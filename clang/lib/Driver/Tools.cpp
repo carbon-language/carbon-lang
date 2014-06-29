@@ -7315,6 +7315,172 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+void cygwin::Link::AddLibGCC(const ArgList &Args, ArgStringList &CmdArgs) const {
+  if (Args.hasArg(options::OPT_static) ||
+      Args.hasArg(options::OPT_static_libgcc)) {
+    CmdArgs.push_back("-lgcc");
+    CmdArgs.push_back("-lgcc_eh");
+  } else {
+    CmdArgs.push_back("-lgcc_s");
+    CmdArgs.push_back("-lgcc");
+  }
+}
+
+void cygwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                const InputInfo &Output,
+                                const InputInfoList &Inputs,
+                                const llvm::opt::ArgList &Args,
+                                const char *LinkingOutput) const {
+  static const char *WrappedSymbols[] = {
+    "_Znwj",
+    "_Znaj",
+    "_ZdlPv",
+    "_ZdaPv",
+    "_ZnwjRKSt9nothrow_t",
+    "_ZnajRKSt9nothrow_t",
+    "_ZdlPvRKSt9nothrow_t",
+    "_ZdaPvRKSt9nothrow_t",
+  };
+
+  const auto &ToolChain = getToolChain();
+  ArgStringList CmdArgs;
+
+  // Silence warning for "clang -g foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  // and "clang -emit-llvm foo.o -o foo"
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
+  // and for "clang -w foo.o -o foo". Other warning options are already
+  // handled somewhere else.
+  Args.ClaimAllArgs(options::OPT_w);
+
+  // FIXME: -mwindows should pass --subsystem windows
+  // FIXME: -mconsole should pass --subsystem console
+
+  // FIXME: this can be disabled via -mno-use-libstdc-wrappers
+  for (const auto &Symbol : WrappedSymbols) {
+    CmdArgs.push_back("--wrap");
+    CmdArgs.push_back(Symbol);
+  }
+
+  if (Args.hasArg(options::OPT_shared))
+    CmdArgs.push_back("--shared");
+  else if (Args.hasArg(options::OPT_mdll))
+    CmdArgs.push_back("--dll");
+
+  if (Args.hasArg(options::OPT_static))
+    CmdArgs.push_back("-Bstatic");
+  else
+    CmdArgs.push_back("-Bdynamic");
+
+  if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_mdll)) {
+    CmdArgs.push_back("--enable-auto-image-base");
+
+    CmdArgs.push_back("-e");
+    CmdArgs.push_back("__cygwin_dll_entry@12");
+  }
+
+  CmdArgs.push_back("--dll-search-prefix=cyg");
+
+  if (Args.hasArg(options::OPT_rdynamic))
+    CmdArgs.push_back("--export-all-symbols");
+
+  if (!Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_mdll)) {
+    CmdArgs.push_back("--large-address-aware");
+    CmdArgs.push_back("--tsaware");
+  }
+
+  if (Args.hasArg(options::OPT_pie))
+    CmdArgs.push_back("-pie");
+
+  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+  // FIXME: add -N, -n flags
+  Args.AddLastArg(CmdArgs, options::OPT_r);
+  Args.AddLastArg(CmdArgs, options::OPT_s);
+  Args.AddLastArg(CmdArgs, options::OPT_t);
+  Args.AddAllArgs(CmdArgs, options::OPT_u_Group);
+  Args.AddLastArg(CmdArgs, options::OPT_Z_Flag);
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared) && !Args.hasArg(options::OPT_mdll)) {
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt0.o")));
+      if (Args.hasArg(options::OPT_pg))
+        CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("gcrt0.o")));
+    }
+    CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtbegin.o")));
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+
+  // FIXME: support mudflap: wrap the following:
+  // -fmudflap || -fmudflapth:
+  // static const char *WrappedStaticSymbols[] = {
+  //   "malloc", "free", "calloc", "realloc", "mmap", "mmap64", "munmap",
+  //   "alloca",
+  // };
+  // -fmudflapth:
+  // static const char *WrappedStaticSymbols[] = {
+  //   "pthread_create",
+  // };
+  // -fmudflap || -fmudflapth:
+  // static const char *WrappedSymbols[] = {
+  //   "main",
+  // };
+
+  for (const auto &Path : ToolChain.getFilePaths())
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + Path));
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  // FIXME: support -freopen, -ftree-parallelize-loops=*
+  // FIXME: support itm (-fgnu-tm)
+  // FIXME: support mudflap (-fmudflap || -fmudflapth) ? -export-dynamic : ""
+
+  if (Args.hasArg(options::OPT_fsplit_stack))
+    CmdArgs.push_back("--wrap=pthread_create");
+
+  if (Args.hasArg(options::OPT_fprofile_arcs) ||
+      Args.hasArg(options::OPT_fprofile_generate) ||
+      Args.hasArg(options::OPT_coverage))
+    CmdArgs.push_back("-lgcov");
+
+  if (!Args.hasArg(options::OPT_nostdlib)) {
+    if (!Args.hasArg(options::OPT_nodefaultlibs)) {
+      // FIXME: support asan, tsan
+
+      if (Args.hasArg(options::OPT_fstack_protector) ||
+          Args.hasArg(options::OPT_fstack_protector_all)) {
+        CmdArgs.push_back("-lssp_nonshared");
+        CmdArgs.push_back("-lssp");
+      }
+
+      AddLibGCC(Args, CmdArgs);
+      if (Args.hasArg(options::OPT_pg))
+        CmdArgs.push_back("-lgmon");
+      CmdArgs.push_back("-lcygwin");
+      // FIXME: -mwindows: -lgdi32 -lcomdlg32
+      CmdArgs.push_back("-ladvapi32");
+      CmdArgs.push_back("-lshell32");
+      CmdArgs.push_back("-luser32");
+      CmdArgs.push_back("-lkernel32");
+      AddLibGCC(Args, CmdArgs);
+    }
+
+    if (!Args.hasArg(options::OPT_nostartfiles)) {
+      ToolChain.AddFastMathRuntimeIfAvailable(Args, CmdArgs);
+      CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtend.o")));
+    }
+  }
+
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+
+  const char *Exec = Args.MakeArgString(getToolChain().GetLinkerPath());
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
 void minix::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                    const InputInfo &Output,
                                    const InputInfoList &Inputs,
