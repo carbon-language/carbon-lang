@@ -695,20 +695,20 @@ public:
   virtual void EmitCFIRegister(int64_t Register1, int64_t Register2);
   virtual void EmitCFIWindowSave();
 
-  virtual void EmitWin64EHStartProc(const MCSymbol *Symbol);
-  virtual void EmitWin64EHEndProc();
-  virtual void EmitWin64EHStartChained();
-  virtual void EmitWin64EHEndChained();
-  virtual void EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
-                                  bool Except);
-  virtual void EmitWin64EHHandlerData();
-  virtual void EmitWin64EHPushReg(unsigned Register);
-  virtual void EmitWin64EHSetFrame(unsigned Register, unsigned Offset);
-  virtual void EmitWin64EHAllocStack(unsigned Size);
-  virtual void EmitWin64EHSaveReg(unsigned Register, unsigned Offset);
-  virtual void EmitWin64EHSaveXMM(unsigned Register, unsigned Offset);
-  virtual void EmitWin64EHPushFrame(bool Code);
-  virtual void EmitWin64EHEndProlog();
+  virtual void EmitWinCFIStartProc(const MCSymbol *Symbol);
+  virtual void EmitWinCFIEndProc();
+  virtual void EmitWinCFIStartChained();
+  virtual void EmitWinCFIEndChained();
+  virtual void EmitWinCFIPushReg(unsigned Register);
+  virtual void EmitWinCFISetFrame(unsigned Register, unsigned Offset);
+  virtual void EmitWinCFIAllocStack(unsigned Size);
+  virtual void EmitWinCFISaveReg(unsigned Register, unsigned Offset);
+  virtual void EmitWinCFISaveXMM(unsigned Register, unsigned Offset);
+  virtual void EmitWinCFIPushFrame(bool Code);
+  virtual void EmitWinCFIEndProlog();
+
+  virtual void EmitWinEHHandler(const MCSymbol *Sym, bool Unwind, bool Except);
+  virtual void EmitWinEHHandlerData();
 
   /// EmitInstruction - Emit the given @p Instruction into the current
   /// section.

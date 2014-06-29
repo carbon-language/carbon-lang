@@ -889,36 +889,34 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
 
   case X86::SEH_PushReg:
-    OutStreamer.EmitWin64EHPushReg(
-        RI->getSEHRegNum(MI->getOperand(0).getImm()));
+    OutStreamer.EmitWinCFIPushReg(RI->getSEHRegNum(MI->getOperand(0).getImm()));
     return;
 
   case X86::SEH_SaveReg:
-    OutStreamer.EmitWin64EHSaveReg(RI->getSEHRegNum(MI->getOperand(0).getImm()),
-                                   MI->getOperand(1).getImm());
+    OutStreamer.EmitWinCFISaveReg(RI->getSEHRegNum(MI->getOperand(0).getImm()),
+                                  MI->getOperand(1).getImm());
     return;
 
   case X86::SEH_SaveXMM:
-    OutStreamer.EmitWin64EHSaveXMM(RI->getSEHRegNum(MI->getOperand(0).getImm()),
-                                   MI->getOperand(1).getImm());
+    OutStreamer.EmitWinCFISaveXMM(RI->getSEHRegNum(MI->getOperand(0).getImm()),
+                                  MI->getOperand(1).getImm());
     return;
 
   case X86::SEH_StackAlloc:
-    OutStreamer.EmitWin64EHAllocStack(MI->getOperand(0).getImm());
+    OutStreamer.EmitWinCFIAllocStack(MI->getOperand(0).getImm());
     return;
 
   case X86::SEH_SetFrame:
-    OutStreamer.EmitWin64EHSetFrame(
-        RI->getSEHRegNum(MI->getOperand(0).getImm()),
-        MI->getOperand(1).getImm());
+    OutStreamer.EmitWinCFISetFrame(RI->getSEHRegNum(MI->getOperand(0).getImm()),
+                                   MI->getOperand(1).getImm());
     return;
 
   case X86::SEH_PushFrame:
-    OutStreamer.EmitWin64EHPushFrame(MI->getOperand(0).getImm());
+    OutStreamer.EmitWinCFIPushFrame(MI->getOperand(0).getImm());
     return;
 
   case X86::SEH_EndPrologue:
-    OutStreamer.EmitWin64EHEndProlog();
+    OutStreamer.EmitWinCFIEndProlog();
     return;
   }
 

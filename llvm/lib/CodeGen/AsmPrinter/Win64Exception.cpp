@@ -72,14 +72,14 @@ void Win64Exception::beginFunction(const MachineFunction *MF) {
   if (!shouldEmitPersonality && !shouldEmitMoves)
     return;
 
-  Asm->OutStreamer.EmitWin64EHStartProc(Asm->CurrentFnSym);
+  Asm->OutStreamer.EmitWinCFIStartProc(Asm->CurrentFnSym);
 
   if (!shouldEmitPersonality)
     return;
 
   const MCSymbol *PersHandlerSym =
       TLOF.getCFIPersonalitySymbol(Per, *Asm->Mang, Asm->TM, MMI);
-  Asm->OutStreamer.EmitWin64EHHandler(PersHandlerSym, true, true);
+  Asm->OutStreamer.EmitWinEHHandler(PersHandlerSym, true, true);
 
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
                                                 Asm->getFunctionNumber()));
@@ -99,9 +99,9 @@ void Win64Exception::endFunction(const MachineFunction *) {
 
   if (shouldEmitPersonality) {
     Asm->OutStreamer.PushSection();
-    Asm->OutStreamer.EmitWin64EHHandlerData();
+    Asm->OutStreamer.EmitWinEHHandlerData();
     emitExceptionTable();
     Asm->OutStreamer.PopSection();
   }
-  Asm->OutStreamer.EmitWin64EHEndProc();
+  Asm->OutStreamer.EmitWinCFIEndProc();
 }

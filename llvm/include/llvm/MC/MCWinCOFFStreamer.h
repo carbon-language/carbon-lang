@@ -56,7 +56,7 @@ public:
                       unsigned ByteAlignment) override;
   void EmitFileDirective(StringRef Filename) override;
   void EmitIdent(StringRef IdentString) override;
-  void EmitWin64EHHandlerData() override;
+  void EmitWinEHHandlerData() override;
   void FinishImpl() override;
 
   /// \}

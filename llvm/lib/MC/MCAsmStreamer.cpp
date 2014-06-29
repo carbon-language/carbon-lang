@@ -212,20 +212,20 @@ public:
   void EmitCFIRegister(int64_t Register1, int64_t Register2) override;
   void EmitCFIWindowSave() override;
 
-  void EmitWin64EHStartProc(const MCSymbol *Symbol) override;
-  void EmitWin64EHEndProc() override;
-  void EmitWin64EHStartChained() override;
-  void EmitWin64EHEndChained() override;
-  void EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
-                          bool Except) override;
-  void EmitWin64EHHandlerData() override;
-  void EmitWin64EHPushReg(unsigned Register) override;
-  void EmitWin64EHSetFrame(unsigned Register, unsigned Offset) override;
-  void EmitWin64EHAllocStack(unsigned Size) override;
-  void EmitWin64EHSaveReg(unsigned Register, unsigned Offset) override;
-  void EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) override;
-  void EmitWin64EHPushFrame(bool Code) override;
-  void EmitWin64EHEndProlog() override;
+  void EmitWinCFIStartProc(const MCSymbol *Symbol) override;
+  void EmitWinCFIEndProc() override;
+  void EmitWinCFIStartChained() override;
+  void EmitWinCFIEndChained() override;
+  void EmitWinCFIPushReg(unsigned Register) override;
+  void EmitWinCFISetFrame(unsigned Register, unsigned Offset) override;
+  void EmitWinCFIAllocStack(unsigned Size) override;
+  void EmitWinCFISaveReg(unsigned Register, unsigned Offset) override;
+  void EmitWinCFISaveXMM(unsigned Register, unsigned Offset) override;
+  void EmitWinCFIPushFrame(bool Code) override;
+  void EmitWinCFIEndProlog() override;
+
+  void EmitWinEHHandler(const MCSymbol *Sym, bool Unwind, bool Except) override;
+  void EmitWinEHHandlerData() override;
 
   void EmitInstruction(const MCInst &Inst, const MCSubtargetInfo &STI) override;
 
@@ -1049,37 +1049,37 @@ void MCAsmStreamer::EmitCFIWindowSave() {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHStartProc(const MCSymbol *Symbol) {
-  MCStreamer::EmitWin64EHStartProc(Symbol);
+void MCAsmStreamer::EmitWinCFIStartProc(const MCSymbol *Symbol) {
+  MCStreamer::EmitWinCFIStartProc(Symbol);
 
   OS << ".seh_proc " << *Symbol;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndProc() {
-  MCStreamer::EmitWin64EHEndProc();
+void MCAsmStreamer::EmitWinCFIEndProc() {
+  MCStreamer::EmitWinCFIEndProc();
 
   OS << "\t.seh_endproc";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHStartChained() {
-  MCStreamer::EmitWin64EHStartChained();
+void MCAsmStreamer::EmitWinCFIStartChained() {
+  MCStreamer::EmitWinCFIStartChained();
 
   OS << "\t.seh_startchained";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndChained() {
-  MCStreamer::EmitWin64EHEndChained();
+void MCAsmStreamer::EmitWinCFIEndChained() {
+  MCStreamer::EmitWinCFIEndChained();
 
   OS << "\t.seh_endchained";
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHHandler(const MCSymbol *Sym, bool Unwind,
-                                       bool Except) {
-  MCStreamer::EmitWin64EHHandler(Sym, Unwind, Except);
+void MCAsmStreamer::EmitWinEHHandler(const MCSymbol *Sym, bool Unwind,
+                                      bool Except) {
+  MCStreamer::EmitWinEHHandler(Sym, Unwind, Except);
 
   OS << "\t.seh_handler " << *Sym;
   if (Unwind)
@@ -1102,8 +1102,8 @@ static const MCSection *getWin64EHTableSection(StringRef suffix,
                                 SectionKind::getDataRel());
 }
 
-void MCAsmStreamer::EmitWin64EHHandlerData() {
-  MCStreamer::EmitWin64EHHandlerData();
+void MCAsmStreamer::EmitWinEHHandlerData() {
+  MCStreamer::EmitWinEHHandlerData();
 
   // Switch sections. Don't call SwitchSection directly, because that will
   // cause the section switch to be visible in the emitted assembly.
@@ -1119,43 +1119,43 @@ void MCAsmStreamer::EmitWin64EHHandlerData() {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHPushReg(unsigned Register) {
-  MCStreamer::EmitWin64EHPushReg(Register);
+void MCAsmStreamer::EmitWinCFIPushReg(unsigned Register) {
+  MCStreamer::EmitWinCFIPushReg(Register);
 
   OS << "\t.seh_pushreg " << Register;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSetFrame(unsigned Register, unsigned Offset) {
-  MCStreamer::EmitWin64EHSetFrame(Register, Offset);
+void MCAsmStreamer::EmitWinCFISetFrame(unsigned Register, unsigned Offset) {
+  MCStreamer::EmitWinCFISetFrame(Register, Offset);
 
   OS << "\t.seh_setframe " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHAllocStack(unsigned Size) {
-  MCStreamer::EmitWin64EHAllocStack(Size);
+void MCAsmStreamer::EmitWinCFIAllocStack(unsigned Size) {
+  MCStreamer::EmitWinCFIAllocStack(Size);
 
   OS << "\t.seh_stackalloc " << Size;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSaveReg(unsigned Register, unsigned Offset) {
-  MCStreamer::EmitWin64EHSaveReg(Register, Offset);
+void MCAsmStreamer::EmitWinCFISaveReg(unsigned Register, unsigned Offset) {
+  MCStreamer::EmitWinCFISaveReg(Register, Offset);
 
   OS << "\t.seh_savereg " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHSaveXMM(unsigned Register, unsigned Offset) {
-  MCStreamer::EmitWin64EHSaveXMM(Register, Offset);
+void MCAsmStreamer::EmitWinCFISaveXMM(unsigned Register, unsigned Offset) {
+  MCStreamer::EmitWinCFISaveXMM(Register, Offset);
 
   OS << "\t.seh_savexmm " << Register << ", " << Offset;
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHPushFrame(bool Code) {
-  MCStreamer::EmitWin64EHPushFrame(Code);
+void MCAsmStreamer::EmitWinCFIPushFrame(bool Code) {
+  MCStreamer::EmitWinCFIPushFrame(Code);
 
   OS << "\t.seh_pushframe";
   if (Code)
@@ -1163,8 +1163,8 @@ void MCAsmStreamer::EmitWin64EHPushFrame(bool Code) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitWin64EHEndProlog(void) {
-  MCStreamer::EmitWin64EHEndProlog();
+void MCAsmStreamer::EmitWinCFIEndProlog(void) {
+  MCStreamer::EmitWinCFIEndProlog();
 
   OS << "\t.seh_endprologue";
   EmitEOL();
