@@ -4231,6 +4231,9 @@ public:
     // 31: VFPv3 40: VFPv4
     Builder.defineMacro("_M_ARM_FP", "31");
   }
+  BuiltinVaListKind getBuiltinVaListKind() const override {
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
 };
 
 // Windows ARM + Itanium C++ ABI Target
