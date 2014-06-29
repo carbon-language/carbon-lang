@@ -686,9 +686,22 @@ exprWithCleanups;
 ///   struct B { int x, y; };
 ///   B b = { 5, 6 };
 /// \endcode
-/// initList()
+/// initListExpr()
 ///   matches "{ 1, 2 }" and "{ 5, 6 }"
 const internal::VariadicDynCastAllOfMatcher<Stmt, InitListExpr> initListExpr;
+
+/// \brief Matches substitutions of non-type template parameters.
+///
+/// Given
+/// \code
+///   template <int N>
+///   struct A { static const int n = N; };
+///   struct B : public A<42> {};
+/// \endcode
+/// substNonTypeTemplateParmExpr()
+///   matches "N" in the right-hand side of "static const int n = N;"
+const internal::VariadicDynCastAllOfMatcher<Stmt, SubstNonTypeTemplateParmExpr>
+substNonTypeTemplateParmExpr;
 
 /// \brief Matches using declarations.
 ///
