@@ -451,12 +451,12 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   bool Is64Bit = STI.is64Bit();
   bool IsLP64 = STI.isTarget64BitLP64();
   bool IsWin64 = STI.isTargetWin64();
-  bool IsSEH =
+  bool IsWinEH =
       MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
-      ExceptionHandling::Win64; // Not necessarily synonymous with IsWin64.
-  bool NeedsWin64SEH = IsSEH && Fn->needsUnwindTableEntry();
+      ExceptionHandling::WinEH; // Not necessarily synonymous with IsWin64.
+  bool NeedsWinEH = IsWinEH && Fn->needsUnwindTableEntry();
   bool NeedsDwarfCFI =
-      !IsSEH && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
+      !IsWinEH && (MMI.hasDebugInfo() || Fn->needsUnwindTableEntry());
   bool UseLEA = STI.useLeaForSP();
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
@@ -572,7 +572,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
           .addCFIIndex(CFIIndex);
     }
 
-    if (NeedsWin64SEH) {
+    if (NeedsWinEH) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_PushReg))
           .addImm(FramePtr)
           .setMIFlag(MachineInstr::FrameSetup);
@@ -623,7 +623,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       StackOffset += stackGrowth;
     }
 
-    if (NeedsWin64SEH) {
+    if (NeedsWinEH) {
       BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_PushReg)).addImm(Reg).setMIFlag(
           MachineInstr::FrameSetup);
     }
@@ -735,7 +735,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   int SEHFrameOffset = 0;
-  if (NeedsWin64SEH) {
+  if (NeedsWinEH) {
     if (HasFP) {
       // We need to set frame base offset low enough such that all saved
       // register offsets would be positive relative to it, but we can't
@@ -775,7 +775,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     ++MBBI;
 
   // Emit SEH info for non-GPRs
-  if (NeedsWin64SEH) {
+  if (NeedsWinEH) {
     for (const CalleeSavedInfo &Info : MFI->getCalleeSavedInfo()) {
       unsigned Reg = Info.getReg();
       if (X86::GR64RegClass.contains(Reg) || X86::GR32RegClass.contains(Reg))

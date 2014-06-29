@@ -416,7 +416,7 @@ void TargetPassConfig::addPassesToHandleExceptions() {
     // FALLTHROUGH
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
-  case ExceptionHandling::Win64:
+  case ExceptionHandling::WinEH:
     addPass(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:

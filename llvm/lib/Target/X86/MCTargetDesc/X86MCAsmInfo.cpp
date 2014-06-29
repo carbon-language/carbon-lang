@@ -146,7 +146,7 @@ X86MCAsmInfoMicrosoft::X86MCAsmInfoMicrosoft(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
     PointerSize = 8;
-    ExceptionsType = ExceptionHandling::Win64;
+    ExceptionsType = ExceptionHandling::WinEH;
   }
 
   AssemblerDialect = AsmWriterFlavor;
@@ -165,7 +165,7 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   if (Triple.getArch() == Triple::x86_64) {
     PrivateGlobalPrefix = ".L";
     PointerSize = 8;
-    ExceptionsType = ExceptionHandling::Win64;
+    ExceptionsType = ExceptionHandling::WinEH;
   } else {
     ExceptionsType = ExceptionHandling::DwarfCFI;
   }
