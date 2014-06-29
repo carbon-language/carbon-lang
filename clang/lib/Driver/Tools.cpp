@@ -4357,7 +4357,7 @@ static bool maybeConsumeDash(const std::string &EH, size_t &I) {
   bool HaveDash = (I + 1 < EH.size() && EH[I + 1] == '-');
   I += HaveDash;
   return !HaveDash;
-};
+}
 
 struct EHFlags {
   EHFlags() : Synch(false), Asynch(false), NoExceptC(false) {}
