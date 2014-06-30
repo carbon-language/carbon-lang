@@ -1,14 +1,14 @@
-// RUN: %clang_cc1 -fblocks -triple %itanium_abi_triple -emit-llvm %s -o %t
+// RUN: %clang_cc1 -fblocks -emit-llvm %s -o %t
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK1
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK2
 
 struct A {
-  long a;
+  int a;
   float b;
   char c;
 };
 
-void test_nest_captured_stmt(int param, long size, int param_arr[size]) {
+void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
   int w;
   int arr[param][size];
   // CHECK1: %struct.anon{{.*}} = type { i32*, i32*, i{{.+}}*, i32**, i32* }
@@ -70,7 +70,7 @@ void test_nest_captured_stmt(int param, long size, int param_arr[size]) {
         // CHECK1-DAG: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 6
         // CHECK1-DAG: [[PARAM_ARR_ADDR:%.*]] = load i{{.+}}*** [[PARAM_ARR_ADDR_REF]]
         // CHECK1-DAG: [[PARAM_ARR:%.*]] = load i{{.+}}** [[PARAM_ARR_ADDR]]
-        // CHECK1-DAG: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[PARAM_ARR]], i{{.*}} [[PARAM_ARR_IDX]]
+        // CHECK1-DAG: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[PARAM_ARR]], i{{.*}}
         // CHECK1: store i{{.+}} 2, i{{.+}}* [[PARAM_ARR_SIZE_MINUS_1_ADDR]]
         //
         // CHECK1: [[Z_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i{{.+}} 0, i{{.+}} 2
