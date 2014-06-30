@@ -41,6 +41,7 @@ namespace llvm {
       ELF_STT_File      = (ELF::STT_FILE      << ELF_STT_Shift),
       ELF_STT_Common    = (ELF::STT_COMMON    << ELF_STT_Shift),
       ELF_STT_Tls       = (ELF::STT_TLS       << ELF_STT_Shift),
+      ELF_STT_GnuIFunc  = (ELF::STT_GNU_IFUNC << ELF_STT_Shift),
       ELF_STT_Loproc    = (ELF::STT_LOPROC    << ELF_STT_Shift),
       ELF_STT_Hiproc    = (ELF::STT_HIPROC    << ELF_STT_Shift),
 

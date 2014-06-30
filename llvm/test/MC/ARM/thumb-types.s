@@ -29,6 +29,12 @@ untyped_text_label:
 explicit_function:
 	nop
 
+	.long	tls(TPOFF)
+
+	.type indirect_function,%gnu_indirect_function
+indirect_function:
+	nop
+
 	.data
 
 untyped_data_label:
@@ -37,6 +43,14 @@ untyped_data_label:
 	.type explicit_data,%object
 explicit_data:
 	.long 0
+
+	.section	.tdata,"awT",%progbits
+	.type	tls,%object
+	.align	2
+tls:
+	.long	42
+	.size	tls, 4
+
 
 @ CHECK: Symbol {
 @ CHECK:   Name: arm_function
@@ -66,6 +80,18 @@ explicit_data:
 @ CHECK:   Name: implicit_function
 @ CHECK:   Value: 0x1
 @ CHECK:   Type: Function
+@ CHECK: }
+
+@ CHECK: Symbol {
+@ CHECK:   Name: indirect_function
+@ CHECK:   Value: 0x13
+@ CHECK:   Type: GNU_IFunc
+@ CHECK: }
+
+@ CHECK: Symbol {
+@ CHECK:   Name: tls
+@ CHECK:   Value: 0x0
+@ CHECK:   Type: TLS
 @ CHECK: }
 
 @ CHECK: Symbol {
