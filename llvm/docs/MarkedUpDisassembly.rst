@@ -63,7 +63,6 @@ immediates having the tag names "mem", "reg", and "imm", respectively.
 The tag-modifier-list is typically additional target-specific context, such as
 register class.
 
-
 Clients should accept and ignore any tag-names or tag-modifiers they do not
 understand, allowing the annotations to grow in richness without breaking older
 clients.
