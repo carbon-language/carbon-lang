@@ -189,6 +189,7 @@ static void HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split,
                                         Invoke.getOuterResumeDest(),
                                         InvokeArgs, CI->getName(), BB);
+    II->setDebugLoc(CI->getDebugLoc());
     II->setCallingConv(CI->getCallingConv());
     II->setAttributes(CI->getAttributes());
     
