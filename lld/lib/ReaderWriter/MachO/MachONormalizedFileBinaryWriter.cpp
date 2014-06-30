@@ -142,6 +142,7 @@ private:
 
   struct SegExtraInfo {
     uint32_t                    fileOffset;
+    uint32_t                    fileSize;
     std::vector<const Section*> sections;
   };
   typedef std::map<const Segment*, SegExtraInfo> SegMap;
@@ -423,23 +424,32 @@ void MachOFileLayout::buildFileOffsets() {
   DEBUG_WITH_TYPE("MachOFileLayout",
                   llvm::dbgs() << "buildFileOffsets()\n");
   for (const Segment &sg : _file.segments) {
-    // FIXME: 4096 should be inferred from segments in normalized file.
-    _segInfo[&sg].fileOffset = llvm::RoundUpToAlignment(fileOffset, 4096);
+    _segInfo[&sg].fileOffset = fileOffset;
     if ((_seg1addr == INT64_MAX) && sg.access)
       _seg1addr = sg.address;
     DEBUG_WITH_TYPE("MachOFileLayout",
                   llvm::dbgs() << "  segment=" << sg.name
                   << ", fileOffset=" << _segInfo[&sg].fileOffset << "\n");
+
+    uint32_t segFileSize = 0;
     for (const Section *s : _segInfo[&sg].sections) {
-      fileOffset = s->address - sg.address + _segInfo[&sg].fileOffset;
-      _sectInfo[s].fileOffset = fileOffset;
+      uint32_t sectOffset = s->address - sg.address;
+      uint32_t sectFileSize =
+          s->type == llvm::MachO::S_ZEROFILL ? 0 : s->content.size();
+      segFileSize = std::max(segFileSize, sectOffset + sectFileSize);
+
+      _sectInfo[s].fileOffset = _segInfo[&sg].fileOffset + sectOffset;
       DEBUG_WITH_TYPE("MachOFileLayout",
                   llvm::dbgs() << "    section=" << s->sectionName
                   << ", fileOffset=" << fileOffset << "\n");
     }
+
+    // FIXME: 4096 should be inferred from segments in normalized file.
+    _segInfo[&sg].fileSize = llvm::RoundUpToAlignment(segFileSize, 4096);
+    fileOffset = llvm::RoundUpToAlignment(fileOffset + segFileSize, 4096);
     _addressOfLinkEdit = sg.address + sg.size;
   }
-  _startOfLinkEdit = llvm::RoundUpToAlignment(fileOffset, 4096);
+  _startOfLinkEdit = fileOffset;
 }
 
 
@@ -537,7 +547,7 @@ std::error_code MachOFileLayout::writeSegmentLoadCommands(uint8_t *&lc) {
     cmd->vmaddr   = seg.address;
     cmd->vmsize   = seg.size;
     cmd->fileoff  = segInfo.fileOffset;
-    cmd->filesize = seg.access ? seg.size : Hex64(0);
+    cmd->filesize = segInfo.fileSize;
     cmd->maxprot  = seg.access;
     cmd->initprot = seg.access;
     cmd->nsects   = segInfo.sections.size();
