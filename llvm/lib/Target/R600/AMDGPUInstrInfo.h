@@ -137,14 +137,6 @@ public:
   bool isSafeToMoveRegClassDefs(const TargetRegisterClass *RC) const override;
 
   // Helper functions that check the opcode for status information
-  bool isLoadInst(llvm::MachineInstr *MI) const;
-  bool isExtLoadInst(llvm::MachineInstr *MI) const;
-  bool isSWSExtLoadInst(llvm::MachineInstr *MI) const;
-  bool isSExtLoadInst(llvm::MachineInstr *MI) const;
-  bool isZExtLoadInst(llvm::MachineInstr *MI) const;
-  bool isAExtLoadInst(llvm::MachineInstr *MI) const;
-  bool isStoreInst(llvm::MachineInstr *MI) const;
-  bool isTruncStoreInst(llvm::MachineInstr *MI) const;
   bool isRegisterStore(const MachineInstr &MI) const;
   bool isRegisterLoad(const MachineInstr &MI) const;
 
