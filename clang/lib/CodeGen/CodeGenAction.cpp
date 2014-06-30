@@ -641,17 +641,23 @@ void CodeGenAction::ExecuteAction() {
 
     bool Invalid;
     SourceManager &SM = CI.getSourceManager();
-    llvm::MemoryBuffer *MainFile = SM.getBuffer(SM.getMainFileID(), &Invalid);
+    FileID FID = SM.getMainFileID();
+    llvm::MemoryBuffer *MainFile = SM.getBuffer(FID, &Invalid);
     if (Invalid)
       return;
 
     llvm::SMDiagnostic Err;
     TheModule.reset(ParseIR(MainFile, Err, *VMContext));
     if (!TheModule) {
-      // Translate from the diagnostic info to the SourceManager location.
-      SourceLocation Loc = SM.translateFileLineCol(
-        SM.getFileEntryForID(SM.getMainFileID()), Err.getLineNo(),
-        Err.getColumnNo() + 1);
+      // Translate from the diagnostic info to the SourceManager location if
+      // available.
+      // TODO: Unify this with ConvertBackendLocation()
+      SourceLocation Loc;
+      if (Err.getLineNo() > 0) {
+        assert(Err.getColumnNo() >= 0);
+        Loc = SM.translateFileLineCol(SM.getFileEntryForID(FID),
+                                      Err.getLineNo(), Err.getColumnNo() + 1);
+      }
 
       // Strip off a leading diagnostic code if there is one.
       StringRef Msg = Err.getMessage();
