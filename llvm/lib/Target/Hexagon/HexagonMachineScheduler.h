@@ -100,7 +100,7 @@ public:
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
   virtual void schedule() override;
-  /// Perform platform specific DAG postprocessing.
+  /// Perform platform-specific DAG postprocessing.
   void postprocessDAG();
 };
 

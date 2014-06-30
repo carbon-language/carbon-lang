@@ -134,7 +134,7 @@ public:
 };
 
 /// file_status - Represents the result of a call to stat and friends. It has
-///               a platform specific member to store the result.
+///               a platform-specific member to store the result.
 class file_status
 {
   #if defined(LLVM_ON_UNIX)
@@ -273,7 +273,7 @@ private:
 ///
 /// @param path A path that is modified to be an absolute path.
 /// @returns errc::success if \a path has been made absolute, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code make_absolute(SmallVectorImpl<char> &path);
 
 /// @brief Normalize path separators in \a Path
@@ -318,14 +318,14 @@ std::error_code create_link(const Twine &to, const Twine &from);
 ///
 /// @param result Holds the current path on return.
 /// @returns errc::success if the current path has been stored in result,
-///          otherwise a platform specific error_code.
+///          otherwise a platform-specific error_code.
 std::error_code current_path(SmallVectorImpl<char> &result);
 
 /// @brief Remove path. Equivalent to POSIX remove().
 ///
 /// @param path Input path.
 /// @returns errc::success if path has been removed or didn't exist, otherwise a
-///          platform specific error code. If IgnoreNonExisting is false, also
+///          platform-specific error code. If IgnoreNonExisting is false, also
 ///          returns error if the file didn't exist.
 std::error_code remove(const Twine &path, bool IgnoreNonExisting = true);
 
@@ -346,7 +346,7 @@ std::error_code copy_file(const Twine &From, const Twine &To);
 /// @param path Input path.
 /// @param size Size to resize to.
 /// @returns errc::success if \a path has been resized to \a size, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code resize_file(const Twine &path, uint64_t size);
 
 /// @}
@@ -366,7 +366,7 @@ bool exists(file_status status);
 /// @param result Set to true if the file represented by status exists, false if
 ///               it does not. Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code exists(const Twine &path, bool &result);
 
 /// @brief Simpler version of exists for clients that don't need to
@@ -408,7 +408,7 @@ bool equivalent(file_status A, file_status B);
 /// @param result Set to true if stat(A) and stat(B) have the same device and
 ///               inode (or equivalent).
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code equivalent(const Twine &A, const Twine &B, bool &result);
 
 /// @brief Simpler version of equivalent for clients that don't need to
@@ -430,7 +430,7 @@ bool is_directory(file_status status);
 /// @param result Set to true if \a path is a directory, false if it is not.
 ///               Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code is_directory(const Twine &path, bool &result);
 
 /// @brief Simpler version of is_directory for clients that don't need to
@@ -452,7 +452,7 @@ bool is_regular_file(file_status status);
 /// @param result Set to true if \a path is a regular file, false if it is not.
 ///               Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code is_regular_file(const Twine &path, bool &result);
 
 /// @brief Simpler version of is_regular_file for clients that don't need to
@@ -478,7 +478,7 @@ bool is_other(file_status status);
 /// @param result Set to true if \a path exists, but is not a directory, regular
 ///               file, or a symlink, false if it does not. Undefined otherwise.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code is_other(const Twine &path, bool &result);
 
 /// @brief Get file status as if by POSIX stat().
@@ -486,7 +486,7 @@ std::error_code is_other(const Twine &path, bool &result);
 /// @param path Input path.
 /// @param result Set to the file status.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code status(const Twine &path, file_status &result);
 
 /// @brief A version for when a file descriptor is already available.
@@ -497,7 +497,7 @@ std::error_code status(int FD, file_status &Result);
 /// @param Path Input path.
 /// @param Result Set to the size of the file in \a Path.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 inline std::error_code file_size(const Twine &Path, uint64_t &Result) {
   file_status Status;
   std::error_code EC = status(Path, Status);
@@ -510,7 +510,7 @@ inline std::error_code file_size(const Twine &Path, uint64_t &Result) {
 /// @brief Set the file modification and access time.
 ///
 /// @returns errc::success if the file times were successfully set, otherwise a
-///          platform specific error_code or errc::function_not_supported on
+///          platform-specific error_code or errc::function_not_supported on
 ///          platforms where the functionality isn't available.
 std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time);
 
@@ -525,7 +525,7 @@ bool status_known(file_status s);
 /// @param path Input path.
 /// @param result Set to true if status() != status_error.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code status_known(const Twine &path, bool &result);
 
 /// @brief Create a uniquely named file.
@@ -548,7 +548,7 @@ std::error_code status_known(const Twine &path, bool &result);
 /// @param ResultFD Set to the opened file's file descriptor.
 /// @param ResultPath Set to the opened file's absolute path.
 /// @returns errc::success if Result{FD,Path} have been successfully set,
-///          otherwise a platform specific error_code.
+///          otherwise a platform-specific error_code.
 std::error_code createUniqueFile(const Twine &Model, int &ResultFD,
                                  SmallVectorImpl<char> &ResultPath,
                                  unsigned Mode = all_read | all_write);
@@ -618,7 +618,7 @@ file_magic identify_magic(StringRef magic);
 /// @param path Input path.
 /// @param result Set to the type of file, or file_magic::unknown.
 /// @returns errc::success if result has been successfully set, otherwise a
-///          platform specific error_code.
+///          platform-specific error_code.
 std::error_code identify_magic(const Twine &path, file_magic &result);
 
 std::error_code getUniqueID(const Twine Path, UniqueID &Result);
@@ -638,7 +638,7 @@ public:
   };
 
 private:
-  /// Platform specific mapping state.
+  /// Platform-specific mapping state.
   mapmode Mode;
   uint64_t Size;
   void *Mapping;

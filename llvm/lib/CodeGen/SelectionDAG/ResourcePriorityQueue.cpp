@@ -442,7 +442,7 @@ signed ResourcePriorityQueue::SUSchedulingCost(SUnit *SU) {
     ResCount -= (regPressureDelta(SU) * ScaleTwo);
   }
 
-  // These are platform specific things.
+  // These are platform-specific things.
   // Will need to go into the back end
   // and accessed from here via a hook.
   for (SDNode *N = SU->getNode(); N; N = N->getGluedNode()) {

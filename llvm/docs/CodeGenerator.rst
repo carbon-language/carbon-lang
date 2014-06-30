@@ -2027,7 +2027,7 @@ supported on x86/x86-64 and PowerPC. It is performed if:
 
 * Option ``-tailcallopt`` is enabled.
 
-* Platform specific constraints are met.
+* Platform-specific constraints are met.
 
 x86/x86-64 constraints:
 

@@ -53,7 +53,7 @@ TimeValue::normalize( void ) {
 
 }
 
-/// Include the platform specific portion of TimeValue class
+/// Include the platform-specific portion of TimeValue class
 #ifdef LLVM_ON_UNIX
 #include "Unix/TimeValue.inc"
 #endif

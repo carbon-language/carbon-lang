@@ -6408,7 +6408,7 @@ This instruction requires several arguments:
       uses value of call or is void).
    -  Option ``-tailcallopt`` is enabled, or
       ``llvm::GuaranteedTailCallOpt`` is ``true``.
-   -  `Platform specific constraints are
+   -  `Platform-specific constraints are
       met. <CodeGenerator.html#tailcallopt>`_
 
 #. The optional "cconv" marker indicates which :ref:`calling

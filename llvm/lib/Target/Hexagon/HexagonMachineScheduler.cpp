@@ -20,7 +20,7 @@ using namespace llvm;
 
 #define DEBUG_TYPE "misched"
 
-/// Platform specific modifications to DAG.
+/// Platform-specific modifications to DAG.
 void VLIWMachineScheduler::postprocessDAG() {
   SUnit* LastSequentialCall = nullptr;
   // Currently we only catch the situation when compare gets scheduled
@@ -150,7 +150,7 @@ void VLIWMachineScheduler::schedule() {
 
   buildDAGWithRegPressure();
 
-  // Postprocess the DAG to add platform specific artificial dependencies.
+  // Postprocess the DAG to add platform-specific artificial dependencies.
   postprocessDAG();
 
   SmallVector<SUnit*, 8> TopRoots, BotRoots;

@@ -320,7 +320,7 @@ private:
   ///   1. Preserve the architecture independence of stack protector generation.
   ///
   ///   2. Preserve the normal IR level stack protector check for platforms like
-  ///      OpenBSD for which we support platform specific stack protector
+  ///      OpenBSD for which we support platform-specific stack protector
   ///      generation.
   ///
   /// The main problem that guided the present solution is that one can not
@@ -338,7 +338,7 @@ private:
   ///      basic block (where the return inst is placed) and then move it back
   ///      later at SelectionDAG/MI time before the stack protector check if the
   ///      tail call optimization failed. The MI level option was nixed
-  ///      immediately since it would require platform specific pattern
+  ///      immediately since it would require platform-specific pattern
   ///      matching. The SelectionDAG level option was nixed because
   ///      SelectionDAG only processes one IR level basic block at a time
   ///      implying one could not create a DAG Combine to move the callinst.

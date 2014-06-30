@@ -487,7 +487,7 @@ into LLVM source tree. You can achieve it in two easy steps:
 #. Adding ``add_subdirectory(<pass name>)`` line into
    ``<LLVM root>/lib/Transform/CMakeLists.txt``.
 
-Compiler/Platform specific topics
+Compiler/Platform-specific topics
 =================================
 
 Notes for specific compilers and/or platforms.

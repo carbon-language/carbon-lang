@@ -633,7 +633,7 @@ Threaded
   Denotes a multithreaded mutator; the collector must still stop the mutator
   ("stop the world") before beginning reachability analysis.  Stopping a
   multithreaded mutator is a complicated problem.  It generally requires highly
-  platform specific code in the runtime, and the production of carefully
+  platform-specific code in the runtime, and the production of carefully
   designed machine code at safe points.
 
 Concurrent
