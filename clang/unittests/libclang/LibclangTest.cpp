@@ -340,9 +340,9 @@ TEST(libclang, ModuleMapDescriptor) {
 }
 
 class LibclangReparseTest : public ::testing::Test {
-  std::string TestDir;
   std::set<std::string> Files;
 public:
+  std::string TestDir;
   CXIndex Index;
   CXTranslationUnit ClangTU;
   unsigned TUFlags;
@@ -404,6 +404,39 @@ TEST_F(LibclangReparseTest, Reparse) {
   WriteFile(HeaderName, std::string(HeaderTop) + HeaderBottom);
 
   ClangTU = clang_parseTranslationUnit(Index, CppName.c_str(), nullptr, 0,
+                                       nullptr, 0, TUFlags);
+  EXPECT_EQ(1U, clang_getNumDiagnostics(ClangTU));
+  DisplayDiagnostics();
+
+  // Immedaitely reparse.
+  ASSERT_TRUE(ReparseTU(0, nullptr /* No unsaved files. */));
+  EXPECT_EQ(1U, clang_getNumDiagnostics(ClangTU));
+
+  std::string NewHeaderContents =
+      std::string(HeaderTop) + "int baz;" + HeaderBottom;
+  WriteFile(HeaderName, NewHeaderContents);
+
+  // Reparse after fix.
+  ASSERT_TRUE(ReparseTU(0, nullptr /* No unsaved files. */));
+  EXPECT_EQ(0U, clang_getNumDiagnostics(ClangTU));
+}
+
+TEST_F(LibclangReparseTest, ReparseWithModule) {
+  const char *HeaderTop = "#ifndef H\n#define H\nstruct Foo { int bar;";
+  const char *HeaderBottom = "\n};\n#endif\n";
+  const char *MFile = "#include \"HeaderFile.h\"\nint main() {"
+                         " struct Foo foo; foo.bar = 7; foo.baz = 8; }\n";
+  const char *ModFile = "module A { header \"HeaderFile.h\" }\n";
+  std::string HeaderName = "HeaderFile.h";
+  std::string MName = "MFile.m";
+  std::string ModName = "module.modulemap";
+  WriteFile(MName, MFile);
+  WriteFile(HeaderName, std::string(HeaderTop) + HeaderBottom);
+  WriteFile(ModName, ModFile);
+
+  const char *Args[] = { "-fmodules", "-I", TestDir.c_str() };
+  int NumArgs = sizeof(Args) / sizeof(Args[0]);
+  ClangTU = clang_parseTranslationUnit(Index, MName.c_str(), Args, NumArgs,
                                        nullptr, 0, TUFlags);
   EXPECT_EQ(1U, clang_getNumDiagnostics(ClangTU));
   DisplayDiagnostics();

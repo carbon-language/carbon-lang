@@ -29,6 +29,105 @@
 using namespace clang;
 
 namespace {
+struct DepCollectorPPCallbacks : public PPCallbacks {
+  DependencyCollector &DepCollector;
+  SourceManager &SM;
+  DepCollectorPPCallbacks(DependencyCollector &L, SourceManager &SM)
+      : DepCollector(L), SM(SM) { }
+
+  void FileChanged(SourceLocation Loc, FileChangeReason Reason,
+                   SrcMgr::CharacteristicKind FileType,
+                   FileID PrevFID) override {
+    if (Reason != PPCallbacks::EnterFile)
+      return;
+
+    // Dependency generation really does want to go all the way to the
+    // file entry for a source location to find out what is depended on.
+    // We do not want #line markers to affect dependency generation!
+    const FileEntry *FE =
+        SM.getFileEntryForID(SM.getFileID(SM.getExpansionLoc(Loc)));
+    if (!FE)
+      return;
+
+    StringRef Filename = FE->getName();
+
+    // Remove leading "./" (or ".//" or "././" etc.)
+    while (Filename.size() > 2 && Filename[0] == '.' &&
+           llvm::sys::path::is_separator(Filename[1])) {
+      Filename = Filename.substr(1);
+      while (llvm::sys::path::is_separator(Filename[0]))
+        Filename = Filename.substr(1);
+    }
+
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/false,
+                                   FileType != SrcMgr::C_User,
+                                   /*IsModuleFile*/false, /*IsMissing*/false);
+  }
+
+  void InclusionDirective(SourceLocation HashLoc, const Token &IncludeTok,
+                          StringRef FileName, bool IsAngled,
+                          CharSourceRange FilenameRange, const FileEntry *File,
+                          StringRef SearchPath, StringRef RelativePath,
+                          const Module *Imported) override {
+    if (!File)
+      DepCollector.maybeAddDependency(FileName, /*FromModule*/false,
+                                     /*IsSystem*/false, /*IsModuleFile*/false,
+                                     /*IsMissing*/true);
+    // Files that actually exist are handled by FileChanged.
+  }
+
+  void EndOfMainFile() override {
+    DepCollector.finishedMainFile();
+  }
+};
+
+struct DepCollectorASTListener : public ASTReaderListener {
+  DependencyCollector &DepCollector;
+  DepCollectorASTListener(DependencyCollector &L) : DepCollector(L) { }
+  bool needsInputFileVisitation() override { return true; }
+  bool needsSystemInputFileVisitation() override {
+    return DepCollector.needSystemDependencies();
+  }
+  void visitModuleFile(StringRef Filename) override {
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/true,
+                                   /*IsSystem*/false, /*IsModuleFile*/true,
+                                   /*IsMissing*/false);
+  }
+  bool visitInputFile(StringRef Filename, bool IsSystem,
+                      bool IsOverridden) override {
+    if (IsOverridden)
+      return true;
+
+    DepCollector.maybeAddDependency(Filename, /*FromModule*/true, IsSystem,
+                                   /*IsModuleFile*/false, /*IsMissing*/false);
+    return true;
+  }
+};
+} // end anonymous namespace
+
+void DependencyCollector::maybeAddDependency(StringRef Filename, bool FromModule,
+                                            bool IsSystem, bool IsModuleFile,
+                                            bool IsMissing) {
+  if (Seen.insert(Filename) &&
+      sawDependency(Filename, FromModule, IsSystem, IsModuleFile, IsMissing))
+    Dependencies.push_back(Filename);
+}
+
+bool DependencyCollector::sawDependency(StringRef Filename, bool FromModule,
+                                       bool IsSystem, bool IsModuleFile,
+                                       bool IsMissing) {
+  return Filename != "<built-in>" && (needSystemDependencies() || !IsSystem);
+}
+
+DependencyCollector::~DependencyCollector() { }
+void DependencyCollector::attachToPreprocessor(Preprocessor &PP) {
+  PP.addPPCallbacks(new DepCollectorPPCallbacks(*this, PP.getSourceManager()));
+}
+void DependencyCollector::attachToASTReader(ASTReader &R) {
+  R.addListener(new DepCollectorASTListener(*this));
+}
+
+namespace {
 /// Private implementation for DependencyFileGenerator
 class DFGImpl : public PPCallbacks {
   std::vector<std::string> Files;

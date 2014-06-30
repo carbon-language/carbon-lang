@@ -69,6 +69,39 @@ void InitializePreprocessor(Preprocessor &PP,
 void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
                               const PreprocessorOutputOptions &Opts);
 
+/// An interface for collecting the dependencies of a compilation. Users should
+/// use \c attachToPreprocessor and \c attachToASTReader to get all of the
+/// dependencies.
+// FIXME: Migrate DependencyFileGen, DependencyGraphGen, ModuleDepCollectory to
+// use this interface.
+class DependencyCollector {
+public:
+  void attachToPreprocessor(Preprocessor &PP);
+  void attachToASTReader(ASTReader &R);
+  llvm::ArrayRef<std::string> getDependencies() const { return Dependencies; }
+
+  /// Called when a new file is seen. Return true if \p Filename should be added
+  /// to the list of dependencies.
+  ///
+  /// The default implementation ignores <built-in> and system files.
+  virtual bool sawDependency(StringRef Filename, bool FromModule,
+                             bool IsSystem, bool IsModuleFile, bool IsMissing);
+  /// Called when the end of the main file is reached.
+  virtual void finishedMainFile() { }
+  /// Return true if system files should be passed to sawDependency().
+  virtual bool needSystemDependencies() { return false; }
+  virtual ~DependencyCollector();
+
+public: // implementation detail
+  /// Add a dependency \p Filename if it has not been seen before and
+  /// sawDependency() returns true.
+  void maybeAddDependency(StringRef Filename, bool FromModule, bool IsSystem,
+                          bool IsModuleFile, bool IsMissing);
+private:
+  llvm::StringSet<> Seen;
+  std::vector<std::string> Dependencies;
+};
+
 /// Builds a depdenency file when attached to a Preprocessor (for includes) and
 /// ASTReader (for module imports), and writes it out at the end of processing
 /// a source file.  Users should attach to the ast reader whenever a module is

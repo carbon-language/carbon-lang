@@ -288,6 +288,9 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
     AttachDependencyGraphGen(*PP, DepOpts.DOTOutputFile,
                              getHeaderSearchOpts().Sysroot);
 
+  for (auto &Listener : DependencyCollectors)
+    Listener->attachToPreprocessor(*PP);
+
   // If we don't have a collector, but we are collecting module dependencies,
   // then we're the top level compiler instance and need to create one.
   if (!ModuleDepCollector && !DepOpts.ModuleDependencyOutputDir.empty())
@@ -1232,6 +1235,9 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     if (ModuleDepCollector)
       ModuleDepCollector->attachToASTReader(*ModuleManager);
+
+    for (auto &Listener : DependencyCollectors)
+      Listener->attachToASTReader(*ModuleManager);
 
     // Try to load the module file.
     unsigned ARRFlags = ASTReader::ARR_OutOfDate | ASTReader::ARR_Missing;

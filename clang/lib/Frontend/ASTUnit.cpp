@@ -1609,6 +1609,9 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang->setSourceManager(new SourceManager(getDiagnostics(),
                                             Clang->getFileManager()));
 
+  auto PreambleDepCollector = std::make_shared<DependencyCollector>();
+  Clang->addDependencyCollector(PreambleDepCollector);
+
   std::unique_ptr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
@@ -1657,29 +1660,20 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // so we can verify whether they have changed or not.
   FilesInPreamble.clear();
   SourceManager &SourceMgr = Clang->getSourceManager();
-  const llvm::MemoryBuffer *MainFileBuffer
-    = SourceMgr.getBuffer(SourceMgr.getMainFileID());
-  for (SourceManager::fileinfo_iterator F = SourceMgr.fileinfo_begin(),
-                                     FEnd = SourceMgr.fileinfo_end();
-       F != FEnd;
-       ++F) {
-    const FileEntry *File = F->second->OrigEntry;
-    if (!File)
+  for (auto &Filename : PreambleDepCollector->getDependencies()) {
+    const FileEntry *File = Clang->getFileManager().getFile(Filename);
+    if (!File || File == SourceMgr.getFileEntryForID(SourceMgr.getMainFileID()))
       continue;
-    const llvm::MemoryBuffer *Buffer = F->second->getRawBuffer();
-    if (Buffer == MainFileBuffer)
-      continue;
-
     if (time_t ModTime = File->getModificationTime()) {
       FilesInPreamble[File->getName()] = PreambleFileHash::createForFile(
-          F->second->getSize(), ModTime);
+          File->getSize(), ModTime);
     } else {
-      assert(F->second->getSize() == Buffer->getBufferSize());
+      llvm::MemoryBuffer *Buffer = SourceMgr.getMemoryBufferForFile(File);
       FilesInPreamble[File->getName()] =
           PreambleFileHash::createForMemoryBuffer(Buffer);
     }
   }
-  
+
   PreambleRebuildCounter = 1;
   PreprocessorOpts.eraseRemappedFile(
                                PreprocessorOpts.remapped_file_buffer_end() - 1);

@@ -111,6 +111,8 @@ class CompilerInstance : public ModuleLoader {
   /// \brief The dependency file generator.
   std::unique_ptr<DependencyFileGenerator> TheDependencyFileGenerator;
 
+  std::vector<std::shared_ptr<DependencyCollector>> DependencyCollectors;
+
   /// \brief The set of top-level modules that has already been loaded,
   /// along with the module map
   llvm::DenseMap<const IdentifierInfo *, Module *> KnownModules;
@@ -711,6 +713,10 @@ public:
   GlobalModuleIndex *loadGlobalModuleIndex(SourceLocation TriggerLoc) override;
 
   bool lookupMissingImports(StringRef Name, SourceLocation TriggerLoc) override;
+
+  void addDependencyCollector(std::shared_ptr<DependencyCollector> Listener) {
+    DependencyCollectors.push_back(std::move(Listener));
+  }
 };
 
 } // end namespace clang
