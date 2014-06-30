@@ -1721,6 +1721,12 @@ MachOObjectFile::getVersionMinLoadCommand(const LoadCommandInfo &L) const {
   return getStruct<MachO::version_min_command>(this, L.Ptr);
 }
 
+MachO::dylib_command
+MachOObjectFile::getDylibIDLoadCommand(const LoadCommandInfo &L) const {
+  return getStruct<MachO::dylib_command>(this, L.Ptr);
+}
+
+
 MachO::any_relocation_info
 MachOObjectFile::getRelocation(DataRefImpl Rel) const {
   DataRefImpl Sec;

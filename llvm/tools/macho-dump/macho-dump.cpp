@@ -328,6 +328,17 @@ DumpVersionMin(const MachOObjectFile &Obj,
   return 0;
 }
 
+static int
+DumpDylibID(const MachOObjectFile &Obj,
+            const MachOObjectFile::LoadCommandInfo &LCI) {
+  MachO::dylib_command DLLC = Obj.getDylibIDLoadCommand(LCI);
+  outs() << "  ('install_name', '" << LCI.Ptr + DLLC.dylib.name << "')\n"
+         << "  ('timestamp, " << DLLC.dylib.timestamp << ")\n"
+         << "  ('cur_version, " << DLLC.dylib.current_version << ")\n"
+         << "  ('compat_version, " << DLLC.dylib.compatibility_version << ")\n";
+  return 0;
+}
+
 static int DumpLoadCommand(const MachOObjectFile &Obj,
                            MachOObjectFile::LoadCommandInfo &LCI) {
   switch (LCI.C.cmd) {
@@ -350,6 +361,8 @@ static int DumpLoadCommand(const MachOObjectFile &Obj,
   case MachO::LC_VERSION_MIN_IPHONEOS:
   case MachO::LC_VERSION_MIN_MACOSX:
     return DumpVersionMin(Obj, LCI);
+  case MachO::LC_ID_DYLIB:
+    return DumpDylibID(Obj, LCI);
   default:
     Warning("unknown load command: " + Twine(LCI.C.cmd));
     return 0;
