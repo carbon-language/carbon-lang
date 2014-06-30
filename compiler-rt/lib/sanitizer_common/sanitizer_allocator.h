@@ -273,9 +273,9 @@ class AllocatorGlobalStats : public AllocatorStats {
       if (stats == this)
         break;
     }
-    // All stats must be positive.
+    // All stats must be non-negative.
     for (int i = 0; i < AllocatorStatCount; i++)
-      s[i] = ((sptr)s[i]) > 0 ? s[i] : 1;
+      s[i] = ((sptr)s[i]) >= 0 ? s[i] : 0;
   }
 
  private:
