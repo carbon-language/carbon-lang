@@ -181,6 +181,6 @@ attributes #1 = { nounwind readnone }
 !9 = metadata !{i32 2, metadata !"Dwarf Version", i32 4}
 !10 = metadata !{i32 2, metadata !"Debug Info Version", i32 1}
 !11 = metadata !{metadata !"clang version 3.5.0 (209308)"}
-!12 = metadata !{i32 786689, metadata !4, metadata !"y", metadata !5, i32 16777217, metadata !8, i32 0, i32 0, i64 2} ; [ DW_TAG_arg_variable ] [y] [line 1]
+!12 = metadata !{i32 786689, metadata !4, metadata !"y", metadata !5, i32 16777217, metadata !8, i32 0, i32 0, metadata !14} ; [ DW_TAG_arg_variable ] [y] [line 1]
 !13 = metadata !{i32 2, i32 0, metadata !4, null}
-
+!14 = metadata !{i64 2}

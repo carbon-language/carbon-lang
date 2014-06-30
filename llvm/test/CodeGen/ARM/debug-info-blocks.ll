@@ -231,10 +231,10 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !133 = metadata !{i32 609, i32 175, metadata !23, null}
 !134 = metadata !{i32 786689, metadata !23, metadata !"data", metadata !24, i32 67109473, metadata !108, i32 0, null} ; [ DW_TAG_arg_variable ]
 !135 = metadata !{i32 609, i32 190, metadata !23, null}
-!136 = metadata !{i32 786688, metadata !23, metadata !"mydata", metadata !24, i32 604, metadata !50, i32 0, null, i64 1, i64 20, i64 2, i64 1, i64 4, i64 2, i64 1, i64 24} ; [ DW_TAG_auto_variable ]
+!136 = metadata !{i32 786688, metadata !23, metadata !"mydata", metadata !24, i32 604, metadata !50, i32 0, null, metadata !163} ; [ DW_TAG_auto_variable ]
 !137 = metadata !{i32 604, i32 49, metadata !23, null}
-!138 = metadata !{i32 786688, metadata !23, metadata !"self", metadata !40, i32 604, metadata !90, i32 0, null, i64 1, i64 24} ; [ DW_TAG_auto_variable ]
-!139 = metadata !{i32 786688, metadata !23, metadata !"semi", metadata !24, i32 607, metadata !125, i32 0, null, i64 1, i64 28} ; [ DW_TAG_auto_variable ]
+!138 = metadata !{i32 786688, metadata !23, metadata !"self", metadata !40, i32 604, metadata !90, i32 0, null, metadata !164} ; [ DW_TAG_auto_variable ]
+!139 = metadata !{i32 786688, metadata !23, metadata !"semi", metadata !24, i32 607, metadata !125, i32 0, null, metadata !165} ; [ DW_TAG_auto_variable ]
 !140 = metadata !{i32 607, i32 30, metadata !23, null}
 !141 = metadata !{i32 610, i32 17, metadata !142, null}
 !142 = metadata !{i32 786443, metadata !152, metadata !23, i32 609, i32 200, i32 94} ; [ DW_TAG_lexical_block ]
@@ -258,3 +258,6 @@ define hidden void @foobar_func_block_invoke_0(i8* %.block_descriptor, %0* %load
 !160 = metadata !{metadata !"header.h", metadata !"/Volumes/Sandbox/llvm"}
 !161 = metadata !{metadata !"header2.h", metadata !"/Volumes/Sandbox/llvm"}
 !162 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!163 = metadata !{i64 1, i64 20, i64 2, i64 1, i64 4, i64 2, i64 1, i64 24}
+!164 = metadata !{i64 1, i64 24}
+!165 = metadata !{i64 1, i64 28}

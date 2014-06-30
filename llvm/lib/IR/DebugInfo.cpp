@@ -138,8 +138,14 @@ void DIDescriptor::replaceFunctionField(unsigned Elt, Function *F) {
   }
 }
 
-unsigned DIVariable::getNumAddrElements() const {
-  return DbgNode->getNumOperands() - 8;
+uint64_t DIVariable::getAddrElement(unsigned Idx) const {
+  DIDescriptor ComplexExpr = getDescriptorField(8);
+  if (Idx < ComplexExpr->getNumOperands())
+    if (auto *CI = dyn_cast_or_null<ConstantInt>(ComplexExpr->getOperand(Idx)))
+      return CI->getZExtValue();
+
+  assert(false && "non-existing complex address element requested");
+  return 0;
 }
 
 /// getInlinedAt - If this variable is inlined then return inline location.
@@ -566,7 +572,13 @@ bool DIVariable::Verify() const {
   // Make sure that type @ field 5 is a DITypeRef.
   if (!fieldIsTypeRef(DbgNode, 5))
     return false;
-  return DbgNode->getNumOperands() >= 8;
+
+  // Variable without a complex expression.
+  if (DbgNode->getNumOperands() == 8)
+    return true;
+
+  // Make sure the complex expression is an MDNode.
+  return (DbgNode->getNumOperands() == 9 && fieldIsMDNode(DbgNode, 8));
 }
 
 /// Verify - Verify that a location descriptor is well formed.

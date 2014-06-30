@@ -570,6 +570,7 @@ Local variables
     metadata, ;; Reference to the type descriptor
     i32,      ;; flags
     metadata  ;; (optional) Reference to inline location
+    metadata  ;; (optional) Reference to a complex expression (see below)
   }
 
 These descriptors are used to define variables local to a sub program.  The

@@ -47,8 +47,9 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 
 ; Verify that debug descriptors for argument and local variable will be replaced
 ; with descriptors that end with OpDeref (encoded as 2).
-;   CHECK: ![[ARG_ID]] = metadata {{.*}} i64 2} ; [ DW_TAG_arg_variable ] [p] [line 1]
-;   CHECK: ![[VAR_ID]] = metadata {{.*}} i64 2} ; [ DW_TAG_auto_variable ] [r] [line 2]
+;   CHECK: ![[ARG_ID]] = {{.*}}metadata ![[OPDEREF:[0-9]+]]} ; [ DW_TAG_arg_variable ] [p] [line 1]
+;   CHECK: ![[OPDEREF]] = metadata !{i64 2}
+;   CHECK: ![[VAR_ID]] = {{.*}}metadata ![[OPDEREF]]} ; [ DW_TAG_auto_variable ] [r] [line 2]
 ; Verify that there are no more variable descriptors.
 ;   CHECK-NOT: DW_TAG_arg_variable
 ;   CHECK-NOT: DW_TAG_auto_variable

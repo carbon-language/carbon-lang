@@ -690,11 +690,16 @@ public:
   /// HasComplexAddr - Return true if the variable has a complex address.
   bool hasComplexAddress() const { return getNumAddrElements() > 0; }
 
-  unsigned getNumAddrElements() const;
-
-  uint64_t getAddrElement(unsigned Idx) const {
-    return getUInt64Field(Idx + 8);
+  /// \brief Return the size of this variable's complex address or
+  /// zero if there is none.
+  unsigned getNumAddrElements() const {
+    if (DbgNode->getNumOperands() < 9)
+      return 0;
+    return getDescriptorField(8)->getNumOperands();
   }
+
+  /// \brief return the Idx'th complex address element.
+  uint64_t getAddrElement(unsigned Idx) const;
 
   /// isBlockByrefVariable - Return true if the variable was declared as
   /// a "__block" variable (Apple Blocks).

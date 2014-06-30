@@ -118,7 +118,7 @@ declare i32 @__objc_personality_v0(...)
 !50 = metadata !{i32 786445, metadata !63, metadata !6, metadata !"block", i32 7, i64 64, i64 64, i64 256, i32 0, metadata !9} ; [ DW_TAG_member ]
 !51 = metadata !{i32 7, i32 18, metadata !28, null}
 !52 = metadata !{i32 7, i32 19, metadata !28, null}
-!53 = metadata !{i32 786688, metadata !28, metadata !"block", metadata !6, i32 5, metadata !9, i32 0, i32 0, i64 1, i64 32} ; [ DW_TAG_auto_variable ]
+!53 = metadata !{i32 786688, metadata !28, metadata !"block", metadata !6, i32 5, metadata !9, i32 0, i32 0, metadata !65} ; [ DW_TAG_auto_variable ]
 !54 = metadata !{i32 5, i32 27, metadata !28, null}
 !55 = metadata !{i32 8, i32 22, metadata !56, null}
 !56 = metadata !{i32 786443, metadata !6, metadata !57, i32 7, i32 26, i32 2} ; [ DW_TAG_lexical_block ]
@@ -130,3 +130,4 @@ declare i32 @__objc_personality_v0(...)
 !62 = metadata !{i32 9, i32 20, metadata !56, null}
 !63 = metadata !{metadata !"foo.m", metadata !"/Users/echristo"}
 !64 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!65 = metadata !{i64 1, i64 32}
