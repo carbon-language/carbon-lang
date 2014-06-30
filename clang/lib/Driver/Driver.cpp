@@ -939,35 +939,6 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
   }
 }
 
-/// \brief Check whether the file referenced by Value exists in the LIB
-/// environment variable.
-static bool ExistsInLibDir(StringRef Value) {
-  llvm::Optional<std::string> OptPath = llvm::sys::Process::GetEnv("LIB");
-  if (!OptPath.hasValue())
-    return false;
-
-#ifdef LLVM_ON_WIN32
-  const StringRef PathSeparators = ";";
-#else
-  const StringRef PathSeparators = ":";
-#endif
-
-  SmallVector<StringRef, 8> LibDirs;
-  llvm::SplitString(OptPath.getValue(), LibDirs, PathSeparators);
-
-  for (const auto &LibDir : LibDirs) {
-    if (LibDir.empty())
-      continue;
-
-    SmallString<128> FilePath(LibDir);
-    llvm::sys::path::append(FilePath, Value);
-    if (llvm::sys::fs::exists(Twine(FilePath)))
-      return true;
-  }
-
-  return false;
-}
-
 /// \brief Check that the file referenced by Value exists. If it doesn't,
 /// issue a diagnostic and return false.
 static bool DiagnoseInputExistence(const Driver &D, const DerivedArgList &Args,
@@ -991,7 +962,7 @@ static bool DiagnoseInputExistence(const Driver &D, const DerivedArgList &Args,
   if (llvm::sys::fs::exists(Twine(Path)))
     return true;
 
-  if (D.IsCLMode() && ExistsInLibDir(Value))
+  if (D.IsCLMode() && llvm::sys::Process::FindInEnvPath("LIB", Value))
     return true;
 
   D.Diag(clang::diag::err_drv_no_such_file) << Path.str();

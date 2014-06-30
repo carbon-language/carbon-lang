@@ -7651,14 +7651,9 @@ static std::string FindFallback(const char *FallbackName,
   if (!OptPath.hasValue())
     return FallbackName;
 
-#ifdef LLVM_ON_WIN32
-  const StringRef PathSeparators = ";";
-#else
-  const StringRef PathSeparators = ":";
-#endif
-
+  const char EnvPathSeparatorStr[] = {llvm::sys::EnvPathSeparator, '\0'};
   SmallVector<StringRef, 8> PathSegments;
-  llvm::SplitString(OptPath.getValue(), PathSegments, PathSeparators);
+  llvm::SplitString(OptPath.getValue(), PathSegments, EnvPathSeparatorStr);
 
   for (size_t i = 0, e = PathSegments.size(); i != e; ++i) {
     const StringRef &PathSegment = PathSegments[i];
