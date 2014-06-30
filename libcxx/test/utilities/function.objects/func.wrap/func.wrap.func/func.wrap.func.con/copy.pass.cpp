@@ -99,6 +99,18 @@ int main()
     assert(f2.target<int(*)(int)>() == 0);
     assert(f2.target<A>() == 0);
     }
+    {
+    std::function<int(int)> f;
+    assert(new_called == 0);
+    assert(f.target<int(*)(int)>() == 0);
+    assert(f.target<A>() == 0);
+    assert(!f);
+    std::function<long(int)> g = f;
+    assert(new_called == 0);
+    assert(g.target<long(*)(int)>() == 0);
+    assert(g.target<A>() == 0);
+    assert(!g);
+    }
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     assert(new_called == 0);
     {

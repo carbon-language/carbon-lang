@@ -651,9 +651,14 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp()>
     __base* __f_;
 
     template <class _Fp>
+        _LIBCPP_INLINE_VISIBILITY
         static bool __not_null(const _Fp&) {return true;}
     template <class _R2>
-        static bool __not_null(const function<_Rp()>& __p) {return __p;}
+        _LIBCPP_INLINE_VISIBILITY
+        static bool __not_null(_R2 (*__p)()) {return __p;}
+    template <class _R2>
+        _LIBCPP_INLINE_VISIBILITY
+        static bool __not_null(const function<_R2()>& __p) {return __p;}
 public:
     typedef _Rp result_type;
 
@@ -955,7 +960,7 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0)>
         static bool __not_null(_R2 (_Cp::*__p)() const volatile) {return __p;}
     template <class _R2, class _B0>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_Rp(_B0)>& __p) {return __p;}
+        static bool __not_null(const function<_R2(_B0)>& __p) {return __p;}
 public:
     typedef _Rp result_type;
 
@@ -1257,7 +1262,7 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0, _A1)>
         static bool __not_null(_R2 (_Cp::*__p)(_B1) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_Rp(_B0, _B1)>& __p) {return __p;}
+        static bool __not_null(const function<_R2(_B0, _B1)>& __p) {return __p;}
 public:
     typedef _Rp result_type;
 
@@ -1558,7 +1563,7 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_A0, _A1, _A2)>
         static bool __not_null(_R2 (_Cp::*__p)(_B1, _B2) const volatile) {return __p;}
     template <class _R2, class _B0, class _B1, class _B2>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_Rp(_B0, _B1, _B2)>& __p) {return __p;}
+        static bool __not_null(const function<_R2(_B0, _B1, _B2)>& __p) {return __p;}
 public:
     typedef _Rp result_type;
 

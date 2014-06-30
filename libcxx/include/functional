@@ -1421,7 +1421,7 @@ class _LIBCPP_TYPE_VIS_ONLY function<_Rp(_ArgTypes...)>
         static bool __not_null(_R2 (_Cp::*__p)(_Ap...) const volatile) {return __p;}
     template <class _R2, class ..._Ap>
         _LIBCPP_INLINE_VISIBILITY
-        static bool __not_null(const function<_Rp(_Ap...)>& __p) {return __p;}
+        static bool __not_null(const function<_R2(_Ap...)>& __p) {return !!__p;}
 
     template <class _Fp, bool = !is_same<_Fp, function>::value &&
                                 __invokable<_Fp&, _ArgTypes...>::value>
