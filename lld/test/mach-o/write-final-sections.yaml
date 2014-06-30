@@ -7,15 +7,10 @@ defined-atoms:
   - name:            _foo
     scope:           global
     content:         [ 55 ]
-# More for __TEXT, __text (with typeResolver)
-  - name:            _resolver
-    scope:           global
-    type:            resolver
-    content:         [ C3 ]
 # CHECK: Name: __text
 # CHECK: Segment: __TEXT
 # CHECK: SectionData (
-# CHECK-NEXT: 0000: 55C3
+# CHECK-NEXT: 0000: 55
 # CHECK-NEXT: )
 
 #  For __TEXT, __const (with typeConstant),

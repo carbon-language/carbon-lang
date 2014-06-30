@@ -227,9 +227,8 @@ const MachOFinalSectionFromAtomType sectsToAtomType[] = {
 
 
 SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
-  for (const MachOFinalSectionFromAtomType *p = sectsToAtomType ;
-                                 p->atomType != DefinedAtom::typeUnknown; ++p) {
-    if (p->atomType != atomType)
+  for (auto &p : sectsToAtomType) {
+    if (p.atomType != atomType)
       continue;
     SectionAttr sectionAttrs = 0;
     switch (atomType) {
@@ -243,15 +242,15 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
     // If we already have a SectionInfo with this name, re-use it.
     // This can happen if two ContentType map to the same mach-o section.
     for (auto sect : _sectionMap) {
-      if (sect.second->sectionName.equals(p->sectionName) &&
-          sect.second->segmentName.equals(p->segmentName)) {
+      if (sect.second->sectionName.equals(p.sectionName) &&
+          sect.second->segmentName.equals(p.segmentName)) {
         return sect.second;
       }
     }
     // Otherwise allocate new SectionInfo object.
-    SectionInfo *sect = new (_allocator) SectionInfo(p->segmentName, 
-                                                     p->sectionName, 
-                                                     p->sectionType, 
+    SectionInfo *sect = new (_allocator) SectionInfo(p.segmentName,
+                                                     p.sectionName,
+                                                     p.sectionType,
                                                      sectionAttrs);
     _sectionInfos.push_back(sect);
     _sectionMap[atomType] = sect;
