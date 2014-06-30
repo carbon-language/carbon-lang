@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -triple thumbv7--windows-msvc -std=c++11 -fsyntax-only -fms-compatibility -x c++ %s
+// RUN: %clang_cc1 -triple thumbv7--windows-msvc -std=c++11 -verify -fsyntax-only %s
+// expected-no-diagnostics
 
 #include <stdarg.h>
 
