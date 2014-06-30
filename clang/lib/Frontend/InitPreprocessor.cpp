@@ -478,7 +478,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Initialize language-specific preprocessor defines.
 
   // Standard conforming mode?
-  if (!LangOpts.GNUMode)
+  if (!LangOpts.GNUMode && !LangOpts.MSVCCompat)
     Builder.defineMacro("__STRICT_ANSI__");
 
   if (LangOpts.CPlusPlus11)

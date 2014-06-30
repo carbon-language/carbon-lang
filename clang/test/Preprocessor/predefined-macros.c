@@ -9,6 +9,7 @@
 // CHECK-MS: #define _M_IX86_FP
 // CHECK-MS: #define _WIN32 1
 // CHECK-MS-NOT: #define __GNUC__
+// CHECK-MS-NOT: #define __STRICT_ANSI__
 //
 // RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-compatibility \
 // RUN:     -o - | FileCheck %s --check-prefix=CHECK-MS-STDINT
