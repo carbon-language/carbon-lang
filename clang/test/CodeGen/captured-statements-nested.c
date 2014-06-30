@@ -1,7 +1,6 @@
 // RUN: %clang_cc1 -fblocks -emit-llvm %s -o %t
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK1
 // RUN: FileCheck %s -input-file=%t -check-prefix=CHECK2
-// REQUIRES:disabled
 
 struct A {
   int a;
@@ -65,27 +64,27 @@ void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
         // CHECK1-NEXT: store i8 99
         //
         // CHECK1: [[SIZE_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 5
-        // CHECK1-NEXT: [[SIZE_ADDR:%.*]] = load i32** [[SIZE_ADDR_REF]]
-        // CHECK1-NEXT: [[SIZE:%.*]] = load i32* [[SIZE_ADDR]]
-        // CHECK1-NEXT: [[SIZE_MINUS_1:%.*]] = sub nsw i32 [[SIZE]], 1
-        // CHECK1-NEXT: [[PARAM_ARR_IDX:%.*]] = {{.*}} [[SIZE_MINUS_1]]
-        // CHECK1-NEXT: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 6
-        // CHECK1-NEXT: [[PARAM_ARR_ADDR:%.*]] = load i32*** [[PARAM_ARR_ADDR_REF]]
-        // CHECK1-NEXT: [[PARAM_ARR:%.*]] = load i32** [[PARAM_ARR_ADDR]]
-        // CHECK1-NEXT: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i32* [[PARAM_ARR]], i{{.*}} [[PARAM_ARR_IDX]]
-        // CHECK1-NEXT: store i32 2, i32* [[PARAM_ARR_SIZE_MINUS_1_ADDR]]
+        // CHECK1-DAG: [[SIZE_ADDR:%.*]] = load i32** [[SIZE_ADDR_REF]]
+        // CHECK1-DAG: [[SIZE:%.*]] = load i32* [[SIZE_ADDR]]
+        // CHECK1-DAG: [[SIZE_MINUS_1:%.*]] = sub nsw i32 [[SIZE]], 1
+        // CHECK1-DAG: [[PARAM_ARR_IDX:%.*]] = {{.*}} [[SIZE_MINUS_1]]
+        // CHECK1-DAG: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 6
+        // CHECK1-DAG: [[PARAM_ARR_ADDR:%.*]] = load i32*** [[PARAM_ARR_ADDR_REF]]
+        // CHECK1-DAG: [[PARAM_ARR:%.*]] = load i32** [[PARAM_ARR_ADDR]]
+        // CHECK1-DAG: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i32* [[PARAM_ARR]], i{{.*}} [[PARAM_ARR_IDX]]
+        // CHECK1: store i32 2, i32* [[PARAM_ARR_SIZE_MINUS_1_ADDR]]
         //
         // CHECK1: [[Z_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 2
-        // CHECK1-NEXT: [[Z_ADDR:%.*]] = load %struct.A** [[Z_ADDR_REF]]
-        // CHECK1-NEXT: [[Z_A_ADDR:%.*]] = getelementptr inbounds %struct.A* [[Z_ADDR]], i32 0, i32 0
-        // CHECK1-NEXT: [[Z_A:%.*]] = load i32* [[Z_A_ADDR]]
-        // CHECK1-NEXT: [[ARR_IDX_2:%.*]] = {{.*}} [[Z_A]]
-        // CHECK1-NEXT: [[ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 7
-        // CHECK1-NEXT: [[ARR_ADDR:%.*]] = load i32** [[ARR_ADDR_REF]]
-        // CHECK1-NEXT: [[ARR_IDX_1:%.*]] = mul {{.*}} 10
-        // CHECK1-NEXT: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
-        // CHECK1-NEXT: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_10_ADDR]], i{{.*}} [[ARR_IDX_2]]
-        // CHECK1-NEXT: store i32 12, i32* [[ARR_10_Z_A_ADDR]]
+        // CHECK1-DAG: [[Z_ADDR:%.*]] = load %struct.A** [[Z_ADDR_REF]]
+        // CHECK1-DAG: [[Z_A_ADDR:%.*]] = getelementptr inbounds %struct.A* [[Z_ADDR]], i32 0, i32 0
+        // CHECK1-DAG: [[Z_A:%.*]] = load i32* [[Z_A_ADDR]]
+        // CHECK1-DAG: [[ARR_IDX_2:%.*]] = {{.*}} [[Z_A]]
+        // CHECK1-DAG: [[ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 7
+        // CHECK1-DAG: [[ARR_ADDR:%.*]] = load i32** [[ARR_ADDR_REF]]
+        // CHECK1-DAG: [[ARR_IDX_1:%.*]] = mul {{.*}} 10
+        // CHECK1-DAG: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
+        // CHECK1-DAG: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_10_ADDR]], i{{.*}} [[ARR_IDX_2]]
+        // CHECK1: store i32 12, i32* [[ARR_10_Z_A_ADDR]]
       }
     }
   }
