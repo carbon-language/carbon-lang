@@ -142,7 +142,10 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
       fa++;
     }
     if (!foundArch) {
-      return make_error_code(llvm::errc::executable_format_error);
+      return make_dynamic_error_code(Twine("file does not contain required"
+                                    " architecture ("
+                                    + MachOLinkingContext::nameFromArch(arch)
+                                    + ")" ));
     }
     objSize = readBigEndian(fa->size);
     uint32_t offset = readBigEndian(fa->offset);
@@ -191,8 +194,15 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   if (lcRange.end() > (start + objSize))
     return make_error_code(llvm::errc::executable_format_error);
 
-  // Normalize architecture
+  // Get architecture from mach_header.
   f->arch = MachOLinkingContext::archFromCpuType(smh->cputype, smh->cpusubtype);
+  if (f->arch != arch) {
+    return make_dynamic_error_code(Twine("file is wrong architecture. Expected "
+                                  "(" + MachOLinkingContext::nameFromArch(arch)
+                                  + ") found ("
+                                  + MachOLinkingContext::nameFromArch(f->arch)
+                                  + ")" ));
+  }
   bool isBigEndianArch = MachOLinkingContext::isBigEndian(f->arch);
   // Copy file type and flags
   f->fileType = HeaderFileType(smh->filetype);
@@ -393,23 +403,10 @@ public:
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &mb) const override {
     if (magic != llvm::sys::fs::file_magic::macho_object &&
+        magic != llvm::sys::fs::file_magic::macho_universal_binary &&
         magic != llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib)
       return false;
-    if (mb.getBufferSize() < 32)
-      return false;
-    const char *start = mb.getBufferStart();
-    const mach_header *mh = reinterpret_cast<const mach_header *>(start);
-    const bool swap = (mh->magic == llvm::MachO::MH_CIGAM) ||
-                      (mh->magic == llvm::MachO::MH_CIGAM_64);
-    const uint32_t filesCpuType = read32(swap, mh->cputype);
-    const uint32_t filesCpuSubtype = read32(swap, mh->cpusubtype);
-    if (filesCpuType != MachOLinkingContext::cpuTypeFromArch(_arch))
-      return false;
-    if (filesCpuSubtype != MachOLinkingContext::cpuSubtypeFromArch(_arch))
-      return false;
-
-    // Is mach-o file with correct cpu type/subtype.
-    return true;
+    return (mb.getBufferSize() > 32);
   }
 
   std::error_code
@@ -458,7 +455,7 @@ void Registry::addSupportMachOObjects(StringRef archName) {
     llvm_unreachable("mach-o arch not supported");
   }
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
-                               new mach_o::MachOYamlIOTaggedDocumentHandler()));
+                           new mach_o::MachOYamlIOTaggedDocumentHandler(arch)));
 }
 
 } // namespace lld

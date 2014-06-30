@@ -275,7 +275,12 @@ normalizedFromAtoms(const lld::File &atomFile, const MachOLinkingContext &ctxt);
 
 /// Class for interfacing mach-o yaml files into generic yaml parsing
 class MachOYamlIOTaggedDocumentHandler : public YamlIOTaggedDocumentHandler {
+public:
+  MachOYamlIOTaggedDocumentHandler(MachOLinkingContext::Arch arch)
+    : _arch(arch) { }
   bool handledDocTag(llvm::yaml::IO &io, const lld::File *&file) const override;
+private:
+  const MachOLinkingContext::Arch _arch;
 };
 
 } // namespace mach_o
