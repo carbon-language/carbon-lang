@@ -1,3 +1,4 @@
+; Test if the !invariant.load metadata is maintained by GVN.
 ; RUN: opt -basicaa -gvn -S < %s | FileCheck %s
 
 define i32 @test1(i32* nocapture %p, i8* nocapture %q) {
