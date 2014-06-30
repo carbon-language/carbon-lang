@@ -1895,9 +1895,7 @@ public:
                            const ArrayRef<const Attr *> &Attrs = None);
 
   llvm::Function *EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K);
-  llvm::Function *GenerateCapturedStmtFunction(const CapturedDecl *CD,
-                                               const RecordDecl *RD,
-                                               SourceLocation Loc);
+  llvm::Function *GenerateCapturedStmtFunction(const CapturedStmt &S);
   llvm::Value *GenerateCapturedStmtArgument(const CapturedStmt &S);
 
   void EmitOMPParallelDirective(const OMPParallelDirective &S);

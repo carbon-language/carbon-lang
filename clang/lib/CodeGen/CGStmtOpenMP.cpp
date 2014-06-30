@@ -32,8 +32,7 @@ void CodeGenFunction::EmitOMPParallelDirective(const OMPParallelDirective &S) {
     CodeGenFunction CGF(CGM, true);
     CGCapturedStmtInfo CGInfo(*CS, CS->getCapturedRegionKind());
     CGF.CapturedStmtInfo = &CGInfo;
-    OutlinedFn = CGF.GenerateCapturedStmtFunction(
-        CS->getCapturedDecl(), CS->getCapturedRecordDecl(), CS->getLocStart());
+    OutlinedFn = CGF.GenerateCapturedStmtFunction(*CS);
   }
 
   // Build call __kmpc_fork_call(loc, 1, microtask, captured_struct/*context*/)

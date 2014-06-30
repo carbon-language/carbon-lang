@@ -8,11 +8,12 @@ struct A {
   char c;
 };
 
-void test_nest_captured_stmt(int param) {
+void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
   int w;
-  // CHECK1: %struct.anon{{.*}} = type { i32*, i32* }
-  // CHECK1: %struct.anon{{.*}} = type { i32*, i32*, i32**, i32* }
-  // CHECK1: [[T:%struct.anon.*]] = type { i32*, i32*, %struct.A*, i32**, i32* }
+  int arr[param][size];
+  // CHECK1: %struct.anon{{.*}} = type { i32*, i32*, i32*, i32**, i32* }
+  // CHECK1: %struct.anon{{.*}} = type { i32*, i32*, i32**, i32*, i32*, i32**, i32* }
+  // CHECK1: [[T:%struct.anon.*]] = type { i32*, i32*, %struct.A*, i32**, i32*, i32*, i32**, i32* }
   #pragma clang __debug captured
   {
     int x;
@@ -26,6 +27,8 @@ void test_nest_captured_stmt(int param) {
         *y = param;
         z.b = 0.1f;
         z.c = 'c';
+        param_arr[size - 1] = 2;
+        arr[10][z.a] = 12;
 
         // CHECK1: define internal void @__captured_stmt{{.*}}([[T]]
         //
@@ -59,6 +62,29 @@ void test_nest_captured_stmt(int param) {
         // CHECK1-NEXT: load %struct.A**
         // CHECK1-NEXT: getelementptr inbounds %struct.A*
         // CHECK1-NEXT: store i8 99
+        //
+        // CHECK1: [[SIZE_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 5
+        // CHECK1-NEXT: [[SIZE_ADDR:%.*]] = load i32** [[SIZE_ADDR_REF]]
+        // CHECK1-NEXT: [[SIZE:%.*]] = load i32* [[SIZE_ADDR]]
+        // CHECK1-NEXT: [[SIZE_MINUS_1:%.*]] = sub nsw i32 [[SIZE]], 1
+        // CHECK1-NEXT: [[PARAM_ARR_IDX:%.*]] = {{.*}} [[SIZE_MINUS_1]]
+        // CHECK1-NEXT: [[PARAM_ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 6
+        // CHECK1-NEXT: [[PARAM_ARR_ADDR:%.*]] = load i32*** [[PARAM_ARR_ADDR_REF]]
+        // CHECK1-NEXT: [[PARAM_ARR:%.*]] = load i32** [[PARAM_ARR_ADDR]]
+        // CHECK1-NEXT: [[PARAM_ARR_SIZE_MINUS_1_ADDR:%.*]] = getelementptr inbounds i32* [[PARAM_ARR]], i{{.*}} [[PARAM_ARR_IDX]]
+        // CHECK1-NEXT: store i32 2, i32* [[PARAM_ARR_SIZE_MINUS_1_ADDR]]
+        //
+        // CHECK1: [[Z_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 2
+        // CHECK1-NEXT: [[Z_ADDR:%.*]] = load %struct.A** [[Z_ADDR_REF]]
+        // CHECK1-NEXT: [[Z_A_ADDR:%.*]] = getelementptr inbounds %struct.A* [[Z_ADDR]], i32 0, i32 0
+        // CHECK1-NEXT: [[Z_A:%.*]] = load i32* [[Z_A_ADDR]]
+        // CHECK1-NEXT: [[ARR_IDX_2:%.*]] = {{.*}} [[Z_A]]
+        // CHECK1-NEXT: [[ARR_ADDR_REF:%.*]] = getelementptr inbounds [[T]]* {{.*}}, i32 0, i32 7
+        // CHECK1-NEXT: [[ARR_ADDR:%.*]] = load i32** [[ARR_ADDR_REF]]
+        // CHECK1-NEXT: [[ARR_IDX_1:%.*]] = mul {{.*}} 10
+        // CHECK1-NEXT: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
+        // CHECK1-NEXT: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i32* [[ARR_10_ADDR]], i{{.*}} [[ARR_IDX_2]]
+        // CHECK1-NEXT: store i32 12, i32* [[ARR_10_Z_A_ADDR]]
       }
     }
   }

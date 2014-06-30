@@ -2054,20 +2054,29 @@ static LValue InitCapturedStruct(CodeGenFunction &CGF, const CapturedStmt &S) {
   return SlotLV;
 }
 
+static void InitVLACaptures(CodeGenFunction &CGF, const CapturedStmt &S) {
+  for (CapturedStmt::const_capture_iterator I = S.capture_begin(),
+                                            E = S.capture_end();
+       I != E; ++I) {
+    if (I->capturesVariable()) {
+      QualType QTy = I->getCapturedVar()->getType();
+      if (QTy->isVariablyModifiedType()) {
+        CGF.EmitVariablyModifiedType(QTy);
+      }
+    }
+  }
+}
+
 /// Generate an outlined function for the body of a CapturedStmt, store any
 /// captured variables into the captured struct, and call the outlined function.
 llvm::Function *
 CodeGenFunction::EmitCapturedStmt(const CapturedStmt &S, CapturedRegionKind K) {
-  const CapturedDecl *CD = S.getCapturedDecl();
-  const RecordDecl *RD = S.getCapturedRecordDecl();
-  assert(CD->hasBody() && "missing CapturedDecl body");
-
   LValue CapStruct = InitCapturedStruct(*this, S);
 
   // Emit the CapturedDecl
   CodeGenFunction CGF(CGM, true);
   CGF.CapturedStmtInfo = new CGCapturedStmtInfo(S, K);
-  llvm::Function *F = CGF.GenerateCapturedStmtFunction(CD, RD, S.getLocStart());
+  llvm::Function *F = CGF.GenerateCapturedStmtFunction(S);
   delete CGF.CapturedStmtInfo;
 
   // Emit call to the helper function.
@@ -2084,11 +2093,13 @@ CodeGenFunction::GenerateCapturedStmtArgument(const CapturedStmt &S) {
 
 /// Creates the outlined function for a CapturedStmt.
 llvm::Function *
-CodeGenFunction::GenerateCapturedStmtFunction(const CapturedDecl *CD,
-                                              const RecordDecl *RD,
-                                              SourceLocation Loc) {
+CodeGenFunction::GenerateCapturedStmtFunction(const CapturedStmt &S) {
   assert(CapturedStmtInfo &&
     "CapturedStmtInfo should be set when generating the captured function");
+  const CapturedDecl *CD = S.getCapturedDecl();
+  const RecordDecl *RD = S.getCapturedRecordDecl();
+  SourceLocation Loc = S.getLocStart();
+  assert(CD->hasBody() && "missing CapturedDecl body");
 
   // Build the argument list.
   ASTContext &Ctx = CGM.getContext();
@@ -2111,11 +2122,13 @@ CodeGenFunction::GenerateCapturedStmtFunction(const CapturedDecl *CD,
   StartFunction(CD, Ctx.VoidTy, F, FuncInfo, Args,
                 CD->getLocation(),
                 CD->getBody()->getLocStart());
-
   // Set the context parameter in CapturedStmtInfo.
   llvm::Value *DeclPtr = LocalDeclMap[CD->getContextParam()];
   assert(DeclPtr && "missing context parameter for CapturedStmt");
   CapturedStmtInfo->setContextValue(Builder.CreateLoad(DeclPtr));
+
+  // Initialize variable-length arrays.
+  InitVLACaptures(*this, S);
 
   // If 'this' is captured, load it into CXXThisValue.
   if (CapturedStmtInfo->isCXXThisExprCaptured()) {
