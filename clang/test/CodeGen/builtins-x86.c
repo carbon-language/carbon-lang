@@ -266,6 +266,7 @@ void f0() {
 
   tmp_i = __builtin_ia32_rdtsc();
   tmp_i = __builtin_ia32_rdtscp(&tmp_Ui);
+  tmp_LLi = __builtin_ia32_rdpmc(tmp_i);
 #ifdef USE_64
   tmp_LLi = __builtin_ia32_cvtss2si64(tmp_V4f);
 #endif
