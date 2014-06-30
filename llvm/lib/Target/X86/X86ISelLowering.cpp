@@ -14225,6 +14225,51 @@ static SDValue getPrefetchNode(unsigned Opc, SDValue Op, SelectionDAG &DAG,
   return SDValue(Res, 0);
 }
 
+// getReadPerformanceCounter - Handles the lowering of builtin intrinsics that
+// read performance monitor counters (x86_rdpmc).
+static void getReadPerformanceCounter(SDNode *N, SDLoc DL,
+                              SelectionDAG &DAG, const X86Subtarget *Subtarget,
+                              SmallVectorImpl<SDValue> &Results) {
+  assert(N->getNumOperands() == 3 && "Unexpected number of operands!");
+  SDVTList Tys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SDValue LO, HI;
+
+  // The ECX register is used to select the index of the performance counter
+  // to read.
+  SDValue Chain = DAG.getCopyToReg(N->getOperand(0), DL, X86::ECX,
+                                   N->getOperand(2));
+  SDValue rd = DAG.getNode(X86ISD::RDPMC_DAG, DL, Tys, Chain);
+
+  // Reads the content of a 64-bit performance counter and returns it in the
+  // registers EDX:EAX.
+  if (Subtarget->is64Bit()) {
+    LO = DAG.getCopyFromReg(rd, DL, X86::RAX, MVT::i64, rd.getValue(1));
+    HI = DAG.getCopyFromReg(LO.getValue(1), DL, X86::RDX, MVT::i64,
+                            LO.getValue(2));
+  } else {
+    LO = DAG.getCopyFromReg(rd, DL, X86::EAX, MVT::i32, rd.getValue(1));
+    HI = DAG.getCopyFromReg(LO.getValue(1), DL, X86::EDX, MVT::i32,
+                            LO.getValue(2));
+  }
+  Chain = HI.getValue(1);
+
+  if (Subtarget->is64Bit()) {
+    // The EAX register is loaded with the low-order 32 bits. The EDX register
+    // is loaded with the supported high-order bits of the counter.
+    SDValue Tmp = DAG.getNode(ISD::SHL, DL, MVT::i64, HI,
+                              DAG.getConstant(32, MVT::i8));
+    Results.push_back(DAG.getNode(ISD::OR, DL, MVT::i64, LO, Tmp));
+    Results.push_back(Chain);
+    return;
+  }
+
+  // Use a buildpair to merge the two 32-bit values into a 64-bit one.
+  SDValue Ops[] = { LO, HI };
+  SDValue Pair = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Ops);
+  Results.push_back(Pair);
+  Results.push_back(Chain);
+}
+
 // getReadTimeStampCounter - Handles the lowering of builtin intrinsics that
 // read the time stamp counter (x86_rdtsc and x86_rdtscp). This function is
 // also used to custom lower READCYCLECOUNTER nodes.
@@ -14289,7 +14334,7 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
 }
 
 enum IntrinsicType {
-  GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDTSC, XTEST
+  GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST
 };
 
 struct IntrinsicData {
@@ -14383,6 +14428,8 @@ static void InitIntinsicsMap() {
                                 IntrinsicData(RDTSC,  X86ISD::RDTSC_DAG, 0)));
   IntrMap.insert(std::make_pair(Intrinsic::x86_rdtscp,
                                 IntrinsicData(RDTSC,  X86ISD::RDTSCP_DAG, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_rdpmc,
+                                IntrinsicData(RDPMC,  X86ISD::RDPMC_DAG, 0)));
   Initialized = true;
 }
 
@@ -14456,6 +14503,12 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
   case RDTSC: {
     SmallVector<SDValue, 2> Results;
     getReadTimeStampCounter(Op.getNode(), dl, Intr.Opc0, DAG, Subtarget, Results);
+    return DAG.getMergeValues(Results, dl);
+  }
+  // Read Performance Monitoring Counters.
+  case RDPMC: {
+    SmallVector<SDValue, 2> Results;
+    getReadPerformanceCounter(Op.getNode(), dl, DAG, Subtarget, Results);
     return DAG.getMergeValues(Results, dl);
   }
   // XTEST intrinsics.
@@ -16282,6 +16335,8 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     case Intrinsic::x86_rdtscp:
       return getReadTimeStampCounter(N, dl, X86ISD::RDTSCP_DAG, DAG, Subtarget,
                                      Results);
+    case Intrinsic::x86_rdpmc:
+      return getReadPerformanceCounter(N, dl, DAG, Subtarget, Results);
     }
   }
   case ISD::READCYCLECOUNTER: {
@@ -16446,6 +16501,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
   case X86ISD::RDTSCP_DAG:         return "X86ISD::RDTSCP_DAG";
+  case X86ISD::RDPMC_DAG:          return "X86ISD::RDPMC_DAG";
   case X86ISD::BT:                 return "X86ISD::BT";
   case X86ISD::CMP:                return "X86ISD::CMP";
   case X86ISD::COMI:               return "X86ISD::COMI";

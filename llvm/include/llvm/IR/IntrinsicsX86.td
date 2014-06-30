@@ -26,6 +26,12 @@ let TargetPrefix = "x86" in {
               Intrinsic<[llvm_i64_ty], [llvm_ptr_ty], [IntrReadWriteArgMem]>;
 }
 
+// Read Performance-Monitoring Counter.
+let TargetPrefix = "x86" in {
+  def int_x86_rdpmc : GCCBuiltin<"__builtin_ia32_rdpmc">,
+              Intrinsic<[llvm_i64_ty], [llvm_i32_ty], []>;
+}
+
 //===----------------------------------------------------------------------===//
 // 3DNow!
 
