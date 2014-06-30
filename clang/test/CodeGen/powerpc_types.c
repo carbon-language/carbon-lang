@@ -1,4 +1,3 @@
-// REQUIRES: powerpc-registered-target
 // RUN: %clang_cc1 -triple powerpc-unknown-freebsd -emit-llvm -o - %s| FileCheck -check-prefix=SVR4-CHECK %s
 
 #include <stdarg.h>

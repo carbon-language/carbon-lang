@@ -1,4 +1,3 @@
-// REQUIRES: arm-registered-target
 // RUN: %clang_cc1 -triple armv7a-linux-gnueabi -emit-llvm -o - %s | FileCheck -check-prefix=DEFAULT %s
 // RUN: %clang_cc1 -triple armv7a-linux-gnueabi -emit-llvm -o - %s -fshort-enums | FileCheck -check-prefix=SHORT-ENUM %s
 // RUN: %clang_cc1 -triple armv7a-linux-gnueabi -emit-llvm -o - %s -fshort-wchar | FileCheck -check-prefix=SHORT-WCHAR %s
