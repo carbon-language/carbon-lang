@@ -17,6 +17,9 @@
 #include <algorithm>
 #include <functional>
 #include <cassert>
+
+#include "counting_predicates.hpp"
+
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 #include <memory>
 
@@ -34,9 +37,20 @@ void test(unsigned N)
     int* ia = new int [N];
     for (int i = 0; i < N; ++i)
         ia[i] = i;
+    {
     std::random_shuffle(ia, ia+N);
     std::make_heap(ia, ia+N, std::greater<int>());
     assert(std::is_heap(ia, ia+N, std::greater<int>()));
+    }
+
+    {
+    binary_counting_predicate<std::greater<int>, int, int> pred ((std::greater<int>()));
+    std::random_shuffle(ia, ia+N);
+    std::make_heap(ia, ia+N, std::ref(pred));
+    assert(pred.count() <= 3*N);
+    assert(std::is_heap(ia, ia+N, pred));   
+    }
+
     delete [] ia;
 }
 
@@ -48,6 +62,8 @@ int main()
     test(3);
     test(10);
     test(1000);
+    test(10000);
+    test(100000);
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
     {
