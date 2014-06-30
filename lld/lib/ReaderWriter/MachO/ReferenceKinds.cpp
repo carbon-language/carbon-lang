@@ -135,7 +135,7 @@ const Registry::KindStrings KindHandler_x86_64::kindStrings[] = {
   LLD_KIND_STRING_ENTRY(delta64Anon),
   LLD_KIND_STRING_END
 };
- 
+
 bool KindHandler_x86_64::isCallSite(const Reference &ref) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return false;
@@ -147,7 +147,8 @@ bool KindHandler_x86_64::isPointer(const Reference &ref) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return false;
   assert(ref.kindArch() == Reference::KindArch::x86_64);
-  return (ref.kindValue() == pointer64);
+  Reference::KindValue kind = ref.kindValue();
+  return (kind == pointer64 || kind == pointer64Anon);
 }
 
 bool KindHandler_x86_64::isLazyImmediate(const Reference &ref) {

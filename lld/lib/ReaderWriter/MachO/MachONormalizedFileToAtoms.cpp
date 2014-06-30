@@ -405,7 +405,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
         size = is64 ? 32 : 20;
         break;
       case atomizeCFString:
-        // Break section up into compact unwind entries.
+        // Break section up into NS/CFString objects.
         size = is64 ? 32 : 16;
         break;
       case atomizeAtSymbols:
@@ -505,8 +505,7 @@ std::error_code convertRelocs(const Section &section,
     MachODefinedAtom *inAtom = file.findAtomCoveringAddress(section,
                                                             reloc.offset,
                                                             &offsetInAtom);
-    if (!inAtom)
-      return make_dynamic_error_code(Twine("no atom at r_address"));
+    assert(inAtom && "r_address in range, should have found atom");
     uint64_t fixupAddress = section.address + reloc.offset;
 
     const lld::Atom *target = nullptr;
