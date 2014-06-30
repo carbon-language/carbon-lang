@@ -81,7 +81,7 @@ void test_nest_captured_stmt(int param, int size, int param_arr[size]) {
         // CHECK1-DAG: [[ARR_ADDR:%.*]] = load i{{.+}}** [[ARR_ADDR_REF]]
         // CHECK1-DAG: [[ARR_IDX_1:%.*]] = mul {{.*}} 10
         // CHECK1-DAG: [[ARR_10_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[ARR_ADDR]], i{{.*}} [[ARR_IDX_1]]
-        // CHECK1-DAG: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[ARR_10_ADDR]], i{{.*}} [[ARR_IDX_2]]
+        // CHECK1-DAG: [[ARR_10_Z_A_ADDR:%.*]] = getelementptr inbounds i{{.+}}* [[ARR_10_ADDR]], i{{.*}}
         // CHECK1: store i{{.+}} 12, i{{.+}}* [[ARR_10_Z_A_ADDR]]
       }
     }
