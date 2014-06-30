@@ -1,5 +1,6 @@
 // This test program creates a very large number of unique histories.
 
+// Heap origin.
 // RUN: %clangxx_msan -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t
 
 // RUN: MSAN_OPTIONS=origin_history_size=7 not %run %t >%t.out 2>&1
@@ -11,8 +12,34 @@
 // RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
 
+// Stack origin.
+// RUN: %clangxx_msan -DSTACK -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t
 
+// RUN: MSAN_OPTIONS=origin_history_size=7 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
+
+// RUN: MSAN_OPTIONS=origin_history_size=2 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK2 < %t.out
+
+// RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
+
+
+// Heap origin, with calls.
 // RUN: %clangxx_msan -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t
+
+// RUN: MSAN_OPTIONS=origin_history_size=7 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
+
+// RUN: MSAN_OPTIONS=origin_history_size=2 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK2 < %t.out
+
+// RUN: MSAN_OPTIONS=origin_history_per_stack_limit=1 not %run %t >%t.out 2>&1
+// RUN: FileCheck %s --check-prefix=CHECK-PER-STACK < %t.out
+
+
+// Stack origin, with calls.
+// RUN: %clangxx_msan -DSTACK -mllvm -msan-instrumentation-with-call-threshold=0 -fsanitize-memory-track-origins=2 -m64 -O3 %s -o %t
 
 // RUN: MSAN_OPTIONS=origin_history_size=7 not %run %t >%t.out 2>&1
 // RUN: FileCheck %s --check-prefix=CHECK7 < %t.out
@@ -31,6 +58,11 @@
 static char *buf, *cur, *end;
 void init() {
   buf = new char[1000];
+#ifdef STACK
+  char stackbuf[1000];
+  char *volatile p = stackbuf;
+  memcpy(buf, p, 1000);
+#endif
   cur = buf;
   end = buf + 1000;
 }
@@ -95,13 +127,13 @@ int main(void) {
 // CHECK7-NOT: Uninitialized value was stored to memory at
 // CHECK7: Uninitialized value was stored to memory at
 // CHECK7-NOT: Uninitialized value was stored to memory at
-// CHECK7: Uninitialized value was created by a heap allocation
+// CHECK7: Uninitialized value was created
 
 // CHECK2: WARNING: MemorySanitizer: use-of-uninitialized-value
 // CHECK2-NOT: Uninitialized value was stored to memory at
 // CHECK2: Uninitialized value was stored to memory at
 // CHECK2-NOT: Uninitialized value was stored to memory at
-// CHECK2: Uninitialized value was created by a heap allocation
+// CHECK2: Uninitialized value was created
 
 // CHECK-PER-STACK: WARNING: MemorySanitizer: use-of-uninitialized-value
 // CHECK-PER-STACK: Uninitialized value was stored to memory at
@@ -110,4 +142,4 @@ int main(void) {
 // CHECK-PER-STACK: in fn2
 // CHECK-PER-STACK: Uninitialized value was stored to memory at
 // CHECK-PER-STACK: in fn1
-// CHECK-PER-STACK: Uninitialized value was created by a heap allocation
+// CHECK-PER-STACK: Uninitialized value was created

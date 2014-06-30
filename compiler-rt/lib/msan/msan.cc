@@ -585,7 +585,7 @@ void __msan_set_alloca_origin4(void *a, uptr size, const char *descr, uptr pc) {
   }
   if (print)
     Printf("__msan_set_alloca_origin: descr=%s id=%x\n", descr + 4, id);
-  __msan_set_origin(a, size, id);
+  __msan_set_origin(a, size, Origin(id, 1).raw_id());
 }
 
 u32 __msan_chain_origin(u32 id) {
