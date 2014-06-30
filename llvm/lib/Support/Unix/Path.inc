@@ -468,7 +468,7 @@ std::error_code setLastModificationAndAccessTime(int FD, TimeValue Time) {
   return std::error_code();
 #else
 #warning Missing futimes() and futimens()
-  return make_error_code(errc::not_supported);
+  return make_error_code(errc::function_not_supported);
 #endif
 }
 
