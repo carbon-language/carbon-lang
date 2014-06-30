@@ -1586,6 +1586,8 @@ GDBRemoteCommunicationClient::GetGDBServerProgramVersion()
 bool
 GDBRemoteCommunicationClient::GetHostInfo (bool force)
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAnyCategoryIsSet (GDBR_LOG_PROCESS));
+
     if (force || m_qHostInfo_is_valid == eLazyBoolCalculate)
     {
         m_qHostInfo_is_valid = eLazyBoolNo;
@@ -1819,6 +1821,9 @@ GDBRemoteCommunicationClient::GetHostInfo (bool force)
                     {
                         assert (byte_order == m_host_arch.GetByteOrder());
                     }
+
+                    if (log)
+                        log->Printf ("GDBRemoteCommunicationClient::%s parsed host architecture as %s, triple as %s from triple text %s", __FUNCTION__, m_host_arch.GetArchitectureName () ? m_host_arch.GetArchitectureName () : "<null-arch-name>", m_host_arch.GetTriple ().getTriple ().c_str(), triple.c_str ());
                 }
                 if (!distribution_id.empty ())
                     m_host_arch.SetDistributionId (distribution_id.c_str ());

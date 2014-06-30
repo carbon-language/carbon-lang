@@ -934,3 +934,16 @@ ProcessPOSIX::IsAThreadRunning()
     }
     return is_running;
 }
+
+const DataBufferSP
+ProcessPOSIX::GetAuxvData ()
+{
+    // If we're the local platform, we can ask the host for auxv data.
+    PlatformSP platform_sp = m_target.GetPlatform ();
+    if (platform_sp && platform_sp->IsHost ())
+        return lldb_private::Host::GetAuxvData(this);
+
+    // Somewhat unexpected - the process is not running locally or we don't have a platform.
+    assert (false && "no platform or not the host - how did we get here with ProcessPOSIX?");
+    return DataBufferSP ();
+}

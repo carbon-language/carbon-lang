@@ -92,9 +92,12 @@ signal_handler (int signo)
 	switch (signo)
 	{
         case SIGSEGV:
-            // Fix up the pointer we're writing to.  This needs to happen if nothing intercepts the SIGSEGV
-            // (i.e. if somebody runs this from the command line).
-            longjmp(g_jump_buffer, 1);
+	        if (g_is_segfaulting)
+	        {
+	            // Fix up the pointer we're writing to.  This needs to happen if nothing intercepts the SIGSEGV
+	            // (i.e. if somebody runs this from the command line).
+	            longjmp(g_jump_buffer, 1);
+			}
             break;
         case SIGUSR1:
             if (g_is_segfaulting)

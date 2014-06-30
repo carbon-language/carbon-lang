@@ -286,7 +286,7 @@ main (int argc, char *argv[])
                     bool done = false;
                     while (!interrupt && !done)
                     {
-                        if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
+                        if (gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done) != GDBRemoteCommunication::PacketResult::Success)
                             break;
                     }
                     

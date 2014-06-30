@@ -62,18 +62,14 @@ RegisterContextFreeBSD_i386::RegisterContextFreeBSD_i386(const ArchSpec &target_
 {
 }
 
-RegisterContextFreeBSD_i386::~RegisterContextFreeBSD_i386()
-{
-}
-
 size_t
-RegisterContextFreeBSD_i386::GetGPRSize()
+RegisterContextFreeBSD_i386::GetGPRSize() const
 {
     return sizeof(GPR);
 }
 
 const RegisterInfo *
-RegisterContextFreeBSD_i386::GetRegisterInfo()
+RegisterContextFreeBSD_i386::GetRegisterInfo() const
 {
     switch (m_target_arch.GetMachine())
     {
@@ -83,4 +79,10 @@ RegisterContextFreeBSD_i386::GetRegisterInfo()
             assert(false && "Unhandled target architecture.");
             return NULL;
     }
+}
+
+uint32_t
+RegisterContextFreeBSD_i386::GetRegisterCount () const
+{
+    return static_cast<uint32_t> (sizeof (g_register_infos_i386) / sizeof (g_register_infos_i386 [0]));
 }

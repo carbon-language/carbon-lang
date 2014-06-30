@@ -207,7 +207,7 @@ With LLDB, for register information, remote GDB servers can add
 support for the "qRegisterInfoN" packet where "N" is a zero based
 base16 register number that must start at zero and increase by one
 for each register that is supported.  The response is done in typical
-GDB remote fashion where a serious of "KEY:VALUE;" pairs are returned.
+GDB remote fashion where a series of "KEY:VALUE;" pairs are returned.
 An example for the x86_64 registers is included below:
 
 send packet: $qRegisterInfo0#00

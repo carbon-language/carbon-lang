@@ -249,6 +249,7 @@ IRMemoryMap::Allocation::Allocation (lldb::addr_t process_alloc,
 lldb::addr_t
 IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, AllocationPolicy policy, Error &error)
 {
+    lldb_private::Log *log (lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     error.Clear();
     
     lldb::ProcessSP process_sp;
@@ -280,6 +281,8 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
         break;
     case eAllocationPolicyMirror:
         process_sp = m_process_wp.lock();
+        if (log)
+            log->Printf ("IRMemoryMap::%s process_sp=0x%" PRIx64 ", process_sp->CanJIT()=%s, process_sp->IsAlive()=%s", __FUNCTION__, (lldb::addr_t) process_sp.get (), process_sp && process_sp->CanJIT () ? "true" : "false", process_sp && process_sp->IsAlive () ? "true" : "false");
         if (process_sp && process_sp->CanJIT() && process_sp->IsAlive())
         {
             allocation_address = process_sp->AllocateMemory(allocation_size, permissions, error);
@@ -288,6 +291,8 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
         }
         else
         {
+            if (log)
+                log->Printf ("IRMemoryMap::%s switching to eAllocationPolicyHostOnly due to failed condition (see previous expr log message)", __FUNCTION__);
             policy = eAllocationPolicyHostOnly;
             allocation_address = FindSpace(allocation_size);
             if (allocation_address == LLDB_INVALID_ADDRESS)
@@ -335,7 +340,7 @@ IRMemoryMap::Malloc (size_t size, uint8_t alignment, uint32_t permissions, Alloc
                                                 alignment,
                                                 policy);
     
-    if (lldb_private::Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS))
+    if (log)
     {
         const char * policy_string;
         

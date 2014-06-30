@@ -62,7 +62,6 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_notification_contains_any_registers_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -87,7 +86,6 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_notification_contains_no_duplicate_registers_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -107,7 +105,6 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_notification_contains_pc_register_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -127,7 +124,6 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_notification_contains_fp_register_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -147,7 +143,6 @@ class TestGdbRemoteExpeditedRegisters(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_notification_contains_sp_register_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()

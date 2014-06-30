@@ -17,9 +17,10 @@
 
 // Other libraries and framework includes
 #include "lldb/Target/Process.h"
-#include "LinuxSignals.h"
 #include "ProcessMessage.h"
 #include "ProcessPOSIX.h"
+
+#include "Plugins/Process/Utility/LinuxSignals.h"
 
 class ProcessMonitor;
 
@@ -107,7 +108,7 @@ public:
 private:
 
     /// Linux-specific signal set.
-    LinuxSignals m_linux_signals;
+    process_linux::LinuxSignals m_linux_signals;
 
     lldb_private::FileSpec *m_core_file;
 

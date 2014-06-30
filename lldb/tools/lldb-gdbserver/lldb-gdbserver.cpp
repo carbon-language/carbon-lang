@@ -52,6 +52,7 @@ static struct option g_long_options[] =
     { "lldb-command",       required_argument,  NULL,               'c' },
     { "log-file",           required_argument,  NULL,               'l' },
     { "log-flags",          required_argument,  NULL,               'f' },
+    { "attach",             required_argument,  NULL,               'a' },
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -59,21 +60,38 @@ static struct option g_long_options[] =
 //----------------------------------------------------------------------
 // Watch for signals
 //----------------------------------------------------------------------
-int g_sigpipe_received = 0;
+static int g_sigpipe_received = 0;
+static int g_sighup_received_count = 0;
+
 void
 signal_handler(int signo)
 {
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    fprintf (stderr, "lldb-gdbserver:%s received signal %d\n", __FUNCTION__, signo);
+    if (log)
+        log->Printf ("lldb-gdbserver:%s received signal %d", __FUNCTION__, signo);
+
     switch (signo)
     {
     case SIGPIPE:
         g_sigpipe_received = 1;
         break;
     case SIGHUP:
+#if 1
+        ++g_sighup_received_count;
+
+        // For now, swallow SIGHUP.
+        if (log)
+            log->Printf ("lldb-gdbserver:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
+        signal (SIGHUP, signal_handler);
+#else
         // Use SIGINT first, if that does not work, use SIGHUP as a last resort.
         // And we should not call exit() here because it results in the global destructors
         // to be invoked and wreaking havoc on the threads still running.
         Host::SystemLog(Host::eSystemLogWarning, "SIGHUP received, exiting lldb-gdbserver...\n");
         abort();
+#endif
         break;
     }
 }
@@ -124,21 +142,221 @@ terminate_lldb_gdbserver ()
     PluginManager::Terminate ();
 }
 
+static void
+run_lldb_commands (const lldb::DebuggerSP &debugger_sp, const std::vector<std::string> lldb_commands)
+{
+    for (const auto &lldb_command : lldb_commands)
+    {
+        printf("(lldb) %s\n", lldb_command.c_str ());
+
+        lldb_private::CommandReturnObject result;
+        debugger_sp->GetCommandInterpreter ().HandleCommand (lldb_command.c_str (), eLazyBoolNo, result);
+        const char *output = result.GetOutputData ();
+        if (output && output[0])
+            puts (output);
+    }
+}
+
+static lldb::PlatformSP
+setup_platform (const std::string platform_name)
+{
+    lldb::PlatformSP platform_sp;
+
+    if (platform_name.empty())
+    {
+        printf ("using the default platform: ");
+        platform_sp = Platform::GetDefaultPlatform ();
+        printf ("%s\n", platform_sp->GetPluginName ().AsCString ());
+        return platform_sp;
+    }
+
+    Error error;
+    platform_sp = Platform::Create (platform_name.c_str(), error);
+    if (error.Fail ())
+    {
+        // the host platform isn't registered with that name (at
+        // least, not always.  Check if the given name matches
+        // the default platform name.  If so, use it.
+        if ( Platform::GetDefaultPlatform () && ( Platform::GetDefaultPlatform ()->GetPluginName () == ConstString (platform_name.c_str()) ) )
+        {
+            platform_sp = Platform::GetDefaultPlatform ();
+        }
+        else
+        {
+            fprintf (stderr, "error: failed to create platform with name '%s'\n", platform_name.c_str());
+            dump_available_platforms (stderr);
+            exit (1);
+        }
+    }
+    printf ("using platform: %s\n", platform_name.c_str ());
+
+    return platform_sp;
+}
+
+void
+handle_attach_to_pid (GDBRemoteCommunicationServer &gdb_server, lldb::pid_t pid)
+{
+    Error error = gdb_server.AttachToProcess (pid);
+    if (error.Fail ())
+    {
+        fprintf (stderr, "error: failed to attach to pid %" PRIu64 ": %s\n", pid, error.AsCString());
+        exit(1);
+    }
+}
+
+void
+handle_attach_to_process_name (GDBRemoteCommunicationServer &gdb_server, const std::string &process_name)
+{
+    // FIXME implement.
+}
+
+void
+handle_attach (GDBRemoteCommunicationServer &gdb_server, const std::string &attach_target)
+{
+    assert (!attach_target.empty () && "attach_target cannot be empty");
+
+    // First check if the attach_target is convertable to a long. If so, we'll use it as a pid.
+    char *end_p = nullptr;
+    const long int pid = strtol (attach_target.c_str (), &end_p, 10);
+
+    // We'll call it a match if the entire argument is consumed.
+    if (end_p && static_cast<size_t> (end_p - attach_target.c_str ()) == attach_target.size ())
+        handle_attach_to_pid (gdb_server, static_cast<lldb::pid_t> (pid));
+    else
+        handle_attach_to_process_name (gdb_server, attach_target);
+}
+
+void
+handle_launch (GDBRemoteCommunicationServer &gdb_server, int argc, const char *const argv[])
+{
+    Error error;
+    error = gdb_server.SetLaunchArguments (argv, argc);
+    if (error.Fail ())
+    {
+        fprintf (stderr, "error: failed to set launch args for '%s': %s\n", argv[0], error.AsCString());
+        exit(1);
+    }
+
+    unsigned int launch_flags = eLaunchFlagStopAtEntry | eLaunchFlagDebug;
+
+    error = gdb_server.SetLaunchFlags (launch_flags);
+    if (error.Fail ())
+    {
+        fprintf (stderr, "error: failed to set launch flags for '%s': %s\n", argv[0], error.AsCString());
+        exit(1);
+    }
+
+    error = gdb_server.LaunchProcess ();
+    if (error.Fail ())
+    {
+        fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
+        exit(1);
+    }
+}
+
+void
+start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host_and_port, const char *const progname)
+{
+    Error error;
+
+    if (host_and_port && host_and_port[0])
+    {
+        std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
+        if (conn_ap.get())
+        {
+            std::string final_host_and_port;
+            std::string listening_host;
+            std::string listening_port;
+
+            // If host_and_port starts with ':', default the host to be "localhost" and expect the remainder to be the port.
+            if (host_and_port[0] == ':')
+                final_host_and_port.append ("localhost");
+            final_host_and_port.append (host_and_port);
+
+            const std::string::size_type colon_pos = final_host_and_port.find(':');
+            if (colon_pos != std::string::npos)
+            {
+                listening_host = final_host_and_port.substr(0, colon_pos);
+                listening_port = final_host_and_port.substr(colon_pos + 1);
+            }
+
+            std::string connect_url ("listen://");
+            connect_url.append (final_host_and_port);
+
+            printf ("Listening to port %s for a connection from %s...\n", listening_port.c_str (), listening_host.c_str ());
+            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
+            {
+                printf ("Connection established.\n");
+                gdb_server.SetConnection (conn_ap.release());
+            }
+            else
+            {
+                fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
+                display_usage (progname);
+                exit (1);
+            }
+        }
+
+        if (gdb_server.IsConnected())
+        {
+            // After we connected, we need to get an initial ack from...
+            if (gdb_server.HandshakeWithClient(&error))
+            {
+                // We'll use a half a second timeout interval so that an exit conditions can
+                // be checked that often.
+                const uint32_t TIMEOUT_USEC = 500000;
+
+                bool interrupt = false;
+                bool done = false;
+                while (!interrupt && !done && (g_sighup_received_count < 1))
+                {
+                    const GDBRemoteCommunication::PacketResult result = gdb_server.GetPacketAndSendResponse (TIMEOUT_USEC, error, interrupt, done);
+                    if ((result != GDBRemoteCommunication::PacketResult::Success) &&
+                        (result != GDBRemoteCommunication::PacketResult::ErrorReplyTimeout))
+                    {
+                        // We're bailing out - we only support successful handling and timeouts.
+                        fprintf(stderr, "leaving packet loop due to PacketResult %d\n", result);
+                        break;
+                    }
+                }
+
+                if (error.Fail())
+                {
+                    fprintf(stderr, "error: %s\n", error.AsCString());
+                }
+            }
+            else
+            {
+                fprintf(stderr, "error: handshake with client failed\n");
+            }
+        }
+    }
+    else
+    {
+        fprintf (stderr, "no connection information provided, unable to run\n");
+        display_usage (progname);
+        exit (1);
+    }
+}
+
 //----------------------------------------------------------------------
 // main
 //----------------------------------------------------------------------
 int
 main (int argc, char *argv[])
 {
-    const char *progname = argv[0];
+    // Setup signal handlers first thing.
     signal (SIGPIPE, signal_handler);
     signal (SIGHUP, signal_handler);
+
+    const char *progname = argv[0];
     int long_option_index = 0;
     StreamSP log_stream_sp;
     Args log_args;
     Error error;
     int ch;
     std::string platform_name;
+    std::string attach_target;
 
     initialize_lldb_gdbserver ();
 
@@ -215,6 +433,11 @@ main (int argc, char *argv[])
                 platform_name = optarg;
             break;
 
+        case 'a': // attach {pid|process_name}
+            if (optarg && optarg[0])
+                attach_target = optarg;
+                break;
+
         case 'h':   /* fall-through is intentional */
         case '?':
             show_usage = true;
@@ -235,7 +458,7 @@ main (int argc, char *argv[])
         ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
     }
 
-    // Skip any options we consumed with getopt_long_only
+    // Skip any options we consumed with getopt_long_only.
     argc -= optind;
     argv += optind;
 
@@ -245,155 +468,29 @@ main (int argc, char *argv[])
         exit(255);
     }
 
-    // Run any commands requested
-    for (const auto &lldb_command : lldb_commands)
-    {
-        printf("(lldb) %s\n", lldb_command.c_str ());
+    // Run any commands requested.
+    run_lldb_commands (debugger_sp, lldb_commands);
 
-        lldb_private::CommandReturnObject result;
-        debugger_sp->GetCommandInterpreter ().HandleCommand (lldb_command.c_str (), eLazyBoolNo, result);
-        const char *output = result.GetOutputData ();
-        if (output && output[0])
-            puts (output);
-    }
-
-    // setup the platform that GDBRemoteCommunicationServer will use
-    lldb::PlatformSP platform_sp;
-    if (platform_name.empty())
-    {
-        printf ("using the default platform: ");
-        platform_sp = Platform::GetDefaultPlatform ();
-        printf ("%s\n", platform_sp->GetPluginName ().AsCString ());
-    }
-    else
-    {
-        Error error;
-        platform_sp = Platform::Create (platform_name.c_str(), error);
-        if (error.Fail ())
-        {
-            // the host platform isn't registered with that name (at
-            // least, not always.  Check if the given name matches
-            // the default platform name.  If so, use it.
-            if ( Platform::GetDefaultPlatform () && ( Platform::GetDefaultPlatform ()->GetPluginName () == ConstString (platform_name.c_str()) ) )
-            {
-                platform_sp = Platform::GetDefaultPlatform ();
-            }
-            else
-            {
-                fprintf (stderr, "error: failed to create platform with name '%s'\n", platform_name.c_str());
-                dump_available_platforms (stderr);
-                exit (1);
-            }
-        }
-        printf ("using platform: %s\n", platform_name.c_str ());
-    }
+    // Setup the platform that GDBRemoteCommunicationServer will use.
+    lldb::PlatformSP platform_sp = setup_platform (platform_name);
 
     const bool is_platform = false;
-    GDBRemoteCommunicationServer gdb_server (is_platform, platform_sp);
+    GDBRemoteCommunicationServer gdb_server (is_platform, platform_sp, debugger_sp);
 
-    const char *host_and_port = argv[0];
+    const char *const host_and_port = argv[0];
     argc -= 1;
     argv += 1;
+
     // Any arguments left over are for the the program that we need to launch. If there
     // are no arguments, then the GDB server will start up and wait for an 'A' packet
-    // to launch a program, or a vAttach packet to attach to an existing process.
-    if (argc > 0)
-    {
-        error = gdb_server.SetLaunchArguments (argv, argc);
-        if (error.Fail ())
-        {
-            fprintf (stderr, "error: failed to set launch args for '%s': %s\n", argv[0], error.AsCString());
-            exit(1);
-        }
+    // to launch a program, or a vAttach packet to attach to an existing process, unless
+    // explicitly asked to attach with the --attach={pid|program_name} form.
+    if (!attach_target.empty ())
+        handle_attach (gdb_server, attach_target);
+    else if (argc > 0)
+        handle_launch (gdb_server, argc, argv);
 
-        unsigned int launch_flags = eLaunchFlagStopAtEntry;
-#if !defined(__linux__)
-        // linux doesn't yet handle eLaunchFlagDebug
-        launch_flags |= eLaunchFlagDebug;
-#endif
-        error = gdb_server.SetLaunchFlags (launch_flags);
-        if (error.Fail ())
-        {
-            fprintf (stderr, "error: failed to set launch flags for '%s': %s\n", argv[0], error.AsCString());
-            exit(1);
-        }
-
-        error = gdb_server.LaunchProcess ();
-        if (error.Fail ())
-        {
-            fprintf (stderr, "error: failed to launch '%s': %s\n", argv[0], error.AsCString());
-            exit(1);
-        }
-    }
-
-    if (host_and_port && host_and_port[0])
-    {
-        std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor());
-        if (conn_ap.get())
-        {
-            std::string final_host_and_port;
-            std::string listening_host;
-            std::string listening_port;
-
-            // If host_and_port starts with ':', default the host to be "localhost" and expect the remainder to be the port.
-            if (host_and_port[0] == ':')
-                final_host_and_port.append ("localhost");
-            final_host_and_port.append (host_and_port);
-
-            const std::string::size_type colon_pos = final_host_and_port.find(':');
-            if (colon_pos != std::string::npos)
-            {
-                listening_host = final_host_and_port.substr(0, colon_pos);
-                listening_port = final_host_and_port.substr(colon_pos + 1);
-            }
-
-            std::string connect_url ("listen://");
-            connect_url.append (final_host_and_port);
-
-            printf ("Listening to port %s for a connection from %s...\n", listening_port.c_str (), listening_host.c_str ());
-            if (conn_ap->Connect(connect_url.c_str(), &error) == eConnectionStatusSuccess)
-            {
-                printf ("Connection established.\n");
-                gdb_server.SetConnection (conn_ap.release());
-            }
-            else
-            {
-                fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
-                display_usage (progname);
-                exit (1);
-            }
-        }
-
-        if (gdb_server.IsConnected())
-        {
-            // After we connected, we need to get an initial ack from...
-            if (gdb_server.HandshakeWithClient(&error))
-            {
-                bool interrupt = false;
-                bool done = false;
-                while (!interrupt && !done)
-                {
-                    if (!gdb_server.GetPacketAndSendResponse (UINT32_MAX, error, interrupt, done))
-                        break;
-                }
-
-                if (error.Fail())
-                {
-                    fprintf(stderr, "error: %s\n", error.AsCString());
-                }
-            }
-            else
-            {
-                fprintf(stderr, "error: handshake with client failed\n");
-            }
-        }
-    }
-    else
-    {
-        fprintf (stderr, "no connection information provided, unable to run\n");
-        display_usage (progname);
-        exit (1);
-    }
+    start_listener (gdb_server, host_and_port, progname);
 
     terminate_lldb_gdbserver ();
 

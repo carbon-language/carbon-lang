@@ -15,6 +15,8 @@
 // Project includes
 #include "LinuxSignals.h"
 
+using namespace process_linux;
+
 LinuxSignals::LinuxSignals()
     : UnixSignals()
 {
@@ -25,6 +27,10 @@ void
 LinuxSignals::Reset()
 {
     m_signals.clear();
+
+    // FIXME we now need *Signals classes on systems that are different OSes (e.g. LinuxSignals
+    // needed on MacOSX to debug Linux from MacOSX, and similar scenarios, used by ProcessGDBRemote).  These must be defined
+    // not based on OS includes and defines.
 
 #define ADDSIGNAL(S, SUPPRESS, STOP, NOTIFY, DESCRIPTION) \
     AddSignal(SIG ## S, "SIG" #S, #S, SUPPRESS, STOP, NOTIFY, DESCRIPTION)
@@ -60,9 +66,13 @@ LinuxSignals::Reset()
     ADDSIGNAL(VTALRM, false,  true,  true, "virtual alarm");
     ADDSIGNAL(PROF,   false,  true,  true, "profiling alarm");
     ADDSIGNAL(WINCH,  false,  true,  true, "window size change");
+#ifdef SIGPOLL
     ADDSIGNAL(POLL,   false,  true,  true, "pollable event");
+#endif
     ADDSIGNAL(IO,     false,  true,  true, "input/output ready");
+#ifdef SIGPWR
     ADDSIGNAL(PWR,    false,  true,  true, "power failure");
+#endif
     ADDSIGNAL(SYS,    false,  true,  true, "invalid system call");
 
 #undef ADDSIGNAL

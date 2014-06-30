@@ -132,7 +132,7 @@ public:
 
     // Returns AUXV structure found in the core file
     const lldb::DataBufferSP
-    GetAuxvData();
+    GetAuxvData() override;
 
 protected:
     void

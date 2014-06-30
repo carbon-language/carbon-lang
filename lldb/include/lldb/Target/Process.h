@@ -1097,6 +1097,17 @@ public:
     virtual DynamicLoader *
     GetDynamicLoader ();
 
+    //------------------------------------------------------------------
+    // Returns AUXV structure found in many ELF-based environments.
+    //
+    // The default action is to return an empty data buffer.
+    //
+    // @return
+    //    A data buffer containing the contents of the AUXV data.
+    //------------------------------------------------------------------
+    virtual const lldb::DataBufferSP
+    GetAuxvData();
+
 protected:
     virtual JITLoaderList &
     GetJITLoaders ();

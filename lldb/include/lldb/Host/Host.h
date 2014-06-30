@@ -503,6 +503,9 @@ public:
     static lldb::DataBufferSP
     GetAuxvData (lldb_private::Process *process);
 
+    static lldb::DataBufferSP
+    GetAuxvData (lldb::pid_t pid);
+
     static lldb::TargetSP
     GetDummyTarget (Debugger &debugger);
     

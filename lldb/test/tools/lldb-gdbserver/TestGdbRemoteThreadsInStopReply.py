@@ -83,7 +83,6 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_QListThreadsInStopReply_supported_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -105,7 +104,6 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_reply_reports_multiple_threads_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -127,8 +125,7 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
-    def test_no_QThreadsInStopReply_supplies_no_threads_llgs_dwarf(self):
+    def test_no_QListThreadsInStopReply_supplies_no_threads_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
         self.set_inferior_startup_launch()
@@ -164,7 +161,6 @@ class TestGdbRemoteThreadsInStopReply(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_stop_reply_reports_correct_threads_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()

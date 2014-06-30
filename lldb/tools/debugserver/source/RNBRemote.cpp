@@ -2326,6 +2326,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         {
             size_t thread_name_len = strlen(thread_name);
             
+
             if (::strcspn (thread_name, "$#+-;:") == thread_name_len)
                 ostrm << std::hex << "name:" << thread_name << ';';
             else

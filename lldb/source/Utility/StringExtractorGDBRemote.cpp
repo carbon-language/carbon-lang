@@ -179,6 +179,7 @@ StringExtractorGDBRemote::GetServerPacketType () const
             if (PACKET_STARTS_WITH ("qSpeedTest:"))             return eServerPacketType_qSpeedTest;
             if (PACKET_MATCHES ("qShlibInfoAddr"))              return eServerPacketType_qShlibInfoAddr;
             if (PACKET_MATCHES ("qStepPacketSupported"))        return eServerPacketType_qStepPacketSupported;
+            if (PACKET_STARTS_WITH ("qSupported"))              return eServerPacketType_qSupported;
             if (PACKET_MATCHES ("qSyncThreadStateSupported"))   return eServerPacketType_qSyncThreadStateSupported;
             break;
 
@@ -198,6 +199,10 @@ StringExtractorGDBRemote::GetServerPacketType () const
         case 'W':
             if (PACKET_STARTS_WITH ("qWatchpointSupportInfo:")) return eServerPacketType_qWatchpointSupportInfo;
             if (PACKET_MATCHES ("qWatchpointSupportInfo"))      return eServerPacketType_qWatchpointSupportInfoSupported;
+            break;
+
+        case 'X':
+            if (PACKET_STARTS_WITH ("qXfer:auxv:read::"))       return eServerPacketType_qXfer_auxv_read;
             break;
         }
         break;

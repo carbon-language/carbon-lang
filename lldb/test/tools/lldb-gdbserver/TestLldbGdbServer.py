@@ -63,7 +63,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.thread_suffix_supported()
 
     @llgs_test
-    @unittest2.expectedFailure()
     def test_thread_suffix_supported_llgs(self):
         self.init_llgs_test()
         self.thread_suffix_supported()
@@ -85,7 +84,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.list_threads_in_stop_reply_supported()
 
     @llgs_test
-    @unittest2.expectedFailure()
     def test_list_threads_in_stop_reply_supported_llgs(self):
         self.init_llgs_test()
         self.list_threads_in_stop_reply_supported()
@@ -143,7 +141,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_inferior_exit_0_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -176,7 +173,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_inferior_exit_42_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -207,7 +203,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_c_packet_works_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -240,7 +235,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_inferior_print_exit_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -272,7 +266,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_first_launch_stop_reply_thread_matches_first_qC_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -308,7 +301,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qProcessInfo_returns_running_process_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -343,7 +335,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_attach_commandline_qProcessInfo_reports_correct_pid_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -376,7 +367,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qProcessInfo_reports_valid_endian_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -410,7 +400,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_attach_commandline_continue_app_exits_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -445,7 +434,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_attach_commandline_kill_after_initial_stop_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -484,7 +472,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qRegisterInfo_returns_one_valid_result_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -519,7 +506,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qRegisterInfo_returns_all_valid_results_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -568,7 +554,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qRegisterInfo_contains_required_generics_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -606,7 +591,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qRegisterInfo_contains_at_least_one_register_set_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -635,10 +619,8 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
         register_sets = { reg_info['set']:1 for reg_info in reg_infos if 'set' in reg_info }
         self.assertTrue("Advanced Vector Extensions" in register_sets)
 
-
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qRegisterInfo_contains_avx_registers_on_linux_x86_64_llgs_dwarf(self):
         # Skip this test if not Linux x86_64.
         if platform.system() != "Linux" or platform.processor() != "x86_64":
@@ -673,7 +655,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qThreadInfo_contains_thread_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -690,7 +671,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qThreadInfo_contains_thread_attach_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -735,7 +715,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qThreadInfo_matches_qC_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -752,7 +731,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qThreadInfo_matches_qC_attach_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -810,7 +788,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_p_returns_correct_data_size_for_each_qRegisterInfo_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -827,7 +804,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_p_returns_correct_data_size_for_each_qRegisterInfo_attach_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -873,7 +849,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_Hg_switches_to_3_threads_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -890,7 +865,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_Hg_switches_to_3_threads_attach_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1010,7 +984,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_Hc_then_Csignal_signals_correct_thread_launch_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1073,7 +1046,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_m_packet_reads_memory_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1101,7 +1073,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qMemoryRegionInfo_is_supported_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1165,7 +1136,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qMemoryRegionInfo_reports_code_address_as_executable_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1229,7 +1199,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qMemoryRegionInfo_reports_stack_address_as_readable_writeable_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1294,7 +1263,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qMemoryRegionInfo_reports_heap_address_as_readable_writeable_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1411,7 +1379,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_software_breakpoint_set_and_remove_work_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1442,7 +1409,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_qSupported_returns_known_stub_features_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1503,7 +1469,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_written_M_content_reads_back_correctly_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1550,7 +1515,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_P_writes_all_gpr_registers_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()
@@ -1659,7 +1623,6 @@ class LldbGdbServerTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_P_and_p_thread_suffix_work_llgs_dwarf(self):
         self.init_llgs_test()
         self.buildDwarf()

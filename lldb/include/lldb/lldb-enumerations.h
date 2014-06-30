@@ -788,6 +788,27 @@ namespace lldb {
     } ExpressionEvaluationPhase;
     
 
+    //----------------------------------------------------------------------
+    // Watchpoint Kind
+    // Indicates what types of events cause the watchpoint to fire.
+    // Used by Native*Protocol-related classes.
+    //----------------------------------------------------------------------
+    typedef enum WatchpointKind
+    {
+        eWatchpointKindRead = (1u << 0),
+        eWatchpointKindWrite = (1u << 1)
+    } WatchpointKind;
+
+    typedef enum GdbSignal
+    {
+        eGdbSignalBadAccess      = 0x91,
+        eGdbSignalBadInstruction = 0x92,
+        eGdbSignalArithmetic     = 0x93,
+        eGdbSignalEmulation      = 0x94,
+        eGdbSignalSoftware       = 0x95,
+        eGdbSignalBreakpoint     = 0x96
+    } GdbRemoteSignal;
+
 } // namespace lldb
 
 

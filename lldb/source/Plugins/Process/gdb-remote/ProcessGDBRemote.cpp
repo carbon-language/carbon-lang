@@ -61,7 +61,9 @@
 
 // Project includes
 #include "lldb/Host/Host.h"
+#include "Plugins/Process/Utility/FreeBSDSignals.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
+#include "Plugins/Process/Utility/LinuxSignals.h"
 #include "Plugins/Process/Utility/StopInfoMachException.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
 #include "Utility/StringExtractorGDBRemote.h"
@@ -285,7 +287,8 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_waiting_for_attach (false),
     m_destroy_tried_resuming (false),
     m_command_sp (),
-    m_breakpoint_pc_offset (0)
+    m_breakpoint_pc_offset (0),
+    m_unix_signals_sp (new UnixSignals ())
 {
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");
     m_async_broadcaster.SetEventName (eBroadcastBitAsyncContinue,           "async thread continue");
@@ -628,6 +631,7 @@ ProcessGDBRemote::WillAttachToProcessWithName (const char *process_name, bool wa
 Error
 ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     Error error (WillLaunchOrAttach ());
     
     if (error.Fail())
@@ -678,7 +682,11 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
             error.SetErrorStringWithFormat ("Process %" PRIu64 " was reported after connecting to '%s', but no stop reply packet was received", pid, remote_url);
     }
 
-    if (error.Success() 
+    if (log)
+        log->Printf ("ProcessGDBRemote::%s pid %" PRIu64 ": normalizing target architecture initial triple: %s (GetTarget().GetArchitecture().IsValid() %s, m_gdb_comm.GetHostArchitecture().IsValid(): %s)", __FUNCTION__, GetID (), GetTarget ().GetArchitecture ().GetTriple ().getTriple ().c_str (), GetTarget ().GetArchitecture ().IsValid () ? "true" : "false", m_gdb_comm.GetHostArchitecture ().IsValid () ? "true" : "false");
+
+
+    if (error.Success()
         && !GetTarget().GetArchitecture().IsValid()
         && m_gdb_comm.GetHostArchitecture().IsValid())
     {
@@ -687,6 +695,42 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
             GetTarget().SetArchitecture(m_gdb_comm.GetProcessArchitecture());
         else
             GetTarget().SetArchitecture(m_gdb_comm.GetHostArchitecture());
+    }
+
+    if (log)
+        log->Printf ("ProcessGDBRemote::%s pid %" PRIu64 ": normalized target architecture triple: %s", __FUNCTION__, GetID (), GetTarget ().GetArchitecture ().GetTriple ().getTriple ().c_str ());
+
+    // Set the Unix signals properly for the target.
+    // FIXME Add a gdb-remote packet to discover dynamically.
+    if (error.Success ())
+    {
+        const ArchSpec arch_spec = GetTarget ().GetArchitecture ();
+        if (arch_spec.IsValid ())
+        {
+            if (log)
+                log->Printf ("ProcessGDBRemote::%s pid %" PRIu64 ": determining unix signals type based on architecture %s, triple %s", __FUNCTION__, GetID (), arch_spec.GetArchitectureName () ? arch_spec.GetArchitectureName () : "<null>", arch_spec.GetTriple ().getTriple ().c_str ());
+
+            switch (arch_spec.GetTriple ().getOS ())
+            {
+            case llvm::Triple::Linux:
+                m_unix_signals_sp.reset (new process_linux::LinuxSignals ());
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s using Linux unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
+                break;
+            case llvm::Triple::OpenBSD:
+            case llvm::Triple::FreeBSD:
+            case llvm::Triple::NetBSD:
+                m_unix_signals_sp.reset (new FreeBSDSignals ());
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s using *BSD unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
+                break;
+            default:
+                m_unix_signals_sp.reset (new UnixSignals ());
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s using generic unix signals type for pid %" PRIu64, __FUNCTION__, GetID ());
+                break;
+            }
+        }
     }
 
     return error;
@@ -1038,6 +1082,13 @@ void
 ProcessGDBRemote::DidLaunch ()
 {
     DidLaunchOrAttach ();
+}
+
+UnixSignals&
+ProcessGDBRemote::GetUnixSignals ()
+{
+    assert (m_unix_signals_sp && "m_unix_signals_sp is null");
+    return *m_unix_signals_sp;
 }
 
 Error
@@ -2231,6 +2282,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
 lldb::addr_t
 ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
 {
+    lldb_private::Log *log (lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_PROCESS|LIBLLDB_LOG_EXPRESSIONS));
     addr_t allocated_addr = LLDB_INVALID_ADDRESS;
     
     LazyBool supported = m_gdb_comm.SupportsAllocDeallocMemory();
@@ -2256,7 +2308,11 @@ ProcessGDBRemote::DoAllocateMemory (size_t size, uint32_t permissions, Error &er
                                  eMmapFlagsAnon | eMmapFlagsPrivate, -1, 0))
                 m_addr_to_mmap_size[allocated_addr] = size;
             else
+            {
                 allocated_addr = LLDB_INVALID_ADDRESS;
+                if (log)
+                    log->Printf ("ProcessGDBRemote::%s no direct stub support for memory allocation, and InferiorCallMmap also failed - is stub missing register context save/restore capability?", __FUNCTION__);
+            }
             break;
     }
     

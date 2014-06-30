@@ -100,7 +100,6 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_grp_register_save_restore_works_with_suffix_llgs_dwarf(self):
         USE_THREAD_SUFFIX = True
         self.init_llgs_test()
@@ -119,7 +118,6 @@ class TestGdbRemoteRegisterState(gdbremote_testcase.GdbRemoteTestCaseBase):
 
     @llgs_test
     @dwarf_test
-    @unittest2.expectedFailure()
     def test_grp_register_save_restore_works_no_suffix_llgs_dwarf(self):
         USE_THREAD_SUFFIX = False
         self.init_llgs_test()

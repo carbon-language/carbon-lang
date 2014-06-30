@@ -2529,6 +2529,7 @@ Process::CanJIT ()
 {
     if (m_can_jit == eCanJITDontKnow)
     {
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
         Error err;
         
         uint64_t allocated_memory = AllocateMemory(8, 
@@ -2536,9 +2537,17 @@ Process::CanJIT ()
                                                    err);
         
         if (err.Success())
+        {
             m_can_jit = eCanJITYes;
+            if (log)
+                log->Printf ("Process::%s pid %" PRIu64 " allocation test passed, CanJIT () is true", __FUNCTION__, GetID ());
+        }
         else
+        {
             m_can_jit = eCanJITNo;
+            if (log)
+                log->Printf ("Process::%s pid %" PRIu64 " allocation test failed, CanJIT () is false: %s", __FUNCTION__, GetID (), err.AsCString ());
+        }
         
         DeallocateMemory (allocated_memory);
     }
@@ -2786,6 +2795,12 @@ Process::GetDynamicLoader ()
     if (m_dyld_ap.get() == NULL)
         m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
     return m_dyld_ap.get();
+}
+
+const lldb::DataBufferSP
+Process::GetAuxvData()
+{
+    return DataBufferSP ();
 }
 
 JITLoaderList &

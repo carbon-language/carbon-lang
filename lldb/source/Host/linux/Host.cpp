@@ -175,6 +175,12 @@ Host::GetAuxvData(lldb_private::Process *process)
     return ProcFileReader::ReadIntoDataBuffer (process->GetID(), "auxv");
 }
 
+lldb::DataBufferSP
+Host::GetAuxvData (lldb::pid_t pid)
+{
+    return ProcFileReader::ReadIntoDataBuffer (pid, "auxv");
+}
+
 static bool
 IsDirNumeric(const char *dname)
 {

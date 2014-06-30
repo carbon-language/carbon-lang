@@ -71,20 +71,23 @@ RegisterContextFreeBSD_mips64::RegisterContextFreeBSD_mips64(const ArchSpec &tar
 {
 }
 
-RegisterContextFreeBSD_mips64::~RegisterContextFreeBSD_mips64()
-{
-}
-
 size_t
-RegisterContextFreeBSD_mips64::GetGPRSize()
+RegisterContextFreeBSD_mips64::GetGPRSize() const
 {
     return sizeof(GPR);
 }
 
 const RegisterInfo *
-RegisterContextFreeBSD_mips64::GetRegisterInfo()
+RegisterContextFreeBSD_mips64::GetRegisterInfo() const
 {
     assert (m_target_arch.GetCore() == ArchSpec::eCore_mips64);
     return g_register_infos_mips64;
 }
+
+uint32_t
+RegisterContextFreeBSD_mips64::GetRegisterCount () const
+{
+    return static_cast<uint32_t> (sizeof (g_register_infos_mips64) / sizeof (g_register_infos_mips64 [0]));
+}
+
 

@@ -103,9 +103,20 @@ namespace lldb_private {
         virtual void
         CalculateTrapHandlerSymbolNames ();
 
+        Error
+        LaunchNativeProcess (
+            ProcessLaunchInfo &launch_info,
+            lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
+            NativeProcessProtocolSP &process_sp) override;
+
+        Error
+        AttachNativeProcess (lldb::pid_t pid,
+                             lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
+                             NativeProcessProtocolSP &process_sp) override;
+
     protected:
         lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
-        
+
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);
     };

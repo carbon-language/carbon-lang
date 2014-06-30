@@ -1024,3 +1024,4 @@ class GdbRemoteTestCaseBase(TestBase):
         (state_reached, step_count) = self.count_single_steps_until_true(main_thread_id, self.g_c1_c2_contents_are, args, max_step_count=5, use_Hc_packet=use_Hc_packet, step_instruction=step_instruction)
         self.assertTrue(state_reached)
         self.assertEquals(step_count, 1)
+

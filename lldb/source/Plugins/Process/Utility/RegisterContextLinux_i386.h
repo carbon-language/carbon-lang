@@ -17,13 +17,15 @@ class RegisterContextLinux_i386
 {
 public:
     RegisterContextLinux_i386(const lldb_private::ArchSpec &target_arch);
-    virtual ~RegisterContextLinux_i386();
 
     size_t
-    GetGPRSize();
+    GetGPRSize() const override;
 
     const lldb_private::RegisterInfo *
-    GetRegisterInfo();
+    GetRegisterInfo() const override;
+
+    uint32_t
+    GetRegisterCount () const override;
 };
 
 #endif

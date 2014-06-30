@@ -10,6 +10,7 @@
 #ifndef lldb_MemoryRegionInfo_h
 #define lldb_MemoryRegionInfo_h
 
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Utility/Range.h"
 
 namespace lldb_private

@@ -1,0 +1,44 @@
+//===-- NativeRegisterContex.cpp --------------------------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+
+#include "lldb/lldb-types.h"
+#include "lldb/lldb-private-forward.h"
+#include "lldb/Target/NativeRegisterContextRegisterInfo.h"
+
+using namespace lldb_private;
+
+NativeRegisterContextRegisterInfo::NativeRegisterContextRegisterInfo (NativeThreadProtocol &thread,
+                                                                      uint32_t concrete_frame_idx,
+                                                                      RegisterInfoInterface *register_info_interface) :
+    NativeRegisterContext (thread, concrete_frame_idx),
+    m_register_info_interface_up (register_info_interface)
+{
+    assert (register_info_interface && "null register_info_interface");
+}
+
+uint32_t
+NativeRegisterContextRegisterInfo::GetRegisterCount () const
+{
+    return m_register_info_interface_up->GetRegisterCount ();
+}
+
+const RegisterInfo *
+NativeRegisterContextRegisterInfo::GetRegisterInfoAtIndex (uint32_t reg_index) const
+{
+    if (reg_index <= GetRegisterCount ())
+        return m_register_info_interface_up->GetRegisterInfo () + reg_index;
+    else
+        return nullptr;
+}
+
+const RegisterInfoInterface&
+NativeRegisterContextRegisterInfo::GetRegisterInfoInterface () const
+{
+    return *m_register_info_interface_up;
+}

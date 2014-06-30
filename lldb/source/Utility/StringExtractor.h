@@ -129,6 +129,9 @@ public:
     GetHexByteString (std::string &str);
 
     size_t
+    GetHexByteStringFixedLength (std::string &str, uint32_t nibble_length);
+
+    size_t
     GetHexByteStringTerminatedBy (std::string &str,
                                   char terminator);
     

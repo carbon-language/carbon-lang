@@ -141,6 +141,9 @@ public:
     virtual size_t
     PutSTDIN(const char *buf, size_t len, lldb_private::Error &error);
 
+    const lldb::DataBufferSP
+    GetAuxvData () override;
+
     //--------------------------------------------------------------------------
     // ProcessPOSIX internal API.
 

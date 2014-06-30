@@ -1228,8 +1228,12 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
     // Wait for the child process to to trap on its call to execve.
     lldb::pid_t wpid;
+    ::pid_t raw_pid;
     int status;
-    if ((wpid = waitpid(pid, &status, 0)) < 0)
+
+    raw_pid = waitpid(pid, &status, 0);
+    wpid = static_cast <lldb::pid_t> (raw_pid);
+    if (raw_pid < 0)
     {
         args->m_error.SetErrorToErrno();
         goto FINISH;
