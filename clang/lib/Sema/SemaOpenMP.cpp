@@ -971,6 +971,52 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
 bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
                            OpenMPDirectiveKind CurrentRegion,
                            SourceLocation StartLoc) {
+  // Allowed nesting of constructs
+  // +------------------+-----------------+------------------------------------+
+  // | Parent directive | Child directive | Closely (!), No-Closely(+), Both(*)|
+  // +------------------+-----------------+------------------------------------+
+  // | parallel         | parallel        | *                                  |
+  // | parallel         | for             | *                                  |
+  // | parallel         | simd            | *                                  |
+  // | parallel         | sections        | *                                  |
+  // | parallel         | section         | +                                  | 
+  // | parallel         | single          | *                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | for              | parallel        | *                                  |
+  // | for              | for             | +                                  |
+  // | for              | simd            | *                                  |
+  // | for              | sections        | +                                  |
+  // | for              | section         | +                                  |
+  // | for              | single          | +                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | simd             | parallel        |                                    |
+  // | simd             | for             |                                    |
+  // | simd             | simd            |                                    |
+  // | simd             | sections        |                                    |
+  // | simd             | section         |                                    |
+  // | simd             | single          |                                    |
+  // +------------------+-----------------+------------------------------------+
+  // | sections         | parallel        | *                                  |
+  // | sections         | for             | +                                  |
+  // | sections         | simd            | *                                  |
+  // | sections         | sections        | +                                  |
+  // | sections         | section         | *                                  |
+  // | sections         | single          | +                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | section          | parallel        | *                                  |
+  // | section          | for             | +                                  |
+  // | section          | simd            | *                                  |
+  // | section          | sections        | +                                  |
+  // | section          | section         | +                                  |
+  // | section          | single          | +                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | single           | parallel        | *                                  |
+  // | single           | for             | +                                  |
+  // | single           | simd            | *                                  |
+  // | single           | sections        | +                                  |
+  // | single           | section         | +                                  |
+  // | single           | single          | +                                  |
+  // +------------------+-----------------+------------------------------------+
   if (Stack->getCurScope()) {
     auto ParentRegion = Stack->getParentDirective();
     bool NestingProhibited = false;
