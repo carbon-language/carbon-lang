@@ -881,7 +881,7 @@ bool X86FastISel::X86SelectCallAddress(const Value *V, X86AddressMode &AM) {
         (AM.Base.Reg != 0 || AM.IndexReg != 0))
       return false;
 
-    // Can't handle DbgLocLImport.
+    // Can't handle DLL Import.
     if (GV->hasDLLImportStorageClass())
       return false;
 
