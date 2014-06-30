@@ -480,6 +480,16 @@ getRequiredQualification(ASTContext &Context,
   return Result;
 }
 
+/// Determine whether \p Id is a name reserved for the implementation (C99
+/// 7.1.3, C++ [lib.global.names]).
+static bool isReservedName(const IdentifierInfo *Id) {
+  if (Id->getLength() < 2)
+    return false;
+  const char *Name = Id->getNameStart();
+  return Name[0] == '_' &&
+         (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z'));
+}
+
 bool ResultBuilder::isInterestingDecl(const NamedDecl *ND,
                                       bool &AsNestedNameSpecifier) const {
   AsNestedNameSpecifier = false;
@@ -506,25 +516,15 @@ bool ResultBuilder::isInterestingDecl(const NamedDecl *ND,
     return false;
   
   // Some declarations have reserved names that we don't want to ever show.
-  if (const IdentifierInfo *Id = ND->getIdentifier()) {
-    // __va_list_tag is a freak of nature. Find it and skip it.
-    if (Id->isStr("__va_list_tag") || Id->isStr("__builtin_va_list"))
-      return false;
-    
-    // Filter out names reserved for the implementation (C99 7.1.3, 
-    // C++ [lib.global.names]) if they come from a system header.
-    //
-    // FIXME: Add predicate for this.
-    if (Id->getLength() >= 2) {
-      const char *Name = Id->getNameStart();
-      if (Name[0] == '_' &&
-          (Name[1] == '_' || (Name[1] >= 'A' && Name[1] <= 'Z')) &&
-          (ND->getLocation().isInvalid() ||
-           SemaRef.SourceMgr.isInSystemHeader(
-                          SemaRef.SourceMgr.getSpellingLoc(ND->getLocation()))))
+  // Filter out names reserved for the implementation if they come from a
+  // system header.
+  // TODO: Add a predicate for this.
+  if (const IdentifierInfo *Id = ND->getIdentifier())
+    if (isReservedName(Id) &&
+        (ND->getLocation().isInvalid() ||
+         SemaRef.SourceMgr.isInSystemHeader(
+             SemaRef.SourceMgr.getSpellingLoc(ND->getLocation()))))
         return false;
-    }
-  }
 
   if (Filter == &ResultBuilder::IsNestedNameSpecifier ||
       ((isa<NamespaceDecl>(ND) || isa<NamespaceAliasDecl>(ND)) &&
