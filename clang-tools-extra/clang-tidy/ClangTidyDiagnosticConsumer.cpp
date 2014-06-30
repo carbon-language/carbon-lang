@@ -94,7 +94,8 @@ private:
 };
 } // end anonymous namespace
 
-ClangTidyMessage::ClangTidyMessage(StringRef Message) : Message(Message) {}
+ClangTidyMessage::ClangTidyMessage(StringRef Message)
+    : Message(Message), FileOffset(0) {}
 
 ClangTidyMessage::ClangTidyMessage(StringRef Message,
                                    const SourceManager &Sources,
