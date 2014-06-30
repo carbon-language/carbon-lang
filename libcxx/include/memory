@@ -2019,7 +2019,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp& __x)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
     {
         using _VSTD::swap;
         swap(__first_, __x.__first_);
@@ -2110,7 +2110,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp& __x)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
     {
         using _VSTD::swap;
         swap(__second_, __x.__second_);
@@ -2203,7 +2203,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp& __x)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
     {
         using _VSTD::swap;
         swap(__first_, __x.__first_);
@@ -2292,7 +2292,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void swap(__libcpp_compressed_pair_imp&)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
     {
     }
 };
@@ -2375,7 +2375,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void swap(__compressed_pair& __x)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
         {base::swap(__x);}
 };
 
@@ -2384,7 +2384,7 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 swap(__compressed_pair<_T1, _T2>& __x, __compressed_pair<_T1, _T2>& __y)
         _NOEXCEPT_(__is_nothrow_swappable<_T1>::value &&
-                   __is_nothrow_swappable<_T1>::value)
+                   __is_nothrow_swappable<_T2>::value)
     {__x.swap(__y);}
 
 // __same_or_less_cv_qualified
