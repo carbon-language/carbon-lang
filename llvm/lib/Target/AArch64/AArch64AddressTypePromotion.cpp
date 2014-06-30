@@ -214,8 +214,8 @@ AArch64AddressTypePromotion::shouldConsiderSExt(const Instruction *SExt) const {
   if (SExt->getType() != ConsideredSExtType)
     return false;
 
-  for (const Use &U : SExt->uses()) {
-    if (isa<GetElementPtrInst>(*U))
+  for (const User *U : SExt->users()) {
+    if (isa<GetElementPtrInst>(U))
       return true;
   }
 
@@ -436,7 +436,7 @@ void AArch64AddressTypePromotion::analyzeSExtension(Instructions &SExtInsts) {
 
       bool insert = false;
       // #1.
-      for (const Use &U : SExt->uses()) {
+      for (const User *U : SExt->users()) {
         const Instruction *Inst = dyn_cast<GetElementPtrInst>(U);
         if (Inst && Inst->getNumOperands() > 2) {
           DEBUG(dbgs() << "Interesting use in GetElementPtrInst\n" << *Inst
