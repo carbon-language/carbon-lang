@@ -278,11 +278,12 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
     // Not found, so need to create a new custom section.
     size_t seperatorIndex = customName.find('/');
     assert(seperatorIndex != StringRef::npos);
-    StringRef segName = customName.slice(0, seperatorIndex-1);
-    StringRef sectName = customName.drop_front(seperatorIndex);
+    StringRef segName = customName.slice(0, seperatorIndex);
+    StringRef sectName = customName.drop_front(seperatorIndex + 1);
     SectionInfo *sect = new (_allocator) SectionInfo(segName, sectName,
                                                      S_REGULAR);
     _customSections.push_back(sect);
+    _sectionInfos.push_back(sect);
     return sect;
   }
 }
@@ -452,6 +453,8 @@ void Util::assignAddressesToSections() {
         layoutSectionsInTextSegment(seg, address);
       else
         layoutSectionsInSegment(seg, address);
+
+      address = llvm::RoundUpToAlignment(address, _context.pageSize());
     }
     DEBUG_WITH_TYPE("WriterMachO-norm",
       llvm::dbgs() << "assignAddressesToSections()\n";
