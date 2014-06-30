@@ -1852,6 +1852,37 @@ static SDValue constantFoldBFE(SelectionDAG &DAG, IntTy Src0,
   return DAG.getConstant(Src0 >> Offset, MVT::i32);
 }
 
+SDValue AMDGPUTargetLowering::performMulCombine(SDNode *N,
+                                                DAGCombinerInfo &DCI) const {
+  EVT VT = N->getValueType(0);
+
+  if (VT.isVector() || VT.getSizeInBits() > 32)
+    return SDValue();
+
+  SelectionDAG &DAG = DCI.DAG;
+  SDLoc DL(N);
+
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+  SDValue Mul;
+
+  if (Subtarget->hasMulU24() && isU24(N0, DAG) && isU24(N1, DAG)) {
+    N0 = DAG.getZExtOrTrunc(N0, DL, MVT::i32);
+    N1 = DAG.getZExtOrTrunc(N1, DL, MVT::i32);
+    Mul = DAG.getNode(AMDGPUISD::MUL_U24, DL, MVT::i32, N0, N1);
+  } else if (Subtarget->hasMulI24() && isI24(N0, DAG) && isI24(N1, DAG)) {
+    N0 = DAG.getSExtOrTrunc(N0, DL, MVT::i32);
+    N1 = DAG.getSExtOrTrunc(N1, DL, MVT::i32);
+    Mul = DAG.getNode(AMDGPUISD::MUL_I24, DL, MVT::i32, N0, N1);
+  } else {
+    return SDValue();
+  }
+
+  // We need to use sext even for MUL_U24, because MUL_U24 is used
+  // for signed multiply of 8 and 16-bit types.
+  return DAG.getSExtOrTrunc(Mul, DL, VT);
+}
+
 SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
                                             DAGCombinerInfo &DCI) const {
   SelectionDAG &DAG = DCI.DAG;
@@ -1859,34 +1890,8 @@ SDValue AMDGPUTargetLowering::PerformDAGCombine(SDNode *N,
 
   switch(N->getOpcode()) {
     default: break;
-    case ISD::MUL: {
-      EVT VT = N->getValueType(0);
-      SDValue N0 = N->getOperand(0);
-      SDValue N1 = N->getOperand(1);
-      SDValue Mul;
-
-      // FIXME: Add support for 24-bit multiply with 64-bit output on SI.
-      if (VT.isVector() || VT.getSizeInBits() > 32)
-        break;
-
-      if (Subtarget->hasMulU24() && isU24(N0, DAG) && isU24(N1, DAG)) {
-        N0 = DAG.getZExtOrTrunc(N0, DL, MVT::i32);
-        N1 = DAG.getZExtOrTrunc(N1, DL, MVT::i32);
-        Mul = DAG.getNode(AMDGPUISD::MUL_U24, DL, MVT::i32, N0, N1);
-      } else if (Subtarget->hasMulI24() && isI24(N0, DAG) && isI24(N1, DAG)) {
-        N0 = DAG.getSExtOrTrunc(N0, DL, MVT::i32);
-        N1 = DAG.getSExtOrTrunc(N1, DL, MVT::i32);
-        Mul = DAG.getNode(AMDGPUISD::MUL_I24, DL, MVT::i32, N0, N1);
-      } else {
-        break;
-      }
-
-      // We need to use sext even for MUL_U24, because MUL_U24 is used
-      // for signed multiply of 8 and 16-bit types.
-      SDValue Reg = DAG.getSExtOrTrunc(Mul, DL, VT);
-
-      return Reg;
-    }
+    case ISD::MUL:
+      return performMulCombine(N, DCI);
     case AMDGPUISD::MUL_I24:
     case AMDGPUISD::MUL_U24: {
       SDValue N0 = N->getOperand(0);

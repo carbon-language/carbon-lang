@@ -64,6 +64,8 @@ private:
                                   SelectionDAG &DAG) const;
   SDValue LowerSIGN_EXTEND_INREG(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue performMulCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
 protected:
   static EVT getEquivalentMemType(LLVMContext &Context, EVT VT);
   static EVT getEquivalentLoadRegType(LLVMContext &Context, EVT VT);
