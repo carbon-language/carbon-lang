@@ -151,4 +151,6 @@ module ExecutionEngine: sig
   val data_layout : t -> Llvm_target.DataLayout.t
 end
 
+(** [initialize_native_target ()] initializes the native target corresponding
+    to the host. Returns [true] if initialization is {b not} done. *)
 val initialize_native_target : unit -> bool

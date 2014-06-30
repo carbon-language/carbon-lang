@@ -1051,12 +1051,12 @@ val const_lshr : llvalue -> llvalue -> llvalue
     See the method [llvm::ConstantExpr::getAShr]. *)
 val const_ashr : llvalue -> llvalue -> llvalue
 
-(** [const_gep pc indices] returns the constant [getElementPtr] of [p1] with the
+(** [const_gep pc indices] returns the constant [getElementPtr] of [pc] with the
     constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getGetElementPtr]. *)
 val const_gep : llvalue -> llvalue array -> llvalue
 
-(** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [p1]
+(** [const_in_bounds_gep pc indices] returns the constant [getElementPtr] of [pc]
     with the constant integers indices from the array [indices].
     See the method [llvm::ConstantExpr::getInBoundsGetElementPtr]. *)
 val const_in_bounds_gep : llvalue -> llvalue array -> llvalue
@@ -2360,7 +2360,7 @@ val build_insertelement : llvalue -> llvalue -> llvalue -> string ->
 val build_shufflevector : llvalue -> llvalue -> llvalue -> string ->
                                llbuilder -> llvalue
 
-(** [build_insertvalue agg idx name b] creates a
+(** [build_extractvalue agg idx name b] creates a
     [%name = extractvalue %agg, %idx]
     instruction at the position specified by the instruction builder [b].
     See the method [llvm::LLVMBuilder::CreateExtractValue]. *)
