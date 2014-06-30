@@ -54,7 +54,8 @@ public:
     ObjectForArch getNext() const { return ObjectForArch(Parent, Index + 1); }
     uint32_t getCPUType() const { return Header.cputype; }
     std::string getArchTypeName() const {
-      return Triple::getArchTypeName(MachOObjectFile::getArch(Header.cputype));
+      Triple T = MachOObjectFile::getArch(Header.cputype, Header.cpusubtype);
+      return T.getArchName();
     }
 
     ErrorOr<std::unique_ptr<ObjectFile>> getAsObjectFile() const;

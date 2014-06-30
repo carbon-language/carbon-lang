@@ -1511,6 +1511,108 @@ Triple::ArchType MachOObjectFile::getArch(uint32_t CPUType) {
   }
 }
 
+Triple MachOObjectFile::getArch(uint32_t CPUType, uint32_t CPUSubType) {
+  switch (CPUType) {
+  case MachO::CPU_TYPE_I386:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    case MachO::CPU_SUBTYPE_I386_ALL:
+      return Triple("i386-apple-darwin");
+    default:
+      return Triple();
+    }
+  case MachO::CPU_TYPE_X86_64:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    case MachO::CPU_SUBTYPE_X86_64_ALL:
+      return Triple("x86_64-apple-darwin");
+    case MachO::CPU_SUBTYPE_X86_64_H:
+      return Triple("x86_64h-apple-darwin");
+    default:
+      return Triple();
+    }
+  case MachO::CPU_TYPE_ARM:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    case MachO::CPU_SUBTYPE_ARM_V4T:
+      return Triple("armv4t-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V5TEJ:
+      return Triple("armv5e-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V6:
+      return Triple("armv6-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V6M:
+      return Triple("armv6m-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V7EM:
+      return Triple("armv7em-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V7K:
+      return Triple("armv7k-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V7M:
+      return Triple("armv7m-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V7S:
+      return Triple("armv7s-apple-darwin");
+    default:
+      return Triple();
+    }
+  case MachO::CPU_TYPE_ARM64:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    case MachO::CPU_SUBTYPE_ARM64_ALL:
+      return Triple("arm64-apple-darwin");
+    default:
+      return Triple();
+    }
+  case MachO::CPU_TYPE_POWERPC:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    case MachO::CPU_SUBTYPE_POWERPC_ALL:
+      return Triple("ppc-apple-darwin");
+    default:
+      return Triple();
+    }
+  case MachO::CPU_TYPE_POWERPC64:
+    case MachO::CPU_SUBTYPE_POWERPC_ALL:
+      return Triple("ppc64-apple-darwin");
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
+    default:
+      return Triple();
+    }
+  default:
+    return Triple();
+  }
+}
+
+Triple MachOObjectFile::getHostArch() {
+  return Triple(sys::getDefaultTargetTriple());
+}
+
+Triple MachOObjectFile::getArch(StringRef ArchFlag) {
+  if (ArchFlag == "i386")
+    return Triple("i386-apple-darwin");
+  else if (ArchFlag == "x86_64")
+    return Triple("x86_64-apple-darwin");
+  else if (ArchFlag == "x86_64h")
+    return Triple("x86_64h-apple-darwin");
+  else if (ArchFlag == "armv4t" || ArchFlag == "arm")
+    return Triple("armv4t-apple-darwin");
+  else if (ArchFlag == "armv5e")
+    return Triple("armv5e-apple-darwin");
+  else if (ArchFlag == "armv6")
+    return Triple("armv6-apple-darwin");
+  else if (ArchFlag == "armv6m")
+    return Triple("armv6m-apple-darwin");
+  else if (ArchFlag == "armv7em")
+    return Triple("armv7em-apple-darwin");
+  else if (ArchFlag == "armv7k")
+    return Triple("armv7k-apple-darwin");
+  else if (ArchFlag == "armv7k")
+    return Triple("armv7m-apple-darwin");
+  else if (ArchFlag == "armv7s")
+    return Triple("armv7s-apple-darwin");
+  else if (ArchFlag == "arm64")
+    return Triple("arm64-apple-darwin");
+  else if (ArchFlag == "ppc")
+    return Triple("ppc-apple-darwin");
+  else if (ArchFlag == "ppc64")
+    return Triple("ppc64-apple-darwin");
+  else
+    return Triple();
+}
+
 unsigned MachOObjectFile::getArch() const {
   return getArch(getCPUType(this));
 }

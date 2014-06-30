@@ -1015,8 +1015,8 @@ namespace llvm {
 
     enum : uint32_t {
       // Capability bits used in the definition of cpusubtype.
-      CPU_SUB_TYPE_MASK  = 0xff000000,   // Mask for architecture bits
-      CPU_SUB_TYPE_LIB64 = 0x80000000,   // 64 bit libraries
+      CPU_SUBTYPE_MASK  = 0xff000000,   // Mask for architecture bits
+      CPU_SUBTYPE_LIB64 = 0x80000000,   // 64 bit libraries
 
       // Special CPU subtype constants.
       CPU_SUBTYPE_MULTIPLE = ~0u

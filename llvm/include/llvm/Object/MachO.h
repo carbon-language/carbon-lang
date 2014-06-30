@@ -225,6 +225,9 @@ public:
                                          StringRef &Suffix);
 
   static Triple::ArchType getArch(uint32_t CPUType);
+  static Triple getArch(uint32_t CPUType, uint32_t CPUSubType);
+  static Triple getArch(StringRef ArchFlag);
+  static Triple getHostArch();
 
   static bool classof(const Binary *v) {
     return v->isMachO();
