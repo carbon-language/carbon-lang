@@ -171,6 +171,13 @@ public:
   // string. \arg Name is assumed to be in UTF-8 encoding too.
   static Optional<std::string> GetEnv(StringRef name);
 
+  /// This function searches for an existing file in the list of directories
+  /// in a PATH like environment variable, and returns the first file found,
+  /// according to the order of the entries in the PATH like environment
+  /// variable.
+  static Optional<std::string> FindInEnvPath(const std::string& EnvName,
+                                             const std::string& FileName);
+
   /// This function returns a SmallVector containing the arguments passed from
   /// the operating system to the program.  This function expects to be handed
   /// the vector passed in from main.

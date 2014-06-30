@@ -11,9 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Process.h"
+#include "llvm/Support/Program.h"
 
 using namespace llvm;
 using namespace sys;
@@ -64,6 +67,33 @@ static volatile TimeValue DummyTimeValue = getElapsedWallTime();
 // portable.
 TimeValue self_process::get_wall_time() const {
   return getElapsedWallTime();
+}
+
+Optional<std::string> Process::FindInEnvPath(const std::string& EnvName,
+                                             const std::string& FileName)
+{
+  Optional<std::string> FoundPath;
+  Optional<std::string> OptPath = Process::GetEnv(EnvName);
+  if (!OptPath.hasValue())
+    return FoundPath;
+
+  const char EnvPathSeparatorStr[] = {EnvPathSeparator, '\0'};
+  SmallVector<StringRef, 8> Dirs;
+  SplitString(OptPath.getValue(), Dirs, EnvPathSeparatorStr);
+
+  for (const auto &Dir : Dirs) {
+    if (Dir.empty())
+      continue;
+
+    SmallString<128> FilePath(Dir);
+    path::append(FilePath, FileName);
+    if (fs::exists(Twine(FilePath))) {
+      FoundPath = FilePath.str();
+      break;
+    }
+  }
+
+  return FoundPath;
 }
 
 
