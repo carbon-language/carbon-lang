@@ -4682,6 +4682,11 @@ TEST_F(FormatTest, UnderstandsOverloadedOperators) {
   verifyFormat("Deleted &operator=(const Deleted &)&& = delete;");
   verifyGoogleFormat("Deleted& operator=(const Deleted&)& = default;");
   verifyGoogleFormat("Deleted& operator=(const Deleted&)&& = delete;");
+
+  verifyFormat("string // break\n"
+               "operator()() & {}");
+  verifyFormat("string // break\n"
+               "operator()() && {}");
 }
 
 TEST_F(FormatTest, UnderstandsNewAndDelete) {

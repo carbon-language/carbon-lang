@@ -903,7 +903,7 @@ private:
       return TT_UnaryOperator;
 
     const FormatToken *NextToken = Tok.getNextNonComment();
-    if (!NextToken)
+    if (!NextToken || NextToken->is(tok::l_brace))
       return TT_Unknown;
 
     if (PrevToken->is(tok::coloncolon) ||
