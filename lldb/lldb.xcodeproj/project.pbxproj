@@ -55,6 +55,14 @@
 		23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 23059A111958B37B007B8189 /* SBUnixSignals.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007B1960C9E60090E598 /* ProcessInfo.cpp */; };
 		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
+		233B009419610B1F0090E598 /* LinuxSignals.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008C19610B1F0090E598 /* LinuxSignals.cpp */; };
+		233B009519610B1F0090E598 /* LinuxSignals.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008D19610B1F0090E598 /* LinuxSignals.h */; };
+		233B009619610B1F0090E598 /* LinuxThread.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008E19610B1F0090E598 /* LinuxThread.cpp */; };
+		233B009719610B1F0090E598 /* LinuxThread.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008F19610B1F0090E598 /* LinuxThread.h */; };
+		233B009819610B1F0090E598 /* ProcessLinux.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009019610B1F0090E598 /* ProcessLinux.cpp */; };
+		233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009119610B1F0090E598 /* ProcessLinux.h */; };
+		233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009219610B1F0090E598 /* ProcessMonitor.cpp */; };
+		233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009319610B1F0090E598 /* ProcessMonitor.h */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		23EFE38B193D1AEC00E54E54 /* SBTypeEnumMember.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EFE38A193D1AEC00E54E54 /* SBTypeEnumMember.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -853,6 +861,14 @@
 			dstPath = "$(DEVELOPER_DIR)/usr/share/man/man1/";
 			dstSubfolderSpec = 0;
 			files = (
+				233B009819610B1F0090E598 /* ProcessLinux.cpp in CopyFiles */,
+				233B009619610B1F0090E598 /* LinuxThread.cpp in CopyFiles */,
+				233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */,
+				233B009719610B1F0090E598 /* LinuxThread.h in CopyFiles */,
+				233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */,
+				233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */,
+				233B009419610B1F0090E598 /* LinuxSignals.cpp in CopyFiles */,
+				233B009519610B1F0090E598 /* LinuxSignals.h in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
@@ -881,6 +897,17 @@
 		233B007A1960A0440090E598 /* ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessInfo.h; path = include/lldb/Target/ProcessInfo.h; sourceTree = "<group>"; };
 		233B007B1960C9E60090E598 /* ProcessInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessInfo.cpp; path = source/Target/ProcessInfo.cpp; sourceTree = "<group>"; };
 		233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessLaunchInfo.cpp; path = source/Target/ProcessLaunchInfo.cpp; sourceTree = "<group>"; };
+		233B008C19610B1F0090E598 /* LinuxSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LinuxSignals.cpp; sourceTree = "<group>"; };
+		233B008D19610B1F0090E598 /* LinuxSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LinuxSignals.h; sourceTree = "<group>"; };
+		233B008E19610B1F0090E598 /* LinuxThread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LinuxThread.cpp; sourceTree = "<group>"; };
+		233B008F19610B1F0090E598 /* LinuxThread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LinuxThread.h; sourceTree = "<group>"; };
+		233B009019610B1F0090E598 /* ProcessLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessLinux.cpp; sourceTree = "<group>"; };
+		233B009119610B1F0090E598 /* ProcessLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessLinux.h; sourceTree = "<group>"; };
+		233B009219610B1F0090E598 /* ProcessMonitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMonitor.cpp; sourceTree = "<group>"; };
+		233B009319610B1F0090E598 /* ProcessMonitor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMonitor.h; sourceTree = "<group>"; };
+		233B009D19610D6B0090E598 /* Host.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
+		233B00A1196113730090E598 /* ProcFileReader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcFileReader.cpp; sourceTree = "<group>"; };
+		233B00A2196113730090E598 /* ProcFileReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcFileReader.h; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
 		23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeEnumMember.h; path = include/lldb/API/SBTypeEnumMember.h; sourceTree = "<group>"; };
@@ -2156,6 +2183,32 @@
 			sourceTree = "<group>";
 			usesTabs = 0;
 		};
+		233B008B196106E90090E598 /* Linux */ = {
+			isa = PBXGroup;
+			children = (
+				233B008C19610B1F0090E598 /* LinuxSignals.cpp */,
+				233B008D19610B1F0090E598 /* LinuxSignals.h */,
+				233B008E19610B1F0090E598 /* LinuxThread.cpp */,
+				233B008F19610B1F0090E598 /* LinuxThread.h */,
+				233B009019610B1F0090E598 /* ProcessLinux.cpp */,
+				233B009119610B1F0090E598 /* ProcessLinux.h */,
+				233B009219610B1F0090E598 /* ProcessMonitor.cpp */,
+				233B009319610B1F0090E598 /* ProcessMonitor.h */,
+				233B00A2196113730090E598 /* ProcFileReader.h */,
+				233B00A1196113730090E598 /* ProcFileReader.cpp */,
+			);
+			path = Linux;
+			sourceTree = "<group>";
+		};
+		233B009C19610D130090E598 /* linux */ = {
+			isa = PBXGroup;
+			children = (
+				233B009D19610D6B0090E598 /* Host.cpp */,
+			);
+			name = linux;
+			path = source/Host/linux;
+			sourceTree = "<group>";
+		};
 		260C897110F57C5600BB2B04 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
@@ -2270,6 +2323,7 @@
 			children = (
 				26BC179F18C7F4CB00D2196D /* elf-core */,
 				4CEE62F71145F1C70064CF93 /* GDB Remote */,
+				233B008B196106E90090E598 /* Linux */,
 				2642FBA713D003B400ED6808 /* MacOSX-Kernel */,
 				26A527BC14E24F5F00F3A14A /* mach-core */,
 				26BC17B318C7F4FA00D2196D /* POSIX */,
@@ -3311,6 +3365,7 @@
 			isa = PBXGroup;
 			children = (
 				69A01E1A1236C5D400C660B5 /* common */,
+				233B009C19610D130090E598 /* linux */,
 				26BC7EE510F1B88100F91463 /* MacOSX */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				266F5CBB12FC846200DFCE33 /* Config.h */,
