@@ -6343,23 +6343,45 @@ static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
     APInt Value = C->getAPIntValue();
     EVT VT = N->getValueType(0);
-    APInt VM1 = Value - 1;
-    if (VM1.isPowerOf2()) {
-      // Multiplying by one more than a power of two, replace with a shift
-      // and an add.
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
-                      DAG.getConstant(VM1.logBase2(), MVT::i64));
-      return DAG.getNode(ISD::ADD, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
-    }
-    APInt VP1 = Value + 1;
-    if (VP1.isPowerOf2()) {
-      // Multiplying by one less than a power of two, replace with a shift
-      // and a subtract.
-      SDValue ShiftedVal =
-          DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
-                      DAG.getConstant(VP1.logBase2(), MVT::i64));
-      return DAG.getNode(ISD::SUB, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
+    if (Value.isNonNegative()) {
+      // (mul x, 2^N + 1) => (add (shl x, N), x)
+      APInt VM1 = Value - 1;
+      if (VM1.isPowerOf2()) {
+        SDValue ShiftedVal =
+            DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                        DAG.getConstant(VM1.logBase2(), MVT::i64));
+        return DAG.getNode(ISD::ADD, SDLoc(N), VT, ShiftedVal,
+                           N->getOperand(0));
+      }
+      // (mul x, 2^N - 1) => (sub (shl x, N), x)
+      APInt VP1 = Value + 1;
+      if (VP1.isPowerOf2()) {
+        SDValue ShiftedVal =
+            DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                        DAG.getConstant(VP1.logBase2(), MVT::i64));
+        return DAG.getNode(ISD::SUB, SDLoc(N), VT, ShiftedVal,
+                           N->getOperand(0));
+      }
+    } else {
+      // (mul x, -(2^N + 1)) => - (add (shl x, N), x)
+      APInt VNM1 = -Value - 1;
+      if (VNM1.isPowerOf2()) {
+        SDValue ShiftedVal =
+            DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                        DAG.getConstant(VNM1.logBase2(), MVT::i64));
+        SDValue Add =
+            DAG.getNode(ISD::ADD, SDLoc(N), VT, ShiftedVal, N->getOperand(0));
+        return DAG.getNode(ISD::SUB, SDLoc(N), VT, DAG.getConstant(0, VT), Add);
+      }
+      // (mul x, -(2^N - 1)) => (sub x, (shl x, N))
+      APInt VNP1 = -Value + 1;
+      if (VNP1.isPowerOf2()) {
+        SDValue ShiftedVal =
+            DAG.getNode(ISD::SHL, SDLoc(N), VT, N->getOperand(0),
+                        DAG.getConstant(VNP1.logBase2(), MVT::i64));
+        return DAG.getNode(ISD::SUB, SDLoc(N), VT, N->getOperand(0),
+                           ShiftedVal);
+      }
     }
   }
   return SDValue();
