@@ -72,7 +72,6 @@
 		233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009119610B1F0090E598 /* ProcessLinux.h */; };
 		233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009219610B1F0090E598 /* ProcessMonitor.cpp */; };
 		233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009319610B1F0090E598 /* ProcessMonitor.h */; };
-		239F5B2F19296DC500083917 /* NativeRegisterContextLinux_x86_64.h in Headers */ = {isa = PBXBuildFile; fileRef = 239F5B2E19296DC500083917 /* NativeRegisterContextLinux_x86_64.h */; };
 		23EDE3321926843600F6A132 /* NativeRegisterContext.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23EDE3311926843600F6A132 /* NativeRegisterContext.h */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -934,9 +933,9 @@
 		233B009D19610D6B0090E598 /* Host.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Host.cpp; sourceTree = "<group>"; };
 		233B00A1196113730090E598 /* ProcFileReader.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcFileReader.cpp; sourceTree = "<group>"; };
 		233B00A2196113730090E598 /* ProcFileReader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcFileReader.h; sourceTree = "<group>"; };
+		233B00A919622F3F0090E598 /* NativeRegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeRegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
+		233B00AA19622F3F0090E598 /* NativeRegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeRegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
-		239F5B2E19296DC500083917 /* NativeRegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NativeRegisterContextLinux_x86_64.h; path = Utility/NativeRegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
-		239F5B3019298D4600083917 /* NativeRegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NativeRegisterContextLinux_x86_64.cpp; path = Utility/NativeRegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
 		23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NativeRegisterContext.cpp; path = source/Target/NativeRegisterContext.cpp; sourceTree = "<group>"; };
 		23EDE3311926843600F6A132 /* NativeRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NativeRegisterContext.h; path = include/lldb/Target/NativeRegisterContext.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
@@ -2222,6 +2221,8 @@
 				233B008F19610B1F0090E598 /* LinuxThread.h */,
 				232CB62B19213AC200EF39FC /* NativeProcessLinux.cpp */,
 				232CB62C19213AC200EF39FC /* NativeProcessLinux.h */,
+				233B00AA19622F3F0090E598 /* NativeRegisterContextLinux_x86_64.h */,
+				233B00A919622F3F0090E598 /* NativeRegisterContextLinux_x86_64.cpp */,
 				232CB62D19213AC200EF39FC /* NativeThreadLinux.cpp */,
 				232CB62E19213AC200EF39FC /* NativeThreadLinux.h */,
 				233B009019610B1F0090E598 /* ProcessLinux.cpp */,
@@ -2918,6 +2919,7 @@
 				B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */,
 				23059A0519532B96007B8189 /* LinuxSignals.cpp */,
 				23059A0619532B96007B8189 /* LinuxSignals.h */,
+				23173F8B192BA93F005C708F /* lldb-x86-register-enums.h */,
 				26474C9E18D0CAEC0073DEBA /* RegisterContext_mips64.h */,
 				26474C9F18D0CAEC0073DEBA /* RegisterContext_x86.h */,
 				26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */,
@@ -2963,6 +2965,7 @@
 				26474CC818D0CB5B0073DEBA /* RegisterContextPOSIX.h */,
 				26CA979F172B1FD5005DC71B /* RegisterContextThreadMemory.cpp */,
 				26CA97A0172B1FD5005DC71B /* RegisterContextThreadMemory.h */,
+				23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */,
 				26474CD018D0CB700073DEBA /* RegisterInfos_i386.h */,
 				26474CD118D0CB710073DEBA /* RegisterInfos_mips64.h */,
 				26474CD218D0CB710073DEBA /* RegisterInfos_x86_64.h */,
@@ -2974,10 +2977,6 @@
 				AF68D3301255A110002FF25B /* UnwindLLDB.h */,
 				26E3EEE411A9901300FBADB6 /* UnwindMacOSXFrameBackchain.h */,
 				26E3EEE311A9901300FBADB6 /* UnwindMacOSXFrameBackchain.cpp */,
-				23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */,
-				239F5B2E19296DC500083917 /* NativeRegisterContextLinux_x86_64.h */,
-				239F5B3019298D4600083917 /* NativeRegisterContextLinux_x86_64.cpp */,
-				23173F8B192BA93F005C708F /* lldb-x86-register-enums.h */,
 			);
 			name = Utility;
 			sourceTree = "<group>";
@@ -4202,7 +4201,6 @@
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
-				239F5B2F19296DC500083917 /* NativeRegisterContextLinux_x86_64.h in Headers */,
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
 				26491E3B15E1DB8600CBFFC2 /* OptionValueRegex.h in Headers */,

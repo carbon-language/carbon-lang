@@ -12,12 +12,13 @@
 #include <signal.h>
 
 #include "NativeProcessLinux.h"
+#include "NativeRegisterContextLinux_x86_64.h"
+
 #include "lldb/Core/Log.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-private-log.h"
-#include "Plugins/Process/Utility/NativeRegisterContextLinux_x86_64.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_i386.h"
 #include "Plugins/Process/Utility/RegisterContextLinux_x86_64.h"
 #include "Plugins/Process/Utility/RegisterInfoInterface.h"

@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/Host/Config.h"
+
 #include "lldb/Target/ProcessLaunchInfo.h"
 
 #ifndef LLDB_DISABLE_POSIX

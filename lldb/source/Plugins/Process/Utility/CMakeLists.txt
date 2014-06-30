@@ -9,7 +9,6 @@ add_lldb_library(lldbPluginProcessUtility
   HistoryUnwind.cpp
   InferiorCallPOSIX.cpp
   LinuxSignals.cpp
-  NativeRegisterContextLinux_x86_64.cpp
   RegisterContextDarwin_arm.cpp
   RegisterContextDarwin_arm64.cpp
   RegisterContextDarwin_i386.cpp

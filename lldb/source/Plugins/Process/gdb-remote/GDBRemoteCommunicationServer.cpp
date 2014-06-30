@@ -15,6 +15,8 @@
 // C Includes
 // C++ Includes
 #include <cstring>
+#include <chrono>
+#include <thread>
 
 // Other libraries and framework includes
 #include "llvm/ADT/Triple.h"
@@ -535,8 +537,8 @@ GDBRemoteCommunicationServer::LaunchDebugServerProcess ()
             if (log)
                 log->Printf ("GDBRemoteCommunicationServer::%s waiting for launched process to hit first stop (%d)...", __FUNCTION__, iteration++);
 
-            // FIXME use a sleep method with finer granularity.
-            sleep (1);
+            // FIXME use a finer granularity.
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
 
         if (log)
