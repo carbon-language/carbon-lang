@@ -164,6 +164,8 @@ private:
           CurrentToken->Previous->Previous->isOneOf(tok::l_paren,
                                                     tok::coloncolon))
         MightBeFunctionType = true;
+      if (CurrentToken->Previous->Type == TT_BinaryOperator)
+        Contexts.back().IsExpression = true;
       if (CurrentToken->is(tok::r_paren)) {
         if (MightBeFunctionType && CurrentToken->Next &&
             (CurrentToken->Next->is(tok::l_paren) ||

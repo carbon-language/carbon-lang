@@ -4841,6 +4841,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyIndependentOfContext("MACRO(int *i);");
   verifyIndependentOfContext("MACRO(auto *a);");
   verifyIndependentOfContext("MACRO(const A *a);");
+  verifyIndependentOfContext("MACRO('0' <= c && c <= '9');");
   // FIXME: Is there a way to make this work?
   // verifyIndependentOfContext("MACRO(A *a);");
 
