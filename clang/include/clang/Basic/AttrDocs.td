@@ -167,7 +167,7 @@ the type.
 
 The enable_if expression is evaluated as if it were the body of a
 bool-returning constexpr function declared with the arguments of the function
-it is being applied to, then called with the parameters at the callsite. If the
+it is being applied to, then called with the parameters at the call site. If the
 result is false or could not be determined through constant expression
 evaluation, then this overload will not be chosen and the provided string may
 be used in a diagnostic if the compile fails as a result.
@@ -634,7 +634,7 @@ def SetTypestateDocs : Documentation {
   let Category = DocCatConsumed;
   let Content = [{
 Annotate methods that transition an object into a new state with
-``__attribute__((set_typestate(new_state)))``.  The new new state must be
+``__attribute__((set_typestate(new_state)))``.  The new state must be
 unconsumed, consumed, or unknown.
   }];
 }
@@ -912,7 +912,7 @@ Clang implements two kinds of checks with this attribute.
    Clang implements this mostly the same way as GCC, but there is a difference
    for functions that accept a ``va_list`` argument (for example, ``vprintf``).
    GCC does not emit ``-Wformat-nonliteral`` warning for calls to such
-   fuctions.  Clang does not warn if the format string comes from a function
+   functions.  Clang does not warn if the format string comes from a function
    parameter, where the function is annotated with a compatible attribute,
    otherwise it warns.  For example:
 
