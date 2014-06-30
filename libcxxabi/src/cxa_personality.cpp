@@ -527,7 +527,7 @@ set_registers(_Unwind_Exception* unwind_exception, _Unwind_Context* context,
 static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
                         bool native_exception,
                         _Unwind_Exception *unwind_exception,
-                        _Unwind_Context *context, const uint8_t *lsda) {
+                        _Unwind_Context *context) {
     // Initialize results to found nothing but an error
     results.ttypeIndex = 0;
     results.actionRecord = 0;
@@ -566,6 +566,7 @@ static void scan_eh_tab(scan_results &results, _Unwind_Action actions,
         return;
     }
     // Start scan by getting exception table address
+    const uint8_t *lsda = (const uint8_t *)_Unwind_GetLanguageSpecificData(context);
     if (lsda == 0)
     {
         // There is no exception table
@@ -925,9 +926,7 @@ __gxx_personality_v0
     {
         // Phase 1 search:  All we're looking for in phase 1 is a handler that
         //   halts unwinding
-        scan_eh_tab(
-            results, actions, native_exception, unwind_exception, context,
-            (const uint8_t *)_Unwind_GetLanguageSpecificData(context));
+        scan_eh_tab(results, actions, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
             // Found one.  Can we cache the results somewhere to optimize phase 2?
@@ -968,10 +967,7 @@ __gxx_personality_v0
             else
             {
                 // No, do the scan again to reload the results.
-                scan_eh_tab(
-                    results, actions, native_exception,
-                    unwind_exception, context,
-                    (const uint8_t*)_Unwind_GetLanguageSpecificData(context));
+                scan_eh_tab(results, actions, native_exception, unwind_exception, context);
                 // Phase 1 told us we would find a handler.  Now in Phase 2 we
                 //   didn't find a handler.  The eh table should not be changing!
                 if (results.reason != _URC_HANDLER_FOUND)
@@ -984,9 +980,7 @@ __gxx_personality_v0
         // Either we didn't do a phase 1 search (due to forced unwinding), or
         //   phase 1 reported no catching-handlers.
         // Search for a (non-catching) cleanup
-        scan_eh_tab(
-            results, actions, native_exception, unwind_exception, context,
-            (const uint8_t*)_Unwind_GetLanguageSpecificData(context));
+        scan_eh_tab(results, actions, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
             // Found a non-catching handler.  Jump to it:
@@ -1080,9 +1074,6 @@ __gxx_personality_v0(_Unwind_State state,
     size_t NDataWords = N + 1;
 #endif
 
-    const uint8_t *lsda =
-        (const uint8_t *)_Unwind_GetLanguageSpecificData(context);
-
     // Copy the address of _Unwind_Control_Block to r12 so that
     // _Unwind_GetLanguageSpecificData() and _Unwind_GetRegionStart() can
     // return correct address.
@@ -1092,8 +1083,7 @@ __gxx_personality_v0(_Unwind_State state,
     switch (state) {
     case _US_VIRTUAL_UNWIND_FRAME:
         // Phase 1 search:  All we're looking for in phase 1 is a handler that halts unwinding
-        scan_eh_tab(results, _UA_SEARCH_PHASE, native_exception,
-                    unwind_exception, context, lsda);
+        scan_eh_tab(results, _UA_SEARCH_PHASE, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
             unwind_exception->barrier_cache.sp = _Unwind_GetGR(context, REG_SP);
@@ -1121,7 +1111,7 @@ __gxx_personality_v0(_Unwind_State state,
             {
                 // Search for the catching handler again for the foreign exception.
                 scan_eh_tab(results, static_cast<_Unwind_Action>(_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME),
-                            native_exception, unwind_exception, context, lsda);
+                            native_exception, unwind_exception, context);
                 if (results.reason != _URC_HANDLER_FOUND)  // phase1 search should guarantee to find one
                     call_terminate(native_exception, unwind_exception);
             }
@@ -1134,8 +1124,7 @@ __gxx_personality_v0(_Unwind_State state,
         // Either we didn't do a phase 1 search (due to forced unwinding), or
         //  phase 1 reported no catching-handlers.
         // Search for a (non-catching) cleanup
-        scan_eh_tab(results, _UA_CLEANUP_PHASE, native_exception,
-                    unwind_exception, context, lsda);
+        scan_eh_tab(results, _UA_CLEANUP_PHASE, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
             // Found a non-catching handler
