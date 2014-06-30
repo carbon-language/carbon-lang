@@ -195,6 +195,7 @@ Atom::Scope atomScope(uint8_t scope) {
   switch (scope) {
   case N_EXT:
     return Atom::scopeGlobal;
+  case N_PEXT:
   case N_PEXT | N_EXT:
     return Atom::scopeLinkageUnit;
   case 0:
@@ -602,6 +603,19 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   return std::unique_ptr<File>(std::move(file));
 }
 
+ErrorOr<std::unique_ptr<lld::File>>
+normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
+                       bool copyRefs) {
+  std::unique_ptr<MachODylibFile> file(new MachODylibFile(path));
+
+  for (auto &sym : normalizedFile.globalSymbols) {
+    assert((sym.scope & N_EXT) && "only expect external symbols here");
+    file->addSharedLibraryAtom(sym.name, copyRefs);
+  }
+
+  return std::unique_ptr<File>(std::move(file));
+}
+
 } // anonymous namespace
 
 namespace normalized {
@@ -634,6 +648,8 @@ ErrorOr<std::unique_ptr<lld::File>>
 normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                   bool copyRefs) {
   switch (normalizedFile.fileType) {
+  case MH_DYLIB:
+    return normalizedDylibToAtoms(normalizedFile, path, copyRefs);
   case MH_OBJECT:
     return normalizedObjectToAtoms(normalizedFile, path, copyRefs);
   default:

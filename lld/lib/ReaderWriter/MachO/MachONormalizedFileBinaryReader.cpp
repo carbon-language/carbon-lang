@@ -392,7 +392,8 @@ public:
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &mb) const override {
-    if (magic != llvm::sys::fs::file_magic::macho_object)
+    if (magic != llvm::sys::fs::file_magic::macho_object &&
+        magic != llvm::sys::fs::file_magic::macho_dynamically_linked_shared_lib)
       return false;
     if (mb.getBufferSize() < 32)
       return false;

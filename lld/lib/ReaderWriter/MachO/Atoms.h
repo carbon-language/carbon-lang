@@ -117,6 +117,48 @@ private:
   const DefinedAtom::Alignment _align;
 };
 
+class MachOSharedLibraryAtom : public SharedLibraryAtom {
+public:
+  MachOSharedLibraryAtom(const File &file, StringRef name,
+                         StringRef dylibInstallName)
+      : SharedLibraryAtom(), _file(file), _name(name),
+        _dylibInstallName(dylibInstallName) {}
+  virtual ~MachOSharedLibraryAtom() {}
+
+  virtual StringRef loadName() const override {
+    return _dylibInstallName;
+  }
+
+  virtual bool canBeNullAtRuntime() const override {
+    // FIXME: this may actually be changeable. For now, all symbols are strongly
+    // defined though.
+    return false;
+  }
+
+  virtual const File& file() const override {
+    return _file;
+  }
+
+  virtual StringRef name() const override {
+    return _name;
+  }
+
+  virtual Type type() const override {
+    // Unused in MachO (I think).
+    return Type::Unknown;
+  }
+
+  virtual uint64_t size() const override {
+    // Unused in MachO (I think)
+    return 0;
+  }
+
+private:
+  const File &_file;
+  StringRef _name;
+  StringRef _dylibInstallName;
+};
+
 
 } // mach_o
 } // lld
