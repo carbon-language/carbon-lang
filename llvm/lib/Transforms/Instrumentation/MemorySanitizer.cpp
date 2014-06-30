@@ -2272,12 +2272,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         return;
       }
 
-      // Allow only tail calls with the same types, otherwise
-      // we may have a false positive: shadow for a non-void RetVal
-      // will get propagated to a void RetVal.
-      if (Call->isTailCall() && Call->getType() != Call->getParent()->getType())
-        Call->setTailCall(false);
-
       assert(!isa<IntrinsicInst>(&I) && "intrinsics are handled elsewhere");
 
       // We are going to insert code that relies on the fact that the callee

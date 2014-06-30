@@ -825,3 +825,17 @@ entry:
 ; CHECK: store i64 16, i64* @__msan_va_arg_overflow_size_tls
 ; CHECK: call void (i32, ...)* @VAArgStructFn
 ; CHECK: ret void
+
+declare i32 @InnerTailCall(i32 %a)
+
+define void @MismatchedReturnTypeTailCall(i32 %a) {
+  %b = tail call i32 @InnerTailCall(i32 %a)
+  ret void
+}
+
+; We used to strip off the 'tail' modifier, but now that we unpoison return slot
+; shadow before the call, we don't need to anymore.
+
+; CHECK-LABEL: define void @MismatchedReturnTypeTailCall
+; CHECK: tail call i32 @InnerTailCall
+; CHECK: ret void
