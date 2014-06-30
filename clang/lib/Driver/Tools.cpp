@@ -2039,23 +2039,21 @@ static void addLsanRT(const ToolChain &TC, const ArgList &Args,
 static void addUbsanRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs, bool IsCXX,
                        bool HasOtherSanitizerRt) {
-  // Export symbols if we're not building a shared library. This allows two
-  // models: either every DSO containing ubsan-sanitized code contains the
-  // ubsan runtime, or the main executable does (or both).
-  const bool ExportSymbols = !Args.hasArg(options::OPT_shared);
+  // Do not link runtime into shared libraries.
+  if (Args.hasArg(options::OPT_shared))
+    return;
 
   // Need a copy of sanitizer_common. This could come from another sanitizer
   // runtime; if we're not including one, include our own copy.
   if (!HasOtherSanitizerRt)
     addSanitizerRTLinkFlags(TC, Args, CmdArgs, "san", true, false);
 
-  addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan", false, ExportSymbols);
+  addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan", false, true);
 
   // Only include the bits of the runtime which need a C++ ABI library if
   // we're linking in C++ mode.
   if (IsCXX)
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan_cxx", false,
-                            ExportSymbols);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan_cxx", false, true);
 }
 
 static void addDfsanRT(const ToolChain &TC, const ArgList &Args,

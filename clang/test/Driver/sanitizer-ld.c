@@ -246,7 +246,7 @@
 // CHECK-UBSAN-LINUX-SHARED: "{{.*}}ld{{(.exe)?}}"
 // CHECK-UBSAN-LINUX-SHARED-NOT: --export-dynamic
 // CHECK-UBSAN-LINUX-SHARED-NOT: --dynamic-list
-// CHECK-UBSAN-LINUX-SHARED: libclang_rt.ubsan-i386.a"
+// CHECK-UBSAN-LINUX-SHARED-NOT: libclang_rt.ubsan-i386.a"
 // CHECK-UBSAN-LINUX-SHARED-NOT: --export-dynamic
 // CHECK-UBSAN-LINUX-SHARED-NOT: --dynamic-list
 
