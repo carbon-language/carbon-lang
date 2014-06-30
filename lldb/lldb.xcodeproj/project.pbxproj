@@ -53,6 +53,8 @@
 /* Begin PBXBuildFile section */
 		23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0F1958B319007B8189 /* SBUnixSignals.cpp */; };
 		23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 23059A111958B37B007B8189 /* SBUnixSignals.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007B1960C9E60090E598 /* ProcessInfo.cpp */; };
+		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		23EFE38B193D1AEC00E54E54 /* SBTypeEnumMember.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EFE38A193D1AEC00E54E54 /* SBTypeEnumMember.cpp */; };
 		260157C61885F51C00F875CF /* libpanel.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 260157C41885F4FF00F875CF /* libpanel.dylib */; };
@@ -875,6 +877,10 @@
 /* Begin PBXFileReference section */
 		23059A0F1958B319007B8189 /* SBUnixSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBUnixSignals.cpp; path = source/API/SBUnixSignals.cpp; sourceTree = "<group>"; };
 		23059A111958B37B007B8189 /* SBUnixSignals.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBUnixSignals.h; path = include/lldb/API/SBUnixSignals.h; sourceTree = "<group>"; };
+		233B007919609DB40090E598 /* ProcessLaunchInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessLaunchInfo.h; path = include/lldb/Target/ProcessLaunchInfo.h; sourceTree = "<group>"; };
+		233B007A1960A0440090E598 /* ProcessInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = ProcessInfo.h; path = include/lldb/Target/ProcessInfo.h; sourceTree = "<group>"; };
+		233B007B1960C9E60090E598 /* ProcessInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessInfo.cpp; path = source/Target/ProcessInfo.cpp; sourceTree = "<group>"; };
+		233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessLaunchInfo.cpp; path = source/Target/ProcessLaunchInfo.cpp; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
 		23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SBTypeEnumMember.h; path = include/lldb/API/SBTypeEnumMember.h; sourceTree = "<group>"; };
@@ -3449,6 +3455,10 @@
 				495BBACB119A0DBE00418BEA /* PathMappingList.cpp */,
 				264A43BB1320B3B4005B4096 /* Platform.h */,
 				264A43BD1320BCEB005B4096 /* Platform.cpp */,
+				233B007A1960A0440090E598 /* ProcessInfo.h */,
+				233B007B1960C9E60090E598 /* ProcessInfo.cpp */,
+				233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */,
+				233B007919609DB40090E598 /* ProcessLaunchInfo.h */,
 				26BC7DF310F1B81A00F91463 /* Process.h */,
 				26BC7F3610F1B90C00F91463 /* Process.cpp */,
 				260A63111860FDB600FECF8E /* Queue.h */,
@@ -4610,6 +4620,7 @@
 				2689005613353E0400698AC0 /* Value.cpp in Sources */,
 				2689005713353E0400698AC0 /* ValueObject.cpp in Sources */,
 				2689005813353E0400698AC0 /* ValueObjectChild.cpp in Sources */,
+				233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */,
 				2689005913353E0400698AC0 /* ValueObjectConstResult.cpp in Sources */,
 				2689005A13353E0400698AC0 /* ValueObjectList.cpp in Sources */,
 				2689005B13353E0400698AC0 /* ValueObjectRegister.cpp in Sources */,
@@ -4704,6 +4715,7 @@
 				94D0B10C16D5535900EA9C70 /* LibCxx.cpp in Sources */,
 				268900C513353E5F00698AC0 /* DWARFDIECollection.cpp in Sources */,
 				268900C613353E5F00698AC0 /* DWARFFormValue.cpp in Sources */,
+				233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */,
 				268900C713353E5F00698AC0 /* DWARFLocationDescription.cpp in Sources */,
 				26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */,
 				268900C813353E5F00698AC0 /* DWARFLocationList.cpp in Sources */,
