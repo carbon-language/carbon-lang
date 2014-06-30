@@ -770,7 +770,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     case tok::identifier: {
       StringRef Text = FormatTok->TokenText;
-      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function") {
+      // Parse function literal unless 'function' is the first token in a line
+      // in which case this should be treated as a free-standing function.
+      if (Style.Language == FormatStyle::LK_JavaScript && Text == "function" &&
+          Line->Tokens.size() > 0) {
         tryToParseJSFunction();
         break;
       }

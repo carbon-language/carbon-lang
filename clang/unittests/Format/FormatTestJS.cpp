@@ -138,6 +138,17 @@ TEST_F(FormatTestJS, GoogScopes) {
                "});  // goog.scope");
 }
 
+TEST_F(FormatTestJS, FormatsFreestandingFunctions) {
+  verifyFormat("function outer1(a, b) {\n"
+               "  function inner1(a, b) { return a; }\n"
+               "  inner1(a, b);\n"
+               "}\n"
+               "function outer2(a, b) {\n"
+               "  function inner2(a, b) { return a; }\n"
+               "  inner2(a, b);\n"
+               "}");
+}
+
 TEST_F(FormatTestJS, FunctionLiterals) {
   verifyFormat("doFoo(function() { return 1; });");
   verifyFormat("var func = function() { return 1; };");
