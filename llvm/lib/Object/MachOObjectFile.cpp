@@ -1565,9 +1565,9 @@ Triple MachOObjectFile::getArch(uint32_t CPUType, uint32_t CPUSubType) {
       return Triple();
     }
   case MachO::CPU_TYPE_POWERPC64:
+    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
     case MachO::CPU_SUBTYPE_POWERPC_ALL:
       return Triple("ppc64-apple-darwin");
-    switch (CPUSubType & ~MachO::CPU_SUBTYPE_MASK) {
     default:
       return Triple();
     }
