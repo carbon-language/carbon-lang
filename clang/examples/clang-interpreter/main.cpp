@@ -18,6 +18,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -42,12 +43,11 @@ std::string GetExecutablePath(const char *Argv0) {
 }
 
 static int Execute(llvm::Module *Mod, char * const *envp) {
-  // To JIT instead of interpreting, call llvm::InitializeNativeTarget() here
-  // and pass ForceInterpreter=false to ExecutionEngine::create().
+  llvm::InitializeNativeTarget();
 
   std::string Error;
   std::unique_ptr<llvm::ExecutionEngine> EE(
-      llvm::ExecutionEngine::create(Mod, /*ForceInterpreter*/ true, &Error));
+      llvm::ExecutionEngine::create(Mod, /*ForceInterpreter*/ false, &Error));
   if (!EE) {
     llvm::errs() << "unable to make execution engine: " << Error << "\n";
     return 255;
