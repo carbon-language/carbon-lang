@@ -10,7 +10,8 @@
 ;   return sum + sth;
 ; }
 ;
-; CHECK-NOT: Reduction like: 1
+; CHECK-NOT: Reduction Type: ADD
+; CHECK-NOT: Reduction Type: MUL
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 define i32 @f() {

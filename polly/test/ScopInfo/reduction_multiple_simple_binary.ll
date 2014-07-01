@@ -1,30 +1,30 @@
 ; RUN: opt -basicaa %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[1 + i0] };
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[i0] };
-; CHECK: MustWriteAccess :=  [Reduction like: 0]
+; CHECK: MustWriteAccess :=  [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_first[0] };
-; CHECK: ReadAccess :=       [Reduction like: 1]
+; CHECK: ReadAccess :=       [Reduction Type: ADD
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
-; CHECK: MustWriteAccess :=  [Reduction like: 1]
+; CHECK: MustWriteAccess :=  [Reduction Type: ADD
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[-1 + i0] };
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[i0] };
-; CHECK: MustWriteAccess :=  [Reduction like: 0]
+; CHECK: MustWriteAccess :=  [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_middle[0] };
-; CHECK: ReadAccess :=       [Reduction like: 1]
+; CHECK: ReadAccess :=       [Reduction Type: MUL
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_prod[0] };
-; CHECK: MustWriteAccess :=  [Reduction like: 1]
+; CHECK: MustWriteAccess :=  [Reduction Type: MUL
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_prod[0] };
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[-1 + i0] };
-; CHECK: ReadAccess :=       [Reduction like: 0]
+; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[1 + i0] };
-; CHECK: MustWriteAccess :=  [Reduction like: 0]
+; CHECK: MustWriteAccess :=  [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_last[0] };
 ;
 ; int first, sum, middle, prod, last;

@@ -84,6 +84,18 @@ public:
   /// remain, if no write happens.
   enum AccessType { READ, MUST_WRITE, MAY_WRITE };
 
+  /// @brief Reduction access type
+  ///
+  /// Commutative and associative binary operations suitable for reductions
+  enum ReductionType {
+    RT_NONE, ///< Indicate no reduction at all
+    RT_ADD,  ///< Addition
+    RT_MUL,  ///< Multiplication
+    RT_BOR,  ///< Bitwise Or
+    RT_BXOR, ///< Bitwise XOr
+    RT_BAND, ///< Bitwise And
+  };
+
 private:
   MemoryAccess(const MemoryAccess &) LLVM_DELETED_FUNCTION;
   const MemoryAccess &operator=(const MemoryAccess &) LLVM_DELETED_FUNCTION;
@@ -97,7 +109,7 @@ private:
   void setBaseName();
   ScopStmt *Statement;
 
-  /// @brief Flag to indicate reduction like accesses
+  /// @brief Reduction type for reduction like accesses, RT_NONE otherwise
   ///
   /// An access is reduction like if it is part of a load-store chain in which
   /// both access the same memory location (use the same LLVM-IR value
@@ -121,7 +133,7 @@ private:
   /// property is only exploited for statement instances that load from and
   /// store to the same data location. Doing so at dependence analysis time
   /// could allow us to handle the above example.
-  bool IsReductionLike = false;
+  ReductionType RedType = RT_NONE;
 
   const Instruction *Inst;
 
@@ -149,7 +161,7 @@ public:
   enum AccessType getType() { return Type; }
 
   /// @brief Is this a reduction like access?
-  bool isReductionLike() const { return IsReductionLike; }
+  bool isReductionLike() const { return RedType != RT_NONE; }
 
   /// @brief Is this a read memory access?
   bool isRead() const { return Type == MemoryAccess::READ; }
@@ -205,11 +217,14 @@ public:
   /// @brief Get the statement that contains this memory access.
   ScopStmt *getStatement() const { return Statement; }
 
+  /// @brief Get the reduction type of this access
+  ReductionType getReductionType() const { return RedType; }
+
   /// @brief Set the updated access relation read from JSCOP file.
   void setNewAccessRelation(isl_map *newAccessRelation);
 
   /// @brief Mark this a reduction like access
-  void markReductionLike() { IsReductionLike = true; }
+  void markAsReductionLike(ReductionType RT) { RedType = RT; }
 
   /// @brief Align the parameters in the access relation to the scop context
   void realignParams();
@@ -222,6 +237,9 @@ public:
   /// @brief Print the MemoryAccess to stderr.
   void dump() const;
 };
+
+llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
+                              MemoryAccess::ReductionType RT);
 
 //===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop

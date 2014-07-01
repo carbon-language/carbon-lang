@@ -30,5 +30,5 @@ return:                                           ; preds = %bb, %entry
 ; CHECK:            [N] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -1 + N };
 ; CHECK:        Scattering :=
 ; CHECK:            [N] -> { Stmt_bb[i0] -> scattering[0, i0, 0] };
-; CHECK:        MustWriteAccess := [Reduction like: 0]
+; CHECK:        MustWriteAccess := [Reduction Type: NONE]
 ; CHECK:            [N] -> { Stmt_bb[i0] -> MemRef_a[i0] };

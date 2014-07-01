@@ -10,15 +10,15 @@
 ;   }
 ; }
 ;
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: sums
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: sums
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: escape
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: sums
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: escape
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 

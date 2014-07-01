@@ -1,9 +1,9 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; CHECK: Function: f_no_fast_math
-; CHECK: Reduction like: 0
+; CHECK: Reduction Type: NONE
 ; CHECK: Function: f_fast_math
-; CHECK: Reduction like: 1
+; CHECK: Reduction Type: ADD
 ;
 ; void f(float *sum) {
 ;   for (int i = 0; i < 100; i++)

@@ -273,6 +273,36 @@ int SCEVAffinator::getLoopDepth(const Loop *L) {
   return L->getLoopDepth() - outerLoop->getLoopDepth();
 }
 
+/// @brief Return the reduction type for a given binary operator
+static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
+                                                    const Instruction *Load) {
+  if (!BinOp)
+    return MemoryAccess::RT_NONE;
+  switch (BinOp->getOpcode()) {
+  case Instruction::FAdd:
+    if (!BinOp->hasUnsafeAlgebra())
+      return MemoryAccess::RT_NONE;
+  // Fall through
+  case Instruction::Add:
+    return MemoryAccess::RT_ADD;
+  case Instruction::Or:
+    return MemoryAccess::RT_BOR;
+  case Instruction::Xor:
+    return MemoryAccess::RT_BXOR;
+  case Instruction::And:
+    return MemoryAccess::RT_BAND;
+  case Instruction::FMul:
+    if (!BinOp->hasUnsafeAlgebra())
+      return MemoryAccess::RT_NONE;
+  // Fall through
+  case Instruction::Mul:
+    if (DisableMultiplicativeReductions)
+      return MemoryAccess::RT_NONE;
+    return MemoryAccess::RT_MUL;
+  default:
+    return MemoryAccess::RT_NONE;
+  }
+}
 //===----------------------------------------------------------------------===//
 
 MemoryAccess::~MemoryAccess() {
@@ -396,6 +426,31 @@ MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement)
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
+raw_ostream &polly::operator<<(raw_ostream &OS,
+                               MemoryAccess::ReductionType RT) {
+  switch (RT) {
+  case MemoryAccess::RT_NONE:
+    OS << "NONE";
+    break;
+  case MemoryAccess::RT_ADD:
+    OS << "ADD";
+    break;
+  case MemoryAccess::RT_MUL:
+    OS << "MUL";
+    break;
+  case MemoryAccess::RT_BOR:
+    OS << "BOR";
+    break;
+  case MemoryAccess::RT_BXOR:
+    OS << "BXOR";
+    break;
+  case MemoryAccess::RT_BAND:
+    OS << "BAND";
+    break;
+  }
+  return OS;
+}
+
 void MemoryAccess::print(raw_ostream &OS) const {
   switch (Type) {
   case READ:
@@ -408,7 +463,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
     OS.indent(12) << "MayWriteAccess :=\t";
     break;
   }
-  OS << "[Reduction like: " << isReductionLike() << "]\n";
+  OS << "[Reduction Type: " << getReductionType() << "]\n";
   OS.indent(16) << getAccessRelationStr() << ";\n";
 }
 
@@ -820,10 +875,15 @@ void ScopStmt::checkForReductions() {
     if (!Valid)
       continue;
 
+    const LoadInst *Load =
+        dyn_cast<const LoadInst>(CandidatePair.first->getAccessInstruction());
+    MemoryAccess::ReductionType RT =
+        getReductionType(dyn_cast<BinaryOperator>(Load->user_back()), Load);
+
     // If no overlapping access was found we mark the load and store as
     // reduction like.
-    CandidatePair.first->markReductionLike();
-    CandidatePair.second->markReductionLike();
+    CandidatePair.first->markAsReductionLike(RT);
+    CandidatePair.second->markAsReductionLike(RT);
   }
 }
 
