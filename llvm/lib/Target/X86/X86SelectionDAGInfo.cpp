@@ -66,7 +66,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
       TargetLowering::CallLoweringInfo CLI(DAG);
       CLI.setDebugLoc(dl).setChain(Chain)
         .setCallee(CallingConv::C, Type::getVoidTy(*DAG.getContext()),
-                   DAG.getExternalSymbol(bzeroEntry, IntPtr), &Args, 0)
+                   DAG.getExternalSymbol(bzeroEntry, IntPtr), std::move(Args),
+                   0)
         .setDiscardResult();
 
       std::pair<SDValue,SDValue> CallResult = DAG.getTargetLoweringInfo().LowerCallTo(CLI);

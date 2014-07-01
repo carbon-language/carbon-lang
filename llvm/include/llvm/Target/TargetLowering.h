@@ -2111,7 +2111,7 @@ public:
     unsigned NumFixedArgs;
     CallingConv::ID CallConv;
     SDValue Callee;
-    ArgListTy *Args;
+    ArgListTy Args;
     SelectionDAG &DAG;
     SDLoc DL;
     ImmutableCallSite *CS;
@@ -2123,7 +2123,7 @@ public:
       : RetTy(nullptr), RetSExt(false), RetZExt(false), IsVarArg(false),
         IsInReg(false), DoesNotReturn(false), IsReturnValueUsed(true),
         IsTailCall(false), NumFixedArgs(-1), CallConv(CallingConv::C),
-        Args(nullptr), DAG(DAG), CS(nullptr) {}
+        DAG(DAG), CS(nullptr) {}
 
     CallLoweringInfo &setDebugLoc(SDLoc dl) {
       DL = dl;
@@ -2136,19 +2136,19 @@ public:
     }
 
     CallLoweringInfo &setCallee(CallingConv::ID CC, Type *ResultType,
-                                SDValue Target, ArgListTy *ArgsList,
+                                SDValue Target, ArgListTy &&ArgsList,
                                 unsigned FixedArgs = -1) {
       RetTy = ResultType;
       Callee = Target;
       CallConv = CC;
       NumFixedArgs =
-        (FixedArgs == static_cast<unsigned>(-1) ? Args->size() : FixedArgs);
-      Args = ArgsList;
+        (FixedArgs == static_cast<unsigned>(-1) ? Args.size() : FixedArgs);
+      Args = std::move(ArgsList);
       return *this;
     }
 
     CallLoweringInfo &setCallee(Type *ResultType, FunctionType *FTy,
-                                SDValue Target, ArgListTy *ArgsList,
+                                SDValue Target, ArgListTy &&ArgsList,
                                 ImmutableCallSite &Call) {
       RetTy = ResultType;
 
@@ -2163,7 +2163,7 @@ public:
 
       CallConv = Call.getCallingConv();
       NumFixedArgs = FTy->getNumParams();
-      Args = ArgsList;
+      Args = std::move(ArgsList);
 
       CS = &Call;
 
@@ -2206,8 +2206,7 @@ public:
     }
 
     ArgListTy &getArgs() {
-      assert(Args && "Arguments must be set before accessing them");
-      return *Args;
+      return Args;
     }
   };
 

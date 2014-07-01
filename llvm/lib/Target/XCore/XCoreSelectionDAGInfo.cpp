@@ -46,7 +46,7 @@ EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
       .setCallee(TLI.getLibcallCallingConv(RTLIB::MEMCPY),
                  Type::getVoidTy(*DAG.getContext()),
                  DAG.getExternalSymbol("__memcpy_4", TLI.getPointerTy()),
-                 &Args, 0)
+                 std::move(Args), 0)
       .setDiscardResult();
 
     std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);

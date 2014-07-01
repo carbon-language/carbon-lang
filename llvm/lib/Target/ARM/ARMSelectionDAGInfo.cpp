@@ -191,7 +191,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, SDLoc dl,
     .setCallee(TLI.getLibcallCallingConv(RTLIB::MEMSET),
                Type::getVoidTy(*DAG.getContext()),
                DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
-                                     TLI.getPointerTy()), &Args, 0)
+                                     TLI.getPointerTy()), std::move(Args), 0)
     .setDiscardResult();
 
   std::pair<SDValue,SDValue> CallResult = TLI.LowerCallTo(CLI);
