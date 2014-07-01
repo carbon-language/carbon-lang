@@ -934,6 +934,9 @@ private:
   /// Specify if TypeIdentifierMap is initialized.
   bool TypeMapInitialized;
 };
+
+DenseMap<Function *, DISubprogram> makeSubprogramMap(Module &M);
+
 } // end namespace llvm
 
 #endif

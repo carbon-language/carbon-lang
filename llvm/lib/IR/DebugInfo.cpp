@@ -1526,3 +1526,22 @@ unsigned llvm::getDebugMetadataVersionFromModule(const Module &M) {
     return 0;
   return cast<ConstantInt>(Val)->getZExtValue();
 }
+
+llvm::DenseMap<llvm::Function *, llvm::DISubprogram> llvm::makeSubprogramMap(Module &M) {
+  DenseMap<Function *, DISubprogram> R;
+
+  NamedMDNode *CU_Nodes = M.getNamedMetadata("llvm.dbg.cu");
+  if (!CU_Nodes)
+    return R;
+
+  for (MDNode *N : CU_Nodes->operands()) {
+    DICompileUnit CUNode(N);
+    DIArray SPs = CUNode.getSubprograms();
+    for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i) {
+      DISubprogram SP(SPs.getElement(i));
+      if (Function *F = SP.getFunction())
+        R.insert(std::make_pair(F, SP));
+    }
+  }
+  return R;
+}

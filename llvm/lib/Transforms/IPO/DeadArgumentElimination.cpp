@@ -150,7 +150,6 @@ namespace {
                        unsigned RetValNum = 0);
     Liveness SurveyUses(const Value *V, UseVector &MaybeLiveUses);
 
-    void CollectFunctionDIs(Module &M);
     void SurveyFunction(const Function &F);
     void MarkValue(const RetOrArg &RA, Liveness L,
                    const UseVector &MaybeLiveUses);
@@ -189,35 +188,6 @@ INITIALIZE_PASS(DAH, "deadarghaX0r",
 ///
 ModulePass *llvm::createDeadArgEliminationPass() { return new DAE(); }
 ModulePass *llvm::createDeadArgHackingPass() { return new DAH(); }
-
-/// CollectFunctionDIs - Map each function in the module to its debug info
-/// descriptor.
-void DAE::CollectFunctionDIs(Module &M) {
-  FunctionDIs.clear();
-
-  for (Module::named_metadata_iterator I = M.named_metadata_begin(),
-       E = M.named_metadata_end(); I != E; ++I) {
-    NamedMDNode &NMD = *I;
-    for (unsigned MDIndex = 0, MDNum = NMD.getNumOperands();
-         MDIndex < MDNum; ++MDIndex) {
-      MDNode *Node = NMD.getOperand(MDIndex);
-      if (!DIDescriptor(Node).isCompileUnit())
-        continue;
-      DICompileUnit CU(Node);
-      const DIArray &SPs = CU.getSubprograms();
-      for (unsigned SPIndex = 0, SPNum = SPs.getNumElements();
-           SPIndex < SPNum; ++SPIndex) {
-        DISubprogram SP(SPs.getElement(SPIndex));
-        assert((!SP || SP.isSubprogram()) &&
-          "A MDNode in subprograms of a CU should be null or a DISubprogram.");
-        if (!SP)
-          continue;
-        if (Function *F = SP.getFunction())
-          FunctionDIs[F] = SP;
-      }
-    }
-  }
-}
 
 /// DeleteDeadVarargs - If this is an function that takes a ... list, and if
 /// llvm.vastart is never called, the varargs list is dead for the function.
@@ -1101,7 +1071,7 @@ bool DAE::runOnModule(Module &M) {
   bool Changed = false;
 
   // Collect debug info descriptors for functions.
-  CollectFunctionDIs(M);
+  FunctionDIs = makeSubprogramMap(M);
 
   // First pass: Do a simple check to see if any functions can have their "..."
   // removed.  We can do this if they never call va_start.  This loop cannot be
