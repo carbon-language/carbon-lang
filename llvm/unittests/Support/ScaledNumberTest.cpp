@@ -323,9 +323,6 @@ TEST(ScaledNumberHelpersTest, compare) {
 }
 
 TEST(ScaledNumberHelpersTest, matchScales) {
-  typedef std::tuple<uint32_t, int16_t, uint32_t, int16_t> Pair32;
-  typedef std::tuple<uint64_t, int16_t, uint64_t, int16_t> Pair64;
-
 #define MATCH_SCALES(T, LDIn, LSIn, RDIn, RSIn, LDOut, RDOut, SOut)            \
   do {                                                                         \
     T LDx = LDIn;                                                              \
