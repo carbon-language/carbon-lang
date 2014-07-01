@@ -39,6 +39,7 @@
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
@@ -80,8 +81,10 @@ namespace {
     CallGraphNode *DoPromotion(Function *F,
                                SmallPtrSet<Argument*, 8> &ArgsToPromote,
                                SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
+    bool doInitialization(CallGraph &CG) override;
     /// The maximum number of elements to expand, or 0 for unlimited.
     unsigned maxElements;
+    DenseMap<Function *, DISubprogram> FunctionDIs;
   };
 }
 
@@ -604,6 +607,10 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   Function *NF = Function::Create(NFTy, F->getLinkage(), F->getName());
   NF->copyAttributesFrom(F);
 
+  // Patch the pointer to LLVM function in debug info descriptor.
+  auto DI = FunctionDIs.find(F);
+  if (DI != FunctionDIs.end())
+    DI->second.replaceFunction(NF);
   
   DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
         << "From: " << *F);
@@ -902,4 +909,9 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     F->setLinkage(Function::ExternalLinkage);
   
   return NF_CGN;
+}
+
+bool ArgPromotion::doInitialization(CallGraph &CG) {
+  FunctionDIs = makeSubprogramMap(CG.getModule());
+  return CallGraphSCCPass::doInitialization(CG);
 }
