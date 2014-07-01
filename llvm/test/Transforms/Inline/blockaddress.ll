@@ -1,8 +1,9 @@
 ; RUN: opt -inline -S < %s | FileCheck %s
 ; PR10162
 
-; Make sure the blockaddress is mapped correctly when doit is inlined
-; CHECK: store i8* blockaddress(@f, %here.i), i8** @ptr1, align 8
+; Make sure doit is not inlined since the blockaddress is taken
+; which could be unsafe
+; CHECK: store i8* blockaddress(@doit, %here), i8** %pptr, align 8
 
 @i = global i32 1, align 4
 @ptr1 = common global i8* null, align 8
