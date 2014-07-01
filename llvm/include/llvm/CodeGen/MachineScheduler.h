@@ -518,9 +518,7 @@ public:
     return Queue.begin() + idx;
   }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void dump();
-#endif
 };
 
 /// Summarize the unscheduled region.

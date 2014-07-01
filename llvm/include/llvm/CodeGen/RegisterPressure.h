@@ -434,10 +434,8 @@ protected:
   void bumpDownwardPressure(const MachineInstr *MI);
 };
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void dumpRegSetPressure(ArrayRef<unsigned> SetPressure,
                         const TargetRegisterInfo *TRI);
-#endif
 } // end namespace llvm
 
 #endif

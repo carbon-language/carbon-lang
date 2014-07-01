@@ -57,11 +57,9 @@ struct ILPValue {
     return RHS <= *this;
   }
 
-#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
   void print(raw_ostream &OS) const;
 
   void dump() const;
-#endif
 };
 
 /// \brief Compute the values of each DAG node for various metrics during DFS.
