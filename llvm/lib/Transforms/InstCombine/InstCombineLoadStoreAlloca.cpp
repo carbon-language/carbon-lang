@@ -50,99 +50,102 @@ static bool pointsToConstantGlobal(Value *V) {
 /// can optimize this.
 static bool
 isOnlyCopiedFromConstantGlobal(Value *V, MemTransferInst *&TheCopy,
-                               SmallVectorImpl<Instruction *> &ToDelete,
-                               bool IsOffset = false) {
+                               SmallVectorImpl<Instruction *> &ToDelete) {
   // We track lifetime intrinsics as we encounter them.  If we decide to go
   // ahead and replace the value with the global, this lets the caller quickly
   // eliminate the markers.
 
-  for (Use &U : V->uses()) {
-    Instruction *I = cast<Instruction>(U.getUser());
+  SmallVector<std::pair<Value *, bool>, 35> ValuesToInspect;
+  ValuesToInspect.push_back(std::make_pair(V, false));
+  while (!ValuesToInspect.empty()) {
+    auto ValuePair = ValuesToInspect.pop_back_val();
+    const bool IsOffset = ValuePair.second;
+    for (auto &U : ValuePair.first->uses()) {
+      Instruction *I = cast<Instruction>(U.getUser());
 
-    if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-      // Ignore non-volatile loads, they are always ok.
-      if (!LI->isSimple()) return false;
-      continue;
-    }
-
-    if (isa<BitCastInst>(I) || isa<AddrSpaceCastInst>(I)) {
-      // If uses of the bitcast are ok, we are ok.
-      if (!isOnlyCopiedFromConstantGlobal(I, TheCopy, ToDelete, IsOffset))
-        return false;
-      continue;
-    }
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
-      // If the GEP has all zero indices, it doesn't offset the pointer.  If it
-      // doesn't, it does.
-      if (!isOnlyCopiedFromConstantGlobal(
-              GEP, TheCopy, ToDelete, IsOffset || !GEP->hasAllZeroIndices()))
-        return false;
-      continue;
-    }
-
-    if (CallSite CS = I) {
-      // If this is the function being called then we treat it like a load and
-      // ignore it.
-      if (CS.isCallee(&U))
-        continue;
-
-      // Inalloca arguments are clobbered by the call.
-      unsigned ArgNo = CS.getArgumentNo(&U);
-      if (CS.isInAllocaArgument(ArgNo))
-        return false;
-
-      // If this is a readonly/readnone call site, then we know it is just a
-      // load (but one that potentially returns the value itself), so we can
-      // ignore it if we know that the value isn't captured.
-      if (CS.onlyReadsMemory() &&
-          (CS.getInstruction()->use_empty() || CS.doesNotCapture(ArgNo)))
-        continue;
-
-      // If this is being passed as a byval argument, the caller is making a
-      // copy, so it is only a read of the alloca.
-      if (CS.isByValArgument(ArgNo))
-        continue;
-    }
-
-    // Lifetime intrinsics can be handled by the caller.
-    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
-      if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
-          II->getIntrinsicID() == Intrinsic::lifetime_end) {
-        assert(II->use_empty() && "Lifetime markers have no result to use!");
-        ToDelete.push_back(II);
+      if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
+        // Ignore non-volatile loads, they are always ok.
+        if (!LI->isSimple()) return false;
         continue;
       }
+
+      if (isa<BitCastInst>(I) || isa<AddrSpaceCastInst>(I)) {
+        // If uses of the bitcast are ok, we are ok.
+        ValuesToInspect.push_back(std::make_pair(I, IsOffset));
+        continue;
+      }
+      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I)) {
+        // If the GEP has all zero indices, it doesn't offset the pointer. If it
+        // doesn't, it does.
+        ValuesToInspect.push_back(
+            std::make_pair(I, IsOffset || !GEP->hasAllZeroIndices()));
+        continue;
+      }
+
+      if (CallSite CS = I) {
+        // If this is the function being called then we treat it like a load and
+        // ignore it.
+        if (CS.isCallee(&U))
+          continue;
+
+        // Inalloca arguments are clobbered by the call.
+        unsigned ArgNo = CS.getArgumentNo(&U);
+        if (CS.isInAllocaArgument(ArgNo))
+          return false;
+
+        // If this is a readonly/readnone call site, then we know it is just a
+        // load (but one that potentially returns the value itself), so we can
+        // ignore it if we know that the value isn't captured.
+        if (CS.onlyReadsMemory() &&
+            (CS.getInstruction()->use_empty() || CS.doesNotCapture(ArgNo)))
+          continue;
+
+        // If this is being passed as a byval argument, the caller is making a
+        // copy, so it is only a read of the alloca.
+        if (CS.isByValArgument(ArgNo))
+          continue;
+      }
+
+      // Lifetime intrinsics can be handled by the caller.
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
+        if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+            II->getIntrinsicID() == Intrinsic::lifetime_end) {
+          assert(II->use_empty() && "Lifetime markers have no result to use!");
+          ToDelete.push_back(II);
+          continue;
+        }
+      }
+
+      // If this is isn't our memcpy/memmove, reject it as something we can't
+      // handle.
+      MemTransferInst *MI = dyn_cast<MemTransferInst>(I);
+      if (!MI)
+        return false;
+
+      // If the transfer is using the alloca as a source of the transfer, then
+      // ignore it since it is a load (unless the transfer is volatile).
+      if (U.getOperandNo() == 1) {
+        if (MI->isVolatile()) return false;
+        continue;
+      }
+
+      // If we already have seen a copy, reject the second one.
+      if (TheCopy) return false;
+
+      // If the pointer has been offset from the start of the alloca, we can't
+      // safely handle this.
+      if (IsOffset) return false;
+
+      // If the memintrinsic isn't using the alloca as the dest, reject it.
+      if (U.getOperandNo() != 0) return false;
+
+      // If the source of the memcpy/move is not a constant global, reject it.
+      if (!pointsToConstantGlobal(MI->getSource()))
+        return false;
+
+      // Otherwise, the transform is safe.  Remember the copy instruction.
+      TheCopy = MI;
     }
-
-    // If this is isn't our memcpy/memmove, reject it as something we can't
-    // handle.
-    MemTransferInst *MI = dyn_cast<MemTransferInst>(I);
-    if (!MI)
-      return false;
-
-    // If the transfer is using the alloca as a source of the transfer, then
-    // ignore it since it is a load (unless the transfer is volatile).
-    if (U.getOperandNo() == 1) {
-      if (MI->isVolatile()) return false;
-      continue;
-    }
-
-    // If we already have seen a copy, reject the second one.
-    if (TheCopy) return false;
-
-    // If the pointer has been offset from the start of the alloca, we can't
-    // safely handle this.
-    if (IsOffset) return false;
-
-    // If the memintrinsic isn't using the alloca as the dest, reject it.
-    if (U.getOperandNo() != 0) return false;
-
-    // If the source of the memcpy/move is not a constant global, reject it.
-    if (!pointsToConstantGlobal(MI->getSource()))
-      return false;
-
-    // Otherwise, the transform is safe.  Remember the copy instruction.
-    TheCopy = MI;
   }
   return true;
 }
