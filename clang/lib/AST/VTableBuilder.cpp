@@ -2446,6 +2446,9 @@ private:
 
   MethodVFTableLocationsTy MethodVFTableLocations;
 
+  /// \brief Does this class have an RTTI component?
+  bool HasRTTIComponent;
+
   /// MethodInfo - Contains information about a method in a vtable.
   /// (Used for computing 'this' pointer adjustment thunks.
   struct MethodInfo {
@@ -2576,8 +2579,9 @@ public:
         Overriders(MostDerivedClass, CharUnits(), MostDerivedClass) {
     // Only include the RTTI component if we know that we will provide a
     // definition of the vftable.
-    if (Context.getLangOpts().RTTI &&
-        !MostDerivedClass->hasAttr<DLLImportAttr>())
+    HasRTTIComponent = Context.getLangOpts().RTTI &&
+                       !MostDerivedClass->hasAttr<DLLImportAttr>();
+    if (HasRTTIComponent)
       Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
 
     LayoutVFTable();
@@ -2921,8 +2925,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     // it requires return adjustment. Insert the method info for this method.
     unsigned VBIndex =
         LastVBase ? VTables.getVBTableIndex(MostDerivedClass, LastVBase) : 0;
-    MethodInfo MI(VBIndex, Context.getLangOpts().RTTI ? Components.size() - 1
-                                                      : Components.size());
+    MethodInfo MI(VBIndex,
+                  HasRTTIComponent ? Components.size() - 1 : Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");
