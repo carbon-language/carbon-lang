@@ -836,11 +836,21 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
                !strconcat("vpcmp", Suffix,
                   "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
+    def rrik_alt : AVX512AIi8<opc, MRMSrcReg,
+               (outs KRC:$dst), (ins KRC:$mask, RC:$src1, RC:$src2, i8imm:$cc),
+               !strconcat("vpcmp", Suffix,
+                  "\t{$cc, $src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32P_RR>, EVEX_4V, EVEX_K;
     def rmi_alt : AVX512AIi8<opc, MRMSrcMem,
                (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
                !strconcat("vpcmp", Suffix,
                   "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+    def rmik_alt : AVX512AIi8<opc, MRMSrcMem,
+               (outs KRC:$dst), (ins KRC:$mask, RC:$src1, x86memop:$src2, i8imm:$cc),
+               !strconcat("vpcmp", Suffix,
+                  "\t{$cc, $src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32P_RM>, EVEX_4V, EVEX_K;
   }
 }
 
