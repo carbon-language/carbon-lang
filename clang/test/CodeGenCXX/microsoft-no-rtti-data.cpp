@@ -18,4 +18,4 @@ extern S *getS();
 
 const std::type_info &ti = typeid(*getS());
 const U &u = dynamic_cast<U &>(*getS());
-// CHECK: call i8* @__RTDynamicCast(i8* %0, i32 0, i8* bitcast ({{.*}} @"\01??_R0?AUS@@@8" to i8*), i8* bitcast ({{.*}} @"\01??_R0?AUU@@@8" to i8*), i32 1)
+// CHECK: call i8* @__RTDynamicCast(i8* %{{.+}}, i32 0, i8* bitcast ({{.*}} @"\01??_R0?AUS@@@8" to i8*), i8* bitcast ({{.*}} @"\01??_R0?AUU@@@8" to i8*), i32 1)
