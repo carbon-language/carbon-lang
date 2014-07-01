@@ -1068,6 +1068,43 @@ void foo() {
 }
 }
 
+namespace PR15677 {
+template <bool>
+struct A{};
+
+template <typename T>
+using B = A<T::value>;
+
+template <typename T>
+using B = A<!T::value>;
+// CHECK-ELIDE-NOTREE: type alias template redefinition with different types ('A<!T::value>' vs 'A<T::value>')
+
+template <int>
+struct C{};
+
+template <typename T>
+using D = C<T::value>;
+
+template <typename T>
+using D = C<T::value + 1>;
+// CHECK-ELIDE-NOTREE: type alias template redefinition with different types ('C<T::value + 1>' vs 'C<T::value>')
+
+template <typename T>
+using E = C<T::value>;
+
+template <typename T>
+using E = C<42>;
+// CHECK-ELIDE-NOTREE: type alias template redefinition with different types ('C<42>' vs 'C<T::value>')
+
+template <typename T>
+using F = C<T::value>;
+
+template <typename T>
+using F = C<21 + 21>;
+// CHECK-ELIDE-NOTREE: type alias template redefinition with different types ('C<21 + 21 aka 42>' vs 'C<T::value>')
+}
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.
