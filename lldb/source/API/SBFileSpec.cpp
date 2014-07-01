@@ -36,7 +36,7 @@ SBFileSpec::SBFileSpec (const lldb_private::FileSpec& fspec) :
 {
 }
 
-// Deprected!!!
+// Deprecated!!!
 SBFileSpec::SBFileSpec (const char *path) :
     m_opaque_ap(new FileSpec (path, true))
 {

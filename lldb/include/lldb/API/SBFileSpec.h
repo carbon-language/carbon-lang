@@ -21,7 +21,7 @@ public:
 
     SBFileSpec (const lldb::SBFileSpec &rhs);
 
-    SBFileSpec (const char *path);// Deprected, use SBFileSpec (const char *path, bool resolve)
+    SBFileSpec (const char *path);// Deprecated, use SBFileSpec (const char *path, bool resolve)
 
     SBFileSpec (const char *path, bool resolve);
 

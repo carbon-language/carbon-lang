@@ -303,7 +303,7 @@ public:
     /// returns an integer result.
     ///
     /// NOTE: only call this function when you want a true string 
-    /// comparision. If you want string equality use the, use the ==
+    /// comparison. If you want string equality use the, use the ==
     /// operator as it is much more efficient. Also if you want string
     /// inequality, use the != operator for the same reasons.
     ///
@@ -383,7 +383,7 @@ public:
     //------------------------------------------------------------------
     /// Set the C string value and its mangled counterpart.
     ///
-    /// Object files and debug sybmols often use mangled string to 
+    /// Object files and debug symbols often use mangled string to 
     /// represent the linkage name for a symbol, function or global. 
     /// The string pool can efficiently store these values and their
     /// counterparts so when we run into another instance of a mangled
@@ -406,7 +406,7 @@ public:
     /// Retrieve the mangled or demangled counterpart for a mangled
     /// or demangled ConstString.
     ///
-    /// Object files and debug sybmols often use mangled string to 
+    /// Object files and debug symbols often use mangled string to 
     /// represent the linkage name for a symbol, function or global. 
     /// The string pool can efficiently store these values and their
     /// counterparts so when we run into another instance of a mangled
@@ -478,7 +478,7 @@ public:
     //------------------------------------------------------------------
     /// Get the size in bytes of the current global string pool.
     ///
-    /// Reports the the size in bytes of all shared C string values,
+    /// Reports the size in bytes of all shared C string values,
     /// containers and any other values as a byte size for the
     /// entire string pool.
     ///

@@ -143,7 +143,7 @@ public:
     ClearAllBreakpointSites ();
 
     //------------------------------------------------------------------
-    /// Tells all the breakopint locations in this list to attempt to
+    /// Tells all the breakpoint locations in this list to attempt to
     /// resolve any possible breakpoint sites.
     //------------------------------------------------------------------
     void

@@ -263,7 +263,7 @@ DynamicLoaderMacOSXDYLD::DidSetNotificationBreakpoint() const
 
 //----------------------------------------------------------------------
 // Try and figure out where dyld is by first asking the Process
-// if it knows (which currently calls down in the the lldb::Process
+// if it knows (which currently calls down in the lldb::Process
 // to get the DYLD info (available on SnowLeopard only). If that fails,
 // then check in the default addresses.
 //----------------------------------------------------------------------
@@ -944,7 +944,7 @@ DynamicLoaderMacOSXDYLD::RemoveModulesUsingImageInfosAddress (lldb::addr_t image
             image_infos[idx].PutToLog (log);
         }
             
-        // Remove this image_infos from the m_all_image_infos.  We do the comparision by address
+        // Remove this image_infos from the m_all_image_infos.  We do the comparison by address
         // rather than by file spec because we can have many modules with the same "file spec" in the
         // case that they are modules loaded from memory.
         //
@@ -1360,7 +1360,7 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
 // On Mac OS X libobjc (the Objective-C runtime) has several critical dispatch
 // functions written in hand-written assembly, and also have hand-written unwind
 // information in the eh_frame section.  Normally we prefer analyzing the 
-// assembly instructions of a curently executing frame to unwind from that frame --
+// assembly instructions of a currently executing frame to unwind from that frame --
 // but on hand-written functions this profiling can fail.  We should use the
 // eh_frame instructions for these functions all the time.
 //

@@ -121,7 +121,7 @@ public:
     //------------------------------------------------------------------
     /// Delete a Target object from the list.
     ///
-    /// When clients are done with the Target objets, this function
+    /// When clients are done with the Target objects, this function
     /// should be called to release the memory associated with a target
     /// object.
     ///

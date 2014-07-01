@@ -189,7 +189,7 @@ public:
     /// how the base address gets displayed.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] style
     ///     The display style for the address.
@@ -215,7 +215,7 @@ public:
     /// and pointer values, reference counts, etc.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     DumpDebug (Stream *s) const;

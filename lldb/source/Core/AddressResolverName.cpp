@@ -148,7 +148,7 @@ AddressResolverName::SearchCallback
         break;
     }
 
-    // Remove any duplicates between the funcion list and the symbol list
+    // Remove any duplicates between the function list and the symbol list
     if (func_list.GetSize())
     {
         for (i = 0; i < func_list.GetSize(); i++)

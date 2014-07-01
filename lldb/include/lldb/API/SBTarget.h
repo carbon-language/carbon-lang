@@ -56,7 +56,7 @@ public:
     ///
     /// This only needs to be specified if clients wish to carefully control
     /// the exact path will be used to launch a binary. If you create a
-    /// target with a symlink, that simlink will get resolved in the target
+    /// target with a symlink, that symlink will get resolved in the target
     /// and the resolved path will get used to launch the process. Calling
     /// this function can help you still launch your process using the
     /// path of your choice.
@@ -372,7 +372,7 @@ public:
     ///     Some launch options specified by logical OR'ing 
     ///     lldb::LaunchFlags enumeration values together.
     ///
-    /// @param[in] stop_at_endtry
+    /// @param[in] stop_at_entry
     ///     If false do not stop the inferior at the entry point.
     ///
     /// @param[out]
@@ -621,7 +621,7 @@ public:
     
 
     //------------------------------------------------------------------
-    /// The the section base load addresses for all sections in a module.
+    /// Clear the section base load addresses for all sections in a module.
     /// 
     /// @param[in] module
     ///     The module to unload.

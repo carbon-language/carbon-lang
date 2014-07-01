@@ -134,7 +134,7 @@ public:
     /// @param[in] is_synchronous
     ///    If \b true the callback will be run on the private event thread
     ///    before the stop event gets reported.  If false, the callback will get
-    ///    handled on the public event thead after the stop has been posted.
+    ///    handled on the public event thread after the stop has been posted.
     ///
     /// @return
     ///    \b true if the process should stop when you hit the watchpoint.
@@ -215,7 +215,7 @@ private:
                                        // undergoing a pair of temporary disable/enable actions to avoid recursively
                                        // triggering further watchpoint events.
     uint32_t    m_disabled_count;      // Keep track of the count that the watchpoint is disabled while in ephemeral mode.
-                                       // At the end of the ephemeral mode when the watchpoint is to be enabled agian,
+                                       // At the end of the ephemeral mode when the watchpoint is to be enabled again,
                                        // we check the count, if it is more than 1, it means the user-supplied actions
                                        // actually want the watchpoint to be disabled!
     uint32_t    m_watch_read:1,        // 1 if we stop when the watched data is read from

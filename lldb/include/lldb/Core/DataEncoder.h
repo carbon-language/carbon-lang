@@ -173,7 +173,7 @@ public:
     }
 
     //------------------------------------------------------------------
-    /// Get a the data start pointer.
+    /// Get the data start pointer.
     ///
     /// @return
     ///     Returns a pointer to the first byte contained in this
@@ -234,7 +234,7 @@ public:
     ///     The size in byte of the integer to encode.
     ///
     /// @param[in] value
-    ///     The integer value to write. The least significate bytes of
+    ///     The integer value to write. The least significant bytes of
     ///     the integer value will be written if the size is less than
     ///     8 bytes.
     ///
@@ -253,7 +253,7 @@ public:
     ///     start encoding.
     ///
     /// @param[int] src
-    ///     The buffer that contains the the bytes to encode.
+    ///     The buffer that contains the bytes to encode.
     ///
     /// @param[in] src_len
     ///     The number of bytes to encode.

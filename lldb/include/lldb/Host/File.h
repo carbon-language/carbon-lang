@@ -331,7 +331,7 @@ public:
     ///
     /// @param[in/out] offset
     ///     The offset to seek to within the file relative to the 
-    ///     end of the file which gets filled in the the resulting
+    ///     end of the file which gets filled in with the resulting
     ///     absolute file offset.
     ///
     /// @param[in] error_ptr
@@ -482,7 +482,7 @@ public:
     ///
     /// Just knowing a file is a interactive isn't enough, we also need
     /// to know if the terminal has a width and height so we can do
-    /// cursor movement and other terminal maninpulations by sending
+    /// cursor movement and other terminal manipulations by sending
     /// escape sequences.
     ///
     /// @return

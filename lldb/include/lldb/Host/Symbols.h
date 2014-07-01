@@ -50,7 +50,7 @@ public:
     // Locate the object and symbol file given a module specification.
     //
     // Locating the file can try to download the file from a corporate build
-    // respository, or using any other means necessary to locate both the
+    // repository, or using any other means necessary to locate both the
     // unstripped object file and the debug symbols.  
     // The force_lookup argument controls whether the external program is called
     // unconditionally to find the symbol file, or if the user's settings are

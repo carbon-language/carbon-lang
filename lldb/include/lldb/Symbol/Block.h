@@ -29,13 +29,13 @@ namespace lldb_private {
 /// Block objects. The BlockList object contains a section offset
 /// address range, and Block objects contain one or more ranges
 /// which are offsets into that range. Blocks are can have discontiguous
-/// ranges within the BlockList adress range, and each block can
+/// ranges within the BlockList address range, and each block can
 /// contain child blocks each with their own sets of ranges.
 ///
 /// Each block has a variable list that represents local, argument, and
 /// static variables that are scoped to the block.
 ///
-/// Inlined functions are representated by attaching a
+/// Inlined functions are represented by attaching a
 /// InlineFunctionInfo shared pointer object to a block. Inlined
 /// functions are represented as named blocks.
 //----------------------------------------------------------------------
@@ -169,7 +169,7 @@ public:
     /// Dump the block contents.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] base_addr
     ///     The resolved start address of the Function's address
@@ -348,7 +348,7 @@ public:
     /// Get const accessor for any inlined function information.
     ///
     /// @return
-    ///     A comst pointer to any inlined function information, or NULL
+    ///     A const pointer to any inlined function information, or NULL
     ///     if this is a regular block.
     //------------------------------------------------------------------
     const InlineFunctionInfo*
@@ -455,7 +455,7 @@ public:
     GetRangeIndexContainingAddress (const Address& addr);
 
     //------------------------------------------------------------------
-    // Since blocks might have multiple discontiguous addresss ranges,
+    // Since blocks might have multiple discontiguous address ranges,
     // we need to be able to get at any of the address ranges in a block.
     //------------------------------------------------------------------
     bool
@@ -477,7 +477,7 @@ protected:
     collection m_children;
     RangeList m_ranges;
     lldb::InlineFunctionInfoSP m_inlineInfoSP; ///< Inlined function information.
-    lldb::VariableListSP m_variable_list_sp; ///< The variable list for all local, static and paramter variables scoped to this block.
+    lldb::VariableListSP m_variable_list_sp; ///< The variable list for all local, static and parameter variables scoped to this block.
     bool m_parsed_block_info:1,         ///< Set to true if this block and it's children have all been parsed
          m_parsed_block_variables:1,
          m_parsed_child_blocks:1;

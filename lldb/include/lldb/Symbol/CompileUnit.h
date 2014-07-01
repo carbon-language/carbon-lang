@@ -115,7 +115,7 @@ public:
     /// parse the debug information.
     ///
     /// @param[in] function_sp
-    ///     A shared pointer to the a Function object.
+    ///     A shared pointer to the Function object.
     //------------------------------------------------------------------
     void
     AddFunction(lldb::FunctionSP& function_sp);
@@ -178,7 +178,7 @@ public:
     /// Dump the compile unit contents to the stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] show_context
     ///     If \b true, variables will dump their symbol context
@@ -199,7 +199,7 @@ public:
     ///
     /// Multiple calls to this function can find all entries that match
     /// a given file and line by starting with \a start_idx equal to zero,
-    /// and calling this function back with the return valeu + 1.
+    /// and calling this function back with the return value + 1.
     ///
     /// @param[in] start_idx
     ///     The zero based index at which to start looking for matches.
@@ -377,7 +377,7 @@ public:
     ///     using a LineEntry base address will be able to be resolved.
     ///
     /// @param[out] sc_list
-    ///     A SymbolContext list class that willl get any matching
+    ///     A SymbolContext list class that will get any matching
     ///     entries appended to.
     ///
     /// @return

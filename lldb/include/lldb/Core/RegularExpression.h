@@ -119,7 +119,7 @@ public:
     RegularExpression ();
 
     //------------------------------------------------------------------
-    /// Constructor that takes a regulare expression with flags.
+    /// Constructor that takes a regular expression with flags.
     ///
     /// Constructor that compiles \a re using \a flags and stores the
     /// resulting compiled regular expression into this object.
@@ -129,7 +129,7 @@ public:
     ///     compile.
     ///
     /// @param[in] flags
-    ///     Flags that are passed the the \c regcomp() function.
+    ///     Flags that are passed to the \c regcomp() function.
     //------------------------------------------------------------------
     explicit
     RegularExpression (const char* re, int flags);
@@ -141,7 +141,7 @@ public:
     //------------------------------------------------------------------
     /// Destructor.
     ///
-    /// Any previosuly compiled regular expression contained in this
+    /// Any previously compiled regular expression contained in this
     /// object will be freed.
     //------------------------------------------------------------------
     ~RegularExpression ();
@@ -154,10 +154,10 @@ public:
     /// Compile a regular expression.
     ///
     /// Compile a regular expression using the supplied regular
-    /// expression text and flags. The compied regular expression lives
+    /// expression text and flags. The compiled regular expression lives
     /// in this object so that it can be readily used for regular
     /// expression matches. Execute() can be called after the regular
-    /// expression is compiled. Any previosuly compiled regular
+    /// expression is compiled. Any previously compiled regular
     /// expression contained in this object will be freed.
     ///
     /// @param[in] re
@@ -165,7 +165,7 @@ public:
     ///     expression to compile.
     ///
     /// @param[in] flags
-    ///     Flags that are passed the the \c regcomp() function.
+    ///     Flags that are passed to the \c regcomp() function.
     ///
     /// @return
     ///     \b true if the regular expression compiles successfully,

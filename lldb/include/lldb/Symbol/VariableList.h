@@ -60,10 +60,10 @@ public:
     AppendVariablesIfUnique(VariableList &var_list);
     
     // Returns the actual number of unique variables that were added to the
-    // list. "total_matches" will get updated with the actualy number of
+    // list. "total_matches" will get updated with the actually number of
     // matches that were found regardless of whether they were unique or not
     // to allow for error conditions when nothing is found, versus conditions
-    // where any varaibles that match "regex" were already in "var_list".
+    // where any variables that match "regex" were already in "var_list".
     size_t
     AppendVariablesIfUnique (const RegularExpression& regex, 
                              VariableList &var_list, 

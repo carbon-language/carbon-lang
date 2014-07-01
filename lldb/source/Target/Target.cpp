@@ -1047,7 +1047,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
                             "Target::SetExecutableModule (executable = '%s')",
                             executable_sp->GetFileSpec().GetPath().c_str());
 
-        m_images.Append(executable_sp); // The first image is our exectuable file
+        m_images.Append(executable_sp); // The first image is our executable file
 
         // If we haven't set an architecture yet, reset our architecture based on what we found in the executable module.
         if (!m_arch.IsValid())
@@ -1258,7 +1258,7 @@ Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len,
     SectionSP section_sp (addr.GetSection());
     if (section_sp)
     {
-        // If the contents of this section are encrypted, the on-disk file is unusuable.  Read only from live memory.
+        // If the contents of this section are encrypted, the on-disk file is unusable.  Read only from live memory.
         if (section_sp->IsEncrypted())
         {
             error.SetErrorString("section is encrypted");
@@ -1323,7 +1323,7 @@ Target::ReadMemory (const Address& addr,
         }
         else
         {
-            // We have at least one section loaded. This can be becuase
+            // We have at least one section loaded. This can be because
             // we have manually loaded some sections with "target modules load ..."
             // or because we have have a live process that has sections loaded
             // through the dynamic loader
@@ -1379,7 +1379,7 @@ Target::ReadMemory (const Address& addr,
             }
             // If the address is not section offset we have an address that
             // doesn't resolve to any address in any currently loaded shared
-            // libaries and we failed to read memory so there isn't anything
+            // libraries and we failed to read memory so there isn't anything
             // more we can do. If it is section offset, we might be able to
             // read cached memory from the object file.
             if (!resolved_addr.IsSectionOffset())
@@ -1550,7 +1550,7 @@ Target::ReadPointerFromMemory (const Address& addr,
             }
             else
             {
-                // We have at least one section loaded. This can be becuase
+                // We have at least one section loaded. This can be because
                 // we have manually loaded some sections with "target modules load ..."
                 // or because we have have a live process that has sections loaded
                 // through the dynamic loader
@@ -2727,7 +2727,7 @@ public:
     virtual const Property *
     GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
     {
-        // When gettings the value for a key from the target options, we will always
+        // When getting the value for a key from the target options, we will always
         // try and grab the setting from the current target if there is one. Else we just
         // use the one from this instance.
         if (idx == ePropertyEnvVars)

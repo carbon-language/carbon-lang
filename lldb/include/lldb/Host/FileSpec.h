@@ -249,7 +249,7 @@ public:
     /// by a directory delimiter, and the filename.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump (Stream *s) const;
@@ -486,7 +486,7 @@ public:
     /// Returns a shared pointer to a data buffer that contains all or
     /// part of the contents of a file. The data is memory mapped and
     /// will lazily page in data from the file as memory is accessed.
-    /// The data that is mappped will start \a offset bytes into the
+    /// The data that is mapped will start \a offset bytes into the
     /// file, and \a length bytes will be mapped. If \a length is
     /// greater than the number of bytes available in the file starting
     /// at \a offset, the number of bytes will be appropriately
@@ -504,7 +504,7 @@ public:
     ///     as many bytes as possible.
     ///
     /// @return
-    ///     A shared pointer to the memeory mapped data. This shared
+    ///     A shared pointer to the memory mapped data. This shared
     ///     pointer can contain a NULL DataBuffer pointer, so the contained
     ///     pointer must be checked prior to using it.
     //------------------------------------------------------------------
@@ -560,7 +560,7 @@ public:
     lldb::DataBufferSP
     ReadFileContentsAsCString(Error *error_ptr = NULL);
     //------------------------------------------------------------------
-    /// Change the file specificed with a new path.
+    /// Change the file specified with a new path.
     ///
     /// Update the contents of this object with a new path. The path will
     /// be split up into a directory and filename and stored as uniqued

@@ -34,7 +34,7 @@ namespace lldb_private {
 /// The BreakpointSite class handles the physical breakpoint that is
 /// actually inserted in the target program.  As such, it is also the
 /// one that  gets hit, when the program stops. It keeps a list of all
-/// BreakpointLocations that share this phsyical site. When the
+/// BreakpointLocations that share this physical site. When the
 /// breakpoint is hit, all the locations are informed by the breakpoint
 /// site. Breakpoint sites are owned by the process.
 //----------------------------------------------------------------------
@@ -51,7 +51,7 @@ public:
                     // and m_trap_opcode contain the saved and written opcode.
         eHardware,  // Breakpoint site is set as a hardware breakpoint
         eExternal   // Breakpoint site is managed by an external debug nub or
-                    // debug interface where memory reads trasparently will not
+                    // debug interface where memory reads transparently will not
                     // display any breakpoint opcodes.
     };
 
@@ -124,7 +124,7 @@ public:
     /// Sets whether the current breakpoint site is enabled or not
     ///
     /// @param[in] enabled
-    ///    \b true if the breakoint is enabled, \b false otherwise.
+    ///    \b true if the breakpoint is enabled, \b false otherwise.
     //------------------------------------------------------------------
     void
     SetEnabled (bool enabled);
@@ -173,7 +173,7 @@ public:
     GetNumberOfOwners ();
 
     //------------------------------------------------------------------
-    /// This method returns the the breakpoint location at index \a index
+    /// This method returns the breakpoint location at index \a index
     /// located at this breakpoint site.  The owners are listed ordinally
     /// from 0 to GetNumberOfOwners() - 1 so you can use this method to iterate
     /// over the owners

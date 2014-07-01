@@ -167,7 +167,7 @@ public:
     ///
     /// @param[in] function_stack_pointer
     ///     A pointer to the base of the function's stack frame.  This
-    ///     is used to determine whether the expession result resides in
+    ///     is used to determine whether the expression result resides in
     ///     memory that will still be valid, or whether it needs to be
     ///     treated as homeless for the purpose of future expressions.
     ///
@@ -309,7 +309,7 @@ public:
     static const Error::ValueType kNoResult = 0x1001; ///< ValueObject::GetError() returns this if there is no result from the expression.
 private:
     //------------------------------------------------------------------
-    /// Populate m_cplusplus and m_objetivec based on the environment.
+    /// Populate m_cplusplus and m_objectivec based on the environment.
     //------------------------------------------------------------------
     
     void

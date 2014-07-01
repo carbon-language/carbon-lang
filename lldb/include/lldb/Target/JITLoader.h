@@ -23,7 +23,7 @@ namespace lldb_private {
 ///
 /// Plugins of this kind listen for code generated at runtime in the 
 /// target. They are very similar to dynamic loader, with the difference
-/// that they do not have information about the the target's dyld and
+/// that they do not have information about the target's dyld and
 /// that there may be multiple JITLoader plugins per process, while 
 /// there is at most one DynamicLoader. 
 //----------------------------------------------------------------------

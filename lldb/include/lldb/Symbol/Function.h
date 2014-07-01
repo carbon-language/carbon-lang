@@ -24,7 +24,7 @@ namespace lldb_private {
 /// @class FunctionInfo Function.h "lldb/Symbol/Function.h"
 /// @brief A class that contains generic function information.
 ///
-/// This provides generic function information that gets resused between
+/// This provides generic function information that gets reused between
 /// inline functions and function types.
 //----------------------------------------------------------------------
 class FunctionInfo
@@ -94,7 +94,7 @@ public:
     /// supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump (Stream *s, bool show_fullpaths) const;
@@ -234,7 +234,7 @@ public:
     /// supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump(Stream *s, bool show_fullpaths) const;
@@ -316,14 +316,14 @@ private:
 /// (Function::m_type), and contains lexical blocks
 /// (Function::m_blocks).
 ///
-/// The function inforation is split into a few pieces:
+/// The function information is split into a few pieces:
 ///     @li The concrete instance information
 ///     @li The abstract information
 ///
 /// The abstract information is found in the function type (Type) that
 /// describes a function information, return type and parameter types.
 ///
-/// The concreate information is the address range information and
+/// The concrete information is the address range information and
 /// specific locations for an instance of this function.
 //----------------------------------------------------------------------
 class Function :
@@ -547,7 +547,7 @@ public:
     
     //------------------------------------------------------------------
     /// Get accessor for the type that describes the function
-    /// return value type, and paramter types.
+    /// return value type, and parameter types.
     ///
     /// @return
     ///     A type object pointer.
@@ -557,7 +557,7 @@ public:
 
     //------------------------------------------------------------------
     /// Get const accessor for the type that describes the function
-    /// return value type, and paramter types.
+    /// return value type, and parameter types.
     ///
     /// @return
     ///     A const type object pointer.
@@ -578,7 +578,7 @@ public:
     /// supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] show_context
     ///     If \b true, variables will dump their symbol context

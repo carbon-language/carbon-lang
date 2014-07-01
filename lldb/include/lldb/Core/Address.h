@@ -230,7 +230,7 @@ public:
     /// offset based address, and \a style lets the user choose.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] style
     ///     The display style for the address.
@@ -310,7 +310,7 @@ public:
     ///
     /// This function will first resolve its address to a load address.
     /// Then, if the address turns out to be in code address, return the
-    /// load address for a an opcode. This address object might have 
+    /// load address for an opcode. This address object might have 
     /// extra bits set (bit zero will be set to Thumb functions for an
     /// ARM target) that are required for changing the program counter
     /// and this function will remove any bits that are intended for
@@ -362,7 +362,7 @@ public:
     /// offset (for absolute addresses that have no section).
     ///
     /// @return
-    ///     Returns \b true if the the offset is valid, \b false
+    ///     Returns \b true if the offset is valid, \b false
     ///     otherwise.
     //------------------------------------------------------------------
     bool

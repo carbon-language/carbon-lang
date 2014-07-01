@@ -101,7 +101,7 @@ public:
     ///
     /// @param[in] save_process_group
     ///     If \b true, save the process group settings, else do not
-    ///     save the process group setttings for a TTY.
+    ///     save the process group settings for a TTY.
     ///
     /// @return
     ///     Returns \b true if \a fd describes a TTY and if the state

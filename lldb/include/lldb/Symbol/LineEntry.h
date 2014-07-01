@@ -59,7 +59,7 @@ struct LineEntry
     /// supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] comp_unit
     ///     The compile unit object that contains the support file
@@ -98,7 +98,7 @@ struct LineEntry
     /// line entry to the supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     ///
     /// @param[in] comp_unit
     ///     The compile unit object that contains the support file

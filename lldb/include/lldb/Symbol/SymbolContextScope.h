@@ -75,7 +75,7 @@ public:
     ~SymbolContextScope () {}
 
     //------------------------------------------------------------------
-    /// Reconstruct the object's symbolc context into \a sc.
+    /// Reconstruct the object's symbol context into \a sc.
     ///
     /// The object should fill in as much of the SymbolContext as it
     /// can so function calls that require a symbol context can be made
@@ -119,11 +119,11 @@ public:
     }
 
     //------------------------------------------------------------------
-    /// Dump the object's symbolc context to the stream \a s.
+    /// Dump the object's symbol context to the stream \a s.
     ///
     /// The object should dump its symbol context to the stream \a s.
     /// This function is widely used in the DumpDebug and verbose output
-    /// for lldb objets.
+    /// for lldb objects.
     ///
     /// @param[in] s
     ///     The stream to which to dump the object's symbol context.

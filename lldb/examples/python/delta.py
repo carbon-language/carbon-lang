@@ -68,7 +68,7 @@ def parse_log_file(file, options):
     generated using:
     (lldb) log enable --threadsafe --timestamp --file <FILE> ....
     
-    This log file will contain timestamps and this fucntion will then normalize
+    This log file will contain timestamps and this function will then normalize
     those packets to be relative to the first value timestamp that is found and
     show delta times between log lines and also keep track of how long it takes
     for GDB remote commands to make a send/receive round trip. This can be

@@ -116,8 +116,8 @@ public:
                     case 7:
                     case 8:
                     case 9:
-                        // fancy flavors that encapsulate of the the above
-                        // falvors...
+                        // fancy flavors that encapsulate of the above
+                        // flavors...
                         break;
 
                     default:
@@ -346,8 +346,8 @@ public:
                     case 7:
                     case 8:
                     case 9:
-                        // fancy flavors that encapsulate of the the above
-                        // falvors...
+                        // fancy flavors that encapsulate of the above
+                        // flavors...
                         break;
 
                     default:
@@ -1289,9 +1289,9 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                     {
                         if (load_cmd.fileoff > m_length)
                         {
-                            // We have a load command that says it extends past the end of hte file.  This is likely
+                            // We have a load command that says it extends past the end of the file.  This is likely
                             // a corrupt file.  We don't have any way to return an error condition here (this method
-                            // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                            // was likely invoked from something like ObjectFile::GetSectionList()) -- all we can do
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LC_SEGMENT_64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
@@ -1307,9 +1307,9 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                         
                         if (load_cmd.fileoff + load_cmd.filesize > m_length)
                         {
-                            // We have a load command that says it extends past the end of hte file.  This is likely
+                            // We have a load command that says it extends past the end of the file.  This is likely
                             // a corrupt file.  We don't have any way to return an error condition here (this method
-                            // was likely invokved from something like ObjectFile::GetSectionList()) -- all we can do
+                            // was likely invoked from something like ObjectFile::GetSectionList()) -- all we can do
                             // is null out the SectionList vector and if a process has been set up, dump a message
                             // to stdout.  The most common case here is core file debugging with a truncated file.
                             const char *lc_segment_name = load_cmd.cmd == LC_SEGMENT_64 ? "LC_SEGMENT_64" : "LC_SEGMENT";
@@ -1345,7 +1345,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                                           load_cmd.vmaddr,        // File VM address == addresses as they are found in the object file
                                                           load_cmd.vmsize,        // VM size in bytes of this section
                                                           load_cmd.fileoff,       // Offset to the data for this section in the file
-                                                          load_cmd.filesize,      // Size in bytes of this section as found in the the file
+                                                          load_cmd.filesize,      // Size in bytes of this section as found in the file
                                                           0,                      // Segments have no alignment information
                                                           load_cmd.flags));       // Flags for this section
 
@@ -1474,7 +1474,7 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
                                                                       sect64.addr,           // File VM address == addresses as they are found in the object file
                                                                       sect64.size,           // VM size in bytes of this section
                                                                       sect64.offset,         // Offset to the data for this section in the file
-                                                                      sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
+                                                                      sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the file
                                                                       sect64.align,
                                                                       load_cmd.flags));      // Flags for this section
                                         segment_sp->SetIsFake(true);
@@ -1971,7 +1971,7 @@ ObjectFileMachO::ParseSymtab ()
                 if (path)
                 {
                     FileSpec file_spec(path, false);
-                    // Strip the path if there is @rpath, @executanble, etc so we just use the basename
+                    // Strip the path if there is @rpath, @executable, etc so we just use the basename
                     if (path[0] == '@')
                         file_spec.GetDirectory().Clear();
                     
@@ -2195,7 +2195,7 @@ ObjectFileMachO::ParseSymtab ()
 
         const bool is_arm = (m_header.cputype == llvm::MachO::CPU_TYPE_ARM);
 
-        // lldb works best if it knows the start addresss of all functions in a module.
+        // lldb works best if it knows the start address of all functions in a module.
         // Linker symbols or debug info are normally the best source of information for start addr / size but
         // they may be stripped in a released binary.
         // Two additional sources of information exist in Mach-O binaries:
@@ -4402,7 +4402,7 @@ ObjectFileMachO::GetDependentModules (FileSpecList& files)
         lldb_private::Mutex::Locker locker(module_sp->GetMutex());
         struct load_command load_cmd;
         lldb::offset_t offset = MachHeaderSizeFromMagic(m_header.magic);
-        const bool resolve_path = false; // Don't resolve the dependend file paths since they may not reside on this system
+        const bool resolve_path = false; // Don't resolve the dependent file paths since they may not reside on this system
         uint32_t i;
         for (i=0; i<m_header.ncmds; ++i)
         {

@@ -2576,7 +2576,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (ClangASTType &clang_type)
                                     // is complete. If we don't do this, clang will crash when we
                                     // call setBases() inside of "clang_type.SetBaseClassesForClassType()"
                                     // below. Since we provide layout assistance, all ivars in this
-                                    // class and other classe will be fine, this is the best we can do
+                                    // class and other classes will be fine, this is the best we can do
                                     // short of crashing.
                                     base_class_type.StartTagDeclarationDefinition ();
                                     base_class_type.CompleteTagDeclarationDefinition ();
@@ -3111,7 +3111,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
         {
             // We have a namespace_decl that was not NULL but it contained
             // a NULL "clang::NamespaceDecl", so this means the global namespace
-            // So as long the the contained decl context DIE isn't a namespace
+            // So as long the contained decl context DIE isn't a namespace
             // we should be ok.
             if (decl_ctx_die->Tag() != DW_TAG_namespace)
                 return true;
@@ -4968,7 +4968,7 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
     if (count1 != count2)
         return false;
     
-    // Make sure the DW_TAG values match all the way back up the the
+    // Make sure the DW_TAG values match all the way back up the
     // compile unit. If they don't, then we are done.
     const DWARFDebugInfoEntry *decl_ctx_die1;
     const DWARFDebugInfoEntry *decl_ctx_die2;
@@ -6185,7 +6185,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         if (accessibility == eAccessNone && decl_ctx)
                         {
                             // Check the decl context that contains this class/struct/union.
-                            // If it is a class we must give it an accessability.
+                            // If it is a class we must give it an accessibility.
                             const clang::Decl::Kind containing_decl_kind = decl_ctx->getDeclKind();
                             if (DeclKindIsCXXClass (containing_decl_kind))
                                 accessibility = default_accessibility;
@@ -6314,7 +6314,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             // Start the definition if the class is not objective C since
                             // the underlying decls respond to isCompleteDefinition(). Objective
                             // C decls dont' respond to isCompleteDefinition() so we can't
-                            // start the declaration definition right away. For C++ classs/union/structs
+                            // start the declaration definition right away. For C++ class/union/structs
                             // we want to start the definition in case the class is needed as the
                             // declaration context for a contained class or type without the need
                             // to complete that type..
@@ -6577,7 +6577,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     const bool is_cxx_method = DeclKindIsCXXClass (containing_decl_kind);
                     // Start off static. This will be set to false in ParseChildParameters(...)
-                    // if we find a "this" paramters as the first parameter
+                    // if we find a "this" parameters as the first parameter
                     if (is_cxx_method)
                         is_static = true;
                     
@@ -7446,7 +7446,7 @@ SymbolFileDWARF::ParseVariableDIE
 
             // DWARF doesn't specify if a DW_TAG_variable is a local, global
             // or static variable, so we have to do a little digging by
-            // looking at the location of a varaible to see if it contains
+            // looking at the location of a variable to see if it contains
             // a DW_OP_addr opcode _somewhere_ in the definition. I say
             // somewhere because clang likes to combine small global variables
             // into the same symbol and have locations like:
@@ -7754,7 +7754,7 @@ SymbolFileDWARF::ParseVariables
                                 if (block == NULL)
                                 {
                                     // This must be a specification or abstract origin with 
-                                    // a concrete block couterpart in the current function. We need
+                                    // a concrete block counterpart in the current function. We need
                                     // to find the concrete block so we can correctly add the 
                                     // variable to it
                                     DWARFCompileUnit *concrete_block_die_cu = dwarf_cu;

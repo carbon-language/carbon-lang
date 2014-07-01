@@ -1135,14 +1135,14 @@ sub dump_continue_with_signal_cmd
 #----------------------------------------------------------------------
 sub dump_A_command
 {	
-	my $cmd = get_exptected_char(\@_, 'A') or print "error: incorrect command letter for argument packet, exptected 'A'\n";
+	my $cmd = get_expected_char(\@_, 'A') or print "error: incorrect command letter for argument packet, expected 'A'\n";
 	printf("set_program_arguments (\n");
 	do
 	{
 		my $arg_len = get_uint(\@_);
-		get_exptected_char(\@_, ',') or die "error: missing comma after argument length...?\n";
+		get_expected_char(\@_, ',') or die "error: missing comma after argument length...?\n";
 		my $arg_idx = get_uint(\@_);
-		get_exptected_char(\@_, ',') or die "error: missing comma after argument number...?\n";
+		get_expected_char(\@_, ',') or die "error: missing comma after argument number...?\n";
 	
 		my $arg = '';
 		my $num_hex8_bytes = $arg_len/2;
@@ -1153,7 +1153,7 @@ sub dump_A_command
 		printf("        <%3u> argv[%u] = '%s'\n", $arg_len, $arg_idx, $arg);
 		if (@_ > 0)
 		{
-			get_exptected_char(\@_, ',') or die "error: missing comma after argument argument ASCII hex bytes...?\n";
+			get_expected_char(\@_, ',') or die "error: missing comma after argument argument ASCII hex bytes...?\n";
 		}		
 	} while (@_ > 0);	
 	printf("    )\n");
@@ -1666,7 +1666,7 @@ sub get256
 }
 
 #----------------------------------------------------------------------
-# Get a an unsigned integer value by grabbing items off the front of 
+# Get an unsigned integer value by grabbing items off the front of 
 # the array stopping when a non-digit char string is encountered.
 #
 # The argument for this function needs to be a reference to an array 
@@ -1695,7 +1695,7 @@ sub get_uint
 # character doesn't match, it won't touch the array. If the first
 # character does match, it will shift it off and return it.
 #----------------------------------------------------------------------
-sub get_exptected_char
+sub get_expected_char
 {
 	my $arrayref = shift;
 	my $expected_char = shift;

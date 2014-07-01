@@ -1220,7 +1220,7 @@ public:
     //------------------------------------------------------------------
     /// Register for process and thread notifications.
     ///
-    /// Clients can register nofication callbacks by filling out a
+    /// Clients can register notification callbacks by filling out a
     /// Process::Notifications structure and calling this function.
     ///
     /// @param[in] callbacks
@@ -1236,7 +1236,7 @@ public:
     //------------------------------------------------------------------
     /// Unregister for process and thread notifications.
     ///
-    /// Clients can unregister nofication callbacks by passing a copy of
+    /// Clients can unregister notification callbacks by passing a copy of
     /// the original baton and callbacks in \a callbacks.
     ///
     /// @param[in] callbacks
@@ -1744,7 +1744,7 @@ public:
     DoSignal (int signal)
     {
         Error error;
-        error.SetErrorStringWithFormat("error: %s does not support senging signals to processes", GetPluginName().GetCString());
+        error.SetErrorStringWithFormat("error: %s does not support sending signals to processes", GetPluginName().GetCString());
         return error;
     }
 
@@ -2197,7 +2197,7 @@ public:
     ///
     /// The value contained in \a scalar will be swapped to match the
     /// byte order of the process that is being debugged. If \a size is
-    /// less than the size of scalar, the least significate \a size bytes
+    /// less than the size of scalar, the least significant \a size bytes
     /// from scalar will be written. If \a size is larger than the byte
     /// size of scalar, then the extra space will be padded with zeros
     /// and the scalar value will be placed in the least significant
@@ -3050,7 +3050,7 @@ protected:
     Broadcaster                 m_private_state_control_broadcaster; // This is the control broadcaster, used to pause, resume & stop the private state thread.
     Listener                    m_private_state_listener;     // This is the listener for the private state thread.
     Predicate<bool>             m_private_state_control_wait; /// This Predicate is used to signal that a control operation is complete.
-    lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches interal state events
+    lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches internal state events
     ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
     uint32_t                    m_process_unique_id;    ///< Each lldb_private::Process class that is created gets a unique integer ID that increments with each new instance
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.

@@ -1155,7 +1155,7 @@ protected:
 
         if (argc != 1)
         {
-            result.AppendError ("'setttings clear' takes exactly one argument");
+            result.AppendError ("'settings clear' takes exactly one argument");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }

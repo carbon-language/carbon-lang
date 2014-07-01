@@ -206,7 +206,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
 {
   SetHelpLong(
 "Timeouts:\n\
-    If the expression can be evaluated statically (without runnning code) then it will be.\n\
+    If the expression can be evaluated statically (without running code) then it will be.\n\
     Otherwise, by default the expression will run on the current thread with a short timeout:\n\
     currently .25 seconds.  If it doesn't return in that time, the evaluation will be interrupted\n\
     and resumed with all threads running.  You can use the -a option to disable retrying on all\n\

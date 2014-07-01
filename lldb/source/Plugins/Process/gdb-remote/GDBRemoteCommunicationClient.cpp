@@ -1120,7 +1120,7 @@ GDBRemoteCommunicationClient::SendAsyncSignal (int signo)
 // then the caller that requested the interrupt will want to keep the sequence
 // locked down so that no one else can send packets while the caller has control.
 // This function usually gets called when we are running and need to stop the 
-// target. It can also be used when we are running and and we need to do something
+// target. It can also be used when we are running and we need to do something
 // else (like read/write memory), so we need to interrupt the running process
 // (gdb remote protocol requires this), and do what we need to do, then resume.
 
@@ -1268,7 +1268,7 @@ int
 GDBRemoteCommunicationClient::SendArgumentsPacket (const ProcessLaunchInfo &launch_info)
 {
     // Since we don't get the send argv0 separate from the executable path, we need to
-    // make sure to use the actual exectuable path found in the launch_info...
+    // make sure to use the actual executable path found in the launch_info...
     std::vector<const char *> argv;
     FileSpec exe_file = launch_info.GetExecutableFile();
     std::string exe_path;
@@ -2924,7 +2924,7 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
                                        type, 
                                        addr, 
                                        length);
-    // Check we havent overwritten the end of the packet buffer
+    // Check we haven't overwritten the end of the packet buffer
     assert (packet_len + 1 < (int)sizeof(packet));
     StringExtractorGDBRemote response;
     // Try to send the breakpoint packet, and check that it was correctly sent
@@ -2952,7 +2952,7 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
             }
         }
     }
-    // Signal generic faliure
+    // Signal generic failure
     return UINT8_MAX;
 }
 
@@ -3578,7 +3578,7 @@ GDBRemoteCommunicationClient::SaveRegisterState (lldb::tid_t tid, uint32_t &save
 bool
 GDBRemoteCommunicationClient::RestoreRegisterState (lldb::tid_t tid, uint32_t save_id)
 {
-    // We use the "m_supports_QSaveRegisterState" variable here becuase the
+    // We use the "m_supports_QSaveRegisterState" variable here because the
     // QSaveRegisterState and QRestoreRegisterState packets must both be supported in
     // order to be useful
     if (m_supports_QSaveRegisterState == eLazyBoolNo)

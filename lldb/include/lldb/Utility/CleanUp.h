@@ -27,7 +27,7 @@ namespace lldb_utility {
 // file descriptors, opaque handles, pointers, etc). If more complex 
 // type T objects are desired, we need to probably specialize this class
 // to take "const T&" for all input T parameters. Yet if a type T is 
-// complex already it might be better to build the cleanup funcionality 
+// complex already it might be better to build the cleanup functionality 
 // into T.
 //
 // The cleanup function must take one argument that is of type T. 

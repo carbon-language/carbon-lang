@@ -176,7 +176,7 @@ public:
     //------------------------------------------------------------------
     /// Get a child value by index from a value.
     ///
-    /// Structs, unions, classes, arrays and and pointers have child
+    /// Structs, unions, classes, arrays and pointers have child
     /// values that can be access by index. 
     ///
     /// Structs and unions access child members using a zero based index
@@ -211,7 +211,7 @@ public:
     ///     The index of the child value to get
     ///
     /// @param[in] use_dynamic
-    ///     An enumeration that specifies wether to get dynamic values,
+    ///     An enumeration that specifies whether to get dynamic values,
     ///     and also if the target can be run to figure out the dynamic
     ///     type of the child value.
     ///

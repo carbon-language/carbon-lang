@@ -810,14 +810,14 @@ LoadValueFromConsecutiveGPRRegisters (ExecutionContext &exe_ctx,
         const RegisterInfo *reg_info = NULL;
         if (is_return_value)
         {
-            // We are assumging we are decoding this immediately after returning
+            // We are assuming we are decoding this immediately after returning
             // from a function call and that the address of the structure is in x8
             reg_info = reg_ctx->GetRegisterInfoByName("x8", 0);
         }
         else
         {
             // We are assuming we are stopped at the first instruction in a function
-            // and that the ABI is being respected so all paramters appear where they
+            // and that the ABI is being respected so all parameters appear where they
             // should be (functions with no external linkage can legally violate the ABI).
             if (NGRN >= 8)
                 return false;

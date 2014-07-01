@@ -883,7 +883,7 @@ GDBRemoteCommunicationServer::SendStopReplyPacketForThread (lldb::tid_t tid)
 
     // If a 'QListThreadsInStopReply' was sent to enable this feature, we
     // will send all thread IDs back in the "threads" key whose value is
-    // a listc of hex thread IDs separated by commas:
+    // a list of hex thread IDs separated by commas:
     //  "threads:10a,10b,10c;"
     // This will save the debugger from having to send a pair of qfThreadInfo
     // and qsThreadInfo packets, but it also might take a lot of room in the
@@ -1663,7 +1663,7 @@ GDBRemoteCommunicationServer::Handle_A (StringExtractorGDBRemote &packet)
                 success = false;
             else
             {
-                // Decode the argument index. We ignore this really becuase
+                // Decode the argument index. We ignore this really because
                 // who would really send down the arguments in a random order???
                 const uint32_t arg_idx = packet.GetU32(UINT32_MAX);
                 if (arg_idx == UINT32_MAX)
@@ -1834,7 +1834,7 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         Error error;
         std::string hostname;
         // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
-        // with the TMPDIR environnement variable
+        // with the TMPDIR environment variable
         packet.SetFilePos(::strlen ("qLaunchGDBServer;"));
         std::string name;
         std::string value;
@@ -1939,7 +1939,7 @@ GDBRemoteCommunicationServer::KillSpawnedProcess (lldb::pid_t pid)
             return true;
     }
 
-    // the launched process still lives.  Now try killling it again,
+    // the launched process still lives.  Now try killing it again,
     // this time with an unblockable signal.
     Host::Kill (pid, SIGKILL);
 

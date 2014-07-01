@@ -92,7 +92,7 @@ public:
     // indicates if the packet was send and any response was received
     // even in the response is UNIMPLEMENTED. If the packet failed to
     // get a response, then false is returned. This quickly tells us
-    // if we were able to connect and communicte with the remote GDB
+    // if we were able to connect and communicate with the remote GDB
     // server
     bool
     QueryNoAckModeSupported ();
@@ -233,7 +233,7 @@ public:
     /// directory for the platform process.
     ///
     /// @param[in] path
-    ///     The path to a directory to use when launching our processs
+    ///     The path to a directory to use when launching our process
     ///
     /// @return
     ///     Zero if the for success, or an error code for failure.

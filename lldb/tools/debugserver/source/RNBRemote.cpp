@@ -96,7 +96,7 @@ RNBRemote::CreatePacketTable  ()
 {
     // Step required to add new packets:
     // 1 - Add new enumeration to RNBRemote::PacketEnum
-    // 2 - Create a the RNBRemote::HandlePacket_ function if a new function is needed
+    // 2 - Create the RNBRemote::HandlePacket_ function if a new function is needed
     // 3 - Register the Packet definition with any needed callbacks in this function
     //          - If no response is needed for a command, then use NULL for the normal callback
     //          - If the packet is not supported while the target is running, use NULL for the async callback
@@ -179,14 +179,14 @@ RNBRemote::CreatePacketTable  ()
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (json_query_thread_extended_info,          &RNBRemote::HandlePacket_jThreadExtendedInfo,     NULL, "jThreadExtendedInfo", "Replies with JSON data of thread extended information."));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
-    t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specifc packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
+    t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specific packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
     t.push_back (Packet (set_logging_mode,              &RNBRemote::HandlePacket_QSetLogging            , NULL, "QSetLogging:", "Check if register packets ('g', 'G', 'p', and 'P' support having the thread ID prefix"));
     t.push_back (Packet (set_max_packet_size,           &RNBRemote::HandlePacket_QSetMaxPacketSize      , NULL, "QSetMaxPacketSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized packet gdb can handle"));
     t.push_back (Packet (set_max_payload_size,          &RNBRemote::HandlePacket_QSetMaxPayloadSize     , NULL, "QSetMaxPayloadSize:", "Tell " DEBUGSERVER_PROGRAM_NAME " the max sized payload gdb can handle"));
     t.push_back (Packet (set_environment_variable,      &RNBRemote::HandlePacket_QEnvironment           , NULL, "QEnvironment:", "Add an environment variable to the inferior's environment"));
     t.push_back (Packet (set_environment_variable_hex,  &RNBRemote::HandlePacket_QEnvironmentHexEncoded , NULL, "QEnvironmentHexEncoded:", "Add an environment variable to the inferior's environment"));
     t.push_back (Packet (set_launch_arch,               &RNBRemote::HandlePacket_QLaunchArch            , NULL, "QLaunchArch:", "Set the architecture to use when launching a process for hosts that can run multiple architecture slices from universal files."));
-    t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set wether to disable ASLR when launching the process with the set argv ('A') packet"));
+    t.push_back (Packet (set_disable_aslr,              &RNBRemote::HandlePacket_QSetDisableASLR        , NULL, "QSetDisableASLR:", "Set whether to disable ASLR when launching the process with the set argv ('A') packet"));
     t.push_back (Packet (set_stdin,                     &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDIN:", "Set the standard input for a process to be launched with the 'A' packet"));
     t.push_back (Packet (set_stdout,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDOUT:", "Set the standard output for a process to be launched with the 'A' packet"));
     t.push_back (Packet (set_stderr,                    &RNBRemote::HandlePacket_QSetSTDIO              , NULL, "QSetSTDERR:", "Set the standard error for a process to be launched with the 'A' packet"));
@@ -2123,7 +2123,7 @@ RNBRemote::HandlePacket_QEnvironmentHexEncoded (const char *p)
 
         QEnvironmentHexEncoded:VARIABLE=VALUE
 
-        The VARIABLE=VALUE part is sent hex-encoded so chracters like '#' with special
+        The VARIABLE=VALUE part is sent hex-encoded so characters like '#' with special
         meaning in the remote protocol won't break it.
     */
        
@@ -2243,7 +2243,7 @@ register_value_in_hex_fixed_width (std::ostream& ostrm,
         }
         else
         {
-            // If we fail to read a regiser value, check if it has a default
+            // If we fail to read a register value, check if it has a default
             // fail value. If it does, return this instead in case some of
             // the registers are not available on the current system.
             if (reg->nub_info.size > 0)
@@ -2349,7 +2349,7 @@ RNBRemote::SendStopReplyPacketForThread (nub_thread_t tid)
         
         // If a 'QListThreadsInStopReply' was sent to enable this feature, we
         // will send all thread IDs back in the "threads" key whose value is
-        // a listc of hex thread IDs separated by commas:
+        // a list of hex thread IDs separated by commas:
         //  "threads:10a,10b,10c;"
         // This will save the debugger from having to send a pair of qfThreadInfo
         // and qsThreadInfo packets, but it also might take a lot of room in the

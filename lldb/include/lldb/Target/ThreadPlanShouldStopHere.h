@@ -21,7 +21,7 @@ namespace lldb_private {
 // This is an interface that ThreadPlans can adopt to allow flexible modifications of the behavior
 // when a thread plan comes to a place where it would ordinarily stop.  If such modification makes
 // sense for your plan, inherit from this class, and when you would be about to stop (in your ShouldStop
-// method), call InvokeShouldStopHereCallback, passing in the frame comparision between where the step operation
+// method), call InvokeShouldStopHereCallback, passing in the frame comparison between where the step operation
 // started and where you arrived.  If it returns true, then QueueStepOutFromHere will queue the plan
 // to execute instead of stopping.
 //

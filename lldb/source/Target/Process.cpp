@@ -83,7 +83,7 @@ public:
     virtual const Property *
     GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
     {
-        // When gettings the value for a key from the process options, we will always
+        // When getting the value for a key from the process options, we will always
         // try and grab the setting from the current process if there is one. Else we just
         // use the one from this instance.
         if (exe_ctx)
@@ -1174,7 +1174,7 @@ Process::SetExitStatus (int status, const char *cstr)
 }
 
 // This static callback can be used to watch for local child processes on
-// the current host. The the child process exits, the process will be
+// the current host. The child process exits, the process will be
 // found in the global target list (we want to be completely sure that the
 // lldb_private::Process doesn't go away before we can deliver the signal.
 bool
@@ -2027,7 +2027,7 @@ Process::DisableSoftwareBreakpoint (BreakpointSite *bp_site)
         const uint8_t * const break_op = bp_site->GetTrapOpcodeBytes();
         if (break_op_size > 0)
         {
-            // Clear a software breakoint instruction
+            // Clear a software breakpoint instruction
             uint8_t curr_break_op[8];
             assert (break_op_size <= sizeof(curr_break_op));
             bool break_op_found = false;
@@ -3522,7 +3522,7 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                         break;
                     default:
                         // TODO: make this work correctly. For now always report
-                        // run if we aren't running so we don't miss any runnning
+                        // run if we aren't running so we don't miss any running
                         // events. If I run the lldb/test/thread/a.out file and
                         // break at main.cpp:58, run and hit the breakpoints on
                         // multiple threads, then somehow during the stepping over
@@ -3916,7 +3916,7 @@ Process::RunPrivateStateThread ()
             {
             case eBroadcastInternalStateControlStop:
                 exit_now = true;
-                break;      // doing any internal state managment below
+                break;      // doing any internal state management below
 
             case eBroadcastInternalStateControlPause:
                 control_only = true;

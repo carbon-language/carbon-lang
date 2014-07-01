@@ -69,7 +69,7 @@ ThreadPlanRunToAddress::ThreadPlanRunToAddress
     m_addresses (addresses),
     m_break_ids ()
 {
-    // Convert all addressses into opcode addresses to make sure we set 
+    // Convert all addresses into opcode addresses to make sure we set 
     // breakpoints at the correct address.
     Target &target = thread.GetProcess()->GetTarget();
     std::vector<lldb::addr_t>::iterator pos, end = m_addresses.end();

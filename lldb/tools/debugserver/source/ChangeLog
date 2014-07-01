@@ -433,7 +433,7 @@
 2008-12-05  Greg Clayton  <gclayton@apple.com>
 
 	* DNBDefs.h (LOG_TASK): New log bit.
-	* DNB.cpp (DNBProcessIsAlive): User newly abtracted MachTask class.
+	* DNB.cpp (DNBProcessIsAlive): User newly abstracted MachTask class.
 	(DNBProcessMemoryRead): Ditto.
 	(DNBProcessMemoryWrite): Ditto.
 	* DNBArchImpl.cpp (DNBArchMachARM::EnableHardwareSingleStep): Ditto.
@@ -446,7 +446,7 @@
 	(MachException::PortInfo::Restore): Cleaned up logging and now return an
 	error instead of the number of restored port infos.
 	* MachProcess.cpp (class MachProcess): Abstracted out all of the task_t
-	related stuff (suspend, resuyme, exception ports, exception thread, and 
+	related stuff (suspend, resume, exception ports, exception thread, and 
 	more) into a new class MachTask.
 	(MachProcess::Task): Now returns a reference to a MachTask class.
 	(MachProcess::Clear): Uses new abstracted MachTask class.
@@ -515,7 +515,7 @@
 	* arm/DBNArchImpl.cpp (DNBArchMachARM::EnableHardwareSingleStep): Log using
 	new LOG_STEP instead of LOG_BREAKPOINTS.
 	(DNBArchMachARM::SetSingleStepSoftwareBreakpoints): Ditto.
-	* MachException.cpp (MachException::Message::Dump): Log excetion header
+	* MachException.cpp (MachException::Message::Dump): Log exception header
 	and reply header on two separate lines.
 	* MachProcess.cpp (IsSBProcess): Check for NULL CFArrayRef returned from
 	SBSCopyApplicationDisplayIdentifiers for SkankPhone.
@@ -1073,7 +1073,7 @@
 
 	* RNBRemote.h: Change default for gdb's max incoming packet size to
 	reflect the real default size.
-	* RNBRemote.cpp (HandlePacket_Q): Correct the string comparisions for
+	* RNBRemote.cpp (HandlePacket_Q): Correct the string comparisons for
 	the QSetMaxPayloadSize and QSetMaxPacketSize packets.
 
 2008-02-19 Christopher Friesen <friesen@apple.com>

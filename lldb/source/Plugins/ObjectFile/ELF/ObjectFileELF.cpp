@@ -458,7 +458,7 @@ ObjectFileELF::CalculateELFNotesSegmentsCRC32 (const ProgramHeaderColl& program_
             if (segment_data.SetData(object_data, ph_offset, ph_size) != ph_size)
             {
                 // The ELF program header contained incorrect data,
-                // prabably corefile is incomplete or corrupted.
+                // probably corefile is incomplete or corrupted.
                 break;
             }
 
@@ -605,7 +605,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                                                               (file.GetByteSize()-file_offset)/1024);
 
                             // For core files - which usually don't happen to have a gnu_debuglink,
-                            // and are pretty bulky - calulating whole contents crc32 would be too much of luxury.
+                            // and are pretty bulky - calculating whole contents crc32 would be too much of luxury.
                             // Thus we will need to fallback to something simpler.
                             if (header.e_type == llvm::ELF::ET_CORE)
                             {
@@ -1242,7 +1242,7 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                                     uint32_t &gnu_debuglink_crc,
                                     ArchSpec &arch_spec)
 {
-    // Only intialize the arch_spec to okay defaults if they're not already set.
+    // Only initialize the arch_spec to okay defaults if they're not already set.
     // We'll refine this with note data as we parse the notes.
     if (arch_spec.GetTriple ().getOS () == llvm::Triple::OSType::UnknownOS)
     {

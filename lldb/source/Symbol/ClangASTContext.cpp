@@ -16,7 +16,7 @@
 // Other libraries and framework includes
 
 // Clang headers like to use NDEBUG inside of them to enable/disable debug 
-// releated features using "#ifndef NDEBUG" preprocessor blocks to do one thing
+// related features using "#ifndef NDEBUG" preprocessor blocks to do one thing
 // or another. This is bad because it means that if clang was built in release
 // mode, it assumes that you are building in release mode which is not always
 // the case. You can end up with functions that are defined as empty in header
@@ -103,7 +103,7 @@ ParseLangArgs
 {
     // FIXME: Cleanup per-file based stuff.
 
-    // Set some properties which depend soley on the input kind; it would be nice
+    // Set some properties which depend solely on the input kind; it would be nice
     // to move these to the language standard, and have the driver resolve the
     // input kind + language standard.
     if (IK == IK_Asm) {
@@ -649,7 +649,7 @@ ClangASTContext::GetBasicTypeEnumeration (const ConstString &name)
             g_type_map.Append(ConstString("__int128_t").GetCString(), eBasicTypeInt128);
             g_type_map.Append(ConstString("__uint128_t").GetCString(), eBasicTypeUnsignedInt128);
             
-            // Miscelaneous
+            // Miscellaneous
             g_type_map.Append(ConstString("bool").GetCString(), eBasicTypeBool);
             g_type_map.Append(ConstString("float").GetCString(), eBasicTypeFloat);
             g_type_map.Append(ConstString("double").GetCString(), eBasicTypeDouble);
@@ -1398,7 +1398,7 @@ check_op_param (uint32_t op_kind, bool unary, bool binary, uint32_t num_params)
     if(op_kind == OO_Call)
         return true;
     
-    // The parameter count doens't include "this"
+    // The parameter count doesn't include "this"
     if (num_params == 0)
         return unary;
     if (num_params == 1)

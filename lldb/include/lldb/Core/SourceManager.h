@@ -85,7 +85,7 @@ public:
         CalculateLineOffsets (uint32_t line = UINT32_MAX);
 
         FileSpec m_file_spec_orig;  // The original file spec that was used (can be different from m_file_spec)
-        FileSpec m_file_spec;       // The actualy file spec being used (if the target has source mappings, this might be different from m_file_spec_orig)
+        FileSpec m_file_spec;       // The actually file spec being used (if the target has source mappings, this might be different from m_file_spec_orig)
         TimeValue m_mod_time;       // Keep the modification time that this file data is valid for
         uint32_t m_source_map_mod_id; // If the target uses path remappings, be sure to clear our notion of a source file if the path modification ID changes
         lldb::DataBufferSP m_data_sp;

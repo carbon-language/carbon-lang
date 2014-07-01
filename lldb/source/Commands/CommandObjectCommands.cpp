@@ -889,7 +889,7 @@ public:
         SetHelpLong(
 "This command allows the user to create powerful regular expression commands\n"
 "with substitutions. The regular expressions and substitutions are specified\n"
-"using the regular exression substitution format of:\n"
+"using the regular expression substitution format of:\n"
 "\n"
 "    s/<regex>/<subst>/\n"
 "\n"

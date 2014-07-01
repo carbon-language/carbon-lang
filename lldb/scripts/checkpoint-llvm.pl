@@ -2,7 +2,7 @@
 
 # This script should be pointed to a valid llvm.build folder that
 # was created using the "build-llvm.pl" shell script. It will create
-# a new llvm.zip file that can be checked into the respository
+# a new llvm.zip file that can be checked into the repository
 # at lldb/llvm.zip
 
 use strict;

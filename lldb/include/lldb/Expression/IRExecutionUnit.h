@@ -456,7 +456,7 @@ private:
         //------------------------------------------------------------------
         /// Constructor
         ///
-        /// Initializes class variabes.
+        /// Initializes class variables.
         ///
         /// @param[in] name
         ///     The name of the function.
@@ -483,7 +483,7 @@ private:
     
     //----------------------------------------------------------------------
     /// @class AllocationRecord IRExecutionUnit.h "lldb/Expression/IRExecutionUnit.h"
-    /// @brief Enacpsulates a single allocation request made by the JIT.
+    /// @brief Encapsulates a single allocation request made by the JIT.
     ///
     /// Allocations made by the JIT are first queued up and then applied in
     /// bulk to the underlying process.

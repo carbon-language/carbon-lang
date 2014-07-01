@@ -99,7 +99,7 @@ public:
     virtual const Property *
     GetPropertyAtIndex (const ExecutionContext *exe_ctx, bool will_modify, uint32_t idx) const
     {
-        // When gettings the value for a key from the thread options, we will always
+        // When getting the value for a key from the thread options, we will always
         // try and grab the setting from the current thread if there is one. Else we just
         // use the one from this instance.
         if (exe_ctx)

@@ -268,7 +268,7 @@ FileSpec::FileSpec(const FileSpec* rhs) :
 }
 
 //------------------------------------------------------------------
-// Virtual destrcuctor in case anyone inherits from this class.
+// Virtual destructor in case anyone inherits from this class.
 //------------------------------------------------------------------
 FileSpec::~FileSpec()
 {
@@ -753,7 +753,7 @@ FileSpec::GetFileNameStrippingExtension () const
 // Returns a shared pointer to a data buffer that contains all or
 // part of the contents of a file. The data is memory mapped and
 // will lazily page in data from the file as memory is accessed.
-// The data that is mappped will start "file_offset" bytes into the
+// The data that is mapped will start "file_offset" bytes into the
 // file, and "file_size" bytes will be mapped. If "file_size" is
 // greater than the number of bytes available in the file starting
 // at "file_offset", the number of bytes will be appropriately

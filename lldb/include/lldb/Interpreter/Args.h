@@ -293,7 +293,7 @@ public:
     /// A copy \a arg_cstr will be made.
     ///
     /// @param[in] arg_cstr
-    ///     The argument to push on the front the the argument stack.
+    ///     The argument to push on the front of the argument stack.
     ///
     /// @param[in] quote_char
     ///     If the argument was originally quoted, put in the quote char here.
@@ -308,7 +308,7 @@ public:
     /// Parse the arguments in the contained arguments.
     ///
     /// The arguments that are consumed by the argument parsing process
-    /// will be removed from the argument vector. The arguements that
+    /// will be removed from the argument vector. The arguments that
     /// get processed start at the second argument. The first argument
     /// is assumed to be the command and will not be touched.
     ///
@@ -430,7 +430,7 @@ public:
     EncodeEscapeSequences (const char *src, std::string &dst);
 
     // ExpandEscapeSequences will change a string of possibly non-printable
-    // characters and expand them into text. So '\n' will turn into two chracters
+    // characters and expand them into text. So '\n' will turn into two characters
     // like "\n" which is suitable for human reading. When a character is not
     // printable and isn't one of the common in escape sequences listed in the
     // help for EncodeEscapeSequences, then it will be encoded as octal. Printable

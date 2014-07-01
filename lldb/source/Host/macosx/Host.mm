@@ -565,8 +565,8 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         command.PutCString(" --disable-aslr");
     
-    // We are launching on this host in a terminal. So compare the environemnt on the host
-    // to what is supplied in the launch_info. Any items that aren't in the host environemnt
+    // We are launching on this host in a terminal. So compare the environment on the host
+    // to what is supplied in the launch_info. Any items that aren't in the host environment
     // need to be sent to darwin-debug. If we send all environment entries, we might blow the
     // max command line length, so we only send user modified entries.
     const char **envp = launch_info.GetEnvironmentEntries().GetConstArgumentVector ();
@@ -660,7 +660,7 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
         {
             pid = (intptr_t)accept_thread_result;
         
-            // Wait for process to be stopped the the entry point by watching
+            // Wait for process to be stopped at the entry point by watching
             // for the process status to be set to SSTOP which indicates it it
             // SIGSTOP'ed at the entry point
             WaitForProcessToSIGSTOP (pid, 5);
@@ -1496,7 +1496,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
                 return;
             } else if (event == XPC_ERROR_CONNECTION_INVALID) {
                 // The service is invalid. Either the service name supplied to xpc_connection_create() is incorrect
-                // or we (this process) have canceled the service; we can do any cleanup of appliation state at this point.
+                // or we (this process) have canceled the service; we can do any cleanup of application state at this point.
                 // printf("Service disconnected");
                 return;
             } else {
@@ -1642,7 +1642,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
 #if !defined(__arm__) && !defined(__arm64__)
         return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
 #else
-        error.SetErrorString ("launching a processs in a new terminal is not supported on iOS devices");
+        error.SetErrorString ("launching a process in a new terminal is not supported on iOS devices");
         return error;
 #endif
     }

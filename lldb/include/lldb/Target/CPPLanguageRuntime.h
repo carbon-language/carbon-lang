@@ -136,7 +136,7 @@ public:
     static bool
     StripNamespacesFromVariableName (const char *name, const char *&base_name_start, const char *&base_name_end);
     
-    // in some cases, compilers will output different names for one same type. when tht happens, it might be impossible
+    // in some cases, compilers will output different names for one same type. when that happens, it might be impossible
     // to construct SBType objects for a valid type, because the name that is available is not the same as the name that
     // can be used as a search key in FindTypes(). the equivalents map here is meant to return possible alternative names
     // for a type through which a search can be conducted. Currently, this is only enabled for C++ but can be extended

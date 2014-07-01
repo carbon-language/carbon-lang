@@ -30,7 +30,7 @@ namespace lldb_private {
 ///
 /// The definition of this struct is itself in the body of the wrapper function,
 /// so Clang does the structure layout itself.  ASTStructExtractor reads through
-/// the AST for the wrapper funtion and finds the struct.
+/// the AST for the wrapper function and finds the struct.
 //----------------------------------------------------------------------
 class ASTStructExtractor : public clang::SemaConsumer
 {

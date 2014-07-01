@@ -162,7 +162,7 @@ MachProcess::SetProcessID(pid_t pid)
         m_pid = ::getpid ();
     else
         m_pid = pid;
-    return m_pid;    // Return actualy PID in case a zero pid was passed in
+    return m_pid;    // Return actually PID in case a zero pid was passed in
 }
 
 nub_state_t
@@ -956,7 +956,7 @@ MachProcess::DisableBreakpoint(nub_addr_t addr, bool remove)
         const uint8_t * const break_op = DNBArchProtocol::GetBreakpointOpcode (bp->ByteSize());
         if (break_op_size > 0)
         {
-            // Clear a software breakoint instruction
+            // Clear a software breakpoint instruction
             uint8_t curr_break_op[break_op_size];
             bool break_op_found = false;
 
@@ -1456,7 +1456,7 @@ MachProcess::STDIOThread(void *arg)
     // MACH_RCV_TIMEOUT option with a zero timeout to grab all other current
     // exceptions for our process. After we have received the last pending
     // exception, we will get a timeout which enables us to then notify
-    // our main thread that we have an exception bundle avaiable. We then wait
+    // our main thread that we have an exception bundle available. We then wait
     // for the main thread to tell this exception thread to start trying to get
     // exceptions messages again and we start again with a mach_msg read with
     // infinite timeout.

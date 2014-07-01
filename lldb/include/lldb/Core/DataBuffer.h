@@ -20,7 +20,7 @@ namespace lldb_private {
 /// @class DataBuffer DataBuffer.h "lldb/Core/DataBuffer.h"
 /// @brief A pure virtual protocol class for abstracted data buffers.
 ///
-/// DataBuffer is an abtract class that gets packaged into a shared pointer
+/// DataBuffer is an abstract class that gets packaged into a shared pointer
 /// that can use to implement various ways to store data (on the heap,
 /// memory mapped, cached inferior memory). It gets used by DataExtractor
 /// so many DataExtractor objects can share the same data and sub-ranges

@@ -234,7 +234,7 @@ BreakpointResolverName::SearchCallback
             if (context.module_sp)
             {
                 context.module_sp->FindFunctions (m_regex,
-                                                  !filter_by_cu, // include symbols only if we aren't filterning by CU
+                                                  !filter_by_cu, // include symbols only if we aren't filtering by CU
                                                   include_inlines, 
                                                   append, 
                                                   func_list);
@@ -264,7 +264,7 @@ BreakpointResolverName::SearchCallback
         }
     }
 
-    // Remove any duplicates between the funcion list and the symbol list
+    // Remove any duplicates between the function list and the symbol list
     SymbolContext sc;
     if (func_list.GetSize())
     {

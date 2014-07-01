@@ -25,7 +25,7 @@ class TimeValue;
 ///
 /// A class that wraps up a pthread condition (pthread_cond_t). The
 /// class will create a pthread condition when an instance is
-/// constructed, and detroy it when it is destructed. It also provides
+/// constructed, and destroy it when it is destructed. It also provides
 /// access to the standard pthread condition calls.
 //----------------------------------------------------------------------
 class Condition

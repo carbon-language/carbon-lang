@@ -71,7 +71,7 @@ RegularExpression::operator= (const RegularExpression &rhs)
 //----------------------------------------------------------------------
 // Destructor
 //
-// Any previosuly compiled regular expression contained in this
+// Any previously compiled regular expression contained in this
 // object will be freed.
 //----------------------------------------------------------------------
 RegularExpression::~RegularExpression()
@@ -81,14 +81,14 @@ RegularExpression::~RegularExpression()
 
 //----------------------------------------------------------------------
 // Compile a regular expression using the supplied regular
-// expression text and flags. The compied regular expression lives
+// expression text and flags. The compiled regular expression lives
 // in this object so that it can be readily used for regular
 // expression matches. Execute() can be called after the regular
-// expression is compiled. Any previosuly compiled regular
+// expression is compiled. Any previously compiled regular
 // expression contained in this object will be freed.
 //
 // RETURNS
-//  True of the refular expression compiles successfully, false
+//  True if the regular expression compiles successfully, false
 //  otherwise.
 //----------------------------------------------------------------------
 bool

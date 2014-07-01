@@ -628,7 +628,7 @@ public:
         Error err;
         
         // This currently holds true for all platforms we support, but we might
-        // need to change this to use get the actualy byte size of "unsigned"
+        // need to change this to use get the actually byte size of "unsigned"
         // from the target AST...
         const uint32_t unsigned_byte_size = sizeof(uint32_t);
         // Skip the prototype as we don't need it (const struct +NXMapTablePrototype *prototype)
@@ -2231,7 +2231,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
         RemoteNXMapTable hash_table;
         
         // Update the process stop ID that indicates the last time we updated the
-        // map, wether it was successful or not.
+        // map, whether it was successful or not.
         m_isa_to_descriptor_stop_id = process->GetStopID();
         
         if (!m_hash_signature.NeedsUpdate(process, this, hash_table))
@@ -2239,7 +2239,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
         
         m_hash_signature.UpdateSignature (hash_table);
 
-        // Grab the dynamicly loaded objc classes from the hash table in memory
+        // Grab the dynamically loaded objc classes from the hash table in memory
         UpdateISAToDescriptorMapDynamic(hash_table);
 
         // Now get the objc classes that are baked into the Objective C runtime

@@ -169,7 +169,7 @@ struct DWARFMappedHash
                 {
                     if (return_implementation_only_if_available)
                     {
-                        // We found the one true definiton for this class, so
+                        // We found the one true definition for this class, so
                         // only return that
                         die_offsets.clear();                        
                         die_offsets.push_back (die_info_array[i].offset);

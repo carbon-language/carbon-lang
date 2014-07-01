@@ -59,7 +59,7 @@ namespace lldb_private {
 ///
 ///     bool Communication::StartReadThread (Error *);
 ///
-/// If true is returned a read thead has been spawned that will
+/// If true is returned a read thread has been spawned that will
 /// continually execute a call to the pure virtual DoRead function:
 ///
 ///     size_t Communication::ReadFromConnection (void *, size_t, uint32_t);
@@ -300,7 +300,7 @@ public:
     //------------------------------------------------------------------
     /// The static read thread function. This function will call
     /// the "DoRead" function continuously and wait for data to become
-    /// avaialble. When data is received it will append the available
+    /// available. When data is received it will append the available
     /// data to the internal cache and broadcast a
     /// \b eBroadcastBitReadThreadGotBytes event.
     ///

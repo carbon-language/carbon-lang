@@ -393,7 +393,7 @@ protected:
     LinkOSOFileAddress (SymbolFileDWARF *oso_symfile, lldb::addr_t oso_file_addr);
             
     //------------------------------------------------------------------
-    /// Given a line table full of lines with "file adresses" that are
+    /// Given a line table full of lines with "file addresses" that are
     /// for a .o file represented by \a oso_symfile, link a new line table
     /// and return it.
     ///
@@ -405,7 +405,7 @@ protected:
     ///
     /// @return
     ///     Returns a valid line table full of linked addresses, or NULL
-    ///     if none of the line table adresses exist in the main
+    ///     if none of the line table addresses exist in the main
     ///     executable.
     //------------------------------------------------------------------
     lldb_private::LineTable *

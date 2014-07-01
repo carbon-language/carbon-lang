@@ -60,7 +60,7 @@ o make directory
   based rules to build binaries for the inferiors.
 
   By default, the built executable name is a.out, which can be overwritten by
-  specifying your EXE make variable, via the Makefile under the specfic test
+  specifying your EXE make variable, via the Makefile under the specific test
   directory or via supplying a Python dictionary to the build method in your
   Python test script.  An example of the latter can be found in
   test/lang/objc/radar-9691614/TestObjCMethodReturningBOOL.py, where:

@@ -57,7 +57,7 @@ SectionLoadHistory::GetSectionLoadListForStopID (uint32_t stop_id, bool read_onl
             if (stop_id == eStopIDNow)
             {
                 // If we are asking for the latest and greatest value, it is always
-                // at the end of our list becuase that will be the highest stop ID.
+                // at the end of our list because that will be the highest stop ID.
                 StopIDToSectionLoadList::reverse_iterator rpos = m_stop_id_to_section_load_list.rbegin();
                 return rpos->second.get();
             }

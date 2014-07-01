@@ -85,7 +85,7 @@ public:
     /// if it has been parsed.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     virtual void
     Dump (Stream *s) const = 0;
@@ -168,7 +168,7 @@ public:
     /// and the next plug-in can attempt to parse an object file.
     ///
     /// @return
-    ///     Returns \b true if the header was parsed succesfully, \b
+    ///     Returns \b true if the header was parsed successfully, \b
     ///     false otherwise.
     //------------------------------------------------------------------
     virtual bool

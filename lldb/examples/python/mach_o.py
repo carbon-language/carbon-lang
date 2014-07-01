@@ -221,7 +221,7 @@ class TerminalColors:
         return ''
     
     def bold(self, on = True):
-        '''Enable or disable bold depending on the "on" paramter.'''
+        '''Enable or disable bold depending on the "on" parameter.'''
         if self.enabled:
             if on:
                 return "\x1b[1m";
@@ -230,7 +230,7 @@ class TerminalColors:
         return ''
     
     def italics(self, on = True):
-        '''Enable or disable italics depending on the "on" paramter.'''
+        '''Enable or disable italics depending on the "on" parameter.'''
         if self.enabled:
             if on:
                 return "\x1b[3m";
@@ -239,7 +239,7 @@ class TerminalColors:
         return ''
     
     def underline(self, on = True):
-        '''Enable or disable underline depending on the "on" paramter.'''
+        '''Enable or disable underline depending on the "on" parameter.'''
         if self.enabled:
             if on:
                 return "\x1b[4m";
@@ -248,7 +248,7 @@ class TerminalColors:
         return ''
     
     def inverse(self, on = True):
-        '''Enable or disable inverse depending on the "on" paramter.'''
+        '''Enable or disable inverse depending on the "on" parameter.'''
         if self.enabled:
             if on:
                 return "\x1b[7m";
@@ -257,7 +257,7 @@ class TerminalColors:
         return ''
     
     def strike(self, on = True):
-        '''Enable or disable strike through depending on the "on" paramter.'''
+        '''Enable or disable strike through depending on the "on" parameter.'''
         if self.enabled:
             if on:
                 return "\x1b[9m";

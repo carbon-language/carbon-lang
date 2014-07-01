@@ -82,7 +82,7 @@ public:
     GetLength () const;
 
     //------------------------------------------------------------------
-    // Get the mex length for the the largest socket address supported.
+    // Get the max length for the largest socket address supported.
     //------------------------------------------------------------------
     static socklen_t
     GetMaxLength ();
@@ -203,7 +203,7 @@ public:
     // Conversion operators to allow getting the contents of this class
     // as a pointer to the appropriate structure. This allows an instance
     // of this class to be used in calls that take one of the sockaddr
-    // structure variants without having to manally use the correct
+    // structure variants without having to manually use the correct
     // accessor function.
     //------------------------------------------------------------------
     

@@ -62,7 +62,7 @@ PromoteToMaxType
             promoted_lhs_ptr = &temp_value; // Update the pointer for the promoted left hand side
     }
 
-    // Make sure our type promotion worked as exptected
+    // Make sure our type promotion worked as expected
     if (promoted_lhs_ptr->GetType() == promoted_rhs_ptr->GetType())
         return promoted_lhs_ptr->GetType(); // Return the resulting max type
 

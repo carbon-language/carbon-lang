@@ -63,13 +63,13 @@ unexpanding.
 =head1 EXAMPLES
  
 # Recursively process all source files in the current working directory 
-# and and subdirectories and also expand tabs to spaces. All source files 
+# and subdirectories and also expand tabs to spaces. All source files 
 # will be overwritten with the newly transformed source files.
 
 % sed-sources -e $cwd
 
 # Recursively process all source files in the current working directory 
-# and and subdirectories and also unexpand spaces to tabs and preview the
+# and subdirectories and also unexpand spaces to tabs and preview the
 # results to STDOUT
 
 % sed-sources -p -u $cwd

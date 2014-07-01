@@ -1631,7 +1631,7 @@ Host::RunShellCommand (const char *command,
         {
             error.SetErrorString("timed out waiting for shell command to complete");
 
-            // Kill the process since it didn't complete withint the timeout specified
+            // Kill the process since it didn't complete within the timeout specified
             Kill (pid, SIGKILL);
             // Wait for the monitor callback to get the message
             timeout_time = TimeValue::Now();

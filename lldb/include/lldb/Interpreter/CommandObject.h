@@ -269,7 +269,7 @@ public:
         //
         // Ensures a valid register context (from the selected frame if there
         // is a frame in m_exe_ctx, or from the selected thread from m_exe_ctx)
-        // is availble from m_exe_ctx prior to executing the command. If a
+        // is available from m_exe_ctx prior to executing the command. If a
         // target doesn't exist or is invalid, the command will fail and
         // CommandObject::GetInvalidRegContextDescription() will be returned as
         // the error. CommandObject subclasses can override the virtual function

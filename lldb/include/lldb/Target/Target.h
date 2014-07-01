@@ -570,7 +570,7 @@ public:
     /// in a target.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump (Stream *s, lldb::DescriptionLevel description_level);

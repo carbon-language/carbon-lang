@@ -31,7 +31,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 // this macro enables a simpler implementation for some method calls in this object that relies only upon
-// ValueObject knowning how to set the address type of its children correctly. the alternative implementation
+// ValueObject knowing how to set the address type of its children correctly. the alternative implementation
 // relies on being able to create a target copy of the frozen object, which makes it less bug-prone but less
 // efficient as well. once we are confident the faster implementation is bug-free, this macro (and the slower
 // implementations) can go

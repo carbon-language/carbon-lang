@@ -136,7 +136,7 @@ public:
     /// supplied stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump (Stream *s, bool show_fullpaths) const;
@@ -236,7 +236,7 @@ public:
     /// Set accessor for the declaration file specification.
     ///
     /// @param[in] file_spec
-    ///     The new declaration file specifciation.
+    ///     The new declaration file specification.
     //------------------------------------------------------------------
     void
     SetFile (const FileSpec& file_spec)

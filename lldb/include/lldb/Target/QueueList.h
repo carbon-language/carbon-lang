@@ -98,7 +98,7 @@ public:
     ///
     /// @return
     ///     A QueueSP to the queue requested, if it is present in the QueueList.
-    ///     An empty QueueSP willbe returned if this queue was not found.
+    ///     An empty QueueSP will be returned if this queue was not found.
     //------------------------------------------------------------------
     lldb::QueueSP
     FindQueueByID (lldb::queue_id_t qid);
@@ -114,7 +114,7 @@ public:
     ///
     /// @return
     ///     A QueueSP to the queue requested, if it is present in the QueueList.
-    ///     An empty QueueSP willbe returned if this queue was not found.
+    ///     An empty QueueSP will be returned if this queue was not found.
     //------------------------------------------------------------------
     lldb::QueueSP
     FindQueueByIndexID (uint32_t index_id);

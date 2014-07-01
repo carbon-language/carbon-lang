@@ -130,7 +130,7 @@ class TestObjCStepping(TestBase):
         line_number = thread.GetFrameAtIndex(0).GetLineEntry().GetLine()
         self.assertTrue (line_number == self.sourceBase_returnsStruct_start_line, "Stepped through super into SourceBase returnsStruct.")
 
-        # Cool now continue to get past the call that intializes the Observer, and then do our steps in again to see that 
+        # Cool now continue to get past the call that initializes the Observer, and then do our steps in again to see that 
         # we can find our way when we're stepping through a KVO swizzled object.
 
         threads = lldbutil.continue_to_breakpoint (process, break3)

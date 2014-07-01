@@ -21,7 +21,7 @@ public:
     //      This is often sourced from the eh_frame exception handling info
     //   2. Unwinding from a non-call site (any location in the function)
     //      This is often done by analyzing the function prologue assembly
-    //      langauge instructions
+    //      language instructions
     //   3. A fast unwind method for this function which only retrieves a 
     //      limited set of registers necessary to walk the stack
     //   4. An architectural default unwind plan when none of the above are

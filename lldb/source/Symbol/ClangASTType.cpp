@@ -6199,7 +6199,7 @@ ClangASTType::DumpSummary (ExecutionContext *exe_ctx,
             if (process)
             {
                 lldb::offset_t offset = data_byte_offset;
-                lldb::addr_t pointer_addresss = data.GetMaxU64(&offset, data_byte_size);
+                lldb::addr_t pointer_address = data.GetMaxU64(&offset, data_byte_size);
                 std::vector<uint8_t> buf;
                 if (length > 0)
                     buf.resize (length);
@@ -6211,7 +6211,7 @@ ClangASTType::DumpSummary (ExecutionContext *exe_ctx,
                 size_t bytes_read;
                 size_t total_cstr_len = 0;
                 Error error;
-                while ((bytes_read = process->ReadMemory (pointer_addresss, &buf.front(), buf.size(), error)) > 0)
+                while ((bytes_read = process->ReadMemory (pointer_address, &buf.front(), buf.size(), error)) > 0)
                 {
                     const size_t len = strlen((const char *)&buf.front());
                     if (len == 0)
@@ -6222,7 +6222,7 @@ ClangASTType::DumpSummary (ExecutionContext *exe_ctx,
                     total_cstr_len += len;
                     if (len < buf.size())
                         break;
-                    pointer_addresss += total_cstr_len;
+                    pointer_address += total_cstr_len;
                 }
                 if (total_cstr_len > 0)
                     s->PutChar ('"');

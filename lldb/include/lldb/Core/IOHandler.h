@@ -191,7 +191,7 @@ namespace lldb_private {
         ///
         /// This will return true if the input stream is a terminal (tty or
         /// pty) and can cause IO handlers to do different things (like
-        /// for a comfirmation when deleting all breakpoints).
+        /// for a confirmation when deleting all breakpoints).
         //------------------------------------------------------------------
         bool
         GetIsInteractive ();
@@ -200,9 +200,9 @@ namespace lldb_private {
         /// Check if the input is coming from a real terminal.
         ///
         /// A real terminal has a valid size with a certain number of rows
-        /// and colums. If this function returns true, then terminal escape
+        /// and columns. If this function returns true, then terminal escape
         /// sequences are expected to work (cursor movement escape sequences,
-        /// clearning lines, etc).
+        /// clearing lines, etc).
         //------------------------------------------------------------------
         bool
         GetIsRealTerminal ();
@@ -267,7 +267,7 @@ namespace lldb_private {
         //------------------------------------------------------------------
         /// Called when a line or lines have been retrieved.
         ///
-        /// This funtion can handle the current line and possibly call
+        /// This function can handle the current line and possibly call
         /// IOHandler::SetIsDone(true) when the IO handler is done like when
         /// "quit" is entered as a command, of when an empty line is
         /// received. It is up to the delegate to determine when a line

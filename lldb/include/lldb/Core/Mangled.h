@@ -153,7 +153,7 @@ public:
     /// demangled name to be computed currently (we don't use the accessor).
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //----------------------------------------------------------------------
     void
     Dump (Stream *s) const;
@@ -162,7 +162,7 @@ public:
     /// Dump a debug description of this object to a Stream \a s.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //----------------------------------------------------------------------
     void
     DumpDebug (Stream *s) const;
@@ -219,7 +219,7 @@ public:
     ///     Which name would you prefer to get?
     ///
     /// @return
-    ///     A const reference to the the preferred name string object if this
+    ///     A const reference to the preferred name string object if this
     ///     object has a valid name of that kind, else a const reference to the
     ///     other name is returned.
     //----------------------------------------------------------------------

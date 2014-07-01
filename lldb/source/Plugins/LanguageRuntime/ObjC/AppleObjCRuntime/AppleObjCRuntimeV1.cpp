@@ -326,7 +326,7 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
     if (process)
     {
         // Update the process stop ID that indicates the last time we updated the
-        // map, wether it was successful or not.
+        // map, whether it was successful or not.
         m_isa_to_descriptor_stop_id = process->GetStopID();
         
         Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));

@@ -1985,7 +1985,7 @@ ProcessGDBRemote::DoDestroy ()
             if (m_destroy_tried_resuming)
             {
                 if (log)
-                    log->PutCString ("ProcessGDBRemote::DoDestroy()Tried resuming to destroy once already, not doing it again.");
+                    log->PutCString ("ProcessGDBRemote::DoDestroy() - Tried resuming to destroy once already, not doing it again.");
             }
             else
             {            
@@ -2484,7 +2484,7 @@ ProcessGDBRemote::EnableBreakpointSite (BreakpointSite *bp_site)
             return error;
         }
 
-        // We will reach here when the stub gives an unsported response to a hardware breakpoint
+        // We will reach here when the stub gives an unsupported response to a hardware breakpoint
         if (log)
             log->Printf("Hardware breakpoints are unsupported");
 
@@ -3234,7 +3234,7 @@ ProcessGDBRemote::GetExtendedInfoForThread (lldb::tid_t tid)
         // character in gdb-remote binary mode.  lldb currently doesn't escape
         // these characters in its packet output -- so we add the quoted version
         // of the } character here manually in case we talk to a debugserver which
-        // un-escapes the chracters at packet read time.
+        // un-escapes the characters at packet read time.
         packet << (char) (0x7d ^ 0x20);
 
         StringExtractorGDBRemote response;
@@ -3279,7 +3279,7 @@ ProcessGDBRemote::GetMaxMemorySize()
             m_remote_stub_max_memory_size = stub_max_size;
 
             // Even if the stub says it can support ginormous packets,
-            // don't exceed our resonable largeish default packet size.
+            // don't exceed our reasonable largeish default packet size.
             if (stub_max_size > reasonable_largeish_default)
             {
                 stub_max_size = reasonable_largeish_default;

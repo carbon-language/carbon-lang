@@ -255,7 +255,7 @@ lldb_private::ListLogCategories (Stream *strm)
                  "  host - log host activities\n"
                  "  jit - log JIT events in the target\n"
                  "  mmap - log mmap related activities\n"
-                 "  module - log module activities such as when modules are created, detroyed, replaced, and more\n"
+                 "  module - log module activities such as when modules are created, destroyed, replaced, and more\n"
                  "  object - log object construction/destruction for important objects\n"
                  "  os - log OperatingSystem plugin related activities\n"
                  "  platform - log platform events and activities\n"

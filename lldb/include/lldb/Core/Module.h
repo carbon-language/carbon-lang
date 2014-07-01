@@ -68,7 +68,7 @@ public:
     /// use ModuleList::GetSharedModule().
     ///
     /// @param[in] file_spec
-    ///     The file specification for the on disk repesentation of
+    ///     The file specification for the on disk representation of
     ///     this executable image.
     ///
     /// @param[in] arch
@@ -197,7 +197,7 @@ public:
     /// in a module.
     ///
     /// @param[in] s
-    ///     The stream to which to dump the object descripton.
+    ///     The stream to which to dump the object description.
     //------------------------------------------------------------------
     void
     Dump (Stream *s);
@@ -419,7 +419,7 @@ public:
                          VariableList& variable_list);
 
     //------------------------------------------------------------------
-    /// Find global and static variables by regular exression.
+    /// Find global and static variables by regular expression.
     ///
     /// @param[in] regex
     ///     A regular expression to use when matching the name.
@@ -472,11 +472,11 @@ public:
     ///
     /// @param[in] type_name
     ///     The name of the type we are looking for that is a fully
-    ///     or partially qualfieid type name.
+    ///     or partially qualified type name.
     ///
     /// @param[in] exact_match
-    ///     If \b true, \a type_name is fully qualifed and must match
-    ///     exactly. If \b false, \a type_name is a partially qualfied
+    ///     If \b true, \a type_name is fully qualified and must match
+    ///     exactly. If \b false, \a type_name is a partially qualified
     ///     name where the leading namespaces or classes can be
     ///     omitted to make finding types that a user may type
     ///     easier.
@@ -773,12 +773,12 @@ public:
     /// A debugging function that will cause everything in a module to
     /// be parsed.
     ///
-    /// All compile units will be pasred, along with all globals and
+    /// All compile units will be parsed, along with all globals and
     /// static variables and all functions for those compile units.
     /// All types, scopes, local variables, static variables, global
     /// variables, and line tables will be parsed. This can be used
     /// prior to dumping a module to see a complete list of the
-    /// resuling debug information that gets parsed, or as a debug
+    /// resulting debug information that gets parsed, or as a debug
     /// function to ensure that the module can consume all of the
     /// debug data the symbol vendor provides.
     //------------------------------------------------------------------
@@ -966,7 +966,7 @@ public:
 
     //------------------------------------------------------------------
     // Return true if the file backing this module has changed since the
-    // module was originally created  since we saved the intial file
+    // module was originally created  since we saved the initial file
     // modification time when the module first gets created.
     //------------------------------------------------------------------
     bool

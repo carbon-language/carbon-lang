@@ -48,11 +48,11 @@ public:
     /// thread so the callback function must be thread safe.
     ///
     /// When the callback gets called, the return value indicates if
-    /// minotoring should stop. If \b true is returned from \a callback
+    /// monitoring should stop. If \b true is returned from \a callback
     /// the information will be removed. If \b false is returned then
     /// monitoring will continue. If the child process exits, the
     /// monitoring will automatically stop after the callback returned
-    /// ragardless of the callback return value.
+    /// regardless of the callback return value.
     ///
     /// @param[in] callback
     ///     A function callback to call when a child receives a signal
@@ -259,7 +259,7 @@ public:
     ///
     /// This function call lets the current host OS do any thread
     /// specific initialization that it needs, including naming the
-    /// thread. No cleanup routine is exptected to be called
+    /// thread. No cleanup routine is expected to be called
     ///
     /// @param[in] name
     ///     The current thread's name in the current process.
@@ -410,7 +410,7 @@ public:
     //------------------------------------------------------------------
     /// When executable files may live within a directory, where the 
     /// directory represents an executable bundle (like the MacOSX 
-    /// app bundles), the locate the executable within the containing
+    /// app bundles), then locate the executable within the containing
     /// bundle.
     ///
     /// @param[in,out] file
@@ -438,7 +438,7 @@ public:
     ///     directory member gets filled in.
     ///
     /// @param[in] file_spec
-    ///     A file spec that gets filled in with the appriopriate path.
+    ///     A file spec that gets filled in with the appropriate path.
     ///
     /// @return
     ///     \b true if \a resource_path was resolved, \a false otherwise.

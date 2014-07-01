@@ -415,7 +415,7 @@ class WatchpointCommandsTestCase(TestBase):
             substrs = ['stop reason = watchpoint'])
 
         # Before continuing, we'll disable the watchpoint, which means we won't
-        # stop agian after this.
+        # stop again after this.
         self.runCmd("watchpoint disable")
 
         self.expect("watchpoint list -v",
@@ -473,7 +473,7 @@ class WatchpointCommandsTestCase(TestBase):
             substrs = ['stop reason = breakpoint'])
 
         # Before continuing, we'll enable the watchpoint, which means we will
-        # stop agian after this.
+        # stop again after this.
         self.runCmd("watchpoint enable")
 
         self.expect("watchpoint list -v",

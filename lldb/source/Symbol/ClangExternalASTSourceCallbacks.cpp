@@ -14,7 +14,7 @@
 // Other libraries and framework includes
 
 // Clang headers like to use NDEBUG inside of them to enable/disable debug 
-// releated features using "#ifndef NDEBUG" preprocessor blocks to do one thing
+// related features using "#ifndef NDEBUG" preprocessor blocks to do one thing
 // or another. This is bad because it means that if clang was built in release
 // mode, it assumes that you are building in release mode which is not always
 // the case. You can end up with functions that are defined as empty in header

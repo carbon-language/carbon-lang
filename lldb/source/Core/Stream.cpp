@@ -252,7 +252,7 @@ Stream::EOL()
 
 //------------------------------------------------------------------
 // Indent the current line using the current indentation level and
-// print an optional string following the idenatation spaces.
+// print an optional string following the indentation spaces.
 //------------------------------------------------------------------
 size_t
 Stream::Indent(const char *s)

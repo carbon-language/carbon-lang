@@ -431,7 +431,7 @@ public:
     /// @param[in] is_synchronous
     ///    If \b true the callback will be run on the private event thread
     ///    before the stop event gets reported.  If false, the callback will get
-    ///    handled on the public event thead after the stop has been posted.
+    ///    handled on the public event thread after the stop has been posted.
     ///
     /// @return
     ///    \b true if the process should stop when you hit the breakpoint.

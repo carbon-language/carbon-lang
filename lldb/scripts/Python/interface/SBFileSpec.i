@@ -10,7 +10,7 @@
 namespace lldb {
 
 %feature("docstring",
-"Represents a file specfication that divides the path into a directory and
+"Represents a file specification that divides the path into a directory and
 basename.  The string values of the paths are put into uniqued string pools
 for fast comparisons and efficient memory usage.
 
@@ -28,7 +28,7 @@ For example, the following code
 
 gets the line entry from the symbol context when a thread is stopped.
 It gets the file spec corresponding to the line entry and checks that
-the filename and the directory matches wat we expect.
+the filename and the directory matches what we expect.
 ") SBFileSpec;
 class SBFileSpec
 {
@@ -37,7 +37,7 @@ public:
 
     SBFileSpec (const lldb::SBFileSpec &rhs);
 
-    SBFileSpec (const char *path);// Deprected, use SBFileSpec (const char *path, bool resolve)
+    SBFileSpec (const char *path);// Deprecated, use SBFileSpec (const char *path, bool resolve)
 
     SBFileSpec (const char *path, bool resolve);
 

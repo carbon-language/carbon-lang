@@ -189,7 +189,7 @@ dumpSysPath = False
 bmExecutable = None
 # The breakpoint specification of bmExecutable, as specified by the '-x' option.
 bmBreakpointSpec = None
-# The benchamrk iteration count, as specified by the '-y' option.
+# The benchmark iteration count, as specified by the '-y' option.
 bmIterationCount = -1
 
 # By default, don't exclude any directories.  Use '-X' to add one excluded directory.
@@ -275,7 +275,7 @@ def usage(parser):
         print """
 Examples:
 
-This is an example of using the -f option to pinpoint to a specfic test class
+This is an example of using the -f option to pinpoint to a specific test class
 and test method to be run:
 
 $ ./dotest.py -f ClassTypesTestCase.test_with_dsym_and_run_command
@@ -1495,7 +1495,7 @@ for ia in range(len(archs) if iterArchs else 1):
             Overwrite addError(), addFailure(), and addExpectedFailure() methods
             to enable each test instance to track its failure/error status.  It
             is used in the LLDB test framework to emit detailed trace messages
-            to a log file for easier human inspection of test failres/errors.
+            to a log file for easier human inspection of test failures/errors.
             """
             __singleton__ = None
             __ignore_singleton__ = False

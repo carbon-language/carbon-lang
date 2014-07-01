@@ -1083,7 +1083,7 @@ for this region.
 // "qsProcessInfo"
 //
 // BRIEF
-//  Get the first process info (qfProcessInfo) or subsequent processs
+//  Get the first process info (qfProcessInfo) or subsequent process
 //  info (qsProcessInfo) for one or more processes on the remote 
 //  platform. The first call gets the first match and subsequent calls
 //  to qsProcessInfo gets the subsequent matches. Return an error EXX,
@@ -1296,7 +1296,7 @@ for this region.
 // sending strings with arbitrary contents in them, including the '#', '$', and '*'
 // characters that have special meaning in gdb-remote protocol and cannot occur
 // in the middle of the string.  The standard solution for this would be to require
-// ascii-hex encoding of all strings, or ascii-hex encode the entier JSON payload.
+// ascii-hex encoding of all strings, or ascii-hex encode the entire JSON payload.
 //
 // Instead, the binary escaping convention is used for JSON data.  This convention
 // (e.g. used for the X packet) says that if '#', '$', '*', or '}' are to occur in

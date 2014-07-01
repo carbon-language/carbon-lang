@@ -179,13 +179,13 @@ namespace lldb_private {
         ///     m_arch - The architecture we are looking for when resolving
         ///              the symbol file.
         ///     m_uuid - The UUID of the executable and symbol file. This
-        ///              can often be used to match up an exectuable with
+        ///              can often be used to match up an executable with
         ///              a symbol file, or resolve an symbol file in a
         ///              symbol file bundle.
         ///
         /// @param[out] sym_file
         ///     The resolved symbol file spec if the returned error
-        ///     indicates succes.
+        ///     indicates success.
         ///
         /// @return
         ///     Returns an error that describes success or failure.
@@ -220,7 +220,7 @@ namespace lldb_private {
         bool
         GetOSKernelDescription (std::string &s);
 
-        // Returns the the name of the platform
+        // Returns the name of the platform
         ConstString
         GetName ();
 
@@ -354,7 +354,7 @@ namespace lldb_private {
         ///     A zero based architecture index
         ///
         /// @param[out] arch
-        ///     A copy of the archgitecture at index if the return value is
+        ///     A copy of the architecture at index if the return value is
         ///     \b true.
         ///
         /// @return
@@ -418,7 +418,7 @@ namespace lldb_private {
         /// attempt to attach to the process with the process ID of \a pid.
         /// The platform subclass should return an appropriate ProcessSP 
         /// subclass that is attached to the process, or an empty shared 
-        /// pointer with an appriopriate error.
+        /// pointer with an appropriate error.
         ///
         /// @param[in] pid
         ///     The process ID that we should attempt to attach to.
@@ -427,7 +427,7 @@ namespace lldb_private {
         ///     An appropriate ProcessSP containing a valid shared pointer
         ///     to the default Process subclass for the platform that is 
         ///     attached to the process, or an empty shared pointer with an
-        ///     appriopriate error fill into the \a error object.
+        ///     appropriate error fill into the \a error object.
         //------------------------------------------------------------------
         virtual lldb::ProcessSP
         Attach (ProcessAttachInfo &attach_info,

@@ -352,7 +352,7 @@ GetProcessAndStatInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info, Proce
         next_var += strlen(next_var) + 1;
     }
 
-    // Get the commond line used to start the process.
+    // Get the command line used to start the process.
     buf_sp = ProcFileReader::ReadIntoDataBuffer(pid, "cmdline");
 
     // Grab Arg0 first, if there is one.
@@ -532,7 +532,7 @@ Host::GetDistributionId ()
 
                     s_distribution_id.SetCString (id_string.c_str ());
                     if (log)
-                        log->Printf ("distribion id set to \"%s\"",
+                        log->Printf ("distribution id set to \"%s\"",
                                 s_distribution_id.GetCString ());
                 }
                 else

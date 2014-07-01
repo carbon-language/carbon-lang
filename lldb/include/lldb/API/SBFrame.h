@@ -75,7 +75,7 @@ public:
     /// Get the appropriate function name for this frame. Inlined functions in
     /// LLDB are represented by Blocks that have inlined function information, so
     /// just looking at the SBFunction or SBSymbol for a frame isn't enough.
-    /// This function will return the appriopriate function, symbol or inlined
+    /// This function will return the appropriate function, symbol or inlined
     /// function name for the frame.
     ///
     /// This function returns:

@@ -40,7 +40,7 @@ public:
     //------------------------------------------------------------------
     /// Constructor
     ///
-    /// Initializes class variabes.
+    /// Initializes class variables.
     ///
     /// @param[in] exe_scope,
     ///     If non-NULL, an execution context scope that can help to 
