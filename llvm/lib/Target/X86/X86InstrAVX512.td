@@ -816,48 +816,47 @@ def : Pat<(v8i1 (X86pcmpeqm (v8i32 VR256X:$src1), (v8i32 VR256X:$src2))),
 
 multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
               RegisterClass RC, X86MemOperand x86memop, PatFrag memop_frag, 
-              SDNode OpNode, ValueType vt, Operand CC, string asm,
-              string asm_alt> {
+              SDNode OpNode, ValueType vt, Operand CC, string Suffix> {
   def rri : AVX512AIi8<opc, MRMSrcReg,
-             (outs KRC:$dst), (ins RC:$src1, RC:$src2, CC:$cc), asm,
+             (outs KRC:$dst), (ins RC:$src1, RC:$src2, CC:$cc),
+             !strconcat("vpcmp${cc}", Suffix,
+                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set KRC:$dst, (OpNode (vt RC:$src1), (vt RC:$src2), imm:$cc))], 
              IIC_SSE_ALU_F32P_RR>, EVEX_4V;
   def rmi : AVX512AIi8<opc, MRMSrcMem,
-             (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc), asm,
+             (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, CC:$cc),
+             !strconcat("vpcmp${cc}", Suffix,
+                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
              [(set KRC:$dst, (OpNode (vt RC:$src1), (memop_frag addr:$src2),
                               imm:$cc))], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   // Accept explicit immediate argument form instead of comparison code.
   let isAsmParserOnly = 1, hasSideEffects = 0 in {
     def rri_alt : AVX512AIi8<opc, MRMSrcReg,
                (outs KRC:$dst), (ins RC:$src1, RC:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
+               !strconcat("vpcmp", Suffix,
+                  "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
     def rmi_alt : AVX512AIi8<opc, MRMSrcMem,
                (outs KRC:$dst), (ins RC:$src1, x86memop:$src2, i8imm:$cc),
-               asm_alt, [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
+               !strconcat("vpcmp", Suffix,
+                  "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
+               [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
   }
 }
 
-defm VPCMPDZ : avx512_icmp_cc<0x1F, VK16, VR512, i512mem, memopv16i32,
-                              X86cmpm, v16i32, AVXCC,
-              "vpcmp${cc}d\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-              "vpcmpd\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-              EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VPCMPDZ :  avx512_icmp_cc<0x1F, VK16, VR512, i512mem, memopv16i32,
+                               X86cmpm, v16i32, AVXCC, "d">,
+                EVEX_V512, EVEX_CD8<32, CD8VF>;
 defm VPCMPUDZ : avx512_icmp_cc<0x1E, VK16, VR512, i512mem, memopv16i32,
-                               X86cmpmu, v16i32, AVXCC,
-              "vpcmp${cc}ud\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-              "vpcmpud\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-              EVEX_V512, EVEX_CD8<32, CD8VF>;
+                               X86cmpmu, v16i32, AVXCC, "ud">,
+                EVEX_V512, EVEX_CD8<32, CD8VF>;
 
-defm VPCMPQZ : avx512_icmp_cc<0x1F, VK8, VR512, i512mem, memopv8i64,
-                              X86cmpm, v8i64, AVXCC,
-              "vpcmp${cc}q\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-              "vpcmpq\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-              VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
+defm VPCMPQZ :  avx512_icmp_cc<0x1F, VK8, VR512, i512mem, memopv8i64,
+                               X86cmpm, v8i64, AVXCC, "q">,
+                VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 defm VPCMPUQZ : avx512_icmp_cc<0x1E, VK8, VR512, i512mem, memopv8i64,
-                               X86cmpmu, v8i64, AVXCC,
-              "vpcmp${cc}uq\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-              "vpcmpuq\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}">,
-              VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
+                               X86cmpmu, v8i64, AVXCC, "uq">,
+                VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 // avx512_cmp_packed - compare packed instructions
 multiclass avx512_cmp_packed<RegisterClass KRC, RegisterClass RC,
