@@ -844,7 +844,7 @@ bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcIdx,
     // Def.sub1 =
     // is a valid SSA representation for Def.sub0 and Def.sub1, but not for
     // Def. Thus, it must not be generated.
-    // However, some code could theoritically generates a single
+    // However, some code could theoretically generates a single
     // Def.sub0 (i.e, not defining the other subregs) and we would
     // have this case.
     // If we can ascertain (or force) that this never happens, we could
