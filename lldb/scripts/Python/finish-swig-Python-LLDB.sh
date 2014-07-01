@@ -157,7 +157,7 @@ then
     if [ $MakefileCalled -eq 0 ]
     then
         ln -s "../../../LLDB" _lldb.so
-    else
+	else
         ln -s "../../../liblldb${SOEXT}" _lldb.so
     fi
 else

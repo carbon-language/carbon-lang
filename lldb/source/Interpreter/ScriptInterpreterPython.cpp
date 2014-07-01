@@ -589,7 +589,12 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                 input_file_sp = debugger.GetInputFile();
                 // Set output to a temporary file so we can forward the results on to the result object
                 
+#ifdef _MSC_VER
+                // pipe is not supported on windows so default to a fail condition
+                int err = 1;
+#else
                 int err = pipe(pipe_fds);
+#endif
                 if (err == 0)
                 {
                     std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe_fds[0], true));

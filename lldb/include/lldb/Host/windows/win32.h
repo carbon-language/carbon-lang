@@ -49,7 +49,10 @@ char* realpath(const char * name, char * resolved);
 #include <stdint.h>
 #include <io.h>
 typedef unsigned short mode_t;
+
+#ifdef LLDB_DISABLE_PYTHON
 typedef uint32_t pid_t;
+#endif
 
 int usleep(uint32_t useconds);
 

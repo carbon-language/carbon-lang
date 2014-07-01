@@ -115,7 +115,7 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict
                 RegisterInfo reg_info;
                 std::vector<uint32_t> value_regs;
                 std::vector<uint32_t> invalidate_regs;
-                bzero (&reg_info, sizeof(reg_info));
+                memset(&reg_info, 0, sizeof(reg_info));
                 
                 reg_info.name = ConstString (reg_info_dict.GetItemForKeyAsString(name_pystr)).GetCString();
                 if (reg_info.name == NULL)

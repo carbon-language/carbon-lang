@@ -9,6 +9,8 @@ set(LLDB_DISABLE_PYTHON ${LLDB_DEFAULT_DISABLE_PYTHON} CACHE BOOL
   "Disables the Python scripting integration.")
 set(LLDB_DISABLE_CURSES ${LLDB_DEFAULT_DISABLE_CURSES} CACHE BOOL
   "Disables the Curses integration.")
+set(LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION 0 CACHE BOOL
+  "Enables using new Python scripts for SWIG API generation .")  
 
 # If we are not building as a part of LLVM, build LLDB as an
 # standalone project, using LLVM as an external library:
@@ -77,6 +79,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(LLDB_BUILT_STANDALONE 1)
 endif()
 
+set(LLDB_DISABLE_PYTHON 0 CACHE BOOL "Disables the Python scripting integration.")
 if (LLDB_DISABLE_PYTHON)
   add_definitions( -DLLDB_DISABLE_PYTHON )
 endif()
@@ -94,9 +97,14 @@ macro(add_lldb_definitions)
 endmacro(add_lldb_definitions)
 
 if (NOT LLDB_DISABLE_PYTHON)
-  find_package(PythonLibs REQUIRED)
-  include_directories(${PYTHON_INCLUDE_DIRS})
+    if (MSVC)
+        # this definition will stop python from auto linking python27_d.lib when Python.h is included
+        add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG )
+    endif()
+    find_package(PythonLibs REQUIRED)
+    include_directories(${PYTHON_INCLUDE_DIRS})
 endif()
+
 include_directories(../clang/include)
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
@@ -202,7 +210,7 @@ macro(add_lldb_library name)
   if (NOT MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
   endif()
-  add_library(${name} ${libkind} ${srcs})
+  llvm_add_library(${name} ${libkind} ${srcs})
   #if (LLVM_COMMON_DEPENDS)
   ##add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
   #endif()
@@ -249,14 +257,7 @@ macro(add_lldb_library name)
 endmacro(add_lldb_library)
 
 macro(add_lldb_executable name)
-  #add_llvm_executable(${name} ${ARGN})
-  llvm_process_sources( ALL_FILES ${ARGN} )
-  add_executable(${name} ${ALL_FILES})
-  #target_link_libraries(${name} ${CLANG_USED_LIBS})
-  #llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
-  #if (LLVM_COMMON_DEPENDS)
-  #add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
-  #endif()
+  add_llvm_executable(${name} ${ARGN})
   set_target_properties(${name} PROPERTIES FOLDER "lldb executables")
 endmacro(add_lldb_executable)
 
@@ -315,9 +316,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLDB_COMPILE_FLAGS}")
 
 #add_subdirectory(include)
 add_subdirectory(docs)
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows" AND NOT LLDB_DISABLE_PYTHON)
-  add_subdirectory(scripts)
-endif()
+add_subdirectory(scripts)
 add_subdirectory(source)
 add_subdirectory(test)
 add_subdirectory(tools)
