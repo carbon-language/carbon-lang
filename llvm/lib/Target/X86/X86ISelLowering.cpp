@@ -16360,6 +16360,20 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
     Results.push_back(EFLAGS.getValue(1));
     return;
   }
+  case ISD::ATOMIC_SWAP:
+  case ISD::ATOMIC_LOAD_ADD:
+  case ISD::ATOMIC_LOAD_SUB:
+  case ISD::ATOMIC_LOAD_AND:
+  case ISD::ATOMIC_LOAD_OR:
+  case ISD::ATOMIC_LOAD_XOR:
+  case ISD::ATOMIC_LOAD_NAND:
+  case ISD::ATOMIC_LOAD_MIN:
+  case ISD::ATOMIC_LOAD_MAX:
+  case ISD::ATOMIC_LOAD_UMIN:
+  case ISD::ATOMIC_LOAD_UMAX:
+    // Delegate to generic TypeLegalization. Situations we can really handle
+    // should have already been dealt with by X86AtomicExpand.cpp.
+    break;
   case ISD::ATOMIC_LOAD: {
     ReplaceATOMIC_LOAD(N, Results, DAG);
     return;
