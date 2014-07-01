@@ -27,4 +27,9 @@
 
 //#define LLDB_CONFIG_FCNTL_GETPATH_SUPPORTED 1
 
+#if _HAS_EXCEPTIONS == 0
+// Exceptions are disabled so this isn't defined, but concrt assumes it is.
+static void *__uncaught_exception() { return nullptr; }
+#endif
+
 #endif // #ifndef liblldb_Platform_Config_h_

@@ -9,6 +9,8 @@
 
 #include <errno.h>
 
+#include "lldb/Host/Config.h"
+
 #include "GDBRemoteCommunicationServer.h"
 #include "lldb/Core/StreamGDBRemote.h"
 
