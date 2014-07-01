@@ -1182,11 +1182,13 @@ void ItaniumCXXABI::emitVTableDefinitions(CodeGenVTables &CGVT,
   ItaniumVTableContext &VTContext = CGM.getItaniumVTableContext();
   const VTableLayout &VTLayout = VTContext.getVTableLayout(RD);
   llvm::GlobalVariable::LinkageTypes Linkage = CGM.getVTableLinkage(RD);
+  llvm::Constant *RTTI =
+      CGM.GetAddrOfRTTIDescriptor(CGM.getContext().getTagDeclType(RD));
 
   // Create and set the initializer.
   llvm::Constant *Init = CGVT.CreateVTableInitializer(
       RD, VTLayout.vtable_component_begin(), VTLayout.getNumVTableComponents(),
-      VTLayout.vtable_thunk_begin(), VTLayout.getNumVTableThunks());
+      VTLayout.vtable_thunk_begin(), VTLayout.getNumVTableThunks(), RTTI);
   VTable->setInitializer(Init);
 
   // Set the correct linkage.

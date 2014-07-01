@@ -2574,6 +2574,12 @@ public:
         MostDerivedClassLayout(Context.getASTRecordLayout(MostDerivedClass)),
         WhichVFPtr(*Which),
         Overriders(MostDerivedClass, CharUnits(), MostDerivedClass) {
+    // Only include the RTTI component if we know that we will provide a
+    // definition of the vftable.
+    if (Context.getLangOpts().RTTI &&
+        !MostDerivedClass->hasAttr<DLLImportAttr>())
+      Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));
+
     LayoutVFTable();
 
     if (Context.getLangOpts().DumpVTableLayouts)
@@ -2915,7 +2921,8 @@ void VFTableBuilder::AddMethods(BaseSubobject Base, unsigned BaseDepth,
     // it requires return adjustment. Insert the method info for this method.
     unsigned VBIndex =
         LastVBase ? VTables.getVBTableIndex(MostDerivedClass, LastVBase) : 0;
-    MethodInfo MI(VBIndex, Components.size());
+    MethodInfo MI(VBIndex, Context.getLangOpts().RTTI ? Components.size() - 1
+                                                      : Components.size());
 
     assert(!MethodInfoMap.count(MD) &&
            "Should not have method info for this method yet!");

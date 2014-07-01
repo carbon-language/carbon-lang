@@ -61,11 +61,10 @@ public:
   /// decl.
   /// \param Components - The vtable components; this is really an array of
   /// VTableComponents.
-  llvm::Constant *CreateVTableInitializer(const CXXRecordDecl *RD,
-                                          const VTableComponent *Components, 
-                                          unsigned NumComponents,
-                                const VTableLayout::VTableThunkTy *VTableThunks,
-                                          unsigned NumVTableThunks);
+  llvm::Constant *CreateVTableInitializer(
+      const CXXRecordDecl *RD, const VTableComponent *Components,
+      unsigned NumComponents, const VTableLayout::VTableThunkTy *VTableThunks,
+      unsigned NumVTableThunks, llvm::Constant *RTTI);
 
   CodeGenVTables(CodeGenModule &CGM);
 

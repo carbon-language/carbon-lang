@@ -431,12 +431,10 @@ void CodeGenVTables::EmitThunks(GlobalDecl GD)
     emitThunk(GD, (*ThunkInfoVector)[I], /*ForVTable=*/false);
 }
 
-llvm::Constant *
-CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
-                                        const VTableComponent *Components, 
-                                        unsigned NumComponents,
-                                const VTableLayout::VTableThunkTy *VTableThunks,
-                                        unsigned NumVTableThunks) {
+llvm::Constant *CodeGenVTables::CreateVTableInitializer(
+    const CXXRecordDecl *RD, const VTableComponent *Components,
+    unsigned NumComponents, const VTableLayout::VTableThunkTy *VTableThunks,
+    unsigned NumVTableThunks, llvm::Constant *RTTI) {
   SmallVector<llvm::Constant *, 64> Inits;
 
   llvm::Type *Int8PtrTy = CGM.Int8PtrTy;
@@ -444,9 +442,6 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
   llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
 
-  QualType ClassType = CGM.getContext().getTagDeclType(RD);
-  llvm::Constant *RTTI = CGM.GetAddrOfRTTIDescriptor(ClassType);
-  
   unsigned NextVTableThunkIndex = 0;
 
   llvm::Constant *PureVirtualFn = nullptr, *DeletedVirtualFn = nullptr;
@@ -594,13 +589,14 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   // V-tables are always unnamed_addr.
   VTable->setUnnamedAddr(true);
 
+  llvm::Constant *RTTI = CGM.GetAddrOfRTTIDescriptor(
+      CGM.getContext().getTagDeclType(Base.getBase()));
+
   // Create and set the initializer.
-  llvm::Constant *Init = 
-    CreateVTableInitializer(Base.getBase(), 
-                            VTLayout->vtable_component_begin(), 
-                            VTLayout->getNumVTableComponents(),
-                            VTLayout->vtable_thunk_begin(),
-                            VTLayout->getNumVTableThunks());
+  llvm::Constant *Init = CreateVTableInitializer(
+      Base.getBase(), VTLayout->vtable_component_begin(),
+      VTLayout->getNumVTableComponents(), VTLayout->vtable_thunk_begin(),
+      VTLayout->getNumVTableThunks(), RTTI);
   VTable->setInitializer(Init);
   
   return VTable;
