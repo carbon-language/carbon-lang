@@ -950,8 +950,8 @@ static void getMipsCPUAndABI(const ArgList &Args,
   if (!ABIName.empty()) {
     // Deduce CPU name from ABI name.
     CPUName = llvm::StringSwitch<const char *>(ABIName)
-      .Cases("32", "o32", "eabi", DefMips32CPU)
-      .Cases("n32", "n64", "64", DefMips64CPU)
+      .Cases("o32", "eabi", DefMips32CPU)
+      .Cases("n32", "n64", DefMips64CPU)
       .Default("");
   }
   else if (!CPUName.empty()) {
