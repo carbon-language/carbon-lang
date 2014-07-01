@@ -727,6 +727,9 @@ public:
   bool isFullCopy() const {
     return isCopy() && !getOperand(0).getSubReg() && !getOperand(1).getSubReg();
   }
+  bool isExtractSubreg() const {
+    return getOpcode() == TargetOpcode::EXTRACT_SUBREG;
+  }
 
   /// isCopyLike - Return true if the instruction behaves like a copy.
   /// This does not include native copy instructions.
