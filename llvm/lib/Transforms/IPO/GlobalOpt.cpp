@@ -2865,7 +2865,12 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
       continue;
 
     Constant *Aliasee = J->getAliasee();
-    GlobalValue *Target = cast<GlobalValue>(Aliasee->stripPointerCasts());
+    GlobalValue *Target = dyn_cast<GlobalValue>(Aliasee->stripPointerCasts());
+    // We can't trivially replace the alias with the aliasee if the aliasee is
+    // non-trivial in some way.
+    // TODO: Try to handle non-zero GEPs of local aliasees.
+    if (!Target)
+      continue;
     Target->removeDeadConstantUsers();
 
     // Make all users of the alias use the aliasee instead.

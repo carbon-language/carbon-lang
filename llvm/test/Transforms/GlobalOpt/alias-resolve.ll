@@ -12,6 +12,10 @@
 @weak1 = alias weak void ()* @bar2
 ; CHECK: @weak1 = alias weak void ()* @bar2
 
+@bar4 = private unnamed_addr constant [2 x i8*] zeroinitializer
+@foo4 = unnamed_addr alias linkonce_odr getelementptr inbounds ([2 x i8*]* @bar4, i32 0, i32 1)
+; CHECK: @foo4 = unnamed_addr alias linkonce_odr getelementptr inbounds ([2 x i8*]* @bar4, i32 0, i32 1)
+
 define void @bar2() {
   ret void
 }
