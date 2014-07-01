@@ -285,10 +285,10 @@ AArch64AddressTypePromotion::propagateSignExtension(Instructions &SExtInsts) {
         // assertion on the type as all involved sext operation may have not
         // been moved yet.
         while (!Inst->use_empty()) {
-          Value::use_iterator UseIt = Inst->use_begin();
-          Instruction *UseInst = dyn_cast<Instruction>(*UseIt);
-          assert(UseInst && "Use of sext is not an Instruction!");
-          UseInst->setOperand(UseIt->getOperandNo(), SExt);
+          Use &U = *Inst->use_begin();
+          Instruction *User = dyn_cast<Instruction>(U.getUser());
+          assert(User && "User of sext is not an Instruction!");
+          User->setOperand(U.getOperandNo(), SExt);
         }
         ToRemove.insert(Inst);
         SExt->setOperand(0, Inst->getOperand(0));
