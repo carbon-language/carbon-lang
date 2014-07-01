@@ -508,7 +508,7 @@ llvm::Constant *CodeGenModule::getMSTypeDescriptor(QualType Type) {
 llvm::Constant *
 CodeGenModule::getMSCompleteObjectLocator(const CXXRecordDecl *RD,
                                           const VPtrInfo *Info) {
-  if (!getLangOpts().RTTI)
+  if (!getLangOpts().RTTIData)
     return llvm::Constant::getNullValue(Int8PtrTy);
   return MSRTTIBuilder(*this, RD).getCompleteObjectLocator(Info);
 }

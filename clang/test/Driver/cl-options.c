@@ -289,10 +289,12 @@
 // RUN: %clang_cl /Zs /WX -m32 -m64 -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
 // MFLAGS-NOT: argument unused during compilation
 
-// Use -fno-rtti by default.
-// RUN: %clang_cl /c -### -- %s 2>&1 | FileCheck -check-prefix=NoRTTI %s
-// NoRTTI: "-fno-rtti"
+// RTTI is on by default. /GR- controls -fno-rtti-data.
+// RUN: %clang_cl /c /GR- -### -- %s 2>&1 | FileCheck -check-prefix=NoRTTI %s
+// NoRTTI: "-fno-rtti-data"
+// NoRTTI-NOT: "-fno-rtti"
 // RUN: %clang_cl /c /GR -### -- %s 2>&1 | FileCheck -check-prefix=RTTI %s
+// RTTI-NOT: "-fno-rtti-data"
 // RTTI-NOT: "-fno-rtti"
 
 

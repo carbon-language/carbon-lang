@@ -2579,7 +2579,7 @@ public:
         Overriders(MostDerivedClass, CharUnits(), MostDerivedClass) {
     // Only include the RTTI component if we know that we will provide a
     // definition of the vftable.
-    HasRTTIComponent = Context.getLangOpts().RTTI &&
+    HasRTTIComponent = Context.getLangOpts().RTTIData &&
                        !MostDerivedClass->hasAttr<DLLImportAttr>();
     if (HasRTTIComponent)
       Components.push_back(VTableComponent::MakeRTTI(MostDerivedClass));

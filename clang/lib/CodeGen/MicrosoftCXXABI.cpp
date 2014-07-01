@@ -1152,7 +1152,7 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
         llvm::GlobalValue::ExternalLinkage;
     llvm::ArrayType *VTableType =
         llvm::ArrayType::get(CGM.Int8PtrTy, NumVTableSlots);
-    if (getContext().getLangOpts().RTTI) {
+    if (getContext().getLangOpts().RTTIData) {
       VTableLinkage = llvm::GlobalValue::PrivateLinkage;
       VTableName = "";
     }
@@ -1163,7 +1163,8 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
           CGM.getModule(), VTableType, /*isConstant=*/true, VTableLinkage,
           /*Initializer=*/nullptr, VTableName);
       VTable->setUnnamedAddr(true);
-      if (getContext().getLangOpts().RTTI && !RD->hasAttr<DLLImportAttr>()) {
+      if (getContext().getLangOpts().RTTIData &&
+          !RD->hasAttr<DLLImportAttr>()) {
         llvm::Value *GEPIndices[] = {llvm::ConstantInt::get(CGM.IntTy, 0),
                                      llvm::ConstantInt::get(CGM.IntTy, 1)};
         llvm::Constant *VTableGEP =
