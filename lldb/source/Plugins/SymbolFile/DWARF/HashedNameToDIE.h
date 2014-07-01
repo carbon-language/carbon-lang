@@ -388,7 +388,7 @@ struct DWARFMappedHash
         }
         
         size_t
-        GetMinumumHashDataByteSize () const
+        GetMinimumHashDataByteSize () const
         {
             return min_hash_data_byte_size;
         }
@@ -651,7 +651,7 @@ struct DWARFMappedHash
             }
 
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinimumHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
                 // We have at least one HashData entry, and we have enough
@@ -724,7 +724,7 @@ struct DWARFMappedHash
                 return eResultError;
             
             const uint32_t count = m_data.GetU32 (hash_data_offset_ptr);
-            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinumumHashDataByteSize();
+            const size_t min_total_hash_data_size = count * m_header.header_data.GetMinimumHashDataByteSize();
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
                 const bool match = regex.Execute(strp_cstr);
