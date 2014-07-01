@@ -1159,21 +1159,36 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
 
     VTable = CGM.getModule().getNamedGlobal(VFTableName);
     if (!VTable) {
+      // Create a backing variable for the contents of VTable.  The VTable may
+      // or may not include space for a pointer to RTTI data.
       llvm::GlobalValue *VFTable = VTable = new llvm::GlobalVariable(
           CGM.getModule(), VTableType, /*isConstant=*/true, VTableLinkage,
           /*Initializer=*/nullptr, VTableName);
       VTable->setUnnamedAddr(true);
+
+      // Only insert a pointer into the VFTable for RTTI data if we are not
+      // importing it.  We never reference the RTTI data directly so there is no
+      // need to make room for it.
       if (getContext().getLangOpts().RTTIData &&
           !RD->hasAttr<DLLImportAttr>()) {
         llvm::Value *GEPIndices[] = {llvm::ConstantInt::get(CGM.IntTy, 0),
                                      llvm::ConstantInt::get(CGM.IntTy, 1)};
+        // Create a GEP which points just after the first entry in the VFTable,
+        // this should be the location of the first virtual method.
         llvm::Constant *VTableGEP =
             llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, GEPIndices);
+        // The symbol for the VFTable is an alias to the GEP.  It is
+        // transparent, to other modules, what the nature of this symbol is; all
+        // that matters is that the alias be the address of the first virtual
+        // method.
         VFTable = llvm::GlobalAlias::create(
             cast<llvm::SequentialType>(VTableGEP->getType())->getElementType(),
             /*AddressSpace=*/0, llvm::GlobalValue::ExternalLinkage,
             VFTableName.str(), VTableGEP, &CGM.getModule());
       } else {
+        // We don't need a GlobalAlias to be a symbol for the VTable if we won't
+        // be referencing any RTTI data.  The GlobalVariable will end up being
+        // an appropriate definition of the VFTable.
         VTable->setName(VFTableName.str());
       }
 
@@ -1199,6 +1214,11 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
           VFTableLinkage = llvm::GlobalValue::ExternalLinkage;
           llvm::Comdat *C =
               CGM.getModule().getOrInsertComdat(VFTable->getName());
+          // We must indicate which VFTable is larger to support linking between
+          // translation units which do and do not have RTTI data.  The largest
+          // VFTable contains the RTTI data; translation units which reference
+          // the smaller VFTable always reference it relative to the first
+          // virtual method.
           C->setSelectionKind(llvm::Comdat::Largest);
           VTable->setComdat(C);
         } else {
