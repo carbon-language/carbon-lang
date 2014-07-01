@@ -559,6 +559,7 @@ def filelist : Separate<["-"], "filelist">, Flags<[LinkerInput]>;
 def : Flag<["-"], "findirect-virtual-calls">, Alias<fapple_kext>;
 def finline_functions : Flag<["-"], "finline-functions">, Group<clang_ignored_f_Group>;
 def finline : Flag<["-"], "finline">, Group<clang_ignored_f_Group>;
+def finput_charset_EQ : Joined<["-"], "finput-charset=">, Group<f_Group>;
 def finstrument_functions : Flag<["-"], "finstrument-functions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Generate calls to instrument function entry and exit">;
 def : Flag<["-"], "fkeep-inline-functions">, Group<clang_ignored_f_Group>;

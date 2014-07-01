@@ -129,6 +129,9 @@
 // RUN: %clang -S -O20 -o /dev/null %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-O %s
 // CHECK-INVALID-O: warning: optimization level '-O20' is unsupported; using '-O3' instead
 
+// RUN: %clang -### -S -finput-charset=iso-8859-1 -o /dev/null %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-CHARSET %s
+// CHECK-INVALID-CHARSET: error: invalid value 'iso-8859-1' in '-finput-charset=iso-8859-1'
+
 // Test that we don't error on these.
 // RUN: %clang -### -S -Werror                                                \
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
@@ -140,6 +143,7 @@
 // RUN:     -fgcse -fno-gcse                                                  \
 // RUN:     -fident -fno-ident                                                \
 // RUN:     -fimplicit-templates -fno-implicit-templates                      \
+// RUN:     -finput-charset=UTF-8                                             \
 // RUN:     -fivopts -fno-ivopts                                              \
 // RUN:     -fnon-call-exceptions -fno-non-call-exceptions                    \
 // RUN:     -fpermissive -fno-permissive                                      \
