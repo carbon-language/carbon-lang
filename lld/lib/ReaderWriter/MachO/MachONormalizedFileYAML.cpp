@@ -508,7 +508,6 @@ struct MappingTraits<DependentDylib> {
   }
 };
 
-
 template <>
 struct ScalarEnumerationTraits<RebaseType> {
   static void enumeration(IO &io, RebaseType &value) {

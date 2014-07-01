@@ -605,7 +605,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                        bool copyRefs) {
-  std::unique_ptr<MachODylibFile> file(new MachODylibFile(path));
+  std::unique_ptr<MachODylibFile> file(
+      new MachODylibFile(normalizedFile.installName));
 
   for (auto &sym : normalizedFile.globalSymbols) {
     assert((sym.scope & N_EXT) && "only expect external symbols here");

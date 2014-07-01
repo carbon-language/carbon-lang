@@ -386,6 +386,15 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
         }
       }
     }
+    if (cmd == LC_ID_DYLIB) {
+      const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
+      dylib_command tempDL;
+      if (swap) {
+        tempDL = *dl; swapStruct(tempDL); dl = &tempDL;
+      }
+
+      f->installName = lc + dl->dylib.name;
+    }
     return false;
   });
   if (ec)

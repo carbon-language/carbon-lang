@@ -324,6 +324,12 @@ uint32_t MachOFileLayout::loadCommandsSize(uint32_t &count) {
   size += segCommandSize;
   ++count;
 
+  // If creating a dylib, add LC_ID_DYLIB.
+  if (_file.fileType == llvm::MachO::MH_DYLIB) {
+    size += sizeof(dylib_command) + pointerAlign(_file.installName.size() + 1);
+    ++count;
+  }
+
   // Add LC_DYLD_INFO
   size += sizeof(dyld_info_command);
   ++count;
@@ -621,6 +627,24 @@ std::error_code MachOFileLayout::writeLoadCommands() {
     else
       ec = writeSegmentLoadCommands<MachO32Trait>(lc);
 
+    // Add LC_ID_DYLIB command for dynamic libraries.
+    if (_file.fileType == llvm::MachO::MH_DYLIB) {
+      dylib_command *dc = reinterpret_cast<dylib_command*>(lc);
+      StringRef path = _file.installName;
+      uint32_t size = sizeof(dylib_command) + pointerAlign(path.size() + 1);
+      dc->cmd                         = LC_ID_DYLIB;
+      dc->cmdsize                     = size;
+      dc->dylib.name                  = sizeof(dylib_command); // offset
+      dc->dylib.timestamp             = 0; // FIXME
+      dc->dylib.current_version       = 0; // FIXME
+      dc->dylib.compatibility_version = 0; // FIXME
+      if (_swap)
+        swapStruct(*dc);
+      memcpy(lc + sizeof(dylib_command), path.begin(), path.size());
+      lc[sizeof(dylib_command) + path.size()] = '\0';
+      lc += size;
+    }
+
     // Add LC_DYLD_INFO_ONLY.
     dyld_info_command* di = reinterpret_cast<dyld_info_command*>(lc);
     di->cmd            = LC_DYLD_INFO_ONLY;
@@ -720,7 +744,6 @@ std::error_code MachOFileLayout::writeLoadCommands() {
       lc[sizeof(dylib_command)+dep.path.size()] = '\0';
       lc += size;
     }
-
   }
   return ec;
 }

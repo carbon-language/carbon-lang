@@ -934,6 +934,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   f->arch = context.arch();
   f->fileType = context.outputMachOType();
   f->flags = util.fileFlags();
+  f->installName = context.installName();
   util.copySegmentInfo(normFile);
   util.copySections(normFile);
   util.addDependentDylibs(atomFile, normFile);
