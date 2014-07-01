@@ -79,6 +79,12 @@ ExhaustiveSearch("exhaustive-register-search", cl::NotHidden,
                  cl::desc("Exhaustive Search for registers bypassing the depth "
                           "and interference cutoffs of last chance recoloring"));
 
+static cl::opt<bool> EnableLocalReassignment(
+    "enable-local-reassign", cl::Hidden,
+    cl::desc("Local reassignment can yield better allocation decisions, but "
+             "may be compile time intensive"),
+    cl::init(true));
+
 // FIXME: Find a good default for this flag and remove the flag.
 static cl::opt<unsigned>
 CSRFirstTimeCost("regalloc-csr-first-time-cost",
@@ -731,7 +737,7 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
       // Evicting another local live range in this case could lead to suboptimal
       // coloring.
       if (!MaxCost.isMax() && IsLocal && LIS->intervalIsInOneMBB(*Intf) &&
-          !canReassign(*Intf, PhysReg)) {
+          (!EnableLocalReassignment || !canReassign(*Intf, PhysReg))) {
         return false;
       }
     }
