@@ -515,6 +515,8 @@ void MCStreamer::EmitWinCFISetFrame(unsigned Register, unsigned Offset) {
 
 void MCStreamer::EmitWinCFIAllocStack(unsigned Size) {
   EnsureValidW64UnwindInfo();
+  if (Size == 0)
+    report_fatal_error("Allocation size must be non-zero!");
   if (Size & 7)
     report_fatal_error("Misaligned stack allocation!");
   MCWin64EHUnwindInfo *CurFrame = CurrentW64UnwindInfo;

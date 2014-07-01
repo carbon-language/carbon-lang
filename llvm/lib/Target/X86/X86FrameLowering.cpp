@@ -751,10 +751,13 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       SEHFrameOffset += SEHFrameOffset % 16; // ensure alignmant
 
       // This only needs to account for XMM spill slots, GPR slots
-      // are covered by .seh_pushreg's emitted above.
-      BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_StackAlloc))
-          .addImm(SEHFrameOffset - X86FI->getCalleeSavedFrameSize())
-          .setMIFlag(MachineInstr::FrameSetup);
+      // are covered by the .seh_pushreg's emitted above.
+      unsigned Size = SEHFrameOffset - X86FI->getCalleeSavedFrameSize();
+      if (Size) {
+        BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_StackAlloc))
+            .addImm(Size)
+            .setMIFlag(MachineInstr::FrameSetup);
+      }
 
       BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_SetFrame))
           .addImm(FramePtr)
