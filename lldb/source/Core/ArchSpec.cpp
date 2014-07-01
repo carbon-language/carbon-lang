@@ -113,7 +113,9 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 4, 4, llvm::Triple::hexagon , ArchSpec::eCore_hexagon_hexagonv5,  "hexagonv5" },
 
     { eByteOrderLittle, 4, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach32  , "unknown-mach-32" },
-    { eByteOrderLittle, 8, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach64  , "unknown-mach-64" }
+    { eByteOrderLittle, 8, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach64  , "unknown-mach-64" },
+
+    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::UnknownArch , ArchSpec::eCore_kalimba  , "kalimba" }
 };
 
 struct ArchDefinitionEntry
@@ -249,7 +251,9 @@ static const ArchDefinitionEntry g_elf_arch_entries[] =
     { ArchSpec::eCore_sparc9_generic  , llvm::ELF::EM_SPARCV9, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // SPARC V9
     { ArchSpec::eCore_x86_64_x86_64   , llvm::ELF::EM_X86_64 , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // AMD64
     { ArchSpec::eCore_mips64          , llvm::ELF::EM_MIPS   , LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // MIPS
-    { ArchSpec::eCore_hexagon_generic , llvm::ELF::EM_HEXAGON, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }  // HEXAGON
+    { ArchSpec::eCore_hexagon_generic , llvm::ELF::EM_HEXAGON, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }, // HEXAGON
+    { ArchSpec::eCore_kalimba ,         llvm::ELF::EM_CSR_KALIMBA, LLDB_INVALID_CPUTYPE, 0xFFFFFFFFu, 0xFFFFFFFFu }  // KALIMBA
+
 };
 
 static const ArchDefinition g_elf_arch_def = {
