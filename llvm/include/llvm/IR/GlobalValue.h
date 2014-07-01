@@ -180,6 +180,9 @@ public:
   static bool isAvailableExternallyLinkage(LinkageTypes Linkage) {
     return Linkage == AvailableExternallyLinkage;
   }
+  static bool isLinkOnceODRLinkage(LinkageTypes Linkage) {
+    return Linkage == LinkOnceODRLinkage;
+  }
   static bool isLinkOnceLinkage(LinkageTypes Linkage) {
     return Linkage == LinkOnceAnyLinkage || Linkage == LinkOnceODRLinkage;
   }
