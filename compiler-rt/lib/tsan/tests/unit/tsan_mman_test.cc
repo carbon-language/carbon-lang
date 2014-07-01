@@ -51,8 +51,8 @@ TEST(Mman, User) {
   char *p2 = (char*)user_alloc(thr, pc, 20);
   EXPECT_NE(p2, (char*)0);
   EXPECT_NE(p2, p);
-  EXPECT_EQ(user_alloc_usable_size(thr, pc, p), (uptr)10);
-  EXPECT_EQ(user_alloc_usable_size(thr, pc, p2), (uptr)20);
+  EXPECT_EQ(10U, user_alloc_usable_size(p));
+  EXPECT_EQ(20U, user_alloc_usable_size(p2));
   user_free(thr, pc, p);
   user_free(thr, pc, p2);
 }
@@ -107,11 +107,12 @@ TEST(Mman, UsableSize) {
   uptr pc = 0;
   char *p = (char*)user_alloc(thr, pc, 10);
   char *p2 = (char*)user_alloc(thr, pc, 20);
-  EXPECT_EQ(0U, user_alloc_usable_size(thr, pc, NULL));
-  EXPECT_EQ(10U, user_alloc_usable_size(thr, pc, p));
-  EXPECT_EQ(20U, user_alloc_usable_size(thr, pc, p2));
+  EXPECT_EQ(0U, user_alloc_usable_size(NULL));
+  EXPECT_EQ(10U, user_alloc_usable_size(p));
+  EXPECT_EQ(20U, user_alloc_usable_size(p2));
   user_free(thr, pc, p);
   user_free(thr, pc, p2);
+  EXPECT_EQ(0U, user_alloc_usable_size((void*)0x123));
 }
 
 TEST(Mman, Stats) {

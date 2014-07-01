@@ -520,7 +520,7 @@ TSAN_INTERCEPTOR(void, cfree, void *p) {
 
 TSAN_INTERCEPTOR(uptr, malloc_usable_size, void *p) {
   SCOPED_INTERCEPTOR_RAW(malloc_usable_size, p);
-  return user_alloc_usable_size(thr, pc, p);
+  return user_alloc_usable_size(p);
 }
 
 #define OPERATOR_NEW_BODY(mangled_name) \

@@ -119,7 +119,7 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
     if (p2 == 0)
       return 0;
     if (p) {
-      uptr oldsz = user_alloc_usable_size(thr, pc, p);
+      uptr oldsz = user_alloc_usable_size(p);
       internal_memcpy(p2, p, min(oldsz, sz));
     }
   }
@@ -128,7 +128,7 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
   return p2;
 }
 
-uptr user_alloc_usable_size(ThreadState *thr, uptr pc, void *p) {
+uptr user_alloc_usable_size(void *p) {
   if (p == 0)
     return 0;
   MBlock *b = ctx->metamap.GetBlock((uptr)p);
@@ -202,10 +202,7 @@ bool __tsan_get_ownership(void *p) {
 }
 
 uptr __tsan_get_allocated_size(void *p) {
-  if (p == 0)
-    return 0;
-  MBlock *b = ctx->metamap.GetBlock((uptr)p);
-  return b->siz;
+  return user_alloc_usable_size(p);
 }
 
 void __tsan_on_thread_idle() {
