@@ -97,24 +97,6 @@ static llvm::Constant *getUnexpectedFn(CodeGenModule &CGM) {
   return CGM.CreateRuntimeFunction(FTy, "__cxa_call_unexpected");
 }
 
-llvm::Constant *CodeGenFunction::getUnwindResumeFn() {
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
-
-  if (CGM.getLangOpts().SjLjExceptions)
-    return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume");
-  return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume");
-}
-
-llvm::Constant *CodeGenFunction::getUnwindResumeOrRethrowFn() {
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, Int8PtrTy, /*IsVarArgs=*/false);
-
-  if (CGM.getLangOpts().SjLjExceptions)
-    return CGM.CreateRuntimeFunction(FTy, "_Unwind_SjLj_Resume_or_Rethrow");
-  return CGM.CreateRuntimeFunction(FTy, "_Unwind_Resume_or_Rethrow");
-}
-
 static llvm::Constant *getTerminateFn(CodeGenModule &CGM) {
   // void __terminate();
 
@@ -721,56 +703,6 @@ llvm::BasicBlock *CodeGenFunction::getInvokeDestImpl() {
   return LP;
 }
 
-// This code contains a hack to work around a design flaw in
-// LLVM's EH IR which breaks semantics after inlining.  This same
-// hack is implemented in llvm-gcc.
-//
-// The LLVM EH abstraction is basically a thin veneer over the
-// traditional GCC zero-cost design: for each range of instructions
-// in the function, there is (at most) one "landing pad" with an
-// associated chain of EH actions.  A language-specific personality
-// function interprets this chain of actions and (1) decides whether
-// or not to resume execution at the landing pad and (2) if so,
-// provides an integer indicating why it's stopping.  In LLVM IR,
-// the association of a landing pad with a range of instructions is
-// achieved via an invoke instruction, the chain of actions becomes
-// the arguments to the @llvm.eh.selector call, and the selector
-// call returns the integer indicator.  Other than the required
-// presence of two intrinsic function calls in the landing pad,
-// the IR exactly describes the layout of the output code.
-//
-// A principal advantage of this design is that it is completely
-// language-agnostic; in theory, the LLVM optimizers can treat
-// landing pads neutrally, and targets need only know how to lower
-// the intrinsics to have a functioning exceptions system (assuming
-// that platform exceptions follow something approximately like the
-// GCC design).  Unfortunately, landing pads cannot be combined in a
-// language-agnostic way: given selectors A and B, there is no way
-// to make a single landing pad which faithfully represents the
-// semantics of propagating an exception first through A, then
-// through B, without knowing how the personality will interpret the
-// (lowered form of the) selectors.  This means that inlining has no
-// choice but to crudely chain invokes (i.e., to ignore invokes in
-// the inlined function, but to turn all unwindable calls into
-// invokes), which is only semantically valid if every unwind stops
-// at every landing pad.
-//
-// Therefore, the invoke-inline hack is to guarantee that every
-// landing pad has a catch-all.
-enum CleanupHackLevel_t {
-  /// A level of hack that requires that all landing pads have
-  /// catch-alls.
-  CHL_MandatoryCatchall,
-
-  /// A level of hack that requires that all landing pads handle
-  /// cleanups.
-  CHL_MandatoryCleanup,
-
-  /// No hacks at all;  ideal IR generation.
-  CHL_Ideal
-};
-const CleanupHackLevel_t CleanupHackLevel = CHL_MandatoryCleanup;
-
 llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
   assert(EHStack.requiresLandingPad());
 
@@ -897,11 +829,8 @@ llvm::BasicBlock *CodeGenFunction::EmitLandingPad() {
       LPadInst->setCleanup(true);
 
   // Otherwise, signal that we at least have cleanups.
-  } else if (CleanupHackLevel == CHL_MandatoryCatchall || hasCleanup) {
-    if (CleanupHackLevel == CHL_MandatoryCatchall)
-      LPadInst->addClause(getCatchAllValue(*this));
-    else
-      LPadInst->setCleanup(true);
+  } else if (hasCleanup) {
+    LPadInst->setCleanup(true);
   }
 
   assert((LPadInst->getNumClauses() > 0 || LPadInst->isCleanup()) &&
@@ -1678,49 +1607,25 @@ llvm::BasicBlock *CodeGenFunction::getEHResumeBlock(bool isCleanup) {
   const char *RethrowName = Personality.CatchallRethrowFn;
   if (RethrowName != nullptr && !isCleanup) {
     EmitRuntimeCall(getCatchallRethrowFn(CGM, RethrowName),
-                      getExceptionFromSlot())
+                    getExceptionFromSlot())
       ->setDoesNotReturn();
-  } else {
-    switch (CleanupHackLevel) {
-    case CHL_MandatoryCatchall:
-      // In mandatory-catchall mode, we need to use
-      // _Unwind_Resume_or_Rethrow, or whatever the personality's
-      // equivalent is.
-      EmitRuntimeCall(getUnwindResumeOrRethrowFn(),
-                        getExceptionFromSlot())
-        ->setDoesNotReturn();
-      break;
-    case CHL_MandatoryCleanup: {
-      // In mandatory-cleanup mode, we should use 'resume'.
-
-      // Recreate the landingpad's return value for the 'resume' instruction.
-      llvm::Value *Exn = getExceptionFromSlot();
-      llvm::Value *Sel = getSelectorFromSlot();
-
-      llvm::Type *LPadType = llvm::StructType::get(Exn->getType(),
-                                                   Sel->getType(), NULL);
-      llvm::Value *LPadVal = llvm::UndefValue::get(LPadType);
-      LPadVal = Builder.CreateInsertValue(LPadVal, Exn, 0, "lpad.val");
-      LPadVal = Builder.CreateInsertValue(LPadVal, Sel, 1, "lpad.val");
-
-      Builder.CreateResume(LPadVal);
-      Builder.restoreIP(SavedIP);
-      return EHResumeBlock;
-    }
-    case CHL_Ideal:
-      // In an idealized mode where we don't have to worry about the
-      // optimizer combining landing pads, we should just use
-      // _Unwind_Resume (or the personality's equivalent).
-      EmitRuntimeCall(getUnwindResumeFn(), getExceptionFromSlot())
-        ->setDoesNotReturn();
-      break;
-    }
+    Builder.CreateUnreachable();
+    Builder.restoreIP(SavedIP);
+    return EHResumeBlock;
   }
 
-  Builder.CreateUnreachable();
+  // Recreate the landingpad's return value for the 'resume' instruction.
+  llvm::Value *Exn = getExceptionFromSlot();
+  llvm::Value *Sel = getSelectorFromSlot();
 
+  llvm::Type *LPadType = llvm::StructType::get(Exn->getType(),
+                                               Sel->getType(), NULL);
+  llvm::Value *LPadVal = llvm::UndefValue::get(LPadType);
+  LPadVal = Builder.CreateInsertValue(LPadVal, Exn, 0, "lpad.val");
+  LPadVal = Builder.CreateInsertValue(LPadVal, Sel, 1, "lpad.val");
+
+  Builder.CreateResume(LPadVal);
   Builder.restoreIP(SavedIP);
-
   return EHResumeBlock;
 }
 
