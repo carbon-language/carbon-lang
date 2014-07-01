@@ -15,25 +15,15 @@
 #ifndef SYSTEMZTARGETMACHINE_H
 #define SYSTEMZTARGETMACHINE_H
 
-#include "SystemZFrameLowering.h"
-#include "SystemZISelLowering.h"
-#include "SystemZInstrInfo.h"
-#include "SystemZRegisterInfo.h"
-#include "SystemZSelectionDAGInfo.h"
 #include "SystemZSubtarget.h"
-#include "llvm/IR/DataLayout.h"
-#include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {
 
+class TargetFrameLowering;
+
 class SystemZTargetMachine : public LLVMTargetMachine {
   SystemZSubtarget        Subtarget;
-  const DataLayout        DL;
-  SystemZInstrInfo        InstrInfo;
-  SystemZTargetLowering   TLInfo;
-  SystemZSelectionDAGInfo TSInfo;
-  SystemZFrameLowering    FrameLowering;
 
 public:
   SystemZTargetMachine(const Target &T, StringRef TT, StringRef CPU,
@@ -43,25 +33,25 @@ public:
 
   // Override TargetMachine.
   const TargetFrameLowering *getFrameLowering() const override {
-    return &FrameLowering;
+    return getSubtargetImpl()->getFrameLowering();
   }
   const SystemZInstrInfo *getInstrInfo() const override {
-    return &InstrInfo;
+    return getSubtargetImpl()->getInstrInfo();
   }
   const SystemZSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
   const DataLayout *getDataLayout() const override {
-    return &DL;
+    return getSubtargetImpl()->getDataLayout();
   }
   const SystemZRegisterInfo *getRegisterInfo() const override {
-    return &InstrInfo.getRegisterInfo();
+    return getSubtargetImpl()->getRegisterInfo();
   }
   const SystemZTargetLowering *getTargetLowering() const override {
-    return &TLInfo;
+    return getSubtargetImpl()->getTargetLowering();
   }
   const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
-    return &TSInfo;
+    return getSubtargetImpl()->getSelectionDAGInfo();
   }
 
   // Override LLVMTargetMachine

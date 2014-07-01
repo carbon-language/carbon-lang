@@ -14,6 +14,12 @@
 #ifndef SYSTEMZSUBTARGET_H
 #define SYSTEMZSUBTARGET_H
 
+#include "SystemZFrameLowering.h"
+#include "SystemZISelLowering.h"
+#include "SystemZInstrInfo.h"
+#include "SystemZRegisterInfo.h"
+#include "SystemZSelectionDAGInfo.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -37,10 +43,26 @@ protected:
 
 private:
   Triple TargetTriple;
+  const DataLayout DL;
+  SystemZInstrInfo InstrInfo;
+  SystemZTargetLowering TLInfo;
+  SystemZSelectionDAGInfo TSInfo;
+  SystemZFrameLowering FrameLowering;
 
+  SystemZSubtarget &initializeSubtargetDependencies(StringRef CPU,
+                                                    StringRef FS);
 public:
   SystemZSubtarget(const std::string &TT, const std::string &CPU,
-                   const std::string &FS);
+                   const std::string &FS, const TargetMachine &TM);
+
+  const TargetFrameLowering *getFrameLowering() const { return &FrameLowering; }
+  const SystemZInstrInfo *getInstrInfo() const { return &InstrInfo; }
+  const DataLayout *getDataLayout() const { return &DL; }
+  const SystemZRegisterInfo *getRegisterInfo() const {
+    return &InstrInfo.getRegisterInfo();
+  }
+  const SystemZTargetLowering *getTargetLowering() const { return &TLInfo; }
+  const TargetSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
 
   // This is important for reducing register pressure in vector code.
   bool useAA() const override { return true; }
