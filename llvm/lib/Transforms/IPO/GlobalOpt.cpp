@@ -1908,7 +1908,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
   for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
     Function *F = FI++;
     // Functions without names cannot be referenced outside this module.
-    if (!F->hasName() && !F->isDeclaration())
+    if (!F->hasName() && !F->isDeclaration() && !F->hasLocalLinkage())
       F->setLinkage(GlobalValue::InternalLinkage);
     F->removeDeadConstantUsers();
     if (F->isDefTriviallyDead()) {
@@ -1953,7 +1953,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
        GVI != E; ) {
     GlobalVariable *GV = GVI++;
     // Global variables without names cannot be referenced outside this module.
-    if (!GV->hasName() && !GV->isDeclaration())
+    if (!GV->hasName() && !GV->isDeclaration() && !GV->hasLocalLinkage())
       GV->setLinkage(GlobalValue::InternalLinkage);
     // Simplify the initializer.
     if (GV->hasInitializer())
@@ -2858,7 +2858,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
        I != E;) {
     Module::alias_iterator J = I++;
     // Aliases without names cannot be referenced outside this module.
-    if (!J->hasName() && !J->isDeclaration())
+    if (!J->hasName() && !J->isDeclaration() && !J->hasLocalLinkage())
       J->setLinkage(GlobalValue::InternalLinkage);
     // If the aliasee may change at link time, nothing can be done - bail out.
     if (J->mayBeOverridden())
