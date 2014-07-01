@@ -387,6 +387,7 @@ private:
 
   bool SelectGetElementPtr(const User *I);
 
+  bool SelectStackmap(const CallInst *I);
   bool SelectCall(const User *I);
 
   bool SelectBitCast(const User *I);

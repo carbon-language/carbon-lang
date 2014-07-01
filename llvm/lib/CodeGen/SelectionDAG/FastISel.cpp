@@ -561,13 +561,13 @@ bool FastISel::SelectGetElementPtr(const User *I) {
   return true;
 }
 
-/// \brief Add a stack map intrinsic call's live variable operands to a stackmap
-/// or patchpoint machine instruction.
-///
+/// \brief Add a stackmap or patchpoint intrinsic call's live variable operands
+/// to a stackmap or patchpoint machine instruction.
 bool FastISel::addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
                                    const CallInst *CI, unsigned StartIdx) {
   for (unsigned i = StartIdx, e = CI->getNumArgOperands(); i != e; ++i) {
     Value *Val = CI->getArgOperand(i);
+    // Check for constants and encode them with a StackMaps::ConstantOp prefix.
     if (auto *C = dyn_cast<ConstantInt>(Val)) {
       Ops.push_back(MachineOperand::CreateImm(StackMaps::ConstantOp));
       Ops.push_back(MachineOperand::CreateImm(C->getSExtValue()));
@@ -575,6 +575,9 @@ bool FastISel::addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
       Ops.push_back(MachineOperand::CreateImm(StackMaps::ConstantOp));
       Ops.push_back(MachineOperand::CreateImm(0));
     } else if (auto *AI = dyn_cast<AllocaInst>(Val)) {
+      // Values coming from a stack location also require a sepcial encoding,
+      // but that is added later on by the target specific frame index
+      // elimination implementation.
       auto SI = FuncInfo.StaticAllocaMap.find(AI);
       if (SI != FuncInfo.StaticAllocaMap.end())
         Ops.push_back(MachineOperand::CreateFI(SI->second));
@@ -587,6 +590,74 @@ bool FastISel::addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
       Ops.push_back(MachineOperand::CreateReg(Reg, /*IsDef=*/false));
     }
   }
+
+  return true;
+}
+
+bool FastISel::SelectStackmap(const CallInst *I) {
+  // void @llvm.experimental.stackmap(i64 <id>, i32 <numShadowBytes>,
+  //                                  [live variables...])
+  assert(I->getCalledFunction()->getReturnType()->isVoidTy() &&
+         "Stackmap cannot return a value.");
+
+  // The stackmap intrinsic only records the live variables (the arguments
+  // passed to it) and emits NOPS (if requested). Unlike the patchpoint
+  // intrinsic, this won't be lowered to a function call. This means we don't
+  // have to worry about calling conventions and target-specific lowering code.
+  // Instead we perform the call lowering right here.
+  //
+  // CALLSEQ_START(0)
+  // STACKMAP(id, nbytes, ...)
+  // CALLSEQ_END(0, 0)
+  //
+  SmallVector<MachineOperand, 32> Ops;
+
+  // Add the <id> and <numBytes> constants.
+  assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::IDPos)) &&
+         "Expected a constant integer.");
+  const auto *ID = cast<ConstantInt>(I->getOperand(PatchPointOpers::IDPos));
+  Ops.push_back(MachineOperand::CreateImm(ID->getZExtValue()));
+
+  assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::NBytesPos)) &&
+         "Expected a constant integer.");
+  const auto *NumBytes =
+    cast<ConstantInt>(I->getOperand(PatchPointOpers::NBytesPos));
+  Ops.push_back(MachineOperand::CreateImm(NumBytes->getZExtValue()));
+
+  // Push live variables for the stack map (skipping the first two arguments
+  // <id> and <numBytes>).
+  if (!addStackMapLiveVars(Ops, I, 2))
+    return false;
+
+  // We are not adding any register mask info here, because the stackmap doesn't
+  // clobber anything.
+
+  // Add scratch registers as implicit def and early clobber.
+  CallingConv::ID CC = I->getCallingConv();
+  const MCPhysReg *ScratchRegs = TLI.getScratchRegisters(CC);
+  for (unsigned i = 0; ScratchRegs[i]; ++i)
+    Ops.push_back(MachineOperand::CreateReg(
+      ScratchRegs[i], /*IsDef=*/true, /*IsImp=*/true, /*IsKill=*/false,
+      /*IsDead=*/false, /*IsUndef=*/false, /*IsEarlyClobber=*/true));
+
+  // Issue CALLSEQ_START
+  unsigned AdjStackDown = TII.getCallFrameSetupOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackDown))
+    .addImm(0);
+
+  // Issue STACKMAP.
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                    TII.get(TargetOpcode::STACKMAP));
+  for (auto const &MO : Ops)
+    MIB.addOperand(MO);
+
+  // Issue CALLSEQ_END
+  unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackUp))
+    .addImm(0).addImm(0);
+
+  // Inform the Frame Information that we have a stackmap in this function.
+  FuncInfo.MF->getFrameInfo()->setHasStackMap();
 
   return true;
 }
@@ -746,76 +817,8 @@ bool FastISel::SelectCall(const User *I) {
     UpdateValueMap(Call, ResultReg);
     return true;
   }
-  case Intrinsic::experimental_stackmap: {
-    // void @llvm.experimental.stackmap(i64 <id>, i32 <numShadowBytes>,
-    //                                  [live variables...])
-
-    assert(Call->getCalledFunction()->getReturnType()->isVoidTy() &&
-           "Stackmap cannot return a value.");
-
-    // The stackmap intrinsic only records the live variables (the arguments
-    // passed to it) and emits NOPS (if requested). Unlike the patchpoint
-    // intrinsic, this won't be lowered to a function call. This means we don't
-    // have to worry about calling conventions and target-specific lowering
-    // code. Instead we perform the call lowering right here.
-    //
-    // CALLSEQ_START(0)
-    // STACKMAP(id, nbytes, ...)
-    // CALLSEQ_END(0, 0)
-    //
-
-    SmallVector<MachineOperand, 32> Ops;
-
-    // Add the <id> and <numBytes> constants.
-    assert(isa<ConstantInt>(Call->getOperand(PatchPointOpers::IDPos)) &&
-           "Expected a constant integer.");
-    auto IDVal = cast<ConstantInt>(Call->getOperand(PatchPointOpers::IDPos));
-    Ops.push_back(MachineOperand::CreateImm(IDVal->getZExtValue()));
-
-    assert(isa<ConstantInt>(Call->getOperand(PatchPointOpers::NBytesPos)) &&
-           "Expected a constant integer.");
-    auto NBytesVal =
-      cast<ConstantInt>(Call->getOperand(PatchPointOpers::NBytesPos));
-    Ops.push_back(MachineOperand::CreateImm(NBytesVal->getZExtValue()));
-
-    // Push live variables for the stack map.
-    if (!addStackMapLiveVars(Ops, Call, 2))
-      return false;
-
-    // We are not adding any register mask info here, because the stackmap
-    // doesn't clobber anything.
-
-    // Add scratch registers as implicit def and early clobber.
-    CallingConv::ID CC = Call->getCallingConv();
-    const MCPhysReg *ScratchRegs = TLI.getScratchRegisters(CC);
-    for (unsigned i = 0; ScratchRegs[i]; ++i)
-      Ops.push_back(MachineOperand::CreateReg(
-        ScratchRegs[i], /*IsDef=*/true, /*IsImp=*/true, /*IsKill=*/false,
-        /*IsDead=*/false, /*IsUndef=*/false, /*IsEarlyClobber=*/true));
-
-    // Issue CALLSEQ_START
-    unsigned AdjStackDown = TII.getCallFrameSetupOpcode();
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackDown))
-      .addImm(0);
-
-    // Issue STACKMAP.
-    MachineInstrBuilder MIB;
-    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                  TII.get(TargetOpcode::STACKMAP));
-
-    for (auto const &MO : Ops)
-      MIB.addOperand(MO);
-
-    // Issue CALLSEQ_END
-    unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackUp))
-      .addImm(0).addImm(0);
-
-    // Inform the Frame Information that we have a stackmap in this function.
-    FuncInfo.MF->getFrameInfo()->setHasStackMap();
-
-    return true;
-  }
+  case Intrinsic::experimental_stackmap:
+    return SelectStackmap(Call);
   }
 
   // Usually, it does not make sense to initialize a value,
