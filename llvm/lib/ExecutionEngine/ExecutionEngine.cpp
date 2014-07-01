@@ -411,13 +411,14 @@ ExecutionEngine *ExecutionEngine::create(Module *M,
                                          std::string *ErrorStr,
                                          CodeGenOpt::Level OptLevel,
                                          bool GVsWithCode) {
-  EngineBuilder EB =  EngineBuilder(M)
-      .setEngineKind(ForceInterpreter
-                     ? EngineKind::Interpreter
-                     : EngineKind::JIT)
-      .setErrorStr(ErrorStr)
-      .setOptLevel(OptLevel)
-      .setAllocateGVsWithCode(GVsWithCode);
+
+  EngineBuilder EB =
+      EngineBuilder(M)
+          .setEngineKind(ForceInterpreter ? EngineKind::Interpreter
+                                          : EngineKind::Either)
+          .setErrorStr(ErrorStr)
+          .setOptLevel(OptLevel)
+          .setAllocateGVsWithCode(GVsWithCode);
 
   return EB.create();
 }
