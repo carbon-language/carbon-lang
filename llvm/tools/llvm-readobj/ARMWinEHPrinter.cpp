@@ -508,15 +508,13 @@ void Decoder::decodeOpcodes(ArrayRef<ulittle8_t> Opcodes, unsigned Offset,
 
   bool Terminated = false;
   for (unsigned OI = Offset, OE = Opcodes.size(); !Terminated && OI < OE; ) {
-    bool Decoded = false;
-    for (unsigned DI = 0, DE = array_lengthof(Ring); DI < DE; ++DI) {
+    for (unsigned DI = 0;; ++DI) {
       if ((Opcodes[OI] & Ring[DI].Mask) == Ring[DI].Value) {
         Terminated = (this->*Ring[DI].Routine)(Opcodes.data(), OI, 0, Prologue);
-        Decoded = true;
         break;
       }
+      assert(DI < array_lengthof(Ring) && "unhandled opcode");
     }
-    assert(Decoded && "unhandled opcode");
   }
 }
 
