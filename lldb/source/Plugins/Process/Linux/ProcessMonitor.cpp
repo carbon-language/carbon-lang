@@ -1381,10 +1381,10 @@ ProcessMonitor::Attach(AttachArgs *args)
                     }
                 }
 
-                int status;
+                ::pid_t wpid;
                 // Need to use __WALL otherwise we receive an error with errno=ECHLD
                 // At this point we should have a thread stopped if waitpid succeeds.
-                if ((status = waitpid(tid, NULL, __WALL)) < 0)
+                if ((wpid = waitpid(tid, NULL, __WALL)) < 0)
                 {
                     // No such thread. The thread may have exited.
                     // More error handling may be needed.
@@ -1698,7 +1698,7 @@ ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
         int status = -1;
         if (log)
             log->Printf ("ProcessMonitor::%s(%" PRIu64 ") waitpid...", __FUNCTION__, tid);
-        lldb::pid_t wait_pid = waitpid(tid, &status, __WALL);
+        ::pid_t wait_pid = waitpid(tid, &status, __WALL);
         if (status == -1)
         {
             // If we got interrupted by a signal (in our process, not the
@@ -1716,7 +1716,7 @@ ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
         if (log)
             log->Printf ("ProcessMonitor::%s(%" PRIu64 ") waitpid, status = %d", __FUNCTION__, tid, status);
 
-        assert(wait_pid == tid);
+        assert(static_cast<lldb::tid_t>(wait_pid) == tid);
 
         siginfo_t info;
         int ptrace_err;
@@ -1733,7 +1733,7 @@ ProcessMonitor::WaitForInitialTIDStop(lldb::tid_t tid)
         if (WIFEXITED(status))
         {
             m_process->SendMessage(ProcessMessage::Exit(wait_pid, WEXITSTATUS(status)));
-            if (wait_pid == tid)
+            if (static_cast<lldb::tid_t>(wait_pid) == tid)
                 return true;
             continue;
         }
@@ -1770,11 +1770,12 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
         int status = -1;
         if (log)
             log->Printf ("ProcessMonitor::%s(bp) waitpid...", __FUNCTION__);
-        lldb::pid_t wait_pid = ::waitpid (-1*getpgid(m_pid), &status, __WALL);
+        ::pid_t wait_pid = ::waitpid (-1*getpgid(m_pid), &status, __WALL);
         if (log)
-            log->Printf ("ProcessMonitor::%s(bp) waitpid, pid = %" PRIu64 ", status = %d", __FUNCTION__, wait_pid, status);
+            log->Printf ("ProcessMonitor::%s(bp) waitpid, pid = %" PRIu64 ", status = %d",
+                         __FUNCTION__, static_cast<lldb::pid_t>(wait_pid), status);
 
-        if (wait_pid == static_cast<lldb::pid_t>(-1))
+        if (wait_pid == -1)
         {
             // If we got interrupted by a signal (in our process, not the
             // inferior) try again.
@@ -1788,7 +1789,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
         if (WIFEXITED(status))
         {
             m_process->SendMessage(ProcessMessage::Exit(wait_pid, WEXITSTATUS(status)));
-            if (wait_pid == tid)
+            if (static_cast<lldb::tid_t>(wait_pid) == tid)
                 return true;
             continue;
         }
@@ -1819,7 +1820,8 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
 
         // Handle events from other threads
         if (log)
-            log->Printf ("ProcessMonitor::%s(bp) handling event, tid == %" PRIu64, __FUNCTION__, wait_pid);
+            log->Printf ("ProcessMonitor::%s(bp) handling event, tid == %" PRIu64,
+                         __FUNCTION__, static_cast<lldb::tid_t>(wait_pid));
 
         ProcessMessage message;
         if (info.si_signo == SIGTRAP)
@@ -1860,7 +1862,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
                 // If this is the thread we're waiting for, stop waiting. Even
                 // though this wasn't the signal we expected, it's the last
                 // signal we'll see while this thread is alive.
-                if (wait_pid == tid)
+                if (static_cast<lldb::tid_t>(wait_pid) == tid)
                     return true;
                 break;
 
@@ -1880,14 +1882,17 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
                     // but we need to resume here to get the stop we are waiting
                     // for (otherwise the thread will stop again immediately when
                     // we try to resume).
-                    if (wait_pid == tid)
+                    if (static_cast<lldb::tid_t>(wait_pid) == tid)
                         Resume(wait_pid, eResumeSignalNone);
                 }
                 break;
 
             case ProcessMessage::eSignalDeliveredMessage:
                 // This is the stop we're expecting.
-                if (wait_pid == tid && WIFSTOPPED(status) && WSTOPSIG(status) == SIGSTOP && info.si_code == SI_TKILL)
+                if (static_cast<lldb::tid_t>(wait_pid) == tid &&
+                    WIFSTOPPED(status) &&
+                    WSTOPSIG(status) == SIGSTOP &&
+                    info.si_code == SI_TKILL)
                 {
                     if (log)
                         log->Printf ("ProcessMonitor::%s(bp) received signal, done waiting", __FUNCTION__);
@@ -1909,7 +1914,7 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
                 // but we need to resume here to get the stop we are waiting
                 // for (otherwise the thread will stop again immediately when
                 // we try to resume).
-                if (wait_pid == tid)
+                if (static_cast<lldb::tid_t>(wait_pid) == tid)
                     Resume(wait_pid, eResumeSignalNone);
                 break;
         }
