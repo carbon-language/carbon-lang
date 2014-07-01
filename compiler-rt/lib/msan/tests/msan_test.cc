@@ -3556,7 +3556,7 @@ TEST(MemorySanitizer, UnalignedStore64_precise2) {
   EXPECT_POISONED_O(x[11], originx3);
 }
 
-#ifndef MSAN_TEST_DISABLE_VECTOR_INTRINSICS
+#if defined(__clang__)
 namespace {
 typedef U1 V16x8 __attribute__((__vector_size__(16)));
 typedef U2 V8x16 __attribute__((__vector_size__(16)));
@@ -3717,7 +3717,7 @@ TEST(VectorMaddTest, mmx_pmadd_wd) {
 
   EXPECT_EQ((unsigned)(2 * 102 + 3 * 103), c[1]);
 }
-#endif  // MSAN_TEST_DISABLE_VECTOR_INTRINSICS
+#endif  // defined(__clang__)
 
 TEST(MemorySanitizerDr, StoreInDSOTest) {
   if (!__msan_has_dynamic_component()) return;
