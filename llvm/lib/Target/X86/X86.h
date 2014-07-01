@@ -24,6 +24,10 @@ class ImmutablePass;
 class JITCodeEmitter;
 class X86TargetMachine;
 
+/// createX86AtomicExpandPass - This pass expands atomic operations that cannot
+/// be handled natively in terms of a loop using cmpxchg.
+FunctionPass *createX86AtomicExpandPass(const X86TargetMachine *TM);
+
 /// createX86ISelDag - This pass converts a legalized DAG into a
 /// X86-specific DAG, ready for instruction scheduling.
 ///

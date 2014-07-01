@@ -111,6 +111,7 @@ public:
     return *getX86TargetMachine().getSubtargetImpl();
   }
 
+  void addIRPasses() override;
   bool addInstSelector() override;
   bool addILPOpts() override;
   bool addPreRegAlloc() override;
@@ -121,6 +122,12 @@ public:
 
 TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
   return new X86PassConfig(this, PM);
+}
+
+void X86PassConfig::addIRPasses() {
+  addPass(createX86AtomicExpandPass(&getX86TargetMachine()));
+
+  TargetPassConfig::addIRPasses();
 }
 
 bool X86PassConfig::addInstSelector() {

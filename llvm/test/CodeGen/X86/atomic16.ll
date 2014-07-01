@@ -4,8 +4,8 @@
 @sc16 = external global i16
 
 define void @atomic_fetch_add16() nounwind {
-; X64:   atomic_fetch_add16
-; X32:   atomic_fetch_add16
+; X64-LABEL:   atomic_fetch_add16
+; X32-LABEL:   atomic_fetch_add16
 entry:
 ; 32-bit
   %t1 = atomicrmw add  i16* @sc16, i16 1 acquire
@@ -34,8 +34,8 @@ entry:
 }
 
 define void @atomic_fetch_sub16() nounwind {
-; X64:   atomic_fetch_sub16
-; X32:   atomic_fetch_sub16
+; X64-LABEL:   atomic_fetch_sub16
+; X32-LABEL:   atomic_fetch_sub16
   %t1 = atomicrmw sub  i16* @sc16, i16 1 acquire
 ; X64:       lock
 ; X64:       decw
@@ -62,18 +62,18 @@ define void @atomic_fetch_sub16() nounwind {
 }
 
 define void @atomic_fetch_and16() nounwind {
-; X64:   atomic_fetch_and16
-; X32:   atomic_fetch_and16
+; X64-LABEL:   atomic_fetch_and16
+; X32-LABEL:   atomic_fetch_and16
   %t1 = atomicrmw and  i16* @sc16, i16 3 acquire
 ; X64:       lock
 ; X64:       andw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       andw $3
   %t2 = atomicrmw and  i16* @sc16, i16 5 acquire
-; X64:       andw
+; X64:       andl
 ; X64:       lock
 ; X64:       cmpxchgw
-; X32:       andw
+; X32:       andl
 ; X32:       lock
 ; X32:       cmpxchgw
   %t3 = atomicrmw and  i16* @sc16, i16 %t2 acquire
@@ -87,18 +87,18 @@ define void @atomic_fetch_and16() nounwind {
 }
 
 define void @atomic_fetch_or16() nounwind {
-; X64:   atomic_fetch_or16
-; X32:   atomic_fetch_or16
+; X64-LABEL:   atomic_fetch_or16
+; X32-LABEL:   atomic_fetch_or16
   %t1 = atomicrmw or   i16* @sc16, i16 3 acquire
 ; X64:       lock
 ; X64:       orw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       orw $3
   %t2 = atomicrmw or   i16* @sc16, i16 5 acquire
-; X64:       orw
+; X64:       orl
 ; X64:       lock
 ; X64:       cmpxchgw
-; X32:       orw
+; X32:       orl
 ; X32:       lock
 ; X32:       cmpxchgw
   %t3 = atomicrmw or   i16* @sc16, i16 %t2 acquire
@@ -112,18 +112,18 @@ define void @atomic_fetch_or16() nounwind {
 }
 
 define void @atomic_fetch_xor16() nounwind {
-; X64:   atomic_fetch_xor16
-; X32:   atomic_fetch_xor16
+; X64-LABEL:   atomic_fetch_xor16
+; X32-LABEL:   atomic_fetch_xor16
   %t1 = atomicrmw xor  i16* @sc16, i16 3 acquire
 ; X64:       lock
 ; X64:       xorw $3, {{.*}} # encoding: [0xf0,0x66
 ; X32:       lock
 ; X32:       xorw $3
   %t2 = atomicrmw xor  i16* @sc16, i16 5 acquire
-; X64:       xorw
+; X64:       xorl
 ; X64:       lock
 ; X64:       cmpxchgw
-; X32:       xorw
+; X32:       xorl
 ; X32:       lock
 ; X32:       cmpxchgw
   %t3 = atomicrmw xor  i16* @sc16, i16 %t2 acquire
@@ -137,15 +137,15 @@ define void @atomic_fetch_xor16() nounwind {
 }
 
 define void @atomic_fetch_nand16(i16 %x) nounwind {
-; X64:   atomic_fetch_nand16
-; X32:   atomic_fetch_nand16
+; X64-LABEL:   atomic_fetch_nand16
+; X32-LABEL:   atomic_fetch_nand16
   %t1 = atomicrmw nand i16* @sc16, i16 %x acquire
-; X64:       andw
-; X64:       notw
+; X64:       andl
+; X64:       notl
 ; X64:       lock
 ; X64:       cmpxchgw
-; X32:       andw
-; X32:       notw
+; X32:       andl
+; X32:       notl
 ; X32:       lock
 ; X32:       cmpxchgw
   ret void
@@ -155,12 +155,16 @@ define void @atomic_fetch_nand16(i16 %x) nounwind {
 
 define void @atomic_fetch_max16(i16 %x) nounwind {
   %t1 = atomicrmw max  i16* @sc16, i16 %x acquire
-; X64:       cmpw
+; X64:       movswl
+; X64:       movswl
+; X64:       subl
 ; X64:       cmov
 ; X64:       lock
 ; X64:       cmpxchgw
 
-; X32:       cmpw
+; X32:       movswl
+; X32:       movswl
+; X32:       subl
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgw
@@ -171,12 +175,16 @@ define void @atomic_fetch_max16(i16 %x) nounwind {
 
 define void @atomic_fetch_min16(i16 %x) nounwind {
   %t1 = atomicrmw min  i16* @sc16, i16 %x acquire
-; X64:       cmpw
+; X64:       movswl
+; X64:       movswl
+; X64:       subl
 ; X64:       cmov
 ; X64:       lock
 ; X64:       cmpxchgw
 
-; X32:       cmpw
+; X32:       movswl
+; X32:       movswl
+; X32:       subl
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgw
@@ -187,12 +195,16 @@ define void @atomic_fetch_min16(i16 %x) nounwind {
 
 define void @atomic_fetch_umax16(i16 %x) nounwind {
   %t1 = atomicrmw umax i16* @sc16, i16 %x acquire
-; X64:       cmpw
+; X64:       movzwl
+; X64:       movzwl
+; X64:       subl
 ; X64:       cmov
 ; X64:       lock
 ; X64:       cmpxchgw
 
-; X32:       cmpw
+; X32:       movzwl
+; X32:       movzwl
+; X32:       subl
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgw
@@ -203,11 +215,16 @@ define void @atomic_fetch_umax16(i16 %x) nounwind {
 
 define void @atomic_fetch_umin16(i16 %x) nounwind {
   %t1 = atomicrmw umin i16* @sc16, i16 %x acquire
-; X64:       cmpw
+; X64:       movzwl
+; X64:       movzwl
+; X64:       subl
 ; X64:       cmov
 ; X64:       lock
 ; X64:       cmpxchgw
-; X32:       cmpw
+
+; X32:       movzwl
+; X32:       movzwl
+; X32:       subl
 ; X32:       cmov
 ; X32:       lock
 ; X32:       cmpxchgw

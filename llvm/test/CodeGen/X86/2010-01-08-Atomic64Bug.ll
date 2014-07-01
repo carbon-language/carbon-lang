@@ -11,9 +11,9 @@ entry:
 ; CHECK: movl 4([[REG]]), %edx
 ; CHECK: LBB0_1:
 ; CHECK: movl %eax, %ebx
-; CHECK: addl {{%[a-z]+}}, %ebx
+; CHECK: addl $1, %ebx
 ; CHECK: movl %edx, %ecx
-; CHECK: adcl {{%[a-z]+}}, %ecx
+; CHECK: adcl $0, %ecx
 ; CHECK: lock
 ; CHECK-NEXT: cmpxchg8b ([[REG]])
 ; CHECK-NEXT: jne
