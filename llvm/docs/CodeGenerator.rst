@@ -1683,7 +1683,7 @@ ones supported by the matcher), through a Requires clause:
   def : MnemonicAlias<"pushf", "pushfq">, Requires<[In64BitMode]>;
   def : MnemonicAlias<"pushf", "pushfl">, Requires<[In32BitMode]>;
 
-In this example, the mnemonic gets mapped into different a new one depending on
+In this example, the mnemonic gets mapped into a different one depending on
 the current instruction set.
 
 Instruction Aliases
