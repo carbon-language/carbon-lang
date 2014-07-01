@@ -732,6 +732,10 @@ void ScopStmt::collectCandiateReductionLoads(
   if (!BinOp->isCommutative() || !BinOp->isAssociative())
     return;
 
+  // Skip if the binary operator is outside the current SCoP
+  if (BinOp->getParent() != Store->getParent())
+    return;
+
   // Skip if it is a multiplicative reduction and we disabled them
   if (DisableMultiplicativeReductions &&
       (BinOp->getOpcode() == Instruction::Mul ||
@@ -746,9 +750,11 @@ void ScopStmt::collectCandiateReductionLoads(
 
   // A load is only a candidate if it cannot escape (thus has only this use)
   if (PossibleLoad0 && PossibleLoad0->getNumUses() == 1)
-    Loads.push_back(lookupAccessFor(PossibleLoad0));
+    if (PossibleLoad0->getParent() == Store->getParent())
+      Loads.push_back(lookupAccessFor(PossibleLoad0));
   if (PossibleLoad1 && PossibleLoad1->getNumUses() == 1)
-    Loads.push_back(lookupAccessFor(PossibleLoad1));
+    if (PossibleLoad1->getParent() == Store->getParent())
+      Loads.push_back(lookupAccessFor(PossibleLoad1));
 }
 
 /// @brief Check for reductions in this ScopStmt
