@@ -565,13 +565,6 @@ namespace llvm {
                                       Triple &TheTriple,
                                       std::string &Error);
 
-    /// getClosestTargetForJIT - Pick the best target that is compatible with
-    /// the current host.  If no close target can be found, this returns null
-    /// and sets the Error string to a reason.
-    ///
-    /// Maintained for compatibility through 2.6.
-    static const Target *getClosestTargetForJIT(std::string &Error);
-
     /// @}
     /// @name Target Registration
     /// @{
