@@ -627,7 +627,7 @@ MVT AArch64TargetLowering::getScalarShiftAmountTy(EVT LHSTy) const {
 
 unsigned AArch64TargetLowering::getMaximalGlobalOffset() const {
   // FIXME: On AArch64, this depends on the type.
-  // Basically, the addressable offsets are o to 4095 * Ty.getSizeInBytes().
+  // Basically, the addressable offsets are up to 4095 * Ty.getSizeInBytes().
   // and the offset has to be a multiple of the related size in bytes.
   return 4095;
 }
