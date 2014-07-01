@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -triple i386-unknown-unknown -O3 -emit-llvm -o - %s
-// DISABLED: %clang_cc1 -triple i386-unknown-unknown -O3 -emit-llvm -o - %s | grep "ret i32 2520"
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -O3 -emit-llvm -o - %s | grep "ret i32 2520"
 
 static int foo(unsigned i) {
   void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };
@@ -15,7 +14,7 @@ static int foo(unsigned i) {
 }
 
 static int foo2(unsigned i) {
-  static const void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };
+  const void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };
   int res = 1;
   
   goto *addrs[i];
