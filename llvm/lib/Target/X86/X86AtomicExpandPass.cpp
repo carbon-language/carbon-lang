@@ -90,6 +90,9 @@ bool X86AtomicExpandPass::runOnFunction(Function &F) {
       MadeChange |= expandAtomicRMW(AI);
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst))
       MadeChange |= expandAtomicStore(SI);
+
+    assert(MadeChange && "Atomic inst not expanded when it should be?");
+    Inst->eraseFromParent();
   }
 
   return MadeChange;
@@ -259,7 +262,6 @@ bool X86AtomicExpandPass::expandAtomicRMW(AtomicRMWInst *AI) {
   Builder.CreateCondBr(Success, ExitBB, LoopBB);
 
   AI->replaceAllUsesWith(NewLoaded);
-  AI->eraseFromParent();
 
   return true;
 }
@@ -268,10 +270,11 @@ bool X86AtomicExpandPass::expandAtomicStore(StoreInst *SI) {
   // An atomic store might need cmpxchg16b (or 8b on x86) to execute. Express
   // this in terms of the usual expansion to "atomicrmw xchg".
   IRBuilder<> Builder(SI);
+  AtomicOrdering Order =
+      SI->getOrdering() == Unordered ? Monotonic : SI->getOrdering();
   AtomicRMWInst *AI =
       Builder.CreateAtomicRMW(AtomicRMWInst::Xchg, SI->getPointerOperand(),
-                              SI->getValueOperand(), SI->getOrdering());
-  SI->eraseFromParent();
+                              SI->getValueOperand(), Order);
 
   // Now we have an appropriate swap instruction, lower it as usual.
   if (shouldExpandAtomicRMW(AI))
