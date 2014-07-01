@@ -178,6 +178,8 @@
 // RUN:    /wd1234 \
 // RUN:    /Zc:forScope \
 // RUN:    /Zc:wchar_t \
+// RUN:    /Zc:inline \
+// RUN:    /Zc:rvalueCast \
 // RUN:    -### -- %s 2>&1 | FileCheck -check-prefix=IGNORED %s
 // IGNORED-NOT: argument unused during compilation
 
