@@ -191,6 +191,8 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -o xxx
   if (llvm::opt::Arg *outpath = parsedArgs->getLastArg(OPT_output))
     ctx.setOutputPath(outpath->getValue());
+  else
+    ctx.setOutputPath("a.out");
 
   // Handle -dead_strip
   if (parsedArgs->getLastArg(OPT_dead_strip))
@@ -203,6 +205,8 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Handle -install_name
   if (llvm::opt::Arg *installName = parsedArgs->getLastArg(OPT_install_name))
     ctx.setInstallName(installName->getValue());
+  else
+    ctx.setInstallName(ctx.outputPath());
 
   // Handle -mark_dead_strippable_dylib
   if (parsedArgs->getLastArg(OPT_mark_dead_strippable_dylib))
