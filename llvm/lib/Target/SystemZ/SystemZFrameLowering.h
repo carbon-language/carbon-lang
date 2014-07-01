@@ -10,7 +10,6 @@
 #ifndef SYSTEMZFRAMELOWERING_H
 #define SYSTEMZFRAMELOWERING_H
 
-#include "SystemZSubtarget.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
@@ -21,13 +20,8 @@ class SystemZSubtarget;
 class SystemZFrameLowering : public TargetFrameLowering {
   IndexedMap<unsigned> RegSpillOffsets;
 
-protected:
-  const SystemZTargetMachine &TM;
-  const SystemZSubtarget &STI;
-
 public:
-  SystemZFrameLowering(const SystemZTargetMachine &tm,
-                       const SystemZSubtarget &sti);
+  SystemZFrameLowering();
 
   // Override TargetFrameLowering.
   bool isFPCloseToIncomingSP() const override { return false; }

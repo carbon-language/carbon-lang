@@ -10,8 +10,9 @@
 #include "SystemZFrameLowering.h"
 #include "SystemZCallingConv.h"
 #include "SystemZInstrBuilder.h"
+#include "SystemZInstrInfo.h"
 #include "SystemZMachineFunctionInfo.h"
-#include "SystemZTargetMachine.h"
+#include "SystemZRegisterInfo.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
@@ -44,11 +45,9 @@ static const TargetFrameLowering::SpillSlot SpillOffsetTable[] = {
 };
 } // end anonymous namespace
 
-SystemZFrameLowering::SystemZFrameLowering(const SystemZTargetMachine &tm,
-                                           const SystemZSubtarget &sti)
-  : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8,
-                        -SystemZMC::CallFrameSize, 8),
-    TM(tm), STI(sti) {
+SystemZFrameLowering::SystemZFrameLowering()
+    : TargetFrameLowering(TargetFrameLowering::StackGrowsDown, 8,
+                          -SystemZMC::CallFrameSize, 8) {
   // Create a mapping from register number to save slot offset.
   RegSpillOffsets.grow(SystemZ::NUM_TARGET_REGS);
   for (unsigned I = 0, E = array_lengthof(SpillOffsetTable); I != E; ++I)
@@ -108,9 +107,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 // instruction, or an implicit one that comes between the explicit start
 // and end registers.
 static void addSavedGPR(MachineBasicBlock &MBB, MachineInstrBuilder &MIB,
-                        const SystemZTargetMachine &TM,
                         unsigned GPR64, bool IsImplicit) {
-  const SystemZRegisterInfo *RI = TM.getRegisterInfo();
+  const TargetRegisterInfo *RI = MBB.getParent()->getTarget().getRegisterInfo();
   unsigned GPR32 = RI->getSubReg(GPR64, SystemZ::subreg_l32);
   bool IsLive = MBB.isLiveIn(GPR64) || MBB.isLiveIn(GPR32);
   if (!IsLive || !IsImplicit) {
@@ -176,8 +174,8 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     MachineInstrBuilder MIB = BuildMI(MBB, MBBI, DL, TII->get(SystemZ::STMG));
 
     // Add the explicit register operands.
-    addSavedGPR(MBB, MIB, TM, LowGPR, false);
-    addSavedGPR(MBB, MIB, TM, HighGPR, false);
+    addSavedGPR(MBB, MIB, LowGPR, false);
+    addSavedGPR(MBB, MIB, HighGPR, false);
 
     // Add the address.
     MIB.addReg(SystemZ::R15D).addImm(StartOffset);
@@ -187,13 +185,13 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     for (unsigned I = 0, E = CSI.size(); I != E; ++I) {
       unsigned Reg = CSI[I].getReg();
       if (SystemZ::GR64BitRegClass.contains(Reg))
-        addSavedGPR(MBB, MIB, TM, Reg, true);
+        addSavedGPR(MBB, MIB, Reg, true);
     }
 
     // ...likewise GPR varargs.
     if (IsVarArg)
       for (unsigned I = ZFI->getVarArgsFirstGPR(); I < SystemZ::NumArgGPRs; ++I)
-        addSavedGPR(MBB, MIB, TM, SystemZ::ArgGPRs[I], true);
+        addSavedGPR(MBB, MIB, SystemZ::ArgGPRs[I], true);
   }
 
   // Save FPRs in the normal TargetInstrInfo way.
