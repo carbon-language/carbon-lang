@@ -53,10 +53,10 @@ void test2 ( const CharT *s, size_t len ) {
 }
 
 int main () {
-    using string_view    = std::experimental::string_view;
-    using u16string_view = std::experimental::u16string_view;
-    using u32string_view = std::experimental::u32string_view;
-    using wstring_view   = std::experimental::wstring_view;
+    typedef std::experimental::string_view    string_view;
+    typedef std::experimental::u16string_view u16string_view;
+    typedef std::experimental::u32string_view u32string_view;
+    typedef std::experimental::wstring_view   wstring_view;
 
     test1<string_view> ();
     test1<u16string_view> ();

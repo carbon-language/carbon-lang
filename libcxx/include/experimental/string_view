@@ -223,11 +223,11 @@ namespace std {
         basic_string_view(const basic_string<_CharT, _Traits, _Allocator>& __str) _NOEXCEPT
             : __data (__str.data()), __size(__str.size()) {}
 
-        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         basic_string_view(const _CharT* __s, size_type __len)
             : __data(__s), __size(__len)
         {
-            _LIBCPP_ASSERT(__len == 0 || __s != nullptr, "string_view::string_view(_CharT *, size_t): recieved nullptr");
+//             _LIBCPP_ASSERT(__len == 0 || __s != nullptr, "string_view::string_view(_CharT *, size_t): recieved nullptr");
         }
             
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
@@ -284,18 +284,16 @@ namespace std {
             return __data[__pos]; 
         }
 
-        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference front() const
         {
-            _LIBCPP_ASSERT(!empty(), "string_view::front(): string is empty");
-            return __data[0];
+            return _LIBCPP_ASSERT(!empty(), "string_view::front(): string is empty"), __data[0];
         }
         
-        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference back() const
         {
-            _LIBCPP_ASSERT(!empty(), "string_view::back(): string is empty");
-            return __data[__size-1];
+            return _LIBCPP_ASSERT(!empty(), "string_view::back(): string is empty"), __data[__size-1];
         }
 
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
@@ -360,12 +358,15 @@ namespace std {
             return __rlen;
         }
         
-        _LIBCPP_CONSTEXPR_AFTER_CXX11 basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
+        _LIBCPP_CONSTEXPR basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
         {
-            if (__pos > size())
-                throw out_of_range("string_view::substr");
-            size_type __rlen = _VSTD::min( __n, size() - __pos );
-            return basic_string_view(data() + __pos, __rlen);
+//             if (__pos > size())
+//                 throw out_of_range("string_view::substr");
+//             size_type __rlen = _VSTD::min( __n, size() - __pos );
+//             return basic_string_view(data() + __pos, __rlen);
+			return __pos > size()
+			       ? throw out_of_range("string_view::substr")
+			       : basic_string_view(data() + __pos, _VSTD::min(__n, size() - __pos));
         }
 
         _LIBCPP_CONSTEXPR_AFTER_CXX11 int compare(basic_string_view __sv) const _NOEXCEPT
@@ -377,32 +378,32 @@ namespace std {
             return __retval;
         }
         
-        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, basic_string_view __sv) const
         {
             return substr(__pos1, __n1).compare(__sv);
         }
 
-        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(                       size_type __pos1, size_type __n1, 
                     basic_string_view _sv, size_type __pos2, size_type __n2) const
         {
             return substr(__pos1, __n1).compare(_sv.substr(__pos2, __n2));
         }
         
-        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(const _CharT* __s) const
         {
             return compare(basic_string_view(__s));
         }
         
-        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, const _CharT* __s) const
         {
             return substr(__pos1, __n1).compare(basic_string_view(__s));
         }
         
-        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, const _CharT* __s, size_type __n2) const
         {
             return substr(__pos1, __n1).compare(basic_string_view(__s, __n2));
