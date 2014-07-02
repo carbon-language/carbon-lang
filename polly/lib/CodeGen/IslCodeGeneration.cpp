@@ -669,12 +669,50 @@ private:
   void createFor(__isl_take isl_ast_node *For);
   void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
   void createForSequential(__isl_take isl_ast_node *For);
-  void createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
-                           __isl_take isl_ast_build *Context, ScopStmt *Stmt,
+
+  /// Generate LLVM-IR that computes the values of the original induction
+  /// variables in function of the newly generated loop induction variables.
+  ///
+  /// Example:
+  ///
+  ///   // Original
+  ///   for i
+  ///     for j
+  ///       S(i)
+  ///
+  ///   Schedule: [i,j] -> [i+j, j]
+  ///
+  ///   // New
+  ///   for c0
+  ///     for c1
+  ///       S(c0 - c1, c1)
+  ///
+  /// Assuming the original code consists of two loops which are
+  /// transformed according to a schedule [i,j] -> [c0=i+j,c1=j]. The resulting
+  /// ast models the original statement as a call expression where each argument
+  /// is an expression that computes the old induction variables from the new
+  /// ones, ordered such that the first argument computes the value of induction
+  /// variable that was outermost in the original code.
+  ///
+  /// @param Expr The call expression that represents the statement.
+  /// @param Stmt The statement that is called.
+  /// @param VMap The value map into which the mapping from the old induction
+  ///             variable to the new one is inserted. This mapping is used
+  ///             for the classical code generation (not scev-based) and
+  ///             gives an explicit mapping from an original, materialized
+  ///             induction variable. It consequently can only be expressed
+  ///             if there was an explicit induction variable.
+  /// @param LTS  The loop to SCEV map in which the mapping from the original
+  ///             loop to a SCEV representing the new loop iv is added. This
+  ///             mapping does not require an explicit induction variable.
+  ///             Instead, we think in terms of an implicit induction variable
+  ///             that counts the number of times a loop is executed. For each
+  ///             original loop this count, expressed in function of the new
+  ///             induction variables, is added to the LTS map.
+  void createSubstitutions(__isl_take isl_ast_expr *Expr, ScopStmt *Stmt,
                            ValueMapT &VMap, LoopToScevMapT &LTS);
-  void createSubstitutionsVector(__isl_take isl_pw_multi_aff *PMA,
-                                 __isl_take isl_ast_build *Context,
-                                 ScopStmt *Stmt, VectorValueMapT &VMap,
+  void createSubstitutionsVector(__isl_take isl_ast_expr *Expr, ScopStmt *Stmt,
+                                 VectorValueMapT &VMap,
                                  std::vector<LoopToScevMapT> &VLTS,
                                  std::vector<Value *> &IVS,
                                  __isl_take isl_id *IteratorID);
@@ -762,13 +800,10 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
                                       std::vector<Value *> &IVS,
                                       __isl_take isl_id *IteratorID,
                                       __isl_take isl_union_map *Schedule) {
-  isl_id *Annotation = isl_ast_node_get_annotation(User);
-  assert(Annotation && "Vector user statement is not annotated");
-
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Annotation);
-  assert(Info && "Vector user statement annotation does not contain info");
-
-  isl_id *Id = isl_pw_multi_aff_get_tuple_id(Info->PMA, isl_dim_out);
+  isl_ast_expr *Expr = isl_ast_node_user_get_expr(User);
+  isl_ast_expr *StmtExpr = isl_ast_expr_get_op_arg(Expr, 0);
+  isl_id *Id = isl_ast_expr_get_id(StmtExpr);
+  isl_ast_expr_free(StmtExpr);
   ScopStmt *Stmt = (ScopStmt *)isl_id_get_user(Id);
   VectorValueMapT VectorMap(IVS.size());
   std::vector<LoopToScevMapT> VLTS(IVS.size());
@@ -777,13 +812,10 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   Schedule = isl_union_map_intersect_domain(Schedule, Domain);
   isl_map *S = isl_map_from_union_map(Schedule);
 
-  createSubstitutionsVector(isl_pw_multi_aff_copy(Info->PMA),
-                            isl_ast_build_copy(Info->Context), Stmt, VectorMap,
-                            VLTS, IVS, IteratorID);
+  createSubstitutionsVector(Expr, Stmt, VectorMap, VLTS, IVS, IteratorID);
   VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, VLTS, S, P);
 
   isl_map_free(S);
-  isl_id_free(Annotation);
   isl_id_free(Id);
   isl_ast_node_free(User);
 }
@@ -977,19 +1009,18 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_node_free(If);
 }
 
-void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
-                                         __isl_take isl_ast_build *Context,
-                                         ScopStmt *Stmt, ValueMapT &VMap,
-                                         LoopToScevMapT &LTS) {
-  for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
-    isl_pw_aff *Aff;
-    isl_ast_expr *Expr;
+void IslNodeBuilder::createSubstitutions(isl_ast_expr *Expr, ScopStmt *Stmt,
+                                         ValueMapT &VMap, LoopToScevMapT &LTS) {
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "Expression of type 'op' expected");
+  assert(isl_ast_expr_get_op_type(Expr) == isl_ast_op_call &&
+         "Opertation of type 'call' expected");
+  for (int i = 0; i < isl_ast_expr_get_op_n_arg(Expr) - 1; ++i) {
+    isl_ast_expr *SubExpr;
     Value *V;
 
-    Aff = isl_pw_multi_aff_get_pw_aff(PMA, i);
-    Expr = isl_ast_build_expr_from_pw_aff(Context, Aff);
-    V = ExprBuilder.create(Expr);
-
+    SubExpr = isl_ast_expr_get_op_arg(Expr, i + 1);
+    V = ExprBuilder.create(SubExpr);
     ScalarEvolution *SE = Stmt->getParent()->getSE();
     LTS[Stmt->getLoopForDimension(i)] = SE->getUnknown(V);
 
@@ -1003,53 +1034,43 @@ void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
     }
   }
 
-  isl_pw_multi_aff_free(PMA);
-  isl_ast_build_free(Context);
+  isl_ast_expr_free(Expr);
 }
 
 void IslNodeBuilder::createSubstitutionsVector(
-    __isl_take isl_pw_multi_aff *PMA, __isl_take isl_ast_build *Context,
-    ScopStmt *Stmt, VectorValueMapT &VMap, std::vector<LoopToScevMapT> &VLTS,
-    std::vector<Value *> &IVS, __isl_take isl_id *IteratorID) {
+    __isl_take isl_ast_expr *Expr, ScopStmt *Stmt, VectorValueMapT &VMap,
+    std::vector<LoopToScevMapT> &VLTS, std::vector<Value *> &IVS,
+    __isl_take isl_id *IteratorID) {
   int i = 0;
 
   Value *OldValue = IDToValue[IteratorID];
   for (Value *IV : IVS) {
     IDToValue[IteratorID] = IV;
-    createSubstitutions(isl_pw_multi_aff_copy(PMA), isl_ast_build_copy(Context),
-                        Stmt, VMap[i], VLTS[i]);
+    createSubstitutions(isl_ast_expr_copy(Expr), Stmt, VMap[i], VLTS[i]);
     i++;
   }
 
   IDToValue[IteratorID] = OldValue;
   isl_id_free(IteratorID);
-  isl_pw_multi_aff_free(PMA);
-  isl_ast_build_free(Context);
+  isl_ast_expr_free(Expr);
 }
 
 void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   ValueMapT VMap;
   LoopToScevMapT LTS;
-  struct IslAstUser *Info;
-  isl_id *Annotation, *Id;
+  isl_id *Id;
   ScopStmt *Stmt;
 
-  Annotation = isl_ast_node_get_annotation(User);
-  assert(Annotation && "Scalar user statement is not annotated");
+  isl_ast_expr *Expr = isl_ast_node_user_get_expr(User);
+  isl_ast_expr *StmtExpr = isl_ast_expr_get_op_arg(Expr, 0);
+  Id = isl_ast_expr_get_id(StmtExpr);
+  isl_ast_expr_free(StmtExpr);
 
-  Info = (struct IslAstUser *)isl_id_get_user(Annotation);
-  assert(Info && "Scalar user statement annotation does not contain info");
-
-  Id = isl_pw_multi_aff_get_tuple_id(Info->PMA, isl_dim_out);
   Stmt = (ScopStmt *)isl_id_get_user(Id);
-
-  createSubstitutions(isl_pw_multi_aff_copy(Info->PMA),
-                      isl_ast_build_copy(Info->Context), Stmt, VMap, LTS);
-
+  createSubstitutions(Expr, Stmt, VMap, LTS);
   BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P);
 
   isl_ast_node_free(User);
-  isl_id_free(Annotation);
   isl_id_free(Id);
 }
 

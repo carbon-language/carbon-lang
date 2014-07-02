@@ -121,7 +121,6 @@ printFor(__isl_take isl_printer *Printer,
 static struct IslAstUser *allocateIslAstUser() {
   struct IslAstUser *NodeInfo;
   NodeInfo = (struct IslAstUser *)malloc(sizeof(struct IslAstUser));
-  NodeInfo->PMA = 0;
   NodeInfo->Context = 0;
   NodeInfo->IsOutermostParallel = 0;
   NodeInfo->IsInnermostParallel = 0;
@@ -132,7 +131,6 @@ static struct IslAstUser *allocateIslAstUser() {
 static void freeIslAstUser(void *Ptr) {
   struct IslAstUser *UserStruct = (struct IslAstUser *)Ptr;
   isl_ast_build_free(UserStruct->Context);
-  isl_pw_multi_aff_free(UserStruct->PMA);
   free(UserStruct);
 }
 
@@ -313,10 +311,6 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
     Id = isl_id_set_free_user(Id, &freeIslAstUser);
   }
 
-  if (!Info->PMA) {
-    isl_map *Map = isl_map_from_union_map(isl_ast_build_get_schedule(Context));
-    Info->PMA = isl_pw_multi_aff_from_map(isl_map_reverse(Map));
-  }
   if (!Info->Context)
     Info->Context = isl_ast_build_copy(Context);
 

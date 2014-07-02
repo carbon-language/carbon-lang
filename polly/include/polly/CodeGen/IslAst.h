@@ -44,7 +44,6 @@ class IslAst;
 // Information about an ast node.
 struct IslAstUser {
   struct isl_ast_build *Context;
-  struct isl_pw_multi_aff *PMA;
   // The node is the outermost parallel loop.
   int IsOutermostParallel;
 
