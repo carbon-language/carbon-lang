@@ -78,7 +78,7 @@ The status of major ABI-impacting C++ features:
   enabling stack traces in all modern Windows debuggers.  Clang does not emit
   any type info or description of variable layout.
 
-* `RTTI`_: :good:`Complete`.  Generation of RTTI data structures has been
+* RTTI: :good:`Complete`.  Generation of RTTI data structures has been
   finished, along with support for the ``/GR`` flag.
 
 * Exceptions and SEH: :none:`Unstarted`.  Clang can parse both constructs, but
