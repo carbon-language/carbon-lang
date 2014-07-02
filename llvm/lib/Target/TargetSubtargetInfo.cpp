@@ -47,6 +47,11 @@ bool TargetSubtargetInfo::enableMachineScheduler() const {
   return false;
 }
 
+bool TargetSubtargetInfo::enableRALocalReassignment(
+    CodeGenOpt::Level OptLevel) const {
+  return true;
+}
+
 bool TargetSubtargetInfo::enablePostMachineScheduler() const {
   return false;
 }

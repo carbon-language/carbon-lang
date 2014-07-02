@@ -100,6 +100,12 @@ public:
                                      AntiDepBreakMode& Mode,
                                      RegClassVector& CriticalPathRCs) const;
 
+  /// \brief True if the subtarget should run the local reassignment
+  /// heuristic of the register allocator.
+  /// This heuristic may be compile time intensive, \p OptLevel provides
+  /// a finer grain to tune the register allocator.
+  virtual bool enableRALocalReassignment(CodeGenOpt::Level OptLevel) const;
+
   /// \brief Enable use of alias analysis during code generation (during MI
   /// scheduling, DAGCombine, etc.).
   virtual bool useAA() const;
