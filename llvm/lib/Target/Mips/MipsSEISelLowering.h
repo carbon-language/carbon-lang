@@ -46,13 +46,7 @@ namespace llvm {
       return false;
     }
 
-    const TargetRegisterClass *getRepRegClassFor(MVT VT) const override {
-      if (VT == MVT::Untyped)
-        return Subtarget->hasDSP() ? &Mips::ACC64DSPRegClass :
-                                     &Mips::ACC64RegClass;
-
-      return TargetLowering::getRepRegClassFor(VT);
-    }
+    const TargetRegisterClass *getRepRegClassFor(MVT VT) const override;
 
   private:
     bool isEligibleForTailCallOptimization(const MipsCC &MipsCCInfo,

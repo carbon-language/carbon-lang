@@ -39,7 +39,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
 
-  if (isGP64bit())
+  if (Subtarget->isGP64bit())
     addRegisterClass(MVT::i64, &Mips::GPR64RegClass);
 
   if (Subtarget->hasDSP() || Subtarget->hasMSA()) {
@@ -120,10 +120,10 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 
   if (Subtarget->hasCnMips())
     setOperationAction(ISD::MUL,              MVT::i64, Legal);
-  else if (isGP64bit())
+  else if (Subtarget->isGP64bit())
     setOperationAction(ISD::MUL,              MVT::i64, Custom);
 
-  if (isGP64bit()) {
+  if (Subtarget->isGP64bit()) {
     setOperationAction(ISD::MULHS,            MVT::i64, Custom);
     setOperationAction(ISD::MULHU,            MVT::i64, Custom);
   }
@@ -228,6 +228,14 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 const MipsTargetLowering *
 llvm::createMipsSETargetLowering(MipsTargetMachine &TM) {
   return new MipsSETargetLowering(TM);
+}
+
+const TargetRegisterClass *
+MipsSETargetLowering::getRepRegClassFor(MVT VT) const {
+  if (VT == MVT::Untyped)
+    return Subtarget->hasDSP() ? &Mips::ACC64DSPRegClass : &Mips::ACC64RegClass;
+
+  return TargetLowering::getRepRegClassFor(VT);
 }
 
 // Enable MSA support for the given integer type and Register class.
@@ -1724,7 +1732,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_copy_s_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
   case Intrinsic::mips_copy_s_d:
-    if (hasMips64())
+    if (Subtarget->hasMips64())
       // Lower directly into VEXTRACT_SEXT_ELT since i64 is legal on Mips64.
       return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_SEXT_ELT);
     else {
@@ -1739,7 +1747,7 @@ SDValue MipsSETargetLowering::lowerINTRINSIC_WO_CHAIN(SDValue Op,
   case Intrinsic::mips_copy_u_w:
     return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
   case Intrinsic::mips_copy_u_d:
-    if (hasMips64())
+    if (Subtarget->hasMips64())
       // Lower directly into VEXTRACT_ZEXT_ELT since i64 is legal on Mips64.
       return lowerMSACopyIntr(Op, DAG, MipsISD::VEXTRACT_ZEXT_ELT);
     else {
@@ -3016,8 +3024,8 @@ MipsSETargetLowering::emitINSERT_DF_VIDX(MachineInstr *MI,
   unsigned SrcValReg = MI->getOperand(3).getReg();
 
   const TargetRegisterClass *VecRC = nullptr;
-  const TargetRegisterClass *GPRRC = isGP64bit() ? &Mips::GPR64RegClass
-                                                 : &Mips::GPR32RegClass;
+  const TargetRegisterClass *GPRRC =
+      Subtarget->isGP64bit() ? &Mips::GPR64RegClass : &Mips::GPR32RegClass;
   unsigned EltLog2Size;
   unsigned InsertOp = 0;
   unsigned InsveOp = 0;
