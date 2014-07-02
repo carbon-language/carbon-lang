@@ -66,6 +66,16 @@ define <4 x i32> @combine_pshufd5(<4 x i32> %a) {
   ret <4 x i32> %d
 }
 
+define <4 x i32> @combine_pshufd6(<4 x i32> %a) {
+; CHECK-SSE2-LABEL: @combine_pshufd6
+; CHECK-SSE2:       # BB#0:
+; CHECK-SSE2-NEXT:    pshufd $0
+; CHECK-SSE2-NEXT:    retq
+  %b = call <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32> %a, i8 0)
+  %c = call <4 x i32> @llvm.x86.sse2.pshuf.d(<4 x i32> %b, i8 8)
+  ret <4 x i32> %c
+}
+
 define <8 x i16> @combine_pshuflw1(<8 x i16> %a) {
 ; CHECK-SSE2-LABEL: @combine_pshuflw1
 ; CHECK-SSE2:       # BB#0:

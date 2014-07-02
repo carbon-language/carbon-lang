@@ -18442,6 +18442,13 @@ static bool combineRedundantDWordShuffle(SDValue N, MutableArrayRef<int> Mask,
   V = DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32, V.getOperand(0),
                   getV4X86ShuffleImm8ForMask(Mask, DAG));
 
+  // It is possible that one of the combinable shuffles was completely absorbed
+  // by the other, just replace it and revisit all users in that case.
+  if (Old.getNode() == V.getNode()) {
+    DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo=*/true);
+    return true;
+  }
+
   // Replace N with its operand as we're going to combine that shuffle away.
   DAG.ReplaceAllUsesWith(N, N.getOperand(0));
 
