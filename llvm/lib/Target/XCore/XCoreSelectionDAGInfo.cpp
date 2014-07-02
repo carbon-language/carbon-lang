@@ -16,8 +16,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "xcore-selectiondag-info"
 
-XCoreSelectionDAGInfo::XCoreSelectionDAGInfo(const XCoreTargetMachine &TM)
-    : TargetSelectionDAGInfo(TM.getDataLayout()) {}
+XCoreSelectionDAGInfo::XCoreSelectionDAGInfo(const DataLayout &DL)
+    : TargetSelectionDAGInfo(&DL) {}
 
 XCoreSelectionDAGInfo::~XCoreSelectionDAGInfo() {
 }

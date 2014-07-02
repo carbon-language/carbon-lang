@@ -22,7 +22,7 @@ class XCoreTargetMachine;
 
 class XCoreSelectionDAGInfo : public TargetSelectionDAGInfo {
 public:
-  explicit XCoreSelectionDAGInfo(const XCoreTargetMachine &TM);
+  explicit XCoreSelectionDAGInfo(const DataLayout &DL);
   ~XCoreSelectionDAGInfo();
 
   SDValue

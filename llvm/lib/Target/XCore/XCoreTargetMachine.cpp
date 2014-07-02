@@ -31,7 +31,7 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
     InstrInfo(),
     FrameLowering(Subtarget),
     TLInfo(*this),
-    TSInfo(*this) {
+    TSInfo(DL) {
   initAsmInfo();
 }
 
