@@ -137,8 +137,6 @@ LexicalScope *LexicalScopes::findLexicalScope(DebugLoc DL) {
 /// getOrCreateLexicalScope - Find lexical scope for the given DebugLoc. If
 /// not available then create new lexical scope.
 LexicalScope *LexicalScopes::getOrCreateLexicalScope(DebugLoc DL) {
-  if (DL.isUnknown())
-    return nullptr;
   MDNode *Scope = nullptr;
   MDNode *InlinedAt = nullptr;
   DL.getScopeAndInlinedAt(Scope, InlinedAt, MF->getFunction()->getContext());
@@ -174,12 +172,9 @@ LexicalScope *LexicalScopes::getOrCreateRegularScope(MDNode *Scope) {
                               std::make_tuple(Parent, DIDescriptor(Scope),
                                               nullptr, false)).first;
 
-  if (!Parent) {
-    assert(DIDescriptor(Scope).isSubprogram());
-    assert(DISubprogram(Scope).describes(MF->getFunction()));
-    assert(!CurrentFnLexicalScope);
+  if (!Parent && DIDescriptor(Scope).isSubprogram() &&
+      DISubprogram(Scope).describes(MF->getFunction()))
     CurrentFnLexicalScope = &I->second;
-  }
 
   return &I->second;
 }
