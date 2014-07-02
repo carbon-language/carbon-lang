@@ -947,22 +947,22 @@ static void getMipsCPUAndABI(const ArgList &Args,
     }
   }
 
-  if (!ABIName.empty()) {
+  if (ABIName.empty()) {
+    // Deduce ABI name from the target triple.
+    if (Triple.getArch() == llvm::Triple::mips ||
+        Triple.getArch() == llvm::Triple::mipsel)
+      ABIName = "o32";
+    else
+      ABIName = "n64";
+  }
+
+  if (CPUName.empty()) {
     // Deduce CPU name from ABI name.
     CPUName = llvm::StringSwitch<const char *>(ABIName)
       .Cases("o32", "eabi", DefMips32CPU)
       .Cases("n32", "n64", DefMips64CPU)
       .Default("");
   }
-  else if (!CPUName.empty()) {
-    // Deduce ABI name from CPU name.
-    ABIName = llvm::StringSwitch<const char *>(CPUName)
-      .Cases("mips32", "mips32r2", "o32")
-      .Cases("mips64", "mips64r2", "n64")
-      .Default("");
-  }
-
-  // FIXME: Warn on inconsistent cpu and abi usage.
 }
 
 // Convert ABI name to the GNU tools acceptable variant.
