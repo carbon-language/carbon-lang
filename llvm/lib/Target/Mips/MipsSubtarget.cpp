@@ -85,7 +85,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       InMips16Mode(false), InMips16HardFloat(Mips16HardFloat),
       InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
       AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16), HasMSA(false),
-      RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT) {
+      RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT), JITInfo() {
   std::string CPUName = CPU;
   CPUName = selectMipsCPU(TT, CPUName);
 

@@ -14,6 +14,7 @@
 #ifndef MIPSSUBTARGET_H
 #define MIPSSUBTARGET_H
 
+#include "MipsJITInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -132,6 +133,8 @@ protected:
   MipsTargetMachine *TM;
 
   Triple TargetTriple;
+
+  MipsJITInfo JITInfo;
 public:
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              AntiDepBreakMode& Mode,
@@ -248,6 +251,8 @@ public:
   /// specify which component of the system provides it. Hardware, software, and
   /// hybrid implementations are all valid.
   bool systemSupportsUnalignedAccess() const { return hasMips32r6(); }
+
+  MipsJITInfo *getJITInfo() { return &JITInfo; }
 };
 } // End llvm namespace
 

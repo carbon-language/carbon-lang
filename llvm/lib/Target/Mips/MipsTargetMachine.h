@@ -17,7 +17,6 @@
 #include "MipsFrameLowering.h"
 #include "MipsISelLowering.h"
 #include "MipsInstrInfo.h"
-#include "MipsJITInfo.h"
 #include "MipsSelectionDAGInfo.h"
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/Passes.h"
@@ -43,7 +42,6 @@ class MipsTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<const MipsFrameLowering> FrameLoweringSE;
   std::unique_ptr<const MipsTargetLowering> TLInfoSE;
   MipsSelectionDAGInfo TSInfo;
-  MipsJITInfo JITInfo;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT,
@@ -71,7 +69,9 @@ public:
                : &getSubtargetImpl()->getInstrItineraryData();
   }
 
-  MipsJITInfo *getJITInfo() override { return &JITInfo; }
+  MipsJITInfo *getJITInfo() override {
+    return Subtarget.getJITInfo();
+  }
 
   const MipsRegisterInfo *getRegisterInfo()  const override {
     return &InstrInfo->getRegisterInfo();
