@@ -696,8 +696,7 @@ entry:
 ; R600-CHECK: LDS_READ_RET
 ; R600-CHECK: LDS_READ_RET
 ; SI-CHECK: S_MOV_B32 m0
-; SI-CHECK: DS_READ_B32
-; SI-CHECK: DS_READ_B32
+; SI-CHECK: DS_READ_B64
 define void @load_v2f32_local(<2 x float> addrspace(1)* %out, <2 x float> addrspace(3)* %in) {
 entry:
   %0 = load <2 x float> addrspace(3)* %in

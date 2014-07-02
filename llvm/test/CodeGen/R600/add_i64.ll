@@ -70,9 +70,9 @@ define void @test_v2i64_vreg(<2 x i64> addrspace(1)* noalias %out, <2 x i64> add
 }
 
 ; SI-LABEL: @trunc_i64_add_to_i32
-; SI: S_LOAD_DWORD [[SREG0:s[0-9]+]],
-; SI: S_LOAD_DWORD [[SREG1:s[0-9]+]],
-; SI: S_ADD_I32 [[SRESULT:s[0-9]+]], [[SREG1]], [[SREG0]]
+; SI: S_LOAD_DWORDX2 s{{\[}}[[SREG0:[0-9]+]]
+; SI: S_LOAD_DWORDX2 s{{\[}}[[SREG1:[0-9]+]]
+; SI: S_ADD_I32 [[SRESULT:s[0-9]+]], s[[SREG1]], s[[SREG0]]
 ; SI-NOT: ADDC
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
 ; SI: BUFFER_STORE_DWORD [[VRESULT]],

@@ -1724,7 +1724,6 @@ multiclass SMRD_Pattern <SMRD Instr_IMM, SMRD Instr_SGPR, ValueType vt> {
 
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, f32>;
 defm : SMRD_Pattern <S_LOAD_DWORD_IMM, S_LOAD_DWORD_SGPR, i32>;
-defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, i64>;
 defm : SMRD_Pattern <S_LOAD_DWORDX2_IMM, S_LOAD_DWORDX2_SGPR, v2i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX4_IMM, S_LOAD_DWORDX4_SGPR, v4i32>;
 defm : SMRD_Pattern <S_LOAD_DWORDX8_IMM, S_LOAD_DWORDX8_SGPR, v32i8>;
@@ -2372,7 +2371,7 @@ defm : DSReadPat <DS_READ_U8,  i32, az_extloadi8_local>;
 defm : DSReadPat <DS_READ_I16, i32, sextloadi16_local>;
 defm : DSReadPat <DS_READ_U16, i32, az_extloadi16_local>;
 defm : DSReadPat <DS_READ_B32, i32, local_load>;
-defm : DSReadPat <DS_READ_B64, i64, local_load>;
+defm : DSReadPat <DS_READ_B64, v2i32, local_load>;
 
 multiclass DSWritePat <DS inst, ValueType vt, PatFrag frag> {
   def : Pat <
@@ -2520,10 +2519,6 @@ defm : MUBUFLoad_Pattern <BUFFER_LOAD_USHORT_ADDR64, i32,
                           az_extloadi16_global, az_extloadi16_constant>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
                           global_load, constant_load>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
-                          global_load, constant_load>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, i64,
-                          az_extloadi32_global, az_extloadi32_constant>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32,
                           global_load, constant_load>;
 defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,

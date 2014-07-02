@@ -116,9 +116,9 @@ define void @vector_or_i64_imm(i64 addrspace(1)* %out, i64 addrspace(1)* %a, i64
 }
 
 ; SI-LABEL: @trunc_i64_or_to_i32
-; SI: S_LOAD_DWORD [[SREG0:s[0-9]+]],
-; SI: S_LOAD_DWORD [[SREG1:s[0-9]+]],
-; SI: S_OR_B32 [[SRESULT:s[0-9]+]], [[SREG1]], [[SREG0]]
+; SI: S_LOAD_DWORDX2 s{{\[}}[[SREG0:[0-9]+]]
+; SI: S_LOAD_DWORDX2 s{{\[}}[[SREG1:[0-9]+]]
+; SI: S_OR_B32 [[SRESULT:s[0-9]+]], s[[SREG1]], s[[SREG0]]
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
 ; SI: BUFFER_STORE_DWORD [[VRESULT]],
 define void @trunc_i64_or_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {

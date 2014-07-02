@@ -91,7 +91,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 
   // We need to custom lower loads/stores from private memory
   setOperationAction(ISD::LOAD, MVT::i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::i64, Custom);
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v8i32, Custom);
@@ -602,6 +601,14 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: {
     LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
+    EVT VT = Op.getValueType();
+
+    // These loads are legal.
+    if (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS &&
+        VT.isVector() && VT.getVectorNumElements() == 2 &&
+        VT.getVectorElementType() == MVT::i32)
+      return SDValue();
+
     if (Op.getValueType().isVector() &&
         (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
          Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS ||
