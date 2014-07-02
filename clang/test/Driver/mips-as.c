@@ -147,3 +147,51 @@
 // RUN:   | FileCheck -check-prefix=MIPS-NMSA %s
 // MIPS-NMSA: as{{(.exe)?}}"
 // MIPS-NMSA-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-mmsa"
+//
+// We've already tested MIPS32r2 and MIPS64r2 thoroughly. Do minimal tests on
+// the remaining CPU's since it was possible to pass on a -mabi with no value
+// when the CPU name is absent from a StringSwitch in getMipsCPUAndABI()
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -c %s -mcpu=mips1 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS1-EB-AS %s
+// MIPS1-EB-AS: as{{(.exe)?}}" "-march" "mips1" "-mabi" "32" "-EB"
+// MIPS1-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -c %s -mcpu=mips2 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS2-EB-AS %s
+// MIPS2-EB-AS: as{{(.exe)?}}" "-march" "mips2" "-mabi" "32" "-EB"
+// MIPS2-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips64-linux-gnu -### -no-integrated-as -c %s -mcpu=mips3 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS3-EB-AS %s
+// MIPS3-EB-AS: as{{(.exe)?}}" "-march" "mips3" "-mabi" "64" "-EB"
+// MIPS3-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips64-linux-gnu -### -no-integrated-as -c %s -mcpu=mips4 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS4-EB-AS %s
+// MIPS4-EB-AS: as{{(.exe)?}}" "-march" "mips4" "-mabi" "64" "-EB"
+// MIPS4-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips64-linux-gnu -### -no-integrated-as -c %s -mcpu=mips5 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS5-EB-AS %s
+// MIPS5-EB-AS: as{{(.exe)?}}" "-march" "mips5" "-mabi" "64" "-EB"
+// MIPS5-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -c %s -mcpu=mips32 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS32-EB-AS %s
+// MIPS32-EB-AS: as{{(.exe)?}}" "-march" "mips32" "-mabi" "32" "-EB"
+// MIPS32-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips-linux-gnu -### -no-integrated-as -c %s -mcpu=mips32r6 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS32R6-EB-AS %s
+// MIPS32R6-EB-AS: as{{(.exe)?}}" "-march" "mips32r6" "-mabi" "32" "-EB"
+// MIPS32R6-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips64-linux-gnu -### -no-integrated-as -c %s -mcpu=mips64 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS64-EB-AS %s
+// MIPS64-EB-AS: as{{(.exe)?}}" "-march" "mips64" "-mabi" "64" "-EB"
+// MIPS64-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
+//
+// RUN: %clang -target mips64-linux-gnu -### -no-integrated-as -c %s -mcpu=mips64r6 \
+// RUN:   2>&1 | FileCheck -check-prefix=MIPS64R6-EB-AS %s
+// MIPS64R6-EB-AS: as{{(.exe)?}}" "-march" "mips64r6" "-mabi" "64" "-EB"
+// MIPS64R6-EB-AS-NOT: "{{[ A-Za-z\\\/]*}}as{{(.exe)?}}{{.*}}"-KPIC"
