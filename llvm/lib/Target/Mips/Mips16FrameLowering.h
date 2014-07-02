@@ -19,8 +19,7 @@
 namespace llvm {
 class Mips16FrameLowering : public MipsFrameLowering {
 public:
-  explicit Mips16FrameLowering(const MipsSubtarget &STI)
-    : MipsFrameLowering(STI, STI.stackAlignment()) {}
+  explicit Mips16FrameLowering(const MipsSubtarget &STI);
 
   /// emitProlog/emitEpilog - These methods insert prolog and epilog code into
   /// the function.

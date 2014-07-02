@@ -15,7 +15,6 @@
 #define MIPS_FRAMEINFO_H
 
 #include "Mips.h"
-#include "MipsSubtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {

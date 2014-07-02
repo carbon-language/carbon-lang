@@ -16,6 +16,7 @@
 #include "MipsAnalyzeImmediate.h"
 #include "MipsMachineFunction.h"
 #include "MipsSEInstrInfo.h"
+#include "MipsSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -256,6 +257,9 @@ bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I,
     .addReg(VR1, RegState::Kill);
   return true;
 }
+
+MipsSEFrameLowering::MipsSEFrameLowering(const MipsSubtarget &STI)
+    : MipsFrameLowering(STI, STI.stackAlignment()) {}
 
 unsigned MipsSEFrameLowering::ehDataReg(unsigned I) const {
   static const unsigned EhDataReg[] = {

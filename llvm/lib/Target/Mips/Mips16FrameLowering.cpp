@@ -16,6 +16,7 @@
 #include "Mips16InstrInfo.h"
 #include "MipsInstrInfo.h"
 #include "MipsRegisterInfo.h"
+#include "MipsSubtarget.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -27,6 +28,9 @@
 #include "llvm/Target/TargetOptions.h"
 
 using namespace llvm;
+
+Mips16FrameLowering::Mips16FrameLowering(const MipsSubtarget &STI)
+    : MipsFrameLowering(STI, STI.stackAlignment()) {}
 
 void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
