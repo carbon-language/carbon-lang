@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-objdump
-LINK_COMPONENTS := all-targets DebugInfo MC MCParser MCDisassembler Object
+LINK_COMPONENTS := all-targets DebugInfo MC MCAnalysis MCParser MCDisassembler Object
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1

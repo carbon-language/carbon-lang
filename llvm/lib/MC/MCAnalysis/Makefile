@@ -1,4 +1,4 @@
-##===- lib/MC/Makefile -------------------------------------*- Makefile -*-===##
+##===- lib/MC/MCAnalysys/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,10 +7,8 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL = ../..
-LIBRARYNAME = LLVMMC
+LEVEL = ../../..
+LIBRARYNAME = LLVMMCAnalysis
 BUILD_ARCHIVE := 1
-PARALLEL_DIRS := MCAnalysis MCParser MCDisassembler
 
 include $(LEVEL)/Makefile.common
-
