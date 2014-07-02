@@ -4613,7 +4613,6 @@ static Expr *EvalAddr(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars,
   case Stmt::CXXReinterpretCastExprClass: {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     switch (cast<CastExpr>(E)->getCastKind()) {
-    case CK_BitCast:
     case CK_LValueToRValue:
     case CK_NoOp:
     case CK_BaseToDerived:
@@ -4627,6 +4626,14 @@ static Expr *EvalAddr(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars,
 
     case CK_ArrayToPointerDecay:
       return EvalVal(SubExpr, refVars, ParentDecl);
+
+    case CK_BitCast:
+      if (SubExpr->getType()->isAnyPointerType() ||
+          SubExpr->getType()->isBlockPointerType() ||
+          SubExpr->getType()->isObjCQualifiedIdType())
+        return EvalAddr(SubExpr, refVars, ParentDecl);
+      else
+        return nullptr;
 
     default:
       return nullptr;
