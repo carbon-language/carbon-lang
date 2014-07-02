@@ -267,8 +267,7 @@ AArch64AddressTypePromotion::propagateSignExtension(Instructions &SExtInsts) {
     }
 
     // Now try to get through the chain of definitions.
-    while (isa<Instruction>(SExt->getOperand(0))) {
-      Instruction *Inst = dyn_cast<Instruction>(SExt->getOperand(0));
+    while (auto *Inst = dyn_cast<Instruction>(SExt->getOperand(0))) {
       DEBUG(dbgs() << "Try to get through:\n" << *Inst << '\n');
       if (!canGetThrough(Inst) || !shouldGetThrough(Inst)) {
         // We cannot get through something that is not an Instruction
