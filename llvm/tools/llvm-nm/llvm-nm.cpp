@@ -111,6 +111,10 @@ cl::alias NumericSortv("v", cl::desc("Alias for --numeric-sort"),
 cl::opt<bool> NoSort("no-sort", cl::desc("Show symbols in order encountered"));
 cl::alias NoSortp("p", cl::desc("Alias for --no-sort"), cl::aliasopt(NoSort));
 
+cl::opt<bool> ReverseSort("reverse-sort", cl::desc("Sort in reverse order"));
+cl::alias ReverseSortr("r", cl::desc("Alias for --reverse-sort"),
+                       cl::aliasopt(ReverseSort));
+
 cl::opt<bool> PrintSize("print-size",
                         cl::desc("Show symbol size instead of address"));
 cl::alias PrintSizeS("S", cl::desc("Alias for --print-size"),
@@ -157,36 +161,69 @@ struct NMSymbol {
 }
 
 static bool compareSymbolAddress(const NMSymbol &A, const NMSymbol &B) {
-  if (A.Address < B.Address)
-    return true;
-  else if (A.Address == B.Address && A.Name < B.Name)
-    return true;
-  else if (A.Address == B.Address && A.Name == B.Name && A.Size < B.Size)
-    return true;
-  else
-    return false;
+  if (!ReverseSort) {
+    if (A.Address < B.Address)
+      return true;
+    else if (A.Address == B.Address && A.Name < B.Name)
+      return true;
+    else if (A.Address == B.Address && A.Name == B.Name && A.Size < B.Size)
+      return true;
+    else
+      return false;
+  } else {
+    if (A.Address > B.Address)
+      return true;
+    else if (A.Address == B.Address && A.Name > B.Name)
+      return true;
+    else if (A.Address == B.Address && A.Name == B.Name && A.Size > B.Size)
+      return true;
+    else
+      return false;
+  }
 }
 
 static bool compareSymbolSize(const NMSymbol &A, const NMSymbol &B) {
-  if (A.Size < B.Size)
-    return true;
-  else if (A.Size == B.Size && A.Name < B.Name)
-    return true;
-  else if (A.Size == B.Size && A.Name == B.Name && A.Address < B.Address)
-    return true;
-  else
-    return false;
+  if (!ReverseSort) {
+    if (A.Size < B.Size)
+      return true;
+    else if (A.Size == B.Size && A.Name < B.Name)
+      return true;
+    else if (A.Size == B.Size && A.Name == B.Name && A.Address < B.Address)
+      return true;
+    else
+      return false;
+  } else {
+    if (A.Size > B.Size)
+      return true;
+    else if (A.Size == B.Size && A.Name > B.Name)
+      return true;
+    else if (A.Size == B.Size && A.Name == B.Name && A.Address > B.Address)
+      return true;
+    else
+      return false;
+  }
 }
 
 static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
-  if (A.Name < B.Name)
-    return true;
-  else if (A.Name == B.Name && A.Size < B.Size)
-    return true;
-  else if (A.Name == B.Name && A.Size == B.Size && A.Address < B.Address)
-    return true;
-  else
-    return false;
+  if (!ReverseSort) {
+    if (A.Name < B.Name)
+      return true;
+    else if (A.Name == B.Name && A.Size < B.Size)
+      return true;
+    else if (A.Name == B.Name && A.Size == B.Size && A.Address < B.Address)
+      return true;
+    else
+      return false;
+  } else {
+    if (A.Name > B.Name)
+      return true;
+    else if (A.Name == B.Name && A.Size > B.Size)
+      return true;
+    else if (A.Name == B.Name && A.Size == B.Size && A.Address > B.Address)
+      return true;
+    else
+      return false;
+  }
 }
 
 static char isSymbolList64Bit(SymbolicFile *Obj) {
