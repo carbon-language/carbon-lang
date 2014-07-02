@@ -332,7 +332,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
   }
 }
 
-void MachineBasicBlock::printAsOperand(raw_ostream &OS, bool /*PrintType*/) {
+void MachineBasicBlock::printAsOperand(raw_ostream &OS, bool /*PrintType*/) const {
   OS << "BB#" << getNumber();
 }
 

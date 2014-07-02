@@ -620,7 +620,7 @@ public:
 
   /// computeRegisterLiveness - Return whether (physical) register \c Reg
   /// has been <def>ined and not <kill>ed as of just before \c MI.
-  /// 
+  ///
   /// Search is localised to a neighborhood of
   /// \c Neighborhood instructions before (searching for defs or kills) and
   /// Neighborhood instructions after (searching just for defs) MI.
@@ -635,7 +635,7 @@ public:
   void print(raw_ostream &OS, SlotIndexes* = nullptr) const;
 
   // Printing method used by LoopInfo.
-  void printAsOperand(raw_ostream &OS, bool PrintType = true);
+  void printAsOperand(raw_ostream &OS, bool PrintType = true) const;
 
   /// getNumber - MachineBasicBlocks are uniquely numbered at the function
   /// level, unless they're not in a MachineFunction yet, in which case this
