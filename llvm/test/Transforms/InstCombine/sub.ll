@@ -445,13 +445,14 @@ define <2 x i64> @test36(<2 x i64> %A) {
 ; CHECK-NEXT: ret <2 x i64> %sub
 }
 
-define <2 x i64> @test37(<2 x i64> %A) {
-  %shl = shl <2 x i64> %A, <i64 3, i64 4>
-  %sub = sub <2 x i64> %shl, %A
-  ret <2 x i64> %sub
+define <2 x i32> @test37(<2 x i32> %A) {
+  %div = sdiv <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
+  %sub = sub nsw <2 x i32> zeroinitializer, %div
+  ret <2 x i32> %sub
 ; CHECK-LABEL: @test37(
-; CHECK-NEXT: %sub = mul <2 x i64> %A, <i64 7, i64 15>
-; CHECK-NEXT: ret <2 x i64> %sub
+; CHECK-NEXT: [[DIV:%.*]] = sdiv <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
+; CHECK-NEXT: [[SUB:%.*]] = sub nsw <2 x i32> zeroinitializer, %div
+; CHECK-NEXT: ret <2 x i32> [[SUB]]
 }
 
 define i32 @test38(i32 %A) {
