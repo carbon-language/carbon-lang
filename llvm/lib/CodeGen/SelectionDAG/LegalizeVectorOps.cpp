@@ -37,12 +37,12 @@ class VectorLegalizer {
   const TargetLowering &TLI;
   bool Changed; // Keep track of whether anything changed
 
-  /// LegalizedNodes - For nodes that are of legal width, and that have more
-  /// than one use, this map indicates what regularized operand to use.  This
-  /// allows us to avoid legalizing the same thing more than once.
+  /// For nodes that are of legal width, and that have more than one use, this
+  /// map indicates what regularized operand to use.  This allows us to avoid
+  /// legalizing the same thing more than once.
   SmallDenseMap<SDValue, SDValue, 64> LegalizedNodes;
 
-  // Adds a node to the translation cache
+  /// \brief Adds a node to the translation cache.
   void AddLegalizedOperand(SDValue From, SDValue To) {
     LegalizedNodes.insert(std::make_pair(From, To));
     // If someone requests legalization of the new node, return itself.
@@ -50,41 +50,55 @@ class VectorLegalizer {
       LegalizedNodes.insert(std::make_pair(To, To));
   }
 
-  // Legalizes the given node
+  /// \brief Legalizes the given node.
   SDValue LegalizeOp(SDValue Op);
-  // Assuming the node is legal, "legalize" the results
+
+  /// \brief Assuming the node is legal, "legalize" the results.
   SDValue TranslateLegalizeResults(SDValue Op, SDValue Result);
-  // Implements unrolling a VSETCC.
+
+  /// \brief Implements unrolling a VSETCC.
   SDValue UnrollVSETCC(SDValue Op);
-  // Implements expansion for FNEG; falls back to UnrollVectorOp if FSUB
-  // isn't legal.
-  // Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
-  // SINT_TO_FLOAT and SHR on vectors isn't legal.
+
+  /// \brief Implements expansion for FNEG; falls back to UnrollVectorOp if
+  /// FSUB isn't legal.
+  ///
+  /// Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
+  /// SINT_TO_FLOAT and SHR on vectors isn't legal.
   SDValue ExpandUINT_TO_FLOAT(SDValue Op);
-  // Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
+
+  /// \brief Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
   SDValue ExpandSEXTINREG(SDValue Op);
-  // Expand bswap of vectors into a shuffle if legal.
+
+  /// \brief Expand bswap of vectors into a shuffle if legal.
   SDValue ExpandBSWAP(SDValue Op);
-  // Implement vselect in terms of XOR, AND, OR when blend is not supported
-  // by the target.
+
+  /// \brief Implement vselect in terms of XOR, AND, OR when blend is not
+  /// supported by the target.
   SDValue ExpandVSELECT(SDValue Op);
   SDValue ExpandSELECT(SDValue Op);
   SDValue ExpandLoad(SDValue Op);
   SDValue ExpandStore(SDValue Op);
   SDValue ExpandFNEG(SDValue Op);
-  // Implements vector promotion; this is essentially just bitcasting the
-  // operands to a different type and bitcasting the result back to the
-  // original type.
+
+  /// \brief Implements vector promotion.
+  ///
+  /// This is essentially just bitcasting the operands to a different type and
+  /// bitcasting the result back to the original type.
   SDValue PromoteVectorOp(SDValue Op);
-  // Implements [SU]INT_TO_FP vector promotion; this is a [zs]ext of the input
-  // operand to the next size up.
+
+  /// \brief Implements [SU]INT_TO_FP vector promotion.
+  ///
+  /// This is a [zs]ext of the input operand to the next size up.
   SDValue PromoteVectorOpINT_TO_FP(SDValue Op);
-  // Implements FP_TO_[SU]INT vector promotion of the result type; it is
-  // promoted to the next size up integer type.  The result is then truncated
-  // back to the original type.
+
+  /// \brief Implements FP_TO_[SU]INT vector promotion of the result type.
+  ///
+  /// It is promoted to the next size up integer type.  The result is then
+  /// truncated back to the original type.
   SDValue PromoteVectorOpFP_TO_INT(SDValue Op, bool isSigned);
 
-  public:
+public:
+  /// \brief Begin legalizer the vector operations in the DAG.
   bool Run();
   VectorLegalizer(SelectionDAG& dag) :
       DAG(dag), TLI(dag.getTargetLoweringInfo()), Changed(false) {}
