@@ -63,10 +63,6 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/Foundation.h>
 
-#if !defined(__arm__) && !defined(__arm64__)
-#include <Carbon/Carbon.h>
-#endif
-
 #ifndef _POSIX_SPAWN_DISABLE_ASLR
 #define _POSIX_SPAWN_DISABLE_ASLR       0x0100
 #endif
@@ -839,96 +835,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 
         return false;
     }
-    
-    ProcessInfoRec which_process;
-    ::memset(&which_process, 0, sizeof(which_process));
-    unsigned char ap_name[PATH_MAX];
-    which_process.processName = ap_name;
-    error = ::GetProcessInformation (&psn, &which_process);
-    
-    bool using_xcode;
-    if (error != noErr)
-    {
-        if (log)
-            log->Printf("GetProcessInformation failed, error: %ld.\n", error);
-        using_xcode = false;
-    }
-    else
-        using_xcode = strncmp((char *) ap_name+1, "Xcode", (int) ap_name[0]) == 0;
-    
-    // Xcode doesn't obey the line number in the Open Apple Event.  So I have to send
-    // it an AppleScript to focus on the right line.
-    
-    if (using_xcode)
-    {
-        static ComponentInstance osa_component = NULL;
-        static const char *as_template = "tell application \"Xcode\"\n"
-                                   "set doc to the first document whose path is \"%s\"\n"
-                                   "set the selection to paragraph %d of doc\n"
-                                   "--- set the selected paragraph range to {%d, %d} of doc\n"
-                                   "end tell\n";
-        const int chars_for_int = 32;
-        static int as_template_len = strlen (as_template);
 
-      
-        char *as_str;
-        AEDesc as_desc;
-      
-        if (osa_component == NULL)
-        {
-            osa_component = ::OpenDefaultComponent (kOSAComponentType,
-                                                    kAppleScriptSubtype);
-        }
-        
-        if (osa_component == NULL)
-        {
-            if (log)
-                log->Printf("Could not get default AppleScript component.\n");
-            return false;
-        }
-
-        uint32_t as_str_size = as_template_len + strlen (file_path) + 3 * chars_for_int + 1;     
-        as_str = (char *) malloc (as_str_size);
-        ::snprintf (as_str, 
-                    as_str_size - 1, 
-                    as_template, 
-                    file_path, 
-                    line_no, 
-                    line_no, 
-                    line_no);
-
-        error = ::AECreateDesc (typeChar, 
-                                as_str, 
-                                strlen (as_str),
-                                &as_desc);
-        
-        ::free (as_str);
-
-        if (error != noErr)
-        {
-            if (log)
-                log->Printf("Failed to create AEDesc for Xcode AppleEvent: %ld.\n", error);
-            return false;
-        }
-            
-        OSAID ret_OSAID;
-        error = ::OSACompileExecute (osa_component, 
-                                     &as_desc, 
-                                     kOSANullScript, 
-                                     kOSAModeNeverInteract, 
-                                     &ret_OSAID);
-        
-        ::OSADispose (osa_component, ret_OSAID);
-
-        ::AEDisposeDesc (&as_desc);
-
-        if (error != noErr)
-        {
-            if (log)
-                log->Printf("Sending AppleEvent to Xcode failed, error: %ld.\n", error);
-            return false;
-        }
-    }
     return true;
 #endif // #if !defined(__arm__)
 }

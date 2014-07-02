@@ -1783,7 +1783,6 @@
 		4C626533130F1B0A00C889F6 /* StreamTee.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamTee.h; path = include/lldb/Core/StreamTee.h; sourceTree = "<group>"; };
 		4C66499F14EEE7F100B0316F /* StreamCallback.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StreamCallback.h; path = include/lldb/Core/StreamCallback.h; sourceTree = "<group>"; };
 		4C6649A214EEE81000B0316F /* StreamCallback.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StreamCallback.cpp; path = source/Core/StreamCallback.cpp; sourceTree = "<group>"; };
-		4C74CB6212288704006A8171 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		4C7CF7E31295E10E00B4FBB5 /* ThreadPlanCallUserExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanCallUserExpression.h; path = include/lldb/Target/ThreadPlanCallUserExpression.h; sourceTree = "<group>"; };
 		4C7CF7E51295E12B00B4FBB5 /* ThreadPlanCallUserExpression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPlanCallUserExpression.cpp; path = source/Target/ThreadPlanCallUserExpression.cpp; sourceTree = "<group>"; };
 		4C98D3DA118FB96F00E575D0 /* ClangFunction.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClangFunction.cpp; path = source/Expression/ClangFunction.cpp; sourceTree = "<group>"; };
@@ -3833,7 +3832,6 @@
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
 				26D55234159A7DB100708D8D /* libxml2.dylib */,
 				966C6B7818E6A56A0093F5EC /* libz.dylib */,
-				4C74CB6212288704006A8171 /* Carbon.framework */,
 				EDB919B414F6F10D008FF64B /* Security.framework */,
 			);
 			name = Libraries;
@@ -5408,8 +5406,6 @@
 					"-framework",
 					Foundation,
 					"-framework",
-					Carbon,
-					"-framework",
 					DebugSymbols,
 					"-framework",
 					Security,
@@ -5468,8 +5464,6 @@
 					"-lllvmclang",
 					"-framework",
 					Foundation,
-					"-framework",
-					Carbon,
 					"-framework",
 					DebugSymbols,
 					"-framework",
@@ -5804,8 +5798,6 @@
 					"-lllvmclang",
 					"-framework",
 					Foundation,
-					"-framework",
-					Carbon,
 					"-framework",
 					DebugSymbols,
 					"-framework",
@@ -6612,8 +6604,6 @@
 					"-lllvmclang",
 					"-framework",
 					Foundation,
-					"-framework",
-					Carbon,
 					"-framework",
 					DebugSymbols,
 					"-framework",
