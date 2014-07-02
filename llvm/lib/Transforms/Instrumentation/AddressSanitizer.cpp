@@ -219,6 +219,7 @@ namespace {
 /// Frontend-provided metadata for global variables.
 class GlobalsMetadata {
  public:
+  GlobalsMetadata() : inited_(false) {}
   void init(Module& M) {
     assert(!inited_);
     inited_ = true;
@@ -277,7 +278,7 @@ class GlobalsMetadata {
   }
 
  private:
-  bool inited_ = false;
+  bool inited_;
   DenseMap<GlobalVariable*, GlobalVariable*> SourceLocation;
   DenseSet<GlobalVariable*> DynInitGlobals;
   DenseSet<GlobalVariable*> BlacklistedGlobals;
