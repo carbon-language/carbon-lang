@@ -1689,7 +1689,7 @@ bool SchedBoundary::checkHazard(SUnit *SU) {
       unsigned NRCycle = getNextResourceCycle(PI->ProcResourceIdx, PI->Cycles);
       if (NRCycle > CurrCycle) {
 #ifndef NDEBUG
-        MaxObservedStall = std::max(NRCycle - CurrCycle, MaxObservedStall);
+        MaxObservedStall = std::max(PI->Cycles, MaxObservedStall);
 #endif
         DEBUG(dbgs() << "  SU(" << SU->NodeNum << ") "
               << SchedModel->getResourceName(PI->ProcResourceIdx)
@@ -1953,10 +1953,12 @@ void SchedBoundary::bumpNode(SUnit *SU) {
              PE = SchedModel->getWriteProcResEnd(SC); PI != PE; ++PI) {
         unsigned PIdx = PI->ProcResourceIdx;
         if (SchedModel->getProcResource(PIdx)->BufferSize == 0) {
-          ReservedCycles[PIdx] = isTop() ? NextCycle + PI->Cycles : NextCycle;
-#ifndef NDEBUG
-          MaxObservedStall = std::max(PI->Cycles, MaxObservedStall);
-#endif
+          if (isTop()) {
+            ReservedCycles[PIdx] =
+              std::max(getNextResourceCycle(PIdx, 0), NextCycle + PI->Cycles);
+          }
+          else
+            ReservedCycles[PIdx] = NextCycle;
         }
       }
     }
@@ -2059,8 +2061,10 @@ SUnit *SchedBoundary::pickOnlyChoice() {
     }
   }
   for (unsigned i = 0; Available.empty(); ++i) {
-    assert(i <= (HazardRec->getMaxLookAhead() + MaxObservedStall) &&
-           "permanent hazard"); (void)i;
+//  FIXME: Re-enable assert once PR20057 is resolved.
+//    assert(i <= (HazardRec->getMaxLookAhead() + MaxObservedStall) &&
+//           "permanent hazard");
+    (void)i;
     bumpCycle(CurrCycle + 1);
     releasePending();
   }
