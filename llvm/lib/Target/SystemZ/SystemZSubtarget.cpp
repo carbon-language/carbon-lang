@@ -20,7 +20,7 @@ using namespace llvm;
 #define GET_SUBTARGETINFO_CTOR
 #include "SystemZGenSubtargetInfo.inc"
 
-// Pin the vtabel to this file.
+// Pin the vtable to this file.
 void SystemZSubtarget::anchor() {}
 
 SystemZSubtarget &

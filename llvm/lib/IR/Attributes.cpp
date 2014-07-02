@@ -293,7 +293,7 @@ bool Attribute::operator<(Attribute A) const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-// Pin the vtabels to this file.
+// Pin the vtables to this file.
 AttributeImpl::~AttributeImpl() {}
 void EnumAttributeImpl::anchor() {}
 void AlignAttributeImpl::anchor() {}
