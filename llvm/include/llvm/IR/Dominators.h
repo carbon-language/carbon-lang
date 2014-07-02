@@ -97,10 +97,6 @@ public:
   bool dominates(const BasicBlockEdge &BBE, const Use &U) const;
   bool dominates(const BasicBlockEdge &BBE, const BasicBlock *BB) const;
 
-  inline DomTreeNode *operator[](BasicBlock *BB) const {
-    return getNode(BB);
-  }
-
   // Ensure base class overloads are visible.
   using Base::isReachableFromEntry;
 
