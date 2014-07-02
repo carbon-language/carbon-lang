@@ -140,6 +140,8 @@ private:
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
 
+  void assumeNoOutOfBound(const IRAccess &Access);
+
 public:
   // @brief Create a memory access from an access in LLVM-IR.
   //
@@ -176,6 +178,9 @@ public:
   bool isWrite() const { return isMustWrite() || isMayWrite(); }
 
   isl_map *getAccessRelation() const;
+
+  /// @brief Return the space in which the access relation lives in.
+  __isl_give isl_space *getAccessRelationSpace() const;
 
   /// @brief Get an isl string representing this access function.
   std::string getAccessRelationStr() const;
@@ -541,6 +546,9 @@ class Scop {
   /// @brief Add the bounds of the parameters to the context.
   void addParameterBounds();
 
+  /// @brief Simplify the assumed context.
+  void simplifyAssumedContext();
+
   /// Build the Scop and Statement with precalculated scop information.
   void buildScop(TempScop &TempScop, const Region &CurRegion,
                  // Loops in Scop containing CurRegion
@@ -631,8 +639,26 @@ public:
   /// @return The assumed context of this Scop.
   __isl_give isl_set *getAssumedContext() const;
 
+  /// @brief Add assumptions to assumed context.
+  ///
+  /// The assumptions added will be assumed to hold during the execution of the
+  /// scop. However, as they are generally not statically provable, at code
+  /// generation time run-time checks will be generated that ensure the
+  /// assumptions hold.
+  ///
+  /// WARNING: We currently exploit in simplifyAssumedContext the knowledge
+  ///          that assumptions do not change the set of statement instances
+  ///          executed.
+  ///
+  /// @param Set A set describing relations between parameters that are assumed
+  ///            to hold.
+  void addAssumption(__isl_take isl_set *Set);
+
   /// @brief Get an isl string representing the context.
   std::string getContextStr() const;
+
+  /// @brief Get an isl string representing the assumed context.
+  std::string getAssumedContextStr() const;
 
   /// @name Statements Iterators
   ///

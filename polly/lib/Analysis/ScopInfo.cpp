@@ -342,6 +342,10 @@ std::string MemoryAccess::getAccessRelationStr() const {
   return stringFromIslObj(AccessRelation);
 }
 
+__isl_give isl_space *MemoryAccess::getAccessRelationSpace() const {
+  return isl_map_get_space(AccessRelation);
+}
+
 isl_map *MemoryAccess::getNewAccessRelation() const {
   return isl_map_copy(newAccessRelation);
 }
@@ -354,6 +358,66 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   return isl_basic_map_from_domain_and_range(
       isl_basic_set_universe(Statement->getDomainSpace()),
       isl_basic_set_universe(Space));
+}
+
+// Formalize no out-of-bound access assumption
+//
+// When delinearizing array accesses we optimistically assume that the
+// delinearized accesses do not access out of bound locations (the subscript
+// expression of each array evaluates for each statement instance that is
+// executed to a value that is larger than zero and strictly smaller than the
+// size of the corresponding dimension). The only exception is the outermost
+// dimension for which we do not assume any upper bound.  At this point we
+// formalize this assumption to ensure that at code generation time the relevant
+// run-time checks can be generated.
+//
+// To find the set of constraints necessary to avoid out of bound accesses, we
+// first build the set of data locations that are not within array bounds. We
+// then apply the reverse access relation to obtain the set of iterations that
+// may contain invalid accesses and reduce this set of iterations to the ones
+// that are actually executed by intersecting them with the domain of the
+// statement. If we now project out all loop dimensions, we obtain a set of
+// parameters that may cause statement instances to be executed that may
+// possibly yield out of bound memory accesses. The complement of these
+// constraints is the set of constraints that needs to be assumed to ensure such
+// statement instances are never executed.
+void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
+  isl_space *Space = isl_space_range(getAccessRelationSpace());
+  isl_set *Outside = isl_set_empty(isl_space_copy(Space));
+  for (int i = 0, Size = Access.Subscripts.size(); i < Size; ++i) {
+    isl_local_space *LS = isl_local_space_from_space(isl_space_copy(Space));
+    isl_pw_aff *Var =
+        isl_pw_aff_var_on_domain(isl_local_space_copy(LS), isl_dim_set, i);
+    isl_pw_aff *Zero = isl_pw_aff_zero_on_domain(LS);
+
+    isl_set *DimOutside;
+
+    if (i == 0) {
+      DimOutside = isl_pw_aff_lt_set(Var, Zero);
+    } else {
+      DimOutside = isl_pw_aff_lt_set(isl_pw_aff_copy(Var), Zero);
+      isl_pw_aff *SizeE =
+          SCEVAffinator::getPwAff(Statement, Access.Sizes[i - 1]);
+
+      SizeE = isl_pw_aff_drop_dims(SizeE, isl_dim_in, 0,
+                                   Statement->getNumIterators());
+      SizeE = isl_pw_aff_add_dims(SizeE, isl_dim_in,
+                                  isl_space_dim(Space, isl_dim_set));
+      SizeE = isl_pw_aff_set_tuple_id(
+          SizeE, isl_dim_in, isl_space_get_tuple_id(Space, isl_dim_set));
+
+      DimOutside = isl_set_union(DimOutside, isl_pw_aff_le_set(SizeE, Var));
+    }
+
+    Outside = isl_set_union(Outside, DimOutside);
+  }
+
+  Outside = isl_set_apply(Outside, isl_map_reverse(getAccessRelation()));
+  Outside = isl_set_intersect(Outside, Statement->getDomain());
+  Outside = isl_set_params(Outside);
+  Outside = isl_set_complement(Outside);
+  Statement->getParent()->addAssumption(Outside);
+  isl_space_free(Space);
 }
 
 MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
@@ -409,6 +473,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
   isl_space_free(Space);
   AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
                                           getBaseName().c_str());
+  assumeNoOutOfBound(Access);
 }
 
 void MemoryAccess::realignParams() {
@@ -1051,6 +1116,39 @@ void Scop::realignParams() {
     Stmt->realignParams();
 }
 
+void Scop::simplifyAssumedContext() {
+  // The parameter constraints of the iteration domains give us a set of
+  // constraints that need to hold for all cases where at least a single
+  // statement iteration is executed in the whole scop. We now simplify the
+  // assumed context under the assumption that such constraints hold and at
+  // least a single statement iteration is executed. For cases where no
+  // statement instances are executed, the assumptions we have taken about
+  // the executed code do not matter and can be changed.
+  //
+  // WARNING: This only holds if the assumptions we have taken do not reduce
+  //          the set of statement instances that are executed. Otherwise we
+  //          may run into a case where the iteration domains suggest that
+  //          for a certain set of parameter constraints no code is executed,
+  //          but in the original program some computation would have been
+  //          performed. In such a case, modifying the run-time conditions and
+  //          possibly influencing the run-time check may cause certain scops
+  //          to not be executed.
+  //
+  // Example:
+  //
+  //   When delinearizing the following code:
+  //
+  //     for (long i = 0; i < 100; i++)
+  //       for (long j = 0; j < m; j++)
+  //         A[i+p][j] = 1.0;
+  //
+  //   we assume that the condition m <= 0 or (m >= 1 and p >= 0) holds as
+  //   otherwise we would access out of bound data. Now, knowing that code is
+  //   only executed for the case m >= 0, it is sufficient to assume p >= 0.
+  AssumedContext =
+      isl_set_gist_params(AssumedContext, isl_union_set_params(getDomains()));
+}
+
 Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
            isl_ctx *Context)
     : SE(&ScalarEvolution), R(tempScop.getMaxRegion()),
@@ -1069,6 +1167,7 @@ Scop::Scop(TempScop &tempScop, LoopInfo &LI, ScalarEvolution &ScalarEvolution,
 
   realignParams();
   addParameterBounds();
+  simplifyAssumedContext();
 
   assert(NestLoops.empty() && "NestLoops not empty at top level!");
 }
@@ -1083,6 +1182,9 @@ Scop::~Scop() {
 }
 
 std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
+std::string Scop::getAssumedContextStr() const {
+  return stringFromIslObj(AssumedContext);
+}
 
 std::string Scop::getNameStr() const {
   std::string ExitName, EntryName;
@@ -1110,6 +1212,10 @@ __isl_give isl_set *Scop::getAssumedContext() const {
   return isl_set_copy(AssumedContext);
 }
 
+void Scop::addAssumption(__isl_take isl_set *Set) {
+  AssumedContext = isl_set_intersect(AssumedContext, Set);
+}
+
 void Scop::printContext(raw_ostream &OS) const {
   OS << "Context:\n";
 
@@ -1119,6 +1225,14 @@ void Scop::printContext(raw_ostream &OS) const {
   }
 
   OS.indent(4) << getContextStr() << "\n";
+
+  OS.indent(4) << "Assumed Context:\n";
+  if (!AssumedContext) {
+    OS.indent(4) << "n/a\n\n";
+    return;
+  }
+
+  OS.indent(4) << getAssumedContextStr() << "\n";
 
   for (const SCEV *Parameter : Parameters) {
     int Dim = ParameterIds.find(Parameter)->second;

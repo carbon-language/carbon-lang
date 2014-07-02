@@ -1151,6 +1151,8 @@ public:
 
     IslNodeBuilder NodeBuilder(Builder, Annotator, this);
 
+    Builder.SetInsertPoint(StartBlock->getSinglePredecessor()->begin());
+    NodeBuilder.addParameters(S.getContext());
     // Build condition that evaluates at run-time if all assumptions taken
     // for the scop hold. If we detect some assumptions do not hold, the
     // original code is executed.
@@ -1160,8 +1162,8 @@ public:
     BasicBlock *PrevBB = StartBlock->getUniquePredecessor();
     BranchInst *Branch = dyn_cast<BranchInst>(PrevBB->getTerminator());
     Branch->setCondition(V);
+    Builder.SetInsertPoint(StartBlock->begin());
 
-    NodeBuilder.addParameters(S.getContext());
     NodeBuilder.create(Ast);
     return true;
   }

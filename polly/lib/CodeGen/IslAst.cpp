@@ -341,7 +341,7 @@ void IslAst::buildRunCondition(__isl_keep isl_ast_build *Context) {
   PwZero = isl_pw_aff_intersect_domain(
       PwZero, isl_set_complement(S->getAssumedContext()));
 
-  isl_pw_aff *Cond = isl_pw_aff_union_max(PwZero, PwOne);
+  isl_pw_aff *Cond = isl_pw_aff_union_max(PwOne, PwZero);
 
   RunCondition = isl_ast_build_expr_from_pw_aff(Context, Cond);
 }

@@ -4,25 +4,24 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; void foo(long n, long m, long o, double A[n][m][o]) {
 ;
-;   for (long i = 0; i < n; i++)
-;     for (long j = 0; j < m; j++)
-;       for (long k = 0; k < o; k++)
+;   for (long i = 0; i < 100; i++)
+;     for (long j = 0; j < 150; j++)
+;       for (long k = 0; k < 200; k++)
 ;         A[i][j][k] = 1.0;
 ; }
 
-; CHECK: Assumed Context:
-; CHECK:   [n, m, o] -> {  :  }
-; CHECK: p0: %n
-; CHECK: p1: %m
-; CHECK: p2: %o
-; CHECK-NOT: p3
-;
-; CHECK: Domain
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
-; CHECK: Scattering
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
-; CHECK: WriteAccess
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
+; CHECK:   Assumed Context:
+; CHECK:   [m, o] -> {  : m >= 150 and o >= 200 }
+; CHECK:   p0: %m
+; CHECK:   p1: %o
+; CHECK:   Statements {
+; CHECK:     Stmt_for_k
+; CHECK:           Domain :=
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= 149 and i2 >= 0 and i2 <= 199 };
+; CHECK:           Scattering :=
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
+; CHECK:           MustWriteAccess := [Reduction Type: NONE]
+; CHECK:               [m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 
 define void @foo(i64 %n, i64 %m, i64 %o, double* %A) {
 entry:
@@ -48,17 +47,17 @@ for.k:
 
 for.k.inc:
   %k.inc = add nsw i64 %k, 1
-  %k.exitcond = icmp eq i64 %k.inc, %o
+  %k.exitcond = icmp eq i64 %k.inc, 200
   br i1 %k.exitcond, label %for.j.inc, label %for.k
 
 for.j.inc:
   %j.inc = add nsw i64 %j, 1
-  %j.exitcond = icmp eq i64 %j.inc, %m
+  %j.exitcond = icmp eq i64 %j.inc, 150
   br i1 %j.exitcond, label %for.i.inc, label %for.j
 
 for.i.inc:
   %i.inc = add nsw i64 %i, 1
-  %i.exitcond = icmp eq i64 %i.inc, %n
+  %i.exitcond = icmp eq i64 %i.inc, 100
   br i1 %i.exitcond, label %end, label %for.i
 
 end:

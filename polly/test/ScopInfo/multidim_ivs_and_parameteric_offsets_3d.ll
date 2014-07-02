@@ -13,6 +13,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Access function:
 ;    {{{((8 * ((((%m * %p) + %q) * %o) + %r)) + %A),+,(8 * %m * %o)}<%for.i>,+,
 ;        (8 * %o)}<%for.j>,+,8}<%for.k>
+
+; CHECK: Assumed Context:
+; CHECK: [n, m, o, p, q, r] -> { : q = 0 and r = 0 and p >= 0 }
 ;
 ; CHECK: p0: %n
 ; CHECK: p1: %m

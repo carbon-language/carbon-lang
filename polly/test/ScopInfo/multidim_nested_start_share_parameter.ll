@@ -12,6 +12,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ;       }
 ; }
 ;
+; CHECK: Assumed Context:
+; CHECK:   {  :  }
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o

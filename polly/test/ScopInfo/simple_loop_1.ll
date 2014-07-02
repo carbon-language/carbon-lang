@@ -25,6 +25,9 @@ return:                                           ; preds = %bb, %entry
   ret void
 }
 
+; CHECK: Assumed Context:
+; CHECK:   {  :  }
+
 ; CHECK:  Stmt_bb
 ; CHECK:        Domain :=
 ; CHECK:            [N] -> { Stmt_bb[i0] : i0 >= 0 and i0 <= -1 + N };

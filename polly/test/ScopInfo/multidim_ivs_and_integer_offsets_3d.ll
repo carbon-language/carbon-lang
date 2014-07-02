@@ -10,6 +10,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ;         A[i+3][j-4][k+7] = 1.0;
 ; }
 
+; CHECK: Assumed Context:
+; CHECK: {  :  }
+
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o

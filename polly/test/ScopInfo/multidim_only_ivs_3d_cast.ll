@@ -8,17 +8,25 @@
 ;         A[i][j][k] = 1.0;
 ; }
 
+; We currently fail to get the relation between the 32 and 64 bit versions of
+; m and o, such that we generate unnecessary run-time checks. This is not a
+; correctness issue, but could be improved.
+
+; CHECK: Assumed Context:
+; CHECK:  [n, m, o, p_3, p_4] -> { : p_4 >= o and p_3 >= m }
 ; CHECK: p0: %n
 ; CHECK: p1: %m
 ; CHECK: p2: %o
-; CHECK-NOT: p3
+; CHECK: p3: (zext i32 %m to i64)
+; CHECK: p4: (zext i32 %o to i64)
+; CHECK-NOT: p5
 
 ; CHECK: Domain
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
+; CHECK:   [n, m, o, p_3, p_4] -> { Stmt_for_k[i0, i1, i2] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m and i2 >= 0 and i2 <= -1 + o };
 ; CHECK: Scattering
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
+; CHECK:   [n, m, o, p_3, p_4] -> { Stmt_for_k[i0, i1, i2] -> scattering[0, i0, 0, i1, 0, i2, 0] };
 ; CHECK: WriteAccess
-; CHECK:   [n, m, o] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
+; CHECK:   [n, m, o, p_3, p_4] -> { Stmt_for_k[i0, i1, i2] -> MemRef_A[i0, i1, i2] };
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"

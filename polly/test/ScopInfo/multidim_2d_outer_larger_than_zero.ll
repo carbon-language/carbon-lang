@@ -4,32 +4,34 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Derived from the following code:
 ;
-; void foo(long n, long m, double A[n][m]) {
-;   for (long i = 0; i < n; i++)
+; void foo(long n, long m, long p, double A[n][m]) {
+;   for (long i = 0; i < 100; i++)
 ;     for (long j = 0; j < m; j++)
-;       A[i][j] = 1.0;
+;       A[i+p][j] = 1.0;
 ; }
 
-; CHECK: Assumed Context:
-; CHECK:   [n, m] -> {  :  }
-; CHECK: p0: %n
-; CHECK: p1: %m
-; CHECK-NOT: p3
+; CHECK:  Assumed Context:
+; CHECK:  [m, p] -> {  : p >= 0 }
+; CHECK:  p0: %m
+; CHECK:  p1: %p
+; CHECK:  Statements {
+; CHECK:    Stmt_for_j
+; CHECK:          Domain :=
+; CHECK:              [m, p] -> { Stmt_for_j[i0, i1] : i0 >= 0 and i0 <= 99 and i1 >= 0 and i1 <= -1 + m };
+; CHECK:          Scattering :=
+; CHECK:              [m, p] -> { Stmt_for_j[i0, i1] -> scattering[0, i0, 0, i1, 0] };
+; CHECK:          MustWriteAccess := [Reduction Type: NONE]
+; CHECK:              [m, p] -> { Stmt_for_j[i0, i1] -> MemRef_A[p + i0, i1] };
+; CHECK:  }
 
-; CHECK: Domain
-; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] : i0 >= 0 and i0 <= -1 + n and i1 >= 0 and i1 <= -1 + m };
-; CHECK: Scattering
-; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] -> scattering[0, i0, 0, i1, 0] };
-; CHECK: MustWriteAccess
-; CHECK:   [n, m] -> { Stmt_for_j[i0, i1] -> MemRef_A[i0, i1] };
-
-define void @foo(i64 %n, i64 %m, double* %A) {
+define void @foo(i64 %n, i64 %m, i64 %p, double* %A) {
 entry:
   br label %for.i
 
 for.i:
   %i = phi i64 [ 0, %entry ], [ %i.inc, %for.i.inc ]
-  %tmp = mul nsw i64 %i, %m
+  %add = add nsw i64 %i, %p
+  %tmp = mul nsw i64 %add, %m
   br label %for.j
 
 for.j:
@@ -43,7 +45,7 @@ for.j:
 
 for.i.inc:
   %i.inc = add nsw i64 %i, 1
-  %i.exitcond = icmp eq i64 %i.inc, %n
+  %i.exitcond = icmp eq i64 %i.inc, 100
   br i1 %i.exitcond, label %end, label %for.i
 
 end:
