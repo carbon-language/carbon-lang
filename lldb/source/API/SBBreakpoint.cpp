@@ -138,7 +138,12 @@ SBBreakpoint::GetID () const
 bool
 SBBreakpoint::IsValid() const
 {
-    return (bool) m_opaque_sp;
+    if (!m_opaque_sp)
+        return false;
+    else if (m_opaque_sp->GetTarget().GetBreakpointByID(m_opaque_sp->GetID()))
+       return true;
+    else
+        return false;
 }
 
 void
