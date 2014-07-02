@@ -15,7 +15,6 @@
 #define MIPS_MACHINE_FUNCTION_INFO_H
 
 #include "Mips16HardFloatInfo.h"
-#include "MipsSubtarget.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
