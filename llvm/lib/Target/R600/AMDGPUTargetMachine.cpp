@@ -174,6 +174,8 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     // SIFixSGPRCopies can generate a lot of duplicate instructions,
     // so we need to run MachineCSE afterwards.
     addPass(&MachineCSEID);
+    initializeSIFixSGPRLiveRangesPass(*PassRegistry::getPassRegistry());
+    insertPass(&RegisterCoalescerID, &SIFixSGPRLiveRangesID);
   }
   return false;
 }
