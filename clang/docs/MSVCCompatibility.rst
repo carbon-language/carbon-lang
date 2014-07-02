@@ -43,14 +43,14 @@ ABI features
 
 The status of major ABI-impacting C++ features:
 
-* Record layout: :good:`Mostly complete`.  We've tested this with a fuzzer, and
-  most of the remaining failures involve ``#pragma pack``,
-  ``__declspec(align(N))``, or other pragmas.
+* Record layout: :good:`Complete`.  We've tested this with a fuzzer and have
+  fixed all known bugs.
 
 * Class inheritance: :good:`Mostly complete`.  This covers all of the standard
   OO features you would expect: virtual method inheritance, multiple
   inheritance, and virtual inheritance.  Every so often we uncover a bug where
-  our tables are incompatible, but this is pretty well in hand.
+  our tables are incompatible, but this is pretty well in hand.  This feature
+  has also been fuzz tested.
 
 * Name mangling: :good:`Ongoing`.  Every new C++ feature generally needs its own
   mangling.  For example, member pointer template arguments have an interesting
@@ -78,23 +78,21 @@ The status of major ABI-impacting C++ features:
   enabling stack traces in all modern Windows debuggers.  Clang does not emit
   any type info or description of variable layout.
 
-* `RTTI`_: :none:`Unstarted`.  See the bug for a discussion of what needs to
-  happen first.
-
-.. _RTTI: http://llvm.org/PR18951
+* `RTTI`_: :good:`Complete`.  Generation of RTTI data structures has been
+  finished, along with support for the ``/GR`` flag.
 
 * Exceptions and SEH: :none:`Unstarted`.  Clang can parse both constructs, but
   does not know how to emit compatible handlers.  This depends on RTTI.
 
 * Thread-safe initialization of local statics: :none:`Unstarted`.  We are ABI
-  compatible with MSVC 2012, which does not support thread-safe local statics.
-  MSVC 2013 changed the ABI to make initialization of local statics thread safe,
+  compatible with MSVC 2013, which does not support thread-safe local statics.
+  MSVC "14" changed the ABI to make initialization of local statics thread safe,
   and we have not yet implemented this.
 
-* Lambdas in ABI boundaries: :none:`Infeasible`.  It is unlikely that we will
-  ever be fully ABI compatible with lambdas declared in inline functions due to
-  what appears to be a hash code in the name mangling.  Lambdas that are not
-  externally visible should work fine.
+* Lambdas: :none:`Mostly complete`.  Clang is compatible with Microsoft's
+  implementation of lambdas except for providing overloads for conversion to
+  function pointer for different calling conventions.  However, Microsoft's
+  extension is non-conforming.
 
 Template instantiation and name lookup
 ======================================
