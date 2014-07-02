@@ -13,6 +13,7 @@ add_lldb_library(lldbHostCommon
   NativeProcessProtocol.cpp
   NativeThreadProtocol.cpp
   OptionParser.cpp
+  Pipe.cpp
   ProcessRunLock.cpp
   SocketAddress.cpp
   SoftwareBreakpoint.cpp

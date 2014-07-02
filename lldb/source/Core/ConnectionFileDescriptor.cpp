@@ -97,9 +97,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_send_type (eFDTypeFile),
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (new SocketAddress()),
-    m_socket_timeout_usec(0),
-    m_pipe_read(-1),
-    m_pipe_write(-1),
+    m_socket_timeout_usec (0),
+    m_pipe (),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_should_close_fd (false),
     m_shutting_down (false)
@@ -118,8 +117,7 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (new SocketAddress()),
     m_socket_timeout_usec(0),
-    m_pipe_read(-1),
-    m_pipe_write(-1),
+    m_pipe (),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_should_close_fd (owns_fd),
     m_shutting_down (false)
@@ -149,13 +147,7 @@ ConnectionFileDescriptor::OpenCommandPipe ()
 
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     // Make the command file descriptor here:
-    int filedes[2];
-#ifndef LLDB_DISABLE_POSIX
-    int result = pipe (filedes);
-#else
-    int result = -1;
-#endif
-    if (result != 0)
+    if (!m_pipe.Open())
     {
         if (log)
             log->Printf ("%p ConnectionFileDescriptor::OpenCommandPipe () - could not make pipe: %s",
@@ -163,12 +155,11 @@ ConnectionFileDescriptor::OpenCommandPipe ()
     }
     else
     {
-        m_pipe_read  = filedes[0];
-        m_pipe_write = filedes[1];
         if (log)
             log->Printf ("%p ConnectionFileDescriptor::OpenCommandPipe() - success readfd=%d writefd=%d",
-                         static_cast<void*>(this), m_pipe_read,
-                         m_pipe_write);
+                         static_cast<void*>(this),
+                         m_pipe.GetReadFileDescriptor(),
+                         m_pipe.GetWriteFileDescriptor());
     }
 }
 
@@ -180,25 +171,7 @@ ConnectionFileDescriptor::CloseCommandPipe ()
         log->Printf ("%p ConnectionFileDescriptor::CloseCommandPipe()",
                      static_cast<void*>(this));
 
-    if (m_pipe_read != -1)
-    {
-#ifdef _MSC_VER
-        llvm_unreachable("pipe close unsupported in MSVC");
-#else
-        close (m_pipe_read);
-#endif
-        m_pipe_read = -1;
-    }
-
-    if (m_pipe_write != -1)
-    {
-#ifdef _MSC_VER
-        llvm_unreachable("pipe close unsupported in MSVC");
-#else
-        close (m_pipe_write);
-#endif
-        m_pipe_write = -1;
-    }
+    m_pipe.Close();
 }
 
 bool
@@ -364,9 +337,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 bool
 ConnectionFileDescriptor::InterruptRead()
 {
-    if (m_pipe_write != -1 )
-        return write (m_pipe_write, "i", 1) == 1;
-    return false;
+    return m_pipe.Write("i", 1) == 1;
 }
 
 ConnectionStatus
@@ -402,13 +373,13 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 
     if (!got_lock)
     {
-        if (m_pipe_write != -1 )
+        if (m_pipe.WriteDescriptorIsValid())
         {
             int result;
-            result = write (m_pipe_write, "q", 1);
+            result = m_pipe.Write("q", 1) == 1;
             if (log)
                 log->Printf ("%p ConnectionFileDescriptor::Disconnect(): Couldn't get the lock, sent 'q' to %d, result = %d.",
-                             static_cast<void*>(this), m_pipe_write, result);
+                             static_cast<void*>(this), m_pipe.GetWriteFileDescriptor(), result);
         }
         else if (log)
             log->Printf ("%p ConnectionFileDescriptor::Disconnect(): Couldn't get the lock, but no command pipe is available.",
@@ -757,7 +728,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     // have another thread change these values out from under us
     // and cause problems in the loop below where like in FS_SET()
     const int data_fd = m_fd_recv;
-    const int pipe_fd = m_pipe_read;
+    const int pipe_fd = m_pipe.GetReadFileDescriptor();
 
     if (data_fd >= 0)
     {
@@ -929,7 +900,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
     // have another thread change these values out from under us
     // and cause problems in the loop below where like in FS_SET()
     const int data_fd = m_fd_recv;
-    const int pipe_fd = m_pipe_read;
+    const int pipe_fd = m_pipe.GetReadFileDescriptor();
     
     // Make sure the file descriptor can be used with select as it
     // must be in range

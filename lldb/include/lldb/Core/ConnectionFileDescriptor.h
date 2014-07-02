@@ -24,6 +24,7 @@
 // Project includes
 #include "lldb/Core/Connection.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Host/Pipe.h"
 #include "lldb/Host/Predicate.h"
 
 namespace lldb_private {
@@ -122,8 +123,7 @@ protected:
     FDType m_fd_recv_type;
     std::unique_ptr<SocketAddress> m_udp_send_sockaddr;
     uint32_t m_socket_timeout_usec;
-    int m_pipe_read;            // A pipe that we select on the reading end of along with
-    int m_pipe_write;           // m_fd_recv so we can force ourselves out of the select.
+    Pipe m_pipe;
     Mutex m_mutex;
     Predicate<uint16_t> m_port_predicate; // Used when binding to port zero to wait for the thread that creates the socket, binds and listens to resolve the port number
     bool m_should_close_fd;     // True if this class should close the file descriptor when it goes away.

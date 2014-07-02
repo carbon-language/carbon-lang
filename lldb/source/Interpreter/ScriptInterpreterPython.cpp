@@ -32,6 +32,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/Pipe.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/PythonDataObjects.h"
@@ -580,8 +581,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         StreamFileSP output_file_sp;
         StreamFileSP error_file_sp;
         Communication output_comm ("lldb.ScriptInterpreterPython.ExecuteOneLine.comm");
-        int pipe_fds[2] = { -1, -1 };
-        
+        bool join_read_thread = false;
         if (options.GetEnableIO())
         {
             if (result)
@@ -589,21 +589,17 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                 input_file_sp = debugger.GetInputFile();
                 // Set output to a temporary file so we can forward the results on to the result object
                 
-#ifdef _MSC_VER
-                // pipe is not supported on windows so default to a fail condition
-                int err = 1;
-#else
-                int err = pipe(pipe_fds);
-#endif
-                if (err == 0)
+                Pipe pipe;
+                if (pipe.Open())
                 {
-                    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe_fds[0], true));
+                    std::unique_ptr<ConnectionFileDescriptor> conn_ap(new ConnectionFileDescriptor(pipe.ReleaseReadFileDescriptor(), true));
                     if (conn_ap->IsConnected())
                     {
                         output_comm.SetConnection(conn_ap.release());
                         output_comm.SetReadThreadBytesReceivedCallback(ReadThreadBytesReceived, &result->GetOutputStream());
                         output_comm.StartReadThread();
-                        FILE *outfile_handle = fdopen (pipe_fds[1], "w");
+                        join_read_thread = true;
+                        FILE *outfile_handle = fdopen (pipe.ReleaseWriteFileDescriptor(), "w");
                         output_file_sp.reset(new StreamFile(outfile_handle, true));
                         error_file_sp = output_file_sp;
                         if (outfile_handle)
@@ -672,7 +668,7 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
         if (out_file != err_file)
             ::fflush (err_file);
         
-        if (pipe_fds[0] != -1)
+        if (join_read_thread)
         {
             // Close the write end of the pipe since we are done with our
             // one line script. This should cause the read thread that
