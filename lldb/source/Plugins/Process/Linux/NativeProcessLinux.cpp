@@ -53,11 +53,25 @@
 #define DEBUG_PTRACE_MAXBYTES 20
 
 // Support ptrace extensions even when compiled without required kernel support
+#ifndef PT_GETREGS
 #ifndef PTRACE_GETREGS
-#define PTRACE_GETREGS 12
+  #define PTRACE_GETREGS 12
 #endif
+#endif
+#ifndef PT_SETREGS
 #ifndef PTRACE_SETREGS
   #define PTRACE_SETREGS 13
+#endif
+#endif
+#ifndef PT_GETFPREGS
+#ifndef PTRACE_GETFPREGS
+  #define PTRACE_GETFPREGS 14
+#endif
+#endif
+#ifndef PT_SETFPREGS
+#ifndef PTRACE_SETFPREGS
+  #define PTRACE_SETFPREGS 15
+#endif
 #endif
 #ifndef PTRACE_GETREGSET
   #define PTRACE_GETREGSET 0x4204
