@@ -157,38 +157,40 @@ end
     See the [llvm::ICmpInst::Predicate] enumeration. *)
 module Icmp : sig
   type t =
-  | Eq
-  | Ne
-  | Ugt
-  | Uge
-  | Ult
-  | Ule
-  | Sgt
-  | Sge
-  | Slt
-  | Sle
+  | Eq  (* Equal *)
+  | Ne  (* Not equal *)
+  | Ugt (* Unsigned greater than *)
+  | Uge (* Unsigned greater or equal *)
+  | Ult (* Unsigned less than *)
+  | Ule (* Unsigned less or equal *)
+  | Sgt (* Signed greater than *)
+  | Sge (* Signed greater or equal *)
+  | Slt (* Signed less than *)
+  | Sle (* Signed less or equal *)
 end
 
 (** The predicate for a floating-point comparison ([fcmp]) instruction.
+    Ordered means that neither operand is a QNAN while unordered means
+    that either operand may be a QNAN.
     See the [llvm::FCmpInst::Predicate] enumeration. *)
 module Fcmp : sig
   type t =
-  | False
-  | Oeq
-  | Ogt
-  | Oge
-  | Olt
-  | Ole
-  | One
-  | Ord
-  | Uno
-  | Ueq
-  | Ugt
-  | Uge
-  | Ult
-  | Ule
-  | Une
-  | True
+  | False (* Always false *)
+  | Oeq   (* Ordered and equal *)
+  | Ogt   (* Ordered and greater than *)
+  | Oge   (* Ordered and greater or equal *)
+  | Olt   (* Ordered and less than *)
+  | Ole   (* Ordered and less or equal *)
+  | One   (* Ordered and not equal *)
+  | Ord   (* Ordered (no operand is NaN) *)
+  | Uno   (* Unordered (one operand at least is NaN) *)
+  | Ueq   (* Unordered and equal *)
+  | Ugt   (* Unordered and greater than *)
+  | Uge   (* Unordered and greater or equal *)
+  | Ult   (* Unordered and less than *)
+  | Ule   (* Unordered and less or equal *)
+  | Une   (* Unordered and not equal *)
+  | True  (* Always true *)
 end
 
 (** The opcodes for LLVM instructions and constant expressions. *)
