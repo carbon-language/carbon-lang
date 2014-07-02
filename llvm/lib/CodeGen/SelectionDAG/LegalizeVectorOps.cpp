@@ -59,6 +59,12 @@ class VectorLegalizer {
   /// \brief Implements unrolling a VSETCC.
   SDValue UnrollVSETCC(SDValue Op);
 
+  /// \brief Implement expand-based legalization of vector operations.
+  ///
+  /// This is just a high-level routine to dispatch to specific code paths for
+  /// operations to legalize them.
+  SDValue Expand(SDValue Op);
+
   /// \brief Implements expansion for FNEG; falls back to UnrollVectorOp if
   /// FSUB isn't legal.
   ///
@@ -295,23 +301,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     // FALL THROUGH
   }
   case TargetLowering::Expand:
-    if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG)
-      Result = ExpandSEXTINREG(Op);
-    else if (Node->getOpcode() == ISD::BSWAP)
-      Result = ExpandBSWAP(Op);
-    else if (Node->getOpcode() == ISD::VSELECT)
-      Result = ExpandVSELECT(Op);
-    else if (Node->getOpcode() == ISD::SELECT)
-      Result = ExpandSELECT(Op);
-    else if (Node->getOpcode() == ISD::UINT_TO_FP)
-      Result = ExpandUINT_TO_FLOAT(Op);
-    else if (Node->getOpcode() == ISD::FNEG)
-      Result = ExpandFNEG(Op);
-    else if (Node->getOpcode() == ISD::SETCC)
-      Result = UnrollVSETCC(Op);
-    else
-      Result = DAG.UnrollVectorOp(Op.getNode());
-    break;
+    Result = Expand(Op);
   }
 
   // Make sure that the generated code is itself legal.
@@ -618,6 +608,27 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
   SDValue TF =  DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Stores);
   AddLegalizedOperand(Op, TF);
   return TF;
+}
+
+SDValue VectorLegalizer::Expand(SDValue Op) {
+  switch (Op->getOpcode()) {
+  case ISD::SIGN_EXTEND_INREG:
+    return ExpandSEXTINREG(Op);
+  case ISD::BSWAP:
+    return ExpandBSWAP(Op);
+  case ISD::VSELECT:
+    return ExpandVSELECT(Op);
+  case ISD::SELECT:
+    return ExpandSELECT(Op);
+  case ISD::UINT_TO_FP:
+    return ExpandUINT_TO_FLOAT(Op);
+  case ISD::FNEG:
+    return ExpandFNEG(Op);
+  case ISD::SETCC:
+    return UnrollVSETCC(Op);
+  default:
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
 }
 
 SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
