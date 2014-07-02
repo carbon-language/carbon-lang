@@ -2519,11 +2519,13 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, NamedDecl *&OldD,
         ResQT = Context.mergeObjCGCQualifiers(NewQType, OldQType);
       if (ResQT.isNull()) {
         if (New->isCXXClassMember() && New->isOutOfLine())
-          Diag(New->getLocation(),
-               diag::err_member_def_does_not_match_ret_type) << New;
+          Diag(New->getLocation(), diag::err_member_def_does_not_match_ret_type)
+              << New << New->getReturnTypeSourceRange();
         else
-          Diag(New->getLocation(), diag::err_ovl_diff_return_type);
-        Diag(OldLocation, PrevDiag) << Old << Old->getType();
+          Diag(New->getLocation(), diag::err_ovl_diff_return_type)
+              << New->getReturnTypeSourceRange();
+        Diag(OldLocation, PrevDiag) << Old << Old->getType()
+                                    << Old->getReturnTypeSourceRange();
         return true;
       }
       else
@@ -7494,8 +7496,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     
     // OpenCL v1.2, s6.9 -- Kernels can only have return type void.
     if (!NewFD->getReturnType()->isVoidType()) {
-      Diag(D.getIdentifierLoc(),
-           diag::err_expected_kernel_void_return_type);
+      SourceRange RTRange = NewFD->getReturnTypeSourceRange();
+      Diag(D.getIdentifierLoc(), diag::err_expected_kernel_void_return_type)
+          << (RTRange.isValid() ? FixItHint::CreateReplacement(RTRange, "void")
+                                : FixItHint());
       D.setInvalidType();
     }
 
@@ -7835,23 +7839,6 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   return Redeclaration;
 }
 
-static SourceRange getResultSourceRange(const FunctionDecl *FD) {
-  const TypeSourceInfo *TSI = FD->getTypeSourceInfo();
-  if (!TSI)
-    return SourceRange();
-
-  TypeLoc TL = TSI->getTypeLoc();
-  FunctionTypeLoc FunctionTL = TL.getAs<FunctionTypeLoc>();
-  if (!FunctionTL)
-    return SourceRange();
-
-  TypeLoc ResultTL = FunctionTL.getReturnLoc();
-  if (ResultTL.getUnqualifiedLoc().getAs<BuiltinTypeLoc>())
-    return ResultTL.getSourceRange();
-
-  return SourceRange();
-}
-
 void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   // C++11 [basic.start.main]p3:
   //   A program that [...] declares main to be inline, static or
@@ -7904,19 +7891,17 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   } else if (getLangOpts().GNUMode && !getLangOpts().CPlusPlus) {
     Diag(FD->getTypeSpecStartLoc(), diag::ext_main_returns_nonint);
 
-    SourceRange ResultRange = getResultSourceRange(FD);
-    if (ResultRange.isValid())
-      Diag(ResultRange.getBegin(), diag::note_main_change_return_type)
-          << FixItHint::CreateReplacement(ResultRange, "int");
+    SourceRange RTRange = FD->getReturnTypeSourceRange();
+    if (RTRange.isValid())
+      Diag(RTRange.getBegin(), diag::note_main_change_return_type)
+          << FixItHint::CreateReplacement(RTRange, "int");
 
   // Otherwise, this is just a flat-out error.
   } else {
-    SourceRange ResultRange = getResultSourceRange(FD);
-    if (ResultRange.isValid())
-      Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint)
-          << FixItHint::CreateReplacement(ResultRange, "int");
-    else
-      Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
+    SourceRange RTRange = FD->getReturnTypeSourceRange();
+    Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint)
+        << (RTRange.isValid() ? FixItHint::CreateReplacement(RTRange, "int")
+                              : FixItHint());
 
     FD->setInvalidDecl(true);
   }

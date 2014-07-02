@@ -12304,8 +12304,10 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   if (NewClassTy.isNull()) {
     Diag(New->getLocation(),
          diag::err_different_return_type_for_overriding_virtual_function)
-      << New->getDeclName() << NewTy << OldTy;
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+        << New->getDeclName() << NewTy << OldTy
+        << New->getReturnTypeSourceRange();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function)
+        << Old->getReturnTypeSourceRange();
 
     return true;
   }
@@ -12325,25 +12327,27 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   if (!Context.hasSameUnqualifiedType(NewClassTy, OldClassTy)) {
     // Check if the new class derives from the old class.
     if (!IsDerivedFrom(NewClassTy, OldClassTy)) {
-      Diag(New->getLocation(),
-           diag::err_covariant_return_not_derived)
-      << New->getDeclName() << NewTy << OldTy;
-      Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+      Diag(New->getLocation(), diag::err_covariant_return_not_derived)
+          << New->getDeclName() << NewTy << OldTy
+          << New->getReturnTypeSourceRange();
+      Diag(Old->getLocation(), diag::note_overridden_virtual_function)
+          << Old->getReturnTypeSourceRange();
       return true;
     }
 
     // Check if we the conversion from derived to base is valid.
-    if (CheckDerivedToBaseConversion(NewClassTy, OldClassTy,
-                    diag::err_covariant_return_inaccessible_base,
-                    diag::err_covariant_return_ambiguous_derived_to_base_conv,
-                    // FIXME: Should this point to the return type?
-                    New->getLocation(), SourceRange(), New->getDeclName(),
-                    nullptr)) {
+    if (CheckDerivedToBaseConversion(
+            NewClassTy, OldClassTy,
+            diag::err_covariant_return_inaccessible_base,
+            diag::err_covariant_return_ambiguous_derived_to_base_conv,
+            New->getLocation(), New->getReturnTypeSourceRange(),
+            New->getDeclName(), nullptr)) {
       // FIXME: this note won't trigger for delayed access control
       // diagnostics, and it's impossible to get an undelayed error
       // here from access control during the original parse because
       // the ParsingDeclSpec/ParsingDeclarator are still in scope.
-      Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+      Diag(Old->getLocation(), diag::note_overridden_virtual_function)
+          << Old->getReturnTypeSourceRange();
       return true;
     }
   }
@@ -12352,8 +12356,10 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   if (NewTy.getLocalCVRQualifiers() != OldTy.getLocalCVRQualifiers()) {
     Diag(New->getLocation(),
          diag::err_covariant_return_type_different_qualifications)
-    << New->getDeclName() << NewTy << OldTy;
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+        << New->getDeclName() << NewTy << OldTy
+        << New->getReturnTypeSourceRange();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function)
+        << Old->getReturnTypeSourceRange();
     return true;
   };
 
@@ -12362,8 +12368,10 @@ bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
   if (NewClassTy.isMoreQualifiedThan(OldClassTy)) {
     Diag(New->getLocation(),
          diag::err_covariant_return_type_class_type_more_qualified)
-    << New->getDeclName() << NewTy << OldTy;
-    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+        << New->getDeclName() << NewTy << OldTy
+        << New->getReturnTypeSourceRange();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function)
+        << Old->getReturnTypeSourceRange();
     return true;
   };
 

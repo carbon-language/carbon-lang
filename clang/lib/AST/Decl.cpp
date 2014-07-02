@@ -2687,6 +2687,23 @@ bool FunctionDecl::doesDeclarationForceExternallyVisibleDefinition() const {
   return FoundBody;
 }
 
+SourceRange FunctionDecl::getReturnTypeSourceRange() const {
+  const TypeSourceInfo *TSI = getTypeSourceInfo();
+  if (!TSI)
+    return SourceRange();
+
+  TypeLoc TL = TSI->getTypeLoc();
+  FunctionTypeLoc FunctionTL = TL.getAs<FunctionTypeLoc>();
+  if (!FunctionTL)
+    return SourceRange();
+
+  TypeLoc ResultTL = FunctionTL.getReturnLoc();
+  if (ResultTL.getUnqualifiedLoc().getAs<BuiltinTypeLoc>())
+    return ResultTL.getSourceRange();
+
+  return SourceRange();
+}
+
 /// \brief For an inline function definition in C, or for a gnu_inline function
 /// in C++, determine whether the definition will be externally visible.
 ///

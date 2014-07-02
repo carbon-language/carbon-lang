@@ -1896,6 +1896,8 @@ public:
     return getType()->getAs<FunctionType>()->getReturnType();
   }
 
+  SourceRange getReturnTypeSourceRange() const;
+
   /// \brief Determine the type of an expression that calls this function.
   QualType getCallResultType() const {
     return getType()->getAs<FunctionType>()->getCallResultType(getASTContext());
