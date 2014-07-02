@@ -89,7 +89,7 @@ The status of major ABI-impacting C++ features:
   MSVC "14" changed the ABI to make initialization of local statics thread safe,
   and we have not yet implemented this.
 
-* Lambdas: :none:`Mostly complete`.  Clang is compatible with Microsoft's
+* Lambdas: :good:`Mostly complete`.  Clang is compatible with Microsoft's
   implementation of lambdas except for providing overloads for conversion to
   function pointer for different calling conventions.  However, Microsoft's
   extension is non-conforming.
