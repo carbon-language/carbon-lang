@@ -89,6 +89,10 @@ class ShowInSystemHeader {
   bit ShowInSystemHeader = 1;
 }
 
+class SuppressInSystemHeader {
+  bit ShowInSystemHeader = 0;
+}
+
 // FIXME: ExtWarn and Extension should also be SFINAEFailure by default.
 class Error<string str>     : Diagnostic<str, CLASS_ERROR, SEV_Error>, SFINAEFailure {
   bit ShowInSystemHeader = 1;

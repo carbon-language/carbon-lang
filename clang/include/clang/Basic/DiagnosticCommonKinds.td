@@ -138,7 +138,7 @@ def err_module_file_conflict : Error<"module '%0' found in both '%1' and '%2'">;
 
 // TransformActions
 // TODO: Use a custom category name to distinguish rewriter errors.
-def err_mt_message : Error<"[rewriter] %0">;
+def err_mt_message : Error<"[rewriter] %0">, SuppressInSystemHeader;
 def warn_mt_message : Warning<"[rewriter] %0">;
 def note_mt_message : Note<"[rewriter] %0">;
 
