@@ -471,6 +471,58 @@ static void mergeTemplateLV(LinkageInfo &LV,
   LV.mergeExternalVisibility(argsLV);
 }
 
+/// Should we consider visibility associated with the template
+/// arguments and parameters of the given variable template
+/// specialization? As usual, follow class template specialization
+/// logic up to initialization.
+static bool shouldConsiderTemplateVisibility(
+                                 const VarTemplateSpecializationDecl *spec,
+                                 LVComputationKind computation) {
+  // Include visibility from the template parameters and arguments
+  // only if this is not an explicit instantiation or specialization
+  // with direct explicit visibility (and note that implicit
+  // instantiations won't have a direct attribute).
+  if (!spec->isExplicitInstantiationOrSpecialization())
+    return true;
+
+  // An explicit variable specialization is an independent, top-level
+  // declaration.  As such, if it has an explicit visibility attribute,
+  // that must directly express the user's intent, and we should honor
+  // it.
+  if (spec->isExplicitSpecialization() &&
+      hasExplicitVisibilityAlready(computation))
+    return false;
+
+  return !hasDirectVisibilityAttribute(spec, computation);
+}
+
+/// Merge in template-related linkage and visibility for the given
+/// variable template specialization. As usual, follow class template
+/// specialization logic up to initialization.
+static void mergeTemplateLV(LinkageInfo &LV,
+                            const VarTemplateSpecializationDecl *spec,
+                            LVComputationKind computation) {
+  bool considerVisibility = shouldConsiderTemplateVisibility(spec, computation);
+
+  // Merge information from the template parameters, but ignore
+  // visibility if we're only considering template arguments.
+
+  VarTemplateDecl *temp = spec->getSpecializedTemplate();
+  LinkageInfo tempLV =
+    getLVForTemplateParameterList(temp->getTemplateParameters(), computation);
+  LV.mergeMaybeWithVisibility(tempLV,
+           considerVisibility && !hasExplicitVisibilityAlready(computation));
+
+  // Merge information from the template arguments.  We ignore
+  // template-argument visibility if we've got an explicit
+  // instantiation with a visibility attribute.
+  const TemplateArgumentList &templateArgs = spec->getTemplateArgs();
+  LinkageInfo argsLV = getLVForTemplateArgumentList(templateArgs, computation);
+  if (considerVisibility)
+    LV.mergeVisibility(argsLV);
+  LV.mergeExternalVisibility(argsLV);
+}
+
 static bool useInlineVisibilityHidden(const NamedDecl *D) {
   // FIXME: we should warn if -fvisibility-inlines-hidden is used with c.
   const LangOptions &Opts = D->getASTContext().getLangOpts();
@@ -661,6 +713,14 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
     // Note that Sema::MergeVarDecl already takes care of implementing
     // C99 6.2.2p4 and propagating the visibility attribute, so we don't have
     // to do it here.
+
+    // As per function and class template specializations (below),
+    // consider LV for the template and template arguments.  We're at file
+    // scope, so we do not need to worry about nested specializations.
+    if (const VarTemplateSpecializationDecl *spec
+              = dyn_cast<VarTemplateSpecializationDecl>(Var)) {
+      mergeTemplateLV(LV, spec, computation);
+    }
 
   //     - a function, unless it has internal linkage; or
   } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
@@ -869,6 +929,10 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D,
 
   // Static data members.
   } else if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (const VarTemplateSpecializationDecl *spec
+        = dyn_cast<VarTemplateSpecializationDecl>(VD))
+      mergeTemplateLV(LV, spec, computation);
+
     // Modify the variable's linkage by its type, but ignore the
     // type's visibility unless it's a definition.
     LinkageInfo typeLV = getLVForType(*VD->getType(), computation);
