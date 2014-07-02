@@ -64,6 +64,9 @@ public:
   /// Return true if the value is negative zero or null value.
   bool isZeroValue() const;
 
+  /// \brief Return true if the value is the smallest signed value.
+  bool isMinSignedValue() const;
+
   /// canTrap - Return true if evaluation of this constant could trap.  This is
   /// true for things like constant expressions that could divide by zero.
   bool canTrap() const;
