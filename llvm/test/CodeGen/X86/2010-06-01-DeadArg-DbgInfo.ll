@@ -24,7 +24,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.lv = !{!0, !14, !15, !16, !17, !24, !25, !28}
 
 !0 = metadata !{i32 786689, metadata !1, metadata !"this", metadata !3, i32 11, metadata !12, i32 0, null} ; [ DW_TAG_arg_variable ]
-!1 = metadata !{i32 786478, metadata !31, metadata !2, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEi", i32 11, metadata !9, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 (%struct.foo*, i32)* @_ZN3foo3bazEi, null, null, null, i32 11} ; [ DW_TAG_subprogram ]
+!1 = metadata !{i32 786478, metadata !31, metadata !2, metadata !"bar", metadata !"bar", metadata !"_ZN3foo3barEi", i32 11, metadata !9, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 true, i32 (%struct.foo*, i32)* null, null, null, null, i32 11} ; [ DW_TAG_subprogram ]
 !2 = metadata !{i32 786451, metadata !31, metadata !3, metadata !"foo", i32 3, i64 32, i64 32, i64 0, i32 0, null, metadata !5, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [foo] [line 3, size 32, align 32, offset 0] [def] [from ]
 !3 = metadata !{i32 786473, metadata !31} ; [ DW_TAG_file_type ]
 !4 = metadata !{i32 786449, metadata !31, i32 4, metadata !"4.2.1 LLVM build", i1 true, metadata !"", i32 0, metadata !32, metadata !32, metadata !33, null, null, metadata !""} ; [ DW_TAG_compile_unit ]

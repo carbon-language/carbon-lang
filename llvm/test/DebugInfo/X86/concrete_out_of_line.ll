@@ -79,7 +79,7 @@ declare void @_Z8moz_freePv(i8*)
 !0 = metadata !{i32 786449, metadata !59, i32 4, metadata !"clang version 3.1 ()", i1 true, metadata !"", i32 0, metadata !1, metadata !1, metadata !3, metadata !47,  metadata !1, metadata !""} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{}
 !3 = metadata !{metadata !5, metadata !23, metadata !27, metadata !31}
-!5 = metadata !{i32 720942, metadata !6, null, metadata !"Release", metadata !"Release", metadata !"_ZN17nsAutoRefCnt7ReleaseEv", i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32* null, null, metadata !12, metadata !20, i32 14} ; [ DW_TAG_subprogram ] [line 14] [def] [Release]
+!5 = metadata !{i32 720942, metadata !6, null, metadata !"Release", metadata !"Release", metadata !"_ZN17nsAutoRefCnt7ReleaseEv", i32 14, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 ()* @_ZN17nsAutoRefCnt7ReleaseEv , null, metadata !12, metadata !20, i32 14} ; [ DW_TAG_subprogram ] [line 14] [def] [Release]
 !6 = metadata !{i32 720937, metadata !59} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720917, i32 0, null, i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9, metadata !10}
@@ -95,7 +95,7 @@ declare void @_Z8moz_freePv(i8*)
 !18 = metadata !{}
 !20 = metadata !{metadata !22}
 !22 = metadata !{i32 786689, metadata !5, metadata !"this", metadata !6, i32 16777230, metadata !10, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
-!23 = metadata !{i32 720942, metadata !6, null, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"_ZN17nsAutoRefCntD1Ev", i32 18, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32* null, null, metadata !15, metadata !24, i32 18} ; [ DW_TAG_subprogram ] [line 18] [def] [~nsAutoRefCnt]
+!23 = metadata !{i32 720942, metadata !6, null, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"_ZN17nsAutoRefCntD1Ev", i32 18, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void ()* @_ZN17nsAutoRefCntD1Ev, null, metadata !15, metadata !24, i32 18} ; [ DW_TAG_subprogram ] [line 18] [def] [~nsAutoRefCnt]
 !24 = metadata !{metadata !26}
 !26 = metadata !{i32 786689, metadata !23, metadata !"this", metadata !6, i32 16777234, metadata !10, i32 64, i32 0} ; [ DW_TAG_arg_variable ]
 !27 = metadata !{i32 720942, metadata !6, null, metadata !"~nsAutoRefCnt", metadata !"~nsAutoRefCnt", metadata !"_ZN17nsAutoRefCntD2Ev", i32 18, metadata !16, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32* null, null, metadata !15, metadata !28, i32 18} ; [ DW_TAG_subprogram ] [line 18] [def] [~nsAutoRefCnt]
