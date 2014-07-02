@@ -44,7 +44,9 @@ typedef __builtin_va_list va_list;
 #endif
 
 /* Hack required to make standard headers work, at least on Ubuntu */
+#ifndef __GNUC_VA_LIST
 #define __GNUC_VA_LIST 1
+#endif
 typedef __builtin_va_list __gnuc_va_list;
 
 #endif /* __STDARG_H */
