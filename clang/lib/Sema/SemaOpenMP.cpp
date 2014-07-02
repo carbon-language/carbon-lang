@@ -1054,8 +1054,8 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
     }
     if (NestingProhibited) {
       SemaRef.Diag(StartLoc, diag::err_omp_prohibited_region)
-          << CloseNesting << getOpenMPDirectiveName(ParentRegion) << true
-          << getOpenMPDirectiveName(CurrentRegion) << ShouldBeInParallelRegion;
+          << CloseNesting << getOpenMPDirectiveName(ParentRegion)
+          << ShouldBeInParallelRegion << getOpenMPDirectiveName(CurrentRegion);
       return true;
     }
   }
