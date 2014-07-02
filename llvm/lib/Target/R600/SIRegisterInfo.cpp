@@ -125,3 +125,19 @@ unsigned SIRegisterInfo::getPhysRegSubReg(unsigned Reg,
   unsigned Index = getHWRegIndex(Reg);
   return SubRC->getRegister(Index + Channel);
 }
+
+bool SIRegisterInfo::regClassCanUseImmediate(int RCID) const {
+  switch (RCID) {
+  default: return false;
+  case AMDGPU::SSrc_32RegClassID:
+  case AMDGPU::SSrc_64RegClassID:
+  case AMDGPU::VSrc_32RegClassID:
+  case AMDGPU::VSrc_64RegClassID:
+    return true;
+  }
+}
+
+bool SIRegisterInfo::regClassCanUseImmediate(
+                             const TargetRegisterClass *RC) const {
+  return regClassCanUseImmediate(RC->getID());
+}

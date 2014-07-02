@@ -60,6 +60,14 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// \returns The sub-register of Reg that is in Channel.
   unsigned getPhysRegSubReg(unsigned Reg, const TargetRegisterClass *SubRC,
                             unsigned Channel) const;
+
+  /// \returns True if operands defined with this register class can accept
+  /// inline immediates.
+  bool regClassCanUseImmediate(int RCID) const;
+
+  /// \returns True if operands defined with this register class can accept
+  /// inline immediates.
+  bool regClassCanUseImmediate(const TargetRegisterClass *RC) const;
 };
 
 } // End namespace llvm

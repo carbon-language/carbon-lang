@@ -559,7 +559,14 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   // Make sure the register classes are correct
   for (unsigned i = 0, e = Desc.getNumOperands(); i != e; ++i) {
     switch (Desc.OpInfo[i].OperandType) {
-    case MCOI::OPERAND_REGISTER:
+    case MCOI::OPERAND_REGISTER: {
+      int RegClass = Desc.OpInfo[i].RegClass;
+      if (!RI.regClassCanUseImmediate(RegClass) &&
+          (MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm())) {
+        ErrInfo = "Expected register, but got immediate";
+        return false;
+      }
+    }
       break;
     case MCOI::OPERAND_IMMEDIATE:
       if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFPImm()) {

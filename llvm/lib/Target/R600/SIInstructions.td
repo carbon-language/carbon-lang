@@ -1632,7 +1632,7 @@ let usesCustomInserter = 1 in {
 // constant that can be used with the ADDR64 MUBUF instructions.
 def SI_ADDR64_RSRC : InstSI <
   (outs SReg_128:$srsrc),
-  (ins SReg_64:$ptr),
+  (ins SSrc_64:$ptr),
   "", []
 >;
 
