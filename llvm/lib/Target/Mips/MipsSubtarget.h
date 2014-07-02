@@ -15,6 +15,8 @@
 #define MIPSSUBTARGET_H
 
 #include "MipsJITInfo.h"
+#include "MipsSelectionDAGInfo.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
@@ -134,7 +136,10 @@ protected:
 
   Triple TargetTriple;
 
+  const DataLayout DL; // Calculates type size & alignment
+  const MipsSelectionDAGInfo TSInfo;
   MipsJITInfo JITInfo;
+
 public:
   bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                              AntiDepBreakMode& Mode,
@@ -255,6 +260,8 @@ public:
   bool systemSupportsUnalignedAccess() const { return hasMips32r6(); }
 
   MipsJITInfo *getJITInfo() { return &JITInfo; }
+  const MipsSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
+  const DataLayout *getDataLayout() const { return &DL; }
 };
 } // End llvm namespace
 
