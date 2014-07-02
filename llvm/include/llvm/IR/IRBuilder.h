@@ -327,6 +327,11 @@ public:
     return Type::getIntNTy(Context, N);
   }
 
+  /// \brief Fetch the type representing a 16-bit floating point value.
+  Type *getHalfTy() {
+    return Type::getHalfTy(Context);
+  }
+
   /// \brief Fetch the type representing a 32-bit floating point value.
   Type *getFloatTy() {
     return Type::getFloatTy(Context);
