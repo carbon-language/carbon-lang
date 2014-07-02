@@ -1580,7 +1580,9 @@ instructions for implementing atomic operations.
 .. code-block:: c
 
   T __builtin_arm_ldrex(const volatile T *addr);
+  T __builtin_arm_ldaex(const volatile T *addr);
   int __builtin_arm_strex(T val, volatile T *addr);
+  int __builtin_arm_stlex(T val, volatile T *addr);
   void __builtin_arm_clrex(void);
 
 The types ``T`` currently supported are:
@@ -1589,11 +1591,11 @@ The types ``T`` currently supported are:
 * Pointer types.
 
 Note that the compiler does not guarantee it will not insert stores which clear
-the exclusive monitor in between an ``ldrex`` and its paired ``strex``. In
-practice this is only usually a risk when the extra store is on the same cache
-line as the variable being modified and Clang will only insert stack stores on
-its own, so it is best not to use these operations on variables with automatic
-storage duration.
+the exclusive monitor in between an ``ldrex`` type operation and its paired
+``strex``. In practice this is only usually a risk when the extra store is on
+the same cache line as the variable being modified and Clang will only insert
+stack stores on its own, so it is best not to use these operations on variables
+with automatic storage duration.
 
 Also, loads and stores may be implicit in code written between the ``ldrex`` and
 ``strex``. Clang will not necessarily mitigate the effects of these either, so

@@ -3074,9 +3074,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 
   if (BuiltinID == ARM::BI__builtin_arm_ldrexd ||
-      (BuiltinID == ARM::BI__builtin_arm_ldrex &&
+      ((BuiltinID == ARM::BI__builtin_arm_ldrex ||
+        BuiltinID == ARM::BI__builtin_arm_ldaex) &&
        getContext().getTypeSize(E->getType()) == 64)) {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_ldrexd);
+    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_ldaex
+                                       ? Intrinsic::arm_ldaexd
+                                       : Intrinsic::arm_ldrexd);
 
     Value *LdPtr = EmitScalarExpr(E->getArg(0));
     Value *Val = Builder.CreateCall(F, Builder.CreateBitCast(LdPtr, Int8PtrTy),
@@ -3093,7 +3096,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateBitCast(Val, ConvertType(E->getType()));
   }
 
-  if (BuiltinID == ARM::BI__builtin_arm_ldrex) {
+  if (BuiltinID == ARM::BI__builtin_arm_ldrex ||
+      BuiltinID == ARM::BI__builtin_arm_ldaex) {
     Value *LoadAddr = EmitScalarExpr(E->getArg(0));
 
     QualType Ty = E->getType();
@@ -3102,7 +3106,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
                                                   getContext().getTypeSize(Ty));
     LoadAddr = Builder.CreateBitCast(LoadAddr, IntResTy->getPointerTo());
 
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_ldrex, LoadAddr->getType());
+    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_ldaex
+                                       ? Intrinsic::arm_ldaex
+                                       : Intrinsic::arm_ldrex,
+                                   LoadAddr->getType());
     Value *Val = Builder.CreateCall(F, LoadAddr, "ldrex");
 
     if (RealResTy->isPointerTy())
@@ -3114,9 +3121,12 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   }
 
   if (BuiltinID == ARM::BI__builtin_arm_strexd ||
-      (BuiltinID == ARM::BI__builtin_arm_strex &&
+      ((BuiltinID == ARM::BI__builtin_arm_stlex ||
+        BuiltinID == ARM::BI__builtin_arm_strex) &&
        getContext().getTypeSize(E->getArg(0)->getType()) == 64)) {
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_strexd);
+    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_stlex
+                                       ? Intrinsic::arm_stlexd
+                                       : Intrinsic::arm_strexd);
     llvm::Type *STy = llvm::StructType::get(Int32Ty, Int32Ty, NULL);
 
     Value *Tmp = CreateMemTemp(E->getArg(0)->getType());
@@ -3132,7 +3142,8 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall3(F, Arg0, Arg1, StPtr, "strexd");
   }
 
-  if (BuiltinID == ARM::BI__builtin_arm_strex) {
+  if (BuiltinID == ARM::BI__builtin_arm_strex ||
+      BuiltinID == ARM::BI__builtin_arm_stlex) {
     Value *StoreVal = EmitScalarExpr(E->getArg(0));
     Value *StoreAddr = EmitScalarExpr(E->getArg(1));
 
@@ -3148,7 +3159,10 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       StoreVal = Builder.CreateZExtOrBitCast(StoreVal, Int32Ty);
     }
 
-    Function *F = CGM.getIntrinsic(Intrinsic::arm_strex, StoreAddr->getType());
+    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_stlex
+                                       ? Intrinsic::arm_stlex
+                                       : Intrinsic::arm_strex,
+                                   StoreAddr->getType());
     return Builder.CreateCall2(F, StoreVal, StoreAddr, "strex");
   }
 
@@ -3791,9 +3805,12 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return EmitNounwindRuntimeCall(CGM.CreateRuntimeFunction(FTy, Name), Ops);
   }
 
-  if (BuiltinID == AArch64::BI__builtin_arm_ldrex &&
+  if ((BuiltinID == AArch64::BI__builtin_arm_ldrex ||
+      BuiltinID == AArch64::BI__builtin_arm_ldaex) &&
       getContext().getTypeSize(E->getType()) == 128) {
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_ldxp);
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_ldaex
+                                       ? Intrinsic::aarch64_ldaxp
+                                       : Intrinsic::aarch64_ldxp);
 
     Value *LdPtr = EmitScalarExpr(E->getArg(0));
     Value *Val = Builder.CreateCall(F, Builder.CreateBitCast(LdPtr, Int8PtrTy),
@@ -3809,7 +3826,8 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Val = Builder.CreateShl(Val0, ShiftCst, "shl", true /* nuw */);
     Val = Builder.CreateOr(Val, Val1);
     return Builder.CreateBitCast(Val, ConvertType(E->getType()));
-  } else if (BuiltinID == AArch64::BI__builtin_arm_ldrex) {
+  } else if (BuiltinID == AArch64::BI__builtin_arm_ldrex ||
+             BuiltinID == AArch64::BI__builtin_arm_ldaex) {
     Value *LoadAddr = EmitScalarExpr(E->getArg(0));
 
     QualType Ty = E->getType();
@@ -3818,7 +3836,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                                   getContext().getTypeSize(Ty));
     LoadAddr = Builder.CreateBitCast(LoadAddr, IntResTy->getPointerTo());
 
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_ldxr, LoadAddr->getType());
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_ldaex
+                                       ? Intrinsic::aarch64_ldaxr
+                                       : Intrinsic::aarch64_ldxr,
+                                   LoadAddr->getType());
     Value *Val = Builder.CreateCall(F, LoadAddr, "ldxr");
 
     if (RealResTy->isPointerTy())
@@ -3828,9 +3849,12 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     return Builder.CreateBitCast(Val, RealResTy);
   }
 
-  if (BuiltinID == AArch64::BI__builtin_arm_strex &&
+  if ((BuiltinID == AArch64::BI__builtin_arm_strex ||
+       BuiltinID == AArch64::BI__builtin_arm_stlex) &&
       getContext().getTypeSize(E->getArg(0)->getType()) == 128) {
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_stxp);
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
+                                       ? Intrinsic::aarch64_stlxp
+                                       : Intrinsic::aarch64_stxp);
     llvm::Type *STy = llvm::StructType::get(Int64Ty, Int64Ty, NULL);
 
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
@@ -3847,7 +3871,8 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
     Value *StPtr = Builder.CreateBitCast(EmitScalarExpr(E->getArg(1)),
                                          Int8PtrTy);
     return Builder.CreateCall3(F, Arg0, Arg1, StPtr, "stxp");
-  } else if (BuiltinID == AArch64::BI__builtin_arm_strex) {
+  } else if (BuiltinID == AArch64::BI__builtin_arm_strex ||
+             BuiltinID == AArch64::BI__builtin_arm_stlex) {
     Value *StoreVal = EmitScalarExpr(E->getArg(0));
     Value *StoreAddr = EmitScalarExpr(E->getArg(1));
 
@@ -3863,7 +3888,10 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
       StoreVal = Builder.CreateZExtOrBitCast(StoreVal, Int64Ty);
     }
 
-    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_stxr, StoreAddr->getType());
+    Function *F = CGM.getIntrinsic(BuiltinID == AArch64::BI__builtin_arm_stlex
+                                       ? Intrinsic::aarch64_stlxr
+                                       : Intrinsic::aarch64_stxr,
+                                   StoreAddr->getType());
     return Builder.CreateCall2(F, StoreVal, StoreAddr, "stxr");
   }
 

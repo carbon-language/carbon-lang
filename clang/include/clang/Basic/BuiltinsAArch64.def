@@ -18,7 +18,9 @@
 BUILTIN(__clear_cache, "vv*v*", "i")
 
 BUILTIN(__builtin_arm_ldrex, "v.", "t")
+BUILTIN(__builtin_arm_ldaex, "v.", "t")
 BUILTIN(__builtin_arm_strex, "i.", "t")
+BUILTIN(__builtin_arm_stlex, "i.", "t")
 BUILTIN(__builtin_arm_clrex, "v", "")
 
 // Bit manipulation
