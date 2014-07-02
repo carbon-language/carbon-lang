@@ -2055,11 +2055,14 @@ static LValue InitCapturedStruct(CodeGenFunction &CGF, const CapturedStmt &S) {
 }
 
 static void InitVLACaptures(CodeGenFunction &CGF, const CapturedStmt &S) {
-  for (CapturedStmt::const_capture_iterator I = S.capture_begin(),
-                                            E = S.capture_end();
-       I != E; ++I) {
-    if (I->capturesVariable()) {
-      QualType QTy = I->getCapturedVar()->getType();
+  for (auto &C : S.captures()) {
+    if (C.capturesVariable()) {
+      QualType QTy;
+      auto VD = C.getCapturedVar();
+      if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(VD))
+        QTy = PVD->getOriginalType();
+      else
+        QTy = VD->getType();
       if (QTy->isVariablyModifiedType()) {
         CGF.EmitVariablyModifiedType(QTy);
       }
