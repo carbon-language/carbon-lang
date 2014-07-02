@@ -935,7 +935,7 @@ private:
   bool TypeMapInitialized;
 };
 
-DenseMap<Function *, DISubprogram> makeSubprogramMap(Module &M);
+DenseMap<const Function *, DISubprogram> makeSubprogramMap(const Module &M);
 
 } // end namespace llvm
 

@@ -84,7 +84,7 @@ namespace {
     bool doInitialization(CallGraph &CG) override;
     /// The maximum number of elements to expand, or 0 for unlimited.
     unsigned maxElements;
-    DenseMap<Function *, DISubprogram> FunctionDIs;
+    DenseMap<const Function *, DISubprogram> FunctionDIs;
   };
 }
 
