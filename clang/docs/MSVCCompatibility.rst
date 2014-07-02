@@ -97,26 +97,45 @@ The status of major ABI-impacting C++ features:
 Template instantiation and name lookup
 ======================================
 
-In addition to the usual `dependent name lookup FAQs`_, Clang is often unable to
-parse certain invalid C++ constructs that MSVC allows.  As of this writing,
-Clang will reject code with missing ``typename`` annotations:
+MSVC allows many invalid constructs in class templates that Clang has
+historically rejected.  In order to parse widely distributed headers for
+libraries such as the Active Template Library (ATL) and Windows Runtime Library
+(WRL), some template rules have been relaxed or extended in Clang on Windows.
 
-.. _dependent name lookup FAQs:
+The first major semantic difference is that MSVC appears to defer all parsing
+an analysis of inline method bodies in class templates until instantiation
+time.  By default on Windows, Clang attempts to follow suit.  This behavior is
+controlled by the ``-fdelayed-template-parsing`` flag.  While Clang delays
+parsing of method bodies, it still parses the bodies *before* template argument
+substitution, which is not what MSVC does.  The following compatibility tweaks
+are necessary to parse the the template in those cases.
+
+MSVC allows some name lookup into dependent base classes.  Even on other
+platforms, this has been a `frequently asked question`_ for Clang users.  A
+dependent base class is a base class that depends on the value of a template
+parameter.  Clang cannot see any of the names inside dependent bases while it
+is parsing your template, so the user is sometimes required to use the
+``typename`` keyword to assist the parser.  On Windows, Clang attempts to
+follow the normal lookup rules, but if lookup fails, it will assume that the
+user intended to find the name in a dependent base.  While parsing the
+following program, Clang will recover as if the user had written the
+commented-out code:
+
+.. _frequently asked question:
   http://clang.llvm.org/compatibility.html#dep_lookup
 
 .. code-block:: c++
 
-  struct X {
-    typedef int type;
+  template <typename T>
+  struct Foo : T {
+    void f() {
+      /*typename*/ T::UnknownType x =  /*this->*/unknownMember;
+    }
   };
-  template<typename T> int f() {
-    // missing typename keyword
-    return sizeof(/*typename*/ T::type);
-  }
-  template void f<X>();
 
-Accepting code like this is ongoing work.  Ultimately, it may be cleaner to
-`implement a token-based template instantiation mode`_ than it is to add
-compatibility hacks to the existing AST-based instantiation.
+After recovery, Clang warns the user that this code is non-standard and issues
+a hint suggesting how to fix the problem.
 
-.. _implement a token-based template instantiation mode: http://llvm.org/PR18714
+As of this writing, Clang is able to compile a simple ATL hello world
+application.  There are still issues parsing WRL headers for modern Windows 8
+apps, but they should be addressed soon.
