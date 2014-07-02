@@ -60,11 +60,9 @@ Mips16ConstantIslands(
 
 /// Select the Mips CPU for the given triple and cpu name.
 /// FIXME: Merge with the copy in MipsMCTargetDesc.cpp
-static inline StringRef selectMipsCPU(StringRef TT, StringRef CPU) {
+static StringRef selectMipsCPU(Triple TT, StringRef CPU) {
   if (CPU.empty() || CPU == "generic") {
-    Triple TheTriple(TT);
-    if (TheTriple.getArch() == Triple::mips ||
-        TheTriple.getArch() == Triple::mipsel)
+    if (TT.getArch() == Triple::mips || TT.getArch() == Triple::mipsel)
       CPU = "mips32";
     else
       CPU = "mips64";
@@ -86,11 +84,9 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
       AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16), HasMSA(false),
       RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT), JITInfo() {
-  std::string CPUName = selectMipsCPU(TT, CPU);
 
-  // Parse features string.
-  ParseSubtargetFeatures(CPUName, FS);
-
+  initializeSubtargetDependencies(CPU, FS);
+  
   if (InMips16Mode && !TM->Options.UseSoftFloat) {
     // Hard float for mips16 means essentially to compile as soft float
     // but to use a runtime library for soft float that is written with
@@ -102,9 +98,6 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   }
 
   PreviousInMips16Mode = InMips16Mode;
-
-  // Initialize scheduling itinerary for the specified CPU.
-  InstrItins = getInstrItineraryForCPU(CPUName);
 
   // Don't even attempt to generate code for MIPS-I, MIPS-II, MIPS-III, and
   // MIPS-V. They have not been tested and currently exist for the integrated
@@ -164,6 +157,17 @@ MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
   CriticalPathRCs.push_back(isGP64bit() ? &Mips::GPR64RegClass
                                         : &Mips::GPR32RegClass);
   return OptLevel >= CodeGenOpt::Aggressive;
+}
+
+MipsSubtarget &MipsSubtarget::initializeSubtargetDependencies(StringRef CPU,
+                                                              StringRef FS) {
+  std::string CPUName = selectMipsCPU(TargetTriple, CPU);
+  
+  // Parse features string.
+  ParseSubtargetFeatures(CPUName, FS);
+  // Initialize scheduling itinerary for the specified CPU.
+  InstrItins = getInstrItineraryForCPU(CPUName);
+  return *this;
 }
 
 //FIXME: This logic for reseting the subtarget along with

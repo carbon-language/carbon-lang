@@ -245,6 +245,8 @@ public:
   /// \brief Reset the subtarget for the Mips target.
   void resetSubtarget(MachineFunction *MF);
 
+  MipsSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
+
   /// Does the system support unaligned memory access.
   ///
   /// MIPS32r6/MIPS64r6 require full unaligned access support but does not
