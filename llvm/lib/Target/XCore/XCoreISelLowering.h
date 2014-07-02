@@ -94,7 +94,7 @@ namespace llvm {
   {
   public:
 
-    explicit XCoreTargetLowering(XCoreTargetMachine &TM);
+    explicit XCoreTargetLowering(const TargetMachine &TM);
 
     using TargetLowering::isZExtFree;
     bool isZExtFree(SDValue Val, EVT VT2) const override;
@@ -123,7 +123,7 @@ namespace llvm {
     bool isLegalAddressingMode(const AddrMode &AM, Type *Ty) const override;
 
   private:
-    const XCoreTargetMachine &TM;
+    const TargetMachine &TM;
     const XCoreSubtarget &Subtarget;
 
     // Lower Operand helpers

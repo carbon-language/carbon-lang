@@ -68,10 +68,9 @@ getTargetNodeName(unsigned Opcode) const
   }
 }
 
-XCoreTargetLowering::XCoreTargetLowering(XCoreTargetMachine &XTM)
-  : TargetLowering(XTM, new XCoreTargetObjectFile()),
-    TM(XTM),
-    Subtarget(*XTM.getSubtargetImpl()) {
+XCoreTargetLowering::XCoreTargetLowering(const TargetMachine &TM)
+    : TargetLowering(TM, new XCoreTargetObjectFile()), TM(TM),
+      Subtarget(TM.getSubtarget<XCoreSubtarget>()) {
 
   // Set up the register classes.
   addRegisterClass(MVT::i32, &XCore::GRRegsRegClass);
