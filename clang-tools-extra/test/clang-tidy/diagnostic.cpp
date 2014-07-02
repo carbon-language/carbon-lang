@@ -7,8 +7,8 @@
 // CHECK2-NOT: warning
 // CHECK3-NOT: warning
 
-// CHECK1: error: error reading '{{.*}}.nonexistent.cpp'
-// CHECK2: error: unknown argument: '-fan-unknown-option'
+// CHECK1: error: error reading '{{.*}}.nonexistent.cpp' [clang-diagnostic-error]
+// CHECK2: error: unknown argument: '-fan-unknown-option' [clang-diagnostic-error]
 
 // CHECK2: :[[@LINE+2]]:9: warning: implicit conversion from 'double' to 'int' changes value
 // CHECK3: :[[@LINE+1]]:9: warning: implicit conversion from 'double' to 'int' changes value

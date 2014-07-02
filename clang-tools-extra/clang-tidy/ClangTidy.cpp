@@ -104,31 +104,28 @@ public:
     DiagPrinter->BeginSourceFile(LangOpts);
   }
 
-  void reportDiagnostic(const ClangTidyMessage &Message,
-                        DiagnosticsEngine::Level Level,
-                        const tooling::Replacements *Fixes = nullptr) {
+  void reportDiagnostic(const ClangTidyError &Error) {
+    const ClangTidyMessage &Message = Error.Message;
     SourceLocation Loc = getLocation(Message.FilePath, Message.FileOffset);
     // Contains a pair for each attempted fix: location and whether the fix was
     // applied successfully.
     SmallVector<std::pair<SourceLocation, bool>, 4> FixLocations;
     {
+      auto Level = static_cast<DiagnosticsEngine::Level>(Error.DiagLevel);
       DiagnosticBuilder Diag =
-          Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0"))
-          << Message.Message;
-      if (Fixes != nullptr) {
-        for (const tooling::Replacement &Fix : *Fixes) {
-          SourceLocation FixLoc =
-              getLocation(Fix.getFilePath(), Fix.getOffset());
-          SourceLocation FixEndLoc = FixLoc.getLocWithOffset(Fix.getLength());
-          Diag << FixItHint::CreateReplacement(SourceRange(FixLoc, FixEndLoc),
-                                               Fix.getReplacementText());
-          ++TotalFixes;
-          if (ApplyFixes) {
-            bool Success = Fix.isApplicable() && Fix.apply(Rewrite);
-            if (Success)
-              ++AppliedFixes;
-            FixLocations.push_back(std::make_pair(FixLoc, Success));
-          }
+          Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0 [%1]"))
+          << Message.Message << Error.CheckName;
+      for (const tooling::Replacement &Fix : Error.Fix) {
+        SourceLocation FixLoc = getLocation(Fix.getFilePath(), Fix.getOffset());
+        SourceLocation FixEndLoc = FixLoc.getLocWithOffset(Fix.getLength());
+        Diag << FixItHint::CreateReplacement(SourceRange(FixLoc, FixEndLoc),
+                                             Fix.getReplacementText());
+        ++TotalFixes;
+        if (ApplyFixes) {
+          bool Success = Fix.isApplicable() && Fix.apply(Rewrite);
+          if (Success)
+            ++AppliedFixes;
+          FixLocations.push_back(std::make_pair(FixLoc, Success));
         }
       }
     }
@@ -136,6 +133,8 @@ public:
       Diags.Report(Fix.first, Fix.second ? diag::note_fixit_applied
                                          : diag::note_fixit_failed);
     }
+    for (const ClangTidyMessage &Note : Error.Notes)
+      reportNote(Note);
   }
 
   void Finish() {
@@ -155,6 +154,13 @@ private:
     const FileEntry *File = SourceMgr.getFileManager().getFile(FilePath);
     FileID ID = SourceMgr.createFileID(File, SourceLocation(), SrcMgr::C_User);
     return SourceMgr.getLocForStartOfFile(ID).getLocWithOffset(Offset);
+  }
+
+  void reportNote(const ClangTidyMessage &Message) {
+    SourceLocation Loc = getLocation(Message.FilePath, Message.FileOffset);
+    DiagnosticBuilder Diag =
+        Diags.Report(Loc, Diags.getCustomDiagID(DiagnosticsEngine::Note, "%0"))
+        << Message.Message;
   }
 
   FileManager Files;
@@ -349,13 +355,8 @@ ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
 
 void handleErrors(const std::vector<ClangTidyError> &Errors, bool Fix) {
   ErrorReporter Reporter(Fix);
-  for (const ClangTidyError &Error : Errors) {
-    Reporter.reportDiagnostic(
-        Error.Message, static_cast<DiagnosticsEngine::Level>(Error.DiagLevel),
-        &Error.Fix);
-    for (const ClangTidyMessage &Note : Error.Notes)
-      Reporter.reportDiagnostic(Note, DiagnosticsEngine::Note);
-  }
+  for (const ClangTidyError &Error : Errors)
+    Reporter.reportDiagnostic(Error);
   Reporter.Finish();
 }
 

@@ -40,6 +40,14 @@ protected:
                              ArrayRef<CharSourceRange> Ranges,
                              const SourceManager *SM,
                              DiagOrStoredDiag Info) override {
+    // Remove check name from the message.
+    // FIXME: Remove this once there's a better way to pass check names than
+    // appending the check name to the message in ClangTidyContext::diag and
+    // using getCustomDiagID.
+    std::string CheckNameInMessage = " [" + Error.CheckName + "]";
+    if (Message.endswith(CheckNameInMessage))
+      Message = Message.substr(0, Message.size() - CheckNameInMessage.size());
+
     ClangTidyMessage TidyMessage = Loc.isValid()
                                        ? ClangTidyMessage(Message, *SM, Loc)
                                        : ClangTidyMessage(Message);
@@ -259,7 +267,6 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
     assert(!Errors.empty() &&
            "A diagnostic note can only be appended to a message.");
   } else {
-    // FIXME: Pass all errors here regardless of filters and non-user code.
     finalizeLastError();
     StringRef WarningOption =
         Context.DiagEngine->getDiagnosticIDs()->getWarningOptionForDiag(
@@ -268,9 +275,28 @@ void ClangTidyDiagnosticConsumer::HandleDiagnostic(
                                 ? ("clang-diagnostic-" + WarningOption).str()
                                 : Context.getCheckName(Info.getID()).str();
 
+    if (CheckName.empty()) {
+      // This is a compiler diagnostic without a warning option. Assign check
+      // name based on its level.
+      switch (DiagLevel) {
+        case DiagnosticsEngine::Error:
+        case DiagnosticsEngine::Fatal:
+          CheckName = "clang-diagnostic-error";
+          break;
+        case DiagnosticsEngine::Warning:
+          CheckName = "clang-diagnostic-warning";
+          break;
+        default:
+          CheckName = "clang-diagnostic-unknown";
+          break;
+      }
+    }
+
     ClangTidyError::Level Level = ClangTidyError::Warning;
     if (DiagLevel == DiagnosticsEngine::Error ||
         DiagLevel == DiagnosticsEngine::Fatal) {
+      // Force reporting of Clang errors regardless of filters and non-user
+      // code.
       Level = ClangTidyError::Error;
       LastErrorRelatesToUserCode = true;
       LastErrorPassesLineFilter = true;
