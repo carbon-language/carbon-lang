@@ -1958,21 +1958,57 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   if (NeedsGlobalCtor || NeedsGlobalDtor)
     EmitCXXGlobalVarDeclInitFunc(D, GV, NeedsGlobalCtor);
 
-  // If we are compiling with ASan, add metadata indicating dynamically
-  // initialized (and not blacklisted) globals.
-  if (SanOpts.Address && NeedsGlobalCtor &&
-      !SanitizerBlacklist->isIn(*GV, "init")) {
-    llvm::NamedMDNode *DynamicInitializers = TheModule.getOrInsertNamedMetadata(
-        "llvm.asan.dynamically_initialized_globals");
-    llvm::Value *GlobalToAdd[] = { GV };
-    llvm::MDNode *ThisGlobal = llvm::MDNode::get(VMContext, GlobalToAdd);
-    DynamicInitializers->addOperand(ThisGlobal);
-  }
+  reportGlobalToASan(GV, D->getLocation(), NeedsGlobalCtor);
 
   // Emit global variable debug information.
   if (CGDebugInfo *DI = getModuleDebugInfo())
     if (getCodeGenOpts().getDebugInfo() >= CodeGenOptions::LimitedDebugInfo)
       DI->EmitGlobalVariable(GV, D);
+}
+
+void CodeGenModule::reportGlobalToASan(llvm::GlobalVariable *GV,
+                                       SourceLocation Loc, bool IsDynInit) {
+  if (!SanOpts.Address)
+    return;
+  IsDynInit &= !SanitizerBlacklist->isIn(*GV, "init");
+  bool IsBlacklisted = SanitizerBlacklist->isIn(*GV);
+
+  llvm::LLVMContext &LLVMCtx = TheModule.getContext();
+
+  llvm::GlobalVariable *LocDescr = nullptr;
+  if (!IsBlacklisted) {
+    // Don't generate source location if a global is blacklisted - it won't
+    // be instrumented anyway.
+    PresumedLoc PLoc = Context.getSourceManager().getPresumedLoc(Loc);
+    if (PLoc.isValid()) {
+      llvm::Constant *LocData[] = {
+          GetAddrOfConstantCString(PLoc.getFilename()),
+          llvm::ConstantInt::get(llvm::Type::getInt32Ty(LLVMCtx), PLoc.getLine()),
+          llvm::ConstantInt::get(llvm::Type::getInt32Ty(LLVMCtx),
+                                 PLoc.getColumn()),
+      };
+      auto LocStruct = llvm::ConstantStruct::getAnon(LocData);
+      LocDescr = new llvm::GlobalVariable(TheModule, LocStruct->getType(), true,
+                                          llvm::GlobalValue::PrivateLinkage,
+                                          LocStruct, ".asan_loc_descr");
+      LocDescr->setUnnamedAddr(true);
+      // Add LocDescr to llvm.compiler.used, so that it won't be removed by
+      // the optimizer before the ASan instrumentation pass.
+      addCompilerUsedGlobal(LocDescr);
+    }
+  }
+
+  llvm::Value *GlobalMetadata[] = {
+      GV,
+      LocDescr,
+      llvm::ConstantInt::get(llvm::Type::getInt1Ty(LLVMCtx), IsDynInit),
+      llvm::ConstantInt::get(llvm::Type::getInt1Ty(LLVMCtx), IsBlacklisted)
+  };
+
+  llvm::MDNode *ThisGlobal = llvm::MDNode::get(VMContext, GlobalMetadata);
+  llvm::NamedMDNode *AsanGlobals =
+      TheModule.getOrInsertNamedMetadata("llvm.asan.globals");
+  AsanGlobals->addOperand(ThisGlobal);
 }
 
 static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
@@ -2779,6 +2815,8 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   auto GV = GenerateStringLiteral(C, LT, *this, GlobalVariableName, Alignment);
   if (Entry)
     Entry->setValue(GV);
+
+  reportGlobalToASan(GV, S->getStrTokenLoc(0));
   return GV;
 }
 

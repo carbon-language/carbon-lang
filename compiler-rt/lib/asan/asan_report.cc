@@ -212,6 +212,26 @@ static void PrintGlobalNameIfASCII(InternalScopedString *str,
               (char *)g.beg);
 }
 
+static const char *GlobalFilename(const __asan_global &g) {
+  const char *res = g.module_name;
+  // Prefer the filename from source location, if is available.
+  if (g.location)
+    res = g.location->filename;
+  CHECK(res);
+  return res;
+}
+
+static void PrintGlobalLocation(InternalScopedString *str,
+                                const __asan_global &g) {
+  str->append("%s", GlobalFilename(g));
+  if (!g.location)
+    return;
+  if (g.location->line_no)
+    str->append(":%d", g.location->line_no);
+  if (g.location->column_no)
+    str->append(":%d", g.location->column_no);
+}
+
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
                                      const __asan_global &g) {
   static const uptr kMinimalDistanceFromAnotherGlobal = 64;
@@ -232,8 +252,10 @@ bool DescribeAddressRelativeToGlobal(uptr addr, uptr size,
     // Can it happen?
     str.append("%p is located %zd bytes inside", (void *)addr, addr - g.beg);
   }
-  str.append(" of global variable '%s' from '%s' (0x%zx) of size %zu\n",
-             MaybeDemangleGlobalName(g.name), g.module_name, g.beg, g.size);
+  str.append(" of global variable '%s' defined in '",
+             MaybeDemangleGlobalName(g.name));
+  PrintGlobalLocation(&str, g);
+  str.append("' (0x%zx) of size %zu\n", g.beg, g.size);
   str.append("%s", d.EndLocation());
   PrintGlobalNameIfASCII(&str, g);
   Printf("%s", str.data());
@@ -742,8 +764,11 @@ void ReportODRViolation(const __asan_global *g1, u32 stack_id1,
   Printf("%s", d.Warning());
   Report("ERROR: AddressSanitizer: odr-violation (%p):\n", g1->beg);
   Printf("%s", d.EndWarning());
-  Printf("  [1] size=%zd %s %s\n", g1->size, g1->name, g1->module_name);
-  Printf("  [2] size=%zd %s %s\n", g2->size, g2->name, g2->module_name);
+  InternalScopedString g1_loc(256), g2_loc(256);
+  PrintGlobalLocation(&g1_loc, *g1);
+  PrintGlobalLocation(&g2_loc, *g2);
+  Printf("  [1] size=%zd %s %s\n", g1->size, g1->name, g1_loc.data());
+  Printf("  [2] size=%zd %s %s\n", g2->size, g2->name, g2_loc.data());
   if (stack_id1 && stack_id2) {
     Printf("These globals were registered at these points:\n");
     Printf("  [1]:\n");
@@ -756,7 +781,7 @@ void ReportODRViolation(const __asan_global *g1, u32 stack_id1,
   }
   Report("HINT: if you don't care about these warnings you may set "
          "ASAN_OPTIONS=detect_odr_violation=0\n");
-  ReportErrorSummary("odr-violation", g1->module_name, 0, g1->name);
+  ReportErrorSummary("odr-violation", g1_loc.data(), 0, g1->name);
 }
 
 // ----------------------- CheckForInvalidPointerPair ----------- {{{1

@@ -7,9 +7,11 @@ target triple = "x86_64-unknown-linux-gnu"
 @YYY = global i32 0, align 4           ; W/o dynamic initializer.
 ; Clang will emit the following metadata identifying @xxx as dynamically
 ; initialized.
-!0 = metadata !{i32* @xxx}
-!1 = metadata !{i32* @XXX}
-!llvm.asan.dynamically_initialized_globals = !{!0, !1}
+!0 = metadata !{i32* @xxx, null, i1 true, i1 false}
+!1 = metadata !{i32* @XXX, null, i1 true, i1 false}
+!2 = metadata !{i32* @yyy, null, i1 false, i1 false}
+!3 = metadata !{i32* @YYY, null, i1 false, i1 false}
+!llvm.asan.globals = !{!0, !1, !2, !3}
 
 define i32 @initializer() uwtable {
 entry:

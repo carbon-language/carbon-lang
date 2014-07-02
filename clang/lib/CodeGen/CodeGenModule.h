@@ -1025,6 +1025,9 @@ public:
 
   const SanitizerOptions &getSanOpts() const { return SanOpts; }
 
+  void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
+                          bool IsDynInit = false);
+
   void addDeferredVTable(const CXXRecordDecl *RD) {
     DeferredVTables.push_back(RD);
   }

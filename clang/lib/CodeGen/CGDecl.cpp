@@ -345,6 +345,8 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
   DMEntry = castedAddr;
   CGM.setStaticLocalDeclAddress(&D, castedAddr);
 
+  CGM.reportGlobalToASan(var, D.getLocation());
+
   // Emit global variable debug descriptor for static vars.
   CGDebugInfo *DI = getDebugInfo();
   if (DI &&

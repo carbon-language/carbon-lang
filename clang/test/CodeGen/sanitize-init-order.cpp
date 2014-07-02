@@ -27,7 +27,12 @@ PODWithCtorAndDtor s3;
 
 // Check that ASan init-order checking ignores structs with trivial default
 // constructor.
-// CHECK: !llvm.asan.dynamically_initialized_globals = !{[[GLOB:![0-9]+]]}
-// CHECK: [[GLOB]] = metadata !{%struct.PODWithCtorAndDtor
+// CHECK: !llvm.asan.globals = !{![[GLOB_1:[0-9]+]], ![[GLOB_2:[0-9]+]], ![[GLOB_3:[0-9]]]}
+// CHECK: ![[GLOB_1]] = metadata !{%struct.PODStruct* {{.*}}, i1 false, i1 false}
+// CHECK: ![[GLOB_2]] = metadata !{%struct.PODWithDtor* {{.*}}, i1 false, i1 false}
+// CHECK: ![[GLOB_3]] = metadata !{%struct.PODWithCtorAndDtor* {{.*}}, i1 true, i1 false}
 
-// BLACKLIST-NOT: llvm.asan.dynamically_initialized_globals
+// BLACKLIST: !llvm.asan.globals = !{![[GLOB_1:[0-9]+]], ![[GLOB_2:[0-9]+]], ![[GLOB_3:[0-9]]]}
+// BLACKLIST: ![[GLOB_1]] = metadata !{%struct.PODStruct* {{.*}}, i1 false, i1 false}
+// BLACKLIST: ![[GLOB_2]] = metadata !{%struct.PODWithDtor* {{.*}}, i1 false, i1 false}
+// BLACKLIST: ![[GLOB_3]] = metadata !{%struct.PODWithCtorAndDtor* {{.*}}, i1 false, i1 false}

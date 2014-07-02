@@ -30,8 +30,17 @@ extern "C" {
   // v2=>v3: stack frame description (created by the compiler)
   //         contains the function PC as the 3-rd field (see
   //         DescribeAddressIfStack).
-  SANITIZER_INTERFACE_ATTRIBUTE void __asan_init_v3();
-  #define __asan_init __asan_init_v3
+  // v3=>v4: added '__asan_global_source_location' to __asan_global.
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_init_v4();
+  #define __asan_init __asan_init_v4
+
+  // This structure is used to describe the source location of a place where
+  // global was defined.
+  struct __asan_global_source_location {
+    const char *filename;
+    int line_no;
+    int column_no;
+  };
 
   // This structure describes an instrumented global variable.
   struct __asan_global {
@@ -42,6 +51,8 @@ extern "C" {
     const char *module_name; // Module name as a C string. This pointer is a
                              // unique identifier of a module.
     uptr has_dynamic_init;   // Non-zero if the global has dynamic initializer.
+    __asan_global_source_location *location;  // Source location of a global,
+                                              // or NULL if it is unknown.
   };
 
   // These two functions should be called by the instrumented code.

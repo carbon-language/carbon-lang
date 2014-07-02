@@ -16,6 +16,7 @@
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
@@ -79,7 +80,7 @@ static const char *const kAsanUnregisterGlobalsName =
     "__asan_unregister_globals";
 static const char *const kAsanPoisonGlobalsName = "__asan_before_dynamic_init";
 static const char *const kAsanUnpoisonGlobalsName = "__asan_after_dynamic_init";
-static const char *const kAsanInitName = "__asan_init_v3";
+static const char *const kAsanInitName = "__asan_init_v4";
 static const char *const kAsanCovModuleInitName = "__sanitizer_cov_module_init";
 static const char *const kAsanCovName = "__sanitizer_cov";
 static const char *const kAsanPtrCmp = "__sanitizer_ptr_cmp";
@@ -215,28 +216,86 @@ STATISTIC(NumOptimizedAccessesToGlobalVar,
           "Number of optimized accesses to global vars");
 
 namespace {
-/// A set of dynamically initialized globals extracted from metadata.
-class SetOfDynamicallyInitializedGlobals {
+/// Frontend-provided metadata for global variables.
+class GlobalsMetadata {
  public:
-  void Init(Module& M) {
-    // Clang generates metadata identifying all dynamically initialized globals.
-    NamedMDNode *DynamicGlobals =
-        M.getNamedMetadata("llvm.asan.dynamically_initialized_globals");
-    if (!DynamicGlobals)
+  void init(Module& M) {
+    assert(!inited_);
+    inited_ = true;
+    NamedMDNode *Globals = M.getNamedMetadata("llvm.asan.globals");
+    if (!Globals)
       return;
-    for (const auto MDN : DynamicGlobals->operands()) {
-      assert(MDN->getNumOperands() == 1);
-      Value *VG = MDN->getOperand(0);
-      // The optimizer may optimize away a global entirely, in which case we
-      // cannot instrument access to it.
-      if (!VG)
+    for (auto MDN : Globals->operands()) {
+      // Format of the metadata node for the global:
+      // {
+      //   global,
+      //   source_location,
+      //   i1 is_dynamically_initialized,
+      //   i1 is_blacklisted
+      // }
+      assert(MDN->getNumOperands() == 4);
+      Value *V = MDN->getOperand(0);
+      // The optimizer may optimize away a global entirely.
+      if (!V)
         continue;
-      DynInitGlobals.insert(cast<GlobalVariable>(VG));
+      GlobalVariable *GV = cast<GlobalVariable>(V);
+      if (Value *Loc = MDN->getOperand(1)) {
+        GlobalVariable *GVLoc = cast<GlobalVariable>(Loc);
+        // We may already know the source location for GV, if it was merged
+        // with another global.
+        if (SourceLocation.insert(std::make_pair(GV, GVLoc)).second)
+          addSourceLocationGlobal(GVLoc);
+      }
+      ConstantInt *IsDynInit = cast<ConstantInt>(MDN->getOperand(2));
+      if (IsDynInit->isOne())
+        DynInitGlobals.insert(GV);
+      ConstantInt *IsBlacklisted = cast<ConstantInt>(MDN->getOperand(3));
+      if (IsBlacklisted->isOne())
+        BlacklistedGlobals.insert(GV);
     }
   }
-  bool Contains(GlobalVariable *G) { return DynInitGlobals.count(G) != 0; }
+
+  GlobalVariable *getSourceLocation(GlobalVariable *G) const {
+    auto Pos = SourceLocation.find(G);
+    return (Pos != SourceLocation.end()) ? Pos->second : nullptr;
+  }
+
+  /// Check if the global is dynamically initialized.
+  bool isDynInit(GlobalVariable *G) const {
+    return DynInitGlobals.count(G);
+  }
+
+  /// Check if the global was blacklisted.
+  bool isBlacklisted(GlobalVariable *G) const {
+    return BlacklistedGlobals.count(G);
+  }
+
+  /// Check if the global was generated to describe source location of another
+  /// global (we don't want to instrument them).
+  bool isSourceLocationGlobal(GlobalVariable *G) const {
+    return LocationGlobals.count(G);
+  }
+
  private:
-  SmallSet<GlobalValue*, 32> DynInitGlobals;
+  bool inited_ = false;
+  DenseMap<GlobalVariable*, GlobalVariable*> SourceLocation;
+  DenseSet<GlobalVariable*> DynInitGlobals;
+  DenseSet<GlobalVariable*> BlacklistedGlobals;
+  DenseSet<GlobalVariable*> LocationGlobals;
+
+  void addSourceLocationGlobal(GlobalVariable *SourceLocGV) {
+    // Source location global is a struct with layout:
+    // {
+    //    filename,
+    //    i32 line_number,
+    //    i32 column_number,
+    // }
+    LocationGlobals.insert(SourceLocGV);
+    ConstantStruct *Contents =
+        cast<ConstantStruct>(SourceLocGV->getInitializer());
+    GlobalVariable *FilenameGV = cast<GlobalVariable>(Contents->getOperand(0));
+    LocationGlobals.insert(FilenameGV);
+  }
 };
 
 /// This struct defines the shadow mapping using the rule:
@@ -351,7 +410,7 @@ struct AddressSanitizer : public FunctionPass {
            *AsanMemoryAccessCallbackSized[2];
   Function *AsanMemmove, *AsanMemcpy, *AsanMemset;
   InlineAsm *EmptyAsm;
-  SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
+  GlobalsMetadata GlobalsMD;
 
   friend struct FunctionStackPoisoner;
 };
@@ -381,7 +440,7 @@ class AddressSanitizerModule : public ModulePass {
   SmallString<64> BlacklistFile;
 
   std::unique_ptr<SpecialCaseList> BL;
-  SetOfDynamicallyInitializedGlobals DynamicallyInitializedGlobals;
+  GlobalsMetadata GlobalsMD;
   Type *IntptrTy;
   LLVMContext *C;
   const DataLayout *DL;
@@ -659,7 +718,7 @@ bool AddressSanitizer::GlobalIsLinkerInitialized(GlobalVariable *G) {
   // If a global variable does not have dynamic initialization we don't
   // have to instrument it.  However, if a global does not have initializer
   // at all, we assume it has dynamic initializer (in other TU).
-  return G->hasInitializer() && !DynamicallyInitializedGlobals.Contains(G);
+  return G->hasInitializer() && !GlobalsMD.isDynInit(G);
 }
 
 void
@@ -866,7 +925,11 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   Type *Ty = cast<PointerType>(G->getType())->getElementType();
   DEBUG(dbgs() << "GLOBAL: " << *G << "\n");
 
+  // FIXME: Don't use the blacklist here, all the data should be collected
+  // by the frontend and passed in globals metadata.
   if (BL->isIn(*G)) return false;
+  if (GlobalsMD.isBlacklisted(G)) return false;
+  if (GlobalsMD.isSourceLocationGlobal(G)) return false;
   if (!Ty->isSized()) return false;
   if (!G->hasInitializer()) return false;
   if (GlobalWasGeneratedByAsan(G)) return false;  // Our own global.
@@ -967,7 +1030,7 @@ void AddressSanitizerModule::initializeCallbacks(Module &M) {
 // trailing redzones. It also creates a function that poisons
 // redzones and inserts this function into llvm.global_ctors.
 bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
-  DynamicallyInitializedGlobals.Init(M);
+  GlobalsMD.init(M);
 
   SmallVector<GlobalVariable *, 16> GlobalsToChange;
 
@@ -986,10 +1049,11 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   //   const char *name;
   //   const char *module_name;
   //   size_t has_dynamic_init;
+  //   void *source_location;
   // We initialize an array of such structures and pass it to a run-time call.
-  StructType *GlobalStructTy = StructType::get(IntptrTy, IntptrTy,
-                                               IntptrTy, IntptrTy,
-                                               IntptrTy, IntptrTy, NULL);
+  StructType *GlobalStructTy =
+      StructType::get(IntptrTy, IntptrTy, IntptrTy, IntptrTy, IntptrTy,
+                      IntptrTy, IntptrTy, NULL);
   SmallVector<Constant *, 16> Initializers(n);
 
   bool HasDynamicallyInitializedGlobals = false;
@@ -1017,9 +1081,6 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
       RightRedzoneSize += MinRZ - (SizeInBytes % MinRZ);
     assert(((RightRedzoneSize + SizeInBytes) % MinRZ) == 0);
     Type *RightRedZoneTy = ArrayType::get(IRB.getInt8Ty(), RightRedzoneSize);
-    // Determine whether this global should be poisoned in initialization.
-    bool GlobalHasDynamicInitializer =
-        DynamicallyInitializedGlobals.Contains(G);
 
     StructType *NewTy = StructType::get(Ty, RightRedZoneTy, NULL);
     Constant *NewInitializer = ConstantStruct::get(
@@ -1048,17 +1109,20 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
     NewGlobal->takeName(G);
     G->eraseFromParent();
 
+    bool GlobalHasDynamicInitializer = GlobalsMD.isDynInit(G);
+    GlobalVariable *SourceLoc = GlobalsMD.getSourceLocation(G);
+
     Initializers[i] = ConstantStruct::get(
-        GlobalStructTy,
-        ConstantExpr::getPointerCast(NewGlobal, IntptrTy),
+        GlobalStructTy, ConstantExpr::getPointerCast(NewGlobal, IntptrTy),
         ConstantInt::get(IntptrTy, SizeInBytes),
         ConstantInt::get(IntptrTy, SizeInBytes + RightRedzoneSize),
         ConstantExpr::getPointerCast(Name, IntptrTy),
         ConstantExpr::getPointerCast(ModuleName, IntptrTy),
         ConstantInt::get(IntptrTy, GlobalHasDynamicInitializer),
+        SourceLoc ? ConstantExpr::getPointerCast(SourceLoc, IntptrTy)
+                  : ConstantInt::get(IntptrTy, 0),
         NULL);
 
-    // Populate the first and last globals declared in this TU.
     if (ClInitializers && GlobalHasDynamicInitializer)
       HasDynamicallyInitializedGlobals = true;
 
@@ -1186,7 +1250,7 @@ bool AddressSanitizer::doInitialization(Module &M) {
     report_fatal_error("data layout missing");
   DL = &DLP->getDataLayout();
 
-  DynamicallyInitializedGlobals.Init(M);
+  GlobalsMD.init(M);
 
   C = &(M.getContext());
   LongSize = DL->getPointerSizeInBits();

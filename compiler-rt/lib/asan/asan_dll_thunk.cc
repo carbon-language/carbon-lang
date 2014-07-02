@@ -203,13 +203,13 @@ extern "C" {
 
   // Manually wrap __asan_init as we need to initialize
   // __asan_option_detect_stack_use_after_return afterwards.
-  void __asan_init_v3() {
+  void __asan_init_v4() {
     typedef void (*fntype)();
     static fntype fn = 0;
-    // __asan_init_v3 is expected to be called by only one thread.
+    // __asan_init_v4 is expected to be called by only one thread.
     if (fn) return;
 
-    fn = (fntype)getRealProcAddressOrDie("__asan_init_v3");
+    fn = (fntype)getRealProcAddressOrDie("__asan_init_v4");
     fn();
     __asan_option_detect_stack_use_after_return =
         (__asan_should_detect_stack_use_after_return() != 0);
@@ -339,7 +339,7 @@ void InterceptHooks() {
 // In DLLs, the callbacks are expected to return 0,
 // otherwise CRT initialization fails.
 static int call_asan_init() {
-  __asan_init_v3();
+  __asan_init_v4();
   return 0;
 }
 #pragma section(".CRT$XIB", long, read)  // NOLINT
