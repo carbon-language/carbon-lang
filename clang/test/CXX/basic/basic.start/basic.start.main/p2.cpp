@@ -62,6 +62,8 @@ main( // expected-error {{first parameter of 'main' (argument count) must be of 
 ) {
 }
 
+const int main(); // expected-error {{'main' must return 'int'}}
+
 #elif TEST7
 
 // expected-no-diagnostics
