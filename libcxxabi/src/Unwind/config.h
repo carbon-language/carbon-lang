@@ -58,13 +58,15 @@
   #endif
 
 #else
-  // ARM EHABI.
+  #include <stdlib.h>
+
   static inline void assert_rtn(const char* func, const char* file, int line, const char* msg)  __attribute__ ((noreturn));
   static inline void assert_rtn(const char* func, const char* file, int line, const char* msg) {
     fprintf(stderr, "libunwind: %s %s:%d - %s\n",  func, file, line, msg);
     assert(false);
     abort();
   }
+
   #define _LIBUNWIND_BUILD_ZERO_COST_APIS (__i386__ || __x86_64__ || __arm64__ || __arm__)
   #define _LIBUNWIND_BUILD_SJLJ_APIS      0
   #define _LIBUNWIND_SUPPORT_FRAME_APIS   (__i386__ || __x86_64__)
