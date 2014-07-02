@@ -1,0 +1,190 @@
+# RUN: lld -flavor darwin -arch i386 -r -print_atoms %s -o %t  | FileCheck %s
+#
+# Test parsing of x86 relocations.
+#
+#  .text
+#
+#_test:
+#  	call _undef
+#  	call _undef+2
+#   callw _undef
+#L1:
+#  	movl	_undef, %eax
+#   movl	_x, %eax
+#  	movl	_x-L1(%eax), %eax
+#  	movl	_x+4-L1(%eax), %eax
+#
+#  .data
+#_x: 
+#  .long _undef
+#  .long _test - .
+#  .long _test+3 - .
+#
+
+--- !mach-o
+arch:            x86
+file-type:       MH_OBJECT
+flags:           [  ]
+OS:              unknown
+sections:        
+  - segment:         __TEXT
+    section:         __text
+    type:            S_REGULAR
+    attributes:      [ S_ATTR_PURE_INSTRUCTIONS, S_ATTR_SOME_INSTRUCTIONS ]
+    address:         0x0000000000000000
+    content:         [ 0xE8, 0xFB, 0xFF, 0xFF, 0xFF, 0xE8, 0xF8, 0xFF, 
+                       0xFF, 0xFF, 0x66, 0xE8, 0xF2, 0xFF, 0xA1, 0x00, 
+                       0x00, 0x00, 0x00, 0xA1, 0x24, 0x00, 0x00, 0x00, 
+                       0x8B, 0x80, 0x16, 0x00, 0x00, 0x00, 0x8B, 0x80, 
+                       0x1A, 0x00, 0x00, 0x00 ]
+    relocations:     
+      - offset:          0x00000020
+        scattered:       true
+        type:            GENERIC_RELOC_LOCAL_SECTDIFF
+        length:          2
+        pc-rel:          false
+        value:           0x00000024
+      - offset:          0x00000000
+        scattered:       true
+        type:            GENERIC_RELOC_PAIR
+        length:          2
+        pc-rel:          false
+        value:           0x0000000E
+      - offset:          0x0000001A
+        scattered:       true
+        type:            GENERIC_RELOC_LOCAL_SECTDIFF
+        length:          2
+        pc-rel:          false
+        value:           0x00000024
+      - offset:          0x00000000
+        scattered:       true
+        type:            GENERIC_RELOC_PAIR
+        length:          2
+        pc-rel:          false
+        value:           0x0000000E
+      - offset:          0x00000014
+        type:            GENERIC_RELOC_VANILLA
+        length:          2
+        pc-rel:          false
+        extern:          false
+        symbol:          2
+      - offset:          0x0000000F
+        type:            GENERIC_RELOC_VANILLA
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+      - offset:          0x0000000C
+        type:            GENERIC_RELOC_VANILLA
+        length:          1
+        pc-rel:          true
+        extern:          true
+        symbol:          2
+      - offset:          0x00000006
+        type:            GENERIC_RELOC_VANILLA
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          2
+      - offset:          0x00000001
+        type:            GENERIC_RELOC_VANILLA
+        length:          2
+        pc-rel:          true
+        extern:          true
+        symbol:          2
+  - segment:         __DATA
+    section:         __data
+    type:            S_REGULAR
+    attributes:      [  ]
+    address:         0x0000000000000024
+    content:         [ 0x00, 0x00, 0x00, 0x00, 0xD8, 0xFF, 0xFF, 0xFF, 
+                       0xD7, 0xFF, 0xFF, 0xFF ]
+    relocations:     
+      - offset:          0x00000008
+        scattered:       true
+        type:            GENERIC_RELOC_LOCAL_SECTDIFF
+        length:          2
+        pc-rel:          false
+        value:           0x00000000
+      - offset:          0x00000000
+        scattered:       true
+        type:            GENERIC_RELOC_PAIR
+        length:          2
+        pc-rel:          false
+        value:           0x0000002C
+      - offset:          0x00000004
+        scattered:       true
+        type:            GENERIC_RELOC_LOCAL_SECTDIFF
+        length:          2
+        pc-rel:          false
+        value:           0x00000000
+      - offset:          0x00000000
+        scattered:       true
+        type:            GENERIC_RELOC_PAIR
+        length:          2
+        pc-rel:          false
+        value:           0x00000028
+      - offset:          0x00000000
+        type:            GENERIC_RELOC_VANILLA
+        length:          2
+        pc-rel:          false
+        extern:          true
+        symbol:          2
+local-symbols:   
+  - name:            _test
+    type:            N_SECT
+    sect:            1
+    value:           0x0000000000000000
+  - name:            _x
+    type:            N_SECT
+    sect:            2
+    value:           0x0000000000000024
+undefined-symbols: 
+  - name:            _undef
+    type:            N_UNDF
+    scope:           [ N_EXT ]
+    value:           0x0000000000000000
+...
+
+# CHECK: defined-atoms:
+# CHECK:   - name:            _x
+# CHECK:     type:            data
+# CHECK:     references:
+# CHECK:       - kind:            pointer32
+# CHECK:         offset:          0
+# CHECK:         target:          _undef
+# CHECK:       - kind:            delta32
+# CHECK:         offset:          4
+# CHECK:         target:          _test
+# CHECK:       - kind:            delta32
+# CHECK:         offset:          8
+# CHECK:         target:          _test
+# CHECK:         addend:          3
+# CHECK:  - name:            _test
+# CHECK:    references:
+# CHECK:      - kind:            branch32
+# CHECK:        offset:          1
+# CHECK:        target:          _undef
+# CHECK-NOT:    addend:
+# CHECK:      - kind:            branch32
+# CHECK:        offset:          6
+# CHECK:        target:          _undef
+# CHECK:        addend:          2
+# CHECK:      - kind:            branch16
+# CHECK:        offset:          12
+# CHECK:        target:          _undef
+# CHECK:      - kind:            abs32
+# CHECK:        offset:          15
+# CHECK:        target:          _undef
+# CHECK:      - kind:            abs32
+# CHECK:        offset:          20
+# CHECK:        target:          _x
+# CHECK:      - kind:            funcRel32
+# CHECK:        offset:          26
+# CHECK:        target:          _x
+# CHECK:        addend:          -14
+# CHECK:      - kind:            funcRel32
+# CHECK:        offset:          32
+# CHECK:        target:          _x
+# CHECK:        addend:          -10
+

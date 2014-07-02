@@ -39,7 +39,7 @@ sections:
         length:          2
         pc-rel:          false
         extern:          true
-        symbol:          1
+        symbol:          0
       - offset:          0x00000008
         type:            GENERIC_RELOC_VANILLA
         length:          2
@@ -51,7 +51,7 @@ sections:
         length:          2
         pc-rel:          false
         extern:          true
-        symbol:          1
+        symbol:          0
 undefined-symbols:
   - name:            ___CFConstantStringClassReference
     type:            N_UNDF
@@ -60,19 +60,35 @@ undefined-symbols:
 ...
 
 # CHECK: defined-atoms:
-# CHECK:  - scope:           hidden
+# CHECK:  - ref-name:        [[STR1:L[L0-9]+]]
+# CHECK:    scope:           hidden
 # CHECK:    type:            c-string
 # CHECK:    content:         [ 68, 65, 6C, 6C, 6F, 00 ]
 # CHECK:    merge:           by-content
-# CHECK:  - scope:           hidden
+# CHECK:  - ref-name:        [[STR2:L[L0-9]+]]
+# CHECK:    scope:           hidden
 # CHECK:    type:            c-string
 # CHECK:    content:         [ 74, 68, 65, 72, 65, 00 ]
 # CHECK:    merge:           by-content
 # CHECK:  - scope:           hidden
 # CHECK:    type:            cfstring
 # CHECK:    merge:           by-content
+# CHECK:    references:
+# CHECK:        - kind:            pointer32
+# CHECK:          offset:          0
+# CHECK:          target:          ___CFConstantStringClassReference
+# CHECK:        - kind:            pointer32
+# CHECK:          offset:          8
+# CHECK:          target:          [[STR1]]
 # CHECK:  - scope:           hidden
 # CHECK:    type:            cfstring
 # CHECK:    merge:           by-content
+# CHECK:    references:
+# CHECK:        - kind:            pointer32
+# CHECK:          offset:          0
+# CHECK:          target:          ___CFConstantStringClassReference
+# CHECK:        - kind:            pointer32
+# CHECK:          offset:          8
+# CHECK:          target:          [[STR2]]
 # CHECK:undefined-atoms:
 # CHECK:  - name:            ___CFConstantStringClassReference

@@ -76,6 +76,23 @@ KindHandler::RelocPattern KindHandler::relocPattern(const Relocation &reloc) {
   return result;
 }
 
+int16_t KindHandler::readS16(bool swap, const uint8_t *addr) {
+  return read16(swap, *reinterpret_cast<const uint16_t*>(addr));
+}
+
+int32_t KindHandler::readS32(bool swap, const uint8_t *addr) {
+  return read32(swap, *reinterpret_cast<const uint32_t*>(addr));
+}
+
+uint32_t KindHandler::readU32(bool swap, const uint8_t *addr) {
+  return read32(swap, *reinterpret_cast<const uint32_t*>(addr));
+}
+
+int64_t KindHandler::readS64(bool swap, const uint8_t *addr) {
+  return read64(swap, *reinterpret_cast<const uint64_t*>(addr));
+}
+
+
 bool KindHandler::isPairedReloc(const Relocation &reloc) {
   llvm_unreachable("abstract");
 }
@@ -87,13 +104,13 @@ KindHandler::getReferenceInfo(const Relocation &reloc,
                                     uint64_t fixupAddress, bool swap,
                                     FindAtomBySectionAndAddress atomFromAddress,
                                     FindAtomBySymbolIndex atomFromSymbolIndex,
-                                    Reference::KindValue *kind, 
-                                    const lld::Atom **target, 
+                                    Reference::KindValue *kind,
+                                    const lld::Atom **target,
                                     Reference::Addend *addend) {
   llvm_unreachable("abstract");
 }
 
-std::error_code 
+std::error_code
 KindHandler::getPairReferenceInfo(const normalized::Relocation &reloc1,
                            const normalized::Relocation &reloc2,
                            const DefinedAtom *inAtom,
@@ -101,8 +118,8 @@ KindHandler::getPairReferenceInfo(const normalized::Relocation &reloc1,
                            uint64_t fixupAddress, bool swap,
                            FindAtomBySectionAndAddress atomFromAddress,
                            FindAtomBySymbolIndex atomFromSymbolIndex,
-                           Reference::KindValue *kind, 
-                           const lld::Atom **target, 
+                           Reference::KindValue *kind,
+                           const lld::Atom **target,
                            Reference::Addend *addend) {
   llvm_unreachable("abstract");
 }
@@ -169,13 +186,6 @@ bool KindHandler_x86_64::isPairedReloc(const Relocation &reloc) {
   return (reloc.type == X86_64_RELOC_SUBTRACTOR);
 }
 
-static int32_t readS32(bool swap, const uint8_t *addr) {
-  return read32(swap, *reinterpret_cast<const uint32_t*>(addr));
-}
-
-static int64_t readS64(bool swap, const uint8_t *addr) {
-  return read64(swap, *reinterpret_cast<const uint64_t*>(addr));
-}
 
 Reference::KindValue 
 KindHandler_x86_64::kindFromReloc(const Relocation &reloc) {
@@ -400,29 +410,166 @@ KindHandler_x86::~KindHandler_x86() {
 }
 
 const Registry::KindStrings KindHandler_x86::kindStrings[] = {
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_BRANCH32),
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_ABS32),
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_FUNC_REL32),
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_POINTER32),
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_LAZY_TARGET),
-  LLD_KIND_STRING_ENTRY(LLD_X86_RELOC_LAZY_IMMEDIATE),
+  LLD_KIND_STRING_ENTRY(invalid),
+  LLD_KIND_STRING_ENTRY(branch32),
+  LLD_KIND_STRING_ENTRY(branch16),
+  LLD_KIND_STRING_ENTRY(abs32),
+  LLD_KIND_STRING_ENTRY(funcRel32),
+  LLD_KIND_STRING_ENTRY(pointer32),
+  LLD_KIND_STRING_ENTRY(delta32),
+  LLD_KIND_STRING_ENTRY(lazyPointer),
+  LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
   LLD_KIND_STRING_END
 };
 
 bool KindHandler_x86::isCallSite(const Reference &ref) {
-  return (ref.kindValue() == LLD_X86_RELOC_BRANCH32);
+  return (ref.kindValue() == branch32);
 }
 
 bool KindHandler_x86::isPointer(const Reference &ref) {
-  return (ref.kindValue() == LLD_X86_RELOC_POINTER32);
+  return (ref.kindValue() == pointer32);
 }
 
 bool KindHandler_x86::isLazyImmediate(const Reference &ref) {
-  return (ref.kindValue() == LLD_X86_RELOC_LAZY_TARGET);
+  return (ref.kindValue() == lazyImmediateLocation);
 }
 
 bool KindHandler_x86::isLazyTarget(const Reference &ref) {
-  return (ref.kindValue() == LLD_X86_RELOC_LAZY_TARGET);
+  return (ref.kindValue() == lazyPointer);
+}
+
+
+bool KindHandler_x86::isPairedReloc(const Relocation &reloc) {
+  if (!reloc.scattered)
+    return false;
+  return (reloc.type == GENERIC_RELOC_LOCAL_SECTDIFF) || 
+         (reloc.type == GENERIC_RELOC_SECTDIFF);
+}
+
+
+std::error_code
+KindHandler_x86::getReferenceInfo(const Relocation &reloc,
+                                  const DefinedAtom *inAtom,
+                                  uint32_t offsetInAtom,
+                                  uint64_t fixupAddress, bool swap,
+                                  FindAtomBySectionAndAddress atomFromAddress,
+                                  FindAtomBySymbolIndex atomFromSymbolIndex,
+                                  Reference::KindValue *kind,
+                                  const lld::Atom **target,
+                                  Reference::Addend *addend) {
+  typedef std::error_code E;
+  DefinedAtom::ContentPermissions perms;
+  const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
+  uint64_t targetAddress;
+  switch (relocPattern(reloc)) {
+  case GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength4:
+    // ex: call _foo (and _foo undefined)
+    *kind = branch32;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    *addend = fixupAddress + 4 + readS32(swap, fixupContent);
+    break;
+  case GENERIC_RELOC_VANILLA | rPcRel  | rLength4:
+    // ex: call _foo (and _foo defined)
+    *kind = branch32;
+    targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+    break;
+  case GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength2:
+    // ex: callw _foo (and _foo undefined)
+    *kind = branch16;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    *addend = fixupAddress + 2 + readS16(swap, fixupContent);
+    break;
+  case GENERIC_RELOC_VANILLA | rPcRel  | rLength2:
+    // ex: callw _foo (and _foo defined)
+    *kind = branch16;
+    targetAddress = fixupAddress + 2 + readS16(swap, fixupContent);
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+    break;
+  case GENERIC_RELOC_VANILLA  | rExtern | rLength4:
+    // ex: movl	_foo, %eax   (and _foo undefined)
+    // ex: .long _foo        (and _foo undefined)
+    perms = inAtom->permissions();
+    *kind = ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X)
+                                                            ? abs32 : pointer32;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    *addend = readU32(swap, fixupContent);
+    break;
+  case GENERIC_RELOC_VANILLA  | rLength4:
+    // ex: movl	_foo, %eax   (and _foo defined)
+    // ex: .long _foo        (and _foo defined)
+    perms = inAtom->permissions();
+    *kind = ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X)
+                                                            ? abs32 : pointer32;
+    targetAddress = readU32(swap, fixupContent);
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+    break;
+  default:
+    return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
+  }
+  return std::error_code();
+}
+
+
+std::error_code
+KindHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
+                                     const normalized::Relocation &reloc2,
+                                     const DefinedAtom *inAtom,
+                                     uint32_t offsetInAtom,
+                                     uint64_t fixupAddress, bool swap,
+                                     FindAtomBySectionAndAddress atomFromAddr,
+                                     FindAtomBySymbolIndex atomFromSymbolIndex,
+                                     Reference::KindValue *kind,
+                                     const lld::Atom **target,
+                                     Reference::Addend *addend) {
+  const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
+  std::error_code ec;
+  DefinedAtom::ContentPermissions perms = inAtom->permissions();
+  uint32_t fromAddress;
+  uint32_t toAddress;
+  uint32_t value;
+  const lld::Atom *fromTarget;
+  Reference::Addend offsetInTo;
+  Reference::Addend offsetInFrom;
+  switch(relocPattern(reloc1) << 16 | relocPattern(reloc2)) {
+  case ((GENERIC_RELOC_SECTDIFF       | rScattered | rLength4) << 16 |
+         GENERIC_RELOC_PAIR           | rScattered | rLength4):
+  case ((GENERIC_RELOC_LOCAL_SECTDIFF | rScattered | rLength4) << 16 |
+         GENERIC_RELOC_PAIR           | rScattered | rLength4):
+    toAddress = reloc1.value;
+    fromAddress = reloc2.value;
+    value = readS32(swap, fixupContent);
+    ec = atomFromAddr(0, toAddress, target, &offsetInTo);
+    if (ec)
+      return ec;
+    ec = atomFromAddr(0, fromAddress, &fromTarget, &offsetInFrom);
+    if (ec)
+      return ec;
+    if (fromTarget != inAtom)
+      return make_dynamic_error_code(Twine("SECTDIFF relocation where "
+                                     "subtrahend label is not in atom"));
+    *kind = ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X)
+                                                          ? funcRel32 : delta32;
+    if (*kind == funcRel32) {
+      // SECTDIFF relocations are used in i386 codegen where the function
+      // prolog does a CALL to the next instruction which POPs the return
+      // address into EBX which becomes the pic-base register.  The POP 
+      // instruction is label the used for the subtrahend in expressions.
+      // The funcRel32 kind represents the 32-bit delta to some symbol from
+      // the start of the function (atom) containing the funcRel32.
+      uint32_t ta = fromAddress + value - toAddress;
+      *addend = ta - offsetInFrom;
+    } else {
+      *addend= fromAddress + value - toAddress;
+    }
+    return std::error_code();
+    break;
+  default:
+    return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
+  }
 }
 
 void KindHandler_x86::applyFixup(Reference::KindNamespace ns,

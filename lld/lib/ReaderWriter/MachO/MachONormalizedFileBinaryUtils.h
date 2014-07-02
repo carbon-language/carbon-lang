@@ -182,6 +182,9 @@ inline void swapStruct(llvm::MachO::nlist_64 &sym) {
 
 
 
+inline uint16_t read16(bool swap, uint16_t value) {
+    return (swap ? getSwappedBytes(value) : value);
+}
 
 inline uint32_t read32(bool swap, uint32_t value) {
     return (swap ? getSwappedBytes(value) : value);

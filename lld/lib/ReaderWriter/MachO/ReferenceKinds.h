@@ -125,7 +125,11 @@ protected:
     rLength8   = 0x0300
   };
   static RelocPattern relocPattern(const normalized::Relocation &reloc);
-  
+
+  static int16_t  readS16(bool swap, const uint8_t *addr);
+  static int32_t  readS32(bool swap, const uint8_t *addr);
+  static uint32_t readU32(bool swap, const uint8_t *addr);
+  static int64_t  readS64(bool swap, const uint8_t *addr);  
 };
 
 
@@ -216,11 +220,60 @@ public:
   bool isPointer(const Reference &) override;
   bool isLazyImmediate(const Reference &) override;
   bool isLazyTarget(const Reference &) override;
-  virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
+  bool isPairedReloc(const normalized::Relocation &) override;
+  std::error_code getReferenceInfo(const normalized::Relocation &reloc,
+                                   const DefinedAtom *inAtom,
+                                   uint32_t offsetInAtom,
+                                   uint64_t fixupAddress, bool swap,
+                                   FindAtomBySectionAndAddress atomFromAddress,
+                                   FindAtomBySymbolIndex atomFromSymbolIndex,
+                                   Reference::KindValue *kind,
+                                   const lld::Atom **target,
+                                   Reference::Addend *addend) override;
+  std::error_code
+      getPairReferenceInfo(const normalized::Relocation &reloc1,
+                           const normalized::Relocation &reloc2,
+                           const DefinedAtom *inAtom,
+                           uint32_t offsetInAtom,
+                           uint64_t fixupAddress, bool swap,
+                           FindAtomBySectionAndAddress atomFromAddress,
+                           FindAtomBySymbolIndex atomFromSymbolIndex,
+                           Reference::KindValue *kind,
+                           const lld::Atom **target,
+                           Reference::Addend *addend) override;
+
+  void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
                           uint64_t targetAddress) override;
+
+private:
+  friend class X86LazyPointerAtom;
+  friend class X86StubHelperAtom;
+  friend class X86StubAtom;
+  friend class X86StubHelperCommonAtom;
+  friend class X86NonLazyPointerAtom;
+
+  enum : Reference::KindValue {
+    invalid,               /// for error condition
+
+    // Kinds found in mach-o .o files:
+    branch32,              /// ex: call _foo
+    branch16,              /// ex: callw _foo
+    abs32,                 /// ex: movl _foo, %eax
+    funcRel32,             /// ex: movl _foo-L1(%eax), %eax
+    pointer32,             /// ex: .long _foo
+    delta32,               /// ex: .long _foo - .
+
+    // Kinds introduced by Passes:
+    lazyPointer,           /// Location contains a lazy pointer.
+    lazyImmediateLocation, /// Location contains immediate value used in stub.
+  };
+
+
 };
+
+
 
 class KindHandler_arm : public KindHandler {
 public:

@@ -438,10 +438,25 @@ std::error_code convertRelocs(const Section &section,
     if (sectIndex > normalizedFile.sections.size())
       return make_dynamic_error_code(Twine("out of range section "
                                      "index (") + Twine(sectIndex) + ")");
-    const Section &sect = normalizedFile.sections[sectIndex-1];
+    const Section *sect = nullptr;
+    if (sectIndex == 0) {
+      for (const Section &s : normalizedFile.sections) {
+        uint64_t sAddr = s.address;
+        if ((sAddr <= addr) && (addr < sAddr+s.content.size())) {
+          sect = &s;
+          break;
+        }
+      }
+      if (!sect) {
+        return make_dynamic_error_code(Twine("address (" + Twine(addr)
+                                           + ") is not in any section"));
+      }
+    } else {
+      sect = &normalizedFile.sections[sectIndex-1];
+    }
     uint32_t offsetInTarget;
-    uint64_t offsetInSect = addr - sect.address;
-    *atom = file.findAtomCoveringAddress(sect, offsetInSect, &offsetInTarget);
+    uint64_t offsetInSect = addr - sect->address;
+    *atom = file.findAtomCoveringAddress(*sect, offsetInSect, &offsetInTarget);
     *addend = offsetInTarget;
     return std::error_code();
   };
@@ -534,7 +549,7 @@ std::error_code convertRelocs(const Section &section,
          + " (r_address=" + Twine::utohexstr(reloc.offset)
          + ", r_type=" + Twine(reloc.type)
          + ", r_extern=" + Twine(reloc.isExtern)
-         + ", r_length=" + Twine(reloc.length)
+         + ", r_length=" + Twine((int)reloc.length)
          + ", r_pcrel=" + Twine(reloc.pcRel)
          + (!reloc.scattered ? (Twine(", r_symbolnum=") + Twine(reloc.symbol))
                              : (Twine(", r_scattered=1, r_value=")
@@ -542,7 +557,17 @@ std::error_code convertRelocs(const Section &section,
          + ")" );
     } else {
       // Instantiate an lld::Reference object and add to its atom.
-      inAtom->addReference(offsetInAtom, kind, target, addend);
+      Reference::KindArch arch = Reference::KindArch::all;
+      switch (normalizedFile.arch ) {
+      case lld::MachOLinkingContext::arch_x86_64:
+        arch = Reference::KindArch::x86_64;
+        break;
+      case lld::MachOLinkingContext::arch_x86:
+        arch = Reference::KindArch::x86;
+        break;
+      }
+      
+      inAtom->addReference(offsetInAtom, kind, target, addend, arch);
     }
   }
   return std::error_code();
@@ -580,7 +605,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   }
 
   // TEMP BEGIN: until all KindHandlers switched to new interface.
-  if (normalizedFile.arch != lld::MachOLinkingContext::arch_x86_64)
+  if ((normalizedFile.arch != lld::MachOLinkingContext::arch_x86_64) &&
+      (normalizedFile.arch != lld::MachOLinkingContext::arch_x86))
     return std::unique_ptr<File>(std::move(file));
   // TEMP END
 

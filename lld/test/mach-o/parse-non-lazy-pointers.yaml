@@ -71,11 +71,13 @@ undefined-symbols:
 
 
 # CHECK:defined-atoms:
-# CHECK:  - scope:           hidden
+# CHECK:  - ref-name:        [[GOT1:L[L0-9]+]]
+# CHECK:    scope:           hidden
 # CHECK:    type:            got
 # CHECK:    content:         [ 00, 00, 00, 00 ]
 # CHECK:    merge:           by-content
-# CHECK:  - scope:           hidden
+# CHECK:  - ref-name:        [[GOT2:L[L0-9]+]]
+# CHECK:    scope:           hidden
 # CHECK:    type:            got
 # CHECK:    content:         [ 00, 00, 00, 00 ]
 # CHECK:    merge:           by-content
@@ -83,6 +85,13 @@ undefined-symbols:
 # CHECK:    scope:           global
 # CHECK:    content:         [ 55, 89, E5, E8, 00, 00, 00, 00, 59, 8D, 81, 14,
 # CHECK:                       00, 00, 00, 8D, 81, 18, 00, 00, 00, 5D, C3 ]
+# CHECK:     references:
+# CHECK:       - kind:            funcRel32
+# CHECK:         offset:          11
+# CHECK:         target:          [[GOT1]]
+# CHECK:       - kind:            funcRel32
+# CHECK:         offset:          17
+# CHECK:         target:          [[GOT2]]
 # CHECK:  - name:            _foo
 # CHECK:    content:         [ 55, 89, E5, 5D, C3 ]
 
