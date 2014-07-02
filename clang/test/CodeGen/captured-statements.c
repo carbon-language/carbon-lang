@@ -60,6 +60,19 @@ void test3(int size) {
   // CHECK-3: call void @__captured_stmt
 }
 
+// Capture VLA array
+void test4(int size, int vla_arr[size]) {
+  #pragma clang __debug captured
+  {
+    vla_arr[0] = 1;
+  }
+  // CHECK-3: test4([[INT:i.+]] [[SIZE:.+]], [[INT]]*
+  // CHECK-3: store [[INT]] [[SIZE]], [[INT]]* [[SIZE_ADDR:.+]],
+  // CHECK-3: [[REF:%.+]] = getelementptr inbounds
+  // CHECK-3: store [[INT]]* [[SIZE_ADDR]], [[INT]]** [[REF]]
+  // CHECK-3: call void @__captured_stmt
+}
+
 void dont_capture_global() {
   static int s;
   extern int e;
