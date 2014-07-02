@@ -788,8 +788,7 @@ void DwarfDebug::finishVariableDefinitions() {
   for (const auto &Var : ConcreteVariables) {
     DIE *VariableDie = Var->getDIE();
     // FIXME: There shouldn't be any variables without DIEs.
-    if (!VariableDie)
-      continue;
+    assert(VariableDie);
     // FIXME: Consider the time-space tradeoff of just storing the unit pointer
     // in the ConcreteVariables list, rather than looking it up again here.
     // DIE::getUnit isn't simple - it walks parent pointers, etc.
