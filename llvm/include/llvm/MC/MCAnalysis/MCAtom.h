@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCAtom.h ----------------------------------------*- C++ -*-===//
+//===-- MCAtom.h ------------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCATOM_H
-#define LLVM_MC_MCATOM_H
+#ifndef LLVM_MC_MCANALYSIS_MCATOM_H
+#define LLVM_MC_MCANALYSIS_MCATOM_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCInst.h"

@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCModule.h - MCModule class ---------------------*- C++ -*-===//
+//===-- MCModule.h - MCModule class -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCMODULE_H
-#define LLVM_MC_MCMODULE_H
+#ifndef LLVM_MC_MCANALYSIS_MCMODULE_H
+#define LLVM_MC_MCANALYSIS_MCMODULE_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"

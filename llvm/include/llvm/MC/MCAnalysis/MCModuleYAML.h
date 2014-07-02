@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCMODULEYAML_H
-#define LLVM_MC_MCMODULEYAML_H
+#ifndef LLVM_MC_MCANALYSIS_MCMODULEYAML_H
+#define LLVM_MC_MCANALYSIS_MCMODULEYAML_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAnalysis/MCModule.h"

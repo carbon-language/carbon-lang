@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCFunction.h ------------------------------------*- C++ -*-===//
+//===-- MCFunction.h --------------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCFUNCTION_H
-#define LLVM_MC_MCFUNCTION_H
+#ifndef LLVM_MC_MCANALYSIS_MCFUNCTION_H
+#define LLVM_MC_MCANALYSIS_MCFUNCTION_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInst.h"
