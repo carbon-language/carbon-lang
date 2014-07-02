@@ -155,8 +155,6 @@ bool AArch64PassConfig::addPreISel() {
     addPass(createAArch64PromoteConstantPass());
   if (TM->getOptLevel() != CodeGenOpt::None)
     addPass(createGlobalMergePass(TM));
-  if (TM->getOptLevel() != CodeGenOpt::None)
-    addPass(createAArch64AddressTypePromotionPass());
 
   return false;
 }
