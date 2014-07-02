@@ -450,9 +450,9 @@ define <2 x i32> @test37(<2 x i32> %A) {
   %sub = sub nsw <2 x i32> zeroinitializer, %div
   ret <2 x i32> %sub
 ; CHECK-LABEL: @test37(
-; CHECK-NEXT: [[DIV:%.*]] = sdiv <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
-; CHECK-NEXT: [[SUB:%.*]] = sub nsw <2 x i32> zeroinitializer, %div
-; CHECK-NEXT: ret <2 x i32> [[SUB]]
+; CHECK-NEXT: [[ICMP:%.*]] = icmp eq <2 x i32> %A, <i32 -2147483648, i32 -2147483648>
+; CHECK-NEXT: [[SEXT:%.*]] = sext <2 x i1> [[ICMP]] to <2 x i32>
+; CHECK-NEXT: ret <2 x i32> [[SEXT]]
 }
 
 define i32 @test38(i32 %A) {
@@ -460,7 +460,7 @@ define i32 @test38(i32 %A) {
   %sub = sub nsw i32 0, %div
   ret i32 %sub
 ; CHECK-LABEL: @test38(
-; CHECK-NEXT: [[DIV:%.*]] = sdiv i32 %A, -2147483648
-; CHECK-NEXT: [[SUB:%.*]] = sub nsw i32 0, [[DIV]]
-; CHECK-NEXT: ret i32 [[SUB]]
+; CHECK-NEXT: [[ICMP:%.*]] = icmp eq i32 %A, -2147483648
+; CHECK-NEXT: [[SEXT:%.*]] = sext i1 [[ICMP]] to i32
+; CHECK-NEXT: ret i32 [[SEXT]]
 }

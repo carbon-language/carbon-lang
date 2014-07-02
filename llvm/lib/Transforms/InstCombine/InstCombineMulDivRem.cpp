@@ -993,6 +993,10 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   }
 
   if (Constant *RHS = dyn_cast<Constant>(Op1)) {
+    // X/INT_MIN -> X == INT_MIN
+    if (RHS->isMinSignedValue())
+      return new ZExtInst(Builder->CreateICmpEQ(Op0, Op1), I.getType());
+
     // -X/C  -->  X/-C  provided the negation doesn't overflow.
     if (SubOperator *Sub = dyn_cast<SubOperator>(Op0))
       if (match(Sub->getOperand(0), m_Zero()) && Sub->hasNoSignedWrap())
