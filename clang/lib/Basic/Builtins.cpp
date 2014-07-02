@@ -76,7 +76,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    if (!LangOpts.NoBuiltin || !strchr(TSRecords[i].Attributes, 'f'))
+    if (BuiltinIsSupported(TSRecords[i], LangOpts))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 

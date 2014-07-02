@@ -14,6 +14,10 @@
 
 // The format of this database matches clang/Basic/Builtins.def.
 
+#if defined(BUILTIN) && !defined(LANGBUILTIN)
+#   define LANGBUILTIN(ID, TYPE, ATTRS, BUILTIN_LANG) BUILTIN(ID, TYPE, ATTRS)
+#endif
+
 // In libgcc
 BUILTIN(__clear_cache, "vv*v*", "i")
 BUILTIN(__builtin_thread_pointer, "v*", "")
@@ -64,14 +68,22 @@ BUILTIN(__builtin_arm_crc32d, "UiUiLLUi", "nc")
 BUILTIN(__builtin_arm_crc32cd, "UiUiLLUi", "nc")
 
 // HINT
-BUILTIN(__yield, "v", "")
-BUILTIN(__wfe, "v", "")
-BUILTIN(__wfi, "v", "")
-BUILTIN(__sev, "v", "")
-BUILTIN(__sevl, "v", "")
+BUILTIN(__builtin_yield, "v", "")
+BUILTIN(__builtin_wfe, "v", "")
+BUILTIN(__builtin_wfi, "v", "")
+BUILTIN(__builtin_sev, "v", "")
+BUILTIN(__builtin_sevl, "v", "")
 
 // Data barrier
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")
 BUILTIN(__builtin_arm_dsb, "vUi", "nc")
 
+// MSVC
+LANGBUILTIN(__yield, "v", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(__wfe, "v", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(__wfi, "v", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(__sev, "v", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(__sevl, "v", "", ALL_MS_LANGUAGES)
+
 #undef BUILTIN
+#undef LANGBUILTIN
