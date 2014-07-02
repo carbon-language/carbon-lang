@@ -43,7 +43,6 @@ class MipsTargetMachine : public LLVMTargetMachine {
   std::unique_ptr<const MipsFrameLowering> FrameLoweringSE;
   std::unique_ptr<const MipsTargetLowering> TLInfoSE;
   MipsSelectionDAGInfo TSInfo;
-  const InstrItineraryData &InstrItins;
   MipsJITInfo JITInfo;
 
 public:
@@ -67,7 +66,9 @@ public:
   { return &DL;}
 
   const InstrItineraryData *getInstrItineraryData() const override {
-    return Subtarget.inMips16Mode() ? nullptr : &InstrItins;
+    return Subtarget.inMips16Mode()
+               ? nullptr
+               : &getSubtargetImpl()->getInstrItineraryData();
   }
 
   MipsJITInfo *getJITInfo() override { return &JITInfo; }

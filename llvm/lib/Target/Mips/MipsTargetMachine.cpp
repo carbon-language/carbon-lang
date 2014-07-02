@@ -80,19 +80,16 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
 // offset from the stack/frame pointer, using StackGrowsUp enables
 // an easier handling.
 // Using CodeModel::Large enables different CALL behavior.
-MipsTargetMachine::
-MipsTargetMachine(const Target &T, StringRef TT,
-                  StringRef CPU, StringRef FS, const TargetOptions &Options,
-                  Reloc::Model RM, CodeModel::Model CM,
-                  CodeGenOpt::Level OL,
-                  bool isLittle)
-  : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-    Subtarget(TT, CPU, FS, isLittle, RM, this),
-    DL(computeDataLayout(Subtarget)),
-    InstrInfo(MipsInstrInfo::create(*this)),
-    FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
-    TLInfo(MipsTargetLowering::create(*this)), TSInfo(DL),
-    InstrItins(Subtarget.getInstrItineraryData()), JITInfo() {
+MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
+                                     StringRef CPU, StringRef FS,
+                                     const TargetOptions &Options,
+                                     Reloc::Model RM, CodeModel::Model CM,
+                                     CodeGenOpt::Level OL, bool isLittle)
+    : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
+      Subtarget(TT, CPU, FS, isLittle, RM, this),
+      DL(computeDataLayout(Subtarget)), InstrInfo(MipsInstrInfo::create(*this)),
+      FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
+      TLInfo(MipsTargetLowering::create(*this)), TSInfo(DL), JITInfo() {
   initAsmInfo();
 }
 
