@@ -84,18 +84,18 @@ class VectorLegalizer {
   ///
   /// This is essentially just bitcasting the operands to a different type and
   /// bitcasting the result back to the original type.
-  SDValue PromoteVectorOp(SDValue Op);
+  SDValue Promote(SDValue Op);
 
   /// \brief Implements [SU]INT_TO_FP vector promotion.
   ///
   /// This is a [zs]ext of the input operand to the next size up.
-  SDValue PromoteVectorOpINT_TO_FP(SDValue Op);
+  SDValue PromoteINT_TO_FP(SDValue Op);
 
   /// \brief Implements FP_TO_[SU]INT vector promotion of the result type.
   ///
   /// It is promoted to the next size up integer type.  The result is then
   /// truncated back to the original type.
-  SDValue PromoteVectorOpFP_TO_INT(SDValue Op, bool isSigned);
+  SDValue PromoteFP_TO_INT(SDValue Op, bool isSigned);
 
 public:
   /// \brief Begin legalizer the vector operations in the DAG.
@@ -284,19 +284,19 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     switch (Op.getOpcode()) {
     default:
       // "Promote" the operation by bitcasting
-      Result = PromoteVectorOp(Op);
+      Result = Promote(Op);
       Changed = true;
       break;
     case ISD::SINT_TO_FP:
     case ISD::UINT_TO_FP:
       // "Promote" the operation by extending the operand.
-      Result = PromoteVectorOpINT_TO_FP(Op);
+      Result = PromoteINT_TO_FP(Op);
       Changed = true;
       break;
     case ISD::FP_TO_UINT:
     case ISD::FP_TO_SINT:
       // Promote the operation by extending the operand.
-      Result = PromoteVectorOpFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
+      Result = PromoteFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
       Changed = true;
       break;
     }
@@ -342,7 +342,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   return Result;
 }
 
-SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
+SDValue VectorLegalizer::Promote(SDValue Op) {
   // Vector "promotion" is basically just bitcasting and doing the operation
   // in a different type.  For example, x86 promotes ISD::AND on v2i32 to
   // v1i64.
@@ -365,7 +365,7 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
   return DAG.getNode(ISD::BITCAST, dl, VT, Op);
 }
 
-SDValue VectorLegalizer::PromoteVectorOpINT_TO_FP(SDValue Op) {
+SDValue VectorLegalizer::PromoteINT_TO_FP(SDValue Op) {
   // INT_TO_FP operations may require the input operand be promoted even
   // when the type is otherwise legal.
   EVT VT = Op.getOperand(0).getValueType();
@@ -401,7 +401,7 @@ SDValue VectorLegalizer::PromoteVectorOpINT_TO_FP(SDValue Op) {
 // elements and then truncate the result.  This is different from the default
 // PromoteVector which uses bitcast to promote thus assumning that the
 // promoted vector type has the same overall size.
-SDValue VectorLegalizer::PromoteVectorOpFP_TO_INT(SDValue Op, bool isSigned) {
+SDValue VectorLegalizer::PromoteFP_TO_INT(SDValue Op, bool isSigned) {
   assert(Op.getNode()->getNumValues() == 1 &&
          "Can't promote a vector with multiple results!");
   EVT VT = Op.getValueType();
