@@ -693,22 +693,32 @@ defm VPERMI2PD : avx512_perm_3src<0x77, "vpermi2pd",  VR512, memopv8f64,
 
 multiclass avx512_perm_table_3src<bits<8> opc, string Suffix, RegisterClass RC,
                           PatFrag mem_frag, X86MemOperand x86memop,
-                          SDNode OpNode, ValueType OpVT, RegisterClass KRC> :
+                          SDNode OpNode, ValueType OpVT, RegisterClass KRC,
+                          ValueType MaskVT, RegisterClass MRC> :
         avx512_perm_3src<opc, "vpermt2"##Suffix, RC, mem_frag, x86memop, OpNode,
                          OpVT, KRC> {
   def : Pat<(OpVT (!cast<Intrinsic>("int_x86_avx512_mask_vpermt_"##Suffix##"_512")
                      VR512:$idx, VR512:$src1, VR512:$src2, -1)),
             (!cast<Instruction>(NAME#rr) VR512:$src1, VR512:$idx, VR512:$src2)>;
+
+  def : Pat<(OpVT (!cast<Intrinsic>("int_x86_avx512_mask_vpermt_"##Suffix##"_512")
+                     VR512:$idx, VR512:$src1, VR512:$src2, MRC:$mask)),
+            (!cast<Instruction>(NAME#rrk) VR512:$src1,
+              (MaskVT (COPY_TO_REGCLASS MRC:$mask, KRC)), VR512:$idx, VR512:$src2)>;
 }
 
 defm VPERMT2D  : avx512_perm_table_3src<0x7E, "d",  VR512, memopv16i32, i512mem,
-                               X86VPermv3, v16i32, VK16WM>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+                               X86VPermv3, v16i32, VK16WM, v16i1, GR16>,
+                 EVEX_V512, EVEX_CD8<32, CD8VF>;
 defm VPERMT2Q  : avx512_perm_table_3src<0x7E, "q",  VR512, memopv8i64, i512mem,
-                               X86VPermv3, v8i64, VK8WM>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+                               X86VPermv3, v8i64, VK8WM, v8i1, GR8>,
+                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
 defm VPERMT2PS : avx512_perm_table_3src<0x7F, "ps",  VR512, memopv16f32, i512mem,
-                               X86VPermv3, v16f32, VK16WM>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+                               X86VPermv3, v16f32, VK16WM, v16i1, GR16>,
+                 EVEX_V512, EVEX_CD8<32, CD8VF>;
 defm VPERMT2PD : avx512_perm_table_3src<0x7F, "pd",  VR512, memopv8f64, i512mem,
-                               X86VPermv3, v8f64, VK8WM>, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
+                               X86VPermv3, v8f64, VK8WM, v8i1, GR8>,
+                 EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - BLEND using mask
