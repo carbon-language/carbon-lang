@@ -334,12 +334,10 @@ SDValue VectorLegalizer::Promote(SDValue Op) {
   case ISD::UINT_TO_FP:
     // "Promote" the operation by extending the operand.
     return PromoteINT_TO_FP(Op);
-    break;
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
     // Promote the operation by extending the operand.
     return PromoteFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
-    break;
   }
 
   // The rest of the time, vector "promotion" is basically just bitcasting and
