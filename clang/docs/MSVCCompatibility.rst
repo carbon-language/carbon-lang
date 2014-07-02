@@ -19,7 +19,7 @@ MSVC.  There are multiple dimensions to compatibility.
 
 First, Clang attempts to be ABI-compatible, meaning that Clang-compiled code
 should be able to link against MSVC-compiled code successfully.  However, C++
-ABIs are particular large and complicated, and Clang's support for MSVC's C++
+ABIs are particularly large and complicated, and Clang's support for MSVC's C++
 ABI is a work in progress.  If you don't require MSVC ABI compatibility or don't
 want to use Microsoft's C and C++ runtimes, the mingw32 toolchain might be a
 better fit for your project.
@@ -82,7 +82,7 @@ The status of major ABI-impacting C++ features:
   finished, along with support for the ``/GR`` flag.
 
 * Exceptions and SEH: :none:`Unstarted`.  Clang can parse both constructs, but
-  does not know how to emit compatible handlers.  This depends on RTTI.
+  does not know how to emit compatible handlers.
 
 * Thread-safe initialization of local statics: :none:`Unstarted`.  We are ABI
   compatible with MSVC 2013, which does not support thread-safe local statics.
