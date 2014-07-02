@@ -101,6 +101,14 @@ a change from Phabricator.
 Committing a change
 -------------------
 
+Arcanist can manage the commit transparently. It will retrieve the description,
+reviewers, the ``Differential Revision``, etc from the review and commit it to the repository.
+
+::
+
+  arc commit --revision D<Revision>
+
+
 When committing an LLVM change that has been reviewed using
 Phabricator, the convention is for the commit message to end with the
 line:
