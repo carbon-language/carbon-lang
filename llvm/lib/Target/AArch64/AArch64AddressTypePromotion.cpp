@@ -384,7 +384,7 @@ void AArch64AddressTypePromotion::mergeSExts(ValueToInsts &ValToSExtendedUses,
       if (ToRemove.count(Inst))
         continue;
       bool inserted = false;
-      for (auto Pt : CurPts) {
+      for (auto &Pt : CurPts) {
         if (DT.dominates(Inst, Pt)) {
           DEBUG(dbgs() << "Replace all uses of:\n" << *Pt << "\nwith:\n"
                        << *Inst << '\n');
