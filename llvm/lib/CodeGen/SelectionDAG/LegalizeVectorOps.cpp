@@ -281,27 +281,11 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 
   switch (TLI.getOperationAction(Node->getOpcode(), QueryType)) {
   case TargetLowering::Promote:
-    switch (Op.getOpcode()) {
-    default:
-      // "Promote" the operation by bitcasting
-      Result = Promote(Op);
-      Changed = true;
-      break;
-    case ISD::SINT_TO_FP:
-    case ISD::UINT_TO_FP:
-      // "Promote" the operation by extending the operand.
-      Result = PromoteINT_TO_FP(Op);
-      Changed = true;
-      break;
-    case ISD::FP_TO_UINT:
-    case ISD::FP_TO_SINT:
-      // Promote the operation by extending the operand.
-      Result = PromoteFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
-      Changed = true;
-      break;
-    }
+    Result = Promote(Op);
+    Changed = true;
     break;
-  case TargetLowering::Legal: break;
+  case TargetLowering::Legal:
+    break;
   case TargetLowering::Custom: {
     SDValue Tmp1 = TLI.LowerOperation(Op, DAG);
     if (Tmp1.getNode()) {
@@ -343,9 +327,24 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
 }
 
 SDValue VectorLegalizer::Promote(SDValue Op) {
-  // Vector "promotion" is basically just bitcasting and doing the operation
-  // in a different type.  For example, x86 promotes ISD::AND on v2i32 to
-  // v1i64.
+  // For a few operations there is a specific concept for promotion based on
+  // the operand's type.
+  switch (Op.getOpcode()) {
+  case ISD::SINT_TO_FP:
+  case ISD::UINT_TO_FP:
+    // "Promote" the operation by extending the operand.
+    return PromoteINT_TO_FP(Op);
+    break;
+  case ISD::FP_TO_UINT:
+  case ISD::FP_TO_SINT:
+    // Promote the operation by extending the operand.
+    return PromoteFP_TO_INT(Op, Op->getOpcode() == ISD::FP_TO_SINT);
+    break;
+  }
+
+  // The rest of the time, vector "promotion" is basically just bitcasting and
+  // doing the operation in a different type.  For example, x86 promotes
+  // ISD::AND on v2i32 to v1i64.
   MVT VT = Op.getSimpleValueType();
   assert(Op.getNode()->getNumValues() == 1 &&
          "Can't promote a vector with multiple results!");
