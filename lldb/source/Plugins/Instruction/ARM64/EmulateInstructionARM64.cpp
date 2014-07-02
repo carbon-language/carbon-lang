@@ -188,7 +188,7 @@ EmulateInstructionARM64::SetTargetTriple (const ArchSpec &arch)
 }
     
 bool
-EmulateInstructionARM64::GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, RegisterInfo &reg_info)
+EmulateInstructionARM64::GetRegisterInfo (RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &reg_info)
 {
     if (reg_kind == eRegisterKindGeneric)
     {

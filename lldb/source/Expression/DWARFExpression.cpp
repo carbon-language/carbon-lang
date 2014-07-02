@@ -728,7 +728,7 @@ static bool
 ReadRegisterValueAsScalar
 (
     RegisterContext *reg_ctx,
-    uint32_t reg_kind,
+    lldb::RegisterKind reg_kind,
     uint32_t reg_num,
     Error *error_ptr,
     Value &value
@@ -1311,7 +1311,7 @@ DWARFExpression::Evaluate
     const DataExtractor& opcodes,
     const lldb::offset_t opcodes_offset,
     const lldb::offset_t opcodes_length,
-    const uint32_t reg_kind,
+    const lldb::RegisterKind reg_kind,
     const Value* initial_value_ptr,
     Value& result,
     Error *error_ptr

@@ -167,7 +167,7 @@ RegisterContextThreadMemory::CopyFromRegisterContext (lldb::RegisterContextSP re
 }
 
 uint32_t
-RegisterContextThreadMemory::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+RegisterContextThreadMemory::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     UpdateRegisterContext ();
     if (m_reg_ctx_sp)

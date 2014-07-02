@@ -75,7 +75,7 @@ EmulateInstruction::ReadRegister (const RegisterInfo *reg_info, RegisterValue& r
 }
 
 bool
-EmulateInstruction::ReadRegister (uint32_t reg_kind, uint32_t reg_num, RegisterValue& reg_value)
+EmulateInstruction::ReadRegister (lldb::RegisterKind reg_kind, uint32_t reg_num, RegisterValue& reg_value)
 {
     RegisterInfo reg_info;
     if (GetRegisterInfo(reg_kind, reg_num, reg_info))
@@ -84,7 +84,7 @@ EmulateInstruction::ReadRegister (uint32_t reg_kind, uint32_t reg_num, RegisterV
 }
 
 uint64_t
-EmulateInstruction::ReadRegisterUnsigned (uint32_t reg_kind, 
+EmulateInstruction::ReadRegisterUnsigned (lldb::RegisterKind reg_kind,
                                           uint32_t reg_num,
                                           uint64_t fail_value, 
                                           bool *success_ptr)
@@ -122,7 +122,7 @@ EmulateInstruction::WriteRegister (const Context &context,
 
 bool
 EmulateInstruction::WriteRegister (const Context &context, 
-                                   uint32_t reg_kind, 
+                                   lldb::RegisterKind reg_kind,
                                    uint32_t reg_num, 
                                    const RegisterValue& reg_value)
 {
@@ -135,7 +135,7 @@ EmulateInstruction::WriteRegister (const Context &context,
 
 bool
 EmulateInstruction::WriteRegisterUnsigned (const Context &context,
-                                           uint32_t reg_kind, 
+                                           lldb::RegisterKind reg_kind,
                                            uint32_t reg_num,
                                            uint64_t uint_value)
 {
@@ -392,7 +392,8 @@ EmulateInstruction::ReadRegisterDefault  (EmulateInstruction *instruction,
 {
     StreamFile strm (stdout, false);
     strm.Printf ("  Read Register (%s)\n", reg_info->name);
-    uint32_t reg_kind, reg_num;
+    lldb::RegisterKind reg_kind;
+    uint32_t reg_num;
     if (GetBestRegisterKindAndNumber (reg_info, reg_kind, reg_num))
         reg_value.SetUInt64((uint64_t)reg_kind << 24 | reg_num);
     else
@@ -608,7 +609,7 @@ EmulateInstruction::SetInstruction (const Opcode &opcode, const Address &inst_ad
 
 bool
 EmulateInstruction::GetBestRegisterKindAndNumber (const RegisterInfo *reg_info, 
-                                                  uint32_t &reg_kind,
+                                                  lldb::RegisterKind &reg_kind,
                                                   uint32_t &reg_num)
 {
     // Generic and DWARF should be the two most popular register kinds when
@@ -653,7 +654,8 @@ EmulateInstruction::GetBestRegisterKindAndNumber (const RegisterInfo *reg_info,
 uint32_t
 EmulateInstruction::GetInternalRegisterNumber (RegisterContext *reg_ctx, const RegisterInfo &reg_info)
 {
-    uint32_t reg_kind, reg_num;
+    lldb::RegisterKind reg_kind;
+    uint32_t reg_num;
     if (reg_ctx && GetBestRegisterKindAndNumber (&reg_info, reg_kind, reg_num))
         return reg_ctx->ConvertRegisterKindToRegisterNumber (reg_kind, reg_num);
     return LLDB_INVALID_REGNUM;

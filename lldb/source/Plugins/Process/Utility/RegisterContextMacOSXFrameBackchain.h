@@ -63,7 +63,7 @@ public:
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
 
     virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
     
 private:
     UnwindMacOSXFrameBackchain::Cursor m_cursor;

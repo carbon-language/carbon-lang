@@ -67,7 +67,7 @@ public:
     WriteAllRegisterValues (const lldb::DataBufferSP &data_sp);
 
     virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
 
     bool
     IsValid () const;
@@ -178,7 +178,7 @@ private:
     // Get the contents of a general purpose (address-size) register for this frame
     // (usually retrieved from the next frame)
     bool
-    ReadGPRValue (int register_kind, uint32_t regnum, lldb::addr_t &value);
+    ReadGPRValue (lldb::RegisterKind register_kind, uint32_t regnum, lldb::addr_t &value);
 
     lldb::UnwindPlanSP
     GetFastUnwindPlanForFrame ();

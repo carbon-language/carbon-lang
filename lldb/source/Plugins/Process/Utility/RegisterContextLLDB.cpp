@@ -218,7 +218,7 @@ RegisterContextLLDB::InitializeZerothFrame()
 
     UnwindPlan::RowSP active_row;
     int cfa_offset = 0;
-    int row_register_kind = -1;
+    lldb::RegisterKind row_register_kind = eRegisterKindGeneric;
     if (m_full_unwind_plan_sp && m_full_unwind_plan_sp->PlanValidAtAddress (m_current_pc))
     {
         active_row = m_full_unwind_plan_sp->GetRowForFunctionOffset (m_current_offset);
@@ -364,7 +364,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
             m_current_offset = -1;
             m_current_offset_backed_up_one = -1;
             addr_t cfa_regval = LLDB_INVALID_ADDRESS;
-            int row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
+            RegisterKind row_register_kind = m_full_unwind_plan_sp->GetRegisterKind ();
             UnwindPlan::RowSP row = m_full_unwind_plan_sp->GetRowForFunctionOffset(0);
             if (row.get())
             {
@@ -513,7 +513,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     UnwindPlan::RowSP active_row;
     int cfa_offset = 0;
-    int row_register_kind = -1;
+    RegisterKind row_register_kind = eRegisterKindGeneric;
 
     // Try to get by with just the fast UnwindPlan if possible - the full UnwindPlan may be expensive to get
     // (e.g. if we have to parse the entire eh_frame section of an ObjectFile for the first time.)
@@ -892,7 +892,7 @@ RegisterContextLLDB::GetRegisterSet (size_t reg_set)
 }
 
 uint32_t
-RegisterContextLLDB::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+RegisterContextLLDB::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     return m_thread.GetRegisterContext()->ConvertRegisterKindToRegisterNumber (kind, num);
 }
@@ -1418,7 +1418,7 @@ RegisterContextLLDB::TryFallbackUnwindPlan ()
 //  where frame 0 (the "next" frame) saved that and retrieve the value.
 
 bool
-RegisterContextLLDB::ReadGPRValue (int register_kind, uint32_t regnum, addr_t &value)
+RegisterContextLLDB::ReadGPRValue (lldb::RegisterKind register_kind, uint32_t regnum, addr_t &value)
 {
     if (!IsValid())
         return false;

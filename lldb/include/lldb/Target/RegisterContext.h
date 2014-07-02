@@ -88,7 +88,7 @@ public:
     CopyFromRegisterContext (lldb::RegisterContextSP context);
     
     virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num) = 0;
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num) = 0;
 
     //------------------------------------------------------------------
     // Subclasses can override these functions if desired
@@ -136,7 +136,7 @@ public:
     GetRegisterInfoByName (const char *reg_name, uint32_t start_idx = 0);
 
     const RegisterInfo *
-    GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num);
+    GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t reg_num);
 
     uint64_t
     GetPC (uint64_t fail_value = LLDB_INVALID_ADDRESS);
@@ -179,7 +179,7 @@ public:
     bool
     WriteRegisterFromUnsigned (const RegisterInfo *reg_info, uint64_t uval);
     bool
-    ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum);
+    ConvertBetweenRegisterKinds (lldb::RegisterKind source_rk, uint32_t source_regnum, lldb::RegisterKind target_rk, uint32_t& target_regnum);
 
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions

@@ -331,7 +331,7 @@ public:
     GetRegisterName(unsigned reg);
 
     uint32_t
-    ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num);
 
     //---------------------------------------------------------------------------
     // Note: prefer kernel definitions over user-land

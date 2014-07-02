@@ -82,7 +82,7 @@ RegisterContext::GetRegisterInfoByName (const char *reg_name, uint32_t start_idx
 }
 
 const RegisterInfo *
-RegisterContext::GetRegisterInfo (uint32_t kind, uint32_t num)
+RegisterContext::GetRegisterInfo (lldb::RegisterKind kind, uint32_t num)
 {
     const uint32_t reg_num = ConvertRegisterKindToRegisterNumber(kind, num);
     if (reg_num == LLDB_INVALID_REGNUM)
@@ -488,7 +488,7 @@ RegisterContext::CalculateExecutionContext (ExecutionContext &exe_ctx)
 
 
 bool
-RegisterContext::ConvertBetweenRegisterKinds (int source_rk, uint32_t source_regnum, int target_rk, uint32_t& target_regnum)
+RegisterContext::ConvertBetweenRegisterKinds (lldb::RegisterKind source_rk, uint32_t source_regnum, lldb::RegisterKind target_rk, uint32_t& target_regnum)
 {
     const uint32_t num_registers = GetRegisterCount();
     for (uint32_t reg = 0; reg < num_registers; ++reg)

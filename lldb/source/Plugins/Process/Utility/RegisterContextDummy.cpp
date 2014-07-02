@@ -129,7 +129,7 @@ RegisterContextDummy::WriteAllRegisterValues (const lldb::DataBufferSP &data_sp)
 }
 
 uint32_t
-RegisterContextDummy::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+RegisterContextDummy::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     if (kind == eRegisterKindGeneric && num == LLDB_REGNUM_GENERIC_PC)
         return 0;

@@ -66,7 +66,7 @@ public:
     CopyFromRegisterContext (lldb::RegisterContextSP context);
     
     virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
     
     //------------------------------------------------------------------
     // Subclasses can override these functions if desired

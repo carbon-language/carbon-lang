@@ -648,8 +648,8 @@ RegisterContextPOSIX_x86::IsRegisterSetAvailable(size_t set_index)
 // Used when parsing DWARF and EH frame information and any other
 // object file sections that contain register numbers in them. 
 uint32_t
-RegisterContextPOSIX_x86::ConvertRegisterKindToRegisterNumber(uint32_t kind,
-                                                                 uint32_t num)
+RegisterContextPOSIX_x86::ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind,
+                                                              uint32_t num)
 {
     const uint32_t num_regs = GetRegisterCount();
 

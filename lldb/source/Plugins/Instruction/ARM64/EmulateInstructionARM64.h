@@ -97,7 +97,7 @@ public:
     }
 
     virtual bool
-    GetRegisterInfo (uint32_t reg_kind, 
+    GetRegisterInfo (lldb::RegisterKind reg_kind,
                      uint32_t reg_num, 
                      lldb_private::RegisterInfo &reg_info);
 

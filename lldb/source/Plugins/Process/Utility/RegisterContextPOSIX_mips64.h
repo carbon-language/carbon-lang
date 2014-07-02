@@ -108,7 +108,7 @@ public:
     GetRegisterName(unsigned reg);
 
     uint32_t
-    ConvertRegisterKindToRegisterNumber(uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber(lldb::RegisterKind kind, uint32_t num);
 
 protected:
     uint64_t m_gpr_mips64[k_num_gpr_registers_mips64];         // general purpose registers.

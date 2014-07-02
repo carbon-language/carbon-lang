@@ -199,7 +199,7 @@ RegisterContextMacOSXFrameBackchain::WriteAllRegisterValues (const lldb::DataBuf
 
 
 uint32_t
-RegisterContextMacOSXFrameBackchain::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+RegisterContextMacOSXFrameBackchain::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     return m_thread.GetRegisterContext()->ConvertRegisterKindToRegisterNumber (kind, num);
 }

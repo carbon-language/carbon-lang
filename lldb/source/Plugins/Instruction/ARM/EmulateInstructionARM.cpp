@@ -267,7 +267,7 @@ EmulateInstructionARM::WriteBits32Unknown (int n)
 }
 
 bool
-EmulateInstructionARM::GetRegisterInfo (uint32_t reg_kind, uint32_t reg_num, RegisterInfo &reg_info)
+EmulateInstructionARM::GetRegisterInfo (lldb::RegisterKind reg_kind, uint32_t reg_num, RegisterInfo &reg_info)
 {
     if (reg_kind == eRegisterKindGeneric)
     {
@@ -13308,7 +13308,8 @@ EmulateInstructionARM::AddWithCarry (uint32_t x, uint32_t y, uint8_t carry_in)
 uint32_t
 EmulateInstructionARM::ReadCoreReg(uint32_t num, bool *success)
 {
-    uint32_t reg_kind, reg_num;
+    lldb::RegisterKind reg_kind;
+    uint32_t reg_num;
     switch (num)
     {
     case SP_REG:
@@ -13389,7 +13390,8 @@ EmulateInstructionARM::WriteCoreRegOptionalFlags (Context &context,
     }
     else
     {
-        uint32_t reg_kind, reg_num;
+        lldb::RegisterKind reg_kind;
+        uint32_t reg_num;
         switch (Rd)
         {
         case SP_REG:

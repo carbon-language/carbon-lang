@@ -904,7 +904,7 @@ RegisterContextDarwin_x86_64::WriteAllRegisterValues (const lldb::DataBufferSP &
 
 
 uint32_t
-RegisterContextDarwin_x86_64::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t reg)
+RegisterContextDarwin_x86_64::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t reg)
 {
     if (kind == eRegisterKindGeneric)
     {

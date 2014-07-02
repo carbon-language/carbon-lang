@@ -347,7 +347,7 @@ public:
               const DataExtractor& opcodes,
               const lldb::offset_t offset,
               const lldb::offset_t length,
-              const uint32_t reg_set,
+              const lldb::RegisterKind reg_set,
               const Value* initial_value_ptr,
               Value& result,
               Error *error_ptr);

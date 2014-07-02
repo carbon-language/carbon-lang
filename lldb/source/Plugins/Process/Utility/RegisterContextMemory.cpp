@@ -98,7 +98,7 @@ RegisterContextMemory::GetRegisterSet (size_t reg_set)
 }
 
 uint32_t
-RegisterContextMemory::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+RegisterContextMemory::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     return m_reg_infos.ConvertRegisterKindToRegisterNumber (kind, num);
 }

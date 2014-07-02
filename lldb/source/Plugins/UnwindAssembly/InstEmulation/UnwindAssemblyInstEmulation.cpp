@@ -358,7 +358,8 @@ UnwindAssemblyInstEmulation::GetPluginDescriptionStatic()
 uint64_t 
 UnwindAssemblyInstEmulation::MakeRegisterKindValuePair (const RegisterInfo &reg_info)
 {
-    uint32_t reg_kind, reg_num;
+    lldb::RegisterKind reg_kind;
+    uint32_t reg_num;
     if (EmulateInstruction::GetBestRegisterKindAndNumber (&reg_info, reg_kind, reg_num))
         return (uint64_t)reg_kind << 24 | reg_num;
     return 0ull;

@@ -868,7 +868,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
 
 
 uint32_t
-GDBRemoteRegisterContext::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num)
+GDBRemoteRegisterContext::ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num)
 {
     return m_reg_info.ConvertRegisterKindToRegisterNumber (kind, num);
 }

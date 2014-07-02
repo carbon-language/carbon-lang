@@ -970,7 +970,7 @@ RegisterContextDarwin_arm64::WriteAllRegisterValues (const lldb::DataBufferSP &d
 }
 
 uint32_t
-RegisterContextDarwin_arm64::ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t reg)
+RegisterContextDarwin_arm64::ConvertRegisterKindToRegisterNumber (RegisterKind kind, uint32_t reg)
 {
     if (kind == eRegisterKindGeneric)
     {

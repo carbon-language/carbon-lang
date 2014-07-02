@@ -98,7 +98,7 @@ public:
     WriteAllRegisterValues (const lldb_private::RegisterCheckpoint &reg_checkpoint);
 
     virtual uint32_t
-    ConvertRegisterKindToRegisterNumber (uint32_t kind, uint32_t num);
+    ConvertRegisterKindToRegisterNumber (lldb::RegisterKind kind, uint32_t num);
 
 protected:
     friend class ThreadGDBRemote;
