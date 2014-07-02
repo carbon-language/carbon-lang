@@ -1896,6 +1896,9 @@ public:
     return getType()->getAs<FunctionType>()->getReturnType();
   }
 
+  /// \brief Attempt to compute an informative source range covering the
+  /// function return type. This may omit qualifiers and other information with
+  /// limited representation in the AST.
   SourceRange getReturnTypeSourceRange() const;
 
   /// \brief Determine the type of an expression that calls this function.

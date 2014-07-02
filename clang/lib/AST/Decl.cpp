@@ -2691,17 +2691,20 @@ SourceRange FunctionDecl::getReturnTypeSourceRange() const {
   const TypeSourceInfo *TSI = getTypeSourceInfo();
   if (!TSI)
     return SourceRange();
-
-  TypeLoc TL = TSI->getTypeLoc();
-  FunctionTypeLoc FunctionTL = TL.getAs<FunctionTypeLoc>();
-  if (!FunctionTL)
+  FunctionTypeLoc FTL =
+      TSI->getTypeLoc().IgnoreParens().getAs<FunctionTypeLoc>();
+  if (!FTL)
     return SourceRange();
 
-  TypeLoc ResultTL = FunctionTL.getReturnLoc();
-  if (ResultTL.getUnqualifiedLoc().getAs<BuiltinTypeLoc>())
-    return ResultTL.getSourceRange();
+  // Skip self-referential return types.
+  const SourceManager &SM = getASTContext().getSourceManager();
+  SourceRange RTRange = FTL.getReturnLoc().getSourceRange();
+  SourceLocation Boundary = getNameInfo().getLocStart();
+  if (RTRange.isInvalid() || Boundary.isInvalid() ||
+      !SM.isBeforeInTranslationUnit(RTRange.getEnd(), Boundary))
+    return SourceRange();
 
-  return SourceRange();
+  return RTRange;
 }
 
 /// \brief For an inline function definition in C, or for a gnu_inline function
