@@ -78,7 +78,7 @@ public:
             bool notify);
 
     bool
-    Remove (off_t index, bool notify);
+    Remove (size_t index, bool notify);
 
     bool
     Remove (const ConstString &path, bool notify);

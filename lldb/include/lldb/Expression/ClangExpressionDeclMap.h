@@ -167,7 +167,7 @@ public:
                       const ConstString &name,
                       llvm::Value *value,
                       size_t size,
-                      off_t alignment);
+                      lldb::offset_t alignment);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Finalize the struct, laying out the position 
@@ -198,7 +198,7 @@ public:
     bool 
     GetStructInfo (uint32_t &num_elements,
                    size_t &size,
-                   off_t &alignment);
+                   lldb::offset_t &alignment);
     
     //------------------------------------------------------------------
     /// [Used by IRForTarget] Get specific information about one field
@@ -234,7 +234,7 @@ public:
     bool 
     GetStructElement (const clang::NamedDecl *&decl,
                       llvm::Value *&value,
-                      off_t &offset,
+                      lldb::offset_t &offset,
                       ConstString &name,
                       uint32_t index);
     
@@ -461,7 +461,7 @@ private:
         {
         }
         
-        off_t                       m_struct_alignment;         ///< The alignment of the struct in bytes.
+        lldb::offset_t              m_struct_alignment;         ///< The alignment of the struct in bytes.
         size_t                      m_struct_size;              ///< The size of the struct in bytes.
         bool                        m_struct_laid_out;          ///< True if the struct has been laid out and the layout is valid (that is, no new fields have been added since).
         ConstString                 m_result_name;              ///< The name of the result variable ($1, for example)

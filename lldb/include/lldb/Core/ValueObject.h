@@ -468,7 +468,7 @@ public:
         return true;
     }
 
-    virtual off_t
+    virtual lldb::offset_t
     GetByteOffset()
     {
         return 0;

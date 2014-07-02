@@ -108,7 +108,7 @@ public:
     
     virtual size_t
     ReadSectionData (const lldb_private::Section *section,
-                     off_t section_offset,
+                     lldb::offset_t section_offset,
                      void *dst,
                      size_t dst_len) const;
     virtual size_t

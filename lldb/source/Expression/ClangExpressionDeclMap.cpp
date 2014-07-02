@@ -304,7 +304,7 @@ ClangExpressionDeclMap::AddValueToStruct
     const ConstString &name,
     llvm::Value *value,
     size_t size,
-    off_t alignment
+    lldb::offset_t alignment
 )
 {
     assert (m_struct_vars.get());
@@ -412,7 +412,7 @@ bool ClangExpressionDeclMap::GetStructInfo
 (
     uint32_t &num_elements,
     size_t &size,
-    off_t &alignment
+    lldb::offset_t &alignment
 )
 {
     assert (m_struct_vars.get());
@@ -432,7 +432,7 @@ ClangExpressionDeclMap::GetStructElement
 (
     const NamedDecl *&decl,
     llvm::Value *&value,
-    off_t &offset,
+    lldb::offset_t &offset,
     ConstString &name,
     uint32_t index
 )

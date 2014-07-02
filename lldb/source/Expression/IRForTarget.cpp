@@ -1519,11 +1519,11 @@ IRForTarget::MaybeHandleVariable (Value *llvm_value_ptr)
         }
         
         const uint64_t value_size = clang_type.GetByteSize();
-        off_t value_alignment = (clang_type.GetTypeBitAlign() + 7ull) / 8ull;
+        lldb::offset_t value_alignment = (clang_type.GetTypeBitAlign() + 7ull) / 8ull;
         
         if (log)
         {
-            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRId64 "]",
+            log->Printf("Type of \"%s\" is [clang \"%s\", llvm \"%s\"] [size %" PRIu64 ", align %" PRIu64 "]",
                         name.c_str(), 
                         clang_type.GetQualType().getAsString().c_str(),
                         PrintType(value_type).c_str(),
@@ -2258,7 +2258,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
     uint32_t element_index;
     
     size_t size;
-    off_t alignment;
+    lldb::offset_t alignment;
     
     if (!m_decl_map->GetStructInfo (num_elements, size, alignment))
         return false;
@@ -2359,7 +2359,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
     {
         const clang::NamedDecl *decl = NULL;
         Value *value = NULL;
-        off_t offset;
+        lldb::offset_t offset;
         lldb_private::ConstString name;
         
         if (!m_decl_map->GetStructElement (decl, value, offset, name, element_index))
@@ -2371,7 +2371,7 @@ IRForTarget::ReplaceVariables (Function &llvm_function)
         }
             
         if (log)
-            log->Printf("  \"%s\" (\"%s\") placed at %" PRId64,
+            log->Printf("  \"%s\" (\"%s\") placed at %" PRIu64,
                         name.GetCString(),
                         decl->getNameAsString().c_str(),
                         offset);

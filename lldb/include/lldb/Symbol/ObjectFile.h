@@ -798,14 +798,14 @@ public:
                 size_t byte_size);
 
     size_t
-    GetData (off_t offset, size_t length, DataExtractor &data) const;
+    GetData (lldb::offset_t offset, size_t length, DataExtractor &data) const;
     
     size_t
-    CopyData (off_t offset, size_t length, void *dst) const;
+    CopyData (lldb::offset_t offset, size_t length, void *dst) const;
     
     virtual size_t
     ReadSectionData (const Section *section, 
-                     off_t section_offset, 
+                     lldb::offset_t section_offset, 
                      void *dst, 
                      size_t dst_len) const;
     virtual size_t

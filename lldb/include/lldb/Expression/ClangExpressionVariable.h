@@ -162,9 +162,9 @@ public:
         {
         }
 
-        off_t   m_alignment;    ///< The required alignment of the variable, in bytes
-        size_t  m_size;         ///< The space required for the variable, in bytes
-        off_t   m_offset;       ///< The offset of the variable in the struct, in bytes
+        lldb::offset_t   m_alignment; ///< The required alignment of the variable, in bytes
+        size_t  m_size;               ///< The space required for the variable, in bytes
+        lldb::offset_t   m_offset;    ///< The offset of the variable in the struct, in bytes
     };
     
 private:

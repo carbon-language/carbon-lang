@@ -132,9 +132,9 @@ PathMappingList::Replace (const ConstString &path,
 }
 
 bool
-PathMappingList::Remove (off_t index, bool notify)
+PathMappingList::Remove (size_t index, bool notify)
 {
-    if (static_cast<size_t>(index) >= m_pairs.size())
+    if (index >= m_pairs.size())
         return false;
 
     ++m_mod_id;

@@ -88,7 +88,7 @@ public:
     Module (const FileSpec& file_spec,
             const ArchSpec& arch,
             const ConstString *object_name = NULL,
-            off_t object_offset = 0,
+            lldb::offset_t object_offset = 0,
             const TimeValue *object_mod_time_ptr = NULL);
 
     Module (const ModuleSpec &module_spec);

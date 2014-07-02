@@ -439,7 +439,7 @@ ObjectFile::ReadMemory (const ProcessSP &process_sp, lldb::addr_t addr, size_t b
 }
 
 size_t
-ObjectFile::GetData (off_t offset, size_t length, DataExtractor &data) const
+ObjectFile::GetData (lldb::offset_t offset, size_t length, DataExtractor &data) const
 {
     // The entire file has already been mmap'ed into m_data, so just copy from there
     // as the back mmap buffer will be shared with shared pointers.
@@ -447,7 +447,7 @@ ObjectFile::GetData (off_t offset, size_t length, DataExtractor &data) const
 }
 
 size_t
-ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
+ObjectFile::CopyData (lldb::offset_t offset, size_t length, void *dst) const
 {
     // The entire file has already been mmap'ed into m_data, so just copy from there
     // Note that the data remains in target byte order.
@@ -456,7 +456,7 @@ ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
 
 
 size_t
-ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void *dst, size_t dst_len) const
+ObjectFile::ReadSectionData (const Section *section, lldb::offset_t section_offset, void *dst, size_t dst_len) const
 {
     // If some other objectfile owns this data, pass this to them.
     if (section->GetObjectFile() != this)
@@ -475,11 +475,11 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
     }
     else
     {
-        const uint64_t section_file_size = section->GetFileSize();
-        if (section_offset < static_cast<off_t>(section_file_size))
+        const lldb::offset_t section_file_size = section->GetFileSize();
+        if (section_offset < section_file_size)
         {
-            const uint64_t section_bytes_left = section_file_size - section_offset;
-            uint64_t section_dst_len = dst_len;
+            const size_t section_bytes_left = section_file_size - section_offset;
+            size_t section_dst_len = dst_len;
             if (section_dst_len > section_bytes_left)
                 section_dst_len = section_bytes_left;
             return CopyData (section->GetFileOffset() + section_offset, section_dst_len, dst);

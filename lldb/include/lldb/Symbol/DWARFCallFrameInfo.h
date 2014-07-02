@@ -100,7 +100,7 @@ private:
 
     typedef std::shared_ptr<CIE> CIESP;
 
-    typedef std::map<off_t, CIESP> cie_map_t;
+    typedef std::map<dw_offset_t, CIESP> cie_map_t;
 
     // Start address (file address), size, offset of FDE location
     // used for finding an FDE for a given File address; the start address field is

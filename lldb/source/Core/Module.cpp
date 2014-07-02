@@ -235,7 +235,7 @@ Module::Module (const ModuleSpec &module_spec) :
 Module::Module(const FileSpec& file_spec, 
                const ArchSpec& arch, 
                const ConstString *object_name, 
-               off_t object_offset,
+               lldb::offset_t object_offset,
                const TimeValue *object_mod_time_ptr) :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_mod_time (file_spec.GetModificationTime()),

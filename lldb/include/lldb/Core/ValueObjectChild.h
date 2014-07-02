@@ -32,7 +32,7 @@ public:
         return m_byte_size;
     }
 
-    virtual off_t
+    virtual lldb::offset_t
     GetByteOffset()
     {
         return m_byte_offset;
