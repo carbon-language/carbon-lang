@@ -56,6 +56,16 @@ define <8 x double> @test5(<8 x double> %a, <8 x double> %b) nounwind {
   ret <8 x double> %c
 }
 
+; The reg variant of vpermt2 with a writemask
+; CHECK-LABEL: test5m:
+; CHECK: vpermt2pd {{.* {%k[1-7]} {z}}}
+define <8 x double> @test5m(<8 x double> %a, <8 x double> %b, i8 %mask) nounwind {
+  %c = shufflevector <8 x double> %a, <8 x double> %b, <8 x i32> <i32 2, i32 8, i32 0, i32 1, i32 6, i32 10, i32 4, i32 5>
+  %m = bitcast i8 %mask to <8 x i1>
+  %res = select <8 x i1> %m, <8 x double> %c, <8 x double> zeroinitializer
+  ret <8 x double> %res
+}
+
 ; CHECK-LABEL: test6:
 ; CHECK: vpermq $30
 ; CHECK: ret
@@ -72,6 +82,27 @@ define <8 x i64> @test7(<8 x i64> %a, <8 x i64> %b) nounwind {
   ret <8 x i64> %c
 }
 
+; The reg variant of vpermt2 with a writemask
+; CHECK-LABEL: test7m:
+; CHECK: vpermt2q {{.* {%k[1-7]} {z}}}
+define <8 x i64> @test7m(<8 x i64> %a, <8 x i64> %b, i8 %mask) nounwind {
+  %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 8, i32 0, i32 1, i32 6, i32 10, i32 4, i32 5>
+  %m = bitcast i8 %mask to <8 x i1>
+  %res = select <8 x i1> %m, <8 x i64> %c, <8 x i64> zeroinitializer
+  ret <8 x i64> %res
+}
+
+; The mem variant of vpermt2 with a writemask
+; CHECK-LABEL: test7mm:
+; CHECK: vpermt2q {{\(.*\).* {%k[1-7]} {z}}}
+define <8 x i64> @test7mm(<8 x i64> %a, <8 x i64> *%pb, i8 %mask) nounwind {
+  %b = load <8 x i64>* %pb
+  %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 8, i32 0, i32 1, i32 6, i32 10, i32 4, i32 5>
+  %m = bitcast i8 %mask to <8 x i1>
+  %res = select <8 x i1> %m, <8 x i64> %c, <8 x i64> zeroinitializer
+  ret <8 x i64> %res
+}
+
 ; CHECK-LABEL: test8:
 ; CHECK: vpermt2d
 ; CHECK: ret
@@ -80,12 +111,43 @@ define <16 x i32> @test8(<16 x i32> %a, <16 x i32> %b) nounwind {
   ret <16 x i32> %c
 }
 
+; The reg variant of vpermt2 with a writemask
+; CHECK-LABEL: test8m:
+; CHECK: vpermt2d {{.* {%k[1-7]} {z}}}
+define <16 x i32> @test8m(<16 x i32> %a, <16 x i32> %b, i16 %mask) nounwind {
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
+  %m = bitcast i16 %mask to <16 x i1>
+  %res = select <16 x i1> %m, <16 x i32> %c, <16 x i32> zeroinitializer
+  ret <16 x i32> %res
+}
+
+; The mem variant of vpermt2 with a writemask
+; CHECK-LABEL: test8mm:
+; CHECK: vpermt2d {{\(.*\).* {%k[1-7]} {z}}}
+define <16 x i32> @test8mm(<16 x i32> %a, <16 x i32> *%pb, i16 %mask) nounwind {
+  %b = load <16 x i32> * %pb
+  %c = shufflevector <16 x i32> %a, <16 x i32> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
+  %m = bitcast i16 %mask to <16 x i1>
+  %res = select <16 x i1> %m, <16 x i32> %c, <16 x i32> zeroinitializer
+  ret <16 x i32> %res
+}
+
 ; CHECK-LABEL: test9:
 ; CHECK: vpermt2ps
 ; CHECK: ret
 define <16 x float> @test9(<16 x float> %a, <16 x float> %b) nounwind {
   %c = shufflevector <16 x float> %a, <16 x float> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
   ret <16 x float> %c
+}
+
+; The reg variant of vpermt2 with a writemask
+; CHECK-LABEL: test9m:
+; CHECK: vpermt2ps {{.*}} {%k{{.}}} {z}
+define <16 x float> @test9m(<16 x float> %a, <16 x float> %b, i16 %mask) nounwind {
+  %c = shufflevector <16 x float> %a, <16 x float> %b, <16 x i32> <i32 15, i32 31, i32 14, i32 22, i32 13, i32 29, i32 4, i32 28, i32 11, i32 27, i32 10, i32 26, i32 9, i32 25, i32 8, i32 24>
+  %m = bitcast i16 %mask to <16 x i1>
+  %res = select <16 x i1> %m, <16 x float> %c, <16 x float> zeroinitializer
+  ret <16 x float> %res
 }
 
 ; CHECK-LABEL: test10:
