@@ -2128,6 +2128,10 @@ def err_attribute_dllimport_static_field_definition : Error<
 def warn_attribute_dllimport_static_field_definition : Warning<
   "definition of dllimport static field">,
   InGroup<DiagGroup<"dllimport-static-field-def">>;
+def warn_invalid_initializer_from_system_header : Warning<
+  "invalid constructor form class in system header, should not be explicit">,
+  InGroup<DiagGroup<"invalid-initializer-from-system-header">>;
+def note_used_in_initialization_here : Note<"used in initialization here">;
 def err_attribute_dll_member_of_dll_class : Error<
   "attribute %q0 cannot be applied to member of %q1 class">;
 def warn_attribute_dll_instantiated_base_class : Warning<

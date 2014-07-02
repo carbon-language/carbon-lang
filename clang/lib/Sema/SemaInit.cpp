@@ -353,8 +353,9 @@ ExprResult InitListChecker::PerformEmptyInit(Sema &SemaRef,
   //   If there are fewer initializer-clauses in the list than there are
   //   members in the aggregate, then each member not explicitly initialized
   //   ...
-  if (SemaRef.getLangOpts().CPlusPlus11 &&
-      Entity.getType()->getBaseElementTypeUnsafe()->isRecordType()) {
+  bool EmptyInitList = SemaRef.getLangOpts().CPlusPlus11 &&
+      Entity.getType()->getBaseElementTypeUnsafe()->isRecordType();
+  if (EmptyInitList) {
     // C++1y / DR1070:
     //   shall be initialized [...] from an empty initializer list.
     //
@@ -376,6 +377,56 @@ ExprResult InitListChecker::PerformEmptyInit(Sema &SemaRef,
   }
 
   InitializationSequence InitSeq(SemaRef, Entity, Kind, SubInit);
+  // libstdc++4.6 marks the vector default constructor as explicit in
+  // _GLIBCXX_DEBUG mode, so recover using the C++03 logic in that case.
+  // stlport does so too. Look for std::__debug for libstdc++, and for
+  // std:: for stlport.  This is effectively a compiler-side implementation of
+  // LWG2193.
+  if (!InitSeq && EmptyInitList && InitSeq.getFailureKind() ==
+          InitializationSequence::FK_ExplicitConstructor) {
+    OverloadCandidateSet::iterator Best;
+    OverloadingResult O =
+        InitSeq.getFailedCandidateSet()
+            .BestViableFunction(SemaRef, Kind.getLocation(), Best);
+    (void)O;
+    assert(O == OR_Success && "Inconsistent overload resolution");
+    CXXConstructorDecl *CtorDecl = cast<CXXConstructorDecl>(Best->Function);
+    CXXRecordDecl *R = CtorDecl->getParent();
+
+    if (CtorDecl->getMinRequiredArguments() == 0 &&
+        CtorDecl->isExplicit() && R->getDeclName() &&
+        SemaRef.SourceMgr.isInSystemHeader(CtorDecl->getLocation())) {
+
+
+      bool IsInStd = false;
+      for (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(R->getDeclContext());
+           ND && !IsInStd;
+	   ND = dyn_cast<NamespaceDecl>(ND->getLexicalParent())) {
+        if (SemaRef.getStdNamespace()->InEnclosingNamespaceSetOf(ND))
+          IsInStd = true;
+      }
+
+      if (IsInStd && llvm::StringSwitch<bool>(R->getName()) 
+              .Cases("basic_string", "deque", "forward_list", true)
+              .Cases("list", "map", "multimap", "multiset", true)
+              .Cases("priority_queue", "queue", "set", "stack", true)
+              .Cases("unordered_map", "unordered_set", "vector", true)
+              .Default(false)) {
+        InitSeq.InitializeFrom(
+            SemaRef, Entity,
+            InitializationKind::CreateValue(Loc, Loc, Loc, true),
+            MultiExprArg(), /*TopLevelOfInitList=*/false);
+        // Emit a warning for this.  System header warnings aren't shown
+        // by default, but people working on system headers should see it.
+        if (!VerifyOnly) {
+          SemaRef.Diag(CtorDecl->getLocation(),
+                       diag::warn_invalid_initializer_from_system_header);
+          SemaRef.Diag(Entity.getDecl()->getLocation(),
+                       diag::note_used_in_initialization_here);
+        }
+      }
+    }
+  }
   if (!InitSeq) {
     if (!VerifyOnly) {
       InitSeq.Diagnose(SemaRef, Entity, Kind, SubInit);
