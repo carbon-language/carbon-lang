@@ -5409,6 +5409,10 @@
 					DebugSymbols,
 					"-framework",
 					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -5468,6 +5472,10 @@
 					DebugSymbols,
 					"-framework",
 					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -5802,6 +5810,10 @@
 					DebugSymbols,
 					"-framework",
 					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
@@ -6608,6 +6620,10 @@
 					DebugSymbols,
 					"-framework",
 					Security,
+					"-framework",
+					CoreServices,
+					"-framework",
+					ApplicationServices,
 				);
 				"OTHER_LDFLAGS[sdk=iphoneos*][arch=*]" = (
 					"-lllvmclang",
