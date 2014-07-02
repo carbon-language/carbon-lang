@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCModuleYAML.h"
+#include "llvm/MC/MCAnalysis/MCModuleYAML.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/MC/MCAtom.h"
-#include "llvm/MC/MCFunction.h"
+#include "llvm/MC/MCAnalysis/MCAtom.h"
+#include "llvm/MC/MCAnalysis/MCFunction.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Object/YAML.h"

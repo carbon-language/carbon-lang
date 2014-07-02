@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCFunction.h"
-#include "llvm/MC/MCAtom.h"
-#include "llvm/MC/MCModule.h"
+#include "llvm/MC/MCAnalysis/MCFunction.h"
+#include "llvm/MC/MCAnalysis/MCAtom.h"
+#include "llvm/MC/MCAnalysis/MCModule.h"
 #include <algorithm>
 
 using namespace llvm;

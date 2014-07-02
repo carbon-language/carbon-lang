@@ -17,7 +17,7 @@
 #define LLVM_MC_MCMODULEYAML_H
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/MC/MCModule.h"
+#include "llvm/MC/MCAnalysis/MCModule.h"
 #include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
