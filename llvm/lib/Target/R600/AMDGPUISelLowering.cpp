@@ -556,6 +556,9 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   case ISD::LOAD: {
     SDNode *Node = LowerLOAD(SDValue(N, 0), DAG).getNode();
+    if (!Node)
+      return;
+
     Results.push_back(SDValue(Node, 0));
     Results.push_back(SDValue(Node, 1));
     // XXX: LLVM seems not to replace Chain Value inside CustomWidenLowerNode
@@ -564,8 +567,9 @@ void AMDGPUTargetLowering::ReplaceNodeResults(SDNode *N,
     return;
   }
   case ISD::STORE: {
-    SDNode *Node = LowerSTORE(SDValue(N, 0), DAG).getNode();
-    Results.push_back(SDValue(Node, 0));
+    SDValue Lowered = LowerSTORE(SDValue(N, 0), DAG);
+    if (Lowered.getNode())
+      Results.push_back(Lowered);
     return;
   }
   default:
