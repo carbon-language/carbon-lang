@@ -85,3 +85,13 @@
 // RUN:   | FileCheck -check-prefix=MIPS-ARCH-64R2 %s
 // MIPS-ARCH-64R2: "-target-cpu" "mips64r2"
 // MIPS-ARCH-64R2: "-target-abi" "n64"
+//
+// RUN: not %clang -target mips64-linux-gnu -c %s \
+// RUN:        -march=mips32 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-6432 %s
+// MIPS-ARCH-6432: error: unknown target CPU 'mips32'
+//
+// RUN: not %clang -target mips-linux-gnu -c %s \
+// RUN:        -march=unknown 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-UNKNOWN %s
+// MIPS-ARCH-UNKNOWN: error: unknown target CPU 'unknown'

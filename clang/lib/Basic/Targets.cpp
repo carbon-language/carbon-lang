@@ -5305,8 +5305,17 @@ public:
 
   StringRef getABI() const override { return ABI; }
   bool setCPU(const std::string &Name) override {
+    bool IsMips32 = getTriple().getArch() == llvm::Triple::mips ||
+                    getTriple().getArch() == llvm::Triple::mipsel;
     CPU = Name;
-    return true;
+    return llvm::StringSwitch<bool>(Name)
+        .Case("mips32", IsMips32)
+        .Case("mips32r2", IsMips32)
+        .Case("mips32r6", IsMips32)
+        .Case("mips64", true)
+        .Case("mips64r2", true)
+        .Case("mips64r6", true)
+        .Default(false);
   }
   const std::string& getCPU() const { return CPU; }
   void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
