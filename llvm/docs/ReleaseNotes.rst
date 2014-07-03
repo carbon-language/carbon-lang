@@ -50,7 +50,8 @@ Non-comprehensive list of changes in this release
   the ``-no-integrated-as`` option,
 
 * llvm-ar now handles IR files like regular object files. In particular, a
-  regular symbol table is created for symbols defined in IR files.
+  regular symbol table is created for symbols defined in IR files, including
+  those in file scope inline assembly.
 
 * LLVM now always uses cfi directives for producing most stack
   unwinding information.
