@@ -25,6 +25,7 @@ namespace object {
 class IRObjectFile : public SymbolicFile {
   std::unique_ptr<Module> M;
   std::unique_ptr<Mangler> Mang;
+  std::vector<std::pair<std::string, uint32_t>> AsmSymbols;
 
 public:
   IRObjectFile(std::unique_ptr<MemoryBuffer> Object, std::error_code &EC,
@@ -34,7 +35,7 @@ public:
   std::error_code printSymbolName(raw_ostream &OS,
                                   DataRefImpl Symb) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
-  const GlobalValue &getSymbolGV(DataRefImpl Symb) const;
+  const GlobalValue *getSymbolGV(DataRefImpl Symb) const;
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
 

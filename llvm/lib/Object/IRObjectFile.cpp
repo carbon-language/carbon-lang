@@ -17,7 +17,17 @@
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Object/IRObjectFile.h"
+#include "llvm/Object/RecordStreamer.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/MC/MCTargetAsmParser.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 using namespace object;
@@ -37,12 +47,85 @@ IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
     return;
 
   Mang.reset(new Mangler(DL));
+
+  const std::string &InlineAsm = M->getModuleInlineAsm();
+  if (InlineAsm.empty())
+    return;
+
+  StringRef Triple = M->getTargetTriple();
+  std::string Err;
+  const Target *T = TargetRegistry::lookupTarget(Triple, Err);
+  if (!T)
+    return;
+
+  std::unique_ptr<MCRegisterInfo> MRI(T->createMCRegInfo(Triple));
+  if (!MRI)
+    return;
+
+  std::unique_ptr<MCAsmInfo> MAI(T->createMCAsmInfo(*MRI, Triple));
+  if (!MAI)
+    return;
+
+  std::unique_ptr<MCSubtargetInfo> STI(
+      T->createMCSubtargetInfo(Triple, "", ""));
+  if (!STI)
+    return;
+
+  std::unique_ptr<MCInstrInfo> MCII(T->createMCInstrInfo());
+  if (!MCII)
+    return;
+
+  MCObjectFileInfo MOFI;
+  MCContext MCCtx(MAI.get(), MRI.get(), &MOFI);
+  MOFI.InitMCObjectFileInfo(Triple, Reloc::Default, CodeModel::Default, MCCtx);
+  std::unique_ptr<RecordStreamer> Streamer(new RecordStreamer(MCCtx));
+
+  std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(InlineAsm));
+  SourceMgr SrcMgr;
+  SrcMgr.AddNewSourceBuffer(Buffer.release(), SMLoc());
+  std::unique_ptr<MCAsmParser> Parser(
+      createMCAsmParser(SrcMgr, MCCtx, *Streamer, *MAI));
+
+  MCTargetOptions MCOptions;
+  std::unique_ptr<MCTargetAsmParser> TAP(
+      T->createMCAsmParser(*STI, *Parser, *MCII, MCOptions));
+  if (!TAP)
+    return;
+
+  Parser->setTargetParser(*TAP);
+  if (Parser->Run(false))
+    return;
+
+  for (auto &KV : *Streamer) {
+    StringRef Key = KV.first();
+    RecordStreamer::State Value = KV.second;
+    uint32_t Res = BasicSymbolRef::SF_None;
+    switch (Value) {
+    case RecordStreamer::NeverSeen:
+      llvm_unreachable("foo");
+    case RecordStreamer::DefinedGlobal:
+      Res |= BasicSymbolRef::SF_Global;
+      break;
+    case RecordStreamer::Defined:
+      break;
+    case RecordStreamer::Global:
+    case RecordStreamer::Used:
+      Res |= BasicSymbolRef::SF_Undefined;
+      Res |= BasicSymbolRef::SF_Global;
+      break;
+    }
+    AsmSymbols.push_back(
+        std::make_pair<std::string, uint32_t>(Key, std::move(Res)));
+  }
 }
 
 IRObjectFile::~IRObjectFile() { M->getMaterializer()->releaseBuffer(); }
 
-static const GlobalValue &getGV(DataRefImpl &Symb) {
-  return *reinterpret_cast<GlobalValue*>(Symb.p & ~uintptr_t(3));
+static const GlobalValue *getGV(DataRefImpl &Symb) {
+  if ((Symb.p & 3) == 3)
+    return nullptr;
+
+  return reinterpret_cast<GlobalValue*>(Symb.p & ~uintptr_t(3));
 }
 
 static uintptr_t skipEmpty(Module::const_alias_iterator I, const Module &M) {
@@ -66,31 +149,43 @@ static uintptr_t skipEmpty(Module::const_iterator I, const Module &M) {
   return reinterpret_cast<uintptr_t>(GV) | 0;
 }
 
+static unsigned getAsmSymIndex(DataRefImpl Symb) {
+  assert((Symb.p & uintptr_t(3)) == 3);
+  uintptr_t Index = Symb.p & ~uintptr_t(3);
+  Index >>= 2;
+  return Index;
+}
+
 void IRObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
-  const GlobalValue *GV = &getGV(Symb);
-  const Module &M = *GV->getParent();
+  const GlobalValue *GV = getGV(Symb);
   uintptr_t Res;
+
   switch (Symb.p & 3) {
   case 0: {
     Module::const_iterator Iter(static_cast<const Function*>(GV));
     ++Iter;
-    Res = skipEmpty(Iter, M);
+    Res = skipEmpty(Iter, *M);
     break;
   }
   case 1: {
     Module::const_global_iterator Iter(static_cast<const GlobalVariable*>(GV));
     ++Iter;
-    Res = skipEmpty(Iter, M);
+    Res = skipEmpty(Iter, *M);
     break;
   }
   case 2: {
     Module::const_alias_iterator Iter(static_cast<const GlobalAlias*>(GV));
     ++Iter;
-    Res = skipEmpty(Iter, M);
+    Res = skipEmpty(Iter, *M);
     break;
   }
-  case 3:
-    llvm_unreachable("Invalid symbol reference");
+  case 3: {
+    unsigned Index = getAsmSymIndex(Symb);
+    assert(Index < AsmSymbols.size());
+    ++Index;
+    Res = (Index << 2) | 3;
+    break;
+  }
   }
 
   Symb.p = Res;
@@ -98,12 +193,18 @@ void IRObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
 
 std::error_code IRObjectFile::printSymbolName(raw_ostream &OS,
                                               DataRefImpl Symb) const {
-  const GlobalValue &GV = getGV(Symb);
+  const GlobalValue *GV = getGV(Symb);
+  if (!GV) {
+    unsigned Index = getAsmSymIndex(Symb);
+    assert(Index <= AsmSymbols.size());
+    OS << AsmSymbols[Index].first;
+    return object_error::success;;
+  }
 
   if (Mang)
-    Mang->getNameWithPrefix(OS, &GV, false);
+    Mang->getNameWithPrefix(OS, GV, false);
   else
-    OS << GV.getName();
+    OS << GV->getName();
 
   return object_error::success;
 }
@@ -119,25 +220,31 @@ static bool isDeclaration(const GlobalValue &V) {
 }
 
 uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
-  const GlobalValue &GV = getGV(Symb);
+  const GlobalValue *GV = getGV(Symb);
+
+  if (!GV) {
+    unsigned Index = getAsmSymIndex(Symb);
+    assert(Index <= AsmSymbols.size());
+    return AsmSymbols[Index].second;
+  }
 
   uint32_t Res = BasicSymbolRef::SF_None;
-  if (isDeclaration(GV))
+  if (isDeclaration(*GV))
     Res |= BasicSymbolRef::SF_Undefined;
-  if (GV.hasPrivateLinkage())
+  if (GV->hasPrivateLinkage())
     Res |= BasicSymbolRef::SF_FormatSpecific;
-  if (!GV.hasLocalLinkage())
+  if (!GV->hasLocalLinkage())
     Res |= BasicSymbolRef::SF_Global;
-  if (GV.hasCommonLinkage())
+  if (GV->hasCommonLinkage())
     Res |= BasicSymbolRef::SF_Common;
-  if (GV.hasLinkOnceLinkage() || GV.hasWeakLinkage())
+  if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage())
     Res |= BasicSymbolRef::SF_Weak;
 
   return Res;
 }
 
-const GlobalValue &IRObjectFile::getSymbolGV(DataRefImpl Symb) const {
-  const GlobalValue &GV = getGV(Symb);
+const GlobalValue *IRObjectFile::getSymbolGV(DataRefImpl Symb) const {
+  const GlobalValue *GV = getGV(Symb);
   return GV;
 }
 
@@ -150,7 +257,9 @@ basic_symbol_iterator IRObjectFile::symbol_begin_impl() const {
 
 basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   DataRefImpl Ret;
-  Ret.p = 3;
+  uint64_t NumAsm = AsmSymbols.size();
+  NumAsm <<= 2;
+  Ret.p = 3 | NumAsm;
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 

@@ -37,6 +37,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/TargetSelect.h"
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
@@ -637,8 +638,10 @@ static char getSymbolNMTypeChar(const GlobalValue &GV) {
 }
 
 static char getSymbolNMTypeChar(IRObjectFile &Obj, basic_symbol_iterator I) {
-  const GlobalValue &GV = Obj.getSymbolGV(I->getRawDataRefImpl());
-  return getSymbolNMTypeChar(GV);
+  const GlobalValue *GV = Obj.getSymbolGV(I->getRawDataRefImpl());
+  if (!GV)
+    return 't';
+  return getSymbolNMTypeChar(*GV);
 }
 
 template <class ELFT>
@@ -723,8 +726,8 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName) {
       continue;
     if (WithoutAliases) {
       if (IRObjectFile *IR = dyn_cast<IRObjectFile>(Obj)) {
-        const GlobalValue &GV = IR->getSymbolGV(I->getRawDataRefImpl());
-        if (isa<GlobalAlias>(GV))
+        const GlobalValue *GV = IR->getSymbolGV(I->getRawDataRefImpl());
+        if (GV && isa<GlobalAlias>(GV))
           continue;
       }
     }
@@ -992,6 +995,10 @@ int main(int argc, char **argv) {
   // llvm-nm only reads binary files.
   if (error(sys::ChangeStdinToBinary()))
     return 1;
+
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
 
   ToolName = argv[0];
   if (BSDFormat)

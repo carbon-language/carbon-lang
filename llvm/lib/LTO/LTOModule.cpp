@@ -24,11 +24,11 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCSection.h"
-#include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
+#include "llvm/Object/RecordStreamer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -551,105 +551,6 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
 
   entry.setValue(info);
 }
-
-namespace {
-
-  class RecordStreamer : public MCStreamer {
-  public:
-    enum State { NeverSeen, Global, Defined, DefinedGlobal, Used };
-
-  private:
-    StringMap<State> Symbols;
-
-    void markDefined(const MCSymbol &Symbol) {
-      State &S = Symbols[Symbol.getName()];
-      switch (S) {
-      case DefinedGlobal:
-      case Global:
-        S = DefinedGlobal;
-        break;
-      case NeverSeen:
-      case Defined:
-      case Used:
-        S = Defined;
-        break;
-      }
-    }
-    void markGlobal(const MCSymbol &Symbol) {
-      State &S = Symbols[Symbol.getName()];
-      switch (S) {
-      case DefinedGlobal:
-      case Defined:
-        S = DefinedGlobal;
-        break;
-
-      case NeverSeen:
-      case Global:
-      case Used:
-        S = Global;
-        break;
-      }
-    }
-    void markUsed(const MCSymbol &Symbol) {
-      State &S = Symbols[Symbol.getName()];
-      switch (S) {
-      case DefinedGlobal:
-      case Defined:
-      case Global:
-        break;
-
-      case NeverSeen:
-      case Used:
-        S = Used;
-        break;
-      }
-    }
-
-    void visitUsedSymbol(const MCSymbol &Sym) override {
-      markUsed(Sym);
-    }
-
-  public:
-    typedef StringMap<State>::const_iterator const_iterator;
-
-    const_iterator begin() {
-      return Symbols.begin();
-    }
-
-    const_iterator end() {
-      return Symbols.end();
-    }
-
-    RecordStreamer(MCContext &Context) : MCStreamer(Context) {}
-
-    void EmitInstruction(const MCInst &Inst,
-                         const MCSubtargetInfo &STI) override {
-      MCStreamer::EmitInstruction(Inst, STI);
-    }
-    void EmitLabel(MCSymbol *Symbol) override {
-      MCStreamer::EmitLabel(Symbol);
-      markDefined(*Symbol);
-    }
-    void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) override {
-      markDefined(*Symbol);
-      MCStreamer::EmitAssignment(Symbol, Value);
-    }
-    bool EmitSymbolAttribute(MCSymbol *Symbol,
-                             MCSymbolAttr Attribute) override {
-      if (Attribute == MCSA_Global)
-        markGlobal(*Symbol);
-      return true;
-    }
-    void EmitZerofill(const MCSection *Section, MCSymbol *Symbol,
-                      uint64_t Size , unsigned ByteAlignment) override {
-      markDefined(*Symbol);
-    }
-    void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
-                          unsigned ByteAlignment) override {
-      markDefined(*Symbol);
-    }
-  };
-} // end anonymous namespace
 
 /// addAsmGlobalSymbols - Add global symbols from module-level ASM to the
 /// defined or undefined lists.
