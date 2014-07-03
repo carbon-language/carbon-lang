@@ -400,8 +400,7 @@ ExprResult InitListChecker::PerformEmptyInit(Sema &SemaRef,
 
       bool IsInStd = false;
       for (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(R->getDeclContext());
-           ND && !IsInStd;
-	   ND = dyn_cast<NamespaceDecl>(ND->getLexicalParent())) {
+           ND && !IsInStd; ND = dyn_cast<NamespaceDecl>(ND->getParent())) {
         if (SemaRef.getStdNamespace()->InEnclosingNamespaceSetOf(ND))
           IsInStd = true;
       }
