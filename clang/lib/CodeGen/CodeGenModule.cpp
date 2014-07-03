@@ -393,6 +393,8 @@ void CodeGenModule::Release() {
     DebugInfo->finalize();
 
   EmitVersionIdentMetadata();
+
+  EmitTargetMetadata();
 }
 
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
@@ -1534,8 +1536,6 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
     }
   }
 
-  getTargetCodeGenInfo().emitTargetMD(D, F, *this);
-
   // Make sure the result is of the requested type.
   if (!IsIncompleteFunction) {
     assert(F->getType()->getElementType() == Ty);
@@ -1684,8 +1684,6 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
 
   if (AddrSpace != Ty->getAddressSpace())
     return llvm::ConstantExpr::getAddrSpaceCast(GV, Ty);
-
-  getTargetCodeGenInfo().emitTargetMD(D, GV, *this);
 
   return GV;
 }
@@ -3338,6 +3336,14 @@ void CodeGenModule::EmitVersionIdentMetadata() {
     llvm::MDString::get(Ctx, Version)
   };
   IdentMetadata->addOperand(llvm::MDNode::get(Ctx, IdentNode));
+}
+
+void CodeGenModule::EmitTargetMetadata() {
+  for (auto &I : MangledDeclNames) {
+    const Decl *D = I.first.getDecl()->getMostRecentDecl();
+    llvm::GlobalValue *GV = GetGlobalValue(I.second);
+    getTargetCodeGenInfo().emitTargetMD(D, GV, *this);
+  }
 }
 
 void CodeGenModule::EmitCoverageFile() {

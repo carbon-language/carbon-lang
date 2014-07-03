@@ -349,8 +349,8 @@ class CodeGenModule : public CodeGenTypeCache {
   /// emitted when the translation unit is complete.
   CtorList GlobalDtors;
 
-  /// A map of canonical GlobalDecls to their mangled names.
-  llvm::DenseMap<GlobalDecl, StringRef> MangledDeclNames;
+  /// An ordered map of canonical GlobalDecls to their mangled names.
+  llvm::MapVector<GlobalDecl, StringRef> MangledDeclNames;
   llvm::StringMap<GlobalDecl, llvm::BumpPtrAllocator> Manglings;
 
   /// Global annotations.
@@ -1145,6 +1145,9 @@ private:
 
   /// \brief Emit the Clang version as llvm.ident metadata.
   void EmitVersionIdentMetadata();
+
+  /// Emits target specific Metadata for global declarations.
+  void EmitTargetMetadata();
 
   /// Emit the llvm.gcov metadata used to tell LLVM where to emit the .gcno and
   /// .gcda files in a way that persists in .bc files.
