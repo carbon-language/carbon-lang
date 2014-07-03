@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/YAML.h"
+#include "llvm/MC/YAML.h"
 #include "llvm/Support/YAMLTraits.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;
 
 struct BinaryHolder {
-  object::yaml::BinaryRef Binary;
+  yaml::BinaryRef Binary;
 };
 
 namespace llvm {

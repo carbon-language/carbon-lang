@@ -1,26 +1,10 @@
-//===- YAML.h - YAMLIO utilities for object files ---------------*- C++ -*-===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
-//
-// This file declares utility classes for handling the YAML representation of
-// object files.
-//
-//===----------------------------------------------------------------------===//
-
-#ifndef LLVM_OBJECT_YAML_H
-#define LLVM_OBJECT_YAML_H
+#ifndef LLVM_MC_YAML_H
+#define LLVM_MC_YAML_H
 
 #include "llvm/Support/YAMLTraits.h"
 
 namespace llvm {
-namespace object {
 namespace yaml {
-
 /// \brief Specialized YAMLIO scalar type for representing a binary blob.
 ///
 /// A typical use case would be to represent the content of a section in a
@@ -100,18 +84,11 @@ inline bool operator==(const BinaryRef &LHS, const BinaryRef &RHS) {
   return LHS.DataIsHexString == RHS.DataIsHexString && LHS.Data == RHS.Data;
 }
 
-}
-}
-
-namespace yaml {
-template <> struct ScalarTraits<object::yaml::BinaryRef> {
-  static void output(const object::yaml::BinaryRef &, void *,
-                     llvm::raw_ostream &);
-  static StringRef input(StringRef, void *, object::yaml::BinaryRef &);
+template <> struct ScalarTraits<BinaryRef> {
+  static void output(const BinaryRef &, void *, llvm::raw_ostream &);
+  static StringRef input(StringRef, void *, BinaryRef &);
   static bool mustQuote(StringRef S) { return needsQuotes(S); }
 };
 }
-
 }
-
 #endif

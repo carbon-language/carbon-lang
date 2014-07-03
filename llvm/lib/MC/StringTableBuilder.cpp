@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/StringTableBuilder.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Object/StringTableBuilder.h"
 
 using namespace llvm;
 

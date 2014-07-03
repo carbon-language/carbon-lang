@@ -16,7 +16,7 @@
 #ifndef LLVM_OBJECT_ELFYAML_H
 #define LLVM_OBJECT_ELFYAML_H
 
-#include "llvm/Object/YAML.h"
+#include "llvm/MC/YAML.h"
 #include "llvm/Support/ELF.h"
 
 namespace llvm {
@@ -83,7 +83,7 @@ struct Section {
   virtual ~Section();
 };
 struct RawContentSection : Section {
-  object::yaml::BinaryRef Content;
+  yaml::BinaryRef Content;
   llvm::yaml::Hex64 Size;
   RawContentSection() : Section(SectionKind::RawContent) {}
   static bool classof(const Section *S) {

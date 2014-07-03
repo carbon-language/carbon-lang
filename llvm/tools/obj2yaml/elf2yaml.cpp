@@ -268,7 +268,7 @@ ELFDumper<ELFT>::dumpContentSection(const Elf_Shdr *Shdr) {
   ErrorOr<ArrayRef<uint8_t>> ContentOrErr = Obj.getSectionContents(Shdr);
   if (std::error_code EC = ContentOrErr.getError())
     return EC;
-  S->Content = object::yaml::BinaryRef(ContentOrErr.get());
+  S->Content = yaml::BinaryRef(ContentOrErr.get());
   S->Size = S->Content.binary_size();
 
   return S.release();

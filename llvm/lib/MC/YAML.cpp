@@ -12,21 +12,20 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/YAML.h"
+#include "llvm/MC/YAML.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
 
 using namespace llvm;
-using namespace object::yaml;
 
-void yaml::ScalarTraits<object::yaml::BinaryRef>::output(
-    const object::yaml::BinaryRef &Val, void *, llvm::raw_ostream &Out) {
+void yaml::ScalarTraits<yaml::BinaryRef>::output(
+    const yaml::BinaryRef &Val, void *, llvm::raw_ostream &Out) {
   Val.writeAsHex(Out);
 }
 
-StringRef yaml::ScalarTraits<object::yaml::BinaryRef>::input(
-    StringRef Scalar, void *, object::yaml::BinaryRef &Val) {
+StringRef yaml::ScalarTraits<yaml::BinaryRef>::input(StringRef Scalar, void *,
+                                                     yaml::BinaryRef &Val) {
   if (Scalar.size() % 2 != 0)
     return "BinaryRef hex string must contain an even number of nybbles.";
   // TODO: Can we improve YAMLIO to permit a more accurate diagnostic here?
@@ -34,11 +33,11 @@ StringRef yaml::ScalarTraits<object::yaml::BinaryRef>::input(
   for (unsigned I = 0, N = Scalar.size(); I != N; ++I)
     if (!isxdigit(Scalar[I]))
       return "BinaryRef hex string must contain only hex digits.";
-  Val = object::yaml::BinaryRef(Scalar);
+  Val = yaml::BinaryRef(Scalar);
   return StringRef();
 }
 
-void BinaryRef::writeAsBinary(raw_ostream &OS) const {
+void yaml::BinaryRef::writeAsBinary(raw_ostream &OS) const {
   if (!DataIsHexString) {
     OS.write((const char *)Data.data(), Data.size());
     return;
@@ -50,7 +49,7 @@ void BinaryRef::writeAsBinary(raw_ostream &OS) const {
   }
 }
 
-void BinaryRef::writeAsHex(raw_ostream &OS) const {
+void yaml::BinaryRef::writeAsHex(raw_ostream &OS) const {
   if (binary_size() == 0)
     return;
   if (DataIsHexString) {

@@ -61,7 +61,7 @@ void COFFDumper::dumpSections(unsigned NumSections) {
 
     ArrayRef<uint8_t> sectionData;
     Obj.getSectionContents(Sect, sectionData);
-    Sec.SectionData = object::yaml::BinaryRef(sectionData);
+    Sec.SectionData = yaml::BinaryRef(sectionData);
 
     std::vector<COFFYAML::Relocation> Relocations;
     for (const auto &Reloc : Section.relocations()) {

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/MC/StringTableBuilder.h"
 #include "gtest/gtest.h"
-#include "llvm/Object/StringTableBuilder.h"
 #include <string>
 
 using namespace llvm;

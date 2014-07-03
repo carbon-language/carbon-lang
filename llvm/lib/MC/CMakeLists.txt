@@ -43,9 +43,11 @@ add_llvm_library(LLVMMC
   MCValue.cpp
   MCWin64EH.cpp
   MachObjectWriter.cpp
+  StringTableBuilder.cpp
   SubtargetFeature.cpp
   WinCOFFObjectWriter.cpp
   WinCOFFStreamer.cpp
+  YAML.cpp
   )
 
 add_subdirectory(MCAnalysis)

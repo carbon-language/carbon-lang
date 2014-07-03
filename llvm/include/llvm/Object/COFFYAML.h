@@ -15,7 +15,7 @@
 #define LLVM_OBJECT_COFFYAML_H
 
 #include "llvm/ADT/Optional.h"
-#include "llvm/Object/YAML.h"
+#include "llvm/MC/YAML.h"
 #include "llvm/Support/COFF.h"
 
 namespace llvm {
@@ -49,7 +49,7 @@ namespace COFFYAML {
   struct Section {
     COFF::section Header;
     unsigned Alignment;
-    object::yaml::BinaryRef SectionData;
+    yaml::BinaryRef SectionData;
     std::vector<Relocation> Relocations;
     StringRef Name;
     Section();
