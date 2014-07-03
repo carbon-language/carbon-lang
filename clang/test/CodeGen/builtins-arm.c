@@ -52,6 +52,7 @@ void sevl() {
 void test_barrier() {
   __builtin_arm_dmb(1); //CHECK: call {{.*}} @llvm.arm.dmb(i32 1)
   __builtin_arm_dsb(2); //CHECK: call {{.*}} @llvm.arm.dsb(i32 2)
+  __builtin_arm_isb(3); //CHECK: call {{.*}} @llvm.arm.isb(i32 3)
 }
 
 // CHECK: call {{.*}} @llvm.arm.rbit(i32 %a)

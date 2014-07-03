@@ -613,8 +613,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
     return true;
 
-  // For NEON intrinsics which take an immediate value as part of the
-  // instruction, range check them here.
+  // For intrinsics which take an immediate value as part of the instruction,
+  // range check them here.
   unsigned i = 0, l = 0, u = 0;
   switch (BuiltinID) {
   default: return false;
@@ -623,7 +623,8 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
   case ARM::BI__builtin_arm_vcvtr_f:
   case ARM::BI__builtin_arm_vcvtr_d: i = 1; u = 1; break;
   case ARM::BI__builtin_arm_dmb:
-  case ARM::BI__builtin_arm_dsb: l = 0; u = 15; break;
+  case ARM::BI__builtin_arm_dsb:
+  case ARM::BI__builtin_arm_isb: l = 0; u = 15; break;
   }
 
   // FIXME: VFP Intrinsics should error if VFP not present.

@@ -77,6 +77,7 @@ BUILTIN(__builtin_arm_sevl, "v", "")
 // Data barrier
 BUILTIN(__builtin_arm_dmb, "vUi", "nc")
 BUILTIN(__builtin_arm_dsb, "vUi", "nc")
+BUILTIN(__builtin_arm_isb, "vUi", "nc")
 
 // MSVC
 LANGBUILTIN(__yield, "v", "", ALL_MS_LANGUAGES)
