@@ -25,14 +25,6 @@ namespace mach_o {
 
 // Additional Reference Kind values used internally.
 enum {
-  LLD_X86_RELOC_BRANCH32       = 100, // CALL or JMP 32-bit pc-rel
-  LLD_X86_RELOC_ABS32          = 101, // 32-bit absolute addr in instruction
-  LLD_X86_RELOC_FUNC_REL32     = 102, // 32-bit target from start of func
-  LLD_X86_RELOC_POINTER32      = 103, // 32-bit data pointer
-  LLD_X86_RELOC_LAZY_TARGET    = 104,
-  LLD_X86_RELOC_LAZY_IMMEDIATE = 105
-};
-enum {
   LLD_ARM_RELOC_THUMB_ABS_LO16 = 100, // thumb movw of absolute address
   LLD_ARM_RELOC_THUMB_ABS_HI16 = 101, // thumb movt of absolute address
   LLD_ARM_RELOC_THUMB_REL_LO16 = 102, // thumb movw of (target - pc)
@@ -108,7 +100,7 @@ public:
   virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress) = 0;
+                          uint64_t targetAddress, uint64_t inAtomAddress) = 0;
 
 protected:
   KindHandler();
@@ -168,7 +160,8 @@ public:
   virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress) override;
+                          uint64_t targetAddress, uint64_t inAtomAddress) 
+                          override;
 
 private:
   friend class X86_64LazyPointerAtom;
@@ -245,7 +238,8 @@ public:
   void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                           Reference::KindValue kindValue, uint64_t addend,
                           uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress) override;
+                          uint64_t targetAddress, uint64_t inAtomAddress) 
+                          override;
 
 private:
   friend class X86LazyPointerAtom;
@@ -287,7 +281,8 @@ public:
   void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                   Reference::KindValue kindValue, uint64_t addend,
                   uint8_t *location, uint64_t fixupAddress,
-                  uint64_t targetAddress) override;
+                  uint64_t targetAddress, uint64_t inAtomAddress) 
+                  override;
 };
 
 } // namespace mach_o

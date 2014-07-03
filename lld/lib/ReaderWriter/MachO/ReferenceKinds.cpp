@@ -351,7 +351,8 @@ void KindHandler_x86_64::applyFixup(Reference::KindNamespace ns,
                                     Reference::KindValue kindValue,
                                     uint64_t addend, uint8_t *location,
                                     uint64_t fixupAddress,
-                                    uint64_t targetAddress) {
+                                    uint64_t targetAddress,
+                                    uint64_t inAtomAddress) {
   if (ns != Reference::KindNamespace::mach_o)
     return;
   assert(arch == Reference::KindArch::x86_64);
@@ -577,24 +578,33 @@ void KindHandler_x86::applyFixup(Reference::KindNamespace ns,
                                  Reference::KindValue kindValue,
                                  uint64_t addend, uint8_t *location,
                                  uint64_t fixupAddress,
-                                 uint64_t targetAddress) {
+                                 uint64_t targetAddress,
+                                 uint64_t inAtomAddress) {
   if (ns != Reference::KindNamespace::mach_o)
     return;
   assert(arch == Reference::KindArch::x86);
   int32_t *loc32 = reinterpret_cast<int32_t*>(location);
+  int16_t *loc16 = reinterpret_cast<int16_t*>(location);
+  // FIXME: these writes may need a swap.
   switch (kindValue) {
-  case LLD_X86_RELOC_BRANCH32:
+  case branch32:
       *loc32 = (targetAddress - (fixupAddress+4)) + addend;
       break;
-  case LLD_X86_RELOC_POINTER32:
-  case LLD_X86_RELOC_ABS32:
+  case branch16:
+      *loc16 = (targetAddress - (fixupAddress+4)) + addend;
+      break;
+  case pointer32:
+  case abs32:
       *loc32 = targetAddress + addend;
       break;
-  case LLD_X86_RELOC_FUNC_REL32:
-      *loc32 = targetAddress + addend;
+  case funcRel32:
+      *loc32 = targetAddress - inAtomAddress + addend; // FIXME
       break;
-  case LLD_X86_RELOC_LAZY_TARGET:
-  case LLD_X86_RELOC_LAZY_IMMEDIATE:
+  case delta32:
+      *loc32 = targetAddress - fixupAddress + addend;
+      break;
+  case lazyPointer:
+  case lazyImmediateLocation:
       // do nothing
       break;
   default:
@@ -647,7 +657,8 @@ void KindHandler_arm::applyFixup(Reference::KindNamespace ns,
                                  Reference::KindValue kindValue,
                                  uint64_t addend, uint8_t *location,
                                  uint64_t fixupAddress,
-                                 uint64_t targetAddress) {
+                                 uint64_t targetAddress,
+                                 uint64_t inAtomAddress) {
   if (ns != Reference::KindNamespace::mach_o)
     return;
   assert(arch == Reference::KindArch::ARM);

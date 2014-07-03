@@ -536,14 +536,16 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
       uint64_t targetAddress = 0;
       if ( ref->target() != nullptr )
         targetAddress = _atomToAddress[ref->target()];
-      uint64_t fixupAddress = _atomToAddress[ai.atom] + offset;
+      uint64_t atomAddress = _atomToAddress[ai.atom];
+      uint64_t fixupAddress = atomAddress + offset;
       if ( rMode ) {
         // FIXME: Need a handler method to update content for .o file
         // output and any needed section relocations.
       } else {
         _context.kindHandler().applyFixup(
           ref->kindNamespace(), ref->kindArch(), ref->kindValue(),
-          ref->addend(), &atomContent[offset], fixupAddress, targetAddress);
+          ref->addend(), &atomContent[offset], fixupAddress, targetAddress,
+          atomAddress);
       }
     }
   }
