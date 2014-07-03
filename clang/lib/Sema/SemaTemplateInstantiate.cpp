@@ -2036,8 +2036,8 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
       Expr *Init = NewInit.get();
       assert((!Init || !isa<ParenListExpr>(Init)) &&
              "call-style init in class");
-      ActOnFinishCXXInClassMemberInitializer(NewField, Init->getLocStart(),
-                                             Init);
+      ActOnFinishCXXInClassMemberInitializer(NewField,
+        Init ? Init->getLocStart() : SourceLocation(), Init);
     }
   }
   // Instantiate late parsed attributes, and attach them to their decls.
