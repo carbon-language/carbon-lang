@@ -1549,7 +1549,6 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
 
   case ISD::ADD:
   case ISD::AND:
-  case ISD::BSWAP:
   case ISD::MUL:
   case ISD::MULHS:
   case ISD::MULHU:
@@ -1596,6 +1595,7 @@ void DAGTypeLegalizer::WidenVectorResult(SDNode *N, unsigned ResNo) {
     Res = WidenVecRes_Convert(N);
     break;
 
+  case ISD::BSWAP:
   case ISD::CTLZ:
   case ISD::CTPOP:
   case ISD::CTTZ:
