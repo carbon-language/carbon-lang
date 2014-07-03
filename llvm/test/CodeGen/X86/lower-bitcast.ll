@@ -79,7 +79,7 @@ define i64 @test4(i64 %A) {
 ; CHECK: ret
 ;
 ; CHECK-WIDE-LABEL: test4
-; CHECK-WIDE: movd %rdi,
+; CHECK-WIDE: movd %{{rdi|rcx}},
 ; CHECK-WIDE-NEXT: paddd
 ; CHECK-WIDE-NEXT: movd {{.*}}, %rax
 ; CHECK-WIDE: ret
