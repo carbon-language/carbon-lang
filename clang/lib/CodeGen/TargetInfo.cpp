@@ -4379,6 +4379,10 @@ ABIArgInfo ARMABIInfo::classifyReturnType(QualType RetTy,
   // are returned indirectly.
   uint64_t Size = getContext().getTypeSize(RetTy);
   if (Size <= 32) {
+    if (getDataLayout().isBigEndian())
+      // Return in 32 bit integer integer type (as if loaded by LDR, AAPCS 5.4)
+      return ABIArgInfo::getDirect(llvm::Type::getInt32Ty(getVMContext()));
+
     // Return in the smallest viable integer type.
     if (Size <= 8)
       return ABIArgInfo::getDirect(llvm::Type::getInt8Ty(getVMContext()));
