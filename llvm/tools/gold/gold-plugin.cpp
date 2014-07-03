@@ -292,7 +292,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     return LDPS_OK;
 
   std::string Error;
-  M = LTOModule::makeLTOModule(view, file->filesize, TargetOpts, Error);
+  M = LTOModule::createFromBuffer(view, file->filesize, TargetOpts, Error);
   if (!M) {
     (*message)(LDPL_ERROR,
                "LLVM gold plugin has failed to create LTO module: %s",

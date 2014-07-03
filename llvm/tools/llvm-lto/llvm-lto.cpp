@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
   for (unsigned i = BaseArg; i < InputFilenames.size(); ++i) {
     std::string error;
     std::unique_ptr<LTOModule> Module(
-        LTOModule::makeLTOModule(InputFilenames[i].c_str(), Options, error));
+        LTOModule::createFromFile(InputFilenames[i].c_str(), Options, error));
     if (!error.empty()) {
       errs() << argv[0] << ": error loading file '" << InputFilenames[i]
              << "': " << error << "\n";

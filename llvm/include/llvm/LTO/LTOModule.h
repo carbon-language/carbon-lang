@@ -86,16 +86,18 @@ public:
   /// InitializeAllTargetMCs();
   /// InitializeAllAsmPrinters();
   /// InitializeAllAsmParsers();
-  static LTOModule *makeLTOModule(const char *path, TargetOptions options,
-                                  std::string &errMsg);
-  static LTOModule *makeLTOModule(int fd, const char *path, size_t size,
-                                  TargetOptions options, std::string &errMsg);
-  static LTOModule *makeLTOModule(int fd, const char *path, size_t map_size,
-                                  off_t offset, TargetOptions options,
-                                  std::string &errMsg);
-  static LTOModule *makeLTOModule(const void *mem, size_t length,
-                                  TargetOptions options, std::string &errMsg,
-                                  StringRef path = "");
+  static LTOModule *createFromFile(const char *path, TargetOptions options,
+                                   std::string &errMsg);
+  static LTOModule *createFromOpenFile(int fd, const char *path, size_t size,
+                                       TargetOptions options,
+                                       std::string &errMsg);
+  static LTOModule *createFromOpenFileSlice(int fd, const char *path,
+                                            size_t map_size, off_t offset,
+                                            TargetOptions options,
+                                            std::string &errMsg);
+  static LTOModule *createFromBuffer(const void *mem, size_t length,
+                                     TargetOptions options, std::string &errMsg,
+                                     StringRef path = "");
 
   /// Return the Module's target triple.
   const char *getTargetTriple() {

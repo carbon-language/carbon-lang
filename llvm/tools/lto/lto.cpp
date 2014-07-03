@@ -104,14 +104,14 @@ lto_module_is_object_file_in_memory_for_target(const void* mem,
 lto_module_t lto_module_create(const char* path) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return wrap(LTOModule::makeLTOModule(path, Options, sLastErrorString));
+  return wrap(LTOModule::createFromFile(path, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_fd(int fd, const char *path, size_t size) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   return wrap(
-      LTOModule::makeLTOModule(fd, path, size, Options, sLastErrorString));
+      LTOModule::createFromOpenFile(fd, path, size, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
@@ -120,14 +120,14 @@ lto_module_t lto_module_create_from_fd_at_offset(int fd, const char *path,
                                                  off_t offset) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return wrap(LTOModule::makeLTOModule(fd, path, map_size, offset, Options,
-                                       sLastErrorString));
+  return wrap(LTOModule::createFromOpenFileSlice(fd, path, map_size, offset,
+                                                 Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_memory(const void* mem, size_t length) {
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
-  return wrap(LTOModule::makeLTOModule(mem, length, Options, sLastErrorString));
+  return wrap(LTOModule::createFromBuffer(mem, length, Options, sLastErrorString));
 }
 
 lto_module_t lto_module_create_from_memory_with_path(const void* mem,
@@ -136,7 +136,7 @@ lto_module_t lto_module_create_from_memory_with_path(const void* mem,
   lto_initialize();
   llvm::TargetOptions Options = InitTargetOptionsFromCodeGenFlags();
   return wrap(
-      LTOModule::makeLTOModule(mem, length, Options, sLastErrorString, path));
+      LTOModule::createFromBuffer(mem, length, Options, sLastErrorString, path));
 }
 
 void lto_module_dispose(lto_module_t mod) { delete unwrap(mod); }

@@ -94,10 +94,8 @@ bool LTOModule::isTargetMatch(MemoryBuffer *buffer, const char *triplePrefix) {
   return strncmp(Triple.c_str(), triplePrefix, strlen(triplePrefix)) == 0;
 }
 
-/// makeLTOModule - Create an LTOModule. N.B. These methods take ownership of
-/// the buffer.
-LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
-                                    std::string &errMsg) {
+LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
+                                     std::string &errMsg) {
   std::unique_ptr<MemoryBuffer> buffer;
   if (std::error_code ec = MemoryBuffer::getFile(path, buffer)) {
     errMsg = ec.message();
@@ -106,17 +104,16 @@ LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
   return makeLTOModule(std::move(buffer), options, errMsg);
 }
 
-LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
-                                    size_t size, TargetOptions options,
-                                    std::string &errMsg) {
-  return makeLTOModule(fd, path, size, 0, options, errMsg);
+LTOModule *LTOModule::createFromOpenFile(int fd, const char *path, size_t size,
+                                         TargetOptions options,
+                                         std::string &errMsg) {
+  return createFromOpenFileSlice(fd, path, size, 0, options, errMsg);
 }
 
-LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
-                                    size_t map_size,
-                                    off_t offset,
-                                    TargetOptions options,
-                                    std::string &errMsg) {
+LTOModule *LTOModule::createFromOpenFileSlice(int fd, const char *path,
+                                              size_t map_size, off_t offset,
+                                              TargetOptions options,
+                                              std::string &errMsg) {
   std::unique_ptr<MemoryBuffer> buffer;
   if (std::error_code ec =
           MemoryBuffer::getOpenFileSlice(fd, path, buffer, map_size, offset)) {
@@ -126,9 +123,9 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
   return makeLTOModule(std::move(buffer), options, errMsg);
 }
 
-LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
-                                    TargetOptions options,
-                                    std::string &errMsg, StringRef path) {
+LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
+                                       TargetOptions options,
+                                       std::string &errMsg, StringRef path) {
   std::unique_ptr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
     return nullptr;
