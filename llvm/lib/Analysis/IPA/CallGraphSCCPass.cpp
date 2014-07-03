@@ -606,7 +606,7 @@ namespace {
         if ((*I)->getFunction())
           (*I)->getFunction()->print(Out);
         else
-          Out << "Printing <null> Function";
+          Out << "\nPrinting <null> Function\n";
       }
       return false;
     }
