@@ -8538,6 +8538,21 @@ let Predicates = [HasF16C] in {
             (VCVTPH2PSrm addr:$src)>;
 }
 
+// Patterns for  matching conversions from float to half-float and vice versa.
+let Predicates = [HasF16C] in {
+  def : Pat<(f32_to_f16 FR32:$src),
+            (i16 (EXTRACT_SUBREG (VMOVPDI2DIrr (VCVTPS2PHrr
+              (COPY_TO_REGCLASS FR32:$src, VR128), 0)), sub_16bit))>;
+
+  def : Pat<(f16_to_f32 GR16:$src),
+            (f32 (COPY_TO_REGCLASS (VCVTPH2PSrr
+              (COPY_TO_REGCLASS (MOVSX32rr16 GR16:$src), VR128)), FR32)) >;
+
+  def : Pat<(f16_to_f32 (i16 (f32_to_f16 FR32:$src))),
+            (f32 (COPY_TO_REGCLASS (VCVTPH2PSrr
+              (VCVTPS2PHrr (COPY_TO_REGCLASS FR32:$src, VR128), 0)), FR32)) >;
+}
+
 //===----------------------------------------------------------------------===//
 // AVX2 Instructions
 //===----------------------------------------------------------------------===//
