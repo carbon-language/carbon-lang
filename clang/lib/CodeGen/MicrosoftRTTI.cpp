@@ -230,6 +230,20 @@ uint32_t MSRTTIClass::initialize(const MSRTTIClass *Parent,
   return NumBases;
 }
 
+static llvm::GlobalValue::LinkageTypes getLinkageForRTTI(QualType Ty) {
+  switch (Ty->getLinkage()) {
+  case NoLinkage:
+  case InternalLinkage:
+  case UniqueExternalLinkage:
+    return llvm::GlobalValue::InternalLinkage;
+
+  case VisibleNoLinkage:
+  case ExternalLinkage:
+    return llvm::GlobalValue::LinkOnceODRLinkage;
+  }
+  llvm_unreachable("Invalid linkage!");
+}
+
 /// \brief An ephemeral helper class for building MS RTTI types.  It caches some
 /// calls to the module and information about the most derived class in a
 /// hierarchy.
@@ -242,7 +256,8 @@ struct MSRTTIBuilder {
 
   MSRTTIBuilder(CodeGenModule &CGM, const CXXRecordDecl *RD)
       : CGM(CGM), Context(CGM.getContext()), VMContext(CGM.getLLVMContext()),
-        Module(CGM.getModule()), RD(RD), Linkage(CGM.getVTableLinkage(RD)),
+        Module(CGM.getModule()), RD(RD),
+        Linkage(getLinkageForRTTI(CGM.getContext().getTagDeclType(RD))),
         Mangler(
             cast<MicrosoftMangleContext>(CGM.getCXXABI().getMangleContext())) {}
 
@@ -499,7 +514,7 @@ llvm::Constant *CodeGenModule::getMSTypeDescriptor(QualType Type) {
   return llvm::ConstantExpr::getBitCast(
       new llvm::GlobalVariable(
           getModule(), TypeDescriptorType, /*Constant=*/false,
-          getTypeInfoLinkage(Type),
+          getLinkageForRTTI(Type),
           llvm::ConstantStruct::get(TypeDescriptorType, Fields),
           MangledName.c_str()),
       Int8PtrTy);
