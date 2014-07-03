@@ -156,9 +156,9 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   if (!DisableUnitAtATime) {
     addExtensionsToPM(EP_ModuleOptimizerEarly, MPM);
 
+    MPM.add(createIPSCCPPass());              // IP SCCP
     MPM.add(createGlobalOptimizerPass());     // Optimize out global vars
 
-    MPM.add(createIPSCCPPass());              // IP SCCP
     MPM.add(createDeadArgEliminationPass());  // Dead argument elimination
 
     MPM.add(createInstructionCombiningPass());// Clean up after IPCP & DAE
