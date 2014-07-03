@@ -13,7 +13,7 @@ declare <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16>, i32)
 declare <2 x i64> @llvm.x86.sse2.psll.dq(<2 x i64>, i32)
 declare <2 x i64> @llvm.x86.sse2.psll.dq.bs(<2 x i64>, i32)
 
-define i64 @test_mmx(i64 %x.coerce, i64 %y.coerce) {
+define i64 @test_mmx(i64 %x.coerce, i64 %y.coerce) sanitize_memory {
 entry:
   %0 = bitcast i64 %x.coerce to <2 x i32>
   %1 = bitcast <2 x i32> %0 to x86_mmx
@@ -35,7 +35,7 @@ entry:
 ; CHECK: ret i64
 
 
-define <8 x i16> @test_sse2_scalar(<8 x i16> %x, i32 %y) {
+define <8 x i16> @test_sse2_scalar(<8 x i16> %x, i32 %y) sanitize_memory {
 entry:
   %0 = tail call <8 x i16> @llvm.x86.sse2.pslli.w(<8 x i16> %x, i32 %y)
   ret <8 x i16> %0
@@ -51,7 +51,7 @@ entry:
 ; CHECK: ret <8 x i16>
 
 
-define <8 x i16> @test_sse2(<8 x i16> %x, <8 x i16> %y) {
+define <8 x i16> @test_sse2(<8 x i16> %x, <8 x i16> %y) sanitize_memory {
 entry:
   %0 = tail call <8 x i16> @llvm.x86.sse2.psrl.w(<8 x i16> %x, <8 x i16> %y)
   ret <8 x i16> %0
@@ -71,7 +71,7 @@ entry:
 
 ; Test variable shift (i.e. vector by vector).
 
-define <4 x i32> @test_avx2(<4 x i32> %x, <4 x i32> %y) {
+define <4 x i32> @test_avx2(<4 x i32> %x, <4 x i32> %y) sanitize_memory {
 entry:
   %0 = tail call <4 x i32> @llvm.x86.avx2.psllv.d(<4 x i32> %x, <4 x i32> %y)
   ret <4 x i32> %0
@@ -85,7 +85,7 @@ entry:
 ; CHECK: = tail call <4 x i32> @llvm.x86.avx2.psllv.d(
 ; CHECK: ret <4 x i32>
 
-define <8 x i32> @test_avx2_256(<8 x i32> %x, <8 x i32> %y) {
+define <8 x i32> @test_avx2_256(<8 x i32> %x, <8 x i32> %y) sanitize_memory {
 entry:
   %0 = tail call <8 x i32> @llvm.x86.avx2.psllv.d.256(<8 x i32> %x, <8 x i32> %y)
   ret <8 x i32> %0

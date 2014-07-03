@@ -651,7 +651,7 @@ define void @VACopy(i8* %p1, i8* %p2) nounwind uwtable sanitize_memory {
 declare void @llvm.va_start(i8*) nounwind
 
 ; Function Attrs: nounwind uwtable
-define void @VAStart(i32 %x, ...) {
+define void @VAStart(i32 %x, ...) sanitize_memory {
 entry:
   %x.addr = alloca i32, align 4
   %va = alloca [1 x %struct.__va_list_tag], align 16
