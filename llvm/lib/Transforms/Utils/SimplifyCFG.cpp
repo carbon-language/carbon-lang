@@ -3529,7 +3529,8 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
 
   // Fill in any holes in the table with the default result.
   if (Values.size() < TableSize) {
-    assert(DefaultValue && "Need a default value to fill the lookup table holes.");
+    assert(DefaultValue &&
+           "Need a default value to fill the lookup table holes.");
     assert(DefaultValue->getType() == ValueType);
     for (uint64_t I = 0; I < TableSize; ++I) {
       if (!TableContents[I])
