@@ -200,6 +200,28 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
     if (Classes[Reg] != reinterpret_cast<TargetRegisterClass *>(-1))
       RegRefs.insert(std::make_pair(Reg, &MO));
 
+    // If this reg is tied and live (Classes[Reg] is set to -1), we can't change
+    // it or any of its sub or super regs. We need to use KeepRegs to mark the
+    // reg because not all uses of the same reg within an instruction are
+    // necessarily tagged as tied.
+    // Example: an x86 "xor %eax, %eax" will have one source operand tied to the
+    // def register but not the second (see PR20020 for details).
+    // FIXME: can this check be relaxed to account for undef uses
+    // of a register? In the above 'xor' example, the uses of %eax are undef, so
+    // earlier instructions could still replace %eax even though the 'xor'
+    // itself can't be changed.
+    if (MI->isRegTiedToUseOperand(i) &&
+        Classes[Reg] == reinterpret_cast<TargetRegisterClass *>(-1)) {
+      for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
+           SubRegs.isValid(); ++SubRegs) {
+        KeepRegs.set(*SubRegs);
+      }
+      for (MCSuperRegIterator SuperRegs(Reg, TRI);
+           SuperRegs.isValid(); ++SuperRegs) {
+        KeepRegs.set(*SuperRegs);
+      }
+    }
+
     if (MO.isUse() && Special) {
       if (!KeepRegs.test(Reg)) {
         for (MCSubRegIterator SubRegs(Reg, TRI, /*IncludeSelf=*/true);
@@ -236,9 +258,15 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
       if (!MO.isDef()) continue;
+
+      // If we've already marked this reg as unchangeable, carry on.
+      if (KeepRegs.test(Reg)) continue;
+      
       // Ignore two-addr defs.
       if (MI->isRegTiedToUseOperand(i)) continue;
 
+      // FIXME: we should use a SubRegIterator that includes self (as above), so
+      // we don't have to repeat all this code for the reg itself.
       DefIndices[Reg] = Count;
       KillIndices[Reg] = ~0u;
       assert(((KillIndices[Reg] == ~0u) !=
@@ -281,6 +309,9 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
 
     RegRefs.insert(std::make_pair(Reg, &MO));
 
+    // FIXME: we should use an MCRegAliasIterator that includes self so we don't
+    // have to repeat all this code for the reg itself.
+    
     // It wasn't previously live but now it is, this is a kill.
     if (KillIndices[Reg] == ~0u) {
       KillIndices[Reg] = Count;
