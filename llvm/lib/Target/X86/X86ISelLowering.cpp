@@ -58,6 +58,12 @@ using namespace llvm;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
+static cl::opt<bool> ExperimentalVectorWideningLegalization(
+    "x86-experimental-vector-widening-legalization", cl::init(false),
+    cl::desc("Enable an experimental vector type legalization through widening "
+             "rather than promotion."),
+    cl::Hidden);
+
 static cl::opt<bool> ExperimentalVectorShuffleLowering(
     "x86-experimental-vector-shuffle-lowering", cl::init(false),
     cl::desc("Enable an experimental vector shuffle lowering code path."),
@@ -1586,6 +1592,16 @@ void X86TargetLowering::resetOperationActions() {
   PredictableSelectIsExpensive = !Subtarget->isAtom();
 
   setPrefFunctionAlignment(4); // 2^4 bytes.
+}
+
+TargetLoweringBase::LegalizeTypeAction
+X86TargetLowering::getPreferredVectorAction(EVT VT) const {
+  if (ExperimentalVectorWideningLegalization &&
+      VT.getVectorNumElements() != 1 &&
+      VT.getVectorElementType().getSimpleVT() != MVT::i1)
+    return TypeWidenVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
 }
 
 EVT X86TargetLowering::getSetCCResultType(LLVMContext &, EVT VT) const {
