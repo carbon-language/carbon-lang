@@ -16410,6 +16410,13 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
                                    MVT::v2f64, N->getOperand(0));
     SDValue ToVecInt = DAG.getNode(ISD::BITCAST, dl, WiderVT, Expanded);
 
+    if (ExperimentalVectorWideningLegalization) {
+      // If we are legalizing vectors by widening, we already have the desired
+      // legal vector type, just return it.
+      Results.push_back(ToVecInt);
+      return;
+    }
+
     SmallVector<SDValue, 8> Elts;
     for (unsigned i = 0, e = NumElts; i != e; ++i)
       Elts.push_back(DAG.getNode(ISD::EXTRACT_VECTOR_ELT, dl, SVT,
