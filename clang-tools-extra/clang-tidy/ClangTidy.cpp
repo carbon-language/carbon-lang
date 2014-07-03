@@ -46,6 +46,8 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
+template class llvm::Registry<clang::tidy::ClangTidyModule>;
+
 namespace clang {
 namespace tidy {
 
