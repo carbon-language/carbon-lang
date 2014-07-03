@@ -1881,7 +1881,8 @@ static void emitGlobalConstantFP(const ConstantFP *CFP, AsmPrinter &AP) {
 
   // PPC's long double has odd notions of endianness compared to how LLVM
   // handles it: p[0] goes first for *big* endian on PPC.
-  if (AP.TM.getDataLayout()->isBigEndian() != CFP->getType()->isPPC_FP128Ty()) {
+  if (AP.TM.getDataLayout()->isBigEndian() &&
+      !CFP->getType()->isPPC_FP128Ty()) {
     int Chunk = API.getNumWords() - 1;
 
     if (TrailingBytes)

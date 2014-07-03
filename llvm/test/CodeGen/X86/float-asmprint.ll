@@ -16,8 +16,9 @@
 ; CHECK-NEXT: .size
 
 ; CHECK: varppc128:
-; CHECK-NEXT: .quad 0                         # ppc_fp128 -0
-; CHECK-NEXT: .quad -9223372036854775808
+; For ppc_fp128, the high double always comes first.
+; CHECK-NEXT: .quad -9223372036854775808      # ppc_fp128 -0
+; CHECK-NEXT: .quad 0
 ; CHECK-NEXT: .size
 
 ; CHECK: var80:

@@ -716,6 +716,13 @@ public:
   /// reduce runtime.
   virtual bool ShouldShrinkFPConstant(EVT) const { return true; }
 
+  /// When splitting a value of the specified type into parts, does the Lo
+  /// or Hi part come first?  This usually follows the endianness, except
+  /// for ppcf128, where the Hi part always comes first.
+  bool hasBigEndianPartOrdering(EVT VT) const {
+    return isBigEndian() || VT == MVT::ppcf128;
+  }
+
   /// If true, the target has custom DAG combine transformations that it can
   /// perform for the specified node.
   bool hasTargetDAGCombine(ISD::NodeType NT) const {

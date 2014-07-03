@@ -6210,6 +6210,9 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
   if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse() &&
       // Do not change the width of a volatile load.
       !cast<LoadSDNode>(N0)->isVolatile() &&
+      // Do not remove the cast if the types differ in endian layout.
+      TLI.hasBigEndianPartOrdering(N0.getValueType()) ==
+      TLI.hasBigEndianPartOrdering(VT) &&
       (!LegalOperations || TLI.isOperationLegal(ISD::LOAD, VT)) &&
       TLI.isLoadBitCastBeneficial(N0.getValueType(), VT)) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);

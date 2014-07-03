@@ -169,7 +169,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, SDLoc DL,
       SDValue Lo, Hi;
       Lo = DAG.getNode(ISD::BITCAST, DL, EVT(MVT::f64), Parts[0]);
       Hi = DAG.getNode(ISD::BITCAST, DL, EVT(MVT::f64), Parts[1]);
-      if (TLI.isBigEndian())
+      if (TLI.hasBigEndianPartOrdering(ValueVT))
         std::swap(Lo, Hi);
       Val = DAG.getNode(ISD::BUILD_PAIR, DL, ValueVT, Lo, Hi);
     } else {
