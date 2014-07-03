@@ -1968,7 +1968,7 @@ CommandObjectPlatformProcessAttach::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1,   false, "pid",     'p'  , OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePid,           "The process ID of an existing process to attach to."},
     { LLDB_OPT_SET_2,   false, "name",    'n'  , OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
     { LLDB_OPT_SET_2,   false, "waitfor", 'w'  , OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone,              "Wait for the the process with <process-name> to launch."},
-    { 0,                false, NULL     , NULL , 0                              , NULL, NULL, 0, eArgTypeNone, NULL }
+    { 0,                false, NULL     , 0    , 0                              , NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 
