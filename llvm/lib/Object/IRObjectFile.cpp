@@ -263,7 +263,7 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
-ErrorOr<SymbolicFile *> llvm::object::SymbolicFile::createIRObjectFile(
+ErrorOr<IRObjectFile *> llvm::object::IRObjectFile::createIRObjectFile(
     std::unique_ptr<MemoryBuffer> Object, LLVMContext &Context) {
   std::error_code EC;
   std::unique_ptr<IRObjectFile> Ret(

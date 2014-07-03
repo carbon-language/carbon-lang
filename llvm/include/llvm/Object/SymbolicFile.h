@@ -143,10 +143,6 @@ public:
 
   // construction aux.
   static ErrorOr<SymbolicFile *>
-  createIRObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                     LLVMContext &Context);
-
-  static ErrorOr<SymbolicFile *>
   createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
                      sys::fs::file_magic Type, LLVMContext *Context);
 

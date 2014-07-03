@@ -42,6 +42,10 @@ public:
   static inline bool classof(const Binary *v) {
     return v->isIR();
   }
+
+  static ErrorOr<IRObjectFile *>
+  createIRObjectFile(std::unique_ptr<MemoryBuffer> Object,
+                     LLVMContext &Context);
 };
 }
 }
