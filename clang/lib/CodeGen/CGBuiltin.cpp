@@ -3033,23 +3033,23 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned HintID = static_cast<unsigned>(-1);
   switch (BuiltinID) {
   default: break;
-  case ARM::BI__builtin_yield:
+  case ARM::BI__builtin_arm_yield:
   case ARM::BI__yield:
     HintID = 1;
     break;
-  case ARM::BI__builtin_wfe:
+  case ARM::BI__builtin_arm_wfe:
   case ARM::BI__wfe:
     HintID = 2;
     break;
-  case ARM::BI__builtin_wfi:
+  case ARM::BI__builtin_arm_wfi:
   case ARM::BI__wfi:
     HintID = 3;
     break;
-  case ARM::BI__builtin_sev:
+  case ARM::BI__builtin_arm_sev:
   case ARM::BI__sev:
     HintID = 4;
     break;
-  case ARM::BI__builtin_sevl:
+  case ARM::BI__builtin_arm_sevl:
   case ARM::BI__sevl:
     HintID = 5;
     break;

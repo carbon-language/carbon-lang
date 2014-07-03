@@ -20,31 +20,31 @@ void test_eh_return_data_regno()
 }
 
 void yield() {
-  __builtin_yield();
+  __builtin_arm_yield();
 }
 
 // CHECK: call {{.*}} @llvm.arm.hint(i32 1)
 
 void wfe() {
-  __builtin_wfe();
+  __builtin_arm_wfe();
 }
 
 // CHECK: call {{.*}} @llvm.arm.hint(i32 2)
 
 void wfi() {
-  __builtin_wfi();
+  __builtin_arm_wfi();
 }
 
 // CHECK: call {{.*}} @llvm.arm.hint(i32 3)
 
 void sev() {
-  __builtin_sev();
+  __builtin_arm_sev();
 }
 
 // CHECK: call {{.*}} @llvm.arm.hint(i32 4)
 
 void sevl() {
-  __builtin_sevl();
+  __builtin_arm_sevl();
 }
 
 // CHECK: call {{.*}} @llvm.arm.hint(i32 5)
