@@ -60,22 +60,17 @@ enum AddrMode2Type {
 };
 
 class ARMDAGToDAGISel : public SelectionDAGISel {
-  ARMBaseTargetMachine &TM;
-
   /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
   /// make the right decision when generating code for different targets.
   const ARMSubtarget *Subtarget;
 
 public:
-  explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm,
-                           CodeGenOpt::Level OptLevel)
-    : SelectionDAGISel(tm, OptLevel), TM(tm),
-      Subtarget(&TM.getSubtarget<ARMSubtarget>()) {
-  }
+  explicit ARMDAGToDAGISel(ARMBaseTargetMachine &tm, CodeGenOpt::Level OptLevel)
+      : SelectionDAGISel(tm, OptLevel) {}
 
   bool runOnMachineFunction(MachineFunction &MF) override {
     // Reset the subtarget each time through.
-    Subtarget = &TM.getSubtarget<ARMSubtarget>();
+    Subtarget = &MF.getTarget().getSubtarget<ARMSubtarget>();
     SelectionDAGISel::runOnMachineFunction(MF);
     return true;
   }
@@ -429,8 +424,8 @@ bool ARMDAGToDAGISel::hasNoVMLxHazardUse(SDNode *N) const {
   if (Use->getOpcode() == ISD::CopyToReg)
     return true;
   if (Use->isMachineOpcode()) {
-    const ARMBaseInstrInfo *TII =
-      static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
+    const ARMBaseInstrInfo *TII = static_cast<const ARMBaseInstrInfo *>(
+        CurDAG->getTarget().getInstrInfo());
 
     const MCInstrDesc &MCID = TII->get(Use->getMachineOpcode());
     if (MCID.mayStore())
