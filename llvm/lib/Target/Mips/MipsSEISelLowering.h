@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MipsSEISELLOWERING_H
-#define MipsSEISELLOWERING_H
+#ifndef MIPSSEISELLOWERING_H
+#define MIPSSEISELLOWERING_H
 
 #include "MipsISelLowering.h"
 #include "MipsRegisterInfo.h"

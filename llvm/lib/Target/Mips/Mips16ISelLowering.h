@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef Mips16ISELLOWERING_H
-#define Mips16ISELLOWERING_H
+#ifndef MIPS16ISELLOWERING_H
+#define MIPS16ISELLOWERING_H
 
 #include "MipsISelLowering.h"
 
