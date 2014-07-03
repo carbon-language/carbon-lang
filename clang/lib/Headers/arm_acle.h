@@ -90,6 +90,11 @@ static __inline__ int32_t __attribute__((always_inline, nodebug))
   __qsub(int32_t t, int32_t v) {
   return __builtin_arm_qsub(t, v);
 }
+
+static __inline__ int32_t __attribute__((always_inline, nodebug))
+__qdbl(int32_t t) {
+  return __builtin_arm_qadd(t, t);
+}
 #endif
 
 /* CRC32 intrinsics */

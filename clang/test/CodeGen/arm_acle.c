@@ -66,6 +66,15 @@ int32_t test_qadd(int32_t a, int32_t b) {
 int32_t test_qsub(int32_t a, int32_t b) {
   return __qsub(a, b);
 }
+
+extern int32_t f();
+// AArch32-LABEL: test_qdbl
+// AArch32: [[VAR:%[a-z0-9]+]] = {{.*}} call {{.*}} @f
+// AArch32-NOT: call {{.*}} @f
+// AArch32: call i32 @llvm.arm.qadd(i32 [[VAR]], i32 [[VAR]])
+int32_t test_qdbl() {
+  return __qdbl(f());
+}
 #endif
 
 /* CRC32 intrinsics */
