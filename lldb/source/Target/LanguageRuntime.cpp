@@ -307,6 +307,15 @@ struct language_name_pair language_names[] =
     {   "upc",              eLanguageTypeUPC            },
     {   "d",                eLanguageTypeD              },
     {   "python",           eLanguageTypePython         },
+    {   "opencl",           eLanguageTypeOpenCL         },
+    {   "go",               eLanguageTypeGo             },
+    {   "modula3",          eLanguageTypeModula3        },
+    {   "haskell",          eLanguageTypeHaskell        },
+    {   "c++03",            eLanguageTypeC_plus_plus_03 },
+    {   "c++11",            eLanguageTypeC_plus_plus_11 },
+    {   "ocaml",            eLanguageTypeOCaml          },
+    {   "rust",             eLanguageTypeRust           },
+    {   "c11",              eLanguageTypeC11            },
     // Now synonyms, in arbitrary order
     {   "objc",             eLanguageTypeObjC           },
     {   "objc++",           eLanguageTypeObjC_plus_plus }

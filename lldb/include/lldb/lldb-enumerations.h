@@ -369,6 +369,15 @@ namespace lldb {
         eLanguageTypeUPC             = 0x0012,   ///< Unified Parallel C.
         eLanguageTypeD               = 0x0013,   ///< D.
         eLanguageTypePython          = 0x0014,   ///< Python.
+        eLanguageTypeOpenCL          = 0x0015,   ///< OpenCL.
+        eLanguageTypeGo              = 0x0016,   ///< Go.
+        eLanguageTypeModula3         = 0x0017,   ///< Modula 3.
+        eLanguageTypeHaskell         = 0x0018,   ///< Haskell.
+        eLanguageTypeC_plus_plus_03  = 0x0019,   ///< ISO C++:2003.
+        eLanguageTypeC_plus_plus_11  = 0x001a,   ///< ISO C++:2011.
+        eLanguageTypeOCaml           = 0x001b,   ///< OCaml.
+        eLanguageTypeRust            = 0x001c,   ///< Rust.
+        eLanguageTypeC11             = 0x001d,   ///< ISO C:2011.
         eNumLanguageTypes
     } LanguageType;
 

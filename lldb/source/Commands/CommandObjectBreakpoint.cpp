@@ -154,9 +154,12 @@ public:
                         case eLanguageTypeC89:
                         case eLanguageTypeC:
                         case eLanguageTypeC99:
+                        case eLanguageTypeC11:
                             m_language = eLanguageTypeC;
                             break;
                         case eLanguageTypeC_plus_plus:
+                        case eLanguageTypeC_plus_plus_03:
+                        case eLanguageTypeC_plus_plus_11:
                             m_language = eLanguageTypeC_plus_plus;
                             break;
                         case eLanguageTypeObjC:
