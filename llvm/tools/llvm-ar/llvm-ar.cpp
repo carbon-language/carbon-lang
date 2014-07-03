@@ -24,6 +24,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
@@ -902,6 +903,10 @@ int main(int argc, char **argv) {
     "LLVM Archiver (llvm-ar)\n\n"
     "  This program archives bitcode files into single libraries\n"
   );
+
+  llvm::InitializeAllTargetInfos();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmParsers();
 
   StringRef Stem = sys::path::stem(ToolName);
   if (Stem.find("ar") != StringRef::npos)
