@@ -14,7 +14,7 @@ static int foo(unsigned i) {
 }
 
 static int foo2(unsigned i) {
-  const void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };
+  static const void *addrs[] = { &&L1, &&L2, &&L3, &&L4, &&L5 };
   int res = 1;
   
   goto *addrs[i];
