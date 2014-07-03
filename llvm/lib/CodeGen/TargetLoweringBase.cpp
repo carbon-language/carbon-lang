@@ -1084,24 +1084,25 @@ void TargetLoweringBase::computeRegisterProperties() {
   // Loop over all of the vector value types to see which need transformations.
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {
-    MVT VT = (MVT::SimpleValueType)i;
-    if (isTypeLegal(VT)) continue;
+    MVT VT = (MVT::SimpleValueType) i;
+    if (isTypeLegal(VT))
+      continue;
 
-    // Determine if there is a legal wider type.  If so, we should promote to
-    // that wider vector type.
     MVT EltVT = VT.getVectorElementType();
     unsigned NElts = VT.getVectorNumElements();
-    if (NElts != 1 && !shouldSplitVectorType(VT)) {
-      bool IsLegalWiderType = false;
-      // First try to promote the elements of integer vectors. If no legal
-      // promotion was found, fallback to the widen-vector method.
-      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-        MVT SVT = (MVT::SimpleValueType)nVT;
+    bool IsLegalWiderType = false;
+    LegalizeTypeAction PreferredAction = getPreferredVectorAction(VT);
+    switch (PreferredAction) {
+    case TypePromoteInteger: {
+      // Try to promote the elements of integer vectors. If no legal
+      // promotion was found, fall through to the widen-vector method.
+      for (unsigned nVT = i + 1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+        MVT SVT = (MVT::SimpleValueType) nVT;
         // Promote vectors of integers to vectors with the same number
         // of elements, with a wider element type.
         if (SVT.getVectorElementType().getSizeInBits() > EltVT.getSizeInBits()
-            && SVT.getVectorNumElements() == NElts &&
-            isTypeLegal(SVT) && SVT.getScalarType().isInteger()) {
+            && SVT.getVectorNumElements() == NElts && isTypeLegal(SVT)
+            && SVT.getScalarType().isInteger()) {
           TransformToType[i] = SVT;
           RegisterTypeForVT[i] = SVT;
           NumRegistersForVT[i] = 1;
@@ -1110,15 +1111,15 @@ void TargetLoweringBase::computeRegisterProperties() {
           break;
         }
       }
-
-      if (IsLegalWiderType) continue;
-
+      if (IsLegalWiderType)
+        break;
+    }
+    case TypeWidenVector: {
       // Try to widen the vector.
-      for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-        MVT SVT = (MVT::SimpleValueType)nVT;
-        if (SVT.getVectorElementType() == EltVT &&
-            SVT.getVectorNumElements() > NElts &&
-            isTypeLegal(SVT)) {
+      for (unsigned nVT = i + 1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
+        MVT SVT = (MVT::SimpleValueType) nVT;
+        if (SVT.getVectorElementType() == EltVT
+            && SVT.getVectorNumElements() > NElts && isTypeLegal(SVT)) {
           TransformToType[i] = SVT;
           RegisterTypeForVT[i] = SVT;
           NumRegistersForVT[i] = 1;
@@ -1127,27 +1128,34 @@ void TargetLoweringBase::computeRegisterProperties() {
           break;
         }
       }
-      if (IsLegalWiderType) continue;
+      if (IsLegalWiderType)
+        break;
     }
+    case TypeSplitVector:
+    case TypeScalarizeVector: {
+      MVT IntermediateVT;
+      MVT RegisterVT;
+      unsigned NumIntermediates;
+      NumRegistersForVT[i] = getVectorTypeBreakdownMVT(VT, IntermediateVT,
+          NumIntermediates, RegisterVT, this);
+      RegisterTypeForVT[i] = RegisterVT;
 
-    MVT IntermediateVT;
-    MVT RegisterVT;
-    unsigned NumIntermediates;
-    NumRegistersForVT[i] =
-      getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
-                                RegisterVT, this);
-    RegisterTypeForVT[i] = RegisterVT;
-
-    MVT NVT = VT.getPow2VectorType();
-    if (NVT == VT) {
-      // Type is already a power of 2.  The default action is to split.
-      TransformToType[i] = MVT::Other;
-      unsigned NumElts = VT.getVectorNumElements();
-      ValueTypeActions.setTypeAction(VT,
-            NumElts > 1 ? TypeSplitVector : TypeScalarizeVector);
-    } else {
-      TransformToType[i] = NVT;
-      ValueTypeActions.setTypeAction(VT, TypeWidenVector);
+      MVT NVT = VT.getPow2VectorType();
+      if (NVT == VT) {
+        // Type is already a power of 2.  The default action is to split.
+        TransformToType[i] = MVT::Other;
+        if (PreferredAction == TypeScalarizeVector)
+          ValueTypeActions.setTypeAction(VT, TypeScalarizeVector);
+        else
+          ValueTypeActions.setTypeAction(VT, TypeSplitVector);
+      } else {
+        TransformToType[i] = NVT;
+        ValueTypeActions.setTypeAction(VT, TypeWidenVector);
+      }
+      break;
+    }
+    default:
+      llvm_unreachable("Unknown vector legalization action!");
     }
   }
 

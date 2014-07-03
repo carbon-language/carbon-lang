@@ -270,8 +270,12 @@ bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
   return VT.bitsGT(MVT::i32);
 }
 
-bool SITargetLowering::shouldSplitVectorType(EVT VT) const {
-  return VT.getScalarType().bitsLE(MVT::i16);
+TargetLoweringBase::LegalizeTypeAction
+SITargetLowering::getPreferredVectorAction(EVT VT) const {
+  if (VT.getVectorNumElements() != 1 && VT.getScalarType().bitsLE(MVT::i16))
+    return TypeSplitVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
 }
 
 bool SITargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,

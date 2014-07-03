@@ -50,7 +50,9 @@ public:
   SITargetLowering(TargetMachine &tm);
   bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
                                      bool *IsFast) const override;
-  bool shouldSplitVectorType(EVT VT) const override;
+
+  TargetLoweringBase::LegalizeTypeAction
+  getPreferredVectorAction(EVT VT) const override;
 
   bool shouldConvertConstantLoadToIntImm(const APInt &Imm,
                                         Type *Ty) const override;

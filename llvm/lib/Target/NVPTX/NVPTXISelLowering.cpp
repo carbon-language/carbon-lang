@@ -473,8 +473,12 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-bool NVPTXTargetLowering::shouldSplitVectorType(EVT VT) const {
-  return VT.getScalarType() == MVT::i1;
+TargetLoweringBase::LegalizeTypeAction
+NVPTXTargetLowering::getPreferredVectorAction(EVT VT) const {
+  if (VT.getVectorNumElements() != 1 && VT.getScalarType() == MVT::i1)
+    return TypeSplitVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
 }
 
 SDValue

@@ -7886,6 +7886,18 @@ bool AArch64TargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
   return Inst->getType()->getPrimitiveSizeInBits() <= 128;
 }
 
+TargetLoweringBase::LegalizeTypeAction
+AArch64TargetLowering::getPreferredVectorAction(EVT VT) const {
+  MVT SVT = VT.getSimpleVT();
+  // During type legalization, we prefer to widen v1i8, v1i16, v1i32  to v8i8,
+  // v4i16, v2i32 instead of to promote.
+  if (SVT == MVT::v1i8 || SVT == MVT::v1i16 || SVT == MVT::v1i32
+      || SVT == MVT::v1f32)
+    return TypeWidenVector;
+
+  return TargetLoweringBase::getPreferredVectorAction(VT);
+}
+
 Value *AArch64TargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                                              AtomicOrdering Ord) const {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();

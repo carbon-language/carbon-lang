@@ -185,10 +185,15 @@ public:
   /// Return true if the target has BitExtract instructions.
   bool hasExtractBitsInsn() const { return HasExtractBitsInsn; }
 
-  /// Return true if a vector of the given type should be split
-  /// (TypeSplitVector) instead of promoted (TypePromoteInteger) during type
-  /// legalization.
-  virtual bool shouldSplitVectorType(EVT /*VT*/) const { return false; }
+  /// Return the preferred vector type legalization action.
+  virtual TargetLoweringBase::LegalizeTypeAction
+  getPreferredVectorAction(EVT VT) const {
+    // The default action for one element vectors is to scalarize
+    if (VT.getVectorNumElements() == 1)
+      return TypeScalarizeVector;
+    // The default action for other vectors is to promote
+    return TypePromoteInteger;
+  }
 
   // There are two general methods for expanding a BUILD_VECTOR node:
   //  1. Use SCALAR_TO_VECTOR on the defined scalar values and then shuffle

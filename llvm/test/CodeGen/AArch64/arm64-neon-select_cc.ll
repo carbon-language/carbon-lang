@@ -136,8 +136,8 @@ define <2x i64> @test_select_cc_v2i64(i64 %a, i64 %b, <2x i64> %c, <2x i64> %d )
 
 define <1 x float> @test_select_cc_v1f32(float %a, float %b, <1 x float> %c, <1 x float> %d ) {
 ; CHECK-LABEL: test_select_cc_v1f32:
-; CHECK: fcmp s0, s1
-; CHECK-NEXT: fcsel s0, s2, s3, eq
+; CHECK: fcmeq [[MASK:v[0-9]+]].2s, v0.2s, v1.2s
+; CHECK-NEXT: bsl [[MASK]].8b, v2.8b, v3.8b
   %cmp31 = fcmp oeq float %a, %b
   %e = select i1 %cmp31, <1 x float> %c, <1 x float> %d
   ret <1 x float> %e
