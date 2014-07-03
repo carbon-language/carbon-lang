@@ -63,7 +63,7 @@ private:
   // Use mangler to add GlobalPrefix to names to match linker names.
   Mangler _mangler;
 
-  LTOModule(Module *m, TargetMachine *t);
+  LTOModule(std::unique_ptr<Module> M, TargetMachine *TM);
 
 public:
   /// Returns 'true' if the file or memory contents is LLVM bitcode.
@@ -205,8 +205,8 @@ private:
 
   /// Create an LTOModule (private version). N.B. This method takes ownership of
   /// the buffer.
-  static LTOModule *makeLTOModule(MemoryBuffer *buffer, TargetOptions options,
-                                  std::string &errMsg);
+  static LTOModule *makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
+                                  TargetOptions options, std::string &errMsg);
 
   /// Create a MemoryBuffer from a memory range with an optional name.
   static MemoryBuffer *makeBuffer(const void *mem, size_t length,

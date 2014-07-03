@@ -44,12 +44,13 @@
 #include <system_error>
 using namespace llvm;
 
-LTOModule::LTOModule(llvm::Module *m, llvm::TargetMachine *t)
-  : _module(m), _target(t),
-    _context(_target->getMCAsmInfo(), _target->getRegisterInfo(), &ObjFileInfo),
-    _mangler(t->getDataLayout()) {
-  ObjFileInfo.InitMCObjectFileInfo(t->getTargetTriple(),
-                                   t->getRelocationModel(), t->getCodeModel(),
+LTOModule::LTOModule(std::unique_ptr<Module> M, TargetMachine *TM)
+    : _module(std::move(M)), _target(TM),
+      _context(_target->getMCAsmInfo(), _target->getRegisterInfo(),
+               &ObjFileInfo),
+      _mangler(TM->getDataLayout()) {
+  ObjFileInfo.InitMCObjectFileInfo(TM->getTargetTriple(),
+                                   TM->getRelocationModel(), TM->getCodeModel(),
                                    _context);
 }
 
@@ -102,7 +103,7 @@ LTOModule *LTOModule::makeLTOModule(const char *path, TargetOptions options,
     errMsg = ec.message();
     return nullptr;
   }
-  return makeLTOModule(buffer.release(), options, errMsg);
+  return makeLTOModule(std::move(buffer), options, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
@@ -122,7 +123,7 @@ LTOModule *LTOModule::makeLTOModule(int fd, const char *path,
     errMsg = ec.message();
     return nullptr;
   }
-  return makeLTOModule(buffer.release(), options, errMsg);
+  return makeLTOModule(std::move(buffer), options, errMsg);
 }
 
 LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
@@ -131,20 +132,20 @@ LTOModule *LTOModule::makeLTOModule(const void *mem, size_t length,
   std::unique_ptr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
   if (!buffer)
     return nullptr;
-  return makeLTOModule(buffer.release(), options, errMsg);
+  return makeLTOModule(std::move(buffer), options, errMsg);
 }
 
-LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
+LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
                                     TargetOptions options,
                                     std::string &errMsg) {
   // parse bitcode buffer
   ErrorOr<Module *> ModuleOrErr =
-      getLazyBitcodeModule(buffer, getGlobalContext());
+      getLazyBitcodeModule(Buffer.get(), getGlobalContext());
   if (std::error_code EC = ModuleOrErr.getError()) {
     errMsg = EC.message();
-    delete buffer;
     return nullptr;
   }
+  Buffer.release();
   std::unique_ptr<Module> m(ModuleOrErr.get());
 
   std::string TripleStr = m->getTargetTriple();
@@ -177,7 +178,7 @@ LTOModule *LTOModule::makeLTOModule(MemoryBuffer *buffer,
                                                      options);
   m->materializeAllPermanently();
 
-  LTOModule *Ret = new LTOModule(m.release(), target);
+  LTOModule *Ret = new LTOModule(std::move(m), target);
 
   // We need a MCContext set up in order to get mangled names of private
   // symbols. It is a bit odd that we need to report uses and definitions
