@@ -39,11 +39,11 @@ namespace __sanitizer {
   extern unsigned struct_itimerspec_sz;
   extern unsigned struct_sigevent_sz;
   extern unsigned struct_sched_param_sz;
-  extern unsigned struct_statfs_sz;
   extern unsigned struct_statfs64_sz;
-  extern unsigned struct_sockaddr_sz;
 
 #if !SANITIZER_ANDROID
+  extern unsigned struct_statfs_sz;
+  extern unsigned struct_sockaddr_sz;
   extern unsigned ucontext_t_sz;
 #endif // !SANITIZER_ANDROID
 

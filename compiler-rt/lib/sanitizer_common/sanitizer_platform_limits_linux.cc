@@ -50,18 +50,15 @@
 
 #include <linux/aio_abi.h>
 
-#if SANITIZER_ANDROID
-#include <asm/statfs.h>
-#else
-#include <sys/statfs.h>
-#endif
-
 #if !SANITIZER_ANDROID
+#include <sys/statfs.h>
 #include <linux/perf_event.h>
 #endif
 
 namespace __sanitizer {
+#if !SANITIZER_ANDROID
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
+#endif
 }  // namespace __sanitizer
 
 #if !defined(__powerpc64__) && !defined(__x86_64__) && !defined(__aarch64__)\

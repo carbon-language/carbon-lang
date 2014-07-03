@@ -68,7 +68,9 @@
 # define ASAN_INTERCEPT_SIGLONGJMP 0
 #endif
 
-#if ASAN_HAS_EXCEPTIONS && !SANITIZER_WINDOWS
+// Android bug: https://code.google.com/p/android/issues/detail?id=61799
+#if ASAN_HAS_EXCEPTIONS && !SANITIZER_WINDOWS && \
+    !(SANITIZER_ANDROID && defined(__i386))
 # define ASAN_INTERCEPT___CXA_THROW 1
 #else
 # define ASAN_INTERCEPT___CXA_THROW 0
