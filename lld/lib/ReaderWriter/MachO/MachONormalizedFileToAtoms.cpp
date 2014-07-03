@@ -565,6 +565,16 @@ std::error_code convertRelocs(const Section &section,
       case lld::MachOLinkingContext::arch_x86:
         arch = Reference::KindArch::x86;
         break;
+      case lld::MachOLinkingContext::arch_ppc:
+        arch = Reference::KindArch::PowerPC;
+        break;
+      case lld::MachOLinkingContext::arch_armv6:
+      case lld::MachOLinkingContext::arch_armv7:
+      case lld::MachOLinkingContext::arch_armv7s:
+        arch = Reference::KindArch::ARM;
+        break;
+      case lld::MachOLinkingContext::arch_unknown:
+        return make_dynamic_error_code(Twine("unknown architecture"));
       }
       
       inAtom->addReference(offsetInAtom, kind, target, addend, arch);
