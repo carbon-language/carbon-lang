@@ -176,7 +176,4 @@ def err_drv_modules_validate_once_requires_timestamp : Error<
 
 def warn_drv_invoking_fallback : Warning<"falling back to %0">,
   InGroup<Fallback>;
-def warn_drv_rtti_fallback :
-  Warning<"cannot compile RTTI yet, falling back to %0">,
-  InGroup<Fallback>;
 }
