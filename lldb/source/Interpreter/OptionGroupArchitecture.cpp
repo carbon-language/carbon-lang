@@ -30,7 +30,7 @@ OptionGroupArchitecture::~OptionGroupArchitecture ()
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1 , false, "arch"    , 'a', OptionParser::eRequiredArgument, nullptr, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
+    { LLDB_OPT_SET_1 , false, "arch"    , 'a', OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypeArchitecture , "Specify the architecture for the target."},
 };
 
 uint32_t

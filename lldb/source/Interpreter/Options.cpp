@@ -1026,7 +1026,7 @@ void
 OptionGroupOptions::Finalize ()
 {
     m_did_finalize = true;
-    OptionDefinition empty_option_def = { 0, false, nullptr, 0, 0, nullptr, 0, eArgTypeNone, nullptr };
+    OptionDefinition empty_option_def = { 0, false, nullptr, 0, 0, nullptr, nullptr, 0, eArgTypeNone, nullptr };
     m_option_defs.push_back (empty_option_def);
 }
 

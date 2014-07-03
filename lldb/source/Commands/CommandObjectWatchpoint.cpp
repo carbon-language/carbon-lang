@@ -329,16 +329,16 @@ private:
 OptionDefinition
 CommandObjectWatchpointList::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "brief",    'b', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,
+    { LLDB_OPT_SET_1, false, "brief",    'b', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
         "Give a brief description of the watchpoint (no location info)."},
 
-    { LLDB_OPT_SET_2, false, "full",    'f', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,
+    { LLDB_OPT_SET_2, false, "full",    'f', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
         "Give a full description of the watchpoint and its locations."},
 
-    { LLDB_OPT_SET_3, false, "verbose", 'v', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,
+    { LLDB_OPT_SET_3, false, "verbose", 'v', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,
         "Explain everything we know about the watchpoint (for debugging debugger bugs)." },
 
-    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
+    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -734,8 +734,8 @@ private:
 OptionDefinition
 CommandObjectWatchpointIgnore::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, true, "ignore-count", 'i', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount, "Set the number of times this watchpoint is skipped before stopping." },
-    { 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
+    { LLDB_OPT_SET_ALL, true, "ignore-count", 'i', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeCount, "Set the number of times this watchpoint is skipped before stopping." },
+    { 0,                false, NULL,            0 , 0,                 NULL, NULL, 0,    eArgTypeNone, NULL }
 };
 
 
@@ -897,8 +897,8 @@ private:
 OptionDefinition
 CommandObjectWatchpointModify::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "condition",    'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeExpression, "The watchpoint stops only if this condition expression evaluates to true."},
-{ 0,                false, NULL,            0 , 0,                 NULL, 0,    eArgTypeNone, NULL }
+{ LLDB_OPT_SET_ALL, false, "condition",    'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeExpression, "The watchpoint stops only if this condition expression evaluates to true."},
+{ 0,                false, NULL,            0 , 0,                 NULL, NULL, 0,    eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
