@@ -131,6 +131,11 @@ cl::opt<bool> WithoutAliases("without-aliases", cl::Hidden,
 cl::opt<bool> ArchiveMap("print-armap", cl::desc("Print the archive map"));
 cl::alias ArchiveMaps("s", cl::desc("Alias for --print-armap"),
                       cl::aliasopt(ArchiveMap));
+
+cl::opt<bool> JustSymbolName("just-symbol-name",
+                             cl::desc("Print just the symbol's name"));
+cl::alias JustSymbolNames("j", cl::desc("Alias for --just-symbol-name"),
+                          cl::aliasopt(JustSymbolName));
 bool PrintAddress = true;
 
 bool MultipleFiles = false;
@@ -446,6 +451,10 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName) {
       continue;
     if (SizeSort && !PrintAddress && I->Size == UnknownAddressOrSize)
       continue;
+    if (JustSymbolName) {
+      outs() << I->Name << "\n";
+      continue;
+    }
 
     char SymbolAddrStr[18] = "";
     char SymbolSizeStr[18] = "";
