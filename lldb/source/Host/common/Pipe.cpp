@@ -9,12 +9,11 @@
 
 #include "lldb/Host/Pipe.h"
 
-#include <unistd.h>
-
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <io.h>
-#include <math.h>   // TODO: not sure if this is needed for windows, remove if not
-#include <process.h>// TODO: not sure if this is needed for windows, remove if not
+#include <fcntl.h>
+#else
+#include <unistd.h>
 #endif
 
 using namespace lldb_private;
@@ -42,7 +41,7 @@ Pipe::Open()
 
 #ifdef _WIN32
     if (::_pipe(m_fds, 256, O_BINARY) == 0)
-        return true
+        return true;
 #else
     if (::pipe(m_fds) == 0)
         return true;
