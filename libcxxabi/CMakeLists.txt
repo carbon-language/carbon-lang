@@ -1,0 +1,212 @@
+#===============================================================================
+# Setup Project
+#===============================================================================
+
+cmake_minimum_required(VERSION 2.8.8)
+
+if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  project(libcxxabi)
+
+  # Rely on llvm-config.
+  set(CONFIG_OUTPUT)
+  find_program(LLVM_CONFIG "llvm-config")
+  if(LLVM_CONFIG)
+    message(STATUS "Found LLVM_CONFIG as ${LLVM_CONFIG}")
+    set(CONFIG_COMMAND ${LLVM_CONFIG}
+      "--bindir"
+      "--includedir"
+      "--libdir"
+      "--prefix"
+      "--src-root")
+    execute_process(
+      COMMAND ${CONFIG_COMMAND}
+      RESULT_VARIABLE HAD_ERROR
+      OUTPUT_VARIABLE CONFIG_OUTPUT
+    )
+    if(NOT HAD_ERROR)
+      string(REGEX REPLACE
+        "[ \t]*[\r\n]+[ \t]*" ";"
+        CONFIG_OUTPUT ${CONFIG_OUTPUT})
+    else()
+      string(REPLACE ";" " " CONFIG_COMMAND_STR "${CONFIG_COMMAND}")
+      message(STATUS "${CONFIG_COMMAND_STR}")
+      message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
+    endif()
+  else()
+    message(FATAL_ERROR "llvm-config not found -- ${LLVM_CONFIG}")
+  endif()
+
+  list(GET CONFIG_OUTPUT 0 TOOLS_BINARY_DIR)
+  list(GET CONFIG_OUTPUT 1 INCLUDE_DIR)
+  list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
+  list(GET CONFIG_OUTPUT 3 LLVM_OBJ_ROOT)
+  list(GET CONFIG_OUTPUT 4 MAIN_SRC_DIR)
+
+  set(LLVM_TOOLS_BINARY_DIR ${TOOLS_BINARY_DIR} CACHE PATH "Path to llvm/bin")
+  set(LLVM_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
+  set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
+  set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
+  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
+
+  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
+  set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
+  if(EXISTS ${LLVMCONFIG_FILE})
+    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
+    include(${LLVMCONFIG_FILE})
+  else()
+    message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
+  endif()
+
+  set(PACKAGE_NAME libcxxabi)
+  set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
+  set(PACKAGE_STRING "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+  set(PACKAGE_BUGREPORT "llvmbugs@cs.uiuc.edu")
+
+  if(EXISTS ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+    set(LLVM_LIT ${LLVM_MAIN_SRC_DIR}/utils/lit/lit.py)
+  else()
+    # Seek installed Lit.
+    find_program(LLVM_LIT "lit.py" ${LLVM_MAIN_SRC_DIR}/utils/lit
+      DOC "Path to lit.py")
+  endif()
+
+  if(LLVM_LIT)
+    # Define the default arguments to use with 'lit', and an option for the user
+    # to override.
+    set(LIT_ARGS_DEFAULT "-sv")
+    if (MSVC OR XCODE)
+      set(LIT_ARGS_DEFAULT "${LIT_ARGS_DEFAULT} --no-progress-bar")
+    endif()
+    set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
+
+    # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
+    if( WIN32 AND NOT CYGWIN )
+      set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
+    endif()
+  else()
+    set(LLVM_INCLUDE_TESTS OFF)
+  endif()
+
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+  set(LIBCXXABI_BUILT_STANDALONE 1)
+endif()
+
+#===============================================================================
+# Setup CMake Options
+#===============================================================================
+
+# Define options.
+option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
+option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
+option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
+option(LIBCXXABI_ENABLE_SHARED "Build libc++abi as a shared library." OFF)
+
+#===============================================================================
+# Configure System
+#===============================================================================
+
+# Add path for custom modules
+set(CMAKE_MODULE_PATH
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
+  ${CMAKE_MODULE_PATH}
+  )
+
+# Configure compiler.
+include(config-ix)
+
+#===============================================================================
+# Setup Compiler Flags
+#===============================================================================
+
+# Get required flags.
+macro(append_if list condition var)
+  if (${condition})
+    list(APPEND ${list} ${var})
+  endif()
+endmacro()
+
+if (LIBCXXABI_HAS_NOSTDINCXX_FLAG)
+  list(APPEND LIBCXXABI_CXX_REQUIRED_FLAGS -nostdinc++)
+endif()
+if (NOT LIBCXXABI_HAS_STDCXX11_FLAG)
+  message(FATAL_ERROR "Building libcxxabi requires a C++11 capable compiler.")
+endif()
+
+list(APPEND LIBCXXABI_CXX_REQUIRED_FLAGS -std=c++11)
+
+# Get warning flags
+if (NOT MSVC)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WALL_FLAG -Wall)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WNO_UNUSED_FUNCTION_FLAG -Wno-unused-function)
+  list(APPEND LIBCXXABI_CXX_REQUIRED_FLAGS -Werror=return-type)
+endif()
+
+append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_W_FLAG -W)
+append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WNO_UNUSED_PARAMETER_FLAG -Wno-unused-parameter)
+append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WWRITE_STRINGS_FLAG -Wwrite-strings)
+append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WNO_LONG_LONG_FLAG -Wno-long-long)
+if (LIBCXXABI_ENABLE_WERROR)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WERROR_FLAG -Werror)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WX_FLAG -WX)
+else()
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_WNO_ERROR_FLAG -Wno-error)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_NO_WX_FLAG -WX-)
+endif()
+if (LIBCXXABI_ENABLE_PEDANTIC)
+  append_if(LIBCXXABI_CXX_WARNING_FLAGS LIBCXXABI_HAS_PEDANTIC_FLAG -pedantic)
+endif()
+
+# Get feature flags.
+# Exceptions
+# Catches C++ exceptions only and tells the compiler to assume that extern C
+# functions never throw a C++ exception.
+append_if(LIBCXXABI_CXX_FEATURE_FLAGS LIBCXXABI_HAS_EHSC_FLAG -EHsc)
+
+# Assert
+string(TOUPPER "${CMAKE_BUILD_TYPE}" uppercase_CMAKE_BUILD_TYPE)
+if (LIBCXXABI_ENABLE_ASSERTIONS)
+  # MSVC doesn't like _DEBUG on release builds. See PR 4379.
+  if (NOT MSVC)
+    list(APPEND LIBCXXABI_CXX_FEATURE_FLAGS -D_DEBUG)
+  endif()
+  # On Release builds cmake automatically defines NDEBUG, so we
+  # explicitly undefine it:
+  if (uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+    list(APPEND LIBCXXABI_CXX_FEATURE_FLAGS -UNDEBUG)
+  endif()
+else()
+  if (NOT uppercase_CMAKE_BUILD_TYPE STREQUAL "RELEASE")
+    list(APPEND LIBCXXABI_CXX_FEATURE_FLAGS -DNDEBUG)
+  endif()
+endif()
+# Static library
+if (NOT LIBCXXABI_ENABLE_SHARED)
+  list(APPEND LIBCXXABI_CXX_FEATURE_FLAGS -D_LIBCPP_BUILD_STATIC)
+endif()
+
+# This is the _ONLY_ place where add_definitions is called.
+if (MSVC)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+string(REPLACE ";" " " LIBCXXABI_CXX_REQUIRED_FLAGS "${LIBCXXABI_CXX_REQUIRED_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXXABI_CXX_REQUIRED_FLAGS}")
+
+string(REPLACE ";" " " LIBCXXABI_CXX_WARNING_FLAGS "${LIBCXXABI_CXX_WARNING_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXXABI_CXX_WARNING_FLAGS}")
+
+string(REPLACE ";" " " LIBCXXABI_CXX_FEATURE_FLAGS "${LIBCXXABI_CXX_FEATURE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LIBCXXABI_CXX_FEATURE_FLAGS}")
+
+#===============================================================================
+# Setup Source Code
+#===============================================================================
+
+include_directories(include)
+
+# Add source code. This also contains all of the logic for deciding linker flags
+# soname, etc...
+add_subdirectory(src)
