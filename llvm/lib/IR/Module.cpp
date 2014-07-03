@@ -437,14 +437,14 @@ std::error_code Module::materializeAllPermanently(bool ReleaseBuffer) {
 // has "dropped all references", except operator delete.
 //
 void Module::dropAllReferences() {
-  for(Module::iterator I = begin(), E = end(); I != E; ++I)
-    I->dropAllReferences();
+  for (Function &F : *this)
+    F.dropAllReferences();
 
-  for(Module::global_iterator I = global_begin(), E = global_end(); I != E; ++I)
-    I->dropAllReferences();
+  for (GlobalVariable &GV : globals())
+    GV.dropAllReferences();
 
-  for(Module::alias_iterator I = alias_begin(), E = alias_end(); I != E; ++I)
-    I->dropAllReferences();
+  for (GlobalAlias &GA : aliases())
+    GA.dropAllReferences();
 }
 
 unsigned Module::getDwarfVersion() const {
