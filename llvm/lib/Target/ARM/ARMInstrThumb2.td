@@ -3209,26 +3209,27 @@ def t2MOVCCi32imm
 let hasSideEffects = 1 in {
 def t2DMB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
                 "dmb", "\t$opt", [(int_arm_dmb (i32 imm0_15:$opt))]>,
-                Requires<[HasDB]> {
+                Requires<[IsThumb, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f5;
   let Inst{3-0} = opt;
 }
-}
 
 def t2DSB : T2I<(outs), (ins memb_opt:$opt), NoItinerary,
                 "dsb", "\t$opt", [(int_arm_dsb (i32 imm0_15:$opt))]>,
-                Requires<[HasDB]> {
+                Requires<[IsThumb, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f4;
   let Inst{3-0} = opt;
 }
 
 def t2ISB : T2I<(outs), (ins instsyncb_opt:$opt), NoItinerary,
-                "isb", "\t$opt", []>, Requires<[HasDB]> {
+                "isb", "\t$opt", [(int_arm_isb (i32 imm0_15:$opt))]>,
+                Requires<[IsThumb, HasDB]> {
   bits<4> opt;
   let Inst{31-4} = 0xf3bf8f6;
   let Inst{3-0} = opt;
+}
 }
 
 class T2I_ldrex<bits<4> opcod, dag oops, dag iops, AddrMode am, int sz,

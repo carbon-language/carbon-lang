@@ -56,6 +56,7 @@ def int_arm_ldaexd : Intrinsic<[llvm_i32_ty, llvm_i32_ty], [llvm_ptr_ty]>;
 // Data barrier instructions
 def int_arm_dmb : GCCBuiltin<"__builtin_arm_dmb">, Intrinsic<[], [llvm_i32_ty]>;
 def int_arm_dsb : GCCBuiltin<"__builtin_arm_dsb">, Intrinsic<[], [llvm_i32_ty]>;
+def int_arm_isb : GCCBuiltin<"__builtin_arm_isb">, Intrinsic<[], [llvm_i32_ty]>;
 
 //===----------------------------------------------------------------------===//
 // VFP
