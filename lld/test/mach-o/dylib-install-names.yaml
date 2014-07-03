@@ -10,11 +10,6 @@
 # RUN: macho-dump libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 # RUN: rm -f libwibble.dylib
 
-# Check the default output file is a.out, and this also goes into LC_ID_DYLIB.
-# RUN: lld -flavor darwin -arch x86_64 -dylib %s
-# RUN: macho-dump a.out | FileCheck %s --check-prefix=CHECK-BINARY-WRITE-AOUT
-# RUN: rm -f a.out
-
 --- !mach-o
 arch:            x86_64
 file-type:       MH_OBJECT
@@ -48,10 +43,6 @@ global-symbols:
 # CHECK-BINARY-WRITE: (('command', 13)
 # CHECK-BINARY-WRITE-NEXT:  ('size', 40)
 # CHECK-BINARY-WRITE-NEXT:  ('install_name', 'libwibble.dylib')
-
-# CHECK-BINARY-WRITE-AOUT: (('command', 13)
-# CHECK-BINARY-WRITE-AOUT-NEXT:  ('size', 32)
-# CHECK-BINARY-WRITE-AOUT-NEXT:  ('install_name', 'a.out')
 
 # CHECK-BINARY-READ: shared-library-atoms:
 # CHECK-BINARY-READ:     - name:          _myGlobal
