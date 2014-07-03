@@ -12,6 +12,8 @@ RUN: llvm-nm %p/Inputs/absolute.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ABSOLUTE-ELF64
 RUN: llvm-nm %p/Inputs/trivial-object-test.macho-i386 \
 RUN:         | FileCheck %s -check-prefix macho
+RUN: llvm-nm -U %p/Inputs/trivial-object-test.macho-i386 \
+RUN:         | FileCheck %s -check-prefix macho-U
 RUN: llvm-nm %p/Inputs/trivial-object-test.macho-x86-64 \
 RUN:         | FileCheck %s -check-prefix macho64
 RUN: llvm-nm %p/Inputs/macho-text-data-bss.macho-x86_64 \
@@ -67,6 +69,10 @@ ABSOLUTE-ELF64: 0000000000000123 A a2
 macho:          U _SomeOtherFunction
 macho: 00000000 T _main
 macho:          U _puts
+
+macho-U-NOT:          U _SomeOtherFunction
+macho-U: 00000000 T _main
+macho-U-NOT:          U _puts
 
 macho64: 0000000000000028 s L_.str
 macho64:                  U _SomeOtherFunction

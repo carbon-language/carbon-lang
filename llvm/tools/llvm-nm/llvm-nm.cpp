@@ -73,6 +73,8 @@ cl::alias DynamicSyms2("D", cl::desc("Alias for --dynamic"),
 
 cl::opt<bool> DefinedOnly("defined-only",
                           cl::desc("Show only defined symbols"));
+cl::alias DefinedOnly2("U", cl::desc("Alias for --defined-only"),
+                       cl::aliasopt(DefinedOnly));
 
 cl::opt<bool> ExternalOnly("extern-only",
                            cl::desc("Show only external symbols"));
