@@ -56,49 +56,10 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL, bool isLittle)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, isLittle, RM, this),
-      InstrInfo(MipsInstrInfo::create(*this)),
-      FrameLowering(MipsFrameLowering::create(*this, Subtarget)),
-      TLInfo(MipsTargetLowering::create(*this)) {
+      Subtarget(TT, CPU, FS, isLittle, RM, this) {
   initAsmInfo();
 }
 
-
-void MipsTargetMachine::setHelperClassesMips16() {
-  InstrInfoSE.swap(InstrInfo);
-  FrameLoweringSE.swap(FrameLowering);
-  TLInfoSE.swap(TLInfo);
-  if (!InstrInfo16) {
-    InstrInfo.reset(MipsInstrInfo::create(*this));
-    FrameLowering.reset(MipsFrameLowering::create(*this, Subtarget));
-    TLInfo.reset(MipsTargetLowering::create(*this));
-  } else {
-    InstrInfo16.swap(InstrInfo);
-    FrameLowering16.swap(FrameLowering);
-    TLInfo16.swap(TLInfo);
-  }
-  assert(TLInfo && "null target lowering 16");
-  assert(InstrInfo && "null instr info 16");
-  assert(FrameLowering && "null frame lowering 16");
-}
-
-void MipsTargetMachine::setHelperClassesMipsSE() {
-  InstrInfo16.swap(InstrInfo);
-  FrameLowering16.swap(FrameLowering);
-  TLInfo16.swap(TLInfo);
-  if (!InstrInfoSE) {
-    InstrInfo.reset(MipsInstrInfo::create(*this));
-    FrameLowering.reset(MipsFrameLowering::create(*this, Subtarget));
-    TLInfo.reset(MipsTargetLowering::create(*this));
-  } else {
-    InstrInfoSE.swap(InstrInfo);
-    FrameLoweringSE.swap(FrameLowering);
-    TLInfoSE.swap(TLInfo);
-  }
-  assert(TLInfo && "null target lowering in SE");
-  assert(InstrInfo && "null instr info SE");
-  assert(FrameLowering && "null frame lowering SE");
-}
 void MipsebTargetMachine::anchor() { }
 
 MipsebTargetMachine::
