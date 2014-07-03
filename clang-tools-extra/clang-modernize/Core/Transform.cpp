@@ -21,6 +21,8 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/STLExtras.h"
 
+template class llvm::Registry<TransformFactory>;
+
 using namespace clang;
 
 llvm::cl::OptionCategory TransformsOptionsCategory("Transforms' options");

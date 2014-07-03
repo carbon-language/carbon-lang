@@ -322,4 +322,6 @@ protected:
 
 typedef llvm::Registry<TransformFactory> TransformFactoryRegistry;
 
+extern template class llvm::Registry<TransformFactory>;
+
 #endif // CLANG_MODERNIZE_TRANSFORM_H
