@@ -202,8 +202,8 @@ private:
   /// Get string that the data pointer points to.
   bool objcClassNameFromExpression(const Constant *c, std::string &name);
 
-  /// Returns 'true' if the memory buffer is for the specified target triple.
-  static bool isTargetMatch(MemoryBuffer *memBuffer, const char *triplePrefix);
+  /// Returns 'true' if the bitcode BC is for the specified target triple.
+  static bool isTargetMatch(StringRef BC, const char *TriplePrefix);
 
   /// Create an LTOModule (private version). N.B. This method takes ownership of
   /// the buffer.
