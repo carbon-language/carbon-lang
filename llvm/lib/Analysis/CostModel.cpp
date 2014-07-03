@@ -95,6 +95,31 @@ static bool isReverseVectorMask(SmallVectorImpl<int> &Mask) {
   return true;
 }
 
+static bool isAlternateVectorMask(SmallVectorImpl<int> &Mask) {
+  bool isAlternate = true;
+  unsigned MaskSize = Mask.size();
+
+  // Example: shufflevector A, B, <0,5,2,7>
+  for (unsigned i = 0; i < MaskSize && isAlternate; ++i) {
+    if (Mask[i] < 0)
+      continue;
+    isAlternate = Mask[i] == (int)((i & 1) ? MaskSize + i : i);
+  }
+
+  if (isAlternate)
+    return true;
+
+  isAlternate = true;
+  // Example: shufflevector A, B, <4,1,6,3>
+  for (unsigned i = 0; i < MaskSize && isAlternate; ++i) {
+    if (Mask[i] < 0)
+      continue;
+    isAlternate = Mask[i] == (int)((i & 1) ? i : MaskSize + i);
+  }
+
+  return isAlternate;
+}
+
 static TargetTransformInfo::OperandValueKind getOperandInfo(Value *V) {
   TargetTransformInfo::OperandValueKind OpInfo =
     TargetTransformInfo::OK_AnyValue;
@@ -466,9 +491,15 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
     unsigned NumVecElems = VecTypOp0->getVectorNumElements();
     SmallVector<int, 16> Mask = Shuffle->getShuffleMask();
 
-    if (NumVecElems == Mask.size() && isReverseVectorMask(Mask))
-      return TTI->getShuffleCost(TargetTransformInfo::SK_Reverse, VecTypOp0, 0,
-                                 nullptr);
+    if (NumVecElems == Mask.size()) {
+      if (isReverseVectorMask(Mask))
+        return TTI->getShuffleCost(TargetTransformInfo::SK_Reverse, VecTypOp0,
+                                   0, nullptr);
+      if (isAlternateVectorMask(Mask))
+        return TTI->getShuffleCost(TargetTransformInfo::SK_Alternate,
+                                   VecTypOp0, 0, nullptr);
+    }
+
     return -1;
   }
   case Instruction::Call:
