@@ -15481,15 +15481,14 @@ static SDValue LowerScalarVariableShift(SDValue Op, SelectionDAG &DAG,
 
 static SDValue LowerShift(SDValue Op, const X86Subtarget* Subtarget,
                           SelectionDAG &DAG) {
-
   MVT VT = Op.getSimpleValueType();
   SDLoc dl(Op);
   SDValue R = Op.getOperand(0);
   SDValue Amt = Op.getOperand(1);
   SDValue V;
 
-  if (!Subtarget->hasSSE2())
-    return SDValue();
+  assert(VT.isVector() && "Custom lowering only for vector shifts!");
+  assert(Subtarget->hasSSE2() && "Only custom lower when we have SSE2!");
 
   V = LowerScalarImmediateShift(Op, DAG, Subtarget);
   if (V.getNode())
