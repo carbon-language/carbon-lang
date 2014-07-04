@@ -235,6 +235,7 @@ private:
     IES_RSHIFT,
     IES_PLUS,
     IES_MINUS,
+    IES_NOT,
     IES_MULTIPLY,
     IES_DIVIDE,
     IES_LBRAC,
@@ -372,6 +373,7 @@ private:
         State = IES_ERROR;
         break;
       case IES_PLUS:
+      case IES_NOT:
       case IES_MULTIPLY:
       case IES_DIVIDE:
       case IES_LPAREN:
@@ -397,6 +399,19 @@ private:
             Scale = 1;
           }
         }
+        break;
+      }
+      PrevState = CurrState;
+    }
+    void onNot() {
+      IntelExprState CurrState = State;
+      switch (State) {
+      default:
+        State = IES_ERROR;
+        break;
+      case IES_PLUS:
+      case IES_NOT:
+        State = IES_NOT;
         break;
       }
       PrevState = CurrState;
@@ -438,6 +453,7 @@ private:
         break;
       case IES_PLUS:
       case IES_MINUS:
+      case IES_NOT:
         State = IES_INTEGER;
         Sym = SymRef;
         SymName = SymRefName;
@@ -453,6 +469,7 @@ private:
         break;
       case IES_PLUS:
       case IES_MINUS:
+      case IES_NOT:
       case IES_OR:
       case IES_AND:
       case IES_LSHIFT:
@@ -476,11 +493,22 @@ private:
                     PrevState == IES_OR || PrevState == IES_AND ||
                     PrevState == IES_LSHIFT || PrevState == IES_RSHIFT ||
                     PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
-                    PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
+                    PrevState == IES_LPAREN || PrevState == IES_LBRAC ||
+                    PrevState == IES_NOT) &&
                    CurrState == IES_MINUS) {
           // Unary minus.  No need to pop the minus operand because it was never
           // pushed.
           IC.pushOperand(IC_IMM, -TmpInt); // Push -Imm.
+        } else if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
+                    PrevState == IES_OR || PrevState == IES_AND ||
+                    PrevState == IES_LSHIFT || PrevState == IES_RSHIFT ||
+                    PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
+                    PrevState == IES_LPAREN || PrevState == IES_LBRAC ||
+                    PrevState == IES_NOT) &&
+                   CurrState == IES_NOT) {
+          // Unary not.  No need to pop the not operand because it was never
+          // pushed.
+          IC.pushOperand(IC_IMM, ~TmpInt); // Push ~Imm.
         } else {
           IC.pushOperand(IC_IMM, TmpInt);
         }
@@ -561,6 +589,7 @@ private:
         break;
       case IES_PLUS:
       case IES_MINUS:
+      case IES_NOT:
       case IES_OR:
       case IES_AND:
       case IES_LSHIFT:
@@ -568,13 +597,14 @@ private:
       case IES_MULTIPLY:
       case IES_DIVIDE:
       case IES_LPAREN:
-        // FIXME: We don't handle this type of unary minus, yet.
+        // FIXME: We don't handle this type of unary minus or not, yet.
         if ((PrevState == IES_PLUS || PrevState == IES_MINUS ||
             PrevState == IES_OR || PrevState == IES_AND ||
             PrevState == IES_LSHIFT || PrevState == IES_RSHIFT ||
             PrevState == IES_MULTIPLY || PrevState == IES_DIVIDE ||
-            PrevState == IES_LPAREN || PrevState == IES_LBRAC) &&
-            CurrState == IES_MINUS) {
+            PrevState == IES_LPAREN || PrevState == IES_LBRAC ||
+            PrevState == IES_NOT) &&
+            (CurrState == IES_MINUS || CurrState == IES_NOT)) {
           State = IES_ERROR;
           break;
         }
@@ -1141,6 +1171,7 @@ bool X86AsmParser::ParseIntelExpression(IntelExprStateMachine &SM, SMLoc &End) {
     }
     case AsmToken::Plus:    SM.onPlus(); break;
     case AsmToken::Minus:   SM.onMinus(); break;
+    case AsmToken::Tilde:   SM.onNot(); break;
     case AsmToken::Star:    SM.onStar(); break;
     case AsmToken::Slash:   SM.onDivide(); break;
     case AsmToken::Pipe:    SM.onOr(); break;
@@ -1523,7 +1554,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
 
   // Immediate.
   if (getLexer().is(AsmToken::Integer) || getLexer().is(AsmToken::Minus) ||
-      getLexer().is(AsmToken::LParen)) {    
+      getLexer().is(AsmToken::Tilde) || getLexer().is(AsmToken::LParen)) {
     AsmToken StartTok = Tok;
     IntelExprStateMachine SM(/*Imm=*/0, /*StopOnLBrac=*/true,
                              /*AddImmPrefix=*/false);
