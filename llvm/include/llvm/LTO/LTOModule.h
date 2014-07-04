@@ -101,13 +101,13 @@ public:
                                      StringRef path = "");
 
   /// Return the Module's target triple.
-  const char *getTargetTriple() {
-    return _module->getTargetTriple().c_str();
+  const std::string &getTargetTriple() {
+    return _module->getTargetTriple();
   }
 
   /// Set the Module's target triple.
-  void setTargetTriple(const char *triple) {
-    _module->setTargetTriple(triple);
+  void setTargetTriple(StringRef Triple) {
+    _module->setTargetTriple(Triple);
   }
 
   /// Get the number of symbols
