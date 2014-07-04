@@ -413,3 +413,12 @@ if(MSVC)
   string(REGEX REPLACE "(^| ) */EH[-cs]+ *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
   string(REGEX REPLACE "(^| ) */GR-? *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
+
+# Plugin support
+# FIXME: Make this configurable.
+if(WIN32 OR CYGWIN)
+  # DLL platform(s) don't support plugins.
+  set(LLVM_ENABLE_PLUGINS OFF)
+else()
+  set(LLVM_ENABLE_PLUGINS ON)
+endif()
