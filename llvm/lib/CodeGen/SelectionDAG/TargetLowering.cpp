@@ -1152,14 +1152,15 @@ bool TargetLowering::isConstTrueVal(const SDNode *N) const {
 
   bool IsVec = false;
   const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
-  if (!CN) {
-    const BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
-    if (!BV)
-      return false;
-
-    IsVec = true;
-    CN = BV->getConstantSplatValue();
-  }
+  if (!CN)
+    if (auto *BV = dyn_cast<BuildVectorSDNode>(N))
+      if (SDValue Splat = BV->getConstantSplatValue())
+        if (auto *SplatCN = dyn_cast<ConstantSDNode>(Splat)) {
+          IsVec = true;
+          CN = SplatCN;
+        }
+  if (!CN)
+    return false;
 
   switch (getBooleanContents(IsVec)) {
   case UndefinedBooleanContent:
@@ -1179,14 +1180,15 @@ bool TargetLowering::isConstFalseVal(const SDNode *N) const {
 
   bool IsVec = false;
   const ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N);
-  if (!CN) {
-    const BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N);
-    if (!BV)
-      return false;
-
-    IsVec = true;
-    CN = BV->getConstantSplatValue();
-  }
+  if (!CN)
+    if (auto *BV = dyn_cast<BuildVectorSDNode>(N))
+      if (SDValue Splat = BV->getConstantSplatValue())
+        if (auto *SplatCN = dyn_cast<ConstantSDNode>(Splat)) {
+          IsVec = true;
+          CN = SplatCN;
+        }
+  if (!CN)
+    return false;
 
   if (getBooleanContents(IsVec) == UndefinedBooleanContent)
     return !CN->getAPIntValue()[0];

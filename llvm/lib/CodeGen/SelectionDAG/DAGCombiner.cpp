@@ -654,13 +654,12 @@ static ConstantSDNode *isConstOrConstSplat(SDValue N) {
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N))
     return CN;
 
-  if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N)) {
-    ConstantSDNode *CN = BV->getConstantSplatValue();
-
-    // BuildVectors can truncate their operands. Ignore that case here.
-    if (CN && CN->getValueType(0) == N.getValueType().getScalarType())
-      return CN;
-  }
+  if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N))
+    if (SDValue Splat = BV->getConstantSplatValue())
+      if (auto *CN = dyn_cast<ConstantSDNode>(Splat))
+        // BuildVectors can truncate their operands. Ignore that case here.
+        if (CN->getValueType(0) == N.getValueType().getScalarType())
+          return CN;
 
   return nullptr;
 }
