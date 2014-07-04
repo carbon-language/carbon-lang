@@ -173,13 +173,16 @@ private:
   void addPotentialUndefinedSymbol(const GlobalValue *dcl, bool isFunc);
 
   /// Add a defined symbol to the list.
-  void addDefinedSymbol(const GlobalValue *def, bool isFunction);
+  void addDefinedSymbol(const char *Name, const GlobalValue *Def,
+                        bool IsFunction);
 
   /// Add a function symbol as defined to the list.
   void addDefinedFunctionSymbol(const Function *f);
+  void addDefinedFunctionSymbol(const char *Name, const Function *F);
 
   /// Add a data symbol as defined to the list.
   void addDefinedDataSymbol(const GlobalValue *v);
+  void addDefinedDataSymbol(const char *Name, const GlobalValue *V);
 
   /// Add global symbols from module-level ASM to the defined or undefined
   /// lists.

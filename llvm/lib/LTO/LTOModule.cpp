@@ -283,10 +283,15 @@ void LTOModule::addObjCClassRef(const GlobalVariable *clgv) {
   entry.setValue(info);
 }
 
-/// addDefinedDataSymbol - Add a data symbol as defined to the list.
-void LTOModule::addDefinedDataSymbol(const GlobalValue *v) {
+void LTOModule::addDefinedDataSymbol(const GlobalValue *V) {
+  SmallString<64> Buffer;
+  _target->getNameWithPrefix(Buffer, V, _mangler);
+  addDefinedDataSymbol(Buffer.c_str(), V);
+}
+
+void LTOModule::addDefinedDataSymbol(const char *Name, const GlobalValue *v) {
   // Add to list of defined symbols.
-  addDefinedSymbol(v, false);
+  addDefinedSymbol(Name, v, false);
 
   if (!v->hasSection() /* || !isTargetDarwin */)
     return;
@@ -334,10 +339,15 @@ void LTOModule::addDefinedDataSymbol(const GlobalValue *v) {
   }
 }
 
-/// addDefinedFunctionSymbol - Add a function symbol as defined to the list.
-void LTOModule::addDefinedFunctionSymbol(const Function *f) {
+void LTOModule::addDefinedFunctionSymbol(const Function *F) {
+  SmallString<64> Buffer;
+  _target->getNameWithPrefix(Buffer, F, _mangler);
+  addDefinedFunctionSymbol(Buffer.c_str(), F);
+}
+
+void LTOModule::addDefinedFunctionSymbol(const char *Name, const Function *F) {
   // add to list of defined symbols
-  addDefinedSymbol(f, true);
+  addDefinedSymbol(Name, F, true);
 }
 
 static bool canBeHidden(const GlobalValue *GV) {
@@ -364,15 +374,11 @@ static bool canBeHidden(const GlobalValue *GV) {
   return !GS.IsCompared;
 }
 
-/// addDefinedSymbol - Add a defined symbol to the list.
-void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
+void LTOModule::addDefinedSymbol(const char *Name, const GlobalValue *def,
+                                 bool isFunction) {
   // ignore all llvm.* symbols
   if (def->getName().startswith("llvm."))
     return;
-
-  // string is owned by _defines
-  SmallString<64> Buffer;
-  _target->getNameWithPrefix(Buffer, def, _mangler);
 
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
@@ -410,14 +416,14 @@ void LTOModule::addDefinedSymbol(const GlobalValue *def, bool isFunction) {
   else
     attr |= LTO_SYMBOL_SCOPE_DEFAULT;
 
-  StringSet::value_type &entry = _defines.GetOrCreateValue(Buffer);
+  StringSet::value_type &entry = _defines.GetOrCreateValue(Name);
   entry.setValue(1);
 
   // fill information structure
   NameAndAttributes info;
-  StringRef Name = entry.getKey();
-  info.name = Name.data();
-  assert(info.name[Name.size()] == '\0');
+  StringRef NameRef = entry.getKey();
+  info.name = NameRef.data();
+  assert(info.name[NameRef.size()] == '\0');
   info.attributes = attr;
   info.isFunction = isFunction;
   info.symbol = def;
@@ -462,9 +468,9 @@ void LTOModule::addAsmGlobalSymbol(const char *name,
   }
 
   if (info.isFunction)
-    addDefinedFunctionSymbol(cast<Function>(info.symbol));
+    addDefinedFunctionSymbol(info.name, cast<Function>(info.symbol));
   else
-    addDefinedDataSymbol(info.symbol);
+    addDefinedDataSymbol(info.name, info.symbol);
 
   _symbols.back().attributes &= ~LTO_SYMBOL_SCOPE_MASK;
   _symbols.back().attributes |= scope;
