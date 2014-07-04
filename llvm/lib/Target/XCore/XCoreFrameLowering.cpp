@@ -228,7 +228,9 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
-  DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
+  // Debug location must be unknown since the first debug location is used
+  // to determine the end of the prologue.
+  DebugLoc dl;
 
   if (MFI->getMaxAlignment() > getStackAlignment())
     report_fatal_error("emitPrologue unsupported alignment: "
@@ -416,7 +418,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
 
   DebugLoc DL;
-  if (MI != MBB.end())
+  if (MI != MBB.end() && !MI->isDebugValue())
     DL = MI->getDebugLoc();
 
   for (std::vector<CalleeSavedInfo>::const_iterator it = CSI.begin();
