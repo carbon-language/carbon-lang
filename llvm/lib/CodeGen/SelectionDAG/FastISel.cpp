@@ -1210,6 +1210,7 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 FastISel::FastISel(FunctionLoweringInfo &funcInfo,
                    const TargetLibraryInfo *libInfo)
   : FuncInfo(funcInfo),
+    MF(funcInfo.MF),
     MRI(FuncInfo.MF->getRegInfo()),
     MFI(*FuncInfo.MF->getFrameInfo()),
     MCP(*FuncInfo.MF->getConstantPool()),

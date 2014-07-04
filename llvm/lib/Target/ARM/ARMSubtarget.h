@@ -76,10 +76,6 @@ protected:
   bool HasFPARMv8;
   bool HasNEON;
 
-  /// MinSize - True if the function being compiled has the "minsize" attribute
-  /// and should be optimised for size at the expense of speed.
-  bool MinSize;
-
   /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
   /// specified. Use the method useNEONForSinglePrecisionFP() to
   /// determine if NEON should actually be used.
@@ -319,7 +315,6 @@ public:
   bool hasCrypto() const { return HasCrypto; }
   bool hasCRC() const { return HasCRC; }
   bool hasVirtualization() const { return HasVirtualization; }
-  bool isMinSize() const { return MinSize; }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
 
@@ -415,12 +410,8 @@ public:
 
   bool isR9Reserved() const { return IsR9Reserved; }
 
-  bool useMovt() const {
-    // NOTE Windows on ARM needs to use mov.w/mov.t pairs to materialise 32-bit
-    // immediates as it is inherently position independent, and may be out of
-    // range otherwise.
-    return UseMovt && (isTargetWindows() || !isMinSize());
-  }
+  bool useMovt(const MachineFunction &MF) const;
+
   bool supportsTailCall() const { return SupportsTailCall; }
 
   bool allowsUnalignedMem() const { return AllowsUnalignedMem; }

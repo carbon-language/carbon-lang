@@ -1695,7 +1695,8 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // FIXME: handle tail calls differently.
   unsigned CallOpc;
-  bool HasMinSizeAttr = Subtarget->isMinSize();
+  bool HasMinSizeAttr = MF.getFunction()->getAttributes().hasAttribute(
+      AttributeSet::FunctionIndex, Attribute::MinSize);
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
@@ -2442,7 +2443,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressELF(SDValue Op,
 
   // If we have T2 ops, we can materialize the address directly via movt/movw
   // pair. This is always cheaper.
-  if (Subtarget->useMovt()) {
+  if (Subtarget->useMovt(DAG.getMachineFunction())) {
     ++NumMovwMovt;
     // FIXME: Once remat is capable of dealing with instructions with register
     // operands, expand this into two nodes.
@@ -2464,7 +2465,7 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   Reloc::Model RelocM = getTargetMachine().getRelocationModel();
 
-  if (Subtarget->useMovt())
+  if (Subtarget->useMovt(DAG.getMachineFunction()))
     ++NumMovwMovt;
 
   // FIXME: Once remat is capable of dealing with instructions with register
@@ -2484,7 +2485,8 @@ SDValue ARMTargetLowering::LowerGlobalAddressDarwin(SDValue Op,
 SDValue ARMTargetLowering::LowerGlobalAddressWindows(SDValue Op,
                                                      SelectionDAG &DAG) const {
   assert(Subtarget->isTargetWindows() && "non-Windows COFF is not supported");
-  assert(Subtarget->useMovt() && "Windows on ARM expects to use movw/movt");
+  assert(Subtarget->useMovt(DAG.getMachineFunction()) &&
+         "Windows on ARM expects to use movw/movt");
 
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   EVT PtrVT = getPointerTy();

@@ -180,7 +180,6 @@ void ARMSubtarget::initializeEnvironment() {
   HasVFPv4 = false;
   HasFPARMv8 = false;
   HasNEON = false;
-  MinSize = false;
   UseNEONForSinglePrecisionFP = false;
   UseMulOps = UseFusedMulOps;
   SlowFPVMLx = false;
@@ -231,9 +230,6 @@ void ARMSubtarget::resetSubtargetFeatures(const MachineFunction *MF) {
     initializeEnvironment();
     resetSubtargetFeatures(CPU, FS);
   }
-
-  MinSize =
-      FnAttrs.hasAttribute(AttributeSet::FunctionIndex, Attribute::MinSize);
 }
 
 void ARMSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
@@ -443,4 +439,13 @@ bool ARMSubtarget::enablePostRAScheduler(
            RegClassVector& CriticalPathRCs) const {
   Mode = TargetSubtargetInfo::ANTIDEP_NONE;
   return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
+}
+
+bool ARMSubtarget::useMovt(const MachineFunction &MF) const {
+  // NOTE Windows on ARM needs to use mov.w/mov.t pairs to materialise 32-bit
+  // immediates as it is inherently position independent, and may be out of
+  // range otherwise.
+  return UseMovt && (isTargetWindows() ||
+                     !MF.getFunction()->getAttributes().hasAttribute(
+                         AttributeSet::FunctionIndex, Attribute::MinSize));
 }

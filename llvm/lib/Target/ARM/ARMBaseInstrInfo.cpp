@@ -1887,7 +1887,8 @@ bool llvm::tryFoldSPUpdateIntoPushPop(const ARMSubtarget &Subtarget,
                                       unsigned NumBytes) {
   // This optimisation potentially adds lots of load and store
   // micro-operations, it's only really a great benefit to code-size.
-  if (!Subtarget.isMinSize())
+  if (!MF.getFunction()->getAttributes().hasAttribute(
+          AttributeSet::FunctionIndex, Attribute::MinSize))
     return false;
 
   // If only one register is pushed/popped, LLVM can use an LDR/STR

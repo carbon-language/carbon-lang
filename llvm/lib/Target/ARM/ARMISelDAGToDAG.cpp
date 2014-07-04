@@ -2439,7 +2439,7 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   case ISD::Constant: {
     unsigned Val = cast<ConstantSDNode>(N)->getZExtValue();
     bool UseCP = true;
-    if (Subtarget->useMovt())
+    if (Subtarget->useMovt(*MF))
       // Thumb2-aware targets have the MOVT instruction, so all immediates can
       // be done with MOV + MOVT, at worst.
       UseCP = false;

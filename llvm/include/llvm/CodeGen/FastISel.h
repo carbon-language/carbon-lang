@@ -49,6 +49,7 @@ class FastISel {
 protected:
   DenseMap<const Value *, unsigned> LocalValueMap;
   FunctionLoweringInfo &FuncInfo;
+  MachineFunction *MF;
   MachineRegisterInfo &MRI;
   MachineFrameInfo &MFI;
   MachineConstantPool &MCP;

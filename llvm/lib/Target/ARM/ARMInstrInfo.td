@@ -270,8 +270,8 @@ def UseNaClTrap      : Predicate<"Subtarget->useNaClTrap()">,
 def DontUseNaClTrap  : Predicate<"!Subtarget->useNaClTrap()">;
 
 // FIXME: Eventually this will be just "hasV6T2Ops".
-def UseMovt          : Predicate<"Subtarget->useMovt()">;
-def DontUseMovt      : Predicate<"!Subtarget->useMovt()">;
+def UseMovt          : Predicate<"Subtarget->useMovt(*MF)">;
+def DontUseMovt      : Predicate<"!Subtarget->useMovt(*MF)">;
 def UseFPVMLx        : Predicate<"Subtarget->useFPVMLx()">;
 def UseMulOps        : Predicate<"Subtarget->useMulOps()">;
 
@@ -594,7 +594,7 @@ def so_imm2part : PatLeaf<(imm), [{
 /// arm_i32imm - True for +V6T2, or true only if so_imm2part is true.
 ///
 def arm_i32imm : PatLeaf<(imm), [{
-  if (Subtarget->useMovt())
+  if (Subtarget->useMovt(*MF))
     return true;
   return ARM_AM::isSOImmTwoPartVal((unsigned)N->getZExtValue());
 }]>;

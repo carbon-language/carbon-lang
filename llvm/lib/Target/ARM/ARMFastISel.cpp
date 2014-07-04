@@ -590,7 +590,7 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
 
   // Use movw+movt when possible, it avoids constant pool entries.
   // Non-darwin targets only support static movt relocations in FastISel.
-  if (Subtarget->useMovt() &&
+  if (Subtarget->useMovt(*FuncInfo.MF) &&
       (Subtarget->isTargetMachO() || RelocM == Reloc::Static)) {
     unsigned Opc;
     unsigned char TF = 0;
