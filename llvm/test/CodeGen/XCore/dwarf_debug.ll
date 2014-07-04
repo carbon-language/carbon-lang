@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=xcore -O0 | FileCheck %s
+; RUN: llc < %s -mtriple=xcore-unknown-unknown -O0 | FileCheck %s
 
 ; target datalayout = "e-m:e-p:32:32-i1:8:32-i8:8:32-i16:16:32-i64:32-f64:32-a:0:32-n32"
 ; target triple = "xcore"
