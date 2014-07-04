@@ -902,3 +902,14 @@ define i1 @icmp_ne_const(i32 %a) nounwind {
 ; CHECK-LABEL: @icmp_ne_const
 ; CHECK-NEXT: ret i1 true
 }
+
+define i1 @icmp_sdiv_int_min(i32 %a) {
+  %div = sdiv i32 -2147483648, %a
+  %cmp = icmp ne i32 %div, -1073741824
+  ret i1 %cmp
+
+; CHECK-LABEL: @icmp_sdiv_int_min
+; CHECK-NEXT: [[DIV:%.*]] = sdiv i32 -2147483648, %a
+; CHECK-NEXT: [[CMP:%.*]] = icmp ne i32 [[DIV]], -1073741824
+; CHECK-NEXT: ret i1 [[CMP]]
+}
