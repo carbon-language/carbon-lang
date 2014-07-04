@@ -71,15 +71,6 @@ static bool ConvertToString(ArrayRef<uint64_t> Record, unsigned Idx,
   return false;
 }
 
-ErrorOr<StringRef> BitcodeReader::convertToStringRef(ArrayRef<uint64_t> Record,
-                                                     unsigned Idx) {
-  if (Idx > Record.size())
-    return Error(InvalidRecord);
-
-  return StringRef((char*)&Record[Idx], Record.size() - Idx);
-}
-
-
 static GlobalValue::LinkageTypes GetDecodedLinkage(unsigned Val) {
   switch (Val) {
   default: // Map unknown/new linkages to external
@@ -2125,13 +2116,13 @@ std::error_code BitcodeReader::ParseBitcodeInto(Module *M) {
   }
 }
 
-ErrorOr<StringRef> BitcodeReader::parseModuleTriple() {
+ErrorOr<std::string> BitcodeReader::parseModuleTriple() {
   if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
     return Error(InvalidRecord);
 
   SmallVector<uint64_t, 64> Record;
 
-  StringRef Triple;
+  std::string Triple;
   // Read all the records for this module.
   while (1) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
@@ -2151,10 +2142,10 @@ ErrorOr<StringRef> BitcodeReader::parseModuleTriple() {
     switch (Stream.readRecord(Entry.ID, Record)) {
     default: break;  // Default behavior, ignore unknown content.
     case bitc::MODULE_CODE_TRIPLE: {  // TRIPLE: [strchr x N]
-      ErrorOr<StringRef> S = convertToStringRef(Record, 0);
-      if (std::error_code EC = S.getError())
-        return EC;
-      Triple = S.get();
+      std::string S;
+      if (ConvertToString(Record, 0, S))
+        return Error(InvalidRecord);
+      Triple = S;
       break;
     }
     }
@@ -2163,7 +2154,7 @@ ErrorOr<StringRef> BitcodeReader::parseModuleTriple() {
   return Triple;
 }
 
-ErrorOr<StringRef> BitcodeReader::parseTriple() {
+ErrorOr<std::string> BitcodeReader::parseTriple() {
   if (std::error_code EC = InitStream())
     return EC;
 
@@ -3478,10 +3469,10 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
   return M;
 }
 
-StringRef llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
-                                       LLVMContext &Context) {
+std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
+                                         LLVMContext &Context) {
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
-  ErrorOr<StringRef> Triple = R->parseTriple();
+  ErrorOr<std::string> Triple = R->parseTriple();
   R->releaseBuffer();
   delete R;
   if (Triple.getError())
