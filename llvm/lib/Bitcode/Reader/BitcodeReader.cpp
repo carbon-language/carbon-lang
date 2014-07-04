@@ -2132,7 +2132,7 @@ ErrorOr<std::string> BitcodeReader::parseModuleTriple() {
     case BitstreamEntry::Error:
       return Error(MalformedBlock);
     case BitstreamEntry::EndBlock:
-      return std::error_code();
+      return Triple;
     case BitstreamEntry::Record:
       // The interesting case.
       break;
@@ -2151,7 +2151,7 @@ ErrorOr<std::string> BitcodeReader::parseModuleTriple() {
     }
     Record.clear();
   }
-  return Triple;
+  llvm_unreachable("Exit infinite loop");
 }
 
 ErrorOr<std::string> BitcodeReader::parseTriple() {
