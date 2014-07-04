@@ -14,6 +14,7 @@
 # RUN: llvm-mc -filetype=obj -triple=i686-pc-linux -mcpu=c3 %s | llvm-objdump -d - | FileCheck %s
 # RUN: llvm-mc -filetype=obj -triple=i686-pc-linux -mcpu=c3-2 %s | llvm-objdump -d - | FileCheck %s
 # RUN: llvm-mc -filetype=obj -triple=i686-pc-linux -mcpu=core2 %s | llvm-objdump -d - | FileCheck --check-prefix=NOPL %s
+# RUN: llvm-mc -filetype=obj -triple=i686-pc-linux -mcpu=slm %s | llvm-objdump -d - | FileCheck --check-prefix=NOPL %s
 
 
 inc %eax
