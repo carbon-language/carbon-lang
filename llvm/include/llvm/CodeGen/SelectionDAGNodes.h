@@ -142,6 +142,9 @@ public:
   bool operator<(const SDValue &O) const {
     return std::tie(Node, ResNo) < std::tie(O.Node, O.ResNo);
   }
+  LLVM_EXPLICIT operator bool() const {
+    return Node != nullptr;
+  }
 
   SDValue getValue(unsigned R) const {
     return SDValue(Node, R);
