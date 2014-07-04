@@ -105,6 +105,12 @@ INTERCEPTOR(void*, memalign, uptr alignment, uptr size) {
   return Allocate(stack, size, alignment, kAlwaysClearMemory);
 }
 
+INTERCEPTOR(void*, aligned_alloc, uptr alignment, uptr size) {
+  ENSURE_LSAN_INITED;
+  GET_STACK_TRACE;
+  return Allocate(stack, size, alignment, kAlwaysClearMemory);
+}
+
 INTERCEPTOR(int, posix_memalign, void **memptr, uptr alignment, uptr size) {
   ENSURE_LSAN_INITED;
   GET_STACK_TRACE;

@@ -738,6 +738,11 @@ TSAN_INTERCEPTOR(void*, memalign, uptr align, uptr sz) {
   return user_alloc(thr, pc, sz, align);
 }
 
+TSAN_INTERCEPTOR(void*, aligned_alloc, uptr align, uptr sz) {
+  SCOPED_INTERCEPTOR_RAW(memalign, align, sz);
+  return user_alloc(thr, pc, sz, align);
+}
+
 TSAN_INTERCEPTOR(void*, valloc, uptr sz) {
   SCOPED_INTERCEPTOR_RAW(valloc, sz);
   return user_alloc(thr, pc, sz, GetPageSizeCached());

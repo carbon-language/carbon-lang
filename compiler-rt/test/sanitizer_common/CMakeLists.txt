@@ -10,6 +10,7 @@ endif()
 if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT ANDROID)
   list(APPEND SUPPORTED_TOOLS tsan)
   list(APPEND SUPPORTED_TOOLS msan)
+  list(APPEND SUPPORTED_TOOLS lsan)
 endif()
 
 # Create a separate config for each tool we support.

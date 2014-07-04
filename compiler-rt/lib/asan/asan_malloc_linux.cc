@@ -106,6 +106,11 @@ INTERCEPTOR(void*, memalign, uptr boundary, uptr size) {
   return asan_memalign(boundary, size, &stack, FROM_MALLOC);
 }
 
+INTERCEPTOR(void*, aligned_alloc, uptr boundary, uptr size) {
+  GET_STACK_TRACE_MALLOC;
+  return asan_memalign(boundary, size, &stack, FROM_MALLOC);
+}
+
 INTERCEPTOR(void*, __libc_memalign, uptr boundary, uptr size) {
   GET_STACK_TRACE_MALLOC;
   void *res = asan_memalign(boundary, size, &stack, FROM_MALLOC);

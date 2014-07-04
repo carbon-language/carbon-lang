@@ -3,7 +3,7 @@
 //
 // Not yet implemented for TSan.
 // https://code.google.com/p/address-sanitizer/issues/detail?id=243
-// XFAIL: tsan
+// XFAIL: tsan,lsan
 
 #include <sanitizer/common_interface_defs.h>
 
