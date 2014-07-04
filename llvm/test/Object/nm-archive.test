@@ -18,6 +18,7 @@ RUN: llvm-nm %t2 | FileCheck %s -check-prefix BITCODE
 BITCODE:          U SomeOtherFunction
 BITCODE-NEXT:          T main
 BITCODE-NEXT:          U puts
+BITCODE-NEXT:          D var
 
 
 Test we don't error with an archive with no symtab.

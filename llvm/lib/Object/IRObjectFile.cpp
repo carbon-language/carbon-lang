@@ -240,6 +240,11 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage())
     Res |= BasicSymbolRef::SF_Weak;
 
+  if (auto *Var = dyn_cast<GlobalVariable>(GV)) {
+    if (Var->getSection() == StringRef("llvm.metadata"))
+      Res |= BasicSymbolRef::SF_FormatSpecific;
+  }
+
   return Res;
 }
 

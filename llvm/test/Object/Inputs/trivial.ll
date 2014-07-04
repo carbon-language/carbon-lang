@@ -10,3 +10,6 @@ entry:
 declare i32 @puts(i8* nocapture) nounwind
 
 declare void @SomeOtherFunction(...)
+
+@var = global i32 0
+@llvm.used = appending global [1 x i8*] [i8* bitcast (i32* @var to i8*)], section "llvm.metadata"
