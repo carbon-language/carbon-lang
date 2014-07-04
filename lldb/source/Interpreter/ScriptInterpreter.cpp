@@ -132,12 +132,3 @@ ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_call
                                                     swig_plugin_get);
 #endif // #ifndef LLDB_DISABLE_PYTHON
 }
-
-void
-ScriptInterpreter::TerminateInterpreter ()
-{
-#ifndef LLDB_DISABLE_PYTHON
-    ScriptInterpreterPython::TerminateInterpreter ();
-#endif // #ifndef LLDB_DISABLE_PYTHON
-}
-

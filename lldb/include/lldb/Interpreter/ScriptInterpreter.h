@@ -567,9 +567,6 @@ public:
                            SWIGPythonScriptKeyword_Frame swig_run_script_keyword_frame,
                            SWIGPython_GetDynamicSetting swig_plugin_get);
 
-    static void
-    TerminateInterpreter ();
-
     virtual void
     ResetOutputFileHandle (FILE *new_fh) { } //By default, do nothing.
 
