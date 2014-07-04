@@ -467,4 +467,21 @@ define i8* @same_addrspace() nounwind noinline {
 ; OPT: ret i8* getelementptr inbounds ([4 x i8]* @p0, i32 0, i32 2)
 }
 
+@gv1 = internal global i32 1
+@gv2 = internal global [1 x i32] [ i32 2 ]
+@gv3 = internal global [1 x i32] [ i32 2 ]
+
+; Handled by TI-independent constant folder
+define i1 @gv_gep_vs_gv() {
+  ret i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @gv2, i32 0, i32 0), i32* @gv1)
+}
+; PLAIN: gv_gep_vs_gv
+; PLAIN: ret i1 false
+
+define i1 @gv_gep_vs_gv_gep() {
+  ret i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @gv2, i32 0, i32 0), i32* getelementptr inbounds ([1 x i32]* @gv3, i32 0, i32 0))
+}
+; PLAIN: gv_gep_vs_gv_gep
+; PLAIN: ret i1 false
+
 ; CHECK: attributes #0 = { nounwind }

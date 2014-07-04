@@ -22,11 +22,11 @@ define i1 @PR6486() nounwind {
 define i1 @PR16462_1() nounwind {
 ; CHECK-LABEL: @PR16462_1(
   ret i1 icmp sgt (i32 sext (i16 trunc (i32 select (i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @a, i32 0, i32 0), i32* @d), i32 0, i32 1) to i16) to i32), i32 65535)
-; CHECK: ret i1 icmp sgt (i32 sext (i16 trunc (i32 select (i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @a, i32 0, i32 0), i32* @d), i32 0, i32 1) to i16) to i32), i32 65535)
+; CHECK: ret i1 false
 }
 
 define i1 @PR16462_2() nounwind {
 ; CHECK-LABEL: @PR16462_2(
   ret i1 icmp sgt (i32 sext (i16 trunc (i32 select (i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @a, i32 0, i32 0), i32* @d), i32 0, i32 1) to i16) to i32), i32 42)
-; CHECK: ret i1 icmp sgt (i16 trunc (i32 select (i1 icmp eq (i32* getelementptr inbounds ([1 x i32]* @a, i32 0, i32 0), i32* @d), i32 0, i32 1) to i16), i16 42)
+; CHECK: ret i1 false
 }

@@ -1334,6 +1334,15 @@ static FCmpInst::Predicate evaluateFCmpRelation(Constant *V1, Constant *V2) {
   return FCmpInst::BAD_FCMP_PREDICATE;
 }
 
+static ICmpInst::Predicate areGlobalsPotentiallyEqual(const GlobalValue *GV1,
+                                                      const GlobalValue *GV2) {
+  // Don't try to decide equality of aliases.
+  if (!isa<GlobalAlias>(GV1) && !isa<GlobalAlias>(GV2))
+    if (!GV1->hasExternalWeakLinkage() || !GV2->hasExternalWeakLinkage())
+      return ICmpInst::ICMP_NE;
+  return ICmpInst::BAD_ICMP_PREDICATE;
+}
+
 /// evaluateICmpRelation - This function determines if there is anything we can
 /// decide about the two constants provided.  This doesn't need to handle simple
 /// things like integer comparisons, but should instead handle ConstantExprs
@@ -1395,10 +1404,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
     // constant (which, since the types must match, means that it's a
     // ConstantPointerNull).
     if (const GlobalValue *GV2 = dyn_cast<GlobalValue>(V2)) {
-      // Don't try to decide equality of aliases.
-      if (!isa<GlobalAlias>(GV) && !isa<GlobalAlias>(GV2))
-        if (!GV->hasExternalWeakLinkage() || !GV2->hasExternalWeakLinkage())
-          return ICmpInst::ICMP_NE;
+      return areGlobalsPotentiallyEqual(GV, GV2);
     } else if (isa<BlockAddress>(V2)) {
       return ICmpInst::ICMP_NE; // Globals never equal labels.
     } else {
@@ -1463,7 +1469,8 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
       }
       break;
 
-    case Instruction::GetElementPtr:
+    case Instruction::GetElementPtr: {
+      GEPOperator *CE1GEP = cast<GEPOperator>(CE1);
       // Ok, since this is a getelementptr, we know that the constant has a
       // pointer type.  Check the various cases.
       if (isa<ConstantPointerNull>(V2)) {
@@ -1510,7 +1517,8 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
                    "Surprising getelementptr!");
             return isSigned ? ICmpInst::ICMP_SGT : ICmpInst::ICMP_UGT;
           } else {
-            // If they are different globals, we don't know what the value is.
+            if (CE1GEP->hasAllZeroIndices())
+              return areGlobalsPotentiallyEqual(GV, GV2);
             return ICmpInst::BAD_ICMP_PREDICATE;
           }
         }
@@ -1526,8 +1534,14 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
           // By far the most common case to handle is when the base pointers are
           // obviously to the same global.
           if (isa<GlobalValue>(CE1Op0) && isa<GlobalValue>(CE2Op0)) {
-            if (CE1Op0 != CE2Op0) // Don't know relative ordering.
+            // Don't know relative ordering, but check for inequality.
+            if (CE1Op0 != CE2Op0) {
+              GEPOperator *CE2GEP = cast<GEPOperator>(CE2);
+              if (CE1GEP->hasAllZeroIndices() && CE2GEP->hasAllZeroIndices())
+                return areGlobalsPotentiallyEqual(cast<GlobalValue>(CE1Op0),
+                                                  cast<GlobalValue>(CE2Op0));
               return ICmpInst::BAD_ICMP_PREDICATE;
+            }
             // Ok, we know that both getelementptr instructions are based on the
             // same global.  From this, we can precisely determine the relative
             // ordering of the resultant pointers.
@@ -1573,6 +1587,7 @@ static ICmpInst::Predicate evaluateICmpRelation(Constant *V1, Constant *V2,
           }
         }
       }
+    }
     default:
       break;
     }

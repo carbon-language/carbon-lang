@@ -156,7 +156,7 @@ for.body:
   br i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 0), i32** @c), label %cond.false, label %cond.end
 
 cond.false:
-  %cond.1 = or i32 %inc3, sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 0), i32** @c) to i32))
+  %cond.1 = or i32 %inc3, sdiv (i32 1, i32 zext (i1 icmp eq (i32** getelementptr inbounds ([1 x i32*]* @a, i64 0, i64 1), i32** @c) to i32))
   br label %cond.end
 
 cond.end:
