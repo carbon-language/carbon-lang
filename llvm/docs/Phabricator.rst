@@ -106,6 +106,7 @@ reviewers, the ``Differential Revision``, etc from the review and commit it to t
 
 ::
 
+  arc patch D<Revision>
   arc commit --revision D<Revision>
 
 
