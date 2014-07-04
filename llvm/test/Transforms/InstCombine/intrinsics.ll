@@ -3,6 +3,7 @@
 %overflow.result = type {i8, i1}
 
 declare %overflow.result @llvm.uadd.with.overflow.i8(i8, i8)
+declare { i32, i1 } @llvm.sadd.with.overflow.i32(i32, i32)
 declare %overflow.result @llvm.umul.with.overflow.i8(i8, i8)
 declare double @llvm.powi.f64(double, i32) nounwind readonly
 declare i32 @llvm.cttz.i32(i32, i1) nounwind readnone
@@ -87,6 +88,18 @@ define i8 @uaddtest7(i8 %A, i8 %B) {
 ; CHECK-LABEL: @uaddtest7(
 ; CHECK-NEXT: %z = add i8 %A, %B
 ; CHECK-NEXT: ret i8 %z
+}
+
+; PR20194
+define { i32, i1 } @saddtest1(i8 %a, i8 %b) {
+  %A = sext i8 %a to i32
+  %B = sext i8 %b to i32
+  %x = call { i32, i1 } @llvm.sadd.with.overflow.i32(i32 %A, i32 %B)
+  ret { i32, i1 } %x
+; CHECK-LABEL: @saddtest1
+; CHECK: %x = add nsw i32 %A, %B
+; CHECK-NEXT: %1 = insertvalue { i32, i1 } { i32 undef, i1 false }, i32 %x, 0
+; CHECK-NEXT:  ret { i32, i1 } %1
 }
 
 
