@@ -13,3 +13,4 @@ declare void @SomeOtherFunction(...)
 
 @var = global i32 0
 @llvm.used = appending global [1 x i8*] [i8* bitcast (i32* @var to i8*)], section "llvm.metadata"
+@llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* null, i8* null }]

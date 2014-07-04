@@ -238,13 +238,10 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
   if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage())
     Res |= BasicSymbolRef::SF_Weak;
 
-  if (auto *Var = dyn_cast<GlobalVariable>(GV)) {
+  if (GV->getName().startswith("llvm."))
+    Res |= BasicSymbolRef::SF_FormatSpecific;
+  else if (auto *Var = dyn_cast<GlobalVariable>(GV)) {
     if (Var->getSection() == StringRef("llvm.metadata"))
-      Res |= BasicSymbolRef::SF_FormatSpecific;
-  }
-
-  if (auto *F = dyn_cast<Function>(GV)) {
-    if (F->getName().startswith("llvm."))
       Res |= BasicSymbolRef::SF_FormatSpecific;
   }
 
