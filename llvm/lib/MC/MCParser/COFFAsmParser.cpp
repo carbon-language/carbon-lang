@@ -170,8 +170,8 @@ bool COFFAsmParser::ParseSectionFlags(StringRef FlagsString, unsigned* Flags) {
   bool ReadOnlyRemoved = false;
   unsigned SecFlags = None;
 
-  for (unsigned i = 0; i < FlagsString.size(); ++i) {
-    switch (FlagsString[i]) {
+  for (char FlagChar : FlagsString) {
+    switch (FlagChar) {
     case 'a':
       // Ignored.
       break;
