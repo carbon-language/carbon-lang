@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/RecordStreamer.h"
+#include "RecordStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 using namespace llvm;
 

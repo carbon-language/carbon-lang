@@ -11,13 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Object/IRObjectFile.h"
+#include "RecordStreamer.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/GVMaterializer.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
-#include "llvm/Object/IRObjectFile.h"
-#include "llvm/Object/RecordStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
