@@ -33,14 +33,8 @@ using namespace llvm;
 using namespace object;
 
 IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                           std::error_code &EC, LLVMContext &Context)
-    : SymbolicFile(Binary::ID_IR, std::move(Object)) {
-  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Data.get(), Context);
-  if ((EC = MOrErr.getError()))
-    return;
-
-  M.reset(MOrErr.get());
-
+                           std::unique_ptr<Module> Mod)
+    : SymbolicFile(Binary::ID_IR, std::move(Object)), M(std::move(Mod)) {
   // If we have a DataLayout, setup a mangler.
   const DataLayout *DL = M->getDataLayout();
   if (!DL)
@@ -119,7 +113,11 @@ IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
   }
 }
 
-IRObjectFile::~IRObjectFile() { M->getMaterializer()->releaseBuffer(); }
+IRObjectFile::~IRObjectFile() {
+  GVMaterializer *GVM =  M->getMaterializer();
+  if (GVM)
+    GVM->releaseBuffer();
+ }
 
 static const GlobalValue *getGV(DataRefImpl &Symb) {
   if ((Symb.p & 3) == 3)
@@ -275,10 +273,10 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
 
 ErrorOr<IRObjectFile *> llvm::object::IRObjectFile::createIRObjectFile(
     std::unique_ptr<MemoryBuffer> Object, LLVMContext &Context) {
-  std::error_code EC;
-  std::unique_ptr<IRObjectFile> Ret(
-      new IRObjectFile(std::move(Object), EC, Context));
-  if (EC)
+  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Object.get(), Context);
+  if (std::error_code EC = MOrErr.getError())
     return EC;
-  return Ret.release();
+
+  std::unique_ptr<Module> M(MOrErr.get());
+  return new IRObjectFile(std::move(Object), std::move(M));
 }

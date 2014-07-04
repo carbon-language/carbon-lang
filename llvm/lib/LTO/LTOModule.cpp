@@ -28,7 +28,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Object/RecordStreamer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -44,15 +43,9 @@
 #include <system_error>
 using namespace llvm;
 
-LTOModule::LTOModule(std::unique_ptr<Module> M, TargetMachine *TM)
-    : _module(std::move(M)), _target(TM),
-      _context(_target->getMCAsmInfo(), _target->getRegisterInfo(),
-               &ObjFileInfo),
-      _mangler(TM->getDataLayout()) {
-  ObjFileInfo.InitMCObjectFileInfo(TM->getTargetTriple(),
-                                   TM->getRelocationModel(), TM->getCodeModel(),
-                                   _context);
-}
+LTOModule::LTOModule(std::unique_ptr<object::IRObjectFile> Obj,
+                     llvm::TargetMachine *TM)
+    : IRFile(std::move(Obj)), _target(TM) {}
 
 /// isBitcodeFile - Returns 'true' if the file (or memory contents) is LLVM
 /// bitcode.
@@ -115,17 +108,15 @@ LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
 LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
                                     TargetOptions options,
                                     std::string &errMsg) {
-  // parse bitcode buffer
-  ErrorOr<Module *> ModuleOrErr =
+  ErrorOr<Module *> MOrErr =
       getLazyBitcodeModule(Buffer.get(), getGlobalContext());
-  if (std::error_code EC = ModuleOrErr.getError()) {
+  if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
   }
-  Buffer.release();
-  std::unique_ptr<Module> m(ModuleOrErr.get());
+  std::unique_ptr<Module> M(MOrErr.get());
 
-  std::string TripleStr = m->getTargetTriple();
+  std::string TripleStr = M->getTargetTriple();
   if (TripleStr.empty())
     TripleStr = sys::getDefaultTargetTriple();
   llvm::Triple Triple(TripleStr);
@@ -153,18 +144,13 @@ LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
 
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
-  m->materializeAllPermanently();
+  M->materializeAllPermanently(true);
+  M->setDataLayout(target->getDataLayout());
 
-  LTOModule *Ret = new LTOModule(std::move(m), target);
+  std::unique_ptr<object::IRObjectFile> IRObj(
+      new object::IRObjectFile(std::move(Buffer), std::move(M)));
 
-  // We need a MCContext set up in order to get mangled names of private
-  // symbols. It is a bit odd that we need to report uses and definitions
-  // of private symbols, but it does look like ld64 expects to be informed
-  // of at least the ones with an 'l' prefix.
-  MCContext &Context = Ret->_context;
-  const TargetLoweringObjectFile &TLOF =
-      target->getTargetLowering()->getObjFileLowering();
-  const_cast<TargetLoweringObjectFile &>(TLOF).Initialize(Context, *target);
+  LTOModule *Ret = new LTOModule(std::move(IRObj), target);
 
   if (Ret->parseSymbols(errMsg)) {
     delete Ret;
@@ -283,9 +269,14 @@ void LTOModule::addObjCClassRef(const GlobalVariable *clgv) {
   entry.setValue(info);
 }
 
-void LTOModule::addDefinedDataSymbol(const GlobalValue *V) {
+void LTOModule::addDefinedDataSymbol(const object::BasicSymbolRef &Sym) {
   SmallString<64> Buffer;
-  _target->getNameWithPrefix(Buffer, V, _mangler);
+  {
+    raw_svector_ostream OS(Buffer);
+    Sym.printName(OS);
+  }
+
+  const GlobalValue *V = IRFile->getSymbolGV(Sym.getRawDataRefImpl());
   addDefinedDataSymbol(Buffer.c_str(), V);
 }
 
@@ -339,9 +330,15 @@ void LTOModule::addDefinedDataSymbol(const char *Name, const GlobalValue *v) {
   }
 }
 
-void LTOModule::addDefinedFunctionSymbol(const Function *F) {
+void LTOModule::addDefinedFunctionSymbol(const object::BasicSymbolRef &Sym) {
   SmallString<64> Buffer;
-  _target->getNameWithPrefix(Buffer, F, _mangler);
+  {
+    raw_svector_ostream OS(Buffer);
+    Sym.printName(OS);
+  }
+
+  const Function *F =
+      cast<Function>(IRFile->getSymbolGV(Sym.getRawDataRefImpl()));
   addDefinedFunctionSymbol(Buffer.c_str(), F);
 }
 
@@ -376,10 +373,6 @@ static bool canBeHidden(const GlobalValue *GV) {
 
 void LTOModule::addDefinedSymbol(const char *Name, const GlobalValue *def,
                                  bool isFunction) {
-  // ignore all llvm.* symbols
-  if (def->getName().startswith("llvm."))
-    return;
-
   // set alignment part log2() can have rounding errors
   uint32_t align = def->getAlignment();
   uint32_t attr = align ? countTrailingZeros(align) : 0;
@@ -499,20 +492,14 @@ void LTOModule::addAsmGlobalSymbolUndef(const char *name) {
   entry.setValue(info);
 }
 
-/// addPotentialUndefinedSymbol - Add a symbol which isn't defined just yet to a
-/// list to be resolved later.
-void
-LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
-  // ignore all llvm.* symbols
-  if (decl->getName().startswith("llvm."))
-    return;
-
-  // ignore all aliases
-  if (isa<GlobalAlias>(decl))
-    return;
-
+/// Add a symbol which isn't defined just yet to a list to be resolved later.
+void LTOModule::addPotentialUndefinedSymbol(const object::BasicSymbolRef &Sym,
+                                            bool isFunc) {
   SmallString<64> name;
-  _target->getNameWithPrefix(name, decl, _mangler);
+  {
+    raw_svector_ostream OS(name);
+    Sym.printName(OS);
+  }
 
   StringMap<NameAndAttributes>::value_type &entry =
     _undefines.GetOrCreateValue(name);
@@ -525,6 +512,8 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
 
   info.name = entry.getKey().data();
 
+  const GlobalValue *decl = IRFile->getSymbolGV(Sym.getRawDataRefImpl());
+
   if (decl->hasExternalWeakLinkage())
     info.attributes = LTO_SYMBOL_DEFINITION_WEAKUNDEF;
   else
@@ -536,90 +525,50 @@ LTOModule::addPotentialUndefinedSymbol(const GlobalValue *decl, bool isFunc) {
   entry.setValue(info);
 }
 
-/// addAsmGlobalSymbols - Add global symbols from module-level ASM to the
-/// defined or undefined lists.
-bool LTOModule::addAsmGlobalSymbols(std::string &errMsg) {
-  const std::string &inlineAsm = _module->getModuleInlineAsm();
-  if (inlineAsm.empty())
-    return false;
-
-  std::unique_ptr<RecordStreamer> Streamer(new RecordStreamer(_context));
-  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(inlineAsm);
-  SourceMgr SrcMgr;
-  SrcMgr.AddNewSourceBuffer(Buffer, SMLoc());
-  std::unique_ptr<MCAsmParser> Parser(
-      createMCAsmParser(SrcMgr, _context, *Streamer, *_target->getMCAsmInfo()));
-  const Target &T = _target->getTarget();
-  std::unique_ptr<MCInstrInfo> MCII(T.createMCInstrInfo());
-  std::unique_ptr<MCSubtargetInfo> STI(T.createMCSubtargetInfo(
-      _target->getTargetTriple(), _target->getTargetCPU(),
-      _target->getTargetFeatureString()));
-  std::unique_ptr<MCTargetAsmParser> TAP(
-      T.createMCAsmParser(*STI, *Parser.get(), *MCII,
-                          _target->Options.MCOptions));
-  if (!TAP) {
-    errMsg = "target " + std::string(T.getName()) +
-      " does not define AsmParser.";
-    return true;
-  }
-
-  Parser->setTargetParser(*TAP);
-  if (Parser->Run(false))
-    return true;
-
-  for (auto &KV : *Streamer) {
-    StringRef Key = KV.first();
-    RecordStreamer::State Value = KV.second;
-    if (Value == RecordStreamer::DefinedGlobal)
-      addAsmGlobalSymbol(Key.data(), LTO_SYMBOL_SCOPE_DEFAULT);
-    else if (Value == RecordStreamer::Defined)
-      addAsmGlobalSymbol(Key.data(), LTO_SYMBOL_SCOPE_INTERNAL);
-    else if (Value == RecordStreamer::Global ||
-             Value == RecordStreamer::Used)
-      addAsmGlobalSymbolUndef(Key.data());
-  }
-
-  return false;
-}
-
-/// isDeclaration - Return 'true' if the global value is a declaration.
-static bool isDeclaration(const GlobalValue &V) {
-  if (V.hasAvailableExternallyLinkage())
-    return true;
-
-  if (V.isMaterializable())
-    return false;
-
-  return V.isDeclaration();
-}
-
 /// parseSymbols - Parse the symbols from the module and model-level ASM and add
 /// them to either the defined or undefined lists.
 bool LTOModule::parseSymbols(std::string &errMsg) {
-  // add functions
-  for (Module::iterator f = _module->begin(), e = _module->end(); f != e; ++f) {
-    if (isDeclaration(*f))
-      addPotentialUndefinedSymbol(f, true);
-    else
-      addDefinedFunctionSymbol(f);
+  for (auto &Sym : IRFile->symbols()) {
+    const GlobalValue *GV = IRFile->getSymbolGV(Sym.getRawDataRefImpl());
+    uint32_t Flags = Sym.getFlags();
+    bool IsUndefined = Flags & object::BasicSymbolRef::SF_Undefined;
+
+    if (!GV) {
+      SmallString<64> Buffer;
+      {
+        raw_svector_ostream OS(Buffer);
+        Sym.printName(OS);
+      }
+      const char *Name = Buffer.c_str();
+
+      if (IsUndefined)
+        addAsmGlobalSymbolUndef(Name);
+      else if (Flags & object::BasicSymbolRef::SF_Global)
+        addAsmGlobalSymbol(Name, LTO_SYMBOL_SCOPE_DEFAULT);
+      else
+        addAsmGlobalSymbol(Name, LTO_SYMBOL_SCOPE_INTERNAL);
+      continue;
+    }
+
+    auto *F = dyn_cast<Function>(GV);
+    if (IsUndefined) {
+      addPotentialUndefinedSymbol(Sym, F != nullptr);
+      continue;
+    }
+
+    if (F) {
+      addDefinedFunctionSymbol(Sym);
+      continue;
+    }
+
+    if (isa<GlobalVariable>(GV)) {
+      addDefinedDataSymbol(Sym);
+      continue;
+    }
+
+    assert(isa<GlobalAlias>(GV));
+    addDefinedDataSymbol(Sym);
   }
-
-  // add data
-  for (Module::global_iterator v = _module->global_begin(),
-         e = _module->global_end(); v !=  e; ++v) {
-    if (isDeclaration(*v))
-      addPotentialUndefinedSymbol(v, false);
-    else
-      addDefinedDataSymbol(v);
-  }
-
-  // add asm globals
-  if (addAsmGlobalSymbols(errMsg))
-    return true;
-
-  // add aliases
-  for (const auto &Alias : _module->aliases())
-    addDefinedDataSymbol(&Alias);
 
   // make symbols for all undefines
   for (StringMap<NameAndAttributes>::iterator u =_undefines.begin(),
@@ -637,7 +586,7 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
 /// parseMetadata - Parse metadata from the module
 void LTOModule::parseMetadata() {
   // Linker Options
-  if (Value *Val = _module->getModuleFlag("Linker Options")) {
+  if (Value *Val = getModule().getModuleFlag("Linker Options")) {
     MDNode *LinkerOptions = cast<MDNode>(Val);
     for (unsigned i = 0, e = LinkerOptions->getNumOperands(); i != e; ++i) {
       MDNode *MDOptions = cast<MDNode>(LinkerOptions->getOperand(i));

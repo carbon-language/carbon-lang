@@ -16,10 +16,10 @@
 
 #include "llvm-c/lto.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/IR/Mangler.h"
 #include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCObjectFileInfo.h"
+#include "llvm/Object/IRObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>
 #include <vector>
@@ -46,9 +46,8 @@ private:
     const GlobalValue *symbol;
   };
 
-  std::unique_ptr<Module> _module;
+  std::unique_ptr<object::IRObjectFile> IRFile;
   std::unique_ptr<TargetMachine> _target;
-  MCObjectFileInfo ObjFileInfo;
   StringSet                               _linkeropt_strings;
   std::vector<const char *>               _deplibs;
   std::vector<const char *>               _linkeropts;
@@ -58,12 +57,8 @@ private:
   StringSet                               _defines;
   StringMap<NameAndAttributes> _undefines;
   std::vector<const char*>                _asm_undefines;
-  MCContext _context;
 
-  // Use mangler to add GlobalPrefix to names to match linker names.
-  Mangler _mangler;
-
-  LTOModule(std::unique_ptr<Module> M, TargetMachine *TM);
+  LTOModule(std::unique_ptr<object::IRObjectFile> Obj, TargetMachine *TM);
 
 public:
   /// Returns 'true' if the file or memory contents is LLVM bitcode.
@@ -100,14 +95,21 @@ public:
                                      TargetOptions options, std::string &errMsg,
                                      StringRef path = "");
 
+  const Module &getModule() const {
+    return const_cast<LTOModule*>(this)->getModule();
+  }
+  Module &getModule() {
+    return IRFile->getModule();
+  }
+
   /// Return the Module's target triple.
   const std::string &getTargetTriple() {
-    return _module->getTargetTriple();
+    return getModule().getTargetTriple();
   }
 
   /// Set the Module's target triple.
   void setTargetTriple(StringRef Triple) {
-    _module->setTargetTriple(Triple);
+    getModule().setTargetTriple(Triple);
   }
 
   /// Get the number of symbols
@@ -153,9 +155,6 @@ public:
     return nullptr;
   }
 
-  /// Return the Module.
-  Module *getLLVVMModule() { return _module.get(); }
-
   const std::vector<const char*> &getAsmUndefinedRefs() {
     return _asm_undefines;
   }
@@ -170,23 +169,20 @@ private:
   bool parseSymbols(std::string &errMsg);
 
   /// Add a symbol which isn't defined just yet to a list to be resolved later.
-  void addPotentialUndefinedSymbol(const GlobalValue *dcl, bool isFunc);
+  void addPotentialUndefinedSymbol(const object::BasicSymbolRef &Sym,
+                                   bool isFunc);
 
   /// Add a defined symbol to the list.
-  void addDefinedSymbol(const char *Name, const GlobalValue *Def,
-                        bool IsFunction);
-
-  /// Add a function symbol as defined to the list.
-  void addDefinedFunctionSymbol(const Function *f);
-  void addDefinedFunctionSymbol(const char *Name, const Function *F);
+  void addDefinedSymbol(const char *Name, const GlobalValue *def,
+                        bool isFunction);
 
   /// Add a data symbol as defined to the list.
-  void addDefinedDataSymbol(const GlobalValue *v);
-  void addDefinedDataSymbol(const char *Name, const GlobalValue *V);
+  void addDefinedDataSymbol(const object::BasicSymbolRef &Sym);
+  void addDefinedDataSymbol(const char*Name, const GlobalValue *v);
 
-  /// Add global symbols from module-level ASM to the defined or undefined
-  /// lists.
-  bool addAsmGlobalSymbols(std::string &errMsg);
+  /// Add a function symbol as defined to the list.
+  void addDefinedFunctionSymbol(const object::BasicSymbolRef &Sym);
+  void addDefinedFunctionSymbol(const char *Name, const Function *F);
 
   /// Add a global symbol from module-level ASM to the defined list.
   void addAsmGlobalSymbol(const char *, lto_symbol_attributes scope);
