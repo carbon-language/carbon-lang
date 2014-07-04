@@ -150,6 +150,11 @@ endfunction(add_dead_strip)
 # Note: Don't set variables CMAKE_*_OUTPUT_DIRECTORY any more,
 # or a certain builder, for eaxample, msbuild.exe, would be confused.
 function(set_output_directory target bindir libdir)
+  # Do nothing if *_OUTPUT_INTDIR is empty.
+  if("${bindir}" STREQUAL "")
+    return()
+  endif()
+
   if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
     foreach(build_mode ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${build_mode}" CONFIG_SUFFIX)
