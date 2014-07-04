@@ -17,8 +17,8 @@ _bar:
 
 // OLD32:      Relocations [
 // OLD32-NEXT:   Section __eh_frame {
-// OLD32-NEXT:     0x20 0 2 n/a GENERIC_RELOC_LOCAL_SECTDIFF 1 -
-// OLD32-NEXT:     0x0 0 2 n/a GENERIC_RELOC_PAIR 1 -
+// OLD32-NEXT:     0x20 0 2 n/a GENERIC_RELOC_LOCAL_SECTDIFF 1 0x0
+// OLD32-NEXT:     0x0 0 2 n/a GENERIC_RELOC_PAIR 1 0x20
 // OLD32-NEXT:   }
 // OLD32-NEXT: ]
 

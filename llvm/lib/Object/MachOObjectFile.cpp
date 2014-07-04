@@ -868,6 +868,9 @@ std::error_code MachOObjectFile::getRelocationOffset(DataRefImpl Rel,
 symbol_iterator
 MachOObjectFile::getRelocationSymbol(DataRefImpl Rel) const {
   MachO::any_relocation_info RE = getRelocation(Rel);
+  if (isRelocationScattered(RE))
+    return symbol_end();
+
   uint32_t SymbolIdx = getPlainRelocationSymbolNum(RE);
   bool isExtern = getPlainRelocationExternal(RE);
   if (!isExtern)
