@@ -116,7 +116,7 @@ void MsanDeallocate(StackTrace *stack, void *p) {
   CHECK(p);
   Init();
   MSAN_FREE_HOOK(p);
-  Metadata *meta = reinterpret_cast<Metadata*>(allocator.GetMetaData(p));
+  Metadata *meta = reinterpret_cast<Metadata *>(allocator.GetMetaData(p));
   uptr size = meta->requested_size;
   meta->requested_size = 0;
   // This memory will not be reused by anyone else, so we are free to keep it
@@ -128,7 +128,7 @@ void MsanDeallocate(StackTrace *stack, void *p) {
       CHECK(stack_id);
       u32 id;
       ChainedOriginDepotPut(stack_id, Origin::kHeapRoot, &id);
-      __msan_set_origin(p, size,  Origin(id, 1).raw_id());
+      __msan_set_origin(p, size, Origin(id, 1).raw_id());
     }
   }
   MsanThread *t = GetCurrentThread();
@@ -171,12 +171,10 @@ void *MsanReallocate(StackTrace *stack, void *old_p, uptr new_size,
 }
 
 static uptr AllocationSize(const void *p) {
-  if (p == 0)
-    return 0;
+  if (p == 0) return 0;
   const void *beg = allocator.GetBlockBegin(p);
-  if (beg != p)
-    return 0;
-  Metadata *b = (Metadata*)allocator.GetMetaData(p);
+  if (beg != p) return 0;
+  Metadata *b = (Metadata *)allocator.GetMetaData(p);
   return b->requested_size;
 }
 
@@ -196,22 +194,12 @@ uptr __msan_get_heap_size() {
   return stats[AllocatorStatMapped];
 }
 
-uptr __msan_get_free_bytes() {
-  return 1;
-}
+uptr __msan_get_free_bytes() { return 1; }
 
-uptr __msan_get_unmapped_bytes() {
-  return 1;
-}
+uptr __msan_get_unmapped_bytes() { return 1; }
 
-uptr __msan_get_estimated_allocated_size(uptr size) {
-  return size;
-}
+uptr __msan_get_estimated_allocated_size(uptr size) { return size; }
 
-int __msan_get_ownership(const void *p) {
-  return AllocationSize(p) != 0;
-}
+int __msan_get_ownership(const void *p) { return AllocationSize(p) != 0; }
 
-uptr __msan_get_allocated_size(const void *p) {
-  return AllocationSize(p);
-}
+uptr __msan_get_allocated_size(const void *p) { return AllocationSize(p); }
