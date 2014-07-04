@@ -66,8 +66,8 @@ void test4(int size, int vla_arr[size]) {
   {
     vla_arr[0] = 1;
   }
-  // CHECK-3: test4([[INT:i.+]] [[SIZE:.+]], [[INT]]*
-  // CHECK-3: store [[INT]] [[SIZE]], [[INT]]* [[SIZE_ADDR:.+]],
+  // CHECK-3: test4([[INT:i.+]] {{.*}}[[SIZE:%.+]], [[INT]]*
+  // CHECK-3: store [[INT]] {{.*}}[[SIZE]], [[INT]]* [[SIZE_ADDR:%.+]],
   // CHECK-3: [[REF:%.+]] = getelementptr inbounds
   // CHECK-3: store [[INT]]* [[SIZE_ADDR]], [[INT]]** [[REF]]
   // CHECK-3: call void @__captured_stmt
