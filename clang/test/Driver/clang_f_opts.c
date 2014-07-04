@@ -147,6 +147,7 @@
 // RUN:     -fivopts -fno-ivopts                                              \
 // RUN:     -fnon-call-exceptions -fno-non-call-exceptions                    \
 // RUN:     -fpermissive -fno-permissive                                      \
+// RUN:     -fdefer-pop -fno-defer-pop                                        \
 // RUN:     -fprefetch-loop-arrays -fno-prefetch-loop-arrays                  \
 // RUN:     -fprofile-correction -fno-profile-correction                      \
 // RUN:     -fprofile-dir=bar                                                 \

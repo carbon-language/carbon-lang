@@ -469,6 +469,8 @@ def fexceptions : Flag<["-"], "fexceptions">, Group<f_Group>, Flags<[CC1Option]>
 def : Flag<["-"], "fexpensive-optimizations">, Group<clang_ignored_f_Group>;
 def : Flag<["-"], "fno-expensive-optimizations">, Group<clang_ignored_f_Group>;
 def fextdirs_EQ : Joined<["-"], "fextdirs=">, Group<f_Group>;
+def : Flag<["-"], "fdefer-pop">, Group<clang_ignored_f_Group>;
+def : Flag<["-"], "fno-defer-pop">, Group<clang_ignored_f_Group>;
 def : Flag<["-"], "fextended-identifiers">, Group<clang_ignored_f_Group>;
 def : Flag<["-"], "fno-extended-identifiers">, Group<f_Group>, Flags<[Unsupported]>;
 def fhosted : Flag<["-"], "fhosted">, Group<f_Group>;
