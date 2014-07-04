@@ -116,6 +116,12 @@
 // MIPS-ARCH-64R2: "-target-cpu" "mips64r2"
 // MIPS-ARCH-64R2: "-target-abi" "n64"
 //
+// RUN: %clang -target mips64-linux-gnu -### -c %s \
+// RUN:        -march=octeon 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-OCTEON %s
+// MIPS-ARCH-OCTEON: "-target-cpu" "octeon"
+// MIPS-ARCH-OCTEON: "-target-abi" "n64"
+//
 // RUN: not %clang -target mips64-linux-gnu -c %s \
 // RUN:        -march=mips32 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ARCH-6432 %s

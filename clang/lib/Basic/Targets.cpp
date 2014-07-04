@@ -5320,6 +5320,7 @@ public:
         .Case("mips64", true)
         .Case("mips64r2", true)
         .Case("mips64r6", true)
+        .Case("octeon", true)
         .Default(false);
   }
   const std::string& getCPU() const { return CPU; }
@@ -5332,7 +5333,10 @@ public:
     Features["n64"] = false;
 
     Features[ABI] = true;
-    Features[CPU] = true;
+    if (CPU == "octeon")
+      Features["mips64r2"] = Features["cnmips"] = true;
+    else
+      Features[CPU] = true;
   }
 
   void getTargetDefines(const LangOptions &Opts,

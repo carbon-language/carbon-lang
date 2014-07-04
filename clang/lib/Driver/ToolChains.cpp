@@ -1633,7 +1633,8 @@ static bool isMips64r2(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_march_EQ,
                            options::OPT_mcpu_EQ);
 
-  return A && A->getValue() == StringRef("mips64r2");
+  return A && (A->getValue() == StringRef("mips64r2") ||
+               A->getValue() == StringRef("octeon"));
 }
 
 static bool isMicroMips(const ArgList &Args) {
