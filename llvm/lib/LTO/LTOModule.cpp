@@ -531,6 +531,9 @@ bool LTOModule::parseSymbols(std::string &errMsg) {
   for (auto &Sym : IRFile->symbols()) {
     const GlobalValue *GV = IRFile->getSymbolGV(Sym.getRawDataRefImpl());
     uint32_t Flags = Sym.getFlags();
+    if (Flags & object::BasicSymbolRef::SF_FormatSpecific)
+      continue;
+
     bool IsUndefined = Flags & object::BasicSymbolRef::SF_Undefined;
 
     if (!GV) {
