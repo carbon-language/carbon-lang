@@ -245,6 +245,11 @@ uint32_t IRObjectFile::getSymbolFlags(DataRefImpl Symb) const {
       Res |= BasicSymbolRef::SF_FormatSpecific;
   }
 
+  if (auto *F = dyn_cast<Function>(GV)) {
+    if (F->getName().startswith("llvm."))
+      Res |= BasicSymbolRef::SF_FormatSpecific;
+  }
+
   return Res;
 }
 
