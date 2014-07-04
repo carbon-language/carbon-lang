@@ -735,6 +735,11 @@ Function *Intrinsic::getDeclaration(Module *M, ID id, ArrayRef<Type*> Tys) {
 #include "llvm/IR/Intrinsics.gen"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
+// This defines the "Intrinsic::getIntrinsicForMSBuiltin()" method.
+#define GET_LLVM_INTRINSIC_FOR_MS_BUILTIN
+#include "llvm/IR/Intrinsics.gen"
+#undef GET_LLVM_INTRINSIC_FOR_MS_BUILTIN
+
 /// hasAddressTaken - returns true if there are any uses of this function
 /// other than direct calls or invokes to it.
 bool Function::hasAddressTaken(const User* *PutOffender) const {

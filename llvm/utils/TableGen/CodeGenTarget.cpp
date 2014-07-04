@@ -459,6 +459,8 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
 
   if (R->getValue("GCCBuiltinName"))  // Ignore a missing GCCBuiltinName field.
     GCCBuiltinName = R->getValueAsString("GCCBuiltinName");
+  if (R->getValue("MSBuiltinName"))   // Ignore a missing MSBuiltinName field.
+    MSBuiltinName = R->getValueAsString("MSBuiltinName");
 
   TargetPrefix = R->getValueAsString("TargetPrefix");
   Name = R->getValueAsString("LLVMName");

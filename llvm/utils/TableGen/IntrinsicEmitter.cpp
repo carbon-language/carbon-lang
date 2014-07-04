@@ -54,6 +54,8 @@ public:
                           raw_ostream &OS);
   void EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
                                     raw_ostream &OS);
+  void EmitIntrinsicToMSBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
+                                   raw_ostream &OS);
   void EmitSuffix(raw_ostream &OS);
 };
 } // End anonymous namespace
@@ -95,6 +97,9 @@ void IntrinsicEmitter::run(raw_ostream &OS) {
 
   // Emit code to translate GCC builtins into LLVM intrinsics.
   EmitIntrinsicToGCCBuiltinMap(Ints, OS);
+
+  // Emit code to translate MS builtins into LLVM intrinsics.
+  EmitIntrinsicToMSBuiltinMap(Ints, OS);
 
   EmitSuffix(OS);
 }
@@ -787,6 +792,55 @@ EmitIntrinsicToGCCBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
     OS << "(" << TargetPrefix << "Intrinsic::ID)";
   OS << "Intrinsic::not_intrinsic;\n";
   OS << "}\n";
+  OS << "#endif\n\n";
+}
+
+void IntrinsicEmitter::
+EmitIntrinsicToMSBuiltinMap(const std::vector<CodeGenIntrinsic> &Ints,
+                            raw_ostream &OS) {
+  std::map<std::string, std::map<std::string, std::string>> TargetBuiltins;
+
+  for (const auto &Intrinsic : Ints) {
+    if (Intrinsic.MSBuiltinName.empty())
+      continue;
+
+    auto &Builtins = TargetBuiltins[Intrinsic.TargetPrefix];
+    if (!Builtins.insert(std::make_pair(Intrinsic.MSBuiltinName,
+                                        Intrinsic.EnumName)).second)
+      PrintFatalError("Intrinsic '" + Intrinsic.TheDef->getName() + "': "
+                      "duplicate MS builtin name!");
+  }
+
+  OS << "// Get the LLVM intrinsic that corresponds to a MS builtin.\n"
+        "// This is used by the C front-end.  The MS builtin name is passed\n"
+        "// in as a BuiltinName, and a target prefix (e.g. 'arm') is passed\n"
+        "// in as a TargetPrefix.  The result is assigned to 'IntrinsicID'.\n"
+        "#ifdef GET_LLVM_INTRINSIC_FOR_MS_BUILTIN\n";
+
+  OS << (TargetOnly ? "static " + TargetPrefix : "") << "Intrinsic::ID "
+     << (TargetOnly ? "" : "Intrinsic::")
+     << "getIntrinsicForMSBuiltin(const char *TP, const char *BN) {\n";
+  OS << "  StringRef BuiltinName(BN);\n"
+        "  StringRef TargetPrefix(TP);\n"
+        "\n";
+
+  for (const auto &Builtins : TargetBuiltins) {
+    OS << "  ";
+    if (Builtins.first.empty())
+      OS << "/* Target Independent Builtins */ ";
+    else
+      OS << "if (TargetPrefix == \"" << Builtins.first << "\") ";
+    OS << "{\n";
+    EmitTargetBuiltins(Builtins.second, TargetPrefix, OS);
+    OS << "}";
+  }
+
+  OS << "  return ";
+  if (!TargetPrefix.empty())
+    OS << "(" << TargetPrefix << "Intrinsic::ID)";
+  OS << "Intrinsic::not_intrinsic;\n";
+  OS << "}\n";
+
   OS << "#endif\n\n";
 }
 

@@ -226,6 +226,10 @@ class GCCBuiltin<string name> {
   string GCCBuiltinName = name;
 }
 
+class MSBuiltin<string name> {
+  string MSBuiltinName = name;
+}
+
 
 //===--------------- Variable Argument Handling Intrinsics ----------------===//
 //
