@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mcpu=corei7-avx | FileCheck %s
+; RUN: llc < %s -mtriple=i686-linux -mcpu=corei7-avx | FileCheck %s
 ; RUN: opt -instsimplify -disable-output < %s
 
 ;CHECK-LABEL: AGEP0:
