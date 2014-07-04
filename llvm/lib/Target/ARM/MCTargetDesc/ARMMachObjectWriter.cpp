@@ -32,6 +32,7 @@ class ARMMachObjectWriter : public MCMachObjectTargetWriter {
                                     const MCFragment *Fragment,
                                     const MCFixup &Fixup,
                                     MCValue Target,
+                                    unsigned Type,
                                     unsigned Log2Size,
                                     uint64_t &FixedValue);
   void RecordARMScatteredHalfRelocation(MachObjectWriter *Writer,
@@ -251,11 +252,11 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
                                                     const MCFragment *Fragment,
                                                     const MCFixup &Fixup,
                                                     MCValue Target,
+                                                    unsigned Type,
                                                     unsigned Log2Size,
                                                     uint64_t &FixedValue) {
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
   unsigned IsPCRel = Writer->isFixupKindPCRel(Asm, Fixup.getKind());
-  unsigned Type = MachO::ARM_RELOC_VANILLA;
 
   // See <reloc.h>.
   const MCSymbol *A = &Target.getSymA()->getSymbol();
@@ -272,6 +273,7 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
   uint32_t Value2 = 0;
 
   if (const MCSymbolRefExpr *B = Target.getSymB()) {
+    assert(Type == MachO::ARM_RELOC_VANILLA && "invalid reloc for 2 symbols");
     const MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
@@ -374,7 +376,8 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
       return RecordARMScatteredHalfRelocation(Writer, Asm, Layout, Fragment,
                                               Fixup, Target, FixedValue);
     return RecordARMScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
-                                        Target, Log2Size, FixedValue);
+                                        Target, RelocType, Log2Size,
+                                        FixedValue);
   }
 
   // Get the symbol data, if any.
@@ -392,7 +395,8 @@ void ARMMachObjectWriter::RecordRelocation(MachObjectWriter *Writer,
     Offset += 1 << Log2Size;
   if (Offset && SD && !Writer->doesSymbolRequireExternRelocation(SD))
     return RecordARMScatteredRelocation(Writer, Asm, Layout, Fragment, Fixup,
-                                        Target, Log2Size, FixedValue);
+                                        Target, RelocType, Log2Size,
+                                        FixedValue);
 
   // See <reloc.h>.
   uint32_t FixupOffset = Layout.getFragmentOffset(Fragment)+Fixup.getOffset();
