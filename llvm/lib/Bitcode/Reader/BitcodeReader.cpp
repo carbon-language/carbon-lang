@@ -3468,14 +3468,11 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
 }
 
 std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
-                                         LLVMContext& Context,
-                                         std::string *ErrMsg) {
+                                         LLVMContext &Context) {
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
 
   std::string Triple("");
-  if (std::error_code EC = R->ParseTriple(Triple))
-    if (ErrMsg)
-      *ErrMsg = EC.message();
+  R->ParseTriple(Triple);
 
   R->releaseBuffer();
   delete R;

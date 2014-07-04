@@ -41,14 +41,11 @@ namespace llvm {
                                    LLVMContext &Context,
                                    std::string *ErrMsg = nullptr);
 
-  /// getBitcodeTargetTriple - Read the header of the specified bitcode
-  /// buffer and extract just the triple information. If successful,
-  /// this returns a string and *does not* take ownership
-  /// of 'buffer'. On error, this returns "", and fills in *ErrMsg
-  /// if ErrMsg is non-null.
+  /// Read the header of the specified bitcode buffer and extract just the
+  /// triple information. If successful, this returns a string and *does not*
+  /// take ownership of 'buffer'. On error, this returns "".
   std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
-                                     LLVMContext &Context,
-                                     std::string *ErrMsg = nullptr);
+                                     LLVMContext &Context);
 
   /// Read the specified bitcode file, returning the module.
   /// This method *never* takes ownership of Buffer.
