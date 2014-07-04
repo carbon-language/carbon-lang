@@ -8842,7 +8842,7 @@ Semantics:
 """"""""""
 
 On some architectures the address of the code to be executed needs to be
-different to the address where the trampoline is actually stored. This
+different than the address where the trampoline is actually stored. This
 intrinsic returns the executable address corresponding to ``tramp``
 after performing the required machine specific adjustments. The pointer
 returned can then be :ref:`bitcast and executed <int_trampoline>`.
@@ -8850,7 +8850,7 @@ returned can then be :ref:`bitcast and executed <int_trampoline>`.
 Memory Use Markers
 ------------------
 
-This class of intrinsics exists to information about the lifetime of
+This class of intrinsics provides information about the lifetime of
 memory objects and ranges where variables are immutable.
 
 .. _int_lifestart:
