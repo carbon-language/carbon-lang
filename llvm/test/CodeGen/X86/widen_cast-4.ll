@@ -24,8 +24,6 @@ forcond:		; preds = %forinc, %entry
 	br i1 %cmp, label %forbody, label %afterfor
 
 forbody:		; preds = %forcond
-; CHECK: %forbody
-; CHECK-WIDE: %forbody
 	%tmp2 = load i32* %i		; <i32> [#uses=1]
 	%tmp3 = load i64** %dst_i.addr		; <i64*> [#uses=1]
 	%arrayidx = getelementptr i64* %tmp3, i32 %tmp2		; <i64*> [#uses=1]
@@ -47,6 +45,7 @@ forbody:		; preds = %forcond
 	%shr = ashr <8 x i8> %add, < i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2, i8 2 >		; <<8 x i8>> [#uses=1]
 	store <8 x i8> %shr, <8 x i8>* %arrayidx10
 	br label %forinc
+; CHECK: %forbody
 ; CHECK:      pmovzxbw
 ; CHECK-NEXT: paddw
 ; CHECK-NEXT: psllw $8
@@ -56,6 +55,7 @@ forbody:		; preds = %forcond
 ; CHECK-NEXT: movlpd
 ;
 ; FIXME: We shouldn't require both a movd and an insert.
+; CHECK-WIDE: %forbody
 ; CHECK-WIDE:      movd
 ; CHECK-WIDE-NEXT: pinsrd
 ; CHECK-WIDE-NEXT: paddb
