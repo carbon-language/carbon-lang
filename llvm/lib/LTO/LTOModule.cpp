@@ -68,30 +68,9 @@ bool LTOModule::isBitcodeFile(const char *path) {
   return type == sys::fs::file_magic::bitcode;
 }
 
-/// isBitcodeFileForTarget - Returns 'true' if the file (or memory contents) is
-/// LLVM bitcode for the specified triple.
-bool LTOModule::isBitcodeFileForTarget(const void *mem, size_t length,
-                                       const char *triplePrefix) {
-  MemoryBuffer *buffer = makeBuffer(mem, length);
-  if (!buffer)
-    return false;
-  return isTargetMatch(StringRef((const char *)mem, length), triplePrefix);
-}
-
-bool LTOModule::isBitcodeFileForTarget(const char *path,
-                                       const char *triplePrefix) {
-  std::unique_ptr<MemoryBuffer> buffer;
-  if (MemoryBuffer::getFile(path, buffer))
-    return false;
-  return isTargetMatch(buffer->getBuffer(), triplePrefix);
-}
-
-/// Returns 'true' if the bitcode BC is for the specified target triple.
-bool LTOModule::isTargetMatch(StringRef BC, const char *TriplePrefix) {
-  std::unique_ptr<MemoryBuffer> Buffer(
-      MemoryBuffer::getMemBuffer(BC, "", false));
-  std::string Triple = getBitcodeTargetTriple(Buffer.get(), getGlobalContext());
-  return strncmp(Triple.c_str(), TriplePrefix, strlen(TriplePrefix)) == 0;
+bool LTOModule::isBitcodeForTarget(MemoryBuffer *buffer,
+                                   StringRef triplePrefix) {
+  return getBitcodeTargetTriple(buffer, getGlobalContext()) == triplePrefix;
 }
 
 LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,

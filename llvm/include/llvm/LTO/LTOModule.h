@@ -70,13 +70,14 @@ public:
   static bool isBitcodeFile(const void *mem, size_t length);
   static bool isBitcodeFile(const char *path);
 
-  /// Returns 'true' if the file or memory contents is LLVM bitcode for the
-  /// specified triple.
-  static bool isBitcodeFileForTarget(const void *mem,
-                                     size_t length,
-                                     const char *triplePrefix);
-  static bool isBitcodeFileForTarget(const char *path,
-                                     const char *triplePrefix);
+  /// Returns 'true' if the memory buffer is LLVM bitcode for the specified
+  /// triple.
+  static bool isBitcodeForTarget(MemoryBuffer *memBuffer,
+                                 StringRef triplePrefix);
+
+  /// Create a MemoryBuffer from a memory range with an optional name.
+  static MemoryBuffer *makeBuffer(const void *mem, size_t length,
+                                  StringRef name = "");
 
   /// Create an LTOModule. N.B. These methods take ownership of the buffer. The
   /// caller must have initialized the Targets, the TargetMCs, the AsmPrinters,
@@ -202,17 +203,10 @@ private:
   /// Get string that the data pointer points to.
   bool objcClassNameFromExpression(const Constant *c, std::string &name);
 
-  /// Returns 'true' if the bitcode BC is for the specified target triple.
-  static bool isTargetMatch(StringRef BC, const char *TriplePrefix);
-
   /// Create an LTOModule (private version). N.B. This method takes ownership of
   /// the buffer.
   static LTOModule *makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
                                   TargetOptions options, std::string &errMsg);
-
-  /// Create a MemoryBuffer from a memory range with an optional name.
-  static MemoryBuffer *makeBuffer(const void *mem, size_t length,
-                                  StringRef name = "");
 };
 }
 #endif // LTO_MODULE_H

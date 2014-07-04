@@ -16,6 +16,7 @@
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/LTO/LTOModule.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/TargetSelect.h"
 
 // extra command-line flags needed for LTOCodeGenerator
@@ -87,7 +88,10 @@ bool lto_module_is_object_file(const char* path) {
 
 bool lto_module_is_object_file_for_target(const char* path,
                                           const char* target_triplet_prefix) {
-  return LTOModule::isBitcodeFileForTarget(path, target_triplet_prefix);
+  std::unique_ptr<MemoryBuffer> buffer;
+  if (MemoryBuffer::getFile(path, buffer))
+    return false;
+  return LTOModule::isBitcodeForTarget(buffer.get(), target_triplet_prefix);
 }
 
 bool lto_module_is_object_file_in_memory(const void* mem, size_t length) {
@@ -98,7 +102,10 @@ bool
 lto_module_is_object_file_in_memory_for_target(const void* mem,
                                             size_t length,
                                             const char* target_triplet_prefix) {
-  return LTOModule::isBitcodeFileForTarget(mem, length, target_triplet_prefix);
+  std::unique_ptr<MemoryBuffer> buffer(LTOModule::makeBuffer(mem, length));
+  if (!buffer)
+    return false;
+  return LTOModule::isBitcodeForTarget(buffer.get(), target_triplet_prefix);
 }
 
 lto_module_t lto_module_create(const char* path) {
