@@ -196,6 +196,9 @@ class BitcodeReader : public GVMaterializer {
 
   static const std::error_category &BitcodeErrorCategory();
 
+  static ErrorOr<StringRef> convertToStringRef(ArrayRef<uint64_t> Record,
+                                               unsigned Idx);
+
 public:
   enum ErrorType {
     BitcodeStreamInvalidSize,
@@ -220,7 +223,7 @@ public:
     InvalidValue // Invalid version, inst number, attr number, etc
   };
 
-  std::error_code Error(ErrorType E) {
+  static std::error_code Error(ErrorType E) {
     return std::error_code(E, BitcodeErrorCategory());
   }
 
@@ -252,7 +255,7 @@ public:
 
   /// @brief Cheap mechanism to just extract module triple
   /// @returns true if an error occurred.
-  ErrorOr<std::string> parseTriple();
+  ErrorOr<StringRef> parseTriple();
 
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
@@ -354,7 +357,7 @@ private:
   std::error_code ResolveGlobalAndAliasInits();
   std::error_code ParseMetadata();
   std::error_code ParseMetadataAttachment();
-  ErrorOr<std::string> parseModuleTriple();
+  ErrorOr<StringRef> parseModuleTriple();
   std::error_code ParseUseLists();
   std::error_code InitStream();
   std::error_code InitStreamFromBuffer();

@@ -14,6 +14,7 @@
 #ifndef LLVM_BITCODE_READERWRITER_H
 #define LLVM_BITCODE_READERWRITER_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorOr.h"
 #include <string>
 
@@ -44,8 +45,7 @@ namespace llvm {
   /// Read the header of the specified bitcode buffer and extract just the
   /// triple information. If successful, this returns a string and *does not*
   /// take ownership of 'buffer'. On error, this returns "".
-  std::string getBitcodeTargetTriple(MemoryBuffer *Buffer,
-                                     LLVMContext &Context);
+  StringRef getBitcodeTargetTriple(MemoryBuffer *Buffer, LLVMContext &Context);
 
   /// Read the specified bitcode file, returning the module.
   /// This method *never* takes ownership of Buffer.

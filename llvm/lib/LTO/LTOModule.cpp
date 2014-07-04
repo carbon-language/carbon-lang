@@ -70,8 +70,8 @@ bool LTOModule::isBitcodeFile(const char *path) {
 
 bool LTOModule::isBitcodeForTarget(MemoryBuffer *buffer,
                                    StringRef triplePrefix) {
-  std::string Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
-  return StringRef(Triple).startswith(triplePrefix);
+  StringRef Triple = getBitcodeTargetTriple(buffer, getGlobalContext());
+  return Triple.startswith(triplePrefix);
 }
 
 LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
