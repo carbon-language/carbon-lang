@@ -17,10 +17,10 @@ namespace mach_o {
 class MachODefinedAtom : public SimpleDefinedAtom {
 public:
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
-                   ContentType type, Merge merge,
+                   ContentType type, Merge merge, bool thumb,
                    const ArrayRef<uint8_t> content)
       : SimpleDefinedAtom(f), _name(name), _content(content),
-        _contentType(type), _scope(scope), _merge(merge) {}
+        _contentType(type), _scope(scope), _merge(merge), _thumb(thumb) {}
 
   // Constructor for zero-fill content
   MachODefinedAtom(const File &f, const StringRef name, Scope scope,
@@ -28,7 +28,7 @@ public:
       : SimpleDefinedAtom(f), _name(name),
         _content(ArrayRef<uint8_t>(nullptr, size)),
         _contentType(DefinedAtom::typeZeroFill),
-        _scope(scope), _merge(mergeNo) {}
+        _scope(scope), _merge(mergeNo), _thumb(false) {}
 
   uint64_t size() const override { return _content.size(); }
 
@@ -53,6 +53,8 @@ public:
     return _content;
   }
 
+  bool isThumb() const { return _thumb; }
+
   void addReference(uint32_t offsetInAtom, uint16_t relocType, 
                const Atom *target, Reference::Addend addend, 
                Reference::KindArch arch = Reference::KindArch::x86_64,
@@ -66,15 +68,16 @@ private:
   const ContentType _contentType;
   const Scope _scope;
   const Merge _merge;
+  const bool _thumb;
 };
 
 class MachODefinedCustomSectionAtom : public MachODefinedAtom {
 public:
   MachODefinedCustomSectionAtom(const File &f, const StringRef name, 
                                 Scope scope, ContentType type, Merge merge,
-                                const ArrayRef<uint8_t> content,
+                                bool thumb, const ArrayRef<uint8_t> content,
                                 StringRef sectionName)
-      : MachODefinedAtom(f, name, scope, type, merge, content), 
+      : MachODefinedAtom(f, name, scope, type, merge, thumb, content), 
         _sectionName(sectionName) {}
 
   SectionChoice sectionChoice() const override {

@@ -23,18 +23,6 @@ namespace lld {
 namespace mach_o {
 
 
-// Additional Reference Kind values used internally.
-enum {
-  LLD_ARM_RELOC_THUMB_ABS_LO16 = 100, // thumb movw of absolute address
-  LLD_ARM_RELOC_THUMB_ABS_HI16 = 101, // thumb movt of absolute address
-  LLD_ARM_RELOC_THUMB_REL_LO16 = 102, // thumb movw of (target - pc)
-  LLD_ARM_RELOC_THUMB_REL_HI16 = 103, // thumb movt of (target - pc)
-  LLD_ARM_RELOC_ABS32          = 104, // 32-bit constant pointer
-  LLD_ARM_RELOC_POINTER32      = 105, // 32-bit data pointer
-  LLD_ARM_RELOC_LAZY_TARGET    = 106,
-  LLD_ARM_RELOC_LAZY_IMMEDIATE = 107,
-};
-
 ///
 /// The KindHandler class is the abstract interface to Reference::Kind
 /// values for mach-o files.  Particular Kind values (e.g. 3) has a different
@@ -52,7 +40,7 @@ public:
   virtual bool isLazyTarget(const Reference &) = 0;
   
   /// Returns true if the specified relocation is paired to the next relocation. 
-  virtual bool isPairedReloc(const normalized::Relocation &);
+  virtual bool isPairedReloc(const normalized::Relocation &) = 0;
   
   /// Prototype for a helper function.  Given a sectionIndex and address, 
   /// finds the atom and offset with that atom of that address. 
@@ -63,7 +51,7 @@ public:
   /// Prototype for a helper function.  Given a symbolIndex, finds the atom
   /// representing that symbol.
   typedef std::function<std::error_code (uint32_t symbolIndex, 
-                        const lld::Atom**)> FindAtomBySymbolIndex;
+                        const lld::Atom **)> FindAtomBySymbolIndex;
   
   /// Analyzes a relocation from a .o file and returns the info
   /// (kind, target, addend) needed to instantiate a Reference.
@@ -78,7 +66,7 @@ public:
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind, 
                            const lld::Atom **target, 
-                           Reference::Addend *addend);
+                           Reference::Addend *addend) = 0;
 
   /// Analyzes a pair of relocations from a .o file and returns the info
   /// (kind, target, addend) needed to instantiate a Reference.
@@ -94,7 +82,7 @@ public:
                            FindAtomBySymbolIndex atomFromSymbolIndex,
                            Reference::KindValue *kind, 
                            const lld::Atom **target, 
-                           Reference::Addend *addend);
+                           Reference::Addend *addend) = 0;
                            
   /// Fixup an atom when generating a final linked binary.
   virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
@@ -278,11 +266,63 @@ public:
   bool isPointer(const Reference &) override;
   bool isLazyImmediate(const Reference &) override;
   bool isLazyTarget(const Reference &) override;
+  bool isPairedReloc(const normalized::Relocation &) override;
+  std::error_code getReferenceInfo(const normalized::Relocation &reloc,
+                                   const DefinedAtom *inAtom,
+                                   uint32_t offsetInAtom,
+                                   uint64_t fixupAddress, bool swap,
+                                   FindAtomBySectionAndAddress atomFromAddress,
+                                   FindAtomBySymbolIndex atomFromSymbolIndex,
+                                   Reference::KindValue *kind,
+                                   const lld::Atom **target,
+                                   Reference::Addend *addend) override;
+  std::error_code
+      getPairReferenceInfo(const normalized::Relocation &reloc1,
+                           const normalized::Relocation &reloc2,
+                           const DefinedAtom *inAtom,
+                           uint32_t offsetInAtom,
+                           uint64_t fixupAddress, bool swap,
+                           FindAtomBySectionAndAddress atomFromAddress,
+                           FindAtomBySymbolIndex atomFromSymbolIndex,
+                           Reference::KindValue *kind,
+                           const lld::Atom **target,
+                           Reference::Addend *addend) override;
+
   void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
                   Reference::KindValue kindValue, uint64_t addend,
                   uint8_t *location, uint64_t fixupAddress,
                   uint64_t targetAddress, uint64_t inAtomAddress) 
                   override;
+
+private:
+  enum : Reference::KindValue {
+    invalid,               /// for error condition
+
+    // Kinds found in mach-o .o files:
+    thumb_b22,             /// ex: bl _foo
+    thumb_movw,            /// ex: movw	r1, :lower16:_foo
+    thumb_movt,            /// ex: movt	r1, :lower16:_foo
+    thumb_movw_funcRel,    /// ex: movw	r1, :lower16:(_foo-(L1+4))
+    thumb_movt_funcRel,    /// ex: movt r1, :upper16:(_foo-(L1+4))
+    arm_b24,               /// ex: bl _foo
+    arm_movw,              /// ex: movw	r1, :lower16:_foo
+    arm_movt,              /// ex: movt	r1, :lower16:_foo
+    arm_movw_funcRel,      /// ex: movw	r1, :lower16:(_foo-(L1+4))
+    arm_movt_funcRel,      /// ex: movt r1, :upper16:(_foo-(L1+4))
+    pointer32,             /// ex: .long _foo
+    delta32,               /// ex: .long _foo - .
+
+    // Kinds introduced by Passes:
+    lazyPointer,           /// Location contains a lazy pointer.
+    lazyImmediateLocation, /// Location contains immediate value used in stub.
+  };
+
+  int32_t getDisplacementFromThumbBranch(uint32_t instruction);
+  int32_t getDisplacementFromArmBranch(uint32_t instruction);
+  uint16_t getWordFromThumbMov(uint32_t instruction);
+  uint16_t getWordFromArmMov(uint32_t instruction);
+  uint32_t clearThumbBit(uint32_t value, const Atom* target);
+
 };
 
 } // namespace mach_o

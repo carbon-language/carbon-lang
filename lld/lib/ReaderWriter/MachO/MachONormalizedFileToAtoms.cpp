@@ -231,6 +231,7 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
   } else {
     DefinedAtom::Merge merge = (symbolDescFlags & N_WEAK_DEF)
                               ? DefinedAtom::mergeAsWeak : DefinedAtom::mergeNo;
+    bool thumb = (symbolDescFlags & N_ARM_THUMB_DEF);
     if (atomType == DefinedAtom::typeUnknown) {
       // Mach-O needs a segment and section name.  Concatentate those two
       // with a / seperator (e.g. "seg/sect") to fit into the lld model
@@ -238,15 +239,15 @@ void atomFromSymbol(DefinedAtom::ContentType atomType, const Section &section,
       std::string segSectName = section.segmentName.str()
                                 + "/" + section.sectionName.str();
       file.addDefinedAtomInCustomSection(symbolName, symbolScope, atomType,
-                                         merge, offset, size, segSectName, true,
-                                         &section);
+                                         merge, thumb,offset, size, segSectName, 
+                                         true, &section);
     } else {
       if ((atomType == lld::DefinedAtom::typeCode) &&
           (symbolDescFlags & N_SYMBOL_RESOLVER)) {
         atomType = lld::DefinedAtom::typeResolver;
       }
       file.addDefinedAtom(symbolName, symbolScope, atomType, merge,
-                          offset, size, copyRefs, &section);
+                          offset, size, thumb, copyRefs, &section);
     }
   }
 }
@@ -418,7 +419,7 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
                                      "not zero terminated.");
       }
       file.addDefinedAtom(StringRef(), scope, atomType, merge, offset, size,
-                          copyRefs, &section);
+                          false, copyRefs, &section);
       offset += size;
     }
   }
@@ -613,12 +614,6 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                                DefinedAtom::Alignment(sym.desc >> 8), copyRefs);
     }
   }
-
-  // TEMP BEGIN: until all KindHandlers switched to new interface.
-  if ((normalizedFile.arch != lld::MachOLinkingContext::arch_x86_64) &&
-      (normalizedFile.arch != lld::MachOLinkingContext::arch_x86))
-    return std::unique_ptr<File>(std::move(file));
-  // TEMP END
 
   // Convert mach-o relocations to References
   std::unique_ptr<mach_o::KindHandler> handler

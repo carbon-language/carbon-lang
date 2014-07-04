@@ -30,7 +30,7 @@ public:
 
   void addDefinedAtom(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
-                      uint64_t sectionOffset, uint64_t contentSize, 
+                      uint64_t sectionOffset, uint64_t contentSize, bool thumb,
                       bool copyRefs, const Section *inSection) {
     assert(sectionOffset+contentSize <= inSection->content.size());
     ArrayRef<uint8_t> content = inSection->content.slice(sectionOffset, 
@@ -41,14 +41,14 @@ public:
       content = content.copy(_allocator);
     }
     MachODefinedAtom *atom =
-        new (_allocator) MachODefinedAtom(*this, name, scope, type, merge,
-                                          content);
+        new (_allocator) MachODefinedAtom(*this, name, scope, type, merge, 
+                                          thumb, content);
     addAtomForSection(inSection, atom, sectionOffset);
   }
 
   void addDefinedAtomInCustomSection(StringRef name, Atom::Scope scope,
                       DefinedAtom::ContentType type, DefinedAtom::Merge merge,
-                      uint64_t sectionOffset, uint64_t contentSize, 
+                      bool thumb, uint64_t sectionOffset, uint64_t contentSize,
                       StringRef sectionName, bool copyRefs, 
                       const Section *inSection) {
     assert(sectionOffset+contentSize <= inSection->content.size());
@@ -61,8 +61,9 @@ public:
       sectionName = sectionName.copy(_allocator);
     }
     MachODefinedCustomSectionAtom *atom =
-        new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type, 
-                                                  merge, content, sectionName);
+        new (_allocator) MachODefinedCustomSectionAtom(*this, name, scope, type,
+                                                        merge, thumb, content,
+                                                        sectionName);
     addAtomForSection(inSection, atom, sectionOffset);
   }
 

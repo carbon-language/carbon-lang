@@ -10,6 +10,7 @@
 
 #include "ReferenceKinds.h"
 #include "MachONormalizedFileBinaryUtils.h"
+#include "Atoms.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -92,37 +93,6 @@ int64_t KindHandler::readS64(bool swap, const uint8_t *addr) {
   return read64(swap, *reinterpret_cast<const uint64_t*>(addr));
 }
 
-
-bool KindHandler::isPairedReloc(const Relocation &reloc) {
-  llvm_unreachable("abstract");
-}
-
-std::error_code 
-KindHandler::getReferenceInfo(const Relocation &reloc,
-                                    const DefinedAtom *inAtom,
-                                    uint32_t offsetInAtom,
-                                    uint64_t fixupAddress, bool swap,
-                                    FindAtomBySectionAndAddress atomFromAddress,
-                                    FindAtomBySymbolIndex atomFromSymbolIndex,
-                                    Reference::KindValue *kind,
-                                    const lld::Atom **target,
-                                    Reference::Addend *addend) {
-  llvm_unreachable("abstract");
-}
-
-std::error_code
-KindHandler::getPairReferenceInfo(const normalized::Relocation &reloc1,
-                           const normalized::Relocation &reloc2,
-                           const DefinedAtom *inAtom,
-                           uint32_t offsetInAtom,
-                           uint64_t fixupAddress, bool swap,
-                           FindAtomBySectionAndAddress atomFromAddress,
-                           FindAtomBySymbolIndex atomFromSymbolIndex,
-                           Reference::KindValue *kind,
-                           const lld::Atom **target,
-                           Reference::Addend *addend) {
-  llvm_unreachable("abstract");
-}
 
 //===----------------------------------------------------------------------===//
 //  KindHandler_x86_64
@@ -564,7 +534,7 @@ KindHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
       uint32_t ta = fromAddress + value - toAddress;
       *addend = ta - offsetInFrom;
     } else {
-      *addend= fromAddress + value - toAddress;
+      *addend = fromAddress + value - toAddress;
     }
     return std::error_code();
     break;
@@ -622,35 +592,446 @@ KindHandler_arm::~KindHandler_arm() {
 }
 
 const Registry::KindStrings KindHandler_arm::kindStrings[] = {
-  LLD_KIND_STRING_ENTRY(ARM_RELOC_BR24),
-  LLD_KIND_STRING_ENTRY(ARM_THUMB_RELOC_BR22),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_ABS_LO16),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_ABS_HI16),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_REL_LO16),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_THUMB_REL_HI16),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_ABS32),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_POINTER32),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_LAZY_TARGET),
-  LLD_KIND_STRING_ENTRY(LLD_ARM_RELOC_LAZY_IMMEDIATE),
+  LLD_KIND_STRING_ENTRY(thumb_b22),
+  LLD_KIND_STRING_ENTRY(thumb_movw),
+  LLD_KIND_STRING_ENTRY(thumb_movt),
+  LLD_KIND_STRING_ENTRY(thumb_movw_funcRel),
+  LLD_KIND_STRING_ENTRY(thumb_movt_funcRel),
+  LLD_KIND_STRING_ENTRY(arm_b24),
+  LLD_KIND_STRING_ENTRY(arm_movw),
+  LLD_KIND_STRING_ENTRY(arm_movt),
+  LLD_KIND_STRING_ENTRY(arm_movw_funcRel),
+  LLD_KIND_STRING_ENTRY(arm_movt_funcRel),
+  LLD_KIND_STRING_ENTRY(pointer32),
+  LLD_KIND_STRING_ENTRY(delta32),
+  LLD_KIND_STRING_ENTRY(lazyPointer),
+  LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
   LLD_KIND_STRING_END
 };
 
 bool KindHandler_arm::isCallSite(const Reference &ref) {
-  return (ref.kindValue() == ARM_THUMB_RELOC_BR22) ||
-         (ref.kindValue() == ARM_RELOC_BR24);
+  return (ref.kindValue() == thumb_b22) ||
+         (ref.kindValue() == arm_b24);
 }
 
 bool KindHandler_arm::isPointer(const Reference &ref) {
-  return (ref.kindValue() == LLD_ARM_RELOC_POINTER32);
+  return (ref.kindValue() == pointer32);
 }
 
 bool KindHandler_arm::isLazyImmediate(const Reference &ref) {
-  return (ref.kindValue() == LLD_ARM_RELOC_LAZY_IMMEDIATE);
+  return (ref.kindValue() == lazyImmediateLocation);
 }
 
 bool KindHandler_arm::isLazyTarget(const Reference &ref) {
-  return (ref.kindValue() == LLD_ARM_RELOC_LAZY_TARGET);
+  return (ref.kindValue() == lazyPointer);
 }
+
+bool KindHandler_arm::isPairedReloc(const Relocation &reloc) {
+  switch (reloc.type) {
+  case ARM_RELOC_SECTDIFF:
+  case ARM_RELOC_LOCAL_SECTDIFF:
+  case ARM_RELOC_HALF_SECTDIFF:
+  case ARM_RELOC_HALF:
+    return true;
+  default:
+    return false;
+  }
+}
+
+
+int32_t KindHandler_arm::getDisplacementFromThumbBranch(uint32_t instruction) {
+  uint32_t s = (instruction >> 10) & 0x1;
+  uint32_t j1 = (instruction >> 29) & 0x1;
+  uint32_t j2 = (instruction >> 27) & 0x1;
+  uint32_t imm10 = instruction & 0x3FF;
+  uint32_t imm11 = (instruction >> 16) & 0x7FF;
+  uint32_t i1 = (j1 == s);
+  uint32_t i2 = (j2 == s);
+  uint32_t dis = (s << 24) | (i1 << 23) | (i2 << 22) 
+               | (imm10 << 12) | (imm11 << 1);
+  int32_t sdis = dis;
+  if (s)
+    return (sdis | 0xFE000000);
+  else
+    return sdis;
+}
+
+int32_t KindHandler_arm::getDisplacementFromArmBranch(uint32_t instruction) {
+  // Sign-extend imm24
+  int32_t displacement = (instruction & 0x00FFFFFF) << 2;
+  if ( (displacement & 0x02000000) != 0 )
+    displacement |= 0xFC000000;
+  // If this is BLX and H bit set, add 2.
+  if ((instruction & 0xFF000000) == 0xFB000000)
+    displacement += 2;
+  return displacement;
+}
+
+
+uint16_t KindHandler_arm::getWordFromThumbMov(uint32_t instruction) {
+  uint32_t i =    ((instruction & 0x00000400) >> 10);
+  uint32_t imm4 =  (instruction & 0x0000000F);
+  uint32_t imm3 = ((instruction & 0x70000000) >> 28);
+  uint32_t imm8 = ((instruction & 0x00FF0000) >> 16);
+  return (imm4 << 12) | (i << 11) | (imm3 << 8) | imm8;
+}
+
+uint16_t KindHandler_arm::getWordFromArmMov(uint32_t instruction) {
+  uint32_t imm4 = ((instruction & 0x000F0000) >> 16);
+  uint32_t imm12 = (instruction & 0x00000FFF);
+  return (imm4 << 12) | imm12;
+}
+
+uint32_t KindHandler_arm::clearThumbBit(uint32_t value, const Atom* target) {
+  // The assembler often adds one to the address of a thumb function.
+  // We need to undo that so it does not look like an addend.
+  if (value & 1) {
+    if (isa<DefinedAtom>(target)) {
+      const MachODefinedAtom *machoTarget = reinterpret_cast<
+                                              const MachODefinedAtom*>(target);
+      if (machoTarget->isThumb())
+        value &= -2;  // mask off thumb-bit
+    }
+  }
+  return value;
+}
+
+std::error_code
+KindHandler_arm::getReferenceInfo(const Relocation &reloc,
+                                  const DefinedAtom *inAtom,
+                                  uint32_t offsetInAtom,
+                                  uint64_t fixupAddress, bool swap,
+                                  FindAtomBySectionAndAddress atomFromAddress,
+                                  FindAtomBySymbolIndex atomFromSymbolIndex,
+                                  Reference::KindValue *kind,
+                                  const lld::Atom **target,
+                                  Reference::Addend *addend) {
+  typedef std::error_code E;
+  const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
+  uint64_t targetAddress;
+  uint32_t instruction = readU32(swap, fixupContent);
+  int32_t displacement;
+  switch (relocPattern(reloc)) {
+  case ARM_THUMB_RELOC_BR22 | rPcRel | rExtern | rLength4:
+    // ex: bl _foo (and _foo is undefined)
+    *kind = thumb_b22;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    // Instruction contains branch to addend.
+    displacement = getDisplacementFromThumbBranch(instruction);
+    *addend = fixupAddress + 4 + displacement;
+    return std::error_code();
+  case ARM_THUMB_RELOC_BR22 | rPcRel           | rLength4:
+    // ex: bl _foo (and _foo is defined)
+    *kind = thumb_b22;
+    displacement = getDisplacementFromThumbBranch(instruction);
+    targetAddress = fixupAddress + 4 + displacement;
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+  case ARM_THUMB_RELOC_BR22 | rScattered | rPcRel | rLength4:
+    // ex: bl _foo+4 (and _foo is defined)
+    *kind = thumb_b22;
+    displacement = getDisplacementFromThumbBranch(instruction);
+    targetAddress = fixupAddress + 4 + displacement;
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+    // reloc.value is target atom's address.  Instruction contains branch
+    // to atom+addend.
+    *addend += (targetAddress - reloc.value);
+    return std::error_code();
+  case ARM_RELOC_BR24 | rPcRel | rExtern | rLength4:
+    // ex: bl _foo (and _foo is undefined)
+    *kind = arm_b24;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    // Instruction contains branch to addend.
+    displacement = getDisplacementFromArmBranch(instruction);
+    *addend = fixupAddress + 8 + displacement;
+    return std::error_code();
+  case ARM_RELOC_BR24 | rPcRel           | rLength4:
+    // ex: bl _foo (and _foo is defined)
+    *kind = arm_b24;
+    displacement = getDisplacementFromArmBranch(instruction);
+    targetAddress = fixupAddress + 8 + displacement;
+    return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+  case ARM_RELOC_BR24 | rScattered | rPcRel | rLength4:
+    // ex: bl _foo+4 (and _foo is defined)
+    *kind = arm_b24;
+    displacement = getDisplacementFromArmBranch(instruction);
+    targetAddress = fixupAddress + 8 + displacement;
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+    // reloc.value is target atom's address.  Instruction contains branch
+    // to atom+addend.
+    *addend += (targetAddress - reloc.value);
+    return std::error_code();
+  case ARM_RELOC_VANILLA | rExtern   | rLength4:
+    // ex: .long _foo (and _foo is undefined)
+    *kind = pointer32;
+    if (E ec = atomFromSymbolIndex(reloc.symbol, target))
+      return ec;
+    *addend = instruction;
+    return std::error_code();
+  case ARM_RELOC_VANILLA             | rLength4:
+    // ex: .long _foo (and _foo is defined)
+    *kind = pointer32;
+    if (E ec = atomFromAddress(reloc.symbol, instruction, target, addend))
+      return ec;
+    *addend = clearThumbBit((uint32_t)*addend, *target);
+    return std::error_code();
+  case ARM_RELOC_VANILLA | rScattered | rLength4:
+    // ex: .long _foo+a (and _foo is defined)
+    *kind = pointer32;
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+   *addend += (clearThumbBit(instruction, *target) - reloc.value);
+    return std::error_code();
+  default:
+    return make_dynamic_error_code(Twine("unsupported arm relocation type"));
+  }
+  return std::error_code();
+}
+
+
+std::error_code
+KindHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
+                                     const normalized::Relocation &reloc2,
+                                     const DefinedAtom *inAtom,
+                                     uint32_t offsetInAtom,
+                                     uint64_t fixupAddress, bool swap,
+                                     FindAtomBySectionAndAddress atomFromAddr,
+                                     FindAtomBySymbolIndex atomFromSymbolIndex,
+                                     Reference::KindValue *kind,
+                                     const lld::Atom **target,
+                                     Reference::Addend *addend) {
+  bool pointerDiff = false;
+  bool funcRel;
+  bool top;
+  bool thumbReloc;
+  switch(relocPattern(reloc1) << 16 | relocPattern(reloc2)) {
+  case ((ARM_RELOC_HALF_SECTDIFF  | rScattered | rLength4) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength4):
+    // ex: movw	r1, :lower16:(_x-L1) [thumb mode]
+    *kind = thumb_movw_funcRel;
+    funcRel = true;
+    top = false;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF_SECTDIFF  | rScattered | rLength8) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength8):
+    // ex: movt	r1, :upper16:(_x-L1) [thumb mode]
+    *kind = thumb_movt_funcRel;
+    funcRel = true;
+    top = true;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF_SECTDIFF  | rScattered | rLength1) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength1):
+    // ex: movw	r1, :lower16:(_x-L1) [arm mode]
+    *kind = arm_movw_funcRel;
+    funcRel = true;
+    top = false;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF_SECTDIFF  | rScattered | rLength2) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength2):
+    // ex: movt	r1, :upper16:(_x-L1) [arm mode]
+    *kind = arm_movt_funcRel;
+    funcRel = true;
+    top = true;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF     | rLength4) << 16 |
+         ARM_RELOC_PAIR     | rLength4):
+    // ex: movw	r1, :lower16:_x [thumb mode]
+    *kind = thumb_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF     | rLength8) << 16 |
+         ARM_RELOC_PAIR     | rLength8):
+    // ex: movt	r1, :upper16:_x [thumb mode]
+    *kind = thumb_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF     | rLength1) << 16 |
+         ARM_RELOC_PAIR     | rLength1):
+    // ex: movw	r1, :lower16:_x [arm mode]
+    *kind = arm_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF     | rLength2) << 16 |
+         ARM_RELOC_PAIR     | rLength2):
+    // ex: movt	r1, :upper16:_x [arm mode]
+    *kind = arm_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF | rScattered  | rLength4) << 16 |
+         ARM_RELOC_PAIR               | rLength4):
+    // ex: movw	r1, :lower16:_x+a [thumb mode]
+    *kind = thumb_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF | rScattered  | rLength8) << 16 |
+         ARM_RELOC_PAIR               | rLength8):
+    // ex: movt	r1, :upper16:_x+a [thumb mode]
+    *kind = thumb_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF | rScattered  | rLength1) << 16 |
+         ARM_RELOC_PAIR               | rLength1):
+    // ex: movw	r1, :lower16:_x+a [arm mode]
+    *kind = arm_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF | rScattered  | rLength2) << 16 |
+         ARM_RELOC_PAIR               | rLength2):
+    // ex: movt	r1, :upper16:_x+a [arm mode]
+    *kind = arm_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF | rExtern   | rLength4) << 16 |
+         ARM_RELOC_PAIR             | rLength4):
+    // ex: movw	r1, :lower16:_undef [thumb mode]
+    *kind = thumb_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF | rExtern   | rLength8) << 16 |
+         ARM_RELOC_PAIR             | rLength8):
+    // ex: movt	r1, :upper16:_undef [thumb mode]
+    *kind = thumb_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = true;
+    break;
+  case ((ARM_RELOC_HALF | rExtern   | rLength1) << 16 |
+         ARM_RELOC_PAIR             | rLength1):
+    // ex: movw	r1, :lower16:_undef [arm mode]
+    *kind = arm_movw;
+    funcRel = false;
+    top = false;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_HALF | rExtern   | rLength2) << 16 |
+         ARM_RELOC_PAIR             | rLength2):
+    // ex: movt	r1, :upper16:_undef [arm mode]
+    *kind = arm_movt;
+    funcRel = false;
+    top = true;
+    thumbReloc = false;
+    break;
+  case ((ARM_RELOC_SECTDIFF       | rScattered | rLength4) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength4):
+  case ((ARM_RELOC_LOCAL_SECTDIFF | rScattered | rLength4) << 16 |
+         ARM_RELOC_PAIR           | rScattered | rLength4):
+    // ex: .long _foo - .
+    pointerDiff = true;
+    break;
+  default:
+    return make_dynamic_error_code(Twine("unsupported arm relocation pair"));
+  }
+  const uint8_t *fixupContent = &inAtom->rawContent()[offsetInAtom];
+  std::error_code ec;
+  uint32_t instruction = readU32(swap, fixupContent);
+  uint32_t value;
+  uint32_t fromAddress;
+  uint32_t toAddress;
+  uint16_t instruction16;
+  uint16_t other16;
+  const lld::Atom *fromTarget;
+  Reference::Addend offsetInTo;
+  Reference::Addend offsetInFrom;
+  if (pointerDiff) {
+    toAddress = reloc1.value;
+    fromAddress = reloc2.value;
+    ec = atomFromAddr(0, toAddress, target, &offsetInTo);
+    if (ec)
+      return ec;
+    ec = atomFromAddr(0, fromAddress, &fromTarget, &offsetInFrom);
+    if (ec)
+      return ec;
+    if (fromTarget != inAtom)
+      return make_dynamic_error_code(Twine("SECTDIFF relocation where "
+                                     "subtrahend label is not in atom"));
+    *kind = delta32;
+    value = clearThumbBit(instruction, *target);
+    *addend = value - (toAddress - fromAddress);
+  } else if (funcRel) {
+    toAddress = reloc1.value;
+    fromAddress = reloc2.value;
+    ec = atomFromAddr(0, toAddress, target, &offsetInTo);
+    if (ec)
+      return ec;
+    ec = atomFromAddr(0, fromAddress, &fromTarget, &offsetInFrom);
+    if (ec)
+      return ec;
+    if (fromTarget != inAtom)
+      return make_dynamic_error_code(Twine("ARM_RELOC_HALF_SECTDIFF relocation "
+                                     "where subtrahend label is not in atom"));
+    other16 = (reloc2.offset & 0xFFFF);
+    if (thumbReloc)
+      instruction16 = getWordFromThumbMov(instruction);
+    else
+      instruction16 = getWordFromArmMov(instruction);
+    if (top)
+      value = (instruction16 << 16) | other16;
+    else
+      value = (other16 << 16) | instruction16;
+    value = clearThumbBit(value, *target);
+    int64_t ta = (int64_t)value - (toAddress - fromAddress);
+    *addend = ta - offsetInFrom;
+    return std::error_code();
+  } else {
+    uint32_t sectIndex;
+    if (thumbReloc)
+      instruction16 = getWordFromThumbMov(instruction);
+    else
+      instruction16 = getWordFromArmMov(instruction);
+    other16 = (reloc2.offset & 0xFFFF);
+    if (top)
+      value = (instruction16 << 16) | other16;
+    else
+      value = (other16 << 16) | instruction16;
+    if (reloc1.isExtern) {
+      ec = atomFromSymbolIndex(reloc1.symbol, target);
+      if (ec)
+        return ec;
+      *addend = value;
+    } else {
+      if (reloc1.scattered) {
+        toAddress = reloc1.value;
+        sectIndex = 0;
+      } else {
+        toAddress = value;
+        sectIndex = reloc1.symbol;
+      }
+      ec = atomFromAddr(sectIndex, toAddress, target, &offsetInTo);
+      if (ec)
+        return ec;
+      *addend = value - toAddress;
+    }
+  }
+  
+  return std::error_code();
+}
+
+
 
 void KindHandler_arm::applyFixup(Reference::KindNamespace ns,
                                  Reference::KindArch arch,
@@ -663,36 +1044,49 @@ void KindHandler_arm::applyFixup(Reference::KindNamespace ns,
     return;
   assert(arch == Reference::KindArch::ARM);
   //int32_t *loc32 = reinterpret_cast<int32_t*>(location);
+  // FIXME: these writes may need a swap.
   switch (kindValue) {
-  case ARM_THUMB_RELOC_BR22:
+  case thumb_b22:
+      // FIXME
+    break;
+  case thumb_movw:
       // FIXME
       break;
-  case ARM_RELOC_BR24:
+  case thumb_movt:
       // FIXME
       break;
-  case LLD_ARM_RELOC_THUMB_ABS_LO16:
+  case thumb_movw_funcRel:
       // FIXME
       break;
-  case LLD_ARM_RELOC_THUMB_ABS_HI16:
+  case thumb_movt_funcRel:
       // FIXME
       break;
-  case LLD_ARM_RELOC_THUMB_REL_LO16:
+  case arm_b24:
       // FIXME
       break;
-  case LLD_ARM_RELOC_THUMB_REL_HI16:
+  case arm_movw:
       // FIXME
       break;
-  case LLD_ARM_RELOC_ABS32:
+  case arm_movt:
       // FIXME
       break;
-  case LLD_ARM_RELOC_POINTER32:
+  case arm_movw_funcRel:
       // FIXME
       break;
-  case LLD_ARM_RELOC_LAZY_TARGET:
-  case LLD_ARM_RELOC_LAZY_IMMEDIATE:
+  case arm_movt_funcRel:
+      // FIXME
+      break;
+  case pointer32:
+      // FIXME
+      break;
+  case delta32:
+      // FIXME
+      break;
+  case lazyPointer:
+  case lazyImmediateLocation:
       // do nothing
       break;
-  default:
+  case invalid:
     llvm_unreachable("invalid ARM Reference Kind");
       break;
   }
