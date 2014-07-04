@@ -551,7 +551,7 @@ bool WinCOFFObjectWriter::ExportSymbol(MCSymbolData const &SymbolData,
   // This doesn't seem to be right. Strings referred to from the .data section
   // need symbols so they can be linked to code in the .text section right?
 
-  // return Asm.isSymbolLinkerVisible (&SymbolData);
+  // return Asm.isSymbolLinkerVisible(SymbolData.getSymbol());
 
   // For now, all non-variable symbols are exported,
   // the linker will sort the rest out for us.
