@@ -5309,6 +5309,11 @@ public:
                     getTriple().getArch() == llvm::Triple::mipsel;
     CPU = Name;
     return llvm::StringSwitch<bool>(Name)
+        .Case("mips1", IsMips32)
+        .Case("mips2", IsMips32)
+        .Case("mips3", true)
+        .Case("mips4", true)
+        .Case("mips5", true)
         .Case("mips32", IsMips32)
         .Case("mips32r2", IsMips32)
         .Case("mips32r6", IsMips32)

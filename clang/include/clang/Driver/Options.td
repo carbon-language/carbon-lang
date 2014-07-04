@@ -1213,6 +1213,21 @@ def mfp64 : Flag<["-"], "mfp64">, Group<m_Group>,
 def mfp32 : Flag<["-"], "mfp32">, Group<m_Group>,
   HelpText<"Use 32-bit floating point registers (MIPS only)">;
 def mnan_EQ : Joined<["-"], "mnan=">, Group<m_Group>;
+def mips1 : Flag<["-"], "mips1">,
+  Alias<march_EQ>, AliasArgs<["mips1"]>,
+  HelpText<"Equivalent to -march=mips1">, Flags<[HelpHidden]>;
+def mips2 : Flag<["-"], "mips2">,
+  Alias<march_EQ>, AliasArgs<["mips2"]>,
+  HelpText<"Equivalent to -march=mips2">, Flags<[HelpHidden]>;
+def mips3 : Flag<["-"], "mips3">,
+  Alias<march_EQ>, AliasArgs<["mips3"]>,
+  HelpText<"Equivalent to -march=mips3">, Flags<[HelpHidden]>;
+def mips4 : Flag<["-"], "mips4">,
+  Alias<march_EQ>, AliasArgs<["mips4"]>,
+  HelpText<"Equivalent to -march=mips4">, Flags<[HelpHidden]>;
+def mips5 : Flag<["-"], "mips5">,
+  Alias<march_EQ>, AliasArgs<["mips5"]>,
+  HelpText<"Equivalent to -march=mips5">, Flags<[HelpHidden]>;
 def mips32 : Flag<["-"], "mips32">,
   Alias<march_EQ>, AliasArgs<["mips32"]>,
   HelpText<"Equivalent to -march=mips32">, Flags<[HelpHidden]>;

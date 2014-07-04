@@ -57,6 +57,36 @@
 // MIPS-ABI-UNKNOWN: error: unknown target ABI 'unknown'
 //
 // RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=mips1 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-1 %s
+// MIPS-ARCH-1: "-target-cpu" "mips1"
+// MIPS-ARCH-1: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=mips2 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-2 %s
+// MIPS-ARCH-2: "-target-cpu" "mips2"
+// MIPS-ARCH-2: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=mips3 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-3 %s
+// MIPS-ARCH-3: "-target-cpu" "mips3"
+// MIPS-ARCH-3: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=mips4 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-4 %s
+// MIPS-ARCH-4: "-target-cpu" "mips4"
+// MIPS-ARCH-4: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
+// RUN:        -march=mips5 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ARCH-5 %s
+// MIPS-ARCH-5: "-target-cpu" "mips5"
+// MIPS-ARCH-5: "-target-abi" "o32"
+//
+// RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:        -march=mips32 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ARCH-32 %s
 // MIPS-ARCH-32: "-target-cpu" "mips32"

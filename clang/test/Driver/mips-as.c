@@ -52,6 +52,31 @@
 // RUN:   | FileCheck -check-prefix=MIPS-32R2 %s
 // MIPS-32R2: as{{(.exe)?}}" "-march" "mips32r2" "-mabi" "32" "-EB"
 //
+// RUN: %clang -target mips-linux-gnu -mips1 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-1 %s
+// MIPS-ALIAS-1: as{{(.exe)?}}" "-march" "mips1" "-mabi" "32" "-EB"
+//
+// RUN: %clang -target mips-linux-gnu -mips2 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-2 %s
+// MIPS-ALIAS-2: as{{(.exe)?}}" "-march" "mips2" "-mabi" "32" "-EB"
+//
+// RUN: %clang -target mips-linux-gnu -mips3 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-3 %s
+// MIPS-ALIAS-3: as{{(.exe)?}}" "-march" "mips3" "-mabi" "32" "-EB"
+//
+// RUN: %clang -target mips-linux-gnu -mips4 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-4 %s
+// MIPS-ALIAS-4: as{{(.exe)?}}" "-march" "mips4" "-mabi" "32" "-EB"
+//
+// RUN: %clang -target mips-linux-gnu -mips5 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-5 %s
+// MIPS-ALIAS-5: as{{(.exe)?}}" "-march" "mips5" "-mabi" "32" "-EB"
+//
 // RUN: %clang -target mips-linux-gnu -mips32 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ALIAS-32 %s
