@@ -2116,12 +2116,13 @@ std::error_code BitcodeReader::ParseBitcodeInto(Module *M) {
   }
 }
 
-std::error_code BitcodeReader::ParseModuleTriple(std::string &Triple) {
+ErrorOr<std::string> BitcodeReader::parseModuleTriple() {
   if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
     return Error(InvalidRecord);
 
   SmallVector<uint64_t, 64> Record;
 
+  std::string Triple;
   // Read all the records for this module.
   while (1) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
@@ -2150,9 +2151,10 @@ std::error_code BitcodeReader::ParseModuleTriple(std::string &Triple) {
     }
     Record.clear();
   }
+  return Triple;
 }
 
-std::error_code BitcodeReader::ParseTriple(std::string &Triple) {
+ErrorOr<std::string> BitcodeReader::parseTriple() {
   if (std::error_code EC = InitStream())
     return EC;
 
@@ -2178,7 +2180,7 @@ std::error_code BitcodeReader::ParseTriple(std::string &Triple) {
 
     case BitstreamEntry::SubBlock:
       if (Entry.ID == bitc::MODULE_BLOCK_ID)
-        return ParseModuleTriple(Triple);
+        return parseModuleTriple();
 
       // Ignore other sub-blocks.
       if (Stream.SkipBlock())
@@ -3470,11 +3472,10 @@ ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
 std::string llvm::getBitcodeTargetTriple(MemoryBuffer *Buffer,
                                          LLVMContext &Context) {
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
-
-  std::string Triple("");
-  R->ParseTriple(Triple);
-
+  ErrorOr<std::string> Triple = R->parseTriple();
   R->releaseBuffer();
   delete R;
-  return Triple;
+  if (Triple.getError())
+    return "";
+  return Triple.get();
 }

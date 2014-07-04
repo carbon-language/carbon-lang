@@ -252,7 +252,7 @@ public:
 
   /// @brief Cheap mechanism to just extract module triple
   /// @returns true if an error occurred.
-  std::error_code ParseTriple(std::string &Triple);
+  ErrorOr<std::string> parseTriple();
 
   static uint64_t decodeSignRotatedValue(uint64_t V);
 
@@ -354,7 +354,7 @@ private:
   std::error_code ResolveGlobalAndAliasInits();
   std::error_code ParseMetadata();
   std::error_code ParseMetadataAttachment();
-  std::error_code ParseModuleTriple(std::string &Triple);
+  ErrorOr<std::string> parseModuleTriple();
   std::error_code ParseUseLists();
   std::error_code InitStream();
   std::error_code InitStreamFromBuffer();
