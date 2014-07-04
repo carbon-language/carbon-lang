@@ -209,16 +209,28 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   unsigned EFlags = 0;
 
   // Architecture
-  if (Features & Mips::FeatureMips64r2)
+  if (Features & Mips::FeatureMips64r6)
+    EFlags |= ELF::EF_MIPS_ARCH_64R6;
+  else if (Features & Mips::FeatureMips64r2)
     EFlags |= ELF::EF_MIPS_ARCH_64R2;
   else if (Features & Mips::FeatureMips64)
     EFlags |= ELF::EF_MIPS_ARCH_64;
+  else if (Features & Mips::FeatureMips5)
+    EFlags |= ELF::EF_MIPS_ARCH_5;
   else if (Features & Mips::FeatureMips4)
     EFlags |= ELF::EF_MIPS_ARCH_4;
+  else if (Features & Mips::FeatureMips3)
+    EFlags |= ELF::EF_MIPS_ARCH_3;
+  else if (Features & Mips::FeatureMips32r6)
+    EFlags |= ELF::EF_MIPS_ARCH_32R6;
   else if (Features & Mips::FeatureMips32r2)
     EFlags |= ELF::EF_MIPS_ARCH_32R2;
   else if (Features & Mips::FeatureMips32)
     EFlags |= ELF::EF_MIPS_ARCH_32;
+  else if (Features & Mips::FeatureMips2)
+    EFlags |= ELF::EF_MIPS_ARCH_2;
+  else
+    EFlags |= ELF::EF_MIPS_ARCH_1;
 
   if (T.isArch64Bit()) {
     if (Features & Mips::FeatureN32)
