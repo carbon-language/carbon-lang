@@ -86,7 +86,8 @@ DynamicFile<ELFT>::create(std::unique_ptr<llvm::MemoryBuffer> mb,
   std::unique_ptr<DynamicFile> file(new DynamicFile(mb->getBufferIdentifier()));
 
   std::error_code ec;
-  file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
+  file->_objFile.reset(
+      new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
 
   if (ec)
     return ec;

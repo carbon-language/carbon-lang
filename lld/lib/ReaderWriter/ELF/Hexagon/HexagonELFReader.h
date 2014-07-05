@@ -49,8 +49,8 @@ public:
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<HexagonELFFileCreateELFTraits>(
-        llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
-        _atomizeStrings);
+        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
+        std::move(mb), _atomizeStrings);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));
@@ -68,8 +68,8 @@ public:
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<HexagonDynamicFileCreateELFTraits>(
-        llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
-        _useUndefines);
+        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
+        std::move(mb), _useUndefines);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));

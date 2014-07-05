@@ -35,8 +35,8 @@ public:
     std::size_t maxAlignment =
         1ULL << llvm::countTrailingZeros(uintptr_t(mb->getBufferStart()));
     auto f = createELF<MipsELFFileCreateTraits>(
-        llvm::object::getElfArchType(&*mb), maxAlignment, std::move(mb),
-        _atomizeStrings);
+        llvm::object::getElfArchType(mb->getBuffer()), maxAlignment,
+        std::move(mb), _atomizeStrings);
     if (std::error_code ec = f.getError())
       return ec;
     result.push_back(std::move(*f));

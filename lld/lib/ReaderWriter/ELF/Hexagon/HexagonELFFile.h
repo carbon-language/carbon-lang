@@ -127,7 +127,8 @@ public:
     std::unique_ptr<HexagonELFFile<ELFT>> file(
         new HexagonELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
 
-    file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
+    file->_objFile.reset(
+        new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
 
     if (ec)
       return ec;

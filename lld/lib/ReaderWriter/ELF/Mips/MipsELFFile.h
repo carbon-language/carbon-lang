@@ -77,7 +77,8 @@ public:
     std::unique_ptr<MipsELFFile<ELFT>> file(
         new MipsELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
 
-    file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
+    file->_objFile.reset(
+        new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
 
     if (ec)
       return ec;

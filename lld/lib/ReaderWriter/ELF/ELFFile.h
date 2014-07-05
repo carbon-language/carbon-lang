@@ -410,7 +410,8 @@ ELFFile<ELFT>::create(std::unique_ptr<MemoryBuffer> mb, bool atomizeStrings) {
   std::unique_ptr<ELFFile<ELFT>> file(
       new ELFFile<ELFT>(mb->getBufferIdentifier(), atomizeStrings));
 
-  file->_objFile.reset(new llvm::object::ELFFile<ELFT>(mb.release(), ec));
+  file->_objFile.reset(
+      new llvm::object::ELFFile<ELFT>(mb.release()->getBuffer(), ec));
 
   if (ec)
     return ec;
