@@ -1243,7 +1243,7 @@ void MCSectionData::dump() {
   OS << "]>";
 }
 
-void MCSymbolData::dump() {
+void MCSymbolData::dump() const {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCSymbolData Symbol:" << getSymbol()
