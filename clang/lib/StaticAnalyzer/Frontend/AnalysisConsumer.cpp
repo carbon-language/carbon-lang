@@ -214,7 +214,7 @@ public:
         default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN)                    \
   case PD_##NAME:                                                              \
-    CREATEFN(*Opts.getPtr(), PathConsumers, OutDir, PP);                       \
+    CREATEFN(*Opts.get(), PathConsumers, OutDir, PP);                       \
     break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
         }

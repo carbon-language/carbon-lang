@@ -99,7 +99,7 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
 
     std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
     Clang->setInvocation(CInvok.release());
-    Clang->setDiagnostics(Diags.getPtr());
+    Clang->setDiagnostics(Diags.get());
     Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
                                                   &Clang->getTargetOpts()));
     Clang->createFileManager();

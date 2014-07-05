@@ -37,7 +37,7 @@ public:
   SimpleFormatContext(LangOptions Options)
       : DiagOpts(new DiagnosticOptions()),
         Diagnostics(new DiagnosticsEngine(new DiagnosticIDs,
-                                          DiagOpts.getPtr())),
+                                          DiagOpts.get())),
         Files((FileSystemOptions())),
         Sources(*Diagnostics, Files),
         Rewrite(Sources, Options) {

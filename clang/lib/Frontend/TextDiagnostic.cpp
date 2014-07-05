@@ -1130,7 +1130,7 @@ void TextDiagnostic::emitSnippetAndCaret(
   std::string FixItInsertionLine = buildFixItInsertionLine(LineNo,
                                                            sourceColMap,
                                                            Hints, SM,
-                                                           DiagOpts.getPtr());
+                                                           DiagOpts.get());
 
   // If the source line is too long for our terminal, select only the
   // "interesting" source region within that line.

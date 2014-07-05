@@ -164,7 +164,7 @@ public:
                       const ProgramStateRef &state,
                       bool IsSink) {
     ID.Add(Loc);
-    ID.AddPointer(state.getPtr());
+    ID.AddPointer(state.get());
     ID.AddBoolean(IsSink);
   }
 

@@ -126,7 +126,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     os << "Array access";
     const ArraySubscriptExpr *AE = cast<ArraySubscriptExpr>(S);
     AddDerefSource(os, Ranges, AE->getBase()->IgnoreParenCasts(),
-                   State.getPtr(), N->getLocationContext());
+                   State.get(), N->getLocationContext());
     os << " results in a null pointer dereference";
     break;
   }
@@ -134,7 +134,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     os << "Dereference of null pointer";
     const UnaryOperator *U = cast<UnaryOperator>(S);
     AddDerefSource(os, Ranges, U->getSubExpr()->IgnoreParens(),
-                   State.getPtr(), N->getLocationContext(), true);
+                   State.get(), N->getLocationContext(), true);
     break;
   }
   case Stmt::MemberExprClass: {
@@ -143,7 +143,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
       os << "Access to field '" << M->getMemberNameInfo()
          << "' results in a dereference of a null pointer";
       AddDerefSource(os, Ranges, M->getBase()->IgnoreParenCasts(),
-                     State.getPtr(), N->getLocationContext(), true);
+                     State.get(), N->getLocationContext(), true);
     }
     break;
   }
@@ -152,7 +152,7 @@ void DereferenceChecker::reportBug(ProgramStateRef State, const Stmt *S,
     os << "Access to instance variable '" << *IV->getDecl()
        << "' results in a dereference of a null pointer";
     AddDerefSource(os, Ranges, IV->getBase()->IgnoreParenCasts(),
-                   State.getPtr(), N->getLocationContext(), true);
+                   State.get(), N->getLocationContext(), true);
     break;
   }
   default:

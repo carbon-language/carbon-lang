@@ -250,7 +250,7 @@ public:
   uint64_t getID() const {
     /// FIXME: Document the requirements this imposes on matcher
     /// implementations (no new() implementation_ during a Matches()).
-    return reinterpret_cast<uint64_t>(Implementation.getPtr());
+    return reinterpret_cast<uint64_t>(Implementation.get());
   }
 
   /// \brief Allows the conversion of a \c Matcher<Type> to a \c

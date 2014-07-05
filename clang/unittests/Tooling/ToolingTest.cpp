@@ -147,7 +147,7 @@ TEST(ToolInvocation, TestMapVirtualFile) {
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
-                                            Files.getPtr());
+                                            Files.get());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   EXPECT_TRUE(Invocation.run());
@@ -166,7 +166,7 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   Args.push_back("-fsyntax-only");
   Args.push_back("test.cpp");
   clang::tooling::ToolInvocation Invocation(Args, new SyntaxOnlyAction,
-                                            Files.getPtr());
+                                            Files.get());
   Invocation.mapVirtualFile("test.cpp", "#include <abc>\n");
   Invocation.mapVirtualFile("def/abc", "\n");
   // Add a module.map file in the include directory of our header, so we trigger

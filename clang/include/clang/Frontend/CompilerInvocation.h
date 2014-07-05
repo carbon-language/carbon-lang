@@ -74,12 +74,12 @@ public:
 
   CompilerInvocationBase(const CompilerInvocationBase &X);
   
-  LangOptions *getLangOpts() { return LangOpts.getPtr(); }
-  const LangOptions *getLangOpts() const { return LangOpts.getPtr(); }
+  LangOptions *getLangOpts() { return LangOpts.get(); }
+  const LangOptions *getLangOpts() const { return LangOpts.get(); }
 
-  TargetOptions &getTargetOpts() { return *TargetOpts.getPtr(); }
+  TargetOptions &getTargetOpts() { return *TargetOpts.get(); }
   const TargetOptions &getTargetOpts() const {
-    return *TargetOpts.getPtr();
+    return *TargetOpts.get();
   }
 
   DiagnosticOptions &getDiagnosticOpts() const { return *DiagnosticOpts; }

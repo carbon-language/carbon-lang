@@ -550,7 +550,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<DiagnosticsEngine,
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
-    DiagCleanup(Diags.getPtr());
+    DiagCleanup(Diags.get());
 
   std::unique_ptr<std::vector<const char *>> Args(
       new std::vector<const char *>());
@@ -579,7 +579,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   // Recover resources if we crash before exiting this function.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInvocation,
     llvm::CrashRecoveryContextReleaseRefCleanup<CompilerInvocation> >
-    CInvokCleanup(CInvok.getPtr());
+    CInvokCleanup(CInvok.get());
 
   if (CInvok->getFrontendOpts().Inputs.empty())
     return;
@@ -607,7 +607,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (index_options & CXIndexOpt_SuppressWarnings)
     CInvok->getDiagnosticOpts().IgnoreWarnings = true;
 
-  ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
+  ASTUnit *Unit = ASTUnit::create(CInvok.get(), Diags,
                                   CaptureDiagnostics,
                                   /*UserFilesAreVolatile=*/true);
   if (!Unit) {
@@ -661,7 +661,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     PPOpts.DetailedRecord = false;
 
   DiagnosticErrorTrap DiagTrap(*Diags);
-  bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.getPtr(), Diags,
+  bool Success = ASTUnit::LoadFromCompilerInvocationAction(CInvok.get(), Diags,
                                                        IndexAction.get(),
                                                        Unit,
                                                        Persistent,

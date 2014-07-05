@@ -1285,13 +1285,13 @@ bool ConditionBRVisitor::patternMatch(const Expr *Ex, raw_ostream &Out,
     if (quotes) {
       Out << '\'';
       const LocationContext *LCtx = N->getLocationContext();
-      const ProgramState *state = N->getState().getPtr();
+      const ProgramState *state = N->getState().get();
       if (const MemRegion *R = state->getLValue(cast<VarDecl>(DR->getDecl()),
                                                 LCtx).getAsRegion()) {
         if (report.isInteresting(R))
           prunable = false;
         else {
-          const ProgramState *state = N->getState().getPtr();
+          const ProgramState *state = N->getState().get();
           SVal V = state->getSVal(R);
           if (report.isInteresting(V))
             prunable = false;
@@ -1446,7 +1446,7 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
 
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(CondVarExpr)) {
     if (const VarDecl *VD = dyn_cast<VarDecl>(DR->getDecl())) {
-      const ProgramState *state = N->getState().getPtr();
+      const ProgramState *state = N->getState().get();
       if (const MemRegion *R = state->getLValue(VD, LCtx).getAsRegion()) {
         if (report.isInteresting(R))
           event->setPrunable(false);
@@ -1490,7 +1490,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   PathDiagnosticEventPiece *event =
     new PathDiagnosticEventPiece(Loc, Out.str());
   
-  const ProgramState *state = N->getState().getPtr();
+  const ProgramState *state = N->getState().get();
   if (const MemRegion *R = state->getLValue(VD, LCtx).getAsRegion()) {
     if (report.isInteresting(R))
       event->setPrunable(false);

@@ -125,7 +125,7 @@ static void removeRedundantMsgs(PathPieces &path) {
           break;
         
         if (PathDiagnosticEventPiece *nextEvent =
-            dyn_cast<PathDiagnosticEventPiece>(path.front().getPtr())) {
+            dyn_cast<PathDiagnosticEventPiece>(path.front().get())) {
           PathDiagnosticEventPiece *event =
             cast<PathDiagnosticEventPiece>(piece);
           // Check to see if we should keep one of the two pieces.  If we
@@ -1412,7 +1412,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       if (Optional<PostStmt> PS = P.getAs<PostStmt>()) {
         if (const Expr *Ex = PS->getStmtAs<Expr>())
           reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
-                                              N->getState().getPtr(), Ex,
+                                              N->getState().get(), Ex,
                                               N->getLocationContext());
       }
       
@@ -1420,7 +1420,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         const Stmt *S = CE->getCalleeContext()->getCallSite();
         if (const Expr *Ex = dyn_cast_or_null<Expr>(S)) {
             reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
-                                                N->getState().getPtr(), Ex,
+                                                N->getState().get(), Ex,
                                                 N->getLocationContext());
         }
         
@@ -1491,7 +1491,7 @@ static bool GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
           const LocationContext *CalleeCtx = PDB.LC;
           if (CallerCtx != CalleeCtx) {
             reversePropagateInterestingSymbols(*PDB.getBugReport(), IE,
-                                               N->getState().getPtr(),
+                                               N->getState().get(),
                                                CalleeCtx, CallerCtx);
           }
         }
@@ -1674,7 +1674,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
 
         PathDiagnosticCallPiece *C;
         if (VisitedEntireCall) {
-          PathDiagnosticPiece *P = PD.getActivePath().front().getPtr();
+          PathDiagnosticPiece *P = PD.getActivePath().front().get();
           C = cast<PathDiagnosticCallPiece>(P);
         } else {
           const Decl *Caller = CE->getLocationContext()->getDecl();
@@ -1728,7 +1728,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         // Propagate the interesting symbols accordingly.
         if (const Expr *Ex = dyn_cast_or_null<Expr>(S)) {
           reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
-                                              N->getState().getPtr(), Ex,
+                                              N->getState().get(), Ex,
                                               N->getLocationContext());
         }
 
@@ -1756,7 +1756,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
         // interesting symbols correctly.
         if (const Expr *Ex = PS->getStmtAs<Expr>())
           reversePropagateIntererstingSymbols(*PDB.getBugReport(), IE,
-                                              N->getState().getPtr(), Ex,
+                                              N->getState().get(), Ex,
                                               N->getLocationContext());
 
         // Add an edge.  If this is an ObjCForCollectionStmt do
@@ -1779,7 +1779,7 @@ GenerateAlternateExtensivePathDiagnostic(PathDiagnostic& PD,
           const LocationContext *CalleeCtx = PDB.LC;
           if (CallerCtx != CalleeCtx) {
             reversePropagateInterestingSymbols(*PDB.getBugReport(), IE,
-                                               N->getState().getPtr(),
+                                               N->getState().get(),
                                                CalleeCtx, CallerCtx);
           }
         }
@@ -2995,7 +2995,7 @@ static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
   for (PathPieces::const_iterator I = path.begin(), E = path.end();
        I!=E; ++I) {
     
-    PathDiagnosticPiece *piece = I->getPtr();
+    PathDiagnosticPiece *piece = I->get();
 
     // Recursively compact calls.
     if (PathDiagnosticCallPiece *call=dyn_cast<PathDiagnosticCallPiece>(piece)){

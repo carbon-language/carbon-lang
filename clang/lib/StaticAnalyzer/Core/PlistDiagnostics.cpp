@@ -311,7 +311,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
       for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E;
            ++I) {
-        const PathDiagnosticPiece *piece = I->getPtr();
+        const PathDiagnosticPiece *piece = I->get();
         AddFID(FM, Fids, *SM, piece->getLocation().asLocation());
         ArrayRef<SourceRange> Ranges = piece->getRanges();
         for (ArrayRef<SourceRange>::iterator I = Ranges.begin(),

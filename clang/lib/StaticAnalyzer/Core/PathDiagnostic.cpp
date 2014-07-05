@@ -67,7 +67,7 @@ PathPieces::~PathPieces() {}
 void PathPieces::flattenTo(PathPieces &Primary, PathPieces &Current,
                            bool ShouldFlattenMacros) const {
   for (PathPieces::const_iterator I = begin(), E = end(); I != E; ++I) {
-    PathDiagnosticPiece *Piece = I->getPtr();
+    PathDiagnosticPiece *Piece = I->get();
 
     switch (Piece->getKind()) {
     case PathDiagnosticPiece::Call: {
@@ -157,7 +157,7 @@ void PathDiagnostic::resetDiagnosticLocationToMainFile() {
   if (path.empty())
     return;
 
-  PathDiagnosticPiece *LastP = path.back().getPtr();
+  PathDiagnosticPiece *LastP = path.back().get();
   assert(LastP);
   const SourceManager &SMgr = LastP->getLocation().getManager();
 
@@ -222,7 +222,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
 
       for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E;
            ++I) {
-        const PathDiagnosticPiece *piece = I->getPtr();
+        const PathDiagnosticPiece *piece = I->get();
         FullSourceLoc L = piece->getLocation().asLocation().getExpansionLoc();
       
         if (FID.isInvalid()) {
@@ -1037,7 +1037,7 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
 static void compute_path_size(const PathPieces &pieces, unsigned &size) {
   for (PathPieces::const_iterator it = pieces.begin(),
                                   et = pieces.end(); it != et; ++it) {
-    const PathDiagnosticPiece *piece = it->getPtr();
+    const PathDiagnosticPiece *piece = it->get();
     if (const PathDiagnosticCallPiece *cp = 
         dyn_cast<PathDiagnosticCallPiece>(piece)) {
       compute_path_size(cp->path, size);

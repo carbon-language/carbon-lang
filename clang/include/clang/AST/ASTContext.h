@@ -816,7 +816,7 @@ public:
   /// \brief Retrieve a pointer to the external AST source associated
   /// with this AST context, if any.
   ExternalASTSource *getExternalSource() const {
-    return ExternalSource.getPtr();
+    return ExternalSource.get();
   }
 
   /// \brief Attach an AST mutation listener to the AST context.
