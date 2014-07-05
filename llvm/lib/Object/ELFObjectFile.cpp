@@ -19,7 +19,8 @@ using namespace object;
 
 ErrorOr<ObjectFile *>
 ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
-  std::pair<unsigned char, unsigned char> Ident = getElfArchType(Obj.get());
+  std::pair<unsigned char, unsigned char> Ident =
+      getElfArchType(Obj->getBuffer());
   std::size_t MaxAlignment =
     1ULL << countTrailingZeros(uintptr_t(Obj->getBufferStart()));
 

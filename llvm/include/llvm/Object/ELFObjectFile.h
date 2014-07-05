@@ -779,7 +779,7 @@ ELFObjectFile<ELFT>::ELFObjectFile(std::unique_ptr<MemoryBuffer> Object,
                                 support::little,
                             ELFT::Is64Bits),
                  std::move(Object)),
-      EF(Data.get(), EC) {}
+      EF(Data->getBuffer(), EC) {}
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin_impl() const {

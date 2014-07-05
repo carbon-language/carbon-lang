@@ -40,11 +40,11 @@ StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type);
 
 // Subclasses of ELFFile may need this for template instantiation
 inline std::pair<unsigned char, unsigned char>
-getElfArchType(MemoryBuffer *Object) {
-  if (Object->getBufferSize() < ELF::EI_NIDENT)
+getElfArchType(StringRef Object) {
+  if (Object.size() < ELF::EI_NIDENT)
     return std::make_pair((uint8_t)ELF::ELFCLASSNONE,(uint8_t)ELF::ELFDATANONE);
-  return std::make_pair((uint8_t) Object->getBufferStart()[ELF::EI_CLASS],
-                        (uint8_t) Object->getBufferStart()[ELF::EI_DATA]);
+  return std::make_pair((uint8_t)Object.begin()[ELF::EI_CLASS],
+                        (uint8_t)Object.begin()[ELF::EI_DATA]);
 }
 
 template <class ELFT>
@@ -230,10 +230,10 @@ private:
   typedef SmallVector<const Elf_Shdr *, 2> Sections_t;
   typedef DenseMap<unsigned, unsigned> IndexMap_t;
 
-  MemoryBuffer *Buf;
+  StringRef Buf;
 
   const uint8_t *base() const {
-    return reinterpret_cast<const uint8_t *>(Buf->getBufferStart());
+    return reinterpret_cast<const uint8_t *>(Buf.begin());
   }
 
   const Elf_Ehdr *Header;
@@ -317,7 +317,7 @@ public:
   std::pair<const Elf_Shdr *, const Elf_Sym *>
   getRelocationSymbol(const Elf_Shdr *RelSec, const RelT *Rel) const;
 
-  ELFFile(MemoryBuffer *Object, std::error_code &ec);
+  ELFFile(StringRef Object, std::error_code &ec);
 
   bool isMipsELF64() const {
     return Header->e_machine == ELF::EM_MIPS &&
@@ -536,7 +536,7 @@ ELFFile<ELFT>::getSymbol(uint32_t Index) const {
 template <class ELFT>
 ErrorOr<ArrayRef<uint8_t> >
 ELFFile<ELFT>::getSectionContents(const Elf_Shdr *Sec) const {
-  if (Sec->sh_offset + Sec->sh_size > Buf->getBufferSize())
+  if (Sec->sh_offset + Sec->sh_size > Buf.size())
     return object_error::parse_failed;
   const uint8_t *Start = base() + Sec->sh_offset;
   return ArrayRef<uint8_t>(Start, Sec->sh_size);
@@ -621,13 +621,13 @@ typename ELFFile<ELFT>::uintX_t ELFFile<ELFT>::getStringTableIndex() const {
 }
 
 template <class ELFT>
-ELFFile<ELFT>::ELFFile(MemoryBuffer *Object, std::error_code &ec)
+ELFFile<ELFT>::ELFFile(StringRef Object, std::error_code &ec)
     : Buf(Object), SectionHeaderTable(nullptr), dot_shstrtab_sec(nullptr),
       dot_strtab_sec(nullptr), dot_symtab_sec(nullptr),
       SymbolTableSectionHeaderIndex(nullptr), dot_gnu_version_sec(nullptr),
       dot_gnu_version_r_sec(nullptr), dot_gnu_version_d_sec(nullptr),
       dt_soname(nullptr) {
-  const uint64_t FileSize = Buf->getBufferSize();
+  const uint64_t FileSize = Buf.size();
 
   if (sizeof(Elf_Ehdr) > FileSize)
     // FIXME: Proper error handling.
