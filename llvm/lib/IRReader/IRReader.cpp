@@ -29,9 +29,8 @@ namespace llvm {
 static const char *const TimeIRParsingGroupName = "LLVM IR Parsing";
 static const char *const TimeIRParsingName = "Parse IR";
 
-
-Module *llvm::getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
-                              LLVMContext &Context) {
+static Module *getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
+                               LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     std::string ErrMsg;

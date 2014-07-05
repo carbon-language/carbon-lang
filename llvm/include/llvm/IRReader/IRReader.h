@@ -24,13 +24,6 @@ class MemoryBuffer;
 class SMDiagnostic;
 class LLVMContext;
 
-/// If the given MemoryBuffer holds a bitcode image, return a Module for it
-/// which does lazy deserialization of function bodies.  Otherwise, attempt to
-/// parse it as LLVM Assembly and return a fully populated Module. This
-/// function *always* takes ownership of the given MemoryBuffer.
-Module *getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
-                        LLVMContext &Context);
-
 /// If the given file holds a bitcode image, return a Module
 /// for it which does lazy deserialization of function bodies.  Otherwise,
 /// attempt to parse it as LLVM Assembly and return a fully populated
