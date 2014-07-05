@@ -177,9 +177,6 @@ public:
 
     T* get() const { return Obj; }
 
-    /// Deprecated: use get().
-    T* getPtr() const { return Obj; }
-
     LLVM_EXPLICIT operator bool() const { return Obj; }
 
     void swap(IntrusiveRefCntPtr& other) {
