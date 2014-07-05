@@ -206,22 +206,6 @@ void FileRemapper::applyMappings(PreprocessorOptions &PPOpts) const {
   PPOpts.RetainRemappedFileBuffers = true;
 }
 
-void FileRemapper::transferMappingsAndClear(PreprocessorOptions &PPOpts) {
-  for (MappingsTy::iterator
-         I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
-    if (const FileEntry *FE = I->second.dyn_cast<const FileEntry *>()) {
-      PPOpts.addRemappedFile(I->first->getName(), FE->getName());
-    } else {
-      llvm::MemoryBuffer *mem = I->second.get<llvm::MemoryBuffer *>();
-      PPOpts.addRemappedFile(I->first->getName(), mem);
-    }
-    I->second = Target();
-  }
-
-  PPOpts.RetainRemappedFileBuffers = false;
-  clear();
-}
-
 void FileRemapper::remap(StringRef filePath, llvm::MemoryBuffer *memBuf) {
   remap(getOriginalFile(filePath), memBuf);
 }
