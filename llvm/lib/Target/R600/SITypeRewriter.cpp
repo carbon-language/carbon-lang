@@ -119,8 +119,7 @@ void SITypeRewriter::visitCallInst(CallInst &I) {
                                               Type::getInt32Ty(I.getContext())){
       Type *ElementTy = Arg->getType()->getVectorElementType();
       std::string TypeName = "i32";
-      InsertElementInst *Def = dyn_cast<InsertElementInst>(Arg);
-      assert(Def);
+      InsertElementInst *Def = cast<InsertElementInst>(Arg);
       Args.push_back(Def->getOperand(1));
       Types.push_back(ElementTy);
       std::string VecTypeName = "v1" + TypeName;
