@@ -29,5 +29,12 @@ TEST(ArrayRefTest, AllocatorCopy) {
   EXPECT_NE(Array2.data(), Array2c.data());
 }
 
+TEST(ArrayRefTest, DropBack) {
+  static const int TheNumbers[] = {4, 8, 15, 16, 23, 42};
+  ArrayRef<int> AR1(TheNumbers);
+  ArrayRef<int> AR2(TheNumbers, AR1.size() - 1);
+  EXPECT_TRUE(AR1.drop_back().equals(AR2));
+}
+
 
 } // end anonymous namespace

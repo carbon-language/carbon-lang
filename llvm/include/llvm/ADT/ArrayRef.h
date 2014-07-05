@@ -147,6 +147,12 @@ namespace llvm {
       return ArrayRef<T>(data()+N, M);
     }
 
+    // \brief Drop the last \p N elements of the array.
+    ArrayRef<T> drop_back(unsigned N = 1) const {
+      assert(size() >= N && "Dropping more elements than exist");
+      return slice(0, size() - N);
+    }
+
     /// @}
     /// @name Operator Overloads
     /// @{
