@@ -395,7 +395,7 @@ int main(int argc, const char **argv) {
       new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
       llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      DiagOpts.getPtr());
+      DiagOpts.get());
 
   // FIXME: Make this DiagnosticsEngine available to all Transforms probably via
   // GlobalOptions.

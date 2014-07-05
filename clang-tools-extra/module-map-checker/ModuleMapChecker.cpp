@@ -211,17 +211,17 @@ ModuleMapChecker::ModuleMapChecker(StringRef ModuleMapPath,
       DumpModuleMap(DumpModuleMap), CommandLine(CommandLine),
       LangOpts(new LangOptions()), DiagIDs(new DiagnosticIDs()),
       DiagnosticOpts(new DiagnosticOptions()),
-      DC(errs(), DiagnosticOpts.getPtr()),
+      DC(errs(), DiagnosticOpts.get()),
       Diagnostics(
-          new DiagnosticsEngine(DiagIDs, DiagnosticOpts.getPtr(), &DC, false)),
+          new DiagnosticsEngine(DiagIDs, DiagnosticOpts.get(), &DC, false)),
       TargetOpts(new ModuleMapTargetOptions()),
-      Target(TargetInfo::CreateTargetInfo(*Diagnostics, TargetOpts.getPtr())),
+      Target(TargetInfo::CreateTargetInfo(*Diagnostics, TargetOpts.get())),
       FileMgr(new FileManager(FileSystemOpts)),
       SourceMgr(new SourceManager(*Diagnostics, *FileMgr, false)),
       HeaderSearchOpts(new HeaderSearchOptions()),
       HeaderInfo(new HeaderSearch(HeaderSearchOpts, *SourceMgr, *Diagnostics,
-                                  *LangOpts, Target.getPtr())),
-      ModMap(new ModuleMap(*SourceMgr, *Diagnostics, *LangOpts, Target.getPtr(),
+                                  *LangOpts, Target.get())),
+      ModMap(new ModuleMap(*SourceMgr, *Diagnostics, *LangOpts, Target.get(),
                            *HeaderInfo)) {}
 
 // Create instance of ModuleMapChecker, to simplify setting up

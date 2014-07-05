@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts(new DiagnosticOptions());
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
-      DiagOpts.getPtr());
+      DiagOpts.get());
 
   // Determine a formatting style from options.
   format::FormatStyle FormatStyle;
