@@ -86,5 +86,14 @@ LANGBUILTIN(__wfi, "v", "", ALL_MS_LANGUAGES)
 LANGBUILTIN(__sev, "v", "", ALL_MS_LANGUAGES)
 LANGBUILTIN(__sevl, "v", "", ALL_MS_LANGUAGES)
 
+LANGBUILTIN(__dmb, "vUi", "nc", ALL_MS_LANGUAGES)
+LANGBUILTIN(__dsb, "vUi", "nc", ALL_MS_LANGUAGES)
+LANGBUILTIN(__isb, "vUi", "nc", ALL_MS_LANGUAGES)
+LANGBUILTIN(__ldrexd, "WiCDWi*", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(_MoveFromCoprocessor, "UiUiUiUiUiUi", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(_MoveFromCoprocessor2, "UiUiUiUiUiUi", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(_MoveToCoprocessor, "vUiUiUiUiUiUi", "", ALL_MS_LANGUAGES)
+LANGBUILTIN(_MoveToCoprocessor2, "vUiUiUiUiUiUi", "", ALL_MS_LANGUAGES)
+
 #undef BUILTIN
 #undef LANGBUILTIN

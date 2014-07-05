@@ -3087,10 +3087,21 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   if (BuiltinID == ARM::BI__builtin_arm_ldrexd ||
       ((BuiltinID == ARM::BI__builtin_arm_ldrex ||
         BuiltinID == ARM::BI__builtin_arm_ldaex) &&
-       getContext().getTypeSize(E->getType()) == 64)) {
-    Function *F = CGM.getIntrinsic(BuiltinID == ARM::BI__builtin_arm_ldaex
-                                       ? Intrinsic::arm_ldaexd
-                                       : Intrinsic::arm_ldrexd);
+       getContext().getTypeSize(E->getType()) == 64) ||
+      BuiltinID == ARM::BI__ldrexd) {
+    Function *F;
+
+    switch (BuiltinID) {
+    default: llvm_unreachable("unexpected builtin");
+    case ARM::BI__builtin_arm_ldaex:
+      F = CGM.getIntrinsic(Intrinsic::arm_ldaexd);
+      break;
+    case ARM::BI__builtin_arm_ldrexd:
+    case ARM::BI__builtin_arm_ldrex:
+    case ARM::BI__ldrexd:
+      F = CGM.getIntrinsic(Intrinsic::arm_ldrexd);
+      break;
+    }
 
     Value *LdPtr = EmitScalarExpr(E->getArg(0));
     Value *Val = Builder.CreateCall(F, Builder.CreateBitCast(LdPtr, Int8PtrTy),
