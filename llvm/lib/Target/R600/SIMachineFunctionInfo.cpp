@@ -63,7 +63,7 @@ static unsigned createLaneVGPR(MachineRegisterInfo &MRI, MachineFunction *MF) {
     }
   }
   MF->getFunction()->getContext().emitError(
-      "Could not found S_ENGPGM instrtuction.");
+      "Could not find S_ENGPGM instrtuction.");
   return VGPR;
 }
 
