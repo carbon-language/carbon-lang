@@ -1087,7 +1087,7 @@ void MipsGOTParser<ELFT>::parseGOT(const Elf_Shdr &GOTShdr) {
   Elf_Sym_Iter DynSymEnd = Obj->end_dynamic_symbols();
   std::size_t DynSymTotal = std::size_t(std::distance(DynSymBegin, DynSymEnd));
 
-  if (DtGotSym + 1 > DynSymTotal) {
+  if (DtGotSym > DynSymTotal) {
     W.startLine() << "MIPS_GOTSYM exceeds a number of dynamic symbols.\n";
     return;
   }

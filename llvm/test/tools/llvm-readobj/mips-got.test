@@ -6,6 +6,8 @@ RUN: llvm-readobj -mips-plt-got %p/Inputs/dynamic-table-so.mips | \
 RUN:   FileCheck %s -check-prefix GOT-SO
 RUN: llvm-readobj -mips-plt-got %p/Inputs/got-tls.so.elf-mips64el | \
 RUN:   FileCheck %s -check-prefix GOT-TLS
+RUN: llvm-readobj -mips-plt-got %p/Inputs/got-empty.exe.mipsel | \
+RUN:   FileCheck %s -check-prefix GOT-EMPTY
 
 GOT-OBJ: Cannot find PLTGOT dynamic table tag.
 
@@ -304,3 +306,26 @@ GOT-TLS-NEXT:     }
 GOT-TLS-NEXT:   ]
 GOT-TLS-NEXT:   Number of TLS and multi-GOT entries: 4
 GOT-TLS-NEXT: }
+
+GOT-EMPTY:      Primary GOT {
+GOT-EMPTY-NEXT:   Canonical gp value: 0x409FF0
+GOT-EMPTY-NEXT:   Reserved entries [
+GOT-EMPTY-NEXT:     Entry {
+GOT-EMPTY-NEXT:       Address: 0x402000
+GOT-EMPTY-NEXT:       Access: -32752
+GOT-EMPTY-NEXT:       Initial: 0x0
+GOT-EMPTY-NEXT:       Purpose: Lazy resolver
+GOT-EMPTY-NEXT:     }
+GOT-EMPTY-NEXT:     Entry {
+GOT-EMPTY-NEXT:       Address: 0x402004
+GOT-EMPTY-NEXT:       Access: -32748
+GOT-EMPTY-NEXT:       Initial: 0x80000000
+GOT-EMPTY-NEXT:       Purpose: Module pointer (GNU extension)
+GOT-EMPTY-NEXT:     }
+GOT-EMPTY-NEXT:   ]
+GOT-EMPTY-NEXT:   Local entries [
+GOT-EMPTY-NEXT:   ]
+GOT-EMPTY-NEXT:   Global entries [
+GOT-EMPTY-NEXT:   ]
+GOT-EMPTY-NEXT:   Number of TLS and multi-GOT entries: 2
+GOT-EMPTY-NEXT: }
