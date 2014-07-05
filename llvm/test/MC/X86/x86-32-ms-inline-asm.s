@@ -73,6 +73,10 @@ _t21:                                   ## @t21
 // CHECK: movl 16(%esi,%eax,2), %eax
 // CHECK: # encoding: [0x8b,0x44,0x46,0x10]
 
+	mov eax, ~15
+// CHECK: movl ~15, %eax
+// CHECK: # encoding: [0xa1,A,A,A,A]
+
     prefetchnta 64[eax]
 // CHECK: prefetchnta 64(%eax)
 // CHECK: # encoding: [0x0f,0x18,0x40,0x40]
