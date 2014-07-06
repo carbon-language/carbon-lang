@@ -39,7 +39,10 @@ class LogDiagnosticPrinter : public DiagnosticConsumer {
     /// The level of the diagnostic.
     DiagnosticsEngine::Level DiagnosticLevel;
   };
-  
+
+  void EmitDiagEntry(llvm::raw_ostream &OS,
+                     const LogDiagnosticPrinter::DiagEntry &DE);
+
   raw_ostream &OS;
   const LangOptions *LangOpts;
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;

@@ -173,8 +173,8 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   }
   
   // Output the call depth.
-  Indent(o, indent) << "<key>depth</key>"
-                    << "<integer>" << depth << "</integer>\n";
+  Indent(o, indent) << "<key>depth</key>";
+  EmitInteger(o, depth) << '\n';
 
   // Output the text.
   assert(!P.getString().empty());
