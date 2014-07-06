@@ -958,11 +958,12 @@ public:
     llvm::FileRemover coffFileRemover(*coffPath);
 
     // Read and parse the COFF
-    std::unique_ptr<MemoryBuffer> newmb;
-    if (std::error_code ec = MemoryBuffer::getFile(*coffPath, newmb))
+    ErrorOr<std::unique_ptr<MemoryBuffer>> newmb =
+        MemoryBuffer::getFile(*coffPath);
+    if (std::error_code ec = newmb.getError())
       return ec;
     std::error_code ec;
-    std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(newmb), ec));
+    std::unique_ptr<FileCOFF> file(new FileCOFF(std::move(newmb.get()), ec));
     if (ec)
       return ec;
     if (std::error_code ec = file->parse())

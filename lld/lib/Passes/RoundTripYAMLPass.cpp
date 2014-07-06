@@ -37,11 +37,12 @@ void RoundTripYAMLPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
   // The file that is written would be kept around if there is a problem
   // writing to the file or when reading atoms back from the file.
   yamlWriter->writeFile(*mergedFile, tmpYAMLFile.str());
-  std::unique_ptr<MemoryBuffer> mb;
-  if (MemoryBuffer::getFile(tmpYAMLFile.str(), mb))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFile(tmpYAMLFile.str());
+  if (!mb)
     return;
 
-  std::error_code ec = _context.registry().parseFile(mb, _yamlFile);
+  std::error_code ec = _context.registry().parseFile(mb.get(), _yamlFile);
   if (ec) {
     // Note: we need a way for Passes to report errors.
     llvm_unreachable("yaml reader not registered or read error");

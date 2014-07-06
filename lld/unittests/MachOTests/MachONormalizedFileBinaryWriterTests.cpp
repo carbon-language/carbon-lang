@@ -30,8 +30,10 @@ using namespace lld::mach_o::normalized;
 // Normalized file to nf parameter.
 static void fromBinary(StringRef path, std::unique_ptr<MemoryBuffer> &mb,
                        std::unique_ptr<NormalizedFile> &nf, StringRef archStr) {
-  std::error_code ec = MemoryBuffer::getFile(path, mb);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr = MemoryBuffer::getFile(path);
+  std::error_code ec = mbOrErr.getError();
   EXPECT_FALSE(ec);
+  mb = std::move(mbOrErr.get());
 
   ErrorOr<std::unique_ptr<NormalizedFile>> r =
       lld::mach_o::normalized::readBinary(

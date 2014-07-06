@@ -40,11 +40,12 @@ public:
       return make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create a memory buffer
-    std::unique_ptr<MemoryBuffer> mb;
-    if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(*filePath, mb))
+    ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+        MemoryBuffer::getFileOrSTDIN(*filePath);
+    if (std::error_code ec = mb.getError())
       return ec;
 
-    _buffer = std::move(mb);
+    _buffer = std::move(mb.get());
     return ctx.registry().parseFile(_buffer, _files);
   }
 

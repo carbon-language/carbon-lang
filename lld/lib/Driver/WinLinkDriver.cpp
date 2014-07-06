@@ -251,12 +251,12 @@ static bool parseSection(StringRef option, std::string &section,
 
 static bool readFile(PECOFFLinkingContext &ctx, StringRef path,
                      ArrayRef<uint8_t> &result) {
-  std::unique_ptr<MemoryBuffer> buf;
-  if (MemoryBuffer::getFile(path, buf))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> buf = MemoryBuffer::getFile(path);
+  if (!buf)
     return false;
+  StringRef Data = buf.get()->getBuffer();
   result = ctx.allocate(ArrayRef<uint8_t>(
-      reinterpret_cast<const uint8_t *>(buf->getBufferStart()),
-      buf->getBufferSize()));
+      reinterpret_cast<const uint8_t *>(Data.begin()), Data.size()));
   return true;
 }
 
@@ -353,10 +353,10 @@ static bool parseExport(StringRef option,
 // Read module-definition file.
 static bool parseDef(StringRef option, llvm::BumpPtrAllocator &alloc,
                      std::vector<moduledef::Directive *> &result) {
-  std::unique_ptr<MemoryBuffer> buf;
-  if (MemoryBuffer::getFile(option, buf))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> buf = MemoryBuffer::getFile(option);
+  if (!buf)
     return llvm::None;
-  moduledef::Lexer lexer(std::move(buf));
+  moduledef::Lexer lexer(std::move(buf.get()));
   moduledef::Parser parser(lexer, alloc);
   return parser.parse(result);
 }

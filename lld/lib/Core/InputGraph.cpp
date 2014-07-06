@@ -86,10 +86,11 @@ void InputGraph::normalize() {
 /// \brief Read the file into _buffer.
 std::error_code FileNode::getBuffer(StringRef filePath) {
   // Create a memory buffer
-  std::unique_ptr<MemoryBuffer> mb;
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(filePath, mb))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+      MemoryBuffer::getFileOrSTDIN(filePath);
+  if (std::error_code ec = mb.getError())
     return ec;
-  _buffer = std::move(mb);
+  _buffer = std::move(mb.get());
   return std::error_code();
 }
 
