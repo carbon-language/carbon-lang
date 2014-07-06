@@ -230,7 +230,7 @@ def module_file_deps : Flag<["-"], "module-file-deps">,
 def header_include_file : Separate<["-"], "header-include-file">,
   HelpText<"Filename (or -) to write header include output to">;
 def show_includes : Flag<["--"], "show-includes">,
-  HelpText<"Print cl.exe style /showIncludes to stderr">;
+  HelpText<"Print cl.exe style /showIncludes to stdout">;
 
 //===----------------------------------------------------------------------===//
 // Diagnostic Options
