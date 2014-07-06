@@ -345,8 +345,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
     return;
   }
 
-  // Write the plist header.
-  o << PlistHeader;
+  EmitPlistHeader(o);
 
   // Write the root object: a <dict> containing...
   //  - "clang_version", the string representation of clang version

@@ -19,12 +19,6 @@ namespace clang {
 namespace markup {
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
-static const char *PlistHeader =
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-    "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
-    "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
-    "<plist version=\"1.0\">\n";
-
 static inline void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
                           const SourceManager &SM, SourceLocation L) {
   FileID FID = SM.getFileID(SM.getExpansionLoc(L));
@@ -47,6 +41,15 @@ static inline raw_ostream &Indent(raw_ostream &o, const unsigned indent) {
   for (unsigned i = 0; i < indent; ++i)
     o << ' ';
   return o;
+}
+
+static inline raw_ostream &EmitPlistHeader(raw_ostream &o) {
+  static const char *PlistHeader =
+      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+      "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
+      "\"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+      "<plist version=\"1.0\">\n";
+  return o << PlistHeader;
 }
 
 static inline raw_ostream &EmitInteger(raw_ostream &o, int64_t value) {

@@ -63,8 +63,7 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
     return;
   }
 
-  // Write the plist header.
-  o << PlistHeader;
+  EmitPlistHeader(o);
 
   // Write the root object: a <dict> containing...
   //  - "files", an <array> mapping from FIDs to file names
