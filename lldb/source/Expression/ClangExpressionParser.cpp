@@ -239,7 +239,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     //
     // FIXME: We shouldn't need to do this, the target should be immutable once
     // created. This complexity should be lifted elsewhere.
-    m_compiler->getTarget().setForcedLangOptions(m_compiler->getLangOpts());
+    m_compiler->getTarget().adjust(m_compiler->getLangOpts());
     
     // 4. Set up the diagnostic buffer for reporting errors
     
