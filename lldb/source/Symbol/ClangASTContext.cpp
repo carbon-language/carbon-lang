@@ -499,17 +499,14 @@ ClangASTContext::getDiagnosticConsumer()
     return m_diagnostic_consumer_ap.get();
 }
 
-TargetOptions *
-ClangASTContext::getTargetOptions()
-{
+std::shared_ptr<TargetOptions> &ClangASTContext::getTargetOptions() {
     if (m_target_options_rp.get() == nullptr && !m_target_triple.empty())
     {
-        m_target_options_rp.reset ();
-        m_target_options_rp = new TargetOptions();
+        m_target_options_rp = std::make_shared<TargetOptions>();
         if (m_target_options_rp.get() != nullptr)
             m_target_options_rp->Triple = m_target_triple;
     }
-    return m_target_options_rp.get();
+    return m_target_options_rp;
 }
 
 

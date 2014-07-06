@@ -71,8 +71,7 @@ public:
     clang::DiagnosticConsumer *
     getDiagnosticConsumer();
 
-    clang::TargetOptions *
-    getTargetOptions();
+    std::shared_ptr<clang::TargetOptions> &getTargetOptions();
 
     clang::TargetInfo *
     getTargetInfo();
