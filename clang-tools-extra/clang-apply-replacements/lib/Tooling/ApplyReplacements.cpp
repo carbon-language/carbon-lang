@@ -59,15 +59,15 @@ collectReplacementsFromDirectory(const llvm::StringRef Directory,
 
     TURFiles.push_back(I->path());
 
-    std::unique_ptr<MemoryBuffer> Out;
-    std::error_code BufferError = MemoryBuffer::getFile(I->path(), Out);
-    if (BufferError) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> Out =
+        MemoryBuffer::getFile(I->path());
+    if (std::error_code BufferError = Out.getError()) {
       errs() << "Error reading " << I->path() << ": " << BufferError.message()
              << "\n";
       continue;
     }
 
-    yaml::Input YIn(Out->getBuffer(), nullptr, &eatDiagnostics);
+    yaml::Input YIn(Out.get()->getBuffer(), nullptr, &eatDiagnostics);
     tooling::TranslationUnitReplacements TU;
     YIn >> TU;
     if (YIn.error()) {

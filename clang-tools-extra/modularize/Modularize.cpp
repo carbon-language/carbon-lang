@@ -230,14 +230,14 @@ getHeaderFileNames(SmallVectorImpl<std::string> &HeaderFileNames,
     HeaderDirectory = HeaderPrefix;
 
   // Read the header list file into a buffer.
-  std::unique_ptr<MemoryBuffer> listBuffer;
-  if (std::error_code ec = MemoryBuffer::getFile(ListFileName, listBuffer)) {
-    return ec;
-  }
+  ErrorOr<std::unique_ptr<MemoryBuffer>> listBuffer =
+      MemoryBuffer::getFile(ListFileName);
+  if (std::error_code EC = listBuffer.getError())
+    return EC;
 
   // Parse the header list into strings.
   SmallVector<StringRef, 32> Strings;
-  listBuffer->getBuffer().split(Strings, "\n", -1, false);
+  listBuffer.get()->getBuffer().split(Strings, "\n", -1, false);
 
   // Collect the header file names from the string list.
   for (SmallVectorImpl<StringRef>::iterator I = Strings.begin(),

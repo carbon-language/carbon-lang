@@ -123,23 +123,27 @@ std::error_code
 IncludeExcludeInfo::readListFromFile(StringRef IncludeListFile,
                                      StringRef ExcludeListFile) {
   if (!IncludeListFile.empty()) {
-    std::unique_ptr<MemoryBuffer> FileBuf;
-    if (std::error_code Err = MemoryBuffer::getFile(IncludeListFile, FileBuf)) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> FileBuf =
+        MemoryBuffer::getFile(IncludeListFile);
+    if (std::error_code Err = FileBuf.getError()) {
       errs() << "Unable to read from include file.\n";
       return Err;
     }
-    if (std::error_code Err = parseCLInput(FileBuf->getBuffer(), IncludeList,
-                                           /*Separator=*/"\n"))
+    if (std::error_code Err =
+            parseCLInput(FileBuf.get()->getBuffer(), IncludeList,
+                         /*Separator=*/"\n"))
       return Err;
   }
   if (!ExcludeListFile.empty()) {
-    std::unique_ptr<MemoryBuffer> FileBuf;
-    if (std::error_code Err = MemoryBuffer::getFile(ExcludeListFile, FileBuf)) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> FileBuf =
+        MemoryBuffer::getFile(ExcludeListFile);
+    if (std::error_code Err = FileBuf.getError()) {
       errs() << "Unable to read from exclude file.\n";
       return Err;
     }
-    if (std::error_code Err = parseCLInput(FileBuf->getBuffer(), ExcludeList,
-                                           /*Separator=*/"\n"))
+    if (std::error_code Err =
+            parseCLInput(FileBuf.get()->getBuffer(), ExcludeList,
+                         /*Separator=*/"\n"))
       return Err;
   }
   return std::error_code();
