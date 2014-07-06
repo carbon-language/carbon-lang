@@ -57,7 +57,7 @@ public:
   std::shared_ptr<LangOptions> LangOpts;
 
   /// Options controlling the target.
-  IntrusiveRefCntPtr<TargetOptions> TargetOpts;
+  std::shared_ptr<TargetOptions> TargetOpts;
 
   /// Options controlling the diagnostic engine.
   IntrusiveRefCntPtr<DiagnosticOptions> DiagnosticOpts;

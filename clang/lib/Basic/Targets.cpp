@@ -6388,8 +6388,9 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
 
 /// CreateTargetInfo - Return the target info object for the specified target
 /// triple.
-TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
-                                         TargetOptions *Opts) {
+TargetInfo *
+TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
+                             const std::shared_ptr<TargetOptions> &Opts) {
   llvm::Triple Triple(Opts->Triple);
 
   // Construct the target
@@ -6398,7 +6399,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
     return nullptr;
   }
-  Target->setTargetOpts(Opts);
+  Target->TargetOpts = Opts;
 
   // Set the target CPU if specified.
   if (!Opts->CPU.empty() && !Target->setCPU(Opts->CPU)) {

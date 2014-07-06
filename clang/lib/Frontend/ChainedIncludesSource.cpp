@@ -100,8 +100,8 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
     Clang->setInvocation(CInvok.release());
     Clang->setDiagnostics(Diags.get());
-    Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                  &Clang->getTargetOpts()));
+    Clang->setTarget(TargetInfo::CreateTargetInfo(
+        Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
     Clang->createFileManager();
     Clang->createSourceManager(Clang->getFileManager());
     Clang->createPreprocessor(TU_Prefix);

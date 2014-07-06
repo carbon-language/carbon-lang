@@ -504,20 +504,17 @@ class ASTInfoCollector : public ASTReaderListener {
   Preprocessor &PP;
   ASTContext &Context;
   LangOptions &LangOpt;
-  IntrusiveRefCntPtr<TargetOptions> &TargetOpts;
+  std::shared_ptr<TargetOptions> &TargetOpts;
   IntrusiveRefCntPtr<TargetInfo> &Target;
   unsigned &Counter;
 
   bool InitializedLanguage;
 public:
-  ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt, 
-                   IntrusiveRefCntPtr<TargetOptions> &TargetOpts,
-                   IntrusiveRefCntPtr<TargetInfo> &Target,
-                   unsigned &Counter)
-    : PP(PP), Context(Context), LangOpt(LangOpt),
-      TargetOpts(TargetOpts), Target(Target),
-      Counter(Counter),
-      InitializedLanguage(false) {}
+  ASTInfoCollector(Preprocessor &PP, ASTContext &Context, LangOptions &LangOpt,
+                   std::shared_ptr<TargetOptions> &TargetOpts,
+                   IntrusiveRefCntPtr<TargetInfo> &Target, unsigned &Counter)
+      : PP(PP), Context(Context), LangOpt(LangOpt), TargetOpts(TargetOpts),
+        Target(Target), Counter(Counter), InitializedLanguage(false) {}
 
   bool ReadLanguageOptions(const LangOptions &LangOpts,
                            bool Complain) override {
@@ -536,10 +533,10 @@ public:
     // If we've already initialized the target, don't do it again.
     if (Target)
       return false;
-    
-    this->TargetOpts = new TargetOptions(TargetOpts);
-    Target = TargetInfo::CreateTargetInfo(PP.getDiagnostics(),
-                                          &*this->TargetOpts);
+
+    this->TargetOpts = std::make_shared<TargetOptions>(TargetOpts);
+    Target =
+        TargetInfo::CreateTargetInfo(PP.getDiagnostics(), this->TargetOpts);
 
     updated();
     return false;
@@ -1066,8 +1063,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                   &Clang->getTargetOpts()));
+  Clang->setTarget(TargetInfo::CreateTargetInfo(
+      Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
   if (!Clang->hasTarget()) {
     delete OverrideMainBuffer;
     return true;
@@ -1565,8 +1562,8 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang->setDiagnostics(&getDiagnostics());
   
   // Create the target instance.
-  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                &Clang->getTargetOpts()));
+  Clang->setTarget(TargetInfo::CreateTargetInfo(
+      Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
   if (!Clang->hasTarget()) {
     llvm::sys::fs::remove(FrontendOpts.OutputFile);
     Preamble.clear();
@@ -1832,8 +1829,8 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
   Clang->setDiagnostics(&AST->getDiagnostics());
   
   // Create the target instance.
-  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                &Clang->getTargetOpts()));
+  Clang->setTarget(TargetInfo::CreateTargetInfo(
+      Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
   if (!Clang->hasTarget())
     return nullptr;
 
@@ -2409,8 +2406,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   ProcessWarningOptions(Diag, CCInvocation->getDiagnosticOpts());
   
   // Create the target instance.
-  Clang->setTarget(TargetInfo::CreateTargetInfo(Clang->getDiagnostics(),
-                                                &Clang->getTargetOpts()));
+  Clang->setTarget(TargetInfo::CreateTargetInfo(
+      Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
   if (!Clang->hasTarget()) {
     Clang->setInvocation(nullptr);
     return;

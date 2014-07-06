@@ -47,7 +47,7 @@ namespace Builtin { struct Info; }
 /// \brief Exposes information about the current target.
 ///
 class TargetInfo : public RefCountedBase<TargetInfo> {
-  IntrusiveRefCntPtr<TargetOptions> TargetOpts;
+  std::shared_ptr<TargetOptions> TargetOpts;
   llvm::Triple Triple;
 protected:
   // Target values set by the ctor of the actual target implementation.  Default
@@ -94,8 +94,9 @@ public:
   /// \param Opts - The options to use to initialize the target. The target may
   /// modify the options to canonicalize the target feature information to match
   /// what the backend expects.
-  static TargetInfo* CreateTargetInfo(DiagnosticsEngine &Diags,
-                                      TargetOptions *Opts);
+  static TargetInfo *
+  CreateTargetInfo(DiagnosticsEngine &Diags,
+                   const std::shared_ptr<TargetOptions> &Opts);
 
   virtual ~TargetInfo();
 
@@ -103,10 +104,6 @@ public:
   TargetOptions &getTargetOpts() const { 
     assert(TargetOpts && "Missing target options");
     return *TargetOpts; 
-  }
-
-  void setTargetOpts(TargetOptions *TargetOpts) {
-    this->TargetOpts = TargetOpts;
   }
 
   ///===---- Target Data Type Query Methods -------------------------------===//

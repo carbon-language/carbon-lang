@@ -91,7 +91,7 @@ private:
   IntrusiveRefCntPtr<TargetInfo>          Target;
   IntrusiveRefCntPtr<Preprocessor>        PP;
   IntrusiveRefCntPtr<ASTContext>          Ctx;
-  IntrusiveRefCntPtr<TargetOptions>       TargetOpts;
+  std::shared_ptr<TargetOptions>          TargetOpts;
   IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts;
   IntrusiveRefCntPtr<ASTReader> Reader;
   bool HadModuleLoaderFatalFailure;
