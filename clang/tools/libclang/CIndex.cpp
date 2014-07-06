@@ -53,7 +53,11 @@
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
 
-#ifdef __APPLE__
+#if LLVM_ENABLE_THREADS != 0 && defined(__APPLE__)
+#define USE_DARWIN_THREADS
+#endif
+
+#ifdef USE_DARWIN_THREADS
 #include <pthread.h>
 #endif
 
@@ -6799,8 +6803,7 @@ void clang::setThreadBackgroundPriority() {
   if (getenv("LIBCLANG_BGPRIO_DISABLE"))
     return;
 
-  // FIXME: Move to llvm/Support and make it cross-platform.
-#ifdef __APPLE__
+#ifdef USE_DARWIN_THREADS
   setpriority(PRIO_DARWIN_THREAD, 0, PRIO_DARWIN_BG);
 #endif
 }
@@ -7014,8 +7017,8 @@ cxindex::Logger::~Logger() {
   raw_ostream &OS = llvm::errs();
   OS << "[libclang:" << Name << ':';
 
-  // FIXME: Portability.
-#ifdef __APPLE__
+#ifdef USE_DARWIN_THREADS
+  // TODO: Portability.
   mach_port_t tid = pthread_mach_thread_np(pthread_self());
   OS << tid << ':';
 #endif
