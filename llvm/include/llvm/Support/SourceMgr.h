@@ -66,6 +66,8 @@ private:
   DiagHandlerTy DiagHandler;
   void *DiagContext;
 
+  bool isValidBufferID(unsigned i) const { return i && i <= Buffers.size(); }
+
   SourceMgr(const SourceMgr&) LLVM_DELETED_FUNCTION;
   void operator=(const SourceMgr&) LLVM_DELETED_FUNCTION;
 public:
@@ -88,22 +90,27 @@ public:
   void *getDiagContext() const { return DiagContext; }
 
   const SrcBuffer &getBufferInfo(unsigned i) const {
-    assert(i < Buffers.size() && "Invalid Buffer ID!");
-    return Buffers[i];
+    assert(isValidBufferID(i));
+    return Buffers[i - 1];
   }
 
   const MemoryBuffer *getMemoryBuffer(unsigned i) const {
-    assert(i < Buffers.size() && "Invalid Buffer ID!");
-    return Buffers[i].Buffer;
+    assert(isValidBufferID(i));
+    return Buffers[i - 1].Buffer;
   }
 
   size_t getNumBuffers() const {
     return Buffers.size();
   }
 
+  unsigned getMainFileID() const {
+    assert(getNumBuffers());
+    return 1;
+  }
+
   SMLoc getParentIncludeLoc(unsigned i) const {
-    assert(i < Buffers.size() && "Invalid Buffer ID!");
-    return Buffers[i].IncludeLoc;
+    assert(isValidBufferID(i));
+    return Buffers[i - 1].IncludeLoc;
   }
 
   /// Add a new source buffer to this source manager. This takes ownership of
@@ -113,13 +120,13 @@ public:
     NB.Buffer = F;
     NB.IncludeLoc = IncludeLoc;
     Buffers.push_back(NB);
-    return Buffers.size() - 1;
+    return Buffers.size();
   }
 
   /// Search for a file with the specified name in the current directory or in
   /// one of the IncludeDirs.
   ///
-  /// If no file is found, this returns ~0, otherwise it returns the buffer ID
+  /// If no file is found, this returns 0, otherwise it returns the buffer ID
   /// of the stacked file. The full path to the included file can be found in
   /// \p IncludedFile.
   size_t AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc,
@@ -127,19 +134,19 @@ public:
 
   /// Return the ID of the buffer containing the specified location.
   ///
-  /// -1 is returned if the buffer is not found.
-  int FindBufferContainingLoc(SMLoc Loc) const;
+  /// 0 is returned if the buffer is not found.
+  unsigned FindBufferContainingLoc(SMLoc Loc) const;
 
   /// Find the line number for the specified location in the specified file.
   /// This is not a fast method.
-  unsigned FindLineNumber(SMLoc Loc, int BufferID = -1) const {
+  unsigned FindLineNumber(SMLoc Loc, unsigned BufferID = 0) const {
     return getLineAndColumn(Loc, BufferID).first;
   }
 
   /// Find the line and column number for the specified location in the
   /// specified file. This is not a fast method.
-  std::pair<unsigned, unsigned>
-    getLineAndColumn(SMLoc Loc, int BufferID = -1) const;
+  std::pair<unsigned, unsigned> getLineAndColumn(SMLoc Loc,
+                                                 unsigned BufferID = 0) const;
 
   /// Emit a message about the specified location with the specified string.
   ///

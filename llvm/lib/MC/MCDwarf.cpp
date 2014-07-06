@@ -928,7 +928,7 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
 
   // Finding the line number is the expensive part which is why we just don't
   // pass it in as for some symbols we won't create a dwarf label.
-  int CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
+  unsigned CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
   unsigned LineNumber = SrcMgr.FindLineNumber(Loc, CurBuffer);
 
   // We create a temporary symbol for use for the AT_high_pc and AT_low_pc

@@ -73,7 +73,7 @@ class TGLexer {
 
   /// CurBuffer - This is the current buffer index we're lexing from as managed
   /// by the SourceMgr object.
-  int CurBuffer;
+  unsigned CurBuffer;
 
 public:
   typedef std::map<std::string, SMLoc> DependenciesMapTy;

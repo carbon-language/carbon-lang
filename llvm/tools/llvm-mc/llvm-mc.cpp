@@ -242,7 +242,7 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI,
                       tool_output_file *Out) {
 
   AsmLexer Lexer(MAI);
-  Lexer.setBuffer(SrcMgr.getMemoryBuffer(0));
+  Lexer.setBuffer(SrcMgr.getMemoryBuffer(SrcMgr.getMainFileID()));
 
   bool Error = false;
   while (Lexer.Lex().isNot(AsmToken::Eof)) {

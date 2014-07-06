@@ -133,7 +133,7 @@ private:
 
   /// This is the current buffer index we're lexing from as managed by the
   /// SourceMgr object.
-  int CurBuffer;
+  unsigned CurBuffer;
 
   AsmCond TheCondState;
   std::vector<AsmCond> TheCondStack;
@@ -162,13 +162,13 @@ private:
   StringRef CppHashFilename;
   int64_t CppHashLineNumber;
   SMLoc CppHashLoc;
-  int CppHashBuf;
+  unsigned CppHashBuf;
   /// When generating dwarf for assembly source files we need to calculate the
   /// logical line number based on the last parsed cpp hash file line comment
   /// and current line. Since this is slow and messes up the SourceMgr's
   /// cache we save the last info we queried with SrcMgr.FindLineNumber().
   SMLoc LastQueryIDLoc;
-  int LastQueryBuffer;
+  unsigned LastQueryBuffer;
   unsigned LastQueryLine;
 
   /// AssemblerDialect. ~OU means unset value and use value provided by MAI.
@@ -310,9 +310,9 @@ private:
   /// current token is not set; clients should ensure Lex() is called
   /// subsequently.
   ///
-  /// \param InBuffer If not -1, should be the known buffer id that contains the
+  /// \param InBuffer If not 0, should be the known buffer id that contains the
   /// location.
-  void jumpToLoc(SMLoc Loc, int InBuffer=-1);
+  void jumpToLoc(SMLoc Loc, unsigned InBuffer = 0);
 
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
@@ -491,9 +491,9 @@ enum { DEFAULT_ADDRSPACE = 0 };
 AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx, MCStreamer &_Out,
                      const MCAsmInfo &_MAI)
     : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
-      PlatformParser(nullptr), CurBuffer(0), MacrosEnabledFlag(true),
-      HadError(false), CppHashLineNumber(0), AssemblerDialect(~0U),
-      IsDarwin(false), ParsingInlineAsm(false) {
+      PlatformParser(nullptr), CurBuffer(_SM.getMainFileID()),
+      MacrosEnabledFlag(true), HadError(false), CppHashLineNumber(0),
+      AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();
@@ -566,14 +566,13 @@ bool AsmParser::Error(SMLoc L, const Twine &Msg, ArrayRef<SMRange> Ranges) {
 
 bool AsmParser::enterIncludeFile(const std::string &Filename) {
   std::string IncludedFile;
-  int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc(), IncludedFile);
-  if (NewBuf == -1)
+  unsigned NewBuf =
+      SrcMgr.AddIncludeFile(Filename, Lexer.getLoc(), IncludedFile);
+  if (!NewBuf)
     return true;
 
   CurBuffer = NewBuf;
-
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer));
-
   return false;
 }
 
@@ -582,8 +581,9 @@ bool AsmParser::enterIncludeFile(const std::string &Filename) {
 /// returns true on failure.
 bool AsmParser::processIncbinFile(const std::string &Filename) {
   std::string IncludedFile;
-  int NewBuf = SrcMgr.AddIncludeFile(Filename, Lexer.getLoc(), IncludedFile);
-  if (NewBuf == -1)
+  unsigned NewBuf =
+      SrcMgr.AddIncludeFile(Filename, Lexer.getLoc(), IncludedFile);
+  if (!NewBuf)
     return true;
 
   // Pick up the bytes from the file and emit them.
@@ -591,12 +591,8 @@ bool AsmParser::processIncbinFile(const std::string &Filename) {
   return false;
 }
 
-void AsmParser::jumpToLoc(SMLoc Loc, int InBuffer) {
-  if (InBuffer != -1) {
-    CurBuffer = InBuffer;
-  } else {
-    CurBuffer = SrcMgr.FindBufferContainingLoc(Loc);
-  }
+void AsmParser::jumpToLoc(SMLoc Loc, unsigned InBuffer) {
+  CurBuffer = InBuffer ? InBuffer : SrcMgr.FindBufferContainingLoc(Loc);
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer), Loc.getPointer());
 }
 
@@ -1697,13 +1693,15 @@ void AsmParser::DiagHandler(const SMDiagnostic &Diag, void *Context) {
 
   const SourceMgr &DiagSrcMgr = *Diag.getSourceMgr();
   const SMLoc &DiagLoc = Diag.getLoc();
-  int DiagBuf = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
-  int CppHashBuf = Parser->SrcMgr.FindBufferContainingLoc(Parser->CppHashLoc);
+  unsigned DiagBuf = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
+  unsigned CppHashBuf =
+      Parser->SrcMgr.FindBufferContainingLoc(Parser->CppHashLoc);
 
   // Like SourceMgr::printMessage() we need to print the include stack if any
   // before printing the message.
-  int DiagCurBuffer = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
-  if (!Parser->SavedDiagHandler && DiagCurBuffer > 0) {
+  unsigned DiagCurBuffer = DiagSrcMgr.FindBufferContainingLoc(DiagLoc);
+  if (!Parser->SavedDiagHandler && DiagCurBuffer &&
+      DiagCurBuffer != DiagSrcMgr.getMainFileID()) {
     SMLoc ParentIncludeLoc = DiagSrcMgr.getParentIncludeLoc(DiagCurBuffer);
     DiagSrcMgr.PrintIncludeStack(ParentIncludeLoc, OS);
   }
@@ -4582,8 +4580,10 @@ bool AsmParser::parseMSInlineAsm(
   // Build the IR assembly string.
   std::string AsmStringIR;
   raw_string_ostream OS(AsmStringIR);
-  const char *AsmStart = SrcMgr.getMemoryBuffer(0)->getBufferStart();
-  const char *AsmEnd = SrcMgr.getMemoryBuffer(0)->getBufferEnd();
+  StringRef ASMString =
+      SrcMgr.getMemoryBuffer(SrcMgr.getMainFileID())->getBuffer();
+  const char *AsmStart = ASMString.begin();
+  const char *AsmEnd = ASMString.end();
   array_pod_sort(AsmStrRewrites.begin(), AsmStrRewrites.end(), rewritesSort);
   for (const AsmRewrite &AR : AsmStrRewrites) {
     AsmRewriteKind Kind = AR.Kind;

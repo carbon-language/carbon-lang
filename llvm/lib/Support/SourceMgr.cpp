@@ -27,7 +27,7 @@ static const size_t TabStop = 8;
 
 namespace {
   struct LineNoCacheTy {
-    int LastQueryBufferID;
+    unsigned LastQueryBufferID;
     const char *LastQuery;
     unsigned LineNoOfQuery;
   };
@@ -62,26 +62,27 @@ size_t SourceMgr::AddIncludeFile(const std::string &Filename,
     MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
   }
 
-  if (!NewBuf) return ~0U;
+  if (!NewBuf)
+    return 0;
 
   return AddNewSourceBuffer(NewBuf.release(), IncludeLoc);
 }
 
-
-int SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
+unsigned SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {
   for (unsigned i = 0, e = Buffers.size(); i != e; ++i)
     if (Loc.getPointer() >= Buffers[i].Buffer->getBufferStart() &&
         // Use <= here so that a pointer to the null at the end of the buffer
         // is included as part of the buffer.
         Loc.getPointer() <= Buffers[i].Buffer->getBufferEnd())
-      return i;
-  return -1;
+      return i + 1;
+  return 0;
 }
 
 std::pair<unsigned, unsigned>
-SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
-  if (BufferID == -1) BufferID = FindBufferContainingLoc(Loc);
-  assert(BufferID != -1 && "Invalid Location!");
+SourceMgr::getLineAndColumn(SMLoc Loc, unsigned BufferID) const {
+  if (!BufferID)
+    BufferID = FindBufferContainingLoc(Loc);
+  assert(BufferID && "Invalid Location!");
 
   const MemoryBuffer *Buff = getMemoryBuffer(BufferID);
 
@@ -125,8 +126,8 @@ SourceMgr::getLineAndColumn(SMLoc Loc, int BufferID) const {
 void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
   if (IncludeLoc == SMLoc()) return;  // Top of stack.
 
-  int CurBuf = FindBufferContainingLoc(IncludeLoc);
-  assert(CurBuf != -1 && "Invalid or unspecified location!");
+  unsigned CurBuf = FindBufferContainingLoc(IncludeLoc);
+  assert(CurBuf && "Invalid or unspecified location!");
 
   PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
 
@@ -149,8 +150,8 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
   std::string LineStr;
   
   if (Loc.isValid()) {
-    int CurBuf = FindBufferContainingLoc(Loc);
-    assert(CurBuf != -1 && "Invalid or unspecified location!");
+    unsigned CurBuf = FindBufferContainingLoc(Loc);
+    assert(CurBuf && "Invalid or unspecified location!");
 
     const MemoryBuffer *CurMB = getMemoryBuffer(CurBuf);
     BufferID = CurMB->getBufferIdentifier();
@@ -208,8 +209,8 @@ void SourceMgr::PrintMessage(raw_ostream &OS, const SMDiagnostic &Diagnostic,
   }
 
   if (Diagnostic.getLoc().isValid()) {
-    int CurBuf = FindBufferContainingLoc(Diagnostic.getLoc());
-    assert(CurBuf != -1 && "Invalid or unspecified location!");
+    unsigned CurBuf = FindBufferContainingLoc(Diagnostic.getLoc());
+    assert(CurBuf && "Invalid or unspecified location!");
     PrintIncludeStack(getBufferInfo(CurBuf).IncludeLoc, OS);
   }
 

@@ -27,7 +27,7 @@
 using namespace llvm;
 
 TGLexer::TGLexer(SourceMgr &SM) : SrcMgr(SM) {
-  CurBuffer = 0;
+  CurBuffer = SrcMgr.getMainFileID();
   CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
   CurPtr = CurBuf->getBufferStart();
   TokStart = nullptr;
@@ -304,7 +304,7 @@ bool TGLexer::LexInclude() {
   
   CurBuffer = SrcMgr.AddIncludeFile(Filename, SMLoc::getFromPointer(CurPtr),
                                     IncludedFile);
-  if (CurBuffer == -1) {
+  if (!CurBuffer) {
     PrintError(getLoc(), "Could not find include file '" + Filename + "'");
     return true;
   }

@@ -650,7 +650,7 @@ bool DarwinAsmParser::parseDirectiveSecureLogUnique(StringRef, SMLoc IDLoc) {
   }
 
   // Write the message.
-  int CurBuf = getSourceManager().FindBufferContainingLoc(IDLoc);
+  unsigned CurBuf = getSourceManager().FindBufferContainingLoc(IDLoc);
   *OS << getSourceManager().getBufferInfo(CurBuf).Buffer->getBufferIdentifier()
       << ":" << getSourceManager().FindLineNumber(IDLoc, CurBuf) << ":"
       << LogMessage + "\n";
