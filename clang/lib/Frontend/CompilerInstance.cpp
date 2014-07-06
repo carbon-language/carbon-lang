@@ -683,11 +683,14 @@ bool CompilerInstance::InitializeSourceManager(const FrontendInputFile &Input,
     SourceMgr.setMainFileID(
         SourceMgr.createFileID(File, SourceLocation(), Kind));
   } else {
-    std::unique_ptr<llvm::MemoryBuffer> SB;
-    if (std::error_code ec = llvm::MemoryBuffer::getSTDIN(SB)) {
-      Diags.Report(diag::err_fe_error_reading_stdin) << ec.message();
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> SBOrErr =
+        llvm::MemoryBuffer::getSTDIN();
+    if (std::error_code EC = SBOrErr.getError()) {
+      Diags.Report(diag::err_fe_error_reading_stdin) << EC.message();
       return false;
     }
+    std::unique_ptr<llvm::MemoryBuffer> SB = std::move(SBOrErr.get());
+
     const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
                                                    SB->getBufferSize(), 0);
     SourceMgr.setMainFileID(

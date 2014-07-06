@@ -1957,14 +1957,16 @@ std::string CompilerInvocation::getModuleHash() const {
   //   $sysroot/System/Library/CoreServices/SystemVersion.plist
   // as part of the module hash.
   if (!hsOpts.Sysroot.empty()) {
-    std::unique_ptr<llvm::MemoryBuffer> buffer;
     SmallString<128> systemVersionFile;
     systemVersionFile += hsOpts.Sysroot;
     llvm::sys::path::append(systemVersionFile, "System");
     llvm::sys::path::append(systemVersionFile, "Library");
     llvm::sys::path::append(systemVersionFile, "CoreServices");
     llvm::sys::path::append(systemVersionFile, "SystemVersion.plist");
-    if (!llvm::MemoryBuffer::getFile(systemVersionFile.str(), buffer)) {
+
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
+        llvm::MemoryBuffer::getFile(systemVersionFile.str());
+    if (buffer) {
       code = hash_combine(code, buffer.get()->getBuffer());
 
       struct stat statBuf;
@@ -2031,14 +2033,15 @@ createVFSFromCompilerInvocation(const CompilerInvocation &CI,
     Overlay(new vfs::OverlayFileSystem(vfs::getRealFileSystem()));
   // earlier vfs files are on the bottom
   for (const std::string &File : CI.getHeaderSearchOpts().VFSOverlayFiles) {
-    std::unique_ptr<llvm::MemoryBuffer> Buffer;
-    if (llvm::MemoryBuffer::getFile(File, Buffer)) {
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+        llvm::MemoryBuffer::getFile(File);
+    if (!Buffer) {
       Diags.Report(diag::err_missing_vfs_overlay_file) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();
     }
 
     IntrusiveRefCntPtr<vfs::FileSystem> FS =
-        vfs::getVFSFromYAML(Buffer.release(), /*DiagHandler*/nullptr);
+        vfs::getVFSFromYAML(Buffer->release(), /*DiagHandler*/ nullptr);
     if (!FS.get()) {
       Diags.Report(diag::err_invalid_vfs_overlay) << File;
       return IntrusiveRefCntPtr<vfs::FileSystem>();

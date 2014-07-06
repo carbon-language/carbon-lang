@@ -106,9 +106,13 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
       // Open the AST file.
       std::error_code ec;
       if (FileName == "-") {
-        ec = llvm::MemoryBuffer::getSTDIN(New->Buffer);
+        llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buf =
+            llvm::MemoryBuffer::getSTDIN();
+        ec = Buf.getError();
         if (ec)
           ErrorStr = ec.message();
+        else
+          New->Buffer = std::move(Buf.get());
       } else {
         // Leave the FileEntry open so if it gets read again by another
         // ModuleManager it must be the same underlying file.

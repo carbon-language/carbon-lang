@@ -65,12 +65,13 @@ bool FileRemapper::initFromFile(StringRef filePath, DiagnosticsEngine &Diag,
 
   std::vector<std::pair<const FileEntry *, const FileEntry *> > pairs;
 
-  std::unique_ptr<llvm::MemoryBuffer> fileBuf;
-  if (llvm::MemoryBuffer::getFile(infoFile.c_str(), fileBuf))
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> fileBuf =
+      llvm::MemoryBuffer::getFile(infoFile.c_str());
+  if (!fileBuf)
     return report("Error opening file: " + infoFile, Diag);
   
   SmallVector<StringRef, 64> lines;
-  fileBuf->getBuffer().split(lines, "\n");
+  fileBuf.get()->getBuffer().split(lines, "\n");
 
   for (unsigned idx = 0; idx+3 <= lines.size(); idx += 3) {
     StringRef fromFilename = lines[idx];

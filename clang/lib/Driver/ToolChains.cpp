@@ -2794,8 +2794,9 @@ static bool IsUbuntu(enum Distro Distro) {
 }
 
 static Distro DetectDistro(llvm::Triple::ArchType Arch) {
-  std::unique_ptr<llvm::MemoryBuffer> File;
-  if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> File =
+      llvm::MemoryBuffer::getFile("/etc/lsb-release");
+  if (File) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 8> Lines;
     Data.split(Lines, "\n");
@@ -2820,7 +2821,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return Version;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
+  File = llvm::MemoryBuffer::getFile("/etc/redhat-release");
+  if (File) {
     StringRef Data = File.get()->getBuffer();
     if (Data.startswith("Fedora release"))
       return Fedora;
@@ -2836,7 +2838,8 @@ static Distro DetectDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/debian_version", File)) {
+  File = llvm::MemoryBuffer::getFile("/etc/debian_version");
+  if (File) {
     StringRef Data = File.get()->getBuffer();
     if (Data[0] == '5')
       return DebianLenny;

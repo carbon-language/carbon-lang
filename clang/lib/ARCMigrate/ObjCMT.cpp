@@ -1943,12 +1943,13 @@ public:
   bool parse(StringRef File, SmallVectorImpl<EditEntry> &Entries) {
     using namespace llvm::yaml;
 
-    std::unique_ptr<llvm::MemoryBuffer> FileBuf;
-    if (llvm::MemoryBuffer::getFile(File, FileBuf))
+    llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> FileBufOrErr =
+        llvm::MemoryBuffer::getFile(File);
+    if (!FileBufOrErr)
       return true;
 
     llvm::SourceMgr SM;
-    Stream YAMLStream(FileBuf.release(), SM);
+    Stream YAMLStream(FileBufOrErr.get().release(), SM);
     document_iterator I = YAMLStream.begin();
     if (I == YAMLStream.end())
       return true;

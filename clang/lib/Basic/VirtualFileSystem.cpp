@@ -126,8 +126,13 @@ std::error_code RealFile::getBuffer(const Twine &Name,
                                     bool RequiresNullTerminator,
                                     bool IsVolatile) {
   assert(FD != -1 && "cannot get buffer for closed file");
-  return MemoryBuffer::getOpenFile(FD, Name.str().c_str(), Result, FileSize,
-                                   RequiresNullTerminator, IsVolatile);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getOpenFile(FD, Name.str().c_str(), FileSize,
+                                RequiresNullTerminator, IsVolatile);
+  if (std::error_code EC = BufferOrErr.getError())
+    return EC;
+  Result = std::move(BufferOrErr.get());
+  return std::error_code();
 }
 
 // FIXME: This is terrible, we need this for ::close.

@@ -239,9 +239,11 @@ GlobalModuleIndex::readIndex(StringRef Path) {
   IndexPath += Path;
   llvm::sys::path::append(IndexPath, IndexFileName);
 
-  std::unique_ptr<llvm::MemoryBuffer> Buffer;
-  if (llvm::MemoryBuffer::getFile(IndexPath.c_str(), Buffer))
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> BufferOrErr =
+      llvm::MemoryBuffer::getFile(IndexPath.c_str());
+  if (!BufferOrErr)
     return std::make_pair(nullptr, EC_NotFound);
+  std::unique_ptr<llvm::MemoryBuffer> Buffer = std::move(BufferOrErr.get());
 
   /// \brief The bitstream reader from which we'll read the AST file.
   llvm::BitstreamReader Reader((const unsigned char *)Buffer->getBufferStart(),

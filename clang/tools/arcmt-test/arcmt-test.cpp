@@ -207,17 +207,15 @@ static bool performTransformations(StringRef resourcesPath,
 static bool filesCompareEqual(StringRef fname1, StringRef fname2) {
   using namespace llvm;
 
-  std::unique_ptr<MemoryBuffer> file1;
-  MemoryBuffer::getFile(fname1, file1);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> file1 = MemoryBuffer::getFile(fname1);
   if (!file1)
     return false;
 
-  std::unique_ptr<MemoryBuffer> file2;
-  MemoryBuffer::getFile(fname2, file2);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> file2 = MemoryBuffer::getFile(fname2);
   if (!file2)
     return false;
 
-  return file1->getBuffer() == file2->getBuffer();
+  return file1.get()->getBuffer() == file2.get()->getBuffer();
 }
 
 static bool verifyTransformedFiles(ArrayRef<std::string> resultFiles) {
@@ -238,18 +236,19 @@ static bool verifyTransformedFiles(ArrayRef<std::string> resultFiles) {
     resultMap[sys::path::stem(fname)] = fname;
   }
 
-  std::unique_ptr<MemoryBuffer> inputBuf;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> inputBuf = std::error_code();
   if (RemappingsFile.empty())
-    MemoryBuffer::getSTDIN(inputBuf);
+    inputBuf = MemoryBuffer::getSTDIN();
   else
-    MemoryBuffer::getFile(RemappingsFile, inputBuf);
+    inputBuf = MemoryBuffer::getFile(RemappingsFile);
   if (!inputBuf) {
     errs() << "error: could not read remappings input\n";
     return true;
   }
 
   SmallVector<StringRef, 8> strs;
-  inputBuf->getBuffer().split(strs, "\n", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+  inputBuf.get()->getBuffer().split(strs, "\n", /*MaxSplit=*/-1,
+                                    /*KeepEmpty=*/false);
 
   if (strs.empty()) {
     errs() << "error: no files to verify from stdin\n";

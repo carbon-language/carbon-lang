@@ -2082,13 +2082,14 @@ FormatStyle getStyle(StringRef StyleName, StringRef FileName,
     }
 
     if (IsFile) {
-      std::unique_ptr<llvm::MemoryBuffer> Text;
-      if (std::error_code ec =
-              llvm::MemoryBuffer::getFile(ConfigFile.c_str(), Text)) {
-        llvm::errs() << ec.message() << "\n";
+      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Text =
+          llvm::MemoryBuffer::getFile(ConfigFile.c_str());
+      if (std::error_code EC = Text.getError()) {
+        llvm::errs() << EC.message() << "\n";
         break;
       }
-      if (std::error_code ec = parseConfiguration(Text->getBuffer(), &Style)) {
+      if (std::error_code ec =
+              parseConfiguration(Text.get()->getBuffer(), &Style)) {
         if (ec == ParseError::Unsuitable) {
           if (!UnsuitableConfigFiles.empty())
             UnsuitableConfigFiles.append(", ");

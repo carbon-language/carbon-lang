@@ -281,17 +281,18 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   if (!TheTarget)
     return Diags.Report(diag::err_target_unknown_triple) << Opts.Triple;
 
-  std::unique_ptr<MemoryBuffer> Buffer;
-  if (std::error_code ec =
-          MemoryBuffer::getFileOrSTDIN(Opts.InputFile, Buffer)) {
-    Error = ec.message();
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer =
+      MemoryBuffer::getFileOrSTDIN(Opts.InputFile);
+
+  if (std::error_code EC = Buffer.getError()) {
+    Error = EC.message();
     return Diags.Report(diag::err_fe_error_reading) << Opts.InputFile;
   }
 
   SourceMgr SrcMgr;
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer.release(), SMLoc());
+  SrcMgr.AddNewSourceBuffer(Buffer->release(), SMLoc());
 
   // Record the location of the include directories so that the lexer can find
   // it later.
