@@ -33,7 +33,7 @@ static char ID;
 #define VALID_POINTER_CHECK_NAME "$__lldb_valid_pointer_check"
 #define VALID_OBJC_OBJECT_CHECK_NAME "$__lldb_objc_object_check"
 
-static const char g_valid_pointer_check_text[] = 
+static const char g_valid_pointer_check_text[] =
 "extern \"C\" void\n"
 "$__lldb_valid_pointer_check (unsigned char *$__lldb_arg_ptr)\n"
 "{\n"
@@ -56,22 +56,22 @@ DynamicCheckerFunctions::Install(Stream &error_stream,
                                                          VALID_POINTER_CHECK_NAME));
     if (!m_valid_pointer_check->Install(error_stream, exe_ctx))
         return false;
-    
+
     Process *process = exe_ctx.GetProcessPtr();
 
     if (process)
     {
         ObjCLanguageRuntime *objc_language_runtime = process->GetObjCLanguageRuntime();
-        
+
         if (objc_language_runtime)
         {
             m_objc_object_check.reset(objc_language_runtime->CreateObjectChecker(VALID_OBJC_OBJECT_CHECK_NAME));
-            
+
             if (!m_objc_object_check->Install(error_stream, exe_ctx))
                 return false;
         }
     }
-        
+
     return true;
 }
 
@@ -94,7 +94,7 @@ DynamicCheckerFunctions::DoCheckersExplainStop (lldb::addr_t addr, Stream &messa
 }
 
 
-static std::string 
+static std::string
 PrintValue(llvm::Value *V, bool truncate = false)
 {
     std::string s;
@@ -128,10 +128,10 @@ PrintValue(llvm::Value *V, bool truncate = false)
 ///
 /// - InspectInstruction [default: does nothing]
 ///
-/// - InspectBasicBlock [default: iterates through the instructions in a 
+/// - InspectBasicBlock [default: iterates through the instructions in a
 ///   basic block calling InspectInstruction]
 ///
-/// - InspectFunction [default: iterates through the basic blocks in a 
+/// - InspectFunction [default: iterates through the basic blocks in a
 ///   function calling InspectBasicBlock]
 //----------------------------------------------------------------------
 class Instrumenter {
@@ -150,7 +150,7 @@ public:
         m_intptr_ty(NULL)
     {
     }
-    
+
     virtual~Instrumenter ()
     {
     }
@@ -168,7 +168,7 @@ public:
     {
         return InspectFunction(function);
     }
-    
+
     //------------------------------------------------------------------
     /// Instrument all the instructions found by Inspect()
     ///
@@ -184,7 +184,7 @@ public:
             if (!InstrumentInstruction(*ii))
                 return false;
         }
-        
+
         return true;
     }
 protected:
@@ -192,13 +192,13 @@ protected:
     /// Add instrumentation to a single instruction
     ///
     /// @param[in] inst
-    ///     The instruction to be instrumented. 
+    ///     The instruction to be instrumented.
     ///
     /// @return
     ///     True on success; false otherwise.
     //------------------------------------------------------------------
     virtual bool InstrumentInstruction(llvm::Instruction *inst) = 0;
-    
+
     //------------------------------------------------------------------
     /// Register a single instruction to be instrumented
     ///
@@ -209,7 +209,7 @@ protected:
     {
         m_to_instrument.push_back(&i);
     }
-    
+
     //------------------------------------------------------------------
     /// Determine whether a single instruction is interesting to
     /// instrument, and, if so, call RegisterInstruction
@@ -224,7 +224,7 @@ protected:
     {
         return true;
     }
-    
+
     //------------------------------------------------------------------
     /// Scan a basic block to see if any instructions are interesting
     ///
@@ -243,15 +243,15 @@ protected:
             if (!InspectInstruction(*ii))
                 return false;
         }
-        
+
         return true;
     }
-    
+
     //------------------------------------------------------------------
     /// Scan a function to see if any instructions are interesting
     ///
     /// @param[in] f
-    ///     The function to be inspected. 
+    ///     The function to be inspected.
     ///
     /// @return
     ///     False if there was an error scanning; true otherwise.
@@ -265,12 +265,12 @@ protected:
             if (!InspectBasicBlock(*bbi))
                 return false;
         }
-        
+
         return true;
     }
-    
+
     //------------------------------------------------------------------
-    /// Build a function pointer for a function with signature 
+    /// Build a function pointer for a function with signature
     /// void (*)(uint8_t*) with a given address
     ///
     /// @param[in] start_address
@@ -282,19 +282,19 @@ protected:
     llvm::Value *BuildPointerValidatorFunc(lldb::addr_t start_address)
     {
         llvm::Type *param_array[1];
-        
+
         param_array[0] = const_cast<llvm::PointerType*>(GetI8PtrTy());
-        
+
         ArrayRef<llvm::Type*> params(param_array, 1);
-        
+
         FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(GetIntptrTy(), start_address, false);
         return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
     }
-    
+
     //------------------------------------------------------------------
-    /// Build a function pointer for a function with signature 
+    /// Build a function pointer for a function with signature
     /// void (*)(uint8_t*, uint8_t*) with a given address
     ///
     /// @param[in] start_address
@@ -306,41 +306,41 @@ protected:
     llvm::Value *BuildObjectCheckerFunc(lldb::addr_t start_address)
     {
         llvm::Type *param_array[2];
-        
+
         param_array[0] = const_cast<llvm::PointerType*>(GetI8PtrTy());
         param_array[1] = const_cast<llvm::PointerType*>(GetI8PtrTy());
-        
+
         ArrayRef<llvm::Type*> params(param_array, 2);
-        
+
         FunctionType *fun_ty = FunctionType::get(llvm::Type::getVoidTy(m_module.getContext()), params, true);
         PointerType *fun_ptr_ty = PointerType::getUnqual(fun_ty);
         Constant *fun_addr_int = ConstantInt::get(GetIntptrTy(), start_address, false);
         return ConstantExpr::getIntToPtr(fun_addr_int, fun_ptr_ty);
     }
-    
+
     PointerType *GetI8PtrTy()
     {
         if (!m_i8ptr_ty)
             m_i8ptr_ty = llvm::Type::getInt8PtrTy(m_module.getContext());
-            
+
         return m_i8ptr_ty;
     }
-    
+
     IntegerType *GetIntptrTy()
     {
         if (!m_intptr_ty)
         {
             llvm::DataLayout data_layout(&m_module);
-            
+
             m_intptr_ty = llvm::Type::getIntNTy(m_module.getContext(), data_layout.getPointerSizeInBits());
         }
-        
+
         return m_intptr_ty;
     }
-    
+
     typedef std::vector <llvm::Instruction *>   InstVector;
     typedef InstVector::iterator                InstIterator;
-    
+
     InstVector                  m_to_instrument;        ///< List of instructions the inspector found
     llvm::Module               &m_module;               ///< The module which is being instrumented
     DynamicCheckerFunctions    &m_checker_functions;    ///< The dynamic checker functions for the process
@@ -358,7 +358,7 @@ public:
         m_valid_pointer_check_func(NULL)
     {
     }
-    
+
     virtual ~ValidPointerChecker ()
     {
     }
@@ -368,53 +368,53 @@ private:
         Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
         if (log)
-            log->Printf("Instrumenting load/store instruction: %s\n", 
+            log->Printf("Instrumenting load/store instruction: %s\n",
                         PrintValue(inst).c_str());
-        
+
         if (!m_valid_pointer_check_func)
             m_valid_pointer_check_func = BuildPointerValidatorFunc(m_checker_functions.m_valid_pointer_check->StartAddress());
-        
+
         llvm::Value *dereferenced_ptr = NULL;
-        
+
         if (llvm::LoadInst *li = dyn_cast<llvm::LoadInst> (inst))
             dereferenced_ptr = li->getPointerOperand();
         else if (llvm::StoreInst *si = dyn_cast<llvm::StoreInst> (inst))
             dereferenced_ptr = si->getPointerOperand();
         else
             return false;
-        
+
         // Insert an instruction to cast the loaded value to int8_t*
-        
+
         BitCastInst *bit_cast = new BitCastInst(dereferenced_ptr,
                                                 GetI8PtrTy(),
                                                 "",
                                                 inst);
-        
+
         // Insert an instruction to call the helper with the result
-        
+
         llvm::Value *arg_array[1];
-        
+
         arg_array[0] = bit_cast;
-        
+
         llvm::ArrayRef<llvm::Value *> args(arg_array, 1);
-        
-        CallInst::Create(m_valid_pointer_check_func, 
+
+        CallInst::Create(m_valid_pointer_check_func,
                          args,
                          "",
                          inst);
-            
+
         return true;
     }
-    
+
     bool InspectInstruction(llvm::Instruction &i)
     {
         if (dyn_cast<llvm::LoadInst> (&i) ||
             dyn_cast<llvm::StoreInst> (&i))
             RegisterInstruction(i);
-        
+
         return true;
     }
-    
+
     llvm::Value         *m_valid_pointer_check_func;
 };
 
@@ -496,7 +496,7 @@ private:
 
         ArrayRef<llvm::Value*> args(arg_array, 2);
 
-        CallInst::Create(m_objc_object_check_func, 
+        CallInst::Create(m_objc_object_check_func,
                          args,
                          "",
                          inst);
@@ -612,52 +612,52 @@ bool
 IRDynamicChecks::runOnModule(llvm::Module &M)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     llvm::Function* function = M.getFunction(StringRef(m_func_name.c_str()));
-    
+
     if (!function)
     {
         if (log)
             log->Printf("Couldn't find %s() in the module", m_func_name.c_str());
-        
+
         return false;
     }
 
     if (m_checker_functions.m_valid_pointer_check.get())
     {
         ValidPointerChecker vpc(M, m_checker_functions);
-        
+
         if (!vpc.Inspect(*function))
             return false;
-        
+
         if (!vpc.Instrument())
             return false;
     }
-    
+
     if (m_checker_functions.m_objc_object_check.get())
     {
         ObjcObjectChecker ooc(M, m_checker_functions);
-        
+
         if (!ooc.Inspect(*function))
             return false;
-        
+
         if (!ooc.Instrument())
             return false;
     }
-        
+
     if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream oss(s);
-        
+
         M.print(oss, NULL);
-        
+
         oss.flush();
-        
+
         log->Printf ("Module after dynamic checks: \n%s", s.c_str());
     }
-    
-    return true;    
+
+    return true;
 }
 
 void

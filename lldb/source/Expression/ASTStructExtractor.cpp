@@ -39,7 +39,7 @@ ASTStructExtractor::ASTStructExtractor(ASTConsumer *passthrough,
 {
     if (!m_passthrough)
         return;
-    
+
     m_passthrough_sema = dyn_cast<SemaConsumer>(passthrough);
 }
 
@@ -48,10 +48,10 @@ ASTStructExtractor::~ASTStructExtractor()
 }
 
 void
-ASTStructExtractor::Initialize(ASTContext &Context) 
+ASTStructExtractor::Initialize(ASTContext &Context)
 {
     m_ast_context = &Context;
-    
+
     if (m_passthrough)
         m_passthrough->Initialize(Context);
 }
@@ -61,17 +61,17 @@ ASTStructExtractor::ExtractFromFunctionDecl(FunctionDecl *F)
 {
     if (!F->hasBody())
         return;
-    
+
     Stmt *body_stmt = F->getBody();
     CompoundStmt *body_compound_stmt = dyn_cast<CompoundStmt>(body_stmt);
-    
+
     if (!body_compound_stmt)
         return; // do we have to handle this?
-    
+
     RecordDecl *struct_decl = NULL;
-    
+
     StringRef desired_name(m_struct_name.c_str());
-    
+
     for (CompoundStmt::const_body_iterator bi = body_compound_stmt->body_begin(), be = body_compound_stmt->body_end();
          bi != be;
          ++bi)
@@ -95,26 +95,26 @@ ASTStructExtractor::ExtractFromFunctionDecl(FunctionDecl *F)
         if (struct_decl)
             break;
     }
-    
+
     if (!struct_decl)
         return;
-    
+
     const ASTRecordLayout* struct_layout(&m_ast_context->getASTRecordLayout (struct_decl));
-    
+
     if (!struct_layout)
         return;
-    
-    m_function.m_struct_size = struct_layout->getSize().getQuantity(); // TODO Store m_struct_size as CharUnits   
+
+    m_function.m_struct_size = struct_layout->getSize().getQuantity(); // TODO Store m_struct_size as CharUnits
     m_function.m_return_offset = struct_layout->getFieldOffset(struct_layout->getFieldCount() - 1) / 8;
     m_function.m_return_size = struct_layout->getDataSize().getQuantity() - m_function.m_return_offset;
-    
+
     for (unsigned field_index = 0, num_fields = struct_layout->getFieldCount();
          field_index < num_fields;
          ++field_index)
     {
         m_function.m_member_offsets.push_back(struct_layout->getFieldOffset(field_index) / 8);
     }
-    
+
     m_function.m_struct_valid = true;
 }
 
@@ -122,11 +122,11 @@ void
 ASTStructExtractor::ExtractFromTopLevelDecl(Decl* D)
 {
     LinkageSpecDecl *linkage_spec_decl = dyn_cast<LinkageSpecDecl>(D);
-    
+
     if (linkage_spec_decl)
     {
         RecordDecl::decl_iterator decl_iterator;
-        
+
         for (decl_iterator = linkage_spec_decl->decls_begin();
              decl_iterator != linkage_spec_decl->decls_end();
              ++decl_iterator)
@@ -134,9 +134,9 @@ ASTStructExtractor::ExtractFromTopLevelDecl(Decl* D)
             ExtractFromTopLevelDecl(*decl_iterator);
         }
     }
-    
+
     FunctionDecl *function_decl = dyn_cast<FunctionDecl>(D);
-    
+
     if (m_ast_context &&
         function_decl &&
         !m_function.m_wrapper_function_name.compare(function_decl->getNameAsString().c_str()))
@@ -145,20 +145,20 @@ ASTStructExtractor::ExtractFromTopLevelDecl(Decl* D)
     }
 }
 
-bool 
+bool
 ASTStructExtractor::HandleTopLevelDecl(DeclGroupRef D)
 {
     DeclGroupRef::iterator decl_iterator;
-    
+
     for (decl_iterator = D.begin();
          decl_iterator != D.end();
          ++decl_iterator)
     {
         Decl *decl = *decl_iterator;
-        
+
         ExtractFromTopLevelDecl(decl);
     }
-    
+
     if (m_passthrough)
         return m_passthrough->HandleTopLevelDecl(D);
     return true;
@@ -166,12 +166,12 @@ ASTStructExtractor::HandleTopLevelDecl(DeclGroupRef D)
 
 void
 ASTStructExtractor::HandleTranslationUnit(ASTContext &Ctx)
-{    
+{
     if (m_passthrough)
         m_passthrough->HandleTranslationUnit(Ctx);
 }
 
-void 
+void
 ASTStructExtractor::HandleTagDeclDefinition(TagDecl *D)
 {
     if (m_passthrough)
@@ -185,15 +185,15 @@ ASTStructExtractor::CompleteTentativeDefinition(VarDecl *D)
         m_passthrough->CompleteTentativeDefinition(D);
 }
 
-void 
-ASTStructExtractor::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) 
+void
+ASTStructExtractor::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired)
 {
     if (m_passthrough)
         m_passthrough->HandleVTable(RD, DefinitionRequired);
 }
 
 void
-ASTStructExtractor::PrintStats() 
+ASTStructExtractor::PrintStats()
 {
     if (m_passthrough)
         m_passthrough->PrintStats();
@@ -204,17 +204,17 @@ ASTStructExtractor::InitializeSema(Sema &S)
 {
     m_sema = &S;
     m_action = reinterpret_cast<Action*>(m_sema);
-    
+
     if (m_passthrough_sema)
         m_passthrough_sema->InitializeSema(S);
 }
 
-void 
-ASTStructExtractor::ForgetSema() 
+void
+ASTStructExtractor::ForgetSema()
 {
     m_sema = NULL;
     m_action = NULL;
-    
+
     if (m_passthrough_sema)
         m_passthrough_sema->ForgetSema();
 }

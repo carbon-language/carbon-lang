@@ -8,11 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Expression/ClangExpressionVariable.h"
-
-// C Includes
-// C++ Includes
-// Other libraries and framework includes
-// Project includes
 #include "clang/AST/ASTContext.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/DataExtractor.h"
@@ -44,17 +39,17 @@ ClangExpressionVariable::ClangExpressionVariable (const lldb::ValueObjectSP &val
 //----------------------------------------------------------------------
 /// Return the variable's size in bytes
 //----------------------------------------------------------------------
-size_t 
+size_t
 ClangExpressionVariable::GetByteSize ()
 {
     return m_frozen_sp->GetByteSize();
-}    
+}
 
 const ConstString &
 ClangExpressionVariable::GetName ()
 {
     return m_frozen_sp->GetName();
-}    
+}
 
 lldb::ValueObjectSP
 ClangExpressionVariable::GetValueObject()
@@ -78,13 +73,13 @@ ClangASTType
 ClangExpressionVariable::GetClangType()
 {
     return m_frozen_sp->GetClangType();
-}    
+}
 
 void
 ClangExpressionVariable::SetClangType(const ClangASTType &clang_type)
 {
     m_frozen_sp->GetValue().SetClangType(clang_type);
-}    
+}
 
 
 TypeFromUser
@@ -92,7 +87,7 @@ ClangExpressionVariable::GetTypeFromUser()
 {
     TypeFromUser tfu (m_frozen_sp->GetClangType());
     return tfu;
-}    
+}
 
 uint8_t *
 ClangExpressionVariable::GetValueBytes()
@@ -130,7 +125,7 @@ ClangExpressionVariable::TransferAddress (bool force)
 
     if (m_frozen_sp.get() == NULL)
         return;
-    
+
     if (force || (m_frozen_sp->GetLiveAddress() == LLDB_INVALID_ADDRESS))
         m_frozen_sp->SetLiveAddress(m_live_sp->GetLiveAddress());
 }

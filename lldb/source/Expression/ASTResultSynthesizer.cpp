@@ -40,7 +40,7 @@ ASTResultSynthesizer::ASTResultSynthesizer(ASTConsumer *passthrough,
 {
     if (!m_passthrough)
         return;
-    
+
     m_passthrough_sema = dyn_cast<SemaConsumer>(passthrough);
 }
 
@@ -49,10 +49,10 @@ ASTResultSynthesizer::~ASTResultSynthesizer()
 }
 
 void
-ASTResultSynthesizer::Initialize(ASTContext &Context) 
+ASTResultSynthesizer::Initialize(ASTContext &Context)
 {
     m_ast_context = &Context;
-    
+
     if (m_passthrough)
         m_passthrough->Initialize(Context);
 }
@@ -75,11 +75,11 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
         }
 
     }
-    
+
     if (LinkageSpecDecl *linkage_spec_decl = dyn_cast<LinkageSpecDecl>(D))
     {
         RecordDecl::decl_iterator decl_iterator;
-        
+
         for (decl_iterator = linkage_spec_decl->decls_begin();
              decl_iterator != linkage_spec_decl->decls_end();
              ++decl_iterator)
@@ -107,53 +107,53 @@ ASTResultSynthesizer::TransformTopLevelDecl(Decl* D)
     }
 }
 
-bool 
+bool
 ASTResultSynthesizer::HandleTopLevelDecl(DeclGroupRef D)
 {
     DeclGroupRef::iterator decl_iterator;
-    
+
     for (decl_iterator = D.begin();
          decl_iterator != D.end();
          ++decl_iterator)
     {
         Decl *decl = *decl_iterator;
-        
+
         TransformTopLevelDecl(decl);
     }
-    
+
     if (m_passthrough)
         return m_passthrough->HandleTopLevelDecl(D);
     return true;
 }
 
-bool 
+bool
 ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     if (!m_sema)
         return false;
-    
+
     FunctionDecl *function_decl = FunDecl;
-    
+
     if (!function_decl)
         return false;
-    
+
     if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);
-        
+
         function_decl->print(os);
-        
+
         os.flush();
-        
+
         log->Printf ("Untransformed function AST:\n%s", s.c_str());
     }
-    
+
     Stmt *function_body = function_decl->getBody();
     CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(function_body);
-    
+
     bool ret = SynthesizeBodyResult (compound_stmt,
                                      function_decl);
 
@@ -161,14 +161,14 @@ ASTResultSynthesizer::SynthesizeFunctionResult (FunctionDecl *FunDecl)
     {
         std::string s;
         raw_string_ostream os(s);
-        
+
         function_decl->print(os);
-        
+
         os.flush();
-        
+
         log->Printf ("Transformed function AST:\n%s", s.c_str());
     }
-    
+
     return ret;
 }
 
@@ -176,67 +176,67 @@ bool
 ASTResultSynthesizer::SynthesizeObjCMethodResult (ObjCMethodDecl *MethodDecl)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-        
+
     if (!m_sema)
         return false;
-        
+
     if (!MethodDecl)
         return false;
-    
+
     if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);
-        
+
         MethodDecl->print(os);
-        
+
         os.flush();
-        
+
         log->Printf ("Untransformed method AST:\n%s", s.c_str());
     }
-    
+
     Stmt *method_body = MethodDecl->getBody();
-    
+
     if (!method_body)
         return false;
-    
+
     CompoundStmt *compound_stmt = dyn_cast<CompoundStmt>(method_body);
-    
+
     bool ret = SynthesizeBodyResult (compound_stmt,
                                      MethodDecl);
-    
+
     if (log && log->GetVerbose())
     {
         std::string s;
         raw_string_ostream os(s);
-        
+
         MethodDecl->print(os);
-        
+
         os.flush();
-        
+
         log->Printf("Transformed method AST:\n%s", s.c_str());
     }
-    
+
     return ret;
 }
 
-bool 
-ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body, 
+bool
+ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                                             DeclContext *DC)
 {
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
-    
+
     ASTContext &Ctx(*m_ast_context);
-        
+
     if (!Body)
         return false;
-    
+
     if (Body->body_empty())
         return false;
-    
+
     Stmt **last_stmt_ptr = Body->body_end() - 1;
     Stmt *last_stmt = *last_stmt_ptr;
-    
+
     while (dyn_cast<NullStmt>(last_stmt))
     {
         if (last_stmt_ptr != Body->body_begin())
@@ -249,28 +249,28 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
             return false;
         }
     }
-    
+
     Expr *last_expr = dyn_cast<Expr>(last_stmt);
-    
+
     if (!last_expr)
         // No auxiliary variable necessary; expression returns void
         return true;
-    
+
     // In C++11, last_expr can be a LValueToRvalue implicit cast.  Strip that off if that's the
     // case.
-    
+
     do {
         ImplicitCastExpr *implicit_cast = dyn_cast<ImplicitCastExpr>(last_expr);
-        
+
         if (!implicit_cast)
             break;
-        
+
         if (implicit_cast->getCastKind() != CK_LValueToRValue)
             break;
-        
+
         last_expr = implicit_cast->getSubExpr();
     } while (0);
-    
+
     // is_lvalue is used to record whether the expression returns an assignable Lvalue or an
     // Rvalue.  This is relevant because they are handled differently.
     //
@@ -302,7 +302,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     //
     //   - In IR transformations, an instruction is inserted at the beginning of the function to
     //     dereference the pointer resident in the slot.  Reads and writes to $__lldb_expr_result
-    //     are redirected at that dereferenced version.  Guard variables for the static variable 
+    //     are redirected at that dereferenced version.  Guard variables for the static variable
     //     are excised.
     //
     //   - During materialization, $0 (the result persistent variable) is populated with the location
@@ -310,46 +310,46 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
     //
     //   - During dematerialization, $0 is ignored.
 
-    bool is_lvalue = 
+    bool is_lvalue =
         (last_expr->getValueKind() == VK_LValue || last_expr->getValueKind() == VK_XValue) &&
         (last_expr->getObjectKind() == OK_Ordinary);
-    
+
     QualType expr_qual_type = last_expr->getType();
     const clang::Type *expr_type = expr_qual_type.getTypePtr();
-    
+
     if (!expr_type)
         return false;
-    
+
     if (expr_type->isVoidType())
         return true;
-    
+
     if (log)
     {
         std::string s = expr_qual_type.getAsString();
-        
+
         log->Printf("Last statement is an %s with type: %s", (is_lvalue ? "lvalue" : "rvalue"), s.c_str());
     }
-    
+
     clang::VarDecl *result_decl = NULL;
-    
+
     if (is_lvalue)
     {
         IdentifierInfo *result_ptr_id;
-        
+
         if (expr_type->isFunctionType())
             result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result"); // functions actually should be treated like function pointers
         else
             result_ptr_id = &Ctx.Idents.get("$__lldb_expr_result_ptr");
-        
+
         m_sema->RequireCompleteType(SourceLocation(), expr_qual_type, clang::diag::err_incomplete_type);
-        
+
         QualType ptr_qual_type;
 
         if (expr_qual_type->getAs<ObjCObjectType>() != NULL)
             ptr_qual_type = Ctx.getObjCObjectPointerType(expr_qual_type);
         else
             ptr_qual_type = Ctx.getPointerType(expr_qual_type);
-        
+
         result_decl = VarDecl::Create(Ctx,
                                       DC,
                                       SourceLocation(),
@@ -358,61 +358,61 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
                                       ptr_qual_type,
                                       NULL,
                                       SC_Static);
-        
+
         if (!result_decl)
             return false;
-                
+
         ExprResult address_of_expr = m_sema->CreateBuiltinUnaryOp(SourceLocation(), UO_AddrOf, last_expr);
-        
+
         m_sema->AddInitializerToDecl(result_decl, address_of_expr.get(), true, false);
     }
     else
     {
         IdentifierInfo &result_id = Ctx.Idents.get("$__lldb_expr_result");
-        
-        result_decl = VarDecl::Create(Ctx, 
-                                      DC, 
+
+        result_decl = VarDecl::Create(Ctx,
+                                      DC,
                                       SourceLocation(),
                                       SourceLocation(),
-                                      &result_id, 
-                                      expr_qual_type, 
-                                      NULL, 
+                                      &result_id,
+                                      expr_qual_type,
+                                      NULL,
                                       SC_Static);
-        
+
         if (!result_decl)
             return false;
-        
+
         m_sema->AddInitializerToDecl(result_decl, last_expr, true, false);
     }
-    
+
     DC->addDecl(result_decl);
-    
+
     ///////////////////////////////
     // call AddInitializerToDecl
     //
-        
+
     //m_sema->AddInitializerToDecl(result_decl, last_expr);
-    
+
     /////////////////////////////////
     // call ConvertDeclToDeclGroup
     //
-    
+
     Sema::DeclGroupPtrTy result_decl_group_ptr;
-    
+
     result_decl_group_ptr = m_sema->ConvertDeclToDeclGroup(result_decl);
-    
+
     ////////////////////////
     // call ActOnDeclStmt
     //
-    
+
     StmtResult result_initialization_stmt_result(m_sema->ActOnDeclStmt(result_decl_group_ptr,
                                                                        SourceLocation(),
                                                                        SourceLocation()));
-    
+
     ////////////////////////////////////////////////
     // replace the old statement with the new one
     //
-    
+
     *last_stmt_ptr = reinterpret_cast<Stmt*>(result_initialization_stmt_result.get());
 
     return true;
@@ -420,7 +420,7 @@ ASTResultSynthesizer::SynthesizeBodyResult (CompoundStmt *Body,
 
 void
 ASTResultSynthesizer::HandleTranslationUnit(ASTContext &Ctx)
-{    
+{
     if (m_passthrough)
         m_passthrough->HandleTranslationUnit(Ctx);
 }
@@ -429,8 +429,8 @@ void
 ASTResultSynthesizer::RecordPersistentTypes(DeclContext *FunDeclCtx)
 {
     typedef DeclContext::specific_decl_iterator<TypeDecl> TypeDeclIterator;
-    
-    for (TypeDeclIterator i = TypeDeclIterator(FunDeclCtx->decls_begin()), 
+
+    for (TypeDeclIterator i = TypeDeclIterator(FunDeclCtx->decls_begin()),
          e = TypeDeclIterator(FunDeclCtx->decls_end());
          i != e;
          ++i)
@@ -439,35 +439,35 @@ ASTResultSynthesizer::RecordPersistentTypes(DeclContext *FunDeclCtx)
     }
 }
 
-void 
+void
 ASTResultSynthesizer::MaybeRecordPersistentType(TypeDecl *D)
 {
     if (!D->getIdentifier())
         return;
-    
+
     StringRef name = D->getName();
-    
+
     if (name.size() == 0 || name[0] != '$')
         return;
-    
+
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
     ConstString name_cs(name.str().c_str());
-    
+
     if (log)
         log->Printf ("Recording persistent type %s\n", name_cs.GetCString());
-    
-    Decl *D_scratch = m_target.GetClangASTImporter()->DeportDecl(m_target.GetScratchClangASTContext()->getASTContext(), 
+
+    Decl *D_scratch = m_target.GetClangASTImporter()->DeportDecl(m_target.GetScratchClangASTContext()->getASTContext(),
                                                                  m_ast_context,
                                                                  D);
-    
+
     if (TypeDecl *TypeDecl_scratch = dyn_cast<TypeDecl>(D_scratch))
         m_target.GetPersistentVariables().RegisterPersistentType(name_cs, TypeDecl_scratch);
 }
 
-void 
+void
 ASTResultSynthesizer::HandleTagDeclDefinition(TagDecl *D)
-{    
+{
     if (m_passthrough)
         m_passthrough->HandleTagDeclDefinition(D);
 }
@@ -479,15 +479,15 @@ ASTResultSynthesizer::CompleteTentativeDefinition(VarDecl *D)
         m_passthrough->CompleteTentativeDefinition(D);
 }
 
-void 
-ASTResultSynthesizer::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired) 
+void
+ASTResultSynthesizer::HandleVTable(CXXRecordDecl *RD, bool DefinitionRequired)
 {
     if (m_passthrough)
         m_passthrough->HandleVTable(RD, DefinitionRequired);
 }
 
 void
-ASTResultSynthesizer::PrintStats() 
+ASTResultSynthesizer::PrintStats()
 {
     if (m_passthrough)
         m_passthrough->PrintStats();
@@ -497,16 +497,16 @@ void
 ASTResultSynthesizer::InitializeSema(Sema &S)
 {
     m_sema = &S;
-    
+
     if (m_passthrough_sema)
         m_passthrough_sema->InitializeSema(S);
 }
 
-void 
-ASTResultSynthesizer::ForgetSema() 
+void
+ASTResultSynthesizer::ForgetSema()
 {
     m_sema = NULL;
-    
+
     if (m_passthrough_sema)
         m_passthrough_sema->ForgetSema();
 }
