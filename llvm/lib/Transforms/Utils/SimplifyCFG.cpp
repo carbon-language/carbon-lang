@@ -2028,7 +2028,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   // Make sure the instruction after the condition is the cond branch.
   BasicBlock::iterator CondIt = Cond; ++CondIt;
 
-  // Ingore dbg intrinsics.
+  // Ignore dbg intrinsics.
   while (isa<DbgInfoIntrinsic>(CondIt)) ++CondIt;
 
   if (&*CondIt != BI)
@@ -2343,7 +2343,7 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   }
 
   // If this is a conditional branch in an empty block, and if any
-  // predecessors is a conditional branch to one of our destinations,
+  // predecessors are a conditional branch to one of our destinations,
   // fold the conditions into logical ops and one cond br.
   BasicBlock::iterator BBI = BB->begin();
   // Ignore dbg intrinsics.
@@ -4056,7 +4056,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
         return SimplifyCFG(BB, TTI, DL) | true;
     } else {
       // If Successor #1 has multiple preds, we may be able to conditionally
-      // execute Successor #0 if it branches to successor #1.
+      // execute Successor #0 if it branches to Successor #1.
       TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
       if (Succ0TI->getNumSuccessors() == 1 &&
           Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
@@ -4065,7 +4065,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     }
   } else if (BI->getSuccessor(1)->getSinglePredecessor()) {
     // If Successor #0 has multiple preds, we may be able to conditionally
-    // execute Successor #1 if it branches to successor #0.
+    // execute Successor #1 if it branches to Successor #0.
     TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
     if (Succ1TI->getNumSuccessors() == 1 &&
         Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
