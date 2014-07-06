@@ -83,8 +83,7 @@ void test___leave() {
   // Clang accepts try with __finally. MSVC doesn't. (Maybe a Borland thing?)
   // __leave in mixed blocks isn't supported.
   try {
-    // FIXME: should say "__leave stmt not in __try block":
-    __leave; // expected-error{{not implemented yet}}
+    __leave; // expected-error{{'__leave' statement not in __try block}}
   } __finally {
   }
 }

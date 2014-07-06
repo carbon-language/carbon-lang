@@ -3279,6 +3279,12 @@ Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
 
 StmtResult
 Sema::ActOnSEHLeaveStmt(SourceLocation Loc, Scope *CurScope) {
+  Scope *SEHTryParent = CurScope;
+  while (SEHTryParent && !SEHTryParent->isSEHTryScope())
+    SEHTryParent = SEHTryParent->getParent();
+  if (!SEHTryParent)
+    return StmtError(Diag(Loc, diag::err_ms___leave_not_in___try));
+
   return StmtError(Diag(Loc, diag::err_ms___leave_unimplemented));
 }
 

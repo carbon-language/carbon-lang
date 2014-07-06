@@ -182,6 +182,9 @@ void Scope::dumpImpl(raw_ostream &OS) const {
     } else if (Flags & FnTryCatchScope) {
       OS << "FnTryCatchScope";
       Flags &= ~FnTryCatchScope;
+    } else if (Flags & SEHTryScope) {
+      OS << "SEHTryScope";
+      Flags &= ~SEHTryScope;
     } else if (Flags & OpenMPDirectiveScope) {
       OS << "OpenMPDirectiveScope";
       Flags &= ~OpenMPDirectiveScope;
