@@ -1,5 +1,5 @@
 // REQUIRES: x86-registered-target
-// RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify -fms-extensions  -Wno-missing-declarations -x objective-c++ %s
+// RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify -fms-extensions  %s
 // expected-no-diagnostics
 
 void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
