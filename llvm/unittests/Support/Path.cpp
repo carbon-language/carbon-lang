@@ -559,7 +559,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   }
   {
     auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
-    EXPECT_FALSE(Buf);
+    EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\r\n");
   }
 
@@ -570,7 +570,7 @@ TEST_F(FileSystemTest, CarriageReturn) {
   }
   {
     auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
-    EXPECT_FALSE(Buf);
+    EXPECT_TRUE((bool)Buf);
     EXPECT_EQ(Buf.get()->getBuffer(), "\n");
   }
   ASSERT_NO_ERROR(fs::remove(Twine(FilePathname)));
