@@ -332,3 +332,28 @@ void TestProperty() {
 
 //expected-warning@+1 {{C++ operator 'and' (aka '&&') used as a macro name}}
 #define and foo
+
+struct __declspec(uuid("00000000-0000-0000-C000-000000000046")) __declspec(novtable) IUnknown {}; // expected-warning{{__declspec attribute 'novtable' is not supported}}
+
+typedef bool (__stdcall __stdcall *blarg)(int);
+
+void local_callconv() {
+  bool (__stdcall *p)(int);
+}
+
+struct S7 {
+	int foo() { return 12; }
+	__declspec(property(get=foo) deprecated) int t; // expected-note {{'t' has been explicitly marked deprecated here}}
+};
+
+// Technically, this is legal (though it does nothing)
+__declspec() void quux( void ) {
+  struct S7 s;
+  int i = s.t;	// expected-warning {{'t' is deprecated}}
+}
+
+void *_alloca(int);
+
+void foo(void) {
+  __declspec(align(16)) int *buffer = (int *)_alloca(9);
+}
