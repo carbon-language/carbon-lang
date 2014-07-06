@@ -558,9 +558,9 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    std::unique_ptr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
-    EXPECT_EQ(Buf->getBuffer(), "\r\n");
+    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    EXPECT_FALSE(Buf);
+    EXPECT_EQ(Buf.get()->getBuffer(), "\r\n");
   }
 
   {
@@ -569,9 +569,9 @@ TEST_F(FileSystemTest, CarriageReturn) {
     File << '\n';
   }
   {
-    std::unique_ptr<MemoryBuffer> Buf;
-    MemoryBuffer::getFile(FilePathname.c_str(), Buf);
-    EXPECT_EQ(Buf->getBuffer(), "\n");
+    auto Buf = MemoryBuffer::getFile(FilePathname.c_str());
+    EXPECT_FALSE(Buf);
+    EXPECT_EQ(Buf.get()->getBuffer(), "\n");
   }
   ASSERT_NO_ERROR(fs::remove(Twine(FilePathname)));
 }
