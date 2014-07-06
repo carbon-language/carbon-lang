@@ -478,10 +478,11 @@ static void PrintSize(uint64_t Bits) {
 /// AnalyzeBitcode - Analyze the bitcode file specified by InputFilename.
 static int AnalyzeBitcode() {
   // Read the input file.
-  std::unique_ptr<MemoryBuffer> MemBuf;
-
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, MemBuf))
-    return Error("Error reading '" + InputFilename + "': " + ec.message());
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
+      MemoryBuffer::getFileOrSTDIN(InputFilename);
+  if (std::error_code EC = MemBufOrErr.getError())
+    return Error("Error reading '" + InputFilename + "': " + EC.message());
+  std::unique_ptr<MemoryBuffer> MemBuf = std::move(MemBufOrErr.get());
 
   if (MemBuf->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");

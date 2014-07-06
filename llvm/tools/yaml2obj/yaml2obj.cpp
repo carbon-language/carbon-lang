@@ -91,8 +91,9 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  std::unique_ptr<MemoryBuffer> Buf;
-  if (MemoryBuffer::getFileOrSTDIN(Input, Buf))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
+      MemoryBuffer::getFileOrSTDIN(Input);
+  if (!Buf)
     return 1;
 
   ConvertFuncPtr Convert = nullptr;
@@ -105,7 +106,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  yaml::Input YIn(Buf->getBuffer());
+  yaml::Input YIn(Buf.get()->getBuffer());
 
   int Res = convertYAML(YIn, Out->os(), Convert);
   if (Res == 0)

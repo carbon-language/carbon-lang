@@ -438,11 +438,15 @@ class LineConsumer {
   StringRef Remaining;
 public:
   LineConsumer(StringRef Filename) {
-    if (std::error_code EC = MemoryBuffer::getFileOrSTDIN(Filename, Buffer)) {
+    ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+        MemoryBuffer::getFileOrSTDIN(Filename);
+    if (std::error_code EC = BufferOrErr.getError()) {
       errs() << Filename << ": " << EC.message() << "\n";
       Remaining = "";
-    } else
+    } else {
+      Buffer = std::move(BufferOrErr.get());
       Remaining = Buffer->getBuffer();
+    }
   }
   bool empty() { return Remaining.empty(); }
   void printNext(raw_ostream &OS, uint32_t LineNum) {

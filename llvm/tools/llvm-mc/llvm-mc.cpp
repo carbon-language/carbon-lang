@@ -367,13 +367,13 @@ int main(int argc, char **argv) {
   if (!TheTarget)
     return 1;
 
-  std::unique_ptr<MemoryBuffer> BufferPtr;
-  if (std::error_code ec =
-          MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr)) {
-    errs() << ProgName << ": " << ec.message() << '\n';
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferPtr =
+      MemoryBuffer::getFileOrSTDIN(InputFilename);
+  if (std::error_code EC = BufferPtr.getError()) {
+    errs() << ProgName << ": " << EC.message() << '\n';
     return 1;
   }
-  MemoryBuffer *Buffer = BufferPtr.release();
+  MemoryBuffer *Buffer = BufferPtr->release();
 
   SourceMgr SrcMgr;
 

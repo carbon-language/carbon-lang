@@ -52,20 +52,22 @@ SourceMgr::~SourceMgr() {
 size_t SourceMgr::AddIncludeFile(const std::string &Filename,
                                  SMLoc IncludeLoc,
                                  std::string &IncludedFile) {
-  std::unique_ptr<MemoryBuffer> NewBuf;
   IncludedFile = Filename;
-  MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> NewBufOrErr =
+      MemoryBuffer::getFile(IncludedFile.c_str());
 
   // If the file didn't exist directly, see if it's in an include path.
-  for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBuf; ++i) {
-    IncludedFile = IncludeDirectories[i] + sys::path::get_separator().data() + Filename;
-    MemoryBuffer::getFile(IncludedFile.c_str(), NewBuf);
+  for (unsigned i = 0, e = IncludeDirectories.size(); i != e && !NewBufOrErr;
+       ++i) {
+    IncludedFile =
+        IncludeDirectories[i] + sys::path::get_separator().data() + Filename;
+    NewBufOrErr = MemoryBuffer::getFile(IncludedFile.c_str());
   }
 
-  if (!NewBuf)
+  if (!NewBufOrErr)
     return 0;
 
-  return AddNewSourceBuffer(NewBuf.release(), IncludeLoc);
+  return AddNewSourceBuffer(NewBufOrErr.get().release(), IncludeLoc);
 }
 
 unsigned SourceMgr::FindBufferContainingLoc(SMLoc Loc) const {

@@ -23,8 +23,11 @@ using namespace llvm;
 
 static std::error_code
 setupMemoryBuffer(std::string Path, std::unique_ptr<MemoryBuffer> &Buffer) {
-  if (std::error_code EC = MemoryBuffer::getFileOrSTDIN(Path, Buffer))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFileOrSTDIN(Path);
+  if (std::error_code EC = BufferOrErr.getError())
     return EC;
+  Buffer = std::move(BufferOrErr.get());
 
   // Sanity check the file.
   if (Buffer->getBufferSize() > std::numeric_limits<unsigned>::max())

@@ -83,8 +83,9 @@ ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
 }
 
 ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
-  std::unique_ptr<MemoryBuffer> File;
-  if (std::error_code EC = MemoryBuffer::getFile(ObjectPath, File))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+      MemoryBuffer::getFile(ObjectPath);
+  if (std::error_code EC = FileOrErr.getError())
     return EC;
-  return createObjectFile(File);
+  return createObjectFile(FileOrErr.get());
 }

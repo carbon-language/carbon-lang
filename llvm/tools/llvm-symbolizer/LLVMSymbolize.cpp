@@ -220,10 +220,11 @@ static std::string getDarwinDWARFResourceForPath(const std::string &Path) {
 }
 
 static bool checkFileCRC(StringRef Path, uint32_t CRCHash) {
-  std::unique_ptr<MemoryBuffer> MB;
-  if (MemoryBuffer::getFileOrSTDIN(Path, MB))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MB =
+      MemoryBuffer::getFileOrSTDIN(Path);
+  if (!MB)
     return false;
-  return !zlib::isAvailable() || CRCHash == zlib::crc32(MB->getBuffer());
+  return !zlib::isAvailable() || CRCHash == zlib::crc32(MB.get()->getBuffer());
 }
 
 static bool findDebugBinary(const std::string &OrigPath,

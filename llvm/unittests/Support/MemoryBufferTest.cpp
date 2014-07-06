@@ -77,11 +77,11 @@ TEST_F(MemoryBufferTest, NullTerminator4K) {
   }
   OF.close();
 
-  OwningBuffer MB;
-  std::error_code EC = MemoryBuffer::getFile(TestPath.c_str(), MB);
+  ErrorOr<OwningBuffer> MB = MemoryBuffer::getFile(TestPath.c_str());
+  std::error_code EC = MB.getError();
   ASSERT_FALSE(EC);
 
-  const char *BufData = MB->getBufferStart();
+  const char *BufData = MB.get()->getBufferStart();
   EXPECT_EQ('f', BufData[4095]);
   EXPECT_EQ('\0', BufData[4096]);
 }
@@ -146,15 +146,16 @@ void MemoryBufferTest::testGetOpenFileSlice(bool Reopen) {
     EXPECT_FALSE(sys::fs::openFileForRead(TestPath.c_str(), TestFD));
   }
 
-  OwningBuffer Buf;
-  std::error_code EC =
-      MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(), Buf,
+  ErrorOr<OwningBuffer> Buf =
+      MemoryBuffer::getOpenFileSlice(TestFD, TestPath.c_str(),
                                      40000, // Size
                                      80000  // Offset
                                      );
+
+  std::error_code EC = Buf.getError();
   EXPECT_FALSE(EC);
 
-  StringRef BufData = Buf->getBuffer();
+  StringRef BufData = Buf.get()->getBuffer();
   EXPECT_EQ(BufData.size(), 40000U);
   EXPECT_EQ(BufData[0], '0');
   EXPECT_EQ(BufData[9], '9');

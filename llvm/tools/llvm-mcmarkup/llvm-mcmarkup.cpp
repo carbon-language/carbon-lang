@@ -135,12 +135,13 @@ MarkupTag MarkupParser::parseTag() {
 }
 
 static void parseMCMarkup(StringRef Filename) {
-  std::unique_ptr<MemoryBuffer> BufferPtr;
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, BufferPtr)) {
-    errs() << ToolName << ": " << ec.message() << '\n';
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferPtr =
+      MemoryBuffer::getFileOrSTDIN(Filename);
+  if (std::error_code EC = BufferPtr.getError()) {
+    errs() << ToolName << ": " << EC.message() << '\n';
     return;
   }
-  MemoryBuffer *Buffer = BufferPtr.release();
+  MemoryBuffer *Buffer = BufferPtr->release();
 
   SourceMgr SrcMgr;
 

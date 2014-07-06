@@ -41,14 +41,15 @@ Module *llvm::ParseAssembly(MemoryBuffer *F,
 
 Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
                                 LLVMContext &Context) {
-  std::unique_ptr<MemoryBuffer> File;
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, File)) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+      MemoryBuffer::getFileOrSTDIN(Filename);
+  if (std::error_code EC = FileOrErr.getError()) {
     Err = SMDiagnostic(Filename, SourceMgr::DK_Error,
-                       "Could not open input file: " + ec.message());
+                       "Could not open input file: " + EC.message());
     return nullptr;
   }
 
-  return ParseAssembly(File.release(), nullptr, Err, Context);
+  return ParseAssembly(FileOrErr.get().release(), nullptr, Err, Context);
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,

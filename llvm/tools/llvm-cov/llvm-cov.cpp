@@ -97,27 +97,29 @@ void reportCoverage(StringRef SourceFile) {
                          : InputGCDA;
   GCOVFile GF;
 
-  std::unique_ptr<MemoryBuffer> GCNO_Buff;
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(GCNO, GCNO_Buff)) {
-    errs() << GCNO << ": " << ec.message() << "\n";
+  ErrorOr<std::unique_ptr<MemoryBuffer>> GCNO_Buff =
+      MemoryBuffer::getFileOrSTDIN(GCNO);
+  if (std::error_code EC = GCNO_Buff.getError()) {
+    errs() << GCNO << ": " << EC.message() << "\n";
     return;
   }
-  GCOVBuffer GCNO_GB(GCNO_Buff.get());
+  GCOVBuffer GCNO_GB(GCNO_Buff.get().get());
   if (!GF.readGCNO(GCNO_GB)) {
     errs() << "Invalid .gcno File!\n";
     return;
   }
 
-  std::unique_ptr<MemoryBuffer> GCDA_Buff;
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(GCDA, GCDA_Buff)) {
-    if (ec != errc::no_such_file_or_directory) {
-      errs() << GCDA << ": " << ec.message() << "\n";
+  ErrorOr<std::unique_ptr<MemoryBuffer>> GCDA_Buff =
+      MemoryBuffer::getFileOrSTDIN(GCDA);
+  if (std::error_code EC = GCDA_Buff.getError()) {
+    if (EC != errc::no_such_file_or_directory) {
+      errs() << GCDA << ": " << EC.message() << "\n";
       return;
     }
     // Clear the filename to make it clear we didn't read anything.
     GCDA = "-";
   } else {
-    GCOVBuffer GCDA_GB(GCDA_Buff.get());
+    GCOVBuffer GCDA_GB(GCDA_Buff.get().get());
     if (!GF.readGCDA(GCDA_GB)) {
       errs() << "Invalid .gcda File!\n";
       return;

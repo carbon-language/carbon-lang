@@ -54,12 +54,13 @@ SpecialCaseList *SpecialCaseList::create(
     const StringRef Path, std::string &Error) {
   if (Path.empty())
     return new SpecialCaseList();
-  std::unique_ptr<MemoryBuffer> File;
-  if (std::error_code EC = MemoryBuffer::getFile(Path, File)) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+      MemoryBuffer::getFile(Path);
+  if (std::error_code EC = FileOrErr.getError()) {
     Error = (Twine("Can't open file '") + Path + "': " + EC.message()).str();
     return nullptr;
   }
-  return create(File.get(), Error);
+  return create(FileOrErr.get().get(), Error);
 }
 
 SpecialCaseList *SpecialCaseList::create(

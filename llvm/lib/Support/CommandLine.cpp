@@ -631,9 +631,11 @@ void cl::TokenizeWindowsCommandLine(StringRef Src, StringSaver &Saver,
 static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
                                TokenizerCallback Tokenizer,
                                SmallVectorImpl<const char *> &NewArgv) {
-  std::unique_ptr<MemoryBuffer> MemBuf;
-  if (MemoryBuffer::getFile(FName, MemBuf))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MemBufOrErr =
+      MemoryBuffer::getFile(FName);
+  if (!MemBufOrErr)
     return false;
+  std::unique_ptr<MemoryBuffer> MemBuf = std::move(MemBufOrErr.get());
   StringRef Str(MemBuf->getBufferStart(), MemBuf->getBufferSize());
 
   // If we have a UTF-16 byte order mark, convert to UTF-8 for parsing.

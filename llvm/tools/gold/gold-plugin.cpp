@@ -280,11 +280,14 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     if (file->offset) {
       offset = file->offset;
     }
-    if (std::error_code ec = MemoryBuffer::getOpenFileSlice(
-            file->fd, file->name, buffer, file->filesize, offset)) {
-      (*message)(LDPL_ERROR, ec.message().c_str());
+    ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+        MemoryBuffer::getOpenFileSlice(file->fd, file->name, file->filesize,
+                                       offset);
+    if (std::error_code EC = BufferOrErr.getError()) {
+      (*message)(LDPL_ERROR, EC.message().c_str());
       return LDPS_ERR;
     }
+    buffer = std::move(BufferOrErr.get());
     view = buffer->getBufferStart();
   }
 

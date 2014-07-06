@@ -75,8 +75,9 @@ ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> &Buffer,
 }
 
 ErrorOr<Binary *> object::createBinary(StringRef Path) {
-  std::unique_ptr<MemoryBuffer> File;
-  if (std::error_code EC = MemoryBuffer::getFileOrSTDIN(Path, File))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
+      MemoryBuffer::getFileOrSTDIN(Path);
+  if (std::error_code EC = FileOrErr.getError())
     return EC;
-  return createBinary(File);
+  return createBinary(FileOrErr.get());
 }

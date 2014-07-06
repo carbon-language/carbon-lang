@@ -88,10 +88,10 @@ bool lto_module_is_object_file(const char* path) {
 
 bool lto_module_is_object_file_for_target(const char* path,
                                           const char* target_triplet_prefix) {
-  std::unique_ptr<MemoryBuffer> buffer;
-  if (MemoryBuffer::getFile(path, buffer))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buffer = MemoryBuffer::getFile(path);
+  if (!Buffer)
     return false;
-  return LTOModule::isBitcodeForTarget(buffer.get(), target_triplet_prefix);
+  return LTOModule::isBitcodeForTarget(Buffer->get(), target_triplet_prefix);
 }
 
 bool lto_module_is_object_file_in_memory(const void* mem, size_t length) {

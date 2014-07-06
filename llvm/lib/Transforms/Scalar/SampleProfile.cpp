@@ -450,13 +450,14 @@ void SampleModuleProfile::dump() {
 ///
 /// \returns true if the file was loaded successfully, false otherwise.
 bool SampleModuleProfile::loadText() {
-  std::unique_ptr<MemoryBuffer> Buffer;
-  std::error_code EC = MemoryBuffer::getFile(Filename, Buffer);
-  if (EC) {
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFile(Filename);
+  if (std::error_code EC = BufferOrErr.getError()) {
     std::string Msg(EC.message());
     M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
     return false;
   }
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
   line_iterator LineIt(*Buffer, '#');
 
   // Read the profile of each function. Since each function may be

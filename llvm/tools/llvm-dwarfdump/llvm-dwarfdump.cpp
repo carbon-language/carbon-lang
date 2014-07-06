@@ -66,14 +66,15 @@ DumpType("debug-dump", cl::init(DIDT_All),
         clEnumValEnd));
 
 static void DumpInput(const StringRef &Filename) {
-  std::unique_ptr<MemoryBuffer> Buff;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buff =
+      MemoryBuffer::getFileOrSTDIN(Filename);
 
-  if (std::error_code ec = MemoryBuffer::getFileOrSTDIN(Filename, Buff)) {
-    errs() << Filename << ": " << ec.message() << "\n";
+  if (std::error_code EC = Buff.getError()) {
+    errs() << Filename << ": " << EC.message() << "\n";
     return;
   }
 
-  ErrorOr<ObjectFile *> ObjOrErr(ObjectFile::createObjectFile(Buff));
+  ErrorOr<ObjectFile *> ObjOrErr(ObjectFile::createObjectFile(Buff.get()));
   if (std::error_code EC = ObjOrErr.getError()) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;

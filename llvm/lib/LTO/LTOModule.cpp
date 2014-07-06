@@ -69,12 +69,13 @@ bool LTOModule::isBitcodeForTarget(MemoryBuffer *buffer,
 
 LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
                                      std::string &errMsg) {
-  std::unique_ptr<MemoryBuffer> buffer;
-  if (std::error_code ec = MemoryBuffer::getFile(path, buffer)) {
-    errMsg = ec.message();
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFile(path);
+  if (std::error_code EC = BufferOrErr.getError()) {
+    errMsg = EC.message();
     return nullptr;
   }
-  return makeLTOModule(std::move(buffer), options, errMsg);
+  return makeLTOModule(std::move(BufferOrErr.get()), options, errMsg);
 }
 
 LTOModule *LTOModule::createFromOpenFile(int fd, const char *path, size_t size,
@@ -87,13 +88,13 @@ LTOModule *LTOModule::createFromOpenFileSlice(int fd, const char *path,
                                               size_t map_size, off_t offset,
                                               TargetOptions options,
                                               std::string &errMsg) {
-  std::unique_ptr<MemoryBuffer> buffer;
-  if (std::error_code ec =
-          MemoryBuffer::getOpenFileSlice(fd, path, buffer, map_size, offset)) {
-    errMsg = ec.message();
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getOpenFileSlice(fd, path, map_size, offset);
+  if (std::error_code EC = BufferOrErr.getError()) {
+    errMsg = EC.message();
     return nullptr;
   }
-  return makeLTOModule(std::move(buffer), options, errMsg);
+  return makeLTOModule(std::move(BufferOrErr.get()), options, errMsg);
 }
 
 LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,

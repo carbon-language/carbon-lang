@@ -805,9 +805,11 @@ static bool checkMachOAndArchFlags(SymbolicFile *O, std::string &Filename) {
 }
 
 static void dumpSymbolNamesFromFile(std::string &Filename) {
-  std::unique_ptr<MemoryBuffer> Buffer;
-  if (error(MemoryBuffer::getFileOrSTDIN(Filename, Buffer), Filename))
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFileOrSTDIN(Filename);
+  if (error(BufferOrErr.getError(), Filename))
     return;
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
 
   LLVMContext &Context = getGlobalContext();
   ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer, &Context);

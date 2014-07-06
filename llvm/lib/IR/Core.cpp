@@ -2606,28 +2606,24 @@ LLVMBool LLVMCreateMemoryBufferWithContentsOfFile(
     LLVMMemoryBufferRef *OutMemBuf,
     char **OutMessage) {
 
-  std::unique_ptr<MemoryBuffer> MB;
-  std::error_code ec;
-  if (!(ec = MemoryBuffer::getFile(Path, MB))) {
-    *OutMemBuf = wrap(MB.release());
-    return 0;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr = MemoryBuffer::getFile(Path);
+  if (std::error_code EC = MBOrErr.getError()) {
+    *OutMessage = strdup(EC.message().c_str());
+    return 1;
   }
-
-  *OutMessage = strdup(ec.message().c_str());
-  return 1;
+  *OutMemBuf = wrap(MBOrErr.get().release());
+  return 0;
 }
 
 LLVMBool LLVMCreateMemoryBufferWithSTDIN(LLVMMemoryBufferRef *OutMemBuf,
                                          char **OutMessage) {
-  std::unique_ptr<MemoryBuffer> MB;
-  std::error_code ec;
-  if (!(ec = MemoryBuffer::getSTDIN(MB))) {
-    *OutMemBuf = wrap(MB.release());
-    return 0;
+  ErrorOr<std::unique_ptr<MemoryBuffer>> MBOrErr = MemoryBuffer::getSTDIN();
+  if (std::error_code EC = MBOrErr.getError()) {
+    *OutMessage = strdup(EC.message().c_str());
+    return 1;
   }
-
-  *OutMessage = strdup(ec.message().c_str());
-  return 1;
+  *OutMemBuf = wrap(MBOrErr.get().release());
+  return 0;
 }
 
 LLVMMemoryBufferRef LLVMCreateMemoryBufferWithMemoryRange(

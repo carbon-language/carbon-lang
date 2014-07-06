@@ -175,14 +175,16 @@ static int printLineInfoForInput() {
     RuntimeDyld Dyld(&MemMgr);
 
     // Load the input memory buffer.
-    std::unique_ptr<MemoryBuffer> InputBuffer;
-    std::unique_ptr<ObjectImage> LoadedObject;
-    if (std::error_code ec =
-            MemoryBuffer::getFileOrSTDIN(InputFileList[i], InputBuffer))
-      return Error("unable to read input: '" + ec.message() + "'");
 
+    ErrorOr<std::unique_ptr<MemoryBuffer>> InputBuffer =
+        MemoryBuffer::getFileOrSTDIN(InputFileList[i]);
+    if (std::error_code EC = InputBuffer.getError())
+      return Error("unable to read input: '" + EC.message() + "'");
+
+    std::unique_ptr<ObjectImage> LoadedObject;
     // Load the object file
-    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
+    LoadedObject.reset(
+        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
@@ -236,14 +238,14 @@ static int executeInput() {
     InputFileList.push_back("-");
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Load the input memory buffer.
-    std::unique_ptr<MemoryBuffer> InputBuffer;
+    ErrorOr<std::unique_ptr<MemoryBuffer>> InputBuffer =
+        MemoryBuffer::getFileOrSTDIN(InputFileList[i]);
+    if (std::error_code EC = InputBuffer.getError())
+      return Error("unable to read input: '" + EC.message() + "'");
     std::unique_ptr<ObjectImage> LoadedObject;
-    if (std::error_code ec =
-            MemoryBuffer::getFileOrSTDIN(InputFileList[i], InputBuffer))
-      return Error("unable to read input: '" + ec.message() + "'");
-
     // Load the object file
-    LoadedObject.reset(Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
+    LoadedObject.reset(
+        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }
@@ -285,13 +287,14 @@ static int executeInput() {
 
 static int checkAllExpressions(RuntimeDyldChecker &Checker) {
   for (const auto& CheckerFileName : CheckFiles) {
-    std::unique_ptr<MemoryBuffer> CheckerFileBuf;
-    if (std::error_code EC =
-          MemoryBuffer::getFileOrSTDIN(CheckerFileName, CheckerFileBuf))
+    ErrorOr<std::unique_ptr<MemoryBuffer>> CheckerFileBuf =
+        MemoryBuffer::getFileOrSTDIN(CheckerFileName);
+    if (std::error_code EC = CheckerFileBuf.getError())
       return Error("unable to read input '" + CheckerFileName + "': " +
                    EC.message());
 
-    if (!Checker.checkAllRulesInBuffer("# rtdyld-check:", CheckerFileBuf.get()))
+    if (!Checker.checkAllRulesInBuffer("# rtdyld-check:",
+                                       CheckerFileBuf.get().get()))
       return Error("some checks in '" + CheckerFileName + "' failed");
   }
   return 0;
@@ -350,15 +353,15 @@ static int linkAndVerify() {
     InputFileList.push_back("-");
   for(unsigned i = 0, e = InputFileList.size(); i != e; ++i) {
     // Load the input memory buffer.
-    std::unique_ptr<MemoryBuffer> InputBuffer;
-    std::unique_ptr<ObjectImage> LoadedObject;
-    if (std::error_code ec =
-            MemoryBuffer::getFileOrSTDIN(InputFileList[i], InputBuffer))
-      return Error("unable to read input: '" + ec.message() + "'");
+    ErrorOr<std::unique_ptr<MemoryBuffer>> InputBuffer =
+        MemoryBuffer::getFileOrSTDIN(InputFileList[i]);
+    if (std::error_code EC = InputBuffer.getError())
+      return Error("unable to read input: '" + EC.message() + "'");
 
+    std::unique_ptr<ObjectImage> LoadedObject;
     // Load the object file
     LoadedObject.reset(
-      Dyld.loadObject(new ObjectBuffer(InputBuffer.release())));
+        Dyld.loadObject(new ObjectBuffer(InputBuffer.get().release())));
     if (!LoadedObject) {
       return Error(Dyld.getErrorString());
     }

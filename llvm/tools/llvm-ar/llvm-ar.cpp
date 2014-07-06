@@ -770,10 +770,10 @@ static void performWriteOperation(ArchiveOperation Operation,
       const char *Filename = Member.getNew();
       int FD = Member.getFD();
       const sys::fs::file_status &Status = Member.getStatus();
-      failIfError(MemoryBuffer::getOpenFile(FD, Filename, MemberBuffer,
-                                            Status.getSize(), false),
-                  Filename);
-
+      ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
+          MemoryBuffer::getOpenFile(FD, Filename, Status.getSize(), false);
+      failIfError(MemberBufferOrErr.getError(), Filename);
+      MemberBuffer = std::move(MemberBufferOrErr.get());
     } else {
       object::Archive::child_iterator OldMember = Member.getOld();
       ErrorOr<std::unique_ptr<MemoryBuffer>> MemberBufferOrErr =
@@ -934,8 +934,9 @@ int ar_main(char **argv) {
 
 static int performOperation(ArchiveOperation Operation) {
   // Create or open the archive object.
-  std::unique_ptr<MemoryBuffer> Buf;
-  std::error_code EC = MemoryBuffer::getFile(ArchiveName, Buf, -1, false);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
+      MemoryBuffer::getFile(ArchiveName, -1, false);
+  std::error_code EC = Buf.getError();
   if (EC && EC != errc::no_such_file_or_directory) {
     errs() << ToolName << ": error opening '" << ArchiveName
            << "': " << EC.message() << "!\n";
@@ -943,7 +944,7 @@ static int performOperation(ArchiveOperation Operation) {
   }
 
   if (!EC) {
-    object::Archive Archive(std::move(Buf), EC);
+    object::Archive Archive(std::move(Buf.get()), EC);
 
     if (EC) {
       errs() << ToolName << ": error loading '" << ArchiveName
