@@ -3277,6 +3277,11 @@ Sema::ActOnSEHFinallyBlock(SourceLocation Loc,
   return SEHFinallyStmt::Create(Context,Loc,Block);
 }
 
+StmtResult
+Sema::ActOnSEHLeaveStmt(SourceLocation Loc, Scope *CurScope) {
+  return StmtError(Diag(Loc, diag::err_ms___leave_unimplemented));
+}
+
 StmtResult Sema::BuildMSDependentExistsStmt(SourceLocation KeywordLoc,
                                             bool IsIfExists,
                                             NestedNameSpecifierLoc QualifierLoc,

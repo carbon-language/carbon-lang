@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -fborland-extensions -fcxx-exceptions %s
-// expected-no-diagnostics
 
 // This test is from http://docwiki.embarcadero.com/RADStudio/en/Try
 
@@ -76,4 +75,16 @@ void Finally() {
 template void Except<void>();
 template void Finally<void>();
 
+}
+
+void test___leave() {
+  // Most tests are in __try.c.
+
+  // Clang accepts try with __finally. MSVC doesn't. (Maybe a Borland thing?)
+  // __leave in mixed blocks isn't supported.
+  try {
+    // FIXME: should say "__leave stmt not in __try block":
+    __leave; // expected-error{{not implemented yet}}
+  } __finally {
+  }
 }

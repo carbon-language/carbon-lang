@@ -170,3 +170,28 @@ void TEST() {
   (void)GetExceptionInformation(); // expected-error{{only allowed in __except filter expression}}
   (void)AbnormalTermination();  // expected-error{{only allowed in __finally block}}
 }
+
+void test___leave() {
+  // FIXME: should say "__leave stmt not in __try block":
+  __leave; // expected-error{{not implemented yet}}
+  __try {
+    // FIXME: should be fine
+    __leave; // expected-error{{not implemented yet}}
+    // FIXME: should say "expected ';' after __leave statement"
+    __leave 4; // expected-error{{not implemented yet}} expected-warning{{expression result unused}}
+  } __except(1) {
+    // FIXME: should say "__leave stmt not in __try block":
+    __leave; // expected-error{{not implemented yet}}
+  }
+
+  __try {
+    // FIXME: should be fine
+    __leave; // expected-error{{not implemented yet}}
+  } __finally {
+    // FIXME: should say "__leave stmt not in __try block":
+    __leave; // expected-error{{not implemented yet}}
+  }
+  // FIXME: should say "__leave stmt not in __try block":
+  __leave; // expected-error{{not implemented yet}}
+}
+

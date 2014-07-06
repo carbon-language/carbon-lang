@@ -1668,6 +1668,7 @@ private:
   StmtResult ParseSEHTryBlockCommon(SourceLocation Loc);
   StmtResult ParseSEHExceptBlock(SourceLocation Loc);
   StmtResult ParseSEHFinallyBlock(SourceLocation Loc);
+  StmtResult ParseSEHLeaveStatement();
 
   //===--------------------------------------------------------------------===//
   // Objective-C Statements
