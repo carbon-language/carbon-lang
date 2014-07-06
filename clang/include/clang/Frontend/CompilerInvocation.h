@@ -52,9 +52,9 @@ bool ParseDiagnosticArgs(DiagnosticOptions &Opts, llvm::opt::ArgList &Args,
 class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
   void operator=(const CompilerInvocationBase &) LLVM_DELETED_FUNCTION;
 
-protected:
+public:
   /// Options controlling the language variant.
-  IntrusiveRefCntPtr<LangOptions> LangOpts;
+  std::shared_ptr<LangOptions> LangOpts;
 
   /// Options controlling the target.
   IntrusiveRefCntPtr<TargetOptions> TargetOpts;
@@ -68,7 +68,6 @@ protected:
   /// Options controlling the preprocessor (aside from \#include handling).
   IntrusiveRefCntPtr<PreprocessorOptions> PreprocessorOpts;
 
-public:
   CompilerInvocationBase();
   ~CompilerInvocationBase();
 

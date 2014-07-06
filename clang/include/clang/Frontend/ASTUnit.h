@@ -83,7 +83,7 @@ public:
   };
 
 private:
-  IntrusiveRefCntPtr<LangOptions>         LangOpts;
+  std::shared_ptr<LangOptions>            LangOpts;
   IntrusiveRefCntPtr<DiagnosticsEngine>   Diagnostics;
   IntrusiveRefCntPtr<FileManager>         FileMgr;
   IntrusiveRefCntPtr<SourceManager>       SourceMgr;
