@@ -323,7 +323,7 @@ def : Pat<(AArch64LOADgot tconstpool:$addr),
 // System instructions.
 //===----------------------------------------------------------------------===//
 
-def HINT  : HintI<"hint">;
+def HINT : HintI<"hint">;
 def : InstAlias<"nop",  (HINT 0b000)>;
 def : InstAlias<"yield",(HINT 0b001)>;
 def : InstAlias<"wfe",  (HINT 0b010)>;
