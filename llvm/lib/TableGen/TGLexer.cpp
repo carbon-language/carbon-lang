@@ -28,8 +28,8 @@ using namespace llvm;
 
 TGLexer::TGLexer(SourceMgr &SM) : SrcMgr(SM) {
   CurBuffer = SrcMgr.getMainFileID();
-  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-  CurPtr = CurBuf->getBufferStart();
+  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer();
+  CurPtr = CurBuf.begin();
   TokStart = nullptr;
 }
 
@@ -52,7 +52,7 @@ int TGLexer::getNextChar() {
   case 0: {
     // A nul character in the stream is either the end of the current buffer or
     // a random nul in the file.  Disambiguate that here.
-    if (CurPtr-1 != CurBuf->getBufferEnd())
+    if (CurPtr-1 != CurBuf.end())
       return 0;  // Just whitespace.
     
     // If this is the end of an included file, pop the parent file off the
@@ -60,7 +60,7 @@ int TGLexer::getNextChar() {
     SMLoc ParentIncludeLoc = SrcMgr.getParentIncludeLoc(CurBuffer);
     if (ParentIncludeLoc != SMLoc()) {
       CurBuffer = SrcMgr.FindBufferContainingLoc(ParentIncludeLoc);
-      CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
+      CurBuf = SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer();
       CurPtr = ParentIncludeLoc.getPointer();
       return getNextChar();
     }
@@ -187,7 +187,7 @@ tgtok::TokKind TGLexer::LexString() {
   
   while (*CurPtr != '"') {
     // If we hit the end of the buffer, report an error.
-    if (*CurPtr == 0 && CurPtr == CurBuf->getBufferEnd())
+    if (*CurPtr == 0 && CurPtr == CurBuf.end())
       return ReturnError(StrStart, "End of file in string literal");
     
     if (*CurPtr == '\n' || *CurPtr == '\r')
@@ -220,7 +220,7 @@ tgtok::TokKind TGLexer::LexString() {
 
     // If we hit the end of the buffer, report an error.
     case '\0':
-      if (CurPtr == CurBuf->getBufferEnd())
+      if (CurPtr == CurBuf.end())
         return ReturnError(StrStart, "End of file in string literal");
       // FALL THROUGH
     default:
@@ -319,8 +319,8 @@ bool TGLexer::LexInclude() {
   }
   Dependencies.insert(std::make_pair(IncludedFile, getLoc()));
   // Save the line number and lex buffer of the includer.
-  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer);
-  CurPtr = CurBuf->getBufferStart();
+  CurBuf = SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer();
+  CurPtr = CurBuf.begin();
   return false;
 }
 
@@ -333,7 +333,7 @@ void TGLexer::SkipBCPLComment() {
       return;  // Newline is end of comment.
     case 0:
       // If this is the end of the buffer, end the comment.
-      if (CurPtr == CurBuf->getBufferEnd())
+      if (CurPtr == CurBuf.end())
         return;
       break;
     }
