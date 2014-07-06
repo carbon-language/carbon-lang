@@ -16,6 +16,22 @@ using namespace clang;
 using namespace arcmt;
 using namespace markup;
 
+static StringRef getLevelName(DiagnosticsEngine::Level Level) {
+  switch (Level) {
+  case DiagnosticsEngine::Ignored:
+    llvm_unreachable("ignored");
+  case DiagnosticsEngine::Note:
+    return "note";
+  case DiagnosticsEngine::Remark:
+  case DiagnosticsEngine::Warning:
+    return "warning";
+  case DiagnosticsEngine::Fatal:
+  case DiagnosticsEngine::Error:
+    return "error";
+  }
+  llvm_unreachable("Invalid DiagnosticsEngine level!");
+}
+
 void arcmt::writeARCDiagsToPlist(const std::string &outPath,
                                  ArrayRef<StoredDiagnostic> diags,
                                  SourceManager &SM,
@@ -84,12 +100,7 @@ void arcmt::writeARCDiagsToPlist(const std::string &outPath,
     EmitString(o, DiagIDs.getCategoryNameFromID(
                           DiagIDs.getCategoryNumberForDiag(D.getID()))) << '\n';
     o << "   <key>type</key>";
-    if (D.getLevel() >= DiagnosticsEngine::Error)
-      EmitString(o, "error") << '\n';
-    else if (D.getLevel() == DiagnosticsEngine::Warning)
-      EmitString(o, "warning") << '\n';
-    else
-      EmitString(o, "note") << '\n';
+    EmitString(o, getLevelName(D.getLevel())) << '\n';
 
     // Output the location of the bug.
     o << "  <key>location</key>\n";
