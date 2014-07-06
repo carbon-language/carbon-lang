@@ -22,7 +22,6 @@
 using namespace llvm;
 
 AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
-  CurBuf = nullptr;
   CurPtr = nullptr;
   isAtStartOfLine = true;
   AllowAtInIdentifier = !StringRef(MAI.getCommentString()).startswith("@");
@@ -31,13 +30,13 @@ AsmLexer::AsmLexer(const MCAsmInfo &_MAI) : MAI(_MAI)  {
 AsmLexer::~AsmLexer() {
 }
 
-void AsmLexer::setBuffer(const MemoryBuffer *buf, const char *ptr) {
-  CurBuf = buf;
+void AsmLexer::setBuffer(StringRef Buf, const char *ptr) {
+  CurBuf = Buf;
 
   if (ptr)
     CurPtr = ptr;
   else
-    CurPtr = CurBuf->getBufferStart();
+    CurPtr = CurBuf.begin();
 
   TokStart = nullptr;
 }
@@ -58,7 +57,7 @@ int AsmLexer::getNextChar() {
   case 0:
     // A nul character in the stream is either the end of the current buffer or
     // a random nul in the file.  Disambiguate that here.
-    if (CurPtr-1 != CurBuf->getBufferEnd())
+    if (CurPtr - 1 != CurBuf.end())
       return 0;  // Just whitespace.
 
     // Otherwise, return end of file.
@@ -420,9 +419,8 @@ StringRef AsmLexer::LexUntilEndOfStatement() {
 
   while (!isAtStartOfComment(*CurPtr) &&    // Start of line comment.
          !isAtStatementSeparator(CurPtr) && // End of statement marker.
-         *CurPtr != '\n' &&
-         *CurPtr != '\r' &&
-         (*CurPtr != 0 || CurPtr != CurBuf->getBufferEnd())) {
+         *CurPtr != '\n' && *CurPtr != '\r' &&
+         (*CurPtr != 0 || CurPtr != CurBuf.end())) {
     ++CurPtr;
   }
   return StringRef(TokStart, CurPtr-TokStart);
@@ -431,9 +429,8 @@ StringRef AsmLexer::LexUntilEndOfStatement() {
 StringRef AsmLexer::LexUntilEndOfLine() {
   TokStart = CurPtr;
 
-  while (*CurPtr != '\n' &&
-         *CurPtr != '\r' &&
-         (*CurPtr != 0 || CurPtr != CurBuf->getBufferEnd())) {
+  while (*CurPtr != '\n' && *CurPtr != '\r' &&
+         (*CurPtr != 0 || CurPtr != CurBuf.end())) {
     ++CurPtr;
   }
   return StringRef(TokStart, CurPtr-TokStart);
