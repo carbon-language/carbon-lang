@@ -42,8 +42,10 @@ StringRef getELFRelocationTypeName(uint32_t Machine, uint32_t Type);
 inline std::pair<unsigned char, unsigned char>
 getElfArchType(StringRef Object) {
   if (Object.size() < ELF::EI_NIDENT)
-    return std::make_pair(ELF::ELFCLASSNONE, ELF::ELFDATANONE);
-  return std::make_pair(Object[ELF::EI_CLASS], Object[ELF::EI_DATA]);
+    return std::make_pair((uint8_t)ELF::ELFCLASSNONE,
+                          (uint8_t)ELF::ELFDATANONE);
+  return std::make_pair((uint8_t)Object[ELF::EI_CLASS],
+                        (uint8_t)Object[ELF::EI_DATA]);
 }
 
 template <class ELFT>
