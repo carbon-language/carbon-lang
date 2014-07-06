@@ -37,7 +37,9 @@ int t4() {
   foo.b = 2;
   __asm {
      lea ebx, foo
-     mov eax, [ebx].foo.a
+     {
+       mov eax, [ebx].foo.a
+     }
      mov [ebx].foo.b, ecx
   }
   return foo.b;

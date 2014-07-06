@@ -52,6 +52,11 @@ void t7() {
   __asm {
     int 0x2c ; } asm comments are fun! }{
   }
+  __asm {
+    {
+      int 0x2c ; } asm comments are fun! }{
+    }
+  }
   __asm {}
 // CHECK: t7
 // CHECK: call void asm sideeffect inteldialect "int $$0x2c", "~{dirflag},~{fpsr},~{flags}"()
@@ -73,8 +78,8 @@ int t8() {
 void t9() {
   __asm {
     push ebx
-    mov ebx, 0x07
-    pop ebx
+    { mov ebx, 0x07 }
+    __asm { pop ebx }
   }
 // CHECK: t9
 // CHECK: call void asm sideeffect inteldialect "push ebx\0A\09mov ebx, $$0x07\0A\09pop ebx", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"()
@@ -129,7 +134,7 @@ void t14() {
   unsigned i = 1, j = 2;
   __asm {
     .if 1
-    mov eax, i
+    { mov eax, i }
     .else
     mov ebx, j
     .endif
