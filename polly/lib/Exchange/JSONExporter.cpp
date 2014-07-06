@@ -191,8 +191,9 @@ bool JSONImporter::runOnScop(Scop &scop) {
   std::string FunctionName = R.getEntry()->getParent()->getName();
   errs() << "Reading JScop '" << R.getNameStr() << "' in function '"
          << FunctionName << "' from '" << FileName << "'.\n";
-  std::unique_ptr<MemoryBuffer> result;
-  std::error_code ec = MemoryBuffer::getFile(FileName, result);
+  ErrorOr<std::unique_ptr<MemoryBuffer>> result =
+      MemoryBuffer::getFile(FileName);
+  std::error_code ec = result.getError();
 
   if (ec) {
     errs() << "File could not be read: " << ec.message() << "\n";
@@ -202,7 +203,7 @@ bool JSONImporter::runOnScop(Scop &scop) {
   Json::Reader reader;
   Json::Value jscop;
 
-  bool parsingSuccessful = reader.parse(result->getBufferStart(), jscop);
+  bool parsingSuccessful = reader.parse(result.get()->getBufferStart(), jscop);
 
   if (!parsingSuccessful) {
     errs() << "JSCoP file could not be parsed\n";
