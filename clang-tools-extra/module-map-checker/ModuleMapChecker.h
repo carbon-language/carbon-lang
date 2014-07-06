@@ -59,7 +59,7 @@ class ModuleMapChecker {
   // Supporting objects.
 
   /// Options controlling the language variant.
-  llvm::IntrusiveRefCntPtr<clang::LangOptions> LangOpts;
+  std::shared_ptr<clang::LangOptions> LangOpts;
   /// Diagnostic IDs.
   const llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagIDs;
   /// Options controlling the diagnostic engine.
@@ -69,7 +69,7 @@ class ModuleMapChecker {
   /// Diagnostic engine.
   llvm::IntrusiveRefCntPtr<clang::DiagnosticsEngine> Diagnostics;
   /// Options controlling the target.
-  llvm::IntrusiveRefCntPtr<clang::TargetOptions> TargetOpts;
+  std::shared_ptr<clang::TargetOptions> TargetOpts;
   /// Target information.
   llvm::IntrusiveRefCntPtr<clang::TargetInfo> Target;
   /// Options controlling the file system manager.

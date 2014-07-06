@@ -215,7 +215,7 @@ ModuleMapChecker::ModuleMapChecker(StringRef ModuleMapPath,
       Diagnostics(
           new DiagnosticsEngine(DiagIDs, DiagnosticOpts.get(), &DC, false)),
       TargetOpts(new ModuleMapTargetOptions()),
-      Target(TargetInfo::CreateTargetInfo(*Diagnostics, TargetOpts.get())),
+      Target(TargetInfo::CreateTargetInfo(*Diagnostics, TargetOpts)),
       FileMgr(new FileManager(FileSystemOpts)),
       SourceMgr(new SourceManager(*Diagnostics, *FileMgr, false)),
       HeaderSearchOpts(new HeaderSearchOptions()),
