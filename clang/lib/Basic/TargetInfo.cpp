@@ -242,10 +242,10 @@ bool TargetInfo::isTypeSigned(IntType T) {
   };
 }
 
-/// setForcedLangOptions - Set forced language options.
+/// adjust - Set forced language options.
 /// Apply changes to the target information with respect to certain
 /// language options which change the target configuration.
-void TargetInfo::setForcedLangOptions(LangOptions &Opts) {
+void TargetInfo::adjust(const LangOptions &Opts) {
   if (Opts.NoBitFieldTypeAlign)
     UseBitFieldTypeAlignment = false;
   if (Opts.ShortWChar)

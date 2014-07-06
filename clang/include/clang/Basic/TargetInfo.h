@@ -630,7 +630,7 @@ public:
   ///
   /// Apply changes to the target information with respect to certain
   /// language options which change the target configuration.
-  virtual void setForcedLangOptions(LangOptions &Opts);
+  virtual void adjust(const LangOptions &Opts);
 
   /// \brief Get the default set of target features for the CPU;
   /// this should include all legal feature strings on the target.
