@@ -1,9 +1,11 @@
-// RUN: %clangxx_msan -O0 %s -o %t && %run %t %p
-// RUN: %clangxx_msan -O2 %s -o %t && %run %t %p
-// RUN: %clang_msan -O0 -xc %s -o %t && %run %t %p
-// RUN: %clang_msan -O2 -xc %s -o %t && %run %t %p
-// RUN: %clang_msan -O0 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %p
-// RUN: %clang_msan -O2 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %p
+// RUN: echo "abcde" > %t-testdata
+// RUN: echo "12345" >> %t-testdata
+// RUN: %clangxx_msan -O0 %s -o %t && %run %t %t-testdata
+// RUN: %clangxx_msan -O2 %s -o %t && %run %t %t-testdata
+// RUN: %clang_msan -O0 -xc %s -o %t && %run %t %t-testdata
+// RUN: %clang_msan -O2 -xc %s -o %t && %run %t %t-testdata
+// RUN: %clang_msan -O0 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %t-testdata
+// RUN: %clang_msan -O2 -xc -D_GNU_SOURCE=1 %s -o %t && %run %t %t-testdata
 
 #include <assert.h>
 #include <stdio.h>
@@ -12,10 +14,9 @@
 
 int main(int argc, char **argv) {
   assert(argc == 2);
-  char buf[1024];
-  snprintf(buf, sizeof(buf), "%s/%s", argv[1], "getline_test_data");
+  printf("%s\n", argv[1]);
 
-  FILE *fp = fopen(buf, "r");
+  FILE *fp = fopen(argv[1], "r");
   assert(fp);
 
   char *line = 0;
@@ -27,7 +28,7 @@ int main(int argc, char **argv) {
   n = getline(&line, &len, fp);
   assert(n == 6);
   assert(strcmp(line, "12345\n") == 0);
-  
+
   free(line);
   fclose(fp);
 
