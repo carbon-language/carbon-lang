@@ -434,7 +434,9 @@ TEST_F(LibclangReparseTest, ReparseWithModule) {
   WriteFile(HeaderName, std::string(HeaderTop) + HeaderBottom);
   WriteFile(ModName, ModFile);
 
-  const char *Args[] = { "-fmodules", "-I", TestDir.c_str() };
+  std::string ModulesCache = std::string("-fmodules-cache-path=") + TestDir;
+  const char *Args[] = { "-fmodules", ModulesCache.c_str(),
+                         "-I", TestDir.c_str() };
   int NumArgs = sizeof(Args) / sizeof(Args[0]);
   ClangTU = clang_parseTranslationUnit(Index, MName.c_str(), Args, NumArgs,
                                        nullptr, 0, TUFlags);
