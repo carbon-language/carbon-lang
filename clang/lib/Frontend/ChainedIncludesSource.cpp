@@ -126,17 +126,14 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
     } else {
       assert(!serialBufs.empty());
       SmallVector<llvm::MemoryBuffer *, 4> bufs;
-      for (unsigned si = 0, se = serialBufs.size(); si != se; ++si) {
-        bufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(
-                             StringRef(serialBufs[si]->getBufferStart(),
-                                             serialBufs[si]->getBufferSize())));
-      }
+      // TODO: Pass through the existing MemoryBuffer instances instead of
+      // allocating new ones.
+      for (auto *SB : serialBufs)
+        bufs.push_back(llvm::MemoryBuffer::getMemBuffer(SB->getBuffer()));
       std::string pchName = includes[i-1];
       llvm::raw_string_ostream os(pchName);
       os << ".pch" << i-1;
-      os.flush();
-      
-      serialBufNames.push_back(pchName);
+      serialBufNames.push_back(os.str());
 
       IntrusiveRefCntPtr<ASTReader> Reader;
       Reader = createASTReader(*Clang, pchName, bufs, serialBufNames, 
@@ -151,11 +148,8 @@ ChainedIncludesSource::create(CompilerInstance &CI) {
       return nullptr;
 
     ParseAST(Clang->getSema());
-    OS.flush();
     Clang->getDiagnosticClient().EndSourceFile();
-    serialBufs.push_back(
-      llvm::MemoryBuffer::getMemBufferCopy(StringRef(serialAST.data(),
-                                                           serialAST.size())));
+    serialBufs.push_back(llvm::MemoryBuffer::getMemBufferCopy(OS.str()));
     source->CIs.push_back(Clang.release());
   }
 
