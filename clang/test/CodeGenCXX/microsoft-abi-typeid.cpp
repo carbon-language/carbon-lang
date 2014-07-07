@@ -13,15 +13,15 @@ A* fn();
 
 const std::type_info* test0_typeid() { return &typeid(int); }
 // CHECK-LABEL: define %struct.type_info* @"\01?test0_typeid@@YAPBUtype_info@@XZ"()
-// CHECK:   ret %struct.type_info* bitcast (%"MSRTTITypeDescriptor\02"* @"\01??_R0H@8" to %struct.type_info*)
+// CHECK:   ret %struct.type_info* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to %struct.type_info*)
 
 const std::type_info* test1_typeid() { return &typeid(A); }
 // CHECK-LABEL: define %struct.type_info* @"\01?test1_typeid@@YAPBUtype_info@@XZ"()
-// CHECK:   ret %struct.type_info* bitcast (%"MSRTTITypeDescriptor\07"* @"\01??_R0?AUA@@@8" to %struct.type_info*)
+// CHECK:   ret %struct.type_info* bitcast (%rtti.TypeDescriptor7* @"\01??_R0?AUA@@@8" to %struct.type_info*)
 
 const std::type_info* test2_typeid() { return &typeid(&a); }
 // CHECK-LABEL: define %struct.type_info* @"\01?test2_typeid@@YAPBUtype_info@@XZ"()
-// CHECK:   ret %struct.type_info* bitcast (%"MSRTTITypeDescriptor\07"* @"\01??_R0PAUA@@@8" to %struct.type_info*)
+// CHECK:   ret %struct.type_info* bitcast (%rtti.TypeDescriptor7* @"\01??_R0PAUA@@@8" to %struct.type_info*)
 
 const std::type_info* test3_typeid() { return &typeid(*fn()); }
 // CHECK-LABEL: define %struct.type_info* @"\01?test3_typeid@@YAPBUtype_info@@XZ"()
@@ -43,7 +43,7 @@ const std::type_info* test3_typeid() { return &typeid(*fn()); }
 
 const std::type_info* test4_typeid() { return &typeid(b); }
 // CHECK: define %struct.type_info* @"\01?test4_typeid@@YAPBUtype_info@@XZ"()
-// CHECK:   ret %struct.type_info* bitcast (%"MSRTTITypeDescriptor\02"* @"\01??_R0H@8" to %struct.type_info*)
+// CHECK:   ret %struct.type_info* bitcast (%rtti.TypeDescriptor2* @"\01??_R0H@8" to %struct.type_info*)
 
 const std::type_info* test5_typeid() { return &typeid(v); }
 // CHECK: define %struct.type_info* @"\01?test5_typeid@@YAPBUtype_info@@XZ"()
