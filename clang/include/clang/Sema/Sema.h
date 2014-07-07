@@ -7312,15 +7312,16 @@ public:
                                           SourceLocation EndLoc);
   /// \brief Called on well-formed '\#pragma omp simd' after parsing
   /// of the associated statement.
-  StmtResult ActOnOpenMPSimdDirective(ArrayRef<OMPClause *> Clauses,
-                                      Stmt *AStmt,
-                                      SourceLocation StartLoc,
-                                      SourceLocation EndLoc);
+  StmtResult ActOnOpenMPSimdDirective(
+      ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
+      SourceLocation EndLoc,
+      llvm::DenseMap<VarDecl *, Expr *> &VarsWithImplicitDSA);
   /// \brief Called on well-formed '\#pragma omp for' after parsing
   /// of the associated statement.
-  StmtResult ActOnOpenMPForDirective(ArrayRef<OMPClause *> Clauses, Stmt *AStmt,
-                                     SourceLocation StartLoc,
-                                     SourceLocation EndLoc);
+  StmtResult ActOnOpenMPForDirective(
+      ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
+      SourceLocation EndLoc,
+      llvm::DenseMap<VarDecl *, Expr *> &VarsWithImplicitDSA);
   /// \brief Called on well-formed '\#pragma omp sections' after parsing
   /// of the associated statement.
   StmtResult ActOnOpenMPSectionsDirective(ArrayRef<OMPClause *> Clauses,
@@ -7335,6 +7336,12 @@ public:
   StmtResult ActOnOpenMPSingleDirective(ArrayRef<OMPClause *> Clauses,
                                         Stmt *AStmt, SourceLocation StartLoc,
                                         SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp parallel for' after parsing
+  /// of the  associated statement.
+  StmtResult ActOnOpenMPParallelForDirective(
+      ArrayRef<OMPClause *> Clauses, Stmt *AStmt, SourceLocation StartLoc,
+      SourceLocation EndLoc,
+      llvm::DenseMap<VarDecl *, Expr *> &VarsWithImplicitDSA);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,

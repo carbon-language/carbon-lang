@@ -815,6 +815,11 @@ void StmtPrinter::VisitOMPSingleDirective(OMPSingleDirective *Node) {
   PrintOMPExecutableDirective(Node);
 }
 
+void StmtPrinter::VisitOMPParallelForDirective(OMPParallelForDirective *Node) {
+  Indent() << "#pragma omp parallel for ";
+  PrintOMPExecutableDirective(Node);
+}
+
 //===----------------------------------------------------------------------===//
 //  Expr printing methods.
 //===----------------------------------------------------------------------===//

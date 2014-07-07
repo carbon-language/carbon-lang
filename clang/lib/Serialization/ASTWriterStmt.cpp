@@ -1851,6 +1851,14 @@ void ASTStmtWriter::VisitOMPSingleDirective(OMPSingleDirective *D) {
   Code = serialization::STMT_OMP_SINGLE_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  Record.push_back(D->getCollapsedNumber());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_PARALLEL_FOR_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//

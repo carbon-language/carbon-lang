@@ -23,6 +23,7 @@ using namespace clang;
 OpenMPDirectiveKind clang::getOpenMPDirectiveKind(StringRef Str) {
   return llvm::StringSwitch<OpenMPDirectiveKind>(Str)
 #define OPENMP_DIRECTIVE(Name) .Case(#Name, OMPD_##Name)
+#define OPENMP_DIRECTIVE_EXT(Name, Str) .Case(Str, OMPD_##Name)
 #include "clang/Basic/OpenMPKinds.def"
       .Default(OMPD_unknown);
 }
@@ -35,6 +36,9 @@ const char *clang::getOpenMPDirectiveName(OpenMPDirectiveKind Kind) {
 #define OPENMP_DIRECTIVE(Name)                                                 \
   case OMPD_##Name:                                                            \
     return #Name;
+#define OPENMP_DIRECTIVE_EXT(Name, Str)                                        \
+  case OMPD_##Name:                                                            \
+    return Str;
 #include "clang/Basic/OpenMPKinds.def"
     break;
   }
@@ -213,6 +217,16 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
       break;
     }
     break;
+  case OMPD_parallel_for:
+    switch (CKind) {
+#define OPENMP_PARALLEL_FOR_CLAUSE(Name)                                       \
+  case OMPC_##Name:                                                            \
+    return true;
+#include "clang/Basic/OpenMPKinds.def"
+    default:
+      break;
+    }
+    break;
   case OMPD_unknown:
   case OMPD_threadprivate:
   case OMPD_task:
@@ -223,16 +237,19 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
 }
 
 bool clang::isOpenMPLoopDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_simd || DKind == OMPD_for; // TODO add next directives.
+  return DKind == OMPD_simd || DKind == OMPD_for ||
+         DKind == OMPD_parallel_for; // TODO add next directives.
 }
 
 bool clang::isOpenMPWorksharingDirective(OpenMPDirectiveKind DKind) {
   return DKind == OMPD_for || DKind == OMPD_sections || DKind == OMPD_section ||
-         DKind == OMPD_single; // TODO add next directives.
+         DKind == OMPD_single ||
+         DKind == OMPD_parallel_for; // TODO add next directives.
 }
 
 bool clang::isOpenMPParallelDirective(OpenMPDirectiveKind DKind) {
-  return DKind == OMPD_parallel; // TODO add next directives.
+  return DKind == OMPD_parallel ||
+         DKind == OMPD_parallel_for; // TODO add next directives.
 }
 
 bool clang::isOpenMPSimdDirective(OpenMPDirectiveKind DKind) {

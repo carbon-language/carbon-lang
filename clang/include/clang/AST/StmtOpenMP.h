@@ -527,6 +527,78 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp parallel for' directive.
+///
+/// \code
+/// #pragma omp parallel for private(a,b) reduction(+:c,d)
+/// \endcode
+/// In this example directive '#pragma omp parallel for' has clauses 'private'
+/// with the variables 'a' and 'b' and 'reduction' with operator '+' and
+/// variables 'c' and 'd'.
+///
+class OMPParallelForDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Number of collapsed loops as specified by 'collapse' clause.
+  unsigned CollapsedNum;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  OMPParallelForDirective(SourceLocation StartLoc, SourceLocation EndLoc,
+                          unsigned CollapsedNum, unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPParallelForDirectiveClass,
+                               OMPD_parallel_for, StartLoc, EndLoc, NumClauses,
+                               1),
+        CollapsedNum(CollapsedNum) {}
+
+  /// \brief Build an empty directive.
+  ///
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  explicit OMPParallelForDirective(unsigned CollapsedNum, unsigned NumClauses)
+      : OMPExecutableDirective(this, OMPParallelForDirectiveClass,
+                               OMPD_parallel_for, SourceLocation(),
+                               SourceLocation(), NumClauses, 1),
+        CollapsedNum(CollapsedNum) {}
+
+public:
+  /// \brief Creates directive with a list of \a Clauses.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param CollapsedNum Number of collapsed loops.
+  /// \param Clauses List of clauses.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPParallelForDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc,
+         unsigned CollapsedNum, ArrayRef<OMPClause *> Clauses,
+         Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive with the place
+  /// for \a NumClauses clauses.
+  ///
+  /// \param C AST context.
+  /// \param CollapsedNum Number of collapsed nested loops.
+  /// \param NumClauses Number of clauses.
+  ///
+  static OMPParallelForDirective *CreateEmpty(const ASTContext &C,
+                                              unsigned NumClauses,
+                                              unsigned CollapsedNum,
+                                              EmptyShell);
+
+  unsigned getCollapsedNumber() const { return CollapsedNum; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPParallelForDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

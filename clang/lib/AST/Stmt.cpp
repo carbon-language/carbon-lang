@@ -1478,3 +1478,29 @@ OMPSingleDirective *OMPSingleDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPSingleDirective(NumClauses);
 }
 
+OMPParallelForDirective *
+OMPParallelForDirective::Create(const ASTContext &C, SourceLocation StartLoc,
+                                SourceLocation EndLoc, unsigned CollapsedNum,
+                                ArrayRef<OMPClause *> Clauses,
+                                Stmt *AssociatedStmt) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPParallelForDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * Clauses.size() + sizeof(Stmt *));
+  OMPParallelForDirective *Dir = new (Mem)
+      OMPParallelForDirective(StartLoc, EndLoc, CollapsedNum, Clauses.size());
+  Dir->setClauses(Clauses);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPParallelForDirective *
+OMPParallelForDirective::CreateEmpty(const ASTContext &C, unsigned NumClauses,
+                                     unsigned CollapsedNum, EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPParallelForDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem =
+      C.Allocate(Size + sizeof(OMPClause *) * NumClauses + sizeof(Stmt *));
+  return new (Mem) OMPParallelForDirective(CollapsedNum, NumClauses);
+}
+

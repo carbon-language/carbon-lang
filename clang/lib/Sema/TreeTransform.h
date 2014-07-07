@@ -6483,6 +6483,17 @@ TreeTransform<Derived>::TransformOMPSingleDirective(OMPSingleDirective *D) {
   return Res;
 }
 
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPParallelForDirective(
+    OMPParallelForDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_parallel_for, DirName,
+                                             nullptr, D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP clause transformation
 //===----------------------------------------------------------------------===//

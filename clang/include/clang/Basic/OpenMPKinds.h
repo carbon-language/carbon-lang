@@ -23,6 +23,8 @@ namespace clang {
 enum OpenMPDirectiveKind {
 #define OPENMP_DIRECTIVE(Name) \
   OMPD_##Name,
+#define OPENMP_DIRECTIVE_EXT(Name, Str) \
+  OMPD_##Name,
 #include "clang/Basic/OpenMPKinds.def"
   OMPD_unknown
 };

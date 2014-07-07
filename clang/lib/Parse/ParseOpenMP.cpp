@@ -25,6 +25,26 @@ using namespace clang;
 // OpenMP declarative directives.
 //===----------------------------------------------------------------------===//
 
+static OpenMPDirectiveKind ParseOpenMPDirectiveKind(Parser &P) {
+  auto Tok = P.getCurToken();
+  auto DKind =
+      Tok.isAnnotation()
+          ? OMPD_unknown
+          : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
+  if (DKind == OMPD_parallel) {
+    Tok = P.getPreprocessor().LookAhead(0);
+    auto SDKind =
+        Tok.isAnnotation()
+            ? OMPD_unknown
+            : getOpenMPDirectiveKind(P.getPreprocessor().getSpelling(Tok));
+    if (SDKind == OMPD_for) {
+      P.ConsumeToken();
+      DKind = OMPD_parallel_for;
+    }
+  }
+  return DKind;
+}
+
 /// \brief Parsing of declarative OpenMP directives.
 ///
 ///       threadprivate-directive:
@@ -36,9 +56,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 
   SourceLocation Loc = ConsumeToken();
   SmallVector<Expr *, 5> Identifiers;
-  OpenMPDirectiveKind DKind = Tok.isAnnotation()
-                                  ? OMPD_unknown
-                                  : getOpenMPDirectiveKind(PP.getSpelling(Tok));
+  auto DKind = ParseOpenMPDirectiveKind(*this);
 
   switch (DKind) {
   case OMPD_threadprivate:
@@ -66,6 +84,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_sections:
   case OMPD_section:
   case OMPD_single:
+  case OMPD_parallel_for:
     Diag(Tok, diag::err_omp_unexpected_directive)
         << getOpenMPDirectiveName(DKind);
     break;
@@ -82,7 +101,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///
 ///       executable-directive:
 ///         annot_pragma_openmp 'parallel' | 'simd' | 'for' | 'sections' |
-///         'section' | 'single' {clause} annot_pragma_openmp_end
+///         'section' | 'single' | 'parallel for' {clause} annot_pragma_openmp_end
 ///
 StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   assert(Tok.is(tok::annot_pragma_openmp) && "Not an OpenMP directive!");
@@ -94,9 +113,7 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   unsigned ScopeFlags =
       Scope::FnScope | Scope::DeclScope | Scope::OpenMPDirectiveScope;
   SourceLocation Loc = ConsumeToken(), EndLoc;
-  OpenMPDirectiveKind DKind = Tok.isAnnotation()
-                                  ? OMPD_unknown
-                                  : getOpenMPDirectiveKind(PP.getSpelling(Tok));
+  auto DKind = ParseOpenMPDirectiveKind(*this);
   // Name of critical directive.
   DeclarationNameInfo DirName;
   StmtResult Directive = StmtError();
@@ -123,7 +140,8 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   case OMPD_for:
   case OMPD_sections:
   case OMPD_single:
-  case OMPD_section: {
+  case OMPD_section:
+  case OMPD_parallel_for: {
     ConsumeToken();
 
     if (isOpenMPLoopDirective(DKind))

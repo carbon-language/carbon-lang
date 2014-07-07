@@ -380,6 +380,11 @@ void StmtProfiler::VisitOMPSingleDirective(const OMPSingleDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void
+StmtProfiler::VisitOMPParallelForDirective(const OMPParallelForDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

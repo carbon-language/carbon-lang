@@ -90,3 +90,8 @@ void CodeGenFunction::EmitOMPSingleDirective(const OMPSingleDirective &) {
   llvm_unreachable("CodeGen for 'omp single' is not supported yet.");
 }
 
+void
+CodeGenFunction::EmitOMPParallelForDirective(const OMPParallelForDirective &) {
+  llvm_unreachable("CodeGen for 'omp parallel for' is not supported yet.");
+}
+

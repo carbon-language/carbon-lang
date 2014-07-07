@@ -1943,6 +1943,13 @@ void ASTStmtReader::VisitOMPSingleDirective(OMPSingleDirective *D) {
   VisitOMPExecutableDirective(D);
 }
 
+void ASTStmtReader::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
+  VisitStmt(D);
+  // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
+  Idx += 2;
+  VisitOMPExecutableDirective(D);
+}
+
 //===----------------------------------------------------------------------===//
 // ASTReader Implementation
 //===----------------------------------------------------------------------===//
@@ -2454,6 +2461,14 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       S = OMPSingleDirective::CreateEmpty(
           Context, Record[ASTStmtReader::NumStmtFields], Empty);
       break;
+
+    case STMT_OMP_PARALLEL_FOR_DIRECTIVE: {
+      unsigned NumClauses = Record[ASTStmtReader::NumStmtFields];
+      unsigned CollapsedNum = Record[ASTStmtReader::NumStmtFields + 1];
+      S = OMPParallelForDirective::CreateEmpty(Context, NumClauses,
+                                               CollapsedNum, Empty);
+      break;
+    }
 
     case EXPR_CXX_OPERATOR_CALL:
       S = new (Context) CXXOperatorCallExpr(Context, Empty);

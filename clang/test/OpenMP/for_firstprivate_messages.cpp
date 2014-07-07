@@ -252,7 +252,7 @@ int main(int argc, char **argv) {
     foo();
 #pragma omp parallel
 #pragma omp for firstprivate(i) // expected-note {{defined as firstprivate}}
-  for (i = 0; i < argc; ++i)    // expected-error {{loop iteration variable may not be firstprivate}}
+  for (i = 0; i < argc; ++i)    // expected-error {{loop iteration variable in the associated loop of 'omp for' directive may not be firstprivate, predetermined as private}}
     foo();
 #pragma omp parallel shared(xa)
 #pragma omp for firstprivate(xa) // OK: may be firstprivate
