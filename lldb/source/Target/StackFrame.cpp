@@ -1444,13 +1444,12 @@ StackFrame::GetStatus (Stream& strm,
             const uint32_t source_lines_after = debugger.GetStopSourceLineCount(false);
             disasm_display = debugger.GetStopDisassemblyDisplay ();
 
-            if (source_lines_before > 0 || source_lines_after > 0)
+            GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
+            if (m_sc.comp_unit && m_sc.line_entry.IsValid())
             {
-                GetSymbolContext(eSymbolContextCompUnit | eSymbolContextLineEntry);
-
-                if (m_sc.comp_unit && m_sc.line_entry.IsValid())
+                have_source = true;
+                if (source_lines_before > 0 || source_lines_after > 0)
                 {
-                    have_source = true;
                     target->GetSourceManager().DisplaySourceLinesWithLineNumbers (m_sc.line_entry.file,
                                                                                       m_sc.line_entry.line,
                                                                                       source_lines_before,
