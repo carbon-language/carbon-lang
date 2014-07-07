@@ -47,8 +47,15 @@ int main(int argc, char **argv) {
   std::auto_ptr<Module> M;
 
   {
+#if LLVM_350_AND_NEWER
+    ErrorOr<std::unique_ptr<MemoryBuffer>> BufferOrErr =
+      MemoryBuffer::getFile(InputFilename);
+    std::unique_ptr<MemoryBuffer> &BufferPtr = BufferOrErr.get();
+    if (std::error_code  ec = BufferOrErr.getError())
+#else
     UNIQUE_PTR<MemoryBuffer> BufferPtr;
     if (ERROR_CODE ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
+#endif
       ErrorMessage = ec.message();
     else {
 #if LLVM_VERSION_MAJOR > 3 || (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
