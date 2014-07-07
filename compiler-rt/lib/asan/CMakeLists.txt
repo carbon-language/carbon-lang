@@ -61,11 +61,6 @@ set(ASAN_DYNAMIC_LIBS stdc++ m c)
 append_if(COMPILER_RT_HAS_LIBPTHREAD pthread ASAN_DYNAMIC_LIBS)
 append_if(COMPILER_RT_HAS_LIBDL dl ASAN_DYNAMIC_LIBS)
 
-if (NOT MSVC)
-  set_source_files_properties(${ASAN_ASM_SOURCES} PROPERTIES LANGUAGE C)
-  list(APPEND ASAN_SOURCES ${ASAN_ASM_SOURCES})
-endif()
-
 # Compile ASan sources into an object library.
 if(APPLE)
   foreach(os ${SANITIZER_COMMON_SUPPORTED_DARWIN_OS})
