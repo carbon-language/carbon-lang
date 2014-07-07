@@ -38,7 +38,6 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
-#include <sys/stat.h>
 
 using namespace clang::driver;
 using namespace clang::driver::tools;

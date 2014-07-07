@@ -26,7 +26,6 @@
 #include <algorithm>
 #include <cstring>
 #include <string>
-#include <sys/stat.h>
 
 using namespace clang;
 using namespace SrcMgr;

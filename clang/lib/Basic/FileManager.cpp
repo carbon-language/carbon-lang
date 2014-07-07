@@ -32,9 +32,6 @@
 
 using namespace clang;
 
-// FIXME: Enhance libsystem to support inode and other fields.
-#include <sys/stat.h>
-
 /// NON_EXISTENT_DIR - A special value distinct from null that is used to
 /// represent a dir name that doesn't exist on the disk.
 #define NON_EXISTENT_DIR reinterpret_cast<DirectoryEntry*>((intptr_t)-1)

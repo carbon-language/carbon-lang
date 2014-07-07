@@ -19,8 +19,6 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FileSystem.h"
 #include <memory>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 namespace clang {
 

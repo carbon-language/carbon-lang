@@ -17,7 +17,6 @@
 #include "clang/Serialization/ASTBitCodes.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/OnDiskHashTable.h"
-#include <sys/stat.h>
 #include <utility>
 
 namespace clang {

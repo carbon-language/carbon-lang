@@ -47,7 +47,6 @@
 #include <atomic>
 #include <cstdio>
 #include <cstdlib>
-#include <sys/stat.h>
 using namespace clang;
 
 using llvm::TimeRecord;
