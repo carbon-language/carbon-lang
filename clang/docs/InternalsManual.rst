@@ -1852,13 +1852,14 @@ are similar.
    * Make sure that ``children()`` visits all of the subexpressions.  This is
      important for a number of features (e.g., IDE support, C++ variadic
      templates).  If you have sub-types, you'll also need to visit those
-     sub-types in the ``RecursiveASTVisitor``.
-   * Add printing support (``StmtPrinter.cpp``) and dumping support
-     (``StmtDumper.cpp``) for your expression.
+     sub-types in ``RecursiveASTVisitor`` and ``DataRecursiveASTVisitor``.
+   * Add printing support (``StmtPrinter.cpp``) for your expression.
    * Add profiling support (``StmtProfile.cpp``) for your AST node, noting the
      distinguishing (non-source location) characteristics of an instance of
      your expression.  Omitting this step will lead to hard-to-diagnose
      failures regarding matching of template declarations.
+   * Add serialization support (``ASTReaderStmt.cpp``, ``ASTWriterStmt.cpp``)
+     for your AST node.
 
 #. Teach semantic analysis to build your AST node.  At this point, you can wire
    up your ``Sema::BuildXXX`` function to actually create your AST.  A few
