@@ -2728,10 +2728,11 @@ MSRTTIBuilder::getBaseClassArray(SmallVectorImpl<MSRTTIClass> &Classes) {
   // mode) bytes of padding.  We provide a pointer sized amount of padding by
   // adding +1 to Classes.size().  The sections have pointer alignment and are
   // marked pick-any so it shouldn't matter.
-  auto PtrType = ABI.getImageRelativeType(
+  llvm::Type *PtrType = ABI.getImageRelativeType(
       ABI.getBaseClassDescriptorType()->getPointerTo());
-  auto ArrayType = llvm::ArrayType::get(PtrType, Classes.size() + 1);
-  auto BCA = new llvm::GlobalVariable(Module, ArrayType,
+  auto *ArrType = llvm::ArrayType::get(PtrType, Classes.size() + 1);
+  auto *BCA = new llvm::GlobalVariable(
+      Module, ArrType,
       /*Constant=*/true, Linkage, /*Initializer=*/nullptr, MangledName.c_str());
 
   // Initialize the BaseClassArray.
@@ -2740,7 +2741,7 @@ MSRTTIBuilder::getBaseClassArray(SmallVectorImpl<MSRTTIClass> &Classes) {
     BaseClassArrayData.push_back(
         ABI.getImageRelativeConstant(getBaseClassDescriptor(Class)));
   BaseClassArrayData.push_back(llvm::Constant::getNullValue(PtrType));
-  BCA->setInitializer(llvm::ConstantArray::get(ArrayType, BaseClassArrayData));
+  BCA->setInitializer(llvm::ConstantArray::get(ArrType, BaseClassArrayData));
   return BCA;
 }
 
@@ -2764,7 +2765,7 @@ MSRTTIBuilder::getBaseClassDescriptor(const MSRTTIClass &Class) {
         Class.Flags, Out);
   }
 
-  // Check to see if we've already declared declared this object.
+  // Check to see if we've already declared this object.
   if (auto BCD = Module.getNamedGlobal(MangledName))
     return BCD;
 
