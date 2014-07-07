@@ -46,7 +46,6 @@ add_clang_library(clangCodeGen
   CGOpenCLRuntime.cpp
   CGOpenMPRuntime.cpp
   CGRecordLayoutBuilder.cpp
-  CGRTTI.cpp
   CGStmt.cpp
   CGStmtOpenMP.cpp
   CGVTT.cpp
@@ -60,7 +59,6 @@ add_clang_library(clangCodeGen
   CodeGenTypes.cpp
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
-  MicrosoftRTTI.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp
 
