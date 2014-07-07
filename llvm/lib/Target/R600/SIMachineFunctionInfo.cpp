@@ -62,8 +62,10 @@ static unsigned createLaneVGPR(MachineRegisterInfo &MRI, MachineFunction *MF) {
       return VGPR;
     }
   }
-  MF->getFunction()->getContext().emitError(
-      "Could not find S_ENGPGM instrtuction.");
+
+  LLVMContext &Ctx = MF->getFunction()->getContext();
+  Ctx.emitError("Could not find S_ENDPGM instruction.");
+
   return VGPR;
 }
 
