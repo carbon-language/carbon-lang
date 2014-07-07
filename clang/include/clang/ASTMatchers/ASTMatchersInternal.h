@@ -1126,16 +1126,25 @@ struct VariadicOperatorNoArg {};
 template <typename P1, typename P2 = VariadicOperatorNoArg,
           typename P3 = VariadicOperatorNoArg,
           typename P4 = VariadicOperatorNoArg,
-          typename P5 = VariadicOperatorNoArg>
+          typename P5 = VariadicOperatorNoArg,
+          typename P6 = VariadicOperatorNoArg,
+          typename P7 = VariadicOperatorNoArg,
+          typename P8 = VariadicOperatorNoArg,
+          typename P9 = VariadicOperatorNoArg>
 class VariadicOperatorMatcher {
 public:
   VariadicOperatorMatcher(VariadicOperatorFunction Func, const P1 &Param1,
                           const P2 &Param2 = VariadicOperatorNoArg(),
                           const P3 &Param3 = VariadicOperatorNoArg(),
                           const P4 &Param4 = VariadicOperatorNoArg(),
-                          const P5 &Param5 = VariadicOperatorNoArg())
+                          const P5 &Param5 = VariadicOperatorNoArg(),
+                          const P6 &Param6 = VariadicOperatorNoArg(),
+                          const P7 &Param7 = VariadicOperatorNoArg(),
+                          const P8 &Param8 = VariadicOperatorNoArg(),
+                          const P9 &Param9 = VariadicOperatorNoArg())
       : Func(Func), Param1(Param1), Param2(Param2), Param3(Param3),
-        Param4(Param4), Param5(Param5) {}
+        Param4(Param4), Param5(Param5), Param6(Param6), Param7(Param7),
+        Param8(Param8), Param9(Param9) {}
 
   template <typename T> operator Matcher<T>() const {
     std::vector<DynTypedMatcher> Matchers;
@@ -1144,6 +1153,10 @@ public:
     addMatcher<T>(Param3, Matchers);
     addMatcher<T>(Param4, Matchers);
     addMatcher<T>(Param5, Matchers);
+    addMatcher<T>(Param6, Matchers);
+    addMatcher<T>(Param7, Matchers);
+    addMatcher<T>(Param8, Matchers);
+    addMatcher<T>(Param9, Matchers);
     return Matcher<T>(
         new VariadicOperatorMatcherInterface<T>(Func, std::move(Matchers)));
   }
@@ -1166,12 +1179,16 @@ private:
   const P3 Param3;
   const P4 Param4;
   const P5 Param5;
+  const P6 Param6;
+  const P7 Param7;
+  const P8 Param8;
+  const P9 Param9;
 };
 
 /// \brief Overloaded function object to generate VariadicOperatorMatcher
 ///   objects from arbitrary matchers.
 ///
-/// It supports 1-5 argument overloaded operator(). More can be added if needed.
+/// It supports 1-9 argument overloaded operator(). More can be added if needed.
 template <unsigned MinCount, unsigned MaxCount>
 struct VariadicOperatorMatcherFunc {
   VariadicOperatorFunction Func;
@@ -1207,6 +1224,43 @@ struct VariadicOperatorMatcherFunc {
              const M5 &P5) const {
     return VariadicOperatorMatcher<M1, M2, M3, M4, M5>(Func, P1, P2, P3, P4,
                                                        P5);
+  }
+  template <typename M1, typename M2, typename M3, typename M4, typename M5,
+            typename M6>
+  typename EnableIfValidArity<
+      6, VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6> >::type
+  operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4,
+             const M5 &P5, const M6 &P6) const {
+    return VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6>(
+        Func, P1, P2, P3, P4, P5, P6);
+  }
+  template <typename M1, typename M2, typename M3, typename M4, typename M5,
+            typename M6, typename M7>
+  typename EnableIfValidArity<
+      7, VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7> >::type
+  operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4,
+             const M5 &P5, const M6 &P6, const M7 &P7) const {
+    return VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7>(
+        Func, P1, P2, P3, P4, P5, P6, P7);
+  }
+  template <typename M1, typename M2, typename M3, typename M4, typename M5,
+            typename M6, typename M7, typename M8>
+  typename EnableIfValidArity<
+      8, VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7, M8> >::type
+  operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4,
+             const M5 &P5, const M6 &P6, const M7 &P7, const M8 &P8) const {
+    return VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7, M8>(
+        Func, P1, P2, P3, P4, P5, P6, P7, P8);
+  }
+  template <typename M1, typename M2, typename M3, typename M4, typename M5,
+            typename M6, typename M7, typename M8, typename M9>
+  typename EnableIfValidArity<
+      9, VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7, M8, M9> >::type
+  operator()(const M1 &P1, const M2 &P2, const M3 &P3, const M4 &P4,
+             const M5 &P5, const M6 &P6, const M7 &P7, const M8 &P8,
+             const M9 &P9) const {
+    return VariadicOperatorMatcher<M1, M2, M3, M4, M5, M6, M7, M8, M9>(
+        Func, P1, P2, P3, P4, P5, P6, P7, P8, P9);
   }
 };
 
