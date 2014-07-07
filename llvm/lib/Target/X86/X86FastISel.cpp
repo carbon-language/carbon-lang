@@ -2402,7 +2402,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     case Intrinsic::usub_with_overflow:
       BaseOpc = ISD::SUB; CondOpc = X86::SETBr; break;
     case Intrinsic::smul_with_overflow:
-      BaseOpc = ISD::MUL; CondOpc = X86::SETOr; break;
+      BaseOpc = X86ISD::SMUL; CondOpc = X86::SETOr; break;
     case Intrinsic::umul_with_overflow:
       BaseOpc = X86ISD::UMUL; CondOpc = X86::SETOr; break;
     }

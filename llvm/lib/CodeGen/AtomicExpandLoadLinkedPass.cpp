@@ -186,7 +186,7 @@ bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
     NewVal = Builder.CreateAnd(Loaded, AI->getValOperand(), "new");
     break;
   case AtomicRMWInst::Nand:
-    NewVal = Builder.CreateAnd(Loaded, Builder.CreateNot(AI->getValOperand()),
+    NewVal = Builder.CreateNot(Builder.CreateAnd(Loaded, AI->getValOperand()),
                                "new");
     break;
   case AtomicRMWInst::Or:

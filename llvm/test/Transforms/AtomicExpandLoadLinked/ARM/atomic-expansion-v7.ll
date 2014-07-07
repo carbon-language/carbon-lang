@@ -80,8 +80,8 @@ define i16 @test_atomic_nand_i16(i16* %ptr, i16 %nandend) {
 ; CHECK: [[LOOP]]:
 ; CHECK: [[OLDVAL32:%.*]] = call i32 @llvm.arm.ldrex.p0i16(i16* %ptr)
 ; CHECK: [[OLDVAL:%.*]] = trunc i32 [[OLDVAL32]] to i16
-; CHECK: [[NEWVAL_TMP:%.*]] = xor i16 %nandend, -1
-; CHECK: [[NEWVAL:%.*]] = and i16 [[OLDVAL]], [[NEWVAL_TMP]]
+; CHECK: [[NEWVAL_TMP:%.*]] = and i16 [[OLDVAL]], %nandend
+; CHECK: [[NEWVAL:%.*]] = xor i16 [[NEWVAL_TMP]], -1
 ; CHECK: [[NEWVAL32:%.*]] = zext i16 [[NEWVAL]] to i32
 ; CHECK: [[TRYAGAIN:%.*]] = call i32 @llvm.arm.strex.p0i16(i32 [[NEWVAL32]], i16* %ptr)
 ; CHECK: [[TST:%.*]] = icmp ne i32 [[TRYAGAIN]], 0

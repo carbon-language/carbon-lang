@@ -22,8 +22,10 @@ define void @fetch_and_nand(i128* %p, i128 %bits) {
 ; CHECK-LABEL: fetch_and_nand:
 ; CHECK: [[LABEL:.?LBB[0-9]+_[0-9]+]]:
 ; CHECK: ldxp  [[DEST_REGLO:x[0-9]+]], [[DEST_REGHI:x[0-9]+]], [x0]
-; CHECK-DAG: bic    [[SCRATCH_REGLO:x[0-9]+]], [[DEST_REGLO]], x2
-; CHECK-DAG: bic    [[SCRATCH_REGHI:x[0-9]+]], [[DEST_REGHI]], x3
+; CHECK-DAG: and    [[TMP_REGLO:x[0-9]+]], [[DEST_REGLO]], x2
+; CHECK-DAG: and    [[TMP_REGHI:x[0-9]+]], [[DEST_REGHI]], x3
+; CHECK-DAG: mvn    [[SCRATCH_REGLO:x[0-9]+]], [[TMP_REGLO]]
+; CHECK-DAG: mvn    [[SCRATCH_REGHI:x[0-9]+]], [[TMP_REGHI]]
 ; CHECK: stlxp  [[SCRATCH_RES:w[0-9]+]], [[SCRATCH_REGLO]], [[SCRATCH_REGHI]], [x0]
 ; CHECK: cbnz   [[SCRATCH_RES]], [[LABEL]]
 
