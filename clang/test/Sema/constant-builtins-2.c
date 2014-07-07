@@ -112,49 +112,53 @@ char isnormal_snan   [!__builtin_isnormal(__builtin_nans("")) ? 1 : -1];
 //long double  g21 = __builtin_powil(2.0L, 4);
 
 #define BITSIZE(x) (sizeof(x) * 8)
-char g22[__builtin_clz(1) == BITSIZE(int) - 1 ? 1 : -1];
-char g23[__builtin_clz(7) == BITSIZE(int) - 3 ? 1 : -1];
-char g24[__builtin_clz(1 << (BITSIZE(int) - 1)) == 0 ? 1 : -1];
-int g25 = __builtin_clz(0); // expected-error {{not a compile-time constant}}
-char g26[__builtin_clzl(0xFL) == BITSIZE(long) - 4 ? 1 : -1];
-char g27[__builtin_clzll(0xFFLL) == BITSIZE(long long) - 8 ? 1 : -1];
+char clz1[__builtin_clz(1) == BITSIZE(int) - 1 ? 1 : -1];
+char clz2[__builtin_clz(7) == BITSIZE(int) - 3 ? 1 : -1];
+char clz3[__builtin_clz(1 << (BITSIZE(int) - 1)) == 0 ? 1 : -1];
+int clz4 = __builtin_clz(0); // expected-error {{not a compile-time constant}}
+char clz5[__builtin_clzl(0xFL) == BITSIZE(long) - 4 ? 1 : -1];
+char clz6[__builtin_clzll(0xFFLL) == BITSIZE(long long) - 8 ? 1 : -1];
+char clz7[__builtin_clzs(0x1) == BITSIZE(short) - 1 ? 1 : -1];
+char clz8[__builtin_clzs(0xf) == BITSIZE(short) - 4 ? 1 : -1];
+char clz9[__builtin_clzs(0xfff) == BITSIZE(short) - 12 ? 1 : -1];
 
-char g28[__builtin_ctz(1) == 0 ? 1 : -1];
-char g29[__builtin_ctz(8) == 3 ? 1 : -1];
-char g30[__builtin_ctz(1 << (BITSIZE(int) - 1)) == BITSIZE(int) - 1 ? 1 : -1];
-int g31 = __builtin_ctz(0); // expected-error {{not a compile-time constant}}
-char g32[__builtin_ctzl(0x10L) == 4 ? 1 : -1];
-char g33[__builtin_ctzll(0x100LL) == 8 ? 1 : -1];
+char ctz1[__builtin_ctz(1) == 0 ? 1 : -1];
+char ctz2[__builtin_ctz(8) == 3 ? 1 : -1];
+char ctz3[__builtin_ctz(1 << (BITSIZE(int) - 1)) == BITSIZE(int) - 1 ? 1 : -1];
+int ctz4 = __builtin_ctz(0); // expected-error {{not a compile-time constant}}
+char ctz5[__builtin_ctzl(0x10L) == 4 ? 1 : -1];
+char ctz6[__builtin_ctzll(0x100LL) == 8 ? 1 : -1];
+char ctz7[__builtin_ctzs(1 << (BITSIZE(short) - 1)) == BITSIZE(short) - 1 ? 1 : -1];
 
-char g34[__builtin_popcount(0) == 0 ? 1 : -1];
-char g35[__builtin_popcount(0xF0F0) == 8 ? 1 : -1];
-char g36[__builtin_popcount(~0) == BITSIZE(int) ? 1 : -1];
-char g37[__builtin_popcount(~0L) == BITSIZE(int) ? 1 : -1];
-char g38[__builtin_popcountl(0L) == 0 ? 1 : -1];
-char g39[__builtin_popcountl(0xF0F0L) == 8 ? 1 : -1];
-char g40[__builtin_popcountl(~0L) == BITSIZE(long) ? 1 : -1];
-char g41[__builtin_popcountll(0LL) == 0 ? 1 : -1];
-char g42[__builtin_popcountll(0xF0F0LL) == 8 ? 1 : -1];
-char g43[__builtin_popcountll(~0LL) == BITSIZE(long long) ? 1 : -1];
+char popcount1[__builtin_popcount(0) == 0 ? 1 : -1];
+char popcount2[__builtin_popcount(0xF0F0) == 8 ? 1 : -1];
+char popcount3[__builtin_popcount(~0) == BITSIZE(int) ? 1 : -1];
+char popcount4[__builtin_popcount(~0L) == BITSIZE(int) ? 1 : -1];
+char popcount5[__builtin_popcountl(0L) == 0 ? 1 : -1];
+char popcount6[__builtin_popcountl(0xF0F0L) == 8 ? 1 : -1];
+char popcount7[__builtin_popcountl(~0L) == BITSIZE(long) ? 1 : -1];
+char popcount8[__builtin_popcountll(0LL) == 0 ? 1 : -1];
+char popcount9[__builtin_popcountll(0xF0F0LL) == 8 ? 1 : -1];
+char popcount10[__builtin_popcountll(~0LL) == BITSIZE(long long) ? 1 : -1];
 
-char g44[__builtin_parity(0) == 0 ? 1 : -1];
-char g45[__builtin_parity(0xb821) == 0 ? 1 : -1];
-char g46[__builtin_parity(0xb822) == 0 ? 1 : -1];
-char g47[__builtin_parity(0xb823) == 1 ? 1 : -1];
-char g48[__builtin_parity(0xb824) == 0 ? 1 : -1];
-char g49[__builtin_parity(0xb825) == 1 ? 1 : -1];
-char g50[__builtin_parity(0xb826) == 1 ? 1 : -1];
-char g51[__builtin_parity(~0) == 0 ? 1 : -1];
-char g52[__builtin_parityl(1L << (BITSIZE(long) - 1)) == 1 ? 1 : -1];
-char g53[__builtin_parityll(1LL << (BITSIZE(long long) - 1)) == 1 ? 1 : -1];
+char parity1[__builtin_parity(0) == 0 ? 1 : -1];
+char parity2[__builtin_parity(0xb821) == 0 ? 1 : -1];
+char parity3[__builtin_parity(0xb822) == 0 ? 1 : -1];
+char parity4[__builtin_parity(0xb823) == 1 ? 1 : -1];
+char parity5[__builtin_parity(0xb824) == 0 ? 1 : -1];
+char parity6[__builtin_parity(0xb825) == 1 ? 1 : -1];
+char parity7[__builtin_parity(0xb826) == 1 ? 1 : -1];
+char parity8[__builtin_parity(~0) == 0 ? 1 : -1];
+char parity9[__builtin_parityl(1L << (BITSIZE(long) - 1)) == 1 ? 1 : -1];
+char parity10[__builtin_parityll(1LL << (BITSIZE(long long) - 1)) == 1 ? 1 : -1];
 
-char g54[__builtin_ffs(0) == 0 ? 1 : -1];
-char g55[__builtin_ffs(1) == 1 ? 1 : -1];
-char g56[__builtin_ffs(0xfbe71) == 1 ? 1 : -1];
-char g57[__builtin_ffs(0xfbe70) == 5 ? 1 : -1];
-char g58[__builtin_ffs(1U << (BITSIZE(int) - 1)) == BITSIZE(int) ? 1 : -1];
-char g59[__builtin_ffsl(0x10L) == 5 ? 1 : -1];
-char g60[__builtin_ffsll(0x100LL) == 9 ? 1 : -1];
+char ffs1[__builtin_ffs(0) == 0 ? 1 : -1];
+char ffs2[__builtin_ffs(1) == 1 ? 1 : -1];
+char ffs3[__builtin_ffs(0xfbe71) == 1 ? 1 : -1];
+char ffs4[__builtin_ffs(0xfbe70) == 5 ? 1 : -1];
+char ffs5[__builtin_ffs(1U << (BITSIZE(int) - 1)) == BITSIZE(int) ? 1 : -1];
+char ffs6[__builtin_ffsl(0x10L) == 5 ? 1 : -1];
+char ffs7[__builtin_ffsll(0x100LL) == 9 ? 1 : -1];
 #undef BITSIZE
 
 // GCC misc stuff

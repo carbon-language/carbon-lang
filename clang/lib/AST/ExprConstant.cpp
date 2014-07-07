@@ -6053,7 +6053,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
   case Builtin::BI__builtin_clz:
   case Builtin::BI__builtin_clzl:
-  case Builtin::BI__builtin_clzll: {
+  case Builtin::BI__builtin_clzll:
+  case Builtin::BI__builtin_clzs: {
     APSInt Val;
     if (!EvaluateInteger(E->getArg(0), Val, Info))
       return false;
@@ -6068,7 +6069,8 @@ bool IntExprEvaluator::VisitCallExpr(const CallExpr *E) {
 
   case Builtin::BI__builtin_ctz:
   case Builtin::BI__builtin_ctzl:
-  case Builtin::BI__builtin_ctzll: {
+  case Builtin::BI__builtin_ctzll:
+  case Builtin::BI__builtin_ctzs: {
     APSInt Val;
     if (!EvaluateInteger(E->getArg(0), Val, Info))
       return false;
