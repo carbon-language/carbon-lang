@@ -1373,6 +1373,10 @@ public:
   void getObjCEncodingForType(QualType T, std::string &S,
                               const FieldDecl *Field=nullptr) const;
 
+  /// \brief Emit the Objective-C property type encoding for the given
+  /// type \p T into \p S.
+  void getObjCEncodingForPropertyType(QualType T, std::string &S) const;
+
   void getLegacyIntegralTypeEncoding(QualType &t) const;
 
   /// \brief Put the string version of the type qualifiers \p QT into \p S.
