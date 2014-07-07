@@ -28,7 +28,6 @@
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
-#include <fstream>
 #include <list>
 #include <plugin-api.h>
 #include <system_error>
@@ -410,15 +409,17 @@ static bool mustPreserve(const claimed_file &F, int i) {
 /// been overridden by a native object file. Then, perform optimization and
 /// codegen.
 static ld_plugin_status all_symbols_read_hook(void) {
-  std::ofstream api_file;
+  // FIXME: raw_fd_ostream should be able to represent an unopened file.
+  std::unique_ptr<raw_fd_ostream> api_file;
+
   assert(CodeGen);
 
   if (options::generate_api_file) {
-    api_file.open("apifile.txt", std::ofstream::out | std::ofstream::trunc);
-    if (!api_file.is_open()) {
-      (*message)(LDPL_FATAL, "Unable to open apifile.txt for writing.");
-      abort();
-    }
+    std::string Error;
+    api_file.reset(new raw_fd_ostream("apifile.txt", Error, sys::fs::F_None));
+    if (!Error.empty())
+      (*message)(LDPL_FATAL, "Unable to open apifile.txt for writing: %s",
+                 Error.c_str());
   }
 
   for (std::list<claimed_file>::iterator I = Modules.begin(),
@@ -431,13 +432,10 @@ static ld_plugin_status all_symbols_read_hook(void) {
         CodeGen->addMustPreserveSymbol(I->syms[i].name);
 
         if (options::generate_api_file)
-          api_file << I->syms[i].name << "\n";
+          (*api_file) << I->syms[i].name << "\n";
       }
     }
   }
-
-  if (options::generate_api_file)
-    api_file.close();
 
   CodeGen->setCodePICModel(output_type);
   CodeGen->setDebugInfo(LTO_DEBUG_MODEL_DWARF);
