@@ -2402,7 +2402,7 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
     case Intrinsic::usub_with_overflow:
       BaseOpc = ISD::SUB; CondOpc = X86::SETBr; break;
     case Intrinsic::smul_with_overflow:
-      BaseOpc = ISD::MUL; CondOpc = X86::SETOr; break;
+      BaseOpc = X86ISD::SMUL; CondOpc = X86::SETOr; break;
     case Intrinsic::umul_with_overflow:
       BaseOpc = X86ISD::UMUL; CondOpc = X86::SETOr; break;
     }
@@ -2430,10 +2430,11 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
                               RHSIsKill);
     }
 
-    // FastISel doesn't have a pattern for X86::MUL*r. Emit it manually.
+    // FastISel doesn't have a pattern for all X86::MUL*r and X86::IMUL*r. Emit
+    // it manually.
     if (BaseOpc == X86ISD::UMUL && !ResultReg) {
       static const unsigned MULOpc[] =
-      { X86::MUL8r, X86::MUL16r, X86::MUL32r, X86::MUL64r };
+        { X86::MUL8r, X86::MUL16r, X86::MUL32r, X86::MUL64r };
       static const unsigned Reg[] = { X86::AL, X86::AX, X86::EAX, X86::RAX };
       // First copy the first operand into RAX, which is an implicit input to
       // the X86::MUL*r instruction.
@@ -2442,6 +2443,21 @@ bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
         .addReg(LHSReg, getKillRegState(LHSIsKill));
       ResultReg = FastEmitInst_r(MULOpc[VT.SimpleTy-MVT::i8],
                                  TLI.getRegClassFor(VT), RHSReg, RHSIsKill);
+    } else if (BaseOpc == X86ISD::SMUL && !ResultReg) {
+      static const unsigned MULOpc[] =
+        { X86::IMUL8r, X86::IMUL16rr, X86::IMUL32rr, X86::IMUL64rr };
+      if (VT == MVT::i8) {
+        // Copy the first operand into AL, which is an implicit input to the
+        // X86::IMUL8r instruction.
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+               TII.get(TargetOpcode::COPY), X86::AL)
+          .addReg(LHSReg, getKillRegState(LHSIsKill));
+        ResultReg = FastEmitInst_r(MULOpc[0], TLI.getRegClassFor(VT), RHSReg,
+                                   RHSIsKill);
+      } else
+        ResultReg = FastEmitInst_rr(MULOpc[VT.SimpleTy-MVT::i8],
+                                    TLI.getRegClassFor(VT), LHSReg, LHSIsKill,
+                                    RHSReg, RHSIsKill);
     }
 
     if (!ResultReg)

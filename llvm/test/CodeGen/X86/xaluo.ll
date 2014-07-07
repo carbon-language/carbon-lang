@@ -261,6 +261,34 @@ entry:
 }
 
 ; SMULO
+define zeroext i1 @smulo.i8(i8 %v1, i8 %v2, i8* %res) {
+entry:
+; FAST-LABEL:   smulo.i8
+; FAST:         movb %dil, %al
+; FAST-NEXT:    imulb %sil
+; FAST-NEXT:    seto %cl
+  %t = call {i8, i1} @llvm.smul.with.overflow.i8(i8 %v1, i8 %v2)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  store i8 %val, i8* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @smulo.i16(i16 %v1, i16 %v2, i16* %res) {
+entry:
+; DAG-LABEL:    smulo.i16
+; DAG:          imulw %si, %di
+; DAG-NEXT:     seto %al
+; FAST-LABEL:   smulo.i16
+; FAST:         imulw %si, %di
+; FAST-NEXT:    seto %al
+  %t = call {i16, i1} @llvm.smul.with.overflow.i16(i16 %v1, i16 %v2)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  store i16 %val, i16* %res
+  ret i1 %obit
+}
+
 define zeroext i1 @smulo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; DAG-LABEL:    smulo.i32
@@ -292,6 +320,34 @@ entry:
 }
 
 ; UMULO
+define zeroext i1 @umulo.i8(i8 %v1, i8 %v2, i8* %res) {
+entry:
+; FAST-LABEL:   umulo.i8
+; FAST:         movb %dil, %al
+; FAST-NEXT:    mulb %sil
+; FAST-NEXT:    seto %cl
+  %t = call {i8, i1} @llvm.umul.with.overflow.i8(i8 %v1, i8 %v2)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  store i8 %val, i8* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @umulo.i16(i16 %v1, i16 %v2, i16* %res) {
+entry:
+; DAG-LABEL:    umulo.i16
+; DAG:          mulw %si
+; DAG-NEXT:     seto
+; FAST-LABEL:   umulo.i16
+; FAST:         mulw %si
+; FAST-NEXT:    seto
+  %t = call {i16, i1} @llvm.umul.with.overflow.i16(i16 %v1, i16 %v2)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  store i16 %val, i16* %res
+  ret i1 %obit
+}
+
 define zeroext i1 @umulo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
 ; DAG-LABEL:    umulo.i32
@@ -665,7 +721,7 @@ continue:
   ret i1 true
 }
 
-declare {i8, i1} @llvm.sadd.with.overflow.i8(i8, i8) nounwind readnone
+declare {i8,  i1} @llvm.sadd.with.overflow.i8 (i8,  i8 ) nounwind readnone
 declare {i16, i1} @llvm.sadd.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.sadd.with.overflow.i64(i64, i64) nounwind readnone
@@ -675,8 +731,12 @@ declare {i32, i1} @llvm.ssub.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.ssub.with.overflow.i64(i64, i64) nounwind readnone
 declare {i32, i1} @llvm.usub.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.usub.with.overflow.i64(i64, i64) nounwind readnone
+declare {i8,  i1} @llvm.smul.with.overflow.i8 (i8,  i8 ) nounwind readnone
+declare {i16, i1} @llvm.smul.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.smul.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.smul.with.overflow.i64(i64, i64) nounwind readnone
+declare {i8,  i1} @llvm.umul.with.overflow.i8 (i8,  i8 ) nounwind readnone
+declare {i16, i1} @llvm.umul.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.umul.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.umul.with.overflow.i64(i64, i64) nounwind readnone
 
