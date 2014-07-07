@@ -62,7 +62,6 @@ append_if(COMPILER_RT_HAS_LIBPTHREAD pthread ASAN_DYNAMIC_LIBS)
 append_if(COMPILER_RT_HAS_LIBDL dl ASAN_DYNAMIC_LIBS)
 
 if (NOT MSVC)
-  set(ASAN_ASM_SOURCES asan_asm_instrumentation.S)
   set_source_files_properties(${ASAN_ASM_SOURCES} PROPERTIES LANGUAGE C)
   list(APPEND ASAN_SOURCES ${ASAN_ASM_SOURCES})
 endif()

@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "asan_test_utils.h"
 
-// Tests for __sanitizer_sanitize_(store|load)N functions in compiler-rt.
-
 #if defined(__linux__)
 
 #if defined(__x86_64__) || (defined(__i386__) && defined(__SSE2__))
@@ -36,13 +34,10 @@ namespace {
 #define DECLARE_ASM_WRITE(Type, Size, Mov, Reg)        \
 template<> void asm_write<Type>(Type *ptr, Type val) { \
   __asm__(                                             \
-    "leaq (%[ptr]), %%rdi  \n\t"                       \
-    "movabsq $__sanitizer_sanitize_store" Size ", %%r11  \n\t" \
-    "call *%%r11  \n\t"                                 \
     Mov " %[val], (%[ptr])  \n\t"                      \
     :                                                  \
     : [ptr] "r" (ptr), [val] Reg (val)                 \
-    : "memory", "rdi", "r11"                           \
+    : "memory"                                         \
   );                                                   \
 }
 
@@ -50,13 +45,10 @@ template<> void asm_write<Type>(Type *ptr, Type val) { \
 template<> Type asm_read<Type>(Type *ptr) {        \
   Type res;                                        \
   __asm__(                                         \
-    "leaq (%[ptr]), %%rdi  \n\t"                   \
-    "movabsq $__sanitizer_sanitize_load" Size ", %%r11  \n\t" \
-    "callq *%%r11  \n\t"                           \
     Mov " (%[ptr]), %[res]  \n\t"                  \
     : [res] Reg (res)                              \
     : [ptr] "r" (ptr)                              \
-    : "memory", "rdi", "r11"                       \
+    : "memory"                                     \
   );                                               \
   return res;                                      \
 }
@@ -75,14 +67,10 @@ namespace {
 #define DECLARE_ASM_WRITE(Type, Size, Mov, Reg)        \
 template<> void asm_write<Type>(Type *ptr, Type val) { \
   __asm__(                                             \
-    "leal (%[ptr]), %%eax  \n\t"                       \
-    "pushl %%eax  \n\t"                                \
-    "call __sanitizer_sanitize_store" Size "  \n\t"    \
-    "popl %%eax  \n\t"                                 \
     Mov " %[val], (%[ptr])  \n\t"                      \
     :                                                  \
     : [ptr] "r" (ptr), [val] Reg (val)                 \
-    : "memory", "eax", "esp"                           \
+    : "memory"                                         \
   );                                                   \
 }
 
@@ -90,50 +78,12 @@ template<> void asm_write<Type>(Type *ptr, Type val) { \
 template<> Type asm_read<Type>(Type *ptr) {        \
   Type res;                                        \
   __asm__(                                         \
-    "leal (%[ptr]), %%eax  \n\t"                   \
-    "pushl %%eax  \n\t"                            \
-    "call __sanitizer_sanitize_load" Size "  \n\t" \
-    "popl %%eax  \n\t"                             \
     Mov " (%[ptr]), %[res]  \n\t"                  \
     : [res] Reg (res)                              \
     : [ptr] "r" (ptr)                              \
-    : "memory", "eax", "esp"                       \
+    : "memory"                                     \
   );                                               \
   return res;                                      \
-}
-
-template<> void asm_write<U8>(U8 *ptr, U8 val) {
-  __asm__(
-    "leal (%[ptr]), %%eax  \n\t"
-    "pushl %%eax  \n\t"
-    "call __sanitizer_sanitize_store8  \n\t"
-    "popl %%eax  \n\t"
-    "movl (%[val]), %%eax  \n\t"
-    "movl %%eax, (%[ptr])  \n\t"
-    "movl 0x4(%[val]), %%eax  \n\t"
-    "movl %%eax, 0x4(%[ptr])  \n\t"
-    :
-    : [ptr] "r" (ptr), [val] "r" (&val)
-    : "memory", "eax", "esp"
-  );
-}
-
-template<> U8 asm_read(U8 *ptr) {
-  U8 res;
-  __asm__(
-    "leal (%[ptr]), %%eax  \n\t"
-    "pushl %%eax  \n\t"
-    "call __sanitizer_sanitize_load8  \n\t"
-    "popl  %%eax  \n\t"
-    "movl (%[ptr]), %%eax  \n\t"
-    "movl %%eax, (%[res])  \n\t"
-    "movl 0x4(%[ptr]), %%eax  \n\t"
-    "movl %%eax, 0x4(%[res])  \n\t"
-    :
-    : [ptr] "r" (ptr), [res] "r" (&res)
-    : "memory", "eax", "esp"
-  );
-  return res;
 }
 
 } // End of anonymous namespace
@@ -220,13 +170,17 @@ TEST(AddressSanitizer, asm_rw) {
   TestAsmWrite<U1>("WRITE of size 1");
   TestAsmWrite<U2>("WRITE of size 2");
   TestAsmWrite<U4>("WRITE of size 4");
+#if defined(__x86_64__)
   TestAsmWrite<U8>("WRITE of size 8");
+#endif // defined(__x86_64__)
   TestAsmWrite<__m128i>("WRITE of size 16");
 
   TestAsmRead<U1>("READ of size 1");
   TestAsmRead<U2>("READ of size 2");
   TestAsmRead<U4>("READ of size 4");
+#if defined(__x86_64__)
   TestAsmRead<U8>("READ of size 8");
+#endif // defined(__x86_64__)
   TestAsmRead<__m128i>("READ of size 16");
 }
 
