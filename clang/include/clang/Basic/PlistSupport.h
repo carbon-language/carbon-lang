@@ -19,8 +19,8 @@ namespace clang {
 namespace markup {
 typedef llvm::DenseMap<FileID, unsigned> FIDMap;
 
-static inline void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
-                          const SourceManager &SM, SourceLocation L) {
+inline void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
+                   const SourceManager &SM, SourceLocation L) {
   FileID FID = SM.getFileID(SM.getExpansionLoc(L));
   FIDMap::iterator I = FIDs.find(FID);
   if (I != FIDs.end())
@@ -29,21 +29,21 @@ static inline void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
   V.push_back(FID);
 }
 
-static inline unsigned GetFID(const FIDMap &FIDs, const SourceManager &SM,
-                              SourceLocation L) {
+inline unsigned GetFID(const FIDMap &FIDs, const SourceManager &SM,
+                       SourceLocation L) {
   FileID FID = SM.getFileID(SM.getExpansionLoc(L));
   FIDMap::const_iterator I = FIDs.find(FID);
   assert(I != FIDs.end());
   return I->second;
 }
 
-static inline raw_ostream &Indent(raw_ostream &o, const unsigned indent) {
+inline raw_ostream &Indent(raw_ostream &o, const unsigned indent) {
   for (unsigned i = 0; i < indent; ++i)
     o << ' ';
   return o;
 }
 
-static inline raw_ostream &EmitPlistHeader(raw_ostream &o) {
+inline raw_ostream &EmitPlistHeader(raw_ostream &o) {
   static const char *PlistHeader =
       "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
       "<!DOCTYPE plist PUBLIC \"-//Apple Computer//DTD PLIST 1.0//EN\" "
@@ -52,14 +52,14 @@ static inline raw_ostream &EmitPlistHeader(raw_ostream &o) {
   return o << PlistHeader;
 }
 
-static inline raw_ostream &EmitInteger(raw_ostream &o, int64_t value) {
+inline raw_ostream &EmitInteger(raw_ostream &o, int64_t value) {
   o << "<integer>";
   o << value;
   o << "</integer>";
   return o;
 }
 
-static inline raw_ostream &EmitString(raw_ostream &o, StringRef s) {
+inline raw_ostream &EmitString(raw_ostream &o, StringRef s) {
   o << "<string>";
   for (StringRef::const_iterator I = s.begin(), E = s.end(); I != E; ++I) {
     char c = *I;
@@ -88,10 +88,10 @@ static inline raw_ostream &EmitString(raw_ostream &o, StringRef s) {
   return o;
 }
 
-static inline void EmitLocation(raw_ostream &o, const SourceManager &SM,
-                                const LangOptions &LangOpts, SourceLocation L,
-                                const FIDMap &FM, unsigned indent,
-                                bool extend = false) {
+inline void EmitLocation(raw_ostream &o, const SourceManager &SM,
+                         const LangOptions &LangOpts, SourceLocation L,
+                         const FIDMap &FM, unsigned indent,
+                         bool extend = false) {
   FullSourceLoc Loc(SM.getExpansionLoc(L), const_cast<SourceManager &>(SM));
 
   // Add in the length of the token, so that we cover multi-char tokens.
@@ -108,9 +108,9 @@ static inline void EmitLocation(raw_ostream &o, const SourceManager &SM,
   Indent(o, indent) << "</dict>\n";
 }
 
-static inline void EmitRange(raw_ostream &o, const SourceManager &SM,
-                             const LangOptions &LangOpts, CharSourceRange R,
-                             const FIDMap &FM, unsigned indent) {
+inline void EmitRange(raw_ostream &o, const SourceManager &SM,
+                      const LangOptions &LangOpts, CharSourceRange R,
+                      const FIDMap &FM, unsigned indent) {
   Indent(o, indent) << "<array>\n";
   EmitLocation(o, SM, LangOpts, R.getBegin(), FM, indent + 1);
   EmitLocation(o, SM, LangOpts, R.getEnd(), FM, indent + 1, R.isTokenRange());
