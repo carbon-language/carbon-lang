@@ -135,11 +135,11 @@ copy-on-write pages, the approach itself can fundamentally dominate at
 an algorithmic level, especially when one considers header files of
 arbitrary size.
 
-There are plans to potentially implement an complementary PCH
-implementation for Clang based on the lazy deserialization of ASTs. This
-approach would theoretically have the same constant-time algorithmic
-advantages just mentioned but would also retain some of the strengths of
-PTH such as reduced memory pressure (ideal for multi-core builds).
+There is also a PCH implementation for Clang based on the lazy
+deserialization of ASTs. This approach theoretically has the same
+constant-time algorithmic advantages just mentioned but also retains some
+of the strengths of PTH such as reduced memory pressure (ideal for
+multi-core builds).
 
 Internal PTH Optimizations
 --------------------------
