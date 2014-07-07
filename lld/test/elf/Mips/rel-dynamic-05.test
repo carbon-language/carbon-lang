@@ -11,11 +11,11 @@
 #   c) STO_MIPS_PLT flag in the dynamic symbol table for symbols require
 #      a pointer equality.
 #
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-so-obj
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-so-obj
-# RUN: yaml2obj -format=elf %s > %t-obj
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t1-exe %t-obj %t-so
-# RUN: llvm-readobj -dt -r -s %t1-exe | FileCheck -check-prefix=PLT %s
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-so.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t-so.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o.o
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o.o %t.so
+# RUN: llvm-readobj -dt -r -s %t.exe | FileCheck -check-prefix=PLT %s
 
 # PLT:      Section {
 # PLT:        Index: 5
@@ -96,7 +96,42 @@
 # PLT-NEXT:   }
 # PLT-NEXT: ]
 
-!ELF
+# so.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x0C
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name: T1
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+    - Name: T2
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x4
+      Size: 4
+    - Name: T3
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x8
+      Size: 4
+
+# o.o
+---
 FileHeader: !FileHeader
   Class: ELFCLASS32
   Data: ELFDATA2LSB
@@ -107,7 +142,7 @@ FileHeader: !FileHeader
 Sections:
 - Name: .text
   Type: SHT_PROGBITS
-  Content:  "0000000000000000"
+  Size: 0x08
   AddressAlign: 16
   Flags: [SHF_EXECINSTR, SHF_ALLOC]
 
@@ -150,3 +185,4 @@ Symbols:
       Type: STT_FUNC
     - Name: T3
       Type: STT_FUNC
+...
