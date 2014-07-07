@@ -39,6 +39,7 @@ class Decl;
 class DependencyOutputOptions;
 class DiagnosticsEngine;
 class DiagnosticOptions;
+class ExternalSemaSource;
 class FileManager;
 class HeaderSearch;
 class HeaderSearchOptions;
@@ -161,6 +162,12 @@ void AttachHeaderIncludeGen(Preprocessor &PP, bool ShowAllHeaders = false,
 /// CacheTokens - Cache tokens for use with PCH. Note that this requires
 /// a seekable stream.
 void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
+
+/// The ChainedIncludesSource class converts headers to chained PCHs in
+/// memory, mainly for testing.
+IntrusiveRefCntPtr<ExternalSemaSource>
+createChainedIncludesSource(CompilerInstance &CI,
+                            IntrusiveRefCntPtr<ExternalSemaSource> &Reader);
 
 /// createInvocationFromCommandLine - Construct a compiler invocation object for
 /// a command line argument vector.
