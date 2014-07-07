@@ -4314,6 +4314,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   }
 
   assert(NumBytesActuallyUsed == ArgOffset);
+  (void)NumBytesActuallyUsed;
 
   if (!MemOpChains.empty())
     Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, MemOpChains);
