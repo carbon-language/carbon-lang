@@ -1654,6 +1654,19 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       assert(Subtarget->isTargetMachO() && "WrapperPIC use on non-MachO?");
       Callee = DAG.getNode(ARMISD::WrapperPIC, dl, getPointerTy(),
                            DAG.getTargetGlobalAddress(GV, dl, getPointerTy()));
+    } else if (Subtarget->isTargetCOFF()) {
+      assert(Subtarget->isTargetWindows() &&
+             "Windows is the only supported COFF target");
+      unsigned TargetFlags = GV->hasDLLImportStorageClass()
+                                 ? ARMII::MO_DLLIMPORT
+                                 : ARMII::MO_NO_FLAG;
+      Callee = DAG.getTargetGlobalAddress(GV, dl, getPointerTy(), /*Offset=*/0,
+                                          TargetFlags);
+      if (GV->hasDLLImportStorageClass())
+        Callee = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(),
+                             DAG.getNode(ARMISD::Wrapper, dl, getPointerTy(),
+                                         Callee), MachinePointerInfo::getGOT(),
+                             false, false, false, 0);
     } else {
       // On ELF targets for PIC code, direct calls should go through the PLT
       unsigned OpFlags = 0;
@@ -2489,15 +2502,23 @@ SDValue ARMTargetLowering::LowerGlobalAddressWindows(SDValue Op,
          "Windows on ARM expects to use movw/movt");
 
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  const ARMII::TOF TargetFlags =
+    (GV->hasDLLImportStorageClass() ? ARMII::MO_DLLIMPORT : ARMII::MO_NO_FLAG);
   EVT PtrVT = getPointerTy();
+  SDValue Result;
   SDLoc DL(Op);
 
   ++NumMovwMovt;
 
   // FIXME: Once remat is capable of dealing with instructions with register
   // operands, expand this into two nodes.
-  return DAG.getNode(ARMISD::Wrapper, DL, PtrVT,
-                     DAG.getTargetGlobalAddress(GV, DL, PtrVT));
+  Result = DAG.getNode(ARMISD::Wrapper, DL, PtrVT,
+                       DAG.getTargetGlobalAddress(GV, DL, PtrVT, /*Offset=*/0,
+                                                  TargetFlags));
+  if (GV->hasDLLImportStorageClass())
+    Result = DAG.getLoad(PtrVT, DL, DAG.getEntryNode(), Result,
+                         MachinePointerInfo::getGOT(), false, false, false, 0);
+  return Result;
 }
 
 SDValue ARMTargetLowering::LowerGLOBAL_OFFSET_TABLE(SDValue Op,
