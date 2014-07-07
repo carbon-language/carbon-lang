@@ -29,7 +29,7 @@
 #include <system_error>
 using namespace clang;
 
-#define DISK_TOKEN_SIZE (1+1+2+4+4)
+static const unsigned StoredTokenSize = 1 + 1 + 2 + 4 + 4;
 
 //===----------------------------------------------------------------------===//
 // PTHLexer methods.
@@ -110,7 +110,7 @@ bool PTHLexer::Lex(Token& Tok) {
   }
 
   if (TKind == tok::hash && Tok.isAtStartOfLine()) {
-    LastHashTokPtr = CurPtr - DISK_TOKEN_SIZE;
+    LastHashTokPtr = CurPtr - StoredTokenSize;
     assert(!LexingRawMode);
     PP->HandleDirective(Tok);
 
@@ -179,7 +179,7 @@ void PTHLexer::DiscardToEndOfLine() {
     if (y & Token::StartOfLine) break;
 
     // Skip to the next token.
-    p += DISK_TOKEN_SIZE;
+    p += StoredTokenSize;
   }
 
   CurPtr = p;
@@ -255,10 +255,10 @@ bool PTHLexer::SkipBlock() {
   // already points 'elif'.  Just return.
 
   if (CurPtr > HashEntryI) {
-    assert(CurPtr == HashEntryI + DISK_TOKEN_SIZE);
+    assert(CurPtr == HashEntryI + StoredTokenSize);
     // Did we reach a #endif?  If so, go ahead and consume that token as well.
     if (isEndif)
-      CurPtr += DISK_TOKEN_SIZE*2;
+      CurPtr += StoredTokenSize * 2;
     else
       LastHashTokPtr = HashEntryI;
 
@@ -274,10 +274,12 @@ bool PTHLexer::SkipBlock() {
 
   // Skip the '#' token.
   assert(((tok::TokenKind)*CurPtr) == tok::hash);
-  CurPtr += DISK_TOKEN_SIZE;
+  CurPtr += StoredTokenSize;
 
   // Did we reach a #endif?  If so, go ahead and consume that token as well.
-  if (isEndif) { CurPtr += DISK_TOKEN_SIZE*2; }
+  if (isEndif) {
+    CurPtr += StoredTokenSize * 2;
+  }
 
   return isEndif;
 }
@@ -290,7 +292,7 @@ SourceLocation PTHLexer::getSourceLocation() {
   // NOTE: This is a virtual function; hence it is defined out-of-line.
   using namespace llvm::support;
 
-  const unsigned char *OffsetPtr = CurPtr + (DISK_TOKEN_SIZE - 4);
+  const unsigned char *OffsetPtr = CurPtr + (StoredTokenSize - 4);
   uint32_t Offset = endian::readNext<uint32_t, little, aligned>(OffsetPtr);
   return FileStartLoc.getLocWithOffset(Offset);
 }
