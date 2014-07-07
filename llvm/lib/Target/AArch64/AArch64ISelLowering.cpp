@@ -5181,11 +5181,37 @@ FailedModImm:
   return Op;
 }
 
-SDValue AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op,
-                                                 SelectionDAG &DAG) const {
-  BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
+// Normalize the operands of BUILD_VECTOR. The value of constant operands will
+// be truncated to fit element width.
+static SDValue NormalizeBuildVector(SDValue Op,
+                                    SelectionDAG &DAG) {
+  assert(Op.getOpcode() == ISD::BUILD_VECTOR && "Unknown opcode!");
   SDLoc dl(Op);
   EVT VT = Op.getValueType();
+  EVT EltTy= VT.getVectorElementType();
+
+  if (EltTy.isFloatingPoint() || EltTy.getSizeInBits() > 16)
+    return Op;
+
+  SmallVector<SDValue, 16> Ops;
+  for (unsigned I = 0, E = VT.getVectorNumElements(); I != E; ++I) {
+    SDValue Lane = Op.getOperand(I);
+    if (Lane.getOpcode() == ISD::Constant) {
+      APInt LowBits(EltTy.getSizeInBits(),
+                    cast<ConstantSDNode>(Lane)->getZExtValue());
+      Lane = DAG.getConstant(LowBits.getZExtValue(), MVT::i32);
+    }
+    Ops.push_back(Lane);
+  }
+  return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
+}
+
+SDValue AArch64TargetLowering::LowerBUILD_VECTOR(SDValue Op,
+                                                 SelectionDAG &DAG) const {
+  SDLoc dl(Op);
+  EVT VT = Op.getValueType();
+  Op = NormalizeBuildVector(Op, DAG);
+  BuildVectorSDNode *BVN = cast<BuildVectorSDNode>(Op.getNode());
 
   APInt CnstBits(VT.getSizeInBits(), 0);
   APInt UndefBits(VT.getSizeInBits(), 0);
