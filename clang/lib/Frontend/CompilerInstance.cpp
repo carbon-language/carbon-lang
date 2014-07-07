@@ -234,6 +234,63 @@ void CompilerInstance::createSourceManager(FileManager &FileMgr) {
   SourceMgr = new SourceManager(getDiagnostics(), FileMgr);
 }
 
+// Initialize the remapping of files to alternative contents, e.g.,
+// those specified through other files.
+static void InitializeFileRemapping(DiagnosticsEngine &Diags,
+                                    SourceManager &SourceMgr,
+                                    FileManager &FileMgr,
+                                    const PreprocessorOptions &InitOpts) {
+  // Remap files in the source manager (with buffers).
+  for (PreprocessorOptions::const_remapped_file_buffer_iterator
+           Remap = InitOpts.remapped_file_buffer_begin(),
+           RemapEnd = InitOpts.remapped_file_buffer_end();
+       Remap != RemapEnd; ++Remap) {
+    // Create the file entry for the file that we're mapping from.
+    const FileEntry *FromFile =
+        FileMgr.getVirtualFile(Remap->first, Remap->second->getBufferSize(), 0);
+    if (!FromFile) {
+      Diags.Report(diag::err_fe_remap_missing_from_file) << Remap->first;
+      if (!InitOpts.RetainRemappedFileBuffers)
+        delete Remap->second;
+      continue;
+    }
+
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    SourceMgr.overrideFileContents(FromFile, Remap->second,
+                                   InitOpts.RetainRemappedFileBuffers);
+  }
+
+  // Remap files in the source manager (with other files).
+  for (PreprocessorOptions::const_remapped_file_iterator
+           Remap = InitOpts.remapped_file_begin(),
+           RemapEnd = InitOpts.remapped_file_end();
+       Remap != RemapEnd; ++Remap) {
+    // Find the file that we're mapping to.
+    const FileEntry *ToFile = FileMgr.getFile(Remap->second);
+    if (!ToFile) {
+      Diags.Report(diag::err_fe_remap_missing_to_file) << Remap->first
+                                                       << Remap->second;
+      continue;
+    }
+
+    // Create the file entry for the file that we're mapping from.
+    const FileEntry *FromFile =
+        FileMgr.getVirtualFile(Remap->first, ToFile->getSize(), 0);
+    if (!FromFile) {
+      Diags.Report(diag::err_fe_remap_missing_from_file) << Remap->first;
+      continue;
+    }
+
+    // Override the contents of the "from" file with the contents of
+    // the "to" file.
+    SourceMgr.overrideFileContents(FromFile, ToFile);
+  }
+
+  SourceMgr.setOverridenFilesKeepOriginalName(
+      InitOpts.RemappedFilesKeepOriginalName);
+}
+
 // Preprocessor
 
 void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
@@ -266,7 +323,16 @@ void CompilerInstance::createPreprocessor(TranslationUnitKind TUKind) {
   if (PPOpts.DetailedRecord)
     PP->createPreprocessingRecord();
 
-  InitializePreprocessor(*PP, PPOpts, getHeaderSearchOpts(), getFrontendOpts());
+  // Apply remappings to the source manager.
+  InitializeFileRemapping(PP->getDiagnostics(), PP->getSourceManager(),
+                          PP->getFileManager(), PPOpts);
+
+  // Predefine macros and configure the preprocessor.
+  InitializePreprocessor(*PP, PPOpts, getFrontendOpts());
+
+  // Initialize the header search object.
+  ApplyHeaderSearchOptions(PP->getHeaderSearchInfo(), getHeaderSearchOpts(),
+                           PP->getLangOpts(), PP->getTargetInfo().getTriple());
 
   PP->setPreprocessedOutput(getPreprocessorOutputOpts().ShowCPP);
 

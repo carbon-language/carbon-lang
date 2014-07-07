@@ -62,7 +62,6 @@ void ApplyHeaderSearchOptions(HeaderSearch &HS,
 /// environment ready to process a single file.
 void InitializePreprocessor(Preprocessor &PP,
                             const PreprocessorOptions &PPOpts,
-                            const HeaderSearchOptions &HSOpts,
                             const FrontendOptions &FEOpts);
 
 /// DoPrintPreprocessedInput - Implement -E mode.

@@ -835,83 +835,17 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   TI.getTargetDefines(LangOpts, Builder);
 }
 
-// Initialize the remapping of files to alternative contents, e.g.,
-// those specified through other files.
-static void InitializeFileRemapping(DiagnosticsEngine &Diags,
-                                    SourceManager &SourceMgr,
-                                    FileManager &FileMgr,
-                                    const PreprocessorOptions &InitOpts) {
-  // Remap files in the source manager (with buffers).
-  for (PreprocessorOptions::const_remapped_file_buffer_iterator
-         Remap = InitOpts.remapped_file_buffer_begin(),
-         RemapEnd = InitOpts.remapped_file_buffer_end();
-       Remap != RemapEnd;
-       ++Remap) {
-    // Create the file entry for the file that we're mapping from.
-    const FileEntry *FromFile = FileMgr.getVirtualFile(Remap->first,
-                                                Remap->second->getBufferSize(),
-                                                       0);
-    if (!FromFile) {
-      Diags.Report(diag::err_fe_remap_missing_from_file)
-        << Remap->first;
-      if (!InitOpts.RetainRemappedFileBuffers)
-        delete Remap->second;
-      continue;
-    }
-
-    // Override the contents of the "from" file with the contents of
-    // the "to" file.
-    SourceMgr.overrideFileContents(FromFile, Remap->second,
-                                   InitOpts.RetainRemappedFileBuffers);
-  }
-
-  // Remap files in the source manager (with other files).
-  for (PreprocessorOptions::const_remapped_file_iterator
-         Remap = InitOpts.remapped_file_begin(),
-         RemapEnd = InitOpts.remapped_file_end();
-       Remap != RemapEnd;
-       ++Remap) {
-    // Find the file that we're mapping to.
-    const FileEntry *ToFile = FileMgr.getFile(Remap->second);
-    if (!ToFile) {
-      Diags.Report(diag::err_fe_remap_missing_to_file)
-      << Remap->first << Remap->second;
-      continue;
-    }
-    
-    // Create the file entry for the file that we're mapping from.
-    const FileEntry *FromFile = FileMgr.getVirtualFile(Remap->first,
-                                                       ToFile->getSize(), 0);
-    if (!FromFile) {
-      Diags.Report(diag::err_fe_remap_missing_from_file)
-      << Remap->first;
-      continue;
-    }
-    
-    // Override the contents of the "from" file with the contents of
-    // the "to" file.
-    SourceMgr.overrideFileContents(FromFile, ToFile);
-  }
-
-  SourceMgr.setOverridenFilesKeepOriginalName(
-                                        InitOpts.RemappedFilesKeepOriginalName);
-}
-
 /// InitializePreprocessor - Initialize the preprocessor getting it and the
 /// environment ready to process a single file. This returns true on error.
 ///
 void clang::InitializePreprocessor(Preprocessor &PP,
                                    const PreprocessorOptions &InitOpts,
-                                   const HeaderSearchOptions &HSOpts,
                                    const FrontendOptions &FEOpts) {
   const LangOptions &LangOpts = PP.getLangOpts();
   std::string PredefineBuffer;
   PredefineBuffer.reserve(4080);
   llvm::raw_string_ostream Predefines(PredefineBuffer);
   MacroBuilder Builder(Predefines);
-
-  InitializeFileRemapping(PP.getDiagnostics(), PP.getSourceManager(),
-                          PP.getFileManager(), InitOpts);
 
   // Emit line markers for various builtin sections of the file.  We don't do
   // this in asm preprocessor mode, because "# 4" is not a line marker directive
@@ -986,9 +920,4 @@ void clang::InitializePreprocessor(Preprocessor &PP,
                           
   // Copy PredefinedBuffer into the Preprocessor.
   PP.setPredefines(Predefines.str());
-  
-  // Initialize the header search object.
-  ApplyHeaderSearchOptions(PP.getHeaderSearchInfo(), HSOpts,
-                           PP.getLangOpts(),
-                           PP.getTargetInfo().getTriple());
 }
