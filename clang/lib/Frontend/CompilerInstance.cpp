@@ -241,44 +241,37 @@ static void InitializeFileRemapping(DiagnosticsEngine &Diags,
                                     FileManager &FileMgr,
                                     const PreprocessorOptions &InitOpts) {
   // Remap files in the source manager (with buffers).
-  for (PreprocessorOptions::const_remapped_file_buffer_iterator
-           Remap = InitOpts.remapped_file_buffer_begin(),
-           RemapEnd = InitOpts.remapped_file_buffer_end();
-       Remap != RemapEnd; ++Remap) {
+  for (const auto &RB : InitOpts.RemappedFileBuffers) {
     // Create the file entry for the file that we're mapping from.
     const FileEntry *FromFile =
-        FileMgr.getVirtualFile(Remap->first, Remap->second->getBufferSize(), 0);
+        FileMgr.getVirtualFile(RB.first, RB.second->getBufferSize(), 0);
     if (!FromFile) {
-      Diags.Report(diag::err_fe_remap_missing_from_file) << Remap->first;
+      Diags.Report(diag::err_fe_remap_missing_from_file) << RB.first;
       if (!InitOpts.RetainRemappedFileBuffers)
-        delete Remap->second;
+        delete RB.second;
       continue;
     }
 
     // Override the contents of the "from" file with the contents of
     // the "to" file.
-    SourceMgr.overrideFileContents(FromFile, Remap->second,
+    SourceMgr.overrideFileContents(FromFile, RB.second,
                                    InitOpts.RetainRemappedFileBuffers);
   }
 
   // Remap files in the source manager (with other files).
-  for (PreprocessorOptions::const_remapped_file_iterator
-           Remap = InitOpts.remapped_file_begin(),
-           RemapEnd = InitOpts.remapped_file_end();
-       Remap != RemapEnd; ++Remap) {
+  for (const auto &RF : InitOpts.RemappedFiles) {
     // Find the file that we're mapping to.
-    const FileEntry *ToFile = FileMgr.getFile(Remap->second);
+    const FileEntry *ToFile = FileMgr.getFile(RF.second);
     if (!ToFile) {
-      Diags.Report(diag::err_fe_remap_missing_to_file) << Remap->first
-                                                       << Remap->second;
+      Diags.Report(diag::err_fe_remap_missing_to_file) << RF.first << RF.second;
       continue;
     }
 
     // Create the file entry for the file that we're mapping from.
     const FileEntry *FromFile =
-        FileMgr.getVirtualFile(Remap->first, ToFile->getSize(), 0);
+        FileMgr.getVirtualFile(RF.first, ToFile->getSize(), 0);
     if (!FromFile) {
-      Diags.Report(diag::err_fe_remap_missing_from_file) << Remap->first;
+      Diags.Report(diag::err_fe_remap_missing_from_file) << RF.first;
       continue;
     }
 

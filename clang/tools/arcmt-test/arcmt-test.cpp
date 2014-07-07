@@ -139,10 +139,8 @@ static void printResult(FileRemapper &remapper, raw_ostream &OS) {
   PreprocessorOptions PPOpts;
   remapper.applyMappings(PPOpts);
   // The changed files will be in memory buffers, print them.
-  for (unsigned i = 0, e = PPOpts.RemappedFileBuffers.size(); i != e; ++i) {
-    const llvm::MemoryBuffer *mem = PPOpts.RemappedFileBuffers[i].second;
-    OS << mem->getBuffer();
-  }
+  for (const auto &RB : PPOpts.RemappedFileBuffers)
+    OS << RB.second->getBuffer();
 }
 
 static bool performTransformations(StringRef resourcesPath,
