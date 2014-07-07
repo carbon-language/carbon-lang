@@ -747,12 +747,6 @@ public:
   /// The type of a generic block literal.
   llvm::Type *getGenericBlockLiteralType();
 
-  /// \brief Gets or a creats a Microsoft TypeDescriptor.
-  llvm::Constant *getMSTypeDescriptor(QualType Ty);
-  /// \brief Gets or a creats a Microsoft CompleteObjectLocator.
-  llvm::Constant *getMSCompleteObjectLocator(const CXXRecordDecl *RD,
-                                             const VPtrInfo *Info);
-
   /// Gets the address of a block which requires no captures.
   llvm::Constant *GetAddrOfGlobalBlock(const BlockExpr *BE, const char *);
   
@@ -972,9 +966,6 @@ public:
   void setFunctionLinkage(GlobalDecl GD, llvm::Function *F) {
     F->setLinkage(getFunctionLinkage(GD));
   }
-
-  /// \brief Returns the appropriate linkage for the TypeInfo struct for a type.
-  llvm::GlobalVariable::LinkageTypes getTypeInfoLinkage(QualType Ty);
 
   /// Return the appropriate linkage for the vtable, VTT, and type information
   /// of the given class.
