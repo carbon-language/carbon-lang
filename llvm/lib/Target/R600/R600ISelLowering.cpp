@@ -578,7 +578,14 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::FSIN: return LowerTrig(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
-  case ISD::LOAD: return LowerLOAD(Op, DAG);
+  case ISD::LOAD: {
+    SDValue Result = LowerLOAD(Op, DAG);
+    assert((!Result.getNode() ||
+            Result.getNode()->getNumValues() == 2) &&
+           "Load should return a value and a chain");
+    return Result;
+  }
+
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddress(MFI, Op, DAG);
   case ISD::INTRINSIC_VOID: {

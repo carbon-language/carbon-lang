@@ -1004,22 +1004,36 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue &Op,
                                               SelectionDAG &DAG) const {
   LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
   EVT MemEltVT = Load->getMemoryVT().getVectorElementType();
+  EVT LoadVT = Op.getValueType();
   EVT EltVT = Op.getValueType().getVectorElementType();
   EVT PtrVT = Load->getBasePtr().getValueType();
+
   unsigned NumElts = Load->getMemoryVT().getVectorNumElements();
   SmallVector<SDValue, 8> Loads;
+  SmallVector<SDValue, 8> Chains;
+
   SDLoc SL(Op);
 
   for (unsigned i = 0, e = NumElts; i != e; ++i) {
     SDValue Ptr = DAG.getNode(ISD::ADD, SL, PtrVT, Load->getBasePtr(),
                     DAG.getConstant(i * (MemEltVT.getSizeInBits() / 8), PtrVT));
-    Loads.push_back(DAG.getExtLoad(Load->getExtensionType(), SL, EltVT,
-                        Load->getChain(), Ptr,
-                        MachinePointerInfo(Load->getMemOperand()->getValue()),
-                        MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
-                        Load->getAlignment()));
+
+    SDValue NewLoad
+      = DAG.getExtLoad(Load->getExtensionType(), SL, EltVT,
+                       Load->getChain(), Ptr,
+                       MachinePointerInfo(Load->getMemOperand()->getValue()),
+                       MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
+                       Load->getAlignment());
+    Loads.push_back(NewLoad.getValue(0));
+    Chains.push_back(NewLoad.getValue(1));
   }
-  return DAG.getNode(ISD::BUILD_VECTOR, SL, Op.getValueType(), Loads);
+
+  SDValue Ops[] = {
+    DAG.getNode(ISD::BUILD_VECTOR, SL, LoadVT, Loads),
+    DAG.getNode(ISD::TokenFactor, SL, MVT::Other, Chains)
+  };
+
+  return DAG.getMergeValues(Ops, SL);
 }
 
 SDValue AMDGPUTargetLowering::MergeVectorStore(const SDValue &Op,
@@ -1122,7 +1136,13 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
                                        Load->getBasePtr(),
                                        MemVT,
                                        Load->getMemOperand());
-    return DAG.getNode(ISD::getExtForLoadExtType(ExtType), DL, VT, ExtLoad32);
+
+    SDValue Ops[] = {
+      DAG.getNode(ISD::getExtForLoadExtType(ExtType), DL, VT, ExtLoad32),
+      ExtLoad32.getValue(1)
+    };
+
+    return DAG.getMergeValues(Ops, DL);
   }
 
   if (ExtType == ISD::NON_EXTLOAD && VT.getSizeInBits() < 32) {
@@ -1136,7 +1156,13 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
 
     SDValue NewLD = DAG.getExtLoad(ISD::EXTLOAD, DL, MVT::i32, Chain,
                                    BasePtr, MVT::i8, MMO);
-    return DAG.getNode(ISD::TRUNCATE, DL, VT, NewLD);
+
+    SDValue Ops[] = {
+      DAG.getNode(ISD::TRUNCATE, DL, VT, NewLD),
+      NewLD.getValue(1)
+    };
+
+    return DAG.getMergeValues(Ops, DL);
   }
 
   // Lower loads constant address space global variable loads
@@ -1144,11 +1170,12 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
       isa<GlobalVariable>(
           GetUnderlyingObject(Load->getMemOperand()->getValue()))) {
 
+
     SDValue Ptr = DAG.getZExtOrTrunc(Load->getBasePtr(), DL,
         getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
     Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr,
         DAG.getConstant(2, MVT::i32));
-    return DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op.getValueType(),
+    return DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op->getVTList(),
                        Load->getChain(), Ptr,
                        DAG.getTargetConstant(0, MVT::i32), Op.getOperand(2));
   }
@@ -1175,10 +1202,21 @@ SDValue AMDGPUTargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   EVT MemEltVT = MemVT.getScalarType();
   if (ExtType == ISD::SEXTLOAD) {
     SDValue MemEltVTNode = DAG.getValueType(MemEltVT);
-    return DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, MVT::i32, Ret, MemEltVTNode);
+
+    SDValue Ops[] = {
+      DAG.getNode(ISD::SIGN_EXTEND_INREG, DL, MVT::i32, Ret, MemEltVTNode),
+      Load->getChain()
+    };
+
+    return DAG.getMergeValues(Ops, DL);
   }
 
-  return DAG.getZeroExtendInReg(Ret, DL, MemEltVT);
+  SDValue Ops[] = {
+    DAG.getZeroExtendInReg(Ret, DL, MemEltVT),
+    Load->getChain()
+  };
+
+  return DAG.getMergeValues(Ops, DL);
 }
 
 SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
