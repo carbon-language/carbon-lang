@@ -21,6 +21,7 @@ class Radar9974002DataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     @dwarf_test
+    @expectedFailureLinux("llvm.org/pr20232")
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
