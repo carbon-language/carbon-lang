@@ -1750,6 +1750,12 @@ unsigned AArch64FastISel::Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt) {
 unsigned AArch64FastISel::EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                      bool isZExt) {
   assert(DestVT != MVT::i1 && "ZeroExt/SignExt an i1?");
+
+  // FastISel does not have plumbing to deal with an MVT::i128, if we see one
+  // so rather than return one we need to bail out to SelectionDAG.
+  if (DestVT == MVT::i128)
+    return 0;
+
   unsigned Opc;
   unsigned Imm = 0;
 
