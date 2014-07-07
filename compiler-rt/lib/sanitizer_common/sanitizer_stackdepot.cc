@@ -50,7 +50,10 @@ struct StackDepotNode {
   uptr size;
   uptr stack[1];  // [size]
 
-  static const u32 kUseCountBits = 20;
+  static const u32 kTabSizeLog = 20;
+  // Lower kTabSizeLog bits are equal for all items in one bucket.
+  // We use these bits to store the per-stack use counter.
+  static const u32 kUseCountBits = kTabSizeLog;
   static const u32 kMaxUseCount = 1 << kUseCountBits;
   static const u32 kUseCountMask = (1 << kUseCountBits) - 1;
   static const u32 kHashMask = ~kUseCountMask;
@@ -100,7 +103,8 @@ uptr StackDepotHandle::size() { return node_->size; }
 uptr *StackDepotHandle::stack() { return &node_->stack[0]; }
 
 // FIXME(dvyukov): this single reserved bit is used in TSan.
-typedef StackDepotBase<StackDepotNode, 1> StackDepot;
+typedef StackDepotBase<StackDepotNode, 1, StackDepotNode::kTabSizeLog>
+    StackDepot;
 static StackDepot theDepot;
 
 StackDepotStats *StackDepotGetStats() {

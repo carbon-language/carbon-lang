@@ -58,7 +58,8 @@ struct ChainedOriginDepotNode {
   typedef Handle handle_type;
 };
 
-static StackDepotBase<ChainedOriginDepotNode, 3> chainedOriginDepot;
+// kTabSizeLog = 22 => 32Mb static storage for bucket pointers.
+static StackDepotBase<ChainedOriginDepotNode, 3, 20> chainedOriginDepot;
 
 StackDepotStats *ChainedOriginDepotGetStats() {
   return chainedOriginDepot.GetStats();
