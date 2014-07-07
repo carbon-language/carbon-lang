@@ -17,6 +17,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD # llvm.org/pr17214
+    @expectedFailureLinux("llvm.org/pr20231")
     def test_step_out(self):
         """Test stepping when the inferior calls setjmp/longjmp, in particular, thread step-out."""
         self.buildDefault()
@@ -24,6 +25,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD # llvm.org/pr17214
+    @expectedFailureLinux("llvm.org/pr20231")
     def test_step_over(self):
         """Test stepping when the inferior calls setjmp/longjmp, in particular, thread step-over a longjmp."""
         self.buildDefault()
@@ -31,6 +33,7 @@ class LongjmpTestCase(TestBase):
 
     @skipIfDarwin # llvm.org/pr16769: LLDB on Mac OS X dies in function ReadRegisterBytes in GDBRemoteRegisterContext.cpp
     @skipIfFreeBSD # llvm.org/pr17214
+    @expectedFailureLinux("llvm.org/pr20231")
     def test_step_back_out(self):
         """Test stepping when the inferior calls setjmp/longjmp, in particular, thread step-out after thread step-in."""
         self.buildDefault()
