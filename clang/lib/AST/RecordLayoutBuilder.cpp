@@ -2860,11 +2860,20 @@ const CXXMethodDecl *ASTContext::getCurrentKeyFunction(const CXXRecordDecl *RD) 
   assert(RD->getDefinition() && "Cannot get key function for forward decl!");
   RD = cast<CXXRecordDecl>(RD->getDefinition());
 
-  LazyDeclPtr &Entry = KeyFunctions[RD];
-  if (!Entry)
-    Entry = const_cast<CXXMethodDecl*>(computeKeyFunction(*this, RD));
+  // Beware:
+  //  1) computing the key function might trigger deserialization, which might
+  //     invalidate iterators into KeyFunctions
+  //  2) 'get' on the LazyDeclPtr might also trigger deserialization and
+  //     invalidate the LazyDeclPtr within the map itself
+  LazyDeclPtr Entry = KeyFunctions[RD];
+  const Decl *Result =
+      Entry ? Entry.get(getExternalSource()) : computeKeyFunction(*this, RD);
 
-  return cast_or_null<CXXMethodDecl>(Entry.get(getExternalSource()));
+  // Store it back if it changed.
+  if (Entry.isOffset() || Entry.isValid() != bool(Result))
+    KeyFunctions[RD] = const_cast<Decl*>(Result);
+
+  return cast_or_null<CXXMethodDecl>(Result);
 }
 
 void ASTContext::setNonKeyFunction(const CXXMethodDecl *Method) {
@@ -2881,10 +2890,12 @@ void ASTContext::setNonKeyFunction(const CXXMethodDecl *Method) {
   if (I == KeyFunctions.end()) return;
 
   // If it is cached, check whether it's the target method, and if so,
-  // remove it from the cache.
-  if (I->second.get(getExternalSource()) == Method) {
+  // remove it from the cache. Note, the call to 'get' might invalidate
+  // the iterator and the LazyDeclPtr object within the map.
+  LazyDeclPtr Ptr = I->second;
+  if (Ptr.get(getExternalSource()) == Method) {
     // FIXME: remember that we did this for module / chained PCH state?
-    KeyFunctions.erase(I);
+    KeyFunctions.erase(Method->getParent());
   }
 }
 

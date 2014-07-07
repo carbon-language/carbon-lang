@@ -1479,6 +1479,9 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
   if (WasDefinition) {
     DeclID KeyFn = ReadDeclID(Record, Idx);
     if (KeyFn && D->IsCompleteDefinition)
+      // FIXME: This is wrong for the ARM ABI, where some other module may have
+      // made this function no longer be a key function. We need an update
+      // record or similar for that case.
       C.KeyFunctions[D] = KeyFn;
   }
 
