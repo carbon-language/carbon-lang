@@ -550,9 +550,11 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
         E = I + OldFilename.size();
         I = Cmd.rfind(" ", I) + 1;
         Cmd.replace(I, E - I, NewFilename.data(), NewFilename.size());
-        // Add the VFS overlay to the reproduction script.
-        I += NewFilename.size();
-        Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
+        if (!VFS.empty()) {
+          // Add the VFS overlay to the reproduction script.
+          I += NewFilename.size();
+          Cmd.insert(I, std::string(" -ivfsoverlay ") + VFS.c_str());
+        }
         ScriptOS << Cmd;
         Diag(clang::diag::note_drv_command_failed_diag_msg) << Script;
       }
