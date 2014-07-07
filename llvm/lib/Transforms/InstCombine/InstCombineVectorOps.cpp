@@ -144,7 +144,7 @@ Instruction *InstCombiner::scalarizePHI(ExtractElementInst &EI, PHINode *PN) {
     // If the operand is the PHI induction variable:
     if (PHIInVal == PHIUser) {
       // Scalarize the binary operation. Its first operand is the
-      // scalar PHI and the second operand is extracted from the other
+      // scalar PHI, and the second operand is extracted from the other
       // vector operand.
       BinaryOperator *B0 = cast<BinaryOperator>(PHIUser);
       unsigned opId = (B0->getOperand(0) == PN) ? 1 : 0;
@@ -361,7 +361,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
     unsigned InsertedIdx = cast<ConstantInt>(IdxOp)->getZExtValue();
 
     if (isa<UndefValue>(ScalarOp)) {  // inserting undef into vector.
-      // Okay, we can handle this if the vector we are insertinting into is
+      // We can handle this if the vector we are inserting into is
       // transitively ok.
       if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask)) {
         // If so, update the mask to reflect the inserted undef.
@@ -376,7 +376,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 
         // This must be extracting from either LHS or RHS.
         if (EI->getOperand(0) == LHS || EI->getOperand(0) == RHS) {
-          // Okay, we can handle this if the vector we are insertinting into is
+          // We can handle this if the vector we are inserting into is
           // transitively ok.
           if (CollectSingleShuffleElements(VecOp, LHS, RHS, Mask)) {
             // If so, update the mask to reflect the inserted value.
@@ -403,7 +403,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 
 /// We are building a shuffle to create V, which is a sequence of insertelement,
 /// extractelement pairs. If PermittedRHS is set, then we must either use it or
-/// not rely on the second vector source. Return an std::pair containing the
+/// not rely on the second vector source. Return a std::pair containing the
 /// left and right vectors of the proposed shuffle (or 0), and set the Mask
 /// parameter as required.
 ///
