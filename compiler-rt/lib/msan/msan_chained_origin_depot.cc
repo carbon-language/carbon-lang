@@ -19,7 +19,7 @@ namespace __msan {
 struct ChainedOriginDepotDesc {
   u32 here_id;
   u32 prev_id;
-  u32 hash() const { return here_id ^ prev_id; }
+  u32 hash() const { return (here_id * 0x1f1f1f1f) ^ prev_id; }
   bool is_valid() { return true; }
 };
 
