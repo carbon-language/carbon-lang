@@ -1012,11 +1012,6 @@ public:
     return *SanitizerBlacklist;
   }
 
-  const SanitizerOptions &getSanOpts() const {
-    return SanitizerBlacklist->isIn(TheModule) ? SanitizerOptions::Disabled
-                                               : LangOpts.Sanitize;
-  }
-
   void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
                           bool IsDynInit = false);
 

@@ -37,11 +37,7 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     : CodeGenTypeCache(cgm), CGM(cgm), Target(cgm.getTarget()),
       Builder(cgm.getModule().getContext(), llvm::ConstantFolder(),
               CGBuilderInserterTy(this)), CapturedStmtInfo(nullptr),
-      SanitizePerformTypeCheck(CGM.getSanOpts().Null |
-                               CGM.getSanOpts().Alignment |
-                               CGM.getSanOpts().ObjectSize |
-                               CGM.getSanOpts().Vptr),
-      SanOpts(&CGM.getSanOpts()), AutoreleaseResult(false), BlockInfo(nullptr),
+      SanOpts(&CGM.getLangOpts().Sanitize), AutoreleaseResult(false), BlockInfo(nullptr),
       BlockPointer(nullptr), LambdaThisCaptureField(nullptr),
       NormalCleanupDest(nullptr), NextCleanupDestIndex(1),
       FirstBlockInfo(nullptr), EHResumeBlock(nullptr), ExceptionSlot(nullptr),
@@ -539,10 +535,8 @@ void CodeGenFunction::StartFunction(GlobalDecl GD,
   CurFnInfo = &FnInfo;
   assert(CurFn->isDeclaration() && "Function already has body?");
 
-  if (CGM.getSanitizerBlacklist().isIn(*Fn)) {
+  if (CGM.getSanitizerBlacklist().isIn(*Fn))
     SanOpts = &SanitizerOptions::Disabled;
-    SanitizePerformTypeCheck = false;
-  }
 
   // Pass inline keyword to optimizer if it appears explicitly on any
   // declaration. Also, in the case of -fno-inline attach NoInline

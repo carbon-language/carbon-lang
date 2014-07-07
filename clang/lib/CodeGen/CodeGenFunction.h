@@ -231,10 +231,6 @@ public:
   /// potentially higher performance penalties.
   unsigned char BoundsChecking;
 
-  /// \brief Whether any type-checking sanitizers are enabled. If \c false,
-  /// calls to EmitTypeCheck can be skipped.
-  bool SanitizePerformTypeCheck;
-
   /// \brief Sanitizer options to use for this function.
   const SanitizerOptions *SanOpts;
 
@@ -1692,6 +1688,10 @@ public:
     /// be an object within its lifetime.
     TCK_DowncastReference
   };
+
+  /// \brief Whether any type-checking sanitizers are enabled. If \c false,
+  /// calls to EmitTypeCheck can be skipped.
+  bool sanitizePerformTypeCheck() const;
 
   /// \brief Emit a check that \p V is the address of storage of the
   /// appropriate size and alignment for an object of type \p Type.
