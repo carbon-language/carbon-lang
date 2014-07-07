@@ -823,6 +823,19 @@ static_assert(X() == 0, "");
 
 }
 
+struct This {
+  constexpr int f() const { return 0; }
+  static constexpr int g() { return 0; }
+  void h() {
+    constexpr int x = f(); // expected-error {{must be initialized by a constant}}
+    // expected-note@-1 {{implicit use of 'this' pointer is only allowed within the evaluation of a call to a 'constexpr' member function}}
+    constexpr int y = this->f(); // expected-error {{must be initialized by a constant}}
+    // expected-note-re@-1 {{{{^}}use of 'this' pointer}}
+    constexpr int z = g();
+    static_assert(z == 0, "");
+  }
+};
+
 }
 
 namespace Temporaries {
