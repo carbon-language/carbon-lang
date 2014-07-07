@@ -475,7 +475,7 @@ struct IndexSourceFileInfo {
   ArrayRef<CXUnsavedFile> unsaved_files;
   CXTranslationUnit *out_TU;
   unsigned TU_options;
-  mutable int result;
+  CXErrorCode &result;
 };
 
 } // anonymous namespace
@@ -493,9 +493,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   int num_command_line_args = ITUI->num_command_line_args;
   CXTranslationUnit *out_TU  = ITUI->out_TU;
   unsigned TU_options = ITUI->TU_options;
-
-  // Set up the initial return value.
-  ITUI->result = CXError_Failure;
 
   if (out_TU)
     *out_TU = nullptr;
@@ -982,6 +979,7 @@ int clang_indexSourceFile(CXIndexAction idxAction,
   if (num_unsaved_files && !unsaved_files)
     return CXError_InvalidArguments;
 
+  CXErrorCode result = CXError_Failure;
   IndexSourceFileInfo ITUI = {
       idxAction,
       client_data,
@@ -994,11 +992,11 @@ int clang_indexSourceFile(CXIndexAction idxAction,
       llvm::makeArrayRef(unsaved_files, num_unsaved_files),
       out_TU,
       TU_options,
-      CXError_Failure};
+      result};
 
   if (getenv("LIBCLANG_NOTHREADS")) {
     clang_indexSourceFile_Impl(&ITUI);
-    return ITUI.result;
+    return result;
   }
 
   llvm::CrashRecoveryContext CRC;
@@ -1029,8 +1027,8 @@ int clang_indexSourceFile(CXIndexAction idxAction,
     if (out_TU)
       PrintLibclangResourceUsage(*out_TU);
   }
-  
-  return ITUI.result;
+
+  return result;
 }
 
 int clang_indexTranslationUnit(CXIndexAction idxAction,

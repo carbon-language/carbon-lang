@@ -2736,7 +2736,7 @@ struct ParseTranslationUnitInfo {
   ArrayRef<CXUnsavedFile> unsaved_files;
   unsigned options;
   CXTranslationUnit *out_TU;
-  mutable CXErrorCode result;
+  CXErrorCode &result;
 };
 static void clang_parseTranslationUnit_Impl(void *UserData) {
   const ParseTranslationUnitInfo *PTUI =
@@ -2751,7 +2751,6 @@ static void clang_parseTranslationUnit_Impl(void *UserData) {
   // Set up the initial return values.
   if (out_TU)
     *out_TU = nullptr;
-  PTUI->result = CXError_Failure;
 
   // Check arguments.
   if (!CIdx || !out_TU) {
@@ -2898,6 +2897,7 @@ enum CXErrorCode clang_parseTranslationUnit2(
   if (num_unsaved_files && !unsaved_files)
     return CXError_InvalidArguments;
 
+  CXErrorCode result = CXError_Failure;
   ParseTranslationUnitInfo PTUI = {
       CIdx,
       source_filename,
@@ -2906,7 +2906,7 @@ enum CXErrorCode clang_parseTranslationUnit2(
       llvm::makeArrayRef(unsaved_files, num_unsaved_files),
       options,
       out_TU,
-      CXError_Failure};
+      result};
   llvm::CrashRecoveryContext CRC;
 
   if (!RunSafely(CRC, clang_parseTranslationUnit_Impl, &PTUI)) {
@@ -2935,8 +2935,8 @@ enum CXErrorCode clang_parseTranslationUnit2(
     if (CXTranslationUnit *TU = PTUI.out_TU)
       PrintLibclangResourceUsage(*TU);
   }
-  
-  return PTUI.result;
+
+  return result;
 }
 
 unsigned clang_defaultSaveOptions(CXTranslationUnit TU) {
@@ -3039,14 +3039,12 @@ struct ReparseTranslationUnitInfo {
   CXTranslationUnit TU;
   ArrayRef<CXUnsavedFile> unsaved_files;
   unsigned options;
-  mutable int result;
+  CXErrorCode &result;
 };
 
 static void clang_reparseTranslationUnit_Impl(void *UserData) {
   const ReparseTranslationUnitInfo *RTUI =
       static_cast<ReparseTranslationUnitInfo *>(UserData);
-  RTUI->result = CXError_Failure;
-
   CXTranslationUnit TU = RTUI->TU;
   unsigned options = RTUI->options;
   (void) options;
@@ -3099,13 +3097,14 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   if (num_unsaved_files && !unsaved_files)
     return CXError_InvalidArguments;
 
+  CXErrorCode result = CXError_Failure;
   ReparseTranslationUnitInfo RTUI = {
       TU, llvm::makeArrayRef(unsaved_files, num_unsaved_files), options,
-      CXError_Failure};
+      result};
 
   if (getenv("LIBCLANG_NOTHREADS")) {
     clang_reparseTranslationUnit_Impl(&RTUI);
-    return RTUI.result;
+    return result;
   }
 
   llvm::CrashRecoveryContext CRC;
@@ -3117,7 +3116,7 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
   } else if (getenv("LIBCLANG_RESOURCE_USAGE"))
     PrintLibclangResourceUsage(TU);
 
-  return RTUI.result;
+  return result;
 }
 
 
