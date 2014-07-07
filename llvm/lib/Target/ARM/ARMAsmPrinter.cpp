@@ -82,7 +82,8 @@ void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
   const GlobalValue *GV = dyn_cast<GlobalValue>(CV->stripPointerCasts());
   assert(GV && "C++ constructor pointer was not a GlobalValue!");
 
-  const MCExpr *E = MCSymbolRefExpr::Create(getSymbol(GV),
+  const MCExpr *E = MCSymbolRefExpr::Create(GetARMGVSymbol(GV,
+                                                           ARMII::MO_NO_FLAG),
                                             (Subtarget->isTargetELF()
                                              ? MCSymbolRefExpr::VK_ARM_TARGET1
                                              : MCSymbolRefExpr::VK_None),
@@ -164,7 +165,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
     else if ((Modifier && strcmp(Modifier, "hi16") == 0) ||
              (TF & ARMII::MO_HI16))
       O << ":upper16:";
-    O << *getSymbol(GV);
+    O << *GetARMGVSymbol(GV, TF);
 
     printOffset(MO.getOffset(), O);
     if (TF == ARMII::MO_PLT)
@@ -954,7 +955,7 @@ void ARMAsmPrinter::EmitJump2Table(const MachineInstr *MI) {
   for (unsigned i = 0, e = JTBBs.size(); i != e; ++i) {
     MachineBasicBlock *MBB = JTBBs[i];
     const MCExpr *MBBSymbolExpr = MCSymbolRefExpr::Create(MBB->getSymbol(),
-                                                      OutContext);
+                                                          OutContext);
     // If this isn't a TBB or TBH, the entries are direct branch instructions.
     if (OffsetWidth == 4) {
       EmitToStreamer(OutStreamer, MCInstBuilder(ARM::t2B)
@@ -1251,8 +1252,10 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       // Add 's' bit operand (always reg0 for this)
       .addReg(0));
 
-    const GlobalValue *GV = MI->getOperand(0).getGlobal();
-    MCSymbol *GVSym = getSymbol(GV);
+    const MachineOperand &Op = MI->getOperand(0);
+    const GlobalValue *GV = Op.getGlobal();
+    const unsigned TF = Op.getTargetFlags();
+    MCSymbol *GVSym = GetARMGVSymbol(GV, TF);
     const MCExpr *GVSymExpr = MCSymbolRefExpr::Create(GVSym, OutContext);
     EmitToStreamer(OutStreamer, MCInstBuilder(ARM::Bcc)
       .addExpr(GVSymExpr)
