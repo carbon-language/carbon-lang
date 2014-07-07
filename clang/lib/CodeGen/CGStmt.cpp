@@ -173,6 +173,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::SEHTryStmtClass:
     EmitSEHTryStmt(cast<SEHTryStmt>(*S));
     break;
+  case Stmt::SEHLeaveStmtClass:
+    EmitSEHLeaveStmt(cast<SEHLeaveStmt>(*S));
+    break;
   case Stmt::OMPParallelDirectiveClass:
     EmitOMPParallelDirective(cast<OMPParallelDirective>(*S));
     break;

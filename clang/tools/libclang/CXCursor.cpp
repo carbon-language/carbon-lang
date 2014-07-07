@@ -215,6 +215,10 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::SEHFinallyStmtClass:
     K = CXCursor_SEHFinallyStmt;
     break;
+
+  case Stmt::SEHLeaveStmtClass:
+    K = CXCursor_SEHLeaveStmt;
+    break;
   
   case Stmt::ArrayTypeTraitExprClass:
   case Stmt::AsTypeExprClass:

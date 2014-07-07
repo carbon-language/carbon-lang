@@ -1936,6 +1936,31 @@ public:
   }
 };
 
+/// Represents a __leave statement.
+///
+class SEHLeaveStmt : public Stmt {
+  SourceLocation LeaveLoc;
+public:
+  explicit SEHLeaveStmt(SourceLocation LL)
+      : Stmt(SEHLeaveStmtClass), LeaveLoc(LL) {}
+
+  /// \brief Build an empty __leave statement.
+  explicit SEHLeaveStmt(EmptyShell Empty) : Stmt(SEHLeaveStmtClass, Empty) { }
+
+  SourceLocation getLeaveLoc() const { return LeaveLoc; }
+  void setLeaveLoc(SourceLocation L) { LeaveLoc = L; }
+
+  SourceLocation getLocStart() const LLVM_READONLY { return LeaveLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return LeaveLoc; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == SEHLeaveStmtClass;
+  }
+
+  // Iterators
+  child_range children() { return child_range(); }
+};
+
 /// \brief This captures a statement into a function. For example, the following
 /// pragma annotated compound statement can be represented as a CapturedStmt,
 /// and this compound statement is the body of an anonymous outlined function.

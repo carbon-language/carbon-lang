@@ -3285,7 +3285,7 @@ Sema::ActOnSEHLeaveStmt(SourceLocation Loc, Scope *CurScope) {
   if (!SEHTryParent)
     return StmtError(Diag(Loc, diag::err_ms___leave_not_in___try));
 
-  return StmtError(Diag(Loc, diag::err_ms___leave_unimplemented));
+  return new (Context) SEHLeaveStmt(Loc);
 }
 
 StmtResult Sema::BuildMSDependentExistsStmt(SourceLocation KeywordLoc,

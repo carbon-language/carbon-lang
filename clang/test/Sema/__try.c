@@ -171,21 +171,18 @@ void TEST() {
   (void)AbnormalTermination();  // expected-error{{only allowed in __finally block}}
 }
 
-void test___leave() {
+void test_seh_leave_stmt() {
   __leave; // expected-error{{'__leave' statement not in __try block}}
 
   __try {
-    // FIXME: should be fine
-    __leave; // expected-error{{not implemented yet}}
-    // FIXME: should say "expected ';' after __leave statement"
-    __leave 4; // expected-error{{not implemented yet}} expected-warning{{expression result unused}}
+    __leave;
+    __leave 4; // expected-error{{expected ';' after __leave statement}}
   } __except(1) {
     __leave; // expected-error{{'__leave' statement not in __try block}}
   }
 
   __try {
-    // FIXME: should be fine
-    __leave; // expected-error{{not implemented yet}}
+    __leave;
   } __finally {
     __leave; // expected-error{{'__leave' statement not in __try block}}
   }

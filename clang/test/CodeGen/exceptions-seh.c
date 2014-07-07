@@ -7,6 +7,7 @@ int SaveDiv(int numerator, int denominator, int *res) {
   int myres = 0;
   __try {
     myres = numerator / denominator;
+    __leave;
   } __except (1) {
     return 0;
   }

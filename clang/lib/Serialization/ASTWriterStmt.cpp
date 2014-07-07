@@ -1650,6 +1650,12 @@ void ASTStmtWriter::VisitSEHTryStmt(SEHTryStmt *S) {
   Code = serialization::STMT_SEH_TRY;
 }
 
+void ASTStmtWriter::VisitSEHLeaveStmt(SEHLeaveStmt *S) {
+  VisitStmt(S);
+  Writer.AddSourceLocation(S->getLeaveLoc(), Record);
+  Code = serialization::STMT_SEH_LEAVE;
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP Clauses.
 //===----------------------------------------------------------------------===//

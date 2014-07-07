@@ -1609,6 +1609,11 @@ void ASTStmtReader::VisitCXXUuidofExpr(CXXUuidofExpr *E) {
   E->setExprOperand(Reader.ReadSubExpr());
 }
 
+void ASTStmtReader::VisitSEHLeaveStmt(SEHLeaveStmt *S) {
+  VisitStmt(S);
+  S->setLeaveLoc(ReadSourceLocation(Record, Idx));
+}
+
 void ASTStmtReader::VisitSEHExceptStmt(SEHExceptStmt *S) {
   VisitStmt(S);
   S->Loc = ReadSourceLocation(Record, Idx);
@@ -2380,6 +2385,9 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
     case EXPR_OBJC_BOOL_LITERAL:
       S = new (Context) ObjCBoolLiteralExpr(Empty);
+      break;
+    case STMT_SEH_LEAVE:
+      S = new (Context) SEHLeaveStmt(Empty);
       break;
     case STMT_SEH_EXCEPT:
       S = new (Context) SEHExceptStmt(Empty);

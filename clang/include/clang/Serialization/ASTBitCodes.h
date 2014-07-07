@@ -1334,6 +1334,7 @@ namespace clang {
       EXPR_CXX_PROPERTY_REF_EXPR, // MSPropertyRefExpr
       EXPR_CXX_UUIDOF_EXPR,       // CXXUuidofExpr (of expr).
       EXPR_CXX_UUIDOF_TYPE,       // CXXUuidofExpr (of type).
+      STMT_SEH_LEAVE,             // SEHLeaveStmt
       STMT_SEH_EXCEPT,            // SEHExceptStmt
       STMT_SEH_FINALLY,           // SEHFinallyStmt
       STMT_SEH_TRY,               // SEHTryStmt

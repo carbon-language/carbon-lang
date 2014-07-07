@@ -573,6 +573,11 @@ void StmtPrinter::VisitSEHFinallyStmt(SEHFinallyStmt *Node) {
   OS << "\n";
 }
 
+void StmtPrinter::VisitSEHLeaveStmt(SEHLeaveStmt *Node) {
+  Indent() << "__leave;";
+  if (Policy.IncludeNewlines) OS << "\n";
+}
+
 //===----------------------------------------------------------------------===//
 //  OpenMP clauses printing methods
 //===----------------------------------------------------------------------===//

@@ -3893,6 +3893,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return cxstring::createRef("SEHExceptStmt");
   case CXCursor_SEHFinallyStmt:
       return cxstring::createRef("SEHFinallyStmt");
+  case CXCursor_SEHLeaveStmt:
+      return cxstring::createRef("SEHLeaveStmt");
   case CXCursor_NullStmt:
       return cxstring::createRef("NullStmt");
   case CXCursor_InvalidFile:

@@ -6376,6 +6376,12 @@ StmtResult TreeTransform<Derived>::TransformSEHHandler(Stmt *Handler) {
     return getDerived().TransformSEHExceptStmt(cast<SEHExceptStmt>(Handler));
 }
 
+template<typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformSEHLeaveStmt(SEHLeaveStmt *S) {
+  return S;
+}
+
 //===----------------------------------------------------------------------===//
 // OpenMP directive transformation
 //===----------------------------------------------------------------------===//
