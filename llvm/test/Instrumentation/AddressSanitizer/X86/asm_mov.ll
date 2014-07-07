@@ -5,18 +5,35 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; CHECK-LABEL: mov1b
 ; CHECK: leaq -128(%rsp), %rsp
+; CHECK-NEXT: pushq %rax
+; CHECK-NEXT: pushq %rcx
 ; CHECK-NEXT: pushq %rdi
+; CHECK-NEXT: pushfq
 ; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_load1@PLT
+; CHECK-NEXT: movq %rdi, %rax
+; CHECK-NEXT: shrq $3, %rax
+; CHECK-NEXT: movb 2147450880(%rax), %al
+; CHECK-NEXT: testb %al, %al
+; CHECK-NEXT: je [[A:.*]]
+; CHECK-NEXT: movl %edi, %ecx
+; CHECK-NEXT: andl $7, %ecx
+; CHECK-NEXT: movsbl %al, %eax
+; CHECK-NEXT: cmpl %eax, %ecx
+; CHECK-NEXT: jl {{.*}}
+; CHECK-NEXT: cld
+; CHECK-NEXT: emms
+; CHECK-NEXT: andq $-16, %rsp
+; CHECK-NEXT: callq __asan_report_load1@PLT
+; CHECK-NEXT: [[A]]:
+; CHECK-NEXT: popfq
 ; CHECK-NEXT: popq %rdi
+; CHECK-NEXT: popq %rcx
+; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_store1@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: callq __asan_report_store1@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: movb {{.*}}, {{.*}}
 define void @mov1b(i8* %dst, i8* %src) #0 {
@@ -27,18 +44,14 @@ entry:
 
 ; CHECK-LABEL: mov2b
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_load2@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: leal 1(%ecx), %ecx
+; CHECK: callq __asan_report_load2@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_store2@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: leal 1(%ecx), %ecx
+; CHECK: callq __asan_report_store2@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: movw {{.*}}, {{.*}}
 define void @mov2b(i16* %dst, i16* %src) #0 {
@@ -49,18 +62,14 @@ entry:
 
 ; CHECK-LABEL: mov4b
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_load4@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: addl $3, %ecx
+; CHECK: callq __asan_report_load4@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_store4@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: addl $3, %ecx
+; CHECK: callq __asan_report_store4@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: movl {{.*}}, {{.*}}
 define void @mov4b(i32* %dst, i32* %src) #0 {
@@ -71,17 +80,35 @@ entry:
 
 ; CHECK-LABEL: mov8b
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_load8@PLT
-; CHECK-NEXT: popq %rdi
+; CHECK-NEXT: pushq %rax
+; CHECK-NEXT: pushfq
+; CHECK-NEXT: leaq {{.*}}, %rax
+; CHECK-NEXT: shrq $3, %rax
+; CHECK-NEXT: cmpb $0, 2147450880(%rax)
+; CHECK-NEXT: je [[A:.*]]
+; CHECK-NEXT: cld
+; CHECK-NEXT: emms
+; CHECK-NEXT: andq $-16, %rsp
+; CHECK-NEXT: callq __asan_report_load8@PLT
+; CHECK-NEXT: [[A]]:
+; CHECK-NEXT: popfq
+; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_store8@PLT
-; CHECK-NEXT: popq %rdi
+; CHECK-NEXT: pushq %rax
+; CHECK-NEXT: pushfq
+; CHECK-NEXT: leaq {{.*}}, %rax
+; CHECK-NEXT: shrq $3, %rax
+; CHECK-NEXT: cmpb $0, 2147450880(%rax)
+; CHECK-NEXT: je [[A:.*]]
+; CHECK-NEXT: cld
+; CHECK-NEXT: emms
+; CHECK-NEXT: andq $-16, %rsp
+; CHECK-NEXT: callq __asan_report_store8@PLT
+; CHECK-NEXT: [[A]]:
+; CHECK-NEXT: popfq
+; CHECK-NEXT: popq %rax
 ; CHECK-NEXT: leaq 128(%rsp), %rsp
 
 ; CHECK: movq {{.*}}, {{.*}}
@@ -93,18 +120,14 @@ entry:
 
 ; CHECK-LABEL: mov16b
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_load16@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: cmpw $0, 2147450880(%rax)
+; CHECK: callq __asan_report_load16@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: leaq -128(%rsp), %rsp
-; CHECK-NEXT: pushq %rdi
-; CHECK-NEXT: leaq {{.*}}, %rdi
-; CHECK-NEXT: callq __sanitizer_sanitize_store16@PLT
-; CHECK-NEXT: popq %rdi
-; CHECK-NEXT: leaq 128(%rsp), %rsp
+; CHECK: cmpw $0, 2147450880(%rax)
+; CHECK: callq __asan_report_store16@PLT
+; CHECK: leaq 128(%rsp), %rsp
 
 ; CHECK: movaps {{.*}}, {{.*}}
 define void @mov16b(<2 x i64>* %dst, <2 x i64>* %src) #0 {
