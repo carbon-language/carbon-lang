@@ -716,8 +716,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     // Finalize PHI nodes.
     for (PHINode *PN : ShadowPHINodes) {
-      Value *S = getShadow(PN);
-      if (isa<Constant>(S)) continue;
       PHINode *PNS = cast<PHINode>(getShadow(PN));
       PHINode *PNO = MS.TrackOrigins ? cast<PHINode>(getOrigin(PN)) : nullptr;
       size_t NumValues = PN->getNumIncomingValues();
@@ -2396,6 +2394,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   void visitPHINode(PHINode &I) {
     IRBuilder<> IRB(&I);
+    if (!PropagateShadow) {
+      setShadow(&I, getCleanShadow(&I));
+      return;
+    }
+
     ShadowPHINodes.push_back(&I);
     setShadow(&I, IRB.CreatePHI(getShadowTy(&I), I.getNumIncomingValues(),
                                 "_msphi_s"));

@@ -743,6 +743,29 @@ declare i32 @NoSanitizeMemoryUndefHelper(i32 %x)
 ; CHECK: ret i32
 
 
+; Test PHINode instrumentation in blacklisted functions
+
+define i32 @NoSanitizeMemoryPHI(i32 %x) {
+entry:
+  %tobool = icmp ne i32 %x, 0
+  br i1 %tobool, label %cond.true, label %cond.false
+
+cond.true:                                        ; preds = %entry
+  br label %cond.end
+
+cond.false:                                       ; preds = %entry
+  br label %cond.end
+
+cond.end:                                         ; preds = %cond.false, %cond.true
+  %cond = phi i32 [ undef, %cond.true ], [ undef, %cond.false ]
+  ret i32 %cond
+}
+
+; CHECK: [[A:%.*]] = phi i32 [ undef, %cond.true ], [ undef, %cond.false ]
+; CHECK: store i32 0, i32* bitcast {{.*}} @__msan_retval_tls
+; CHECK: ret i32 [[A]]
+
+
 ; Test argument shadow alignment
 
 define <2 x i64> @ArgumentShadowAlignment(i64 %a, <2 x i64> %b) sanitize_memory {
