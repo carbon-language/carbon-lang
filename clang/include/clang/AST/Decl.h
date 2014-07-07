@@ -52,8 +52,7 @@ class VarTemplateDecl;
 /// A client can read the relevant info using TypeLoc wrappers, e.g:
 /// @code
 /// TypeLoc TL = TypeSourceInfo->getTypeLoc();
-/// if (PointerLoc *PL = dyn_cast<PointerLoc>(&TL))
-///   PL->getStarLoc().print(OS, SrcMgr);
+/// TL.getStartLoc().print(OS, SrcMgr);
 /// @endcode
 ///
 class TypeSourceInfo {
