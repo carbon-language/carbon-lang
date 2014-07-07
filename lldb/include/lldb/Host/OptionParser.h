@@ -16,18 +16,17 @@ struct option;
 
 namespace lldb_private {
 
-typedef struct Option
+struct OptionDefinition;
+
+struct Option
 {
-    // name of long option
-    const char *name;
-    // one of no_argument, required_argument, and optional_argument:
-    // whether option takes an argument
-    int has_arg;
+    // The definition of the option that this refers to.
+    const OptionDefinition *definition;
     // if not NULL, set *flag to val when option found
     int *flag;
     // if flag not NULL, value to set *flag to; else return value
     int val;
-} Option;
+};
 
 class OptionParser
 {

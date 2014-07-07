@@ -21,6 +21,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandOptionValidators.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionGroupFile.h"
 #include "lldb/Interpreter/OptionGroupPlatform.h"
@@ -1644,6 +1645,11 @@ protected:
     CommandOptions m_options;
 };
 
+namespace
+{
+    PosixPlatformCommandOptionValidator g_posix_validator;
+}
+
 OptionDefinition
 CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 {
@@ -1654,10 +1660,10 @@ CommandObjectPlatformProcessList::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_5            , true , "contains"   , 'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeProcessName      , "Find processes with executable basenames that contain a string." },
 { LLDB_OPT_SET_6            , true , "regex"      , 'r', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeRegularExpression, "Find processes with executable basenames that match a regular expression." },
 { LLDB_OPT_SET_FROM_TO(2, 6), false, "parent"     , 'P', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePid              , "Find processes that have a matching parent process ID." },
-{ LLDB_OPT_SET_FROM_TO(2, 6), false, "uid"        , 'u', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching user ID." },
-{ LLDB_OPT_SET_FROM_TO(2, 6), false, "euid"       , 'U', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective user ID." },
-{ LLDB_OPT_SET_FROM_TO(2, 6), false, "gid"        , 'g', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching group ID." },
-{ LLDB_OPT_SET_FROM_TO(2, 6), false, "egid"       , 'G', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective group ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "uid"        , 'u', OptionParser::eRequiredArgument, &g_posix_validator, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching user ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "euid"       , 'U', OptionParser::eRequiredArgument, &g_posix_validator, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective user ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "gid"        , 'g', OptionParser::eRequiredArgument, &g_posix_validator, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching group ID." },
+{ LLDB_OPT_SET_FROM_TO(2, 6), false, "egid"       , 'G', OptionParser::eRequiredArgument, &g_posix_validator, NULL, 0, eArgTypeUnsignedInteger  , "Find processes that have a matching effective group ID." },
 { LLDB_OPT_SET_FROM_TO(2, 6), false, "arch"       , 'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeArchitecture     , "Find processes that have a matching architecture." },
 { LLDB_OPT_SET_FROM_TO(1, 6), false, "show-args"  , 'A', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone             , "Show process arguments instead of the process executable basename." },
 { LLDB_OPT_SET_FROM_TO(1, 6), false, "verbose"    , 'v', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone             , "Enable verbose output." },

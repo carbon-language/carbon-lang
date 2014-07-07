@@ -16,6 +16,9 @@
 
 namespace lldb_private
 {
+    class Platform;
+    class ExecutionContext;
+
     //----------------------------------------------------------------------
     // Every register is described in detail including its name, alternate
     // name (optional), encoding, size in bytes and the default display
@@ -55,11 +58,12 @@ namespace lldb_private
     struct OptionValidator
     {
         virtual ~OptionValidator() { }
-        virtual bool IsValid() const = 0;
-        virtual const char * ValidConditionString() const = 0;
+        virtual bool IsValid(Platform &platform, ExecutionContext &target) const = 0;
+        virtual const char * ShortConditionString() const = 0;
+        virtual const char * LongConditionString() const = 0;
     };
     
-    typedef struct
+    struct OptionDefinition
     {
         uint32_t usage_mask;                     // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
                                                  // then this option belongs to option set n.
@@ -73,7 +77,7 @@ namespace lldb_private
         lldb::CommandArgumentType argument_type; // Type of argument this option takes
         const char *usage_text;                  // Full text explaining what this options does and what (if any) argument to
                                                  // pass it.
-    } OptionDefinition;
+    };
 
 } // namespace lldb_private
 

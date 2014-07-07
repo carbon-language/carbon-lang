@@ -159,7 +159,7 @@ public:
 
     void
     OutputFormattedUsageText (Stream &strm,
-                              const char *text,
+                              const OptionDefinition &option_def,
                               uint32_t output_max_columns);
 
     void
@@ -301,6 +301,12 @@ public:
                                     int max_return_elements,
                                     bool &word_complete,
                                     StringList &matches);
+
+    CommandInterpreter&
+    GetInterpreter()
+    {
+        return m_interpreter;
+    }
     
 protected:
     // This is a set of options expressed as indexes into the options table for this Option.
