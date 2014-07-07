@@ -2378,16 +2378,33 @@ static bool SimplifyCondBranchToCondBranch(BranchInst *PBI, BranchInst *BI) {
   // Do not perform this transformation if it would require
   // insertion of a large number of select instructions. For targets
   // without predication/cmovs, this is a big pessimization.
-  BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
 
+  // Also do not perform this transformation if any phi node in the common
+  // destination block can trap when reached by BB or PBB (PR17073). In that
+  // case, it would be unsafe to hoist the operation into a select instruction.
+
+  BasicBlock *CommonDest = PBI->getSuccessor(PBIOp);
   unsigned NumPhis = 0;
   for (BasicBlock::iterator II = CommonDest->begin();
-       isa<PHINode>(II); ++II, ++NumPhis)
+       isa<PHINode>(II); ++II, ++NumPhis) {
     if (NumPhis > 2) // Disable this xform.
       return false;
 
+    PHINode *PN = cast<PHINode>(II);
+    Value *BIV = PN->getIncomingValueForBlock(BB);
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(BIV))
+      if (CE->canTrap())
+        return false;
+
+    unsigned PBBIdx = PN->getBasicBlockIndex(PBI->getParent());
+    Value *PBIV = PN->getIncomingValue(PBBIdx);
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(PBIV))
+      if (CE->canTrap())
+        return false;
+  }
+
   // Finally, if everything is ok, fold the branches to logical ops.
-  BasicBlock *OtherDest  = BI->getSuccessor(BIOp ^ 1);
+  BasicBlock *OtherDest = BI->getSuccessor(BIOp ^ 1);
 
   DEBUG(dbgs() << "FOLDING BRs:" << *PBI->getParent()
                << "AND: " << *BI->getParent());
