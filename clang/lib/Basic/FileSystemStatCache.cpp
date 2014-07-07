@@ -111,6 +111,7 @@ bool FileSystemStatCache::get(const char *Path, FileData &Data, bool isFile,
     // If not, close the file if opened.
     if (F && *F) {
       (*F)->close();
+      delete *F;
       *F = nullptr;
     }
     
