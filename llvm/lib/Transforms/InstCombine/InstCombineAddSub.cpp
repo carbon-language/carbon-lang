@@ -961,8 +961,8 @@ bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
 //   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
 //   ADD(XOR(AND(Z, C), C), 1) == NEG(OR(Z, ~C))
 //   XOR(AND(Z, C), (C + 1)) == NEG(OR(Z, ~C)) if C is even
-Value *checkForNegativeOperand(BinaryOperator &I,
-                               InstCombiner::BuilderTy *Builder) {
+static Value *checkForNegativeOperand(BinaryOperator &I,
+                                      InstCombiner::BuilderTy *Builder) {
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
   // This function creates 2 instructions to replace ADD, we need at least one

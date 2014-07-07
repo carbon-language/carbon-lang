@@ -411,8 +411,8 @@ static Value *getIdentityValue(Instruction::BinaryOps OpCode, Value *V) {
 
 /// This function factors binary ops which can be combined using distributive
 /// laws. This also factor SHL as MUL e.g. SHL(X, 2) ==> MUL(X, 4).
-Instruction::BinaryOps getBinOpsForFactorization(BinaryOperator *Op,
-                                                 Value *&LHS, Value *&RHS) {
+static Instruction::BinaryOps
+getBinOpsForFactorization(BinaryOperator *Op, Value *&LHS, Value *&RHS) {
   if (!Op)
     return Instruction::BinaryOpsEnd;
 

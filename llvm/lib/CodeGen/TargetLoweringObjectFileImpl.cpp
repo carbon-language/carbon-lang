@@ -760,7 +760,7 @@ getCOFFSectionFlags(SectionKind K) {
   return Flags;
 }
 
-const GlobalValue *getComdatGVForCOFF(const GlobalValue *GV) {
+static const GlobalValue *getComdatGVForCOFF(const GlobalValue *GV) {
   const Comdat *C = GV->getComdat();
   assert(C && "expected GV to have a Comdat!");
 
