@@ -89,9 +89,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       GenericBlockLiteralType(nullptr), LifetimeStartFn(nullptr),
       LifetimeEndFn(nullptr),
       SanitizerBlacklist(
-          llvm::SpecialCaseList::createOrDie(CGO.SanitizerBlacklistFile)),
-      SanOpts(SanitizerBlacklist->isIn(M) ? SanitizerOptions::Disabled
-                                          : LangOpts.Sanitize) {
+          llvm::SpecialCaseList::createOrDie(CGO.SanitizerBlacklistFile)) {
 
   // Initialize the type cache.
   llvm::LLVMContext &LLVMContext = M.getContext();
@@ -122,7 +120,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     createCUDARuntime();
 
   // Enable TBAA unless it's suppressed. ThreadSanitizer needs TBAA even at O0.
-  if (SanOpts.Thread ||
+  if (LangOpts.Sanitize.Thread ||
       (!CodeGenOpts.RelaxedAliasing && CodeGenOpts.OptimizationLevel > 0))
     TBAA = new CodeGenTBAA(Context, VMContext, CodeGenOpts, getLangOpts(),
                            getCXXABI().getMangleContext());
@@ -735,14 +733,13 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
   if (!SanitizerBlacklist->isIn(*F)) {
     // When AddressSanitizer is enabled, set SanitizeAddress attribute
     // unless __attribute__((no_sanitize_address)) is used.
-    if (SanOpts.Address && !D->hasAttr<NoSanitizeAddressAttr>())
+    if (LangOpts.Sanitize.Address && !D->hasAttr<NoSanitizeAddressAttr>())
       B.addAttribute(llvm::Attribute::SanitizeAddress);
     // Same for ThreadSanitizer and __attribute__((no_sanitize_thread))
-    if (SanOpts.Thread && !D->hasAttr<NoSanitizeThreadAttr>()) {
+    if (LangOpts.Sanitize.Thread && !D->hasAttr<NoSanitizeThreadAttr>())
       B.addAttribute(llvm::Attribute::SanitizeThread);
-    }
     // Same for MemorySanitizer and __attribute__((no_sanitize_memory))
-    if (SanOpts.Memory && !D->hasAttr<NoSanitizeMemoryAttr>())
+    if (LangOpts.Sanitize.Memory && !D->hasAttr<NoSanitizeMemoryAttr>())
       B.addAttribute(llvm::Attribute::SanitizeMemory);
   }
 
@@ -1966,7 +1963,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
 void CodeGenModule::reportGlobalToASan(llvm::GlobalVariable *GV,
                                        SourceLocation Loc, bool IsDynInit) {
-  if (!SanOpts.Address)
+  if (!LangOpts.Sanitize.Address)
     return;
   IsDynInit &= !SanitizerBlacklist->isIn(*GV, "init");
   bool IsBlacklisted = SanitizerBlacklist->isIn(*GV);
@@ -2796,7 +2793,7 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // Mangle the string literal if the ABI allows for it.  However, we cannot
   // do this if  we are compiling with ASan or -fwritable-strings because they
   // rely on strings having normal linkage.
-  if (!LangOpts.WritableStrings && !SanOpts.Address &&
+  if (!LangOpts.WritableStrings && !LangOpts.Sanitize.Address &&
       getCXXABI().getMangleContext().shouldMangleStringLiteral(S)) {
     llvm::raw_svector_ostream Out(MangledNameBuffer);
     getCXXABI().getMangleContext().mangleStringLiteral(S, Out);

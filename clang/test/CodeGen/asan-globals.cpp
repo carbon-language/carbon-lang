@@ -1,5 +1,7 @@
 // RUN: echo "global:*blacklisted_global*" > %t.blacklist
 // RUN: %clang_cc1 -fsanitize=address -fsanitize-blacklist=%t.blacklist -emit-llvm -o - %s | FileCheck %s
+// RUN: echo "src:%s" > %t.blacklist-src
+// RUN: %clang_cc1 -fsanitize=address -fsanitize-blacklist=%t.blacklist-src -emit-llvm -o - %s | FileCheck %s --check-prefix=BLACKLIST-SRC
 // REQUIRES: shell
 
 int global;
@@ -21,3 +23,10 @@ void func() {
 // CHECK: ![[BLACKLISTED_GLOBAL]] = metadata !{{{.*}}, null, i1 false, i1 true}
 // CHECK: ![[STATIC_VAR]] = metadata !{{{.*}} [[STATIC_LOC]], i1 false, i1 false}
 // CHECK: ![[LITERAL]] = metadata !{{{.*}} [[LITERAL_LOC]], i1 false, i1 false}
+
+// BLACKLIST-SRC: !llvm.asan.globals = !{![[GLOBAL:[0-9]+]], ![[DYN_INIT_GLOBAL:[0-9]+]], ![[BLACKLISTED_GLOBAL:[0-9]+]], ![[STATIC_VAR:[0-9]+]], ![[LITERAL:[0-9]+]]}
+// BLACKLIST-SRC: ![[GLOBAL]] = metadata !{{{.*}} null, i1 false, i1 true}
+// BLACKLIST-SRC: ![[DYN_INIT_GLOBAL]] = metadata !{{{.*}} null, i1 true, i1 true}
+// BLACKLIST-SRC: ![[BLACKLISTED_GLOBAL]] = metadata !{{{.*}}, null, i1 false, i1 true}
+// BLACKLIST-SRC: ![[STATIC_VAR]] = metadata !{{{.*}} null, i1 false, i1 true}
+// BLACKLIST-SRC: ![[LITERAL]] = metadata !{{{.*}} null, i1 false, i1 true}
