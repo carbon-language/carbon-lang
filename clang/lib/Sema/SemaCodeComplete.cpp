@@ -5322,7 +5322,7 @@ static QualType getPreferredArgumentTypeForMessageSend(ResultBuilder &Results,
       if (R.Priority <= BestPriority) {
         const ObjCMethodDecl *Method = cast<ObjCMethodDecl>(R.Declaration);
         if (NumSelIdents <= Method->param_size()) {
-          QualType MyPreferredType = Method->param_begin()[NumSelIdents - 1]
+          QualType MyPreferredType = Method->parameters()[NumSelIdents - 1]
                                        ->getType();
           if (R.Priority < BestPriority || PreferredType.isNull()) {
             BestPriority = R.Priority;
@@ -6994,7 +6994,7 @@ void Sema::CodeCompleteObjCMethodDeclSelector(Scope *S,
         // Suggest parameter names we've seen before.
         unsigned NumSelIdents = SelIdents.size();
         if (NumSelIdents && NumSelIdents <= MethList->Method->param_size()) {
-          ParmVarDecl *Param = MethList->Method->param_begin()[NumSelIdents-1];
+          ParmVarDecl *Param = MethList->Method->parameters()[NumSelIdents-1];
           if (Param->getIdentifier()) {
             CodeCompletionBuilder Builder(Results.getAllocator(),
                                           Results.getCodeCompletionTUInfo());

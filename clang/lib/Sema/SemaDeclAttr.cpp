@@ -85,7 +85,7 @@ static QualType getFunctionOrMethodParamType(const Decl *D, unsigned Idx) {
   if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
     return BD->getParamDecl(Idx)->getType();
 
-  return cast<ObjCMethodDecl>(D)->param_begin()[Idx]->getType();
+  return cast<ObjCMethodDecl>(D)->parameters()[Idx]->getType();
 }
 
 static QualType getFunctionOrMethodResultType(const Decl *D) {

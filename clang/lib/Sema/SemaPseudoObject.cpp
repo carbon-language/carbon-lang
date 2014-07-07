@@ -1099,7 +1099,7 @@ static void CheckKeyForObjCARCConversion(Sema &S, QualType ContainerT,
                                                       true /*instance*/);
   if (!Getter)
     return;
-  QualType T = Getter->param_begin()[0]->getType();
+  QualType T = Getter->parameters()[0]->getType();
   S.CheckObjCARCConversion(Key->getSourceRange(), 
                          T, Key, Sema::CCK_ImplicitConversion);
 }
@@ -1192,13 +1192,13 @@ bool ObjCSubscriptOpBuilder::findAtIndexGetter() {
   }
   
   if (AtIndexGetter) {
-    QualType T = AtIndexGetter->param_begin()[0]->getType();
+    QualType T = AtIndexGetter->parameters()[0]->getType();
     if ((arrayRef && !T->isIntegralOrEnumerationType()) ||
         (!arrayRef && !T->isObjCObjectPointerType())) {
       S.Diag(RefExpr->getKeyExpr()->getExprLoc(), 
              arrayRef ? diag::err_objc_subscript_index_type
                       : diag::err_objc_subscript_key_type) << T;
-      S.Diag(AtIndexGetter->param_begin()[0]->getLocation(), 
+      S.Diag(AtIndexGetter->parameters()[0]->getLocation(), 
              diag::note_parameter_type) << T;
       return false;
     }
@@ -1315,26 +1315,26 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
   
   bool err = false;
   if (AtIndexSetter && arrayRef) {
-    QualType T = AtIndexSetter->param_begin()[1]->getType();
+    QualType T = AtIndexSetter->parameters()[1]->getType();
     if (!T->isIntegralOrEnumerationType()) {
       S.Diag(RefExpr->getKeyExpr()->getExprLoc(), 
              diag::err_objc_subscript_index_type) << T;
-      S.Diag(AtIndexSetter->param_begin()[1]->getLocation(), 
+      S.Diag(AtIndexSetter->parameters()[1]->getLocation(), 
              diag::note_parameter_type) << T;
       err = true;
     }
-    T = AtIndexSetter->param_begin()[0]->getType();
+    T = AtIndexSetter->parameters()[0]->getType();
     if (!T->isObjCObjectPointerType()) {
       S.Diag(RefExpr->getBaseExpr()->getExprLoc(), 
              diag::err_objc_subscript_object_type) << T << arrayRef;
-      S.Diag(AtIndexSetter->param_begin()[0]->getLocation(), 
+      S.Diag(AtIndexSetter->parameters()[0]->getLocation(), 
              diag::note_parameter_type) << T;
       err = true;
     }
   }
   else if (AtIndexSetter && !arrayRef)
     for (unsigned i=0; i <2; i++) {
-      QualType T = AtIndexSetter->param_begin()[i]->getType();
+      QualType T = AtIndexSetter->parameters()[i]->getType();
       if (!T->isObjCObjectPointerType()) {
         if (i == 1)
           S.Diag(RefExpr->getKeyExpr()->getExprLoc(),
@@ -1342,7 +1342,7 @@ bool ObjCSubscriptOpBuilder::findAtIndexSetter() {
         else
           S.Diag(RefExpr->getBaseExpr()->getExprLoc(),
                  diag::err_objc_subscript_dic_object_type) << T;
-        S.Diag(AtIndexSetter->param_begin()[i]->getLocation(), 
+        S.Diag(AtIndexSetter->parameters()[i]->getLocation(), 
                diag::note_parameter_type) << T;
         err = true;
       }
