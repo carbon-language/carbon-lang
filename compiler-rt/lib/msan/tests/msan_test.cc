@@ -18,6 +18,7 @@
 
 #include "sanitizer_common/tests/sanitizer_test_utils.h"
 
+#include "sanitizer/allocator_interface.h"
 #include "sanitizer/msan_interface.h"
 #include "msandr_test_so.h"
 
@@ -3022,12 +3023,12 @@ TEST(MemorySanitizer, valloc) {
 TEST(MemorySanitizer, pvalloc) {
   void *p = pvalloc(kPageSize + 100);
   EXPECT_EQ(0U, (uintptr_t)p % kPageSize);
-  EXPECT_EQ(2 * kPageSize, __msan_get_allocated_size(p));
+  EXPECT_EQ(2 * kPageSize, __sanitizer_get_allocated_size(p));
   free(p);
 
   p = pvalloc(0);  // pvalloc(0) should allocate at least one page.
   EXPECT_EQ(0U, (uintptr_t)p % kPageSize);
-  EXPECT_EQ(kPageSize, __msan_get_allocated_size(p));
+  EXPECT_EQ(kPageSize, __sanitizer_get_allocated_size(p));
   free(p);
 }
 
@@ -4076,7 +4077,7 @@ TEST(MemorySanitizerStress, DISABLED_MallocStackTrace) {
 TEST(MemorySanitizerAllocator, get_estimated_allocated_size) {
   size_t sizes[] = {0, 20, 5000, 1<<20};
   for (size_t i = 0; i < sizeof(sizes) / sizeof(*sizes); ++i) {
-    size_t alloc_size = __msan_get_estimated_allocated_size(sizes[i]);
+    size_t alloc_size = __sanitizer_get_estimated_allocated_size(sizes[i]);
     EXPECT_EQ(alloc_size, sizes[i]);
   }
 }
@@ -4085,26 +4086,26 @@ TEST(MemorySanitizerAllocator, get_allocated_size_and_ownership) {
   char *array = reinterpret_cast<char*>(malloc(100));
   int *int_ptr = new int;
 
-  EXPECT_TRUE(__msan_get_ownership(array));
-  EXPECT_EQ(100U, __msan_get_allocated_size(array));
+  EXPECT_TRUE(__sanitizer_get_ownership(array));
+  EXPECT_EQ(100U, __sanitizer_get_allocated_size(array));
 
-  EXPECT_TRUE(__msan_get_ownership(int_ptr));
-  EXPECT_EQ(sizeof(*int_ptr), __msan_get_allocated_size(int_ptr));
+  EXPECT_TRUE(__sanitizer_get_ownership(int_ptr));
+  EXPECT_EQ(sizeof(*int_ptr), __sanitizer_get_allocated_size(int_ptr));
 
   void *wild_addr = reinterpret_cast<void*>(0x1);
-  EXPECT_FALSE(__msan_get_ownership(wild_addr));
-  EXPECT_EQ(0U, __msan_get_allocated_size(wild_addr));
+  EXPECT_FALSE(__sanitizer_get_ownership(wild_addr));
+  EXPECT_EQ(0U, __sanitizer_get_allocated_size(wild_addr));
 
-  EXPECT_FALSE(__msan_get_ownership(array + 50));
-  EXPECT_EQ(0U, __msan_get_allocated_size(array + 50));
+  EXPECT_FALSE(__sanitizer_get_ownership(array + 50));
+  EXPECT_EQ(0U, __sanitizer_get_allocated_size(array + 50));
 
-  // NULL is a valid argument for GetAllocatedSize but is not owned.                                                  
-  EXPECT_FALSE(__msan_get_ownership(NULL));
-  EXPECT_EQ(0U, __msan_get_allocated_size(NULL));
- 
+  // NULL is a valid argument for GetAllocatedSize but is not owned.
+  EXPECT_FALSE(__sanitizer_get_ownership(NULL));
+  EXPECT_EQ(0U, __sanitizer_get_allocated_size(NULL));
+
   free(array);
-  EXPECT_FALSE(__msan_get_ownership(array));
-  EXPECT_EQ(0U, __msan_get_allocated_size(array));
+  EXPECT_FALSE(__sanitizer_get_ownership(array));
+  EXPECT_EQ(0U, __sanitizer_get_allocated_size(array));
 
   delete int_ptr;
 }

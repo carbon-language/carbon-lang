@@ -21,6 +21,7 @@
 #include "asan_report.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_allocator_interface.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_list.h"
@@ -760,25 +761,34 @@ using namespace __asan;  // NOLINT
 
 // ASan allocator doesn't reserve extra bytes, so normally we would
 // just return "size". We don't want to expose our redzone sizes, etc here.
-uptr __asan_get_estimated_allocated_size(uptr size) {
+uptr __sanitizer_get_estimated_allocated_size(uptr size) {
   return size;
 }
+uptr __asan_get_estimated_allocated_size(uptr size) {
+  return __sanitizer_get_estimated_allocated_size(size);
+}
 
-int __asan_get_ownership(const void *p) {
+int __sanitizer_get_ownership(const void *p) {
   uptr ptr = reinterpret_cast<uptr>(p);
   return (AllocationSize(ptr) > 0);
 }
+int __asan_get_ownership(const void *p) {
+  return __sanitizer_get_ownership(p);
+}
 
-uptr __asan_get_allocated_size(const void *p) {
+uptr __sanitizer_get_allocated_size(const void *p) {
   if (p == 0) return 0;
   uptr ptr = reinterpret_cast<uptr>(p);
   uptr allocated_size = AllocationSize(ptr);
   // Die if p is not malloced or if it is already freed.
   if (allocated_size == 0) {
     GET_STACK_TRACE_FATAL_HERE;
-    ReportAsanGetAllocatedSizeNotOwned(ptr, &stack);
+    ReportSanitizerGetAllocatedSizeNotOwned(ptr, &stack);
   }
   return allocated_size;
+}
+uptr __asan_get_allocated_size(const void *p) {
+  return __sanitizer_get_allocated_size(p);
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
@@ -791,6 +801,15 @@ void __asan_malloc_hook(void *ptr, uptr size) {
 }
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 void __asan_free_hook(void *ptr) {
+  (void)ptr;
+}
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+void __sanitizer_malloc_hook(void *ptr, uptr size) {
+  (void)ptr;
+  (void)size;
+}
+SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
+void __sanitizer_free_hook(void *ptr) {
   (void)ptr;
 }
 }  // extern "C"

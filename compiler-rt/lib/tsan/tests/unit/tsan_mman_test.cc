@@ -11,19 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 #include <limits>
+#include <sanitizer/allocator_interface.h>
 #include "tsan_mman.h"
 #include "tsan_rtl.h"
 #include "gtest/gtest.h"
-
-extern "C" {
-uptr __tsan_get_current_allocated_bytes();
-uptr __tsan_get_heap_size();
-uptr __tsan_get_free_bytes();
-uptr __tsan_get_unmapped_bytes();
-uptr __tsan_get_estimated_allocated_size(uptr size);
-bool __tsan_get_ownership(void *p);
-uptr __tsan_get_allocated_size(void *p);
-}
 
 namespace __tsan {
 
@@ -118,30 +109,30 @@ TEST(Mman, UsableSize) {
 TEST(Mman, Stats) {
   ThreadState *thr = cur_thread();
 
-  uptr alloc0 = __tsan_get_current_allocated_bytes();
-  uptr heap0 = __tsan_get_heap_size();
-  uptr free0 = __tsan_get_free_bytes();
-  uptr unmapped0 = __tsan_get_unmapped_bytes();
+  uptr alloc0 = __sanitizer_get_current_allocated_bytes();
+  uptr heap0 = __sanitizer_get_heap_size();
+  uptr free0 = __sanitizer_get_free_bytes();
+  uptr unmapped0 = __sanitizer_get_unmapped_bytes();
 
-  EXPECT_EQ(__tsan_get_estimated_allocated_size(10), (uptr)10);
-  EXPECT_EQ(__tsan_get_estimated_allocated_size(20), (uptr)20);
-  EXPECT_EQ(__tsan_get_estimated_allocated_size(100), (uptr)100);
+  EXPECT_EQ(10U, __sanitizer_get_estimated_allocated_size(10));
+  EXPECT_EQ(20U, __sanitizer_get_estimated_allocated_size(20));
+  EXPECT_EQ(100U, __sanitizer_get_estimated_allocated_size(100));
 
   char *p = (char*)user_alloc(thr, 0, 10);
-  EXPECT_EQ(__tsan_get_ownership(p), true);
-  EXPECT_EQ(__tsan_get_allocated_size(p), (uptr)10);
+  EXPECT_TRUE(__sanitizer_get_ownership(p));
+  EXPECT_EQ(10U, __sanitizer_get_allocated_size(p));
 
-  EXPECT_EQ(__tsan_get_current_allocated_bytes(), alloc0 + 16);
-  EXPECT_GE(__tsan_get_heap_size(), heap0);
-  EXPECT_EQ(__tsan_get_free_bytes(), free0);
-  EXPECT_EQ(__tsan_get_unmapped_bytes(), unmapped0);
+  EXPECT_EQ(alloc0 + 16, __sanitizer_get_current_allocated_bytes());
+  EXPECT_GE(__sanitizer_get_heap_size(), heap0);
+  EXPECT_EQ(free0, __sanitizer_get_free_bytes());
+  EXPECT_EQ(unmapped0, __sanitizer_get_unmapped_bytes());
 
   user_free(thr, 0, p);
 
-  EXPECT_EQ(__tsan_get_current_allocated_bytes(), alloc0);
-  EXPECT_GE(__tsan_get_heap_size(), heap0);
-  EXPECT_EQ(__tsan_get_free_bytes(), free0);
-  EXPECT_EQ(__tsan_get_unmapped_bytes(), unmapped0);
+  EXPECT_EQ(alloc0, __sanitizer_get_current_allocated_bytes());
+  EXPECT_GE(__sanitizer_get_heap_size(), heap0);
+  EXPECT_EQ(free0, __sanitizer_get_free_bytes());
+  EXPECT_EQ(unmapped0, __sanitizer_get_unmapped_bytes());
 }
 
 TEST(Mman, CallocOverflow) {

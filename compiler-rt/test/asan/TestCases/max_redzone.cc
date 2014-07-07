@@ -8,17 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <sanitizer/asan_interface.h>
+#include <sanitizer/allocator_interface.h>
 
 int main(int argc, char **argv) {
   if (argc < 2)
     return 1;
   bool large_redzone = atoi(argv[1]);
-  size_t before = __asan_get_heap_size();
+  size_t before = __sanitizer_get_heap_size();
   void *pp[10000];
   for (int i = 0; i < 10000; ++i)
     pp[i] = malloc(4096 - 64);
-  size_t after = __asan_get_heap_size();
+  size_t after = __sanitizer_get_heap_size();
   for (int i = 0; i < 10000; ++i)
     free(pp[i]);
   size_t diff = after - before;

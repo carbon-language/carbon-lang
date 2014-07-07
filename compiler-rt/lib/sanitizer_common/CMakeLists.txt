@@ -45,6 +45,7 @@ set(SANITIZER_LIBCDEP_SOURCES
 set(SANITIZER_HEADERS
   sanitizer_addrhashmap.h
   sanitizer_allocator.h
+  sanitizer_allocator_interface.h
   sanitizer_allocator_internal.h
   sanitizer_atomic.h
   sanitizer_atomic_clang.h

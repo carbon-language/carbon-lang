@@ -7,11 +7,12 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <sanitizer/allocator_interface.h>
 
 static void *glob_ptr;
 
 extern "C" {
-void __asan_free_hook(void *ptr) {
+void __sanitizer_free_hook(const volatile void *ptr) {
   if (ptr == glob_ptr) {
     *(int*)ptr = 0;
     write(1, "FreeHook\n", sizeof("FreeHook\n"));

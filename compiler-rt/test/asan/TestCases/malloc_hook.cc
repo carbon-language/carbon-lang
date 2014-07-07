@@ -6,22 +6,21 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <sanitizer/allocator_interface.h>
 
 extern "C" {
-bool __asan_get_ownership(const void *p);
-
-void *global_ptr;
+const volatile void *global_ptr;
 
 // Note: avoid calling functions that allocate memory in malloc/free
 // to avoid infinite recursion.
-void __asan_malloc_hook(void *ptr, size_t sz) {
-  if (__asan_get_ownership(ptr)) {
+void __sanitizer_malloc_hook(const volatile void *ptr, size_t sz) {
+  if (__sanitizer_get_ownership(ptr)) {
     write(1, "MallocHook\n", sizeof("MallocHook\n"));
     global_ptr = ptr;
   }
 }
-void __asan_free_hook(void *ptr) {
-  if (__asan_get_ownership(ptr) && ptr == global_ptr)
+void __sanitizer_free_hook(const volatile void *ptr) {
+  if (__sanitizer_get_ownership(ptr) && ptr == global_ptr)
     write(1, "FreeHook\n", sizeof("FreeHook\n"));
 }
 }  // extern "C"

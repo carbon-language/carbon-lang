@@ -6,8 +6,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sanitizer/allocator_interface.h>
 
-extern "C" size_t __asan_get_heap_size();
 static pthread_key_t tsd_key;
 
 void *Thread(void *) {
@@ -30,7 +30,7 @@ int main() {
     pthread_t t;
     pthread_create(&t, 0, Thread, 0);
     pthread_join(t, 0);
-    size_t new_heap_size = __asan_get_heap_size();
+    size_t new_heap_size = __sanitizer_get_heap_size();
     fprintf(stderr, "heap size: new: %zd old: %zd\n", new_heap_size, old_heap_size);
     if (old_heap_size)
       assert(old_heap_size == new_heap_size);

@@ -4,7 +4,7 @@
 
 #include <assert.h>
 #include <pthread.h>
-#include <sanitizer/asan_interface.h>
+#include <sanitizer/allocator_interface.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -17,12 +17,12 @@ void* allocate(void *arg) {
 }
 
 void* check_stats(void *arg) {
-  assert(__asan_get_current_allocated_bytes() > 0);
+  assert(__sanitizer_get_current_allocated_bytes() > 0);
   return 0;
 }
 
 int main() {
-  size_t used_mem = __asan_get_current_allocated_bytes();
+  size_t used_mem = __sanitizer_get_current_allocated_bytes();
   printf("Before: %zu\n", used_mem);
   const int kNumIterations = 1000;
   for (int iter = 0; iter < kNumIterations; iter++) {
@@ -33,7 +33,7 @@ int main() {
     }
     for (int j = 0; j < 4; j++)
       assert(0 == pthread_join(thr[j], 0));
-    used_mem = __asan_get_current_allocated_bytes();
+    used_mem = __sanitizer_get_current_allocated_bytes();
     if (used_mem > kLargeAlloc) {
       printf("After iteration %d: %zu\n", iter, used_mem);
       return 1;

@@ -21,6 +21,7 @@
 #include "msan_thread.h"
 #include "sanitizer_common/sanitizer_platform_limits_posix.h"
 #include "sanitizer_common/sanitizer_allocator.h"
+#include "sanitizer_common/sanitizer_allocator_interface.h"
 #include "sanitizer_common/sanitizer_allocator_internal.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
@@ -208,7 +209,7 @@ INTERCEPTOR(void, cfree, void *ptr) {
 }
 
 INTERCEPTOR(uptr, malloc_usable_size, void *ptr) {
-  return __msan_get_allocated_size(ptr);
+  return __sanitizer_get_allocated_size(ptr);
 }
 
 // This function actually returns a struct by value, but we can't unpoison a

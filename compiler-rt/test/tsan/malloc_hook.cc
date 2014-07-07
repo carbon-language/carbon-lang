@@ -4,18 +4,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <sanitizer/allocator_interface.h>
 
 static int malloc_count;
 static int free_count;
 
 extern "C" {
-void __tsan_malloc_hook(void *ptr, size_t size) {
+void __sanitizer_malloc_hook(const volatile void *ptr, size_t size) {
   (void)ptr;
   (void)size;
   __sync_fetch_and_add(&malloc_count, 1);
 }
 
-void __tsan_free_hook(void *ptr) {
+void __sanitizer_free_hook(const volatile void *ptr) {
   (void)ptr;
   __sync_fetch_and_add(&free_count, 1);
 }

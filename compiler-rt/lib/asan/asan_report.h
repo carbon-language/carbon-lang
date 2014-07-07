@@ -43,8 +43,8 @@ void NORETURN ReportAllocTypeMismatch(uptr addr, StackTrace *free_stack,
                                       AllocType dealloc_type);
 void NORETURN ReportMallocUsableSizeNotOwned(uptr addr,
                                              StackTrace *stack);
-void NORETURN ReportAsanGetAllocatedSizeNotOwned(uptr addr,
-                                                 StackTrace *stack);
+void NORETURN
+ReportSanitizerGetAllocatedSizeNotOwned(uptr addr, StackTrace *stack);
 void NORETURN ReportStringFunctionMemoryRangesOverlap(
     const char *function, const char *offset1, uptr length1,
     const char *offset2, uptr length2, StackTrace *stack);

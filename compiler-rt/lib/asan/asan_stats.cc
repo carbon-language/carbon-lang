@@ -15,6 +15,7 @@
 #include "asan_internal.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_allocator_interface.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
 
@@ -139,7 +140,7 @@ static void PrintAccumulatedStats() {
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
 
-uptr __asan_get_current_allocated_bytes() {
+uptr __sanitizer_get_current_allocated_bytes() {
   AsanStats stats;
   GetAccumulatedStats(&stats);
   uptr malloced = stats.malloced;
@@ -148,14 +149,20 @@ uptr __asan_get_current_allocated_bytes() {
   // way we update accumulated stats.
   return (malloced > freed) ? malloced - freed : 1;
 }
+uptr __asan_get_current_allocated_bytes() {
+  return __sanitizer_get_current_allocated_bytes();
+}
 
-uptr __asan_get_heap_size() {
+uptr __sanitizer_get_heap_size() {
   AsanStats stats;
   GetAccumulatedStats(&stats);
   return stats.mmaped - stats.munmaped;
 }
+uptr __asan_get_heap_size() {
+  return __sanitizer_get_heap_size();
+}
 
-uptr __asan_get_free_bytes() {
+uptr __sanitizer_get_free_bytes() {
   AsanStats stats;
   GetAccumulatedStats(&stats);
   uptr total_free = stats.mmaped
@@ -168,9 +175,15 @@ uptr __asan_get_free_bytes() {
   // way we update accumulated stats.
   return (total_free > total_used) ? total_free - total_used : 1;
 }
+uptr __asan_get_free_bytes() {
+  return __sanitizer_get_free_bytes();
+}
 
-uptr __asan_get_unmapped_bytes() {
+uptr __sanitizer_get_unmapped_bytes() {
   return 0;
+}
+uptr __asan_get_unmapped_bytes() {
+  return __sanitizer_get_unmapped_bytes();
 }
 
 void __asan_print_accumulated_stats() {

@@ -87,28 +87,42 @@ extern "C" {
   // for request of "size" bytes. If ASan allocator can't allocate that much
   // memory, returns the maximal possible allocation size, otherwise returns
   // "size".
+  /* DEPRECATED: Use __sanitizer_get_estimated_allocated_size instead. */
   size_t __asan_get_estimated_allocated_size(size_t size);
+
   // Returns 1 if p was returned by the ASan allocator and is not yet freed.
   // Otherwise returns 0.
+  /* DEPRECATED: Use __sanitizer_get_ownership instead. */
   int __asan_get_ownership(const void *p);
+
   // Returns the number of bytes reserved for the pointer p.
   // Requires (get_ownership(p) == true) or (p == 0).
+  /* DEPRECATED: Use __sanitizer_get_allocated_size instead. */
   size_t __asan_get_allocated_size(const void *p);
+
   // Number of bytes, allocated and not yet freed by the application.
+  /* DEPRECATED: Use __sanitizer_get_current_allocated_bytes instead. */
   size_t __asan_get_current_allocated_bytes();
+
   // Number of bytes, mmaped by asan allocator to fulfill allocation requests.
   // Generally, for request of X bytes, allocator can reserve and add to free
   // lists a large number of chunks of size X to use them for future requests.
   // All these chunks count toward the heap size. Currently, allocator never
   // releases memory to OS (instead, it just puts freed chunks to free lists).
+  /* DEPRECATED: Use __sanitizer_get_heap_size instead. */
   size_t __asan_get_heap_size();
+
   // Number of bytes, mmaped by asan allocator, which can be used to fulfill
   // allocation requests. When a user program frees memory chunk, it can first
   // fall into quarantine and will count toward __asan_get_free_bytes() later.
+  /* DEPRECATED: Use __sanitizer_get_free_bytes instead. */
   size_t __asan_get_free_bytes();
+
   // Number of bytes in unmapped pages, that are released to OS. Currently,
   // always returns 0.
+  /* DEPRECATED: Use __sanitizer_get_unmapped_bytes instead. */
   size_t __asan_get_unmapped_bytes();
+
   // Prints accumulated stats to stderr. Used for debugging.
   void __asan_print_accumulated_stats();
 
@@ -121,6 +135,7 @@ extern "C" {
   //   allocation of "size" bytes, which returned "ptr".
   // __asan_free_hook(ptr) is called immediately before
   //   deallocation of "ptr".
+  /* DEPRECATED: Use __sanitizer_malloc_hook / __sanitizer_free_hook instead. */
   void __asan_malloc_hook(void *ptr, size_t size);
   void __asan_free_hook(void *ptr);
 
