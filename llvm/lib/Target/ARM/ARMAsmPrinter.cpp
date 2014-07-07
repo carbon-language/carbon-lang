@@ -795,23 +795,41 @@ getModifierVariantKind(ARMCP::ARMCPModifier Modifier) {
 
 MCSymbol *ARMAsmPrinter::GetARMGVSymbol(const GlobalValue *GV,
                                         unsigned char TargetFlags) {
-  bool isIndirect = Subtarget->isTargetMachO() &&
-    (TargetFlags & ARMII::MO_NONLAZY) &&
-    Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
-  if (!isIndirect)
-    return getSymbol(GV);
+  if (Subtarget->isTargetMachO()) {
+    bool IsIndirect = (TargetFlags & ARMII::MO_NONLAZY) &&
+      Subtarget->GVIsIndirectSymbol(GV, TM.getRelocationModel());
 
-  // FIXME: Remove this when Darwin transition to @GOT like syntax.
-  MCSymbol *MCSym = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
-  MachineModuleInfoMachO &MMIMachO =
-    MMI->getObjFileInfo<MachineModuleInfoMachO>();
-  MachineModuleInfoImpl::StubValueTy &StubSym =
-    GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym) :
-    MMIMachO.getGVStubEntry(MCSym);
-  if (!StubSym.getPointer())
-    StubSym = MachineModuleInfoImpl::
-      StubValueTy(getSymbol(GV), !GV->hasInternalLinkage());
-  return MCSym;
+    if (!IsIndirect)
+      return getSymbol(GV);
+
+    // FIXME: Remove this when Darwin transition to @GOT like syntax.
+    MCSymbol *MCSym = getSymbolWithGlobalValueBase(GV, "$non_lazy_ptr");
+    MachineModuleInfoMachO &MMIMachO =
+      MMI->getObjFileInfo<MachineModuleInfoMachO>();
+    MachineModuleInfoImpl::StubValueTy &StubSym =
+      GV->hasHiddenVisibility() ? MMIMachO.getHiddenGVStubEntry(MCSym)
+                                : MMIMachO.getGVStubEntry(MCSym);
+    if (!StubSym.getPointer())
+      StubSym = MachineModuleInfoImpl::StubValueTy(getSymbol(GV),
+                                                   !GV->hasInternalLinkage());
+    return MCSym;
+  } else if (Subtarget->isTargetCOFF()) {
+    assert(Subtarget->isTargetWindows() &&
+           "Windows is the only supported COFF target");
+
+    bool IsIndirect = (TargetFlags & ARMII::MO_DLLIMPORT);
+    if (!IsIndirect)
+      return getSymbol(GV);
+
+    SmallString<128> Name;
+    Name = "__imp_";
+    getNameWithPrefix(Name, GV);
+
+    return OutContext.GetOrCreateSymbol(Name);
+  } else if (Subtarget->isTargetELF()) {
+    return getSymbol(GV);
+  }
+  llvm_unreachable("unexpected target");
 }
 
 void ARMAsmPrinter::
