@@ -172,3 +172,20 @@ define <16 x i8> @shuffle_v16i8_03_02_01_00_31_30_29_28_11_10_09_08_23_22_21_20(
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 3, i32 2, i32 1, i32 0, i32 31, i32 30, i32 29, i32 28, i32 11, i32 10, i32 9, i32 8, i32 23, i32 22, i32 21, i32 20>
   ret <16 x i8> %shuffle
 }
+
+define <16 x i8> @zext_to_v8i16_shuffle(<16 x i8> %a) {
+; CHECK-SSE2-LABEL: @zext_to_v8i16_shuffle
+; CHECK-SSE2:         pxor %xmm1, %xmm1
+; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> zeroinitializer, <16 x i32> <i32 0, i32 17, i32 1, i32 19, i32 2, i32 21, i32 3, i32 23, i32 4, i32 25, i32 5, i32 27, i32 6, i32 29, i32 7, i32 31>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @zext_to_v4i32_shuffle(<16 x i8> %a) {
+; CHECK-SSE2-LABEL: @zext_to_v4i32_shuffle
+; CHECK-SSE2:         pxor %xmm1, %xmm1
+; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
+; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> zeroinitializer, <16 x i32> <i32 0, i32 17, i32 18, i32 19, i32 1, i32 21, i32 22, i32 23, i32 2, i32 25, i32 26, i32 27, i32 3, i32 29, i32 30, i32 31>
+  ret <16 x i8> %shuffle
+}
