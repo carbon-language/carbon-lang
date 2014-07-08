@@ -1443,7 +1443,8 @@ Host::GetOSKernelDescription (std::string &s)
 }
 #endif
 
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) && !defined(__linux__)
+#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) \
+    && !defined(__linux__) && !defined(_WIN32)
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
