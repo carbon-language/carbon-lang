@@ -1082,6 +1082,44 @@ llvm::Value *X86_32ABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
   return AddrTyped;
 }
 
+bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
+    const llvm::Triple &Triple, const CodeGenOptions &Opts) {
+  assert(Triple.getArch() == llvm::Triple::x86);
+
+  switch (Opts.getStructReturnConvention()) {
+  case CodeGenOptions::SRCK_Default:
+    break;
+  case CodeGenOptions::SRCK_OnStack:  // -fpcc-struct-return
+    return false;
+  case CodeGenOptions::SRCK_InRegs:  // -freg-struct-return
+    return true;
+  }
+
+  if (Triple.isOSDarwin())
+    return true;
+
+  switch (Triple.getOS()) {
+  case llvm::Triple::AuroraUX:
+  case llvm::Triple::DragonFly:
+  case llvm::Triple::FreeBSD:
+  case llvm::Triple::OpenBSD:
+  case llvm::Triple::Bitrig:
+    return true;
+  case llvm::Triple::Win32:
+    switch (Triple.getEnvironment()) {
+    case llvm::Triple::UnknownEnvironment:
+    case llvm::Triple::Cygnus:
+    case llvm::Triple::GNU:
+    case llvm::Triple::MSVC:
+      return true;
+    default:
+      return false;
+    }
+  default:
+    return false;
+  }
+}
+
 void X86_32TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
                                                   llvm::GlobalValue *GV,
                                             CodeGen::CodeGenModule &CGM) const {
@@ -4888,44 +4926,6 @@ llvm::Value *SystemZABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
     return CGF.Builder.CreateLoad(ResAddr, "indirect_arg");
 
   return ResAddr;
-}
-
-bool X86_32TargetCodeGenInfo::isStructReturnInRegABI(
-    const llvm::Triple &Triple, const CodeGenOptions &Opts) {
-  assert(Triple.getArch() == llvm::Triple::x86);
-
-  switch (Opts.getStructReturnConvention()) {
-  case CodeGenOptions::SRCK_Default:
-    break;
-  case CodeGenOptions::SRCK_OnStack:  // -fpcc-struct-return
-    return false;
-  case CodeGenOptions::SRCK_InRegs:  // -freg-struct-return
-    return true;
-  }
-
-  if (Triple.isOSDarwin())
-    return true;
-
-  switch (Triple.getOS()) {
-  case llvm::Triple::AuroraUX:
-  case llvm::Triple::DragonFly:
-  case llvm::Triple::FreeBSD:
-  case llvm::Triple::OpenBSD:
-  case llvm::Triple::Bitrig:
-    return true;
-  case llvm::Triple::Win32:
-    switch (Triple.getEnvironment()) {
-    case llvm::Triple::UnknownEnvironment:
-    case llvm::Triple::Cygnus:
-    case llvm::Triple::GNU:
-    case llvm::Triple::MSVC:
-      return true;
-    default:
-      return false;
-    }
-  default:
-    return false;
-  }
 }
 
 ABIArgInfo SystemZABIInfo::classifyReturnType(QualType RetTy) const {
