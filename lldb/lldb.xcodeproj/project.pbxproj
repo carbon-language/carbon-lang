@@ -72,7 +72,6 @@
 		233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009119610B1F0090E598 /* ProcessLinux.h */; };
 		233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009219610B1F0090E598 /* ProcessMonitor.cpp */; };
 		233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009319610B1F0090E598 /* ProcessMonitor.h */; };
-		23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */; };
 		23EDE3321926843600F6A132 /* NativeRegisterContext.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23EDE3311926843600F6A132 /* NativeRegisterContext.h */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -939,7 +938,6 @@
 		233B00A919622F3F0090E598 /* NativeRegisterContextLinux_x86_64.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = NativeRegisterContextLinux_x86_64.cpp; sourceTree = "<group>"; };
 		233B00AA19622F3F0090E598 /* NativeRegisterContextLinux_x86_64.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NativeRegisterContextLinux_x86_64.h; sourceTree = "<group>"; };
 		2360092C193FB21500189DB1 /* MemoryRegionInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryRegionInfo.h; path = include/lldb/Target/MemoryRegionInfo.h; sourceTree = "<group>"; };
-		23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandOptionValidators.cpp; path = source/Interpreter/CommandOptionValidators.cpp; sourceTree = "<group>"; };
 		23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NativeRegisterContext.cpp; path = source/Target/NativeRegisterContext.cpp; sourceTree = "<group>"; };
 		23EDE3311926843600F6A132 /* NativeRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NativeRegisterContext.h; path = include/lldb/Target/NativeRegisterContext.h; sourceTree = "<group>"; };
 		23EDE3371926AAD500F6A132 /* RegisterInfoInterface.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RegisterInfoInterface.h; path = Utility/RegisterInfoInterface.h; sourceTree = "<group>"; };
@@ -3461,7 +3459,6 @@
 				26DFBC58113B48F300DD817F /* CommandObjectMultiword.cpp */,
 				26DFBC52113B48D600DD817F /* CommandObjectRegexCommand.h */,
 				26DFBC59113B48F300DD817F /* CommandObjectRegexCommand.cpp */,
-				23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */,
 				26BC7DE410F1B7F900F91463 /* CommandReturnObject.h */,
 				26BC7F0A10F1B8DD00F91463 /* CommandReturnObject.cpp */,
 				94005E0513F45A1B001EF42D /* embedded_interpreter.py */,
@@ -5009,7 +5006,6 @@
 				B2462247141AD37D00F3D409 /* OptionGroupWatchpoint.cpp in Sources */,
 				49A71FE7141FFA5C00D59478 /* IRInterpreter.cpp in Sources */,
 				49A71FE8141FFACF00D59478 /* DataEncoder.cpp in Sources */,
-				23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */,
 				B207C4931429607D00F36E4E /* CommandObjectWatchpoint.cpp in Sources */,
 				26EFC4CD18CFAF0D00865D87 /* ObjectFileJIT.cpp in Sources */,
 				49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */,

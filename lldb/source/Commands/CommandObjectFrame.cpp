@@ -291,8 +291,8 @@ protected:
 OptionDefinition
 CommandObjectFrameSelect::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "relative", 'r', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeOffset, "A relative frame index offset from the current frame index."},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "relative", 'r', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOffset, "A relative frame index offset from the current frame index."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectFrameVariable

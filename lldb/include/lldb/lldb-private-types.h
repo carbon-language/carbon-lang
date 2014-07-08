@@ -16,9 +16,6 @@
 
 namespace lldb_private
 {
-    class Platform;
-    class ExecutionContext;
-
     //----------------------------------------------------------------------
     // Every register is described in detail including its name, alternate
     // name (optional), encoding, size in bytes and the default display
@@ -54,16 +51,8 @@ namespace lldb_private
         const char *string_value;
         const char *usage;
     } OptionEnumValueElement;
-
-    struct OptionValidator
-    {
-        virtual ~OptionValidator() { }
-        virtual bool IsValid(Platform &platform, const ExecutionContext &target) const = 0;
-        virtual const char * ShortConditionString() const = 0;
-        virtual const char * LongConditionString() const = 0;
-    };
     
-    struct OptionDefinition
+    typedef struct
     {
         uint32_t usage_mask;                     // Used to mark options that can be used together.  If (1 << n & usage_mask) != 0
                                                  // then this option belongs to option set n.
@@ -71,13 +60,12 @@ namespace lldb_private
         const char *long_option;                 // Full name for this option.
         int short_option;                        // Single character for this option.
         int option_has_arg;                      // no_argument, required_argument or optional_argument
-        OptionValidator* validator;              // If non-NULL, option is valid iff |validator->IsValid()|, otherwise always valid.
         OptionEnumValueElement *enum_values;     // If non-NULL an array of enum values.
         uint32_t completion_type;                // Cookie the option class can use to do define the argument completion.
         lldb::CommandArgumentType argument_type; // Type of argument this option takes
         const char *usage_text;                  // Full text explaining what this options does and what (if any) argument to
                                                  // pass it.
-    };
+    } OptionDefinition;
 
 } // namespace lldb_private
 

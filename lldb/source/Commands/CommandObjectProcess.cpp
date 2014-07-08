@@ -621,13 +621,13 @@ protected:
 OptionDefinition
 CommandObjectProcessAttach::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "continue",'c', OptionParser::eNoArgument,         NULL, NULL, 0, eArgTypeNone,         "Immediately continue the process once attached."},
-{ LLDB_OPT_SET_ALL, false, "plugin",  'P', OptionParser::eRequiredArgument,   NULL, NULL, 0, eArgTypePlugin,       "Name of the process plugin you want to use."},
-{ LLDB_OPT_SET_1,   false, "pid",     'p', OptionParser::eRequiredArgument,   NULL, NULL, 0, eArgTypePid,          "The process ID of an existing process to attach to."},
-{ LLDB_OPT_SET_2,   false, "name",    'n', OptionParser::eRequiredArgument,   NULL, NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
-{ LLDB_OPT_SET_2,   false, "include-existing", 'i', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,         "Include existing processes when doing attach -w."},
-{ LLDB_OPT_SET_2,   false, "waitfor", 'w', OptionParser::eNoArgument,         NULL, NULL, 0, eArgTypeNone,         "Wait for the process with <process-name> to launch."},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_ALL, false, "continue",'c', OptionParser::eNoArgument,         NULL, 0, eArgTypeNone,         "Immediately continue the process once attached."},
+{ LLDB_OPT_SET_ALL, false, "plugin",  'P', OptionParser::eRequiredArgument,   NULL, 0, eArgTypePlugin,       "Name of the process plugin you want to use."},
+{ LLDB_OPT_SET_1,   false, "pid",     'p', OptionParser::eRequiredArgument,   NULL, 0, eArgTypePid,          "The process ID of an existing process to attach to."},
+{ LLDB_OPT_SET_2,   false, "name",    'n', OptionParser::eRequiredArgument,   NULL, 0, eArgTypeProcessName,  "The name of the process to attach to."},
+{ LLDB_OPT_SET_2,   false, "include-existing", 'i', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,         "Include existing processes when doing attach -w."},
+{ LLDB_OPT_SET_2,   false, "waitfor", 'w', OptionParser::eNoArgument,         NULL, 0, eArgTypeNone,         "Wait for the process with <process-name> to launch."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -812,9 +812,9 @@ protected:
 OptionDefinition
 CommandObjectProcessContinue::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "ignore-count",'i', OptionParser::eRequiredArgument,         NULL, NULL, 0, eArgTypeUnsignedInteger,
+{ LLDB_OPT_SET_ALL, false, "ignore-count",'i', OptionParser::eRequiredArgument,         NULL, 0, eArgTypeUnsignedInteger,
                            "Ignore <N> crossings of the breakpoint (if it exists) for the currently selected thread."},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -951,8 +951,8 @@ protected:
 OptionDefinition
 CommandObjectProcessDetach::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "keep-stopped",   's', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean, "Whether or not the process should be kept stopped on detach (if possible)." },
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "keep-stopped",   's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Whether or not the process should be kept stopped on detach (if possible)." },
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1123,8 +1123,8 @@ protected:
 OptionDefinition
 CommandObjectProcessConnect::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "plugin", 'p', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePlugin, "Name of the process plugin you want to use."},
-    { 0,                false, NULL,      0 , 0,                 NULL, NULL, 0, eArgTypeNone,   NULL }
+    { LLDB_OPT_SET_ALL, false, "plugin", 'p', OptionParser::eRequiredArgument, NULL, 0, eArgTypePlugin, "Name of the process plugin you want to use."},
+    { 0,                false, NULL,      0 , 0,                 NULL, 0, eArgTypeNone,   NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1893,10 +1893,10 @@ protected:
 OptionDefinition
 CommandObjectProcessHandle::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "stop",   's', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean, "Whether or not the process should be stopped if the signal is received." },
-{ LLDB_OPT_SET_1, false, "notify", 'n', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean, "Whether or not the debugger should notify the user if the signal is received." },
-{ LLDB_OPT_SET_1, false, "pass",  'p', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean, "Whether or not the signal should be passed to the process." },
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "stop",   's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Whether or not the process should be stopped if the signal is received." },
+{ LLDB_OPT_SET_1, false, "notify", 'n', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Whether or not the debugger should notify the user if the signal is received." },
+{ LLDB_OPT_SET_1, false, "pass",  'p', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Whether or not the signal should be passed to the process." },
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

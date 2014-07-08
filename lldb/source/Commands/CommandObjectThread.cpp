@@ -305,10 +305,10 @@ protected:
 OptionDefinition
 CommandObjectThreadBacktrace::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "count", 'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
-{ LLDB_OPT_SET_1, false, "start", 's', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFrameIndex, "Frame in which to start the backtrace"},
-{ LLDB_OPT_SET_1, false, "extended", 'e', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean, "Show the extended backtrace, if available"},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "count", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeCount, "How many frames to display (-1 for all)"},
+{ LLDB_OPT_SET_1, false, "start", 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFrameIndex, "Frame in which to start the backtrace"},
+{ LLDB_OPT_SET_1, false, "extended", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean, "Show the extended backtrace, if available"},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 enum StepScope
@@ -662,12 +662,12 @@ g_duo_running_mode[] =
 OptionDefinition
 CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "step-in-avoids-no-debug",   'a', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether stepping into functions will step over functions with no debug information."},
-{ LLDB_OPT_SET_1, false, "step-out-avoids-no-debug",  'A', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeBoolean,     "A boolean value, if true stepping out of functions will continue to step out till it hits a function with debug information."},
-{ LLDB_OPT_SET_1, false, "run-mode",        'm', OptionParser::eRequiredArgument, NULL, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
-{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to not to stop at when stepping in."},
-{ LLDB_OPT_SET_1, false, "step-in-target",  't', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeFunctionName,   "The name of the directly called function step in should stop at when stepping into."},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "step-in-avoids-no-debug",   'a', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether stepping into functions will step over functions with no debug information."},
+{ LLDB_OPT_SET_1, false, "step-out-avoids-no-debug",  'A', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value, if true stepping out of functions will continue to step out till it hits a function with debug information."},
+{ LLDB_OPT_SET_1, false, "run-mode",        'm', OptionParser::eRequiredArgument, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
+{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', OptionParser::eRequiredArgument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to not to stop at when stepping in."},
+{ LLDB_OPT_SET_1, false, "step-in-target",  't', OptionParser::eRequiredArgument, NULL,               0, eArgTypeFunctionName,   "The name of the directly called function step in should stop at when stepping into."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -1203,10 +1203,10 @@ protected:
 OptionDefinition
 CommandObjectThreadUntil::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_1, false, "frame",   'f', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeFrameIndex,   "Frame index for until operation - defaults to 0"},
-{ LLDB_OPT_SET_1, false, "thread",  't', OptionParser::eRequiredArgument, NULL, NULL,               0, eArgTypeThreadIndex,  "Thread index for the thread for until operation"},
-{ LLDB_OPT_SET_1, false, "run-mode",'m', OptionParser::eRequiredArgument, NULL, g_duo_running_mode, 0, eArgTypeRunMode,"Determine how to run other threads while stepping this one"},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_1, false, "frame",   'f', OptionParser::eRequiredArgument, NULL,               0, eArgTypeFrameIndex,   "Frame index for until operation - defaults to 0"},
+{ LLDB_OPT_SET_1, false, "thread",  't', OptionParser::eRequiredArgument, NULL,               0, eArgTypeThreadIndex,  "Thread index for the thread for until operation"},
+{ LLDB_OPT_SET_1, false, "run-mode",'m', OptionParser::eRequiredArgument, g_duo_running_mode, 0, eArgTypeRunMode,"Determine how to run other threads while stepping this one"},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -1512,9 +1512,9 @@ public:
 OptionDefinition
 CommandObjectThreadInfo::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "json",'j', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone, "Display the thread info in JSON format."},
+    { LLDB_OPT_SET_ALL, false, "json",'j', OptionParser::eNoArgument, NULL, 0, eArgTypeNone, "Display the thread info in JSON format."},
 
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 
@@ -1728,8 +1728,8 @@ protected:
 OptionDefinition
 CommandObjectThreadReturn::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "from-expression",  'x', OptionParser::eNoArgument, NULL, NULL,               0, eArgTypeNone,     "Return from the innermost expression evaluation."},
-{ 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+{ LLDB_OPT_SET_ALL, false, "from-expression",  'x', OptionParser::eNoArgument, NULL,               0, eArgTypeNone,     "Return from the innermost expression evaluation."},
+{ 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------
@@ -1915,23 +1915,23 @@ protected:
 OptionDefinition
 CommandObjectThreadJump::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
         "Specifies the source file to jump to."},
 
-    { LLDB_OPT_SET_1, true, "line", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLineNum,
+    { LLDB_OPT_SET_1, true, "line", 'l', OptionParser::eRequiredArgument, NULL, 0, eArgTypeLineNum,
         "Specifies the line number to jump to."},
 
-    { LLDB_OPT_SET_2, true, "by", 'b', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeOffset,
+    { LLDB_OPT_SET_2, true, "by", 'b', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOffset,
         "Jumps by a relative line offset from the current line."},
 
-    { LLDB_OPT_SET_3, true, "address", 'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeAddressOrExpression,
+    { LLDB_OPT_SET_3, true, "address", 'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeAddressOrExpression,
         "Jumps to a specific address."},
 
     { LLDB_OPT_SET_1|
       LLDB_OPT_SET_2|
-      LLDB_OPT_SET_3, false, "force",'r', OptionParser::eNoArgument, NULL, NULL, 0, eArgTypeNone,"Allows the PC to leave the current function."},
+      LLDB_OPT_SET_3, false, "force",'r', OptionParser::eNoArgument, NULL, 0, eArgTypeNone,"Allows the PC to leave the current function."},
 
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 //-------------------------------------------------------------------------

@@ -2275,8 +2275,8 @@ g_sort_option_enumeration[4] =
 OptionDefinition
 CommandObjectTargetModulesDumpSymtab::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "sort", 's', OptionParser::eRequiredArgument, NULL, g_sort_option_enumeration, 0, eArgTypeSortOrder, "Supply a sort order when dumping the symbol table."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+    { LLDB_OPT_SET_1, false, "sort", 's', OptionParser::eRequiredArgument, g_sort_option_enumeration, 0, eArgTypeSortOrder, "Supply a sort order when dumping the symbol table."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectTargetModulesDumpSections
@@ -3457,22 +3457,22 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesList::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1, false, "address",    'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeAddressOrExpression, "Display the image at this address."},
-    { LLDB_OPT_SET_1, false, "arch",       'A', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
-    { LLDB_OPT_SET_1, false, "triple",     't', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the triple when listing images."},
-    { LLDB_OPT_SET_1, false, "header",     'h', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Display the image header address as a load address if debugging, a file address otherwise."},
-    { LLDB_OPT_SET_1, false, "offset",     'o', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Display the image header address offset from the header file address (the slide amount)."},
-    { LLDB_OPT_SET_1, false, "uuid",       'u', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Display the UUID when listing images."},
-    { LLDB_OPT_SET_1, false, "fullpath",   'f', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image object file."},
-    { LLDB_OPT_SET_1, false, "directory",  'd', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the directory with optional width for the image object file."},
-    { LLDB_OPT_SET_1, false, "basename",   'b', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the basename with optional width for the image object file."},
-    { LLDB_OPT_SET_1, false, "symfile",    's', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image symbol file with optional width."},
-    { LLDB_OPT_SET_1, false, "symfile-unique", 'S', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the symbol file with optional width only if it is different from the executable object file."},
-    { LLDB_OPT_SET_1, false, "mod-time",   'm', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the modification time with optional width of the module."},
-    { LLDB_OPT_SET_1, false, "ref-count",  'r', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeWidth,   "Display the reference count if the module is still in the shared module cache."},
-    { LLDB_OPT_SET_1, false, "pointer",    'p', OptionParser::eOptionalArgument, NULL, NULL, 0, eArgTypeNone,    "Display the module pointer."},
-    { LLDB_OPT_SET_1, false, "global",     'g', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,    "Display the modules from the global module list, not just the current target."},
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+    { LLDB_OPT_SET_1, false, "address",    'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeAddressOrExpression, "Display the image at this address."},
+    { LLDB_OPT_SET_1, false, "arch",       'A', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the architecture when listing images."},
+    { LLDB_OPT_SET_1, false, "triple",     't', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the triple when listing images."},
+    { LLDB_OPT_SET_1, false, "header",     'h', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,    "Display the image header address as a load address if debugging, a file address otherwise."},
+    { LLDB_OPT_SET_1, false, "offset",     'o', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,    "Display the image header address offset from the header file address (the slide amount)."},
+    { LLDB_OPT_SET_1, false, "uuid",       'u', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,    "Display the UUID when listing images."},
+    { LLDB_OPT_SET_1, false, "fullpath",   'f', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image object file."},
+    { LLDB_OPT_SET_1, false, "directory",  'd', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the directory with optional width for the image object file."},
+    { LLDB_OPT_SET_1, false, "basename",   'b', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the basename with optional width for the image object file."},
+    { LLDB_OPT_SET_1, false, "symfile",    's', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the fullpath to the image symbol file with optional width."},
+    { LLDB_OPT_SET_1, false, "symfile-unique", 'S', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the symbol file with optional width only if it is different from the executable object file."},
+    { LLDB_OPT_SET_1, false, "mod-time",   'm', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the modification time with optional width of the module."},
+    { LLDB_OPT_SET_1, false, "ref-count",  'r', OptionParser::eOptionalArgument, NULL, 0, eArgTypeWidth,   "Display the reference count if the module is still in the shared module cache."},
+    { LLDB_OPT_SET_1, false, "pointer",    'p', OptionParser::eOptionalArgument, NULL, 0, eArgTypeNone,    "Display the module pointer."},
+    { LLDB_OPT_SET_1, false, "global",     'g', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,    "Display the modules from the global module list, not just the current target."},
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectTargetModulesShowUnwind
@@ -3742,9 +3742,9 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesShowUnwind::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1,   false,  "name",       'n', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFunctionName, "Show unwind instructions for a function or symbol name."},
-    { LLDB_OPT_SET_2,   false,  "address",    'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeAddressOrExpression, "Show unwind instructions for a function or symbol containing an address"},
-    { 0,                false, NULL,           0, 0,                 NULL, NULL, 0, eArgTypeNone, NULL }
+    { LLDB_OPT_SET_1,   false,  "name",       'n', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFunctionName, "Show unwind instructions for a function or symbol name."},
+    { LLDB_OPT_SET_2,   false,  "address",    'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeAddressOrExpression, "Show unwind instructions for a function or symbol containing an address"},
+    { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone, NULL }
 };
 
 //----------------------------------------------------------------------
@@ -4181,22 +4181,22 @@ protected:
 OptionDefinition
 CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1,   true,  "address",    'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeAddressOrExpression, "Lookup an address in one or more target modules."},
-    { LLDB_OPT_SET_1,   false, "offset",     'o', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeOffset,           "When looking up an address subtract <offset> from any addresses before doing the lookup."},
+    { LLDB_OPT_SET_1,   true,  "address",    'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeAddressOrExpression, "Lookup an address in one or more target modules."},
+    { LLDB_OPT_SET_1,   false, "offset",     'o', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOffset,           "When looking up an address subtract <offset> from any addresses before doing the lookup."},
     { LLDB_OPT_SET_2| LLDB_OPT_SET_4 | LLDB_OPT_SET_5
       /* FIXME: re-enable this for types when the LookupTypeInModule actually uses the regex option: | LLDB_OPT_SET_6 */ ,
-                        false, "regex",      'r', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,             "The <name> argument for name lookups are regular expressions."},
-    { LLDB_OPT_SET_2,   true,  "symbol",     's', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeSymbol,           "Lookup a symbol by name in the symbol tables in one or more target modules."},
-    { LLDB_OPT_SET_3,   true,  "file",       'f', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFilename,         "Lookup a file by fullpath or basename in one or more target modules."},
-    { LLDB_OPT_SET_3,   false, "line",       'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLineNum,          "Lookup a line number in a file (must be used in conjunction with --file)."},
+                        false, "regex",      'r', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,             "The <name> argument for name lookups are regular expressions."},
+    { LLDB_OPT_SET_2,   true,  "symbol",     's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeSymbol,           "Lookup a symbol by name in the symbol tables in one or more target modules."},
+    { LLDB_OPT_SET_3,   true,  "file",       'f', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFilename,         "Lookup a file by fullpath or basename in one or more target modules."},
+    { LLDB_OPT_SET_3,   false, "line",       'l', OptionParser::eRequiredArgument, NULL, 0, eArgTypeLineNum,          "Lookup a line number in a file (must be used in conjunction with --file)."},
     { LLDB_OPT_SET_FROM_TO(3,5),
-                        false, "no-inlines", 'i', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,             "Ignore inline entries (must be used in conjunction with --file or --function)."},
-    { LLDB_OPT_SET_4,   true,  "function",   'F', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFunctionName,     "Lookup a function by name in the debug symbols in one or more target modules."},
-    { LLDB_OPT_SET_5,   true,  "name",       'n', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeFunctionOrSymbol, "Lookup a function or symbol by name in one or more target modules."},
-    { LLDB_OPT_SET_6,   true,  "type",       't', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeName,             "Lookup a type by name in the debug symbols in one or more target modules."},
-    { LLDB_OPT_SET_ALL, false, "verbose",    'v', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,             "Enable verbose lookup information."},
-    { LLDB_OPT_SET_ALL, false, "all",        'A', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,             "Print all matches, not just the best match, if a best match is available."},
-    { 0,                false, NULL,           0, 0,                 NULL, NULL, 0, eArgTypeNone,             NULL }
+                        false, "no-inlines", 'i', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,             "Ignore inline entries (must be used in conjunction with --file or --function)."},
+    { LLDB_OPT_SET_4,   true,  "function",   'F', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFunctionName,     "Lookup a function by name in the debug symbols in one or more target modules."},
+    { LLDB_OPT_SET_5,   true,  "name",       'n', OptionParser::eRequiredArgument, NULL, 0, eArgTypeFunctionOrSymbol, "Lookup a function or symbol by name in one or more target modules."},
+    { LLDB_OPT_SET_6,   true,  "type",       't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeName,             "Lookup a type by name in the debug symbols in one or more target modules."},
+    { LLDB_OPT_SET_ALL, false, "verbose",    'v', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,             "Enable verbose lookup information."},
+    { LLDB_OPT_SET_ALL, false, "all",        'A', OptionParser::eNoArgument,       NULL, 0, eArgTypeNone,             "Print all matches, not just the best match, if a best match is available."},
+    { 0,                false, NULL,           0, 0,                 NULL, 0, eArgTypeNone,             NULL }
 };
 
 
@@ -5067,29 +5067,29 @@ private:
 OptionDefinition
 CommandObjectTargetStopHookAdd::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeOneLiner,
+    { LLDB_OPT_SET_ALL, false, "one-liner", 'o', OptionParser::eRequiredArgument, NULL, 0, eArgTypeOneLiner,
         "Specify a one-line breakpoint command inline. Be sure to surround it with quotes." },
-    { LLDB_OPT_SET_ALL, false, "shlib", 's', OptionParser::eRequiredArgument, NULL, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
+    { LLDB_OPT_SET_ALL, false, "shlib", 's', OptionParser::eRequiredArgument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
         "Set the module within which the stop-hook is to be run."},
-    { LLDB_OPT_SET_ALL, false, "thread-index", 'x', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeThreadIndex,
+    { LLDB_OPT_SET_ALL, false, "thread-index", 'x', OptionParser::eRequiredArgument, NULL, 0, eArgTypeThreadIndex,
         "The stop hook is run only for the thread whose index matches this argument."},
-    { LLDB_OPT_SET_ALL, false, "thread-id", 't', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeThreadID,
+    { LLDB_OPT_SET_ALL, false, "thread-id", 't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeThreadID,
         "The stop hook is run only for the thread whose TID matches this argument."},
-    { LLDB_OPT_SET_ALL, false, "thread-name", 'T', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeThreadName,
+    { LLDB_OPT_SET_ALL, false, "thread-name", 'T', OptionParser::eRequiredArgument, NULL, 0, eArgTypeThreadName,
         "The stop hook is run only for the thread whose thread name matches this argument."},
-    { LLDB_OPT_SET_ALL, false, "queue-name", 'q', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeQueueName,
+    { LLDB_OPT_SET_ALL, false, "queue-name", 'q', OptionParser::eRequiredArgument, NULL, 0, eArgTypeQueueName,
         "The stop hook is run only for threads in the queue whose name is given by this argument."},
-    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
+    { LLDB_OPT_SET_1, false, "file", 'f', OptionParser::eRequiredArgument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,
         "Specify the source file within which the stop-hook is to be run." },
-    { LLDB_OPT_SET_1, false, "start-line", 'l', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLineNum,
+    { LLDB_OPT_SET_1, false, "start-line", 'l', OptionParser::eRequiredArgument, NULL, 0, eArgTypeLineNum,
         "Set the start of the line range for which the stop-hook is to be run."},
-    { LLDB_OPT_SET_1, false, "end-line", 'e', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeLineNum,
+    { LLDB_OPT_SET_1, false, "end-line", 'e', OptionParser::eRequiredArgument, NULL, 0, eArgTypeLineNum,
         "Set the end of the line range for which the stop-hook is to be run."},
-    { LLDB_OPT_SET_2, false, "classname", 'c', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeClassName,
+    { LLDB_OPT_SET_2, false, "classname", 'c', OptionParser::eRequiredArgument, NULL, 0, eArgTypeClassName,
         "Specify the class within which the stop-hook is to be run." },
-    { LLDB_OPT_SET_3, false, "name", 'n', OptionParser::eRequiredArgument, NULL, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
+    { LLDB_OPT_SET_3, false, "name", 'n', OptionParser::eRequiredArgument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
         "Set the function name within which the stop hook will be run." },
-    { 0, false, NULL, 0, 0, NULL, NULL, 0, eArgTypeNone, NULL }
+    { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
 #pragma mark CommandObjectTargetStopHookDelete

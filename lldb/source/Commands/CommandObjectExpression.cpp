@@ -60,12 +60,12 @@ static OptionEnumValueElement g_description_verbosity_type[] =
 OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "all-threads",        'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,    "Should we run all threads if the execution doesn't complete on one thread."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "ignore-breakpoints", 'i', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,    "Ignore breakpoint hits while running expressions"},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value (in microseconds) for running the expression."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, or raises a signal.  Note, unlike gdb hitting a breakpoint is controlled by another option (-i)."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "debug",              'g', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone,       "When specified, debug the JIT code by setting a breakpoint on the first instruction and forcing breakpoints to not be ignored (-i0) and no unwinding to happen on error (-u0)."},
-    { LLDB_OPT_SET_1, false, "description-verbosity", 'v', OptionParser::eOptionalArgument, NULL, g_description_verbosity_type, 0, eArgTypeDescriptionVerbosity,        "How verbose should the output of this expression be, if the object description is asked for."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "all-threads",        'a', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "Should we run all threads if the execution doesn't complete on one thread."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "ignore-breakpoints", 'i', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "Ignore breakpoint hits while running expressions"},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', OptionParser::eRequiredArgument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value (in microseconds) for running the expression."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', OptionParser::eRequiredArgument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, or raises a signal.  Note, unlike gdb hitting a breakpoint is controlled by another option (-i)."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "debug",              'g', OptionParser::eNoArgument      , NULL, 0, eArgTypeNone,       "When specified, debug the JIT code by setting a breakpoint on the first instruction and forcing breakpoints to not be ignored (-i0) and no unwinding to happen on error (-u0)."},
+    { LLDB_OPT_SET_1, false, "description-verbosity", 'v', OptionParser::eOptionalArgument, g_description_verbosity_type, 0, eArgTypeDescriptionVerbosity,        "How verbose should the output of this expression be, if the object description is asked for."},
 };
 
 
