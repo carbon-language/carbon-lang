@@ -1,7 +1,7 @@
 #
 # Check if the index is appearing properly in the output file 
 #
-RUN: llvm-nm --numeric-sort -s %p/Inputs/coff_archive.lib | FileCheck -check-prefix=CHECKIDX %s
+RUN: llvm-nm --numeric-sort -M %p/Inputs/coff_archive.lib | FileCheck -check-prefix=CHECKIDX %s
 
 CHECKIDX: Archive map
 CHECKIDX: ??0invalid_argument@std@@QAE@PBD@Z in Debug\mymath.obj

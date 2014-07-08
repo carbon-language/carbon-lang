@@ -129,7 +129,7 @@ cl::opt<bool> WithoutAliases("without-aliases", cl::Hidden,
                              cl::desc("Exclude aliases from output"));
 
 cl::opt<bool> ArchiveMap("print-armap", cl::desc("Print the archive map"));
-cl::alias ArchiveMaps("s", cl::desc("Alias for --print-armap"),
+cl::alias ArchiveMaps("M", cl::desc("Alias for --print-armap"),
                       cl::aliasopt(ArchiveMap));
 
 cl::opt<bool> JustSymbolName("just-symbol-name",

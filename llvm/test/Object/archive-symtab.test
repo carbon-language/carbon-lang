@@ -1,6 +1,6 @@
 RUN: rm -f %t.a
 RUN: llvm-ar rcs %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
-RUN: llvm-nm -s %t.a | FileCheck %s
+RUN: llvm-nm -M %t.a | FileCheck %s
 
 CHECK: Archive map
 CHECK-NEXT: main in trivial-object-test.elf-x86-64
@@ -20,17 +20,17 @@ CHECK-NEXT: 0000000000000016 T main
 
 RUN: rm -f %t.a
 RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
-RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=NOMAP
+RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=NOMAP
 
 NOMAP-NOT: Archive map
 
 RUN: llvm-ar s %t.a
-RUN: llvm-nm -s %t.a | FileCheck %s
+RUN: llvm-nm -M %t.a | FileCheck %s
 
 check that the archive does have a corrupt symbol table.
 RUN: rm -f %t.a
 RUN: cp %p/Inputs/archive-test.a-corrupt-symbol-table %t.a
-RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=CORRUPT
+RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=CORRUPT
 
 CORRUPT: Archive map
 CORRUPT-NEXT: mbin in trivial-object-test.elf-x86-64
@@ -49,18 +49,18 @@ CORRUPT-NEXT: 0000000000000016 T main
 
 check that the we *don't* update the symbol table.
 RUN: llvm-ar s %t.a
-RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=CORRUPT
+RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=CORRUPT
 
 repeate the test with llvm-ranlib
 
 RUN: rm -f %t.a
 RUN: llvm-ar rcS %t.a %p/Inputs/trivial-object-test.elf-x86-64 %p/Inputs/trivial-object-test2.elf-x86-64
-RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=NOMAP
+RUN: llvm-nm -M %t.a | FileCheck %s --check-prefix=NOMAP
 
 RUN: llvm-ranlib %t.a
-RUN: llvm-nm -s %t.a | FileCheck %s
+RUN: llvm-nm -M %t.a | FileCheck %s
 
-RUN: llvm-nm -s %p/Inputs/macho-archive-x86_64.a | FileCheck %s --check-prefix=BSD-MachO
+RUN: llvm-nm -M %p/Inputs/macho-archive-x86_64.a | FileCheck %s --check-prefix=BSD-MachO
 
 BSD-MachO: Archive map
 BSD-MachO: _bar in bar.o
