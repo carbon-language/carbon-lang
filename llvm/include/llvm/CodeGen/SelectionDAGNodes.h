@@ -1583,11 +1583,16 @@ public:
                        unsigned MinSplatBits = 0,
                        bool isBigEndian = false) const;
 
-  /// getConstantSplatValue - Check if this is a constant splat, and if so,
-  /// return the splat value only if it is a ConstantSDNode. Otherwise
-  /// return nullptr. This is a simpler form of isConstantSplat.
-  /// Get the constant splat only if you care about the splat value.
-  ConstantSDNode *getConstantSplatValue() const;
+  /// \brief Returns the splatted value or a null value if this is not a splat.
+  SDValue getSplatValue(bool &HasUndefElements) const;
+
+  /// \brief Returns the splatted constant or null if this is not a constant
+  /// splat.
+  ConstantSDNode *getConstantSplatNode(bool &HasUndefElements) const;
+
+  /// \brief Returns the splatted constant FP or null if this is not a constant
+  /// FP splat.
+  ConstantFPSDNode *getConstantFPSplatNode(bool &HasUndefElements) const;
 
   bool isConstant() const;
 

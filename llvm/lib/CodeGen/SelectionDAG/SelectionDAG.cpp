@@ -1506,8 +1506,10 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
     return N1;
 
   // Shuffling a constant splat doesn't change the result.
+  bool SplatHasUndefs;
   if (N2Undef && N1.getOpcode() == ISD::BUILD_VECTOR)
-    if (cast<BuildVectorSDNode>(N1)->getConstantSplatValue())
+    if (cast<BuildVectorSDNode>(N1)->getConstantSplatNode(SplatHasUndefs) &&
+        !SplatHasUndefs)
       return N1;
 
   FoldingSetNodeID ID;
@@ -6603,16 +6605,38 @@ bool BuildVectorSDNode::isConstantSplat(APInt &SplatValue,
   return true;
 }
 
-ConstantSDNode *BuildVectorSDNode::getConstantSplatValue() const {
-  SDValue Op0 = getOperand(0);
-  if (Op0.getOpcode() != ISD::Constant)
-    return nullptr;
+SDValue BuildVectorSDNode::getSplatValue(bool &HasUndefElements) const {
+  HasUndefElements = false;
+  SDValue Splatted;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    SDValue Op = getOperand(i);
+    if (Op.getOpcode() == ISD::UNDEF)
+      HasUndefElements = true;
+    else if (!Splatted)
+      Splatted = Op;
+    else if (Splatted != Op)
+      return SDValue();
+  }
 
-  for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
-    if (getOperand(i) != Op0)
-      return nullptr;
+  if (!Splatted) {
+    assert(getOperand(0).getOpcode() == ISD::UNDEF &&
+           "Can only have a splat without a constant for all undefs.");
+    return getOperand(0);
+  }
 
-  return cast<ConstantSDNode>(Op0);
+  return Splatted;
+}
+
+ConstantSDNode *
+BuildVectorSDNode::getConstantSplatNode(bool &HasUndefElements) const {
+  return dyn_cast_or_null<ConstantSDNode>(
+      getSplatValue(HasUndefElements).getNode());
+}
+
+ConstantFPSDNode *
+BuildVectorSDNode::getConstantFPSplatNode(bool &HasUndefElements) const {
+  return dyn_cast_or_null<ConstantFPSDNode>(
+      getSplatValue(HasUndefElements).getNode());
 }
 
 bool BuildVectorSDNode::isConstant() const {
