@@ -218,6 +218,15 @@ User defined variables:\n\
     your user defined variable is a $, then the variable's value will be available in future\n\
     expressions, otherwise it will just be available in the current expression.\n\
 \n\
+\n\
+Continuing evaluation after a breakpoint:\n\
+    If the \"-i false\" option is used, and execution is interrupted by a breakpoint hit, once\n\
+    you are done with your investigation, you can either remove the expression execution frames\n\
+    from the stack with \"thread return -x\" or if you are still interested in the expression result\n\
+    you can issue the \"continue\" command and the expression evaluation will complete and the\n\
+    expression result will be available using the \"thread.completed-expression\" key in the thread\n\
+    format.\n\
+\n\
 Examples: \n\
 \n\
    expr my_struct->a = my_array[3] \n\
