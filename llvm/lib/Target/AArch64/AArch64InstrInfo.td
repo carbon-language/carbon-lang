@@ -2242,6 +2242,41 @@ def : Pat<(f32_to_f16 FPR32:$Rn),
 def FCVTSHpseudo : Pseudo<(outs FPR32:$Rd), (ins FPR32:$Rn),
                           [(set (f32 FPR32:$Rd), (f16_to_f32 i32:$Rn))]>;
 
+// When converting from f16 coming directly from a load, make sure we
+// load into the FPR16 registers rather than going through the GPRs.
+//   f16->f32
+def : Pat<(f32 (f16_to_f32 (i32
+                (zextloadi16 (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
+                                    ro_Wextend16:$extend))))),
+          (FCVTSHr (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend))>;
+def : Pat<(f32 (f16_to_f32 (i32
+                (zextloadi16 (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
+                                    ro_Xextend16:$extend))))),
+          (FCVTSHr (LDRHroX GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend))>;
+def : Pat <(f32 (f16_to_f32 (i32
+                  (zextloadi16 (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset))))),
+           (FCVTSHr (LDRHui GPR64sp:$Rn, uimm12s2:$offset))>;
+def : Pat <(f32 (f16_to_f32 (i32
+                  (zextloadi16 (am_unscaled16 GPR64sp:$Rn, simm9:$offset))))),
+           (FCVTSHr (LDURHi GPR64sp:$Rn, simm9:$offset))>;
+
+//   f16->f64
+def : Pat<(f64 (fextend (f32 (f16_to_f32 (i32
+                (zextloadi16 (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
+                                    ro_Wextend16:$extend))))))),
+          (FCVTDHr (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend))>;
+def : Pat<(f64 (fextend (f32 (f16_to_f32 (i32
+                (zextloadi16 (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
+                                    ro_Xextend16:$extend))))))),
+          (FCVTDHr (LDRHroX GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend))>;
+def : Pat <(f64 (fextend (f32 (f16_to_f32 (i32
+                  (zextloadi16 (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset))))))),
+           (FCVTDHr (LDRHui GPR64sp:$Rn, uimm12s2:$offset))>;
+def : Pat <(f64 (fextend (f32 (f16_to_f32 (i32
+                  (zextloadi16 (am_unscaled16 GPR64sp:$Rn, simm9:$offset))))))),
+           (FCVTDHr (LDURHi GPR64sp:$Rn, simm9:$offset))>;
+
+
 //===----------------------------------------------------------------------===//
 // Floating point single operand instructions.
 //===----------------------------------------------------------------------===//
