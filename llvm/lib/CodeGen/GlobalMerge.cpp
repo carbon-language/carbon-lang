@@ -199,19 +199,17 @@ bool GlobalMerge::doMerge(SmallVectorImpl<GlobalVariable*> &Globals,
                                             ? GlobalValue::ExternalLinkage
                                             : GlobalValue::InternalLinkage;
 
-    // If merged variables have external linkage, we use symbol name of the
-    // first variable merged as the suffix of global symbol name. This would
-    // be able to avoid the link-time naming conflict for globalm symbols.
-    Twine MergedGVName = HasExternal
-                             ? "_MergedGlobals_" + TheFirstExternal->getName()
-                             : "_MergedGlobals";
-
     StructType *MergedTy = StructType::get(M.getContext(), Tys);
     Constant *MergedInit = ConstantStruct::get(MergedTy, Inits);
 
+    // If merged variables have external linkage, we use symbol name of the
+    // first variable merged as the suffix of global symbol name. This would
+    // be able to avoid the link-time naming conflict for globalm symbols.
     GlobalVariable *MergedGV = new GlobalVariable(
-        M, MergedTy, isConst, Linkage, MergedInit, MergedGVName, nullptr,
-        GlobalVariable::NotThreadLocal, AddrSpace);
+        M, MergedTy, isConst, Linkage, MergedInit,
+        HasExternal ? "_MergedGlobals_" + TheFirstExternal->getName()
+                    : "_MergedGlobals",
+        nullptr, GlobalVariable::NotThreadLocal, AddrSpace);
 
     for (size_t k = i; k < j; ++k) {
       GlobalValue::LinkageTypes Linkage = Globals[k]->getLinkage();

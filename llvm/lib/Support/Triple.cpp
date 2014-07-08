@@ -737,9 +737,8 @@ void Triple::setObjectFormat(ObjectFormatType Kind) {
   if (Environment == UnknownEnvironment)
     return setEnvironmentName(getObjectFormatTypeName(Kind));
 
-  Twine Env = getEnvironmentTypeName(Environment) + Twine("-") +
-              getObjectFormatTypeName(Kind);
-  setEnvironmentName(Env.str());
+  setEnvironmentName((getEnvironmentTypeName(Environment) + Twine("-") +
+                      getObjectFormatTypeName(Kind)).str());
 }
 
 void Triple::setArchName(StringRef Str) {

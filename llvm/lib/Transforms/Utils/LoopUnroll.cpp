@@ -242,21 +242,25 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
                            Twine("completely unrolled loop with ") +
                                Twine(TripCount) + " iterations");
   } else {
+    auto EmitDiag = [&](const Twine &T) {
+      emitOptimizationRemark(Ctx, DEBUG_TYPE, *F, LoopLoc,
+                             "unrolled loop by a factor of " + Twine(Count) +
+                                 T);
+    };
+
     DEBUG(dbgs() << "UNROLLING loop %" << Header->getName()
           << " by " << Count);
-    Twine DiagMsg("unrolled loop by a factor of " + Twine(Count));
     if (TripMultiple == 0 || BreakoutTrip != TripMultiple) {
       DEBUG(dbgs() << " with a breakout at trip " << BreakoutTrip);
-      DiagMsg.concat(" with a breakout at trip " + Twine(BreakoutTrip));
+      EmitDiag(" with a breakout at trip " + Twine(BreakoutTrip));
     } else if (TripMultiple != 1) {
       DEBUG(dbgs() << " with " << TripMultiple << " trips per branch");
-      DiagMsg.concat(" with " + Twine(TripMultiple) + " trips per branch");
+      EmitDiag(" with " + Twine(TripMultiple) + " trips per branch");
     } else if (RuntimeTripCount) {
       DEBUG(dbgs() << " with run-time trip count");
-      DiagMsg.concat(" with run-time trip count");
+      EmitDiag(" with run-time trip count");
     }
     DEBUG(dbgs() << "!\n");
-    emitOptimizationRemark(Ctx, DEBUG_TYPE, *F, LoopLoc, DiagMsg);
   }
 
   bool ContinueOnTrue = L->contains(BI->getSuccessor(0));
