@@ -46,7 +46,6 @@ void SyncVar::Reset() {
   is_recursive = 0;
   is_broken = 0;
   is_linker_init = 0;
-  next = 0;
 
   clock.Zero();
   read_clock.Reset();
