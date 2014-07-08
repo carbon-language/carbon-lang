@@ -37,31 +37,34 @@
 int main()
 {
     {
-    static_assert((std::is_same<std::map<int, double>::key_type, int>::value), "");
-    static_assert((std::is_same<std::map<int, double>::mapped_type, double>::value), "");
-    static_assert((std::is_same<std::map<int, double>::value_type, std::pair<const int, double> >::value), "");
-    static_assert((std::is_same<std::map<int, double>::key_compare, std::less<int> >::value), "");
-    static_assert((std::is_same<std::map<int, double>::allocator_type, std::allocator<std::pair<const int, double> > >::value), "");
-    static_assert((std::is_same<std::map<int, double>::reference, std::pair<const int, double>&>::value), "");
-    static_assert((std::is_same<std::map<int, double>::const_reference, const std::pair<const int, double>&>::value), "");
-    static_assert((std::is_same<std::map<int, double>::pointer, std::pair<const int, double>*>::value), "");
-    static_assert((std::is_same<std::map<int, double>::const_pointer, const std::pair<const int, double>*>::value), "");
-    static_assert((std::is_same<std::map<int, double>::size_type, std::size_t>::value), "");
-    static_assert((std::is_same<std::map<int, double>::difference_type, std::ptrdiff_t>::value), "");
+    typedef std::map<int, double> C;
+    static_assert((std::is_same<C::key_type, int>::value), "");
+    static_assert((std::is_same<C::mapped_type, double>::value), "");
+    static_assert((std::is_same<C::value_type, std::pair<const int, double> >::value), "");
+    static_assert((std::is_same<C::key_compare, std::less<int> >::value), "");
+    static_assert((std::is_same<C::allocator_type, std::allocator<std::pair<const int, double> > >::value), "");
+    static_assert((std::is_same<C::reference, std::pair<const int, double>&>::value), "");
+    static_assert((std::is_same<C::const_reference, const std::pair<const int, double>&>::value), "");
+    static_assert((std::is_same<C::pointer, std::pair<const int, double>*>::value), "");
+    static_assert((std::is_same<C::const_pointer, const std::pair<const int, double>*>::value), "");
+    static_assert((std::is_same<C::size_type, std::size_t>::value), "");
+    static_assert((std::is_same<C::difference_type, std::ptrdiff_t>::value), "");
     }
 #if __cplusplus >= 201103L
     {
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::key_type, int>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::mapped_type, double>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::value_type, std::pair<const int, double> >::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::key_compare, std::less<int> >::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::allocator_type, min_allocator<std::pair<const int, double> > >::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::reference, std::pair<const int, double>&>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::const_reference, const std::pair<const int, double>&>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::pointer, min_pointer<std::pair<const int, double>>>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::const_pointer, min_pointer<const std::pair<const int, double>>>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::size_type, std::size_t>::value), "");
-    static_assert((std::is_same<std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>>::difference_type, std::ptrdiff_t>::value), "");
+    typedef std::map<int, double, std::less<int>, min_allocator<std::pair<const int, double>>> C;
+    static_assert((std::is_same<C::key_type, int>::value), "");
+    static_assert((std::is_same<C::mapped_type, double>::value), "");
+    static_assert((std::is_same<C::value_type, std::pair<const int, double> >::value), "");
+    static_assert((std::is_same<C::key_compare, std::less<int> >::value), "");
+    static_assert((std::is_same<C::allocator_type, min_allocator<std::pair<const int, double> > >::value), "");
+    static_assert((std::is_same<C::reference, std::pair<const int, double>&>::value), "");
+    static_assert((std::is_same<C::const_reference, const std::pair<const int, double>&>::value), "");
+    static_assert((std::is_same<C::pointer, min_pointer<std::pair<const int, double>>>::value), "");
+    static_assert((std::is_same<C::const_pointer, min_pointer<const std::pair<const int, double>>>::value), "");
+//  min_allocator doesn't have a size_type, so one gets synthesized
+    static_assert((std::is_same<C::size_type, std::make_unsigned<C::difference_type>::type>::value), "");
+    static_assert((std::is_same<C::difference_type, std::ptrdiff_t>::value), "");
     }
 #endif
 }
