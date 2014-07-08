@@ -27,6 +27,7 @@ SyncVar::SyncVar()
 void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
   this->addr = addr;
   this->uid = uid;
+  this->next = 0;
 
   creation_stack_id = 0;
   if (kCppMode)  // Go does not use them
@@ -36,7 +37,6 @@ void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
 }
 
 void SyncVar::Reset() {
-  addr = 0;
   uid = 0;
   creation_stack_id = 0;
   owner_tid = kInvalidTid;
@@ -46,7 +46,6 @@ void SyncVar::Reset() {
   is_recursive = 0;
   is_broken = 0;
   is_linker_init = 0;
-  next = 0;
 
   clock.Zero();
   read_clock.Reset();
@@ -134,7 +133,7 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
   u32 myidx = 0;
   SyncVar *mys = 0;
   for (;;) {
-    u32 idx = *meta;
+    u32 idx = idx0;
     for (;;) {
       if (idx == 0)
         break;
@@ -157,8 +156,10 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
     }
     if (!create)
       return 0;
-    if (*meta != idx0)
+    if (*meta != idx0) {
+      idx0 = *meta;
       continue;
+    }
 
     if (myidx == 0) {
       const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
