@@ -43,7 +43,7 @@ int main () {
     test ( U"a", 1 );
 #endif
 
-#if _LIBCPP_STD_VER > 11
+#if __cplusplus >= 201103L
     {
     constexpr std::experimental::basic_string_view<char> sv ( "ABC", 2 );
     static_assert ( sv.length() ==  2,  "" );

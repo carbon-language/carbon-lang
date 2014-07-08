@@ -174,7 +174,7 @@ namespace std {
 
 */
 
-#include <__config>
+#include <experimental/__config>
 
 #include <string>
 #include <algorithm>
@@ -186,9 +186,7 @@ namespace std {
 #pragma GCC system_header
 #endif
 
-namespace std {
- namespace experimental {
-  inline namespace library_fundamentals_v1 {
+_LIBCPP_BEGIN_NAMESPACE_LFTS
     
     template<class _CharT, class _Traits = _VSTD::char_traits<_CharT> >
     class _LIBCPP_TYPE_VIS_ONLY basic_string_view {
@@ -276,12 +274,15 @@ namespace std {
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference operator[](size_type __pos) const { return __data[__pos]; }
         
-        _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference at(size_type __pos) const
         {
-            if (__pos >= size())
-                throw out_of_range("string_view::at");
-            return __data[__pos]; 
+            return __pos >= size()
+                ? throw out_of_range("string_view::at")
+                : __data[__pos];
+//             if (__pos >= size())
+//                 throw out_of_range("string_view::at");
+//             return __data[__pos]; 
         }
 
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
@@ -358,7 +359,8 @@ namespace std {
             return __rlen;
         }
         
-        _LIBCPP_CONSTEXPR basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
+        _LIBCPP_CONSTEXPR
+        basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
         {
 //             if (__pos > size())
 //                 throw out_of_range("string_view::substr");
@@ -776,8 +778,7 @@ namespace std {
   typedef basic_string_view<char32_t> u32string_view;
   typedef basic_string_view<wchar_t>  wstring_view;
 
-}}}  // close std::experimental::library_fundamentals_v1
-
+_LIBCPP_END_NAMESPACE_LFTS
 _LIBCPP_BEGIN_NAMESPACE_STD
 
 // [string.view.hash]
