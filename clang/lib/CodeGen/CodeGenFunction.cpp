@@ -788,16 +788,13 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   // of the declaration as the location for the subprogram. A function
   // may lack a declaration in the source code if it is created by code
   // gen. (examples: _GLOBAL__I_a, __cxx_global_array_dtor, thunk).
-  SourceLocation Loc;
-  if (FD) {
-    Loc = FD->getLocation();
+  SourceLocation Loc = FD->getLocation();
 
-    // If this is a function specialization then use the pattern body
-    // as the location for the function.
-    if (const FunctionDecl *SpecDecl = FD->getTemplateInstantiationPattern())
-      if (SpecDecl->hasBody(SpecDecl))
-        Loc = SpecDecl->getLocation();
-  }
+  // If this is a function specialization then use the pattern body
+  // as the location for the function.
+  if (const FunctionDecl *SpecDecl = FD->getTemplateInstantiationPattern())
+    if (SpecDecl->hasBody(SpecDecl))
+      Loc = SpecDecl->getLocation();
 
   // Emit the standard function prologue.
   StartFunction(GD, ResTy, Fn, FnInfo, Args, Loc, BodyRange.getBegin());
