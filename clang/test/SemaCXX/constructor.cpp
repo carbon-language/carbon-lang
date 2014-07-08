@@ -17,6 +17,8 @@ class Foo {
   
   int Foo(int, int); // expected-error{{constructor cannot have a return type}} \
   // expected-error{{member 'Foo' has the same name as its class}}
+
+  volatile Foo(float); // expected-error{{constructor cannot have a return type}}
 };
 
 Foo::Foo(const Foo&) { }

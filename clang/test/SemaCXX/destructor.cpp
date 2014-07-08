@@ -380,3 +380,9 @@ namespace PR7900 {
 namespace PR16892 {
   auto p = &A::~A; // expected-error{{taking the address of a destructor}}
 }
+
+namespace PR20238 {
+struct S {
+  volatile ~S() { } // expected-error{{destructor cannot have a return type}}
+};
+}

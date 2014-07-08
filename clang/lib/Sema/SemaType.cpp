@@ -1989,17 +1989,14 @@ static void inferARCWriteback(TypeProcessingState &state,
   // TODO: mark whether we did this inference?
 }
 
-static void diagnoseIgnoredQualifiers(
-    Sema &S, unsigned Quals,
-    SourceLocation FallbackLoc,
-    SourceLocation ConstQualLoc = SourceLocation(),
-    SourceLocation VolatileQualLoc = SourceLocation(),
-    SourceLocation RestrictQualLoc = SourceLocation(),
-    SourceLocation AtomicQualLoc = SourceLocation()) {
+void Sema::diagnoseIgnoredQualifiers(unsigned DiagID, unsigned Quals,
+                                     SourceLocation FallbackLoc,
+                                     SourceLocation ConstQualLoc,
+                                     SourceLocation VolatileQualLoc,
+                                     SourceLocation RestrictQualLoc,
+                                     SourceLocation AtomicQualLoc) {
   if (!Quals)
     return;
-
-  const SourceManager &SM = S.getSourceManager();
 
   struct Qual {
     unsigned Mask;
@@ -2027,7 +2024,8 @@ static void diagnoseIgnoredQualifiers(
       SourceLocation QualLoc = QualKinds[I].Loc;
       if (!QualLoc.isInvalid()) {
         FixIts[NumQuals] = FixItHint::CreateRemoval(QualLoc);
-        if (Loc.isInvalid() || SM.isBeforeInTranslationUnit(QualLoc, Loc))
+        if (Loc.isInvalid() ||
+            getSourceManager().isBeforeInTranslationUnit(QualLoc, Loc))
           Loc = QualLoc;
       }
 
@@ -2035,7 +2033,7 @@ static void diagnoseIgnoredQualifiers(
     }
   }
 
-  S.Diag(Loc.isInvalid() ? FallbackLoc : Loc, diag::warn_qual_return_type)
+  Diag(Loc.isInvalid() ? FallbackLoc : Loc, DiagID)
     << QualStr << NumQuals << FixIts[0] << FixIts[1] << FixIts[2] << FixIts[3];
 }
 
@@ -2046,8 +2044,9 @@ static void diagnoseRedundantReturnTypeQualifiers(Sema &S, QualType RetTy,
   if (D.getTypeObject(FunctionChunkIndex).Fun.hasTrailingReturnType()) {
     // FIXME: TypeSourceInfo doesn't preserve location information for
     // qualifiers.
-    diagnoseIgnoredQualifiers(S, RetTy.getLocalCVRQualifiers(),
-                              D.getIdentifierLoc());
+    S.diagnoseIgnoredQualifiers(diag::warn_qual_return_type,
+                                RetTy.getLocalCVRQualifiers(),
+                                D.getIdentifierLoc());
     return;
   }
 
@@ -2061,8 +2060,9 @@ static void diagnoseRedundantReturnTypeQualifiers(Sema &S, QualType RetTy,
 
     case DeclaratorChunk::Pointer: {
       DeclaratorChunk::PointerTypeInfo &PTI = OuterChunk.Ptr;
-      diagnoseIgnoredQualifiers(
-          S, PTI.TypeQuals,
+      S.diagnoseIgnoredQualifiers(
+          diag::warn_qual_return_type,
+          PTI.TypeQuals,
           SourceLocation(),
           SourceLocation::getFromRawEncoding(PTI.ConstQualLoc),
           SourceLocation::getFromRawEncoding(PTI.VolatileQualLoc),
@@ -2079,8 +2079,9 @@ static void diagnoseRedundantReturnTypeQualifiers(Sema &S, QualType RetTy,
       // FIXME: We can't currently provide an accurate source location and a
       // fix-it hint for these.
       unsigned AtomicQual = RetTy->isAtomicType() ? DeclSpec::TQ_atomic : 0;
-      diagnoseIgnoredQualifiers(S, RetTy.getCVRQualifiers() | AtomicQual,
-                                D.getIdentifierLoc());
+      S.diagnoseIgnoredQualifiers(diag::warn_qual_return_type,
+                                  RetTy.getCVRQualifiers() | AtomicQual,
+                                  D.getIdentifierLoc());
       return;
     }
 
@@ -2095,12 +2096,13 @@ static void diagnoseRedundantReturnTypeQualifiers(Sema &S, QualType RetTy,
 
   // Just parens all the way out to the decl specifiers. Diagnose any qualifiers
   // which are present there.
-  diagnoseIgnoredQualifiers(S, D.getDeclSpec().getTypeQualifiers(),
-                            D.getIdentifierLoc(),
-                            D.getDeclSpec().getConstSpecLoc(),
-                            D.getDeclSpec().getVolatileSpecLoc(),
-                            D.getDeclSpec().getRestrictSpecLoc(),
-                            D.getDeclSpec().getAtomicSpecLoc());
+  S.diagnoseIgnoredQualifiers(diag::warn_qual_return_type,
+                              D.getDeclSpec().getTypeQualifiers(),
+                              D.getIdentifierLoc(),
+                              D.getDeclSpec().getConstSpecLoc(),
+                              D.getDeclSpec().getVolatileSpecLoc(),
+                              D.getDeclSpec().getRestrictSpecLoc(),
+                              D.getDeclSpec().getAtomicSpecLoc());
 }
 
 static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,

@@ -1556,6 +1556,14 @@ public:
   bool diagnoseQualifiedDeclaration(CXXScopeSpec &SS, DeclContext *DC,
                                     DeclarationName Name,
                                     SourceLocation Loc);
+  void
+  diagnoseIgnoredQualifiers(unsigned DiagID, unsigned Quals,
+                            SourceLocation FallbackLoc,
+                            SourceLocation ConstQualLoc = SourceLocation(),
+                            SourceLocation VolatileQualLoc = SourceLocation(),
+                            SourceLocation RestrictQualLoc = SourceLocation(),
+                            SourceLocation AtomicQualLoc = SourceLocation());
+
   static bool adjustContextForLocalExternDecl(DeclContext *&DC);
   void DiagnoseFunctionSpecifiers(const DeclSpec &DS);
   void CheckShadow(Scope *S, VarDecl *D, const LookupResult& R);

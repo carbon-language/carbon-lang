@@ -6279,6 +6279,15 @@ QualType Sema::CheckConstructorDeclarator(Declarator &D, QualType R,
     SC = SC_None;
   }
 
+  if (unsigned TypeQuals = D.getDeclSpec().getTypeQualifiers()) {
+    diagnoseIgnoredQualifiers(
+        diag::err_constructor_return_type, TypeQuals, SourceLocation(),
+        D.getDeclSpec().getConstSpecLoc(), D.getDeclSpec().getVolatileSpecLoc(),
+        D.getDeclSpec().getRestrictSpecLoc(),
+        D.getDeclSpec().getAtomicSpecLoc());
+    D.setInvalidType();
+  }
+
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
   if (FTI.TypeQuals != 0) {
     if (FTI.TypeQuals & Qualifiers::Const)
@@ -6426,7 +6435,7 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
     
     SC = SC_None;
   }
-  if (D.getDeclSpec().hasTypeSpecifier() && !D.isInvalidType()) {
+  if (!D.isInvalidType()) {
     // Destructors don't have return types, but the parser will
     // happily parse something like:
     //
@@ -6435,9 +6444,19 @@ QualType Sema::CheckDestructorDeclarator(Declarator &D, QualType R,
     //   };
     //
     // The return type will be eliminated later.
-    Diag(D.getIdentifierLoc(), diag::err_destructor_return_type)
-      << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
-      << SourceRange(D.getIdentifierLoc());
+    if (D.getDeclSpec().hasTypeSpecifier())
+      Diag(D.getIdentifierLoc(), diag::err_destructor_return_type)
+        << SourceRange(D.getDeclSpec().getTypeSpecTypeLoc())
+        << SourceRange(D.getIdentifierLoc());
+    else if (unsigned TypeQuals = D.getDeclSpec().getTypeQualifiers()) {
+      diagnoseIgnoredQualifiers(diag::err_destructor_return_type, TypeQuals,
+                                SourceLocation(),
+                                D.getDeclSpec().getConstSpecLoc(),
+                                D.getDeclSpec().getVolatileSpecLoc(),
+                                D.getDeclSpec().getRestrictSpecLoc(),
+                                D.getDeclSpec().getAtomicSpecLoc());
+      D.setInvalidType();
+    }
   }
 
   DeclaratorChunk::FunctionTypeInfo &FTI = D.getFunctionTypeInfo();
