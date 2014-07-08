@@ -2815,6 +2815,9 @@ bool MipsAsmParser::parseDirectiveModule() {
     return false;
   }
 
+  // Emit appropriate flags.
+  getTargetStreamer().emitDirectiveModuleFP(FpABI, isABI_O32());
+
   return false;
 }
 
