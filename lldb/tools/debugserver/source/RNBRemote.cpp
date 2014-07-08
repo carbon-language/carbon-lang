@@ -4379,20 +4379,25 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     size_t cpusubtype_len = sizeof(cpusubtype);
     if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &cpusubtype_len, NULL, 0) == 0)
     {
-        if (cputype == CPU_TYPE_X86_64 && cpusubtype == CPU_SUBTYPE_486)
+        // If a process is CPU_TYPE_X86, then ignore the cpusubtype that we detected
+        // from the host and use CPU_SUBTYPE_I386_ALL because we don't want the
+        // CPU_SUBTYPE_X86_ARCH1 or CPU_SUBTYPE_X86_64_H to be used as the cpu subtype
+        // for i386...
+        if (host_cpu_is_64bit)
         {
-            cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+            if (cputype == CPU_TYPE_X86)
+            {
+                cpusubtype = 3; // CPU_SUBTYPE_I386_ALL
+            }
+            else if (cputype == CPU_TYPE_ARM)
+            {
+                // We can query a process' cputype but we cannot query a process' cpusubtype.
+                // If the process has cputype CPU_TYPE_ARM, then it is an armv7 (32-bit process) and we
+                // need to override the host cpusubtype (which is in the CPU_SUBTYPE_ARM64 subtype namespace)
+                // with a reasonable CPU_SUBTYPE_ARMV7 subtype.
+                cpusubtype = 11; // CPU_SUBTYPE_ARM_V7S
+            }
         }
-
-        // We can query a process' cputype but we cannot query a process' cpusubtype.
-        // If the process has cputype CPU_TYPE_ARM, then it is an armv7 (32-bit process) and we 
-        // need to override the host cpusubtype (which is in the CPU_SUBTYPE_ARM64 subtype namespace)
-        // with a reasonable CPU_SUBTYPE_ARMV7 subtype.
-        if (host_cpu_is_64bit && cputype == CPU_TYPE_ARM)
-        {
-            cpusubtype = 11; //CPU_SUBTYPE_ARM_V7S;
-        }
-
         rep << "cpusubtype:" << std::hex << cpusubtype << ';';
     }
 
