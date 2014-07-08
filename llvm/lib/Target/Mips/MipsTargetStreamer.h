@@ -18,7 +18,7 @@ namespace llvm {
 
 struct MipsABIFlagsSection;
 
-using Val_GNU_MIPS_ABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI;
+typedef MipsABIFlagsSection::Val_GNU_MIPS_ABI Val_GNU_MIPS_ABI;
 
 class MipsTargetStreamer : public MCTargetStreamer {
 public:
