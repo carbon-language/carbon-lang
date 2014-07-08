@@ -30,6 +30,10 @@
 
 #include <stdint.h>
 
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 /* Miscellaneous data-processing intrinsics */
 
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
@@ -137,6 +141,10 @@ static __inline__ uint32_t __attribute__((always_inline, nodebug))
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __crc32cd(uint32_t a, uint64_t b) {
   return __builtin_arm_crc32cd(a, b);
+}
+#endif
+
+#if defined(__cplusplus)
 }
 #endif
 
