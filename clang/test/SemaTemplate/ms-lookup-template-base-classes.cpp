@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++1y -fms-compatibility -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++1y -fms-compatibility -fno-spell-checking -fsyntax-only -verify %s
 
 
 template <class T>
@@ -380,6 +380,15 @@ struct B : A<T> { NameFromBase m; }; // expected-error {{unknown type name 'Name
 struct C : A<int> { NameFromBase m; }; // expected-error {{unknown type name 'NameFromBase'}}
 }
 
+namespace type_in_base_of_dependent_base {
+struct A { typedef int NameFromBase; };
+template <typename T>
+struct B : A {};
+// FIXME: MSVC accepts this.
+template <typename T>
+struct C : B<T> { NameFromBase m; }; // expected-error {{unknown type name 'NameFromBase'}}
+}
+
 namespace lookup_in_function_contexts {
 template <typename T> struct A { typedef T NameFromBase; };
 template <typename T>
@@ -389,23 +398,20 @@ struct B : A<T> {
     return {};
   }
 
-  // FIXME: MSVC accepts all of the code below that isn't C++14 only.  Downgrade
-  // these errors to warnings.
-
   static void memberFunc() {
-    NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+    NameFromBase x; // expected-warning {{lookup into dependent bases}}
   }
 
   static void funcLocalClass() {
     struct X {
-      NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+      NameFromBase x; // expected-warning {{lookup into dependent bases}}
     } y;
   }
 
   void localClassMethod() {
     struct X {
       void bar() {
-        NameFromBase m; // expected-error {{unknown type name 'NameFromBase'}}
+        NameFromBase m; // expected-warning {{lookup into dependent bases}}
       }
     } x;
     x.bar();
@@ -413,20 +419,18 @@ struct B : A<T> {
 
   static void funcLambda() {
     auto l = []() {
-      NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+      NameFromBase x; // expected-warning {{lookup into dependent bases}}
     };
     l();
   }
 
   static constexpr int constexprFunc() {
-    NameFromBase x = {}; // expected-error {{unknown type name 'NameFromBase'}}
-    // FIXME: Suppress this diagnostic, we have an initializer.
-    // expected-error@-2 {{variables defined in a constexpr function must be initialized}}
+    NameFromBase x = {}; // expected-warning {{lookup into dependent bases}}
     return sizeof(x);
   }
 
   static auto autoFunc() {
-    NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+    NameFromBase x; // expected-warning {{lookup into dependent bases}}
     return x;
   }
 };

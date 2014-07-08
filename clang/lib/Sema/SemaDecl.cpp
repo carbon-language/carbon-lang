@@ -131,8 +131,15 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
 static ParsedType recoverFromTypeInKnownDependentBase(Sema &S,
                                                       const IdentifierInfo &II,
                                                       SourceLocation NameLoc) {
-  auto *RD = dyn_cast<CXXRecordDecl>(S.CurContext);
-  if (!RD || !RD->getDescribedClassTemplate())
+  // Find the first parent class template context, if any.
+  // FIXME: Perform the lookup in all enclosing class templates.
+  const CXXRecordDecl *RD = nullptr;
+  for (DeclContext *DC = S.CurContext; DC; DC = DC->getParent()) {
+    RD = dyn_cast<CXXRecordDecl>(DC);
+    if (RD && RD->getDescribedClassTemplate())
+      break;
+  }
+  if (!RD)
     return ParsedType();
 
   // Look for type decls in dependent base classes that have known primary
@@ -146,6 +153,8 @@ static ParsedType recoverFromTypeInKnownDependentBase(Sema &S,
     if (!TD)
       continue;
     auto *BasePrimaryTemplate = cast<CXXRecordDecl>(TD->getTemplatedDecl());
+    // FIXME: Allow lookup into non-dependent bases of dependent bases, possibly
+    // by calling or integrating with the main LookupQualifiedName mechanism.
     for (NamedDecl *ND : BasePrimaryTemplate->lookup(&II)) {
       if (FoundTypeDecl)
         return ParsedType();
