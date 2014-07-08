@@ -2040,9 +2040,9 @@ static void diagnoseIgnoredQualifiers(
 }
 
 // Diagnose pointless type qualifiers on the return type of a function.
-static void diagnoseIgnoredFunctionQualifiers(Sema &S, QualType RetTy,
-                                              Declarator &D,
-                                              unsigned FunctionChunkIndex) {
+static void diagnoseRedundantReturnTypeQualifiers(Sema &S, QualType RetTy,
+                                                  Declarator &D,
+                                                  unsigned FunctionChunkIndex) {
   if (D.getTypeObject(FunctionChunkIndex).Fun.hasTrailingReturnType()) {
     // FIXME: TypeSourceInfo doesn't preserve location information for
     // qualifiers.
@@ -2788,7 +2788,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       if ((T.getCVRQualifiers() || T->isAtomicType()) &&
           !(S.getLangOpts().CPlusPlus &&
             (T->isDependentType() || T->isRecordType())))
-        diagnoseIgnoredFunctionQualifiers(S, T, D, chunkIndex);
+        diagnoseRedundantReturnTypeQualifiers(S, T, D, chunkIndex);
 
       // Objective-C ARC ownership qualifiers are ignored on the function
       // return type (by type canonicalization). Complain if this attribute
