@@ -92,6 +92,8 @@ bool MipsAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
 #include "MipsGenMCPseudoLowering.inc"
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
+  MipsTargetStreamer &TS = getTargetStreamer();
+  TS.setCanHaveModuleDir(false);
   if (MI->isDebugValue()) {
     SmallString<128> Str;
     raw_svector_ostream OS(Str);
@@ -657,6 +659,19 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
           OutContext.getELFSection(".gcc_compiled_long64", ELF::SHT_PROGBITS, 0,
                                    SectionKind::getDataRel()));
   }
+  getTargetStreamer().updateABIInfo(*Subtarget);
+  unsigned FpAbiVal;
+  if (Subtarget->isABI_N32() || Subtarget->isABI_N64())
+    FpAbiVal = Val_GNU_MIPS_ABI_FP_DOUBLE;
+  else if(Subtarget->isABI_O32()) {
+    if (Subtarget->isFP64bit())
+      FpAbiVal = Val_GNU_MIPS_ABI_FP_64;
+    else if(Subtarget->isABI_FPXX())
+      FpAbiVal = Val_GNU_MIPS_ABI_FP_XX;
+    else
+      FpAbiVal = Val_GNU_MIPS_ABI_FP_DOUBLE;
+  }
+  getTargetStreamer().emitDirectiveModule(FpAbiVal, Subtarget->isABI_O32());
 }
 
 void MipsAsmPrinter::EmitJal(MCSymbol *Symbol) {
@@ -852,7 +867,7 @@ void MipsAsmPrinter::EmitFPCallStub(
   TS.emitDirectiveSetNoMicroMips();
   //
   // .ent __call_stub_fp_xxxx
-  // .type	__call_stub_fp_xxxx,@function
+  // .type  __call_stub_fp_xxxx,@function
   //  __call_stub_fp_xxxx:
   //
   std::string x = "__call_stub_fp_" + std::string(Symbol);

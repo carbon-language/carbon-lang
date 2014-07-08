@@ -1565,6 +1565,7 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
   case ELF::SHT_X86_64_UNWIND:
   case ELF::SHT_MIPS_REGINFO:
   case ELF::SHT_MIPS_OPTIONS:
+  case ELF::SHT_MIPS_ABIFLAGS:
     // Nothing to do.
     break;
 
