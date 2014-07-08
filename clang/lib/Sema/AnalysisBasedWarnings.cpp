@@ -611,8 +611,9 @@ static bool SuggestInitializationFixit(Sema &S, const VarDecl *VD) {
   QualType VariableTy = VD->getType().getCanonicalType();
   if (VariableTy->isBlockPointerType() &&
       !VD->hasAttr<BlocksAttr>()) {
-    S.Diag(VD->getLocation(), diag::note_block_var_fixit_add_initialization) << VD->getDeclName()
-    << FixItHint::CreateInsertion(VD->getLocation(), "__block ");
+    S.Diag(VD->getLocation(), diag::note_block_var_fixit_add_initialization)
+        << VD->getDeclName()
+        << FixItHint::CreateInsertion(VD->getLocation(), "__block ");
     return true;
   }
 
