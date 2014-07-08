@@ -45,7 +45,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 #include <algorithm>
 #include <string>
 #include <system_error>
@@ -149,9 +148,6 @@ static cl::opt<bool> ClInvalidPointerPairs("asan-detect-invalid-pointer-pair",
 static cl::opt<unsigned> ClRealignStack("asan-realign-stack",
        cl::desc("Realign stack to the value of this flag (power of two)"),
        cl::Hidden, cl::init(32));
-static cl::opt<std::string> ClBlacklistFile("asan-blacklist",
-       cl::desc("File containing the list of objects to ignore "
-                "during instrumentation"), cl::Hidden);
 static cl::opt<int> ClInstrumentationWithCallsThreshold(
     "asan-instrumentation-with-call-threshold",
        cl::desc("If the function being instrumented contains more than "
@@ -418,9 +414,7 @@ struct AddressSanitizer : public FunctionPass {
 
 class AddressSanitizerModule : public ModulePass {
  public:
-  AddressSanitizerModule(StringRef BlacklistFile = StringRef())
-      : ModulePass(ID), BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
-                                                            : BlacklistFile) {}
+  AddressSanitizerModule() : ModulePass(ID) {}
   bool runOnModule(Module &M) override;
   static char ID;  // Pass identification, replacement for typeid
   const char *getPassName() const override {
@@ -438,9 +432,6 @@ class AddressSanitizerModule : public ModulePass {
     return RedzoneSizeForScale(Mapping.Scale);
   }
 
-  SmallString<64> BlacklistFile;
-
-  std::unique_ptr<SpecialCaseList> BL;
   GlobalsMetadata GlobalsMD;
   Type *IntptrTy;
   LLVMContext *C;
@@ -601,8 +592,8 @@ char AddressSanitizerModule::ID = 0;
 INITIALIZE_PASS(AddressSanitizerModule, "asan-module",
     "AddressSanitizer: detects use-after-free and out-of-bounds bugs."
     "ModulePass", false, false)
-ModulePass *llvm::createAddressSanitizerModulePass(StringRef BlacklistFile) {
-  return new AddressSanitizerModule(BlacklistFile);
+ModulePass *llvm::createAddressSanitizerModulePass() {
+  return new AddressSanitizerModule();
 }
 
 static size_t TypeSizeToSizeIndex(uint32_t TypeSize) {
@@ -926,9 +917,6 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   Type *Ty = cast<PointerType>(G->getType())->getElementType();
   DEBUG(dbgs() << "GLOBAL: " << *G << "\n");
 
-  // FIXME: Don't use the blacklist here, all the data should be collected
-  // by the frontend and passed in globals metadata.
-  if (BL->isIn(*G)) return false;
   if (GlobalsMD.isBlacklisted(G)) return false;
   if (GlobalsMD.isSourceLocationGlobal(G)) return false;
   if (!Ty->isSized()) return false;
@@ -1163,7 +1151,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   if (!DLP)
     return false;
   DL = &DLP->getDataLayout();
-  BL.reset(SpecialCaseList::createOrDie(BlacklistFile));
   C = &(M.getContext());
   int LongSize = DL->getPointerSizeInBits();
   IntptrTy = Type::getIntNTy(*C, LongSize);
@@ -1183,7 +1170,8 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
     Changed = true;
   }
 
-  if (ClGlobals && !BL->isIn(M)) Changed |= InstrumentGlobals(IRB, M);
+  if (ClGlobals)
+    Changed |= InstrumentGlobals(IRB, M);
 
   return Changed;
 }
