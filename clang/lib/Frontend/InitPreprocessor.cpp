@@ -223,7 +223,7 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
   if (TypeWidth == 64)
     Ty = IsSigned ? TI.getInt64Type() : TI.getIntTypeByWidth(64, false);
 
-  Twine Prefix = IsSigned ? "__INT" : "__UINT";
+  const char *Prefix = IsSigned ? "__INT" : "__UINT";
 
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
 
@@ -244,7 +244,7 @@ static void DefineExactWidthIntTypeSize(TargetInfo::IntType Ty,
   if (TypeWidth == 64)
     Ty = IsSigned ? TI.getInt64Type() : TI.getIntTypeByWidth(64, false);
 
-  Twine Prefix = IsSigned ? "__INT" : "__UINT";
+  const char *Prefix = IsSigned ? "__INT" : "__UINT";
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
 }
 
@@ -255,7 +255,7 @@ static void DefineLeastWidthIntType(unsigned TypeWidth, bool IsSigned,
   if (Ty == TargetInfo::NoInt)
     return;
 
-  Twine Prefix = IsSigned ? "__INT_LEAST" : "__UINT_LEAST";
+  const char *Prefix = IsSigned ? "__INT_LEAST" : "__UINT_LEAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
 }
@@ -268,7 +268,7 @@ static void DefineFastIntType(unsigned TypeWidth, bool IsSigned,
   if (Ty == TargetInfo::NoInt)
     return;
 
-  Twine Prefix = IsSigned ? "__INT_FAST" : "__UINT_FAST";
+  const char *Prefix = IsSigned ? "__INT_FAST" : "__UINT_FAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
 }
