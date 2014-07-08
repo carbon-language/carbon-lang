@@ -1,8 +1,11 @@
 # RUN: yaml2obj %p/Inputs/alignment.obj.yaml > %t.obj
 #
-# RUN: lld -flavor link /out:%t.exe /subsystem:console /force /entry:start \
-# RUN:   -- %t.obj
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /force \
+# RUN:   /entry:start /opt:noref -- %t.obj
 # RUN: llvm-readobj -sections %t.exe | FileCheck %s
+
+CHECK: Name: .bss (2E 62 73 73 00 00 00 00)
+CHECK: RawDataSize: 18
 
 CHECK:      Name: .data (2E 64 61 74 61 00 00 00)
 CHECK-NEXT: VirtualSize: 0x6

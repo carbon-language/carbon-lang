@@ -678,10 +678,6 @@ std::error_code FileCOFF::AtomizeDefinedSymbolsInSection(
     _symbolAtom[*si] = atom;
     _definedAtomLocations[section][(*si)->Value].push_back(atom);
   }
-
-  // Finally, set alignment to the first atom so that the section contents
-  // will be aligned as specified by the object section header.
-  _definedAtomLocations[section][0][0]->setAlignment(getAlignment(section));
   return std::error_code();
 }
 
@@ -697,6 +693,11 @@ std::error_code FileCOFF::AtomizeDefinedSymbols(
     if (std::error_code ec =
             AtomizeDefinedSymbolsInSection(section, symbols, atoms))
       return ec;
+
+    // Set alignment to the first atom so that the section contents
+    // will be aligned as specified by the object section header.
+    if (atoms.size() > 0)
+      atoms[0]->setAlignment(getAlignment(section));
 
     // Connect atoms with layout-before/layout-after edges.
     connectAtomsWithLayoutEdge(atoms);
