@@ -11,7 +11,6 @@
 #define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_LLVM_TWINE_LOCAL_CHECK_H
 
 #include "../ClangTidy.h"
-#include "llvm/Support/Regex.h"
 
 namespace clang {
 namespace tidy {

@@ -11,7 +11,6 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/Lex/Lexer.h"
-#include "llvm/Support/raw_ostream.h"
 
 using namespace clang::ast_matchers;
 
@@ -29,7 +28,7 @@ void TwineLocalCheck::registerMatchers(MatchFinder *Finder) {
 void TwineLocalCheck::check(const MatchFinder::MatchResult &Result) {
   const VarDecl *VD = Result.Nodes.getNodeAs<VarDecl>("variable");
   auto Diag = diag(VD->getLocation(),
-                   "twine variables are prone to use after free bugs");
+                   "twine variables are prone to use-after-free bugs");
 
   // If this VarDecl has an initializer try to fix it.
   if (VD->hasInit()) {
