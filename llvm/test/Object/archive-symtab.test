@@ -59,3 +59,9 @@ RUN: llvm-nm -s %t.a | FileCheck %s --check-prefix=NOMAP
 
 RUN: llvm-ranlib %t.a
 RUN: llvm-nm -s %t.a | FileCheck %s
+
+RUN: llvm-nm -s %p/Inputs/macho-archive-x86_64.a | FileCheck %s --check-prefix=BSD-MachO
+
+BSD-MachO: Archive map
+BSD-MachO: _bar in bar.o
+BSD-MachO: _foo in foo.o
