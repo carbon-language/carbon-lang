@@ -946,6 +946,13 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
     return false;
   }
 
+  // Don't instrument private COMDAT globals on Windows until PR20244 (linkage
+  // of vftables with RTTI) is properly fixed.
+  llvm::Triple TargetTriple(G->getParent()->getTargetTriple());
+  if (G->hasComdat() && G->getLinkage() == GlobalVariable::PrivateLinkage &&
+      TargetTriple.isWindowsMSVCEnvironment())
+    return false;
+
   if (G->hasSection()) {
     StringRef Section(G->getSection());
     // Ignore the globals from the __OBJC section. The ObjC runtime assumes
