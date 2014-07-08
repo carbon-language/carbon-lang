@@ -1145,7 +1145,7 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_tryrdlock, void *m) {
   SCOPED_TSAN_INTERCEPTOR(pthread_rwlock_tryrdlock, m);
   int res = REAL(pthread_rwlock_tryrdlock)(m);
   if (res == 0) {
-    MutexLock(thr, pc, (uptr)m, /*rec=*/1, /*try_lock=*/true);
+    MutexReadLock(thr, pc, (uptr)m, /*try_lock=*/true);
   }
   return res;
 }
