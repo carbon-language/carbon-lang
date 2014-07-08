@@ -133,7 +133,7 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
   u32 myidx = 0;
   SyncVar *mys = 0;
   for (;;) {
-    u32 idx = *meta;
+    u32 idx = idx0;
     for (;;) {
       if (idx == 0)
         break;
@@ -156,8 +156,10 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
     }
     if (!create)
       return 0;
-    if (*meta != idx0)
+    if (*meta != idx0) {
+      idx0 = *meta;
       continue;
+    }
 
     if (myidx == 0) {
       const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
