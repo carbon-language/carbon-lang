@@ -253,7 +253,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   // FIXME: This will reduce the # syscalls.
 
   // Nope, there isn't.  Check to see if the file exists.
-  vfs::File *F = nullptr;
+  std::unique_ptr<vfs::File> F;
   FileData Data;
   if (getStatValue(InterndFileName, Data, true, openFile ? &F : nullptr)) {
     // There's no real file at the given path.
@@ -281,10 +281,6 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     if (DirInfo != UFE.Dir && Data.IsVFSMapped)
       UFE.Dir = DirInfo;
 
-    // If the stat process opened the file, close it to avoid a FD leak.
-    if (F)
-      delete F;
-
     return &UFE;
   }
 
@@ -297,7 +293,7 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   UFE.UniqueID = Data.UniqueID;
   UFE.IsNamedPipe = Data.IsNamedPipe;
   UFE.InPCH = Data.InPCH;
-  UFE.File.reset(F);
+  UFE.File = std::move(F);
   UFE.IsValid = true;
   return &UFE;
 }
@@ -453,7 +449,7 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 /// false if it's an existent real file.  If FileDescriptor is NULL,
 /// do directory look-up instead of file look-up.
 bool FileManager::getStatValue(const char *Path, FileData &Data, bool isFile,
-                               vfs::File **F) {
+                               std::unique_ptr<vfs::File> *F) {
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
   if (FileSystemOpts.WorkingDir.empty())
