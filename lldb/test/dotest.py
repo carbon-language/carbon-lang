@@ -399,7 +399,10 @@ setCrashInfoHook = None
 
 def deleteCrashInfoDylib(dylib_path):
     try:
-        os.remove(dylib_path)
+        # Need to modify this to handle multiple tests running at the same time.  If we move this
+        # to the test's real dir, all should be we run sequentially within a test directory.
+        # os.remove(dylib_path)
+        None
     finally:
         pass
 
@@ -1010,9 +1013,8 @@ def setupSysPath():
 
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")):
             lines = lldb_dash_p_result.splitlines()
-            # Assume the last line of output is the path.  Generally there should only be one.
-            if os.path.isfile(os.path.join(lines[-1], init_in_python_dir)):
-                lldbPath = lines[-1]
+            if len(lines) == 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
+                lldbPath = lines[0]
                 if "freebsd" in sys.platform or "linux" in sys.platform:
                     os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')
         
