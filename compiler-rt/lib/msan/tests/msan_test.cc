@@ -1292,64 +1292,56 @@ TEST(MemorySanitizer, memcpy) {
   EXPECT_POISONED(y[1]);
 }
 
-// Dst is poisoned, src is clean.
-void TestUnalignedMemcpy(int left, int right, bool src_is_aligned) {
-  const int sz = 20;
+void TestUnalignedMemcpy(unsigned left, unsigned right, bool src_is_aligned,
+                         bool src_is_poisoned, bool dst_is_poisoned) {
+  fprintf(stderr, "%s(%d, %d, %d, %d, %d)\n", __func__, left, right,
+          src_is_aligned, src_is_poisoned, dst_is_poisoned);
+
+  const unsigned sz = 20;
+  U4 dst_origin, src_origin;
   char *dst = (char *)malloc(sz);
-  U4 origin = __msan_get_origin(dst);
+  if (dst_is_poisoned)
+    dst_origin = __msan_get_origin(dst);
+  else
+    memset(dst, 0, sz);
 
   char *src = (char *)malloc(sz);
-  memset(src, 0, sz);
+  if (src_is_poisoned)
+    src_origin = __msan_get_origin(src);
+  else
+    memset(src, 0, sz);
 
   memcpy(dst + left, src_is_aligned ? src + left : src, sz - left - right);
-  for (int i = 0; i < left; ++i)
-    EXPECT_POISONED_O(dst[i], origin);
-  for (int i = 0; i < right; ++i)
-    EXPECT_POISONED_O(dst[sz - i - 1], origin);
-  EXPECT_NOT_POISONED(dst[left]);
-  EXPECT_NOT_POISONED(dst[sz - right - 1]);
+
+  for (unsigned i = 0; i < (left & (~3U)); ++i)
+    if (dst_is_poisoned)
+      EXPECT_POISONED_O(dst[i], dst_origin);
+    else
+      EXPECT_NOT_POISONED(dst[i]);
+
+  for (unsigned i = 0; i < (right & (~3U)); ++i)
+    if (dst_is_poisoned)
+      EXPECT_POISONED_O(dst[sz - i - 1], dst_origin);
+    else
+      EXPECT_NOT_POISONED(dst[sz - i - 1]);
+
+  for (unsigned i = left; i < sz - right; ++i)
+    if (src_is_poisoned)
+      EXPECT_POISONED_O(dst[i], src_origin);
+    else
+      EXPECT_NOT_POISONED(dst[i]);
 
   free(dst);
   free(src);
 }
 
 TEST(MemorySanitizer, memcpy_unaligned) {
-  for (int i = 0; i < 10; ++i) {
-    for (int j = 0; j < 10; ++j) {
-      TestUnalignedMemcpy(i, j, true);
-      TestUnalignedMemcpy(i, j, false);
-    }
-  }
-}
-
-// Src is poisoned, dst is clean.
-void TestUnalignedPoisonedMemcpy(int left, int right, bool src_is_aligned) {
-  const int sz = 20;
-  char *dst = (char *)malloc(sz);
-  memset(dst, 0, sz);
-
-  char *src = (char *)malloc(sz);
-  U4 origin = __msan_get_origin(src);
-
-  memcpy(dst + left, src_is_aligned ? src + left : src, sz - left - right);
-  for (int i = 0; i < left; ++i)
-    EXPECT_NOT_POISONED(dst[i]);
-  for (int i = 0; i < right; ++i)
-    EXPECT_NOT_POISONED(dst[sz - i - 1]);
-  EXPECT_POISONED_O(dst[left], origin);
-  EXPECT_POISONED_O(dst[sz - right - 1], origin);
-
-  free(dst);
-  free(src);
-}
-
-TEST(MemorySanitizer, memcpy_unaligned_poisoned) {
-  for (int i = 0; i < 10; ++i) {
-    for (int j = 0; j < 10; ++j) {
-      TestUnalignedPoisonedMemcpy(i, j, true);
-      TestUnalignedPoisonedMemcpy(i, j, false);
-    }
-  }
+  for (int i = 0; i < 10; ++i)
+    for (int j = 0; j < 10; ++j)
+      for (int aligned = 0; aligned < 2; ++aligned)
+        for (int srcp = 0; srcp < 2; ++srcp)
+          for (int dstp = 0; dstp < 2; ++dstp)
+            TestUnalignedMemcpy(i, j, aligned, srcp, dstp);
 }
 
 TEST(MemorySanitizer, memmove) {

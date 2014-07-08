@@ -1412,6 +1412,9 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
   }
 
   uptr end = (d + size) & ~3UL;
+  // If both ends fall into the same 4-byte slot, we are done.
+  if (end < beg) return;
+
   // Copy right unaligned origin if that memory is poisoned.
   if (end < d + size) {
     u32 o = GetOriginIfPoisoned((uptr)src + (end - d), (d + size) - end);
@@ -1428,7 +1431,7 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
     if (__msan_get_track_origins() > 1) {
       u32 *src = (u32 *)MEM_TO_ORIGIN(s);
       u32 *src_s = (u32 *)MEM_TO_SHADOW(s);
-      u32 *src_end = src + (end - beg);
+      u32 *src_end = (u32 *)MEM_TO_ORIGIN(s + (end - beg));
       u32 *dst = (u32 *)MEM_TO_ORIGIN(beg);
       u32 src_o = 0;
       u32 dst_o = 0;
