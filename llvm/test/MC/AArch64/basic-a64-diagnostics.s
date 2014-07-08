@@ -729,6 +729,27 @@
 // CHECK-ERROR-NEXT:                  ^
 
 //------------------------------------------------------------------------------
+// Logical (immediates)
+//------------------------------------------------------------------------------
+
+        and w2, w3, #4294967296
+        eor w2, w3, #4294967296
+        orr w2, w3, #4294967296
+        ands w2, w3, #4294967296
+// CHECK-ERROR: error: expected compatible register or logical immediate
+// CHECK-ERROR-NEXT:         and w2, w3, #4294967296
+// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
+// CHECK-ERROR-NEXT:         eor w2, w3, #4294967296
+// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
+// CHECK-ERROR-NEXT:         orr w2, w3, #4294967296
+// CHECK-ERROR-NEXT:                     ^
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
+// CHECK-ERROR-NEXT:         ands w2, w3, #4294967296
+// CHECK-ERROR-NEXT:                      ^
+
+//------------------------------------------------------------------------------
 // Bitfield
 //------------------------------------------------------------------------------
 

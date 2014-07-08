@@ -619,7 +619,11 @@ public:
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
     if (!MCE)
       return false;
-    return AArch64_AM::isLogicalImmediate(MCE->getValue(), 32);
+    int64_t Val = MCE->getValue();
+    if (Val >> 32 != 0 && Val >> 32 != ~0LL)
+      return false;
+    Val &= 0xFFFFFFFF;
+    return AArch64_AM::isLogicalImmediate(Val, 32);
   }
   bool isLogicalImm64() const {
     if (!isImm())
@@ -1360,7 +1364,8 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
     assert(MCE && "Invalid logical immediate operand!");
-    uint64_t encoding = AArch64_AM::encodeLogicalImmediate(MCE->getValue(), 32);
+    uint64_t encoding =
+        AArch64_AM::encodeLogicalImmediate(MCE->getValue() & 0xFFFFFFFF, 32);
     Inst.addOperand(MCOperand::CreateImm(encoding));
   }
 

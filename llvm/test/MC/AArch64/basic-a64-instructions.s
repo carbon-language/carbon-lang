@@ -3245,6 +3245,17 @@ _func:
 // CHECK: orr      w3, wzr, #0xf000f          // encoding: [0xe3,0x8f,0x00,0x32]
 // CHECK: orr x10, xzr, #0xaaaaaaaaaaaaaaaa // encoding: [0xea,0xf3,0x01,0xb2]
 
+        // The Imm field of logicalImm operations has to be truncated to the
+        // register width, i.e. 32 bits
+        and w2, w3, #-3
+        orr w0, w1, #~2
+        eor w16, w17, #-7
+        ands w19, w20, #~15
+// CHECK: and	w2, w3, #0xfffffffd     // encoding: [0x62,0x78,0x1e,0x12]
+// CHECK: orr	w0, w1, #0xfffffffd     // encoding: [0x20,0x78,0x1e,0x32]
+// CHECK: eor	w16, w17, #0xfffffff9   // encoding: [0x30,0x76,0x1d,0x52]
+// CHECK: ands	w19, w20, #0xfffffff0   // encoding: [0x93,0x6e,0x1c,0x72]
+
 //------------------------------------------------------------------------------
 // Logical (shifted register)
 //------------------------------------------------------------------------------
