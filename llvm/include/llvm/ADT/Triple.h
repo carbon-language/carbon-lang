@@ -78,22 +78,6 @@ public:
     spir,       // SPIR: standard portable IR for OpenCL 32-bit version
     spir64      // SPIR: standard portable IR for OpenCL 64-bit version
   };
-  enum SubArchType {
-    NoSubArch,
-
-    ARMSubArch_v8,
-    ARMSubArch_v7,
-    ARMSubArch_v7em,
-    ARMSubArch_v7m,
-    ARMSubArch_v7s,
-    ARMSubArch_v6,
-    ARMSubArch_v6m,
-    ARMSubArch_v6t2,
-    ARMSubArch_v5,
-    ARMSubArch_v5te,
-    ARMSubArch_v4t,
-    ARMSubArch_v4
-  };
   enum VendorType {
     UnknownVendor,
 
@@ -164,9 +148,6 @@ private:
   /// The parsed arch type.
   ArchType Arch;
 
-  /// The parsed subarchitecture type.
-  SubArchType SubArch;
-
   /// The parsed vendor type.
   VendorType Vendor;
 
@@ -208,9 +189,6 @@ public:
 
   /// getArch - Get the parsed architecture type of this triple.
   ArchType getArch() const { return Arch; }
-
-  /// getSubArch - get the parsed subarchitecture type for this triple.
-  SubArchType getSubArch() const { return SubArch; }
 
   /// getVendor - Get the parsed vendor type of this triple.
   VendorType getVendor() const { return Vendor; }

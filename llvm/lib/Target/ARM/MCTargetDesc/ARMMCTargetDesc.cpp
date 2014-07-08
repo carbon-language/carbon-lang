@@ -84,89 +84,93 @@ static bool getITDeprecationInfo(MCInst &MI, MCSubtargetInfo &STI,
 std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   Triple triple(TT);
 
+  // Set the boolean corresponding to the current target triple, or the default
+  // if one cannot be determined, to true.
+  unsigned Len = TT.size();
+  unsigned Idx = 0;
+
+  // FIXME: Enhance Triple helper class to extract ARM version.
   bool isThumb = triple.getArch() == Triple::thumb ||
                  triple.getArch() == Triple::thumbeb;
+  if (Len >= 5 && TT.substr(0, 4) == "armv")
+    Idx = 4;
+  else if (Len >= 7 && TT.substr(0, 6) == "armebv")
+    Idx = 6;
+  else if (Len >= 7 && TT.substr(0, 6) == "thumbv")
+    Idx = 6;
+  else if (Len >= 9 && TT.substr(0, 8) == "thumbebv")
+    Idx = 8;
 
   bool NoCPU = CPU == "generic" || CPU.empty();
   std::string ARMArchFeature;
-  switch (triple.getSubArch()) {
-  case Triple::ARMSubArch_v8:
-    if (NoCPU)
-      // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
-      //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
-      //      FeatureT2XtPk, FeatureCrypto, FeatureCRC
-      ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
-                       "+trustzone,+t2xtpk,+crypto,+crc";
-    else
-      // Use CPU to figure out the exact features
-      ARMArchFeature = "+v8";
-    break;
-  case Triple::ARMSubArch_v7m:
-    isThumb = true;
-    if (NoCPU)
-      // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
-      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+mclass";
-    else
-      // Use CPU to figure out the exact features.
-      ARMArchFeature = "+v7";
-    break;
-  case Triple::ARMSubArch_v7em:
-    if (NoCPU)
-      // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
-      //       FeatureT2XtPk, FeatureMClass
-      ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
-    else
-      // Use CPU to figure out the exact features.
-      ARMArchFeature = "+v7";
-    break;
-  case Triple::ARMSubArch_v7s:
-    if (NoCPU)
-      // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
-      //      Swift
-      ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+ras";
-    else
-      // Use CPU to figure out the exact features.
-      ARMArchFeature = "+v7";
-    break;
-  case Triple::ARMSubArch_v7:
-    // v7 CPUs have lots of different feature sets. If no CPU is specified,
-    // then assume v7a (e.g. cortex-a8) feature set. Otherwise, return
-    // the "minimum" feature set and use CPU string to figure out the exact
-    // features.
-    if (NoCPU)
-      // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
-      ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
-    else
-      // Use CPU to figure out the exact features.
-      ARMArchFeature = "+v7";
-    break;
-  case Triple::ARMSubArch_v6t2:
-    ARMArchFeature = "+v6t2";
-    break;
-  case Triple::ARMSubArch_v6m:
-    isThumb = true;
-    if (NoCPU)
-      // v6m: FeatureNoARM, FeatureMClass
-      ARMArchFeature = "+v6m,+noarm,+mclass";
-    else
-      ARMArchFeature = "+v6";
-    break;
-  case Triple::ARMSubArch_v6:
-    ARMArchFeature = "+v6";
-    break;
-  case Triple::ARMSubArch_v5te:
-    ARMArchFeature = "+v5te";
-    break;
-  case Triple::ARMSubArch_v5:
-    ARMArchFeature = "+v5t";
-    break;
-  case Triple::ARMSubArch_v4t:
-    ARMArchFeature = "+v4t";
-    break;
-  case Triple::NoSubArch:
-  case Triple::ARMSubArch_v4:
-    ARMArchFeature = "+v4";
-    break;
+  if (Idx) {
+    unsigned SubVer = TT[Idx];
+    if (SubVer == '8') {
+      if (NoCPU)
+        // v8a: FeatureDB, FeatureFPARMv8, FeatureNEON, FeatureDSPThumb2,
+        //      FeatureMP, FeatureHWDiv, FeatureHWDivARM, FeatureTrustZone,
+        //      FeatureT2XtPk, FeatureCrypto, FeatureCRC
+        ARMArchFeature = "+v8,+db,+fp-armv8,+neon,+t2dsp,+mp,+hwdiv,+hwdiv-arm,"
+                         "+trustzone,+t2xtpk,+crypto,+crc";
+      else
+        // Use CPU to figure out the exact features
+        ARMArchFeature = "+v8";
+    } else if (SubVer == '7') {
+      if (Len >= Idx+2 && TT[Idx+1] == 'm') {
+        isThumb = true;
+        if (NoCPU)
+          // v7m: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureMClass
+          ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+mclass";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
+      } else if (Len >= Idx+3 && TT[Idx+1] == 'e'&& TT[Idx+2] == 'm') {
+        if (NoCPU)
+          // v7em: FeatureNoARM, FeatureDB, FeatureHWDiv, FeatureDSPThumb2,
+          //       FeatureT2XtPk, FeatureMClass
+          ARMArchFeature = "+v7,+noarm,+db,+hwdiv,+t2dsp,t2xtpk,+mclass";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
+      } else if (Len >= Idx+2 && TT[Idx+1] == 's') {
+        if (NoCPU)
+          // v7s: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureHasRAS
+          //      Swift
+          ARMArchFeature = "+v7,+swift,+neon,+db,+t2dsp,+ras";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
+      } else {
+        // v7 CPUs have lots of different feature sets. If no CPU is specified,
+        // then assume v7a (e.g. cortex-a8) feature set. Otherwise, return
+        // the "minimum" feature set and use CPU string to figure out the exact
+        // features.
+        if (NoCPU)
+          // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
+          ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
+        else
+          // Use CPU to figure out the exact features.
+          ARMArchFeature = "+v7";
+      }
+    } else if (SubVer == '6') {
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
+        ARMArchFeature = "+v6t2";
+      else if (Len >= Idx+2 && TT[Idx+1] == 'm') {
+        isThumb = true;
+        if (NoCPU)
+          // v6m: FeatureNoARM, FeatureMClass
+          ARMArchFeature = "+v6m,+noarm,+mclass";
+        else
+          ARMArchFeature = "+v6";
+      } else
+        ARMArchFeature = "+v6";
+    } else if (SubVer == '5') {
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
+        ARMArchFeature = "+v5te";
+      else
+        ARMArchFeature = "+v5t";
+    } else if (SubVer == '4' && Len >= Idx+2 && TT[Idx+1] == 't')
+      ARMArchFeature = "+v4t";
   }
 
   if (isThumb) {
