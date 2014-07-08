@@ -126,7 +126,8 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
   CHECK_LE(src + size, jctx->heap_begin + jctx->heap_size);
   CHECK_GE(dst, jctx->heap_begin);
   CHECK_LE(dst + size, jctx->heap_begin + jctx->heap_size);
-  CHECK(dst >= src + size || src >= dst + size);
+  CHECK_NE(dst, src);
+  CHECK_NE(size, 0);
 
   // Assuming it's not running concurrently with threads that do
   // memory accesses and mutex operations (stop-the-world phase).
@@ -136,7 +137,14 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
   u64 *s = (u64*)MemToShadow(src);
   u64 *d = (u64*)MemToShadow(dst);
   u64 *send = (u64*)MemToShadow(src + size);
-  for (; s != send; s++, d++) {
+  uptr inc = 1;
+  if (dst > src) {
+    s = (u64*)MemToShadow(src + size) - 1;
+    d = (u64*)MemToShadow(dst + size) - 1;
+    send = (u64*)MemToShadow(src) - 1;
+    inc = -1;
+  }
+  for (; s != send; s += inc, d += inc) {
     *d = *s;
     *s = 0;
   }

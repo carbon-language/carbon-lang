@@ -16,13 +16,13 @@ void *Thread(void *p) {
 
 int main() {
   int const kHeapSize = 1024 * 1024;
-  void *jheap = malloc(kHeapSize);
-  __tsan_java_init((jptr)jheap, kHeapSize);
+  jptr jheap = (jptr)malloc(kHeapSize + 8) + 8;
+  __tsan_java_init(jheap, kHeapSize);
   const int kBlockSize = 64;
   int const kMove = 1024;
-  __tsan_java_alloc((jptr)jheap, kBlockSize);
-  varaddr = (jptr)jheap;
-  lockaddr = (jptr)jheap + 46;
+  __tsan_java_alloc(jheap, kBlockSize);
+  varaddr = jheap;
+  lockaddr = jheap + 46;
   varaddr2 = varaddr + kMove;
   lockaddr2 = lockaddr + kMove;
   pthread_t th;
@@ -33,8 +33,9 @@ int main() {
   __tsan_java_move(varaddr, varaddr2, kBlockSize);
   pthread_join(th, 0);
   __tsan_java_free(varaddr2, kBlockSize);
-  printf("OK\n");
+  printf("DONE\n");
   return __tsan_java_fini();
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer: data race
+// CHECK: DONE

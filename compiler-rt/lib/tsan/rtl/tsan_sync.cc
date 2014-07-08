@@ -180,13 +180,22 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
 }
 
 void MetaMap::MoveMemory(uptr src, uptr dst, uptr sz) {
-  // Here we assume that src and dst do not overlap,
-  // and there are no concurrent accesses to the regions (e.g. stop-the-world).
+  // src and dst can overlap,
+  // there are no concurrent accesses to the regions (e.g. stop-the-world).
+  CHECK_NE(src, dst);
+  CHECK_NE(sz, 0);
   uptr diff = dst - src;
   u32 *src_meta = MemToMeta(src);
   u32 *dst_meta = MemToMeta(dst);
   u32 *src_meta_end = MemToMeta(src + sz);
-  for (; src_meta != src_meta_end; src_meta++, dst_meta++) {
+  uptr inc = 1;
+  if (dst > src) {
+    src_meta = MemToMeta(src + sz) - 1;
+    dst_meta = MemToMeta(dst + sz) - 1;
+    src_meta_end = MemToMeta(src) - 1;
+    inc = -1;
+  }
+  for (; src_meta != src_meta_end; src_meta += inc, dst_meta += inc) {
     CHECK_EQ(*dst_meta, 0);
     u32 idx = *src_meta;
     *src_meta = 0;

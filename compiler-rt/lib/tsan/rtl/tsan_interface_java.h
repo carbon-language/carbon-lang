@@ -50,7 +50,7 @@ void __tsan_java_alloc(jptr ptr, jptr size) INTERFACE_ATTRIBUTE;
 void __tsan_java_free(jptr ptr, jptr size) INTERFACE_ATTRIBUTE;
 // Callback for memory move by GC.
 // Can be aggregated for several objects (preferably).
-// The ranges must not overlap.
+// The ranges can overlap.
 void __tsan_java_move(jptr src, jptr dst, jptr size) INTERFACE_ATTRIBUTE;
 // This function must be called on the finalizer thread
 // before executing a batch of finalizers.

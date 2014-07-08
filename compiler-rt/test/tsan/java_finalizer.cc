@@ -10,15 +10,15 @@ void *Thread(void *p) {
 
 int main() {
   int const kHeapSize = 1024 * 1024;
-  void *jheap = (char*)malloc(kHeapSize + 8) + 8;
-  __tsan_java_init((jptr)jheap, kHeapSize);
+  jptr jheap = (jptr)malloc(kHeapSize + 8) + 8;
+  __tsan_java_init(jheap, kHeapSize);
   const int kBlockSize = 16;
-  __tsan_java_alloc((jptr)jheap, kBlockSize);
+  __tsan_java_alloc(jheap, kBlockSize);
   pthread_t th;
-  pthread_create(&th, 0, Thread, jheap);
+  pthread_create(&th, 0, Thread, (void*)jheap);
   *(int*)jheap = 43;
   pthread_join(th, 0);
-  __tsan_java_free((jptr)jheap, kBlockSize);
+  __tsan_java_free(jheap, kBlockSize);
   fprintf(stderr, "DONE\n");
   return __tsan_java_fini();
 }
