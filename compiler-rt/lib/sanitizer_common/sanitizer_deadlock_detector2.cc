@@ -187,8 +187,7 @@ u32 DD::allocateId(DDCallback *cb) {
     id = id_gen++;
   }
   CHECK_LE(id, kMaxMutex);
-  VPrintf(3, "#%llu: DD::allocateId assign id %d\n",
-      cb->lt->ctx, id);
+  VPrintf(3, "#%llu: DD::allocateId assign id %d\n", cb->lt->ctx, id);
   return id;
 }
 
