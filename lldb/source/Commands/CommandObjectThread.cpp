@@ -371,6 +371,14 @@ public:
                 }
                 break;
             
+            case 'c':
+                {
+                    m_step_count = Args::StringToUInt32(option_arg, UINT32_MAX, 0);
+                    if (m_step_count == UINT32_MAX)
+                       error.SetErrorStringWithFormat ("invalid ignore count '%s'", option_arg);
+                    break;
+                }
+                break;
             case 'm':
                 {
                     OptionEnumValueElement *enum_values = g_option_table[option_idx].enum_values; 
@@ -408,6 +416,7 @@ public:
             m_run_mode = eOnlyDuringStepping;
             m_avoid_regexp.clear();
             m_step_in_target.clear();
+            m_step_count = 1;
         }
 
         const OptionDefinition*
@@ -426,6 +435,7 @@ public:
         RunMode m_run_mode;
         std::string m_avoid_regexp;
         std::string m_step_in_target;
+        int32_t m_step_count;
     };
 
     CommandObjectThreadStepWithTypeAndScope (CommandInterpreter &interpreter,
@@ -603,6 +613,14 @@ protected:
         {
             new_plan_sp->SetIsMasterPlan (true);
             new_plan_sp->SetOkayToDiscard (false);
+            
+            if (m_options.m_step_count > 1)
+            {
+                if (new_plan_sp->SetIterationCount(m_options.m_step_count) != m_options.m_step_count)
+                {
+                    result.AppendWarning ("step operation does not support iteration count.");
+                }
+            }
 
             process->GetThreadList().SetSelectedThreadByID (thread->GetID());
             process->Resume ();
@@ -664,6 +682,7 @@ CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "step-in-avoids-no-debug",   'a', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether stepping into functions will step over functions with no debug information."},
 { LLDB_OPT_SET_1, false, "step-out-avoids-no-debug",  'A', OptionParser::eRequiredArgument, NULL,               0, eArgTypeBoolean,     "A boolean value, if true stepping out of functions will continue to step out till it hits a function with debug information."},
+{ LLDB_OPT_SET_1, false, "count",           'c', OptionParser::eRequiredArgument, NULL,               1, eArgTypeCount,     "How many times to perform the stepping operation - currently only supported for step-inst and next-inst."},
 { LLDB_OPT_SET_1, false, "run-mode",        'm', OptionParser::eRequiredArgument, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
 { LLDB_OPT_SET_1, false, "step-over-regexp",'r', OptionParser::eRequiredArgument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to not to stop at when stepping in."},
 { LLDB_OPT_SET_1, false, "step-in-target",  't', OptionParser::eRequiredArgument, NULL,               0, eArgTypeFunctionName,   "The name of the directly called function step in should stop at when stepping into."},

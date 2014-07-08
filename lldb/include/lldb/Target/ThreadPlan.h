@@ -539,6 +539,27 @@ public:
         return false;
     }
     
+    virtual bool
+    SetIterationCount (size_t count)
+    {
+        if (m_takes_iteration_count)
+        {
+            // Don't tell me to do something 0 times...
+            if (count == 0)
+                return false;
+            m_iteration_count = count;
+        }
+        return m_takes_iteration_count;
+    }
+    
+    virtual size_t
+    GetIterationCount ()
+    {
+        if (!m_takes_iteration_count)
+            return 0;
+        else
+            return m_iteration_count;
+    }
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from ThreadPlan can see and modify these
@@ -593,6 +614,8 @@ protected:
     Thread &m_thread;
     Vote m_stop_vote;
     Vote m_run_vote;
+    bool m_takes_iteration_count = false;
+    int32_t m_iteration_count = 1;
 
 private:
     //------------------------------------------------------------------

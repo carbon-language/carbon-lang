@@ -32,6 +32,7 @@ public:
     virtual lldb::StateType GetPlanRunState ();
     virtual bool WillStop ();
     virtual bool MischiefManaged ();
+    virtual bool IsPlanStale ();
 
 protected:
     virtual bool DoPlanExplainsStop (Event *event_ptr);
@@ -41,6 +42,7 @@ protected:
                                bool stop_others,
                                Vote stop_vote,
                                Vote run_vote);
+    void SetUpState ();
 
 private:
     friend lldb::ThreadPlanSP
