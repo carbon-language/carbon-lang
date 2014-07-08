@@ -22,6 +22,16 @@
 // itself is not, but in practice runtime seems to be in the order of magnitude
 // of dominance tree calculation.
 //
+// WARNING: LLVM is generally very concerned about compile time such that
+//          the use of additional analysis passes in the default
+//          optimization sequence is avoided as much as possible.
+//          Specifically, if you do not need the RegionInfo, but dominance
+//          information could be sufficient please base your work only on
+//          the dominator tree. Most passes maintain it, such that using
+//          it has often near zero cost. In contrast RegionInfo is by
+//          default not available, is not maintained by existing
+//          transformations and there is no intention to do so.
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_REGIONINFO_H
