@@ -40,7 +40,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 using namespace llvm;
 
