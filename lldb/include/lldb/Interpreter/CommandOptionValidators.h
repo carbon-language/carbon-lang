@@ -19,7 +19,7 @@ class ExecutionContext;
 
 class PosixPlatformCommandOptionValidator : public OptionValidator
 {
-    virtual bool IsValid(Platform &platform, ExecutionContext &target) const;
+    virtual bool IsValid(Platform &platform, const ExecutionContext &target) const;
     virtual const char* ShortConditionString() const;
     virtual const char* LongConditionString() const;
 };

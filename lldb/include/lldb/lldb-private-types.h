@@ -58,7 +58,7 @@ namespace lldb_private
     struct OptionValidator
     {
         virtual ~OptionValidator() { }
-        virtual bool IsValid(Platform &platform, ExecutionContext &target) const = 0;
+        virtual bool IsValid(Platform &platform, const ExecutionContext &target) const = 0;
         virtual const char * ShortConditionString() const = 0;
         virtual const char * LongConditionString() const = 0;
     };

@@ -15,7 +15,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-bool PosixPlatformCommandOptionValidator::IsValid(Platform &platform, ExecutionContext &target) const
+bool PosixPlatformCommandOptionValidator::IsValid(Platform &platform, const ExecutionContext &target) const
 {
     llvm::Triple::OSType os = platform.GetSystemArchitecture().GetTriple().getOS();
     switch (os)
