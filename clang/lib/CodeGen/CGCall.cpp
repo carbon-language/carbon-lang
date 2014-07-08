@@ -2859,28 +2859,33 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   if (ArgMemory) {
     llvm::Value *Arg = ArgMemory;
-    llvm::Type *LastParamTy =
-        IRFuncTy->getParamType(IRFuncTy->getNumParams() - 1);
-    if (Arg->getType() != LastParamTy) {
+    if (CallInfo.isVariadic()) {
+      // When passing non-POD arguments by value to variadic functions, we will
+      // end up with a variadic prototype and an inalloca call site.  In such
+      // cases, we can't do any parameter mismatch checks.  Give up and bitcast
+      // the callee.
+      unsigned CalleeAS =
+          cast<llvm::PointerType>(Callee->getType())->getAddressSpace();
+      Callee = Builder.CreateBitCast(
+          Callee, getTypes().GetFunctionType(CallInfo)->getPointerTo(CalleeAS));
+    } else {
+      llvm::Type *LastParamTy =
+          IRFuncTy->getParamType(IRFuncTy->getNumParams() - 1);
+      if (Arg->getType() != LastParamTy) {
 #ifndef NDEBUG
-      // Assert that these structs have equivalent element types.
-      llvm::StructType *FullTy = CallInfo.getArgStruct();
-      llvm::StructType *Prefix = cast<llvm::StructType>(
-          cast<llvm::PointerType>(LastParamTy)->getElementType());
-
-      // For variadic functions, the caller might supply a larger struct than
-      // the callee expects, and that's OK.
-      assert(Prefix->getNumElements() == FullTy->getNumElements() ||
-             (CallInfo.isVariadic() &&
-              Prefix->getNumElements() <= FullTy->getNumElements()));
-
-      for (llvm::StructType::element_iterator PI = Prefix->element_begin(),
-                                              PE = Prefix->element_end(),
-                                              FI = FullTy->element_begin();
-           PI != PE; ++PI, ++FI)
-        assert(*PI == *FI);
+        // Assert that these structs have equivalent element types.
+        llvm::StructType *FullTy = CallInfo.getArgStruct();
+        llvm::StructType *DeclaredTy = cast<llvm::StructType>(
+            cast<llvm::PointerType>(LastParamTy)->getElementType());
+        assert(DeclaredTy->getNumElements() == FullTy->getNumElements());
+        for (llvm::StructType::element_iterator DI = DeclaredTy->element_begin(),
+                                                DE = DeclaredTy->element_end(),
+                                                FI = FullTy->element_begin();
+             DI != DE; ++DI, ++FI)
+          assert(*DI == *FI);
 #endif
-      Arg = Builder.CreateBitCast(Arg, LastParamTy);
+        Arg = Builder.CreateBitCast(Arg, LastParamTy);
+      }
     }
     Args.push_back(Arg);
   }
