@@ -7924,47 +7924,6 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
         return DAG.getVectorShuffle(VT, dl, V1, V2, NewMask);
       }
 
-  // Check for a shuffle of a splat, and return just the splat. While DAG
-  // combining will do a similar transformation, this shows up with the
-  // internally created shuffles and so we handle it specially here as we won't
-  // have another chance to DAG-combine the generic shuffle instructions.
-  if (V2IsUndef) {
-    SDValue V = V1;
-
-    // Look through any bitcasts. These can't change the size, just the number
-    // of elements which we check later.
-    while (V.getOpcode() == ISD::BITCAST)
-      V = V->getOperand(0);
-
-    // A splat should always show up as a build vector node.
-    if (V.getOpcode() == ISD::BUILD_VECTOR) {
-      SDValue Base;
-      bool AllSame = true;
-      for (unsigned i = 0; i != V->getNumOperands(); ++i)
-        if (V->getOperand(i).getOpcode() != ISD::UNDEF) {
-          Base = V->getOperand(i);
-          break;
-        }
-      // Splat of <u, u, ..., u>, return <u, u, ..., u>
-      if (!Base)
-        return V1;
-      for (unsigned i = 0; i != V->getNumOperands(); ++i)
-        if (V->getOperand(i) != Base) {
-          AllSame = false;
-          break;
-        }
-      // Splat of <x, x, ..., x>, return <x, x, ..., x>, provided that the
-      // number of elements match or the value splatted is a zero constant.
-      if (AllSame) {
-        if (V.getValueType().getVectorNumElements() == (unsigned)NumElements)
-          return V1;
-        if (auto *C = dyn_cast<ConstantSDNode>(Base))
-          if (C->isNullValue())
-            return V1;
-      }
-    }
-  }
-
   // For integer vector shuffles, try to collapse them into a shuffle of fewer
   // lanes but wider integers. We cap this to not form integers larger than i64
   // but it might be interesting to form i128 integers to handle flipping the
