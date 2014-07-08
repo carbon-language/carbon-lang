@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -fms-compatibility -fsyntax-only -verify %s
+// RUN: %clang_cc1 -std=c++1y -fms-compatibility -fsyntax-only -verify %s
 
 
 template <class T>
@@ -274,4 +274,185 @@ template <typename T> struct Derived : Base<T> {
   }
 };
 template struct Derived<int>;
+}
+
+namespace typedef_in_base {
+template <typename T> struct A { typedef T NameFromBase; };
+template <typename T> struct B : A<T> {
+  NameFromBase m; // expected-warning {{found via unqualified lookup into dependent bases}}
+};
+static_assert(sizeof(B<int>) == 4, "");
+}
+
+namespace struct_in_base {
+template <typename T> struct A { struct NameFromBase {}; };
+template <typename T> struct B : A<T> {
+  NameFromBase m; // expected-warning {{found via unqualified lookup into dependent bases}}
+};
+static_assert(sizeof(B<int>) == 1, "");
+}
+
+namespace enum_in_base {
+template <typename T> struct A { enum NameFromBase { X }; };
+template <typename T> struct B : A<T> {
+  NameFromBase m; // expected-warning {{found via unqualified lookup into dependent bases}}
+};
+static_assert(sizeof(B<int>) == sizeof(A<int>::NameFromBase), "");
+}
+
+namespace two_types_in_base {
+template <typename T> struct A { typedef T NameFromBase; };
+template <typename T> struct B { struct NameFromBase { T m; }; };
+template <typename T> struct C : A<T>, B<T> {
+  NameFromBase m; // expected-error {{unknown type name 'NameFromBase'}}
+};
+static_assert(sizeof(C<int>) == 4, "");
+}
+
+namespace type_and_decl_in_base {
+template <typename T> struct A { typedef T NameFromBase; };
+template <typename T> struct B { static const T NameFromBase = 42; };
+template <typename T> struct C : A<T>, B<T> {
+  NameFromBase m; // expected-error {{unknown type name 'NameFromBase'}}
+};
+}
+
+namespace classify_type_from_base {
+template <typename T> struct A { struct NameFromBase {}; };
+template <typename T> struct B : A<T> {
+  A<NameFromBase> m; // expected-warning {{found via unqualified lookup into dependent bases}}
+};
+}
+
+namespace classify_nontype_from_base {
+// MSVC does not do lookup of non-type declarations from dependent template base
+// classes.  The extra lookup only applies to types.
+template <typename T> struct A { void NameFromBase() {} };
+template <void (*F)()> struct B { };
+template <typename T> struct C : A<T> {
+  B<C::NameFromBase> a; // correct
+  B<NameFromBase> b; // expected-error {{use of undeclared identifier 'NameFromBase'}}
+};
+}
+
+namespace template_in_base {
+template <typename T> struct A {
+  template <typename U> struct NameFromBase { U x; };
+};
+template <typename T> struct B : A<T> {
+  // Correct form.
+  typename B::template NameFromBase<T> m;
+};
+template <typename T> struct C : A<T> {
+  // Incorrect form.
+  NameFromBase<T> m; // expected-error {{unknown type name 'NameFromBase'}}
+  //expected-error@-1 {{expected member name or ';' after declaration specifiers}}
+};
+}
+
+namespace type_in_inner_class_in_base {
+template <typename T>
+struct A {
+  struct B { typedef T NameFromBase; };
+};
+template <typename T>
+struct C : A<T>::B { NameFromBase m; }; // expected-error {{unknown type name 'NameFromBase'}}
+}
+
+namespace type_in_inner_template_class_in_base {
+template <typename T>
+struct A {
+  template <typename U> struct B { typedef U InnerType; };
+};
+template <typename T>
+struct C : A<T>::template B<T> {
+  NameFromBase m; // expected-error {{unknown type name 'NameFromBase'}}
+};
+}
+
+namespace have_nondependent_base {
+template <typename T>
+struct A {
+  // Nothing, lookup should fail.
+};
+template <typename T>
+struct B : A<T> { NameFromBase m; }; // expected-error {{unknown type name 'NameFromBase'}}
+struct C : A<int> { NameFromBase m; }; // expected-error {{unknown type name 'NameFromBase'}}
+}
+
+namespace lookup_in_function_contexts {
+template <typename T> struct A { typedef T NameFromBase; };
+template <typename T>
+struct B : A<T> {
+  // expected-warning@+1 {{lookup into dependent bases}}
+  static auto lateSpecifiedFunc() -> decltype(NameFromBase()) {
+    return {};
+  }
+
+  // FIXME: MSVC accepts all of the code below that isn't C++14 only.  Downgrade
+  // these errors to warnings.
+
+  static void memberFunc() {
+    NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+  }
+
+  static void funcLocalClass() {
+    struct X {
+      NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+    } y;
+  }
+
+  void localClassMethod() {
+    struct X {
+      void bar() {
+        NameFromBase m; // expected-error {{unknown type name 'NameFromBase'}}
+      }
+    } x;
+    x.bar();
+  }
+
+  static void funcLambda() {
+    auto l = []() {
+      NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+    };
+    l();
+  }
+
+  static constexpr int constexprFunc() {
+    NameFromBase x = {}; // expected-error {{unknown type name 'NameFromBase'}}
+    // FIXME: Suppress this diagnostic, we have an initializer.
+    // expected-error@-2 {{variables defined in a constexpr function must be initialized}}
+    return sizeof(x);
+  }
+
+  static auto autoFunc() {
+    NameFromBase x; // expected-error {{unknown type name 'NameFromBase'}}
+    return x;
+  }
+};
+
+// Force us to parse the methods.
+template struct B<int>;
+}
+
+namespace function_template_deduction {
+// Overloaded function templates.
+template <int N> int f() { return N; }
+template <typename T> int f() { return sizeof(T); }
+
+// Dependent base class with type.
+template <typename T>
+struct A { typedef T NameFromBase; };
+template <typename T>
+struct B : A<T> {
+  // expected-warning@+1 {{found via unqualified lookup into dependent bases}}
+  int x = f<NameFromBase>();
+};
+
+// Dependent base class with enum.
+template <typename T> struct C { enum { NameFromBase = 4 }; };
+template <typename T> struct D : C<T> {
+  // expected-warning@+1 {{use of undeclared identifier 'NameFromBase'; unqualified lookup into dependent bases}}
+  int x = f<NameFromBase>();
+};
 }

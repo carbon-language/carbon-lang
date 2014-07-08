@@ -128,6 +128,56 @@ bool Sema::isSimpleTypeSpecifier(tok::TokenKind Kind) const {
   return false;
 }
 
+static ParsedType recoverFromTypeInKnownDependentBase(Sema &S,
+                                                      const IdentifierInfo &II,
+                                                      SourceLocation NameLoc) {
+  auto *RD = dyn_cast<CXXRecordDecl>(S.CurContext);
+  if (!RD || !RD->getDescribedClassTemplate())
+    return ParsedType();
+
+  // Look for type decls in dependent base classes that have known primary
+  // templates.
+  bool FoundTypeDecl = false;
+  for (const auto &Base : RD->bases()) {
+    auto *TST = Base.getType()->getAs<TemplateSpecializationType>();
+    if (!TST || !TST->isDependentType())
+      continue;
+    auto *TD = TST->getTemplateName().getAsTemplateDecl();
+    if (!TD)
+      continue;
+    auto *BasePrimaryTemplate = cast<CXXRecordDecl>(TD->getTemplatedDecl());
+    for (NamedDecl *ND : BasePrimaryTemplate->lookup(&II)) {
+      if (FoundTypeDecl)
+        return ParsedType();
+      FoundTypeDecl = isa<TypeDecl>(ND);
+      if (!FoundTypeDecl)
+        return ParsedType();
+    }
+  }
+  if (!FoundTypeDecl)
+    return ParsedType();
+
+  // We found some types in dependent base classes.  Recover as if the user
+  // wrote 'typename MyClass::II' instead of 'II'.  We'll fully resolve the
+  // lookup during template instantiation.
+  S.Diag(NameLoc, diag::ext_found_via_dependent_bases_lookup) << &II;
+
+  ASTContext &Context = S.Context;
+  auto *NNS = NestedNameSpecifier::Create(Context, nullptr, false,
+                                          cast<Type>(Context.getRecordType(RD)));
+  QualType T = Context.getDependentNameType(ETK_Typename, NNS, &II);
+
+  CXXScopeSpec SS;
+  SS.MakeTrivial(Context, NNS, SourceRange(NameLoc));
+
+  TypeLocBuilder Builder;
+  DependentNameTypeLoc DepTL = Builder.push<DependentNameTypeLoc>(T);
+  DepTL.setNameLoc(NameLoc);
+  DepTL.setElaboratedKeywordLoc(SourceLocation());
+  DepTL.setQualifierLoc(SS.getWithLocInContext(Context));
+  return S.CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
+}
+
 /// \brief If the identifier refers to a type name within this scope,
 /// return the declaration of that type.
 ///
@@ -209,6 +259,14 @@ ParsedType Sema::getTypeName(const IdentifierInfo &II, SourceLocation NameLoc,
   } else {
     // Perform unqualified name lookup.
     LookupName(Result, S);
+
+    // For unqualified lookup in a class template in MSVC mode, look into
+    // dependent base classes where the primary class template is known.
+    if (Result.empty() && getLangOpts().MSVCCompat && (!SS || SS->isEmpty())) {
+      if (ParsedType TypeInBase =
+              recoverFromTypeInKnownDependentBase(*this, II, NameLoc))
+        return TypeInBase;
+    }
   }
 
   NamedDecl *IIDecl = nullptr;
@@ -629,6 +687,14 @@ Sema::NameClassification Sema::ClassifyName(Scope *S,
 
   LookupResult Result(*this, Name, NameLoc, LookupOrdinaryName);
   LookupParsedName(Result, S, &SS, !CurMethod);
+
+  // For unqualified lookup in a class template in MSVC mode, look into
+  // dependent base classes where the primary class template is known.
+  if (Result.empty() && SS.isEmpty() && getLangOpts().MSVCCompat) {
+    if (ParsedType TypeInBase =
+            recoverFromTypeInKnownDependentBase(*this, *Name, NameLoc))
+      return TypeInBase;
+  }
 
   // Perform lookup for Objective-C instance variables (including automatically 
   // synthesized instance variables), if we're in an Objective-C method.
