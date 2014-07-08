@@ -997,10 +997,11 @@ class StopInfoThreadPlan : public StopInfo
 {
 public:
 
-    StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp) :
+    StopInfoThreadPlan (ThreadPlanSP &plan_sp, ValueObjectSP &return_valobj_sp, ClangExpressionVariableSP &expression_variable_sp) :
         StopInfo (plan_sp->GetThread(), LLDB_INVALID_UID),
         m_plan_sp (plan_sp),
-        m_return_valobj_sp (return_valobj_sp)
+        m_return_valobj_sp (return_valobj_sp),
+        m_expression_variable_sp (expression_variable_sp)
     {
     }
     
@@ -1032,6 +1033,12 @@ public:
         return m_return_valobj_sp;
     }
     
+    ClangExpressionVariableSP
+    GetExpressionVariable()
+    {
+        return m_expression_variable_sp;
+    }
+    
 protected:
     virtual bool
     ShouldStop (Event *event_ptr)
@@ -1045,6 +1052,7 @@ protected:
 private:
     ThreadPlanSP m_plan_sp;
     ValueObjectSP m_return_valobj_sp;
+    ClangExpressionVariableSP m_expression_variable_sp;
 };
     
 class StopInfoExec : public StopInfo
@@ -1123,9 +1131,11 @@ StopInfo::CreateStopReasonToTrace (Thread &thread)
 }
 
 StopInfoSP
-StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp, ValueObjectSP return_valobj_sp)
+StopInfo::CreateStopReasonWithPlan (ThreadPlanSP &plan_sp,
+                                    ValueObjectSP return_valobj_sp,
+                                    ClangExpressionVariableSP expression_variable_sp)
 {
-    return StopInfoSP (new StopInfoThreadPlan (plan_sp, return_valobj_sp));
+    return StopInfoSP (new StopInfoThreadPlan (plan_sp, return_valobj_sp, expression_variable_sp));
 }
 
 StopInfoSP
@@ -1150,4 +1160,16 @@ StopInfo::GetReturnValueObject(StopInfoSP &stop_info_sp)
     }
     else
         return ValueObjectSP();
+}
+
+ClangExpressionVariableSP
+StopInfo::GetExpressionVariable(StopInfoSP &stop_info_sp)
+{
+    if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonPlanComplete)
+    {
+        StopInfoThreadPlan *plan_stop_info = static_cast<StopInfoThreadPlan *>(stop_info_sp.get());
+        return plan_stop_info->GetExpressionVariable();
+    }
+    else
+        return ClangExpressionVariableSP();
 }

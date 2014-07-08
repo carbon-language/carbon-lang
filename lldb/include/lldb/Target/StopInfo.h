@@ -157,7 +157,9 @@ public:
     CreateStopReasonToTrace (Thread &thread);
 
     static lldb::StopInfoSP
-    CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan, lldb::ValueObjectSP return_valobj_sp);
+    CreateStopReasonWithPlan (lldb::ThreadPlanSP &plan,
+                              lldb::ValueObjectSP return_valobj_sp,
+                              lldb::ClangExpressionVariableSP expression_variable_sp);
 
     static lldb::StopInfoSP
     CreateStopReasonWithException (Thread &thread, const char *description);
@@ -167,6 +169,9 @@ public:
 
     static lldb::ValueObjectSP
     GetReturnValueObject (lldb::StopInfoSP &stop_info_sp);
+
+    static lldb::ClangExpressionVariableSP
+    GetExpressionVariable (lldb::StopInfoSP &stop_info_sp);
 
 protected:
     // Perform any action that is associated with this stop.  This is done as the

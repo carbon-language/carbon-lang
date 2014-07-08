@@ -884,17 +884,19 @@ ClangUserExpression::Execute (Stream &error_stream,
             }
 
             args.push_back(struct_address);
-
-            lldb::ThreadPlanSP call_plan_sp(new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(),
-                                                                              wrapper_address,
-                                                                              args,
-                                                                              options,
-                                                                              shared_ptr_to_me));
+         
+            ThreadPlanCallUserExpression *user_expression_plan = 
+                    new ThreadPlanCallUserExpression (exe_ctx.GetThreadRef(),
+                                                      wrapper_address, 
+                                                      args,
+                                                      options,
+                                                      shared_ptr_to_me);
+            lldb::ThreadPlanSP call_plan_sp(user_expression_plan);
 
             if (!call_plan_sp || !call_plan_sp->ValidatePlan (&error_stream))
                 return lldb::eExpressionSetupError;
 
-            lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
+            lldb::addr_t function_stack_pointer = user_expression_plan->GetFunctionStackPointer();
 
             function_stack_bottom = function_stack_pointer - Host::GetPageSize();
             function_stack_top = function_stack_pointer;
@@ -935,8 +937,12 @@ ClangUserExpression::Execute (Stream &error_stream,
                     || (execution_result == lldb::eExpressionHitBreakpoint && options.DoesIgnoreBreakpoints()))
                     error_stream.PutCString ("\nThe process has been returned to the state before expression evaluation.");
                 else
+                {
+                    if (execution_result == lldb::eExpressionHitBreakpoint)
+                        user_expression_plan->TransferExpressionOwnership();
                     error_stream.PutCString ("\nThe process has been left at the point where it was interrupted, "
                                              "use \"thread return -x\" to return to the state before expression evaluation.");
+                }
 
                 return execution_result;
             }

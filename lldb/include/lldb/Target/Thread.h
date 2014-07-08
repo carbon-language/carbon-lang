@@ -966,6 +966,17 @@ public:
     GetReturnValueObject ();
 
     //------------------------------------------------------------------
+    /// Gets the outer-most expression variable from the completed plans
+    ///
+    /// @return
+    ///     A ClangExpressionVariableSP, either empty if there is no
+    ///     plan completed an expression during the current stop
+    ///     or the expression variable that was made for the completed expression.
+    //------------------------------------------------------------------
+    lldb::ClangExpressionVariableSP
+    GetExpressionVariable ();
+
+    //------------------------------------------------------------------
     ///  Checks whether the given plan is in the completed plans for this
     ///  stop.
     ///

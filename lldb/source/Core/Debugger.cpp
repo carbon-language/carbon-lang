@@ -111,6 +111,7 @@ g_language_enumerators[] =
     "{, ${thread.info.trace_messages} messages}" \
     "{, stop reason = ${thread.stop-reason}}"\
     "{\\nReturn value: ${thread.return-value}}"\
+    "{\\nCompleted expression: ${thread.completed-expression}}"\
     "\\n"
 
 #define DEFAULT_FRAME_FORMAT "frame #${frame.index}: ${frame.pc}"\
@@ -2071,6 +2072,19 @@ FormatPromptRecurse
                                                 if (return_valobj_sp)
                                                 {
                                                     return_valobj_sp->Dump(s);
+                                                    var_success = true;
+                                                }
+                                            }
+                                        }
+                                        else if (IsToken (var_name_begin, "completed-expression}"))
+                                        {
+                                            StopInfoSP stop_info_sp = thread->GetStopInfo ();
+                                            if (stop_info_sp && stop_info_sp->IsValid())
+                                            {
+                                                ClangExpressionVariableSP expression_var_sp = StopInfo::GetExpressionVariable (stop_info_sp);
+                                                if (expression_var_sp && expression_var_sp->GetValueObject())
+                                                {
+                                                    expression_var_sp->GetValueObject()->Dump(s);
                                                     var_success = true;
                                                 }
                                             }

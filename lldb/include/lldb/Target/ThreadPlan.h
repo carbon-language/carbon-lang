@@ -501,10 +501,25 @@ public:
         return m_thread.GetStopInfo ();
     }
     
+    // If the completion of the thread plan stepped out of a function, the return value of the function
+    // might have been captured by the thread plan (currently only ThreadPlanStepOut does this.)
+    // If so, the ReturnValueObject can be retrieved from here.
+    
     virtual lldb::ValueObjectSP
     GetReturnValueObject ()
     {
         return lldb::ValueObjectSP();
+    }
+
+    // If the thread plan managing the evaluation of a user expression lives longer than the command
+    // that instigated the expression (generally because the expression evaluation hit a breakpoint, and
+    // the user regained control at that point) a subsequent process control command step/continue/etc. might
+    // complete the expression evaluations.  If so, the result of the expression evaluation will show up here.
+    
+    virtual lldb::ClangExpressionVariableSP
+    GetExpressionVariable ()
+    {
+        return lldb::ClangExpressionVariableSP();
     }
     
     // If a thread plan stores the state before it was run, then you might

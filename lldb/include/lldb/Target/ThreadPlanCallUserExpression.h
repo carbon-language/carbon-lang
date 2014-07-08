@@ -40,21 +40,35 @@ public:
     GetDescription (Stream *s, lldb::DescriptionLevel level);
     
     virtual void
-    WillPop ()
-    {
-        ThreadPlanCallFunction::WillPop();
-        if (m_user_expression_sp)
-            m_user_expression_sp.reset();
-    }
+    WillPop ();
 
     virtual lldb::StopInfoSP
     GetRealStopInfo();
+    
+    virtual bool
+    MischiefManaged ();
+    
+    void
+    TransferExpressionOwnership ()
+    {
+        m_manage_materialization = true;
+    }
+    
+    virtual lldb::ClangExpressionVariableSP
+    GetExpressionVariable ()
+    {
+        return m_result_var_sp;
+    }
     
 protected:
 private:
     ClangUserExpression::ClangUserExpressionSP m_user_expression_sp;    // This is currently just used to ensure the
                                                                         // User expression the initiated this ThreadPlan
                                                                         // lives as long as the thread plan does.
+    bool m_manage_materialization = false;
+    lldb::ClangExpressionVariableSP m_result_var_sp;                 // If we are left to manage the materialization,
+                                                                        // then stuff the result expression variable here.
+
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallUserExpression);
 };
 
