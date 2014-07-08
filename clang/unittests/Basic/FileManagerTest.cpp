@@ -51,8 +51,9 @@ public:
   }
 
   // Implement FileSystemStatCache::getStat().
-  virtual LookupResult getStat(const char *Path, FileData &Data, bool isFile,
-                               vfs::File **F, vfs::FileSystem &FS) {
+  LookupResult getStat(const char *Path, FileData &Data, bool isFile,
+                       std::unique_ptr<vfs::File> *F,
+                       vfs::FileSystem &FS) override {
     if (StatCalls.count(Path) != 0) {
       Data = StatCalls[Path];
       return CacheExists;
