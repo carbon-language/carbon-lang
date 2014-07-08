@@ -211,50 +211,20 @@ void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
   setCanHaveModuleDir(false);
 }
 
-void MipsTargetAsmStreamer::emitDirectiveModule(unsigned Value,
-                                                bool is32BitAbi) {
+void MipsTargetAsmStreamer::emitDirectiveModuleFP(Val_GNU_MIPS_ABI Value,
+                                                  bool Is32BitAbi) {
+  MipsTargetStreamer::emitDirectiveModuleFP(Value, Is32BitAbi);
+
   StringRef ModuleValue;
   OS << "\t.module\tfp=";
-  switch (Value) {
-  case Val_GNU_MIPS_ABI_FP_XX:
-    ModuleValue = "xx";
-    break;
-  case Val_GNU_MIPS_ABI_FP_64:
-    ModuleValue = "64";
-    break;
-  case Val_GNU_MIPS_ABI_FP_DOUBLE:
-    if (is32BitAbi)
-      ModuleValue = "32";
-    else
-      ModuleValue = "64";
-    break;
-  default:
-    llvm_unreachable("unsupported .module value");
-  }
-  OS << ModuleValue << "\n";
+  OS << ABIFlagsSection.getFpABIString(Value, Is32BitAbi) << "\n";
 }
 
-void MipsTargetAsmStreamer::emitDirectiveSetFp(unsigned Value,
-                                               bool is32BitAbi) {
+void MipsTargetAsmStreamer::emitDirectiveSetFp(Val_GNU_MIPS_ABI Value,
+                                               bool Is32BitAbi) {
   StringRef ModuleValue;
   OS << "\t.set\tfp=";
-  switch (Value) {
-  case Val_GNU_MIPS_ABI_FP_XX:
-    ModuleValue = "xx";
-    break;
-  case Val_GNU_MIPS_ABI_FP_64:
-    ModuleValue = "64";
-    break;
-  case Val_GNU_MIPS_ABI_FP_DOUBLE:
-    if (is32BitAbi)
-      ModuleValue = "32";
-    else
-      ModuleValue = "64";
-    break;
-  default:
-    llvm_unreachable("unsupported .set fp value");
-  }
-  OS << ModuleValue << "\n";
+  OS << ABIFlagsSection.getFpABIString(Value, Is32BitAbi) << "\n";
 }
 
 void MipsTargetAsmStreamer::emitMipsAbiFlags() {
@@ -661,15 +631,5 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   ABIShndxSD.setAlignment(8);
   OS.SwitchSection(Sec);
 
-  OS.EmitIntValue(MipsABIFlags.version, 2);   // version
-  OS.EmitIntValue(MipsABIFlags.isa_level, 1); // isa_level
-  OS.EmitIntValue(MipsABIFlags.isa_rev, 1);   // isa_rev
-  OS.EmitIntValue(MipsABIFlags.gpr_size, 1);  // gpr_size
-  OS.EmitIntValue(MipsABIFlags.cpr1_size, 1); // cpr1_size
-  OS.EmitIntValue(MipsABIFlags.cpr2_size, 1); // cpr2_size
-  OS.EmitIntValue(MipsABIFlags.fp_abi, 1);    // fp_abi
-  OS.EmitIntValue(MipsABIFlags.isa_ext, 4);   // isa_ext
-  OS.EmitIntValue(MipsABIFlags.ases, 4);      // ases
-  OS.EmitIntValue(MipsABIFlags.flags1, 4);    // flags1
-  OS.EmitIntValue(MipsABIFlags.flags2, 4);    // flags2
+  OS << ABIFlagsSection;
 }

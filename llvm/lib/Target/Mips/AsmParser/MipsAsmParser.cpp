@@ -38,7 +38,7 @@ class MCInstrInfo;
 namespace {
 class MipsAssemblerOptions {
 public:
-  MipsAssemblerOptions() : aTReg(1), reorder(true), macro(true), fpAbiMode(0) {}
+  MipsAssemblerOptions() : aTReg(1), reorder(true), macro(true) {}
 
   unsigned getATRegNum() { return aTReg; }
   bool setATReg(unsigned Reg);
@@ -46,18 +46,15 @@ public:
   bool isReorder() { return reorder; }
   void setReorder() { reorder = true; }
   void setNoreorder() { reorder = false; }
-  void setFpAbiMode(int Mode) { fpAbiMode = Mode; }
 
   bool isMacro() { return macro; }
   void setMacro() { macro = true; }
   void setNomacro() { macro = false; }
-  int getFpAbiMode() { return fpAbiMode; }
 
 private:
   unsigned aTReg;
   bool reorder;
   bool macro;
-  int fpAbiMode;
 };
 }
 
@@ -136,8 +133,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   void expandMemInst(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions, bool isLoad,
                      bool isImmOpnd);
-  bool reportParseError(StringRef ErrorMsg);
-  bool reportParseError(SMLoc Loc, StringRef ErrorMsg);
+  bool reportParseError(Twine ErrorMsg);
+  bool reportParseError(SMLoc Loc, Twine ErrorMsg);
 
   bool parseMemOffset(const MCExpr *&Res, bool isParenExpr);
   bool parseRelocOperand(const MCExpr *&Res);
@@ -167,6 +164,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseDirectiveGpWord();
   bool parseDirectiveGpDWord();
   bool parseDirectiveModule();
+  bool parseDirectiveModuleFP();
+  bool parseFpABIValue(Val_GNU_MIPS_ABI &FpABI, StringRef Directive);
 
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
@@ -2304,13 +2303,13 @@ bool MipsAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
   return false;
 }
 
-bool MipsAsmParser::reportParseError(StringRef ErrorMsg) {
+bool MipsAsmParser::reportParseError(Twine ErrorMsg) {
   SMLoc Loc = getLexer().getLoc();
   Parser.eatToEndOfStatement();
   return Error(Loc, ErrorMsg);
 }
 
-bool MipsAsmParser::reportParseError(SMLoc Loc, StringRef ErrorMsg) {
+bool MipsAsmParser::reportParseError(SMLoc Loc, Twine ErrorMsg) {
   return Error(Loc, ErrorMsg);
 }
 
@@ -2445,7 +2444,7 @@ bool MipsAsmParser::parseSetNoMips16Directive() {
 }
 
 bool MipsAsmParser::parseSetFpDirective() {
-  int FpAbiMode;
+  Val_GNU_MIPS_ABI FpAbiVal;
   // Line can be: .set fp=32
   //              .set fp=xx
   //              .set fp=64
@@ -2457,43 +2456,15 @@ bool MipsAsmParser::parseSetFpDirective() {
   }
   Parser.Lex(); // Eat '=' token.
   Tok = Parser.getTok();
-  if (Tok.is(AsmToken::Identifier)) {
-    StringRef XX = Tok.getString();
-    if (XX != "xx") {
-      reportParseError("unsupported option");
-      return false;
-    }
-    if (!isABI_O32()) {
-      reportParseError("'set fp=xx'option requires O32 ABI");
-      return false;
-    }
-    FpAbiMode = Val_GNU_MIPS_ABI_FP_XX;
-  } else if (Tok.is(AsmToken::Integer)) {
-    unsigned Value = Tok.getIntVal();
-    if (Value != 32 && Value != 64) {
-      reportParseError("unsupported option");
-      return false;
-    }
-    if (Value == 32) {
-      if (!isABI_O32()) {
-        reportParseError("'set fp=32'option requires O32 ABI");
-        return false;
-      }
-      FpAbiMode = Val_GNU_MIPS_ABI_FP_DOUBLE;
-    } else {
-      if (isABI_N32() || isABI_N64())
-        FpAbiMode = Val_GNU_MIPS_ABI_FP_DOUBLE;
-      else if (isABI_O32())
-        FpAbiMode = Val_GNU_MIPS_ABI_FP_64;
-    }
-  }
-  Parser.Lex(); // Eat option token.
+
+  if (!parseFpABIValue(FpAbiVal, ".set"))
+    return false;
+
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token in statement");
     return false;
   }
-  Options.setFpAbiMode(FpAbiMode);
-  getTargetStreamer().emitDirectiveSetFp(FpAbiMode, isABI_O32());
+  getTargetStreamer().emitDirectiveSetFp(FpAbiVal, isABI_O32());
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2817,7 +2788,6 @@ bool MipsAsmParser::parseDirectiveModule() {
   // Line can be: .module fp=32
   //              .module fp=xx
   //              .module fp=64
-  unsigned FpAbiVal = 0;
   if (!getTargetStreamer().getCanHaveModuleDir()) {
     // TODO : get a better message.
     reportParseError(".module directive must appear before any code");
@@ -2835,39 +2805,76 @@ bool MipsAsmParser::parseDirectiveModule() {
     return false;
   }
   Parser.Lex(); // Eat '=' token.
-  Tok = Parser.getTok();
-  if (Tok.is(AsmToken::Identifier)) {
-    StringRef XX = Tok.getString();
-    if (XX != "xx") {
-      reportParseError("unsupported option");
-      return false;
-    }
-    FpAbiVal = Val_GNU_MIPS_ABI_FP_XX;
-  } else if (Tok.is(AsmToken::Integer)) {
-    unsigned Value = Tok.getIntVal();
-    if (Value != 32 && Value != 64) {
-      reportParseError("unsupported value, expected 32 or 64");
-      return false;
-    }
-    if (Value == 64) {
-      if (isABI_N32() || isABI_N64())
-        FpAbiVal = Val_GNU_MIPS_ABI_FP_DOUBLE;
-      else if (isABI_O32())
-        FpAbiVal = Val_GNU_MIPS_ABI_FP_64;
-    } else if (isABI_O32())
-      FpAbiVal = Val_GNU_MIPS_ABI_FP_DOUBLE;
-  }
-  Parser.Lex(); // Eat option token.
+
+  Val_GNU_MIPS_ABI FpABI;
+  if (!parseFpABIValue(FpABI, ".module"))
+    return false;
+
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     reportParseError("unexpected token in statement");
     return false;
   }
-  // Emit appropriate flags.
-  getTargetStreamer().emitDirectiveModule(FpAbiVal, isABI_O32());
-  getTargetStreamer().setFpABI(FpAbiVal);
-  Parser.Lex(); // Consume the EndOfStatement.
+
   return false;
 }
+
+bool MipsAsmParser::parseFpABIValue(Val_GNU_MIPS_ABI &FpABI,
+                                    StringRef Directive) {
+  MCAsmLexer &Lexer = getLexer();
+
+  if (Lexer.is(AsmToken::Identifier)) {
+    StringRef Value = Parser.getTok().getString();
+    Parser.Lex();
+
+    if (Value != "xx") {
+      reportParseError("unsupported value, expected 'xx', '32' or '64'");
+      return false;
+    }
+
+    if (!isABI_O32()) {
+      reportParseError("'" + Directive + " fp=xx' requires the O32 ABI");
+      return false;
+    }
+
+    FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_XX;
+    return true;
+  }
+
+  if (Lexer.is(AsmToken::Integer)) {
+    unsigned Value = Parser.getTok().getIntVal();
+    Parser.Lex();
+
+    if (Value != 32 && Value != 64) {
+      reportParseError("unsupported value, expected 'xx', '32' or '64'");
+      return false;
+    }
+
+    if (Value == 32) {
+      if (!isABI_O32()) {
+        reportParseError("'" + Directive + " fp=32' requires the O32 ABI");
+        return false;
+      }
+
+      FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_DOUBLE;
+      return true;
+    } else {
+      if (isABI_N32() || isABI_N64()) {
+        FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_DOUBLE;
+        return true;
+      }
+
+      if (isABI_O32()) {
+        FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_64;
+        return true;
+      }
+
+      llvm_unreachable("Unknown ABI");
+    }
+  }
+
+  return false;
+}
+
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
   StringRef IDVal = DirectiveID.getString();
 
