@@ -1,10 +1,13 @@
 // RUN: %clangxx_tsan %s -o %t
+// RUN:                                 not %run %t 2>&1 | FileCheck %s
 // RUN: TSAN_OPTIONS=detect_deadlocks=1 not %run %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS=detect_deadlocks=0     %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
 // RUN: echo "deadlock:main" > %t.sup
-// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=%t.sup" %run %t
+// RUN: TSAN_OPTIONS="suppressions=%t.sup" %run %t 2>&1 | FileCheck %s --check-prefix=DISABLED
 // RUN: echo "deadlock:zzzz" > %t.sup
-// RUN: TSAN_OPTIONS="detect_deadlocks=1 suppressions=%t.sup" not %run %t 2>&1 | FileCheck %s
+// RUN: TSAN_OPTIONS="suppressions=%t.sup" not %run %t 2>&1 | FileCheck %s
 #include <pthread.h>
+#include <stdio.h>
 
 int main() {
   pthread_mutex_t mu1, mu2;
@@ -21,9 +24,12 @@ int main() {
   pthread_mutex_lock(&mu2);
   pthread_mutex_lock(&mu1);
   // CHECK: ThreadSanitizer: lock-order-inversion (potential deadlock)
+  // DISABLED-NOT: ThreadSanitizer
+  // DISABLED: PASS
   pthread_mutex_unlock(&mu1);
   pthread_mutex_unlock(&mu2);
 
   pthread_mutex_destroy(&mu1);
   pthread_mutex_destroy(&mu2);
+  fprintf(stderr, "PASS\n");
 }

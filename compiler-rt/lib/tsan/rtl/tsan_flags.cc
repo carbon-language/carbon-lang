@@ -102,6 +102,7 @@ void InitializeFlags(Flags *f, const char *env) {
   SetCommonFlagsDefaults(f);
   // Override some common flags defaults.
   f->allow_addr2line = true;
+  f->detect_deadlocks = true;
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());
