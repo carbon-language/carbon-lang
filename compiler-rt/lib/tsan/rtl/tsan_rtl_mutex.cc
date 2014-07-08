@@ -172,7 +172,7 @@ void MutexLock(ThreadState *thr, uptr pc, uptr addr, int rec, bool try_lock) {
   }
   s->recursion += rec;
   thr->mset.Add(s->GetId(), true, thr->fast_state.epoch());
-  if (flags()->detect_deadlocks && s->recursion == 1) {
+  if (flags()->detect_deadlocks && (s->recursion - rec) == 0) {
     Callback cb(thr, pc);
     if (!try_lock)
       ctx->dd->MutexBeforeLock(&cb, &s->dd, true);
