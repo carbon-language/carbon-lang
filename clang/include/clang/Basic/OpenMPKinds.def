@@ -95,13 +95,14 @@ OPENMP_PARALLEL_CLAUSE(shared)
 OPENMP_PARALLEL_CLAUSE(reduction)
 OPENMP_PARALLEL_CLAUSE(copyin)
 
-// FIXME: more clauses allowed for directive 'omp simd'.
+// Clauses allowed for directive 'omp simd'.
 OPENMP_SIMD_CLAUSE(private)
 OPENMP_SIMD_CLAUSE(lastprivate)
 OPENMP_SIMD_CLAUSE(linear)
 OPENMP_SIMD_CLAUSE(aligned)
 OPENMP_SIMD_CLAUSE(safelen)
 OPENMP_SIMD_CLAUSE(collapse)
+OPENMP_SIMD_CLAUSE(reduction)
 
 // TODO more clauses allowed for directive 'omp for'.
 OPENMP_FOR_CLAUSE(private)

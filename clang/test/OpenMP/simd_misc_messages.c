@@ -459,6 +459,85 @@ void test_lastprivate()
   for (i = 0; i < 16; ++i) ;
 }
 
+void test_reduction()
+{
+  int i, x, y;
+  // expected-error@+3 {{expected ')'}} expected-note@+3 {{to match this '('}}
+  // expected-error@+2 {{expected identifier}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction(
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected identifier}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction()
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected expression}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction(x)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected identifier}}
+  #pragma omp simd reduction(:x)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+3 {{expected ')'}} expected-note@+3 {{to match this '('}}
+  // expected-error@+2 {{expected identifier}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction(,
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+3 {{expected ')'}} expected-note@+3 {{to match this '('}}
+  // expected-error@+2 {{expected expression}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction(+
+  for (i = 0; i < 16; ++i) ;
+
+  // expected-error@+3 {{expected ')'}} expected-note@+3 {{to match this '('}}
+  //
+  // expected-error@+1 {{expected expression}}
+  #pragma omp simd reduction(+:
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}}
+  #pragma omp simd reduction(+:)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}}
+  #pragma omp simd reduction(+:,y)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected expression}}
+  #pragma omp simd reduction(+:x,+:y)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+2 {{expected identifier}}
+  // expected-warning@+1 {{missing ':' after reduction identifier - ignoring}}
+  #pragma omp simd reduction(%:x)
+  for (i = 0; i < 16; ++i) ;
+
+  #pragma omp simd reduction(+:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(*:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(-:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(&:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(|:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(^:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(&&:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(||:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(max:x)
+  for (i = 0; i < 16; ++i) ;
+  #pragma omp simd reduction(min:x)
+  for (i = 0; i < 16; ++i) ;
+  struct X { int x; };
+  struct X X;
+  // expected-error@+1 {{expected variable name}}
+  #pragma omp simd reduction(+:X.x)
+  for (i = 0; i < 16; ++i) ;
+  // expected-error@+1 {{expected variable name}}
+  #pragma omp simd reduction(+:x+x)
+  for (i = 0; i < 16; ++i) ;
+}
+
 void test_loop_messages()
 {
   float a[100], b[100], c[100];
