@@ -1010,8 +1010,9 @@ def setupSysPath():
 
         if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")):
             lines = lldb_dash_p_result.splitlines()
-            if len(lines) == 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
-                lldbPath = lines[0]
+            # Assume the last line of output is the path.  Generally there should only be one.
+            if os.path.isfile(os.path.join(lines[-1], init_in_python_dir)):
+                lldbPath = lines[-1]
                 if "freebsd" in sys.platform or "linux" in sys.platform:
                     os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')
         
