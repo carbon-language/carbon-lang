@@ -76,6 +76,6 @@
 #include <f16cintrin.h>
 #endif
 
-// FIXME: LWP
+/* FIXME: LWP */
 
 #endif /* __X86INTRIN_H */
