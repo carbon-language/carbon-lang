@@ -873,7 +873,7 @@ def : Pat<(v8i1 (X86pcmpeqm (v8i32 VR256X:$src1), (v8i32 VR256X:$src2))),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src1, sub_ymm)),
             (v16i32 (SUBREG_TO_REG (i32 0), VR256X:$src2, sub_ymm))), VK8)>;
 
-multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
+multiclass avx512_icmp_cc<bits<8> opc, RegisterClass WMRC, RegisterClass KRC,
               RegisterClass RC, X86MemOperand x86memop, PatFrag memop_frag, 
               SDNode OpNode, ValueType vt, Operand CC, string Suffix> {
   def rri : AVX512AIi8<opc, MRMSrcReg,
@@ -896,7 +896,7 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
                   "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RR>, EVEX_4V;
     def rrik_alt : AVX512AIi8<opc, MRMSrcReg,
-               (outs KRC:$dst), (ins KRC:$mask, RC:$src1, RC:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins WMRC:$mask, RC:$src1, RC:$src2, i8imm:$cc),
                !strconcat("vpcmp", Suffix,
                   "\t{$cc, $src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RR>, EVEX_4V, EVEX_K;
@@ -906,24 +906,24 @@ multiclass avx512_icmp_cc<bits<8> opc, RegisterClass KRC,
                   "\t{$cc, $src2, $src1, $dst|$dst, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RM>, EVEX_4V;
     def rmik_alt : AVX512AIi8<opc, MRMSrcMem,
-               (outs KRC:$dst), (ins KRC:$mask, RC:$src1, x86memop:$src2, i8imm:$cc),
+               (outs KRC:$dst), (ins WMRC:$mask, RC:$src1, x86memop:$src2, i8imm:$cc),
                !strconcat("vpcmp", Suffix,
                   "\t{$cc, $src2, $src1, $dst {${mask}}|$dst {${mask}}, $src1, $src2, $cc}"),
                [], IIC_SSE_ALU_F32P_RM>, EVEX_4V, EVEX_K;
   }
 }
 
-defm VPCMPDZ :  avx512_icmp_cc<0x1F, VK16, VR512, i512mem, memopv16i32,
+defm VPCMPDZ :  avx512_icmp_cc<0x1F, VK16WM, VK16, VR512, i512mem, memopv16i32,
                                X86cmpm, v16i32, AVXCC, "d">,
                 EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VPCMPUDZ : avx512_icmp_cc<0x1E, VK16, VR512, i512mem, memopv16i32,
+defm VPCMPUDZ : avx512_icmp_cc<0x1E, VK16WM, VK16, VR512, i512mem, memopv16i32,
                                X86cmpmu, v16i32, AVXCC, "ud">,
                 EVEX_V512, EVEX_CD8<32, CD8VF>;
 
-defm VPCMPQZ :  avx512_icmp_cc<0x1F, VK8, VR512, i512mem, memopv8i64,
+defm VPCMPQZ :  avx512_icmp_cc<0x1F, VK8WM, VK8, VR512, i512mem, memopv8i64,
                                X86cmpm, v8i64, AVXCC, "q">,
                 VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
-defm VPCMPUQZ : avx512_icmp_cc<0x1E, VK8, VR512, i512mem, memopv8i64,
+defm VPCMPUQZ : avx512_icmp_cc<0x1E, VK8WM, VK8, VR512, i512mem, memopv8i64,
                                X86cmpmu, v8i64, AVXCC, "uq">,
                 VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 

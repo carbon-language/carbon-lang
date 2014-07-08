@@ -1,4 +1,5 @@
-// RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=knl --show-encoding %s | FileCheck %s
+// RUN: not llvm-mc -triple x86_64-unknown-unknown -mcpu=knl --show-encoding %s 2> %t.err | FileCheck %s
+// RUN: FileCheck --check-prefix=ERR < %t.err %s
 
 // CHECK: vaddpd %zmm6, %zmm27, %zmm8
 // CHECK:  encoding: [0x62,0x71,0xa5,0x40,0x58,0xc6]
@@ -3199,6 +3200,9 @@ vpcmpd $1, %zmm24, %zmm7, %k5{%k4}
 // CHECK: vpcmpuq $2,
 // CHECK: encoding: [0x62,0xf3,0xf5,0x47,0x1e,0x72,0x01,0x02]
 vpcmpuq $2, 0x40(%rdx), %zmm17, %k6{%k7}
+
+// ERR: invalid operand for instruction
+vpcmpd $1, %zmm24, %zmm7, %k5{%k0}
 
 // CHECK: vpermi2d
 // CHECK: encoding: [0x62,0x42,0x6d,0x4b,0x76,0xd6]
