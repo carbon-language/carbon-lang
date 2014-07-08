@@ -44,18 +44,13 @@ namespace {
     bool runOnModule(Module &M) override;
 
   private:
-    SmallPtrSet<Constant *, 32> AliveGlobals;
+    SmallPtrSet<GlobalValue*, 32> AliveGlobals;
     SmallPtrSet<Constant *, 8> SeenConstants;
-    SmallPtrSet<GlobalVariable *, 8> DiscardableGlobalInitializers;
 
     /// GlobalIsNeeded - mark the specific global value as needed, and
     /// recursively mark anything that it uses as also needed.
     void GlobalIsNeeded(GlobalValue *GV);
     void MarkUsedGlobalsAsNeeded(Constant *C);
-
-    /// \brief Checks if C is alive or is a ConstantExpr that refers to an alive
-    /// value.
-    bool ContainsUsedGlobal(Constant *C);
 
     bool RemoveUnusedGlobalValue(GlobalValue &GV);
   };
@@ -167,19 +162,6 @@ bool GlobalDCE::runOnModule(Module &M) {
       I->setAliasee(nullptr);
     }
 
-  // Look for available externally constants that we can turn into normal
-  // externals by deleting their initalizers. This allows us to remove other
-  // globals that are referenced by the initializer.
-  if (!DiscardableGlobalInitializers.empty()) {
-    for (GlobalVariable *GV : DiscardableGlobalInitializers) {
-      if (!ContainsUsedGlobal(GV->getInitializer())) {
-        GV->setInitializer(nullptr);
-        GV->setLinkage(GlobalValue::ExternalLinkage);
-        Changed = true;
-      }
-    }
-  }
-
   if (!DeadFunctions.empty()) {
     // Now that all interferences have been dropped, delete the actual objects
     // themselves.
@@ -227,12 +209,8 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(G)) {
     // If this is a global variable, we must make sure to add any global values
     // referenced by the initializer to the alive set.
-    if (GV->hasInitializer()) {
-      if (GV->hasAvailableExternallyLinkage())
-        DiscardableGlobalInitializers.insert(GV);
-      else
-        MarkUsedGlobalsAsNeeded(GV->getInitializer());
-    }
+    if (GV->hasInitializer())
+      MarkUsedGlobalsAsNeeded(GV->getInitializer());
   } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(G)) {
     // The target of a global alias is needed.
     MarkUsedGlobalsAsNeeded(GA->getAliasee());
@@ -268,21 +246,6 @@ void GlobalDCE::MarkUsedGlobalsAsNeeded(Constant *C) {
     if (Op && SeenConstants.insert(Op))
       MarkUsedGlobalsAsNeeded(Op);
   }
-}
-
-bool GlobalDCE::ContainsUsedGlobal(Constant *C) {
-  // C contains a used global If C is alive or we visited it while marking
-  // values alive.
-  if (AliveGlobals.count(C) || SeenConstants.count(C))
-    return true;
-
-  // Now check all operands of a ConstantExpr.
-  for (User::op_iterator I = C->op_begin(), E = C->op_end(); I != E; ++I) {
-    Constant *Op = dyn_cast<Constant>(*I);
-    if (Op && ContainsUsedGlobal(Op))
-      return true;
-  }
-  return false;
 }
 
 // RemoveUnusedGlobalValue - Loop over all of the uses of the specified
