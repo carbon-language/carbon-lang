@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "IncludeOrderCheck.h"
 #include "NamespaceCommentCheck.h"
+#include "TwineLocalCheck.h"
 
 namespace clang {
 namespace tidy {
@@ -24,6 +25,9 @@ public:
     CheckFactories.addCheckFactory(
         "llvm-namespace-comment",
         new ClangTidyCheckFactory<NamespaceCommentCheck>());
+    CheckFactories.addCheckFactory(
+        "llvm-twine-local",
+        new ClangTidyCheckFactory<TwineLocalCheck>());
   }
 };
 

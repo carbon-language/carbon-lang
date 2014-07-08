@@ -4,6 +4,7 @@ add_clang_library(clangTidyLLVMModule
   IncludeOrderCheck.cpp
   LLVMTidyModule.cpp
   NamespaceCommentCheck.cpp
+  TwineLocalCheck.cpp
 
   LINK_LIBS
   clangAST
