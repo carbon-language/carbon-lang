@@ -1954,7 +1954,7 @@ MachProcess::LaunchForDebug
     const char *path,
     char const *argv[],
     char const *envp[],
-    const char *working_directory, // NULL => dont' change, non-NULL => set working directory for inferior to this
+    const char *working_directory, // NULL => don't change, non-NULL => set working directory for inferior to this
     const char *stdin_path,
     const char *stdout_path,
     const char *stderr_path,

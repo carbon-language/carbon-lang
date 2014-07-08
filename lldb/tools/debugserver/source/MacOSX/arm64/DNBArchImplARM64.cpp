@@ -948,7 +948,7 @@ DNBArchMachARM64::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
 }
 
 //----------------------------------------------------------------------
-// Register information defintions for 64 bit ARMv8.
+// Register information definitions for 64 bit ARMv8.
 //----------------------------------------------------------------------
 enum gpr_regnums
 {
@@ -1405,7 +1405,7 @@ DNBArchMachARM64::g_gpr_registers[] =
     DEFINE_GPR_NAME (pc,  NULL, GENERIC_REGNUM_PC),
 
     // in armv7 we specify that writing to the CPSR should invalidate r8-12, sp, lr.
-    // this should be spcified for arm64 too even though debugserver is only used for
+    // this should be specified for arm64 too even though debugserver is only used for
     // userland debugging.
     { e_regSetGPR, gpr_cpsr, "cpsr", "flags", Uint, Hex, 4, GPR_OFFSET_NAME(cpsr), dwarf_elr_mode, dwarf_elr_mode, INVALID_NUB_REGNUM, gdb_gpr_cpsr, NULL, NULL },
 

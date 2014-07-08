@@ -10,7 +10,7 @@
 #ifndef lldb_ARMDefines_h_
 #define lldb_ARMDefines_h_
 
-// Common defintions for the ARM/Thumb Instruction Set Architecture.
+// Common definitions for the ARM/Thumb Instruction Set Architecture.
 
 namespace lldb_private {
 

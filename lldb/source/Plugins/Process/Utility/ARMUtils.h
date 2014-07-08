@@ -316,7 +316,7 @@ static inline uint32_t ARMExpandImm(uint32_t opcode)
 // (imm32, carry_out) = ThumbExpandImm_C(imm12, carry_in)
 static inline uint32_t ThumbExpandImm_C(uint32_t opcode, uint32_t carry_in, uint32_t &carry_out)
 {
-    uint32_t imm32; // the expaned result
+    uint32_t imm32; // the expanded result
     const uint32_t i = bit(opcode, 26);
     const uint32_t imm3 = bits(opcode, 14, 12);
     const uint32_t abcdefgh = bits(opcode, 7, 0);

@@ -752,7 +752,7 @@ ObjectFilePECOFF::CreateSections (SectionList &unified_section_list)
                                                    m_coff_header_opt.image_base + m_sect_headers[idx].vmaddr,   // File VM address == addresses as they are found in the object file
                                                    m_sect_headers[idx].vmsize,   // VM size in bytes of this section
                                                    m_sect_headers[idx].offset,   // Offset to the data for this section in the file
-                                                   m_sect_headers[idx].size,     // Size in bytes of this section as found in the the file
+                                                   m_sect_headers[idx].size,     // Size in bytes of this section as found in the file
                                                    m_coff_header_opt.sect_alignment, // Section alignment
                                                    m_sect_headers[idx].flags));  // Flags for this section
 

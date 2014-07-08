@@ -145,7 +145,7 @@ SymbolFileSymtab::GetNumCompileUnits()
     if (m_source_indexes.empty())
         return 0;
 
-    // If we have any source file symbols we will logically orgnize the object symbols
+    // If we have any source file symbols we will logically organize the object symbols
     // using these.
     return m_source_indexes.size();
 }

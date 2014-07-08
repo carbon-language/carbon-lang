@@ -537,7 +537,7 @@ RegisterContextDarwin_arm64::GetRegisterSet (size_t reg_set)
 
 
 //----------------------------------------------------------------------
-// Register information defintions for arm64
+// Register information definitions for arm64
 //----------------------------------------------------------------------
 int
 RegisterContextDarwin_arm64::GetSetForNativeRegNum (int reg)

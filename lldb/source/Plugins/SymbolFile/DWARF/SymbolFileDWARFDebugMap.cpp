@@ -81,7 +81,7 @@ SymbolFileDWARFDebugMap::CompileUnitInfo::GetFileRangeMap(SymbolFileDWARFDebugMa
             ///const uint32_t fun_resolve_flags = SymbolContext::Module | eSymbolContextCompUnit | eSymbolContextFunction;
             //SectionList *oso_sections = oso_objfile->Sections();
             // Now we need to make sections that map from zero based object
-            // file addresses to where things eneded up in the main executable.
+            // file addresses to where things ended up in the main executable.
 
             assert (comp_unit_info->first_symbol_index != UINT32_MAX);
             // End index is one past the last valid symbol index
@@ -214,7 +214,7 @@ public:
                 SymbolVendor* symbol_vendor = Module::GetSymbolVendor(can_create, feedback_strm);
                 if (symbol_vendor)
                 {
-                    // Set a a pointer to this class to set our OSO DWARF file know
+                    // Set a pointer to this class to set our OSO DWARF file know
                     // that the DWARF is being used along with a debug map and that
                     // it will have the remapped sections that we do below.
                     SymbolFileDWARF *oso_symfile = SymbolFileDWARFDebugMap::GetSymbolFileAsSymbolFileDWARF(symbol_vendor->GetSymbolFile());

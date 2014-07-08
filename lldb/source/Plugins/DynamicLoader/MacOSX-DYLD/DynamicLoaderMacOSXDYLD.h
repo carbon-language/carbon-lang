@@ -175,7 +175,7 @@ protected:
         lldb_private::UUID uuid;            // UUID for this dylib if it has one, else all zeros
         llvm::MachO::mach_header header;    // The mach header for this image
         std::vector<Segment> segments;      // All segment vmaddr and vmsize pairs for this executable (from memory of inferior)
-        uint32_t load_stop_id;              // The process stop ID that the sections for this image were loadeded
+        uint32_t load_stop_id;              // The process stop ID that the sections for this image were loaded
 
         DYLDImageInfo() :
             address(LLDB_INVALID_ADDRESS),

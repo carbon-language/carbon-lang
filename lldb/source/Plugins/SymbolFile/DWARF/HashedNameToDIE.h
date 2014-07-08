@@ -465,7 +465,7 @@ struct DWARFMappedHash
                         break;
 
                     default:
-                        // We can always skip atomes we don't know about
+                        // We can always skip atoms we don't know about
                         break;
                 }
             }
@@ -655,7 +655,7 @@ struct DWARFMappedHash
             if (count > 0 && m_data.ValidOffsetForDataOfSize (*hash_data_offset_ptr, min_total_hash_data_size))
             {
                 // We have at least one HashData entry, and we have enough
-                // data to parse at leats "count" HashData enties.
+                // data to parse at least "count" HashData entries.
                 
                 // First make sure the entire C string matches...
                 const bool match = strcmp (name, strp_cstr) == 0;
@@ -678,7 +678,7 @@ struct DWARFMappedHash
                         DIEInfo die_info;
                         if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
                         {
-                            // Only happend the HashData if the string matched...
+                            // Only happened if the HashData of the string matched...
                             if (match)
                                 pair.value.push_back (die_info);
                         }
@@ -747,7 +747,7 @@ struct DWARFMappedHash
                         DIEInfo die_info;
                         if (m_header.Read(m_data, hash_data_offset_ptr, die_info))
                         {
-                            // Only happend the HashData if the string matched...
+                            // Only happened if the HashData of the string matched...
                             if (match)
                                 pair.value.push_back (die_info);
                         }

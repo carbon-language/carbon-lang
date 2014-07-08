@@ -162,7 +162,7 @@ typedef enum NameMatchType
 typedef enum InstructionType
 {
     eInstructionTypeAny,                // Support for any instructions at all (at least one)
-    eInstructionTypePrologueEpilogue,   // All prologue and epilogue instructons that push and pop register values and modify sp/fp
+    eInstructionTypePrologueEpilogue,   // All prologue and epilogue instructions that push and pop register values and modify sp/fp
     eInstructionTypePCModifying,        // Any instruction that modifies the program counter/instruction pointer
     eInstructionTypeAll                 // All instructions of any kind
 

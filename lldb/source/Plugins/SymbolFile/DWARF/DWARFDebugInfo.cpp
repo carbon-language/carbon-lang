@@ -512,7 +512,7 @@ static dw_offset_t DumpCallback
 
                 // We have already found our DIE and are printing it's children. Obey
                 // our recurse depth and return an invalid offset if we get done
-                // dumping all the the children
+                // dumping all of the children
                 if (dumpInfo->recurse_depth == UINT32_MAX || curr_depth <= dumpInfo->found_depth + dumpInfo->recurse_depth)
                     die->Dump(dwarf2Data, cu, *s, 0);
             }

@@ -533,7 +533,7 @@ class MultiResponseGdbRemoteEntry(GdbRemoteEntryBase):
 
         save_key: required.  Specifies the key within the context where an array will be stored.
             Each packet received from the gdb remote that does not match the end_regex will get
-            appended ot the array stored within the context at that key.
+            appended to the array stored within the context at that key.
 
         runaway_response_count: optional. Defaults to 10000. If this many responses are retrieved,
             assume there is something wrong with either the response collection or the ending

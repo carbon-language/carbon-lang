@@ -809,7 +809,7 @@ DNBArchImplI386::IsWatchpointVacant(const DBG &debug_state, uint32_t hw_index)
     return (debug_state.__dr7 & (3 << (2*hw_index))) == 0;
 }
 
-// Resets local copy of debug status register to wait for the next debug excpetion.
+// Resets local copy of debug status register to wait for the next debug exception.
 void
 DNBArchImplI386::ClearWatchpointHits(DBG &debug_state)
 {
@@ -1012,7 +1012,7 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 
 
 //----------------------------------------------------------------------
-// Register information defintions
+// Register information definitions
 //----------------------------------------------------------------------
 
 #define DEFINE_GPR_PSEUDO_16(reg16,reg32) { e_regSetGPR, gpr_##reg16, #reg16, NULL, Uint, Hex, 2, 0,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }

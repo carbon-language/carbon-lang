@@ -269,7 +269,7 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
         StreamFile s(stdout, false);
 #endif
         // If we are hiding some frames from the outside world, we need to add those onto the total count of
-        // frames to fetch.  However, we don't need ot do that if end_idx is 0 since in that case we always
+        // frames to fetch.  However, we don't need to do that if end_idx is 0 since in that case we always
         // get the first concrete frame and all the inlined frames below it...  And of course, if end_idx is
         // UINT32_MAX that means get all, so just do that...
         

@@ -116,7 +116,7 @@ SectionLoadList::SetSectionLoadAddress (const lldb::SectionSP &section, addr_t l
         {
             // Some sections are ok to overlap, and for others we should warn. When
             // we have multiple load addresses that correspond to a section, we will
-            // allways attribute the section to the be last section that claims it
+            // always attribute the section to the be last section that claims it
             // exists at that address. Sometimes it is ok for more that one section
             // to be loaded at a specific load address, and other times it isn't.
             // The "warn_multiple" parameter tells us if we should warn in this case

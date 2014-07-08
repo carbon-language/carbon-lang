@@ -475,7 +475,7 @@ RegisterContextDarwin_arm::GetRegisterSet (size_t reg_set)
 
 
 //----------------------------------------------------------------------
-// Register information defintions for 32 bit i386.
+// Register information definitions for 32 bit i386.
 //----------------------------------------------------------------------
 int
 RegisterContextDarwin_arm::GetSetForNativeRegNum (int reg)

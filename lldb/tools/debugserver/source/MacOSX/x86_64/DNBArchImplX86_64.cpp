@@ -759,7 +759,7 @@ DNBArchImplX86_64::IsWatchpointVacant(const DBG &debug_state, uint32_t hw_index)
     return (debug_state.__dr7 & (3 << (2*hw_index))) == 0;
 }
 
-// Resets local copy of debug status register to wait for the next debug excpetion.
+// Resets local copy of debug status register to wait for the next debug exception.
 void
 DNBArchImplX86_64::ClearWatchpointHits(DBG &debug_state)
 {
@@ -963,7 +963,7 @@ DNBArchImplX86_64::EnableHardwareSingleStep (bool enable)
 
 
 //----------------------------------------------------------------------
-// Register information defintions
+// Register information definitions
 //----------------------------------------------------------------------
 
 enum

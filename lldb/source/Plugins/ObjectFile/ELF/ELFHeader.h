@@ -353,7 +353,7 @@ struct ELFRel
     }
 
     /// Returns the symbol index when the given entry represents a 32-bit
-    /// reloction.
+    /// relocation.
     static unsigned
     RelocSymbol32(const ELFRel &rel)
     {
@@ -361,7 +361,7 @@ struct ELFRel
     }
 
     /// Returns the symbol index when the given entry represents a 64-bit
-    /// reloction.
+    /// relocation.
     static unsigned
     RelocSymbol64(const ELFRel &rel)
     {
@@ -412,7 +412,7 @@ struct ELFRela
     }
 
     /// Returns the symbol index when the given entry represents a 32-bit
-    /// reloction.
+    /// relocation.
     static unsigned
     RelocSymbol32(const ELFRela &rela)
     {
@@ -420,7 +420,7 @@ struct ELFRela
     }
 
     /// Returns the symbol index when the given entry represents a 64-bit
-    /// reloction.
+    /// relocation.
     static unsigned
     RelocSymbol64(const ELFRela &rela)
     {

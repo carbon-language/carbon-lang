@@ -146,7 +146,7 @@ Listener::StopListeningForEvents (Broadcaster* broadcaster, uint32_t event_mask)
     return false;
 }
 
-// Called when a Broadcaster is in its destuctor. We need to remove all
+// Called when a Broadcaster is in its destructor. We need to remove all
 // knowledge of this broadcaster and any events that it may have queued up
 void
 Listener::BroadcasterWillDestruct (Broadcaster *broadcaster)

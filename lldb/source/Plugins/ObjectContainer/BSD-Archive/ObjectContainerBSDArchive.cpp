@@ -247,7 +247,7 @@ ObjectContainerBSDArchive::Archive::FindCachedArchive (const FileSpec &file, con
                 // whose modification time doesn't match. It doesn't make sense
                 // for us to continue to use this BSD archive since we cache only
                 // the object info which consists of file time info and also the
-                // file offset and file size of any contianed objects. Since
+                // file offset and file size of any contained objects. Since
                 // this information is now out of date, we won't get the correct
                 // information if we go and extract the file data, so we should 
                 // remove the old and outdated entry.

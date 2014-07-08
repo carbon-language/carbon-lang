@@ -360,7 +360,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
         }
         
 
-        // Resolve our PC to section offset if we haven't alreday done so
+        // Resolve our PC to section offset if we haven't already done so
         // and if we don't have a module. The resolved address section will
         // contain the module to which it belongs
         if (!m_sc.module_sp && m_flags.IsClear(RESOLVED_FRAME_CODE_ADDR))

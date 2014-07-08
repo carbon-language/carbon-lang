@@ -204,7 +204,7 @@ DNBArchMachPPC::EnableHardwareSingleStep (bool enable)
 }
 
 //----------------------------------------------------------------------
-// Register information defintions for 32 bit PowerPC.
+// Register information definitions for 32 bit PowerPC.
 //----------------------------------------------------------------------
 
 enum gpr_regnums

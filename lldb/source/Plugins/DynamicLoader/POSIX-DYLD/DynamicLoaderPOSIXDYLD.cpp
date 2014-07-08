@@ -468,7 +468,7 @@ DynamicLoaderPOSIXDYLD::GetThreadLocalData (const lldb::ModuleSP module, const l
     if (modid == -1)
         return LLDB_INVALID_ADDRESS;
 
-    // Lookup the DTV stucture for this thread.
+    // Lookup the DTV structure for this thread.
     addr_t dtv_ptr = tp + metadata.dtv_offset;
     addr_t dtv = ReadPointer (dtv_ptr);
     if (dtv == LLDB_INVALID_ADDRESS)

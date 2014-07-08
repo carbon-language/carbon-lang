@@ -672,7 +672,7 @@ DWARFDebugLine::ParseStatementTable
                 // The files are numbered, starting at 1, in the order in which they
                 // appear; the names in the prologue come before names defined by
                 // the DW_LNE_define_file instruction. These numbers are used in the
-                // the file register of the state machine.
+                // file register of the state machine.
                 {
                     FileNameEntry fileEntry;
                     fileEntry.name      = debug_line_data.GetCStr(offset_ptr);

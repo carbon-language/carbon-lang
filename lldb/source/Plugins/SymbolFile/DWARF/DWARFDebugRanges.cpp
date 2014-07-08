@@ -143,7 +143,7 @@ DWARFDebugRanges::Dump(Stream &s, const DWARFDataExtractor& debug_ranges_data, l
     {
         dw_addr_t begin = debug_ranges_data.GetMaxU64(offset_ptr, addr_size);
         dw_addr_t end   = debug_ranges_data.GetMaxU64(offset_ptr, addr_size);
-        // Extend 4 byte addresses that consits of 32 bits of 1's to be 64 bits
+        // Extend 4 byte addresses that consists of 32 bits of 1's to be 64 bits
         // of ones
         if (begin == 0xFFFFFFFFull && addr_size == 4)
             begin = LLDB_INVALID_ADDRESS;

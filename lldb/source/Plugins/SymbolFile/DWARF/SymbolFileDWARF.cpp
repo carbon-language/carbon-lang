@@ -1985,7 +1985,7 @@ SymbolFileDWARF::ParseChildMembers
                                     const uint64_t word_width = 32;
                                     
                                     // Objective-C has invalid DW_AT_bit_offset values in older versions
-                                    // of clang, so we have to be careful and only insert unnammed bitfields
+                                    // of clang, so we have to be careful and only insert unnamed bitfields
                                     // if we have a new enough clang.
                                     bool detect_unnamed_bitfields = true;
                                     
@@ -3081,7 +3081,7 @@ SymbolFileDWARF::DIEIsInNamespace (const ClangNamespaceDecl *namespace_decl,
                                    DWARFCompileUnit* cu, 
                                    const DWARFDebugInfoEntry* die)
 {
-    // No namespace specified, so the answesr i
+    // No namespace specified, so the answer is
     if (namespace_decl == NULL)
         return true;
     
@@ -6313,7 +6313,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         {
                             // Start the definition if the class is not objective C since
                             // the underlying decls respond to isCompleteDefinition(). Objective
-                            // C decls dont' respond to isCompleteDefinition() so we can't
+                            // C decls don't respond to isCompleteDefinition() so we can't
                             // start the declaration definition right away. For C++ class/union/structs
                             // we want to start the definition in case the class is needed as the
                             // declaration context for a contained class or type without the need

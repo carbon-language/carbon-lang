@@ -78,7 +78,7 @@ DWARFDeclContext::operator==(const DWARFDeclContext& rhs) const
     collection::const_iterator rhs_begin = rhs.m_entries.begin();
     // The two entry arrays have the same size
     
-    // First compare the tags before we do expensize name compares
+    // First compare the tags before we do expensive name compares
     for (pos = begin, rhs_pos = rhs_begin; pos != end; ++pos, ++rhs_pos)
     {
         if (pos->tag != rhs_pos->tag)

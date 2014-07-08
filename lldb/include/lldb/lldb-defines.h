@@ -103,7 +103,7 @@
 #define LLDB_INVALID_QUEUE_ID           0
 
 //----------------------------------------------------------------------
-/// CPU Type defintions
+/// CPU Type definitions
 //----------------------------------------------------------------------
 #define LLDB_ARCH_DEFAULT               "systemArch"
 #define LLDB_ARCH_DEFAULT_32BIT         "systemArch32"
@@ -111,7 +111,7 @@
 #define LLDB_INVALID_CPUTYPE            (0xFFFFFFFEu)
 
 //----------------------------------------------------------------------
-/// Option Set defintions
+/// Option Set definitions
 //----------------------------------------------------------------------
 // FIXME: I'm sure there's some #define magic that can create all 32 sets on the
 // fly.  That would have the added benefit of making this unreadable.

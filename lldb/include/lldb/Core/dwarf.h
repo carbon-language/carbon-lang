@@ -12,7 +12,7 @@
 
 #include <stdint.h>
 
-// Get the DWARF constant defintions from llvm
+// Get the DWARF constant definitions from llvm
 #include "llvm/Support/Dwarf.h"
 // and stuff them in our default namespace
 using namespace llvm::dwarf;

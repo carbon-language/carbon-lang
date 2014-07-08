@@ -18,7 +18,7 @@ using namespace lldb;
 using namespace lldb_private;
 
 
-// when the one and only logging channel is abled, then this will be non NULL.
+// when the one and only logging channel is enabled, then this will be non NULL.
 static LogChannelDWARF* g_log_channel = NULL;
 
 LogChannelDWARF::LogChannelDWARF () :
