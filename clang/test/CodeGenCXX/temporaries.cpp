@@ -27,6 +27,21 @@ namespace PR16263 {
   // CHECK: @_ZN7PR162631uE = constant i32* {{.*}} @_ZGRN7PR162631uE_ {{.*}} 12
 }
 
+namespace PR20227 {
+  struct A { ~A(); };
+  struct B { virtual ~B(); };
+  struct C : B {};
+
+  A &&a = dynamic_cast<A&&>(A{});
+  // CHECK: @_ZGRN7PR202271aE_ = private global
+
+  B &&b = dynamic_cast<C&&>(dynamic_cast<B&&>(C{}));
+  // CHECK: @_ZGRN7PR202271bE_ = private global
+
+  B &&c = static_cast<C&&>(static_cast<B&&>(C{}));
+  // CHECK: @_ZGRN7PR202271cE_ = private global
+}
+
 struct A {
   A();
   ~A();
