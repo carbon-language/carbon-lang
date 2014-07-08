@@ -6652,7 +6652,8 @@ bool InitializationSequence::Diagnose(Sema &S,
                               Args.back()->getLocEnd());
 
     if (Failure == FK_ListConstructorOverloadFailed) {
-      assert(Args.size() == 1 && "List construction from other than 1 argument.");
+      assert(Args.size() == 1 &&
+             "List construction from other than 1 argument.");
       InitListExpr *InitList = cast<InitListExpr>(Args[0]);
       Args = MultiExprArg(InitList->getInits(), InitList->getNumInits());
     }

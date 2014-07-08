@@ -2395,9 +2395,9 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
   }
 
   if (FTI.NumParams > 0) {
-    // For a declaration with parameters, eg. "T var(T());", suggest adding parens
-    // around the first parameter to turn the declaration into a variable
-    // declaration.
+    // For a declaration with parameters, eg. "T var(T());", suggest adding
+    // parens around the first parameter to turn the declaration into a
+    // variable declaration.
     SourceRange Range = FTI.Params[0].Param->getSourceRange();
     SourceLocation B = Range.getBegin();
     SourceLocation E = S.getLocForEndOfToken(Range.getEnd());
@@ -2407,8 +2407,8 @@ static void warnAboutAmbiguousFunction(Sema &S, Declarator &D,
       << FixItHint::CreateInsertion(B, "(")
       << FixItHint::CreateInsertion(E, ")");
   } else {
-    // For a declaration without parameters, eg. "T var();", suggest replacing the
-    // parens with an initializer to turn the declaration into a variable
+    // For a declaration without parameters, eg. "T var();", suggest replacing
+    // the parens with an initializer to turn the declaration into a variable
     // declaration.
     const CXXRecordDecl *RD = RT->getAsCXXRecordDecl();
 
