@@ -10670,6 +10670,8 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     assert(OtherSV->getOperand(0).getValueType() == VT &&
            "Shuffle types don't match");
 
+    SmallVector<int, 4> Mask;
+    // Compute the combined shuffle mask.
     for (unsigned i = 0; i != NumElts; ++i) {
       int Idx = SVN->getMaskElt(i);
       assert(Idx < (int)NumElts && "Index references undef operand");
@@ -10677,13 +10679,29 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
       // shuffle. Adopt the incoming index.
       if (Idx >= 0)
         Idx = OtherSV->getMaskElt(Idx);
-
-      // The combined shuffle must map each index to itself.
-      if (Idx >= 0 && (unsigned)Idx != i)
-        return SDValue();
+      Mask.push_back(Idx);
     }
 
-    return OtherSV->getOperand(0);
+    bool IsIdentityMask = true;
+    for (unsigned i = 0; i != NumElts && IsIdentityMask; ++i) {
+      // Skip Undefs.
+      if (Mask[i] < 0)
+        continue;
+
+      // The combined shuffle must map each index to itself.
+      IsIdentityMask = (unsigned)Mask[i] == i;
+    }
+
+    if (IsIdentityMask)
+      // optimize shuffle(shuffle(x, undef), undef) -> x.
+      return OtherSV->getOperand(0);
+
+    // It may still be beneficial to combine the two shuffles if the
+    // resulting shuffle is legal.
+    //   shuffle(shuffle(x, undef, M1), undef, M2) -> shuffle(x, undef, M3).
+    if (TLI.isShuffleMaskLegal(Mask, VT))
+      return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(0), N1,
+                                  &Mask[0]);
   }
 
   return SDValue();
