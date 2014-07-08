@@ -7124,11 +7124,15 @@ def err_omp_prohibited_region_simd : Error<
   "OpenMP constructs may not be nested inside a simd region">;
 def err_omp_sections_not_compound_stmt : Error<
   "the statement for '#pragma omp sections' must be a compound statement">;
+def err_omp_parallel_sections_not_compound_stmt : Error<
+  "the statement for '#pragma omp parallel sections' must be a compound statement">;
 def err_omp_orphaned_section_directive : Error<
   "%select{orphaned 'omp section' directives are prohibited, it|'omp section' directive}0"
   " must be closely nested to a sections region%select{|, not a %1 region}0">;
 def err_omp_sections_substmt_not_section : Error<
   "statement in 'omp sections' directive must be enclosed into a section region">;
+def err_omp_parallel_sections_substmt_not_section : Error<
+  "statement in 'omp parallel sections' directive must be enclosed into a section region">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

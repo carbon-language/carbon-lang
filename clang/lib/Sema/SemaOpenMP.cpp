@@ -976,6 +976,14 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
+  case OMPD_parallel_sections: {
+    Sema::CapturedParamNameType Params[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
+                             Params);
+    break;
+  }
   case OMPD_threadprivate:
   case OMPD_task:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -998,6 +1006,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel         | section         | +                                  | 
   // | parallel         | single          | *                                  |
   // | parallel         | parallel for    | *                                  |
+  // | parallel         |parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   // | for              | parallel        | *                                  |
   // | for              | for             | +                                  |
@@ -1006,6 +1015,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for              | section         | +                                  |
   // | for              | single          | +                                  |
   // | for              | parallel for    | *                                  |
+  // | for              |parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   // | simd             | parallel        |                                    |
   // | simd             | for             |                                    |
@@ -1014,6 +1024,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | simd             | section         |                                    |
   // | simd             | single          |                                    |
   // | simd             | parallel for    |                                    |
+  // | simd             |parallel sections|                                    |
   // +------------------+-----------------+------------------------------------+
   // | sections         | parallel        | *                                  |
   // | sections         | for             | +                                  |
@@ -1022,6 +1033,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | sections         | section         | *                                  |
   // | sections         | single          | +                                  |
   // | sections         | parallel for    | *                                  |
+  // | sections         |parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   // | section          | parallel        | *                                  |
   // | section          | for             | +                                  |
@@ -1030,6 +1042,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | section          | section         | +                                  |
   // | section          | single          | +                                  |
   // | section          | parallel for    | *                                  |
+  // | section          |parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   // | single           | parallel        | *                                  |
   // | single           | for             | +                                  |
@@ -1038,6 +1051,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | single           | section         | +                                  |
   // | single           | single          | +                                  |
   // | single           | parallel for    | *                                  |
+  // | single           |parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   // | parallel for     | parallel        | *                                  |
   // | parallel for     | for             | +                                  |
@@ -1046,6 +1060,16 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for     | section         | +                                  |
   // | parallel for     | single          | +                                  |
   // | parallel for     | parallel for    | *                                  |
+  // | parallel for     |parallel sections| *                                  |
+  // +------------------+-----------------+------------------------------------+
+  // | parallel sections| parallel        | *                                  |
+  // | parallel sections| for             | +                                  |
+  // | parallel sections| simd            | *                                  |
+  // | parallel sections| sections        | +                                  |
+  // | parallel sections| section         | *                                  |
+  // | parallel sections| single          | +                                  |
+  // | parallel sections| parallel for    | *                                  |
+  // | parallel sections|parallel sections| *                                  |
   // +------------------+-----------------+------------------------------------+
   if (Stack->getCurScope()) {
     auto ParentRegion = Stack->getParentDirective();
@@ -1063,7 +1087,8 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
       // Orphaned section directives are prohibited. That is, the section
       // directives must appear within the sections construct and must not be
       // encountered elsewhere in the sections region.
-      if (ParentRegion != OMPD_sections) {
+      if (ParentRegion != OMPD_sections &&
+          ParentRegion != OMPD_parallel_sections) {
         SemaRef.Diag(StartLoc, diag::err_omp_orphaned_section_directive)
             << (ParentRegion != OMPD_unknown)
             << getOpenMPDirectiveName(ParentRegion);
@@ -1154,6 +1179,10 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
   case OMPD_parallel_for:
     Res = ActOnOpenMPParallelForDirective(ClausesWithImplicit, AStmt, StartLoc,
                                           EndLoc, VarsWithInheritedDSA);
+    break;
+  case OMPD_parallel_sections:
+    Res = ActOnOpenMPParallelSectionsDirective(ClausesWithImplicit, AStmt,
+                                               StartLoc, EndLoc);
     break;
   case OMPD_threadprivate:
   case OMPD_task:
@@ -1832,6 +1861,41 @@ StmtResult Sema::ActOnOpenMPParallelForDirective(
   getCurFunction()->setHasBranchProtectedScope();
   return OMPParallelForDirective::Create(Context, StartLoc, EndLoc,
                                          NestedLoopCount, Clauses, AStmt);
+}
+
+StmtResult
+Sema::ActOnOpenMPParallelSectionsDirective(ArrayRef<OMPClause *> Clauses,
+                                           Stmt *AStmt, SourceLocation StartLoc,
+                                           SourceLocation EndLoc) {
+  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
+  auto BaseStmt = AStmt;
+  while (CapturedStmt *CS = dyn_cast_or_null<CapturedStmt>(BaseStmt))
+    BaseStmt = CS->getCapturedStmt();
+  if (auto C = dyn_cast_or_null<CompoundStmt>(BaseStmt)) {
+    auto S = C->children();
+    if (!S)
+      return StmtError();
+    // All associated statements must be '#pragma omp section' except for
+    // the first one.
+    for (++S; S; ++S) {
+      auto SectionStmt = *S;
+      if (!SectionStmt || !isa<OMPSectionDirective>(SectionStmt)) {
+        if (SectionStmt)
+          Diag(SectionStmt->getLocStart(),
+               diag::err_omp_parallel_sections_substmt_not_section);
+        return StmtError();
+      }
+    }
+  } else {
+    Diag(AStmt->getLocStart(),
+         diag::err_omp_parallel_sections_not_compound_stmt);
+    return StmtError();
+  }
+
+  getCurFunction()->setHasBranchProtectedScope();
+
+  return OMPParallelSectionsDirective::Create(Context, StartLoc, EndLoc,
+                                              Clauses, AStmt);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
