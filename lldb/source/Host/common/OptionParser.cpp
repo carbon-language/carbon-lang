@@ -9,6 +9,9 @@
 
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Host/HostGetOpt.h"
+#include "lldb/lldb-private-types.h"
+
+#include <vector>
 
 using namespace lldb_private;
 
@@ -36,7 +39,19 @@ OptionParser::Parse (int argc,
                      const Option *longopts,
                      int *longindex)
 {
-    return getopt_long_only(argc, argv, optstring, (const option*)longopts, longindex);
+    std::vector<option> opts;
+    while (longopts->definition != nullptr)
+    {
+        option opt;
+        opt.flag = longopts->flag;
+        opt.val = longopts->val;
+        opt.name = longopts->definition->long_option;
+        opt.has_arg = longopts->definition->option_has_arg;
+        opts.push_back(opt);
+        ++longopts;
+    }
+    opts.push_back(option());
+    return getopt_long_only(argc, argv, optstring, &opts[0], longindex);
 }
 
 char*

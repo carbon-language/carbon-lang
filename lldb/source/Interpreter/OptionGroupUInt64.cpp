@@ -31,6 +31,7 @@ OptionGroupUInt64::OptionGroupUInt64 (uint32_t usage_mask,
     m_option_definition.required = required;
     m_option_definition.long_option = long_option;
     m_option_definition.short_option = short_option;
+    m_option_definition.validator = nullptr;
     m_option_definition.option_has_arg = OptionParser::eRequiredArgument;
     m_option_definition.enum_values = nullptr;
     m_option_definition.completion_type = completion_type;
