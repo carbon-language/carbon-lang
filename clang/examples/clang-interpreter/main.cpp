@@ -77,6 +77,7 @@ int main(int argc, const char **argv, char * const *envp) {
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
   Driver TheDriver(Path, llvm::sys::getProcessTriple(), Diags);
   TheDriver.setTitle("clang interpreter");
+  TheDriver.setCheckInputsExist(false);
 
   // FIXME: This is a hack to try to force the driver to do something we can
   // recognize. We need to extend the driver library to support this use model
