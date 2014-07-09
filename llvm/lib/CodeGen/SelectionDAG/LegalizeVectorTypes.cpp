@@ -2413,7 +2413,6 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
 SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
-  unsigned NumElts = VT.getVectorNumElements();
 
   SDValue InOp = N->getOperand(0);
   // If some legalization strategy other than widening is used on the operand,
@@ -2422,8 +2421,9 @@ SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
   if (getTypeAction(InOp.getValueType()) != TargetLowering::TypeWidenVector)
     return WidenVecOp_Convert(N);
   InOp = GetWidenedVector(InOp);
-  EVT InVT = InOp.getValueType();
-  assert(NumElts < InVT.getVectorNumElements() && "Input wasn't widened!");
+  assert(VT.getVectorNumElements() <
+             InOp.getValueType().getVectorNumElements() &&
+         "Input wasn't widened!");
 
   // Use a special DAG node to represent the operation of zero extending the
   // low lanes.
