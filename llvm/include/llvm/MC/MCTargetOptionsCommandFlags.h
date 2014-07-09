@@ -36,12 +36,17 @@ cl::opt<bool> RelaxAll("mc-relax-all",
 cl::opt<int> DwarfVersion("dwarf-version", cl::desc("Dwarf version"),
                           cl::init(0));
 
+cl::opt<bool> ShowMCInst("asm-show-inst",
+                         cl::desc("Emit internal instruction representation to "
+                                  "assembly file"));
+
 static inline MCTargetOptions InitMCTargetOptionsFromFlags() {
   MCTargetOptions Options;
   Options.SanitizeAddress =
       (AsmInstrumentation == MCTargetOptions::AsmInstrumentationAddress);
   Options.MCRelaxAll = RelaxAll;
   Options.DwarfVersion = DwarfVersion;
+  Options.ShowMCInst = ShowMCInst;
   return Options;
 }
 
