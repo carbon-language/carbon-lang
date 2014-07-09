@@ -52,10 +52,10 @@ define i32 @ogt_f32(float %a, float %b) nounwind {
 ; 64-C-DAG:      c.ule.s $f12, $f13
 ; 64-C-DAG:      movf $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.olt.s $[[T0:f[0-9]+]], $f14, $f12
+; 32-CMP-DAG:    cmp.lt.s $[[T0:f[0-9]+]], $f14, $f12
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.olt.s $[[T0:f[0-9]+]], $f13, $f12
+; 64-CMP-DAG:    cmp.lt.s $[[T0:f[0-9]+]], $f13, $f12
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp ogt float %a, %b
@@ -76,10 +76,10 @@ define i32 @oge_f32(float %a, float %b) nounwind {
 ; 64-C-DAG:      c.ult.s $f12, $f13
 ; 64-C-DAG:      movf $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.ole.s $[[T0:f[0-9]+]], $f14, $f12
+; 32-CMP-DAG:    cmp.le.s $[[T0:f[0-9]+]], $f14, $f12
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.ole.s $[[T0:f[0-9]+]], $f13, $f12
+; 64-CMP-DAG:    cmp.le.s $[[T0:f[0-9]+]], $f13, $f12
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp oge float %a, %b
@@ -100,10 +100,10 @@ define i32 @olt_f32(float %a, float %b) nounwind {
 ; 64-C-DAG:      c.olt.s $f12, $f13
 ; 64-C-DAG:      movt $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.olt.s $[[T0:f[0-9]+]], $f12, $f14
+; 32-CMP-DAG:    cmp.lt.s $[[T0:f[0-9]+]], $f12, $f14
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.olt.s $[[T0:f[0-9]+]], $f12, $f13
+; 64-CMP-DAG:    cmp.lt.s $[[T0:f[0-9]+]], $f12, $f13
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp olt float %a, %b
@@ -124,10 +124,10 @@ define i32 @ole_f32(float %a, float %b) nounwind {
 ; 64-C-DAG:      c.ole.s $f12, $f13
 ; 64-C-DAG:      movt $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.ole.s $[[T0:f[0-9]+]], $f12, $f14
+; 32-CMP-DAG:    cmp.le.s $[[T0:f[0-9]+]], $f12, $f14
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.ole.s $[[T0:f[0-9]+]], $f12, $f13
+; 64-CMP-DAG:    cmp.le.s $[[T0:f[0-9]+]], $f12, $f13
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp ole float %a, %b
@@ -412,10 +412,10 @@ define i32 @ogt_f64(double %a, double %b) nounwind {
 ; 64-C-DAG:      c.ule.d $f12, $f13
 ; 64-C-DAG:      movf $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.olt.d $[[T0:f[0-9]+]], $f14, $f12
+; 32-CMP-DAG:    cmp.lt.d $[[T0:f[0-9]+]], $f14, $f12
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.olt.d $[[T0:f[0-9]+]], $f13, $f12
+; 64-CMP-DAG:    cmp.lt.d $[[T0:f[0-9]+]], $f13, $f12
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp ogt double %a, %b
@@ -436,10 +436,10 @@ define i32 @oge_f64(double %a, double %b) nounwind {
 ; 64-C-DAG:      c.ult.d $f12, $f13
 ; 64-C-DAG:      movf $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.ole.d $[[T0:f[0-9]+]], $f14, $f12
+; 32-CMP-DAG:    cmp.le.d $[[T0:f[0-9]+]], $f14, $f12
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.ole.d $[[T0:f[0-9]+]], $f13, $f12
+; 64-CMP-DAG:    cmp.le.d $[[T0:f[0-9]+]], $f13, $f12
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp oge double %a, %b
@@ -460,10 +460,10 @@ define i32 @olt_f64(double %a, double %b) nounwind {
 ; 64-C-DAG:      c.olt.d $f12, $f13
 ; 64-C-DAG:      movt $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.olt.d $[[T0:f[0-9]+]], $f12, $f14
+; 32-CMP-DAG:    cmp.lt.d $[[T0:f[0-9]+]], $f12, $f14
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.olt.d $[[T0:f[0-9]+]], $f12, $f13
+; 64-CMP-DAG:    cmp.lt.d $[[T0:f[0-9]+]], $f12, $f13
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp olt double %a, %b
@@ -484,10 +484,10 @@ define i32 @ole_f64(double %a, double %b) nounwind {
 ; 64-C-DAG:      c.ole.d $f12, $f13
 ; 64-C-DAG:      movt $[[T0]], $1, $fcc0
 
-; 32-CMP-DAG:    cmp.ole.d $[[T0:f[0-9]+]], $f12, $f14
+; 32-CMP-DAG:    cmp.le.d $[[T0:f[0-9]+]], $f12, $f14
 ; 32-CMP-DAG:    mfc1 $2, $[[T0]]
 
-; 64-CMP-DAG:    cmp.ole.d $[[T0:f[0-9]+]], $f12, $f13
+; 64-CMP-DAG:    cmp.le.d $[[T0:f[0-9]+]], $f12, $f13
 ; 64-CMP-DAG:    mfc1 $2, $[[T0]]
 
   %1 = fcmp ole double %a, %b

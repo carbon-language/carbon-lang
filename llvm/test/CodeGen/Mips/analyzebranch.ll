@@ -16,7 +16,7 @@ entry:
 ; 32-GPR:        mtc1      $zero, $[[Z:f[0-9]]]
 ; 32-GPR:        mthc1     $zero, $[[Z:f[0-9]]]
 ; 64-GPR:        dmtc1     $zero, $[[Z:f[0-9]]]
-; GPR:           cmp.olt.d $[[FGRCC:f[0-9]+]], $[[Z]], $f12
+; GPR:           cmp.lt.d  $[[FGRCC:f[0-9]+]], $[[Z]], $f12
 ; GPR:           mfc1      $[[GPRCC:[0-9]+]], $[[FGRCC]]
 ; GPR-NOT:       not       $[[GPRCC]], $[[GPRCC]]
 ; GPR:           bnez      $[[GPRCC]], $BB
