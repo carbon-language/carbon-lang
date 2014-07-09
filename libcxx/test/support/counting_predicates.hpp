@@ -22,6 +22,7 @@ public:
 	
 	bool operator () (const argument_type &a) const { ++count_; return p_(a); }
 	size_t count() const { return count_; }
+	void reset() { count_ = 0; }
 	
 private:
 	Predicate p_;
@@ -38,7 +39,8 @@ public:
 	
 	bool operator () (const Arg1 &a1, const Arg2 &a2) const { ++count_; return p_(a1, a2); }
 	size_t count() const { return count_; }
-	
+	void reset() { count_ = 0; }
+
 private:
 	Predicate p_;
 	mutable size_t count_;
