@@ -655,13 +655,13 @@ static ConstantSDNode *isConstOrConstSplat(SDValue N) {
     return CN;
 
   if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(N)) {
-    bool HasUndefElements;
-    ConstantSDNode *CN = BV->getConstantSplatNode(HasUndefElements);
+    BitVector UndefElements;
+    ConstantSDNode *CN = BV->getConstantSplatNode(&UndefElements);
 
     // BuildVectors can truncate their operands. Ignore that case here.
     // FIXME: We blindly ignore splats which include undef which is overly
     // pessimistic.
-    if (CN && !HasUndefElements &&
+    if (CN && UndefElements.none() &&
         CN->getValueType(0) == N.getValueType().getScalarType())
       return CN;
   }

@@ -20,6 +20,7 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
@@ -1584,15 +1585,26 @@ public:
                        bool isBigEndian = false) const;
 
   /// \brief Returns the splatted value or a null value if this is not a splat.
-  SDValue getSplatValue(bool &HasUndefElements) const;
+  ///
+  /// If passed a non-null UndefElements bitvector, it will resize it to match
+  /// the vector width and set the bits where elements are undef.
+  SDValue getSplatValue(BitVector *UndefElements = nullptr) const;
 
   /// \brief Returns the splatted constant or null if this is not a constant
   /// splat.
-  ConstantSDNode *getConstantSplatNode(bool &HasUndefElements) const;
+  ///
+  /// If passed a non-null UndefElements bitvector, it will resize it to match
+  /// the vector width and set the bits where elements are undef.
+  ConstantSDNode *
+  getConstantSplatNode(BitVector *UndefElements = nullptr) const;
 
   /// \brief Returns the splatted constant FP or null if this is not a constant
   /// FP splat.
-  ConstantFPSDNode *getConstantFPSplatNode(bool &HasUndefElements) const;
+  ///
+  /// If passed a non-null UndefElements bitvector, it will resize it to match
+  /// the vector width and set the bits where elements are undef.
+  ConstantFPSDNode *
+  getConstantFPSplatNode(BitVector *UndefElements = nullptr) const;
 
   bool isConstant() const;
 
