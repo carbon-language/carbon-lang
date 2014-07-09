@@ -20385,7 +20385,7 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
 
   // The right side has to be a 'trunc' or a constant vector.
   bool RHSTrunc = N1.getOpcode() == ISD::TRUNCATE;
-  ConstantSDNode *RHSConstSplat;
+  ConstantSDNode *RHSConstSplat = nullptr;
   if (auto *RHSBV = dyn_cast<BuildVectorSDNode>(N1))
     RHSConstSplat = RHSBV->getConstantSplatNode();
   if (!RHSTrunc && !RHSConstSplat)
