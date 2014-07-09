@@ -112,6 +112,7 @@ class ProcessLaunchTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailureDarwin("llvm.org/pr20265")
     def test_set_working_dir_with_dsym (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
         self.buildDsym(dictionary=self.d)
@@ -120,6 +121,7 @@ class ProcessLaunchTestCase(TestBase):
 
     @skipIfFreeBSD # llvm.org/pr16684
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20265")
     def test_set_working_dir_with_dwarf (self):
         """Test that '-w dir' sets the working dir when running the inferior."""
         self.buildDwarf(dictionary=self.d)
