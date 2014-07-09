@@ -64,3 +64,6 @@ void test3_foo() __attribute__((alias("test3_bar")));
 __attribute__((section("test"))) void test4_bar() { }
 void test4_foo() __attribute__((section("test")));
 void test4_foo() __attribute__((alias("test4_bar")));
+
+int test5_bar = 0;
+extern struct incomplete_type test5_foo __attribute__((alias("test5_bar")));
