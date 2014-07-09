@@ -3475,27 +3475,14 @@ class ARMTargetInfo : public TargetInfo {
   static const Builtin::Info BuiltinInfo[];
 
   static bool shouldUseInlineAtomic(const llvm::Triple &T) {
-    if (T.isOSWindows())
-      return true;
-
-    // On linux, binaries targeting old cpus call functions in libgcc to
-    // perform atomic operations. The implementation in libgcc then calls into
-    // the kernel which on armv6 and newer uses ldrex and strex. The net result
-    // is that if we assume the kernel is at least as recent as the hardware,
-    // it is safe to use atomic instructions on armv6 and newer.
-    if (!T.isOSLinux() &&
-        T.getOS() != llvm::Triple::FreeBSD &&
-        T.getOS() != llvm::Triple::NetBSD &&
-        T.getOS() != llvm::Triple::Bitrig)
-      return false;
     StringRef ArchName = T.getArchName();
     if (T.getArch() == llvm::Triple::arm ||
         T.getArch() == llvm::Triple::armeb) {
       StringRef VersionStr;
       if (ArchName.startswith("armv"))
-        VersionStr = ArchName.substr(4);
+        VersionStr = ArchName.substr(4, 1);
       else if (ArchName.startswith("armebv"))
-        VersionStr = ArchName.substr(6);
+        VersionStr = ArchName.substr(6, 1);
       else
         return false;
       unsigned Version;
@@ -3507,9 +3494,9 @@ class ARMTargetInfo : public TargetInfo {
            T.getArch() == llvm::Triple::thumbeb);
     StringRef VersionStr;
     if (ArchName.startswith("thumbv"))
-      VersionStr = ArchName.substr(6);
+      VersionStr = ArchName.substr(6, 1);
     else if (ArchName.startswith("thumbebv"))
-      VersionStr = ArchName.substr(8);
+      VersionStr = ArchName.substr(8, 1);
     else
       return false;
     unsigned Version;
@@ -3853,6 +3840,13 @@ public:
   bool setCPU(const std::string &Name) override {
     if (!getCPUDefineSuffix(Name))
       return false;
+
+    // Cortex M does not support 8 byte atomics, while general Thumb2 does.
+    StringRef Profile = getCPUProfile(Name);
+    if (Profile == "M" && MaxAtomicInlineWidth) {
+      MaxAtomicPromoteWidth = 32;
+      MaxAtomicInlineWidth = 32;
+    }
 
     CPU = Name;
     return true;
