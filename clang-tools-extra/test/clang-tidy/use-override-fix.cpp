@@ -1,6 +1,8 @@
 // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-use-override %t
 // REQUIRES: shell
 
+// CHECK-MESSAGES-NOT: warning:
+
 #define ABSTRACT = 0
 
 #define OVERRIDE override
@@ -32,113 +34,161 @@ struct Base {
 struct SimpleCases : public Base {
 public:
   virtual ~SimpleCases();
-  // CHECK: {{^  ~SimpleCases\(\) override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using 'override' or 'final' instead of 'virtual'
+  // CHECK-FIXES: {{^  ~SimpleCases\(\) override;}}
 
   void a();
-  // CHECK: {{^  void a\(\) override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Use exactly
+  // CHECK-FIXES: {{^  void a\(\) override;}}
+
   void b() override;
-  // CHECK: {{^  void b\(\) override;}}
+  // CHECK-MESSAGES-NOT: warning:
+  // CHECK-FIXES: {{^  void b\(\) override;}}
+
   virtual void c();
-  // CHECK: {{^  void c\(\) override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void c\(\) override;}}
+
   virtual void d() override;
-  // CHECK: {{^  void d\(\) override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void d\(\) override;}}
 
   virtual void e() = 0;
-  // CHECK: {{^  void e\(\) override = 0;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void e\(\) override = 0;}}
+
   virtual void f()=0;
-  // CHECK: {{^  void f\(\)override =0;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void f\(\)override =0;}}
+
   virtual void g() ABSTRACT;
-  // CHECK: {{^  void g\(\) override ABSTRACT;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void g\(\) override ABSTRACT;}}
 
   virtual void j() const;
-  // CHECK: {{^  void j\(\) const override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void j\(\) const override;}}
+
   virtual MustUseResultObject k();  // Has an implicit attribute.
-  // CHECK: {{^  MustUseResultObject k\(\) override;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: Prefer using
+  // CHECK-FIXES: {{^  MustUseResultObject k\(\) override;}}
+
   virtual bool l() MUST_USE_RESULT; // Has an explicit attribute
-  // CHECK: {{^  bool l\(\) override MUST_USE_RESULT;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  bool l\(\) override MUST_USE_RESULT;}}
 
   virtual void m() override final;
-  // CHECK: {{^  void m\(\) final;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void m\(\) final;}}
 };
 
+// CHECK-MESSAGES-NOT: warning:
+
 void SimpleCases::i() {}
-// CHECK: {{^void SimpleCases::i\(\) {}}}
+// CHECK-FIXES: {{^void SimpleCases::i\(\) {}}}
 
 SimpleCases::~SimpleCases() {}
-// CHECK: {{^SimpleCases::~SimpleCases\(\) {}}}
+// CHECK-FIXES: {{^SimpleCases::~SimpleCases\(\) {}}}
 
 struct DefaultedDestructor : public Base {
   DefaultedDestructor() {}
   virtual ~DefaultedDestructor() = default;
-  // CHECK: {{^  ~DefaultedDestructor\(\) override = default;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-FIXES: {{^  ~DefaultedDestructor\(\) override = default;}}
 };
 
 struct FinalSpecified : public Base {
 public:
   virtual ~FinalSpecified() final;
-  // CHECK: {{^  ~FinalSpecified\(\) final;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Use exactly
+  // CHECK-FIXES: {{^  ~FinalSpecified\(\) final;}}
 
   void b() final;
-  // CHECK: {{^  void b\(\) final;}}
+  // CHECK-MESSAGES-NOT: warning:
+  // CHECK-FIXES: {{^  void b\(\) final;}}
+
   virtual void d() final;
-  // CHECK: {{^  void d\(\) final;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void d\(\) final;}}
 
   virtual void e() final = 0;
-  // CHECK: {{^  void e\(\) final = 0;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void e\(\) final = 0;}}
 
   virtual void j() const final;
-  // CHECK: {{^  void j\(\) const final;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void j\(\) const final;}}
+
   virtual bool l() final MUST_USE_RESULT;
-  // CHECK: {{^  bool l\(\) final MUST_USE_RESULT;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  bool l\(\) final MUST_USE_RESULT;}}
 };
 
 struct InlineDefinitions : public Base {
 public:
   virtual ~InlineDefinitions() {}
-  // CHECK: {{^  ~InlineDefinitions\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-FIXES: {{^  ~InlineDefinitions\(\) override {}}}
 
   void a() {}
-  // CHECK: {{^  void a\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Use exactly
+  // CHECK-FIXES: {{^  void a\(\) override {}}}
+
   void b() override {}
-  // CHECK: {{^  void b\(\) override {}}}
+  // CHECK-MESSAGES-NOT: warning:
+  // CHECK-FIXES: {{^  void b\(\) override {}}}
+
   virtual void c() {}
-  // CHECK: {{^  void c\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void c\(\) override {}}}
+
   virtual void d() override {}
-  // CHECK: {{^  void d\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  void d\(\) override {}}}
 
   virtual void j() const {}
-  // CHECK: {{^  void j\(\) const override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  void j\(\) const override {}}}
+
   virtual MustUseResultObject k() {}  // Has an implicit attribute.
-  // CHECK: {{^  MustUseResultObject k\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:31: warning: Prefer using
+  // CHECK-FIXES: {{^  MustUseResultObject k\(\) override {}}}
+
   virtual bool l() MUST_USE_RESULT {} // Has an explicit attribute
-  // CHECK: {{^  bool l\(\) override MUST_USE_RESULT {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  bool l\(\) override MUST_USE_RESULT {}}}
 };
 
 struct Macros : public Base {
   // Tests for 'virtual' and 'override' being defined through macros. Basically
   // give up for now.
   NOT_VIRTUAL void a() NOT_OVERRIDE;
-  // CHECK: {{^  NOT_VIRTUAL void a\(\) override NOT_OVERRIDE;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: Use exactly
+  // CHECK-FIXES: {{^  NOT_VIRTUAL void a\(\) override NOT_OVERRIDE;}}
 
   VIRTUAL void b() NOT_OVERRIDE;
-  // CHECK: {{^  VIRTUAL void b\(\) override NOT_OVERRIDE;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
+  // CHECK-FIXES: {{^  VIRTUAL void b\(\) override NOT_OVERRIDE;}}
 
   NOT_VIRTUAL void c() OVERRIDE;
-  // CHECK: {{^  NOT_VIRTUAL void c\(\) OVERRIDE;}}
+  // CHECK-MESSAGES-NOT: warning:
+  // CHECK-FIXES: {{^  NOT_VIRTUAL void c\(\) OVERRIDE;}}
 
   VIRTUAL void d() OVERRIDE;
-  // CHECK: {{^  VIRTUAL void d\(\) OVERRIDE;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  VIRTUAL void d\(\) OVERRIDE;}}
 
 #define FUNC(name, return_type) return_type name()
   FUNC(void, e);
-  // CHECK: {{^  FUNC\(void, e\);}}
+  // CHECK-FIXES: {{^  FUNC\(void, e\);}}
 
 #define F virtual void f();
   F
-  // CHECK: {{^  F}}
+  // CHECK-FIXES: {{^  F}}
 
   VIRTUAL void g() OVERRIDE final;
-  // CHECK: {{^  VIRTUAL void g\(\) final;}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-FIXES: {{^  VIRTUAL void g\(\) final;}}
 };
 
 // Tests for templates.
@@ -148,14 +198,15 @@ template <typename T> struct TemplateBase {
 
 template <typename T> struct DerivedFromTemplate : public TemplateBase<T> {
   virtual void f(T t);
-  // CHECK: {{^  void f\(T t\) override;}}
+  // CHECK-FIXES: {{^  void f\(T t\) override;}}
 };
 void f() { DerivedFromTemplate<int>().f(2); }
 
 template <class C>
 struct UnusedMemberInstantiation : public C {
   virtual ~UnusedMemberInstantiation() {}
-  // CHECK: {{^  ~UnusedMemberInstantiation\(\) override {}}}
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using
+  // CHECK-FIXES: {{^  ~UnusedMemberInstantiation\(\) override {}}}
 };
 struct IntantiateWithoutUse : public UnusedMemberInstantiation<Base> {};
 
@@ -164,7 +215,10 @@ struct IntantiateWithoutUse : public UnusedMemberInstantiation<Base> {};
 template <int I>
 struct MembersOfSpecializations : public Base {
   void a() override;
-  // CHECK: {{^  void a\(\) override;}}
+  // CHECK-MESSAGES-NOT: warning:
+  // CHECK-FIXES: {{^  void a\(\) override;}}
 };
 template <> void MembersOfSpecializations<3>::a() {}
 void f() { MembersOfSpecializations<3>().a(); };
+
+// CHECK-MESSAGES-NOT: warning:
