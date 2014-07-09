@@ -40,6 +40,7 @@ enum TokenType {
   TT_CtorInitializerComma,
   TT_DesignatedInitializerPeriod,
   TT_DictLiteral,
+  TT_FunctionDeclarationName,
   TT_FunctionLBrace,
   TT_FunctionTypeLParen,
   TT_ImplicitStringLiteral,
