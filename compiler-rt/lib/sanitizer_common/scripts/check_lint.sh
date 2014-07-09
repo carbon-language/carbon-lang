@@ -54,8 +54,7 @@ run_lint() {
 }
 
 run_lint ${LLVM_LINT_FILTER} --filter=${LLVM_LINT_FILTER} \
-  lib/Transforms/Instrumentation/*Sanitizer.cpp \
-  lib/Transforms/Utils/SpecialCaseList.cpp &
+  lib/Transforms/Instrumentation/*Sanitizer.cpp &
 
 if [ "${COMPILER_RT}" == "" ]; then
   COMPILER_RT=projects/compiler-rt
