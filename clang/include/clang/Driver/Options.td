@@ -1235,12 +1235,18 @@ def mips32 : Flag<["-"], "mips32">,
 def mips32r2 : Flag<["-"], "mips32r2">,
   Alias<march_EQ>, AliasArgs<["mips32r2"]>,
   HelpText<"Equivalent to -march=mips32r2">, Flags<[HelpHidden]>;
+def mips32r6 : Flag<["-"], "mips32r6">,
+  Alias<march_EQ>, AliasArgs<["mips32r6"]>,
+  HelpText<"Equivalent to -march=mips32r6">, Flags<[HelpHidden]>;
 def mips64 : Flag<["-"], "mips64">,
   Alias<march_EQ>, AliasArgs<["mips64"]>,
   HelpText<"Equivalent to -march=mips64">, Flags<[HelpHidden]>;
 def mips64r2 : Flag<["-"], "mips64r2">,
   Alias<march_EQ>, AliasArgs<["mips64r2"]>,
   HelpText<"Equivalent to -march=mips64r2">, Flags<[HelpHidden]>;
+def mips64r6 : Flag<["-"], "mips64r6">,
+  Alias<march_EQ>, AliasArgs<["mips64r6"]>,
+  HelpText<"Equivalent to -march=mips64r6">, Flags<[HelpHidden]>;
 def module_file_info : Flag<["-"], "module-file-info">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
 def mthumb : Flag<["-"], "mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<["-"], "mtune=">, Group<m_Group>;

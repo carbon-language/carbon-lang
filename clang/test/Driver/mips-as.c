@@ -92,6 +92,11 @@
 // RUN:   | FileCheck -check-prefix=MIPS-ALIAS-32R2 %s
 // MIPS-ALIAS-32R2: as{{(.exe)?}}" "-march" "mips32r2" "-mabi" "32" "-EB"
 //
+// RUN: %clang -target mips-linux-gnu -mips32r6 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-32R6 %s
+// MIPS-ALIAS-32R6: as{{(.exe)?}}" "-march" "mips32r6" "-mabi" "32" "-EB"
+//
 // RUN: %clang -target mips64-linux-gnu -mips64 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ALIAS-64 %s
@@ -101,6 +106,11 @@
 // RUN:   -no-integrated-as -c %s 2>&1 \
 // RUN:   | FileCheck -check-prefix=MIPS-ALIAS-64R2 %s
 // MIPS-ALIAS-64R2: as{{(.exe)?}}" "-march" "mips64r2" "-mabi" "64" "-EB"
+//
+// RUN: %clang -target mips64-linux-gnu -mips64r6 -### \
+// RUN:   -no-integrated-as -c %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=MIPS-ALIAS-64R6 %s
+// MIPS-ALIAS-64R6: as{{(.exe)?}}" "-march" "mips64r6" "-mabi" "64" "-EB"
 //
 // RUN: %clang -target mips-linux-gnu -mno-mips16 -mips16 -### \
 // RUN:   -no-integrated-as -c %s 2>&1 \
