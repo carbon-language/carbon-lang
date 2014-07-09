@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This is the source level debug info generator for llvm translation.
+// This is the source-level debug info generator for llvm translation.
 //
 //===----------------------------------------------------------------------===//
 

@@ -8,7 +8,7 @@ compiler infrastructure project.
 
 Unlike many other compiler frontends, Clang is useful for a number of things
 beyond just compiling code: we intend for Clang to be host to a number of
-different source level tools.  One example of this is the Clang Static Analyzer.
+different source-level tools.  One example of this is the Clang Static Analyzer.
 
 If you're interested in more (including how to build Clang) it is best to read
 the relevant web sites.  Here are some pointers:

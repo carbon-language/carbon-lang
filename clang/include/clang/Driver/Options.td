@@ -925,7 +925,7 @@ def fdebug_types_section: Flag <["-"], "fdebug-types-section">, Group<f_Group>,
 def fno_debug_types_section: Flag<["-"], "fno-debug-types-section">, Group<f_Group>,
   Flags<[CC1Option]>;
 def g_Flag : Flag<["-"], "g">, Group<g_Group>,
-  HelpText<"Generate source level debug information">, Flags<[CC1Option,CC1AsOption]>;
+  HelpText<"Generate source-level debug information">, Flags<[CC1Option,CC1AsOption]>;
 def gline_tables_only : Flag<["-"], "gline-tables-only">, Group<g_Group>,
   HelpText<"Emit debug line number tables only">, Flags<[CC1Option]>;
 def gmlt : Flag<["-"], "gmlt">, Alias<gline_tables_only>;
@@ -939,11 +939,11 @@ def ggdb1 : Flag<["-"], "ggdb1">, Group<g_Group>;
 def ggdb2 : Flag<["-"], "ggdb2">, Group<g_Group>;
 def ggdb3 : Flag<["-"], "ggdb3">, Group<g_Group>;
 def gdwarf_2 : Flag<["-"], "gdwarf-2">, Group<g_Group>,
-  HelpText<"Generate source level debug information with dwarf version 2">, Flags<[CC1Option,CC1AsOption]>;
+  HelpText<"Generate source-level debug information with dwarf version 2">, Flags<[CC1Option,CC1AsOption]>;
 def gdwarf_3 : Flag<["-"], "gdwarf-3">, Group<g_Group>,
-  HelpText<"Generate source level debug information with dwarf version 3">, Flags<[CC1Option,CC1AsOption]>;
+  HelpText<"Generate source-level debug information with dwarf version 3">, Flags<[CC1Option,CC1AsOption]>;
 def gdwarf_4 : Flag<["-"], "gdwarf-4">, Group<g_Group>,
-  HelpText<"Generate source level debug information with dwarf version 4">, Flags<[CC1Option,CC1AsOption]>;
+  HelpText<"Generate source-level debug information with dwarf version 4">, Flags<[CC1Option,CC1AsOption]>;
 def gfull : Flag<["-"], "gfull">, Group<g_Group>;
 def gused : Flag<["-"], "gused">, Group<g_Group>;
 def gstabs : Joined<["-"], "gstabs">, Group<g_Group>, Flags<[Unsupported]>;
