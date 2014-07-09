@@ -135,9 +135,9 @@ or create a symbolic link so it updates automatically.
   </Type>
 
   <Type Name="llvm::StringMap&lt;*,*&gt;">
-    <DisplayString>{{ size={ItemSize}, buckets={NumBuckets} }}</DisplayString>
+    <DisplayString>{{ size={NumItems}, buckets={NumBuckets} }}</DisplayString>
     <Expand>
-      <Item Name="[size]">ItemSize</Item>
+      <Item Name="[size]">NumItems</Item>
       <Item Name="[buckets]">NumBuckets</Item>
       <ArrayItems>
         <Size>NumBuckets</Size>
