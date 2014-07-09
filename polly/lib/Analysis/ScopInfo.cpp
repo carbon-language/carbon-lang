@@ -58,11 +58,10 @@ STATISTIC(RichScopFound, "Number of Scops containing a loop");
 // Multiplicative reductions can be disabled seperately as these kind of
 // operations can overflow easily. Additive reductions and bit operations
 // are in contrast pretty stable.
-static cl::opt<bool>
-DisableMultiplicativeReductions("polly-disable-multiplicative-reductions",
-                                cl::desc("Disable multiplicative reductions"),
-                                cl::Hidden, cl::ZeroOrMore, cl::init(false),
-                                cl::cat(PollyCategory));
+static cl::opt<bool> DisableMultiplicativeReductions(
+    "polly-disable-multiplicative-reductions",
+    cl::desc("Disable multiplicative reductions"), cl::Hidden, cl::ZeroOrMore,
+    cl::init(false), cl::cat(PollyCategory));
 
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {

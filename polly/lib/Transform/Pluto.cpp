@@ -55,15 +55,15 @@ static cl::opt<bool> PlutoParallel("polly-pluto-parallel",
                                    cl::cat(PollyCategory));
 
 static cl::opt<bool>
-PlutoInnerParallel("polly-pluto-innerpara",
-                   cl::desc("Enable inner parallelism instead of piped."),
-                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                   cl::cat(PollyCategory));
+    PlutoInnerParallel("polly-pluto-innerpara",
+                       cl::desc("Enable inner parallelism instead of piped."),
+                       cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                       cl::cat(PollyCategory));
 
 static cl::opt<bool>
-PlutoIdentity("polly-pluto-identity",
-              cl::desc("Enable pluto identity transformation"), cl::Hidden,
-              cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+    PlutoIdentity("polly-pluto-identity",
+                  cl::desc("Enable pluto identity transformation"), cl::Hidden,
+                  cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> PlutoUnroll("polly-pluto-unroll",
                                  cl::desc("Enable pluto unrolling"), cl::Hidden,
@@ -91,9 +91,9 @@ static cl::opt<bool> PlutoPollyUnroll("polly-pluto-pollyunroll",
                                       cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool>
-PlutoIslDep("polly-pluto-isldep",
-            cl::desc("Enable pluto isl dependency scanning"), cl::Hidden,
-            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+    PlutoIslDep("polly-pluto-isldep",
+                cl::desc("Enable pluto isl dependency scanning"), cl::Hidden,
+                cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> PlutoIslDepCompact(
     "polly-pluto-isldepcom", cl::desc("Enable pluto isl dependency compaction"),

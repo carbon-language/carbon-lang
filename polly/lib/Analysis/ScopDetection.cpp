@@ -70,52 +70,52 @@ using namespace polly;
 #define DEBUG_TYPE "polly-detect"
 
 static cl::opt<bool>
-DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",
-                        cl::desc("Detect scops in functions without loops"),
-                        cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                        cl::cat(PollyCategory));
+    DetectScopsWithoutLoops("polly-detect-scops-in-functions-without-loops",
+                            cl::desc("Detect scops in functions without loops"),
+                            cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                            cl::cat(PollyCategory));
 
 static cl::opt<bool>
-DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
-                          cl::desc("Detect scops in regions without loops"),
-                          cl::Hidden, cl::init(false), cl::ZeroOrMore,
-                          cl::cat(PollyCategory));
+    DetectRegionsWithoutLoops("polly-detect-scops-in-regions-without-loops",
+                              cl::desc("Detect scops in regions without loops"),
+                              cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                              cl::cat(PollyCategory));
 
-static cl::opt<std::string>
-OnlyFunction("polly-only-func",
-             cl::desc("Only run on functions that contain a certain string"),
-             cl::value_desc("string"), cl::ValueRequired, cl::init(""),
-             cl::cat(PollyCategory));
+static cl::opt<std::string> OnlyFunction(
+    "polly-only-func",
+    cl::desc("Only run on functions that contain a certain string"),
+    cl::value_desc("string"), cl::ValueRequired, cl::init(""),
+    cl::cat(PollyCategory));
 
-static cl::opt<std::string>
-OnlyRegion("polly-only-region",
-           cl::desc("Only run on certain regions (The provided identifier must "
-                    "appear in the name of the region's entry block"),
-           cl::value_desc("identifier"), cl::ValueRequired, cl::init(""),
-           cl::cat(PollyCategory));
-
-static cl::opt<bool>
-IgnoreAliasing("polly-ignore-aliasing",
-               cl::desc("Ignore possible aliasing of the array bases"),
-               cl::Hidden, cl::init(false), cl::ZeroOrMore,
-               cl::cat(PollyCategory));
+static cl::opt<std::string> OnlyRegion(
+    "polly-only-region",
+    cl::desc("Only run on certain regions (The provided identifier must "
+             "appear in the name of the region's entry block"),
+    cl::value_desc("identifier"), cl::ValueRequired, cl::init(""),
+    cl::cat(PollyCategory));
 
 static cl::opt<bool>
-ReportLevel("polly-report",
-            cl::desc("Print information about the activities of Polly"),
-            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+    IgnoreAliasing("polly-ignore-aliasing",
+                   cl::desc("Ignore possible aliasing of the array bases"),
+                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                   cl::cat(PollyCategory));
 
 static cl::opt<bool>
-AllowNonAffine("polly-allow-nonaffine",
-               cl::desc("Allow non affine access functions in arrays"),
-               cl::Hidden, cl::init(false), cl::ZeroOrMore,
-               cl::cat(PollyCategory));
+    ReportLevel("polly-report",
+                cl::desc("Print information about the activities of Polly"),
+                cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool>
+    AllowNonAffine("polly-allow-nonaffine",
+                   cl::desc("Allow non affine access functions in arrays"),
+                   cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                   cl::cat(PollyCategory));
 
 static cl::opt<bool, true>
-TrackFailures("polly-detect-track-failures",
-              cl::desc("Track failure strings in detecting scop regions"),
-              cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
-              cl::init(false), cl::cat(PollyCategory));
+    TrackFailures("polly-detect-track-failures",
+                  cl::desc("Track failure strings in detecting scop regions"),
+                  cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
+                  cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool> KeepGoing("polly-detect-keep-going",
                                cl::desc("Do not fail on the first error."),
@@ -123,16 +123,16 @@ static cl::opt<bool> KeepGoing("polly-detect-keep-going",
                                cl::cat(PollyCategory));
 
 static cl::opt<bool, true>
-PollyDelinearizeX("polly-delinearize",
-                  cl::desc("Delinearize array access functions"),
-                  cl::location(PollyDelinearize), cl::Hidden, cl::ZeroOrMore,
-                  cl::init(false), cl::cat(PollyCategory));
+    PollyDelinearizeX("polly-delinearize",
+                      cl::desc("Delinearize array access functions"),
+                      cl::location(PollyDelinearize), cl::Hidden,
+                      cl::ZeroOrMore, cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
-VerifyScops("polly-detect-verify",
-            cl::desc("Verify the detected SCoPs after each transformation"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore,
-            cl::cat(PollyCategory));
+    VerifyScops("polly-detect-verify",
+                cl::desc("Verify the detected SCoPs after each transformation"),
+                cl::Hidden, cl::init(false), cl::ZeroOrMore,
+                cl::cat(PollyCategory));
 
 bool polly::PollyTrackFailures = false;
 bool polly::PollyDelinearize = false;

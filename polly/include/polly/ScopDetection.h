@@ -317,7 +317,7 @@ public:
   //@{
   typedef std::map<const Region *, RejectLog>::iterator reject_iterator;
   typedef std::map<const Region *, RejectLog>::const_iterator
-  const_reject_iterator;
+      const_reject_iterator;
 
   reject_iterator reject_begin() { return RejectLogs.begin(); }
   reject_iterator reject_end() { return RejectLogs.end(); }

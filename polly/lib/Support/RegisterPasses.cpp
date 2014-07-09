@@ -43,8 +43,8 @@ cl::OptionCategory PollyCategory("Polly Options",
                                  "Configure the polly loop optimizer");
 
 static cl::opt<bool>
-PollyEnabled("polly", cl::desc("Enable the polly optimizer (only at -O3)"),
-             cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+    PollyEnabled("polly", cl::desc("Enable the polly optimizer (only at -O3)"),
+                 cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 enum OptimizerChoice {
   OPTIMIZER_NONE,
@@ -111,39 +111,37 @@ static cl::opt<polly::VectorizerChoice, true> Vectorizer(
     cl::location(PollyVectorizerChoice), cl::init(polly::VECTORIZER_NONE),
     cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::opt<bool>
-ImportJScop("polly-import",
-            cl::desc("Export the polyhedral description of the detected Scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore,
-            cl::cat(PollyCategory));
+static cl::opt<bool> ImportJScop(
+    "polly-import",
+    cl::desc("Export the polyhedral description of the detected Scops"),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::opt<bool>
-ExportJScop("polly-export",
-            cl::desc("Export the polyhedral description of the detected Scops"),
-            cl::Hidden, cl::init(false), cl::ZeroOrMore,
-            cl::cat(PollyCategory));
+static cl::opt<bool> ExportJScop(
+    "polly-export",
+    cl::desc("Export the polyhedral description of the detected Scops"),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 static cl::opt<bool> DeadCodeElim("polly-run-dce",
                                   cl::desc("Run the dead code elimination"),
                                   cl::Hidden, cl::init(true), cl::ZeroOrMore,
                                   cl::cat(PollyCategory));
 
-static cl::opt<bool>
-PollyViewer("polly-show",
-            cl::desc("Highlight the code regions that will be optimized in a "
-                     "(CFG BBs and LLVM-IR instructions)"),
-            cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<bool> PollyViewer(
+    "polly-show",
+    cl::desc("Highlight the code regions that will be optimized in a "
+             "(CFG BBs and LLVM-IR instructions)"),
+    cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+
+static cl::opt<bool> PollyOnlyViewer(
+    "polly-show-only",
+    cl::desc("Highlight the code regions that will be optimized in "
+             "a (CFG only BBs)"),
+    cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
-PollyOnlyViewer("polly-show-only",
-                cl::desc("Highlight the code regions that will be optimized in "
-                         "a (CFG only BBs)"),
-                cl::init(false), cl::cat(PollyCategory));
-
-static cl::opt<bool>
-PollyPrinter("polly-dot", cl::desc("Enable the Polly DOT printer in -O3"),
-             cl::Hidden, cl::value_desc("Run the Polly DOT printer at -O3"),
-             cl::init(false), cl::cat(PollyCategory));
+    PollyPrinter("polly-dot", cl::desc("Enable the Polly DOT printer in -O3"),
+                 cl::Hidden, cl::value_desc("Run the Polly DOT printer at -O3"),
+                 cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool> PollyOnlyPrinter(
     "polly-dot-only",
@@ -152,9 +150,9 @@ static cl::opt<bool> PollyOnlyPrinter(
     cl::init(false), cl::cat(PollyCategory));
 
 static cl::opt<bool>
-CFGPrinter("polly-view-cfg",
-           cl::desc("Show the Polly CFG right after code generation"),
-           cl::Hidden, cl::init(false), cl::cat(PollyCategory));
+    CFGPrinter("polly-view-cfg",
+               cl::desc("Show the Polly CFG right after code generation"),
+               cl::Hidden, cl::init(false), cl::cat(PollyCategory));
 
 namespace polly {
 void initializePollyPasses(PassRegistry &Registry) {
@@ -325,6 +323,6 @@ registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
 ///   optimizations behind us, such that inefficiencies on the low level can
 ///   be optimized away.
 static llvm::RegisterStandardPasses
-RegisterPollyOptimizer(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-                       registerPollyEarlyAsPossiblePasses);
+    RegisterPollyOptimizer(llvm::PassManagerBuilder::EP_EarlyAsPossible,
+                           registerPollyEarlyAsPossiblePasses);
 }

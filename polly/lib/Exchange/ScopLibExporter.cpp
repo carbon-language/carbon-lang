@@ -29,10 +29,10 @@ using namespace polly;
 
 namespace {
 static cl::opt<std::string>
-ExportDir("polly-export-scoplib-dir",
-          cl::desc("The directory to export the .scoplib files to."),
-          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-          cl::init("."), cl::cat(PollyCategory));
+    ExportDir("polly-export-scoplib-dir",
+              cl::desc("The directory to export the .scoplib files to."),
+              cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
+              cl::init("."), cl::cat(PollyCategory));
 
 class ScopLibExporter : public ScopPass {
   Scop *S;
@@ -85,8 +85,8 @@ void ScopLibExporter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 static RegisterPass<ScopLibExporter>
-A("polly-export-scoplib", "Polly - Export Scops with ScopLib library"
-                          " (Writes a .scoplib file for each Scop)");
+    A("polly-export-scoplib", "Polly - Export Scops with ScopLib library"
+                              " (Writes a .scoplib file for each Scop)");
 
 Pass *polly::createScopLibExporterPass() { return new ScopLibExporter(); }
 

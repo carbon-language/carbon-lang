@@ -39,17 +39,15 @@ using namespace llvm;
 
 #define DEBUG_TYPE "polly-dependence"
 
-static cl::opt<int>
-OptComputeOut("polly-dependences-computeout",
-              cl::desc("Bound the dependence analysis by a maximal amount of "
-                       "computational steps"),
-              cl::Hidden, cl::init(250000), cl::ZeroOrMore,
-              cl::cat(PollyCategory));
+static cl::opt<int> OptComputeOut(
+    "polly-dependences-computeout",
+    cl::desc("Bound the dependence analysis by a maximal amount of "
+             "computational steps"),
+    cl::Hidden, cl::init(250000), cl::ZeroOrMore, cl::cat(PollyCategory));
 
-static cl::opt<bool>
-LegalityCheckDisabled("disable-polly-legality",
-                      cl::desc("Disable polly legality check"), cl::Hidden,
-                      cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
+static cl::opt<bool> LegalityCheckDisabled(
+    "disable-polly-legality", cl::desc("Disable polly legality check"),
+    cl::Hidden, cl::init(false), cl::ZeroOrMore, cl::cat(PollyCategory));
 
 enum AnalysisType { VALUE_BASED_ANALYSIS, MEMORY_BASED_ANALYSIS };
 

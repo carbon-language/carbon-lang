@@ -32,16 +32,16 @@ using namespace polly;
 
 namespace {
 static cl::opt<std::string>
-ImportDir("polly-import-scoplib-dir",
-          cl::desc("The directory to import the .scoplib files from."),
-          cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
-          cl::init("."), cl::cat(PollyCategory));
+    ImportDir("polly-import-scoplib-dir",
+              cl::desc("The directory to import the .scoplib files from."),
+              cl::Hidden, cl::value_desc("Directory path"), cl::ValueRequired,
+              cl::init("."), cl::cat(PollyCategory));
 
 static cl::opt<std::string>
-ImportPostfix("polly-import-scoplib-postfix",
-              cl::desc("Postfix to append to the import .scoplib files."),
-              cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
-              cl::init(""), cl::cat(PollyCategory));
+    ImportPostfix("polly-import-scoplib-postfix",
+                  cl::desc("Postfix to append to the import .scoplib files."),
+                  cl::Hidden, cl::value_desc("File postfix"), cl::ValueRequired,
+                  cl::init(""), cl::cat(PollyCategory));
 
 struct ScopLibImporter : public RegionPass {
   static char ID;
@@ -108,8 +108,8 @@ void ScopLibImporter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 static RegisterPass<ScopLibImporter>
-A("polly-import-scoplib", "Polly - Import Scops with ScopLib library"
-                          " (Reads a .scoplib file for each Scop)");
+    A("polly-import-scoplib", "Polly - Import Scops with ScopLib library"
+                              " (Reads a .scoplib file for each Scop)");
 
 Pass *polly::createScopLibImporterPass() { return new ScopLibImporter(); }
 
