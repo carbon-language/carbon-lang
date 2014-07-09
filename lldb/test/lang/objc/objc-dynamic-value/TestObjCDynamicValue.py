@@ -15,6 +15,7 @@ class ObjCDynamicValueTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dsym_test
+    @expectedFailureDarwin("llvm.org/pr20271")
     def test_get_dynamic_objc_vals_with_dsym(self):
         """Test fetching ObjC dynamic values."""
         if self.getArchitecture() == 'i386':
@@ -26,6 +27,7 @@ class ObjCDynamicValueTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20271")
     def test_get_objc_dynamic_vals_with_dwarf(self):
         """Test fetching ObjC dynamic values."""
         if self.getArchitecture() == 'i386':
