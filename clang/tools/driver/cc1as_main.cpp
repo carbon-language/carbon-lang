@@ -147,37 +147,6 @@ public:
 
 }
 
-#if 0
-bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
-                                        const char *const *ArgBegin,
-                                        const char *const *ArgEnd,
-                                        DiagnosticsEngine &Diags) {
-  bool Success = true;
-  
-  // Parse the arguments.
-  std::unique_ptr<OptTable> Opts(createDriverOptTable());
-  const unsigned IncludedFlagsBitmask = options::CC1Option;
-  unsigned MissingArgIndex, MissingArgCount;
-  std::unique_ptr<InputArgList> Args(
-                                     Opts->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
-                                                     IncludedFlagsBitmask));
-  
-  // Check for missing argument error.
-  if (MissingArgCount) {
-    Diags.Report(diag::err_drv_missing_argument)
-    << Args->getArgString(MissingArgIndex) << MissingArgCount;
-    Success = false;
-  }
-  
-  // Issue errors on unknown arguments.
-  for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
-       ie = Args->filtered_end(); it != ie; ++it) {
-    Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
-    Success = false;
-  }
-}
-#endif
-
 bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
                                          const char **ArgBegin,
                                          const char **ArgEnd,
@@ -191,7 +160,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   unsigned MissingArgIndex, MissingArgCount;
   std::unique_ptr<InputArgList> Args(
       OptTbl->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
-                      IncludedFlagsBitmask));
+                        IncludedFlagsBitmask));
 
   // Check for missing argument error.
   if (MissingArgCount) {
@@ -483,9 +452,8 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   if (Asm.ShowHelp) {
     std::unique_ptr<OptTable> Opts(driver::createDriverOptTable());
-    Opts->PrintHelp(llvm::outs(), "clang -cc1as",
-                    "Clang Integrated Assembler",
-                    /*Include=*/ driver::options::CC1AsOption, /*Exclude=*/ 0);
+    Opts->PrintHelp(llvm::outs(), "clang -cc1as", "Clang Integrated Assembler",
+                    /*Include=*/driver::options::CC1AsOption, /*Exclude=*/0);
     return 0;
   }
 
