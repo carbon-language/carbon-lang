@@ -13,7 +13,6 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   Support
   Target
-  TransformUtils
   )
 
 add_clang_library(clangCodeGen
@@ -60,6 +59,7 @@ add_clang_library(clangCodeGen
   ItaniumCXXABI.cpp
   MicrosoftCXXABI.cpp
   ModuleBuilder.cpp
+  SanitizerBlacklist.cpp
   TargetInfo.cpp
 
   DEPENDS

@@ -47,6 +47,7 @@ add_llvm_library(LLVMSupport
   SmallPtrSet.cpp
   SmallVector.cpp
   SourceMgr.cpp
+  SpecialCaseList.cpp
   Statistic.cpp
   StreamableMemoryObject.cpp
   StringExtras.cpp

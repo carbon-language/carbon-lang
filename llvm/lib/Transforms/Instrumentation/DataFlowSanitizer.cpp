@@ -59,9 +59,9 @@
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/SpecialCaseList.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 #include <iterator>
 
 using namespace llvm;
@@ -119,6 +119,51 @@ static cl::opt<bool> ClDebugNonzeroLabels(
     cl::Hidden);
 
 namespace {
+
+StringRef GetGlobalTypeString(const GlobalValue &G) {
+  // Types of GlobalVariables are always pointer types.
+  Type *GType = G.getType()->getElementType();
+  // For now we support blacklisting struct types only.
+  if (StructType *SGType = dyn_cast<StructType>(GType)) {
+    if (!SGType->isLiteral())
+      return SGType->getName();
+  }
+  return "<unknown type>";
+}
+
+class DFSanABIList {
+  std::unique_ptr<SpecialCaseList> SCL;
+
+ public:
+  DFSanABIList(SpecialCaseList *SCL) : SCL(SCL) {}
+
+  /// Returns whether either this function or its source file are listed in the
+  /// given category.
+  bool isIn(const Function &F, const StringRef Category) const {
+    return isIn(*F.getParent(), Category) ||
+           SCL->inSection("fun", F.getName(), Category);
+  }
+
+  /// Returns whether this global alias is listed in the given category.
+  ///
+  /// If GA aliases a function, the alias's name is matched as a function name
+  /// would be.  Similarly, aliases of globals are matched like globals.
+  bool isIn(const GlobalAlias &GA, const StringRef Category) const {
+    if (isIn(*GA.getParent(), Category))
+      return true;
+
+    if (isa<FunctionType>(GA.getType()->getElementType()))
+      return SCL->inSection("fun", GA.getName(), Category);
+
+    return SCL->inSection("global", GA.getName(), Category) ||
+           SCL->inSection("type", GetGlobalTypeString(GA), Category);
+  }
+
+  /// Returns whether this module is listed in the given category.
+  bool isIn(const Module &M, const StringRef Category) const {
+    return SCL->inSection("src", M.getModuleIdentifier(), Category);
+  }
+};
 
 class DataFlowSanitizer : public ModulePass {
   friend struct DFSanFunction;
@@ -190,7 +235,7 @@ class DataFlowSanitizer : public ModulePass {
   Constant *DFSanSetLabelFn;
   Constant *DFSanNonzeroLabelFn;
   MDNode *ColdCallWeights;
-  std::unique_ptr<SpecialCaseList> ABIList;
+  DFSanABIList ABIList;
   DenseMap<Value *, Function *> UnwrappedFnMap;
   AttributeSet ReadOnlyNoneAttrs;
 
@@ -395,11 +440,11 @@ bool DataFlowSanitizer::doInitialization(Module &M) {
 }
 
 bool DataFlowSanitizer::isInstrumented(const Function *F) {
-  return !ABIList->isIn(*F, "uninstrumented");
+  return !ABIList.isIn(*F, "uninstrumented");
 }
 
 bool DataFlowSanitizer::isInstrumented(const GlobalAlias *GA) {
-  return !ABIList->isIn(*GA, "uninstrumented");
+  return !ABIList.isIn(*GA, "uninstrumented");
 }
 
 DataFlowSanitizer::InstrumentedABI DataFlowSanitizer::getInstrumentedABI() {
@@ -407,11 +452,11 @@ DataFlowSanitizer::InstrumentedABI DataFlowSanitizer::getInstrumentedABI() {
 }
 
 DataFlowSanitizer::WrapperKind DataFlowSanitizer::getWrapperKind(Function *F) {
-  if (ABIList->isIn(*F, "functional"))
+  if (ABIList.isIn(*F, "functional"))
     return WK_Functional;
-  if (ABIList->isIn(*F, "discard"))
+  if (ABIList.isIn(*F, "discard"))
     return WK_Discard;
-  if (ABIList->isIn(*F, "custom"))
+  if (ABIList.isIn(*F, "custom"))
     return WK_Custom;
 
   return WK_Warning;
@@ -500,7 +545,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
   if (!DL)
     return false;
 
-  if (ABIList->isIn(M, "skip"))
+  if (ABIList.isIn(M, "skip"))
     return false;
 
   if (!GetArgTLSPtr) {

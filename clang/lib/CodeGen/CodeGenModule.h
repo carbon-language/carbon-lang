@@ -16,6 +16,7 @@
 
 #include "CGVTables.h"
 #include "CodeGenTypes.h"
+#include "SanitizerBlacklist.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -31,7 +32,6 @@
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
 
 namespace llvm {
 class Module;
@@ -473,7 +473,7 @@ class CodeGenModule : public CodeGenTypeCache {
 
   GlobalDecl initializedGlobalDecl;
 
-  std::unique_ptr<llvm::SpecialCaseList> SanitizerBlacklist;
+  SanitizerBlacklist SanitizerBL;
 
   /// @}
 public:
@@ -1008,8 +1008,8 @@ public:
   /// annotations are emitted during finalization of the LLVM code.
   void AddGlobalAnnotations(const ValueDecl *D, llvm::GlobalValue *GV);
 
-  const llvm::SpecialCaseList &getSanitizerBlacklist() const {
-    return *SanitizerBlacklist;
+  const SanitizerBlacklist &getSanitizerBlacklist() const {
+    return SanitizerBL;
   }
 
   void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,

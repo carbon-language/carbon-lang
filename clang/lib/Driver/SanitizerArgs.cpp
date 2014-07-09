@@ -15,7 +15,7 @@
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
+#include "llvm/Support/SpecialCaseList.h"
 #include <memory>
 
 using namespace clang::driver;

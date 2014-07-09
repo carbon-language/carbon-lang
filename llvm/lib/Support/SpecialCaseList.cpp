@@ -14,15 +14,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/Utils/SpecialCaseList.h"
+#include "llvm/Support/SpecialCaseList.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/Function.h"
-#include "llvm/IR/GlobalVariable.h"
-#include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/raw_ostream.h"
@@ -169,48 +165,8 @@ SpecialCaseList::~SpecialCaseList() {
   }
 }
 
-bool SpecialCaseList::isIn(const Function& F, const StringRef Category) const {
-  return isIn(*F.getParent(), Category) ||
-         inSectionCategory("fun", F.getName(), Category);
-}
-
-static StringRef GetGlobalTypeString(const GlobalValue &G) {
-  // Types of GlobalVariables are always pointer types.
-  Type *GType = G.getType()->getElementType();
-  // For now we support blacklisting struct types only.
-  if (StructType *SGType = dyn_cast<StructType>(GType)) {
-    if (!SGType->isLiteral())
-      return SGType->getName();
-  }
-  return "<unknown type>";
-}
-
-bool SpecialCaseList::isIn(const GlobalVariable &G,
-                           const StringRef Category) const {
-  return isIn(*G.getParent(), Category) ||
-         inSectionCategory("global", G.getName(), Category) ||
-         inSectionCategory("type", GetGlobalTypeString(G), Category);
-}
-
-bool SpecialCaseList::isIn(const GlobalAlias &GA,
-                           const StringRef Category) const {
-  if (isIn(*GA.getParent(), Category))
-    return true;
-
-  if (isa<FunctionType>(GA.getType()->getElementType()))
-    return inSectionCategory("fun", GA.getName(), Category);
-
-  return inSectionCategory("global", GA.getName(), Category) ||
-         inSectionCategory("type", GetGlobalTypeString(GA), Category);
-}
-
-bool SpecialCaseList::isIn(const Module &M, const StringRef Category) const {
-  return inSectionCategory("src", M.getModuleIdentifier(), Category);
-}
-
-bool SpecialCaseList::inSectionCategory(const StringRef Section,
-                                        const StringRef Query,
-                                        const StringRef Category) const {
+bool SpecialCaseList::inSection(const StringRef Section, const StringRef Query,
+                                const StringRef Category) const {
   StringMap<StringMap<Entry> >::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
   StringMap<Entry>::const_iterator II = I->second.find(Category);

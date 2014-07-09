@@ -87,9 +87,8 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       NSConcreteStackBlock(nullptr), BlockObjectAssign(nullptr),
       BlockObjectDispose(nullptr), BlockDescriptorType(nullptr),
       GenericBlockLiteralType(nullptr), LifetimeStartFn(nullptr),
-      LifetimeEndFn(nullptr),
-      SanitizerBlacklist(
-          llvm::SpecialCaseList::createOrDie(CGO.SanitizerBlacklistFile)) {
+      LifetimeEndFn(nullptr), SanitizerBL(llvm::SpecialCaseList::createOrDie(
+                                  CGO.SanitizerBlacklistFile)) {
 
   // Initialize the type cache.
   llvm::LLVMContext &LLVMContext = M.getContext();
@@ -730,7 +729,7 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     B.addAttribute(llvm::Attribute::StackProtectReq);
 
   // Add sanitizer attributes if function is not blacklisted.
-  if (!SanitizerBlacklist->isIn(*F)) {
+  if (!SanitizerBL.isIn(*F)) {
     // When AddressSanitizer is enabled, set SanitizeAddress attribute
     // unless __attribute__((no_sanitize_address)) is used.
     if (LangOpts.Sanitize.Address && !D->hasAttr<NoSanitizeAddressAttr>())
@@ -1965,8 +1964,8 @@ void CodeGenModule::reportGlobalToASan(llvm::GlobalVariable *GV,
                                        SourceLocation Loc, bool IsDynInit) {
   if (!LangOpts.Sanitize.Address)
     return;
-  IsDynInit &= !SanitizerBlacklist->isIn(*GV, "init");
-  bool IsBlacklisted = SanitizerBlacklist->isIn(*GV);
+  IsDynInit &= !SanitizerBL.isIn(*GV, "init");
+  bool IsBlacklisted = SanitizerBL.isIn(*GV);
 
   llvm::LLVMContext &LLVMCtx = TheModule.getContext();
 
