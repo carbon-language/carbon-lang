@@ -869,7 +869,6 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::TRUNCATE, VT, Expand);
     setOperationAction(ISD::SIGN_EXTEND, VT, Expand);
     setOperationAction(ISD::ZERO_EXTEND, VT, Expand);
-    setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG, VT, Expand);
     setOperationAction(ISD::ANY_EXTEND, VT, Expand);
     setOperationAction(ISD::VSELECT, VT, Expand);
     setOperationAction(ISD::SELECT_CC, VT, Expand);
