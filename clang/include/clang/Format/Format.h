@@ -126,6 +126,10 @@ struct FormatStyle {
   /// Switch statement body is always indented one level more than case labels.
   bool IndentCaseLabels;
 
+  /// \brief Indent if a function definition or declaration is wrapped after the
+  /// type.
+  bool IndentWrappedFunctionNames;
+
   /// \brief Different ways to indent namespace contents.
   enum NamespaceIndentationKind {
     /// Don't indent in namespaces.
@@ -383,6 +387,7 @@ struct FormatStyle {
            ExperimentalAutoDetectBinPacking ==
                R.ExperimentalAutoDetectBinPacking &&
            IndentCaseLabels == R.IndentCaseLabels &&
+           IndentWrappedFunctionNames == R.IndentWrappedFunctionNames &&
            IndentWidth == R.IndentWidth && Language == R.Language &&
            MaxEmptyLinesToKeep == R.MaxEmptyLinesToKeep &&
            KeepEmptyLinesAtTheStartOfBlocks ==

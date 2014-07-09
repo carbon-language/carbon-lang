@@ -5082,6 +5082,23 @@ TEST_F(FormatTest, BreaksLongDeclarations) {
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
   verifyFormat("decltype(LoooooooooooooooooooooooooooooooooooooooongName)\n"
                "LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}");
+  FormatStyle Indented = getLLVMStyle();
+  Indented.IndentWrappedFunctionNames = true;
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+               "    LoooooooooooooooooooooooooooooooongFunctionDeclaration();",
+               Indented);
+  verifyFormat(
+      "LoooooooooooooooooooooooooooooooooooooooongReturnType\n"
+      "    LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}",
+      Indented);
+  verifyFormat(
+      "LoooooooooooooooooooooooooooooooooooooooongReturnType const\n"
+      "    LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}",
+      Indented);
+  verifyFormat(
+      "decltype(LoooooooooooooooooooooooooooooooooooooooongName)\n"
+      "    LooooooooooooooooooooooooooooooooooongFunctionDefinition() {}",
+      Indented);
 
   // FIXME: Without the comment, this breaks after "(".
   verifyFormat("LoooooooooooooooooooooooooooooooooooooooongType  // break\n"
@@ -8103,6 +8120,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(ConstructorInitializerAllOnOneLineOrOnePerLine);
   CHECK_PARSE_BOOL(DerivePointerAlignment);
   CHECK_PARSE_BOOL(IndentCaseLabels);
+  CHECK_PARSE_BOOL(IndentWrappedFunctionNames);
   CHECK_PARSE_BOOL(KeepEmptyLinesAtTheStartOfBlocks);
   CHECK_PARSE_BOOL(ObjCSpaceAfterProperty);
   CHECK_PARSE_BOOL(ObjCSpaceBeforeProtocolList);

@@ -251,6 +251,10 @@ the configuration (without a prefix: ``Auto``).
 **IndentWidth** (``unsigned``)
   The number of columns to use for indentation.
 
+**IndentWrappedFunctionNames** (``bool``)
+  Indent if a function definition or declaration is wrapped after the
+  type.
+
 **KeepEmptyLinesAtTheStartOfBlocks** (``bool``)
   If true, empty lines at the start of blocks are kept.
 

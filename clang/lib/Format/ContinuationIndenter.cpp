@@ -520,8 +520,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return State.Stack.back().VariablePos;
   if ((PreviousNonComment && (PreviousNonComment->ClosesTemplateDeclaration ||
                               PreviousNonComment->Type == TT_AttributeParen)) ||
-      NextNonComment->is(tok::kw_operator) ||
-      NextNonComment->Type == TT_FunctionDeclarationName)
+      (!Style.IndentWrappedFunctionNames &&
+       (NextNonComment->is(tok::kw_operator) ||
+        NextNonComment->Type == TT_FunctionDeclarationName)))
     return std::max(State.Stack.back().LastSpace, State.Stack.back().Indent);
   if (NextNonComment->Type == TT_SelectorName) {
     if (!State.Stack.back().ObjCSelectorNameFound) {
