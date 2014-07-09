@@ -1,19 +1,26 @@
 ; Test all important variants of the unconditional 'br' instruction.
 
-; RUN: llc -march=mips   -mcpu=mips32   < %s | FileCheck %s -check-prefix=ALL
-; RUN: llc -march=mips   -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=ALL
-; RUN: llc -march=mips64 -mcpu=mips4    < %s | FileCheck %s -check-prefix=ALL
-; RUN: llc -march=mips64 -mcpu=mips64   < %s | FileCheck %s -check-prefix=ALL
-; RUN: llc -march=mips64 -mcpu=mips64r2 < %s | FileCheck %s -check-prefix=ALL
+; RUN: llc -march=mips   -mcpu=mips32   -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOT-R6
+; RUN: llc -march=mips   -mcpu=mips32r2 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOT-R6
+; RUN: llc -march=mips   -mcpu=mips32r6 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=R6
+; RUN: llc -march=mips64 -mcpu=mips4    -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64   -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64r2 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64r6 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=R6
 
 define i32 @br(i8 *%addr) {
 ; ALL-LABEL: br:
-; ALL:           jr $4
+; NOT-R6:        jr $4 # <MCInst #{{[0-9]+}} JR
+; R6:            jr $4 # <MCInst #{{[0-9]+}} JALR
+
 ; ALL: $BB0_1: # %L1
-; ALL:           jr $ra
+; NOT-R6:        jr $ra # <MCInst #{{[0-9]+}} JR
+; R6:            jr $ra # <MCInst #{{[0-9]+}} JALR
 ; ALL:           addiu $2, $zero, 0
+
 ; ALL: $BB0_2: # %L2
-; ALL:           jr $ra
+; NOT-R6:        jr $ra # <MCInst #{{[0-9]+}} JR
+; R6:            jr $ra # <MCInst #{{[0-9]+}} JALR
 ; ALL:           addiu $2, $zero, 1
 
 entry:

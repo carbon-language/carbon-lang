@@ -3,8 +3,11 @@
 ; FIXME: We should remove the need for -enable-mips-tail-calls
 ; RUN: llc -march=mips   -mcpu=mips32   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips   -mcpu=mips32r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
+; RUN: llc -march=mips   -mcpu=mips32r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=O32
 ; RUN: llc -march=mips64 -mcpu=mips4    -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 ; RUN: llc -march=mips64 -mcpu=mips64   -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r2 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
+; RUN: llc -march=mips64 -mcpu=mips64r6 -enable-mips-tail-calls < %s | FileCheck %s -check-prefix=ALL -check-prefix=N64
 
 declare void @extern_void_void()
 declare i32 @extern_i32_void()
@@ -63,7 +66,8 @@ define void @musttail_call_void_void() {
 
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_void_void)($gp)
 
-; ALL:           jr $[[TGT]]
+; NOT-R6:        jr $[[TGT]]
+; R6:            r6.jr $[[TGT]]
 
   musttail call void @extern_void_void()
   ret void
@@ -76,7 +80,8 @@ define i32 @musttail_call_i32_void() {
 
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_i32_void)($gp)
 
-; ALL:           jr $[[TGT]]
+; NOT-R6:        jr $[[TGT]]
+; R6:            r6.jr $[[TGT]]
 
   %1 = musttail call i32 @extern_i32_void()
   ret i32 %1
@@ -89,7 +94,8 @@ define float @musttail_call_float_void() {
 
 ; N64:           ld $[[TGT:[0-9]+]], %call16(extern_float_void)($gp)
 
-; ALL:           jr $[[TGT]]
+; NOT-R6:        jr $[[TGT]]
+; R6:            r6.jr $[[TGT]]
 
   %1 = musttail call float @extern_float_void()
   ret float %1

@@ -91,10 +91,10 @@ bool MipsAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
 
 #include "MipsGenMCPseudoLowering.inc"
 
-void MipsAsmPrinter::emitPseudoReturn(MCStreamer &OutStreamer,
-                                      const MachineInstr *MI) {
-  // Lower PseudoReturn to JR, JR_MM, JALR, or JALR64 as appropriate for the
-  // target
+// Lower PseudoReturn/PseudoIndirectBranch/PseudoIndirectBranch64 to JR, JR_MM,
+// JALR, or JALR64 as appropriate for the target
+void MipsAsmPrinter::emitPseudoIndirectBranch(MCStreamer &OutStreamer,
+                                              const MachineInstr *MI) {
   bool HasLinkReg = false;
   MCInst TmpInst0;
 
@@ -181,8 +181,10 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       continue;
 
     if (I->getOpcode() == Mips::PseudoReturn ||
-        I->getOpcode() == Mips::PseudoReturn64) {
-      emitPseudoReturn(OutStreamer, &*I);
+        I->getOpcode() == Mips::PseudoReturn64 ||
+        I->getOpcode() == Mips::PseudoIndirectBranch ||
+        I->getOpcode() == Mips::PseudoIndirectBranch64) {
+      emitPseudoIndirectBranch(OutStreamer, &*I);
       continue;
     }
 
