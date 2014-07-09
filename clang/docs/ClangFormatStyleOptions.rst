@@ -213,7 +213,7 @@ the configuration (without a prefix: ``Auto``).
 
 **DerivePointerAlignment** (``bool``)
   If ``true``, analyze the formatted file for the most common
-  alignment of & and \*. ``PointerAlignment`` is then used only as fallback.
+  alignment of & and *. ``PointerAlignment`` is then used only as fallback.
 
 **DisableFormat** (``bool``)
   Disables formatting at all.
@@ -247,10 +247,6 @@ the configuration (without a prefix: ``Auto``).
 
   When ``false``, use the same indentation level as for the switch statement.
   Switch statement body is always indented one level more than case labels.
-
-**IndentFunctionDeclarationAfterType** (``bool``)
-  If ``true``, indent when breaking function declarations which
-  are not also definitions after the type.
 
 **IndentWidth** (``unsigned``)
   The number of columns to use for indentation.
