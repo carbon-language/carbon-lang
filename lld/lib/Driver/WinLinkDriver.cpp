@@ -696,9 +696,8 @@ parseArgs(int argc, const char **argv, PECOFFLinkingContext &ctx,
   // Show warning for unknown arguments. In .drectve section, unknown options
   // starting with "-?" are silently ignored. This is a COFF's feature to embed a
   // new linker option to an object file while keeping backward compatibility.
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end(); it != ie; ++it) {
-    StringRef arg = (*it)->getSpelling();
+  for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN)) {
+    StringRef arg = unknownArg->getSpelling();
     if (isReadingDirectiveSection && arg.startswith("-?"))
       continue;
     diag << "warning: ignoring unknown argument: " << arg << "\n";
@@ -830,19 +829,15 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Handle /nodefaultlib:<lib>. The same option without argument is handled in
   // the following for loop.
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_nodefaultlib),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    ctx.addNoDefaultLib((*it)->getValue());
+  for (auto nodeDefaultLib : parsedArgs->filtered(OPT_nodefaultlib)) {
+    ctx.addNoDefaultLib(nodeDefaultLib->getValue());
   }
 
   // Handle /defaultlib. Argument of the option is added to the input file list
   // unless it's blacklisted by /nodefaultlib.
   std::vector<StringRef> defaultLibs;
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_defaultlib),
-                               ie = parsedArgs->filtered_end();
-       it != ie; ++it) {
-    defaultLibs.push_back((*it)->getValue());
+  for (auto defaultLib : parsedArgs->filtered(OPT_defaultlib)) {
+    defaultLibs.push_back(defaultLib->getValue());
   }
 
   std::vector<StringRef> inputFiles;

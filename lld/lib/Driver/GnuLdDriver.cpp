@@ -288,21 +288,17 @@ bool GnuLdDriver::parse(int argc, const char *argv[],
   bool _outputOptionSet = false;
 
   // Ignore unknown arguments.
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end();
-       it != ie; ++it)
-    diagnostics << "warning: ignoring unknown argument: " << (*it)->getValue()
-                << "\n";
+  for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN))
+    diagnostics << "warning: ignoring unknown argument: "
+                << unknownArg->getValue() << "\n";
 
   // Set sys root path.
   if (llvm::opt::Arg *sysRootPath = parsedArgs->getLastArg(OPT_sysroot))
     ctx->setSysroot(sysRootPath->getValue());
 
   // Add all search paths.
-  for (auto it = parsedArgs->filtered_begin(OPT_L),
-            ie = parsedArgs->filtered_end();
-       it != ie; ++it)
-    ctx->addSearchPath((*it)->getValue());
+  for (auto libDir : parsedArgs->filtered(OPT_L))
+    ctx->addSearchPath(libDir->getValue());
 
   if (!parsedArgs->hasArg(OPT_nostdlib))
     addPlatformSearchDirs(*ctx, triple, baseTriple);

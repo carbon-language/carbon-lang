@@ -104,10 +104,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     return false;
   }
 
-  for (auto it = parsedArgs->filtered_begin(OPT_UNKNOWN),
-            ie = parsedArgs->filtered_end(); it != ie; ++it) {
+  for (auto unknownArg : parsedArgs->filtered(OPT_UNKNOWN)) {
     diagnostics  << "warning: ignoring unknown argument: "
-                 << (*it)->getAsString(*parsedArgs) << "\n";
+                 << unknownArg->getAsString(*parsedArgs) << "\n";
   }
 
   // Figure out output kind ( -dylib, -r, -bundle, -preload, or -static )
@@ -256,10 +255,8 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   // Handle -mllvm
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_mllvm),
-                               ie = parsedArgs->filtered_end();
-                               it != ie; ++it) {
-    ctx.appendLLVMOption((*it)->getValue());
+  for (auto &llvmArg : parsedArgs->filtered(OPT_mllvm)) {
+    ctx.appendLLVMOption(llvmArg->getValue());
   }
 
   // Handle -print_atoms a
@@ -269,11 +266,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
 
   // Handle input files
-  for (llvm::opt::arg_iterator it = parsedArgs->filtered_begin(OPT_INPUT),
-                               ie = parsedArgs->filtered_end();
-                              it != ie; ++it) {
+  for (auto &inputFile : parsedArgs->filtered(OPT_INPUT)) {
     inputGraph->addInputElement(std::unique_ptr<InputElement>(
-        new MachOFileNode(ctx, (*it)->getValue(), globalWholeArchive)));
+        new MachOFileNode(ctx, inputFile->getValue(), globalWholeArchive)));
   }
 
   if (!inputGraph->size()) {
