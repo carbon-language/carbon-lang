@@ -33,7 +33,6 @@ IndentWidth:     2
 TabWidth:        8
 UseTab:          Never
 BreakBeforeBraces: Attach
-IndentFunctionDeclarationAfterType: true
 SpacesInParentheses: false
 SpaceInEmptyParentheses: false
 SpacesInCStyleCastParentheses: false
