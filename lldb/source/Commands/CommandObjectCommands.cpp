@@ -1034,7 +1034,7 @@ protected:
                 Debugger &debugger = m_interpreter.GetDebugger();
                 const bool multiple_lines = true; // Get multiple lines
                 IOHandlerSP io_handler_sp (new IOHandlerEditline (debugger,
-                                                                  "lldb",       // Name of input reader for history
+                                                                  "lldb-regex", // Name of input reader for history
                                                                   "\033[K> ",   // Prompt and clear line
                                                                   multiple_lines,
                                                                   0,            // Don't show line numbers
