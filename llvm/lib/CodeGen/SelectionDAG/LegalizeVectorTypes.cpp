@@ -2425,6 +2425,39 @@ SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
              InOp.getValueType().getVectorNumElements() &&
          "Input wasn't widened!");
 
+  // We may need to further widen the operand until it has the same total
+  // vector size as the result.
+  EVT InVT = InOp.getValueType();
+  if (InVT.getSizeInBits() != VT.getSizeInBits()) {
+    EVT InEltVT = InVT.getVectorElementType();
+    for (int i = MVT::FIRST_VECTOR_VALUETYPE, e = MVT::LAST_VECTOR_VALUETYPE; i < e; ++i) {
+      EVT FixedVT = (MVT::SimpleValueType)i;
+      EVT FixedEltVT = FixedVT.getVectorElementType();
+      if (TLI.isTypeLegal(FixedVT) &&
+          FixedVT.getSizeInBits() == VT.getSizeInBits() &&
+          FixedEltVT == InEltVT) {
+        assert(FixedVT.getVectorNumElements() >= VT.getVectorNumElements() &&
+               "Not enough elements in the fixed type for the operand!");
+        assert(FixedVT.getVectorNumElements() != InVT.getVectorNumElements() &&
+               "We can't have the same type as we started with!");
+        if (FixedVT.getVectorNumElements() > InVT.getVectorNumElements())
+          InOp = DAG.getNode(ISD::INSERT_SUBVECTOR, DL, FixedVT,
+                             DAG.getUNDEF(FixedVT), InOp,
+                             DAG.getConstant(0, TLI.getVectorIdxTy()));
+        else
+          InOp = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, FixedVT, InOp,
+                             DAG.getConstant(0, TLI.getVectorIdxTy()));
+        break;
+      }
+    }
+    InVT = InOp.getValueType();
+    if (InVT.getSizeInBits() != VT.getSizeInBits())
+      // We couldn't find a legal vector type that was a widening of the input
+      // and could be extended in-register to the result type, so we have to
+      // scalarize.
+      return WidenVecOp_Convert(N);
+  }
+
   // Use a special DAG node to represent the operation of zero extending the
   // low lanes.
   return DAG.getZeroExtendVectorInReg(InOp, DL, VT);

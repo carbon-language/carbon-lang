@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=i386-apple-darwin10 -mcpu=corei7-avx -mattr=+avx | FileCheck %s
+; RUN: llc < %s -mtriple=i386-apple-darwin10 -mcpu=corei7-avx -mattr=+avx -x86-experimental-vector-widening-legalization | FileCheck %s --check-prefix=CHECK-WIDE
 
 ;CHECK-LABEL: foo1_8:
 ;CHECK: vcvtdq2ps
@@ -19,6 +20,10 @@ define <4 x float> @foo1_4(<4 x i8> %src) {
 ;CHECK-LABEL: foo2_8:
 ;CHECK: vcvtdq2ps
 ;CHECK: ret
+;
+;CHECK-WIDE-LABEL: foo2_8:
+;CHECK-WIDE: vcvtdq2ps %ymm{{.*}}, %ymm{{.*}}
+;CHECK-WIDE: ret
 define <8 x float> @foo2_8(<8 x i8> %src) {
   %res = uitofp <8 x i8> %src to <8 x float>
   ret <8 x float> %res
@@ -27,6 +32,10 @@ define <8 x float> @foo2_8(<8 x i8> %src) {
 ;CHECK-LABEL: foo2_4:
 ;CHECK: vcvtdq2ps
 ;CHECK: ret
+;
+;CHECK-WIDE-LABEL: foo2_4:
+;CHECK-WIDE: vcvtdq2ps %xmm{{.*}}, %xmm{{.*}}
+;CHECK-WIDE: ret
 define <4 x float> @foo2_4(<4 x i8> %src) {
   %res = uitofp <4 x i8> %src to <4 x float>
   ret <4 x float> %res

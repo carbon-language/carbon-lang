@@ -1034,6 +1034,9 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, SDLoc DL, EVT VT) {
 
 SDValue SelectionDAG::getZeroExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT) {
   assert(VT.isVector() && "This DAG node is restricted to vector types.");
+  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+         "The sizes of the input and result must match in order to perform the "
+         "extend in-register.");
   assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
          "The destination vector type must have fewer lanes than the input.");
   return getNode(ISD::ZERO_EXTEND_VECTOR_INREG, DL, VT, Op);
