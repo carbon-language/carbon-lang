@@ -923,10 +923,13 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   if (!G->hasInitializer()) return false;
   if (GlobalWasGeneratedByAsan(G)) return false;  // Our own global.
   // Touch only those globals that will not be defined in other modules.
-  // Don't handle ODR type linkages since other modules may be built w/o asan.
+  // Don't handle ODR linkage types and COMDATs since other modules may be built
+  // without ASan.
   if (G->getLinkage() != GlobalVariable::ExternalLinkage &&
       G->getLinkage() != GlobalVariable::PrivateLinkage &&
       G->getLinkage() != GlobalVariable::InternalLinkage)
+    return false;
+  if (G->hasComdat())
     return false;
   // Two problems with thread-locals:
   //   - The address of the main thread's copy can't be computed at link-time.
@@ -945,13 +948,6 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
     DEBUG(dbgs() << "Ignoring \\01L_OBJC_* global: " << *G << "\n");
     return false;
   }
-
-  // Don't instrument private COMDAT globals on Windows until PR20244 (linkage
-  // of vftables with RTTI) is properly fixed.
-  llvm::Triple TargetTriple(G->getParent()->getTargetTriple());
-  if (G->hasComdat() && G->getLinkage() == GlobalVariable::PrivateLinkage &&
-      TargetTriple.isWindowsMSVCEnvironment())
-    return false;
 
   if (G->hasSection()) {
     StringRef Section(G->getSection());
