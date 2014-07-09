@@ -423,12 +423,12 @@ private:
   bool TraverseDeclContextHelper(DeclContext *DC);
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
-  bool TraverseOMPClause(OMPClause *C);
   bool TraverseOMPExecutableDirective(OMPExecutableDirective *S);
+  bool TraverseOMPClause(OMPClause *C);
 #define OPENMP_CLAUSE(Name, Class) bool Visit##Class(Class *C);
 #include "clang/Basic/OpenMPKinds.def"
   /// \brief Process clauses with list of variables.
-  template <typename T> void VisitOMPClauseList(T *Node);
+  template <typename T> bool VisitOMPClauseList(T *Node);
 
   typedef SmallVector<Stmt *, 16> StmtsTy;
   typedef SmallVector<StmtsTy *, 4> QueuesTy;
@@ -2273,53 +2273,34 @@ DEF_TRAVERSE_STMT(AsTypeExpr, {})
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseOMPExecutableDirective(
     OMPExecutableDirective *S) {
-  ArrayRef<OMPClause *> Clauses = S->clauses();
-  for (ArrayRef<OMPClause *>::iterator I = Clauses.begin(), E = Clauses.end();
-       I != E; ++I)
-    if (!TraverseOMPClause(*I))
-      return false;
+  for (auto *C : S->clauses())
+    TRY_TO(TraverseOMPClause(C));
   return true;
 }
 
-DEF_TRAVERSE_STMT(OMPParallelDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPParallelDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPSimdDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPSimdDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPForDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPForDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPSectionsDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPSectionsDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPSectionDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPSectionDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPSingleDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPSingleDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPParallelForDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPParallelForDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
-DEF_TRAVERSE_STMT(OMPParallelSectionsDirective, {
-  if (!TraverseOMPExecutableDirective(S))
-    return false;
-})
+DEF_TRAVERSE_STMT(OMPParallelSectionsDirective,
+                  { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
 // OpenMP clauses.
 template <typename Derived>
@@ -2329,9 +2310,11 @@ bool RecursiveASTVisitor<Derived>::TraverseOMPClause(OMPClause *C) {
   switch (C->getClauseKind()) {
 #define OPENMP_CLAUSE(Name, Class)                                             \
   case OMPC_##Name:                                                            \
-    return getDerived().Visit##Class(static_cast<Class *>(C));
+    TRY_TO(Visit##Class(static_cast<Class *>(C)));                             \
+    break;
 #include "clang/Basic/OpenMPKinds.def"
-  default:
+  case OMPC_threadprivate:
+  case OMPC_unknown:
     break;
   }
   return true;
@@ -2339,45 +2322,44 @@ bool RecursiveASTVisitor<Derived>::TraverseOMPClause(OMPClause *C) {
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPIfClause(OMPIfClause *C) {
-  TraverseStmt(C->getCondition());
+  TRY_TO(TraverseStmt(C->getCondition()));
   return true;
 }
 
 template <typename Derived>
 bool
 RecursiveASTVisitor<Derived>::VisitOMPNumThreadsClause(OMPNumThreadsClause *C) {
-  TraverseStmt(C->getNumThreads());
+  TRY_TO(TraverseStmt(C->getNumThreads()));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPSafelenClause(OMPSafelenClause *C) {
-  TraverseStmt(C->getSafelen());
+  TRY_TO(TraverseStmt(C->getSafelen()));
   return true;
 }
 
 template <typename Derived>
 bool
 RecursiveASTVisitor<Derived>::VisitOMPCollapseClause(OMPCollapseClause *C) {
-  TraverseStmt(C->getNumForLoops());
+  TRY_TO(TraverseStmt(C->getNumForLoops()));
   return true;
 }
 
 template <typename Derived>
-bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *C) {
+bool RecursiveASTVisitor<Derived>::VisitOMPDefaultClause(OMPDefaultClause *) {
   return true;
 }
 
 template <typename Derived>
-bool
-RecursiveASTVisitor<Derived>::VisitOMPProcBindClause(OMPProcBindClause *C) {
+bool RecursiveASTVisitor<Derived>::VisitOMPProcBindClause(OMPProcBindClause *) {
   return true;
 }
 
 template <typename Derived>
 bool
 RecursiveASTVisitor<Derived>::VisitOMPScheduleClause(OMPScheduleClause *C) {
-  TraverseStmt(C->getChunkSize());
+  TRY_TO(TraverseStmt(C->getChunkSize()));
   return true;
 }
 
@@ -2393,61 +2375,62 @@ bool RecursiveASTVisitor<Derived>::VisitOMPNowaitClause(OMPNowaitClause *) {
 
 template <typename Derived>
 template <typename T>
-void RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
-  for (auto *I : Node->varlists())
-    TraverseStmt(I);
+bool RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
+  for (auto *E : Node->varlists())
+    TRY_TO(TraverseStmt(E));
+  return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPPrivateClause(OMPPrivateClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPFirstprivateClause(
     OMPFirstprivateClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPLastprivateClause(
     OMPLastprivateClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPSharedClause(OMPSharedClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPLinearClause(OMPLinearClause *C) {
-  VisitOMPClauseList(C);
-  TraverseStmt(C->getStep());
+  TRY_TO(TraverseStmt(C->getStep()));
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPAlignedClause(OMPAlignedClause *C) {
-  VisitOMPClauseList(C);
-  TraverseStmt(C->getAlignment());
+  TRY_TO(TraverseStmt(C->getAlignment()));
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPCopyinClause(OMPCopyinClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::VisitOMPCopyprivateClause(
     OMPCopyprivateClause *C) {
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
@@ -2456,7 +2439,7 @@ bool
 RecursiveASTVisitor<Derived>::VisitOMPReductionClause(OMPReductionClause *C) {
   TRY_TO(TraverseNestedNameSpecifierLoc(C->getQualifierLoc()));
   TRY_TO(TraverseDeclarationNameInfo(C->getNameInfo()));
-  VisitOMPClauseList(C);
+  TRY_TO(VisitOMPClauseList(C));
   return true;
 }
 
