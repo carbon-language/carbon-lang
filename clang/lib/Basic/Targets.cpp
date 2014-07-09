@@ -5513,6 +5513,8 @@ public:
     if (RegNo == 1) return 5;
     return -1;
   }
+
+  bool isCLZForZeroUndef() const override { return false; }
 };
 
 const Builtin::Info MipsTargetInfoBase::BuiltinInfo[] = {
