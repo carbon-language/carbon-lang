@@ -99,7 +99,7 @@ public:
     return Buffers[i - 1].Buffer;
   }
 
-  size_t getNumBuffers() const {
+  unsigned getNumBuffers() const {
     return Buffers.size();
   }
 
@@ -115,7 +115,7 @@ public:
 
   /// Add a new source buffer to this source manager. This takes ownership of
   /// the memory buffer.
-  size_t AddNewSourceBuffer(MemoryBuffer *F, SMLoc IncludeLoc) {
+  unsigned AddNewSourceBuffer(MemoryBuffer *F, SMLoc IncludeLoc) {
     SrcBuffer NB;
     NB.Buffer = F;
     NB.IncludeLoc = IncludeLoc;
@@ -129,8 +129,8 @@ public:
   /// If no file is found, this returns 0, otherwise it returns the buffer ID
   /// of the stacked file. The full path to the included file can be found in
   /// \p IncludedFile.
-  size_t AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc,
-                        std::string &IncludedFile);
+  unsigned AddIncludeFile(const std::string &Filename, SMLoc IncludeLoc,
+                          std::string &IncludedFile);
 
   /// Return the ID of the buffer containing the specified location.
   ///

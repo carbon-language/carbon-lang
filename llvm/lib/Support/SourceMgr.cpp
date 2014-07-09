@@ -49,9 +49,9 @@ SourceMgr::~SourceMgr() {
   }
 }
 
-size_t SourceMgr::AddIncludeFile(const std::string &Filename,
-                                 SMLoc IncludeLoc,
-                                 std::string &IncludedFile) {
+unsigned SourceMgr::AddIncludeFile(const std::string &Filename,
+                                   SMLoc IncludeLoc,
+                                   std::string &IncludedFile) {
   IncludedFile = Filename;
   ErrorOr<std::unique_ptr<MemoryBuffer>> NewBufOrErr =
       MemoryBuffer::getFile(IncludedFile.c_str());
