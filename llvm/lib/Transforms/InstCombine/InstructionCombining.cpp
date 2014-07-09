@@ -42,6 +42,7 @@
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
@@ -1194,6 +1195,11 @@ static Value *CreateBinOpAsGiven(BinaryOperator &Inst, Value *LHS, Value *RHS,
 ///         null pointer if no transformation was made.
 Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
   if (!Inst.getType()->isVectorTy()) return nullptr;
+
+  // It may not be safe to reorder shuffles and things like div, urem, etc.
+  // because we may trap when executing those ops on unknown vector elements.
+  // See PR20059.
+  if (!isSafeToSpeculativelyExecute(&Inst)) return nullptr;
 
   unsigned VWidth = cast<VectorType>(Inst.getType())->getNumElements();
   Value *LHS = Inst.getOperand(0), *RHS = Inst.getOperand(1);
