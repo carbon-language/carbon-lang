@@ -2295,8 +2295,9 @@ DEF_TRAVERSE_STMT(AsTypeExpr, {})
 template <typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseOMPExecutableDirective(
     OMPExecutableDirective *S) {
-  for (auto *C : S->clauses())
+  for (auto *C : S->clauses()) {
     TRY_TO(TraverseOMPClause(C));
+  }
   return true;
 }
 
@@ -2398,8 +2399,9 @@ bool RecursiveASTVisitor<Derived>::VisitOMPNowaitClause(OMPNowaitClause *) {
 template <typename Derived>
 template <typename T>
 bool RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
-  for (auto *E : Node->varlists())
+  for (auto *E : Node->varlists()) {
     TRY_TO(TraverseStmt(E));
+  }
   return true;
 }
 
