@@ -34,11 +34,6 @@
 # define SANITIZER_SUPPORTS_WEAK_HOOKS 0
 #endif
 
-// If set, the tool will install its own SEGV signal handler.
-#ifndef SANITIZER_NEEDS_SEGV
-# define SANITIZER_NEEDS_SEGV 1
-#endif
-
 // GCC does not understand __has_feature
 #if !defined(__has_feature)
 # define __has_feature(x) 0
