@@ -144,13 +144,17 @@ unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
   if (Vector && !ST->hasSSE1())
     return 0;
 
-  if (ST->is64Bit())
+  if (ST->is64Bit()) {
+    if (Vector && ST->hasAVX512())
+      return 32;
     return 16;
+  }
   return 8;
 }
 
 unsigned X86TTI::getRegisterBitWidth(bool Vector) const {
   if (Vector) {
+    if (ST->hasAVX512()) return 512;
     if (ST->hasAVX()) return 256;
     if (ST->hasSSE1()) return 128;
     return 0;
