@@ -6,7 +6,6 @@ set(LLVM_LINK_COMPONENTS
 
 add_clang_library(clangDriver
   Action.cpp
-  CC1AsOptions.cpp
   Compilation.cpp
   Driver.cpp
   DriverOptions.cpp
@@ -22,7 +21,6 @@ add_clang_library(clangDriver
   Types.cpp
 
   DEPENDS
-  ClangCC1AsOptions
   ClangDriverOptions
 
   LINK_LIBS

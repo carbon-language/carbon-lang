@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines the options accepted by clang -cc1.
+//  This file defines the options accepted by clang -cc1 and clang -cc1as.
 //
 //===----------------------------------------------------------------------===//
 
@@ -17,19 +17,24 @@ let Flags = [CC1Option, NoDriverOption] in {
 // Target Options
 //===----------------------------------------------------------------------===//
 
-def target_abi : Separate<["-"], "target-abi">,
-  HelpText<"Target a particular ABI type">;
+let Flags = [CC1Option, CC1AsOption, NoDriverOption] in {
+
 def target_cpu : Separate<["-"], "target-cpu">,
   HelpText<"Target a specific cpu type">;
-def mfpmath : Separate<["-"], "mfpmath">,
-  HelpText<"Which unit to use for fp math">;
 def target_feature : Separate<["-"], "target-feature">,
   HelpText<"Target specific attributes">;
-def target_linker_version : Separate<["-"], "target-linker-version">,
-  HelpText<"Target linker version">;
 def triple : Separate<["-"], "triple">,
   HelpText<"Specify target triple (e.g. i686-apple-darwin9)">;
+
+}
+
+def target_abi : Separate<["-"], "target-abi">,
+  HelpText<"Target a particular ABI type">;
+def target_linker_version : Separate<["-"], "target-linker-version">,
+  HelpText<"Target linker version">;
 def triple_EQ : Joined<["-"], "triple=">, Alias<triple>;
+def mfpmath : Separate<["-"], "mfpmath">,
+  HelpText<"Which unit to use for fp math">;
 
 //===----------------------------------------------------------------------===//
 // Analyzer Options
@@ -122,16 +127,29 @@ def migrator_no_finalize_removal : Flag<["-"], "no-finalize-removal">,
 // CodeGen Options
 //===----------------------------------------------------------------------===//
 
+let Flags = [CC1Option, CC1AsOption, NoDriverOption] in {
+
+def fdebug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,
+  HelpText<"The compilation directory to embed in the debug info.">;
+def dwarf_debug_flags : Separate<["-"], "dwarf-debug-flags">,
+  HelpText<"The string to embed in the Dwarf debug flags record.">;
+def mno_exec_stack : Flag<["-"], "mnoexecstack">,
+  HelpText<"Mark the file as not needing an executable stack">;
+def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
+    HelpText<"Compress DWARF debug sections using zlib">;
+def msave_temp_labels : Flag<["-"], "msave-temp-labels">,
+  HelpText<"Save temporary labels in the symbol table. "
+           "Note this may change .s semantics and shouldn't generally be used "
+           "on compiler-generated code.">;
+
+}
+
 def disable_llvm_optzns : Flag<["-"], "disable-llvm-optzns">,
   HelpText<"Don't run LLVM optimization passes">;
 def disable_llvm_verifier : Flag<["-"], "disable-llvm-verifier">,
   HelpText<"Don't run the LLVM IR verifier pass">;
 def disable_red_zone : Flag<["-"], "disable-red-zone">,
   HelpText<"Do not emit code that uses the red zone.">;
-def fdebug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,
-  HelpText<"The compilation directory to embed in the debug info.">;
-def dwarf_debug_flags : Separate<["-"], "dwarf-debug-flags">,
-  HelpText<"The string to embed in the Dwarf debug flags record.">;
 def dwarf_column_info : Flag<["-"], "dwarf-column-info">,
   HelpText<"Turn on column location information.">;
 def split_dwarf : Flag<["-"], "split-dwarf">,
@@ -188,10 +206,6 @@ def mfloat_abi : Separate<["-"], "mfloat-abi">,
   HelpText<"The float ABI to use">;
 def mlimit_float_precision : Separate<["-"], "mlimit-float-precision">,
   HelpText<"Limit float precision to the given value">;
-def mno_exec_stack : Flag<["-"], "mnoexecstack">,
-  HelpText<"Mark the file as not needing an executable stack">;
-def compress_debug_sections : Flag<["-"], "compress-debug-sections">,
-    HelpText<"Compress DWARF debug sections using zlib">;
 def split_stacks : Flag<["-"], "split-stacks">,
   HelpText<"Try to use a split stack if possible.">;
 def mno_zero_initialized_in_bss : Flag<["-"], "mno-zero-initialized-in-bss">,
@@ -200,8 +214,6 @@ def backend_option : Separate<["-"], "backend-option">,
   HelpText<"Additional arguments to forward to LLVM backend (during code gen)">;
 def mregparm : Separate<["-"], "mregparm">,
   HelpText<"Limit the number of registers available for integer arguments">;
-def msave_temp_labels : Flag<["-"], "msave-temp-labels">,
-  HelpText<"(integrated-as) Save temporary labels">;
 def mrelocation_model : Separate<["-"], "mrelocation-model">,
   HelpText<"The relocation model to use">;
 def munwind_tables : Flag<["-"], "munwind-tables">,
@@ -272,6 +284,7 @@ def Wno_rewrite_macros : Flag<["-"], "Wno-rewrite-macros">,
 // This isn't normally used, it is just here so we can parse a
 // CompilerInvocation out of a driver-derived argument vector.
 def cc1 : Flag<["-"], "cc1">;
+def cc1as : Flag<["-"], "cc1as">;
 
 def ast_merge : Separate<["-"], "ast-merge">,
   MetaVarName<"<ast file>">,
@@ -303,8 +316,6 @@ def plugin_arg : JoinedAndSeparate<["-"], "plugin-arg-">,
     HelpText<"Pass <arg> to plugin <name>">;
 def add_plugin : Separate<["-"], "add-plugin">, MetaVarName<"<name>">,
   HelpText<"Use the named plugin action in addition to the default action">;
-def version : Flag<["-"], "version">,
-  HelpText<"Print the compiler version">;
 def ast_dump_filter : Separate<["-"], "ast-dump-filter">,
   MetaVarName<"<dump_filter>">,
   HelpText<"Use with -ast-dump or -ast-print to dump/print only AST declaration"
@@ -401,12 +412,19 @@ def foverride_record_layout_EQ : Joined<["-"], "foverride-record-layout=">,
 // Language Options
 //===----------------------------------------------------------------------===//
 
+let Flags = [CC1Option, CC1AsOption, NoDriverOption] in {
+
+def version : Flag<["-"], "version">,
+  HelpText<"Print the compiler version">;
+def main_file_name : Separate<["-"], "main-file-name">,
+  HelpText<"Main file name to use for debug info">;
+
+}
+
 def fblocks_runtime_optional : Flag<["-"], "fblocks-runtime-optional">,
   HelpText<"Weakly link in the blocks runtime">;
 def fsjlj_exceptions : Flag<["-"], "fsjlj-exceptions">,
   HelpText<"Use SjLj style exceptions">;
-def main_file_name : Separate<["-"], "main-file-name">,
-  HelpText<"Main file name to use for debug info">;
 def split_dwarf_file : Separate<["-"], "split-dwarf-file">,
   HelpText<"File name to use for split dwarf debug info output">;
 def fno_wchar : Flag<["-"], "fno-wchar">,
@@ -560,3 +578,32 @@ def fcuda_is_device : Flag<["-"], "fcuda-is-device">,
   HelpText<"Generate code for CUDA device">;
 
 } // let Flags = [CC1Option]
+
+
+//===----------------------------------------------------------------------===//
+// cc1as-only Options
+//===----------------------------------------------------------------------===//
+
+let Flags = [CC1AsOption, NoDriverOption] in {
+
+// Language Options
+def n : Flag<["-"], "n">,
+  HelpText<"Don't automatically start assembly file with a text section">;
+
+// Frontend Options
+def filetype : Separate<["-"], "filetype">,
+    HelpText<"Specify the output file type ('asm', 'null', or 'obj')">;
+
+// Transliterate Options
+def output_asm_variant : Separate<["-"], "output-asm-variant">,
+    HelpText<"Select the asm variant index to use for output">;
+def show_encoding : Flag<["-"], "show-encoding">,
+    HelpText<"Show instruction encoding information in transliterate mode">;
+def show_inst : Flag<["-"], "show-inst">,
+    HelpText<"Show internal instruction representation in transliterate mode">;
+
+// Assemble Options
+def dwarf_debug_producer : Separate<["-"], "dwarf-debug-producer">,
+  HelpText<"The string to embed in the Dwarf debug AT_producer record.">;
+
+} // let Flags = [CC1AsOption]

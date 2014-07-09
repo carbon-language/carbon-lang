@@ -30,7 +30,8 @@ enum ClangFlags {
   CoreOption = (1 << 8),
   CLOption = (1 << 9),
   CC1Option = (1 << 10),
-  NoDriverOption = (1 << 11)
+  CC1AsOption = (1 << 11),
+  NoDriverOption = (1 << 12)
 };
 
 enum ID {

@@ -14,7 +14,6 @@
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Driver/CC1AsOptions.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
@@ -57,6 +56,7 @@
 #include <system_error>
 using namespace clang;
 using namespace clang::driver;
+using namespace clang::driver::options;
 using namespace llvm;
 using namespace llvm::opt;
 
@@ -147,30 +147,64 @@ public:
 
 }
 
+#if 0
+bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
+                                        const char *const *ArgBegin,
+                                        const char *const *ArgEnd,
+                                        DiagnosticsEngine &Diags) {
+  bool Success = true;
+  
+  // Parse the arguments.
+  std::unique_ptr<OptTable> Opts(createDriverOptTable());
+  const unsigned IncludedFlagsBitmask = options::CC1Option;
+  unsigned MissingArgIndex, MissingArgCount;
+  std::unique_ptr<InputArgList> Args(
+                                     Opts->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
+                                                     IncludedFlagsBitmask));
+  
+  // Check for missing argument error.
+  if (MissingArgCount) {
+    Diags.Report(diag::err_drv_missing_argument)
+    << Args->getArgString(MissingArgIndex) << MissingArgCount;
+    Success = false;
+  }
+  
+  // Issue errors on unknown arguments.
+  for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
+       ie = Args->filtered_end(); it != ie; ++it) {
+    Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
+    Success = false;
+  }
+}
+#endif
+
 bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
                                          const char **ArgBegin,
                                          const char **ArgEnd,
                                          DiagnosticsEngine &Diags) {
-  using namespace clang::driver::cc1asoptions;
   bool Success = true;
 
   // Parse the arguments.
-  std::unique_ptr<OptTable> OptTbl(createCC1AsOptTable());
+  std::unique_ptr<OptTable> OptTbl(createDriverOptTable());
+
+  const unsigned IncludedFlagsBitmask = options::CC1AsOption;
   unsigned MissingArgIndex, MissingArgCount;
   std::unique_ptr<InputArgList> Args(
-      OptTbl->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount));
+      OptTbl->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
+                      IncludedFlagsBitmask));
 
   // Check for missing argument error.
   if (MissingArgCount) {
     Diags.Report(diag::err_drv_missing_argument)
-      << Args->getArgString(MissingArgIndex) << MissingArgCount;
+        << Args->getArgString(MissingArgIndex) << MissingArgCount;
     Success = false;
   }
 
   // Issue errors on unknown arguments.
-  for (arg_iterator it = Args->filtered_begin(cc1asoptions::OPT_UNKNOWN),
-         ie = Args->filtered_end(); it != ie; ++it) {
-    Diags.Report(diag::err_drv_unknown_argument) << (*it) ->getAsString(*Args);
+  for (arg_iterator it = Args->filtered_begin(OPT_UNKNOWN),
+                    ie = Args->filtered_end();
+       it != ie; ++it) {
+    Diags.Report(diag::err_drv_unknown_argument) << (*it)->getAsString(*Args);
     Success = false;
   }
 
@@ -189,7 +223,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.IncludePaths = Args->getAllArgValues(OPT_I);
   Opts.NoInitialTextSection = Args->hasArg(OPT_n);
   Opts.SaveTemporaryLabels = Args->hasArg(OPT_msave_temp_labels);
-  Opts.GenDwarfForAssembly = Args->hasArg(OPT_g);
+  Opts.GenDwarfForAssembly = Args->hasArg(OPT_g_Flag);
   Opts.CompressDebugSections = Args->hasArg(OPT_compress_debug_sections);
   if (Args->hasArg(OPT_gdwarf_2))
     Opts.DwarfVersion = 2;
@@ -447,10 +481,11 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
   if (!AssemblerInvocation::CreateFromArgs(Asm, ArgBegin, ArgEnd, Diags))
     return 1;
 
-  // Honor -help.
   if (Asm.ShowHelp) {
-    std::unique_ptr<OptTable> Opts(driver::createCC1AsOptTable());
-    Opts->PrintHelp(llvm::outs(), "clang -cc1as", "Clang Integrated Assembler");
+    std::unique_ptr<OptTable> Opts(driver::createDriverOptTable());
+    Opts->PrintHelp(llvm::outs(), "clang -cc1as",
+                    "Clang Integrated Assembler",
+                    /*Include=*/ driver::options::CC1AsOption, /*Exclude=*/ 0);
     return 0;
   }
 
@@ -484,3 +519,4 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   return !!Failed;
 }
+
