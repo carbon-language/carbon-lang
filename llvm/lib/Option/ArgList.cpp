@@ -234,44 +234,40 @@ void ArgList::AddLastArg(ArgStringList &Output, OptSpecifier Id0,
 
 void ArgList::AddAllArgs(ArgStringList &Output, OptSpecifier Id0,
                          OptSpecifier Id1, OptSpecifier Id2) const {
-  for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
-         ie = filtered_end(); it != ie; ++it) {
-    (*it)->claim();
-    (*it)->render(*this, Output);
+  for (auto Arg: filtered(Id0, Id1, Id2)) {
+    Arg->claim();
+    Arg->render(*this, Output);
   }
 }
 
 void ArgList::AddAllArgValues(ArgStringList &Output, OptSpecifier Id0,
                               OptSpecifier Id1, OptSpecifier Id2) const {
-  for (arg_iterator it = filtered_begin(Id0, Id1, Id2),
-         ie = filtered_end(); it != ie; ++it) {
-    (*it)->claim();
-    for (unsigned i = 0, e = (*it)->getNumValues(); i != e; ++i)
-      Output.push_back((*it)->getValue(i));
+  for (auto Arg : filtered(Id0, Id1, Id2)) {
+    Arg->claim();
+    for (unsigned i = 0, e = Arg->getNumValues(); i != e; ++i)
+      Output.push_back(Arg->getValue(i));
   }
 }
 
 void ArgList::AddAllArgsTranslated(ArgStringList &Output, OptSpecifier Id0,
                                    const char *Translation,
                                    bool Joined) const {
-  for (arg_iterator it = filtered_begin(Id0),
-         ie = filtered_end(); it != ie; ++it) {
-    (*it)->claim();
+  for (auto Arg: filtered(Id0)) {
+    Arg->claim();
 
     if (Joined) {
       Output.push_back(MakeArgString(StringRef(Translation) +
-                                     (*it)->getValue(0)));
+                                     Arg->getValue(0)));
     } else {
       Output.push_back(Translation);
-      Output.push_back((*it)->getValue(0));
+      Output.push_back(Arg->getValue(0));
     }
   }
 }
 
 void ArgList::ClaimAllArgs(OptSpecifier Id0) const {
-  for (arg_iterator it = filtered_begin(Id0),
-         ie = filtered_end(); it != ie; ++it)
-    (*it)->claim();
+  for (auto Arg : filtered(Id0))
+    Arg->claim();
 }
 
 void ArgList::ClaimAllArgs() const {
