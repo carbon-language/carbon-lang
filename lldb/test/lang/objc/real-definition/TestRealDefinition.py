@@ -12,6 +12,7 @@ class TestRealDefinition(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailureDarwin("llvm.org/pr20272")
     def test_frame_var_after_stop_at_interface_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
         if self.getArchitecture() == 'i386':
@@ -21,6 +22,7 @@ class TestRealDefinition(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20272")
     def test_frame_var_after_stop_at_interface_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
         if self.getArchitecture() == 'i386':
@@ -30,6 +32,7 @@ class TestRealDefinition(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailureDarwin("llvm.org/pr20272")
     def test_frame_var_after_stop_at_implementation_with_dsym(self):
         """Test that we can find the implementation for an objective C type"""
         if self.getArchitecture() == 'i386':
@@ -39,6 +42,7 @@ class TestRealDefinition(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20272")
     def test_frame_var_after_stop_at_implementation_with_dwarf(self):
         """Test that we can find the implementation for an objective C type"""
         if self.getArchitecture() == 'i386':
