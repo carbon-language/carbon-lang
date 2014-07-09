@@ -182,7 +182,7 @@ IRForTarget::GetFunctionAddress (llvm::Function *fun,
             if (m_error_stream)
                 m_error_stream->Printf("Internal error [IRForTarget]: Call to unhandled compiler intrinsic '%s'\n", Intrinsic::getName(intrinsic_id).c_str());
 
-                return LookupResult::Fail;
+            return LookupResult::Fail;
         case Intrinsic::memcpy:
             {
                 static lldb_private::ConstString g_memcpy_str ("memcpy");
