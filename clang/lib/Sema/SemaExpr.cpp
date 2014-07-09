@@ -2103,7 +2103,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
         return E;
     }
 
-    // Don't diagnose an empty lookup for inline assmebly.
+    // Don't diagnose an empty lookup for inline assembly.
     if (IsInlineAsmIdentifier)
       return ExprError();
 
