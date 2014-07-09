@@ -12,6 +12,7 @@ class HiddenIvarsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
+    @expectedFailureDarwin("llvm.org/20269")
     def test_expr_with_dsym(self):
         if self.getArchitecture() == 'i386':
             self.skipTest("requires modern objc runtime")
@@ -20,6 +21,7 @@ class HiddenIvarsTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/20269")
     def test_expr_with_dwarf(self):
         if self.getArchitecture() == 'i386':
             self.skipTest("requires modern objc runtime")
