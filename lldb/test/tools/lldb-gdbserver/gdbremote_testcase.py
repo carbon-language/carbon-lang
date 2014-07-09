@@ -6,6 +6,7 @@ import errno
 import unittest2
 import pexpect
 import platform
+import random
 import re
 import sets
 import signal
@@ -21,8 +22,6 @@ import os.path
 class GdbRemoteTestCaseBase(TestBase):
 
     mydir = TestBase.compute_mydir(__file__)
-
-    port = 12345
 
     _TIMEOUT_SECONDS = 5
 
@@ -50,10 +49,10 @@ class GdbRemoteTestCaseBase(TestBase):
         self.logger.setLevel(self._LOGGING_LEVEL)
         self.test_sequence = GdbRemoteTestSequence(self.logger)
         self.set_inferior_startup_launch()
+        self.port = self.get_next_port()
 
-        # Uncomment this code to force only a single test to run (by name).
-        #if not re.search(r"P_", self._testMethodName):
-        #    self.skipTest("focusing on one test")
+    def get_next_port(self):
+        return 12000 + random.randint(0,3999)
 
     def reset_test_sequence(self):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
@@ -114,39 +113,50 @@ class GdbRemoteTestCaseBase(TestBase):
         return server
 
     def connect_to_debug_monitor(self, attach_pid=None):
-        server = self.launch_debug_monitor(attach_pid=attach_pid)
-
-        # Wait until we receive the server ready message before continuing.
-        server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
-
-        # Schedule debug monitor to be shut down during teardown.
-        logger = self.logger
-        def shutdown_debug_monitor():
-            try:
-                server.close()
-            except:
-                logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
-        self.addTearDownHook(shutdown_debug_monitor)
-
         attempts = 0
         MAX_ATTEMPTS = 20
 
         while attempts < MAX_ATTEMPTS:
-            # Create a socket to talk to the server
+            server = self.launch_debug_monitor(attach_pid=attach_pid)
+
+            # Wait until we receive the server ready message before continuing.
+            port_good = True
             try:
-                self.sock = self.create_socket()
-                return server
-            except socket.error as serr:
-                # We're only trying to handle connection refused
-                if serr.errno != errno.ECONNREFUSED:
-                    raise serr
+                server.expect_exact('Listening to port {} for a connection from localhost'.format(self.port))
+            except:
+                port_good = False
+                server.close()
 
-                # Increment attempts.
-                print("connect to debug monitor on port %d failed, attempt #%d of %d" % (self.port, attempts + 1, MAX_ATTEMPTS))
-                attempts += 1
+            if port_good:
+                # Schedule debug monitor to be shut down during teardown.
+                logger = self.logger
+                def shutdown_debug_monitor():
+                    try:
+                        server.close()
+                    except:
+                        logger.warning("failed to close pexpect server for debug monitor: {}; ignoring".format(sys.exc_info()[0]))
+                self.addTearDownHook(shutdown_debug_monitor)
 
-                # And wait a second before next attempt.
-                time.sleep(1)
+                # Create a socket to talk to the server
+                try:
+                    self.sock = self.create_socket()
+                    return server
+                except socket.error as serr:
+                    # We're only trying to handle connection refused.
+                    if serr.errno != errno.ECONNREFUSED:
+                        raise serr
+                    # We should close the server here to be safe.
+                    server.close()
+
+            # Increment attempts.
+            print("connect to debug monitor on port %d failed, attempt #%d of %d" % (self.port, attempts + 1, MAX_ATTEMPTS))
+            attempts += 1
+
+            # And wait a random length of time before next attempt, to avoid collisions.
+            time.sleep(random.randint(1,5))
+            
+            # Now grab a new port number.
+            self.port = self.get_next_port()
 
         raise Exception("failed to create a socket to the launched debug monitor after %d tries" % attempts)
 
