@@ -1,5 +1,7 @@
-; RUN: llc -march=mips64el -mcpu=mips4 < %s | FileCheck %s
-; RUN: llc -march=mips64el -mcpu=mips64 < %s | FileCheck %s
+; RUN: llc -march=mips64el -mcpu=mips4    -asm-show-inst < %s | FileCheck %s -check-prefix=CHECK -check-prefix=NOT-R6
+; RUN: llc -march=mips64el -mcpu=mips64   -asm-show-inst < %s | FileCheck %s -check-prefix=CHECK -check-prefix=NOT-R6
+; RUN: llc -march=mips64el -mcpu=mips64r2 -asm-show-inst < %s | FileCheck %s -check-prefix=CHECK -check-prefix=NOT-R6
+; RUN: llc -march=mips64el -mcpu=mips64r6 -asm-show-inst < %s | FileCheck %s -check-prefix=CHECK -check-prefix=R6
 
 declare void @llvm.eh.return.i64(i64, i8*)
 declare void @foo(...)
@@ -10,7 +12,7 @@ entry:
   call void @llvm.eh.return.i64(i64 %offset, i8* %handler)
   unreachable
 
-; CHECK:        f1
+; CHECK:    f1:
 ; CHECK:        daddiu  $sp, $sp, -[[spoffset:[0-9]+]]
 
 ; check that $a0-$a3 are saved on stack.
@@ -42,9 +44,9 @@ entry:
 ; CHECK:        daddiu  $sp, $sp, [[spoffset]]
 ; CHECK:        move    $25, $2
 ; CHECK:        move    $ra, $2
-; CHECK:        jr      $ra
+; NOT-R6:       jr      $ra # <MCInst #{{[0-9]+}} JR
+; R6:           jr      $ra # <MCInst #{{[0-9]+}} JALR
 ; CHECK:        daddu   $sp, $sp, $3
-
 }
 
 define void @f2(i64 %offset, i8* %handler) {
@@ -52,7 +54,7 @@ entry:
   call void @llvm.eh.return.i64(i64 %offset, i8* %handler)
   unreachable
 
-; CHECK:        f2
+; CHECK:    f2:
 ; CHECK:        .cfi_startproc
 ; CHECK:        daddiu  $sp, $sp, -[[spoffset:[0-9]+]]
 ; CHECK:        .cfi_def_cfa_offset [[spoffset]]
@@ -84,7 +86,8 @@ entry:
 ; CHECK:        daddiu  $sp, $sp, [[spoffset]]
 ; CHECK:        move    $25, $2
 ; CHECK:        move    $ra, $2
-; CHECK:        jr      $ra
+; NOT-R6:       jr      $ra # <MCInst #{{[0-9]+}} JR
+; R6:           jr      $ra # <MCInst #{{[0-9]+}} JALR
 ; CHECK:        daddu   $sp, $sp, $3
 ; CHECK:        .cfi_endproc
 }

@@ -91,6 +91,42 @@ bool MipsAsmPrinter::lowerOperand(const MachineOperand &MO, MCOperand &MCOp) {
 
 #include "MipsGenMCPseudoLowering.inc"
 
+void MipsAsmPrinter::emitPseudoReturn(MCStreamer &OutStreamer,
+                                      const MachineInstr *MI) {
+  // Lower PseudoReturn to JR, JR_MM, JALR, or JALR64 as appropriate for the
+  // target
+  bool HasLinkReg = false;
+  MCInst TmpInst0;
+
+  if (Subtarget->hasMips64r6()) {
+    // MIPS64r6 should use (JALR64 ZERO_64, $rs)
+    TmpInst0.setOpcode(Mips::JALR64);
+    HasLinkReg = true;
+  } else if (Subtarget->hasMips32r6()) {
+    // MIPS32r6 should use (JALR ZERO, $rs)
+    TmpInst0.setOpcode(Mips::JALR);
+    HasLinkReg = true;
+  } else if (Subtarget->inMicroMipsMode())
+    // microMIPS should use (JR_MM $rs)
+    TmpInst0.setOpcode(Mips::JR_MM);
+  else {
+    // Everything else should use (JR $rs)
+    TmpInst0.setOpcode(Mips::JR);
+  }
+
+  MCOperand MCOp;
+
+  if (HasLinkReg) {
+    unsigned ZeroReg = Subtarget->isGP64bit() ? Mips::ZERO_64 : Mips::ZERO;
+    TmpInst0.addOperand(MCOperand::CreateReg(ZeroReg));
+  }
+
+  lowerOperand(MI->getOperand(0), MCOp);
+  TmpInst0.addOperand(MCOp);
+
+  EmitToStreamer(OutStreamer, TmpInst0);
+}
+
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MipsTargetStreamer &TS = getTargetStreamer();
   TS.setCanHaveModuleDir(false);
@@ -143,6 +179,12 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     // Do any auto-generated pseudo lowerings.
     if (emitPseudoExpansionLowering(OutStreamer, &*I))
       continue;
+
+    if (I->getOpcode() == Mips::PseudoReturn ||
+        I->getOpcode() == Mips::PseudoReturn64) {
+      emitPseudoReturn(OutStreamer, &*I);
+      continue;
+    }
 
     // The inMips16Mode() test is not permanent.
     // Some instructions are marked as pseudo right now which

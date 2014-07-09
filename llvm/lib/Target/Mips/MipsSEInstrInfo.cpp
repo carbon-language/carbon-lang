@@ -272,7 +272,7 @@ bool MipsSEInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   default:
     return false;
   case Mips::RetRA:
-    expandRetRA(MBB, MI, Mips::RET);
+    expandRetRA(MBB, MI);
     break;
   case Mips::PseudoMFHI:
     Opc = isMicroMips ? Mips::MFHI16_MM : Mips::MFHI;
@@ -428,9 +428,14 @@ unsigned MipsSEInstrInfo::getAnalyzableBrOpc(unsigned Opc) const {
 }
 
 void MipsSEInstrInfo::expandRetRA(MachineBasicBlock &MBB,
-                                MachineBasicBlock::iterator I,
-                                unsigned Opc) const {
-  BuildMI(MBB, I, I->getDebugLoc(), get(Opc)).addReg(Mips::RA);
+                                  MachineBasicBlock::iterator I) const {
+  const auto &Subtarget = TM.getSubtarget<MipsSubtarget>();
+
+  if (Subtarget.isGP64bit())
+    BuildMI(MBB, I, I->getDebugLoc(), get(Mips::PseudoReturn64))
+        .addReg(Mips::RA_64);
+  else
+    BuildMI(MBB, I, I->getDebugLoc(), get(Mips::PseudoReturn)).addReg(Mips::RA);
 }
 
 std::pair<bool, bool>
@@ -591,17 +596,16 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
   // indirect jump to TargetReg
   const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
   unsigned ADDU = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
-  unsigned JR = STI.isABI_N64() ? Mips::JR64 : Mips::JR;
-  unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
-  unsigned RA = STI.isABI_N64() ? Mips::RA_64 : Mips::RA;
-  unsigned T9 = STI.isABI_N64() ? Mips::T9_64 : Mips::T9;
-  unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
+  unsigned SP = STI.isGP64bit() ? Mips::SP_64 : Mips::SP;
+  unsigned RA = STI.isGP64bit() ? Mips::RA_64 : Mips::RA;
+  unsigned T9 = STI.isGP64bit() ? Mips::T9_64 : Mips::T9;
+  unsigned ZERO = STI.isGP64bit() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned OffsetReg = I->getOperand(0).getReg();
   unsigned TargetReg = I->getOperand(1).getReg();
 
   // addu $ra, $v0, $zero
   // addu $sp, $sp, $v1
-  // jr   $ra
+  // jr   $ra (via RetRA)
   if (TM.getRelocationModel() == Reloc::PIC_)
     BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), T9)
         .addReg(TargetReg).addReg(ZERO);
@@ -609,7 +613,7 @@ void MipsSEInstrInfo::expandEhReturn(MachineBasicBlock &MBB,
       .addReg(TargetReg).addReg(ZERO);
   BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(ADDU), SP)
       .addReg(SP).addReg(OffsetReg);
-  BuildMI(MBB, I, I->getDebugLoc(), TM.getInstrInfo()->get(JR)).addReg(RA);
+  expandRetRA(MBB, I);
 }
 
 const MipsInstrInfo *llvm::createMipsSEInstrInfo(MipsTargetMachine &TM) {

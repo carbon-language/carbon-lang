@@ -4,67 +4,94 @@
 ; test constant generation here.
 ;
 ; We'll test pointer returns in a separate file since the relocation model
-; affects it.
+; affects it and it's undesirable to repeat the non-pointer returns for each
+; relocation model.
 
-; RUN: llc -march=mips   -mcpu=mips32   < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR32 -check-prefix=NO-MTHC1
-; RUN: llc -march=mips   -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR32 -check-prefix=MTHC1
-; RUN: llc -march=mips64 -mcpu=mips4    < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1
-; RUN: llc -march=mips64 -mcpu=mips64   < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1
-; RUN: llc -march=mips64 -mcpu=mips64r2 < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1
+; RUN: llc -march=mips   -mcpu=mips32   -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR32 -check-prefix=NO-MTHC1 -check-prefix=NOT-R6
+; RUN: llc -march=mips   -mcpu=mips32r2 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR32 -check-prefix=MTHC1 -check-prefix=NOT-R6
+; RUN: llc -march=mips   -mcpu=mips32r6 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR32 -check-prefix=MTHC1 -check-prefix=R6
+; RUN: llc -march=mips64 -mcpu=mips4    -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1 -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64   -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1 -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64r2 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1 -check-prefix=NOT-R6
+; RUN: llc -march=mips64 -mcpu=mips64r6 -asm-show-inst < %s | FileCheck %s -check-prefix=ALL -check-prefix=GPR64 -check-prefix=DMTC1 -check-prefix=R6
 
 define void @ret_void() {
 ; ALL-LABEL: ret_void:
-; ALL:           jr $ra
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret void
 }
 
 define i8 @ret_i8() {
 ; ALL-LABEL: ret_i8:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       addiu $2, $zero, 3
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i8 3
 }
 
 define i16 @ret_i16_3() {
 ; ALL-LABEL: ret_i16_3:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       addiu $2, $zero, 3
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i16 3
 }
 
 define i16 @ret_i16_256() {
 ; ALL-LABEL: ret_i16_256:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       addiu $2, $zero, 256
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i16 256
 }
 
 define i16 @ret_i16_257() {
 ; ALL-LABEL: ret_i16_257:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       addiu $2, $zero, 257
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i16 257
 }
 
 define i32 @ret_i32_257() {
 ; ALL-LABEL: ret_i32_257:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       addiu $2, $zero, 257
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i32 257
 }
 
 define i32 @ret_i32_65536() {
 ; ALL-LABEL: ret_i32_65536:
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       lui $2, 1
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i32 65536
 }
 
 define i32 @ret_i32_65537() {
 ; ALL-LABEL: ret_i32_65537:
 ; ALL:           lui $[[T0:[0-9]+]], 1
-; ALL-DAG:       jr $ra
 ; ALL-DAG:       ori $2, $[[T0]], 1
+
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i32 65537
 }
 
@@ -77,7 +104,9 @@ define i64 @ret_i64_65537() {
 
 ; GPR64-DAG:     daddiu $2, $[[T0]], 1
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i64 65537
 }
 
@@ -91,7 +120,9 @@ define i64 @ret_i64_281479271677952() {
 ; GPR64-DAG:     daddiu $[[T1:[0-9]+]], $[[T0]], 1
 ; GPR64-DAG:     dsll $2, $[[T1]], 32
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i64 281479271677952
 }
 
@@ -108,11 +139,12 @@ define i64 @ret_i64_281479271809026() {
 ; GPR64-DAG:     dsll $[[T1:[0-9]+]], $[[T0]], 17
 ; GPR64-DAG:     daddiu $2, $[[T1]], 2
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret i64 281479271809026
 }
 
-; TODO: f32
 define float @ret_float_0x0() {
 ; ALL-LABEL: ret_float_0x0:
 
@@ -122,7 +154,9 @@ define float @ret_float_0x0() {
 
 ; DMTC-DAG:      dmtc1 $zero, $f0
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret float 0x0000000000000000
 }
 
@@ -133,7 +167,8 @@ define float @ret_float_0x3() {
 ; O32-DAG:       lwc1 $f0, %lo($CPI
 ; N64-DAG:       lwc1 $f0, %got_ofst($CPI
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
 
 ; float constants are written as double constants
   ret float 0x36b8000000000000
@@ -150,7 +185,9 @@ define double @ret_double_0x0() {
 
 ; DMTC-DAG:      dmtc1 $zero, $f0
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret double 0x0000000000000000
 }
 
@@ -161,6 +198,8 @@ define double @ret_double_0x3() {
 ; O32-DAG:       ldc1 $f0, %lo($CPI
 ; N64-DAG:       ldc1 $f0, %got_ofst($CPI
 
-; ALL-DAG:       jr $ra
+; NOT-R6-DAG:    jr $ra # <MCInst #{{[0-9]+}} JR
+; R6-DAG:        jr $ra # <MCInst #{{[0-9]+}} JALR
+
   ret double 0x0000000000000003
 }

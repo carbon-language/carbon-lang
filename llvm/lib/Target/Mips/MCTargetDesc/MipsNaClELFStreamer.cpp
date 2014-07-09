@@ -48,7 +48,13 @@ private:
   bool PendingCall;
 
   bool isIndirectJump(const MCInst &MI) {
-    return MI.getOpcode() == Mips::JR || MI.getOpcode() == Mips::RET;
+    if (MI.getOpcode() == Mips::JALR) {
+      // MIPS32r6/MIPS64r6 doesn't have a JR instruction and uses JALR instead.
+      // JALR is an indirect branch if the link register is $0.
+      assert(MI.getOperand(0).isReg());
+      return MI.getOperand(0).getReg() == Mips::ZERO;
+    }
+    return MI.getOpcode() == Mips::JR;
   }
 
   bool isStackPointerFirstOperand(const MCInst &MI) {
@@ -56,7 +62,9 @@ private:
             && MI.getOperand(0).getReg() == Mips::SP);
   }
 
-  bool isCall(unsigned Opcode, bool *IsIndirectCall) {
+  bool isCall(const MCInst &MI, bool *IsIndirectCall) {
+    unsigned Opcode = MI.getOpcode();
+
     *IsIndirectCall = false;
 
     switch (Opcode) {
@@ -71,6 +79,12 @@ private:
       return true;
 
     case Mips::JALR:
+      // JALR is only a call if the link register is not $0. Otherwise it's an
+      // indirect branch.
+      assert(MI.getOperand(0).isReg());
+      if (MI.getOperand(0).getReg() == Mips::ZERO)
+        return false;
+
       *IsIndirectCall = true;
       return true;
     }
@@ -154,7 +168,7 @@ public:
     // Sandbox calls by aligning call and branch delay to the bundle end.
     // For indirect calls, emit the mask before the call.
     bool IsIndirectCall;
-    if (isCall(Inst.getOpcode(), &IsIndirectCall)) {
+    if (isCall(Inst, &IsIndirectCall)) {
       if (PendingCall)
         report_fatal_error("Dangerous instruction in branch delay slot!");
 

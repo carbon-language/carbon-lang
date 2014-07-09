@@ -186,6 +186,8 @@ def JALR64Pseudo : JumpLinkRegPseudo<GPR64Opnd, JALR, RA, GPR32Opnd>;
 def TAILCALL64_R : TailCallReg<GPR64Opnd, JR, GPR32Opnd>;
 }
 
+def PseudoReturn64 : PseudoReturnBase<GPR64Opnd>;
+
 /// Multiply and Divide Instructions.
 def DMULT  : Mult<"dmult", II_DMULT, GPR64Opnd, [HI0_64, LO0_64]>,
              MULT_FM<0, 0x1c>, ISA_MIPS3_NOT_32R6_64R6;
