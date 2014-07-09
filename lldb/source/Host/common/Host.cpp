@@ -1069,7 +1069,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                     if (framework_pos)
                     {
                         framework_pos += strlen("LLDB.framework");
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
                         // Shallow bundle
                         *framework_pos = '\0';
 #else

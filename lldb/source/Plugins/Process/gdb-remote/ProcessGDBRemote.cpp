@@ -181,7 +181,7 @@ namespace {
 #define HIGH_PORT   (49151u)
 #endif
 
-#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__))
+#if defined(__APPLE__) && (defined(__arm__) || defined(__arm64__) || defined(__aarch64__))
 static bool rand_initialized = false;
 
 static inline uint16_t
@@ -2701,7 +2701,7 @@ ProcessGDBRemote::LaunchAndConnectToDebugserver (const ProcessInfo &process_info
         debugserver_launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
         debugserver_launch_info.SetUserID(process_info.GetUserID());
 
-#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
         // On iOS, still do a local connection using a random port
         const char *hostname = "127.0.0.1";
         uint16_t port = get_random_port ();

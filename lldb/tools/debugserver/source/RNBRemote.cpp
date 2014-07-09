@@ -798,7 +798,7 @@ RNBRemote::ThreadFunctionReadRemoteData(void *arg)
 static cpu_type_t
 best_guess_cpu_type ()
 {
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
     if (sizeof (char *) == 8)
     {
         return CPU_TYPE_ARM64;
@@ -4488,7 +4488,7 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     }
 #elif defined (__arm__)
     rep << "ptrsize:4;";
-#elif defined (__arm64__) && defined (ARM_UNIFIED_THREAD_STATE)
+#elif (defined (__arm64__) || defined (__aarch64__)) && defined (ARM_UNIFIED_THREAD_STATE)
     nub_thread_t thread = DNBProcessGetCurrentThreadMachPort (pid);
     kern_return_t kr;
     arm_unified_thread_state_t gp_regs;

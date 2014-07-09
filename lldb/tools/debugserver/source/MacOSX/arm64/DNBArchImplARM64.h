@@ -11,7 +11,7 @@
 #ifndef __DNBArchImplARM64_h__
 #define __DNBArchImplARM64_h__
 
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
 
 #include <map>
 #include <mach/thread_status.h>

@@ -14,7 +14,7 @@
 #ifndef __DebugNubArchMachARM_h__
 #define __DebugNubArchMachARM_h__
 
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
 
 #include "DNBArch.h"
 
@@ -89,7 +89,7 @@ public:
     virtual bool            StepNotComplete ();
     virtual uint32_t        GetHardwareWatchpointHit(nub_addr_t &addr);
 
-#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+#if defined (ARM_DEBUG_STATE32) && (defined (__arm64__) || defined (__aarch64__))
     typedef arm_debug_state32_t DBG;
 #else
     typedef arm_debug_state_t DBG;
@@ -115,7 +115,7 @@ protected:
         e_regSetGPR = ARM_THREAD_STATE,
         e_regSetVFP = ARM_VFP_STATE,
         e_regSetEXC = ARM_EXCEPTION_STATE,
-#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+#if defined (ARM_DEBUG_STATE32) && (defined (__arm64__) || defined (__aarch64__))
         e_regSetDBG = ARM_DEBUG_STATE32,
 #else
         e_regSetDBG = ARM_DEBUG_STATE,

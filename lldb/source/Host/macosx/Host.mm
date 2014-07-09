@@ -228,7 +228,7 @@ Host::ResolveExecutableInBundle (FileSpec &file)
 lldb::pid_t
 Host::LaunchApplication (const FileSpec &app_file_spec)
 {
-#if defined (__arm__) || defined(__arm64__)
+#if defined (__arm__) || defined(__arm64__) || defined(__aarch64__)
     return LLDB_INVALID_PROCESS_ID;
 #else
     char app_path[PATH_MAX];
@@ -321,7 +321,7 @@ WaitForProcessToSIGSTOP (const lldb::pid_t pid, const int timeout_in_seconds)
     }
     return false;
 }
-#if !defined(__arm__) && !defined(__arm64__)
+#if !defined(__arm__) && !defined(__arm64__) && !defined(__aarch64__)
 
 //static lldb::pid_t
 //LaunchInNewTerminalWithCommandFile 
@@ -669,7 +669,7 @@ LaunchInNewTerminalWithAppleScript (const char *exe_path, ProcessLaunchInfo &lau
     return error;
 }
 
-#endif // #if !defined(__arm__)
+#endif // #if !defined(__arm__) && !defined(__arm64__) && !defined(__aarch64__)
 
 
 // On MacOSX CrashReporter will display a string for each shared library if
@@ -728,7 +728,7 @@ Host::SetCrashDescription (const char *cstr)
 bool
 Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
 {
-#if defined(__arm__) || defined(__arm64__)
+#if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
     return false;
 #else
     // We attach this to an 'odoc' event to specify a particular selection
@@ -837,7 +837,7 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     }
 
     return true;
-#endif // #if !defined(__arm__)
+#endif // #if !defined(__arm__) && !defined(__arm64__) && !defined(__aarch64__)
 }
 
 
@@ -1507,7 +1507,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     
     if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
     {
-#if !defined(__arm__) && !defined(__arm64__)
+#if !defined(__arm__) && !defined(__arm64__) && !defined(__aarch64__)
         return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
 #else
         error.SetErrorString ("launching a process in a new terminal is not supported on iOS devices");

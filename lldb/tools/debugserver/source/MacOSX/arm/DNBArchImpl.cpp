@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
 
 #include "MacOSX/arm/DNBArchImpl.h"
 #include "MacOSX/MachProcess.h"
@@ -286,7 +286,7 @@ DNBArchMachARM::GetDBGState(bool force)
         return KERN_SUCCESS;
 
     // Read the registers from our thread
-#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+#if defined (ARM_DEBUG_STATE32) && (defined (__arm64__) || defined (__aarch64__))
     mach_msg_type_number_t count = ARM_DEBUG_STATE32_COUNT;
     kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_DEBUG_STATE32, (thread_state_t)&m_state.dbg, &count);
 #else
@@ -332,7 +332,7 @@ kern_return_t
 DNBArchMachARM::SetDBGState(bool also_set_on_task)
 {
     int set = e_regSetDBG;
-#if defined (ARM_DEBUG_STATE32) && defined (__arm64__)
+#if defined (ARM_DEBUG_STATE32) && (defined (__arm64__) || defined (__aarch64__))
     kern_return_t kret = ::thread_set_state (m_thread->MachPortNumber(), ARM_DEBUG_STATE32, (thread_state_t)&m_state.dbg, ARM_DEBUG_STATE32_COUNT);
     if (also_set_on_task)
     {
@@ -549,7 +549,7 @@ DNBArchMachARM::EnableHardwareSingleStep (bool enable)
 // an armv8 device, regardless of whether it was built for arch arm or arch arm64,
 // it needs to use the MDSCR_EL1 SS bit to single instruction step.
 
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
     if (enable)
     {
         DNBLogThreadedIf(LOG_STEP, "%s: Setting MDSCR_EL1 Single Step bit at pc 0x%llx", __FUNCTION__, (uint64_t) m_state.context.gpr.__pc);
@@ -723,7 +723,7 @@ DNBArchMachARM::NumSupportedHardwareBreakpoints()
         }
         else
         {
-#if !defined (__arm64__)
+#if !defined (__arm64__) && !defined (__aarch64__)
             // Read the DBGDIDR to get the number of available hardware breakpoints
             // However, in some of our current armv7 processors, hardware
             // breakpoints/watchpoints were not properly connected. So detect those
@@ -784,7 +784,7 @@ DNBArchMachARM::NumSupportedHardwareWatchpoints()
         }
         else
         {
-#if !defined (__arm64__)
+#if !defined (__arm64__) && !defined (__aarch64__)
             // Read the DBGDIDR to get the number of available hardware breakpoints
             // However, in some of our current armv7 processors, hardware
             // breakpoints/watchpoints were not properly connected. So detect those
@@ -928,7 +928,7 @@ DNBArchMachARM::DisableHardwareBreakpoint (uint32_t hw_index)
 // armv8 device, armv7 processes can watch dwords.  But on a genuine armv7
 // device I tried, only word watchpoints are supported.
 
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
 #define WATCHPOINTS_ARE_DWORD 1
 #else
 #undef WATCHPOINTS_ARE_DWORD

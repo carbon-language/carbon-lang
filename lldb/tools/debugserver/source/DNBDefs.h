@@ -23,7 +23,7 @@
 //----------------------------------------------------------------------
 // Define nub_addr_t and the invalid address value from the architecture
 //----------------------------------------------------------------------
-#if defined (__x86_64__) || defined (__ppc64__) || defined (__arm64__)
+#if defined (__x86_64__) || defined (__ppc64__) || defined (__arm64__) || defined (__aarch64__)
 
 //----------------------------------------------------------------------
 // 64 bit address architectures

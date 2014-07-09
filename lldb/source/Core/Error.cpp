@@ -21,7 +21,7 @@
 #include <cerrno>
 #include <cstdarg>
 
-#if (defined (__arm__) || defined (__arm64__)) && defined (__APPLE__)
+#if (defined (__arm__) || defined (__arm64__) || defined (__aarch64__)) && defined (__APPLE__)
 #include <SpringBoardServices/SpringBoardServer.h>
 #endif
 

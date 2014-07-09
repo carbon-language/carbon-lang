@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#if defined (__arm__) || defined (__arm64__)
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
 
 #include "MacOSX/arm64/DNBArchImplARM64.h"
 
@@ -233,7 +233,7 @@ DNBArchMachARM64::GetVFPState(bool force)
     kern_return_t kret = ::thread_get_state(m_thread->MachPortNumber(), ARM_NEON_STATE64, (thread_state_t)&m_state.context.vfp, &count);
     if (DNBLogEnabledForAny (LOG_THREAD))
     {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
         DNBLogThreaded("thread_get_state(0x%4.4x, %u, &vfp, %u) => 0x%8.8x (count = %u) regs"
                        "\n   q0  = 0x%16.16llx%16.16llx"
                        "\n   q1  = 0x%16.16llx%16.16llx"
@@ -1506,7 +1506,7 @@ const char *g_invalidate_v29[] {"v29", "d29", "s29", NULL };
 const char *g_invalidate_v30[] {"v30", "d30", "s30", NULL };
 const char *g_invalidate_v31[] {"v31", "d31", "s31", NULL };
 
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
 #define VFP_V_OFFSET_IDX(idx) (offsetof (DNBArchMachARM64::FPU, __v) + (idx * 16) + offsetof (DNBArchMachARM64::Context, vfp))
 #else
 #define VFP_V_OFFSET_IDX(idx) (offsetof (DNBArchMachARM64::FPU, opaque) + (idx * 16) + offsetof (DNBArchMachARM64::Context, vfp))
@@ -1753,7 +1753,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
 
             if (reg >= vfp_v0 && reg <= vfp_v31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&value->value.v_uint8, &m_state.context.vfp.__v[reg - vfp_v0], 16);
 #else
                 memcpy (&value->value.v_uint8, ((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_v0) * 16), 16);
@@ -1762,7 +1762,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             }
             else if (reg == vfp_fpsr)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&value->value.uint32, &m_state.context.vfp.__fpsr, 4);
 #else
                 memcpy (&value->value.uint32, ((uint8_t *) &m_state.context.vfp.opaque) + (32 * 16) + 0, 4);
@@ -1771,7 +1771,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             }
             else if (reg == vfp_fpcr)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&value->value.uint32, &m_state.context.vfp.__fpcr, 4);
 #else
                 memcpy (&value->value.uint32, ((uint8_t *) &m_state.context.vfp.opaque) + (32 * 16) + 4, 4);
@@ -1780,7 +1780,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             }
             else if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&value->value.v_uint8, &m_state.context.vfp.__v[reg - vfp_s0], 4);
 #else
                 memcpy (&value->value.v_uint8, ((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_s0) * 16), 4);
@@ -1789,7 +1789,7 @@ DNBArchMachARM64::GetRegisterValue(int set, int reg, DNBRegisterValue *value)
             }
             else if (reg >= vfp_d0 && reg <= vfp_d31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&value->value.v_uint8, &m_state.context.vfp.__v[reg - vfp_d0], 8);
 #else
                 memcpy (&value->value.v_uint8, ((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_d0) * 16), 8);
@@ -1851,7 +1851,7 @@ DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *val
         case e_regSetVFP:
             if (reg >= vfp_v0 && reg <= vfp_v31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&m_state.context.vfp.__v[reg - vfp_v0], &value->value.v_uint8, 16);
 #else
                 memcpy (((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_v0) * 16), &value->value.v_uint8, 16);
@@ -1860,7 +1860,7 @@ DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *val
             }
             else if (reg == vfp_fpsr)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&m_state.context.vfp.__fpsr, &value->value.uint32, 4);
 #else
                 memcpy (((uint8_t *) &m_state.context.vfp.opaque) + (32 * 16) + 0, &value->value.uint32, 4);
@@ -1869,7 +1869,7 @@ DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *val
             }
             else if (reg == vfp_fpcr)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&m_state.context.vfp.__fpcr, &value->value.uint32, 4);
 #else
                 memcpy (((uint8_t *) m_state.context.vfp.opaque) + (32 * 16) + 4, &value->value.uint32, 4);
@@ -1878,7 +1878,7 @@ DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *val
             }
             else if (reg >= vfp_s0 && reg <= vfp_s31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&m_state.context.vfp.__v[reg - vfp_s0], &value->value.v_uint8, 4);
 #else
                 memcpy (((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_s0) * 16), &value->value.v_uint8, 4);
@@ -1887,7 +1887,7 @@ DNBArchMachARM64::SetRegisterValue(int set, int reg, const DNBRegisterValue *val
             }
             else if (reg >= vfp_d0 && reg <= vfp_d31)
             {
-#if defined (__arm64__)
+#if defined (__arm64__) || defined (__aarch64__)
                 memcpy (&m_state.context.vfp.__v[reg - vfp_d0], &value->value.v_uint8, 8);
 #else
                 memcpy (((uint8_t *) &m_state.context.vfp.opaque) + ((reg - vfp_d0) * 16), &value->value.v_uint8, 8);
@@ -2090,4 +2090,4 @@ DNBArchMachARM64::RestoreRegisterState (uint32_t save_id)
 
 
 #endif  // #if defined (ARM_THREAD_STATE64_COUNT)
-#endif  // #if defined (__arm__)
+#endif  // #if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)

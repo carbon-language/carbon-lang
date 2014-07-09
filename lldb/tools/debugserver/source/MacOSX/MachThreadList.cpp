@@ -323,7 +323,7 @@ MachThreadList::UpdateThreadList(MachProcess *process, bool update, MachThreadLi
             DNBArchProtocol::SetArchitecture(CPU_TYPE_X86_64);
         else
             DNBArchProtocol::SetArchitecture(CPU_TYPE_I386);
-#elif defined (__arm__) || defined (__arm64__)
+#elif defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
         if (m_is_64_bit)
             DNBArchProtocol::SetArchitecture(CPU_TYPE_ARM64);
         else

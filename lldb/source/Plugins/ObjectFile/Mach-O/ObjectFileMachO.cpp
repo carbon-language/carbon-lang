@@ -45,7 +45,7 @@
 
 #include "ObjectFileMachO.h"
 
-#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
 // GetLLDBSharedCacheUUID() needs to call dlsym()
 #include <dlfcn.h>
 #endif
@@ -2043,7 +2043,7 @@ ObjectFileMachO::ParseSymtab ()
 
                 bool data_was_read = false;
 
-#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
                 if (m_header.flags & 0x80000000u && process->GetAddressByteSize() == sizeof (void*))
                 {
                     // This mach-o memory file is in the dyld shared cache. If this
@@ -2302,7 +2302,7 @@ ObjectFileMachO::ParseSymtab ()
             }
         }
 
-#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
 
         // Some recent builds of the dyld_shared_cache (hereafter: DSC) have been optimized by moving LOCAL
         // symbols out of the memory mapped portion of the DSC. The symbol information has all been retained,
@@ -4905,7 +4905,7 @@ UUID
 ObjectFileMachO::GetLLDBSharedCacheUUID ()
 {
     UUID uuid;
-#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__))
+#if defined (__APPLE__) && (defined (__arm__) || defined (__arm64__) || defined (__aarch64__))
     uint8_t *(*dyld_get_all_image_infos)(void);
     dyld_get_all_image_infos = (uint8_t*(*)()) dlsym (RTLD_DEFAULT, "_dyld_get_all_image_infos");
     if (dyld_get_all_image_infos)

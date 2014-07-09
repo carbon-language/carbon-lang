@@ -41,7 +41,7 @@ using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
 
-#if !defined (__arm__) && !defined (__arm64__) // No DebugSymbols on the iOS devices
+#if !defined (__arm__) && !defined (__arm64__) && !defined (__aarch64__) // No DebugSymbols on the iOS devices
 extern "C" {
 
 CFURLRef DBGCopyFullDSYMURLForUUID (CFUUIDRef uuid, CFURLRef exec_url);
@@ -293,7 +293,7 @@ LocateMacOSXFilesUsingDebugSymbols
     if (out_dsym_fspec)
         out_dsym_fspec->Clear();
 
-#if !defined (__arm__) && !defined (__arm64__) // No DebugSymbols on the iOS devices
+#if !defined (__arm__) && !defined (__arm64__) && !defined (__aarch64__) // No DebugSymbols on the iOS devices
 
     const UUID *uuid = module_spec.GetUUIDPtr();
     const ArchSpec *arch = module_spec.GetArchitecturePtr();
@@ -461,7 +461,7 @@ LocateMacOSXFilesUsingDebugSymbols
             }
         }
     }
-#endif // #if !defined (__arm__)
+#endif // #if !defined (__arm__) && !defined (__arm64__) && !defined (__aarch64__)
 
     return items_found;
 }
