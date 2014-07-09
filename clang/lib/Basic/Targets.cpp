@@ -5297,6 +5297,14 @@ public:
         IsNan2008(false), IsSingleFloat(false), FloatABI(HardFloat),
         DspRev(NoDSP), HasMSA(false), HasFP64(false), ABI(ABIStr) {}
 
+  bool isNaN2008Default() const {
+    return CPU == "mips32r6" || CPU == "mips64r6";
+  }
+
+  bool isFP64Default() const {
+    return CPU == "mips32r6" || ABI == "n32" || ABI == "n64" || ABI == "64";
+  }
+
   StringRef getABI() const override { return ABI; }
   bool setCPU(const std::string &Name) override {
     bool IsMips32 = getTriple().getArch() == llvm::Triple::mips ||
@@ -5467,11 +5475,11 @@ public:
                             DiagnosticsEngine &Diags) override {
     IsMips16 = false;
     IsMicromips = false;
-    IsNan2008 = false;
+    IsNan2008 = isNaN2008Default();
     IsSingleFloat = false;
     FloatABI = HardFloat;
     DspRev = NoDSP;
-    HasFP64 = ABI == "n32" || ABI == "n64" || ABI == "64";
+    HasFP64 = isFP64Default();
 
     for (std::vector<std::string>::iterator it = Features.begin(),
          ie = Features.end(); it != ie; ++it) {
@@ -5495,6 +5503,8 @@ public:
         HasFP64 = false;
       else if (*it == "+nan2008")
         IsNan2008 = true;
+      else if (*it == "-nan2008")
+        IsNan2008 = false;
     }
 
     // Remove front-end specific options.

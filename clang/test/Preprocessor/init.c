@@ -2864,6 +2864,16 @@
 // MIPS64-NOMFP64:#define _MIPS_FPSET 32
 // MIPS64-NOMFP64:#define __mips_fpr 32
 //
+// RUN: %clang_cc1 -target-cpu mips32r6 \
+// RUN:   -E -dM -triple=mips-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-XXR6 %s
+// RUN: %clang_cc1 -target-cpu mips64r6 \
+// RUN:   -E -dM -triple=mips64-none-none < /dev/null \
+// RUN:   | FileCheck -check-prefix MIPS-XXR6 %s
+// MIPS-XXR6:#define _MIPS_FPSET 32
+// MIPS-XXR6:#define __mips_fpr 64
+// MIPS-XXR6:#define __mips_nan2008 1
+//
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=msp430-none-none < /dev/null | FileCheck -check-prefix MSP430 %s
 //
 // MSP430:#define MSP430 1
