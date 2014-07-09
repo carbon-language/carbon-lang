@@ -353,9 +353,9 @@ protected:
 const OptionDefinition
 CommandObjectRegisterRead::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "alternate", 'A', OptionParser::eNoArgument      , NULL, 0, eArgTypeNone      , "Display register names using the alternate register name if there is one."},
-    { LLDB_OPT_SET_1  , false, "set"      , 's', OptionParser::eRequiredArgument, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
-    { LLDB_OPT_SET_2  , false, "all"      , 'a', OptionParser::eNoArgument      , NULL, 0, eArgTypeNone      , "Show all register sets."},
+    { LLDB_OPT_SET_ALL, false, "alternate", 'A', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone      , "Display register names using the alternate register name if there is one."},
+    { LLDB_OPT_SET_1  , false, "set"      , 's', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeIndex     , "Specify which register sets to dump by index."},
+    { LLDB_OPT_SET_2  , false, "all"      , 'a', OptionParser::eNoArgument      , NULL, NULL, 0, eArgTypeNone      , "Show all register sets."},
 };
 
 uint32_t

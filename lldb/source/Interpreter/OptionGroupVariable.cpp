@@ -28,14 +28,14 @@ using namespace lldb_private;
 static OptionDefinition
 g_option_table[] =
 {
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "no-args",         'a', OptionParser::eNoArgument,       nullptr, 0, eArgTypeNone, "Omit function arguments."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "no-locals",       'l', OptionParser::eNoArgument,       nullptr, 0, eArgTypeNone, "Omit local variables."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "show-globals",    'g', OptionParser::eNoArgument,       nullptr, 0, eArgTypeNone, "Show the current frame source file global and static variables."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "show-declaration",'c', OptionParser::eNoArgument,       nullptr, 0, eArgTypeNone, "Show variable declaration information (source file and line where the variable was declared)."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "regex",           'r', OptionParser::eNoArgument,       nullptr, 0, eArgTypeRegularExpression, "The <variable-name> argument for name lookups are regular expressions."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "scope",           's', OptionParser::eNoArgument,       nullptr, 0, eArgTypeNone, "Show variable scope (argument, local, global, static)."},
-    { LLDB_OPT_SET_1,                  false, "summary",         'y', OptionParser::eRequiredArgument, nullptr, 0, eArgTypeName, "Specify the summary that the variable output should use."},
-    { LLDB_OPT_SET_2,                  false, "summary-string",  'z', OptionParser::eRequiredArgument, nullptr, 0, eArgTypeName, "Specify a summary string to use to format the variable output."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "no-args",         'a', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone, "Omit function arguments."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "no-locals",       'l', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone, "Omit local variables."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "show-globals",    'g', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone, "Show the current frame source file global and static variables."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "show-declaration",'c', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone, "Show variable declaration information (source file and line where the variable was declared)."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "regex",           'r', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeRegularExpression, "The <variable-name> argument for name lookups are regular expressions."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "scope",           's', OptionParser::eNoArgument,       nullptr, nullptr, 0, eArgTypeNone, "Show variable scope (argument, local, global, static)."},
+    { LLDB_OPT_SET_1,                  false, "summary",         'y', OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypeName, "Specify the summary that the variable output should use."},
+    { LLDB_OPT_SET_2,                  false, "summary-string",  'z', OptionParser::eRequiredArgument, nullptr, nullptr, 0, eArgTypeName, "Specify a summary string to use to format the variable output."},
 };
 
 static Error

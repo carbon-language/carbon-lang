@@ -20,6 +20,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/DataFormatters/FormatManager.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Target/Process.h"
 //#include "lldb/Target/RegisterContext.h"
@@ -627,14 +628,14 @@ Args::ParseOptions (Options &options)
         return error;
     }
 
-    for (int i=0; long_options[i].name != nullptr; ++i)
+    for (int i=0; long_options[i].definition != nullptr; ++i)
     {
         if (long_options[i].flag == nullptr)
         {
             if (isprint8(long_options[i].val))
             {
                 sstr << (char)long_options[i].val;
-                switch (long_options[i].has_arg)
+                switch (long_options[i].definition->option_has_arg)
                 {
                 default:
                 case OptionParser::eNoArgument:                       break;
@@ -673,7 +674,7 @@ Args::ParseOptions (Options &options)
         if (long_options_index == -1)
         {
             for (int i=0;
-                 long_options[i].name || long_options[i].has_arg || long_options[i].flag || long_options[i].val;
+                 long_options[i].definition || long_options[i].flag || long_options[i].val;
                  ++i)
             {
                 if (long_options[i].val == val)
@@ -686,8 +687,18 @@ Args::ParseOptions (Options &options)
         // Call the callback with the option
         if (long_options_index >= 0)
         {
-            error = options.SetOptionValue(long_options_index,
-                                           long_options[long_options_index].has_arg == OptionParser::eNoArgument ? nullptr : OptionParser::GetOptionArgument());
+            const OptionDefinition *def = long_options[long_options_index].definition;
+            CommandInterpreter &interpreter = options.GetInterpreter();
+            OptionValidator *validator = def->validator;
+            if (validator && !validator->IsValid(*interpreter.GetPlatform(true), interpreter.GetExecutionContext()))
+            {
+                error.SetErrorStringWithFormat("Option \"%s\" invalid.  %s", def->long_option, def->validator->LongConditionString());
+            }
+            else
+            {
+                error = options.SetOptionValue(long_options_index,
+                                               (def->option_has_arg == OptionParser::eNoArgument) ? nullptr : OptionParser::GetOptionArgument());
+            }
         }
         else
         {
@@ -1222,7 +1233,7 @@ Args::FindArgumentIndexForOption (Option *long_options, int long_options_index)
     char short_buffer[3];
     char long_buffer[255];
     ::snprintf (short_buffer, sizeof (short_buffer), "-%c", long_options[long_options_index].val);
-    ::snprintf (long_buffer, sizeof (long_buffer),  "--%s", long_options[long_options_index].name);
+    ::snprintf (long_buffer, sizeof (long_buffer),  "--%s", long_options[long_options_index].definition->long_option);
     size_t end = GetArgumentCount ();
     size_t idx = 0;
     while (idx < end)
@@ -1278,12 +1289,12 @@ Args::ParseAliasOptions (Options &options,
         return;
     }
 
-    for (i = 0; long_options[i].name != nullptr; ++i)
+    for (i = 0; long_options[i].definition != nullptr; ++i)
     {
         if (long_options[i].flag == nullptr)
         {
             sstr << (char) long_options[i].val;
-            switch (long_options[i].has_arg)
+            switch (long_options[i].definition->option_has_arg)
             {
                 default:
                 case OptionParser::eNoArgument:
@@ -1328,7 +1339,7 @@ Args::ParseAliasOptions (Options &options,
         if (long_options_index == -1)
         {
             for (int j = 0;
-                 long_options[j].name || long_options[j].has_arg || long_options[j].flag || long_options[j].val;
+                 long_options[j].definition || long_options[j].flag || long_options[j].val;
                  ++j)
             {
                 if (long_options[j].val == val)
@@ -1344,8 +1355,10 @@ Args::ParseAliasOptions (Options &options,
         {
             StreamString option_str;
             option_str.Printf ("-%c", val);
+            const OptionDefinition *def = long_options[long_options_index].definition;
+            int has_arg = (def == nullptr) ? OptionParser::eNoArgument : def->option_has_arg;
 
-            switch (long_options[long_options_index].has_arg)
+            switch (has_arg)
             {
             case OptionParser::eNoArgument:
                 option_arg_vector->push_back (OptionArgPair (std::string (option_str.GetData()), 
@@ -1410,7 +1423,7 @@ Args::ParseAliasOptions (Options &options,
                         raw_input_string.erase (pos, strlen (tmp_arg));
                 }
                 ReplaceArgumentAtIndex (idx, "");
-                if ((long_options[long_options_index].has_arg != OptionParser::eNoArgument)
+                if ((long_options[long_options_index].definition->option_has_arg != OptionParser::eNoArgument)
                     && (OptionParser::GetOptionArgument() != nullptr)
                     && (idx+1 < GetArgumentCount())
                     && (strcmp (OptionParser::GetOptionArgument(), GetArgumentAtIndex(idx+1)) == 0))
@@ -1453,12 +1466,12 @@ Args::ParseArgsForCompletion
     // to suppress error messages.
 
     sstr << ":";
-    for (int i = 0; long_options[i].name != nullptr; ++i)
+    for (int i = 0; long_options[i].definition != nullptr; ++i)
     {
         if (long_options[i].flag == nullptr)
         {
             sstr << (char) long_options[i].val;
-            switch (long_options[i].has_arg)
+            switch (long_options[i].definition->option_has_arg)
             {
                 default:
                 case OptionParser::eNoArgument:
@@ -1555,7 +1568,7 @@ Args::ParseArgsForCompletion
         if (long_options_index == -1)
         {
             for (int j = 0;
-                 long_options[j].name || long_options[j].has_arg || long_options[j].flag || long_options[j].val;
+                 long_options[j].definition || long_options[j].flag || long_options[j].val;
                  ++j)
             {
                 if (long_options[j].val == val)
@@ -1581,7 +1594,9 @@ Args::ParseArgsForCompletion
                 }
             }
 
-            switch (long_options[long_options_index].has_arg)
+            const OptionDefinition *def = long_options[long_options_index].definition;
+            int has_arg = (def == nullptr) ? OptionParser::eNoArgument : def->option_has_arg;
+            switch (has_arg)
             {
             case OptionParser::eNoArgument:
                 option_element_vector.push_back (OptionArgElement (opt_defs_index, OptionParser::GetOptionIndex() - 1, 0));

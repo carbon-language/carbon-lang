@@ -277,8 +277,7 @@ Options::GetLongOptions ()
         {
             const int short_opt = opt_defs[i].short_option;
 
-            m_getopt_table[i].name    = opt_defs[i].long_option;
-            m_getopt_table[i].has_arg = opt_defs[i].option_has_arg;
+            m_getopt_table[i].definition = &opt_defs[i];
             m_getopt_table[i].flag    = nullptr;
             m_getopt_table[i].val     = short_opt;
 
@@ -297,7 +296,7 @@ Options::GetLongOptions ()
                                 opt_defs[i].long_option,
                                 short_opt,
                                 pos->second,
-                                m_getopt_table[pos->second].name,
+                                m_getopt_table[pos->second].definition->long_option,
                                 opt_defs[i].long_option);
                 else
                     Host::SystemLog (Host::eSystemLogError, "option[%u] --%s has a short option 0x%x that conflicts with option[%u] --%s, short option won't be used for --%s\n",
@@ -305,17 +304,16 @@ Options::GetLongOptions ()
                                 opt_defs[i].long_option,
                                 short_opt,
                                 pos->second,
-                                m_getopt_table[pos->second].name,
+                                m_getopt_table[pos->second].definition->long_option,
                                 opt_defs[i].long_option);
             }
         }
 
         //getopt_long_only requires a NULL final entry in the table:
 
-        m_getopt_table[i].name    = nullptr;
-        m_getopt_table[i].has_arg = 0;
-        m_getopt_table[i].flag    = nullptr;
-        m_getopt_table[i].val     = 0;
+        m_getopt_table[i].definition    = nullptr;
+        m_getopt_table[i].flag          = nullptr;
+        m_getopt_table[i].val           = 0;
     }
 
     if (m_getopt_table.empty())
@@ -336,18 +334,29 @@ void
 Options::OutputFormattedUsageText
 (
     Stream &strm,
-    const char *text,
+    const OptionDefinition &option_def,
     uint32_t output_max_columns
 )
 {
-    int len = strlen (text);
+    std::string actual_text;
+    if (option_def.validator)
+    {
+        const char *condition = option_def.validator->ShortConditionString();
+        if (condition)
+        {
+            actual_text = "[";
+            actual_text.append(condition);
+            actual_text.append("] ");
+        }
+    }
+    actual_text.append(option_def.usage_text);
 
     // Will it all fit on one line?
 
-    if (static_cast<uint32_t>(len + strm.GetIndentLevel()) < output_max_columns)
+    if (static_cast<uint32_t>(actual_text.length() + strm.GetIndentLevel()) < output_max_columns)
     {
         // Output it as a single line.
-        strm.Indent (text);
+        strm.Indent (actual_text.c_str());
         strm.EOL();
     }
     else
@@ -357,13 +366,13 @@ Options::OutputFormattedUsageText
         int text_width = output_max_columns - strm.GetIndentLevel() - 1;
         int start = 0;
         int end = start;
-        int final_end = strlen (text);
+        int final_end = actual_text.length();
         int sub_len;
 
         while (end < final_end)
         {
             // Don't start the 'text' on a space, since we're already outputting the indentation.
-            while ((start < final_end) && (text[start] == ' '))
+            while ((start < final_end) && (actual_text[start] == ' '))
                 start++;
 
             end = start + text_width;
@@ -373,7 +382,7 @@ Options::OutputFormattedUsageText
             {
                 // If we're not at the end of the text, make sure we break the line on white space.
                 while (end > start
-                       && text[end] != ' ' && text[end] != '\t' && text[end] != '\n')
+                       && actual_text[end] != ' ' && actual_text[end] != '\t' && actual_text[end] != '\n')
                     end--;
             }
 
@@ -383,7 +392,7 @@ Options::OutputFormattedUsageText
             strm.Indent();
             assert (start < final_end);
             assert (start + sub_len <= final_end);
-            strm.Write(text + start, sub_len);
+            strm.Write(actual_text.c_str() + start, sub_len);
             start = end + 1;
         }
         strm.EOL();
@@ -630,7 +639,7 @@ Options::GenerateOptionUsage
     strm.Printf ("\n\n");
 
     // Now print out all the detailed information about the various options:  long form, short form and help text:
-    //   --long_name <argument>  ( -short <argument> )
+    //   -short <argument> ( --long_name <argument> )
     //   help text
 
     // This variable is used to keep track of which options' info we've printed out, because some options can be in
@@ -683,7 +692,7 @@ Options::GenerateOptionUsage
         
         if (opt_defs[i].usage_text)
             OutputFormattedUsageText (strm,
-                                      opt_defs[i].usage_text,
+                                      opt_defs[i],
                                       screen_width);
         if (opt_defs[i].enum_values != nullptr)
         {
@@ -1026,7 +1035,7 @@ void
 OptionGroupOptions::Finalize ()
 {
     m_did_finalize = true;
-    OptionDefinition empty_option_def = { 0, false, nullptr, 0, 0, nullptr, 0, eArgTypeNone, nullptr };
+    OptionDefinition empty_option_def = { 0, false, nullptr, 0, 0, nullptr, nullptr, 0, eArgTypeNone, nullptr };
     m_option_defs.push_back (empty_option_def);
 }
 
