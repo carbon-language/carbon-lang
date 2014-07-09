@@ -60,10 +60,6 @@ public:
   // FIXME: This should be tablegen'd like getDwarfRegNum is
   int getSEHRegNum(unsigned i) const;
 
-  /// getCompactUnwindRegNum - This function maps the register to the number for
-  /// compact unwind encoding. Return -1 if the register isn't valid.
-  int getCompactUnwindRegNum(unsigned RegNum, bool isEH) const override;
-
   /// Code Generation virtual methods...
   ///
   bool trackLivenessAfterRegAlloc(const MachineFunction &MF) const override;

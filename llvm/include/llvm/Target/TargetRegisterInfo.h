@@ -813,12 +813,6 @@ public:
   /// getFrameRegister - This method should return the register used as a base
   /// for values allocated in the current stack frame.
   virtual unsigned getFrameRegister(const MachineFunction &MF) const = 0;
-
-  /// getCompactUnwindRegNum - This function maps the register to the number for
-  /// compact unwind encoding. Return -1 if the register isn't valid.
-  virtual int getCompactUnwindRegNum(unsigned, bool) const {
-    return -1;
-  }
 };
 
 
