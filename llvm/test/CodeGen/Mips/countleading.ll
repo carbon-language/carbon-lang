@@ -52,9 +52,9 @@ entry:
 ; MIPS32-GT-R1-DAG: clz $[[R1:[0-9]+]], $5
 ; MIPS32-GT-R1-DAG: addiu $[[R2:2+]], $[[R0]], 32
 ; MIPS32-R1-R2-DAG: movn $[[R2]], $[[R1]], $5
-; MIPS32-R6-DAG:    selnez $[[R5:[0-9]+]], $[[R2]], $5
-; MIPS32-R6-DAG:    seleqz $[[R6:[0-9]+]], $[[R1]], $5
-; MIPS32-R6-DAG:    or $2, $[[R5]], $[[R6]]
+; MIPS32-R6-DAG:    seleqz $[[R5:[0-9]+]], $[[R2]], $5
+; MIPS32-R6-DAG:    selnez $[[R6:[0-9]+]], $[[R1]], $5
+; MIPS32-R6-DAG:    or $2, $[[R6]], $[[R5]]
 ; MIPS32-GT-R1-DAG: addiu $3, $zero, 0
 
 ; MIPS64-GT-R1:  dclz $2, $4

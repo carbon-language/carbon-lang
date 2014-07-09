@@ -786,14 +786,14 @@ def : MipsPat<(select i32:$cond, i32:$t, i32:$f),
               (OR (SELNEZ i32:$t, i32:$cond), (SELEQZ i32:$f, i32:$cond))>,
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (seteq i32:$cond, immz)), i32:$t, i32:$f),
-              (OR (SELNEZ i32:$t, i32:$cond), (SELEQZ i32:$f, i32:$cond))>,
+              (OR (SELEQZ i32:$t, i32:$cond), (SELNEZ i32:$f, i32:$cond))>,
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (setne i32:$cond, immz)), i32:$t, i32:$f),
-              (OR (SELNEZ i32:$f, i32:$cond), (SELEQZ i32:$t, i32:$cond))>,
+              (OR (SELNEZ i32:$t, i32:$cond), (SELEQZ i32:$f, i32:$cond))>,
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (seteq i32:$cond, immZExt16:$imm)), i32:$t, i32:$f),
-              (OR (SELNEZ i32:$t, (XORi i32:$cond, immZExt16:$imm)),
-                  (SELEQZ i32:$f, (XORi i32:$cond, immZExt16:$imm)))>,
+              (OR (SELEQZ i32:$t, (XORi i32:$cond, immZExt16:$imm)),
+                  (SELNEZ i32:$f, (XORi i32:$cond, immZExt16:$imm)))>,
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (setne i32:$cond, immZExt16:$imm)), i32:$t, i32:$f),
               (OR (SELNEZ i32:$f, (XORi i32:$cond, immZExt16:$imm)),
@@ -801,13 +801,13 @@ def : MipsPat<(select (i32 (setne i32:$cond, immZExt16:$imm)), i32:$t, i32:$f),
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (setgt i32:$cond, immSExt16Plus1:$imm)), i32:$t,
                       i32:$f),
-              (OR (SELNEZ i32:$t, (SLTi i32:$cond, (Plus1 imm:$imm))),
-                  (SELEQZ i32:$f, (SLTi i32:$cond, (Plus1 imm:$imm))))>,
+              (OR (SELEQZ i32:$t, (SLTi i32:$cond, (Plus1 imm:$imm))),
+                  (SELNEZ i32:$f, (SLTi i32:$cond, (Plus1 imm:$imm))))>,
               ISA_MIPS32R6;
 def : MipsPat<(select (i32 (setugt i32:$cond, immSExt16Plus1:$imm)),
                       i32:$t, i32:$f),
-              (OR (SELNEZ i32:$t, (SLTiu i32:$cond, (Plus1 imm:$imm))),
-                  (SELEQZ i32:$f, (SLTiu i32:$cond, (Plus1 imm:$imm))))>,
+              (OR (SELEQZ i32:$t, (SLTiu i32:$cond, (Plus1 imm:$imm))),
+                  (SELNEZ i32:$f, (SLTiu i32:$cond, (Plus1 imm:$imm))))>,
               ISA_MIPS32R6;
 
 def : MipsPat<(select i32:$cond, i32:$t, immz),

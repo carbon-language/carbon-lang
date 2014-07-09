@@ -628,12 +628,12 @@ entry:
 ;        (setcc's result is i32 so bits 32-63 are undefined). It's not really
 ;        needed.
 ; CMP_CC_FMT-DAG: sll $[[CC:[0-9]+]], $4, 0
-; CMP_CC_FMT-DAG: selnez $[[EQ1:[0-9]+]], $8, $[[CC]]
-; CMP_CC_FMT-DAG: seleqz $[[NE1:[0-9]+]], $6, $[[CC]]
-; CMP_CC_FMT-DAG: or $2, $[[EQ1]], $[[NE1]]
-; CMP_CC_FMT-DAG: selnez $[[EQ2:[0-9]+]], $9, $[[CC]]
-; CMP_CC_FMT-DAG: seleqz $[[NE2:[0-9]+]], $7, $[[CC]]
-; CMP_CC_FMT-DAG: or $4, $[[EQ2]], $[[NE2]]
+; CMP_CC_FMT-DAG: seleqz $[[EQ1:[0-9]+]], $8, $[[CC]]
+; CMP_CC_FMT-DAG: selnez $[[NE1:[0-9]+]], $6, $[[CC]]
+; CMP_CC_FMT-DAG: or $2, $[[NE1]], $[[EQ1]]
+; CMP_CC_FMT-DAG: seleqz $[[EQ2:[0-9]+]], $9, $[[CC]]
+; CMP_CC_FMT-DAG: selnez $[[NE2:[0-9]+]], $7, $[[CC]]
+; CMP_CC_FMT-DAG: or $4, $[[NE2]], $[[EQ2]]
 
 define fp128 @select_LD(i32 %a, i64, fp128 %b, fp128 %c) {
 entry:

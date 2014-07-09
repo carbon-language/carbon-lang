@@ -18,9 +18,9 @@ entry:
 ; 32R2:          movn $5, $6, $4
 ; 32R2:          move $2, $5
 
-; 32R6-DAG:      selnez $[[T0:[0-9]+]], $5, $4
-; 32R6-DAG:      seleqz $[[T1:[0-9]+]], $6, $4
-; 32R6:          or $2, $[[T0]], $[[T1]]
+; 32R6-DAG:      seleqz $[[T0:[0-9]+]], $5, $4
+; 32R6-DAG:      selnez $[[T1:[0-9]+]], $6, $4
+; 32R6:          or $2, $[[T1]], $[[T0]]
 
 ; 64:            movn $5, $6, $4
 ; 64:            move $2, $5
@@ -28,9 +28,9 @@ entry:
 ; 64R2:          movn $5, $6, $4
 ; 64R2:          move $2, $5
 
-; 64R6-DAG:      selnez $[[T0:[0-9]+]], $5, $4
-; 64R6-DAG:      seleqz $[[T1:[0-9]+]], $6, $4
-; 64R6:          or $2, $[[T0]], $[[T1]]
+; 64R6-DAG:      seleqz $[[T0:[0-9]+]], $5, $4
+; 64R6-DAG:      selnez $[[T1:[0-9]+]], $6, $4
+; 64R6:          or $2, $[[T1]], $[[T0]]
 
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, i32 %f1, i32 %f0
@@ -56,13 +56,13 @@ entry:
 ; 32R2:          move $3, $7
 
 ; 32R6-DAG:      lw $[[F1:[0-9]+]], 16($sp)
-; 32R6-DAG:      selnez $[[T0:[0-9]+]], $6, $4
-; 32R6-DAG:      seleqz $[[T1:[0-9]+]], $[[F1]], $4
-; 32R6:          or $2, $[[T0]], $[[T1]]
+; 32R6-DAG:      seleqz $[[T0:[0-9]+]], $6, $4
+; 32R6-DAG:      selnez $[[T1:[0-9]+]], $[[F1]], $4
+; 32R6:          or $2, $[[T1]], $[[T0]]
 ; 32R6-DAG:      lw $[[F1H:[0-9]+]], 20($sp)
-; 32R6-DAG:      selnez $[[T0:[0-9]+]], $7, $4
-; 32R6-DAG:      seleqz $[[T1:[0-9]+]], $[[F1H]], $4
-; 32R6:          or $3, $[[T0]], $[[T1]]
+; 32R6-DAG:      seleqz $[[T0:[0-9]+]], $7, $4
+; 32R6-DAG:      selnez $[[T1:[0-9]+]], $[[F1H]], $4
+; 32R6:          or $3, $[[T1]], $[[T0]]
 
 ; 64:            movn $5, $6, $4
 ; 64:            move $2, $5
@@ -74,9 +74,9 @@ entry:
 ;        (setcc's result is i32 so bits 32-63 are undefined). It's not really
 ;        needed.
 ; 64R6-DAG:      sll $[[CC:[0-9]+]], $4, 0
-; 64R6-DAG:      selnez $[[T0:[0-9]+]], $5, $[[CC]]
-; 64R6-DAG:      seleqz $[[T1:[0-9]+]], $6, $[[CC]]
-; 64R6:          or $2, $[[T0]], $[[T1]]
+; 64R6-DAG:      seleqz $[[T0:[0-9]+]], $5, $[[CC]]
+; 64R6-DAG:      selnez $[[T1:[0-9]+]], $6, $[[CC]]
+; 64R6:          or $2, $[[T1]], $[[T0]]
 
   %tobool = icmp ne i32 %s, 0
   %cond = select i1 %tobool, i64 %f1, i64 %f0
@@ -105,13 +105,13 @@ entry:
 
 ; 32R6-DAG:      lw $[[F1:[0-9]+]], 16($sp)
 ; 32R6-DAG:      or $[[T2:[0-9]+]], $4, $5
-; 32R6-DAG:      selnez $[[T0:[0-9]+]], $6, $[[T2]]
-; 32R6-DAG:      seleqz $[[T1:[0-9]+]], $[[F1]], $[[T2]]
-; 32R6:          or $2, $[[T0]], $[[T1]]
+; 32R6-DAG:      seleqz $[[T0:[0-9]+]], $6, $[[T2]]
+; 32R6-DAG:      selnez $[[T1:[0-9]+]], $[[F1]], $[[T2]]
+; 32R6:          or $2, $[[T1]], $[[T0]]
 ; 32R6-DAG:      lw $[[F1H:[0-9]+]], 20($sp)
-; 32R6-DAG:      selnez $[[T0:[0-9]+]], $7, $[[T2]]
-; 32R6-DAG:      seleqz $[[T1:[0-9]+]], $[[F1H]], $[[T2]]
-; 32R6:          or $3, $[[T0]], $[[T1]]
+; 32R6-DAG:      seleqz $[[T0:[0-9]+]], $7, $[[T2]]
+; 32R6-DAG:      selnez $[[T1:[0-9]+]], $[[F1H]], $[[T2]]
+; 32R6:          or $3, $[[T1]], $[[T0]]
 
 ; 64:            movn $5, $6, $4
 ; 64:            move $2, $5
@@ -119,9 +119,9 @@ entry:
 ; 64R2:          movn $5, $6, $4
 ; 64R2:          move $2, $5
 
-; 64R6-DAG:      selnez $[[T0:[0-9]+]], $5, $4
-; 64R6-DAG:      seleqz $[[T1:[0-9]+]], $6, $4
-; 64R6:          or $2, $[[T0]], $[[T1]]
+; 64R6-DAG:      seleqz $[[T0:[0-9]+]], $5, $4
+; 64R6-DAG:      selnez $[[T1:[0-9]+]], $6, $4
+; 64R6:          or $2, $[[T1]], $[[T0]]
 
   %tobool = icmp ne i64 %s, 0
   %cond = select i1 %tobool, i64 %f1, i64 %f0
