@@ -8,7 +8,7 @@ define <4 x i32> @test1(<4 x i32> %a) {
 
 ; SSE41-LABEL: test1:
 ; SSE41: pmuludq
-; SSE41: pshufd	$57
+; SSE41: pshufd	$49
 ; SSE41: pmuludq
 ; SSE41: shufps	$-35
 ; SSE41: psubd
@@ -18,7 +18,7 @@ define <4 x i32> @test1(<4 x i32> %a) {
 
 ; AVX-LABEL: test1:
 ; AVX: vpmuludq
-; AVX: vpshufd	$57
+; AVX: vpshufd	$49
 ; AVX: vpmuludq
 ; AVX: vshufps	$-35
 ; AVX: vpsubd
@@ -32,11 +32,11 @@ define <8 x i32> @test2(<8 x i32> %a) {
   ret <8 x i32> %div
 
 ; AVX-LABEL: test2:
-; AVX: vpermd
+; AVX: vpbroadcastd
+; AVX: vpalignr $4
 ; AVX: vpmuludq
-; AVX: vshufps	$-35
 ; AVX: vpmuludq
-; AVX: vshufps	$-35
+; AVX: vpblendd $170
 ; AVX: vpsubd
 ; AVX: vpsrld $1
 ; AVX: vpadd
@@ -107,6 +107,12 @@ define <16 x i16> @test6(<16 x i16> %a) {
 define <16 x i8> @test7(<16 x i8> %a) {
   %div = sdiv <16 x i8> %a, <i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7, i8 7,i8 7, i8 7, i8 7, i8 7>
   ret <16 x i8> %div
+
+; FIXME: scalarized
+; SSE41-LABEL: test7:
+; SSE41: pext
+; AVX-LABEL: test7:
+; AVX: pext
 }
 
 define <4 x i32> @test8(<4 x i32> %a) {
@@ -115,8 +121,8 @@ define <4 x i32> @test8(<4 x i32> %a) {
 
 ; SSE41-LABEL: test8:
 ; SSE41: pmuldq
-; SSE41: pshufd	$57
-; SSE41-NOT: pshufd	$57
+; SSE41: pshufd	$49
+; SSE41-NOT: pshufd	$49
 ; SSE41: pmuldq
 ; SSE41: shufps	$-35
 ; SSE41: pshufd	$-40
@@ -130,8 +136,8 @@ define <4 x i32> @test8(<4 x i32> %a) {
 ; SSE: pand
 ; SSE: paddd
 ; SSE: pmuludq
-; SSE: pshufd	$57
-; SSE-NOT: pshufd	$57
+; SSE: pshufd	$49
+; SSE-NOT: pshufd	$49
 ; SSE: pmuludq
 ; SSE: shufps	$-35
 ; SSE: pshufd	$-40
@@ -143,8 +149,8 @@ define <4 x i32> @test8(<4 x i32> %a) {
 
 ; AVX-LABEL: test8:
 ; AVX: vpmuldq
-; AVX: vpshufd	$57
-; AVX-NOT: vpshufd	$57
+; AVX: vpshufd	$49
+; AVX-NOT: vpshufd	$49
 ; AVX: vpmuldq
 ; AVX: vshufps	$-35
 ; AVX: vpshufd	$-40
@@ -159,12 +165,11 @@ define <8 x i32> @test9(<8 x i32> %a) {
   ret <8 x i32> %div
 
 ; AVX-LABEL: test9:
+; AVX: vpalignr $4
 ; AVX: vpbroadcastd
 ; AVX: vpmuldq
-; AVX: vshufps	$-35
 ; AVX: vpmuldq
-; AVX: vshufps	$-35
-; AVX: vpshufd	$-40
+; AVX: vpblendd $170
 ; AVX: vpadd
 ; AVX: vpsrld $31
 ; AVX: vpsrad $2
@@ -177,10 +182,10 @@ define <8 x i32> @test10(<8 x i32> %a) {
 
 ; AVX-LABEL: test10:
 ; AVX: vpbroadcastd
+; AVX: vpalignr $4
 ; AVX: vpmuludq
-; AVX: vshufps	$-35
 ; AVX: vpmuludq
-; AVX: vshufps	$-35
+; AVX: vpblendd $170
 ; AVX: vpsubd
 ; AVX: vpsrld $1
 ; AVX: vpadd
@@ -193,12 +198,11 @@ define <8 x i32> @test11(<8 x i32> %a) {
   ret <8 x i32> %rem
 
 ; AVX-LABEL: test11:
+; AVX: vpalignr $4
 ; AVX: vpbroadcastd
 ; AVX: vpmuldq
-; AVX: vshufps	$-35
 ; AVX: vpmuldq
-; AVX: vshufps	$-35
-; AVX: vpshufd	$-40
+; AVX: vpblendd $170
 ; AVX: vpadd
 ; AVX: vpsrld $31
 ; AVX: vpsrad $2

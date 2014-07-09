@@ -15122,7 +15122,7 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
          (VT == MVT::v8i32 && Subtarget->hasInt256()));
 
   // Get the high parts.
-  const int Mask[] = {1, 2, 3, 4, 5, 6, 7, 8};
+  const int Mask[] = {1, -1, 3, -1, 5, -1, 7, -1};
   SDValue Hi0 = DAG.getVectorShuffle(VT, dl, Op0, Op0, Mask);
   SDValue Hi1 = DAG.getVectorShuffle(VT, dl, Op1, Op1, Mask);
 
@@ -15138,10 +15138,18 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
                              DAG.getNode(Opcode, dl, MulVT, Hi0, Hi1));
 
   // Shuffle it back into the right order.
-  const int HighMask[] = {1, 5, 3, 7, 9, 13, 11, 15};
-  SDValue Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-  const int LowMask[] = {0, 4, 2, 6, 8, 12, 10, 14};
-  SDValue Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
+  SDValue Highs, Lows;
+  if (VT == MVT::v8i32) {
+    const int HighMask[] = {1, 9, 3, 11, 5, 13, 7, 15};
+    Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
+    const int LowMask[] = {0, 8, 2, 10, 4, 12, 6, 14};
+    Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
+  } else {
+    const int HighMask[] = {1, 5, 3, 7};
+    Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
+    const int LowMask[] = {0, 4, 2, 6};
+    Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
+  }
 
   // If we have a signed multiply but no PMULDQ fix up the high parts of a
   // unsigned multiply.
