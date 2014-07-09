@@ -83,7 +83,7 @@ static void printDiagnosticOptions(raw_ostream &OS,
     if (!Opt.empty()) {
       OS << (Started ? "," : " [")
          << (Level == DiagnosticsEngine::Remark ? "-R" : "-W") << Opt;
-      StringRef OptValue = Info.getDiags()->getFlagNameValue();
+      StringRef OptValue = Info.getDiags()->getFlagValue();
       if (!OptValue.empty())
         OS << "=" << OptValue;
       Started = true;
