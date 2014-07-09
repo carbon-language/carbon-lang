@@ -1,4 +1,4 @@
-//===- Passes/StubsPass.cpp - Adds stubs ----------------------------------===//
+//===- lib/ReaderWriter/MachO/StubsPass.cpp -------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -17,9 +17,10 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
-#include "lld/Core/Pass.h"
 #include "lld/Core/Reference.h"
 #include "llvm/ADT/DenseMap.h"
+
+#include "MachOPasses.h"
 
 namespace lld {
 

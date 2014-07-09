@@ -16,6 +16,7 @@
 #include "lld/Core/Reference.h"
 #include "lld/Core/Pass.h"
 
+#include "MachOPasses.h"
 #include "ReferenceKinds.h"
 #include "StubAtoms.hpp"
 

@@ -19,6 +19,7 @@
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/Simple.h"
 
+#include "MachOPasses.h"
 #include "ReferenceKinds.h"
 #include "StubAtoms.hpp"
 

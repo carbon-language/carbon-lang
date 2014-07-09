@@ -1,4 +1,5 @@
 add_lld_library(lldMachO
+  GOTPass.cpp
   MachOLinkingContext.cpp
   MachONormalizedFileBinaryReader.cpp
   MachONormalizedFileBinaryWriter.cpp
@@ -6,6 +7,7 @@ add_lld_library(lldMachO
   MachONormalizedFileToAtoms.cpp
   MachONormalizedFileYAML.cpp
   ReferenceKinds.cpp
+  StubsPass.cpp
   WriterMachO.cpp
   )
 

@@ -184,67 +184,6 @@ private:
 };
 
 
-class TestingStubsPass : public StubsPass {
-public:
-  TestingStubsPass(const LinkingContext &ctx) : _file(ctx) {}
-
-  bool noTextRelocs() override { return true; }
-
-  bool isCallSite(const Reference &ref) override {
-    if (ref.kindNamespace() != Reference::KindNamespace::testing)
-      return false;
-    return (ref.kindValue() == CoreLinkingContext::TEST_RELOC_CALL32);
-  }
-
-  const DefinedAtom *getStub(const Atom &target) override {
-    const DefinedAtom *result = new TestingStubAtom(_file, target);
-    _file.addAtom(*result);
-    return result;
-  }
-
-  void addStubAtoms(MutableFile &mergedFile) override {
-    for (const DefinedAtom *stub : _file.defined()) {
-      mergedFile.addAtom(*stub);
-    }
-  }
-
-private:
-  TestingPassFile _file;
-};
-
-class TestingGOTPass : public GOTPass {
-public:
-  TestingGOTPass(const LinkingContext &ctx) : _file(ctx) {}
-
-  bool noTextRelocs() override { return true; }
-
-  bool isGOTAccess(const Reference &ref, bool &canBypassGOT) override {
-    if (ref.kindNamespace() != Reference::KindNamespace::testing)
-      return false;
-    switch (ref.kindValue()) {
-    case CoreLinkingContext::TEST_RELOC_GOT_LOAD32:
-      canBypassGOT = true;
-      return true;
-    case CoreLinkingContext::TEST_RELOC_GOT_USE32:
-      canBypassGOT = false;
-      return true;
-    }
-    return false;
-  }
-
-  void updateReferenceToGOT(const Reference *ref, bool targetIsNowGOT) override {
-    const_cast<Reference *>(ref)->setKindValue(
-        targetIsNowGOT ? CoreLinkingContext::TEST_RELOC_PCREL32
-                       : CoreLinkingContext::TEST_RELOC_LEA32_WAS_GOT);
-  }
-
-  const DefinedAtom *makeGOTEntry(const Atom &target) override {
-    return new TestingGOTAtom(_file, target);
-  }
-
-private:
-  TestingPassFile _file;
-};
 
 } // anonymous namespace
 
@@ -259,10 +198,6 @@ void CoreLinkingContext::addPasses(PassManager &pm) {
   for (StringRef name : _passNames) {
     if (name.equals("layout"))
       pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
-    else if (name.equals("GOT"))
-      pm.add(std::unique_ptr<Pass>(new TestingGOTPass(*this)));
-    else if (name.equals("stubs"))
-      pm.add(std::unique_ptr<Pass>(new TestingStubsPass(*this)));
     else
       llvm_unreachable("bad pass name");
   }
