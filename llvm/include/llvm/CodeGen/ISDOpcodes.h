@@ -379,6 +379,15 @@ namespace ISD {
     /// operand, a ValueType node.
     SIGN_EXTEND_INREG,
 
+    /// ZERO_EXTEND_VECTOR_INREG(Vector) - This operator represents an
+    /// in-register zero-extension of the low lanes of an integer vector. The
+    /// result type must have fewer elements than the operand type, and those
+    /// elements must be larger integer types such that the total size of the
+    /// operand type and the result type match. Each of the low operand
+    /// elements is zero-extended into the corresponding, wider result
+    /// elements.
+    ZERO_EXTEND_VECTOR_INREG,
+
     /// FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
     /// integer.
     FP_TO_SINT,

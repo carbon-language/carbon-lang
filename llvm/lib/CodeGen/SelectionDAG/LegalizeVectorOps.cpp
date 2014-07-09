@@ -75,6 +75,12 @@ class VectorLegalizer {
   /// \brief Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
   SDValue ExpandSEXTINREG(SDValue Op);
 
+  /// \brief Implement expansion for ZERO_EXTEND_VECTOR_INREG.
+  ///
+  /// Shuffles the low lanes of the operand into place and blends zeros into
+  /// the remaining lanes, finally bitcasting to the proper type.
+  SDValue ExpandZERO_EXTEND_VECTOR_INREG(SDValue Op);
+
   /// \brief Expand bswap of vectors into a shuffle if legal.
   SDValue ExpandBSWAP(SDValue Op);
 
@@ -274,6 +280,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FP_EXTEND:
   case ISD::FMA:
   case ISD::SIGN_EXTEND_INREG:
+  case ISD::ZERO_EXTEND_VECTOR_INREG:
     QueryType = Node->getValueType(0);
     break;
   case ISD::FP_ROUND_INREG:
@@ -614,6 +621,8 @@ SDValue VectorLegalizer::Expand(SDValue Op) {
   switch (Op->getOpcode()) {
   case ISD::SIGN_EXTEND_INREG:
     return ExpandSEXTINREG(Op);
+  case ISD::ZERO_EXTEND_VECTOR_INREG:
+    return ExpandZERO_EXTEND_VECTOR_INREG(Op);
   case ISD::BSWAP:
     return ExpandBSWAP(Op);
   case ISD::VSELECT:
@@ -706,6 +715,39 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   Op = Op.getOperand(0);
   Op =   DAG.getNode(ISD::SHL, DL, VT, Op, ShiftSz);
   return DAG.getNode(ISD::SRA, DL, VT, Op, ShiftSz);
+}
+
+// Generically expand a vector zext in register to a shuffle of the relevant
+// lanes into the appropriate locations, a blend of zero into the high bits,
+// and a bitcast to the wider element type.
+SDValue VectorLegalizer::ExpandZERO_EXTEND_VECTOR_INREG(SDValue Op) {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  int NumElements = VT.getVectorNumElements();
+  SDValue Src = Op.getOperand(0);
+  EVT SrcVT = Src.getValueType();
+  int NumSrcElements = SrcVT.getVectorNumElements();
+
+  // Build up a zero vector to blend into this one.
+  EVT SrcScalarVT = SrcVT.getScalarType();
+  SDValue ScalarZero = DAG.getTargetConstant(0, SrcScalarVT);
+  SmallVector<SDValue, 4> BuildVectorOperands(NumSrcElements, ScalarZero);
+  SDValue Zero = DAG.getNode(ISD::BUILD_VECTOR, DL, SrcVT, BuildVectorOperands);
+
+  // Shuffle the incoming lanes into the correct position, and pull all other
+  // lanes from the zero vector.
+  SmallVector<int, 16> ShuffleMask;
+  ShuffleMask.reserve(NumSrcElements);
+  for (int i = 0; i < NumSrcElements; ++i)
+    ShuffleMask.push_back(i);
+
+  int ExtLaneScale = NumSrcElements / NumElements;
+  int EndianOffset = TLI.isBigEndian() ? ExtLaneScale - 1 : 0;
+  for (int i = 0; i < NumElements; ++i)
+    ShuffleMask[i * ExtLaneScale + EndianOffset] = NumSrcElements + i;
+
+  return DAG.getNode(ISD::BITCAST, DL, VT,
+                     DAG.getVectorShuffle(SrcVT, DL, Zero, Src, ShuffleMask));
 }
 
 SDValue VectorLegalizer::ExpandBSWAP(SDValue Op) {

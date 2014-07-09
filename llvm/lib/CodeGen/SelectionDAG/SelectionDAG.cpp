@@ -1032,6 +1032,13 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, SDLoc DL, EVT VT) {
                  getConstant(Imm, Op.getValueType()));
 }
 
+SDValue SelectionDAG::getZeroExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT) {
+  assert(VT.isVector() && "This DAG node is restricted to vector types.");
+  assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
+         "The destination vector type must have fewer lanes than the input.");
+  return getNode(ISD::ZERO_EXTEND_VECTOR_INREG, DL, VT, Op);
+}
+
 /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
 ///
 SDValue SelectionDAG::getNOT(SDLoc DL, SDValue Val, EVT VT) {

@@ -649,6 +649,7 @@ private:
   SDValue WidenVecOp_EXTRACT_SUBVECTOR(SDNode *N);
   SDValue WidenVecOp_STORE(SDNode* N);
   SDValue WidenVecOp_SETCC(SDNode* N);
+  SDValue WidenVecOp_ZERO_EXTEND(SDNode *N);
 
   SDValue WidenVecOp_Convert(SDNode *N);
 

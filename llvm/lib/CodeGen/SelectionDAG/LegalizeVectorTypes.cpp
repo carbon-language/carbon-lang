@@ -2380,6 +2380,7 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
   case ISD::SETCC:              Res = WidenVecOp_SETCC(N); break;
+  case ISD::ZERO_EXTEND:        Res = WidenVecOp_ZERO_EXTEND(N); break;
 
   case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
@@ -2388,7 +2389,6 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
   case ISD::UINT_TO_FP:
   case ISD::TRUNCATE:
   case ISD::SIGN_EXTEND:
-  case ISD::ZERO_EXTEND:
   case ISD::ANY_EXTEND:
     Res = WidenVecOp_Convert(N);
     break;
@@ -2408,6 +2408,26 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
 
   ReplaceValueWith(SDValue(N, 0), Res);
   return false;
+}
+
+SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
+  SDLoc DL(N);
+  EVT VT = N->getValueType(0);
+  unsigned NumElts = VT.getVectorNumElements();
+
+  SDValue InOp = N->getOperand(0);
+  // If some legalization strategy other than widening is used on the operand,
+  // we can't safely assume that just zero-extending the low lanes is the
+  // correct transformation.
+  if (getTypeAction(InOp.getValueType()) != TargetLowering::TypeWidenVector)
+    return WidenVecOp_Convert(N);
+  InOp = GetWidenedVector(InOp);
+  EVT InVT = InOp.getValueType();
+  assert(NumElts < InVT.getVectorNumElements() && "Input wasn't widened!");
+
+  // Use a special DAG node to represent the operation of zero extending the
+  // low lanes.
+  return DAG.getZeroExtendVectorInReg(InOp, DL, VT);
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_Convert(SDNode *N) {
