@@ -1751,9 +1751,14 @@ unsigned AArch64FastISel::EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                      bool isZExt) {
   assert(DestVT != MVT::i1 && "ZeroExt/SignExt an i1?");
 
-  // FastISel does not have plumbing to deal with an MVT::i128, if we see one
-  // so rather than return one we need to bail out to SelectionDAG.
-  if (DestVT == MVT::i128)
+  // FastISel does not have plumbing to deal with extensions where the SrcVT or
+  // DestVT are odd things, so test to make sure that they are both types we can
+  // handle (i1/i8/i16/i32 for SrcVT and i8/i16/i32/i64 for DestVT), otherwise
+  // bail out to SelectionDAG.
+  if (((DestVT != MVT::i8) && (DestVT != MVT::i16) &&
+       (DestVT != MVT::i32) && (DestVT != MVT::i64)) ||
+      ((SrcVT !=  MVT::i1) && (SrcVT !=  MVT::i8) &&
+       (SrcVT !=  MVT::i16) && (SrcVT !=  MVT::i32)))
     return 0;
 
   unsigned Opc;
