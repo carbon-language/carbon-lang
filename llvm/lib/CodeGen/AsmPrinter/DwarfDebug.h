@@ -330,6 +330,8 @@ class DwarfDebug : public AsmPrinterHandler {
   DwarfAccelTable AccelNamespace;
   DwarfAccelTable AccelTypes;
 
+  DenseMap<const Function *, DISubprogram> FunctionDIs;
+
   MCDwarfDwoLineTable *getDwoLineTable(const DwarfCompileUnit &);
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);

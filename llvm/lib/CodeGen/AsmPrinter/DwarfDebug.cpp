@@ -730,6 +730,8 @@ void DwarfDebug::beginModule() {
 
   const Module *M = MMI->getModule();
 
+  FunctionDIs = makeSubprogramMap(*M);
+
   // If module has named metadata anchors then use them, otherwise scan the
   // module using debug info finder to collect debug info.
   NamedMDNode *CU_Nodes = M->getNamedMetadata("llvm.dbg.cu");
@@ -1415,6 +1417,10 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   if (!MMI->hasDebugInfo())
     return;
 
+  auto DI = FunctionDIs.find(MF->getFunction());
+  if (DI == FunctionDIs.end())
+    return;
+
   // Grab the lexical scopes for the function, if we don't have any of those
   // then we're not going to be able to do anything.
   LScopes.initialize(*MF);
@@ -1430,6 +1436,14 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   // belongs to so that we add to the correct per-cu line table in the
   // non-asm case.
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
+  // FnScope->getScopeNode() and DI->second should represent the same function,
+  // though they may not be the same MDNode due to inline functions merged in
+  // LTO where the debug info metadata still differs (either due to distinct
+  // written differences - two versions of a linkonce_odr function
+  // written/copied into two separate files, or some sub-optimal metadata that
+  // isn't structurally identical (see: file path/name info from clang, which
+  // includes the directory of the cpp file being built, even when the file name
+  // is absolute (such as an <> lookup header)))
   DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
   assert(TheCU && "Unable to find compile unit!");
   if (Asm->OutStreamer.hasRawTextSupport())
@@ -1527,7 +1541,8 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
     assert(CurFn == MF);
   assert(CurFn != nullptr);
 
-  if (!MMI->hasDebugInfo() || LScopes.empty()) {
+  if (!MMI->hasDebugInfo() || LScopes.empty() ||
+      !FunctionDIs.count(MF->getFunction())) {
     // If we don't have a lexical scope for this function then there will
     // be a hole in the range information. Keep note of this by setting the
     // previously used section to nullptr.
