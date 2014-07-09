@@ -3,7 +3,7 @@ Set breakpoints on objective-c class and instance methods in foundation.
 Also lookup objective-c data types and evaluate expressions.
 """
 
-import os, time
+import os, os.path, time
 import unittest2
 import lldb
 import string
@@ -119,6 +119,7 @@ class FoundationTestCase(TestBase):
         self.expression_lookups_objc()
 
     @dwarf_test
+    @expectedFailureDarwin("llvm.org/pr20267")
     def test_expression_lookups_objc_dwarf(self):
         """Test running an expression detect spurious debug info lookups (DWARF)."""
         self.buildDwarf()
@@ -141,7 +142,8 @@ class FoundationTestCase(TestBase):
         self.runCmd("log disable dwarf lookups")
         
         def cleanup():
-            os.unlink (logfile)
+            if os.path.exists (logfile):
+                os.unlink (logfile)
         
         self.addTearDownHook(cleanup)
         

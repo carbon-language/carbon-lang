@@ -133,7 +133,6 @@ class FoundationTestCase2(TestBase):
 
         self.runCmd("process continue")
 
-    @unittest2.expectedFailure(8741897)
     def NSArray_expr(self):
         """Test expression commands for NSArray."""
         exe = os.path.join(os.getcwd(), "a.out")
