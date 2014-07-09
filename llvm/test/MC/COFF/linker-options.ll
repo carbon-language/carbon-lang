@@ -5,6 +5,7 @@
       metadata !{ metadata !"/DEFAULTLIB:msvcrt.lib" },
       metadata !{ metadata !"/DEFAULTLIB:msvcrt.lib",
                   metadata !"/DEFAULTLIB:secur32.lib" },
+      metadata !{ metadata !"/DEFAULTLIB:C:\5Cpath to\5Casan_rt.lib" },
       metadata !{ metadata !"/with spaces" } } }
 
 !llvm.module.flags = !{ !0 }
@@ -17,5 +18,6 @@ define dllexport void @foo() {
 ; CHECK: .ascii   " /DEFAULTLIB:msvcrt.lib"
 ; CHECK: .ascii   " /DEFAULTLIB:msvcrt.lib"
 ; CHECK: .ascii   " /DEFAULTLIB:secur32.lib"
+; CHECK: .ascii   " \"/DEFAULTLIB:C:\\path to\\asan_rt.lib\""
 ; CHECK: .ascii   " \"/with spaces\""
 ; CHECK: .ascii   " /EXPORT:_foo"
