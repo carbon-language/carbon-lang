@@ -88,6 +88,7 @@ public:
     BGQ,
     Freescale,
     IBM,
+    ImaginationTechnologies,
     NVIDIA
   };
   enum OSType {

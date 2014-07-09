@@ -115,6 +115,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
   case BGQ: return "bgq";
   case Freescale: return "fsl";
   case IBM: return "ibm";
+  case ImaginationTechnologies: return "img";
   case NVIDIA: return "nvidia";
   }
 
@@ -292,6 +293,7 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("bgq", Triple::BGQ)
     .Case("fsl", Triple::Freescale)
     .Case("ibm", Triple::IBM)
+    .Case("img", Triple::ImaginationTechnologies)
     .Case("nvidia", Triple::NVIDIA)
     .Default(Triple::UnknownVendor);
 }
