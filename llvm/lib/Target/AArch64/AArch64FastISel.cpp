@@ -1907,6 +1907,7 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
   case MVT::i32:
     ZReg = AArch64::WZR;
     Opc = AArch64::MADDWrrr;
+    SrcVT = MVT::i32;
     break;
   case MVT::i64:
     ZReg = AArch64::XZR;
