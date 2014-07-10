@@ -481,7 +481,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.GNUMode && !LangOpts.MSVCCompat)
     Builder.defineMacro("__STRICT_ANSI__");
 
-  if (LangOpts.CPlusPlus11)
+  if (!LangOpts.MSVCCompat && LangOpts.CPlusPlus11)
     Builder.defineMacro("__GXX_EXPERIMENTAL_CXX0X__");
 
   if (LangOpts.ObjC1) {
@@ -541,7 +541,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   if (!LangOpts.MSVCCompat && LangOpts.CXXExceptions)
     Builder.defineMacro("__EXCEPTIONS");
-  if (LangOpts.RTTI)
+  if (!LangOpts.MSVCCompat && LangOpts.RTTI)
     Builder.defineMacro("__GXX_RTTI");
   if (LangOpts.SjLjExceptions)
     Builder.defineMacro("__USING_SJLJ_EXCEPTIONS__");
@@ -549,7 +549,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (LangOpts.Deprecated)
     Builder.defineMacro("__DEPRECATED");
 
-  if (LangOpts.CPlusPlus) {
+  if (!LangOpts.MSVCCompat && LangOpts.CPlusPlus) {
     Builder.defineMacro("__GNUG__", "4");
     Builder.defineMacro("__GXX_WEAK__");
     Builder.defineMacro("__private_extern__", "extern");
@@ -746,36 +746,38 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   else
     Builder.defineMacro("__FINITE_MATH_ONLY__", "0");
 
-  if (LangOpts.GNUInline)
-    Builder.defineMacro("__GNUC_GNU_INLINE__");
-  else
-    Builder.defineMacro("__GNUC_STDC_INLINE__");
+  if (!LangOpts.MSVCCompat) {
+    if (LangOpts.GNUInline)
+      Builder.defineMacro("__GNUC_GNU_INLINE__");
+    else
+      Builder.defineMacro("__GNUC_STDC_INLINE__");
 
-  // The value written by __atomic_test_and_set.
-  // FIXME: This is target-dependent.
-  Builder.defineMacro("__GCC_ATOMIC_TEST_AND_SET_TRUEVAL", "1");
+    // The value written by __atomic_test_and_set.
+    // FIXME: This is target-dependent.
+    Builder.defineMacro("__GCC_ATOMIC_TEST_AND_SET_TRUEVAL", "1");
 
-  // Used by libstdc++ to implement ATOMIC_<foo>_LOCK_FREE.
-  unsigned InlineWidthBits = TI.getMaxAtomicInlineWidth();
+    // Used by libstdc++ to implement ATOMIC_<foo>_LOCK_FREE.
+    unsigned InlineWidthBits = TI.getMaxAtomicInlineWidth();
 #define DEFINE_LOCK_FREE_MACRO(TYPE, Type) \
-  Builder.defineMacro("__GCC_ATOMIC_" #TYPE "_LOCK_FREE", \
-                      getLockFreeValue(TI.get##Type##Width(), \
-                                       TI.get##Type##Align(), \
-                                       InlineWidthBits));
-  DEFINE_LOCK_FREE_MACRO(BOOL, Bool);
-  DEFINE_LOCK_FREE_MACRO(CHAR, Char);
-  DEFINE_LOCK_FREE_MACRO(CHAR16_T, Char16);
-  DEFINE_LOCK_FREE_MACRO(CHAR32_T, Char32);
-  DEFINE_LOCK_FREE_MACRO(WCHAR_T, WChar);
-  DEFINE_LOCK_FREE_MACRO(SHORT, Short);
-  DEFINE_LOCK_FREE_MACRO(INT, Int);
-  DEFINE_LOCK_FREE_MACRO(LONG, Long);
-  DEFINE_LOCK_FREE_MACRO(LLONG, LongLong);
-  Builder.defineMacro("__GCC_ATOMIC_POINTER_LOCK_FREE",
-                      getLockFreeValue(TI.getPointerWidth(0),
-                                       TI.getPointerAlign(0),
-                                       InlineWidthBits));
+    Builder.defineMacro("__GCC_ATOMIC_" #TYPE "_LOCK_FREE", \
+                        getLockFreeValue(TI.get##Type##Width(), \
+                                         TI.get##Type##Align(), \
+                                         InlineWidthBits));
+    DEFINE_LOCK_FREE_MACRO(BOOL, Bool);
+    DEFINE_LOCK_FREE_MACRO(CHAR, Char);
+    DEFINE_LOCK_FREE_MACRO(CHAR16_T, Char16);
+    DEFINE_LOCK_FREE_MACRO(CHAR32_T, Char32);
+    DEFINE_LOCK_FREE_MACRO(WCHAR_T, WChar);
+    DEFINE_LOCK_FREE_MACRO(SHORT, Short);
+    DEFINE_LOCK_FREE_MACRO(INT, Int);
+    DEFINE_LOCK_FREE_MACRO(LONG, Long);
+    DEFINE_LOCK_FREE_MACRO(LLONG, LongLong);
+    Builder.defineMacro("__GCC_ATOMIC_POINTER_LOCK_FREE",
+                        getLockFreeValue(TI.getPointerWidth(0),
+                                         TI.getPointerAlign(0),
+                                         InlineWidthBits));
 #undef DEFINE_LOCK_FREE_MACRO
+  }
 
   if (LangOpts.NoInlineDefine)
     Builder.defineMacro("__NO_INLINE__");

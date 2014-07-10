@@ -8,8 +8,23 @@
 // CHECK-MS: #define _M_IX86 600
 // CHECK-MS: #define _M_IX86_FP
 // CHECK-MS: #define _WIN32 1
-// CHECK-MS-NOT: #define __GNUC__
 // CHECK-MS-NOT: #define __STRICT_ANSI__
+// CHECK-MS-NOT: GCC
+// CHECK-MS-NOT: GNU
+// CHECK-MS-NOT: GXX
+//
+// RUN: %clang_cc1 %s -E -dM -triple x86_64-pc-win32 -fms-extensions -fms-compatibility \
+// RUN:     -fmsc-version=1300 -o - | FileCheck %s --check-prefix=CHECK-MS64
+// CHECK-MS64: #define _INTEGRAL_MAX_BITS 64
+// CHECK-MS64: #define _MSC_EXTENSIONS 1
+// CHECK-MS64: #define _MSC_VER 1300
+// CHECK-MS64: #define _M_AMD64 1
+// CHECK-MS64: #define _M_X64 1
+// CHECK-MS64: #define _WIN64 1
+// CHECK-MS64-NOT: #define __STRICT_ANSI__
+// CHECK-MS64-NOT: GCC
+// CHECK-MS64-NOT: GNU
+// CHECK-MS64-NOT: GXX
 //
 // RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-compatibility \
 // RUN:     -o - | FileCheck %s --check-prefix=CHECK-MS-STDINT
