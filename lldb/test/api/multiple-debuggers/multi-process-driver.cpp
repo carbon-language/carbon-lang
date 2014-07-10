@@ -1,3 +1,18 @@
+
+// This program creates NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS of pthreads, 
+// creates an lldb Debugger on each thread, creates targets, inserts two
+// breakpoints, runs to the first breakpoint, backtraces, runs to the second
+// breakpoint, backtraces, kills the inferior process, closes down the
+// debugger.
+
+// The main thread keeps track of which pthreads have completed and which 
+// pthreads have completed successfully, and exits when all pthreads have
+// completed successfully, or our time limit has been exceeded.
+
+// This test file helps to uncover race conditions and locking mistakes
+// that are hit when lldb is being used to debug multiple processes
+// simultaneously.
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -22,6 +37,8 @@ using namespace lldb;
 
 bool *completed_threads_array = 0;
 bool *successful_threads_array  = 0;
+
+const char *inferior_process_name = "testprog";
 
 bool
 wait_for_stop_event (SBProcess process, SBListener listener)
@@ -88,7 +105,7 @@ void *do_one_debugger (void *in)
     if (debugger.IsValid ())
     {
         debugger.SetAsync (true);
-        SBTarget target = debugger.CreateTargetWithFileAndArch("testprog", "x86_64");
+        SBTarget target = debugger.CreateTargetWithFileAndArch(inferior_process_name, "x86_64");
         SBCommandInterpreter command_interp = debugger.GetCommandInterpreter();
         if (target.IsValid())
         {
@@ -202,7 +219,7 @@ void *do_one_debugger (void *in)
     return (void*) 1;
 }
 
-int main ()
+int main (int argc, char **argv)
 {
     SBDebugger::Initialize();
 
@@ -210,6 +227,11 @@ int main ()
     memset (completed_threads_array, 0, sizeof (bool) * NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS);
     successful_threads_array = (bool *) malloc (sizeof (bool) * NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS);
     memset (successful_threads_array, 0, sizeof (bool) * NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS);
+
+    if (argc > 1 && argv[1] != NULL)
+    {
+        inferior_process_name = argv[1];
+    }
 
     for (uint64_t i = 0; i< NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS; i++)
     {
