@@ -21,7 +21,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         self.stop_hook_multiple_threads()
 
     @dwarf_test
-    @skipIfLinux # llvm.org/pr15037 stop hooks sometimes fail to fire on Linux (cannot mark XFAIL, sometimes it passes)
+    @expectedFailureLinux("llvm.org/pr15037") # stop hooks sometimes fail to fire on Linux
     def test_stop_hook_multiple_threads_with_dwarf(self):
         """Test that lldb stop-hook works for multiple threads."""
         self.buildDwarf(dictionary=self.d)

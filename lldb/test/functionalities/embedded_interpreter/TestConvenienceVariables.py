@@ -19,7 +19,7 @@ class ConvenienceVariablesCase(TestBase):
 
     @dwarf_test
     @skipIfFreeBSD # llvm.org/pr17228
-    @skipIfLinux   # llvm.org/pr20276
+    @expectedFailureLinux("llvm.org/pr20276") # intermittent failure on Linux
     def test_with_dwarf_and_run_commands(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
         self.buildDwarf()

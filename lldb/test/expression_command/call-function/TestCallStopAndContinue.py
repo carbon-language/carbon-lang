@@ -22,15 +22,15 @@ class ExprCommandCallStopContinueTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @dsym_test
-    @skipIfDarwin  # see llvm.org/pr20274 - intermittent failure on MacOSX
+    @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
     def test_with_dsym(self):
         """Test gathering result from interrupted function call."""
         self.buildDsym()
         self.call_function()
 
     @dwarf_test
-    @skipIfDarwin  # see llvm.org/pr20274 - intermittent failure on MacOSX
-    @skipIfLinux   # see llvm.org/pr20274 - intermittent failure on Linux
+    @expectedFailureDarwin("llvm.org/pr20274") # intermittent failure on MacOSX
+    @expectedFailureLinux("llvm.org/pr20274") # intermittent failure on Linux
     def test_with_dwarf(self):
         """Test gathering result from interrupted function call."""
         self.buildDwarf()

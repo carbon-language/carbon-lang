@@ -16,6 +16,8 @@ class TestMultipleSimultaneousDebuggers(TestBase):
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
 
     @skipIfi386
+    @expectedFailureDarwin("llvm.org/pr20282") # intermittent
+    @expectedFailureLinux("llvm.org/pr20282")
     def test_multiple_debuggers(self):
 
         self.driver_exe = os.path.join(os.getcwd(), "multi-process-driver")
