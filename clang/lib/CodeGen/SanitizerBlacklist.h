@@ -38,6 +38,7 @@ public:
   bool isIn(const llvm::Function &F) const;
   bool isIn(const llvm::GlobalVariable &G,
             const StringRef Category = StringRef()) const;
+  bool isBlacklistedType(StringRef MangledTypeName) const;
 };
 }  // end namespace CodeGen
 }  // end namespace clang

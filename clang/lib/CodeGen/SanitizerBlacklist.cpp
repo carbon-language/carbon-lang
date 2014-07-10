@@ -46,3 +46,7 @@ bool SanitizerBlacklist::isIn(const llvm::GlobalVariable &G,
          SCL->inSection("global", G.getName(), Category) ||
          SCL->inSection("type", GetGlobalTypeString(G), Category);
 }
+
+bool SanitizerBlacklist::isBlacklistedType(StringRef MangledTypeName) const {
+  return SCL->inSection("type", MangledTypeName);
+}
