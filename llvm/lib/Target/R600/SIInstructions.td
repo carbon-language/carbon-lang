@@ -1078,8 +1078,12 @@ defm V_CVT_I32_F32 : VOP1_32 <0x00000008, "V_CVT_I32_F32",
   [(set i32:$dst, (fp_to_sint f32:$src0))]
 >;
 defm V_MOV_FED_B32 : VOP1_32 <0x00000009, "V_MOV_FED_B32", []>;
-////def V_CVT_F16_F32 : VOP1_F16 <0x0000000a, "V_CVT_F16_F32", []>;
-//defm V_CVT_F32_F16 : VOP1_32 <0x0000000b, "V_CVT_F32_F16", []>;
+defm V_CVT_F16_F32 : VOP1_32 <0x0000000a, "V_CVT_F16_F32",
+  [(set i32:$dst, (f32_to_f16 f32:$src0))]
+>;
+defm V_CVT_F32_F16 : VOP1_32 <0x0000000b, "V_CVT_F32_F16",
+  [(set f32:$dst, (f16_to_f32 i32:$src0))]
+>;
 //defm V_CVT_RPI_I32_F32 : VOP1_32 <0x0000000c, "V_CVT_RPI_I32_F32", []>;
 //defm V_CVT_FLR_I32_F32 : VOP1_32 <0x0000000d, "V_CVT_FLR_I32_F32", []>;
 //defm V_CVT_OFF_F32_I4 : VOP1_32 <0x0000000e, "V_CVT_OFF_F32_I4", []>;
