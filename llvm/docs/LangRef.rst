@@ -8651,7 +8651,7 @@ Syntax:
 
 ::
 
-      declare i16 @llvm.convert.to.fp16(f32 %a)
+      declare i16 @llvm.convert.to.fp16(float %a)
 
 Overview:
 """""""""
@@ -8679,7 +8679,7 @@ Examples:
 
 .. code-block:: llvm
 
-      %res = call i16 @llvm.convert.to.fp16(f32 %a)
+      %res = call i16 @llvm.convert.to.fp16(float %a)
       store i16 %res, i16* @x, align 2
 
 .. _int_convert_from_fp16:
@@ -8692,7 +8692,7 @@ Syntax:
 
 ::
 
-      declare f32 @llvm.convert.from.fp16(i16 %a)
+      declare float @llvm.convert.from.fp16(i16 %a)
 
 Overview:
 """""""""
@@ -8721,7 +8721,7 @@ Examples:
 .. code-block:: llvm
 
       %a = load i16* @x, align 2
-      %res = call f32 @llvm.convert.from.fp16(i16 %a)
+      %res = call float @llvm.convert.from.fp16(i16 %a)
 
 Debugger Intrinsics
 -------------------
