@@ -213,24 +213,27 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
         ArchSpec platform_arch;
         for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
         {
-            
-            error = ModuleList::GetSharedModule (module_spec, 
-                                                 exe_module_sp, 
-                                                 NULL,
-                                                 NULL, 
-                                                 NULL);
-            // Did we find an executable using one of the 
-            if (error.Success())
+            // Only match x86 with x86 and x86_64 with x86_64...
+            if (!exe_arch.IsValid() || exe_arch.GetCore() == module_spec.GetArchitecture().GetCore())
             {
-                if (exe_module_sp && exe_module_sp->GetObjectFile())
-                    break;
-                else
-                    error.SetErrorToGenericError();
+                error = ModuleList::GetSharedModule (module_spec,
+                                                     exe_module_sp, 
+                                                     NULL,
+                                                     NULL, 
+                                                     NULL);
+                // Did we find an executable using one of the 
+                if (error.Success())
+                {
+                    if (exe_module_sp && exe_module_sp->GetObjectFile())
+                        break;
+                    else
+                        error.SetErrorToGenericError();
+                }
+                
+                if (idx > 0)
+                    arch_names.PutCString (", ");
+                arch_names.PutCString (platform_arch.GetArchitectureName());
             }
-            
-            if (idx > 0)
-                arch_names.PutCString (", ");
-            arch_names.PutCString (platform_arch.GetArchitectureName());
         }
         
         if (error.Fail() || !exe_module_sp)
@@ -436,6 +439,7 @@ PlatformiOSSimulator::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &a
             {
                 // 32/64: return "x86_64-apple-macosx" for architecture 1
                 arch = platform_arch64;
+                return true;
             }
             else if (idx == 2 || idx == 3)
             {
@@ -454,6 +458,7 @@ PlatformiOSSimulator::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &a
         {
             // This macosx platform supports only 32 bit, so return the *-apple-macosx version
             arch = platform_arch;
+            return true;
         }
     }
     return false;

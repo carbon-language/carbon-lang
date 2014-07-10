@@ -346,7 +346,7 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (DYLDImageInfo &image_
     
     Target &target = m_process->GetTarget();
     const ModuleList &target_images = target.GetImages();
-    ModuleSpec module_spec (image_info.file_spec, image_info.GetArchitecture ());
+    ModuleSpec module_spec (image_info.file_spec);
     module_spec.GetUUID() = image_info.uuid;
     ModuleSP module_sp (target_images.FindFirstModule (module_spec));
     

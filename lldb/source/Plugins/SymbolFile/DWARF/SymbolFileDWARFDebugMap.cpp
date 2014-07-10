@@ -504,10 +504,16 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             // use the debug map, to add new sections to each .o file and
             // even though a .o file might not have changed, the sections
             // that get added to the .o file can change.
+            ArchSpec oso_arch;
+            // Only adopt the architecture from the module (not the vendor or OS)
+            // since .o files for "i386-apple-ios" will historically show up as "i386-apple-macosx"
+            // due to the lack of a LC_VERSION_MIN_MACOSX or LC_VERSION_MIN_IPHONEOS
+            // load command...
+            oso_arch.SetTriple(m_obj_file->GetModule()->GetArchitecture().GetTriple().getArchName().str().c_str());
             comp_unit_info->oso_sp->module_sp.reset (new DebugMapModule (obj_file->GetModule(),
                                                                          GetCompUnitInfoIndex(comp_unit_info),
                                                                          oso_file,
-                                                                         m_obj_file->GetModule()->GetArchitecture(),
+                                                                         oso_arch,
                                                                          oso_object ? &oso_object : NULL,
                                                                          0,
                                                                          oso_object ? &comp_unit_info->oso_mod_time : NULL));

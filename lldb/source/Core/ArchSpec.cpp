@@ -849,33 +849,10 @@ ArchSpec::IsEqualTo (const ArchSpec& rhs, bool exact_match) const
                     return false;
             }
             
-            bool ios_simulator_compatible = false;
-            // Check for iOS desktop simulator matches where:
-            // x86_64-apple-ios is compatible with x86_64-apple-macosx
-            // i386-apple-ios is compatible with i386-apple-macosx
-            if (lhs_triple_vendor == llvm::Triple::Apple)
-            {
-                const llvm::Triple::ArchType lhs_arch = lhs_triple.getArch();
-                if (lhs_arch == llvm::Triple::x86_64 ||
-                    lhs_arch == llvm::Triple::x86)
-                {
-                    if ((lhs_triple_os == llvm::Triple::MacOSX && rhs_triple_os == llvm::Triple::IOS    ) ||
-                        (lhs_triple_os == llvm::Triple::IOS    && rhs_triple_os == llvm::Triple::MacOSX ))
-                    {
-                        ios_simulator_compatible = true;
-                    }
-                        
-                }
-            }
-            
-            // Only fail if both os types are not unknown or if we determined the triples
-            // match for x86_64 or x86 iOS simulator
-            if (!ios_simulator_compatible)
-            {
-                if (lhs_triple_os != llvm::Triple::UnknownOS &&
-                    rhs_triple_os != llvm::Triple::UnknownOS)
-                    return false;
-            }
+            // Only fail if both os types are not unknown
+            if (lhs_triple_os != llvm::Triple::UnknownOS &&
+                rhs_triple_os != llvm::Triple::UnknownOS)
+                return false;
         }
 
         const llvm::Triple::EnvironmentType lhs_triple_env = lhs_triple.getEnvironment();

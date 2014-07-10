@@ -85,6 +85,7 @@ TargetList::CreateTarget (Debugger &debugger,
     
     ArchSpec platform_arch(arch);
 
+    bool prefer_platform_arch = false;
     
     if (user_exe_path && user_exe_path[0])
     {
@@ -104,7 +105,17 @@ TargetList::CreateTarget (Debugger &debugger,
                 {
                     if (platform_arch.IsValid())
                     {
-                        if (!platform_arch.IsCompatibleMatch(matching_module_spec.GetArchitecture()))
+                        if (platform_arch.IsCompatibleMatch(matching_module_spec.GetArchitecture()))
+                        {
+                            // If the OS or vendor weren't specified, then adopt the module's
+                            // architecture so that the platform matching can be more accurate
+                            if (!platform_arch.TripleOSWasSpecified() || !platform_arch.TripleVendorWasSpecified())
+                            {
+                                prefer_platform_arch = true;
+                                platform_arch = matching_module_spec.GetArchitecture();
+                            }
+                        }
+                        else
                         {
                             error.SetErrorStringWithFormat("the specified architecture '%s' is not compatible with '%s' in '%s'",
                                                            platform_arch.GetTriple().str().c_str(),
@@ -116,6 +127,7 @@ TargetList::CreateTarget (Debugger &debugger,
                     else
                     {
                         // Only one arch and none was specified
+                        prefer_platform_arch = true;
                         platform_arch = matching_module_spec.GetArchitecture();
                     }
                 }
@@ -127,19 +139,10 @@ TargetList::CreateTarget (Debugger &debugger,
                     module_spec.GetArchitecture() = arch;
                     if (module_specs.FindMatchingModuleSpec(module_spec, matching_module_spec))
                     {
+                        prefer_platform_arch = true;
                         platform_arch = matching_module_spec.GetArchitecture();
                     }
                 }
-                // Don't just select the first architecture, we want to let the platform select
-                // the best architecture first when there are multiple archs.
-//                else
-//                {
-//                    // No arch specified, select the first arch
-//                    if (module_specs.GetModuleSpecAtIndex(0, matching_module_spec))
-//                    {
-//                        platform_arch = matching_module_spec.GetArchitecture();
-//                    }
-//                }
             }
         }
     }
@@ -166,9 +169,18 @@ TargetList::CreateTarget (Debugger &debugger,
         // current architecture if we have a valid architecture.
         platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
         
-        if (arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
+        if (!prefer_platform_arch && arch.IsValid())
         {
-            platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
+            if (!platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
+                platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
+        }
+        else if (platform_arch.IsValid())
+        {
+            // if "arch" isn't valid, yet "platform_arch" is, it means we have an executable file with
+            // a single architecture which should be used
+            ArchSpec fixed_platform_arch;
+            if (!platform_sp->IsCompatibleArchitecture(platform_arch, false, &fixed_platform_arch))
+                platform_sp = Platform::GetPlatformForArchitecture(platform_arch, &fixed_platform_arch);
         }
     }
     
