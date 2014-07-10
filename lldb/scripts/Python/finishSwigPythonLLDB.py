@@ -71,7 +71,7 @@ strMsgFrameWkPyExists = "Python output folder '%s' already exists";
 strMsgFrameWkPyMkDir = "Python output folder '%s' will be created";
 strErrMsgCreateFrmWkPyDirFailed = "Unable to create directory '%s' error: %s";
 strMsglldbsoExists = "Symlink '%s' already exists";
-strMsglldbsoMk = "Creating symlink for _lldb.so";
+strMsglldbsoMk = "Creating symlink for _lldb.so  (%s -> %s)";
 strErrMsgCpLldbpy = "copying lldb to lldb package directory";
 strErrMsgCreatePyPkgMissingSlash = "Parameter 3 fn create_py_pkg() missing slash"; 
 strErrMsgMkLinkExecute = "Command mklink failed: %s";
@@ -135,7 +135,6 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 
 	strPkgName = vstrPkgDir;
 	strPkgName = "lldb" + strPkgName.replace( "/", "." );
-	strPkgName = os.path.normcase( strPkgName );
 	
 	strPkgDir = vstrFrameworkPythonDir;
 	strPkgDir += vstrPkgDir;
@@ -148,10 +147,9 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 		
 	for strPkgFile in vListPkgFiles:
 		if os.path.exists( strPkgFile ) and os.path.isfile( strPkgFile ):
-			strPyFile = os.path.normcase( strPkgFile );
 			if bDbg:
 				print(strMsgCreatePyPkgCopyPkgFile % (strPkgFile, strPkgDir));
-			shutil.copy( strPyFile, strPkgDir );
+			shutil.copy( strPkgFile, strPkgDir );
 	
 	# Create a packet init files if there wasn't one
 	strPkgIniFile = strPkgDir + "/__init__.py";
@@ -162,8 +160,7 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 	strPyScript = "__all__ = [";
 	strDelimiter = "";
 	for strPkgFile in vListPkgFiles:
-		strPyFile = os.path.normcase( strPkgFile );
-		if os.path.exists( strPyFile ) and os.path.isfile( strPyFile ):
+		if os.path.exists( strPkgFile ) and os.path.isfile( strPkgFile ):
 			strBaseName = os.path.basename( strPkgFile );
 			nPos = strBaseName.find( "." );
 			if nPos != -1:
@@ -257,7 +254,7 @@ def make_symlink_windows( vDictArgs, vstrFrameworkPythonDir, vstrDllName ):
 		return (bOk, strMsg);
 
 	if bDbg:
-		print strMsglldbsoMk;
+		print strMsglldbsoMk % (os.path.abspath(strSrc), os.path.abspath(strTarget));
 		
 	try:
 		csl = ctypes.windll.kernel32.CreateHardLinkW

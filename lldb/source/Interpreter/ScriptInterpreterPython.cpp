@@ -2621,7 +2621,7 @@ ScriptInterpreterPython::InitializePrivate ()
         }
     }
 
-    PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line; from termios import *");
+    PyRun_SimpleString ("sys.dont_write_bytecode = 1; import lldb.embedded_interpreter; from lldb.embedded_interpreter import run_python_interpreter; from lldb.embedded_interpreter import run_one_line");
 
     if (threads_already_initialized) {
         if (log)

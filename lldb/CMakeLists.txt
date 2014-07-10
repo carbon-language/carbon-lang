@@ -108,10 +108,6 @@ macro(add_lldb_definitions)
 endmacro(add_lldb_definitions)
 
 if (NOT LLDB_DISABLE_PYTHON)
-    if (MSVC)
-        # this definition will stop python from auto linking python27_d.lib when Python.h is included
-        add_definitions( -DSWIG_PYTHON_INTERPRETER_NO_DEBUG )
-    endif()
     find_package(PythonLibs REQUIRED)
     include_directories(${PYTHON_INCLUDE_DIRS})
 endif()

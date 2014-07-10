@@ -327,6 +327,18 @@ endif ()
 # FIXME: implement svn/git revision and repository parsing solution on Windows. There is an SVN-only
 #        revision parsing solution in tools/clang/lib/Basic/CMakelists.txt.
 
+if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
+	# Add a Post-Build Event to copy over Python files and create the symlink to liblldb.so for the Python API(hardlink on Windows)
+	if ( NOT LLDB_DISABLE_PYTHON )
+        message("Adding post build step to run finishSwigWrapperClasses.py")
+	    add_custom_command( TARGET liblldb
+	        POST_BUILD
+            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py
+	        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--prefix=${CMAKE_BINARY_DIR}" "--cmakeBuildConfiguration=${CMAKE_CFG_INTDIR}" -m
+	        COMMENT "Python script sym-linking LLDB Python API")
+	endif ()
+endif ()
+
 install(TARGETS liblldb
   RUNTIME DESTINATION bin
   LIBRARY DESTINATION lib
