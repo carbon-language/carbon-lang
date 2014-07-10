@@ -124,6 +124,10 @@ def CallAndMessageUnInitRefArg : Checker<"CallAndMessageUnInitRefArg">,
   HelpText<"Check for logical errors for function calls and Objective-C message expressions (e.g., uninitialized arguments, null function pointers, and pointer to undefined variables)">,
   DescFile<"CallAndMessageChecker.cpp">;
 
+def TestAfterDivZeroChecker : Checker<"TestAfterDivZero">,
+  HelpText<"Check for division by variable that is later compared against 0. Either the comparison is useless or there is division by zero.">,
+  DescFile<"TestAfterDivZeroChecker.cpp">;
+
 } // end "alpha.core"
 
 //===----------------------------------------------------------------------===//
