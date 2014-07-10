@@ -16,6 +16,7 @@
 // RUN:   | grep -v "__asan_on_error" > %t.symbols
 
 // RUN: cat %p/../../../../lib/asan/asan_interface_internal.h \
+// RUN:     %p/../../../../lib/asan/asan_init_version.h \
 // RUN:    | sed "s/\/\/.*//" | sed "s/typedef.*//" \
 // RUN:    | grep -v "OPTIONAL" \
 // RUN:    | grep "__asan_.*(" | sed "s/.* __asan_/__asan_/;s/(.*//" \

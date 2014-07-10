@@ -20,6 +20,7 @@
 // Using #ifdef rather than relying on Makefiles etc.
 // simplifies the build procedure.
 #ifdef ASAN_DLL_THUNK
+#include "asan_init_version.h"
 #include "sanitizer_common/sanitizer_interception.h"
 
 // ---------- Function interception helper functions and macros ----------- {{{1
@@ -203,13 +204,13 @@ extern "C" {
 
   // Manually wrap __asan_init as we need to initialize
   // __asan_option_detect_stack_use_after_return afterwards.
-  void __asan_init_v4() {
+  void __asan_init() {
     typedef void (*fntype)();
     static fntype fn = 0;
-    // __asan_init_v4 is expected to be called by only one thread.
+    // __asan_init is expected to be called by only one thread.
     if (fn) return;
 
-    fn = (fntype)getRealProcAddressOrDie("__asan_init_v4");
+    fn = (fntype)getRealProcAddressOrDie(__asan_init_name);
     fn();
     __asan_option_detect_stack_use_after_return =
         (__asan_should_detect_stack_use_after_return() != 0);
@@ -339,7 +340,7 @@ void InterceptHooks() {
 // In DLLs, the callbacks are expected to return 0,
 // otherwise CRT initialization fails.
 static int call_asan_init() {
-  __asan_init_v4();
+  __asan_init();
   return 0;
 }
 #pragma section(".CRT$XIB", long, read)  // NOLINT
