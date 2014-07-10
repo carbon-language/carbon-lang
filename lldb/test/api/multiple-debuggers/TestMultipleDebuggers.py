@@ -16,7 +16,7 @@ class TestMultipleSimultaneousDebuggers(TestBase):
         self.lib_dir = os.environ["LLDB_LIB_DIR"]
 
     @skipIfi386
-    def test_whatever(self):
+    def test_multiple_debuggers(self):
 
         self.driver_exe = os.path.join(os.getcwd(), "multi-process-driver")
         self.buildDriver('multi-process-driver.cpp', self.driver_exe)
