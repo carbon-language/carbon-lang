@@ -358,10 +358,7 @@ public:
   Value *VisitExprWithCleanups(ExprWithCleanups *E) {
     CGF.enterFullExpression(E);
     CodeGenFunction::RunCleanupsScope Scope(CGF);
-    auto *V = Visit(E->getSubExpr());
-    if (CGDebugInfo *DI = CGF.getDebugInfo())
-      DI->EmitLocation(Builder, E->getLocEnd(), false);
-    return V;
+    return Visit(E->getSubExpr());
   }
   Value *VisitCXXNewExpr(const CXXNewExpr *E) {
     return CGF.EmitCXXNewExpr(E);
@@ -2942,12 +2939,13 @@ Value *ScalarExprEmitter::VisitBinLAnd(const BinaryOperator *E) {
   // Reaquire the RHS block, as there may be subblocks inserted.
   RHSBlock = Builder.GetInsertBlock();
 
-  // Emit an unconditional branch from this block to ContBlock.  Insert an entry
-  // into the phi node for the edge with the value of RHSCond.
-  if (CGF.getDebugInfo())
+  // Emit an unconditional branch from this block to ContBlock.
+  {
     // There is no need to emit line number for unconditional branch.
-    Builder.SetCurrentDebugLocation(llvm::DebugLoc());
-  CGF.EmitBlock(ContBlock);
+    SuppressDebugLocation S(Builder);
+    CGF.EmitBlock(ContBlock);
+  }
+  // Insert an entry into the phi node for the edge with the value of RHSCond.
   PN->addIncoming(RHSCond, RHSBlock);
 
   // ZExt result to int.
