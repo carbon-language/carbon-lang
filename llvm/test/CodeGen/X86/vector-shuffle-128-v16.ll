@@ -31,9 +31,8 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_00_00_00_00_08_08_08_08_08_08_08_08(
 ; CHECK-SSE2-LABEL: @shuffle_v16i8_00_00_00_00_00_00_00_00_08_08_08_08_08_08_08_08
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
+; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,2,4,5,6,7]
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,2,1]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,0,0,0,4,5,6,7]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,6,6,6]
 ; CHECK-SSE2-NEXT:    retq
@@ -59,9 +58,7 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_04_04_04_04_08_08_08_08_12_12_12_12(
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,6,6,7]
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,1,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,1,3]
 ; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,0,2,2,4,5,6,7]
 ; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,4,6,6]
 ; CHECK-SSE2-NEXT:    retq
