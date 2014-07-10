@@ -511,34 +511,24 @@ class InstSS<bits<8> op, dag outs, dag ins, string asmstr, list<dag> pattern>
 //     to store.  Other stored registers are added as implicit uses.
 //
 //   Unary:
-//     One register output operand and one input operand.  The input
-//     operand may be a register, immediate or memory.
+//     One register output operand and one input operand.
 //
 //   Binary:
-//     One register output operand and two input operands.  The first
-//     input operand is always a register and the second may be a register,
-//     immediate or memory.
-//
-//   Shift:
-//     One register output operand and two input operands.  The first
-//     input operand is a register and the second has the same form as
-//     an address (although it isn't actually used to address memory).
+//     One register output operand and two input operands.
 //
 //   Compare:
-//     Two input operands.  The first operand is always a register,
-//     the second may be a register, immediate or memory.
+//     Two input operands and an implicit CC output operand.
 //
 //   Ternary:
-//     One register output operand and three register input operands.
+//     One register output operand and three input operands.
 //
 //   LoadAndOp:
-//     One output operand and two input operands.  The first input operand
-//     is a register and the second is an address.
+//     One output operand and two input operands, one of which is an address.
+//     The instruction both reads from and writes to the address.
 //
 //   CmpSwap:
-//     One output operand and three input operands.  The first two
-//     operands are registers and the third is an address.  The instruction
-//     both reads from and writes to the address.
+//     One output operand and three input operands, one of which is an address.
+//     The instruction both reads from and writes to the address.
 //
 //   RotateSelect:
 //     One output operand and five input operands.  The first two operands
@@ -993,6 +983,33 @@ class BinaryRIL<string mnemonic, bits<12> opcode, SDPatternOperator operator,
   let DisableEncoding = "$R1src";
 }
 
+class BinaryRS<string mnemonic, bits<8> opcode, SDPatternOperator operator,
+               RegisterOperand cls>
+  : InstRS<opcode, (outs cls:$R1), (ins cls:$R1src, shift12only:$BD2),
+           mnemonic#"\t$R1, $BD2",
+           [(set cls:$R1, (operator cls:$R1src, shift12only:$BD2))]> {
+  let R3 = 0;
+  let Constraints = "$R1 = $R1src";
+  let DisableEncoding = "$R1src";
+}
+
+class BinaryRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
+                RegisterOperand cls>
+  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R3, shift20only:$BD2),
+            mnemonic#"\t$R1, $R3, $BD2",
+            [(set cls:$R1, (operator cls:$R3, shift20only:$BD2))]>;
+
+multiclass BinaryRSAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
+                        SDPatternOperator operator, RegisterOperand cls> {
+  let NumOpsKey = mnemonic in {
+    let NumOpsValue = "3" in
+      def K  : BinaryRSY<mnemonic##"k", opcode2, null_frag, cls>,
+               Requires<[FeatureDistinctOps]>;
+    let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
+      def "" : BinaryRS<mnemonic, opcode1, operator, cls>;
+  }
+}
+
 class BinaryRX<string mnemonic, bits<8> opcode, SDPatternOperator operator,
                RegisterOperand cls, SDPatternOperator load, bits<5> bytes,
                AddressingMode mode = bdxaddr12only>
@@ -1074,33 +1091,6 @@ multiclass BinarySIPair<string mnemonic, bits<8> siOpcode,
       def "" : BinarySI<mnemonic, siOpcode, operator, imm, bdaddr12pair>;
     let DispSize = "20" in
       def Y  : BinarySIY<mnemonic#"y", siyOpcode, operator, imm, bdaddr20pair>;
-  }
-}
-
-class ShiftRS<string mnemonic, bits<8> opcode, SDPatternOperator operator,
-              RegisterOperand cls>
-  : InstRS<opcode, (outs cls:$R1), (ins cls:$R1src, shift12only:$BD2),
-           mnemonic#"\t$R1, $BD2",
-           [(set cls:$R1, (operator cls:$R1src, shift12only:$BD2))]> {
-  let R3 = 0;
-  let Constraints = "$R1 = $R1src";
-  let DisableEncoding = "$R1src";
-}
-
-class ShiftRSY<string mnemonic, bits<16> opcode, SDPatternOperator operator,
-               RegisterOperand cls>
-  : InstRSY<opcode, (outs cls:$R1), (ins cls:$R3, shift20only:$BD2),
-            mnemonic#"\t$R1, $R3, $BD2",
-            [(set cls:$R1, (operator cls:$R3, shift20only:$BD2))]>;
-
-multiclass ShiftRSAndK<string mnemonic, bits<8> opcode1, bits<16> opcode2,
-                       SDPatternOperator operator, RegisterOperand cls> {
-  let NumOpsKey = mnemonic in {
-    let NumOpsValue = "3" in
-      def K  : ShiftRSY<mnemonic##"k", opcode2, null_frag, cls>,
-               Requires<[FeatureDistinctOps]>;
-    let NumOpsValue = "2", isConvertibleToThreeAddress = 1 in
-      def "" : ShiftRS<mnemonic, opcode1, operator, cls>;
   }
 }
 

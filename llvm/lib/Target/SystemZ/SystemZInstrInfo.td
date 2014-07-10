@@ -1015,26 +1015,26 @@ def DLG  : BinaryRXY<"dlg",  0xE387, z_udivrem64, GR128, load, 8>;
 
 // Shift left.
 let neverHasSideEffects = 1 in {
-  defm SLL : ShiftRSAndK<"sll", 0x89, 0xEBDF, shl, GR32>;
-  def SLLG : ShiftRSY<"sllg", 0xEB0D, shl, GR64>;
+  defm SLL : BinaryRSAndK<"sll", 0x89, 0xEBDF, shl, GR32>;
+  def SLLG : BinaryRSY<"sllg", 0xEB0D, shl, GR64>;
 }
 
 // Logical shift right.
 let neverHasSideEffects = 1 in {
-  defm SRL : ShiftRSAndK<"srl", 0x88, 0xEBDE, srl, GR32>;
-  def SRLG : ShiftRSY<"srlg", 0xEB0C, srl, GR64>;
+  defm SRL : BinaryRSAndK<"srl", 0x88, 0xEBDE, srl, GR32>;
+  def SRLG : BinaryRSY<"srlg", 0xEB0C, srl, GR64>;
 }
 
 // Arithmetic shift right.
 let Defs = [CC], CCValues = 0xE, CompareZeroCCMask = 0xE in {
-  defm SRA : ShiftRSAndK<"sra", 0x8A, 0xEBDC, sra, GR32>;
-  def SRAG : ShiftRSY<"srag", 0xEB0A, sra, GR64>;
+  defm SRA : BinaryRSAndK<"sra", 0x8A, 0xEBDC, sra, GR32>;
+  def SRAG : BinaryRSY<"srag", 0xEB0A, sra, GR64>;
 }
 
 // Rotate left.
 let neverHasSideEffects = 1 in {
-  def RLL  : ShiftRSY<"rll",  0xEB1D, rotl, GR32>;
-  def RLLG : ShiftRSY<"rllg", 0xEB1C, rotl, GR64>;
+  def RLL  : BinaryRSY<"rll",  0xEB1D, rotl, GR32>;
+  def RLLG : BinaryRSY<"rllg", 0xEB1C, rotl, GR64>;
 }
 
 // Rotate second operand left and inserted selected bits into first operand.
