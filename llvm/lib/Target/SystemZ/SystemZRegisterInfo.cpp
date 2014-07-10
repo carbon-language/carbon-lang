@@ -22,18 +22,14 @@ using namespace llvm;
 SystemZRegisterInfo::SystemZRegisterInfo()
     : SystemZGenRegisterInfo(SystemZ::R14D) {}
 
-const MCPhysReg*
+const MCPhysReg *
 SystemZRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
-  static const MCPhysReg CalleeSavedRegs[] = {
-    SystemZ::R6D,  SystemZ::R7D,  SystemZ::R8D,  SystemZ::R9D,
-    SystemZ::R10D, SystemZ::R11D, SystemZ::R12D, SystemZ::R13D,
-    SystemZ::R14D, SystemZ::R15D,
-    SystemZ::F8D,  SystemZ::F9D,  SystemZ::F10D, SystemZ::F11D,
-    SystemZ::F12D, SystemZ::F13D, SystemZ::F14D, SystemZ::F15D,
-    0
-  };
+  return CSR_SystemZ_SaveList;
+}
 
-  return CalleeSavedRegs;
+const uint32_t *
+SystemZRegisterInfo::getCallPreservedMask(CallingConv::ID CC) const {
+  return CSR_SystemZ_RegMask;
 }
 
 BitVector

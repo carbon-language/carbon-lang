@@ -13,7 +13,7 @@ class CCIfExtend<CCAction A>
   : CCIf<"ArgFlags.isSExt() || ArgFlags.isZExt()", A>;
 
 //===----------------------------------------------------------------------===//
-// SVR4 return value calling convention
+// z/Linux return value calling convention
 //===----------------------------------------------------------------------===//
 def RetCC_SystemZ : CallingConv<[
   // Promote i32 to i64 if it has an explicit extension type.
@@ -39,7 +39,7 @@ def RetCC_SystemZ : CallingConv<[
 ]>;
 
 //===----------------------------------------------------------------------===//
-// SVR4 argument calling conventions
+// z/Linux argument calling conventions
 //===----------------------------------------------------------------------===//
 def CC_SystemZ : CallingConv<[
   // Promote i32 to i64 if it has an explicit extension type.
@@ -63,3 +63,9 @@ def CC_SystemZ : CallingConv<[
   // Other arguments are passed in 8-byte-aligned 8-byte stack slots.
   CCIfType<[i32, i64, f32, f64], CCAssignToStack<8, 8>>
 ]>;
+
+//===----------------------------------------------------------------------===//
+// z/Linux callee-saved registers
+//===----------------------------------------------------------------------===//
+def CSR_SystemZ : CalleeSavedRegs<(add (sequence "R%dD", 6, 15),
+                                       (sequence "F%dD", 8, 15))>;

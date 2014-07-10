@@ -233,9 +233,7 @@ defm CondStore64 : CondStores<GR64, nonvolatile_store,
 // Call instructions
 //===----------------------------------------------------------------------===//
 
-// The definitions here are for the call-clobbered registers.
-let isCall = 1, Defs = [R0D, R1D, R2D, R3D, R4D, R5D, R14D,
-                        F0D, F1D, F2D, F3D, F4D, F5D, F6D, F7D, CC] in {
+let isCall = 1, Defs = [R14D, CC] in {
   def CallBRASL : Alias<6, (outs), (ins pcrel32:$I2, variable_ops),
                         [(z_call pcrel32:$I2)]>;
   def CallBASR  : Alias<2, (outs), (ins ADDR64:$R2, variable_ops),
