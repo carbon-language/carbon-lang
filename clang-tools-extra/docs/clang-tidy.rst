@@ -53,7 +53,7 @@ There are currently three groups of checks:
 * Clang static analyzer checks are named starting with ``clang-analyzer-``.
 
 
-The ``-fix`` flag instructs :program:`clang-format` to fix found errors if
+The ``-fix`` flag instructs :program:`clang-tidy` to fix found errors if
 supported by corresponding checks.
 
 An overview of all the command-line options:
