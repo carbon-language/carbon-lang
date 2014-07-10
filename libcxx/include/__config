@@ -317,6 +317,8 @@ typedef __char32_t char32_t;
 #if defined(__FreeBSD__)
 #define _LIBCPP_HAS_QUICK_EXIT
 #define _LIBCPP_HAS_C11_FEATURES
+#elif defined(__ANDROID__)
+#define _LIBCPP_HAS_QUICK_EXIT
 #elif defined(__linux__)
 #include <features.h>
 #if __GLIBC_PREREQ(2, 15)

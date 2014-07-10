@@ -30,9 +30,9 @@
 #include "__sso_allocator"
 #if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 #include <support/win32/locale_win32.h>
-#else // _LIBCPP_MSVCRT
+#elif !defined(__ANDROID__)
 #include <langinfo.h>
-#endif // !_LIBCPP_MSVCRT
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -1037,6 +1037,8 @@ ctype<char>::classic_table()  _NOEXCEPT
     return *__ctype_b_loc();
 #elif defined(_AIX)
     return (const unsigned int *)__lc_ctype_ptr->obj->mask;
+#elif defined(__ANDROID__)
+    return _ctype_;
 #else
     // Platform not supported: abort so the person doing the port knows what to
     // fix
