@@ -1,4 +1,4 @@
-// RUN: %clang -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -g -std=c++11 -S -emit-llvm %s -o - | FileCheck %s
 // PR19864
 int main() {
     int v[] = {13, 21, 8, 3, 34, 1, 5, 2};

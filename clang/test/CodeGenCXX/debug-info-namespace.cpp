@@ -1,6 +1,6 @@
-// RUN: %clang -g -fno-standalone-debug -S -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang -g -gline-tables-only    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-GMLT %s
-// RUN: %clang -g -fstandalone-debug    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-NOLIMIT %s
+// RUN: %clang_cc1 -g -fno-standalone-debug -S -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -g -gline-tables-only    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-GMLT %s
+// RUN: %clang_cc1 -g -fstandalone-debug    -S -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-NOLIMIT %s
 
 namespace A {
 #line 1 "foo.cpp"
@@ -44,11 +44,11 @@ using B::i;
 // but it doesn't yet.
 
 // CHECK: [[CU:![0-9]*]] = {{.*}}[[MODULES:![0-9]*]], metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
-// CHECK: [[FILE:![0-9]*]] {{.*}}debug-info-namespace.cpp"
 // CHECK: [[FOO:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [foo] [line 5, size 0, align 0, offset 0] [decl] [from ]
 // CHECK: [[FOOCPP:![0-9]*]] = metadata !{metadata !"foo.cpp", {{.*}}
 // CHECK: [[NS:![0-9]*]] = {{.*}}, metadata [[FILE2:![0-9]*]], metadata [[CTXT:![0-9]*]], {{.*}} ; [ DW_TAG_namespace ] [B] [line 1]
-// CHECK: [[CTXT]] = {{.*}}, metadata [[FILE]], null, {{.*}} ; [ DW_TAG_namespace ] [A] [line 5]
+// CHECK: [[CTXT]] = {{.*}}, metadata [[FILE:![0-9]*]], null, {{.*}} ; [ DW_TAG_namespace ] [A] [line 5]
+// CHECK: [[FILE]] {{.*}}debug-info-namespace.cpp"
 // CHECK: [[BAR:![0-9]*]] {{.*}} ; [ DW_TAG_structure_type ] [bar] [line 6, {{.*}}] [decl] [from ]
 // CHECK: [[F1:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] [line 4] [def] [f1]
 // CHECK: [[FUNC:![0-9]*]] {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [def] [func]

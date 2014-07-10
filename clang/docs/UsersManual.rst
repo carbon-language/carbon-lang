@@ -577,17 +577,12 @@ feature.
 Current limitations
 ^^^^^^^^^^^^^^^^^^^
 
-1. For :option:`-Rpass` to provide column information, you
-   need to enable it explicitly. That is, you need to add
-   :option:`-gcolumn-info`. If you omit this, remarks will only show
-   line information.
-
-2. Optimization remarks that refer to function names will display the
+1. Optimization remarks that refer to function names will display the
    mangled name of the function. Since these remarks are emitted by the
    back end of the compiler, it does not know anything about the input
    language, nor its mangling rules.
 
-3. Some source locations are not displayed correctly. The front end has
+2. Some source locations are not displayed correctly. The front end has
    a more detailed source location tracking than the locations included
    in the debug info (e.g., the front end can locate code inside macro
    expansions). However, the locations used by :option:`-Rpass` are

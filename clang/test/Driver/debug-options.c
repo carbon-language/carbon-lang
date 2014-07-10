@@ -68,6 +68,10 @@
 // RUN: %clang -### -fdebug-types-section -fno-debug-types-section %s 2>&1 \
 // RUN:        | FileCheck -check-prefix=NOFDTS %s
 //
+// RUN: %clang -### -g -gno-column-info %s 2>&1 \
+// RUN:        | FileCheck -check-prefix=NOCI %s
+//
+// RUN: %clang -### -g %s 2>&1 | FileCheck -check-prefix=CI %s
 //
 // G: "-cc1"
 // G: "-g"
@@ -114,3 +118,7 @@
 // FDTS: "-backend-option" "-generate-type-units"
 //
 // NOFDTS-NOT: "-backend-option" "-generate-type-units"
+//
+// CI: "-dwarf-column-info"
+//
+// NOCI-NOT: "-dwarf-column-info"
