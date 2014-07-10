@@ -2923,7 +2923,8 @@ public:
       const Type *T = isSingleElementStruct(I.type, getContext());
       if (T) {
         const BuiltinType *BT = T->getAs<BuiltinType>();
-        if (T->isVectorType() || (BT && BT->isFloatingPoint())) {
+        if ((T->isVectorType() && getContext().getTypeSize(T) == 128) ||
+            (BT && BT->isFloatingPoint())) {
           QualType QT(T, 0);
           I.info = ABIArgInfo::getDirectInReg(CGT.ConvertType(QT));
           continue;
@@ -2997,6 +2998,18 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
   if (Ty->isAnyComplexType())
     return ABIArgInfo::getDirect();
 
+  // Non-Altivec vector types are passed in GPRs (smaller than 16 bytes)
+  // or via reference (larger than 16 bytes).
+  if (Ty->isVectorType()) {
+    uint64_t Size = getContext().getTypeSize(Ty);
+    if (Size > 128)
+      return ABIArgInfo::getIndirect(0, /*ByVal=*/false);
+    else if (Size < 128) {
+      llvm::Type *CoerceTy = llvm::IntegerType::get(getVMContext(), Size);
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+  }
+
   if (isAggregateTypeForABI(Ty)) {
     if (CGCXXABI::RecordArgABI RAA = getRecordArgABI(Ty, getCXXABI()))
       return ABIArgInfo::getIndirect(0, RAA == CGCXXABI::RAA_DirectInMemory);
@@ -3015,6 +3028,18 @@ PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
 
   if (RetTy->isAnyComplexType())
     return ABIArgInfo::getDirect();
+
+  // Non-Altivec vector types are returned in GPRs (smaller than 16 bytes)
+  // or via reference (larger than 16 bytes).
+  if (RetTy->isVectorType()) {
+    uint64_t Size = getContext().getTypeSize(RetTy);
+    if (Size > 128)
+      return ABIArgInfo::getIndirect(0);
+    else if (Size < 128) {
+      llvm::Type *CoerceTy = llvm::IntegerType::get(getVMContext(), Size);
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+  }
 
   if (isAggregateTypeForABI(RetTy))
     return ABIArgInfo::getIndirect(0);
