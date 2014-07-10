@@ -18,6 +18,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/CFG.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/Debug.h"
@@ -34,6 +35,7 @@ namespace {
     DominatorTree *DT;
     LoopInfo *LI;
     AliasAnalysis *AA;
+    const DataLayout *DL;
 
   public:
     static char ID; // Pass identification
@@ -98,6 +100,8 @@ bool Sinking::runOnFunction(Function &F) {
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   LI = &getAnalysis<LoopInfo>();
   AA = &getAnalysis<AliasAnalysis>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
 
   bool MadeChange, EverMadeChange = false;
 
@@ -193,7 +197,7 @@ bool Sinking::IsAcceptableTarget(Instruction *Inst,
   if (SuccToSinkTo->getUniquePredecessor() != Inst->getParent()) {
     // We cannot sink a load across a critical edge - there may be stores in
     // other code paths.
-    if (!isSafeToSpeculativelyExecute(Inst))
+    if (!isSafeToSpeculativelyExecute(Inst, DL))
       return false;
 
     // We don't want to sink across a critical edge if we don't dominate the
