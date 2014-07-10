@@ -1341,8 +1341,9 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
     "x86_64-linux-gnu", "x86_64-unknown-linux-gnu", "x86_64-pc-linux-gnu",
     "x86_64-redhat-linux6E", "x86_64-redhat-linux", "x86_64-suse-linux",
     "x86_64-manbo-linux-gnu", "x86_64-linux-gnu", "x86_64-slackware-linux",
-    "x86_64-linux-android"
+    "x86_64-linux-android", "x86_64-unknown-linux"
   };
+  static const char *const X32LibDirs[] = { "/libx32" };
   static const char *const X86LibDirs[] = { "/lib32", "/lib" };
   static const char *const X86Triples[] = {
     "i686-linux-gnu", "i686-pc-linux-gnu", "i486-linux-gnu", "i386-linux-gnu",
@@ -1451,10 +1452,19 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
                    X86_64LibDirs + llvm::array_lengthof(X86_64LibDirs));
     TripleAliases.append(X86_64Triples,
                          X86_64Triples + llvm::array_lengthof(X86_64Triples));
-    BiarchLibDirs.append(X86LibDirs,
-                         X86LibDirs + llvm::array_lengthof(X86LibDirs));
-    BiarchTripleAliases.append(X86Triples,
-                               X86Triples + llvm::array_lengthof(X86Triples));
+    // x32 is always available when x86_64 is available, so adding it as secondary
+    // arch with x86_64 triples
+    if (TargetTriple.getEnvironment() == llvm::Triple::GNUX32) {
+      BiarchLibDirs.append(X32LibDirs,
+                           X32LibDirs + llvm::array_lengthof(X32LibDirs));
+      BiarchTripleAliases.append(X86_64Triples,
+                                 X86_64Triples + llvm::array_lengthof(X86_64Triples));
+    } else {
+      BiarchLibDirs.append(X86LibDirs,
+                           X86LibDirs + llvm::array_lengthof(X86LibDirs));
+      BiarchTripleAliases.append(X86Triples,
+                                 X86Triples + llvm::array_lengthof(X86Triples));
+    }
     break;
   case llvm::Triple::x86:
     LibDirs.append(X86LibDirs, X86LibDirs + llvm::array_lengthof(X86LibDirs));
@@ -1992,47 +2002,64 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
   Multilib Alt64 = Multilib()
     .gccSuffix("/64")
     .includeSuffix("/64")
-    .flag("-m32").flag("+m64");
+    .flag("-m32").flag("+m64").flag("-mx32");
   Multilib Alt32 = Multilib()
     .gccSuffix("/32")
     .includeSuffix("/32")
-    .flag("+m32").flag("-m64");
+    .flag("+m32").flag("-m64").flag("-mx32");
+  Multilib Altx32 = Multilib()
+    .gccSuffix("/x32")
+    .includeSuffix("/x32")
+    .flag("-m32").flag("-m64").flag("+mx32");
 
   FilterNonExistent NonExistent(Path);
 
-  // Decide whether the default multilib is 32bit, correcting for
-  // when the default multilib and the alternate appear backwards
-  bool DefaultIs32Bit;
+  // Determine default multilib from: 32, 64, x32
+  // Also handle cases such as 64 on 32, 32 on 64, etc.
+  enum { UNKNOWN, WANT32, WANT64, WANTX32 } Want = UNKNOWN;
+  const bool isX32 {TargetTriple.getEnvironment() == llvm::Triple::GNUX32};
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
-    DefaultIs32Bit = false;
-  else if (TargetTriple.isArch64Bit() && !NonExistent(Alt64))
-    DefaultIs32Bit = true;
+    Want = WANT64;
+  else if (TargetTriple.isArch64Bit() && isX32 && !NonExistent(Altx32))
+    Want = WANT64;
+  else if (TargetTriple.isArch64Bit() && !isX32 && !NonExistent(Alt64))
+    Want = WANT32;
   else {
-    if (NeedsBiarchSuffix)
-      DefaultIs32Bit = TargetTriple.isArch64Bit();
+    if (TargetTriple.isArch32Bit())
+      Want = NeedsBiarchSuffix ? WANT64 : WANT32;
+    else if (isX32)
+      Want = NeedsBiarchSuffix ? WANT64 : WANTX32;
     else
-      DefaultIs32Bit = TargetTriple.isArch32Bit();
+      Want = NeedsBiarchSuffix ? WANT32 : WANT64;
   }
 
-  if (DefaultIs32Bit)
-    Default.flag("+m32").flag("-m64");
+  if (Want == WANT32)
+    Default.flag("+m32").flag("-m64").flag("-mx32");
+  else if (Want == WANT64)
+    Default.flag("-m32").flag("+m64").flag("-mx32");
+  else if (Want == WANTX32)
+    Default.flag("-m32").flag("-m64").flag("+mx32");
   else
-    Default.flag("-m32").flag("+m64");
+    return false;
 
   Result.Multilibs.push_back(Default);
   Result.Multilibs.push_back(Alt64);
   Result.Multilibs.push_back(Alt32);
+  Result.Multilibs.push_back(Altx32);
 
   Result.Multilibs.FilterOut(NonExistent);
 
   Multilib::flags_list Flags;
-  addMultilibFlag(TargetTriple.isArch64Bit(), "m64", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && !isX32, "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && isX32, "mx32", Flags);
 
   if (!Result.Multilibs.select(Flags, Result.SelectedMultilib))
     return false;
 
-  if (Result.SelectedMultilib == Alt64 || Result.SelectedMultilib == Alt32)
+  if (Result.SelectedMultilib == Alt64 ||
+      Result.SelectedMultilib == Alt32 ||
+      Result.SelectedMultilib == Altx32)
     Result.BiarchSibling = Default;
 
   return true;
@@ -2949,7 +2976,9 @@ static std::string getMultiarchTriple(const llvm::Triple &TargetTriple,
       return "i386-linux-gnu";
     return TargetTriple.str();
   case llvm::Triple::x86_64:
-    if (llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
+    // We don't want this for x32, otherwise it will match x86_64 libs
+    if (TargetTriple.getEnvironment() != llvm::Triple::GNUX32 &&
+        llvm::sys::fs::exists(SysRoot + "/lib/x86_64-linux-gnu"))
       return "x86_64-linux-gnu";
     return TargetTriple.str();
   case llvm::Triple::arm64:
@@ -3024,6 +3053,10 @@ static StringRef getOSLibDir(const llvm::Triple &Triple, const ArgList &Args) {
   if (Triple.getArch() == llvm::Triple::x86 ||
       Triple.getArch() == llvm::Triple::ppc)
     return "lib32";
+
+  if (Triple.getArch() == llvm::Triple::x86_64 &&
+      Triple.getEnvironment() == llvm::Triple::GNUX32)
+    return "libx32";
 
   return Triple.isArch32Bit() ? "lib" : "lib64";
 }

@@ -55,6 +55,22 @@
 // CHECK-UBUNTU-13-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
+// RUN:     -target x86_64-unknown-linux-gnux32 \
+// RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04 %s
+// CHECK-UBUNTU-14-04: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
+// CHECK-UBUNTU-14-04: "-isysroot" "[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/c++/4.8"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/c++/4.8/x86_64-linux-gnu/x32"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/c++/4.8/backward"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../include/x86_64-linux-gnu/c++/4.8/x32"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "[[SYSROOT]]/usr/local/include"
+// CHECK-UBUNTU-14-04: "-internal-isystem" "{{.*}}{{/|\\\\}}lib{{(64|x32)?}}{{/|\\\\}}clang{{/|\\\\}}{{[0-9]\.[0-9]\.[0-9]}}{{/|\\\\}}include"
+// CHECK-UBUNTU-14-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include/x86_64-linux-gnu"
+// CHECK-UBUNTU-14-04: "-internal-externc-isystem" "[[SYSROOT]]/include"
+// CHECK-UBUNTU-14-04: "-internal-externc-isystem" "[[SYSROOT]]/usr/include"
+///
+// RUN: %clang -no-canonical-prefixes %s -### -fsyntax-only 2>&1 \
 // RUN:     -target arm-linux-gnueabihf \
 // RUN:     --sysroot=%S/Inputs/ubuntu_13.04_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-13-04-CROSS %s

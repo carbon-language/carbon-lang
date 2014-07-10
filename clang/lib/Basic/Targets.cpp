@@ -3272,18 +3272,24 @@ namespace {
 class X86_64TargetInfo : public X86TargetInfo {
 public:
   X86_64TargetInfo(const llvm::Triple &Triple) : X86TargetInfo(Triple) {
-    LongWidth = LongAlign = PointerWidth = PointerAlign = 64;
+    const bool IsX32{getTriple().getEnvironment() == llvm::Triple::GNUX32};
+    LongWidth = LongAlign = PointerWidth = PointerAlign = IsX32 ? 32 : 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;
     LargeArrayMinWidth = 128;
     LargeArrayAlign = 128;
     SuitableAlign = 128;
-    IntMaxType = SignedLong;
-    UIntMaxType = UnsignedLong;
-    Int64Type = SignedLong;
+    SizeType    = IsX32 ? UnsignedInt      : UnsignedLong;
+    PtrDiffType = IsX32 ? SignedInt        : SignedLong;
+    IntPtrType  = IsX32 ? SignedInt        : SignedLong;
+    IntMaxType  = IsX32 ? SignedLongLong   : SignedLong;
+    UIntMaxType = IsX32 ? UnsignedLongLong : UnsignedLong;
+    Int64Type   = IsX32 ? SignedLongLong   : SignedLong;
     RegParmMax = 6;
 
-    DescriptionString = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
+    DescriptionString = (IsX32)
+                            ? "e-m:e-" "p:32:32-" "i64:64-f80:128-n8:16:32:64-S128"
+                            : "e-m:e-"            "i64:64-f80:128-n8:16:32:64-S128";
 
     // Use fpret only for long double.
     RealTypeUsesObjCFPRet = (1 << TargetInfo::LongDouble);

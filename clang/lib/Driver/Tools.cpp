@@ -6848,7 +6848,10 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   if (getToolChain().getArch() == llvm::Triple::x86) {
     CmdArgs.push_back("--32");
   } else if (getToolChain().getArch() == llvm::Triple::x86_64) {
-    CmdArgs.push_back("--64");
+    if (getToolChain().getTriple().getEnvironment() == llvm::Triple::GNUX32)
+      CmdArgs.push_back("--x32");
+    else
+      CmdArgs.push_back("--64");
   } else if (getToolChain().getArch() == llvm::Triple::ppc) {
     CmdArgs.push_back("-a32");
     CmdArgs.push_back("-mppc");
@@ -7048,6 +7051,9 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
     return "/lib64/ld64.so.2";
   else if (ToolChain.getArch() == llvm::Triple::sparcv9)
     return "/lib64/ld-linux.so.2";
+  else if (ToolChain.getArch() == llvm::Triple::x86_64 &&
+           ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUX32)
+    return "/libx32/ld-linux-x32.so.2";
   else
     return "/lib64/ld-linux-x86-64.so.2";
 }
@@ -7158,6 +7164,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   }
   else if (ToolChain.getArch() == llvm::Triple::systemz)
     CmdArgs.push_back("elf64_s390");
+  else if (ToolChain.getArch() == llvm::Triple::x86_64 &&
+           ToolChain.getTriple().getEnvironment() == llvm::Triple::GNUX32)
+    CmdArgs.push_back("elf32_x86_64");
   else
     CmdArgs.push_back("elf_x86_64");
 

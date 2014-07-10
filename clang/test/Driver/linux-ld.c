@@ -34,6 +34,19 @@
 // CHECK-LD-64: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=x86_64-unknown-linux-gnux32 \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-LD-X32 %s
+// CHECK-LD-X32-NOT: warning:
+// CHECK-LD-X32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-LD-X32: "--eh-frame-hdr"
+// CHECK-LD-X32: "-m" "elf32_x86_64"
+// CHECK-LD-X32: "-dynamic-linker"
+// CHECK-LD-X32: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
+// CHECK-LD-X32: "-lc"
+// CHECK-LD-X32: "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=x86_64-unknown-linux \
 // RUN:     --sysroot=%S/Inputs/basic_linux_tree \
 // RUN:     --rtlib=compiler-rt \
@@ -184,6 +197,23 @@
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../.."
 // CHECK-64-TO-32: "-L[[SYSROOT]]/lib"
 // CHECK-64-TO-32: "-L[[SYSROOT]]/usr/lib"
+//
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=x86_64-unknown-linux-gnux32 \
+// RUN:     --sysroot=%S/Inputs/multilib_64bit_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-X32 %s
+// CHECK-X32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-X32: "{{.*}}/usr/lib/gcc/x86_64-unknown-linux/4.6.0/x32{{/|\\\\}}crtbegin.o"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/x32"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../../../x86_64-unknown-linux/lib/../libx32"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../../../libx32"
+// CHECK-X32: "-L[[SYSROOT]]/lib/../libx32"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/../libx32"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../../../x86_64-unknown-linux/lib"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-unknown-linux/4.6.0/../../.."
+// CHECK-X32: "-L[[SYSROOT]]/lib"
+// CHECK-X32: "-L[[SYSROOT]]/usr/lib"
 //
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=x86_64-unknown-linux -m32 \
@@ -363,6 +393,26 @@
 // CHECK-UBUNTU-14-04-PPC64LE: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../.."
 // CHECK-UBUNTU-14-04-PPC64LE: "{{.*}}/usr/lib/gcc/powerpc64le-linux-gnu/4.8{{/|\\\\}}crtend.o"
 // CHECK-UBUNTU-14-04-PPC64LE: "{{.*}}/usr/lib/gcc/powerpc64le-linux-gnu/4.8/../../../powerpc64le-linux-gnu{{/|\\\\}}crtn.o"
+//
+// Check Ubuntu 14.04 on x32.
+// "/usr/lib/gcc/x86_64-linux-gnu/4.8/x32/crtend.o" "/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../libx32/crtn.o"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=x86_64-unknown-linux-gnux32 \
+// RUN:     --sysroot=%S/Inputs/ubuntu_14.04_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBUNTU-14-04-X32 %s
+// CHECK-UBUNTU-14-04-X32: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-UBUNTU-14-04-X32: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../libx32{{/|\\\\}}crt1.o"
+// CHECK-UBUNTU-14-04-X32: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../libx32{{/|\\\\}}crti.o"
+// CHECK-UBUNTU-14-04-X32: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.8/x32{{/|\\\\}}crtbegin.o"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/x32"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../libx32"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/lib/../libx32"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/../libx32"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/x86_64-linux-gnu/../../libx32"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8"
+// CHECK-UBUNTU-14-04-X32: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.8/../../.."
+// CHECK-UBUNTU-14-04-X32: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.8/x32{{/|\\\\}}crtend.o"
+// CHECK-UBUNTU-14-04-X32: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.8/../../../../libx32{{/|\\\\}}crtn.o"
 //
 // Check fedora 18 on arm.
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
