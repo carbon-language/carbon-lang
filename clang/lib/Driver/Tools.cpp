@@ -5025,9 +5025,6 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
 }
 // Hexagon tools end.
 
-/// getARMCPUForMArch - Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting
-//
-// FIXME: tblgen this.
 const char *arm::getARMCPUForMArch(const ArgList &Args,
                                    const llvm::Triple &Triple) {
   StringRef MArch;
@@ -5049,6 +5046,14 @@ const char *arm::getARMCPUForMArch(const ArgList &Args,
     }
   }
 
+  return driver::getARMCPUForMArch(MArch, Triple);
+}
+
+/// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
+//
+// FIXME: tblgen this.
+const char *driver::getARMCPUForMArch(StringRef MArch,
+                                      const llvm::Triple &Triple) {
   switch (Triple.getOS()) {
   case llvm::Triple::NetBSD:
     if (MArch == "armv6")

@@ -13,6 +13,10 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 
+namespace llvm {
+  class Triple;
+}
+
 namespace clang {
 class DiagnosticsEngine;
 
@@ -25,6 +29,9 @@ namespace driver {
 
   /// ActionList - Type used for lists of actions.
   typedef SmallVector<Action*, 3> ActionList;
+
+/// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
+const char* getARMCPUForMArch(StringRef MArch, const llvm::Triple &Triple);
 
 } // end namespace driver
 } // end namespace clang
