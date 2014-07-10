@@ -1,21 +1,20 @@
 # RUN: lld -flavor darwin -arch x86_64 -r -test_libresolution \
-# RUN:        -path_exists /usr/lib \
-# RUN:        -path_exists /usr/local/lib \
-# RUN:        -path_exists /usr/lib/libSystem.dylib \
 # RUN:        -path_exists hasFoo \
 # RUN:        -path_exists hasFoo/libFoo.dylib \
 # RUN:        -path_exists /hasBar \
 # RUN:        -path_exists /hasBar/libBar.dylib \
+# RUN:        -path_exists /SDK/hasFoo \
+# RUN:        -path_exists /SDK/hasFoo/libFoo.dylib \
+# RUN:        -path_exists /SDK/hasBar \
+# RUN:        -path_exists /SDK/hasBar/libBar.dylib \
+# RUN:        -syslibroot /SDK \
 # RUN:        -L hasFoo \
 # RUN:        -L /hasBar \
-# RUN:        -lSystem -lFoo -lBar \
+# RUN:        -lFoo -lBar \
 # RUN: 2>&1 | FileCheck %s
 
 # CHECK: Library search paths:
 # CHECK:     hasFoo
-# CHECK:     /hasBar
-# CHECK:     /usr/lib
-# CHECK:     /usr/local/lib
-# CHECK: Found library /usr/lib/libSystem.dylib
+# CHECK:     /SDK/hasBar
 # CHECK: Found library hasFoo/libFoo.dylib
-# CHECK: Found library /hasBar/libBar.dylib
+# CHECK: Found library /SDK/hasBar/libBar.dylib

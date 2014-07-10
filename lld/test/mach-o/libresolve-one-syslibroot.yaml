@@ -2,8 +2,11 @@
 # RUN:        -path_exists /usr/lib \
 # RUN:        -path_exists /Applications/MySDK/usr/local/lib \
 # RUN:        -path_exists /Applications/MySDK/usr/local/lib/libSystem.a \
+# RUN:        -path_exists /hasFoo \
+# RUN:        -path_exists /hasFoo/foo.o \
 # RUN:        -syslibroot /Applications/MySDK \
-# RUN:        -lSystem \
+# RUN:        -L/hasFoo \
+# RUN:        -lSystem -lfoo.o \
 # RUN: 2>&1 | FileCheck %s
 
 # When just one -syslibroot is specified, we apparently want to skip *system*
@@ -12,8 +15,11 @@
 # no mention of /usr/lib.
 
 # CHECK: Library search paths:
+# CHECK:     /hasFoo
 # CHECK-NOT:     /usr/lib
 # CHECK-NOT:     /usr/local/lib
 # CHECK:     /Applications/MySDK/usr/local/lib
+# CHECK-NOT:     /usr/lib
 # CHECK-NOT:     /usr/local/lib
 # CHECK: Found library /Applications/MySDK/usr/local/lib/libSystem.a
+# CHECK: Found library /hasFoo/foo.o

@@ -296,8 +296,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     syslibRoots.push_back(syslibRoot->getValue());
   }
 
-  // FIXME: handle -L options: these get added *before* the default paths,
-  // possibly modified by any syslibroot options.
+  // Paths specified with -L come first, and are not considered system paths for
+  // the case where there is precisely 1 -syslibroot.
+  for (auto libPath : parsedArgs->filtered(OPT_L)) {
+    ctx.addModifiedSearchDir(libPath->getValue(), syslibRoots, false);
+  }
+
   ctx.addModifiedSearchDir("/usr/lib", syslibRoots, true);
   ctx.addModifiedSearchDir("/usr/local/lib", syslibRoots, true);
 
