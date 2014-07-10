@@ -23,9 +23,9 @@ uint8_t MipsABIFlagsSection::getFpABIValue() {
     if (Is32BitABI)
       return OddSPReg ? Val_GNU_MIPS_ABI_FP_64 : Val_GNU_MIPS_ABI_FP_64A;
     return Val_GNU_MIPS_ABI_FP_DOUBLE;
-  default:
-    return 0;
   }
+
+  llvm_unreachable("unexpected fp abi value");
 }
 
 StringRef MipsABIFlagsSection::getFpABIString(FpABIKind Value) {
