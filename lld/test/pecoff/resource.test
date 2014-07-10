@@ -13,3 +13,10 @@
 
 # Multiple resource files are concatenated.
 # RUN: cat %t.exe | grep 'H.e.l.l.o.H.e.l.l.o.'
+
+# RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start /opt:noref \
+# RUN:   /manifest:embed -- %t.obj %p/Inputs/resource.res
+# RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
+
+CHECK: ResourceTableRVA: 0x1000
+CHECK: ResourceTableSize: 0x208
