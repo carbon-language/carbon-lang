@@ -499,7 +499,7 @@ namespace
             lldb::addr_t addr,
             void *buff,
             lldb::addr_t size,
-            size_t &result) :
+            lldb::addr_t &result) :
             Operation (),
             m_addr (addr),
             m_buff (buff),
