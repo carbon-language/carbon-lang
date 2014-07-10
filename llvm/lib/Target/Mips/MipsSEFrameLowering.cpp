@@ -343,6 +343,22 @@ void MipsSEFrameLowering::emitPrologue(MachineFunction &MF) const {
             MCCFIInstruction::createOffset(nullptr, Reg1, Offset + 4));
         BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
             .addCFIIndex(CFIIndex);
+      } else if (Mips::FGR64RegClass.contains(Reg)) {
+        unsigned Reg0 = MRI->getDwarfRegNum(Reg, true);
+        unsigned Reg1 = MRI->getDwarfRegNum(Reg, true) + 1;
+
+        if (!STI.isLittle())
+          std::swap(Reg0, Reg1);
+
+        unsigned CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg0, Offset));
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
+
+        CFIIndex = MMI.addFrameInst(
+          MCCFIInstruction::createOffset(nullptr, Reg1, Offset + 4));
+        BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
+            .addCFIIndex(CFIIndex);
       } else {
         // Reg is either in GPR32 or FGR32.
         unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(

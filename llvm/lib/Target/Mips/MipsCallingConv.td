@@ -26,9 +26,9 @@ def RetCC_MipsO32 : CallingConv<[
   // f32 are returned in registers F0, F2
   CCIfType<[f32], CCAssignToReg<[F0, F2]>>,
 
-  // f64 arguments are returned in D0_64 and D1_64 in FP64bit mode or
+  // f64 arguments are returned in D0_64 and D2_64 in FP64bit mode or
   // in D0 and D1 in FP32bit mode.
-  CCIfType<[f64], CCIfSubtarget<"isFP64bit()", CCAssignToReg<[D0_64, D1_64]>>>,
+  CCIfType<[f64], CCIfSubtarget<"isFP64bit()", CCAssignToReg<[D0_64, D2_64]>>>,
   CCIfType<[f64], CCIfSubtarget<"isNotFP64bit()", CCAssignToReg<[D0, D1]>>>
 ]>;
 
@@ -247,8 +247,9 @@ def CSR_O32_FPXX : CalleeSavedRegs<(add (sequence "D%u", 15, 10), RA, FP,
 def CSR_O32 : CalleeSavedRegs<(add (sequence "D%u", 15, 10), RA, FP,
                                    (sequence "S%u", 7, 0))>;
 
-def CSR_O32_FP64 : CalleeSavedRegs<(add (sequence "D%u_64", 31, 20), RA, FP,
-                                        (sequence "S%u", 7, 0))>;
+def CSR_O32_FP64 :
+  CalleeSavedRegs<(add (decimate (sequence "D%u_64", 30, 20), 2), RA, FP,
+                       (sequence "S%u", 7, 0))>;
 
 def CSR_N32 : CalleeSavedRegs<(add D20_64, D22_64, D24_64, D26_64, D28_64,
                                    D30_64, RA_64, FP_64, GP_64,
