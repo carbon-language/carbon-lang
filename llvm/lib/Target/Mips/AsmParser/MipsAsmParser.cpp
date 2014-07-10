@@ -165,7 +165,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseDirectiveGpDWord();
   bool parseDirectiveModule();
   bool parseDirectiveModuleFP();
-  bool parseFpABIValue(Val_GNU_MIPS_ABI &FpABI, StringRef Directive);
+  bool parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
+                       StringRef Directive);
 
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
@@ -235,6 +236,9 @@ public:
             ((STI.getFeatureBits() & Mips::FeatureEABI) != 0) +
             ((STI.getFeatureBits() & Mips::FeatureN32) != 0) +
             ((STI.getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
+
+    if (!isABI_O32() && !allowOddSPReg() != 0)
+      report_fatal_error("-mno-odd-spreg requires the O32 ABI");
   }
 
   MCAsmParser &getParser() const { return Parser; }
@@ -249,6 +253,10 @@ public:
   bool isABI_N64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
   bool isABI_O32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
   bool isABI_FPXX() const { return false; } // TODO: add check for FeatureXX
+
+  bool allowOddSPReg() const {
+    return !(STI.getFeatureBits() & Mips::FeatureNoOddSPReg);
+  }
 
   bool inMicroMipsMode() const {
     return STI.getFeatureBits() & Mips::FeatureMicroMips;
@@ -563,6 +571,10 @@ public:
   void addFGR32AsmRegOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getFGR32Reg()));
+    // FIXME: We ought to do this for -integrated-as without -via-file-asm too.
+    if (!AsmParser.allowOddSPReg() && RegIdx.Index & 1)
+      AsmParser.Error(StartLoc, "-mno-odd-spreg prohibits the use of odd FPU "
+                                "registers");
   }
 
   void addFGRH32AsmRegOperands(MCInst &Inst, unsigned N) const {
@@ -2444,7 +2456,7 @@ bool MipsAsmParser::parseSetNoMips16Directive() {
 }
 
 bool MipsAsmParser::parseSetFpDirective() {
-  Val_GNU_MIPS_ABI FpAbiVal;
+  MipsABIFlagsSection::FpABIKind FpAbiVal;
   // Line can be: .set fp=32
   //              .set fp=xx
   //              .set fp=64
@@ -2464,7 +2476,7 @@ bool MipsAsmParser::parseSetFpDirective() {
     reportParseError("unexpected token in statement");
     return false;
   }
-  getTargetStreamer().emitDirectiveSetFp(FpAbiVal, isABI_O32());
+  getTargetStreamer().emitDirectiveSetFp(FpAbiVal);
   Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
@@ -2784,29 +2796,73 @@ bool MipsAsmParser::parseDirectiveOption() {
   return false;
 }
 
+/// parseDirectiveModule
+///  ::= .module oddspreg
+///  ::= .module nooddspreg
+///  ::= .module fp=value
 bool MipsAsmParser::parseDirectiveModule() {
-  // Line can be: .module fp=32
-  //              .module fp=xx
-  //              .module fp=64
+  MCAsmLexer &Lexer = getLexer();
+  SMLoc L = Lexer.getLoc();
+
   if (!getTargetStreamer().getCanHaveModuleDir()) {
     // TODO : get a better message.
     reportParseError(".module directive must appear before any code");
     return false;
   }
-  AsmToken Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Identifier) && Tok.getString() != "fp") {
-    reportParseError("unexpected token in .module directive, 'fp' expected");
-    return false;
+
+  if (Lexer.is(AsmToken::Identifier)) {
+    StringRef Option = Parser.getTok().getString();
+    Parser.Lex();
+
+    if (Option == "oddspreg") {
+      getTargetStreamer().emitDirectiveModuleOddSPReg(true, isABI_O32());
+      clearFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+
+      if (getLexer().isNot(AsmToken::EndOfStatement)) {
+        reportParseError("Expected end of statement");
+        return false;
+      }
+
+      return false;
+    } else if (Option == "nooddspreg") {
+      if (!isABI_O32()) {
+        Error(L, "'.module nooddspreg' requires the O32 ABI");
+        return false;
+      }
+
+      getTargetStreamer().emitDirectiveModuleOddSPReg(false, isABI_O32());
+      setFeatureBits(Mips::FeatureNoOddSPReg, "nooddspreg");
+
+      if (getLexer().isNot(AsmToken::EndOfStatement)) {
+        reportParseError("Expected end of statement");
+        return false;
+      }
+
+      return false;
+    } else if (Option == "fp") {
+      return parseDirectiveModuleFP();
+    }
+
+    return Error(L, "'" + Twine(Option) + "' is not a valid .module option.");
   }
-  Parser.Lex(); // Eat fp token
-  Tok = Parser.getTok();
-  if (Tok.isNot(AsmToken::Equal)) {
+
+  return false;
+}
+
+/// parseDirectiveModuleFP
+///  ::= =32
+///  ::= =xx
+///  ::= =64
+bool MipsAsmParser::parseDirectiveModuleFP() {
+  MCAsmLexer &Lexer = getLexer();
+
+  if (Lexer.isNot(AsmToken::Equal)) {
     reportParseError("unexpected token in statement");
     return false;
   }
   Parser.Lex(); // Eat '=' token.
 
-  Val_GNU_MIPS_ABI FpABI;
+  MipsABIFlagsSection::FpABIKind FpABI;
   if (!parseFpABIValue(FpABI, ".module"))
     return false;
 
@@ -2817,11 +2873,11 @@ bool MipsAsmParser::parseDirectiveModule() {
 
   // Emit appropriate flags.
   getTargetStreamer().emitDirectiveModuleFP(FpABI, isABI_O32());
-
+  Parser.Lex(); // Consume the EndOfStatement.
   return false;
 }
 
-bool MipsAsmParser::parseFpABIValue(Val_GNU_MIPS_ABI &FpABI,
+bool MipsAsmParser::parseFpABIValue(MipsABIFlagsSection::FpABIKind &FpABI,
                                     StringRef Directive) {
   MCAsmLexer &Lexer = getLexer();
 
@@ -2839,7 +2895,7 @@ bool MipsAsmParser::parseFpABIValue(Val_GNU_MIPS_ABI &FpABI,
       return false;
     }
 
-    FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_XX;
+    FpABI = MipsABIFlagsSection::FpABIKind::XX;
     return true;
   }
 
@@ -2858,21 +2914,11 @@ bool MipsAsmParser::parseFpABIValue(Val_GNU_MIPS_ABI &FpABI,
         return false;
       }
 
-      FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_DOUBLE;
-      return true;
-    } else {
-      if (isABI_N32() || isABI_N64()) {
-        FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_DOUBLE;
-        return true;
-      }
+      FpABI = MipsABIFlagsSection::FpABIKind::S32;
+    } else
+      FpABI = MipsABIFlagsSection::FpABIKind::S64;
 
-      if (isABI_O32()) {
-        FpABI = MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_64;
-        return true;
-      }
-
-      llvm_unreachable("Unknown ABI");
-    }
+    return true;
   }
 
   return false;

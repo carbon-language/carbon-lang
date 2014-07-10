@@ -18,8 +18,6 @@ namespace llvm {
 
 struct MipsABIFlagsSection;
 
-typedef MipsABIFlagsSection::Val_GNU_MIPS_ABI Val_GNU_MIPS_ABI;
-
 class MipsTargetStreamer : public MCTargetStreamer {
 public:
   MipsTargetStreamer(MCStreamer &S);
@@ -56,11 +54,23 @@ public:
   virtual void emitDirectiveCpload(unsigned RegNo);
   virtual void emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                     const MCSymbol &Sym, bool IsReg);
-  // ABI Flags
-  virtual void emitDirectiveModuleFP(Val_GNU_MIPS_ABI Value, bool Is32BitAbi) {
-    ABIFlagsSection.FpABI = Value;
+
+  /// Emit a '.module fp=value' directive using the given values.
+  /// Updates the .MIPS.abiflags section
+  virtual void emitDirectiveModuleFP(MipsABIFlagsSection::FpABIKind Value,
+                                     bool Is32BitABI) {
+    ABIFlagsSection.setFpABI(Value, Is32BitABI);
   }
-  virtual void emitDirectiveSetFp(Val_GNU_MIPS_ABI Value, bool Is32BitAbi){};
+
+  /// Emit a '.module fp=value' directive using the current values of the
+  /// .MIPS.abiflags section.
+  void emitDirectiveModuleFP() {
+    emitDirectiveModuleFP(ABIFlagsSection.getFpABI(),
+                          ABIFlagsSection.Is32BitABI);
+  }
+
+  virtual void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI);
+  virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value){};
   virtual void emitMipsAbiFlags(){};
   void setCanHaveModuleDir(bool Can) { canHaveModuleDirective = Can; }
   bool getCanHaveModuleDir() { return canHaveModuleDirective; }
@@ -122,8 +132,10 @@ public:
                             const MCSymbol &Sym, bool IsReg) override;
 
   // ABI Flags
-  void emitDirectiveModuleFP(Val_GNU_MIPS_ABI Value, bool Is32BitAbi) override;
-  void emitDirectiveSetFp(Val_GNU_MIPS_ABI Value, bool Is32BitAbi) override;
+  void emitDirectiveModuleFP(MipsABIFlagsSection::FpABIKind Value,
+                             bool Is32BitABI) override;
+  void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
+  void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value) override;
   void emitMipsAbiFlags() override;
 };
 
@@ -177,6 +189,7 @@ public:
                             const MCSymbol &Sym, bool IsReg) override;
 
   // ABI Flags
+  void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI) override;
   void emitMipsAbiFlags() override;
 
 protected:

@@ -11,16 +11,30 @@
 
 using namespace llvm;
 
-StringRef MipsABIFlagsSection::getFpABIString(Val_GNU_MIPS_ABI Value,
-                                              bool Is32BitAbi) {
+uint8_t MipsABIFlagsSection::getFpABIValue() {
+  switch (FpABI) {
+  case FpABIKind::ANY:
+    return Val_GNU_MIPS_ABI_FP_ANY;
+  case FpABIKind::XX:
+    return Val_GNU_MIPS_ABI_FP_XX;
+  case FpABIKind::S32:
+    return Val_GNU_MIPS_ABI_FP_DOUBLE;
+  case FpABIKind::S64:
+    if (Is32BitABI)
+      return OddSPReg ? Val_GNU_MIPS_ABI_FP_64 : Val_GNU_MIPS_ABI_FP_64A;
+    return Val_GNU_MIPS_ABI_FP_DOUBLE;
+  default:
+    return 0;
+  }
+}
+
+StringRef MipsABIFlagsSection::getFpABIString(FpABIKind Value) {
   switch (Value) {
-  case MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_XX:
+  case FpABIKind::XX:
     return "xx";
-  case MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_64:
-    return "64";
-  case MipsABIFlagsSection::Val_GNU_MIPS_ABI_FP_DOUBLE:
-    if (Is32BitAbi)
-      return "32";
+  case FpABIKind::S32:
+    return "32";
+  case FpABIKind::S64:
     return "64";
   default:
     llvm_unreachable("unsupported fp abi value");
@@ -30,17 +44,17 @@ StringRef MipsABIFlagsSection::getFpABIString(Val_GNU_MIPS_ABI Value,
 namespace llvm {
 MCStreamer &operator<<(MCStreamer &OS, MipsABIFlagsSection &ABIFlagsSection) {
   // Write out a Elf_Internal_ABIFlags_v0 struct
-  OS.EmitIntValue(ABIFlagsSection.getVersion(), 2);         // version
-  OS.EmitIntValue(ABIFlagsSection.getISALevel(), 1);        // isa_level
-  OS.EmitIntValue(ABIFlagsSection.getISARevision(), 1);     // isa_rev
-  OS.EmitIntValue(ABIFlagsSection.getGPRSize(), 1);         // gpr_size
-  OS.EmitIntValue(ABIFlagsSection.getCPR1Size(), 1);        // cpr1_size
-  OS.EmitIntValue(ABIFlagsSection.getCPR2Size(), 1);        // cpr2_size
-  OS.EmitIntValue(ABIFlagsSection.getFpABI(), 1);           // fp_abi
-  OS.EmitIntValue(ABIFlagsSection.getISAExtensionSet(), 4); // isa_ext
-  OS.EmitIntValue(ABIFlagsSection.getASESet(), 4);          // ases
-  OS.EmitIntValue(ABIFlagsSection.getFlags1(), 4);          // flags1
-  OS.EmitIntValue(ABIFlagsSection.getFlags2(), 4);          // flags2
+  OS.EmitIntValue(ABIFlagsSection.getVersionValue(), 2);         // version
+  OS.EmitIntValue(ABIFlagsSection.getISALevelValue(), 1);        // isa_level
+  OS.EmitIntValue(ABIFlagsSection.getISARevisionValue(), 1);     // isa_rev
+  OS.EmitIntValue(ABIFlagsSection.getGPRSizeValue(), 1);         // gpr_size
+  OS.EmitIntValue(ABIFlagsSection.getCPR1SizeValue(), 1);        // cpr1_size
+  OS.EmitIntValue(ABIFlagsSection.getCPR2SizeValue(), 1);        // cpr2_size
+  OS.EmitIntValue(ABIFlagsSection.getFpABIValue(), 1);           // fp_abi
+  OS.EmitIntValue(ABIFlagsSection.getISAExtensionSetValue(), 4); // isa_ext
+  OS.EmitIntValue(ABIFlagsSection.getASESetValue(), 4);          // ases
+  OS.EmitIntValue(ABIFlagsSection.getFlags1Value(), 4);          // flags1
+  OS.EmitIntValue(ABIFlagsSection.getFlags2Value(), 4);          // flags2
   return OS;
 }
 }

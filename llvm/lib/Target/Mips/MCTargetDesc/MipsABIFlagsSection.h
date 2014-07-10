@@ -69,8 +69,16 @@ struct MipsABIFlagsSection {
     Val_GNU_MIPS_ABI_FP_ANY = 0,
     Val_GNU_MIPS_ABI_FP_DOUBLE = 1,
     Val_GNU_MIPS_ABI_FP_XX = 5,
-    Val_GNU_MIPS_ABI_FP_64 = 6
+    Val_GNU_MIPS_ABI_FP_64 = 6,
+    Val_GNU_MIPS_ABI_FP_64A = 7
   };
+
+  enum AFL_FLAGS1 {
+    AFL_FLAGS1_ODDSPREG = 1
+  };
+
+  // Internal representation of the values used in .module fp=value
+  enum class FpABIKind { ANY, XX, S32, S64 };
 
   // Version of flags structure.
   uint16_t Version;
@@ -84,31 +92,52 @@ struct MipsABIFlagsSection {
   AFL_REG CPR1Size;
   // The size of co-processor 2 registers.
   AFL_REG CPR2Size;
-  // The floating-point ABI.
-  Val_GNU_MIPS_ABI FpABI;
   // Processor-specific extension.
   uint32_t ISAExtensionSet;
   // Mask of ASEs used.
   uint32_t ASESet;
 
+  bool OddSPReg;
+
+  bool Is32BitABI;
+
+protected:
+  // The floating-point ABI.
+  FpABIKind FpABI;
+
+public:
   MipsABIFlagsSection()
       : Version(0), ISALevel(0), ISARevision(0), GPRSize(AFL_REG_NONE),
-        CPR1Size(AFL_REG_NONE), CPR2Size(AFL_REG_NONE),
-        FpABI(Val_GNU_MIPS_ABI_FP_ANY), ISAExtensionSet(0), ASESet(0) {}
+        CPR1Size(AFL_REG_NONE), CPR2Size(AFL_REG_NONE), ISAExtensionSet(0),
+        ASESet(0), OddSPReg(false), Is32BitABI(false), FpABI(FpABIKind::ANY) {}
 
-  uint16_t getVersion() { return (uint16_t)Version; }
-  uint8_t getISALevel() { return (uint8_t)ISALevel; }
-  uint8_t getISARevision() { return (uint8_t)ISARevision; }
-  uint8_t getGPRSize() { return (uint8_t)GPRSize; }
-  uint8_t getCPR1Size() { return (uint8_t)CPR1Size; }
-  uint8_t getCPR2Size() { return (uint8_t)CPR2Size; }
-  uint8_t getFpABI() { return (uint8_t)FpABI; }
-  uint32_t getISAExtensionSet() { return (uint32_t)ISAExtensionSet; }
-  uint32_t getASESet() { return (uint32_t)ASESet; }
-  uint32_t getFlags1() { return 0; }
-  uint32_t getFlags2() { return 0; }
+  uint16_t getVersionValue() { return (uint16_t)Version; }
+  uint8_t getISALevelValue() { return (uint8_t)ISALevel; }
+  uint8_t getISARevisionValue() { return (uint8_t)ISARevision; }
+  uint8_t getGPRSizeValue() { return (uint8_t)GPRSize; }
+  uint8_t getCPR1SizeValue() { return (uint8_t)CPR1Size; }
+  uint8_t getCPR2SizeValue() { return (uint8_t)CPR2Size; }
+  uint8_t getFpABIValue();
+  uint32_t getISAExtensionSetValue() { return (uint32_t)ISAExtensionSet; }
+  uint32_t getASESetValue() { return (uint32_t)ASESet; }
 
-  StringRef getFpABIString(Val_GNU_MIPS_ABI Value, bool Is32BitAbi);
+  uint32_t getFlags1Value() {
+    uint32_t Value = 0;
+
+    if (OddSPReg)
+      Value |= (uint32_t)AFL_FLAGS1_ODDSPREG;
+
+    return Value;
+  }
+
+  uint32_t getFlags2Value() { return 0; }
+
+  FpABIKind getFpABI() { return FpABI; }
+  void setFpABI(FpABIKind Value, bool IsABI32Bit) {
+    FpABI = Value;
+    Is32BitABI = IsABI32Bit;
+  }
+  StringRef getFpABIString(FpABIKind Value);
 
   template <class PredicateLibrary>
   void setISALevelAndRevisionFromPredicates(const PredicateLibrary &P) {
@@ -177,16 +206,18 @@ struct MipsABIFlagsSection {
 
   template <class PredicateLibrary>
   void setFpAbiFromPredicates(const PredicateLibrary &P) {
-    FpABI = Val_GNU_MIPS_ABI_FP_ANY;
+    Is32BitABI = P.isABI_O32();
+
+    FpABI = FpABIKind::ANY;
     if (P.isABI_N32() || P.isABI_N64())
-      FpABI = Val_GNU_MIPS_ABI_FP_DOUBLE;
+      FpABI = FpABIKind::S64;
     else if (P.isABI_O32()) {
       if (P.isFP64bit())
-        FpABI = Val_GNU_MIPS_ABI_FP_64;
+        FpABI = FpABIKind::S64;
       else if (P.isABI_FPXX())
-        FpABI = Val_GNU_MIPS_ABI_FP_XX;
+        FpABI = FpABIKind::XX;
       else
-        FpABI = Val_GNU_MIPS_ABI_FP_DOUBLE;
+        FpABI = FpABIKind::S32;
     }
   }
 

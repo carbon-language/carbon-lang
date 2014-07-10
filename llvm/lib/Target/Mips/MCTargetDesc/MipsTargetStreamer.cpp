@@ -59,6 +59,11 @@ void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
                                               const MCSymbol &Sym, bool IsReg) {
 }
+void MipsTargetStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
+                                                     bool IsO32ABI) {
+  if (!Enabled && !IsO32ABI)
+    report_fatal_error("+nooddspreg is only valid for O32");
+}
 
 MipsTargetAsmStreamer::MipsTargetAsmStreamer(MCStreamer &S,
                                              formatted_raw_ostream &OS)
@@ -211,24 +216,31 @@ void MipsTargetAsmStreamer::emitDirectiveCpsetup(unsigned RegNo,
   setCanHaveModuleDir(false);
 }
 
-void MipsTargetAsmStreamer::emitDirectiveModuleFP(Val_GNU_MIPS_ABI Value,
-                                                  bool Is32BitAbi) {
-  MipsTargetStreamer::emitDirectiveModuleFP(Value, Is32BitAbi);
+void MipsTargetAsmStreamer::emitDirectiveModuleFP(
+    MipsABIFlagsSection::FpABIKind Value, bool Is32BitABI) {
+  MipsTargetStreamer::emitDirectiveModuleFP(Value, Is32BitABI);
 
   StringRef ModuleValue;
   OS << "\t.module\tfp=";
-  OS << ABIFlagsSection.getFpABIString(Value, Is32BitAbi) << "\n";
+  OS << ABIFlagsSection.getFpABIString(Value) << "\n";
 }
 
-void MipsTargetAsmStreamer::emitDirectiveSetFp(Val_GNU_MIPS_ABI Value,
-                                               bool Is32BitAbi) {
+void MipsTargetAsmStreamer::emitDirectiveSetFp(
+    MipsABIFlagsSection::FpABIKind Value) {
   StringRef ModuleValue;
   OS << "\t.set\tfp=";
-  OS << ABIFlagsSection.getFpABIString(Value, Is32BitAbi) << "\n";
+  OS << ABIFlagsSection.getFpABIString(Value) << "\n";
 }
 
 void MipsTargetAsmStreamer::emitMipsAbiFlags() {
   // No action required for text output.
+}
+
+void MipsTargetAsmStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
+                                                        bool IsO32ABI) {
+  MipsTargetStreamer::emitDirectiveModuleOddSPReg(Enabled, IsO32ABI);
+
+  OS << "\t.module\t" << (Enabled ? "" : "no") << "oddspreg\n";
 }
 
 // This part is for ELF object output.
@@ -632,4 +644,11 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   OS.SwitchSection(Sec);
 
   OS << ABIFlagsSection;
+}
+
+void MipsTargetELFStreamer::emitDirectiveModuleOddSPReg(bool Enabled,
+                                                        bool IsO32ABI) {
+  MipsTargetStreamer::emitDirectiveModuleOddSPReg(Enabled, IsO32ABI);
+
+  ABIFlagsSection.OddSPReg = Enabled;
 }

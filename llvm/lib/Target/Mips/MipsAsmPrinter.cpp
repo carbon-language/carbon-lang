@@ -704,9 +704,13 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
           OutContext.getELFSection(".gcc_compiled_long64", ELF::SHT_PROGBITS, 0,
                                    SectionKind::getDataRel()));
   }
+
   getTargetStreamer().updateABIInfo(*Subtarget);
-  getTargetStreamer().emitDirectiveModuleFP(
-      getTargetStreamer().getABIFlagsSection().FpABI, Subtarget->isABI_O32());
+  getTargetStreamer().emitDirectiveModuleFP();
+
+  if (Subtarget->isABI_O32())
+    getTargetStreamer().emitDirectiveModuleOddSPReg(Subtarget->useOddSPReg(),
+                                                    Subtarget->isABI_O32());
 }
 
 void MipsAsmPrinter::EmitJal(MCSymbol *Symbol) {

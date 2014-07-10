@@ -340,6 +340,12 @@ def AFGR64 : RegisterClass<"Mips", [f64], 64, (add
 
 def FGR64 : RegisterClass<"Mips", [f64], 64, (sequence "D%u_64", 0, 31)>;
 
+// Used to reserve odd registers when given -mattr=+nooddspreg
+def OddSP : RegisterClass<"Mips", [f32], 32,
+                          (add (decimate (sequence "F%u", 1, 31), 2),
+                               (decimate (sequence "F_HI%u", 1, 31), 2))>,
+            Unallocatable;
+
 // FP control registers.
 def CCR : RegisterClass<"Mips", [i32], 32, (sequence "FCR%u", 0, 31)>,
           Unallocatable;

@@ -107,13 +107,14 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              Reloc::Model _RM, MipsTargetMachine *_TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(Mips32),
       MipsABI(UnknownABI), IsLittle(little), IsSingleFloat(false),
-      IsFP64bit(false), IsNaN2008bit(false), IsGP64bit(false), HasVFPU(false),
-      HasCnMips(false), IsLinux(true), HasMips3_32(false), HasMips3_32r2(false),
-      HasMips4_32(false), HasMips4_32r2(false), HasMips5_32r2(false),
-      InMips16Mode(false), InMips16HardFloat(Mips16HardFloat),
-      InMicroMipsMode(false), HasDSP(false), HasDSPR2(false),
-      AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16), HasMSA(false),
-      RM(_RM), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT),
+      IsFP64bit(false), UseOddSPReg(true), IsNaN2008bit(false),
+      IsGP64bit(false), HasVFPU(false), HasCnMips(false), IsLinux(true),
+      HasMips3_32(false), HasMips3_32r2(false), HasMips4_32(false),
+      HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
+      InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
+      HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
+      HasMSA(false), RM(_RM), OverrideMode(NoOverride), TM(_TM),
+      TargetTriple(TT),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
       TSInfo(DL), JITInfo(), InstrInfo(MipsInstrInfo::create(*TM)),
       FrameLowering(MipsFrameLowering::create(*TM, *this)),
@@ -149,6 +150,11 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   if (hasMSA() && !isFP64bit())
     report_fatal_error("MSA requires a 64-bit FPU register file (FR=1 mode). "
                        "See -mattr=+fp64.",
+                       false);
+
+  if (!isABI_O32() && !useOddSPReg())
+    report_fatal_error("-mattr=+nooddspreg is not currently permitted for a "
+                       "the O32 ABI.",
                        false);
 
   if (hasMips32r6()) {

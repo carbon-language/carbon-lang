@@ -201,6 +201,11 @@ getReservedRegs(const MachineFunction &MF) const {
     Reserved.set(Mips::GP_64);
   }
 
+  if (Subtarget.isABI_O32() && !Subtarget.useOddSPReg()) {
+    for (const auto &Reg : Mips::OddSPRegClass)
+      Reserved.set(Reg);
+  }
+
   return Reserved;
 }
 
