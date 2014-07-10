@@ -1,4 +1,6 @@
 set(files
+  machine/_stdint.h
+  machine/_types.h
   altivec.h
   ammintrin.h
   arm_acle.h
