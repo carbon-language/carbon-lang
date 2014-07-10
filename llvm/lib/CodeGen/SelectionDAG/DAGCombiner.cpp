@@ -6022,6 +6022,19 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
     }
   }
 
+  // trunc (select c, a, b) -> select c, (trunc a), (trunc b)
+  if (N0.getOpcode() == ISD::SELECT) {
+    EVT SrcVT = N0.getValueType();
+    if ((!LegalOperations || TLI.isOperationLegal(ISD::SELECT, SrcVT)) &&
+        TLI.isTruncateFree(SrcVT, VT)) {
+      SDLoc SL(N0);
+      SDValue Cond = N0.getOperand(0);
+      SDValue TruncOp0 = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(1));
+      SDValue TruncOp1 = DAG.getNode(ISD::TRUNCATE, SL, VT, N0.getOperand(2));
+      return DAG.getNode(ISD::SELECT, SDLoc(N), VT, Cond, TruncOp0, TruncOp1);
+    }
+  }
+
   // Fold a series of buildvector, bitcast, and truncate if possible.
   // For example fold
   //   (2xi32 trunc (bitcast ((4xi32)buildvector x, x, y, y) 2xi64)) to

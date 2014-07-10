@@ -357,3 +357,11 @@ define i8 @test18(i32 %x, i8 zeroext %a, i8 zeroext %b) nounwind {
 ; ATOM: cmpl $15, %edi
 ; ATOM: cmovgel %edx
 }
+
+; CHECK-LABEL: @trunc_select_miscompile
+; CHECK-NOT: sarb
+define i32 @trunc_select_miscompile(i32 %a, i1 zeroext %cc) {
+  %tmp1 = select i1 %cc, i32 3, i32 2
+  %tmp2 = shl i32 %a, %tmp1
+  ret i32 %tmp2
+}
