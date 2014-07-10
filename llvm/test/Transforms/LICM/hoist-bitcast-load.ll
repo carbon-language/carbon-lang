@@ -156,5 +156,46 @@ for.end:                                          ; preds = %for.inc, %entry
   ret void
 }
 
+; Don't crash on bitcasts to unsized types.
+; CHECK-LABEL: @test5
+; CHECK: for.body:
+; CHECK: load i32* %c, align 4
+
+%atype = type opaque
+
+; Function Attrs: nounwind uwtable
+define void @test5(i32* nocapture %a, i32* nocapture readonly %b, i32 %n) #0 {
+entry:
+  %cmp6 = icmp sgt i32 %n, 0
+  %ca = alloca i16
+  %cab = bitcast i16* %ca to %atype*
+  %c = bitcast %atype* %cab to i32*
+  br i1 %cmp6, label %for.body, label %for.end
+
+for.body:                                         ; preds = %entry, %for.inc
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc ], [ 0, %entry ]
+  %arrayidx = getelementptr inbounds i32* %a, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %cmp1 = icmp sgt i32 %0, 0
+  br i1 %cmp1, label %if.then, label %for.inc
+
+if.then:                                          ; preds = %for.body
+  %1 = load i32* %c, align 4
+  %arrayidx3 = getelementptr inbounds i32* %b, i64 %indvars.iv
+  %2 = load i32* %arrayidx3, align 4
+  %mul = mul nsw i32 %2, %1
+  store i32 %mul, i32* %arrayidx, align 4
+  br label %for.inc
+
+for.inc:                                          ; preds = %for.body, %if.then
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, %n
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.inc, %entry
+  ret void
+}
+
 attributes #0 = { nounwind uwtable }
 
