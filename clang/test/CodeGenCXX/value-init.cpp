@@ -262,6 +262,59 @@ namespace PR11124 {
 void r170806_a(bool b = bool());
 void r170806_b() { r170806_a(); }
 
+namespace PR20256 {
+  struct data { int i; };
+
+  template<typename T = int>
+  data g() {
+    data d; // not value-init
+    return d;
+  }
+  template data g();
+  // CHECK-LABEL: define {{.*}} @_ZN7PR202561gIiEENS_4dataEv(
+  // CHECK-NOT: store
+  // CHECK-NOT: memset
+  // CHECK: }
+
+  template<typename ...T>
+  data h(T ...t) {
+    data d(t...); // value-init
+    return d;
+  }
+  template data h();
+  // CHECK-LABEL: define {{.*}} @_ZN7PR202561hIJEEENS_4dataEDpT_(
+  // CHECK: call void @llvm.memset
+  // CHECK: }
+
+
+  template<typename T = int>
+  data j() {
+    data d = {}; // value-init
+    return d;
+  }
+  template data j();
+  // CHECK-LABEL: define {{.*}} @_ZN7PR202561jIiEENS_4dataEv(
+  // CHECK: call void @llvm.memset
+  // CHECK: }
+
+  data f() {
+    data d; // not value-init
+    return d;
+  }
+  // CHECK-LABEL: define {{.*}} @_ZN7PR202561fEv(
+  // CHECK-NOT: store
+  // CHECK-NOT: memset
+  // CHECK: }
+
+  data i() {
+    data d = {}; // value-init
+    return d;
+  }
+  // CHECK-LABEL: define {{.*}} @_ZN7PR202561iEv(
+  // CHECK: call void @llvm.memset
+  // CHECK: }
+}
+
 // CHECK-LABEL: define linkonce_odr void @_ZN8zeroinit2X3IiEC2Ev(%"struct.zeroinit::X3"* %this) unnamed_addr
 // CHECK: call void @llvm.memset.p0i8.i64
 // CHECK-NEXT: call void @_ZN8zeroinit2X2IiEC2Ev

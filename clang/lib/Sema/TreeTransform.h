@@ -2891,6 +2891,13 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
 
   // Build a ParenListExpr to represent anything else.
   SourceRange Parens = Construct->getParenOrBraceRange();
+  if (Parens.isInvalid()) {
+    // This was a variable declaration's initialization for which no initializer
+    // was specified.
+    assert(NewArgs.empty() &&
+           "no parens or braces but have direct init with arguments?");
+    return ExprEmpty();
+  }
   return getDerived().RebuildParenListExpr(Parens.getBegin(), NewArgs,
                                            Parens.getEnd());
 }
