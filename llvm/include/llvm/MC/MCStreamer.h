@@ -243,6 +243,10 @@ public:
     return *W64UnwindInfos[i];
   }
 
+  ArrayRef<MCWin64EHUnwindInfo *> getW64UnwindInfos() const {
+    return W64UnwindInfos;
+  }
+
   void generateCompactUnwindEncodings(MCAsmBackend *MAB);
 
   /// @name Assembly File Formatting.

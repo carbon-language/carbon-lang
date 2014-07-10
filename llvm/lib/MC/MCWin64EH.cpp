@@ -274,23 +274,23 @@ void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
   llvm::EmitUnwindInfo(streamer, info);
 }
 
-void MCWin64EHUnwindEmitter::Emit(MCStreamer &streamer) {
-  MCContext &context = streamer.getContext();
+void MCWin64EHUnwindEmitter::Emit(MCStreamer &Streamer) {
+  MCContext &Context = Streamer.getContext();
+
   // Emit the unwind info structs first.
-  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
-    MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
-    const MCSection *xdataSect =
-      getWin64EHTableSection(GetSectionSuffix(info.Function), context);
-    streamer.SwitchSection(xdataSect);
-    llvm::EmitUnwindInfo(streamer, &info);
+  for (const auto &CFI : Streamer.getW64UnwindInfos()) {
+    const MCSection *XData =
+        getWin64EHTableSection(GetSectionSuffix(CFI->Function), Context);
+    Streamer.SwitchSection(XData);
+    EmitUnwindInfo(Streamer, CFI);
   }
+
   // Now emit RUNTIME_FUNCTION entries.
-  for (unsigned i = 0; i < streamer.getNumW64UnwindInfos(); ++i) {
-    MCWin64EHUnwindInfo &info = streamer.getW64UnwindInfo(i);
-    const MCSection *pdataSect =
-      getWin64EHFuncTableSection(GetSectionSuffix(info.Function), context);
-    streamer.SwitchSection(pdataSect);
-    EmitRuntimeFunction(streamer, &info);
+  for (const auto &CFI : Streamer.getW64UnwindInfos()) {
+    const MCSection *PData =
+        getWin64EHFuncTableSection(GetSectionSuffix(CFI->Function), Context);
+    Streamer.SwitchSection(PData);
+    EmitRuntimeFunction(Streamer, CFI);
   }
 }
 
