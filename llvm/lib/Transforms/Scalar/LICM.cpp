@@ -639,7 +639,7 @@ void LICM::hoist(Instruction &I) {
 ///
 bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   // If it is not a trapping instruction, it is always safe to hoist.
-  if (isSafeToSpeculativelyExecute(&Inst))
+  if (isSafeToSpeculativelyExecute(&Inst, DL))
     return true;
 
   return isGuaranteedToExecute(Inst);

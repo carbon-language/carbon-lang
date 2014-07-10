@@ -1142,8 +1142,8 @@ public:
 /// We can do this to a select if its only uses are loads and if the operand to
 /// the select can be loaded unconditionally.
 static bool isSafeSelectToSpeculate(SelectInst *SI, const DataLayout *DL) {
-  bool TDerefable = SI->getTrueValue()->isDereferenceablePointer();
-  bool FDerefable = SI->getFalseValue()->isDereferenceablePointer();
+  bool TDerefable = SI->getTrueValue()->isDereferenceablePointer(DL);
+  bool FDerefable = SI->getFalseValue()->isDereferenceablePointer(DL);
 
   for (User *U : SI->users()) {
     LoadInst *LI = dyn_cast<LoadInst>(U);
@@ -1226,7 +1226,7 @@ static bool isSafePHIToSpeculate(PHINode *PN, const DataLayout *DL) {
 
     // If this pointer is always safe to load, or if we can prove that there is
     // already a load in the block, then we can move the load to the pred block.
-    if (InVal->isDereferenceablePointer() ||
+    if (InVal->isDereferenceablePointer(DL) ||
         isSafeToLoadUnconditionally(InVal, Pred->getTerminator(), MaxAlign, DL))
       continue;
 

@@ -17,6 +17,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/GetElementPtrTypeIterator.h"
 #include "llvm/IR/InstrTypes.h"
@@ -472,17 +473,31 @@ Value *Value::stripInBoundsOffsets() {
 
 /// isDereferenceablePointer - Test if this value is always a pointer to
 /// allocated and suitably aligned memory for a simple load or store.
-static bool isDereferenceablePointer(const Value *V,
+static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
                                      SmallPtrSet<const Value *, 32> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
-  // It's also not always safe to follow a bitcast, for example:
-  //   bitcast i8* (alloca i8) to i32*
-  // would result in a 4-byte load from a 1-byte alloca. Some cases could
-  // be handled using DataLayout to check sizes and alignments though.
 
   // These are obviously ok.
   if (isa<AllocaInst>(V)) return true;
+
+  // It's not always safe to follow a bitcast, for example:
+  //   bitcast i8* (alloca i8) to i32*
+  // would result in a 4-byte load from a 1-byte alloca. However,
+  // if we're casting from a pointer from a type of larger size
+  // to a type of smaller size (or the same size), and the alignment
+  // is at least as large as for the resulting pointer type, then
+  // we can look through the bitcast.
+  if (DL)
+    if (const BitCastInst* BC = dyn_cast<BitCastInst>(V)) {
+      Type *STy = BC->getSrcTy()->getPointerElementType(),
+           *DTy = BC->getDestTy()->getPointerElementType();
+      if ((DL->getTypeStoreSize(STy) >=
+           DL->getTypeStoreSize(DTy)) &&
+          (DL->getABITypeAlignment(STy) >=
+           DL->getABITypeAlignment(DTy)))
+        return isDereferenceablePointer(BC->getOperand(0), DL, Visited);
+    }
 
   // Global variables which can't collapse to null are ok.
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
@@ -497,7 +512,7 @@ static bool isDereferenceablePointer(const Value *V,
     // Conservatively require that the base pointer be fully dereferenceable.
     if (!Visited.insert(GEP->getOperand(0)))
       return false;
-    if (!isDereferenceablePointer(GEP->getOperand(0), Visited))
+    if (!isDereferenceablePointer(GEP->getOperand(0), DL, Visited))
       return false;
     // Check the indices.
     gep_type_iterator GTI = gep_type_begin(GEP);
@@ -533,9 +548,9 @@ static bool isDereferenceablePointer(const Value *V,
 
 /// isDereferenceablePointer - Test if this value is always a pointer to
 /// allocated and suitably aligned memory for a simple load or store.
-bool Value::isDereferenceablePointer() const {
+bool Value::isDereferenceablePointer(const DataLayout *DL) const {
   SmallPtrSet<const Value *, 32> Visited;
-  return ::isDereferenceablePointer(this, Visited);
+  return ::isDereferenceablePointer(this, DL, Visited);
 }
 
 /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,

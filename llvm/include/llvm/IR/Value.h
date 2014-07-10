@@ -430,7 +430,7 @@ public:
 
   /// isDereferenceablePointer - Test if this value is always a pointer to
   /// allocated and suitably aligned memory for a simple load or store.
-  bool isDereferenceablePointer() const;
+  bool isDereferenceablePointer(const DataLayout *DL = nullptr) const;
 
   /// DoPHITranslation - If this value is a PHI node with CurBB as its parent,
   /// return the value in the PHI node corresponding to PredBB.  If not, return
