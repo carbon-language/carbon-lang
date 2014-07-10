@@ -5,7 +5,6 @@
 ; Built from source:
 ; $ clang++ a.cpp b.cpp -g -c -emit-llvm
 ; $ llvm-link a.bc b.bc -o ab.bc
-; $ opt -inline ab.bc -o ab-opt.bc
 ; $ cat a.cpp
 ; # 1 "func.h"
 ; inline int func(int i) {
