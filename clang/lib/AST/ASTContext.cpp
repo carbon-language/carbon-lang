@@ -3428,7 +3428,7 @@ QualType ASTContext::getPackExpansionType(QualType Pattern,
     // contains an alias template specialization which ignores one of its
     // parameters.
     if (Canon->containsUnexpandedParameterPack()) {
-      Canon = getPackExpansionType(getCanonicalType(Pattern), NumExpansions);
+      Canon = getPackExpansionType(Canon, NumExpansions);
 
       // Find the insert position again, in case we inserted an element into
       // PackExpansionTypes and invalidated our insert position.
@@ -3439,7 +3439,7 @@ QualType ASTContext::getPackExpansionType(QualType Pattern,
   T = new (*this) PackExpansionType(Pattern, Canon, NumExpansions);
   Types.push_back(T);
   PackExpansionTypes.InsertNode(T, InsertPos);
-  return QualType(T, 0);  
+  return QualType(T, 0);
 }
 
 /// CmpProtocolNames - Comparison predicate for sorting protocols
