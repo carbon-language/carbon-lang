@@ -14,6 +14,7 @@
 
 // C++ Includes
 #include <string>
+#include <unordered_map>
 
 // Other libraries and framework includes
 
@@ -135,7 +136,7 @@ namespace lldb_private {
         typedef std::shared_ptr<TypeFormatImpl> SharedPointer;
         typedef bool(*ValueCallback)(void*, ConstString, const lldb::TypeFormatImplSP&);
         
-        virtual ~TypeFormatImpl () = default;
+        virtual ~TypeFormatImpl ();
         
         bool
         Cascades () const
@@ -229,7 +230,7 @@ namespace lldb_private {
         typedef std::shared_ptr<TypeFormatImpl_Format> SharedPointer;
         typedef bool(*ValueCallback)(void*, ConstString, const TypeFormatImpl_Format::SharedPointer&);
         
-        virtual ~TypeFormatImpl_Format () = default;
+        virtual ~TypeFormatImpl_Format ();
         
         lldb::Format
         GetFormat () const
@@ -272,7 +273,7 @@ namespace lldb_private {
         typedef std::shared_ptr<TypeFormatImpl_EnumType> SharedPointer;
         typedef bool(*ValueCallback)(void*, ConstString, const TypeFormatImpl_EnumType::SharedPointer&);
         
-        ~TypeFormatImpl_EnumType () = default;
+        ~TypeFormatImpl_EnumType ();
         
         ConstString
         GetTypeName ()
@@ -301,7 +302,7 @@ namespace lldb_private {
         
     protected:
         ConstString m_enum_type;
-        mutable std::map<void*,ClangASTType> m_types;
+        mutable std::unordered_map<void*,ClangASTType> m_types;
         
     private:
         DISALLOW_COPY_AND_ASSIGN(TypeFormatImpl_EnumType);

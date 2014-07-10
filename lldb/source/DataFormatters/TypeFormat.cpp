@@ -38,11 +38,18 @@ m_my_revision(0)
 {
 }
 
+TypeFormatImpl::~TypeFormatImpl ()
+{
+}
 
 TypeFormatImpl_Format::TypeFormatImpl_Format (lldb::Format f,
                                               const TypeFormatImpl::Flags& flags) :
 TypeFormatImpl(flags),
 m_format (f)
+{
+}
+
+TypeFormatImpl_Format::~TypeFormatImpl_Format ()
 {
 }
 
@@ -159,6 +166,10 @@ TypeFormatImpl_EnumType::TypeFormatImpl_EnumType (ConstString type_name,
 TypeFormatImpl(flags),
 m_enum_type(type_name),
 m_types()
+{
+}
+
+TypeFormatImpl_EnumType::~TypeFormatImpl_EnumType ()
 {
 }
 

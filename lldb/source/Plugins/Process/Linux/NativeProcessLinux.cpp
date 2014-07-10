@@ -263,9 +263,9 @@ namespace
 
         errno = 0;
         if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
-            result = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid), *(unsigned int *)addr, data);
+            result = ptrace(static_cast<__ptrace_request>(req), static_cast< ::pid_t>(pid), *(unsigned int *)addr, data);
         else
-            result = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid), addr, data);
+            result = ptrace(static_cast<__ptrace_request>(req), static_cast< ::pid_t>(pid), addr, data);
 
         if (log)
             log->Printf("ptrace(%s, %" PRIu64 ", %p, %p, %zu)=%lX called from file %s line %d",
@@ -299,9 +299,9 @@ namespace
         long result = 0;
         errno = 0;
         if (req == PTRACE_GETREGSET || req == PTRACE_SETREGSET)
-            result = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid), *(unsigned int *)addr, data);
+            result = ptrace(static_cast<__ptrace_request>(req), static_cast< ::pid_t>(pid), *(unsigned int *)addr, data);
         else
-            result = ptrace(static_cast<__ptrace_request>(req), static_cast<::pid_t>(pid), addr, data);
+            result = ptrace(static_cast<__ptrace_request>(req), static_cast< ::pid_t>(pid), addr, data);
         return result;
     }
 #endif
@@ -1530,7 +1530,7 @@ NativeProcessLinux::Launch(LaunchArgs *args)
 
         goto FINISH;
     }
-    assert(WIFSTOPPED(status) && (wpid == static_cast<::pid_t> (pid)) &&
+    assert(WIFSTOPPED(status) && (wpid == static_cast< ::pid_t> (pid)) &&
            "Could not sync with inferior process.");
 
     if (log)
