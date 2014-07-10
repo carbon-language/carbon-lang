@@ -30,11 +30,9 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_00_00_00_00_01_01_01_01_01_01_01_01(
 define <16 x i8> @shuffle_v16i8_00_00_00_00_00_00_00_00_08_08_08_08_08_08_08_08(<16 x i8> %a, <16 x i8> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v16i8_00_00_00_00_00_00_00_00_08_08_08_08_08_08_08_08
 ; CHECK-SSE2:       # BB#0:
-; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm1
-; CHECK-SSE2-NEXT:    movdqa %xmm0, %xmm2
-; CHECK-SSE2-NEXT:    punpckhbw %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    punpcklwd %xmm2, %xmm0
+; CHECK-SSE2-NEXT:    pand
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
+; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
 ; CHECK-SSE2-NEXT:    packuswb %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,0,3]
@@ -60,18 +58,11 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_01_01_01_01_02_02_02_02_03_03_03_03(
 define <16 x i8> @shuffle_v16i8_00_00_00_00_04_04_04_04_08_08_08_08_12_12_12_12(<16 x i8> %a, <16 x i8> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v16i8_00_00_00_00_04_04_04_04_08_08_08_08_12_12_12_12
 ; CHECK-SSE2:       # BB#0:
-; CHECK-SSE2-NEXT:    pxor %xmm1, %xmm1
-; CHECK-SSE2-NEXT:    movdqa %xmm0, %xmm2
-; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm2
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm2 = xmm2[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm2 = xmm2[0,2,2,3,4,5,6,7]
-; CHECK-SSE2-NEXT:    punpckhbw %xmm1, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
-; CHECK-SSE2-NEXT:    punpcklwd %xmm2, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,2,1]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,0,2,3,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,7,5,6,7]
+; CHECK-SSE2-NEXT:    pand
+; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,6,6,7]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,1]
+; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,3,3,4,5,6,7]
+; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,5,6,7]
 ; CHECK-SSE2-NEXT:    packuswb %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,0,1]
@@ -187,5 +178,18 @@ define <16 x i8> @zext_to_v4i32_shuffle(<16 x i8> %a) {
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm1, %xmm0
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> zeroinitializer, <16 x i32> <i32 0, i32 17, i32 18, i32 19, i32 1, i32 21, i32 22, i32 23, i32 2, i32 25, i32 26, i32 27, i32 3, i32 29, i32 30, i32 31>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @trunc_v4i32_shuffle(<16 x i8> %a) {
+; CHECK-SSE2-LABEL: @trunc_v4i32_shuffle
+; CHECK-SSE2:       # BB#0:
+; CHECK-SSE2-NEXT:    pand
+; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,2,2,3,4,5,6,7]
+; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,6,6,7]
+; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,2,2,3]
+; CHECK-SSE2-NEXT:    packuswb %xmm0, %xmm0
+; CHECK-SSE2-NEXT:    retq
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 4, i32 8, i32 12, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i8> %shuffle
 }

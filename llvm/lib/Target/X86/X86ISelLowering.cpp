@@ -7815,16 +7815,42 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
   SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
 
-  auto buildLoAndHiV8s =
-      [&](SDValue V, ArrayRef<int> LoBlendMask, ArrayRef<int> HiBlendMask) {
-    SDValue LoV =
-        DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                    DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
-    SDValue HiV =
-        DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                    DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V, Zero));
-    SDValue BlendedLo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV, HiV, LoBlendMask);
-    SDValue BlendedHi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV, HiV, HiBlendMask);
+  auto buildLoAndHiV8s = [&](SDValue V, MutableArrayRef<int> LoBlendMask,
+                             MutableArrayRef<int> HiBlendMask) {
+    SDValue V1, V2;
+    // Check if any of the odd lanes in the v16i8 are used. If not, we can mask
+    // them out and avoid using UNPCK{L,H} to extract the elements of V as
+    // i16s.
+    if (std::none_of(LoBlendMask.begin(), LoBlendMask.end(),
+                     [](int M) { return M >= 0 && M % 2 == 1; }) &&
+        std::none_of(HiBlendMask.begin(), HiBlendMask.end(),
+                     [](int M) { return M >= 0 && M % 2 == 1; })) {
+      // Use a mask to drop the high bytes.
+      V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V);
+      V1 = DAG.getNode(ISD::AND, DL, MVT::v8i16, V1,
+                       DAG.getConstant(0x00FF, MVT::v8i16));
+
+      // This will be a single vector shuffle instead of a blend so nuke V2.
+      V2 = DAG.getUNDEF(MVT::v8i16);
+
+      // Squash the masks to point directly into V1.
+      for (int &M : LoBlendMask)
+        if (M >= 0)
+          M /= 2;
+      for (int &M : HiBlendMask)
+        if (M >= 0)
+          M /= 2;
+    } else {
+      // Otherwise just unpack the low half of V into V1 and the high half into
+      // V2 so that we can blend them as i16s.
+      V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                       DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
+      V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                       DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V, Zero));
+    }
+
+    SDValue BlendedLo = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, LoBlendMask);
+    SDValue BlendedHi = DAG.getVectorShuffle(MVT::v8i16, DL, V1, V2, HiBlendMask);
     return std::make_pair(BlendedLo, BlendedHi);
   };
   SDValue V1Lo, V1Hi, V2Lo, V2Hi;
