@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -faltivec -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
-// REQUIRES: asserts
 
 #include <stdarg.h>
 
@@ -32,10 +31,10 @@ void test4 (int x, struct test4 y)
 }
 
 // CHECK: define void @test1va(%struct.test1* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %ap.next = getelementptr i8* %ap.cur, i64 8
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.cur to %struct.test1*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 8
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[CUR]] to %struct.test1*
 struct test1 test1va (int x, ...)
 {
   struct test1 y;
@@ -47,14 +46,14 @@ struct test1 test1va (int x, ...)
 }
 
 // CHECK: define void @test2va(%struct.test2* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %[[TMP0:[0-9]+]] = ptrtoint i8* %ap.cur to i64
-// CHECK: %[[TMP1:[0-9]+]] = add i64 %[[TMP0]], 15
-// CHECK: %[[TMP2:[0-9]+]] = and i64 %[[TMP1]], -16
-// CHECK: %ap.align = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i64 16
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.align to %struct.test2*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[TMP0:[^ ]+]] = ptrtoint i8* %[[CUR]] to i64
+// CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
+// CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
+// CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 16
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[ALIGN]] to %struct.test2*
 struct test2 test2va (int x, ...)
 {
   struct test2 y;
@@ -66,14 +65,14 @@ struct test2 test2va (int x, ...)
 }
 
 // CHECK: define void @test3va(%struct.test3* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %[[TMP0:[0-9]+]] = ptrtoint i8* %ap.cur to i64
-// CHECK: %[[TMP1:[0-9]+]] = add i64 %[[TMP0]], 15
-// CHECK: %[[TMP2:[0-9]+]] = and i64 %[[TMP1]], -16
-// CHECK: %ap.align = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i64 32
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.align to %struct.test3*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[TMP0:[^ ]+]] = ptrtoint i8* %[[CUR]] to i64
+// CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
+// CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
+// CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 32
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[ALIGN]] to %struct.test3*
 struct test3 test3va (int x, ...)
 {
   struct test3 y;
@@ -85,10 +84,10 @@ struct test3 test3va (int x, ...)
 }
 
 // CHECK: define void @test4va(%struct.test4* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %ap.next = getelementptr i8* %ap.cur, i64 16
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.cur to %struct.test4*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 16
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[CUR]] to %struct.test4*
 struct test4 test4va (int x, ...)
 {
   struct test4 y;
@@ -100,10 +99,10 @@ struct test4 test4va (int x, ...)
 }
 
 // CHECK: define void @testva_longdouble(%struct.test_longdouble* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %ap.next = getelementptr i8* %ap.cur, i64 16
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.cur to %struct.test_longdouble*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[CUR]], i64 16
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[CUR]] to %struct.test_longdouble*
 struct test_longdouble { long double x; };
 struct test_longdouble testva_longdouble (int x, ...)
 {
@@ -116,14 +115,14 @@ struct test_longdouble testva_longdouble (int x, ...)
 }
 
 // CHECK: define void @testva_vector(%struct.test_vector* noalias sret %agg.result, i32 signext %x, ...)
-// CHECK: %ap.cur = load i8** %ap
-// CHECK: %[[TMP0:[0-9]+]] = ptrtoint i8* %ap.cur to i64
-// CHECK: %[[TMP1:[0-9]+]] = add i64 %[[TMP0]], 15
-// CHECK: %[[TMP2:[0-9]+]] = and i64 %[[TMP1]], -16
-// CHECK: %ap.align = inttoptr i64 %[[TMP2]] to i8*
-// CHECK: %ap.next = getelementptr i8* %ap.align, i64 16
-// CHECK: store i8* %ap.next, i8** %ap
-// CHECK: bitcast i8* %ap.align to %struct.test_vector*
+// CHECK: %[[CUR:[^ ]+]] = load i8** %ap
+// CHECK: %[[TMP0:[^ ]+]] = ptrtoint i8* %[[CUR]] to i64
+// CHECK: %[[TMP1:[^ ]+]] = add i64 %[[TMP0]], 15
+// CHECK: %[[TMP2:[^ ]+]] = and i64 %[[TMP1]], -16
+// CHECK: %[[ALIGN:[^ ]+]] = inttoptr i64 %[[TMP2]] to i8*
+// CHECK: %[[NEXT:[^ ]+]] = getelementptr i8* %[[ALIGN]], i64 16
+// CHECK: store i8* %[[NEXT]], i8** %ap
+// CHECK: bitcast i8* %[[ALIGN]] to %struct.test_vector*
 struct test_vector { vector int x; };
 struct test_vector testva_vector (int x, ...)
 {
