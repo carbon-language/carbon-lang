@@ -82,6 +82,8 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SETCC, MVT::i32, Expand);
   setOperationAction(ISD::SETCC, MVT::f32, Expand);
   setOperationAction(ISD::FP_TO_UINT, MVT::i1, Custom);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Custom);
 
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
@@ -839,8 +841,20 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
   default:
     AMDGPUTargetLowering::ReplaceNodeResults(N, Results, DAG);
     return;
-  case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
+  case ISD::FP_TO_UINT:
+    if (N->getValueType(0) == MVT::i1) {
+      Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
+      return;
+    }
+    // Fall-through. Since we don't care about out of bounds values
+    // we can use FP_TO_SINT for uints too. The DAGLegalizer code for uint
+    // considers some extra cases which are not necessary here.
+  case ISD::FP_TO_SINT: {
+    SDValue Result;
+    if (expandFP_TO_SINT(N, Result, DAG))
+      Results.push_back(Result);
     return;
+  }
   case ISD::UDIV: {
     SDValue Op = SDValue(N, 0);
     SDLoc DL(Op);
