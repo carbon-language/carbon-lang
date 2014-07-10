@@ -492,7 +492,8 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
     if (const BitCastInst* BC = dyn_cast<BitCastInst>(V)) {
       Type *STy = BC->getSrcTy()->getPointerElementType(),
            *DTy = BC->getDestTy()->getPointerElementType();
-      if ((DL->getTypeStoreSize(STy) >=
+      if (STy->isSized() && DTy->isSized() &&
+          (DL->getTypeStoreSize(STy) >=
            DL->getTypeStoreSize(DTy)) &&
           (DL->getABITypeAlignment(STy) >=
            DL->getABITypeAlignment(DTy)))
