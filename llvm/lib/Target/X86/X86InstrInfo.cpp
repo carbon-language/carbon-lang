@@ -5037,6 +5037,7 @@ bool X86InstrInfo::shouldScheduleAdjacent(MachineInstr* First,
   case X86::TEST16rm:
   case X86::TEST32rm:
   case X86::TEST64rm:
+  case X86::TEST8ri_NOREX:
   case X86::AND16i16:
   case X86::AND16ri:
   case X86::AND16ri8:
