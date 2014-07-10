@@ -1353,18 +1353,22 @@ bool Generic_GCC::GCCInstallationDetector::getBiarchSibling(Multilib &M) const {
 
   static const char *const MIPSLibDirs[] = { "/lib" };
   static const char *const MIPSTriples[] = { "mips-linux-gnu",
-                                             "mips-mti-linux-gnu" };
+                                             "mips-mti-linux-gnu",
+                                             "mips-img-linux-gnu" };
   static const char *const MIPSELLibDirs[] = { "/lib" };
   static const char *const MIPSELTriples[] = { "mipsel-linux-gnu",
-                                               "mipsel-linux-android" };
+                                               "mipsel-linux-android",
+                                               "mips-img-linux-gnu" };
 
   static const char *const MIPS64LibDirs[] = { "/lib64", "/lib" };
   static const char *const MIPS64Triples[] = { "mips64-linux-gnu",
                                                "mips-mti-linux-gnu",
+                                               "mips-img-linux-gnu",
                                                "mips64-linux-gnuabi64" };
   static const char *const MIPS64ELLibDirs[] = { "/lib64", "/lib" };
   static const char *const MIPS64ELTriples[] = { "mips64el-linux-gnu",
                                                  "mips-mti-linux-gnu",
+                                                 "mips-img-linux-gnu",
                                                  "mips64el-linux-android",
                                                  "mips64el-linux-gnuabi64" };
 
@@ -1869,6 +1873,33 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .FilterOut(NonExistent);
   }
 
+  MultilibSet ImgMultilibs;
+  {
+    Multilib Mips64r6 = Multilib()
+      .gccSuffix("/mips64r6")
+      .osSuffix("/mips64r6")
+      .includeSuffix("/mips64r6")
+      .flag("+m64").flag("-m32");
+
+    Multilib LittleEndian = Multilib()
+      .gccSuffix("/el")
+      .osSuffix("/el")
+      .includeSuffix("/el")
+      .flag("+EL").flag("-EB");
+
+    Multilib MAbi64 = Multilib()
+      .gccSuffix("/64")
+      .osSuffix("/64")
+      .includeSuffix("/64")
+      .flag("+mabi=64").flag("-mabi=n32").flag("-m32");
+
+    ImgMultilibs = MultilibSet()
+      .Maybe(Mips64r6)
+      .Maybe(MAbi64)
+      .Maybe(LittleEndian)
+      .FilterOut(NonExistent);
+  }
+
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
 
   Multilib::flags_list Flags;
@@ -1898,6 +1929,17 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
     // Select Android toolchain. It's the only choice in that case.
     if (AndroidMipsMultilibs.select(Flags, Result.SelectedMultilib)) {
       Result.Multilibs = AndroidMipsMultilibs;
+      return true;
+    }
+    return false;
+  }
+
+  if (TargetTriple.getVendor() == llvm::Triple::ImaginationTechnologies &&
+      TargetTriple.getOS() == llvm::Triple::Linux &&
+      TargetTriple.getEnvironment() == llvm::Triple::GNU) {
+    // Select mips-img-linux-gnu toolchain.
+    if (ImgMultilibs.select(Flags, Result.SelectedMultilib)) {
+      Result.Multilibs = ImgMultilibs;
       return true;
     }
     return false;

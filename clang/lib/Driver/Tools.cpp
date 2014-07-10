@@ -916,6 +916,14 @@ static void getMipsCPUAndABI(const ArgList &Args,
   const char *DefMips32CPU = "mips32r2";
   const char *DefMips64CPU = "mips64r2";
 
+  // MIPS32r6 is the default for mips(el)?-img-linux-gnu and MIPS64r6 is the
+  // default for mips64(el)?-img-linux-gnu.
+  if (Triple.getVendor() == llvm::Triple::ImaginationTechnologies &&
+      Triple.getEnvironment() == llvm::Triple::GNU) {
+    DefMips32CPU = "mips32r6";
+    DefMips64CPU = "mips64r6";
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_march_EQ,
                                options::OPT_mcpu_EQ))
     CPUName = A->getValue();
@@ -5186,7 +5194,7 @@ bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
   return A && (A->getValue() == StringRef(Value));
 }
 
-bool mips::isNaN2008(const ArgList &Args) {
+bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
   if (Arg *NaNArg = Args.getLastArg(options::OPT_mnan_EQ))
     return llvm::StringSwitch<bool>(NaNArg->getValue())
                .Case("2008", true)
@@ -5194,10 +5202,9 @@ bool mips::isNaN2008(const ArgList &Args) {
                .Default(false);
 
   // NaN2008 is the default for MIPS32r6/MIPS64r6.
-  if (Arg *CPUArg = Args.getLastArg(options::OPT_mcpu_EQ))
-    return llvm::StringSwitch<bool>(CPUArg->getValue())
-               .Cases("mips32r6", "mips64r6", true)
-               .Default(false);
+  return llvm::StringSwitch<bool>(getCPUName(Args, Triple))
+             .Cases("mips32r6", "mips64r6", true)
+             .Default(false);
 
   return false;
 }
@@ -7022,16 +7029,16 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
       return "/lib/ld-linux.so.3";              /* TODO: check which dynamic linker name.  */
   } else if (ToolChain.getArch() == llvm::Triple::mips ||
              ToolChain.getArch() == llvm::Triple::mipsel) {
-    if (mips::isNaN2008(Args))
+    if (mips::isNaN2008(Args, ToolChain.getTriple()))
       return "/lib/ld-linux-mipsn8.so.1";
     return "/lib/ld.so.1";
   } else if (ToolChain.getArch() == llvm::Triple::mips64 ||
              ToolChain.getArch() == llvm::Triple::mips64el) {
     if (mips::hasMipsAbiArg(Args, "n32"))
-      return mips::isNaN2008(Args) ? "/lib32/ld-linux-mipsn8.so.1"
-                                   : "/lib32/ld.so.1";
-    return mips::isNaN2008(Args) ? "/lib64/ld-linux-mipsn8.so.1"
-                                 : "/lib64/ld.so.1";
+      return mips::isNaN2008(Args, ToolChain.getTriple())
+                 ? "/lib32/ld-linux-mipsn8.so.1" : "/lib32/ld.so.1";
+    return mips::isNaN2008(Args, ToolChain.getTriple())
+               ? "/lib64/ld-linux-mipsn8.so.1" : "/lib64/ld.so.1";
   } else if (ToolChain.getArch() == llvm::Triple::ppc)
     return "/lib/ld.so.1";
   else if (ToolChain.getArch() == llvm::Triple::ppc64 ||
