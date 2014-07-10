@@ -75,6 +75,20 @@ class VectorLegalizer {
   /// \brief Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
   SDValue ExpandSEXTINREG(SDValue Op);
 
+  /// \brief Implement expansion for ANY_EXTEND_VECTOR_INREG.
+  ///
+  /// Shuffles the low lanes of the operand into place and bitcasts to the proper
+  /// type. The contents of the bits in the extended part of each element are
+  /// undef.
+  SDValue ExpandANY_EXTEND_VECTOR_INREG(SDValue Op);
+
+  /// \brief Implement expansion for SIGN_EXTEND_VECTOR_INREG.
+  ///
+  /// Shuffles the low lanes of the operand into place, bitcasts to the proper
+  /// type, then shifts left and arithmetic shifts right to introduce a sign
+  /// extension.
+  SDValue ExpandSIGN_EXTEND_VECTOR_INREG(SDValue Op);
+
   /// \brief Implement expansion for ZERO_EXTEND_VECTOR_INREG.
   ///
   /// Shuffles the low lanes of the operand into place and blends zeros into
@@ -280,6 +294,8 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   case ISD::FP_EXTEND:
   case ISD::FMA:
   case ISD::SIGN_EXTEND_INREG:
+  case ISD::ANY_EXTEND_VECTOR_INREG:
+  case ISD::SIGN_EXTEND_VECTOR_INREG:
   case ISD::ZERO_EXTEND_VECTOR_INREG:
     QueryType = Node->getValueType(0);
     break;
@@ -621,6 +637,10 @@ SDValue VectorLegalizer::Expand(SDValue Op) {
   switch (Op->getOpcode()) {
   case ISD::SIGN_EXTEND_INREG:
     return ExpandSEXTINREG(Op);
+  case ISD::ANY_EXTEND_VECTOR_INREG:
+    return ExpandANY_EXTEND_VECTOR_INREG(Op);
+  case ISD::SIGN_EXTEND_VECTOR_INREG:
+    return ExpandSIGN_EXTEND_VECTOR_INREG(Op);
   case ISD::ZERO_EXTEND_VECTOR_INREG:
     return ExpandZERO_EXTEND_VECTOR_INREG(Op);
   case ISD::BSWAP:
@@ -715,6 +735,52 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   Op = Op.getOperand(0);
   Op =   DAG.getNode(ISD::SHL, DL, VT, Op, ShiftSz);
   return DAG.getNode(ISD::SRA, DL, VT, Op, ShiftSz);
+}
+
+// Generically expand a vector anyext in register to a shuffle of the relevant
+// lanes into the appropriate locations, with other lanes left undef.
+SDValue VectorLegalizer::ExpandANY_EXTEND_VECTOR_INREG(SDValue Op) {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  int NumElements = VT.getVectorNumElements();
+  SDValue Src = Op.getOperand(0);
+  EVT SrcVT = Src.getValueType();
+  int NumSrcElements = SrcVT.getVectorNumElements();
+
+  // Build a base mask of undef shuffles.
+  SmallVector<int, 16> ShuffleMask;
+  ShuffleMask.resize(NumSrcElements, -1);
+
+  // Place the extended lanes into the correct locations.
+  int ExtLaneScale = NumSrcElements / NumElements;
+  int EndianOffset = TLI.isBigEndian() ? ExtLaneScale - 1 : 0;
+  for (int i = 0; i < NumElements; ++i)
+    ShuffleMask[i * ExtLaneScale + EndianOffset] = i;
+
+  return DAG.getNode(
+      ISD::BITCAST, DL, VT,
+      DAG.getVectorShuffle(SrcVT, DL, Src, DAG.getUNDEF(SrcVT), ShuffleMask));
+}
+
+SDValue VectorLegalizer::ExpandSIGN_EXTEND_VECTOR_INREG(SDValue Op) {
+  SDLoc DL(Op);
+  EVT VT = Op.getValueType();
+  SDValue Src = Op.getOperand(0);
+  EVT SrcVT = Src.getValueType();
+
+  // First build an any-extend node which can be legalized above when we
+  // recurse through it.
+  Op = DAG.getAnyExtendVectorInReg(Src, DL, VT);
+
+  // Now we need sign extend. Do this by shifting the elements. Even if these
+  // aren't legal operations, they have a better chance of being legalized
+  // without full scalarization than the sign extension does.
+  unsigned EltWidth = VT.getVectorElementType().getSizeInBits();
+  unsigned SrcEltWidth = SrcVT.getVectorElementType().getSizeInBits();
+  SDValue ShiftAmount = DAG.getConstant(EltWidth - SrcEltWidth, VT);
+  return DAG.getNode(ISD::SRA, DL, VT,
+                     DAG.getNode(ISD::SHL, DL, VT, Op, ShiftAmount),
+                     ShiftAmount);
 }
 
 // Generically expand a vector zext in register to a shuffle of the relevant

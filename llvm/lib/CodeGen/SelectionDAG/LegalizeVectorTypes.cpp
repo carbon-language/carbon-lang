@@ -2398,7 +2398,12 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
   case ISD::EXTRACT_VECTOR_ELT: Res = WidenVecOp_EXTRACT_VECTOR_ELT(N); break;
   case ISD::STORE:              Res = WidenVecOp_STORE(N); break;
   case ISD::SETCC:              Res = WidenVecOp_SETCC(N); break;
-  case ISD::ZERO_EXTEND:        Res = WidenVecOp_ZERO_EXTEND(N); break;
+
+  case ISD::ANY_EXTEND:
+  case ISD::SIGN_EXTEND:
+  case ISD::ZERO_EXTEND:
+    Res = WidenVecOp_EXTEND(N);
+    break;
 
   case ISD::FP_EXTEND:
   case ISD::FP_TO_SINT:
@@ -2406,8 +2411,6 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP:
   case ISD::TRUNCATE:
-  case ISD::SIGN_EXTEND:
-  case ISD::ANY_EXTEND:
     Res = WidenVecOp_Convert(N);
     break;
   }
@@ -2428,14 +2431,14 @@ bool DAGTypeLegalizer::WidenVectorOperand(SDNode *N, unsigned OpNo) {
   return false;
 }
 
-SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
+SDValue DAGTypeLegalizer::WidenVecOp_EXTEND(SDNode *N) {
   SDLoc DL(N);
   EVT VT = N->getValueType(0);
 
   SDValue InOp = N->getOperand(0);
   // If some legalization strategy other than widening is used on the operand,
-  // we can't safely assume that just zero-extending the low lanes is the
-  // correct transformation.
+  // we can't safely assume that just extending the low lanes is the correct
+  // transformation.
   if (getTypeAction(InOp.getValueType()) != TargetLowering::TypeWidenVector)
     return WidenVecOp_Convert(N);
   InOp = GetWidenedVector(InOp);
@@ -2476,9 +2479,18 @@ SDValue DAGTypeLegalizer::WidenVecOp_ZERO_EXTEND(SDNode *N) {
       return WidenVecOp_Convert(N);
   }
 
-  // Use a special DAG node to represent the operation of zero extending the
+  // Use special DAG nodes to represent the operation of extending the
   // low lanes.
-  return DAG.getZeroExtendVectorInReg(InOp, DL, VT);
+  switch (N->getOpcode()) {
+  default:
+    llvm_unreachable("Extend legalization on on extend operation!");
+  case ISD::ANY_EXTEND:
+    return DAG.getAnyExtendVectorInReg(InOp, DL, VT);
+  case ISD::SIGN_EXTEND:
+    return DAG.getSignExtendVectorInReg(InOp, DL, VT);
+  case ISD::ZERO_EXTEND:
+    return DAG.getZeroExtendVectorInReg(InOp, DL, VT);
+  }
 }
 
 SDValue DAGTypeLegalizer::WidenVecOp_Convert(SDNode *N) {

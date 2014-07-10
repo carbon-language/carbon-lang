@@ -746,6 +746,10 @@ void TargetLoweringBase::initActions() {
     if (VT >= MVT::FIRST_VECTOR_VALUETYPE &&
         VT <= MVT::LAST_VECTOR_VALUETYPE) {
       setOperationAction(ISD::FCOPYSIGN, (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::ANY_EXTEND_VECTOR_INREG,
+                         (MVT::SimpleValueType)VT, Expand);
+      setOperationAction(ISD::SIGN_EXTEND_VECTOR_INREG,
+                         (MVT::SimpleValueType)VT, Expand);
       setOperationAction(ISD::ZERO_EXTEND_VECTOR_INREG,
                          (MVT::SimpleValueType)VT, Expand);
     }

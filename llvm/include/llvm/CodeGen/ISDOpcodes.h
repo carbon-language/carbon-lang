@@ -379,6 +379,28 @@ namespace ISD {
     /// operand, a ValueType node.
     SIGN_EXTEND_INREG,
 
+    /// ANY_EXTEND_VECTOR_INREG(Vector) - This operator represents an
+    /// in-register any-extension of the low lanes of an integer vector. The
+    /// result type must have fewer elements than the operand type, and those
+    /// elements must be larger integer types such that the total size of the
+    /// operand type and the result type match. Each of the low operand
+    /// elements is any-extended into the corresponding, wider result
+    /// elements with the high bits becoming undef.
+    ANY_EXTEND_VECTOR_INREG,
+
+    /// SIGN_EXTEND_VECTOR_INREG(Vector) - This operator represents an
+    /// in-register sign-extension of the low lanes of an integer vector. The
+    /// result type must have fewer elements than the operand type, and those
+    /// elements must be larger integer types such that the total size of the
+    /// operand type and the result type match. Each of the low operand
+    /// elements is sign-extended into the corresponding, wider result
+    /// elements.
+    // FIXME: The SIGN_EXTEND_INREG node isn't specifically limited to
+    // scalars, but it also doesn't handle vectors well. Either it should be
+    // restricted to scalars or this node (and its handling) should be merged
+    // into it.
+    SIGN_EXTEND_VECTOR_INREG,
+
     /// ZERO_EXTEND_VECTOR_INREG(Vector) - This operator represents an
     /// in-register zero-extension of the low lanes of an integer vector. The
     /// result type must have fewer elements than the operand type, and those

@@ -221,6 +221,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::ZERO_EXTEND:                return "zero_extend";
   case ISD::ANY_EXTEND:                 return "any_extend";
   case ISD::SIGN_EXTEND_INREG:          return "sign_extend_inreg";
+  case ISD::ANY_EXTEND_VECTOR_INREG:    return "any_extend_vector_inreg";
+  case ISD::SIGN_EXTEND_VECTOR_INREG:   return "sign_extend_vector_inreg";
   case ISD::ZERO_EXTEND_VECTOR_INREG:   return "zero_extend_vector_inreg";
   case ISD::TRUNCATE:                   return "truncate";
   case ISD::FP_ROUND:                   return "fp_round";

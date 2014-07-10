@@ -1033,6 +1033,26 @@ SDValue SelectionDAG::getZeroExtendInReg(SDValue Op, SDLoc DL, EVT VT) {
                  getConstant(Imm, Op.getValueType()));
 }
 
+SDValue SelectionDAG::getAnyExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT) {
+  assert(VT.isVector() && "This DAG node is restricted to vector types.");
+  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+         "The sizes of the input and result must match in order to perform the "
+         "extend in-register.");
+  assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
+         "The destination vector type must have fewer lanes than the input.");
+  return getNode(ISD::ANY_EXTEND_VECTOR_INREG, DL, VT, Op);
+}
+
+SDValue SelectionDAG::getSignExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT) {
+  assert(VT.isVector() && "This DAG node is restricted to vector types.");
+  assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&
+         "The sizes of the input and result must match in order to perform the "
+         "extend in-register.");
+  assert(VT.getVectorNumElements() < Op.getValueType().getVectorNumElements() &&
+         "The destination vector type must have fewer lanes than the input.");
+  return getNode(ISD::SIGN_EXTEND_VECTOR_INREG, DL, VT, Op);
+}
+
 SDValue SelectionDAG::getZeroExtendVectorInReg(SDValue Op, SDLoc DL, EVT VT) {
   assert(VT.isVector() && "This DAG node is restricted to vector types.");
   assert(VT.getSizeInBits() == Op.getValueType().getSizeInBits() &&

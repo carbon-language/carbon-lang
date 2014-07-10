@@ -4,6 +4,17 @@
 ;CHECK-LABEL: foo1_8:
 ;CHECK: vcvtdq2ps
 ;CHECK: ret
+;
+;CHECK-WIDE-LABEL: foo1_8:
+;CHECK-WIDE:      vpmovzxbd %xmm0, %xmm1
+;CHECK-WIDE-NEXT: vpslld $24, %xmm1, %xmm1
+;CHECK-WIDE-NEXT: vpsrad $24, %xmm1, %xmm1
+;CHECK-WIDE-NEXT: vpshufb {{.*}}, %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vpslld $24, %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vpsrad $24, %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vinsertf128 $1, %xmm0, %ymm1, %ymm0
+;CHECK-WIDE-NEXT: vcvtdq2ps %ymm0, %ymm0
+;CHECK-WIDE-NEXT: ret
 define <8 x float> @foo1_8(<8 x i8> %src) {
   %res = sitofp <8 x i8> %src to <8 x float>
   ret <8 x float> %res
@@ -12,6 +23,13 @@ define <8 x float> @foo1_8(<8 x i8> %src) {
 ;CHECK-LABEL: foo1_4:
 ;CHECK: vcvtdq2ps
 ;CHECK: ret
+;
+;CHECK-WIDE-LABEL: foo1_4:
+;CHECK-WIDE:      vpmovzxbd %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vpslld $24, %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vpsrad $24, %xmm0, %xmm0
+;CHECK-WIDE-NEXT: vcvtdq2ps %xmm0, %xmm0
+;CHECK-WIDE-NEXT: ret
 define <4 x float> @foo1_4(<4 x i8> %src) {
   %res = sitofp <4 x i8> %src to <4 x float>
   ret <4 x float> %res
