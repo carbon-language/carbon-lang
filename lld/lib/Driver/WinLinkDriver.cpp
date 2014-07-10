@@ -608,7 +608,7 @@ handleFailIfMismatchOption(StringRef option,
 
 // Process "LINK" environment variable. If defined, the value of the variable
 // should be processed as command line arguments.
-static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
+static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &ctx,
                                                 int argc, const char **argv) {
   std::vector<const char *> ret;
   // The first argument is the name of the command. This should stay at the head
@@ -620,7 +620,7 @@ static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
   llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LINK");
   if (env.hasValue())
     for (std::string &arg : splitArgList(*env))
-      ret.push_back(context.allocate(arg).data());
+      ret.push_back(ctx.allocate(arg).data());
 
   // Add the rest of arguments passed via the command line.
   for (int i = 1; i < argc; ++i)
@@ -631,11 +631,11 @@ static std::vector<const char *> processLinkEnv(PECOFFLinkingContext &context,
 
 // Process "LIB" environment variable. The variable contains a list of search
 // paths separated by semicolons.
-static void processLibEnv(PECOFFLinkingContext &context) {
+static void processLibEnv(PECOFFLinkingContext &ctx) {
   llvm::Optional<std::string> env = llvm::sys::Process::GetEnv("LIB");
   if (env.hasValue())
     for (StringRef path : splitPathList(*env))
-      context.appendInputSearchPath(context.allocate(path));
+      ctx.appendInputSearchPath(ctx.allocate(path));
 }
 
 // Returns a default entry point symbol name depending on context image type and
@@ -804,25 +804,25 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
   if (maybeRunLibCommand(argc, argv, diag))
     return true;
 
-  PECOFFLinkingContext context;
-  std::vector<const char *> newargv = processLinkEnv(context, argc, argv);
-  processLibEnv(context);
-  if (!parse(newargv.size() - 1, &newargv[0], context, diag))
+  PECOFFLinkingContext ctx;
+  std::vector<const char *> newargv = processLinkEnv(ctx, argc, argv);
+  processLibEnv(ctx);
+  if (!parse(newargv.size() - 1, &newargv[0], ctx, diag))
     return false;
 
   // Create the file if needed.
-  if (context.getCreateManifest() && !context.getEmbedManifest())
-    if (!createSideBySideManifestFile(context, diag))
+  if (ctx.getCreateManifest() && !ctx.getEmbedManifest())
+    if (!createSideBySideManifestFile(ctx, diag))
       return false;
 
   // Register possible input file parsers.
-  context.registry().addSupportCOFFObjects(context);
-  context.registry().addSupportCOFFImportLibraries();
-  context.registry().addSupportArchives(context.logInputFiles());
-  context.registry().addSupportNativeObjects();
-  context.registry().addSupportYamlFiles();
+  ctx.registry().addSupportCOFFObjects(ctx);
+  ctx.registry().addSupportCOFFImportLibraries();
+  ctx.registry().addSupportArchives(ctx.logInputFiles());
+  ctx.registry().addSupportNativeObjects();
+  ctx.registry().addSupportYamlFiles();
 
-  return link(context, diag);
+  return link(ctx, diag);
 }
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
