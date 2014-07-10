@@ -63,11 +63,11 @@ let isBranch = 1, isTerminator = 1, Uses = [CC] in {
     def BRCL : InstRIL<0xC04, (outs), (ins cond4:$valid, cond4:$R1,
                                            brtarget32:$I2), "jg$R1\t$I2", []>;
   }
-  def AsmBRC : InstRI<0xA74, (outs), (ins uimm8zx4:$R1, brtarget16:$I2),
+  def AsmBRC : InstRI<0xA74, (outs), (ins imm32zx4:$R1, brtarget16:$I2),
                       "brc\t$R1, $I2", []>;
-  def AsmBRCL : InstRIL<0xC04, (outs), (ins uimm8zx4:$R1, brtarget32:$I2),
+  def AsmBRCL : InstRIL<0xC04, (outs), (ins imm32zx4:$R1, brtarget32:$I2),
                         "brcl\t$R1, $I2", []>;
-  def AsmBCR : InstRR<0x07, (outs), (ins uimm8zx4:$R1, GR64:$R2),
+  def AsmBCR : InstRR<0x07, (outs), (ins imm32zx4:$R1, GR64:$R2),
                       "bcr\t$R1, $R2", []>;
 }
 
@@ -109,7 +109,7 @@ multiclass CompareBranches<Operand ccmask, string pos1, string pos2> {
 }
 let isCodeGenOnly = 1 in
   defm C : CompareBranches<cond4, "$M3", "">;
-defm AsmC : CompareBranches<uimm8zx4, "", "$M3, ">;
+defm AsmC : CompareBranches<imm32zx4, "", "$M3, ">;
 
 // Define AsmParser mnemonics for each general condition-code mask
 // (integer or floating-point)
@@ -855,7 +855,7 @@ let Defs = [CC] in {
   }
 
   // AND to memory
-  defm NI : BinarySIPair<"ni", 0x94, 0xEB54, null_frag, uimm8>;
+  defm NI : BinarySIPair<"ni", 0x94, 0xEB54, null_frag, imm32zx8>;
 
   // Block AND.
   let mayLoad = 1, mayStore = 1 in
@@ -912,7 +912,7 @@ let Defs = [CC] in {
   }
 
   // OR to memory
-  defm OI : BinarySIPair<"oi", 0x96, 0xEB56, null_frag, uimm8>;
+  defm OI : BinarySIPair<"oi", 0x96, 0xEB56, null_frag, imm32zx8>;
 
   // Block OR.
   let mayLoad = 1, mayStore = 1 in
@@ -952,7 +952,7 @@ let Defs = [CC] in {
   }
 
   // XOR to memory
-  defm XI : BinarySIPair<"xi", 0x97, 0xEB57, null_frag, uimm8>;
+  defm XI : BinarySIPair<"xi", 0x97, 0xEB57, null_frag, imm32zx8>;
 
   // Block XOR.
   let mayLoad = 1, mayStore = 1 in
@@ -1403,15 +1403,15 @@ def  : Pat<(sub GR64:$src1, (azextloadi32 bdxaddr20only:$addr)),
 
 // Optimize sign-extended 1/0 selects to -1/0 selects.  This is important
 // for vector legalization.
-def : Pat<(sra (shl (i32 (z_select_ccmask 1, 0, uimm8zx4:$valid, uimm8zx4:$cc)),
+def : Pat<(sra (shl (i32 (z_select_ccmask 1, 0, imm32zx4:$valid, imm32zx4:$cc)),
                          (i32 31)),
                     (i32 31)),
-          (Select32 (LHI -1), (LHI 0), uimm8zx4:$valid, uimm8zx4:$cc)>;
-def : Pat<(sra (shl (i64 (anyext (i32 (z_select_ccmask 1, 0, uimm8zx4:$valid,
-                                                       uimm8zx4:$cc)))),
+          (Select32 (LHI -1), (LHI 0), imm32zx4:$valid, imm32zx4:$cc)>;
+def : Pat<(sra (shl (i64 (anyext (i32 (z_select_ccmask 1, 0, imm32zx4:$valid,
+                                                       imm32zx4:$cc)))),
                     (i32 63)),
                (i32 63)),
-          (Select64 (LGHI -1), (LGHI 0), uimm8zx4:$valid, uimm8zx4:$cc)>;
+          (Select64 (LGHI -1), (LGHI 0), imm32zx4:$valid, imm32zx4:$cc)>;
 
 // Peepholes for turning scalar operations into block operations.
 defm : BlockLoadStore<anyextloadi8, i32, MVCSequence, NCSequence, OCSequence,

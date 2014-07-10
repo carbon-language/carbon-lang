@@ -202,21 +202,6 @@ def S32Imm : ImmediateAsmOperand<"S32Imm">;
 def U32Imm : ImmediateAsmOperand<"U32Imm">;
 
 //===----------------------------------------------------------------------===//
-// 8-bit immediates
-//===----------------------------------------------------------------------===//
-
-def uimm8zx4 : Immediate<i8, [{
-  return isUInt<4>(N->getZExtValue());
-}], NOOP_SDNodeXForm, "U4Imm">;
-
-def uimm8zx6 : Immediate<i8, [{
-  return isUInt<6>(N->getZExtValue());
-}], NOOP_SDNodeXForm, "U6Imm">;
-
-def simm8    : Immediate<i8, [{}], SIMM8, "S8Imm">;
-def uimm8    : Immediate<i8, [{}], UIMM8, "U8Imm">;
-
-//===----------------------------------------------------------------------===//
 // i32 immediates
 //===----------------------------------------------------------------------===//
 
@@ -241,6 +226,14 @@ def imm32lh16c : Immediate<i32, [{
 }], LH16, "U16Imm">;
 
 // Short immediates
+def imm32zx4 : Immediate<i32, [{
+  return isUInt<4>(N->getZExtValue());
+}], NOOP_SDNodeXForm, "U4Imm">;
+
+def imm32zx6 : Immediate<i32, [{
+  return isUInt<6>(N->getZExtValue());
+}], NOOP_SDNodeXForm, "U6Imm">;
+
 def imm32sx8 : Immediate<i32, [{
   return isInt<8>(N->getSExtValue());
 }], SIMM8, "S8Imm">;
@@ -470,13 +463,13 @@ def AccessReg : AsmOperandClass {
   let Name = "AccessReg";
   let ParserMethod = "parseAccessReg";
 }
-def access_reg : Immediate<i8, [{ return N->getZExtValue() < 16; }],
+def access_reg : Immediate<i32, [{ return N->getZExtValue() < 16; }],
                            NOOP_SDNodeXForm, "AccessReg"> {
   let ParserMatchClass = AccessReg;
 }
 
 // A 4-bit condition-code mask.
-def cond4 : PatLeaf<(i8 imm), [{ return (N->getZExtValue() < 16); }]>,
-            Operand<i8> {
+def cond4 : PatLeaf<(i32 imm), [{ return (N->getZExtValue() < 16); }]>,
+            Operand<i32> {
   let PrintMethod = "printCond4Operand";
 }

@@ -19,14 +19,14 @@ def SDT_ZICmp               : SDTypeProfile<0, 3,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisVT<2, i32>]>;
 def SDT_ZBRCCMask           : SDTypeProfile<0, 3,
-                                            [SDTCisVT<0, i8>,
-                                             SDTCisVT<1, i8>,
+                                            [SDTCisVT<0, i32>,
+                                             SDTCisVT<1, i32>,
                                              SDTCisVT<2, OtherVT>]>;
 def SDT_ZSelectCCMask       : SDTypeProfile<1, 4,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisSameAs<1, 2>,
-                                             SDTCisVT<3, i8>,
-                                             SDTCisVT<4, i8>]>;
+                                             SDTCisVT<3, i32>,
+                                             SDTCisVT<4, i32>]>;
 def SDT_ZWrapPtr            : SDTypeProfile<1, 1,
                                             [SDTCisSameAs<0, 1>,
                                              SDTCisPtrTy<0>]>;
@@ -37,7 +37,7 @@ def SDT_ZWrapOffset         : SDTypeProfile<1, 2,
 def SDT_ZAdjDynAlloc        : SDTypeProfile<1, 0, [SDTCisVT<0, i64>]>;
 def SDT_ZExtractAccess      : SDTypeProfile<1, 1,
                                             [SDTCisVT<0, i32>,
-                                             SDTCisVT<1, i8>]>;
+                                             SDTCisVT<1, i32>]>;
 def SDT_ZGR128Binary32      : SDTypeProfile<1, 2,
                                             [SDTCisVT<0, untyped>,
                                              SDTCisVT<1, untyped>,
@@ -77,7 +77,7 @@ def SDT_ZString             : SDTypeProfile<1, 3,
                                              SDTCisVT<3, i32>]>;
 def SDT_ZI32Intrinsic       : SDTypeProfile<1, 0, [SDTCisVT<0, i32>]>;
 def SDT_ZPrefetch           : SDTypeProfile<0, 2,
-                                            [SDTCisVT<0, i8>,
+                                            [SDTCisVT<0, i32>,
                                              SDTCisPtrTy<1>]>;
 
 //===----------------------------------------------------------------------===//
