@@ -48,7 +48,6 @@
 #include <unistd.h>
 
 #if SANITIZER_FREEBSD
-#include <stdlib.h>  // for getenv
 #include <sys/sysctl.h>
 #include <machine/atomic.h>
 extern "C" {
@@ -56,6 +55,7 @@ extern "C" {
 // FreeBSD 9.2 and 10.0.
 #include <sys/umtx.h>
 }
+extern char **environ;  // provided by crt1
 #endif  // SANITIZER_FREEBSD
 
 #if !SANITIZER_ANDROID
@@ -315,10 +315,20 @@ u64 NanoTime() {
   return (u64)tv.tv_sec * 1000*1000*1000 + tv.tv_usec * 1000;
 }
 
-#if SANITIZER_LINUX
-// Like getenv, but reads env directly from /proc and does not use libc.
-// This function should be called first inside __asan_init.
+// Like getenv, but reads env directly from /proc (on Linux) or parses the
+// 'environ' array (on FreeBSD) and does not use libc. This function should be
+// called first inside __asan_init.
 const char *GetEnv(const char *name) {
+#if SANITIZER_FREEBSD
+  if (::environ != 0) {
+    uptr NameLen = internal_strlen(name);
+    for (char **Env = ::environ; *Env != 0; Env++) {
+      if (internal_strncmp(*Env, name, NameLen) == 0 && (*Env)[NameLen] == '=')
+        return (*Env) + NameLen + 1;
+    }
+  }
+  return 0;  // Not found.
+#elif SANITIZER_LINUX
   static char *environ;
   static uptr len;
   static bool inited;
@@ -342,12 +352,10 @@ const char *GetEnv(const char *name) {
     p = endp + 1;
   }
   return 0;  // Not found.
-}
 #else
-const char *GetEnv(const char *name) {
-  return getenv(name);
-}
+#error "Unsupported platform"
 #endif
+}
 
 extern "C" {
   SANITIZER_WEAK_ATTRIBUTE extern void *__libc_stack_end;
