@@ -6,6 +6,10 @@
 //  * The driver passes the option through to the backend.
 //  * The frontend diagnostic handler 'demangles' and resolves the correct function definition.
 
+// Test that link invocations don't emit an "argument unused during compilation" diagnostic.
+// RUN: touch %t.o
+// RUN: %clang -Werror -Wframe-larger-than=0 %t.o -###  2>&1 | not grep ' error: '
+
 // TODO: Support rich backend diagnostics for Objective-C methods.
 
 // Backend diagnostics aren't suppressed in system headers because such results
