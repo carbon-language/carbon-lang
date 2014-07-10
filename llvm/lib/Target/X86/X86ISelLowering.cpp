@@ -7792,19 +7792,6 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
 
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
   }
-  SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
-  SDValue LoV1 =
-      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                  DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V1, Zero));
-  SDValue HiV1 =
-      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                  DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V1, Zero));
-  SDValue LoV2 =
-      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                  DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V2, Zero));
-  SDValue HiV2 =
-      DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
-                  DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V2, Zero));
 
   int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
   int V1HiBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
@@ -7826,10 +7813,23 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   buildBlendMasks(LoMask, V1LoBlendMask, V2LoBlendMask);
   buildBlendMasks(HiMask, V1HiBlendMask, V2HiBlendMask);
 
-  SDValue V1Lo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV1, HiV1, V1LoBlendMask);
-  SDValue V2Lo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV2, HiV2, V2LoBlendMask);
-  SDValue V1Hi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV1, HiV1, V1HiBlendMask);
-  SDValue V2Hi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV2, HiV2, V2HiBlendMask);
+  SDValue Zero = getZeroVector(MVT::v8i16, Subtarget, DAG, DL);
+
+  auto buildLoAndHiV8s =
+      [&](SDValue V, ArrayRef<int> LoBlendMask, ArrayRef<int> HiBlendMask) {
+    SDValue LoV =
+        DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                    DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, V, Zero));
+    SDValue HiV =
+        DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
+                    DAG.getNode(X86ISD::UNPCKH, DL, MVT::v16i8, V, Zero));
+    SDValue BlendedLo = DAG.getVectorShuffle(MVT::v8i16, DL, LoV, HiV, LoBlendMask);
+    SDValue BlendedHi = DAG.getVectorShuffle(MVT::v8i16, DL, LoV, HiV, HiBlendMask);
+    return std::make_pair(BlendedLo, BlendedHi);
+  };
+  SDValue V1Lo, V1Hi, V2Lo, V2Hi;
+  std::tie(V1Lo, V1Hi) = buildLoAndHiV8s(V1, V1LoBlendMask, V1HiBlendMask);
+  std::tie(V2Lo, V2Hi) = buildLoAndHiV8s(V2, V2LoBlendMask, V2HiBlendMask);
 
   SDValue LoV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Lo, V2Lo, LoMask);
   SDValue HiV = DAG.getVectorShuffle(MVT::v8i16, DL, V1Hi, V2Hi, HiMask);
