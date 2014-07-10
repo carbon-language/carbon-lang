@@ -793,9 +793,9 @@ SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
   // FIXME: Sign extend 1 to all ones if thats legal on the target.
   if (TLI.getOperationAction(ISD::AND, VT) == TargetLowering::Expand ||
       TLI.getOperationAction(ISD::XOR, VT) == TargetLowering::Expand ||
-      TLI.getOperationAction(ISD::OR,  VT) == TargetLowering::Expand ||
-      TLI.getBooleanContents(true) !=
-      TargetLowering::ZeroOrNegativeOneBooleanContent)
+      TLI.getOperationAction(ISD::OR, VT) == TargetLowering::Expand ||
+      TLI.getBooleanContents(Op1.getValueType()) !=
+          TargetLowering::ZeroOrNegativeOneBooleanContent)
     return DAG.UnrollVectorOp(Op.getNode());
 
   // If the mask and the type are different sizes, unroll the vector op. This

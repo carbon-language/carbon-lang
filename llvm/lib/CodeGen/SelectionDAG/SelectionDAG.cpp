@@ -1012,11 +1012,12 @@ SDValue SelectionDAG::getZExtOrTrunc(SDValue Op, SDLoc DL, EVT VT) {
     getNode(ISD::TRUNCATE, DL, VT, Op);
 }
 
-SDValue SelectionDAG::getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT) {
+SDValue SelectionDAG::getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT,
+                                        EVT OpVT) {
   if (VT.bitsLE(Op.getValueType()))
     return getNode(ISD::TRUNCATE, SL, VT, Op);
 
-  TargetLowering::BooleanContent BType = TLI->getBooleanContents(VT.isVector());
+  TargetLowering::BooleanContent BType = TLI->getBooleanContents(OpVT);
   return getNode(TLI->getExtendForContent(BType), SL, VT, Op);
 }
 
@@ -1054,7 +1055,7 @@ SDValue SelectionDAG::getNOT(SDLoc DL, SDValue Val, EVT VT) {
 SDValue SelectionDAG::getLogicalNOT(SDLoc DL, SDValue Val, EVT VT) {
   EVT EltVT = VT.getScalarType();
   SDValue TrueValue;
-  switch (TLI->getBooleanContents(VT.isVector())) {
+  switch (TLI->getBooleanContents(VT)) {
     case TargetLowering::ZeroOrOneBooleanContent:
     case TargetLowering::UndefinedBooleanContent:
       TrueValue = getConstant(1, VT);
@@ -1776,7 +1777,8 @@ SDValue SelectionDAG::FoldSetCC(EVT VT, SDValue N1,
   case ISD::SETTRUE:
   case ISD::SETTRUE2: {
     const TargetLowering *TLI = TM.getTargetLowering();
-    TargetLowering::BooleanContent Cnt = TLI->getBooleanContents(VT.isVector());
+    TargetLowering::BooleanContent Cnt =
+        TLI->getBooleanContents(N1->getValueType(0));
     return getConstant(
         Cnt == TargetLowering::ZeroOrNegativeOneBooleanContent ? -1ULL : 1, VT);
   }
@@ -2007,11 +2009,20 @@ void SelectionDAG::computeKnownBits(SDValue Op, APInt &KnownZero,
   case ISD::UMULO:
     if (Op.getResNo() != 1)
       break;
-    // The boolean result conforms to getBooleanContents.  Fall through.
+    // The boolean result conforms to getBooleanContents.
+    // If we know the result of a setcc has the top bits zero, use this info.
+    // We know that we have an integer-based boolean since these operations
+    // are only available for integer.
+    if (TLI->getBooleanContents(Op.getValueType().isVector(), false) ==
+            TargetLowering::ZeroOrOneBooleanContent &&
+        BitWidth > 1)
+      KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
+    break;
   case ISD::SETCC:
     // If we know the result of a setcc has the top bits zero, use this info.
-    if (TLI->getBooleanContents(Op.getValueType().isVector()) ==
-        TargetLowering::ZeroOrOneBooleanContent && BitWidth > 1)
+    if (TLI->getBooleanContents(Op.getOperand(0).getValueType()) ==
+            TargetLowering::ZeroOrOneBooleanContent &&
+        BitWidth > 1)
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - 1);
     break;
   case ISD::SHL:
@@ -2410,9 +2421,16 @@ unsigned SelectionDAG::ComputeNumSignBits(SDValue Op, unsigned Depth) const{
     if (Op.getResNo() != 1)
       break;
     // The boolean result conforms to getBooleanContents.  Fall through.
+    // If setcc returns 0/-1, all bits are sign bits.
+    // We know that we have an integer-based boolean since these operations
+    // are only available for integer.
+    if (TLI->getBooleanContents(Op.getValueType().isVector(), false) ==
+        TargetLowering::ZeroOrNegativeOneBooleanContent)
+      return VTBits;
+    break;
   case ISD::SETCC:
     // If setcc returns 0/-1, all bits are sign bits.
-    if (TLI->getBooleanContents(Op.getValueType().isVector()) ==
+    if (TLI->getBooleanContents(Op.getOperand(0).getValueType()) ==
         TargetLowering::ZeroOrNegativeOneBooleanContent)
       return VTBits;
     break;

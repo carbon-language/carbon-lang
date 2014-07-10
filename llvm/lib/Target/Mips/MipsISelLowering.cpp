@@ -215,6 +215,11 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
   setBooleanVectorContents(ZeroOrNegativeOneBooleanContent);
+  // The cmp.cond.fmt instruction in MIPS32r6/MIPS64r6 uses 0 and -1 like MSA
+  // does. Integer booleans still use 0 and 1.
+  if (Subtarget->hasMips32r6())
+    setBooleanContents(ZeroOrOneBooleanContent,
+                       ZeroOrNegativeOneBooleanContent);
 
   // Load extented operations for i1 types must be promoted
   setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);

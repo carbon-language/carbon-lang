@@ -570,8 +570,8 @@ public:
 
   /// getBoolExtOrTrunc - Convert Op, which must be of integer type, to the
   /// integer type VT, by using an extension appropriate for the target's
-  /// BooleanContent or truncating it.
-  SDValue getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT);
+  /// BooleanContent for type OpVT or truncating it.
+  SDValue getBoolExtOrTrunc(SDValue Op, SDLoc SL, EVT VT, EVT OpVT);
 
   /// getNOT - Create a bitwise NOT operation as (XOR Val, -1).
   SDValue getNOT(SDLoc DL, SDValue Val, EVT VT);

@@ -690,6 +690,7 @@ TargetLoweringBase::TargetLoweringBase(const TargetMachine &tm,
   ExceptionPointerRegister = 0;
   ExceptionSelectorRegister = 0;
   BooleanContents = UndefinedBooleanContent;
+  BooleanFloatContents = UndefinedBooleanContent;
   BooleanVectorContents = UndefinedBooleanContent;
   SchedPreferenceInfo = Sched::ILP;
   JumpBufSize = 0;

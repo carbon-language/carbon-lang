@@ -516,9 +516,8 @@ entry:
 ; 32R6-DAG:      mtc1 $7, $[[F3:f[0-9]+]]
 ; 32R6:          cmp.eq.s $[[CC:f[0-9]+]], $[[F2]], $[[F3]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -532,9 +531,8 @@ entry:
 
 ; 64R6:          cmp.eq.s $[[CC:f[0-9]+]], $f14, $f15
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -563,9 +561,8 @@ entry:
 ; 32R6-DAG:      mtc1 $7, $[[F3:f[0-9]+]]
 ; 32R6:          cmp.lt.s $[[CC:f[0-9]+]], $[[F2]], $[[F3]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -579,9 +576,8 @@ entry:
 
 ; 64R6:          cmp.lt.s $[[CC:f[0-9]+]], $f14, $f15
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
   %cmp = fcmp olt float %f2, %f3
@@ -609,9 +605,8 @@ entry:
 ; 32R6-DAG:      mtc1 $7, $[[F3:f[0-9]+]]
 ; 32R6:          cmp.lt.s $[[CC:f[0-9]+]], $[[F3]], $[[F2]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -625,9 +620,8 @@ entry:
 
 ; 64R6:          cmp.lt.s $[[CC:f[0-9]+]], $f15, $f14
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -668,9 +662,8 @@ entry:
 ; 32R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 32R6:          cmp.eq.d $[[CC:f[0-9]+]], $[[TMP]], $[[TMP1]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -702,9 +695,8 @@ entry:
 ; 64R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 64R6:          cmp.eq.d $[[CC:f[0-9]+]], $[[TMP]], $[[TMP1]]
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -747,9 +739,8 @@ entry:
 ; 32R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 32R6:          cmp.lt.d $[[CC:f[0-9]+]], $[[TMP]], $[[TMP1]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -781,9 +772,8 @@ entry:
 ; 64R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 64R6:          cmp.lt.d $[[CC:f[0-9]+]], $[[TMP]], $[[TMP1]]
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -826,9 +816,8 @@ entry:
 ; 32R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 32R6:          cmp.lt.d $[[CC:f[0-9]+]], $[[TMP1]], $[[TMP]]
 ; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 32R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 32R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 32R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 32R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 32R6:          or $2, $[[NE]], $[[EQ]]
 
@@ -860,9 +849,8 @@ entry:
 ; 64R6-DAG:      ldc1 $[[TMP1:f[0-9]+]], 0($[[D3]])
 ; 64R6:          cmp.lt.d $[[CC:f[0-9]+]], $[[TMP1]], $[[TMP]]
 ; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
+; 64R6:          andi $[[CCGPR]], $[[CCGPR]], 1
 ; 64R6:          seleqz $[[EQ:[0-9]+]], $5, $[[CCGPR]]
-; FIXME: This move is redundant
-; 64R6:          mfc1 $[[CCGPR:[0-9]+]], $[[CC]]
 ; 64R6:          selnez $[[NE:[0-9]+]], $4, $[[CCGPR]]
 ; 64R6:          or $2, $[[NE]], $[[EQ]]
 

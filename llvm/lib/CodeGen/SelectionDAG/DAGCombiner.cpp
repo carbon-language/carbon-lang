@@ -3958,14 +3958,14 @@ SDValue DAGCombiner::visitSHL(SDNode *N) {
     // If setcc produces all-one true value then:
     // (shl (and (setcc) N01CV) N1CV) -> (and (setcc) N01CV<<N1CV)
     if (N1CV && N1CV->isConstant()) {
-      if (N0.getOpcode() == ISD::AND &&
-          TLI.getBooleanContents(true) ==
-          TargetLowering::ZeroOrNegativeOneBooleanContent) {
+      if (N0.getOpcode() == ISD::AND) {
         SDValue N00 = N0->getOperand(0);
         SDValue N01 = N0->getOperand(1);
         BuildVectorSDNode *N01CV = dyn_cast<BuildVectorSDNode>(N01);
 
-        if (N01CV && N01CV->isConstant() && N00.getOpcode() == ISD::SETCC) {
+        if (N01CV && N01CV->isConstant() && N00.getOpcode() == ISD::SETCC &&
+            TLI.getBooleanContents(N00.getOperand(0).getValueType()) ==
+                TargetLowering::ZeroOrNegativeOneBooleanContent) {
           SDValue C = DAG.FoldConstantArithmetic(ISD::SHL, VT, N01CV, N1CV);
           if (C.getNode())
             return DAG.getNode(ISD::AND, SDLoc(N), VT, N00, C);
@@ -4524,11 +4524,20 @@ SDValue DAGCombiner::visitSELECT(SDNode *N) {
   if (VT == MVT::i1 && N1C && N1C->getAPIntValue() == 1)
     return DAG.getNode(ISD::OR, SDLoc(N), VT, N0, N2);
   // fold (select C, 0, 1) -> (xor C, 1)
+  // We can't do this reliably if integer based booleans have different contents
+  // to floating point based booleans. This is because we can't tell whether we
+  // have an integer-based boolean or a floating-point-based boolean unless we
+  // can find the SETCC that produced it and inspect its operands. This is
+  // fairly easy if C is the SETCC node, but it can potentially be
+  // undiscoverable (or not reasonably discoverable). For example, it could be
+  // in another basic block or it could require searching a complicated
+  // expression.
   if (VT.isInteger() &&
-      (VT0 == MVT::i1 ||
-       (VT0.isInteger() &&
-        TLI.getBooleanContents(false) ==
-        TargetLowering::ZeroOrOneBooleanContent)) &&
+      (VT0 == MVT::i1 || (VT0.isInteger() &&
+                          TLI.getBooleanContents(false, false) ==
+                              TLI.getBooleanContents(false, true) &&
+                          TLI.getBooleanContents(false, false) ==
+                              TargetLowering::ZeroOrOneBooleanContent)) &&
       N1C && N2C && N1C->isNullValue() && N2C->getAPIntValue() == 1) {
     SDValue XORNode;
     if (VT == VT0)
@@ -5077,12 +5086,12 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   }
 
   if (N0.getOpcode() == ISD::SETCC) {
+    EVT N0VT = N0.getOperand(0).getValueType();
     // sext(setcc) -> sext_in_reg(vsetcc) for vectors.
     // Only do this before legalize for now.
     if (VT.isVector() && !LegalOperations &&
-        TLI.getBooleanContents(true) ==
-          TargetLowering::ZeroOrNegativeOneBooleanContent) {
-      EVT N0VT = N0.getOperand(0).getValueType();
+        TLI.getBooleanContents(N0VT) ==
+            TargetLowering::ZeroOrNegativeOneBooleanContent) {
       // On some architectures (such as SSE/NEON/etc) the SETCC result type is
       // of the same size as the compared operands. Only optimize sext(setcc())
       // if this is the case.
@@ -11243,8 +11252,8 @@ SDValue DAGCombiner::SimplifySelectCC(SDLoc DL, SDValue N0, SDValue N1,
 
   // fold select C, 16, 0 -> shl C, 4
   if (N2C && N3C && N3C->isNullValue() && N2C->getAPIntValue().isPowerOf2() &&
-    TLI.getBooleanContents(N0.getValueType().isVector()) ==
-      TargetLowering::ZeroOrOneBooleanContent) {
+      TLI.getBooleanContents(N0.getValueType()) ==
+          TargetLowering::ZeroOrOneBooleanContent) {
 
     // If the caller doesn't want us to simplify this into a zext of a compare,
     // don't do it.

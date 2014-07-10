@@ -284,8 +284,17 @@ public:
   /// selects between the two kinds.  For example on X86 a scalar boolean should
   /// be zero extended from i1, while the elements of a vector of booleans
   /// should be sign extended from i1.
-  BooleanContent getBooleanContents(bool isVec) const {
-    return isVec ? BooleanVectorContents : BooleanContents;
+  ///
+  /// Some cpus also treat floating point types the same way as they treat
+  /// vectors instead of the way they treat scalars.
+  BooleanContent getBooleanContents(bool isVec, bool isFloat) const {
+    if (isVec)
+      return BooleanVectorContents;
+    return isFloat ? BooleanFloatContents : BooleanContents;
+  }
+
+  BooleanContent getBooleanContents(EVT Type) const {
+    return getBooleanContents(Type.isVector(), Type.isFloatingPoint());
   }
 
   /// Return target scheduling preference.
@@ -950,9 +959,19 @@ public:
   virtual void resetOperationActions() {}
 
 protected:
-  /// Specify how the target extends the result of a boolean value from i1 to a
-  /// wider type.  See getBooleanContents.
-  void setBooleanContents(BooleanContent Ty) { BooleanContents = Ty; }
+  /// Specify how the target extends the result of integer and floating point
+  /// boolean values from i1 to a wider type.  See getBooleanContents.
+  void setBooleanContents(BooleanContent Ty) {
+    BooleanContents = Ty;
+    BooleanFloatContents = Ty;
+  }
+
+  /// Specify how the target extends the result of integer and floating point
+  /// boolean values from i1 to a wider type.  See getBooleanContents.
+  void setBooleanContents(BooleanContent IntTy, BooleanContent FloatTy) {
+    BooleanContents = IntTy;
+    BooleanFloatContents = FloatTy;
+  }
 
   /// Specify how the target extends the result of a vector boolean value from a
   /// vector of i1 to a wider type.  See getBooleanContents.
@@ -1495,6 +1514,10 @@ private:
   /// Information about the contents of the high-bits in boolean values held in
   /// a type wider than i1. See getBooleanContents.
   BooleanContent BooleanContents;
+
+  /// Information about the contents of the high-bits in boolean values held in
+  /// a type wider than i1. See getBooleanContents.
+  BooleanContent BooleanFloatContents;
 
   /// Information about the contents of the high-bits in boolean vector values
   /// when the element type is wider than i1. See getBooleanContents.

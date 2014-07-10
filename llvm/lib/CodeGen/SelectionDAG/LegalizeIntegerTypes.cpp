@@ -519,7 +519,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VSELECT(SDNode *N) {
   EVT OpTy = N->getOperand(1).getValueType();
 
   // Promote all the way up to the canonical SetCC type.
-  Mask = PromoteTargetBoolean(Mask, getSetCCResultType(OpTy));
+  Mask = PromoteTargetBoolean(Mask, OpTy);
   SDValue LHS = GetPromotedInteger(N->getOperand(1));
   SDValue RHS = GetPromotedInteger(N->getOperand(2));
   return DAG.getNode(ISD::VSELECT, SDLoc(N),
@@ -919,8 +919,7 @@ SDValue DAGTypeLegalizer::PromoteIntOp_BRCOND(SDNode *N, unsigned OpNo) {
   assert(OpNo == 1 && "only know how to promote condition");
 
   // Promote all the way up to the canonical SetCC type.
-  EVT SVT = getSetCCResultType(MVT::Other);
-  SDValue Cond = PromoteTargetBoolean(N->getOperand(1), SVT);
+  SDValue Cond = PromoteTargetBoolean(N->getOperand(1), MVT::Other);
 
   // The chain (Op#0) and basic block destination (Op#2) are always legal types.
   return SDValue(DAG.UpdateNodeOperands(N, N->getOperand(0), Cond,
@@ -1013,9 +1012,8 @@ SDValue DAGTypeLegalizer::PromoteIntOp_SELECT(SDNode *N, unsigned OpNo) {
   EVT OpTy = N->getOperand(1).getValueType();
 
   // Promote all the way up to the canonical SetCC type.
-  EVT SVT = getSetCCResultType(N->getOpcode() == ISD::SELECT ?
-                                   OpTy.getScalarType() : OpTy);
-  Cond = PromoteTargetBoolean(Cond, SVT);
+  EVT OpVT = N->getOpcode() == ISD::SELECT ? OpTy.getScalarType() : OpTy;
+  Cond = PromoteTargetBoolean(Cond, OpVT);
 
   return SDValue(DAG.UpdateNodeOperands(N, Cond, N->getOperand(1),
                                         N->getOperand(2)), 0);

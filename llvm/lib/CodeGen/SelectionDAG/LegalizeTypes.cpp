@@ -1065,11 +1065,14 @@ DAGTypeLegalizer::ExpandChainLibCall(RTLIB::Libcall LC,
 /// PromoteTargetBoolean - Promote the given target boolean to a target boolean
 /// of the given type.  A target boolean is an integer value, not necessarily of
 /// type i1, the bits of which conform to getBooleanContents.
-SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT VT) {
+///
+/// ValVT is the type of values that produced the boolean.
+SDValue DAGTypeLegalizer::PromoteTargetBoolean(SDValue Bool, EVT ValVT) {
   SDLoc dl(Bool);
+  EVT BoolVT = getSetCCResultType(ValVT);
   ISD::NodeType ExtendCode =
-    TargetLowering::getExtendForContent(TLI.getBooleanContents(VT.isVector()));
-  return DAG.getNode(ExtendCode, dl, VT, Bool);
+      TargetLowering::getExtendForContent(TLI.getBooleanContents(ValVT));
+  return DAG.getNode(ExtendCode, dl, BoolVT, Bool);
 }
 
 /// SplitInteger - Return the lower LoVT bits of Op in Lo and the upper HiVT

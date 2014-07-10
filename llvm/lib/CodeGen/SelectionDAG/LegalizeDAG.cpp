@@ -3761,7 +3761,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     SDValue SumSignNE = DAG.getSetCC(dl, OType, LHSSign, SumSign, ISD::SETNE);
 
     SDValue Cmp = DAG.getNode(ISD::AND, dl, OType, SignsMatch, SumSignNE);
-    Results.push_back(DAG.getBoolExtOrTrunc(Cmp, dl, ResultType));
+    Results.push_back(DAG.getBoolExtOrTrunc(Cmp, dl, ResultType, ResultType));
     break;
   }
   case ISD::UADDO:
@@ -3779,7 +3779,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       = Node->getOpcode() == ISD::UADDO ? ISD::SETULT : ISD::SETUGT;
     SDValue SetCC = DAG.getSetCC(dl, SetCCType, Sum, LHS, CC);
 
-    Results.push_back(DAG.getBoolExtOrTrunc(SetCC, dl, ResultType));
+    Results.push_back(DAG.getBoolExtOrTrunc(SetCC, dl, ResultType, ResultType));
     break;
   }
   case ISD::UMULO:
@@ -3969,7 +3969,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     // illegal; expand it into a SELECT_CC.
     EVT VT = Node->getValueType(0);
     int TrueValue;
-    switch (TLI.getBooleanContents(VT.isVector())) {
+    switch (TLI.getBooleanContents(Tmp1->getValueType(0))) {
     case TargetLowering::ZeroOrOneBooleanContent:
     case TargetLowering::UndefinedBooleanContent:
       TrueValue = 1;

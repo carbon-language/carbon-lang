@@ -167,7 +167,7 @@ private:
                                                  SDNode *Node, bool isSigned);
   std::pair<SDValue, SDValue> ExpandAtomic(SDNode *Node);
 
-  SDValue PromoteTargetBoolean(SDValue Bool, EVT VT);
+  SDValue PromoteTargetBoolean(SDValue Bool, EVT ValVT);
   void ReplaceValueWith(SDValue From, SDValue To);
   void SplitInteger(SDValue Op, SDValue &Lo, SDValue &Hi);
   void SplitInteger(SDValue Op, EVT LoVT, EVT HiVT,
