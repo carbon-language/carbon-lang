@@ -1560,6 +1560,11 @@
 	ldxbr	%f0, %f2
 	ldxbr	%f2, %f0
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: ldxbra	%f0, 0, %f0, 0
+
+	ldxbra	%f0, 0, %f0, 0
+
 #CHECK: error: invalid operand
 #CHECK: ldy	%f0, -524289
 #CHECK: error: invalid operand
@@ -1576,6 +1581,11 @@
 	le	%f0, -1
 	le	%f0, 4096
 
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: ledbra	%f0, 0, %f0, 0
+
+	ledbra	%f0, 0, %f0, 0
+
 #CHECK: error: invalid register pair
 #CHECK: lexbr	%f0, %f2
 #CHECK: error: invalid register pair
@@ -1583,6 +1593,11 @@
 
 	lexbr	%f0, %f2
 	lexbr	%f2, %f0
+
+#CHECK: error: {{(instruction requires: fp-extension)?}}
+#CHECK: lexbra	%f0, 0, %f0, 0
+
+	lexbra	%f0, 0, %f0, 0
 
 #CHECK: error: invalid operand
 #CHECK: ley	%f0, -524289

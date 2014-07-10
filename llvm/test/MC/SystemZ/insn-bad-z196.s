@@ -411,6 +411,60 @@
 	lbh	%r0, 524288
 
 #CHECK: error: invalid operand
+#CHECK: ldxbra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: ldxbra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: ldxbra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: ldxbra	%f0, 16, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: ldxbra	%f0, 0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: ldxbra	%f2, 0, %f0, 0
+
+	ldxbra	%f0, 0, %f0, -1
+	ldxbra	%f0, 0, %f0, 16
+	ldxbra	%f0, -1, %f0, 0
+	ldxbra	%f0, 16, %f0, 0
+	ldxbra	%f0, 0, %f2, 0
+	ldxbra	%f2, 0, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: ledbra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: ledbra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: ledbra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: ledbra	%f0, 16, %f0, 0
+
+	ledbra	%f0, 0, %f0, -1
+	ledbra	%f0, 0, %f0, 16
+	ledbra	%f0, -1, %f0, 0
+	ledbra	%f0, 16, %f0, 0
+
+#CHECK: error: invalid operand
+#CHECK: lexbra	%f0, 0, %f0, -1
+#CHECK: error: invalid operand
+#CHECK: lexbra	%f0, 0, %f0, 16
+#CHECK: error: invalid operand
+#CHECK: lexbra	%f0, -1, %f0, 0
+#CHECK: error: invalid operand
+#CHECK: lexbra	%f0, 16, %f0, 0
+#CHECK: error: invalid register pair
+#CHECK: lexbra	%f0, 0, %f2, 0
+#CHECK: error: invalid register pair
+#CHECK: lexbra	%f2, 0, %f0, 0
+
+	lexbra	%f0, 0, %f0, -1
+	lexbra	%f0, 0, %f0, 16
+	lexbra	%f0, -1, %f0, 0
+	lexbra	%f0, 16, %f0, 0
+	lexbra	%f0, 0, %f2, 0
+	lexbra	%f2, 0, %f0, 0
+
+#CHECK: error: invalid operand
 #CHECK: lfh	%r0, -524289
 #CHECK: error: invalid operand
 #CHECK: lfh	%r0, 524288

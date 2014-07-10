@@ -133,6 +133,13 @@ def LEDBR : UnaryRRE<"ledb", 0xB344, fround,    FP32,  FP64>;
 def LEXBR : UnaryRRE<"lexb", 0xB346, null_frag, FP128, FP128>;
 def LDXBR : UnaryRRE<"ldxb", 0xB345, null_frag, FP128, FP128>;
 
+def LEDBRA : UnaryRRF4<"ledbra", 0xB344, FP32,  FP64>,
+             Requires<[FeatureFPExtension]>;
+def LEXBRA : UnaryRRF4<"lexbra", 0xB346, FP128, FP128>,
+             Requires<[FeatureFPExtension]>;
+def LDXBRA : UnaryRRF4<"ldxbra", 0xB345, FP128, FP128>,
+             Requires<[FeatureFPExtension]>;
+
 def : Pat<(f32 (fround FP128:$src)),
           (EXTRACT_SUBREG (LEXBR FP128:$src), subreg_hh32)>;
 def : Pat<(f64 (fround FP128:$src)),
