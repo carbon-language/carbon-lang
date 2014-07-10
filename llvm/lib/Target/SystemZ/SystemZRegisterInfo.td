@@ -119,6 +119,29 @@ defm ADDR128 : SystemZRegClass<"ADDR128", untyped, 128, (sub GR128Bit, R0Q)>;
 // Floating-point registers
 //===----------------------------------------------------------------------===//
 
+// Maps FPR register numbers to their DWARF encoding.
+class DwarfMapping<int id> { int Id = id; }
+
+def F0Dwarf  : DwarfMapping<16>;
+def F2Dwarf  : DwarfMapping<17>;
+def F4Dwarf  : DwarfMapping<18>;
+def F6Dwarf  : DwarfMapping<19>;
+
+def F1Dwarf  : DwarfMapping<20>;
+def F3Dwarf  : DwarfMapping<21>;
+def F5Dwarf  : DwarfMapping<22>;
+def F7Dwarf  : DwarfMapping<23>;
+
+def F8Dwarf  : DwarfMapping<24>;
+def F10Dwarf : DwarfMapping<25>;
+def F12Dwarf : DwarfMapping<26>;
+def F14Dwarf : DwarfMapping<27>;
+
+def F9Dwarf  : DwarfMapping<28>;
+def F11Dwarf : DwarfMapping<29>;
+def F13Dwarf : DwarfMapping<30>;
+def F15Dwarf : DwarfMapping<31>;
+
 // Lower 32 bits of one of the 16 64-bit floating-point registers
 class FPR32<bits<16> num, string n> : SystemZReg<n> {
   let HWEncoding = num;
@@ -142,7 +165,7 @@ class FPR128<bits<16> num, string n, FPR64 low, FPR64 high>
 foreach I = 0-15 in {
   def F#I#S : FPR32<I, "f"#I>;
   def F#I#D : FPR64<I, "f"#I, !cast<FPR32>("F"#I#"S")>,
-              DwarfRegNum<[!add(I, 16)]>;
+              DwarfRegNum<[!cast<DwarfMapping>("F"#I#"Dwarf").Id]>;
 }
 
 foreach I = [0, 1, 4, 5, 8, 9, 12, 13] in {
