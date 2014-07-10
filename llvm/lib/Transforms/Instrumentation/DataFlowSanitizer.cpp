@@ -602,7 +602,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
     ++i;
     // Don't stop on weak.  We assume people aren't playing games with the
     // instrumentedness of overridden weak aliases.
-    if (Function *F = dyn_cast<Function>(GA->getAliasee())) {
+    if (auto F = dyn_cast<Function>(GA->getBaseObject())) {
       bool GAInst = isInstrumented(GA), FInst = isInstrumented(F);
       if (GAInst && FInst) {
         addGlobalNamePrefix(GA);
@@ -612,7 +612,7 @@ bool DataFlowSanitizer::runOnModule(Module &M) {
         // below will take care of instrumenting it.
         Function *NewF =
             buildWrapperFunction(F, "", GA->getLinkage(), F->getFunctionType());
-        GA->replaceAllUsesWith(NewF);
+        GA->replaceAllUsesWith(ConstantExpr::getBitCast(NewF, GA->getType()));
         NewF->takeName(GA);
         GA->eraseFromParent();
         FnsToInstrument.push_back(NewF);

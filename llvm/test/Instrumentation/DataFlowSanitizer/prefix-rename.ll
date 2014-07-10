@@ -8,7 +8,15 @@ module asm ".symver f1,f@@version1"
 ; CHECK: @"dfs$f2" = alias {{.*}} @"dfs$f1"
 @f2 = alias void ()* @f1
 
+; CHECK: @"dfs$g2" = alias {{.*}} @"dfs$g1"
+@g2 = alias bitcast (void (i8*)* @g1 to void (i16*)*)
+
 ; CHECK: define void @"dfs$f1"
 define void @f1() {
+  ret void
+}
+
+; CHECK: define void @"dfs$g1"
+define void @g1(i8*) {
   ret void
 }
