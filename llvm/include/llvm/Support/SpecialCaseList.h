@@ -71,7 +71,9 @@ class SpecialCaseList {
   ~SpecialCaseList();
 
   /// Returns true, if special case list contains a line
+  /// \code
   ///   @Section:<E>=@Category
+  /// \endcode
   /// and @Query satisfies a wildcard expression <E>.
   bool inSection(const StringRef Section, const StringRef Query,
                  const StringRef Category = StringRef()) const;
