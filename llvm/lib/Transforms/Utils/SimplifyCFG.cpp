@@ -201,8 +201,8 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 /// ComputeSpeculationCost - Compute an abstract "cost" of speculating the
 /// given instruction, which is assumed to be safe to speculate. 1 means
 /// cheap, 2 means less cheap, and UINT_MAX means prohibitively expensive.
-static unsigned ComputeSpeculationCost(const User *I) {
-  assert(isSafeToSpeculativelyExecute(I) &&
+static unsigned ComputeSpeculationCost(const User *I, const DataLayout *DL) {
+  assert(isSafeToSpeculativelyExecute(I, DL) &&
          "Instruction is not safe to speculatively execute!");
   switch (Operator::getOpcode(I)) {
   default:
@@ -257,7 +257,8 @@ static unsigned ComputeSpeculationCost(const User *I) {
 /// CostRemaining, false is returned and CostRemaining is undefined.
 static bool DominatesMergePoint(Value *V, BasicBlock *BB,
                                 SmallPtrSet<Instruction*, 4> *AggressiveInsts,
-                                unsigned &CostRemaining) {
+                                unsigned &CostRemaining,
+                                const DataLayout *DL) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I) {
     // Non-instructions all dominate instructions, but not all constantexprs
@@ -290,10 +291,10 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   // Okay, it looks like the instruction IS in the "condition".  Check to
   // see if it's a cheap instruction to unconditionally compute, and if it
   // only uses stuff defined outside of the condition.  If so, hoist it out.
-  if (!isSafeToSpeculativelyExecute(I))
+  if (!isSafeToSpeculativelyExecute(I, DL))
     return false;
 
-  unsigned Cost = ComputeSpeculationCost(I);
+  unsigned Cost = ComputeSpeculationCost(I, DL);
 
   if (Cost > CostRemaining)
     return false;
@@ -303,7 +304,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
   // Okay, we can only really hoist these out if their operands do
   // not take us over the cost threshold.
   for (User::op_iterator i = I->op_begin(), e = I->op_end(); i != e; ++i)
-    if (!DominatesMergePoint(*i, BB, AggressiveInsts, CostRemaining))
+    if (!DominatesMergePoint(*i, BB, AggressiveInsts, CostRemaining, DL))
       return false;
   // Okay, it's safe to do this!  Remember this instruction.
   AggressiveInsts->insert(I);
@@ -997,7 +998,7 @@ static bool isSafeToHoistInvoke(BasicBlock *BB1, BasicBlock *BB2,
 /// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
-static bool HoistThenElseCodeToIf(BranchInst *BI) {
+static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL) {
   // This does very trivial matching, with limited scanning, to find identical
   // instructions in the two blocks.  In particular, we don't want to get into
   // O(M*N) situations here where M and N are the sizes of BB1 and BB2.  As
@@ -1071,9 +1072,9 @@ HoistTerminator:
       if (BB1V == BB2V)
         continue;
 
-      if (isa<ConstantExpr>(BB1V) && !isSafeToSpeculativelyExecute(BB1V))
+      if (isa<ConstantExpr>(BB1V) && !isSafeToSpeculativelyExecute(BB1V, DL))
         return Changed;
-      if (isa<ConstantExpr>(BB2V) && !isSafeToSpeculativelyExecute(BB2V))
+      if (isa<ConstantExpr>(BB2V) && !isSafeToSpeculativelyExecute(BB2V, DL))
         return Changed;
     }
   }
@@ -1390,7 +1391,8 @@ static Value *isSafeToSpeculateStore(Instruction *I, BasicBlock *BrBB,
 /// \endcode
 ///
 /// \returns true if the conditional block is removed.
-static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
+static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB,
+                                   const DataLayout *DL) {
   // Be conservative for now. FP select instruction can often be expensive.
   Value *BrCond = BI->getCondition();
   if (isa<FCmpInst>(BrCond))
@@ -1433,13 +1435,13 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
       return false;
 
     // Don't hoist the instruction if it's unsafe or expensive.
-    if (!isSafeToSpeculativelyExecute(I) &&
+    if (!isSafeToSpeculativelyExecute(I, DL) &&
         !(HoistCondStores &&
           (SpeculatedStoreValue = isSafeToSpeculateStore(I, BB, ThenBB,
                                                          EndBB))))
       return false;
     if (!SpeculatedStoreValue &&
-        ComputeSpeculationCost(I) > PHINodeFoldingThreshold)
+        ComputeSpeculationCost(I, DL) > PHINodeFoldingThreshold)
       return false;
 
     // Store the store speculation candidate.
@@ -1490,11 +1492,11 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     if (!OrigCE && !ThenCE)
       continue; // Known safe and cheap.
 
-    if ((ThenCE && !isSafeToSpeculativelyExecute(ThenCE)) ||
-        (OrigCE && !isSafeToSpeculativelyExecute(OrigCE)))
+    if ((ThenCE && !isSafeToSpeculativelyExecute(ThenCE, DL)) ||
+        (OrigCE && !isSafeToSpeculativelyExecute(OrigCE, DL)))
       return false;
-    unsigned OrigCost = OrigCE ? ComputeSpeculationCost(OrigCE) : 0;
-    unsigned ThenCost = ThenCE ? ComputeSpeculationCost(ThenCE) : 0;
+    unsigned OrigCost = OrigCE ? ComputeSpeculationCost(OrigCE, DL) : 0;
+    unsigned ThenCost = ThenCE ? ComputeSpeculationCost(ThenCE, DL) : 0;
     if (OrigCost + ThenCost > 2 * PHINodeFoldingThreshold)
       return false;
 
@@ -1741,9 +1743,9 @@ static bool FoldTwoEntryPHINode(PHINode *PN, const DataLayout *DL) {
     }
 
     if (!DominatesMergePoint(PN->getIncomingValue(0), BB, &AggressiveInsts,
-                             MaxCostVal0) ||
+                             MaxCostVal0, DL) ||
         !DominatesMergePoint(PN->getIncomingValue(1), BB, &AggressiveInsts,
-                             MaxCostVal1))
+                             MaxCostVal1, DL))
       return false;
   }
 
@@ -1961,7 +1963,7 @@ static bool checkCSEInPredecessor(Instruction *Inst, BasicBlock *PB) {
 /// FoldBranchToCommonDest - If this basic block is simple enough, and if a
 /// predecessor branches to us and one of our successors, fold the block into
 /// the predecessor and use logical operations to pick the right destination.
-bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
+bool llvm::FoldBranchToCommonDest(BranchInst *BI, const DataLayout *DL) {
   BasicBlock *BB = BI->getParent();
 
   Instruction *Cond = nullptr;
@@ -2013,7 +2015,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI) {
   Instruction *BonusInst = nullptr;
   if (&*FrontIt != Cond &&
       FrontIt->hasOneUse() && FrontIt->user_back() == Cond &&
-      isSafeToSpeculativelyExecute(FrontIt)) {
+      isSafeToSpeculativelyExecute(FrontIt, DL)) {
     BonusInst = &*FrontIt;
     ++FrontIt;
 
@@ -4016,7 +4018,7 @@ bool SimplifyCFGOpt::SimplifyUncondBranch(BranchInst *BI, IRBuilder<> &Builder){
   // branches to us and our successor, fold the comparison into the
   // predecessor and use logical operations to update the incoming value
   // for PHI nodes in common successor.
-  if (FoldBranchToCommonDest(BI))
+  if (FoldBranchToCommonDest(BI, DL))
     return SimplifyCFG(BB, TTI, DL) | true;
   return false;
 }
@@ -4060,7 +4062,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   // If this basic block is ONLY a compare and a branch, and if a predecessor
   // branches to us and one of our successors, fold the comparison into the
   // predecessor and use logical operations to pick the right destination.
-  if (FoldBranchToCommonDest(BI))
+  if (FoldBranchToCommonDest(BI, DL))
     return SimplifyCFG(BB, TTI, DL) | true;
 
   // We have a conditional branch to two blocks that are only reachable
@@ -4069,7 +4071,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
   // can hoist it up to the branching block.
   if (BI->getSuccessor(0)->getSinglePredecessor()) {
     if (BI->getSuccessor(1)->getSinglePredecessor()) {
-      if (HoistThenElseCodeToIf(BI))
+      if (HoistThenElseCodeToIf(BI, DL))
         return SimplifyCFG(BB, TTI, DL) | true;
     } else {
       // If Successor #1 has multiple preds, we may be able to conditionally
@@ -4077,7 +4079,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
       TerminatorInst *Succ0TI = BI->getSuccessor(0)->getTerminator();
       if (Succ0TI->getNumSuccessors() == 1 &&
           Succ0TI->getSuccessor(0) == BI->getSuccessor(1))
-        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0)))
+        if (SpeculativelyExecuteBB(BI, BI->getSuccessor(0), DL))
           return SimplifyCFG(BB, TTI, DL) | true;
     }
   } else if (BI->getSuccessor(1)->getSinglePredecessor()) {
@@ -4086,7 +4088,7 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
     TerminatorInst *Succ1TI = BI->getSuccessor(1)->getTerminator();
     if (Succ1TI->getNumSuccessors() == 1 &&
         Succ1TI->getSuccessor(0) == BI->getSuccessor(0))
-      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1)))
+      if (SpeculativelyExecuteBB(BI, BI->getSuccessor(1), DL))
         return SimplifyCFG(BB, TTI, DL) | true;
   }
 

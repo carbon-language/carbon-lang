@@ -1199,7 +1199,7 @@ Value *InstCombiner::SimplifyVectorOp(BinaryOperator &Inst) {
   // It may not be safe to reorder shuffles and things like div, urem, etc.
   // because we may trap when executing those ops on unknown vector elements.
   // See PR20059.
-  if (!isSafeToSpeculativelyExecute(&Inst)) return nullptr;
+  if (!isSafeToSpeculativelyExecute(&Inst, DL)) return nullptr;
 
   unsigned VWidth = cast<VectorType>(Inst.getType())->getNumElements();
   Value *LHS = Inst.getOperand(0), *RHS = Inst.getOperand(1);

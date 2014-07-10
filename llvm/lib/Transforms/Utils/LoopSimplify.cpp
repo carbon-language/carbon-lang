@@ -50,6 +50,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Dominators.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
@@ -473,7 +474,8 @@ static BasicBlock *insertUniqueBackedgeBlock(Loop *L, BasicBlock *Preheader,
 /// explicit if they accepted the analysis directly and then updated it.
 static bool simplifyOneLoop(Loop *L, SmallVectorImpl<Loop *> &Worklist,
                             AliasAnalysis *AA, DominatorTree *DT, LoopInfo *LI,
-                            ScalarEvolution *SE, Pass *PP) {
+                            ScalarEvolution *SE, Pass *PP,
+                            const DataLayout *DL) {
   bool Changed = false;
 ReprocessLoop:
 
@@ -672,7 +674,7 @@ ReprocessLoop:
       // The block has now been cleared of all instructions except for
       // a comparison and a conditional branch. SimplifyCFG may be able
       // to fold it now.
-      if (!FoldBranchToCommonDest(BI)) continue;
+      if (!FoldBranchToCommonDest(BI, DL)) continue;
 
       // Success. The block is now dead, so remove it from the loop,
       // update the dominator tree and delete it.
@@ -709,7 +711,8 @@ ReprocessLoop:
 }
 
 bool llvm::simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
-                        AliasAnalysis *AA, ScalarEvolution *SE) {
+                        AliasAnalysis *AA, ScalarEvolution *SE,
+                        const DataLayout *DL) {
   bool Changed = false;
 
   // Worklist maintains our depth-first queue of loops in this nest to process.
@@ -726,7 +729,8 @@ bool llvm::simplifyLoop(Loop *L, DominatorTree *DT, LoopInfo *LI, Pass *PP,
   }
 
   while (!Worklist.empty())
-    Changed |= simplifyOneLoop(Worklist.pop_back_val(), Worklist, AA, DT, LI, SE, PP);
+    Changed |= simplifyOneLoop(Worklist.pop_back_val(), Worklist, AA, DT, LI,
+                               SE, PP, DL);
 
   return Changed;
 }
@@ -744,6 +748,7 @@ namespace {
     DominatorTree *DT;
     LoopInfo *LI;
     ScalarEvolution *SE;
+    const DataLayout *DL;
 
     bool runOnFunction(Function &F) override;
 
@@ -787,10 +792,12 @@ bool LoopSimplify::runOnFunction(Function &F) {
   LI = &getAnalysis<LoopInfo>();
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   SE = getAnalysisIfAvailable<ScalarEvolution>();
+  DataLayoutPass *DLP = getAnalysisIfAvailable<DataLayoutPass>();
+  DL = DLP ? &DLP->getDataLayout() : nullptr;
 
   // Simplify each loop nest in the function.
   for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
-    Changed |= simplifyLoop(*I, DT, LI, this, AA, SE);
+    Changed |= simplifyLoop(*I, DT, LI, this, AA, SE, DL);
 
   return Changed;
 }

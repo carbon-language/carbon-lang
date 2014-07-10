@@ -924,8 +924,10 @@ bool LoopReroll::reroll(Instruction *IV, Loop *L, BasicBlock *Header,
       // them, and this matching fails. As an exception, we allow the alias
       // set tracker to handle regular (simple) load/store dependencies.
       if (FutureSideEffects &&
-            ((!isSimpleLoadStore(J1) && !isSafeToSpeculativelyExecute(J1)) ||
-             (!isSimpleLoadStore(J2) && !isSafeToSpeculativelyExecute(J2)))) {
+            ((!isSimpleLoadStore(J1) &&
+              !isSafeToSpeculativelyExecute(J1, DL)) ||
+             (!isSimpleLoadStore(J2) &&
+              !isSafeToSpeculativelyExecute(J2, DL)))) {
         DEBUG(dbgs() << "LRR: iteration root match failed at " << *J1 <<
                         " vs. " << *J2 <<
                         " (side effects prevent reordering)\n");
