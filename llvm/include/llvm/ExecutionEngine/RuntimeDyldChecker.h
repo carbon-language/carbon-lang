@@ -81,7 +81,7 @@ public:
 
 private:
 
-  bool checkSymbolIsValidForLoad(StringRef Symbol) const;
+  bool isSymbolValid(StringRef Symbol) const;
   uint64_t getSymbolAddress(StringRef Symbol) const;
   uint64_t readMemoryAtSymbol(StringRef Symbol, int64_t Offset,
                               unsigned Size) const;
