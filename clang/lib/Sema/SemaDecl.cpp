@@ -10718,6 +10718,50 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
   return false;
 }
 
+/// Add a minimal nested name specifier fixit hint to allow lookup of a tag name
+/// from an outer enclosing namespace or file scope inside a friend declaration.
+/// This should provide the commented out code in the following snippet:
+///   namespace N {
+///     struct X;
+///     namespace M {
+///       struct Y { friend struct /*N::*/ X; };
+///     }
+///   }
+static void addFriendTagNNSFixIt(Sema &SemaRef, Sema::SemaDiagnosticBuilder &D,
+                                 NamedDecl *ND, Scope *S,
+                                 SourceLocation NameLoc) {
+  // While the decl is in a namespace, do repeated lookup of that name and see
+  // if we get the same namespace back.  If we do not, continue until
+  // translation unit scope, at which point we have a fully qualified NNS.
+  SmallVector<IdentifierInfo *, 4> Namespaces;
+  DeclContext *DC = ND->getDeclContext()->getRedeclContext();
+  for (; !DC->isTranslationUnit(); DC = DC->getParent()) {
+    // This tag should be declared in a namespace, which can only be enclosed by
+    // other namespaces.  Bail if there's an anonymous namespace in the chain.
+    NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(DC);
+    if (!Namespace || Namespace->isAnonymousNamespace())
+      return;
+    IdentifierInfo *II = Namespace->getIdentifier();
+    Namespaces.push_back(II);
+    NamedDecl *Lookup = SemaRef.LookupSingleName(
+        S, II, NameLoc, Sema::LookupNestedNameSpecifierName);
+    if (Lookup == Namespace)
+      break;
+  }
+
+  // Once we have all the namespaces, reverse them to go outermost first, and
+  // build an NNS.
+  SmallString<64> Insertion;
+  llvm::raw_svector_ostream OS(Insertion);
+  if (DC->isTranslationUnit())
+    OS << "::";
+  std::reverse(Namespaces.begin(), Namespaces.end());
+  for (auto *II : Namespaces)
+    OS << II->getName() << "::";
+  OS.flush();
+  D << FixItHint::CreateInsertion(NameLoc, Insertion);
+}
+
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
 /// former case, Name will be non-null.  In the later case, Name will be null.
 /// TagSpec indicates what kind of tag this is. TUK indicates whether this is a
@@ -10827,7 +10871,6 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     Redecl = NotForRedeclaration;
 
   LookupResult Previous(*this, Name, NameLoc, LookupTagName, Redecl);
-  bool FriendSawTagOutsideEnclosingNamespace = false;
   if (Name && SS.isNotEmpty()) {
     // We have a nested-name tag ('struct foo::bar').
 
@@ -10912,23 +10955,38 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
     //   the entity has been previously declared shall not consider
     //   any scopes outside the innermost enclosing namespace.
     //
+    // MSVC doesn't implement the above rule for types, so a friend tag
+    // declaration may be a redeclaration of a type declared in an enclosing
+    // scope.  They do implement this rule for friend functions.
+    //
     // Does it matter that this should be by scope instead of by
     // semantic context?
     if (!Previous.empty() && TUK == TUK_Friend) {
       DeclContext *EnclosingNS = SearchDC->getEnclosingNamespaceContext();
       LookupResult::Filter F = Previous.makeFilter();
+      bool FriendSawTagOutsideEnclosingNamespace = false;
       while (F.hasNext()) {
         NamedDecl *ND = F.next();
         DeclContext *DC = ND->getDeclContext()->getRedeclContext();
         if (DC->isFileContext() &&
             !EnclosingNS->Encloses(ND->getDeclContext())) {
-          F.erase();
-          FriendSawTagOutsideEnclosingNamespace = true;
+          if (getLangOpts().MSVCCompat)
+            FriendSawTagOutsideEnclosingNamespace = true;
+          else
+            F.erase();
         }
       }
       F.done();
+
+      // Diagnose this MSVC extension in the easy case where lookup would have
+      // unambiguously found something outside the enclosing namespace.
+      if (Previous.isSingleResult() && FriendSawTagOutsideEnclosingNamespace) {
+        NamedDecl *ND = Previous.getFoundDecl();
+        auto D = Diag(NameLoc, diag::ext_friend_tag_redecl_outside_namespace);
+        addFriendTagNNSFixIt(*this, D, ND, S, NameLoc);
+      }
     }
-    
+
     // Note:  there used to be some attempt at recovery here.
     if (Previous.isAmbiguous())
       return nullptr;
@@ -11453,8 +11511,7 @@ CreateNewDecl:
   // declaration so we always pass true to setObjectOfFriendDecl to make
   // the tag name visible.
   if (TUK == TUK_Friend)
-    New->setObjectOfFriendDecl(!FriendSawTagOutsideEnclosingNamespace &&
-                               getLangOpts().MicrosoftExt);
+    New->setObjectOfFriendDecl(getLangOpts().MSVCCompat);
 
   // Set the access specifier.
   if (!Invalid && SearchDC->isRecord())

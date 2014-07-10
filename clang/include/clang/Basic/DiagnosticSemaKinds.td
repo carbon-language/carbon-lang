@@ -997,7 +997,11 @@ def warn_template_qualified_friend_ignored : Warning<
   "dependent nested name specifier '%0' for friend template declaration is "
   "not supported; ignoring this friend declaration">,
   InGroup<UnsupportedFriend>;
-  
+def ext_friend_tag_redecl_outside_namespace : ExtWarn<
+  "unqualified friend declaration referring to type outside of the nearest "
+  "enclosing namespace is a Microsoft extension; add a nested name specifier">,
+  InGroup<Microsoft>;
+
 def err_invalid_member_in_interface : Error<
   "%select{data member |non-public member function |static member function |"
           "user-declared constructor|user-declared destructor|operator |"

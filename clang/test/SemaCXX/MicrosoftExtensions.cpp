@@ -176,29 +176,6 @@ void pointer_to_integral_type_conv(char* ptr) {
    b = reinterpret_cast<bool>(ptr); // expected-error {{cast from pointer to smaller type 'bool' loses information}}
 }
 
-namespace friend_as_a_forward_decl {
-
-class A {
-  class Nested {
-    friend class B;
-    B* b;
-  };
-  B* b;
-};
-B* global_b;
-
-
-void f()
-{
-  class Local {
-    friend class Z;
-    Z* b;
-  };
-  Z* b;
-}
-
-}
-
 struct PR11150 {
   class X {
     virtual void f() = 0;
