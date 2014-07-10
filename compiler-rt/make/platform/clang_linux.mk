@@ -129,8 +129,10 @@ CFLAGS.builtins-x86_64 += --sysroot=$(ProjSrcRoot)/SDKs/linux
 
 FUNCTIONS.builtins-i386 := $(CommonFunctions) $(ArchFunctions.i386)
 FUNCTIONS.builtins-x86_64 := $(CommonFunctions) $(ArchFunctions.x86_64)
-FUNCTIONS.profile-i386 := GCDAProfiling
-FUNCTIONS.profile-x86_64 := GCDAProfiling
+FUNCTIONS.profile-i386 := GCDAProfiling InstrProfiling InstrProfilingBuffer \
+                          InstrProfilingFile InstrProfilingPlatformOther \
+                          InstrProfilingRuntime
+FUNCTIONS.profile-x86_64 := $(FUNCTIONS.profile-i386)
 FUNCTIONS.san-i386 := $(SanitizerCommonFunctions)
 FUNCTIONS.san-x86_64 := $(SanitizerCommonFunctions)
 FUNCTIONS.asan-i386 := $(AsanFunctions) $(InterceptionFunctions) \
