@@ -3272,7 +3272,7 @@ namespace {
 class X86_64TargetInfo : public X86TargetInfo {
 public:
   X86_64TargetInfo(const llvm::Triple &Triple) : X86TargetInfo(Triple) {
-    const bool IsX32{getTriple().getEnvironment() == llvm::Triple::GNUX32};
+    const bool IsX32 = getTriple().getEnvironment() == llvm::Triple::GNUX32;
     LongWidth = LongAlign = PointerWidth = PointerAlign = IsX32 ? 32 : 64;
     LongDoubleWidth = 128;
     LongDoubleAlign = 128;

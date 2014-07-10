@@ -2017,7 +2017,7 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
   // Determine default multilib from: 32, 64, x32
   // Also handle cases such as 64 on 32, 32 on 64, etc.
   enum { UNKNOWN, WANT32, WANT64, WANTX32 } Want = UNKNOWN;
-  const bool IsX32 {TargetTriple.getEnvironment() == llvm::Triple::GNUX32};
+  const bool IsX32 = TargetTriple.getEnvironment() == llvm::Triple::GNUX32;
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
     Want = WANT64;
   else if (TargetTriple.isArch64Bit() && IsX32 && !NonExistent(Altx32))
