@@ -92,9 +92,18 @@
   <ul>
   <li><code>cd libcxxabi</code></li>
   <li><code>mkdir build &amp;&amp; cd build</code></li>
-  <li><code>cmake -DLIBCXXABI_LIBCXX_INCLUDES=path/to/libcxx/include .. # on linux you may need -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++</code></li>
+  <li><code>cmake -DLIBCXXABI_LIBCXX_INCLUDES=path/to/libcxx/include .. # on
+    linux you may need -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++</code></li>
   <li><code>make</code></li>
   </ul>
+
+  <p>To run the tests:</p>
+  <ul>
+  <li><code>make check-libcxxabi</code></li>
+  </ul>
+  <p>Note: in a standalone build, the system's libc++ will be used for tests. If
+  the system's libc++ was statically linked against libc++abi (or linked against
+  a different ABI library), this may interfere with test results.</p>
 
   <p>Send discussions to the
   (<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">clang mailing list</a>).</p>

@@ -53,6 +53,7 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   if(EXISTS ${LLVMCONFIG_FILE})
     list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
     include(${LLVMCONFIG_FILE})
+    include("${LLVM_CMAKE_PATH}/AddLLVM.cmake")
   else()
     message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
   endif()
@@ -91,6 +92,8 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
   set(LIBCXXABI_BUILT_STANDALONE 1)
+else()
+  set(LLVM_LIT "${CMAKE_SOURCE_DIR}/utils/lit/lit.py")
 endif()
 
 #===============================================================================
@@ -101,7 +104,26 @@ endif()
 option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
-option(LIBCXXABI_ENABLE_SHARED "Build libc++abi as a shared library." OFF)
+
+# Default to building a shared library so that the default options still test
+# the libc++abi that is being built. There are two problems with testing a
+# static libc++abi. In the case of a standalone build, the tests will link the
+# system's libc++, which might not have been built against our libc++abi. In the
+# case of an in tree build, libc++ will prefer a dynamic libc++abi from the
+# system over a static libc++abi from the output directory.
+option(LIBCXXABI_ENABLE_SHARED "Build libc++abi as a shared library." ON)
+
+find_path(
+  LIBCXXABI_LIBCXX_INCLUDES
+  vector
+  PATHS ${LIBCXXABI_LIBCXX_INCLUDES}
+        ${CMAKE_BINARY_DIR}/${LIBCXXABI_LIBCXX_INCLUDES}
+        ${LLVM_MAIN_SRC_DIR}/projects/libcxx/include
+        ${LLVM_INCLUDE_DIR}/c++/v1
+  )
+
+set(LIBCXXABI_LIBCXX_INCLUDES "${LIBCXXABI_LIBCXX_INCLUDES}" CACHE STRING
+    "Specify path to libc++ includes." FORCE)
 
 #===============================================================================
 # Configure System
@@ -210,3 +232,16 @@ include_directories(include)
 # Add source code. This also contains all of the logic for deciding linker flags
 # soname, etc...
 add_subdirectory(src)
+
+if(NOT LIBCXXABI_ENABLE_SHARED)
+  # TODO: Fix the libc++ cmake files so that libc++abi can be statically linked.
+  # As it is now, libc++ will prefer linking against a dynamic libc++abi in the
+  # system library paths over a static libc++abi in the out directory. This
+  # would test the system library rather than the one we just built, which isn't
+  # very helpful.
+  message(WARNING "The libc++abi tests are currently only valid when "
+                  "LIBCXXABI_ENABLE_SHARED is on, no check target will be "
+                  "available!")
+else()
+  add_subdirectory(test)
+endif()

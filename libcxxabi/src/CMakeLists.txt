@@ -48,13 +48,7 @@ else()
     )
 endif()
 
-if (LIBCXXABI_LIBCXX_INCLUDES)
-  include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
-elseif (NOT LIBCXXABI_BUILT_STANDALONE)
-  include_directories("${LLVM_MAIN_SRC_DIR}/projects/libcxx/include")
-else()
-  include_directories("${LLVM_INCLUDE_DIR}/c++/v1")
-endif()
+include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
 
 # Generate library list.
 set(libraries ${LIBCXXABI_CXX_ABI_LIBRARIES})
