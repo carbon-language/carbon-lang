@@ -44,11 +44,19 @@ define <16 x i8> @shuffle_v16i8_00_00_00_00_01_01_01_01_02_02_02_02_03_03_03_03(
 ; CHECK-SSE2-LABEL: @shuffle_v16i8_00_00_00_00_01_01_01_01_02_02_02_02_03_03_03_03
 ; CHECK-SSE2:       # BB#0:
 ; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
-; CHECK-SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[0,1,2,1]
-; CHECK-SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[0,0,1,1,4,5,6,7]
-; CHECK-SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,6,6,7,7]
+; CHECK-SSE2-NEXT:    punpcklwd %xmm0, %xmm0
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 0, i32 0, i32 0, i32 0, i32 1, i32 1, i32 1, i32 1, i32 2, i32 2, i32 2, i32 2, i32 3, i32 3, i32 3, i32 3>
+  ret <16 x i8> %shuffle
+}
+
+define <16 x i8> @shuffle_v16i8_04_04_04_04_05_05_05_05_06_06_06_06_07_07_07_07(<16 x i8> %a, <16 x i8> %b) {
+; CHECK-SSE2-LABEL: @shuffle_v16i8_04_04_04_04_05_05_05_05_06_06_06_06_07_07_07_07
+; CHECK-SSE2:       # BB#0:
+; CHECK-SSE2-NEXT:    punpcklbw %xmm0, %xmm0
+; CHECK-SSE2-NEXT:    punpckhwd %xmm0, %xmm0
+; CHECK-SSE2-NEXT:    retq
+  %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 4, i32 4, i32 4, i32 4, i32 5, i32 5, i32 5, i32 5, i32 6, i32 6, i32 6, i32 6, i32 7, i32 7, i32 7, i32 7>
   ret <16 x i8> %shuffle
 }
 
