@@ -795,7 +795,8 @@ namespace llvm {
 
     /// forgetLoop - This method should be called by the client when it has
     /// changed a loop in a way that may effect ScalarEvolution's ability to
-    /// compute a trip count, or if the loop is deleted.
+    /// compute a trip count, or if the loop is deleted.  This call is
+    /// potentially expensive for large loop bodies.
     void forgetLoop(const Loop *L);
 
     /// forgetValue - This method should be called by the client when it has

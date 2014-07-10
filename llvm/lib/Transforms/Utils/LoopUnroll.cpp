@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/UnrollLoop.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopIterator.h"
@@ -64,10 +65,15 @@ static inline void RemapInstruction(Instruction *I,
 
 /// FoldBlockIntoPredecessor - Folds a basic block into its predecessor if it
 /// only has one predecessor, and that predecessor only has one successor.
-/// The LoopInfo Analysis that is passed will be kept consistent.
-/// Returns the new combined block.
-static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI,
-                                            LPPassManager *LPM) {
+/// The LoopInfo Analysis that is passed will be kept consistent.  If folding is
+/// successful references to the containing loop must be removed from
+/// ScalarEvolution by calling ScalarEvolution::forgetLoop because SE may have
+/// references to the eliminated BB.  The argument ForgottenLoops contains a set
+/// of loops that have already been forgotten to prevent redundant, expensive
+/// calls to ScalarEvolution::forgetLoop.  Returns the new combined block.
+static BasicBlock *
+FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI, LPPassManager *LPM,
+                         SmallPtrSetImpl<Loop *> &ForgottenLoops) {
   // Merge basic blocks into their predecessor if there is only one distinct
   // pred, and if there is only one distinct successor of the predecessor, and
   // if there are no PHI nodes.
@@ -104,8 +110,10 @@ static BasicBlock *FoldBlockIntoPredecessor(BasicBlock *BB, LoopInfo* LI,
   // ScalarEvolution holds references to loop exit blocks.
   if (LPM) {
     if (ScalarEvolution *SE = LPM->getAnalysisIfAvailable<ScalarEvolution>()) {
-      if (Loop *L = LI->getLoopFor(BB))
-        SE->forgetLoop(L);
+      if (Loop *L = LI->getLoopFor(BB)) {
+        if (ForgottenLoops.insert(L))
+          SE->forgetLoop(L);
+      }
     }
   }
   LI->removeBlock(BB);
@@ -423,11 +431,13 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
   }
 
   // Merge adjacent basic blocks, if possible.
+  SmallPtrSet<Loop *, 4> ForgottenLoops;
   for (unsigned i = 0, e = Latches.size(); i != e; ++i) {
     BranchInst *Term = cast<BranchInst>(Latches[i]->getTerminator());
     if (Term->isUnconditional()) {
       BasicBlock *Dest = Term->getSuccessor(0);
-      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI, LPM))
+      if (BasicBlock *Fold = FoldBlockIntoPredecessor(Dest, LI, LPM,
+                                                      ForgottenLoops))
         std::replace(Latches.begin(), Latches.end(), Dest, Fold);
     }
   }
