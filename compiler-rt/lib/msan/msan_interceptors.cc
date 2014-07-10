@@ -1264,13 +1264,14 @@ void *fast_memset(void *ptr, int c, SIZE_T n) {
   // hack until we have a really fast internal_memset
   if (sizeof(uptr) == 8 &&
       (n % 8) == 0 &&
-      ((uptr)ptr % 8) == 0 &&
-      (c == 0 || c == -1)) {
-    // Printf("memset %p %zd %x\n", ptr, n, c);
-    uptr to_store = c ? -1L : 0L;
+      ((uptr)ptr % 8) == 0) {
+    uptr c8 = (unsigned)c & 0xFF;
+    c8 = (c8 << 8) | c8;
+    c8 = (c8 << 16) | c8;
+    c8 = (c8 << 32) | c8;
     uptr *p = (uptr*)ptr;
     for (SIZE_T i = 0; i < n / 8; i++)
-      p[i] = to_store;
+      p[i] = c8;
     return ptr;
   }
   return internal_memset(ptr, c, n);
