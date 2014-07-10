@@ -1,9 +1,11 @@
-; RUN: llc < %s -march=x86-64 | grep shrdq
+; RUN: llc -march=x86-64 < %s | FileCheck %s
 ; PR4736
 
 %0 = type { i32, i8, [35 x i8] }
 
 @g_144 = external global %0, align 8              ; <%0*> [#uses=1]
+
+; CHECK: shrdq
 
 define i32 @int87(i32 %uint64p_8) nounwind {
 entry:
