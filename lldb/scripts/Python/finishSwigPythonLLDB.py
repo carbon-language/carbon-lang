@@ -57,14 +57,20 @@ import utilsDebug 		# Debug Python scripts
 # User facing text:
 strMsgOsVersion = "The current OS is %s";
 strMsgPyVersion = "The Python version is %d.%d";
-strErrMsgProgFail = "Program failure: ";     
+strErrMsgProgFail = "Program failure: ";
+strErrMsgLLDBPyFileNotNotFound = "Unable to locate lldb.py at path '%s'";
+strMsgCopyLLDBPy = "Copying lldb.py from '%s' to '%s'";
 strErrMsgFrameWkPyDirNotExist = "Unable to find the LLDB.framework directory '%s'";
+strMsgCreatePyPkgCopyPkgFile = "create_py_pkg: Copied file '%s' to folder '%s'";
+strMsgCreatePyPkgInitFile = "create_py_pkg: Creating pakage init file '%s'";
+strMsgCreatePyPkgMkDir = "create_py_pkg: Created folder '%s'";
+strMsgConfigBuildDir = "Configuration build directory located at '%s'";
 strMsgFoundLldbFrameWkDir = "Found '%s'";
 strMsgPyFileLocatedHere = "Python file will be put in '%s'";
-strMsgFrameWkPyExists = "'%s' already exists";
-strMsgFrameWkPyMkDir = "Making directory '%s'";
+strMsgFrameWkPyExists = "Python output folder '%s' already exists";
+strMsgFrameWkPyMkDir = "Python output folder '%s' will be created";
 strErrMsgCreateFrmWkPyDirFailed = "Unable to create directory '%s' error: %s";
-strMsglldbsoExists = "'%s' already exists";
+strMsglldbsoExists = "Symlink '%s' already exists";
 strMsglldbsoMk = "Creating symlink for _lldb.so";
 strErrMsgCpLldbpy = "copying lldb to lldb package directory";
 strErrMsgCreatePyPkgMissingSlash = "Parameter 3 fn create_py_pkg() missing slash"; 
@@ -117,7 +123,8 @@ def macosx_copy_file_for_heap( vDictArgs, vstrFrameworkPythonDir ):
 def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script create_py_pkg()" );
 	dbg.dump_object( "Package file(s):", vListPkgFiles );
-		
+	bDbg = vDictArgs.has_key( "-d" );
+
 	bOk = True;
 	strMsg = "";
 	
@@ -135,11 +142,15 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 	strPkgDir = os.path.normcase( strPkgDir );
 	
 	if not(os.path.exists( strPkgDir ) and os.path.isdir( strPkgDir )):
+		if bDbg:
+			print(strMsgCreatePyPkgMkDir % strPkgDir);
 		os.makedirs( strPkgDir );
 		
 	for strPkgFile in vListPkgFiles:
 		if os.path.exists( strPkgFile ) and os.path.isfile( strPkgFile ):
 			strPyFile = os.path.normcase( strPkgFile );
+			if bDbg:
+				print(strMsgCreatePyPkgCopyPkgFile % (strPkgFile, strPkgDir));
 			shutil.copy( strPyFile, strPkgDir );
 	
 	# Create a packet init files if there wasn't one
@@ -163,6 +174,8 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 	strPyScript += "for x in __all__:\n";
 	strPyScript += "\t__import__('%s.' + x)" % strPkgName;
 	
+	if bDbg:
+		print(strMsgCreatePyPkgInitFile % strPkgIniFile);
 	file = open( strPkgIniFile, "w" );
 	file.write( strPyScript );
 	file.close();
@@ -172,15 +185,17 @@ def create_py_pkg( vDictArgs, vstrFrameworkPythonDir, vstrPkgDir, vListPkgFiles 
 #++---------------------------------------------------------------------------
 # Details:	Copy the lldb.py file into the lldb package directory and rename 
 #			to __init_.py.
-# Args:		vstrFrameworkPythonDir	- (R) Python framework directory.
+# Args:		vDictArgs				- (R) Program input parameters.
+#			vstrFrameworkPythonDir	- (R) Python framework directory.
 #			vstrCfgBldDir			- (R) Config directory path.
 # Returns:	Bool - True = function success, False = failure.
 #			Str - Error description on task failure.
 # Throws:	None.
 #--
-def copy_lldbpy_file_to_lldb_pkg_dir( vstrFrameworkPythonDir, vstrCfgBldDir ):
+def copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs, vstrFrameworkPythonDir, vstrCfgBldDir ):
 	dbg = utilsDebug.CDebugFnVerbose( "Python script copy_lldbpy_file_to_lldb_pkg_dir()" );
 	bOk = True;
+	bDbg = vDictArgs.has_key( "-d" );
 	strMsg = "";
 	
 	strSrc = vstrCfgBldDir + "/lldb.py";
@@ -189,9 +204,12 @@ def copy_lldbpy_file_to_lldb_pkg_dir( vstrFrameworkPythonDir, vstrCfgBldDir ):
 	strDst = os.path.normcase( strDst );
 	
 	if not os.path.exists( strSrc ):
+		strMsg = strErrMsgLLDBPyFileNotNotFound % strSrc;
 		return (bOk, strMsg);
 	
 	try:
+		if bDbg:
+			print(strMsgCopyLLDBPy % (strSrc, strDst));
 		shutil.copyfile( strSrc, strDst );
 	except IOError as e:
 		bOk = False;
@@ -538,8 +556,8 @@ def main( vDictArgs ):
 	eOSType = utilsOsType.determine_os_type();
 	if bDbg:
 		pyVersion = sys.version_info;
-		print strMsgOsVersion % utilsOsType.EnumOsType.name_of( eOSType );
-		print strMsgPyVersion % (pyVersion[ 0 ], pyVersion[ 1 ]);
+		print(strMsgOsVersion % utilsOsType.EnumOsType.name_of( eOSType ));
+		print(strMsgPyVersion % (pyVersion[ 0 ], pyVersion[ 1 ]));
 	
 	bOk, strFrameworkPythonDir, strMsg = get_framework_python_dir( vDictArgs );
 
@@ -547,6 +565,7 @@ def main( vDictArgs ):
 		bOk, strCfgBldDir, strMsg = get_config_build_dir( vDictArgs, strFrameworkPythonDir );
 	if bOk and bDbg:
 		print strMsgPyFileLocatedHere % strFrameworkPythonDir;
+		print strMsgConfigBuildDir % strCfgBldDir;
 	
 	if bOk:
 		bOk, strMsg = find_or_create_python_dir( vDictArgs, strFrameworkPythonDir );
@@ -555,7 +574,8 @@ def main( vDictArgs ):
 		bOk, strMsg = make_symlink( vDictArgs, strFrameworkPythonDir );
 	
 	if bOk:
-		bOk, strMsg = copy_lldbpy_file_to_lldb_pkg_dir( strFrameworkPythonDir,
+		bOk, strMsg = copy_lldbpy_file_to_lldb_pkg_dir( vDictArgs,
+														strFrameworkPythonDir,
 														strCfgBldDir );
 	strRoot = vDictArgs[ "--srcRoot" ];
 	if bOk:

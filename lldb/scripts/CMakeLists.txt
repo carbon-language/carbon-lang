@@ -6,6 +6,7 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	add_custom_command(
 	  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
 	  DEPENDS ${LLDB_SOURCE_DIR}/scripts/lldb.swig
+	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py
 	  DEPENDS ${SWIG_INPUTS}  
 	  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/buildSwigWrapperClasses.py "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}" "--prefix=${CMAKE_BINARY_DIR}" -m    
 	  COMMENT "Python script building LLDB Python wrapper")  
