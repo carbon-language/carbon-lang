@@ -37,11 +37,6 @@ struct SpecialCaseList::Entry {
   Entry() {}
   Entry(Entry &&Other)
       : Strings(std::move(Other.Strings)), RegEx(std::move(Other.RegEx)) {}
-  Entry &operator=(Entry &&Other) {
-    Strings = std::move(Other.Strings);
-    RegEx = std::move(Other.RegEx);
-    return *this;
-  }
 
   StringSet<> Strings;
   std::unique_ptr<Regex> RegEx;
