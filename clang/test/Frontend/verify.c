@@ -134,9 +134,18 @@ unexpected b; // expected-error@33 1-1 {{unknown type}}
 // expected-warning@verify-directive.h: {{ }}
 // expected-error@-1 {{missing or invalid line number}}
 
+// expected-warning@verify-directive.h:0 {{ }}
+// expected-error@-1 {{missing or invalid line number}}
+
+// expected-warning@verify-directive.h:0*{{ }}
+// expected-error@-1 {{missing or invalid line number}}
+
+// expected-warning@verify-directive.h:*0{{ }}
+// syntactically ok -- means match in any line for 0 occurrences.
+
 // expected-warning@verify-directive.h:1 {{diagnostic}}
 
 //      CHECK8: error: 'warning' diagnostics expected but not seen:
-// CHECK8-NEXT:   File {{.*}}verify-directive.h Line 1 (directive at {{.*}}verify.c:137): diagnostic
+// CHECK8-NEXT:   File {{.*}}verify-directive.h Line 1 (directive at {{.*}}verify.c:146): diagnostic
 // CHECK8-NEXT: 1 error generated.
 #endif

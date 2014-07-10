@@ -71,7 +71,10 @@ class FileEntry;
 /// \endcode
 ///
 /// The path can be absolute or relative and the same search paths will be used
-/// as for #include directives.
+/// as for #include directives.  The line number in an external file may be
+/// substituted with '*' meaning that any line number will match (useful where
+/// the included file is, for example, a system header where the actual line
+/// number may change and is not critical).
 ///
 /// The simple syntax above allows each specification to match exactly one
 /// error.  You can use the extended syntax to customize this. The extended
@@ -143,7 +146,7 @@ public:
   class Directive {
   public:
     static Directive *create(bool RegexKind, SourceLocation DirectiveLoc,
-                             SourceLocation DiagnosticLoc,
+                             SourceLocation DiagnosticLoc, bool MatchAnyLine,
                              StringRef Text, unsigned Min, unsigned Max);
   public:
     /// Constant representing n or more matches.
@@ -153,6 +156,7 @@ public:
     SourceLocation DiagnosticLoc;
     const std::string Text;
     unsigned Min, Max;
+    bool MatchAnyLine;
 
     virtual ~Directive() { }
 
@@ -165,9 +169,9 @@ public:
 
   protected:
     Directive(SourceLocation DirectiveLoc, SourceLocation DiagnosticLoc,
-              StringRef Text, unsigned Min, unsigned Max)
+              bool MatchAnyLine, StringRef Text, unsigned Min, unsigned Max)
       : DirectiveLoc(DirectiveLoc), DiagnosticLoc(DiagnosticLoc),
-        Text(Text), Min(Min), Max(Max) {
+        Text(Text), Min(Min), Max(Max), MatchAnyLine(MatchAnyLine) {
     assert(!DirectiveLoc.isInvalid() && "DirectiveLoc is invalid!");
     assert(!DiagnosticLoc.isInvalid() && "DiagnosticLoc is invalid!");
     }
