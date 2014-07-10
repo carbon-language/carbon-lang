@@ -633,6 +633,23 @@ public:
       return false;
     return AArch64_AM::isLogicalImmediate(MCE->getValue(), 64);
   }
+  bool isLogicalImm32Not() const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return false;
+    int64_t Val = ~MCE->getValue() & 0xFFFFFFFF;
+    return AArch64_AM::isLogicalImmediate(Val, 32);
+  }
+  bool isLogicalImm64Not() const {
+    if (!isImm())
+      return false;
+    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    if (!MCE)
+      return false;
+    return AArch64_AM::isLogicalImmediate(~MCE->getValue(), 64);
+  }
   bool isShiftedImm() const { return Kind == k_ShiftedImm; }
   bool isAddSubImm() const {
     if (!isShiftedImm() && !isImm())
@@ -1374,6 +1391,22 @@ public:
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
     assert(MCE && "Invalid logical immediate operand!");
     uint64_t encoding = AArch64_AM::encodeLogicalImmediate(MCE->getValue(), 64);
+    Inst.addOperand(MCOperand::CreateImm(encoding));
+  }
+
+  void addLogicalImm32NotOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
+    int64_t Val = ~MCE->getValue() & 0xFFFFFFFF;
+    uint64_t encoding = AArch64_AM::encodeLogicalImmediate(Val, 32);
+    Inst.addOperand(MCOperand::CreateImm(encoding));
+  }
+
+  void addLogicalImm64NotOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
+    uint64_t encoding =
+        AArch64_AM::encodeLogicalImmediate(~MCE->getValue(), 64);
     Inst.addOperand(MCOperand::CreateImm(encoding));
   }
 

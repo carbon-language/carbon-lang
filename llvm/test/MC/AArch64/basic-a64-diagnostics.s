@@ -2985,13 +2985,17 @@
         orn wsp, w3, w5
         bics x20, sp, x9, lsr #0
         orn x2, x6, sp, lsl #3
-// CHECK-ERROR: error: invalid operand for instruction
+// FIXME: the diagnostic we get for 'orn wsp, w3, w5' is from the orn alias,
+// which is a better match than the genuine ORNWri, whereas it would be better
+// to get the ORNWri diagnostic when the alias did not match, i.e. the
+// alias' diagnostics should have a lower priority.
+// CHECK-ERROR: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         orn wsp, w3, w5
-// CHECK-ERROR-NEXT:             ^
+// CHECK-ERROR-NEXT:                      ^
 // CHECK-ERROR-NEXT: error: invalid operand for instruction
 // CHECK-ERROR-NEXT:         bics x20, sp, x9, lsr #0
 // CHECK-ERROR-NEXT:                   ^
-// CHECK-ERROR-NEXT: error: invalid operand for instruction
+// CHECK-ERROR-NEXT: error: expected compatible register or logical immediate
 // CHECK-ERROR-NEXT:         orn x2, x6, sp, lsl #3
 // CHECK-ERROR-NEXT:                     ^
 

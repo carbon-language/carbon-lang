@@ -671,10 +671,10 @@ def CRC32CXrr : BaseCRC32<1, 0b11, 1, GPR64, int_aarch64_crc32cx, "crc32cx">;
 //===----------------------------------------------------------------------===//
 
 // (immediate)
-defm ANDS : LogicalImmS<0b11, "ands", AArch64and_flag>;
-defm AND  : LogicalImm<0b00, "and", and>;
-defm EOR  : LogicalImm<0b10, "eor", xor>;
-defm ORR  : LogicalImm<0b01, "orr", or>;
+defm ANDS : LogicalImmS<0b11, "ands", AArch64and_flag, "bics">;
+defm AND  : LogicalImm<0b00, "and", and, "bic">;
+defm EOR  : LogicalImm<0b10, "eor", xor, "eon">;
+defm ORR  : LogicalImm<0b01, "orr", or, "orn">;
 
 // FIXME: these aliases *are* canonical sometimes (when movz can't be
 // used). Actually, it seems to be working right now, but putting logical_immXX

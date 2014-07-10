@@ -448,13 +448,19 @@ def logical_imm64_XFORM : SDNodeXForm<imm, [{
   return CurDAG->getTargetConstant(enc, MVT::i32);
 }]>;
 
-def LogicalImm32Operand : AsmOperandClass {
-  let Name = "LogicalImm32";
-  let DiagnosticType = "LogicalSecondSource";
-}
-def LogicalImm64Operand : AsmOperandClass {
-  let Name = "LogicalImm64";
-  let DiagnosticType = "LogicalSecondSource";
+let DiagnosticType = "LogicalSecondSource" in {
+  def LogicalImm32Operand : AsmOperandClass {
+    let Name = "LogicalImm32";
+  }
+  def LogicalImm64Operand : AsmOperandClass {
+    let Name = "LogicalImm64";
+  }
+  def LogicalImm32NotOperand : AsmOperandClass {
+    let Name = "LogicalImm32Not";
+  }
+  def LogicalImm64NotOperand : AsmOperandClass {
+    let Name = "LogicalImm64Not";
+  }
 }
 def logical_imm32 : Operand<i32>, PatLeaf<(imm), [{
   return AArch64_AM::isLogicalImmediate(N->getZExtValue(), 32);
@@ -467,6 +473,12 @@ def logical_imm64 : Operand<i64>, PatLeaf<(imm), [{
 }], logical_imm64_XFORM> {
   let PrintMethod = "printLogicalImm64";
   let ParserMatchClass = LogicalImm64Operand;
+}
+def logical_imm32_not : Operand<i32> {
+  let ParserMatchClass = LogicalImm32NotOperand;
+}
+def logical_imm64_not : Operand<i64> {
+  let ParserMatchClass = LogicalImm64NotOperand;
 }
 
 // imm0_65535 predicate - True if the immediate is in the range [0,65535].
@@ -1935,22 +1947,32 @@ class LogicalRegAlias<string asm, Instruction inst, RegisterClass regtype>
     : InstAlias<asm#" $dst, $src1, $src2",
                 (inst regtype:$dst, regtype:$src1, regtype:$src2, 0)>;
 
-let AddedComplexity = 6 in
-multiclass LogicalImm<bits<2> opc, string mnemonic, SDNode OpNode> {
+multiclass LogicalImm<bits<2> opc, string mnemonic, SDNode OpNode,
+                      string Alias> {
+  let AddedComplexity = 6 in
   def Wri : BaseLogicalImm<opc, GPR32sp, GPR32, logical_imm32, mnemonic,
                            [(set GPR32sp:$Rd, (OpNode GPR32:$Rn,
                                                logical_imm32:$imm))]> {
     let Inst{31} = 0;
     let Inst{22} = 0; // 64-bit version has an additional bit of immediate.
   }
+  let AddedComplexity = 6 in
   def Xri : BaseLogicalImm<opc, GPR64sp, GPR64, logical_imm64, mnemonic,
                            [(set GPR64sp:$Rd, (OpNode GPR64:$Rn,
                                                logical_imm64:$imm))]> {
     let Inst{31} = 1;
   }
+
+  def : InstAlias<Alias # " $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Wri") GPR32sp:$Rd, GPR32:$Rn,
+                      logical_imm32_not:$imm), 0>;
+  def : InstAlias<Alias # " $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Xri") GPR64sp:$Rd, GPR64:$Rn,
+                       logical_imm64_not:$imm), 0>;
 }
 
-multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode> {
+multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode,
+                       string Alias> {
   let isCompare = 1, Defs = [NZCV] in {
   def Wri  : BaseLogicalImm<opc, GPR32, GPR32, logical_imm32, mnemonic,
       [(set GPR32:$Rd, (OpNode GPR32:$Rn, logical_imm32:$imm))]> {
@@ -1962,6 +1984,13 @@ multiclass LogicalImmS<bits<2> opc, string mnemonic, SDNode OpNode> {
     let Inst{31} = 1;
   }
   } // end Defs = [NZCV]
+
+  def : InstAlias<Alias # " $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Wri") GPR32:$Rd, GPR32:$Rn,
+                      logical_imm32_not:$imm), 0>;
+  def : InstAlias<Alias # " $Rd, $Rn, $imm",
+                  (!cast<Instruction>(NAME # "Xri") GPR64:$Rd, GPR64:$Rn,
+                       logical_imm64_not:$imm), 0>;
 }
 
 class BaseLogicalRegPseudo<RegisterClass regtype, SDPatternOperator OpNode>
