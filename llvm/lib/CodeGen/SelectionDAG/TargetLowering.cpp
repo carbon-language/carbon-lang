@@ -2885,3 +2885,65 @@ bool TargetLowering::expandMUL(SDNode *N, SDValue &Lo, SDValue &Hi, EVT HiLoVT,
   }
   return false;
 }
+
+bool TargetLowering::expandFP_TO_SINT(SDNode *Node, SDValue &Result,
+                               SelectionDAG &DAG) const {
+  EVT VT = Node->getOperand(0).getValueType();
+  EVT NVT = Node->getValueType(0);
+  SDLoc dl(SDValue(Node, 0));
+
+  // FIXME: Only f32 to i64 conversions are supported.
+  if (VT != MVT::f32 || NVT != MVT::i64)
+    return false;
+
+  // Expand f32 -> i64 conversion
+  // This algorithm comes from compiler-rt's implementation of fixsfdi:
+  // https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/fixsfdi.c
+  EVT IntVT = EVT::getIntegerVT(*DAG.getContext(),
+                                VT.getSizeInBits());
+  SDValue ExponentMask = DAG.getConstant(0x7F800000, IntVT);
+  SDValue ExponentLoBit = DAG.getConstant(23, IntVT);
+  SDValue Bias = DAG.getConstant(127, IntVT);
+  SDValue SignMask = DAG.getConstant(APInt::getSignBit(VT.getSizeInBits()),
+                                     IntVT);
+  SDValue SignLowBit = DAG.getConstant(VT.getSizeInBits() - 1, IntVT);
+  SDValue MantissaMask = DAG.getConstant(0x007FFFFF, IntVT);
+
+  SDValue Bits = DAG.getNode(ISD::BITCAST, dl, IntVT, Node->getOperand(0));
+
+  SDValue ExponentBits = DAG.getNode(ISD::SRL, dl, IntVT,
+      DAG.getNode(ISD::AND, dl, IntVT, Bits, ExponentMask),
+      DAG.getZExtOrTrunc(ExponentLoBit, dl, getShiftAmountTy(IntVT)));
+  SDValue Exponent = DAG.getNode(ISD::SUB, dl, IntVT, ExponentBits, Bias);
+
+  SDValue Sign = DAG.getNode(ISD::SRA, dl, IntVT,
+      DAG.getNode(ISD::AND, dl, IntVT, Bits, SignMask),
+      DAG.getZExtOrTrunc(SignLowBit, dl, getShiftAmountTy(IntVT)));
+  Sign = DAG.getSExtOrTrunc(Sign, dl, NVT);
+
+  SDValue R = DAG.getNode(ISD::OR, dl, IntVT,
+      DAG.getNode(ISD::AND, dl, IntVT, Bits, MantissaMask),
+      DAG.getConstant(0x00800000, IntVT));
+
+  R = DAG.getZExtOrTrunc(R, dl, NVT);
+
+
+  R = DAG.getSelectCC(dl, Exponent, ExponentLoBit,
+     DAG.getNode(ISD::SHL, dl, NVT, R,
+                 DAG.getZExtOrTrunc(
+                    DAG.getNode(ISD::SUB, dl, IntVT, Exponent, ExponentLoBit),
+                    dl, getShiftAmountTy(IntVT))),
+     DAG.getNode(ISD::SRL, dl, NVT, R,
+                 DAG.getZExtOrTrunc(
+                    DAG.getNode(ISD::SUB, dl, IntVT, ExponentLoBit, Exponent),
+                    dl, getShiftAmountTy(IntVT))),
+     ISD::SETGT);
+
+  SDValue Ret = DAG.getNode(ISD::SUB, dl, NVT,
+      DAG.getNode(ISD::XOR, dl, NVT, R, Sign),
+      Sign);
+
+  Result = DAG.getSelectCC(dl, Exponent, DAG.getConstant(0, IntVT),
+      DAG.getConstant(0, NVT), Ret, ISD::SETLT);
+  return true;
+}
