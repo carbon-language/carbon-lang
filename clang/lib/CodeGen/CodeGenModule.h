@@ -760,19 +760,22 @@ public:
   llvm::Constant *GetConstantArrayFromStringLiteral(const StringLiteral *E);
 
   /// Return a pointer to a constant array for the given string literal.
-  llvm::Constant *GetAddrOfConstantStringFromLiteral(const StringLiteral *S);
+  llvm::GlobalVariable *
+  GetAddrOfConstantStringFromLiteral(const StringLiteral *S);
 
   /// Return a pointer to a constant array for the given ObjCEncodeExpr node.
-  llvm::Constant *GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *);
+  llvm::GlobalVariable *
+  GetAddrOfConstantStringFromObjCEncode(const ObjCEncodeExpr *);
 
   /// Returns a pointer to a character array containing the literal and a
   /// terminating '\0' character. The result has pointer to array type.
   ///
   /// \param GlobalName If provided, the name to use for the global (if one is
   /// created).
-  llvm::Constant *GetAddrOfConstantCString(const std::string &str,
-                                           const char *GlobalName = nullptr,
-                                           unsigned Alignment = 0);
+  llvm::GlobalVariable *
+  GetAddrOfConstantCString(const std::string &Str,
+                           const char *GlobalName = nullptr,
+                           unsigned Alignment = 0);
 
   /// Returns a pointer to a constant global variable for the given file-scope
   /// compound literal expression.
