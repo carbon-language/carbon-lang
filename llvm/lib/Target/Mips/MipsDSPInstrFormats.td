@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-def HasDSP : Predicate<"Subtarget.hasDSP()">,
+def HasDSP : Predicate<"Subtarget->hasDSP()">,
              AssemblerPredicate<"FeatureDSP">;
-def HasDSPR2 : Predicate<"Subtarget.hasDSPR2()">,
+def HasDSPR2 : Predicate<"Subtarget->hasDSPR2()">,
                AssemblerPredicate<"FeatureDSPR2">;
 
 // Fields.

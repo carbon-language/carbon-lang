@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-def HasMSA : Predicate<"Subtarget.hasMSA()">,
+def HasMSA : Predicate<"Subtarget->hasMSA()">,
              AssemblerPredicate<"FeatureMSA">;
 
 class MSAInst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {

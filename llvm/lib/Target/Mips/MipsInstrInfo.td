@@ -146,61 +146,61 @@ def MipsSDR : SDNode<"MipsISD::SDR", SDTStore,
 //===----------------------------------------------------------------------===//
 // Mips Instruction Predicate Definitions.
 //===----------------------------------------------------------------------===//
-def HasMips2     :    Predicate<"Subtarget.hasMips2()">,
+def HasMips2     :    Predicate<"Subtarget->hasMips2()">,
                       AssemblerPredicate<"FeatureMips2">;
-def HasMips3_32  :    Predicate<"Subtarget.hasMips3_32()">,
+def HasMips3_32  :    Predicate<"Subtarget->hasMips3_32()">,
                       AssemblerPredicate<"FeatureMips3_32">;
-def HasMips3_32r2 :   Predicate<"Subtarget.hasMips3_32r2()">,
+def HasMips3_32r2 :   Predicate<"Subtarget->hasMips3_32r2()">,
                       AssemblerPredicate<"FeatureMips3_32r2">;
-def HasMips3     :    Predicate<"Subtarget.hasMips3()">,
+def HasMips3     :    Predicate<"Subtarget->hasMips3()">,
                       AssemblerPredicate<"FeatureMips3">;
-def HasMips4_32  :    Predicate<"Subtarget.hasMips4_32()">,
+def HasMips4_32  :    Predicate<"Subtarget->hasMips4_32()">,
                       AssemblerPredicate<"FeatureMips4_32">;
-def HasMips4_32r2 :   Predicate<"Subtarget.hasMips4_32r2()">,
+def HasMips4_32r2 :   Predicate<"Subtarget->hasMips4_32r2()">,
                       AssemblerPredicate<"FeatureMips4_32r2">;
-def HasMips5_32r2 :   Predicate<"Subtarget.hasMips5_32r2()">,
+def HasMips5_32r2 :   Predicate<"Subtarget->hasMips5_32r2()">,
                       AssemblerPredicate<"FeatureMips5_32r2">;
-def HasMips32    :    Predicate<"Subtarget.hasMips32()">,
+def HasMips32    :    Predicate<"Subtarget->hasMips32()">,
                       AssemblerPredicate<"FeatureMips32">;
-def HasMips32r2  :    Predicate<"Subtarget.hasMips32r2()">,
+def HasMips32r2  :    Predicate<"Subtarget->hasMips32r2()">,
                       AssemblerPredicate<"FeatureMips32r2">;
-def HasMips32r6  :    Predicate<"Subtarget.hasMips32r6()">,
+def HasMips32r6  :    Predicate<"Subtarget->hasMips32r6()">,
                       AssemblerPredicate<"FeatureMips32r6">;
-def NotMips32r6  :    Predicate<"!Subtarget.hasMips32r6()">,
+def NotMips32r6  :    Predicate<"!Subtarget->hasMips32r6()">,
                       AssemblerPredicate<"!FeatureMips32r6">;
-def IsGP64bit    :    Predicate<"Subtarget.isGP64bit()">,
+def IsGP64bit    :    Predicate<"Subtarget->isGP64bit()">,
                       AssemblerPredicate<"FeatureGP64Bit">;
-def IsGP32bit    :    Predicate<"!Subtarget.isGP64bit()">,
+def IsGP32bit    :    Predicate<"!Subtarget->isGP64bit()">,
                       AssemblerPredicate<"!FeatureGP64Bit">;
-def HasMips64    :    Predicate<"Subtarget.hasMips64()">,
+def HasMips64    :    Predicate<"Subtarget->hasMips64()">,
                       AssemblerPredicate<"FeatureMips64">;
-def HasMips64r2  :    Predicate<"Subtarget.hasMips64r2()">,
+def HasMips64r2  :    Predicate<"Subtarget->hasMips64r2()">,
                       AssemblerPredicate<"FeatureMips64r2">;
-def HasMips64r6  :    Predicate<"Subtarget.hasMips64r6()">,
+def HasMips64r6  :    Predicate<"Subtarget->hasMips64r6()">,
                       AssemblerPredicate<"FeatureMips64r6">;
-def NotMips64r6  :    Predicate<"!Subtarget.hasMips64r6()">,
+def NotMips64r6  :    Predicate<"!Subtarget->hasMips64r6()">,
                       AssemblerPredicate<"!FeatureMips64r6">;
-def IsN64       :     Predicate<"Subtarget.isABI_N64()">,
+def IsN64       :     Predicate<"Subtarget->isABI_N64()">,
                       AssemblerPredicate<"FeatureN64">;
-def InMips16Mode :    Predicate<"Subtarget.inMips16Mode()">,
+def InMips16Mode :    Predicate<"Subtarget->inMips16Mode()">,
                       AssemblerPredicate<"FeatureMips16">;
-def HasCnMips    :    Predicate<"Subtarget.hasCnMips()">,
+def HasCnMips    :    Predicate<"Subtarget->hasCnMips()">,
                       AssemblerPredicate<"FeatureCnMips">;
 def RelocStatic :     Predicate<"TM.getRelocationModel() == Reloc::Static">,
                       AssemblerPredicate<"FeatureMips32">;
 def RelocPIC    :     Predicate<"TM.getRelocationModel() == Reloc::PIC_">,
                       AssemblerPredicate<"FeatureMips32">;
 def NoNaNsFPMath :    Predicate<"TM.Options.NoNaNsFPMath">;
-def HasStdEnc :       Predicate<"Subtarget.hasStandardEncoding()">,
+def HasStdEnc :       Predicate<"Subtarget->hasStandardEncoding()">,
                       AssemblerPredicate<"!FeatureMips16">;
-def NotDSP :          Predicate<"!Subtarget.hasDSP()">;
-def InMicroMips    :  Predicate<"Subtarget.inMicroMipsMode()">,
+def NotDSP :          Predicate<"!Subtarget->hasDSP()">;
+def InMicroMips    :  Predicate<"Subtarget->inMicroMipsMode()">,
                       AssemblerPredicate<"FeatureMicroMips">;
-def NotInMicroMips :  Predicate<"!Subtarget.inMicroMipsMode()">,
+def NotInMicroMips :  Predicate<"!Subtarget->inMicroMipsMode()">,
                       AssemblerPredicate<"!FeatureMicroMips">;
-def IsLE           :  Predicate<"Subtarget.isLittle()">;
-def IsBE           :  Predicate<"!Subtarget.isLittle()">;
-def IsNotNaCl    :    Predicate<"!Subtarget.isTargetNaCl()">;
+def IsLE           :  Predicate<"Subtarget->isLittle()">;
+def IsBE           :  Predicate<"!Subtarget->isLittle()">;
+def IsNotNaCl    :    Predicate<"!Subtarget->isTargetNaCl()">;
 
 //===----------------------------------------------------------------------===//
 // Mips GPR size adjectives.

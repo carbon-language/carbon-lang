@@ -41,7 +41,7 @@ class MipsFastISel final : public FastISel {
   const TargetMachine &TM;
   const TargetInstrInfo &TII;
   const TargetLowering &TLI;
-  const MipsSubtarget &Subtarget;
+  const MipsSubtarget *Subtarget;
   MipsFunctionInfo *MFI;
 
   // Convenience variables to avoid some queries.
@@ -56,11 +56,11 @@ public:
         M(const_cast<Module &>(*funcInfo.Fn->getParent())),
         TM(funcInfo.MF->getTarget()), TII(*TM.getInstrInfo()),
         TLI(*TM.getTargetLowering()),
-        Subtarget(TM.getSubtarget<MipsSubtarget>()) {
+        Subtarget(&TM.getSubtarget<MipsSubtarget>()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();
-    TargetSupported = ((Subtarget.getRelocationModel() == Reloc::PIC_) &&
-                       (Subtarget.hasMips32r2() && (Subtarget.isABI_O32())));
+    TargetSupported = ((Subtarget->getRelocationModel() == Reloc::PIC_) &&
+                       (Subtarget->hasMips32r2() && (Subtarget->isABI_O32())));
   }
 
   bool TargetSelectInstruction(const Instruction *I) override;

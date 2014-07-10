@@ -57,13 +57,13 @@ let PrintMethod = "printFCCOperand", DecoderMethod = "DecodeCondCode" in
 // Feature predicates.
 //===----------------------------------------------------------------------===//
 
-def IsFP64bit        : Predicate<"Subtarget.isFP64bit()">,
+def IsFP64bit        : Predicate<"Subtarget->isFP64bit()">,
                        AssemblerPredicate<"FeatureFP64Bit">;
-def NotFP64bit       : Predicate<"!Subtarget.isFP64bit()">,
+def NotFP64bit       : Predicate<"!Subtarget->isFP64bit()">,
                        AssemblerPredicate<"!FeatureFP64Bit">;
-def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">,
+def IsSingleFloat    : Predicate<"Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"FeatureSingleFloat">;
-def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">,
+def IsNotSingleFloat : Predicate<"!Subtarget->isSingleFloat()">,
                        AssemblerPredicate<"!FeatureSingleFloat">;
 
 //===----------------------------------------------------------------------===//

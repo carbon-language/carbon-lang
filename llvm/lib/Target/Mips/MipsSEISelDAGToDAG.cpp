@@ -37,7 +37,7 @@ using namespace llvm;
 #define DEBUG_TYPE "mips-isel"
 
 bool MipsSEDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
-  if (Subtarget.inMips16Mode())
+  if (Subtarget->inMips16Mode())
     return false;
   return MipsDAGToDAGISel::runOnMachineFunction(MF);
 }
@@ -134,7 +134,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
   const TargetRegisterClass *RC;
 
-  if (Subtarget.isABI_N64())
+  if (Subtarget->isABI_N64())
     RC = (const TargetRegisterClass*)&Mips::GPR64RegClass;
   else
     RC = (const TargetRegisterClass*)&Mips::GPR32RegClass;
@@ -142,7 +142,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   V0 = RegInfo.createVirtualRegister(RC);
   V1 = RegInfo.createVirtualRegister(RC);
 
-  if (Subtarget.isABI_N64()) {
+  if (Subtarget->isABI_N64()) {
     MF.getRegInfo().addLiveIn(Mips::T9_64);
     MBB.addLiveIn(Mips::T9_64);
 
@@ -174,7 +174,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   MF.getRegInfo().addLiveIn(Mips::T9);
   MBB.addLiveIn(Mips::T9);
 
-  if (Subtarget.isABI_N32()) {
+  if (Subtarget->isABI_N32()) {
     // lui $v0, %hi(%neg(%gp_rel(fname)))
     // addu $v1, $v0, $t9
     // addiu $globalbasereg, $v1, %lo(%neg(%gp_rel(fname)))
@@ -187,7 +187,7 @@ void MipsSEDAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
     return;
   }
 
-  assert(Subtarget.isABI_O32());
+  assert(Subtarget->isABI_O32());
 
   // For O32 ABI, the following instruction sequence is emitted to initialize
   // the global base register:
@@ -408,7 +408,7 @@ bool MipsSEDAGToDAGISel::selectIntAddrMSA(SDValue Addr, SDValue &Base,
 // * MSA is enabled
 // * N is a ISD::BUILD_VECTOR representing a constant splat
 bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
-  if (!Subtarget.hasMSA())
+  if (!Subtarget->hasMSA())
     return false;
 
   BuildVectorSDNode *Node = dyn_cast<BuildVectorSDNode>(N);
@@ -422,7 +422,7 @@ bool MipsSEDAGToDAGISel::selectVSplat(SDNode *N, APInt &Imm) const {
 
   if (!Node->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
                              HasAnyUndefs, 8,
-                             !Subtarget.isLittle()))
+                             !Subtarget->isLittle()))
     return false;
 
   Imm = SplatValue;
@@ -648,7 +648,7 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   }
 
   case ISD::ADDE: {
-    if (Subtarget.hasDSP()) // Select DSP instructions, ADDSC and ADDWC.
+    if (Subtarget->hasDSP()) // Select DSP instructions, ADDSC and ADDWC.
       break;
     SDValue InFlag = Node->getOperand(2);
     Result = selectAddESubE(Mips::ADDu, InFlag, InFlag.getValue(0), DL, Node);
@@ -658,11 +658,11 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
   case ISD::ConstantFP: {
     ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Node);
     if (Node->getValueType(0) == MVT::f64 && CN->isExactlyValue(+0.0)) {
-      if (Subtarget.isGP64bit()) {
+      if (Subtarget->isGP64bit()) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO_64, MVT::i64);
         Result = CurDAG->getMachineNode(Mips::DMTC1, DL, MVT::f64, Zero);
-      } else if (Subtarget.isFP64bit()) {
+      } else if (Subtarget->isFP64bit()) {
         SDValue Zero = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
                                               Mips::ZERO, MVT::i32);
         Result = CurDAG->getMachineNode(Mips::BuildPairF64_64, DL, MVT::f64,
@@ -813,12 +813,12 @@ std::pair<bool, SDNode*> MipsSEDAGToDAGISel::selectNode(SDNode *Node) {
     EVT ResVecTy = BVN->getValueType(0);
     EVT ViaVecTy;
 
-    if (!Subtarget.hasMSA() || !BVN->getValueType(0).is128BitVector())
+    if (!Subtarget->hasMSA() || !BVN->getValueType(0).is128BitVector())
       return std::make_pair(false, nullptr);
 
     if (!BVN->isConstantSplat(SplatValue, SplatUndef, SplatBitSize,
                               HasAnyUndefs, 8,
-                              !Subtarget.isLittle()))
+                              !Subtarget->isLittle()))
       return std::make_pair(false, nullptr);
 
     switch (SplatBitSize) {
