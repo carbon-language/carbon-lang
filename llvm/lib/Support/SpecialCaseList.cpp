@@ -35,9 +35,7 @@ namespace llvm {
 /// literal strings than Regex.
 struct SpecialCaseList::Entry {
   StringSet<> Strings;
-  Regex *RegEx;
-
-  Entry() : RegEx(nullptr) {}
+  std::unique_ptr<Regex> RegEx;
 
   bool match(StringRef Query) const {
     return Strings.count(Query) || (RegEx && RegEx->match(Query));
@@ -147,23 +145,13 @@ bool SpecialCaseList::parse(const MemoryBuffer *MB, std::string &Error) {
     for (StringMap<std::string>::const_iterator II = I->second.begin(),
                                                 IE = I->second.end();
          II != IE; ++II) {
-      Entries[I->getKey()][II->getKey()].RegEx = new Regex(II->getValue());
+      Entries[I->getKey()][II->getKey()].RegEx.reset(new Regex(II->getValue()));
     }
   }
   return true;
 }
 
-SpecialCaseList::~SpecialCaseList() {
-  for (StringMap<StringMap<Entry> >::iterator I = Entries.begin(),
-                                              E = Entries.end();
-       I != E; ++I) {
-    for (StringMap<Entry>::const_iterator II = I->second.begin(),
-                                          IE = I->second.end();
-         II != IE; ++II) {
-      delete II->second.RegEx;
-    }
-  }
-}
+SpecialCaseList::~SpecialCaseList() {}
 
 bool SpecialCaseList::inSection(const StringRef Section, const StringRef Query,
                                 const StringRef Category) const {
