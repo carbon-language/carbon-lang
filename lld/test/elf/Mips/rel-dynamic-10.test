@@ -5,10 +5,10 @@
 #   a) There should be no dynamic relocations.
 #   b) There should be no PLT entries.
 #
-# RUN: yaml2obj -format=elf %s > %t-obj1
-# RUN: yaml2obj -format=elf %S/Inputs/pic-obj.yaml > %t-obj2
-# RUN: lld -flavor gnu -target mipsel -e T0 -o %t3-exe %t-obj1 %t-obj2
-# RUN: llvm-readobj -dt -r -s %t3-exe | FileCheck -check-prefix=PLT-SYM %s
+# RUN: yaml2obj -format=elf -docnum 1 %s > %t-o1.o
+# RUN: yaml2obj -format=elf -docnum 2 %s > %t-o2.o
+# RUN: lld -flavor gnu -target mipsel -e T0 -o %t.exe %t-o1.o %t-o2.o
+# RUN: llvm-readobj -dt -r -s %t.exe | FileCheck -check-prefix=PLT-SYM %s
 
 # PLT-SYM:     Sections [
 # PLT-SYM:       Section {
@@ -29,7 +29,58 @@
 # PLT-SYM-NEXT:   }
 # PLT-SYM-NEXT: ]
 
-!ELF
+# o1.o
+---
+FileHeader:
+  Class:   ELFCLASS32
+  Data:    ELFDATA2LSB
+  Type:    ET_REL
+  Machine: EM_MIPS
+  Flags:   [EF_MIPS_PIC, EF_MIPS_CPIC]
+
+Sections:
+- Name:         .text
+  Type:         SHT_PROGBITS
+  Size:         0x0C
+  AddressAlign: 16
+  Flags:        [SHF_EXECINSTR, SHF_ALLOC]
+
+- Name:         .data
+  Type:         SHT_PROGBITS
+  Size:         0x08
+  AddressAlign: 16
+  Flags:        [SHF_WRITE, SHF_ALLOC]
+
+Symbols:
+  Global:
+    - Name: T1
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x0
+      Size: 4
+    - Name: T2
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x4
+      Size: 4
+    - Name: T3
+      Section: .text
+      Type: STT_FUNC
+      Value: 0x8
+      Size: 4
+    - Name: D1
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x0
+      Size: 4
+    - Name: D2
+      Section: .data
+      Type: STT_OBJECT
+      Value: 0x4
+      Size: 4
+
+# o2.o
+---
 FileHeader: !FileHeader
   Class: ELFCLASS32
   Data: ELFDATA2LSB
@@ -40,13 +91,13 @@ FileHeader: !FileHeader
 Sections:
 - Name: .text
   Type: SHT_PROGBITS
-  Content:  "0000000000000000"
+  Size: 0x08
   AddressAlign: 16
   Flags: [SHF_EXECINSTR, SHF_ALLOC]
 
 - Name: .data
   Type: SHT_PROGBITS
-  Content:  "0000000000000000"
+  Size: 0x08
   AddressAlign: 16
   Flags: [SHF_WRITE, SHF_ALLOC]
 
@@ -106,3 +157,4 @@ Symbols:
       Type: STT_OBJECT
     - Name: D2
       Type: STT_OBJECT
+...
