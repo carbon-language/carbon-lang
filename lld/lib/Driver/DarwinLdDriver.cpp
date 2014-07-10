@@ -302,8 +302,11 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.addModifiedSearchDir(libPath->getValue(), syslibRoots, false);
   }
 
-  ctx.addModifiedSearchDir("/usr/lib", syslibRoots, true);
-  ctx.addModifiedSearchDir("/usr/local/lib", syslibRoots, true);
+  // -Z suppresses the standard search paths.
+  if (!parsedArgs->hasArg(OPT_Z)) {
+    ctx.addModifiedSearchDir("/usr/lib", syslibRoots, true);
+    ctx.addModifiedSearchDir("/usr/local/lib", syslibRoots, true);
+  }
 
   // Now that we've constructed the final set of search paths, print out what
   // we'll be using for testing purposes.

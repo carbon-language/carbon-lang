@@ -66,6 +66,8 @@ def bundle_loader : Separate<["-"], "bundle_loader">,
 def grp_libs : OptionGroup<"libs">, HelpText<"LIBRARY OPTIONS">;
 def L : JoinedOrSeparate<["-"], "L">,
         HelpText<"Add directory to library search path">, Group<grp_libs>;
+def Z : Flag<["-"], "Z">,
+     HelpText<"Do not search standard directories for libraries or frameworks">;
 def all_load : Flag<["-"], "all_load">,
         HelpText<"Forces all members of all static libraries to be loaded">,
         Group<grp_libs>;
