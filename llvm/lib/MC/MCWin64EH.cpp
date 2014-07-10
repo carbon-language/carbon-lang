@@ -20,34 +20,30 @@ namespace llvm {
 
 // NOTE: All relocations generated here are 4-byte image-relative.
 
-static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &instArray){
-  uint8_t count = 0;
-  for (std::vector<MCWin64EHInstruction>::const_iterator I = instArray.begin(),
-       E = instArray.end(); I != E; ++I) {
-    switch (I->getOperation()) {
+static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &Insns) {
+  uint8_t Count = 0;
+  for (const auto &I : Insns) {
+    switch (I.getOperation()) {
     case Win64EH::UOP_PushNonVol:
     case Win64EH::UOP_AllocSmall:
     case Win64EH::UOP_SetFPReg:
     case Win64EH::UOP_PushMachFrame:
-      count += 1;
+      Count += 1;
       break;
     case Win64EH::UOP_SaveNonVol:
     case Win64EH::UOP_SaveXMM128:
-      count += 2;
+      Count += 2;
       break;
     case Win64EH::UOP_SaveNonVolBig:
     case Win64EH::UOP_SaveXMM128Big:
-      count += 3;
+      Count += 3;
       break;
     case Win64EH::UOP_AllocLarge:
-      if (I->getSize() > 512*1024-8)
-        count += 3;
-      else
-        count += 2;
+      Count += (I.getSize() > 512 * 1024 - 8) ? 3 : 2;
       break;
     }
   }
-  return count;
+  return Count;
 }
 
 static void EmitAbsDifference(MCStreamer &streamer, MCSymbol *lhs,
