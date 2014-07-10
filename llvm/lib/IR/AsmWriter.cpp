@@ -1528,11 +1528,6 @@ void AssemblyWriter::printAlias(const GlobalAlias *GA) {
     writeOperand(Aliasee, !isa<ConstantExpr>(Aliasee));
   }
 
-  if (GA->hasComdat()) {
-    Out << ", comdat ";
-    PrintLLVMName(Out, GA->getComdat()->getName(), ComdatPrefix);
-  }
-
   printInfoComment(*GA);
   Out << '\n';
 }
