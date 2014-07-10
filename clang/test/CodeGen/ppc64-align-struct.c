@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -faltivec -triple powerpc64-unknown-linux-gnu -emit-llvm -o - %s | FileCheck %s
+// REQUIRES: asserts
 
 #include <stdarg.h>
 
