@@ -48,6 +48,6 @@ int main() {
 // CHECK-NEXT:     #1 bar1{{.*}} {{.*}}simple_stack2.cc:16{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread1{{.*}} {{.*}}simple_stack2.cc:34{{(:3)?}} ({{.*}})
 // CHECK:        Previous read of size 4 at {{.*}} by main thread:
-// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack2.cc:20{{(:28)?}} ({{.*}})
+// CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack2.cc:20{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack2.cc:29{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack2.cc:41{{(:3)?}} ({{.*}})
