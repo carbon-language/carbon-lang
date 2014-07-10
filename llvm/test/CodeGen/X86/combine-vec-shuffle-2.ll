@@ -162,3 +162,92 @@ define <4 x i32> @test14(<4 x i32> %A, <4 x i32> %B) {
 ; CHECK-NOT: pshufd
 ; CHECK: ret
 
+
+; Verify that we don't optimize the following cases. We expect more than one shuffle.
+
+define <4 x i32> @test15(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 0, i32 4, i32 3, i32 1>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test15
+; CHECK: shufps $114
+; CHECK-NEXT: pshufd $-58
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test16(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test16
+; CHECK: blendps $10
+; CHECK-NEXT: pshufd $-58
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test17(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 1, i32 3, i32 1>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test17
+; CHECK: shufps $120
+; CHECK-NEXT: pshufd $-58
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test18(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test18
+; CHECK: blendps $11
+; CHECK-NEXT: pshufd $-59
+; CHECK-NEXT: ret
+
+define <4 x i32> @test19(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 0, i32 4, i32 5, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 0, i32 0, i32 0>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test19
+; CHECK: shufps $-104
+; CHECK-NEXT: pshufd $2
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test20(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 3, i32 2, i32 4, i32 4>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test20
+; CHECK: shufps $11
+; CHECK-NEXT: pshufd $-58
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test21(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 1, i32 3, i32 1>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test21
+; CHECK: shufps $120
+; CHECK-NEXT: pshufd $-60
+; CHECK-NEXT: ret
+
+
+define <4 x i32> @test22(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 1, i32 1, i32 1, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test22
+; CHECK: blendps $11
+; CHECK-NEXT: pshufd $-43
+; CHECK-NEXT: ret
+
