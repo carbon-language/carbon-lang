@@ -957,8 +957,16 @@ void X86_32ABIInfo::computeInfo(CGFunctionInfo &FI) const {
   else
     State.FreeRegs = DefaultNumRegisterParameters;
 
-  if (!getCXXABI().classifyReturnType(FI))
+  if (!getCXXABI().classifyReturnType(FI)) {
     FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), State);
+  } else if (FI.getReturnInfo().isIndirect()) {
+    // The C++ ABI is not aware of register usage, so we have to check if the
+    // return value was sret and put it in a register ourselves if appropriate.
+    if (State.FreeRegs) {
+      --State.FreeRegs;  // The sret parameter consumes a register.
+      FI.getReturnInfo().setInReg(true);
+    }
+  }
 
   bool UsedInAlloca = false;
   for (auto &I : FI.arguments()) {

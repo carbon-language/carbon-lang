@@ -33,3 +33,12 @@ int main() {
 // CHECK: call void {{.*}} @"\01?variadic_sret@C@@QAA?AUS@@PBDZZ"
 // CHECK: call void @"\01?cdecl_sret@C@@QAA?AUS@@XZ"
 // CHECK: call void @"\01?byval_and_sret@C@@QAA?AUS@@U2@@Z"
+
+// __fastcall has similar issues.
+struct A {
+  S __fastcall f(int x);
+};
+S A::f(int x) {
+  return S();
+}
+// CHECK-LABEL: define x86_fastcallcc void @"\01?f@A@@QAI?AUS@@H@Z"(%struct.A* inreg %this, %struct.S* inreg noalias sret %agg.result, i32 %x)
