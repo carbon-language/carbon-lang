@@ -1024,6 +1024,11 @@ void ASTDumper::VisitVarDecl(const VarDecl *D) {
   if (D->isNRVOVariable())
     OS << " nrvo";
   if (D->hasInit()) {
+    switch (D->getInitStyle()) {
+    case VarDecl::CInit: OS << " cinit"; break;
+    case VarDecl::CallInit: OS << " callinit"; break;
+    case VarDecl::ListInit: OS << " listinit"; break;
+    }
     lastChild();
     dumpStmt(D->getInit());
   }
