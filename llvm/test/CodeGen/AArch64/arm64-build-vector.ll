@@ -42,4 +42,18 @@ define <8 x i16> @build_all_zero(<8 x i16> %a) #1 {
   %b = add <8 x i16> %a, <i16 -32768, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>
   %c = mul <8 x i16> %b, <i16 -20864, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef, i16 undef>
   ret <8 x i16> %c
-  }
+}
+
+; There is an optimization in DAG Combiner as following:
+;   fold (concat_vectors (BUILD_VECTOR A, B, ...), (BUILD_VECTOR C, D, ...))
+;        -> (BUILD_VECTOR A, B, ..., C, D, ...)
+; This case checks when A,B and C,D are different types, there should be no
+; assertion failure.
+define <8 x i16> @concat_2_build_vector(<4 x i16> %in0) {
+; CHECK-LABEL: concat_2_build_vector:
+; CHECK: movi
+  %vshl_n = shl <4 x i16> %in0, <i16 8, i16 8, i16 8, i16 8>
+  %vshl_n2 = shl <4 x i16> %vshl_n, <i16 9, i16 9, i16 9, i16 9>
+  %shuffle.i = shufflevector <4 x i16> %vshl_n2, <4 x i16> zeroinitializer, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  ret <8 x i16> %shuffle.i
+}

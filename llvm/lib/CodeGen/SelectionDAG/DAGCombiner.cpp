@@ -10390,10 +10390,24 @@ SDValue DAGCombiner::visitCONCAT_VECTORS(SDNode *N) {
     SmallVector<SDValue, 8> Opnds;
     unsigned BuildVecNumElts =  N0.getNumOperands();
 
-    for (unsigned i = 0; i != BuildVecNumElts; ++i)
-      Opnds.push_back(N0.getOperand(i));
-    for (unsigned i = 0; i != BuildVecNumElts; ++i)
-      Opnds.push_back(N1.getOperand(i));
+    EVT SclTy0 = N0.getOperand(0)->getValueType(0);
+    EVT SclTy1 = N1.getOperand(0)->getValueType(0);
+    if (SclTy0.isFloatingPoint()) {
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(N0.getOperand(i));
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(N1.getOperand(i));
+    } else {
+      // If BUILD_VECTOR are from built from integer, they may have different
+      // operand types. Get the smaller type and truncate all operands to it.
+      EVT MinTy = SclTy0.bitsLE(SclTy1) ? SclTy0 : SclTy1;
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
+                        N0.getOperand(i)));
+      for (unsigned i = 0; i != BuildVecNumElts; ++i)
+        Opnds.push_back(DAG.getNode(ISD::TRUNCATE, SDLoc(N), MinTy,
+                        N1.getOperand(i)));
+    }
 
     return DAG.getNode(ISD::BUILD_VECTOR, SDLoc(N), VT, Opnds);
   }
