@@ -1,0 +1,19 @@
+# RUN: lld -flavor darwin -test_libresolution \
+# RUN:        -path_exists /usr/lib \
+# RUN:        -path_exists /Applications/MySDK/usr/local/lib \
+# RUN:        -path_exists /Applications/MySDK/usr/local/lib/libSystem.a \
+# RUN:        -syslibroot /Applications/MySDK \
+# RUN:        -lSystem \
+# RUN: 2>&1 | FileCheck %s
+
+# When just one -syslibroot is specified, we apparently want to skip *system*
+# paths that aren't found. User ones should still get added. In this case
+# /usr/lib exists, but not the equivalent in the -syslibroot, so there should be
+# no mention of /usr/lib.
+
+# CHECK: Library search paths:
+# CHECK-NOT:     /usr/lib
+# CHECK-NOT:     /usr/local/lib
+# CHECK:     /Applications/MySDK/usr/local/lib
+# CHECK-NOT:     /usr/local/lib
+# CHECK: Found library /Applications/MySDK/usr/local/lib/libSystem.a

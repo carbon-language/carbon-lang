@@ -20,8 +20,10 @@
 
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
+#include "llvm/Support/Path.h"
 
 using lld::mach_o::KindHandler;
 using namespace llvm::MachO;
@@ -123,7 +125,7 @@ MachOLinkingContext::MachOLinkingContext()
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
-      _kindHandler(nullptr) {}
+      _testingLibResolution(false), _kindHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -260,6 +262,87 @@ bool MachOLinkingContext::addUnixThreadLoadCommand() const {
   default:
     return false;
   }
+}
+
+bool MachOLinkingContext::pathExists(StringRef path) const {
+  if (!testingLibResolution())
+    return llvm::sys::fs::exists(path.str());
+
+  // Otherwise, we're in test mode: only files explicitly provided on the
+  // command-line exist.
+  return _existingPaths.find(path) != _existingPaths.end();
+}
+
+void MachOLinkingContext::addModifiedSearchDir(
+    StringRef libPath, const StringRefVector &syslibRoots, bool isSystemPath) {
+  bool addedModifiedPath = false;
+
+  // Two cases to consider here:
+  //   + If the last -syslibroot is "/", all of them are ignored (don't ask).
+  //   + -syslibroot only applies to absolute paths.
+  if (!syslibRoots.empty() && syslibRoots.back() != "/" &&
+      llvm::sys::path::is_absolute(libPath)) {
+    for (auto syslibRoot : syslibRoots) {
+      SmallString<256> path(syslibRoot);
+      llvm::sys::path::append(path, libPath);
+      if (pathExists(path)) {
+        _searchDirs.push_back(path.str().copy(_allocator));
+        addedModifiedPath = true;
+      }
+    }
+  }
+
+  if (addedModifiedPath)
+    return;
+
+  // Finally, if only one -syslibroot is given, system paths which aren't in it
+  // get suppressed.
+  if (syslibRoots.size() != 1 || !isSystemPath) {
+    if (pathExists(libPath)) {
+      _searchDirs.push_back(libPath);
+    }
+  }
+}
+
+ErrorOr<StringRef>
+MachOLinkingContext::searchDirForLibrary(StringRef path,
+                                         StringRef libName) const {
+  SmallString<256> fullPath;
+  if (libName.endswith(".o")) {
+    // A request ending in .o is special: just search for the file directly.
+    fullPath.assign(path);
+    llvm::sys::path::append(fullPath, libName);
+    if (pathExists(fullPath))
+      return fullPath.str().copy(_allocator);
+    return make_error_code(llvm::errc::no_such_file_or_directory);
+  }
+
+  // Search for dynamic library
+  fullPath.assign(path);
+  llvm::sys::path::append(fullPath, Twine("lib") + libName + ".dylib");
+  if (pathExists(fullPath))
+    return fullPath.str().copy(_allocator);
+
+  // If not, try for a static library
+  fullPath.assign(path);
+  llvm::sys::path::append(fullPath, Twine("lib") + libName + ".a");
+  if (pathExists(fullPath))
+    return fullPath.str().copy(_allocator);
+
+  return make_error_code(llvm::errc::no_such_file_or_directory);
+}
+
+
+
+ErrorOr<StringRef> MachOLinkingContext::searchLibrary(StringRef libName) const {
+  SmallString<256> path;
+  for (StringRef dir : searchDirs()) {
+    ErrorOr<StringRef> ec = searchDirForLibrary(dir, libName);
+    if (ec)
+      return ec;
+  }
+
+  return make_error_code(llvm::errc::no_such_file_or_directory);
 }
 
 bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {

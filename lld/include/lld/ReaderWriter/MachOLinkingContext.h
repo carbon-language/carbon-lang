@@ -17,6 +17,8 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
 
+#include <set>
+
 using llvm::MachO::HeaderFileType;
 
 namespace lld {
@@ -78,6 +80,38 @@ public:
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
   bool printAtoms() const { return _printAtoms; }
+  bool testingLibResolution() const { return _testingLibResolution; }
+  const StringRefVector &searchDirs() const { return _searchDirs; }
+
+  /// \brief Checks whether a given path on the filesystem exists.
+  ///
+  /// When running in -test_libresolution mode, this method consults an
+  /// internally maintained list of files that exist (provided by -path_exists)
+  /// instead of the actual filesystem.
+  bool pathExists(StringRef path) const;
+
+  /// \brief Adds any library search paths derived from the given base, possibly
+  /// modified by -syslibroots.
+  ///
+  /// The set of paths added consists of approximately all syslibroot-prepended
+  /// versions of libPath that exist, or the original libPath if there are none
+  /// for whatever reason. With various edge-cases for compatibility.
+  void addModifiedSearchDir(StringRef libPath,
+                            const StringRefVector &syslibRoots,
+                            bool isSystemPath = false);
+
+  /// \brief Determine whether -lFoo can be resolve within the given path, and
+  /// return the filename if so.
+  ///
+  /// The -lFoo option is documented to search for libFoo.dylib and libFoo.a in
+  /// that order, unless Foo ends in ".o", in which case only the exact file
+  /// matches (e.g. -lfoo.o would only find foo.o).
+  ErrorOr<StringRef> searchDirForLibrary(StringRef path,
+                                         StringRef libName) const;
+
+  /// \brief Iterates through all search path entries lookinf for libName (as
+  /// specified by -lFoo).
+  ErrorOr<StringRef> searchLibrary(StringRef libName) const;
 
   /// \brief The dylib's binary compatibility version, in the raw uint32 format.
   ///
@@ -125,6 +159,13 @@ public:
   }
   void setBundleLoader(StringRef loader) { _bundleLoader = loader; }
   void setPrintAtoms(bool value=true) { _printAtoms = value; }
+  void setTestingLibResolution(bool value = true) {
+    _testingLibResolution = value;
+  }
+  void addExistingPathForDebug(StringRef path) {
+    _existingPaths.insert(path);
+  }
+
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
@@ -153,6 +194,8 @@ private:
 
   static ArchInfo _s_archInfos[];
 
+  std::set<StringRef> _existingPaths; // For testing only.
+  StringRefVector _searchDirs;
   HeaderFileType _outputMachOType;   // e.g MH_EXECUTE
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
@@ -166,6 +209,7 @@ private:
   StringRef _installName;
   bool _deadStrippableDylib;
   bool _printAtoms;
+  bool _testingLibResolution;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
   mutable std::unique_ptr<Writer> _writer;

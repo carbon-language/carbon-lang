@@ -263,12 +263,76 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_print_atoms))
     ctx.setPrintAtoms();
 
+  // In -test_libresolution mode, we'll be given an explicit list of paths that
+  // exist. We'll also be expected to print out information about how we located
+  // libraries and so on that the user specified, but not to actually do any
+  // linking.
+  if (parsedArgs->getLastArg(OPT_test_libresolution)) {
+    ctx.setTestingLibResolution();
+
+    // With paths existing by fiat, linking is not going to end well.
+    ctx.setDoNothing(true);
+
+    // Only bother looking for an existence override if we're going to use it.
+    for (auto existingPath : parsedArgs->filtered(OPT_path_exists)) {
+      ctx.addExistingPathForDebug(existingPath->getValue());
+    }
+  }
+
   std::unique_ptr<InputGraph> inputGraph(new InputGraph());
 
+  // Now construct the set of library search directories, following ld64's
+  // baroque set of accumulated hacks. Mostly, the algorithm constructs
+  //     { syslibroots } x { libpaths }
+  //
+  // Unfortunately, there are numerous exceptions:
+  //   1. Only absolute paths get modified by syslibroot options.
+  //   2. If there is just 1 -syslibroot, system paths not found in it are
+  //      skipped.
+  //   3. If the last -syslibroot is "/", all of them are ignored entirely.
+  //   4. If { syslibroots } x path ==  {}, the original path is kept.
+  std::vector<StringRef> syslibRoots;
+  for (auto syslibRoot : parsedArgs->filtered(OPT_syslibroot)) {
+    syslibRoots.push_back(syslibRoot->getValue());
+  }
+
+  // FIXME: handle -L options: these get added *before* the default paths,
+  // possibly modified by any syslibroot options.
+  ctx.addModifiedSearchDir("/usr/lib", syslibRoots, true);
+  ctx.addModifiedSearchDir("/usr/local/lib", syslibRoots, true);
+
+  // Now that we've constructed the final set of search paths, print out what
+  // we'll be using for testing purposes.
+  if (ctx.testingLibResolution()) {
+    diagnostics << "Library search paths:\n";
+    for (auto path : ctx.searchDirs()) {
+      diagnostics << "    " << path << '\n';
+    }
+  }
+
   // Handle input files
-  for (auto &inputFile : parsedArgs->filtered(OPT_INPUT)) {
+  for (auto &arg : *parsedArgs) {
+    StringRef inputPath;
+    switch (arg->getOption().getID()) {
+    default:
+      continue;
+    case OPT_INPUT:
+      inputPath = arg->getValue();
+      break;
+    case OPT_l: {
+      ErrorOr<StringRef> resolvedPath = ctx.searchLibrary(arg->getValue());
+      if (!resolvedPath) {
+        diagnostics << "Unable to find library -l" << arg->getValue() << "\n";
+        return false;
+      } else if (ctx.testingLibResolution()) {
+        diagnostics << "Found library " << resolvedPath.get() << '\n';
+      }
+      inputPath = resolvedPath.get();
+      break;
+    }
+    }
     inputGraph->addInputElement(std::unique_ptr<InputElement>(
-        new MachOFileNode(ctx, inputFile->getValue(), globalWholeArchive)));
+        new MachOFileNode(ctx, inputPath, globalWholeArchive)));
   }
 
   if (!inputGraph->size()) {
