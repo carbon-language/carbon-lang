@@ -2017,17 +2017,17 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
   // Determine default multilib from: 32, 64, x32
   // Also handle cases such as 64 on 32, 32 on 64, etc.
   enum { UNKNOWN, WANT32, WANT64, WANTX32 } Want = UNKNOWN;
-  const bool isX32 {TargetTriple.getEnvironment() == llvm::Triple::GNUX32};
+  const bool IsX32 {TargetTriple.getEnvironment() == llvm::Triple::GNUX32};
   if (TargetTriple.isArch32Bit() && !NonExistent(Alt32))
     Want = WANT64;
-  else if (TargetTriple.isArch64Bit() && isX32 && !NonExistent(Altx32))
+  else if (TargetTriple.isArch64Bit() && IsX32 && !NonExistent(Altx32))
     Want = WANT64;
-  else if (TargetTriple.isArch64Bit() && !isX32 && !NonExistent(Alt64))
+  else if (TargetTriple.isArch64Bit() && !IsX32 && !NonExistent(Alt64))
     Want = WANT32;
   else {
     if (TargetTriple.isArch32Bit())
       Want = NeedsBiarchSuffix ? WANT64 : WANT32;
-    else if (isX32)
+    else if (IsX32)
       Want = NeedsBiarchSuffix ? WANT64 : WANTX32;
     else
       Want = NeedsBiarchSuffix ? WANT32 : WANT64;
@@ -2050,9 +2050,9 @@ static bool findBiarchMultilibs(const llvm::Triple &TargetTriple,
   Result.Multilibs.FilterOut(NonExistent);
 
   Multilib::flags_list Flags;
-  addMultilibFlag(TargetTriple.isArch64Bit() && !isX32, "m64", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && !IsX32, "m64", Flags);
   addMultilibFlag(TargetTriple.isArch32Bit(), "m32", Flags);
-  addMultilibFlag(TargetTriple.isArch64Bit() && isX32, "mx32", Flags);
+  addMultilibFlag(TargetTriple.isArch64Bit() && IsX32, "mx32", Flags);
 
   if (!Result.Multilibs.select(Flags, Result.SelectedMultilib))
     return false;
