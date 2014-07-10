@@ -50,6 +50,7 @@ const char *Triple::getArchTypeName(ArchType Kind) {
   case amdil:       return "amdil";
   case spir:        return "spir";
   case spir64:      return "spir64";
+  case kalimba:     return "kalimba";
   }
 
   llvm_unreachable("Invalid ArchType!");
@@ -101,6 +102,7 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case amdil:       return "amdil";
   case spir:        return "spir";
   case spir64:      return "spir";
+  case kalimba:     return "kalimba";
   }
 }
 
@@ -117,6 +119,7 @@ const char *Triple::getVendorTypeName(VendorType Kind) {
   case IBM: return "ibm";
   case ImaginationTechnologies: return "img";
   case NVIDIA: return "nvidia";
+  case CSR: return "csr";
   }
 
   llvm_unreachable("Invalid VendorType!");
@@ -208,6 +211,7 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("amdil", amdil)
     .Case("spir", spir)
     .Case("spir64", spir64)
+    .Case("kalimba", kalimba)
     .Default(UnknownArch);
 }
 
@@ -281,6 +285,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("amdil", Triple::amdil)
     .Case("spir", Triple::spir)
     .Case("spir64", Triple::spir64)
+    .Case("kalimba", Triple::kalimba)
     .Default(Triple::UnknownArch);
 }
 
@@ -295,6 +300,7 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
     .Case("ibm", Triple::IBM)
     .Case("img", Triple::ImaginationTechnologies)
     .Case("nvidia", Triple::NVIDIA)
+    .Case("csr", Triple::CSR)
     .Default(Triple::UnknownVendor);
 }
 
@@ -800,6 +806,7 @@ static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   case llvm::Triple::x86:
   case llvm::Triple::xcore:
   case llvm::Triple::spir:
+  case llvm::Triple::kalimba:
     return 32;
 
   case llvm::Triple::arm64:
@@ -851,6 +858,7 @@ Triple Triple::get32BitArchVariant() const {
   case Triple::arm:
   case Triple::armeb:
   case Triple::hexagon:
+  case Triple::kalimba:
   case Triple::le32:
   case Triple::mips:
   case Triple::mipsel:
@@ -885,6 +893,7 @@ Triple Triple::get64BitArchVariant() const {
   case Triple::arm:
   case Triple::armeb:
   case Triple::hexagon:
+  case Triple::kalimba:
   case Triple::le32:
   case Triple::msp430:
   case Triple::r600:
