@@ -102,7 +102,8 @@ validCategories = {
 'pyapi':'Tests related to the Python API',
 'basic_process': 'Basic process execution sniff tests.',
 'cmdline' : 'Tests related to the LLDB command-line interface',
-'dyntype' : 'Tests related to dynamic type support'
+'dyntype' : 'Tests related to dynamic type support',
+'stresstest' : 'Tests related to stressing lldb limits'
 }
 
 # The test suite.
