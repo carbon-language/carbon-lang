@@ -1120,6 +1120,12 @@ Value *InstCombiner::Descale(Value *Val, APInt Scale, bool &NoSignedWrap) {
     return nullptr;
   }
 
+  // If Op is zero then Val = Op * Scale.
+  if (match(Op, m_Zero())) {
+    NoSignedWrap = true;
+    return Op;
+  }
+
   // We know that we can successfully descale, so from here on we can safely
   // modify the IR.  Op holds the descaled version of the deepest term in the
   // expression.  NoSignedWrap is 'true' if multiplying Op by Scale is known
