@@ -1248,6 +1248,12 @@ def mips64r2 : Flag<["-"], "mips64r2">,
 def mips64r6 : Flag<["-"], "mips64r6">,
   Alias<march_EQ>, AliasArgs<["mips64r6"]>,
   HelpText<"Equivalent to -march=mips64r6">, Flags<[HelpHidden]>;
+def modd_spreg : Flag<["-"], "modd-spreg">, Group<m_Group>,
+  HelpText<"Enable odd single-precision floating point registers">,
+  Flags<[HelpHidden]>;
+def mno_odd_spreg : Flag<["-"], "mno-odd-spreg">, Group<m_Group>,
+  HelpText<"Disable odd single-precision floating point registers">,
+  Flags<[HelpHidden]>;
 def module_file_info : Flag<["-"], "module-file-info">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
 def mthumb : Flag<["-"], "mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<["-"], "mtune=">, Group<m_Group>;

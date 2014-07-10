@@ -60,6 +60,16 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOMMSA %s
 // CHECK-NOMMSA: "-target-feature" "-msa"
 //
+// -modd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -mno-odd-spreg -modd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MODDSPREG %s
+// CHECK-MODDSPREG: "-target-feature" "-nooddspreg"
+//
+// -mno-odd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -modd-spreg -mno-odd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-NOMODDSPREG %s
+// CHECK-NOMODDSPREG: "-target-feature" "+nooddspreg"
+//
 // -mfp64
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mfp32 -mfp64 2>&1 \

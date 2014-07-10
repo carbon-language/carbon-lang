@@ -1050,6 +1050,8 @@ static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
                    "msa");
   AddTargetFeature(Args, Features, options::OPT_mfp64, options::OPT_mfp32,
                    "fp64");
+  AddTargetFeature(Args, Features, options::OPT_mno_odd_spreg,
+                   options::OPT_modd_spreg, "nooddspreg");
 }
 
 void Clang::AddMIPSTargetArgs(const ArgList &Args,
