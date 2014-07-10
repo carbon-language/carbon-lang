@@ -64,7 +64,6 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_TRUE(_context.isTerminalServerAware());
   EXPECT_TRUE(_context.getDynamicBaseEnabled());
   EXPECT_TRUE(_context.getCreateManifest());
-  EXPECT_EQ("a.exe.manifest", _context.getManifestOutputPath());
   EXPECT_EQ("", _context.getManifestDependency());
   EXPECT_FALSE(_context.getEmbedManifest());
   EXPECT_EQ(1, _context.getManifestId());
@@ -593,24 +592,6 @@ TEST_F(WinLinkParserTest, Manifest_Default) {
 TEST_F(WinLinkParserTest, Manifest_No) {
   EXPECT_TRUE(parse("link.exe", "/manifest:no", "a.out", nullptr));
   EXPECT_FALSE(_context.getCreateManifest());
-}
-
-TEST_F(WinLinkParserTest, Manifest_Embed) {
-  EXPECT_TRUE(parse("link.exe", "/manifest:embed", "a.out", nullptr));
-  EXPECT_TRUE(_context.getCreateManifest());
-  EXPECT_TRUE(_context.getEmbedManifest());
-  EXPECT_EQ(1, _context.getManifestId());
-  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ("'false'", _context.getManifestUiAccess());
-}
-
-TEST_F(WinLinkParserTest, Manifest_Embed_ID42) {
-  EXPECT_TRUE(parse("link.exe", "/manifest:embed,id=42", "a.out", nullptr));
-  EXPECT_TRUE(_context.getCreateManifest());
-  EXPECT_TRUE(_context.getEmbedManifest());
-  EXPECT_EQ(42, _context.getManifestId());
-  EXPECT_EQ("'asInvoker'", _context.getManifestLevel());
-  EXPECT_EQ("'false'", _context.getManifestUiAccess());
 }
 
 TEST_F(WinLinkParserTest, Manifestuac_no) {

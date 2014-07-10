@@ -122,7 +122,6 @@ public:
   void addSupportNativeObjects();
   void addSupportCOFFObjects(PECOFFLinkingContext &);
   void addSupportCOFFImportLibraries();
-  void addSupportWindowsResourceFiles();
   void addSupportMachOObjects(StringRef archName);
   void addSupportELFObjects(bool atomizeStrings, TargetHandlerBase *handler);
   void addSupportELFDynamicSharedObjects(bool useShlibUndefines,
