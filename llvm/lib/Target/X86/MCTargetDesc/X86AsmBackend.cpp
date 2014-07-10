@@ -366,6 +366,17 @@ public:
   }
 };
 
+class ELFX86_X32AsmBackend : public ELFX86AsmBackend {
+public:
+  ELFX86_X32AsmBackend(const Target &T, uint8_t OSABI, StringRef CPU)
+      : ELFX86AsmBackend(T, OSABI, CPU) {}
+
+  MCObjectWriter *createObjectWriter(raw_ostream &OS) const override {
+    return createX86ELFObjectWriter(OS, /*IsELF64*/ false, OSABI,
+                                    ELF::EM_X86_64);
+  }
+};
+
 class ELFX86_64AsmBackend : public ELFX86AsmBackend {
 public:
   ELFX86_64AsmBackend(const Target &T, uint8_t OSABI, StringRef CPU)
@@ -824,5 +835,8 @@ MCAsmBackend *llvm::createX86_64AsmBackend(const Target &T,
     return new WindowsX86AsmBackend(T, true, CPU);
 
   uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+
+  if (TheTriple.getEnvironment() == Triple::GNUX32)
+    return new ELFX86_X32AsmBackend(T, OSABI, CPU);
   return new ELFX86_64AsmBackend(T, OSABI, CPU);
 }
