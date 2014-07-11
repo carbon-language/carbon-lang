@@ -59,11 +59,11 @@ class DivisionBRVisitor : public BugReporterVisitorImpl<DivisionBRVisitor> {
 private:
   SymbolRef ZeroSymbol;
   const StackFrameContext *SFC;
-  bool Satisfied = false;
+  bool Satisfied;
 
 public:
   DivisionBRVisitor(SymbolRef ZeroSymbol, const StackFrameContext *SFC)
-      : ZeroSymbol(ZeroSymbol), SFC(SFC) {}
+      : ZeroSymbol(ZeroSymbol), SFC(SFC), Satisfied(false) {}
 
   void Profile(llvm::FoldingSetNodeID &ID) const override {
     ID.Add(ZeroSymbol);
