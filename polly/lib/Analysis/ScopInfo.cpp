@@ -1269,6 +1269,40 @@ __isl_give isl_union_set *Scop::getDomains() {
   return Domain;
 }
 
+__isl_give isl_union_map *Scop::getMustWrites() {
+  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+
+  for (ScopStmt *Stmt : *this) {
+    for (MemoryAccess *MA : *Stmt) {
+      if (!MA->isMustWrite())
+        continue;
+
+      isl_set *Domain = Stmt->getDomain();
+      isl_map *AccessDomain = MA->getAccessRelation();
+      AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
+      Write = isl_union_map_add_map(Write, AccessDomain);
+    }
+  }
+  return isl_union_map_coalesce(Write);
+}
+
+__isl_give isl_union_map *Scop::getMayWrites() {
+  isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
+
+  for (ScopStmt *Stmt : *this) {
+    for (MemoryAccess *MA : *Stmt) {
+      if (!MA->isMayWrite())
+        continue;
+
+      isl_set *Domain = Stmt->getDomain();
+      isl_map *AccessDomain = MA->getAccessRelation();
+      AccessDomain = isl_map_intersect_domain(AccessDomain, Domain);
+      Write = isl_union_map_add_map(Write, AccessDomain);
+    }
+  }
+  return isl_union_map_coalesce(Write);
+}
+
 __isl_give isl_union_map *Scop::getWrites() {
   isl_union_map *Write = isl_union_map_empty(this->getParamSpace());
 

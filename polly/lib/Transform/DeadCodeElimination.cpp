@@ -36,6 +36,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "isl/flow.h"
 #include "isl/set.h"
 #include "isl/map.h"
 #include "isl/union_map.h"
@@ -63,26 +64,35 @@ public:
   void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
-  isl_union_set *getLastWrites(isl_union_map *Writes, isl_union_map *Schedule);
+  /// @brief Return the set of live iterations.
+  ///
+  /// The set of live iterations are all iterations that write to memory and for
+  /// which we can not prove that there will be a later write that _must_
+  /// overwrite the same memory location and is consequently the only one that
+  /// is visible after the execution of the SCoP.
+  ///
+  isl_union_set *getLiveOut(Scop &S);
   bool eliminateDeadCode(Scop &S, int PreciseSteps);
 };
 }
 
 char DeadCodeElim::ID = 0;
 
-/// Return the set of iterations that contains the last write for each location.
-isl_union_set *DeadCodeElim::getLastWrites(__isl_take isl_union_map *Writes,
-                                           __isl_take isl_union_map *Schedule) {
-  isl_union_map *WriteIterations = isl_union_map_reverse(Writes);
-  isl_union_map *WriteTimes =
-      isl_union_map_apply_range(WriteIterations, isl_union_map_copy(Schedule));
+// To compute the live outs, we first assume all must and may-writes are exposed
+// and then subtract the set of statements that are definitely overwritten.
+isl_union_set *DeadCodeElim::getLiveOut(Scop &S) {
+  __isl_take isl_union_map *Kills = S.getMustWrites();
+  __isl_take isl_union_map *Empty = isl_union_map_empty(S.getParamSpace());
 
-  isl_union_map *LastWriteTimes = isl_union_map_lexmax(WriteTimes);
-  isl_union_map *LastWriteIterations = isl_union_map_apply_range(
-      LastWriteTimes, isl_union_map_reverse(Schedule));
+  isl_union_map *Covering;
+  isl_union_map *Writes = S.getWrites();
+  isl_union_map_compute_flow(Kills, Empty, isl_union_map_copy(Writes),
+                             S.getSchedule(), NULL, &Covering, NULL, NULL);
 
-  isl_union_set *Live = isl_union_map_range(LastWriteIterations);
-  return isl_union_set_coalesce(Live);
+  isl_union_map *Exposed = Writes;
+  Exposed =
+      isl_union_map_subtract_domain(Exposed, isl_union_map_domain(Covering));
+  return isl_union_map_domain(Exposed);
 }
 
 /// Performs polyhedral dead iteration elimination by:
@@ -99,7 +109,7 @@ bool DeadCodeElim::eliminateDeadCode(Scop &S, int PreciseSteps) {
   if (!D->hasValidDependences())
     return false;
 
-  isl_union_set *Live = this->getLastWrites(S.getWrites(), S.getSchedule());
+  isl_union_set *Live = getLiveOut(S);
   isl_union_map *Dep =
       D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_RED);
   Dep = isl_union_map_reverse(Dep);

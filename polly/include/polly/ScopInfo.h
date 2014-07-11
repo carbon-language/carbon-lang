@@ -702,6 +702,12 @@ public:
   /// @brief Get a union set containing the iteration domains of all statements.
   __isl_give isl_union_set *getDomains();
 
+  /// @brief Get a union map of all may-writes performed in the SCoP.
+  __isl_give isl_union_map *getMayWrites();
+
+  /// @brief Get a union map of all must-writes performed in the SCoP.
+  __isl_give isl_union_map *getMustWrites();
+
   /// @brief Get a union map of all writes performed in the SCoP.
   __isl_give isl_union_map *getWrites();
 
