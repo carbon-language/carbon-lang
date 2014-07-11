@@ -16,12 +16,12 @@ void t(T b) {
 void foo() {
   bool *b = SomeFunction();
   if (b) {
-// CHECK-MESSAGES: dubious check of 'bool *' against 'nullptr'
+// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: dubious check of 'bool *' against 'nullptr'
 // CHECK-FIXES: if (*b) {
   }
 
   if (F() && b) {
-// CHECK-MESSAGES: dubious check of 'bool *' against 'nullptr'
+// CHECK-MESSAGES: :[[@LINE-1]]:14: warning: dubious check of 'bool *' against 'nullptr'
 // CHECK-FIXES: if (F() && *b) {
   }
 
@@ -33,13 +33,11 @@ void foo() {
 #define TESTMACRO if (b || F())
 
   TESTMACRO {
-// CHECK-MESSAGES: dubious check of 'bool *' against 'nullptr'
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: dubious check of 'bool *' against 'nullptr'
 // Can't fix this.
 // CHECK-FIXES: #define TESTMACRO if (b || F())
 // CHECK-FIXES: TESTMACRO {
   }
-
-// CHECK-MESSAGES-NOT: warning:
 
   t(b);
 
