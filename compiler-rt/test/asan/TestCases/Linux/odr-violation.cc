@@ -23,19 +23,20 @@
 #endif
 
 #if BUILD_SO
-char G[SZ];
+namespace foo { char G[SZ]; }
 #else
 #include <stdio.h>
-char G[100];
+namespace foo { char G[100]; }
+// CHECK: ERROR: AddressSanitizer: odr-violation
+// CHECK: size=100 'foo::G' {{.*}}odr-violation.cc:[[@LINE-2]]:22
+// CHECK: size={{4|100}} 'foo::G'
 int main(int argc, char **argv) {
-  printf("PASS: %p\n", &G);
+  printf("PASS: %p\n", &foo::G);
 }
 #endif
 
-// CHECK: ERROR: AddressSanitizer: odr-violation
-// CHECK: size=100 G
-// CHECK: size={{4|100}} G
 // CHECK: These globals were registered at these points:
 // CHECK: ODR-EXE
 // CHECK: ODR-SO
+// CHECK: SUMMARY: AddressSanitizer: odr-violation: global 'foo::G' at {{.*}}odr-violation.cc
 // DISABLED: PASS

@@ -768,8 +768,10 @@ void ReportODRViolation(const __asan_global *g1, u32 stack_id1,
   InternalScopedString g1_loc(256), g2_loc(256);
   PrintGlobalLocation(&g1_loc, *g1);
   PrintGlobalLocation(&g2_loc, *g2);
-  Printf("  [1] size=%zd %s %s\n", g1->size, g1->name, g1_loc.data());
-  Printf("  [2] size=%zd %s %s\n", g2->size, g2->name, g2_loc.data());
+  Printf("  [1] size=%zd '%s' %s\n", g1->size,
+         MaybeDemangleGlobalName(g1->name), g1_loc.data());
+  Printf("  [2] size=%zd '%s' %s\n", g2->size,
+         MaybeDemangleGlobalName(g2->name), g2_loc.data());
   if (stack_id1 && stack_id2) {
     Printf("These globals were registered at these points:\n");
     Printf("  [1]:\n");
@@ -782,7 +784,10 @@ void ReportODRViolation(const __asan_global *g1, u32 stack_id1,
   }
   Report("HINT: if you don't care about these warnings you may set "
          "ASAN_OPTIONS=detect_odr_violation=0\n");
-  ReportErrorSummary("odr-violation", g1_loc.data(), 0, g1->name);
+  InternalScopedString error_msg(256);
+  error_msg.append("odr-violation: global '%s' at %s",
+                   MaybeDemangleGlobalName(g1->name), g1_loc.data());
+  ReportErrorSummary(error_msg.data());
 }
 
 // ----------------------- CheckForInvalidPointerPair ----------- {{{1
