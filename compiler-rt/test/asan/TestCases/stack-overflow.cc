@@ -74,7 +74,7 @@ void recursive_func(char *p) {
   if (y)
     recursive_func(buf);
   x = 1; // prevent tail call optimization
-  // CHECK: {{stack-overflow on address 0x.* \(pc 0x.* sp 0x.* bp 0x.* T.*\)}}
+  // CHECK: {{stack-overflow on address 0x.* \(pc 0x.* bp 0x.* sp 0x.* T.*\)}}
   // If stack overflow happens during function prologue, stack trace may be
   // corrupted. Unwind tables are not always 100% exact there.
   // For this reason, we don't do any further checks.
