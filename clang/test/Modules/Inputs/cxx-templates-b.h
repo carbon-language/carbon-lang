@@ -20,6 +20,10 @@ extern DefinedInCommon &defined_in_common;
 template<int> struct MergeTemplates;
 MergeTemplates<0> *merge_templates_b;
 
+template<typename T> template<typename U>
+constexpr int Outer<T>::Inner<U>::g() { return 2; }
+static_assert(Outer<int>::Inner<int>::g() == 2, "");
+
 @import cxx_templates_b_impl;
 
 template<typename T, typename> struct Identity { typedef T type; };

@@ -26,8 +26,8 @@ template<typename T> struct TemplateInstantiationVisibility { typedef int type; 
 
 template<typename T> struct Outer {
   template<typename U> struct Inner {
-    void f();
-    void g();
+    static constexpr int f();
+    static constexpr int g();
   };
 };
 

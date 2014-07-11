@@ -1017,7 +1017,8 @@ ASTDeclReader::RedeclarableResult ASTDeclReader::VisitVarDeclImpl(VarDecl *VD) {
   switch ((VarKind)Record[Idx++]) {
   case VarNotTemplate:
     // Only true variables (not parameters or implicit parameters) can be merged
-    if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam)
+    if (VD->getKind() != Decl::ParmVar && VD->getKind() != Decl::ImplicitParam &&
+        !isa<VarTemplateSpecializationDecl>(VD))
       mergeRedeclarable(VD, Redecl);
     break;
   case VarTemplate:
@@ -1438,7 +1439,9 @@ ASTDeclReader::VisitCXXRecordDeclImpl(CXXRecordDecl *D) {
   };
   switch ((CXXRecKind)Record[Idx++]) {
   case CXXRecNotTemplate:
-    mergeRedeclarable(D, Redecl);
+    // Merged when we merge the folding set entry in the primary template.
+    if (!isa<ClassTemplateSpecializationDecl>(D))
+      mergeRedeclarable(D, Redecl);
     break;
   case CXXRecTemplate: {
     // Merged when we merge the template.

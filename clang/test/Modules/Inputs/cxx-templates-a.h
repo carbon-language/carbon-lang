@@ -63,3 +63,7 @@ template<> struct WithExplicitSpecialization<int> {
     return n;
   }
 };
+
+template<typename T> template<typename U>
+constexpr int Outer<T>::Inner<U>::f() { return 1; }
+static_assert(Outer<int>::Inner<int>::f() == 1, "");

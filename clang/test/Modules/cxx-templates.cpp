@@ -107,6 +107,9 @@ void g() {
   int &q = WithExplicitSpecializationUse().inner_template<int>();
 }
 
+static_assert(Outer<int>::Inner<int>::f() == 1, "");
+static_assert(Outer<int>::Inner<int>::g() == 2, "");
+
 RedeclaredAsFriend<int> raf1;
 RedeclareTemplateAsFriend<double> rtaf;
 RedeclaredAsFriend<double> raf2;
