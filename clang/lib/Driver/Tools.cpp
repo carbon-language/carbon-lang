@@ -1247,7 +1247,7 @@ void Clang::AddSparcTargetArgs(const ArgList &Args,
                              ArgStringList &CmdArgs) const {
   const Driver &D = getToolChain().getDriver();
 
-  // Select the float ABI as determined by -msoft-float, -mhard-float, and
+  // Select the float ABI as determined by -msoft-float and -mhard-float.
   StringRef FloatABI;
   if (Arg *A = Args.getLastArg(options::OPT_msoft_float,
                                options::OPT_mhard_float)) {
@@ -2857,6 +2857,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     break;
 
   case llvm::Triple::sparc:
+  case llvm::Triple::sparcv9:
     AddSparcTargetArgs(Args, CmdArgs);
     break;
 
