@@ -67,8 +67,8 @@ namespace {
 
     BasicBlock *switchConvert(CaseItr Begin, CaseItr End,
                               ConstantInt *LowerBound, ConstantInt *UpperBound,
-                              Value *Val, BasicBlock *OrigBlock,
-                              BasicBlock *Default);
+                              Value *Val, BasicBlock *Predecessor,
+                              BasicBlock *OrigBlock, BasicBlock *Default);
     BasicBlock *newLeafBlock(CaseRange &Leaf, Value *Val, BasicBlock *OrigBlock,
                              BasicBlock *Default);
     unsigned Clusterify(CaseVector &Cases, SwitchInst *SI);
@@ -131,6 +131,21 @@ static raw_ostream& operator<<(raw_ostream &O,
   return O << "]";
 }
 
+static void fixPhis(BasicBlock *Succ,
+                    BasicBlock *OrigBlock,
+                    BasicBlock *NewNode) {
+  for (BasicBlock::iterator I = Succ->begin(),
+                            E = Succ->getFirstNonPHI();
+       I != E; ++I) {
+    PHINode *PN = cast<PHINode>(I);
+
+    for (unsigned I = 0, E = PN->getNumIncomingValues(); I != E; ++I) {
+      if (PN->getIncomingBlock(I) == OrigBlock)
+        PN->setIncomingBlock(I, NewNode);
+    }
+  }
+}
+
 // switchConvert - Convert the switch statement into a binary lookup of
 // the case values. The function recursively builds this tree.
 // LowerBound and UpperBound are used to keep track of the bounds for Val
@@ -139,6 +154,7 @@ static raw_ostream& operator<<(raw_ostream &O,
 BasicBlock *LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
                                        ConstantInt *LowerBound,
                                        ConstantInt *UpperBound, Value *Val,
+                                       BasicBlock *Predecessor,
                                        BasicBlock *OrigBlock,
                                        BasicBlock *Default) {
   unsigned Size = End - Begin;
@@ -149,6 +165,7 @@ BasicBlock *LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
     // emitting the code that checks if the value actually falls in the range
     // because the bounds already tell us so.
     if (Begin->Low == LowerBound && Begin->High == UpperBound) {
+      fixPhis(Begin->BB, OrigBlock, Predecessor);
       return Begin->BB;
     }
     return newLeafBlock(*Begin, Val, OrigBlock, Default);
@@ -200,21 +217,25 @@ BasicBlock *LowerSwitch::switchConvert(CaseItr Begin, CaseItr End,
           dbgs() << "NONE\n";
         });
 
-  BasicBlock *LBranch = switchConvert(LHS.begin(), LHS.end(), LowerBound,
-                                      NewUpperBound, Val, OrigBlock, Default);
-  BasicBlock *RBranch = switchConvert(RHS.begin(), RHS.end(), NewLowerBound,
-                                      UpperBound, Val, OrigBlock, Default);
-
   // Create a new node that checks if the value is < pivot. Go to the
   // left branch if it is and right branch if not.
   Function* F = OrigBlock->getParent();
   BasicBlock* NewNode = BasicBlock::Create(Val->getContext(), "NodeBlock");
-  Function::iterator FI = OrigBlock;
-  F->getBasicBlockList().insert(++FI, NewNode);
 
   ICmpInst* Comp = new ICmpInst(ICmpInst::ICMP_SLT,
                                 Val, Pivot.Low, "Pivot");
+
+  BasicBlock *LBranch = switchConvert(LHS.begin(), LHS.end(), LowerBound,
+                                      NewUpperBound, Val, NewNode, OrigBlock,
+                                      Default);
+  BasicBlock *RBranch = switchConvert(RHS.begin(), RHS.end(), NewLowerBound,
+                                      UpperBound, Val, NewNode, OrigBlock,
+                                      Default);
+
+  Function::iterator FI = OrigBlock;
+  F->getBasicBlockList().insert(++FI, NewNode);
   NewNode->getInstList().push_back(Comp);
+
   BranchInst::Create(LBranch, RBranch, Comp, NewNode);
   return NewNode;
 }
@@ -386,7 +407,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   }
   BasicBlock *SwitchBlock =
       switchConvert(Cases.begin(), Cases.end(), LowerBound, UpperBound, Val,
-                    OrigBlock, NewDefault);
+                    OrigBlock, OrigBlock, NewDefault);
 
   // Branch to our shiny new if-then stuff...
   BranchInst::Create(SwitchBlock, OrigBlock);
