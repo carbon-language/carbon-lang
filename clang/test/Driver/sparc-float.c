@@ -35,4 +35,4 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target sparc64-linux-gnu -msoft-float \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-SPARC64 %s
-// CHECK-SOFT-MIPS16: "-msoft-float"
+// CHECK-SOFT-SPARC64: "-msoft-float"
