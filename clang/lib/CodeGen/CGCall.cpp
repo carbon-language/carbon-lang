@@ -1381,6 +1381,10 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       ++AI;  // Skip the sret parameter.
   }
 
+  // Get the function-level nonnull attribute if it exists.
+  const NonNullAttr *NNAtt =
+    CurCodeDecl ? CurCodeDecl->getAttr<NonNullAttr>() : nullptr;
+
   // Track if we received the parameter as a pointer (indirect, byval, or
   // inalloca).  If already have a pointer, EmitParmDecl doesn't need to copy it
   // into a local alloca for us.
@@ -1467,6 +1471,13 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
           ArgI.getDirectOffset() == 0) {
         assert(AI != Fn->arg_end() && "Argument mismatch!");
         llvm::Value *V = AI;
+
+        if (const ParmVarDecl *PVD = dyn_cast<ParmVarDecl>(Arg))
+          if ((NNAtt && NNAtt->isNonNull(PVD->getFunctionScopeIndex())) ||
+              PVD->hasAttr<NonNullAttr>())
+            AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
+                                                AI->getArgNo() + 1,
+                                                llvm::Attribute::NonNull));
 
         if (Arg->getType().isRestrictQualified())
           AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
