@@ -541,6 +541,9 @@ CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
   case Stmt::OMPParallelSectionsDirectiveClass:
     K = CXCursor_OMPParallelSectionsDirective;
     break;
+  case Stmt::OMPTaskDirectiveClass:
+    K = CXCursor_OMPTaskDirective;
+    break;
   }
 
   CXCursor C = { K, 0, { Parent, S, TU } };

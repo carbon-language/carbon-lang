@@ -96,7 +96,7 @@ int foomain(I argc, C **argv) {
   {
     foo();
   }
-#pragma omp parallel sections copyprivate(i) // expected-error {{unexpected OpenMP clause 'copyprivate' in directive '#pragma omp parallel sections'}}
+#pragma omp parallel sections copyprivate(h) // expected-error {{unexpected OpenMP clause 'copyprivate' in directive '#pragma omp parallel sections'}}
   {
     foo();
   }
@@ -176,7 +176,7 @@ int main(int argc, char **argv) {
   {
     foo();
   }
-#pragma omp parallel sections copyprivate(i) // expected-error {{unexpected OpenMP clause 'copyprivate' in directive '#pragma omp parallel sections'}}
+#pragma omp parallel sections copyprivate(h) // expected-error {{unexpected OpenMP clause 'copyprivate' in directive '#pragma omp parallel sections'}}
   {
     foo();
   }

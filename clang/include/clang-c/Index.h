@@ -2163,9 +2163,13 @@ enum CXCursorKind {
    */
   CXCursor_OMPParallelSectionsDirective  = 239,
 
+  /** \brief OpenMP task directive.
+   */
+  CXCursor_OMPTaskDirective              = 240,
+
   /** \brief Windows Structured Exception Handling's leave statement.
    */
-  CXCursor_SEHLeaveStmt                  = 240,
+  CXCursor_SEHLeaveStmt                  = 241,
 
   CXCursor_LastStmt                      = CXCursor_SEHLeaveStmt,
 

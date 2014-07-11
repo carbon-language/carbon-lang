@@ -100,3 +100,7 @@ void CodeGenFunction::EmitOMPParallelSectionsDirective(
   llvm_unreachable("CodeGen for 'omp parallel sections' is not supported yet.");
 }
 
+void CodeGenFunction::EmitOMPTaskDirective(const OMPTaskDirective &) {
+  llvm_unreachable("CodeGen for 'omp task' is not supported yet.");
+}
+

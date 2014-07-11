@@ -390,6 +390,10 @@ void StmtProfiler::VisitOMPParallelSectionsDirective(
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTaskDirective(const OMPTaskDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

@@ -105,8 +105,8 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///
 ///       executable-directive:
 ///         annot_pragma_openmp 'parallel' | 'simd' | 'for' | 'sections' |
-///         'section' | 'single' | 'parallel for' | 'parallel sections' {clause}
-///         annot_pragma_openmp_end
+///         'section' | 'single' | 'parallel for' | 'parallel sections' | 'task'
+///         {clause} annot_pragma_openmp_end
 ///
 StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   assert(Tok.is(tok::annot_pragma_openmp) && "Not an OpenMP directive!");
@@ -147,7 +147,8 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   case OMPD_single:
   case OMPD_section:
   case OMPD_parallel_for:
-  case OMPD_parallel_sections: {
+  case OMPD_parallel_sections:
+  case OMPD_task: {
     ConsumeToken();
 
     if (isOpenMPLoopDirective(DKind))
@@ -207,11 +208,6 @@ StmtResult Parser::ParseOpenMPDeclarativeOrExecutableDirective() {
   }
   case OMPD_unknown:
     Diag(Tok, diag::err_omp_unknown_directive);
-    SkipUntil(tok::annot_pragma_openmp_end);
-    break;
-  case OMPD_task:
-    Diag(Tok, diag::err_omp_unexpected_directive)
-        << getOpenMPDirectiveName(DKind);
     SkipUntil(tok::annot_pragma_openmp_end);
     break;
   }
