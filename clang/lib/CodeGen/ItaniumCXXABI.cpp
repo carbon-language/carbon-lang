@@ -1818,6 +1818,15 @@ void ItaniumCXXABI::registerGlobalDtor(CodeGenFunction &CGF,
   CGF.registerGlobalDtorWithAtExit(D, dtor, addr);
 }
 
+static bool isThreadWrapperReplaceable(const VarDecl *VD,
+                                       CodeGen::CodeGenModule &CGM) {
+  assert(!VD->isStaticLocal() && "static local VarDecls don't need wrappers!");
+  // OS X prefers to have references to thread local variables to go through
+  // the thread wrapper instead of directly referencing the backing variable.
+  return VD->getTLSKind() == VarDecl::TLS_Dynamic &&
+         CGM.getTarget().getTriple().isMacOSX();
+}
+
 /// Get the appropriate linkage for the wrapper function. This is essentially
 /// the weak form of the variable's linkage; every translation unit which needs
 /// the wrapper emits a copy, and we want the linker to merge them.
@@ -1830,12 +1839,13 @@ getThreadLocalWrapperLinkage(const VarDecl *VD, CodeGen::CodeGenModule &CGM) {
   if (llvm::GlobalValue::isLocalLinkage(VarLinkage))
     return VarLinkage;
 
-  // All accesses to the thread_local variable go through the thread wrapper.
-  // However, this means that we cannot allow the thread wrapper to get inlined
-  // into any functions.
-  if (VD->getTLSKind() == VarDecl::TLS_Dynamic &&
-      CGM.getTarget().getTriple().isMacOSX())
-    return llvm::GlobalValue::WeakAnyLinkage;
+  // If the thread wrapper is replaceable, give it appropriate linkage.
+  if (isThreadWrapperReplaceable(VD, CGM)) {
+    if (llvm::GlobalVariable::isLinkOnceLinkage(VarLinkage) ||
+        llvm::GlobalVariable::isWeakODRLinkage(VarLinkage))
+      return llvm::GlobalVariable::WeakAnyLinkage;
+    return VarLinkage;
+  }
   return llvm::GlobalValue::WeakODRLinkage;
 }
 
@@ -1862,7 +1872,7 @@ ItaniumCXXABI::getOrCreateThreadLocalWrapper(const VarDecl *VD,
       llvm::Function::Create(FnTy, getThreadLocalWrapperLinkage(VD, CGM),
                              WrapperName.str(), &CGM.getModule());
   // Always resolve references to the wrapper at link time.
-  if (!Wrapper->hasLocalLinkage())
+  if (!Wrapper->hasLocalLinkage() && !isThreadWrapperReplaceable(VD, CGM))
     Wrapper->setVisibility(llvm::GlobalValue::HiddenVisibility);
   return Wrapper;
 }
@@ -1873,6 +1883,12 @@ void ItaniumCXXABI::EmitThreadLocalInitFuncs(
   for (unsigned I = 0, N = Decls.size(); I != N; ++I) {
     const VarDecl *VD = Decls[I].first;
     llvm::GlobalVariable *Var = Decls[I].second;
+
+    // Some targets require that all access to thread local variables go through
+    // the thread wrapper.  This means that we cannot attempt to create a thread
+    // wrapper or a thread helper.
+    if (isThreadWrapperReplaceable(VD, CGM) && !VD->hasDefinition())
+      continue;
 
     // Mangle the name for the thread_local initialization function.
     SmallString<256> InitFnName;
