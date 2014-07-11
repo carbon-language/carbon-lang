@@ -417,43 +417,124 @@ bool RuntimeDyldMachO::resolveAArch64Relocation(const RelocationEntry &RE,
   const SectionEntry &Section = Sections[RE.SectionID];
   uint8_t* LocalAddress = Section.Address + RE.Offset;
 
-  // If the relocation is PC-relative, the value to be encoded is the
-  // pointer difference.
-  if (RE.IsPCRel) {
-    uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
-    Value -= FinalAddress;
-  }
-
   switch (RE.RelType) {
   default:
     llvm_unreachable("Invalid relocation type!");
-  case MachO::ARM64_RELOC_UNSIGNED:
-    return applyRelocationValue(LocalAddress, Value, 1 << RE.Size);
+  case MachO::ARM64_RELOC_UNSIGNED: {
+    assert(!RE.IsPCRel && "PCRel and ARM64_RELOC_UNSIGNED not supported");
+    // Mask in the target value a byte at a time (we don't have an alignment
+    // guarantee for the target address, so this is safest).
+    if (RE.Size < 2)
+      llvm_unreachable("Invalid size for ARM64_RELOC_UNSIGNED");
+
+    applyRelocationValue(LocalAddress, Value + RE.Addend, 1 << RE.Size);
+    break;
+  }
   case MachO::ARM64_RELOC_BRANCH26: {
+    assert(RE.IsPCRel && "not PCRel and ARM64_RELOC_BRANCH26 not supported");
     // Mask the value into the target address. We know instructions are
     // 32-bit aligned, so we can do it all at once.
-    uint32_t *p = (uint32_t *)LocalAddress;
-    // The low two bits of the value are not encoded.
-    Value >>= 2;
-    // Mask the value to 26 bits.
-    uint64_t FinalValue = Value & 0x3ffffff;
-    // Check for overflow.
-    if (FinalValue != Value)
-      return Error("ARM64 BRANCH26 relocation out of range.");
+    uint32_t *p = (uint32_t*)LocalAddress;
+    // Check if the addend is encoded in the instruction.
+    uint32_t EncodedAddend = *p & 0x03FFFFFF;
+    if (EncodedAddend != 0 ) {
+      if (RE.Addend == 0)
+        llvm_unreachable("branch26 instruction has embedded addend.");
+      else
+        llvm_unreachable("branch26 instruction has embedded addend and" \
+                         "ARM64_RELOC_ADDEND.");
+    }
+    // Check if branch is in range.
+    uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
+    uint64_t PCRelVal = Value - FinalAddress + RE.Addend;
+    assert(isInt<26>(PCRelVal) && "Branch target out of range!");
     // Insert the value into the instruction.
-    *p = (*p & ~0x3ffffff) | FinalValue;
+    *p = (*p & 0xFC000000) | ((uint32_t)(PCRelVal >> 2) & 0x03FFFFFF);
+    break;
+  }
+  case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
+  case MachO::ARM64_RELOC_PAGE21: {
+    assert(RE.IsPCRel && "not PCRel and ARM64_RELOC_PAGE21 not supported");
+    // Mask the value into the target address. We know instructions are
+    // 32-bit aligned, so we can do it all at once.
+    uint32_t *p = (uint32_t*)LocalAddress;
+    // Check if the addend is encoded in the instruction.
+    uint32_t EncodedAddend = ((*p & 0x60000000) >> 29) |
+                             ((*p & 0x01FFFFE0) >> 3);
+    if (EncodedAddend != 0) {
+      if (RE.Addend == 0)
+        llvm_unreachable("adrp instruction has embedded addend.");
+      else
+        llvm_unreachable("adrp instruction has embedded addend and" \
+                         "ARM64_RELOC_ADDEND.");
+    }
+    // Adjust for PC-relative relocation and offset.
+    uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
+    uint64_t PCRelVal = ((Value + RE.Addend) & (-4096)) -
+                         (FinalAddress & (-4096));
+    // Check that the value fits into 21 bits (+ 12 lower bits).
+    assert(isInt<33>(PCRelVal) && "Invalid page reloc value!");
+    // Insert the value into the instruction.
+    uint32_t ImmLoValue = (uint32_t)(PCRelVal << 17) & 0x60000000;
+    uint32_t ImmHiValue = (uint32_t)(PCRelVal >>  9) & 0x00FFFFE0;
+    *p = (*p & 0x9F00001F) | ImmHiValue | ImmLoValue;
+    break;
+  }
+  case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
+  case MachO::ARM64_RELOC_PAGEOFF12: {
+    assert(!RE.IsPCRel && "PCRel and ARM64_RELOC_PAGEOFF21 not supported");
+    // Mask the value into the target address. We know instructions are
+    // 32-bit aligned, so we can do it all at once.
+    uint32_t *p = (uint32_t*)LocalAddress;
+    // Check if the addend is encoded in the instruction.
+    uint32_t EncodedAddend = *p & 0x003FFC00;
+    if (EncodedAddend != 0) {
+      if (RE.Addend == 0)
+        llvm_unreachable("adrp instruction has embedded addend.");
+      else
+        llvm_unreachable("adrp instruction has embedded addend and" \
+                         "ARM64_RELOC_ADDEND.");
+    }
+    // Add the offset from the symbol.
+    Value += RE.Addend;
+    // Mask out the page address and only use the lower 12 bits.
+    Value &= 0xFFF;
+    // Check which instruction we are updating to obtain the implicit shift
+    // factor from LDR/STR instructions.
+    if (*p & 0x08000000) {
+      uint32_t ImplicitShift = ((*p >> 30) & 0x3);
+      switch (ImplicitShift) {
+      case 0:
+        // Check if this a vector op.
+        if ((*p & 0x04800000) == 0x04800000) {
+          ImplicitShift = 4;
+          assert(((Value & 0xF) == 0) &&
+                 "128-bit LDR/STR not 16-byte aligned.");
+        }
+        break;
+      case 1:
+        assert(((Value & 0x1) == 0) && "16-bit LDR/STR not 2-byte aligned.");
+      case 2:
+        assert(((Value & 0x3) == 0) && "32-bit LDR/STR not 4-byte aligned.");
+      case 3:
+        assert(((Value & 0x7) == 0) && "64-bit LDR/STR not 8-byte aligned.");
+      }
+      // Compensate for implicit shift.
+      Value >>= ImplicitShift;
+    }
+    // Insert the value into the instruction.
+    *p = (*p & 0xFFC003FF) | ((uint32_t)(Value << 10) & 0x003FFC00);
     break;
   }
   case MachO::ARM64_RELOC_SUBTRACTOR:
-  case MachO::ARM64_RELOC_PAGE21:
-  case MachO::ARM64_RELOC_PAGEOFF12:
-  case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
-  case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
   case MachO::ARM64_RELOC_POINTER_TO_GOT:
   case MachO::ARM64_RELOC_TLVP_LOAD_PAGE21:
   case MachO::ARM64_RELOC_TLVP_LOAD_PAGEOFF12:
-  case MachO::ARM64_RELOC_ADDEND:
+    llvm_unreachable("Relocation type not implemented yet!");
     return Error("Relocation type not implemented yet!");
+  case MachO::ARM64_RELOC_ADDEND:
+    llvm_unreachable("ARM64_RELOC_ADDEND should have been handeled by " \
+                     "processRelocationRef!");
   }
   return false;
 }
@@ -659,8 +740,40 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
   const MachOObjectFile *MachO = static_cast<const MachOObjectFile *>(OF);
   MachO::any_relocation_info RE =
       MachO->getRelocation(RelI->getRawDataRefImpl());
+  int64_t RelocAddendValue = 0;
+  bool HasRelocAddendValue = false;
 
   uint32_t RelType = MachO->getAnyRelocationType(RE);
+  if (Arch == Triple::arm64) {
+    // ARM64_RELOC_ADDEND provides the offset (addend) that will be used by the
+    // next relocation entry. Save the value and advance to the next relocation
+    // entry.
+    if (RelType == MachO::ARM64_RELOC_ADDEND) {
+      assert(!MachO->getPlainRelocationExternal(RE));
+      assert(!MachO->getAnyRelocationPCRel(RE));
+      assert(MachO->getAnyRelocationLength(RE) == 2);
+      uint64_t RawAddend = MachO->getPlainRelocationSymbolNum(RE);
+      // Sign-extend the 24-bit to 64-bit.
+      RelocAddendValue = RawAddend << 40;
+      RelocAddendValue >>= 40;
+      HasRelocAddendValue = true;
+
+      // Get the next entry.
+      RE = MachO->getRelocation((++RelI)->getRawDataRefImpl());
+      RelType = MachO->getAnyRelocationType(RE);
+      assert(RelType == MachO::ARM64_RELOC_BRANCH26 ||
+             RelType == MachO::ARM64_RELOC_PAGE21 ||
+             RelType == MachO::ARM64_RELOC_PAGEOFF12);
+
+    } else if (RelType == MachO::ARM64_RELOC_BRANCH26 ||
+               RelType == MachO::ARM64_RELOC_PAGE21 ||
+               RelType == MachO::ARM64_RELOC_PAGEOFF12 ||
+               RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGE21 ||
+               RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12) {
+      RelocAddendValue = 0;
+      HasRelocAddendValue = true;
+    }
+  }
 
   // FIXME: Properly handle scattered relocations.
   //        Special case the couple of scattered relocations that we know how
@@ -691,8 +804,11 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
   RelI->getOffset(Offset);
   uint8_t *LocalAddress = Section.Address + Offset;
   unsigned NumBytes = 1 << Size;
-  uint64_t Addend = 0;
-  memcpy(&Addend, LocalAddress, NumBytes);
+  int64_t Addend = 0;
+  if (HasRelocAddendValue)
+    Addend = RelocAddendValue;
+  else
+    memcpy(&Addend, LocalAddress, NumBytes);
 
   if (IsExtern) {
     // Obtain the symbol name which is referenced in the relocation
@@ -793,7 +909,41 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
     RelocationEntry TargetRE(Value.SectionID, Offset, RelType, 0, IsPCRel,
                              Size);
     resolveRelocation(TargetRE, (uint64_t)Addr);
+  } else if (Arch == Triple::arm64 &&
+             (RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGE21 ||
+              RelType == MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12)) {
+    assert(Size == 2);
+    StubMap::const_iterator i = Stubs.find(Value);
+    uint8_t *Addr;
+    if (i != Stubs.end())
+      Addr = Section.Address + i->second;
+    else {
+      // FIXME: There must be a better way to do this then to check and fix the
+      // alignment every time!!!
+      uintptr_t BaseAddress = uintptr_t(Section.Address);
+      uintptr_t StubAlignment = getStubAlignment();
+      uintptr_t StubAddress
+        = (BaseAddress + Section.StubOffset + StubAlignment - 1) &
+          -StubAlignment;
+      unsigned StubOffset = StubAddress - BaseAddress;
+      Stubs[Value] = StubOffset;
+      assert(((StubAddress % getStubAlignment()) == 0) &&
+             "GOT entry not aligned");
+      RelocationEntry GOTRE(SectionID, StubOffset, MachO::ARM64_RELOC_UNSIGNED,
+                            Value.Addend, /*IsPCRel=*/false, /*Size=*/3);
+      if (Value.SymbolName)
+        addRelocationForSymbol(GOTRE, Value.SymbolName);
+      else
+        addRelocationForSection(GOTRE, Value.SectionID);
+      Section.StubOffset = StubOffset + getMaxStubSize();
+
+      Addr = (uint8_t *)StubAddress;
+    }
+    RelocationEntry TargetRE(SectionID, Offset, RelType, /*Addend=*/0, IsPCRel,
+                             Size);
+    resolveRelocation(TargetRE, (uint64_t)Addr);
   } else {
+
     RelocationEntry RE(SectionID, Offset, RelType, Value.Addend, IsPCRel, Size);
     if (Value.SymbolName)
       addRelocationForSymbol(RE, Value.SymbolName);
