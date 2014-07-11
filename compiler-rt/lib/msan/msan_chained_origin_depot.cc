@@ -19,6 +19,19 @@ namespace __msan {
 struct ChainedOriginDepotDesc {
   u32 here_id;
   u32 prev_id;
+  /* This is murmur2 hash for the 64->32 bit case.
+     It does not behave all that well because the keys have a very biased
+     distribution (I've seen 7-element buckets with the table only 14% full).
+
+     here_id is built of
+     * (1 bits) Reserved, zero.
+     * (8 bits) Part id = bits 13..20 of the hash value of here_id's key.
+     * (23 bits) Sequential number (each part has each own sequence).
+
+     prev_id has either the same distribution as here_id (but with 3:8:21)
+     split, or one of two reserved values (-1) or (-2). Either case can
+     dominate depending on the workload.
+  */
   u32 hash() const {
     const u32 m = 0x5bd1e995;
     const u32 seed = 0x9747b28c;
