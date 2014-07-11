@@ -1711,6 +1711,8 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
         RC = &AArch64::GPR32RegClass;
       else if (RegVT == MVT::i64)
         RC = &AArch64::GPR64RegClass;
+      else if (RegVT == MVT::f16)
+        RC = &AArch64::FPR16RegClass;
       else if (RegVT == MVT::f32)
         RC = &AArch64::FPR32RegClass;
       else if (RegVT == MVT::f64 || RegVT.is64BitVector())

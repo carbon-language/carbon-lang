@@ -270,7 +270,7 @@ SelectionDAGLegalize::ExpandConstantFP(ConstantFPSDNode *CFP, bool UseCP) {
 
   EVT OrigVT = VT;
   EVT SVT = VT;
-  while (SVT != MVT::f32) {
+  while (SVT != MVT::f32 && SVT != MVT::f16) {
     SVT = (MVT::SimpleValueType)(SVT.getSimpleVT().SimpleTy - 1);
     if (ConstantFPSDNode::isValueValidForType(SVT, CFP->getValueAPF()) &&
         // Only do this if the target has a native EXTLOAD instruction from

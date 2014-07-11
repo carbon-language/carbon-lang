@@ -109,3 +109,17 @@ entry:
 ; CHECK: ldr {{q[0-9]+}}, [sp]
   ret <2 x double> %varg_stack;
 }
+
+; Check that f16 can be passed and returned (ACLE 2.0 extension)
+define half @test_half(float, half %arg) {
+; CHECK-LABEL: test_half:
+; CHECK: mov v0.16b, v{{[0-9]+}}.16b
+  ret half %arg;
+}
+
+; Check that f16 constants are materialized correctly
+define half @test_half_const() {
+; CHECK-LABEL: test_half_const:
+; CHECK: ldr h0, [x{{[0-9]+}}, :lo12:{{.*}}]
+  ret half 0xH4248
+}
