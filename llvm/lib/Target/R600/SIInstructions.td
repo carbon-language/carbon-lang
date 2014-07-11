@@ -969,38 +969,38 @@ defm IMAGE_GET_RESINFO : MIMG_NoSampler <0x0000000e, "IMAGE_GET_RESINFO">;
 //def IMAGE_ATOMIC_FCMPSWAP : MIMG_NoPattern_ <"IMAGE_ATOMIC_FCMPSWAP", 0x0000001d>;
 //def IMAGE_ATOMIC_FMIN : MIMG_NoPattern_ <"IMAGE_ATOMIC_FMIN", 0x0000001e>;
 //def IMAGE_ATOMIC_FMAX : MIMG_NoPattern_ <"IMAGE_ATOMIC_FMAX", 0x0000001f>;
-defm IMAGE_SAMPLE : MIMG_Sampler <0x00000020, "IMAGE_SAMPLE">;
-//def IMAGE_SAMPLE_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_CL", 0x00000021>;
-defm IMAGE_SAMPLE_D : MIMG_Sampler <0x00000022, "IMAGE_SAMPLE_D">;
-//def IMAGE_SAMPLE_D_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_D_CL", 0x00000023>;
-defm IMAGE_SAMPLE_L : MIMG_Sampler <0x00000024, "IMAGE_SAMPLE_L">;
-defm IMAGE_SAMPLE_B : MIMG_Sampler <0x00000025, "IMAGE_SAMPLE_B">;
-//def IMAGE_SAMPLE_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_B_CL", 0x00000026>;
-//def IMAGE_SAMPLE_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_LZ", 0x00000027>;
-defm IMAGE_SAMPLE_C : MIMG_Sampler <0x00000028, "IMAGE_SAMPLE_C">;
-//def IMAGE_SAMPLE_C_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CL", 0x00000029>;
-defm IMAGE_SAMPLE_C_D : MIMG_Sampler <0x0000002a, "IMAGE_SAMPLE_C_D">;
-//def IMAGE_SAMPLE_C_D_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D_CL", 0x0000002b>;
-defm IMAGE_SAMPLE_C_L : MIMG_Sampler <0x0000002c, "IMAGE_SAMPLE_C_L">;
-defm IMAGE_SAMPLE_C_B : MIMG_Sampler <0x0000002d, "IMAGE_SAMPLE_C_B">;
-//def IMAGE_SAMPLE_C_B_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_CL", 0x0000002e>;
-//def IMAGE_SAMPLE_C_LZ : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_LZ", 0x0000002f>;
-//def IMAGE_SAMPLE_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_O", 0x00000030>;
-//def IMAGE_SAMPLE_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_CL_O", 0x00000031>;
-//def IMAGE_SAMPLE_D_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_D_O", 0x00000032>;
-//def IMAGE_SAMPLE_D_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_D_CL_O", 0x00000033>;
-//def IMAGE_SAMPLE_L_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_L_O", 0x00000034>;
-//def IMAGE_SAMPLE_B_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_B_O", 0x00000035>;
-//def IMAGE_SAMPLE_B_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_B_CL_O", 0x00000036>;
-//def IMAGE_SAMPLE_LZ_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_LZ_O", 0x00000037>;
-//def IMAGE_SAMPLE_C_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_O", 0x00000038>;
-//def IMAGE_SAMPLE_C_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CL_O", 0x00000039>;
-//def IMAGE_SAMPLE_C_D_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D_O", 0x0000003a>;
-//def IMAGE_SAMPLE_C_D_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_D_CL_O", 0x0000003b>;
-//def IMAGE_SAMPLE_C_L_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_L_O", 0x0000003c>;
-//def IMAGE_SAMPLE_C_B_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_O", 0x0000003d>;
-//def IMAGE_SAMPLE_C_B_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_B_CL_O", 0x0000003e>;
-//def IMAGE_SAMPLE_C_LZ_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_LZ_O", 0x0000003f>;
+defm IMAGE_SAMPLE           : MIMG_Sampler <0x00000020, "IMAGE_SAMPLE">;
+defm IMAGE_SAMPLE_CL        : MIMG_Sampler <0x00000021, "IMAGE_SAMPLE_CL">;
+defm IMAGE_SAMPLE_D         : MIMG_Sampler <0x00000022, "IMAGE_SAMPLE_D">;
+defm IMAGE_SAMPLE_D_CL      : MIMG_Sampler <0x00000023, "IMAGE_SAMPLE_D_CL">;
+defm IMAGE_SAMPLE_L         : MIMG_Sampler <0x00000024, "IMAGE_SAMPLE_L">;
+defm IMAGE_SAMPLE_B         : MIMG_Sampler <0x00000025, "IMAGE_SAMPLE_B">;
+defm IMAGE_SAMPLE_B_CL      : MIMG_Sampler <0x00000026, "IMAGE_SAMPLE_B_CL">;
+defm IMAGE_SAMPLE_LZ        : MIMG_Sampler <0x00000027, "IMAGE_SAMPLE_LZ">;
+defm IMAGE_SAMPLE_C         : MIMG_Sampler <0x00000028, "IMAGE_SAMPLE_C">;
+defm IMAGE_SAMPLE_C_CL      : MIMG_Sampler <0x00000029, "IMAGE_SAMPLE_C_CL">;
+defm IMAGE_SAMPLE_C_D       : MIMG_Sampler <0x0000002a, "IMAGE_SAMPLE_C_D">;
+defm IMAGE_SAMPLE_C_D_CL    : MIMG_Sampler <0x0000002b, "IMAGE_SAMPLE_C_D_CL">;
+defm IMAGE_SAMPLE_C_L       : MIMG_Sampler <0x0000002c, "IMAGE_SAMPLE_C_L">;
+defm IMAGE_SAMPLE_C_B       : MIMG_Sampler <0x0000002d, "IMAGE_SAMPLE_C_B">;
+defm IMAGE_SAMPLE_C_B_CL    : MIMG_Sampler <0x0000002e, "IMAGE_SAMPLE_C_B_CL">;
+defm IMAGE_SAMPLE_C_LZ      : MIMG_Sampler <0x0000002f, "IMAGE_SAMPLE_C_LZ">;
+defm IMAGE_SAMPLE_O         : MIMG_Sampler <0x00000030, "IMAGE_SAMPLE_O">;
+defm IMAGE_SAMPLE_CL_O      : MIMG_Sampler <0x00000031, "IMAGE_SAMPLE_CL_O">;
+defm IMAGE_SAMPLE_D_O       : MIMG_Sampler <0x00000032, "IMAGE_SAMPLE_D_O">;
+defm IMAGE_SAMPLE_D_CL_O    : MIMG_Sampler <0x00000033, "IMAGE_SAMPLE_D_CL_O">;
+defm IMAGE_SAMPLE_L_O       : MIMG_Sampler <0x00000034, "IMAGE_SAMPLE_L_O">;
+defm IMAGE_SAMPLE_B_O       : MIMG_Sampler <0x00000035, "IMAGE_SAMPLE_B_O">;
+defm IMAGE_SAMPLE_B_CL_O    : MIMG_Sampler <0x00000036, "IMAGE_SAMPLE_B_CL_O">;
+defm IMAGE_SAMPLE_LZ_O      : MIMG_Sampler <0x00000037, "IMAGE_SAMPLE_LZ_O">;
+defm IMAGE_SAMPLE_C_O       : MIMG_Sampler <0x00000038, "IMAGE_SAMPLE_C_O">;
+defm IMAGE_SAMPLE_C_CL_O    : MIMG_Sampler <0x00000039, "IMAGE_SAMPLE_C_CL_O">;
+defm IMAGE_SAMPLE_C_D_O     : MIMG_Sampler <0x0000003a, "IMAGE_SAMPLE_C_D_O">;
+defm IMAGE_SAMPLE_C_D_CL_O  : MIMG_Sampler <0x0000003b, "IMAGE_SAMPLE_C_D_CL_O">;
+defm IMAGE_SAMPLE_C_L_O     : MIMG_Sampler <0x0000003c, "IMAGE_SAMPLE_C_L_O">;
+defm IMAGE_SAMPLE_C_B_O     : MIMG_Sampler <0x0000003d, "IMAGE_SAMPLE_C_B_O">;
+defm IMAGE_SAMPLE_C_B_CL_O  : MIMG_Sampler <0x0000003e, "IMAGE_SAMPLE_C_B_CL_O">;
+defm IMAGE_SAMPLE_C_LZ_O    : MIMG_Sampler <0x0000003f, "IMAGE_SAMPLE_C_LZ_O">;
 defm IMAGE_GATHER4          : MIMG_Gather <0x00000040, "IMAGE_GATHER4">;
 defm IMAGE_GATHER4_CL       : MIMG_Gather <0x00000041, "IMAGE_GATHER4_CL">;
 defm IMAGE_GATHER4_L        : MIMG_Gather <0x00000044, "IMAGE_GATHER4_L">;
@@ -1025,15 +1025,15 @@ defm IMAGE_GATHER4_C_L_O    : MIMG_Gather <0x0000005c, "IMAGE_GATHER4_C_L_O">;
 defm IMAGE_GATHER4_C_B_O    : MIMG_Gather <0x0000005d, "IMAGE_GATHER4_C_B_O">;
 defm IMAGE_GATHER4_C_B_CL_O : MIMG_Gather <0x0000005e, "IMAGE_GATHER4_C_B_CL_O">;
 defm IMAGE_GATHER4_C_LZ_O   : MIMG_Gather <0x0000005f, "IMAGE_GATHER4_C_LZ_O">;
-defm IMAGE_GET_LOD : MIMG_Sampler <0x00000060, "IMAGE_GET_LOD">;
-//def IMAGE_SAMPLE_CD : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD", 0x00000068>;
-//def IMAGE_SAMPLE_CD_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD_CL", 0x00000069>;
-//def IMAGE_SAMPLE_C_CD : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CD", 0x0000006a>;
-//def IMAGE_SAMPLE_C_CD_CL : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CD_CL", 0x0000006b>;
-//def IMAGE_SAMPLE_CD_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD_O", 0x0000006c>;
-//def IMAGE_SAMPLE_CD_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_CD_CL_O", 0x0000006d>;
-//def IMAGE_SAMPLE_C_CD_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CD_O", 0x0000006e>;
-//def IMAGE_SAMPLE_C_CD_CL_O : MIMG_NoPattern_ <"IMAGE_SAMPLE_C_CD_CL_O", 0x0000006f>;
+defm IMAGE_GET_LOD          : MIMG_Sampler <0x00000060, "IMAGE_GET_LOD">;
+defm IMAGE_SAMPLE_CD        : MIMG_Sampler <0x00000068, "IMAGE_SAMPLE_CD">;
+defm IMAGE_SAMPLE_CD_CL     : MIMG_Sampler <0x00000069, "IMAGE_SAMPLE_CD_CL">;
+defm IMAGE_SAMPLE_C_CD      : MIMG_Sampler <0x0000006a, "IMAGE_SAMPLE_C_CD">;
+defm IMAGE_SAMPLE_C_CD_CL   : MIMG_Sampler <0x0000006b, "IMAGE_SAMPLE_C_CD_CL">;
+defm IMAGE_SAMPLE_CD_O      : MIMG_Sampler <0x0000006c, "IMAGE_SAMPLE_CD_O">;
+defm IMAGE_SAMPLE_CD_CL_O   : MIMG_Sampler <0x0000006d, "IMAGE_SAMPLE_CD_CL_O">;
+defm IMAGE_SAMPLE_C_CD_O    : MIMG_Sampler <0x0000006e, "IMAGE_SAMPLE_C_CD_O">;
+defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, "IMAGE_SAMPLE_C_CD_CL_O">;
 //def IMAGE_RSRC256 : MIMG_NoPattern_RSRC256 <"IMAGE_RSRC256", 0x0000007e>;
 //def IMAGE_SAMPLER : MIMG_NoPattern_ <"IMAGE_SAMPLER", 0x0000007f>;
 
@@ -1853,6 +1853,7 @@ def : Pat <
 /********** Image sampling patterns **********/
 /********** ======================= **********/
 
+// Image + sampler
 class SampleRawPattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat <
   (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, i32:$dmask, i32:$unorm,
         i32:$r128, i32:$da, i32:$glc, i32:$slc, i32:$tfe, i32:$lwe),
@@ -1861,6 +1862,78 @@ class SampleRawPattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat 
           $addr, $rsrc, $sampler)
 >;
 
+multiclass SampleRawPatterns<SDPatternOperator name, string opcode> {
+  def : SampleRawPattern<name, !cast<MIMG>(opcode # _V4_V1), i32>;
+  def : SampleRawPattern<name, !cast<MIMG>(opcode # _V4_V2), v2i32>;
+  def : SampleRawPattern<name, !cast<MIMG>(opcode # _V4_V4), v4i32>;
+  def : SampleRawPattern<name, !cast<MIMG>(opcode # _V4_V8), v8i32>;
+  def : SampleRawPattern<name, !cast<MIMG>(opcode # _V4_V16), v16i32>;
+}
+
+// Image only
+class ImagePattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat <
+  (name vt:$addr, v32i8:$rsrc, i32:$dmask, i32:$unorm,
+        i32:$r128, i32:$da, i32:$glc, i32:$slc, i32:$tfe, i32:$lwe),
+  (opcode (as_i32imm $dmask), (as_i1imm $unorm), (as_i1imm $glc), (as_i1imm $da),
+          (as_i1imm $r128), (as_i1imm $tfe), (as_i1imm $lwe), (as_i1imm $slc),
+          $addr, $rsrc)
+>;
+
+multiclass ImagePatterns<SDPatternOperator name, string opcode> {
+  def : ImagePattern<name, !cast<MIMG>(opcode # _V4_V1), i32>;
+  def : ImagePattern<name, !cast<MIMG>(opcode # _V4_V2), v2i32>;
+  def : ImagePattern<name, !cast<MIMG>(opcode # _V4_V4), v4i32>;
+}
+
+// Basic sample
+defm : SampleRawPatterns<int_SI_image_sample,           "IMAGE_SAMPLE">;
+defm : SampleRawPatterns<int_SI_image_sample_cl,        "IMAGE_SAMPLE_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_d,         "IMAGE_SAMPLE_D">;
+defm : SampleRawPatterns<int_SI_image_sample_d_cl,      "IMAGE_SAMPLE_D_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_l,         "IMAGE_SAMPLE_L">;
+defm : SampleRawPatterns<int_SI_image_sample_b,         "IMAGE_SAMPLE_B">;
+defm : SampleRawPatterns<int_SI_image_sample_b_cl,      "IMAGE_SAMPLE_B_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_lz,        "IMAGE_SAMPLE_LZ">;
+defm : SampleRawPatterns<int_SI_image_sample_cd,        "IMAGE_SAMPLE_CD">;
+defm : SampleRawPatterns<int_SI_image_sample_cd_cl,     "IMAGE_SAMPLE_CD_CL">;
+
+// Sample with comparison
+defm : SampleRawPatterns<int_SI_image_sample_c,         "IMAGE_SAMPLE_C">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cl,      "IMAGE_SAMPLE_C_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_c_d,       "IMAGE_SAMPLE_C_D">;
+defm : SampleRawPatterns<int_SI_image_sample_c_d_cl,    "IMAGE_SAMPLE_C_D_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_c_l,       "IMAGE_SAMPLE_C_L">;
+defm : SampleRawPatterns<int_SI_image_sample_c_b,       "IMAGE_SAMPLE_C_B">;
+defm : SampleRawPatterns<int_SI_image_sample_c_b_cl,    "IMAGE_SAMPLE_C_B_CL">;
+defm : SampleRawPatterns<int_SI_image_sample_c_lz,      "IMAGE_SAMPLE_C_LZ">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cd,      "IMAGE_SAMPLE_C_CD">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cd_cl,   "IMAGE_SAMPLE_C_CD_CL">;
+
+// Sample with offsets
+defm : SampleRawPatterns<int_SI_image_sample_o,         "IMAGE_SAMPLE_O">;
+defm : SampleRawPatterns<int_SI_image_sample_cl_o,      "IMAGE_SAMPLE_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_d_o,       "IMAGE_SAMPLE_D_O">;
+defm : SampleRawPatterns<int_SI_image_sample_d_cl_o,    "IMAGE_SAMPLE_D_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_l_o,       "IMAGE_SAMPLE_L_O">;
+defm : SampleRawPatterns<int_SI_image_sample_b_o,       "IMAGE_SAMPLE_B_O">;
+defm : SampleRawPatterns<int_SI_image_sample_b_cl_o,    "IMAGE_SAMPLE_B_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_lz_o,      "IMAGE_SAMPLE_LZ_O">;
+defm : SampleRawPatterns<int_SI_image_sample_cd_o,      "IMAGE_SAMPLE_CD_O">;
+defm : SampleRawPatterns<int_SI_image_sample_cd_cl_o,   "IMAGE_SAMPLE_CD_CL_O">;
+
+// Sample with comparison and offsets
+defm : SampleRawPatterns<int_SI_image_sample_c_o,       "IMAGE_SAMPLE_C_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cl_o,    "IMAGE_SAMPLE_C_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_d_o,     "IMAGE_SAMPLE_C_D_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_d_cl_o,  "IMAGE_SAMPLE_C_D_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_l_o,     "IMAGE_SAMPLE_C_L_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_b_o,     "IMAGE_SAMPLE_C_B_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_b_cl_o,  "IMAGE_SAMPLE_C_B_CL_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_lz_o,    "IMAGE_SAMPLE_C_LZ_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cd_o,    "IMAGE_SAMPLE_C_CD_O">;
+defm : SampleRawPatterns<int_SI_image_sample_c_cd_cl_o, "IMAGE_SAMPLE_C_CD_CL_O">;
+
+// Gather opcodes
 // Only the variants which make sense are defined.
 def : SampleRawPattern<int_SI_gather4,           IMAGE_GATHER4_V4_V2,        v2i32>;
 def : SampleRawPattern<int_SI_gather4,           IMAGE_GATHER4_V4_V4,        v4i32>;
@@ -1904,6 +1977,10 @@ def : SampleRawPattern<int_SI_gather4_c_lz_o,    IMAGE_GATHER4_C_LZ_O_V4_V8, v8i
 def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V1, i32>;
 def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V2, v2i32>;
 def : SampleRawPattern<int_SI_getlod, IMAGE_GET_LOD_V4_V4, v4i32>;
+
+def : ImagePattern<int_SI_getresinfo, IMAGE_GET_RESINFO_V4_V1, i32>;
+defm : ImagePatterns<int_SI_image_load, "IMAGE_LOAD">;
+defm : ImagePatterns<int_SI_image_load_mip, "IMAGE_LOAD_MIP">;
 
 /* SIsample for simple 1D texture lookup */
 def : Pat <
