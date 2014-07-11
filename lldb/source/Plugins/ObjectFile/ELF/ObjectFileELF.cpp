@@ -1242,6 +1242,10 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                                     uint32_t &gnu_debuglink_crc,
                                     ArchSpec &arch_spec)
 {
+    // Don't reparse the section headers if we already did that.
+    if (!section_headers.empty())
+        return section_headers.size();
+
     // Only initialize the arch_spec to okay defaults if they're not already set.
     // We'll refine this with note data as we parse the notes.
     if (arch_spec.GetTriple ().getOS () == llvm::Triple::OSType::UnknownOS)
@@ -1250,10 +1254,6 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
         arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
         arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
     }
-
-    // We have already parsed the section headers
-    if (!section_headers.empty())
-        return section_headers.size();
 
     // If there are no section headers we are done.
     if (header.e_shnum == 0)
