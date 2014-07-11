@@ -216,7 +216,7 @@ class R600_REDUCTION <bits<11> inst, dag ins, string asm, list<dag> pattern,
 def TEX_SHADOW : PatLeaf<
   (imm),
   [{uint32_t TType = (uint32_t)N->getZExtValue();
-    return (TType >= 6 && TType <= 8) || (TType >= 11 && TType <= 13);
+    return (TType >= 6 && TType <= 8) || TType == 13;
   }]
 >;
 
