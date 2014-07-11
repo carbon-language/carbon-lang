@@ -3138,6 +3138,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     }
   }
 
+  // Warn about ignored options to clang.
+  for (arg_iterator it = Args.filtered_begin(
+       options::OPT_clang_ignored_gcc_optimization_f_Group),
+       ie = Args.filtered_end(); it != ie; ++it) {
+    D.Diag(diag::warn_ignored_gcc_optimization) << (*it)->getAsString(Args);
+  }
+
   // Don't warn about unused -flto.  This can happen when we're preprocessing or
   // precompiling.
   Args.ClaimAllArgs(options::OPT_flto);
