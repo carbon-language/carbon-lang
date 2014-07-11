@@ -10727,9 +10727,8 @@ bool Sema::isAcceptableTagRedeclaration(const TagDecl *Previous,
 ///       struct Y { friend struct /*N::*/ X; };
 ///     }
 ///   }
-static void addFriendTagNNSFixIt(Sema &SemaRef, Sema::SemaDiagnosticBuilder &D,
-                                 NamedDecl *ND, Scope *S,
-                                 SourceLocation NameLoc) {
+static FixItHint createFriendTagNNSFixIt(Sema &SemaRef, NamedDecl *ND, Scope *S,
+                                         SourceLocation NameLoc) {
   // While the decl is in a namespace, do repeated lookup of that name and see
   // if we get the same namespace back.  If we do not, continue until
   // translation unit scope, at which point we have a fully qualified NNS.
@@ -10740,7 +10739,7 @@ static void addFriendTagNNSFixIt(Sema &SemaRef, Sema::SemaDiagnosticBuilder &D,
     // other namespaces.  Bail if there's an anonymous namespace in the chain.
     NamespaceDecl *Namespace = dyn_cast<NamespaceDecl>(DC);
     if (!Namespace || Namespace->isAnonymousNamespace())
-      return;
+      return FixItHint();
     IdentifierInfo *II = Namespace->getIdentifier();
     Namespaces.push_back(II);
     NamedDecl *Lookup = SemaRef.LookupSingleName(
@@ -10759,7 +10758,7 @@ static void addFriendTagNNSFixIt(Sema &SemaRef, Sema::SemaDiagnosticBuilder &D,
   for (auto *II : Namespaces)
     OS << II->getName() << "::";
   OS.flush();
-  D << FixItHint::CreateInsertion(NameLoc, Insertion);
+  return FixItHint::CreateInsertion(NameLoc, Insertion);
 }
 
 /// ActOnTag - This is invoked when we see 'struct foo' or 'struct {'.  In the
@@ -10982,8 +10981,8 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
       // unambiguously found something outside the enclosing namespace.
       if (Previous.isSingleResult() && FriendSawTagOutsideEnclosingNamespace) {
         NamedDecl *ND = Previous.getFoundDecl();
-        auto D = Diag(NameLoc, diag::ext_friend_tag_redecl_outside_namespace);
-        addFriendTagNNSFixIt(*this, D, ND, S, NameLoc);
+        Diag(NameLoc, diag::ext_friend_tag_redecl_outside_namespace)
+            << createFriendTagNNSFixIt(*this, ND, S, NameLoc);
       }
     }
 
