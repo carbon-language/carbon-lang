@@ -687,26 +687,38 @@ bool FastISel::SelectCall(const User *I) {
   MachineModuleInfo &MMI = FuncInfo.MF->getMMI();
   ComputeUsesVAFloatArgument(*Call, &MMI);
 
-  const Function *F = Call->getCalledFunction();
-  if (!F) return false;
+  // Handle intrinsic function calls.
+  if (const auto *II = dyn_cast<IntrinsicInst>(Call))
+    return SelectIntrinsicCall(II);
 
-  // Handle selected intrinsic function calls.
-  switch (F->getIntrinsicID()) {
+  // Usually, it does not make sense to initialize a value,
+  // make an unrelated function call and use the value, because
+  // it tends to be spilled on the stack. So, we move the pointer
+  // to the last local value to the beginning of the block, so that
+  // all the values which have already been materialized,
+  // appear after the call. It also makes sense to skip intrinsics
+  // since they tend to be inlined.
+  flushLocalValueMap();
+
+  // An arbitrary call. Bail.
+  return false;
+}
+
+bool FastISel::SelectIntrinsicCall(const IntrinsicInst *II) {
+  switch (II->getIntrinsicID()) {
   default: break;
-    // At -O0 we don't care about the lifetime intrinsics.
+  // At -O0 we don't care about the lifetime intrinsics.
   case Intrinsic::lifetime_start:
   case Intrinsic::lifetime_end:
-    // The donothing intrinsic does, well, nothing.
+  // The donothing intrinsic does, well, nothing.
   case Intrinsic::donothing:
     return true;
-
   case Intrinsic::dbg_declare: {
-    const DbgDeclareInst *DI = cast<DbgDeclareInst>(Call);
+    const DbgDeclareInst *DI = cast<DbgDeclareInst>(II);
     DIVariable DIVar(DI->getVariable());
     assert((!DIVar || DIVar.isVariable()) &&
-      "Variable in DbgDeclareInst should be either null or a DIVariable.");
-    if (!DIVar ||
-        !FuncInfo.MF->getMMI().hasDebugInfo()) {
+           "Variable in DbgDeclareInst should be either null or a DIVariable.");
+    if (!DIVar || !FuncInfo.MF->getMMI().hasDebugInfo()) {
       DEBUG(dbgs() << "Dropping debug info for " << *DI << "\n");
       return true;
     }
@@ -723,7 +735,7 @@ bool FastISel::SelectCall(const User *I) {
       // Some arguments' frame index is recorded during argument lowering.
       Offset = FuncInfo.getArgumentFrameIndex(Arg);
     if (Offset)
-        Op = MachineOperand::CreateFI(Offset);
+      Op = MachineOperand::CreateFI(Offset);
     if (!Op)
       if (unsigned Reg = lookUpRegForValue(Address))
         Op = MachineOperand::CreateReg(Reg, false);
@@ -754,9 +766,9 @@ bool FastISel::SelectCall(const User *I) {
       } else
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(TargetOpcode::DBG_VALUE))
-            .addOperand(*Op)
-            .addImm(0)
-            .addMetadata(DI->getVariable());
+          .addOperand(*Op)
+          .addImm(0)
+          .addMetadata(DI->getVariable());
     } else {
       // We can't yet handle anything else here because it would require
       // generating code, thus altering codegen because of debug info.
@@ -766,7 +778,7 @@ bool FastISel::SelectCall(const User *I) {
   }
   case Intrinsic::dbg_value: {
     // This form of DBG_VALUE is target-independent.
-    const DbgValueInst *DI = cast<DbgValueInst>(Call);
+    const DbgValueInst *DI = cast<DbgValueInst>(II);
     const MCInstrDesc &II = TII.get(TargetOpcode::DBG_VALUE);
     const Value *V = DI->getValue();
     if (!V) {
@@ -801,38 +813,27 @@ bool FastISel::SelectCall(const User *I) {
     return true;
   }
   case Intrinsic::objectsize: {
-    ConstantInt *CI = cast<ConstantInt>(Call->getArgOperand(1));
+    ConstantInt *CI = cast<ConstantInt>(II->getArgOperand(1));
     unsigned long long Res = CI->isZero() ? -1ULL : 0;
-    Constant *ResCI = ConstantInt::get(Call->getType(), Res);
+    Constant *ResCI = ConstantInt::get(II->getType(), Res);
     unsigned ResultReg = getRegForValue(ResCI);
     if (ResultReg == 0)
       return false;
-    UpdateValueMap(Call, ResultReg);
+    UpdateValueMap(II, ResultReg);
     return true;
   }
   case Intrinsic::expect: {
-    unsigned ResultReg = getRegForValue(Call->getArgOperand(0));
+    unsigned ResultReg = getRegForValue(II->getArgOperand(0));
     if (ResultReg == 0)
       return false;
-    UpdateValueMap(Call, ResultReg);
+    UpdateValueMap(II, ResultReg);
     return true;
   }
   case Intrinsic::experimental_stackmap:
-    return SelectStackmap(Call);
+    return SelectStackmap(II);
   }
 
-  // Usually, it does not make sense to initialize a value,
-  // make an unrelated function call and use the value, because
-  // it tends to be spilled on the stack. So, we move the pointer
-  // to the last local value to the beginning of the block, so that
-  // all the values which have already been materialized,
-  // appear after the call. It also makes sense to skip intrinsics
-  // since they tend to be inlined.
-  if (!isa<IntrinsicInst>(Call))
-    flushLocalValueMap();
-
-  // An arbitrary call. Bail.
-  return false;
+  return FastLowerIntrinsicCall(II);
 }
 
 bool FastISel::SelectCast(const User *I, unsigned Opcode) {
@@ -1225,6 +1226,10 @@ FastISel::FastISel(FunctionLoweringInfo &funcInfo,
 FastISel::~FastISel() {}
 
 bool FastISel::FastLowerArguments() {
+  return false;
+}
+
+bool FastISel::FastLowerIntrinsicCall(const IntrinsicInst */*II*/) {
   return false;
 }
 

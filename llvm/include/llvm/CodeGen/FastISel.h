@@ -27,6 +27,7 @@ class CallInst;
 class DataLayout;
 class FunctionLoweringInfo;
 class Instruction;
+class IntrinsicInst;
 class LoadInst;
 class MVT;
 class MachineConstantPool;
@@ -178,6 +179,10 @@ protected:
   /// This method is called by target-independent code to do target specific
   /// argument lowering. It returns true if it was successful.
   virtual bool FastLowerArguments();
+
+  /// This method is called by target-independent code to do target specific
+  /// intrinsic lowering. It returns true if it was successful.
+  virtual bool FastLowerIntrinsicCall(const IntrinsicInst *II);
 
   /// This method is called by target-independent code to request that an
   /// instruction with the given type and opcode be emitted.
@@ -390,6 +395,7 @@ private:
 
   bool SelectStackmap(const CallInst *I);
   bool SelectCall(const User *I);
+  bool SelectIntrinsicCall(const IntrinsicInst *II);
 
   bool SelectBitCast(const User *I);
 
