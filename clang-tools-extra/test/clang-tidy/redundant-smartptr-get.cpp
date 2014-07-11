@@ -1,8 +1,6 @@
 // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-redundant-smartptr-get %t
 // REQUIRES: shell
 
-// CHECK-MESSAGES-NOT: warning
-
 namespace std {
 
 template <typename T>
@@ -102,8 +100,6 @@ void Positive() {
   // CHECK-MESSAGES: nullptr != ss->get();
   // CHECK-FIXES: bb = nullptr != *ss;
 }
-
-// CHECK-MESSAGES-NOT: warning:
 
 void Negative() {
   struct NegPtr {

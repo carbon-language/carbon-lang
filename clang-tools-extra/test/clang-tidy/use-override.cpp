@@ -1,8 +1,6 @@
 // RUN: $(dirname %s)/check_clang_tidy_fix.sh %s misc-use-override %t
 // REQUIRES: shell
 
-// CHECK-MESSAGES-NOT: warning:
-
 #define ABSTRACT = 0
 
 #define OVERRIDE override
@@ -198,6 +196,7 @@ template <typename T> struct TemplateBase {
 
 template <typename T> struct DerivedFromTemplate : public TemplateBase<T> {
   virtual void f(T t);
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Prefer using
   // CHECK-FIXES: {{^  void f\(T t\) override;}}
 };
 void f() { DerivedFromTemplate<int>().f(2); }
@@ -220,5 +219,3 @@ struct MembersOfSpecializations : public Base {
 };
 template <> void MembersOfSpecializations<3>::a() {}
 void f() { MembersOfSpecializations<3>().a(); };
-
-// CHECK-MESSAGES-NOT: warning:
