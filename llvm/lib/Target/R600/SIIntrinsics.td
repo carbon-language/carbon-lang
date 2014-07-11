@@ -58,8 +58,8 @@ let TargetPrefix = "SI", isTarget = 1 in {
   class SampleRaw : Intrinsic <
     [llvm_v4f32_ty],    // vdata(VGPR)
     [llvm_anyint_ty,    // vaddr(VGPR)
-     llvm_v32i8_ty,     // rsrc(SGPR)
-     llvm_v16i8_ty,     // sampler(SGPR)
+     llvm_v8i32_ty,     // rsrc(SGPR)
+     llvm_v4i32_ty,     // sampler(SGPR)
      llvm_i32_ty,       // dmask(imm)
      llvm_i32_ty,       // unorm(imm)
      llvm_i32_ty,       // r128(imm)
@@ -74,7 +74,7 @@ let TargetPrefix = "SI", isTarget = 1 in {
   class Image : Intrinsic <
     [llvm_v4f32_ty],    // vdata(VGPR)
     [llvm_anyint_ty,    // vaddr(VGPR)
-     llvm_v32i8_ty,     // rsrc(SGPR)
+     llvm_v8i32_ty,     // rsrc(SGPR)
      llvm_i32_ty,       // dmask(imm)
      llvm_i32_ty,       // unorm(imm)
      llvm_i32_ty,       // r128(imm)

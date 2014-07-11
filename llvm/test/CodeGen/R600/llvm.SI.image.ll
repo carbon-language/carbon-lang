@@ -4,7 +4,7 @@
 ;CHECK: IMAGE_LOAD {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @image_load() #0 {
 main_body:
-  %r = call <4 x float> @llvm.SI.image.load.v4i32(<4 x i32> undef, <32 x i8> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
+  %r = call <4 x float> @llvm.SI.image.load.v4i32(<4 x i32> undef, <8 x i32> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
   %r0 = extractelement <4 x float> %r, i32 0
   %r1 = extractelement <4 x float> %r, i32 1
   %r2 = extractelement <4 x float> %r, i32 2
@@ -17,7 +17,7 @@ main_body:
 ;CHECK: IMAGE_LOAD_MIP {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v\[[0-9]+:[0-9]+\]}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @image_load_mip() #0 {
 main_body:
-  %r = call <4 x float> @llvm.SI.image.load.mip.v4i32(<4 x i32> undef, <32 x i8> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
+  %r = call <4 x float> @llvm.SI.image.load.mip.v4i32(<4 x i32> undef, <8 x i32> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
   %r0 = extractelement <4 x float> %r, i32 0
   %r1 = extractelement <4 x float> %r, i32 1
   %r2 = extractelement <4 x float> %r, i32 2
@@ -30,7 +30,7 @@ main_body:
 ;CHECK: IMAGE_GET_RESINFO {{v\[[0-9]+:[0-9]+\]}}, 15, 0, 0, 0, 0, 0, 0, 0, {{v[0-9]+}}, {{s\[[0-9]+:[0-9]+\]}}
 define void @getresinfo() #0 {
 main_body:
-  %r = call <4 x float> @llvm.SI.getresinfo.i32(i32 undef, <32 x i8> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
+  %r = call <4 x float> @llvm.SI.getresinfo.i32(i32 undef, <8 x i32> undef, i32 15, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0, i32 0)
   %r0 = extractelement <4 x float> %r, i32 0
   %r1 = extractelement <4 x float> %r, i32 1
   %r2 = extractelement <4 x float> %r, i32 2
@@ -39,9 +39,9 @@ main_body:
   ret void
 }
 
-declare <4 x float> @llvm.SI.image.load.v4i32(<4 x i32>, <32 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #1
-declare <4 x float> @llvm.SI.image.load.mip.v4i32(<4 x i32>, <32 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #1
-declare <4 x float> @llvm.SI.getresinfo.i32(i32, <32 x i8>, i32, i32, i32, i32, i32, i32, i32, i32) #1
+declare <4 x float> @llvm.SI.image.load.v4i32(<4 x i32>, <8 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
+declare <4 x float> @llvm.SI.image.load.mip.v4i32(<4 x i32>, <8 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
+declare <4 x float> @llvm.SI.getresinfo.i32(i32, <8 x i32>, i32, i32, i32, i32, i32, i32, i32, i32) #1
 
 declare void @llvm.SI.export(i32, i32, i32, i32, i32, float, float, float, float)
 

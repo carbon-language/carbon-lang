@@ -1855,7 +1855,7 @@ def : Pat <
 
 // Image + sampler
 class SampleRawPattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat <
-  (name vt:$addr, v32i8:$rsrc, v16i8:$sampler, i32:$dmask, i32:$unorm,
+  (name vt:$addr, v8i32:$rsrc, v4i32:$sampler, i32:$dmask, i32:$unorm,
         i32:$r128, i32:$da, i32:$glc, i32:$slc, i32:$tfe, i32:$lwe),
   (opcode (as_i32imm $dmask), (as_i1imm $unorm), (as_i1imm $glc), (as_i1imm $da),
           (as_i1imm $r128), (as_i1imm $tfe), (as_i1imm $lwe), (as_i1imm $slc),
@@ -1872,7 +1872,7 @@ multiclass SampleRawPatterns<SDPatternOperator name, string opcode> {
 
 // Image only
 class ImagePattern<SDPatternOperator name, MIMG opcode, ValueType vt> : Pat <
-  (name vt:$addr, v32i8:$rsrc, i32:$dmask, i32:$unorm,
+  (name vt:$addr, v8i32:$rsrc, i32:$dmask, i32:$unorm,
         i32:$r128, i32:$da, i32:$glc, i32:$slc, i32:$tfe, i32:$lwe),
   (opcode (as_i32imm $dmask), (as_i1imm $unorm), (as_i1imm $glc), (as_i1imm $da),
           (as_i1imm $r128), (as_i1imm $tfe), (as_i1imm $lwe), (as_i1imm $slc),
