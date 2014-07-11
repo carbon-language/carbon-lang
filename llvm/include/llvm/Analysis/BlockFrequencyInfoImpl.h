@@ -131,7 +131,8 @@ inline raw_ostream &operator<<(raw_ostream &OS, const BlockMass &X) {
 template <> struct isPodLike<BlockMass> {
   static const bool value = true;
 };
-}
+
+} // end namespace llvm
 
 //===----------------------------------------------------------------------===//
 //
@@ -1183,7 +1184,8 @@ raw_ostream &BlockFrequencyInfoImpl<BT>::print(raw_ostream &OS) const {
   OS << "\n";
   return OS;
 }
-}
+
+} // end namespace llvm
 
 #undef DEBUG_TYPE
 

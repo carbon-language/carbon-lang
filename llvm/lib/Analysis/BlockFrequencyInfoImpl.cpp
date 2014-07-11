@@ -87,7 +87,8 @@ struct DitheringDistributer {
 
   BlockMass takeMass(uint32_t Weight);
 };
-}
+
+} // end namespace
 
 DitheringDistributer::DitheringDistributer(Distribution &Dist,
                                            const BlockMass &Mass) {
