@@ -185,7 +185,8 @@ static bool isDisp8(int Value) {
 /// isCDisp8 - Return true if this signed displacement fits in a 8-bit
 /// compressed dispacement field.
 static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
-  assert((TSFlags & X86II::EncodingMask) >> X86II::EncodingShift == X86II::EVEX &&
+  assert(((TSFlags & X86II::EncodingMask) >>
+          X86II::EncodingShift == X86II::EVEX) &&
          "Compressed 8-bit displacement is only valid for EVEX inst.");
 
   unsigned CD8E = (TSFlags >> X86II::EVEX_CD8EShift) & X86II::EVEX_CD8EMask;
@@ -195,7 +196,7 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
     CValue = Value;
     return isDisp8(Value);
   }
-  
+
   unsigned MemObjSize = 1U << CD8E;
   if (CD8V & 4) {
     // Fixed vector length
@@ -208,10 +209,9 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
       EVEX_LL += ((TSFlags >> X86II::VEXShift) & X86II::EVEX_L2) ? 2 : 0;
       assert(EVEX_LL < 3 && "");
 
-      unsigned NumElems = (1U << (EVEX_LL + 4)) / MemObjSize;
-      NumElems /= 1U << (CD8V & 0x3);
-
-      MemObjSize *= NumElems;
+      unsigned VectorByteSize = 1U << (EVEX_LL + 4);
+      unsigned Divider = 1U << (CD8V & 0x3);
+      MemObjSize = VectorByteSize / Divider;
     }
   }
 
