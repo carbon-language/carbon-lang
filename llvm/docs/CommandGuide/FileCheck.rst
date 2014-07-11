@@ -49,6 +49,17 @@ OPTIONS
  The :option:`--strict-whitespace` argument disables this behavior. End-of-line
  sequences are canonicalized to UNIX-style ``\n`` in all modes.
 
+.. option:: --implicit-check-not check-pattern
+
+  Adds implicit negative checks for the specified patterns between positive
+  checks. The option allows writing stricter tests without stuffing them with
+  ``CHECK-NOT``s.
+
+  For example, "``--implicit-check-not warning:``" can be useful when testing
+  diagnostic messages from tools that don't have an option similar to ``clang
+  -verify``. With this option FileCheck will verify that input does not contain
+  warnings not covered by any ``CHECK:`` patterns.
+
 .. option:: -version
 
  Show the version number of this program.

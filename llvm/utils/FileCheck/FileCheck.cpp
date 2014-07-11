@@ -50,6 +50,13 @@ static cl::opt<bool>
 NoCanonicalizeWhiteSpace("strict-whitespace",
               cl::desc("Do not treat all horizontal whitespace as equivalent"));
 
+static cl::list<std::string> ImplicitCheckNot(
+    "implicit-check-not",
+    cl::desc("Add an implicit negative check with this pattern to every\n"
+             "positive check. This can be used to ensure that no instances of\n"
+             "this pattern occur which are not matched by a positive pattern"),
+    cl::value_desc("pattern"));
+
 typedef cl::list<std::string>::const_iterator prefix_iterator;
 
 //===----------------------------------------------------------------------===//
@@ -837,7 +844,26 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // Find all instances of CheckPrefix followed by : in the file.
   StringRef Buffer = F->getBuffer();
-  std::vector<Pattern> DagNotMatches;
+
+  std::vector<Pattern> ImplicitNegativeChecks;
+  for (const auto &PatternString : ImplicitCheckNot) {
+    // Create a buffer with fake command line content in order to display the
+    // command line option responsible for the specific implicit CHECK-NOT.
+    std::string Prefix = std::string("-") + ImplicitCheckNot.ArgStr + "='";
+    std::string Suffix = "'";
+    MemoryBuffer *CmdLine = MemoryBuffer::getMemBufferCopy(
+        Prefix + PatternString + Suffix, "command line");
+    StringRef PatternInBuffer =
+        CmdLine->getBuffer().substr(Prefix.size(), PatternString.size());
+    SM.AddNewSourceBuffer(CmdLine, SMLoc());
+
+    ImplicitNegativeChecks.push_back(Pattern(Check::CheckNot));
+    ImplicitNegativeChecks.back().ParsePattern(PatternInBuffer,
+                                               "IMPLICIT-CHECK", SM, 0);
+  }
+
+
+  std::vector<Pattern> DagNotMatches = ImplicitNegativeChecks;
 
   // LineNumber keeps track of the line on which CheckPrefix instances are
   // found.
@@ -910,6 +936,7 @@ static bool ReadCheckFile(SourceMgr &SM,
                                        PatternLoc,
                                        CheckTy));
     std::swap(DagNotMatches, CheckStrings.back().DagNotStrings);
+    DagNotMatches = ImplicitNegativeChecks;
   }
 
   // Add an EOF pattern for any trailing CHECK-DAG/-NOTs, and use the first

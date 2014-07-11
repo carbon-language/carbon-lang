@@ -1,0 +1,44 @@
+; RUN: sed 's#^;.*##' %s | FileCheck -check-prefix=CHECK-PASS -implicit-check-not=warning: %s
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL1 -implicit-check-not=warning: %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR1
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL2 -implicit-check-not=warning: %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR2
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL3 -implicit-check-not=warning: %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR3
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL1 -implicit-check-not='{{aaa|bbb|ccc}}' %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR4
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL1 -implicit-check-not=aaa -implicit-check-not=bbb -implicit-check-not=ccc %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR5
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL2 -implicit-check-not=aaa -implicit-check-not=bbb -implicit-check-not=ccc %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR6
+; RUN: sed 's#^;.*##' %s | not FileCheck -check-prefix=CHECK-FAIL3 -implicit-check-not=aaa -implicit-check-not=bbb -implicit-check-not=ccc %s 2>&1 | FileCheck %s -check-prefix CHECK-ERROR7
+
+warning: aaa
+; CHECK-PASS: warning: aaa
+; CHECK-ERROR1: error: CHECK-FAIL1-NOT: string occurred!
+; CHECK-ERROR1: command line:1:22: note: CHECK-FAIL1-NOT: pattern specified here
+; CHECK-ERROR1-NEXT: -implicit-check-not='warning:'
+; CHECK-FAIL2: warning: aaa
+; CHECK-FAIL3: warning: aaa
+; CHECK-ERROR4: error: CHECK-FAIL1-NOT: string occurred!
+; CHECK-ERROR4: command line:1:22: note: CHECK-FAIL1-NOT: pattern specified here
+; CHECK-ERROR4-NEXT: {{-implicit-check-not='\{\{aaa\|bbb\|ccc\}\}'}}
+; CHECK-ERROR5: error: CHECK-FAIL1-NOT: string occurred!
+; CHECK-ERROR5: command line:1:22: note: CHECK-FAIL1-NOT: pattern specified here
+; CHECK-ERROR5-NEXT: -implicit-check-not='aaa'
+
+warning: bbb
+; CHECK-PASS: warning: bbb
+; CHECK-FAIL1: warning: bbb
+; CHECK-ERROR2: error: CHECK-FAIL2-NOT: string occurred!
+; CHECK-ERROR2: command line:1:22: note: CHECK-FAIL2-NOT: pattern specified here
+; CHECK-ERROR2-NEXT: -implicit-check-not='warning:'
+; CHECK-FAIL3: warning: bbb
+; CHECK-ERROR6: error: CHECK-FAIL2-NOT: string occurred!
+; CHECK-ERROR6: command line:1:22: note: CHECK-FAIL2-NOT: pattern specified here
+; CHECK-ERROR6-NEXT: -implicit-check-not='bbb'
+
+warning: ccc
+; CHECK-PASS: warning: ccc
+; CHECK-FAIL1: warning: ccc
+; CHECK-FAIL2: warning: ccc
+; CHECK-ERROR3: error: CHECK-FAIL3-NOT: string occurred!
+; CHECK-ERROR3: command line:1:22: note: CHECK-FAIL3-NOT: pattern specified here
+; CHECK-ERROR3-NEXT: -implicit-check-not='warning:'
+; CHECK-ERROR7: error: CHECK-FAIL3-NOT: string occurred!
+; CHECK-ERROR7: command line:1:22: note: CHECK-FAIL3-NOT: pattern specified here
+; CHECK-ERROR7-NEXT: -implicit-check-not='ccc'
