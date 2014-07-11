@@ -172,7 +172,7 @@
 // Test that the warning is displayed on these.
 // RUN: %clang -### -finline-limit=1000 %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING1 %s
 // RUN: %clang -### -finline-limit %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING2 %s
-// CHECK-WARNING1: ignoring unsupported optimization flag '-finline-limit=1000
+// CHECK-WARNING1: ignoring unsupported optimization flag '-finline-limit=1000'
 // CHECK-WARNING2: ignoring unsupported optimization flag '-finline-limit'
 
 // RUN: %clang -### -fshort-wchar -fno-short-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR1 %s
