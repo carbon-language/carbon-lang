@@ -61,7 +61,7 @@ void MCELF::SetVisibility(MCSymbolData &SD, unsigned Visibility) {
   SD.setFlags(OtherFlags | (Visibility << ELF_STV_Shift));
 }
 
-unsigned MCELF::GetVisibility(MCSymbolData &SD) {
+unsigned MCELF::GetVisibility(const MCSymbolData &SD) {
   unsigned Visibility =
     (SD.getFlags() & (0x3 << ELF_STV_Shift)) >> ELF_STV_Shift;
   assert(Visibility == ELF::STV_DEFAULT || Visibility == ELF::STV_INTERNAL ||
@@ -76,7 +76,7 @@ void MCELF::setOther(MCSymbolData &SD, unsigned Other) {
   SD.setFlags(OtherFlags | (Other << ELF_STO_Shift));
 }
 
-unsigned MCELF::getOther(MCSymbolData &SD) {
+unsigned MCELF::getOther(const MCSymbolData &SD) {
   unsigned Other =
     (SD.getFlags() & (0x3f << ELF_STO_Shift)) >> ELF_STO_Shift;
   return Other;
