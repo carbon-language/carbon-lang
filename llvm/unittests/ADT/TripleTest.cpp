@@ -564,4 +564,16 @@ TEST(TripleTest, NormalizeWindows) {
 
   EXPECT_EQ("i686-pc-windows-elf", Triple::normalize("i686-pc-windows-elf-elf"));
 }
+
+TEST(TripleTest, getARMCPUForArch) {
+  {
+    llvm::Triple Triple("armv7s-apple-ios7");
+    EXPECT_STREQ("swift", Triple.getARMCPUForArch());
+  }
+  {
+    llvm::Triple Triple("armv7-apple-ios7");
+    EXPECT_STREQ("cortex-a8", Triple.getARMCPUForArch());
+    EXPECT_STREQ("swift", Triple.getARMCPUForArch("armv7s"));
+  }
+}
 }

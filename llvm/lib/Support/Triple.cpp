@@ -930,3 +930,85 @@ Triple Triple::get64BitArchVariant() const {
   }
   return T;
 }
+
+// FIXME: tblgen this.
+const char *Triple::getARMCPUForArch(StringRef MArch) const {
+  if (MArch.empty())
+    MArch = getArchName();
+
+  switch (getOS()) {
+  case llvm::Triple::NetBSD:
+    if (MArch == "armv6")
+      return "arm1176jzf-s";
+    break;
+  case llvm::Triple::Win32:
+    // FIXME: this is invalid for WindowsCE
+    return "cortex-a9";
+  default:
+    break;
+  }
+
+  const char *result = nullptr;
+  size_t offset = StringRef::npos;
+  if (MArch.startswith("arm"))
+    offset = 3;
+  if (MArch.startswith("thumb"))
+    offset = 5;
+  if (offset != StringRef::npos && MArch.substr(offset, 2) == "eb")
+    offset += 2;
+  if (offset != StringRef::npos)
+    result = llvm::StringSwitch<const char *>(MArch.substr(offset))
+      .Cases("v2", "v2a", "arm2")
+      .Case("v3", "arm6")
+      .Case("v3m", "arm7m")
+      .Case("v4", "strongarm")
+      .Case("v4t", "arm7tdmi")
+      .Cases("v5", "v5t", "arm10tdmi")
+      .Cases("v5e", "v5te", "arm1022e")
+      .Case("v5tej", "arm926ej-s")
+      .Cases("v6", "v6k", "arm1136jf-s")
+      .Case("v6j", "arm1136j-s")
+      .Cases("v6z", "v6zk", "arm1176jzf-s")
+      .Case("v6t2", "arm1156t2-s")
+      .Cases("v6m", "v6-m", "cortex-m0")
+      .Cases("v7", "v7a", "v7-a", "v7l", "v7-l", "cortex-a8")
+      .Cases("v7s", "v7-s", "swift")
+      .Cases("v7r", "v7-r", "cortex-r4")
+      .Cases("v7m", "v7-m", "cortex-m3")
+      .Cases("v7em", "v7e-m", "cortex-m4")
+      .Cases("v8", "v8a", "v8-a", "cortex-a53")
+      .Default(nullptr);
+  else
+    result = llvm::StringSwitch<const char *>(MArch)
+      .Case("ep9312", "ep9312")
+      .Case("iwmmxt", "iwmmxt")
+      .Case("xscale", "xscale")
+      .Default(nullptr);
+
+  if (result)
+    return result;
+
+  // If all else failed, return the most base CPU with thumb interworking
+  // supported by LLVM.
+  // FIXME: Should warn once that we're falling back.
+  switch (getOS()) {
+  case llvm::Triple::NetBSD:
+    switch (getEnvironment()) {
+    case llvm::Triple::GNUEABIHF:
+    case llvm::Triple::GNUEABI:
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::EABI:
+      return "arm926ej-s";
+    default:
+      return "strongarm";
+    }
+  default:
+    switch (getEnvironment()) {
+    case llvm::Triple::EABIHF:
+    case llvm::Triple::GNUEABIHF:
+      return "arm1176jzf-s";
+    default:
+      return "arm7tdmi";
+    }
+  }
+}

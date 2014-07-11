@@ -477,6 +477,12 @@ public:
   ///          architecture if no such variant can be found.
   llvm::Triple get64BitArchVariant() const;
 
+  /// Get the (LLVM) name of the minimum ARM CPU for the arch we are targeting.
+  ///
+  /// \param Arch the architecture name (e.g., "armv7s"). If it is an empty
+  /// string then the triple's arch name is used.
+  const char* getARMCPUForArch(StringRef Arch = StringRef()) const;
+
   /// @}
   /// @name Static helpers for IDs.
   /// @{
