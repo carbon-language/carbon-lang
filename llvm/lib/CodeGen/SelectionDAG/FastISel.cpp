@@ -678,6 +678,172 @@ bool FastISel::SelectStackmap(const CallInst *I) {
   return true;
 }
 
+/// \brief Lower an argument list according to the target calling convention.
+///
+/// This is a helper for lowering intrinsics that follow a target calling
+/// convention or require stack pointer adjustment. Only a subset of the
+/// intrinsic's operands need to participate in the calling convention.
+bool FastISel::lowerCallOperands(const CallInst *CI, unsigned ArgIdx,
+                                 unsigned NumArgs, const Value *Callee,
+                                 bool ForceRetVoidTy, CallLoweringInfo &CLI) {
+  ArgListTy Args;
+  Args.reserve(NumArgs);
+
+  // Populate the argument list.
+  // Attributes for args start at offset 1, after the return attribute.
+  ImmutableCallSite CS(CI);
+  for (unsigned ArgI = ArgIdx, ArgE = ArgIdx + NumArgs, AttrI = ArgIdx + 1;
+       ArgI != ArgE; ++ArgI) {
+    Value *V = CI->getOperand(ArgI);
+
+    assert(!V->getType()->isEmptyTy() && "Empty type passed to intrinsic.");
+
+    ArgListEntry Entry;
+    Entry.Val = V;
+    Entry.Ty = V->getType();
+    Entry.setAttributes(&CS, AttrI);
+    Args.push_back(Entry);
+  }
+
+  Type *RetTy = ForceRetVoidTy ? Type::getVoidTy(CI->getType()->getContext())
+                               : CI->getType();
+  CLI.setCallee(CI->getCallingConv(), RetTy, Callee, std::move(Args), NumArgs);
+
+  return LowerCallTo(CLI);
+}
+
+bool FastISel::SelectPatchpoint(const CallInst *I) {
+  // void|i64 @llvm.experimental.patchpoint.void|i64(i64 <id>,
+  //                                                 i32 <numBytes>,
+  //                                                 i8* <target>,
+  //                                                 i32 <numArgs>,
+  //                                                 [Args...],
+  //                                                 [live variables...])
+  CallingConv::ID CC = I->getCallingConv();
+  bool IsAnyRegCC = CC == CallingConv::AnyReg;
+  bool HasDef = !I->getType()->isVoidTy();
+  Value *Callee = I->getOperand(PatchPointOpers::TargetPos);
+
+  // Get the real number of arguments participating in the call <numArgs>
+  assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::NArgPos)) &&
+         "Expected a constant integer.");
+  const auto *NumArgsVal =
+    cast<ConstantInt>(I->getOperand(PatchPointOpers::NArgPos));
+  unsigned NumArgs = NumArgsVal->getZExtValue();
+
+  // Skip the four meta args: <id>, <numNopBytes>, <target>, <numArgs>
+  // This includes all meta-operands up to but not including CC.
+  unsigned NumMetaOpers = PatchPointOpers::CCPos;
+  assert(I->getNumArgOperands() >= NumMetaOpers + NumArgs &&
+         "Not enough arguments provided to the patchpoint intrinsic");
+
+  // For AnyRegCC the arguments are lowered later on manually.
+  unsigned NumCallArgs = IsAnyRegCC ? 0 : NumArgs;
+  CallLoweringInfo CLI;
+  if (!lowerCallOperands(I, NumMetaOpers, NumCallArgs, Callee, IsAnyRegCC, CLI))
+    return false;
+
+  assert(CLI.Call && "No call instruction specified.");
+
+  SmallVector<MachineOperand, 32> Ops;
+
+  // Add an explicit result reg if we use the anyreg calling convention.
+  unsigned ResultReg = 0;
+  if (IsAnyRegCC && HasDef) {
+    ResultReg = createResultReg(TLI.getRegClassFor(MVT::i64));
+    Ops.push_back(MachineOperand::CreateReg(ResultReg, /*IsDef=*/true));
+  }
+
+  // Add the <id> and <numBytes> constants.
+  assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::IDPos)) &&
+         "Expected a constant integer.");
+  const auto *ID = cast<ConstantInt>(I->getOperand(PatchPointOpers::IDPos));
+  Ops.push_back(MachineOperand::CreateImm(ID->getZExtValue()));
+
+  assert(isa<ConstantInt>(I->getOperand(PatchPointOpers::NBytesPos)) &&
+         "Expected a constant integer.");
+  const auto *NumBytes =
+    cast<ConstantInt>(I->getOperand(PatchPointOpers::NBytesPos));
+  Ops.push_back(MachineOperand::CreateImm(NumBytes->getZExtValue()));
+
+  // Assume that the callee is a constant address or null pointer.
+  // FIXME: handle function symbols in the future.
+  unsigned CalleeAddr;
+  if (const auto *C = dyn_cast<IntToPtrInst>(Callee))
+    CalleeAddr = cast<ConstantInt>(C->getOperand(0))->getZExtValue();
+  else if (const auto *C = dyn_cast<ConstantExpr>(Callee)) {
+    if (C->getOpcode() == Instruction::IntToPtr)
+      CalleeAddr = cast<ConstantInt>(C->getOperand(0))->getZExtValue();
+    else
+      llvm_unreachable("Unsupported ConstantExpr.");
+  } else if (isa<ConstantPointerNull>(Callee))
+    CalleeAddr = 0;
+  else
+    llvm_unreachable("Unsupported callee address.");
+
+  Ops.push_back(MachineOperand::CreateImm(CalleeAddr));
+
+  // Adjust <numArgs> to account for any arguments that have been passed on
+  // the stack instead.
+  unsigned NumCallRegArgs = IsAnyRegCC ? NumArgs : CLI.OutRegs.size();
+  Ops.push_back(MachineOperand::CreateImm(NumCallRegArgs));
+
+  // Add the calling convention
+  Ops.push_back(MachineOperand::CreateImm((unsigned)CC));
+
+  // Add the arguments we omitted previously. The register allocator should
+  // place these in any free register.
+  if (IsAnyRegCC) {
+    for (unsigned i = NumMetaOpers, e = NumMetaOpers + NumArgs; i != e; ++i) {
+      unsigned Reg = getRegForValue(I->getArgOperand(i));
+      if (!Reg)
+        return false;
+      Ops.push_back(MachineOperand::CreateReg(Reg, /*IsDef=*/false));
+    }
+  }
+
+  // Push the arguments from the call instruction.
+  for (auto Reg : CLI.OutRegs)
+    Ops.push_back(MachineOperand::CreateReg(Reg, /*IsDef=*/false));
+
+  // Push live variables for the stack map.
+  if (!addStackMapLiveVars(Ops, I, NumMetaOpers + NumArgs))
+    return false;
+
+  // Push the register mask info.
+  Ops.push_back(MachineOperand::CreateRegMask(TRI.getCallPreservedMask(CC)));
+
+  // Add scratch registers as implicit def and early clobber.
+  const MCPhysReg *ScratchRegs = TLI.getScratchRegisters(CC);
+  for (unsigned i = 0; ScratchRegs[i]; ++i)
+    Ops.push_back(MachineOperand::CreateReg(
+      ScratchRegs[i], /*IsDef=*/true, /*IsImp=*/true, /*IsKill=*/false,
+      /*IsDead=*/false, /*IsUndef=*/false, /*IsEarlyClobber=*/true));
+
+  // Add implicit defs (return values).
+  for (auto Reg : CLI.InRegs)
+    Ops.push_back(MachineOperand::CreateReg(Reg, /*IsDef=*/true,
+                                            /*IsImpl=*/true));
+
+  MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                    TII.get(TargetOpcode::PATCHPOINT));
+
+  for (auto &MO : Ops)
+    MIB.addOperand(MO);
+
+  MIB->setPhysRegsDeadExcept(CLI.InRegs, TRI);
+
+  // Delete the original call instruction.
+  CLI.Call->eraseFromParent();
+
+  // Inform the Frame Information that we have a patchpoint in this function.
+  FuncInfo.MF->getFrameInfo()->setHasPatchPoint();
+
+  if (ResultReg)
+    UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 /// Returns an AttributeSet representing the attributes applied to the return
 /// value of the given call.
 static AttributeSet getReturnAttrs(FastISel::CallLoweringInfo &CLI) {
@@ -1033,6 +1199,9 @@ bool FastISel::SelectIntrinsicCall(const IntrinsicInst *II) {
   }
   case Intrinsic::experimental_stackmap:
     return SelectStackmap(II);
+  case Intrinsic::experimental_patchpoint_void:
+  case Intrinsic::experimental_patchpoint_i64:
+    return SelectPatchpoint(II);
   }
 
   return FastLowerIntrinsicCall(II);

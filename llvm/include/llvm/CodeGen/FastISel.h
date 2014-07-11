@@ -541,6 +541,7 @@ private:
   bool SelectGetElementPtr(const User *I);
 
   bool SelectStackmap(const CallInst *I);
+  bool SelectPatchpoint(const CallInst *I);
   bool LowerCall(const CallInst *I);
   bool SelectCall(const User *Call);
   bool SelectIntrinsicCall(const IntrinsicInst *II);
@@ -574,6 +575,9 @@ private:
 
   bool addStackMapLiveVars(SmallVectorImpl<MachineOperand> &Ops,
                            const CallInst *CI, unsigned StartIdx);
+  bool lowerCallOperands(const CallInst *CI, unsigned ArgIdx, unsigned NumArgs,
+                         const Value *Callee, bool ForceRetVoidTy,
+                         CallLoweringInfo &CLI);
 };
 
 }
