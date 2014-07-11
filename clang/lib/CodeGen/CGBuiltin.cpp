@@ -1515,7 +1515,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return EmitBuiltinNewDeleteCall(FD->getType()->castAs<FunctionProtoType>(),
                                     E->getArg(0), true);
   case Builtin::BI__noop:
-    return RValue::get(nullptr);
+    // __noop always evaluates to an integer literal zero.
+    return RValue::get(ConstantInt::get(IntTy, 0));
   case Builtin::BI_InterlockedExchange:
   case Builtin::BI_InterlockedExchangePointer:
     return EmitBinaryAtomic(*this, llvm::AtomicRMWInst::Xchg, E);
