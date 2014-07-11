@@ -93,6 +93,12 @@ public:
     void
     SetCancelCallback (lldb::ExpressionCancelCallback callback, void *baton);
 
+    bool
+    GetGenerateDebugInfo ();
+    
+    void
+    SetGenerateDebugInfo (bool b = true);
+
 protected:
 
     SBExpressionOptions (lldb_private::EvaluateExpressionOptions &expression_options);

@@ -95,7 +95,14 @@ public:
     %feature ("docstring", "Sets the language that LLDB should assume the expression is written in") SetLanguage;
     void
     SetLanguage (lldb::LanguageType language);
-    
+
+    bool
+    GetGenerateDebugInfo ();
+
+    %feature("docstring", "Sets whether to generate debug information for the expression and also controls if a SBModule is generated.") SetGenerateDebugInfo;
+    void
+    SetGenerateDebugInfo (bool b = true);
+
 protected:
 
     SBExpressionOptions (lldb_private::EvaluateExpressionOptions &expression_options);

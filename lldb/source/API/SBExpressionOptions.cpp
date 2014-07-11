@@ -161,6 +161,18 @@ SBExpressionOptions::SetCancelCallback (lldb::ExpressionCancelCallback callback,
     m_opaque_ap->SetCancelCallback (callback, baton);
 }
 
+bool
+SBExpressionOptions::GetGenerateDebugInfo ()
+{
+    return m_opaque_ap->GetGenerateDebugInfo();
+}
+
+void
+SBExpressionOptions::SetGenerateDebugInfo (bool b)
+{
+    return m_opaque_ap->SetGenerateDebugInfo(b);
+}
+
 EvaluateExpressionOptions *
 SBExpressionOptions::get() const
 {
