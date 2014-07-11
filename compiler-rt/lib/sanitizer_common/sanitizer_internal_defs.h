@@ -17,7 +17,11 @@
 
 // Only use SANITIZER_*ATTRIBUTE* before the function return type!
 #if SANITIZER_WINDOWS
-# define SANITIZER_INTERFACE_ATTRIBUTE __declspec(dllexport)
+# if defined(SANITIZER_DLL_THUNK)
+#  define SANITIZER_INTERFACE_ATTRIBUTE
+# else
+#  define SANITIZER_INTERFACE_ATTRIBUTE __declspec(dllexport)
+# endif
 // FIXME find out what we need on Windows, if anything.
 # define SANITIZER_WEAK_ATTRIBUTE
 #elif defined(SANITIZER_GO)
