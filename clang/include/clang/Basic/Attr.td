@@ -855,7 +855,7 @@ def NonNull : InheritableAttr {
 
 def ReturnsNonNull : InheritableAttr {
   let Spellings = [GCC<"returns_nonnull">];
-  let Subjects = SubjectList<[ObjCMethod, HasFunctionProto], WarnDiag,
+  let Subjects = SubjectList<[ObjCMethod, Function], WarnDiag,
                              "ExpectedFunctionOrMethod">;
   let Documentation = [Undocumented];
 }

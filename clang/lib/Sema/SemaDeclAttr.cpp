@@ -90,7 +90,7 @@ static QualType getFunctionOrMethodParamType(const Decl *D, unsigned Idx) {
 
 static QualType getFunctionOrMethodResultType(const Decl *D) {
   if (const FunctionType *FnTy = D->getFunctionType())
-    return cast<FunctionProtoType>(FnTy)->getReturnType();
+    return cast<FunctionType>(FnTy)->getReturnType();
   return cast<ObjCMethodDecl>(D)->getReturnType();
 }
 
