@@ -2569,8 +2569,11 @@ ObjectFileELF::GetArchitecture (ArchSpec &arch)
     if (!ParseHeader())
         return false;
 
-    // Allow elf notes to be parsed which may affect the detected architecture.
-    ParseSectionHeaders();
+    if (m_section_headers.empty())
+    {
+        // Allow elf notes to be parsed which may affect the detected architecture.
+        ParseSectionHeaders();
+    }
 
     arch = m_arch_spec;
     return true;
