@@ -11,6 +11,7 @@
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
 #include "ArgumentCommentCheck.h"
+#include "BoolPointerImplicitConversion.h"
 #include "RedundantSmartptrGet.h"
 #include "UseOverride.h"
 
@@ -23,6 +24,9 @@ public:
     CheckFactories.addCheckFactory(
         "misc-argument-comment",
         new ClangTidyCheckFactory<ArgumentCommentCheck>());
+    CheckFactories.addCheckFactory(
+        "misc-bool-pointer-implicit-conversion",
+        new ClangTidyCheckFactory<BoolPointerImplicitConversion>());
     CheckFactories.addCheckFactory(
         "misc-redundant-smartptr-get",
         new ClangTidyCheckFactory<RedundantSmartptrGet>());
