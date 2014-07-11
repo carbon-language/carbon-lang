@@ -3,7 +3,7 @@
 
 void f() {
   int *ptr = malloc(sizeof(int) * 10); // expected-warning{{implicitly declaring library function 'malloc' with type}} \
-  // expected-note{{please include the header <stdlib.h> or explicitly provide a declaration for 'malloc'}} \
+  // expected-note{{include the header <stdlib.h> or explicitly provide a declaration for 'malloc'}} \
   // expected-note{{'malloc' is a builtin with type 'void *}}
 }
 

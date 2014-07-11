@@ -3867,7 +3867,8 @@ static void emitReplacement(Sema &S, SourceLocation Loc, SourceRange Range,
   if (!EmitHeaderHint)
     return;
 
-  S.Diag(Loc, diag::note_please_include_header) << HeaderName << FunctionName;
+  S.Diag(Loc, diag::note_include_header_or_declare) << HeaderName
+                                                    << FunctionName;
 }
 
 static bool IsFunctionStdAbs(const FunctionDecl *FDecl) {
@@ -3907,8 +3908,8 @@ void Sema::CheckAbsoluteValueFunction(const CallExpr *Call,
   QualType ArgType = Call->getArg(0)->IgnoreParenImpCasts()->getType();
   QualType ParamType = Call->getArg(0)->getType();
 
-  // Unsigned types can not be negative.  Suggest to drop the absolute value
-  // function.
+  // Unsigned types cannot be negative.  Suggest removing the absolute value
+  // function call.
   if (ArgType->isUnsignedIntegerType()) {
     const char *FunctionName =
         IsStdAbs ? "std::abs" : Context.BuiltinInfo.GetName(AbsKind);

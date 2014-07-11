@@ -31,6 +31,6 @@ void test_int(int i, unsigned u, long long ll, float f, double d) {
   (void)abs(d);
   // expected-warning@-1{{using integer absolute value function 'abs' when argument is of floating point type}}
   // expected-note@-2{{use function 'fabs' instead}}
-  // expected-note@-3{{please include the header <math.h> or explicitly provide a declaration for 'fabs'}}
+  // expected-note@-3{{include the header <math.h> or explicitly provide a declaration for 'fabs'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:9-[[@LINE-4]]:12}:"fabs"
 }

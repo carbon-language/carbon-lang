@@ -82,7 +82,7 @@ void foo4() {
   int (*yy)(const char *s) = funk; // expected-warning {{incompatible pointer types initializing 'int (*)(const char *)' with an expression of type 'int (char *)'}}
   
   int (^nested)(char *s) = ^(char *str) { void (^nest)(void) = ^(void) { printf("%s\n", str); }; next(); return 1; }; // expected-warning{{implicitly declaring library function 'printf' with type 'int (const char *, ...)'}} \
-  // expected-note{{please include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
+  // expected-note{{include the header <stdio.h> or explicitly provide a declaration for 'printf'}}
 }
 
 typedef void (^bptr)(void);

@@ -29,7 +29,7 @@
 - (int) InstMethod
 {
   return index;	// expected-warning {{implicitly declaring library function 'index'}}	\
-                // expected-note {{please include the header <strings.h> or explicitly provide a declaration for 'index'}} \
+                // expected-note {{include the header <strings.h> or explicitly provide a declaration for 'index'}} \
                 // expected-warning {{incompatible pointer to integer conversion returning}}
 }
 + (int) ClassMethod

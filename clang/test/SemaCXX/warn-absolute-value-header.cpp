@@ -16,25 +16,25 @@ void test(long long ll, double d, int i, float f) {
   (void)abs(d);
   // expected-warning@-1{{using integer absolute value function 'abs' when argument is of floating point type}}
   // expected-note@-2{{use function 'std::abs' instead}}
-  // expected-note@-3{{please include the header <cmath> or explicitly provide a declaration for 'std::abs'}}
+  // expected-note@-3{{include the header <cmath> or explicitly provide a declaration for 'std::abs'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:9-[[@LINE-4]]:12}:"std::abs"
 
   (void)fabsf(d);
   // expected-warning@-1{{absolute value function 'fabsf' given an argument of type 'double' but has parameter of type 'float' which may cause truncation of value}}
   // expected-note@-2{{use function 'std::abs' instead}}
-  // expected-note@-3{{please include the header <cmath> or explicitly provide a declaration for 'std::abs'}}
+  // expected-note@-3{{include the header <cmath> or explicitly provide a declaration for 'std::abs'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:9-[[@LINE-4]]:14}:"std::abs"
 
   // Suggest including cstdlib
   (void)abs(ll);
   // expected-warning@-1{{absolute value function 'abs' given an argument of type 'long long' but has parameter of type 'int' which may cause truncation of value}}
   // expected-note@-2{{use function 'std::abs' instead}}
-  // expected-note@-3{{please include the header <cstdlib> or explicitly provide a declaration for 'std::abs'}}
+  // expected-note@-3{{include the header <cstdlib> or explicitly provide a declaration for 'std::abs'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:9-[[@LINE-4]]:12}:"std::abs"
   (void)fabsf(ll);
   // expected-warning@-1{{using floating point absolute value function 'fabsf' when argument is of integer type}}
   // expected-note@-2{{use function 'std::abs' instead}}
-  // expected-note@-3{{please include the header <cstdlib> or explicitly provide a declaration for 'std::abs'}}
+  // expected-note@-3{{include the header <cstdlib> or explicitly provide a declaration for 'std::abs'}}
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:9-[[@LINE-4]]:14}:"std::abs"
 
   // Proper function already called, no warnings.

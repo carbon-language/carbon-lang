@@ -387,21 +387,11 @@ def note_unreachable_silence : Note<
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
   "implicitly declaring library function '%0' with type %1">;
-def note_please_include_header : Note<
-  "please include the header <%0> or explicitly provide a "
-  "declaration for '%1'">;
+def note_include_header_or_declare : Note<
+  "include the header <%0> or explicitly provide a declaration for '%1'">;
 def note_previous_builtin_declaration : Note<"%0 is a builtin with type %1">;
-def warn_implicit_decl_requires_stdio : Warning<
-  "declaration of built-in function '%0' requires inclusion of the header "
-  "<stdio.h>">,
-  InGroup<BuiltinRequiresHeader>;
-def warn_implicit_decl_requires_setjmp : Warning<
-  "declaration of built-in function '%0' requires inclusion of the header "
-  "<setjmp.h>">,
-  InGroup<BuiltinRequiresHeader>;
-def warn_implicit_decl_requires_ucontext : Warning<
-  "declaration of built-in function '%0' requires inclusion of the header "
-  "<ucontext.h>">,
+def warn_implicit_decl_requires_sysheader : Warning<
+  "declaration of built-in function '%1' requires inclusion of the header <%0>">,
   InGroup<BuiltinRequiresHeader>;
 def warn_redecl_library_builtin : Warning<
   "incompatible redeclaration of library function %0">,

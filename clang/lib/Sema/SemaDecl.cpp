@@ -1602,6 +1602,20 @@ static void LookupPredefedObjCSuperType(Sema &ThisSema, Scope *S,
       Context.setObjCSuperType(Context.getTagDeclType(TD));
 }
 
+static StringRef getHeaderName(ASTContext::GetBuiltinTypeError Error) {
+  switch (Error) {
+  case ASTContext::GE_None:
+    return "";
+  case ASTContext::GE_Missing_stdio:
+    return "stdio.h";
+  case ASTContext::GE_Missing_setjmp:
+    return "setjmp.h";
+  case ASTContext::GE_Missing_ucontext:
+    return "ucontext.h";
+  }
+  llvm_unreachable("unhandled error kind");
+}
+
 /// LazilyCreateBuiltin - The specified Builtin-ID was first used at
 /// file scope.  lazily create a decl for it. ForRedeclaration is true
 /// if we're creating this built-in in anticipation of redeclaring the
@@ -1615,27 +1629,11 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
 
   ASTContext::GetBuiltinTypeError Error;
   QualType R = Context.GetBuiltinType(BID, Error);
-  switch (Error) {
-  case ASTContext::GE_None:
-    // Okay
-    break;
-
-  case ASTContext::GE_Missing_stdio:
+  if (Error) {
     if (ForRedeclaration)
-      Diag(Loc, diag::warn_implicit_decl_requires_stdio)
-        << Context.BuiltinInfo.GetName(BID);
-    return nullptr;
-
-  case ASTContext::GE_Missing_setjmp:
-    if (ForRedeclaration)
-      Diag(Loc, diag::warn_implicit_decl_requires_setjmp)
-        << Context.BuiltinInfo.GetName(BID);
-    return nullptr;
-
-  case ASTContext::GE_Missing_ucontext:
-    if (ForRedeclaration)
-      Diag(Loc, diag::warn_implicit_decl_requires_ucontext)
-        << Context.BuiltinInfo.GetName(BID);
+      Diag(Loc, diag::warn_implicit_decl_requires_sysheader)
+          << getHeaderName(Error)
+          << Context.BuiltinInfo.GetName(BID);
     return nullptr;
   }
 
@@ -1645,9 +1643,9 @@ NamedDecl *Sema::LazilyCreateBuiltin(IdentifierInfo *II, unsigned bid,
       << R;
     if (Context.BuiltinInfo.getHeaderName(BID) &&
         !Diags.isIgnored(diag::ext_implicit_lib_function_decl, Loc))
-      Diag(Loc, diag::note_please_include_header)
-        << Context.BuiltinInfo.getHeaderName(BID)
-        << Context.BuiltinInfo.GetName(BID);
+      Diag(Loc, diag::note_include_header_or_declare)
+          << Context.BuiltinInfo.getHeaderName(BID)
+          << Context.BuiltinInfo.GetName(BID);
   }
 
   DeclContext *Parent = Context.getTranslationUnitDecl();

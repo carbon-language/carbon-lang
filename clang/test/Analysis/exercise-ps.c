@@ -19,5 +19,5 @@ static void f2(void *buf) {
   F12_typedef* x;
   x = f2_helper();
   memcpy((&x[1]), (buf), 1); // expected-warning{{implicitly declaring library function 'memcpy' with type 'void *(void *, const void *}} \
-  // expected-note{{please include the header <string.h> or explicitly provide a declaration for 'memcpy'}}
+  // expected-note{{include the header <string.h> or explicitly provide a declaration for 'memcpy'}}
 }
