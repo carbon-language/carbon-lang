@@ -74,7 +74,6 @@ public:
                            const LoadInst *LI) override;
 
   bool FastLowerArguments() override;
-  bool FastLowerIntrinsicCall(const IntrinsicInst *II) override;
 
 #include "X86GenFastISel.inc"
 
@@ -125,6 +124,7 @@ private:
   bool X86SelectFPExt(const Instruction *I);
   bool X86SelectFPTrunc(const Instruction *I);
 
+  bool X86VisitIntrinsicCall(const IntrinsicInst &I);
   bool X86SelectCall(const Instruction *I);
 
   bool DoSelectCall(const Instruction *I, const char *MemIntName);
@@ -2166,8 +2166,8 @@ bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
   return true;
 }
 
-static bool isCommutativeIntrinsic(IntrinsicInst const *II) {
-  switch (II->getIntrinsicID()) {
+static bool isCommutativeIntrinsic(IntrinsicInst const &I) {
+  switch (I.getIntrinsicID()) {
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::smul_with_overflow:
@@ -2178,12 +2178,12 @@ static bool isCommutativeIntrinsic(IntrinsicInst const *II) {
   }
 }
 
-bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
+bool X86FastISel::X86VisitIntrinsicCall(const IntrinsicInst &I) {
   // FIXME: Handle more intrinsics.
-  switch (II->getIntrinsicID()) {
+  switch (I.getIntrinsicID()) {
   default: return false;
   case Intrinsic::frameaddress: {
-    Type *RetTy = II->getCalledFunction()->getReturnType();
+    Type *RetTy = I.getCalledFunction()->getReturnType();
 
     MVT VT;
     if (!isTypeLegal(RetTy, VT))
@@ -2223,7 +2223,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     // movq (%rax), %rax
     // ...
     unsigned DestReg;
-    unsigned Depth = cast<ConstantInt>(II->getOperand(0))->getZExtValue();
+    unsigned Depth = cast<ConstantInt>(I.getOperand(0))->getZExtValue();
     while (Depth--) {
       DestReg = createResultReg(RC);
       addDirectMem(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
@@ -2231,23 +2231,23 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
       SrcReg = DestReg;
     }
 
-    UpdateValueMap(II, SrcReg);
+    UpdateValueMap(&I, SrcReg);
     return true;
   }
   case Intrinsic::memcpy: {
-    const MemCpyInst *MCI = cast<MemCpyInst>(II);
+    const MemCpyInst &MCI = cast<MemCpyInst>(I);
     // Don't handle volatile or variable length memcpys.
-    if (MCI->isVolatile())
+    if (MCI.isVolatile())
       return false;
 
-    if (isa<ConstantInt>(MCI->getLength())) {
+    if (isa<ConstantInt>(MCI.getLength())) {
       // Small memcpy's are common enough that we want to do them
       // without a call if possible.
-      uint64_t Len = cast<ConstantInt>(MCI->getLength())->getZExtValue();
+      uint64_t Len = cast<ConstantInt>(MCI.getLength())->getZExtValue();
       if (IsMemcpySmall(Len)) {
         X86AddressMode DestAM, SrcAM;
-        if (!X86SelectAddress(MCI->getRawDest(), DestAM) ||
-            !X86SelectAddress(MCI->getRawSource(), SrcAM))
+        if (!X86SelectAddress(MCI.getRawDest(), DestAM) ||
+            !X86SelectAddress(MCI.getRawSource(), SrcAM))
           return false;
         TryEmitSmallMemcpy(DestAM, SrcAM, Len);
         return true;
@@ -2255,35 +2255,35 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     }
 
     unsigned SizeWidth = Subtarget->is64Bit() ? 64 : 32;
-    if (!MCI->getLength()->getType()->isIntegerTy(SizeWidth))
+    if (!MCI.getLength()->getType()->isIntegerTy(SizeWidth))
       return false;
 
-    if (MCI->getSourceAddressSpace() > 255 || MCI->getDestAddressSpace() > 255)
+    if (MCI.getSourceAddressSpace() > 255 || MCI.getDestAddressSpace() > 255)
       return false;
 
-    return LowerCallTo(II, "memcpy", II->getNumArgOperands() - 2);
+    return DoSelectCall(&I, "memcpy");
   }
   case Intrinsic::memset: {
-    const MemSetInst *MSI = cast<MemSetInst>(II);
+    const MemSetInst &MSI = cast<MemSetInst>(I);
 
-    if (MSI->isVolatile())
+    if (MSI.isVolatile())
       return false;
 
     unsigned SizeWidth = Subtarget->is64Bit() ? 64 : 32;
-    if (!MSI->getLength()->getType()->isIntegerTy(SizeWidth))
+    if (!MSI.getLength()->getType()->isIntegerTy(SizeWidth))
       return false;
 
-    if (MSI->getDestAddressSpace() > 255)
+    if (MSI.getDestAddressSpace() > 255)
       return false;
 
-    return LowerCallTo(II, "memset", II->getNumArgOperands() - 2);
+    return DoSelectCall(&I, "memset");
   }
   case Intrinsic::stackprotector: {
     // Emit code to store the stack guard onto the stack.
     EVT PtrTy = TLI.getPointerTy();
 
-    const Value *Op1 = II->getArgOperand(0); // The guard's value.
-    const AllocaInst *Slot = cast<AllocaInst>(II->getArgOperand(1));
+    const Value *Op1 = I.getArgOperand(0); // The guard's value.
+    const AllocaInst *Slot = cast<AllocaInst>(I.getArgOperand(1));
 
     MFI.setStackProtectorIndex(FuncInfo.StaticAllocaMap[Slot]);
 
@@ -2294,7 +2294,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     return true;
   }
   case Intrinsic::dbg_declare: {
-    const DbgDeclareInst *DI = cast<DbgDeclareInst>(II);
+    const DbgDeclareInst *DI = cast<DbgDeclareInst>(&I);
     X86AddressMode AM;
     assert(DI->getAddress() && "Null address should be checked earlier!");
     if (!X86SelectAddress(DI->getAddress(), AM))
@@ -2314,7 +2314,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (!Subtarget->hasSSE1())
       return false;
 
-    Type *RetTy = II->getCalledFunction()->getReturnType();
+    Type *RetTy = I.getCalledFunction()->getReturnType();
 
     MVT VT;
     if (!isTypeLegal(RetTy, VT))
@@ -2336,7 +2336,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     case MVT::f64: Opc = SqrtOpc[1][HasAVX]; RC = &X86::FR64RegClass; break;
     }
 
-    const Value *SrcVal = II->getArgOperand(0);
+    const Value *SrcVal = I.getArgOperand(0);
     unsigned SrcReg = getRegForValue(SrcVal);
 
     if (SrcReg == 0)
@@ -2359,7 +2359,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     MIB.addReg(SrcReg);
 
-    UpdateValueMap(II, ResultReg);
+    UpdateValueMap(&I, ResultReg);
     return true;
   }
   case Intrinsic::sadd_with_overflow:
@@ -2370,7 +2370,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
   case Intrinsic::umul_with_overflow: {
     // This implements the basic lowering of the xalu with overflow intrinsics
     // into add/sub/mul followed by either seto or setb.
-    const Function *Callee = II->getCalledFunction();
+    const Function *Callee = I.getCalledFunction();
     auto *Ty = cast<StructType>(Callee->getReturnType());
     Type *RetTy = Ty->getTypeAtIndex(0U);
     Type *CondTy = Ty->getTypeAtIndex(1);
@@ -2382,16 +2382,16 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     if (VT < MVT::i8 || VT > MVT::i64)
       return false;
 
-    const Value *LHS = II->getArgOperand(0);
-    const Value *RHS = II->getArgOperand(1);
+    const Value *LHS = I.getArgOperand(0);
+    const Value *RHS = I.getArgOperand(1);
 
     // Canonicalize immediate to the RHS.
     if (isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS) &&
-        isCommutativeIntrinsic(II))
+        isCommutativeIntrinsic(I))
       std::swap(LHS, RHS);
 
     unsigned BaseOpc, CondOpc;
-    switch (II->getIntrinsicID()) {
+    switch (I.getIntrinsicID()) {
     default: llvm_unreachable("Unexpected intrinsic!");
     case Intrinsic::sadd_with_overflow:
       BaseOpc = ISD::ADD; CondOpc = X86::SETOr; break;
@@ -2468,7 +2468,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CondOpc),
             ResultReg2);
 
-    UpdateValueMap(II, ResultReg, 2);
+    UpdateValueMap(&I, ResultReg, 2);
     return true;
   }
   case Intrinsic::x86_sse_cvttss2si:
@@ -2476,7 +2476,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
   case Intrinsic::x86_sse2_cvttsd2si:
   case Intrinsic::x86_sse2_cvttsd2si64: {
     bool IsInputDouble;
-    switch (II->getIntrinsicID()) {
+    switch (I.getIntrinsicID()) {
     default: llvm_unreachable("Unexpected intrinsic.");
     case Intrinsic::x86_sse_cvttss2si:
     case Intrinsic::x86_sse_cvttss2si64:
@@ -2492,7 +2492,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
       break;
     }
 
-    Type *RetTy = II->getCalledFunction()->getReturnType();
+    Type *RetTy = I.getCalledFunction()->getReturnType();
     MVT VT;
     if (!isTypeLegal(RetTy, VT))
       return false;
@@ -2512,7 +2512,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     }
 
     // Check if we can fold insertelement instructions into the convert.
-    const Value *Op = II->getArgOperand(0);
+    const Value *Op = I.getArgOperand(0);
     while (auto *IE = dyn_cast<InsertElementInst>(Op)) {
       const Value *Index = IE->getOperand(2);
       if (!isa<ConstantInt>(Index))
@@ -2534,7 +2534,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addReg(Reg);
 
-    UpdateValueMap(II, ResultReg);
+    UpdateValueMap(&I, ResultReg);
     return true;
   }
   }
@@ -2642,6 +2642,10 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   // Can't handle inline asm yet.
   if (isa<InlineAsm>(Callee))
     return false;
+
+  // Handle intrinsic calls.
+  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI))
+    return X86VisitIntrinsicCall(*II);
 
   // Allow SelectionDAG isel to handle tail calls.
   if (cast<CallInst>(I)->isTailCall())
