@@ -798,6 +798,13 @@ Type::GetTypeScopeAndBasename (const char* &name_cstr,
 }
 
 
+ModuleSP
+Type::GetModule()
+{
+    if (m_symbol_file)
+        return m_symbol_file->GetObjectFile()->GetModule();
+    return ModuleSP();
+}
 
 
 TypeAndOrName::TypeAndOrName () : m_type_pair(), m_type_name()
@@ -929,76 +936,95 @@ TypeAndOrName::HasClangASTType () const
 
 
 TypeImpl::TypeImpl() :
-m_static_type(),
-m_dynamic_type()
+    m_module_wp(),
+    m_static_type(),
+    m_dynamic_type()
 {
 }
 
 TypeImpl::TypeImpl(const TypeImpl& rhs) :
-m_static_type(rhs.m_static_type),
-m_dynamic_type(rhs.m_dynamic_type)
+    m_module_wp (rhs.m_module_wp),
+    m_static_type(rhs.m_static_type),
+    m_dynamic_type(rhs.m_dynamic_type)
 {
 }
 
-TypeImpl::TypeImpl (lldb::TypeSP type_sp) :
-m_static_type(type_sp),
-m_dynamic_type()
+TypeImpl::TypeImpl (const lldb::TypeSP &type_sp) :
+    m_module_wp (),
+    m_static_type(),
+    m_dynamic_type()
 {
+    SetType (type_sp);
 }
 
-TypeImpl::TypeImpl (ClangASTType clang_type) :
-m_static_type(clang_type),
-m_dynamic_type()
+TypeImpl::TypeImpl (const ClangASTType &clang_type) :
+    m_module_wp (),
+    m_static_type(),
+    m_dynamic_type()
 {
+    SetType (clang_type);
 }
 
-TypeImpl::TypeImpl (lldb::TypeSP type_sp, ClangASTType dynamic) :
-m_static_type (type_sp),
-m_dynamic_type(dynamic)
+TypeImpl::TypeImpl (const lldb::TypeSP &type_sp, const ClangASTType &dynamic) :
+    m_module_wp (),
+    m_static_type (type_sp),
+    m_dynamic_type(dynamic)
 {
+    SetType (type_sp, dynamic);
 }
 
-TypeImpl::TypeImpl (ClangASTType clang_type, ClangASTType dynamic) :
-m_static_type (clang_type),
-m_dynamic_type(dynamic)
+TypeImpl::TypeImpl (const ClangASTType &static_type, const ClangASTType &dynamic_type) :
+    m_module_wp (),
+    m_static_type (),
+    m_dynamic_type()
 {
+    SetType (static_type, dynamic_type);
 }
 
-TypeImpl::TypeImpl (TypePair pair, ClangASTType dynamic) :
-m_static_type (pair),
-m_dynamic_type(dynamic)
+TypeImpl::TypeImpl (const TypePair &pair, const ClangASTType &dynamic) :
+    m_module_wp (),
+    m_static_type (),
+    m_dynamic_type()
 {
+    SetType (pair, dynamic);
 }
 
 void
-TypeImpl::SetType (lldb::TypeSP type_sp)
+TypeImpl::SetType (const lldb::TypeSP &type_sp)
 {
     m_static_type.SetType(type_sp);
+    if (type_sp)
+        m_module_wp = type_sp->GetModule();
+    else
+        m_module_wp = lldb::ModuleWP();
 }
 
 void
-TypeImpl::SetType (ClangASTType clang_type)
+TypeImpl::SetType (const ClangASTType &clang_type)
 {
+    m_module_wp = lldb::ModuleWP();
     m_static_type.SetType (clang_type);
 }
 
 void
-TypeImpl::SetType (lldb::TypeSP type_sp, ClangASTType dynamic)
+TypeImpl::SetType (const lldb::TypeSP &type_sp, const ClangASTType &dynamic)
 {
-    m_static_type.SetType (type_sp);
+    SetType (type_sp);
     m_dynamic_type = dynamic;
 }
 
 void
-TypeImpl::SetType (ClangASTType clang_type, ClangASTType dynamic)
+TypeImpl::SetType (const ClangASTType &clang_type, const ClangASTType &dynamic)
 {
+    m_module_wp = lldb::ModuleWP();
     m_static_type.SetType (clang_type);
     m_dynamic_type = dynamic;
 }
 
 void
-TypeImpl::SetType (TypePair pair, ClangASTType dynamic)
+TypeImpl::SetType (const TypePair &pair, const ClangASTType &dynamic)
 {
+    m_module_wp = pair.GetModule();
     m_static_type = pair;
     m_dynamic_type = dynamic;
 }
@@ -1008,6 +1034,7 @@ TypeImpl::operator = (const TypeImpl& rhs)
 {
     if (rhs != *this)
     {
+        m_module_wp = rhs.m_module_wp;
         m_static_type = rhs.m_static_type;
         m_dynamic_type = rhs.m_dynamic_type;
     }
@@ -1015,24 +1042,55 @@ TypeImpl::operator = (const TypeImpl& rhs)
 }
 
 bool
+TypeImpl::CheckModule (lldb::ModuleSP &module_sp) const
+{
+    // Check if we have a module for this type. If we do and the shared pointer is
+    // can be successfully initialized with m_module_wp, return true. Else return false
+    // if we didn't have a module, or if we had a module and it has been deleted. Any
+    // functions doing anything with a TypeSP in this TypeImpl class should call this
+    // function and only do anything with the ivars if this function returns true. If
+    // we have a module, the "module_sp" will be filled in with a strong reference to the
+    // module so that the module will at least stay around long enough for the type
+    // query to succeed.
+    module_sp = m_module_wp.lock();
+    if (!module_sp)
+    {
+        lldb::ModuleWP empty_module_wp;
+        // If either call to "std::weak_ptr::owner_before(...) value returns true, this
+        // indicates that m_module_wp once contained (possibly still does) a reference
+        // to a valid shared pointer. This helps us know if we had a valid reference to
+        // a section which is now invalid because the module it was in was deleted
+        if (empty_module_wp.owner_before(m_module_wp) || m_module_wp.owner_before(empty_module_wp))
+        {
+            // m_module_wp had a valid reference to a module, but all strong references
+            // have been released and the module has been deleted
+            return false;
+        }
+    }
+    // We either successfully locked the module, or didn't have one to begin with
+    return true;
+}
+
+bool
 TypeImpl::operator == (const TypeImpl& rhs) const
 {
-    return m_static_type == rhs.m_static_type &&
-    m_dynamic_type == rhs.m_dynamic_type;
+    return m_static_type == rhs.m_static_type && m_dynamic_type == rhs.m_dynamic_type;
 }
 
 bool
 TypeImpl::operator != (const TypeImpl& rhs) const
 {
-    return m_static_type != rhs.m_static_type ||
-    m_dynamic_type != rhs.m_dynamic_type;
+    return m_static_type != rhs.m_static_type || m_dynamic_type != rhs.m_dynamic_type;
 }
 
 bool
 TypeImpl::IsValid() const
 {
     // just a name is not valid
-    return m_static_type.IsValid() || m_dynamic_type.IsValid();
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
+        return m_static_type.IsValid() || m_dynamic_type.IsValid();
+    return false;
 }
 
 TypeImpl::operator bool () const
@@ -1043,6 +1101,7 @@ TypeImpl::operator bool () const
 void
 TypeImpl::Clear()
 {
+    m_module_wp = lldb::ModuleWP();
     m_static_type.Clear();
     m_dynamic_type.Clear();
 }
@@ -1050,122 +1109,185 @@ TypeImpl::Clear()
 ConstString
 TypeImpl::GetName ()  const
 {
-    if (m_dynamic_type)
-        return m_dynamic_type.GetTypeName();
-    return m_static_type.GetName ();
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
+    {
+        if (m_dynamic_type)
+            return m_dynamic_type.GetTypeName();
+        return m_static_type.GetName ();
+    }
+    return ConstString();
 }
 
 ConstString
 TypeImpl::GetDisplayTypeName ()  const
 {
-    if (m_dynamic_type)
-        return m_dynamic_type.GetDisplayTypeName();
-    return m_static_type.GetDisplayTypeName();
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
+    {
+        if (m_dynamic_type)
+            return m_dynamic_type.GetDisplayTypeName();
+        return m_static_type.GetDisplayTypeName();
+    }
+    return ConstString();
 }
 
 TypeImpl
 TypeImpl::GetPointerType () const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetPointerType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetPointerType());
+        }
+        return TypeImpl(m_static_type.GetPointerType());
     }
-    return TypeImpl(m_static_type.GetPointerType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetPointeeType () const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetPointeeType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetPointeeType());
+        }
+        return TypeImpl(m_static_type.GetPointeeType());
     }
-    return TypeImpl(m_static_type.GetPointeeType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetReferenceType () const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetLValueReferenceType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetLValueReferenceType());
+        }
+        return TypeImpl(m_static_type.GetReferenceType());
     }
-    return TypeImpl(m_static_type.GetReferenceType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetTypedefedType () const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetTypedefedType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetTypedefedType());
+        }
+        return TypeImpl(m_static_type.GetTypedefedType());
     }
-    return TypeImpl(m_static_type.GetTypedefedType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetDereferencedType () const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetNonReferenceType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetNonReferenceType());
+        }
+        return TypeImpl(m_static_type.GetDereferencedType());
     }
-    return TypeImpl(m_static_type.GetDereferencedType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetUnqualifiedType() const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetFullyUnqualifiedType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetFullyUnqualifiedType());
+        }
+        return TypeImpl(m_static_type.GetUnqualifiedType());
     }
-    return TypeImpl(m_static_type.GetUnqualifiedType());
+    return TypeImpl();
 }
 
 TypeImpl
 TypeImpl::GetCanonicalType() const
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        return TypeImpl(m_static_type, m_dynamic_type.GetCanonicalType());
+        if (m_dynamic_type.IsValid())
+        {
+            return TypeImpl(m_static_type, m_dynamic_type.GetCanonicalType());
+        }
+        return TypeImpl(m_static_type.GetCanonicalType());
     }
-    return TypeImpl(m_static_type.GetCanonicalType());
+    return TypeImpl();
 }
 
 ClangASTType
 TypeImpl::GetClangASTType (bool prefer_dynamic)
 {
-    if (prefer_dynamic)
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        if (m_dynamic_type.IsValid())
-            return m_dynamic_type;
+        if (prefer_dynamic)
+        {
+            if (m_dynamic_type.IsValid())
+                return m_dynamic_type;
+        }
+        return m_static_type.GetClangASTType();
     }
-    return m_static_type.GetClangASTType();
+    return ClangASTType();
 }
 
 clang::ASTContext *
 TypeImpl::GetClangASTContext (bool prefer_dynamic)
 {
-    if (prefer_dynamic)
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        if (m_dynamic_type.IsValid())
-            return m_dynamic_type.GetASTContext();
+        if (prefer_dynamic)
+        {
+            if (m_dynamic_type.IsValid())
+                return m_dynamic_type.GetASTContext();
+        }
+        return m_static_type.GetClangASTContext();
     }
-    return m_static_type.GetClangASTContext();
+    return NULL;
 }
 
 bool
 TypeImpl::GetDescription (lldb_private::Stream &strm,
-                lldb::DescriptionLevel description_level)
+                          lldb::DescriptionLevel description_level)
 {
-    if (m_dynamic_type.IsValid())
+    ModuleSP module_sp;
+    if (CheckModule (module_sp))
     {
-        strm.Printf("Dynamic:\n");
-        m_dynamic_type.DumpTypeDescription(&strm);
-        strm.Printf("\nStatic:\n");
+        if (m_dynamic_type.IsValid())
+        {
+            strm.Printf("Dynamic:\n");
+            m_dynamic_type.DumpTypeDescription(&strm);
+            strm.Printf("\nStatic:\n");
+        }
+        m_static_type.GetClangASTType().DumpTypeDescription(&strm);
     }
-    m_static_type.GetClangASTType().DumpTypeDescription(&strm);
+    else
+    {
+        strm.PutCString("Invalid TypeImpl module for type has been deleted\n");
+    }
     return true;
 }
 

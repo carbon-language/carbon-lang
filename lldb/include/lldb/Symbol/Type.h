@@ -105,6 +105,11 @@ public:
     void
     DumpTypeName(Stream *s);
 
+    // Since Type instances only keep a "SymbolFile *" internally, other classes
+    // like TypeImpl need make sure the module is still around before playing with
+    // Type instances. They can store a weak pointer to the Module;
+    lldb::ModuleSP
+    GetModule();
 
     void
     GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_name);
@@ -308,16 +313,18 @@ protected:
 
 // these classes are used to back the SBType* objects
 
-class TypePair {
-private:
-    ClangASTType clang_type;
-    lldb::TypeSP type_sp;
-    
+class TypePair
+{
 public:
-    TypePair () : clang_type(), type_sp() {}
+    TypePair () :
+        clang_type(),
+        type_sp()
+    {
+    }
+
     TypePair (ClangASTType type) :
-    clang_type(type),
-    type_sp()
+        clang_type(type),
+        type_sp()
     {
     }
     
@@ -467,6 +474,17 @@ public:
     {
         return clang_type.GetASTContext();
     }
+    
+    lldb::ModuleSP
+    GetModule () const
+    {
+        if (type_sp)
+            return type_sp->GetModule();
+        return lldb::ModuleSP();
+    }
+protected:
+    ClangASTType clang_type;
+    lldb::TypeSP type_sp;
 };
     
 class TypeImpl
@@ -479,30 +497,30 @@ public:
     
     TypeImpl(const TypeImpl& rhs);
     
-    TypeImpl (lldb::TypeSP type_sp);
+    TypeImpl (const lldb::TypeSP &type_sp);
     
-    TypeImpl (ClangASTType clang_type);
+    TypeImpl (const ClangASTType &clang_type);
     
-    TypeImpl (lldb::TypeSP type_sp, ClangASTType dynamic);
+    TypeImpl (const lldb::TypeSP &type_sp, const ClangASTType &dynamic);
     
-    TypeImpl (ClangASTType clang_type, ClangASTType dynamic);
+    TypeImpl (const ClangASTType &clang_type, const ClangASTType &dynamic);
     
-    TypeImpl (TypePair pair, ClangASTType dynamic);
+    TypeImpl (const TypePair &pair, const ClangASTType &dynamic);
 
     void
-    SetType (lldb::TypeSP type_sp);
+    SetType (const lldb::TypeSP &type_sp);
     
     void
-    SetType (ClangASTType clang_type);
+    SetType (const ClangASTType &clang_type);
     
     void
-    SetType (lldb::TypeSP type_sp, ClangASTType dynamic);
+    SetType (const lldb::TypeSP &type_sp, const ClangASTType &dynamic);
     
     void
-    SetType (ClangASTType clang_type, ClangASTType dynamic);
+    SetType (const ClangASTType &clang_type, const ClangASTType &dynamic);
     
     void
-    SetType (TypePair pair, ClangASTType dynamic);
+    SetType (const TypePair &pair, const ClangASTType &dynamic);
     
     TypeImpl&
     operator = (const TypeImpl& rhs);
@@ -558,6 +576,11 @@ public:
                     lldb::DescriptionLevel description_level);
     
 private:
+    
+    bool
+    CheckModule (lldb::ModuleSP &module_sp) const;
+
+    lldb::ModuleWP m_module_wp;
     TypePair m_static_type;
     ClangASTType m_dynamic_type;
 };
