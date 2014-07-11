@@ -318,8 +318,6 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
                                                                mCPU,
                                                                mAttrs);
 
-    m_failed_lookups.clear();
-
     m_execution_engine_ap.reset(builder.create(target_machine));
 
     if (!m_execution_engine_ap.get())
