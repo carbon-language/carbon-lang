@@ -729,24 +729,26 @@ void raw_svector_ostream::resync() {
 }
 
 void raw_svector_ostream::write_impl(const char *Ptr, size_t Size) {
-  // If we're writing bytes from the end of the buffer into the smallvector, we
-  // don't need to copy the bytes, just commit the bytes because they are
-  // already in the right place.
-  if (Ptr == OS.end()) {
-    assert(OS.size() + Size <= OS.capacity() && "Invalid write_impl() call!");
-    OS.set_size(OS.size() + Size);
+  size_t NewSize = OS.size() + Size;
+  size_t NewReservation = NewSize + 64;
+
+  bool NoOverlap = Ptr + Size < OS.begin() || Ptr > OS.begin() + OS.capacity();
+
+  if (NoOverlap) {
+    assert(!GetNumBytesInBuffer());
+    OS.reserve(NewReservation);
+    memcpy(OS.end(), Ptr, Size);
+    OS.set_size(NewSize);
+  } else if (Ptr == OS.end()) {
+    // Grow the buffer to include the scratch area without copying.
+    assert(NewSize <= OS.capacity() && "Invalid write_impl() call!");
+    OS.set_size(NewSize);
+    OS.reserve(NewReservation);
   } else {
-    assert(GetNumBytesInBuffer() == 0 &&
-           "Should be writing from buffer if some bytes in it");
-    // Otherwise, do copy the bytes.
-    OS.append(Ptr, Ptr+Size);
+    OS.append(Ptr, Ptr + Size);
+    OS.reserve(NewReservation);
   }
 
-  // Grow the vector if necessary.
-  if (OS.capacity() - OS.size() < 64)
-    OS.reserve(OS.capacity() * 2);
-
-  // Update the buffer position.
   SetBuffer(OS.end(), OS.capacity() - OS.size());
 }
 
