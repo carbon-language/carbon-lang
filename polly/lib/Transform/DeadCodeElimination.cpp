@@ -81,8 +81,8 @@ char DeadCodeElim::ID = 0;
 // To compute the live outs, we first assume all must and may-writes are exposed
 // and then subtract the set of statements that are definitely overwritten.
 isl_union_set *DeadCodeElim::getLiveOut(Scop &S) {
-  __isl_take isl_union_map *Kills = S.getMustWrites();
-  __isl_take isl_union_map *Empty = isl_union_map_empty(S.getParamSpace());
+  isl_union_map *Kills = S.getMustWrites();
+  isl_union_map *Empty = isl_union_map_empty(S.getParamSpace());
 
   isl_union_map *Covering;
   isl_union_map *Writes = S.getWrites();
