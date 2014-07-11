@@ -136,6 +136,16 @@ cl::opt<bool> JustSymbolName("just-symbol-name",
                              cl::desc("Print just the symbol's name"));
 cl::alias JustSymbolNames("j", cl::desc("Alias for --just-symbol-name"),
                           cl::aliasopt(JustSymbolName));
+
+// FIXME: This option takes exactly two strings and should be allowed anywhere
+// on the command line.  Such that "llvm-nm -s __TEXT __text foo.o" would work.
+// But that does not as the CommandLine Library does not have a way to make
+// this work.  For now the "-s __TEXT __text" has to be last on the command
+// line.
+cl::list<std::string> SegSect("s", cl::Positional, cl::ZeroOrMore,
+                              cl::desc("Dump only symbols from this segment "
+                                       "and section name, Mach-O only"));
+
 bool PrintAddress = true;
 
 bool MultipleFiles = false;
@@ -714,6 +724,46 @@ static char getNMTypeChar(SymbolicFile *Obj, basic_symbol_iterator I) {
   return Ret;
 }
 
+// getNsectForSegSect() is used to implement the Mach-O "-s segname sectname"
+// option to dump only those symbols from that section in a Mach-O file.
+// It is called once for each Mach-O file from dumpSymbolNamesFromObject()
+// to get the section number for that named section from the command line
+// arguments. It returns the section number for that section in the Mach-O
+// file or zero it is not present.
+static unsigned getNsectForSegSect(MachOObjectFile *Obj) {
+  unsigned Nsect = 1;
+  for (section_iterator I = Obj->section_begin(), E = Obj->section_end();
+       I != E; ++I) {
+    DataRefImpl Ref = I->getRawDataRefImpl();
+    StringRef SectionName;
+    Obj->getSectionName(Ref, SectionName);
+    StringRef SegmentName = Obj->getSectionFinalSegmentName(Ref);
+    if (SegmentName == SegSect[0] && SectionName == SegSect[1])
+      return Nsect;
+    Nsect++;
+  }
+  return 0;
+}
+
+// getNsectInMachO() is used to implement the Mach-O "-s segname sectname"
+// option to dump only those symbols from that section in a Mach-O file.
+// It is called once for each symbol in a Mach-O file from
+// dumpSymbolNamesFromObject() and returns the section number for that symbol
+// if it is in a section, else it returns 0.
+static unsigned getNsectInMachO(MachOObjectFile &Obj, basic_symbol_iterator I) {
+  DataRefImpl Symb = I->getRawDataRefImpl();
+  if (Obj.is64Bit()) {
+    MachO::nlist_64 STE = Obj.getSymbol64TableEntry(Symb);
+    if ((STE.n_type & MachO::N_TYPE) == MachO::N_SECT)
+      return STE.n_sect;
+    return 0;
+  }
+  MachO::nlist STE = Obj.getSymbolTableEntry(Symb);
+  if ((STE.n_type & MachO::N_TYPE) == MachO::N_SECT)
+    return STE.n_sect;
+  return 0;
+}
+
 static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName) {
   basic_symbol_iterator IBegin = Obj->symbol_begin();
   basic_symbol_iterator IEnd = Obj->symbol_end();
@@ -729,6 +779,16 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName) {
   }
   std::string NameBuffer;
   raw_string_ostream OS(NameBuffer);
+  // If a "-s segname sectname" option was specified and this is a Mach-O
+  // file get the section number for that section in this object file.
+  unsigned int Nsect = 0;
+  MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
+  if (SegSect.size() != 0 && MachO) {
+    Nsect = getNsectForSegSect(MachO);
+    // If this section is not in the object file no symbols are printed.
+    if (Nsect == 0)
+      return;
+  }
   for (basic_symbol_iterator I = IBegin; I != IEnd; ++I) {
     uint32_t SymFlags = I->getFlags();
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
@@ -740,6 +800,11 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName) {
           continue;
       }
     }
+    // If a "-s segname sectname" option was specified and this is a Mach-O
+    // file and this section appears in this file, Nsect will be non-zero then
+    // see if this symbol is a symbol from that section and if not skip it.
+    if (Nsect && Nsect != getNsectInMachO(*MachO, I))
+      continue;
     NMSymbol S;
     S.Size = UnknownAddressOrSize;
     S.Address = UnknownAddressOrSize;
@@ -1046,6 +1111,11 @@ int main(int argc, char **argv) {
               "for the -arch option");
     }
   }
+
+  if (SegSect.size() != 0 && SegSect.size() != 2)
+    error("bad number of arguments (must be two arguments)",
+          "for the -s option");
+
 
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
                 dumpSymbolNamesFromFile);
