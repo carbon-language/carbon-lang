@@ -2730,9 +2730,18 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
         // If the user is one of our immediate successors, and if that successor
         // only has us as a predecessors (we'd have to split the critical edge
         // otherwise), we can keep going.
-        if (UserIsSuccessor && UserParent->getSinglePredecessor())
+        if (UserIsSuccessor && UserParent->getSinglePredecessor()) {
           // Okay, the CFG is simple enough, try to sink this instruction.
-          MadeIRChange |= TryToSinkInstruction(I, UserParent);
+          if (TryToSinkInstruction(I, UserParent)) {
+            MadeIRChange = true;
+            // We'll add uses of the sunk instruction below, but since sinking
+            // can expose opportunities for it's *operands* add them to the
+            // worklist
+            for (Use &U : I->operands())
+              if (Instruction *OpI = dyn_cast<Instruction>(U.get()))
+                Worklist.Add(OpI);
+          }
+        }
       }
     }
 
