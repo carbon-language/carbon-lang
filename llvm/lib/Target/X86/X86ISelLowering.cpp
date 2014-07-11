@@ -15156,10 +15156,23 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   assert((VT == MVT::v4i32 && Subtarget->hasSSE2()) ||
          (VT == MVT::v8i32 && Subtarget->hasInt256()));
 
-  // Get the high parts.
+  // PMULxD operations multiply each even value (starting at 0) of LHS with
+  // the related value of RHS and produce a widen result.
+  // E.g., PMULUDQ <4 x i32> <a|b|c|d>, <4 x i32> <e|f|g|h>
+  // => <2 x i64> <ae|cg>
+  //
+  // In other word, to have all the results, we need to perform two PMULxD:
+  // 1. one with the even values.
+  // 2. one with the odd values.
+  // To achieve #2, with need to place the odd values at an even position.
+  //
+  // Place the odd value at an even position (basically, shift all values 1
+  // step to the left):
   const int Mask[] = {1, -1, 3, -1, 5, -1, 7, -1};
-  SDValue Hi0 = DAG.getVectorShuffle(VT, dl, Op0, Op0, Mask);
-  SDValue Hi1 = DAG.getVectorShuffle(VT, dl, Op1, Op1, Mask);
+  // <a|b|c|d> => <b|undef|d|undef>
+  SDValue Odd0 = DAG.getVectorShuffle(VT, dl, Op0, Op0, Mask);
+  // <e|f|g|h> => <f|undef|h|undef>
+  SDValue Odd1 = DAG.getVectorShuffle(VT, dl, Op1, Op1, Mask);
 
   // Emit two multiplies, one for the lower 2 ints and one for the higher 2
   // ints.
@@ -15167,22 +15180,39 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   bool IsSigned = Op->getOpcode() == ISD::SMUL_LOHI;
   unsigned Opcode =
       (!IsSigned || !Subtarget->hasSSE41()) ? X86ISD::PMULUDQ : X86ISD::PMULDQ;
+  // PMULUDQ <4 x i32> <a|b|c|d>, <4 x i32> <e|f|g|h>
+  // => <2 x i64> <ae|cg>
   SDValue Mul1 = DAG.getNode(ISD::BITCAST, dl, VT,
                              DAG.getNode(Opcode, dl, MulVT, Op0, Op1));
+  // PMULUDQ <4 x i32> <b|undef|d|undef>, <4 x i32> <f|undef|h|undef>
+  // => <2 x i64> <bf|dh>
   SDValue Mul2 = DAG.getNode(ISD::BITCAST, dl, VT,
-                             DAG.getNode(Opcode, dl, MulVT, Hi0, Hi1));
+                             DAG.getNode(Opcode, dl, MulVT, Odd0, Odd1));
 
   // Shuffle it back into the right order.
+  // The internal representation is big endian.
+  // In other words, a i64 bitcasted to 2 x i32 has its high part at index 0
+  // and its low part at index 1.
+  // Moreover, we have: Mul1 = <ae|cg> ; Mul2 = <bf|dh>
+  // Vector index                0 1   ;          2 3
+  // We want      <ae|bf|cg|dh>
+  // Vector index   0  2  1  3
+  // Since each element is seen as 2 x i32, we get:
+  // high_mask[i] = 2 x vector_index[i]
+  // low_mask[i] = 2 x vector_index[i] + 1
+  // where vector_index = {0, Size/2, 1, Size/2 + 1, ...,
+  //                       Size/2 - 1, Size/2 + Size/2 - 1}
+  // where Size is the number of element of the final vector.
   SDValue Highs, Lows;
   if (VT == MVT::v8i32) {
-    const int HighMask[] = {1, 9, 3, 11, 5, 13, 7, 15};
+    const int HighMask[] = {0, 8, 2, 10, 4, 12, 6, 14};
     Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-    const int LowMask[] = {0, 8, 2, 10, 4, 12, 6, 14};
+    const int LowMask[] = {1, 9, 3, 11, 5, 13, 7, 15};
     Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
   } else {
-    const int HighMask[] = {1, 5, 3, 7};
+    const int HighMask[] = {0, 4, 2, 6};
     Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-    const int LowMask[] = {0, 4, 2, 6};
+    const int LowMask[] = {1, 5, 3, 7};
     Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
   }
 
@@ -15200,7 +15230,9 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
     Highs = DAG.getNode(ISD::SUB, dl, VT, Highs, Fixup);
   }
 
-  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Highs, Lows);
+  // The low part of a MUL_LOHI is supposed to be the first value and the
+  // high part the second value.
+  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Lows, Highs);
 }
 
 static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,

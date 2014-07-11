@@ -132,9 +132,6 @@ define <4 x i32> @test8(<4 x i32> %a) {
 ; SSE41: padd
 
 ; SSE-LABEL: test8:
-; SSE: psrad $31
-; SSE: pand
-; SSE: paddd
 ; SSE: pmuludq
 ; SSE: pshufd	$49
 ; SSE-NOT: pshufd	$49
