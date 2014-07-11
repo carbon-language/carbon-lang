@@ -32,6 +32,8 @@
 #include <system_error>
 using namespace clang;
 
+template class llvm::Registry<clang::PluginASTAction>;
+
 namespace {
 
 class DelegatingDeserializationListener : public ASTDeserializationListener {
