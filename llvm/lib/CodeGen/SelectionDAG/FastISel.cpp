@@ -39,6 +39,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/Analysis.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/ADT/Optional.h"
 #include "llvm/ADT/Statistic.h"
@@ -73,6 +74,21 @@ STATISTIC(NumFastIselSuccessIndependent, "Number of insts selected by "
 STATISTIC(NumFastIselSuccessTarget, "Number of insts selected by "
           "target-specific selector");
 STATISTIC(NumFastIselDead, "Number of dead insts removed on failure");
+
+/// \brief Set CallLoweringInfo attribute flags based on a call instruction
+/// and called function attributes.
+void FastISel::ArgListEntry::setAttributes(ImmutableCallSite *CS,
+                                           unsigned AttrIdx) {
+  isSExt     = CS->paramHasAttr(AttrIdx, Attribute::SExt);
+  isZExt     = CS->paramHasAttr(AttrIdx, Attribute::ZExt);
+  isInReg    = CS->paramHasAttr(AttrIdx, Attribute::InReg);
+  isSRet     = CS->paramHasAttr(AttrIdx, Attribute::StructRet);
+  isNest     = CS->paramHasAttr(AttrIdx, Attribute::Nest);
+  isByVal    = CS->paramHasAttr(AttrIdx, Attribute::ByVal);
+  isInAlloca = CS->paramHasAttr(AttrIdx, Attribute::InAlloca);
+  isReturned = CS->paramHasAttr(AttrIdx, Attribute::Returned);
+  Alignment  = CS->getParamAlignment(AttrIdx);
+}
 
 /// startNewBlock - Set the current block to which generated machine
 /// instructions will be appended, and clear the local CSE map.
@@ -662,6 +678,193 @@ bool FastISel::SelectStackmap(const CallInst *I) {
   return true;
 }
 
+/// Returns an AttributeSet representing the attributes applied to the return
+/// value of the given call.
+static AttributeSet getReturnAttrs(FastISel::CallLoweringInfo &CLI) {
+  SmallVector<Attribute::AttrKind, 2> Attrs;
+  if (CLI.RetSExt)
+    Attrs.push_back(Attribute::SExt);
+  if (CLI.RetZExt)
+    Attrs.push_back(Attribute::ZExt);
+  if (CLI.IsInReg)
+    Attrs.push_back(Attribute::InReg);
+
+  return AttributeSet::get(CLI.RetTy->getContext(), AttributeSet::ReturnIndex,
+                           Attrs);
+}
+
+bool FastISel::LowerCallTo(const CallInst *CI, const char *SymName,
+                           unsigned NumArgs) {
+  ImmutableCallSite CS(CI);
+
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
+  Type *RetTy = FTy->getReturnType();
+
+  ArgListTy Args;
+  Args.reserve(NumArgs);
+
+  // Populate the argument list.
+  // Attributes for args start at offset 1, after the return attribute.
+  for (unsigned ArgI = 0; ArgI != NumArgs; ++ArgI) {
+    Value *V = CI->getOperand(ArgI);
+
+    assert(!V->getType()->isEmptyTy() && "Empty type passed to intrinsic.");
+
+    ArgListEntry Entry;
+    Entry.Val = V;
+    Entry.Ty = V->getType();
+    Entry.setAttributes(&CS, ArgI + 1);
+    Args.push_back(Entry);
+  }
+
+  CallLoweringInfo CLI;
+  CLI.setCallee(RetTy, FTy, SymName, std::move(Args), CS, NumArgs);
+
+  return LowerCallTo(CLI);
+}
+
+bool FastISel::LowerCallTo(CallLoweringInfo &CLI) {
+  // Handle the incoming return values from the call.
+  CLI.clearIns();
+  SmallVector<EVT, 4> RetTys;
+  ComputeValueVTs(TLI, CLI.RetTy, RetTys);
+
+  SmallVector<ISD::OutputArg, 4> Outs;
+  GetReturnInfo(CLI.RetTy, getReturnAttrs(CLI), Outs, TLI);
+
+  bool CanLowerReturn = TLI.CanLowerReturn(CLI.CallConv, *FuncInfo.MF,
+                                           CLI.IsVarArg, Outs,
+                                           CLI.RetTy->getContext());
+
+  // FIXME: sret demotion isn't supported yet - bail out.
+  if (!CanLowerReturn)
+    return false;
+
+  for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
+    EVT VT = RetTys[I];
+    MVT RegisterVT = TLI.getRegisterType(CLI.RetTy->getContext(), VT);
+    unsigned NumRegs = TLI.getNumRegisters(CLI.RetTy->getContext(), VT);
+    for (unsigned i = 0; i != NumRegs; ++i) {
+      ISD::InputArg MyFlags;
+      MyFlags.VT = RegisterVT;
+      MyFlags.ArgVT = VT;
+      MyFlags.Used = CLI.IsReturnValueUsed;
+      if (CLI.RetSExt)
+        MyFlags.Flags.setSExt();
+      if (CLI.RetZExt)
+        MyFlags.Flags.setZExt();
+      if (CLI.IsInReg)
+        MyFlags.Flags.setInReg();
+      CLI.Ins.push_back(MyFlags);
+    }
+  }
+
+  // Handle all of the outgoing arguments.
+  CLI.clearOuts();
+  for (auto &Arg : CLI.getArgs()) {
+    Type *FinalType = Arg.Ty;
+    if (Arg.isByVal)
+      FinalType = cast<PointerType>(Arg.Ty)->getElementType();
+    bool NeedsRegBlock = TLI.functionArgumentNeedsConsecutiveRegisters(
+      FinalType, CLI.CallConv, CLI.IsVarArg);
+
+    ISD::ArgFlagsTy Flags;
+    if (Arg.isZExt)
+      Flags.setZExt();
+    if (Arg.isSExt)
+      Flags.setSExt();
+    if (Arg.isInReg)
+      Flags.setInReg();
+    if (Arg.isSRet)
+      Flags.setSRet();
+    if (Arg.isByVal)
+      Flags.setByVal();
+    if (Arg.isInAlloca) {
+      Flags.setInAlloca();
+      // Set the byval flag for CCAssignFn callbacks that don't know about
+      // inalloca. This way we can know how many bytes we should've allocated
+      // and how many bytes a callee cleanup function will pop.  If we port
+      // inalloca to more targets, we'll have to add custom inalloca handling in
+      // the various CC lowering callbacks.
+      Flags.setByVal();
+    }
+    if (Arg.isByVal || Arg.isInAlloca) {
+      PointerType *Ty = cast<PointerType>(Arg.Ty);
+      Type *ElementTy = Ty->getElementType();
+      unsigned FrameSize = DL.getTypeAllocSize(ElementTy);
+      // For ByVal, alignment should come from FE. BE will guess if this info is
+      // not there, but there are cases it cannot get right.
+      unsigned FrameAlign = Arg.Alignment;
+      if (!FrameAlign)
+        FrameAlign = TLI.getByValTypeAlignment(ElementTy);
+      Flags.setByValSize(FrameSize);
+      Flags.setByValAlign(FrameAlign);
+    }
+    if (Arg.isNest)
+      Flags.setNest();
+    if (NeedsRegBlock)
+      Flags.setInConsecutiveRegs();
+    unsigned OriginalAlignment = DL.getABITypeAlignment(Arg.Ty);
+    Flags.setOrigAlign(OriginalAlignment);
+
+    CLI.OutVals.push_back(Arg.Val);
+    CLI.OutFlags.push_back(Flags);
+  }
+
+  if (!FastLowerCall(CLI))
+    return false;
+
+  // Set all unused physreg defs as dead.
+  assert(CLI.Call && "No call instruction specified.");
+  CLI.Call->setPhysRegsDeadExcept(CLI.InRegs, TRI);
+
+  if (CLI.NumResultRegs && CLI.CS)
+    UpdateValueMap(CLI.CS->getInstruction(), CLI.ResultReg, CLI.NumResultRegs);
+
+  return true;
+}
+
+bool FastISel::LowerCall(const CallInst *CI) {
+  ImmutableCallSite CS(CI);
+
+  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
+  FunctionType *FuncTy = cast<FunctionType>(PT->getElementType());
+  Type *RetTy = FuncTy->getReturnType();
+
+  ArgListTy Args;
+  ArgListEntry Entry;
+  Args.reserve(CS.arg_size());
+
+  for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
+       i != e; ++i) {
+    Value *V = *i;
+
+    // Skip empty types
+    if (V->getType()->isEmptyTy())
+      continue;
+
+    Entry.Val = V;
+    Entry.Ty = V->getType();
+
+    // Skip the first return-type Attribute to get to params.
+    Entry.setAttributes(&CS, i - CS.arg_begin() + 1);
+    Args.push_back(Entry);
+  }
+
+  // Check if target-independent constraints permit a tail call here.
+  // Target-dependent constraints are checked within FastLowerCall.
+  bool IsTailCall = CI->isTailCall();
+  if (IsTailCall && !isInTailCallPosition(CS, TM, TLI))
+    IsTailCall = false;
+
+  CallLoweringInfo CLI;
+  CLI.setCallee(RetTy, FuncTy, CI->getCalledValue(), std::move(Args), CS)
+    .setTailCall(IsTailCall);
+
+  return LowerCallTo(CLI);
+}
+
 bool FastISel::SelectCall(const User *I) {
   const CallInst *Call = cast<CallInst>(I);
 
@@ -700,8 +903,7 @@ bool FastISel::SelectCall(const User *I) {
   // since they tend to be inlined.
   flushLocalValueMap();
 
-  // An arbitrary call. Bail.
-  return false;
+  return LowerCall(Call);
 }
 
 bool FastISel::SelectIntrinsicCall(const IntrinsicInst *II) {
@@ -1226,6 +1428,10 @@ FastISel::FastISel(FunctionLoweringInfo &funcInfo,
 FastISel::~FastISel() {}
 
 bool FastISel::FastLowerArguments() {
+  return false;
+}
+
+bool FastISel::FastLowerCall(CallLoweringInfo &/*CLI*/) {
   return false;
 }
 
