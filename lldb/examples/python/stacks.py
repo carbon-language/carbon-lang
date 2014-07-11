@@ -16,8 +16,11 @@ def stack_frames(debugger, command, result, dict):
     except:
         return
     
+    target = debugger.GetSelectedTarget()
+    process = target.GetProcess()
+    
     frame_info = {}
-    for thread in lldb.process:
+    for thread in process:
         last_frame = None
         print "thread %u" % (thread.id)
         for frame in thread.frames:
