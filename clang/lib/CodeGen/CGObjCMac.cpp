@@ -4846,7 +4846,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
    if (CGM.getLangOpts().ObjCGCBitmapPrint) {
     printf("\n%s ivar layout for class '%s': ",
            ForStrongLayout ? "strong" : "weak",
-           OMD->getClassInterface()->getName().data());
+           OMD->getClassInterface()->getName().str().c_str());
     const unsigned char *s = (const unsigned char*)BitMap.c_str();
     for (unsigned i = 0, e = BitMap.size(); i < e; i++)
       if (!(s[i] & 0xf0))
