@@ -985,7 +985,6 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
                     {
                         bytes_read = ::read (pipe_fd, buffer, sizeof(buffer));
                     } while (bytes_read < 0 && errno == EINTR);
-                    assert (bytes_read == 1 && buffer[0] == 'q');
 
                     if (log)
                         log->Printf("%p ConnectionFileDescriptor::BytesAvailable() got data: %*s from the command channel.",
