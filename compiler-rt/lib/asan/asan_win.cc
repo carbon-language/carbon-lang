@@ -21,6 +21,7 @@
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"
+#include "asan_report.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mutex.h"
@@ -85,6 +86,44 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
 void AsanOnSIGSEGV(int, void *siginfo, void *context) {
   UNIMPLEMENTED();
 }
+
+static LPTOP_LEVEL_EXCEPTION_FILTER default_seh_handler;
+
+long WINAPI SEHHandler(EXCEPTION_POINTERS *info) {
+  EXCEPTION_RECORD *exception_record = info->ExceptionRecord;
+  CONTEXT *context = info->ContextRecord;
+  uptr pc = (uptr)exception_record->ExceptionAddress;
+#ifdef _WIN64
+  uptr bp = (uptr)context->Rbp, sp = (uptr)context->Rsp;
+#else
+  uptr bp = (uptr)context->Ebp, sp = (uptr)context->Esp;
+#endif
+
+  if (exception_record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION ||
+      exception_record->ExceptionCode == EXCEPTION_IN_PAGE_ERROR) {
+    const char *description =
+        (exception_record->ExceptionCode == EXCEPTION_ACCESS_VIOLATION)
+            ? "access-violation"
+            : "in-page-error";
+    uptr access_addr = exception_record->ExceptionInformation[1];
+    ReportSIGSEGV(description, pc, sp, bp, context, access_addr);
+  }
+
+  // FIXME: Handle EXCEPTION_STACK_OVERFLOW here.
+
+  return default_seh_handler(info);
+}
+
+int SetSEHFilter() {
+  default_seh_handler = SetUnhandledExceptionFilter(SEHHandler);
+  return 0;
+}
+
+// Put a pointer to SetSEHFilter at the end of the global list
+// of C initializers, after the default handler is set by the CRT.
+// See crt0dat.c in the CRT sources for the details.
+#pragma section(".CRT$XIZ", long, read)  // NOLINT
+__declspec(allocate(".CRT$XIZ")) int (*__intercept_seh)() = SetSEHFilter;
 
 }  // namespace __asan
 

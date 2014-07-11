@@ -50,7 +50,7 @@ void AsanOnSIGSEGV(int, void *siginfo, void *context) {
       (code == si_SEGV_MAPERR || code == si_SEGV_ACCERR))
     ReportStackOverflow(pc, sp, bp, context, addr);
   else
-    ReportSIGSEGV(pc, sp, bp, context, addr);
+    ReportSIGSEGV("SEGV", pc, sp, bp, context, addr);
 }
 
 // ---------------------- TSD ---------------- {{{1

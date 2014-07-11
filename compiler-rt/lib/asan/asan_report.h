@@ -34,8 +34,8 @@ void DescribeThread(AsanThreadContext *context);
 // Different kinds of error reports.
 void NORETURN
     ReportStackOverflow(uptr pc, uptr sp, uptr bp, void *context, uptr addr);
-void NORETURN
-    ReportSIGSEGV(uptr pc, uptr sp, uptr bp, void *context, uptr addr);
+void NORETURN ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
+                            void *context, uptr addr);
 void NORETURN ReportDoubleFree(uptr addr, StackTrace *free_stack);
 void NORETURN ReportFreeNotMalloced(uptr addr, StackTrace *free_stack);
 void NORETURN ReportAllocTypeMismatch(uptr addr, StackTrace *free_stack,

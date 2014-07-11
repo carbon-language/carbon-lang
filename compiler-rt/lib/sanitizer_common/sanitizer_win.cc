@@ -17,9 +17,10 @@
 
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
-#include <stdlib.h>
-#include <io.h>
 #include <windows.h>
+#include <dbghelp.h>
+#include <io.h>
+#include <stdlib.h>
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
@@ -449,7 +450,30 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
 
 void StackTrace::SlowUnwindStackWithContext(uptr pc, void *context,
                                             uptr max_depth) {
-  UNREACHABLE("no signal context on windows");
+  CONTEXT ctx = *(CONTEXT *)context;
+  STACKFRAME64 stack_frame;
+  memset(&stack_frame, 0, sizeof(stack_frame));
+  size = 0;
+#if defined(_WIN64)
+  int machine_type = IMAGE_FILE_MACHINE_AMD64;
+  stack_frame.AddrPC.Offset = ctx.Rip;
+  stack_frame.AddrFrame.Offset = ctx.Rbp;
+  stack_frame.AddrStack.Offset = ctx.Rsp;
+#else
+  int machine_type = IMAGE_FILE_MACHINE_I386;
+  stack_frame.AddrPC.Offset = ctx.Eip;
+  stack_frame.AddrFrame.Offset = ctx.Ebp;
+  stack_frame.AddrStack.Offset = ctx.Esp;
+#endif
+  stack_frame.AddrPC.Mode = AddrModeFlat;
+  stack_frame.AddrFrame.Mode = AddrModeFlat;
+  stack_frame.AddrStack.Mode = AddrModeFlat;
+  while (StackWalk64(machine_type, GetCurrentProcess(), GetCurrentThread(),
+                     &stack_frame, &ctx, NULL, &SymFunctionTableAccess64,
+                     &SymGetModuleBase64, NULL) &&
+         size < Min(max_depth, kStackTraceMax)) {
+    trace[size++] = (uptr)stack_frame.AddrPC.Offset;
+  }
 }
 
 void MaybeOpenReportFile() {
