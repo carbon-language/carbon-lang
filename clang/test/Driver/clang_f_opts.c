@@ -175,6 +175,15 @@
 // CHECK-WARNING1: ignoring unsupported optimization flag '-finline-limit=1000'
 // CHECK-WARNING2: ignoring unsupported optimization flag '-finline-limit'
 
+// Test that we mute the warning on these
+// RUN: %clang -### -finline-limit=1000 -Wno-unused-command-line-argument               \
+// RUN:     %s 2>&1 | FileCheck --check-prefix=CHECK-NO-WARNING1 %s
+// RUN: %clang -### -finline-limit -Wno-unused-command-line-argument                    \
+// RUN:     %s 2>&1 | FileCheck --check-prefix=CHECK-NO-WARNING2 %s
+// CHECK-NO-WARNING1-NOT: ignoring unsupported optimization flag '-finline-limit=1000'
+// CHECK-NO-WARNING2-NOT: ignoring unsupported optimization flag '-finline-limit'
+
+
 // RUN: %clang -### -fshort-wchar -fno-short-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR1 %s
 // RUN: %clang -### -fno-short-wchar -fshort-wchar %s 2>&1 | FileCheck -check-prefix=CHECK-WCHAR2 %s
 // CHECK-WCHAR1: -fno-short-wchar
