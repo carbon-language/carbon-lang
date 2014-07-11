@@ -1758,11 +1758,11 @@ ASTDeclReader::VisitClassTemplateSpecializationDeclImpl(
             Reader.MergedDeclContexts.insert(
                 std::make_pair(D, CanonDD->Definition));
             D->IsCompleteDefinition = false;
-            D->DefinitionData = CanonSpec->DefinitionData;
           } else {
             CanonSpec->DefinitionData = D->DefinitionData;
           }
         }
+        D->DefinitionData = CanonSpec->DefinitionData;
       }
     }
   }
@@ -2037,10 +2037,27 @@ void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
   auto *DPattern = D->getTemplatedDecl();
   auto *ExistingPattern = Existing->getTemplatedDecl();
   RedeclarableResult Result(Reader, DsID, DPattern->getKind());
-  if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern))
-    // FIXME: Merge definitions here, if both declarations had definitions.
+  if (auto *DClass = dyn_cast<CXXRecordDecl>(DPattern)) {
+    // Merge with any existing definition.
+    // FIXME: This is duplicated in several places. Refactor.
+    auto *ExistingClass =
+        cast<CXXRecordDecl>(ExistingPattern)->getCanonicalDecl();
+    if (auto *DDD = DClass->DefinitionData.getNotUpdated()) {
+      if (auto *ExistingDD = ExistingClass->DefinitionData.getNotUpdated()) {
+        MergeDefinitionData(ExistingClass, *DDD);
+        Reader.PendingDefinitions.erase(DClass);
+        Reader.MergedDeclContexts.insert(
+            std::make_pair(DClass, ExistingDD->Definition));
+        DClass->IsCompleteDefinition = false;
+      } else {
+        ExistingClass->DefinitionData = DClass->DefinitionData;
+      }
+    }
+    DClass->DefinitionData = ExistingClass->DefinitionData;
+
     return mergeRedeclarable(DClass, cast<TagDecl>(ExistingPattern),
                              Result);
+  }
   if (auto *DFunction = dyn_cast<FunctionDecl>(DPattern))
     return mergeRedeclarable(DFunction, cast<FunctionDecl>(ExistingPattern),
                              Result);

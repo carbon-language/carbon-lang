@@ -67,3 +67,9 @@ template<> struct WithExplicitSpecialization<int> {
 template<typename T> template<typename U>
 constexpr int Outer<T>::Inner<U>::f() { return 1; }
 static_assert(Outer<int>::Inner<int>::f() == 1, "");
+
+template<typename T> struct MergeTemplateDefinitions {
+  static constexpr int f();
+  static constexpr int g();
+};
+template<typename T> constexpr int MergeTemplateDefinitions<T>::f() { return 1; }
