@@ -19,13 +19,7 @@ set(LIBCXXABI_SOURCES
   typeinfo.cpp
 )
 
-set(LIBCXXABI_HEADERS
-  ../include/cxxabi.h
-  ../include/libunwind.h
-  ../include/unwind.h
-)
-
-append_if(LIBCXXABI_HEADERS APPLE ../include/mach-o/compact_unwind_encoding.h)
+set(LIBCXXABI_HEADERS ../include/cxxabi.h)
 
 # Add all the headers to the project for IDEs.
 if (MSVC_IDE OR XCODE)

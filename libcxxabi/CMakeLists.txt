@@ -104,6 +104,7 @@ endif()
 option(LIBCXXABI_ENABLE_ASSERTIONS "Enable assertions independent of build mode." ON)
 option(LIBCXXABI_ENABLE_PEDANTIC "Compile with pedantic enabled." ON)
 option(LIBCXXABI_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
+option(LIBCXXABI_USE_LLVM_UNWINDER "Build and use the LLVM unwinder." OFF)
 
 # Default to building a shared library so that the default options still test
 # the libc++abi that is being built. There are two problems with testing a
@@ -242,6 +243,10 @@ include_directories(include)
 # Add source code. This also contains all of the logic for deciding linker flags
 # soname, etc...
 add_subdirectory(src)
+
+if (LIBCXXABI_USE_LLVM_UNWINDER)
+  add_subdirectory(src/Unwind)
+endif()
 
 if(NOT LIBCXXABI_ENABLE_SHARED)
   # TODO: Fix the libc++ cmake files so that libc++abi can be statically linked.
