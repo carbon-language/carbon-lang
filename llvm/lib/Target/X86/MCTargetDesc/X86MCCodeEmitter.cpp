@@ -197,14 +197,23 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
     return isDisp8(Value);
   }
 
-  unsigned MemObjSize = 1U << CD8E;
+  unsigned ElemSize = 1U << CD8E;
+  unsigned MemObjSize;
+  // The unit of displacement is either
+  //   - the size of a  power-of-two number of elements or
+  //   - the size of a single element for broadcasts or
+  //   - the total vector size divided by a power-of-two number.
   if (CD8V & 4) {
     // Fixed vector length
-    MemObjSize *= 1U << (CD8V & 0x3);
+    unsigned NumElems = 1U << (CD8V & 0x3);
+    MemObjSize = ElemSize * NumElems;
   } else {
     // Modified vector length
     bool EVEX_b = (TSFlags >> X86II::VEXShift) & X86II::EVEX_B;
-    if (!EVEX_b) {
+    if (EVEX_b)
+      // Broadcast implies element size units.
+      MemObjSize = ElemSize;
+    else {
       unsigned EVEX_LL = ((TSFlags >> X86II::VEXShift) & X86II::VEX_L) ? 1 : 0;
       EVEX_LL += ((TSFlags >> X86II::VEXShift) & X86II::EVEX_L2) ? 2 : 0;
       assert(EVEX_LL < 3 && "");
