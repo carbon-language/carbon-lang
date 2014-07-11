@@ -88,9 +88,6 @@ bool IsInInterceptorScope() {
     if (!IsInInterceptorScope()) CHECK_UNPOISONED_0(x, n); \
   } while (0);
 
-static void *fast_memset(void *ptr, int c, SIZE_T n);
-static void *fast_memcpy(void *dst, const void *src, SIZE_T n);
-
 INTERCEPTOR(SIZE_T, fread, void *ptr, SIZE_T size, SIZE_T nmemb, void *file) {
   ENSURE_MSAN_INITED();
   SIZE_T res = REAL(fread)(ptr, size, nmemb, file);
@@ -537,7 +534,7 @@ INTERCEPTOR(wchar_t *, wmempcpy, wchar_t *dest, const wchar_t *src, SIZE_T n) {
 INTERCEPTOR(wchar_t *, wmemset, wchar_t *s, wchar_t c, SIZE_T n) {
   CHECK(MEM_IS_APP(s));
   ENSURE_MSAN_INITED();
-  wchar_t *res = (wchar_t *)fast_memset(s, c, n * sizeof(wchar_t));
+  wchar_t *res = (wchar_t *)REAL(memset)(s, c, n * sizeof(wchar_t));
   __msan_unpoison(s, n * sizeof(wchar_t));
   return res;
 }
@@ -1006,7 +1003,7 @@ INTERCEPTOR(int, sigaction, int signo, const __sanitizer_sigaction *act,
     __sanitizer_sigaction new_act;
     __sanitizer_sigaction *pnew_act = act ? &new_act : 0;
     if (act) {
-      internal_memcpy(pnew_act, act, sizeof(__sanitizer_sigaction));
+      REAL(memcpy)(pnew_act, act, sizeof(__sanitizer_sigaction));
       uptr cb = (uptr)pnew_act->sigaction;
       uptr new_cb = (pnew_act->sa_flags & __sanitizer::sa_siginfo)
                         ? (uptr)SignalAction
@@ -1259,59 +1256,25 @@ int OnExit() {
 #define COMMON_SYSCALL_POST_WRITE_RANGE(p, s) __msan_unpoison(p, s)
 #include "sanitizer_common/sanitizer_common_syscalls.inc"
 
-// static
-void *fast_memset(void *ptr, int c, SIZE_T n) {
-  // hack until we have a really fast internal_memset
-  if (sizeof(uptr) == 8 &&
-      (n % 8) == 0 &&
-      ((uptr)ptr % 8) == 0) {
-    uptr c8 = (unsigned)c & 0xFF;
-    c8 = (c8 << 8) | c8;
-    c8 = (c8 << 16) | c8;
-    c8 = (c8 << 32) | c8;
-    uptr *p = (uptr*)ptr;
-    for (SIZE_T i = 0; i < n / 8; i++)
-      p[i] = c8;
-    return ptr;
-  }
-  return internal_memset(ptr, c, n);
-}
-
-// static
-void *fast_memcpy(void *dst, const void *src, SIZE_T n) {
-  // Same hack as in fast_memset above.
-  if (sizeof(uptr) == 8 &&
-      (n % 8) == 0 &&
-      ((uptr)dst % 8) == 0 &&
-      ((uptr)src % 8) == 0) {
-    uptr *d = (uptr*)dst;
-    uptr *s = (uptr*)src;
-    for (SIZE_T i = 0; i < n / 8; i++)
-      d[i] = s[i];
-    return dst;
-  }
-  return internal_memcpy(dst, src, n);
-}
-
 static void PoisonShadow(uptr ptr, uptr size, u8 value) {
   uptr PageSize = GetPageSizeCached();
   uptr shadow_beg = MEM_TO_SHADOW(ptr);
   uptr shadow_end = MEM_TO_SHADOW(ptr + size);
   if (value ||
       shadow_end - shadow_beg < common_flags()->clear_shadow_mmap_threshold) {
-    fast_memset((void*)shadow_beg, value, shadow_end - shadow_beg);
+    REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
   } else {
     uptr page_beg = RoundUpTo(shadow_beg, PageSize);
     uptr page_end = RoundDownTo(shadow_end, PageSize);
 
     if (page_beg >= page_end) {
-      fast_memset((void *)shadow_beg, 0, shadow_end - shadow_beg);
+      REAL(memset)((void *)shadow_beg, 0, shadow_end - shadow_beg);
     } else {
       if (page_beg != shadow_beg) {
-        fast_memset((void *)shadow_beg, 0, page_beg - shadow_beg);
+        REAL(memset)((void *)shadow_beg, 0, page_beg - shadow_beg);
       }
       if (page_end != shadow_end) {
-        fast_memset((void *)page_end, 0, shadow_end - page_end);
+        REAL(memset)((void *)page_end, 0, shadow_end - page_end);
       }
       MmapFixedNoReserve(page_beg, page_end - page_beg);
     }
@@ -1319,7 +1282,7 @@ static void PoisonShadow(uptr ptr, uptr size, u8 value) {
 }
 
 // These interface functions reside here so that they can use
-// fast_memset, etc.
+// REAL(memset), etc.
 void __msan_unpoison(const void *a, uptr size) {
   if (!MEM_IS_APP(a)) return;
   PoisonShadow((uptr)a, size, 0);
@@ -1338,7 +1301,7 @@ void __msan_poison_stack(void *a, uptr size) {
 }
 
 void __msan_clear_and_unpoison(void *a, uptr size) {
-  fast_memset(a, 0, size);
+  REAL(memset)(a, 0, size);
   PoisonShadow((uptr)a, size, 0);
 }
 
@@ -1347,7 +1310,7 @@ void *__msan_memcpy(void *dest, const void *src, SIZE_T n) {
   if (msan_init_is_running) return REAL(memcpy)(dest, src, n);
   ENSURE_MSAN_INITED();
   GET_STORE_STACK_TRACE;
-  void *res = fast_memcpy(dest, src, n);
+  void *res = REAL(memcpy)(dest, src, n);
   CopyPoison(dest, src, n, &stack);
   return res;
 }
@@ -1356,7 +1319,7 @@ void *__msan_memset(void *s, int c, SIZE_T n) {
   if (!msan_inited) return internal_memset(s, c, n);
   if (msan_init_is_running) return REAL(memset)(s, c, n);
   ENSURE_MSAN_INITED();
-  void *res = fast_memset(s, c, n);
+  void *res = REAL(memset)(s, c, n);
   __msan_unpoison(s, n);
   return res;
 }
@@ -1445,7 +1408,7 @@ void CopyOrigin(void *dst, const void *src, uptr size, StackTrace *stack) {
         *dst = dst_o;
       }
     } else {
-      fast_memcpy((void *)MEM_TO_ORIGIN(beg), (void *)MEM_TO_ORIGIN(s),
+      REAL(memcpy)((void *)MEM_TO_ORIGIN(beg), (void *)MEM_TO_ORIGIN(s),
                   end - beg);
     }
   }
@@ -1455,15 +1418,15 @@ void MovePoison(void *dst, const void *src, uptr size, StackTrace *stack) {
   if (!MEM_IS_APP(dst)) return;
   if (!MEM_IS_APP(src)) return;
   if (src == dst) return;
-  internal_memmove((void *)MEM_TO_SHADOW((uptr)dst),
-                   (void *)MEM_TO_SHADOW((uptr)src), size);
+  REAL(memmove)((void *)MEM_TO_SHADOW((uptr)dst),
+                (void *)MEM_TO_SHADOW((uptr)src), size);
   CopyOrigin(dst, src, size, stack);
 }
 
 void CopyPoison(void *dst, const void *src, uptr size, StackTrace *stack) {
   if (!MEM_IS_APP(dst)) return;
   if (!MEM_IS_APP(src)) return;
-  fast_memcpy((void *)MEM_TO_SHADOW((uptr)dst),
+  REAL(memcpy)((void *)MEM_TO_SHADOW((uptr)dst),
               (void *)MEM_TO_SHADOW((uptr)src), size);
   CopyOrigin(dst, src, size, stack);
 }
