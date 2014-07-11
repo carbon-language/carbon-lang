@@ -24,10 +24,11 @@
 namespace llvm {
 class GlobalVariable;
 class TargetLoweringBase;
+class TargetLowering;
+class TargetMachine;
 class SDNode;
 class SDValue;
 class SelectionDAG;
-class TargetLowering;
 struct EVT;
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
@@ -86,7 +87,8 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool isInTailCallPosition(ImmutableCallSite CS, const SelectionDAG &DAG);
+bool isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM,
+                          const TargetLoweringBase &TLI);
 
 /// Test if given that the input instruction is in the tail call position if the
 /// return type or any attributes of the function will inhibit tail call

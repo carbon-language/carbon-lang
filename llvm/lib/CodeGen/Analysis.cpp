@@ -475,7 +475,8 @@ static bool nextRealType(SmallVectorImpl<CompositeType *> &SubTypes,
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool llvm::isInTailCallPosition(ImmutableCallSite CS, const SelectionDAG &DAG) {
+bool llvm::isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM,
+                                const TargetLoweringBase &TLI) {
   const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
@@ -490,8 +491,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const SelectionDAG &DAG) {
   // longjmp on x86), it can end up causing miscompilation that has not
   // been fully understood.
   if (!Ret &&
-      (!DAG.getTarget().Options.GuaranteedTailCallOpt ||
-       !isa<UnreachableInst>(Term)))
+      (!TM.Options.GuaranteedTailCallOpt || !isa<UnreachableInst>(Term)))
     return false;
 
   // If I will have a chain, make sure no other instruction that will have a
@@ -509,8 +509,7 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const SelectionDAG &DAG) {
         return false;
     }
 
-  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret,
-                                         *DAG.getTarget().getTargetLowering());
+  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret, TLI);
 }
 
 bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
