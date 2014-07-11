@@ -50,6 +50,7 @@ class GdbRemoteTestCaseBase(TestBase):
         self.test_sequence = GdbRemoteTestSequence(self.logger)
         self.set_inferior_startup_launch()
         self.port = self.get_next_port()
+        self.named_pipe_path = None
 
     def get_next_port(self):
         return 12000 + random.randint(0,3999)
@@ -102,6 +103,8 @@ class GdbRemoteTestCaseBase(TestBase):
         commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
             commandline += " --attach=%d" % attach_pid
+        if self.named_pipe_path:
+            commandline += " --named-pipe %s" % self.named_pipe_path
 
         # Start the server.
         server = pexpect.spawn(commandline)
