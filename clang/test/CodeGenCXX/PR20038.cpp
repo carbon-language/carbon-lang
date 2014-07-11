@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -g -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple %itanium_abi_triple -g -emit-llvm  %s -o - | FileCheck %s
 
 struct C {
   ~C();
