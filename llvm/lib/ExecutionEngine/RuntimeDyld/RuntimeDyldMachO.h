@@ -16,7 +16,6 @@
 
 #include "ObjectImageCommon.h"
 #include "RuntimeDyldImpl.h"
-#include "llvm/ADT/IndexedMap.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Format.h"
 
@@ -56,11 +55,20 @@ private:
       return 8; // 32-bit instruction and 32-bit address
     else if (Arch == Triple::x86_64)
       return 8; // GOT entry
+    else if (Arch == Triple::arm64)
+      return 8; // GOT entry
     else
       return 0;
   }
 
-  unsigned getStubAlignment() override { return 1; }
+  unsigned getStubAlignment() override {
+    if (Arch == Triple::arm || Arch == Triple::thumb)
+      return 4;
+    else if (Arch == Triple::arm64)
+      return 8;
+    else
+      return 1;
+  }
 
   relocation_iterator processSECTDIFFRelocation(
                                              unsigned SectionID,
