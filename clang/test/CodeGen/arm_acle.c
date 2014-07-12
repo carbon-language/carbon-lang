@@ -3,7 +3,8 @@
 
 #include <arm_acle.h>
 
-/* Miscellaneous data-processing intrinsics */
+/* 9 DATA-PROCESSING INTRINSICS */
+/* 9.2 Miscellaneous data-processing intrinsics */
 // ARM-LABEL: test_rev
 // ARM: call i32 @llvm.bswap.i32(i32 %t)
 uint32_t test_rev(uint32_t t) {
@@ -42,8 +43,10 @@ uint64_t test_clzll(uint64_t t) {
   return __clzll(t);
 }
 
-/* Saturating intrinsics */
+/* 9.4 Saturating intrinsics */
 #ifdef __ARM_32BIT_STATE
+
+/* 9.4.1 Width-specified saturation intrinsics */
 // AArch32-LABEL: test_ssat
 // AArch32: call i32 @llvm.arm.ssat(i32 %t, i32 1)
 int32_t test_ssat(int32_t t) {
@@ -55,6 +58,8 @@ int32_t test_ssat(int32_t t) {
 int32_t test_usat(int32_t t) {
   return __usat(t, 2);
 }
+
+/* 9.4.2 Saturating addition and subtraction intrinsics */
 // AArch32-LABEL: test_qadd
 // AArch32: call i32 @llvm.arm.qadd(i32 %a, i32 %b)
 int32_t test_qadd(int32_t a, int32_t b) {
@@ -77,7 +82,7 @@ int32_t test_qdbl() {
 }
 #endif
 
-/* CRC32 intrinsics */
+/* 9.7 CRC32 intrinsics */
 // ARM-LABEL: test_crc32b
 // AArch32: call i32 @llvm.arm.crc32b
 // AArch64: call i32 @llvm.aarch64.crc32b

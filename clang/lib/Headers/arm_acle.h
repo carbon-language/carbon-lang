@@ -34,8 +34,8 @@
 extern "C" {
 #endif
 
-/* Miscellaneous data-processing intrinsics */
-
+/* 9 DATA-PROCESSING INTRINSICS */
+/* 9.2 Miscellaneous data-processing intrinsics */
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __clz(uint32_t t) {
   return __builtin_clz(t);
@@ -74,17 +74,20 @@ static __inline__ uint64_t __attribute__((always_inline, nodebug))
   return __builtin_bswap64(t);
 }
 
-
 /*
- * Saturating intrinsics
+ * 9.4 Saturating intrinsics
  *
  * FIXME: Change guard to their corrosponding __ARM_FEATURE flag when Q flag
  * intrinsics are implemented and the flag is enabled.
  */
+/* 9.4.1 Width-specified saturation intrinsics */
 #if __ARM_32BIT_STATE
 #define __ssat(x, y) __builtin_arm_ssat(x, y)
 #define __usat(x, y) __builtin_arm_usat(x, y)
+#endif
 
+/* 9.4.2 Saturating addition and subtraction intrinsics */
+#if __ARM_32BIT_STATE
 static __inline__ int32_t __attribute__((always_inline, nodebug))
   __qadd(int32_t t, int32_t v) {
   return __builtin_arm_qadd(t, v);
@@ -101,7 +104,7 @@ __qdbl(int32_t t) {
 }
 #endif
 
-/* CRC32 intrinsics */
+/* 9.7 CRC32 intrinsics */
 #if __ARM_FEATURE_CRC32
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
   __crc32b(uint32_t a, uint8_t b) {
