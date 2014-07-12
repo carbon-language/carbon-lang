@@ -19,5 +19,6 @@ FileCheck -input-file=${TEMPORARY_FILE} ${INPUT_FILE} \
 
 if grep -q CHECK-MESSAGES ${INPUT_FILE}; then
   FileCheck -input-file=${TEMPORARY_FILE}.msg ${INPUT_FILE} \
-    -check-prefix=CHECK-MESSAGES -implicit-check-not="warning:" || exit $?
+    -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:" \
+    || exit $?
 fi

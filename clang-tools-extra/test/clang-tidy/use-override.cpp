@@ -82,8 +82,8 @@ public:
 
 // CHECK-MESSAGES-NOT: warning:
 
-void SimpleCases::i() {}
-// CHECK-FIXES: {{^void SimpleCases::i\(\) {}}}
+void SimpleCases::c() {}
+// CHECK-FIXES: {{^void SimpleCases::c\(\) {}}}
 
 SimpleCases::~SimpleCases() {}
 // CHECK-FIXES: {{^SimpleCases::~SimpleCases\(\) {}}}
@@ -176,7 +176,7 @@ struct Macros : public Base {
   // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
   // CHECK-FIXES: {{^  VIRTUAL void d\(\) OVERRIDE;}}
 
-#define FUNC(name, return_type) return_type name()
+#define FUNC(return_type, name) return_type name()
   FUNC(void, e);
   // CHECK-FIXES: {{^  FUNC\(void, e\);}}
 
@@ -209,13 +209,18 @@ struct UnusedMemberInstantiation : public C {
 };
 struct IntantiateWithoutUse : public UnusedMemberInstantiation<Base> {};
 
+struct Base2 {
+  virtual ~Base2() {}
+  virtual void a();
+};
+
 // The OverrideAttr isn't propagated to specializations in all cases. Make sure
 // we don't add "override" a second time.
 template <int I>
-struct MembersOfSpecializations : public Base {
+struct MembersOfSpecializations : public Base2 {
   void a() override;
   // CHECK-MESSAGES-NOT: warning:
   // CHECK-FIXES: {{^  void a\(\) override;}}
 };
 template <> void MembersOfSpecializations<3>::a() {}
-void f() { MembersOfSpecializations<3>().a(); };
+void ff() { MembersOfSpecializations<3>().a(); };
