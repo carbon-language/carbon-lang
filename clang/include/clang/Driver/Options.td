@@ -73,7 +73,7 @@ def g_flags_Group         : OptionGroup<"<g flags group>">;
 def i_Group               : OptionGroup<"<i group>">, Group<CompileOnly_Group>;
 def clang_i_Group         : OptionGroup<"<clang i group>">, Group<i_Group>;
 def m_Group               : OptionGroup<"<m group>">, Group<CompileOnly_Group>;
-def m_x86_Features_Group  : OptionGroup<"<m x86 features group>">, Group<m_Group>;
+def m_x86_Features_Group  : OptionGroup<"<m x86 features group>">, Group<m_Group>, Flags<[CoreOption]>;
 def m_hexagon_Features_Group  : OptionGroup<"<m hexagon features group>">, Group<m_Group>;
 def m_arm_Features_Group  : OptionGroup<"<m arm features group>">, Group<m_Group>;
 def m_aarch64_Features_Group  : OptionGroup<"<m aarch64 features group>">, Group<m_Group>;
