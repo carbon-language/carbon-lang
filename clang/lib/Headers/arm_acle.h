@@ -34,6 +34,30 @@
 extern "C" {
 #endif
 
+/* 8.4 - Hints */
+
+#if !defined(_MSC_VER)
+static __inline__ void __attribute__((always_inline, nodebug)) __wfi(void) {
+  __builtin_arm_wfi();
+}
+
+static __inline__ void __attribute__((always_inline, nodebug)) __wfe(void) {
+  __builtin_arm_wfe();
+}
+
+static __inline__ void __attribute__((always_inline, nodebug)) __sev(void) {
+  __builtin_arm_sev();
+}
+
+static __inline__ void __attribute__((always_inline, nodebug)) __sevl(void) {
+  __builtin_arm_sevl();
+}
+
+static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
+  __builtin_arm_yield();
+}
+#endif
+
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
