@@ -112,11 +112,7 @@ void Distribution::add(const BlockNode &Node, uint64_t Amount,
   Total = NewTotal;
 
   // Save the weight.
-  Weight W;
-  W.TargetNode = Node;
-  W.Amount = Amount;
-  W.Type = Type;
-  Weights.push_back(W);
+  Weights.push_back(Weight(Type, Node, Amount));
 }
 
 static void combineWeight(Weight &W, const Weight &OtherW) {

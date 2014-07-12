@@ -322,6 +322,8 @@ public:
     BlockNode TargetNode;
     uint64_t Amount;
     Weight() : Type(Local), Amount(0) {}
+    Weight(DistType Type, BlockNode TargetNode, uint64_t Amount)
+        : Type(Type), TargetNode(TargetNode), Amount(Amount) {}
   };
 
   /// \brief Distribution of unscaled probability weight.
