@@ -21,11 +21,6 @@ using namespace llvm::bfi_detail;
 
 #define DEBUG_TYPE "block-freq"
 
-//===----------------------------------------------------------------------===//
-//
-// BlockMass implementation.
-//
-//===----------------------------------------------------------------------===//
 ScaledNumber<uint64_t> BlockMass::toScaled() const {
   if (isFull())
     return ScaledNumber<uint64_t>(1, 0);
@@ -46,11 +41,6 @@ raw_ostream &BlockMass::print(raw_ostream &OS) const {
   return OS;
 }
 
-//===----------------------------------------------------------------------===//
-//
-// BlockFrequencyInfoImpl implementation.
-//
-//===----------------------------------------------------------------------===//
 namespace {
 
 typedef BlockFrequencyInfoImplBase::BlockNode BlockNode;
