@@ -1604,7 +1604,7 @@ bool FastISel::FastLowerCall(CallLoweringInfo &/*CLI*/) {
   return false;
 }
 
-bool FastISel::FastLowerIntrinsicCall(const IntrinsicInst */*II*/) {
+bool FastISel::FastLowerIntrinsicCall(const IntrinsicInst * /*II*/) {
   return false;
 }
 
