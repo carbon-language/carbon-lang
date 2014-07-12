@@ -420,14 +420,12 @@ void MCStreamer::setCurrentW64UnwindInfo(MCWinFrameInfo *Frame) {
 }
 
 void MCStreamer::EnsureValidW64UnwindInfo() {
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (!CurFrame || CurFrame->End)
+  if (!CurrentW64UnwindInfo || CurrentW64UnwindInfo->End)
     report_fatal_error("No open Win64 EH frame function!");
 }
 
 void MCStreamer::EmitWinCFIStartProc(const MCSymbol *Symbol) {
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame && !CurFrame->End)
+  if (CurrentW64UnwindInfo && !CurrentW64UnwindInfo->End)
     report_fatal_error("Starting a function before ending the previous one!");
   MCWinFrameInfo *Frame = new MCWinFrameInfo;
   Frame->Begin = getContext().CreateTempSymbol();
@@ -438,69 +436,62 @@ void MCStreamer::EmitWinCFIStartProc(const MCSymbol *Symbol) {
 
 void MCStreamer::EmitWinCFIEndProc() {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame->ChainedParent)
+  if (CurrentW64UnwindInfo->ChainedParent)
     report_fatal_error("Not all chained regions terminated!");
-  CurFrame->End = getContext().CreateTempSymbol();
-  EmitLabel(CurFrame->End);
+  CurrentW64UnwindInfo->End = getContext().CreateTempSymbol();
+  EmitLabel(CurrentW64UnwindInfo->End);
 }
 
 void MCStreamer::EmitWinCFIStartChained() {
   EnsureValidW64UnwindInfo();
   MCWinFrameInfo *Frame = new MCWinFrameInfo;
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
   Frame->Begin = getContext().CreateTempSymbol();
-  Frame->Function = CurFrame->Function;
-  Frame->ChainedParent = CurFrame;
+  Frame->Function = CurrentW64UnwindInfo->Function;
+  Frame->ChainedParent = CurrentW64UnwindInfo;
   EmitLabel(Frame->Begin);
   setCurrentW64UnwindInfo(Frame);
 }
 
 void MCStreamer::EmitWinCFIEndChained() {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (!CurFrame->ChainedParent)
+  if (!CurrentW64UnwindInfo->ChainedParent)
     report_fatal_error("End of a chained region outside a chained region!");
-  CurFrame->End = getContext().CreateTempSymbol();
-  EmitLabel(CurFrame->End);
-  CurrentW64UnwindInfo = CurFrame->ChainedParent;
+  CurrentW64UnwindInfo->End = getContext().CreateTempSymbol();
+  EmitLabel(CurrentW64UnwindInfo->End);
+  CurrentW64UnwindInfo = CurrentW64UnwindInfo->ChainedParent;
 }
 
 void MCStreamer::EmitWinEHHandler(const MCSymbol *Sym, bool Unwind,
                                   bool Except) {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame->ChainedParent)
+  if (CurrentW64UnwindInfo->ChainedParent)
     report_fatal_error("Chained unwind areas can't have handlers!");
-  CurFrame->ExceptionHandler = Sym;
+  CurrentW64UnwindInfo->ExceptionHandler = Sym;
   if (!Except && !Unwind)
     report_fatal_error("Don't know what kind of handler this is!");
   if (Unwind)
-    CurFrame->HandlesUnwind = true;
+    CurrentW64UnwindInfo->HandlesUnwind = true;
   if (Except)
-    CurFrame->HandlesExceptions = true;
+    CurrentW64UnwindInfo->HandlesExceptions = true;
 }
 
 void MCStreamer::EmitWinEHHandlerData() {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame->ChainedParent)
+  if (CurrentW64UnwindInfo->ChainedParent)
     report_fatal_error("Chained unwind areas can't have handlers!");
 }
 
 void MCStreamer::EmitWinCFIPushReg(unsigned Register) {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(Win64EH::UOP_PushNonVol, Label, Register);
   EmitLabel(Label);
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFISetFrame(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame->LastFrameInst >= 0)
+  if (CurrentW64UnwindInfo->LastFrameInst >= 0)
     report_fatal_error("Frame register and offset already specified!");
   if (Offset & 0x0F)
     report_fatal_error("Misaligned frame pointer offset!");
@@ -509,8 +500,8 @@ void MCStreamer::EmitWinCFISetFrame(unsigned Register, unsigned Offset) {
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Label, Register, Offset);
   EmitLabel(Label);
-  CurFrame->LastFrameInst = CurFrame->Instructions.size();
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->LastFrameInst = CurrentW64UnwindInfo->Instructions.size();
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFIAllocStack(unsigned Size) {
@@ -519,55 +510,50 @@ void MCStreamer::EmitWinCFIAllocStack(unsigned Size) {
     report_fatal_error("Allocation size must be non-zero!");
   if (Size & 7)
     report_fatal_error("Misaligned stack allocation!");
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(Label, Size);
   EmitLabel(Label);
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFISaveReg(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
   if (Offset & 7)
     report_fatal_error("Misaligned saved register offset!");
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(
      Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVolBig : Win64EH::UOP_SaveNonVol,
                             Label, Register, Offset);
   EmitLabel(Label);
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFISaveXMM(unsigned Register, unsigned Offset) {
   EnsureValidW64UnwindInfo();
   if (Offset & 0x0F)
     report_fatal_error("Misaligned saved vector register offset!");
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(
     Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128Big : Win64EH::UOP_SaveXMM128,
                             Label, Register, Offset);
   EmitLabel(Label);
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFIPushFrame(bool Code) {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  if (CurFrame->Instructions.size() > 0)
+  if (CurrentW64UnwindInfo->Instructions.size() > 0)
     report_fatal_error("If present, PushMachFrame must be the first UOP");
   MCSymbol *Label = getContext().CreateTempSymbol();
   MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Label, Code);
   EmitLabel(Label);
-  CurFrame->Instructions.push_back(Inst);
+  CurrentW64UnwindInfo->Instructions.push_back(Inst);
 }
 
 void MCStreamer::EmitWinCFIEndProlog() {
   EnsureValidW64UnwindInfo();
-  MCWinFrameInfo *CurFrame = CurrentW64UnwindInfo;
-  CurFrame->PrologEnd = getContext().CreateTempSymbol();
-  EmitLabel(CurFrame->PrologEnd);
+  CurrentW64UnwindInfo->PrologEnd = getContext().CreateTempSymbol();
+  EmitLabel(CurrentW64UnwindInfo->PrologEnd);
 }
 
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
