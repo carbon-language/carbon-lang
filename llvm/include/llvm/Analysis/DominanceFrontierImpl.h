@@ -48,6 +48,14 @@ void DominanceFrontierBase<BlockT>::removeBlock(BlockT *BB) {
 }
 
 template <class BlockT>
+void DominanceFrontierBase<BlockT>::addToFrontier(iterator I,
+                                                  BlockT *Node) {
+  assert(I != end() && "BB is not in DominanceFrontier!");
+  assert(I->second.count(Node) && "Node is not in DominanceFrontier of BB");
+  I->second.erase(Node);
+}
+
+template <class BlockT>
 void DominanceFrontierBase<BlockT>::removeFromFrontier(iterator I,
                                                        BlockT *Node) {
   assert(I != end() && "BB is not in DominanceFrontier!");
