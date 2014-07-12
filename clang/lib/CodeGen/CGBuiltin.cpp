@@ -3801,6 +3801,31 @@ emitVectorWrappedScalar16Intrinsic(unsigned Int, SmallVectorImpl<Value*> &Ops,
 
 Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
                                                const CallExpr *E) {
+  unsigned HintID = static_cast<unsigned>(-1);
+  switch (BuiltinID) {
+  default: break;
+  case AArch64::BI__builtin_arm_yield:
+    HintID = 1;
+    break;
+  case AArch64::BI__builtin_arm_wfe:
+    HintID = 2;
+    break;
+  case AArch64::BI__builtin_arm_wfi:
+    HintID = 3;
+    break;
+  case AArch64::BI__builtin_arm_sev:
+    HintID = 4;
+    break;
+  case AArch64::BI__builtin_arm_sevl:
+    HintID = 5;
+    break;
+  }
+
+  if (HintID != static_cast<unsigned>(-1)) {
+    Function *F = CGM.getIntrinsic(Intrinsic::aarch64_hint);
+    return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, HintID));
+  }
+
   if (BuiltinID == AArch64::BI__builtin_arm_rbit) {
     assert((getContext().getTypeSize(E->getType()) == 32) &&
            "rbit of unusual size!");

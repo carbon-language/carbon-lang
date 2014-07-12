@@ -3,6 +3,43 @@
 
 #include <arm_acle.h>
 
+/* Hints */
+
+// ARM-LABEL: test_yield
+// AArch32: call void @llvm.arm.hint(i32 1)
+// AArch64: call void @llvm.aarch64.hint(i32 1)
+void test_yield(void) {
+  __yield();
+}
+
+// ARM-LABEL: test_wfe
+// AArch32: call void @llvm.arm.hint(i32 2)
+// AArch64: call void @llvm.aarch64.hint(i32 2)
+void test_wfe(void) {
+  __wfe();
+}
+
+// ARM-LABEL: test_wfi
+// AArch32: call void @llvm.arm.hint(i32 3)
+// AArch64: call void @llvm.aarch64.hint(i32 3)
+void test_wfi(void) {
+  __wfi();
+}
+
+// ARM-LABEL: test_sev
+// AArch32: call void @llvm.arm.hint(i32 4)
+// AArch64: call void @llvm.aarch64.hint(i32 4)
+void test_sev(void) {
+  __sev();
+}
+
+// ARM-LABEL: test_sevl
+// AArch32: call void @llvm.arm.hint(i32 5)
+// AArch64: call void @llvm.aarch64.hint(i32 5)
+void test_sevl(void) {
+  __sevl();
+}
+
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */
 // ARM-LABEL: test_rev
