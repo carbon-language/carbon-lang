@@ -51,6 +51,7 @@ add_llvm_library(LLVMCodeGen
   MachineCodeEmitter.cpp
   MachineCopyPropagation.cpp
   MachineDominators.cpp
+  MachineDominanceFrontier.cpp
   MachineFunction.cpp
   MachineFunctionAnalysis.cpp
   MachineFunctionPass.cpp

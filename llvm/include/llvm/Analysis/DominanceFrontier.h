@@ -23,167 +23,185 @@
 #include <set>
 
 namespace llvm {
-  
+
 //===----------------------------------------------------------------------===//
 /// DominanceFrontierBase - Common base class for computing forward and inverse
 /// dominance frontiers for a function.
 ///
-class DominanceFrontierBase : public FunctionPass {
+template <class BlockT>
+class DominanceFrontierBase {
 public:
-  typedef std::set<BasicBlock*>             DomSetType;    // Dom set for a bb
-  typedef std::map<BasicBlock*, DomSetType> DomSetMapType; // Dom set map
+  typedef std::set<BlockT *> DomSetType;                // Dom set for a bb
+  typedef std::map<BlockT *, DomSetType> DomSetMapType; // Dom set map
+
 protected:
+  typedef GraphTraits<BlockT *> BlockTraits;
+
   DomSetMapType Frontiers;
-  std::vector<BasicBlock*> Roots;
+  std::vector<BlockT *> Roots;
   const bool IsPostDominators;
 
 public:
-  DominanceFrontierBase(char &ID, bool isPostDom)
-    : FunctionPass(ID), IsPostDominators(isPostDom) {}
+  DominanceFrontierBase(bool isPostDom) : IsPostDominators(isPostDom) {}
 
   /// getRoots - Return the root blocks of the current CFG.  This may include
   /// multiple blocks if we are computing post dominators.  For forward
   /// dominators, this will always be a single block (the entry node).
   ///
-  inline const std::vector<BasicBlock*> &getRoots() const { return Roots; }
+  inline const std::vector<BlockT *> &getRoots() const {
+    return Roots;
+  }
+
+  BlockT *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
 
   /// isPostDominator - Returns true if analysis based of postdoms
   ///
-  bool isPostDominator() const { return IsPostDominators; }
+  bool isPostDominator() const {
+    return IsPostDominators;
+  }
 
-  void releaseMemory() override { Frontiers.clear(); }
+  void releaseMemory() {
+    Frontiers.clear();
+  }
 
   // Accessor interface:
-  typedef DomSetMapType::iterator iterator;
-  typedef DomSetMapType::const_iterator const_iterator;
-  iterator       begin()       { return Frontiers.begin(); }
+  typedef typename DomSetMapType::iterator iterator;
+  typedef typename DomSetMapType::const_iterator const_iterator;
+  iterator begin() { return Frontiers.begin(); }
   const_iterator begin() const { return Frontiers.begin(); }
-  iterator       end()         { return Frontiers.end(); }
-  const_iterator end()   const { return Frontiers.end(); }
-  iterator       find(BasicBlock *B)       { return Frontiers.find(B); }
-  const_iterator find(BasicBlock *B) const { return Frontiers.find(B); }
+  iterator end() { return Frontiers.end(); }
+  const_iterator end() const { return Frontiers.end(); }
+  iterator find(BlockT *B) { return Frontiers.find(B); }
+  const_iterator find(BlockT *B) const { return Frontiers.find(B); }
 
-  iterator addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
+  iterator addBasicBlock(BlockT *BB, const DomSetType &frontier) {
     assert(find(BB) == end() && "Block already in DominanceFrontier!");
     return Frontiers.insert(std::make_pair(BB, frontier)).first;
   }
 
   /// removeBlock - Remove basic block BB's frontier.
-  void removeBlock(BasicBlock *BB) {
-    assert(find(BB) != end() && "Block is not in DominanceFrontier!");
-    for (iterator I = begin(), E = end(); I != E; ++I)
-      I->second.erase(BB);
-    Frontiers.erase(BB);
-  }
+  void removeBlock(BlockT *BB);
 
-  void addToFrontier(iterator I, BasicBlock *Node) {
-    assert(I != end() && "BB is not in DominanceFrontier!");
-    I->second.insert(Node);
-  }
+  void addToFrontier(iterator I, BlockT *Node);
 
-  void removeFromFrontier(iterator I, BasicBlock *Node) {
-    assert(I != end() && "BB is not in DominanceFrontier!");
-    assert(I->second.count(Node) && "Node is not in DominanceFrontier of BB");
-    I->second.erase(Node);
-  }
+  void removeFromFrontier(iterator I, BlockT *Node);
 
   /// compareDomSet - Return false if two domsets match. Otherwise
   /// return true;
-  bool compareDomSet(DomSetType &DS1, const DomSetType &DS2) const {
-    std::set<BasicBlock *> tmpSet;
-    for (DomSetType::const_iterator I = DS2.begin(),
-           E = DS2.end(); I != E; ++I)
-      tmpSet.insert(*I);
-
-    for (DomSetType::const_iterator I = DS1.begin(),
-           E = DS1.end(); I != E; ) {
-      BasicBlock *Node = *I++;
-
-      if (tmpSet.erase(Node) == 0)
-        // Node is in DS1 but not in DS2.
-        return true;
-    }
-
-    if (!tmpSet.empty())
-      // There are nodes that are in DS2 but not in DS1.
-      return true;
-
-    // DS1 and DS2 matches.
-    return false;
-  }
+  bool compareDomSet(DomSetType &DS1, const DomSetType &DS2) const;
 
   /// compare - Return true if the other dominance frontier base matches
   /// this dominance frontier base. Otherwise return false.
-  bool compare(DominanceFrontierBase &Other) const {
-    DomSetMapType tmpFrontiers;
-    for (DomSetMapType::const_iterator I = Other.begin(),
-           E = Other.end(); I != E; ++I)
-      tmpFrontiers.insert(std::make_pair(I->first, I->second));
-
-    for (DomSetMapType::iterator I = tmpFrontiers.begin(),
-           E = tmpFrontiers.end(); I != E; ) {
-      BasicBlock *Node = I->first;
-      const_iterator DFI = find(Node);
-      if (DFI == end())
-        return true;
-
-      if (compareDomSet(I->second, DFI->second))
-        return true;
-
-      ++I;
-      tmpFrontiers.erase(Node);
-    }
-
-    if (!tmpFrontiers.empty())
-      return true;
-
-    return false;
-  }
+  bool compare(DominanceFrontierBase<BlockT> &Other) const;
 
   /// print - Convert to human readable form
   ///
-  void print(raw_ostream &OS, const Module* = nullptr) const override;
+  void print(raw_ostream &OS) const;
 
   /// dump - Dump the dominance frontier to dbgs().
   void dump() const;
 };
 
-
 //===-------------------------------------
 /// DominanceFrontier Class - Concrete subclass of DominanceFrontierBase that is
 /// used to compute a forward dominator frontiers.
 ///
-class DominanceFrontier : public DominanceFrontierBase {
-  virtual void anchor();
+template <class BlockT>
+class ForwardDominanceFrontierBase : public DominanceFrontierBase<BlockT> {
+private:
+  typedef GraphTraits<BlockT *> BlockTraits;
+
 public:
-  static char ID; // Pass ID, replacement for typeid
-  DominanceFrontier() :
-    DominanceFrontierBase(ID, false) {
-      initializeDominanceFrontierPass(*PassRegistry::getPassRegistry());
-    }
+  typedef DominatorTreeBase<BlockT> DomTreeT;
+  typedef DomTreeNodeBase<BlockT> DomTreeNodeT;
+  typedef typename DominanceFrontierBase<BlockT>::DomSetType DomSetType;
 
-  BasicBlock *getRoot() const {
-    assert(Roots.size() == 1 && "Should always have entry node!");
-    return Roots[0];
+  ForwardDominanceFrontierBase() : DominanceFrontierBase<BlockT>(false) {}
+
+  void analyze(DomTreeT &DT) {
+    this->Roots = DT.getRoots();
+    assert(this->Roots.size() == 1 &&
+           "Only one entry block for forward domfronts!");
+    calculate(DT, DT[this->Roots[0]]);
   }
 
-  bool runOnFunction(Function &) override {
-    Frontiers.clear();
-    DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    Roots = DT.getRoots();
-    assert(Roots.size() == 1 && "Only one entry block for forward domfronts!");
-    calculate(DT, DT[Roots[0]]);
-    return false;
-  }
-
-  void getAnalysisUsage(AnalysisUsage &AU) const override {
-    AU.setPreservesAll();
-    AU.addRequired<DominatorTreeWrapperPass>();
-  }
-
-  const DomSetType &calculate(const DominatorTree &DT,
-                              const DomTreeNode *Node);
+  const DomSetType &calculate(const DomTreeT &DT, const DomTreeNodeT *Node);
 };
+
+class DominanceFrontier : public FunctionPass {
+  ForwardDominanceFrontierBase<BasicBlock> Base;
+
+public:
+  typedef DominatorTreeBase<BasicBlock> DomTreeT;
+  typedef DomTreeNodeBase<BasicBlock> DomTreeNodeT;
+  typedef typename DominanceFrontierBase<BasicBlock>::DomSetType DomSetType;
+  typedef DominanceFrontierBase<BasicBlock>::iterator iterator;
+  typedef DominanceFrontierBase<BasicBlock>::const_iterator const_iterator;
+
+  static char ID; // Pass ID, replacement for typeid
+
+  DominanceFrontier();
+
+  ForwardDominanceFrontierBase<BasicBlock> &getBase() { return Base; }
+
+  inline const std::vector<BasicBlock *> &getRoots() const {
+    return Base.getRoots();
+  }
+
+  BasicBlock *getRoot() const { return Base.getRoot(); }
+
+  bool isPostDominator() const { return Base.isPostDominator(); }
+
+  iterator begin() { return Base.begin(); }
+
+  const_iterator begin() const { return Base.begin(); }
+
+  iterator end() { return Base.end(); }
+
+  const_iterator end() const { return Base.end(); }
+
+  iterator find(BasicBlock *B) { return Base.find(B); }
+
+  const_iterator find(BasicBlock *B) const { return Base.find(B); }
+
+  iterator addBasicBlock(BasicBlock *BB, const DomSetType &frontier) {
+    return Base.addBasicBlock(BB, frontier);
+  }
+
+  void removeBlock(BasicBlock *BB) { return Base.removeBlock(BB); }
+
+  void addToFrontier(iterator I, BasicBlock *Node) {
+    return Base.addToFrontier(I, Node);
+  }
+
+  void removeFromFrontier(iterator I, BasicBlock *Node) {
+    return Base.removeFromFrontier(I, Node);
+  }
+
+  bool compareDomSet(DomSetType &DS1, const DomSetType &DS2) const {
+    return Base.compareDomSet(DS1, DS2);
+  }
+
+  bool compare(DominanceFrontierBase<BasicBlock> &Other) const {
+    return Base.compare(Other);
+  }
+
+  void releaseMemory() override;
+
+  bool runOnFunction(Function &) override;
+
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+
+  void print(raw_ostream &OS, const Module * = nullptr) const override;
+
+  void dump() const;
+};
+
+EXTERN_TEMPLATE_INSTANTIATION(class DominanceFrontierBase<BasicBlock>);
+EXTERN_TEMPLATE_INSTANTIATION(class ForwardDominanceFrontierBase<BasicBlock>);
 
 } // End llvm namespace
 
