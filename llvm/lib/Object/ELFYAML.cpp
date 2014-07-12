@@ -298,6 +298,8 @@ void ScalarBitSetTraits<ELFYAML::ELF_EF>::bitset(IO &IO,
 
 void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
     IO &IO, ELFYAML::ELF_SHT &Value) {
+  const auto *Object = static_cast<ELFYAML::Object *>(IO.getContext());
+  assert(Object && "The IO context is not initialized");
 #define ECase(X) IO.enumCase(Value, #X, ELF::X);
   ECase(SHT_NULL)
   ECase(SHT_PROGBITS)
@@ -325,15 +327,27 @@ void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
   ECase(SHT_GNU_versym)
   ECase(SHT_HIOS)
   ECase(SHT_LOPROC)
-  ECase(SHT_ARM_EXIDX)
-  ECase(SHT_ARM_PREEMPTMAP)
-  ECase(SHT_ARM_ATTRIBUTES)
-  ECase(SHT_ARM_DEBUGOVERLAY)
-  ECase(SHT_ARM_OVERLAYSECTION)
-  ECase(SHT_HEX_ORDERED)
-  ECase(SHT_X86_64_UNWIND)
-  ECase(SHT_MIPS_REGINFO)
-  ECase(SHT_MIPS_OPTIONS)
+  switch (Object->Header.Machine) {
+  case ELF::EM_ARM:
+    ECase(SHT_ARM_EXIDX)
+    ECase(SHT_ARM_PREEMPTMAP)
+    ECase(SHT_ARM_ATTRIBUTES)
+    ECase(SHT_ARM_DEBUGOVERLAY)
+    ECase(SHT_ARM_OVERLAYSECTION)
+    break;
+  case ELF::EM_HEXAGON:
+    ECase(SHT_HEX_ORDERED)
+    break;
+  case ELF::EM_X86_64:
+    ECase(SHT_X86_64_UNWIND)
+    break;
+  case ELF::EM_MIPS:
+    ECase(SHT_MIPS_REGINFO)
+    ECase(SHT_MIPS_OPTIONS)
+  default:
+    // Nothing to do.
+    break;
+  }
 #undef ECase
 }
 
