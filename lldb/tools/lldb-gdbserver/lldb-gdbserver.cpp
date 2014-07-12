@@ -12,12 +12,13 @@
 // C Includes
 #include <errno.h>
 #include <getopt.h>
-#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifndef _WIN32
+#include <signal.h>
 #include <unistd.h>
 #endif
 
@@ -74,6 +75,7 @@ static struct option g_long_options[] =
     { "log-flags",          required_argument,  NULL,               'f' },
     { "attach",             required_argument,  NULL,               'a' },
     { "named-pipe",         required_argument,  NULL,               'P' },
+    { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.  NOTE: this is a do-nothing arg as it's behavior is default now.  FIXME remove call from lldb-platform.
     { "setsid",             no_argument,        NULL,               'S' },  // Call setsid() to make llgs run in its own session.
     { NULL,                 0,                  NULL,               0   }
 };
@@ -84,6 +86,8 @@ static struct option g_long_options[] =
 //----------------------------------------------------------------------
 static int g_sigpipe_received = 0;
 static int g_sighup_received_count = 0;
+
+#ifndef _WIN32
 
 void
 signal_handler(int signo)
@@ -100,28 +104,21 @@ signal_handler(int signo)
         g_sigpipe_received = 1;
         break;
     case SIGHUP:
-#if 1
         ++g_sighup_received_count;
 
         // For now, swallow SIGHUP.
         if (log)
             log->Printf ("lldb-gdbserver:%s swallowing SIGHUP (receive count=%d)", __FUNCTION__, g_sighup_received_count);
         signal (SIGHUP, signal_handler);
-#else
-        // Use SIGINT first, if that does not work, use SIGHUP as a last resort.
-        // And we should not call exit() here because it results in the global destructors
-        // to be invoked and wreaking havoc on the threads still running.
-        Host::SystemLog(Host::eSystemLogWarning, "SIGHUP received, exiting lldb-gdbserver...\n");
-        abort();
-#endif
         break;
     }
 }
+#endif // #ifndef _WIN32
 
 static void
 display_usage (const char *progname)
 {
-    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [[HOST]:PORT] "
+    fprintf(stderr, "Usage:\n  %s [--log-file log-file-path] [--log-flags flags] [--lldb-command command]* [--platform platform_name] [--setsid] [--named-pipe named-pipe-path] [--native-regs] [--attach pid] [[HOST]:PORT] "
             "[-- PROGRAM ARG1 ARG2 ...]\n", progname);
     exit(0);
 }
@@ -450,9 +447,11 @@ start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host
 int
 main (int argc, char *argv[])
 {
+#ifndef _WIN32
     // Setup signal handlers first thing.
     signal (SIGPIPE, signal_handler);
     signal (SIGHUP, signal_handler);
+#endif
 
     const char *progname = argv[0];
     int long_option_index = 0;
@@ -542,6 +541,10 @@ main (int argc, char *argv[])
         case 'P': // named pipe
             if (optarg && optarg[0])
                 named_pipe_path = optarg;
+            break;
+
+        case 'r':
+            // Do nothing, native regs is the default these days
             break;
 
 #ifndef _WIN32
