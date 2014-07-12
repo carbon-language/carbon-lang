@@ -509,6 +509,11 @@ void llvm::MergeBasicBlockIntoOnlyPred(BasicBlock *DestBB, Pass *P) {
   PredBB->getTerminator()->eraseFromParent();
   DestBB->getInstList().splice(DestBB->begin(), PredBB->getInstList());
 
+  // If the PredBB is the entry block of the function, move DestBB up to
+  // become the entry block after we erase PredBB.
+  if (PredBB == &DestBB->getParent()->getEntryBlock())
+    DestBB->moveAfter(PredBB);
+
   if (P) {
     if (DominatorTreeWrapperPass *DTWP =
             P->getAnalysisIfAvailable<DominatorTreeWrapperPass>()) {

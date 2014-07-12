@@ -669,14 +669,9 @@ bool JumpThreading::ProcessBlock(BasicBlock *BB) {
       if (LoopHeaders.erase(SinglePred))
         LoopHeaders.insert(BB);
 
-      // Remember if SinglePred was the entry block of the function.  If so, we
-      // will need to move BB back to the entry position.
-      bool isEntry = SinglePred == &SinglePred->getParent()->getEntryBlock();
       LVI->eraseBlock(SinglePred);
       MergeBasicBlockIntoOnlyPred(BB);
 
-      if (isEntry && BB != &BB->getParent()->getEntryBlock())
-        BB->moveBefore(&BB->getParent()->getEntryBlock());
       return true;
     }
   }
