@@ -53,7 +53,7 @@ using namespace lldb_private;
 
 namespace
 {
-    static lldb::tid_t s_listen_thread = LLDB_INVALID_HOST_THREAD;
+    static lldb::thread_t s_listen_thread = LLDB_INVALID_HOST_THREAD;
     static std::unique_ptr<ConnectionFileDescriptor> s_listen_connection_up;
     static std::string s_listen_url;
 }
