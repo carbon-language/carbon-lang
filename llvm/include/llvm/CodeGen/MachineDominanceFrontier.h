@@ -22,7 +22,7 @@ class MachineDominanceFrontier : public MachineFunctionPass {
 public:
   typedef DominatorTreeBase<MachineBasicBlock> DomTreeT;
   typedef DomTreeNodeBase<MachineBasicBlock> DomTreeNodeT;
-  typedef typename DominanceFrontierBase<MachineBasicBlock>::DomSetType DomSetType;
+  typedef DominanceFrontierBase<MachineBasicBlock>::DomSetType DomSetType;
   typedef DominanceFrontierBase<MachineBasicBlock>::iterator iterator;
   typedef DominanceFrontierBase<MachineBasicBlock>::const_iterator const_iterator;
 
