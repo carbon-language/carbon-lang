@@ -1251,8 +1251,29 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
     if (arch_spec.GetTriple ().getOS () == llvm::Triple::OSType::UnknownOS)
     {
         arch_spec.SetArchitecture (eArchTypeELF, header.e_machine, LLDB_INVALID_CPUTYPE);
-        arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
-        arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+        switch (arch_spec.GetAddressByteSize())
+        {
+        case 4:
+            {
+                const ArchSpec host_arch32 = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                if (host_arch32.GetCore() == arch_spec.GetCore())
+                {
+                    arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
+                    arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+                }
+            }
+            break;
+        case 8:
+            {
+                const ArchSpec host_arch64 = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+                if (host_arch64.GetCore() == arch_spec.GetCore())
+                {
+                    arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
+                    arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+                }
+            }
+            break;
+        }
     }
 
     // If there are no section headers we are done.

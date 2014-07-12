@@ -905,6 +905,10 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
     case ArchSpec::kCore_any:
         return true;
 
+    case ArchSpec::eCore_arm_generic:
+        if (enforce_exact_match)
+            break;
+        // Fall through to case below
     case ArchSpec::kCore_arm_any:
         if (core2 >= ArchSpec::kCore_arm_first && core2 <= ArchSpec::kCore_arm_last)
             return true;
@@ -932,6 +936,8 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
     case ArchSpec::eCore_arm_armv6m:
         if (!enforce_exact_match)
         {
+            if (core2 == ArchSpec::eCore_arm_generic)
+                return true;
             try_inverse = false;
             if (core2 == ArchSpec::eCore_arm_armv7)
                 return true;
@@ -949,9 +955,11 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
     case ArchSpec::eCore_arm_armv7s:
         if (!enforce_exact_match)
         {
-            try_inverse = false;
+            if (core2 == ArchSpec::eCore_arm_generic)
+                return true;
             if (core2 == ArchSpec::eCore_arm_armv7)
                 return true;
+            try_inverse = false;
         }
         break;
 
