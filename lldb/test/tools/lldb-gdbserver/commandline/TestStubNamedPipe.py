@@ -1,14 +1,19 @@
 import unittest2
 
+# Add the directory above ours to the python library path since we
+# will import from there.
+import os.path
+import sys
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+
 import gdbremote_testcase
 import os
-import os.path
 import select
 import tempfile
 import time
 from lldbtest import *
 
-class TestStubNamedPipe(gdbremote_testcase.GdbRemoteTestCaseBase):
+class TestStubNamedPipeTestCase(gdbremote_testcase.GdbRemoteTestCaseBase):
     def create_named_pipe(self):
         temp_dir = tempfile.mkdtemp()
         named_pipe_path = os.path.join(temp_dir, "stub_port_number")
@@ -79,8 +84,6 @@ class TestStubNamedPipe(gdbremote_testcase.GdbRemoteTestCaseBase):
         self.get_port_from_named_pipe()
 
     @llgs_test
-    @dwarf_test
-    # @unittest2.expectedFailure()
     def test_get_port_from_named_pipe_llgs(self):
         self.init_llgs_test()
         self.set_inferior_startup_launch()

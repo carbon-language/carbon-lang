@@ -17,6 +17,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 // C++ Includes
 
@@ -71,6 +74,7 @@ static struct option g_long_options[] =
     { "log-flags",          required_argument,  NULL,               'f' },
     { "attach",             required_argument,  NULL,               'a' },
     { "named-pipe",         required_argument,  NULL,               'P' },
+    { "setsid",             no_argument,        NULL,               'S' },  // Call setsid() to make llgs run in its own session.
     { NULL,                 0,                  NULL,               0   }
 };
 
@@ -539,6 +543,30 @@ main (int argc, char *argv[])
             if (optarg && optarg[0])
                 named_pipe_path = optarg;
             break;
+
+#ifndef _WIN32
+        case 'S':
+            // Put llgs into a new session. Terminals group processes
+            // into sessions and when a special terminal key sequences
+            // (like control+c) are typed they can cause signals to go out to
+            // all processes in a session. Using this --setsid (-S) option
+            // will cause debugserver to run in its own sessions and be free
+            // from such issues.
+            //
+            // This is useful when llgs is spawned from a command
+            // line application that uses llgs to do the debugging,
+            // yet that application doesn't want llgs receiving the
+            // signals sent to the session (i.e. dying when anyone hits ^C).
+            {
+                const ::pid_t new_sid = setsid();
+                if (new_sid == -1)
+                {
+                    const char *errno_str = strerror(errno);
+                    fprintf (stderr, "failed to set new session id for %s (%s)\n", LLGS_PROGRAM_NAME, errno_str ? errno_str : "<no error string>");
+                }
+            }
+            break;
+#endif
 
         case 'a': // attach {pid|process_name}
             if (optarg && optarg[0])
