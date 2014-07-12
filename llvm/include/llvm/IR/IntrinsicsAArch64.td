@@ -33,6 +33,11 @@ def int_aarch64_udiv : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>,
                                 LLVMMatchType<0>], [IntrNoMem]>;
 
 //===----------------------------------------------------------------------===//
+// HINT
+
+def int_aarch64_hint : Intrinsic<[], [llvm_i32_ty]>;
+
+//===----------------------------------------------------------------------===//
 // RBIT
 
 def int_aarch64_rbit : Intrinsic<[llvm_anyint_ty], [LLVMMatchType<0>],
