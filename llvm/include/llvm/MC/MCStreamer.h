@@ -180,9 +180,9 @@ class MCStreamer {
   MCSymbol *EmitCFICommon();
   void EnsureValidFrame();
 
-  std::vector<MCWin64EHUnwindInfo *> W64UnwindInfos;
-  MCWin64EHUnwindInfo *CurrentW64UnwindInfo;
-  void setCurrentW64UnwindInfo(MCWin64EHUnwindInfo *Frame);
+  std::vector<MCWinFrameInfo *> W64UnwindInfos;
+  MCWinFrameInfo *CurrentW64UnwindInfo;
+  void setCurrentW64UnwindInfo(MCWinFrameInfo *Frame);
   void EnsureValidW64UnwindInfo();
 
   // SymbolOrdering - Tracks an index to represent the order
@@ -204,7 +204,7 @@ protected:
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
 
-  MCWin64EHUnwindInfo *getCurrentW64UnwindInfo() {
+  MCWinFrameInfo *getCurrentW64UnwindInfo() {
     return CurrentW64UnwindInfo;
   }
   void EmitW64Tables();
@@ -239,11 +239,11 @@ public:
 
   unsigned getNumW64UnwindInfos() { return W64UnwindInfos.size(); }
 
-  MCWin64EHUnwindInfo &getW64UnwindInfo(unsigned i) {
+  MCWinFrameInfo &getW64UnwindInfo(unsigned i) {
     return *W64UnwindInfos[i];
   }
 
-  ArrayRef<MCWin64EHUnwindInfo *> getW64UnwindInfos() const {
+  ArrayRef<MCWinFrameInfo *> getW64UnwindInfos() const {
     return W64UnwindInfos;
   }
 

@@ -138,7 +138,7 @@ static void EmitSymbolRefWithOfs(MCStreamer &streamer,
 }
 
 static void EmitRuntimeFunction(MCStreamer &streamer,
-                                const MCWin64EHUnwindInfo *info) {
+                                const MCWinFrameInfo *info) {
   MCContext &context = streamer.getContext();
 
   streamer.EmitValueToAlignment(4);
@@ -149,7 +149,7 @@ static void EmitRuntimeFunction(MCStreamer &streamer,
                                              context), 4);
 }
 
-static void EmitUnwindInfo(MCStreamer &streamer, MCWin64EHUnwindInfo *info) {
+static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info) {
   // If this UNWIND_INFO already has a symbol, it's already been emitted.
   if (info->Symbol) return;
 
@@ -259,7 +259,7 @@ static const MCSection *getWin64EHFuncTableSection(StringRef suffix,
 }
 
 void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
-                                            MCWin64EHUnwindInfo *info) {
+                                            MCWinFrameInfo *info) {
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = streamer.getContext();
