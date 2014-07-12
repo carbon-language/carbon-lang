@@ -285,12 +285,6 @@
 // Xclang: "-cc1"
 // Xclang: "hellocc1"
 
-// We support -m32 and -m64.  We support all x86 CPU feature flags in gcc's -m
-// flag space.
-// RUN: %clang_cl /Zs /WX -m32 -m64 -msse3 -msse4.1 -mavx -mno-avx \
-// RUN:     -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
-// MFLAGS-NOT: argument unused during compilation
-
 // RTTI is on by default. /GR- controls -fno-rtti-data.
 // RUN: %clang_cl /c /GR- -### -- %s 2>&1 | FileCheck -check-prefix=NoRTTI %s
 // NoRTTI: "-fno-rtti-data"
