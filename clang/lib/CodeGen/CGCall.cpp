@@ -1107,6 +1107,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     }
     if (TargetDecl->hasAttr<MallocAttr>())
       RetAttrs.addAttribute(llvm::Attribute::NoAlias);
+    if (TargetDecl->hasAttr<ReturnsNonNullAttr>())
+      RetAttrs.addAttribute(llvm::Attribute::NonNull);
   }
 
   if (CodeGenOpts.OptimizeSize)

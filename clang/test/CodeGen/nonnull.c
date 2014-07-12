@@ -15,3 +15,9 @@ void bar2(int * x, int * y) __attribute__((nonnull(2)))  {
   *x = 0;
 }
 
+static int a;
+// CHECK: define nonnull i32* @bar3()
+int * bar3() __attribute__((returns_nonnull))  {
+  return &a;
+}
+
