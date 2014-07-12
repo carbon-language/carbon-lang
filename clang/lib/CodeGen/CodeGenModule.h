@@ -1015,8 +1015,10 @@ public:
     return SanitizerBL;
   }
 
-  void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
+  void reportGlobalToASan(llvm::GlobalVariable *GV, const VarDecl &D,
                           bool IsDynInit = false);
+  void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
+                          StringRef Name, bool IsDynInit = false);
 
   void addDeferredVTable(const CXXRecordDecl *RD) {
     DeferredVTables.push_back(RD);

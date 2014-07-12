@@ -69,7 +69,7 @@ entry:
 
 
 !llvm.asan.globals = !{!0}
-!0 = metadata !{[10 x i32]* @GlobDy, null, i1 true, i1 false}
+!0 = metadata !{[10 x i32]* @GlobDy, null, null, i1 true, i1 false}
 
 ; CHECK-LABEL: define internal void @asan.module_ctor
 ; CHECK-NOT: ret

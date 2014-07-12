@@ -216,8 +216,11 @@ namespace {
 class GlobalsMetadata {
  public:
   struct Entry {
-    Entry() : SourceLoc(nullptr), IsDynInit(false), IsBlacklisted(false) {}
+    Entry()
+        : SourceLoc(nullptr), Name(nullptr), IsDynInit(false),
+          IsBlacklisted(false) {}
     GlobalVariable *SourceLoc;
+    GlobalVariable *Name;
     bool IsDynInit;
     bool IsBlacklisted;
   };
@@ -232,7 +235,7 @@ class GlobalsMetadata {
       return;
     for (auto MDN : Globals->operands()) {
       // Metadata node contains the global and the fields of "Entry".
-      assert(MDN->getNumOperands() == 4);
+      assert(MDN->getNumOperands() == 5);
       Value *V = MDN->getOperand(0);
       // The optimizer may optimize away a global entirely.
       if (!V)
@@ -246,9 +249,14 @@ class GlobalsMetadata {
         E.SourceLoc = GVLoc;
         addSourceLocationGlobal(GVLoc);
       }
-      ConstantInt *IsDynInit = cast<ConstantInt>(MDN->getOperand(2));
+      if (Value *Name = MDN->getOperand(2)) {
+        GlobalVariable *GVName = cast<GlobalVariable>(Name);
+        E.Name = GVName;
+        InstrumentationGlobals.insert(GVName);
+      }
+      ConstantInt *IsDynInit = cast<ConstantInt>(MDN->getOperand(3));
       E.IsDynInit |= IsDynInit->isOne();
-      ConstantInt *IsBlacklisted = cast<ConstantInt>(MDN->getOperand(3));
+      ConstantInt *IsBlacklisted = cast<ConstantInt>(MDN->getOperand(4));
       E.IsBlacklisted |= IsBlacklisted->isOne();
     }
   }
@@ -1049,6 +1057,14 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
   for (size_t i = 0; i < n; i++) {
     static const uint64_t kMaxGlobalRedzone = 1 << 18;
     GlobalVariable *G = GlobalsToChange[i];
+
+    auto MD = GlobalsMD.get(G);
+    // Create string holding the global name unless it was provided by
+    // the metadata.
+    GlobalVariable *Name =
+        MD.Name ? MD.Name : createPrivateGlobalForString(M, G->getName(),
+                                                         /*AllowMerging*/ true);
+
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
     uint64_t SizeInBytes = DL->getTypeAllocSize(Ty);
@@ -1070,9 +1086,6 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
         NewTy, G->getInitializer(),
         Constant::getNullValue(RightRedZoneTy), NULL);
 
-    GlobalVariable *Name =
-        createPrivateGlobalForString(M, G->getName(), /*AllowMerging*/true);
-
     // Create a new global variable with enough space for a redzone.
     GlobalValue::LinkageTypes Linkage = G->getLinkage();
     if (G->isConstant() && Linkage == GlobalValue::PrivateLinkage)
@@ -1091,8 +1104,6 @@ bool AddressSanitizerModule::InstrumentGlobals(IRBuilder<> &IRB, Module &M) {
         ConstantExpr::getGetElementPtr(NewGlobal, Indices2, true));
     NewGlobal->takeName(G);
     G->eraseFromParent();
-
-    auto MD = GlobalsMD.get(G);
 
     Initializers[i] = ConstantStruct::get(
         GlobalStructTy, ConstantExpr::getPointerCast(NewGlobal, IntptrTy),

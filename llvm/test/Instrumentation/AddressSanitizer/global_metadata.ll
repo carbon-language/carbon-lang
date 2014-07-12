@@ -18,12 +18,20 @@ target triple = "x86_64-unknown-linux-gnu"
 @.asan_loc_descr2 = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 12, i32 14 }
 @.asan_loc_descr4 = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 14, i32 25 }
 
+; Global names:
+@.str2 = private unnamed_addr constant [7 x i8] c"global\00", align 1
+@.str3 = private unnamed_addr constant [16 x i8] c"dyn_init_global\00", align 1
+@.str4 = private unnamed_addr constant [11 x i8] c"static_var\00", align 1
+@.str5 = private unnamed_addr constant [17 x i8] c"<string literal>\00", align 1
+
 ; Check that globals were instrumented, but sanitizer location descriptors weren't:
 ; CHECK: @global = global { i32, [60 x i8] } zeroinitializer, align 32
 ; CHECK: @.str = internal unnamed_addr constant { [14 x i8], [50 x i8] } { [14 x i8] c"Hello, world!\00", [50 x i8] zeroinitializer }, align 32
 ; CHECK: @.asan_loc_descr = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 5, i32 5 }
+; CHECK: @.str2 = private unnamed_addr constant [7 x i8] c"global\00", align 1
 
-; Check that location decriptors were passed into __asan_register_globals:
+; Check that location decriptors and global names were passed into __asan_register_globals:
+; CHECK: i64 ptrtoint ([7 x i8]* @.str2 to i64)
 ; CHECK: i64 ptrtoint ({ [22 x i8]*, i32, i32 }* @.asan_loc_descr to i64)
 
 ; Function Attrs: nounwind sanitize_address
@@ -55,9 +63,9 @@ attributes #1 = { nounwind sanitize_address "less-precise-fpmad"="false" "no-fra
 !llvm.asan.globals = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}
 
-!0 = metadata !{i32* @global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr, i1 false, i1 false}
-!1 = metadata !{i32* @dyn_init_global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr1, i1 true, i1 false}
-!2 = metadata !{i32* @blacklisted_global, null, i1 false, i1 true}
-!3 = metadata !{i32* @_ZZ4funcvE10static_var, { [22 x i8]*, i32, i32 }* @.asan_loc_descr2, i1 false, i1 false}
-!4 = metadata !{[14 x i8]* @.str, { [22 x i8]*, i32, i32 }* @.asan_loc_descr4, i1 false, i1 false}
+!0 = metadata !{i32* @global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr, [7 x i8]* @.str2, i1 false, i1 false}
+!1 = metadata !{i32* @dyn_init_global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr1, [16 x i8]* @.str3, i1 true, i1 false}
+!2 = metadata !{i32* @blacklisted_global, null, null, i1 false, i1 true}
+!3 = metadata !{i32* @_ZZ4funcvE10static_var, { [22 x i8]*, i32, i32 }* @.asan_loc_descr2, [11 x i8]* @.str4, i1 false, i1 false}
+!4 = metadata !{[14 x i8]* @.str, { [22 x i8]*, i32, i32 }* @.asan_loc_descr4, [17 x i8]* @.str5, i1 false, i1 false}
 !5 = metadata !{metadata !"clang version 3.5.0 (211282)"}
