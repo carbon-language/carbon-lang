@@ -137,7 +137,7 @@ class DominanceFrontier : public FunctionPass {
 public:
   typedef DominatorTreeBase<BasicBlock> DomTreeT;
   typedef DomTreeNodeBase<BasicBlock> DomTreeNodeT;
-  typedef typename DominanceFrontierBase<BasicBlock>::DomSetType DomSetType;
+  typedef DominanceFrontierBase<BasicBlock>::DomSetType DomSetType;
   typedef DominanceFrontierBase<BasicBlock>::iterator iterator;
   typedef DominanceFrontierBase<BasicBlock>::const_iterator const_iterator;
 
