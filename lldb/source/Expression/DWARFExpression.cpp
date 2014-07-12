@@ -1345,6 +1345,9 @@ DWARFExpression::Evaluate
     Value tmp;
     uint32_t reg_num;
 
+    /// Insertion point for evaluating multi-piece expression.
+    uint64_t op_piece_offset = 0;
+
     // Make sure all of the data is available in opcodes.
     if (!opcodes.ValidOffsetForDataOfSize(opcodes_offset, opcodes_length))
     {
@@ -2574,10 +2577,13 @@ DWARFExpression::Evaluate
         // variable a particular DWARF expression refers to.
         //----------------------------------------------------------------------
         case DW_OP_piece:
-            if (stack.size() < 1)
+            if (stack.size() < 1 ||
+                (op_piece_offset > 0 && stack.size() < 2))
             {
+                // In a multi-piece expression, this means that the current piece is not available.
+                // We don't have a way to signal partial availabilty.
                 if (error_ptr)
-                    error_ptr->SetErrorString("Expression stack needs at least 1 item for DW_OP_piece.");
+                    error_ptr->SetErrorString("Partially unavailable DW_OP_piece expressions are not yet supported.");
                 return false;
             }
             else
@@ -2598,6 +2604,74 @@ DWARFExpression::Evaluate
                                     error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte scalar value.", piece_byte_size, (uint64_t)stack.back().GetScalar().GetByteSize());
                                 return false;
                             }
+
+                            // Multiple pieces of a large value are assembled in a memory buffer value.
+                            if (op_piece_offset)
+                            {
+                                Error error;
+                                Scalar cur_piece = stack.back().GetScalar();
+                                stack.pop_back();
+                                
+                                switch (stack.back().GetValueType())
+                                {
+                                    case  Value::eValueTypeScalar:
+                                        {
+                                            // We already have something on the stack that will becomes the first
+                                            // bytes of our buffer, we need to populate these bytes into the buffer
+                                            // and then we will add the current bytes to it.
+                                            
+                                            // Promote top of stack to a memory buffer.
+                                            Scalar prev_piece = stack.back().GetScalar();
+                                            stack.pop_back();
+                                            stack.push_back(Value());
+                                            Value &piece_value = stack.back();
+                                            piece_value.ResizeData(op_piece_offset);
+                                            prev_piece.GetAsMemoryData(piece_value.GetBuffer().GetBytes(), op_piece_offset, lldb::endian::InlHostByteOrder(), error);
+                                            if (error.Fail())
+                                            {
+                                                if (error_ptr)
+                                                    error_ptr->SetErrorString(error.AsCString());
+                                                return false;
+                                            }
+                                        }
+                                        // Fall through to host address case...
+                                        
+                                    case Value::eValueTypeHostAddress:
+                                        {
+                                            if (stack.back().GetBuffer().GetByteSize() != op_piece_offset)
+                                            {
+                                                if (error_ptr)
+                                                    error_ptr->SetErrorStringWithFormat ("DW_OP_piece for offset %" PRIu64 " but top of stack is of size %" PRIu64,
+                                                                                         op_piece_offset,
+                                                                                         stack.back().GetBuffer().GetByteSize());
+                                                return false;
+                                            }
+                                            
+                                            // Append the current piece to the buffer.
+                                            size_t len = op_piece_offset + piece_byte_size;
+                                            stack.back().ResizeData(len);
+                                            cur_piece.GetAsMemoryData (stack.back().GetBuffer().GetBytes() + op_piece_offset,
+                                                                       piece_byte_size,
+                                                                       lldb::endian::InlHostByteOrder(),
+                                                                       error);
+                                            if (error.Fail())
+                                            {
+                                                if (error_ptr)
+                                                    error_ptr->SetErrorString(error.AsCString());
+                                                return false;
+                                            }
+                                        }
+                                        break;
+                                        
+                                    default:
+                                        // Expect top of stack to be a memory buffer.
+                                        if (error_ptr)
+                                            error_ptr->SetErrorStringWithFormat("DW_OP_piece for offset %" PRIu64 ": top of stack is not a piece", op_piece_offset);
+                                        return false;
+                                }
+
+                            }
+                            op_piece_offset += piece_byte_size;
                         }
                         break;
                         

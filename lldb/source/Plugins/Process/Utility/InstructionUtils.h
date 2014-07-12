@@ -83,6 +83,8 @@ Rotl32 (uint32_t bits, uint32_t amt)
 static inline uint64_t
 MaskUpToBit (const uint64_t bit)
 {
+    if (bit >= 63)
+        return -1ll;
     return (1ull << (bit + 1ull)) - 1ull;
 }
 

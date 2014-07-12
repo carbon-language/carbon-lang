@@ -122,6 +122,9 @@ public:
     CopyData (const void *src, lldb::offset_t src_len);
 
     void
+    AppendData (const void *src, uint64_t src_len);
+
+    void
     Clear();
 
 private:

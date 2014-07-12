@@ -55,7 +55,7 @@ Value::Value(const Scalar& scalar) :
 }
 
 
-Value::Value(const uint8_t *bytes, int len) :
+Value::Value(const void *bytes, int len) :
     m_value (),
     m_vector (),
     m_clang_type (),
@@ -64,8 +64,7 @@ Value::Value(const uint8_t *bytes, int len) :
     m_context_type (eContextTypeInvalid),
     m_data_buffer ()
 {
-    m_data_buffer.CopyData(bytes, len);
-    m_value = (uintptr_t)m_data_buffer.GetBytes();
+    SetBytes(bytes, len);
 }
 
 Value::Value(const Value &v) :
@@ -108,6 +107,22 @@ Value::operator=(const Value &rhs)
         }
     }
     return *this;
+}
+
+void
+Value::SetBytes (const void *bytes, int len)
+{
+    m_value_type = eValueTypeHostAddress;
+    m_data_buffer.CopyData(bytes, len);
+    m_value = (uintptr_t)m_data_buffer.GetBytes();
+}
+
+void
+Value::AppendBytes (const void *bytes, int len)
+{
+    m_value_type = eValueTypeHostAddress;
+    m_data_buffer.AppendData (bytes, len);
+    m_value = (uintptr_t)m_data_buffer.GetBytes();
 }
 
 void

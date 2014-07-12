@@ -124,9 +124,15 @@ public:
     Value();
     Value(const Scalar& scalar);
     Value(const Vector& vector);
-    Value(const uint8_t *bytes, int len);
+    Value(const void *bytes, int len);
     Value(const Value &rhs);
     
+    void
+    SetBytes (const void *bytes, int len);
+    
+    void
+    AppendBytes (const void *bytes, int len);
+
     Value &
     operator=(const Value &rhs);
 
@@ -234,6 +240,18 @@ public:
 
     void
     ResizeData(size_t len);
+
+    DataBufferHeap &
+    GetBuffer ()
+    {
+        return m_data_buffer;
+    }
+
+    const DataBufferHeap &
+    GetBuffer () const
+    {
+        return m_data_buffer;
+    }
 
     bool
     ValueOf(ExecutionContext *exe_ctx);
