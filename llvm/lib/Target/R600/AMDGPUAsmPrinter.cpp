@@ -47,7 +47,7 @@ using namespace llvm;
 // precision, and leaves single precision to flush all and does not report
 // CL_FP_DENORM for CL_DEVICE_SINGLE_FP_CONFIG. Mesa's OpenCL currently reports
 // CL_FP_DENORM for both.
-static uint32_t getFPMode(MachineFunction &) {
+static uint32_t getFPMode(const MachineFunction &) {
   return FP_ROUND_MODE_SP(FP_ROUND_ROUND_TO_NEAREST) |
          FP_ROUND_MODE_DP(FP_ROUND_ROUND_TO_NEAREST) |
          FP_DENORM_MODE_SP(FP_DENORM_FLUSH_NONE) |
@@ -144,25 +144,21 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
+void AMDGPUAsmPrinter::EmitProgramInfoR600(const MachineFunction &MF) {
   unsigned MaxGPR = 0;
   bool killPixel = false;
-  const R600RegisterInfo * RI =
-                static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
-  R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
+  const R600RegisterInfo *RI
+    = static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
+  const R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
 
-  for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
-                                                  BB != BB_E; ++BB) {
-    MachineBasicBlock &MBB = *BB;
-    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-                                                    I != E; ++I) {
-      MachineInstr &MI = *I;
+  for (const MachineBasicBlock &MBB : MF) {
+    for (const MachineInstr &MI : MBB) {
       if (MI.getOpcode() == AMDGPU::KILLGT)
         killPixel = true;
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
-        MachineOperand & MO = MI.getOperand(op_idx);
+        const MachineOperand &MO = MI.getOperand(op_idx);
         if (!MO.isReg())
           continue;
         unsigned HWReg = RI->getEncodingValue(MO.getReg()) & 0xff;
@@ -209,27 +205,22 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
 }
 
 void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
-                                        MachineFunction &MF) const {
+                                        const MachineFunction &MF) const {
   uint64_t CodeSize = 0;
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;
-  const SIRegisterInfo * RI =
-                static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
+  const SIRegisterInfo *RI
+    = static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
 
-  for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
-                                                  BB != BB_E; ++BB) {
-    MachineBasicBlock &MBB = *BB;
-    for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
-                                                    I != E; ++I) {
-      MachineInstr &MI = *I;
-
+  for (const MachineBasicBlock &MBB : MF) {
+    for (const MachineInstr &MI : MBB) {
       // TODO: CodeSize should account for multiple functions.
       CodeSize += MI.getDesc().Size;
 
       unsigned numOperands = MI.getNumOperands();
       for (unsigned op_idx = 0; op_idx < numOperands; op_idx++) {
-        MachineOperand &MO = MI.getOperand(op_idx);
+        const MachineOperand &MO = MI.getOperand(op_idx);
         unsigned width = 0;
         bool isSGPR = false;
 
@@ -317,10 +308,10 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   ProgInfo.CodeLen = CodeSize;
 }
 
-void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
+void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
                                          const SIProgramInfo &KernelInfo) {
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
-  SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   unsigned RsrcReg;
   switch (MFI->getShaderType()) {
