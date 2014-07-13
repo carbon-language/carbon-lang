@@ -25,7 +25,7 @@
 # CHECK-OBJ-ALL:  Section {
 # CHECK-OBJ-ALL:    Index: 5
 # CHECK-OBJ-ALL:    Name: .MIPS.abiflags ({{[0-9]+}})
-# CHECK-OBJ-ALL:    Type:  (0x7000002A)
+# CHECK-OBJ-ALL:    Type: SHT_MIPS_ABIFLAGS (0x7000002A)
 # CHECK-OBJ-ALL:     Flags [ (0x2)
 # CHECK-OBJ-ALL:      SHF_ALLOC (0x2)
 # CHECK-OBJ-ALL:    ]

@@ -407,6 +407,7 @@ static const char *getElfSectionType(unsigned Arch, unsigned Type) {
     switch (Type) {
     LLVM_READOBJ_ENUM_CASE(ELF, SHT_MIPS_REGINFO);
     LLVM_READOBJ_ENUM_CASE(ELF, SHT_MIPS_OPTIONS);
+    LLVM_READOBJ_ENUM_CASE(ELF, SHT_MIPS_ABIFLAGS);
     }
   }
 

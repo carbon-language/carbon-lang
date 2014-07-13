@@ -191,6 +191,7 @@ COFF-X86-64-NEXT:     StorageClass: IMAGE_SYM_CLASS_STATIC
 ELF-MIPSEL:      FileHeader:
 ELF-MIPSEL-NEXT:   Class:           ELFCLASS32
 ELF-MIPSEL-NEXT:   Data:            ELFDATA2LSB
+ELF-MIPSEL-NEXT:   OSABI:           ELFOSABI_GNU
 ELF-MIPSEL-NEXT:   Type:            ET_REL
 ELF-MIPSEL-NEXT:   Machine:         EM_MIPS
 ELF-MIPSEL-NEXT:   Flags:           [ EF_MIPS_NOREORDER, EF_MIPS_PIC, EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
@@ -206,7 +207,7 @@ ELF-MIPSEL-NEXT:     Link:            .symtab
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
 ELF-MIPSEL-NEXT:     Info:            .text
 ELF-MIPSEL-NEXT:     Relocations:
-ELF-MIPSEL-NEXT:       - Offset:          0
+ELF-MIPSEL-NEXT:       - Offset:          0x0000000000000000
 ELF-MIPSEL-NEXT:         Symbol:          _gp_disp
 ELF-MIPSEL-NEXT:         Type:            R_MIPS_HI16
 ELF-MIPSEL-NEXT:         Addend:          0
@@ -239,6 +240,10 @@ ELF-MIPSEL-NEXT:   - Name:            .bss
 ELF-MIPSEL-NEXT:     Type:            SHT_NOBITS
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_WRITE, SHF_ALLOC ]
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000004
+ELF-MIPSEL-NEXT:     Content:         48656C6C
+ELF-MIPSEL-NEXT:   - Name:            .mdebug.abi32
+ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
+ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000001
 ELF-MIPSEL-NEXT:     Content:         ''
 ELF-MIPSEL-NEXT:   - Name:            .rodata.str1.1
 ELF-MIPSEL-NEXT:     Type:            SHT_PROGBITS
@@ -250,6 +255,11 @@ ELF-MIPSEL-NEXT:     Type:            SHT_MIPS_REGINFO
 ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC ]
 ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000001
 ELF-MIPSEL-NEXT:     Content:         '000000000000000000000000000000000000000000000000'
+ELF-MIPSEL-NEXT:   - Name:            .MIPS.abiflags
+ELF-MIPSEL-NEXT:     Type:            SHT_MIPS_ABIFLAGS
+ELF-MIPSEL-NEXT:     Flags:           [ SHF_ALLOC ]
+ELF-MIPSEL-NEXT:     AddressAlign:    0x0000000000000008
+ELF-MIPSEL-NEXT:     Content:         '000020010101000100000000000000000100000000000000'
 ELF-MIPSEL-NEXT: Symbols:
 ELF-MIPSEL-NEXT:   Local:
 ELF-MIPSEL-NEXT:     - Name:            trivial.ll
@@ -267,17 +277,27 @@ ELF-MIPSEL-NEXT:       Section:         .data
 ELF-MIPSEL-NEXT:     - Name:            .bss
 ELF-MIPSEL-NEXT:       Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .bss
+ELF-MIPSEL-NEXT:     - Name:            .mdebug.abi32
+ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:       Section:         .mdebug.abi32
 ELF-MIPSEL-NEXT:     - Name:            .rodata.str1.1
 ELF-MIPSEL-NEXT:       Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .rodata.str1.1
 ELF-MIPSEL-NEXT:     - Name:            .reginfo
 ELF-MIPSEL-NEXT:       Type:            STT_SECTION
 ELF-MIPSEL-NEXT:       Section:         .reginfo
+ELF-MIPSEL-NEXT:     - Name:            .MIPS.abiflags
+ELF-MIPSEL-NEXT:       Type:            STT_SECTION
+ELF-MIPSEL-NEXT:       Section:         .MIPS.abiflags
 ELF-MIPSEL-NEXT:   Global:
 ELF-MIPSEL-NEXT:     - Name:            main
 ELF-MIPSEL-NEXT:       Type:            STT_FUNC
 ELF-MIPSEL-NEXT:       Section:         .text
 ELF-MIPSEL-NEXT:       Size:            0x000000000000004C
+ELF-MIPSEL-NEXT:     - Name:            var
+ELF-MIPSEL-NEXT:       Type:            STT_OBJECT
+ELF-MIPSEL-NEXT:       Section:         .bss
+ELF-MIPSEL-NEXT:       Size:            0x0000000000000004
 ELF-MIPSEL-NEXT:     - Name:            SomeOtherFunction
 ELF-MIPSEL-NEXT:     - Name:            _gp_disp
 ELF-MIPSEL-NEXT:     - Name:            puts

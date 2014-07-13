@@ -2,6 +2,8 @@ RUN: llvm-readobj -s %p/Inputs/trivial.obj.coff-i386 \
 RUN:   | FileCheck %s -check-prefix COFF
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.elf-i386 \
 RUN:   | FileCheck %s -check-prefix ELF
+RUN: llvm-readobj -s %p/Inputs/trivial.obj.elf-mipsel \
+RUN:   | FileCheck %s -check-prefix ELF-MIPSEL
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-i386 \
 RUN:   | FileCheck %s -check-prefix MACHO-I386
 RUN: llvm-readobj -s %p/Inputs/trivial.obj.macho-x86-64 \
@@ -83,6 +85,37 @@ ELF-NEXT:     Info: 0
 ELF-NEXT:     AddressAlignment: 16
 ELF-NEXT:     EntrySize: 0
 ELF-NEXT:   }
+
+ELF-MIPSEL:      Section {
+ELF-MIPSEL:        Index: 4
+ELF-MIPSEL-NEXT:   Name: .reginfo (27)
+ELF-MIPSEL-NEXT:   Type: SHT_MIPS_REGINFO (0x70000006)
+ELF-MIPSEL-NEXT:   Flags [ (0x2)
+ELF-MIPSEL-NEXT:     SHF_ALLOC (0x2)
+ELF-MIPSEL-NEXT:   ]
+ELF-MIPSEL-NEXT:   Address: 0x0
+ELF-MIPSEL-NEXT:   Offset: 0x34
+ELF-MIPSEL-NEXT:   Size: 24
+ELF-MIPSEL-NEXT:   Link: 0
+ELF-MIPSEL-NEXT:   Info: 0
+ELF-MIPSEL-NEXT:   AddressAlignment: 1
+ELF-MIPSEL-NEXT:   EntrySize: 0
+ELF-MIPSEL-NEXT: }
+ELF-MIPSEL-NEXT: Section {
+ELF-MIPSEL-NEXT:   Index: 5
+ELF-MIPSEL-NEXT:   Name: .MIPS.abiflags (12)
+ELF-MIPSEL-NEXT:   Type: SHT_MIPS_ABIFLAGS (0x7000002A)
+ELF-MIPSEL-NEXT:   Flags [ (0x2)
+ELF-MIPSEL-NEXT:     SHF_ALLOC (0x2)
+ELF-MIPSEL-NEXT:   ]
+ELF-MIPSEL-NEXT:   Address: 0x0
+ELF-MIPSEL-NEXT:   Offset: 0x50
+ELF-MIPSEL-NEXT:   Size: 24
+ELF-MIPSEL-NEXT:   Link: 0
+ELF-MIPSEL-NEXT:   Info: 0
+ELF-MIPSEL-NEXT:   AddressAlignment: 8
+ELF-MIPSEL-NEXT:   EntrySize: 0
+ELF-MIPSEL-NEXT: }
 
 MACHO-I386:      Sections [
 MACHO-I386-NEXT:   Section {
