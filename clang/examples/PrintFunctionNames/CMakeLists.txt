@@ -10,3 +10,12 @@ if( NOT MSVC ) # MSVC mangles symbols differently, and
 endif()
 
 add_llvm_loadable_module(PrintFunctionNames PrintFunctionNames.cpp)
+
+if(LLVM_ENABLE_PLUGINS AND (WIN32 OR CYGWIN))
+  target_link_libraries(PrintFunctionNames ${cmake_2_8_12_PRIVATE}
+    clangAST
+    clangBasic
+    clangFrontend
+    LLVMSupport
+    )
+endif()
