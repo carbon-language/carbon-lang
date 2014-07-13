@@ -1,6 +1,6 @@
 # If we don't need RTTI or EH, there's no reason to export anything
 # from the plugin.
-if( NOT WIN32 ) # Win32 mangles symbols differently, and
+if( NOT MSVC ) # MSVC mangles symbols differently, and
                 # PrintFunctionNames.export contains C++ symbols.
   if( NOT LLVM_REQUIRES_RTTI )
     if( NOT LLVM_REQUIRES_EH )
