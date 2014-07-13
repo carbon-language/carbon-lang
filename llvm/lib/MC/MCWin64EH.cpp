@@ -23,7 +23,7 @@ namespace llvm {
 static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &Insns) {
   uint8_t Count = 0;
   for (const auto &I : Insns) {
-    switch (I.getOperation()) {
+    switch (I.Operation) {
     case Win64EH::UOP_PushNonVol:
     case Win64EH::UOP_AllocSmall:
     case Win64EH::UOP_SetFPReg:
@@ -39,7 +39,7 @@ static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &Insns) {
       Count += 3;
       break;
     case Win64EH::UOP_AllocLarge:
-      Count += (I.getSize() > 512 * 1024 - 8) ? 3 : 2;
+      Count += (I.Offset > 512 * 1024 - 8) ? 3 : 2;
       break;
     }
   }
@@ -59,63 +59,63 @@ static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
                            MCWin64EHInstruction &inst) {
   uint8_t b2;
   uint16_t w;
-  b2 = (inst.getOperation() & 0x0F);
-  switch (inst.getOperation()) {
+  b2 = (inst.Operation & 0x0F);
+  switch (inst.Operation) {
   case Win64EH::UOP_PushNonVol:
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
-    b2 |= (inst.getRegister() & 0x0F) << 4;
+    EmitAbsDifference(streamer, inst.Label, begin);
+    b2 |= (inst.Register & 0x0F) << 4;
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_AllocLarge:
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
-    if (inst.getSize() > 512*1024-8) {
+    EmitAbsDifference(streamer, inst.Label, begin);
+    if (inst.Offset > 512 * 1024 - 8) {
       b2 |= 0x10;
       streamer.EmitIntValue(b2, 1);
-      w = inst.getSize() & 0xFFF8;
+      w = inst.Offset & 0xFFF8;
       streamer.EmitIntValue(w, 2);
-      w = inst.getSize() >> 16;
+      w = inst.Offset >> 16;
     } else {
       streamer.EmitIntValue(b2, 1);
-      w = inst.getSize() >> 3;
+      w = inst.Offset >> 3;
     }
     streamer.EmitIntValue(w, 2);
     break;
   case Win64EH::UOP_AllocSmall:
-    b2 |= (((inst.getSize()-8) >> 3) & 0x0F) << 4;
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
+    b2 |= (((inst.Offset - 8) >> 3) & 0x0F) << 4;
+    EmitAbsDifference(streamer, inst.Label, begin);
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_SetFPReg:
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
+    EmitAbsDifference(streamer, inst.Label, begin);
     streamer.EmitIntValue(b2, 1);
     break;
   case Win64EH::UOP_SaveNonVol:
   case Win64EH::UOP_SaveXMM128:
-    b2 |= (inst.getRegister() & 0x0F) << 4;
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
+    b2 |= (inst.Register & 0x0F) << 4;
+    EmitAbsDifference(streamer, inst.Label, begin);
     streamer.EmitIntValue(b2, 1);
-    w = inst.getOffset() >> 3;
-    if (inst.getOperation() == Win64EH::UOP_SaveXMM128)
+    w = inst.Offset >> 3;
+    if (inst.Operation == Win64EH::UOP_SaveXMM128)
       w >>= 1;
     streamer.EmitIntValue(w, 2);
     break;
   case Win64EH::UOP_SaveNonVolBig:
   case Win64EH::UOP_SaveXMM128Big:
-    b2 |= (inst.getRegister() & 0x0F) << 4;
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
+    b2 |= (inst.Register & 0x0F) << 4;
+    EmitAbsDifference(streamer, inst.Label, begin);
     streamer.EmitIntValue(b2, 1);
-    if (inst.getOperation() == Win64EH::UOP_SaveXMM128Big)
-      w = inst.getOffset() & 0xFFF0;
+    if (inst.Operation == Win64EH::UOP_SaveXMM128Big)
+      w = inst.Offset & 0xFFF0;
     else
-      w = inst.getOffset() & 0xFFF8;
+      w = inst.Offset & 0xFFF8;
     streamer.EmitIntValue(w, 2);
-    w = inst.getOffset() >> 16;
+    w = inst.Offset >> 16;
     streamer.EmitIntValue(w, 2);
     break;
   case Win64EH::UOP_PushMachFrame:
-    if (inst.isPushCodeFrame())
+    if (inst.Offset == 1)
       b2 |= 0x10;
-    EmitAbsDifference(streamer, inst.getLabel(), begin);
+    EmitAbsDifference(streamer, inst.Label, begin);
     streamer.EmitIntValue(b2, 1);
     break;
   }
@@ -178,9 +178,8 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info) {
   uint8_t frame = 0;
   if (info->LastFrameInst >= 0) {
     MCWin64EHInstruction &frameInst = info->Instructions[info->LastFrameInst];
-    assert(frameInst.getOperation() == Win64EH::UOP_SetFPReg);
-    frame = (frameInst.getRegister() & 0x0F) |
-            (frameInst.getOffset() & 0xF0);
+    assert(frameInst.Operation == Win64EH::UOP_SetFPReg);
+    frame = (frameInst.Register & 0x0F) | (frameInst.Offset & 0xF0);
   }
   streamer.EmitIntValue(frame, 1);
 

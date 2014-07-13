@@ -24,41 +24,37 @@ namespace llvm {
   class MCStreamer;
   class MCSymbol;
 
-  class MCWin64EHInstruction {
-  public:
-    typedef Win64EH::UnwindOpcodes OpType;
-  private:
-    OpType Operation;
-    MCSymbol *Label;
-    unsigned Offset;
-    unsigned Register;
-  public:
-    MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg)
+struct MCWin64EHInstruction {
+  typedef Win64EH::UnwindOpcodes OpType;
+  const OpType Operation;
+  const MCSymbol *Label;
+  const unsigned Offset;
+  const unsigned Register;
+
+  MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg)
       : Operation(Op), Label(L), Offset(0), Register(Reg) {
-     assert(Op == Win64EH::UOP_PushNonVol);
-    }
-    MCWin64EHInstruction(MCSymbol *L, unsigned Size)
-      : Operation(Size>128 ? Win64EH::UOP_AllocLarge : Win64EH::UOP_AllocSmall),
-        Label(L), Offset(Size) { }
-    MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg, unsigned Off)
+    assert(Op == Win64EH::UOP_PushNonVol);
+  }
+
+  MCWin64EHInstruction(MCSymbol *L, unsigned Size)
+      : Operation(Size > 128 ? Win64EH::UOP_AllocLarge
+                             : Win64EH::UOP_AllocSmall),
+        Label(L), Offset(Size), Register(-1) {}
+
+  MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg, unsigned Off)
       : Operation(Op), Label(L), Offset(Off), Register(Reg) {
-      assert(Op == Win64EH::UOP_SetFPReg ||
-             Op == Win64EH::UOP_SaveNonVol ||
-             Op == Win64EH::UOP_SaveNonVolBig ||
-             Op == Win64EH::UOP_SaveXMM128 ||
-             Op == Win64EH::UOP_SaveXMM128Big);
-    }
-    MCWin64EHInstruction(OpType Op, MCSymbol *L, bool Code)
-      : Operation(Op), Label(L), Offset(Code ? 1 : 0) {
-      assert(Op == Win64EH::UOP_PushMachFrame);
-    }
-    OpType getOperation() const { return Operation; }
-    MCSymbol *getLabel() const { return Label; }
-    unsigned getOffset() const { return Offset; }
-    unsigned getSize() const { return Offset; }
-    unsigned getRegister() const { return Register; }
-    bool isPushCodeFrame() const { return Offset == 1; }
-  };
+    assert(Op == Win64EH::UOP_SetFPReg ||
+           Op == Win64EH::UOP_SaveNonVol ||
+           Op == Win64EH::UOP_SaveNonVolBig ||
+           Op == Win64EH::UOP_SaveXMM128 ||
+           Op == Win64EH::UOP_SaveXMM128Big);
+  }
+
+  MCWin64EHInstruction(OpType Op, MCSymbol *L, bool Code)
+      : Operation(Op), Label(L), Offset(Code ? 1 : 0), Register(-1) {
+    assert(Op == Win64EH::UOP_PushMachFrame);
+  }
+};
 
   struct MCWinFrameInfo {
     MCWinFrameInfo()
