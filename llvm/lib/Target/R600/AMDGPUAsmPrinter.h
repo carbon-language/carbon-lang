@@ -16,7 +16,6 @@
 #define AMDGPU_ASMPRINTER_H
 
 #include "llvm/CodeGen/AsmPrinter.h"
-#include <string>
 #include <vector>
 
 namespace llvm {
