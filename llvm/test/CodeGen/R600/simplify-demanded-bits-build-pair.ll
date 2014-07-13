@@ -1,6 +1,5 @@
-; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI %s
-
 ; XFAIL: *
+; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI -mattr=-promote-alloca < %s | FileCheck -check-prefix=SI %s
 
 ; 64-bit select was originally lowered with a build_pair, and this
 ; could be simplified to 1 cndmask instead of 2, but that broken when
@@ -16,8 +15,8 @@ define void @trunc_select_i64(i32 addrspace(1)* %out, i64 %a, i64 %b, i32 %c) {
 
 ; FIXME: Fix truncating store for local memory
 ; SI-LABEL: @trunc_load_alloca_i64:
-; SI: DS_READ_B32
-; SI-NOT: DS_READ_B64
+; SI: V_MOVRELS_B32
+; SI-NOT: V_MOVRELS_B32
 ; SI: S_ENDPGM
 define void @trunc_load_alloca_i64(i64 addrspace(1)* %out, i32 %a, i32 %b) {
   %idx = add i32 %a, %b

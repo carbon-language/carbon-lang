@@ -1,10 +1,18 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -mattr=-promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-ALLOCA -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -mattr=+promote-alloca -verify-machineinstrs < %s | FileCheck -check-prefix=SI-PROMOTE -check-prefix=SI %s
+
 
 declare void @llvm.AMDGPU.barrier.local() noduplicate nounwind
 
 ; SI-LABEL: @private_access_f64_alloca:
-; SI: DS_WRITE_B64
-; SI: DS_READ_B64
+
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_READ_B64
 define void @private_access_f64_alloca(double addrspace(1)* noalias %out, double addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load double addrspace(1)* %in, align 8
   %array = alloca double, i32 16, align 8
@@ -17,10 +25,16 @@ define void @private_access_f64_alloca(double addrspace(1)* noalias %out, double
 }
 
 ; SI-LABEL: @private_access_v2f64_alloca:
-; SI: DS_WRITE_B64
-; SI: DS_WRITE_B64
-; SI: DS_READ_B64
-; SI: DS_READ_B64
+
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_READ_B64
+; SI-PROMOTE: DS_READ_B64
 define void @private_access_v2f64_alloca(<2 x double> addrspace(1)* noalias %out, <2 x double> addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load <2 x double> addrspace(1)* %in, align 16
   %array = alloca <2 x double>, i32 16, align 16
@@ -33,8 +47,14 @@ define void @private_access_v2f64_alloca(<2 x double> addrspace(1)* noalias %out
 }
 
 ; SI-LABEL: @private_access_i64_alloca:
-; SI: DS_WRITE_B64
-; SI: DS_READ_B64
+
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_READ_B64
 define void @private_access_i64_alloca(i64 addrspace(1)* noalias %out, i64 addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load i64 addrspace(1)* %in, align 8
   %array = alloca i64, i32 16, align 8
@@ -47,10 +67,20 @@ define void @private_access_i64_alloca(i64 addrspace(1)* noalias %out, i64 addrs
 }
 
 ; SI-LABEL: @private_access_v2i64_alloca:
-; SI: DS_WRITE_B64
-; SI: DS_WRITE_B64
-; SI: DS_READ_B64
-; SI: DS_READ_B64
+
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELD_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+; SI-ALLOCA: V_MOVRELS_B32_e32
+
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_WRITE_B64
+; SI-PROMOTE: DS_READ_B64
+; SI-PROMOTE: DS_READ_B64
 define void @private_access_v2i64_alloca(<2 x i64> addrspace(1)* noalias %out, <2 x i64> addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load <2 x i64> addrspace(1)* %in, align 16
   %array = alloca <2 x i64>, i32 16, align 16
