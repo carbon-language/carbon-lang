@@ -605,11 +605,10 @@ void Verifier::visitComdat(const Comdat &C) {
     Assert1(GV,
             "comdat selection kind requires a global value with the same name",
             &C);
-  // The Module is invalid if the GlobalValue has local linkage.  Allowing
-  // otherwise opens us up to seeing the underling global value get renamed if
-  // collisions occur.
+  // The Module is invalid if the GlobalValue has private linkage.  Entities
+  // with private linkage don't have entries in the symbol table.
   if (GV)
-    Assert1(!GV->hasLocalLinkage(), "comdat global value has local linkage",
+    Assert1(!GV->hasPrivateLinkage(), "comdat global value has private linkage",
             GV);
 }
 

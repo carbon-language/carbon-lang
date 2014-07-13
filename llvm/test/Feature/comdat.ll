@@ -16,3 +16,6 @@ define void @f() comdat $f {
   ret void
 }
 ; CHECK: define void @f() comdat $f
+
+$i = comdat largest
+@i = internal global i32 0, comdat $i

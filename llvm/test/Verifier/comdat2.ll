@@ -2,4 +2,4 @@
 
 $v = comdat any
 @v = private global i32 0, comdat $v
-; CHECK: comdat global value has local linkage
+; CHECK: comdat global value has private linkage
