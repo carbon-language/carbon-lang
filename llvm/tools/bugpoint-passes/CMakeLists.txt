@@ -10,6 +10,10 @@ if( NOT LLVM_REQUIRES_RTTI )
   endif()
 endif()
 
+if(WIN32 OR CYGWIN)
+  set(LLVM_LINK_COMPONENTS Core)
+endif()
+
 add_llvm_loadable_module( BugpointPasses
   TestPasses.cpp
   )
