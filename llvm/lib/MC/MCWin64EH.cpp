@@ -274,7 +274,7 @@ void MCWin64EHUnwindEmitter::Emit(MCStreamer &Streamer) {
   MCContext &Context = Streamer.getContext();
 
   // Emit the unwind info structs first.
-  for (const auto &CFI : Streamer.getW64UnwindInfos()) {
+  for (const auto &CFI : Streamer.getWinFrameInfos()) {
     const MCSection *XData =
         getWin64EHTableSection(GetSectionSuffix(CFI->Function), Context);
     Streamer.SwitchSection(XData);
@@ -282,7 +282,7 @@ void MCWin64EHUnwindEmitter::Emit(MCStreamer &Streamer) {
   }
 
   // Now emit RUNTIME_FUNCTION entries.
-  for (const auto &CFI : Streamer.getW64UnwindInfos()) {
+  for (const auto &CFI : Streamer.getWinFrameInfos()) {
     const MCSection *PData =
         getWin64EHFuncTableSection(GetSectionSuffix(CFI->Function), Context);
     Streamer.SwitchSection(PData);

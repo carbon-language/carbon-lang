@@ -175,15 +175,15 @@ class MCStreamer {
   MCStreamer(const MCStreamer &) LLVM_DELETED_FUNCTION;
   MCStreamer &operator=(const MCStreamer &) LLVM_DELETED_FUNCTION;
 
-  std::vector<MCDwarfFrameInfo> FrameInfos;
-  MCDwarfFrameInfo *getCurrentFrameInfo();
-  MCSymbol *EmitCFICommon();
-  void EnsureValidFrame();
+  std::vector<MCDwarfFrameInfo> DwarfFrameInfos;
+  MCDwarfFrameInfo *getCurrentDwarfFrameInfo();
+  void EnsureValidDwarfFrame();
 
-  std::vector<MCWinFrameInfo *> W64UnwindInfos;
-  MCWinFrameInfo *CurrentW64UnwindInfo;
-  void setCurrentW64UnwindInfo(MCWinFrameInfo *Frame);
-  void EnsureValidW64UnwindInfo();
+  MCSymbol *EmitCFICommon();
+
+  std::vector<MCWinFrameInfo *> WinFrameInfos;
+  MCWinFrameInfo *CurrentWinFrameInfo;
+  void EnsureValidWinFrameInfo();
 
   // SymbolOrdering - Tracks an index to represent the order
   // a symbol was emitted in. Zero means we did not emit that symbol.
@@ -204,10 +204,11 @@ protected:
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
 
-  MCWinFrameInfo *getCurrentW64UnwindInfo() {
-    return CurrentW64UnwindInfo;
+  MCWinFrameInfo *getCurrentWinFrameInfo() {
+    return CurrentWinFrameInfo;
   }
-  void EmitW64Tables();
+
+  void EmitWindowsUnwindTables();
 
   virtual void EmitRawTextImpl(StringRef String);
 
@@ -231,20 +232,14 @@ public:
     return TargetStreamer.get();
   }
 
-  unsigned getNumFrameInfos() { return FrameInfos.size(); }
-
-  const MCDwarfFrameInfo &getFrameInfo(unsigned i) { return FrameInfos[i]; }
-
-  ArrayRef<MCDwarfFrameInfo> getFrameInfos() const { return FrameInfos; }
-
-  unsigned getNumW64UnwindInfos() { return W64UnwindInfos.size(); }
-
-  MCWinFrameInfo &getW64UnwindInfo(unsigned i) {
-    return *W64UnwindInfos[i];
+  unsigned getNumFrameInfos() { return DwarfFrameInfos.size(); }
+  ArrayRef<MCDwarfFrameInfo> getDwarfFrameInfos() const {
+    return DwarfFrameInfos;
   }
 
-  ArrayRef<MCWinFrameInfo *> getW64UnwindInfos() const {
-    return W64UnwindInfos;
+  unsigned getNumWinFrameInfos() { return WinFrameInfos.size(); }
+  ArrayRef<MCWinFrameInfo *> getWinFrameInfos() const {
+    return WinFrameInfos;
   }
 
   void generateCompactUnwindEncodings(MCAsmBackend *MAB);

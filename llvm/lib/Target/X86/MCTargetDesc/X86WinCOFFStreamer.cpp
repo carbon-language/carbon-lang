@@ -28,12 +28,12 @@ void X86WinCOFFStreamer::EmitWinEHHandlerData() {
 
   // We have to emit the unwind info now, because this directive
   // actually switches to the .xdata section!
-  MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentW64UnwindInfo());
+  MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentWinFrameInfo());
 }
 
 void X86WinCOFFStreamer::FinishImpl() {
   EmitFrames(nullptr);
-  EmitW64Tables();
+  EmitWindowsUnwindTables();
 
   MCWinCOFFStreamer::FinishImpl();
 }
