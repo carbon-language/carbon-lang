@@ -10764,7 +10764,7 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
     // It may still be beneficial to combine the two shuffles if the
     // resulting shuffle is legal.
-    if (TLI.isShuffleMaskLegal(Mask, VT)) {
+    if (TLI.isTypeLegal(VT) && TLI.isShuffleMaskLegal(Mask, VT)) {
       if (!CommuteOperands)
         // shuffle(shuffle(x, undef, M1), undef, M2) -> shuffle(x, undef, M3).
         // shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(x, undef, M3)
