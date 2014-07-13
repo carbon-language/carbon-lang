@@ -46,7 +46,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:     AuxSymbolCount: 0
 // CHECK-NEXT:   }
 // CHECK-NEXT:   Symbol {
-// CHECK-NEXT:     Name: global_aliased_to_external
+// CHECK:          Name: global_aliased_to_external
 // CHECK-NEXT:     Value: 0
 // CHECK-NEXT:     Section:  (0)
 // CHECK-NEXT:     BaseType: Null (0x0)
@@ -90,7 +90,7 @@ weak_aliased_to_external = external2
 // CHECK-NEXT:     StorageClass: WeakExternal (0x69)
 // CHECK-NEXT:     AuxSymbolCount: 1
 // CHECK-NEXT:     AuxWeakExternal {
-// CHECK-NEXT:       Linked: external2 (13)
+// CHECK-NEXT:       Linked: external2
 // CHECK-NEXT:       Search: Library (0x2)
 // CHECK-NEXT:       Unused: (00 00 00 00 00 00 00 00 00 00)
 // CHECK-NEXT:     }

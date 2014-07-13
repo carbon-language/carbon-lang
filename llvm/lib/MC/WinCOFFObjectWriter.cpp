@@ -153,7 +153,7 @@ public:
   void MakeSymbolReal(COFFSymbol &S, size_t Index);
   void MakeSectionReal(COFFSection &S, size_t Number);
 
-  bool ExportSymbol(MCSymbolData const &SymbolData, MCAssembler &Asm);
+  bool ExportSymbol(const MCSymbol &Symbol, MCAssembler &Asm);
 
   bool IsPhysicalSection(COFFSection *S);
 
@@ -456,10 +456,13 @@ void WinCOFFObjectWriter::DefineSymbol(MCSymbolData const &SymbolData,
 
     // If no storage class was specified in the streamer, define it here.
     if (coff_symbol->Data.StorageClass == 0) {
-      bool external = ResSymData.isExternal() || !ResSymData.Fragment;
+      bool IsExternal =
+          ResSymData.isExternal() ||
+          (!ResSymData.getFragment() && !ResSymData.getSymbol().isVariable());
 
-      coff_symbol->Data.StorageClass =
-       external ? COFF::IMAGE_SYM_CLASS_EXTERNAL : COFF::IMAGE_SYM_CLASS_STATIC;
+      coff_symbol->Data.StorageClass = IsExternal
+                                           ? COFF::IMAGE_SYM_CLASS_EXTERNAL
+                                           : COFF::IMAGE_SYM_CLASS_STATIC;
     }
 
     if (!Base) {
@@ -546,16 +549,24 @@ void WinCOFFObjectWriter::MakeSymbolReal(COFFSymbol &S, size_t Index) {
   S.Index = Index;
 }
 
-bool WinCOFFObjectWriter::ExportSymbol(MCSymbolData const &SymbolData,
+bool WinCOFFObjectWriter::ExportSymbol(const MCSymbol &Symbol,
                                        MCAssembler &Asm) {
   // This doesn't seem to be right. Strings referred to from the .data section
   // need symbols so they can be linked to code in the .text section right?
 
-  // return Asm.isSymbolLinkerVisible(SymbolData.getSymbol());
+  // return Asm.isSymbolLinkerVisible(Symbol);
+
+  // Non-temporary labels should always be visible to the linker.
+  if (!Symbol.isTemporary())
+    return true;
+
+  // Absolute temporary labels are never visible.
+  if (!Symbol.isInSection())
+    return false;
 
   // For now, all non-variable symbols are exported,
   // the linker will sort the rest out for us.
-  return SymbolData.isExternal() || !SymbolData.getSymbol().isVariable();
+  return !Symbol.isVariable();
 }
 
 bool WinCOFFObjectWriter::IsPhysicalSection(COFFSection *S) {
@@ -689,7 +700,7 @@ void WinCOFFObjectWriter::ExecutePostLayoutBinding(MCAssembler &Asm,
     DefineSection(Section);
 
   for (MCSymbolData &SD : Asm.symbols())
-    if (ExportSymbol(SD, Asm))
+    if (ExportSymbol(SD.getSymbol(), Asm))
       DefineSymbol(SD, Asm, Layout);
 }
 
