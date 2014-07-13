@@ -1,19 +1,27 @@
-; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s --check-prefix=R600-CHECK --check-prefix=FUNC
-; RUN: llc -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s --check-prefix=SI-CHECK --check-prefix=FUNC
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck %s -check-prefix=R600 -check-prefix=FUNC
+; RUN: llc -mattr=+promote-alloca -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s -check-prefix=SI-PROMOTE -check-prefix=SI -check-prefix=FUNC
+; RUN: llc -mattr=-promote-alloca -verify-machineinstrs -march=r600 -mcpu=SI < %s | FileCheck %s -check-prefix=SI-ALLOCA -check-prefix=SI -check-prefix=FUNC
 
 declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 
 ; FUNC-LABEL: @mova_same_clause
 
-; R600-CHECK: LDS_WRITE
-; R600-CHECK: LDS_WRITE
-; R600-CHECK: LDS_READ
-; R600-CHECK: LDS_READ
+; R600: LDS_WRITE
+; R600: LDS_WRITE
+; R600: LDS_READ
+; R600: LDS_READ
 
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_WRITE_B32
-; SI-CHECK: DS_READ_B32
-; SI-CHECK: DS_READ_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
+
+; SI-ALLOCA: V_READFIRSTLANE_B32 vcc_lo
+; SI-ALLOCA: V_MOVRELD
+; SI-ALLOCA: S_CBRANCH
+; SI-ALLOCA: V_READFIRSTLANE_B32 vcc_lo
+; SI-ALLOCA: V_MOVRELD
+; SI-ALLOCA: S_CBRANCH
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {
 entry:
   %stack = alloca [5 x i32], align 4
@@ -42,8 +50,9 @@ entry:
 ; this.
 
 ; FUNC-LABEL: @multiple_structs
-; R600-CHECK-NOT: MOVA_INT
-; SI-CHECK-NOT: V_MOVREL
+; R600-NOT: MOVA_INT
+; SI-NOT: V_MOVREL
+; SI-NOT: V_MOVREL
 %struct.point = type { i32, i32 }
 
 define void @multiple_structs(i32 addrspace(1)* %out) {
@@ -72,8 +81,8 @@ entry:
 ; MOVA instructions.
 
 ; FUNC-LABEL: @direct_loop
-; R600-CHECK-NOT: MOVA_INT
-; SI-CHECK-NOT: V_MOVREL
+; R600-NOT: MOVA_INT
+; SI-NOT: V_MOVREL
 
 define void @direct_loop(i32 addrspace(1)* %out, i32 addrspace(1)* %in) {
 entry:
@@ -109,9 +118,9 @@ for.end:
 
 ; FUNC-LABEL: @short_array
 
-; R600-CHECK: MOVA_INT
+; R600: MOVA_INT
 
-; SI-CHECK: V_MOVRELS_B32_e32
+; SI-PROMOTE: V_MOVRELS_B32_e32
 define void @short_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i16]
@@ -128,10 +137,10 @@ entry:
 
 ; FUNC-LABEL: @char_array
 
-; R600-CHECK: MOVA_INT
+; R600: MOVA_INT
 
-; SI-CHECK: V_OR_B32_e32 v{{[0-9]}}, 0x100
-; SI-CHECK: V_MOVRELS_B32_e32
+; SI: V_OR_B32_e32 v{{[0-9]}}, 0x100
+; SI: V_MOVRELS_B32_e32
 define void @char_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i8]
@@ -150,11 +159,11 @@ entry:
 ; Make sure we don't overwrite workitem information with private memory
 
 ; FUNC-LABEL: @work_item_info
-; R600-CHECK-NOT: MOV T0.X
+; R600-NOT: MOV T0.X
 ; Additional check in case the move ends up in the last slot
-; R600-CHECK-NOT: MOV * TO.X
+; R600-NOT: MOV * TO.X
 
-; SI-CHECK-NOT: V_MOV_B32_e{{(32|64)}} v0
+; SI-NOT: V_MOV_B32_e{{(32|64)}} v0
 define void @work_item_info(i32 addrspace(1)* %out, i32 %in) {
 entry:
   %0 = alloca [2 x i32]
@@ -175,8 +184,8 @@ entry:
 ; FUNC-LABEL: @no_overlap
 ; R600_CHECK: MOV
 ; R600_CHECK: [[CHAN:[XYZW]]]+
-; R600-CHECK-NOT: [[CHAN]]+
-; SI-CHECK: V_MOV_B32_e32 v3
+; R600-NOT: [[CHAN]]+
+; SI: V_MOV_B32_e32 v3
 define void @no_overlap(i32 addrspace(1)* %out, i32 %in) {
 entry:
   %0 = alloca [3 x i8], align 1
