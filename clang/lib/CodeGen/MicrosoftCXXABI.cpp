@@ -1325,15 +1325,13 @@ llvm::GlobalVariable *MicrosoftCXXABI::getAddrOfVTable(const CXXRecordDecl *RD,
         if (llvm::GlobalValue::isAvailableExternallyLinkage(VFTableLinkage)) {
           // AvailableExternally implies that we grabbed the data from another
           // executable.  No need to stick the alias in a Comdat.
-        } else if (llvm::GlobalValue::isLocalLinkage(VFTableLinkage)) {
-          // If it's local, it means that the virtual function table can't be
-          // referenced in another translation unit. No need to stick the alias
-          // in a Comdat.
-        } else if (llvm::GlobalValue::isWeakODRLinkage(VFTableLinkage) ||
+        } else if (llvm::GlobalValue::isInternalLinkage(VFTableLinkage) ||
+                   llvm::GlobalValue::isWeakODRLinkage(VFTableLinkage) ||
                    llvm::GlobalValue::isLinkOnceODRLinkage(VFTableLinkage)) {
           // The alias is going to be dropped into a Comdat, no need to make it
           // weak.
-          VFTableLinkage = llvm::GlobalValue::ExternalLinkage;
+          if (!llvm::GlobalValue::isInternalLinkage(VFTableLinkage))
+            VFTableLinkage = llvm::GlobalValue::ExternalLinkage;
           llvm::Comdat *C =
               CGM.getModule().getOrInsertComdat(VFTable->getName());
           // We must indicate which VFTable is larger to support linking between
