@@ -411,8 +411,11 @@ endif()
 # Plugin support
 # FIXME: Make this configurable.
 if(WIN32 OR CYGWIN)
-  # DLL platform(s) don't support plugins.
-  set(LLVM_ENABLE_PLUGINS OFF)
+  if(BUILD_SHARED_LIBS)
+    set(LLVM_ENABLE_PLUGINS ON)
+  else()
+    set(LLVM_ENABLE_PLUGINS OFF)
+  endif()
 else()
   set(LLVM_ENABLE_PLUGINS ON)
 endif()
