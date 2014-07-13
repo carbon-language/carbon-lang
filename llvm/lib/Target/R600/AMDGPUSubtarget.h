@@ -52,6 +52,7 @@ private:
   bool FP64;
   bool CaymanISA;
   bool EnableIRStructurizer;
+  bool EnablePromoteAlloca;
   bool EnableIfCvt;
   unsigned WavefrontSize;
   bool CFALUBug;
@@ -81,7 +82,7 @@ public:
   }
 
   short getTexVTXClauseSize() const {
-      return TexVTXClauseSize;
+    return TexVTXClauseSize;
   }
 
   Generation getGeneration() const {
@@ -127,6 +128,10 @@ public:
 
   bool IsIRStructurizerEnabled() const {
     return EnableIRStructurizer;
+  }
+
+  bool isPromoteAllocaEnabled() const {
+    return EnablePromoteAlloca;
   }
 
   bool isIfCvtEnabled() const {

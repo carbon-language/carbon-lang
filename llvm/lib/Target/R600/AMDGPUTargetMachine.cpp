@@ -33,7 +33,6 @@
 #include "llvm/Transforms/Scalar.h"
 #include <llvm/CodeGen/Passes.h>
 
-
 using namespace llvm;
 
 extern "C" void LLVMInitializeR600Target() {
@@ -137,8 +136,11 @@ void AMDGPUTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 
 void AMDGPUPassConfig::addCodeGenPrepare() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
-  addPass(createAMDGPUPromoteAlloca(ST));
-  addPass(createSROAPass());
+  if (ST.isPromoteAllocaEnabled()) {
+    addPass(createAMDGPUPromoteAlloca(ST));
+    addPass(createSROAPass());
+  }
+
   TargetPassConfig::addCodeGenPrepare();
 }
 

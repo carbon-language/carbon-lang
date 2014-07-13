@@ -16,6 +16,8 @@
 #include "R600InstrInfo.h"
 #include "SIInstrInfo.h"
 
+#include "llvm/ADT/SmallString.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "amdgpu-subtarget"
@@ -37,12 +39,17 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS) :
   FP64(false),
   CaymanISA(false),
   EnableIRStructurizer(true),
+  EnablePromoteAlloca(false),
   EnableIfCvt(true),
   WavefrontSize(0),
   CFALUBug(false),
   LocalMemorySize(0),
   InstrItins(getInstrItineraryForCPU(GPU)) {
-  ParseSubtargetFeatures(GPU, FS);
+
+  SmallString<256> FullFS("+promote-alloca,");
+  FullFS += FS;
+
+  ParseSubtargetFeatures(GPU, FullFS);
 
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));

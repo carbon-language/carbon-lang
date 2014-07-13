@@ -25,6 +25,11 @@ def FeatureIRStructurizer : SubtargetFeature <"disable-irstructurizer",
         "false",
         "Disable IR Structurizer">;
 
+def FeaturePromoteAlloca : SubtargetFeature <"promote-alloca",
+        "EnablePromoteAlloca",
+        "true",
+        "Enable promote alloca pass">;
+
 // Target features
 
 def FeatureIfCvt : SubtargetFeature <"disable-ifcvt",
