@@ -345,6 +345,7 @@ void ScalarEnumerationTraits<ELFYAML::ELF_SHT>::enumeration(
     ECase(SHT_MIPS_REGINFO)
     ECase(SHT_MIPS_OPTIONS)
     ECase(SHT_MIPS_ABIFLAGS)
+    break;
   default:
     // Nothing to do.
     break;
