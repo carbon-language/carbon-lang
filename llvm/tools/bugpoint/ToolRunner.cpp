@@ -148,6 +148,14 @@ static std::string ProcessFailure(StringRef ProgPath, const char** Args,
     errs() << "Error making unique filename: " << EC.message() << "\n";
     exit(1);
   }
+
+#ifdef _WIN32
+  // Close ErrorFD immediately, or it couldn't be reopened on Win32.
+  // FIXME: We may have an option in openFileForWrite(), not to use ResultFD
+  // but to close it.
+  delete new raw_fd_ostream(ErrorFD, true);
+#endif
+
   RunProgramWithTimeout(ProgPath, Args, "", ErrorFilename.str(),
                         ErrorFilename.str(), Timeout, MemoryLimit);
   // FIXME: check return code ?
