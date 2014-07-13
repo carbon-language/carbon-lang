@@ -46,16 +46,13 @@ static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &Insns) {
   return Count;
 }
 
-static void EmitAbsDifference(MCStreamer &streamer, MCSymbol *lhs,
-                              MCSymbol *rhs) {
-  MCContext &context = streamer.getContext();
-  const MCExpr *diff = MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(
-                                                                  lhs, context),
-                                               MCSymbolRefExpr::Create(
-                                                                  rhs, context),
-                                               context);
-  streamer.EmitAbsValue(diff, 1);
-
+static void EmitAbsDifference(MCStreamer &Streamer, const MCSymbol *LHS,
+                              const MCSymbol *RHS) {
+  MCContext &Context = Streamer.getContext();
+  const MCExpr *Diff =
+      MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(LHS, Context),
+                              MCSymbolRefExpr::Create(RHS, Context), Context);
+  Streamer.EmitAbsValue(Diff, 1);
 }
 
 static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
