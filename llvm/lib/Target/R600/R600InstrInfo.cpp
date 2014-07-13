@@ -209,8 +209,10 @@ bool R600InstrInfo::usesVertexCache(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::usesVertexCache(const MachineInstr *MI) const {
-  const R600MachineFunctionInfo *MFI = MI->getParent()->getParent()->getInfo<R600MachineFunctionInfo>();
-  return MFI->ShaderType != ShaderType::COMPUTE && usesVertexCache(MI->getOpcode());
+  const MachineFunction *MF = MI->getParent()->getParent();
+  const R600MachineFunctionInfo *MFI = MF->getInfo<R600MachineFunctionInfo>();
+  return MFI->getShaderType() != ShaderType::COMPUTE &&
+    usesVertexCache(MI->getOpcode());
 }
 
 bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
@@ -218,9 +220,11 @@ bool R600InstrInfo::usesTextureCache(unsigned Opcode) const {
 }
 
 bool R600InstrInfo::usesTextureCache(const MachineInstr *MI) const {
-  const R600MachineFunctionInfo *MFI = MI->getParent()->getParent()->getInfo<R600MachineFunctionInfo>();
-  return (MFI->ShaderType == ShaderType::COMPUTE && usesVertexCache(MI->getOpcode())) ||
-         usesTextureCache(MI->getOpcode());
+  const MachineFunction *MF = MI->getParent()->getParent();
+  const R600MachineFunctionInfo *MFI = MF->getInfo<R600MachineFunctionInfo>();
+  return (MFI->getShaderType() == ShaderType::COMPUTE &&
+          usesVertexCache(MI->getOpcode())) ||
+    usesTextureCache(MI->getOpcode());
 }
 
 bool R600InstrInfo::mustBeLastInClause(unsigned Opcode) const {

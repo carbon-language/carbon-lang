@@ -327,7 +327,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     const ISD::InputArg &Arg = Ins[i];
 
     // First check if it's a PS input addr
-    if (Info->ShaderType == ShaderType::PIXEL && !Arg.Flags.isInReg() &&
+    if (Info->getShaderType() == ShaderType::PIXEL && !Arg.Flags.isInReg() &&
         !Arg.Flags.isByVal()) {
 
       assert((PSInputNum <= 15) && "Too many PS inputs!");
@@ -343,7 +343,7 @@ SDValue SITargetLowering::LowerFormalArguments(
     }
 
     // Second split vertices into their elements
-    if (Info->ShaderType != ShaderType::COMPUTE && Arg.VT.isVector()) {
+    if (Info->getShaderType() != ShaderType::COMPUTE && Arg.VT.isVector()) {
       ISD::InputArg NewArg = Arg;
       NewArg.Flags.setSplit();
       NewArg.VT = Arg.VT.getVectorElementType();
@@ -359,7 +359,7 @@ SDValue SITargetLowering::LowerFormalArguments(
         NewArg.PartOffset += NewArg.VT.getStoreSize();
       }
 
-    } else if (Info->ShaderType != ShaderType::COMPUTE) {
+    } else if (Info->getShaderType() != ShaderType::COMPUTE) {
       Splits.push_back(Arg);
     }
   }
@@ -369,20 +369,21 @@ SDValue SITargetLowering::LowerFormalArguments(
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
   // At least one interpolation mode must be enabled or else the GPU will hang.
-  if (Info->ShaderType == ShaderType::PIXEL && (Info->PSInputAddr & 0x7F) == 0) {
+  if (Info->getShaderType() == ShaderType::PIXEL &&
+      (Info->PSInputAddr & 0x7F) == 0) {
     Info->PSInputAddr |= 1;
     CCInfo.AllocateReg(AMDGPU::VGPR0);
     CCInfo.AllocateReg(AMDGPU::VGPR1);
   }
 
   // The pointer to the list of arguments is stored in SGPR0, SGPR1
-  if (Info->ShaderType == ShaderType::COMPUTE) {
+  if (Info->getShaderType() == ShaderType::COMPUTE) {
     CCInfo.AllocateReg(AMDGPU::SGPR0);
     CCInfo.AllocateReg(AMDGPU::SGPR1);
     MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
   }
 
-  if (Info->ShaderType == ShaderType::COMPUTE) {
+  if (Info->getShaderType() == ShaderType::COMPUTE) {
     getOriginalFunctionArgs(DAG, DAG.getMachineFunction().getFunction(), Ins,
                             Splits);
   }

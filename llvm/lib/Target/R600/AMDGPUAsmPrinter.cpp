@@ -16,7 +16,6 @@
 //===----------------------------------------------------------------------===//
 //
 
-
 #include "AMDGPUAsmPrinter.h"
 #include "AMDGPU.h"
 #include "AMDGPUSubtarget.h"
@@ -179,7 +178,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   unsigned RsrcReg;
   if (STM.getGeneration() >= AMDGPUSubtarget::EVERGREEN) {
     // Evergreen / Northern Islands
-    switch (MFI->ShaderType) {
+    switch (MFI->getShaderType()) {
     default: // Fall through
     case ShaderType::COMPUTE:  RsrcReg = R_0288D4_SQ_PGM_RESOURCES_LS; break;
     case ShaderType::GEOMETRY: RsrcReg = R_028878_SQ_PGM_RESOURCES_GS; break;
@@ -188,7 +187,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
     }
   } else {
     // R600 / R700
-    switch (MFI->ShaderType) {
+    switch (MFI->getShaderType()) {
     default: // Fall through
     case ShaderType::GEOMETRY: // Fall through
     case ShaderType::COMPUTE:  // Fall through
@@ -203,7 +202,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoR600(MachineFunction &MF) {
   OutStreamer.EmitIntValue(R_02880C_DB_SHADER_CONTROL, 4);
   OutStreamer.EmitIntValue(S_02880C_KILL_ENABLE(killPixel), 4);
 
-  if (MFI->ShaderType == ShaderType::COMPUTE) {
+  if (MFI->getShaderType() == ShaderType::COMPUTE) {
     OutStreamer.EmitIntValue(R_0288E8_SQ_LDS_ALLOC, 4);
     OutStreamer.EmitIntValue(RoundUpToAlignment(MFI->LDSSize, 4) >> 2, 4);
   }
@@ -324,7 +323,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
 
   unsigned RsrcReg;
-  switch (MFI->ShaderType) {
+  switch (MFI->getShaderType()) {
   default: // Fall through
   case ShaderType::COMPUTE:  RsrcReg = R_00B848_COMPUTE_PGM_RSRC1; break;
   case ShaderType::GEOMETRY: RsrcReg = R_00B228_SPI_SHADER_PGM_RSRC1_GS; break;
@@ -344,7 +343,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
   unsigned LDSBlocks =
     RoundUpToAlignment(MFI->LDSSize, 1 << LDSAlignShift) >> LDSAlignShift;
 
-  if (MFI->ShaderType == ShaderType::COMPUTE) {
+  if (MFI->getShaderType() == ShaderType::COMPUTE) {
     OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
 
     const uint32_t ComputePGMRSrc1 =
@@ -367,7 +366,7 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(MachineFunction &MF,
                              S_00B028_SGPRS(KernelInfo.NumSGPR / 8), 4);
   }
 
-  if (MFI->ShaderType == ShaderType::PIXEL) {
+  if (MFI->getShaderType() == ShaderType::PIXEL) {
     OutStreamer.EmitIntValue(R_00B02C_SPI_SHADER_PGM_RSRC2_PS, 4);
     OutStreamer.EmitIntValue(S_00B02C_EXTRA_LDS_SIZE(LDSBlocks), 4);
     OutStreamer.EmitIntValue(R_0286CC_SPI_PS_INPUT_ENA, 4);

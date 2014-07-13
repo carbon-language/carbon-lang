@@ -1680,7 +1680,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
                  getTargetMachine(), ArgLocs, *DAG.getContext());
   MachineFunction &MF = DAG.getMachineFunction();
-  unsigned ShaderType = MF.getInfo<R600MachineFunctionInfo>()->ShaderType;
+  unsigned ShaderType = MF.getInfo<R600MachineFunctionInfo>()->getShaderType();
 
   SmallVector<ISD::InputArg, 8> LocalIns;
 

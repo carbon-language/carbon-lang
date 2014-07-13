@@ -20,14 +20,19 @@ namespace llvm {
 
 class AMDGPUMachineFunction : public MachineFunctionInfo {
   virtual void anchor();
+  unsigned ShaderType;
+
 public:
   AMDGPUMachineFunction(const MachineFunction &MF);
-  unsigned ShaderType;
   /// A map to keep track of local memory objects and their offsets within
   /// the local memory space.
   std::map<const GlobalValue *, unsigned> LocalMemoryObjects;
   /// Number of bytes in the LDS that are being used.
   unsigned LDSSize;
+
+  unsigned getShaderType() const {
+    return ShaderType;
+  }
 };
 
 }
