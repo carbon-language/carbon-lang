@@ -36,8 +36,8 @@
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/NativeRegisterContext.h"
-#include "../../../Host/common/NativeProcessProtocol.h"
-#include "../../../Host/common/NativeThreadProtocol.h"
+#include "Host/common/NativeProcessProtocol.h"
+#include "Host/common/NativeThreadProtocol.h"
 
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
@@ -3041,12 +3041,21 @@ GDBRemoteCommunicationServer::Handle_qfThreadInfo (StringExtractorGDBRemote &pac
     if (!IsGdbServer())
         return SendUnimplementedResponse("GDBRemoteCommunicationServer::Handle_qfThreadInfo() unimplemented");
 
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_THREAD));
+
     // Fail if we don't have a current process.
     if (!m_debugged_process_sp || (m_debugged_process_sp->GetID () == LLDB_INVALID_PROCESS_ID))
-        return SendErrorResponse (68);
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s() no process (%s), returning OK", __FUNCTION__, m_debugged_process_sp ? "invalid process id" : "null m_debugged_process_sp");
+        return SendOKResponse ();
+    }
 
     StreamGDBRemote response;
     response.PutChar ('m');
+
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServer::%s() starting thread iteration", __FUNCTION__);
 
     NativeThreadProtocolSP thread_sp;
     uint32_t thread_index;
@@ -3054,10 +3063,15 @@ GDBRemoteCommunicationServer::Handle_qfThreadInfo (StringExtractorGDBRemote &pac
          thread_sp;
          ++thread_index, thread_sp = m_debugged_process_sp->GetThreadAtIndex (thread_index))
     {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s() iterated thread %" PRIu32 "(%s, tid=0x%" PRIx64 ")", __FUNCTION__, thread_index, thread_sp ? "is not null" : "null", thread_sp ? thread_sp->GetID () : LLDB_INVALID_THREAD_ID);
         if (thread_index > 0)
             response.PutChar(',');
         response.Printf ("%" PRIx64, thread_sp->GetID ());
     }
+
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServer::%s() finished thread iteration", __FUNCTION__);
 
     return SendPacketNoLock(response.GetData(), response.GetSize());
 }

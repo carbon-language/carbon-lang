@@ -195,7 +195,11 @@ def expect_lldb_gdbserver_replay(
                 # This is an entry to send to the remote debug monitor.
                 send_packet = sequence_entry.get_send_packet()
                 if logger:
-                    logger.info("sending packet to remote: %s" % send_packet)
+                    if len(send_packet) == 1 and send_packet[0] == chr(3):
+                        packet_desc = "^C"
+                    else:
+                        packet_desc = send_packet
+                    logger.info("sending packet to remote: {}".format(packet_desc))
                 sock.sendall(send_packet)
             else:
                 # This is an entry expecting to receive content from the remote debug monitor.
