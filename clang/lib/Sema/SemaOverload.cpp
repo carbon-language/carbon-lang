@@ -1164,17 +1164,6 @@ TryUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
           ICS.Standard.Second = ICK_Derived_To_Base;
       }
     }
-
-    // C++ [over.best.ics]p4:
-    //   However, when considering the argument of a user-defined
-    //   conversion function that is a candidate by 13.3.1.3 when
-    //   invoked for the copying of the temporary in the second step
-    //   of a class copy-initialization, or by 13.3.1.4, 13.3.1.5, or
-    //   13.3.1.6 in all cases, only standard conversion sequences and
-    //   ellipsis conversion sequences are allowed.
-    if (SuppressUserConversions && ICS.isUserDefined()) {
-      ICS.setBad(BadConversionSequence::suppressed_user, From, ToType);
-    }
   } else if (UserDefResult == OR_Ambiguous && !SuppressUserConversions) {
     ICS.setAmbiguous();
     ICS.Ambiguous.setFromType(From->getType());

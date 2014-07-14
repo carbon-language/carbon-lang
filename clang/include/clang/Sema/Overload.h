@@ -339,7 +339,6 @@ namespace clang {
     enum FailureKind {
       no_conversion,
       unrelated_class,
-      suppressed_user,
       bad_qualifiers,
       lvalue_ref_to_rvalue,
       rvalue_ref_to_lvalue
