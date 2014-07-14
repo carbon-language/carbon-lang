@@ -36,6 +36,19 @@ define i16 @test2() {
 ; BE: ret i16 -8531
 }
 
+define i16 @test2_addrspacecast() {
+  %r = load i16 addrspace(1)* addrspacecast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16 addrspace(1)*)
+  ret i16 %r
+
+; 0xBEEF
+; LE-LABEL: @test2_addrspacecast(
+; LE: ret i16 -16657
+
+; 0xDEAD
+; BE-LABEL: @test2_addrspacecast(
+; BE: ret i16 -8531
+}
+
 ; Load of second 16 bits of 32-bit value.
 define i16 @test3() {
   %r = load i16* getelementptr(i16* bitcast(i32* getelementptr ({{i32,i8},i32}* @g1, i32 0, i32 0, i32 0) to i16*), i32 1)
