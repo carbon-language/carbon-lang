@@ -737,8 +737,8 @@ public:
 
   /// Grabs __declspec(uuid()) off a type, or returns 0 if we cannot resolve to
   /// a single GUID.
-  static UuidAttr *GetUuidAttrOfType(QualType QT,
-                                     bool *HasMultipleGUIDsPtr = nullptr);
+  static const UuidAttr *GetUuidAttrOfType(QualType QT,
+                                           bool *HasMultipleGUIDsPtr = nullptr);
 
   // Iterators
   child_range children() {
