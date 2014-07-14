@@ -323,30 +323,13 @@ void MipsTargetELFStreamer::finish() {
   MCAssembler &MCA = getStreamer().getAssembler();
   MCContext &Context = MCA.getContext();
   MCStreamer &OS = getStreamer();
-  const MCObjectFileInfo &OFI = *Context.getObjectFileInfo();
   Triple T(STI.getTargetTriple());
   uint64_t Features = STI.getFeatureBits();
 
-  // .bss, .text and .data are always at least 16-byte aligned.
-  MCSectionData &TextSectionData =
-      MCA.getOrCreateSectionData(*OFI.getTextSection());
-  MCSectionData &DataSectionData =
-      MCA.getOrCreateSectionData(*OFI.getDataSection());
-  MCSectionData &BSSSectionData =
-      MCA.getOrCreateSectionData(*OFI.getBSSSection());
-
-  TextSectionData.setAlignment(std::max(16u, TextSectionData.getAlignment()));
-  DataSectionData.setAlignment(std::max(16u, DataSectionData.getAlignment()));
-  BSSSectionData.setAlignment(std::max(16u, BSSSectionData.getAlignment()));
-
   if (T.isArch64Bit() && (Features & Mips::FeatureN64)) {
-    // The EntrySize value of 1 seems strange since the records are neither
-    // 1-byte long nor fixed length but it matches the value GAS emits.
-    const MCSectionELF *Sec =
-        Context.getELFSection(".MIPS.options", ELF::SHT_MIPS_OPTIONS,
-                              ELF::SHF_ALLOC | ELF::SHF_MIPS_NOSTRIP,
-                              SectionKind::getMetadata(), 1, "");
-    MCA.getOrCreateSectionData(*Sec).setAlignment(8);
+    const MCSectionELF *Sec = Context.getELFSection(
+        ".MIPS.options", ELF::SHT_MIPS_OPTIONS,
+        ELF::SHF_ALLOC | ELF::SHF_MIPS_NOSTRIP, SectionKind::getMetadata());
     OS.SwitchSection(Sec);
 
     OS.EmitIntValue(1, 1);  // kind
@@ -363,8 +346,7 @@ void MipsTargetELFStreamer::finish() {
   } else {
     const MCSectionELF *Sec =
         Context.getELFSection(".reginfo", ELF::SHT_MIPS_REGINFO, ELF::SHF_ALLOC,
-                              SectionKind::getMetadata(), 24, "");
-    MCA.getOrCreateSectionData(*Sec).setAlignment(4);
+                              SectionKind::getMetadata());
     OS.SwitchSection(Sec);
 
     OS.EmitIntValue(0, 4); // ri_gprmask
@@ -656,7 +638,7 @@ void MipsTargetELFStreamer::emitMipsAbiFlags() {
   MCStreamer &OS = getStreamer();
   const MCSectionELF *Sec =
       Context.getELFSection(".MIPS.abiflags", ELF::SHT_MIPS_ABIFLAGS,
-                            ELF::SHF_ALLOC, SectionKind::getMetadata(), 24, "");
+                            ELF::SHF_ALLOC, SectionKind::getMetadata());
   MCSectionData &ABIShndxSD = MCA.getOrCreateSectionData(*Sec);
   ABIShndxSD.setAlignment(8);
   OS.SwitchSection(Sec);
