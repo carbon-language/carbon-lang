@@ -1239,8 +1239,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // Parse the (optional) nested-name-specifier.
   CXXScopeSpec &SS = DS.getTypeSpecScope();
   if (getLangOpts().CPlusPlus) {
-    // "FOO : BAR" is not a potential typo for "FOO::BAR".  In this context it
-    // is a base-specifier-list.
+    // "FOO : BAR" is not a potential typo for "FOO::BAR".
     ColonProtectionRAIIObject X(*this);
 
     if (ParseOptionalCXXScopeSpecifier(SS, ParsedType(), EnteringContext))
@@ -1927,8 +1926,14 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
   //   declarator pure-specifier[opt]
   //   declarator brace-or-equal-initializer[opt]
   //   identifier[opt] ':' constant-expression
-  if (Tok.isNot(tok::colon))
+  if (Tok.isNot(tok::colon)) {
+    // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
+    // is a bitfield.
+    // FIXME: This should only apply when parsing the id-expression (see
+    // PR18587).
+    ColonProtectionRAIIObject X(*this);
     ParseDeclarator(DeclaratorInfo);
+  }
 
   if (!DeclaratorInfo.isFunctionDeclarator() && TryConsumeToken(tok::colon)) {
     BitfieldSize = ParseConstantExpression();
@@ -2009,14 +2014,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     SkipUntil(tok::r_brace, StopAtSemi);
     return;
   }
-
-  // Turn on colon protection early, while parsing declspec, although there is
-  // nothing to protect there. It prevents from false errors if error recovery
-  // incorrectly determines where the declspec ends, as in the example:
-  //   struct A { enum class B { C }; };
-  //   const int C = 4;
-  //   struct D { A::B : C; };
-  ColonProtectionRAIIObject X(*this);
 
   // Access declarations.
   bool MalformedTypeSpec = false;
@@ -2131,11 +2128,13 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
   if (MalformedTypeSpec)
     DS.SetTypeSpecError();
 
-  ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
-                             &CommonLateParsedAttrs);
-
-  // Turn off colon protection that was set for declspec.
-  X.restore();
+  {
+    // Don't parse FOO:BAR as if it were a typo for FOO::BAR, in this context it
+    // is a bitfield.
+    ColonProtectionRAIIObject X(*this);
+    ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
+                               &CommonLateParsedAttrs);
+  }
 
   // If we had a free-standing type definition with a missing semicolon, we
   // may get this far before the problem becomes obvious.
