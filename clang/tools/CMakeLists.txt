@@ -5,9 +5,10 @@ if(CLANG_ENABLE_REWRITER)
   add_subdirectory(clang-format-vs)
 endif()
 
+add_subdirectory(c-index-test)
+add_subdirectory(libclang)
+
 if(CLANG_ENABLE_ARCMT)
-  add_subdirectory(libclang)
-  add_subdirectory(c-index-test)
   add_subdirectory(arcmt-test)
   add_subdirectory(c-arcmt-test)
 endif()

@@ -26,10 +26,17 @@ endif ()
 
 list(APPEND CLANG_TEST_DEPS
   clang clang-headers
-  c-index-test diagtool arcmt-test c-arcmt-test
+  c-index-test diagtool
   clang-check clang-format
   clang-tblgen
   )
+
+if (CLANG_ENABLE_ARCMT)
+  list(APPEND CLANG_TEST_DEPS
+    arcmt-test
+    c-arcmt-test
+  )
+endif ()
 
 if (ENABLE_CLANG_EXAMPLES)
   list(APPEND CLANG_TEST_DEPS
