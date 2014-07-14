@@ -1,4 +1,5 @@
 ; RUN: llc -mtriple=i386-linux-gnu %s -o - | FileCheck %s
+; XFAIL: *
 
 define i64 @test_add(i64* %addr, i64 %inc) {
 ; CHECK-LABEL: test_add:

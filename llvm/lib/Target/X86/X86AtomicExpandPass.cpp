@@ -98,24 +98,20 @@ bool X86AtomicExpandPass::runOnFunction(Function &F) {
   return MadeChange;
 }
 
-/// Returns true if operations on the given type will need to use either
-/// cmpxchg8b or cmpxchg16b. This occurs if the type is 1 step up from the
-/// native width, and the instructions are available (otherwise we leave them
-/// alone to become __sync_fetch_and_... calls).
+/// Returns true if the operand type is 1 step up from the native width, and
+/// the corresponding cmpxchg8b or cmpxchg16b instruction is available
+/// (otherwise we leave them alone to become __sync_fetch_and_... calls).
 bool X86AtomicExpandPass::needsCmpXchgNb(llvm::Type *MemType) {
   const X86Subtarget &Subtarget = TM->getSubtarget<X86Subtarget>();
-  if (!Subtarget.hasCmpxchg16b())
-    return false;
-
-  unsigned CmpXchgNbWidth = Subtarget.is64Bit() ? 128 : 64;
-
   unsigned OpWidth = MemType->getPrimitiveSizeInBits();
-  if (OpWidth == CmpXchgNbWidth)
-    return true;
+
+  if (OpWidth == 64)
+    return !Subtarget.is64Bit();  // FIXME this should be Subtarget.hasCmpxchg8b
+  if (OpWidth == 128)
+    return Subtarget.hasCmpxchg16b();
 
   return false;
 }
-
 
 bool X86AtomicExpandPass::shouldExpandAtomicRMW(AtomicRMWInst *AI) {
   const X86Subtarget &Subtarget = TM->getSubtarget<X86Subtarget>();
