@@ -72,8 +72,8 @@ define i16 @to_half(float %in) {
 
 define float @from_half(i16 %in) {
 ; CHECK-LABEL: from_half:
-; CHECK: fmov s[[HALFVAL:[0-9]+]], {{w[0-9]+}}
-; CHECK: fcvt s0, h[[HALFVAL]]
+; CHECK: fmov {{s[0-9]+}}, {{w[0-9]+}}
+; CHECK: fcvt s0, {{h[0-9]+}}
   %res = call float @llvm.convert.from.fp16(i16 %in)
   ret float %res
 }

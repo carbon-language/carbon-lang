@@ -634,19 +634,6 @@ bool AArch64ExpandPseudo::expandMI(MachineBasicBlock &MBB,
     return true;
   }
 
-  case AArch64::FCVTSHpseudo: {
-    MachineOperand Src = MI.getOperand(1);
-    Src.setImplicit();
-    unsigned SrcH =
-        TII->getRegisterInfo().getSubReg(Src.getReg(), AArch64::hsub);
-    auto MIB = BuildMI(MBB, MBBI, MI.getDebugLoc(), TII->get(AArch64::FCVTSHr))
-                   .addOperand(MI.getOperand(0))
-                   .addReg(SrcH, RegState::Undef)
-                   .addOperand(Src);
-    transferImpOps(MI, MIB, MIB);
-    MI.eraseFromParent();
-    return true;
-  }
   case AArch64::LOADgot: {
     // Expand into ADRP + LDR.
     unsigned DstReg = MI.getOperand(0).getReg();
