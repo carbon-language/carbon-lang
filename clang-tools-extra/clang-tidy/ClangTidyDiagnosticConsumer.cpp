@@ -18,6 +18,7 @@
 
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyOptions.h"
+#include "clang/AST/ASTDiagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
 #include "llvm/ADT/SmallString.h"
@@ -202,6 +203,10 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 void ClangTidyContext::setCurrentFile(StringRef File) {
   CurrentFile = File;
   CheckFilter.reset(new ChecksFilter(getOptions().Checks));
+}
+
+void ClangTidyContext::setASTContext(ASTContext *Context) {
+  DiagEngine->SetArgToStringFn(&FormatASTNodeDiagnosticArgument, Context);
 }
 
 const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {

@@ -19,6 +19,7 @@
 
 namespace clang {
 
+class ASTContext;
 class CompilerInstance;
 namespace ast_matchers {
 class MatchFinder;
@@ -135,6 +136,9 @@ public:
 
   /// \brief Should be called when starting to process new translation unit.
   void setCurrentFile(StringRef File);
+
+  /// \brief Sets ASTContext for the current translation unit.
+  void setASTContext(ASTContext *Context);
 
   /// \brief Returns the name of the clang-tidy check which produced this
   /// diagnostic ID.

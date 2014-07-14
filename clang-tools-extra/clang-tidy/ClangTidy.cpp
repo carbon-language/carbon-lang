@@ -210,6 +210,7 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
   // modify Compiler.
   Context.setSourceManager(&Compiler.getSourceManager());
   Context.setCurrentFile(File);
+  Context.setASTContext(&Compiler.getASTContext());
 
   std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
   ChecksFilter &Filter = Context.getChecksFilter();
