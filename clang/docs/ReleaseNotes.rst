@@ -64,6 +64,9 @@ Clang's diagnostics are constantly being improved to catch more issues,
 explain them more clearly, and provide more accurate source information
 about them. The improvements since the 3.4 release include:
 
+- GCC compatibility: Clang displays a warning on unsupported gcc
+  optimization flags instead of an error.
+
 -  ...
 
 New Compiler Flags
