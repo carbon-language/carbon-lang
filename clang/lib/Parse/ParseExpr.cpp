@@ -2309,6 +2309,7 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
                                                          Expr *Data,
                                                          ArrayRef<Expr *> Args),
                                  Expr *Data) {
+  bool SawError = false;
   while (1) {
     if (Tok.is(tok::code_completion)) {
       if (Completer)
@@ -2328,13 +2329,15 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
 
     if (Tok.is(tok::ellipsis))
       Expr = Actions.ActOnPackExpansion(Expr.get(), ConsumeToken());    
-    if (Expr.isInvalid())
-      return true;
-
-    Exprs.push_back(Expr.get());
+    if (Expr.isInvalid()) {
+      SkipUntil(tok::comma, tok::r_paren, StopBeforeMatch);
+      SawError = true;
+    } else {
+      Exprs.push_back(Expr.get());
+    }
 
     if (Tok.isNot(tok::comma))
-      return false;
+      return SawError;
     // Move to the next argument, remember where the comma was.
     CommaLocs.push_back(ConsumeToken());
   }

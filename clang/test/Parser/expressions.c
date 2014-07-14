@@ -67,3 +67,9 @@ void func_16992 () {
   int x3 = __alignof int;         // expected-error {{expected parentheses around type name in __alignof expression}}
   int x4 = _Alignof int;          // expected-error {{expected parentheses around type name in _Alignof expression}}
 }
+
+void callee(double, double);
+void test8() {
+  callee(foobar,   // expected-error {{use of undeclared identifier 'foobar'}}
+         fizbin);  // expected-error {{use of undeclared identifier 'fizbin'}}
+}

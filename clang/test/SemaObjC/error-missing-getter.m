@@ -27,7 +27,8 @@ int func2 (int arg) {
     if (TestClass.setterOnly) { // expected-error {{no getter method for read from property}}
       TestClass.setterOnly = 1;
     }
-    func(TestClass.setterOnly + 1, x); // expected-error {{no getter method for read from property}}
+    func(TestClass.setterOnly + 1, x); // expected-error {{no getter method for read from property}} \
+                                       // expected-error {{use of undeclared identifier 'x'}}
     int i = TestClass.setterOnly + 1;  // expected-error {{no getter method for read from property}}
     return TestClass.setterOnly + 1;   // expected-error {{no getter method for read from property}}
 }
