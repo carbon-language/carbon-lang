@@ -46,8 +46,8 @@ static void DescribeStackOrigin(const char *so, uptr pc) {
   Printf(
       "  %sUninitialized value was created by an allocation of '%s%s%s'"
       " in the stack frame of function '%s%s%s'%s\n",
-      d.Origin(), d.Name(), s, d.Origin(), d.Name(),
-      Symbolizer::Get()->Demangle(sep + 1), d.Origin(), d.End());
+      d.Origin(), d.Name(), s, d.Origin(), d.Name(), sep + 1, d.Origin(),
+      d.End());
   InternalFree(s);
 
   if (pc) {
