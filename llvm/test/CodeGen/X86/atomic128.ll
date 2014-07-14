@@ -277,6 +277,7 @@ define void @atomic_store_seq_cst(i128* %p, i128 %in) {
 ; CHECK:         lock
 ; CHECK:         cmpxchg16b (%rdi)
 ; CHECK:         jne [[LOOP]]
+; CHECK-NOT:     callq ___sync_lock_test_and_set_16
 
    store atomic i128 %in, i128* %p seq_cst, align 16
    ret void

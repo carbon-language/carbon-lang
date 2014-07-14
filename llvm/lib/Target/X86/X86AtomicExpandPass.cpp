@@ -277,8 +277,11 @@ bool X86AtomicExpandPass::expandAtomicStore(StoreInst *SI) {
                               SI->getValueOperand(), Order);
 
   // Now we have an appropriate swap instruction, lower it as usual.
-  if (shouldExpandAtomicRMW(AI))
-    return expandAtomicRMW(AI);
+  if (shouldExpandAtomicRMW(AI)) {
+    expandAtomicRMW(AI);
+    AI->eraseFromParent();
+    return true;
+  }
 
   return AI;
 }
