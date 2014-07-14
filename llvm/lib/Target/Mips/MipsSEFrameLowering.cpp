@@ -64,6 +64,8 @@ private:
   bool expandCopy(MachineBasicBlock &MBB, Iter I);
   bool expandCopyACC(MachineBasicBlock &MBB, Iter I, unsigned MFHiOpc,
                      unsigned MFLoOpc);
+  bool expandBuildPairF64(MachineBasicBlock &MBB,
+                          MachineBasicBlock::iterator I, bool FP64) const;
 
   MachineFunction &MF;
   MachineRegisterInfo &MRI;
@@ -108,6 +110,14 @@ bool ExpandPseudo::expandInstr(MachineBasicBlock &MBB, Iter I) {
   case Mips::STORE_ACC128:
     expandStoreACC(MBB, I, Mips::PseudoMFHI64, Mips::PseudoMFLO64, 8);
     break;
+  case Mips::BuildPairF64:
+    if (expandBuildPairF64(MBB, I, false))
+      MBB.erase(I);
+    return false;
+  case Mips::BuildPairF64_64:
+    if (expandBuildPairF64(MBB, I, true))
+      MBB.erase(I);
+    return false;
   case TargetOpcode::COPY:
     if (!expandCopy(MBB, I))
       return false;
@@ -256,6 +266,50 @@ bool ExpandPseudo::expandCopyACC(MachineBasicBlock &MBB, Iter I,
   BuildMI(MBB, I, DL, TII.get(TargetOpcode::COPY), DstHi)
     .addReg(VR1, RegState::Kill);
   return true;
+}
+
+/// This method expands the same instruction that MipsSEInstrInfo::
+/// expandBuildPairF64 does, for the case when ABI is fpxx and mthc1 is
+/// not available. It is implemented here because frame indexes are
+/// eliminated before MipsSEInstrInfo::expandBuildPairF64 is called.
+bool ExpandPseudo::expandBuildPairF64(MachineBasicBlock &MBB,
+                                      MachineBasicBlock::iterator I,
+                                      bool FP64) const {
+  // For fpxx and when mthc1 is not available, use:
+  //   spill + reload via ldc1
+  //
+  // The case where dmtc1 is available doesn't need to be handled here
+  // because it never creates a BuildPairF64 node.
+
+  const TargetMachine &TM = MF.getTarget();
+  if (TM.getSubtarget<MipsSubtarget>().isABI_FPXX()
+      && !TM.getSubtarget<MipsSubtarget>().hasMTHC1()) {
+    const MipsSEInstrInfo &TII =
+      *static_cast<const MipsSEInstrInfo*>(TM.getInstrInfo());
+    const MipsRegisterInfo &TRI =
+      *static_cast<const MipsRegisterInfo*>(TM.getRegisterInfo());
+
+    unsigned DstReg = I->getOperand(0).getReg();
+    unsigned LoReg = I->getOperand(1).getReg();
+    unsigned HiReg = I->getOperand(2).getReg();
+
+    // It should be impossible to have FGR64 on MIPS-II or MIPS32r1 (which are
+    // the cases where mthc1 is not available).
+    assert(!TM.getSubtarget<MipsSubtarget>().isFP64bit());
+
+    const TargetRegisterClass *RC = &Mips::GPR32RegClass;
+    const TargetRegisterClass *RC2 = &Mips::AFGR64RegClass;
+
+    int FI = MF.getInfo<MipsFunctionInfo>()->getBuildPairF64_FI(RC2);
+    TII.storeRegToStack(MBB, I, LoReg, I->getOperand(1).isKill(), FI, RC, &TRI,
+                        0);
+    TII.storeRegToStack(MBB, I, HiReg, I->getOperand(2).isKill(), FI, RC, &TRI,
+                        4);
+    TII.loadRegFromStack(MBB, I, DstReg, FI, RC2, &TRI, 0);
+    return true;
+  }
+
+  return false;
 }
 
 MipsSEFrameLowering::MipsSEFrameLowering(const MipsSubtarget &STI)

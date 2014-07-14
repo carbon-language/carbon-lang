@@ -157,6 +157,9 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                        "the O32 ABI.",
                        false);
 
+  if (IsFPXX && (isABI_N32() || isABI_N64()))
+    report_fatal_error("FPXX is not permitted for the N32/N64 ABI's.", false);
+
   if (hasMips32r6()) {
     StringRef ISA = hasMips64r6() ? "MIPS64r6" : "MIPS32r6";
 

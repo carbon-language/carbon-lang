@@ -169,7 +169,7 @@ public:
   bool isABI_N64() const { return MipsABI == N64; }
   bool isABI_N32() const { return MipsABI == N32; }
   bool isABI_O32() const { return MipsABI == O32; }
-  bool isABI_FPXX() const { return false; } // TODO: add check for FPXX
+  bool isABI_FPXX() const { return isABI_O32() && IsFPXX; }
   unsigned getTargetABI() const { return MipsABI; }
 
   /// This constructor initializes the data members to match that
@@ -253,6 +253,7 @@ public:
 
   /// Features related to the presence of specific instructions.
   bool hasExtractInsert() const { return !inMips16Mode() && hasMips32r2(); }
+  bool hasMTHC1() const { return hasMips32r2(); }
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
   bool allowMixed16_32() const { return inMips16ModeDefault() |
