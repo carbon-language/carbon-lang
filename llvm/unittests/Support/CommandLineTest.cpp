@@ -212,4 +212,23 @@ TEST(CommandLineTest, AliasesWithArguments) {
   }
 }
 
+void testAliasRequired(int argc, const char *const *argv) {
+  StackOption<std::string> Option("option", cl::Required);
+  cl::alias Alias("o", llvm::cl::aliasopt(Option));
+
+  cl::ParseCommandLineOptions(argc, argv);
+  EXPECT_EQ("x", Option);
+  EXPECT_EQ(1, Option.getNumOccurrences());
+
+  Alias.removeArgument();
+}
+
+TEST(CommandLineTest, AliasRequired) {
+  const char *opts1[] = { "-tool", "-option=x" };
+  const char *opts2[] = { "-tool", "-o", "x" };
+  testAliasRequired(array_lengthof(opts1), opts1);
+  testAliasRequired(array_lengthof(opts2), opts2);
+}
+
+
 }  // anonymous namespace

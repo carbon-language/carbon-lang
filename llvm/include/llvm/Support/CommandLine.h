@@ -270,8 +270,8 @@ public:
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags.
   //
-  bool addOccurrence(unsigned pos, StringRef ArgName,
-                     StringRef Value, bool MultiArg = false);
+  virtual bool addOccurrence(unsigned pos, StringRef ArgName,
+                             StringRef Value, bool MultiArg = false);
 
   // Prints option name followed by message.  Always returns true.
   bool error(const Twine &Message, StringRef ArgName = StringRef());
@@ -1648,6 +1648,10 @@ class alias : public Option {
   bool handleOccurrence(unsigned pos, StringRef /*ArgName*/,
                                 StringRef Arg) override {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
+  }
+  bool addOccurrence(unsigned pos, StringRef /*ArgName*/,
+                     StringRef Value, bool MultiArg = false) override {
+    return AliasFor->addOccurrence(pos, AliasFor->ArgStr, Value, MultiArg);
   }
   // Handle printing stuff...
   size_t getOptionWidth() const override;

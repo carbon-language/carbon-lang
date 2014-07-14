@@ -38,9 +38,9 @@ int merge_main(int argc, const char *argv[]) {
                                cl::desc("<filenames...>"));
 
   cl::opt<std::string> OutputFilename("output", cl::value_desc("output"),
-                                      cl::init("-"),
+                                      cl::init("-"), cl::Required,
                                       cl::desc("Output file"));
-  cl::alias OutputFilenameA("o", cl::desc("Alias for --output"), cl::Required,
+  cl::alias OutputFilenameA("o", cl::desc("Alias for --output"),
                             cl::aliasopt(OutputFilename));
 
   cl::ParseCommandLineOptions(argc, argv, "LLVM profile data merger\n");
