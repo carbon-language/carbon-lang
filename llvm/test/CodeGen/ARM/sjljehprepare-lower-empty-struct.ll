@@ -10,7 +10,7 @@
 ; __Unwind_SjLj_Register and actual @bar invocation
 
 
-define i8* @foo({} %c) {
+define i8* @foo(i8 %a, {} %c) {
 entry:
 ; CHECK: bl __Unwind_SjLj_Register
 ; CHECK-NEXT: {{[A-Z][a-zA-Z0-9]*}}:

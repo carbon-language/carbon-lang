@@ -249,34 +249,16 @@ void SjLjEHPrepare::lowerIncomingArguments(Function &F) {
        ++AI) {
     Type *Ty = AI->getType();
 
-    if (isa<StructType>(Ty) || isa<ArrayType>(Ty)) {
-      // Aggregate types can't be cast, but are legal argument types,
-      // so we have to handle them differently.  We use
-      // select i8 true, %arg, undef to achieve the same goal
-      Value *TrueValue = ConstantInt::getTrue(F.getContext());
-      Value *UndefValue = UndefValue::get(Ty);
-      Instruction *SI = SelectInst::Create(TrueValue, AI, UndefValue,
-                                           AI->getName() + ".tmp",
-                                           AfterAllocaInsPt);
-      AI->replaceAllUsesWith(SI);
+    // Use 'select i8 true, %arg, undef' to simulate a 'no-op' instruction.
+    Value *TrueValue = ConstantInt::getTrue(F.getContext());
+    Value *UndefValue = UndefValue::get(Ty);
+    Instruction *SI = SelectInst::Create(TrueValue, AI, UndefValue,
+                                         AI->getName() + ".tmp",
+                                         AfterAllocaInsPt);
+    AI->replaceAllUsesWith(SI);
 
-      SI->setOperand(1, AI);
-    } else {
-      // This is always a no-op cast because we're casting AI to AI->getType()
-      // so src and destination types are identical. BitCast is the only
-      // possibility.
-      CastInst *NC = new BitCastInst(AI, AI->getType(), AI->getName() + ".tmp",
-                                     AfterAllocaInsPt);
-      AI->replaceAllUsesWith(NC);
-
-      // Set the operand of the cast instruction back to the AllocaInst.
-      // Normally it's forbidden to replace a CastInst's operand because it
-      // could cause the opcode to reflect an illegal conversion. However, we're
-      // replacing it here with the same value it was constructed with.  We do
-      // this because the above replaceAllUsesWith() clobbered the operand, but
-      // we want this one to remain.
-      NC->setOperand(0, AI);
-    }
+    // Reset the operand, because it  was clobbered by the RAUW above.
+    SI->setOperand(1, AI);
   }
 }
 
