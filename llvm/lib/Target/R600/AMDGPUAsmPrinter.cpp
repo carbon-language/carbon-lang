@@ -47,10 +47,18 @@ using namespace llvm;
 // precision, and leaves single precision to flush all and does not report
 // CL_FP_DENORM for CL_DEVICE_SINGLE_FP_CONFIG. Mesa's OpenCL currently reports
 // CL_FP_DENORM for both.
+//
+// FIXME: It seems some instructions do not support single precision denormals
+// regardless of the mode (exp_*_f32, rcp_*_f32, rsq_*_f32, rsq_*f32, sqrt_f32,
+// and sin_f32, cos_f32 on most parts).
+
+// We want to use these instructions, and using fp32 denormals also causes
+// instructions to run at the double precision rate for the device so it's
+// probably best to just report no single precision denormals.
 static uint32_t getFPMode(const MachineFunction &) {
   return FP_ROUND_MODE_SP(FP_ROUND_ROUND_TO_NEAREST) |
          FP_ROUND_MODE_DP(FP_ROUND_ROUND_TO_NEAREST) |
-         FP_DENORM_MODE_SP(FP_DENORM_FLUSH_NONE) |
+         FP_DENORM_MODE_SP(FP_DENORM_FLUSH_IN_FLUSH_OUT) |
          FP_DENORM_MODE_DP(FP_DENORM_FLUSH_NONE);
 }
 
