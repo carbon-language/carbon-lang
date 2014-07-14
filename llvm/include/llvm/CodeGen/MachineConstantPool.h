@@ -17,6 +17,7 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/MC/SectionKind.h"
 #include <cassert>
 #include <climits>
 #include <vector>
@@ -119,6 +120,8 @@ public:
   ///     them.
   ///  2: This entry may have arbitrary relocations. 
   unsigned getRelocationInfo() const;
+
+  SectionKind getSectionKind(const DataLayout *DL) const;
 };
   
 /// The MachineConstantPool class keeps track of constants referenced by a

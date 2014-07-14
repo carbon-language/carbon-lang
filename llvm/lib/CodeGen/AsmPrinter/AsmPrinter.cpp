@@ -1062,21 +1062,7 @@ void AsmPrinter::EmitConstantPool() {
     const MachineConstantPoolEntry &CPE = CP[i];
     unsigned Align = CPE.getAlignment();
 
-    SectionKind Kind;
-    switch (CPE.getRelocationInfo()) {
-    default: llvm_unreachable("Unknown section kind");
-    case 2: Kind = SectionKind::getReadOnlyWithRel(); break;
-    case 1:
-      Kind = SectionKind::getReadOnlyWithRelLocal();
-      break;
-    case 0:
-    switch (TM.getDataLayout()->getTypeAllocSize(CPE.getType())) {
-    case 4:  Kind = SectionKind::getMergeableConst4(); break;
-    case 8:  Kind = SectionKind::getMergeableConst8(); break;
-    case 16: Kind = SectionKind::getMergeableConst16();break;
-    default: Kind = SectionKind::getMergeableConst(); break;
-    }
-    }
+    SectionKind Kind = CPE.getSectionKind(TM.getDataLayout());
 
     const MCSection *S = getObjFileLowering().getSectionForConstant(Kind);
 
