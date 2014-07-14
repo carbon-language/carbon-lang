@@ -9,5 +9,6 @@ add_clang_library(clangTidyGoogleModule
   clangAST
   clangASTMatchers
   clangBasic
+  clangLex
   clangTidy
   )

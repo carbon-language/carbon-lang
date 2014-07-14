@@ -11,5 +11,6 @@ add_clang_library(clangTidyMiscModule
   clangAST
   clangASTMatchers
   clangBasic
+  clangLex
   clangTidy
   )

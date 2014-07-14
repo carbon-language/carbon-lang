@@ -17,6 +17,8 @@ add_clang_library(clangTidy
   clangBasic
   clangFrontend
   clangRewriteCore
+  clangSema
+  clangStaticAnalyzerCore
   clangStaticAnalyzerFrontend
   clangTooling
   )

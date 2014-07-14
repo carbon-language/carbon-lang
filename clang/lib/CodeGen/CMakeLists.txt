@@ -13,6 +13,7 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   Support
   Target
+  TransformUtils
   )
 
 add_clang_library(clangCodeGen

@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   ExecutionEngine
   Interpreter
   JIT
+  MC
   Support
   nativecodegen
   )
