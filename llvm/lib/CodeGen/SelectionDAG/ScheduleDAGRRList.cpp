@@ -1373,7 +1373,7 @@ SUnit *ScheduleDAGRRList::PickNodeToScheduleBottomUp() {
       Interferences.push_back(CurSU);
     }
     else {
-      assert(CurSU->isPending && "Intereferences are pending");
+      assert(CurSU->isPending && "Interferences are pending");
       // Update the interference with current live regs.
       LRegsPair.first->second = LRegs;
     }
