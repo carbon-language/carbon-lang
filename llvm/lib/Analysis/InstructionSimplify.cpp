@@ -1964,7 +1964,15 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
       APInt Val = CI2->getValue().abs();
       if (!Val.isMinValue()) {
         Lower = IntMin.sdiv(Val);
-        Upper = IntMax.sdiv(Val) + 1;
+        APInt Rem;
+        APInt::sdivrem(IntMax, Val, Upper, Rem);
+        // We may need to round the result of the INT_MAX / CI2 calculation up
+        // if we see that the division was not exact.
+        if (Rem.isMinValue())
+          Upper = Upper + 1;
+        else
+          Upper = Upper + 2;
+        assert(Upper != Lower && "Upper part of range has wrapped!");
       }
     } else if (match(LHS, m_LShr(m_Value(), m_ConstantInt(CI2)))) {
       // 'lshr x, CI2' produces [0, UINT_MAX >> CI2].

@@ -913,3 +913,14 @@ define i1 @icmp_sdiv_int_min(i32 %a) {
 ; CHECK-NEXT: [[CMP:%.*]] = icmp ne i32 [[DIV]], -1073741824
 ; CHECK-NEXT: ret i1 [[CMP]]
 }
+
+define i1 @icmp_sdiv_pr20288(i64 %a) {
+   %div = sdiv i64 %a, -8589934592
+   %cmp = icmp ne i64 %div, 1073741824
+   ret i1 %cmp
+
+; CHECK-LABEL: @icmp_sdiv_pr20288
+; CHECK-NEXT: [[DIV:%.*]] = sdiv i64 %a, -8589934592
+; CHECK-NEXT: [[CMP:%.*]] = icmp ne i64 [[DIV]], 1073741824
+; CHECK-NEXT: ret i1 [[CMP]]
+}
