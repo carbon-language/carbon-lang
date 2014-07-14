@@ -624,6 +624,12 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
     StringRef FrameworkDirName
       = SourceMgr.getFileManager().getCanonicalName(FrameworkDir);
 
+    // In case this is a case-insensitive filesystem, make sure the canonical
+    // directory name matches ModuleName exactly. Modules are case-sensitive.
+    // FIXME: we should be able to give a fix-it hint for the correct spelling.
+    if (llvm::sys::path::stem(FrameworkDirName) != ModuleName)
+      return nullptr;
+
     bool canInfer = false;
     if (llvm::sys::path::has_parent_path(FrameworkDirName)) {
       // Figure out the parent path.
