@@ -475,6 +475,22 @@ public:
     Instruction *InsertBefore = nullptr ///< Place to insert the instruction
   );
 
+  /// @brief Create a BitCast or an AddrSpaceCast cast instruction.
+  static CastInst *CreatePointerBitCastOrAddrSpaceCast(
+    Value *S,                ///< The pointer value to be casted (operand 0)
+    Type *Ty,          ///< The type to which operand is casted
+    const Twine &Name, ///< The name for the instruction
+    BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
+  );
+
+  /// @brief Create a BitCast or an AddrSpaceCast cast instruction.
+  static CastInst *CreatePointerBitCastOrAddrSpaceCast(
+    Value *S,                ///< The pointer value to be casted (operand 0)
+    Type *Ty,          ///< The type to which cast should be made
+    const Twine &Name = "", ///< Name for the instruction
+    Instruction *InsertBefore = 0 ///< Place to insert the instruction
+  );
+
   /// @brief Create a ZExt, BitCast, or Trunc for int -> int casts.
   static CastInst *CreateIntegerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)

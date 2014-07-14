@@ -159,6 +159,12 @@ public:
   Constant *CreatePointerCast(Constant *C, Type *DestTy) const {
     return ConstantExpr::getPointerCast(C, DestTy);
   }
+
+  Constant *CreatePointerBitCastOrAddrSpaceCast(Constant *C,
+                                                Type *DestTy) const {
+    return ConstantExpr::getPointerBitCastOrAddrSpaceCast(C, DestTy);
+  }
+
   Constant *CreateIntCast(Constant *C, Type *DestTy,
                           bool isSigned) const {
     return ConstantExpr::getIntegerCast(C, DestTy, isSigned);

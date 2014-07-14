@@ -211,6 +211,13 @@ public:
     return Fold(ConstantExpr::getTruncOrBitCast(C, DestTy));
   }
 
+  Constant *CreatePointerBitCastOrAddrSpaceCast(Constant *C,
+                                                Type *DestTy) const {
+    if (C->getType() == DestTy)
+      return C; // avoid calling Fold
+    return Fold(ConstantExpr::getPointerBitCastOrAddrSpaceCast(C, DestTy));
+  }
+
   //===--------------------------------------------------------------------===//
   // Compare Instructions
   //===--------------------------------------------------------------------===//
