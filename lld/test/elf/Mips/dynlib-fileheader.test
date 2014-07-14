@@ -24,7 +24,7 @@
 # CHECK:  Type: SharedObject (0x3)
 # CHECK:  Machine: EM_MIPS (0x8)
 # CHECK:  Version: 1
-# CHECK:  Entry: 0xF0
+# CHECK:  Entry: 0x100
 # CHECK:  ProgramHeaderOffset: 0x34
 # CHECK:  SectionHeaderOffset: 0x2100
 # CHECK:  Flags [ (0x70001007)

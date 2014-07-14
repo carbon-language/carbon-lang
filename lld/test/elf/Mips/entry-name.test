@@ -6,8 +6,8 @@
 # RUN: llvm-objdump -t %t2 | FileCheck %s
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400128 g     F .text  00000004 main
-# CHECK: 00000000         *UND*  00000000 __start
+# CHECK: {{[0-9a-f]+}} g     F .text  00000004 main
+# CHECK: 00000000              *UND*  00000000 __start
 
     .global main
     .ent    main

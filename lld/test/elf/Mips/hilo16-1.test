@@ -8,19 +8,19 @@
 
 # CHECK: Disassembly of section .text:
 # CHECK: glob1:
-# CHECK-NEXT: 400128:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: 40012c:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: 400130:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: 400134:  40 00 08 3c  lui  $8, 64
-# CHECK-NEXT: 400138:  42 00 08 3c  lui  $8, 66
-# CHECK-NEXT: 40013c:  3e 00 08 3c  lui  $8, 62
-# CHECK-NEXT: 400140:  40 02 08 3c  lui  $8, 576
-# CHECK-NEXT: 400144:  40 fe 08 3c  lui  $8, 65088
-# CHECK-NEXT: 400148:  4d 01 08 85  lh   $8, 333($8)
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 00 08 3c  lui     $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 00 08 3c  lui     $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 00 08 3c  lui     $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 00 08 3c  lui     $8, 64
+# CHECK-NEXT: {{[0-9a-f]+}}: 42 00 08 3c  lui     $8, 66
+# CHECK-NEXT: {{[0-9a-f]+}}: 3e 00 08 3c  lui     $8, 62
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 02 08 3c  lui     $8, 576
+# CHECK-NEXT: {{[0-9a-f]+}}: 40 fe 08 3c  lui     $8, 65088
+# CHECK-NEXT: {{[0-9a-f]+}}: 65 01 08 85  lh      $8, 357($8)
 
 # CHECK: SYMBOL TABLE:
-# CHECK: 00400128 g F .text  00000024 glob1
-# CHECK: 0040014c g F .text  00000004 glob2
+# CHECK: {{[0-9a-f]+}} g F .text  00000024 glob1
+# CHECK: {{[0-9a-f]+}} g F .text  00000004 glob2
 
     .global glob1
     .ent    glob1

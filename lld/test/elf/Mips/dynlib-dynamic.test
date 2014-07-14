@@ -13,9 +13,9 @@
 # CHECK: LoadName:
 # CHECK: DynamicSection [ (15 entries)
 # CHECK:   Tag        Type                 Name/Value
-# CHECK-NEXT:  0x00000004 HASH                 0xB4
-# CHECK-NEXT:  0x00000005 STRTAB               0x118
-# CHECK-NEXT:  0x00000006 SYMTAB               0xD8
+# CHECK-NEXT:  0x00000004 HASH                 0x{{[0-9A-F]+}}
+# CHECK-NEXT:  0x00000005 STRTAB               0x{{[0-9A-F]+}}
+# CHECK-NEXT:  0x00000006 SYMTAB               0x{{[0-9A-F]+}}
 # CHECK-NEXT:  0x0000000A STRSZ                17 (bytes)
 # CHECK-NEXT:  0x0000000B SYMENT               16 (bytes)
 # CHECK-NEXT:  0x0000001A FINI_ARRAY           0x0

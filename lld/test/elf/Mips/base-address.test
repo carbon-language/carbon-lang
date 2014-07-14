@@ -9,9 +9,9 @@
 
 # CHECK: DynamicSection [ (15 entries)
 # CHECK:   Tag        Type                 Name/Value
-# CHECK-NEXT:   0x00000004 HASH                 0x400104
-# CHECK-NEXT:   0x00000005 STRTAB               0x400124
-# CHECK-NEXT:   0x00000006 SYMTAB               0x400114
+# CHECK-NEXT:   0x00000004 HASH                 0x{{[0-9A-F]+}}
+# CHECK-NEXT:   0x00000005 STRTAB               0x{{[0-9A-F]+}}
+# CHECK-NEXT:   0x00000006 SYMTAB               0x{{[0-9A-F]+}}
 # CHECK-NEXT:   0x0000000A STRSZ                1 (bytes)
 # CHECK-NEXT:   0x0000000B SYMENT               16 (bytes)
 # CHECK-NEXT:   0x0000001A FINI_ARRAY           0x0
@@ -30,32 +30,32 @@
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_PHDR (0x6)
 # CHECK:     Offset: 0x34
-# CHECK:     VirtualAddress: 0x400034
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_INTERP (0x3)
-# CHECK:     Offset: 0xF4
-# CHECK:     VirtualAddress: 0x4000F4
+# CHECK:     Offset: 0x100
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_LOAD (0x1)
 # CHECK:     Offset: 0x0
-# CHECK:     VirtualAddress: 0x400000
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_LOAD (0x1)
 # CHECK:     Offset: 0x1000
-# CHECK:     VirtualAddress: 0x401000
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_LOAD (0x1)
 # CHECK:     Offset: 0x2000
-# CHECK:     VirtualAddress: 0x402000
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK:   ProgramHeader {
 # CHECK:     Type: PT_DYNAMIC (0x2)
-# CHECK:     Offset: 0x12C
-# CHECK:     VirtualAddress: 0x40012C
+# CHECK:     Offset: 0x144
+# CHECK:     VirtualAddress: 0x{{[0-9A-F]+}}
 # CHECK:   }
 # CHECK: ]
 
