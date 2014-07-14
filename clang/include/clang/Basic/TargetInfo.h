@@ -170,7 +170,7 @@ public:
   };
 
 protected:
-  IntType SizeType, IntMaxType, UIntMaxType, PtrDiffType, IntPtrType, WCharType,
+  IntType SizeType, IntMaxType, PtrDiffType, IntPtrType, WCharType,
           WIntType, Char16Type, Char32Type, Int64Type, SigAtomicType,
           ProcessIDType;
 
@@ -206,7 +206,9 @@ protected:
 public:
   IntType getSizeType() const { return SizeType; }
   IntType getIntMaxType() const { return IntMaxType; }
-  IntType getUIntMaxType() const { return UIntMaxType; }
+  IntType getUIntMaxType() const {
+    return getCorrespondingUnsignedType(IntMaxType);
+  }
   IntType getPtrDiffType(unsigned AddrSpace) const {
     return AddrSpace == 0 ? PtrDiffType : getPtrDiffTypeV(AddrSpace);
   }
