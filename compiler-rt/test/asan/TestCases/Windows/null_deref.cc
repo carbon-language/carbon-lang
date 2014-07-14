@@ -1,4 +1,4 @@
-// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s --check-prefix=CHECK-%os --check-prefix=CHECK
+// RUN: %clangxx_asan -O0 %s -o %t && not %run %t 2>&1 | FileCheck %s
 // FIXME: merge this with the common null_deref test when we can run common
 // tests on Windows.
 
@@ -11,5 +11,5 @@ static void NullDeref(int *ptr) {
 int main() {
   NullDeref((int*)0);
   // CHECK: {{    #1 0x.* in main.*null_deref.cc:}}[[@LINE-1]]
-  // CHECK: {{AddressSanitizer can not provide additional info.}}
+  // CHECK: AddressSanitizer can not provide additional info.
 }
