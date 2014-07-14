@@ -962,6 +962,15 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
             try_inverse = false;
         }
         break;
+            
+    case ArchSpec::eCore_x86_64_x86_64h:
+        if (!enforce_exact_match)
+        {
+            try_inverse = false;
+            if (core2 == ArchSpec::eCore_x86_64_x86_64)
+                return true;
+        }
+        break;
 
     default:
         break;

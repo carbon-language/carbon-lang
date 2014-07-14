@@ -344,26 +344,32 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
             
             if (is_64_bit_capable)
             {
-#if defined (__i386__) || defined (__x86_64__)
-                if (cpusubtype == CPU_SUBTYPE_486)
-                    cpusubtype = CPU_SUBTYPE_I386_ALL;
-#endif
                 if (cputype & CPU_ARCH_ABI64)
                 {
                     // We have a 64 bit kernel on a 64 bit system
-                    g_host_arch_32.SetArchitecture (eArchTypeMachO, ~(CPU_ARCH_MASK) & cputype, cpusubtype);
                     g_host_arch_64.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                 }
                 else
                 {
-                    // We have a 32 bit kernel on a 64 bit system
-                    g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
-                    cputype |= CPU_ARCH_ABI64;
-                    g_host_arch_64.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
+                    // We have a 64 bit kernel that is returning a 32 bit cputype, the
+                    // cpusubtype will be correct as if it were for a 64 bit architecture
+                    g_host_arch_64.SetArchitecture (eArchTypeMachO, cputype | CPU_ARCH_ABI64, cpusubtype);
                 }
+                
+                // Now we need modify the cpusubtype for the 32 bit slices.
+                uint32_t cpusubtype32 = cpusubtype;
+#if defined (__i386__) || defined (__x86_64__)
+                if (cpusubtype == CPU_SUBTYPE_486 || cpusubtype == CPU_SUBTYPE_X86_64_H)
+                    cpusubtype32 = CPU_SUBTYPE_I386_ALL;
+#elif defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+                if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
+                    cpusubtype32 = CPU_SUBTYPE_ARM_V7S;
+#endif
+                g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype & ~(CPU_ARCH_MASK), cpusubtype32);
             }
             else
             {
+                // We have a 32 bit kernel on a 32 bit system
                 g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype, cpusubtype);
                 g_host_arch_64.Clear();
             }
