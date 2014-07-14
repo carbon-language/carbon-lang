@@ -37,6 +37,10 @@ ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux FreeBSD GNU GNU/kFreeBSD))
         LLVMLibsOptions += -Wl,-soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
+ifeq ($(ENABLE_CLANG_ARCMT),1)
+  CXX.Flags += -DCLANG_ENABLE_ARCMT
+endif
+
 ##===----------------------------------------------------------------------===##
 # FIXME: This is copied from the 'lto' makefile.  Should we share this?
 ##===----------------------------------------------------------------------===##
