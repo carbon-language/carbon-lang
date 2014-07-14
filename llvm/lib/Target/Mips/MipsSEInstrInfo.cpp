@@ -521,8 +521,9 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
   unsigned SubIdx = N ? Mips::sub_hi : Mips::sub_lo;
   unsigned SubReg = getRegisterInfo().getSubReg(SrcReg, SubIdx);
 
-  if (SubIdx == Mips::sub_hi && FP64) {
-    // FIXME: The .addReg(SrcReg, RegState::Implicit) is a white lie used to
+  if (SubIdx == Mips::sub_hi && TM.getSubtarget<MipsSubtarget>().hasMTHC1()) {
+    // FIXME: Strictly speaking MFHC1 only reads the top 32-bits however, we
+    //        claim to read the whole 64-bits as part of a white lie used to
     //        temporarily work around a widespread bug in the -mfp64 support.
     //        The problem is that none of the 32-bit fpu ops mention the fact
     //        that they clobber the upper 32-bits of the 64-bit FPR. Fixing that
@@ -533,8 +534,8 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
     //        We therefore pretend that it reads the bottom 32-bits to
     //        artificially create a dependency and prevent the scheduler
     //        changing the behaviour of the code.
-    BuildMI(MBB, I, dl, get(Mips::MFHC1), DstReg).addReg(SubReg).addReg(
-        SrcReg, RegState::Implicit);
+    BuildMI(MBB, I, dl, get(FP64 ? Mips::MFHC1_D64 : Mips::MFHC1_D32), DstReg)
+        .addReg(SrcReg);
   } else
     BuildMI(MBB, I, dl, get(Mips::MFC1), DstReg).addReg(SubReg);
 }

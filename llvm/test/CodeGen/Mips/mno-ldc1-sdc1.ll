@@ -123,7 +123,7 @@ entry:
 ; 32R1-LE-PIC-DAG:    sw $[[R1]], 4(${{[0-9]+}})
 
 ; 32R2-LE-PIC-DAG:    mfc1 $[[R0:[0-9]+]], $f12
-; 32R2-LE-PIC-DAG:    mfc1 $[[R1:[0-9]+]], $f13
+; 32R2-LE-PIC-DAG:    mfhc1 $[[R1:[0-9]+]], $f12
 ; 32R2-LE-PIC-DAG:    sw $[[R0]], 0(${{[0-9]+}})
 ; 32R2-LE-PIC-DAG:    sw $[[R1]], 4(${{[0-9]+}})
 
@@ -140,7 +140,7 @@ entry:
 ; 32R1-LE-STATIC-DAG: sw $[[R1]], 4($[[R3]])
 
 ; 32R2-LE-STATIC-DAG: mfc1 $[[R0:[0-9]+]], $f12
-; 32R2-LE-STATIC-DAG: mfc1 $[[R1:[0-9]+]], $f13
+; 32R2-LE-STATIC-DAG: mfhc1 $[[R1:[0-9]+]], $f12
 ; 32R2-LE-STATIC-DAG: lui $[[R2:[0-9]+]], %hi(g0)
 ; 32R2-LE-STATIC-DAG: sw $[[R0]], %lo(g0)($[[R2]])
 ; 32R2-LE-STATIC-DAG: addiu $[[R3:[0-9]+]], $[[R2]], %lo(g0)
@@ -159,7 +159,7 @@ entry:
 ; 32R1-BE-PIC-DAG:    sw $[[R0]], 4(${{[0-9]+}})
 
 ; 32R2-BE-PIC-DAG:    mfc1 $[[R0:[0-9]+]], $f12
-; 32R2-BE-PIC-DAG:    mfc1 $[[R1:[0-9]+]], $f13
+; 32R2-BE-PIC-DAG:    mfhc1 $[[R1:[0-9]+]], $f12
 ; 32R2-BE-PIC-DAG:    sw $[[R1]], 0(${{[0-9]+}})
 ; 32R2-BE-PIC-DAG:    sw $[[R0]], 4(${{[0-9]+}})
 
@@ -225,7 +225,7 @@ entry:
 ; 32R1-DAG:      sw $[[R1]], 4(${{[0-9]+}})
 
 ; 32R2-DAG:      mfc1 $[[R0:[0-9]+]], $f12
-; 32R2-DAG:      mfc1 $[[R1:[0-9]+]], $f13
+; 32R2-DAG:      mfhc1 $[[R1:[0-9]+]], $f12
 ; 32R2-DAG:      sw $[[R0]], 0(${{[0-9]+}})
 ; 32R2-DAG:      sw $[[R1]], 4(${{[0-9]+}})
 

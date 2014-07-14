@@ -1,15 +1,19 @@
-; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=FP32 -check-prefix=CHECK
-; RUN: llc -march=mips  < %s | FileCheck %s -check-prefix=FP32 -check-prefix=CHECK
-; RUN: llc -march=mipsel -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
-; RUN: llc -march=mips -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=FP64 -check-prefix=CHECK
+; RUN: llc -march=mipsel < %s | FileCheck %s -check-prefix=NO-MFHC1 -check-prefix=ALL
+; RUN: llc -march=mips  < %s | FileCheck %s -check-prefix=NO-MFHC1 -check-prefix=ALL
+; RUN: llc -march=mipsel -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=HAS-MFHC1 -check-prefix=ALL
+; RUN: llc -march=mips -mcpu=mips32r2 < %s | FileCheck %s -check-prefix=HAS-MFHC1 -check-prefix=ALL
+; RUN: llc -march=mipsel -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=HAS-MFHC1 -check-prefix=ALL
+; RUN: llc -march=mips -mcpu=mips32r2 -mattr=+fp64 < %s | FileCheck %s -check-prefix=HAS-MFHC1 -check-prefix=ALL
 
 @a = external global i32
 
-; CHECK-LABEL: f:
-; FP32: mtc1
-; FP32: mtc1
-; FP64-DAG: mtc1
-; FP64-DAG: mthc1
+; ALL-LABEL: f:
+
+; NO-MFHC1: mtc1
+; NO-MFHC1: mtc1
+
+; HAS-MFHC1-DAG: mtc1
+; HAS-MFHC1-DAG: mthc1
 
 define double @f(i32 %a1, double %d) nounwind {
 entry:
@@ -18,11 +22,13 @@ entry:
   ret double %add
 }
 
-; CHECK-LABEL: f3:
-; FP32: mfc1
-; FP32: mfc1
-; FP64-DAG: mfc1
-; FP64-DAG: mfhc1
+; ALL-LABEL: f3:
+
+; NO-MFHC1: mfc1
+; NO-MFHC1: mfc1
+
+; HAS-MFHC1-DAG: mfc1
+; HAS-MFHC1-DAG: mfhc1
 
 define void @f3(double %d, i32 %a1) nounwind {
 entry:

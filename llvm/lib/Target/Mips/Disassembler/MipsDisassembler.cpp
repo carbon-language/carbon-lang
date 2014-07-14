@@ -142,11 +142,6 @@ static DecodeStatus DecodeFGR32RegisterClass(MCInst &Inst,
                                              uint64_t Address,
                                              const void *Decoder);
 
-static DecodeStatus DecodeFGRH32RegisterClass(MCInst &Inst,
-                                              unsigned RegNo,
-                                              uint64_t Address,
-                                              const void *Decoder);
-
 static DecodeStatus DecodeCCRRegisterClass(MCInst &Inst,
                                            unsigned RegNo,
                                            uint64_t Address,
@@ -910,18 +905,6 @@ static DecodeStatus DecodeFGR32RegisterClass(MCInst &Inst,
     return MCDisassembler::Fail;
 
   unsigned Reg = getReg(Decoder, Mips::FGR32RegClassID, RegNo);
-  Inst.addOperand(MCOperand::CreateReg(Reg));
-  return MCDisassembler::Success;
-}
-
-static DecodeStatus DecodeFGRH32RegisterClass(MCInst &Inst,
-                                              unsigned RegNo,
-                                              uint64_t Address,
-                                              const void *Decoder) {
-  if (RegNo > 31)
-    return MCDisassembler::Fail;
-
-  unsigned Reg = getReg(Decoder, Mips::FGRH32RegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
 }
