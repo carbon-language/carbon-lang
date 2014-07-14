@@ -473,7 +473,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
   User *CI = cast<User>(SI.getOperand(1));
   Value *CastOp = CI->getOperand(0);
 
-  Type *DestPTy = cast<PointerType>(CI->getType())->getElementType();
+  Type *DestPTy = CI->getType()->getPointerElementType();
   PointerType *SrcTy = dyn_cast<PointerType>(CastOp->getType());
   if (!SrcTy) return nullptr;
 
@@ -518,8 +518,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
 
   // If the pointers point into different address spaces don't do the
   // transformation.
-  if (SrcTy->getAddressSpace() !=
-      cast<PointerType>(CI->getType())->getAddressSpace())
+  if (SrcTy->getAddressSpace() != CI->getType()->getPointerAddressSpace())
     return nullptr;
 
   // If the pointers point to values of different sizes don't do the
