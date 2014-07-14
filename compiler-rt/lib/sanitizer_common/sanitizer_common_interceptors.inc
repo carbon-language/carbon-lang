@@ -4628,6 +4628,22 @@ INTERCEPTOR(int, dlclose, void *handle) {
 #define INIT_DLOPEN_DLCLOSE
 #endif
 
+#if SANITIZER_INTERCEPT_GETPASS
+INTERCEPTOR(char *, getpass, const char *prompt) {
+  void *ctx;
+  COMMON_INTERCEPTOR_ENTER(ctx, getpass, prompt);
+  if (prompt)
+    COMMON_INTERCEPTOR_READ_RANGE(ctx, prompt, REAL(strlen)(prompt)+1);
+  char *res = REAL(getpass)(prompt);
+  if (res) COMMON_INTERCEPTOR_INITIALIZE_RANGE(res, REAL(strlen)(res)+1);
+  return res;
+}
+
+#define INIT_GETPASS COMMON_INTERCEPT_FUNCTION(getpass);
+#else
+#define INIT_GETPASS
+#endif
+
 static void InitializeCommonInterceptors() {
   static u64 metadata_mem[sizeof(MetadataHashMap) / sizeof(u64) + 1];
   interceptor_metadata_map = new((void *)&metadata_mem) MetadataHashMap();
@@ -4786,4 +4802,5 @@ static void InitializeCommonInterceptors() {
   INIT_FFLUSH;
   INIT_FCLOSE;
   INIT_DLOPEN_DLCLOSE;
+  INIT_GETPASS;
 }
