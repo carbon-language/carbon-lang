@@ -4336,7 +4336,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     // standard library implementors; therefore, we need the xvalue check here.
     ICS.Standard.DirectBinding =
       S.getLangOpts().CPlusPlus11 ||
-      (InitCategory.isPRValue() && !T2->isRecordType());
+      !(InitCategory.isPRValue() || T2->isRecordType());
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
     ICS.Standard.BindsToRvalue = InitCategory.isRValue();

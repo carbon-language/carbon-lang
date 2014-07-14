@@ -592,10 +592,10 @@ void test5() {
 }
 
 namespace PR20218 {
-  void f(void (*const &)()); // expected-note{{candidate}}
-  void f(void (&&)()) = delete; // expected-note{{candidate}} expected-warning 2{{extension}}
-  void g(void (&&)()) = delete; // expected-note{{candidate}} expected-warning 2{{extension}}
-  void g(void (*const &)()); // expected-note{{candidate}}
+  void f(void (*const &)()); // expected-note 2{{candidate}}
+  void f(void (&&)()) = delete; // expected-note 2{{candidate}} expected-warning 2{{extension}}
+  void g(void (&&)()) = delete; // expected-note 2{{candidate}} expected-warning 2{{extension}}
+  void g(void (*const &)()); // expected-note 2{{candidate}}
 
   void x();
   typedef void (&fr)();
@@ -604,11 +604,7 @@ namespace PR20218 {
   void h() {
     f(x); // expected-error {{ambiguous}}
     g(x); // expected-error {{ambiguous}}
-
-    // OK! These ones try to copy-initialize a temporary of the reference's
-    // underlying type, which only works for the pointer case and not for the
-    // reference case.
-    f(y);
-    g(y);
+    f(y); // expected-error {{ambiguous}}
+    g(y); // expected-error {{ambiguous}}
   }
 }
