@@ -78,21 +78,29 @@ private:
 
 char DeadCodeElim::ID = 0;
 
-// To compute the live outs, we first assume all must and may-writes are exposed
-// and then subtract the set of statements that are definitely overwritten.
+// To compute the live outs, we compute for the data-locations that are
+// must-written to the last statement that touches these locations. On top of
+// this we add all statements that perform may-write accesses.
+//
+// We could be more precise by removing may-write accesses for which we know
+// that they are overwritten by a must-write after. However, at the moment the
+// only may-writes we introduce access the full (unbounded) array, such that
+// bounded write accesses can not overwrite all of the data-locations. As
+// this means may-writes are in the current situation always live, there is
+// no point in trying to remove them from the live-out set.
 isl_union_set *DeadCodeElim::getLiveOut(Scop &S) {
-  isl_union_map *Kills = S.getMustWrites();
-  isl_union_map *Empty = isl_union_map_empty(S.getParamSpace());
+  isl_union_map *Schedule = S.getSchedule();
+  isl_union_map *WriteIterations = isl_union_map_reverse(S.getMustWrites());
+  isl_union_map *WriteTimes =
+      isl_union_map_apply_range(WriteIterations, isl_union_map_copy(Schedule));
 
-  isl_union_map *Covering;
-  isl_union_map *Writes = S.getWrites();
-  isl_union_map_compute_flow(Kills, Empty, isl_union_map_copy(Writes),
-                             S.getSchedule(), NULL, &Covering, NULL, NULL);
+  isl_union_map *LastWriteTimes = isl_union_map_lexmax(WriteTimes);
+  isl_union_map *LastWriteIterations = isl_union_map_apply_range(
+      LastWriteTimes, isl_union_map_reverse(Schedule));
 
-  isl_union_map *Exposed = Writes;
-  Exposed =
-      isl_union_map_subtract_domain(Exposed, isl_union_map_domain(Covering));
-  return isl_union_map_domain(Exposed);
+  isl_union_set *Live = isl_union_map_range(LastWriteIterations);
+  Live = isl_union_set_union(Live, isl_union_map_domain(S.getMayWrites()));
+  return isl_union_set_coalesce(Live);
 }
 
 /// Performs polyhedral dead iteration elimination by:

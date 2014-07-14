@@ -7,8 +7,12 @@
 ; S2:    A[i2] = i;
 ;    }
 
-; CHECK-NOT: Stmt_S1
+; We unfortunately do need to execute all iterations of S1, as we do not know
+; the size of A and as a result S1 may write for example to A[1024], which
+; is not overwritten by S2.
 
+; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
+; CHECK:   Stmt_S1(c1);
 ; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
 ; CHECK:   Stmt_S2(c1);
 
@@ -21,7 +25,7 @@ entry:
 for.cond:
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
   %exitcond = icmp ne i32 %i.0, 1024
-  br i1 %exitcond, label %S1, label %for.cond.2
+  br i1 %exitcond, label %S1, label %next
 
 S1:
   %rem = srem i32 %i.0, 2
@@ -33,8 +37,11 @@ for.inc:
   %inc = add nsw i32 %i.0, 1
   br label %for.cond
 
+next:
+ br label %for.cond.2
+
 for.cond.2:
-  %i.2 = phi i32 [ 0, %for.cond ], [ %inc.2, %for.inc.2 ]
+  %i.2 = phi i32 [ 0, %next ], [ %inc.2, %for.inc.2 ]
   %exitcond.2 = icmp ne i32 %i.2, 1024
   br i1 %exitcond.2, label %S2, label %for.end
 
