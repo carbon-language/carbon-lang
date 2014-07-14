@@ -628,8 +628,6 @@ static void PrintSectionContents(const ObjectFile *Obj) {
     bool BSS;
     if (error(Section.getName(Name)))
       continue;
-    if (error(Section.getContents(Contents)))
-      continue;
     if (error(Section.getAddress(BaseAddr)))
       continue;
     if (error(Section.isBSS(BSS)))
@@ -637,11 +635,17 @@ static void PrintSectionContents(const ObjectFile *Obj) {
 
     outs() << "Contents of section " << Name << ":\n";
     if (BSS) {
+      uint64_t Size;
+      if (error(Section.getSize(Size)))
+        continue;
       outs() << format("<skipping contents of bss section at [%04" PRIx64
-                       ", %04" PRIx64 ")>\n", BaseAddr,
-                       BaseAddr + Contents.size());
+                       ", %04" PRIx64 ")>\n",
+                       BaseAddr, BaseAddr + Size);
       continue;
     }
+
+    if (error(Section.getContents(Contents)))
+      continue;
 
     // Dump out the content as hex and printable ascii characters.
     for (std::size_t addr = 0, end = Contents.size(); addr < end; addr += 16) {
