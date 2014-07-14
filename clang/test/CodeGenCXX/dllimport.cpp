@@ -765,7 +765,7 @@ USEMEMFUNC(ExplicitlyImportInstantiatedTemplate<int>, func)
 // MS: A dll attribute propagates through multiple levels of instantiation.
 template <typename T> struct TopClass { void func() {} };
 template <typename T> struct MiddleClass : public TopClass<T> { };
-struct __declspec(dllimport) BottomClas : public MiddleClass<int> { };
+struct __declspec(dllimport) BottomClass : public MiddleClass<int> { };
 USEMEMFUNC(TopClass<int>, func)
 // M32-DAG: {{declare|define available_externally}} dllimport x86_thiscallcc void @"\01?func@?$TopClass@H@@QAEXXZ"
 // G32-DAG: define linkonce_odr x86_thiscallcc void @_ZN8TopClassIiE4funcEv

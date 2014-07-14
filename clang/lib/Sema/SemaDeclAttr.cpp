@@ -3911,7 +3911,7 @@ static void handleCapabilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // concept, and so they use the same semantic attribute. Eventually, the
   // lockable attribute will be removed.
   //
-  // For backwards compatibility, any capability which has no specified string
+  // For backward compatibility, any capability which has no specified string
   // literal will be considered a "mutex."
   StringRef N("mutex");
   SourceLocation LiteralLoc;

@@ -55,7 +55,7 @@ sorttable = {
     // Sorttable v1 put rows with a class of "sortbottom" at the bottom (as
     // "total" rows, for example). This is B&R, since what you're supposed
     // to do is put them in a tfoot. So, if there are sortbottom rows,
-    // for backwards compatibility, move them to tfoot (creating it if needed).
+    // for backward compatibility, move them to tfoot (creating it if needed).
     sortbottomrows = [];
     for (var i=0; i<table.rows.length; i++) {
       if (table.rows[i].className.search(/\bsortbottom\b/) != -1) {

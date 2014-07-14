@@ -2093,9 +2093,8 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
     // their own builtin as they use the non-splat variant.
     if (Def->hasSplat())
       continue;
-    // Functions which do not have an immediate do not ned to have range
-    // checking
-    // code emitted.
+    // Functions which do not have an immediate do not need to have range
+    // checking code emitted.
     if (!Def->hasImmediate())
       continue;
     if (Emitted.find(Def->getMangledName()) != Emitted.end())
@@ -2121,7 +2120,7 @@ NeonEmitter::genIntrinsicRangeCheckCode(raw_ostream &OS,
 
       UpperBound = utostr(Def->getReturnType().getElementSizeInBits() - 1);
     } else if (R->getValueAsBit("isShift")) {
-      // Builtins which are overloaded by type will need to have thier upper
+      // Builtins which are overloaded by type will need to have their upper
       // bound computed at Sema time based on the type constant.
 
       // Right shifts have an 'r' in the name, left shifts do not.

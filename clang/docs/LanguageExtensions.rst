@@ -91,7 +91,7 @@ feature) or 0 if not.  They can be used like this:
 
 .. _langext-has-feature-back-compat:
 
-For backwards compatibility reasons, ``__has_feature`` can also be used to test
+For backward compatibility, ``__has_feature`` can also be used to test
 for support for non-standardized features, i.e. features not prefixed ``c_``,
 ``cxx_`` or ``objc_``.
 

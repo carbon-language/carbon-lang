@@ -104,7 +104,7 @@ struct ScalarEnumerationTraits<FormatStyle::PointerAlignmentStyle> {
     IO.enumCase(Value, "Left", FormatStyle::PAS_Left);
     IO.enumCase(Value, "Right", FormatStyle::PAS_Right);
 
-    // For backward compability.
+    // For backward compatibility.
     IO.enumCase(Value, "true", FormatStyle::PAS_Left);
     IO.enumCase(Value, "false", FormatStyle::PAS_Right);
   }

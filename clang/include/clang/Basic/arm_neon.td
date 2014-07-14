@@ -87,7 +87,7 @@ def call;
 def cast;
 // bitcast - Same as "cast", except a reinterpret-cast is produced:
 //             (bitcast "T", $p0) -> "*(T*)&__p0".
-//           The VAL argument is saved to a temprary so it can be used
+//           The VAL argument is saved to a temporary so it can be used
 //           as an l-value.
 def bitcast;
 // dup - Take a scalar argument and create a vector by duplicating it into

@@ -5459,7 +5459,7 @@ public:
         
     case 'r': // CPU registers.
     case 'd': // Equivalent to "r" unless generating MIPS16 code.
-    case 'y': // Equivalent to "r", backwards compatibility only.
+    case 'y': // Equivalent to "r", backward compatibility only.
     case 'f': // floating-point registers.
     case 'c': // $25 for indirect jumps
     case 'l': // lo register
