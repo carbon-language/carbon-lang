@@ -459,7 +459,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a BitCast or a PtrToInt cast instruction
+  /// @brief Create a BitCast AddrSpaceCast, or a PtrToInt cast instruction.
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which operand is casted
@@ -467,7 +467,7 @@ public:
     BasicBlock *InsertAtEnd  ///< The block to insert the instruction into
   );
 
-  /// @brief Create a BitCast or a PtrToInt cast instruction
+  /// @brief Create a BitCast, AddrSpaceCast or a PtrToInt cast instruction.
   static CastInst *CreatePointerCast(
     Value *S,                ///< The pointer value to be casted (operand 0)
     Type *Ty,          ///< The type to which cast should be made
