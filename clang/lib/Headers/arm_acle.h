@@ -33,8 +33,9 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-/* 8.4 - Hints */
+ 
+/* 8 SYNCHRONIZATION, BARRIER AND HINT INTRINSICS */
+/* 8.4 Hints */
 
 #if !defined(_MSC_VER)
 static __inline__ void __attribute__((always_inline, nodebug)) __wfi(void) {
@@ -57,6 +58,11 @@ static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
   __builtin_arm_yield();
 }
 #endif
+
+/* 8.7 NOP */
+static __inline__ void __attribute__((always_inline, nodebug)) __nop(void) {
+  __builtin_arm_nop();
+}
 
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */

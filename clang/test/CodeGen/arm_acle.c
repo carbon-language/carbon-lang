@@ -40,6 +40,14 @@ void test_sevl(void) {
   __sevl();
 }
 
+/* 8.7 NOP */
+// ARM-LABEL: test_nop
+// AArch32: call void @llvm.arm.hint(i32 0)
+// AArch64: call void @llvm.aarch64.hint(i32 0)
+void test_nop(void) {
+  __nop();
+}
+
 /* 9 DATA-PROCESSING INTRINSICS */
 /* 9.2 Miscellaneous data-processing intrinsics */
 // ARM-LABEL: test_rev
