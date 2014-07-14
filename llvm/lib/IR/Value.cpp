@@ -543,6 +543,9 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
     return true;
   }
 
+  if (const AddrSpaceCastInst *ASC = dyn_cast<AddrSpaceCastInst>(V))
+    return isDereferenceablePointer(ASC->getOperand(0), DL, Visited);
+
   // If we don't know, assume the worst.
   return false;
 }
