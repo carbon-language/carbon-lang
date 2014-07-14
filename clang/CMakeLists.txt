@@ -385,8 +385,25 @@ install(DIRECTORY include/clang-c
 add_definitions( -D_GNU_SOURCE )
 
 option(CLANG_ENABLE_ARCMT "Build ARCMT." ON)
+if (CLANG_ENABLE_ARCMT)
+  set(ENABLE_CLANG_ARCMT "1")
+else()
+  set(ENABLE_CLANG_ARCMT "0")
+endif()
+
 option(CLANG_ENABLE_REWRITER "Build rewriter." ON)
+if (CLANG_ENABLE_REWRITER)
+  set(ENABLE_CLANG_REWRITER "1")
+else()
+  set(ENABLE_CLANG_REWRITER "0")
+endif()
+
 option(CLANG_ENABLE_STATIC_ANALYZER "Build static analyzer." ON)
+if (CLANG_ENABLE_STATIC_ANALYZER)
+  set(ENABLE_CLANG_STATIC_ANALYZER "1")
+else()
+  set(ENABLE_CLANG_STATIC_ANALYZER "0")
+endif()
 
 if (NOT CLANG_ENABLE_REWRITER AND CLANG_ENABLE_ARCMT)
   message(FATAL_ERROR "Cannot disable rewriter while enabling ARCMT")
