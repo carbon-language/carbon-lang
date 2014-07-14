@@ -590,3 +590,25 @@ void test5() {
   } callable;
   callable();  // expected-error{{no matching function for call}}
 }
+
+namespace PR20218 {
+  void f(void (*const &)()); // expected-note{{candidate}}
+  void f(void (&&)()) = delete; // expected-note{{candidate}} expected-warning 2{{extension}}
+  void g(void (&&)()) = delete; // expected-note{{candidate}} expected-warning 2{{extension}}
+  void g(void (*const &)()); // expected-note{{candidate}}
+
+  void x();
+  typedef void (&fr)();
+  struct Y { operator fr(); } y;
+
+  void h() {
+    f(x); // expected-error {{ambiguous}}
+    g(x); // expected-error {{ambiguous}}
+
+    // OK! These ones try to copy-initialize a temporary of the reference's
+    // underlying type, which only works for the pointer case and not for the
+    // reference case.
+    f(y);
+    g(y);
+  }
+}

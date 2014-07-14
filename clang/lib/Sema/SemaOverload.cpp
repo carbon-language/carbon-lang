@@ -3465,8 +3465,9 @@ compareStandardConversionSubsets(ASTContext &Context,
 
 /// \brief Determine whether one of the given reference bindings is better
 /// than the other based on what kind of bindings they are.
-static bool isBetterReferenceBindingKind(const StandardConversionSequence &SCS1,
-                                       const StandardConversionSequence &SCS2) {
+static bool
+isBetterReferenceBindingKind(const StandardConversionSequence &SCS1,
+                             const StandardConversionSequence &SCS2) {
   // C++0x [over.ics.rank]p3b4:
   //   -- S1 and S2 are reference bindings (8.5.3) and neither refers to an
   //      implicit object parameter of a non-static member function declared
@@ -3487,7 +3488,7 @@ static bool isBetterReferenceBindingKind(const StandardConversionSequence &SCS1,
   return (!SCS1.IsLvalueReference && SCS1.BindsToRvalue &&
           SCS2.IsLvalueReference) ||
          (SCS1.IsLvalueReference && SCS1.BindsToFunctionLvalue &&
-          !SCS2.IsLvalueReference);
+          !SCS2.IsLvalueReference && SCS2.BindsToFunctionLvalue);
 }
 
 /// CompareStandardConversionSequences - Compare two standard
@@ -4372,6 +4373,10 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     return ICS;
   }
 
+  // A temporary of function type cannot be created; don't even try.
+  if (T1->isFunctionType())
+    return ICS;
+
   //       -- Otherwise, a temporary of type "cv1 T1" is created and
   //          initialized from the initializer expression using the
   //          rules for a non-reference copy initialization (8.5). The
@@ -4433,28 +4438,34 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
   if (ICS.isStandard()) {
     ICS.Standard.ReferenceBinding = true;
     ICS.Standard.IsLvalueReference = !isRValRef;
-    ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
+    ICS.Standard.BindsToFunctionLvalue = false;
     ICS.Standard.BindsToRvalue = true;
     ICS.Standard.BindsImplicitObjectArgumentWithoutRefQualifier = false;
     ICS.Standard.ObjCLifetimeConversionBinding = false;
   } else if (ICS.isUserDefined()) {
-    // Don't allow rvalue references to bind to lvalues.
-    if (DeclType->isRValueReferenceType()) {
-      if (const ReferenceType *RefType =
-              ICS.UserDefined.ConversionFunction->getReturnType()
-                  ->getAs<LValueReferenceType>()) {
-        if (!RefType->getPointeeType()->isFunctionType()) {
-          ICS.setBad(BadConversionSequence::lvalue_ref_to_rvalue, Init, 
-                     DeclType);
-          return ICS;
-        }
-      }
+    const ReferenceType *LValRefType =
+        ICS.UserDefined.ConversionFunction->getReturnType()
+            ->getAs<LValueReferenceType>();
+
+    // C++ [over.ics.ref]p3:
+    //   Except for an implicit object parameter, for which see 13.3.1, a
+    //   standard conversion sequence cannot be formed if it requires [...]
+    //   binding an rvalue reference to an lvalue other than a function
+    //   lvalue.
+    // Note that the function case is not possible here.
+    if (DeclType->isRValueReferenceType() && LValRefType) {
+      // FIXME: This is the wrong BadConversionSequence. The problem is binding
+      // an rvalue reference to a (non-function) lvalue, not binding an lvalue
+      // reference to an rvalue!
+      ICS.setBad(BadConversionSequence::lvalue_ref_to_rvalue, Init, DeclType);
+      return ICS;
     }
+
     ICS.UserDefined.Before.setAsIdentityConversion();
     ICS.UserDefined.After.ReferenceBinding = true;
     ICS.UserDefined.After.IsLvalueReference = !isRValRef;
-    ICS.UserDefined.After.BindsToFunctionLvalue = T2->isFunctionType();
-    ICS.UserDefined.After.BindsToRvalue = true;
+    ICS.UserDefined.After.BindsToFunctionLvalue = false;
+    ICS.UserDefined.After.BindsToRvalue = !LValRefType;
     ICS.UserDefined.After.BindsImplicitObjectArgumentWithoutRefQualifier = false;
     ICS.UserDefined.After.ObjCLifetimeConversionBinding = false;
   }
