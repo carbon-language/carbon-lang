@@ -1413,6 +1413,9 @@ Process::GetPrivateState ()
 void
 Process::SetPrivateState (StateType new_state)
 {
+    if (m_finalize_called)
+        return;
+
     Log *log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_STATE | LIBLLDB_LOG_PROCESS));
     bool state_changed = false;
 
