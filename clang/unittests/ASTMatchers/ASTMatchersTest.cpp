@@ -1095,12 +1095,19 @@ TEST(Matcher, HasOperatorNameForOverloadedOperatorCall) {
               "bool operator&&(Y x, Y y) { return true; }; "
               "Y a; Y b; bool c = a && b;",
               OpCallLessLess));
+  StatementMatcher OpStarCall =
+      operatorCallExpr(hasOverloadedOperatorName("*"));
+  EXPECT_TRUE(matches("class Y; int operator*(Y &); void f(Y &y) { *y; }",
+              OpStarCall));
   DeclarationMatcher ClassWithOpStar =
     recordDecl(hasMethod(hasOverloadedOperatorName("*")));
   EXPECT_TRUE(matches("class Y { int operator*(); };",
                       ClassWithOpStar));
   EXPECT_TRUE(notMatches("class Y { void myOperator(); };",
               ClassWithOpStar)) ;
+  DeclarationMatcher AnyOpStar = functionDecl(hasOverloadedOperatorName("*"));
+  EXPECT_TRUE(matches("class Y; int operator*(Y &);", AnyOpStar));
+  EXPECT_TRUE(matches("class Y { int operator*(); };", AnyOpStar));
 }
 
 TEST(Matcher, NestedOverloadedOperatorCalls) {

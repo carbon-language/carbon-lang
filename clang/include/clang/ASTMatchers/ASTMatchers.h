@@ -1542,14 +1542,14 @@ AST_MATCHER_P(NamedDecl, matchesName, std::string, RegExp) {
 /// line and \c recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
 /// the declaration of \c A.
 ///
-/// Usable as: Matcher<CXXOperatorCallExpr>, Matcher<CXXMethodDecl>
+/// Usable as: Matcher<CXXOperatorCallExpr>, Matcher<FunctionDecl>
 inline internal::PolymorphicMatcherWithParam1<
     internal::HasOverloadedOperatorNameMatcher, StringRef,
-    AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, CXXMethodDecl)>
+    AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, FunctionDecl)>
 hasOverloadedOperatorName(const StringRef Name) {
   return internal::PolymorphicMatcherWithParam1<
       internal::HasOverloadedOperatorNameMatcher, StringRef,
-      AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, CXXMethodDecl)>(
+      AST_POLYMORPHIC_SUPPORTED_TYPES_2(CXXOperatorCallExpr, FunctionDecl)>(
       Name);
 }
 

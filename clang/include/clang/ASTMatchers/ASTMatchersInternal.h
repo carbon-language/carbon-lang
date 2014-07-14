@@ -517,7 +517,7 @@ template <typename T> struct has_getDecl {
 template <typename T, typename ArgT>
 class HasOverloadedOperatorNameMatcher : public SingleNodeMatcherInterface<T> {
   static_assert(std::is_same<T, CXXOperatorCallExpr>::value ||
-                std::is_same<T, CXXMethodDecl>::value,
+                std::is_base_of<FunctionDecl, T>::value,
                 "unsupported class for matcher");
   static_assert(std::is_same<ArgT, StringRef>::value,
                 "argument type must be StringRef");
@@ -541,7 +541,7 @@ private:
 
   /// \brief Returns true only if CXXMethodDecl represents an overloaded
   /// operator and has the given operator name.
-  bool matchesSpecialized(const CXXMethodDecl &Node) const {
+  bool matchesSpecialized(const FunctionDecl &Node) const {
     return Node.isOverloadedOperator() &&
            getOperatorSpelling(Node.getOverloadedOperator()) == Name;
   }
