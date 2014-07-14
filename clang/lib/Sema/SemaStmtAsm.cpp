@@ -152,6 +152,12 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
                               diag::err_asm_invalid_lvalue_in_input)
                          << Info.getConstraintStr()
                          << InputExpr->getSourceRange());
+    } else {
+      ExprResult Result = DefaultFunctionArrayLvalueConversion(Exprs[i]);
+      if (Result.isInvalid())
+        return StmtError();
+
+      Exprs[i] = Result.get();
     }
 
     if (Info.allowsRegister()) {
@@ -163,11 +169,6 @@ StmtResult Sema::ActOnGCCAsmStmt(SourceLocation AsmLoc, bool IsSimple,
       }
     }
 
-    ExprResult Result = DefaultFunctionArrayLvalueConversion(Exprs[i]);
-    if (Result.isInvalid())
-      return StmtError();
-
-    Exprs[i] = Result.get();
     InputConstraintInfos.push_back(Info);
 
     const Type *Ty = Exprs[i]->getType().getTypePtr();

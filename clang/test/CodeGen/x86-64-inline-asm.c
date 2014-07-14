@@ -10,3 +10,8 @@ void f() {
 // expected-error@-5 {{scale factor without index register is ignored}}
 #endif
 }
+
+static unsigned var[1] = {};
+void g(void) { asm volatile("movd %%xmm0, %0"
+                            :
+                            : "m"(var)); }

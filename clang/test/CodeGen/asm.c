@@ -239,3 +239,12 @@ void t28(void)
 // CHECK: call void asm sideeffect "/* $0 */", "i|r,~{dirflag},~{fpsr},~{flags}"(i32 1)
 }
 
+static unsigned t29_var[1];
+
+void t29(void) {
+  asm volatile("movl %%eax, %0"
+               :
+               : "m"(t29_var));
+  // CHECK: @t29
+  // CHECK: call void asm sideeffect "movl %eax, $0", "*m,~{dirflag},~{fpsr},~{flags}"([1 x i32]* @t29_var)
+}
