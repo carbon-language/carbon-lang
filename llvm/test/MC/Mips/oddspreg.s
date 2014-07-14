@@ -15,7 +15,21 @@
 # RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 | \
 # RUN:   FileCheck %s -check-prefix=CHECK-ASM
 #
-# RUN: llvm-mc %s -arch=mips64 -mcpu=mips64 -filetype=obj -o - | \
+# Repeat the -filetype=obj tests but this time use an empty assembly file. The
+# output should be unchanged.
+# RUN: llvm-mc /dev/null -arch=mips64 -mcpu=mips64 -filetype=obj -o - | \
+# RUN:   llvm-readobj -sections -section-data -section-relocations - | \
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-N64
+
+# RUN: llvm-mc /dev/null -arch=mips -mcpu=mips32 -mattr=+fp64 -filetype=obj -o - | \
+# RUN:   llvm-readobj -sections -section-data -section-relocations - | \
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-O32
+#
+# RUN: llvm-mc /dev/null -arch=mips64 -mcpu=mips64 -mattr=-n64,+n32 -filetype=obj -o - | \
+# RUN:   llvm-readobj -sections -section-data -section-relocations - | \
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-N32
+
+# RUN: llvm-mc /dev/null -arch=mips64 -mcpu=mips64 -filetype=obj -o - | \
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ-ALL -check-prefix=CHECK-OBJ-N64
 

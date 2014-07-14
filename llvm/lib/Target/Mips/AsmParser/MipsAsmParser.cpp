@@ -237,7 +237,7 @@ public:
             ((STI.getFeatureBits() & Mips::FeatureN32) != 0) +
             ((STI.getFeatureBits() & Mips::FeatureN64) != 0)) == 1);
 
-    if (!isABI_O32() && !allowOddSPReg() != 0)
+    if (!isABI_O32() && !useOddSPReg() != 0)
       report_fatal_error("-mno-odd-spreg requires the O32 ABI");
   }
 
@@ -254,7 +254,7 @@ public:
   bool isABI_O32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
   bool isABI_FPXX() const { return false; } // TODO: add check for FeatureXX
 
-  bool allowOddSPReg() const {
+  bool useOddSPReg() const {
     return !(STI.getFeatureBits() & Mips::FeatureNoOddSPReg);
   }
 
@@ -572,7 +572,7 @@ public:
     assert(N == 1 && "Invalid number of operands!");
     Inst.addOperand(MCOperand::CreateReg(getFGR32Reg()));
     // FIXME: We ought to do this for -integrated-as without -via-file-asm too.
-    if (!AsmParser.allowOddSPReg() && RegIdx.Index & 1)
+    if (!AsmParser.useOddSPReg() && RegIdx.Index & 1)
       AsmParser.Error(StartLoc, "-mno-odd-spreg prohibits the use of odd FPU "
                                 "registers");
   }

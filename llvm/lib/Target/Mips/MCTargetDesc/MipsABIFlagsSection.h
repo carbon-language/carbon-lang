@@ -228,6 +228,7 @@ public:
     setCPR1SizeFromPredicates(P);
     setASESetFromPredicates(P);
     setFpAbiFromPredicates(P);
+    OddSPReg = P.useOddSPReg();
   }
 };
 
