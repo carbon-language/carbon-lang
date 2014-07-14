@@ -926,7 +926,7 @@ define i1 @icmp_sdiv_pr20288(i64 %a) {
 }
 
 define i1 @icmp_sdiv_neg1(i64 %a) {
- %div = sdiv i64 %call, -1
+ %div = sdiv i64 %a, -1
  %cmp = icmp ne i64 %div, 1073741824
  ret i1 %cmp
 
