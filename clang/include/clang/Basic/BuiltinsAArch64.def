@@ -28,6 +28,7 @@ BUILTIN(__builtin_arm_rbit, "UiUi", "nc")
 BUILTIN(__builtin_arm_rbit64, "LUiLUi", "nc")
 
 // HINT
+BUILTIN(__builtin_arm_nop, "v", "")
 BUILTIN(__builtin_arm_yield, "v", "")
 BUILTIN(__builtin_arm_wfe, "v", "")
 BUILTIN(__builtin_arm_wfi, "v", "")

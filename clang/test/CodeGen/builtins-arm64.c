@@ -16,6 +16,7 @@ unsigned long long rbit64(unsigned long long a) {
 }
 
 void hints() {
+  __builtin_arm_nop();    //CHECK: call {{.*}} @llvm.aarch64.hint(i32 0)
   __builtin_arm_yield();  //CHECK: call {{.*}} @llvm.aarch64.hint(i32 1)
   __builtin_arm_wfe();    //CHECK: call {{.*}} @llvm.aarch64.hint(i32 2)
   __builtin_arm_wfi();    //CHECK: call {{.*}} @llvm.aarch64.hint(i32 3)

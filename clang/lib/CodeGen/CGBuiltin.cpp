@@ -3040,6 +3040,9 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   unsigned HintID = static_cast<unsigned>(-1);
   switch (BuiltinID) {
   default: break;
+  case ARM::BI__builtin_arm_nop:
+    HintID = 0;
+    break;
   case ARM::BI__builtin_arm_yield:
   case ARM::BI__yield:
     HintID = 1;
@@ -3804,6 +3807,9 @@ Value *CodeGenFunction::EmitAArch64BuiltinExpr(unsigned BuiltinID,
   unsigned HintID = static_cast<unsigned>(-1);
   switch (BuiltinID) {
   default: break;
+  case AArch64::BI__builtin_arm_nop:
+    HintID = 0;
+    break;
   case AArch64::BI__builtin_arm_yield:
     HintID = 1;
     break;
