@@ -349,7 +349,7 @@ def err_invalid_thread : Error<
 def err_thread_non_global : Error<
   "'%0' variables must have global storage">;
 def err_thread_unsupported : Error<
-  "thread-local storage is unsupported for the current target">;
+  "thread-local storage is not supported for the current target">;
 
 def warn_maybe_falloff_nonvoid_function : Warning<
   "control may reach end of non-void function">,
@@ -2131,7 +2131,7 @@ def err_attribute_dll_member_of_dll_class : Error<
 def warn_attribute_dll_instantiated_base_class : Warning<
   "propagating dll attribute to %select{already instantiated|explicitly specialized}0 "
   "base class template "
-  "%select{without dll attribute|with different dll attribute}1 is unsupported">,
+  "%select{without dll attribute|with different dll attribute}1 is not supported">,
   InGroup<DiagGroup<"unsupported-dll-base-class-template">>;
 def err_attribute_weakref_not_static : Error<
   "weakref declaration must have internal linkage">;
@@ -6914,7 +6914,7 @@ def err_uncasted_send_to_unknown_any_method : Error<
   "no known method %select{%objcinstance1|%objcclass1}0; cast the "
   "message send to the method's return type">;
 def err_unsupported_unknown_any_decl : Error<
-  "%0 has unknown type, which is unsupported for this kind of declaration">;
+  "%0 has unknown type, which is not supported for this kind of declaration">;
 def err_unsupported_unknown_any_expr : Error<
   "unsupported expression with unknown type">;
 def err_unsupported_unknown_any_call : Error<
