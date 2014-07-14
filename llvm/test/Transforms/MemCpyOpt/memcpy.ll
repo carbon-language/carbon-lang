@@ -29,7 +29,7 @@ entry:
 ; CHECK: ret void
 }
 
-declare void @ccoshl(%0* sret , x86_fp80, x86_fp80) nounwind 
+declare void @ccoshl(%0* nocapture sret, x86_fp80, x86_fp80) nounwind 
 
 
 ; The intermediate alloca and one of the memcpy's should be eliminated, the
@@ -202,7 +202,7 @@ define void @test10(%opaque* noalias nocapture sret %x, i32 %y) {
   ret void
 }
 
-declare void @f1(%struct.big* sret)
+declare void @f1(%struct.big* nocapture sret)
 declare void @f2(%struct.big*)
 
 ; CHECK: attributes [[NUW]] = { nounwind }

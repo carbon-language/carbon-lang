@@ -684,6 +684,12 @@ bool MemCpyOpt::performCallSlotOptzn(Instruction *cpy,
     }
   }
 
+  // Check that src isn't captured by the called function since the
+  // transformation can cause aliasing issues in that case.
+  for (unsigned i = 0, e = CS.arg_size(); i != e; ++i)
+    if (CS.getArgument(i) == cpySrc && !CS.doesNotCapture(i))
+      return false;
+
   // Since we're changing the parameter to the callsite, we need to make sure
   // that what would be the new parameter dominates the callsite.
   DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
