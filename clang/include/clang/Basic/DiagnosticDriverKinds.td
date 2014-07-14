@@ -119,10 +119,10 @@ def err_drv_emit_llvm_link : Error<
 def err_drv_optimization_remark_pattern : Error<
   "%0 in '%1'">;
 
-def warn_ignored_gcc_optimization : Warning<"ignoring unsupported optimization flag '%0'">,
-  InGroup<UnusedCommandLineArgument>;
 def warn_O4_is_O3 : Warning<"-O4 is equivalent to -O3">, InGroup<Deprecated>;
 def warn_drv_optimization_value : Warning<"optimization level '%0' is unsupported; using '%1%2' instead">,
+  InGroup<InvalidCommandLineArgument>;
+def warn_ignored_gcc_optimization : Warning<"optimization flag '%0' is not supported">,
   InGroup<InvalidCommandLineArgument>;
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for C++ and Objective-C++ only">;
