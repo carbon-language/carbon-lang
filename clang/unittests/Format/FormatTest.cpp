@@ -4975,6 +4975,7 @@ TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("return (my_int)aaa;");
   verifyFormat("#define x ((int)-1)");
   verifyFormat("#define p(q) ((int *)&q)");
+  verifyFormat("fn(a)(b) + 1;");
 
   verifyFormat("void f() { my_int a = (my_int)*b; }");
   verifyFormat("void f() { return P ? (my_int)*P : (my_int)0; }");
