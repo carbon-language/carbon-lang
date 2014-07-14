@@ -15,6 +15,7 @@
 #include "AMDGPUSubtarget.h"
 #include "R600InstrInfo.h"
 #include "SIInstrInfo.h"
+#include "llvm/ADT/SmallString.h"
 
 #include "llvm/ADT/SmallString.h"
 
@@ -37,6 +38,8 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS) :
   TexVTXClauseSize(0),
   Gen(AMDGPUSubtarget::R600),
   FP64(false),
+  FP64Denormals(false),
+  FP32Denormals(false),
   CaymanISA(false),
   EnableIRStructurizer(true),
   EnablePromoteAlloca(false),
@@ -45,14 +48,27 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS) :
   CFALUBug(false),
   LocalMemorySize(0),
   InstrItins(getInstrItineraryForCPU(GPU)) {
+  // On SI+, we want FP64 denormals to be on by default. FP32 denormals can be
+  // enabled, but some instructions do not respect them and they run at the
+  // double precision rate, so don't enable by default.
+  //
+  // We want to be able to turn these off, but making this a subtarget feature
+  // for SI has the unhelpful behavior that it unsets everything else if you
+  // disable it.
 
-  SmallString<256> FullFS("+promote-alloca,");
+  SmallString<256> FullFS("+promote-alloca,+fp64-denormals,");
   FullFS += FS;
 
   ParseSubtargetFeatures(GPU, FullFS);
 
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
+
+    // FIXME: I don't think think Evergreen has any useful support for
+    // denormals, but should be checked. Should we issue a warning somewhere if
+    // someone tries to enable these?
+    FP32Denormals = false;
+    FP64Denormals = false;
   } else {
     InstrInfo.reset(new SIInstrInfo(*this));
   }

@@ -50,6 +50,8 @@ private:
   short TexVTXClauseSize;
   Generation Gen;
   bool FP64;
+  bool FP64Denormals;
+  bool FP32Denormals;
   bool CaymanISA;
   bool EnableIRStructurizer;
   bool EnablePromoteAlloca;
@@ -95,6 +97,14 @@ public:
 
   bool hasCaymanISA() const {
     return CaymanISA;
+  }
+
+  bool hasFP32Denormals() const {
+    return FP32Denormals;
+  }
+
+  bool hasFP64Denormals() const {
+    return FP64Denormals;
   }
 
   bool hasBFE() const {

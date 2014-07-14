@@ -42,6 +42,20 @@ def FeatureFP64 : SubtargetFeature<"fp64",
         "true",
         "Enable double precision operations">;
 
+def FeatureFP64Denormals : SubtargetFeature<"fp64-denormals",
+        "FP64Denormals",
+        "true",
+        "Enable double precision denormal handling",
+        [FeatureFP64]>;
+
+// Some instructions do not support denormals despite this flag. Using
+// fp32 denormals also causes instructions to run at the double
+// precision rate for the device.
+def FeatureFP32Denormals : SubtargetFeature<"fp32-denormals",
+        "FP32Denormals",
+        "true",
+        "Enable single precision denormal handling">;
+
 def Feature64BitPtr : SubtargetFeature<"64BitPtr",
         "Is64bit",
         "true",

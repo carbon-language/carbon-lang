@@ -55,11 +55,20 @@ using namespace llvm;
 // We want to use these instructions, and using fp32 denormals also causes
 // instructions to run at the double precision rate for the device so it's
 // probably best to just report no single precision denormals.
-static uint32_t getFPMode(const MachineFunction &) {
+static uint32_t getFPMode(const MachineFunction &F) {
+  const AMDGPUSubtarget& ST = F.getTarget().getSubtarget<AMDGPUSubtarget>();
+  // TODO: Is there any real use for the flush in only / flush out only modes?
+
+  uint32_t FP32Denormals =
+    ST.hasFP32Denormals() ? FP_DENORM_FLUSH_NONE : FP_DENORM_FLUSH_IN_FLUSH_OUT;
+
+  uint32_t FP64Denormals =
+    ST.hasFP64Denormals() ? FP_DENORM_FLUSH_NONE : FP_DENORM_FLUSH_IN_FLUSH_OUT;
+
   return FP_ROUND_MODE_SP(FP_ROUND_ROUND_TO_NEAREST) |
          FP_ROUND_MODE_DP(FP_ROUND_ROUND_TO_NEAREST) |
-         FP_DENORM_MODE_SP(FP_DENORM_FLUSH_IN_FLUSH_OUT) |
-         FP_DENORM_MODE_DP(FP_DENORM_FLUSH_NONE);
+         FP_DENORM_MODE_SP(FP32Denormals) |
+         FP_DENORM_MODE_DP(FP64Denormals);
 }
 
 static AsmPrinter *createAMDGPUAsmPrinterPass(TargetMachine &tm,
