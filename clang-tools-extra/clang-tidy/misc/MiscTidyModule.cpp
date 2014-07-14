@@ -13,6 +13,7 @@
 #include "ArgumentCommentCheck.h"
 #include "BoolPointerImplicitConversion.h"
 #include "RedundantSmartptrGet.h"
+#include "SwappedArgumentsCheck.h"
 #include "UseOverride.h"
 
 namespace clang {
@@ -30,6 +31,9 @@ public:
     CheckFactories.addCheckFactory(
         "misc-redundant-smartptr-get",
         new ClangTidyCheckFactory<RedundantSmartptrGet>());
+    CheckFactories.addCheckFactory(
+        "misc-swapped-arguments",
+        new ClangTidyCheckFactory<SwappedArgumentsCheck>());
     CheckFactories.addCheckFactory(
         "misc-use-override",
         new ClangTidyCheckFactory<UseOverride>());
