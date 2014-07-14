@@ -48,6 +48,10 @@ if [ "$1" == "" ]; then
       echo SKIPPING $c -- requires TSAN_OPTIONS
       continue
     fi
+    if [ "`grep "XFAIL" $c`" ]; then
+      echo SKIPPING $c -- has XFAIL
+      continue
+    fi
     COMPILER=$CXX
     case $c in
       *.c) COMPILER=$CC
