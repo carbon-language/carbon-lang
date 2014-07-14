@@ -53,7 +53,7 @@ static inline unsigned hexDigitValue(char C) {
 /// This should only be used with unsigned types.
 ///
 template<typename IntTy>
-static inline char *utohex_buffer(IntTy X, char *BufferEnd) {
+static inline char *utohex_buffer(IntTy X, char *BufferEnd, bool LowerCase = false) {
   char *BufPtr = BufferEnd;
   *--BufPtr = 0;      // Null terminate buffer.
   if (X == 0) {
@@ -63,15 +63,15 @@ static inline char *utohex_buffer(IntTy X, char *BufferEnd) {
 
   while (X) {
     unsigned char Mod = static_cast<unsigned char>(X) & 15;
-    *--BufPtr = hexdigit(Mod);
+    *--BufPtr = hexdigit(Mod, LowerCase);
     X >>= 4;
   }
   return BufPtr;
 }
 
-static inline std::string utohexstr(uint64_t X) {
+static inline std::string utohexstr(uint64_t X, bool LowerCase = false) {
   char Buffer[17];
-  return utohex_buffer(X, Buffer+17);
+  return utohex_buffer(X, Buffer+17, LowerCase);
 }
 
 static inline std::string utostr_32(uint32_t X, bool isNeg = false) {
