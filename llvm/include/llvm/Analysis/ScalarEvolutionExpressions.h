@@ -309,17 +309,17 @@ namespace llvm {
                               getLoop(), FlagAnyWrap);
     }
 
-    /// isAffine - Return true if this is an affine AddRec (i.e., it represents
-    /// an expressions A+B*x where A and B are loop invariant values.
+    /// isAffine - Return true if this represents an expression
+    /// A + B*x where A and B are loop invariant values.
     bool isAffine() const {
       // We know that the start value is invariant.  This expression is thus
       // affine iff the step is also invariant.
       return getNumOperands() == 2;
     }
 
-    /// isQuadratic - Return true if this is an quadratic AddRec (i.e., it
-    /// represents an expressions A+B*x+C*x^2 where A, B and C are loop
-    /// invariant values.  This corresponds to an addrec of the form {L,+,M,+,N}
+    /// isQuadratic - Return true if this represents an expression
+    /// A + B*x + C*x^2 where A, B and C are loop invariant values.
+    /// This corresponds to an addrec of the form {L,+,M,+,N}
     bool isQuadratic() const {
       return getNumOperands() == 3;
     }
