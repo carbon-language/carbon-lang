@@ -113,6 +113,7 @@ static size_t RoundUpToInstrBoundary(size_t size, char *code) {
         cursor += 3;
         continue;
       case 0xC1F7:  // F7 C1 XX YY ZZ WW = test ecx, WWZZYYXX
+      case 0x25FF:  // FF 25 XX YY ZZ WW = jmp dword ptr ds:[WWZZYYXX]
         cursor += 6;
         continue;
       case 0x3D83:  // 83 3D XX YY ZZ WW TT = cmp TT, WWZZYYXX
