@@ -338,8 +338,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 /// getSectionForConstant - Given a mergeable constant with the
 /// specified size and relocation information, return a section that it
 /// should be placed in.
-const MCSection *TargetLoweringObjectFileELF::
-getSectionForConstant(SectionKind Kind) const {
+const MCSection *
+TargetLoweringObjectFileELF::getSectionForConstant(SectionKind Kind,
+                                                   const Constant *C) const {
   if (Kind.isMergeableConst4() && MergeableConst4Section)
     return MergeableConst4Section;
   if (Kind.isMergeableConst8() && MergeableConst8Section)
@@ -654,7 +655,8 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 }
 
 const MCSection *
-TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind) const {
+TargetLoweringObjectFileMachO::getSectionForConstant(SectionKind Kind,
+                                                     const Constant *C) const {
   // If this constant requires a relocation, we have to put it in the data
   // segment, not in the text segment.
   if (Kind.isDataRel() || Kind.isReadOnlyWithRel())

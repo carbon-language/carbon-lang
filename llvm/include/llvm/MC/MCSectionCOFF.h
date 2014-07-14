@@ -36,7 +36,7 @@ class MCSymbol;
     /// The COMDAT symbol of this section. Only valid if this is a COMDAT
     /// section. Two COMDAT sections are merged if they have the same
     /// COMDAT symbol.
-    const MCSymbol *COMDATSymbol;
+    MCSymbol *COMDATSymbol;
 
     /// Selection - This is the Selection field for the section symbol, if
     /// it is a COMDAT section (Characteristics & IMAGE_SCN_LNK_COMDAT) != 0
@@ -45,7 +45,7 @@ class MCSymbol;
   private:
     friend class MCContext;
     MCSectionCOFF(StringRef Section, unsigned Characteristics,
-                  const MCSymbol *COMDATSymbol, int Selection, SectionKind K)
+                  MCSymbol *COMDATSymbol, int Selection, SectionKind K)
         : MCSection(SV_COFF, K), SectionName(Section),
           Characteristics(Characteristics), COMDATSymbol(COMDATSymbol),
           Selection(Selection) {
@@ -67,7 +67,7 @@ class MCSymbol;
       return SectionName.str() + "_end";
     }
     unsigned getCharacteristics() const { return Characteristics; }
-    const MCSymbol *getCOMDATSymbol() const { return COMDATSymbol; }
+    MCSymbol *getCOMDATSymbol() const { return COMDATSymbol; }
     int getSelection() const { return Selection; }
 
     void setSelection(int Selection) const;

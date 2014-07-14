@@ -87,7 +87,8 @@ public:
         new NVPTXSection(MCSection::SV_ELF, SectionKind::getMetadata());
   }
 
-  const MCSection *getSectionForConstant(SectionKind Kind) const override {
+  const MCSection *getSectionForConstant(SectionKind Kind,
+                                         const Constant *C) const override {
     return ReadOnlySection;
   }
 

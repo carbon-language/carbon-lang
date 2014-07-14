@@ -46,6 +46,11 @@ namespace llvm {
     const MCExpr *
     getExecutableRelativeSymbol(const ConstantExpr *CE, Mangler &Mang,
                                 const TargetMachine &TM) const override;
+
+    /// \brief Given a mergeable constant with the specified size and relocation
+    /// information, return a section that it should be placed in.
+    const MCSection *getSectionForConstant(SectionKind Kind,
+                                           const Constant *C) const override;
   };
 
 } // end namespace llvm

@@ -8,10 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86TargetObjectFile.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/IR/Mangler.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Target/TargetLowering.h"
@@ -105,4 +107,63 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
   return MCSymbolRefExpr::Create(TM.getSymbol(GVLHS, Mang),
                                  MCSymbolRefExpr::VK_COFF_IMGREL32,
                                  getContext());
+}
+
+static std::string APIntToHexString(const APInt &AI, unsigned Width) {
+  std::string HexString = utohexstr(AI.getLimitedValue(), /*LowerCase=*/true);
+  unsigned Size = HexString.size();
+  assert(Width >= Size && "hex string is too large!");
+  HexString.insert(HexString.begin(), Width - Size, '0');
+
+  return HexString;
+}
+
+
+static std::string scalarConstantToHexString(const Constant *C) {
+  Type *Ty = C->getType();
+  if (Ty->isFloatTy()) {
+    const auto *CFP = cast<ConstantFP>(C);
+    return APIntToHexString(CFP->getValueAPF().bitcastToAPInt(), /*Width=*/8);
+  } else if (Ty->isDoubleTy()) {
+    const auto *CFP = cast<ConstantFP>(C);
+    return APIntToHexString(CFP->getValueAPF().bitcastToAPInt(), /*Width=*/16);
+  } else if (const auto *ITy = dyn_cast<IntegerType>(Ty)) {
+    const auto *CI = cast<ConstantInt>(C);
+    return APIntToHexString(CI->getValue(), (ITy->getBitWidth() / 8) * 2);
+  }
+  llvm_unreachable("unexpected constant pool element type!");
+}
+
+const MCSection *
+X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
+                                                  const Constant *C) const {
+  if (Kind.isReadOnly()) {
+    if (C) {
+      Type *Ty = C->getType();
+      SmallString<32> COMDATSymName;
+      if (Ty->isFloatTy() || Ty->isDoubleTy()) {
+        COMDATSymName = "__real@";
+        COMDATSymName += scalarConstantToHexString(C);
+      } else if (const auto *VTy = dyn_cast<VectorType>(Ty)) {
+        uint64_t NumBits = VTy->getBitWidth();
+        if (NumBits == 128 || NumBits == 256) {
+          const auto *CDV = cast<ConstantDataVector>(C);
+          COMDATSymName = NumBits == 128 ? "__xmm@" : "__ymm@";
+          for (int I = CDV->getNumElements() - 1, E = -1; I != E; --I)
+            COMDATSymName +=
+                scalarConstantToHexString(CDV->getElementAsConstant(I));
+        }
+      }
+      if (!COMDATSymName.empty()) {
+        unsigned Characteristics = COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                                   COFF::IMAGE_SCN_MEM_READ |
+                                   COFF::IMAGE_SCN_LNK_COMDAT;
+        return getContext().getCOFFSection(".rdata", Characteristics, Kind,
+                                           COMDATSymName,
+                                           COFF::IMAGE_COMDAT_SELECT_ANY);
+      }
+    }
+  }
+
+  return TargetLoweringObjectFile::getSectionForConstant(Kind, C);
 }

@@ -297,7 +297,8 @@ TargetLoweringObjectFile::SelectSectionForGlobal(const GlobalValue *GV,
 /// specified size and relocation information, return a section that it
 /// should be placed in.
 const MCSection *
-TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind) const {
+TargetLoweringObjectFile::getSectionForConstant(SectionKind Kind,
+                                                const Constant *C) const {
   if (Kind.isReadOnly() && ReadOnlySection != nullptr)
     return ReadOnlySection;
 

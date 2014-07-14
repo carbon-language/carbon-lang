@@ -50,6 +50,9 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
                              unsigned AsmVariant, const char *ExtraCode,
                              raw_ostream &OS) override;
 
+  /// \brief Return the symbol for the specified constant pool entry.
+  MCSymbol *GetCPISymbol(unsigned CPID) const override;
+
   bool runOnMachineFunction(MachineFunction &F) override;
 };
 

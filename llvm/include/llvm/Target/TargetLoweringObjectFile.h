@@ -70,7 +70,8 @@ public:
 
   /// Given a constant with the SectionKind, return a section that it should be
   /// placed in.
-  virtual const MCSection *getSectionForConstant(SectionKind Kind) const;
+  virtual const MCSection *getSectionForConstant(SectionKind Kind,
+                                                 const Constant *C) const;
 
   /// Classify the specified global variable into a set of target independent
   /// categories embodied in SectionKind.
