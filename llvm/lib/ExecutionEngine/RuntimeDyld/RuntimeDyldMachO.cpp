@@ -120,8 +120,21 @@ public:
   }
 };
 
+static uint32_t readMachOMagic(const char *InputBuffer, unsigned BufferSize) {
+  if (BufferSize < 4)
+    return 0;
+  StringRef Magic(InputBuffer, 4);
+  if (Magic == "\xFE\xED\xFA\xCE" || Magic == "\xCE\xFA\xED\xFE")
+    return 0xFEEDFACE;
+  else if (Magic == "\xFE\xED\xFA\xCF" || Magic == "\xCF\xFA\xED\xFE")
+    return 0xFEEDFACF;
+  // else
+  return 0;
+}
+
 ObjectImage *RuntimeDyldMachO::createObjectImage(ObjectBuffer *Buffer) {
-  uint32_t magic = *((const uint32_t *)Buffer->getBufferStart());
+  uint32_t magic = readMachOMagic(Buffer->getBufferStart(),
+                                  Buffer->getBufferSize());
   bool is64 = (magic == MachO::MH_MAGIC_64);
   assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
          "Unrecognized Macho Magic");
@@ -136,7 +149,8 @@ ObjectImage *RuntimeDyldMachO::createObjectImageFromFile(
   MemoryBuffer *Buffer =
       MemoryBuffer::getMemBuffer(ObjFile->getData(), "", false);
 
-  uint32_t magic = *((const uint32_t *)Buffer->getBufferStart());
+  uint32_t magic = readMachOMagic(Buffer->getBufferStart(),
+                                  Buffer->getBufferSize());
   bool is64 = (magic == MachO::MH_MAGIC_64);
   assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
          "Unrecognized Macho Magic");
@@ -955,18 +969,9 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
 
 bool
 RuntimeDyldMachO::isCompatibleFormat(const ObjectBuffer *InputBuffer) const {
-  if (InputBuffer->getBufferSize() < 4)
-    return false;
-  StringRef Magic(InputBuffer->getBufferStart(), 4);
-  if (Magic == "\xFE\xED\xFA\xCE")
-    return true;
-  if (Magic == "\xCE\xFA\xED\xFE")
-    return true;
-  if (Magic == "\xFE\xED\xFA\xCF")
-    return true;
-  if (Magic == "\xCF\xFA\xED\xFE")
-    return true;
-  return false;
+  uint32_t Magic = readMachOMagic(InputBuffer->getBufferStart(),
+                                  InputBuffer->getBufferSize());
+  return (Magic == 0xFEEDFACE || Magic == 0xFEEDFACF);
 }
 
 bool RuntimeDyldMachO::isCompatibleFile(const object::ObjectFile *Obj) const {
