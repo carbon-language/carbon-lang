@@ -68,6 +68,11 @@ const UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
   if (!RD)
     return nullptr;
 
+  // Loop over all record redeclarations looking for a uuid attribute.
+  for (const TagDecl *I : RD->redecls())
+    if (const UuidAttr *Uuid = I->getAttr<UuidAttr>())
+      return Uuid;
+
   // __uuidof can grab UUIDs from template arguments.
   if (ClassTemplateSpecializationDecl *CTSD =
           dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
@@ -105,11 +110,6 @@ const UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
 
     return UuidForRD;
   }
-
-  // Loop over all record redeclarations looking for a uuid attribute.
-  for (const TagDecl *I : RD->redecls())
-    if (const UuidAttr *Uuid = I->getAttr<UuidAttr>())
-      return Uuid;
 
   return nullptr;
 }
