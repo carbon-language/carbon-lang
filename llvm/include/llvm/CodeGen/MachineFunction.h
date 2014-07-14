@@ -227,19 +227,14 @@ public:
   void setHasInlineAsm(bool B) {
     HasInlineAsm = B;
   }
-  
+
   /// getInfo - Keep track of various per-function pieces of information for
   /// backends that would like to do so.
   ///
   template<typename Ty>
   Ty *getInfo() {
-    if (!MFInfo) {
-        // This should be just `new (Allocator.Allocate<Ty>()) Ty(*this)', but
-        // that apparently breaks GCC 3.3.
-        Ty *Loc = static_cast<Ty*>(Allocator.Allocate(sizeof(Ty),
-                                                      AlignOf<Ty>::Alignment));
-        MFInfo = new (Loc) Ty(*this);
-    }
+    if (!MFInfo)
+      MFInfo = new (Allocator.Allocate<Ty>()) Ty(*this);
     return static_cast<Ty*>(MFInfo);
   }
 
