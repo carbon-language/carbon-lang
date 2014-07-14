@@ -333,6 +333,13 @@ function(llvm_add_library name)
       ${lib_deps}
       ${llvm_libs}
       )
+  elseif((CYGWIN OR WIN32) AND ARG_SHARED)
+    # Win32's import library may be unaware of its dependent libs.
+    target_link_libraries(${name} PRIVATE
+      ${ARG_LINK_LIBS}
+      ${lib_deps}
+      ${llvm_libs}
+      )
   elseif(ARG_SHARED AND BUILD_SHARED_LIBS)
     # FIXME: It may be PRIVATE since SO knows its dependent libs.
     target_link_libraries(${name} PUBLIC
