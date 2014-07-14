@@ -830,7 +830,7 @@
 // ARM:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM:#define __UINTMAX_WIDTH__ 64
 // ARM:#define __UINTPTR_MAX__ 4294967295U
-// ARM:#define __UINTPTR_TYPE__ unsigned int
+// ARM:#define __UINTPTR_TYPE__ long unsigned int
 // ARM:#define __UINTPTR_WIDTH__ 32
 // ARM:#define __UINT_FAST16_MAX__ 65535U
 // ARM:#define __UINT_FAST16_TYPE__ unsigned short
@@ -986,7 +986,7 @@
 // ARM-BE:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM-BE:#define __UINTMAX_WIDTH__ 64
 // ARM-BE:#define __UINTPTR_MAX__ 4294967295U
-// ARM-BE:#define __UINTPTR_TYPE__ unsigned int
+// ARM-BE:#define __UINTPTR_TYPE__ long unsigned int
 // ARM-BE:#define __UINTPTR_WIDTH__ 32
 // ARM-BE:#define __UINT_FAST16_MAX__ 65535U
 // ARM-BE:#define __UINT_FAST16_TYPE__ unsigned short
@@ -1147,7 +1147,7 @@
 // ARMEABISOFTFP:#define __UINTMAX_TYPE__ long long unsigned int
 // ARMEABISOFTFP:#define __UINTMAX_WIDTH__ 64
 // ARMEABISOFTFP:#define __UINTPTR_MAX__ 4294967295U
-// ARMEABISOFTFP:#define __UINTPTR_TYPE__ unsigned int
+// ARMEABISOFTFP:#define __UINTPTR_TYPE__ long unsigned int
 // ARMEABISOFTFP:#define __UINTPTR_WIDTH__ 32
 // ARMEABISOFTFP:#define __UINT_FAST16_MAX__ 65535U
 // ARMEABISOFTFP:#define __UINT_FAST16_TYPE__ unsigned short
@@ -1308,7 +1308,7 @@
 // ARMEABIHARDFP:#define __UINTMAX_TYPE__ long long unsigned int
 // ARMEABIHARDFP:#define __UINTMAX_WIDTH__ 64
 // ARMEABIHARDFP:#define __UINTPTR_MAX__ 4294967295U
-// ARMEABIHARDFP:#define __UINTPTR_TYPE__ unsigned int
+// ARMEABIHARDFP:#define __UINTPTR_TYPE__ long unsigned int
 // ARMEABIHARDFP:#define __UINTPTR_WIDTH__ 32
 // ARMEABIHARDFP:#define __UINT_FAST16_MAX__ 65535U
 // ARMEABIHARDFP:#define __UINT_FAST16_TYPE__ unsigned short
@@ -1466,7 +1466,7 @@
 // ARM-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM-NETBSD:#define __UINTMAX_WIDTH__ 64
 // ARM-NETBSD:#define __UINTPTR_MAX__ 4294967295U
-// ARM-NETBSD:#define __UINTPTR_TYPE__ unsigned int
+// ARM-NETBSD:#define __UINTPTR_TYPE__ long unsigned int
 // ARM-NETBSD:#define __UINTPTR_WIDTH__ 32
 // ARM-NETBSD:#define __UINT_FAST16_MAX__ 65535U
 // ARM-NETBSD:#define __UINT_FAST16_TYPE__ unsigned short
@@ -2157,7 +2157,7 @@
 // MIPS32BE:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS32BE:#define __UINTMAX_WIDTH__ 64
 // MIPS32BE:#define __UINTPTR_MAX__ 4294967295U
-// MIPS32BE:#define __UINTPTR_TYPE__ unsigned int
+// MIPS32BE:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS32BE:#define __UINTPTR_WIDTH__ 32
 // MIPS32BE:#define __UINT_FAST16_MAX__ 65535U
 // MIPS32BE:#define __UINT_FAST16_TYPE__ unsigned short
@@ -2328,7 +2328,7 @@
 // MIPS32EL:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS32EL:#define __UINTMAX_WIDTH__ 64
 // MIPS32EL:#define __UINTPTR_MAX__ 4294967295U
-// MIPS32EL:#define __UINTPTR_TYPE__ unsigned int
+// MIPS32EL:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS32EL:#define __UINTPTR_WIDTH__ 32
 // MIPS32EL:#define __UINT_FAST16_MAX__ 65535U
 // MIPS32EL:#define __UINT_FAST16_TYPE__ unsigned short
@@ -2999,7 +2999,7 @@
 // MSP430:#define __UINTMAX_TYPE__ long long unsigned int
 // MSP430:#define __UINTMAX_WIDTH__ 64
 // MSP430:#define __UINTPTR_MAX__ 65535U
-// MSP430:#define __UINTPTR_TYPE__ unsigned short
+// MSP430:#define __UINTPTR_TYPE__ unsigned int
 // MSP430:#define __UINTPTR_WIDTH__ 16
 // MSP430:#define __UINT_FAST16_MAX__ 65535U
 // MSP430:#define __UINT_FAST16_TYPE__ unsigned short
@@ -3075,8 +3075,8 @@
 // NVPTX32:#define __INTMAX_MAX__ 9223372036854775807LL
 // NVPTX32:#define __INTMAX_TYPE__ long long int
 // NVPTX32:#define __INTMAX_WIDTH__ 64
-// NVPTX32:#define __INTPTR_MAX__ 4294967295U
-// NVPTX32:#define __INTPTR_TYPE__ unsigned int
+// NVPTX32:#define __INTPTR_MAX__ 2147483647
+// NVPTX32:#define __INTPTR_TYPE__ int
 // NVPTX32:#define __INTPTR_WIDTH__ 32
 // NVPTX32:#define __INT_FAST16_MAX__ 32767
 // NVPTX32:#define __INT_FAST16_TYPE__ short
@@ -3227,8 +3227,8 @@
 // NVPTX64:#define __INTMAX_MAX__ 9223372036854775807LL
 // NVPTX64:#define __INTMAX_TYPE__ long long int
 // NVPTX64:#define __INTMAX_WIDTH__ 64
-// NVPTX64:#define __INTPTR_MAX__ 18446744073709551615ULL
-// NVPTX64:#define __INTPTR_TYPE__ long long unsigned int
+// NVPTX64:#define __INTPTR_MAX__ 9223372036854775807LL
+// NVPTX64:#define __INTPTR_TYPE__ long long int
 // NVPTX64:#define __INTPTR_WIDTH__ 64
 // NVPTX64:#define __INT_FAST16_MAX__ 32767
 // NVPTX64:#define __INT_FAST16_TYPE__ short
@@ -3303,8 +3303,8 @@
 // NVPTX64:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // NVPTX64:#define __UINTMAX_TYPE__ long long unsigned int
 // NVPTX64:#define __UINTMAX_WIDTH__ 64
-// NVPTX64:#define __UINTPTR_MAX__ 18446744073709551615UL
-// NVPTX64:#define __UINTPTR_TYPE__ long unsigned int
+// NVPTX64:#define __UINTPTR_MAX__ 18446744073709551615ULL
+// NVPTX64:#define __UINTPTR_TYPE__ long long unsigned int
 // NVPTX64:#define __UINTPTR_WIDTH__ 64
 // NVPTX64:#define __UINT_FAST16_MAX__ 65535U
 // NVPTX64:#define __UINT_FAST16_TYPE__ unsigned short
@@ -3461,7 +3461,7 @@
 // PPC603E:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC603E:#define __UINTMAX_WIDTH__ 64
 // PPC603E:#define __UINTPTR_MAX__ 4294967295U
-// PPC603E:#define __UINTPTR_TYPE__ unsigned int
+// PPC603E:#define __UINTPTR_TYPE__ long unsigned int
 // PPC603E:#define __UINTPTR_WIDTH__ 32
 // PPC603E:#define __UINT_FAST16_MAX__ 65535U
 // PPC603E:#define __UINT_FAST16_TYPE__ unsigned short
@@ -4301,7 +4301,7 @@
 // PPC:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC:#define __UINTMAX_WIDTH__ 64
 // PPC:#define __UINTPTR_MAX__ 4294967295U
-// PPC:#define __UINTPTR_TYPE__ unsigned int
+// PPC:#define __UINTPTR_TYPE__ long unsigned int
 // PPC:#define __UINTPTR_WIDTH__ 32
 // PPC:#define __UINT_FAST16_MAX__ 65535U
 // PPC:#define __UINT_FAST16_TYPE__ unsigned short
@@ -4619,7 +4619,7 @@
 // PPC-DARWIN:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC-DARWIN:#define __UINTMAX_WIDTH__ 64
 // PPC-DARWIN:#define __UINTPTR_MAX__ 4294967295U
-// PPC-DARWIN:#define __UINTPTR_TYPE__ unsigned int
+// PPC-DARWIN:#define __UINTPTR_TYPE__ long unsigned int
 // PPC-DARWIN:#define __UINTPTR_WIDTH__ 32
 // PPC-DARWIN:#define __UINT_FAST16_MAX__ 65535U
 // PPC-DARWIN:#define __UINT_FAST16_TYPE__ unsigned short
@@ -4915,7 +4915,7 @@
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
 // SPARC:#define __UINTMAX_WIDTH__ 64
 // SPARC:#define __UINTPTR_MAX__ 4294967295U
-// SPARC:#define __UINTPTR_TYPE__ unsigned int
+// SPARC:#define __UINTPTR_TYPE__ long unsigned int
 // SPARC:#define __UINTPTR_WIDTH__ 32
 // SPARC:#define __UINT_FAST16_MAX__ 65535U
 // SPARC:#define __UINT_FAST16_TYPE__ unsigned short
@@ -5733,6 +5733,7 @@
 // SPARCV9:#define __LP64__ 1
 // SPARCV9:#define __SIZEOF_LONG__ 8
 // SPARCV9:#define __SIZEOF_POINTER__ 8
+// SPARCV9:#define __UINTPTR_TYPE__ long unsigned int
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-openbsd < /dev/null | FileCheck -check-prefix SPARC64-OBSD %s
 // SPARC64-OBSD:#define __INT64_TYPE__ long long int

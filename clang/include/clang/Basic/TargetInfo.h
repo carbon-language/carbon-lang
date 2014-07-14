@@ -212,7 +212,7 @@ public:
   }
   IntType getIntPtrType() const { return IntPtrType; }
   IntType getUIntPtrType() const {
-    return getIntTypeByWidth(getTypeWidth(IntPtrType), false);
+    return getCorrespondingUnsignedType(IntPtrType);
   }
   IntType getWCharType() const { return WCharType; }
   IntType getWIntType() const { return WIntType; }
@@ -221,6 +221,23 @@ public:
   IntType getInt64Type() const { return Int64Type; }
   IntType getSigAtomicType() const { return SigAtomicType; }
   IntType getProcessIDType() const { return ProcessIDType; }
+
+  static IntType getCorrespondingUnsignedType(IntType T) {
+    switch (T) {
+    case SignedChar:
+      return UnsignedChar;
+    case SignedShort:
+      return UnsignedShort;
+    case SignedInt:
+      return UnsignedInt;
+    case SignedLong:
+      return UnsignedLong;
+    case SignedLongLong:
+      return UnsignedLongLong;
+    default:
+      llvm_unreachable("Unexpected signed integer type");
+    }
+  }
 
   /// \brief Return the width (in bits) of the specified integer type enum.
   ///
