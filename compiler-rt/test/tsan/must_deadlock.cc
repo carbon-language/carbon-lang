@@ -28,6 +28,7 @@ int main() {
   pthread_mutex_init(&mu2, NULL);
   pthread_barrier_init(&barrier, 0, 2);
 
+  fprintf(stderr, "This test is going to deadlock and die in 3 seconds\n");
   alarm(3);
 
   pthread_t t;
