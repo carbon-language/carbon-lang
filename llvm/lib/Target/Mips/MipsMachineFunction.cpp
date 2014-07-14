@@ -137,12 +137,12 @@ MachinePointerInfo MipsFunctionInfo::callPtrInfo(const GlobalValue *Val) {
   return MachinePointerInfo(E);
 }
 
-int MipsFunctionInfo::getBuildPairF64_FI(const TargetRegisterClass *RC) {
-  if (BuildPairF64_FI == -1) {
-    BuildPairF64_FI = MF.getFrameInfo()->CreateStackObject(RC->getSize(),
-        RC->getAlignment(), false);
+int MipsFunctionInfo::getMoveF64ViaSpillFI(const TargetRegisterClass *RC) {
+  if (MoveF64ViaSpillFI == -1) {
+    MoveF64ViaSpillFI = MF.getFrameInfo()->CreateStackObject(
+        RC->getSize(), RC->getAlignment(), false);
   }
-  return BuildPairF64_FI;
+  return MoveF64ViaSpillFI;
 }
 
 void MipsFunctionInfo::anchor() { }

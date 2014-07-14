@@ -153,9 +153,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                        false);
 
   if (!isABI_O32() && !useOddSPReg())
-    report_fatal_error("-mattr=+nooddspreg is not currently permitted for a "
-                       "the O32 ABI.",
-                       false);
+    report_fatal_error("-mattr=+nooddspreg requires the O32 ABI.", false);
 
   if (IsFPXX && (isABI_N32() || isABI_N64()))
     report_fatal_error("FPXX is not permitted for the N32/N64 ABI's.", false);

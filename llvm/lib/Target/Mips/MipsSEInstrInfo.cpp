@@ -512,6 +512,7 @@ void MipsSEInstrInfo::expandCvtFPInt(MachineBasicBlock &MBB,
 void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
                                               MachineBasicBlock::iterator I,
                                               bool FP64) const {
+  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned SrcReg = I->getOperand(1).getReg();
   unsigned N = I->getOperand(2).getImm();
@@ -521,7 +522,15 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
   unsigned SubIdx = N ? Mips::sub_hi : Mips::sub_lo;
   unsigned SubReg = getRegisterInfo().getSubReg(SrcReg, SubIdx);
 
-  if (SubIdx == Mips::sub_hi && TM.getSubtarget<MipsSubtarget>().hasMTHC1()) {
+  // FPXX on MIPS-II or MIPS32r1 should have been handled with a spill/reload
+  // in MipsSEFrameLowering.cpp.
+  assert(!(Subtarget.isABI_FPXX() && !Subtarget.hasMips32r2()));
+
+  // FP64A (FP64 with nooddspreg) should have been handled with a spill/reload
+  // in MipsSEFrameLowering.cpp.
+  assert(!(Subtarget.isFP64bit() && !Subtarget.useOddSPReg()));
+
+  if (SubIdx == Mips::sub_hi && Subtarget.hasMTHC1()) {
     // FIXME: Strictly speaking MFHC1 only reads the top 32-bits however, we
     //        claim to read the whole 64-bits as part of a white lie used to
     //        temporarily work around a widespread bug in the -mfp64 support.
@@ -543,6 +552,7 @@ void MipsSEInstrInfo::expandExtractElementF64(MachineBasicBlock &MBB,
 void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator I,
                                          bool FP64) const {
+  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
   unsigned DstReg = I->getOperand(0).getReg();
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
   const MCInstrDesc& Mtc1Tdd = get(Mips::MTC1);
@@ -564,10 +574,18 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
   // The case where dmtc1 is available doesn't need to be handled here
   // because it never creates a BuildPairF64 node.
 
+  // FPXX on MIPS-II or MIPS32r1 should have been handled with a spill/reload
+  // in MipsSEFrameLowering.cpp.
+  assert(!(Subtarget.isABI_FPXX() && !Subtarget.hasMips32r2()));
+
+  // FP64A (FP64 with nooddspreg) should have been handled with a spill/reload
+  // in MipsSEFrameLowering.cpp.
+  assert(!(Subtarget.isFP64bit() && !Subtarget.useOddSPReg()));
+
   BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_lo))
     .addReg(LoReg);
 
-  if (TM.getSubtarget<MipsSubtarget>().hasMTHC1()) {
+  if (Subtarget.hasMTHC1()) {
     // FIXME: The .addReg(DstReg) is a white lie used to temporarily work
     //        around a widespread bug in the -mfp64 support.
     //        The problem is that none of the 32-bit fpu ops mention the fact
@@ -582,7 +600,7 @@ void MipsSEInstrInfo::expandBuildPairF64(MachineBasicBlock &MBB,
     BuildMI(MBB, I, dl, get(FP64 ? Mips::MTHC1_D64 : Mips::MTHC1_D32), DstReg)
         .addReg(DstReg)
         .addReg(HiReg);
-  } else if (TM.getSubtarget<MipsSubtarget>().isABI_FPXX())
+  } else if (Subtarget.isABI_FPXX())
     llvm_unreachable("BuildPairF64 not expanded in frame lowering code!");
   else
     BuildMI(MBB, I, dl, Mtc1Tdd, TRI.getSubReg(DstReg, Mips::sub_hi))

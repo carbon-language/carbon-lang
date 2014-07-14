@@ -55,7 +55,7 @@ public:
   MipsFunctionInfo(MachineFunction &MF)
       : MF(MF), SRetReturnReg(0), GlobalBaseReg(0), Mips16SPAliasReg(0),
         VarArgsFrameIndex(0), CallsEhReturn(false), SaveS2(false),
-        BuildPairF64_FI(-1) {}
+        MoveF64ViaSpillFI(-1) {}
 
   ~MipsFunctionInfo();
 
@@ -97,7 +97,7 @@ public:
   void setSaveS2() { SaveS2 = true; }
   bool hasSaveS2() const { return SaveS2; }
 
-  int getBuildPairF64_FI(const TargetRegisterClass *RC);
+  int getMoveF64ViaSpillFI(const TargetRegisterClass *RC);
 
   std::map<const char *, const llvm::Mips16HardFloatInfo::FuncSignature *>
   StubsNeeded;
@@ -141,7 +141,7 @@ private:
 
   /// FrameIndex for expanding BuildPairF64 nodes to spill and reload when the
   /// O32 FPXX ABI is enabled. -1 is used to denote invalid index.
-  int BuildPairF64_FI;
+  int MoveF64ViaSpillFI;
 
   /// MipsCallEntry maps.
   StringMap<const MipsCallEntry *> ExternalCallEntries;
