@@ -10777,6 +10777,50 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     }
   }
 
+  // Try to fold according to rules:
+  //   shuffle(shuffle A, B, M0), B, M1) -> shuffle(A, B, M2)
+  //   shuffle(shuffle A, B, M0), A, M1) -> shuffle(A, B, M2)
+  // Don't try to fold shuffles with illegal type.
+  if (N0.getOpcode() == ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
+      TLI.isTypeLegal(VT)) {
+    ShuffleVectorSDNode *OtherSV = cast<ShuffleVectorSDNode>(N0);
+
+    // The incoming shuffle must be of the same type as the result of the
+    // current shuffle.
+    assert(OtherSV->getOperand(0).getValueType() == VT &&
+           "Shuffle types don't match");
+
+    SDValue SV0 = OtherSV->getOperand(0);
+    SDValue SV1 = OtherSV->getOperand(1);
+    bool HasSameOp0 = N1 == SV0;
+    if (!HasSameOp0 && N1 != SV1)
+      // Early exit.
+      return SDValue();
+
+    SmallVector<int, 4> Mask;
+    // Compute the combined shuffle mask for a shuffle with SV0 as the first
+    // operand, and SV1 as the second operand.
+    for (unsigned i = 0; i != NumElts; ++i) {
+      int Idx = SVN->getMaskElt(i);
+      if (Idx < 0) {
+        // Propagate Undef.
+        Mask.push_back(Idx);
+        continue;
+      }
+
+      if (Idx < (int)NumElts)
+        Idx = OtherSV->getMaskElt(Idx);
+      else
+        Idx = HasSameOp0 ? Idx - NumElts : Idx;
+
+      Mask.push_back(Idx);
+    }
+
+    // Avoid introducing shuffles with illegal mask.
+    if (TLI.isShuffleMaskLegal(Mask, VT))
+      return DAG.getVectorShuffle(VT, SDLoc(N), SV0, SV1, &Mask[0]);
+  }
+
   return SDValue();
 }
 
