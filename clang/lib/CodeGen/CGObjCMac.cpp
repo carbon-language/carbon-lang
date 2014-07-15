@@ -5520,8 +5520,10 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
     assert(ID);
     if (ObjCImplementationDecl *IMP = ID->getImplementation())
       // We are implementing a weak imported interface. Give it external linkage
-      if (ID->isWeakImported() && !IMP->isWeakImported())
+      if (ID->isWeakImported() && !IMP->isWeakImported()) {
         DefinedClasses[i]->setLinkage(llvm::GlobalVariable::ExternalLinkage);
+        DefinedMetaClasses[i]->setLinkage(llvm::GlobalVariable::ExternalLinkage);
+      }
   }
   
   AddModuleClassList(DefinedClasses,
@@ -5821,11 +5823,6 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
                                   ID->getClassInterface()->isWeakImported());
     IsAGV = GetClassGlobal(ObjCMetaClassName + ClassName,
                            ID->getClassInterface()->isWeakImported());
-
-    // We are implementing a weak imported interface. Give it external
-    // linkage.
-    if (!ID->isWeakImported() && ID->getClassInterface()->isWeakImported())
-      IsAGV->setLinkage(llvm::GlobalVariable::ExternalLinkage);
   } else {
     // Has a root. Current class is not a root.
     const ObjCInterfaceDecl *Root = ID->getClassInterface();
@@ -5847,7 +5844,7 @@ void CGObjCNonFragileABIMac::GenerateClass(const ObjCImplementationDecl *ID) {
   std::string TClassName = ObjCMetaClassName + ClassName;
   llvm::GlobalVariable *MetaTClass = BuildClassMetaData(
       TClassName, IsAGV, SuperClassGV, CLASS_RO_GV, classIsHidden,
-      ID->isWeakImported());
+      ID->getClassInterface()->isWeakImported());
   DefinedMetaClasses.push_back(MetaTClass);
 
   // Metadata for the class
