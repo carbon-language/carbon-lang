@@ -16,6 +16,9 @@ pair<T1, T2> make_pair(T1 x, T2 y) {
 template <typename T>
 void templ(T a, T b) {
   std::make_pair<T, unsigned>(a, b);
+  std::make_pair<int, int>(1, 2);
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: for C++11-compatibility, omit template arguments from make_pair
+// CHECK-FIXES: std::make_pair(1, 2)
 }
 
 void test(int i) {
@@ -39,6 +42,7 @@ M
 // CHECK-FIXES-NEXT: M
 
   templ(i, i);
+  templ(1U, 2U);
 
   std::make_pair(i, 1); // no-warning
 }
