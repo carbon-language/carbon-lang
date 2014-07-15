@@ -316,6 +316,16 @@ TEST(libclang, VirtualFileOverlay_TopLevel) {
   T.map("/foo.h", "/real/foo.h");
 }
 
+TEST(libclang, VirtualFileOverlay_Empty) {
+  const char *contents =
+      "{\n"
+      "  'version': 0,\n"
+      "  'roots': [\n"
+      "  ]\n"
+      "}\n";
+  TestVFO T(contents);
+}
+
 TEST(libclang, ModuleMapDescriptor) {
   const char *Contents =
     "framework module TestFrame {\n"

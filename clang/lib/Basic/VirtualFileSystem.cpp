@@ -1101,35 +1101,34 @@ void JSONWriter::write(ArrayRef<YAMLVFSEntry> Entries,
        << (IsCaseSensitive.getValue() ? "true" : "false") << "',\n";
   OS << "  'roots': [\n";
 
-  if (Entries.empty())
-    return;
-
-  const YAMLVFSEntry &Entry = Entries.front();
-  startDirectory(path::parent_path(Entry.VPath));
-  writeEntry(path::filename(Entry.VPath), Entry.RPath);
-
-  for (const auto &Entry : Entries.slice(1)) {
-    StringRef Dir = path::parent_path(Entry.VPath);
-    if (Dir == DirStack.back())
-      OS << ",\n";
-    else {
-      while (!DirStack.empty() && !containedIn(DirStack.back(), Dir)) {
-        OS << "\n";
-        endDirectory();
-      }
-      OS << ",\n";
-      startDirectory(Dir);
-    }
+  if (!Entries.empty()) {
+    const YAMLVFSEntry &Entry = Entries.front();
+    startDirectory(path::parent_path(Entry.VPath));
     writeEntry(path::filename(Entry.VPath), Entry.RPath);
-  }
 
-  while (!DirStack.empty()) {
+    for (const auto &Entry : Entries.slice(1)) {
+      StringRef Dir = path::parent_path(Entry.VPath);
+      if (Dir == DirStack.back())
+        OS << ",\n";
+      else {
+        while (!DirStack.empty() && !containedIn(DirStack.back(), Dir)) {
+          OS << "\n";
+          endDirectory();
+        }
+        OS << ",\n";
+        startDirectory(Dir);
+      }
+      writeEntry(path::filename(Entry.VPath), Entry.RPath);
+    }
+
+    while (!DirStack.empty()) {
+      OS << "\n";
+      endDirectory();
+    }
     OS << "\n";
-    endDirectory();
   }
 
-  OS << "\n"
-     << "  ]\n"
+  OS << "  ]\n"
      << "}\n";
 }
 
