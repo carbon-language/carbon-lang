@@ -138,6 +138,9 @@ def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
 
 // Non-aliases:
 
+def _SLASH_arch : CLCompileJoined<"arch:">,
+  HelpText<"Set architecture for code generation">;
+
 def _SLASH_M_Group : OptionGroup<"</M group>">, Group<cl_compile_Group>;
 
 def _SLASH_EH : CLJoined<"EH">, HelpText<"Exception handling model">;
@@ -207,7 +210,6 @@ def _SLASH_Zm : CLIgnoredJoined<"Zm">;
 // Unsupported:
 
 def _SLASH_AI : CLJoined<"AI">;
-def _SLASH_arch : CLJoined<"arch:">;
 def _SLASH_bigobj : CLFlag<"bigobj">;
 def _SLASH_clr : CLJoined<"clr">;
 def _SLASH_d2Zi_PLUS : CLFlag<"d2Zi+">;

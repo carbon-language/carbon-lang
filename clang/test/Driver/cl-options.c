@@ -198,7 +198,6 @@
 // (/Zs is for syntax-only)
 // RUN: %clang_cl /Zs \
 // RUN:     /AIfoo \
-// RUN:     /arch:sse2 \
 // RUN:     /clr:pure \
 // RUN:     /docname \
 // RUN:     /d2Zi+ \
