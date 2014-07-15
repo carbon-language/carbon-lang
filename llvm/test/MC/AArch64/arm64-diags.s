@@ -159,6 +159,15 @@ ldr    q1, [x3, w3, sxtw #1]
   ldp w1, w2, [x2], #16
   ldp w2, w2, [x2], #16
   ldp x1, x1, [x2]
+  ldp s1, s1, [x1], #8
+  ldp s1, s1, [x1, #8]!
+  ldp s1, s1, [x1, #8]
+  ldp d1, d1, [x1], #16
+  ldp d1, d1, [x1, #16]!
+  ldp d1, d1, [x1, #16]
+  ldp q1, q1, [x1], #32
+  ldp q1, q1, [x1, #32]!
+  ldp q1, q1, [x1, #32]
 
   ldr x2, [x2], #8
   ldr x2, [x2, #8]!
@@ -184,6 +193,33 @@ ldr    q1, [x3, w3, sxtw #1]
 ; CHECK-ERRORS:       ^
 ; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
 ; CHECK-ERRORS:   ldp x1, x1, [x2]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp s1, s1, [x1], #8
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp s1, s1, [x1, #8]!
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp s1, s1, [x1, #8]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp d1, d1, [x1], #16
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp d1, d1, [x1, #16]!
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp d1, d1, [x1, #16]
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp q1, q1, [x1], #32
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp q1, q1, [x1, #32]!
+; CHECK-ERRORS:           ^
+; CHECK-ERRORS: error: unpredictable LDP instruction, Rt2==Rt
+; CHECK-ERRORS:   ldp q1, q1, [x1, #32]
 ; CHECK-ERRORS:           ^
 ; CHECK-ERRORS: error: unpredictable LDR instruction, writeback base is also a source
 ; CHECK-ERRORS:   ldr x2, [x2], #8
