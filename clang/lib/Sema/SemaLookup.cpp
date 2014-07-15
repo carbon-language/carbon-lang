@@ -1990,10 +1990,8 @@ addAssociatedClassesAndNamespaces(AssociatedLookup &Result,
       break;
 
     case TemplateArgument::Pack:
-      for (TemplateArgument::pack_iterator P = Arg.pack_begin(),
-                                        PEnd = Arg.pack_end();
-           P != PEnd; ++P)
-        addAssociatedClassesAndNamespaces(Result, *P);
+      for (const auto &P : Arg.pack_elements())
+        addAssociatedClassesAndNamespaces(Result, P);
       break;
   }
 }

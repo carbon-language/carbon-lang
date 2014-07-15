@@ -1351,9 +1351,8 @@ void StmtProfiler::VisitTemplateArgument(const TemplateArgument &Arg) {
     break;
 
   case TemplateArgument::Pack:
-    const TemplateArgument *Pack = Arg.pack_begin();
-    for (unsigned i = 0, e = Arg.pack_size(); i != e; ++i)
-      VisitTemplateArgument(Pack[i]);
+    for (const auto &P : Arg.pack_elements())
+      VisitTemplateArgument(P);
     break;
   }
 }

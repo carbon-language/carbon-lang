@@ -2095,13 +2095,11 @@ ConvertDeducedTemplateArgument(Sema &S, NamedDecl *Param,
     // This is a template argument pack, so check each of its arguments against
     // the template parameter.
     SmallVector<TemplateArgument, 2> PackedArgsBuilder;
-    for (TemplateArgument::pack_iterator PA = Arg.pack_begin(),
-                                      PAEnd = Arg.pack_end();
-         PA != PAEnd; ++PA) {
+    for (const auto &P : Arg.pack_elements()) {
       // When converting the deduced template argument, append it to the
       // general output list. We need to do this so that the template argument
       // checking logic has all of the prior template arguments available.
-      DeducedTemplateArgument InnerArg(*PA);
+      DeducedTemplateArgument InnerArg(P);
       InnerArg.setDeducedFromArrayBound(Arg.wasDeducedFromArrayBound());
       if (ConvertDeducedTemplateArgument(S, Param, InnerArg, Template,
                                          NTTPType, PackedArgsBuilder.size(),
@@ -5037,10 +5035,8 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
     break;
 
   case TemplateArgument::Pack:
-    for (TemplateArgument::pack_iterator P = TemplateArg.pack_begin(),
-                                      PEnd = TemplateArg.pack_end();
-         P != PEnd; ++P)
-      MarkUsedTemplateParameters(Ctx, *P, OnlyDeduced, Depth, Used);
+    for (const auto &P : TemplateArg.pack_elements())
+      MarkUsedTemplateParameters(Ctx, P, OnlyDeduced, Depth, Used);
     break;
   }
 }

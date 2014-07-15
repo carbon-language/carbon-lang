@@ -3060,11 +3060,9 @@ QualType ASTContext::getSubstTemplateTypeParmPackType(
                                           const TemplateTypeParmType *Parm,
                                               const TemplateArgument &ArgPack) {
 #ifndef NDEBUG
-  for (TemplateArgument::pack_iterator P = ArgPack.pack_begin(), 
-                                    PEnd = ArgPack.pack_end();
-       P != PEnd; ++P) {
-    assert(P->getKind() == TemplateArgument::Type &&"Pack contains a non-type");
-    assert(P->getAsType().isCanonical() && "Pack contains non-canonical type");
+  for (const auto &P : ArgPack.pack_elements()) {
+    assert(P.getKind() == TemplateArgument::Type &&"Pack contains a non-type");
+    assert(P.getAsType().isCanonical() && "Pack contains non-canonical type");
   }
 #endif
   

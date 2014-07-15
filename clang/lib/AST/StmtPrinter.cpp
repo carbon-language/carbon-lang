@@ -1541,9 +1541,8 @@ void StmtPrinter::VisitUserDefinedLiteral(UserDefinedLiteral *Node) {
       cast<FunctionDecl>(DRE->getDecl())->getTemplateSpecializationArgs();
     assert(Args);
     const TemplateArgument &Pack = Args->get(0);
-    for (TemplateArgument::pack_iterator I = Pack.pack_begin(),
-                                         E = Pack.pack_end(); I != E; ++I) {
-      char C = (char)I->getAsIntegral().getZExtValue();
+    for (const auto &P : Pack.pack_elements()) {
+      char C = (char)P.getAsIntegral().getZExtValue();
       OS << C;
     }
     break;

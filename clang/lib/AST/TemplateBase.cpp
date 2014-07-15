@@ -114,11 +114,9 @@ bool TemplateArgument::isDependent() const {
     return (getAsExpr()->isTypeDependent() || getAsExpr()->isValueDependent());
 
   case Pack:
-    for (pack_iterator P = pack_begin(), PEnd = pack_end(); P != PEnd; ++P) {
-      if (P->isDependent())
+    for (const auto &P : pack_elements())
+      if (P.isDependent())
         return true;
-    }
-
     return false;
   }
 
@@ -155,11 +153,9 @@ bool TemplateArgument::isInstantiationDependent() const {
     return getAsExpr()->isInstantiationDependent();
     
   case Pack:
-    for (pack_iterator P = pack_begin(), PEnd = pack_end(); P != PEnd; ++P) {
-      if (P->isInstantiationDependent())
+    for (const auto &P : pack_elements())
+      if (P.isInstantiationDependent())
         return true;
-    }
-    
     return false;
   }
 
@@ -214,8 +210,8 @@ bool TemplateArgument::containsUnexpandedParameterPack() const {
     break;
 
   case Pack:
-    for (pack_iterator P = pack_begin(), PEnd = pack_end(); P != PEnd; ++P)
-      if (P->containsUnexpandedParameterPack())
+    for (const auto &P : pack_elements())
+      if (P.containsUnexpandedParameterPack())
         return true;
 
     break;
@@ -392,14 +388,13 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
   case Pack:
     Out << "<";
     bool First = true;
-    for (TemplateArgument::pack_iterator P = pack_begin(), PEnd = pack_end();
-         P != PEnd; ++P) {
+    for (const auto &P : pack_elements()) {
       if (First)
         First = false;
       else
         Out << ", ";
       
-      P->print(Policy, Out);
+      P.print(Policy, Out);
     }
     Out << ">";
     break;        

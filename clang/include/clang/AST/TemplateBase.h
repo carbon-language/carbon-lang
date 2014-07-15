@@ -18,6 +18,7 @@
 #include "clang/AST/TemplateName.h"
 #include "clang/AST/Type.h"
 #include "llvm/ADT/APSInt.h"
+#include "llvm/ADT/iterator_range.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -325,6 +326,12 @@ public:
   pack_iterator pack_end() const {
     assert(getKind() == Pack);
     return Args.Args + Args.NumArgs;
+  }
+
+  /// \brief Iterator range referencing all of the elements of a template
+  /// argument pack.
+  llvm::iterator_range<pack_iterator> pack_elements() const {
+    return llvm::make_range(pack_begin(), pack_end());
   }
 
   /// \brief The number of template arguments in the given template argument

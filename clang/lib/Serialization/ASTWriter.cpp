@@ -5192,9 +5192,8 @@ void ASTWriter::AddTemplateArgument(const TemplateArgument &Arg,
     break;
   case TemplateArgument::Pack:
     Record.push_back(Arg.pack_size());
-    for (TemplateArgument::pack_iterator I=Arg.pack_begin(), E=Arg.pack_end();
-           I != E; ++I)
-      AddTemplateArgument(*I, Record);
+    for (const auto &P : Arg.pack_elements())
+      AddTemplateArgument(P, Record);
     break;
   }
 }

@@ -747,9 +747,8 @@ void USRGenerator::VisitTemplateArgument(const TemplateArgument &Arg) {
       
   case TemplateArgument::Pack:
     Out << 'p' << Arg.pack_size();
-    for (TemplateArgument::pack_iterator P = Arg.pack_begin(), PEnd = Arg.pack_end();
-         P != PEnd; ++P)
-      VisitTemplateArgument(*P);
+    for (const auto &P : Arg.pack_elements())
+      VisitTemplateArgument(P);
     break;
       
   case TemplateArgument::Type:
