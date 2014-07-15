@@ -1800,10 +1800,12 @@ def : Pat <
 // VOP1 Patterns
 //===----------------------------------------------------------------------===//
 
-def : RcpPat<V_RCP_F32_e32, f32>;
 def : RcpPat<V_RCP_F64_e32, f64>;
-defm : RsqPat<V_RSQ_F32_e32, f32>;
 defm : RsqPat<V_RSQ_F64_e32, f64>;
+
+let Predicates = [UnsafeFPMath] in {
+defm : RsqPat<V_RSQ_F32_e32, f32>;
+}
 
 //===----------------------------------------------------------------------===//
 // VOP2 Patterns
@@ -2334,11 +2336,6 @@ def : POW_Common <V_LOG_F32_e32, V_EXP_F32_e32, V_MUL_LEGACY_F32_e32>;
 def : Pat <
   (int_AMDGPU_div f32:$src0, f32:$src1),
   (V_MUL_LEGACY_F32_e32 $src0, (V_RCP_LEGACY_F32_e32 $src1))
->;
-
-def : Pat<
-  (fdiv f32:$src0, f32:$src1),
-  (V_MUL_F32_e32 $src0, (V_RCP_F32_e32 $src1))
 >;
 
 def : Pat<

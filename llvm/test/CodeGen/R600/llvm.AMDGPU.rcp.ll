@@ -1,4 +1,5 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -enable-unsafe-fp-math -verify-machineinstrs < %s | FileCheck -check-prefix=SI-UNSAFE -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI-SAFE -check-prefix=SI -check-prefix=FUNC %s
 
 declare float @llvm.AMDGPU.rcp.f32(float) nounwind readnone
 declare double @llvm.AMDGPU.rcp.f64(double) nounwind readnone
@@ -24,7 +25,15 @@ define void @rcp_f64(double addrspace(1)* %out, double %src) nounwind {
 }
 
 ; FUNC-LABEL: @rcp_pat_f32
-; SI: V_RCP_F32_e32
+; SI-UNSAFE-NOT: V_MUL_F32
+; SI-UNSAFE: V_RCP_F32_e32
+; SI-UNSAFE-NOT: V_MUL_F32
+
+; Check for surrounding multiplies the correct divide has.
+; SI-SAFE: V_MUL_F32
+; SI-SAFE: V_RCP_F32_e32
+; SI-SAFE: V_MUL_F32
+
 define void @rcp_pat_f32(float addrspace(1)* %out, float %src) nounwind {
   %rcp = fdiv float 1.0, %src
   store float %rcp, float addrspace(1)* %out, align 4
@@ -40,7 +49,9 @@ define void @rcp_pat_f64(double addrspace(1)* %out, double %src) nounwind {
 }
 
 ; FUNC-LABEL: @rsq_rcp_pat_f32
-; SI: V_RSQ_F32_e32
+; SI-UNSAFE: V_RSQ_F32_e32
+; SI-SAFE: V_SQRT_F32_e32
+; SI-SAFE: V_RCP_F32_e32
 define void @rsq_rcp_pat_f32(float addrspace(1)* %out, float %src) nounwind {
   %sqrt = call float @llvm.sqrt.f32(float %src) nounwind readnone
   %rcp = call float @llvm.AMDGPU.rcp.f32(float %sqrt) nounwind readnone

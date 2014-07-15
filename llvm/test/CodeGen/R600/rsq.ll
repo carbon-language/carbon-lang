@@ -1,10 +1,12 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs -enable-unsafe-fp-math < %s | FileCheck -check-prefix=SI-UNSAFE -check-prefix=SI %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI-SAFE -check-prefix=SI %s
 
 declare float @llvm.sqrt.f32(float) nounwind readnone
 declare double @llvm.sqrt.f64(double) nounwind readnone
 
 ; SI-LABEL: @rsq_f32
-; SI: V_RSQ_F32_e32
+; SI-UNSAFE: V_RSQ_F32_e32
+; SI-SAFE: V_SQRT_F32
 ; SI: S_ENDPGM
 define void @rsq_f32(float addrspace(1)* noalias %out, float addrspace(1)* noalias %in) nounwind {
   %val = load float addrspace(1)* %in, align 4

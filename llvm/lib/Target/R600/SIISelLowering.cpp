@@ -221,6 +221,8 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FNEG, MVT::f64, Expand);
   setOperationAction(ISD::FABS, MVT::f64, Expand);
 
+  setOperationAction(ISD::FDIV, MVT::f32, Custom);
+
   setTargetDAGCombine(ISD::SELECT_CC);
   setTargetDAGCombine(ISD::SETCC);
 
@@ -633,6 +635,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   }
 
   case ISD::SELECT: return LowerSELECT(Op, DAG);
+  case ISD::FDIV: return LowerFDIV(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
   case ISD::GlobalAddress: return LowerGlobalAddress(MFI, Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: {
@@ -928,6 +931,79 @@ SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
   SDValue Res = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v2i32, Lo, Hi);
   return DAG.getNode(ISD::BITCAST, DL, MVT::i64, Res);
+}
+
+static SDValue performUnsafeFDIV(SDValue Op, SelectionDAG &DAG) {
+  SDLoc SL(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+  EVT VT = Op.getValueType();
+
+  if (const ConstantFPSDNode *CLHS = dyn_cast<ConstantFPSDNode>(LHS)) {
+    if (CLHS->isExactlyValue(1.0)) {
+
+      // 1.0 / sqrt(x) -> rsq(x)
+      if (RHS.getOpcode() == ISD::FSQRT)
+        return DAG.getNode(AMDGPUISD::RSQ, SL, VT, RHS.getOperand(0));
+
+      // 1.0 / x -> rcp(x)
+      return DAG.getNode(AMDGPUISD::RCP, SL, VT, RHS);
+    }
+  }
+
+  // Turn into multiply by the reciprocal
+  // x / y -> x * (1.0 / y)
+  SDValue Recip = DAG.getNode(AMDGPUISD::RCP, SL, VT, RHS);
+  return DAG.getNode(ISD::FMUL, SL, VT, LHS, Recip);
+}
+
+SDValue SITargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const {
+  if (DAG.getTarget().Options.UnsafeFPMath)
+    return performUnsafeFDIV(Op, DAG);
+
+  SDLoc SL(Op);
+  SDValue LHS = Op.getOperand(0);
+  SDValue RHS = Op.getOperand(1);
+
+  SDValue r1 = DAG.getNode(ISD::FABS, SL, MVT::f32, RHS);
+
+  const APFloat K0Val(BitsToFloat(0x6f800000));
+  const SDValue K0 = DAG.getConstantFP(K0Val, MVT::f32);
+
+  const APFloat K1Val(BitsToFloat(0x2f800000));
+  const SDValue K1 = DAG.getConstantFP(K1Val, MVT::f32);
+
+  const SDValue One = DAG.getTargetConstantFP(1.0, MVT::f32);
+
+  EVT SetCCVT = getSetCCResultType(*DAG.getContext(), MVT::f32);
+
+  SDValue r2 = DAG.getSetCC(SL, SetCCVT, r1, K0, ISD::SETOGT);
+
+  SDValue r3 = DAG.getNode(ISD::SELECT, SL, MVT::f32, r2, K1, One);
+
+  r1 = DAG.getNode(ISD::FMUL, SL, MVT::f32, RHS, r3);
+
+  SDValue r0 = DAG.getNode(AMDGPUISD::RCP, SL, MVT::f32, r1);
+
+  SDValue Mul = DAG.getNode(ISD::FMUL, SL, MVT::f32, LHS, r0);
+
+  return DAG.getNode(ISD::FMUL, SL, MVT::f32, r3, Mul);
+}
+
+SDValue SITargetLowering::LowerFDIV64(SDValue Op, SelectionDAG &DAG) const {
+  return SDValue();
+}
+
+SDValue SITargetLowering::LowerFDIV(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+
+  if (VT == MVT::f32)
+    return LowerFDIV32(Op, DAG);
+
+  if (VT == MVT::f64)
+    return LowerFDIV64(Op, DAG);
+
+  llvm_unreachable("Unexpected type for fdiv");
 }
 
 SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
