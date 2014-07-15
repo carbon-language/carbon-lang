@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
@@ -117,6 +118,10 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   /// ArgumentStackSize - amount of bytes on stack consumed by the arguments
   /// being passed on the stack
   unsigned ArgumentStackSize;
+
+  /// CoalescedWeights - mapping of basic blocks to the rolling counter of
+  /// coalesced weights.
+  DenseMap<const MachineBasicBlock*, unsigned> CoalescedWeights;
 
 public:
   ARMFunctionInfo() :
@@ -220,6 +225,15 @@ public:
       return I->second;
     else
       return -1U;
+  }
+
+  DenseMap<const MachineBasicBlock*, unsigned>::iterator getCoalescedWeight(
+                                                  MachineBasicBlock* MBB) {
+    auto It = CoalescedWeights.find(MBB);
+    if (It == CoalescedWeights.end()) {
+      It = CoalescedWeights.insert(std::make_pair(MBB, 0)).first;
+    }
+    return It;
   }
 };
 } // End llvm namespace

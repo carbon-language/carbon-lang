@@ -2,12 +2,12 @@
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32-S64"
 
-; This test will generate spills/fills using vldmia instructions that access 64 bytes of memory.
-; Check that we don't crash when we generate these instructions on Cortex-A9.
+; This test used to test vector spilling using vstmia/vldmia instructions, but
+; the changes for PR:18825 prevent that spilling.
 
 ; CHECK: test:
-; CHECK: vstmia
-; CHECK: vldmia
+; CHECK-NOT: vstmia
+; CHECK-NOT: vldmia
 define void @test(i64* %src) #0 {
 entry:
   %arrayidx39 = getelementptr inbounds i64* %src, i32 13
