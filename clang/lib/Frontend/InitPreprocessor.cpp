@@ -201,9 +201,8 @@ static void DefineFmt(const Twine &Prefix, TargetInfo::IntType Ty,
   bool IsSigned = TI.isTypeSigned(Ty);
   StringRef FmtModifier = TI.getTypeFormatModifier(Ty);
   for (const char *Fmt = IsSigned ? "di" : "ouxX"; *Fmt; ++Fmt) {
-    Twine Macro = Prefix + "_FMT" + Twine(*Fmt) + "__";
-    Twine Value = Twine("\"") + FmtModifier + Twine(*Fmt) + "\"";
-    Builder.defineMacro(Macro, Value);
+    Builder.defineMacro(Prefix + "_FMT" + Twine(*Fmt) + "__",
+                        Twine("\"") + FmtModifier + Twine(*Fmt) + "\"");
   }
 }
 
