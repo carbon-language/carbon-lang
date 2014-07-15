@@ -3043,7 +3043,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 //  If a tail called function callee has more arguments than the caller the
 //  caller needs to make sure that there is room to move the RETADDR to. This is
 //  achieved by reserving an area the size of the argument delta right after the
-//  original REtADDR, but before the saved framepointer or the spilled registers
+//  original RETADDR, but before the saved framepointer or the spilled registers
 //  e.g. caller(arg1, arg2) calls callee(arg1, arg2,arg3,arg4)
 //  stack layout:
 //    arg1
