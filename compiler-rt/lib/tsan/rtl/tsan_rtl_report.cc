@@ -316,8 +316,7 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   int fd = -1;
   int creat_tid = -1;
   u32 creat_stack = 0;
-  if (FdLocation(addr, &fd, &creat_tid, &creat_stack)
-      || FdLocation(AlternativeAddress(addr), &fd, &creat_tid, &creat_stack)) {
+  if (FdLocation(addr, &fd, &creat_tid, &creat_stack)) {
     void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
     ReportLocation *loc = new(mem) ReportLocation();
     rep_->locs.PushBack(loc);
