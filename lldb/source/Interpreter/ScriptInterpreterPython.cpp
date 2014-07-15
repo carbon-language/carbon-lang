@@ -2438,7 +2438,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     {
         error.SetErrorString("invalid Debugger pointer");
         return false;
-    }
+   }
     
     bool ret_val = false;
     
@@ -2446,7 +2446,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     
     {
         Locker py_lock(this,
-                       Locker::AcquireLock | Locker::InitSession,
+                       Locker::AcquireLock | Locker::InitSession | cmd_retobj.GetInteractive() ? 0 : Locker::NoSTDIN,
                        Locker::FreeLock    | Locker::TearDownSession);
         
         SynchronicityHandler synch_handler(debugger_sp,

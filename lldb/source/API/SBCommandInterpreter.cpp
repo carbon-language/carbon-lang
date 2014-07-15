@@ -138,6 +138,7 @@ SBCommandInterpreter::HandleCommand (const char *command_line, SBCommandReturnOb
     result.Clear();
     if (command_line && m_opaque_ptr)
     {
+        result.ref().SetInteractive(false);
         m_opaque_ptr->HandleCommand (command_line, add_to_history ? eLazyBoolYes : eLazyBoolNo, result.ref());
     }
     else

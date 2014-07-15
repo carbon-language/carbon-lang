@@ -160,9 +160,17 @@ public:
     bool
     HasResult ();
 
-    bool GetDidChangeProcessState ();
+    bool
+    GetDidChangeProcessState ();
 
-    void SetDidChangeProcessState (bool b);
+    void
+    SetDidChangeProcessState (bool b);
+
+    bool
+    GetInteractive () const;
+    
+    void
+    SetInteractive (bool b);
 
 private:
     enum 
@@ -176,6 +184,7 @@ private:
     
     lldb::ReturnStatus m_status;
     bool m_did_change_process_state;
+    bool m_interactive; // If true, then the input handle from the debugger will be hooked up
 };
 
 } // namespace lldb_private
