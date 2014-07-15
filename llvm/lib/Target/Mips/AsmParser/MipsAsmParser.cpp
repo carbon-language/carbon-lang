@@ -252,7 +252,7 @@ public:
   bool isABI_N32() const { return STI.getFeatureBits() & Mips::FeatureN32; }
   bool isABI_N64() const { return STI.getFeatureBits() & Mips::FeatureN64; }
   bool isABI_O32() const { return STI.getFeatureBits() & Mips::FeatureO32; }
-  bool isABI_FPXX() const { return false; } // TODO: add check for FeatureXX
+  bool isABI_FPXX() const { return STI.getFeatureBits() & Mips::FeatureFPXX; }
 
   bool useOddSPReg() const {
     return !(STI.getFeatureBits() & Mips::FeatureNoOddSPReg);

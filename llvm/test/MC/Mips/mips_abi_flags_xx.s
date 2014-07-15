@@ -5,6 +5,10 @@
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
 # RUN:     FileCheck %s -check-prefix=CHECK-OBJ
 
+# RUN: llvm-mc /dev/null -arch=mips -mcpu=mips32 -mattr=fpxx -filetype=obj -o - | \
+# RUN:   llvm-readobj -sections -section-data -section-relocations - | \
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ
+
 # CHECK-ASM: .module fp=xx
 
 # Checking if the Mips.abiflags were correctly emitted.
