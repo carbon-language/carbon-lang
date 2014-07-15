@@ -36,6 +36,7 @@ class AMDGPUShaderInst <dag outs, dag ins, string asm, list<dag> pattern>
 
 def FP32Denormals : Predicate<"Subtarget.hasFP32Denormals()">;
 def FP64Denormals : Predicate<"Subtarget.hasFP64Denormals()">;
+def UnsafeFPMath : Predicate<"TM.Options.UnsafeFPMath">;
 
 def InstFlag : OperandWithDefaultOps <i32, (ops (i32 0))>;
 def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
