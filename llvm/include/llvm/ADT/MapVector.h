@@ -125,12 +125,26 @@ public:
   }
 
   /// \brief Remove the element given by Iterator.
+  ///
   /// Returns an iterator to the element following the one which was removed,
   /// which may be end().
+  ///
+  /// \note This is a deceivingly expensive operation (linear time).  It's
+  /// usually better to use \a remove_if() if possible.
   typename VectorType::iterator erase(typename VectorType::iterator Iterator) {
-    typename MapType::iterator MapIterator = Map.find(Iterator->first);
-    Map.erase(MapIterator);
-    return Vector.erase(Iterator);
+    Map.erase(Iterator->first);
+    auto Next = Vector.erase(Iterator);
+    if (Next == Vector.end())
+      return Next;
+
+    // Update indices in the map.
+    size_t Index = Next - Vector.begin();
+    for (auto &I : Map) {
+      assert(I.second != Index && "Index was already erased!");
+      if (I.second > Index)
+        --I.second;
+    }
+    return Next;
   }
 };
 

@@ -1442,7 +1442,7 @@ iteration over maps of pointers.
 
 It is implemented by mapping from key to an index in a vector of key,value
 pairs.  This provides fast lookup and iteration, but has two main drawbacks: The
-key is stored twice and it doesn't support removing elements.
+key is stored twice and removing elements takes linear time.
 
 .. _dss_inteqclasses:
 

@@ -53,3 +53,18 @@ TEST(MapVectorTest, insert_pop) {
   EXPECT_EQ(MV[1], 2);
   EXPECT_EQ(MV[4], 7);
 }
+
+TEST(MapVectorTest, erase) {
+  MapVector<int, int> MV;
+
+  MV.insert(std::make_pair(1, 2));
+  MV.insert(std::make_pair(3, 4));
+  MV.insert(std::make_pair(5, 6));
+  ASSERT_EQ(MV.size(), 3u);
+
+  MV.erase(MV.find(1));
+  ASSERT_EQ(MV.size(), 2u);
+  ASSERT_EQ(MV.find(1), MV.end());
+  ASSERT_EQ(MV[3], 4);
+  ASSERT_EQ(MV[5], 6);
+}
