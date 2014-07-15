@@ -86,3 +86,7 @@ declare void @llvm.memset.p0i8.i32(i8* nocapture, i8, i32, i32, i1) nounwind
 ; CHECK: call void @loop_openmp.omp_subfn(i8* %omp_data)
 ; CHECK: call void @GOMP_parallel_end()
 
+; Verify the new subfunction is annotated such that SCoP detection will skip it.
+; CHECK: @loop_openmp.omp_subfn({{.*}}) [[ATTR:#[0-9]+]]
+; CHECK: attributes [[ATTR]] = {{{[^\}]*}}polly.skip.fn{{[^\}]*}}}
+

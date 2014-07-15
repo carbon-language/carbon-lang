@@ -229,7 +229,7 @@ Function *OMPGenerator::createSubfunctionDefinition() {
   Function *FN = Function::Create(FT, Function::InternalLinkage,
                                   F->getName() + ".omp_subfn", M);
   // Do not run any polly pass on the new function.
-  P->getAnalysis<polly::ScopDetection>().markFunctionAsInvalid(FN);
+  FN->addFnAttr(PollySkipFnAttr);
 
   Function::arg_iterator AI = FN->arg_begin();
   AI->setName("omp.userContext");

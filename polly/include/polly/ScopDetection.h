@@ -108,6 +108,9 @@ typedef std::map<const SCEVUnknown *, const SCEV *> BaseToElSize;
 extern bool PollyTrackFailures;
 extern bool PollyDelinearize;
 
+/// @brief A function attribute which will cause Polly to skip the function
+extern llvm::StringRef PollySkipFnAttr;
+
 //===----------------------------------------------------------------------===//
 /// @brief Pass to detect the maximal static control parts (Scops) of a
 /// function.
@@ -145,10 +148,6 @@ class ScopDetection : public FunctionPass {
 
   // Remember a list of errors for every region.
   mutable RejectLogsContainer RejectLogs;
-
-  // Remember the invalid functions producted by backends;
-  typedef std::set<const Function *> FunctionSet;
-  FunctionSet InvalidFunctions;
 
   // Delinearize all non affine memory accesses and return false when there
   // exists a non affine memory access that cannot be delinearized. Return true
@@ -249,13 +248,9 @@ class ScopDetection : public FunctionPass {
   /// @return True if the loop is valid in the region.
   bool isValidLoop(Loop *L, DetectionContext &Context) const;
 
-  /// @brief Check if a function is an OpenMP subfunction.
+  /// @brief Check if the function @p F is marked as invalid.
   ///
-  /// An OpenMP subfunction is not valid for Scop detection.
-  ///
-  /// @param F The function to check.
-  ///
-  /// @return True if the function is not an OpenMP subfunction.
+  /// @note An OpenMP subfunction will be marked as invalid.
   bool isValidFunction(llvm::Function &F);
 
   /// @brief Print the locations of all detected scops.
@@ -347,7 +342,7 @@ public:
   ///        the function.
   ///
   /// @param F The function to mark as invalid.
-  void markFunctionAsInvalid(const Function *F) { InvalidFunctions.insert(F); }
+  void markFunctionAsInvalid(Function *F) const;
 
   /// @brief Verify if all valid Regions in this Function are still valid
   /// after some transformations.

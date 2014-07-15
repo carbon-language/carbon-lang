@@ -136,6 +136,7 @@ static cl::opt<bool>
 
 bool polly::PollyTrackFailures = false;
 bool polly::PollyDelinearize = false;
+StringRef polly::PollySkipFnAttr = "polly.skip.fn";
 
 //===----------------------------------------------------------------------===//
 // Statistics.
@@ -769,8 +770,12 @@ bool ScopDetection::isValidRegion(DetectionContext &Context) const {
   return true;
 }
 
+void ScopDetection::markFunctionAsInvalid(Function *F) const {
+  F->addFnAttr(PollySkipFnAttr);
+}
+
 bool ScopDetection::isValidFunction(llvm::Function &F) {
-  return !InvalidFunctions.count(&F);
+  return !F.hasFnAttribute(PollySkipFnAttr);
 }
 
 void ScopDetection::printLocations(llvm::Function &F) {

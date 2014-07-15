@@ -1,4 +1,4 @@
-; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -analyze < %s 2>&1 | not FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-codegen -enable-polly-openmp -analyze < %s 2>&1 | FileCheck %s
 
 ;#define N 500000
 ;float A[N];
@@ -47,4 +47,4 @@ for.end11:                                        ; preds = %for.inc8
 }
 
 
-; CHECK: Checking region: omp.setup
+; CHECK-NOT: Checking region: omp.setup
