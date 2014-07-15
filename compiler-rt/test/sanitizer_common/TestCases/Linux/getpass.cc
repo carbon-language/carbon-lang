@@ -19,8 +19,7 @@ main (int argc, char** argv)
       int res = read(master, buf, sizeof(buf));
       write(1, buf, res);
       write(master, "password\n", 9);
-      res = read(master, buf, sizeof(buf));
-      write(1, buf, res);
+      while ((res = read(master, buf, sizeof(buf))) > 0) write(1, buf, res);
     } else {
       char *s = getpass("prompt");
       assert(strcmp(s, "password") == 0);
