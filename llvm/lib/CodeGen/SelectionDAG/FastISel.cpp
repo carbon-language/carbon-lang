@@ -748,10 +748,11 @@ bool FastISel::SelectPatchpoint(const CallInst *I) {
   SmallVector<MachineOperand, 32> Ops;
 
   // Add an explicit result reg if we use the anyreg calling convention.
-  unsigned ResultReg = 0;
   if (IsAnyRegCC && HasDef) {
-    ResultReg = createResultReg(TLI.getRegClassFor(MVT::i64));
-    Ops.push_back(MachineOperand::CreateReg(ResultReg, /*IsDef=*/true));
+    assert(CLI.NumResultRegs == 0 && "Unexpected result register.");
+    CLI.ResultReg = createResultReg(TLI.getRegClassFor(MVT::i64));
+    CLI.NumResultRegs = 1;
+    Ops.push_back(MachineOperand::CreateReg(CLI.ResultReg, /*IsDef=*/true));
   }
 
   // Add the <id> and <numBytes> constants.
@@ -839,8 +840,8 @@ bool FastISel::SelectPatchpoint(const CallInst *I) {
   // Inform the Frame Information that we have a patchpoint in this function.
   FuncInfo.MF->getFrameInfo()->setHasPatchPoint();
 
-  if (ResultReg)
-    UpdateValueMap(I, ResultReg);
+  if (CLI.NumResultRegs)
+    UpdateValueMap(I, CLI.ResultReg, CLI.NumResultRegs);
   return true;
 }
 
