@@ -47,9 +47,10 @@ __attribute__((weak_import))
 // CHECK: @"OBJC_CLASS_$_NSURLQueryItem" = extern_weak global
 
 // rdar://17633301
-@interface AVScheduledAudioParameters @end // isWeakImported is true!!
+__attribute__((visibility("default"))) __attribute__((availability(ios,introduced=9876.5)))
+@interface AVScheduledAudioParameters @end
 
-@interface XXXX : AVScheduledAudioParameters // is isWeakImported() true
+@interface XXXX : AVScheduledAudioParameters
 @end
 
 @implementation AVScheduledAudioParameters @end
