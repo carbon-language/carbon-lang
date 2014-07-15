@@ -673,7 +673,8 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
 TerminatorInst *llvm::SplitBlockAndInsertIfThen(Value *Cond,
                                                 Instruction *SplitBefore,
                                                 bool Unreachable,
-                                                MDNode *BranchWeights) {
+                                                MDNode *BranchWeights,
+                                                DominatorTree *DT) {
   BasicBlock *Head = SplitBefore->getParent();
   BasicBlock *Tail = Head->splitBasicBlock(SplitBefore);
   TerminatorInst *HeadOldTerm = Head->getTerminator();
@@ -690,6 +691,20 @@ TerminatorInst *llvm::SplitBlockAndInsertIfThen(Value *Cond,
   HeadNewTerm->setDebugLoc(SplitBefore->getDebugLoc());
   HeadNewTerm->setMetadata(LLVMContext::MD_prof, BranchWeights);
   ReplaceInstWithInst(HeadOldTerm, HeadNewTerm);
+
+  if (DT) {
+    if (DomTreeNode *OldNode = DT->getNode(Head)) {
+      std::vector<DomTreeNode *> Children(OldNode->begin(), OldNode->end());
+
+      DomTreeNode *NewNode = DT->addNewBlock(Tail, Head);
+      for (auto Child : Children)
+        DT->changeImmediateDominator(Child, NewNode);
+
+      // Head dominates ThenBlock.
+      DT->addNewBlock(ThenBlock, Head);
+    }
+  }
+
   return CheckTerm;
 }
 
