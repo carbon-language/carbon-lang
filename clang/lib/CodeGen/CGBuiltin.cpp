@@ -6007,6 +6007,28 @@ Value *CodeGenFunction::EmitPPCBuiltinExpr(unsigned BuiltinID,
   }
 }
 
+// Emit an intrinsic that has 1 float or double.
+static Value *emitUnaryFPBuiltin(CodeGenFunction &CGF,
+                                 const CallExpr *E,
+                                 unsigned IntrinsicID) {
+  llvm::Value *Src0 = CGF.EmitScalarExpr(E->getArg(0));
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall(F, Src0);
+}
+
+// Emit an intrinsic that has 3 float or double operands.
+static Value *emitTernaryFPBuiltin(CodeGenFunction &CGF,
+                                   const CallExpr *E,
+                                   unsigned IntrinsicID) {
+  llvm::Value *Src0 = CGF.EmitScalarExpr(E->getArg(0));
+  llvm::Value *Src1 = CGF.EmitScalarExpr(E->getArg(1));
+  llvm::Value *Src2 = CGF.EmitScalarExpr(E->getArg(2));
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall3(F, Src0, Src1, Src2);
+}
+
 Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
                                             const CallExpr *E) {
   switch (BuiltinID) {
@@ -6037,7 +6059,30 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
     llvm::StoreInst *FlagStore = Builder.CreateStore(FlagExt, FlagOutPtr.first);
     FlagStore->setAlignment(FlagOutPtr.second);
     return Result;
-  } default:
+  }
+  case R600::BI__builtin_amdgpu_div_fmas:
+  case R600::BI__builtin_amdgpu_div_fmasf:
+    return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fmas);
+  case R600::BI__builtin_amdgpu_div_fixup:
+  case R600::BI__builtin_amdgpu_div_fixupf:
+    return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fixup);
+  case R600::BI__builtin_amdgpu_trig_preop:
+  case R600::BI__builtin_amdgpu_trig_preopf: {
+    Value *Src0 = EmitScalarExpr(E->getArg(0));
+    Value *Src1 = EmitScalarExpr(E->getArg(1));
+    Value *F = CGM.getIntrinsic(Intrinsic::AMDGPU_trig_preop, Src0->getType());
+    return Builder.CreateCall2(F, Src0, Src1);
+  }
+  case R600::BI__builtin_amdgpu_rcp:
+  case R600::BI__builtin_amdgpu_rcpf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rcp);
+  case R600::BI__builtin_amdgpu_rsq:
+  case R600::BI__builtin_amdgpu_rsqf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rsq);
+  case R600::BI__builtin_amdgpu_rsq_clamped:
+  case R600::BI__builtin_amdgpu_rsq_clampedf:
+    return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rsq_clamped);
+   default:
     return nullptr;
   }
 }

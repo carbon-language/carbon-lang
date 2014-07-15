@@ -28,3 +28,87 @@ void test_div_scale_f32(global float* out, global int* flagout, float a, float b
   *out = __builtin_amdgpu_div_scalef(a, b, true, &flag);
   *flagout = flag;
 }
+
+// CHECK-LABEL: @test_div_fmas_f32
+// CHECK: call float @llvm.AMDGPU.div.fmas.f32
+void test_div_fmas_f32(global float* out, float a, float b, float c)
+{
+  *out = __builtin_amdgpu_div_fmasf(a, b, c);
+}
+
+// CHECK-LABEL: @test_div_fmas_f64
+// CHECK: call double @llvm.AMDGPU.div.fmas.f64
+void test_div_fmas_f64(global double* out, double a, double b, double c)
+{
+  *out = __builtin_amdgpu_div_fmas(a, b, c);
+}
+
+// CHECK-LABEL: @test_div_fixup_f32
+// CHECK: call float @llvm.AMDGPU.div.fixup.f32
+void test_div_fixup_f32(global float* out, float a, float b, float c)
+{
+  *out = __builtin_amdgpu_div_fixupf(a, b, c);
+}
+
+// CHECK-LABEL: @test_div_fixup_f64
+// CHECK: call double @llvm.AMDGPU.div.fixup.f64
+void test_div_fixup_f64(global double* out, double a, double b, double c)
+{
+  *out = __builtin_amdgpu_div_fixup(a, b, c);
+}
+
+// CHECK-LABEL: @test_trig_preop_f32
+// CHECK: call float @llvm.AMDGPU.trig.preop.f32
+void test_trig_preop_f32(global float* out, float a, int b)
+{
+  *out = __builtin_amdgpu_trig_preopf(a, b);
+}
+
+// CHECK-LABEL: @test_trig_preop_f64
+// CHECK: call double @llvm.AMDGPU.trig.preop.f64
+void test_trig_preop_f64(global double* out, double a, int b)
+{
+  *out = __builtin_amdgpu_trig_preop(a, b);
+}
+
+// CHECK-LABEL: @test_rcp_f32
+// CHECK: call float @llvm.AMDGPU.rcp.f32
+void test_rcp_f32(global float* out, float a)
+{
+  *out = __builtin_amdgpu_rcpf(a);
+}
+
+// CHECK-LABEL: @test_rcp_f64
+// CHECK: call double @llvm.AMDGPU.rcp.f64
+void test_rcp_f64(global double* out, double a)
+{
+  *out = __builtin_amdgpu_rcp(a);
+}
+
+// CHECK-LABEL: @test_rsq_f32
+// CHECK: call float @llvm.AMDGPU.rsq.f32
+void test_rsq_f32(global float* out, float a)
+{
+  *out = __builtin_amdgpu_rsqf(a);
+}
+
+// CHECK-LABEL: @test_rsq_f64
+// CHECK: call double @llvm.AMDGPU.rsq.f64
+void test_rsq_f64(global double* out, double a)
+{
+  *out = __builtin_amdgpu_rsq(a);
+}
+
+// CHECK-LABEL: @test_rsq_clamped_f32
+// CHECK: call float @llvm.AMDGPU.rsq.clamped.f32
+void test_rsq_clamped_f32(global float* out, float a)
+{
+  *out = __builtin_amdgpu_rsq_clampedf(a);
+}
+
+// CHECK-LABEL: @test_rsq_clamped_f64
+// CHECK: call double @llvm.AMDGPU.rsq.clamped.f64
+void test_rsq_clamped_f64(global double* out, double a)
+{
+  *out = __builtin_amdgpu_rsq_clamped(a);
+}
