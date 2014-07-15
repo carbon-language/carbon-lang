@@ -13,9 +13,6 @@
 
 let TargetPrefix = "AMDGPU", isTarget = 1 in {
 
-  def int_AMDGPU_load_const : Intrinsic<[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
-  def int_AMDGPU_load_imm : Intrinsic<[llvm_v4f32_ty], [llvm_i32_ty], [IntrNoMem]>;
-  def int_AMDGPU_reserve_reg : Intrinsic<[], [llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_store_output : Intrinsic<[], [llvm_float_ty, llvm_i32_ty], []>;
   def int_AMDGPU_swizzle : Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty, llvm_i32_ty], [IntrNoMem]>;
   def int_AMDGPU_abs : Intrinsic<[llvm_i32_ty], [llvm_i32_ty], [IntrNoMem]>;
