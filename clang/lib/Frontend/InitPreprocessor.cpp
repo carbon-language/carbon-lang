@@ -656,8 +656,12 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Builder);
   DefineFmt("__INTMAX", TI.getIntMaxType(), TI, Builder);
+  Builder.defineMacro("__INTMAX_C_SUFFIX__",
+                      TargetInfo::getTypeConstantSuffix(TI.getIntMaxType()));
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Builder);
   DefineFmt("__UINTMAX", TI.getUIntMaxType(), TI, Builder);
+  Builder.defineMacro("__UINTMAX_C_SUFFIX__",
+                      TargetInfo::getTypeConstantSuffix(TI.getUIntMaxType()));
   DefineTypeWidth("__INTMAX_WIDTH__",  TI.getIntMaxType(), TI, Builder);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Builder);
   DefineFmt("__PTRDIFF", TI.getPtrDiffType(0), TI, Builder);

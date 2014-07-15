@@ -291,6 +291,7 @@
 // AARCH64:#define __INT8_FMTi__ "hhi"
 // AARCH64:#define __INT8_MAX__ 127
 // AARCH64:#define __INT8_TYPE__ char
+// AARCH64:#define __INTMAX_C_SUFFIX__ L
 // AARCH64:#define __INTMAX_FMTd__ "ld"
 // AARCH64:#define __INTMAX_FMTi__ "li"
 // AARCH64:#define __INTMAX_MAX__ 9223372036854775807L
@@ -384,6 +385,7 @@
 // AARCH64:#define __UINT8_C_SUFFIX__ U
 // AARCH64:#define __UINT8_MAX__ 255U
 // AARCH64:#define __UINT8_TYPE__ unsigned char
+// AARCH64:#define __UINTMAX_C_SUFFIX__ UL
 // AARCH64:#define __UINTMAX_MAX__ 18446744073709551615UL
 // AARCH64:#define __UINTMAX_TYPE__ long unsigned int
 // AARCH64:#define __UINTMAX_WIDTH__ 64
@@ -476,6 +478,7 @@
 // AARCH64-BE:#define __INT8_FMTi__ "hhi"
 // AARCH64-BE:#define __INT8_MAX__ 127
 // AARCH64-BE:#define __INT8_TYPE__ char
+// AARCH64-BE:#define __INTMAX_C_SUFFIX__ L
 // AARCH64-BE:#define __INTMAX_FMTd__ "ld"
 // AARCH64-BE:#define __INTMAX_FMTi__ "li"
 // AARCH64-BE:#define __INTMAX_MAX__ 9223372036854775807L
@@ -569,6 +572,7 @@
 // AARCH64-BE:#define __UINT8_C_SUFFIX__ U
 // AARCH64-BE:#define __UINT8_MAX__ 255U
 // AARCH64-BE:#define __UINT8_TYPE__ unsigned char
+// AARCH64-BE:#define __UINTMAX_C_SUFFIX__ UL
 // AARCH64-BE:#define __UINTMAX_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __UINTMAX_TYPE__ long unsigned int
 // AARCH64-BE:#define __UINTMAX_WIDTH__ 64
@@ -661,6 +665,7 @@
 // AARCH64-NETBSD:#define __INT8_FMTi__ "hhi"
 // AARCH64-NETBSD:#define __INT8_MAX__ 127
 // AARCH64-NETBSD:#define __INT8_TYPE__ char
+// AARCH64-NETBSD:#define __INTMAX_C_SUFFIX__ LL
 // AARCH64-NETBSD:#define __INTMAX_FMTd__ "lld"
 // AARCH64-NETBSD:#define __INTMAX_FMTi__ "lli"
 // AARCH64-NETBSD:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -755,6 +760,7 @@
 // AARCH64-NETBSD:#define __UINT8_C_SUFFIX__ U
 // AARCH64-NETBSD:#define __UINT8_MAX__ 255U
 // AARCH64-NETBSD:#define __UINT8_TYPE__ unsigned char
+// AARCH64-NETBSD:#define __UINTMAX_C_SUFFIX__ ULL
 // AARCH64-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // AARCH64-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
 // AARCH64-NETBSD:#define __UINTMAX_WIDTH__ 64
@@ -843,6 +849,7 @@
 // ARM:#define __INT8_FMTi__ "hhi"
 // ARM:#define __INT8_MAX__ 127
 // ARM:#define __INT8_TYPE__ char
+// ARM:#define __INTMAX_C_SUFFIX__ LL
 // ARM:#define __INTMAX_FMTd__ "lld"
 // ARM:#define __INTMAX_FMTi__ "lli"
 // ARM:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -938,6 +945,7 @@
 // ARM:#define __UINT8_C_SUFFIX__ U
 // ARM:#define __UINT8_MAX__ 255U
 // ARM:#define __UINT8_TYPE__ unsigned char
+// ARM:#define __UINTMAX_C_SUFFIX__ ULL
 // ARM:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // ARM:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM:#define __UINTMAX_WIDTH__ 64
@@ -1028,6 +1036,7 @@
 // ARM-BE:#define __INT8_FMTi__ "hhi"
 // ARM-BE:#define __INT8_MAX__ 127
 // ARM-BE:#define __INT8_TYPE__ char
+// ARM-BE:#define __INTMAX_C_SUFFIX__ LL
 // ARM-BE:#define __INTMAX_FMTd__ "lld"
 // ARM-BE:#define __INTMAX_FMTi__ "lli"
 // ARM-BE:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -1122,6 +1131,7 @@
 // ARM-BE:#define __UINT8_C_SUFFIX__ U
 // ARM-BE:#define __UINT8_MAX__ 255U
 // ARM-BE:#define __UINT8_TYPE__ unsigned char
+// ARM-BE:#define __UINTMAX_C_SUFFIX__ ULL
 // ARM-BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // ARM-BE:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM-BE:#define __UINTMAX_WIDTH__ 64
@@ -1215,6 +1225,7 @@
 // ARMEABISOFTFP:#define __INT8_FMTi__ "hhi"
 // ARMEABISOFTFP:#define __INT8_MAX__ 127
 // ARMEABISOFTFP:#define __INT8_TYPE__ char
+// ARMEABISOFTFP:#define __INTMAX_C_SUFFIX__ LL
 // ARMEABISOFTFP:#define __INTMAX_FMTd__ "lld"
 // ARMEABISOFTFP:#define __INTMAX_FMTi__ "lli"
 // ARMEABISOFTFP:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -1311,6 +1322,7 @@
 // ARMEABISOFTFP:#define __UINT8_C_SUFFIX__ U
 // ARMEABISOFTFP:#define __UINT8_MAX__ 255U
 // ARMEABISOFTFP:#define __UINT8_TYPE__ unsigned char
+// ARMEABISOFTFP:#define __UINTMAX_C_SUFFIX__ ULL
 // ARMEABISOFTFP:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // ARMEABISOFTFP:#define __UINTMAX_TYPE__ long long unsigned int
 // ARMEABISOFTFP:#define __UINTMAX_WIDTH__ 64
@@ -1404,6 +1416,7 @@
 // ARMEABIHARDFP:#define __INT8_FMTi__ "hhi"
 // ARMEABIHARDFP:#define __INT8_MAX__ 127
 // ARMEABIHARDFP:#define __INT8_TYPE__ char
+// ARMEABIHARDFP:#define __INTMAX_C_SUFFIX__ LL
 // ARMEABIHARDFP:#define __INTMAX_FMTd__ "lld"
 // ARMEABIHARDFP:#define __INTMAX_FMTi__ "lli"
 // ARMEABIHARDFP:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -1500,6 +1513,7 @@
 // ARMEABIHARDFP:#define __UINT8_C_SUFFIX__ U
 // ARMEABIHARDFP:#define __UINT8_MAX__ 255U
 // ARMEABIHARDFP:#define __UINT8_TYPE__ unsigned char
+// ARMEABIHARDFP:#define __UINTMAX_C_SUFFIX__ ULL
 // ARMEABIHARDFP:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // ARMEABIHARDFP:#define __UINTMAX_TYPE__ long long unsigned int
 // ARMEABIHARDFP:#define __UINTMAX_WIDTH__ 64
@@ -1591,6 +1605,7 @@
 // ARM-NETBSD:#define __INT8_FMTi__ "hhi"
 // ARM-NETBSD:#define __INT8_MAX__ 127
 // ARM-NETBSD:#define __INT8_TYPE__ char
+// ARM-NETBSD:#define __INTMAX_C_SUFFIX__ LL
 // ARM-NETBSD:#define __INTMAX_FMTd__ "lld"
 // ARM-NETBSD:#define __INTMAX_FMTi__ "lli"
 // ARM-NETBSD:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -1686,6 +1701,7 @@
 // ARM-NETBSD:#define __UINT8_C_SUFFIX__ U
 // ARM-NETBSD:#define __UINT8_MAX__ 255U
 // ARM-NETBSD:#define __UINT8_TYPE__ unsigned char
+// ARM-NETBSD:#define __UINTMAX_C_SUFFIX__ UL
 // ARM-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // ARM-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
 // ARM-NETBSD:#define __UINTMAX_WIDTH__ 64
@@ -1830,6 +1846,7 @@
 // I386:#define __INT8_FMTi__ "hhi"
 // I386:#define __INT8_MAX__ 127
 // I386:#define __INT8_TYPE__ char
+// I386:#define __INTMAX_C_SUFFIX__ LL
 // I386:#define __INTMAX_FMTd__ "lld"
 // I386:#define __INTMAX_FMTi__ "lli"
 // I386:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -1925,6 +1942,7 @@
 // I386:#define __UINT8_C_SUFFIX__ U
 // I386:#define __UINT8_MAX__ 255U
 // I386:#define __UINT8_TYPE__ unsigned char
+// I386:#define __UINTMAX_C_SUFFIX__ ULL
 // I386:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // I386:#define __UINTMAX_TYPE__ long long unsigned int
 // I386:#define __UINTMAX_WIDTH__ 64
@@ -2010,6 +2028,7 @@
 // I386-LINUX:#define __INT8_FMTi__ "hhi"
 // I386-LINUX:#define __INT8_MAX__ 127
 // I386-LINUX:#define __INT8_TYPE__ char
+// I386-LINUX:#define __INTMAX_C_SUFFIX__ LL
 // I386-LINUX:#define __INTMAX_FMTd__ "lld"
 // I386-LINUX:#define __INTMAX_FMTi__ "lli"
 // I386-LINUX:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -2105,6 +2124,7 @@
 // I386-LINUX:#define __UINT8_C_SUFFIX__ U
 // I386-LINUX:#define __UINT8_MAX__ 255U
 // I386-LINUX:#define __UINT8_TYPE__ unsigned char
+// I386-LINUX:#define __UINTMAX_C_SUFFIX__ ULL
 // I386-LINUX:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // I386-LINUX:#define __UINTMAX_TYPE__ long long unsigned int
 // I386-LINUX:#define __UINTMAX_WIDTH__ 64
@@ -2190,6 +2210,7 @@
 // I386-NETBSD:#define __INT8_FMTi__ "hhi"
 // I386-NETBSD:#define __INT8_MAX__ 127
 // I386-NETBSD:#define __INT8_TYPE__ char
+// I386-NETBSD:#define __INTMAX_C_SUFFIX__ LL
 // I386-NETBSD:#define __INTMAX_FMTd__ "lld"
 // I386-NETBSD:#define __INTMAX_FMTi__ "lli"
 // I386-NETBSD:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -2285,6 +2306,7 @@
 // I386-NETBSD:#define __UINT8_C_SUFFIX__ U
 // I386-NETBSD:#define __UINT8_MAX__ 255U
 // I386-NETBSD:#define __UINT8_TYPE__ unsigned char
+// I386-NETBSD:#define __UINTMAX_C_SUFFIX__ ULL
 // I386-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // I386-NETBSD:#define __UINTMAX_TYPE__ long long unsigned int
 // I386-NETBSD:#define __UINTMAX_WIDTH__ 64
@@ -2390,6 +2412,7 @@
 // MIPS32BE:#define __INT8_FMTi__ "hhi"
 // MIPS32BE:#define __INT8_MAX__ 127
 // MIPS32BE:#define __INT8_TYPE__ char
+// MIPS32BE:#define __INTMAX_C_SUFFIX__ LL
 // MIPS32BE:#define __INTMAX_FMTd__ "lld"
 // MIPS32BE:#define __INTMAX_FMTi__ "lli"
 // MIPS32BE:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -2489,6 +2512,7 @@
 // MIPS32BE:#define __UINT8_C_SUFFIX__ U
 // MIPS32BE:#define __UINT8_MAX__ 255U
 // MIPS32BE:#define __UINT8_TYPE__ unsigned char
+// MIPS32BE:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS32BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MIPS32BE:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS32BE:#define __UINTMAX_WIDTH__ 64
@@ -2591,6 +2615,7 @@
 // MIPS32EL:#define __INT8_FMTi__ "hhi"
 // MIPS32EL:#define __INT8_MAX__ 127
 // MIPS32EL:#define __INT8_TYPE__ char
+// MIPS32EL:#define __INTMAX_C_SUFFIX__ LL
 // MIPS32EL:#define __INTMAX_FMTd__ "lld"
 // MIPS32EL:#define __INTMAX_FMTi__ "lli"
 // MIPS32EL:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -2688,6 +2713,7 @@
 // MIPS32EL:#define __UINT8_C_SUFFIX__ U
 // MIPS32EL:#define __UINT8_MAX__ 255U
 // MIPS32EL:#define __UINT8_TYPE__ unsigned char
+// MIPS32EL:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS32EL:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MIPS32EL:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS32EL:#define __UINTMAX_WIDTH__ 64
@@ -2791,6 +2817,7 @@
 // MIPS64BE:#define __INT8_FMTi__ "hhi"
 // MIPS64BE:#define __INT8_MAX__ 127
 // MIPS64BE:#define __INT8_TYPE__ char
+// MIPS64BE:#define __INTMAX_C_SUFFIX__ LL
 // MIPS64BE:#define __INTMAX_FMTd__ "lld"
 // MIPS64BE:#define __INTMAX_FMTi__ "lli"
 // MIPS64BE:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -2887,6 +2914,7 @@
 // MIPS64BE:#define __UINT8_C_SUFFIX__ U
 // MIPS64BE:#define __UINT8_MAX__ 255U
 // MIPS64BE:#define __UINT8_TYPE__ unsigned char
+// MIPS64BE:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS64BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MIPS64BE:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS64BE:#define __UINTMAX_WIDTH__ 64
@@ -2991,6 +3019,7 @@
 // MIPS64EL:#define __INT8_FMTi__ "hhi"
 // MIPS64EL:#define __INT8_MAX__ 127
 // MIPS64EL:#define __INT8_TYPE__ char
+// MIPS64EL:#define __INTMAX_C_SUFFIX__ LL
 // MIPS64EL:#define __INTMAX_FMTd__ "lld"
 // MIPS64EL:#define __INTMAX_FMTi__ "lli"
 // MIPS64EL:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -3088,6 +3117,7 @@
 // MIPS64EL:#define __UINT8_C_SUFFIX__ U
 // MIPS64EL:#define __UINT8_MAX__ 255U
 // MIPS64EL:#define __UINT8_TYPE__ unsigned char
+// MIPS64EL:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS64EL:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MIPS64EL:#define __UINTMAX_TYPE__ long long unsigned int
 // MIPS64EL:#define __UINTMAX_WIDTH__ 64
@@ -3349,6 +3379,7 @@
 // MSP430:#define __INT8_FMTi__ "hhi"
 // MSP430:#define __INT8_MAX__ 127
 // MSP430:#define __INT8_TYPE__ char
+// MSP430:#define __INTMAX_C_SUFFIX__ LL
 // MSP430:#define __INTMAX_FMTd__ "lld"
 // MSP430:#define __INTMAX_FMTi__ "lli"
 // MSP430:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -3443,6 +3474,7 @@
 // MSP430:#define __UINT8_C_SUFFIX__ U
 // MSP430:#define __UINT8_MAX__ 255U
 // MSP430:#define __UINT8_TYPE__ unsigned char
+// MSP430:#define __UINTMAX_C_SUFFIX__ ULL
 // MSP430:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MSP430:#define __UINTMAX_TYPE__ long long unsigned int
 // MSP430:#define __UINTMAX_WIDTH__ 64
@@ -3528,6 +3560,7 @@
 // NVPTX32:#define __INT8_FMTi__ "hhi"
 // NVPTX32:#define __INT8_MAX__ 127
 // NVPTX32:#define __INT8_TYPE__ char
+// NVPTX32:#define __INTMAX_C_SUFFIX__ LL
 // NVPTX32:#define __INTMAX_FMTd__ "lld"
 // NVPTX32:#define __INTMAX_FMTi__ "lli"
 // NVPTX32:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -3624,6 +3657,7 @@
 // NVPTX32:#define __UINT8_C_SUFFIX__ U
 // NVPTX32:#define __UINT8_MAX__ 255U
 // NVPTX32:#define __UINT8_TYPE__ unsigned char
+// NVPTX32:#define __UINTMAX_C_SUFFIX__ ULL
 // NVPTX32:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // NVPTX32:#define __UINTMAX_TYPE__ long long unsigned int
 // NVPTX32:#define __UINTMAX_WIDTH__ 64
@@ -3708,6 +3742,7 @@
 // NVPTX64:#define __INT8_FMTi__ "hhi"
 // NVPTX64:#define __INT8_MAX__ 127
 // NVPTX64:#define __INT8_TYPE__ char
+// NVPTX64:#define __INTMAX_C_SUFFIX__ LL
 // NVPTX64:#define __INTMAX_FMTd__ "lld"
 // NVPTX64:#define __INTMAX_FMTi__ "lli"
 // NVPTX64:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -3804,6 +3839,7 @@
 // NVPTX64:#define __UINT8_C_SUFFIX__ U
 // NVPTX64:#define __UINT8_MAX__ 255U
 // NVPTX64:#define __UINT8_TYPE__ unsigned char
+// NVPTX64:#define __UINTMAX_C_SUFFIX__ ULL
 // NVPTX64:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // NVPTX64:#define __UINTMAX_TYPE__ long long unsigned int
 // NVPTX64:#define __UINTMAX_WIDTH__ 64
@@ -3892,6 +3928,7 @@
 // PPC603E:#define __INT8_FMTi__ "hhi"
 // PPC603E:#define __INT8_MAX__ 127
 // PPC603E:#define __INT8_TYPE__ char
+// PPC603E:#define __INTMAX_C_SUFFIX__ LL
 // PPC603E:#define __INTMAX_FMTd__ "lld"
 // PPC603E:#define __INTMAX_FMTi__ "lli"
 // PPC603E:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -3989,6 +4026,7 @@
 // PPC603E:#define __UINT8_C_SUFFIX__ U
 // PPC603E:#define __UINT8_MAX__ 255U
 // PPC603E:#define __UINT8_TYPE__ unsigned char
+// PPC603E:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC603E:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // PPC603E:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC603E:#define __UINTMAX_WIDTH__ 64
@@ -4084,6 +4122,7 @@
 // PPC64:#define __INT8_FMTi__ "hhi"
 // PPC64:#define __INT8_MAX__ 127
 // PPC64:#define __INT8_TYPE__ char
+// PPC64:#define __INTMAX_C_SUFFIX__ L
 // PPC64:#define __INTMAX_FMTd__ "ld"
 // PPC64:#define __INTMAX_FMTi__ "li"
 // PPC64:#define __INTMAX_MAX__ 9223372036854775807L
@@ -4182,6 +4221,7 @@
 // PPC64:#define __UINT8_C_SUFFIX__ U
 // PPC64:#define __UINT8_MAX__ 255U
 // PPC64:#define __UINT8_TYPE__ unsigned char
+// PPC64:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64:#define __UINTMAX_MAX__ 18446744073709551615UL
 // PPC64:#define __UINTMAX_TYPE__ long unsigned int
 // PPC64:#define __UINTMAX_WIDTH__ 64
@@ -4279,6 +4319,7 @@
 // PPC64LE:#define __INT8_FMTi__ "hhi"
 // PPC64LE:#define __INT8_MAX__ 127
 // PPC64LE:#define __INT8_TYPE__ char
+// PPC64LE:#define __INTMAX_C_SUFFIX__ L
 // PPC64LE:#define __INTMAX_FMTd__ "ld"
 // PPC64LE:#define __INTMAX_FMTi__ "li"
 // PPC64LE:#define __INTMAX_MAX__ 9223372036854775807L
@@ -4378,6 +4419,7 @@
 // PPC64LE:#define __UINT8_C_SUFFIX__ U
 // PPC64LE:#define __UINT8_MAX__ 255U
 // PPC64LE:#define __UINT8_TYPE__ unsigned char
+// PPC64LE:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64LE:#define __UINTMAX_MAX__ 18446744073709551615UL
 // PPC64LE:#define __UINTMAX_TYPE__ long unsigned int
 // PPC64LE:#define __UINTMAX_WIDTH__ 64
@@ -4655,6 +4697,7 @@
 // PPC64-LINUX:#define __INT8_FMTi__ "hhi"
 // PPC64-LINUX:#define __INT8_MAX__ 127
 // PPC64-LINUX:#define __INT8_TYPE__ char
+// PPC64-LINUX:#define __INTMAX_C_SUFFIX__ L
 // PPC64-LINUX:#define __INTMAX_FMTd__ "ld"
 // PPC64-LINUX:#define __INTMAX_FMTi__ "li"
 // PPC64-LINUX:#define __INTMAX_MAX__ 9223372036854775807L
@@ -4753,6 +4796,7 @@
 // PPC64-LINUX:#define __UINT8_C_SUFFIX__ U
 // PPC64-LINUX:#define __UINT8_MAX__ 255U
 // PPC64-LINUX:#define __UINT8_TYPE__ unsigned char
+// PPC64-LINUX:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64-LINUX:#define __UINTMAX_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __UINTMAX_TYPE__ long unsigned int
 // PPC64-LINUX:#define __UINTMAX_WIDTH__ 64
@@ -4844,6 +4888,7 @@
 // PPC:#define __INT8_FMTi__ "hhi"
 // PPC:#define __INT8_MAX__ 127
 // PPC:#define __INT8_TYPE__ char
+// PPC:#define __INTMAX_C_SUFFIX__ LL
 // PPC:#define __INTMAX_FMTd__ "lld"
 // PPC:#define __INTMAX_FMTi__ "lli"
 // PPC:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -4941,6 +4986,7 @@
 // PPC:#define __UINT8_C_SUFFIX__ U
 // PPC:#define __UINT8_MAX__ 255U
 // PPC:#define __UINT8_TYPE__ unsigned char
+// PPC:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // PPC:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC:#define __UINTMAX_WIDTH__ 64
@@ -5028,6 +5074,7 @@
 // PPC-LINUX:#define __INT8_FMTi__ "hhi"
 // PPC-LINUX:#define __INT8_MAX__ 127
 // PPC-LINUX:#define __INT8_TYPE__ char
+// PPC-LINUX:#define __INTMAX_C_SUFFIX__ LL
 // PPC-LINUX:#define __INTMAX_FMTd__ "lld"
 // PPC-LINUX:#define __INTMAX_FMTi__ "lli"
 // PPC-LINUX:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -5125,6 +5172,7 @@
 // PPC-LINUX:#define __UINT8_C_SUFFIX__ U
 // PPC-LINUX:#define __UINT8_MAX__ 255U
 // PPC-LINUX:#define __UINT8_TYPE__ unsigned char
+// PPC-LINUX:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC-LINUX:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // PPC-LINUX:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC-LINUX:#define __UINTMAX_WIDTH__ 64
@@ -5212,6 +5260,7 @@
 // PPC-DARWIN:#define __INT8_FMTi__ "hhi"
 // PPC-DARWIN:#define __INT8_MAX__ 127
 // PPC-DARWIN:#define __INT8_TYPE__ char
+// PPC-DARWIN:#define __INTMAX_C_SUFFIX__ LL
 // PPC-DARWIN:#define __INTMAX_FMTd__ "lld"
 // PPC-DARWIN:#define __INTMAX_FMTi__ "lli"
 // PPC-DARWIN:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -5315,6 +5364,7 @@
 // PPC-DARWIN:#define __UINT8_C_SUFFIX__ U
 // PPC-DARWIN:#define __UINT8_MAX__ 255U
 // PPC-DARWIN:#define __UINT8_TYPE__ unsigned char
+// PPC-DARWIN:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC-DARWIN:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // PPC-DARWIN:#define __UINTMAX_TYPE__ long long unsigned int
 // PPC-DARWIN:#define __UINTMAX_WIDTH__ 64
@@ -5398,6 +5448,7 @@
 // S390X:#define __INT8_FMTi__ "hhi"
 // S390X:#define __INT8_MAX__ 127
 // S390X:#define __INT8_TYPE__ char
+// S390X:#define __INTMAX_C_SUFFIX__ LL
 // S390X:#define __INTMAX_FMTd__ "lld"
 // S390X:#define __INTMAX_FMTi__ "lli"
 // S390X:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -5489,6 +5540,7 @@
 // S390X:#define __UINT8_C_SUFFIX__ U
 // S390X:#define __UINT8_MAX__ 255U
 // S390X:#define __UINT8_TYPE__ unsigned char
+// S390X:#define __UINTMAX_C_SUFFIX__ ULL
 // S390X:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // S390X:#define __UINTMAX_TYPE__ long long unsigned int
 // S390X:#define __UINTMAX_WIDTH__ 64
@@ -5574,6 +5626,7 @@
 // SPARC:#define __INT8_FMTi__ "hhi"
 // SPARC:#define __INT8_MAX__ 127
 // SPARC:#define __INT8_TYPE__ char
+// SPARC:#define __INTMAX_C_SUFFIX__ LL
 // SPARC:#define __INTMAX_FMTd__ "lld"
 // SPARC:#define __INTMAX_FMTi__ "lli"
 // SPARC:#define __INTMAX_MAX__ 9223372036854775807LL
@@ -5667,6 +5720,7 @@
 // SPARC:#define __UINT8_C_SUFFIX__ U
 // SPARC:#define __UINT8_MAX__ 255U
 // SPARC:#define __UINT8_TYPE__ unsigned char
+// SPARC:#define __UINTMAX_C_SUFFIX__ ULL
 // SPARC:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // SPARC:#define __UINTMAX_TYPE__ long long unsigned int
 // SPARC:#define __UINTMAX_WIDTH__ 64
@@ -5750,6 +5804,7 @@
 // TCE:#define __INT8_FMTi__ "hhi"
 // TCE:#define __INT8_MAX__ 127
 // TCE:#define __INT8_TYPE__ char
+// TCE:#define __INTMAX_C_SUFFIX__ L
 // TCE:#define __INTMAX_FMTd__ "ld"
 // TCE:#define __INTMAX_FMTi__ "li"
 // TCE:#define __INTMAX_MAX__ 2147483647L
@@ -5833,6 +5888,7 @@
 // TCE:#define __UINT8_C_SUFFIX__ U
 // TCE:#define __UINT8_MAX__ 255U
 // TCE:#define __UINT8_TYPE__ unsigned char
+// TCE:#define __UINTMAX_C_SUFFIX__ UL
 // TCE:#define __UINTMAX_MAX__ 4294967295UL
 // TCE:#define __UINTMAX_TYPE__ long unsigned int
 // TCE:#define __UINTMAX_WIDTH__ 32
@@ -5915,6 +5971,7 @@
 // X86_64:#define __INT8_FMTi__ "hhi"
 // X86_64:#define __INT8_MAX__ 127
 // X86_64:#define __INT8_TYPE__ char
+// X86_64:#define __INTMAX_C_SUFFIX__ L
 // X86_64:#define __INTMAX_FMTd__ "ld"
 // X86_64:#define __INTMAX_FMTi__ "li"
 // X86_64:#define __INTMAX_MAX__ 9223372036854775807L
@@ -6016,6 +6073,7 @@
 // X86_64:#define __UINT8_C_SUFFIX__ U
 // X86_64:#define __UINT8_MAX__ 255U
 // X86_64:#define __UINT8_TYPE__ unsigned char
+// X86_64:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64:#define __UINTMAX_MAX__ 18446744073709551615UL
 // X86_64:#define __UINTMAX_TYPE__ long unsigned int
 // X86_64:#define __UINTMAX_WIDTH__ 64
@@ -6105,6 +6163,7 @@
 // X32:#define __INT8_FMTi__ "hhi"
 // X32:#define __INT8_MAX__ 127
 // X32:#define __INT8_TYPE__ char
+// X32:#define __INTMAX_C_SUFFIX__ LL
 // X32:#define __INTMAX_FMTd__ "lld"
 // X32:#define __INTMAX_FMTi__ "lli"
 // X32:#define __INTMAX_MAX__ 9223372036854775807L
@@ -6204,6 +6263,7 @@
 // X32:#define __UINT8_C_SUFFIX__ U
 // X32:#define __UINT8_MAX__ 255U
 // X32:#define __UINT8_TYPE__ unsigned char
+// X32:#define __UINTMAX_C_SUFFIX__ ULL
 // X32:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // X32:#define __UINTMAX_TYPE__ long long unsigned int
 // X32:#define __UINTMAX_WIDTH__ 64
@@ -6290,6 +6350,7 @@
 // X86_64-LINUX:#define __INT8_FMTi__ "hhi"
 // X86_64-LINUX:#define __INT8_MAX__ 127
 // X86_64-LINUX:#define __INT8_TYPE__ char
+// X86_64-LINUX:#define __INTMAX_C_SUFFIX__ L
 // X86_64-LINUX:#define __INTMAX_FMTd__ "ld"
 // X86_64-LINUX:#define __INTMAX_FMTi__ "li"
 // X86_64-LINUX:#define __INTMAX_MAX__ 9223372036854775807L
@@ -6390,6 +6451,7 @@
 // X86_64-LINUX:#define __UINT8_C_SUFFIX__ U
 // X86_64-LINUX:#define __UINT8_MAX__ 255U
 // X86_64-LINUX:#define __UINT8_TYPE__ unsigned char
+// X86_64-LINUX:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64-LINUX:#define __UINTMAX_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __UINTMAX_TYPE__ long unsigned int
 // X86_64-LINUX:#define __UINTMAX_WIDTH__ 64
@@ -6482,6 +6544,7 @@
 // X86_64-NETBSD:#define __INT8_FMTi__ "hhi"
 // X86_64-NETBSD:#define __INT8_MAX__ 127
 // X86_64-NETBSD:#define __INT8_TYPE__ char
+// X86_64-NETBSD:#define __INTMAX_C_SUFFIX__ L
 // X86_64-NETBSD:#define __INTMAX_FMTd__ "ld"
 // X86_64-NETBSD:#define __INTMAX_FMTi__ "li"
 // X86_64-NETBSD:#define __INTMAX_MAX__ 9223372036854775807L
@@ -6582,6 +6645,7 @@
 // X86_64-NETBSD:#define __UINT8_C_SUFFIX__ U
 // X86_64-NETBSD:#define __UINT8_MAX__ 255U
 // X86_64-NETBSD:#define __UINT8_TYPE__ unsigned char
+// X86_64-NETBSD:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615UL
 // X86_64-NETBSD:#define __UINTMAX_TYPE__ long unsigned int
 // X86_64-NETBSD:#define __UINTMAX_WIDTH__ 64
@@ -6617,6 +6681,7 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-none < /dev/null | FileCheck -check-prefix SPARCV9 %s
 // SPARCV9:#define __INT64_TYPE__ long int
+// SPARCV9:#define __INTMAX_C_SUFFIX__ L
 // SPARCV9:#define __INTMAX_TYPE__ long int
 // SPARCV9:#define __INTPTR_TYPE__ long int
 // SPARCV9:#define __LONG_MAX__ 9223372036854775807L
@@ -6627,7 +6692,9 @@
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc64-none-openbsd < /dev/null | FileCheck -check-prefix SPARC64-OBSD %s
 // SPARC64-OBSD:#define __INT64_TYPE__ long long int
+// SPARC64-OBSD:#define __INTMAX_C_SUFFIX__ LL
 // SPARC64-OBSD:#define __INTMAX_TYPE__ long long int
+// SPARC64-OBSD:#define __UINTMAX_C_SUFFIX__ ULL
 // SPARC64-OBSD:#define __UINTMAX_TYPE__ long long unsigned int
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-pc-kfreebsd-gnu < /dev/null | FileCheck -check-prefix KFREEBSD-DEFINE %s
