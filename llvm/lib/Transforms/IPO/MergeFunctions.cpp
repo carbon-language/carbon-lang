@@ -766,13 +766,23 @@ int FunctionComparator::cmpOperation(const Instruction *L,
     if (int Res = cmpNumbers(CI->getCallingConv(),
                              cast<CallInst>(R)->getCallingConv()))
       return Res;
-    return cmpAttrs(CI->getAttributes(), cast<CallInst>(R)->getAttributes());
+    if (int Res =
+            cmpAttrs(CI->getAttributes(), cast<CallInst>(R)->getAttributes()))
+      return Res;
+    return cmpNumbers(
+        (uint64_t)CI->getMetadata(LLVMContext::MD_range),
+        (uint64_t)cast<CallInst>(R)->getMetadata(LLVMContext::MD_range));
   }
   if (const InvokeInst *CI = dyn_cast<InvokeInst>(L)) {
     if (int Res = cmpNumbers(CI->getCallingConv(),
                              cast<InvokeInst>(R)->getCallingConv()))
       return Res;
-    return cmpAttrs(CI->getAttributes(), cast<InvokeInst>(R)->getAttributes());
+    if (int Res =
+            cmpAttrs(CI->getAttributes(), cast<InvokeInst>(R)->getAttributes()))
+      return Res;
+    return cmpNumbers(
+        (uint64_t)CI->getMetadata(LLVMContext::MD_range),
+        (uint64_t)cast<InvokeInst>(R)->getMetadata(LLVMContext::MD_range));
   }
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(L)) {
     ArrayRef<unsigned> LIndices = IVI->getIndices();
