@@ -47,3 +47,20 @@ define <8 x i16> @vec2() {
 ; CHECK:      vec2:
 ; CHECK:               movaps  __xmm@00000001000200030004000500060007(%rip), %xmm0
 ; CHECK-NEXT:          ret
+
+
+define <4 x float> @undef1() {
+  ret <4 x float> <float 1.0, float 1.0, float undef, float undef>
+
+; CHECK:             .globl  __xmm@00000000000000003f8000003f800000
+; CHECK-NEXT:        .section        .rdata,"rd",discard,__xmm@00000000000000003f8000003f800000
+; CHECK-NEXT:        .align  16
+; CHECK-NEXT: __xmm@00000000000000003f8000003f800000:
+; CHECK-NEXT:        .long   1065353216              # float 1
+; CHECK-NEXT:        .long   1065353216              # float 1
+; CHECK-NEXT:        .zero   4
+; CHECK-NEXT:        .zero   4
+; CHECK:      undef1:
+; CHECK:               movaps  __xmm@00000000000000003f8000003f800000(%rip), %xmm0
+; CHECK-NEXT:          ret
+}

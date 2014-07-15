@@ -109,7 +109,8 @@ const MCExpr *X86WindowsTargetObjectFile::getExecutableRelativeSymbol(
                                  getContext());
 }
 
-static std::string APIntToHexString(const APInt &AI, unsigned Width) {
+static std::string APIntToHexString(const APInt &AI) {
+  unsigned Width = (AI.getBitWidth() / 8) * 2;
   std::string HexString = utohexstr(AI.getLimitedValue(), /*LowerCase=*/true);
   unsigned Size = HexString.size();
   assert(Width >= Size && "hex string is too large!");
@@ -121,17 +122,19 @@ static std::string APIntToHexString(const APInt &AI, unsigned Width) {
 
 static std::string scalarConstantToHexString(const Constant *C) {
   Type *Ty = C->getType();
-  if (Ty->isFloatTy()) {
+  APInt AI;
+  if (isa<UndefValue>(C)) {
+    AI = APInt(Ty->getPrimitiveSizeInBits(), /*val=*/0);
+  } else if (Ty->isFloatTy() || Ty->isDoubleTy()) {
     const auto *CFP = cast<ConstantFP>(C);
-    return APIntToHexString(CFP->getValueAPF().bitcastToAPInt(), /*Width=*/8);
-  } else if (Ty->isDoubleTy()) {
-    const auto *CFP = cast<ConstantFP>(C);
-    return APIntToHexString(CFP->getValueAPF().bitcastToAPInt(), /*Width=*/16);
-  } else if (const auto *ITy = dyn_cast<IntegerType>(Ty)) {
+    AI = CFP->getValueAPF().bitcastToAPInt();
+  } else if (Ty->isIntegerTy()) {
     const auto *CI = cast<ConstantInt>(C);
-    return APIntToHexString(CI->getValue(), (ITy->getBitWidth() / 8) * 2);
+    AI = CI->getValue();
+  } else {
+    llvm_unreachable("unexpected constant pool element type!");
   }
-  llvm_unreachable("unexpected constant pool element type!");
+  return APIntToHexString(AI);
 }
 
 const MCSection *
@@ -147,11 +150,16 @@ X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
       } else if (const auto *VTy = dyn_cast<VectorType>(Ty)) {
         uint64_t NumBits = VTy->getBitWidth();
         if (NumBits == 128 || NumBits == 256) {
-          const auto *CDV = cast<ConstantDataVector>(C);
           COMDATSymName = NumBits == 128 ? "__xmm@" : "__ymm@";
-          for (int I = CDV->getNumElements() - 1, E = -1; I != E; --I)
-            COMDATSymName +=
-                scalarConstantToHexString(CDV->getElementAsConstant(I));
+          if (const auto *CDV = dyn_cast<ConstantDataVector>(C)) {
+            for (int I = CDV->getNumElements() - 1, E = -1; I != E; --I)
+              COMDATSymName +=
+                  scalarConstantToHexString(CDV->getElementAsConstant(I));
+          } else {
+            const auto *CV = cast<ConstantVector>(C);
+            for (int I = CV->getNumOperands() - 1, E = -1; I != E; --I)
+              COMDATSymName += scalarConstantToHexString(CV->getOperand(I));
+          }
         }
       }
       if (!COMDATSymName.empty()) {
