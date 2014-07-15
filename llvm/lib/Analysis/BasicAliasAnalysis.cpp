@@ -490,10 +490,6 @@ namespace {
     /// global) or not.
     bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override;
 
-    /// Get the location associated with a pointer argument of a callsite.
-    Location getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                            ModRefResult &Mask) override;
-
     /// getModRefBehavior - Return the behavior when calling the given
     /// call site.
     ModRefBehavior getModRefBehavior(ImmutableCallSite CS) override;
@@ -657,21 +653,6 @@ BasicAliasAnalysis::pointsToConstantMemory(const Location &Loc, bool OrLocal) {
   return Worklist.empty();
 }
 
-static bool isMemsetPattern16(const Function *MS,
-                              const TargetLibraryInfo &TLI) {
-  if (TLI.has(LibFunc::memset_pattern16) &&
-      MS->getName() == "memset_pattern16") {
-    FunctionType *MemsetType = MS->getFunctionType();
-    if (!MemsetType->isVarArg() && MemsetType->getNumParams() == 3 &&
-        isa<PointerType>(MemsetType->getParamType(0)) &&
-        isa<PointerType>(MemsetType->getParamType(1)) &&
-        isa<IntegerType>(MemsetType->getParamType(2)))
-      return true;
-  }
-
-  return false;
-}
-
 /// getModRefBehavior - Return the behavior when calling the given call site.
 AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(ImmutableCallSite CS) {
@@ -711,91 +692,8 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   if (F->onlyReadsMemory())
     Min = OnlyReadsMemory;
 
-  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
-  if (isMemsetPattern16(F, TLI))
-    Min = OnlyAccessesArgumentPointees;
-
   // Otherwise be conservative.
   return ModRefBehavior(AliasAnalysis::getModRefBehavior(F) & Min);
-}
-
-AliasAnalysis::Location
-BasicAliasAnalysis::getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
-                                   ModRefResult &Mask) {
-  Location Loc = AliasAnalysis::getArgLocation(CS, ArgIdx, Mask);
-  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
-  const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
-  if (II != nullptr)
-    switch (II->getIntrinsicID()) {
-    default: break;
-    case Intrinsic::memset:
-    case Intrinsic::memcpy:
-    case Intrinsic::memmove: {
-      assert((ArgIdx == 0 || ArgIdx == 1) &&
-             "Invalid argument index for memory intrinsic");
-      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
-        Loc.Size = LenCI->getZExtValue();
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Memory intrinsic location pointer not argument?");
-      Mask = ArgIdx ? Ref : Mod;
-      break;
-    }
-    case Intrinsic::lifetime_start:
-    case Intrinsic::lifetime_end:
-    case Intrinsic::invariant_start: {
-      assert(ArgIdx == 1 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      Loc.Size = cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
-      break;
-    }
-    case Intrinsic::invariant_end: {
-      assert(ArgIdx == 2 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      Loc.Size = cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
-      break;
-    }
-    case Intrinsic::arm_neon_vld1: {
-      assert(ArgIdx == 0 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      // LLVM's vld1 and vst1 intrinsics currently only support a single
-      // vector register.
-      if (DL)
-        Loc.Size = DL->getTypeStoreSize(II->getType());
-      break;
-    }
-    case Intrinsic::arm_neon_vst1: {
-      assert(ArgIdx == 0 && "Invalid argument index");
-      assert(Loc.Ptr == II->getArgOperand(ArgIdx) &&
-             "Intrinsic location pointer not argument?");
-      if (DL)
-        Loc.Size = DL->getTypeStoreSize(II->getArgOperand(1)->getType());
-      break;
-    }
-    }
-
-  // We can bound the aliasing properties of memset_pattern16 just as we can
-  // for memcpy/memset.  This is particularly important because the
-  // LoopIdiomRecognizer likes to turn loops into calls to memset_pattern16
-  // whenever possible.
-  else if (CS.getCalledFunction() &&
-           isMemsetPattern16(CS.getCalledFunction(), TLI)) {
-    assert((ArgIdx == 0 || ArgIdx == 1) &&
-           "Invalid argument index for memset_pattern16");
-    if (ArgIdx == 1)
-      Loc.Size = 16;
-    else if (const ConstantInt *LenCI =
-             dyn_cast<ConstantInt>(CS.getArgument(2)))
-      Loc.Size = LenCI->getZExtValue();
-    assert(Loc.Ptr == CS.getArgument(ArgIdx) &&
-           "memset_pattern16 location pointer not argument?");
-    Mask = ArgIdx ? Ref : Mod;
-  }
-  // FIXME: Handle memset_pattern4 and memset_pattern8 also.
-
-  return Loc;
 }
 
 /// getModRefInfo - Check to see if the specified callsite can clobber the
@@ -850,8 +748,124 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       return NoModRef;
   }
 
+  const TargetLibraryInfo &TLI = getAnalysis<TargetLibraryInfo>();
+  ModRefResult Min = ModRef;
+
+  // Finally, handle specific knowledge of intrinsics.
+  const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
+  if (II != nullptr)
+    switch (II->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::memcpy:
+    case Intrinsic::memmove: {
+      uint64_t Len = UnknownSize;
+      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2)))
+        Len = LenCI->getZExtValue();
+      Value *Dest = II->getArgOperand(0);
+      Value *Src = II->getArgOperand(1);
+      // If it can't overlap the source dest, then it doesn't modref the loc.
+      if (isNoAlias(Location(Dest, Len), Loc)) {
+        if (isNoAlias(Location(Src, Len), Loc))
+          return NoModRef;
+        // If it can't overlap the dest, then worst case it reads the loc.
+        Min = Ref;
+      } else if (isNoAlias(Location(Src, Len), Loc)) {
+        // If it can't overlap the source, then worst case it mutates the loc.
+        Min = Mod;
+      }
+      break;
+    }
+    case Intrinsic::memset:
+      // Since memset is 'accesses arguments' only, the AliasAnalysis base class
+      // will handle it for the variable length case.
+      if (ConstantInt *LenCI = dyn_cast<ConstantInt>(II->getArgOperand(2))) {
+        uint64_t Len = LenCI->getZExtValue();
+        Value *Dest = II->getArgOperand(0);
+        if (isNoAlias(Location(Dest, Len), Loc))
+          return NoModRef;
+      }
+      // We know that memset doesn't load anything.
+      Min = Mod;
+      break;
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::invariant_start: {
+      uint64_t PtrSize =
+        cast<ConstantInt>(II->getArgOperand(0))->getZExtValue();
+      if (isNoAlias(Location(II->getArgOperand(1),
+                             PtrSize,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
+    case Intrinsic::invariant_end: {
+      uint64_t PtrSize =
+        cast<ConstantInt>(II->getArgOperand(1))->getZExtValue();
+      if (isNoAlias(Location(II->getArgOperand(2),
+                             PtrSize,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
+    case Intrinsic::arm_neon_vld1: {
+      // LLVM's vld1 and vst1 intrinsics currently only support a single
+      // vector register.
+      uint64_t Size =
+        DL ? DL->getTypeStoreSize(II->getType()) : UnknownSize;
+      if (isNoAlias(Location(II->getArgOperand(0), Size,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
+    case Intrinsic::arm_neon_vst1: {
+      uint64_t Size =
+        DL ? DL->getTypeStoreSize(II->getArgOperand(1)->getType()) : UnknownSize;
+      if (isNoAlias(Location(II->getArgOperand(0), Size,
+                             II->getMetadata(LLVMContext::MD_tbaa)),
+                    Loc))
+        return NoModRef;
+      break;
+    }
+    }
+
+  // We can bound the aliasing properties of memset_pattern16 just as we can
+  // for memcpy/memset.  This is particularly important because the
+  // LoopIdiomRecognizer likes to turn loops into calls to memset_pattern16
+  // whenever possible.
+  else if (TLI.has(LibFunc::memset_pattern16) &&
+           CS.getCalledFunction() &&
+           CS.getCalledFunction()->getName() == "memset_pattern16") {
+    const Function *MS = CS.getCalledFunction();
+    FunctionType *MemsetType = MS->getFunctionType();
+    if (!MemsetType->isVarArg() && MemsetType->getNumParams() == 3 &&
+        isa<PointerType>(MemsetType->getParamType(0)) &&
+        isa<PointerType>(MemsetType->getParamType(1)) &&
+        isa<IntegerType>(MemsetType->getParamType(2))) {
+      uint64_t Len = UnknownSize;
+      if (const ConstantInt *LenCI = dyn_cast<ConstantInt>(CS.getArgument(2)))
+        Len = LenCI->getZExtValue();
+      const Value *Dest = CS.getArgument(0);
+      const Value *Src = CS.getArgument(1);
+      // If it can't overlap the source dest, then it doesn't modref the loc.
+      if (isNoAlias(Location(Dest, Len), Loc)) {
+        // Always reads 16 bytes of the source.
+        if (isNoAlias(Location(Src, 16), Loc))
+          return NoModRef;
+        // If it can't overlap the dest, then worst case it reads the loc.
+        Min = Ref;
+      // Always reads 16 bytes of the source.
+      } else if (isNoAlias(Location(Src, 16), Loc)) {
+        // If it can't overlap the source, then worst case it mutates the loc.
+        Min = Mod;
+      }
+    }
+  }
+
   // The AliasAnalysis base class has some smarts, lets use them.
-  return AliasAnalysis::getModRefInfo(CS, Loc);
+  return ModRefResult(AliasAnalysis::getModRefInfo(CS, Loc) & Min);
 }
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction
