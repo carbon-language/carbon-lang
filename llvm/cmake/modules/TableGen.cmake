@@ -77,9 +77,19 @@ if(CMAKE_CROSSCOMPILING)
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CX_NATIVE_TG_DIR}
     COMMENT "Creating ${CX_NATIVE_TG_DIR}...")
 
+  # Forward a subset of configure options to discover additional tablegen modules.
+  get_cmake_property(_variableNames CACHE_VARIABLES)
+  foreach (_variableName ${_variableNames})
+    if (_variableName MATCHES "^(LLVM_EXTERNAL_.*_SOURCE_DIR)$")
+      list(APPEND CX_CMAKE_ARGUMENTS "-D${_variableName}=\"${${_variableName}}\"")
+    endif ()
+  endforeach()
+
   add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}/CMakeCache.txt
+    # Remove the old cache to avoid persisting previous flags.
+    COMMAND ${CMAKE_COMMAND} -E remove ${CX_NATIVE_TG_DIR}/CMakeCache.txt
     COMMAND ${CMAKE_COMMAND} -UMAKE_TOOLCHAIN_FILE -DCMAKE_BUILD_TYPE=Release
-                             -DLLVM_BUILD_POLLY=OFF
+                             -DLLVM_BUILD_POLLY=OFF ${CX_CMAKE_ARGUMENTS}
                              -G "${CMAKE_GENERATOR}" ${CMAKE_SOURCE_DIR}
     WORKING_DIRECTORY ${CX_NATIVE_TG_DIR}
     DEPENDS ${CX_NATIVE_TG_DIR}
