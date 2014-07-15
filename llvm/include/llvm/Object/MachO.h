@@ -233,12 +233,10 @@ public:
     return v->isMachO();
   }
 
-  const char *getSectionPointer(DataRefImpl Rel) const;
-
 private:
-  typedef SmallVector<const char *, 1> SectionList;
+  typedef SmallVector<const char*, 1> SectionList;
   SectionList Sections;
-  typedef SmallVector<const char *, 1> LibraryList;
+  typedef SmallVector<const char*, 1> LibraryList;
   LibraryList Libraries;
   typedef SmallVector<StringRef, 1> LibraryShortName;
   LibraryShortName LibrariesShortNames;

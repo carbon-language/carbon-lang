@@ -113,9 +113,14 @@ public:
   void finalizeLoad(ObjectImage &ObjImg,
                     ObjSectionToIDMap &SectionMap) override;
 
-  static ObjectImage *createObjectImage(ObjectBuffer *Buffer);
+  static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) {
+    return new ObjectImageCommon(InputBuffer);
+  }
+
   static ObjectImage *
-  createObjectImageFromFile(std::unique_ptr<object::ObjectFile> InputObject);
+  createObjectImageFromFile(std::unique_ptr<object::ObjectFile> InputObject) {
+    return new ObjectImageCommon(std::move(InputObject));
+  }
 };
 
 } // end namespace llvm

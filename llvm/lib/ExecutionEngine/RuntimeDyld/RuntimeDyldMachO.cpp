@@ -14,148 +14,12 @@
 #include "RuntimeDyldMachO.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
-#include "ObjectImageCommon.h"
-#include "JITRegistrar.h"
 using namespace llvm;
 using namespace llvm::object;
 
 #define DEBUG_TYPE "dyld"
 
 namespace llvm {
-
-class MachOObjectImage : public ObjectImageCommon {
-private:
-  typedef SmallVector<uint64_t, 1> SectionAddrList;
-  SectionAddrList OldSectionAddrList;
-
-protected:
-  bool is64;
-  bool Registered;
-
-private:
-  void initOldAddress() {
-    MachOObjectFile *objf = static_cast<MachOObjectFile *>(ObjFile.get());
-    // Unfortunately we need to do this, since there's information encoded
-    // in the original addr of the section that we could not otherwise
-    // recover. The reason for this is that symbols do not actually store
-    // their file offset, but only their vmaddr. This means that in order
-    // to locate the symbol correctly in the object file, we need to know
-    // where the original start of the section was (including any padding,
-    // etc).
-    for (section_iterator i = objf->section_begin(), e = objf->section_end();
-         i != e; ++i) {
-      uint64_t Addr;
-      i->getAddress(Addr);
-      OldSectionAddrList[i->getRawDataRefImpl().d.a] = Addr;
-    }
-  }
-
-public:
-  MachOObjectImage(ObjectBuffer *Input, bool is64)
-      : ObjectImageCommon(Input),
-        OldSectionAddrList(ObjFile->section_end()->getRawDataRefImpl().d.a, 0),
-        is64(is64), Registered(false) {
-    initOldAddress();
-  }
-
-  MachOObjectImage(std::unique_ptr<object::ObjectFile> Input, bool is64)
-      : ObjectImageCommon(std::move(Input)),
-        OldSectionAddrList(ObjFile->section_end()->getRawDataRefImpl().d.a, 0),
-        is64(is64), Registered(false) {
-    initOldAddress();
-  }
-
-  virtual ~MachOObjectImage() {
-    if (Registered)
-      deregisterWithDebugger();
-  }
-
-  // Subclasses can override these methods to update the image with loaded
-  // addresses for sections and common symbols
-  virtual void updateSectionAddress(const SectionRef &Sec, uint64_t Addr) {
-    MachOObjectFile *objf = static_cast<MachOObjectFile *>(ObjFile.get());
-    char *data =
-        const_cast<char *>(objf->getSectionPointer(Sec.getRawDataRefImpl()));
-
-    uint64_t oldAddr = OldSectionAddrList[Sec.getRawDataRefImpl().d.a];
-
-    if (is64) {
-      ((MachO::section_64 *)data)->addr = Addr;
-    } else {
-      ((MachO::section *)data)->addr = Addr;
-    }
-
-    for (symbol_iterator i = objf->symbol_begin(), e = objf->symbol_end();
-         i != e; ++i) {
-      section_iterator symSec(objf->section_end());
-      (*i).getSection(symSec);
-      if (*symSec == Sec) {
-        uint64_t symAddr;
-        (*i).getAddress(symAddr);
-        updateSymbolAddress(*i, symAddr + Addr - oldAddr);
-      }
-    }
-  }
-
-  uint64_t getOldSectionAddr(const SectionRef &Sec) const {
-    return OldSectionAddrList[Sec.getRawDataRefImpl().d.a];
-  }
-
-  virtual void updateSymbolAddress(const SymbolRef &Sym, uint64_t Addr) {
-    char *data = const_cast<char *>(
-        reinterpret_cast<const char *>(Sym.getRawDataRefImpl().p));
-    if (is64)
-      ((MachO::nlist_64 *)data)->n_value = Addr;
-    else
-      ((MachO::nlist *)data)->n_value = Addr;
-  }
-
-  virtual void registerWithDebugger() {
-    JITRegistrar::getGDBRegistrar().registerObject(*Buffer);
-    Registered = true;
-  }
-
-  virtual void deregisterWithDebugger() {
-    JITRegistrar::getGDBRegistrar().deregisterObject(*Buffer);
-  }
-};
-
-static uint32_t readMachOMagic(const char *InputBuffer, unsigned BufferSize) {
-  if (BufferSize < 4)
-    return 0;
-  StringRef Magic(InputBuffer, 4);
-  if (Magic == "\xFE\xED\xFA\xCE" || Magic == "\xCE\xFA\xED\xFE")
-    return 0xFEEDFACE;
-  else if (Magic == "\xFE\xED\xFA\xCF" || Magic == "\xCF\xFA\xED\xFE")
-    return 0xFEEDFACF;
-  // else
-  return 0;
-}
-
-ObjectImage *RuntimeDyldMachO::createObjectImage(ObjectBuffer *Buffer) {
-  uint32_t magic = readMachOMagic(Buffer->getBufferStart(),
-                                  Buffer->getBufferSize());
-  bool is64 = (magic == MachO::MH_MAGIC_64);
-  assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
-         "Unrecognized Macho Magic");
-  return new MachOObjectImage(Buffer, is64);
-}
-
-ObjectImage *RuntimeDyldMachO::createObjectImageFromFile(
-    std::unique_ptr<object::ObjectFile> ObjFile) {
-  if (!ObjFile)
-    return nullptr;
-
-  MemoryBuffer *Buffer =
-      MemoryBuffer::getMemBuffer(ObjFile->getData(), "", false);
-
-  uint32_t magic = readMachOMagic(Buffer->getBufferStart(),
-                                  Buffer->getBufferSize());
-  bool is64 = (magic == MachO::MH_MAGIC_64);
-  assert((magic == MachO::MH_MAGIC_64 || magic == MachO::MH_MAGIC) &&
-         "Unrecognized Macho Magic");
-  return new MachOObjectImage(std::move(ObjFile), is64);
-}
 
 static unsigned char *processFDE(unsigned char *P, intptr_t DeltaForText,
                                  intptr_t DeltaForEH) {
@@ -750,7 +614,6 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
     ObjSectionToIDMap &ObjSectionToID, const SymbolTableMap &Symbols,
     StubMap &Stubs) {
   const ObjectFile *OF = Obj.getObjectFile();
-  const MachOObjectImage &MachOObj = *static_cast<MachOObjectImage *>(&Obj);
   const MachOObjectFile *MachO = static_cast<const MachOObjectFile *>(OF);
   MachO::any_relocation_info RE =
       MachO->getRelocation(RelI->getRawDataRefImpl());
@@ -862,8 +725,8 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
     bool IsCode = false;
     Sec.isText(IsCode);
     Value.SectionID = findOrEmitSection(Obj, Sec, IsCode, ObjSectionToID);
-    uint64_t Addr = MachOObj.getOldSectionAddr(Sec);
-    DEBUG(dbgs() << "\nAddr: " << Addr << "\nAddend: " << Addend);
+    uint64_t Addr;
+    Sec.getAddress(Addr);
     Value.Addend = Addend - Addr;
     if (IsPCRel)
       Value.Addend += Offset + NumBytes;
@@ -969,9 +832,18 @@ relocation_iterator RuntimeDyldMachO::processRelocationRef(
 
 bool
 RuntimeDyldMachO::isCompatibleFormat(const ObjectBuffer *InputBuffer) const {
-  uint32_t Magic = readMachOMagic(InputBuffer->getBufferStart(),
-                                  InputBuffer->getBufferSize());
-  return (Magic == 0xFEEDFACE || Magic == 0xFEEDFACF);
+  if (InputBuffer->getBufferSize() < 4)
+    return false;
+  StringRef Magic(InputBuffer->getBufferStart(), 4);
+  if (Magic == "\xFE\xED\xFA\xCE")
+    return true;
+  if (Magic == "\xCE\xFA\xED\xFE")
+    return true;
+  if (Magic == "\xFE\xED\xFA\xCF")
+    return true;
+  if (Magic == "\xCF\xFA\xED\xFE")
+    return true;
+  return false;
 }
 
 bool RuntimeDyldMachO::isCompatibleFile(const object::ObjectFile *Obj) const {
