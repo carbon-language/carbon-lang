@@ -5,6 +5,7 @@ add_clang_library(clangTidyGoogleModule
   ExplicitConstructorCheck.cpp
   ExplicitMakePairCheck.cpp
   GoogleTidyModule.cpp
+  OverloadedUnaryAndCheck.cpp
 
   LINK_LIBS
   clangAST

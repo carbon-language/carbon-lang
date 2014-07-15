@@ -13,6 +13,7 @@
 #include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
 #include "ExplicitMakePairCheck.h"
+#include "OverloadedUnaryAndCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -28,6 +29,9 @@ public:
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());
+    CheckFactories.addCheckFactory(
+        "google-runtime-operator",
+        new ClangTidyCheckFactory<runtime::OverloadedUnaryAndCheck>());
     CheckFactories.addCheckFactory(
         "google-readability-casting",
         new ClangTidyCheckFactory<readability::AvoidCStyleCastsCheck>());
