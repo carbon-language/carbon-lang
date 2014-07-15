@@ -66,14 +66,7 @@
 		232CB61E191E00CD00EF39FC /* SoftwareBreakpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = 232CB614191E00CD00EF39FC /* SoftwareBreakpoint.h */; };
 		233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007B1960C9E60090E598 /* ProcessInfo.cpp */; };
 		233B007F1960CB280090E598 /* ProcessLaunchInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 233B007E1960CB280090E598 /* ProcessLaunchInfo.cpp */; };
-		233B009619610B1F0090E598 /* LinuxThread.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008E19610B1F0090E598 /* LinuxThread.cpp */; };
-		233B009719610B1F0090E598 /* LinuxThread.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B008F19610B1F0090E598 /* LinuxThread.h */; };
-		233B009819610B1F0090E598 /* ProcessLinux.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009019610B1F0090E598 /* ProcessLinux.cpp */; };
-		233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009119610B1F0090E598 /* ProcessLinux.h */; };
-		233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009219610B1F0090E598 /* ProcessMonitor.cpp */; };
-		233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 233B009319610B1F0090E598 /* ProcessMonitor.h */; };
 		23DDF226196C3EE600BB8417 /* CommandOptionValidators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */; };
-		23EDE3321926843600F6A132 /* NativeRegisterContext.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = 23EDE3311926843600F6A132 /* NativeRegisterContext.h */; };
 		23EDE33319269E7C00F6A132 /* NativeRegisterContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */; };
 		23EFE389193D1ABC00E54E54 /* SBTypeEnumMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 23EFE388193D1ABC00E54E54 /* SBTypeEnumMember.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		23EFE38B193D1AEC00E54E54 /* SBTypeEnumMember.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23EFE38A193D1AEC00E54E54 /* SBTypeEnumMember.cpp */; };
@@ -875,13 +868,6 @@
 			dstPath = "$(DEVELOPER_DIR)/usr/share/man/man1/";
 			dstSubfolderSpec = 0;
 			files = (
-				23EDE3321926843600F6A132 /* NativeRegisterContext.h in CopyFiles */,
-				233B009819610B1F0090E598 /* ProcessLinux.cpp in CopyFiles */,
-				233B009619610B1F0090E598 /* LinuxThread.cpp in CopyFiles */,
-				233B009A19610B1F0090E598 /* ProcessMonitor.cpp in CopyFiles */,
-				233B009719610B1F0090E598 /* LinuxThread.h in CopyFiles */,
-				233B009919610B1F0090E598 /* ProcessLinux.h in CopyFiles */,
-				233B009B19610B1F0090E598 /* ProcessMonitor.h in CopyFiles */,
 				AF90106515AB7D3600FF120D /* lldb.1 in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
