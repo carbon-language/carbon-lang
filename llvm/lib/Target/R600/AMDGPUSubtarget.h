@@ -136,6 +136,14 @@ public:
             hasCaymanISA());
   }
 
+  bool hasFFBL() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
+  bool hasFFBH() const {
+    return (getGeneration() >= EVERGREEN);
+  }
+
   bool IsIRStructurizerEnabled() const {
     return EnableIRStructurizer;
   }

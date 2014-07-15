@@ -328,6 +328,9 @@ defm CUBE_eg : CUBE_Common<0xC0>;
 
 def BCNT_INT : R600_1OP_Helper <0xAA, "BCNT_INT", ctpop, VecALU>;
 
+def FFBH_UINT : R600_1OP_Helper <0xAB, "FFBH_UINT", ctlz_zero_undef, VecALU>;
+def FFBL_INT : R600_1OP_Helper <0xAC, "FFBL_INT", cttz_zero_undef, VecALU>;
+
 let hasSideEffects = 1 in {
   def MOVA_INT_eg : R600_1OP <0xCC, "MOVA_INT", [], VecALU>;
 }
