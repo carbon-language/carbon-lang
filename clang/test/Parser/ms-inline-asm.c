@@ -45,6 +45,9 @@ void t10() {
     }
   }
 }
+void t11() {
+  do { __asm mov eax, 0 __asm { __asm mov edx, 1 } } while(0);
+}
 int t_fail() { // expected-note {{to match this}}
   __asm 
   __asm { // expected-error 3 {{expected}} expected-note {{to match this}}
