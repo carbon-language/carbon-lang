@@ -101,3 +101,20 @@ define <1 x i64> @test_vector_copy_dup_dv2D(<1 x i64> %a, <2 x i64> %c) {
   ret <1 x i64> %vset_lane
 }
 
+; Undefined behaviour, so we really don't care what actually gets emitted, just
+; as long as we don't crash (since it could be dynamically unreachable).
+define i32 @test_out_of_range_extract(<4 x i32> %vec) {
+; CHECK-LABEL: test_out_of_range_extract:
+; CHECK: ret
+  %elt = extractelement <4 x i32> %vec, i32 4
+  ret i32 %elt
+}
+
+; Undefined behaviour, so we really don't care what actually gets emitted, just
+; as long as we don't crash (since it could be dynamically unreachable).
+define void @test_out_of_range_insert(<4 x i32> %vec, i32 %elt) {
+; CHECK-LABEL: test_out_of_range_insert:
+; CHECK: ret
+  insertelement <4 x i32> %vec, i32 %elt, i32 4
+  ret void
+}
