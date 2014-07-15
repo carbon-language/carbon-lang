@@ -22,6 +22,12 @@
 using __sanitizer::uptr;
 
 extern "C" {
+  // This function should be called at the very beginning of the process,
+  // before any instrumented code is executed and before any call to malloc.
+  // Please note that __asan_init is a macro that is replaced with
+  // __asan_init_vXXX at compile-time.
+  SANITIZER_INTERFACE_ATTRIBUTE void __asan_init();
+
   // This structure is used to describe the source location of a place where
   // global was defined.
   struct __asan_global_source_location {
