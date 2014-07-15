@@ -324,10 +324,16 @@ def : Pat<(sub GR64:$op, (and (i64 (X86setcc_c X86_COND_B, EFLAGS)), 1)),
           (SBB64ri8 GR64:$op, 0)>;
 
 // (sub OP, SETCC_CARRY) -> (adc OP, 0)
+def : Pat<(sub (add GR8:$op1, GR8:$op2), (i8 (X86setcc_c X86_COND_B, EFLAGS))),
+          (ADC8ri GR8:$op1, GR8:$op2)>;
 def : Pat<(sub GR8:$op, (i8 (X86setcc_c X86_COND_B, EFLAGS))),
           (ADC8ri GR8:$op, 0)>;
+def : Pat<(sub (add GR32:$op1, GR32:$op2), (i32 (X86setcc_c X86_COND_B, EFLAGS))),
+          (ADC32ri8 GR32:$op1, GR32:$op2)>;
 def : Pat<(sub GR32:$op, (i32 (X86setcc_c X86_COND_B, EFLAGS))),
           (ADC32ri8 GR32:$op, 0)>;
+def : Pat<(sub (add GR64:$op1, GR64:$op2), (i64 (X86setcc_c X86_COND_B, EFLAGS))),
+          (ADC64ri8 GR64:$op1, GR64:$op2)>;
 def : Pat<(sub GR64:$op, (i64 (X86setcc_c X86_COND_B, EFLAGS))),
           (ADC64ri8 GR64:$op, 0)>;
 
