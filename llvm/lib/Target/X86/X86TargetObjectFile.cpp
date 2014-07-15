@@ -151,15 +151,9 @@ X86WindowsTargetObjectFile::getSectionForConstant(SectionKind Kind,
         uint64_t NumBits = VTy->getBitWidth();
         if (NumBits == 128 || NumBits == 256) {
           COMDATSymName = NumBits == 128 ? "__xmm@" : "__ymm@";
-          if (const auto *CDV = dyn_cast<ConstantDataVector>(C)) {
-            for (int I = CDV->getNumElements() - 1, E = -1; I != E; --I)
-              COMDATSymName +=
-                  scalarConstantToHexString(CDV->getElementAsConstant(I));
-          } else {
-            const auto *CV = cast<ConstantVector>(C);
-            for (int I = CV->getNumOperands() - 1, E = -1; I != E; --I)
-              COMDATSymName += scalarConstantToHexString(CV->getOperand(I));
-          }
+          for (int I = VTy->getNumElements() - 1, E = -1; I != E; --I)
+            COMDATSymName +=
+                scalarConstantToHexString(C->getAggregateElement(I));
         }
       }
       if (!COMDATSymName.empty()) {
