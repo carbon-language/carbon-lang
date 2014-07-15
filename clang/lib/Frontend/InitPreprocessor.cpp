@@ -196,6 +196,17 @@ static void DefineTypeSize(const Twine &MacroName, TargetInfo::IntType Ty,
                  TI.isTypeSigned(Ty), Builder);
 }
 
+static void DefineFmt(const Twine &Prefix, TargetInfo::IntType Ty,
+                      const TargetInfo &TI, MacroBuilder &Builder) {
+  bool IsSigned = TI.isTypeSigned(Ty);
+  StringRef FmtModifier = TI.getTypeFormatModifier(Ty);
+  for (const char *Fmt = IsSigned ? "di" : "ouxX"; *Fmt; ++Fmt) {
+    Twine Macro = Prefix + "_FMT" + Twine(*Fmt) + "__";
+    Twine Value = Twine("\"") + FmtModifier + Twine(*Fmt) + "\"";
+    Builder.defineMacro(Macro, Value);
+  }
+}
+
 static void DefineType(const Twine &MacroName, TargetInfo::IntType Ty,
                        MacroBuilder &Builder) {
   Builder.defineMacro(MacroName, TargetInfo::getTypeName(Ty));
@@ -226,6 +237,7 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
   const char *Prefix = IsSigned ? "__INT" : "__UINT";
 
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
+  DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 
   StringRef ConstSuffix(TargetInfo::getTypeConstantSuffix(Ty));
   if (!ConstSuffix.empty())
@@ -258,6 +270,7 @@ static void DefineLeastWidthIntType(unsigned TypeWidth, bool IsSigned,
   const char *Prefix = IsSigned ? "__INT_LEAST" : "__UINT_LEAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
+  DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 }
 
 static void DefineFastIntType(unsigned TypeWidth, bool IsSigned,
@@ -271,6 +284,8 @@ static void DefineFastIntType(unsigned TypeWidth, bool IsSigned,
   const char *Prefix = IsSigned ? "__INT_FAST" : "__UINT_FAST";
   DefineType(Prefix + Twine(TypeWidth) + "_TYPE__", Ty, Builder);
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);
+
+  DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 }
 
 
@@ -641,13 +656,18 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     DefineTypeSizeof("__SIZEOF_INT128__", 128, TI, Builder);
 
   DefineType("__INTMAX_TYPE__", TI.getIntMaxType(), Builder);
+  DefineFmt("__INTMAX", TI.getIntMaxType(), TI, Builder);
   DefineType("__UINTMAX_TYPE__", TI.getUIntMaxType(), Builder);
+  DefineFmt("__UINTMAX", TI.getUIntMaxType(), TI, Builder);
   DefineTypeWidth("__INTMAX_WIDTH__",  TI.getIntMaxType(), TI, Builder);
   DefineType("__PTRDIFF_TYPE__", TI.getPtrDiffType(0), Builder);
+  DefineFmt("__PTRDIFF", TI.getPtrDiffType(0), TI, Builder);
   DefineTypeWidth("__PTRDIFF_WIDTH__", TI.getPtrDiffType(0), TI, Builder);
   DefineType("__INTPTR_TYPE__", TI.getIntPtrType(), Builder);
+  DefineFmt("__INTPTR", TI.getIntPtrType(), TI, Builder);
   DefineTypeWidth("__INTPTR_WIDTH__", TI.getIntPtrType(), TI, Builder);
   DefineType("__SIZE_TYPE__", TI.getSizeType(), Builder);
+  DefineFmt("__SIZE", TI.getSizeType(), TI, Builder);
   DefineTypeWidth("__SIZE_WIDTH__", TI.getSizeType(), TI, Builder);
   DefineType("__WCHAR_TYPE__", TI.getWCharType(), Builder);
   DefineTypeWidth("__WCHAR_WIDTH__", TI.getWCharType(), TI, Builder);
@@ -660,6 +680,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.MSVCCompat) {
     DefineTypeWidth("__UINTMAX_WIDTH__",  TI.getUIntMaxType(), TI, Builder);
     DefineType("__UINTPTR_TYPE__", TI.getUIntPtrType(), Builder);
+    DefineFmt("__UINTPTR", TI.getUIntPtrType(), TI, Builder);
     DefineTypeWidth("__UINTPTR_WIDTH__", TI.getUIntPtrType(), TI, Builder);
   }
 
@@ -683,6 +704,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   // Define exact-width integer types for stdint.h
   Builder.defineMacro("__INT" + Twine(TI.getCharWidth()) + "_TYPE__",
                       "char");
+  DefineFmt("__INT" + Twine(TI.getCharWidth()), TargetInfo::SignedChar, TI, Builder);
 
   if (TI.getShortWidth() > TI.getCharWidth())
     DefineExactWidthIntType(TargetInfo::SignedShort, TI, Builder);

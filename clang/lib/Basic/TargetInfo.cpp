@@ -134,6 +134,25 @@ const char *TargetInfo::getTypeConstantSuffix(IntType T) {
   }
 }
 
+/// getTypeFormatModifier - Return the printf format modifier for the
+/// specified integer type enum. For example, SignedLong -> "l".
+
+const char *TargetInfo::getTypeFormatModifier(IntType T) {
+  switch (T) {
+  default: llvm_unreachable("not an integer!");
+  case SignedChar:
+  case UnsignedChar:     return "hh";
+  case SignedShort:
+  case UnsignedShort:    return "h";
+  case SignedInt:
+  case UnsignedInt:      return "";
+  case SignedLong:
+  case UnsignedLong:     return "l";
+  case SignedLongLong:
+  case UnsignedLongLong: return "ll";
+  }
+}
+
 /// getTypeWidth - Return the width (in bits) of the specified integer type
 /// enum. For example, SignedInt -> getIntWidth().
 unsigned TargetInfo::getTypeWidth(IntType T) const {

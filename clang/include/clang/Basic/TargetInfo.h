@@ -445,6 +445,12 @@ public:
   /// For example, SignedLong -> "L".
   static const char *getTypeConstantSuffix(IntType T);
 
+  /// \brief Return the printf format modifier for the specified
+  /// integer type enum.
+  ///
+  /// For example, SignedLong -> "l".
+  static const char *getTypeFormatModifier(IntType T);
+
   /// \brief Check whether the given real type should use the "fpret" flavor of
   /// Objective-C message passing on this target.
   bool useObjCFPRetForRealType(RealType T) const {
