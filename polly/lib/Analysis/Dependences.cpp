@@ -124,6 +124,15 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
   }
 }
 
+/// @brief Fix all dimension of @p Zero to 0 and add it to @p user
+static int fixSetToZero(__isl_take isl_set *Zero, void *user) {
+  isl_union_set **User = (isl_union_set **)user;
+  for (unsigned i = 0; i < isl_set_dim(Zero, isl_dim_set); i++)
+    Zero = isl_set_fix_si(Zero, isl_dim_set, i, 0);
+  *User = isl_union_set_add_set(*User, Zero);
+  return 0;
+}
+
 /// @brief Compute the privatization dependences for a given dependency @p Map
 ///
 /// Privatization dependences are widened original dependences which originate
@@ -164,14 +173,34 @@ void Dependences::collectInfo(Scop &S, isl_union_map **Read,
 ///       S1[i0] -> S2[] : i0 >= 0 and i0 <= 1023}
 ///   RED:
 ///     { S1[i0] -> S1[1 + i0] : i0 >= 0 and i0 <= 1022 }
+///
+/// Note: This function also computes the (reverse) transitive closure of the
+///       reduction dependences.
 void Dependences::addPrivatizationDependences() {
-  isl_union_map *PrivRAW, *PrivWAW, *PrivWAR, *TransClosure;
+  isl_union_map *PrivRAW, *PrivWAW, *PrivWAR;
 
-  // The transitive closure might be over approximated but we only use it to
-  // compute the privatization dependences. Thus, overapproximation will lead
-  // "only" to more conservative privatization dependences.
-  // FIXME: Take precautions to ensure only forward dependences are created.
-  TransClosure = isl_union_map_transitive_closure(isl_union_map_copy(RED), 0);
+  // The transitive closure might be over approximated, thus could lead to
+  // dependency cycles in the privatization dependences. To make sure this
+  // will not happen we remove all negative dependences after we computed
+  // the transitive closure.
+  TC_RED = isl_union_map_transitive_closure(isl_union_map_copy(RED), 0);
+
+  // FIXME: Apply the current schedule instead of assuming the identity schedule
+  //        here. The current approach is only valid as long as we compute the
+  //        dependences only with the initial (identity schedule). Any other
+  //        schedule could change "the direction of the backward depenendes" we
+  //        want to eliminate here.
+  isl_union_set *UDeltas = isl_union_map_deltas(isl_union_map_copy(TC_RED));
+  isl_union_set *Universe = isl_union_set_universe(isl_union_set_copy(UDeltas));
+  isl_union_set *Zero = isl_union_set_empty(isl_union_set_get_space(Universe));
+  isl_union_set_foreach_set(Universe, fixSetToZero, &Zero);
+  isl_union_map *NonPositive = isl_union_set_lex_le_union_set(UDeltas, Zero);
+
+  TC_RED = isl_union_map_subtract(TC_RED, NonPositive);
+
+  TC_RED = isl_union_map_union(
+      TC_RED, isl_union_map_reverse(isl_union_map_copy(TC_RED)));
+  TC_RED = isl_union_map_coalesce(TC_RED);
 
   isl_union_map **Maps[] = {&RAW, &WAW, &WAR};
   isl_union_map **PrivMaps[] = {&PrivRAW, &PrivWAW, &PrivWAR};
@@ -179,15 +208,15 @@ void Dependences::addPrivatizationDependences() {
     isl_union_map **Map = Maps[u], **PrivMap = PrivMaps[u];
 
     *PrivMap = isl_union_map_apply_range(isl_union_map_copy(*Map),
-                                         isl_union_map_copy(TransClosure));
+                                         isl_union_map_copy(TC_RED));
     *PrivMap = isl_union_map_union(
-        *PrivMap, isl_union_map_apply_range(isl_union_map_copy(TransClosure),
+        *PrivMap, isl_union_map_apply_range(isl_union_map_copy(TC_RED),
                                             isl_union_map_copy(*Map)));
 
     *Map = isl_union_map_union(*Map, *PrivMap);
   }
 
-  isl_union_map_free(TransClosure);
+  isl_union_set_free(Universe);
 }
 
 void Dependences::calculateDependences(Scop &S) {
@@ -330,6 +359,7 @@ void Dependences::calculateDependences(Scop &S) {
   WAW = isl_union_map_zip(WAW);
   WAR = isl_union_map_zip(WAR);
   RED = isl_union_map_zip(RED);
+  TC_RED = isl_union_map_zip(TC_RED);
 
   DEBUG(dbgs() << "Zipped Dependences:\n"; printScop(dbgs()); dbgs() << "\n");
 
@@ -337,6 +367,7 @@ void Dependences::calculateDependences(Scop &S) {
   WAW = isl_union_set_unwrap(isl_union_map_domain(WAW));
   WAR = isl_union_set_unwrap(isl_union_map_domain(WAR));
   RED = isl_union_set_unwrap(isl_union_map_domain(RED));
+  TC_RED = isl_union_set_unwrap(isl_union_map_domain(TC_RED));
 
   DEBUG(dbgs() << "Unwrapped Dependences:\n"; printScop(dbgs());
         dbgs() << "\n");
@@ -349,6 +380,7 @@ void Dependences::calculateDependences(Scop &S) {
   WAW = isl_union_map_coalesce(WAW);
   WAR = isl_union_map_coalesce(WAR);
   RED = isl_union_map_coalesce(RED);
+  TC_RED = isl_union_map_coalesce(TC_RED);
 
   DEBUG(printScop(dbgs()));
 }
@@ -495,6 +527,8 @@ void Dependences::printScop(raw_ostream &OS) const {
   printDependencyMap(OS, WAW);
   OS << "\tReduction dependences:\n\t\t";
   printDependencyMap(OS, RED);
+  OS << "\tTransitive closure of reduction dependences:\n\t\t";
+  printDependencyMap(OS, TC_RED);
 }
 
 void Dependences::releaseMemory() {
@@ -502,8 +536,9 @@ void Dependences::releaseMemory() {
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
   isl_union_map_free(RED);
+  isl_union_map_free(TC_RED);
 
-  RED = RAW = WAR = WAW = nullptr;
+  RED = RAW = WAR = WAW = TC_RED = nullptr;
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {
@@ -522,6 +557,9 @@ isl_union_map *Dependences::getDependences(int Kinds) {
 
   if (Kinds & TYPE_RED)
     Deps = isl_union_map_union(Deps, isl_union_map_copy(RED));
+
+  if (Kinds & TYPE_TC_RED)
+    Deps = isl_union_map_union(Deps, isl_union_map_copy(TC_RED));
 
   Deps = isl_union_map_coalesce(Deps);
   Deps = isl_union_map_detect_equalities(Deps);

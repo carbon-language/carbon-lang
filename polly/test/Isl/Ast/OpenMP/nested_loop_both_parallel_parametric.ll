@@ -53,7 +53,6 @@ ret:
 ; Note that we do not delinearize this access function because it is considered
 ; to already be affine: {{0,+,4}<%loop.i>,+,4096}<%loop.j>.
 
-;
 ; CHECK: for (int c1 = 0; c1 < n; c1 += 1)
 ; CHECK:   #pragma simd
 ; CHECK:   #pragma omp parallel for

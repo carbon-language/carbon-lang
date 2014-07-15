@@ -91,11 +91,15 @@ printParallelFor(__isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
     if (Info->IsInnermostParallel) {
       Printer = isl_printer_start_line(Printer);
       Printer = isl_printer_print_str(Printer, "#pragma simd");
+      if (Info->IsReductionParallel)
+        Printer = isl_printer_print_str(Printer, " reduction");
       Printer = isl_printer_end_line(Printer);
     }
     if (Info->IsOutermostParallel) {
       Printer = isl_printer_start_line(Printer);
       Printer = isl_printer_print_str(Printer, "#pragma omp parallel for");
+      if (Info->IsReductionParallel)
+        Printer = isl_printer_print_str(Printer, " reduction");
       Printer = isl_printer_end_line(Printer);
     }
   }
@@ -124,6 +128,7 @@ static struct IslAstUser *allocateIslAstUser() {
   NodeInfo->Context = 0;
   NodeInfo->IsOutermostParallel = 0;
   NodeInfo->IsInnermostParallel = 0;
+  NodeInfo->IsReductionParallel = false;
   return NodeInfo;
 }
 
@@ -148,25 +153,17 @@ static void freeIslAstUser(void *Ptr) {
 // dimension if it is a subset of a map with equal values for the current
 // dimension.
 static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
-                                     Dependences *D) {
-  isl_union_map *Schedule, *Deps;
+                                     __isl_take isl_union_map *Deps) {
+  isl_union_map *Schedule;
   isl_map *ScheduleDeps, *Test;
   isl_space *ScheduleSpace;
   unsigned Dimension, IsParallel;
-
-  if (!D->hasValidDependences()) {
-    return false;
-  }
 
   Schedule = isl_ast_build_get_schedule(Build);
   ScheduleSpace = isl_ast_build_get_schedule_space(Build);
 
   Dimension = isl_space_dim(ScheduleSpace, isl_dim_out) - 1;
 
-  // FIXME: We can remove ignore reduction dependences in case we privatize the
-  //        memory locations the reduction statements reduce into.
-  Deps = D->getDependences(Dependences::TYPE_RAW | Dependences::TYPE_WAW |
-                           Dependences::TYPE_WAR | Dependences::TYPE_RED);
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
   Deps = isl_union_map_apply_domain(Deps, Schedule);
 
@@ -192,6 +189,35 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   return IsParallel;
 }
 
+/// @brief Check if the current scheduling dimension is parallel
+///
+/// In case the dimension is parallel we also check if any reduction
+/// dependences is broken when we exploit this parallelism. If so,
+/// @p IsReductionParallel will be set to true. The reduction dependences we use
+/// to check are actually the union of the transitive closure of the initial
+/// reduction dependences together with their reveresal. Even though these
+/// dependences connect all iterations with each other (thus they are cyclic)
+/// we can perform the parallelism check as we are only interested in a zero
+/// (or non-zero) dependence distance on the dimension in question.
+static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
+                                     Dependences *D,
+                                     bool &IsReductionParallel) {
+  if (!D->hasValidDependences())
+    return false;
+
+  isl_union_map *Deps = D->getDependences(
+      Dependences::TYPE_RAW | Dependences::TYPE_WAW | Dependences::TYPE_WAR);
+  if (!astScheduleDimIsParallel(Build, Deps))
+    return false;
+
+  isl_union_map *RedDeps =
+      D->getDependences(Dependences::TYPE_TC_RED);
+  if (!astScheduleDimIsParallel(Build, RedDeps))
+    IsReductionParallel = true;
+
+  return true;
+}
+
 // Mark a for node openmp parallel, if it is the outermost parallel for node.
 static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
                                struct AstBuildUserInfo *BuildInfo,
@@ -199,7 +225,8 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
   if (BuildInfo->InParallelFor)
     return;
 
-  if (astScheduleDimIsParallel(Build, BuildInfo->Deps)) {
+  if (astScheduleDimIsParallel(Build, BuildInfo->Deps,
+                               NodeInfo->IsReductionParallel)) {
     BuildInfo->InParallelFor = 1;
     NodeInfo->IsOutermostParallel = 1;
   }
@@ -284,7 +311,8 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
     if (Info->IsOutermostParallel)
       BuildInfo->InParallelFor = 0;
     if (!containsLoops(isl_ast_node_for_get_body(Node)))
-      if (astScheduleDimIsParallel(Build, BuildInfo->Deps))
+      if (astScheduleDimIsParallel(Build, BuildInfo->Deps,
+                                   Info->IsReductionParallel))
         Info->IsInnermostParallel = 1;
     if (!Info->Context)
       Info->Context = isl_ast_build_copy(Build);

@@ -9,7 +9,7 @@
 ; CHECK-DAG: Stmt_for_body3[i0, i1] -> Stmt_for_body3[1 + i0, -1 + i1] : i0 <= 1022 and i0 >= 0 and i1 <= 511 and i1 >= 2
 ; CHECK-DAG: Stmt_for_body3[i0, 2] -> Stmt_for_body3[2 + i0, 0] : i0 <= 1021 and i0 >= 0
 ; CHECK: Reduction dependences:
-; CHECK:   { Stmt_for_body3[i0, 1] -> Stmt_for_body3[1 + i0, 0] : i0 >= 0 and i0 <= 1022 }
+; CHECK:   { Stmt_for_body3[i0, 1] -> Stmt_for_body3[1 + i0, 0] : i0 <= 1022 and i0 >= 0 }
 ;
 ; void f(int *sum) {
 ;   for (int i = 0; i < 1024; i++)

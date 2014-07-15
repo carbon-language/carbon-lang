@@ -47,23 +47,30 @@ public:
 
   /// @brief The type of the dependences.
   ///
-  /// Reduction dependences are seperated because they can be ignored during
-  /// the scheduling. This is the case since the order in which the reduction
-  /// statements are executed does not matter. However, if they are executed
-  /// in parallel we need to take additional measures (e.g., privatization)
-  /// to ensure a correct result.
+  /// Reduction dependences are separated from RAW/WAW/WAR dependences because
+  /// we can ignore them during the scheduling. This is the case since the order
+  /// in which the reduction statements are executed does not matter. However,
+  /// if they are executed in parallel we need to take additional measures
+  /// (e.g, privatization) to ensure a correct result. The (reverse) transitive
+  /// closure of the reduction dependences are used to check for parallel
+  /// executed reduction statements during code generation. These dependences
+  /// connect all instances of a reduction with each other, they are therefor
+  /// cyclic and possibly "reversed".
   enum Type {
     // Write after read
-    TYPE_WAR = 0x1,
+    TYPE_WAR = 1 << 0,
 
     // Read after write
-    TYPE_RAW = 0x2,
+    TYPE_RAW = 1 << 1,
 
     // Write after write
-    TYPE_WAW = 0x4,
+    TYPE_WAW = 1 << 2,
 
     // Reduction dependences
-    TYPE_RED = 0x8,
+    TYPE_RED = 1 << 3,
+
+    // Transitive closure of the reduction dependences (& the reverse)
+    TYPE_TC_RED = 1 << 4,
   };
 
   typedef std::map<ScopStmt *, isl_map *> StatementToIslMapTy;
@@ -113,6 +120,9 @@ private:
 
   /// @brief The map of reduction dependences
   isl_union_map *RED = nullptr;
+
+  /// @brief The (reverse) transitive closure of reduction dependences
+  isl_union_map *TC_RED = nullptr;
 
   /// @brief Collect information about the SCoP.
   void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,

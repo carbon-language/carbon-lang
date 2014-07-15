@@ -49,6 +49,9 @@ struct IslAstUser {
 
   // The node is the innermost parallel loop.
   int IsInnermostParallel;
+
+  // The node is only parallel because of reductions
+  bool IsReductionParallel;
 };
 
 class IslAstInfo : public ScopPass {
@@ -87,7 +90,7 @@ static inline bool isInnermostParallel(__isl_keep isl_ast_node *Node) {
 
   bool Res = false;
   if (Info)
-    Res = Info->IsInnermostParallel;
+    Res = Info->IsInnermostParallel && !Info->IsReductionParallel;
   isl_id_free(Id);
   return Res;
 }
@@ -101,7 +104,7 @@ static inline bool isOutermostParallel(__isl_keep isl_ast_node *Node) {
 
   bool Res = false;
   if (Info)
-    Res = Info->IsOutermostParallel;
+    Res = Info->IsOutermostParallel && !Info->IsReductionParallel;
   isl_id_free(Id);
   return Res;
 }
