@@ -107,7 +107,7 @@ OPENMP_SIMD_CLAUSE(safelen)
 OPENMP_SIMD_CLAUSE(collapse)
 OPENMP_SIMD_CLAUSE(reduction)
 
-// TODO more clauses allowed for directive 'omp for'.
+// Clauses allowed for directive 'omp for'.
 OPENMP_FOR_CLAUSE(private)
 OPENMP_FOR_CLAUSE(lastprivate)
 OPENMP_FOR_CLAUSE(firstprivate)
@@ -124,7 +124,7 @@ OPENMP_SECTIONS_CLAUSE(firstprivate)
 OPENMP_SECTIONS_CLAUSE(reduction)
 OPENMP_SECTIONS_CLAUSE(nowait)
 
-// TODO more clauses allowed for directive 'omp single'.
+// Clauses allowed for directive 'omp single'.
 OPENMP_SINGLE_CLAUSE(private)
 OPENMP_SINGLE_CLAUSE(firstprivate)
 OPENMP_SINGLE_CLAUSE(copyprivate)

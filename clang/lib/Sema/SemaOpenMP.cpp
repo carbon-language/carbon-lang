@@ -1899,7 +1899,10 @@ StmtResult Sema::ActOnOpenMPSingleDirective(ArrayRef<OMPClause *> Clauses,
                                             Stmt *AStmt,
                                             SourceLocation StartLoc,
                                             SourceLocation EndLoc) {
+  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
+
   getCurFunction()->setHasBranchProtectedScope();
+
   return OMPSingleDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
 }
 

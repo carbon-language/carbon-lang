@@ -215,14 +215,6 @@ void foo() {
   }
 #pragma omp sections
   {
-#pragma omp section
-    {
-#pragma omp single // expected-error {{region cannot be closely nested inside 'section' region; perhaps you forget to enclose 'omp single' directive into a parallel region?}}
-      bar();
-    }
-  }
-#pragma omp sections
-  {
 #pragma omp parallel
     {
 #pragma omp single // OK
