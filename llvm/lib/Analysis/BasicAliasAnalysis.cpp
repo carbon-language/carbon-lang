@@ -309,7 +309,8 @@ DecomposeGEPExpression(const Value *V, int64_t &BaseOffs,
       return V;
     }
 
-    if (Op->getOpcode() == Instruction::BitCast) {
+    if (Op->getOpcode() == Instruction::BitCast ||
+        Op->getOpcode() == Instruction::AddrSpaceCast) {
       V = Op->getOperand(0);
       continue;
     }

@@ -172,6 +172,23 @@ define i32* @test13() {
 ; CHECK-NEXT: call void
 }
 
+define i32 addrspace(1)* @test13_addrspacecast() {
+  %p = tail call i8* @malloc(i32 4)
+  %p.bc = bitcast i8* %p to i32*
+  %P = addrspacecast i32* %p.bc to i32 addrspace(1)*
+  %DEAD = load i32 addrspace(1)* %P
+  %DEAD2 = add i32 %DEAD, 1
+  store i32 %DEAD2, i32 addrspace(1)* %P
+  call void @test13f( )
+  store i32 0, i32 addrspace(1)* %P
+  ret i32 addrspace(1)* %P
+; CHECK: @test13_addrspacecast()
+; CHECK-NEXT: malloc
+; CHECK-NEXT: bitcast
+; CHECK-NEXT: addrspacecast
+; CHECK-NEXT: call void
+}
+
 declare noalias i8* @malloc(i32)
 declare noalias i8* @calloc(i32, i32)
 
