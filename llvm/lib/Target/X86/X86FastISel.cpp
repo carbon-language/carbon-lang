@@ -2919,7 +2919,7 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   MachineInstrBuilder MIB;
   if (CalleeOp) {
     // Register-indirect call.
-    unsigned CallOpc = Is64Bit ? X86::CALL64r : CallOpc = X86::CALL32r;
+    unsigned CallOpc = Is64Bit ? X86::CALL64r : X86::CALL32r;
     MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CallOpc))
       .addReg(CalleeOp);
   } else {
