@@ -24,6 +24,7 @@ void Token::dump(raw_ostream &os) const {
     break;
   CASE(eof)
   CASE(identifier)
+  CASE(libname)
   CASE(kw_as_needed)
   CASE(kw_entry)
   CASE(kw_group)
@@ -116,6 +117,24 @@ void Lexer::lex(Token &tok) {
       StringRef word = _buffer.substr(0, quotedStringEnd);
       tok = Token(word, Token::identifier);
       _buffer = _buffer.drop_front(quotedStringEnd + 1);
+      return;
+    }
+    // -l<lib name>
+    if (_buffer.startswith("-l")) {
+      _buffer = _buffer.drop_front(2);
+      StringRef::size_type start = 0;
+      if (_buffer[start] == ':')
+        ++start;
+      if (!canStartName(_buffer[start]))
+        // Create 'unknown' token.
+        break;
+      auto libNameEnd =
+          std::find_if(_buffer.begin() + start + 1, _buffer.end(),
+                       [=](char c) { return !canContinueName(c); });
+      StringRef::size_type libNameLen =
+          std::distance(_buffer.begin(), libNameEnd);
+      tok = Token(_buffer.substr(0, libNameLen), Token::libname);
+      _buffer = _buffer.drop_front(libNameLen);
       return;
     }
     /// keyword or identifer.
@@ -295,10 +314,15 @@ Group *Parser::parseGroup() {
 
   std::vector<Path> paths;
 
-  while (_tok._kind == Token::identifier || _tok._kind == Token::kw_as_needed) {
+  while (_tok._kind == Token::identifier || _tok._kind == Token::libname ||
+         _tok._kind == Token::kw_as_needed) {
     switch (_tok._kind) {
     case Token::identifier:
       paths.push_back(Path(_tok._range));
+      consumeToken();
+      break;
+    case Token::libname:
+      paths.push_back(Path(_tok._range, false, true));
       consumeToken();
       break;
     case Token::kw_as_needed:
@@ -325,9 +349,19 @@ bool Parser::parseAsNeeded(std::vector<Path> &paths) {
   if (!expectAndConsume(Token::l_paren, "expected ("))
     return false;
 
-  while (_tok._kind == Token::identifier) {
-    paths.push_back(Path(_tok._range, true));
-    consumeToken();
+  while (_tok._kind == Token::identifier || _tok._kind == Token::libname) {
+    switch (_tok._kind) {
+    case Token::identifier:
+      paths.push_back(Path(_tok._range, true, false));
+      consumeToken();
+      break;
+    case Token::libname:
+      paths.push_back(Path(_tok._range, true, true));
+      consumeToken();
+      break;
+    default:
+      llvm_unreachable("Invalid token.");
+    }
   }
 
   if (!expectAndConsume(Token::r_paren, "expected )"))

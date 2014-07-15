@@ -101,6 +101,19 @@ RUN:     %p/Inputs/group-cmd-search-2.ls -o %t6
 */
 
 /*
+  This link should finish successfully. The group-cmd-search-3.ls
+  script contains GROUP command with two elements. The first one
+  has a -l:<path> form and should be found by iterating through
+  lib dirs and searching the 'path' name exactly. The second element
+  has a -l<lib name> form and should be found by constructing a full
+  library name lib<lib name>.a and iterating through lib dirs.
+
+RUN: lld -flavor gnu -target x86_64 -shared \
+RUN:     -L%p/Inputs %p/Inputs/use-shared.x86-64 \
+RUN:     %p/Inputs/group-cmd-search-3.ls -o %t8
+*/
+
+/*
   This link should fail with unknown input file format error.
   The linker script from this file contains GROUP with an absolute
   path which can be found under provided sysroot directory.

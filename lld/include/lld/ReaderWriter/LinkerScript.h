@@ -34,6 +34,7 @@ public:
     unknown,
     eof,
     identifier,
+    libname,
     comma,
     l_paren,
     r_paren,
@@ -145,10 +146,11 @@ private:
 struct Path {
   StringRef _path;
   bool _asNeeded;
+  bool _isDashlPrefix;
 
-  Path() : _asNeeded(false) {}
-  explicit Path(StringRef path, bool asNeeded = false)
-      : _path(path), _asNeeded(asNeeded) {}
+  Path() : _asNeeded(false), _isDashlPrefix(false) {}
+  explicit Path(StringRef path, bool asNeeded = false, bool isLib = false)
+      : _path(path), _asNeeded(asNeeded), _isDashlPrefix(isLib) {}
 };
 
 class Group : public Command {
@@ -169,6 +171,8 @@ public:
       first = false;
       if (path._asNeeded)
         os << "AS_NEEDED(";
+      if (path._isDashlPrefix)
+        os << "-l";
       os << path._path;
       if (path._asNeeded)
         os << ")";

@@ -96,6 +96,7 @@ std::error_code ELFGNULdScript::parse(const LinkingContext &ctx,
     for (const script::Path &path : group->getPaths()) {
       // TODO : Propagate Set WholeArchive/dashlPrefix
       attributes.setAsNeeded(path._asNeeded);
+      attributes.setDashlPrefix(path._isDashlPrefix);
       auto inputNode = new ELFFileNode(
           _elfLinkingContext, _elfLinkingContext.allocateString(path._path),
           attributes);
