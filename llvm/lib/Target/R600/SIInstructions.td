@@ -1800,10 +1800,9 @@ def : Pat <
 // VOP1 Patterns
 //===----------------------------------------------------------------------===//
 
+let Predicates = [UnsafeFPMath] in {
 def : RcpPat<V_RCP_F64_e32, f64>;
 defm : RsqPat<V_RSQ_F64_e32, f64>;
-
-let Predicates = [UnsafeFPMath] in {
 defm : RsqPat<V_RSQ_F32_e32, f32>;
 }
 

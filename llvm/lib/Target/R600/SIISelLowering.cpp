@@ -936,16 +936,27 @@ SDValue SITargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(ISD::BITCAST, DL, MVT::i64, Res);
 }
 
-static SDValue performUnsafeFDIV(SDValue Op, SelectionDAG &DAG) {
+// Catch division cases where we can use shortcuts with rcp and rsq
+// instructions.
+SDValue SITargetLowering::LowerFastFDIV(SDValue Op, SelectionDAG &DAG) const {
   SDLoc SL(Op);
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   EVT VT = Op.getValueType();
+  bool Unsafe = DAG.getTarget().Options.UnsafeFPMath;
 
   if (const ConstantFPSDNode *CLHS = dyn_cast<ConstantFPSDNode>(LHS)) {
-    if (CLHS->isExactlyValue(1.0)) {
+    if ((Unsafe || (VT == MVT::f32 && !Subtarget->hasFP32Denormals())) &&
+        CLHS->isExactlyValue(1.0)) {
+      // v_rcp_f32 and v_rsq_f32 do not support denormals, and according to
+      // the CI documentation has a worst case error of 1 ulp.
+      // OpenCL requires <= 2.5 ulp for 1.0 / x, so it should always be OK to
+      // use it as long as we aren't trying to use denormals.
 
       // 1.0 / sqrt(x) -> rsq(x)
+      //
+      // XXX - Is UnsafeFPMath sufficient to do this for f64? The maximum ULP
+      // error seems really high at 2^29 ULP.
       if (RHS.getOpcode() == ISD::FSQRT)
         return DAG.getNode(AMDGPUISD::RSQ, SL, VT, RHS.getOperand(0));
 
@@ -954,15 +965,25 @@ static SDValue performUnsafeFDIV(SDValue Op, SelectionDAG &DAG) {
     }
   }
 
-  // Turn into multiply by the reciprocal
-  // x / y -> x * (1.0 / y)
-  SDValue Recip = DAG.getNode(AMDGPUISD::RCP, SL, VT, RHS);
-  return DAG.getNode(ISD::FMUL, SL, VT, LHS, Recip);
+  if (Unsafe) {
+    // Turn into multiply by the reciprocal.
+    // x / y -> x * (1.0 / y)
+    SDValue Recip = DAG.getNode(AMDGPUISD::RCP, SL, VT, RHS);
+    return DAG.getNode(ISD::FMUL, SL, VT, LHS, Recip);
+  }
+
+  return SDValue();
 }
 
 SDValue SITargetLowering::LowerFDIV32(SDValue Op, SelectionDAG &DAG) const {
-  if (DAG.getTarget().Options.UnsafeFPMath)
-    return performUnsafeFDIV(Op, DAG);
+  SDValue FastLowered = LowerFastFDIV(Op, DAG);
+  if (FastLowered.getNode())
+    return FastLowered;
+
+  // This uses v_rcp_f32 which does not handle denormals. Let this hit a
+  // selection error for now rather than do something incorrect.
+  if (Subtarget->hasFP32Denormals())
+    return SDValue();
 
   SDLoc SL(Op);
   SDValue LHS = Op.getOperand(0);
