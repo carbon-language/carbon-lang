@@ -210,8 +210,7 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   if (!astScheduleDimIsParallel(Build, Deps))
     return false;
 
-  isl_union_map *RedDeps =
-      D->getDependences(Dependences::TYPE_TC_RED);
+  isl_union_map *RedDeps = D->getDependences(Dependences::TYPE_TC_RED);
   if (!astScheduleDimIsParallel(Build, RedDeps))
     IsReductionParallel = true;
 
