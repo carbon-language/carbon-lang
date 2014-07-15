@@ -64,17 +64,15 @@ const UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT,
   else if (QT->isArrayType())
     Ty = Ty->getBaseElementTypeUnsafe();
 
-  CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
+  const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
   if (!RD)
     return nullptr;
 
-  // Loop over all record redeclarations looking for a uuid attribute.
-  for (const TagDecl *I : RD->redecls())
-    if (const UuidAttr *Uuid = I->getAttr<UuidAttr>())
-      return Uuid;
+  if (const UuidAttr *Uuid = RD->getMostRecentDecl()->getAttr<UuidAttr>())
+    return Uuid;
 
   // __uuidof can grab UUIDs from template arguments.
-  if (ClassTemplateSpecializationDecl *CTSD =
+  if (const ClassTemplateSpecializationDecl *CTSD =
           dyn_cast<ClassTemplateSpecializationDecl>(RD)) {
     const TemplateArgumentList &TAL = CTSD->getTemplateArgs();
     const UuidAttr *UuidForRD = nullptr;
