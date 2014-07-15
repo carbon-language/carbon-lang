@@ -10,7 +10,7 @@ define <2 x double> @test() {
 ; Prefer a constant pool load here.
 ; CHECK: test2
 ; CHECK-NOT: shuf
-; CHECK: movaps {{.*}}CPI
+; CHECK: movaps {{.*}}{{CPI|__xmm@}}
 define <4 x i32> @test2() nounwind  {
 	ret <4 x i32> < i32 0, i32 0, i32 1, i32 0 >
 }
