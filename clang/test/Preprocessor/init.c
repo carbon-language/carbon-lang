@@ -749,9 +749,9 @@
 // AARCH64-NETBSD:#define __UINT32_C_SUFFIX__ U
 // AARCH64-NETBSD:#define __UINT32_MAX__ 4294967295U
 // AARCH64-NETBSD:#define __UINT32_TYPE__ unsigned int
-// AARCH64-NETBSD:#define __UINT64_C_SUFFIX__ UL
-// AARCH64-NETBSD:#define __UINT64_MAX__ 18446744073709551615UL
-// AARCH64-NETBSD:#define __UINT64_TYPE__ long unsigned int
+// AARCH64-NETBSD:#define __UINT64_C_SUFFIX__ ULL
+// AARCH64-NETBSD:#define __UINT64_MAX__ 18446744073709551615ULL
+// AARCH64-NETBSD:#define __UINT64_TYPE__ long long unsigned int
 // AARCH64-NETBSD:#define __UINT8_C_SUFFIX__ U
 // AARCH64-NETBSD:#define __UINT8_MAX__ 255U
 // AARCH64-NETBSD:#define __UINT8_TYPE__ unsigned char
@@ -2881,9 +2881,9 @@
 // MIPS64BE:#define __UINT32_C_SUFFIX__ U
 // MIPS64BE:#define __UINT32_MAX__ 4294967295U
 // MIPS64BE:#define __UINT32_TYPE__ unsigned int
-// MIPS64BE:#define __UINT64_C_SUFFIX__ UL
-// MIPS64BE:#define __UINT64_MAX__ 18446744073709551615UL
-// MIPS64BE:#define __UINT64_TYPE__ long unsigned int
+// MIPS64BE:#define __UINT64_C_SUFFIX__ ULL
+// MIPS64BE:#define __UINT64_MAX__ 18446744073709551615ULL
+// MIPS64BE:#define __UINT64_TYPE__ long long unsigned int
 // MIPS64BE:#define __UINT8_C_SUFFIX__ U
 // MIPS64BE:#define __UINT8_MAX__ 255U
 // MIPS64BE:#define __UINT8_TYPE__ unsigned char
@@ -3082,9 +3082,9 @@
 // MIPS64EL:#define __UINT32_C_SUFFIX__ U
 // MIPS64EL:#define __UINT32_MAX__ 4294967295U
 // MIPS64EL:#define __UINT32_TYPE__ unsigned int
-// MIPS64EL:#define __UINT64_C_SUFFIX__ UL
-// MIPS64EL:#define __UINT64_MAX__ 18446744073709551615UL
-// MIPS64EL:#define __UINT64_TYPE__ long unsigned int
+// MIPS64EL:#define __UINT64_C_SUFFIX__ ULL
+// MIPS64EL:#define __UINT64_MAX__ 18446744073709551615ULL
+// MIPS64EL:#define __UINT64_TYPE__ long long unsigned int
 // MIPS64EL:#define __UINT8_C_SUFFIX__ U
 // MIPS64EL:#define __UINT8_MAX__ 255U
 // MIPS64EL:#define __UINT8_TYPE__ unsigned char
@@ -3618,9 +3618,9 @@
 // NVPTX32:#define __UINT32_C_SUFFIX__ U
 // NVPTX32:#define __UINT32_MAX__ 4294967295U
 // NVPTX32:#define __UINT32_TYPE__ unsigned int
-// NVPTX32:#define __UINT64_C_SUFFIX__ UL
-// NVPTX32:#define __UINT64_MAX__ 18446744073709551615UL
-// NVPTX32:#define __UINT64_TYPE__ long unsigned int
+// NVPTX32:#define __UINT64_C_SUFFIX__ ULL
+// NVPTX32:#define __UINT64_MAX__ 18446744073709551615ULL
+// NVPTX32:#define __UINT64_TYPE__ long long unsigned int
 // NVPTX32:#define __UINT8_C_SUFFIX__ U
 // NVPTX32:#define __UINT8_MAX__ 255U
 // NVPTX32:#define __UINT8_TYPE__ unsigned char
@@ -3798,9 +3798,9 @@
 // NVPTX64:#define __UINT32_C_SUFFIX__ U
 // NVPTX64:#define __UINT32_MAX__ 4294967295U
 // NVPTX64:#define __UINT32_TYPE__ unsigned int
-// NVPTX64:#define __UINT64_C_SUFFIX__ UL
-// NVPTX64:#define __UINT64_MAX__ 18446744073709551615UL
-// NVPTX64:#define __UINT64_TYPE__ long unsigned int
+// NVPTX64:#define __UINT64_C_SUFFIX__ ULL
+// NVPTX64:#define __UINT64_MAX__ 18446744073709551615ULL
+// NVPTX64:#define __UINT64_TYPE__ long long unsigned int
 // NVPTX64:#define __UINT8_C_SUFFIX__ U
 // NVPTX64:#define __UINT8_MAX__ 255U
 // NVPTX64:#define __UINT8_TYPE__ unsigned char
@@ -5483,9 +5483,9 @@
 // S390X:#define __UINT32_C_SUFFIX__ U
 // S390X:#define __UINT32_MAX__ 4294967295U
 // S390X:#define __UINT32_TYPE__ unsigned int
-// S390X:#define __UINT64_C_SUFFIX__ UL
-// S390X:#define __UINT64_MAX__ 18446744073709551615UL
-// S390X:#define __UINT64_TYPE__ long unsigned int
+// S390X:#define __UINT64_C_SUFFIX__ ULL
+// S390X:#define __UINT64_MAX__ 18446744073709551615ULL
+// S390X:#define __UINT64_TYPE__ long long unsigned int
 // S390X:#define __UINT8_C_SUFFIX__ U
 // S390X:#define __UINT8_MAX__ 255U
 // S390X:#define __UINT8_TYPE__ unsigned char

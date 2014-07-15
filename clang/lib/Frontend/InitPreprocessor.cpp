@@ -232,7 +232,7 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
   // Use the target specified int64 type, when appropriate, so that [u]int64_t
   // ends up being defined in terms of the correct type.
   if (TypeWidth == 64)
-    Ty = IsSigned ? TI.getInt64Type() : TI.getIntTypeByWidth(64, false);
+    Ty = IsSigned ? TI.getInt64Type() : TI.getUInt64Type();
 
   const char *Prefix = IsSigned ? "__INT" : "__UINT";
 
@@ -254,7 +254,7 @@ static void DefineExactWidthIntTypeSize(TargetInfo::IntType Ty,
   // Use the target specified int64 type, when appropriate, so that [u]int64_t
   // ends up being defined in terms of the correct type.
   if (TypeWidth == 64)
-    Ty = IsSigned ? TI.getInt64Type() : TI.getIntTypeByWidth(64, false);
+    Ty = IsSigned ? TI.getInt64Type() : TI.getUInt64Type();
 
   const char *Prefix = IsSigned ? "__INT" : "__UINT";
   DefineTypeSize(Prefix + Twine(TypeWidth) + "_MAX__", Ty, TI, Builder);

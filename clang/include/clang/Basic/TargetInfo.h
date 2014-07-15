@@ -221,6 +221,9 @@ public:
   IntType getChar16Type() const { return Char16Type; }
   IntType getChar32Type() const { return Char32Type; }
   IntType getInt64Type() const { return Int64Type; }
+  IntType getUInt64Type() const {
+    return getCorrespondingUnsignedType(Int64Type);
+  }
   IntType getSigAtomicType() const { return SigAtomicType; }
   IntType getProcessIDType() const { return ProcessIDType; }
 
