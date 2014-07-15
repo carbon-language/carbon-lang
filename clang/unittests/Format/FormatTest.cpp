@@ -4467,6 +4467,14 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>(\n"
       "        bbbbbbbbbbbbbbbbbbbbbbbb);",
       getLLVMStyleWithColumns(72));
+  EXPECT_EQ("static_cast<A< //\n"
+            "    B> *>(\n"
+            "\n"
+            "    );",
+            format("static_cast<A<//\n"
+                   "    B>*>(\n"
+                   "\n"
+                   "    );"));
 
   FormatStyle AlwaysBreak = getLLVMStyle();
   AlwaysBreak.AlwaysBreakTemplateDeclarations = true;
