@@ -266,4 +266,16 @@ define <2 x i64> @test21(<2 x i64> %a, <2 x i64> %b) {
 ; CHECK-NEXT: pslldq
 ; CHECK-NEXT: ret
 
+; Verify that the DAGCombiner doesn't crash in the attempt to check if a shuffle
+; with illegal type has a legal mask. Method 'isShuffleMaskLegal' only knows how to
+; handle legal vector value types.
+define <4 x i8> @test_crash(<4 x i8> %a, <4 x i8> %b) {
+  %shuf1 = shufflevector <4 x i8> %a, <4 x i8> zeroinitializer, <4 x i32><i32 4, i32 4, i32 2, i32 3>
+  %shuf2 = shufflevector <4 x i8> %b, <4 x i8> zeroinitializer, <4 x i32><i32 0, i32 1, i32 4, i32 4>
+  %or = or <4 x i8> %shuf1, %shuf2
+  ret <4 x i8> %or
+}
+; CHECK-LABEL: test_crash
+; CHECK: movsd
+; CHECK: ret
 

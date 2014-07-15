@@ -3255,6 +3255,8 @@ SDValue DAGCombiner::visitOR(SDNode *N) {
     // Do this only if the resulting shuffle is legal.
     if (isa<ShuffleVectorSDNode>(N0) &&
         isa<ShuffleVectorSDNode>(N1) &&
+        // Avoid folding a node with illegal type.
+        TLI.isTypeLegal(VT) &&
         N0->getOperand(1) == N1->getOperand(1) &&
         ISD::isBuildVectorAllZeros(N0.getOperand(1).getNode())) {
       bool CanFold = true;
