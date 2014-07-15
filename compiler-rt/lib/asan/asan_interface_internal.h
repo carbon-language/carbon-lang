@@ -91,6 +91,17 @@ extern "C" {
   void __asan_describe_address(uptr addr);
 
   SANITIZER_INTERFACE_ATTRIBUTE
+  uptr __asan_get_alloc_stack(uptr addr, uptr *trace, uptr size,
+                              u32 *thread_id);
+
+  SANITIZER_INTERFACE_ATTRIBUTE
+  uptr __asan_get_free_stack(uptr addr, uptr *trace, uptr size,
+                             u32 *thread_id);
+
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_get_shadow_mapping(uptr *shadow_scale, uptr *shadow_offset);
+
+  SANITIZER_INTERFACE_ATTRIBUTE
   void __asan_report_error(uptr pc, uptr bp, uptr sp,
                            uptr addr, int is_write, uptr access_size);
 

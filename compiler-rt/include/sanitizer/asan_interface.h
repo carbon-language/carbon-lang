@@ -62,6 +62,22 @@ extern "C" {
   // Print the description of addr (useful when debugging in gdb).
   void __asan_describe_address(void *addr);
 
+  // Useful for calling from the debugger to get the allocation stack trace
+  // and thread ID for a heap address. Stores up to 'size' frames into 'trace',
+  // returns the number of stored frames or 0 on error.
+  size_t __asan_get_alloc_stack(void *addr, void **trace, size_t size,
+                                int *thread_id);
+
+  // Useful for calling from the debugger to get the free stack trace
+  // and thread ID for a heap address. Stores up to 'size' frames into 'trace',
+  // returns the number of stored frames or 0 on error.
+  size_t __asan_get_free_stack(void *addr, void **trace, size_t size,
+                               int *thread_id);
+
+  // Useful for calling from the debugger to get the current shadow memory
+  // mapping.
+  void __asan_get_shadow_mapping(size_t *shadow_scale, size_t *shadow_offset);
+
   // This is an internal function that is called to report an error.
   // However it is still a part of the interface because users may want to
   // set a breakpoint on this function in a debugger.
