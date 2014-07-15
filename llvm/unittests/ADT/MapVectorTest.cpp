@@ -68,3 +68,24 @@ TEST(MapVectorTest, erase) {
   ASSERT_EQ(MV[3], 4);
   ASSERT_EQ(MV[5], 6);
 }
+
+TEST(MapVectorTest, remove_if) {
+  MapVector<int, int> MV;
+
+  MV.insert(std::make_pair(1, 11));
+  MV.insert(std::make_pair(2, 12));
+  MV.insert(std::make_pair(3, 13));
+  MV.insert(std::make_pair(4, 14));
+  MV.insert(std::make_pair(5, 15));
+  MV.insert(std::make_pair(6, 16));
+  ASSERT_EQ(MV.size(), 6u);
+
+  MV.remove_if([](const std::pair<int, int> &Val) { return Val.second % 2; });
+  ASSERT_EQ(MV.size(), 3u);
+  ASSERT_EQ(MV.find(1), MV.end());
+  ASSERT_EQ(MV.find(3), MV.end());
+  ASSERT_EQ(MV.find(5), MV.end());
+  ASSERT_EQ(MV[2], 12);
+  ASSERT_EQ(MV[4], 14);
+  ASSERT_EQ(MV[6], 16);
+}

@@ -1441,8 +1441,10 @@ order, making it an easy (but somewhat expensive) solution for non-deterministic
 iteration over maps of pointers.
 
 It is implemented by mapping from key to an index in a vector of key,value
-pairs.  This provides fast lookup and iteration, but has two main drawbacks: The
-key is stored twice and removing elements takes linear time.
+pairs.  This provides fast lookup and iteration, but has two main drawbacks:
+the key is stored twice and removing elements takes linear time.  If it is
+necessary to remove elements, it's best to remove them in bulk using
+``remove_if()``.
 
 .. _dss_inteqclasses:
 

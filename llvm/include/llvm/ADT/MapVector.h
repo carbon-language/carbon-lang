@@ -146,7 +146,35 @@ public:
     }
     return Next;
   }
+
+  /// \brief Remove the elements that match the predicate.
+  ///
+  /// Erase all elements that match \c Pred in a single pass.  Takes linear
+  /// time.
+  template <class Predicate> void remove_if(Predicate Pred);
 };
+
+template <typename KeyT, typename ValueT, typename MapType, typename VectorType>
+template <class Function>
+void MapVector<KeyT, ValueT, MapType, VectorType>::remove_if(Function Pred) {
+  auto O = Vector.begin();
+  for (auto I = O, E = Vector.end(); I != E; ++I) {
+    if (Pred(*I)) {
+      // Erase from the map.
+      Map.erase(I->first);
+      continue;
+    }
+
+    if (I != O) {
+      // Move the value and update the index in the map.
+      *O = std::move(*I);
+      Map[O->first] = O - Vector.begin();
+    }
+    ++O;
+  }
+  // Erase trailing entries in the vector.
+  Vector.erase(O, Vector.end());
+}
 
 } // end namespace llvm
 
