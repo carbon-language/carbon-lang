@@ -63,7 +63,10 @@
 #include "llvm/Support/SpecialCaseList.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include <algorithm>
 #include <iterator>
+#include <set>
+#include <utility>
 
 using namespace llvm;
 
@@ -284,6 +287,7 @@ struct DFSanFunction {
   };
   DenseMap<std::pair<Value *, Value *>, CachedCombinedShadow>
       CachedCombinedShadows;
+  DenseMap<Value *, std::set<Value *>> ShadowElements;
 
   DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
       : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
@@ -892,6 +896,24 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
   if (V1 == V2)
     return V1;
 
+  auto V1Elems = ShadowElements.find(V1);
+  auto V2Elems = ShadowElements.find(V2);
+  if (V1Elems != ShadowElements.end() && V2Elems != ShadowElements.end()) {
+    if (std::includes(V1Elems->second.begin(), V1Elems->second.end(),
+                      V2Elems->second.begin(), V2Elems->second.end())) {
+      return V1;
+    } else if (std::includes(V2Elems->second.begin(), V2Elems->second.end(),
+                             V1Elems->second.begin(), V1Elems->second.end())) {
+      return V2;
+    }
+  } else if (V1Elems != ShadowElements.end()) {
+    if (V1Elems->second.count(V2))
+      return V1;
+  } else if (V2Elems != ShadowElements.end()) {
+    if (V2Elems->second.count(V1))
+      return V2;
+  }
+
   auto Key = std::make_pair(V1, V2);
   if (V1 > V2)
     std::swap(Key.first, Key.second);
@@ -917,6 +939,20 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
 
   CCS.Block = Tail;
   CCS.Shadow = Phi;
+
+  std::set<Value *> UnionElems;
+  if (V1Elems != ShadowElements.end()) {
+    UnionElems = V1Elems->second;
+  } else {
+    UnionElems.insert(V1);
+  }
+  if (V2Elems != ShadowElements.end()) {
+    UnionElems.insert(V2Elems->second.begin(), V2Elems->second.end());
+  } else {
+    UnionElems.insert(V2);
+  }
+  ShadowElements[Phi] = std::move(UnionElems);
+
   return Phi;
 }
 

@@ -8,10 +8,10 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; CHECK-LABEL: @"dfs$f"
 define void @f(i32 %x, i32 %y) {
-  ; CHECK: __dfsan_union
+  ; CHECK: call{{.*}}__dfsan_union
   %xay = add i32 %x, %y
   store i32 %xay, i32* @a
-  ; CHECK-NOT: __dfsan_union
+  ; CHECK-NOT: call{{.*}}__dfsan_union
   %xmy = mul i32 %x, %y
   store i32 %xmy, i32* @b
   ret void
@@ -25,17 +25,28 @@ define void @g(i1 %p, i32 %x, i32 %y) {
   br i1 %p, label %l1, label %l2
 
 l1:
-  ; CHECK: __dfsan_union
+  ; CHECK: call{{.*}}__dfsan_union
   %xay = add i32 %x, %y
   store i32 %xay, i32* @a
   br label %l3
 
 l2:
-  ; CHECK: __dfsan_union
+  ; CHECK: call{{.*}}__dfsan_union
   %xmy = mul i32 %x, %y
   store i32 %xmy, i32* @b
   br label %l3
 
 l3:
   ret void
+}
+
+; In this case, we know that the label for %xayax subsumes the label for %xay.
+
+; CHECK-LABEL: @"dfs$h"
+define i32 @h(i32 %x, i32 %y) {
+  ; CHECK: call{{.*}}__dfsan_union
+  %xay = add i32 %x, %y
+  ; CHECK-NOT: call{{.*}}__dfsan_union
+  %xayax = add i32 %xay, %x
+  ret i32 %xayax
 }
