@@ -90,7 +90,7 @@ NSString *my_global_str = NULL;
 void
 Test_MyString (const char *program)
 {
-    my_global_str = [NSString stringWithString:@"This is a global string"];
+    my_global_str = @"This is a global string";
     NSString *str = [NSString stringWithFormat:@"Hello from '%s'", program];
     MyString *my = [[MyString alloc] initWithNSString:str];
     NSLog(@"MyString instance: %@", [my description]);
