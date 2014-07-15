@@ -31,10 +31,14 @@ define void @private_access_f64_alloca(double addrspace(1)* noalias %out, double
 ; SI-ALLOCA: V_MOVRELS_B32_e32
 ; SI-ALLOCA: V_MOVRELS_B32_e32
 
-; SI-PROMOTE: DS_WRITE_B64
-; SI-PROMOTE: DS_WRITE_B64
-; SI-PROMOTE: DS_READ_B64
-; SI-PROMOTE: DS_READ_B64
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
 define void @private_access_v2f64_alloca(<2 x double> addrspace(1)* noalias %out, <2 x double> addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load <2 x double> addrspace(1)* %in, align 16
   %array = alloca <2 x double>, i32 16, align 16
@@ -77,10 +81,14 @@ define void @private_access_i64_alloca(i64 addrspace(1)* noalias %out, i64 addrs
 ; SI-ALLOCA: V_MOVRELS_B32_e32
 ; SI-ALLOCA: V_MOVRELS_B32_e32
 
-; SI-PROMOTE: DS_WRITE_B64
-; SI-PROMOTE: DS_WRITE_B64
-; SI-PROMOTE: DS_READ_B64
-; SI-PROMOTE: DS_READ_B64
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_WRITE_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
+; SI-PROMOTE: DS_READ_B32
 define void @private_access_v2i64_alloca(<2 x i64> addrspace(1)* noalias %out, <2 x i64> addrspace(1)* noalias %in, i32 %b) nounwind {
   %val = load <2 x i64> addrspace(1)* %in, align 16
   %array = alloca <2 x i64>, i32 16, align 16

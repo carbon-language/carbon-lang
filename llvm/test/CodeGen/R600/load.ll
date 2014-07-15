@@ -254,8 +254,8 @@ entry:
 
 ; load a v2f32 value from the global address space
 ; FUNC-LABEL: @load_v2f32
+; R600-CHECK: MEM_RAT
 ; R600-CHECK: VTX_READ_64
-
 ; SI-CHECK: BUFFER_LOAD_DWORDX2
 define void @load_v2f32(<2 x float> addrspace(1)* %out, <2 x float> addrspace(1)* %in) {
 entry:
@@ -265,9 +265,7 @@ entry:
 }
 
 ; FUNC-LABEL: @load_i64
-; R600-CHECK: MEM_RAT
-; R600-CHECK: MEM_RAT
-
+; R600-CHECK: VTX_READ_64
 ; SI-CHECK: BUFFER_LOAD_DWORDX2
 define void @load_i64(i64 addrspace(1)* %out, i64 addrspace(1)* %in) {
 entry:
