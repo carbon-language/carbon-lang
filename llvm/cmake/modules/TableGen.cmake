@@ -86,8 +86,7 @@ if(CMAKE_CROSSCOMPILING)
   endforeach()
 
   add_custom_command(OUTPUT ${CX_NATIVE_TG_DIR}/CMakeCache.txt
-    # Remove the old cache to avoid persisting previous flags.
-    COMMAND ${CMAKE_COMMAND} -E remove ${CX_NATIVE_TG_DIR}/CMakeCache.txt
+    # TODO: Clear the old CMakeCache.txt somehow without breaking restat.
     COMMAND ${CMAKE_COMMAND} -UMAKE_TOOLCHAIN_FILE -DCMAKE_BUILD_TYPE=Release
                              -DLLVM_BUILD_POLLY=OFF ${CX_CMAKE_ARGUMENTS}
                              -G "${CMAKE_GENERATOR}" ${CMAKE_SOURCE_DIR}
