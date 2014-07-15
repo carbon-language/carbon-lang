@@ -12,6 +12,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
+#include "ExplicitMakePairCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -21,6 +22,9 @@ namespace tidy {
 class GoogleModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.addCheckFactory(
+        "google-build-explicit-make-pair",
+        new ClangTidyCheckFactory<build::ExplicitMakePairCheck>());
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());
