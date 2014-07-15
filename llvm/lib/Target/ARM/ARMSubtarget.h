@@ -105,9 +105,6 @@ protected:
   /// NoARM - True if subtarget does not support ARM mode execution.
   bool NoARM;
 
-  /// PostRAScheduler - True if using post-register-allocation scheduler.
-  bool PostRAScheduler;
-
   /// IsR9Reserved - True if R9 is a not available as general purpose register.
   bool IsR9Reserved;
 
@@ -429,12 +426,7 @@ public:
   bool hasSinCos() const;
 
   /// True for some subtargets at > -O0.
-  bool enablePostMachineScheduler() const;
-
-  /// enablePostRAScheduler - True at 'More' optimization.
-  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                             TargetSubtargetInfo::AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const override;
+  bool enablePostMachineScheduler() const override;
 
   // enableAtomicExpandLoadLinked - True if we need to expand our atomics.
   bool enableAtomicExpandLoadLinked() const override;

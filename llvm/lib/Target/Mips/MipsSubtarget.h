@@ -160,9 +160,10 @@ protected:
   std::unique_ptr<const MipsTargetLowering> TLInfoSE;
 
 public:
-  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                             AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const override;
+  /// This overrides the PostRAScheduler bit in the SchedModel for each CPU.
+  bool enablePostMachineScheduler() const override;
+  void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const override;
+  CodeGenOpt::Level getOptLevelToEnablePostRAScheduler() const override;
 
   /// Only O32 and EABI supported right now.
   bool isABI_EABI() const { return MipsABI == EABI; }

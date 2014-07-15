@@ -219,9 +219,6 @@ void X86Subtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // Make sure the right MCSchedModel is used.
   InitCPUSchedModel(CPUName);
 
-  if (X86ProcFamily == IntelAtom || X86ProcFamily == IntelSLM)
-    PostRAScheduler = true;
-
   InstrItins = getInstrItineraryForCPU(CPUName);
 
   // It's important to keep the MCSubtargetInfo feature bits in sync with
@@ -286,7 +283,6 @@ void X86Subtarget::initializeEnvironment() {
   HasCmpxchg16b = false;
   UseLeaForSP = false;
   HasSlowDivide = false;
-  PostRAScheduler = false;
   PadShortFunctions = false;
   CallRegIndirect = false;
   LEAUsesAG = false;
@@ -359,16 +355,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                     is64Bit() ? -8 : -4),
       JITInfo(hasSSE1()) {}
 
-bool
-X86Subtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                                    TargetSubtargetInfo::AntiDepBreakMode &Mode,
-                                    RegClassVector &CriticalPathRCs) const {
-  Mode = TargetSubtargetInfo::ANTIDEP_CRITICAL;
-  CriticalPathRCs.clear();
-  return PostRAScheduler && OptLevel >= CodeGenOpt::Default;
-}
-
-bool
-X86Subtarget::enableEarlyIfConversion() const {
+bool X86Subtarget::enableEarlyIfConversion() const {
   return hasCMov() && X86EarlyIfConv;
 }
+

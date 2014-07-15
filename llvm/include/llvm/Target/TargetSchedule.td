@@ -88,6 +88,8 @@ class SchedMachineModel {
   // Per-cycle resources tables.
   ProcessorItineraries Itineraries = NoItineraries;
 
+  bit PostRAScheduler = 0; // Enable Post RegAlloc Scheduler pass.
+
   // Subtargets that define a model for only a subset of instructions
   // that have a scheduling class (itinerary class or SchedRW list)
   // and may actually be generated for that subtarget must clear this

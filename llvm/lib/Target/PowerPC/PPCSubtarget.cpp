@@ -222,22 +222,6 @@ bool PPCSubtarget::hasLazyResolverStub(const GlobalValue *GV,
          GV->hasCommonLinkage() || isDecl;
 }
 
-bool PPCSubtarget::enablePostRAScheduler(
-           CodeGenOpt::Level OptLevel,
-           TargetSubtargetInfo::AntiDepBreakMode& Mode,
-           RegClassVector& CriticalPathRCs) const {
-  Mode = TargetSubtargetInfo::ANTIDEP_ALL;
-
-  CriticalPathRCs.clear();
-
-  if (isPPC64())
-    CriticalPathRCs.push_back(&PPC::G8RCRegClass);
-  else
-    CriticalPathRCs.push_back(&PPC::GPRCRegClass);
-    
-  return OptLevel >= CodeGenOpt::Default;
-}
-
 // Embedded cores need aggressive scheduling (and some others also benefit).
 static bool needsAggressiveScheduling(unsigned Directive) {
   switch (Directive) {
@@ -257,6 +241,19 @@ bool PPCSubtarget::enableMachineScheduler() const {
   // FIXME: Enable this for all cores (some additional modeling
   // may be necessary).
   return needsAggressiveScheduling(DarwinDirective);
+}
+
+// This overrides the PostRAScheduler bit in the SchedModel for each CPU.
+bool PPCSubtarget::enablePostMachineScheduler() const { return true; }
+
+PPCGenSubtargetInfo::AntiDepBreakMode PPCSubtarget::getAntiDepBreakMode() const {
+  return TargetSubtargetInfo::ANTIDEP_ALL;
+}
+
+void PPCSubtarget::getCriticalPathRCs(RegClassVector &CriticalPathRCs) const {
+  CriticalPathRCs.clear();
+  CriticalPathRCs.push_back(isPPC64() ?
+                            &PPC::G8RCRegClass : &PPC::GPRCRegClass);
 }
 
 void PPCSubtarget::overrideSchedPolicy(MachineSchedPolicy &Policy,

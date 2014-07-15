@@ -1201,6 +1201,10 @@ void SubtargetEmitter::EmitProcessorModels(raw_ostream &OS) {
     EmitProcessorProp(OS, PI->ModelDef, "MispredictPenalty", ',');
 
     OS << "  " << (bool)(PI->ModelDef ?
+                         PI->ModelDef->getValueAsBit("PostRAScheduler") : 0)
+       << ", // " << "PostRAScheduler\n";
+
+    OS << "  " << (bool)(PI->ModelDef ?
                          PI->ModelDef->getValueAsBit("CompleteModel") : 0)
        << ", // " << "CompleteModel\n";
 

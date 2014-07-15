@@ -633,6 +633,7 @@ def GenericModel : SchedMachineModel {
   let MicroOpBufferSize = 32;
   let LoadLatency = 4;
   let HighLatency = 10;
+  let PostRAScheduler = 0;
 }
 
 include "X86ScheduleAtom.td"

@@ -19,6 +19,7 @@ def SLMModel : SchedMachineModel {
   let MicroOpBufferSize = 32; // Based on the reorder buffer.
   let LoadLatency = 3;
   let MispredictPenalty = 10;
+  let PostRAScheduler = 1;
 
   // For small loops, expand by a small factor to hide the backedge cost.
   let LoopMicroOpBufferSize = 10;

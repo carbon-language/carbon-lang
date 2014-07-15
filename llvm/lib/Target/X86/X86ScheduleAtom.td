@@ -538,6 +538,7 @@ def AtomModel : SchedMachineModel {
   // On the Atom, the throughput for taken branches is 2 cycles. For small
   // simple loops, expand by a small factor to hide the backedge cost.
   let LoopMicroOpBufferSize = 10;
+  let PostRAScheduler = 1;
 
   let Itineraries = AtomItineraries;
 }

@@ -225,15 +225,15 @@ public:
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
 
-  /// enablePostRAScheduler - True at 'More' optimization.
-  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                             TargetSubtargetInfo::AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const override;
-
   bool enableEarlyIfConversion() const override { return hasISEL(); }
 
   // Scheduling customization.
   bool enableMachineScheduler() const override;
+  // This overrides the PostRAScheduler bit in the SchedModel for each CPU.
+  bool enablePostMachineScheduler() const override;
+  AntiDepBreakMode getAntiDepBreakMode() const override;
+  void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const override;
+
   void overrideSchedPolicy(MachineSchedPolicy &Policy,
                            MachineInstr *begin,
                            MachineInstr *end,

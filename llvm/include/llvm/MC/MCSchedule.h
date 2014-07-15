@@ -186,6 +186,8 @@ public:
   // takes to recover from a branch misprediction.
   unsigned MispredictPenalty;
   static const unsigned DefaultMispredictPenalty = 10;
+  
+  bool PostRAScheduler; // default value is false
 
   bool CompleteModel;
 
@@ -210,7 +212,8 @@ public:
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
                   MispredictPenalty(DefaultMispredictPenalty),
-                  CompleteModel(true), ProcID(0), ProcResourceTable(nullptr),
+                  PostRAScheduler(false), CompleteModel(true),
+                  ProcID(0), ProcResourceTable(nullptr),
                   SchedClassTable(nullptr), NumProcResourceKinds(0),
                   NumSchedClasses(0), InstrItineraries(nullptr) {
     (void)NumProcResourceKinds;
@@ -219,12 +222,13 @@ public:
 
   // Table-gen driven ctor.
   MCSchedModel(unsigned iw, int mbs, int lmbs, unsigned ll, unsigned hl,
-               unsigned mp, bool cm, unsigned pi, const MCProcResourceDesc *pr,
-               const MCSchedClassDesc *sc, unsigned npr, unsigned nsc,
-               const InstrItinerary *ii):
+               unsigned mp, bool postRASched, bool cm, unsigned pi,
+               const MCProcResourceDesc *pr, const MCSchedClassDesc *sc,
+               unsigned npr, unsigned nsc, const InstrItinerary *ii):
     IssueWidth(iw), MicroOpBufferSize(mbs), LoopMicroOpBufferSize(lmbs),
     LoadLatency(ll), HighLatency(hl),
-    MispredictPenalty(mp), CompleteModel(cm), ProcID(pi),
+    MispredictPenalty(mp), PostRAScheduler(postRASched),
+    CompleteModel(cm), ProcID(pi),
     ProcResourceTable(pr), SchedClassTable(sc), NumProcResourceKinds(npr),
     NumSchedClasses(nsc), InstrItineraries(ii) {}
 

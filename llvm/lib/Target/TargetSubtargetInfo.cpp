@@ -53,16 +53,7 @@ bool TargetSubtargetInfo::enableRALocalReassignment(
 }
 
 bool TargetSubtargetInfo::enablePostMachineScheduler() const {
-  return false;
-}
-
-bool TargetSubtargetInfo::enablePostRAScheduler(
-          CodeGenOpt::Level OptLevel,
-          AntiDepBreakMode& Mode,
-          RegClassVector& CriticalPathRCs) const {
-  Mode = ANTIDEP_NONE;
-  CriticalPathRCs.clear();
-  return false;
+  return getSchedModel()->PostRAScheduler;
 }
 
 bool TargetSubtargetInfo::useAA() const {

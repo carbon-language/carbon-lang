@@ -177,15 +177,17 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   UseSmallSection = !IsLinux && (RM == Reloc::Static);
 }
 
-bool
-MipsSubtarget::enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                                    TargetSubtargetInfo::AntiDepBreakMode &Mode,
-                                     RegClassVector &CriticalPathRCs) const {
-  Mode = TargetSubtargetInfo::ANTIDEP_NONE;
+/// This overrides the PostRAScheduler bit in the SchedModel for any CPU.
+bool MipsSubtarget::enablePostMachineScheduler() const { return true; }
+
+void MipsSubtarget::getCriticalPathRCs(RegClassVector &CriticalPathRCs) const {
   CriticalPathRCs.clear();
-  CriticalPathRCs.push_back(isGP64bit() ? &Mips::GPR64RegClass
-                                        : &Mips::GPR32RegClass);
-  return OptLevel >= CodeGenOpt::Aggressive;
+  CriticalPathRCs.push_back(isGP64bit() ?
+                            &Mips::GPR64RegClass : &Mips::GPR32RegClass);
+}
+
+CodeGenOpt::Level MipsSubtarget::getOptLevelToEnablePostRAScheduler() const {
+  return CodeGenOpt::Aggressive;
 }
 
 MipsSubtarget &

@@ -170,9 +170,6 @@ protected:
   /// full divides and should be used when possible.
   bool HasSlowDivide;
 
-  /// PostRAScheduler - True if using post-register-allocation scheduler.
-  bool PostRAScheduler;
-
   /// PadShortFunctions - True if the short functions should be padded to prevent
   /// a stall when returning too early.
   bool PadShortFunctions;
@@ -453,18 +450,15 @@ public:
   /// Enable the MachineScheduler pass for all X86 subtargets.
   bool enableMachineScheduler() const override { return true; }
 
-  /// enablePostRAScheduler - run for Atom optimization.
-  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
-                             TargetSubtargetInfo::AntiDepBreakMode& Mode,
-                             RegClassVector& CriticalPathRCs) const override;
-
-  bool postRAScheduler() const { return PostRAScheduler; }
-
   bool enableEarlyIfConversion() const override;
 
   /// getInstrItins = Return the instruction itineraries based on the
   /// subtarget selection.
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
+
+  AntiDepBreakMode getAntiDepBreakMode() const override {
+    return TargetSubtargetInfo::ANTIDEP_CRITICAL;
+  }
 };
 
 } // End llvm namespace
