@@ -19,4 +19,4 @@
 type = Library
 name = LTO
 parent = Libraries
-required_libraries = BitReader BitWriter Core IPA IPO InstCombine Linker MC MCParser ObjCARC Object Scalar Support Target TransformUtils
+required_libraries = BitReader BitWriter Core IPA IPO InstCombine Linker MC ObjCARC Object Scalar Support Target TransformUtils

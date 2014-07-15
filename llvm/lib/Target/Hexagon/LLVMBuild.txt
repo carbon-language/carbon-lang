@@ -28,5 +28,5 @@ has_asmprinter = 1
 type = Library
 name = HexagonCodeGen
 parent = Hexagon
-required_libraries = Analysis AsmPrinter CodeGen Core HexagonAsmPrinter HexagonDesc HexagonInfo MC Scalar SelectionDAG Support Target TransformUtils
+required_libraries = Analysis AsmPrinter CodeGen Core HexagonAsmPrinter HexagonDesc HexagonInfo MC SelectionDAG Support Target
 add_to_library_groups = Hexagon

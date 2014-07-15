@@ -28,5 +28,5 @@ has_asmprinter = 1
 type = Library
 name = R600CodeGen
 parent = R600
-required_libraries = Analysis AsmPrinter CodeGen Core MC R600AsmPrinter R600Desc R600Info Scalar SelectionDAG Support Target TransformUtils
+required_libraries = Analysis AsmPrinter CodeGen Core MC R600AsmPrinter R600Desc R600Info Scalar SelectionDAG Support Target
 add_to_library_groups = R600
