@@ -50,6 +50,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/ValueTracking.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/IR/InstVisitor.h"
@@ -265,6 +266,7 @@ class DataFlowSanitizer : public ModulePass {
 struct DFSanFunction {
   DataFlowSanitizer &DFS;
   Function *F;
+  DominatorTree DT;
   DataFlowSanitizer::InstrumentedABI IA;
   bool IsNativeABI;
   Value *ArgTLSPtr;
@@ -276,10 +278,19 @@ struct DFSanFunction {
   DenseSet<Instruction *> SkipInsts;
   DenseSet<Value *> NonZeroChecks;
 
+  struct CachedCombinedShadow {
+    BasicBlock *Block;
+    Value *Shadow;
+  };
+  DenseMap<std::pair<Value *, Value *>, CachedCombinedShadow>
+      CachedCombinedShadows;
+
   DFSanFunction(DataFlowSanitizer &DFS, Function *F, bool IsNativeABI)
       : DFS(DFS), F(F), IA(DFS.getInstrumentedABI()),
         IsNativeABI(IsNativeABI), ArgTLSPtr(nullptr), RetvalTLSPtr(nullptr),
-        LabelReturnAlloca(nullptr) {}
+        LabelReturnAlloca(nullptr) {
+    DT.recalculate(*F);
+  }
   Value *getArgTLSPtr();
   Value *getArgTLS(unsigned Index, Instruction *Pos);
   Value *getRetvalTLS();
@@ -880,6 +891,14 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
     return V1;
   if (V1 == V2)
     return V1;
+
+  auto Key = std::make_pair(V1, V2);
+  if (V1 > V2)
+    std::swap(Key.first, Key.second);
+  CachedCombinedShadow &CCS = CachedCombinedShadows[Key];
+  if (CCS.Block && DT.dominates(CCS.Block, Pos->getParent()))
+    return CCS.Shadow;
+
   IRBuilder<> IRB(Pos);
   BasicBlock *Head = Pos->getParent();
   Value *Ne = IRB.CreateICmpNE(V1, V2);
@@ -895,6 +914,9 @@ Value *DFSanFunction::combineShadows(Value *V1, Value *V2, Instruction *Pos) {
   PHINode *Phi = PHINode::Create(DFS.ShadowTy, 2, "", Tail->begin());
   Phi->addIncoming(Call, Call->getParent());
   Phi->addIncoming(V1, Head);
+
+  CCS.Block = Tail;
+  CCS.Shadow = Phi;
   return Phi;
 }
 
@@ -988,16 +1010,27 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
 
     BasicBlock *Head = Pos->getParent();
     BasicBlock *Tail = Head->splitBasicBlock(Pos);
+
+    if (DomTreeNode *OldNode = DT.getNode(Head)) {
+      std::vector<DomTreeNode *> Children(OldNode->begin(), OldNode->end());
+
+      DomTreeNode *NewNode = DT.addNewBlock(Tail, Head);
+      for (auto Child : Children)
+        DT.changeImmediateDominator(Child, NewNode);
+    }
+
     // In the following code LastBr will refer to the previous basic block's
     // conditional branch instruction, whose true successor is fixed up to point
     // to the next block during the loop below or to the tail after the final
     // iteration.
     BranchInst *LastBr = BranchInst::Create(FallbackBB, FallbackBB, ShadowsEq);
     ReplaceInstWithInst(Head->getTerminator(), LastBr);
+    DT.addNewBlock(FallbackBB, Head);
 
     for (uint64_t Ofs = 64 / DFS.ShadowWidth; Ofs != Size;
          Ofs += 64 / DFS.ShadowWidth) {
       BasicBlock *NextBB = BasicBlock::Create(*DFS.Ctx, "", F);
+      DT.addNewBlock(NextBB, LastBr->getParent());
       IRBuilder<> NextIRB(NextBB);
       WideAddr = NextIRB.CreateGEP(WideAddr, ConstantInt::get(DFS.IntptrTy, 1));
       Value *NextWideShadow = NextIRB.CreateAlignedLoad(WideAddr, ShadowAlign);
