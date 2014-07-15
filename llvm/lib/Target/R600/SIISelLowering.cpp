@@ -182,6 +182,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     MVT::v8i32, MVT::v8f32, MVT::v16i32, MVT::v16f32
   };
 
+  setOperationAction(ISD::SELECT_CC, MVT::i1, Expand);
+  setOperationAction(ISD::SELECT, MVT::i1, Promote);
+
   for (MVT VT : VecTypes) {
     for (unsigned Op = 0; Op < ISD::BUILTIN_OP_END; ++Op) {
       switch(Op) {

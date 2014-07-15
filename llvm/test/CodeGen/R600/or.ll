@@ -127,3 +127,19 @@ define void @trunc_i64_or_to_i32(i32 addrspace(1)* %out, i64 %a, i64 %b) {
   store i32 %trunc, i32 addrspace(1)* %out, align 8
   ret void
 }
+
+; EG-CHECK: @or_i1
+; EG-CHECK: OR_INT {{\** *}}T{{[0-9]+\.[XYZW], PV\.[XYZW], PS}}
+
+; SI-CHECK: @or_i1
+; SI-CHECK: S_OR_B64 s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}]
+define void @or_i1(float addrspace(1)* %out, float addrspace(1)* %in0, float addrspace(1)* %in1) {
+  %a = load float addrspace(1) * %in0
+  %b = load float addrspace(1) * %in1
+  %acmp = fcmp oge float %a, 0.000000e+00
+  %bcmp = fcmp oge float %b, 0.000000e+00
+  %or = or i1 %acmp, %bcmp
+  %result = select i1 %or, float %a, float %b
+  store float %result, float addrspace(1)* %out
+  ret void
+}

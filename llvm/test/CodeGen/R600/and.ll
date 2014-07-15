@@ -80,6 +80,15 @@ define void @s_and_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) {
   ret void
 }
 
+; FIXME: Should use SGPRs
+; FUNC-LABEL: @s_and_i1
+; SI: V_AND_B32
+define void @s_and_i1(i1 addrspace(1)* %out, i1 %a, i1 %b) {
+  %and = and i1 %a, %b
+  store i1 %and, i1 addrspace(1)* %out
+  ret void
+}
+
 ; FUNC-LABEL: @s_and_constant_i64
 ; SI: S_AND_B64
 define void @s_and_constant_i64(i64 addrspace(1)* %out, i64 %a) {
