@@ -1,14 +1,43 @@
 ; RUN: opt -instcombine -S < %s | FileCheck %s
-target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
+target datalayout = "E-p:64:64:64-p1:64:64:64-p2:32:32:32-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 @x = external global <2 x i64>, align 16
 @xx = external global [13 x <2 x i64>], align 16
+
+@x.as2 = external addrspace(2) global <2 x i64>, align 16
 
 ; CHECK-LABEL: @static_hem(
 ; CHECK: , align 16
 define <2 x i64> @static_hem() {
   %t = getelementptr <2 x i64>* @x, i32 7
   %tmp1 = load <2 x i64>* %t, align 1
+  ret <2 x i64> %tmp1
+}
+
+; CHECK-LABEL: @static_hem_addrspacecast(
+; CHECK: , align 16
+define <2 x i64> @static_hem_addrspacecast() {
+  %t = getelementptr <2 x i64>* @x, i32 7
+  %t.asc = addrspacecast <2 x i64>* %t to <2 x i64> addrspace(1)*
+  %tmp1 = load <2 x i64> addrspace(1)* %t.asc, align 1
+  ret <2 x i64> %tmp1
+}
+
+; CHECK-LABEL: @static_hem_addrspacecast_smaller_ptr(
+; CHECK: , align 16
+define <2 x i64> @static_hem_addrspacecast_smaller_ptr() {
+  %t = getelementptr <2 x i64>* @x, i32 7
+  %t.asc = addrspacecast <2 x i64>* %t to <2 x i64> addrspace(2)*
+  %tmp1 = load <2 x i64> addrspace(2)* %t.asc, align 1
+  ret <2 x i64> %tmp1
+}
+
+; CHECK-LABEL: @static_hem_addrspacecast_larger_ptr(
+; CHECK: , align 16
+define <2 x i64> @static_hem_addrspacecast_larger_ptr() {
+  %t = getelementptr <2 x i64> addrspace(2)* @x.as2, i32 7
+  %t.asc = addrspacecast <2 x i64> addrspace(2)* %t to <2 x i64> addrspace(1)*
+  %tmp1 = load <2 x i64> addrspace(1)* %t.asc, align 1
   ret <2 x i64> %tmp1
 }
 

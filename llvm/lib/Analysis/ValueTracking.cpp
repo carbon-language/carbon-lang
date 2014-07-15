@@ -29,6 +29,7 @@
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Operator.h"
 #include "llvm/IR/PatternMatch.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include <cstring>
 using namespace llvm;
@@ -415,6 +416,7 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
     break; // Can't work with floating point.
   case Instruction::PtrToInt:
   case Instruction::IntToPtr:
+  case Instruction::AddrSpaceCast: // Pointers could be different sizes.
     // We can't handle these if we don't know the pointer size.
     if (!TD) break;
     // FALL THROUGH and handle them the same as zext/trunc.
