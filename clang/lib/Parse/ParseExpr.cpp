@@ -863,7 +863,12 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     //     ++ cast-expression
     //     -- cast-expression
     SourceLocation SavedLoc = ConsumeToken();
-    Res = ParseCastExpression(!getLangOpts().CPlusPlus);
+    // One special case is implicitly handled here: if the preceding tokens are
+    // an ambiguous cast expression, such as "(T())++", then we recurse to
+    // determine whether the '++' is prefix or postfix.
+    Res = ParseCastExpression(!getLangOpts().CPlusPlus,
+                              /*isAddressOfOperand*/false, NotCastExpr,
+                              NotTypeCast);
     if (!Res.isInvalid())
       Res = Actions.ActOnUnaryOp(getCurScope(), SavedLoc, SavedKind, Res.get());
     return Res;

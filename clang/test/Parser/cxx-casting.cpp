@@ -101,5 +101,11 @@ void PR19748() {
   (true ? (B(*)())f : p)();
 }
 
+void PR19751(int n) {
+  struct T { void operator++(int); };
+  (T())++; // ok, not an ill-formed cast to function type
+  (T())++n; // expected-error {{C-style cast from 'int' to 'T ()' is not allowed}}
+}
+
 // PR13619. Must be at end of file.
 int n = reinterpret_cast // expected-error {{expected '<'}} expected-error {{expected ';'}}
