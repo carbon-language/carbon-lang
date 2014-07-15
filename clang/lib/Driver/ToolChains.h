@@ -538,7 +538,9 @@ public:
   }
 
   virtual bool IsIntegratedAssemblerDefault() const {
-    if (getTriple().getArch() == llvm::Triple::ppc)
+    if (getTriple().getArch() == llvm::Triple::ppc ||
+        getTriple().getArch() == llvm::Triple::sparc ||
+        getTriple().getArch() == llvm::Triple::sparcv9)
       return true;
     return Generic_ELF::IsIntegratedAssemblerDefault();
   }
