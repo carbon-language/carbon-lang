@@ -3038,6 +3038,13 @@ TEST(UsingDeclaration, ThroughUsingDeclaration) {
       declRefExpr(throughUsingDecl(anything()))));
 }
 
+TEST(UsingDirectiveDeclaration, MatchesUsingNamespace) {
+  EXPECT_TRUE(matches("namespace X { int x; } using namespace X;",
+                      usingDirectiveDecl()));
+  EXPECT_FALSE(
+      matches("namespace X { int x; } using X::x;", usingDirectiveDecl()));
+}
+
 TEST(SingleDecl, IsSingleDecl) {
   StatementMatcher SingleDeclStmt =
       declStmt(hasSingleDecl(varDecl(hasInitializer(anything()))));
