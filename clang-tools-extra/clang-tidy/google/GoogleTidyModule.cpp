@@ -16,6 +16,8 @@
 #include "NamedParameterCheck.h"
 #include "OverloadedUnaryAndCheck.h"
 #include "StringReferenceMemberCheck.h"
+#include "UnnamedNamespaceInHeaderCheck.h"
+#include "UsingNamespaceDirectiveCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -28,6 +30,12 @@ public:
     CheckFactories.addCheckFactory(
         "google-build-explicit-make-pair",
         new ClangTidyCheckFactory<build::ExplicitMakePairCheck>());
+    CheckFactories.addCheckFactory(
+        "google-build-namespaces",
+        new ClangTidyCheckFactory<build::UnnamedNamespaceInHeaderCheck>());
+    CheckFactories.addCheckFactory(
+        "google-build-using-namespace",
+        new ClangTidyCheckFactory<build::UsingNamespaceDirectiveCheck>());
     CheckFactories.addCheckFactory(
         "google-explicit-constructor",
         new ClangTidyCheckFactory<ExplicitConstructorCheck>());

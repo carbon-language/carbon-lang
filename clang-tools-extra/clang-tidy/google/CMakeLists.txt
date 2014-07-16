@@ -8,6 +8,8 @@ add_clang_library(clangTidyGoogleModule
   NamedParameterCheck.cpp
   OverloadedUnaryAndCheck.cpp
   StringReferenceMemberCheck.cpp
+  UnnamedNamespaceInHeaderCheck.cpp
+  UsingNamespaceDirectiveCheck.cpp
 
   LINK_LIBS
   clangAST
