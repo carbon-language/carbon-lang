@@ -45,7 +45,7 @@ define void @sum_of_array(i32 %x, i32 %y, float* nocapture %output) {
   ret void
 }
 ; PTX-LABEL: sum_of_array(
-; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rl|r)[0-9]+]]{{\]}}
+; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rd|r)[0-9]+]]{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+4{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+128{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+132{{\]}}
@@ -88,7 +88,7 @@ define void @sum_of_array2(i32 %x, i32 %y, float* nocapture %output) {
   ret void
 }
 ; PTX-LABEL: sum_of_array2(
-; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rl|r)[0-9]+]]{{\]}}
+; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rd|r)[0-9]+]]{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+4{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+128{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+132{{\]}}
@@ -129,7 +129,7 @@ define void @sum_of_array3(i32 %x, i32 %y, float* nocapture %output) {
   ret void
 }
 ; PTX-LABEL: sum_of_array3(
-; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rl|r)[0-9]+]]{{\]}}
+; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG:%(rd|r)[0-9]+]]{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+4{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+128{{\]}}
 ; PTX: ld.shared.f32 {{%f[0-9]+}}, {{\[}}[[BASE_REG]]+132{{\]}}

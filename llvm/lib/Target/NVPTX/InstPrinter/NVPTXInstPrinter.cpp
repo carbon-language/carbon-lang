@@ -57,13 +57,13 @@ void NVPTXInstPrinter::printRegName(raw_ostream &OS, unsigned RegNo) const {
     OS << "%r";
     break;
   case 4:
-    OS << "%rl";
+    OS << "%rd";
     break;
   case 5:
     OS << "%f";
     break;
   case 6:
-    OS << "%fl";
+    OS << "%fd";
     break;
   }
 

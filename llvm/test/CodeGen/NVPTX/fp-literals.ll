@@ -11,7 +11,7 @@ define float @myaddf(float %a) {
 }
 
 ; CHECK: myaddd
-; CHECK: add.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, 0d3FF0000000000000
+; CHECK: add.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, 0d3FF0000000000000
 define double @myaddd(double %a) {
   %ret = fadd double %a, 1.0
   ret double %ret

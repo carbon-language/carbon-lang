@@ -9,28 +9,28 @@
 ;;; f64
 
 define double @fadd_f64(double %a, double %b) {
-; CHECK: add.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}}
+; CHECK: add.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}}
 ; CHECK: ret
   %ret = fadd double %a, %b
   ret double %ret
 }
 
 define double @fsub_f64(double %a, double %b) {
-; CHECK: sub.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}}
+; CHECK: sub.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}}
 ; CHECK: ret
   %ret = fsub double %a, %b
   ret double %ret
 }
 
 define double @fmul_f64(double %a, double %b) {
-; CHECK: mul.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}}
+; CHECK: mul.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}}
 ; CHECK: ret
   %ret = fmul double %a, %b
   ret double %ret
 }
 
 define double @fdiv_f64(double %a, double %b) {
-; CHECK: div.rn.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}}
+; CHECK: div.rn.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}}
 ; CHECK: ret
   %ret = fdiv double %a, %b
   ret double %ret

@@ -9,7 +9,7 @@ define ptx_device float @t1_f32(float %x, float %y, float %z) {
 }
 
 define ptx_device double @t1_f64(double %x, double %y, double %z) {
-; CHECK: fma.rn.f64 %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}}, %fl{{[0-9]+}};
+; CHECK: fma.rn.f64 %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}}, %fd{{[0-9]+}};
 ; CHECK: ret;
   %a = fmul double %x, %y
   %b = fadd double %a, %z

@@ -2010,9 +2010,9 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
   // O << "\t.reg .s16 %rc<" << NVPTXNumRegisters << ">;\n";
   // O << "\t.reg .s16 %rs<" << NVPTXNumRegisters << ">;\n";
   // O << "\t.reg .s32 %r<" << NVPTXNumRegisters << ">;\n";
-  // O << "\t.reg .s64 %rl<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .s64 %rd<" << NVPTXNumRegisters << ">;\n";
   // O << "\t.reg .f32 %f<" << NVPTXNumRegisters << ">;\n";
-  // O << "\t.reg .f64 %fl<" << NVPTXNumRegisters << ">;\n";
+  // O << "\t.reg .f64 %fd<" << NVPTXNumRegisters << ">;\n";
 
   // Emit declaration of the virtual registers or 'physical' registers for
   // each register class

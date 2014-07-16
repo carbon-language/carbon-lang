@@ -35,9 +35,9 @@ foreach i = 0-4 in {
   def P#i  : NVPTXReg<"%p"#i>;  // Predicate
   def RS#i : NVPTXReg<"%rs"#i>; // 16-bit
   def R#i  : NVPTXReg<"%r"#i>;  // 32-bit
-  def RL#i : NVPTXReg<"%rl"#i>; // 64-bit
+  def RL#i : NVPTXReg<"%rd"#i>; // 64-bit
   def F#i  : NVPTXReg<"%f"#i>;  // 32-bit float
-  def FL#i : NVPTXReg<"%fl"#i>; // 64-bit float
+  def FL#i : NVPTXReg<"%fd"#i>; // 64-bit float
 
   // Arguments
   def ia#i : NVPTXReg<"%ia"#i>;

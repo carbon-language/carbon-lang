@@ -9,8 +9,8 @@
 ;;; i64
 
 define i64 @icmp_eq_i64(i64 %a, i64 %b) {
-; CHECK: setp.eq.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.eq.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp eq i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -18,8 +18,8 @@ define i64 @icmp_eq_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_ne_i64(i64 %a, i64 %b) {
-; CHECK: setp.ne.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.ne.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp ne i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -27,8 +27,8 @@ define i64 @icmp_ne_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_ugt_i64(i64 %a, i64 %b) {
-; CHECK: setp.gt.u64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.gt.u64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp ugt i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -36,8 +36,8 @@ define i64 @icmp_ugt_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_uge_i64(i64 %a, i64 %b) {
-; CHECK: setp.ge.u64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.ge.u64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp uge i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -45,8 +45,8 @@ define i64 @icmp_uge_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_ult_i64(i64 %a, i64 %b) {
-; CHECK: setp.lt.u64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.lt.u64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp ult i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -54,8 +54,8 @@ define i64 @icmp_ult_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_ule_i64(i64 %a, i64 %b) {
-; CHECK: setp.le.u64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.le.u64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp ule i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -63,8 +63,8 @@ define i64 @icmp_ule_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_sgt_i64(i64 %a, i64 %b) {
-; CHECK: setp.gt.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.gt.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp sgt i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -72,8 +72,8 @@ define i64 @icmp_sgt_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_sge_i64(i64 %a, i64 %b) {
-; CHECK: setp.ge.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.ge.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp sge i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -81,8 +81,8 @@ define i64 @icmp_sge_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_slt_i64(i64 %a, i64 %b) {
-; CHECK: setp.lt.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.lt.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp slt i64 %a, %b
   %ret = zext i1 %cmp to i64
@@ -90,8 +90,8 @@ define i64 @icmp_slt_i64(i64 %a, i64 %b) {
 }
 
 define i64 @icmp_sle_i64(i64 %a, i64 %b) {
-; CHECK: setp.le.s64 %p[[P0:[0-9]+]], %rl{{[0-9]+}}, %rl{{[0-9]+}}
-; CHECK: selp.u64 %rl{{[0-9]+}}, 1, 0, %p[[P0]]
+; CHECK: setp.le.s64 %p[[P0:[0-9]+]], %rd{{[0-9]+}}, %rd{{[0-9]+}}
+; CHECK: selp.u64 %rd{{[0-9]+}}, 1, 0, %p[[P0]]
 ; CHECK: ret
   %cmp = icmp sle i64 %a, %b
   %ret = zext i1 %cmp to i64

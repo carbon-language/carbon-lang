@@ -198,7 +198,7 @@ define ptx_device i32 @test_clock() {
 }
 
 define ptx_device i64 @test_clock64() {
-; CHECK: mov.u64 %rl{{[0-9]+}}, %clock64;
+; CHECK: mov.u64 %rd{{[0-9]+}}, %clock64;
 ; CHECK: ret;
 	%x = call i64 @llvm.ptx.read.clock64()
 	ret i64 %x

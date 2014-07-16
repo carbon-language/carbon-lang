@@ -53,9 +53,9 @@ std::string getNVPTXRegClassStr(TargetRegisterClass const *RC) {
     return "%f";
   }
   if (RC == &NVPTX::Float64RegsRegClass) {
-    return "%fl";
+    return "%fd";
   } else if (RC == &NVPTX::Int64RegsRegClass) {
-    return "%rl";
+    return "%rd";
   } else if (RC == &NVPTX::Int32RegsRegClass) {
     return "%r";
   } else if (RC == &NVPTX::Int16RegsRegClass) {
