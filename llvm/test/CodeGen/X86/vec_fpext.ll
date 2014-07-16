@@ -3,6 +3,8 @@
 
 ; PR11674
 define void @fpext_frommem(<2 x float>* %in, <2 x double>* %out) {
+; CHECK-LABEL: fpext_frommem:
+; AVX-LABEL: fpext_frommem:
 entry:
 ; CHECK: cvtps2pd (%{{.+}}), %xmm{{[0-9]+}}
 ; AVX: vcvtps2pd (%{{.+}}), %xmm{{[0-9]+}}
@@ -13,6 +15,8 @@ entry:
 }
 
 define void @fpext_frommem4(<4 x float>* %in, <4 x double>* %out) {
+; CHECK-LABEL: fpext_frommem4:
+; AVX-LABEL: fpext_frommem4:
 entry:
 ; CHECK: cvtps2pd (%{{.+}}), %xmm{{[0-9]+}}
 ; CHECK: cvtps2pd 8(%{{.+}}), %xmm{{[0-9]+}}
@@ -24,6 +28,8 @@ entry:
 }
 
 define void @fpext_frommem8(<8 x float>* %in, <8 x double>* %out) {
+; CHECK-LABEL: fpext_frommem8:
+; AVX-LABEL: fpext_frommem8:
 entry:
 ; CHECK: cvtps2pd (%{{.+}}), %xmm{{[0-9]+}}
 ; CHECK: cvtps2pd 8(%{{.+}}), %xmm{{[0-9]+}}
