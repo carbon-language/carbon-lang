@@ -1,4 +1,3 @@
-// RUN: %clang -emit-llvm -fno-standalone-debug -g -S %s -o - | FileCheck %s
 
 // CHECK-DAG: [ DW_TAG_structure_type ] [PR16214] [line [[@LINE+1]], {{.*}} [def]
 struct PR16214 {
