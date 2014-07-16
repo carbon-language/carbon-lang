@@ -891,7 +891,7 @@ Currently, only the following parameter attributes are defined:
     address of outgoing stack arguments.  An ``inalloca`` argument must
     be a pointer to stack memory produced by an ``alloca`` instruction.
     The alloca, or argument allocation, must also be tagged with the
-    inalloca keyword.  Only the past argument may have the ``inalloca``
+    inalloca keyword.  Only the last argument may have the ``inalloca``
     attribute, and that argument is guaranteed to be passed in memory.
 
     An argument allocation may be used by a call at most once because
