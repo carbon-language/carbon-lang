@@ -1494,6 +1494,21 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
       break;
     }
 
+    MemSDNode *MemSD = cast<MemSDNode>(N);
+    const DataLayout *TD = getDataLayout();
+
+    unsigned Align = MemSD->getAlignment();
+    unsigned PrefAlign =
+      TD->getPrefTypeAlignment(ValVT.getTypeForEVT(*DAG.getContext()));
+    if (Align < PrefAlign) {
+      // This store is not sufficiently aligned, so bail out and let this vector
+      // store be scalarized.  Note that we may still be able to emit smaller
+      // vector stores.  For example, if we are storing a <4 x float> with an
+      // alignment of 8, this check will fail but the legalizer will try again
+      // with 2 x <2 x float>, which will succeed with an alignment of 8.
+      return SDValue();
+    }
+
     unsigned Opcode = 0;
     EVT EltVT = ValVT.getVectorElementType();
     unsigned NumElts = ValVT.getVectorNumElements();
@@ -1535,8 +1550,6 @@ NVPTXTargetLowering::LowerSTOREVector(SDValue Op, SelectionDAG &DAG) const {
     for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
       Ops.push_back(N->getOperand(i));
     }
-
-    MemSDNode *MemSD = cast<MemSDNode>(N);
 
     SDValue NewSt = DAG.getMemIntrinsicNode(
         Opcode, DL, DAG.getVTList(MVT::Other), Ops,
@@ -3046,6 +3059,7 @@ SDValue NVPTXTargetLowering::PerformDAGCombine(SDNode *N,
 
 /// ReplaceVectorLoad - Convert vector loads into multi-output scalar loads.
 static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
+                              const DataLayout *TD,
                               SmallVectorImpl<SDValue> &Results) {
   EVT ResVT = N->getValueType(0);
   SDLoc DL(N);
@@ -3071,6 +3085,20 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
   case MVT::v4f32:
     // This is a "native" vector type
     break;
+  }
+
+  LoadSDNode *LD = cast<LoadSDNode>(N);
+
+  unsigned Align = LD->getAlignment();
+  unsigned PrefAlign =
+    TD->getPrefTypeAlignment(ResVT.getTypeForEVT(*DAG.getContext()));
+  if (Align < PrefAlign) {
+    // This load is not sufficiently aligned, so bail out and let this vector
+    // load be scalarized.  Note that we may still be able to emit smaller
+    // vector loads.  For example, if we are loading a <4 x float> with an
+    // alignment of 8, this check will fail but the legalizer will try again
+    // with 2 x <2 x float>, which will succeed with an alignment of 8.
+    return;
   }
 
   EVT EltVT = ResVT.getVectorElementType();
@@ -3108,8 +3136,6 @@ static void ReplaceLoadVector(SDNode *N, SelectionDAG &DAG,
   // Copy regular operands
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     OtherOps.push_back(N->getOperand(i));
-
-  LoadSDNode *LD = cast<LoadSDNode>(N);
 
   // The select routine does not have access to the LoadSDNode instance, so
   // pass along the extension information
@@ -3283,7 +3309,7 @@ void NVPTXTargetLowering::ReplaceNodeResults(
   default:
     report_fatal_error("Unhandled custom legalization");
   case ISD::LOAD:
-    ReplaceLoadVector(N, DAG, Results);
+    ReplaceLoadVector(N, DAG, getDataLayout(), Results);
     return;
   case ISD::INTRINSIC_W_CHAIN:
     ReplaceINTRINSIC_W_CHAIN(N, DAG, Results);
