@@ -70,6 +70,18 @@
 // RUN:   | FileCheck --check-prefix=CHECK-NOMODDSPREG %s
 // CHECK-NOMODDSPREG: "-target-feature" "+nooddspreg"
 //
+// -mfpxx
+// RUN: %clang -target mips-linux-gnu -### -c %s -mfpxx 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MFPXX %s
+// CHECK-MFPXX: "-target-feature" "+fpxx"
+// CHECK-MFPXX: "-target-feature" "+nooddspreg"
+//
+// -mfpxx -modd-spreg
+// RUN: %clang -target mips-linux-gnu -### -c %s -mfpxx -modd-spreg 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MFPXX-ODDSPREG %s
+// CHECK-MFPXX-ODDSPREG: "-target-feature" "+fpxx"
+// CHECK-MFPXX-ODDSPREG: "-target-feature" "-nooddspreg"
+//
 // -mfp64
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mfp32 -mfp64 2>&1 \

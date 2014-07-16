@@ -1058,6 +1058,10 @@ static void getMIPSTargetFeatures(const Driver &D, const ArgList &Args,
                    "msa");
   AddTargetFeature(Args, Features, options::OPT_mfp64, options::OPT_mfp32,
                    "fp64");
+  if (Args.getLastArg(options::OPT_mfpxx)) {
+    Features.push_back(Args.MakeArgString("+fpxx"));
+    Features.push_back(Args.MakeArgString("+nooddspreg"));
+  }
   AddTargetFeature(Args, Features, options::OPT_mno_odd_spreg,
                    options::OPT_modd_spreg, "nooddspreg");
 }

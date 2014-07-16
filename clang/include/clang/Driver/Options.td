@@ -1261,6 +1261,9 @@ def mips64r2 : Flag<["-"], "mips64r2">,
 def mips64r6 : Flag<["-"], "mips64r6">,
   Alias<march_EQ>, AliasArgs<["mips64r6"]>,
   HelpText<"Equivalent to -march=mips64r6">, Flags<[HelpHidden]>;
+def mfpxx : Flag<["-"], "mfpxx">, Group<m_Group>,
+  HelpText<"Avoid FPU mode dependent operations when used with the O32 ABI">,
+  Flags<[HelpHidden]>;
 def modd_spreg : Flag<["-"], "modd-spreg">, Group<m_Group>,
   HelpText<"Enable odd single-precision floating point registers">,
   Flags<[HelpHidden]>;
