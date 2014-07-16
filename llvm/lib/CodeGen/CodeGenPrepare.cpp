@@ -2130,8 +2130,11 @@ bool AddressingModeMatcher::MatchOperationAddr(User *AddrInst, unsigned Opcode,
     return true;
   }
   case Instruction::SExt: {
+    // Make sure this isn't a ConstantExpr (PR20314).
+    Instruction *SExt = dyn_cast<Instruction>(AddrInst);
+    if (!SExt) return false;
+
     // Try to move this sext out of the way of the addressing mode.
-    Instruction *SExt = cast<Instruction>(AddrInst);
     // Ask for a method for doing so.
     TypePromotionHelper::Action TPH = TypePromotionHelper::getAction(
         SExt, InsertedTruncs, TLI, PromotedInsts);
