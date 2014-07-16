@@ -1,5 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -fno-standalone-debug -g -o - %s | FileCheck %s
-// RUN: %clang_cc1 -emit-llvm -fno-standalone-debug -g -o - -load %llvmshlibdir/PrintFunctionNames%pluginext %s 2>&1 | FileCheck %s
+// RUN: %clang -emit-llvm -fno-standalone-debug -g -S %s -o - | FileCheck %s
 
 // CHECK-DAG: [ DW_TAG_structure_type ] [PR16214] [line [[@LINE+1]], {{.*}} [def]
 struct PR16214 {
