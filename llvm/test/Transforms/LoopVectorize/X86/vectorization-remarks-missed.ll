@@ -28,6 +28,7 @@
 ; CHECK: remark: source.cpp:13:5: loop not vectorized: vector width and interleave count are explicitly set to 1
 ; CHECK: remark: source.cpp:19:5: loop not vectorized: cannot identify array bounds
 ; CHECK: remark: source.cpp:19:5: loop not vectorized: vectorization is explicitly enabled
+; CHECK: warning: source.cpp:19:5: loop not vectorized: failed explicitly specified loop vectorization
 
 ; CHECK: _Z4testPii
 ; CHECK-NOT: x i32>

@@ -127,20 +127,20 @@ void DiagnosticInfoSampleProfile::print(DiagnosticPrinter &DP) const {
   DP << getMsg();
 }
 
-bool DiagnosticInfoOptimizationRemarkBase::isLocationAvailable() const {
+bool DiagnosticInfoOptimizationBase::isLocationAvailable() const {
   return getDebugLoc().isUnknown() == false;
 }
 
-void DiagnosticInfoOptimizationRemarkBase::getLocation(StringRef *Filename,
-                                                       unsigned *Line,
-                                                       unsigned *Column) const {
+void DiagnosticInfoOptimizationBase::getLocation(StringRef *Filename,
+                                                 unsigned *Line,
+                                                 unsigned *Column) const {
   DILocation DIL(getDebugLoc().getAsMDNode(getFunction().getContext()));
   *Filename = DIL.getFilename();
   *Line = DIL.getLineNumber();
   *Column = DIL.getColumnNumber();
 }
 
-const std::string DiagnosticInfoOptimizationRemarkBase::getLocationStr() const {
+const std::string DiagnosticInfoOptimizationBase::getLocationStr() const {
   StringRef Filename("<unknown>");
   unsigned Line = 0;
   unsigned Column = 0;
@@ -149,7 +149,7 @@ const std::string DiagnosticInfoOptimizationRemarkBase::getLocationStr() const {
   return Twine(Filename + ":" + Twine(Line) + ":" + Twine(Column)).str();
 }
 
-void DiagnosticInfoOptimizationRemarkBase::print(DiagnosticPrinter &DP) const {
+void DiagnosticInfoOptimizationBase::print(DiagnosticPrinter &DP) const {
   DP << getLocationStr() << ": " << getMsg();
 }
 
@@ -188,4 +188,21 @@ void llvm::emitOptimizationRemarkAnalysis(LLVMContext &Ctx,
                                           const Twine &Msg) {
   Ctx.diagnose(
       DiagnosticInfoOptimizationRemarkAnalysis(PassName, Fn, DLoc, Msg));
+}
+
+bool DiagnosticInfoOptimizationWarning::isEnabled() const {
+  // Only print warnings.
+  return getSeverity() == DS_Warning;
+}
+
+void llvm::emitLoopVectorizeWarning(LLVMContext &Ctx, const Function &Fn,
+                                    const DebugLoc &DLoc, const Twine &Msg) {
+  Ctx.diagnose(DiagnosticInfoOptimizationWarning(
+      Fn, DLoc, Twine("loop not vectorized: " + Msg)));
+}
+
+void llvm::emitLoopInterleaveWarning(LLVMContext &Ctx, const Function &Fn,
+                                     const DebugLoc &DLoc, const Twine &Msg) {
+  Ctx.diagnose(DiagnosticInfoOptimizationWarning(
+      Fn, DLoc, Twine("loop not interleaved: " + Msg)));
 }

@@ -1086,6 +1086,23 @@ private:
   MDNode *LoopID;
 };
 
+static void emitMissedWarning(Function *F, Loop *L,
+                              const LoopVectorizeHints &LH) {
+  emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
+                               L->getStartLoc(), LH.emitRemark());
+
+  if (LH.getForce() == LoopVectorizeHints::FK_Enabled) {
+    if (LH.getWidth() != 1)
+      emitLoopVectorizeWarning(
+          F->getContext(), *F, L->getStartLoc(),
+          "failed explicitly specified loop vectorization");
+    else if (LH.getUnroll() != 1)
+      emitLoopInterleaveWarning(
+          F->getContext(), *F, L->getStartLoc(),
+          "failed explicitly specified loop interleaving");
+  }
+}
+
 static void addInnerLoop(Loop &L, SmallVectorImpl<Loop *> &V) {
   if (L.empty())
     return V.push_back(&L);
@@ -1241,8 +1258,7 @@ struct LoopVectorize : public FunctionPass {
     LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, F);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
-      emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
-                                   L->getStartLoc(), Hints.emitRemark());
+      emitMissedWarning(F, L, Hints);
       return false;
     }
 
@@ -1276,8 +1292,7 @@ struct LoopVectorize : public FunctionPass {
       emitOptimizationRemarkAnalysis(
           F->getContext(), DEBUG_TYPE, *F, L->getStartLoc(),
           "loop not vectorized due to NoImplicitFloat attribute");
-      emitOptimizationRemarkMissed(F->getContext(), DEBUG_TYPE, *F,
-                                   L->getStartLoc(), Hints.emitRemark());
+      emitMissedWarning(F, L, Hints);
       return false;
     }
 

@@ -2,6 +2,7 @@
 
 ; CHECK: remark: source.cpp:4:5: loop not vectorized: loop contains a switch statement
 ; CHECK: remark: source.cpp:4:5: loop not vectorized: vectorization is explicitly enabled with width 4
+; CHECK: warning: source.cpp:4:5: loop not vectorized: failed explicitly specified loop vectorization
 
 ; CHECK: _Z11test_switchPii
 ; CHECK-NOT: x i32>
