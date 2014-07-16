@@ -2258,6 +2258,26 @@ static void addDashXForInput(const ArgList &Args, const InputInfo &Input,
     CmdArgs.push_back(types::getTypeName(Input.getType()));
 }
 
+static std::string getMSCompatibilityVersion(const char *VersionStr) {
+  unsigned Version;
+  if (StringRef(VersionStr).getAsInteger(10, Version))
+    return "0";
+
+  if (Version < 100)
+    return llvm::utostr_32(Version) + ".0";
+
+  if (Version < 10000)
+    return llvm::utostr_32(Version / 100) + "." +
+        llvm::utostr_32(Version % 100);
+
+  unsigned Build = 0, Factor = 1;
+  for ( ; Version > 10000; Version = Version / 10, Factor = Factor * 10)
+    Build = Build + (Version % 10) * Factor;
+  return llvm::utostr_32(Version / 100) + "." +
+      llvm::utostr_32(Version % 100) + "." +
+      llvm::utostr_32(Build);
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -3767,16 +3787,30 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                                                   true))))
     CmdArgs.push_back("-fms-compatibility");
 
-  // -fmsc-version=1700 is default.
+  // -fms-compatibility-version=17.00 is default.
   if (Args.hasFlag(options::OPT_fms_extensions, options::OPT_fno_ms_extensions,
-                   IsWindowsMSVC) || Args.hasArg(options::OPT_fmsc_version)) {
-    StringRef msc_ver = Args.getLastArgValue(options::OPT_fmsc_version);
-    if (msc_ver.empty())
-      CmdArgs.push_back("-fmsc-version=1700");
-    else
-      CmdArgs.push_back(Args.MakeArgString("-fmsc-version=" + msc_ver));
-  }
+                   IsWindowsMSVC) || Args.hasArg(options::OPT_fmsc_version) ||
+      Args.hasArg(options::OPT_fms_compatibility_version)) {
+    const Arg *MSCVersion = Args.getLastArg(options::OPT_fmsc_version);
+    const Arg *MSCompatibilityVersion =
+      Args.getLastArg(options::OPT_fms_compatibility_version);
 
+    if (MSCVersion && MSCompatibilityVersion)
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+          << MSCVersion->getAsString(Args)
+          << MSCompatibilityVersion->getAsString(Args);
+
+    std::string Ver;
+    if (MSCompatibilityVersion)
+      Ver = Args.getLastArgValue(options::OPT_fms_compatibility_version);
+    else if (MSCVersion)
+      Ver = getMSCompatibilityVersion(MSCVersion->getValue());
+
+    if (Ver.empty())
+      CmdArgs.push_back("-fms-compatibility-version=17.00");
+    else
+      CmdArgs.push_back(Args.MakeArgString("-fms-compatibility-version=" + Ver));
+  }
 
   // -fno-borland-extensions is default.
   if (Args.hasFlag(options::OPT_fborland_extensions,

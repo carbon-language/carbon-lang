@@ -1,7 +1,7 @@
 // This test verifies that the correct macros are predefined.
 //
 // RUN: %clang_cc1 %s -E -dM -triple i686-pc-win32 -fms-extensions -fms-compatibility \
-// RUN:     -fmsc-version=1300 -o - | FileCheck %s --check-prefix=CHECK-MS
+// RUN:     -fms-compatibility-version=13.00 -o - | FileCheck %s --check-prefix=CHECK-MS
 // CHECK-MS: #define _INTEGRAL_MAX_BITS 64
 // CHECK-MS: #define _MSC_EXTENSIONS 1
 // CHECK-MS: #define _MSC_VER 1300
@@ -14,7 +14,7 @@
 // CHECK-MS-NOT: GXX
 //
 // RUN: %clang_cc1 %s -E -dM -triple x86_64-pc-win32 -fms-extensions -fms-compatibility \
-// RUN:     -fmsc-version=1300 -o - | FileCheck %s --check-prefix=CHECK-MS64
+// RUN:     -fms-compatibility-version=13.00 -o - | FileCheck %s --check-prefix=CHECK-MS64
 // CHECK-MS64: #define _INTEGRAL_MAX_BITS 64
 // CHECK-MS64: #define _MSC_EXTENSIONS 1
 // CHECK-MS64: #define _MSC_VER 1300

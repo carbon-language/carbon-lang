@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -triple i686-pc-win32 -fms-compatibility -fmsc-version=1700 %s
+// RUN: %clang_cc1 -fsyntax-only -triple i686-pc-win32 -fms-compatibility -fms-compatibility-version=17.00 %s
 // RUN: %clang_cc1 -fsyntax-only -triple i386-mingw32 %s
 
 // Something in MSVC's headers (pulled in e.g. by <crtdefs.h>) defines __null

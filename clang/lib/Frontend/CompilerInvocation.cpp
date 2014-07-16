@@ -1208,7 +1208,7 @@ static Visibility parseVisibility(Arg *arg, ArgList &args,
 }
 
 static unsigned parseMSCVersion(ArgList &Args, DiagnosticsEngine &Diags) {
-  auto Arg = Args.getLastArg(OPT_fmsc_version);
+  auto Arg = Args.getLastArg(OPT_fms_compatibility_version);
   if (!Arg)
     return 0;
 
@@ -1225,25 +1225,8 @@ static unsigned parseMSCVersion(ArgList &Args, DiagnosticsEngine &Diags) {
   // Unfortunately, due to the bit-width limitations, we cannot currently encode
   // the value for the patch level.
 
-  StringRef Value = Arg->getValue();
-
-  // parse the compatible old form of _MSC_VER or the newer _MSC_FULL_VER
-  if (Value.find('.') == StringRef::npos) {
-    unsigned Version = 0;
-    if (Value.getAsInteger(10, Version)) {
-      Diags.Report(diag::err_drv_invalid_value)
-        << Arg->getAsString(Args) << Value;
-      return 0;
-    }
-    if (Version < 100)
-      Version = Version * 100;    // major -> major.minor
-    if (Version < 100000)
-      Version = Version * 100000; // major.minor -> major.minor.build
-    return Version;
-  }
-
-  // parse the dot-delimited component version
   unsigned VC[4] = {0};
+  StringRef Value = Arg->getValue();
   SmallVector<StringRef, 4> Components;
 
   Value.split(Components, ".", llvm::array_lengthof(VC));
@@ -1430,7 +1413,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MSVCCompat = Args.hasArg(OPT_fms_compatibility);
   Opts.MicrosoftExt = Opts.MSVCCompat || Args.hasArg(OPT_fms_extensions);
   Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks) || Opts.MicrosoftExt;
-  Opts.MSCVersion = parseMSCVersion(Args, Diags);
+  Opts.MSCompatibilityVersion = parseMSCVersion(Args, Diags);
   Opts.VtorDispMode = getLastArgIntValue(Args, OPT_vtordisp_mode_EQ, 1, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
