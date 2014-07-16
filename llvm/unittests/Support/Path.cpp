@@ -91,6 +91,7 @@ TEST(Support, Path) {
   paths.push_back("c:\\foo/");
   paths.push_back("c:/foo\\bar");
 
+  SmallVector<StringRef, 5> ComponentStack;
   for (SmallVector<StringRef, 40>::const_iterator i = paths.begin(),
                                                   e = paths.end();
                                                   i != e;
@@ -100,18 +101,17 @@ TEST(Support, Path) {
                                    ci != ce;
                                    ++ci) {
       ASSERT_FALSE(ci->empty());
+      ComponentStack.push_back(*ci);
     }
 
-#if 0 // Valgrind is whining about this.
-    outs() << "    Reverse Iteration: [";
     for (sys::path::reverse_iterator ci = sys::path::rbegin(*i),
                                      ce = sys::path::rend(*i);
                                      ci != ce;
                                      ++ci) {
-      outs() << *ci << ',';
+      ASSERT_TRUE(*ci == ComponentStack.back());
+      ComponentStack.pop_back();
     }
-    outs() << "]\n";
-#endif
+    ASSERT_TRUE(ComponentStack.empty());
 
     path::has_root_path(*i);
     path::root_path(*i);
