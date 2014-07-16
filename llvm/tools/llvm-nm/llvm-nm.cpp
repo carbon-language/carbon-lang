@@ -146,6 +146,9 @@ cl::list<std::string> SegSect("s", cl::Positional, cl::ZeroOrMore,
                               cl::desc("Dump only symbols from this segment "
                                        "and section name, Mach-O only"));
 
+cl::opt<bool> FormatMachOasHex("x", cl::desc("Print symbol entry in hex, "
+                                             "Mach-O only"));
+
 bool PrintAddress = true;
 
 bool MultipleFiles = false;
@@ -268,8 +271,10 @@ typedef std::vector<NMSymbol> SymbolListT;
 static SymbolListT SymbolList;
 
 // darwinPrintSymbol() is used to print a symbol from a Mach-O file when the
-// the OutputFormat is darwin.  It produces the same output as darwin's nm(1) -m
-// output.
+// the OutputFormat is darwin or we are printing Mach-O symbols in hex.  For
+// the darwin format it produces the same output as darwin's nm(1) -m output
+// and when printing Mach-O symbols in hex it produces the same output as
+// darwin's nm(1) -x format.
 static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
                               char *SymbolAddrStr, const char *printBlanks) {
   MachO::mach_header H;
@@ -278,7 +283,9 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
   MachO::nlist_64 STE_64;
   MachO::nlist STE;
   uint8_t NType;
+  uint8_t NSect;
   uint16_t NDesc;
+  uint32_t NStrx;
   uint64_t NValue;
   if (MachO->is64Bit()) {
     H_64 = MachO->MachOObjectFile::getHeader64();
@@ -286,7 +293,9 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
     Flags = H_64.flags;
     STE_64 = MachO->getSymbol64TableEntry(I->Symb);
     NType = STE_64.n_type;
+    NSect = STE_64.n_sect;
     NDesc = STE_64.n_desc;
+    NStrx = STE_64.n_strx;
     NValue = STE_64.n_value;
   } else {
     H = MachO->MachOObjectFile::getHeader();
@@ -294,8 +303,32 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
     Flags = H.flags;
     STE = MachO->getSymbolTableEntry(I->Symb);
     NType = STE.n_type;
+    NSect = STE.n_sect;
     NDesc = STE.n_desc;
+    NStrx = STE.n_strx;
     NValue = STE.n_value;
+  }
+
+  // If we are printing Mach-O symbols in hex do that and return.
+  if (FormatMachOasHex) {
+    char Str[18] = "";
+    const char *printFormat;
+    if (MachO->is64Bit())
+      printFormat = "%016" PRIx64;
+    else
+      printFormat = "%08" PRIx64;
+    format(printFormat, NValue).print(Str, sizeof(Str));
+    outs() << Str << ' ';
+    format("%02x", NType).print(Str, sizeof(Str));
+    outs() << Str << ' ';
+    format("%02x", NSect).print(Str, sizeof(Str));
+    outs() << Str << ' ';
+    format("%04x", NDesc).print(Str, sizeof(Str));
+    outs() << Str << ' ';
+    format("%08x", NStrx).print(Str, sizeof(Str));
+    outs() << Str << ' ';
+    outs() << I->Name << "\n";
+    return;
   }
 
   if (PrintAddress) {
@@ -480,11 +513,13 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName) {
     if (I->Size != UnknownAddressOrSize)
       format(printFormat, I->Size).print(SymbolSizeStr, sizeof(SymbolSizeStr));
 
-    // If OutputFormat is darwin and we have a MachOObjectFile print as darwin's
-    // nm(1) -m output, else if OutputFormat is darwin and not a Mach-O object
-    // fall back to OutputFormat bsd (see below).
+    // If OutputFormat is darwin or we are printing Mach-O symbols in hex and
+    // we have a MachOObjectFile, call darwinPrintSymbol to print as darwin's
+    // nm(1) -m output or hex, else if OutputFormat is darwin or we are
+    // printing Mach-O symbols in hex and not a Mach-O object fall back to
+    // OutputFormat bsd (see below).
     MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
-    if (OutputFormat == darwin && MachO) {
+    if ((OutputFormat == darwin || FormatMachOasHex) && MachO) {
       darwinPrintSymbol(MachO, I, SymbolAddrStr, printBlanks);
     } else if (OutputFormat == posix) {
       outs() << I->Name << " " << I->TypeChar << " " << SymbolAddrStr
