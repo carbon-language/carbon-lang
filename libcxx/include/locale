@@ -1871,7 +1871,7 @@ public:
 };
 
 template <class _CharT>
-class _LIBCPP_TYPE_VIS __time_get_c_storage
+class _LIBCPP_TYPE_VIS_ONLY __time_get_c_storage
 {
 protected:
     typedef basic_string<_CharT> string_type;
@@ -2509,7 +2509,7 @@ protected:
 };
 
 template <class _CharT>
-class _LIBCPP_TYPE_VIS __time_get_storage
+class _LIBCPP_TYPE_VIS_ONLY __time_get_storage
     : public __time_get
 {
 protected:
