@@ -201,8 +201,13 @@ static void AddLinkerInputs(const ToolChain &TC,
       TC.AddCXXStdlibLibArgs(Args, CmdArgs);
     else if (A.getOption().matches(options::OPT_Z_reserved_lib_cckext))
       TC.AddCCKextLibArgs(Args, CmdArgs);
-    else
-      A.renderAsInput(Args, CmdArgs);
+    else if (A.getOption().matches(options::OPT_z)) {
+      // Pass -z prefix for gcc linker compatibility.
+      A.claim();
+      A.render(Args, CmdArgs);
+    } else {
+       A.renderAsInput(Args, CmdArgs);
+    }
   }
 
   // LIBRARY_PATH - included following the user specified library paths.
