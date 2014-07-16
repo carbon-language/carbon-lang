@@ -10,6 +10,9 @@
 // RUN: cat %t/crash-report-*.sh | FileCheck --check-prefix=CHECKSH %s
 // REQUIRES: crash-recovery
 
+// PR20321: diag invokes clang -E with -frewrite-includes.
+// REQUIRES: rewriter
+
 // because of the glob (*.c, *.sh)
 // REQUIRES: shell
 
