@@ -6,7 +6,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-unknown-linux-gnu"
 
 define i32 @test_load(i32* %a) sanitize_address {
-; CHECK: @test_load
+; CHECK-LABEL: @test_load
 ; CHECK-NOT: load
 ; CHECK:   %[[LOAD_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
 ; CHECK:   lshr i64 %[[LOAD_ADDR]], 3
@@ -39,7 +39,7 @@ entry:
 }
 
 define void @test_store(i32* %a) sanitize_address {
-; CHECK: @test_store
+; CHECK-LABEL: @test_store
 ; CHECK-NOT: store
 ; CHECK:   %[[STORE_ADDR:[^ ]*]] = ptrtoint i32* %a to i64
 ; CHECK:   lshr i64 %[[STORE_ADDR]], 3
@@ -84,7 +84,7 @@ entry:
   ret void
 }
 
-; CHECK: define void @alloca_test()
+; CHECK-LABEL: define void @alloca_test()
 ; CHECK: = alloca
 ; CHECK-NOT: = alloca
 ; CHECK: ret void
@@ -95,7 +95,7 @@ entry:
     ret void
 }
 
-; CHECK: LongDoubleTest
+; CHECK-LABEL: LongDoubleTest
 ; CHECK: __asan_report_store_n
 ; CHECK: __asan_report_store_n
 ; CHECK: ret void
@@ -108,7 +108,7 @@ define void @i40test(i40* %a, i40* %b) nounwind uwtable sanitize_address {
   ret void
 }
 
-; CHECK: i40test
+; CHECK-LABEL: i40test
 ; CHECK: __asan_report_load_n{{.*}}, i64 5)
 ; CHECK: __asan_report_load_n{{.*}}, i64 5)
 ; CHECK: __asan_report_store_n{{.*}}, i64 5)
@@ -134,7 +134,7 @@ define void @i80test(i80* %a, i80* %b) nounwind uwtable sanitize_address {
   ret void
 }
 
-; CHECK: i80test
+; CHECK-LABEL: i80test
 ; CHECK: __asan_report_load_n{{.*}}, i64 10)
 ; CHECK: __asan_report_load_n{{.*}}, i64 10)
 ; CHECK: __asan_report_store_n{{.*}}, i64 10)
@@ -147,7 +147,7 @@ entry:
   %tmp1 = load i32* %a
   ret i32 %tmp1
 }
-; CHECK: @f_available_externally
+; CHECK-LABEL: @f_available_externally
 ; CHECK-NOT: __asan_report
 ; CHECK: ret i32
 
