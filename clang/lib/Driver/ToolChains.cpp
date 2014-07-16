@@ -1632,21 +1632,6 @@ static bool isMips16(const ArgList &Args) {
   return A && A->getOption().matches(options::OPT_mips16);
 }
 
-static bool isMips32r2(const ArgList &Args) {
-  Arg *A = Args.getLastArg(options::OPT_march_EQ,
-                           options::OPT_mcpu_EQ);
-
-  return A && A->getValue() == StringRef("mips32r2");
-}
-
-static bool isMips64r2(const ArgList &Args) {
-  Arg *A = Args.getLastArg(options::OPT_march_EQ,
-                           options::OPT_mcpu_EQ);
-
-  return A && (A->getValue() == StringRef("mips64r2") ||
-               A->getValue() == StringRef("octeon"));
-}
-
 static bool isMicroMips(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_mmicromips,
                            options::OPT_mno_micromips);
@@ -1707,7 +1692,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .gccSuffix("/mips32")
       .osSuffix("/mips32")
       .includeSuffix("/mips32")
-      .flag("+m32").flag("-m64").flag("-mmicromips").flag("-march=mips32r2");
+      .flag("+m32").flag("-m64").flag("-mmicromips").flag("+march=mips32");
 
     Multilib MArchMicroMips = Multilib()
       .gccSuffix("/micromips")
@@ -1728,7 +1713,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .flag("-m32").flag("+m64").flag("-march=mips64r2");
 
     Multilib MArchDefault = Multilib()
-      .flag("+m32").flag("-m64").flag("+march=mips32r2");
+      .flag("+m32").flag("-m64").flag("-mmicromips").flag("+march=mips32r2");
 
     Multilib Mips16 = Multilib()
       .gccSuffix("/mips16")
@@ -1911,8 +1896,11 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(isMips32(TargetArch), "m32", Flags);
   addMultilibFlag(isMips64(TargetArch), "m64", Flags);
   addMultilibFlag(isMips16(Args), "mips16", Flags);
-  addMultilibFlag(isMips32r2(Args), "march=mips32r2", Flags);
-  addMultilibFlag(isMips64r2(Args), "march=mips64r2", Flags);
+  addMultilibFlag(CPUName == "mips32", "march=mips32", Flags);
+  addMultilibFlag(CPUName == "mips32r2", "march=mips32r2", Flags);
+  addMultilibFlag(CPUName == "mips64", "march=mips64", Flags);
+  addMultilibFlag(CPUName == "mips64r2" || CPUName == "octeon",
+                  "march=mips64r2", Flags);
   addMultilibFlag(isMicroMips(Args), "mmicromips", Flags);
   addMultilibFlag(isMipsFP64(Args), "mfp64", Flags);
   addMultilibFlag(!isMipsFP64(Args), "mfp32", Flags);

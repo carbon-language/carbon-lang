@@ -520,6 +520,32 @@
 // CHECK-BE-NAN64-32R2: "[[TC]]/fp64/nan2008{{/|\\\\}}crtend.o"
 // CHECK-BE-NAN64-32R2: "[[TC]]/../../../../sysroot/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
+// = Big-endian, default (mips32r2), fp64, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips-linux-gnu -mfp64 -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-NAN64-32R2-DEF %s
+// CHECK-BE-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-BE-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/fp64/nan2008"
+// CHECK-BE-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-BE-NAN64-32R2-DEF: "-internal-externc-isystem"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/include"
+// CHECK-BE-NAN64-32R2-DEF: "-internal-externc-isystem"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/usr/include"
+// CHECK-BE-NAN64-32R2-DEF: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-NAN64-32R2-DEF: "--sysroot=[[TC]]/../../../../sysroot/fp64/nan2008"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/fp64/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-BE-NAN64-32R2-DEF: "-L[[TC]]/fp64/nan2008"
+// CHECK-BE-NAN64-32R2-DEF: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/fp64/nan2008"
+// CHECK-BE-NAN64-32R2-DEF: "-L[[TC]]/../../../../sysroot/fp64/nan2008/usr/lib/../lib"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/fp64/nan2008{{/|\\\\}}crtend.o"
+// CHECK-BE-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
 // = Big-endian, micromips, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mips-linux-gnu -mmicromips -mhard-float \
@@ -1170,6 +1196,32 @@
 // CHECK-BE-NAN64-64R2-64: "[[TC]]/mips64r2/64/fp64/nan2008{{/|\\\\}}crtend.o"
 // CHECK-BE-NAN64-64R2-64: "[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008/usr/lib{{/|\\\\}}crtn.o"
 //
+// = Big-endian, default (mips64r2), ABI 64, fp64, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips64-linux-gnu -mabi=64 -mfp64 -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-NAN64-64R2-64-DEF %s
+// CHECK-BE-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-BE-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/mips64r2/64/fp64/nan2008"
+// CHECK-BE-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-BE-NAN64-64R2-64-DEF: "-internal-externc-isystem"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/include"
+// CHECK-BE-NAN64-64R2-64-DEF: "-internal-externc-isystem"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/usr/include"
+// CHECK-BE-NAN64-64R2-64-DEF: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-NAN64-64R2-64-DEF: "--sysroot=[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008/usr/lib{{/|\\\\}}crt1.o"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008/usr/lib{{/|\\\\}}crti.o"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/mips64r2/64/fp64/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-BE-NAN64-64R2-64-DEF: "-L[[TC]]/mips64r2/64/fp64/nan2008"
+// CHECK-BE-NAN64-64R2-64-DEF: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/mips64r2/64/fp64/nan2008"
+// CHECK-BE-NAN64-64R2-64-DEF: "-L[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008/usr/lib"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/mips64r2/64/fp64/nan2008{{/|\\\\}}crtend.o"
+// CHECK-BE-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/fp64/nan2008/usr/lib{{/|\\\\}}crtn.o"
+//
 // = Little-endian, mips32, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mipsel-linux-gnu -mips32 -mhard-float \
@@ -1689,6 +1741,32 @@
 // CHECK-EL-NAN64-32R2: "-L[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib"
 // CHECK-EL-NAN64-32R2: "[[TC]]/el/fp64/nan2008{{/|\\\\}}crtend.o"
 // CHECK-EL-NAN64-32R2: "[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Little-endian, default (mips32r2), fp64, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mipsel-linux-gnu -mfp64 -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-NAN64-32R2-DEF %s
+// CHECK-EL-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-EL-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/el/fp64/nan2008"
+// CHECK-EL-NAN64-32R2-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-EL-NAN64-32R2-DEF: "-internal-externc-isystem"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/include"
+// CHECK-EL-NAN64-32R2-DEF: "-internal-externc-isystem"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/usr/include"
+// CHECK-EL-NAN64-32R2-DEF: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-NAN64-32R2-DEF: "--sysroot=[[TC]]/../../../../sysroot/el/fp64/nan2008"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/el/fp64/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-EL-NAN64-32R2-DEF: "-L[[TC]]/el/fp64/nan2008"
+// CHECK-EL-NAN64-32R2-DEF: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/el/fp64/nan2008"
+// CHECK-EL-NAN64-32R2-DEF: "-L[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/el/fp64/nan2008{{/|\\\\}}crtend.o"
+// CHECK-EL-NAN64-32R2-DEF: "[[TC]]/../../../../sysroot/el/fp64/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Little-endian, micromips, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -2339,3 +2417,29 @@
 // CHECK-EL-NAN64-64R2-64: "-L[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib"
 // CHECK-EL-NAN64-64R2-64: "[[TC]]/mips64r2/64/el/fp64/nan2008{{/|\\\\}}crtend.o"
 // CHECK-EL-NAN64-64R2-64: "[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib{{/|\\\\}}crtn.o"
+//
+// = Little-endian, default (mips64r2), ABI 64, fp64, nan2008
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips64el-linux-gnu -mabi=64 -mfp64 -mnan=2008 \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-NAN64-64R2-64-DEF %s
+// CHECK-EL-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-EL-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/mips64r2/64/el/fp64/nan2008"
+// CHECK-EL-NAN64-64R2-64-DEF: "-internal-isystem"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-EL-NAN64-64R2-64-DEF: "-internal-externc-isystem"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/include"
+// CHECK-EL-NAN64-64R2-64-DEF: "-internal-externc-isystem"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/usr/include"
+// CHECK-EL-NAN64-64R2-64-DEF: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-NAN64-64R2-64-DEF: "--sysroot=[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib{{/|\\\\}}crt1.o"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib{{/|\\\\}}crti.o"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/mips64r2/64/el/fp64/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-EL-NAN64-64R2-64-DEF: "-L[[TC]]/mips64r2/64/el/fp64/nan2008"
+// CHECK-EL-NAN64-64R2-64-DEF: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/mips64r2/64/el/fp64/nan2008"
+// CHECK-EL-NAN64-64R2-64-DEF: "-L[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/mips64r2/64/el/fp64/nan2008{{/|\\\\}}crtend.o"
+// CHECK-EL-NAN64-64R2-64-DEF: "[[TC]]/../../../../sysroot/mips64r2/64/el/fp64/nan2008/usr/lib{{/|\\\\}}crtn.o"
