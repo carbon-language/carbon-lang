@@ -53,7 +53,7 @@ ModuleAnalysisManager::getResultImpl(void *PassID, Module *M) {
   // If we don't have a cached result for this module, look up the pass and run
   // it to produce a result, which we then add to the cache.
   if (Inserted)
-    RI->second = std::move(lookupPass(PassID).run(M, this));
+    RI->second = lookupPass(PassID).run(M, this);
 
   return *RI->second;
 }
