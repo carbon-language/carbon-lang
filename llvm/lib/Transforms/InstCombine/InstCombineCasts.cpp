@@ -1909,9 +1909,9 @@ Instruction *InstCombiner::visitBitCast(BitCastInst &CI) {
 }
 
 Instruction *InstCombiner::visitAddrSpaceCast(AddrSpaceCastInst &CI) {
-  // If the destination pointer element type is not the the same as the source's
-  // do the addrspacecast to the same type, and then the bitcast in the new
-  // address space. This allows the cast to be exposed to other transforms.
+  // If the destination pointer element type is not the same as the source's
+  // first do a bitcast to the destination type, and then the addrspacecast.
+  // This allows the cast to be exposed to other transforms.
   Value *Src = CI.getOperand(0);
   PointerType *SrcTy = cast<PointerType>(Src->getType()->getScalarType());
   PointerType *DestTy = cast<PointerType>(CI.getType()->getScalarType());
