@@ -331,6 +331,7 @@ class SymbolizationLoop(object):
     if self.system not in ['Linux', 'Darwin']:
       raise Exception('Unknown system')
     self.llvm_symbolizer = None
+    self.frame_no = 0
 
   def symbolize_address(self, addr, binary, offset):
     # Initialize llvm-symbolizer lazily.
@@ -352,13 +353,15 @@ class SymbolizationLoop(object):
     assert result
     return result
 
-  def print_symbolized_lines(self, symbolized_lines):
+  def get_symbolized_lines(self, symbolized_lines):
     if not symbolized_lines:
-      print self.current_line
+      return [self.current_line]
     else:
+      result = []
       for symbolized_frame in symbolized_lines:
-        print '    #' + str(self.frame_no) + ' ' + symbolized_frame.rstrip()
+        result.append('    #%s %s' % (str(self.frame_no), symbolized_frame.rstrip()))
         self.frame_no += 1
+      return result
 
   def process_stdin(self):
     self.frame_no = 0
@@ -366,28 +369,31 @@ class SymbolizationLoop(object):
       line = sys.stdin.readline()
       if not line:
         break
-      self.current_line = line.rstrip()
-      #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
-      stack_trace_line_format = (
-          '^( *#([0-9]+) *)(0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)')
-      match = re.match(stack_trace_line_format, line)
-      if not match:
-        print self.current_line
-        continue
-      if DEBUG:
-        print line
-      _, frameno_str, addr, binary, offset = match.groups()
-      if frameno_str == '0':
-        # Assume that frame #0 is the first frame of new stack trace.
-        self.frame_no = 0
-      original_binary = binary
-      if self.binary_name_filter:
-        binary = self.binary_name_filter(binary)
-      symbolized_line = self.symbolize_address(addr, binary, offset)
-      if not symbolized_line:
-        if original_binary != binary:
-          symbolized_line = self.symbolize_address(addr, binary, offset)
-      self.print_symbolized_lines(symbolized_line)
+      processed = self.process_line(line)
+      print ''.join(processed)
+
+  def process_line(self, line):
+    self.current_line = line.rstrip()
+    #0 0x7f6e35cf2e45  (/blah/foo.so+0x11fe45)
+    stack_trace_line_format = (
+        '^( *#([0-9]+) *)(0x[0-9a-f]+) *\((.*)\+(0x[0-9a-f]+)\)')
+    match = re.match(stack_trace_line_format, line)
+    if not match:
+      return [self.current_line]
+    if DEBUG:
+      print line
+    _, frameno_str, addr, binary, offset = match.groups()
+    if frameno_str == '0':
+      # Assume that frame #0 is the first frame of new stack trace.
+      self.frame_no = 0
+    original_binary = binary
+    if self.binary_name_filter:
+      binary = self.binary_name_filter(binary)
+    symbolized_line = self.symbolize_address(addr, binary, offset)
+    if not symbolized_line:
+      if original_binary != binary:
+        symbolized_line = self.symbolize_address(addr, binary, offset)
+    return self.get_symbolized_lines(symbolized_line)
 
 
 if __name__ == '__main__':
