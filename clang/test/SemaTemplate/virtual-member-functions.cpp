@@ -44,7 +44,7 @@ template struct Derived<int>; // expected-note {{in instantiation of member func
 
 template<typename T>
 struct HasOutOfLineKey {
-  HasOutOfLineKey() { } 
+  HasOutOfLineKey() { } // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::f' requested here}}
   virtual T *f(float *fp);
 };
 
@@ -53,7 +53,7 @@ T *HasOutOfLineKey<T>::f(float *fp) {
   return fp; // expected-error{{cannot initialize return object of type 'int *' with an lvalue of type 'float *'}}
 }
 
-HasOutOfLineKey<int> out_of_line; // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::f' requested here}}
+HasOutOfLineKey<int> out_of_line; // expected-note{{in instantiation of member function 'HasOutOfLineKey<int>::HasOutOfLineKey' requested here}}
 
 namespace std {
   class type_info;
@@ -101,4 +101,54 @@ namespace DynamicCast {
   };
   Y* f(X<void>* x) { return dynamic_cast<Y*>(x); } // expected-note {{in instantiation of member function 'DynamicCast::X<void>::foo' requested here}}
   Y* f2(X<void>* x) { return dynamic_cast<Y*>(x); }
+}
+
+namespace avoid_using_vtable {
+// We shouldn't emit the vtable for this code, in any ABI.  If we emit the
+// vtable, we emit an implicit virtual dtor, which calls ~RefPtr, which requires
+// a complete type for DeclaredOnly.
+//
+// Previously we would reference the vtable in the MS C++ ABI, even though we
+// don't need to emit either the ctor or the dtor.  In the Itanium C++ ABI, the
+// 'trace' method is the key function, so even though we use the vtable, we
+// don't emit it.
+
+template <typename T>
+struct RefPtr {
+  T *m_ptr;
+  ~RefPtr() { m_ptr->deref(); }
+};
+struct DeclaredOnly;
+struct Base {
+  virtual ~Base();
+};
+
+struct AvoidVTable : Base {
+  RefPtr<DeclaredOnly> m_insertionStyle;
+  virtual void trace();
+  AvoidVTable();
+};
+// Don't call the dtor, because that will emit an implicit dtor, and require a
+// complete type for DeclaredOnly.
+void foo() { new AvoidVTable; }
+}
+
+namespace vtable_uses_incomplete {
+// Opposite of the previous test that avoids a vtable, this one tests that we
+// use the vtable when the ctor is defined inline.
+template <typename T>
+struct RefPtr {
+  T *m_ptr;
+  ~RefPtr() { m_ptr->deref(); }  // expected-error {{member access into incomplete type 'vtable_uses_incomplete::DeclaredOnly'}}
+};
+struct DeclaredOnly; // expected-note {{forward declaration of 'vtable_uses_incomplete::DeclaredOnly'}}
+struct Base {
+  virtual ~Base();
+};
+
+struct UsesVTable : Base {
+  RefPtr<DeclaredOnly> m_insertionStyle;
+  virtual void trace();
+  UsesVTable() {} // expected-note {{in instantiation of member function 'vtable_uses_incomplete::RefPtr<vtable_uses_incomplete::DeclaredOnly>::~RefPtr' requested here}}
+};
 }
