@@ -990,11 +990,10 @@ def ObjCDesignatedInitializer : Attr {
 }
 
 def ObjCRuntimeName : Attr {
-    let Spellings = [GNU<"objc_runtime_name">];
-    let Subjects = SubjectList<[ObjCInterface, ObjCProtocol], ErrorDiag,
-    "ExpectedObjectiveCInterfaceOrProtocol">;
-    let Args = [StringArgument<"MetadataName">];
-    let Documentation = [ObjCRuntimeNameDocs];
+  let Spellings = [GNU<"objc_runtime_name">];
+  let Subjects = SubjectList<[ObjCInterface, ObjCProtocol], ErrorDiag>;
+  let Args = [StringArgument<"MetadataName">];
+  let Documentation = [ObjCRuntimeNameDocs];
 }
 
 def OptimizeNone : InheritableAttr {
