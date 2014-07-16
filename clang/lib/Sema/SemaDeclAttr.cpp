@@ -3599,12 +3599,13 @@ static void handleObjCDesignatedInitializer(Sema &S, Decl *D,
 
 static void handleObjCRuntimeName(Sema &S, Decl *D,
                                   const AttributeList &Attr) {
-    StringRef MetaDataName;
-    if (!S.checkStringLiteralArgumentAttr(Attr, 0, MetaDataName))
-        return;
-    D->addAttr(::new (S.Context)
-               ObjCRuntimeNameAttr(Attr.getRange(), S.Context,
-                                   MetaDataName, 0));
+  StringRef MetaDataName;
+  if (!S.checkStringLiteralArgumentAttr(Attr, 0, MetaDataName))
+    return;
+  D->addAttr(::new (S.Context)
+             ObjCRuntimeNameAttr(Attr.getRange(), S.Context,
+                                 MetaDataName,
+                                 Attr.getAttributeSpellingListIndex()));
 }
 
 static void handleObjCOwnershipAttr(Sema &S, Decl *D,
