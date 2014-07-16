@@ -2613,8 +2613,10 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     // bytes (in both 32 and 64 bits modes) and always involves rounding up to
     // the required alignment, we don't know why.
     if ((PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
-        BaseLayout.leadsWithZeroSizedBase()) || HasVtordisp)
+        BaseLayout.leadsWithZeroSizedBase()) || HasVtordisp) {
       Size = Size.RoundUpToAlignment(VtorDispAlignment) + VtorDispSize;
+      RequiredAlignment = VtorDispAlignment;
+    }
     // Insert the virtual base.
     ElementInfo Info = getAdjustedElementInfo(BaseLayout);
     CharUnits BaseOffset = Size.RoundUpToAlignment(Info.Alignment);
