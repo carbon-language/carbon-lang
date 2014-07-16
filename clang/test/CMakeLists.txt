@@ -26,16 +26,10 @@ endif ()
 
 list(APPEND CLANG_TEST_DEPS
   clang clang-headers
+  clang-check clang-format
   c-index-test diagtool
   clang-tblgen
   )
-
-if (CLANG_ENABLE_REWRITER)
-  list(APPEND CLANG_TEST_DEPS
-    clang-check
-    clang-format
-  )
-endif ()
 
 if (CLANG_ENABLE_ARCMT)
   list(APPEND CLANG_TEST_DEPS

@@ -16,7 +16,6 @@ config.target_triple = "@TARGET_TRIPLE@"
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.clang_arcmt = @ENABLE_CLANG_ARCMT@
 config.clang_staticanalyzer = @ENABLE_CLANG_STATIC_ANALYZER@
-config.clang_rewriter = @ENABLE_CLANG_REWRITER@
 config.clang_examples = @ENABLE_CLANG_EXAMPLES@
 config.enable_shared = @ENABLE_SHARED@
 config.host_arch = "@HOST_ARCH@"

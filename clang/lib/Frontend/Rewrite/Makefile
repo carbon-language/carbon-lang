@@ -12,7 +12,11 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../../..
-LIBRARYNAME := clangRewriteCore
+LIBRARYNAME := clangRewriteFrontend
 
 include $(CLANG_LEVEL)/Makefile
+
+ifeq ($(ENABLE_CLANG_ARCMT),1)
+  CXX.Flags += -DCLANG_ENABLE_OBJC_REWRITER
+endif
 

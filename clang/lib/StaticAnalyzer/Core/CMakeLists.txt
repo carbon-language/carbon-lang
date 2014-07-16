@@ -45,5 +45,5 @@ add_clang_library(clangStaticAnalyzerCore
   clangAnalysis
   clangBasic
   clangLex
-  clangRewriteCore
+  clangRewrite
   )

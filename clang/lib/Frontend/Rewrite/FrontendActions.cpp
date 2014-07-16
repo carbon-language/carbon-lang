@@ -146,9 +146,7 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
   return true;
 }
 
-//===----------------------------------------------------------------------===//
-// Preprocessor Actions
-//===----------------------------------------------------------------------===//
+#ifdef CLANG_ENABLE_OBJC_REWRITER
 
 ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
                                                   StringRef InFile) {
@@ -165,6 +163,12 @@ ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
   }
   return nullptr;
 }
+
+#endif
+
+//===----------------------------------------------------------------------===//
+// Preprocessor Actions
+//===----------------------------------------------------------------------===//
 
 void RewriteMacrosAction::ExecuteAction() {
   CompilerInstance &CI = getCompilerInstance();

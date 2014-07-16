@@ -1,4 +1,4 @@
-##===- clang/lib/StaticAnalyzer/Makefile -------------------*- Makefile -*-===##
+##===- clang/lib/Rewrite/Makefile --------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,9 +6,13 @@
 # License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+#
+# This implements code transformation / rewriting facilities.
+#
+##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
-DIRS := Frontend
-PARALLEL_DIRS := Core
+LIBRARYNAME := clangRewrite
 
 include $(CLANG_LEVEL)/Makefile
+

@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 CLANG_LEVEL := ../..
+DIRS := Rewrite
 LIBRARYNAME := clangFrontend
 
 include $(CLANG_LEVEL)/Makefile
-

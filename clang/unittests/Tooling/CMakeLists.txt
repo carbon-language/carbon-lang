@@ -19,6 +19,6 @@ target_link_libraries(ToolingTests
   clangBasic
   clangFrontend
   clangLex
-  clangRewriteCore
+  clangRewrite
   clangTooling
   )

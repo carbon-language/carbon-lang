@@ -18,5 +18,5 @@ add_clang_library(clangRewriteFrontend
   clangEdit
   clangFrontend
   clangLex
-  clangRewriteCore
+  clangRewrite
   )

@@ -45,20 +45,12 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case DumpTokens:             return new DumpTokensAction();
   case EmitAssembly:           return new EmitAssemblyAction();
   case EmitBC:                 return new EmitBCAction();
-#ifdef CLANG_ENABLE_REWRITER
   case EmitHTML:               return new HTMLPrintAction();
-#else
-  case EmitHTML:               Action = "EmitHTML"; break;
-#endif
   case EmitLLVM:               return new EmitLLVMAction();
   case EmitLLVMOnly:           return new EmitLLVMOnlyAction();
   case EmitCodeGenOnly:        return new EmitCodeGenOnlyAction();
   case EmitObj:                return new EmitObjAction();
-#ifdef CLANG_ENABLE_REWRITER
   case FixIt:                  return new FixItAction();
-#else
-  case FixIt:                  Action = "FixIt"; break;
-#endif
   case GenerateModule:         return new GenerateModuleAction;
   case GeneratePCH:            return new GeneratePCHAction;
   case GeneratePTH:            return new GeneratePTHAction();
@@ -87,25 +79,17 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   case PrintDeclContext:       return new DeclContextPrintAction();
   case PrintPreamble:          return new PrintPreambleAction();
   case PrintPreprocessedInput: {
-    if (CI.getPreprocessorOutputOpts().RewriteIncludes) {
-#ifdef CLANG_ENABLE_REWRITER
+    if (CI.getPreprocessorOutputOpts().RewriteIncludes)
       return new RewriteIncludesAction();
-#else
-      Action = "RewriteIncludesAction";
-      break;
-#endif
-    }
     return new PrintPreprocessedAction();
   }
 
-#ifdef CLANG_ENABLE_REWRITER
   case RewriteMacros:          return new RewriteMacrosAction();
-  case RewriteObjC:            return new RewriteObjCAction();
   case RewriteTest:            return new RewriteTestAction();
+#ifdef CLANG_ENABLE_OBJC_REWRITER
+  case RewriteObjC:            return new RewriteObjCAction();
 #else
-  case RewriteMacros:          Action = "RewriteMacros"; break;
   case RewriteObjC:            Action = "RewriteObjC"; break;
-  case RewriteTest:            Action = "RewriteTest"; break;
 #endif
 #ifdef CLANG_ENABLE_ARCMT
   case MigrateSource:          return new arcmt::MigrateSourceAction();
@@ -121,7 +105,7 @@ static FrontendAction *CreateFrontendBaseAction(CompilerInstance &CI) {
   }
 
 #if !defined(CLANG_ENABLE_ARCMT) || !defined(CLANG_ENABLE_STATIC_ANALYZER) \
-  || !defined(CLANG_ENABLE_REWRITER)
+  || !defined(CLANG_ENABLE_OBJC_REWRITER)
   CI.getDiagnostics().Report(diag::err_fe_action_not_available) << Action;
   return 0;
 #else
@@ -137,11 +121,9 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
 
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
 
-#ifdef CLANG_ENABLE_REWRITER
   if (FEOpts.FixAndRecompile) {
     Act = new FixItRecompile(Act);
   }
-#endif
   
 #ifdef CLANG_ENABLE_ARCMT
   if (CI.getFrontendOpts().ProgramAction != frontend::MigrateSource &&

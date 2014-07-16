@@ -29,6 +29,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include <memory>
 
+#ifdef CLANG_ENABLE_OBJC_REWRITER
+
 using namespace clang;
 using llvm::utostr;
 
@@ -5946,3 +5948,5 @@ Stmt *RewriteObjCFragileABI::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ReplaceStmtWithRange(IV, Replacement, OldRange);
   return Replacement;  
 }
+
+#endif

@@ -14,7 +14,7 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc option
 USEDLIBS = clangFrontendTool.a clangFrontend.a clangDriver.a \
            clangSerialization.a clangCodeGen.a clangParse.a clangSema.a \
            clangStaticAnalyzerCheckers.a clangStaticAnalyzerCore.a \
-           clangARCMigrate.a clangRewriteCore.a \
+           clangARCMigrate.a clangRewrite.a \
 		   clangRewriteFrontend.a clangEdit.a \
            clangAnalysis.a clangAST.a clangLex.a clangBasic.a
 

@@ -8,7 +8,7 @@ target_link_libraries(clang-format
   clangBasic
   clangFormat
   clangLex
-  clangRewriteCore
+  clangRewrite
   clangTooling
   )
 

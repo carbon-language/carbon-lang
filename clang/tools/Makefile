@@ -12,11 +12,7 @@ CLANG_LEVEL := ..
 include $(CLANG_LEVEL)/../../Makefile.config
 
 DIRS := 
-PARALLEL_DIRS := driver diagtool
-
-ifeq ($(ENABLE_CLANG_REWRITER),1)
-  PARALLEL_DIRS += clang-format
-endif
+PARALLEL_DIRS := clang-format driver diagtool
 
 ifeq ($(ENABLE_CLANG_STATIC_ANALYZER), 1)
   PARALLEL_DIRS += clang-check

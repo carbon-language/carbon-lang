@@ -17,5 +17,5 @@ add_clang_library(clangTooling
   clangDriver
   clangFrontend
   clangLex
-  clangRewriteCore
+  clangRewrite
   )

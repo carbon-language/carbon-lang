@@ -31,7 +31,7 @@ add_clang_library(clangARCMigrate
   clangEdit
   clangFrontend
   clangLex
-  clangRewriteCore
+  clangRewrite
   clangSema
   clangSerialization
   clangStaticAnalyzerCheckers
