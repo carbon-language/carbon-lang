@@ -38,14 +38,10 @@ define <4 x float> @test4(<4 x float> %a, <4 x float> %b) {
   %2 = shufflevector <4 x float> %1, <4 x float> %b, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x float> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend
-; wrongly thinks that shuffle mask [6,7,2,3] is not legal. Therefore, we
-; end up with the sub-optimal sequence 'movhlps, palignr'.
 ; CHECK-LABEL: test4
 ; Mask: [6,7,2,3]
 ; CHECK: movhlps
-; CHECK: palignr $8
-; CHECK: ret
+; CHECK-NEXT: ret
 
 define <4 x float> @test5(<4 x float> %a, <4 x float> %b) {
   %1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 3>

@@ -16880,6 +16880,7 @@ X86TargetLowering::isShuffleMaskLegal(const SmallVectorImpl<int> &M,
   return (SVT.getVectorNumElements() == 2 ||
           ShuffleVectorSDNode::isSplatMask(&M[0], VT) ||
           isMOVLMask(M, SVT) ||
+          isMOVHLPSMask(M, SVT) ||
           isSHUFPMask(M, SVT) ||
           isPSHUFDMask(M, SVT) ||
           isPSHUFHWMask(M, SVT, Subtarget->hasInt256()) ||

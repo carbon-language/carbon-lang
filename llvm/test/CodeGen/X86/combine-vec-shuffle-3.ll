@@ -35,14 +35,10 @@ define <4 x float> @test4(<4 x float> %a, <4 x float> %b) {
   %2 = shufflevector <4 x float> %1, <4 x float> %b, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x float> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend
-; wrongly thinks that shuffle mask [6,7,2,3] is not legal. Therefore, we
-; end up with the sub-optimal sequence 'shufps, palignr'.
 ; CHECK-LABEL: test4
 ; Mask: [6,7,2,3]
-; CHECK: shufps $94
-; CHECK: palignr $8
-; CHECK: ret
+; CHECK: movhlps
+; CHECK-NEXT: ret
 
 define <4 x float> @test5(<4 x float> %a, <4 x float> %b) {
   %1 = shufflevector <4 x float> %a, <4 x float> %b, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
@@ -90,13 +86,10 @@ define <4 x i32> @test9(<4 x i32> %a, <4 x i32> %b) {
   %2 = shufflevector <4 x i32> %1, <4 x i32> %b, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x i32> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend thinks that
-; shuffle mask [6,7,2,3] is not legal.
 ; CHECK-LABEL: test9
 ; Mask: [6,7,2,3]
-; CHECK: shufps $94
-; CHECK: palignr $8
-; CHECK: ret
+; CHECK: movhlps
+; CHECK-NEXT: ret
 
 define <4 x i32> @test10(<4 x i32> %a, <4 x i32> %b) {
   %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
@@ -144,13 +137,9 @@ define <4 x float> @test14(<4 x float> %a, <4 x float> %b) {
   %2 = shufflevector <4 x float> %1, <4 x float> %a, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x float> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend
-; wrongly thinks that shuffle mask [6,7,2,3] is not legal. Therefore, we
-; end up with the sub-optimal sequence 'pshufd, palignr'.
 ; CHECK-LABEL: test14
 ; Mask: [6,7,2,3]
-; CHECK: pshufd $94
-; CHECK: palignr $8
+; CHECK: movhlps
 ; CHECK: ret
 
 define <4 x float> @test15(<4 x float> %a, <4 x float> %b) {
@@ -199,13 +188,9 @@ define <4 x i32> @test19(<4 x i32> %a, <4 x i32> %b) {
   %2 = shufflevector <4 x i32> %1, <4 x i32> %a, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x i32> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend
-; wrongly thinks that shuffle mask [6,7,2,3] is not legal. Therefore, we
-; end up with the sub-optimal sequence 'shufps, palignr'.
 ; CHECK-LABEL: test19
 ; Mask: [6,7,2,3]
-; CHECK: pshufd $94
-; CHECK: palignr $8
+; CHECK: movhlps
 ; CHECK: ret
 
 define <4 x i32> @test20(<4 x i32> %a, <4 x i32> %b) {
@@ -370,4 +355,31 @@ define <4 x float> @blend_123(<4 x float> %a, <4 x float> %b) {
 ; CHECK-LABEL: blend_123
 ; CHECK: movss
 ; CHECK: ret
+
+define <4 x i32> @test_movhl_1(<4 x i32> %a, <4 x i32> %b) {
+  %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 2, i32 7, i32 5, i32 3>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %b, <4 x i32> <i32 6, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test_movhl_1
+; CHECK: movhlps
+; CHECK-NEXT: ret
+
+define <4 x i32> @test_movhl_2(<4 x i32> %a, <4 x i32> %b) {
+  %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 2, i32 0, i32 3, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %b, <4 x i32> <i32 3, i32 7, i32 0, i32 2>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test_movhl_2
+; CHECK: movhlps
+; CHECK-NEXT: ret
+
+define <4 x i32> @test_movhl_3(<4 x i32> %a, <4 x i32> %b) {
+  %1 = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 7, i32 6, i32 3, i32 2>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %b, <4 x i32> <i32 6, i32 0, i32 3, i32 2>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test_movhl_3
+; CHECK: movhlps
+; CHECK-NEXT: ret
 
