@@ -7,7 +7,7 @@ add_clang_library(clangApplyReplacements
 
   LINK_LIBS
   clangBasic
-  clangRewriteCore
+  clangRewrite
   clangTooling
   )
 

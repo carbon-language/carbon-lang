@@ -18,7 +18,7 @@ USEDLIBS = clangTidy.a clangTidyLLVMModule.a clangTidyGoogleModule.a \
 	   clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
 	   clangStaticAnalyzerCore.a \
 	   clangFormat.a clangTooling.a clangFrontend.a clangSerialization.a \
-	   clangDriver.a clangRewriteFrontend.a clangRewriteCore.a \
+	   clangDriver.a clangRewriteFrontend.a clangRewrite.a \
 	   clangParse.a clangSema.a clangAnalysis.a clangAST.a \
 	   clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
 

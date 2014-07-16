@@ -20,7 +20,7 @@ SOURCES = ClangQuery.cpp
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc mcparser option
 USEDLIBS = clangQuery.a clangDynamicASTMatchers.a clangFormat.a clangTooling.a \
 	   clangFrontend.a clangSerialization.a clangDriver.a clangRewriteFrontend.a \
-	   LLVMLineEditor.a clangRewriteCore.a clangParse.a clangSema.a clangAnalysis.a \
+	   LLVMLineEditor.a clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
 	   clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile

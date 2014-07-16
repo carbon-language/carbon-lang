@@ -15,7 +15,7 @@ LINK_COMPONENTS := asmparser bitreader support mc mcparser option \
 		TransformUtils
 USEDLIBS = clangApplyReplacements.a clangFormat.a clangTooling.a clangFrontend.a \
 		clangSerialization.a clangDriver.a clangRewriteFrontend.a \
-		clangRewriteCore.a clangParse.a clangSema.a clangAnalysis.a \
+		clangRewrite.a clangParse.a clangSema.a clangAnalysis.a \
 		clangAST.a clangASTMatchers.a clangEdit.a clangLex.a clangBasic.a
 
 include $(CLANG_LEVEL)/Makefile
