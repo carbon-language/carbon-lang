@@ -32,11 +32,17 @@ class WinSymbolizer : public Symbolizer {
 
     BlockingMutexLock l(&dbghelp_mu_);
     if (!initialized_) {
-      SymSetOptions(SYMOPT_DEFERRED_LOADS |
-                    SYMOPT_UNDNAME |
-                    SYMOPT_LOAD_LINES);
-      CHECK(SymInitialize(GetCurrentProcess(), 0, TRUE));
-      // FIXME: We don't call SymCleanup() on exit yet - should we?
+      if (!TrySymInitialize()) {
+        // OK, maybe the client app has called SymInitialize already.
+        // That's a bit unfortunate for us as all the DbgHelp functions are
+        // single-threaded and we can't coordinate with the app.
+        // FIXME: Can we stop the other threads at this point?
+        // Anyways, we have to reconfigure stuff to make sure that SymInitialize
+        // has all the appropriate options set.
+        // Cross our fingers and reinitialize DbgHelp.
+        CHECK(SymCleanup(GetCurrentProcess()));
+        CHECK(TrySymInitialize());
+      }
       initialized_ = true;
     }
 
@@ -92,6 +98,12 @@ class WinSymbolizer : public Symbolizer {
   // FIXME: Implement GetModuleNameAndOffsetForPC().
 
  private:
+  bool TrySymInitialize() {
+    SymSetOptions(SYMOPT_DEFERRED_LOADS | SYMOPT_UNDNAME | SYMOPT_LOAD_LINES);
+    return SymInitialize(GetCurrentProcess(), 0, TRUE);
+    // FIXME: We don't call SymCleanup() on exit yet - should we?
+  }
+
   // All DbgHelp functions are single threaded, so we should use a mutex to
   // serialize accesses.
   BlockingMutex dbghelp_mu_;
