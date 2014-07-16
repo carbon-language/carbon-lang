@@ -1662,11 +1662,6 @@ static bool isMipsFP64(const ArgList &Args) {
   return A && A->getOption().matches(options::OPT_mfp64);
 }
 
-static bool isMipsNan2008(const ArgList &Args) {
-  Arg *A = Args.getLastArg(options::OPT_mnan_EQ);
-  return A && A->getValue() == StringRef("2008");
-}
-
 struct DetectedMultilibs {
   /// The set of multilibs that the detected installation supports.
   MultilibSet Multilibs;
@@ -1921,7 +1916,8 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(isMicroMips(Args), "mmicromips", Flags);
   addMultilibFlag(isMipsFP64(Args), "mfp64", Flags);
   addMultilibFlag(!isMipsFP64(Args), "mfp32", Flags);
-  addMultilibFlag(isMipsNan2008(Args), "mnan=2008", Flags);
+  addMultilibFlag(tools::mips::isNaN2008(Args, TargetTriple), "mnan=2008",
+                  Flags);
   addMultilibFlag(tools::mips::hasMipsAbiArg(Args, "n32"), "mabi=n32", Flags);
   // Default is to assume mabi=64
   bool IsMABI64 =
