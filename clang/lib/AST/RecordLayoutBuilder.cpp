@@ -2647,10 +2647,10 @@ void MicrosoftRecordLayoutBuilder::finalizeLayout(const RecordDecl *RD) {
 
 // Recursively walks the non-virtual bases of a class and determines if any of
 // them are in the bases with overridden methods set.
-static bool RequiresVtordisp(
-    const llvm::SmallPtrSet<const CXXRecordDecl *, 2> &
-        BasesWithOverriddenMethods,
-    const CXXRecordDecl *RD) {
+static bool
+RequiresVtordisp(const llvm::SmallPtrSetImpl<const CXXRecordDecl *> &
+                     BasesWithOverriddenMethods,
+                 const CXXRecordDecl *RD) {
   if (BasesWithOverriddenMethods.count(RD))
     return true;
   // If any of a virtual bases non-virtual bases (recursively) requires a
