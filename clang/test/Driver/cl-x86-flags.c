@@ -5,7 +5,7 @@
 // We support -m32 and -m64.  We support all x86 CPU feature flags in gcc's -m
 // flag space.
 // RUN: %clang_cl /Zs /WX -m32 -m64 -msse3 -msse4.1 -mavx -mno-avx \
-// RUN:     -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
+// RUN:     --target=i386-pc-win32 -### -- 2>&1 %s | FileCheck -check-prefix=MFLAGS %s
 // MFLAGS-NOT: argument unused during compilation
 
 // -arch:IA32 is no-op.
