@@ -14,7 +14,7 @@ Using clang-tidy
 
 :program:`clang-tidy` is a `LibTooling`_-based tool, and it's easier to work
 with if you set up a compile command database for your project (for an example
-of how to do this see `How To Setup Tooling For LLVM`_ ). You can also specify
+of how to do this see `How To Setup Tooling For LLVM`_). You can also specify
 compilation options on the command line after ``--``:
 
 .. code-block:: bash
@@ -39,7 +39,7 @@ The ``-list-checks`` option lists all the enabled checks. When used without
 available checks or with any other value of ``-checks=`` to see which checks are
 enabled by this value.
 
-There are currently three groups of checks:
+There are currently the following groups of checks:
 
 * Checks related to the LLVM coding conventions have names starting with
   ``llvm-``.
@@ -52,6 +52,17 @@ There are currently three groups of checks:
 
 * Clang static analyzer checks are named starting with ``clang-analyzer-``.
 
+Clang diagnostics are treated in a similar way as check diagnostics. Clang
+diagnostics are displayed by clang-tidy and can be filtered out using
+``-checks=`` option. However, the ``-checks=`` option does not affect
+compilation arguments, so it can not turn on Clang warnings which are not
+already turned on in build configuration.
+
+Clang diagnostics have check names starting with ``clang-diagnostic-``.
+Diagnostics which have a corresponding warning option, are named
+``clang-diagostic-<warning-option>``, e.g. Clang warning controlled by
+``-Wliteral-conversion`` will be reported with check name
+``clang-diagnostic-literal-conversion``.
 
 The ``-fix`` flag instructs :program:`clang-tidy` to fix found errors if
 supported by corresponding checks.
