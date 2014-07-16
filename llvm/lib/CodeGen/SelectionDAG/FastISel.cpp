@@ -1038,6 +1038,11 @@ bool FastISel::SelectCall(const User *I) {
 
   // Handle simple inline asms.
   if (const InlineAsm *IA = dyn_cast<InlineAsm>(Call->getCalledValue())) {
+    // If the inline asm has side effects, then make sure that no local value
+    // lives across by flushing the local value map.
+    if (IA->hasSideEffects())
+      flushLocalValueMap();
+
     // Don't attempt to handle constraints.
     if (!IA->getConstraintString().empty())
       return false;
