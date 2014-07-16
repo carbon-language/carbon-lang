@@ -32,6 +32,10 @@ namespace lldb_private {
 class Host
 {
 public:
+
+    /// A value of std::numeric_limits<uint32_t>::max() is used if there is no practical limit.
+    static const uint32_t MAX_THREAD_NAME_LENGTH;
+
     typedef bool (*MonitorChildProcessCallback) (void *callback_baton,
                                                  lldb::pid_t pid,
                                                  bool exited,

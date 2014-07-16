@@ -3657,11 +3657,23 @@ Process::StartPrivateStateThread (bool force)
     // Create a thread that watches our internal state and controls which
     // events make it to clients (into the DCProcess event queue).
     char thread_name[1024];
-    if (already_running)
-        snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%" PRIu64 ")>", GetID());
+
+    if (Host::MAX_THREAD_NAME_LENGTH <= 16)
+    {
+            // On platforms with abbreviated thread name lengths, choose thread names that fit within the limit.
+            if (already_running)
+                snprintf(thread_name, sizeof(thread_name), "intern-state-OV");
+            else
+                snprintf(thread_name, sizeof(thread_name), "intern-state");
+    }
     else
-        snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%" PRIu64 ")>", GetID());
-        
+    {
+        if (already_running)
+                snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state-override(pid=%" PRIu64 ")>", GetID());
+        else
+                snprintf(thread_name, sizeof(thread_name), "<lldb.process.internal-state(pid=%" PRIu64 ")>", GetID());
+    }
+
     // Create the private state thread, and start it running.
     m_private_state_thread = Host::ThreadCreate (thread_name, Process::PrivateStateThread, this, NULL);
     bool success = IS_VALID_LLDB_HOST_THREAD(m_private_state_thread);

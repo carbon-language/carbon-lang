@@ -49,6 +49,9 @@
 #include <pthread_np.h>
 #endif
 
+// C++ includes
+#include <limits>
+
 #include "lldb/Host/Host.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
@@ -87,6 +90,12 @@ extern "C"
 using namespace lldb;
 using namespace lldb_private;
 
+// Define maximum thread name length
+#if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__NetBSD__)
+uint32_t const Host::MAX_THREAD_NAME_LENGTH = 16;
+#else
+uint32_t const Host::MAX_THREAD_NAME_LENGTH = std::numeric_limits<uint32_t>::max ();
+#endif
 
 #if !defined (__APPLE__) && !defined (_WIN32)
 struct MonitorInfo
