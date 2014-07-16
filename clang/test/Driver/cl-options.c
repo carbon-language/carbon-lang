@@ -301,7 +301,6 @@
 // RUN:     -fno-strict-aliasing \
 // RUN:     -fstrict-aliasing \
 // RUN:     -mllvm -disable-llvm-optzns \
-// RUN:     -msse2 \
 // RUN:     -Wunused-variables \
 // RUN:     /Zs -- %s 2>&1
 
