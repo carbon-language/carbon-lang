@@ -1925,9 +1925,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       (!tools::mips::hasMipsAbiArg(Args, "n32") && isMips64(TargetArch));
   addMultilibFlag(IsMABI64, "mabi=64", Flags);
   addMultilibFlag(isSoftFloatABI(Args), "msoft-float", Flags);
-  addMultilibFlag(isSoftFloatABI(Args), "mfloat-abi=soft", Flags);
   addMultilibFlag(!isSoftFloatABI(Args), "mhard-float", Flags);
-  addMultilibFlag(!isSoftFloatABI(Args), "mfloat-abi=hard", Flags);
   addMultilibFlag(isMipsEL(TargetArch), "EL", Flags);
   addMultilibFlag(isMipsEB(TargetArch), "EB", Flags);
 
