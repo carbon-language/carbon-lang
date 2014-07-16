@@ -2,6 +2,8 @@
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %t %s
 // RUN: cat %t/*.html | FileCheck %s
 
+// REQUIRES: staticanalyzer
+
 // Because of the glob (*.html)
 // REQUIRES: shell
 
