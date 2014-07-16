@@ -49,7 +49,12 @@ struct bit_zero
 
 class Abstract
 {
-    virtual ~Abstract() = 0;
+    virtual void foo() = 0;
+};
+
+class AbstractDestructor
+{
+    virtual ~AbstractDestructor() = 0;
 };
 
 struct A
@@ -61,9 +66,10 @@ int main()
 {
     test_has_not_trivial_destructor<void>();
     test_has_not_trivial_destructor<A>();
-    test_has_not_trivial_destructor<Abstract>();
+    test_has_not_trivial_destructor<AbstractDestructor>();
     test_has_not_trivial_destructor<NotEmpty>();
 
+    test_is_trivially_destructible<Abstract>();
     test_is_trivially_destructible<int&>();
     test_is_trivially_destructible<Union>();
     test_is_trivially_destructible<Empty>();

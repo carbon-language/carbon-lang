@@ -1537,42 +1537,56 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_move_assignable
 
 // is_destructible
 
-template <class _Tp>
-struct __destructible_test
-{
-    _Tp __t;
-};
+//	if it's a reference, return true
+//	if it's a function, return false
+//	if it's   void,     return false
+//	if it's an array of unknown bound, return false
+//	Otherwise, return "std::declval<_Up&>().~_Up()" is well-formed
+//    where _Up is remove_all_extents<_Tp>::type
+
+template <typename _Tp>
+struct __is_destructor_wellformed {
+	template <typename _Tp1, typename _Tp2 = decltype(_VSTD::declval<_Tp1&>().~_Tp1())>
+	static char  __test (int);
+
+	template <typename _Tp1>
+	static __two __test (...);
+	
+	static const bool value = sizeof(__test<_Tp>(12)) == sizeof(char);
+	};
+
+template <class _Tp, bool>
+struct __destructible_imp;
 
 template <class _Tp>
-decltype((_VSTD::declval<__destructible_test<_Tp> >().~__destructible_test<_Tp>(), true_type()))
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-__is_destructible_test(_Tp&&);
-#else
-__is_destructible_test(_Tp&);
-#endif
-
-false_type
-__is_destructible_test(__any);
-
-template <class _Tp, bool = is_void<_Tp>::value || is_abstract<_Tp>::value
-                                                || is_function<_Tp>::value>
-struct __destructible_imp
-    : public common_type
-        <
-            decltype(__is_destructible_test(declval<_Tp>()))
-        >::type {};
+struct __destructible_imp<_Tp, false> 
+   : public _VSTD::integral_constant<bool, 
+        __is_destructor_wellformed<typename _VSTD::remove_all_extents<_Tp>::type>::value> {};
 
 template <class _Tp>
 struct __destructible_imp<_Tp, true>
-    : public false_type {};
+    : public _VSTD::true_type {};
+
+template <class _Tp, bool>
+struct __destructible_false;
+
+template <class _Tp>
+struct __destructible_false<_Tp, false> : public __destructible_imp<_Tp, _VSTD::is_reference<_Tp>::value> {};
+
+template <class _Tp>
+struct __destructible_false<_Tp, true> : public _VSTD::false_type {};
 
 template <class _Tp>
 struct is_destructible
-    : public __destructible_imp<_Tp> {};
+    : public __destructible_false<_Tp, _VSTD::is_function<_Tp>::value> {};
 
 template <class _Tp>
 struct is_destructible<_Tp[]>
-    : public false_type {};
+    : public _VSTD::false_type {};
+
+template <>
+struct is_destructible<void>
+    : public _VSTD::false_type {};
 
 // move
 

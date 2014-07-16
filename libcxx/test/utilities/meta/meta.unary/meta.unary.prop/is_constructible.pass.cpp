@@ -24,6 +24,16 @@ private:
     A(char);
 };
 
+class Abstract
+{
+    virtual void foo() = 0;
+};
+
+class AbstractDestructor
+{
+    virtual ~AbstractDestructor() = 0;
+};
+
 template <class T>
 void test_is_constructible()
 {
@@ -71,4 +81,6 @@ int main()
     test_is_not_constructible<A, void> ();
     test_is_not_constructible<void> ();
     test_is_not_constructible<int&> ();
+    test_is_not_constructible<Abstract> ();
+    test_is_not_constructible<AbstractDestructor> ();
 }
