@@ -476,8 +476,17 @@ bool ARMSubtarget::shouldCoalesce(MachineInstr *MI,
   auto AFI = MF->getInfo<ARMFunctionInfo>();
   auto It = AFI->getCoalescedWeight(MBB);
 
-  DEBUG(dbgs() << "\tARM::shouldCoalesce - Coalesced Weight: " << It->second << "\n");
-  DEBUG(dbgs() << "\tARM::shouldCoalesce - Reg Weight: " << NewRCWeight.RegWeight << "\n");
+  DEBUG(dbgs() << "\tARM::shouldCoalesce - Coalesced Weight: "
+    << It->second << "\n");
+  DEBUG(dbgs() << "\tARM::shouldCoalesce - Reg Weight: "
+    << NewRCWeight.RegWeight << "\n");
+
+  // This number is the largest round number that which meets the criteria:
+  //  (1) addresses PR18825
+  //  (2) generates better code in some test cases (like vldm-shed-a9.ll)
+  //  (3) Doesn't regress any test cases (in-tree, test-suite, and SPEC)
+  // In practice the SizeMultiplier will only factor in for straight line code
+  // that uses a lot of NEON vectors, which isn't terribly common.
   unsigned SizeMultiplier = MBB->size()/100;
   SizeMultiplier = SizeMultiplier ? SizeMultiplier : 1;
   if (It->second < NewRCWeight.WeightLimit * SizeMultiplier) {
