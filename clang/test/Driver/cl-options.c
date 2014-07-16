@@ -294,9 +294,16 @@
 
 // Accept "core" clang options.
 // (/Zs is for syntax-only)
-// RUN: %clang_cl /Zs \
+// RUN: %clang_cl \
+// RUN:     --driver-mode=cl \
+// RUN:     -ferror-limit=10 \
 // RUN:     -fmsc-version=1800 \
-// RUN:     -- %s 2>&1
+// RUN:     -fno-strict-aliasing \
+// RUN:     -fstrict-aliasing \
+// RUN:     -mllvm -disable-llvm-optzns \
+// RUN:     -msse2 \
+// RUN:     -Wunused-variables \
+// RUN:     /Zs -- %s 2>&1
 
 
 void f() { }
