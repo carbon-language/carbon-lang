@@ -13,6 +13,7 @@
 #include "AvoidCStyleCastsCheck.h"
 #include "ExplicitConstructorCheck.h"
 #include "ExplicitMakePairCheck.h"
+#include "MemsetZeroLengthCheck.h"
 #include "NamedParameterCheck.h"
 #include "OverloadedUnaryAndCheck.h"
 #include "StringReferenceMemberCheck.h"
@@ -45,6 +46,9 @@ public:
     CheckFactories.addCheckFactory(
         "google-runtime-member-string-references",
         new ClangTidyCheckFactory<runtime::StringReferenceMemberCheck>());
+    CheckFactories.addCheckFactory(
+        "google-runtime-memset",
+        new ClangTidyCheckFactory<runtime::MemsetZeroLengthCheck>());
     CheckFactories.addCheckFactory(
         "google-readability-casting",
         new ClangTidyCheckFactory<readability::AvoidCStyleCastsCheck>());
