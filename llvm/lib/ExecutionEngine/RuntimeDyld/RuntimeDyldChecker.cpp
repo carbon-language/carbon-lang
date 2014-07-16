@@ -233,9 +233,13 @@ namespace llvm {
         std::string ErrMsg;
         raw_string_ostream ErrMsgStream(ErrMsg);
         ErrMsgStream << "Invalid operand index '" << format("%i", OpIdx)
-                     << " for instruction '" << Symbol
-                     << ". Instruction has only "
-                     << format("%i", Inst.getNumOperands()) << " operands.";
+                     << "' for instruction '" << Symbol
+                     << "'. Instruction has only "
+                     << format("%i", Inst.getNumOperands())
+                     << " operands.\nInstruction is:\n  ";
+        Inst.dump_pretty(ErrMsgStream,
+                         Checker.Disassembler->getContext().getAsmInfo(),
+                         Checker.InstPrinter);
         return std::make_pair(EvalResult(ErrMsgStream.str()), "");
       }
 
