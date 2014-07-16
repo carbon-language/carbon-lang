@@ -830,7 +830,7 @@
 // RUN:     -shared \
 // RUN:   | FileCheck --check-prefix=CHECK-ANDROID-SO %s
 // CHECK-ANDROID-SO: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
-// CHECK-ANDROID-SO: "-Bsymbolic"
+// CHECK-ANDROID-SO-NOT: "-Bsymbolic"
 // CHECK-ANDROID-SO: "{{.*}}{{/|\\\\}}crtbegin_so.o"
 // CHECK-ANDROID-SO: "-L[[SYSROOT]]/usr/lib"
 // CHECK-ANDROID-SO-NOT: "gcc_s"

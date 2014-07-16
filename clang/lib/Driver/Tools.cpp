@@ -7168,9 +7168,6 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-static");
   } else if (Args.hasArg(options::OPT_shared)) {
     CmdArgs.push_back("-shared");
-    if (isAndroid) {
-      CmdArgs.push_back("-Bsymbolic");
-    }
   }
 
   if (ToolChain.getArch() == llvm::Triple::arm ||
