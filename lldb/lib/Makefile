@@ -83,7 +83,7 @@ USEDLIBS = lldbAPI.a \
 # necessary to also link the clang rewriter libraries so vtable references can
 # be resolved correctly, if we are building with GCC.
 ifeq (g++,$(shell basename $(CXX) | cut -c 1-4))
-  USEDLIBS += clangRewriteCore.a \
+  USEDLIBS += clangRewrite.a \
               clangRewriteFrontend.a
 endif
 

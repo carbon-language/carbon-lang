@@ -155,7 +155,7 @@ set( CLANG_USED_LIBS
   clangFrontend
   clangLex
   clangParse
-  clangRewriteCore
+  clangRewrite
   clangRewriteFrontend
   clangSema
   clangSerialization
