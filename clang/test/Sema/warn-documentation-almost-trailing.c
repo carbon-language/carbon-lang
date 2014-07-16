@@ -9,6 +9,5 @@ struct a {
   int y; /*< comment */ // expected-warning {{not a Doxygen trailing comment}}
 };
 
-// CHECK: fix-it:"{{.*}}":{8:10-8:13}:"///<"
-// CHECK: fix-it:"{{.*}}":{9:10-9:13}:"/**<"
-
+// CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:10-[[@LINE-4]]:13}:"///<"
+// CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:10-[[@LINE-4]]:13}:"/**<"
