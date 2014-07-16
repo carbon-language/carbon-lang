@@ -1,4 +1,8 @@
 add_lld_library(lldMachO
+  ArchHandler.cpp
+  ArchHandler_arm.cpp
+  ArchHandler_x86.cpp
+  ArchHandler_x86_64.cpp
   GOTPass.cpp
   MachOLinkingContext.cpp
   MachONormalizedFileBinaryReader.cpp
@@ -6,7 +10,6 @@ add_lld_library(lldMachO
   MachONormalizedFileFromAtoms.cpp
   MachONormalizedFileToAtoms.cpp
   MachONormalizedFileYAML.cpp
-  ReferenceKinds.cpp
   StubsPass.cpp
   WriterMachO.cpp
   )

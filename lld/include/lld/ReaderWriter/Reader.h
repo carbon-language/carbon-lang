@@ -33,6 +33,7 @@ class File;
 class LinkingContext;
 class PECOFFLinkingContext;
 class TargetHandlerBase;
+class MachOLinkingContext;
 
 /// \brief An abstract class for reading object files, library files, and
 /// executable files.
@@ -122,7 +123,7 @@ public:
   void addSupportNativeObjects();
   void addSupportCOFFObjects(PECOFFLinkingContext &);
   void addSupportCOFFImportLibraries();
-  void addSupportMachOObjects(StringRef archName);
+  void addSupportMachOObjects(const MachOLinkingContext &);
   void addSupportELFObjects(bool atomizeStrings, TargetHandlerBase *handler);
   void addSupportELFDynamicSharedObjects(bool useShlibUndefines,
                                          TargetHandlerBase *handler);

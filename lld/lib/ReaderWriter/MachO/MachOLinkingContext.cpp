@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/ReaderWriter/MachOLinkingContext.h"
-#include "GOTPass.hpp"
-#include "StubsPass.hpp"
-#include "ReferenceKinds.h"
+
+#include "ArchHandler.h"
+#include "MachOPasses.h"
 
 #include "lld/Core/PassManager.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -25,7 +25,7 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/Path.h"
 
-using lld::mach_o::KindHandler;
+using lld::mach_o::ArchHandler;
 using namespace llvm::MachO;
 
 namespace lld {
@@ -125,7 +125,7 @@ MachOLinkingContext::MachOLinkingContext()
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
-      _testingLibResolution(false), _kindHandler(nullptr) {}
+      _testingLibResolution(false), _archHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -222,6 +222,33 @@ bool MachOLinkingContext::outputTypeHasEntry() const {
     return false;
   }
 }
+
+bool MachOLinkingContext::needsStubsPass() const {
+  switch (_outputMachOType) {
+  case MH_EXECUTE:
+    return !_outputMachOTypeStatic;
+  case MH_DYLIB:
+  case MH_BUNDLE:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool MachOLinkingContext::needsGOTPass() const {
+  // Only x86_64 uses GOT pass but not in -r mode.
+  if (_arch != arch_x86_64)
+    return false;
+  return (_outputMachOType != MH_OBJECT);
+}
+
+
+StringRef MachOLinkingContext::binderSymbolName() const {
+  return archHandler().stubInfo().binderSymbolName;
+}
+
+
+
 
 bool MachOLinkingContext::minOS(StringRef mac, StringRef iOS) const {
   uint32_t parsedVersion;
@@ -375,11 +402,11 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
 }
 
 void MachOLinkingContext::addPasses(PassManager &pm) {
-  if (outputMachOType() != MH_OBJECT) {
-    pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
-    pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
-  }
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));
+  if (needsStubsPass())
+    mach_o::addStubsPass(pm, *this);
+  if (needsGOTPass())
+    mach_o::addGOTPass(pm, *this);
 }
 
 Writer &MachOLinkingContext::writer() const {
@@ -388,10 +415,10 @@ Writer &MachOLinkingContext::writer() const {
   return *_writer;
 }
 
-KindHandler &MachOLinkingContext::kindHandler() const {
-  if (!_kindHandler)
-    _kindHandler = KindHandler::create(_arch);
-  return *_kindHandler;
+ArchHandler &MachOLinkingContext::archHandler() const {
+  if (!_archHandler)
+    _archHandler = ArchHandler::create(_arch);
+  return *_archHandler;
 }
 
 

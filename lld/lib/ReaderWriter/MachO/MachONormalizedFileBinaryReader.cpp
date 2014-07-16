@@ -22,8 +22,10 @@
 ///                  +------------+
 
 #include "MachONormalizedFile.h"
+
+#include "ArchHandler.h"
 #include "MachONormalizedFileBinaryUtils.h"
-#include "ReferenceKinds.h"
+
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/SmallString.h"
@@ -442,27 +444,11 @@ private:
 } // namespace normalized
 } // namespace mach_o
 
-void Registry::addSupportMachOObjects(StringRef archName) {
-  MachOLinkingContext::Arch arch = MachOLinkingContext::archFromName(archName);
+void Registry::addSupportMachOObjects(const MachOLinkingContext &ctx) {
+  MachOLinkingContext::Arch arch = ctx.arch();
   add(std::unique_ptr<Reader>(new mach_o::normalized::MachOReader(arch)));
-  switch (arch) {
-  case MachOLinkingContext::arch_x86_64:
-    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::x86_64,
-                 mach_o::KindHandler_x86_64::kindStrings);
-    break;
-  case MachOLinkingContext::arch_x86:
-    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::x86,
-                 mach_o::KindHandler_x86::kindStrings);
-    break;
-  case MachOLinkingContext::arch_armv6:
-  case MachOLinkingContext::arch_armv7:
-  case MachOLinkingContext::arch_armv7s:
-    addKindTable(Reference::KindNamespace::mach_o, Reference::KindArch::ARM,
-                 mach_o::KindHandler_arm::kindStrings);
-    break;
-  default:
-    llvm_unreachable("mach-o arch not supported");
-  }
+  addKindTable(Reference::KindNamespace::mach_o, ctx.archHandler().kindArch(), 
+               ctx.archHandler().kindStrings());
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(
                            new mach_o::MachOYamlIOTaggedDocumentHandler(arch)));
 }

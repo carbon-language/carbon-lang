@@ -194,7 +194,17 @@ inline uint64_t read64(bool swap, uint64_t value) {
     return (swap ? getSwappedBytes(value) : value);
 }
 
+inline void write16(int16_t &loc, bool swap, int16_t value) {
+    loc = (swap ? getSwappedBytes(value) : value);
+}
 
+inline void write32(int32_t &loc, bool swap, int32_t value) {
+    loc = (swap ? getSwappedBytes(value) : value);
+}
+
+inline void write64(uint64_t &loc, bool swap, uint64_t value) {
+    loc = (swap ? getSwappedBytes(value) : value);
+}
 
 inline uint32_t
 bitFieldExtract(uint32_t value, bool isBigEndianBigField, uint8_t firstBit,

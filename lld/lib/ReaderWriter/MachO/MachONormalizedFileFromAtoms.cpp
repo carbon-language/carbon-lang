@@ -21,8 +21,10 @@
 ///                    +-------+
 
 #include "MachONormalizedFile.h"
+
+#include "ArchHandler.h"
 #include "MachONormalizedFileBinaryUtils.h"
-#include "ReferenceKinds.h"
+
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
 #include "llvm/ADT/StringRef.h"
@@ -542,7 +544,7 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
         // FIXME: Need a handler method to update content for .o file
         // output and any needed section relocations.
       } else {
-        _context.kindHandler().applyFixup(
+        _context.archHandler().applyFixup(
           ref->kindNamespace(), ref->kindArch(), ref->kindValue(),
           ref->addend(), &atomContent[offset], fixupAddress, targetAddress,
           atomAddress);
@@ -713,7 +715,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
 
 const Atom *Util::targetOfLazyPointer(const DefinedAtom *lpAtom) {
   for (const Reference *ref : *lpAtom) {
-    if (_context.kindHandler().isLazyTarget(*ref)) {
+    if (_context.archHandler().isLazyPointer(*ref)) {
       return ref->target();
     }
   }
@@ -871,7 +873,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
         uint64_t segmentOffset = _atomToAddress[atom] + ref->offsetInAtom()
                                 - segmentStartAddr;
         const Atom* targ = ref->target();
-        if (_context.kindHandler().isPointer(*ref)) {
+        if (_context.archHandler().isPointer(*ref)) {
           // A pointer to a DefinedAtom requires rebasing.
           if (dyn_cast<DefinedAtom>(targ)) {
             RebaseLocation rebase;
@@ -893,7 +895,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             nFile.bindingInfo.push_back(bind);
           }
         }
-        if (_context.kindHandler().isLazyTarget(*ref)) {
+        if (_context.archHandler().isLazyPointer(*ref)) {
             BindLocation bind;
             bind.segIndex = segmentIndex;
             bind.segOffset = segmentOffset;

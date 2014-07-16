@@ -21,10 +21,11 @@
 ///                    +-------+
 
 #include "MachONormalizedFile.h"
-#include "MachONormalizedFileBinaryUtils.h"
-#include "File.h"
+
+#include "ArchHandler.h"
 #include "Atoms.h"
-#include "ReferenceKinds.h"
+#include "File.h"
+#include "MachONormalizedFileBinaryUtils.h"
 
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
@@ -431,8 +432,8 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
 std::error_code convertRelocs(const Section &section,
                               const NormalizedFile &normalizedFile,
                               MachOFile &file,
-                              KindHandler &handler) {
-  // Utility function for KindHandler to find atom by its address.
+                              ArchHandler &handler) {
+  // Utility function for ArchHandler to find atom by its address.
   auto atomByAddr = [&] (uint32_t sectIndex, uint64_t addr,
                          const lld::Atom **atom, Reference::Addend *addend)
                          -> std::error_code {
@@ -462,7 +463,7 @@ std::error_code convertRelocs(const Section &section,
     return std::error_code();
   };
 
-  // Utility function for KindHandler to find atom by its symbol index.
+  // Utility function for ArchHandler to find atom by its symbol index.
   auto atomBySymbol = [&] (uint32_t symbolIndex, const lld::Atom **result)
                            -> std::error_code {
     // Find symbol from index.
@@ -536,7 +537,7 @@ std::error_code convertRelocs(const Section &section,
                                                &target, &addend);
     }
     else {
-      // Use KindHandler to convert relocation record into information
+      // Use ArchHandler to convert relocation record into information
       // needed to instantiate an lld::Reference object.
       relocErr = handler.getReferenceInfo(reloc, inAtom, offsetInAtom,
                                           fixupAddress,swap, atomByAddr,
@@ -558,27 +559,8 @@ std::error_code convertRelocs(const Section &section,
          + ")" );
     } else {
       // Instantiate an lld::Reference object and add to its atom.
-      Reference::KindArch arch = Reference::KindArch::all;
-      switch (normalizedFile.arch ) {
-      case lld::MachOLinkingContext::arch_x86_64:
-        arch = Reference::KindArch::x86_64;
-        break;
-      case lld::MachOLinkingContext::arch_x86:
-        arch = Reference::KindArch::x86;
-        break;
-      case lld::MachOLinkingContext::arch_ppc:
-        arch = Reference::KindArch::PowerPC;
-        break;
-      case lld::MachOLinkingContext::arch_armv6:
-      case lld::MachOLinkingContext::arch_armv7:
-      case lld::MachOLinkingContext::arch_armv7s:
-        arch = Reference::KindArch::ARM;
-        break;
-      case lld::MachOLinkingContext::arch_unknown:
-        return make_dynamic_error_code(Twine("unknown architecture"));
-      }
-      
-      inAtom->addReference(offsetInAtom, kind, target, addend, arch);
+      inAtom->addReference(offsetInAtom, kind, target, addend, 
+                           handler.kindArch());
     }
   }
   return std::error_code();
@@ -616,8 +598,8 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   }
 
   // Convert mach-o relocations to References
-  std::unique_ptr<mach_o::KindHandler> handler
-                                     = KindHandler::create(normalizedFile.arch);
+  std::unique_ptr<mach_o::ArchHandler> handler
+                                     = ArchHandler::create(normalizedFile.arch);
   for (auto &sect : normalizedFile.sections) {
     if (isDebugInfoSection(sect))
       continue;

@@ -31,15 +31,22 @@ namespace mach_o {
 class CRuntimeFile : public SimpleFile {
 public:
   CRuntimeFile(const MachOLinkingContext &context)
-      : SimpleFile("C runtime"), _undefMain(*this, context.entrySymbolName()) {
+      : SimpleFile("C runtime"), 
+       _undefMain(*this, context.entrySymbolName()),
+       _undefBinder(*this, context.binderSymbolName()) {
       // only main executables need _main
       if (context.outputMachOType() == llvm::MachO::MH_EXECUTE) {
         this->addAtom(_undefMain);
+      }
+      // only dynamic binaries use stubs
+      if (context.needsStubsPass()) {
+        this->addAtom(_undefBinder);
       }
    }
 
 private:
   SimpleUndefinedAtom   _undefMain;
+  SimpleUndefinedAtom   _undefBinder;
 };
 
 } // namespace mach_o

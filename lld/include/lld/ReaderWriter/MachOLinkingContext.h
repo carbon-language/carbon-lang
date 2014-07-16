@@ -24,7 +24,7 @@ using llvm::MachO::HeaderFileType;
 namespace lld {
 
 namespace mach_o {
-class KindHandler; // defined in lib. this header is in include.
+class ArchHandler; 
 }
 
 class MachOLinkingContext : public LinkingContext {
@@ -68,7 +68,7 @@ public:
   virtual uint64_t pageZeroSize() const { return _pageZeroSize; }
   virtual uint64_t pageSize() const { return _pageSize; }
 
-  mach_o::KindHandler &kindHandler() const;
+  mach_o::ArchHandler &archHandler() const;
 
   HeaderFileType outputMachOType() const { return _outputMachOType; }
 
@@ -168,6 +168,15 @@ public:
 
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
+  /// Stub creation Pass should be run.
+  bool needsStubsPass() const;
+
+  // GOT createion Pass should be run.
+  bool needsGOTPass() const;
+
+  /// Magic symbol name stubs will need to help lazy bind.
+  StringRef binderSymbolName() const;
+
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
   static StringRef nameFromArch(Arch arch);
@@ -211,7 +220,7 @@ private:
   bool _printAtoms;
   bool _testingLibResolution;
   StringRef _bundleLoader;
-  mutable std::unique_ptr<mach_o::KindHandler> _kindHandler;
+  mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
 };
 

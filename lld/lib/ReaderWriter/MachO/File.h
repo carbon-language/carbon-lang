@@ -10,12 +10,13 @@
 #ifndef LLD_READER_WRITER_MACHO_FILE_H
 #define LLD_READER_WRITER_MACHO_FILE_H
 
-#include "llvm/ADT/StringMap.h"
-
 #include "Atoms.h"
+#include "MachONormalizedFile.h"
 
 #include "lld/Core/Simple.h"
 #include "lld/Core/SharedLibraryFile.h"
+
+#include "llvm/ADT/StringMap.h"
 
 #include <unordered_map>
 
@@ -137,6 +138,8 @@ public:
       return nullptr;
     return pos->second;
   }
+  
+  llvm::BumpPtrAllocator &allocator() { return _allocator; }
   
 private:
   struct SectionOffsetAndAtom { uint64_t offset;  MachODefinedAtom *atom; };

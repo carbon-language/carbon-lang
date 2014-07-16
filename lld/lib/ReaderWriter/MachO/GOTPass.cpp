@@ -32,77 +32,143 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "ArchHandler.h"
+#include "File.h"
+#include "MachOPasses.h"
+
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
+#include "lld/Core/Simple.h"
+
 #include "llvm/ADT/DenseMap.h"
 
-#include "MachOPasses.h"
 
 namespace lld {
+namespace mach_o {
 
-static bool shouldReplaceTargetWithGOTAtom(const Atom *target,
-                                           bool canBypassGOT) {
-  // Accesses to shared library symbols must go through GOT.
-  if (target->definition() == Atom::definitionSharedLibrary)
-    return true;
-  // Accesses to interposable symbols in same linkage unit must also go
-  // through GOT.
-  const DefinedAtom *defTarget = dyn_cast<DefinedAtom>(target);
-  if (defTarget != nullptr &&
-      defTarget->interposable() != DefinedAtom::interposeNo) {
-    assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
-    return true;
+
+//
+//  GOT Entry Atom created by the GOT pass.
+//
+class GOTEntryAtom : public SimpleDefinedAtom {
+public:
+  GOTEntryAtom(const File &file, bool is64) 
+    : SimpleDefinedAtom(file), _is64(is64) { }
+
+  ContentType contentType() const override {
+    return DefinedAtom::typeGOT;
   }
-  // Target does not require indirection.  So, if instruction allows GOT to be
-  // by-passed, do that optimization and don't create GOT entry.
-  return !canBypassGOT;
-}
 
-static const DefinedAtom *
-findGOTAtom(const Atom *target,
-            llvm::DenseMap<const Atom *, const DefinedAtom *> &targetToGOT) {
-  auto pos = targetToGOT.find(target);
-  return (pos == targetToGOT.end()) ? nullptr : pos->second;
-}
+  Alignment alignment() const override {
+    return Alignment(_is64 ? 3 : 2);
+  }
 
-void GOTPass::perform(std::unique_ptr<MutableFile> &mergedFile) {
-  // Use map so all pointers to same symbol use same GOT entry.
-  llvm::DenseMap<const Atom*, const DefinedAtom*> targetToGOT;
+  uint64_t size() const override {
+    return _is64 ? 8 : 4;
+  }
 
-  // Scan all references in all atoms.
-  for (const DefinedAtom *atom : mergedFile->defined()) {
-    for (const Reference *ref : *atom) {
-      // Look at instructions accessing the GOT.
-      bool canBypassGOT;
-      if (!isGOTAccess(*ref, canBypassGOT))
-        continue;
-      const Atom *target = ref->target();
-      assert(target != nullptr);
+  ContentPermissions permissions() const override {
+    return DefinedAtom::permRW_;
+  }
 
-      if (!shouldReplaceTargetWithGOTAtom(target, canBypassGOT)) {
-        // Update reference kind to reflect that target is a direct accesss.
-        updateReferenceToGOT(ref, false);
-        continue;
+  ArrayRef<uint8_t> rawContent() const override {
+    static const uint8_t zeros[] =
+        { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+    return llvm::makeArrayRef(zeros, size());
+  }
+
+private:
+  const bool _is64;
+};
+
+
+/// Pass for instantiating and optimizing GOT slots.
+/// 
+class GOTPass : public Pass {
+public:
+  GOTPass(const MachOLinkingContext &context)
+    : _context(context), _archHandler(_context.archHandler()),
+      _file("<mach-o GOT Pass>") { } 
+
+private:
+
+  void perform(std::unique_ptr<MutableFile> &mergedFile) override {
+    // Scan all references in all atoms.
+    for (const DefinedAtom *atom : mergedFile->defined()) {
+      for (const Reference *ref : *atom) {
+        // Look at instructions accessing the GOT.
+        bool canBypassGOT;
+        if (!_archHandler.isGOTAccess(*ref, canBypassGOT))
+          continue;
+        const Atom *target = ref->target();
+        assert(target != nullptr);
+
+        if (!shouldReplaceTargetWithGOTAtom(target, canBypassGOT)) {
+          // Update reference kind to reflect that target is a direct accesss.
+          _archHandler.updateReferenceToGOT(ref, false);
+        } else {
+          // Replace the target with a reference to a GOT entry.
+          const DefinedAtom *gotEntry = makeGOTEntry(target);
+          const_cast<Reference *>(ref)->setTarget(gotEntry);
+          // Update reference kind to reflect that target is now a GOT entry.
+          _archHandler.updateReferenceToGOT(ref, true);
+        }
       }
-      // Replace the target with a reference to a GOT entry.
-      const DefinedAtom *gotEntry = findGOTAtom(target, targetToGOT);
-      if (!gotEntry) {
-        gotEntry = makeGOTEntry(*target);
-        assert(gotEntry != nullptr);
-        assert(gotEntry->contentType() == DefinedAtom::typeGOT);
-        targetToGOT[target] = gotEntry;
-      }
-      const_cast<Reference *>(ref)->setTarget(gotEntry);
-      // Update reference kind to reflect that target is now a GOT entry.
-      updateReferenceToGOT(ref, true);
     }
+
+    // add all created GOT Atoms to master file
+    for (auto &it : _targetToGOT)
+      mergedFile->addAtom(*it.second);
   }
 
-  // add all created GOT Atoms to master file
-  for (auto &it : targetToGOT)
-    mergedFile->addAtom(*it.second);
-}
+  bool shouldReplaceTargetWithGOTAtom(const Atom *target, bool canBypassGOT) {
+    // Accesses to shared library symbols must go through GOT.
+    if (target->definition() == Atom::definitionSharedLibrary)
+      return true;
+    // Accesses to interposable symbols in same linkage unit must also go
+    // through GOT.
+    const DefinedAtom *defTarget = dyn_cast<DefinedAtom>(target);
+    if (defTarget != nullptr &&
+        defTarget->interposable() != DefinedAtom::interposeNo) {
+      assert(defTarget->scope() != DefinedAtom::scopeTranslationUnit);
+      return true;
+    }
+    // Target does not require indirection.  So, if instruction allows GOT to be
+    // by-passed, do that optimization and don't create GOT entry.
+    return !canBypassGOT;
+  }
+  
+  const DefinedAtom *makeGOTEntry(const Atom *target) {
+    auto pos = _targetToGOT.find(target);
+    if (pos == _targetToGOT.end()) {
+      GOTEntryAtom *gotEntry = new (_file.allocator()) 
+                                        GOTEntryAtom(_file, _context.is64Bit());
+      _targetToGOT[target] = gotEntry;
+      const ArchHandler::ReferenceInfo &nlInfo = _archHandler.stubInfo().
+                                                nonLazyPointerReferenceToBinder;
+      gotEntry->addReference(Reference::KindNamespace::mach_o, nlInfo.arch,
+                             nlInfo.kind, 0, target, 0);
+      return gotEntry;
+    }
+    return pos->second;
+  }
 
+  
+  const MachOLinkingContext                       &_context;
+  mach_o::ArchHandler                             &_archHandler;
+  MachOFile                                        _file;
+  llvm::DenseMap<const Atom*, const GOTEntryAtom*> _targetToGOT;
+};
+
+
+
+void addGOTPass(PassManager &pm, const MachOLinkingContext &ctx) {
+  assert(ctx.needsGOTPass());
+  pm.add(std::unique_ptr<Pass>(new GOTPass(ctx)));
+}
+  
+
+} // end namesapce mach_o
 } // end namesapce lld

@@ -75,6 +75,11 @@ global-symbols:
     scope:           [ N_EXT ]
     sect:            1
     value:           0x0000000000000001
+  - name:            dyld_stub_binder
+    type:            N_SECT
+    scope:           [ N_EXT ]
+    sect:            1
+    value:           0x0000000000000001
 
 ...
 
