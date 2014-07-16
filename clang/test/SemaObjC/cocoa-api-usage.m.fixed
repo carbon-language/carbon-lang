@@ -3,6 +3,7 @@
 // RUN: cp %s %t.m
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -fobjc-arc %t.m -fixit -Wobjc-cocoa-api
 // RUN: diff %s.fixed %t.m
+// REQUIRES: rewriter
 
 typedef signed char BOOL;
 #define nil ((void*) 0)

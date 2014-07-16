@@ -2,6 +2,7 @@
 // RUN: cp %s %t
 // RUN: not %clang_cc1 -x c++ -fixit %t -DFIXING
 // RUN: %clang_cc1 -x c++ %t -DFIXING
+// REQUIRES: rewriter
 
 template<typename T> void f(T) { }
 template<typename T> void g(T) { }

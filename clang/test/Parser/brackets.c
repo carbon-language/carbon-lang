@@ -3,6 +3,7 @@
 // RUN: not %clang_cc1 -fixit %t -x c -DFIXIT
 // RUN: %clang_cc1 -fsyntax-only %t -x c -DFIXIT
 // RUN: not %clang_cc1 -fsyntax-only -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s -strict-whitespace
+// REQUIRES: rewriter
 
 void test1() {
   int a[] = {0,1,1,2,3};

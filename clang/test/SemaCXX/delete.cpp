@@ -2,6 +2,7 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -fixit -x c++ %t
 // RUN: %clang_cc1 -E -o - %t | FileCheck %s
+// REQUIRES: rewriter
 
 void f(int a[10][20]) {
   // CHECK: delete[] a;

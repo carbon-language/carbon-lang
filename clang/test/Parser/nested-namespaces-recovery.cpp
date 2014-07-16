@@ -2,6 +2,7 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
 // RUN: not %clang_cc1 -x c++ -fixit %t
 // RUN: %clang_cc1 -x c++ %t
+// REQUIRES: rewriter
 
 namespace foo1::foo2::foo3 { // expected-error {{nested namespace definition must define each namespace separately}}
   int foo(int x) { return x; }

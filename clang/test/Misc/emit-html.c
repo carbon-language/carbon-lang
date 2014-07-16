@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -emit-html -o -
+// REQUIRES: rewriter
 
 // rdar://6562329
 #line 42 "foo.c"
