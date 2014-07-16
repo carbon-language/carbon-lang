@@ -158,7 +158,6 @@ class FoundationTestCase2(TestBase):
             patterns = ["\(int\) \$.* = 3"])
         self.runCmd("process continue")
 
-    @unittest2.expectedFailure(8741897)
     def NSString_expr(self):
         """Test expression commands for NSString."""
         exe = os.path.join(os.getcwd(), "a.out")
@@ -178,12 +177,13 @@ class FoundationTestCase2(TestBase):
             patterns = ["\(int\) \$.* ="])
         self.expect("expression [str description]",
             patterns = ["\(id\) \$.* = 0x"])
-        self.expect("expression [str_id description]",
+        self.expect("expression (id)[str_id description]",
             patterns = ["\(id\) \$.* = 0x"])
+        self.expect("expression str.length")
         self.expect("expression str.description")
-        self.expect("expression str_id.description")
         self.expect('expression str = @"new"')
-        self.expect('expression str = [NSString stringWithFormat: @"%cew", \'N\']')
+        self.runCmd("image lookup -t NSString")
+        self.expect('expression str = [NSString stringWithCString: "new"]')
         self.runCmd("process continue")
 
     def MyString_dump(self):
