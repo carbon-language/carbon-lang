@@ -7,6 +7,7 @@ add_clang_library(clangTidyGoogleModule
   GoogleTidyModule.cpp
   NamedParameterCheck.cpp
   OverloadedUnaryAndCheck.cpp
+  StringReferenceMemberCheck.cpp
 
   LINK_LIBS
   clangAST

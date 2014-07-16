@@ -15,6 +15,7 @@
 #include "ExplicitMakePairCheck.h"
 #include "NamedParameterCheck.h"
 #include "OverloadedUnaryAndCheck.h"
+#include "StringReferenceMemberCheck.h"
 
 using namespace clang::ast_matchers;
 
@@ -33,6 +34,9 @@ public:
     CheckFactories.addCheckFactory(
         "google-runtime-operator",
         new ClangTidyCheckFactory<runtime::OverloadedUnaryAndCheck>());
+    CheckFactories.addCheckFactory(
+        "google-runtime-member-string-references",
+        new ClangTidyCheckFactory<runtime::StringReferenceMemberCheck>());
     CheckFactories.addCheckFactory(
         "google-readability-casting",
         new ClangTidyCheckFactory<readability::AvoidCStyleCastsCheck>());
