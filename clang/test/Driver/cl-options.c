@@ -292,5 +292,11 @@
 // RTTI-NOT: "-fno-rtti-data"
 // RTTI-NOT: "-fno-rtti"
 
+// Accept "core" clang options.
+// (/Zs is for syntax-only)
+// RUN: %clang_cl /Zs \
+// RUN:     -fmsc-version=1800 \
+// RUN:     -- %s 2>&1
+
 
 void f() { }
