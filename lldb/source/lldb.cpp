@@ -43,6 +43,7 @@
 #include "Plugins/Platform/Linux/PlatformLinux.h"
 #include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 #include "Plugins/Platform/Windows/PlatformWindows.h"
+#include "Plugins/Platform/Kalimba/PlatformKalimba.h"
 #include "Plugins/Process/elf-core/ProcessElfCore.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
 #include "Plugins/SymbolVendor/ELF/SymbolVendorELF.h"
@@ -123,6 +124,7 @@ lldb_private::Initialize ()
         PlatformFreeBSD::Initialize();
         PlatformLinux::Initialize();
         PlatformWindows::Initialize();
+        PlatformKalimba::Initialize();
         SymbolFileDWARFDebugMap::Initialize();
         ItaniumABILanguageRuntime::Initialize();
 #ifndef LLDB_DISABLE_PYTHON
@@ -210,6 +212,7 @@ lldb_private::Terminate ()
     PlatformFreeBSD::Terminate();
     PlatformLinux::Terminate();
     PlatformWindows::Terminate();
+    PlatformKalimba::Terminate();
     SymbolFileDWARFDebugMap::Terminate();
     ItaniumABILanguageRuntime::Terminate();
 #ifndef LLDB_DISABLE_PYTHON

@@ -10,3 +10,4 @@
 
 add_subdirectory(POSIX)
 add_subdirectory(gdb-server)
+add_subdirectory(Kalimba)

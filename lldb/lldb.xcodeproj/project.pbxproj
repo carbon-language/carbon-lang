@@ -51,6 +51,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		23042D121976CA1D00621B2C /* PlatformKalimba.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23042D101976CA0A00621B2C /* PlatformKalimba.cpp */; };
 		23059A0719532B96007B8189 /* LinuxSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0519532B96007B8189 /* LinuxSignals.cpp */; };
 		23059A101958B319007B8189 /* SBUnixSignals.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23059A0F1958B319007B8189 /* SBUnixSignals.cpp */; };
 		23059A121958B3B2007B8189 /* SBUnixSignals.h in Headers */ = {isa = PBXBuildFile; fileRef = 23059A111958B37B007B8189 /* SBUnixSignals.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -890,6 +891,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		23042D101976CA0A00621B2C /* PlatformKalimba.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformKalimba.cpp; sourceTree = "<group>"; };
+		23042D111976CA0A00621B2C /* PlatformKalimba.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PlatformKalimba.h; sourceTree = "<group>"; };
 		23059A0519532B96007B8189 /* LinuxSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LinuxSignals.cpp; path = Utility/LinuxSignals.cpp; sourceTree = "<group>"; };
 		23059A0619532B96007B8189 /* LinuxSignals.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LinuxSignals.h; path = Utility/LinuxSignals.h; sourceTree = "<group>"; };
 		23059A0F1958B319007B8189 /* SBUnixSignals.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBUnixSignals.cpp; path = source/API/SBUnixSignals.cpp; sourceTree = "<group>"; };
@@ -2206,6 +2209,15 @@
 			name = Products;
 			sourceTree = "<group>";
 			usesTabs = 0;
+		};
+		23042D0F1976C9D800621B2C /* Kalimba */ = {
+			isa = PBXGroup;
+			children = (
+				23042D111976CA0A00621B2C /* PlatformKalimba.h */,
+				23042D101976CA0A00621B2C /* PlatformKalimba.cpp */,
+			);
+			path = Kalimba;
+			sourceTree = "<group>";
 		};
 		233B008B196106E90090E598 /* Linux */ = {
 			isa = PBXGroup;
@@ -3662,6 +3674,7 @@
 			children = (
 				2694E99814FC0BB30076DE67 /* FreeBSD */,
 				264A97BC133918A30017F0BE /* GDB Server */,
+				23042D0F1976C9D800621B2C /* Kalimba */,
 				2694E99F14FC0BBD0076DE67 /* Linux */,
 				26C5577F132575C8008FD8FE /* MacOSX */,
 				9457596415349416005A9070 /* POSIX */,
@@ -4648,6 +4661,7 @@
 				2689000F13353DB600698AC0 /* StoppointLocation.cpp in Sources */,
 				2689001113353DB600698AC0 /* Watchpoint.cpp in Sources */,
 				2689001213353DDE00698AC0 /* CommandObjectApropos.cpp in Sources */,
+				23042D121976CA1D00621B2C /* PlatformKalimba.cpp in Sources */,
 				2689001313353DDE00698AC0 /* CommandObjectArgs.cpp in Sources */,
 				2689001413353DDE00698AC0 /* CommandObjectBreakpoint.cpp in Sources */,
 				2689001513353DDE00698AC0 /* CommandObjectBreakpointCommand.cpp in Sources */,

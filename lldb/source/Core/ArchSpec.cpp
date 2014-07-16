@@ -115,7 +115,7 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach32  , "unknown-mach-32" },
     { eByteOrderLittle, 8, 4, 4 , llvm::Triple::UnknownArch , ArchSpec::eCore_uknownMach64  , "unknown-mach-64" },
 
-    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::UnknownArch , ArchSpec::eCore_kalimba  , "kalimba" }
+    { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba  , "kalimba" }
 };
 
 struct ArchDefinitionEntry

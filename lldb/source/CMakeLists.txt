@@ -61,6 +61,7 @@ set( LLDB_USED_LIBS
   lldbPluginProcessUtility
   lldbPluginPlatformGDB
   lldbPluginPlatformFreeBSD
+  lldbPluginPlatformKalimba
   lldbPluginPlatformLinux
   lldbPluginPlatformPOSIX
   lldbPluginPlatformWindows

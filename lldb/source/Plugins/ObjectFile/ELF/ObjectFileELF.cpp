@@ -46,6 +46,7 @@ namespace {
 const char *const LLDB_NT_OWNER_FREEBSD = "FreeBSD";
 const char *const LLDB_NT_OWNER_GNU     = "GNU";
 const char *const LLDB_NT_OWNER_NETBSD  = "NetBSD";
+const char *const LLDB_NT_OWNER_CSR     = "csr";
 
 // ELF note type definitions
 const elf_word LLDB_NT_FREEBSD_ABI_TAG  = 0x01;
@@ -1220,6 +1221,24 @@ ObjectFileELF::RefineModuleDetailsFromNote (lldb_private::DataExtractor &data, l
 
             if (log)
                 log->Printf ("ObjectFileELF::%s detected NetBSD, min version constant %" PRIu32, __FUNCTION__, version_info);
+        }
+        // Process CSR kalimba notes
+        else if ((note.n_type == LLDB_NT_GNU_ABI_TAG) &&
+                (note.n_name == LLDB_NT_OWNER_CSR))
+        {
+            // We'll consume the payload below.
+            processed = true;
+            arch_spec.GetTriple().setOS(llvm::Triple::OSType::UnknownOS);
+            arch_spec.GetTriple().setVendor(llvm::Triple::VendorType::CSR);
+
+            // TODO At some point the description string could be processed.
+            // It could provide a steer towards the kalimba variant which
+            // this ELF targets.
+            if(note.n_descsz)
+            {
+                const char *cstr = data.GetCStr(&offset, llvm::RoundUpToAlignment (note.n_descsz, 4));
+                (void)cstr;
+            }
         }
 
         if (!processed)
