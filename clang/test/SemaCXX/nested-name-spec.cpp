@@ -311,3 +311,102 @@ namespace N {
 
 namespace TypedefNamespace { typedef int F; };
 TypedefNamespace::F::NonexistentName BadNNSWithCXXScopeSpec; // expected-error {{'F' (aka 'int') is not a class, namespace, or scoped enumeration}}
+
+namespace PR18587 {
+
+struct C1 {
+  int a, b, c;
+  typedef int C2;
+  struct B1 {
+    struct B2 {
+      int a, b, c;
+    };
+  };
+};
+struct C2 { static const unsigned N1 = 1; };
+struct B1 {
+  enum E1 { B2 = 2 };
+  static const int B3 = 3;
+};
+const int N1 = 2;
+
+// Function declarators
+struct S1a { int f(C1::C2); };
+struct S1b { int f(C1:C2); };  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+
+struct S2a {
+  C1::C2 f(C1::C2);
+};
+struct S2c {
+  C1::C2 f(C1:C2);  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+struct S3a {
+  int f(C1::C2), C2 : N1;
+  int g : B1::B2;
+};
+struct S3b {
+  int g : B1:B2;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+// Inside square brackets
+struct S4a {
+  int f[C2::N1];
+};
+struct S4b {
+  int f[C2:N1];  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+struct S5a {
+  int f(int xx[B1::B3 ? C2::N1 : B1::B2]);
+};
+struct S5b {
+  int f(int xx[B1::B3 ? C2::N1 : B1:B2]);  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+struct S5c {
+  int f(int xx[B1:B3 ? C2::N1 : B1::B2]);  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+// Bit fields
+struct S6a {
+  C1::C2 m1 : B1::B2;
+};
+struct S6c {
+  C1::C2 m1 : B1:B2;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+struct S6d {
+  int C2:N1;
+};
+struct S6e {
+  static const int N = 3;
+  B1::E1 : N;
+};
+struct S6g {
+  C1::C2 : B1:B2;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+  B1::E1 : B1:B2;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+// Template parameters
+template <int N> struct T1 {
+  int a,b,c;
+  static const unsigned N1 = N;
+  typedef unsigned C1;
+};
+T1<C2::N1> var_1a;
+T1<C2:N1> var_1b;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+template<int N> int F() {}
+int (*X1)() = (B1::B2 ? F<1> : F<2>);
+int (*X2)() = (B1:B2 ? F<1> : F<2>);  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+
+// Bit fields + templates
+struct S7a {
+  T1<B1::B2>::C1 m1 : T1<B1::B2>::N1;
+};
+struct S7b {
+  T1<B1:B2>::C1 m1 : T1<B1::B2>::N1;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+struct S7c {
+  T1<B1::B2>::C1 m1 : T1<B1:B2>::N1;  // expected-error{{unexpected ':' in nested name specifier; did you mean '::'?}}
+};
+
+}

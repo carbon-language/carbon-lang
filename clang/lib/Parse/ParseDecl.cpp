@@ -2715,23 +2715,22 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       // typedef-name
     case tok::kw_decltype:
     case tok::identifier: {
-      // In C++, check to see if this is a scope specifier like foo::bar::, if
-      // so handle it as such.  This is important for ctor parsing.
-      if (getLangOpts().CPlusPlus) {
-        if (TryAnnotateCXXScopeToken(EnteringContext)) {
-          if (!DS.hasTypeSpecifier())
-            DS.SetTypeSpecError();
-          goto DoneWithDeclSpec;
-        }
-        if (!Tok.is(tok::identifier))
-          continue;
-      }
-
       // This identifier can only be a typedef name if we haven't already seen
       // a type-specifier.  Without this check we misparse:
       //  typedef int X; struct Y { short X; };  as 'short int'.
       if (DS.hasTypeSpecifier())
         goto DoneWithDeclSpec;
+
+      // In C++, check to see if this is a scope specifier like foo::bar::, if
+      // so handle it as such.  This is important for ctor parsing.
+      if (getLangOpts().CPlusPlus) {
+        if (TryAnnotateCXXScopeToken(EnteringContext)) {
+          DS.SetTypeSpecError();
+          goto DoneWithDeclSpec;
+        }
+        if (!Tok.is(tok::identifier))
+          continue;
+      }
 
       // Check for need to substitute AltiVec keyword tokens.
       if (TryAltiVecToken(DS, Loc, PrevSpec, DiagID, isInvalid))
@@ -4529,7 +4528,9 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
   // Member pointers get special handling, since there's no place for the
   // scope spec in the generic path below.
   if (getLangOpts().CPlusPlus &&
-      (Tok.is(tok::coloncolon) || Tok.is(tok::identifier) ||
+      (Tok.is(tok::coloncolon) ||
+       (Tok.is(tok::identifier) &&
+        (NextToken().is(tok::coloncolon) || NextToken().is(tok::less))) ||
        Tok.is(tok::annot_cxxscope))) {
     bool EnteringContext = D.getContext() == Declarator::FileContext ||
                            D.getContext() == Declarator::MemberContext;
@@ -4722,6 +4723,14 @@ void Parser::ParseDirectDeclarator(Declarator &D) {
   DeclaratorScopeObj DeclScopeObj(*this, D.getCXXScopeSpec());
 
   if (getLangOpts().CPlusPlus && D.mayHaveIdentifier()) {
+    // Don't parse FOO:BAR as if it were a typo for FOO::BAR inside a class, in
+    // this context it is a bitfield. Also in range-based for statement colon
+    // may delimit for-range-declaration.
+    ColonProtectionRAIIObject X(*this,
+                                D.getContext() == Declarator::MemberContext ||
+                                    (D.getContext() == Declarator::ForContext &&
+                                     getLangOpts().CPlusPlus11));
+
     // ParseDeclaratorInternal might already have parsed the scope.
     if (D.getCXXScopeSpec().isEmpty()) {
       bool EnteringContext = D.getContext() == Declarator::FileContext ||

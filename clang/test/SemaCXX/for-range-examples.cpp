@@ -227,3 +227,15 @@ namespace test7 {
     for (e [[deprecated]] : arr) { e = 0; } // expected-warning {{deprecated}} expected-note {{here}} expected-warning {{extension}}
   }
 }
+
+namespace pr18587 {
+  class Arg {};
+  struct Cont {
+    int *begin();
+    int *end();
+  };
+  void AddAllArgs(Cont &x) {
+    for (auto Arg: x) {
+    }
+  }
+}
