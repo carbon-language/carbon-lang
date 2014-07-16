@@ -669,9 +669,9 @@ public:
     SK_ConversionSequence,
     /// \brief Perform an implicit conversion sequence without narrowing.
     SK_ConversionSequenceNoNarrowing,
-    /// \brief Perform list-initialization without a constructor
+    /// \brief Perform list-initialization without a constructor.
     SK_ListInitialization,
-    /// \brief Perform list-initialization with a constructor.
+    /// \brief Perform list-initialization with an initializer list constructor.
     SK_ListConstructorCall,
     /// \brief Unwrap the single-element initializer list for a reference.
     SK_UnwrapInitList,
@@ -679,6 +679,9 @@ public:
     SK_RewrapInitList,
     /// \brief Perform initialization via a constructor.
     SK_ConstructorInitialization,
+    /// \brief Perform initialization via a constructor, taking arguments from
+    /// a single InitListExpr.
+    SK_ConstructorInitializationFromList,
     /// \brief Zero-initialize the object
     SK_ZeroInitialization,
     /// \brief C assignment

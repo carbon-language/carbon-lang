@@ -2764,6 +2764,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_UnwrapInitList:
   case SK_RewrapInitList:
   case SK_ConstructorInitialization:
+  case SK_ConstructorInitializationFromList:
   case SK_ZeroInitialization:
   case SK_CAssignment:
   case SK_StringInit:
@@ -2944,8 +2945,9 @@ InitializationSequence
                                    bool HadMultipleCandidates,
                                    bool FromInitList, bool AsInitList) {
   Step S;
-  S.Kind = FromInitList && !AsInitList ? SK_ListConstructorCall
-                                       : SK_ConstructorInitialization;
+  S.Kind = FromInitList ? AsInitList ? SK_ListConstructorCall
+                                     : SK_ConstructorInitializationFromList
+                        : SK_ConstructorInitialization;
   S.Type = T;
   S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Constructor;
@@ -5781,6 +5783,7 @@ InitializationSequence::Perform(Sema &S,
   }
 
   case SK_ConstructorInitialization:
+  case SK_ConstructorInitializationFromList:
   case SK_ListConstructorCall:
   case SK_ZeroInitialization:
     break;
@@ -6109,7 +6112,7 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ListConstructorCall: {
+    case SK_ConstructorInitializationFromList: {
       // When an initializer list is passed for a parameter of type "reference
       // to object", we don't get an EK_Temporary entity, but instead an
       // EK_Parameter entity with reference type.
@@ -6128,7 +6131,7 @@ InitializationSequence::Perform(Sema &S,
                                                                    Entity,
                                                  Kind, Arg, *Step,
                                                ConstructorInitRequiresZeroInit,
-                                               /*IsListInitialization*/ true,
+                                               /*IsListInitialization*/true,
                                                InitList->getLBraceLoc(),
                                                InitList->getRBraceLoc());
       break;
@@ -6150,7 +6153,8 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ConstructorInitialization: {
+    case SK_ConstructorInitialization:
+    case SK_ListConstructorCall: {
       // When an initializer list is passed for a parameter of type "reference
       // to object", we don't get an EK_Temporary entity, but instead an
       // EK_Parameter entity with reference type.
@@ -6160,13 +6164,12 @@ InitializationSequence::Perform(Sema &S,
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(
                                         Entity.getType().getNonReferenceType());
       bool UseTemporary = Entity.getType()->isReferenceType();
-      CurInit = PerformConstructorInitialization(S, UseTemporary ? TempEntity
-                                                                 : Entity,
-                                                 Kind, Args, *Step,
-                                               ConstructorInitRequiresZeroInit,
-                                               /*IsListInitialization*/ false,
-                                               /*LBraceLoc*/ SourceLocation(),
-                                               /*RBraceLoc*/ SourceLocation());
+      CurInit = PerformConstructorInitialization(
+          S, UseTemporary ? TempEntity : Entity, Kind, Args, *Step,
+          ConstructorInitRequiresZeroInit,
+          /*IsListInitialization*/Step->Kind == SK_ListConstructorCall,
+          /*LBraceLoc*/SourceLocation(),
+          /*RBraceLoc*/SourceLocation());
       break;
     }
 
@@ -6175,7 +6178,7 @@ InitializationSequence::Perform(Sema &S,
       ++NextStep;
       if (NextStep != StepEnd &&
           (NextStep->Kind == SK_ConstructorInitialization ||
-           NextStep->Kind == SK_ListConstructorCall)) {
+           NextStep->Kind == SK_ConstructorInitializationFromList)) {
         // The need for zero-initialization is recorded directly into
         // the call to the object's constructor within the next step.
         ConstructorInitRequiresZeroInit = true;
@@ -7011,10 +7014,6 @@ void InitializationSequence::dump(raw_ostream &OS) const {
       OS << "list aggregate initialization";
       break;
 
-    case SK_ListConstructorCall:
-      OS << "list initialization via constructor";
-      break;
-
     case SK_UnwrapInitList:
       OS << "unwrap reference initializer list";
       break;
@@ -7025,6 +7024,14 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_ConstructorInitialization:
       OS << "constructor initialization";
+      break;
+
+    case SK_ConstructorInitializationFromList:
+      OS << "list initialization via constructor";
+      break;
+
+    case SK_ListConstructorCall:
+      OS << "list initialization via initializer list constructor";
       break;
 
     case SK_ZeroInitialization:
