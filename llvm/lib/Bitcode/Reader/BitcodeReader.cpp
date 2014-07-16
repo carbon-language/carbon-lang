@@ -2889,10 +2889,14 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         dyn_cast_or_null<PointerType>(getTypeByID(Record[0]));
       Type *OpTy = getTypeByID(Record[1]);
       Value *Size = getFnValueByID(Record[2], OpTy);
-      unsigned Align = Record[3];
+      unsigned AlignRecord = Record[3];
+      bool InAlloca = AlignRecord & (1 << 5);
+      unsigned Align = AlignRecord & ((1 << 5) - 1);
       if (!Ty || !Size)
         return Error(InvalidRecord);
-      I = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
+      AllocaInst *AI = new AllocaInst(Ty->getElementType(), Size, (1 << Align) >> 1);
+      AI->setUsedWithInAlloca(InAlloca);
+      I = AI;
       InstructionList.push_back(I);
       break;
     }
