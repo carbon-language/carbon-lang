@@ -429,9 +429,11 @@ implementation of an override in a subclass does not call super.  For example:
 def ObjCRuntimeNameDocs : Documentation {
     let Category = DocCatFunction;
     let Content = [{
-        Annotation of Objective-C classes and protocols with this attribute allow to
-        use an alternative name for metadata names which normally use class or protocol
-        names as part of their names.
+        By default, the Objective-C interface or protocol identifier is used
+        in the metadata name for that object. The `objc_runtime_name`
+        attribute allows annotated interfaces or protocols to use the
+        specified string argument in the object's metadata name instead of the
+        default name.
         
         **Usage**: ``__attribute__((objc_runtime_name("MyLocalName")))``.  This attribute
         can only be placed before an @protocol or @interface declaration:
