@@ -5530,8 +5530,7 @@ SDValue DAGCombiner::visitANY_EXTEND(SDNode *N) {
   // scalars.
   if (ISD::isNON_EXTLoad(N0.getNode()) && !VT.isVector() &&
       ISD::isUNINDEXEDLoad(N0.getNode()) &&
-      ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
+      TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType())) {
     bool DoXform = true;
     SmallVector<SDNode*, 4> SetCCs;
     if (!N0.hasOneUse())
@@ -7228,8 +7227,7 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
 
   // fold (fpext (load x)) -> (fpext (fptrunc (extload x)))
   if (ISD::isNormalLoad(N0.getNode()) && N0.hasOneUse() &&
-      ((!LegalOperations && !cast<LoadSDNode>(N0)->isVolatile()) ||
-       TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType()))) {
+       TLI.isLoadExtLegal(ISD::EXTLOAD, N0.getValueType())) {
     LoadSDNode *LN0 = cast<LoadSDNode>(N0);
     SDValue ExtLoad = DAG.getExtLoad(ISD::EXTLOAD, SDLoc(N), VT,
                                      LN0->getChain(),
