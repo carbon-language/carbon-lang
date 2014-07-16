@@ -1199,6 +1199,22 @@ bool ObjCInterfaceDecl::hasDesignatedInitializers() const {
   return data().HasDesignatedInitializers;
 }
 
+StringRef
+ObjCInterfaceDecl::getObjCRuntimeNameAsString() const {
+    if (ObjCRuntimeNameAttr *ObjCRTName = getAttr<ObjCRuntimeNameAttr>())
+        return ObjCRTName->getMetadataName();
+    return getName();
+}
+
+StringRef
+ObjCImplementationDecl::getObjCRuntimeNameAsString() const {
+    if (ObjCInterfaceDecl *ID =
+        const_cast<ObjCImplementationDecl*>(this)->getClassInterface())
+        return ID->getObjCRuntimeNameAsString();
+    
+    return getName();
+}
+
 ObjCImplementationDecl *ObjCInterfaceDecl::getImplementation() const {
   if (const ObjCInterfaceDecl *Def = getDefinition()) {
     if (data().ExternallyCompleted)
@@ -1601,6 +1617,13 @@ void ObjCProtocolDecl::collectInheritedProtocolProperties(
       for (const auto *PI : PDecl->protocols())
         PI->collectInheritedProtocolProperties(Property, PM);
   }
+}
+
+StringRef
+ObjCProtocolDecl::getObjCRuntimeNameAsString() const {
+    if (ObjCRuntimeNameAttr *ObjCRTName = getAttr<ObjCRuntimeNameAttr>())
+        return ObjCRTName->getMetadataName();
+    return getName();
 }
 
 //===----------------------------------------------------------------------===//
