@@ -38,6 +38,8 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+#define DEBUG_TYPE "arm-register-info"
+
 #define GET_REGINFO_TARGET_DESC
 #include "ARMGenRegisterInfo.inc"
 
@@ -774,4 +776,61 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     // Update the original instruction to use the scratch register.
     MI.getOperand(FIOperandNum).ChangeToRegister(ScratchReg, false, false,true);
   }
+}
+
+bool ARMBaseRegisterInfo::shouldCoalesce(MachineInstr *MI,
+                                  const TargetRegisterClass *SrcRC,
+                                  unsigned SubReg,
+                                  const TargetRegisterClass *DstRC,
+                                  unsigned DstSubReg,
+                                  const TargetRegisterClass *NewRC) const {
+  auto MBB = MI->getParent();
+  auto MF = MBB->getParent();
+  const MachineRegisterInfo &MRI = MF->getRegInfo();
+  // If not copying into a sub-register this should be ok because we shouldn't
+  // need to split the reg.
+  if (!DstSubReg)
+    return true;
+  // Small registers don't frequently cause a problem, so we can coalesce them.
+  if (NewRC->getSize() < 32 && DstRC->getSize() < 32 && SrcRC->getSize() < 32)
+    return true;
+
+  auto NewRCWeight =
+              MRI.getTargetRegisterInfo()->getRegClassWeight(NewRC);
+  auto SrcRCWeight =
+              MRI.getTargetRegisterInfo()->getRegClassWeight(SrcRC);
+  auto DstRCWeight =
+              MRI.getTargetRegisterInfo()->getRegClassWeight(DstRC);
+  // If the source register class is more expensive than the destination, the
+  // coalescing is probably profitable.
+  if (SrcRCWeight.RegWeight > NewRCWeight.RegWeight)
+    return true;
+  if (DstRCWeight.RegWeight > NewRCWeight.RegWeight)
+    return true;
+
+  // If the register allocator isn't constrained, we can always allow coalescing
+  // unfortunately we don't know yet if we will be constrained.
+  // The goal of this heuristic is to restrict how many expensive registers
+  // we allow to coalesce in a given basic block.
+  auto AFI = MF->getInfo<ARMFunctionInfo>();
+  auto It = AFI->getCoalescedWeight(MBB);
+
+  DEBUG(dbgs() << "\tARM::shouldCoalesce - Coalesced Weight: "
+    << It->second << "\n");
+  DEBUG(dbgs() << "\tARM::shouldCoalesce - Reg Weight: "
+    << NewRCWeight.RegWeight << "\n");
+
+  // This number is the largest round number that which meets the criteria:
+  //  (1) addresses PR18825
+  //  (2) generates better code in some test cases (like vldm-shed-a9.ll)
+  //  (3) Doesn't regress any test cases (in-tree, test-suite, and SPEC)
+  // In practice the SizeMultiplier will only factor in for straight line code
+  // that uses a lot of NEON vectors, which isn't terribly common.
+  unsigned SizeMultiplier = MBB->size()/100;
+  SizeMultiplier = SizeMultiplier ? SizeMultiplier : 1;
+  if (It->second < NewRCWeight.WeightLimit * SizeMultiplier) {
+    It->second += NewRCWeight.RegWeight;
+    return true;
+  }
+  return false;
 }

@@ -1038,7 +1038,6 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
   }
 
   if (CP.getNewRC()) {
-    const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
     auto SrcRC = MRI->getRegClass(CP.getSrcReg());
     auto DstRC = MRI->getRegClass(CP.getDstReg());
     unsigned SrcIdx = CP.getSrcIdx();
@@ -1047,7 +1046,7 @@ bool RegisterCoalescer::joinCopy(MachineInstr *CopyMI, bool &Again) {
       std::swap(SrcIdx, DstIdx);
       std::swap(SrcRC, DstRC);
     }
-    if (!ST.shouldCoalesce(CopyMI, SrcRC, SrcIdx, DstRC, DstIdx,
+    if (!TRI->shouldCoalesce(CopyMI, SrcRC, SrcIdx, DstRC, DstIdx,
                             CP.getNewRC())) {
       DEBUG(dbgs() << "\tSubtarget bailed on coalescing.\n");
       return false;

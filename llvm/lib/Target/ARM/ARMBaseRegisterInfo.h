@@ -187,6 +187,14 @@ public:
   void eliminateFrameIndex(MachineBasicBlock::iterator II,
                            int SPAdj, unsigned FIOperandNum,
                            RegScavenger *RS = nullptr) const override;
+
+  /// \brief SrcRC and DstRC will be morphed into NewRC if this returns true
+  bool shouldCoalesce(MachineInstr *MI,
+                      const TargetRegisterClass *SrcRC,
+                      unsigned SubReg,
+                      const TargetRegisterClass *DstRC,
+                      unsigned DstSubReg,
+                      const TargetRegisterClass *NewRC) const override;
 };
 
 } // end namespace llvm

@@ -126,15 +126,6 @@ public:
   /// \brief Reset the features for the subtarget.
   virtual void resetSubtargetFeatures(const MachineFunction *MF) { }
 
-  /// \brief SrcRC and DstRC will be morphed into NewRC if this returns true.
-  virtual bool shouldCoalesce(MachineInstr *MI,
-                              const TargetRegisterClass *SrcRC,
-                              unsigned SubReg,
-                              const TargetRegisterClass *DstRC,
-                              unsigned DstSubReg,
-                              const TargetRegisterClass *NewRC) const
-  { return true; }
-
 };
 
 } // End llvm namespace
