@@ -1626,10 +1626,6 @@ static bool isMipsEL(llvm::Triple::ArchType Arch) {
   return Arch == llvm::Triple::mipsel || Arch == llvm::Triple::mips64el;
 }
 
-static bool isMipsEB(llvm::Triple::ArchType Arch) {
-  return Arch == llvm::Triple::mips || Arch == llvm::Triple::mips64;
-}
-
 static bool isMips16(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_mips16,
                            options::OPT_mno_mips16);
@@ -1744,7 +1740,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .gccSuffix("/64")
       .osSuffix("/64")
       .includeSuffix("/64")
-      .flag("+mabi=64").flag("-mabi=n32").flag("-m32");
+      .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
     Multilib BigEndian = Multilib()
       .flag("+EB").flag("-EL");
@@ -1840,7 +1836,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
     Multilib MAbi64 = Multilib()
       .gccSuffix("/64")
       .includeSuffix("/64")
-      .flag("+mabi=64").flag("-mabi=n32").flag("-m32");
+      .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
     CSMipsMultilibs = MultilibSet()
       .Either(MArchMips16, MArchMicroMips, MArchDefault)
@@ -1896,7 +1892,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .gccSuffix("/64")
       .osSuffix("/64")
       .includeSuffix("/64")
-      .flag("+mabi=64").flag("-mabi=n32").flag("-m32");
+      .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
     ImgMultilibs = MultilibSet()
       .Maybe(Mips64r6)
@@ -1904,6 +1900,10 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
       .Maybe(LittleEndian)
       .FilterOut(NonExistent);
   }
+
+  StringRef CPUName;
+  StringRef ABIName;
+  tools::mips::getMipsCPUAndABI(Args, TargetTriple, CPUName, ABIName);
 
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
 
@@ -1918,16 +1918,12 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(!isMipsFP64(Args), "mfp32", Flags);
   addMultilibFlag(tools::mips::isNaN2008(Args, TargetTriple), "mnan=2008",
                   Flags);
-  addMultilibFlag(tools::mips::hasMipsAbiArg(Args, "n32"), "mabi=n32", Flags);
-  // Default is to assume mabi=64
-  bool IsMABI64 =
-      tools::mips::hasMipsAbiArg(Args, "64") ||
-      (!tools::mips::hasMipsAbiArg(Args, "n32") && isMips64(TargetArch));
-  addMultilibFlag(IsMABI64, "mabi=64", Flags);
+  addMultilibFlag(ABIName == "n32", "mabi=n32", Flags);
+  addMultilibFlag(ABIName == "n64", "mabi=n64", Flags);
   addMultilibFlag(isSoftFloatABI(Args), "msoft-float", Flags);
   addMultilibFlag(!isSoftFloatABI(Args), "mhard-float", Flags);
   addMultilibFlag(isMipsEL(TargetArch), "EL", Flags);
-  addMultilibFlag(isMipsEB(TargetArch), "EB", Flags);
+  addMultilibFlag(!isMipsEL(TargetArch), "EB", Flags);
 
   if (TargetTriple.getEnvironment() == llvm::Triple::Android) {
     // Select Android toolchain. It's the only choice in that case.

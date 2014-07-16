@@ -217,6 +217,9 @@ namespace arm {
 }
 
 namespace mips {
+  void getMipsCPUAndABI(const llvm::opt::ArgList &Args,
+                        const llvm::Triple &Triple, StringRef &CPUName,
+                        StringRef &ABIName);
   bool hasMipsAbiArg(const llvm::opt::ArgList &Args, const char *Value);
   bool isNaN2008(const llvm::opt::ArgList &Args, const llvm::Triple &Triple);
   bool isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,

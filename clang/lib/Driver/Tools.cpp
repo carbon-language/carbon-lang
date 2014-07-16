@@ -909,10 +909,10 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
 
 // Get CPU and ABI names. They are not independent
 // so we have to calculate them together.
-static void getMipsCPUAndABI(const ArgList &Args,
-                             const llvm::Triple &Triple,
-                             StringRef &CPUName,
-                             StringRef &ABIName) {
+void mips::getMipsCPUAndABI(const ArgList &Args,
+                            const llvm::Triple &Triple,
+                            StringRef &CPUName,
+                            StringRef &ABIName) {
   const char *DefMips32CPU = "mips32r2";
   const char *DefMips64CPU = "mips64r2";
 
@@ -1028,7 +1028,7 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
                                   std::vector<const char *> &Features) {
   StringRef CPUName;
   StringRef ABIName;
-  getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
+  mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
   ABIName = getGnuCompatibleMipsABIName(ABIName);
 
   StringRef FloatABI = getMipsFloatABI(D, Args);
@@ -1089,7 +1089,7 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
   StringRef CPUName;
   StringRef ABIName;
   const llvm::Triple &Triple = getToolChain().getTriple();
-  getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
+  mips::getMipsCPUAndABI(Args, Triple, CPUName, ABIName);
 
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName.data());
@@ -1383,7 +1383,7 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
   case llvm::Triple::mips64el: {
     StringRef CPUName;
     StringRef ABIName;
-    getMipsCPUAndABI(Args, T, CPUName, ABIName);
+    mips::getMipsCPUAndABI(Args, T, CPUName, ABIName);
     return CPUName;
   }
 
@@ -6040,7 +6040,7 @@ void openbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::mips64el: {
     StringRef CPUName;
     StringRef ABIName;
-    getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
+    mips::getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
 
     CmdArgs.push_back("-mabi");
     CmdArgs.push_back(getGnuCompatibleMipsABIName(ABIName).data());
@@ -6362,7 +6362,7 @@ void freebsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
            getToolChain().getArch() == llvm::Triple::mips64el) {
     StringRef CPUName;
     StringRef ABIName;
-    getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
+    mips::getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
 
     CmdArgs.push_back("-march");
     CmdArgs.push_back(CPUName.data());
@@ -6635,7 +6635,7 @@ void netbsd::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::mips64el: {
     StringRef CPUName;
     StringRef ABIName;
-    getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
+    mips::getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
 
     CmdArgs.push_back("-march");
     CmdArgs.push_back(CPUName.data());
@@ -6929,7 +6929,7 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
              getToolChain().getArch() == llvm::Triple::mips64el) {
     StringRef CPUName;
     StringRef ABIName;
-    getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
+    mips::getMipsCPUAndABI(Args, getToolChain().getTriple(), CPUName, ABIName);
     ABIName = getGnuCompatibleMipsABIName(ABIName);
 
     CmdArgs.push_back("-march");
