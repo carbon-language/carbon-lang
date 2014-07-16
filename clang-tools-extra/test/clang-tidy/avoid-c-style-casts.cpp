@@ -17,7 +17,7 @@ void f(int a, double b, const char *cpc, const void *cpv, X *pX) {
 
   char *pc2 = (char*)(cpc + 33);
   // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use const_cast. {{.*}}
-  // CHECK-FIXES: char *pc2 = const_cast<char *>((cpc + 33));
+  // CHECK-FIXES: char *pc2 = const_cast<char *>(cpc + 33);
 
   const char &crc = *cpc;
   char &rc = (char&)crc;
@@ -32,6 +32,20 @@ void f(int a, double b, const char *cpc, const void *cpv, X *pX) {
   char ****ppppc = (char****)ppcpcpc;
   // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: C-style casts are discouraged. Use const_cast. {{.*}}
   // CHECK-FIXES: char ****ppppc = const_cast<char ****>(ppcpcpc);
+
+  char ***pppc = (char***)*(ppcpcpc);
+  // CHECK-MESSAGES: :[[@LINE-1]]:18: warning: C-style casts are discouraged. Use const_cast. {{.*}}
+  // CHECK-FIXES: char ***pppc = const_cast<char ***>(*(ppcpcpc));
+
+  char ***pppc2 = (char***)(*ppcpcpc);
+  // CHECK-MESSAGES: :[[@LINE-1]]:19: warning: C-style casts are discouraged. Use const_cast. {{.*}}
+  // CHECK-FIXES: char ***pppc2 = const_cast<char ***>(*ppcpcpc);
+
+  char *pc5 = (char*)(const char*)(cpv);
+  // CHECK-MESSAGES: :[[@LINE-1]]:15: warning: C-style casts are discouraged. Use const_cast. {{.*}}
+  // CHECK-MESSAGES: :[[@LINE-2]]:22: warning: C-style casts are discouraged. Use reinterpret_cast. {{.*}}
+  // CHECK-FIXES: char *pc5 = const_cast<char *>(reinterpret_cast<const char *>(cpv));
+
 
   int b1 = (int)b;
   // CHECK-MESSAGES: :[[@LINE-1]]:12: warning: C-style casts are discouraged. Use static_cast. [google-readability-casting]

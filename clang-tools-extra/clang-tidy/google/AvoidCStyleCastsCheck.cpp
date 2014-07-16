@@ -56,6 +56,7 @@ bool pointedTypesAreEqual(QualType SourceType, QualType DestType) {
   }
   return SourceType.getUnqualifiedType() == DestType.getUnqualifiedType();
 }
+
 void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *CastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
 
@@ -85,15 +86,18 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
     diag_builder << ("Use " + CastType + ".").str();
     if (ParenRange.getBegin().isMacroID() || ParenRange.getEnd().isMacroID())
       return;
-    diag_builder << FixItHint::CreateReplacement(
-                        ParenRange,
-                        (CastType + "<" + DestTypeString + ">(").str())
-                 << FixItHint::CreateInsertion(
-                        Lexer::getLocForEndOfToken(
-                            CastExpr->getSubExprAsWritten()->getLocEnd(), 0,
-                            *Result.SourceManager,
-                            Result.Context->getLangOpts()),
-                        ")");
+
+    const Expr *SubExpr = CastExpr->getSubExprAsWritten()->IgnoreImpCasts();
+    std::string CastText = (CastType + "<" + DestTypeString + ">").str();
+    if (!isa<ParenExpr>(SubExpr)) {
+      CastText.push_back('(');
+      diag_builder << FixItHint::CreateInsertion(
+          Lexer::getLocForEndOfToken(SubExpr->getLocEnd(), 0,
+                                     *Result.SourceManager,
+                                     Result.Context->getLangOpts()),
+          ")");
+    }
+    diag_builder << FixItHint::CreateReplacement(ParenRange, CastText);
   };
   // Suggest appropriate C++ cast. See [expr.cast] for cast notation semantics.
   switch (CastExpr->getCastKind()) {
