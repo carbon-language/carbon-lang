@@ -202,8 +202,8 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
 }
 
 Error
-PlatformKalimba::GetFileWithUUID (const FileSpec &/*platform_file*/, 
-                                const UUID */*uuid_ptr*/, FileSpec &/*local_file*/)
+PlatformKalimba::GetFileWithUUID (const FileSpec & /*platform_file*/, 
+                                const UUID * /*uuid_ptr*/, FileSpec & /*local_file*/)
 {
     return Error();
 }
@@ -262,8 +262,8 @@ PlatformKalimba::GetStatus (Stream &strm)
 }
 
 size_t
-PlatformKalimba::GetSoftwareBreakpointTrapOpcode (Target &/*target*/, 
-                                                BreakpointSite */*bp_site*/)
+PlatformKalimba::GetSoftwareBreakpointTrapOpcode (Target & /*target*/, 
+                                                BreakpointSite * /*bp_site*/)
 {
     // the target hardware does not support software breakpoints
     return 0;

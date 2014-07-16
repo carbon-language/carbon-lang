@@ -2565,7 +2565,7 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
                     {
                         SectionSP section_sp (section_list->GetSectionAtIndex(sect_idx));
                         if (section_sp)
-                            changed |= target_sp->SetSectionUnloaded (section_sp) > 0;
+                            changed |= target_sp->SetSectionUnloaded (section_sp);
                     }
                     if (changed)
                     {

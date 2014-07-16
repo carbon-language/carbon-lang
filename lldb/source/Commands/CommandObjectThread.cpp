@@ -616,7 +616,7 @@ protected:
             
             if (m_options.m_step_count > 1)
             {
-                if (new_plan_sp->SetIterationCount(m_options.m_step_count) != m_options.m_step_count)
+                if (new_plan_sp->SetIterationCount(m_options.m_step_count))
                 {
                     result.AppendWarning ("step operation does not support iteration count.");
                 }
