@@ -57,12 +57,16 @@ void MemsetZeroLengthCheck::check(const MatchFinder::MatchResult &Result) {
   const Expr *Arg2 = Call->getArg(2);
 
   // Try to evaluate the second argument so we can also find values that are not
-  // just literals. We don't emit a warning if the second argument also
-  // evaluates to zero.
+  // just literals.
   llvm::APSInt Value1, Value2;
-  if (!Arg2->EvaluateAsInt(Value2, *Result.Context) || Value2 != 0 ||
-      (Arg1->EvaluateAsInt(Value1, *Result.Context) && Value1 == 0))
+  if (!Arg2->EvaluateAsInt(Value2, *Result.Context) || Value2 != 0)
     return;
+
+  // If both arguments evaluate to zero emit a warning without fix suggestions.
+  if (Arg1->EvaluateAsInt(Value1, *Result.Context) && Value1 == 0) {
+    diag(Call->getLocStart(), "memset of size zero");
+    return;
+  }
 
   // Emit a warning and fix-its to swap the arguments.
   auto D = diag(Call->getLocStart(),

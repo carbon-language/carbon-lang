@@ -46,6 +46,8 @@ void foo(void *a, int xsize, int ysize) {
   memset(a, -1, sizeof(int));
   memset(a, 0xcd, 1);
   memset(a, v, 0);
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero
+// CHECK-FIXES: memset(a, v, 0);
 
   memtmpl<0>();
 }
