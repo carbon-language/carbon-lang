@@ -49,5 +49,9 @@ void foo(void *a, int xsize, int ysize) {
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero
 // CHECK-FIXES: memset(a, v, 0);
 
+  memset(a, -1, v);
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero
+// CHECK-FIXES: memset(a, -1, v);
+
   memtmpl<0>();
 }

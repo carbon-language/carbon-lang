@@ -63,7 +63,8 @@ void MemsetZeroLengthCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   // If both arguments evaluate to zero emit a warning without fix suggestions.
-  if (Arg1->EvaluateAsInt(Value1, *Result.Context) && Value1 == 0) {
+  if (Arg1->EvaluateAsInt(Value1, *Result.Context) &&
+      (Value1 == 0 || Value1.isNegative())) {
     diag(Call->getLocStart(), "memset of size zero");
     return;
   }
