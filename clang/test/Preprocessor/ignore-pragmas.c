@@ -3,7 +3,6 @@
 // RUN: %clang -M -Wall %s -Xclang -verify
 // RUN: %clang -E -frewrite-includes %s -Wall -Xclang -verify
 // RUN: %clang -E -dD -dM %s -Wall -Xclang -verify
-// REQUIRES: rewriter
 // expected-no-diagnostics
 
 #pragma GCC visibility push (default)

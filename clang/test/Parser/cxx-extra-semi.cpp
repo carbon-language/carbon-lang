@@ -4,7 +4,6 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -x c++ -Wextra-semi -fixit %t
 // RUN: %clang_cc1 -x c++ -Wextra-semi -Werror %t
-// REQUIRES: rewriter
 
 class A {
   void A1();

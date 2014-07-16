@@ -2,7 +2,6 @@
 // RUN: cp %s %t
 // RUN: not %clang_cc1 --std=c++1y -x c++ -fixit %t -DFIXING
 // RUN: %clang_cc1 --std=c++1y -x c++ %t -DFIXING
-// REQUIRES: rewriter
 
 template<typename T> 
 T pi = T(3.1415926535897932385); // expected-note {{template is declared here}}

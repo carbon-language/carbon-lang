@@ -3,7 +3,6 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -fsyntax-only -Wdocumentation -fixit %t
 // RUN: %clang_cc1 -fsyntax-only -Wdocumentation -Werror %t
-// REQUIRES: rewriter
 
 struct a {
   int x; //< comment // expected-warning {{not a Doxygen trailing comment}}

@@ -10,7 +10,6 @@
 // RUN: cp %s %t
 // RUN: %clang_cc1 -x c++ %s -std=c++11 -fsyntax-only -verify -DTEST9
 // RUN: not %clang_cc1 -x c++ %t -std=c++11 -fixit -DTEST9
-// REQUIRES: rewriter
 // RUN: %clang_cc1 -x c++ %t -std=c++11 -fsyntax-only -DTEST9
 
 // RUN: %clang_cc1 -fsyntax-only -verify %s -DTEST10
