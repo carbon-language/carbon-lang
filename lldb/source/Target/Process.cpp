@@ -4595,8 +4595,28 @@ public:
         // interrupt the IOHandlerProcessSTDIO::Run() and we can look at the byte
         // that was written to the pipe and then call m_process->Halt() from a
         // much safer location in code.
-        char ch = 'i'; // Send 'i' for interrupt
-        return m_pipe.Write (&ch, 1) == 1;
+        if (m_active)
+        {
+            char ch = 'i'; // Send 'i' for interrupt
+            return m_pipe.Write (&ch, 1) == 1;
+        }
+        else
+        {
+            // This IOHandler might be pushed on the stack, but not being run currently
+            // so do the right thing if we aren't actively watching for STDIN by sending
+            // the interrupt to the process. Otherwise the write to the pipe above would
+            // do nothing. This can happen when the command interpreter is running and
+            // gets a "expression ...". It will be on the IOHandler thread and sending
+            // the input is complete to the delegate which will cause the expression to
+            // run, which will push the process IO handler, but not run it.
+            
+            if (StateIsRunningState(m_process->GetState()))
+            {
+                m_process->SendAsyncInterrupt();
+                return true;
+            }
+        }
+        return false;
     }
     
     virtual void
