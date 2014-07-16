@@ -87,8 +87,7 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM,
-                          const TargetLoweringBase &TLI);
+bool isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM);
 
 /// Test if given that the input instruction is in the tail call position if the
 /// return type or any attributes of the function will inhibit tail call
