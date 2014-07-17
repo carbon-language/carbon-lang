@@ -205,7 +205,7 @@ def SDTPrefetch : SDTypeProfile<0, 4, [     // prefetch
   SDTCisPtrTy<0>, SDTCisSameAs<1, 2>, SDTCisSameAs<1, 3>, SDTCisInt<1>
 ]>;
 
-def SDTMemBarrier : SDTypeProfile<0, 5, [   // memory barier
+def SDTMemBarrier : SDTypeProfile<0, 5, [   // memory barrier
   SDTCisSameAs<0,1>,  SDTCisSameAs<0,2>,  SDTCisSameAs<0,3>, SDTCisSameAs<0,4>,
   SDTCisInt<0>
 ]>;

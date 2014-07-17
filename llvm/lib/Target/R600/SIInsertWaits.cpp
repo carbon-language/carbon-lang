@@ -273,17 +273,17 @@ bool SIInsertWaits::insertWait(MachineBasicBlock &MBB,
       continue;
 
     NeedWait = true;
-    
+
     if (Ordered[i]) {
       unsigned Value = LastIssued.Array[i] - Required.Array[i];
 
-      // adjust the value to the real hardware posibilities
+      // Adjust the value to the real hardware possibilities.
       Counts.Array[i] = std::min(Value, WaitCounts.Array[i]);
 
     } else
       Counts.Array[i] = 0;
 
-    // Remember on what we have waited on
+    // Remember on what we have waited on.
     WaitedOn.Array[i] = LastIssued.Array[i] - Counts.Array[i];
   }
 
