@@ -341,12 +341,27 @@ void PrintAccessAndVarIntersection(const char *var_name,
   Printf("%s", str.data());
 }
 
-struct StackVarDescr {
-  uptr beg;
-  uptr size;
-  const char *name_pos;
-  uptr name_len;
-};
+bool ParseFrameDescription(const char *frame_descr,
+                           InternalMmapVector<StackVarDescr> *vars) {
+  char *p;
+  uptr n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
+  CHECK_GT(n_objects, 0);
+
+  for (uptr i = 0; i < n_objects; i++) {
+    uptr beg  = (uptr)internal_simple_strtoll(p, &p, 10);
+    uptr size = (uptr)internal_simple_strtoll(p, &p, 10);
+    uptr len  = (uptr)internal_simple_strtoll(p, &p, 10);
+    if (beg == 0 || size == 0 || *p != ' ') {
+      return false;
+    }
+    p++;
+    StackVarDescr var = {beg, size, p, len};
+    vars->push_back(var);
+    p += len;
+  }
+
+  return true;
+}
 
 bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   AsanThread *t = FindThreadByStackAddress(addr);
@@ -388,32 +403,19 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   alloca_stack.size = 1;
   Printf("%s", d.EndLocation());
   alloca_stack.Print();
+
+  InternalMmapVector<StackVarDescr> vars(16);
+  if (!ParseFrameDescription(frame_descr, &vars)) {
+    Printf("AddressSanitizer can't parse the stack frame "
+           "descriptor: |%s|\n", frame_descr);
+    // 'addr' is a stack address, so return true even if we can't parse frame
+    return true;
+  }
+  uptr n_objects = vars.size();
   // Report the number of stack objects.
-  char *p;
-  uptr n_objects = (uptr)internal_simple_strtoll(frame_descr, &p, 10);
-  CHECK_GT(n_objects, 0);
   Printf("  This frame has %zu object(s):\n", n_objects);
 
   // Report all objects in this frame.
-  InternalScopedBuffer<StackVarDescr> vars(n_objects);
-  for (uptr i = 0; i < n_objects; i++) {
-    uptr beg, size;
-    uptr len;
-    beg  = (uptr)internal_simple_strtoll(p, &p, 10);
-    size = (uptr)internal_simple_strtoll(p, &p, 10);
-    len  = (uptr)internal_simple_strtoll(p, &p, 10);
-    if (beg == 0 || size == 0 || *p != ' ') {
-      Printf("AddressSanitizer can't parse the stack frame "
-                 "descriptor: |%s|\n", frame_descr);
-      break;
-    }
-    p++;
-    vars[i].beg = beg;
-    vars[i].size = size;
-    vars[i].name_pos = p;
-    vars[i].name_len = len;
-    p += len;
-  }
   for (uptr i = 0; i < n_objects; i++) {
     buf[0] = 0;
     internal_strncat(buf, vars[i].name_pos,

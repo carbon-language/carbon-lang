@@ -18,6 +18,13 @@
 
 namespace __asan {
 
+struct StackVarDescr {
+  uptr beg;
+  uptr size;
+  const char *name_pos;
+  uptr name_len;
+};
+
 // The following functions prints address description depending
 // on the memory type (shadow/heap/stack/global).
 void DescribeHeapAddress(uptr addr, uptr access_size);
@@ -25,6 +32,8 @@ bool DescribeAddressIfGlobal(uptr addr, uptr access_size);
 bool DescribeAddressRelativeToGlobal(uptr addr, uptr access_size,
                                      const __asan_global &g);
 bool DescribeAddressIfShadow(uptr addr);
+bool ParseFrameDescription(const char *frame_descr,
+                           InternalMmapVector<StackVarDescr> *vars);
 bool DescribeAddressIfStack(uptr addr, uptr access_size);
 // Determines memory type on its own.
 void DescribeAddress(uptr addr, uptr access_size);
