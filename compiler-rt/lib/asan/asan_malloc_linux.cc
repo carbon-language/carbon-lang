@@ -167,7 +167,6 @@ void ReplaceSystemMalloc() {
     // Decide on K vs L dispatch format by the presence of
     // __libc_malloc_default_dispatch export in libc.
     void *default_dispatch_p = AsanDlSymNext("__libc_malloc_default_dispatch");
-    Printf("default dispatch: %p\n", default_dispatch_p);
     if (default_dispatch_p)
       *__libc_malloc_dispatch_p = (void *)&asan_malloc_dispatch_k;
     else
