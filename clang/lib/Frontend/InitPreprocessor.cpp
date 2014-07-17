@@ -239,9 +239,7 @@ static void DefineExactWidthIntType(TargetInfo::IntType Ty,
   DefineFmt(Prefix + Twine(TypeWidth), Ty, TI, Builder);
 
   StringRef ConstSuffix(TargetInfo::getTypeConstantSuffix(Ty));
-  if (!ConstSuffix.empty())
-    Builder.defineMacro(Prefix + Twine(TypeWidth) + "_C_SUFFIX__", ConstSuffix);
-
+  Builder.defineMacro(Prefix + Twine(TypeWidth) + "_C_SUFFIX__", ConstSuffix);
 }
 
 static void DefineExactWidthIntTypeSize(TargetInfo::IntType Ty,
@@ -706,9 +704,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("__WINT_UNSIGNED__");
 
   // Define exact-width integer types for stdint.h
-  Builder.defineMacro("__INT" + Twine(TI.getCharWidth()) + "_TYPE__",
-                      "char");
-  DefineFmt("__INT" + Twine(TI.getCharWidth()), TargetInfo::SignedChar, TI, Builder);
+  DefineExactWidthIntType(TargetInfo::SignedChar, TI, Builder);
 
   if (TI.getShortWidth() > TI.getCharWidth())
     DefineExactWidthIntType(TargetInfo::SignedShort, TI, Builder);
