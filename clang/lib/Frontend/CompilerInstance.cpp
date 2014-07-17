@@ -101,8 +101,8 @@ void CompilerInstance::setSema(Sema *S) {
   TheSema.reset(S);
 }
 
-void CompilerInstance::setASTConsumer(ASTConsumer *Value) {
-  Consumer.reset(Value);
+void CompilerInstance::setASTConsumer(std::unique_ptr<ASTConsumer> Value) {
+  Consumer = std::move(Value);
 }
 
 void CompilerInstance::setCodeCompletionConsumer(CodeCompleteConsumer *Value) {

@@ -29,7 +29,7 @@ class MultiplexASTDeserializationListener;
 class MultiplexConsumer : public SemaConsumer {
 public:
   // Takes ownership of the pointers in C.
-  MultiplexConsumer(ArrayRef<ASTConsumer*> C);
+  MultiplexConsumer(std::vector<std::unique_ptr<ASTConsumer>> C);
   ~MultiplexConsumer();
 
   // ASTConsumer
@@ -59,7 +59,7 @@ public:
   void ForgetSema() override;
 
 private:
-  std::vector<ASTConsumer*> Consumers;  // Owns these.
+  std::vector<std::unique_ptr<ASTConsumer>> Consumers; // Owns these.
   std::unique_ptr<MultiplexASTMutationListener> MutationListener;
   std::unique_ptr<MultiplexASTDeserializationListener> DeserializationListener;
 };

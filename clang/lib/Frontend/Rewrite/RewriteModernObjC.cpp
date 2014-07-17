@@ -675,14 +675,11 @@ RewriteModernObjC::RewriteModernObjC(std::string inFile, raw_ostream* OS,
                "for @try/@finally (code may not execute properly)");
 }
 
-ASTConsumer *clang::CreateModernObjCRewriter(const std::string& InFile,
-                                       raw_ostream* OS,
-                                       DiagnosticsEngine &Diags,
-                                       const LangOptions &LOpts,
-                                       bool SilenceRewriteMacroWarning,
-                                       bool LineInfo) {
-    return new RewriteModernObjC(InFile, OS, Diags, LOpts,
-                                 SilenceRewriteMacroWarning, LineInfo);
+std::unique_ptr<ASTConsumer> clang::CreateModernObjCRewriter(
+    const std::string &InFile, raw_ostream *OS, DiagnosticsEngine &Diags,
+    const LangOptions &LOpts, bool SilenceRewriteMacroWarning, bool LineInfo) {
+  return llvm::make_unique<RewriteModernObjC>(
+      InFile, OS, Diags, LOpts, SilenceRewriteMacroWarning, LineInfo);
 }
 
 void RewriteModernObjC::InitializeCommon(ASTContext &context) {

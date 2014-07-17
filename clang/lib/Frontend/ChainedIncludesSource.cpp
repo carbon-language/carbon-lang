@@ -158,12 +158,12 @@ IntrusiveRefCntPtr<ExternalSemaSource> clang::createChainedIncludesSource(
 
     SmallVector<char, 256> serialAST;
     llvm::raw_svector_ostream OS(serialAST);
-    std::unique_ptr<ASTConsumer> consumer;
-    consumer.reset(new PCHGenerator(Clang->getPreprocessor(), "-", nullptr,
-                                    /*isysroot=*/"", &OS));
+    auto consumer =
+        llvm::make_unique<PCHGenerator>(Clang->getPreprocessor(), "-", nullptr,
+                                        /*isysroot=*/"", &OS);
     Clang->getASTContext().setASTMutationListener(
                                             consumer->GetASTMutationListener());
-    Clang->setASTConsumer(consumer.release());
+    Clang->setASTConsumer(std::move(consumer));
     Clang->createSema(TU_Prefix, nullptr);
 
     if (firstInclude) {
