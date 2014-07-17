@@ -19,9 +19,8 @@ template <class ELFT> class MipsTargetLayout;
 
 template <typename ELFT> class MipsELFWriter {
 public:
-  MipsELFWriter(MipsLinkingContext &context,
-                MipsTargetLayout<ELFT> &targetLayout)
-      : _context(context), _targetLayout(targetLayout) {}
+  MipsELFWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &targetLayout)
+      : _ctx(ctx), _targetLayout(targetLayout) {}
 
   void setELFHeader(ELFHeader<ELFT> &elfHeader) {
     elfHeader.e_version(1);
@@ -36,13 +35,13 @@ public:
     // merge them and write result here.
     uint32_t flags = llvm::ELF::EF_MIPS_NOREORDER | llvm::ELF::EF_MIPS_ABI_O32 |
                      llvm::ELF::EF_MIPS_CPIC | llvm::ELF::EF_MIPS_ARCH_32R2;
-    if (_context.getOutputELFType() == llvm::ELF::ET_DYN)
+    if (_ctx.getOutputELFType() == llvm::ELF::ET_DYN)
       flags |= EF_MIPS_PIC;
     elfHeader.e_flags(flags);
   }
 
   void finalizeMipsRuntimeAtomValues() {
-    if (!_context.isDynamic())
+    if (!_ctx.isDynamic())
       return;
 
     auto gotSection = _targetLayout.findOutputSection(".got");
@@ -60,8 +59,8 @@ public:
   }
 
   std::unique_ptr<MipsRuntimeFile<ELFT>> createRuntimeFile() {
-    auto file = llvm::make_unique<MipsRuntimeFile<ELFT>>(_context);
-    if (_context.isDynamic()) {
+    auto file = llvm::make_unique<MipsRuntimeFile<ELFT>>(_ctx);
+    if (_ctx.isDynamic()) {
       file->addAbsoluteAtom("_GLOBAL_OFFSET_TABLE_");
       file->addAbsoluteAtom("_gp");
       file->addAbsoluteAtom("_gp_disp");
@@ -80,7 +79,7 @@ public:
   }
 
 private:
-  MipsLinkingContext &_context;
+  MipsLinkingContext &_ctx;
   MipsTargetLayout<ELFT> &_targetLayout;
 
   void setAtomValue(StringRef name, uint64_t value) {

@@ -22,8 +22,7 @@ template <typename ELFT> class MipsTargetLayout;
 template <class ELFT>
 class MipsExecutableWriter : public ExecutableWriter<ELFT> {
 public:
-  MipsExecutableWriter(MipsLinkingContext &context,
-                       MipsTargetLayout<ELFT> &layout);
+  MipsExecutableWriter(MipsLinkingContext &ctx, MipsTargetLayout<ELFT> &layout);
 
 protected:
   void buildDynamicSymbolTable(const File &file) override;
@@ -58,10 +57,10 @@ private:
 };
 
 template <class ELFT>
-MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &context,
+MipsExecutableWriter<ELFT>::MipsExecutableWriter(MipsLinkingContext &ctx,
                                                  MipsTargetLayout<ELFT> &layout)
-    : ExecutableWriter<ELFT>(context, layout), _writeHelper(context, layout),
-      _mipsContext(context), _mipsTargetLayout(layout) {}
+    : ExecutableWriter<ELFT>(ctx, layout), _writeHelper(ctx, layout),
+      _mipsContext(ctx), _mipsTargetLayout(layout) {}
 
 template <class ELFT>
 void MipsExecutableWriter<ELFT>::buildDynamicSymbolTable(const File &file) {

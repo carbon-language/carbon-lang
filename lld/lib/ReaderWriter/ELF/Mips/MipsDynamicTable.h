@@ -21,9 +21,9 @@ template <class ELFType> class MipsTargetLayout;
 template <class MipsELFType>
 class MipsDynamicTable : public DynamicTable<MipsELFType> {
 public:
-  MipsDynamicTable(MipsLinkingContext &context,
+  MipsDynamicTable(MipsLinkingContext &ctx,
                    MipsTargetLayout<MipsELFType> &layout)
-      : DynamicTable<MipsELFType>(context, layout, ".dynamic",
+      : DynamicTable<MipsELFType>(ctx, layout, ".dynamic",
                                   DefaultLayout<MipsELFType>::ORDER_DYNAMIC),
         _mipsTargetLayout(layout) {}
 

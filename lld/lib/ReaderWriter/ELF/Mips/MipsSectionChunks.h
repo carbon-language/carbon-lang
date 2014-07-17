@@ -18,8 +18,8 @@ class MipsLinkingContext;
 /// \brief Handle Mips GOT section
 template <class ELFType> class MipsGOTSection : public AtomSection<ELFType> {
 public:
-  MipsGOTSection(const MipsLinkingContext &context)
-      : AtomSection<ELFType>(context, ".got", DefinedAtom::typeGOT,
+  MipsGOTSection(const MipsLinkingContext &ctx)
+      : AtomSection<ELFType>(ctx, ".got", DefinedAtom::typeGOT,
                              DefinedAtom::permRW_,
                              MipsTargetLayout<ELFType>::ORDER_GOT),
         _hasNonLocal(false), _localCount(0) {
@@ -95,8 +95,8 @@ private:
 /// \brief Handle Mips PLT section
 template <class ELFType> class MipsPLTSection : public AtomSection<ELFType> {
 public:
-  MipsPLTSection(const MipsLinkingContext &context)
-      : AtomSection<ELFType>(context, ".plt", DefinedAtom::typeGOT,
+  MipsPLTSection(const MipsLinkingContext &ctx)
+      : AtomSection<ELFType>(ctx, ".plt", DefinedAtom::typeGOT,
                              DefinedAtom::permR_X,
                              MipsTargetLayout<ELFType>::ORDER_PLT) {}
 

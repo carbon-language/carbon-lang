@@ -154,13 +154,13 @@ public:
 
 template <typename ELFT> class RelocationPass : public Pass {
 public:
-  RelocationPass(MipsLinkingContext &context);
+  RelocationPass(MipsLinkingContext &ctx);
 
   void perform(std::unique_ptr<MutableFile> &mf) override;
 
 private:
   /// \brief Reference to the linking context.
-  const MipsLinkingContext &_context;
+  const MipsLinkingContext &_ctx;
 
   /// \brief Owner of all the Atoms created by this pass.
   RelocationPassFile _file;
@@ -259,8 +259,8 @@ private:
 };
 
 template <typename ELFT>
-RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &context)
-    : _context(context), _file(context), _gotLDMEntry(nullptr) {
+RelocationPass<ELFT>::RelocationPass(MipsLinkingContext &ctx)
+    : _ctx(ctx), _file(ctx), _gotLDMEntry(nullptr) {
   _localGotVector.push_back(new (_file._alloc) GOT0Atom(_file));
   _localGotVector.push_back(new (_file._alloc) GOTModulePointerAtom(_file));
 }
@@ -449,7 +449,7 @@ bool RelocationPass<ELFT>::mightBeDynamic(const MipsELFDefinedAtom<ELFT> &atom,
   if ((atom.section()->sh_flags & SHF_ALLOC) == 0)
     return false;
 
-  if (_context.getOutputELFType() == llvm::ELF::ET_DYN)
+  if (_ctx.getOutputELFType() == llvm::ELF::ET_DYN)
     return true;
   if (!isMipsReadonly(atom))
     return true;
@@ -503,7 +503,7 @@ bool RelocationPass<ELFT>::isDynamic(const Atom *atom) const {
   if (sa)
     return true;
 
-  if (_context.getOutputELFType() == llvm::ELF::ET_DYN) {
+  if (_ctx.getOutputELFType() == llvm::ELF::ET_DYN) {
     if (da && da->scope() != DefinedAtom::scopeTranslationUnit)
       return true;
 
@@ -568,7 +568,7 @@ bool RelocationPass<ELFT>::isLocalCall(const Atom *a) const {
     return true;
 
   // Calls to external symbols defined in an executable file resolved locally.
-  if (_context.getOutputELFType() == llvm::ELF::ET_EXEC)
+  if (_ctx.getOutputELFType() == llvm::ELF::ET_EXEC)
     return true;
 
   return false;

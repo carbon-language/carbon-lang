@@ -124,14 +124,14 @@ private:
 template <class ELFType>
 class MipsRuntimeFile final : public CRuntimeFile<ELFType> {
 public:
-  MipsRuntimeFile(const MipsLinkingContext &context)
-      : CRuntimeFile<ELFType>(context, "Mips runtime file") {}
+  MipsRuntimeFile(const MipsLinkingContext &ctx)
+      : CRuntimeFile<ELFType>(ctx, "Mips runtime file") {}
 };
 
 /// \brief TargetHandler for Mips
 class MipsTargetHandler final : public DefaultTargetHandler<Mips32ElELFType> {
 public:
-  MipsTargetHandler(MipsLinkingContext &context);
+  MipsTargetHandler(MipsLinkingContext &ctx);
 
   MipsTargetLayout<Mips32ElELFType> &getTargetLayout() override {
     return *_targetLayout;
@@ -151,7 +151,7 @@ public:
 
 private:
   static const Registry::KindStrings kindStrings[];
-  MipsLinkingContext &_context;
+  MipsLinkingContext &_ctx;
   std::unique_ptr<MipsRuntimeFile<Mips32ElELFType>> _runtimeFile;
   std::unique_ptr<MipsTargetLayout<Mips32ElELFType>> _targetLayout;
   std::unique_ptr<MipsTargetRelocationHandler> _relocationHandler;
@@ -160,11 +160,10 @@ private:
 template <class ELFT>
 class MipsDynamicSymbolTable : public DynamicSymbolTable<ELFT> {
 public:
-  MipsDynamicSymbolTable(const MipsLinkingContext &context,
+  MipsDynamicSymbolTable(const MipsLinkingContext &ctx,
                          MipsTargetLayout<ELFT> &layout)
-      : DynamicSymbolTable<ELFT>(
-            context, layout, ".dynsym",
-            DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),
+      : DynamicSymbolTable<ELFT>(ctx, layout, ".dynsym",
+                                 DefaultLayout<ELFT>::ORDER_DYNAMIC_SYMBOLS),
         _targetLayout(layout) {}
 
   void sortSymbols() override {
