@@ -161,6 +161,45 @@ private:
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
+class ResolvableSymbols {
+public:
+  void add(File *file) {
+    std::lock_guard<std::mutex> lock(_mutex);
+    if (_seen.count(file) > 0)
+      return;
+    _seen.insert(file);
+    _queue.insert(file);
+  }
+
+  const std::set<std::string> &defined() {
+    readAllSymbols();
+    return _defined;
+  }
+
+private:
+  // Files are read lazily, so that it has no runtime overhead if
+  // no one accesses this class.
+  void readAllSymbols() {
+    std::lock_guard<std::mutex> lock(_mutex);
+    for (File *file : _queue) {
+      if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
+        for (const std::string &sym : archive->getDefinedSymbols())
+          _defined.insert(sym);
+        continue;
+      }
+      for (const DefinedAtom *atom : file->defined())
+        if (!atom->name().empty())
+          _defined.insert(atom->name());
+    }
+    _queue.clear();
+  }
+
+  std::set<std::string> _defined;
+  std::set<File *> _seen;
+  std::set<File *> _queue;
+  std::mutex _mutex;
+};
+
 // A ExportedSymbolRenameFile is a virtual archive file for dllexported symbols.
 //
 // One usually has to specify the exact symbol name to resolve it. That's true
@@ -199,18 +238,11 @@ public:
       _exportedSyms.insert(desc.name);
   }
 
-  void addResolvableSymbols(File *file) {
-    std::lock_guard<std::mutex> lock(_mutex);
-    if (_seen.count(file) > 0)
-      return;
-    _seen.insert(file);
-    _queue.insert(file);
-  }
+  void addResolvableSymbols(File *file) { _syms.add(file); }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (_exportedSyms.count(sym) == 0)
       return nullptr;
-    readAllSymbols();
     std::string replace;
     if (!findSymbolWithAtsignSuffix(sym.str(), replace))
       return nullptr;
@@ -218,29 +250,13 @@ public:
   }
 
 private:
-  // Files are read lazily, so that it has no runtime overhead if
-  // there's no dllexported stdcall functions.
-  void readAllSymbols() const {
-    std::lock_guard<std::mutex> lock(_mutex);
-    for (File *file : _queue) {
-      if (auto *archive = dyn_cast<ArchiveLibraryFile>(file)) {
-        for (const std::string &sym : archive->getDefinedSymbols())
-          _defined.insert(sym);
-        continue;
-      }
-      for (const DefinedAtom *atom : file->defined())
-        if (!atom->name().empty())
-          _defined.insert(atom->name());
-    }
-    _queue.clear();
-  }
-
   // Find a symbol that starts with a given symbol name followed
   // by @number suffix.
   bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
     sym.append("@");
-    auto it = _defined.lower_bound(sym);
-    for (auto e = _defined.end(); it != e; ++it) {
+    const std::set<std::string> &defined = _syms.defined();
+    auto it = defined.lower_bound(sym);
+    for (auto e = defined.end(); it != e; ++it) {
       if (!StringRef(*it).startswith(sym))
         return false;
       if (it->size() == sym.size())
@@ -255,10 +271,7 @@ private:
   }
 
   std::set<std::string> _exportedSyms;
-  std::set<File *> _seen;
-  mutable std::set<std::string> _defined;
-  mutable std::set<File *> _queue;
-  mutable std::mutex _mutex;
+  mutable ResolvableSymbols _syms;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 
