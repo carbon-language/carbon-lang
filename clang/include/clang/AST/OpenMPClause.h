@@ -711,6 +711,35 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
+/// \brief This represents 'untied' clause in the '#pragma omp ...' directive.
+///
+/// \code
+/// #pragma omp task untied
+/// \endcode
+/// In this example directive '#pragma omp task' has 'untied' clause.
+///
+class OMPUntiedClause : public OMPClause {
+public:
+  /// \brief Build 'untied' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPUntiedClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_untied, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPUntiedClause()
+      : OMPClause(OMPC_untied, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_untied;
+  }
+
+  StmtRange children() { return StmtRange(); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

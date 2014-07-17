@@ -1709,6 +1709,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_nowait:
     C = new (Context) OMPNowaitClause();
     break;
+  case OMPC_untied:
+    C = new (Context) OMPUntiedClause();
+    break;
   case OMPC_private:
     C = OMPPrivateClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1795,6 +1798,8 @@ void OMPClauseReader::VisitOMPScheduleClause(OMPScheduleClause *C) {
 void OMPClauseReader::VisitOMPOrderedClause(OMPOrderedClause *) {}
 
 void OMPClauseReader::VisitOMPNowaitClause(OMPNowaitClause *) {}
+
+void OMPClauseReader::VisitOMPUntiedClause(OMPUntiedClause *) {}
 
 void OMPClauseReader::VisitOMPPrivateClause(OMPPrivateClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));

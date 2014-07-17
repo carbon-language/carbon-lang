@@ -33,7 +33,7 @@ T tmain(T argc, T *argv) {
   T b = argc, c, d, e, f, g;
   static T a;
   S<T> s;
-#pragma omp task
+#pragma omp task untied
   a = 2;
 #pragma omp task default(none), private(argc, b) firstprivate(argv) shared(d) if (argc > 0) final(S<T>::TS > 0)
   foo();
@@ -46,7 +46,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: int b = argc, c, d, e, f, g;
 // CHECK-NEXT: static int a;
 // CHECK-NEXT: S<int> s;
-// CHECK-NEXT: #pragma omp task
+// CHECK-NEXT: #pragma omp task untied
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<int>::TS > 0)
 // CHECK-NEXT: foo()
@@ -56,7 +56,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: long b = argc, c, d, e, f, g;
 // CHECK-NEXT: static long a;
 // CHECK-NEXT: S<long> s;
-// CHECK-NEXT: #pragma omp task
+// CHECK-NEXT: #pragma omp task untied
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<long>::TS > 0)
 // CHECK-NEXT: foo()
@@ -66,7 +66,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: T b = argc, c, d, e, f, g;
 // CHECK-NEXT: static T a;
 // CHECK-NEXT: S<T> s;
-// CHECK-NEXT: #pragma omp task
+// CHECK-NEXT: #pragma omp task untied
 // CHECK-NEXT: a = 2;
 // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<T>::TS > 0)
 // CHECK-NEXT: foo()
@@ -82,8 +82,8 @@ int main(int argc, char **argv) {
 #pragma omp threadprivate(a)
   Enum ee;
 // CHECK: Enum ee;
-#pragma omp task
-  // CHECK-NEXT: #pragma omp task
+#pragma omp task untied
+  // CHECK-NEXT: #pragma omp task untied
   a = 2;
 // CHECK-NEXT: a = 2;
 #pragma omp task default(none), private(argc, b) firstprivate(argv) if (argc > 0) final(a > 0)

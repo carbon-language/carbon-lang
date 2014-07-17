@@ -1968,6 +1968,8 @@ void OMPClauseEnqueue::VisitOMPOrderedClause(const OMPOrderedClause *) {}
 
 void OMPClauseEnqueue::VisitOMPNowaitClause(const OMPNowaitClause *) {}
 
+void OMPClauseEnqueue::VisitOMPUntiedClause(const OMPUntiedClause *) {}
+
 template<typename T>
 void OMPClauseEnqueue::VisitOMPClauseList(T *Node) {
   for (const auto *I : Node->varlists())

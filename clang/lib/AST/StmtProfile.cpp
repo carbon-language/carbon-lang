@@ -306,6 +306,8 @@ void OMPClauseProfiler::VisitOMPOrderedClause(const OMPOrderedClause *) {}
 
 void OMPClauseProfiler::VisitOMPNowaitClause(const OMPNowaitClause *) {}
 
+void OMPClauseProfiler::VisitOMPUntiedClause(const OMPUntiedClause *) {}
+
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
   for (auto *I : Node->varlists())
