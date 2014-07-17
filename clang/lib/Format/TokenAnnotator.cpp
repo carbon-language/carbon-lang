@@ -1140,7 +1140,7 @@ private:
     if (!Current || !Current->is(tok::question))
       return;
     next();
-    parse(prec::LogicalOr);
+    parseConditionalExpr();
     if (!Current || Current->Type != TT_ConditionalExpr)
       return;
     next();
