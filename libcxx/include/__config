@@ -313,6 +313,10 @@ typedef __char32_t char32_t;
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
+#if !(__has_feature(cxx_relaxed_constexpr))
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+#endif
+
 #if __ISO_C_VISIBLE >= 2011 || __cplusplus >= 201103L
 #if defined(__FreeBSD__)
 #define _LIBCPP_HAS_QUICK_EXIT
@@ -388,6 +392,9 @@ namespace std {
 #define _LIBCPP_HAS_NO_CONSTEXPR
 #endif
 
+// No version of GCC supports relaxed constexpr rules
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
+
 #define _NOEXCEPT throw()
 #define _NOEXCEPT_(x)
 #define _NOEXCEPT_OR_FALSE(x) false
@@ -457,6 +464,7 @@ using namespace _LIBCPP_NAMESPACE __attribute__((__strong__));
 #define _LIBCPP_HAS_NO_TEMPLATE_ALIASES
 #define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER
 #define _LIBCPP_HAS_NO_CONSTEXPR
+#define _LIBCPP_HAS_NO_CXX14_CONSTEXPR
 #define _LIBCPP_HAS_NO_UNICODE_CHARS
 #define _LIBCPP_HAS_NO_DELETED_FUNCTIONS
 #define _LIBCPP_HAS_NO_DEFAULTED_FUNCTIONS
@@ -648,13 +656,17 @@ template <unsigned> struct __static_assert_check {};
 #endif
 
 #if _LIBCPP_STD_VER <= 11
-#define _LIBCPP_CONSTEXPR_AFTER_CXX11
 #define _LIBCPP_EXPLICIT_AFTER_CXX11
 #define _LIBCPP_DEPRECATED_AFTER_CXX11
 #else
-#define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
 #define _LIBCPP_EXPLICIT_AFTER_CXX11 explicit
 #define _LIBCPP_DEPRECATED_AFTER_CXX11 [[deprecated]]
+#endif
+
+#if _LIBCPP_STD_VER > 11 && !defined(_LIBCPP_HAS_NO_CXX14_CONSTEXPR)
+#define _LIBCPP_CONSTEXPR_AFTER_CXX11 constexpr
+#else
+#define _LIBCPP_CONSTEXPR_AFTER_CXX11
 #endif
 
 #ifndef _LIBCPP_HAS_NO_ASAN
