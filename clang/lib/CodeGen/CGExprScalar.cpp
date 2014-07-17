@@ -701,7 +701,10 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   // If casting to/from storage-only half FP, use special intrinsics.
   if (SrcType->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
-    Src = Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16), Src);
+    Src = Builder.CreateCall(
+        CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
+                             CGF.CGM.FloatTy),
+        Src);
     SrcType = CGF.getContext().FloatTy;
     SrcTy = CGF.FloatTy;
   }
@@ -797,7 +800,9 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
 
   if (DstTy != ResTy) {
     assert(ResTy->isIntegerTy(16) && "Only half FP requires extra conversion");
-    Res = Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16), Res);
+    Res = Builder.CreateCall(
+        CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16, CGF.CGM.FloatTy),
+        Res);
   }
 
   return Res;
@@ -1686,9 +1691,10 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
 
     if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType) {
       // Another special case: half FP increment should be done via float
-      value =
-    Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16),
-                       input);
+      value = Builder.CreateCall(
+          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_from_fp16,
+                               CGF.CGM.FloatTy),
+          input);
     }
 
     if (value->getType()->isFloatTy())
@@ -1707,9 +1713,10 @@ ScalarExprEmitter::EmitScalarPrePostIncDec(const UnaryOperator *E, LValue LV,
     value = Builder.CreateFAdd(value, amt, isInc ? "inc" : "dec");
 
     if (type->isHalfType() && !CGF.getContext().getLangOpts().NativeHalfType)
-      value =
-       Builder.CreateCall(CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16),
-                          value);
+      value = Builder.CreateCall(
+          CGF.CGM.getIntrinsic(llvm::Intrinsic::convert_to_fp16,
+                               CGF.CGM.FloatTy),
+          value);
 
   // Objective-C pointer types.
   } else {
