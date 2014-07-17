@@ -697,8 +697,9 @@ createRuntimeDyldELF(RTDyldMemoryManager *MM, bool ProcessAllSections) {
 }
 
 static std::unique_ptr<RuntimeDyldMachO>
-createRuntimeDyldMachO(RTDyldMemoryManager *MM, bool ProcessAllSections) {
-  std::unique_ptr<RuntimeDyldMachO> Dyld(new RuntimeDyldMachO(MM));
+createRuntimeDyldMachO(Triple::ArchType Arch, RTDyldMemoryManager *MM,
+                       bool ProcessAllSections) {
+  std::unique_ptr<RuntimeDyldMachO> Dyld(RuntimeDyldMachO::create(Arch, MM));
   Dyld->setProcessAllSections(ProcessAllSections);
   return Dyld;
 }
@@ -715,7 +716,9 @@ ObjectImage *RuntimeDyld::loadObject(std::unique_ptr<ObjectFile> InputObject) {
   } else if (InputObject->isMachO()) {
     InputImage.reset(RuntimeDyldMachO::createObjectImageFromFile(std::move(InputObject)));
     if (!Dyld)
-      Dyld = createRuntimeDyldMachO(MM, ProcessAllSections).release();
+      Dyld = createRuntimeDyldMachO(
+                           static_cast<Triple::ArchType>(InputImage->getArch()),
+                           MM, ProcessAllSections).release();
   } else
     report_fatal_error("Incompatible object format!");
 
@@ -751,7 +754,9 @@ ObjectImage *RuntimeDyld::loadObject(ObjectBuffer *InputBuffer) {
   case sys::fs::file_magic::macho_dsym_companion:
     InputImage.reset(RuntimeDyldMachO::createObjectImage(InputBuffer));
     if (!Dyld)
-      Dyld = createRuntimeDyldMachO(MM, ProcessAllSections).release();
+      Dyld = createRuntimeDyldMachO(
+                           static_cast<Triple::ArchType>(InputImage->getArch()),
+                           MM, ProcessAllSections).release();
     break;
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::bitcode:

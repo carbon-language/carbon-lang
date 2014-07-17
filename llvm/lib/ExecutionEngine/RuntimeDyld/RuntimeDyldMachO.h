@@ -19,68 +19,18 @@
 #include "llvm/Object/MachO.h"
 #include "llvm/Support/Format.h"
 
+#define DEBUG_TYPE "dyld"
+
 using namespace llvm;
 using namespace llvm::object;
 
 namespace llvm {
 class RuntimeDyldMachO : public RuntimeDyldImpl {
-private:
-
-  /// Write the least significant 'Size' bytes in 'Value' out at the address
-  /// pointed to by Addr.
-  bool applyRelocationValue(uint8_t *Addr, uint64_t Value, unsigned Size) {
-    for (unsigned i = 0; i < Size; ++i) {
-      *Addr++ = (uint8_t)Value;
-      Value >>= 8;
-    }
-
-    return false;
-  }
-
-  bool resolveI386Relocation(const RelocationEntry &RE, uint64_t Value);
-  bool resolveX86_64Relocation(const RelocationEntry &RE, uint64_t Value);
-  bool resolveARMRelocation(const RelocationEntry &RE, uint64_t Value);
-  bool resolveAArch64Relocation(const RelocationEntry &RE, uint64_t Value);
-
-  // Populate stubs in __jump_table section.
-  void populateJumpTable(MachOObjectFile &Obj, const SectionRef &JTSection,
-                         unsigned JTSectionID);
-
-  // Populate __pointers section.
-  void populatePointersSection(MachOObjectFile &Obj, const SectionRef &PTSection,
-                               unsigned PTSectionID);
-
-  unsigned getMaxStubSize() override {
-    if (Arch == Triple::arm || Arch == Triple::thumb)
-      return 8; // 32-bit instruction and 32-bit address
-    else if (Arch == Triple::x86_64)
-      return 8; // GOT entry
-    else if (Arch == Triple::arm64)
-      return 8; // GOT entry
-    else
-      return 0;
-  }
-
-  unsigned getStubAlignment() override {
-    if (Arch == Triple::arm || Arch == Triple::thumb)
-      return 4;
-    else if (Arch == Triple::arm64)
-      return 8;
-    else
-      return 1;
-  }
-
-  relocation_iterator processSECTDIFFRelocation(
-                                             unsigned SectionID,
-                                             relocation_iterator RelI,
-                                             ObjectImage &ObjImg,
-                                             ObjSectionToIDMap &ObjSectionToID);
-
-  relocation_iterator processI386ScatteredVANILLA(
-					     unsigned SectionID,
-					     relocation_iterator RelI,
-					     ObjectImage &ObjImg,
-					     ObjSectionToIDMap &ObjSectionToID);
+protected:
+  struct SectionOffsetPair {
+    unsigned SectionID;
+    uint64_t Offset;
+  };
 
   struct EHFrameRelatedSections {
     EHFrameRelatedSections()
@@ -99,30 +49,105 @@ private:
   // EH frame sections with the memory manager.
   SmallVector<EHFrameRelatedSections, 2> UnregisteredEHFrameSections;
 
-public:
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  void resolveRelocation(const RelocationEntry &RE, uint64_t Value) override;
-  relocation_iterator
-  processRelocationRef(unsigned SectionID, relocation_iterator RelI,
-                       ObjectImage &Obj, ObjSectionToIDMap &ObjSectionToID,
-                       const SymbolTableMap &Symbols, StubMap &Stubs) override;
-  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
-  bool isCompatibleFile(const object::ObjectFile *Obj) const override;
-  void registerEHFrames() override;
-  void finalizeLoad(ObjectImage &ObjImg,
-                    ObjSectionToIDMap &SectionMap) override;
+  /// Parse the given relocation, which must be a non-scattered, and
+  /// return a RelocationEntry representing the information. The 'Addend' field
+  /// will contain the unmodified instruction immediate.
+  RelocationEntry getBasicRelocationEntry(unsigned SectionID, ObjectImage &Obj,
+                                          const relocation_iterator &RI) const;
 
+  /// Construct a RelocationValueRef representing the relocation target.
+  /// For Symbols in known sections, this will return a RelocationValueRef
+  /// representing a (SectionID, Offset) pair.
+  /// For Symbols whose section is not known, this will return a
+  /// (SymbolName, Offset) pair, where the Offset is taken from the instruction
+  /// immediate (held in RE.Addend).
+  /// In both cases the Addend field is *NOT* fixed up to be PC-relative. That
+  /// should be done by the caller where appropriate by calling makePCRel on
+  /// the RelocationValueRef.
+  RelocationValueRef getRelocationValueRef(ObjectImage &ObjImg,
+                                           const relocation_iterator &RI,
+                                           const RelocationEntry &RE,
+                                           ObjSectionToIDMap &ObjSectionToID,
+                                           const SymbolTableMap &Symbols);
+
+  /// Make the RelocationValueRef addend PC-relative.
+  void makeValueAddendPCRel(RelocationValueRef &Value, ObjectImage &ObjImg,
+                            const relocation_iterator &RI);
+
+  /// Dump information about the relocation entry (RE) and resolved value.
+  void dumpRelocationToResolve(const RelocationEntry &RE, uint64_t Value) const;
+
+public:
+  /// Create an ObjectImage from the given ObjectBuffer.
   static ObjectImage *createObjectImage(ObjectBuffer *InputBuffer) {
     return new ObjectImageCommon(InputBuffer);
   }
 
+  /// Create an ObjectImage from the given ObjectFile.
   static ObjectImage *
   createObjectImageFromFile(std::unique_ptr<object::ObjectFile> InputObject) {
     return new ObjectImageCommon(std::move(InputObject));
   }
+
+  /// Create a RuntimeDyldMachO instance for the given target architecture.
+  static std::unique_ptr<RuntimeDyldMachO> create(Triple::ArchType Arch,
+                                                  RTDyldMemoryManager *mm);
+
+  /// Write the least significant 'Size' bytes in 'Value' out at the address
+  /// pointed to by Addr. Check for overflow.
+  bool writeBytesUnaligned(uint8_t *Addr, uint64_t Value, unsigned Size);
+
+  SectionEntry &getSection(unsigned SectionID) { return Sections[SectionID]; }
+
+  bool isCompatibleFormat(const ObjectBuffer *Buffer) const override;
+  bool isCompatibleFile(const object::ObjectFile *Obj) const override;
+  void registerEHFrames() override;
+};
+
+/// RuntimeDyldMachOTarget - Templated base class for generic MachO linker
+/// algorithms and data structures.
+///
+/// Concrete, target specific sub-classes can be accessed via the impl()
+/// methods. (i.e. the RuntimeDyldMachO hierarchy uses the Curiously
+/// Recurring Template Idiom). Concrete subclasses for each target
+/// can be found in ./Targets.
+template <typename Impl>
+class RuntimeDyldMachOCRTPBase : public RuntimeDyldMachO {
+private:
+  Impl &impl() { return static_cast<Impl &>(*this); }
+  const Impl &impl() const { return static_cast<Impl &>(*this); }
+
+public:
+  RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
+
+  void finalizeLoad(ObjectImage &ObjImg, ObjSectionToIDMap &SectionMap) {
+    unsigned EHFrameSID = RTDYLD_INVALID_SECTION_ID;
+    unsigned TextSID = RTDYLD_INVALID_SECTION_ID;
+    unsigned ExceptTabSID = RTDYLD_INVALID_SECTION_ID;
+    ObjSectionToIDMap::iterator i, e;
+
+    for (i = SectionMap.begin(), e = SectionMap.end(); i != e; ++i) {
+      const SectionRef &Section = i->first;
+      StringRef Name;
+      Section.getName(Name);
+      if (Name == "__eh_frame")
+        EHFrameSID = i->second;
+      else if (Name == "__text")
+        TextSID = i->second;
+      else if (Name == "__gcc_except_tab")
+        ExceptTabSID = i->second;
+      else
+        impl().finalizeSection(ObjImg, i->second, Section);
+    }
+    UnregisteredEHFrameSections.push_back(
+        EHFrameRelatedSections(EHFrameSID, TextSID, ExceptTabSID));
+  }
 };
 
 } // end namespace llvm
+
+#undef DEBUG_TYPE
 
 #endif
