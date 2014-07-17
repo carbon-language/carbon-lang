@@ -179,9 +179,6 @@
 /* Define to 1 if you have the `shell32' library (-lshell32). */
 #cmakedefine HAVE_LIBSHELL32 ${HAVE_LIBSHELL32}
 
-/* Define to 1 if you have the `udis86' library (-ludis86). */
-#undef HAVE_LIBUDIS86
-
 /* Define to 1 if you have the 'z' library (-lz). */
 #cmakedefine HAVE_LIBZ ${HAVE_LIBZ}
 
@@ -517,9 +514,6 @@
 
 /* Define to 1 if your <sys/time.h> declares `struct tm'. */
 #undef TM_IN_SYS_TIME
-
-/* Define if use udis86 library */
-#undef USE_UDIS86
 
 /* Type of 1st arg on ELM Callback */
 #cmakedefine WIN32_ELMCB_PCSTR ${WIN32_ELMCB_PCSTR}

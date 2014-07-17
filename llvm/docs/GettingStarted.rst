@@ -713,13 +713,6 @@ The following options can be used to set or enable LLVM specific options:
   generating the documentation can take a long time and producess 100s of
   megabytes of output.
 
-``--with-udis86``
-
-  LLVM can use external disassembler library for various purposes (now it's used
-  only for examining code produced by JIT). This option will enable usage of
-  `udis86 <http://udis86.sourceforge.net/>`_ x86 (both 32 and 64 bits)
-  disassembler library.
-
 To configure LLVM, follow these steps:
 
 #. Change directory into the object root directory:

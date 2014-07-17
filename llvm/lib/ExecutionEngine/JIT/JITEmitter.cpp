@@ -36,7 +36,6 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Disassembler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Memory.h"
@@ -929,11 +928,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
   MemMgr->setMemoryExecutable();
 
   DEBUG({
-      if (sys::hasDisassembler()) {
-        dbgs() << "JIT: Disassembled code:\n";
-        dbgs() << sys::disassembleBuffer(FnStart, FnEnd-FnStart,
-                                         (uintptr_t)FnStart);
-      } else {
         dbgs() << "JIT: Binary code:\n";
         uint8_t* q = FnStart;
         for (int i = 0; q < FnEnd; q += 4, ++i) {
@@ -955,7 +949,6 @@ bool JITEmitter::finishFunction(MachineFunction &F) {
             dbgs() << '\n';
         }
         dbgs()<< '\n';
-      }
     });
 
   if (MMI)

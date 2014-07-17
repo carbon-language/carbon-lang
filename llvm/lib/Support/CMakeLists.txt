@@ -73,7 +73,6 @@ add_llvm_library(LLVMSupport
 
 # System
   Atomic.cpp
-  Disassembler.cpp
   DynamicLibrary.cpp
   Errno.cpp
   Host.cpp
