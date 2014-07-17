@@ -110,6 +110,7 @@
 #include <clc/relational/any.h>
 #include <clc/relational/bitselect.h>
 #include <clc/relational/isequal.h>
+#include <clc/relational/isgreater.h>
 #include <clc/relational/isnan.h>
 #include <clc/relational/select.h>
 #include <clc/relational/signbit.h>
