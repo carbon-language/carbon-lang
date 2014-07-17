@@ -1488,7 +1488,7 @@ static int fixupReg(struct InternalInstruction *insn,
     if (!valid)
       return -1;
     break;
-  case ENCODING_RM:
+  CASE_ENCODING_RM:
     if (insn->eaBase >= insn->eaRegBase) {
       insn->eaBase = (EABase)fixupRMValue(insn,
                                           (OperandType)op->type,
@@ -1681,11 +1681,14 @@ static int readOperands(struct InternalInstruction* insn) {
     case ENCODING_DI:
       break;
     case ENCODING_REG:
-    case ENCODING_RM:
+    CASE_ENCODING_RM:
       if (readModRM(insn))
         return -1;
       if (fixupReg(insn, &Op))
         return -1;
+      // Apply the AVX512 compressed displacement scaling factor.
+      if (Op.encoding != ENCODING_REG && insn->eaDisplacement == EA_DISP_8)
+        insn->displacement *= 1 << (Op.encoding - ENCODING_RM);
       break;
     case ENCODING_CB:
     case ENCODING_CW:

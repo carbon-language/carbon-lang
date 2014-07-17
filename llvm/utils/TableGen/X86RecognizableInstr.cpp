@@ -205,6 +205,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   HasEVEX_B        = Rec->getValueAsBit("hasEVEX_B");
   IsCodeGenOnly    = Rec->getValueAsBit("isCodeGenOnly");
   ForceDisassemble = Rec->getValueAsBit("ForceDisassemble");
+  CD8_Scale        = byteFromRec(Rec, "CD8_Scale");
 
   Name      = Rec->getName();
   AsmString = Rec->getValueAsString("AsmString");
@@ -441,6 +442,16 @@ InstructionContext RecognizableInstr::insnContext() const {
   return insnContext;
 }
 
+void RecognizableInstr::adjustOperandEncoding(OperandEncoding &encoding) {
+  // The scaling factor for AVX512 compressed displacement encoding is an
+  // instruction attribute.  Adjust the ModRM encoding type to include the
+  // scale for compressed displacement.
+  if (encoding != ENCODING_RM || CD8_Scale == 0)
+    return;
+  encoding = (OperandEncoding)(encoding + Log2_32(CD8_Scale));
+  assert(encoding <= ENCODING_RM_CD64 && "Invalid CDisp scaling");
+}
+
 void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
                                       unsigned &physicalOperandIndex,
                                       unsigned &numPhysicalOperands,
@@ -464,8 +475,10 @@ void RecognizableInstr::handleOperand(bool optional, unsigned &operandIndex,
 
   const std::string &typeName = (*Operands)[operandIndex].Rec->getName();
 
-  Spec->operands[operandIndex].encoding = encodingFromString(typeName,
-                                                              OpSize);
+  OperandEncoding encoding = encodingFromString(typeName, OpSize);
+  // Adjust the encoding type for an operand based on the instruction.
+  adjustOperandEncoding(encoding);
+  Spec->operands[operandIndex].encoding = encoding;
   Spec->operands[operandIndex].type = typeFromString(typeName,
                                                      HasREX_WPrefix, OpSize);
 
