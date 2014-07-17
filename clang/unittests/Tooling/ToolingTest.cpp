@@ -28,20 +28,20 @@ namespace {
 /// Takes an ast consumer and returns it from CreateASTConsumer. This only
 /// works with single translation unit compilations.
 class TestAction : public clang::ASTFrontendAction {
-public:
+ public:
   /// Takes ownership of TestConsumer.
-  explicit TestAction(std::unique_ptr<clang::ASTConsumer> TestConsumer)
-      : TestConsumer(std::move(TestConsumer)) {}
+  explicit TestAction(clang::ASTConsumer *TestConsumer)
+      : TestConsumer(TestConsumer) {}
 
-protected:
-  virtual std::unique_ptr<clang::ASTConsumer>
-  CreateASTConsumer(clang::CompilerInstance &compiler, StringRef dummy) {
+ protected:
+  virtual clang::ASTConsumer* CreateASTConsumer(
+      clang::CompilerInstance& compiler, StringRef dummy) {
     /// TestConsumer will be deleted by the framework calling us.
-    return std::move(TestConsumer);
+    return TestConsumer;
   }
 
-private:
-  std::unique_ptr<clang::ASTConsumer> TestConsumer;
+ private:
+  clang::ASTConsumer * const TestConsumer;
 };
 
 class FindTopLevelDeclConsumer : public clang::ASTConsumer {
@@ -59,10 +59,8 @@ class FindTopLevelDeclConsumer : public clang::ASTConsumer {
 
 TEST(runToolOnCode, FindsNoTopLevelDeclOnEmptyCode) {
   bool FoundTopLevelDecl = false;
-  EXPECT_TRUE(
-      runToolOnCode(new TestAction(llvm::make_unique<FindTopLevelDeclConsumer>(
-                        &FoundTopLevelDecl)),
-                    ""));
+  EXPECT_TRUE(runToolOnCode(
+      new TestAction(new FindTopLevelDeclConsumer(&FoundTopLevelDecl)), ""));
   EXPECT_FALSE(FoundTopLevelDecl);
 }
 
@@ -99,17 +97,13 @@ bool FindClassDeclX(ASTUnit *AST) {
 
 TEST(runToolOnCode, FindsClassDecl) {
   bool FoundClassDeclX = false;
-  EXPECT_TRUE(
-      runToolOnCode(new TestAction(llvm::make_unique<FindClassDeclXConsumer>(
-                        &FoundClassDeclX)),
-                    "class X;"));
+  EXPECT_TRUE(runToolOnCode(new TestAction(
+      new FindClassDeclXConsumer(&FoundClassDeclX)), "class X;"));
   EXPECT_TRUE(FoundClassDeclX);
 
   FoundClassDeclX = false;
-  EXPECT_TRUE(
-      runToolOnCode(new TestAction(llvm::make_unique<FindClassDeclXConsumer>(
-                        &FoundClassDeclX)),
-                    "class Y;"));
+  EXPECT_TRUE(runToolOnCode(new TestAction(
+      new FindClassDeclXConsumer(&FoundClassDeclX)), "class Y;"));
   EXPECT_FALSE(FoundClassDeclX);
 }
 
@@ -131,8 +125,8 @@ TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
 }
 
 struct IndependentFrontendActionCreator {
-  std::unique_ptr<ASTConsumer> newASTConsumer() {
-    return llvm::make_unique<FindTopLevelDeclConsumer>(nullptr);
+  ASTConsumer *newASTConsumer() {
+    return new FindTopLevelDeclConsumer(nullptr);
   }
 };
 
@@ -191,8 +185,8 @@ struct VerifyEndCallback : public SourceFileCallbacks {
   virtual void handleEndSource() {
     ++EndCalled;
   }
-  std::unique_ptr<ASTConsumer> newASTConsumer() {
-    return llvm::make_unique<FindTopLevelDeclConsumer>(&Matched);
+  ASTConsumer *newASTConsumer() {
+    return new FindTopLevelDeclConsumer(&Matched);
   }
   unsigned BeginCalled;
   unsigned EndCalled;
@@ -231,10 +225,10 @@ struct SkipBodyConsumer : public clang::ASTConsumer {
 };
 
 struct SkipBodyAction : public clang::ASTFrontendAction {
-  virtual std::unique_ptr<ASTConsumer>
-  CreateASTConsumer(CompilerInstance &Compiler, StringRef) {
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &Compiler,
+                                         StringRef) {
     Compiler.getFrontendOpts().SkipFunctionBodies = true;
-    return llvm::make_unique<SkipBodyConsumer>();
+    return new SkipBodyConsumer;
   }
 };
 

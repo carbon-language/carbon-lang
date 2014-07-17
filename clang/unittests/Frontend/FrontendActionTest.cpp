@@ -38,9 +38,9 @@ public:
     return ASTFrontendAction::BeginSourceFileAction(ci, filename);
   }
 
-  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                         StringRef InFile) {
-    return llvm::make_unique<Visitor>(decl_names);
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile) {
+    return new Visitor(decl_names);
   }
 
 private:

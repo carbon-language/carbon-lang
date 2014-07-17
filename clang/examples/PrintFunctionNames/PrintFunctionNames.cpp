@@ -36,9 +36,8 @@ public:
 
 class PrintFunctionNamesAction : public PluginASTAction {
 protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef) {
-    return llvm::make_unique<PrintFunctionsConsumer>();
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI, llvm::StringRef) {
+    return new PrintFunctionsConsumer();
   }
 
   bool ParseArgs(const CompilerInstance &CI,

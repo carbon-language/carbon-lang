@@ -590,8 +590,8 @@ static raw_ostream *GetOutputStream(CompilerInstance &CI,
   llvm_unreachable("Invalid action!");
 }
 
-std::unique_ptr<ASTConsumer>
-CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
+                                              StringRef InFile) {
   BackendAction BA = static_cast<BackendAction>(Act);
   std::unique_ptr<raw_ostream> OS(GetOutputStream(CI, InFile, BA));
   if (BA != Backend_EmitNothing && !OS)
@@ -623,12 +623,11 @@ CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
     LinkModuleToUse = ModuleOrErr.get();
   }
 
-  auto Result = llvm::make_unique<BackendConsumer>(
-      BA, CI.getDiagnostics(), CI.getCodeGenOpts(), CI.getTargetOpts(),
-      CI.getLangOpts(), (bool)CI.getFrontendOpts().ShowTimers, InFile,
-      LinkModuleToUse, OS.release(), *VMContext);
-  BEConsumer = Result.get();
-  return std::move(Result);
+  BEConsumer = new BackendConsumer(BA, CI.getDiagnostics(), CI.getCodeGenOpts(),
+                                   CI.getTargetOpts(), CI.getLangOpts(),
+                                   CI.getFrontendOpts().ShowTimers, InFile,
+                                   LinkModuleToUse, OS.release(), *VMContext);
+  return BEConsumer;
 }
 
 void CodeGenAction::ExecuteAction() {

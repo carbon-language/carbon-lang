@@ -118,19 +118,17 @@ namespace {
   };
 } // end anonymous namespace
 
-std::unique_ptr<ASTConsumer> clang::CreateASTPrinter(raw_ostream *Out,
-                                                     StringRef FilterString) {
-  return llvm::make_unique<ASTPrinter>(Out, /*Dump=*/false, FilterString);
+ASTConsumer *clang::CreateASTPrinter(raw_ostream *Out,
+                                     StringRef FilterString) {
+  return new ASTPrinter(Out, /*Dump=*/ false, FilterString);
 }
 
-std::unique_ptr<ASTConsumer> clang::CreateASTDumper(StringRef FilterString,
-                                                    bool DumpLookups) {
-  return llvm::make_unique<ASTPrinter>(nullptr, /*Dump=*/true, FilterString,
-                                       DumpLookups);
+ASTConsumer *clang::CreateASTDumper(StringRef FilterString, bool DumpLookups) {
+  return new ASTPrinter(nullptr, /*Dump=*/true, FilterString, DumpLookups);
 }
 
-std::unique_ptr<ASTConsumer> clang::CreateASTDeclNodeLister() {
-  return llvm::make_unique<ASTDeclNodeLister>(nullptr);
+ASTConsumer *clang::CreateASTDeclNodeLister() {
+  return new ASTDeclNodeLister(nullptr);
 }
 
 //===----------------------------------------------------------------------===//
@@ -166,9 +164,8 @@ void ASTViewer::HandleTopLevelSingleDecl(Decl *D) {
   }
 }
 
-std::unique_ptr<ASTConsumer> clang::CreateASTViewer() {
-  return llvm::make_unique<ASTViewer>();
-}
+
+ASTConsumer *clang::CreateASTViewer() { return new ASTViewer(); }
 
 //===----------------------------------------------------------------------===//
 /// DeclContextPrinter - Decl and DeclContext Visualization
@@ -478,6 +475,6 @@ void DeclContextPrinter::PrintDeclContext(const DeclContext* DC,
     }
   }
 }
-std::unique_ptr<ASTConsumer> clang::CreateDeclContextPrinter() {
-  return llvm::make_unique<DeclContextPrinter>();
+ASTConsumer *clang::CreateDeclContextPrinter() {
+  return new DeclContextPrinter();
 }

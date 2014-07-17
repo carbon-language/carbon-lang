@@ -185,17 +185,23 @@ ObjCMigrateAction::ObjCMigrateAction(FrontendAction *WrappedAction,
     MigrateDir = "."; // user current directory if none is given.
 }
 
-std::unique_ptr<ASTConsumer>
-ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *ObjCMigrateAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(CompInst->getSourceManager());
   CompInst->getPreprocessor().addPPCallbacks(PPRec);
-  std::vector<std::unique_ptr<ASTConsumer>> Consumers;
-  Consumers.push_back(WrapperFrontendAction::CreateASTConsumer(CI, InFile));
-  Consumers.push_back(llvm::make_unique<ObjCMigrateASTConsumer>(
-      MigrateDir, ObjCMigAction, Remapper, CompInst->getFileManager(), PPRec,
-      CompInst->getPreprocessor(), false, ArrayRef<std::string>()));
-  return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
+  ASTConsumer *
+    WrappedConsumer = WrapperFrontendAction::CreateASTConsumer(CI, InFile);
+  ASTConsumer *MTConsumer = new ObjCMigrateASTConsumer(MigrateDir,
+                                                       ObjCMigAction,
+                                                       Remapper,
+                                                    CompInst->getFileManager(),
+                                                       PPRec,
+                                                       CompInst->getPreprocessor(),
+                                                       false,
+                                                       ArrayRef<std::string>());
+  ASTConsumer *Consumers[] = { MTConsumer, WrappedConsumer };
+  return new MultiplexConsumer(Consumers);
 }
 
 bool ObjCMigrateAction::BeginInvocation(CompilerInstance &CI) {
@@ -1859,8 +1865,8 @@ static std::vector<std::string> getWhiteListFilenames(StringRef DirPath) {
   return Filenames;
 }
 
-std::unique_ptr<ASTConsumer>
-MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
   PPConditionalDirectiveRecord *
     PPRec = new PPConditionalDirectiveRecord(CI.getSourceManager());
   unsigned ObjCMTAction = CI.getFrontendOpts().ObjCMTAction;
@@ -1877,10 +1883,14 @@ MigrateSourceAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   CI.getPreprocessor().addPPCallbacks(PPRec);
   std::vector<std::string> WhiteList =
     getWhiteListFilenames(CI.getFrontendOpts().ObjCMTWhiteListPath);
-  return llvm::make_unique<ObjCMigrateASTConsumer>(
-      CI.getFrontendOpts().OutputFile, ObjCMTAction, Remapper,
-      CI.getFileManager(), PPRec, CI.getPreprocessor(),
-      /*isOutputFile=*/true, WhiteList);
+  return new ObjCMigrateASTConsumer(CI.getFrontendOpts().OutputFile,
+                                    ObjCMTAction,
+                                    Remapper,
+                                    CI.getFileManager(),
+                                    PPRec,
+                                    CI.getPreprocessor(),
+                                    /*isOutputFile=*/true,
+                                    WhiteList);
 }
 
 namespace {

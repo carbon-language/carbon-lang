@@ -687,14 +687,14 @@ void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
 // AnalysisConsumer creation.
 //===----------------------------------------------------------------------===//
 
-std::unique_ptr<AnalysisASTConsumer>
+AnalysisASTConsumer *
 ento::CreateAnalysisConsumer(const Preprocessor &pp, const std::string &outDir,
                              AnalyzerOptionsRef opts,
                              ArrayRef<std::string> plugins) {
   // Disable the effects of '-Werror' when using the AnalysisConsumer.
   pp.getDiagnostics().setWarningsAsErrors(false);
 
-  return llvm::make_unique<AnalysisConsumer>(pp, outDir, opts, plugins);
+  return new AnalysisConsumer(pp, outDir, opts, plugins);
 }
 
 //===----------------------------------------------------------------------===//

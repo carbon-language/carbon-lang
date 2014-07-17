@@ -30,8 +30,8 @@ using namespace clang;
 // AST Consumer Actions
 //===----------------------------------------------------------------------===//
 
-std::unique_ptr<ASTConsumer>
-HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
     return CreateHTMLPrinter(OS, CI.getPreprocessor());
   return nullptr;
@@ -40,9 +40,9 @@ HTMLPrintAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
 FixItAction::FixItAction() {}
 FixItAction::~FixItAction() {}
 
-std::unique_ptr<ASTConsumer>
-FixItAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
-  return llvm::make_unique<ASTConsumer>();
+ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
+                                            StringRef InFile) {
+  return new ASTConsumer();
 }
 
 namespace {
@@ -148,8 +148,8 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
 
 #ifdef CLANG_ENABLE_OBJC_REWRITER
 
-std::unique_ptr<ASTConsumer>
-RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "cpp")) {
     if (CI.getLangOpts().ObjCRuntime.isNonFragile())
       return CreateModernObjCRewriter(InFile, OS,

@@ -95,10 +95,10 @@ protected:
   public:
     TestAction(TestVisitor *Visitor) : Visitor(Visitor) {}
 
-    virtual std::unique_ptr<clang::ASTConsumer>
-    CreateASTConsumer(CompilerInstance &, llvm::StringRef dummy) {
+    virtual clang::ASTConsumer* CreateASTConsumer(
+        CompilerInstance&, llvm::StringRef dummy) {
       /// TestConsumer will be deleted by the framework calling us.
-      return llvm::make_unique<FindConsumer>(Visitor);
+      return new FindConsumer(Visitor);
     }
 
   protected:

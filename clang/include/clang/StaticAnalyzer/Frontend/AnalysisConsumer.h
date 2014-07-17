@@ -37,9 +37,10 @@ public:
 /// CreateAnalysisConsumer - Creates an ASTConsumer to run various code
 /// analysis passes.  (The set of analyses run is controlled by command-line
 /// options.)
-std::unique_ptr<AnalysisASTConsumer>
-CreateAnalysisConsumer(const Preprocessor &pp, const std::string &output,
-                       AnalyzerOptionsRef opts, ArrayRef<std::string> plugins);
+AnalysisASTConsumer *CreateAnalysisConsumer(const Preprocessor &pp,
+                                            const std::string &output,
+                                            AnalyzerOptionsRef opts,
+                                            ArrayRef<std::string> plugins);
 
 } // end GR namespace
 

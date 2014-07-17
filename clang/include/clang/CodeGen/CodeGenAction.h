@@ -37,8 +37,8 @@ protected:
 
   bool hasIRSupport() const override;
 
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override;
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 
   void ExecuteAction() override;
 

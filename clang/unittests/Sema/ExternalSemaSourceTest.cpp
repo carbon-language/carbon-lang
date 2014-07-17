@@ -140,10 +140,10 @@ class ExternalSemaSourceInstaller : public clang::ASTFrontendAction {
   std::unique_ptr<DiagnosticConsumer> OwnedClient;
 
 protected:
-  virtual std::unique_ptr<clang::ASTConsumer>
+  virtual clang::ASTConsumer *
   CreateASTConsumer(clang::CompilerInstance &Compiler,
                     llvm::StringRef /* dummy */) {
-    return llvm::make_unique<clang::ASTConsumer>();
+    return new clang::ASTConsumer();
   }
 
   virtual void ExecuteAction() {

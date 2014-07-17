@@ -299,12 +299,11 @@ private:
   public:
     TestAction(TestVisitor *Visitor) : Visitor(Visitor) {}
 
-    virtual std::unique_ptr<clang::ASTConsumer>
-    CreateASTConsumer(clang::CompilerInstance &compiler,
-                      llvm::StringRef dummy) {
+    virtual clang::ASTConsumer* CreateASTConsumer(
+        clang::CompilerInstance& compiler, llvm::StringRef dummy) {
       Visitor->SM = &compiler.getSourceManager();
       /// TestConsumer will be deleted by the framework calling us.
-      return llvm::make_unique<FindConsumer>(Visitor);
+      return new FindConsumer(Visitor);
     }
 
   private:

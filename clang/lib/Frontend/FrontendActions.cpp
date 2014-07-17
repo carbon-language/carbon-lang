@@ -33,9 +33,9 @@ using namespace clang;
 // Custom Actions
 //===----------------------------------------------------------------------===//
 
-std::unique_ptr<ASTConsumer>
-InitOnlyAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
-  return llvm::make_unique<ASTConsumer>();
+ASTConsumer *InitOnlyAction::CreateASTConsumer(CompilerInstance &CI,
+                                               StringRef InFile) {
+  return new ASTConsumer();
 }
 
 void InitOnlyAction::ExecuteAction() {
@@ -45,37 +45,36 @@ void InitOnlyAction::ExecuteAction() {
 // AST Consumer Actions
 //===----------------------------------------------------------------------===//
 
-std::unique_ptr<ASTConsumer>
-ASTPrintAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *ASTPrintAction::CreateASTConsumer(CompilerInstance &CI,
+                                               StringRef InFile) {
   if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile))
     return CreateASTPrinter(OS, CI.getFrontendOpts().ASTDumpFilter);
   return nullptr;
 }
 
-std::unique_ptr<ASTConsumer>
-ASTDumpAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *ASTDumpAction::CreateASTConsumer(CompilerInstance &CI,
+                                              StringRef InFile) {
   return CreateASTDumper(CI.getFrontendOpts().ASTDumpFilter,
                          CI.getFrontendOpts().ASTDumpLookups);
 }
 
-std::unique_ptr<ASTConsumer>
-ASTDeclListAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *ASTDeclListAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
   return CreateASTDeclNodeLister();
 }
 
-std::unique_ptr<ASTConsumer>
-ASTViewAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *ASTViewAction::CreateASTConsumer(CompilerInstance &CI,
+                                              StringRef InFile) {
   return CreateASTViewer();
 }
 
-std::unique_ptr<ASTConsumer>
-DeclContextPrintAction::CreateASTConsumer(CompilerInstance &CI,
-                                          StringRef InFile) {
+ASTConsumer *DeclContextPrintAction::CreateASTConsumer(CompilerInstance &CI,
+                                                       StringRef InFile) {
   return CreateDeclContextPrinter();
 }
 
-std::unique_ptr<ASTConsumer>
-GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
   raw_ostream *OS = nullptr;
@@ -84,8 +83,8 @@ GeneratePCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
 
   if (!CI.getFrontendOpts().RelocatablePCH)
     Sysroot.clear();
-  return llvm::make_unique<PCHGenerator>(CI.getPreprocessor(), OutputFile,
-                                         nullptr, Sysroot, OS);
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, nullptr, Sysroot,
+                          OS);
 }
 
 bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
@@ -112,17 +111,16 @@ bool GeneratePCHAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   return false;
 }
 
-std::unique_ptr<ASTConsumer>
-GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
-                                        StringRef InFile) {
+ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
+                                                     StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
   raw_ostream *OS = nullptr;
   if (ComputeASTConsumerArguments(CI, InFile, Sysroot, OutputFile, OS))
     return nullptr;
 
-  return llvm::make_unique<PCHGenerator>(CI.getPreprocessor(), OutputFile,
-                                         Module, Sysroot, OS);
+  return new PCHGenerator(CI.getPreprocessor(), OutputFile, Module, 
+                          Sysroot, OS);
 }
 
 static SmallVectorImpl<char> &
@@ -365,20 +363,19 @@ bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   return false;
 }
 
-std::unique_ptr<ASTConsumer>
-SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
-  return llvm::make_unique<ASTConsumer>();
+ASTConsumer *SyntaxOnlyAction::CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) {
+  return new ASTConsumer();
 }
 
-std::unique_ptr<ASTConsumer>
-DumpModuleInfoAction::CreateASTConsumer(CompilerInstance &CI,
-                                        StringRef InFile) {
-  return llvm::make_unique<ASTConsumer>();
+ASTConsumer *DumpModuleInfoAction::CreateASTConsumer(CompilerInstance &CI,
+                                                     StringRef InFile) {
+  return new ASTConsumer();
 }
 
-std::unique_ptr<ASTConsumer>
-VerifyPCHAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
-  return llvm::make_unique<ASTConsumer>();
+ASTConsumer *VerifyPCHAction::CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
+  return new ASTConsumer();
 }
 
 void VerifyPCHAction::ExecuteAction() {

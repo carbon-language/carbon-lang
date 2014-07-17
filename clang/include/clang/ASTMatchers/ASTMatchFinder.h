@@ -148,7 +148,7 @@ public:
                          MatchCallback *Action);
 
   /// \brief Creates a clang ASTConsumer that finds all matches.
-  std::unique_ptr<clang::ASTConsumer> newASTConsumer();
+  clang::ASTConsumer *newASTConsumer();
 
   /// \brief Calls the registered callbacks on all matches on the given \p Node.
   ///

@@ -414,8 +414,8 @@ public:
     : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
       CXTU(cxTU), SKData(skData) { }
 
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override {
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override {
     PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
 
     if (!PPOpts.ImplicitPCHInclude.empty()) {
@@ -429,12 +429,13 @@ public:
     IndexCtx.setPreprocessor(PP);
 
     if (SKData) {
-      auto *PPRec = new PPConditionalDirectiveRecord(PP.getSourceManager());
+      PPConditionalDirectiveRecord *
+        PPRec = new PPConditionalDirectiveRecord(PP.getSourceManager());
       PP.addPPCallbacks(PPRec);
-      SKCtrl = llvm::make_unique<TUSkipBodyControl>(*SKData, *PPRec, PP);
+      SKCtrl.reset(new TUSkipBodyControl(*SKData, *PPRec, PP));
     }
 
-    return llvm::make_unique<IndexingConsumer>(IndexCtx, SKCtrl.get());
+    return new IndexingConsumer(IndexCtx, SKCtrl.get());
   }
 
   void EndSourceFileAction() override {

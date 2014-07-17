@@ -28,7 +28,6 @@
 #include "llvm/Option/OptTable.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Signals.h"
-#include "llvm/ADT/STLExtras.h"
 
 using namespace clang::driver;
 using namespace clang::tooling;
@@ -180,14 +179,14 @@ private:
 namespace clang_check {
 class ClangCheckActionFactory {
 public:
-  std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
+  clang::ASTConsumer *newASTConsumer() {
     if (ASTList)
       return clang::CreateASTDeclNodeLister();
     if (ASTDump)
       return clang::CreateASTDumper(ASTDumpFilter);
     if (ASTPrint)
       return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
-    return llvm::make_unique<clang::ASTConsumer>();
+    return new clang::ASTConsumer();
   }
 };
 }

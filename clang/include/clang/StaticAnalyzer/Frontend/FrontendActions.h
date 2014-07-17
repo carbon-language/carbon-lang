@@ -22,8 +22,8 @@ namespace ento {
 
 class AnalysisAction : public ASTFrontendAction {
 protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override;
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 };
 
 void printCheckerHelp(raw_ostream &OS, ArrayRef<std::string> plugins);

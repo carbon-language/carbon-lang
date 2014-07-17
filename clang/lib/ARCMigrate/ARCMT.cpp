@@ -446,11 +446,11 @@ public:
   ARCMTMacroTrackerAction(std::vector<SourceLocation> &ARCMTMacroLocs)
     : ARCMTMacroLocs(ARCMTMacroLocs) { }
 
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override {
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override {
     CI.getPreprocessor().addPPCallbacks(
                               new ARCMTMacroTrackerPPCallbacks(ARCMTMacroLocs));
-    return llvm::make_unique<ASTConsumer>();
+    return new ASTConsumer();
   }
 };
 

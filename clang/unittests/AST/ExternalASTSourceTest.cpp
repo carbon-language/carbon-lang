@@ -35,9 +35,9 @@ private:
     return ASTFrontendAction::ExecuteAction();
   }
 
-  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                         StringRef InFile) {
-    return llvm::make_unique<ASTConsumer>();
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile) {
+    return new ASTConsumer;
   }
 
   IntrusiveRefCntPtr<ExternalASTSource> Source;

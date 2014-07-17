@@ -13,8 +13,8 @@
 using namespace clang;
 using namespace ento;
 
-std::unique_ptr<ASTConsumer>
-AnalysisAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
+ASTConsumer *AnalysisAction::CreateASTConsumer(CompilerInstance &CI,
+                                               StringRef InFile) {
   return CreateAnalysisConsumer(CI.getPreprocessor(),
                                 CI.getFrontendOpts().OutputFile,
                                 CI.getAnalyzerOpts(),

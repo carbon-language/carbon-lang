@@ -47,12 +47,11 @@ namespace {
   };
 }
 
-std::unique_ptr<ASTConsumer> clang::CreateHTMLPrinter(raw_ostream *OS,
-                                                      Preprocessor &PP,
-                                                      bool SyntaxHighlight,
-                                                      bool HighlightMacros) {
-  return llvm::make_unique<HTMLPrinter>(OS, PP, SyntaxHighlight,
-                                        HighlightMacros);
+ASTConsumer* clang::CreateHTMLPrinter(raw_ostream *OS,
+                                      Preprocessor &PP,
+                                      bool SyntaxHighlight,
+                                      bool HighlightMacros) {
+  return new HTMLPrinter(OS, PP, SyntaxHighlight, HighlightMacros);
 }
 
 void HTMLPrinter::Initialize(ASTContext &context) {

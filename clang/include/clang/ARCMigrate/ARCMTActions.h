@@ -37,8 +37,8 @@ class MigrateSourceAction : public ASTFrontendAction {
   FileRemapper Remapper;
 protected:
   bool BeginInvocation(CompilerInstance &CI) override;
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override;
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
 };
 
 class MigrateAction : public WrapperFrontendAction {
@@ -65,8 +65,8 @@ public:
                     unsigned migrateAction);
 
 protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override;
+  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                 StringRef InFile) override;
   bool BeginInvocation(CompilerInstance &CI) override;
 };
 
