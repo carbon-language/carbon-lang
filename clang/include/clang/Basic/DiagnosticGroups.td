@@ -704,7 +704,6 @@ def RemarkBackendPlugin : DiagGroup<"remark-backend-plugin">;
 def BackendOptimizationRemark : DiagGroup<"pass">;
 def BackendOptimizationRemarkMissed : DiagGroup<"pass-missed">;
 def BackendOptimizationRemarkAnalysis : DiagGroup<"pass-analysis">;
-def BackendOptimizationWarnings : DiagGroup<"optimization-warning">;
 
 // Instrumentation based profiling warnings.
 def ProfileInstrOutOfDate : DiagGroup<"profile-instr-out-of-date">;

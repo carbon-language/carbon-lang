@@ -41,8 +41,6 @@ def remark_fe_backend_optimization_remark_missed : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemarkMissed>, DefaultRemark;
 def remark_fe_backend_optimization_remark_analysis : Remark<"%0">, BackendInfo,
     InGroup<BackendOptimizationRemarkAnalysis>, DefaultRemark;
-def warn_fe_backend_optimization_warning : Warning<"%0">, BackendInfo,
-    InGroup<BackendOptimizationWarnings>, DefaultWarn;
 def note_fe_backend_optimization_remark_invalid_loc : Note<"could "
   "not determine the original source location for %0:%1:%2">;
 
