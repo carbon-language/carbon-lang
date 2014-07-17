@@ -1550,6 +1550,31 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                                 m_image_tokens.push_back (image_ptr);
                                 return image_token;
                             }
+                            else if (image_ptr == 0)
+                            {
+                                prefix = "extern \"C\" const char *dlerror(void);\n";
+                                expr.Clear();
+                                expr.PutCString("dlerror()");
+                                ClangUserExpression::Evaluate (exe_ctx,
+                                                               expr_options,
+                                                               expr.GetData(),
+                                                               prefix,
+                                                               result_valobj_sp,
+                                                               expr_error);
+                                if (result_valobj_sp && error.Success())
+                                {
+                                    if (result_valobj_sp->IsCStringContainer(true))
+                                    {
+                                        lldb::DataBufferSP buf_sp (new DataBufferHeap());
+                                        size_t num_chars = result_valobj_sp->ReadPointedString (buf_sp, error);
+                                        if (error.Success() && num_chars > 0)
+                                        {
+                                            error.Clear();
+                                            error.SetErrorStringWithFormat("dlopen failed: %s", buf_sp->GetBytes());
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
