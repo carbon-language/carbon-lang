@@ -15,6 +15,7 @@
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/DataLayout.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 
@@ -53,6 +54,13 @@ namespace {
     bool pointsToConstantMemory(const Location &Loc, bool OrLocal) override {
       return false;
     }
+    Location getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
+                            ModRefResult &Mask) override {
+      Mask = ModRef;
+      return Location(CS.getArgument(ArgIdx), UnknownSize,
+                      CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa));
+    }
+
     ModRefResult getModRefInfo(ImmutableCallSite CS,
                                const Location &Loc) override {
       return ModRef;
