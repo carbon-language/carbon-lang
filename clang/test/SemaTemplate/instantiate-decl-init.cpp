@@ -45,3 +45,23 @@ template<int N> void f1() {
   NonTrivial array[N];
 }
 template<> void f1<2>();
+
+namespace PR20346 {
+  struct S { short inner_s; };
+
+  struct outer_struct {
+    wchar_t arr[32];
+    S outer_s;
+  };
+
+  template <class T>
+  void OpenFileSession() {
+    // Ensure that we don't think the ImplicitValueInitExpr generated here
+    // during the initial parse only initializes the first array element!
+    outer_struct asdfasdf = {};
+  };
+
+  void foo() {
+    OpenFileSession<int>();
+  }
+}
