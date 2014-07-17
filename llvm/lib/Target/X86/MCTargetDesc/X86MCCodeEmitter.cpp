@@ -191,9 +191,11 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
 
   unsigned CD8E = (TSFlags >> X86II::EVEX_CD8EShift) & X86II::EVEX_CD8EMask;
   unsigned CD8V = (TSFlags >> X86II::EVEX_CD8VShift) & X86II::EVEX_CD8VMask;
+  unsigned CD8_Scale = (TSFlags >> 56) & 0x7f;
 
   if (CD8V == 0 && CD8E == 0) {
     CValue = Value;
+    assert(CD8_Scale == 0);
     return isDisp8(Value);
   }
 
@@ -223,6 +225,8 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
       MemObjSize = VectorByteSize / Divider;
     }
   }
+
+  assert(MemObjSize == CD8_Scale);
 
   unsigned MemObjMask = MemObjSize - 1;
   assert((MemObjSize & MemObjMask) == 0 && "Invalid memory object size.");
