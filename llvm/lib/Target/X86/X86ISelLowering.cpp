@@ -523,6 +523,10 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::FP_TO_FP16, MVT::f32, Expand);
   }
 
+  // There's never any support for extending beyond MVT::f32.
+  setOperationAction(ISD::FP16_TO_FP, MVT::f64, Expand);
+  setOperationAction(ISD::FP16_TO_FP, MVT::f80, Expand);
+
   if (Subtarget->hasPOPCNT()) {
     setOperationAction(ISD::CTPOP          , MVT::i8   , Promote);
   } else {

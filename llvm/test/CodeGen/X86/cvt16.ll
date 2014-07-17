@@ -59,6 +59,20 @@ define float @test3(float %src) nounwind uwtable readnone {
 ; F16C-NEXT: vcvtph2ps
 ; F16C: ret
 
+define double @test4(i16* nocapture %src) {
+  %1 = load i16* %src, align 2
+  %2 = tail call double @llvm.convert.from.fp16.f64(i16 %1)
+  ret double %2
+}
+; CHECK-LABEL: test4:
+; LIBCALL: callq  __gnu_h2f_ieee
+; LIBCALL: cvtss2sd
+; SOFTFLOAT: callq  __gnu_h2f_ieee
+; SOFTFLOAT: callq __extendsfdf2
+; F16C: vcvtph2ps
+; F16C: vcvtss2sd
+; F16C: ret
+
 declare float @llvm.convert.from.fp16.f32(i16) nounwind readnone
 declare i16 @llvm.convert.to.fp16.f32(float) nounwind readnone
-
+declare double @llvm.convert.from.fp16.f64(i16) nounwind readnone
