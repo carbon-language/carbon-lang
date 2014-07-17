@@ -86,6 +86,44 @@ ArchHandler::RelocPattern ArchHandler::relocPattern(const Relocation &reloc) {
   return result;
 }
 
+normalized::Relocation
+ArchHandler::relocFromPattern(ArchHandler::RelocPattern pattern) {
+  normalized::Relocation result;
+  result.offset    = 0;
+  result.scattered = (pattern & rScattered);
+  result.type     = (RelocationInfoType)(pattern & 0xF);
+  result.pcRel    = (pattern & rPcRel);
+  result.isExtern = (pattern & rExtern);
+  result.value    = 0;
+  result.symbol    = 0;
+  switch (pattern & 0x300) {
+  case rLength1:
+    result.length = 0;
+    break;
+  case rLength2:
+    result.length = 1;
+    break;
+  case rLength4:
+    result.length = 2;
+    break;
+  case rLength8:
+    result.length = 3;
+    break;
+  }
+  return result;
+}
+
+void ArchHandler::appendReloc(normalized::Relocations &relocs, uint32_t offset,
+                              uint32_t symbol, uint32_t value,
+                              RelocPattern pattern) {
+  normalized::Relocation reloc = relocFromPattern(pattern);
+  reloc.offset = offset;
+  reloc.symbol = symbol;
+  reloc.value  = value;
+  relocs.push_back(reloc);
+}
+
+
 int16_t ArchHandler::readS16(bool swap, const uint8_t *addr) {
   return read16(swap, *reinterpret_cast<const uint16_t*>(addr));
 }

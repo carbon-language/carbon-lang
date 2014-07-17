@@ -57,11 +57,17 @@ public:
                            const lld::Atom **target,
                            Reference::Addend *addend) override;
 
-  void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
-                          Reference::KindValue kindValue, uint64_t addend,
-                          uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress, uint64_t inAtomAddress) 
-                          override;
+  void generateAtomContent(const DefinedAtom &atom, bool relocatable,
+                           FindAddressForAtom findAddress,
+                           uint8_t *atomContentBuffer) override;
+
+  void appendSectionRelocations(const DefinedAtom &atom,
+                                uint64_t atomSectionOffset,
+                                const Reference &ref,
+                                FindSymbolIndexForAtom symbolIndexForAtom,
+                                FindSectionIndexForAtom sectionIndexForAtom,
+                                FindAddressForAtom addressForAtom,
+                                normalized::Relocations &relocs) override;
 
 private:
   static const Registry::KindStrings _sKindStrings[];
@@ -83,6 +89,17 @@ private:
     lazyImmediateLocation, /// Location contains immediate value used in stub.
   };
   
+  static bool useExternalRelocationTo(const Atom &target);
+
+  void applyFixupFinal(const Reference &ref, uint8_t *location,
+                       uint64_t fixupAddress, uint64_t targetAddress,
+                       uint64_t inAtomAddress);
+
+  void applyFixupRelocatable(const Reference &ref, uint8_t *location,
+                             uint64_t fixupAddress,
+                             uint64_t targetAddress,
+                             uint64_t inAtomAddress);
+
   const bool _swap;
 };
 
@@ -246,12 +263,10 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
   Reference::Addend offsetInTo;
   Reference::Addend offsetInFrom;
   switch (relocPattern(reloc1) << 16 | relocPattern(reloc2)) {
-  case((GENERIC_RELOC_SECTDIFF | rScattered | rLength4) << 16 |
-       GENERIC_RELOC_PAIR | rScattered | rLength4)
-      :
-  case((GENERIC_RELOC_LOCAL_SECTDIFF | rScattered | rLength4) << 16 |
-       GENERIC_RELOC_PAIR | rScattered | rLength4)
-      :
+  case ((GENERIC_RELOC_SECTDIFF | rScattered | rLength4) << 16 |
+         GENERIC_RELOC_PAIR | rScattered | rLength4):
+  case ((GENERIC_RELOC_LOCAL_SECTDIFF | rScattered | rLength4) << 16 |
+         GENERIC_RELOC_PAIR | rScattered | rLength4):
     toAddress = reloc1.value;
     fromAddress = reloc2.value;
     value = readS32(swap, fixupContent);
@@ -285,33 +300,58 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
   }
 }
 
-void ArchHandler_x86::applyFixup(Reference::KindNamespace ns,
-                                 Reference::KindArch arch,
-                                 Reference::KindValue kindValue,
-                                 uint64_t addend, uint8_t *location,
-                                 uint64_t fixupAddress, uint64_t targetAddress,
-                                 uint64_t inAtomAddress) {
-  if (ns != Reference::KindNamespace::mach_o)
+void ArchHandler_x86::generateAtomContent(const DefinedAtom &atom,
+                                           bool relocatable,
+                                           FindAddressForAtom findAddress,
+                                           uint8_t *atomContentBuffer) {
+  // Copy raw bytes.
+  memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
+  // Apply fix-ups.
+  for (const Reference *ref : atom) {
+    uint32_t offset = ref->offsetInAtom();
+    const Atom *target = ref->target();
+    uint64_t targetAddress = 0;
+    if (isa<DefinedAtom>(target))
+      targetAddress = findAddress(*target);
+    uint64_t atomAddress = findAddress(atom);
+    uint64_t fixupAddress = atomAddress + offset;
+    if (relocatable) {
+      applyFixupRelocatable(*ref, &atomContentBuffer[offset],
+                                        fixupAddress, targetAddress,
+                                        atomAddress);
+    } else {
+      applyFixupFinal(*ref, &atomContentBuffer[offset],
+                                  fixupAddress, targetAddress,
+                                  atomAddress);
+    }
+  }
+}
+
+void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *location,
+                                      uint64_t fixupAddress,
+                                      uint64_t targetAddress,
+                                      uint64_t inAtomAddress) {
+  if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
-  assert(arch == Reference::KindArch::x86);
+  assert(ref.kindArch() == Reference::KindArch::x86);
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int16_t *loc16 = reinterpret_cast<int16_t *>(location);
-  switch (kindValue) {
+  switch (ref.kindValue()) {
   case branch32:
-    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + addend);
+    write32(*loc32, _swap, (targetAddress - (fixupAddress + 4)) + ref.addend());
     break;
   case branch16:
-    write16(*loc16, _swap, (targetAddress - (fixupAddress + 4)) + addend);
+    write16(*loc16, _swap, (targetAddress - (fixupAddress + 2)) + ref.addend());
     break;
   case pointer32:
   case abs32:
-    write32(*loc32, _swap, targetAddress + addend);
+    write32(*loc32, _swap, targetAddress + ref.addend());
     break;
   case funcRel32:
-    write32(*loc32, _swap, targetAddress - inAtomAddress + addend); // FIXME
+    write32(*loc32, _swap, targetAddress - inAtomAddress + ref.addend()); 
     break;
   case delta32:
-    write32(*loc32, _swap, targetAddress - fixupAddress + addend);
+    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
     break;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -322,6 +362,125 @@ void ArchHandler_x86::applyFixup(Reference::KindNamespace ns,
     break;
   }
 }
+
+void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
+                                               uint8_t *location,
+                                               uint64_t fixupAddress,
+                                               uint64_t targetAddress,
+                                               uint64_t inAtomAddress) {
+  int32_t *loc32 = reinterpret_cast<int32_t *>(location);
+  int16_t *loc16 = reinterpret_cast<int16_t *>(location);
+  switch (ref.kindValue()) {
+  case branch32:
+    write32(*loc32, _swap, ref.addend() - (fixupAddress + 4));
+    break;
+  case branch16:
+    write16(*loc16, _swap, ref.addend() - (fixupAddress + 2));
+    break;
+  case pointer32:
+  case abs32:
+    write32(*loc32, _swap, targetAddress + ref.addend());
+    break;
+  case funcRel32:
+    write32(*loc32, _swap, targetAddress - inAtomAddress + ref.addend()); // FIXME
+    break;
+  case delta32:
+    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    break;
+  case lazyPointer:
+  case lazyImmediateLocation:
+    // do nothing
+    break;
+  default:
+    llvm_unreachable("invalid x86 Reference Kind");
+    break;
+  }
+}
+
+bool ArchHandler_x86::useExternalRelocationTo(const Atom &target) {
+  // Undefined symbols are referenced via external relocations.
+  if (isa<UndefinedAtom>(&target))
+    return true;
+  if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&target)) {
+     switch (defAtom->merge()) {
+     case DefinedAtom::mergeAsTentative:
+       // Tentative definitions are referenced via external relocations.
+       return true;
+     case DefinedAtom::mergeAsWeak:
+     case DefinedAtom::mergeAsWeakAndAddressUsed:
+       // Global weak-defs are referenced via external relocations.
+       return (defAtom->scope() == DefinedAtom::scopeGlobal);
+     default:
+       break;
+    }
+  }
+  // Everything else is reference via an internal relocation.
+  return false;
+}
+
+
+void ArchHandler_x86::appendSectionRelocations(
+                                   const DefinedAtom &atom,
+                                   uint64_t atomSectionOffset,
+                                   const Reference &ref,
+                                   FindSymbolIndexForAtom symbolIndexForAtom,
+                                   FindSectionIndexForAtom sectionIndexForAtom,
+                                   FindAddressForAtom addressForAtom,
+                                   normalized::Relocations &relocs) {
+  if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
+    return;
+  assert(ref.kindArch() == Reference::KindArch::x86);
+  uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
+  bool useExternalReloc = useExternalRelocationTo(*ref.target());
+  switch (ref.kindValue()) {
+  case branch32:
+    if (useExternalReloc)
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
+                GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength4);
+    else
+      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                GENERIC_RELOC_VANILLA | rPcRel           | rLength4);
+    break;
+  case branch16:
+    if (useExternalReloc)
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
+                GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength2);
+    else
+      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                GENERIC_RELOC_VANILLA | rPcRel           | rLength2);
+    break;
+  case pointer32:
+  case abs32:
+    if (useExternalReloc)
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
+                GENERIC_RELOC_VANILLA |         rExtern | rLength4);
+    else
+      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                GENERIC_RELOC_VANILLA |                   rLength4);
+    break;
+  case funcRel32:
+      appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+                GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
+      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) - ref.addend(),
+                GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
+    break;
+  case delta32:
+      appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+                GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
+      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) + ref.offsetInAtom(),
+                GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
+    break;
+  case lazyPointer:
+  case lazyImmediateLocation:
+    llvm_unreachable("lazy reference kind implies Stubs pass was run");
+    break;
+  default:
+    llvm_unreachable("unknown x86 Reference Kind");
+    break;
+
+  }
+}
+
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_x86() {
   return std::unique_ptr<mach_o::ArchHandler>(new ArchHandler_x86());

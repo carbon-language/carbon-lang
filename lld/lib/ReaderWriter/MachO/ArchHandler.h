@@ -105,11 +105,37 @@ public:
                            const lld::Atom **target, 
                            Reference::Addend *addend) = 0;
 
-  /// Fixup an atom when generating a final linked binary.
-  virtual void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
-                          Reference::KindValue kindValue, uint64_t addend,
-                          uint8_t *location, uint64_t fixupAddress,
-                          uint64_t targetAddress, uint64_t inAtomAddress) = 0;
+  /// Prototype for a helper function.  Given an atom, finds the symbol table
+  /// index for it in the output file.
+  typedef std::function<uint32_t (const Atom &atom)> FindSymbolIndexForAtom;
+
+  /// Prototype for a helper function.  Given an atom, finds the index
+  /// of the section that will contain the atom.
+  typedef std::function<uint32_t (const Atom &atom)> FindSectionIndexForAtom;
+
+  /// Prototype for a helper function.  Given an atom, finds the address
+  /// assigned to it in the output file.
+  typedef std::function<uint64_t (const Atom &atom)> FindAddressForAtom;
+
+  /// Some architectures require local symbols on anonymous atoms.
+  virtual bool needsLocalSymbolInRelocatableFile(const DefinedAtom *atom) {
+    return false;
+  }
+
+  /// Copy raw content then apply all fixup References on an Atom.
+  virtual void generateAtomContent(const DefinedAtom &atom, bool relocatable,
+                                   FindAddressForAtom findAddress,
+                                   uint8_t *atomContentBuffer) = 0;
+
+  /// Used in -r mode to convert a Reference to a mach-o relocation.
+  virtual void appendSectionRelocations(const DefinedAtom &atom,
+                                        uint64_t atomSectionOffset,
+                                        const Reference &ref,
+                                        FindSymbolIndexForAtom,
+                                        FindSectionIndexForAtom,
+                                        FindAddressForAtom,
+                                        normalized::Relocations&) = 0;
+
 
   struct ReferenceInfo {
     Reference::KindArch arch;
@@ -161,7 +187,15 @@ protected:
     rLength4   = 0x0200,
     rLength8   = 0x0300
   };
+  /// Extract RelocPattern from normalized mach-o relocation.
   static RelocPattern relocPattern(const normalized::Relocation &reloc);
+  /// Create normalized Relocation initialized from pattern.
+  static normalized::Relocation relocFromPattern(RelocPattern pattern);
+  /// One liner to add a relocation.
+  static void appendReloc(normalized::Relocations &relocs, uint32_t offset,
+                          uint32_t symbol, uint32_t value,
+                          RelocPattern pattern);
+
 
   static int16_t  readS16(bool swap, const uint8_t *addr);
   static int32_t  readS32(bool swap, const uint8_t *addr);

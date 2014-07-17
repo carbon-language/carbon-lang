@@ -57,11 +57,18 @@ public:
                            const lld::Atom **target,
                            Reference::Addend *addend) override;
 
-  void applyFixup(Reference::KindNamespace ns, Reference::KindArch arch,
-                  Reference::KindValue kindValue, uint64_t addend,
-                  uint8_t *location, uint64_t fixupAddress,
-                  uint64_t targetAddress, uint64_t inAtomAddress) 
-                  override;
+  void generateAtomContent(const DefinedAtom &atom, bool relocatable,
+                           FindAddressForAtom findAddress,
+                           uint8_t *atomContentBuffer) override;
+
+  void appendSectionRelocations(const DefinedAtom &atom,
+                                uint64_t atomSectionOffset,
+                                const Reference &ref,
+                                FindSymbolIndexForAtom,
+                                FindSectionIndexForAtom,
+                                FindAddressForAtom,
+                                normalized::Relocations &) override;
+
 
 private:
   static const Registry::KindStrings _sKindStrings[];
@@ -96,6 +103,14 @@ private:
   uint32_t clearThumbBit(uint32_t value, const Atom *target);
   uint32_t setDisplacementInArmBranch(uint32_t instruction, int32_t disp);
   
+  void applyFixupFinal(const Reference &ref, uint8_t *location,
+                       uint64_t fixupAddress, uint64_t targetAddress,
+                       uint64_t inAtomAddress);
+
+  void applyFixupRelocatable(const Reference &ref, uint8_t *location,
+                             uint64_t fixupAddress,
+                             uint64_t targetAddress,
+                             uint64_t inAtomAddress);
   
   const bool _swap;
 };
@@ -594,19 +609,17 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
   return std::error_code();
 }
 
-void ArchHandler_arm::applyFixup(Reference::KindNamespace ns,
-                                 Reference::KindArch arch,
-                                 Reference::KindValue kindValue,
-                                 uint64_t addend, uint8_t *location,
-                                 uint64_t fixupAddress, uint64_t targetAddress,
-                                 uint64_t inAtomAddress) {
-  if (ns != Reference::KindNamespace::mach_o)
+void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
+                                      uint64_t fixupAddress,
+                                      uint64_t targetAddress,
+                                      uint64_t inAtomAddress) {
+  if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
-  assert(arch == Reference::KindArch::ARM);
+  assert(ref.kindArch() == Reference::KindArch::ARM);
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int32_t displacement;
   // FIXME: these writes may need a swap.
-  switch (kindValue) {
+  switch (ref.kindValue()) {
   case thumb_b22:
     // FIXME
     break;
@@ -623,7 +636,7 @@ void ArchHandler_arm::applyFixup(Reference::KindNamespace ns,
     // FIXME
     break;
   case arm_b24:
-    displacement = (targetAddress - (fixupAddress + 8)) + addend;
+    displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
     *loc32 = setDisplacementInArmBranch(*loc32, displacement);
     break;
   case arm_movw:
@@ -652,6 +665,51 @@ void ArchHandler_arm::applyFixup(Reference::KindNamespace ns,
     llvm_unreachable("invalid ARM Reference Kind");
     break;
   }
+}
+
+void ArchHandler_arm::generateAtomContent(const DefinedAtom &atom,
+                                           bool relocatable,
+                                           FindAddressForAtom findAddress,
+                                           uint8_t *atomContentBuffer) {
+  // Copy raw bytes.
+  memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
+  // Apply fix-ups.
+  for (const Reference *ref : atom) {
+    uint32_t offset = ref->offsetInAtom();
+    const Atom *target = ref->target();
+    uint64_t targetAddress = 0;
+    if (isa<DefinedAtom>(target))
+      targetAddress = findAddress(*target);
+    uint64_t atomAddress = findAddress(atom);
+    uint64_t fixupAddress = atomAddress + offset;
+    if (relocatable) {
+      applyFixupRelocatable(*ref, &atomContentBuffer[offset],
+                                        fixupAddress, targetAddress,
+                                        atomAddress);
+    } else {
+      applyFixupFinal(*ref, &atomContentBuffer[offset],
+                                  fixupAddress, targetAddress,
+                                  atomAddress);
+    }
+  }
+}
+
+void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
+                                             uint8_t *location,
+                                             uint64_t fixupAddress,
+                                             uint64_t targetAddress,
+                                             uint64_t inAtomAddress)  {
+  // FIXME: to do
+}
+
+void ArchHandler_arm::appendSectionRelocations(const DefinedAtom &atom,
+                                               uint64_t atomSectionOffset,
+                                               const Reference &ref,
+                                               FindSymbolIndexForAtom,
+                                               FindSectionIndexForAtom,
+                                               FindAddressForAtom,
+                                               normalized::Relocations &) {
+  // FIXME: to do
 }
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_arm() {

@@ -1,6 +1,12 @@
-# RUN: lld -flavor darwin -arch x86_64 -r -print_atoms %s -o %t  | FileCheck %s
+# RUN: lld -flavor darwin -arch x86_64 -r %s -o %t -print_atoms | FileCheck %s \
+# RUN: && lld -flavor darwin -arch x86_64 %t -r -print_atoms -o %t2  | FileCheck %s
 #
-# Test parsing of x86_64 data relocations.
+# Test parsing and writing of x86_64 text relocations.
+#
+# The first step tests if the supplied mach-o file is parsed into the correct
+# set of references.  The second step verifies relocations can be round-tripped
+# by writing to a new .o file, then parsing that file which should result in
+# the same references.
 #
 #_foo:
 #  ret

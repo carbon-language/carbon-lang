@@ -88,7 +88,8 @@ SegmentInfo::SegmentInfo(StringRef n)
 
 class Util {
 public:
-  Util(const MachOLinkingContext &ctxt) : _context(ctxt), _entryAtom(nullptr) {}
+  Util(const MachOLinkingContext &ctxt) : _context(ctxt), 
+    _archHandler(ctxt.archHandler()), _entryAtom(nullptr) {}
 
   void      assignAtomsToSections(const lld::File &atomFile);
   void      organizeSections();
@@ -128,8 +129,7 @@ private:
   const Atom  *targetOfStub(const DefinedAtom *stubAtom);
   bool         belongsInGlobalSymbolsSection(const DefinedAtom* atom);
   void         appendSection(SectionInfo *si, NormalizedFile &file);
-  void         appendReloc(const DefinedAtom *atom, const Reference *ref,
-                                                      Relocations &relocations);
+  uint32_t     sectionIndexForAtom(const Atom *atom);
 
   static uint64_t alignTo(uint64_t value, uint8_t align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
@@ -147,6 +147,7 @@ private:
   };
 
   const MachOLinkingContext    &_context;
+  mach_o::ArchHandler          &_archHandler;
   llvm::BumpPtrAllocator        _allocator;
   std::vector<SectionInfo*>     _sectionInfos;
   std::vector<SegmentInfo*>     _segmentInfos;
@@ -509,6 +510,14 @@ void Util::copySegmentInfo(NormalizedFile &file) {
 
 void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   const bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
+
+  // Utility function for ArchHandler to find address of atom in output file.
+  auto addrForAtom = [&] (const Atom &atom) -> uint64_t {
+    auto pos = _atomToAddress.find(&atom);
+    assert(pos != _atomToAddress.end());
+    return pos->second;
+  };
+
   // Add new empty section to end of file.sections.
   Section temp;
   file.sections.push_back(std::move(temp));
@@ -528,28 +537,9 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
   normSect->content = llvm::makeArrayRef(sectionContent, si->size);
   for (AtomInfo &ai : si->atomsAndOffsets) {
-    // Copy raw bytes.
     uint8_t *atomContent = reinterpret_cast<uint8_t*>
                                           (&sectionContent[ai.offsetInSection]);
-    memcpy(atomContent, ai.atom->rawContent().data(), ai.atom->size());
-    // Apply fix-ups.
-    for (const Reference *ref : *ai.atom) {
-      uint32_t offset = ref->offsetInAtom();
-      uint64_t targetAddress = 0;
-      if ( ref->target() != nullptr )
-        targetAddress = _atomToAddress[ref->target()];
-      uint64_t atomAddress = _atomToAddress[ai.atom];
-      uint64_t fixupAddress = atomAddress + offset;
-      if ( rMode ) {
-        // FIXME: Need a handler method to update content for .o file
-        // output and any needed section relocations.
-      } else {
-        _context.archHandler().applyFixup(
-          ref->kindNamespace(), ref->kindArch(), ref->kindValue(),
-          ref->addend(), &atomContent[offset], fixupAddress, targetAddress,
-          atomAddress);
-      }
-    }
+    _archHandler.generateAtomContent(*ai.atom, rMode, addrForAtom, atomContent);
   }
 }
 
@@ -647,6 +637,7 @@ bool Util::belongsInGlobalSymbolsSection(const DefinedAtom* atom) {
 }
 
 void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
+  bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
   // Mach-O symbol table has three regions: locals, globals, undefs.
 
   // Add all local (non-global) symbols in address order
@@ -667,14 +658,31 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
           sym.sect  = sect->finalSectionIndex;
           sym.desc  = 0;
           sym.value = _atomToAddress[atom];
+          _atomToSymbolIndex[atom] = file.localSymbols.size();
           file.localSymbols.push_back(sym);
         }
+      } else if (rMode && _archHandler.needsLocalSymbolInRelocatableFile(atom)){
+        // Create 'Lxxx' labels for anonymous atoms if archHandler says so.
+        static unsigned tempNum = 1;
+        char tmpName[16];
+        sprintf(tmpName, "L%04u", tempNum++);
+        StringRef tempRef(tmpName);
+        Symbol sym;
+        sym.name  = tempRef.copy(file.ownedAllocations);
+        sym.type  = N_SECT;
+        sym.scope = 0;
+        sym.sect  = sect->finalSectionIndex;
+        sym.desc  = 0;
+        sym.value = _atomToAddress[atom];
+        _atomToSymbolIndex[atom] = file.localSymbols.size();
+        file.localSymbols.push_back(sym);
       }
     }
   }
 
   // Sort global symbol alphabetically, then add to symbol table.
   std::sort(globals.begin(), globals.end(), AtomSorter());
+  const uint32_t globalStartIndex = file.localSymbols.size();
   for (AtomAndIndex &ai : globals) {
     Symbol sym;
     sym.name  = ai.atom->name();
@@ -683,6 +691,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
     sym.sect  = ai.index;
     sym.desc  = descBits(static_cast<const DefinedAtom*>(ai.atom));
     sym.value = _atomToAddress[ai.atom];
+    _atomToSymbolIndex[ai.atom] = globalStartIndex + file.globalSymbols.size();
     file.globalSymbols.push_back(sym);
   }
 
@@ -715,7 +724,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
 
 const Atom *Util::targetOfLazyPointer(const DefinedAtom *lpAtom) {
   for (const Reference *ref : *lpAtom) {
-    if (_context.archHandler().isLazyPointer(*ref)) {
+    if (_archHandler.isLazyPointer(*ref)) {
       return ref->target();
     }
   }
@@ -838,21 +847,51 @@ void Util::segIndexForSection(const SectionInfo *sect, uint8_t &segmentIndex,
 }
 
 
-void Util::appendReloc(const DefinedAtom *atom, const Reference *ref,
-                                                     Relocations &relocations) {
-  // TODO: convert Reference to normalized relocation
+uint32_t Util::sectionIndexForAtom(const Atom *atom) {
+  uint64_t address = _atomToAddress[atom];
+  uint32_t index = 1;
+  for (const SectionInfo *si : _sectionInfos) {
+    if ((si->address <= address) && (address < si->address+si->size))
+      return index;
+    ++index;
+  }
+  llvm_unreachable("atom not in any section");
 }
 
 void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
   if (_context.outputMachOType() != llvm::MachO::MH_OBJECT)
     return;
 
+
+  // Utility function for ArchHandler to find symbol index for an atom.
+  auto symIndexForAtom = [&] (const Atom &atom) -> uint32_t {
+    auto pos = _atomToSymbolIndex.find(&atom);
+    assert(pos != _atomToSymbolIndex.end());
+    return pos->second;
+  };
+
+  // Utility function for ArchHandler to find section index for an atom.
+  auto sectIndexForAtom = [&] (const Atom &atom) -> uint32_t {
+    return sectionIndexForAtom(&atom);
+  };
+
+  // Utility function for ArchHandler to find address of atom in output file.
+  auto addressForAtom = [&] (const Atom &atom) -> uint64_t {
+    auto pos = _atomToAddress.find(&atom);
+    assert(pos != _atomToAddress.end());
+    return pos->second;
+  };
+
   for (SectionInfo *si : _sectionInfos) {
     Section &normSect = file.sections[si->normalizedSectionIndex];
     for (const AtomInfo &info : si->atomsAndOffsets) {
       const DefinedAtom *atom = info.atom;
       for (const Reference *ref : *atom) {
-        appendReloc(atom, ref, normSect.relocations);
+        _archHandler.appendSectionRelocations(*atom, info.offsetInSection, *ref,
+                                              symIndexForAtom,
+                                              sectIndexForAtom,
+                                              addressForAtom,
+                                              normSect.relocations);
       }
     }
   }
@@ -873,7 +912,7 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
         uint64_t segmentOffset = _atomToAddress[atom] + ref->offsetInAtom()
                                 - segmentStartAddr;
         const Atom* targ = ref->target();
-        if (_context.archHandler().isPointer(*ref)) {
+        if (_archHandler.isPointer(*ref)) {
           // A pointer to a DefinedAtom requires rebasing.
           if (dyn_cast<DefinedAtom>(targ)) {
             RebaseLocation rebase;
@@ -895,13 +934,13 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
             nFile.bindingInfo.push_back(bind);
           }
         }
-        if (_context.archHandler().isLazyPointer(*ref)) {
+        if (_archHandler.isLazyPointer(*ref)) {
             BindLocation bind;
             bind.segIndex = segmentIndex;
             bind.segOffset = segmentOffset;
             bind.kind = llvm::MachO::BIND_TYPE_POINTER;
             bind.canBeNull = false; //sa->canBeNullAtRuntime();
-            bind.ordinal = 1;
+            bind.ordinal = 1; // FIXME
             bind.symbolName = targ->name();
             bind.addend = ref->addend();
             nFile.lazyBindingInfo.push_back(bind);
