@@ -1347,7 +1347,7 @@ static Value *SimplifyAShrInst(Value *Op0, Value *Op1, bool isExact,
     return X;
 
   // Arithmetic shifting an all-sign-bit value is a no-op.
-  unsigned NumSignBits = ComputeNumSignBits(Op0);
+  unsigned NumSignBits = ComputeNumSignBits(Op0, Q.DL);
   if (NumSignBits == Op0->getType()->getScalarSizeInBits())
     return Op0;
 
