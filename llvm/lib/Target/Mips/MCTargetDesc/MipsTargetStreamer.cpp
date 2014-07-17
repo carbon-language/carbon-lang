@@ -366,7 +366,8 @@ void MipsTargetELFStreamer::finish() {
     const MCSectionELF *Sec =
         Context.getELFSection(".reginfo", ELF::SHT_MIPS_REGINFO, ELF::SHF_ALLOC,
                               SectionKind::getMetadata(), 24, "");
-    MCA.getOrCreateSectionData(*Sec).setAlignment(4);
+    MCA.getOrCreateSectionData(*Sec)
+        .setAlignment(Features & Mips::FeatureN32 ? 8 : 4);
     OS.SwitchSection(Sec);
 
     OS.EmitIntValue(0, 4); // ri_gprmask

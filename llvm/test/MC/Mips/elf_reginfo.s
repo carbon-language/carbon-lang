@@ -27,6 +27,6 @@
 # CHECK_32-LABEL:    Name: .reginfo
 # CHECK_32-NEXT:     Type:  SHT_MIPS_REGINFO
 # CHECK_32-NEXT:     Flags [ (0x2)
-# CHECK_32:          AddressAlignment: 4
+# CHECK_32:          AddressAlignment: 8
 # CHECK_32:          EntrySize: 24
 # CHECK_32-LABEL:  }
