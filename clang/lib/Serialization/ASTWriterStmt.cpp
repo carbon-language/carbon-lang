@@ -1857,6 +1857,12 @@ void ASTStmtWriter::VisitOMPSingleDirective(OMPSingleDirective *D) {
   Code = serialization::STMT_OMP_SINGLE_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPMasterDirective(OMPMasterDirective *D) {
+  VisitStmt(D);
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_MASTER_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
   VisitStmt(D);
   Record.push_back(D->getNumClauses());

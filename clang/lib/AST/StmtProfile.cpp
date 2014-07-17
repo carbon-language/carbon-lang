@@ -385,6 +385,10 @@ void StmtProfiler::VisitOMPSingleDirective(const OMPSingleDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPMasterDirective(const OMPMasterDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void
 StmtProfiler::VisitOMPParallelForDirective(const OMPParallelForDirective *S) {
   VisitOMPExecutableDirective(S);

@@ -64,6 +64,7 @@ OPENMP_DIRECTIVE(for)
 OPENMP_DIRECTIVE(sections)
 OPENMP_DIRECTIVE(section)
 OPENMP_DIRECTIVE(single)
+OPENMP_DIRECTIVE(master)
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 

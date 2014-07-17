@@ -252,6 +252,7 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
   case OMPD_unknown:
   case OMPD_threadprivate:
   case OMPD_section:
+  case OMPD_master:
     break;
   }
   return false;
