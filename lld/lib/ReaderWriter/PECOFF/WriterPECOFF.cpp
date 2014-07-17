@@ -332,6 +332,8 @@ PEHeaderChunk<PEHeader>::PEHeaderChunk(const PECOFFLinkingContext &ctx)
   uint16_t characteristics = llvm::COFF::IMAGE_FILE_EXECUTABLE_IMAGE;
   if (!ctx.is64Bit())
     characteristics |= llvm::COFF::IMAGE_FILE_32BIT_MACHINE;
+  if (ctx.isDll())
+    characteristics |= llvm::COFF::IMAGE_FILE_DLL;
   if (ctx.getLargeAddressAware() || ctx.is64Bit())
     characteristics |= llvm::COFF::IMAGE_FILE_LARGE_ADDRESS_AWARE;
   if (ctx.getSwapRunFromCD())
