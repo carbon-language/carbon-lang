@@ -551,12 +551,6 @@ def VCVTBSH: ASuI<0b11101, 0b11, 0b0011, 0b01, 0, (outs SPR:$Sd), (ins SPR:$Sm),
                  /* FIXME */ IIC_fpCVTHS, "vcvtb", ".f16.f32\t$Sd, $Sm",
                  [/* For disassembly only; pattern left blank */]>;
 
-def : Pat<(fp_to_f16 SPR:$a),
-          (i32 (COPY_TO_REGCLASS (VCVTBSH SPR:$a), GPR))>;
-
-def : Pat<(f16_to_fp GPR:$a),
-          (VCVTBHS (COPY_TO_REGCLASS GPR:$a, SPR))>;
-
 def VCVTTHS: ASuI<0b11101, 0b11, 0b0010, 0b11, 0, (outs SPR:$Sd), (ins SPR:$Sm),
                  /* FIXME */ IIC_fpCVTSH, "vcvtt", ".f32.f16\t$Sd, $Sm",
                  [/* For disassembly only; pattern left blank */]>;
@@ -618,6 +612,19 @@ def VCVTTDH : ADuI<0b11101, 0b11, 0b0011, 0b11, 0,
   let Inst{3-0}   = Dm{3-0};
   let Inst{5}     = Dm{4};
 }
+
+def : Pat<(fp_to_f16 SPR:$a),
+          (i32 (COPY_TO_REGCLASS (VCVTBSH SPR:$a), GPR))>;
+
+def : Pat<(fp_to_f16 (f64 DPR:$a)),
+          (i32 (COPY_TO_REGCLASS (VCVTBDH DPR:$a), GPR))>;
+
+def : Pat<(f16_to_fp GPR:$a),
+          (VCVTBHS (COPY_TO_REGCLASS GPR:$a, SPR))>;
+
+def : Pat<(f64 (f16_to_fp GPR:$a)),
+          (VCVTBHD (COPY_TO_REGCLASS GPR:$a, SPR))>;
+
 
 multiclass vcvt_inst<string opc, bits<2> rm> {
   let PostEncoderMethod = "", DecoderNamespace = "VFPV8" in {
