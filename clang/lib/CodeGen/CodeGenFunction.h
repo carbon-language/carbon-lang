@@ -247,6 +247,17 @@ public:
   /// \brief Sanitizer options to use for this function.
   const SanitizerOptions *SanOpts;
 
+  /// \brief True if CodeGen currently emits code implementing sanitizer checks.
+  bool IsSanitizerScope;
+
+  /// \brief RAII object to set/unset CodeGenFunction::IsSanitizerScope.
+  class SanitizerScope {
+    CodeGenFunction *CGF;
+  public:
+    SanitizerScope(CodeGenFunction *CGF);
+    ~SanitizerScope();
+  };
+
   /// In ARC, whether we should autorelease the return value.
   bool AutoreleaseResult;
 

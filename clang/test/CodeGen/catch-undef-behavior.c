@@ -49,7 +49,7 @@ void foo() {
   // CHECK-TRAP-NEXT: %[[CHECK2:.*]] = icmp eq i64 %[[MISALIGN]], 0
 
   // CHECK:      %[[OK:.*]] = and i1 %[[CHECK01]], %[[CHECK2]]
-  // CHECK-NEXT: br i1 %[[OK]], {{.*}} !prof ![[WEIGHT_MD:.*]]
+  // CHECK-NEXT: br i1 %[[OK]], {{.*}} !prof ![[WEIGHT_MD:.*]], !nosanitize
 
   // CHECK-TRAP:      %[[OK:.*]] = and i1 %[[CHECK01]], %[[CHECK2]]
   // CHECK-TRAP-NEXT: br i1 %[[OK]], {{.*}}
@@ -311,7 +311,7 @@ int long_double_int_overflow(long double ld) {
   // CHECK: %[[LE:.*]] = fcmp olt x86_fp80 %[[F]], 0xK401E8000000000000000
   // CHECK: and i1 %[[GE]], %[[LE]]
 
-  // CHECK: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]]
+  // CHECK: store x86_fp80 %[[F]], x86_fp80* %[[ALLOCA:.*]], !nosanitize
   // CHECK: %[[ARG:.*]] = ptrtoint x86_fp80* %[[ALLOCA]] to i64
   // CHECK: call void @__ubsan_handle_float_cast_overflow({{.*}}, i64 %[[ARG]]
 

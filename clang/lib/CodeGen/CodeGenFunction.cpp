@@ -36,8 +36,9 @@ using namespace CodeGen;
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     : CodeGenTypeCache(cgm), CGM(cgm), Target(cgm.getTarget()),
       Builder(cgm.getModule().getContext(), llvm::ConstantFolder(),
-              CGBuilderInserterTy(this)), CapturedStmtInfo(nullptr),
-      SanOpts(&CGM.getLangOpts().Sanitize), AutoreleaseResult(false), BlockInfo(nullptr),
+              CGBuilderInserterTy(this)),
+      CapturedStmtInfo(nullptr), SanOpts(&CGM.getLangOpts().Sanitize),
+      IsSanitizerScope(false), AutoreleaseResult(false), BlockInfo(nullptr),
       BlockPointer(nullptr), LambdaThisCaptureField(nullptr),
       NormalCleanupDest(nullptr), NextCleanupDestIndex(1),
       FirstBlockInfo(nullptr), EHResumeBlock(nullptr), ExceptionSlot(nullptr),
@@ -843,11 +844,12 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   //   function call is used by the caller, the behavior is undefined.
   if (getLangOpts().CPlusPlus && !FD->hasImplicitReturnZero() &&
       !FD->getReturnType()->isVoidType() && Builder.GetInsertBlock()) {
-    if (SanOpts->Return)
+    if (SanOpts->Return) {
+      SanitizerScope SanScope(this);
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
                 ArrayRef<llvm::Value *>(), CRK_Unrecoverable);
-    else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
+    } else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
       Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
     Builder.CreateUnreachable();
     Builder.ClearInsertionPoint();
@@ -1499,6 +1501,7 @@ void CodeGenFunction::EmitVariablyModifiedType(QualType type) {
           //   greater than zero.
           if (SanOpts->VLABound &&
               size->getType()->isSignedIntegerType()) {
+            SanitizerScope SanScope(this);
             llvm::Value *Zero = llvm::Constant::getNullValue(Size->getType());
             llvm::Constant *StaticArgs[] = {
               EmitCheckSourceLocation(size->getLocStart()),
@@ -1637,11 +1640,26 @@ llvm::Value *CodeGenFunction::EmitFieldAnnotations(const FieldDecl *D,
 
 CodeGenFunction::CGCapturedStmtInfo::~CGCapturedStmtInfo() { }
 
+CodeGenFunction::SanitizerScope::SanitizerScope(CodeGenFunction *CGF)
+    : CGF(CGF) {
+  assert(!CGF->IsSanitizerScope);
+  CGF->IsSanitizerScope = true;
+}
+
+CodeGenFunction::SanitizerScope::~SanitizerScope() {
+  CGF->IsSanitizerScope = false;
+}
+
 void CodeGenFunction::InsertHelper(llvm::Instruction *I,
                                    const llvm::Twine &Name,
                                    llvm::BasicBlock *BB,
                                    llvm::BasicBlock::iterator InsertPt) const {
   LoopStack.InsertHelper(I);
+  if (IsSanitizerScope) {
+    I->setMetadata(
+        CGM.getModule().getMDKindID("nosanitize"),
+        llvm::MDNode::get(CGM.getLLVMContext(), ArrayRef<llvm::Value *>()));
+  }
 }
 
 template <bool PreserveNames>

@@ -458,6 +458,8 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   if (Address->getType()->getPointerAddressSpace())
     return;
 
+  SanitizerScope SanScope(this);
+
   llvm::Value *Cond = nullptr;
   llvm::BasicBlock *Done = nullptr;
 
@@ -654,6 +656,7 @@ void CodeGenFunction::EmitBoundsCheck(const Expr *E, const Expr *Base,
                                       bool Accessed) {
   assert(SanOpts->ArrayBounds &&
          "should not be called unless adding bounds checks");
+  SanitizerScope SanScope(this);
 
   QualType IndexedType;
   llvm::Value *Bound = getArrayIndexingBound(*this, Base, IndexedType);
@@ -1129,6 +1132,7 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
 
   if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
       (SanOpts->Enum && Ty->getAs<EnumType>())) {
+    SanitizerScope SanScope(this);
     llvm::APInt Min, End;
     if (getRangeForType(*this, Ty, Min, End, true)) {
       --End;
@@ -2183,6 +2187,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                                 ArrayRef<llvm::Value *> DynamicArgs,
                                 CheckRecoverableKind RecoverKind) {
   assert(SanOpts != &SanitizerOptions::Disabled);
+  assert(IsSanitizerScope);
 
   if (CGM.getCodeGenOpts().SanitizeUndefinedTrapOnError) {
     assert (RecoverKind != CRK_AlwaysRecoverable &&
@@ -3231,6 +3236,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
       (!TargetDecl || !isa<FunctionDecl>(TargetDecl))) {
     if (llvm::Constant *PrefixSig =
             CGM.getTargetCodeGenInfo().getUBSanFunctionSignature(CGM)) {
+      SanitizerScope SanScope(this);
       llvm::Constant *FTRTTIConst =
           CGM.GetAddrOfRTTIDescriptor(QualType(FnType, 0), /*ForEH=*/true);
       llvm::Type *PrefixStructTyElems[] = {

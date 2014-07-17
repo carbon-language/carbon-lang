@@ -447,11 +447,12 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F));
   }
   case Builtin::BI__builtin_unreachable: {
-    if (SanOpts->Unreachable)
+    if (SanOpts->Unreachable) {
+      SanitizerScope SanScope(this);
       EmitCheck(Builder.getFalse(), "builtin_unreachable",
                 EmitCheckSourceLocation(E->getExprLoc()),
                 ArrayRef<llvm::Value *>(), CRK_Unrecoverable);
-    else
+    } else
       Builder.CreateUnreachable();
 
     // We do need to preserve an insertion point.
