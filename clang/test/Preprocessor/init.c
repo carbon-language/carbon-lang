@@ -219,7 +219,7 @@
 // RUN: %clang_cc1 -E -dM -fno-short-wchar -triple=x86_64-w64-mingw32 < /dev/null | FileCheck -check-prefix SHORTWCHAR %s
 //
 // SHORTWCHAR: #define __SIZEOF_WCHAR_T__ 2
-// SHORTWCHAR: #define __WCHAR_MAX__ 65535U
+// SHORTWCHAR: #define __WCHAR_MAX__ 65535
 // SHORTWCHAR: #define __WCHAR_TYPE__ unsigned short
 // SHORTWCHAR: #define __WCHAR_WIDTH__ 16
 //
@@ -377,8 +377,8 @@
 // AARCH64:#define __SIZE_MAX__ 18446744073709551615UL
 // AARCH64:#define __SIZE_TYPE__ long unsigned int
 // AARCH64:#define __SIZE_WIDTH__ 64
-// AARCH64:#define __UINT16_C_SUFFIX__ U
-// AARCH64:#define __UINT16_MAX__ 65535U
+// AARCH64:#define __UINT16_C_SUFFIX__ {{$}}
+// AARCH64:#define __UINT16_MAX__ 65535
 // AARCH64:#define __UINT16_TYPE__ unsigned short
 // AARCH64:#define __UINT32_C_SUFFIX__ U
 // AARCH64:#define __UINT32_MAX__ 4294967295U
@@ -386,8 +386,8 @@
 // AARCH64:#define __UINT64_C_SUFFIX__ UL
 // AARCH64:#define __UINT64_MAX__ 18446744073709551615UL
 // AARCH64:#define __UINT64_TYPE__ long unsigned int
-// AARCH64:#define __UINT8_C_SUFFIX__ U
-// AARCH64:#define __UINT8_MAX__ 255U
+// AARCH64:#define __UINT8_C_SUFFIX__ {{$}}
+// AARCH64:#define __UINT8_MAX__ 255
 // AARCH64:#define __UINT8_TYPE__ unsigned char
 // AARCH64:#define __UINTMAX_C_SUFFIX__ UL
 // AARCH64:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -396,21 +396,21 @@
 // AARCH64:#define __UINTPTR_MAX__ 18446744073709551615UL
 // AARCH64:#define __UINTPTR_TYPE__ long unsigned int
 // AARCH64:#define __UINTPTR_WIDTH__ 64
-// AARCH64:#define __UINT_FAST16_MAX__ 65535U
+// AARCH64:#define __UINT_FAST16_MAX__ 65535
 // AARCH64:#define __UINT_FAST16_TYPE__ unsigned short
 // AARCH64:#define __UINT_FAST32_MAX__ 4294967295U
 // AARCH64:#define __UINT_FAST32_TYPE__ unsigned int
 // AARCH64:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // AARCH64:#define __UINT_FAST64_TYPE__ long unsigned int
-// AARCH64:#define __UINT_FAST8_MAX__ 255U
+// AARCH64:#define __UINT_FAST8_MAX__ 255
 // AARCH64:#define __UINT_FAST8_TYPE__ unsigned char
-// AARCH64:#define __UINT_LEAST16_MAX__ 65535U
+// AARCH64:#define __UINT_LEAST16_MAX__ 65535
 // AARCH64:#define __UINT_LEAST16_TYPE__ unsigned short
 // AARCH64:#define __UINT_LEAST32_MAX__ 4294967295U
 // AARCH64:#define __UINT_LEAST32_TYPE__ unsigned int
 // AARCH64:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // AARCH64:#define __UINT_LEAST64_TYPE__ long unsigned int
-// AARCH64:#define __UINT_LEAST8_MAX__ 255U
+// AARCH64:#define __UINT_LEAST8_MAX__ 255
 // AARCH64:#define __UINT_LEAST8_TYPE__ unsigned char
 // AARCH64:#define __USER_LABEL_PREFIX__ _
 // AARCH64:#define __WCHAR_MAX__ 4294967295U
@@ -568,8 +568,8 @@
 // AARCH64-BE:#define __SIZE_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __SIZE_TYPE__ long unsigned int
 // AARCH64-BE:#define __SIZE_WIDTH__ 64
-// AARCH64-BE:#define __UINT16_C_SUFFIX__ U
-// AARCH64-BE:#define __UINT16_MAX__ 65535U
+// AARCH64-BE:#define __UINT16_C_SUFFIX__ {{$}}
+// AARCH64-BE:#define __UINT16_MAX__ 65535
 // AARCH64-BE:#define __UINT16_TYPE__ unsigned short
 // AARCH64-BE:#define __UINT32_C_SUFFIX__ U
 // AARCH64-BE:#define __UINT32_MAX__ 4294967295U
@@ -577,8 +577,8 @@
 // AARCH64-BE:#define __UINT64_C_SUFFIX__ UL
 // AARCH64-BE:#define __UINT64_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __UINT64_TYPE__ long unsigned int
-// AARCH64-BE:#define __UINT8_C_SUFFIX__ U
-// AARCH64-BE:#define __UINT8_MAX__ 255U
+// AARCH64-BE:#define __UINT8_C_SUFFIX__ {{$}}
+// AARCH64-BE:#define __UINT8_MAX__ 255
 // AARCH64-BE:#define __UINT8_TYPE__ unsigned char
 // AARCH64-BE:#define __UINTMAX_C_SUFFIX__ UL
 // AARCH64-BE:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -587,21 +587,21 @@
 // AARCH64-BE:#define __UINTPTR_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __UINTPTR_TYPE__ long unsigned int
 // AARCH64-BE:#define __UINTPTR_WIDTH__ 64
-// AARCH64-BE:#define __UINT_FAST16_MAX__ 65535U
+// AARCH64-BE:#define __UINT_FAST16_MAX__ 65535
 // AARCH64-BE:#define __UINT_FAST16_TYPE__ unsigned short
 // AARCH64-BE:#define __UINT_FAST32_MAX__ 4294967295U
 // AARCH64-BE:#define __UINT_FAST32_TYPE__ unsigned int
 // AARCH64-BE:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __UINT_FAST64_TYPE__ long unsigned int
-// AARCH64-BE:#define __UINT_FAST8_MAX__ 255U
+// AARCH64-BE:#define __UINT_FAST8_MAX__ 255
 // AARCH64-BE:#define __UINT_FAST8_TYPE__ unsigned char
-// AARCH64-BE:#define __UINT_LEAST16_MAX__ 65535U
+// AARCH64-BE:#define __UINT_LEAST16_MAX__ 65535
 // AARCH64-BE:#define __UINT_LEAST16_TYPE__ unsigned short
 // AARCH64-BE:#define __UINT_LEAST32_MAX__ 4294967295U
 // AARCH64-BE:#define __UINT_LEAST32_TYPE__ unsigned int
 // AARCH64-BE:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // AARCH64-BE:#define __UINT_LEAST64_TYPE__ long unsigned int
-// AARCH64-BE:#define __UINT_LEAST8_MAX__ 255U
+// AARCH64-BE:#define __UINT_LEAST8_MAX__ 255
 // AARCH64-BE:#define __UINT_LEAST8_TYPE__ unsigned char
 // AARCH64-BE:#define __USER_LABEL_PREFIX__ _
 // AARCH64-BE:#define __WCHAR_MAX__ 4294967295U
@@ -760,8 +760,8 @@
 // AARCH64-NETBSD:#define __SIZE_MAX__ 18446744073709551615UL
 // AARCH64-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // AARCH64-NETBSD:#define __SIZE_WIDTH__ 64
-// AARCH64-NETBSD:#define __UINT16_C_SUFFIX__ U
-// AARCH64-NETBSD:#define __UINT16_MAX__ 65535U
+// AARCH64-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
+// AARCH64-NETBSD:#define __UINT16_MAX__ 65535
 // AARCH64-NETBSD:#define __UINT16_TYPE__ unsigned short
 // AARCH64-NETBSD:#define __UINT32_C_SUFFIX__ U
 // AARCH64-NETBSD:#define __UINT32_MAX__ 4294967295U
@@ -769,8 +769,8 @@
 // AARCH64-NETBSD:#define __UINT64_C_SUFFIX__ ULL
 // AARCH64-NETBSD:#define __UINT64_MAX__ 18446744073709551615ULL
 // AARCH64-NETBSD:#define __UINT64_TYPE__ long long unsigned int
-// AARCH64-NETBSD:#define __UINT8_C_SUFFIX__ U
-// AARCH64-NETBSD:#define __UINT8_MAX__ 255U
+// AARCH64-NETBSD:#define __UINT8_C_SUFFIX__ {{$}}
+// AARCH64-NETBSD:#define __UINT8_MAX__ 255
 // AARCH64-NETBSD:#define __UINT8_TYPE__ unsigned char
 // AARCH64-NETBSD:#define __UINTMAX_C_SUFFIX__ ULL
 // AARCH64-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -779,21 +779,21 @@
 // AARCH64-NETBSD:#define __UINTPTR_MAX__ 18446744073709551615UL
 // AARCH64-NETBSD:#define __UINTPTR_TYPE__ long unsigned int
 // AARCH64-NETBSD:#define __UINTPTR_WIDTH__ 64
-// AARCH64-NETBSD:#define __UINT_FAST16_MAX__ 65535U
+// AARCH64-NETBSD:#define __UINT_FAST16_MAX__ 65535
 // AARCH64-NETBSD:#define __UINT_FAST16_TYPE__ unsigned short
 // AARCH64-NETBSD:#define __UINT_FAST32_MAX__ 4294967295U
 // AARCH64-NETBSD:#define __UINT_FAST32_TYPE__ unsigned int
 // AARCH64-NETBSD:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // AARCH64-NETBSD:#define __UINT_FAST64_TYPE__ long unsigned int
-// AARCH64-NETBSD:#define __UINT_FAST8_MAX__ 255U
+// AARCH64-NETBSD:#define __UINT_FAST8_MAX__ 255
 // AARCH64-NETBSD:#define __UINT_FAST8_TYPE__ unsigned char
-// AARCH64-NETBSD:#define __UINT_LEAST16_MAX__ 65535U
+// AARCH64-NETBSD:#define __UINT_LEAST16_MAX__ 65535
 // AARCH64-NETBSD:#define __UINT_LEAST16_TYPE__ unsigned short
 // AARCH64-NETBSD:#define __UINT_LEAST32_MAX__ 4294967295U
 // AARCH64-NETBSD:#define __UINT_LEAST32_TYPE__ unsigned int
 // AARCH64-NETBSD:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // AARCH64-NETBSD:#define __UINT_LEAST64_TYPE__ long unsigned int
-// AARCH64-NETBSD:#define __UINT_LEAST8_MAX__ 255U
+// AARCH64-NETBSD:#define __UINT_LEAST8_MAX__ 255
 // AARCH64-NETBSD:#define __UINT_LEAST8_TYPE__ unsigned char
 // AARCH64-NETBSD:#define __USER_LABEL_PREFIX__
 // AARCH64-NETBSD:#define __WCHAR_MAX__ 2147483647
@@ -949,8 +949,8 @@
 // ARM:#define __SIZE_TYPE__ unsigned int
 // ARM:#define __SIZE_WIDTH__ 32
 // ARM:#define __THUMB_INTERWORK__ 1
-// ARM:#define __UINT16_C_SUFFIX__ U
-// ARM:#define __UINT16_MAX__ 65535U
+// ARM:#define __UINT16_C_SUFFIX__ {{$}}
+// ARM:#define __UINT16_MAX__ 65535
 // ARM:#define __UINT16_TYPE__ unsigned short
 // ARM:#define __UINT32_C_SUFFIX__ U
 // ARM:#define __UINT32_MAX__ 4294967295U
@@ -958,8 +958,8 @@
 // ARM:#define __UINT64_C_SUFFIX__ ULL
 // ARM:#define __UINT64_MAX__ 18446744073709551615ULL
 // ARM:#define __UINT64_TYPE__ long long unsigned int
-// ARM:#define __UINT8_C_SUFFIX__ U
-// ARM:#define __UINT8_MAX__ 255U
+// ARM:#define __UINT8_C_SUFFIX__ {{$}}
+// ARM:#define __UINT8_MAX__ 255
 // ARM:#define __UINT8_TYPE__ unsigned char
 // ARM:#define __UINTMAX_C_SUFFIX__ ULL
 // ARM:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -968,21 +968,21 @@
 // ARM:#define __UINTPTR_MAX__ 4294967295U
 // ARM:#define __UINTPTR_TYPE__ long unsigned int
 // ARM:#define __UINTPTR_WIDTH__ 32
-// ARM:#define __UINT_FAST16_MAX__ 65535U
+// ARM:#define __UINT_FAST16_MAX__ 65535
 // ARM:#define __UINT_FAST16_TYPE__ unsigned short
 // ARM:#define __UINT_FAST32_MAX__ 4294967295U
 // ARM:#define __UINT_FAST32_TYPE__ unsigned int
 // ARM:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // ARM:#define __UINT_FAST64_TYPE__ long long unsigned int
-// ARM:#define __UINT_FAST8_MAX__ 255U
+// ARM:#define __UINT_FAST8_MAX__ 255
 // ARM:#define __UINT_FAST8_TYPE__ unsigned char
-// ARM:#define __UINT_LEAST16_MAX__ 65535U
+// ARM:#define __UINT_LEAST16_MAX__ 65535
 // ARM:#define __UINT_LEAST16_TYPE__ unsigned short
 // ARM:#define __UINT_LEAST32_MAX__ 4294967295U
 // ARM:#define __UINT_LEAST32_TYPE__ unsigned int
 // ARM:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // ARM:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// ARM:#define __UINT_LEAST8_MAX__ 255U
+// ARM:#define __UINT_LEAST8_MAX__ 255
 // ARM:#define __UINT_LEAST8_TYPE__ unsigned char
 // ARM:#define __USER_LABEL_PREFIX__ _
 // ARM:#define __WCHAR_MAX__ 4294967295U
@@ -1139,8 +1139,8 @@
 // ARM-BE:#define __SIZE_TYPE__ unsigned int
 // ARM-BE:#define __SIZE_WIDTH__ 32
 // ARM-BE:#define __THUMB_INTERWORK__ 1
-// ARM-BE:#define __UINT16_C_SUFFIX__ U
-// ARM-BE:#define __UINT16_MAX__ 65535U
+// ARM-BE:#define __UINT16_C_SUFFIX__ {{$}}
+// ARM-BE:#define __UINT16_MAX__ 65535
 // ARM-BE:#define __UINT16_TYPE__ unsigned short
 // ARM-BE:#define __UINT32_C_SUFFIX__ U
 // ARM-BE:#define __UINT32_MAX__ 4294967295U
@@ -1148,8 +1148,8 @@
 // ARM-BE:#define __UINT64_C_SUFFIX__ ULL
 // ARM-BE:#define __UINT64_MAX__ 18446744073709551615ULL
 // ARM-BE:#define __UINT64_TYPE__ long long unsigned int
-// ARM-BE:#define __UINT8_C_SUFFIX__ U
-// ARM-BE:#define __UINT8_MAX__ 255U
+// ARM-BE:#define __UINT8_C_SUFFIX__ {{$}}
+// ARM-BE:#define __UINT8_MAX__ 255
 // ARM-BE:#define __UINT8_TYPE__ unsigned char
 // ARM-BE:#define __UINTMAX_C_SUFFIX__ ULL
 // ARM-BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -1158,21 +1158,21 @@
 // ARM-BE:#define __UINTPTR_MAX__ 4294967295U
 // ARM-BE:#define __UINTPTR_TYPE__ long unsigned int
 // ARM-BE:#define __UINTPTR_WIDTH__ 32
-// ARM-BE:#define __UINT_FAST16_MAX__ 65535U
+// ARM-BE:#define __UINT_FAST16_MAX__ 65535
 // ARM-BE:#define __UINT_FAST16_TYPE__ unsigned short
 // ARM-BE:#define __UINT_FAST32_MAX__ 4294967295U
 // ARM-BE:#define __UINT_FAST32_TYPE__ unsigned int
 // ARM-BE:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // ARM-BE:#define __UINT_FAST64_TYPE__ long long unsigned int
-// ARM-BE:#define __UINT_FAST8_MAX__ 255U
+// ARM-BE:#define __UINT_FAST8_MAX__ 255
 // ARM-BE:#define __UINT_FAST8_TYPE__ unsigned char
-// ARM-BE:#define __UINT_LEAST16_MAX__ 65535U
+// ARM-BE:#define __UINT_LEAST16_MAX__ 65535
 // ARM-BE:#define __UINT_LEAST16_TYPE__ unsigned short
 // ARM-BE:#define __UINT_LEAST32_MAX__ 4294967295U
 // ARM-BE:#define __UINT_LEAST32_TYPE__ unsigned int
 // ARM-BE:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // ARM-BE:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// ARM-BE:#define __UINT_LEAST8_MAX__ 255U
+// ARM-BE:#define __UINT_LEAST8_MAX__ 255
 // ARM-BE:#define __UINT_LEAST8_TYPE__ unsigned char
 // ARM-BE:#define __USER_LABEL_PREFIX__ _
 // ARM-BE:#define __WCHAR_MAX__ 4294967295U
@@ -1334,8 +1334,8 @@
 // ARMEABISOFTFP:#define __SIZE_WIDTH__ 32
 // ARMEABISOFTFP:#define __SOFTFP__ 1
 // ARMEABISOFTFP:#define __THUMB_INTERWORK__ 1
-// ARMEABISOFTFP:#define __UINT16_C_SUFFIX__ U
-// ARMEABISOFTFP:#define __UINT16_MAX__ 65535U
+// ARMEABISOFTFP:#define __UINT16_C_SUFFIX__ {{$}}
+// ARMEABISOFTFP:#define __UINT16_MAX__ 65535
 // ARMEABISOFTFP:#define __UINT16_TYPE__ unsigned short
 // ARMEABISOFTFP:#define __UINT32_C_SUFFIX__ U
 // ARMEABISOFTFP:#define __UINT32_MAX__ 4294967295U
@@ -1343,8 +1343,8 @@
 // ARMEABISOFTFP:#define __UINT64_C_SUFFIX__ ULL
 // ARMEABISOFTFP:#define __UINT64_MAX__ 18446744073709551615ULL
 // ARMEABISOFTFP:#define __UINT64_TYPE__ long long unsigned int
-// ARMEABISOFTFP:#define __UINT8_C_SUFFIX__ U
-// ARMEABISOFTFP:#define __UINT8_MAX__ 255U
+// ARMEABISOFTFP:#define __UINT8_C_SUFFIX__ {{$}}
+// ARMEABISOFTFP:#define __UINT8_MAX__ 255
 // ARMEABISOFTFP:#define __UINT8_TYPE__ unsigned char
 // ARMEABISOFTFP:#define __UINTMAX_C_SUFFIX__ ULL
 // ARMEABISOFTFP:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -1353,21 +1353,21 @@
 // ARMEABISOFTFP:#define __UINTPTR_MAX__ 4294967295U
 // ARMEABISOFTFP:#define __UINTPTR_TYPE__ long unsigned int
 // ARMEABISOFTFP:#define __UINTPTR_WIDTH__ 32
-// ARMEABISOFTFP:#define __UINT_FAST16_MAX__ 65535U
+// ARMEABISOFTFP:#define __UINT_FAST16_MAX__ 65535
 // ARMEABISOFTFP:#define __UINT_FAST16_TYPE__ unsigned short
 // ARMEABISOFTFP:#define __UINT_FAST32_MAX__ 4294967295U
 // ARMEABISOFTFP:#define __UINT_FAST32_TYPE__ unsigned int
 // ARMEABISOFTFP:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // ARMEABISOFTFP:#define __UINT_FAST64_TYPE__ long long unsigned int
-// ARMEABISOFTFP:#define __UINT_FAST8_MAX__ 255U
+// ARMEABISOFTFP:#define __UINT_FAST8_MAX__ 255
 // ARMEABISOFTFP:#define __UINT_FAST8_TYPE__ unsigned char
-// ARMEABISOFTFP:#define __UINT_LEAST16_MAX__ 65535U
+// ARMEABISOFTFP:#define __UINT_LEAST16_MAX__ 65535
 // ARMEABISOFTFP:#define __UINT_LEAST16_TYPE__ unsigned short
 // ARMEABISOFTFP:#define __UINT_LEAST32_MAX__ 4294967295U
 // ARMEABISOFTFP:#define __UINT_LEAST32_TYPE__ unsigned int
 // ARMEABISOFTFP:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // ARMEABISOFTFP:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// ARMEABISOFTFP:#define __UINT_LEAST8_MAX__ 255U
+// ARMEABISOFTFP:#define __UINT_LEAST8_MAX__ 255
 // ARMEABISOFTFP:#define __UINT_LEAST8_TYPE__ unsigned char
 // ARMEABISOFTFP:#define __USER_LABEL_PREFIX__
 // ARMEABISOFTFP:#define __WCHAR_MAX__ 4294967295U
@@ -1529,8 +1529,8 @@
 // ARMEABIHARDFP:#define __SIZE_WIDTH__ 32
 // ARMEABIHARDFP-NOT:#define __SOFTFP__ 1
 // ARMEABIHARDFP:#define __THUMB_INTERWORK__ 1
-// ARMEABIHARDFP:#define __UINT16_C_SUFFIX__ U
-// ARMEABIHARDFP:#define __UINT16_MAX__ 65535U
+// ARMEABIHARDFP:#define __UINT16_C_SUFFIX__ {{$}}
+// ARMEABIHARDFP:#define __UINT16_MAX__ 65535
 // ARMEABIHARDFP:#define __UINT16_TYPE__ unsigned short
 // ARMEABIHARDFP:#define __UINT32_C_SUFFIX__ U
 // ARMEABIHARDFP:#define __UINT32_MAX__ 4294967295U
@@ -1538,8 +1538,8 @@
 // ARMEABIHARDFP:#define __UINT64_C_SUFFIX__ ULL
 // ARMEABIHARDFP:#define __UINT64_MAX__ 18446744073709551615ULL
 // ARMEABIHARDFP:#define __UINT64_TYPE__ long long unsigned int
-// ARMEABIHARDFP:#define __UINT8_C_SUFFIX__ U
-// ARMEABIHARDFP:#define __UINT8_MAX__ 255U
+// ARMEABIHARDFP:#define __UINT8_C_SUFFIX__ {{$}}
+// ARMEABIHARDFP:#define __UINT8_MAX__ 255
 // ARMEABIHARDFP:#define __UINT8_TYPE__ unsigned char
 // ARMEABIHARDFP:#define __UINTMAX_C_SUFFIX__ ULL
 // ARMEABIHARDFP:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -1548,21 +1548,21 @@
 // ARMEABIHARDFP:#define __UINTPTR_MAX__ 4294967295U
 // ARMEABIHARDFP:#define __UINTPTR_TYPE__ long unsigned int
 // ARMEABIHARDFP:#define __UINTPTR_WIDTH__ 32
-// ARMEABIHARDFP:#define __UINT_FAST16_MAX__ 65535U
+// ARMEABIHARDFP:#define __UINT_FAST16_MAX__ 65535
 // ARMEABIHARDFP:#define __UINT_FAST16_TYPE__ unsigned short
 // ARMEABIHARDFP:#define __UINT_FAST32_MAX__ 4294967295U
 // ARMEABIHARDFP:#define __UINT_FAST32_TYPE__ unsigned int
 // ARMEABIHARDFP:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // ARMEABIHARDFP:#define __UINT_FAST64_TYPE__ long long unsigned int
-// ARMEABIHARDFP:#define __UINT_FAST8_MAX__ 255U
+// ARMEABIHARDFP:#define __UINT_FAST8_MAX__ 255
 // ARMEABIHARDFP:#define __UINT_FAST8_TYPE__ unsigned char
-// ARMEABIHARDFP:#define __UINT_LEAST16_MAX__ 65535U
+// ARMEABIHARDFP:#define __UINT_LEAST16_MAX__ 65535
 // ARMEABIHARDFP:#define __UINT_LEAST16_TYPE__ unsigned short
 // ARMEABIHARDFP:#define __UINT_LEAST32_MAX__ 4294967295U
 // ARMEABIHARDFP:#define __UINT_LEAST32_TYPE__ unsigned int
 // ARMEABIHARDFP:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // ARMEABIHARDFP:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// ARMEABIHARDFP:#define __UINT_LEAST8_MAX__ 255U
+// ARMEABIHARDFP:#define __UINT_LEAST8_MAX__ 255
 // ARMEABIHARDFP:#define __UINT_LEAST8_TYPE__ unsigned char
 // ARMEABIHARDFP:#define __USER_LABEL_PREFIX__
 // ARMEABIHARDFP:#define __WCHAR_MAX__ 4294967295U
@@ -1721,8 +1721,8 @@
 // ARM-NETBSD:#define __SIZE_TYPE__ long unsigned int
 // ARM-NETBSD:#define __SIZE_WIDTH__ 32
 // ARM-NETBSD:#define __THUMB_INTERWORK__ 1
-// ARM-NETBSD:#define __UINT16_C_SUFFIX__ U
-// ARM-NETBSD:#define __UINT16_MAX__ 65535U
+// ARM-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
+// ARM-NETBSD:#define __UINT16_MAX__ 65535
 // ARM-NETBSD:#define __UINT16_TYPE__ unsigned short
 // ARM-NETBSD:#define __UINT32_C_SUFFIX__ U
 // ARM-NETBSD:#define __UINT32_MAX__ 4294967295U
@@ -1730,8 +1730,8 @@
 // ARM-NETBSD:#define __UINT64_C_SUFFIX__ ULL
 // ARM-NETBSD:#define __UINT64_MAX__ 18446744073709551615ULL
 // ARM-NETBSD:#define __UINT64_TYPE__ long long unsigned int
-// ARM-NETBSD:#define __UINT8_C_SUFFIX__ U
-// ARM-NETBSD:#define __UINT8_MAX__ 255U
+// ARM-NETBSD:#define __UINT8_C_SUFFIX__ {{$}}
+// ARM-NETBSD:#define __UINT8_MAX__ 255
 // ARM-NETBSD:#define __UINT8_TYPE__ unsigned char
 // ARM-NETBSD:#define __UINTMAX_C_SUFFIX__ UL
 // ARM-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -1740,21 +1740,21 @@
 // ARM-NETBSD:#define __UINTPTR_MAX__ 4294967295U
 // ARM-NETBSD:#define __UINTPTR_TYPE__ long unsigned int
 // ARM-NETBSD:#define __UINTPTR_WIDTH__ 32
-// ARM-NETBSD:#define __UINT_FAST16_MAX__ 65535U
+// ARM-NETBSD:#define __UINT_FAST16_MAX__ 65535
 // ARM-NETBSD:#define __UINT_FAST16_TYPE__ unsigned short
 // ARM-NETBSD:#define __UINT_FAST32_MAX__ 4294967295U
 // ARM-NETBSD:#define __UINT_FAST32_TYPE__ unsigned int
 // ARM-NETBSD:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // ARM-NETBSD:#define __UINT_FAST64_TYPE__ long long unsigned int
-// ARM-NETBSD:#define __UINT_FAST8_MAX__ 255U
+// ARM-NETBSD:#define __UINT_FAST8_MAX__ 255
 // ARM-NETBSD:#define __UINT_FAST8_TYPE__ unsigned char
-// ARM-NETBSD:#define __UINT_LEAST16_MAX__ 65535U
+// ARM-NETBSD:#define __UINT_LEAST16_MAX__ 65535
 // ARM-NETBSD:#define __UINT_LEAST16_TYPE__ unsigned short
 // ARM-NETBSD:#define __UINT_LEAST32_MAX__ 4294967295U
 // ARM-NETBSD:#define __UINT_LEAST32_TYPE__ unsigned int
 // ARM-NETBSD:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // ARM-NETBSD:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// ARM-NETBSD:#define __UINT_LEAST8_MAX__ 255U
+// ARM-NETBSD:#define __UINT_LEAST8_MAX__ 255
 // ARM-NETBSD:#define __UINT_LEAST8_TYPE__ unsigned char
 // ARM-NETBSD:#define __USER_LABEL_PREFIX__
 // ARM-NETBSD:#define __WCHAR_MAX__ 2147483647
@@ -1966,8 +1966,8 @@
 // I386:#define __SIZE_MAX__ 4294967295U
 // I386:#define __SIZE_TYPE__ unsigned int
 // I386:#define __SIZE_WIDTH__ 32
-// I386:#define __UINT16_C_SUFFIX__ U
-// I386:#define __UINT16_MAX__ 65535U
+// I386:#define __UINT16_C_SUFFIX__ {{$}}
+// I386:#define __UINT16_MAX__ 65535
 // I386:#define __UINT16_TYPE__ unsigned short
 // I386:#define __UINT32_C_SUFFIX__ U
 // I386:#define __UINT32_MAX__ 4294967295U
@@ -1975,8 +1975,8 @@
 // I386:#define __UINT64_C_SUFFIX__ ULL
 // I386:#define __UINT64_MAX__ 18446744073709551615ULL
 // I386:#define __UINT64_TYPE__ long long unsigned int
-// I386:#define __UINT8_C_SUFFIX__ U
-// I386:#define __UINT8_MAX__ 255U
+// I386:#define __UINT8_C_SUFFIX__ {{$}}
+// I386:#define __UINT8_MAX__ 255
 // I386:#define __UINT8_TYPE__ unsigned char
 // I386:#define __UINTMAX_C_SUFFIX__ ULL
 // I386:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -1985,21 +1985,21 @@
 // I386:#define __UINTPTR_MAX__ 4294967295U
 // I386:#define __UINTPTR_TYPE__ unsigned int
 // I386:#define __UINTPTR_WIDTH__ 32
-// I386:#define __UINT_FAST16_MAX__ 65535U
+// I386:#define __UINT_FAST16_MAX__ 65535
 // I386:#define __UINT_FAST16_TYPE__ unsigned short
 // I386:#define __UINT_FAST32_MAX__ 4294967295U
 // I386:#define __UINT_FAST32_TYPE__ unsigned int
 // I386:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // I386:#define __UINT_FAST64_TYPE__ long long unsigned int
-// I386:#define __UINT_FAST8_MAX__ 255U
+// I386:#define __UINT_FAST8_MAX__ 255
 // I386:#define __UINT_FAST8_TYPE__ unsigned char
-// I386:#define __UINT_LEAST16_MAX__ 65535U
+// I386:#define __UINT_LEAST16_MAX__ 65535
 // I386:#define __UINT_LEAST16_TYPE__ unsigned short
 // I386:#define __UINT_LEAST32_MAX__ 4294967295U
 // I386:#define __UINT_LEAST32_TYPE__ unsigned int
 // I386:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // I386:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// I386:#define __UINT_LEAST8_MAX__ 255U
+// I386:#define __UINT_LEAST8_MAX__ 255
 // I386:#define __UINT_LEAST8_TYPE__ unsigned char
 // I386:#define __USER_LABEL_PREFIX__ _
 // I386:#define __WCHAR_MAX__ 2147483647
@@ -2152,8 +2152,8 @@
 // I386-LINUX:#define __SIZE_MAX__ 4294967295U
 // I386-LINUX:#define __SIZE_TYPE__ unsigned int
 // I386-LINUX:#define __SIZE_WIDTH__ 32
-// I386-LINUX:#define __UINT16_C_SUFFIX__ U
-// I386-LINUX:#define __UINT16_MAX__ 65535U
+// I386-LINUX:#define __UINT16_C_SUFFIX__ {{$}}
+// I386-LINUX:#define __UINT16_MAX__ 65535
 // I386-LINUX:#define __UINT16_TYPE__ unsigned short
 // I386-LINUX:#define __UINT32_C_SUFFIX__ U
 // I386-LINUX:#define __UINT32_MAX__ 4294967295U
@@ -2161,8 +2161,8 @@
 // I386-LINUX:#define __UINT64_C_SUFFIX__ ULL
 // I386-LINUX:#define __UINT64_MAX__ 18446744073709551615ULL
 // I386-LINUX:#define __UINT64_TYPE__ long long unsigned int
-// I386-LINUX:#define __UINT8_C_SUFFIX__ U
-// I386-LINUX:#define __UINT8_MAX__ 255U
+// I386-LINUX:#define __UINT8_C_SUFFIX__ {{$}}
+// I386-LINUX:#define __UINT8_MAX__ 255
 // I386-LINUX:#define __UINT8_TYPE__ unsigned char
 // I386-LINUX:#define __UINTMAX_C_SUFFIX__ ULL
 // I386-LINUX:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -2171,21 +2171,21 @@
 // I386-LINUX:#define __UINTPTR_MAX__ 4294967295U
 // I386-LINUX:#define __UINTPTR_TYPE__ unsigned int
 // I386-LINUX:#define __UINTPTR_WIDTH__ 32
-// I386-LINUX:#define __UINT_FAST16_MAX__ 65535U
+// I386-LINUX:#define __UINT_FAST16_MAX__ 65535
 // I386-LINUX:#define __UINT_FAST16_TYPE__ unsigned short
 // I386-LINUX:#define __UINT_FAST32_MAX__ 4294967295U
 // I386-LINUX:#define __UINT_FAST32_TYPE__ unsigned int
 // I386-LINUX:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // I386-LINUX:#define __UINT_FAST64_TYPE__ long long unsigned int
-// I386-LINUX:#define __UINT_FAST8_MAX__ 255U
+// I386-LINUX:#define __UINT_FAST8_MAX__ 255
 // I386-LINUX:#define __UINT_FAST8_TYPE__ unsigned char
-// I386-LINUX:#define __UINT_LEAST16_MAX__ 65535U
+// I386-LINUX:#define __UINT_LEAST16_MAX__ 65535
 // I386-LINUX:#define __UINT_LEAST16_TYPE__ unsigned short
 // I386-LINUX:#define __UINT_LEAST32_MAX__ 4294967295U
 // I386-LINUX:#define __UINT_LEAST32_TYPE__ unsigned int
 // I386-LINUX:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // I386-LINUX:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// I386-LINUX:#define __UINT_LEAST8_MAX__ 255U
+// I386-LINUX:#define __UINT_LEAST8_MAX__ 255
 // I386-LINUX:#define __UINT_LEAST8_TYPE__ unsigned char
 // I386-LINUX:#define __USER_LABEL_PREFIX__
 // I386-LINUX:#define __WCHAR_MAX__ 2147483647
@@ -2338,8 +2338,8 @@
 // I386-NETBSD:#define __SIZE_MAX__ 4294967295U
 // I386-NETBSD:#define __SIZE_TYPE__ unsigned int
 // I386-NETBSD:#define __SIZE_WIDTH__ 32
-// I386-NETBSD:#define __UINT16_C_SUFFIX__ U
-// I386-NETBSD:#define __UINT16_MAX__ 65535U
+// I386-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
+// I386-NETBSD:#define __UINT16_MAX__ 65535
 // I386-NETBSD:#define __UINT16_TYPE__ unsigned short
 // I386-NETBSD:#define __UINT32_C_SUFFIX__ U
 // I386-NETBSD:#define __UINT32_MAX__ 4294967295U
@@ -2347,8 +2347,8 @@
 // I386-NETBSD:#define __UINT64_C_SUFFIX__ ULL
 // I386-NETBSD:#define __UINT64_MAX__ 18446744073709551615ULL
 // I386-NETBSD:#define __UINT64_TYPE__ long long unsigned int
-// I386-NETBSD:#define __UINT8_C_SUFFIX__ U
-// I386-NETBSD:#define __UINT8_MAX__ 255U
+// I386-NETBSD:#define __UINT8_C_SUFFIX__ {{$}}
+// I386-NETBSD:#define __UINT8_MAX__ 255
 // I386-NETBSD:#define __UINT8_TYPE__ unsigned char
 // I386-NETBSD:#define __UINTMAX_C_SUFFIX__ ULL
 // I386-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -2357,21 +2357,21 @@
 // I386-NETBSD:#define __UINTPTR_MAX__ 4294967295U
 // I386-NETBSD:#define __UINTPTR_TYPE__ unsigned int
 // I386-NETBSD:#define __UINTPTR_WIDTH__ 32
-// I386-NETBSD:#define __UINT_FAST16_MAX__ 65535U
+// I386-NETBSD:#define __UINT_FAST16_MAX__ 65535
 // I386-NETBSD:#define __UINT_FAST16_TYPE__ unsigned short
 // I386-NETBSD:#define __UINT_FAST32_MAX__ 4294967295U
 // I386-NETBSD:#define __UINT_FAST32_TYPE__ unsigned int
 // I386-NETBSD:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // I386-NETBSD:#define __UINT_FAST64_TYPE__ long long unsigned int
-// I386-NETBSD:#define __UINT_FAST8_MAX__ 255U
+// I386-NETBSD:#define __UINT_FAST8_MAX__ 255
 // I386-NETBSD:#define __UINT_FAST8_TYPE__ unsigned char
-// I386-NETBSD:#define __UINT_LEAST16_MAX__ 65535U
+// I386-NETBSD:#define __UINT_LEAST16_MAX__ 65535
 // I386-NETBSD:#define __UINT_LEAST16_TYPE__ unsigned short
 // I386-NETBSD:#define __UINT_LEAST32_MAX__ 4294967295U
 // I386-NETBSD:#define __UINT_LEAST32_TYPE__ unsigned int
 // I386-NETBSD:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // I386-NETBSD:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// I386-NETBSD:#define __UINT_LEAST8_MAX__ 255U
+// I386-NETBSD:#define __UINT_LEAST8_MAX__ 255
 // I386-NETBSD:#define __UINT_LEAST8_TYPE__ unsigned char
 // I386-NETBSD:#define __USER_LABEL_PREFIX__
 // I386-NETBSD:#define __WCHAR_MAX__ 2147483647
@@ -2548,8 +2548,8 @@
 // MIPS32BE:#define __STDC_HOSTED__ 0
 // MIPS32BE:#define __STDC_VERSION__ 199901L
 // MIPS32BE:#define __STDC__ 1
-// MIPS32BE:#define __UINT16_C_SUFFIX__ U
-// MIPS32BE:#define __UINT16_MAX__ 65535U
+// MIPS32BE:#define __UINT16_C_SUFFIX__ {{$}}
+// MIPS32BE:#define __UINT16_MAX__ 65535
 // MIPS32BE:#define __UINT16_TYPE__ unsigned short
 // MIPS32BE:#define __UINT32_C_SUFFIX__ U
 // MIPS32BE:#define __UINT32_MAX__ 4294967295U
@@ -2557,8 +2557,8 @@
 // MIPS32BE:#define __UINT64_C_SUFFIX__ ULL
 // MIPS32BE:#define __UINT64_MAX__ 18446744073709551615ULL
 // MIPS32BE:#define __UINT64_TYPE__ long long unsigned int
-// MIPS32BE:#define __UINT8_C_SUFFIX__ U
-// MIPS32BE:#define __UINT8_MAX__ 255U
+// MIPS32BE:#define __UINT8_C_SUFFIX__ {{$}}
+// MIPS32BE:#define __UINT8_MAX__ 255
 // MIPS32BE:#define __UINT8_TYPE__ unsigned char
 // MIPS32BE:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS32BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -2567,21 +2567,21 @@
 // MIPS32BE:#define __UINTPTR_MAX__ 4294967295U
 // MIPS32BE:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS32BE:#define __UINTPTR_WIDTH__ 32
-// MIPS32BE:#define __UINT_FAST16_MAX__ 65535U
+// MIPS32BE:#define __UINT_FAST16_MAX__ 65535
 // MIPS32BE:#define __UINT_FAST16_TYPE__ unsigned short
 // MIPS32BE:#define __UINT_FAST32_MAX__ 4294967295U
 // MIPS32BE:#define __UINT_FAST32_TYPE__ unsigned int
 // MIPS32BE:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // MIPS32BE:#define __UINT_FAST64_TYPE__ long long unsigned int
-// MIPS32BE:#define __UINT_FAST8_MAX__ 255U
+// MIPS32BE:#define __UINT_FAST8_MAX__ 255
 // MIPS32BE:#define __UINT_FAST8_TYPE__ unsigned char
-// MIPS32BE:#define __UINT_LEAST16_MAX__ 65535U
+// MIPS32BE:#define __UINT_LEAST16_MAX__ 65535
 // MIPS32BE:#define __UINT_LEAST16_TYPE__ unsigned short
 // MIPS32BE:#define __UINT_LEAST32_MAX__ 4294967295U
 // MIPS32BE:#define __UINT_LEAST32_TYPE__ unsigned int
 // MIPS32BE:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // MIPS32BE:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// MIPS32BE:#define __UINT_LEAST8_MAX__ 255U
+// MIPS32BE:#define __UINT_LEAST8_MAX__ 255
 // MIPS32BE:#define __UINT_LEAST8_TYPE__ unsigned char
 // MIPS32BE:#define __USER_LABEL_PREFIX__ _
 // MIPS32BE:#define __WCHAR_MAX__ 2147483647
@@ -2753,8 +2753,8 @@
 // MIPS32EL:#define __SIZE_MAX__ 4294967295U
 // MIPS32EL:#define __SIZE_TYPE__ unsigned int
 // MIPS32EL:#define __SIZE_WIDTH__ 32
-// MIPS32EL:#define __UINT16_C_SUFFIX__ U
-// MIPS32EL:#define __UINT16_MAX__ 65535U
+// MIPS32EL:#define __UINT16_C_SUFFIX__ {{$}}
+// MIPS32EL:#define __UINT16_MAX__ 65535
 // MIPS32EL:#define __UINT16_TYPE__ unsigned short
 // MIPS32EL:#define __UINT32_C_SUFFIX__ U
 // MIPS32EL:#define __UINT32_MAX__ 4294967295U
@@ -2762,8 +2762,8 @@
 // MIPS32EL:#define __UINT64_C_SUFFIX__ ULL
 // MIPS32EL:#define __UINT64_MAX__ 18446744073709551615ULL
 // MIPS32EL:#define __UINT64_TYPE__ long long unsigned int
-// MIPS32EL:#define __UINT8_C_SUFFIX__ U
-// MIPS32EL:#define __UINT8_MAX__ 255U
+// MIPS32EL:#define __UINT8_C_SUFFIX__ {{$}}
+// MIPS32EL:#define __UINT8_MAX__ 255
 // MIPS32EL:#define __UINT8_TYPE__ unsigned char
 // MIPS32EL:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS32EL:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -2772,21 +2772,21 @@
 // MIPS32EL:#define __UINTPTR_MAX__ 4294967295U
 // MIPS32EL:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS32EL:#define __UINTPTR_WIDTH__ 32
-// MIPS32EL:#define __UINT_FAST16_MAX__ 65535U
+// MIPS32EL:#define __UINT_FAST16_MAX__ 65535
 // MIPS32EL:#define __UINT_FAST16_TYPE__ unsigned short
 // MIPS32EL:#define __UINT_FAST32_MAX__ 4294967295U
 // MIPS32EL:#define __UINT_FAST32_TYPE__ unsigned int
 // MIPS32EL:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // MIPS32EL:#define __UINT_FAST64_TYPE__ long long unsigned int
-// MIPS32EL:#define __UINT_FAST8_MAX__ 255U
+// MIPS32EL:#define __UINT_FAST8_MAX__ 255
 // MIPS32EL:#define __UINT_FAST8_TYPE__ unsigned char
-// MIPS32EL:#define __UINT_LEAST16_MAX__ 65535U
+// MIPS32EL:#define __UINT_LEAST16_MAX__ 65535
 // MIPS32EL:#define __UINT_LEAST16_TYPE__ unsigned short
 // MIPS32EL:#define __UINT_LEAST32_MAX__ 4294967295U
 // MIPS32EL:#define __UINT_LEAST32_TYPE__ unsigned int
 // MIPS32EL:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // MIPS32EL:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// MIPS32EL:#define __UINT_LEAST8_MAX__ 255U
+// MIPS32EL:#define __UINT_LEAST8_MAX__ 255
 // MIPS32EL:#define __UINT_LEAST8_TYPE__ unsigned char
 // MIPS32EL:#define __USER_LABEL_PREFIX__ _
 // MIPS32EL:#define __WCHAR_MAX__ 2147483647
@@ -2958,8 +2958,8 @@
 // MIPS64BE:#define __SIZE_MAX__ 18446744073709551615UL
 // MIPS64BE:#define __SIZE_TYPE__ long unsigned int
 // MIPS64BE:#define __SIZE_WIDTH__ 64
-// MIPS64BE:#define __UINT16_C_SUFFIX__ U
-// MIPS64BE:#define __UINT16_MAX__ 65535U
+// MIPS64BE:#define __UINT16_C_SUFFIX__ {{$}}
+// MIPS64BE:#define __UINT16_MAX__ 65535
 // MIPS64BE:#define __UINT16_TYPE__ unsigned short
 // MIPS64BE:#define __UINT32_C_SUFFIX__ U
 // MIPS64BE:#define __UINT32_MAX__ 4294967295U
@@ -2967,8 +2967,8 @@
 // MIPS64BE:#define __UINT64_C_SUFFIX__ ULL
 // MIPS64BE:#define __UINT64_MAX__ 18446744073709551615ULL
 // MIPS64BE:#define __UINT64_TYPE__ long long unsigned int
-// MIPS64BE:#define __UINT8_C_SUFFIX__ U
-// MIPS64BE:#define __UINT8_MAX__ 255U
+// MIPS64BE:#define __UINT8_C_SUFFIX__ {{$}}
+// MIPS64BE:#define __UINT8_MAX__ 255
 // MIPS64BE:#define __UINT8_TYPE__ unsigned char
 // MIPS64BE:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS64BE:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -2977,21 +2977,21 @@
 // MIPS64BE:#define __UINTPTR_MAX__ 18446744073709551615UL
 // MIPS64BE:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS64BE:#define __UINTPTR_WIDTH__ 64
-// MIPS64BE:#define __UINT_FAST16_MAX__ 65535U
+// MIPS64BE:#define __UINT_FAST16_MAX__ 65535
 // MIPS64BE:#define __UINT_FAST16_TYPE__ unsigned short
 // MIPS64BE:#define __UINT_FAST32_MAX__ 4294967295U
 // MIPS64BE:#define __UINT_FAST32_TYPE__ unsigned int
 // MIPS64BE:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // MIPS64BE:#define __UINT_FAST64_TYPE__ long unsigned int
-// MIPS64BE:#define __UINT_FAST8_MAX__ 255U
+// MIPS64BE:#define __UINT_FAST8_MAX__ 255
 // MIPS64BE:#define __UINT_FAST8_TYPE__ unsigned char
-// MIPS64BE:#define __UINT_LEAST16_MAX__ 65535U
+// MIPS64BE:#define __UINT_LEAST16_MAX__ 65535
 // MIPS64BE:#define __UINT_LEAST16_TYPE__ unsigned short
 // MIPS64BE:#define __UINT_LEAST32_MAX__ 4294967295U
 // MIPS64BE:#define __UINT_LEAST32_TYPE__ unsigned int
 // MIPS64BE:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // MIPS64BE:#define __UINT_LEAST64_TYPE__ long unsigned int
-// MIPS64BE:#define __UINT_LEAST8_MAX__ 255U
+// MIPS64BE:#define __UINT_LEAST8_MAX__ 255
 // MIPS64BE:#define __UINT_LEAST8_TYPE__ unsigned char
 // MIPS64BE:#define __USER_LABEL_PREFIX__ _
 // MIPS64BE:#define __WCHAR_MAX__ 2147483647
@@ -3165,8 +3165,8 @@
 // MIPS64EL:#define __SIZE_MAX__ 18446744073709551615UL
 // MIPS64EL:#define __SIZE_TYPE__ long unsigned int
 // MIPS64EL:#define __SIZE_WIDTH__ 64
-// MIPS64EL:#define __UINT16_C_SUFFIX__ U
-// MIPS64EL:#define __UINT16_MAX__ 65535U
+// MIPS64EL:#define __UINT16_C_SUFFIX__ {{$}}
+// MIPS64EL:#define __UINT16_MAX__ 65535
 // MIPS64EL:#define __UINT16_TYPE__ unsigned short
 // MIPS64EL:#define __UINT32_C_SUFFIX__ U
 // MIPS64EL:#define __UINT32_MAX__ 4294967295U
@@ -3174,8 +3174,8 @@
 // MIPS64EL:#define __UINT64_C_SUFFIX__ ULL
 // MIPS64EL:#define __UINT64_MAX__ 18446744073709551615ULL
 // MIPS64EL:#define __UINT64_TYPE__ long long unsigned int
-// MIPS64EL:#define __UINT8_C_SUFFIX__ U
-// MIPS64EL:#define __UINT8_MAX__ 255U
+// MIPS64EL:#define __UINT8_C_SUFFIX__ {{$}}
+// MIPS64EL:#define __UINT8_MAX__ 255
 // MIPS64EL:#define __UINT8_TYPE__ unsigned char
 // MIPS64EL:#define __UINTMAX_C_SUFFIX__ ULL
 // MIPS64EL:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -3184,21 +3184,21 @@
 // MIPS64EL:#define __UINTPTR_MAX__ 18446744073709551615UL
 // MIPS64EL:#define __UINTPTR_TYPE__ long unsigned int
 // MIPS64EL:#define __UINTPTR_WIDTH__ 64
-// MIPS64EL:#define __UINT_FAST16_MAX__ 65535U
+// MIPS64EL:#define __UINT_FAST16_MAX__ 65535
 // MIPS64EL:#define __UINT_FAST16_TYPE__ unsigned short
 // MIPS64EL:#define __UINT_FAST32_MAX__ 4294967295U
 // MIPS64EL:#define __UINT_FAST32_TYPE__ unsigned int
 // MIPS64EL:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // MIPS64EL:#define __UINT_FAST64_TYPE__ long unsigned int
-// MIPS64EL:#define __UINT_FAST8_MAX__ 255U
+// MIPS64EL:#define __UINT_FAST8_MAX__ 255
 // MIPS64EL:#define __UINT_FAST8_TYPE__ unsigned char
-// MIPS64EL:#define __UINT_LEAST16_MAX__ 65535U
+// MIPS64EL:#define __UINT_LEAST16_MAX__ 65535
 // MIPS64EL:#define __UINT_LEAST16_TYPE__ unsigned short
 // MIPS64EL:#define __UINT_LEAST32_MAX__ 4294967295U
 // MIPS64EL:#define __UINT_LEAST32_TYPE__ unsigned int
 // MIPS64EL:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // MIPS64EL:#define __UINT_LEAST64_TYPE__ long unsigned int
-// MIPS64EL:#define __UINT_LEAST8_MAX__ 255U
+// MIPS64EL:#define __UINT_LEAST8_MAX__ 255
 // MIPS64EL:#define __UINT_LEAST8_TYPE__ unsigned char
 // MIPS64EL:#define __USER_LABEL_PREFIX__ _
 // MIPS64EL:#define __WCHAR_MAX__ 2147483647
@@ -3522,11 +3522,11 @@
 // MSP430:#define __SIZEOF_SIZE_T__ 2
 // MSP430:#define __SIZEOF_WCHAR_T__ 2
 // MSP430:#define __SIZEOF_WINT_T__ 2
-// MSP430:#define __SIZE_MAX__ 65535U
+// MSP430:#define __SIZE_MAX__ 65535
 // MSP430:#define __SIZE_TYPE__ unsigned int
 // MSP430:#define __SIZE_WIDTH__ 16
 // MSP430:#define __UINT16_C_SUFFIX__ U
-// MSP430:#define __UINT16_MAX__ 65535U
+// MSP430:#define __UINT16_MAX__ 65535
 // MSP430:#define __UINT16_TYPE__ unsigned short
 // MSP430:#define __UINT32_C_SUFFIX__ UL
 // MSP430:#define __UINT32_MAX__ 4294967295UL
@@ -3534,31 +3534,31 @@
 // MSP430:#define __UINT64_C_SUFFIX__ ULL
 // MSP430:#define __UINT64_MAX__ 18446744073709551615ULL
 // MSP430:#define __UINT64_TYPE__ long long unsigned int
-// MSP430:#define __UINT8_C_SUFFIX__ U
-// MSP430:#define __UINT8_MAX__ 255U
+// MSP430:#define __UINT8_C_SUFFIX__ {{$}}
+// MSP430:#define __UINT8_MAX__ 255
 // MSP430:#define __UINT8_TYPE__ unsigned char
 // MSP430:#define __UINTMAX_C_SUFFIX__ ULL
 // MSP430:#define __UINTMAX_MAX__ 18446744073709551615ULL
 // MSP430:#define __UINTMAX_TYPE__ long long unsigned int
 // MSP430:#define __UINTMAX_WIDTH__ 64
-// MSP430:#define __UINTPTR_MAX__ 65535U
+// MSP430:#define __UINTPTR_MAX__ 65535
 // MSP430:#define __UINTPTR_TYPE__ unsigned int
 // MSP430:#define __UINTPTR_WIDTH__ 16
-// MSP430:#define __UINT_FAST16_MAX__ 65535U
+// MSP430:#define __UINT_FAST16_MAX__ 65535
 // MSP430:#define __UINT_FAST16_TYPE__ unsigned short
 // MSP430:#define __UINT_FAST32_MAX__ 4294967295UL
 // MSP430:#define __UINT_FAST32_TYPE__ long unsigned int
 // MSP430:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // MSP430:#define __UINT_FAST64_TYPE__ long long unsigned int
-// MSP430:#define __UINT_FAST8_MAX__ 255U
+// MSP430:#define __UINT_FAST8_MAX__ 255
 // MSP430:#define __UINT_FAST8_TYPE__ unsigned char
-// MSP430:#define __UINT_LEAST16_MAX__ 65535U
+// MSP430:#define __UINT_LEAST16_MAX__ 65535
 // MSP430:#define __UINT_LEAST16_TYPE__ unsigned short
 // MSP430:#define __UINT_LEAST32_MAX__ 4294967295UL
 // MSP430:#define __UINT_LEAST32_TYPE__ long unsigned int
 // MSP430:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // MSP430:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// MSP430:#define __UINT_LEAST8_MAX__ 255U
+// MSP430:#define __UINT_LEAST8_MAX__ 255
 // MSP430:#define __UINT_LEAST8_TYPE__ unsigned char
 // MSP430:#define __USER_LABEL_PREFIX__ _
 // MSP430:#define __WCHAR_MAX__ 32767
@@ -3712,8 +3712,8 @@
 // NVPTX32:#define __SIZE_MAX__ 4294967295U
 // NVPTX32:#define __SIZE_TYPE__ unsigned int
 // NVPTX32:#define __SIZE_WIDTH__ 32
-// NVPTX32:#define __UINT16_C_SUFFIX__ U
-// NVPTX32:#define __UINT16_MAX__ 65535U
+// NVPTX32:#define __UINT16_C_SUFFIX__ {{$}}
+// NVPTX32:#define __UINT16_MAX__ 65535
 // NVPTX32:#define __UINT16_TYPE__ unsigned short
 // NVPTX32:#define __UINT32_C_SUFFIX__ U
 // NVPTX32:#define __UINT32_MAX__ 4294967295U
@@ -3721,8 +3721,8 @@
 // NVPTX32:#define __UINT64_C_SUFFIX__ ULL
 // NVPTX32:#define __UINT64_MAX__ 18446744073709551615ULL
 // NVPTX32:#define __UINT64_TYPE__ long long unsigned int
-// NVPTX32:#define __UINT8_C_SUFFIX__ U
-// NVPTX32:#define __UINT8_MAX__ 255U
+// NVPTX32:#define __UINT8_C_SUFFIX__ {{$}}
+// NVPTX32:#define __UINT8_MAX__ 255
 // NVPTX32:#define __UINT8_TYPE__ unsigned char
 // NVPTX32:#define __UINTMAX_C_SUFFIX__ ULL
 // NVPTX32:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -3731,21 +3731,21 @@
 // NVPTX32:#define __UINTPTR_MAX__ 4294967295U
 // NVPTX32:#define __UINTPTR_TYPE__ unsigned int
 // NVPTX32:#define __UINTPTR_WIDTH__ 32
-// NVPTX32:#define __UINT_FAST16_MAX__ 65535U
+// NVPTX32:#define __UINT_FAST16_MAX__ 65535
 // NVPTX32:#define __UINT_FAST16_TYPE__ unsigned short
 // NVPTX32:#define __UINT_FAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_FAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // NVPTX32:#define __UINT_FAST64_TYPE__ long unsigned int
-// NVPTX32:#define __UINT_FAST8_MAX__ 255U
+// NVPTX32:#define __UINT_FAST8_MAX__ 255
 // NVPTX32:#define __UINT_FAST8_TYPE__ unsigned char
-// NVPTX32:#define __UINT_LEAST16_MAX__ 65535U
+// NVPTX32:#define __UINT_LEAST16_MAX__ 65535
 // NVPTX32:#define __UINT_LEAST16_TYPE__ unsigned short
 // NVPTX32:#define __UINT_LEAST32_MAX__ 4294967295U
 // NVPTX32:#define __UINT_LEAST32_TYPE__ unsigned int
 // NVPTX32:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // NVPTX32:#define __UINT_LEAST64_TYPE__ long unsigned int
-// NVPTX32:#define __UINT_LEAST8_MAX__ 255U
+// NVPTX32:#define __UINT_LEAST8_MAX__ 255
 // NVPTX32:#define __UINT_LEAST8_TYPE__ unsigned char
 // NVPTX32:#define __USER_LABEL_PREFIX__ _
 // NVPTX32:#define __WCHAR_MAX__ 2147483647
@@ -3898,8 +3898,8 @@
 // NVPTX64:#define __SIZE_MAX__ 18446744073709551615UL
 // NVPTX64:#define __SIZE_TYPE__ long long unsigned int
 // NVPTX64:#define __SIZE_WIDTH__ 64
-// NVPTX64:#define __UINT16_C_SUFFIX__ U
-// NVPTX64:#define __UINT16_MAX__ 65535U
+// NVPTX64:#define __UINT16_C_SUFFIX__ {{$}}
+// NVPTX64:#define __UINT16_MAX__ 65535
 // NVPTX64:#define __UINT16_TYPE__ unsigned short
 // NVPTX64:#define __UINT32_C_SUFFIX__ U
 // NVPTX64:#define __UINT32_MAX__ 4294967295U
@@ -3907,8 +3907,8 @@
 // NVPTX64:#define __UINT64_C_SUFFIX__ ULL
 // NVPTX64:#define __UINT64_MAX__ 18446744073709551615ULL
 // NVPTX64:#define __UINT64_TYPE__ long long unsigned int
-// NVPTX64:#define __UINT8_C_SUFFIX__ U
-// NVPTX64:#define __UINT8_MAX__ 255U
+// NVPTX64:#define __UINT8_C_SUFFIX__ {{$}}
+// NVPTX64:#define __UINT8_MAX__ 255
 // NVPTX64:#define __UINT8_TYPE__ unsigned char
 // NVPTX64:#define __UINTMAX_C_SUFFIX__ ULL
 // NVPTX64:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -3917,21 +3917,21 @@
 // NVPTX64:#define __UINTPTR_MAX__ 18446744073709551615ULL
 // NVPTX64:#define __UINTPTR_TYPE__ long long unsigned int
 // NVPTX64:#define __UINTPTR_WIDTH__ 64
-// NVPTX64:#define __UINT_FAST16_MAX__ 65535U
+// NVPTX64:#define __UINT_FAST16_MAX__ 65535
 // NVPTX64:#define __UINT_FAST16_TYPE__ unsigned short
 // NVPTX64:#define __UINT_FAST32_MAX__ 4294967295U
 // NVPTX64:#define __UINT_FAST32_TYPE__ unsigned int
 // NVPTX64:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // NVPTX64:#define __UINT_FAST64_TYPE__ long unsigned int
-// NVPTX64:#define __UINT_FAST8_MAX__ 255U
+// NVPTX64:#define __UINT_FAST8_MAX__ 255
 // NVPTX64:#define __UINT_FAST8_TYPE__ unsigned char
-// NVPTX64:#define __UINT_LEAST16_MAX__ 65535U
+// NVPTX64:#define __UINT_LEAST16_MAX__ 65535
 // NVPTX64:#define __UINT_LEAST16_TYPE__ unsigned short
 // NVPTX64:#define __UINT_LEAST32_MAX__ 4294967295U
 // NVPTX64:#define __UINT_LEAST32_TYPE__ unsigned int
 // NVPTX64:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // NVPTX64:#define __UINT_LEAST64_TYPE__ long unsigned int
-// NVPTX64:#define __UINT_LEAST8_MAX__ 255U
+// NVPTX64:#define __UINT_LEAST8_MAX__ 255
 // NVPTX64:#define __UINT_LEAST8_TYPE__ unsigned char
 // NVPTX64:#define __USER_LABEL_PREFIX__ _
 // NVPTX64:#define __WCHAR_MAX__ 2147483647
@@ -4089,8 +4089,8 @@
 // PPC603E:#define __SIZE_MAX__ 4294967295U
 // PPC603E:#define __SIZE_TYPE__ long unsigned int
 // PPC603E:#define __SIZE_WIDTH__ 32
-// PPC603E:#define __UINT16_C_SUFFIX__ U
-// PPC603E:#define __UINT16_MAX__ 65535U
+// PPC603E:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC603E:#define __UINT16_MAX__ 65535
 // PPC603E:#define __UINT16_TYPE__ unsigned short
 // PPC603E:#define __UINT32_C_SUFFIX__ U
 // PPC603E:#define __UINT32_MAX__ 4294967295U
@@ -4098,8 +4098,8 @@
 // PPC603E:#define __UINT64_C_SUFFIX__ ULL
 // PPC603E:#define __UINT64_MAX__ 18446744073709551615ULL
 // PPC603E:#define __UINT64_TYPE__ long long unsigned int
-// PPC603E:#define __UINT8_C_SUFFIX__ U
-// PPC603E:#define __UINT8_MAX__ 255U
+// PPC603E:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC603E:#define __UINT8_MAX__ 255
 // PPC603E:#define __UINT8_TYPE__ unsigned char
 // PPC603E:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC603E:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -4108,21 +4108,21 @@
 // PPC603E:#define __UINTPTR_MAX__ 4294967295U
 // PPC603E:#define __UINTPTR_TYPE__ long unsigned int
 // PPC603E:#define __UINTPTR_WIDTH__ 32
-// PPC603E:#define __UINT_FAST16_MAX__ 65535U
+// PPC603E:#define __UINT_FAST16_MAX__ 65535
 // PPC603E:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC603E:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC603E:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC603E:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // PPC603E:#define __UINT_FAST64_TYPE__ long long unsigned int
-// PPC603E:#define __UINT_FAST8_MAX__ 255U
+// PPC603E:#define __UINT_FAST8_MAX__ 255
 // PPC603E:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC603E:#define __UINT_LEAST16_MAX__ 65535U
+// PPC603E:#define __UINT_LEAST16_MAX__ 65535
 // PPC603E:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC603E:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC603E:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC603E:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // PPC603E:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// PPC603E:#define __UINT_LEAST8_MAX__ 255U
+// PPC603E:#define __UINT_LEAST8_MAX__ 255
 // PPC603E:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC603E:#define __USER_LABEL_PREFIX__ _
 // PPC603E:#define __WCHAR_MAX__ 2147483647
@@ -4288,8 +4288,8 @@
 // PPC64:#define __SIZE_MAX__ 18446744073709551615UL
 // PPC64:#define __SIZE_TYPE__ long unsigned int
 // PPC64:#define __SIZE_WIDTH__ 64
-// PPC64:#define __UINT16_C_SUFFIX__ U
-// PPC64:#define __UINT16_MAX__ 65535U
+// PPC64:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC64:#define __UINT16_MAX__ 65535
 // PPC64:#define __UINT16_TYPE__ unsigned short
 // PPC64:#define __UINT32_C_SUFFIX__ U
 // PPC64:#define __UINT32_MAX__ 4294967295U
@@ -4297,8 +4297,8 @@
 // PPC64:#define __UINT64_C_SUFFIX__ UL
 // PPC64:#define __UINT64_MAX__ 18446744073709551615UL
 // PPC64:#define __UINT64_TYPE__ long unsigned int
-// PPC64:#define __UINT8_C_SUFFIX__ U
-// PPC64:#define __UINT8_MAX__ 255U
+// PPC64:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC64:#define __UINT8_MAX__ 255
 // PPC64:#define __UINT8_TYPE__ unsigned char
 // PPC64:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -4307,21 +4307,21 @@
 // PPC64:#define __UINTPTR_MAX__ 18446744073709551615UL
 // PPC64:#define __UINTPTR_TYPE__ long unsigned int
 // PPC64:#define __UINTPTR_WIDTH__ 64
-// PPC64:#define __UINT_FAST16_MAX__ 65535U
+// PPC64:#define __UINT_FAST16_MAX__ 65535
 // PPC64:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC64:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC64:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC64:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // PPC64:#define __UINT_FAST64_TYPE__ long unsigned int
-// PPC64:#define __UINT_FAST8_MAX__ 255U
+// PPC64:#define __UINT_FAST8_MAX__ 255
 // PPC64:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC64:#define __UINT_LEAST16_MAX__ 65535U
+// PPC64:#define __UINT_LEAST16_MAX__ 65535
 // PPC64:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC64:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC64:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC64:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // PPC64:#define __UINT_LEAST64_TYPE__ long unsigned int
-// PPC64:#define __UINT_LEAST8_MAX__ 255U
+// PPC64:#define __UINT_LEAST8_MAX__ 255
 // PPC64:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC64:#define __USER_LABEL_PREFIX__ _
 // PPC64:#define __WCHAR_MAX__ 2147483647
@@ -4490,8 +4490,8 @@
 // PPC64LE:#define __SIZE_MAX__ 18446744073709551615UL
 // PPC64LE:#define __SIZE_TYPE__ long unsigned int
 // PPC64LE:#define __SIZE_WIDTH__ 64
-// PPC64LE:#define __UINT16_C_SUFFIX__ U
-// PPC64LE:#define __UINT16_MAX__ 65535U
+// PPC64LE:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC64LE:#define __UINT16_MAX__ 65535
 // PPC64LE:#define __UINT16_TYPE__ unsigned short
 // PPC64LE:#define __UINT32_C_SUFFIX__ U
 // PPC64LE:#define __UINT32_MAX__ 4294967295U
@@ -4499,8 +4499,8 @@
 // PPC64LE:#define __UINT64_C_SUFFIX__ UL
 // PPC64LE:#define __UINT64_MAX__ 18446744073709551615UL
 // PPC64LE:#define __UINT64_TYPE__ long unsigned int
-// PPC64LE:#define __UINT8_C_SUFFIX__ U
-// PPC64LE:#define __UINT8_MAX__ 255U
+// PPC64LE:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC64LE:#define __UINT8_MAX__ 255
 // PPC64LE:#define __UINT8_TYPE__ unsigned char
 // PPC64LE:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64LE:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -4509,21 +4509,21 @@
 // PPC64LE:#define __UINTPTR_MAX__ 18446744073709551615UL
 // PPC64LE:#define __UINTPTR_TYPE__ long unsigned int
 // PPC64LE:#define __UINTPTR_WIDTH__ 64
-// PPC64LE:#define __UINT_FAST16_MAX__ 65535U
+// PPC64LE:#define __UINT_FAST16_MAX__ 65535
 // PPC64LE:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC64LE:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC64LE:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC64LE:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // PPC64LE:#define __UINT_FAST64_TYPE__ long unsigned int
-// PPC64LE:#define __UINT_FAST8_MAX__ 255U
+// PPC64LE:#define __UINT_FAST8_MAX__ 255
 // PPC64LE:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC64LE:#define __UINT_LEAST16_MAX__ 65535U
+// PPC64LE:#define __UINT_LEAST16_MAX__ 65535
 // PPC64LE:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC64LE:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC64LE:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC64LE:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // PPC64LE:#define __UINT_LEAST64_TYPE__ long unsigned int
-// PPC64LE:#define __UINT_LEAST8_MAX__ 255U
+// PPC64LE:#define __UINT_LEAST8_MAX__ 255
 // PPC64LE:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC64LE:#define __USER_LABEL_PREFIX__ _
 // PPC64LE:#define __WCHAR_MAX__ 2147483647
@@ -4871,8 +4871,8 @@
 // PPC64-LINUX:#define __SIZE_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __SIZE_TYPE__ long unsigned int
 // PPC64-LINUX:#define __SIZE_WIDTH__ 64
-// PPC64-LINUX:#define __UINT16_C_SUFFIX__ U
-// PPC64-LINUX:#define __UINT16_MAX__ 65535U
+// PPC64-LINUX:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC64-LINUX:#define __UINT16_MAX__ 65535
 // PPC64-LINUX:#define __UINT16_TYPE__ unsigned short
 // PPC64-LINUX:#define __UINT32_C_SUFFIX__ U
 // PPC64-LINUX:#define __UINT32_MAX__ 4294967295U
@@ -4880,8 +4880,8 @@
 // PPC64-LINUX:#define __UINT64_C_SUFFIX__ UL
 // PPC64-LINUX:#define __UINT64_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __UINT64_TYPE__ long unsigned int
-// PPC64-LINUX:#define __UINT8_C_SUFFIX__ U
-// PPC64-LINUX:#define __UINT8_MAX__ 255U
+// PPC64-LINUX:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC64-LINUX:#define __UINT8_MAX__ 255
 // PPC64-LINUX:#define __UINT8_TYPE__ unsigned char
 // PPC64-LINUX:#define __UINTMAX_C_SUFFIX__ UL
 // PPC64-LINUX:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -4890,21 +4890,21 @@
 // PPC64-LINUX:#define __UINTPTR_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __UINTPTR_TYPE__ long unsigned int
 // PPC64-LINUX:#define __UINTPTR_WIDTH__ 64
-// PPC64-LINUX:#define __UINT_FAST16_MAX__ 65535U
+// PPC64-LINUX:#define __UINT_FAST16_MAX__ 65535
 // PPC64-LINUX:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC64-LINUX:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC64-LINUX:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC64-LINUX:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __UINT_FAST64_TYPE__ long unsigned int
-// PPC64-LINUX:#define __UINT_FAST8_MAX__ 255U
+// PPC64-LINUX:#define __UINT_FAST8_MAX__ 255
 // PPC64-LINUX:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC64-LINUX:#define __UINT_LEAST16_MAX__ 65535U
+// PPC64-LINUX:#define __UINT_LEAST16_MAX__ 65535
 // PPC64-LINUX:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC64-LINUX:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC64-LINUX:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC64-LINUX:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // PPC64-LINUX:#define __UINT_LEAST64_TYPE__ long unsigned int
-// PPC64-LINUX:#define __UINT_LEAST8_MAX__ 255U
+// PPC64-LINUX:#define __UINT_LEAST8_MAX__ 255
 // PPC64-LINUX:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC64-LINUX:#define __USER_LABEL_PREFIX__
 // PPC64-LINUX:#define __WCHAR_MAX__ 2147483647
@@ -5065,8 +5065,8 @@
 // PPC:#define __SIZE_MAX__ 4294967295U
 // PPC:#define __SIZE_TYPE__ long unsigned int
 // PPC:#define __SIZE_WIDTH__ 32
-// PPC:#define __UINT16_C_SUFFIX__ U
-// PPC:#define __UINT16_MAX__ 65535U
+// PPC:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC:#define __UINT16_MAX__ 65535
 // PPC:#define __UINT16_TYPE__ unsigned short
 // PPC:#define __UINT32_C_SUFFIX__ U
 // PPC:#define __UINT32_MAX__ 4294967295U
@@ -5074,8 +5074,8 @@
 // PPC:#define __UINT64_C_SUFFIX__ ULL
 // PPC:#define __UINT64_MAX__ 18446744073709551615ULL
 // PPC:#define __UINT64_TYPE__ long long unsigned int
-// PPC:#define __UINT8_C_SUFFIX__ U
-// PPC:#define __UINT8_MAX__ 255U
+// PPC:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC:#define __UINT8_MAX__ 255
 // PPC:#define __UINT8_TYPE__ unsigned char
 // PPC:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -5084,21 +5084,21 @@
 // PPC:#define __UINTPTR_MAX__ 4294967295U
 // PPC:#define __UINTPTR_TYPE__ long unsigned int
 // PPC:#define __UINTPTR_WIDTH__ 32
-// PPC:#define __UINT_FAST16_MAX__ 65535U
+// PPC:#define __UINT_FAST16_MAX__ 65535
 // PPC:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // PPC:#define __UINT_FAST64_TYPE__ long long unsigned int
-// PPC:#define __UINT_FAST8_MAX__ 255U
+// PPC:#define __UINT_FAST8_MAX__ 255
 // PPC:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC:#define __UINT_LEAST16_MAX__ 65535U
+// PPC:#define __UINT_LEAST16_MAX__ 65535
 // PPC:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // PPC:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// PPC:#define __UINT_LEAST8_MAX__ 255U
+// PPC:#define __UINT_LEAST8_MAX__ 255
 // PPC:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC:#define __USER_LABEL_PREFIX__ _
 // PPC:#define __WCHAR_MAX__ 2147483647
@@ -5255,8 +5255,8 @@
 // PPC-LINUX:#define __SIZE_MAX__ 4294967295U
 // PPC-LINUX:#define __SIZE_TYPE__ unsigned int
 // PPC-LINUX:#define __SIZE_WIDTH__ 32
-// PPC-LINUX:#define __UINT16_C_SUFFIX__ U
-// PPC-LINUX:#define __UINT16_MAX__ 65535U
+// PPC-LINUX:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC-LINUX:#define __UINT16_MAX__ 65535
 // PPC-LINUX:#define __UINT16_TYPE__ unsigned short
 // PPC-LINUX:#define __UINT32_C_SUFFIX__ U
 // PPC-LINUX:#define __UINT32_MAX__ 4294967295U
@@ -5264,8 +5264,8 @@
 // PPC-LINUX:#define __UINT64_C_SUFFIX__ ULL
 // PPC-LINUX:#define __UINT64_MAX__ 18446744073709551615ULL
 // PPC-LINUX:#define __UINT64_TYPE__ long long unsigned int
-// PPC-LINUX:#define __UINT8_C_SUFFIX__ U
-// PPC-LINUX:#define __UINT8_MAX__ 255U
+// PPC-LINUX:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC-LINUX:#define __UINT8_MAX__ 255
 // PPC-LINUX:#define __UINT8_TYPE__ unsigned char
 // PPC-LINUX:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC-LINUX:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -5274,21 +5274,21 @@
 // PPC-LINUX:#define __UINTPTR_MAX__ 4294967295U
 // PPC-LINUX:#define __UINTPTR_TYPE__ unsigned int
 // PPC-LINUX:#define __UINTPTR_WIDTH__ 32
-// PPC-LINUX:#define __UINT_FAST16_MAX__ 65535U
+// PPC-LINUX:#define __UINT_FAST16_MAX__ 65535
 // PPC-LINUX:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC-LINUX:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC-LINUX:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC-LINUX:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // PPC-LINUX:#define __UINT_FAST64_TYPE__ long long unsigned int
-// PPC-LINUX:#define __UINT_FAST8_MAX__ 255U
+// PPC-LINUX:#define __UINT_FAST8_MAX__ 255
 // PPC-LINUX:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC-LINUX:#define __UINT_LEAST16_MAX__ 65535U
+// PPC-LINUX:#define __UINT_LEAST16_MAX__ 65535
 // PPC-LINUX:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC-LINUX:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC-LINUX:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC-LINUX:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // PPC-LINUX:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// PPC-LINUX:#define __UINT_LEAST8_MAX__ 255U
+// PPC-LINUX:#define __UINT_LEAST8_MAX__ 255
 // PPC-LINUX:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC-LINUX:#define __USER_LABEL_PREFIX__
 // PPC-LINUX:#define __WCHAR_MAX__ 2147483647
@@ -5451,8 +5451,8 @@
 // PPC-DARWIN:#define __STDC_HOSTED__ 0
 // PPC-DARWIN:#define __STDC_VERSION__ 199901L
 // PPC-DARWIN:#define __STDC__ 1
-// PPC-DARWIN:#define __UINT16_C_SUFFIX__ U
-// PPC-DARWIN:#define __UINT16_MAX__ 65535U
+// PPC-DARWIN:#define __UINT16_C_SUFFIX__ {{$}}
+// PPC-DARWIN:#define __UINT16_MAX__ 65535
 // PPC-DARWIN:#define __UINT16_TYPE__ unsigned short
 // PPC-DARWIN:#define __UINT32_C_SUFFIX__ U
 // PPC-DARWIN:#define __UINT32_MAX__ 4294967295U
@@ -5460,8 +5460,8 @@
 // PPC-DARWIN:#define __UINT64_C_SUFFIX__ ULL
 // PPC-DARWIN:#define __UINT64_MAX__ 18446744073709551615ULL
 // PPC-DARWIN:#define __UINT64_TYPE__ long long unsigned int
-// PPC-DARWIN:#define __UINT8_C_SUFFIX__ U
-// PPC-DARWIN:#define __UINT8_MAX__ 255U
+// PPC-DARWIN:#define __UINT8_C_SUFFIX__ {{$}}
+// PPC-DARWIN:#define __UINT8_MAX__ 255
 // PPC-DARWIN:#define __UINT8_TYPE__ unsigned char
 // PPC-DARWIN:#define __UINTMAX_C_SUFFIX__ ULL
 // PPC-DARWIN:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -5470,21 +5470,21 @@
 // PPC-DARWIN:#define __UINTPTR_MAX__ 4294967295U
 // PPC-DARWIN:#define __UINTPTR_TYPE__ long unsigned int
 // PPC-DARWIN:#define __UINTPTR_WIDTH__ 32
-// PPC-DARWIN:#define __UINT_FAST16_MAX__ 65535U
+// PPC-DARWIN:#define __UINT_FAST16_MAX__ 65535
 // PPC-DARWIN:#define __UINT_FAST16_TYPE__ unsigned short
 // PPC-DARWIN:#define __UINT_FAST32_MAX__ 4294967295U
 // PPC-DARWIN:#define __UINT_FAST32_TYPE__ unsigned int
 // PPC-DARWIN:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // PPC-DARWIN:#define __UINT_FAST64_TYPE__ long long unsigned int
-// PPC-DARWIN:#define __UINT_FAST8_MAX__ 255U
+// PPC-DARWIN:#define __UINT_FAST8_MAX__ 255
 // PPC-DARWIN:#define __UINT_FAST8_TYPE__ unsigned char
-// PPC-DARWIN:#define __UINT_LEAST16_MAX__ 65535U
+// PPC-DARWIN:#define __UINT_LEAST16_MAX__ 65535
 // PPC-DARWIN:#define __UINT_LEAST16_TYPE__ unsigned short
 // PPC-DARWIN:#define __UINT_LEAST32_MAX__ 4294967295U
 // PPC-DARWIN:#define __UINT_LEAST32_TYPE__ unsigned int
 // PPC-DARWIN:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // PPC-DARWIN:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// PPC-DARWIN:#define __UINT_LEAST8_MAX__ 255U
+// PPC-DARWIN:#define __UINT_LEAST8_MAX__ 255
 // PPC-DARWIN:#define __UINT_LEAST8_TYPE__ unsigned char
 // PPC-DARWIN:#define __USER_LABEL_PREFIX__ _
 // PPC-DARWIN:#define __WCHAR_MAX__ 2147483647
@@ -5631,8 +5631,8 @@
 // S390X:#define __SIZEOF_WINT_T__ 4
 // S390X:#define __SIZE_TYPE__ long unsigned int
 // S390X:#define __SIZE_WIDTH__ 64
-// S390X:#define __UINT16_C_SUFFIX__ U
-// S390X:#define __UINT16_MAX__ 65535U
+// S390X:#define __UINT16_C_SUFFIX__ {{$}}
+// S390X:#define __UINT16_MAX__ 65535
 // S390X:#define __UINT16_TYPE__ unsigned short
 // S390X:#define __UINT32_C_SUFFIX__ U
 // S390X:#define __UINT32_MAX__ 4294967295U
@@ -5640,8 +5640,8 @@
 // S390X:#define __UINT64_C_SUFFIX__ ULL
 // S390X:#define __UINT64_MAX__ 18446744073709551615ULL
 // S390X:#define __UINT64_TYPE__ long long unsigned int
-// S390X:#define __UINT8_C_SUFFIX__ U
-// S390X:#define __UINT8_MAX__ 255U
+// S390X:#define __UINT8_C_SUFFIX__ {{$}}
+// S390X:#define __UINT8_MAX__ 255
 // S390X:#define __UINT8_TYPE__ unsigned char
 // S390X:#define __UINTMAX_C_SUFFIX__ ULL
 // S390X:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -5650,21 +5650,21 @@
 // S390X:#define __UINTPTR_MAX__ 18446744073709551615UL
 // S390X:#define __UINTPTR_TYPE__ long unsigned int
 // S390X:#define __UINTPTR_WIDTH__ 64
-// S390X:#define __UINT_FAST16_MAX__ 65535U
+// S390X:#define __UINT_FAST16_MAX__ 65535
 // S390X:#define __UINT_FAST16_TYPE__ unsigned short
 // S390X:#define __UINT_FAST32_MAX__ 4294967295U
 // S390X:#define __UINT_FAST32_TYPE__ unsigned int
 // S390X:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // S390X:#define __UINT_FAST64_TYPE__ long unsigned int
-// S390X:#define __UINT_FAST8_MAX__ 255U
+// S390X:#define __UINT_FAST8_MAX__ 255
 // S390X:#define __UINT_FAST8_TYPE__ unsigned char
-// S390X:#define __UINT_LEAST16_MAX__ 65535U
+// S390X:#define __UINT_LEAST16_MAX__ 65535
 // S390X:#define __UINT_LEAST16_TYPE__ unsigned short
 // S390X:#define __UINT_LEAST32_MAX__ 4294967295U
 // S390X:#define __UINT_LEAST32_TYPE__ unsigned int
 // S390X:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // S390X:#define __UINT_LEAST64_TYPE__ long unsigned int
-// S390X:#define __UINT_LEAST8_MAX__ 255U
+// S390X:#define __UINT_LEAST8_MAX__ 255
 // S390X:#define __UINT_LEAST8_TYPE__ unsigned char
 // S390X:#define __USER_LABEL_PREFIX__ _
 // S390X:#define __WCHAR_MAX__ 2147483647
@@ -5815,8 +5815,8 @@
 // SPARC:#define __SIZE_MAX__ 4294967295U
 // SPARC:#define __SIZE_TYPE__ long unsigned int
 // SPARC:#define __SIZE_WIDTH__ 32
-// SPARC:#define __UINT16_C_SUFFIX__ U
-// SPARC:#define __UINT16_MAX__ 65535U
+// SPARC:#define __UINT16_C_SUFFIX__ {{$}}
+// SPARC:#define __UINT16_MAX__ 65535
 // SPARC:#define __UINT16_TYPE__ unsigned short
 // SPARC:#define __UINT32_C_SUFFIX__ U
 // SPARC:#define __UINT32_MAX__ 4294967295U
@@ -5824,8 +5824,8 @@
 // SPARC:#define __UINT64_C_SUFFIX__ ULL
 // SPARC:#define __UINT64_MAX__ 18446744073709551615ULL
 // SPARC:#define __UINT64_TYPE__ long long unsigned int
-// SPARC:#define __UINT8_C_SUFFIX__ U
-// SPARC:#define __UINT8_MAX__ 255U
+// SPARC:#define __UINT8_C_SUFFIX__ {{$}}
+// SPARC:#define __UINT8_MAX__ 255
 // SPARC:#define __UINT8_TYPE__ unsigned char
 // SPARC:#define __UINTMAX_C_SUFFIX__ ULL
 // SPARC:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -5834,21 +5834,21 @@
 // SPARC:#define __UINTPTR_MAX__ 4294967295U
 // SPARC:#define __UINTPTR_TYPE__ long unsigned int
 // SPARC:#define __UINTPTR_WIDTH__ 32
-// SPARC:#define __UINT_FAST16_MAX__ 65535U
+// SPARC:#define __UINT_FAST16_MAX__ 65535
 // SPARC:#define __UINT_FAST16_TYPE__ unsigned short
 // SPARC:#define __UINT_FAST32_MAX__ 4294967295U
 // SPARC:#define __UINT_FAST32_TYPE__ unsigned int
 // SPARC:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // SPARC:#define __UINT_FAST64_TYPE__ long long unsigned int
-// SPARC:#define __UINT_FAST8_MAX__ 255U
+// SPARC:#define __UINT_FAST8_MAX__ 255
 // SPARC:#define __UINT_FAST8_TYPE__ unsigned char
-// SPARC:#define __UINT_LEAST16_MAX__ 65535U
+// SPARC:#define __UINT_LEAST16_MAX__ 65535
 // SPARC:#define __UINT_LEAST16_TYPE__ unsigned short
 // SPARC:#define __UINT_LEAST32_MAX__ 4294967295U
 // SPARC:#define __UINT_LEAST32_TYPE__ unsigned int
 // SPARC:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // SPARC:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// SPARC:#define __UINT_LEAST8_MAX__ 255U
+// SPARC:#define __UINT_LEAST8_MAX__ 255
 // SPARC:#define __UINT_LEAST8_TYPE__ unsigned char
 // SPARC:#define __USER_LABEL_PREFIX__ _
 // SPARC:#define __VERSION__ "4.2.1 Compatible
@@ -5990,14 +5990,14 @@
 // TCE:#define __SIZE_WIDTH__ 32
 // TCE:#define __TCE_V1__ 1
 // TCE:#define __TCE__ 1
-// TCE:#define __UINT16_C_SUFFIX__ U
-// TCE:#define __UINT16_MAX__ 65535U
+// TCE:#define __UINT16_C_SUFFIX__ {{$}}
+// TCE:#define __UINT16_MAX__ 65535
 // TCE:#define __UINT16_TYPE__ unsigned short
 // TCE:#define __UINT32_C_SUFFIX__ U
 // TCE:#define __UINT32_MAX__ 4294967295U
 // TCE:#define __UINT32_TYPE__ unsigned int
-// TCE:#define __UINT8_C_SUFFIX__ U
-// TCE:#define __UINT8_MAX__ 255U
+// TCE:#define __UINT8_C_SUFFIX__ {{$}}
+// TCE:#define __UINT8_MAX__ 255
 // TCE:#define __UINT8_TYPE__ unsigned char
 // TCE:#define __UINTMAX_C_SUFFIX__ UL
 // TCE:#define __UINTMAX_MAX__ 4294967295UL
@@ -6006,17 +6006,17 @@
 // TCE:#define __UINTPTR_MAX__ 4294967295U
 // TCE:#define __UINTPTR_TYPE__ unsigned int
 // TCE:#define __UINTPTR_WIDTH__ 32
-// TCE:#define __UINT_FAST16_MAX__ 65535U
+// TCE:#define __UINT_FAST16_MAX__ 65535
 // TCE:#define __UINT_FAST16_TYPE__ unsigned short
 // TCE:#define __UINT_FAST32_MAX__ 4294967295U
 // TCE:#define __UINT_FAST32_TYPE__ unsigned int
-// TCE:#define __UINT_FAST8_MAX__ 255U
+// TCE:#define __UINT_FAST8_MAX__ 255
 // TCE:#define __UINT_FAST8_TYPE__ unsigned char
-// TCE:#define __UINT_LEAST16_MAX__ 65535U
+// TCE:#define __UINT_LEAST16_MAX__ 65535
 // TCE:#define __UINT_LEAST16_TYPE__ unsigned short
 // TCE:#define __UINT_LEAST32_MAX__ 4294967295U
 // TCE:#define __UINT_LEAST32_TYPE__ unsigned int
-// TCE:#define __UINT_LEAST8_MAX__ 255U
+// TCE:#define __UINT_LEAST8_MAX__ 255
 // TCE:#define __UINT_LEAST8_TYPE__ unsigned char
 // TCE:#define __USER_LABEL_PREFIX__ _
 // TCE:#define __WCHAR_MAX__ 2147483647
@@ -6176,8 +6176,8 @@
 // X86_64:#define __SSE2__ 1
 // X86_64:#define __SSE_MATH__ 1
 // X86_64:#define __SSE__ 1
-// X86_64:#define __UINT16_C_SUFFIX__ U
-// X86_64:#define __UINT16_MAX__ 65535U
+// X86_64:#define __UINT16_C_SUFFIX__ {{$}}
+// X86_64:#define __UINT16_MAX__ 65535
 // X86_64:#define __UINT16_TYPE__ unsigned short
 // X86_64:#define __UINT32_C_SUFFIX__ U
 // X86_64:#define __UINT32_MAX__ 4294967295U
@@ -6185,8 +6185,8 @@
 // X86_64:#define __UINT64_C_SUFFIX__ UL
 // X86_64:#define __UINT64_MAX__ 18446744073709551615UL
 // X86_64:#define __UINT64_TYPE__ long unsigned int
-// X86_64:#define __UINT8_C_SUFFIX__ U
-// X86_64:#define __UINT8_MAX__ 255U
+// X86_64:#define __UINT8_C_SUFFIX__ {{$}}
+// X86_64:#define __UINT8_MAX__ 255
 // X86_64:#define __UINT8_TYPE__ unsigned char
 // X86_64:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -6195,21 +6195,21 @@
 // X86_64:#define __UINTPTR_MAX__ 18446744073709551615UL
 // X86_64:#define __UINTPTR_TYPE__ long unsigned int
 // X86_64:#define __UINTPTR_WIDTH__ 64
-// X86_64:#define __UINT_FAST16_MAX__ 65535U
+// X86_64:#define __UINT_FAST16_MAX__ 65535
 // X86_64:#define __UINT_FAST16_TYPE__ unsigned short
 // X86_64:#define __UINT_FAST32_MAX__ 4294967295U
 // X86_64:#define __UINT_FAST32_TYPE__ unsigned int
 // X86_64:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // X86_64:#define __UINT_FAST64_TYPE__ long unsigned int
-// X86_64:#define __UINT_FAST8_MAX__ 255U
+// X86_64:#define __UINT_FAST8_MAX__ 255
 // X86_64:#define __UINT_FAST8_TYPE__ unsigned char
-// X86_64:#define __UINT_LEAST16_MAX__ 65535U
+// X86_64:#define __UINT_LEAST16_MAX__ 65535
 // X86_64:#define __UINT_LEAST16_TYPE__ unsigned short
 // X86_64:#define __UINT_LEAST32_MAX__ 4294967295U
 // X86_64:#define __UINT_LEAST32_TYPE__ unsigned int
 // X86_64:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // X86_64:#define __UINT_LEAST64_TYPE__ long unsigned int
-// X86_64:#define __UINT_LEAST8_MAX__ 255U
+// X86_64:#define __UINT_LEAST8_MAX__ 255
 // X86_64:#define __UINT_LEAST8_TYPE__ unsigned char
 // X86_64:#define __USER_LABEL_PREFIX__ _
 // X86_64:#define __WCHAR_MAX__ 2147483647
@@ -6370,8 +6370,8 @@
 // X32:#define __SSE2__ 1
 // X32:#define __SSE_MATH__ 1
 // X32:#define __SSE__ 1
-// X32:#define __UINT16_C_SUFFIX__ U
-// X32:#define __UINT16_MAX__ 65535U
+// X32:#define __UINT16_C_SUFFIX__ {{$}}
+// X32:#define __UINT16_MAX__ 65535
 // X32:#define __UINT16_TYPE__ unsigned short
 // X32:#define __UINT32_C_SUFFIX__ U
 // X32:#define __UINT32_MAX__ 4294967295U
@@ -6379,8 +6379,8 @@
 // X32:#define __UINT64_C_SUFFIX__ UL
 // X32:#define __UINT64_MAX__ 18446744073709551615ULL
 // X32:#define __UINT64_TYPE__ long long unsigned int
-// X32:#define __UINT8_C_SUFFIX__ U
-// X32:#define __UINT8_MAX__ 255U
+// X32:#define __UINT8_C_SUFFIX__ {{$}}
+// X32:#define __UINT8_MAX__ 255
 // X32:#define __UINT8_TYPE__ unsigned char
 // X32:#define __UINTMAX_C_SUFFIX__ ULL
 // X32:#define __UINTMAX_MAX__ 18446744073709551615ULL
@@ -6389,21 +6389,21 @@
 // X32:#define __UINTPTR_MAX__ 4294967295U
 // X32:#define __UINTPTR_TYPE__ unsigned int
 // X32:#define __UINTPTR_WIDTH__ 32
-// X32:#define __UINT_FAST16_MAX__ 65535U
+// X32:#define __UINT_FAST16_MAX__ 65535
 // X32:#define __UINT_FAST16_TYPE__ unsigned short
 // X32:#define __UINT_FAST32_MAX__ 4294967295U
 // X32:#define __UINT_FAST32_TYPE__ unsigned int
 // X32:#define __UINT_FAST64_MAX__ 18446744073709551615ULL
 // X32:#define __UINT_FAST64_TYPE__ long long unsigned int
-// X32:#define __UINT_FAST8_MAX__ 255U
+// X32:#define __UINT_FAST8_MAX__ 255
 // X32:#define __UINT_FAST8_TYPE__ unsigned char
-// X32:#define __UINT_LEAST16_MAX__ 65535U
+// X32:#define __UINT_LEAST16_MAX__ 65535
 // X32:#define __UINT_LEAST16_TYPE__ unsigned short
 // X32:#define __UINT_LEAST32_MAX__ 4294967295U
 // X32:#define __UINT_LEAST32_TYPE__ unsigned int
 // X32:#define __UINT_LEAST64_MAX__ 18446744073709551615ULL
 // X32:#define __UINT_LEAST64_TYPE__ long long unsigned int
-// X32:#define __UINT_LEAST8_MAX__ 255U
+// X32:#define __UINT_LEAST8_MAX__ 255
 // X32:#define __UINT_LEAST8_TYPE__ unsigned char
 // X32:#define __USER_LABEL_PREFIX__ _
 // X32:#define __WCHAR_MAX__ 2147483647
@@ -6562,8 +6562,8 @@
 // X86_64-LINUX:#define __SSE2__ 1
 // X86_64-LINUX:#define __SSE_MATH__ 1
 // X86_64-LINUX:#define __SSE__ 1
-// X86_64-LINUX:#define __UINT16_C_SUFFIX__ U
-// X86_64-LINUX:#define __UINT16_MAX__ 65535U
+// X86_64-LINUX:#define __UINT16_C_SUFFIX__ {{$}}
+// X86_64-LINUX:#define __UINT16_MAX__ 65535
 // X86_64-LINUX:#define __UINT16_TYPE__ unsigned short
 // X86_64-LINUX:#define __UINT32_C_SUFFIX__ U
 // X86_64-LINUX:#define __UINT32_MAX__ 4294967295U
@@ -6571,8 +6571,8 @@
 // X86_64-LINUX:#define __UINT64_C_SUFFIX__ UL
 // X86_64-LINUX:#define __UINT64_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __UINT64_TYPE__ long unsigned int
-// X86_64-LINUX:#define __UINT8_C_SUFFIX__ U
-// X86_64-LINUX:#define __UINT8_MAX__ 255U
+// X86_64-LINUX:#define __UINT8_C_SUFFIX__ {{$}}
+// X86_64-LINUX:#define __UINT8_MAX__ 255
 // X86_64-LINUX:#define __UINT8_TYPE__ unsigned char
 // X86_64-LINUX:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64-LINUX:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -6581,21 +6581,21 @@
 // X86_64-LINUX:#define __UINTPTR_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __UINTPTR_TYPE__ long unsigned int
 // X86_64-LINUX:#define __UINTPTR_WIDTH__ 64
-// X86_64-LINUX:#define __UINT_FAST16_MAX__ 65535U
+// X86_64-LINUX:#define __UINT_FAST16_MAX__ 65535
 // X86_64-LINUX:#define __UINT_FAST16_TYPE__ unsigned short
 // X86_64-LINUX:#define __UINT_FAST32_MAX__ 4294967295U
 // X86_64-LINUX:#define __UINT_FAST32_TYPE__ unsigned int
 // X86_64-LINUX:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __UINT_FAST64_TYPE__ long unsigned int
-// X86_64-LINUX:#define __UINT_FAST8_MAX__ 255U
+// X86_64-LINUX:#define __UINT_FAST8_MAX__ 255
 // X86_64-LINUX:#define __UINT_FAST8_TYPE__ unsigned char
-// X86_64-LINUX:#define __UINT_LEAST16_MAX__ 65535U
+// X86_64-LINUX:#define __UINT_LEAST16_MAX__ 65535
 // X86_64-LINUX:#define __UINT_LEAST16_TYPE__ unsigned short
 // X86_64-LINUX:#define __UINT_LEAST32_MAX__ 4294967295U
 // X86_64-LINUX:#define __UINT_LEAST32_TYPE__ unsigned int
 // X86_64-LINUX:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // X86_64-LINUX:#define __UINT_LEAST64_TYPE__ long unsigned int
-// X86_64-LINUX:#define __UINT_LEAST8_MAX__ 255U
+// X86_64-LINUX:#define __UINT_LEAST8_MAX__ 255
 // X86_64-LINUX:#define __UINT_LEAST8_TYPE__ unsigned char
 // X86_64-LINUX:#define __USER_LABEL_PREFIX__
 // X86_64-LINUX:#define __WCHAR_MAX__ 2147483647
@@ -6760,8 +6760,8 @@
 // X86_64-NETBSD:#define __SSE2__ 1
 // X86_64-NETBSD:#define __SSE_MATH__ 1
 // X86_64-NETBSD:#define __SSE__ 1
-// X86_64-NETBSD:#define __UINT16_C_SUFFIX__ U
-// X86_64-NETBSD:#define __UINT16_MAX__ 65535U
+// X86_64-NETBSD:#define __UINT16_C_SUFFIX__ {{$}}
+// X86_64-NETBSD:#define __UINT16_MAX__ 65535
 // X86_64-NETBSD:#define __UINT16_TYPE__ unsigned short
 // X86_64-NETBSD:#define __UINT32_C_SUFFIX__ U
 // X86_64-NETBSD:#define __UINT32_MAX__ 4294967295U
@@ -6769,8 +6769,8 @@
 // X86_64-NETBSD:#define __UINT64_C_SUFFIX__ UL
 // X86_64-NETBSD:#define __UINT64_MAX__ 18446744073709551615UL
 // X86_64-NETBSD:#define __UINT64_TYPE__ long unsigned int
-// X86_64-NETBSD:#define __UINT8_C_SUFFIX__ U
-// X86_64-NETBSD:#define __UINT8_MAX__ 255U
+// X86_64-NETBSD:#define __UINT8_C_SUFFIX__ {{$}}
+// X86_64-NETBSD:#define __UINT8_MAX__ 255
 // X86_64-NETBSD:#define __UINT8_TYPE__ unsigned char
 // X86_64-NETBSD:#define __UINTMAX_C_SUFFIX__ UL
 // X86_64-NETBSD:#define __UINTMAX_MAX__ 18446744073709551615UL
@@ -6779,21 +6779,21 @@
 // X86_64-NETBSD:#define __UINTPTR_MAX__ 18446744073709551615UL
 // X86_64-NETBSD:#define __UINTPTR_TYPE__ long unsigned int
 // X86_64-NETBSD:#define __UINTPTR_WIDTH__ 64
-// X86_64-NETBSD:#define __UINT_FAST16_MAX__ 65535U
+// X86_64-NETBSD:#define __UINT_FAST16_MAX__ 65535
 // X86_64-NETBSD:#define __UINT_FAST16_TYPE__ unsigned short
 // X86_64-NETBSD:#define __UINT_FAST32_MAX__ 4294967295U
 // X86_64-NETBSD:#define __UINT_FAST32_TYPE__ unsigned int
 // X86_64-NETBSD:#define __UINT_FAST64_MAX__ 18446744073709551615UL
 // X86_64-NETBSD:#define __UINT_FAST64_TYPE__ long unsigned int
-// X86_64-NETBSD:#define __UINT_FAST8_MAX__ 255U
+// X86_64-NETBSD:#define __UINT_FAST8_MAX__ 255
 // X86_64-NETBSD:#define __UINT_FAST8_TYPE__ unsigned char
-// X86_64-NETBSD:#define __UINT_LEAST16_MAX__ 65535U
+// X86_64-NETBSD:#define __UINT_LEAST16_MAX__ 65535
 // X86_64-NETBSD:#define __UINT_LEAST16_TYPE__ unsigned short
 // X86_64-NETBSD:#define __UINT_LEAST32_MAX__ 4294967295U
 // X86_64-NETBSD:#define __UINT_LEAST32_TYPE__ unsigned int
 // X86_64-NETBSD:#define __UINT_LEAST64_MAX__ 18446744073709551615UL
 // X86_64-NETBSD:#define __UINT_LEAST64_TYPE__ long unsigned int
-// X86_64-NETBSD:#define __UINT_LEAST8_MAX__ 255U
+// X86_64-NETBSD:#define __UINT_LEAST8_MAX__ 255
 // X86_64-NETBSD:#define __UINT_LEAST8_TYPE__ unsigned char
 // X86_64-NETBSD:#define __USER_LABEL_PREFIX__
 // X86_64-NETBSD:#define __WCHAR_MAX__ 2147483647

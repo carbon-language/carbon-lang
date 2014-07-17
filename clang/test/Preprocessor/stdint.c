@@ -1173,8 +1173,8 @@
 //
 // RUN: %clang_cc1 -E -ffreestanding -triple=i386-mingw32 %s | FileCheck -check-prefix I386_MINGW32 %s
 //
-// I386_MINGW32:WCHAR_MAX_ 65535U
-// I386_MINGW32:WCHAR_MIN_ 0U
+// I386_MINGW32:WCHAR_MAX_ 65535
+// I386_MINGW32:WCHAR_MIN_ 0
 //
 //
 // RUN: %clang_cc1 -E -ffreestanding -triple=xcore-none-none %s | FileCheck -check-prefix XCORE %s
@@ -1269,7 +1269,7 @@
 // XCORE:WINT_MIN_ 0U
 // XCORE:WINT_MAX_ 4294967295U
 //
-// XCORE:WCHAR_MAX_ 255U
+// XCORE:WCHAR_MAX_ 255
 // XCORE:WCHAR_MIN_ 0
 //
 // XCORE:INT8_C_(0) 0

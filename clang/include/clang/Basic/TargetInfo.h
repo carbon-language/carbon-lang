@@ -446,7 +446,7 @@ public:
   /// \brief Return the constant suffix for the specified integer type enum.
   ///
   /// For example, SignedLong -> "L".
-  static const char *getTypeConstantSuffix(IntType T);
+  const char *getTypeConstantSuffix(IntType T) const;
 
   /// \brief Return the printf format modifier for the specified
   /// integer type enum.
