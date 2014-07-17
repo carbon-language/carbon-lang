@@ -189,51 +189,18 @@ static bool isCDisp8(uint64_t TSFlags, int Value, int& CValue) {
           X86II::EncodingShift == X86II::EVEX) &&
          "Compressed 8-bit displacement is only valid for EVEX inst.");
 
-  unsigned CD8E = (TSFlags >> X86II::EVEX_CD8EShift) & X86II::EVEX_CD8EMask;
-  unsigned CD8V = (TSFlags >> X86II::EVEX_CD8VShift) & X86II::EVEX_CD8VMask;
-  unsigned CD8_Scale = (TSFlags >> 56) & 0x7f;
-
-  if (CD8V == 0 && CD8E == 0) {
+  unsigned CD8_Scale =
+    (TSFlags >> X86II::CD8_Scale_Shift) & X86II::CD8_Scale_Mask;
+  if (CD8_Scale == 0) {
     CValue = Value;
-    assert(CD8_Scale == 0);
     return isDisp8(Value);
   }
 
-  unsigned ElemSize = 1U << CD8E;
-  unsigned MemObjSize;
-  // The unit of displacement is either
-  //   - the size of a  power-of-two number of elements or
-  //   - the size of a single element for broadcasts or
-  //   - the total vector size divided by a power-of-two number.
-  if (CD8V & 4) {
-    // Fixed vector length
-    unsigned NumElems = 1U << (CD8V & 0x3);
-    MemObjSize = ElemSize * NumElems;
-  } else {
-    // Modified vector length
-    bool EVEX_b = (TSFlags >> X86II::VEXShift) & X86II::EVEX_B;
-    if (EVEX_b)
-      // Broadcast implies element size units.
-      MemObjSize = ElemSize;
-    else {
-      unsigned EVEX_LL = ((TSFlags >> X86II::VEXShift) & X86II::VEX_L) ? 1 : 0;
-      EVEX_LL += ((TSFlags >> X86II::VEXShift) & X86II::EVEX_L2) ? 2 : 0;
-      assert(EVEX_LL < 3 && "");
-
-      unsigned VectorByteSize = 1U << (EVEX_LL + 4);
-      unsigned Divider = 1U << (CD8V & 0x3);
-      MemObjSize = VectorByteSize / Divider;
-    }
-  }
-
-  assert(MemObjSize == CD8_Scale);
-
-  unsigned MemObjMask = MemObjSize - 1;
-  assert((MemObjSize & MemObjMask) == 0 && "Invalid memory object size.");
-
-  if (Value & MemObjMask) // Unaligned offset
+  unsigned Mask = CD8_Scale - 1;
+  assert((CD8_Scale & Mask) == 0 && "Invalid memory object size.");
+  if (Value & Mask) // Unaligned offset
     return false;
-  Value /= (int)MemObjSize;
+  Value /= (int)CD8_Scale;
   bool Ret = (Value == (signed char)Value);
 
   if (Ret)

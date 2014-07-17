@@ -188,10 +188,6 @@ class EVEX_V512 { bit hasEVEX_L2 = 1; bit hasVEX_L = 0; }
 // Specify AVX512 8-bit compressed displacement encoding based on the vector
 // element size in bits (8, 16, 32, 64) and the CDisp8 form.
 class EVEX_CD8<int esize, CD8VForm form> {
-  bits<2> EVEX_CD8E = !if(!eq(esize, 8),  0b00,
-                      !if(!eq(esize, 16), 0b01,
-                      !if(!eq(esize, 32), 0b10,
-                      !if(!eq(esize, 64), 0b11, ?))));
   int CD8_EltSize = !srl(esize, 3);
   bits<3> EVEX_CD8V = form.Value;
 }
@@ -258,7 +254,6 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasEVEX_Z = 0;        // Does this inst set the EVEX_Z field?
   bit hasEVEX_L2 = 0;       // Does this inst set the EVEX_L2 field?
   bit hasEVEX_B = 0;        // Does this inst set the EVEX_B field?
-  bits<2> EVEX_CD8E = 0;    // Compressed disp8 form - element-size.
   bits<3> EVEX_CD8V = 0;    // Compressed disp8 form - vector-width.
   // Declare it int rather than bits<4> so that all bits are defined when
   // assigning to bits<7>.
@@ -309,15 +304,11 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   let TSFlags{45}    = hasEVEX_Z;
   let TSFlags{46}    = hasEVEX_L2;
   let TSFlags{47}    = hasEVEX_B;
-  let TSFlags{49-48} = EVEX_CD8E;
-  let TSFlags{52-50} = EVEX_CD8V;
-  let TSFlags{53}    = has3DNow0F0FOpcode;
-  let TSFlags{54}    = hasMemOp4Prefix;
-  let TSFlags{55}    = hasEVEX_RC;
-
-  // Temporarily make this available to the backend in order to assert that TD
-  // and C++ compute the same scaling value.
-  let TSFlags{62-56} = CD8_Scale;
+  // If we run out of TSFlags bits, it's possible to encode this in 3 bits.
+  let TSFlags{54-48} = CD8_Scale;
+  let TSFlags{55}    = has3DNow0F0FOpcode;
+  let TSFlags{56}    = hasMemOp4Prefix;
+  let TSFlags{57}    = hasEVEX_RC;
 }
 
 class PseudoI<dag oops, dag iops, list<dag> pattern>
