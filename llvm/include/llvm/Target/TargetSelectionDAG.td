@@ -392,8 +392,8 @@ def sint_to_fp : SDNode<"ISD::SINT_TO_FP" , SDTIntToFPOp>;
 def uint_to_fp : SDNode<"ISD::UINT_TO_FP" , SDTIntToFPOp>;
 def fp_to_sint : SDNode<"ISD::FP_TO_SINT" , SDTFPToIntOp>;
 def fp_to_uint : SDNode<"ISD::FP_TO_UINT" , SDTFPToIntOp>;
-def f16_to_f32 : SDNode<"ISD::FP16_TO_FP32", SDTIntToFPOp>;
-def f32_to_f16 : SDNode<"ISD::FP32_TO_FP16", SDTFPToIntOp>;
+def f16_to_fp  : SDNode<"ISD::FP16_TO_FP" , SDTIntToFPOp>;
+def fp_to_f16  : SDNode<"ISD::FP_TO_FP16" , SDTFPToIntOp>;
 
 def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
 def select     : SDNode<"ISD::SELECT"     , SDTSelect>;

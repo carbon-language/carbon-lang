@@ -2244,46 +2244,46 @@ def : Pat<(f64 (fpimm0)), (FMOVXDr XZR)>, Requires<[NoZCZ]>;
 
 defm FCVT : FPConversion<"fcvt">;
 
-def : Pat<(f32_to_f16 FPR32:$Rn),
+def : Pat<(fp_to_f16 FPR32:$Rn),
           (i32 (COPY_TO_REGCLASS
                    (f32 (SUBREG_TO_REG (i32 0), (FCVTHSr FPR32:$Rn), hsub)),
                    GPR32))>;
 
-def : Pat<(f32 (f16_to_f32 i32:$Rn)),
+def : Pat<(f32 (f16_to_fp i32:$Rn)),
           (FCVTSHr (EXTRACT_SUBREG (i32 (COPY_TO_REGCLASS i32:$Rn, FPR32)),
                                    hsub))>;
 
 // When converting from f16 coming directly from a load, make sure we
 // load into the FPR16 registers rather than going through the GPRs.
 //   f16->f32
-def : Pat<(f32 (f16_to_f32 (i32
+def : Pat<(f32 (f16_to_fp (i32
                 (zextloadi16 (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
                                     ro_Wextend16:$extend))))),
           (FCVTSHr (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend))>;
-def : Pat<(f32 (f16_to_f32 (i32
+def : Pat<(f32 (f16_to_fp (i32
                 (zextloadi16 (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
                                     ro_Xextend16:$extend))))),
           (FCVTSHr (LDRHroX GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend))>;
-def : Pat <(f32 (f16_to_f32 (i32
+def : Pat <(f32 (f16_to_fp (i32
                   (zextloadi16 (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset))))),
            (FCVTSHr (LDRHui GPR64sp:$Rn, uimm12s2:$offset))>;
-def : Pat <(f32 (f16_to_f32 (i32
+def : Pat <(f32 (f16_to_fp (i32
                   (zextloadi16 (am_unscaled16 GPR64sp:$Rn, simm9:$offset))))),
            (FCVTSHr (LDURHi GPR64sp:$Rn, simm9:$offset))>;
 
 //   f16->f64
-def : Pat<(f64 (fextend (f32 (f16_to_f32 (i32
+def : Pat<(f64 (fextend (f32 (f16_to_fp (i32
                 (zextloadi16 (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
                                     ro_Wextend16:$extend))))))),
           (FCVTDHr (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro_Wextend16:$extend))>;
-def : Pat<(f64 (fextend (f32 (f16_to_f32 (i32
+def : Pat<(f64 (fextend (f32 (f16_to_fp (i32
                 (zextloadi16 (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
                                     ro_Xextend16:$extend))))))),
           (FCVTDHr (LDRHroX GPR64sp:$Rn, GPR64:$Rm, ro_Xextend16:$extend))>;
-def : Pat <(f64 (fextend (f32 (f16_to_f32 (i32
+def : Pat <(f64 (fextend (f32 (f16_to_fp (i32
                   (zextloadi16 (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset))))))),
            (FCVTDHr (LDRHui GPR64sp:$Rn, uimm12s2:$offset))>;
-def : Pat <(f64 (fextend (f32 (f16_to_f32 (i32
+def : Pat <(f64 (fextend (f32 (f16_to_fp (i32
                   (zextloadi16 (am_unscaled16 GPR64sp:$Rn, simm9:$offset))))))),
            (FCVTDHr (LDURHi GPR64sp:$Rn, simm9:$offset))>;
 
@@ -2292,37 +2292,37 @@ def : Pat <(f64 (fextend (f32 (f16_to_f32 (i32
 // registers rather than going through the GPRs.
 let AddedComplexity = 10 in {
 // f32->f16
-def : Pat< (truncstorei16 (assertzext (i32 (f32_to_f16 FPR32:$Rt))),
+def : Pat< (truncstorei16 (assertzext (i32 (fp_to_f16 FPR32:$Rt))),
                           (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
                                          ro_Wextend16:$extend)),
            (STRHroW (FCVTHSr FPR32:$Rt), GPR64sp:$Rn, GPR32:$Rm,
                                          ro_Wextend16:$extend)>;
-def : Pat< (truncstorei16 (assertzext (i32 (f32_to_f16 FPR32:$Rt))),
+def : Pat< (truncstorei16 (assertzext (i32 (fp_to_f16 FPR32:$Rt))),
                           (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
                                          ro_Xextend16:$extend)),
            (STRHroX (FCVTHSr FPR32:$Rt), GPR64sp:$Rn, GPR64:$Rm,
                                          ro_Xextend16:$extend)>;
-def : Pat <(truncstorei16 (assertzext (i32 (f32_to_f16 FPR32:$Rt))),
+def : Pat <(truncstorei16 (assertzext (i32 (fp_to_f16 FPR32:$Rt))),
               (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset)),
            (STRHui (FCVTHSr FPR32:$Rt), GPR64sp:$Rn, uimm12s2:$offset)>;
-def : Pat <(truncstorei16 (assertzext (i32 (f32_to_f16 FPR32:$Rt))),
+def : Pat <(truncstorei16 (assertzext (i32 (fp_to_f16 FPR32:$Rt))),
               (am_unscaled16 GPR64sp:$Rn, simm9:$offset)),
            (STURHi (FCVTHSr FPR32:$Rt), GPR64sp:$Rn, simm9:$offset)>;
 // f64->f16
-def : Pat< (truncstorei16 (assertzext (i32 (f32_to_f16 (f32 (fround FPR64:$Rt))))),
+def : Pat< (truncstorei16 (assertzext (i32 (fp_to_f16 (f32 (fround FPR64:$Rt))))),
                           (ro_Windexed16 GPR64sp:$Rn, GPR32:$Rm,
                                          ro_Wextend16:$extend)),
            (STRHroW (FCVTHDr FPR64:$Rt), GPR64sp:$Rn, GPR32:$Rm,
                                          ro_Wextend16:$extend)>;
-def : Pat< (truncstorei16 (assertzext (i32 (f32_to_f16 (f32 (fround FPR64:$Rt))))),
+def : Pat< (truncstorei16 (assertzext (i32 (fp_to_f16 (f32 (fround FPR64:$Rt))))),
                           (ro_Xindexed16 GPR64sp:$Rn, GPR64:$Rm,
                                          ro_Xextend16:$extend)),
            (STRHroX (FCVTHDr FPR64:$Rt), GPR64sp:$Rn, GPR64:$Rm,
                                          ro_Xextend16:$extend)>;
-def : Pat <(truncstorei16 (assertzext (i32 (f32_to_f16 (f32 (fround FPR64:$Rt))))),
+def : Pat <(truncstorei16 (assertzext (i32 (fp_to_f16 (f32 (fround FPR64:$Rt))))),
               (am_indexed16 GPR64sp:$Rn, uimm12s2:$offset)),
            (STRHui (FCVTHDr FPR64:$Rt), GPR64sp:$Rn, uimm12s2:$offset)>;
-def : Pat <(truncstorei16 (assertzext (i32 (f32_to_f16 (f32 (fround FPR64:$Rt))))),
+def : Pat <(truncstorei16 (assertzext (i32 (fp_to_f16 (f32 (fround FPR64:$Rt))))),
               (am_unscaled16 GPR64sp:$Rn, simm9:$offset)),
            (STURHi (FCVTHDr FPR64:$Rt), GPR64sp:$Rn, simm9:$offset)>;
 }

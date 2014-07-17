@@ -496,10 +496,8 @@ def int_donothing : Intrinsic<[], [], [IntrNoMem]>;
 
 // Intrisics to support half precision floating point format
 let Properties = [IntrNoMem] in {
-def int_convert_to_fp16   : Intrinsic<[llvm_i16_ty], [llvm_float_ty]>,
-                            GCCBuiltin<"__gnu_f2h_ieee">;
-def int_convert_from_fp16 : Intrinsic<[llvm_float_ty], [llvm_i16_ty]>,
-                            GCCBuiltin<"__gnu_h2f_ieee">;
+def int_convert_to_fp16   : Intrinsic<[llvm_i16_ty], [llvm_anyfloat_ty]>;
+def int_convert_from_fp16 : Intrinsic<[llvm_anyfloat_ty], [llvm_i16_ty]>;
 }
 
 // These convert intrinsics are to support various conversions between

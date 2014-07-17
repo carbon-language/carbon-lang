@@ -21,7 +21,7 @@
 
 
 define void @test1(float %src, i16* %dest) {
-  %1 = tail call i16 @llvm.convert.to.fp16(float %src)
+  %1 = tail call i16 @llvm.convert.to.fp16.f32(float %src)
   store i16 %1, i16* %dest, align 2
   ret void
 }
@@ -34,7 +34,7 @@ define void @test1(float %src, i16* %dest) {
 
 define float @test2(i16* nocapture %src) {
   %1 = load i16* %src, align 2
-  %2 = tail call float @llvm.convert.from.fp16(i16 %1)
+  %2 = tail call float @llvm.convert.from.fp16.f32(i16 %1)
   ret float %2
 }
 ; CHECK-LABEL: test2:
@@ -45,8 +45,8 @@ define float @test2(i16* nocapture %src) {
 
 
 define float @test3(float %src) nounwind uwtable readnone {
-  %1 = tail call i16 @llvm.convert.to.fp16(float %src)
-  %2 = tail call float @llvm.convert.from.fp16(i16 %1)
+  %1 = tail call i16 @llvm.convert.to.fp16.f32(float %src)
+  %2 = tail call float @llvm.convert.from.fp16.f32(i16 %1)
   ret float %2
 }
 
@@ -59,6 +59,6 @@ define float @test3(float %src) nounwind uwtable readnone {
 ; F16C-NEXT: vcvtph2ps
 ; F16C: ret
 
-declare float @llvm.convert.from.fp16(i16) nounwind readnone
-declare i16 @llvm.convert.to.fp16(float) nounwind readnone
+declare float @llvm.convert.from.fp16.f32(i16) nounwind readnone
+declare i16 @llvm.convert.to.fp16.f32(float) nounwind readnone
 

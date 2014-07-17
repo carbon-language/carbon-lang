@@ -827,8 +827,8 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     }
     // Special handling for half-precision FP.
     if (!Subtarget->hasFP16()) {
-      setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Expand);
-      setOperationAction(ISD::FP32_TO_FP16, MVT::i32, Expand);
+      setOperationAction(ISD::FP16_TO_FP, MVT::f32, Expand);
+      setOperationAction(ISD::FP_TO_FP16, MVT::f32, Expand);
     }
   }
 

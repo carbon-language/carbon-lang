@@ -792,11 +792,11 @@ def INT_NVVM_H2F : F_MATH_1<!strconcat("{{\n\t",
             "}}")))),
           Float32Regs, Int16Regs, int_nvvm_h2f>;
 
-def : Pat<(f32 (f16_to_f32 Int16Regs:$a)),
+def : Pat<(f32 (f16_to_fp Int16Regs:$a)),
           (CVT_f32_f16 Int16Regs:$a, CvtNONE)>;
-def : Pat<(i16 (f32_to_f16 Float32Regs:$a)),
+def : Pat<(i16 (fp_to_f16 Float32Regs:$a)),
           (CVT_f16_f32 Float32Regs:$a, CvtRN_FTZ)>, Requires<[doF32FTZ]>;
-def : Pat<(i16 (f32_to_f16 Float32Regs:$a)),
+def : Pat<(i16 (fp_to_f16 Float32Regs:$a)),
           (CVT_f16_f32 Float32Regs:$a, CvtRN)>;
 
 //

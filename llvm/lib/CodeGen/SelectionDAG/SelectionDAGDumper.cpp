@@ -236,8 +236,8 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FP_TO_UINT:                 return "fp_to_uint";
   case ISD::BITCAST:                    return "bitcast";
   case ISD::ADDRSPACECAST:              return "addrspacecast";
-  case ISD::FP16_TO_FP32:               return "fp16_to_fp32";
-  case ISD::FP32_TO_FP16:               return "fp32_to_fp16";
+  case ISD::FP16_TO_FP:                 return "fp16_to_fp";
+  case ISD::FP_TO_FP16:                 return "fp_to_fp16";
 
   case ISD::CONVERT_RNDSAT: {
     switch (cast<CvtRndSatSDNode>(this)->getCvtCode()) {

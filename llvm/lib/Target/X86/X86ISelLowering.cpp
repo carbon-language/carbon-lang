@@ -519,8 +519,8 @@ void X86TargetLowering::resetOperationActions() {
   // If we don't have F16C support, then lower half float conversions
   // into library calls.
   if (TM.Options.UseSoftFloat || !Subtarget->hasF16C()) {
-    setOperationAction(ISD::FP16_TO_FP32, MVT::f32, Expand);
-    setOperationAction(ISD::FP32_TO_FP16, MVT::i16, Expand);
+    setOperationAction(ISD::FP16_TO_FP, MVT::f32, Expand);
+    setOperationAction(ISD::FP_TO_FP16, MVT::f32, Expand);
   }
 
   if (Subtarget->hasPOPCNT()) {
