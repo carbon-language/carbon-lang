@@ -396,7 +396,8 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
       SkippedStartOfLine = Tok.isAtStartOfLine();
       EndLoc = ConsumeBrace();
       BraceNesting--;
-      // Finish if all of the opened braces in the inline asm section were consumed.
+      // Finish if all of the opened braces in the inline asm section were
+      // consumed.
       if (BraceNesting == 0)
         break;
       else {
