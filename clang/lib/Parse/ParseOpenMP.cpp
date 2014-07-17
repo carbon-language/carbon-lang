@@ -292,7 +292,8 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 ///       default-clause | private-clause | firstprivate-clause | shared-clause
 ///       | linear-clause | aligned-clause | collapse-clause |
 ///       lastprivate-clause | reduction-clause | proc_bind-clause |
-///       schedule-clause | copyin-clause | copyprivate-clause | untied-clause
+///       schedule-clause | copyin-clause | copyprivate-clause | untied-clause |
+///       mergeable-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -354,6 +355,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
   case OMPC_ordered:
   case OMPC_nowait:
   case OMPC_untied:
+  case OMPC_mergeable:
     // OpenMP [2.7.1, Restrictions, p. 9]
     //  Only one ordered clause can appear on a loop directive.
     // OpenMP [2.7.1, Restrictions, C/C++, p. 4]
@@ -471,6 +473,9 @@ OMPClause *Parser::ParseOpenMPSimpleClause(OpenMPClauseKind Kind) {
 ///
 ///    untied-clause:
 ///         'untied'
+///
+///    mergeable-clause:
+///         'mergeable'
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPClauseKind Kind) {
   SourceLocation Loc = Tok.getLocation();

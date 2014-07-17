@@ -2392,6 +2392,12 @@ bool RecursiveASTVisitor<Derived>::VisitOMPUntiedClause(OMPUntiedClause *) {
 }
 
 template <typename Derived>
+bool
+RecursiveASTVisitor<Derived>::VisitOMPMergeableClause(OMPMergeableClause *) {
+  return true;
+}
+
+template <typename Derived>
 template <typename T>
 bool RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
   for (auto *E : Node->varlists()) {

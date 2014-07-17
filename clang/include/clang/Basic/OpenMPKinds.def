@@ -89,6 +89,7 @@ OPENMP_CLAUSE(schedule, OMPScheduleClause)
 OPENMP_CLAUSE(ordered, OMPOrderedClause)
 OPENMP_CLAUSE(nowait, OMPNowaitClause)
 OPENMP_CLAUSE(untied, OMPUntiedClause)
+OPENMP_CLAUSE(mergeable, OMPMergeableClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -176,7 +177,7 @@ OPENMP_PARALLEL_SECTIONS_CLAUSE(reduction)
 OPENMP_PARALLEL_SECTIONS_CLAUSE(copyin)
 OPENMP_PARALLEL_SECTIONS_CLAUSE(lastprivate)
 
-// TODO more clauses allowed for OpenMP directive 'task'.
+// Clauses allowed for OpenMP directive 'task'.
 OPENMP_TASK_CLAUSE(if)
 OPENMP_TASK_CLAUSE(final)
 OPENMP_TASK_CLAUSE(default)
@@ -184,6 +185,7 @@ OPENMP_TASK_CLAUSE(private)
 OPENMP_TASK_CLAUSE(firstprivate)
 OPENMP_TASK_CLAUSE(shared)
 OPENMP_TASK_CLAUSE(untied)
+OPENMP_TASK_CLAUSE(mergeable)
 
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND

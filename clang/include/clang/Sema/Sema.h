@@ -7443,6 +7443,9 @@ public:
   /// \brief Called on well-formed 'untied' clause.
   OMPClause *ActOnOpenMPUntiedClause(SourceLocation StartLoc,
                                      SourceLocation EndLoc);
+  /// \brief Called on well-formed 'mergeable' clause.
+  OMPClause *ActOnOpenMPMergeableClause(SourceLocation StartLoc,
+                                        SourceLocation EndLoc);
 
   OMPClause *
   ActOnOpenMPVarListClause(OpenMPClauseKind Kind, ArrayRef<Expr *> Vars,
