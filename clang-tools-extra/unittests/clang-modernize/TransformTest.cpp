@@ -93,8 +93,8 @@ public:
 };
 
 struct ConsumerFactory {
-  std::unique_ptr<ASTConsumer> newASTConsumer() {
-    return llvm::make_unique<TimePassingASTConsumer>(&Called);
+  ASTConsumer *newASTConsumer() {
+    return new TimePassingASTConsumer(&Called);
   }
   bool Called;
 };

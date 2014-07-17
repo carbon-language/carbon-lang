@@ -652,10 +652,10 @@ public:
         HadErrors(HadErrors) {}
 
 protected:
-  std::unique_ptr<clang::ASTConsumer>
-  CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {
-    return llvm::make_unique<CollectEntitiesConsumer>(
-        Entities, PPTracker, CI.getPreprocessor(), InFile, HadErrors);
+  virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) {
+    return new CollectEntitiesConsumer(Entities, PPTracker,
+                                       CI.getPreprocessor(), InFile, HadErrors);
   }
 
 private:

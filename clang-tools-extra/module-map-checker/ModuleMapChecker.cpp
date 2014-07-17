@@ -178,10 +178,9 @@ public:
   ModuleMapCheckerAction(ModuleMapChecker &Checker) : Checker(Checker) {}
 
 protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 StringRef InFile) override {
-    return llvm::make_unique<ModuleMapCheckerConsumer>(Checker,
-                                                       CI.getPreprocessor());
+  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile) {
+    return new ModuleMapCheckerConsumer(Checker, CI.getPreprocessor());
   }
 
 private:
