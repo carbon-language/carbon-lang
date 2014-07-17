@@ -189,7 +189,7 @@ class EVEX_V512 { bit hasEVEX_L2 = 1; bit hasVEX_L = 0; }
 // element size in bits (8, 16, 32, 64) and the CDisp8 form.
 class EVEX_CD8<int esize, CD8VForm form> {
   int CD8_EltSize = !srl(esize, 3);
-  bits<3> EVEX_CD8V = form.Value;
+  bits<3> CD8_Form = form.Value;
 }
 
 class Has3DNow0F0FOpcode  { bit has3DNow0F0FOpcode = 1; }
@@ -254,7 +254,7 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   bit hasEVEX_Z = 0;        // Does this inst set the EVEX_Z field?
   bit hasEVEX_L2 = 0;       // Does this inst set the EVEX_L2 field?
   bit hasEVEX_B = 0;        // Does this inst set the EVEX_B field?
-  bits<3> EVEX_CD8V = 0;    // Compressed disp8 form - vector-width.
+  bits<3> CD8_Form = 0;     // Compressed disp8 form - vector-width.
   // Declare it int rather than bits<4> so that all bits are defined when
   // assigning to bits<7>.
   int CD8_EltSize = 0;      // Compressed disp8 form - element-size in bytes.
@@ -274,11 +274,11 @@ class X86Inst<bits<8> opcod, Format f, ImmType i, dag outs, dag ins,
   //   - the total vector size divided by a power-of-two number.
   // Possible values are: 0 (non-AVX512 inst), 1, 2, 4, 8, 16, 32 and 64.
   bits<7> CD8_Scale = !if (!eq (OpEnc.Value, EncEVEX.Value),
-                           !if (EVEX_CD8V{2},
-                                !shl(CD8_EltSize, EVEX_CD8V{1-0}),
+                           !if (CD8_Form{2},
+                                !shl(CD8_EltSize, CD8_Form{1-0}),
                                 !if (hasEVEX_B,
                                      CD8_EltSize,
-                                     !srl(VectSize, EVEX_CD8V{1-0}))), 0);
+                                     !srl(VectSize, CD8_Form{1-0}))), 0);
 
   // TSFlags layout should be kept in sync with X86InstrInfo.h.
   let TSFlags{6-0}   = FormBits;
