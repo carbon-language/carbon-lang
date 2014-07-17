@@ -3021,6 +3021,7 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                              ConstructorArgs,
                              CXXConstExpr->hadMultipleCandidates(),
                              CXXConstExpr->isListInitialization(),
+                             CXXConstExpr->isStdInitListInitialization(),
                              CXXConstExpr->requiresZeroInitialization(),
                              CXXConstExpr->getConstructionKind(),
                              SourceRange());

@@ -242,6 +242,7 @@ namespace DR1070 {
 namespace ListInitInstantiate {
   struct A {
     A(std::initializer_list<A>);
+    A(std::initializer_list<int>);
   };
   struct B : A {
     B(int);
@@ -253,4 +254,8 @@ namespace ListInitInstantiate {
   template<typename T> X<T>::X() : a{B{0}, B{1}} {}
 
   X<int> x;
+
+  int f(const A&);
+  template<typename T> void g() { int k = f({0}); }
+  template void g<int>();
 }

@@ -806,13 +806,16 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(const ASTContext &C,
                                                SourceRange ParenOrBraceRange,
                                                bool HadMultipleCandidates,
                                                bool ListInitialization,
+                                               bool StdInitListInitialization,
                                                bool ZeroInitialization)
   : CXXConstructExpr(C, CXXTemporaryObjectExprClass, 
                      Type->getType().getNonReferenceType(), 
                      Type->getTypeLoc().getBeginLoc(),
                      Cons, false, Args,
                      HadMultipleCandidates,
-                     ListInitialization, ZeroInitialization,
+                     ListInitialization,
+                     StdInitListInitialization,
+                     ZeroInitialization,
                      CXXConstructExpr::CK_Complete, ParenOrBraceRange),
     Type(Type) {
 }
@@ -834,12 +837,14 @@ CXXConstructExpr *CXXConstructExpr::Create(const ASTContext &C, QualType T,
                                            ArrayRef<Expr*> Args,
                                            bool HadMultipleCandidates,
                                            bool ListInitialization,
+                                           bool StdInitListInitialization,
                                            bool ZeroInitialization,
                                            ConstructionKind ConstructKind,
                                            SourceRange ParenOrBraceRange) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args,
                                   HadMultipleCandidates, ListInitialization,
+                                  StdInitListInitialization,
                                   ZeroInitialization, ConstructKind,
                                   ParenOrBraceRange);
 }
@@ -850,6 +855,7 @@ CXXConstructExpr::CXXConstructExpr(const ASTContext &C, StmtClass SC,
                                    ArrayRef<Expr*> args,
                                    bool HadMultipleCandidates,
                                    bool ListInitialization,
+                                   bool StdInitListInitialization,
                                    bool ZeroInitialization,
                                    ConstructionKind ConstructKind,
                                    SourceRange ParenOrBraceRange)
@@ -861,6 +867,7 @@ CXXConstructExpr::CXXConstructExpr(const ASTContext &C, StmtClass SC,
     NumArgs(args.size()),
     Elidable(elidable), HadMultipleCandidates(HadMultipleCandidates),
     ListInitialization(ListInitialization),
+    StdInitListInitialization(StdInitListInitialization),
     ZeroInitialization(ZeroInitialization),
     ConstructKind(ConstructKind), Args(nullptr)
 {

@@ -2375,6 +2375,7 @@ public:
                                      MultiExprArg Args,
                                      bool HadMultipleCandidates,
                                      bool ListInitialization,
+                                     bool StdInitListInitialization,
                                      bool RequiresZeroInit,
                              CXXConstructExpr::ConstructionKind ConstructKind,
                                      SourceRange ParenRange) {
@@ -2387,6 +2388,7 @@ public:
                                            ConvertedArgs,
                                            HadMultipleCandidates,
                                            ListInitialization,
+                                           StdInitListInitialization,
                                            RequiresZeroInit, ConstructKind,
                                            ParenRange);
   }
@@ -2876,6 +2878,11 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
   // of expressions. Any other form of initializer can just be reused directly.
   if (!Construct || isa<CXXTemporaryObjectExpr>(Construct))
     return getDerived().TransformExpr(Init);
+
+  // If the initialization implicitly converted an initializer list to a
+  // std::initializer_list object, unwrap the std::initializer_list too.
+  if (Construct && Construct->isStdInitListInitialization())
+    return TransformInitializer(Construct->getArg(0), CXXDirectInit);
 
   SmallVector<Expr*, 8> NewArgs;
   bool ArgChanged = false;
@@ -8571,6 +8578,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
                                               Args,
                                               E->hadMultipleCandidates(),
                                               E->isListInitialization(),
+                                              E->isStdInitListInitialization(),
                                               E->requiresZeroInitialization(),
                                               E->getConstructionKind(),
                                               E->getParenOrBraceRange());

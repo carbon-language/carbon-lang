@@ -2560,11 +2560,11 @@ static ExprResult BuildCXXCastArgument(Sema &S,
                              InitializedEntity::InitializeTemporary(Ty),
                              Constructor->getAccess());
 
-    ExprResult Result
-      = S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
-                                ConstructorArgs, HadMultipleCandidates,
-                                /*ListInit*/ false, /*ZeroInit*/ false,
-                                CXXConstructExpr::CK_Complete, SourceRange());
+    ExprResult Result = S.BuildCXXConstructExpr(
+        CastLoc, Ty, cast<CXXConstructorDecl>(Method),
+        ConstructorArgs, HadMultipleCandidates,
+        /*ListInit*/ false, /*StdInitListInit*/ false, /*ZeroInit*/ false,
+        CXXConstructExpr::CK_Complete, SourceRange());
     if (Result.isInvalid())
       return ExprError();
 
@@ -2709,20 +2709,17 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                   From, /*FIXME:ConstructLoc*/SourceLocation(),
                                   ConstructorArgs))
         return ExprError();
-      return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                   ToType, SCS.CopyConstructor,
-                                   ConstructorArgs,
-                                   /*HadMultipleCandidates*/ false,
-                                   /*ListInit*/ false, /*ZeroInit*/ false,
-                                   CXXConstructExpr::CK_Complete,
-                                   SourceRange());
+      return BuildCXXConstructExpr(
+          /*FIXME:ConstructLoc*/ SourceLocation(), ToType, SCS.CopyConstructor,
+          ConstructorArgs, /*HadMultipleCandidates*/ false,
+          /*ListInit*/ false, /*StdInitListInit*/ false, /*ZeroInit*/ false,
+          CXXConstructExpr::CK_Complete, SourceRange());
     }
-    return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
-                                 ToType, SCS.CopyConstructor,
-                                 From, /*HadMultipleCandidates*/ false,
-                                 /*ListInit*/ false, /*ZeroInit*/ false,
-                                 CXXConstructExpr::CK_Complete,
-                                 SourceRange());
+    return BuildCXXConstructExpr(
+        /*FIXME:ConstructLoc*/ SourceLocation(), ToType, SCS.CopyConstructor,
+        From, /*HadMultipleCandidates*/ false,
+        /*ListInit*/ false, /*StdInitListInit*/ false, /*ZeroInit*/ false,
+        CXXConstructExpr::CK_Complete, SourceRange());
   }
 
   // Resolve overloaded function references.
