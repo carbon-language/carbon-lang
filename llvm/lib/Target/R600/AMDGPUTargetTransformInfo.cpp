@@ -101,7 +101,7 @@ void AMDGPUTTI::getUnrollingPreferences(Loop *L,
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
                                                       I != E; ++I) {
       const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I);
-      if (!GEP)
+      if (!GEP || GEP->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
         continue;
       const Value *Ptr = GEP->getPointerOperand();
       const AllocaInst *Alloca = dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr));
