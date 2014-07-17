@@ -331,13 +331,23 @@ def : InstAlias<"wfi",  (HINT 0b011)>;
 def : InstAlias<"sev",  (HINT 0b100)>;
 def : InstAlias<"sevl", (HINT 0b101)>;
 
-  // As far as LLVM is concerned this writes to the system's exclusive monitors.
+// As far as LLVM is concerned this writes to the system's exclusive monitors.
 let mayLoad = 1, mayStore = 1 in
 def CLREX : CRmSystemI<imm0_15, 0b010, "clrex">;
 
-def DMB   : CRmSystemI<barrier_op, 0b101, "dmb">;
-def DSB   : CRmSystemI<barrier_op, 0b100, "dsb">;
-def ISB   : CRmSystemI<barrier_op, 0b110, "isb">;
+// NOTE: ideally, this would have mayStore = 0, mayLoad = 0, but we cannot
+// model patterns with sufficiently fine granularity.
+let mayLoad = ?, mayStore = ? in {
+def DMB   : CRmSystemI<barrier_op, 0b101, "dmb",
+                       [(int_aarch64_dmb (i32 imm32_0_15:$CRm))]>;
+
+def DSB   : CRmSystemI<barrier_op, 0b100, "dsb",
+                       [(int_aarch64_dsb (i32 imm32_0_15:$CRm))]>;
+
+def ISB   : CRmSystemI<barrier_op, 0b110, "isb",
+                       [(int_aarch64_isb (i32 imm32_0_15:$CRm))]>;
+}
+
 def : InstAlias<"clrex", (CLREX 0xf)>;
 def : InstAlias<"isb", (ISB 0xf)>;
 

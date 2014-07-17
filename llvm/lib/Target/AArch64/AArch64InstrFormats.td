@@ -539,6 +539,11 @@ def imm0_7 : Operand<i64>, ImmLeaf<i64, [{
   let ParserMatchClass = Imm0_7Operand;
 }
 
+// imm32_0_15 predicate - True if the 32-bit immediate is in the range [0,15]
+def imm32_0_15 : Operand<i32>, ImmLeaf<i32, [{
+  return ((uint32_t)Imm) < 16;
+}]>;
+
 // An arithmetic shifter operand:
 //  {7-6} - shift type: 00 = lsl, 01 = lsr, 10 = asr
 //  {5-0} - imm6
@@ -821,8 +826,9 @@ def barrier_op : Operand<i32> {
   let PrintMethod = "printBarrierOption";
   let ParserMatchClass = BarrierAsmOperand;
 }
-class CRmSystemI<Operand crmtype, bits<3> opc, string asm>
-    : SimpleSystemI<0, (ins crmtype:$CRm), asm, "\t$CRm">,
+class CRmSystemI<Operand crmtype, bits<3> opc, string asm,
+                 list<dag> pattern = []>
+    : SimpleSystemI<0, (ins crmtype:$CRm), asm, "\t$CRm", pattern>,
       Sched<[WriteBarrier]> {
   bits<4> CRm;
   let Inst{20-12} = 0b000110011;
