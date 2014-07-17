@@ -4,8 +4,8 @@
 # RUN: llvm-mc -triple mipsel-unknown-linux -mcpu=mips32 %s -o -| \
 # RUN:   FileCheck %s -check-prefix=CHECK-ASM
 
-# This *MUST* match the output of gas compiled with the same triple.
-# CHECK-OBJ: Flags [ (0x50001400)
+# This *MUST* match the output of 'gcc -c' compiled with the same triple.
+# CHECK-OBJ: Flags [ (0x50001404)
 
 # CHECK-ASM: .nan 2008
 
