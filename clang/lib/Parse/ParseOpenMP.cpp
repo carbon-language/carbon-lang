@@ -286,11 +286,11 @@ bool Parser::ParseOpenMPSimpleVarList(OpenMPDirectiveKind Kind,
 /// \brief Parsing of OpenMP clauses.
 ///
 ///    clause:
-///       if-clause | num_threads-clause | safelen-clause | default-clause |
-///       private-clause | firstprivate-clause | shared-clause | linear-clause |
-///       aligned-clause | collapse-clause | lastprivate-clause |
-///       reduction-clause | proc_bind-clause | schedule-clause |
-///       copyin-clause | copyprivate-clause
+///       if-clause | final-clause | num_threads-clause | safelen-clause |
+///       default-clause | private-clause | firstprivate-clause | shared-clause
+///       | linear-clause | aligned-clause | collapse-clause |
+///       lastprivate-clause | reduction-clause | proc_bind-clause |
+///       schedule-clause | copyin-clause | copyprivate-clause
 ///
 OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
                                      OpenMPClauseKind CKind, bool FirstClause) {
@@ -305,6 +305,7 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 
   switch (CKind) {
   case OMPC_if:
+  case OMPC_final:
   case OMPC_num_threads:
   case OMPC_safelen:
   case OMPC_collapse:
@@ -314,6 +315,9 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
     // OpenMP [2.8.1, simd construct, Restrictions]
     //  Only one safelen  clause can appear on a simd directive.
     //  Only one collapse clause can appear on a simd directive.
+    // OpenMP [2.11.1, task Construct, Restrictions]
+    //  At most one if clause can appear on the directive.
+    //  At most one final clause can appear on the directive.
     if (!FirstClause) {
       Diag(Tok, diag::err_omp_more_one_clause) << getOpenMPDirectiveName(DKind)
                                                << getOpenMPClauseName(CKind);
@@ -384,11 +388,14 @@ OMPClause *Parser::ParseOpenMPClause(OpenMPDirectiveKind DKind,
 }
 
 /// \brief Parsing of OpenMP clauses with single expressions like 'if',
-/// 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams' or
+/// 'final', 'collapse', 'safelen', 'num_threads', 'simdlen', 'num_teams' or
 /// 'thread_limit'.
 ///
 ///    if-clause:
 ///      'if' '(' expression ')'
+///
+///    final-clause:
+///      'final' '(' expression ')'
 ///
 ///    num_threads-clause:
 ///      'num_threads' '(' expression ')'

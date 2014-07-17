@@ -35,7 +35,7 @@ T tmain(T argc, T *argv) {
   S<T> s;
 #pragma omp task
   a = 2;
-#pragma omp task default(none), private(argc, b) firstprivate(argv) shared(d) if (argc > 0)
+#pragma omp task default(none), private(argc, b) firstprivate(argv) shared(d) if (argc > 0) final(S<T>::TS > 0)
   foo();
 #pragma omp task if (C)
   foo();
@@ -48,7 +48,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<int> s;
 // CHECK-NEXT: #pragma omp task
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
+// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<int>::TS > 0)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp task if(5)
 // CHECK-NEXT: foo()
@@ -58,7 +58,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<long> s;
 // CHECK-NEXT: #pragma omp task
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
+// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<long>::TS > 0)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp task if(1)
 // CHECK-NEXT: foo()
@@ -68,7 +68,7 @@ T tmain(T argc, T *argv) {
 // CHECK-NEXT: S<T> s;
 // CHECK-NEXT: #pragma omp task
 // CHECK-NEXT: a = 2;
-// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0)
+// CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) shared(d) if(argc > 0) final(S<T>::TS > 0)
 // CHECK-NEXT: foo()
 // CHECK-NEXT: #pragma omp task if(C)
 // CHECK-NEXT: foo()
@@ -86,8 +86,8 @@ int main(int argc, char **argv) {
   // CHECK-NEXT: #pragma omp task
   a = 2;
 // CHECK-NEXT: a = 2;
-#pragma omp task default(none), private(argc, b) firstprivate(argv) if (argc > 0)
-  // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) if(argc > 0)
+#pragma omp task default(none), private(argc, b) firstprivate(argv) if (argc > 0) final(a > 0)
+  // CHECK-NEXT: #pragma omp task default(none) private(argc,b) firstprivate(argv) if(argc > 0) final(a > 0)
   foo();
   // CHECK-NEXT: foo();
   return tmain<int, 5>(b, &b) + tmain<long, 1>(x, &x);

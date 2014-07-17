@@ -69,6 +69,7 @@ OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 
 // OpenMP clauses.
 OPENMP_CLAUSE(if, OMPIfClause)
+OPENMP_CLAUSE(final, OMPFinalClause)
 OPENMP_CLAUSE(num_threads, OMPNumThreadsClause)
 OPENMP_CLAUSE(safelen, OMPSafelenClause)
 OPENMP_CLAUSE(collapse, OMPCollapseClause)
@@ -175,6 +176,7 @@ OPENMP_PARALLEL_SECTIONS_CLAUSE(lastprivate)
 
 // TODO more clauses allowed for OpenMP directive 'task'.
 OPENMP_TASK_CLAUSE(if)
+OPENMP_TASK_CLAUSE(final)
 OPENMP_TASK_CLAUSE(default)
 OPENMP_TASK_CLAUSE(private)
 OPENMP_TASK_CLAUSE(firstprivate)
