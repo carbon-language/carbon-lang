@@ -42,8 +42,10 @@ class TestingProgressDisplay(object):
             self.progressBar.update(float(self.completed)/self.numTests,
                                     test.getFullName())
 
-        if not test.result.code.isFailure and \
-                (self.opts.quiet or self.opts.succinct):
+        shouldShow = test.result.code.isFailure or \
+            (self.opts.show_unsupported and test.result.code.name == 'UNSUPPORTED') or \
+            (not self.opts.quiet and not self.opts.succinct)
+        if not shouldShow:
             return
 
         if self.progressBar:
@@ -168,6 +170,9 @@ def main(builtinParameters = {}):
     group.add_option("", "--no-progress-bar", dest="useProgressBar",
                      help="Do not use curses based progress bar",
                      action="store_false", default=True)
+    group.add_option("", "--show-unsupported", dest="show_unsupported",
+                     help="Show unsupported tests",
+                     action="store_true", default=False)
     parser.add_option_group(group)
 
     group = OptionGroup(parser, "Test Execution")

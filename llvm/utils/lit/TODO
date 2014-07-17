@@ -156,8 +156,6 @@ Miscellaneous
 
 * Move temp directory name into local test config.
 
-* Add --show-unsupported, don't show by default?
-
 * Support valgrind in all configs, and LLVM style valgrind.
 
 * Support a timeout / ulimit.
