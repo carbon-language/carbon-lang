@@ -484,11 +484,13 @@ void t41(unsigned short a) {
   __asm mov fs, a;
   __asm mov gs, a;
   __asm mov ss, a;
-  // CHECK-LABEL: define void @t41
-  // CHECK: call void asm sideeffect inteldialect "mov cs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
-  // CHECK: call void asm sideeffect inteldialect "mov ds, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
-  // CHECK: call void asm sideeffect inteldialect "mov es, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
-  // CHECK: call void asm sideeffect inteldialect "mov fs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
-  // CHECK: call void asm sideeffect inteldialect "mov gs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
-  // CHECK: call void asm sideeffect inteldialect "mov ss, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr)
+  // CHECK-LABEL: define void @t41(i16 zeroext %a)
+  // CHECK: [[T41_A_ADDR:%.+]] = alloca i16
+  // CHECK: store i16 %a, i16* [[T41_A_ADDR]]
+  // CHECK: call void asm sideeffect inteldialect "mov cs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
+  // CHECK: call void asm sideeffect inteldialect "mov ds, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
+  // CHECK: call void asm sideeffect inteldialect "mov es, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
+  // CHECK: call void asm sideeffect inteldialect "mov fs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
+  // CHECK: call void asm sideeffect inteldialect "mov gs, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
+  // CHECK: call void asm sideeffect inteldialect "mov ss, word ptr $0", "*m,~{dirflag},~{fpsr},~{flags}"(i16* [[T41_A_ADDR]])
 }
