@@ -2615,7 +2615,7 @@ void MicrosoftRecordLayoutBuilder::layoutVirtualBases(const CXXRecordDecl *RD) {
     if ((PreviousBaseLayout && PreviousBaseLayout->hasZeroSizedSubObject() &&
         BaseLayout.leadsWithZeroSizedBase()) || HasVtordisp) {
       Size = Size.RoundUpToAlignment(VtorDispAlignment) + VtorDispSize;
-      RequiredAlignment = VtorDispAlignment;
+      Alignment = std::max(VtorDispAlignment, Alignment);
     }
     // Insert the virtual base.
     ElementInfo Info = getAdjustedElementInfo(BaseLayout);
