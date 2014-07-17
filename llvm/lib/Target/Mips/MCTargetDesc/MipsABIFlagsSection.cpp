@@ -41,6 +41,12 @@ StringRef MipsABIFlagsSection::getFpABIString(FpABIKind Value) {
   }
 }
 
+uint8_t MipsABIFlagsSection::getCPR1SizeValue() {
+  if (FpABI == FpABIKind::XX)
+    return (uint8_t)AFL_REG_32;
+  return (uint8_t)CPR1Size;
+}
+
 namespace llvm {
 MCStreamer &operator<<(MCStreamer &OS, MipsABIFlagsSection &ABIFlagsSection) {
   // Write out a Elf_Internal_ABIFlags_v0 struct

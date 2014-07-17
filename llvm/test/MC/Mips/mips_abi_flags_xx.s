@@ -3,11 +3,15 @@
 #
 # RUN: llvm-mc %s -arch=mips -mcpu=mips32 -filetype=obj -o - | \
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
-# RUN:     FileCheck %s -check-prefix=CHECK-OBJ
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ -check-prefix=CHECK-OBJ-R1
 
 # RUN: llvm-mc /dev/null -arch=mips -mcpu=mips32 -mattr=fpxx -filetype=obj -o - | \
 # RUN:   llvm-readobj -sections -section-data -section-relocations - | \
-# RUN:     FileCheck %s -check-prefix=CHECK-OBJ
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ -check-prefix=CHECK-OBJ-R1
+
+# RUN: llvm-mc /dev/null -arch=mips -mcpu=mips32r6 -mattr=fpxx -filetype=obj -o - | \
+# RUN:   llvm-readobj -sections -section-data -section-relocations - | \
+# RUN:     FileCheck %s -check-prefix=CHECK-OBJ -check-prefix=CHECK-OBJ-R6
 
 # CHECK-ASM: .module fp=xx
 
@@ -28,7 +32,8 @@
 # CHECK-OBJ:         Relocations [
 # CHECK-OBJ:         ]
 # CHECK-OBJ:         SectionData (
-# CHECK-OBJ:           0000: 00002001 01010005 00000000 00000000  |.. .............|
+# CHECK-OBJ-R1:        0000: 00002001 01010005 00000000 00000000  |.. .............|
+# CHECK-OBJ-R6:        0000: 00002006 01010005 00000000 00000000  |.. .............|
 # CHECK-OBJ:           0010: 00000001 00000000                    |........|
 # CHECK-OBJ:         )
 # CHECK-OBJ-LABEL: }
