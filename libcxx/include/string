@@ -1031,16 +1031,16 @@ __str_rfind(const _CharT *__p, _SizeT __sz,
               _CharT __c, _SizeT __pos) _NOEXCEPT
 {
     if (__sz < 1)
-    	return __npos;
-	if (__pos < __sz)
-		++__pos;
-	else
-		__pos = __sz;
-	for (const _CharT* __ps = __p + __pos; __ps != __p;)
-	{
-		if (_Traits::eq(*--__ps, __c))
-			return static_cast<_SizeT>(__ps - __p);
-	}
+        return __npos;
+    if (__pos < __sz)
+        ++__pos;
+    else
+        __pos = __sz;
+    for (const _CharT* __ps = __p + __pos; __ps != __p;)
+    {
+        if (_Traits::eq(*--__ps, __c))
+            return static_cast<_SizeT>(__ps - __p);
+    }
     return __npos;
 }
 
@@ -2136,11 +2136,13 @@ inline _LIBCPP_INLINE_VISIBILITY
 basic_string<_CharT, _Traits, _Allocator>::basic_string(basic_string&& __str, const allocator_type& __a)
     : __r_(__a)
 {
-    if (__a == __str.__alloc() || !__str.__is_long())
-        __r_.first().__r = __str.__r_.first().__r;
-    else
+    if (__str.__is_long() && __a != __str.__alloc()) // copy, not move
         __init(_VSTD::__to_raw_pointer(__str.__get_long_pointer()), __str.__get_long_size());
-    __str.__zero();
+    else
+    {
+        __r_.first().__r = __str.__r_.first().__r;
+        __str.__zero();
+    }
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __get_db()->__insert_c(this);
     if (__is_long())
