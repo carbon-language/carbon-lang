@@ -660,7 +660,7 @@ bool raw_fd_ostream::has_colors() const {
 /// Use it like: outs() << "foo" << "bar";
 raw_ostream &llvm::outs() {
   // Set buffer settings to model stdout behavior.
-  // Delete the file descriptor when the program exists, forcing error
+  // Delete the file descriptor when the program exits, forcing error
   // detection. If you don't want this behavior, don't use outs().
   static raw_fd_ostream S(STDOUT_FILENO, true);
   return S;
