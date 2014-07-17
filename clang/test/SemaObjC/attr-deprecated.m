@@ -192,3 +192,38 @@ __attribute__((deprecated))
 }
 
 @end
+
+// rdar://16068470
+@interface TestBase
+@property (nonatomic, strong) id object __attribute__((deprecated("deprecated"))); // expected-note {{'object' has been explicitly marked deprecated here}} \
+expected-note {{property 'object' is declared deprecated here}} \
+expected-note {{'setObject:' has been explicitly marked deprecated here}}
+@end
+
+@interface TestDerived : TestBase
+@property (nonatomic, strong) id object;
+@end
+
+@interface TestUse @end
+
+@implementation TestBase @end
+
+@implementation TestDerived @end
+
+@implementation TestUse
+
+- (void) use
+{
+    TestBase *base = (id)0;
+    TestDerived *derived = (id)0;
+    id object = (id)0;
+
+    base.object = object; // expected-warning {{'object' is deprecated: deprecated}}
+    derived.object = object;
+
+    [base setObject:object];  // expected-warning {{'setObject:' is deprecated: deprecated}}
+    [derived setObject:object];
+}
+
+@end
+

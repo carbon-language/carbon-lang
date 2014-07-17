@@ -2076,6 +2076,8 @@ static bool mergeDeclAttribute(Sema &S, NamedDecl *D,
     // AlignedAttrs are handled separately, because we need to handle all
     // such attributes on a declaration at the same time.
     NewAttr = nullptr;
+  else if (isa<DeprecatedAttr>(Attr) && Override)
+    NewAttr = nullptr;
   else if (Attr->duplicatesAllowed() || !DeclHasAttr(D, Attr))
     NewAttr = cast<InheritableAttr>(Attr->clone(S.Context));
 
