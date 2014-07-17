@@ -87,8 +87,8 @@ cl::opt<bool> POSIXFormat("P", cl::desc("Alias for --format=posix"));
 cl::opt<bool> DarwinFormat("m", cl::desc("Alias for --format=darwin"));
 
 static cl::list<std::string>
-ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
-          cl::ZeroOrMore);
+    ArchFlags("arch", cl::desc("architecture(s) from a Mach-O file to dump"),
+              cl::ZeroOrMore);
 bool ArchAll = false;
 
 cl::opt<bool> PrintFileName(
@@ -1234,7 +1234,6 @@ int main(int argc, char **argv) {
   if (SegSect.size() != 0 && SegSect.size() != 2)
     error("bad number of arguments (must be two arguments)",
           "for the -s option");
-
 
   std::for_each(InputFilenames.begin(), InputFilenames.end(),
                 dumpSymbolNamesFromFile);
