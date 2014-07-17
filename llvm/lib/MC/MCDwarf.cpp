@@ -740,14 +740,10 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
 
   // AT_producer, the version of the assembler tool.
   StringRef DwarfDebugProducer = context.getDwarfDebugProducer();
-  if (!DwarfDebugProducer.empty()){
+  if (!DwarfDebugProducer.empty())
     MCOS->EmitBytes(DwarfDebugProducer);
-  }
-  else {
-    MCOS->EmitBytes(StringRef("llvm-mc (based on LLVM "));
-    MCOS->EmitBytes(StringRef(PACKAGE_VERSION));
-    MCOS->EmitBytes(StringRef(")"));
-  }
+  else
+    MCOS->EmitBytes(StringRef("llvm-mc (based on LLVM " PACKAGE_VERSION ")"));
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_language, a 4 byte value.  We use DW_LANG_Mips_Assembler as the dwarf2
