@@ -44,6 +44,7 @@ relational/isequal.cl
 relational/isgreater.cl
 relational/isgreaterequal.cl
 relational/isnan.cl
+relational/isnotequal.cl
 relational/signbit.cl
 shared/clamp.cl
 shared/max.cl

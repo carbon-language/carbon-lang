@@ -113,6 +113,7 @@
 #include <clc/relational/isgreater.h>
 #include <clc/relational/isgreaterequal.h>
 #include <clc/relational/isnan.h>
+#include <clc/relational/isnotequal.h>
 #include <clc/relational/select.h>
 #include <clc/relational/signbit.h>
 
