@@ -220,6 +220,10 @@ static void InitLibcallNames(const char **Names, const Triple &TT) {
   Names[RTLIB::FPEXT_F32_F64] = "__extendsfdf2";
   Names[RTLIB::FPEXT_F16_F32] = "__gnu_h2f_ieee";
   Names[RTLIB::FPROUND_F32_F16] = "__gnu_f2h_ieee";
+  Names[RTLIB::FPROUND_F64_F16] = "__truncdfhf2";
+  Names[RTLIB::FPROUND_F80_F16] = "__truncxfhf2";
+  Names[RTLIB::FPROUND_F128_F16] = "__trunctfhf2";
+  Names[RTLIB::FPROUND_PPCF128_F16] = "__trunctfhf2";
   Names[RTLIB::FPROUND_F64_F32] = "__truncdfsf2";
   Names[RTLIB::FPROUND_F80_F32] = "__truncxfsf2";
   Names[RTLIB::FPROUND_F128_F32] = "__trunctfsf2";
@@ -434,7 +438,18 @@ RTLIB::Libcall RTLIB::getFPEXT(EVT OpVT, EVT RetVT) {
 /// getFPROUND - Return the FPROUND_*_* value for the given types, or
 /// UNKNOWN_LIBCALL if there is none.
 RTLIB::Libcall RTLIB::getFPROUND(EVT OpVT, EVT RetVT) {
-  if (RetVT == MVT::f32) {
+  if (RetVT == MVT::f16) {
+    if (OpVT == MVT::f32)
+      return FPROUND_F32_F16;
+    if (OpVT == MVT::f64)
+      return FPROUND_F64_F16;
+    if (OpVT == MVT::f80)
+      return FPROUND_F80_F16;
+    if (OpVT == MVT::f128)
+      return FPROUND_F128_F16;
+    if (OpVT == MVT::ppcf128)
+      return FPROUND_PPCF128_F16;
+  } else if (RetVT == MVT::f32) {
     if (OpVT == MVT::f64)
       return FPROUND_F64_F32;
     if (OpVT == MVT::f80)

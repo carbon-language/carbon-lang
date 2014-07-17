@@ -632,10 +632,10 @@ bool DAGTypeLegalizer::SoftenFloatOperand(SDNode *N, unsigned OpNo) {
 
   case ISD::BITCAST:     Res = SoftenFloatOp_BITCAST(N); break;
   case ISD::BR_CC:       Res = SoftenFloatOp_BR_CC(N); break;
+  case ISD::FP_TO_FP16:  // Same as FP_ROUND for softening purposes
   case ISD::FP_ROUND:    Res = SoftenFloatOp_FP_ROUND(N); break;
   case ISD::FP_TO_SINT:  Res = SoftenFloatOp_FP_TO_SINT(N); break;
   case ISD::FP_TO_UINT:  Res = SoftenFloatOp_FP_TO_UINT(N); break;
-  case ISD::FP_TO_FP16:  Res = SoftenFloatOp_FP_TO_FP16(N); break;
   case ISD::SELECT_CC:   Res = SoftenFloatOp_SELECT_CC(N); break;
   case ISD::SETCC:       Res = SoftenFloatOp_SETCC(N); break;
   case ISD::STORE:       Res = SoftenFloatOp_STORE(N, OpNo); break;
@@ -662,10 +662,15 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_BITCAST(SDNode *N) {
 }
 
 SDValue DAGTypeLegalizer::SoftenFloatOp_FP_ROUND(SDNode *N) {
+  // We actually deal with the partially-softened FP_TO_FP16 node too, which
+  // returns an i16 so doesn't meet the constraints necessary for FP_ROUND.
+  assert(N->getOpcode() == ISD::FP_ROUND || N->getOpcode() == ISD::FP_TO_FP16);
+
   EVT SVT = N->getOperand(0).getValueType();
   EVT RVT = N->getValueType(0);
+  EVT FloatRVT = N->getOpcode() == ISD::FP_TO_FP16 ? MVT::f16 : RVT;
 
-  RTLIB::Libcall LC = RTLIB::getFPROUND(SVT, RVT);
+  RTLIB::Libcall LC = RTLIB::getFPROUND(SVT, FloatRVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_ROUND libcall");
 
   SDValue Op = GetSoftenedFloat(N->getOperand(0));
@@ -707,15 +712,6 @@ SDValue DAGTypeLegalizer::SoftenFloatOp_FP_TO_UINT(SDNode *N) {
   EVT RVT = N->getValueType(0);
   RTLIB::Libcall LC = RTLIB::getFPTOUINT(N->getOperand(0).getValueType(), RVT);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_TO_UINT!");
-  SDValue Op = GetSoftenedFloat(N->getOperand(0));
-  return TLI.makeLibCall(DAG, LC, RVT, &Op, 1, false, SDLoc(N)).first;
-}
-
-SDValue DAGTypeLegalizer::SoftenFloatOp_FP_TO_FP16(SDNode *N) {
-  assert(N->getOperand(0).getValueType() == MVT::f32 &&
-         "Cannot soften in one step");
-  EVT RVT = N->getValueType(0);
-  RTLIB::Libcall LC = RTLIB::FPROUND_F32_F16;
   SDValue Op = GetSoftenedFloat(N->getOperand(0));
   return TLI.makeLibCall(DAG, LC, RVT, &Op, 1, false, SDLoc(N)).first;
 }

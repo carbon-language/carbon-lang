@@ -73,6 +73,17 @@ define double @test4(i16* nocapture %src) {
 ; F16C: vcvtss2sd
 ; F16C: ret
 
+
+define i16 @test5(double %src) {
+  %val = tail call i16 @llvm.convert.to.fp16.f64(double %src)
+  ret i16 %val
+}
+; CHECK-LABEL: test5:
+; LIBCALL: jmp  __truncdfhf2
+; SOFTFLOAT: callq  __truncdfhf2
+; F16C: jmp __truncdfhf2
+
 declare float @llvm.convert.from.fp16.f32(i16) nounwind readnone
 declare i16 @llvm.convert.to.fp16.f32(float) nounwind readnone
 declare double @llvm.convert.from.fp16.f64(i16) nounwind readnone
+declare i16 @llvm.convert.to.fp16.f64(double) nounwind readnone
