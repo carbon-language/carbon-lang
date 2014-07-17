@@ -1,18 +1,9 @@
+#undef signbit
 
-#define _CLC_SIGNBIT_DECL(TYPE, RETTYPE) \
-  _CLC_OVERLOAD _CLC_DECL RETTYPE signbit(TYPE x);
+#define __CLC_FUNCTION signbit
+#define __CLC_BODY <clc/relational/unary_decl.inc>
 
-#define _CLC_VECTOR_SIGNBIT_DECL(TYPE, RETTYPE) \
-  _CLC_SIGNBIT_DECL(TYPE##2, RETTYPE##2)  \
-  _CLC_SIGNBIT_DECL(TYPE##3, RETTYPE##3)  \
-  _CLC_SIGNBIT_DECL(TYPE##4, RETTYPE##4)  \
-  _CLC_SIGNBIT_DECL(TYPE##8, RETTYPE##8)  \
-  _CLC_SIGNBIT_DECL(TYPE##16, RETTYPE##16)
+#include <clc/relational/floatn.inc>
 
-_CLC_SIGNBIT_DECL(float, int)
-_CLC_VECTOR_SIGNBIT_DECL(float, int)
-
-#ifdef cl_khr_fp64
-_CLC_SIGNBIT_DECL(double, int)
-_CLC_VECTOR_SIGNBIT_DECL(double, long)
-#endif
+#undef __CLC_BODY
+#undef __CLC_FUNCTION
