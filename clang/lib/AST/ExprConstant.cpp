@@ -7955,6 +7955,16 @@ public:
       return true;
     }
   }
+
+  bool VisitCallExpr(const CallExpr *E) {
+    switch (E->getBuiltinCallee()) {
+    default:
+      return ExprEvaluatorBaseTy::VisitCallExpr(E);
+    case Builtin::BI__assume:
+      // The argument is not evaluated!
+      return true;
+    }
+  }
 };
 } // end anonymous namespace
 
