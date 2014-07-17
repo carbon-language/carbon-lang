@@ -2313,6 +2313,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *ArgShadowBase = getShadowPtrForArgument(A, IRB, ArgOffset);
       DEBUG(dbgs() << "  Arg#" << i << ": " << *A <<
             " Shadow: " << *ArgShadow << "\n");
+      bool ArgIsInitialized = false;
       if (CS.paramHasAttr(i + 1, Attribute::ByVal)) {
         assert(A->getType()->isPointerTy() &&
                "ByVal argument is not a pointer!");
@@ -2325,8 +2326,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Size = MS.DL->getTypeAllocSize(A->getType());
         Store = IRB.CreateAlignedStore(ArgShadow, ArgShadowBase,
                                        kShadowTLSAlignment);
+        Constant *Cst = dyn_cast<Constant>(ArgShadow);
+        if (Cst && Cst->isNullValue()) ArgIsInitialized = true;
       }
-      if (MS.TrackOrigins)
+      if (MS.TrackOrigins && !ArgIsInitialized)
         IRB.CreateStore(getOrigin(A),
                         getOriginPtrForArgument(A, IRB, ArgOffset));
       (void)Store;
