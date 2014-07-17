@@ -235,7 +235,13 @@ def make_symlink_windows( vDictArgs, vstrFrameworkPythonDir, vstrDllName ):
 	strMsg = "";
 
 	bDbg = vDictArgs.has_key( "-d" );
-	strTarget = vstrDllName + ".pyd";
+	strTarget = vstrDllName;
+	# When importing an extension module using a debug version of python, you
+	# write, for example, "import foo", but the interpreter searches for
+	# "foo_d.pyd"
+	if vDictArgs["--buildConfig"].lower() == "debug":
+		strTarget += "_d";
+	strTarget += ".pyd";
 	strDLLPath = "%s\\%s" % (vstrFrameworkPythonDir, strTarget);
 	strTarget = os.path.normcase( strDLLPath );
 	strSrc = "";
@@ -525,6 +531,7 @@ def get_framework_python_dir( vDictArgs ):
 			-m (optional) 	Specify called from Makefile system. If given locate
 							the LLDBWrapPython.cpp in --srcRoot/source folder 
 							else in the	--targetDir folder.
+			--buildConfig	The LLDB build configuration (e.g. debug/release).
 			--srcRoot		The root of the lldb source tree.
 			--targetDir 	Where the lldb framework/shared library gets put.
 			--cfgBlddir 	Where the buildSwigPythonLLDB.py program will 

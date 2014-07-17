@@ -165,13 +165,14 @@ def validate_arguments( vArgv ):
 	nResult = 0;
 	strListArgs = "hdm"; # Format "hiox:" = -h -i -o -x <arg>
 	listLongArgs = ["srcRoot=", "targetDir=", "cfgBldDir=", "prefix=", "cmakeBuildConfiguration=",
-					"argsFile"];
+					"argsFile", "buildConfig="];
 	dictArgReq = {	"-h": "o",			# o = optional, m = mandatory
 					"-d": "o",
 					"-m": "o",
 					"--srcRoot": "m",
 					"--targetDir": "m",
 					"--cfgBldDir": "o",
+					"--buildConfig": "m",
 					"--prefix": "o",
 					"--cmakeBuildConfiguration": "o",
 					"--argsFile": "o" };

@@ -18,14 +18,6 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 
 	# Install the LLDB python module on all operating systems
 	install(SCRIPT lldb_python_module.cmake -DCMAKE_INSTALL_PREFIX=\"${CMAKE_INSTALL_PREFIX}\" -DCMAKE_BUILD_DIR=\"${CMAKE_BUILD_DIR}\")
-
-	# Add a Post-Build Event to copy over Python files and create the symlink to liblldb.so for the Python API(hardlink on Windows)
-	add_custom_command( TARGET liblldb
-	  POST_BUILD
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/finishSwigWrapperClasses.py
-	  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/Python/finishSwigPythonLLDB.py
-	  COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/finishSwigWrapperClasses.py -d "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}" "--prefix=${CMAKE_BINARY_DIR}" "--cmakeBuildConfiguration=${CMAKE_CFG_INTDIR}" -m
-	  COMMENT "Python script sym-linking LLDB Python API")
 else ()
 	add_custom_command(
 	  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/LLDBWrapPython.cpp
