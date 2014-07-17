@@ -1565,12 +1565,12 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                                 {
                                     if (result_valobj_sp->IsCStringContainer(true))
                                     {
-                                        lldb::DataBufferSP buf_sp (new DataBufferHeap());
-                                        size_t num_chars = result_valobj_sp->ReadPointedString (buf_sp, error);
+                                        StreamString s;
+                                        size_t num_chars = result_valobj_sp->ReadPointedString (s, error);
                                         if (error.Success() && num_chars > 0)
                                         {
                                             error.Clear();
-                                            error.SetErrorStringWithFormat("dlopen failed: %s", buf_sp->GetBytes());
+                                            error.SetErrorStringWithFormat("dlopen failed: %s", s.GetData());
                                         }
                                     }
                                 }
