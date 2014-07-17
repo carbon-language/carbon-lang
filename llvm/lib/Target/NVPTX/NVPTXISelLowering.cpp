@@ -48,6 +48,12 @@ static cl::opt<bool> sched4reg(
     "nvptx-sched4reg",
     cl::desc("NVPTX Specific: schedule for register pressue"), cl::init(false));
 
+static cl::opt<unsigned>
+FMAContractLevelOpt("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,
+                    cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
+                             " 1: do it  2: do it aggressively"),
+                    cl::init(2));
+
 static bool IsPTXVectorType(MVT VT) {
   switch (VT.SimpleTy) {
   default:
@@ -3799,7 +3805,31 @@ unsigned NVPTXTargetLowering::getFunctionAlignment(const Function *) const {
 //                         NVPTX DAG Combining
 //===----------------------------------------------------------------------===//
 
-extern unsigned FMAContractLevel;
+bool NVPTXTargetLowering::allowFMA(MachineFunction &MF,
+                                   CodeGenOpt::Level OptLevel) const {
+  const Function *F = MF.getFunction();
+  const TargetOptions &TO = MF.getTarget().Options;
+
+  // Always honor command-line argument
+  if (FMAContractLevelOpt.getNumOccurrences() > 0) {
+    return FMAContractLevelOpt > 0;
+  } else if (OptLevel == 0) {
+    // Do not contract if we're not optimizing the code
+    return false;
+  } else if (TO.AllowFPOpFusion == FPOpFusion::Fast || TO.UnsafeFPMath) {
+    // Honor TargetOptions flags that explicitly say fusion is okay
+    return true;
+  } else if (F->hasFnAttribute("unsafe-fp-math")) {
+    // Check for unsafe-fp-math=true coming from Clang
+    Attribute Attr = F->getFnAttribute("unsafe-fp-math");
+    StringRef Val = Attr.getValueAsString();
+    if (Val == "true")
+      return true;
+  }
+
+  // We did not have a clear indication that fusion is allowed, so assume not
+  return false;
+}
 
 /// PerformADDCombineWithOperands - Try DAG combinations for an ADD with
 /// operands N0 and N1.  This is a helper for PerformADDCombine that is
@@ -3833,7 +3863,9 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
   }
   else if (N0.getOpcode() == ISD::FMUL) {
     if (VT == MVT::f32 || VT == MVT::f64) {
-      if (FMAContractLevel == 0)
+      NVPTXTargetLowering *TLI =
+        (NVPTXTargetLowering *)&DAG.getTargetLoweringInfo();
+      if (!TLI->allowFMA(DAG.getMachineFunction(), OptLevel))
         return SDValue();
 
       // For floating point:

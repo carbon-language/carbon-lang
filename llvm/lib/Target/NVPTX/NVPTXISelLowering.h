@@ -503,6 +503,12 @@ public:
   TargetLoweringBase::LegalizeTypeAction
   getPreferredVectorAction(EVT VT) const override;
 
+  bool allowFMA(MachineFunction &MF, CodeGenOpt::Level OptLevel) const;
+
+  virtual bool isFMAFasterThanFMulAndFAdd(EVT) const {
+    return true;
+  }
+
 private:
   const NVPTXSubtarget &nvptxSubtarget; // cache the subtarget here
 

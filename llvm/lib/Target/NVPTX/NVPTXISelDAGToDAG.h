@@ -24,20 +24,13 @@ namespace {
 
 class LLVM_LIBRARY_VISIBILITY NVPTXDAGToDAGISel : public SelectionDAGISel {
 
-  // If true, generate corresponding FPCONTRACT. This is
-  // language dependent (i.e. CUDA and OpenCL works differently).
-  bool doFMAF64;
-  bool doFMAF32;
-  bool doFMAF64AGG;
-  bool doFMAF32AGG;
-  bool allowFMA;
-
   // If true, generate mul.wide from sext and mul
   bool doMulWide;
 
   int getDivF32Level() const;
   bool usePrecSqrtF32() const;
   bool useF32FTZ() const;
+  bool allowFMA() const;
 
 public:
   explicit NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,

@@ -1,5 +1,5 @@
-; RUN: llc < %s -march=nvptx -mcpu=sm_20 | FileCheck %s
-; RUN: llc < %s -march=nvptx64 -mcpu=sm_20 | FileCheck %s
+; RUN: llc < %s -march=nvptx -mcpu=sm_20 -fp-contract=fast | FileCheck %s
+; RUN: llc < %s -march=nvptx64 -mcpu=sm_20 -fp-contract=fast | FileCheck %s
 
 ;; These tests should run for all targets
 

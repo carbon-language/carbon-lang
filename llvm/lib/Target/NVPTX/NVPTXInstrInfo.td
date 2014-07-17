@@ -139,17 +139,10 @@ def hasGenericLdSt : Predicate<"Subtarget.hasGenericLdSt()">;
 def doF32FTZ : Predicate<"useF32FTZ()">;
 def doNoF32FTZ : Predicate<"!useF32FTZ()">;
 
-def doFMAF32      : Predicate<"doFMAF32">;
-def doFMAF32_ftz  : Predicate<"(doFMAF32 && useF32FTZ())">;
-def doFMAF32AGG      : Predicate<"doFMAF32AGG">;
-def doFMAF32AGG_ftz  : Predicate<"(doFMAF32AGG && useF32FTZ())">;
-def doFMAF64      : Predicate<"doFMAF64">;
-def doFMAF64AGG      : Predicate<"doFMAF64AGG">;
-
 def doMulWide      : Predicate<"doMulWide">;
 
-def allowFMA : Predicate<"allowFMA">;
-def allowFMA_ftz : Predicate<"(allowFMA && useF32FTZ())">;
+def allowFMA : Predicate<"allowFMA()">;
+def noFMA : Predicate<"!allowFMA()">;
 
 def do_DIVF32_APPROX : Predicate<"getDivF32Level()==0">;
 def do_DIVF32_FULL : Predicate<"getDivF32Level()==1">;
@@ -222,13 +215,13 @@ multiclass F3<string OpcStr, SDNode OpNode> {
                       !strconcat(OpcStr, ".ftz.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
                         (OpNode Float32Regs:$a, Float32Regs:$b))]>,
-                      Requires<[allowFMA_ftz]>;
+                      Requires<[allowFMA, doF32FTZ]>;
    def f32ri_ftz : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, f32imm:$b),
                       !strconcat(OpcStr, ".ftz.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
                         (OpNode Float32Regs:$a, fpimm:$b))]>,
-                      Requires<[allowFMA_ftz]>;
+                      Requires<[allowFMA, doF32FTZ]>;
    def f32rr : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, Float32Regs:$b),
                       !strconcat(OpcStr, ".f32 \t$dst, $a, $b;"),
@@ -248,34 +241,38 @@ multiclass F3_rn<string OpcStr, SDNode OpNode> {
                       (ins Float64Regs:$a, Float64Regs:$b),
                       !strconcat(OpcStr, ".rn.f64 \t$dst, $a, $b;"),
                       [(set Float64Regs:$dst,
-                        (OpNode Float64Regs:$a, Float64Regs:$b))]>;
+                        (OpNode Float64Regs:$a, Float64Regs:$b))]>,
+                      Requires<[noFMA]>;
    def f64ri : NVPTXInst<(outs Float64Regs:$dst),
                       (ins Float64Regs:$a, f64imm:$b),
                       !strconcat(OpcStr, ".rn.f64 \t$dst, $a, $b;"),
                       [(set Float64Regs:$dst,
-                        (OpNode Float64Regs:$a, fpimm:$b))]>;
+                        (OpNode Float64Regs:$a, fpimm:$b))]>,
+                      Requires<[noFMA]>;
    def f32rr_ftz : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, Float32Regs:$b),
                       !strconcat(OpcStr, ".rn.ftz.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
                         (OpNode Float32Regs:$a, Float32Regs:$b))]>,
-                      Requires<[doF32FTZ]>;
+                      Requires<[noFMA, doF32FTZ]>;
    def f32ri_ftz : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, f32imm:$b),
                       !strconcat(OpcStr, ".rn.ftz.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
                         (OpNode Float32Regs:$a, fpimm:$b))]>,
-                      Requires<[doF32FTZ]>;
+                      Requires<[noFMA, doF32FTZ]>;
    def f32rr : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, Float32Regs:$b),
                       !strconcat(OpcStr, ".rn.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
-                        (OpNode Float32Regs:$a, Float32Regs:$b))]>;
+                        (OpNode Float32Regs:$a, Float32Regs:$b))]>,
+                      Requires<[noFMA]>;
    def f32ri : NVPTXInst<(outs Float32Regs:$dst),
                       (ins Float32Regs:$a, f32imm:$b),
                       !strconcat(OpcStr, ".rn.f32 \t$dst, $a, $b;"),
                       [(set Float32Regs:$dst,
-                        (OpNode Float32Regs:$a, fpimm:$b))]>;
+                        (OpNode Float32Regs:$a, fpimm:$b))]>,
+                      Requires<[noFMA]>;
 }
 
 multiclass F2<string OpcStr, SDNode OpNode> {
@@ -919,8 +916,8 @@ multiclass FPCONTRACT64<string OpcStr, Predicate Pred> {
 }
 
 defm FMA32_ftz  : FPCONTRACT32<"fma.rn.ftz.f32", doF32FTZ>;
-defm FMA32  : FPCONTRACT32<"fma.rn.f32", doNoF32FTZ>;
-defm FMA64  : FPCONTRACT64<"fma.rn.f64", doNoF32FTZ>;
+defm FMA32  : FPCONTRACT32<"fma.rn.f32", true>;
+defm FMA64  : FPCONTRACT64<"fma.rn.f64", true>;
 
 def SINF:  NVPTXInst<(outs Float32Regs:$dst), (ins Float32Regs:$src),
                       "sin.approx.f32 \t$dst, $src;",

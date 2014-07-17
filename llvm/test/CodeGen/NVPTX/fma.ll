@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=nvptx -mcpu=sm_20 | FileCheck %s
+; RUN: llc < %s -march=nvptx -mcpu=sm_20 -fp-contract=fast | FileCheck %s
 
 define ptx_device float @t1_f32(float %x, float %y, float %z) {
 ; CHECK: fma.rn.f32 %f{{[0-9]+}}, %f{{[0-9]+}}, %f{{[0-9]+}}, %f{{[0-9]+}};

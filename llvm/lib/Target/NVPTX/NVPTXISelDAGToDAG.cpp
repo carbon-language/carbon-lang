@@ -24,15 +24,6 @@ using namespace llvm;
 
 #define DEBUG_TYPE "nvptx-isel"
 
-unsigned FMAContractLevel = 0;
-
-static cl::opt<unsigned, true>
-FMAContractLevelOpt("nvptx-fma-level", cl::ZeroOrMore, cl::Hidden,
-                    cl::desc("NVPTX Specific: FMA contraction (0: don't do it"
-                             " 1: do it  2: do it aggressively"),
-                    cl::location(FMAContractLevel),
-                    cl::init(2));
-
 static cl::opt<int> UsePrecDivF32(
     "nvptx-prec-divf32", cl::ZeroOrMore, cl::Hidden,
     cl::desc("NVPTX Specifies: 0 use div.approx, 1 use div.full, 2 use"
@@ -61,16 +52,6 @@ NVPTXDAGToDAGISel::NVPTXDAGToDAGISel(NVPTXTargetMachine &tm,
                                      CodeGenOpt::Level OptLevel)
     : SelectionDAGISel(tm, OptLevel),
       Subtarget(tm.getSubtarget<NVPTXSubtarget>()) {
-
-  doFMAF32 = (OptLevel > 0) && Subtarget.hasFMAF32() && (FMAContractLevel >= 1);
-  doFMAF64 = (OptLevel > 0) && Subtarget.hasFMAF64() && (FMAContractLevel >= 1);
-  doFMAF32AGG =
-      (OptLevel > 0) && Subtarget.hasFMAF32() && (FMAContractLevel == 2);
-  doFMAF64AGG =
-      (OptLevel > 0) && Subtarget.hasFMAF64() && (FMAContractLevel == 2);
-
-  allowFMA = (FMAContractLevel >= 1);
-
   doMulWide = (OptLevel > 0);
 }
 
@@ -114,6 +95,11 @@ bool NVPTXDAGToDAGISel::useF32FTZ() const {
     else
       return false;
   }
+}
+
+bool NVPTXDAGToDAGISel::allowFMA() const {
+  const NVPTXTargetLowering *TL = (NVPTXTargetLowering *)getTargetLowering();
+  return TL->allowFMA(*MF, OptLevel);
 }
 
 /// Select - Select instructions not customized! Used for
