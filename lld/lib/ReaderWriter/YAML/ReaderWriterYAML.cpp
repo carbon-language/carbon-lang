@@ -61,8 +61,6 @@ class RefNameBuilder {
 public:
   RefNameBuilder(const lld::File &file)
       : _collisionCount(0), _unnamedCounter(0) {
-    if (&file == nullptr)
-      return;
     // visit all atoms
     for (const lld::DefinedAtom *atom : file.defined()) {
       // Build map of atoms names to detect duplicates
