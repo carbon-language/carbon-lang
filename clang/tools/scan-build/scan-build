@@ -388,6 +388,10 @@ sub ScanFile {
     }
     elsif (/<!-- BUGFILE (.*) -->$/) {
       $BugFile = abs_path($1);
+      if (!defined $BugFile) {
+         # The file no longer exists: use the original path.
+         $BugFile = $1;
+      }
       UpdatePrefix($BugFile);
     }
     elsif (/<!-- BUGPATHLENGTH (.*) -->$/) {
