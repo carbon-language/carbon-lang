@@ -645,7 +645,18 @@ bool Sema::CheckAArch64BuiltinFunctionCall(unsigned BuiltinID,
   if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
     return true;
 
-  return false;
+  // For intrinsics which take an immediate value as part of the instruction,
+  // range check them here.
+  unsigned i = 0, l = 0, u = 0;
+  switch (BuiltinID) {
+  default: return false;
+  case AArch64::BI__builtin_arm_dmb:
+  case AArch64::BI__builtin_arm_dsb:
+  case AArch64::BI__builtin_arm_isb: l = 0; u = 15; break;
+  }
+
+  // FIXME: VFP Intrinsics should error if VFP not present.
+  return SemaBuiltinConstantArgRange(TheCall, i, l, u + l);
 }
 
 bool Sema::CheckMipsBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
