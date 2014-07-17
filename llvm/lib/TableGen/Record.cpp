@@ -955,8 +955,10 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
   case SHL:
   case SRA:
   case SRL: {
-    IntInit *LHSi = dyn_cast<IntInit>(LHS);
-    IntInit *RHSi = dyn_cast<IntInit>(RHS);
+    IntInit *LHSi =
+      dyn_cast_or_null<IntInit>(LHS->convertInitializerTo(IntRecTy::get()));
+    IntInit *RHSi =
+      dyn_cast_or_null<IntInit>(RHS->convertInitializerTo(IntRecTy::get()));
     if (LHSi && RHSi) {
       int64_t LHSv = LHSi->getValue(), RHSv = RHSi->getValue();
       int64_t Result;

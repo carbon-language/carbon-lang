@@ -1,6 +1,16 @@
 // RUN: llvm-tblgen %s | FileCheck %s
 // XFAIL: vg_leak
 
+def shifts {
+    bits<2> b = 0b10;
+    int i = 2;
+    int shifted_b = !shl(b, 2);
+    int shifted_i = !shl(i, 2);
+}
+// CHECK: def shifts
+// CHECK: shifted_b = 8
+// CHECK: shifted_i = 8
+
 class Int<int value> {
   int Value = value;
 }
