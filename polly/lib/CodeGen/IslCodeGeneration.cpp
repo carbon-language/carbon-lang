@@ -781,7 +781,8 @@ unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   if (!Annotation)
     return -1;
 
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Annotation);
+  struct IslAstUserPayload *Info =
+      (struct IslAstUserPayload *)isl_id_get_user(Annotation);
   if (!Info) {
     isl_id_free(Annotation);
     return -1;
@@ -849,7 +850,8 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   isl_id *Annotation = isl_ast_node_get_annotation(For);
   assert(Annotation && "For statement is not annotated");
 
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Annotation);
+  struct IslAstUserPayload *Info =
+      (struct IslAstUserPayload *)isl_id_get_user(Annotation);
   assert(Info && "For statement annotation does not contain info");
 
   isl_union_map *Schedule = isl_ast_build_get_schedule(Info->Context);
@@ -898,7 +900,7 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   CmpInst::Predicate Predicate;
   bool Parallel;
 
-  Parallel = isInnermostParallel(For);
+  Parallel = IslAstInfo::isInnermostParallel(For);
 
   Body = isl_ast_node_for_get_body(For);
 
@@ -950,7 +952,7 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
 void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
   bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
 
-  if (Vector && isInnermostParallel(For)) {
+  if (Vector && IslAstInfo::isInnermostParallel(For)) {
     int VectorWidth = getNumberOfIterations(For);
     if (1 < VectorWidth && VectorWidth <= 16) {
       createForVector(For, VectorWidth);

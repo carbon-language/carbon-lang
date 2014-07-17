@@ -86,7 +86,7 @@ struct AstBuildUserInfo {
 static __isl_give isl_printer *
 printParallelFor(__isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
                  __isl_take isl_ast_print_options *PrintOptions,
-                 IslAstUser *Info) {
+                 IslAstUserPayload *Info) {
   if (Info) {
     if (Info->IsInnermostParallel) {
       Printer = isl_printer_start_line(Printer);
@@ -115,16 +115,18 @@ printFor(__isl_take isl_printer *Printer,
   if (!Id)
     return isl_ast_node_for_print(Node, Printer, PrintOptions);
 
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
+  struct IslAstUserPayload *Info =
+      (struct IslAstUserPayload *)isl_id_get_user(Id);
   Printer = printParallelFor(Node, Printer, PrintOptions, Info);
   isl_id_free(Id);
   return Printer;
 }
 
 // Allocate an AstNodeInfo structure and initialize it with default values.
-static struct IslAstUser *allocateIslAstUser() {
-  struct IslAstUser *NodeInfo;
-  NodeInfo = (struct IslAstUser *)malloc(sizeof(struct IslAstUser));
+static struct IslAstUserPayload *allocateIslAstUser() {
+  struct IslAstUserPayload *NodeInfo;
+  NodeInfo =
+      (struct IslAstUserPayload *)malloc(sizeof(struct IslAstUserPayload));
   NodeInfo->Context = 0;
   NodeInfo->IsOutermostParallel = 0;
   NodeInfo->IsInnermostParallel = 0;
@@ -134,7 +136,7 @@ static struct IslAstUser *allocateIslAstUser() {
 
 // Free the AstNodeInfo structure.
 static void freeIslAstUser(void *Ptr) {
-  struct IslAstUser *UserStruct = (struct IslAstUser *)Ptr;
+  struct IslAstUserPayload *UserStruct = (struct IslAstUserPayload *)Ptr;
   isl_ast_build_free(UserStruct->Context);
   free(UserStruct);
 }
@@ -220,7 +222,7 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
 // Mark a for node openmp parallel, if it is the outermost parallel for node.
 static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
                                struct AstBuildUserInfo *BuildInfo,
-                               struct IslAstUser *NodeInfo) {
+                               struct IslAstUserPayload *NodeInfo) {
   if (BuildInfo->InParallelFor)
     return;
 
@@ -241,7 +243,7 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
 static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
                                             void *User) {
   struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *)User;
-  struct IslAstUser *NodeInfo = allocateIslAstUser();
+  struct IslAstUserPayload *NodeInfo = allocateIslAstUser();
   isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
   Id = isl_id_set_free_user(Id, freeIslAstUser);
 
@@ -303,7 +305,8 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
   isl_id *Id = isl_ast_node_get_annotation(Node);
   if (!Id)
     return Node;
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
+  struct IslAstUserPayload *Info =
+      (struct IslAstUserPayload *)isl_id_get_user(Id);
   struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *)User;
 
   if (Info) {
@@ -324,11 +327,11 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
 static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
                                              __isl_keep isl_ast_build *Context,
                                              void *User) {
-  struct IslAstUser *Info = nullptr;
+  struct IslAstUserPayload *Info = nullptr;
   isl_id *Id = isl_ast_node_get_annotation(Node);
 
   if (Id)
-    Info = (struct IslAstUser *)isl_id_get_user(Id);
+    Info = (struct IslAstUserPayload *)isl_id_get_user(Id);
 
   if (!Info) {
     // Allocate annotations once: parallel for detection might have already
@@ -487,6 +490,37 @@ void IslAstInfo::printScop(raw_ostream &OS) const {
   OS << F->getName() << "():\n";
 
   Ast->pprint(OS);
+}
+
+IslAstUserPayload *IslAstInfo::getNodePayload(__isl_keep isl_ast_node *Node) {
+  isl_id *Id = isl_ast_node_get_annotation(Node);
+  if (!Id)
+    return nullptr;
+  IslAstUserPayload *Payload = (IslAstUserPayload *)isl_id_get_user(Id);
+  isl_id_free(Id);
+  return Payload;
+}
+
+bool IslAstInfo::isParallel(__isl_keep isl_ast_node *Node) {
+  return (isInnermostParallel(Node) || isOuterParallel(Node)) &&
+         !isReductionParallel(Node);
+}
+
+bool IslAstInfo::isInnermostParallel(__isl_keep isl_ast_node *Node) {
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload && Payload->IsInnermostParallel &&
+         !Payload->IsReductionParallel;
+}
+
+bool IslAstInfo::isOuterParallel(__isl_keep isl_ast_node *Node) {
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload && Payload->IsOutermostParallel &&
+         !Payload->IsReductionParallel;
+}
+
+bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload && Payload->IsReductionParallel;
 }
 
 void IslAstInfo::getAnalysisUsage(AnalysisUsage &AU) const {

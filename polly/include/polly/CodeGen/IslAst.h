@@ -27,7 +27,6 @@
 
 #include "isl/ast.h"
 
-struct clast_name;
 namespace llvm {
 class raw_ostream;
 }
@@ -42,7 +41,7 @@ class Scop;
 class IslAst;
 
 // Information about an ast node.
-struct IslAstUser {
+struct IslAstUserPayload {
   struct isl_ast_build *Context;
   // The node is the outermost parallel loop.
   int IsOutermostParallel;
@@ -77,37 +76,31 @@ public:
 
   bool runOnScop(Scop &S);
   void printScop(llvm::raw_ostream &OS) const;
+
+  /// @name Extract information attached to an isl ast (for) node.
+  ///
+  ///{
+
+  /// @brief Get the complete payload attached to @p Node.
+  static IslAstUserPayload *getNodePayload(__isl_keep isl_ast_node *Node);
+
+  /// @brief Is this loop a parallel loop?
+  static bool isParallel(__isl_keep isl_ast_node *Node);
+
+  /// @brief Is this loop an outer parallel loop?
+  static bool isOuterParallel(__isl_keep isl_ast_node *Node);
+
+  /// @brief Is this loop an innermost parallel loop?
+  static bool isInnermostParallel(__isl_keep isl_ast_node *Node);
+
+  /// @brief Is this loop a reduction parallel loop?
+  static bool isReductionParallel(__isl_keep isl_ast_node *Node);
+
+  ///}
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
   virtual void releaseMemory();
 };
-
-// Returns true when Node has been tagged as an innermost parallel loop.
-static inline bool isInnermostParallel(__isl_keep isl_ast_node *Node) {
-  isl_id *Id = isl_ast_node_get_annotation(Node);
-  if (!Id)
-    return false;
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
-
-  bool Res = false;
-  if (Info)
-    Res = Info->IsInnermostParallel && !Info->IsReductionParallel;
-  isl_id_free(Id);
-  return Res;
-}
-
-// Returns true when Node has been tagged as an outermost parallel loop.
-static inline bool isOutermostParallel(__isl_keep isl_ast_node *Node) {
-  isl_id *Id = isl_ast_node_get_annotation(Node);
-  if (!Id)
-    return false;
-  struct IslAstUser *Info = (struct IslAstUser *)isl_id_get_user(Id);
-
-  bool Res = false;
-  if (Info)
-    Res = Info->IsOutermostParallel && !Info->IsReductionParallel;
-  isl_id_free(Id);
-  return Res;
-}
 }
 
 namespace llvm {
