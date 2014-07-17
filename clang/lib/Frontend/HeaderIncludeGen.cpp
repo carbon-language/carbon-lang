@@ -131,5 +131,6 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
     Msg += '\n';
 
     OutputFile->write(Msg.data(), Msg.size());
+    OutputFile->flush();
   }
 }
