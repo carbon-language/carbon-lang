@@ -18,6 +18,7 @@ namespace readability {
 
 /// \brief Find functions with unnamed arguments.
 ///
+/// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml?showone=Function_Declarations_and_Definitions#Function_Declarations_and_Definitions
 /// Corresponding cpplint.py check name: 'readability/function'.
 class NamedParameterCheck : public ClangTidyCheck {
 public:

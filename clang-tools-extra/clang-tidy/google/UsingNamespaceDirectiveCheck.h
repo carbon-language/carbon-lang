@@ -18,6 +18,7 @@ namespace build {
 
 /// \brief Finds using namespace directives.
 ///
+/// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml?showone=Namespaces#Namespaces
 /// Corresponding cpplint.py check name: 'build/namespaces'.
 class UsingNamespaceDirectiveCheck : public ClangTidyCheck {
 public:
