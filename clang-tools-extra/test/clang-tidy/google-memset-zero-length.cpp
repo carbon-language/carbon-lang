@@ -7,9 +7,13 @@ namespace std {
   using ::memset;
 }
 
-template <int i>
+template <int i, typename T>
 void memtmpl() {
   memset(0, sizeof(int), i);
+  memset(0, sizeof(T), sizeof(T));
+  memset(0, sizeof(T), 0);
+// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped argument
+// CHECK-FIXES: memset(0, 0, sizeof(T));
   memset(0, sizeof(int), 0);
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero, potentially swapped argument
 // CHECK-FIXES: memset(0, 0, sizeof(int));
@@ -53,5 +57,5 @@ void foo(void *a, int xsize, int ysize) {
 // CHECK-MESSAGES: :[[@LINE-1]]:3: warning: memset of size zero
 // CHECK-FIXES: memset(a, -1, v);
 
-  memtmpl<0>();
+  memtmpl<0, int>();
 }
