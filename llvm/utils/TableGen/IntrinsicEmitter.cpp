@@ -129,8 +129,9 @@ void IntrinsicEmitter::EmitEnumInfo(const std::vector<CodeGenIntrinsic> &Ints,
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     OS << "    " << Ints[i].EnumName;
     OS << ((i != e-1) ? ", " : "  ");
-    OS << std::string(40-Ints[i].EnumName.size(), ' ')
-      << "// " << Ints[i].Name << "\n";
+    if (Ints[i].EnumName.size() < 40)
+      OS << std::string(40-Ints[i].EnumName.size(), ' ');
+    OS << " // " << Ints[i].Name << "\n";
   }
   OS << "#endif\n\n";
 }
