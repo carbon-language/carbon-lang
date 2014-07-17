@@ -22,9 +22,9 @@
 // CHECK-NULL: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}}
 
 // PR6805
-// CHECK: @foo
-// CHECK-NULL: @foo
-// CHECK-TRAP: @foo
+// CHECK-LABEL: @foo
+// CHECK-NULL-LABEL: @foo
+// CHECK-TRAP-LABEL: @foo
 void foo() {
   union { int i; } u;
   // CHECK:      %[[CHECK0:.*]] = icmp ne {{.*}}* %[[PTR:.*]], null
@@ -68,8 +68,8 @@ void foo() {
   u.i=1;
 }
 
-// CHECK: @bar
-// CHECK-TRAP: @bar
+// CHECK-LABEL: @bar
+// CHECK-TRAP-LABEL: @bar
 int bar(int *a) {
   // CHECK:      %[[SIZE:.*]] = call i64 @llvm.objectsize.i64
   // CHECK-NEXT: icmp uge i64 %[[SIZE]], 4
@@ -95,14 +95,14 @@ int bar(int *a) {
   return *a;
 }
 
-// CHECK: @addr_space
+// CHECK-LABEL: @addr_space
 int addr_space(int __attribute__((address_space(256))) *a) {
   // CHECK-NOT: __ubsan
   return *a;
 }
 
-// CHECK: @lsh_overflow
-// CHECK-TRAP: @lsh_overflow
+// CHECK-LABEL: @lsh_overflow
+// CHECK-TRAP-LABEL: @lsh_overflow
 int lsh_overflow(int a, int b) {
   // CHECK:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
   // CHECK-NEXT: br i1 %[[INBOUNDS]], label %[[CHECKBB:.*]], label %[[CONTBB:.*]]
@@ -145,8 +145,8 @@ int lsh_overflow(int a, int b) {
   return a << b;
 }
 
-// CHECK: @rsh_inbounds
-// CHECK-TRAP: @rsh_inbounds
+// CHECK-LABEL: @rsh_inbounds
+// CHECK-TRAP-LABEL: @rsh_inbounds
 int rsh_inbounds(int a, int b) {
   // CHECK:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
   // CHECK:      br i1 %[[INBOUNDS]]
@@ -170,8 +170,8 @@ int rsh_inbounds(int a, int b) {
   return a >> b;
 }
 
-// CHECK: @load
-// CHECK-TRAP: @load
+// CHECK-LABEL: @load
+// CHECK-TRAP-LABEL: @load
 int load(int *p) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_500]] to i8*), i64 %{{.*}})
 
@@ -181,8 +181,8 @@ int load(int *p) {
   return *p;
 }
 
-// CHECK: @store
-// CHECK-TRAP: @store
+// CHECK-LABEL: @store
+// CHECK-TRAP-LABEL: @store
 void store(int *p, int q) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_600]] to i8*), i64 %{{.*}})
 
@@ -194,8 +194,8 @@ void store(int *p, int q) {
 
 struct S { int k; };
 
-// CHECK: @member_access
-// CHECK-TRAP: @member_access
+// CHECK-LABEL: @member_access
+// CHECK-TRAP-LABEL: @member_access
 int *member_access(struct S *p) {
   // CHECK: call void @__ubsan_handle_type_mismatch(i8* bitcast ({{.*}} @[[LINE_700]] to i8*), i64 %{{.*}})
 
@@ -205,8 +205,8 @@ int *member_access(struct S *p) {
   return &p->k;
 }
 
-// CHECK: @signed_overflow
-// CHECK-TRAP: @signed_overflow
+// CHECK-LABEL: @signed_overflow
+// CHECK-TRAP-LABEL: @signed_overflow
 int signed_overflow(int a, int b) {
   // CHECK:      %[[ARG1:.*]] = zext
   // CHECK-NEXT: %[[ARG2:.*]] = zext
@@ -218,8 +218,8 @@ int signed_overflow(int a, int b) {
   return a + b;
 }
 
-// CHECK: @no_return
-// CHECK-TRAP: @no_return
+// CHECK-LABEL: @no_return
+// CHECK-TRAP-LABEL: @no_return
 int no_return() {
   // Reaching the end of a noreturn function is fine in C.
   // FIXME: If the user explicitly requests -fsanitize=return, we should catch
@@ -233,7 +233,7 @@ int no_return() {
   // CHECK-TRAP: ret i32
 }
 
-// CHECK: @vla_bound
+// CHECK-LABEL: @vla_bound
 void vla_bound(int n) {
   // CHECK:      icmp sgt i32 %[[PARAM:.*]], 0
   //
@@ -243,14 +243,14 @@ void vla_bound(int n) {
   int arr[n * 3];
 }
 
-// CHECK: @int_float_no_overflow
+// CHECK-LABEL: @int_float_no_overflow
 float int_float_no_overflow(__int128 n) {
   // CHECK-NOT: call void @__ubsan_handle
   return n;
 }
 
-// CHECK: @int_float_overflow
-// CHECK-TRAP: @int_float_overflow
+// CHECK-LABEL: @int_float_overflow
+// CHECK-TRAP-LABEL: @int_float_overflow
 float int_float_overflow(unsigned __int128 n) {
   // This is 2**104. FLT_MAX is 2**128 - 2**104.
   // CHECK: icmp ule i128 %{{.*}}, -20282409603651670423947251286016
@@ -264,8 +264,8 @@ float int_float_overflow(unsigned __int128 n) {
   return n;
 }
 
-// CHECK: @int_fp16_overflow
-// CHECK-TRAP: @int_fp16_overflow
+// CHECK-LABEL: @int_fp16_overflow
+// CHECK-TRAP-LABEL: @int_fp16_overflow
 void int_fp16_overflow(int n, __fp16 *p) {
   // CHECK: %[[GE:.*]] = icmp sge i32 %{{.*}}, -65504
   // CHECK: %[[LE:.*]] = icmp sle i32 %{{.*}}, 65504
@@ -282,8 +282,8 @@ void int_fp16_overflow(int n, __fp16 *p) {
   *p = n;
 }
 
-// CHECK: @float_int_overflow
-// CHECK-TRAP: @float_int_overflow
+// CHECK-LABEL: @float_int_overflow
+// CHECK-TRAP-LABEL: @float_int_overflow
 int float_int_overflow(float f) {
   // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], 0xC1E0000020000000
   // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 0x41E0000000000000
@@ -303,8 +303,8 @@ int float_int_overflow(float f) {
   return f;
 }
 
-// CHECK: @long_double_int_overflow
-// CHECK-TRAP: @long_double_int_overflow
+// CHECK-LABEL: @long_double_int_overflow
+// CHECK-TRAP-LABEL: @long_double_int_overflow
 int long_double_int_overflow(long double ld) {
   // CHECK: alloca x86_fp80
   // CHECK: %[[GE:.*]] = fcmp ogt x86_fp80 %[[F:.*]], 0xKC01E8000000100000000
@@ -325,8 +325,8 @@ int long_double_int_overflow(long double ld) {
   return ld;
 }
 
-// CHECK: @float_uint_overflow
-// CHECK-TRAP: @float_uint_overflow
+// CHECK-LABEL: @float_uint_overflow
+// CHECK-TRAP-LABEL: @float_uint_overflow
 unsigned float_uint_overflow(float f) {
   // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.{{0*}}e+00
   // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 0x41F0000000000000
@@ -343,8 +343,8 @@ unsigned float_uint_overflow(float f) {
   return f;
 }
 
-// CHECK: @fp16_char_overflow
-// CHECK-TRAP: @fp16_char_overflow
+// CHECK-LABEL: @fp16_char_overflow
+// CHECK-TRAP-LABEL: @fp16_char_overflow
 signed char fp16_char_overflow(__fp16 *p) {
   // CHECK: %[[GE:.*]] = fcmp ogt float %[[F:.*]], -1.29{{0*}}e+02
   // CHECK: %[[LE:.*]] = fcmp olt float %[[F]], 1.28{{0*}}e+02
@@ -361,8 +361,8 @@ signed char fp16_char_overflow(__fp16 *p) {
   return *p;
 }
 
-// CHECK: @float_float_overflow
-// CHECK-TRAP: @float_float_overflow
+// CHECK-LABEL: @float_float_overflow
+// CHECK-TRAP-LABEL: @float_float_overflow
 float float_float_overflow(double f) {
   // CHECK: %[[F:.*]] = call double @llvm.fabs.f64(
   // CHECK: %[[GE:.*]] = fcmp ogt double %[[F]], 0x47EFFFFFE0000000
@@ -382,8 +382,8 @@ float float_float_overflow(double f) {
   return f;
 }
 
-// CHECK:          @int_divide_overflow
-// CHECK-OVERFLOW: @int_divide_overflow
+// CHECK-LABEL:          @int_divide_overflow
+// CHECK-OVERFLOW-LABEL: @int_divide_overflow
 int int_divide_overflow(int a, int b) {
   // CHECK:               %[[ZERO:.*]] = icmp ne i32 %[[B:.*]], 0
   // CHECK-OVERFLOW-NOT:  icmp ne i32 %{{.*}}, 0
@@ -418,7 +418,7 @@ int int_divide_overflow(int a, int b) {
   // CHECK-TRAP:     }
 }
 
-// CHECK: @sour_bool
+// CHECK-LABEL: @sour_bool
 _Bool sour_bool(_Bool *p) {
   // CHECK: %[[OK:.*]] = icmp ule i8 {{.*}}, 1
   // CHECK: br i1 %[[OK]]
