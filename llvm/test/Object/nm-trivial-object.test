@@ -26,6 +26,8 @@ RUN: llvm-nm %p/Inputs/macho-text-data-bss.macho-x86_64 -s __DATA __data \
 RUN:         | FileCheck %s -check-prefix macho-s
 RUN: llvm-nm -x %p/Inputs/macho-text-data-bss.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix macho-x
+RUN: llvm-nm -p -a %p/Inputs/macho-hello-g.macho-x86_64 \
+RUN:         | FileCheck %s -check-prefix macho-pa
 RUN: llvm-nm %p/Inputs/common.coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF-COMMON
 RUN: llvm-nm %p/Inputs/relocatable-with-section-address.elf-x86-64 \
@@ -114,6 +116,19 @@ macho-x: 0000000000000070 0e 03 0000 0000000d _b
 macho-x: 000000000000000c 0f 02 0000 00000004 _d
 macho-x: 0000000000000000 0f 01 0000 00000001 _t
 macho-x: 0000000000000048 0f 05 0000 00000007 _t.eh
+
+macho-pa: 0000000000000000 - 00 0000    SO /Volumes/SandBox/
+macho-pa: 0000000000000000 - 00 0000    SO hello.c
+macho-pa: 0000000053c8408d - 03 0001   OSO /Volumes/SandBox/hello.o
+macho-pa: 0000000100000f30 - 01 0000 BNSYM 
+macho-pa: 0000000100000f30 - 01 0000   FUN _main
+macho-pa: 000000000000003b - 00 0000   FUN 
+macho-pa: 000000000000003b - 01 0000 ENSYM 
+macho-pa: 0000000000000000 - 01 0000    SO 
+macho-pa: 0000000100000000 T __mh_execute_header
+macho-pa: 0000000100000f30 T _main
+macho-pa:                  U _printf
+macho-pa:                  U dyld_stub_binder
 
 Test that nm uses addresses even with ELF .o files.
 ELF-SEC-ADDR64:      0000000000000058 D a

@@ -457,6 +457,84 @@ static void darwinPrintSymbol(MachOObjectFile *MachO, SymbolListT::iterator I,
   outs() << "\n";
 }
 
+// Table that maps Darwin's Mach-O stab constants to strings to allow printing.
+struct DarwinStabName {
+  uint8_t NType;
+  const char *Name;
+};
+static const struct DarwinStabName DarwinStabNames[] = {
+    {MachO::N_GSYM, "GSYM"},
+    {MachO::N_FNAME, "FNAME"},
+    {MachO::N_FUN, "FUN"},
+    {MachO::N_STSYM, "STSYM"},
+    {MachO::N_LCSYM, "LCSYM"},
+    {MachO::N_BNSYM, "BNSYM"},
+    {MachO::N_PC, "PC"},
+    {MachO::N_AST, "AST"},
+    {MachO::N_OPT, "OPT"},
+    {MachO::N_RSYM, "RSYM"},
+    {MachO::N_SLINE, "SLINE"},
+    {MachO::N_ENSYM, "ENSYM"},
+    {MachO::N_SSYM, "SSYM"},
+    {MachO::N_SO, "SO"},
+    {MachO::N_OSO, "OSO"},
+    {MachO::N_LSYM, "LSYM"},
+    {MachO::N_BINCL, "BINCL"},
+    {MachO::N_SOL, "SOL"},
+    {MachO::N_PARAMS, "PARAM"},
+    {MachO::N_VERSION, "VERS"},
+    {MachO::N_OLEVEL, "OLEV"},
+    {MachO::N_PSYM, "PSYM"},
+    {MachO::N_EINCL, "EINCL"},
+    {MachO::N_ENTRY, "ENTRY"},
+    {MachO::N_LBRAC, "LBRAC"},
+    {MachO::N_EXCL, "EXCL"},
+    {MachO::N_RBRAC, "RBRAC"},
+    {MachO::N_BCOMM, "BCOMM"},
+    {MachO::N_ECOMM, "ECOMM"},
+    {MachO::N_ECOML, "ECOML"},
+    {MachO::N_LENG, "LENG"},
+    {0, 0}};
+static const char *getDarwinStabString(uint8_t NType) {
+  for (unsigned i = 0; DarwinStabNames[i].Name; i++) {
+    if (DarwinStabNames[i].NType == NType)
+      return DarwinStabNames[i].Name;
+  }
+  return 0;
+}
+
+// darwinPrintStab() prints the n_sect, n_desc along with a symbolic name of
+// a stab n_type value in a Mach-O file.
+static void darwinPrintStab(MachOObjectFile *MachO, SymbolListT::iterator I) {
+  MachO::nlist_64 STE_64;
+  MachO::nlist STE;
+  uint8_t NType;
+  uint8_t NSect;
+  uint16_t NDesc;
+  if (MachO->is64Bit()) {
+    STE_64 = MachO->getSymbol64TableEntry(I->Symb);
+    NType = STE_64.n_type;
+    NSect = STE_64.n_sect;
+    NDesc = STE_64.n_desc;
+  } else {
+    STE = MachO->getSymbolTableEntry(I->Symb);
+    NType = STE.n_type;
+    NSect = STE.n_sect;
+    NDesc = STE.n_desc;
+  }
+
+  char Str[18] = "";
+  format("%02x", NSect).print(Str, sizeof(Str));
+  outs() << ' ' << Str << ' ';
+  format("%04x", NDesc).print(Str, sizeof(Str));
+  outs() << Str << ' ';
+  if (const char *stabString = getDarwinStabString(NType))
+    format("%5.5s", stabString).print(Str, sizeof(Str));
+  else
+    format("   %02x", NType).print(Str, sizeof(Str));
+  outs() << Str;
+}
+
 static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName) {
   if (!NoSort) {
     if (NumericSort)
@@ -532,7 +610,10 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName) {
         if (I->Size != UnknownAddressOrSize)
           outs() << ' ';
       }
-      outs() << I->TypeChar << " " << I->Name << "\n";
+      outs() << I->TypeChar;
+      if (I->TypeChar == '-' && MachO)
+        darwinPrintStab(MachO, I);
+      outs() << " " << I->Name << "\n";
     } else if (OutputFormat == sysv) {
       std::string PaddedName(I->Name);
       while (PaddedName.length() < 20)
@@ -656,6 +737,9 @@ static uint8_t getNType(MachOObjectFile &Obj, DataRefImpl Symb) {
 static char getSymbolNMTypeChar(MachOObjectFile &Obj, basic_symbol_iterator I) {
   DataRefImpl Symb = I->getRawDataRefImpl();
   uint8_t NType = getNType(Obj, Symb);
+
+  if (NType & MachO::N_STAB)
+    return '-';
 
   switch (NType & MachO::N_TYPE) {
   case MachO::N_ABS:

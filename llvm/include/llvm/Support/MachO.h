@@ -386,13 +386,15 @@ namespace llvm {
 
     enum StabType {
       // Constant values for the "n_type" field in llvm::MachO::nlist and
-      // llvm::MachO::nlist_64 when "(n_type & NlistMaskStab) != 0"
+      // llvm::MachO::nlist_64 when "(n_type & N_STAB) != 0"
       N_GSYM    = 0x20u,
       N_FNAME   = 0x22u,
       N_FUN     = 0x24u,
       N_STSYM   = 0x26u,
       N_LCSYM   = 0x28u,
       N_BNSYM   = 0x2Eu,
+      N_PC      = 0x30u,
+      N_AST     = 0x32u,
       N_OPT     = 0x3Cu,
       N_RSYM    = 0x40u,
       N_SLINE   = 0x44u,
