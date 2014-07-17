@@ -1037,12 +1037,12 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   ABIName = getGnuCompatibleMipsABIName(ABIName);
 
   // Always override the backend's default ABI.
-  StringRef ABIFeature = llvm::StringSwitch<StringRef>(ABIName)
-                              .Case("32", "+o32")
-                              .Case("n32", "+n32")
-                              .Case("64", "+n64")
-                              .Case("eabi", "+eabi")
-                              .Default(("+" + ABIName).str());
+  std::string ABIFeature = llvm::StringSwitch<StringRef>(ABIName)
+                               .Case("32", "+o32")
+                               .Case("n32", "+n32")
+                               .Case("64", "+n64")
+                               .Case("eabi", "+eabi")
+                               .Default(("+" + ABIName).str());
   Features.push_back("-o32");
   Features.push_back("-n64");
   Features.push_back(Args.MakeArgString(ABIFeature));
