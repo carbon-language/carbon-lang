@@ -24,6 +24,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <functional>
 #include <memory>
 #include <stack>
 #include <vector>
@@ -71,7 +72,7 @@ public:
   /// Adds an observer of getNextFile(). Each time a new file is about to be
   /// returned from getNextFile(), registered observers are called with the file
   /// being returned.
-  void registerObserver(llvm::function_ref<void(File *)> fn);
+  void registerObserver(std::function<void(File *)>);
 
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement>);
@@ -99,7 +100,7 @@ protected:
   // Index of the next element to be processed
   uint32_t _nextElementIndex;
   InputElement *_currentInputElement;
-  std::vector<llvm::function_ref<void(File *)>> _observers;
+  std::vector<std::function<void(File *)>> _observers;
 
 private:
   ErrorOr<InputElement *> getNextInputElement();

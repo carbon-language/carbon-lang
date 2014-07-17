@@ -38,7 +38,7 @@ ErrorOr<File &> InputGraph::getNextFile() {
 
 void InputGraph::notifyProgress() { _currentInputElement->notifyProgress(); }
 
-void InputGraph::registerObserver(llvm::function_ref<void(File *)> fn) {
+void InputGraph::registerObserver(std::function<void(File *)> fn) {
   _observers.push_back(fn);
 }
 

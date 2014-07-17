@@ -101,20 +101,6 @@ std::unique_ptr<File> PECOFFLinkingContext::createUndefinedSymbolFile() const {
       "<command line option /include>");
 }
 
-namespace {
-// As per policy, we cannot use std::function.
-class ObserverCallback {
-public:
-  explicit ObserverCallback(pecoff::ExportedSymbolRenameFile *f)
-      : _renameFile(f) {}
-
-  void operator()(File *file) { _renameFile->addResolvableSymbols(file); }
-
-private:
-  pecoff::ExportedSymbolRenameFile *_renameFile;
-};
-} // end anonymous namespace
-
 bool PECOFFLinkingContext::createImplicitFiles(
     std::vector<std::unique_ptr<File>> &) const {
   // Create a file for __ImageBase.
@@ -140,7 +126,7 @@ bool PECOFFLinkingContext::createImplicitFiles(
   exportNode->appendInputFile(std::unique_ptr<File>(renameFile));
   getLibraryGroup()->addFile(std::move(exportNode));
   getInputGraph().registerObserver(
-      *(new (_allocator) ObserverCallback(renameFile)));
+      [=](File *file) { renameFile->addResolvableSymbols(file); });
   return true;
 }
 
