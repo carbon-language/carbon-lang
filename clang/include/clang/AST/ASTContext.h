@@ -2283,6 +2283,10 @@ public:
   void getObjCEncodingForMethodParameter(Decl::ObjCDeclQualifier QT,
                                          QualType T, std::string& S,
                                          bool Extended) const;
+
+  /// \brief Returns true if this is an inline-initialized static data member
+  /// which is treated as a definition for MSVC compatibility.
+  bool isMSStaticDataMemberInlineDefinition(const VarDecl *VD) const;
   
 private:
   const ASTRecordLayout &

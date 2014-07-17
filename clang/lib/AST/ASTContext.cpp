@@ -4781,6 +4781,12 @@ CharUnits ASTContext::getObjCEncodingTypeSize(QualType type) const {
   return sz;
 }
 
+bool ASTContext::isMSStaticDataMemberInlineDefinition(const VarDecl *VD) const {
+  return getLangOpts().MSVCCompat && VD->isStaticDataMember() &&
+         VD->getType()->isIntegralOrEnumerationType() &&
+         !VD->getFirstDecl()->isOutOfLine() && VD->getFirstDecl()->hasInit();
+}
+
 static inline 
 std::string charUnitsToString(const CharUnits &CU) {
   return llvm::itostr(CU.getQuantity());
@@ -7849,6 +7855,12 @@ static GVALinkage basicGVALinkageForVariable(const ASTContext &Context,
                                                : StaticLocalLinkage;
   }
 
+  // MSVC treats in-class initialized static data members as definitions.
+  // By giving them non-strong linkage, out-of-line definitions won't
+  // cause link errors.
+  if (Context.isMSStaticDataMemberInlineDefinition(VD))
+    return GVA_DiscardableODR;
+
   switch (VD->getTemplateSpecializationKind()) {
   case TSK_Undeclared:
   case TSK_ExplicitSpecialization:
@@ -7934,7 +7946,8 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
   const VarDecl *VD = cast<VarDecl>(D);
   assert(VD->isFileVarDecl() && "Expected file scoped var");
 
-  if (VD->isThisDeclarationADefinition() == VarDecl::DeclarationOnly)
+  if (VD->isThisDeclarationADefinition() == VarDecl::DeclarationOnly &&
+      !isMSStaticDataMemberInlineDefinition(VD))
     return false;
 
   // Variables that can be needed in other TUs are required.

@@ -403,10 +403,6 @@ public:
   /// Gets the deleted virtual member call name.
   virtual StringRef GetDeletedVirtualCallName() = 0;
 
-  /// \brief Returns true iff static data members that are initialized in the
-  /// class definition should have linkonce linkage.
-  virtual bool isInlineInitializedStaticDataMemberLinkOnce() { return false; }
-
   /**************************** Array cookies ******************************/
 
   /// Returns the extra size required in order to store the array
