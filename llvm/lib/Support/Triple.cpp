@@ -61,6 +61,8 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   default:
     return nullptr;
 
+  case arm64:
+  case arm64_be:
   case aarch64:
   case aarch64_be:  return "aarch64";
 
@@ -68,9 +70,6 @@ const char *Triple::getArchTypePrefix(ArchType Kind) {
   case armeb:
   case thumb:
   case thumbeb:     return "arm";
-
-  case arm64:       
-  case arm64_be:    return "arm64";
 
   case ppc64:
   case ppc64le:
