@@ -655,6 +655,9 @@ void AddressSanitizer::instrumentMemIntrinsic(MemIntrinsic *MI) {
 // and set IsWrite/Alignment. Otherwise return NULL.
 static Value *isInterestingMemoryAccess(Instruction *I, bool *IsWrite,
                                         unsigned *Alignment) {
+  // Skip memory accesses inserted by another instrumentation.
+  if (I->getMetadata("nosanitize"))
+    return nullptr;
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
     if (!ClInstrumentReads) return nullptr;
     *IsWrite = false;
