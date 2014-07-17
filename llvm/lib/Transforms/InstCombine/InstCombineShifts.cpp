@@ -815,10 +815,5 @@ Instruction *InstCombiner::visitAShr(BinaryOperator &I) {
                         APInt::getSignBit(I.getType()->getScalarSizeInBits())))
     return BinaryOperator::CreateLShr(Op0, Op1);
 
-  // Arithmetic shifting an all-sign-bit value is a no-op.
-  unsigned NumSignBits = ComputeNumSignBits(Op0);
-  if (NumSignBits == Op0->getType()->getScalarSizeInBits())
-    return ReplaceInstUsesWith(I, Op0);
-
   return nullptr;
 }
