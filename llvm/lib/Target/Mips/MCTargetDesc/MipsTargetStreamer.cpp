@@ -281,22 +281,18 @@ MipsTargetELFStreamer::MipsTargetELFStreamer(MCStreamer &S,
   else
     EFlags |= ELF::EF_MIPS_ARCH_1;
 
-  if (T.isArch64Bit()) {
-    if (Features & Mips::FeatureN32)
-      EFlags |= ELF::EF_MIPS_ABI2;
-    else if (Features & Mips::FeatureO32) {
-      EFlags |= ELF::EF_MIPS_ABI_O32;
-      EFlags |= ELF::EF_MIPS_32BITMODE; /* Compatibility Mode */
-    }
-    // No need to set any bit for N64 which is the default ABI at the moment
-    // for 64-bit Mips architectures.
-  } else {
-    if (Features & Mips::FeatureMips64r2 || Features & Mips::FeatureMips64)
-      EFlags |= ELF::EF_MIPS_32BITMODE;
-
-    // ABI
+  // ABI
+  // N64 does not require any ABI bits.
+  if (Features & Mips::FeatureO32)
     EFlags |= ELF::EF_MIPS_ABI_O32;
-  }
+  else if (Features & Mips::FeatureN32)
+    EFlags |= ELF::EF_MIPS_ABI2;
+
+  if (Features & Mips::FeatureGP64Bit) {
+    if (Features & Mips::FeatureO32)
+      EFlags |= ELF::EF_MIPS_32BITMODE; /* Compatibility Mode */
+  } else if (Features & Mips::FeatureMips64r2 || Features & Mips::FeatureMips64)
+    EFlags |= ELF::EF_MIPS_32BITMODE;
 
   // Other options.
   if (Features & Mips::FeatureNaN2008)
