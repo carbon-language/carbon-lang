@@ -32,7 +32,7 @@ namespace {
   ///
   class FAddendCoef {
   public:
-    // The constructor has to initialize a APFloat, which is uncessary for
+    // The constructor has to initialize a APFloat, which is unnecessary for
     // most addends which have coefficient either 1 or -1. So, the constructor
     // is expensive. In order to avoid the cost of the constructor, we should
     // reuse some instances whenever possible. The pre-created instances
