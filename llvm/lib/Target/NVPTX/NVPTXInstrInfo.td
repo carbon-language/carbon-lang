@@ -1917,7 +1917,7 @@ def StoreParamV2I8   : StoreParamV2Inst<Int16Regs, ".b8">;
 def StoreParamV4I32    : NVPTXInst<(outs), (ins Int32Regs:$val, Int32Regs:$val2,
                                                Int32Regs:$val3, Int32Regs:$val4,
                                                 i32imm:$a, i32imm:$b),
-                   "st.param.b32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
+                "st.param.v4.b32\t[param$a+$b], {{$val, $val2, $val3, $val4}};",
                          []>;
 
 def StoreParamV4I16    : NVPTXInst<(outs), (ins Int16Regs:$val, Int16Regs:$val2,
