@@ -43,8 +43,8 @@ entry:
 }
 
 ; Test FMA3 variant selection
-; CHECK: fma3_select231ssX:
-; CHECK: vfmadd231ss xmm
+; CHECK-FMA-INST: fma3_select231ssX:
+; CHECK-FMA-INST: vfmadd231ss %xmm
 define float @fma3_select231ssX(float %x, float %y) #0 {
 entry:
   br label %while.body
@@ -58,8 +58,8 @@ while.end:                                        ; preds = %while.body, %entry
 }
 
 ; Test FMA3 variant selection
-; CHECK: fma3_select231pdY:
-; CHECK: vfmadd231pd ymm
+; CHECK-FMA-INST: fma3_select231pdY:
+; CHECK-FMA-INST: vfmadd231pd %ymm
 define <4 x double> @fma3_select231pdY(<4 x double> %x, <4 x double> %y) #0 {
 entry:
   br label %while.body
