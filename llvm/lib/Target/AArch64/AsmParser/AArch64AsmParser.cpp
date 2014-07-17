@@ -1253,134 +1253,116 @@ public:
 
   void addSImm9Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addSImm7s4Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue() / 4));
   }
 
   void addSImm7s8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue() / 8));
   }
 
   void addSImm7s16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue() / 16));
   }
 
   void addImm0_7Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_8Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_15Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_16Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     assert(MCE && "Invalid constant immediate operand!");
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_31Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_31Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_32Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_63Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_63Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm1_64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_127Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_255Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm0_65535Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addImm32_63Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid constant immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     Inst.addOperand(MCOperand::CreateImm(MCE->getValue()));
   }
 
   void addLogicalImm32Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid logical immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     uint64_t encoding =
         AArch64_AM::encodeLogicalImmediate(MCE->getValue() & 0xFFFFFFFF, 32);
     Inst.addOperand(MCOperand::CreateImm(encoding));
@@ -1388,8 +1370,7 @@ public:
 
   void addLogicalImm64Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid logical immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     uint64_t encoding = AArch64_AM::encodeLogicalImmediate(MCE->getValue(), 64);
     Inst.addOperand(MCOperand::CreateImm(encoding));
   }
@@ -1412,8 +1393,7 @@ public:
 
   void addSIMDImmType10Operands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
-    const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(getImm());
-    assert(MCE && "Invalid immediate operand!");
+    const MCConstantExpr *MCE = cast<MCConstantExpr>(getImm());
     uint64_t encoding = AArch64_AM::encodeAdvSIMDModImmType10(MCE->getValue());
     Inst.addOperand(MCOperand::CreateImm(encoding));
   }
