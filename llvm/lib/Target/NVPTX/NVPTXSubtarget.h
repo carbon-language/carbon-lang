@@ -91,7 +91,12 @@ public:
   inline bool hasROT64() const { return SmVersion >= 20; }
 
   bool hasImageHandles() const {
-    // Currently disabled
+    // Enable handles for Kepler+, where CUDA supports indirect surfaces and
+    // textures
+    if (getDrvInterface() == NVPTX::CUDA)
+      return (SmVersion >= 30);
+
+    // Disabled, otherwise
     return false;
   }
   bool is64Bit() const { return Is64Bit; }

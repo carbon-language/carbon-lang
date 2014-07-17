@@ -36,8 +36,24 @@ class NVPTXInst<dag outs, dag ins, string asmstr, list<dag> pattern>
   bit IsLoad = 0;
   bit IsStore = 0;
 
-  let TSFlags{3-0} = VecInstType;
-  let TSFlags{4-4} = IsSimpleMove;
-  let TSFlags{5-5} = IsLoad;
-  let TSFlags{6-6} = IsStore;
+  bit IsTex = 0;
+  bit IsSust = 0;
+  bit IsSurfTexQuery = 0;
+  bit IsTexModeUnified = 0;
+
+  // The following field is encoded as log2 of the vector size minus one,
+  // with 0 meaning the operation is not a surface instruction.  For example,
+  // if IsSuld == 2, then the instruction is a suld instruction with vector size
+  // 2**(2-1) = 2.
+  bits<2> IsSuld = 0;
+
+  let TSFlags{3-0}   = VecInstType;
+  let TSFlags{4-4}   = IsSimpleMove;
+  let TSFlags{5-5}   = IsLoad;
+  let TSFlags{6-6}   = IsStore;
+  let TSFlags{7}     = IsTex;
+  let TSFlags{9-8}   = IsSuld;
+  let TSFlags{10}    = IsSust;
+  let TSFlags{11}    = IsSurfTexQuery;
+  let TSFlags{12}    = IsTexModeUnified;
 }

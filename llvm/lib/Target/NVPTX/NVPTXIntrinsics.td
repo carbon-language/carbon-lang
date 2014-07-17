@@ -1936,9 +1936,10 @@ def : Pat<(int_nvvm_rotate_right_b64 Int64Regs:$src, Int32Regs:$amt),
 // NOTE: For Fermi support, any new texture/surface/sampler intrinsics must be
 // also defined in NVPTXReplaceImageHandles.cpp
 
-
+// texmode_independent
+let IsTex = 1, IsTexModeUnified = 0 in {
 // Texture fetch instructions using handles
-def TEX_1D_F32_I32
+def TEX_1D_F32_S32
   : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
                     Float32Regs:$b, Float32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x),
@@ -1965,19 +1966,19 @@ def TEX_1D_F32_F32_GRAD
               "tex.grad.1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
               []>;
-def TEX_1D_I32_I32
+def TEX_1D_S32_S32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x),
               "tex.1d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, [$t, $s, \\{$x\\}];",
               []>;
-def TEX_1D_I32_F32
+def TEX_1D_S32_F32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x),
               "tex.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, [$t, $s, \\{$x\\}];",
               []>;
-def TEX_1D_I32_F32_LEVEL
+def TEX_1D_S32_F32_LEVEL
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x,
@@ -1985,7 +1986,7 @@ def TEX_1D_I32_F32_LEVEL
               "tex.level.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x\\}], $lod;",
               []>;
-def TEX_1D_I32_F32_GRAD
+def TEX_1D_S32_F32_GRAD
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x,
@@ -1993,8 +1994,36 @@ def TEX_1D_I32_F32_GRAD
               "tex.grad.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
               []>;
+def TEX_1D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x),
+              "tex.1d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, [$t, $s, \\{$x\\}];",
+              []>;
+def TEX_1D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x),
+              "tex.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, [$t, $s, \\{$x\\}];",
+              []>;
+def TEX_1D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x\\}], $lod;",
+              []>;
+def TEX_1D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
 
-def TEX_1D_ARRAY_F32_I32
+def TEX_1D_ARRAY_F32_S32
   : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
                     Float32Regs:$b, Float32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
@@ -2024,21 +2053,21 @@ def TEX_1D_ARRAY_F32_F32_GRAD
               "tex.grad.a1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
               []>;
-def TEX_1D_ARRAY_I32_I32
+def TEX_1D_ARRAY_S32_S32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
               "tex.a1d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x\\}];",
               []>;
-def TEX_1D_ARRAY_I32_F32
+def TEX_1D_ARRAY_S32_F32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x),
               "tex.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x\\}];",
               []>;
-def TEX_1D_ARRAY_I32_F32_LEVEL
+def TEX_1D_ARRAY_S32_F32_LEVEL
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
@@ -2046,7 +2075,7 @@ def TEX_1D_ARRAY_I32_F32_LEVEL
               "tex.level.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x\\}], $lod;",
               []>;
-def TEX_1D_ARRAY_I32_F32_GRAD
+def TEX_1D_ARRAY_S32_F32_GRAD
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
@@ -2054,8 +2083,38 @@ def TEX_1D_ARRAY_I32_F32_GRAD
               "tex.grad.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
               []>;
+def TEX_1D_ARRAY_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "tex.a1d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x\\}];",
+              []>;
+def TEX_1D_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x),
+              "tex.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x\\}];",
+              []>;
+def TEX_1D_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x\\}], $lod;",
+              []>;
+def TEX_1D_ARRAY_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
 
-def TEX_2D_F32_I32
+def TEX_2D_F32_S32
   : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
                     Float32Regs:$b, Float32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
@@ -2087,21 +2146,21 @@ def TEX_2D_F32_F32_GRAD
               "[$t, $s, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
               "\\{$grady0, $grady1\\};",
               []>;
-def TEX_2D_I32_I32
+def TEX_2D_S32_S32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
               "tex.2d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y\\}];",
               []>;
-def TEX_2D_I32_F32
+def TEX_2D_S32_F32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
               "tex.2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y\\}];",
               []>;
-def TEX_2D_I32_F32_LEVEL
+def TEX_2D_S32_F32_LEVEL
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
@@ -2109,7 +2168,7 @@ def TEX_2D_I32_F32_LEVEL
               "tex.level.2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y\\}], $lod;",
               []>;
-def TEX_2D_I32_F32_GRAD
+def TEX_2D_S32_F32_GRAD
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
@@ -2119,8 +2178,40 @@ def TEX_2D_I32_F32_GRAD
               "[$t, $s, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
               "\\{$grady0, $grady1\\};",
               []>;
+def TEX_2D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "tex.2d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TEX_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tex.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TEX_2D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$lod),
+              "tex.level.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y\\}], $lod;",
+              []>;
+def TEX_2D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
 
-def TEX_2D_ARRAY_F32_I32
+def TEX_2D_ARRAY_F32_S32
   : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
                     Float32Regs:$b, Float32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
@@ -2154,7 +2245,7 @@ def TEX_2D_ARRAY_F32_F32_GRAD
               "[$t, $s, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
               "\\{$grady0, $grady1\\};",
               []>;
-def TEX_2D_ARRAY_I32_I32
+def TEX_2D_ARRAY_S32_S32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
@@ -2162,7 +2253,7 @@ def TEX_2D_ARRAY_I32_I32
               "tex.a2d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x, $y, $y\\}];",
               []>;
-def TEX_2D_ARRAY_I32_F32
+def TEX_2D_ARRAY_S32_F32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
@@ -2170,7 +2261,7 @@ def TEX_2D_ARRAY_I32_F32
               "tex.a2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x, $y, $y\\}];",
               []>;
-def TEX_2D_ARRAY_I32_F32_LEVEL
+def TEX_2D_ARRAY_S32_F32_LEVEL
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
@@ -2178,7 +2269,7 @@ def TEX_2D_ARRAY_I32_F32_LEVEL
               "tex.level.a2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$l, $x, $y, $y\\}], $lod;",
               []>;
-def TEX_2D_ARRAY_I32_F32_GRAD
+def TEX_2D_ARRAY_S32_F32_GRAD
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
@@ -2189,8 +2280,43 @@ def TEX_2D_ARRAY_I32_F32_GRAD
               "[$t, $s, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
               "\\{$grady0, $grady1\\};",
               []>;
+def TEX_2D_ARRAY_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+                   Int32Regs:$y),
+              "tex.a2d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_2D_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y),
+              "tex.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_2D_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y, Float32Regs:$lod),
+              "tex.level.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $y\\}], $lod;",
+              []>;
+def TEX_2D_ARRAY_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
 
-def TEX_3D_F32_I32
+def TEX_3D_F32_S32
   : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
                     Float32Regs:$b, Float32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
@@ -2227,7 +2353,7 @@ def TEX_3D_F32_F32_GRAD
               "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
               "\\{$grady0, $grady1, $grady2, $grady2\\};",
               []>;
-def TEX_3D_I32_I32
+def TEX_3D_S32_S32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
@@ -2235,7 +2361,7 @@ def TEX_3D_I32_I32
               "tex.3d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y, $z, $z\\}];",
               []>;
-def TEX_3D_I32_F32
+def TEX_3D_S32_F32
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
@@ -2243,7 +2369,7 @@ def TEX_3D_I32_F32
               "tex.3d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y, $z, $z\\}];",
               []>;
-def TEX_3D_I32_F32_LEVEL
+def TEX_3D_S32_F32_LEVEL
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
@@ -2251,7 +2377,7 @@ def TEX_3D_I32_F32_LEVEL
               "tex.level.3d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
               "[$t, $s, \\{$x, $y, $z, $z\\}], $lod;",
               []>;
-def TEX_3D_I32_F32_GRAD
+def TEX_3D_S32_F32_GRAD
   : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
                     Int32Regs:$b, Int32Regs:$a),
               (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
@@ -2264,9 +2390,1234 @@ def TEX_3D_I32_F32_GRAD
               "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
               "\\{$grady0, $grady1, $grady2, $grady2\\};",
               []>;
+def TEX_3D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$z),
+              "tex.3d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_3D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z),
+              "tex.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_3D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z, Float32Regs:$lod),
+              "tex.level.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_3D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$gradx2, Float32Regs:$grady0,
+                   Float32Regs:$grady1, Float32Regs:$grady2),
+              "tex.grad.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}], "
+              "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
+              "\\{$grady0, $grady1, $grady2, $grady2\\};",
+              []>;
+
+def TEX_CUBE_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+               Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_CUBE_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_CUBE_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_CUBE_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_CUBE_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_CUBE_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+
+def TEX_CUBE_ARRAY_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+               Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_CUBE_ARRAY_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+def TEX_CUBE_ARRAY_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_CUBE_ARRAY_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+def TEX_CUBE_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_CUBE_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int64Regs:$s, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, $s, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+
+def TLD4_R_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_G_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_B_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_A_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_R_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_G_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_B_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_A_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_R_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_G_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_B_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+def TLD4_A_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Int64Regs:$s, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, $s, \\{$x, $y\\}];",
+              []>;
+}
 
 
-// Surface load instructions
+// texmode_unified
+let IsTex = 1, IsTexModeUnified = 1 in {
+// Texture fetch instructions using handles
+def TEX_UNIFIED_1D_F32_S32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x),
+              "tex.1d.v4.f32.s32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x),
+              "tex.1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$lod),
+              "tex.level.1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_F32_F32_GRAD
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+def TEX_UNIFIED_1D_S32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x),
+              "tex.1d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x),
+              "tex.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_S32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+def TEX_UNIFIED_1D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x),
+              "tex.1d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x),
+              "tex.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, [$t, \\{$x\\}];",
+              []>;
+def TEX_UNIFIED_1D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+
+def TEX_UNIFIED_1D_ARRAY_F32_S32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x),
+              "tex.a1d.v4.f32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x),
+              "tex.a1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.a1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_F32_F32_GRAD
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.a1d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_S32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x),
+              "tex.a1d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x),
+              "tex.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_S32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.a1d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x),
+              "tex.a1d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x),
+              "tex.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}];",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$lod),
+              "tex.level.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], $lod;",
+              []>;
+def TEX_UNIFIED_1D_ARRAY_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$gradx, Float32Regs:$grady),
+              "tex.grad.a1d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x\\}], \\{$gradx\\}, \\{$grady\\};",
+              []>;
+
+def TEX_UNIFIED_2D_F32_S32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y),
+              "tex.2d.v4.f32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tex.2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$lod),
+              "tex.level.2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_F32_F32_GRAD
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+def TEX_UNIFIED_2D_S32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y),
+              "tex.2d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tex.2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$lod),
+              "tex.level.2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_S32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+def TEX_UNIFIED_2D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y),
+              "tex.2d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tex.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$lod),
+              "tex.level.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+
+def TEX_UNIFIED_2D_ARRAY_F32_S32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x,
+                   Int32Regs:$y),
+              "tex.a2d.v4.f32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y),
+              "tex.a2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y, Float32Regs:$lod),
+              "tex.level.a2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_F32_F32_GRAD
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y, Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.a2d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_S32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x,
+                   Int32Regs:$y),
+              "tex.a2d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y),
+              "tex.a2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y, Float32Regs:$lod),
+              "tex.level.a2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_S32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.a2d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Int32Regs:$x,
+                   Int32Regs:$y),
+              "tex.a2d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y),
+              "tex.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}];",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y, Float32Regs:$lod),
+              "tex.level.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], $lod;",
+              []>;
+def TEX_UNIFIED_2D_ARRAY_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l, Float32Regs:$x,
+                   Float32Regs:$y,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$grady0, Float32Regs:$grady1),
+              "tex.grad.a2d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $y\\}], \\{$gradx0, $gradx1\\}, "
+              "\\{$grady0, $grady1\\};",
+              []>;
+
+def TEX_UNIFIED_3D_F32_S32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$z),
+              "tex.3d.v4.f32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z),
+              "tex.3d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z, Float32Regs:$lod),
+              "tex.level.3d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_3D_F32_F32_GRAD
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$gradx2, Float32Regs:$grady0,
+                   Float32Regs:$grady1, Float32Regs:$grady2),
+              "tex.grad.3d.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], "
+              "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
+              "\\{$grady0, $grady1, $grady2, $grady2\\};",
+              []>;
+def TEX_UNIFIED_3D_S32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$z),
+              "tex.3d.v4.s32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z),
+              "tex.3d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z, Float32Regs:$lod),
+              "tex.level.3d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_3D_S32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$gradx2, Float32Regs:$grady0,
+                   Float32Regs:$grady1, Float32Regs:$grady2),
+              "tex.grad.3d.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], "
+              "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
+              "\\{$grady0, $grady1, $grady2, $grady2\\};",
+              []>;
+def TEX_UNIFIED_3D_U32_S32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$z),
+              "tex.3d.v4.u32.s32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z),
+              "tex.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_3D_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z, Float32Regs:$lod),
+              "tex.level.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_3D_U32_F32_GRAD
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y,
+                   Float32Regs:$z,
+                   Float32Regs:$gradx0, Float32Regs:$gradx1,
+                   Float32Regs:$gradx2, Float32Regs:$grady0,
+                   Float32Regs:$grady1, Float32Regs:$grady2),
+              "tex.grad.3d.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], "
+              "\\{$gradx0, $gradx1, $gradx2, $gradx2\\}, "
+              "\\{$grady0, $grady1, $grady2, $grady2\\};",
+              []>;
+
+def TEX_UNIFIED_CUBE_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t,
+               Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_CUBE_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_CUBE_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.cube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.cube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$x, $y, $z, $z\\}], $lod;",
+              []>;
+
+def TEX_UNIFIED_CUBE_ARRAY_F32_F32
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+               Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_ARRAY_F32_F32_LEVEL
+  : NVPTXInst<(outs Float32Regs:$r, Float32Regs:$g,
+                    Float32Regs:$b, Float32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.f32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_CUBE_ARRAY_S32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_ARRAY_S32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.s32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+def TEX_UNIFIED_CUBE_ARRAY_U32_F32
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z),
+              "tex.acube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}];",
+              []>;
+def TEX_UNIFIED_CUBE_ARRAY_U32_F32_LEVEL
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g,
+                    Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$t, Int32Regs:$l,
+                   Float32Regs:$x, Float32Regs:$y, Float32Regs:$z,
+                   Float32Regs:$lod),
+              "tex.level.acube.v4.u32.f32\t\\{$r, $g, $b, $a\\}, "
+              "[$t, \\{$l, $x, $y, $z\\}], $lod;",
+              []>;
+
+def TLD4_UNIFIED_R_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_G_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_B_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_A_2D_F32_F32
+  : NVPTXInst<(outs Float32Regs:$v0, Float32Regs:$v1,
+                    Float32Regs:$v2, Float32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.f32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_R_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_G_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_B_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_A_2D_S32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.s32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_R_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.r.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_G_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.g.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_B_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.b.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+def TLD4_UNIFIED_A_2D_U32_F32
+  : NVPTXInst<(outs Int32Regs:$v0, Int32Regs:$v1,
+                    Int32Regs:$v2, Int32Regs:$v3),
+              (ins Int64Regs:$t, Float32Regs:$x, Float32Regs:$y),
+              "tld4.a.2d.v4.u32.f32\t\\{$v0, $v1, $v2, $v3\\}, "
+              "[$t, \\{$x, $y\\}];",
+              []>;
+}
+
+
+
+//=== Surface load instructions
+// .clamp variant
+let IsSuld = 1 in {
+def SULD_1D_I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b8.clamp \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b16.clamp \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b32.clamp \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b64.clamp \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b8.clamp \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b16.clamp \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b32.clamp \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b64.clamp \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b8.clamp \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b16.clamp \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b32.clamp \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b64.clamp \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b8.clamp \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b16.clamp \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b32.clamp \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b64.clamp \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b8.clamp \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b16.clamp \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b32.clamp \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b64.clamp \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 2 in {
+def SULD_1D_V2I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b8.clamp \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b16.clamp \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b32.clamp \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b64.clamp \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_V2I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b8.clamp \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b16.clamp \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b32.clamp \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b64.clamp \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_V2I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b8.clamp \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b16.clamp \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b32.clamp \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b64.clamp \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_V2I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b8.clamp \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b16.clamp \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b32.clamp \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b64.clamp \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_V2I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b8.clamp \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b16.clamp \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b32.clamp \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I64_CLAMP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b64.clamp \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 3 in {
+def SULD_1D_V4I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b8.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b16.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b32.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_V4I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b8.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V4I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b16.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V4I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b32.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_V4I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b8.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V4I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b16.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V4I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b32.clamp \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_V4I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b8.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V4I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b16.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V4I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b32.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+
+def SULD_3D_V4I8_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b8.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V4I16_CLAMP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b16.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V4I32_CLAMP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b32.clamp \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+
+// .trap variant
+let IsSuld = 1 in {
 def SULD_1D_I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r),
               (ins Int64Regs:$s, Int32Regs:$x),
@@ -2282,35 +3633,10 @@ def SULD_1D_I32_TRAP
               (ins Int64Regs:$s, Int32Regs:$x),
               "suld.b.1d.b32.trap \\{$r\\}, [$s, \\{$x\\}];",
               []>;
-def SULD_1D_V2I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+def SULD_1D_I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r),
               (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
-              []>;
-def SULD_1D_V2I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
-              []>;
-def SULD_1D_V2I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
-              []>;
-def SULD_1D_V4I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
-              (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v4.b8.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
-              []>;
-def SULD_1D_V4I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
-              (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v4.b16.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
-              []>;
-def SULD_1D_V4I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
-              (ins Int64Regs:$s, Int32Regs:$x),
-              "suld.b.1d.v4.b32.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              "suld.b.1d.b64.trap \\{$r\\}, [$s, \\{$x\\}];",
               []>;
 
 def SULD_1D_ARRAY_I8_TRAP
@@ -2328,6 +3654,98 @@ def SULD_1D_ARRAY_I32_TRAP
               (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
               "suld.b.a1d.b32.trap \\{$r\\}, [$s, \\{$l, $x\\}];",
               []>;
+def SULD_1D_ARRAY_I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b64.trap \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b8.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b16.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b32.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b64.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b8.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b16.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b32.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b64.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b8.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b16.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b32.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b64.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 2 in {
+def SULD_1D_V2I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b64.trap \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+
 def SULD_1D_ARRAY_V2I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
               (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
@@ -2343,6 +3761,97 @@ def SULD_1D_ARRAY_V2I32_TRAP
               (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
               "suld.b.a1d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
               []>;
+def SULD_1D_ARRAY_V2I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b64.trap \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_V2I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b64.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_V2I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b8.trap \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b16.trap \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b32.trap \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b64.trap \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_V2I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I64_TRAP
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b64.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 3 in {
+def SULD_1D_V4I8_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b8.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I16_TRAP
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b16.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I32_TRAP
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b32.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+
 def SULD_1D_ARRAY_V4I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
               (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
@@ -2362,36 +3871,6 @@ def SULD_1D_ARRAY_V4I32_TRAP
               "[$s, \\{$l, $x\\}];",
               []>;
 
-def SULD_2D_I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.b8.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
-              []>;
-def SULD_2D_I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.b16.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
-              []>;
-def SULD_2D_I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.b32.trap \\{$r\\}, [$s, \\{$x, $y\\}];",
-              []>;
-def SULD_2D_V2I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
-              []>;
-def SULD_2D_V2I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
-              []>;
-def SULD_2D_V2I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.2d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
-              []>;
 def SULD_2D_V4I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
@@ -2408,39 +3887,6 @@ def SULD_2D_V4I32_TRAP
               "suld.b.2d.v4.b32.trap \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
               []>;
 
-def SULD_2D_ARRAY_I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.b8.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
-              []>;
-def SULD_2D_ARRAY_I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.b16.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
-              []>;
-def SULD_2D_ARRAY_I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.b32.trap \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
-              []>;
-def SULD_2D_ARRAY_V2I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.v2.b8.trap \\{$r, $g\\}, "
-              "[$s, \\{$l, $x, $y, $y\\}];",
-              []>;
-def SULD_2D_ARRAY_V2I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.v2.b16.trap \\{$r, $g\\}, "
-              "[$s, \\{$l, $x, $y, $y\\}];",
-              []>;
-def SULD_2D_ARRAY_V2I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
-              "suld.b.a2d.v2.b32.trap \\{$r, $g\\}, "
-              "[$s, \\{$l, $x, $y, $y\\}];",
-              []>;
 def SULD_2D_ARRAY_V4I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
               (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
@@ -2460,36 +3906,7 @@ def SULD_2D_ARRAY_V4I32_TRAP
               "[$s, \\{$l, $x, $y, $y\\}];",
               []>;
 
-def SULD_3D_I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.b8.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
-def SULD_3D_I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.b16.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
-def SULD_3D_I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.b32.trap \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
-def SULD_3D_V2I8_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.v2.b8.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
-def SULD_3D_V2I16_TRAP
-  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.v2.b16.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
-def SULD_3D_V2I32_TRAP
-  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
-              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
-              "suld.b.3d.v2.b32.trap \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
-              []>;
+
 def SULD_3D_V4I8_TRAP
   : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
@@ -2508,7 +3925,318 @@ def SULD_3D_V4I32_TRAP
               "suld.b.3d.v4.b32.trap \\{$r, $g, $b, $a\\}, "
               "[$s, \\{$x, $y, $z, $z\\}];",
               []>;
+}
 
+// .zero variant
+let IsSuld = 1 in {
+def SULD_1D_I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b8.zero \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b16.zero \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b32.zero \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.b64.zero \\{$r\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b8.zero \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b16.zero \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b32.zero \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.b64.zero \\{$r\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b8.zero \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b16.zero \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b32.zero \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.b64.zero \\{$r\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b8.zero \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b16.zero \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b32.zero \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.b64.zero \\{$r\\}, [$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b8.zero \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b16.zero \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b32.zero \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.b64.zero \\{$r\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 2 in {
+def SULD_1D_V2I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b8.zero \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b16.zero \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b32.zero \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V2I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v2.b64.zero \\{$r, $g\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_V2I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b8.zero \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b16.zero \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b32.zero \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V2I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v2.b64.zero \\{$r, $g\\}, [$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_V2I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b8.zero \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b16.zero \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b32.zero \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V2I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v2.b64.zero \\{$r, $g\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_V2I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b8.zero \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b16.zero \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b32.zero \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V2I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v2.b64.zero \\{$r, $g\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+def SULD_3D_V2I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b8.zero \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b16.zero \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b32.zero \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V2I64_ZERO
+  : NVPTXInst<(outs Int64Regs:$r, Int64Regs:$g),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v2.b64.zero \\{$r, $g\\}, [$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
+
+let IsSuld = 3 in {
+def SULD_1D_V4I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b8.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b16.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+def SULD_1D_V4I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x),
+              "suld.b.1d.v4.b32.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x\\}];",
+              []>;
+
+def SULD_1D_ARRAY_V4I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b8.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V4I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b16.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+def SULD_1D_ARRAY_V4I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x),
+              "suld.b.a1d.v4.b32.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x\\}];",
+              []>;
+
+def SULD_2D_V4I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b8.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V4I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b16.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+def SULD_2D_V4I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.2d.v4.b32.zero \\{$r, $g, $b, $a\\}, [$s, \\{$x, $y\\}];",
+              []>;
+
+def SULD_2D_ARRAY_V4I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b8.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V4I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b16.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+def SULD_2D_ARRAY_V4I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y),
+              "suld.b.a2d.v4.b32.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$l, $x, $y, $y\\}];",
+              []>;
+
+
+def SULD_3D_V4I8_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b8.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V4I16_ZERO
+  : NVPTXInst<(outs Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b16.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+def SULD_3D_V4I32_ZERO
+  : NVPTXInst<(outs Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z),
+              "suld.b.3d.v4.b32.zero \\{$r, $g, $b, $a\\}, "
+              "[$s, \\{$x, $y, $z, $z\\}];",
+              []>;
+}
 
 //-----------------------------------
 // Texture Query Intrinsics
@@ -2624,8 +4352,354 @@ def ISTYPEP_TEXTURE
 
 //===- Surface Stores -----------------------------------------------------===//
 
+let IsSust = 1 in {
 // Unformatted
+// .clamp variant
+def SUST_B_1D_B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.1d.b8.clamp \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.1d.b16.clamp \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
+              "sust.b.1d.b32.clamp \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.1d.b64.clamp \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_V2B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+              "sust.b.1d.v2.b8.clamp \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+              "sust.b.1d.v2.b16.clamp \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+              "sust.b.1d.v2.b32.clamp \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+              "sust.b.1d.v2.b64.clamp \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V4B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g,
+                   Int16Regs:$b, Int16Regs:$a),
+              "sust.b.1d.v4.b8.clamp \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_V4B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g,
+                   Int16Regs:$b, Int16Regs:$a),
+              "sust.b.1d.v4.b16.clamp \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_V4B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g,
+                   Int32Regs:$b, Int32Regs:$a),
+              "sust.b.1d.v4.b32.clamp \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
 
+
+def SUST_B_1D_ARRAY_B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.a1d.b8.clamp \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.a1d.b16.clamp \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r),
+              "sust.b.a1d.b32.clamp \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.a1d.b64.clamp \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.a1d.v2.b8.clamp \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.a1d.v2.b16.clamp \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r,
+                   Int32Regs:$g),
+              "sust.b.a1d.v2.b32.clamp \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.a1d.v2.b64.clamp \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              "sust.b.a1d.v4.b8.clamp \t[$s, \\{$idx, $x\\}], "
+              "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+             "sust.b.a1d.v4.b16.clamp \t[$s, \\{$idx, $x\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r,
+                   Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+             "sust.b.a1d.v4.b32.clamp \t[$s, \\{$idx, $x\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_2D_B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+              "sust.b.2d.b8.clamp \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+              "sust.b.2d.b16.clamp \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+              "sust.b.2d.b32.clamp \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+              "sust.b.2d.b64.clamp \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_V2B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.2d.v2.b8.clamp \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.2d.v2.b16.clamp \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+                   Int32Regs:$g),
+              "sust.b.2d.v2.b32.clamp \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.2d.v2.b64.clamp \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V4B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              "sust.b.2d.v4.b8.clamp \t[$s, \\{$x, $y\\}], "
+              "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_V4B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+             "sust.b.2d.v4.b16.clamp \t[$s, \\{$x, $y\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_V4B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+                   Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+             "sust.b.2d.v4.b32.clamp \t[$s, \\{$x, $y\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_2D_ARRAY_B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r),
+              "sust.b.a2d.b8.clamp \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r),
+              "sust.b.a2d.b16.clamp \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r),
+              "sust.b.a2d.b32.clamp \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r),
+              "sust.b.a2d.b64.clamp \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.a2d.v2.b8.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g),
+             "sust.b.a2d.v2.b16.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r, Int32Regs:$g),
+             "sust.b.a2d.v2.b32.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r, Int64Regs:$g),
+             "sust.b.a2d.v2.b64.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+      "sust.b.a2d.v4.b8.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+      "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+     "sust.b.a2d.v4.b16.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+     "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+     "sust.b.a2d.v4.b32.clamp \t[$s, \\{$idx, $x, $y, $y\\}], "
+     "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_3D_B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r),
+              "sust.b.3d.b8.clamp \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r),
+              "sust.b.3d.b16.clamp \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r),
+              "sust.b.3d.b32.clamp \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r),
+              "sust.b.3d.b64.clamp \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_V2B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.3d.v2.b8.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.3d.v2.b16.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r, Int32Regs:$g),
+              "sust.b.3d.v2.b32.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B64_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r, Int64Regs:$g),
+              "sust.b.3d.v2.b64.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V4B8_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+         "sust.b.3d.v4.b8.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+         "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_3D_V4B16_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+        "sust.b.3d.v4.b16.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+        "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_3D_V4B32_CLAMP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+        "sust.b.3d.v4.b32.clamp \t[$s, \\{$x, $y, $z, $z\\}], "
+        "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+// .trap variant
 def SUST_B_1D_B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
@@ -2641,6 +4715,11 @@ def SUST_B_1D_B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
               "sust.b.1d.b32.trap \t[$s, \\{$x\\}], \\{$r\\};",
               []>;
+def SUST_B_1D_B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.1d.b64.trap \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
 def SUST_B_1D_V2B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
@@ -2655,6 +4734,11 @@ def SUST_B_1D_V2B32_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
               "sust.b.1d.v2.b32.trap \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+              "sust.b.1d.v2.b64.trap \t[$s, \\{$x\\}], \\{$r, $g\\};",
               []>;
 def SUST_B_1D_V4B8_TRAP
   : NVPTXInst<(outs),
@@ -2691,6 +4775,11 @@ def SUST_B_1D_ARRAY_B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r),
               "sust.b.a1d.b32.trap \t[$s, \\{$idx, $x\\}], \\{$r\\};",
               []>;
+def SUST_B_1D_ARRAY_B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.a1d.b64.trap \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
 def SUST_B_1D_ARRAY_V2B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
@@ -2708,6 +4797,12 @@ def SUST_B_1D_ARRAY_V2B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r,
                    Int32Regs:$g),
               "sust.b.a1d.v2.b32.trap \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.a1d.v2.b64.trap \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
               []>;
 def SUST_B_1D_ARRAY_V4B8_TRAP
   : NVPTXInst<(outs),
@@ -2747,6 +4842,11 @@ def SUST_B_2D_B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
               "sust.b.2d.b32.trap \t[$s, \\{$x, $y\\}], \\{$r\\};",
               []>;
+def SUST_B_2D_B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+              "sust.b.2d.b64.trap \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
 def SUST_B_2D_V2B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
@@ -2764,6 +4864,12 @@ def SUST_B_2D_V2B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
                    Int32Regs:$g),
               "sust.b.2d.v2.b32.trap \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.2d.v2.b64.trap \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
               []>;
 def SUST_B_2D_V4B8_TRAP
   : NVPTXInst<(outs),
@@ -2806,6 +4912,12 @@ def SUST_B_2D_ARRAY_B32_TRAP
                    Int32Regs:$r),
               "sust.b.a2d.b32.trap \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
               []>;
+def SUST_B_2D_ARRAY_B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r),
+              "sust.b.a2d.b64.trap \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
 def SUST_B_2D_ARRAY_V2B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
@@ -2825,6 +4937,13 @@ def SUST_B_2D_ARRAY_V2B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
                    Int32Regs:$r, Int32Regs:$g),
              "sust.b.a2d.v2.b32.trap \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r, Int64Regs:$g),
+             "sust.b.a2d.v2.b64.trap \t[$s, \\{$idx, $x, $y, $y\\}], "
              "\\{$r, $g\\};",
               []>;
 def SUST_B_2D_ARRAY_V4B8_TRAP
@@ -2868,6 +4987,12 @@ def SUST_B_3D_B32_TRAP
                    Int32Regs:$r),
               "sust.b.3d.b32.trap \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
               []>;
+def SUST_B_3D_B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r),
+              "sust.b.3d.b64.trap \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
 def SUST_B_3D_V2B8_TRAP
   : NVPTXInst<(outs),
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
@@ -2887,6 +5012,13 @@ def SUST_B_3D_V2B32_TRAP
               (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
                    Int32Regs:$r, Int32Regs:$g),
               "sust.b.3d.v2.b32.trap \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B64_TRAP
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r, Int64Regs:$g),
+              "sust.b.3d.v2.b64.trap \t[$s, \\{$x, $y, $z, $z\\}], "
               "\\{$r, $g\\};",
               []>;
 def SUST_B_3D_V4B8_TRAP
@@ -2910,6 +5042,353 @@ def SUST_B_3D_V4B32_TRAP
         "sust.b.3d.v4.b32.trap \t[$s, \\{$x, $y, $z, $z\\}], "
         "\\{$r, $g, $b, $a\\};",
               []>;
+
+
+// .zero variant
+def SUST_B_1D_B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.1d.b8.zero \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.1d.b16.zero \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
+              "sust.b.1d.b32.zero \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.1d.b64.zero \t[$s, \\{$x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_V2B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+              "sust.b.1d.v2.b8.zero \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+              "sust.b.1d.v2.b16.zero \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+              "sust.b.1d.v2.b32.zero \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V2B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+              "sust.b.1d.v2.b64.zero \t[$s, \\{$x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_V4B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g,
+                   Int16Regs:$b, Int16Regs:$a),
+              "sust.b.1d.v4.b8.zero \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_V4B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g,
+                   Int16Regs:$b, Int16Regs:$a),
+              "sust.b.1d.v4.b16.zero \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_V4B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g,
+                   Int32Regs:$b, Int32Regs:$a),
+              "sust.b.1d.v4.b32.zero \t[$s, \\{$x\\}], \\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_1D_ARRAY_B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.a1d.b8.zero \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r),
+              "sust.b.a1d.b16.zero \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r),
+              "sust.b.a1d.b32.zero \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r),
+              "sust.b.a1d.b64.zero \t[$s, \\{$idx, $x\\}], \\{$r\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.a1d.v2.b8.zero \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.a1d.v2.b16.zero \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r,
+                   Int32Regs:$g),
+              "sust.b.a1d.v2.b32.zero \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V2B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.a1d.v2.b64.zero \t[$s, \\{$idx, $x\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              "sust.b.a1d.v4.b8.zero \t[$s, \\{$idx, $x\\}], "
+              "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+             "sust.b.a1d.v4.b16.zero \t[$s, \\{$idx, $x\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_1D_ARRAY_V4B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$r,
+                   Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+             "sust.b.a1d.v4.b32.zero \t[$s, \\{$idx, $x\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_2D_B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+              "sust.b.2d.b8.zero \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+              "sust.b.2d.b16.zero \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+              "sust.b.2d.b32.zero \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+              "sust.b.2d.b64.zero \t[$s, \\{$x, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_V2B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.2d.v2.b8.zero \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g),
+              "sust.b.2d.v2.b16.zero \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+                   Int32Regs:$g),
+              "sust.b.2d.v2.b32.zero \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V2B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+                   Int64Regs:$g),
+              "sust.b.2d.v2.b64.zero \t[$s, \\{$x, $y\\}], \\{$r, $g\\};",
+              []>;
+def SUST_B_2D_V4B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+              "sust.b.2d.v4.b8.zero \t[$s, \\{$x, $y\\}], "
+              "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_V4B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r,
+                   Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+             "sust.b.2d.v4.b16.zero \t[$s, \\{$x, $y\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_V4B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+                   Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+             "sust.b.2d.v4.b32.zero \t[$s, \\{$x, $y\\}], "
+             "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_2D_ARRAY_B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r),
+              "sust.b.a2d.b8.zero \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r),
+              "sust.b.a2d.b16.zero \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r),
+              "sust.b.a2d.b32.zero \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r),
+              "sust.b.a2d.b64.zero \t[$s, \\{$idx, $x, $y, $y\\}], \\{$r\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.a2d.v2.b8.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g),
+             "sust.b.a2d.v2.b16.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r, Int32Regs:$g),
+             "sust.b.a2d.v2.b32.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V2B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int64Regs:$r, Int64Regs:$g),
+             "sust.b.a2d.v2.b64.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+             "\\{$r, $g\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+      "sust.b.a2d.v4.b8.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+      "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+     "sust.b.a2d.v4.b16.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+     "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_2D_ARRAY_V4B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$idx, Int32Regs:$x, Int32Regs:$y,
+                   Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+     "sust.b.a2d.v4.b32.zero \t[$s, \\{$idx, $x, $y, $y\\}], "
+     "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
+def SUST_B_3D_B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r),
+              "sust.b.3d.b8.zero \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r),
+              "sust.b.3d.b16.zero \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r),
+              "sust.b.3d.b32.zero \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r),
+              "sust.b.3d.b64.zero \t[$s, \\{$x, $y, $z, $z\\}], \\{$r\\};",
+              []>;
+def SUST_B_3D_V2B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.3d.v2.b8.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g),
+              "sust.b.3d.v2.b16.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r, Int32Regs:$g),
+              "sust.b.3d.v2.b32.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V2B64_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int64Regs:$r, Int64Regs:$g),
+              "sust.b.3d.v2.b64.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+              "\\{$r, $g\\};",
+              []>;
+def SUST_B_3D_V4B8_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+         "sust.b.3d.v4.b8.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+         "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_3D_V4B16_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+        "sust.b.3d.v4.b16.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+        "\\{$r, $g, $b, $a\\};",
+              []>;
+def SUST_B_3D_V4B32_ZERO
+  : NVPTXInst<(outs),
+              (ins Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+                   Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+        "sust.b.3d.v4.b32.zero \t[$s, \\{$x, $y, $z, $z\\}], "
+        "\\{$r, $g, $b, $a\\};",
+              []>;
+
+
 
 // Formatted
 
@@ -3197,12 +5676,341 @@ def SUST_P_3D_V4B32_TRAP
         "sust.p.3d.v4.b32.trap \t[$s, \\{$x, $y, $z, $z\\}], "
         "\\{$r, $g, $b, $a\\};",
               []>;
-
+}
 
 // Surface store instruction patterns
 // I'm not sure why we can't just include these in the instruction definitions,
 // but TableGen complains of type errors :(
 
+// .clamp variant
+def : Pat<(int_nvvm_sust_b_1d_i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_B8_CLAMP Int64Regs:$s, Int32Regs:$x, Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_B16_CLAMP Int64Regs:$s, Int32Regs:$x, Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
+          (SUST_B_1D_B32_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i64_clamp
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_B64_CLAMP Int64Regs:$s, Int32Regs:$x, Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_V2B8_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_V2B16_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_1D_V2B32_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i64_clamp
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_V2B64_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i8_clamp
+           Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_V4B8_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i16_clamp
+           Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_V4B16_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i32_clamp
+           Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_1D_V4B32_CLAMP Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_1d_array_i8_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_ARRAY_B8_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i16_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_ARRAY_B16_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i32_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$r),
+          (SUST_B_1D_ARRAY_B32_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i64_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_ARRAY_B64_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i8_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_ARRAY_V2B8_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i16_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_ARRAY_V2B16_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i32_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_1D_ARRAY_V2B32_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i64_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_ARRAY_V2B64_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i8_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_ARRAY_V4B8_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i16_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_ARRAY_V4B16_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i32_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_1D_ARRAY_V4B32_CLAMP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_2d_i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_B8_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_B16_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+          (SUST_B_2D_B32_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i64_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_B64_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i8_clamp
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_V2B8_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i16_clamp
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_V2B16_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i32_clamp
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_2D_V2B32_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i64_clamp
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_2D_V2B64_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_V4B8_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_V4B16_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_2D_V4B32_CLAMP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_2d_array_i8_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_ARRAY_B8_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i16_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_ARRAY_B16_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i32_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+          (SUST_B_2D_ARRAY_B32_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i64_clamp
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_ARRAY_B64_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i8_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_ARRAY_V2B8_CLAMP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i16_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_ARRAY_V2B16_CLAMP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i32_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+           Int32Regs:$g),
+          (SUST_B_2D_ARRAY_V2B32_CLAMP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i64_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+           Int64Regs:$g),
+          (SUST_B_2D_ARRAY_V2B64_CLAMP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i8_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_ARRAY_V4B8_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i16_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_ARRAY_V4B16_CLAMP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i32_clamp
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_2D_ARRAY_V4B32_CLAMP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_3d_i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r),
+          (SUST_B_3D_B8_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r),
+          (SUST_B_3D_B16_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r),
+          (SUST_B_3D_B32_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i64_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r),
+          (SUST_B_3D_B64_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_3D_V2B8_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_3D_V2B16_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_3D_V2B32_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i64_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_3D_V2B64_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i8_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_3D_V4B8_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i16_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_3D_V4B16_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i32_clamp
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_3D_V4B32_CLAMP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+// .trap variant
 def : Pat<(int_nvvm_sust_b_1d_i8_trap
            Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
           (SUST_B_1D_B8_TRAP Int64Regs:$s, Int32Regs:$x, Int16Regs:$r)>;
@@ -3214,6 +6022,10 @@ def : Pat<(int_nvvm_sust_b_1d_i16_trap
 def : Pat<(int_nvvm_sust_b_1d_i32_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
           (SUST_B_1D_B32_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i64_trap
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_B64_TRAP Int64Regs:$s, Int32Regs:$x, Int64Regs:$r)>;
 
 def : Pat<(int_nvvm_sust_b_1d_v2i8_trap
            Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
@@ -3229,6 +6041,11 @@ def : Pat<(int_nvvm_sust_b_1d_v2i32_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
           (SUST_B_1D_V2B32_TRAP Int64Regs:$s, Int32Regs:$x,
            Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i64_trap
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_V2B64_TRAP Int64Regs:$s, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
 
 def : Pat<(int_nvvm_sust_b_1d_v4i8_trap
            Int64Regs:$s, Int32Regs:$x,
@@ -3265,6 +6082,11 @@ def : Pat<(int_nvvm_sust_b_1d_array_i32_trap
           (SUST_B_1D_ARRAY_B32_TRAP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
            Int32Regs:$r)>;
 
+def : Pat<(int_nvvm_sust_b_1d_array_i64_trap
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_ARRAY_B64_TRAP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r)>;
+
 def : Pat<(int_nvvm_sust_b_1d_array_v2i8_trap
           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
           (SUST_B_1D_ARRAY_V2B8_TRAP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
@@ -3279,6 +6101,11 @@ def : Pat<(int_nvvm_sust_b_1d_array_v2i32_trap
           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
           (SUST_B_1D_ARRAY_V2B32_TRAP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
            Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i64_trap
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_ARRAY_V2B64_TRAP Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
 
 def : Pat<(int_nvvm_sust_b_1d_array_v4i8_trap
            Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
@@ -3315,6 +6142,11 @@ def : Pat<(int_nvvm_sust_b_2d_i32_trap
           (SUST_B_2D_B32_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
            Int32Regs:$r)>;
 
+def : Pat<(int_nvvm_sust_b_2d_i64_trap
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_B64_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
 def : Pat<(int_nvvm_sust_b_2d_v2i8_trap
           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r, Int16Regs:$g),
           (SUST_B_2D_V2B8_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
@@ -3329,6 +6161,11 @@ def : Pat<(int_nvvm_sust_b_2d_v2i32_trap
           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g),
           (SUST_B_2D_V2B32_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
            Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i64_trap
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_2D_V2B64_TRAP Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r, Int64Regs:$g)>;
 
 def : Pat<(int_nvvm_sust_b_2d_v4i8_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
@@ -3368,6 +6205,12 @@ def : Pat<(int_nvvm_sust_b_2d_array_i32_trap
            Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
            Int32Regs:$r)>;
 
+def : Pat<(int_nvvm_sust_b_2d_array_i64_trap
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_ARRAY_B64_TRAP Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
 def : Pat<(int_nvvm_sust_b_2d_array_v2i8_trap
            Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
            Int16Regs:$r, Int16Regs:$g),
@@ -3387,6 +6230,12 @@ def : Pat<(int_nvvm_sust_b_2d_array_v2i32_trap
            Int32Regs:$g),
           (SUST_B_2D_ARRAY_V2B32_TRAP Int64Regs:$s, Int32Regs:$l,
            Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i64_trap
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+           Int64Regs:$g),
+          (SUST_B_2D_ARRAY_V2B64_TRAP Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g)>;
 
 def : Pat<(int_nvvm_sust_b_2d_array_v4i8_trap
            Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
@@ -3432,6 +6281,13 @@ def : Pat<(int_nvvm_sust_b_3d_i32_trap
            Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int32Regs:$r)>;
 
+def : Pat<(int_nvvm_sust_b_3d_i64_trap
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r),
+          (SUST_B_3D_B64_TRAP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r)>;
+
 def : Pat<(int_nvvm_sust_b_3d_v2i8_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int16Regs:$r, Int16Regs:$g),
@@ -3453,6 +6309,13 @@ def : Pat<(int_nvvm_sust_b_3d_v2i32_trap
            Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int32Regs:$r, Int32Regs:$g)>;
 
+def : Pat<(int_nvvm_sust_b_3d_v2i64_trap
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_3D_V2B64_TRAP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g)>;
+
 def : Pat<(int_nvvm_sust_b_3d_v4i8_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
@@ -3471,6 +6334,334 @@ def : Pat<(int_nvvm_sust_b_3d_v4i32_trap
            Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
           (SUST_B_3D_V4B32_TRAP Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+// .zero variant
+def : Pat<(int_nvvm_sust_b_1d_i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_B8_ZERO Int64Regs:$s, Int32Regs:$x, Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_B16_ZERO Int64Regs:$s, Int32Regs:$x, Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$r),
+          (SUST_B_1D_B32_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_i64_zero
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_B64_ZERO Int64Regs:$s, Int32Regs:$x, Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_V2B8_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_V2B16_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_1D_V2B32_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v2i64_zero
+           Int64Regs:$s, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_V2B64_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i8_zero
+           Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_V4B8_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i16_zero
+           Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_V4B16_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_v4i32_zero
+           Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_1D_V4B32_ZERO Int64Regs:$s, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_1d_array_i8_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_ARRAY_B8_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i16_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r),
+          (SUST_B_1D_ARRAY_B16_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i32_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$r),
+          (SUST_B_1D_ARRAY_B32_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_i64_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r),
+          (SUST_B_1D_ARRAY_B64_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i8_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_ARRAY_V2B8_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i16_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_1D_ARRAY_V2B16_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i32_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_1D_ARRAY_V2B32_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v2i64_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_1D_ARRAY_V2B64_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i8_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_ARRAY_V4B8_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i16_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_1D_ARRAY_V4B16_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_1d_array_v4i32_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_1D_ARRAY_V4B32_ZERO Int64Regs:$s, Int32Regs:$l, Int32Regs:$x,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_2d_i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_B8_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_B16_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+          (SUST_B_2D_B32_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_i64_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_B64_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i8_zero
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_V2B8_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i16_zero
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_V2B16_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i32_zero
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_2D_V2B32_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v2i64_zero
+          Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_2D_V2B64_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_V4B8_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_V4B16_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_v4i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_2D_V4B32_ZERO Int64Regs:$s, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_2d_array_i8_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_ARRAY_B8_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i16_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int16Regs:$r),
+          (SUST_B_2D_ARRAY_B16_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i32_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r),
+          (SUST_B_2D_ARRAY_B32_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_i64_zero
+          Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r),
+          (SUST_B_2D_ARRAY_B64_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i8_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_ARRAY_V2B8_ZERO Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i16_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_2D_ARRAY_V2B16_ZERO Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i32_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int32Regs:$r,
+           Int32Regs:$g),
+          (SUST_B_2D_ARRAY_V2B32_ZERO Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v2i64_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y, Int64Regs:$r,
+           Int64Regs:$g),
+          (SUST_B_2D_ARRAY_V2B64_ZERO Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y, Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i8_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_ARRAY_V4B8_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i16_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_2D_ARRAY_V4B16_ZERO Int64Regs:$s,
+           Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_2d_array_v4i32_zero
+           Int64Regs:$s, Int32Regs:$l, Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_2D_ARRAY_V4B32_ZERO Int64Regs:$s, Int32Regs:$l,
+           Int32Regs:$x, Int32Regs:$y,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
+
+
+
+def : Pat<(int_nvvm_sust_b_3d_i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r),
+          (SUST_B_3D_B8_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r),
+          (SUST_B_3D_B16_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r),
+          (SUST_B_3D_B32_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_i64_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r),
+          (SUST_B_3D_B64_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_3D_V2B8_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g),
+          (SUST_B_3D_V2B16_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g),
+          (SUST_B_3D_V2B32_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v2i64_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g),
+          (SUST_B_3D_V2B64_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int64Regs:$r, Int64Regs:$g)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i8_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_3D_V4B8_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i16_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a),
+          (SUST_B_3D_V4B16_ZERO Int64Regs:$s,
+           Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int16Regs:$r, Int16Regs:$g, Int16Regs:$b, Int16Regs:$a)>;
+
+def : Pat<(int_nvvm_sust_b_3d_v4i32_zero
+           Int64Regs:$s, Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
+           Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a),
+          (SUST_B_3D_V4B32_ZERO Int64Regs:$s,
            Int32Regs:$x, Int32Regs:$y, Int32Regs:$z,
            Int32Regs:$r, Int32Regs:$g, Int32Regs:$b, Int32Regs:$a)>;
 

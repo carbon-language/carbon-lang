@@ -1041,10 +1041,11 @@ def int_nvvm_read_ptx_sreg_envreg31
 
 
 // Texture Fetch
-def int_nvvm_tex_1d_v4f32_i32
+// texmode_independent
+def int_nvvm_tex_1d_v4f32_s32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.1d.v4f32.i32">;
+              "llvm.nvvm.tex.1d.v4f32.s32">;
 def int_nvvm_tex_1d_v4f32_f32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty], [],
@@ -1058,28 +1059,45 @@ def int_nvvm_tex_1d_grad_v4f32_f32
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
               "llvm.nvvm.tex.1d.grad.v4f32.f32">;
-def int_nvvm_tex_1d_v4i32_i32
+def int_nvvm_tex_1d_v4s32_s32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.1d.v4i32.i32">;
-def int_nvvm_tex_1d_v4i32_f32
+              "llvm.nvvm.tex.1d.v4s32.s32">;
+def int_nvvm_tex_1d_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.v4i32.f32">;
-def int_nvvm_tex_1d_level_v4i32_f32
+              "llvm.nvvm.tex.1d.v4s32.f32">;
+def int_nvvm_tex_1d_level_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.level.v4i32.f32.level">;
-def int_nvvm_tex_1d_grad_v4i32_f32
+              "llvm.nvvm.tex.1d.level.v4s32.f32">;
+def int_nvvm_tex_1d_grad_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.grad.v4i32.f32">;
+              "llvm.nvvm.tex.1d.grad.v4s32.f32">;
+def int_nvvm_tex_1d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.1d.v4u32.s32">;
+def int_nvvm_tex_1d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.v4u32.f32">;
+def int_nvvm_tex_1d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.level.v4u32.f32">;
+def int_nvvm_tex_1d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.grad.v4u32.f32">;
 
-def int_nvvm_tex_1d_array_v4f32_i32
+def int_nvvm_tex_1d_array_v4f32_s32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.1d.array.v4f32.i32">;
+              "llvm.nvvm.tex.1d.array.v4f32.s32">;
 def int_nvvm_tex_1d_array_v4f32_f32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
@@ -1094,29 +1112,47 @@ def int_nvvm_tex_1d_array_grad_v4f32_f32
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty], [],
               "llvm.nvvm.tex.1d.array.grad.v4f32.f32">;
-def int_nvvm_tex_1d_array_v4i32_i32
+def int_nvvm_tex_1d_array_v4s32_s32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.1d.array.v4i32.i32">;
-def int_nvvm_tex_1d_array_v4i32_f32
+              "llvm.nvvm.tex.1d.array.v4s32.s32">;
+def int_nvvm_tex_1d_array_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.array.v4i32.f32">;
-def int_nvvm_tex_1d_array_level_v4i32_f32
+              "llvm.nvvm.tex.1d.array.v4s32.f32">;
+def int_nvvm_tex_1d_array_level_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.array.level.v4i32.f32">;
-def int_nvvm_tex_1d_array_grad_v4i32_f32
+              "llvm.nvvm.tex.1d.array.level.v4s32.f32">;
+def int_nvvm_tex_1d_array_grad_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.1d.array.grad.v4i32.f32">;
+              "llvm.nvvm.tex.1d.array.grad.v4s32.f32">;
+def int_nvvm_tex_1d_array_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.1d.array.v4u32.s32">;
+def int_nvvm_tex_1d_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.array.v4u32.f32">;
+def int_nvvm_tex_1d_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.array.level.v4u32.f32">;
+def int_nvvm_tex_1d_array_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.1d.array.grad.v4u32.f32">;
 
-def int_nvvm_tex_2d_v4f32_i32
+def int_nvvm_tex_2d_v4f32_s32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.2d.v4f32.i32">;
+              "llvm.nvvm.tex.2d.v4f32.s32">;
 def int_nvvm_tex_2d_v4f32_f32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
@@ -1131,30 +1167,48 @@ def int_nvvm_tex_2d_grad_v4f32_f32
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
               "llvm.nvvm.tex.2d.grad.v4f32.f32">;
-def int_nvvm_tex_2d_v4i32_i32
+def int_nvvm_tex_2d_v4s32_s32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
-              "llvm.nvvm.tex.2d.v4i32.i32">;
-def int_nvvm_tex_2d_v4i32_f32
+              "llvm.nvvm.tex.2d.v4s32.s32">;
+def int_nvvm_tex_2d_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.v4i32.f32">;
-def int_nvvm_tex_2d_level_v4i32_f32
+              "llvm.nvvm.tex.2d.v4s32.f32">;
+def int_nvvm_tex_2d_level_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.level.v4i32.f32">;
-def int_nvvm_tex_2d_grad_v4i32_f32
+              "llvm.nvvm.tex.2d.level.v4s32.f32">;
+def int_nvvm_tex_2d_grad_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.grad.v4i32.f32">;
+              "llvm.nvvm.tex.2d.grad.v4s32.f32">;
+def int_nvvm_tex_2d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.2d.v4u32.s32">;
+def int_nvvm_tex_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.v4u32.f32">;
+def int_nvvm_tex_2d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.level.v4u32.f32">;
+def int_nvvm_tex_2d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.grad.v4u32.f32">;
 
-def int_nvvm_tex_2d_array_v4f32_i32
+def int_nvvm_tex_2d_array_v4f32_s32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
                llvm_i32_ty], [],
-              "llvm.nvvm.tex.2d.array.v4f32.i32">;
+              "llvm.nvvm.tex.2d.array.v4f32.s32">;
 def int_nvvm_tex_2d_array_v4f32_f32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
@@ -1171,32 +1225,53 @@ def int_nvvm_tex_2d_array_grad_v4f32_f32
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
               "llvm.nvvm.tex.2d.array.grad.v4f32.f32">;
-def int_nvvm_tex_2d_array_v4i32_i32
+def int_nvvm_tex_2d_array_v4s32_s32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
                llvm_i32_ty], [],
-              "llvm.nvvm.tex.2d.array.v4i32.i32">;
-def int_nvvm_tex_2d_array_v4i32_f32
+              "llvm.nvvm.tex.2d.array.v4s32.s32">;
+def int_nvvm_tex_2d_array_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.array.v4i32.f32">;
-def int_nvvm_tex_2d_array_level_v4i32_f32
+              "llvm.nvvm.tex.2d.array.v4s32.f32">;
+def int_nvvm_tex_2d_array_level_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.array.level.v4i32.f32">;
-def int_nvvm_tex_2d_array_grad_v4i32_f32
+              "llvm.nvvm.tex.2d.array.level.v4s32.f32">;
+def int_nvvm_tex_2d_array_grad_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.2d.array.grad.v4i32.f32">;
+              "llvm.nvvm.tex.2d.array.grad.v4s32.f32">;
+def int_nvvm_tex_2d_array_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+               llvm_i32_ty], [],
+              "llvm.nvvm.tex.2d.array.v4u32.s32">;
+def int_nvvm_tex_2d_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.array.v4u32.f32">;
+def int_nvvm_tex_2d_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.array.level.v4u32.f32">;
+def int_nvvm_tex_2d_array_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.2d.array.grad.v4u32.f32">;
 
-def int_nvvm_tex_3d_v4f32_i32
+def int_nvvm_tex_3d_v4f32_s32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-              [], "llvm.nvvm.tex.3d.v4f32.i32">;
+              [], "llvm.nvvm.tex.3d.v4f32.s32">;
 def int_nvvm_tex_3d_v4f32_f32
   : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
@@ -1213,28 +1288,787 @@ def int_nvvm_tex_3d_grad_v4f32_f32
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
               "llvm.nvvm.tex.3d.grad.v4f32.f32">;
-def int_nvvm_tex_3d_v4i32_i32
+def int_nvvm_tex_3d_v4s32_s32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
-              [], "llvm.nvvm.tex.3d.v4i32.i32">;
-def int_nvvm_tex_3d_v4i32_f32
+              [], "llvm.nvvm.tex.3d.v4s32.s32">;
+def int_nvvm_tex_3d_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty], [],
-              "llvm.nvvm.tex.3d.v4i32.f32">;
-def int_nvvm_tex_3d_level_v4i32_f32
+              "llvm.nvvm.tex.3d.v4s32.f32">;
+def int_nvvm_tex_3d_level_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.3d.level.v4i32.f32">;
-def int_nvvm_tex_3d_grad_v4i32_f32
+              "llvm.nvvm.tex.3d.level.v4s32.f32">;
+def int_nvvm_tex_3d_grad_v4s32_f32
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
                llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
-              "llvm.nvvm.tex.3d.grad.v4i32.f32">;
+              "llvm.nvvm.tex.3d.grad.v4s32.f32">;
+def int_nvvm_tex_3d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [], "llvm.nvvm.tex.3d.v4u32.s32">;
+def int_nvvm_tex_3d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.3d.v4u32.f32">;
+def int_nvvm_tex_3d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.3d.level.v4u32.f32">;
+def int_nvvm_tex_3d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.3d.grad.v4u32.f32">;
 
-// Surface Load
+def int_nvvm_tex_cube_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.v4f32.f32">;
+def int_nvvm_tex_cube_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.level.v4f32.f32">;
+def int_nvvm_tex_cube_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.v4s32.f32">;
+def int_nvvm_tex_cube_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.level.v4s32.f32">;
+def int_nvvm_tex_cube_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.v4u32.f32">;
+def int_nvvm_tex_cube_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.level.v4u32.f32">;
+
+def int_nvvm_tex_cube_array_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.v4f32.f32">;
+def int_nvvm_tex_cube_array_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.level.v4f32.f32">;
+def int_nvvm_tex_cube_array_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.v4s32.f32">;
+def int_nvvm_tex_cube_array_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.level.v4s32.f32">;
+def int_nvvm_tex_cube_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.v4u32.f32">;
+def int_nvvm_tex_cube_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.cube.array.level.v4u32.f32">;
+
+def int_nvvm_tld4_r_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.r.2d.v4f32.f32">;
+def int_nvvm_tld4_g_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.g.2d.v4f32.f32">;
+def int_nvvm_tld4_b_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.b.2d.v4f32.f32">;
+def int_nvvm_tld4_a_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.a.2d.v4f32.f32">;
+def int_nvvm_tld4_r_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.r.2d.v4s32.f32">;
+def int_nvvm_tld4_g_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.g.2d.v4s32.f32">;
+def int_nvvm_tld4_b_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.b.2d.v4s32.f32">;
+def int_nvvm_tld4_a_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.a.2d.v4s32.f32">;
+def int_nvvm_tld4_r_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.r.2d.v4u32.f32">;
+def int_nvvm_tld4_g_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.g.2d.v4u32.f32">;
+def int_nvvm_tld4_b_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.b.2d.v4u32.f32">;
+def int_nvvm_tld4_a_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.a.2d.v4u32.f32">;
+
+
+// texmode_unified
+def int_nvvm_tex_unified_1d_v4f32_s32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4f32.s32">;
+def int_nvvm_tex_unified_1d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4f32.f32">;
+def int_nvvm_tex_unified_1d_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.level.v4f32.f32">;
+def int_nvvm_tex_unified_1d_grad_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.grad.v4f32.f32">;
+def int_nvvm_tex_unified_1d_v4s32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4s32.s32">;
+def int_nvvm_tex_unified_1d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4s32.f32">;
+def int_nvvm_tex_unified_1d_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.level.v4s32.f32">;
+def int_nvvm_tex_unified_1d_grad_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.grad.v4s32.f32">;
+def int_nvvm_tex_unified_1d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4u32.s32">;
+def int_nvvm_tex_unified_1d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.v4u32.f32">;
+def int_nvvm_tex_unified_1d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.level.v4u32.f32">;
+def int_nvvm_tex_unified_1d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.grad.v4u32.f32">;
+
+def int_nvvm_tex_unified_1d_array_v4f32_s32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4f32.s32">;
+def int_nvvm_tex_unified_1d_array_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4f32.f32">;
+def int_nvvm_tex_unified_1d_array_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.level.v4f32.f32">;
+def int_nvvm_tex_unified_1d_array_grad_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.grad.v4f32.f32">;
+def int_nvvm_tex_unified_1d_array_v4s32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4s32.s32">;
+def int_nvvm_tex_unified_1d_array_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4s32.f32">;
+def int_nvvm_tex_unified_1d_array_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.level.v4s32.f32">;
+def int_nvvm_tex_unified_1d_array_grad_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.grad.v4s32.f32">;
+def int_nvvm_tex_unified_1d_array_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4u32.s32">;
+def int_nvvm_tex_unified_1d_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.v4u32.f32">;
+def int_nvvm_tex_unified_1d_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.level.v4u32.f32">;
+def int_nvvm_tex_unified_1d_array_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.1d.array.grad.v4u32.f32">;
+
+def int_nvvm_tex_unified_2d_v4f32_s32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4f32.s32">;
+def int_nvvm_tex_unified_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4f32.f32">;
+def int_nvvm_tex_unified_2d_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.level.v4f32.f32">;
+def int_nvvm_tex_unified_2d_grad_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.grad.v4f32.f32">;
+def int_nvvm_tex_unified_2d_v4s32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4s32.s32">;
+def int_nvvm_tex_unified_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4s32.f32">;
+def int_nvvm_tex_unified_2d_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.level.v4s32.f32">;
+def int_nvvm_tex_unified_2d_grad_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.grad.v4s32.f32">;
+def int_nvvm_tex_unified_2d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4u32.s32">;
+def int_nvvm_tex_unified_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.v4u32.f32">;
+def int_nvvm_tex_unified_2d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.level.v4u32.f32">;
+def int_nvvm_tex_unified_2d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.grad.v4u32.f32">;
+
+def int_nvvm_tex_unified_2d_array_v4f32_s32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+               llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4f32.s32">;
+def int_nvvm_tex_unified_2d_array_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4f32.f32">;
+def int_nvvm_tex_unified_2d_array_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.level.v4f32.f32">;
+def int_nvvm_tex_unified_2d_array_grad_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.grad.v4f32.f32">;
+def int_nvvm_tex_unified_2d_array_v4s32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+               llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4s32.s32">;
+def int_nvvm_tex_unified_2d_array_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4s32.f32">;
+def int_nvvm_tex_unified_2d_array_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.level.v4s32.f32">;
+def int_nvvm_tex_unified_2d_array_grad_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.grad.v4s32.f32">;
+def int_nvvm_tex_unified_2d_array_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+               llvm_i32_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4u32.s32">;
+def int_nvvm_tex_unified_2d_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.v4u32.f32">;
+def int_nvvm_tex_unified_2d_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.level.v4u32.f32">;
+def int_nvvm_tex_unified_2d_array_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.2d.array.grad.v4u32.f32">;
+
+def int_nvvm_tex_unified_3d_v4f32_s32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [], "llvm.nvvm.tex.unified.3d.v4f32.s32">;
+def int_nvvm_tex_unified_3d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.v4f32.f32">;
+def int_nvvm_tex_unified_3d_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.level.v4f32.f32">;
+def int_nvvm_tex_unified_3d_grad_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.grad.v4f32.f32">;
+def int_nvvm_tex_unified_3d_v4s32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [], "llvm.nvvm.tex.unified.3d.v4s32.s32">;
+def int_nvvm_tex_unified_3d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.v4s32.f32">;
+def int_nvvm_tex_unified_3d_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.level.v4s32.f32">;
+def int_nvvm_tex_unified_3d_grad_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.grad.v4s32.f32">;
+def int_nvvm_tex_unified_3d_v4u32_s32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [], "llvm.nvvm.tex.unified.3d.v4u32.s32">;
+def int_nvvm_tex_unified_3d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.v4u32.f32">;
+def int_nvvm_tex_unified_3d_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.level.v4u32.f32">;
+def int_nvvm_tex_unified_3d_grad_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.3d.grad.v4u32.f32">;
+
+def int_nvvm_tex_unified_cube_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.v4f32.f32">;
+def int_nvvm_tex_unified_cube_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.level.v4f32.f32">;
+def int_nvvm_tex_unified_cube_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.v4s32.f32">;
+def int_nvvm_tex_unified_cube_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.level.v4s32.f32">;
+def int_nvvm_tex_unified_cube_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.v4u32.f32">;
+def int_nvvm_tex_unified_cube_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.level.v4u32.f32">;
+
+def int_nvvm_tex_unified_cube_array_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.v4f32.f32">;
+def int_nvvm_tex_unified_cube_array_level_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.level.v4f32.f32">;
+def int_nvvm_tex_unified_cube_array_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.v4s32.f32">;
+def int_nvvm_tex_unified_cube_array_level_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.level.v4s32.f32">;
+def int_nvvm_tex_unified_cube_array_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.v4u32.f32">;
+def int_nvvm_tex_unified_cube_array_level_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty,
+               llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tex.unified.cube.array.level.v4u32.f32">;
+
+def int_nvvm_tld4_unified_r_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.r.2d.v4f32.f32">;
+def int_nvvm_tld4_unified_g_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.g.2d.v4f32.f32">;
+def int_nvvm_tld4_unified_b_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.b.2d.v4f32.f32">;
+def int_nvvm_tld4_unified_a_2d_v4f32_f32
+  : Intrinsic<[llvm_float_ty, llvm_float_ty, llvm_float_ty, llvm_float_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.a.2d.v4f32.f32">;
+def int_nvvm_tld4_unified_r_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.r.2d.v4s32.f32">;
+def int_nvvm_tld4_unified_g_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.g.2d.v4s32.f32">;
+def int_nvvm_tld4_unified_b_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.b.2d.v4s32.f32">;
+def int_nvvm_tld4_unified_a_2d_v4s32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.a.2d.v4s32.f32">;
+def int_nvvm_tld4_unified_r_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.r.2d.v4u32.f32">;
+def int_nvvm_tld4_unified_g_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.g.2d.v4u32.f32">;
+def int_nvvm_tld4_unified_b_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.b.2d.v4u32.f32">;
+def int_nvvm_tld4_unified_a_2d_v4u32_f32
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_float_ty, llvm_float_ty], [],
+              "llvm.nvvm.tld4.unified.a.2d.v4u32.f32">;
+
+
+//=== Surface Load
+// .clamp variants
+def int_nvvm_suld_1d_i8_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i8.clamp">;
+def int_nvvm_suld_1d_i16_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i16.clamp">;
+def int_nvvm_suld_1d_i32_clamp
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i32.clamp">;
+def int_nvvm_suld_1d_i64_clamp
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i64.clamp">;
+def int_nvvm_suld_1d_v2i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i8.clamp">;
+def int_nvvm_suld_1d_v2i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i16.clamp">;
+def int_nvvm_suld_1d_v2i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i32.clamp">;
+def int_nvvm_suld_1d_v2i64_clamp
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i64.clamp">;
+def int_nvvm_suld_1d_v4i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i8.clamp">;
+def int_nvvm_suld_1d_v4i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i16.clamp">;
+def int_nvvm_suld_1d_v4i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i32.clamp">;
+
+def int_nvvm_suld_1d_array_i8_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i8.clamp">;
+def int_nvvm_suld_1d_array_i16_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i16.clamp">;
+def int_nvvm_suld_1d_array_i32_clamp
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i32.clamp">;
+def int_nvvm_suld_1d_array_i64_clamp
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i64.clamp">;
+def int_nvvm_suld_1d_array_v2i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i8.clamp">;
+def int_nvvm_suld_1d_array_v2i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i16.clamp">;
+def int_nvvm_suld_1d_array_v2i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i32.clamp">;
+def int_nvvm_suld_1d_array_v2i64_clamp
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i64.clamp">;
+def int_nvvm_suld_1d_array_v4i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i8.clamp">;
+def int_nvvm_suld_1d_array_v4i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i16.clamp">;
+def int_nvvm_suld_1d_array_v4i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i32.clamp">;
+
+def int_nvvm_suld_2d_i8_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i8.clamp">;
+def int_nvvm_suld_2d_i16_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i16.clamp">;
+def int_nvvm_suld_2d_i32_clamp
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i32.clamp">;
+def int_nvvm_suld_2d_i64_clamp
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i64.clamp">;
+def int_nvvm_suld_2d_v2i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i8.clamp">;
+def int_nvvm_suld_2d_v2i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i16.clamp">;
+def int_nvvm_suld_2d_v2i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i32.clamp">;
+def int_nvvm_suld_2d_v2i64_clamp
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i64.clamp">;
+def int_nvvm_suld_2d_v4i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i8.clamp">;
+def int_nvvm_suld_2d_v4i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i16.clamp">;
+def int_nvvm_suld_2d_v4i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i32.clamp">;
+
+def int_nvvm_suld_2d_array_i8_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i8.clamp">;
+def int_nvvm_suld_2d_array_i16_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i16.clamp">;
+def int_nvvm_suld_2d_array_i32_clamp
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i32.clamp">;
+def int_nvvm_suld_2d_array_i64_clamp
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i64.clamp">;
+def int_nvvm_suld_2d_array_v2i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i8.clamp">;
+def int_nvvm_suld_2d_array_v2i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i16.clamp">;
+def int_nvvm_suld_2d_array_v2i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i32.clamp">;
+def int_nvvm_suld_2d_array_v2i64_clamp
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i64.clamp">;
+def int_nvvm_suld_2d_array_v4i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i8.clamp">;
+def int_nvvm_suld_2d_array_v4i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i16.clamp">;
+def int_nvvm_suld_2d_array_v4i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i32.clamp">;
+
+def int_nvvm_suld_3d_i8_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i8.clamp">;
+def int_nvvm_suld_3d_i16_clamp
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i16.clamp">;
+def int_nvvm_suld_3d_i32_clamp
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i32.clamp">;
+def int_nvvm_suld_3d_i64_clamp
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i64.clamp">;
+def int_nvvm_suld_3d_v2i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i8.clamp">;
+def int_nvvm_suld_3d_v2i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i16.clamp">;
+def int_nvvm_suld_3d_v2i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i32.clamp">;
+def int_nvvm_suld_3d_v2i64_clamp
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i64.clamp">;
+def int_nvvm_suld_3d_v4i8_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i8.clamp">;
+def int_nvvm_suld_3d_v4i16_clamp
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i16.clamp">;
+def int_nvvm_suld_3d_v4i32_clamp
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i32.clamp">;
+
+// .trap variants
 def int_nvvm_suld_1d_i8_trap
   : Intrinsic<[llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty], [],
@@ -1247,6 +2081,10 @@ def int_nvvm_suld_1d_i32_trap
   : Intrinsic<[llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.1d.i32.trap">;
+def int_nvvm_suld_1d_i64_trap
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i64.trap">;
 def int_nvvm_suld_1d_v2i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty], [],
@@ -1259,6 +2097,10 @@ def int_nvvm_suld_1d_v2i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.1d.v2i32.trap">;
+def int_nvvm_suld_1d_v2i64_trap
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i64.trap">;
 def int_nvvm_suld_1d_v4i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty], [],
@@ -1284,6 +2126,10 @@ def int_nvvm_suld_1d_array_i32_trap
   : Intrinsic<[llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.1d.array.i32.trap">;
+def int_nvvm_suld_1d_array_i64_trap
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i64.trap">;
 def int_nvvm_suld_1d_array_v2i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1296,6 +2142,10 @@ def int_nvvm_suld_1d_array_v2i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.1d.array.v2i32.trap">;
+def int_nvvm_suld_1d_array_v2i64_trap
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i64.trap">;
 def int_nvvm_suld_1d_array_v4i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1321,6 +2171,10 @@ def int_nvvm_suld_2d_i32_trap
   : Intrinsic<[llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.2d.i32.trap">;
+def int_nvvm_suld_2d_i64_trap
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i64.trap">;
 def int_nvvm_suld_2d_v2i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1333,6 +2187,10 @@ def int_nvvm_suld_2d_v2i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.2d.v2i32.trap">;
+def int_nvvm_suld_2d_v2i64_trap
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i64.trap">;
 def int_nvvm_suld_2d_v4i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1358,6 +2216,10 @@ def int_nvvm_suld_2d_array_i32_trap
   : Intrinsic<[llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.2d.array.i32.trap">;
+def int_nvvm_suld_2d_array_i64_trap
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i64.trap">;
 def int_nvvm_suld_2d_array_v2i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1370,6 +2232,10 @@ def int_nvvm_suld_2d_array_v2i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.2d.array.v2i32.trap">;
+def int_nvvm_suld_2d_array_v2i64_trap
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i64.trap">;
 def int_nvvm_suld_2d_array_v4i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1395,6 +2261,10 @@ def int_nvvm_suld_3d_i32_trap
   : Intrinsic<[llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.3d.i32.trap">;
+def int_nvvm_suld_3d_i64_trap
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i64.trap">;
 def int_nvvm_suld_3d_v2i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1407,6 +2277,10 @@ def int_nvvm_suld_3d_v2i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.3d.v2i32.trap">;
+def int_nvvm_suld_3d_v2i64_trap
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i64.trap">;
 def int_nvvm_suld_3d_v4i8_trap
   : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
@@ -1419,6 +2293,232 @@ def int_nvvm_suld_3d_v4i32_trap
   : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
               [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.suld.3d.v4i32.trap">;
+
+// .zero variants
+def int_nvvm_suld_1d_i8_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i8.zero">;
+def int_nvvm_suld_1d_i16_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i16.zero">;
+def int_nvvm_suld_1d_i32_zero
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i32.zero">;
+def int_nvvm_suld_1d_i64_zero
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.i64.zero">;
+def int_nvvm_suld_1d_v2i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i8.zero">;
+def int_nvvm_suld_1d_v2i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i16.zero">;
+def int_nvvm_suld_1d_v2i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i32.zero">;
+def int_nvvm_suld_1d_v2i64_zero
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v2i64.zero">;
+def int_nvvm_suld_1d_v4i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i8.zero">;
+def int_nvvm_suld_1d_v4i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i16.zero">;
+def int_nvvm_suld_1d_v4i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.v4i32.zero">;
+
+def int_nvvm_suld_1d_array_i8_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i8.zero">;
+def int_nvvm_suld_1d_array_i16_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i16.zero">;
+def int_nvvm_suld_1d_array_i32_zero
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i32.zero">;
+def int_nvvm_suld_1d_array_i64_zero
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.i64.zero">;
+def int_nvvm_suld_1d_array_v2i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i8.zero">;
+def int_nvvm_suld_1d_array_v2i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i16.zero">;
+def int_nvvm_suld_1d_array_v2i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i32.zero">;
+def int_nvvm_suld_1d_array_v2i64_zero
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v2i64.zero">;
+def int_nvvm_suld_1d_array_v4i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i8.zero">;
+def int_nvvm_suld_1d_array_v4i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i16.zero">;
+def int_nvvm_suld_1d_array_v4i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.1d.array.v4i32.zero">;
+
+def int_nvvm_suld_2d_i8_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i8.zero">;
+def int_nvvm_suld_2d_i16_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i16.zero">;
+def int_nvvm_suld_2d_i32_zero
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i32.zero">;
+def int_nvvm_suld_2d_i64_zero
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.i64.zero">;
+def int_nvvm_suld_2d_v2i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i8.zero">;
+def int_nvvm_suld_2d_v2i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i16.zero">;
+def int_nvvm_suld_2d_v2i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i32.zero">;
+def int_nvvm_suld_2d_v2i64_zero
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v2i64.zero">;
+def int_nvvm_suld_2d_v4i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i8.zero">;
+def int_nvvm_suld_2d_v4i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i16.zero">;
+def int_nvvm_suld_2d_v4i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.v4i32.zero">;
+
+def int_nvvm_suld_2d_array_i8_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i8.zero">;
+def int_nvvm_suld_2d_array_i16_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i16.zero">;
+def int_nvvm_suld_2d_array_i32_zero
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i32.zero">;
+def int_nvvm_suld_2d_array_i64_zero
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.i64.zero">;
+def int_nvvm_suld_2d_array_v2i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i8.zero">;
+def int_nvvm_suld_2d_array_v2i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i16.zero">;
+def int_nvvm_suld_2d_array_v2i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i32.zero">;
+def int_nvvm_suld_2d_array_v2i64_zero
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v2i64.zero">;
+def int_nvvm_suld_2d_array_v4i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i8.zero">;
+def int_nvvm_suld_2d_array_v4i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i16.zero">;
+def int_nvvm_suld_2d_array_v4i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.2d.array.v4i32.zero">;
+
+def int_nvvm_suld_3d_i8_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i8.zero">;
+def int_nvvm_suld_3d_i16_zero
+  : Intrinsic<[llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i16.zero">;
+def int_nvvm_suld_3d_i32_zero
+  : Intrinsic<[llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i32.zero">;
+def int_nvvm_suld_3d_i64_zero
+  : Intrinsic<[llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.i64.zero">;
+def int_nvvm_suld_3d_v2i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i8.zero">;
+def int_nvvm_suld_3d_v2i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i16.zero">;
+def int_nvvm_suld_3d_v2i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i32.zero">;
+def int_nvvm_suld_3d_v2i64_zero
+  : Intrinsic<[llvm_i64_ty, llvm_i64_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v2i64.zero">;
+def int_nvvm_suld_3d_v4i8_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i8.zero">;
+def int_nvvm_suld_3d_v4i16_zero
+  : Intrinsic<[llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i16.zero">;
+def int_nvvm_suld_3d_v4i32_zero
+  : Intrinsic<[llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty],
+              [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.suld.3d.v4i32.zero">;
 
 //===- Texture Query ------------------------------------------------------===//
 
@@ -1503,7 +2603,277 @@ def int_nvvm_istypep_texture
 //===- Surface Stores -----------------------------------------------------===//
 
 // Unformatted
+// .clamp variant
+def int_nvvm_sust_b_1d_i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i8_clamp">;
+def int_nvvm_sust_b_1d_i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i16_clamp">;
+def int_nvvm_sust_b_1d_i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i32_clamp">;
+def int_nvvm_sust_b_1d_i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i64_clamp">;
+def int_nvvm_sust_b_1d_v2i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i8_clamp">;
+def int_nvvm_sust_b_1d_v2i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i16_clamp">;
+def int_nvvm_sust_b_1d_v2i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i32_clamp">;
+def int_nvvm_sust_b_1d_v2i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i64_clamp">;
+def int_nvvm_sust_b_1d_v4i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i8_clamp">;
+def int_nvvm_sust_b_1d_v4i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i16_clamp">;
+def int_nvvm_sust_b_1d_v4i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i32_clamp">;
 
+
+def int_nvvm_sust_b_1d_array_i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i8_clamp">;
+def int_nvvm_sust_b_1d_array_i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i16_clamp">;
+def int_nvvm_sust_b_1d_array_i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i32_clamp">;
+def int_nvvm_sust_b_1d_array_i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i64_clamp">;
+def int_nvvm_sust_b_1d_array_v2i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i8_clamp">;
+def int_nvvm_sust_b_1d_array_v2i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i16_clamp">;
+def int_nvvm_sust_b_1d_array_v2i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i32_clamp">;
+def int_nvvm_sust_b_1d_array_v2i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i64_clamp">;
+def int_nvvm_sust_b_1d_array_v4i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i8_clamp">;
+def int_nvvm_sust_b_1d_array_v4i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i16_clamp">;
+def int_nvvm_sust_b_1d_array_v4i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i32_clamp">;
+
+
+def int_nvvm_sust_b_2d_i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i8_clamp">;
+def int_nvvm_sust_b_2d_i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i16_clamp">;
+def int_nvvm_sust_b_2d_i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i32_clamp">;
+def int_nvvm_sust_b_2d_i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i64_clamp">;
+def int_nvvm_sust_b_2d_v2i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i8_clamp">;
+def int_nvvm_sust_b_2d_v2i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i16_clamp">;
+def int_nvvm_sust_b_2d_v2i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i32_clamp">;
+def int_nvvm_sust_b_2d_v2i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i64_clamp">;
+def int_nvvm_sust_b_2d_v4i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i8_clamp">;
+def int_nvvm_sust_b_2d_v4i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i16_clamp">;
+def int_nvvm_sust_b_2d_v4i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i32_clamp">;
+
+
+def int_nvvm_sust_b_2d_array_i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i8_clamp">;
+def int_nvvm_sust_b_2d_array_i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i16_clamp">;
+def int_nvvm_sust_b_2d_array_i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i32_clamp">;
+def int_nvvm_sust_b_2d_array_i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i64_clamp">;
+def int_nvvm_sust_b_2d_array_v2i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i8_clamp">;
+def int_nvvm_sust_b_2d_array_v2i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i16_clamp">;
+def int_nvvm_sust_b_2d_array_v2i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i32_clamp">;
+def int_nvvm_sust_b_2d_array_v2i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i64_clamp">;
+def int_nvvm_sust_b_2d_array_v4i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i8_clamp">;
+def int_nvvm_sust_b_2d_array_v4i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i16_clamp">;
+def int_nvvm_sust_b_2d_array_v4i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i32_clamp">;
+
+
+def int_nvvm_sust_b_3d_i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i8_clamp">;
+def int_nvvm_sust_b_3d_i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i16_clamp">;
+def int_nvvm_sust_b_3d_i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i32_clamp">;
+def int_nvvm_sust_b_3d_i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i64_clamp">;
+def int_nvvm_sust_b_3d_v2i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i8_clamp">;
+def int_nvvm_sust_b_3d_v2i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i16_clamp">;
+def int_nvvm_sust_b_3d_v2i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i32_clamp">;
+def int_nvvm_sust_b_3d_v2i64_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i64.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i64_clamp">;
+def int_nvvm_sust_b_3d_v4i8_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i8.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i8_clamp">;
+def int_nvvm_sust_b_3d_v4i16_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i16.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i16_clamp">;
+def int_nvvm_sust_b_3d_v4i32_clamp
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i32.clamp">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i32_clamp">;
+
+
+// .trap variant
 def int_nvvm_sust_b_1d_i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty], [],
               "llvm.nvvm.sust.b.1d.i8.trap">,
@@ -1516,6 +2886,10 @@ def int_nvvm_sust_b_1d_i32_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.1d.i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_1d_i32_trap">;
+def int_nvvm_sust_b_1d_i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i64_trap">;
 def int_nvvm_sust_b_1d_v2i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], [],
               "llvm.nvvm.sust.b.1d.v2i8.trap">,
@@ -1528,6 +2902,10 @@ def int_nvvm_sust_b_1d_v2i32_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.1d.v2i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_1d_v2i32_trap">;
+def int_nvvm_sust_b_1d_v2i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i64_trap">;
 def int_nvvm_sust_b_1d_v4i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty,
                    llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
@@ -1557,6 +2935,10 @@ def int_nvvm_sust_b_1d_array_i32_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.1d.array.i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_1d_array_i32_trap">;
+def int_nvvm_sust_b_1d_array_i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i64_trap">;
 def int_nvvm_sust_b_1d_array_v2i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty], [],
@@ -1572,6 +2954,11 @@ def int_nvvm_sust_b_1d_array_v2i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.1d.array.v2i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_1d_array_v2i32_trap">;
+def int_nvvm_sust_b_1d_array_v2i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i64_trap">;
 def int_nvvm_sust_b_1d_array_v4i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
                    llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
@@ -1601,6 +2988,10 @@ def int_nvvm_sust_b_2d_i32_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.2d.i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_2d_i32_trap">;
+def int_nvvm_sust_b_2d_i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i64_trap">;
 def int_nvvm_sust_b_2d_v2i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty], [],
@@ -1616,6 +3007,11 @@ def int_nvvm_sust_b_2d_v2i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.2d.v2i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_2d_v2i32_trap">;
+def int_nvvm_sust_b_2d_v2i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i64_trap">;
 def int_nvvm_sust_b_2d_v4i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
                    llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
@@ -1648,6 +3044,11 @@ def int_nvvm_sust_b_2d_array_i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.2d.array.i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_2d_array_i32_trap">;
+def int_nvvm_sust_b_2d_array_i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i64_trap">;
 def int_nvvm_sust_b_2d_array_v2i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty], [],
@@ -1663,6 +3064,11 @@ def int_nvvm_sust_b_2d_array_v2i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.2d.array.v2i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_2d_array_v2i32_trap">;
+def int_nvvm_sust_b_2d_array_v2i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i64_trap">;
 def int_nvvm_sust_b_2d_array_v4i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
@@ -1695,6 +3101,11 @@ def int_nvvm_sust_b_3d_i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.3d.i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_3d_i32_trap">;
+def int_nvvm_sust_b_3d_i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i64_trap">;
 def int_nvvm_sust_b_3d_v2i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty], [],
@@ -1710,6 +3121,11 @@ def int_nvvm_sust_b_3d_v2i32_trap
                    llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.3d.v2i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_3d_v2i32_trap">;
+def int_nvvm_sust_b_3d_v2i64_trap
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i64.trap">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i64_trap">;
 def int_nvvm_sust_b_3d_v4i8_trap
   : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
                    llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
@@ -1725,6 +3141,278 @@ def int_nvvm_sust_b_3d_v4i32_trap
                    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.b.3d.v4i32.trap">,
     GCCBuiltin<"__nvvm_sust_b_3d_v4i32_trap">;
+
+
+// .zero variant
+def int_nvvm_sust_b_1d_i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i8_zero">;
+def int_nvvm_sust_b_1d_i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i16_zero">;
+def int_nvvm_sust_b_1d_i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i32_zero">;
+def int_nvvm_sust_b_1d_i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_i64_zero">;
+def int_nvvm_sust_b_1d_v2i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i8_zero">;
+def int_nvvm_sust_b_1d_v2i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i16_zero">;
+def int_nvvm_sust_b_1d_v2i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i32_zero">;
+def int_nvvm_sust_b_1d_v2i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.v2i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v2i64_zero">;
+def int_nvvm_sust_b_1d_v4i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i8_zero">;
+def int_nvvm_sust_b_1d_v4i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i16_zero">;
+def int_nvvm_sust_b_1d_v4i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.v4i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_v4i32_zero">;
+
+
+def int_nvvm_sust_b_1d_array_i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i8_zero">;
+def int_nvvm_sust_b_1d_array_i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i16_zero">;
+def int_nvvm_sust_b_1d_array_i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i32_zero">;
+def int_nvvm_sust_b_1d_array_i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_i64_zero">;
+def int_nvvm_sust_b_1d_array_v2i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i8_zero">;
+def int_nvvm_sust_b_1d_array_v2i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i16_zero">;
+def int_nvvm_sust_b_1d_array_v2i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i32_zero">;
+def int_nvvm_sust_b_1d_array_v2i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v2i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v2i64_zero">;
+def int_nvvm_sust_b_1d_array_v4i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i8_zero">;
+def int_nvvm_sust_b_1d_array_v4i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i16_zero">;
+def int_nvvm_sust_b_1d_array_v4i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.1d.array.v4i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_1d_array_v4i32_zero">;
+
+
+def int_nvvm_sust_b_2d_i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i8_zero">;
+def int_nvvm_sust_b_2d_i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i16_zero">;
+def int_nvvm_sust_b_2d_i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i32_zero">;
+def int_nvvm_sust_b_2d_i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_i64_zero">;
+def int_nvvm_sust_b_2d_v2i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i8_zero">;
+def int_nvvm_sust_b_2d_v2i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i16_zero">;
+def int_nvvm_sust_b_2d_v2i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i32_zero">;
+def int_nvvm_sust_b_2d_v2i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.v2i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v2i64_zero">;
+def int_nvvm_sust_b_2d_v4i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i8_zero">;
+def int_nvvm_sust_b_2d_v4i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i16_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i16_zero">;
+def int_nvvm_sust_b_2d_v4i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.v4i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_v4i32_zero">;
+
+
+def int_nvvm_sust_b_2d_array_i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i8_zero">;
+def int_nvvm_sust_b_2d_array_i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i16_zero">;
+def int_nvvm_sust_b_2d_array_i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i32_zero">;
+def int_nvvm_sust_b_2d_array_i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_i64_zero">;
+def int_nvvm_sust_b_2d_array_v2i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i8_zero">;
+def int_nvvm_sust_b_2d_array_v2i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i16_zero">;
+def int_nvvm_sust_b_2d_array_v2i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i32_zero">;
+def int_nvvm_sust_b_2d_array_v2i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v2i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v2i64_zero">;
+def int_nvvm_sust_b_2d_array_v4i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i8_zero">;
+def int_nvvm_sust_b_2d_array_v4i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i16_zero">;
+def int_nvvm_sust_b_2d_array_v4i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.2d.array.v4i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_2d_array_v4i32_zero">;
+
+
+def int_nvvm_sust_b_3d_i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i8_zero">;
+def int_nvvm_sust_b_3d_i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i16_zero">;
+def int_nvvm_sust_b_3d_i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i32_zero">;
+def int_nvvm_sust_b_3d_i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_i64_zero">;
+def int_nvvm_sust_b_3d_v2i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i8_zero">;
+def int_nvvm_sust_b_3d_v2i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i16_zero">;
+def int_nvvm_sust_b_3d_v2i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i32_zero">;
+def int_nvvm_sust_b_3d_v2i64_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i64_ty, llvm_i64_ty], [],
+              "llvm.nvvm.sust.b.3d.v2i64.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v2i64_zero">;
+def int_nvvm_sust_b_3d_v4i8_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i8.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i8_zero">;
+def int_nvvm_sust_b_3d_v4i16_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i16_ty, llvm_i16_ty, llvm_i16_ty, llvm_i16_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i16.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i16_zero">;
+def int_nvvm_sust_b_3d_v4i32_zero
+  : Intrinsic<[], [llvm_i64_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty,
+                   llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
+              "llvm.nvvm.sust.b.3d.v4i32.zero">,
+    GCCBuiltin<"__nvvm_sust_b_3d_v4i32_zero">;
+
+
 
 // Formatted
 
@@ -1949,6 +3637,7 @@ def int_nvvm_sust_p_3d_v4i32_trap
                    llvm_i32_ty, llvm_i32_ty, llvm_i32_ty, llvm_i32_ty], [],
               "llvm.nvvm.sust.p.3d.v4i32.trap">,
     GCCBuiltin<"__nvvm_sust_p_3d_v4i32_trap">;
+
 
 def int_nvvm_rotate_b32
   : Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],

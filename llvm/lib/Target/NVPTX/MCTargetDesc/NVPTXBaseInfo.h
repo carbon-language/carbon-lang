@@ -84,6 +84,17 @@ __attribute__((unused))
 #endif
     static const char *NamedMDForAnnotations = "nvvm.annotations";
 
+namespace NVPTXII {
+enum {
+  // These must be kept in sync with TSFlags in NVPTXInstrFormats.td
+  IsTexFlag = 0x80,
+  IsSuldMask = 0x300,
+  IsSuldShift = 8,
+  IsSustFlag = 0x400,
+  IsSurfTexQueryFlag = 0x800,
+  IsTexModeUnifiedFlag = 0x1000
+};
+}
 }
 
 #endif

@@ -360,73 +360,379 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
     return "NVPTXISD::MUL_WIDE_SIGNED";
   case NVPTXISD::MUL_WIDE_UNSIGNED:
     return "NVPTXISD::MUL_WIDE_UNSIGNED";
-  case NVPTXISD::Tex1DFloatI32:        return "NVPTXISD::Tex1DFloatI32";
+  case NVPTXISD::Tex1DFloatS32:        return "NVPTXISD::Tex1DFloatS32";
   case NVPTXISD::Tex1DFloatFloat:      return "NVPTXISD::Tex1DFloatFloat";
   case NVPTXISD::Tex1DFloatFloatLevel:
     return "NVPTXISD::Tex1DFloatFloatLevel";
   case NVPTXISD::Tex1DFloatFloatGrad:
     return "NVPTXISD::Tex1DFloatFloatGrad";
-  case NVPTXISD::Tex1DI32I32:          return "NVPTXISD::Tex1DI32I32";
-  case NVPTXISD::Tex1DI32Float:        return "NVPTXISD::Tex1DI32Float";
-  case NVPTXISD::Tex1DI32FloatLevel:
-    return "NVPTXISD::Tex1DI32FloatLevel";
-  case NVPTXISD::Tex1DI32FloatGrad:
-    return "NVPTXISD::Tex1DI32FloatGrad";
-  case NVPTXISD::Tex1DArrayFloatI32:   return "NVPTXISD::Tex2DArrayFloatI32";
-  case NVPTXISD::Tex1DArrayFloatFloat: return "NVPTXISD::Tex2DArrayFloatFloat";
+  case NVPTXISD::Tex1DS32S32:          return "NVPTXISD::Tex1DS32S32";
+  case NVPTXISD::Tex1DS32Float:        return "NVPTXISD::Tex1DS32Float";
+  case NVPTXISD::Tex1DS32FloatLevel:
+    return "NVPTXISD::Tex1DS32FloatLevel";
+  case NVPTXISD::Tex1DS32FloatGrad:
+    return "NVPTXISD::Tex1DS32FloatGrad";
+  case NVPTXISD::Tex1DU32S32:          return "NVPTXISD::Tex1DU32S32";
+  case NVPTXISD::Tex1DU32Float:        return "NVPTXISD::Tex1DU32Float";
+  case NVPTXISD::Tex1DU32FloatLevel:
+    return "NVPTXISD::Tex1DU32FloatLevel";
+  case NVPTXISD::Tex1DU32FloatGrad:
+    return "NVPTXISD::Tex1DU32FloatGrad";
+  case NVPTXISD::Tex1DArrayFloatS32:   return "NVPTXISD::Tex1DArrayFloatS32";
+  case NVPTXISD::Tex1DArrayFloatFloat: return "NVPTXISD::Tex1DArrayFloatFloat";
   case NVPTXISD::Tex1DArrayFloatFloatLevel:
-    return "NVPTXISD::Tex2DArrayFloatFloatLevel";
+    return "NVPTXISD::Tex1DArrayFloatFloatLevel";
   case NVPTXISD::Tex1DArrayFloatFloatGrad:
-    return "NVPTXISD::Tex2DArrayFloatFloatGrad";
-  case NVPTXISD::Tex1DArrayI32I32:     return "NVPTXISD::Tex2DArrayI32I32";
-  case NVPTXISD::Tex1DArrayI32Float:   return "NVPTXISD::Tex2DArrayI32Float";
-  case NVPTXISD::Tex1DArrayI32FloatLevel:
-    return "NVPTXISD::Tex2DArrayI32FloatLevel";
-  case NVPTXISD::Tex1DArrayI32FloatGrad:
-    return "NVPTXISD::Tex2DArrayI32FloatGrad";
-  case NVPTXISD::Tex2DFloatI32:        return "NVPTXISD::Tex2DFloatI32";
+    return "NVPTXISD::Tex1DArrayFloatFloatGrad";
+  case NVPTXISD::Tex1DArrayS32S32:     return "NVPTXISD::Tex1DArrayS32S32";
+  case NVPTXISD::Tex1DArrayS32Float:   return "NVPTXISD::Tex1DArrayS32Float";
+  case NVPTXISD::Tex1DArrayS32FloatLevel:
+    return "NVPTXISD::Tex1DArrayS32FloatLevel";
+  case NVPTXISD::Tex1DArrayS32FloatGrad:
+    return "NVPTXISD::Tex1DArrayS32FloatGrad";
+  case NVPTXISD::Tex1DArrayU32S32:     return "NVPTXISD::Tex1DArrayU32S32";
+  case NVPTXISD::Tex1DArrayU32Float:   return "NVPTXISD::Tex1DArrayU32Float";
+  case NVPTXISD::Tex1DArrayU32FloatLevel:
+    return "NVPTXISD::Tex1DArrayU32FloatLevel";
+  case NVPTXISD::Tex1DArrayU32FloatGrad:
+    return "NVPTXISD::Tex1DArrayU32FloatGrad";
+  case NVPTXISD::Tex2DFloatS32:        return "NVPTXISD::Tex2DFloatS32";
   case NVPTXISD::Tex2DFloatFloat:      return "NVPTXISD::Tex2DFloatFloat";
   case NVPTXISD::Tex2DFloatFloatLevel:
     return "NVPTXISD::Tex2DFloatFloatLevel";
   case NVPTXISD::Tex2DFloatFloatGrad:
     return "NVPTXISD::Tex2DFloatFloatGrad";
-  case NVPTXISD::Tex2DI32I32:          return "NVPTXISD::Tex2DI32I32";
-  case NVPTXISD::Tex2DI32Float:        return "NVPTXISD::Tex2DI32Float";
-  case NVPTXISD::Tex2DI32FloatLevel:
-    return "NVPTXISD::Tex2DI32FloatLevel";
-  case NVPTXISD::Tex2DI32FloatGrad:
-    return "NVPTXISD::Tex2DI32FloatGrad";
-  case NVPTXISD::Tex2DArrayFloatI32:   return "NVPTXISD::Tex2DArrayFloatI32";
+  case NVPTXISD::Tex2DS32S32:          return "NVPTXISD::Tex2DS32S32";
+  case NVPTXISD::Tex2DS32Float:        return "NVPTXISD::Tex2DS32Float";
+  case NVPTXISD::Tex2DS32FloatLevel:
+    return "NVPTXISD::Tex2DS32FloatLevel";
+  case NVPTXISD::Tex2DS32FloatGrad:
+    return "NVPTXISD::Tex2DS32FloatGrad";
+  case NVPTXISD::Tex2DU32S32:          return "NVPTXISD::Tex2DU32S32";
+  case NVPTXISD::Tex2DU32Float:        return "NVPTXISD::Tex2DU32Float";
+  case NVPTXISD::Tex2DU32FloatLevel:
+    return "NVPTXISD::Tex2DU32FloatLevel";
+  case NVPTXISD::Tex2DU32FloatGrad:
+    return "NVPTXISD::Tex2DU32FloatGrad";
+  case NVPTXISD::Tex2DArrayFloatS32:   return "NVPTXISD::Tex2DArrayFloatS32";
   case NVPTXISD::Tex2DArrayFloatFloat: return "NVPTXISD::Tex2DArrayFloatFloat";
   case NVPTXISD::Tex2DArrayFloatFloatLevel:
     return "NVPTXISD::Tex2DArrayFloatFloatLevel";
   case NVPTXISD::Tex2DArrayFloatFloatGrad:
     return "NVPTXISD::Tex2DArrayFloatFloatGrad";
-  case NVPTXISD::Tex2DArrayI32I32:     return "NVPTXISD::Tex2DArrayI32I32";
-  case NVPTXISD::Tex2DArrayI32Float:   return "NVPTXISD::Tex2DArrayI32Float";
-  case NVPTXISD::Tex2DArrayI32FloatLevel:
-    return "NVPTXISD::Tex2DArrayI32FloatLevel";
-  case NVPTXISD::Tex2DArrayI32FloatGrad:
-    return "NVPTXISD::Tex2DArrayI32FloatGrad";
-  case NVPTXISD::Tex3DFloatI32:        return "NVPTXISD::Tex3DFloatI32";
+  case NVPTXISD::Tex2DArrayS32S32:     return "NVPTXISD::Tex2DArrayS32S32";
+  case NVPTXISD::Tex2DArrayS32Float:   return "NVPTXISD::Tex2DArrayS32Float";
+  case NVPTXISD::Tex2DArrayS32FloatLevel:
+    return "NVPTXISD::Tex2DArrayS32FloatLevel";
+  case NVPTXISD::Tex2DArrayS32FloatGrad:
+    return "NVPTXISD::Tex2DArrayS32FloatGrad";
+  case NVPTXISD::Tex2DArrayU32S32:     return "NVPTXISD::Tex2DArrayU32S32";
+  case NVPTXISD::Tex2DArrayU32Float:   return "NVPTXISD::Tex2DArrayU32Float";
+  case NVPTXISD::Tex2DArrayU32FloatLevel:
+    return "NVPTXISD::Tex2DArrayU32FloatLevel";
+  case NVPTXISD::Tex2DArrayU32FloatGrad:
+    return "NVPTXISD::Tex2DArrayU32FloatGrad";
+  case NVPTXISD::Tex3DFloatS32:        return "NVPTXISD::Tex3DFloatS32";
   case NVPTXISD::Tex3DFloatFloat:      return "NVPTXISD::Tex3DFloatFloat";
   case NVPTXISD::Tex3DFloatFloatLevel:
     return "NVPTXISD::Tex3DFloatFloatLevel";
   case NVPTXISD::Tex3DFloatFloatGrad:
     return "NVPTXISD::Tex3DFloatFloatGrad";
-  case NVPTXISD::Tex3DI32I32:          return "NVPTXISD::Tex3DI32I32";
-  case NVPTXISD::Tex3DI32Float:        return "NVPTXISD::Tex3DI32Float";
-  case NVPTXISD::Tex3DI32FloatLevel:
-    return "NVPTXISD::Tex3DI32FloatLevel";
-  case NVPTXISD::Tex3DI32FloatGrad:
-    return "NVPTXISD::Tex3DI32FloatGrad";
+  case NVPTXISD::Tex3DS32S32:          return "NVPTXISD::Tex3DS32S32";
+  case NVPTXISD::Tex3DS32Float:        return "NVPTXISD::Tex3DS32Float";
+  case NVPTXISD::Tex3DS32FloatLevel:
+    return "NVPTXISD::Tex3DS32FloatLevel";
+  case NVPTXISD::Tex3DS32FloatGrad:
+    return "NVPTXISD::Tex3DS32FloatGrad";
+  case NVPTXISD::Tex3DU32S32:          return "NVPTXISD::Tex3DU32S32";
+  case NVPTXISD::Tex3DU32Float:        return "NVPTXISD::Tex3DU32Float";
+  case NVPTXISD::Tex3DU32FloatLevel:
+    return "NVPTXISD::Tex3DU32FloatLevel";
+  case NVPTXISD::Tex3DU32FloatGrad:
+    return "NVPTXISD::Tex3DU32FloatGrad";
+  case NVPTXISD::TexCubeFloatFloat:      return "NVPTXISD::TexCubeFloatFloat";
+  case NVPTXISD::TexCubeFloatFloatLevel:
+    return "NVPTXISD::TexCubeFloatFloatLevel";
+  case NVPTXISD::TexCubeS32Float:        return "NVPTXISD::TexCubeS32Float";
+  case NVPTXISD::TexCubeS32FloatLevel:
+    return "NVPTXISD::TexCubeS32FloatLevel";
+  case NVPTXISD::TexCubeU32Float:        return "NVPTXISD::TexCubeU32Float";
+  case NVPTXISD::TexCubeU32FloatLevel:
+    return "NVPTXISD::TexCubeU32FloatLevel";
+  case NVPTXISD::TexCubeArrayFloatFloat:
+    return "NVPTXISD::TexCubeArrayFloatFloat";
+  case NVPTXISD::TexCubeArrayFloatFloatLevel:
+    return "NVPTXISD::TexCubeArrayFloatFloatLevel";
+  case NVPTXISD::TexCubeArrayS32Float:
+    return "NVPTXISD::TexCubeArrayS32Float";
+  case NVPTXISD::TexCubeArrayS32FloatLevel:
+    return "NVPTXISD::TexCubeArrayS32FloatLevel";
+  case NVPTXISD::TexCubeArrayU32Float:
+    return "NVPTXISD::TexCubeArrayU32Float";
+  case NVPTXISD::TexCubeArrayU32FloatLevel:
+    return "NVPTXISD::TexCubeArrayU32FloatLevel";
+  case NVPTXISD::Tld4R2DFloatFloat:
+    return "NVPTXISD::Tld4R2DFloatFloat";
+  case NVPTXISD::Tld4G2DFloatFloat:
+    return "NVPTXISD::Tld4G2DFloatFloat";
+  case NVPTXISD::Tld4B2DFloatFloat:
+    return "NVPTXISD::Tld4B2DFloatFloat";
+  case NVPTXISD::Tld4A2DFloatFloat:
+    return "NVPTXISD::Tld4A2DFloatFloat";
+  case NVPTXISD::Tld4R2DS64Float:
+    return "NVPTXISD::Tld4R2DS64Float";
+  case NVPTXISD::Tld4G2DS64Float:
+    return "NVPTXISD::Tld4G2DS64Float";
+  case NVPTXISD::Tld4B2DS64Float:
+    return "NVPTXISD::Tld4B2DS64Float";
+  case NVPTXISD::Tld4A2DS64Float:
+    return "NVPTXISD::Tld4A2DS64Float";
+  case NVPTXISD::Tld4R2DU64Float:
+    return "NVPTXISD::Tld4R2DU64Float";
+  case NVPTXISD::Tld4G2DU64Float:
+    return "NVPTXISD::Tld4G2DU64Float";
+  case NVPTXISD::Tld4B2DU64Float:
+    return "NVPTXISD::Tld4B2DU64Float";
+  case NVPTXISD::Tld4A2DU64Float:
+    return "NVPTXISD::Tld4A2DU64Float";
+
+  case NVPTXISD::TexUnified1DFloatS32:
+    return "NVPTXISD::TexUnified1DFloatS32";
+  case NVPTXISD::TexUnified1DFloatFloat:
+    return "NVPTXISD::TexUnified1DFloatFloat";
+  case NVPTXISD::TexUnified1DFloatFloatLevel:
+    return "NVPTXISD::TexUnified1DFloatFloatLevel";
+  case NVPTXISD::TexUnified1DFloatFloatGrad:
+    return "NVPTXISD::TexUnified1DFloatFloatGrad";
+  case NVPTXISD::TexUnified1DS32S32:
+    return "NVPTXISD::TexUnified1DS32S32";
+  case NVPTXISD::TexUnified1DS32Float:
+    return "NVPTXISD::TexUnified1DS32Float";
+  case NVPTXISD::TexUnified1DS32FloatLevel:
+    return "NVPTXISD::TexUnified1DS32FloatLevel";
+  case NVPTXISD::TexUnified1DS32FloatGrad:
+    return "NVPTXISD::TexUnified1DS32FloatGrad";
+  case NVPTXISD::TexUnified1DU32S32:
+    return "NVPTXISD::TexUnified1DU32S32";
+  case NVPTXISD::TexUnified1DU32Float:
+    return "NVPTXISD::TexUnified1DU32Float";
+  case NVPTXISD::TexUnified1DU32FloatLevel:
+    return "NVPTXISD::TexUnified1DU32FloatLevel";
+  case NVPTXISD::TexUnified1DU32FloatGrad:
+    return "NVPTXISD::TexUnified1DU32FloatGrad";
+  case NVPTXISD::TexUnified1DArrayFloatS32:
+    return "NVPTXISD::TexUnified1DArrayFloatS32";
+  case NVPTXISD::TexUnified1DArrayFloatFloat:
+    return "NVPTXISD::TexUnified1DArrayFloatFloat";
+  case NVPTXISD::TexUnified1DArrayFloatFloatLevel:
+    return "NVPTXISD::TexUnified1DArrayFloatFloatLevel";
+  case NVPTXISD::TexUnified1DArrayFloatFloatGrad:
+    return "NVPTXISD::TexUnified1DArrayFloatFloatGrad";
+  case NVPTXISD::TexUnified1DArrayS32S32:
+    return "NVPTXISD::TexUnified1DArrayS32S32";
+  case NVPTXISD::TexUnified1DArrayS32Float:
+    return "NVPTXISD::TexUnified1DArrayS32Float";
+  case NVPTXISD::TexUnified1DArrayS32FloatLevel:
+    return "NVPTXISD::TexUnified1DArrayS32FloatLevel";
+  case NVPTXISD::TexUnified1DArrayS32FloatGrad:
+    return "NVPTXISD::TexUnified1DArrayS32FloatGrad";
+  case NVPTXISD::TexUnified1DArrayU32S32:
+    return "NVPTXISD::TexUnified1DArrayU32S32";
+  case NVPTXISD::TexUnified1DArrayU32Float:
+    return "NVPTXISD::TexUnified1DArrayU32Float";
+  case NVPTXISD::TexUnified1DArrayU32FloatLevel:
+    return "NVPTXISD::TexUnified1DArrayU32FloatLevel";
+  case NVPTXISD::TexUnified1DArrayU32FloatGrad:
+    return "NVPTXISD::TexUnified1DArrayU32FloatGrad";
+  case NVPTXISD::TexUnified2DFloatS32:
+    return "NVPTXISD::TexUnified2DFloatS32";
+  case NVPTXISD::TexUnified2DFloatFloat:
+    return "NVPTXISD::TexUnified2DFloatFloat";
+  case NVPTXISD::TexUnified2DFloatFloatLevel:
+    return "NVPTXISD::TexUnified2DFloatFloatLevel";
+  case NVPTXISD::TexUnified2DFloatFloatGrad:
+    return "NVPTXISD::TexUnified2DFloatFloatGrad";
+  case NVPTXISD::TexUnified2DS32S32:
+    return "NVPTXISD::TexUnified2DS32S32";
+  case NVPTXISD::TexUnified2DS32Float:
+    return "NVPTXISD::TexUnified2DS32Float";
+  case NVPTXISD::TexUnified2DS32FloatLevel:
+    return "NVPTXISD::TexUnified2DS32FloatLevel";
+  case NVPTXISD::TexUnified2DS32FloatGrad:
+    return "NVPTXISD::TexUnified2DS32FloatGrad";
+  case NVPTXISD::TexUnified2DU32S32:
+    return "NVPTXISD::TexUnified2DU32S32";
+  case NVPTXISD::TexUnified2DU32Float:
+    return "NVPTXISD::TexUnified2DU32Float";
+  case NVPTXISD::TexUnified2DU32FloatLevel:
+    return "NVPTXISD::TexUnified2DU32FloatLevel";
+  case NVPTXISD::TexUnified2DU32FloatGrad:
+    return "NVPTXISD::TexUnified2DU32FloatGrad";
+  case NVPTXISD::TexUnified2DArrayFloatS32:
+    return "NVPTXISD::TexUnified2DArrayFloatS32";
+  case NVPTXISD::TexUnified2DArrayFloatFloat:
+    return "NVPTXISD::TexUnified2DArrayFloatFloat";
+  case NVPTXISD::TexUnified2DArrayFloatFloatLevel:
+    return "NVPTXISD::TexUnified2DArrayFloatFloatLevel";
+  case NVPTXISD::TexUnified2DArrayFloatFloatGrad:
+    return "NVPTXISD::TexUnified2DArrayFloatFloatGrad";
+  case NVPTXISD::TexUnified2DArrayS32S32:
+    return "NVPTXISD::TexUnified2DArrayS32S32";
+  case NVPTXISD::TexUnified2DArrayS32Float:
+    return "NVPTXISD::TexUnified2DArrayS32Float";
+  case NVPTXISD::TexUnified2DArrayS32FloatLevel:
+    return "NVPTXISD::TexUnified2DArrayS32FloatLevel";
+  case NVPTXISD::TexUnified2DArrayS32FloatGrad:
+    return "NVPTXISD::TexUnified2DArrayS32FloatGrad";
+  case NVPTXISD::TexUnified2DArrayU32S32:
+    return "NVPTXISD::TexUnified2DArrayU32S32";
+  case NVPTXISD::TexUnified2DArrayU32Float:
+    return "NVPTXISD::TexUnified2DArrayU32Float";
+  case NVPTXISD::TexUnified2DArrayU32FloatLevel:
+    return "NVPTXISD::TexUnified2DArrayU32FloatLevel";
+  case NVPTXISD::TexUnified2DArrayU32FloatGrad:
+    return "NVPTXISD::TexUnified2DArrayU32FloatGrad";
+  case NVPTXISD::TexUnified3DFloatS32:
+    return "NVPTXISD::TexUnified3DFloatS32";
+  case NVPTXISD::TexUnified3DFloatFloat:
+    return "NVPTXISD::TexUnified3DFloatFloat";
+  case NVPTXISD::TexUnified3DFloatFloatLevel:
+    return "NVPTXISD::TexUnified3DFloatFloatLevel";
+  case NVPTXISD::TexUnified3DFloatFloatGrad:
+    return "NVPTXISD::TexUnified3DFloatFloatGrad";
+  case NVPTXISD::TexUnified3DS32S32:
+    return "NVPTXISD::TexUnified3DS32S32";
+  case NVPTXISD::TexUnified3DS32Float:
+    return "NVPTXISD::TexUnified3DS32Float";
+  case NVPTXISD::TexUnified3DS32FloatLevel:
+    return "NVPTXISD::TexUnified3DS32FloatLevel";
+  case NVPTXISD::TexUnified3DS32FloatGrad:
+    return "NVPTXISD::TexUnified3DS32FloatGrad";
+  case NVPTXISD::TexUnified3DU32S32:
+    return "NVPTXISD::TexUnified3DU32S32";
+  case NVPTXISD::TexUnified3DU32Float:
+    return "NVPTXISD::TexUnified3DU32Float";
+  case NVPTXISD::TexUnified3DU32FloatLevel:
+    return "NVPTXISD::TexUnified3DU32FloatLevel";
+  case NVPTXISD::TexUnified3DU32FloatGrad:
+    return "NVPTXISD::TexUnified3DU32FloatGrad";
+  case NVPTXISD::TexUnifiedCubeFloatFloat:
+    return "NVPTXISD::TexUnifiedCubeFloatFloat";
+  case NVPTXISD::TexUnifiedCubeFloatFloatLevel:
+    return "NVPTXISD::TexUnifiedCubeFloatFloatLevel";
+  case NVPTXISD::TexUnifiedCubeS32Float:
+    return "NVPTXISD::TexUnifiedCubeS32Float";
+  case NVPTXISD::TexUnifiedCubeS32FloatLevel:
+    return "NVPTXISD::TexUnifiedCubeS32FloatLevel";
+  case NVPTXISD::TexUnifiedCubeU32Float:
+    return "NVPTXISD::TexUnifiedCubeU32Float";
+  case NVPTXISD::TexUnifiedCubeU32FloatLevel:
+    return "NVPTXISD::TexUnifiedCubeU32FloatLevel";
+  case NVPTXISD::TexUnifiedCubeArrayFloatFloat:
+    return "NVPTXISD::TexUnifiedCubeArrayFloatFloat";
+  case NVPTXISD::TexUnifiedCubeArrayFloatFloatLevel:
+    return "NVPTXISD::TexUnifiedCubeArrayFloatFloatLevel";
+  case NVPTXISD::TexUnifiedCubeArrayS32Float:
+    return "NVPTXISD::TexUnifiedCubeArrayS32Float";
+  case NVPTXISD::TexUnifiedCubeArrayS32FloatLevel:
+    return "NVPTXISD::TexUnifiedCubeArrayS32FloatLevel";
+  case NVPTXISD::TexUnifiedCubeArrayU32Float:
+    return "NVPTXISD::TexUnifiedCubeArrayU32Float";
+  case NVPTXISD::TexUnifiedCubeArrayU32FloatLevel:
+    return "NVPTXISD::TexUnifiedCubeArrayU32FloatLevel";
+  case NVPTXISD::Tld4UnifiedR2DFloatFloat:
+    return "NVPTXISD::Tld4UnifiedR2DFloatFloat";
+  case NVPTXISD::Tld4UnifiedG2DFloatFloat:
+    return "NVPTXISD::Tld4UnifiedG2DFloatFloat";
+  case NVPTXISD::Tld4UnifiedB2DFloatFloat:
+    return "NVPTXISD::Tld4UnifiedB2DFloatFloat";
+  case NVPTXISD::Tld4UnifiedA2DFloatFloat:
+    return "NVPTXISD::Tld4UnifiedA2DFloatFloat";
+  case NVPTXISD::Tld4UnifiedR2DS64Float:
+    return "NVPTXISD::Tld4UnifiedR2DS64Float";
+  case NVPTXISD::Tld4UnifiedG2DS64Float:
+    return "NVPTXISD::Tld4UnifiedG2DS64Float";
+  case NVPTXISD::Tld4UnifiedB2DS64Float:
+    return "NVPTXISD::Tld4UnifiedB2DS64Float";
+  case NVPTXISD::Tld4UnifiedA2DS64Float:
+    return "NVPTXISD::Tld4UnifiedA2DS64Float";
+  case NVPTXISD::Tld4UnifiedR2DU64Float:
+    return "NVPTXISD::Tld4UnifiedR2DU64Float";
+  case NVPTXISD::Tld4UnifiedG2DU64Float:
+    return "NVPTXISD::Tld4UnifiedG2DU64Float";
+  case NVPTXISD::Tld4UnifiedB2DU64Float:
+    return "NVPTXISD::Tld4UnifiedB2DU64Float";
+  case NVPTXISD::Tld4UnifiedA2DU64Float:
+    return "NVPTXISD::Tld4UnifiedA2DU64Float";
+
+  case NVPTXISD::Suld1DI8Clamp:          return "NVPTXISD::Suld1DI8Clamp";
+  case NVPTXISD::Suld1DI16Clamp:         return "NVPTXISD::Suld1DI16Clamp";
+  case NVPTXISD::Suld1DI32Clamp:         return "NVPTXISD::Suld1DI32Clamp";
+  case NVPTXISD::Suld1DI64Clamp:         return "NVPTXISD::Suld1DI64Clamp";
+  case NVPTXISD::Suld1DV2I8Clamp:        return "NVPTXISD::Suld1DV2I8Clamp";
+  case NVPTXISD::Suld1DV2I16Clamp:       return "NVPTXISD::Suld1DV2I16Clamp";
+  case NVPTXISD::Suld1DV2I32Clamp:       return "NVPTXISD::Suld1DV2I32Clamp";
+  case NVPTXISD::Suld1DV2I64Clamp:       return "NVPTXISD::Suld1DV2I64Clamp";
+  case NVPTXISD::Suld1DV4I8Clamp:        return "NVPTXISD::Suld1DV4I8Clamp";
+  case NVPTXISD::Suld1DV4I16Clamp:       return "NVPTXISD::Suld1DV4I16Clamp";
+  case NVPTXISD::Suld1DV4I32Clamp:       return "NVPTXISD::Suld1DV4I32Clamp";
+
+  case NVPTXISD::Suld1DArrayI8Clamp:   return "NVPTXISD::Suld1DArrayI8Clamp";
+  case NVPTXISD::Suld1DArrayI16Clamp:  return "NVPTXISD::Suld1DArrayI16Clamp";
+  case NVPTXISD::Suld1DArrayI32Clamp:  return "NVPTXISD::Suld1DArrayI32Clamp";
+  case NVPTXISD::Suld1DArrayI64Clamp:  return "NVPTXISD::Suld1DArrayI64Clamp";
+  case NVPTXISD::Suld1DArrayV2I8Clamp: return "NVPTXISD::Suld1DArrayV2I8Clamp";
+  case NVPTXISD::Suld1DArrayV2I16Clamp:return "NVPTXISD::Suld1DArrayV2I16Clamp";
+  case NVPTXISD::Suld1DArrayV2I32Clamp:return "NVPTXISD::Suld1DArrayV2I32Clamp";
+  case NVPTXISD::Suld1DArrayV2I64Clamp:return "NVPTXISD::Suld1DArrayV2I64Clamp";
+  case NVPTXISD::Suld1DArrayV4I8Clamp: return "NVPTXISD::Suld1DArrayV4I8Clamp";
+  case NVPTXISD::Suld1DArrayV4I16Clamp:return "NVPTXISD::Suld1DArrayV4I16Clamp";
+  case NVPTXISD::Suld1DArrayV4I32Clamp:return "NVPTXISD::Suld1DArrayV4I32Clamp";
+
+  case NVPTXISD::Suld2DI8Clamp:          return "NVPTXISD::Suld2DI8Clamp";
+  case NVPTXISD::Suld2DI16Clamp:         return "NVPTXISD::Suld2DI16Clamp";
+  case NVPTXISD::Suld2DI32Clamp:         return "NVPTXISD::Suld2DI32Clamp";
+  case NVPTXISD::Suld2DI64Clamp:         return "NVPTXISD::Suld2DI64Clamp";
+  case NVPTXISD::Suld2DV2I8Clamp:        return "NVPTXISD::Suld2DV2I8Clamp";
+  case NVPTXISD::Suld2DV2I16Clamp:       return "NVPTXISD::Suld2DV2I16Clamp";
+  case NVPTXISD::Suld2DV2I32Clamp:       return "NVPTXISD::Suld2DV2I32Clamp";
+  case NVPTXISD::Suld2DV2I64Clamp:       return "NVPTXISD::Suld2DV2I64Clamp";
+  case NVPTXISD::Suld2DV4I8Clamp:        return "NVPTXISD::Suld2DV4I8Clamp";
+  case NVPTXISD::Suld2DV4I16Clamp:       return "NVPTXISD::Suld2DV4I16Clamp";
+  case NVPTXISD::Suld2DV4I32Clamp:       return "NVPTXISD::Suld2DV4I32Clamp";
+
+  case NVPTXISD::Suld2DArrayI8Clamp:   return "NVPTXISD::Suld2DArrayI8Clamp";
+  case NVPTXISD::Suld2DArrayI16Clamp:  return "NVPTXISD::Suld2DArrayI16Clamp";
+  case NVPTXISD::Suld2DArrayI32Clamp:  return "NVPTXISD::Suld2DArrayI32Clamp";
+  case NVPTXISD::Suld2DArrayI64Clamp:  return "NVPTXISD::Suld2DArrayI64Clamp";
+  case NVPTXISD::Suld2DArrayV2I8Clamp: return "NVPTXISD::Suld2DArrayV2I8Clamp";
+  case NVPTXISD::Suld2DArrayV2I16Clamp:return "NVPTXISD::Suld2DArrayV2I16Clamp";
+  case NVPTXISD::Suld2DArrayV2I32Clamp:return "NVPTXISD::Suld2DArrayV2I32Clamp";
+  case NVPTXISD::Suld2DArrayV2I64Clamp:return "NVPTXISD::Suld2DArrayV2I64Clamp";
+  case NVPTXISD::Suld2DArrayV4I8Clamp: return "NVPTXISD::Suld2DArrayV4I8Clamp";
+  case NVPTXISD::Suld2DArrayV4I16Clamp:return "NVPTXISD::Suld2DArrayV4I16Clamp";
+  case NVPTXISD::Suld2DArrayV4I32Clamp:return "NVPTXISD::Suld2DArrayV4I32Clamp";
+
+  case NVPTXISD::Suld3DI8Clamp:          return "NVPTXISD::Suld3DI8Clamp";
+  case NVPTXISD::Suld3DI16Clamp:         return "NVPTXISD::Suld3DI16Clamp";
+  case NVPTXISD::Suld3DI32Clamp:         return "NVPTXISD::Suld3DI32Clamp";
+  case NVPTXISD::Suld3DI64Clamp:         return "NVPTXISD::Suld3DI64Clamp";
+  case NVPTXISD::Suld3DV2I8Clamp:        return "NVPTXISD::Suld3DV2I8Clamp";
+  case NVPTXISD::Suld3DV2I16Clamp:       return "NVPTXISD::Suld3DV2I16Clamp";
+  case NVPTXISD::Suld3DV2I32Clamp:       return "NVPTXISD::Suld3DV2I32Clamp";
+  case NVPTXISD::Suld3DV2I64Clamp:       return "NVPTXISD::Suld3DV2I64Clamp";
+  case NVPTXISD::Suld3DV4I8Clamp:        return "NVPTXISD::Suld3DV4I8Clamp";
+  case NVPTXISD::Suld3DV4I16Clamp:       return "NVPTXISD::Suld3DV4I16Clamp";
+  case NVPTXISD::Suld3DV4I32Clamp:       return "NVPTXISD::Suld3DV4I32Clamp";
 
   case NVPTXISD::Suld1DI8Trap:          return "NVPTXISD::Suld1DI8Trap";
   case NVPTXISD::Suld1DI16Trap:         return "NVPTXISD::Suld1DI16Trap";
   case NVPTXISD::Suld1DI32Trap:         return "NVPTXISD::Suld1DI32Trap";
+  case NVPTXISD::Suld1DI64Trap:         return "NVPTXISD::Suld1DI64Trap";
   case NVPTXISD::Suld1DV2I8Trap:        return "NVPTXISD::Suld1DV2I8Trap";
   case NVPTXISD::Suld1DV2I16Trap:       return "NVPTXISD::Suld1DV2I16Trap";
   case NVPTXISD::Suld1DV2I32Trap:       return "NVPTXISD::Suld1DV2I32Trap";
+  case NVPTXISD::Suld1DV2I64Trap:       return "NVPTXISD::Suld1DV2I64Trap";
   case NVPTXISD::Suld1DV4I8Trap:        return "NVPTXISD::Suld1DV4I8Trap";
   case NVPTXISD::Suld1DV4I16Trap:       return "NVPTXISD::Suld1DV4I16Trap";
   case NVPTXISD::Suld1DV4I32Trap:       return "NVPTXISD::Suld1DV4I32Trap";
@@ -434,9 +740,11 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::Suld1DArrayI8Trap:     return "NVPTXISD::Suld1DArrayI8Trap";
   case NVPTXISD::Suld1DArrayI16Trap:    return "NVPTXISD::Suld1DArrayI16Trap";
   case NVPTXISD::Suld1DArrayI32Trap:    return "NVPTXISD::Suld1DArrayI32Trap";
+  case NVPTXISD::Suld1DArrayI64Trap:    return "NVPTXISD::Suld1DArrayI64Trap";
   case NVPTXISD::Suld1DArrayV2I8Trap:   return "NVPTXISD::Suld1DArrayV2I8Trap";
   case NVPTXISD::Suld1DArrayV2I16Trap:  return "NVPTXISD::Suld1DArrayV2I16Trap";
   case NVPTXISD::Suld1DArrayV2I32Trap:  return "NVPTXISD::Suld1DArrayV2I32Trap";
+  case NVPTXISD::Suld1DArrayV2I64Trap:  return "NVPTXISD::Suld1DArrayV2I64Trap";
   case NVPTXISD::Suld1DArrayV4I8Trap:   return "NVPTXISD::Suld1DArrayV4I8Trap";
   case NVPTXISD::Suld1DArrayV4I16Trap:  return "NVPTXISD::Suld1DArrayV4I16Trap";
   case NVPTXISD::Suld1DArrayV4I32Trap:  return "NVPTXISD::Suld1DArrayV4I32Trap";
@@ -444,9 +752,11 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::Suld2DI8Trap:          return "NVPTXISD::Suld2DI8Trap";
   case NVPTXISD::Suld2DI16Trap:         return "NVPTXISD::Suld2DI16Trap";
   case NVPTXISD::Suld2DI32Trap:         return "NVPTXISD::Suld2DI32Trap";
+  case NVPTXISD::Suld2DI64Trap:         return "NVPTXISD::Suld2DI64Trap";
   case NVPTXISD::Suld2DV2I8Trap:        return "NVPTXISD::Suld2DV2I8Trap";
   case NVPTXISD::Suld2DV2I16Trap:       return "NVPTXISD::Suld2DV2I16Trap";
   case NVPTXISD::Suld2DV2I32Trap:       return "NVPTXISD::Suld2DV2I32Trap";
+  case NVPTXISD::Suld2DV2I64Trap:       return "NVPTXISD::Suld2DV2I64Trap";
   case NVPTXISD::Suld2DV4I8Trap:        return "NVPTXISD::Suld2DV4I8Trap";
   case NVPTXISD::Suld2DV4I16Trap:       return "NVPTXISD::Suld2DV4I16Trap";
   case NVPTXISD::Suld2DV4I32Trap:       return "NVPTXISD::Suld2DV4I32Trap";
@@ -454,9 +764,11 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::Suld2DArrayI8Trap:     return "NVPTXISD::Suld2DArrayI8Trap";
   case NVPTXISD::Suld2DArrayI16Trap:    return "NVPTXISD::Suld2DArrayI16Trap";
   case NVPTXISD::Suld2DArrayI32Trap:    return "NVPTXISD::Suld2DArrayI32Trap";
+  case NVPTXISD::Suld2DArrayI64Trap:    return "NVPTXISD::Suld2DArrayI64Trap";
   case NVPTXISD::Suld2DArrayV2I8Trap:   return "NVPTXISD::Suld2DArrayV2I8Trap";
   case NVPTXISD::Suld2DArrayV2I16Trap:  return "NVPTXISD::Suld2DArrayV2I16Trap";
   case NVPTXISD::Suld2DArrayV2I32Trap:  return "NVPTXISD::Suld2DArrayV2I32Trap";
+  case NVPTXISD::Suld2DArrayV2I64Trap:  return "NVPTXISD::Suld2DArrayV2I64Trap";
   case NVPTXISD::Suld2DArrayV4I8Trap:   return "NVPTXISD::Suld2DArrayV4I8Trap";
   case NVPTXISD::Suld2DArrayV4I16Trap:  return "NVPTXISD::Suld2DArrayV4I16Trap";
   case NVPTXISD::Suld2DArrayV4I32Trap:  return "NVPTXISD::Suld2DArrayV4I32Trap";
@@ -464,12 +776,74 @@ const char *NVPTXTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case NVPTXISD::Suld3DI8Trap:          return "NVPTXISD::Suld3DI8Trap";
   case NVPTXISD::Suld3DI16Trap:         return "NVPTXISD::Suld3DI16Trap";
   case NVPTXISD::Suld3DI32Trap:         return "NVPTXISD::Suld3DI32Trap";
+  case NVPTXISD::Suld3DI64Trap:         return "NVPTXISD::Suld3DI64Trap";
   case NVPTXISD::Suld3DV2I8Trap:        return "NVPTXISD::Suld3DV2I8Trap";
   case NVPTXISD::Suld3DV2I16Trap:       return "NVPTXISD::Suld3DV2I16Trap";
   case NVPTXISD::Suld3DV2I32Trap:       return "NVPTXISD::Suld3DV2I32Trap";
+  case NVPTXISD::Suld3DV2I64Trap:       return "NVPTXISD::Suld3DV2I64Trap";
   case NVPTXISD::Suld3DV4I8Trap:        return "NVPTXISD::Suld3DV4I8Trap";
   case NVPTXISD::Suld3DV4I16Trap:       return "NVPTXISD::Suld3DV4I16Trap";
   case NVPTXISD::Suld3DV4I32Trap:       return "NVPTXISD::Suld3DV4I32Trap";
+
+  case NVPTXISD::Suld1DI8Zero:          return "NVPTXISD::Suld1DI8Zero";
+  case NVPTXISD::Suld1DI16Zero:         return "NVPTXISD::Suld1DI16Zero";
+  case NVPTXISD::Suld1DI32Zero:         return "NVPTXISD::Suld1DI32Zero";
+  case NVPTXISD::Suld1DI64Zero:         return "NVPTXISD::Suld1DI64Zero";
+  case NVPTXISD::Suld1DV2I8Zero:        return "NVPTXISD::Suld1DV2I8Zero";
+  case NVPTXISD::Suld1DV2I16Zero:       return "NVPTXISD::Suld1DV2I16Zero";
+  case NVPTXISD::Suld1DV2I32Zero:       return "NVPTXISD::Suld1DV2I32Zero";
+  case NVPTXISD::Suld1DV2I64Zero:       return "NVPTXISD::Suld1DV2I64Zero";
+  case NVPTXISD::Suld1DV4I8Zero:        return "NVPTXISD::Suld1DV4I8Zero";
+  case NVPTXISD::Suld1DV4I16Zero:       return "NVPTXISD::Suld1DV4I16Zero";
+  case NVPTXISD::Suld1DV4I32Zero:       return "NVPTXISD::Suld1DV4I32Zero";
+
+  case NVPTXISD::Suld1DArrayI8Zero:     return "NVPTXISD::Suld1DArrayI8Zero";
+  case NVPTXISD::Suld1DArrayI16Zero:    return "NVPTXISD::Suld1DArrayI16Zero";
+  case NVPTXISD::Suld1DArrayI32Zero:    return "NVPTXISD::Suld1DArrayI32Zero";
+  case NVPTXISD::Suld1DArrayI64Zero:    return "NVPTXISD::Suld1DArrayI64Zero";
+  case NVPTXISD::Suld1DArrayV2I8Zero:   return "NVPTXISD::Suld1DArrayV2I8Zero";
+  case NVPTXISD::Suld1DArrayV2I16Zero:  return "NVPTXISD::Suld1DArrayV2I16Zero";
+  case NVPTXISD::Suld1DArrayV2I32Zero:  return "NVPTXISD::Suld1DArrayV2I32Zero";
+  case NVPTXISD::Suld1DArrayV2I64Zero:  return "NVPTXISD::Suld1DArrayV2I64Zero";
+  case NVPTXISD::Suld1DArrayV4I8Zero:   return "NVPTXISD::Suld1DArrayV4I8Zero";
+  case NVPTXISD::Suld1DArrayV4I16Zero:  return "NVPTXISD::Suld1DArrayV4I16Zero";
+  case NVPTXISD::Suld1DArrayV4I32Zero:  return "NVPTXISD::Suld1DArrayV4I32Zero";
+
+  case NVPTXISD::Suld2DI8Zero:          return "NVPTXISD::Suld2DI8Zero";
+  case NVPTXISD::Suld2DI16Zero:         return "NVPTXISD::Suld2DI16Zero";
+  case NVPTXISD::Suld2DI32Zero:         return "NVPTXISD::Suld2DI32Zero";
+  case NVPTXISD::Suld2DI64Zero:         return "NVPTXISD::Suld2DI64Zero";
+  case NVPTXISD::Suld2DV2I8Zero:        return "NVPTXISD::Suld2DV2I8Zero";
+  case NVPTXISD::Suld2DV2I16Zero:       return "NVPTXISD::Suld2DV2I16Zero";
+  case NVPTXISD::Suld2DV2I32Zero:       return "NVPTXISD::Suld2DV2I32Zero";
+  case NVPTXISD::Suld2DV2I64Zero:       return "NVPTXISD::Suld2DV2I64Zero";
+  case NVPTXISD::Suld2DV4I8Zero:        return "NVPTXISD::Suld2DV4I8Zero";
+  case NVPTXISD::Suld2DV4I16Zero:       return "NVPTXISD::Suld2DV4I16Zero";
+  case NVPTXISD::Suld2DV4I32Zero:       return "NVPTXISD::Suld2DV4I32Zero";
+
+  case NVPTXISD::Suld2DArrayI8Zero:     return "NVPTXISD::Suld2DArrayI8Zero";
+  case NVPTXISD::Suld2DArrayI16Zero:    return "NVPTXISD::Suld2DArrayI16Zero";
+  case NVPTXISD::Suld2DArrayI32Zero:    return "NVPTXISD::Suld2DArrayI32Zero";
+  case NVPTXISD::Suld2DArrayI64Zero:    return "NVPTXISD::Suld2DArrayI64Zero";
+  case NVPTXISD::Suld2DArrayV2I8Zero:   return "NVPTXISD::Suld2DArrayV2I8Zero";
+  case NVPTXISD::Suld2DArrayV2I16Zero:  return "NVPTXISD::Suld2DArrayV2I16Zero";
+  case NVPTXISD::Suld2DArrayV2I32Zero:  return "NVPTXISD::Suld2DArrayV2I32Zero";
+  case NVPTXISD::Suld2DArrayV2I64Zero:  return "NVPTXISD::Suld2DArrayV2I64Zero";
+  case NVPTXISD::Suld2DArrayV4I8Zero:   return "NVPTXISD::Suld2DArrayV4I8Zero";
+  case NVPTXISD::Suld2DArrayV4I16Zero:  return "NVPTXISD::Suld2DArrayV4I16Zero";
+  case NVPTXISD::Suld2DArrayV4I32Zero:  return "NVPTXISD::Suld2DArrayV4I32Zero";
+
+  case NVPTXISD::Suld3DI8Zero:          return "NVPTXISD::Suld3DI8Zero";
+  case NVPTXISD::Suld3DI16Zero:         return "NVPTXISD::Suld3DI16Zero";
+  case NVPTXISD::Suld3DI32Zero:         return "NVPTXISD::Suld3DI32Zero";
+  case NVPTXISD::Suld3DI64Zero:         return "NVPTXISD::Suld3DI64Zero";
+  case NVPTXISD::Suld3DV2I8Zero:        return "NVPTXISD::Suld3DV2I8Zero";
+  case NVPTXISD::Suld3DV2I16Zero:       return "NVPTXISD::Suld3DV2I16Zero";
+  case NVPTXISD::Suld3DV2I32Zero:       return "NVPTXISD::Suld3DV2I32Zero";
+  case NVPTXISD::Suld3DV2I64Zero:       return "NVPTXISD::Suld3DV2I64Zero";
+  case NVPTXISD::Suld3DV4I8Zero:        return "NVPTXISD::Suld3DV4I8Zero";
+  case NVPTXISD::Suld3DV4I16Zero:       return "NVPTXISD::Suld3DV4I16Zero";
+  case NVPTXISD::Suld3DV4I32Zero:       return "NVPTXISD::Suld3DV4I32Zero";
   }
 }
 
@@ -2145,90 +2519,357 @@ static unsigned getOpcForTextureInstr(unsigned Intrinsic) {
   default:
     return 0;
 
-  case Intrinsic::nvvm_tex_1d_v4f32_i32:
-    return NVPTXISD::Tex1DFloatI32;
+  case Intrinsic::nvvm_tex_1d_v4f32_s32:
+    return NVPTXISD::Tex1DFloatS32;
   case Intrinsic::nvvm_tex_1d_v4f32_f32:
     return NVPTXISD::Tex1DFloatFloat;
   case Intrinsic::nvvm_tex_1d_level_v4f32_f32:
     return NVPTXISD::Tex1DFloatFloatLevel;
   case Intrinsic::nvvm_tex_1d_grad_v4f32_f32:
     return NVPTXISD::Tex1DFloatFloatGrad;
-  case Intrinsic::nvvm_tex_1d_v4i32_i32:
-    return NVPTXISD::Tex1DI32I32;
-  case Intrinsic::nvvm_tex_1d_v4i32_f32:
-    return NVPTXISD::Tex1DI32Float;
-  case Intrinsic::nvvm_tex_1d_level_v4i32_f32:
-    return NVPTXISD::Tex1DI32FloatLevel;
-  case Intrinsic::nvvm_tex_1d_grad_v4i32_f32:
-    return NVPTXISD::Tex1DI32FloatGrad;
+  case Intrinsic::nvvm_tex_1d_v4s32_s32:
+    return NVPTXISD::Tex1DS32S32;
+  case Intrinsic::nvvm_tex_1d_v4s32_f32:
+    return NVPTXISD::Tex1DS32Float;
+  case Intrinsic::nvvm_tex_1d_level_v4s32_f32:
+    return NVPTXISD::Tex1DS32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_grad_v4s32_f32:
+    return NVPTXISD::Tex1DS32FloatGrad;
+  case Intrinsic::nvvm_tex_1d_v4u32_s32:
+    return NVPTXISD::Tex1DU32S32;
+  case Intrinsic::nvvm_tex_1d_v4u32_f32:
+    return NVPTXISD::Tex1DU32Float;
+  case Intrinsic::nvvm_tex_1d_level_v4u32_f32:
+    return NVPTXISD::Tex1DU32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_grad_v4u32_f32:
+    return NVPTXISD::Tex1DU32FloatGrad;
 
-  case Intrinsic::nvvm_tex_1d_array_v4f32_i32:
-    return NVPTXISD::Tex1DArrayFloatI32;
+  case Intrinsic::nvvm_tex_1d_array_v4f32_s32:
+    return NVPTXISD::Tex1DArrayFloatS32;
   case Intrinsic::nvvm_tex_1d_array_v4f32_f32:
     return NVPTXISD::Tex1DArrayFloatFloat;
   case Intrinsic::nvvm_tex_1d_array_level_v4f32_f32:
     return NVPTXISD::Tex1DArrayFloatFloatLevel;
   case Intrinsic::nvvm_tex_1d_array_grad_v4f32_f32:
     return NVPTXISD::Tex1DArrayFloatFloatGrad;
-  case Intrinsic::nvvm_tex_1d_array_v4i32_i32:
-    return NVPTXISD::Tex1DArrayI32I32;
-  case Intrinsic::nvvm_tex_1d_array_v4i32_f32:
-    return NVPTXISD::Tex1DArrayI32Float;
-  case Intrinsic::nvvm_tex_1d_array_level_v4i32_f32:
-    return NVPTXISD::Tex1DArrayI32FloatLevel;
-  case Intrinsic::nvvm_tex_1d_array_grad_v4i32_f32:
-    return NVPTXISD::Tex1DArrayI32FloatGrad;
+  case Intrinsic::nvvm_tex_1d_array_v4s32_s32:
+    return NVPTXISD::Tex1DArrayS32S32;
+  case Intrinsic::nvvm_tex_1d_array_v4s32_f32:
+    return NVPTXISD::Tex1DArrayS32Float;
+  case Intrinsic::nvvm_tex_1d_array_level_v4s32_f32:
+    return NVPTXISD::Tex1DArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_array_grad_v4s32_f32:
+    return NVPTXISD::Tex1DArrayS32FloatGrad;
+  case Intrinsic::nvvm_tex_1d_array_v4u32_s32:
+    return NVPTXISD::Tex1DArrayU32S32;
+  case Intrinsic::nvvm_tex_1d_array_v4u32_f32:
+    return NVPTXISD::Tex1DArrayU32Float;
+  case Intrinsic::nvvm_tex_1d_array_level_v4u32_f32:
+    return NVPTXISD::Tex1DArrayU32FloatLevel;
+  case Intrinsic::nvvm_tex_1d_array_grad_v4u32_f32:
+    return NVPTXISD::Tex1DArrayU32FloatGrad;
 
-  case Intrinsic::nvvm_tex_2d_v4f32_i32:
-    return NVPTXISD::Tex2DFloatI32;
+  case Intrinsic::nvvm_tex_2d_v4f32_s32:
+    return NVPTXISD::Tex2DFloatS32;
   case Intrinsic::nvvm_tex_2d_v4f32_f32:
     return NVPTXISD::Tex2DFloatFloat;
   case Intrinsic::nvvm_tex_2d_level_v4f32_f32:
     return NVPTXISD::Tex2DFloatFloatLevel;
   case Intrinsic::nvvm_tex_2d_grad_v4f32_f32:
     return NVPTXISD::Tex2DFloatFloatGrad;
-  case Intrinsic::nvvm_tex_2d_v4i32_i32:
-    return NVPTXISD::Tex2DI32I32;
-  case Intrinsic::nvvm_tex_2d_v4i32_f32:
-    return NVPTXISD::Tex2DI32Float;
-  case Intrinsic::nvvm_tex_2d_level_v4i32_f32:
-    return NVPTXISD::Tex2DI32FloatLevel;
-  case Intrinsic::nvvm_tex_2d_grad_v4i32_f32:
-    return NVPTXISD::Tex2DI32FloatGrad;
+  case Intrinsic::nvvm_tex_2d_v4s32_s32:
+    return NVPTXISD::Tex2DS32S32;
+  case Intrinsic::nvvm_tex_2d_v4s32_f32:
+    return NVPTXISD::Tex2DS32Float;
+  case Intrinsic::nvvm_tex_2d_level_v4s32_f32:
+    return NVPTXISD::Tex2DS32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_grad_v4s32_f32:
+    return NVPTXISD::Tex2DS32FloatGrad;
+  case Intrinsic::nvvm_tex_2d_v4u32_s32:
+    return NVPTXISD::Tex2DU32S32;
+  case Intrinsic::nvvm_tex_2d_v4u32_f32:
+    return NVPTXISD::Tex2DU32Float;
+  case Intrinsic::nvvm_tex_2d_level_v4u32_f32:
+    return NVPTXISD::Tex2DU32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_grad_v4u32_f32:
+    return NVPTXISD::Tex2DU32FloatGrad;
 
-  case Intrinsic::nvvm_tex_2d_array_v4f32_i32:
-    return NVPTXISD::Tex2DArrayFloatI32;
+  case Intrinsic::nvvm_tex_2d_array_v4f32_s32:
+    return NVPTXISD::Tex2DArrayFloatS32;
   case Intrinsic::nvvm_tex_2d_array_v4f32_f32:
     return NVPTXISD::Tex2DArrayFloatFloat;
   case Intrinsic::nvvm_tex_2d_array_level_v4f32_f32:
     return NVPTXISD::Tex2DArrayFloatFloatLevel;
   case Intrinsic::nvvm_tex_2d_array_grad_v4f32_f32:
     return NVPTXISD::Tex2DArrayFloatFloatGrad;
-  case Intrinsic::nvvm_tex_2d_array_v4i32_i32:
-    return NVPTXISD::Tex2DArrayI32I32;
-  case Intrinsic::nvvm_tex_2d_array_v4i32_f32:
-    return NVPTXISD::Tex2DArrayI32Float;
-  case Intrinsic::nvvm_tex_2d_array_level_v4i32_f32:
-    return NVPTXISD::Tex2DArrayI32FloatLevel;
-  case Intrinsic::nvvm_tex_2d_array_grad_v4i32_f32:
-    return NVPTXISD::Tex2DArrayI32FloatGrad;
+  case Intrinsic::nvvm_tex_2d_array_v4s32_s32:
+    return NVPTXISD::Tex2DArrayS32S32;
+  case Intrinsic::nvvm_tex_2d_array_v4s32_f32:
+    return NVPTXISD::Tex2DArrayS32Float;
+  case Intrinsic::nvvm_tex_2d_array_level_v4s32_f32:
+    return NVPTXISD::Tex2DArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_array_grad_v4s32_f32:
+    return NVPTXISD::Tex2DArrayS32FloatGrad;
+  case Intrinsic::nvvm_tex_2d_array_v4u32_s32:
+    return NVPTXISD::Tex2DArrayU32S32;
+  case Intrinsic::nvvm_tex_2d_array_v4u32_f32:
+    return NVPTXISD::Tex2DArrayU32Float;
+  case Intrinsic::nvvm_tex_2d_array_level_v4u32_f32:
+    return NVPTXISD::Tex2DArrayU32FloatLevel;
+  case Intrinsic::nvvm_tex_2d_array_grad_v4u32_f32:
+    return NVPTXISD::Tex2DArrayU32FloatGrad;
 
-  case Intrinsic::nvvm_tex_3d_v4f32_i32:
-    return NVPTXISD::Tex3DFloatI32;
+  case Intrinsic::nvvm_tex_3d_v4f32_s32:
+    return NVPTXISD::Tex3DFloatS32;
   case Intrinsic::nvvm_tex_3d_v4f32_f32:
     return NVPTXISD::Tex3DFloatFloat;
   case Intrinsic::nvvm_tex_3d_level_v4f32_f32:
     return NVPTXISD::Tex3DFloatFloatLevel;
   case Intrinsic::nvvm_tex_3d_grad_v4f32_f32:
     return NVPTXISD::Tex3DFloatFloatGrad;
-  case Intrinsic::nvvm_tex_3d_v4i32_i32:
-    return NVPTXISD::Tex3DI32I32;
-  case Intrinsic::nvvm_tex_3d_v4i32_f32:
-    return NVPTXISD::Tex3DI32Float;
-  case Intrinsic::nvvm_tex_3d_level_v4i32_f32:
-    return NVPTXISD::Tex3DI32FloatLevel;
-  case Intrinsic::nvvm_tex_3d_grad_v4i32_f32:
-    return NVPTXISD::Tex3DI32FloatGrad;
+  case Intrinsic::nvvm_tex_3d_v4s32_s32:
+    return NVPTXISD::Tex3DS32S32;
+  case Intrinsic::nvvm_tex_3d_v4s32_f32:
+    return NVPTXISD::Tex3DS32Float;
+  case Intrinsic::nvvm_tex_3d_level_v4s32_f32:
+    return NVPTXISD::Tex3DS32FloatLevel;
+  case Intrinsic::nvvm_tex_3d_grad_v4s32_f32:
+    return NVPTXISD::Tex3DS32FloatGrad;
+  case Intrinsic::nvvm_tex_3d_v4u32_s32:
+    return NVPTXISD::Tex3DU32S32;
+  case Intrinsic::nvvm_tex_3d_v4u32_f32:
+    return NVPTXISD::Tex3DU32Float;
+  case Intrinsic::nvvm_tex_3d_level_v4u32_f32:
+    return NVPTXISD::Tex3DU32FloatLevel;
+  case Intrinsic::nvvm_tex_3d_grad_v4u32_f32:
+    return NVPTXISD::Tex3DU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_cube_v4f32_f32:
+    return NVPTXISD::TexCubeFloatFloat;
+  case Intrinsic::nvvm_tex_cube_level_v4f32_f32:
+    return NVPTXISD::TexCubeFloatFloatLevel;
+  case Intrinsic::nvvm_tex_cube_v4s32_f32:
+    return NVPTXISD::TexCubeS32Float;
+  case Intrinsic::nvvm_tex_cube_level_v4s32_f32:
+    return NVPTXISD::TexCubeS32FloatLevel;
+  case Intrinsic::nvvm_tex_cube_v4u32_f32:
+    return NVPTXISD::TexCubeU32Float;
+  case Intrinsic::nvvm_tex_cube_level_v4u32_f32:
+    return NVPTXISD::TexCubeU32FloatLevel;
+
+  case Intrinsic::nvvm_tex_cube_array_v4f32_f32:
+    return NVPTXISD::TexCubeArrayFloatFloat;
+  case Intrinsic::nvvm_tex_cube_array_level_v4f32_f32:
+    return NVPTXISD::TexCubeArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_cube_array_v4s32_f32:
+    return NVPTXISD::TexCubeArrayS32Float;
+  case Intrinsic::nvvm_tex_cube_array_level_v4s32_f32:
+    return NVPTXISD::TexCubeArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_cube_array_v4u32_f32:
+    return NVPTXISD::TexCubeArrayU32Float;
+  case Intrinsic::nvvm_tex_cube_array_level_v4u32_f32:
+    return NVPTXISD::TexCubeArrayU32FloatLevel;
+
+  case Intrinsic::nvvm_tld4_r_2d_v4f32_f32:
+    return NVPTXISD::Tld4R2DFloatFloat;
+  case Intrinsic::nvvm_tld4_g_2d_v4f32_f32:
+    return NVPTXISD::Tld4G2DFloatFloat;
+  case Intrinsic::nvvm_tld4_b_2d_v4f32_f32:
+    return NVPTXISD::Tld4B2DFloatFloat;
+  case Intrinsic::nvvm_tld4_a_2d_v4f32_f32:
+    return NVPTXISD::Tld4A2DFloatFloat;
+  case Intrinsic::nvvm_tld4_r_2d_v4s32_f32:
+    return NVPTXISD::Tld4R2DS64Float;
+  case Intrinsic::nvvm_tld4_g_2d_v4s32_f32:
+    return NVPTXISD::Tld4G2DS64Float;
+  case Intrinsic::nvvm_tld4_b_2d_v4s32_f32:
+    return NVPTXISD::Tld4B2DS64Float;
+  case Intrinsic::nvvm_tld4_a_2d_v4s32_f32:
+    return NVPTXISD::Tld4A2DS64Float;
+  case Intrinsic::nvvm_tld4_r_2d_v4u32_f32:
+    return NVPTXISD::Tld4R2DU64Float;
+  case Intrinsic::nvvm_tld4_g_2d_v4u32_f32:
+    return NVPTXISD::Tld4G2DU64Float;
+  case Intrinsic::nvvm_tld4_b_2d_v4u32_f32:
+    return NVPTXISD::Tld4B2DU64Float;
+  case Intrinsic::nvvm_tld4_a_2d_v4u32_f32:
+    return NVPTXISD::Tld4A2DU64Float;
+
+  case Intrinsic::nvvm_tex_unified_1d_v4f32_s32:
+    return NVPTXISD::TexUnified1DFloatS32;
+  case Intrinsic::nvvm_tex_unified_1d_v4f32_f32:
+    return NVPTXISD::TexUnified1DFloatFloat;
+  case Intrinsic::nvvm_tex_unified_1d_level_v4f32_f32:
+    return NVPTXISD::TexUnified1DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4f32_f32:
+    return NVPTXISD::TexUnified1DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_unified_1d_v4s32_s32:
+    return NVPTXISD::TexUnified1DS32S32;
+  case Intrinsic::nvvm_tex_unified_1d_v4s32_f32:
+    return NVPTXISD::TexUnified1DS32Float;
+  case Intrinsic::nvvm_tex_unified_1d_level_v4s32_f32:
+    return NVPTXISD::TexUnified1DS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4s32_f32:
+    return NVPTXISD::TexUnified1DS32FloatGrad;
+  case Intrinsic::nvvm_tex_unified_1d_v4u32_s32:
+    return NVPTXISD::TexUnified1DU32S32;
+  case Intrinsic::nvvm_tex_unified_1d_v4u32_f32:
+    return NVPTXISD::TexUnified1DU32Float;
+  case Intrinsic::nvvm_tex_unified_1d_level_v4u32_f32:
+    return NVPTXISD::TexUnified1DU32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4u32_f32:
+    return NVPTXISD::TexUnified1DU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_unified_1d_array_v4f32_s32:
+    return NVPTXISD::TexUnified1DArrayFloatS32;
+  case Intrinsic::nvvm_tex_unified_1d_array_v4f32_f32:
+    return NVPTXISD::TexUnified1DArrayFloatFloat;
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4f32_f32:
+    return NVPTXISD::TexUnified1DArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4f32_f32:
+    return NVPTXISD::TexUnified1DArrayFloatFloatGrad;
+  case Intrinsic::nvvm_tex_unified_1d_array_v4s32_s32:
+    return NVPTXISD::TexUnified1DArrayS32S32;
+  case Intrinsic::nvvm_tex_unified_1d_array_v4s32_f32:
+    return NVPTXISD::TexUnified1DArrayS32Float;
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4s32_f32:
+    return NVPTXISD::TexUnified1DArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4s32_f32:
+    return NVPTXISD::TexUnified1DArrayS32FloatGrad;
+  case Intrinsic::nvvm_tex_unified_1d_array_v4u32_s32:
+    return NVPTXISD::TexUnified1DArrayU32S32;
+  case Intrinsic::nvvm_tex_unified_1d_array_v4u32_f32:
+    return NVPTXISD::TexUnified1DArrayU32Float;
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4u32_f32:
+    return NVPTXISD::TexUnified1DArrayU32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4u32_f32:
+    return NVPTXISD::TexUnified1DArrayU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_unified_2d_v4f32_s32:
+    return NVPTXISD::TexUnified2DFloatS32;
+  case Intrinsic::nvvm_tex_unified_2d_v4f32_f32:
+    return NVPTXISD::TexUnified2DFloatFloat;
+  case Intrinsic::nvvm_tex_unified_2d_level_v4f32_f32:
+    return NVPTXISD::TexUnified2DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4f32_f32:
+    return NVPTXISD::TexUnified2DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_unified_2d_v4s32_s32:
+    return NVPTXISD::TexUnified2DS32S32;
+  case Intrinsic::nvvm_tex_unified_2d_v4s32_f32:
+    return NVPTXISD::TexUnified2DS32Float;
+  case Intrinsic::nvvm_tex_unified_2d_level_v4s32_f32:
+    return NVPTXISD::TexUnified2DS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4s32_f32:
+    return NVPTXISD::TexUnified2DS32FloatGrad;
+  case Intrinsic::nvvm_tex_unified_2d_v4u32_s32:
+    return NVPTXISD::TexUnified2DU32S32;
+  case Intrinsic::nvvm_tex_unified_2d_v4u32_f32:
+    return NVPTXISD::TexUnified2DU32Float;
+  case Intrinsic::nvvm_tex_unified_2d_level_v4u32_f32:
+    return NVPTXISD::TexUnified2DU32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4u32_f32:
+    return NVPTXISD::TexUnified2DU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_unified_2d_array_v4f32_s32:
+    return NVPTXISD::TexUnified2DArrayFloatS32;
+  case Intrinsic::nvvm_tex_unified_2d_array_v4f32_f32:
+    return NVPTXISD::TexUnified2DArrayFloatFloat;
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4f32_f32:
+    return NVPTXISD::TexUnified2DArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4f32_f32:
+    return NVPTXISD::TexUnified2DArrayFloatFloatGrad;
+  case Intrinsic::nvvm_tex_unified_2d_array_v4s32_s32:
+    return NVPTXISD::TexUnified2DArrayS32S32;
+  case Intrinsic::nvvm_tex_unified_2d_array_v4s32_f32:
+    return NVPTXISD::TexUnified2DArrayS32Float;
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4s32_f32:
+    return NVPTXISD::TexUnified2DArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4s32_f32:
+    return NVPTXISD::TexUnified2DArrayS32FloatGrad;
+  case Intrinsic::nvvm_tex_unified_2d_array_v4u32_s32:
+    return NVPTXISD::TexUnified2DArrayU32S32;
+  case Intrinsic::nvvm_tex_unified_2d_array_v4u32_f32:
+    return NVPTXISD::TexUnified2DArrayU32Float;
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4u32_f32:
+    return NVPTXISD::TexUnified2DArrayU32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4u32_f32:
+    return NVPTXISD::TexUnified2DArrayU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_unified_3d_v4f32_s32:
+    return NVPTXISD::TexUnified3DFloatS32;
+  case Intrinsic::nvvm_tex_unified_3d_v4f32_f32:
+    return NVPTXISD::TexUnified3DFloatFloat;
+  case Intrinsic::nvvm_tex_unified_3d_level_v4f32_f32:
+    return NVPTXISD::TexUnified3DFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4f32_f32:
+    return NVPTXISD::TexUnified3DFloatFloatGrad;
+  case Intrinsic::nvvm_tex_unified_3d_v4s32_s32:
+    return NVPTXISD::TexUnified3DS32S32;
+  case Intrinsic::nvvm_tex_unified_3d_v4s32_f32:
+    return NVPTXISD::TexUnified3DS32Float;
+  case Intrinsic::nvvm_tex_unified_3d_level_v4s32_f32:
+    return NVPTXISD::TexUnified3DS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4s32_f32:
+    return NVPTXISD::TexUnified3DS32FloatGrad;
+  case Intrinsic::nvvm_tex_unified_3d_v4u32_s32:
+    return NVPTXISD::TexUnified3DU32S32;
+  case Intrinsic::nvvm_tex_unified_3d_v4u32_f32:
+    return NVPTXISD::TexUnified3DU32Float;
+  case Intrinsic::nvvm_tex_unified_3d_level_v4u32_f32:
+    return NVPTXISD::TexUnified3DU32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4u32_f32:
+    return NVPTXISD::TexUnified3DU32FloatGrad;
+
+  case Intrinsic::nvvm_tex_unified_cube_v4f32_f32:
+    return NVPTXISD::TexUnifiedCubeFloatFloat;
+  case Intrinsic::nvvm_tex_unified_cube_level_v4f32_f32:
+    return NVPTXISD::TexUnifiedCubeFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_cube_v4s32_f32:
+    return NVPTXISD::TexUnifiedCubeS32Float;
+  case Intrinsic::nvvm_tex_unified_cube_level_v4s32_f32:
+    return NVPTXISD::TexUnifiedCubeS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_cube_v4u32_f32:
+    return NVPTXISD::TexUnifiedCubeU32Float;
+  case Intrinsic::nvvm_tex_unified_cube_level_v4u32_f32:
+    return NVPTXISD::TexUnifiedCubeU32FloatLevel;
+
+  case Intrinsic::nvvm_tex_unified_cube_array_v4f32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayFloatFloat;
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4f32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayFloatFloatLevel;
+  case Intrinsic::nvvm_tex_unified_cube_array_v4s32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayS32Float;
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4s32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayS32FloatLevel;
+  case Intrinsic::nvvm_tex_unified_cube_array_v4u32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayU32Float;
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4u32_f32:
+    return NVPTXISD::TexUnifiedCubeArrayU32FloatLevel;
+
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4f32_f32:
+    return NVPTXISD::Tld4UnifiedR2DFloatFloat;
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4f32_f32:
+    return NVPTXISD::Tld4UnifiedG2DFloatFloat;
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4f32_f32:
+    return NVPTXISD::Tld4UnifiedB2DFloatFloat;
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4f32_f32:
+    return NVPTXISD::Tld4UnifiedA2DFloatFloat;
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4s32_f32:
+    return NVPTXISD::Tld4UnifiedR2DS64Float;
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4s32_f32:
+    return NVPTXISD::Tld4UnifiedG2DS64Float;
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4s32_f32:
+    return NVPTXISD::Tld4UnifiedB2DS64Float;
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4s32_f32:
+    return NVPTXISD::Tld4UnifiedA2DS64Float;
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4u32_f32:
+    return NVPTXISD::Tld4UnifiedR2DU64Float;
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4u32_f32:
+    return NVPTXISD::Tld4UnifiedG2DU64Float;
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4u32_f32:
+    return NVPTXISD::Tld4UnifiedB2DU64Float;
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4u32_f32:
+    return NVPTXISD::Tld4UnifiedA2DU64Float;
   }
 }
 
@@ -2236,18 +2877,132 @@ static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
   switch (Intrinsic) {
   default:
     return 0;
+  case Intrinsic::nvvm_suld_1d_i8_clamp:
+    return NVPTXISD::Suld1DI8Clamp;
+  case Intrinsic::nvvm_suld_1d_i16_clamp:
+    return NVPTXISD::Suld1DI16Clamp;
+  case Intrinsic::nvvm_suld_1d_i32_clamp:
+    return NVPTXISD::Suld1DI32Clamp;
+  case Intrinsic::nvvm_suld_1d_i64_clamp:
+    return NVPTXISD::Suld1DI64Clamp;
+  case Intrinsic::nvvm_suld_1d_v2i8_clamp:
+    return NVPTXISD::Suld1DV2I8Clamp;
+  case Intrinsic::nvvm_suld_1d_v2i16_clamp:
+    return NVPTXISD::Suld1DV2I16Clamp;
+  case Intrinsic::nvvm_suld_1d_v2i32_clamp:
+    return NVPTXISD::Suld1DV2I32Clamp;
+  case Intrinsic::nvvm_suld_1d_v2i64_clamp:
+    return NVPTXISD::Suld1DV2I64Clamp;
+  case Intrinsic::nvvm_suld_1d_v4i8_clamp:
+    return NVPTXISD::Suld1DV4I8Clamp;
+  case Intrinsic::nvvm_suld_1d_v4i16_clamp:
+    return NVPTXISD::Suld1DV4I16Clamp;
+  case Intrinsic::nvvm_suld_1d_v4i32_clamp:
+    return NVPTXISD::Suld1DV4I32Clamp;
+  case Intrinsic::nvvm_suld_1d_array_i8_clamp:
+    return NVPTXISD::Suld1DArrayI8Clamp;
+  case Intrinsic::nvvm_suld_1d_array_i16_clamp:
+    return NVPTXISD::Suld1DArrayI16Clamp;
+  case Intrinsic::nvvm_suld_1d_array_i32_clamp:
+    return NVPTXISD::Suld1DArrayI32Clamp;
+  case Intrinsic::nvvm_suld_1d_array_i64_clamp:
+    return NVPTXISD::Suld1DArrayI64Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v2i8_clamp:
+    return NVPTXISD::Suld1DArrayV2I8Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v2i16_clamp:
+    return NVPTXISD::Suld1DArrayV2I16Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v2i32_clamp:
+    return NVPTXISD::Suld1DArrayV2I32Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v2i64_clamp:
+    return NVPTXISD::Suld1DArrayV2I64Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v4i8_clamp:
+    return NVPTXISD::Suld1DArrayV4I8Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v4i16_clamp:
+    return NVPTXISD::Suld1DArrayV4I16Clamp;
+  case Intrinsic::nvvm_suld_1d_array_v4i32_clamp:
+    return NVPTXISD::Suld1DArrayV4I32Clamp;
+  case Intrinsic::nvvm_suld_2d_i8_clamp:
+    return NVPTXISD::Suld2DI8Clamp;
+  case Intrinsic::nvvm_suld_2d_i16_clamp:
+    return NVPTXISD::Suld2DI16Clamp;
+  case Intrinsic::nvvm_suld_2d_i32_clamp:
+    return NVPTXISD::Suld2DI32Clamp;
+  case Intrinsic::nvvm_suld_2d_i64_clamp:
+    return NVPTXISD::Suld2DI64Clamp;
+  case Intrinsic::nvvm_suld_2d_v2i8_clamp:
+    return NVPTXISD::Suld2DV2I8Clamp;
+  case Intrinsic::nvvm_suld_2d_v2i16_clamp:
+    return NVPTXISD::Suld2DV2I16Clamp;
+  case Intrinsic::nvvm_suld_2d_v2i32_clamp:
+    return NVPTXISD::Suld2DV2I32Clamp;
+  case Intrinsic::nvvm_suld_2d_v2i64_clamp:
+    return NVPTXISD::Suld2DV2I64Clamp;
+  case Intrinsic::nvvm_suld_2d_v4i8_clamp:
+    return NVPTXISD::Suld2DV4I8Clamp;
+  case Intrinsic::nvvm_suld_2d_v4i16_clamp:
+    return NVPTXISD::Suld2DV4I16Clamp;
+  case Intrinsic::nvvm_suld_2d_v4i32_clamp:
+    return NVPTXISD::Suld2DV4I32Clamp;
+  case Intrinsic::nvvm_suld_2d_array_i8_clamp:
+    return NVPTXISD::Suld2DArrayI8Clamp;
+  case Intrinsic::nvvm_suld_2d_array_i16_clamp:
+    return NVPTXISD::Suld2DArrayI16Clamp;
+  case Intrinsic::nvvm_suld_2d_array_i32_clamp:
+    return NVPTXISD::Suld2DArrayI32Clamp;
+  case Intrinsic::nvvm_suld_2d_array_i64_clamp:
+    return NVPTXISD::Suld2DArrayI64Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v2i8_clamp:
+    return NVPTXISD::Suld2DArrayV2I8Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v2i16_clamp:
+    return NVPTXISD::Suld2DArrayV2I16Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v2i32_clamp:
+    return NVPTXISD::Suld2DArrayV2I32Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v2i64_clamp:
+    return NVPTXISD::Suld2DArrayV2I64Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v4i8_clamp:
+    return NVPTXISD::Suld2DArrayV4I8Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v4i16_clamp:
+    return NVPTXISD::Suld2DArrayV4I16Clamp;
+  case Intrinsic::nvvm_suld_2d_array_v4i32_clamp:
+    return NVPTXISD::Suld2DArrayV4I32Clamp;
+  case Intrinsic::nvvm_suld_3d_i8_clamp:
+    return NVPTXISD::Suld3DI8Clamp;
+  case Intrinsic::nvvm_suld_3d_i16_clamp:
+    return NVPTXISD::Suld3DI16Clamp;
+  case Intrinsic::nvvm_suld_3d_i32_clamp:
+    return NVPTXISD::Suld3DI32Clamp;
+  case Intrinsic::nvvm_suld_3d_i64_clamp:
+    return NVPTXISD::Suld3DI64Clamp;
+  case Intrinsic::nvvm_suld_3d_v2i8_clamp:
+    return NVPTXISD::Suld3DV2I8Clamp;
+  case Intrinsic::nvvm_suld_3d_v2i16_clamp:
+    return NVPTXISD::Suld3DV2I16Clamp;
+  case Intrinsic::nvvm_suld_3d_v2i32_clamp:
+    return NVPTXISD::Suld3DV2I32Clamp;
+  case Intrinsic::nvvm_suld_3d_v2i64_clamp:
+    return NVPTXISD::Suld3DV2I64Clamp;
+  case Intrinsic::nvvm_suld_3d_v4i8_clamp:
+    return NVPTXISD::Suld3DV4I8Clamp;
+  case Intrinsic::nvvm_suld_3d_v4i16_clamp:
+    return NVPTXISD::Suld3DV4I16Clamp;
+  case Intrinsic::nvvm_suld_3d_v4i32_clamp:
+    return NVPTXISD::Suld3DV4I32Clamp;
   case Intrinsic::nvvm_suld_1d_i8_trap:
     return NVPTXISD::Suld1DI8Trap;
   case Intrinsic::nvvm_suld_1d_i16_trap:
     return NVPTXISD::Suld1DI16Trap;
   case Intrinsic::nvvm_suld_1d_i32_trap:
     return NVPTXISD::Suld1DI32Trap;
+  case Intrinsic::nvvm_suld_1d_i64_trap:
+    return NVPTXISD::Suld1DI64Trap;
   case Intrinsic::nvvm_suld_1d_v2i8_trap:
     return NVPTXISD::Suld1DV2I8Trap;
   case Intrinsic::nvvm_suld_1d_v2i16_trap:
     return NVPTXISD::Suld1DV2I16Trap;
   case Intrinsic::nvvm_suld_1d_v2i32_trap:
     return NVPTXISD::Suld1DV2I32Trap;
+  case Intrinsic::nvvm_suld_1d_v2i64_trap:
+    return NVPTXISD::Suld1DV2I64Trap;
   case Intrinsic::nvvm_suld_1d_v4i8_trap:
     return NVPTXISD::Suld1DV4I8Trap;
   case Intrinsic::nvvm_suld_1d_v4i16_trap:
@@ -2260,12 +3015,16 @@ static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
     return NVPTXISD::Suld1DArrayI16Trap;
   case Intrinsic::nvvm_suld_1d_array_i32_trap:
     return NVPTXISD::Suld1DArrayI32Trap;
+  case Intrinsic::nvvm_suld_1d_array_i64_trap:
+    return NVPTXISD::Suld1DArrayI64Trap;
   case Intrinsic::nvvm_suld_1d_array_v2i8_trap:
     return NVPTXISD::Suld1DArrayV2I8Trap;
   case Intrinsic::nvvm_suld_1d_array_v2i16_trap:
     return NVPTXISD::Suld1DArrayV2I16Trap;
   case Intrinsic::nvvm_suld_1d_array_v2i32_trap:
     return NVPTXISD::Suld1DArrayV2I32Trap;
+  case Intrinsic::nvvm_suld_1d_array_v2i64_trap:
+    return NVPTXISD::Suld1DArrayV2I64Trap;
   case Intrinsic::nvvm_suld_1d_array_v4i8_trap:
     return NVPTXISD::Suld1DArrayV4I8Trap;
   case Intrinsic::nvvm_suld_1d_array_v4i16_trap:
@@ -2278,12 +3037,16 @@ static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
     return NVPTXISD::Suld2DI16Trap;
   case Intrinsic::nvvm_suld_2d_i32_trap:
     return NVPTXISD::Suld2DI32Trap;
+  case Intrinsic::nvvm_suld_2d_i64_trap:
+    return NVPTXISD::Suld2DI64Trap;
   case Intrinsic::nvvm_suld_2d_v2i8_trap:
     return NVPTXISD::Suld2DV2I8Trap;
   case Intrinsic::nvvm_suld_2d_v2i16_trap:
     return NVPTXISD::Suld2DV2I16Trap;
   case Intrinsic::nvvm_suld_2d_v2i32_trap:
     return NVPTXISD::Suld2DV2I32Trap;
+  case Intrinsic::nvvm_suld_2d_v2i64_trap:
+    return NVPTXISD::Suld2DV2I64Trap;
   case Intrinsic::nvvm_suld_2d_v4i8_trap:
     return NVPTXISD::Suld2DV4I8Trap;
   case Intrinsic::nvvm_suld_2d_v4i16_trap:
@@ -2296,12 +3059,16 @@ static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
     return NVPTXISD::Suld2DArrayI16Trap;
   case Intrinsic::nvvm_suld_2d_array_i32_trap:
     return NVPTXISD::Suld2DArrayI32Trap;
+  case Intrinsic::nvvm_suld_2d_array_i64_trap:
+    return NVPTXISD::Suld2DArrayI64Trap;
   case Intrinsic::nvvm_suld_2d_array_v2i8_trap:
     return NVPTXISD::Suld2DArrayV2I8Trap;
   case Intrinsic::nvvm_suld_2d_array_v2i16_trap:
     return NVPTXISD::Suld2DArrayV2I16Trap;
   case Intrinsic::nvvm_suld_2d_array_v2i32_trap:
     return NVPTXISD::Suld2DArrayV2I32Trap;
+  case Intrinsic::nvvm_suld_2d_array_v2i64_trap:
+    return NVPTXISD::Suld2DArrayV2I64Trap;
   case Intrinsic::nvvm_suld_2d_array_v4i8_trap:
     return NVPTXISD::Suld2DArrayV4I8Trap;
   case Intrinsic::nvvm_suld_2d_array_v4i16_trap:
@@ -2314,18 +3081,132 @@ static unsigned getOpcForSurfaceInstr(unsigned Intrinsic) {
     return NVPTXISD::Suld3DI16Trap;
   case Intrinsic::nvvm_suld_3d_i32_trap:
     return NVPTXISD::Suld3DI32Trap;
+  case Intrinsic::nvvm_suld_3d_i64_trap:
+    return NVPTXISD::Suld3DI64Trap;
   case Intrinsic::nvvm_suld_3d_v2i8_trap:
     return NVPTXISD::Suld3DV2I8Trap;
   case Intrinsic::nvvm_suld_3d_v2i16_trap:
     return NVPTXISD::Suld3DV2I16Trap;
   case Intrinsic::nvvm_suld_3d_v2i32_trap:
     return NVPTXISD::Suld3DV2I32Trap;
+  case Intrinsic::nvvm_suld_3d_v2i64_trap:
+    return NVPTXISD::Suld3DV2I64Trap;
   case Intrinsic::nvvm_suld_3d_v4i8_trap:
     return NVPTXISD::Suld3DV4I8Trap;
   case Intrinsic::nvvm_suld_3d_v4i16_trap:
     return NVPTXISD::Suld3DV4I16Trap;
   case Intrinsic::nvvm_suld_3d_v4i32_trap:
     return NVPTXISD::Suld3DV4I32Trap;
+  case Intrinsic::nvvm_suld_1d_i8_zero:
+    return NVPTXISD::Suld1DI8Zero;
+  case Intrinsic::nvvm_suld_1d_i16_zero:
+    return NVPTXISD::Suld1DI16Zero;
+  case Intrinsic::nvvm_suld_1d_i32_zero:
+    return NVPTXISD::Suld1DI32Zero;
+  case Intrinsic::nvvm_suld_1d_i64_zero:
+    return NVPTXISD::Suld1DI64Zero;
+  case Intrinsic::nvvm_suld_1d_v2i8_zero:
+    return NVPTXISD::Suld1DV2I8Zero;
+  case Intrinsic::nvvm_suld_1d_v2i16_zero:
+    return NVPTXISD::Suld1DV2I16Zero;
+  case Intrinsic::nvvm_suld_1d_v2i32_zero:
+    return NVPTXISD::Suld1DV2I32Zero;
+  case Intrinsic::nvvm_suld_1d_v2i64_zero:
+    return NVPTXISD::Suld1DV2I64Zero;
+  case Intrinsic::nvvm_suld_1d_v4i8_zero:
+    return NVPTXISD::Suld1DV4I8Zero;
+  case Intrinsic::nvvm_suld_1d_v4i16_zero:
+    return NVPTXISD::Suld1DV4I16Zero;
+  case Intrinsic::nvvm_suld_1d_v4i32_zero:
+    return NVPTXISD::Suld1DV4I32Zero;
+  case Intrinsic::nvvm_suld_1d_array_i8_zero:
+    return NVPTXISD::Suld1DArrayI8Zero;
+  case Intrinsic::nvvm_suld_1d_array_i16_zero:
+    return NVPTXISD::Suld1DArrayI16Zero;
+  case Intrinsic::nvvm_suld_1d_array_i32_zero:
+    return NVPTXISD::Suld1DArrayI32Zero;
+  case Intrinsic::nvvm_suld_1d_array_i64_zero:
+    return NVPTXISD::Suld1DArrayI64Zero;
+  case Intrinsic::nvvm_suld_1d_array_v2i8_zero:
+    return NVPTXISD::Suld1DArrayV2I8Zero;
+  case Intrinsic::nvvm_suld_1d_array_v2i16_zero:
+    return NVPTXISD::Suld1DArrayV2I16Zero;
+  case Intrinsic::nvvm_suld_1d_array_v2i32_zero:
+    return NVPTXISD::Suld1DArrayV2I32Zero;
+  case Intrinsic::nvvm_suld_1d_array_v2i64_zero:
+    return NVPTXISD::Suld1DArrayV2I64Zero;
+  case Intrinsic::nvvm_suld_1d_array_v4i8_zero:
+    return NVPTXISD::Suld1DArrayV4I8Zero;
+  case Intrinsic::nvvm_suld_1d_array_v4i16_zero:
+    return NVPTXISD::Suld1DArrayV4I16Zero;
+  case Intrinsic::nvvm_suld_1d_array_v4i32_zero:
+    return NVPTXISD::Suld1DArrayV4I32Zero;
+  case Intrinsic::nvvm_suld_2d_i8_zero:
+    return NVPTXISD::Suld2DI8Zero;
+  case Intrinsic::nvvm_suld_2d_i16_zero:
+    return NVPTXISD::Suld2DI16Zero;
+  case Intrinsic::nvvm_suld_2d_i32_zero:
+    return NVPTXISD::Suld2DI32Zero;
+  case Intrinsic::nvvm_suld_2d_i64_zero:
+    return NVPTXISD::Suld2DI64Zero;
+  case Intrinsic::nvvm_suld_2d_v2i8_zero:
+    return NVPTXISD::Suld2DV2I8Zero;
+  case Intrinsic::nvvm_suld_2d_v2i16_zero:
+    return NVPTXISD::Suld2DV2I16Zero;
+  case Intrinsic::nvvm_suld_2d_v2i32_zero:
+    return NVPTXISD::Suld2DV2I32Zero;
+  case Intrinsic::nvvm_suld_2d_v2i64_zero:
+    return NVPTXISD::Suld2DV2I64Zero;
+  case Intrinsic::nvvm_suld_2d_v4i8_zero:
+    return NVPTXISD::Suld2DV4I8Zero;
+  case Intrinsic::nvvm_suld_2d_v4i16_zero:
+    return NVPTXISD::Suld2DV4I16Zero;
+  case Intrinsic::nvvm_suld_2d_v4i32_zero:
+    return NVPTXISD::Suld2DV4I32Zero;
+  case Intrinsic::nvvm_suld_2d_array_i8_zero:
+    return NVPTXISD::Suld2DArrayI8Zero;
+  case Intrinsic::nvvm_suld_2d_array_i16_zero:
+    return NVPTXISD::Suld2DArrayI16Zero;
+  case Intrinsic::nvvm_suld_2d_array_i32_zero:
+    return NVPTXISD::Suld2DArrayI32Zero;
+  case Intrinsic::nvvm_suld_2d_array_i64_zero:
+    return NVPTXISD::Suld2DArrayI64Zero;
+  case Intrinsic::nvvm_suld_2d_array_v2i8_zero:
+    return NVPTXISD::Suld2DArrayV2I8Zero;
+  case Intrinsic::nvvm_suld_2d_array_v2i16_zero:
+    return NVPTXISD::Suld2DArrayV2I16Zero;
+  case Intrinsic::nvvm_suld_2d_array_v2i32_zero:
+    return NVPTXISD::Suld2DArrayV2I32Zero;
+  case Intrinsic::nvvm_suld_2d_array_v2i64_zero:
+    return NVPTXISD::Suld2DArrayV2I64Zero;
+  case Intrinsic::nvvm_suld_2d_array_v4i8_zero:
+    return NVPTXISD::Suld2DArrayV4I8Zero;
+  case Intrinsic::nvvm_suld_2d_array_v4i16_zero:
+    return NVPTXISD::Suld2DArrayV4I16Zero;
+  case Intrinsic::nvvm_suld_2d_array_v4i32_zero:
+    return NVPTXISD::Suld2DArrayV4I32Zero;
+  case Intrinsic::nvvm_suld_3d_i8_zero:
+    return NVPTXISD::Suld3DI8Zero;
+  case Intrinsic::nvvm_suld_3d_i16_zero:
+    return NVPTXISD::Suld3DI16Zero;
+  case Intrinsic::nvvm_suld_3d_i32_zero:
+    return NVPTXISD::Suld3DI32Zero;
+  case Intrinsic::nvvm_suld_3d_i64_zero:
+    return NVPTXISD::Suld3DI64Zero;
+  case Intrinsic::nvvm_suld_3d_v2i8_zero:
+    return NVPTXISD::Suld3DV2I8Zero;
+  case Intrinsic::nvvm_suld_3d_v2i16_zero:
+    return NVPTXISD::Suld3DV2I16Zero;
+  case Intrinsic::nvvm_suld_3d_v2i32_zero:
+    return NVPTXISD::Suld3DV2I32Zero;
+  case Intrinsic::nvvm_suld_3d_v2i64_zero:
+    return NVPTXISD::Suld3DV2I64Zero;
+  case Intrinsic::nvvm_suld_3d_v4i8_zero:
+    return NVPTXISD::Suld3DV4I8Zero;
+  case Intrinsic::nvvm_suld_3d_v4i16_zero:
+    return NVPTXISD::Suld3DV4I16Zero;
+  case Intrinsic::nvvm_suld_3d_v4i32_zero:
+    return NVPTXISD::Suld3DV4I32Zero;
   }
 }
 
@@ -2422,28 +3303,64 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     return true;
   }
 
-  case Intrinsic::nvvm_tex_1d_v4f32_i32:
+  case Intrinsic::nvvm_tex_1d_v4f32_s32:
   case Intrinsic::nvvm_tex_1d_v4f32_f32:
   case Intrinsic::nvvm_tex_1d_level_v4f32_f32:
   case Intrinsic::nvvm_tex_1d_grad_v4f32_f32:
-  case Intrinsic::nvvm_tex_1d_array_v4f32_i32:
+  case Intrinsic::nvvm_tex_1d_array_v4f32_s32:
   case Intrinsic::nvvm_tex_1d_array_v4f32_f32:
   case Intrinsic::nvvm_tex_1d_array_level_v4f32_f32:
   case Intrinsic::nvvm_tex_1d_array_grad_v4f32_f32:
-  case Intrinsic::nvvm_tex_2d_v4f32_i32:
+  case Intrinsic::nvvm_tex_2d_v4f32_s32:
   case Intrinsic::nvvm_tex_2d_v4f32_f32:
   case Intrinsic::nvvm_tex_2d_level_v4f32_f32:
   case Intrinsic::nvvm_tex_2d_grad_v4f32_f32:
-  case Intrinsic::nvvm_tex_2d_array_v4f32_i32:
+  case Intrinsic::nvvm_tex_2d_array_v4f32_s32:
   case Intrinsic::nvvm_tex_2d_array_v4f32_f32:
   case Intrinsic::nvvm_tex_2d_array_level_v4f32_f32:
   case Intrinsic::nvvm_tex_2d_array_grad_v4f32_f32:
-  case Intrinsic::nvvm_tex_3d_v4f32_i32:
+  case Intrinsic::nvvm_tex_3d_v4f32_s32:
   case Intrinsic::nvvm_tex_3d_v4f32_f32:
   case Intrinsic::nvvm_tex_3d_level_v4f32_f32:
-  case Intrinsic::nvvm_tex_3d_grad_v4f32_f32: {
+  case Intrinsic::nvvm_tex_3d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_cube_v4f32_f32:
+  case Intrinsic::nvvm_tex_cube_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_cube_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_cube_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tld4_r_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_g_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_b_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_a_2d_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_v4f32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4f32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_v4f32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4f32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_v4f32_s32:
+  case Intrinsic::nvvm_tex_unified_3d_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_level_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_v4f32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4f32_f32:
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4f32_f32:
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4f32_f32: {
     Info.opc = getOpcForTextureInstr(Intrinsic);
-    Info.memVT = MVT::f32;
+    Info.memVT = MVT::v4f32;
     Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
@@ -2452,28 +3369,120 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.align = 16;
     return true;
   }
-  case Intrinsic::nvvm_tex_1d_v4i32_i32:
-  case Intrinsic::nvvm_tex_1d_v4i32_f32:
-  case Intrinsic::nvvm_tex_1d_level_v4i32_f32:
-  case Intrinsic::nvvm_tex_1d_grad_v4i32_f32:
-  case Intrinsic::nvvm_tex_1d_array_v4i32_i32:
-  case Intrinsic::nvvm_tex_1d_array_v4i32_f32:
-  case Intrinsic::nvvm_tex_1d_array_level_v4i32_f32:
-  case Intrinsic::nvvm_tex_1d_array_grad_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_v4i32_i32:
-  case Intrinsic::nvvm_tex_2d_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_level_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_grad_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_array_v4i32_i32:
-  case Intrinsic::nvvm_tex_2d_array_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_array_level_v4i32_f32:
-  case Intrinsic::nvvm_tex_2d_array_grad_v4i32_f32:
-  case Intrinsic::nvvm_tex_3d_v4i32_i32:
-  case Intrinsic::nvvm_tex_3d_v4i32_f32:
-  case Intrinsic::nvvm_tex_3d_level_v4i32_f32:
-  case Intrinsic::nvvm_tex_3d_grad_v4i32_f32: {
+  case Intrinsic::nvvm_tex_1d_v4s32_s32:
+  case Intrinsic::nvvm_tex_1d_v4s32_f32:
+  case Intrinsic::nvvm_tex_1d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_1d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_1d_array_v4s32_s32:
+  case Intrinsic::nvvm_tex_1d_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_1d_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_1d_array_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_v4s32_s32:
+  case Intrinsic::nvvm_tex_2d_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_array_v4s32_s32:
+  case Intrinsic::nvvm_tex_2d_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_2d_array_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_3d_v4s32_s32:
+  case Intrinsic::nvvm_tex_3d_v4s32_f32:
+  case Intrinsic::nvvm_tex_3d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_3d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_cube_v4s32_f32:
+  case Intrinsic::nvvm_tex_cube_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_cube_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_cube_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_cube_v4u32_f32:
+  case Intrinsic::nvvm_tex_cube_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_cube_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_cube_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_v4u32_s32:
+  case Intrinsic::nvvm_tex_1d_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_array_v4u32_s32:
+  case Intrinsic::nvvm_tex_1d_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_1d_array_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_v4u32_s32:
+  case Intrinsic::nvvm_tex_2d_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_array_v4u32_s32:
+  case Intrinsic::nvvm_tex_2d_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_2d_array_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_3d_v4u32_s32:
+  case Intrinsic::nvvm_tex_3d_v4u32_f32:
+  case Intrinsic::nvvm_tex_3d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_3d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tld4_r_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_g_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_b_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_a_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_r_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_g_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_b_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_a_2d_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_v4s32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4s32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_v4s32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4s32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_v4s32_s32:
+  case Intrinsic::nvvm_tex_unified_3d_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_v4u32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4u32_s32:
+  case Intrinsic::nvvm_tex_unified_1d_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_1d_array_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_v4u32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4u32_s32:
+  case Intrinsic::nvvm_tex_unified_2d_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_2d_array_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_v4u32_s32:
+  case Intrinsic::nvvm_tex_unified_3d_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_3d_grad_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4s32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_level_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_v4u32_f32:
+  case Intrinsic::nvvm_tex_unified_cube_array_level_v4u32_f32:
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4s32_f32:
+  case Intrinsic::nvvm_tld4_unified_r_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_unified_g_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_unified_b_2d_v4u32_f32:
+  case Intrinsic::nvvm_tld4_unified_a_2d_v4u32_f32: {
     Info.opc = getOpcForTextureInstr(Intrinsic);
-    Info.memVT = MVT::i32;
+    Info.memVT = MVT::v4i32;
     Info.ptrVal = nullptr;
     Info.offset = 0;
     Info.vol = 0;
@@ -2482,6 +3491,21 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.align = 16;
     return true;
   }
+  case Intrinsic::nvvm_suld_1d_i8_clamp:
+  case Intrinsic::nvvm_suld_1d_v2i8_clamp:
+  case Intrinsic::nvvm_suld_1d_v4i8_clamp:
+  case Intrinsic::nvvm_suld_1d_array_i8_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v2i8_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v4i8_clamp:
+  case Intrinsic::nvvm_suld_2d_i8_clamp:
+  case Intrinsic::nvvm_suld_2d_v2i8_clamp:
+  case Intrinsic::nvvm_suld_2d_v4i8_clamp:
+  case Intrinsic::nvvm_suld_2d_array_i8_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v2i8_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v4i8_clamp:
+  case Intrinsic::nvvm_suld_3d_i8_clamp:
+  case Intrinsic::nvvm_suld_3d_v2i8_clamp:
+  case Intrinsic::nvvm_suld_3d_v4i8_clamp:
   case Intrinsic::nvvm_suld_1d_i8_trap:
   case Intrinsic::nvvm_suld_1d_v2i8_trap:
   case Intrinsic::nvvm_suld_1d_v4i8_trap:
@@ -2496,7 +3520,22 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_2d_array_v4i8_trap:
   case Intrinsic::nvvm_suld_3d_i8_trap:
   case Intrinsic::nvvm_suld_3d_v2i8_trap:
-  case Intrinsic::nvvm_suld_3d_v4i8_trap: {
+  case Intrinsic::nvvm_suld_3d_v4i8_trap:
+  case Intrinsic::nvvm_suld_1d_i8_zero:
+  case Intrinsic::nvvm_suld_1d_v2i8_zero:
+  case Intrinsic::nvvm_suld_1d_v4i8_zero:
+  case Intrinsic::nvvm_suld_1d_array_i8_zero:
+  case Intrinsic::nvvm_suld_1d_array_v2i8_zero:
+  case Intrinsic::nvvm_suld_1d_array_v4i8_zero:
+  case Intrinsic::nvvm_suld_2d_i8_zero:
+  case Intrinsic::nvvm_suld_2d_v2i8_zero:
+  case Intrinsic::nvvm_suld_2d_v4i8_zero:
+  case Intrinsic::nvvm_suld_2d_array_i8_zero:
+  case Intrinsic::nvvm_suld_2d_array_v2i8_zero:
+  case Intrinsic::nvvm_suld_2d_array_v4i8_zero:
+  case Intrinsic::nvvm_suld_3d_i8_zero:
+  case Intrinsic::nvvm_suld_3d_v2i8_zero:
+  case Intrinsic::nvvm_suld_3d_v4i8_zero: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i8;
     Info.ptrVal = nullptr;
@@ -2507,6 +3546,21 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.align = 16;
     return true;
   }
+  case Intrinsic::nvvm_suld_1d_i16_clamp:
+  case Intrinsic::nvvm_suld_1d_v2i16_clamp:
+  case Intrinsic::nvvm_suld_1d_v4i16_clamp:
+  case Intrinsic::nvvm_suld_1d_array_i16_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v2i16_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v4i16_clamp:
+  case Intrinsic::nvvm_suld_2d_i16_clamp:
+  case Intrinsic::nvvm_suld_2d_v2i16_clamp:
+  case Intrinsic::nvvm_suld_2d_v4i16_clamp:
+  case Intrinsic::nvvm_suld_2d_array_i16_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v2i16_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v4i16_clamp:
+  case Intrinsic::nvvm_suld_3d_i16_clamp:
+  case Intrinsic::nvvm_suld_3d_v2i16_clamp:
+  case Intrinsic::nvvm_suld_3d_v4i16_clamp:
   case Intrinsic::nvvm_suld_1d_i16_trap:
   case Intrinsic::nvvm_suld_1d_v2i16_trap:
   case Intrinsic::nvvm_suld_1d_v4i16_trap:
@@ -2521,7 +3575,22 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_2d_array_v4i16_trap:
   case Intrinsic::nvvm_suld_3d_i16_trap:
   case Intrinsic::nvvm_suld_3d_v2i16_trap:
-  case Intrinsic::nvvm_suld_3d_v4i16_trap: {
+  case Intrinsic::nvvm_suld_3d_v4i16_trap:
+  case Intrinsic::nvvm_suld_1d_i16_zero:
+  case Intrinsic::nvvm_suld_1d_v2i16_zero:
+  case Intrinsic::nvvm_suld_1d_v4i16_zero:
+  case Intrinsic::nvvm_suld_1d_array_i16_zero:
+  case Intrinsic::nvvm_suld_1d_array_v2i16_zero:
+  case Intrinsic::nvvm_suld_1d_array_v4i16_zero:
+  case Intrinsic::nvvm_suld_2d_i16_zero:
+  case Intrinsic::nvvm_suld_2d_v2i16_zero:
+  case Intrinsic::nvvm_suld_2d_v4i16_zero:
+  case Intrinsic::nvvm_suld_2d_array_i16_zero:
+  case Intrinsic::nvvm_suld_2d_array_v2i16_zero:
+  case Intrinsic::nvvm_suld_2d_array_v4i16_zero:
+  case Intrinsic::nvvm_suld_3d_i16_zero:
+  case Intrinsic::nvvm_suld_3d_v2i16_zero:
+  case Intrinsic::nvvm_suld_3d_v4i16_zero: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i16;
     Info.ptrVal = nullptr;
@@ -2532,6 +3601,21 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.align = 16;
     return true;
   }
+  case Intrinsic::nvvm_suld_1d_i32_clamp:
+  case Intrinsic::nvvm_suld_1d_v2i32_clamp:
+  case Intrinsic::nvvm_suld_1d_v4i32_clamp:
+  case Intrinsic::nvvm_suld_1d_array_i32_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v2i32_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v4i32_clamp:
+  case Intrinsic::nvvm_suld_2d_i32_clamp:
+  case Intrinsic::nvvm_suld_2d_v2i32_clamp:
+  case Intrinsic::nvvm_suld_2d_v4i32_clamp:
+  case Intrinsic::nvvm_suld_2d_array_i32_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v2i32_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v4i32_clamp:
+  case Intrinsic::nvvm_suld_3d_i32_clamp:
+  case Intrinsic::nvvm_suld_3d_v2i32_clamp:
+  case Intrinsic::nvvm_suld_3d_v4i32_clamp:
   case Intrinsic::nvvm_suld_1d_i32_trap:
   case Intrinsic::nvvm_suld_1d_v2i32_trap:
   case Intrinsic::nvvm_suld_1d_v4i32_trap:
@@ -2546,7 +3630,22 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
   case Intrinsic::nvvm_suld_2d_array_v4i32_trap:
   case Intrinsic::nvvm_suld_3d_i32_trap:
   case Intrinsic::nvvm_suld_3d_v2i32_trap:
-  case Intrinsic::nvvm_suld_3d_v4i32_trap: {
+  case Intrinsic::nvvm_suld_3d_v4i32_trap:
+  case Intrinsic::nvvm_suld_1d_i32_zero:
+  case Intrinsic::nvvm_suld_1d_v2i32_zero:
+  case Intrinsic::nvvm_suld_1d_v4i32_zero:
+  case Intrinsic::nvvm_suld_1d_array_i32_zero:
+  case Intrinsic::nvvm_suld_1d_array_v2i32_zero:
+  case Intrinsic::nvvm_suld_1d_array_v4i32_zero:
+  case Intrinsic::nvvm_suld_2d_i32_zero:
+  case Intrinsic::nvvm_suld_2d_v2i32_zero:
+  case Intrinsic::nvvm_suld_2d_v4i32_zero:
+  case Intrinsic::nvvm_suld_2d_array_i32_zero:
+  case Intrinsic::nvvm_suld_2d_array_v2i32_zero:
+  case Intrinsic::nvvm_suld_2d_array_v4i32_zero:
+  case Intrinsic::nvvm_suld_3d_i32_zero:
+  case Intrinsic::nvvm_suld_3d_v2i32_zero:
+  case Intrinsic::nvvm_suld_3d_v4i32_zero: {
     Info.opc = getOpcForSurfaceInstr(Intrinsic);
     Info.memVT = MVT::i32;
     Info.ptrVal = nullptr;
@@ -2557,7 +3656,46 @@ bool NVPTXTargetLowering::getTgtMemIntrinsic(
     Info.align = 16;
     return true;
   }
-
+  case Intrinsic::nvvm_suld_1d_i64_clamp:
+  case Intrinsic::nvvm_suld_1d_v2i64_clamp:
+  case Intrinsic::nvvm_suld_1d_array_i64_clamp:
+  case Intrinsic::nvvm_suld_1d_array_v2i64_clamp:
+  case Intrinsic::nvvm_suld_2d_i64_clamp:
+  case Intrinsic::nvvm_suld_2d_v2i64_clamp:
+  case Intrinsic::nvvm_suld_2d_array_i64_clamp:
+  case Intrinsic::nvvm_suld_2d_array_v2i64_clamp:
+  case Intrinsic::nvvm_suld_3d_i64_clamp:
+  case Intrinsic::nvvm_suld_3d_v2i64_clamp:
+  case Intrinsic::nvvm_suld_1d_i64_trap:
+  case Intrinsic::nvvm_suld_1d_v2i64_trap:
+  case Intrinsic::nvvm_suld_1d_array_i64_trap:
+  case Intrinsic::nvvm_suld_1d_array_v2i64_trap:
+  case Intrinsic::nvvm_suld_2d_i64_trap:
+  case Intrinsic::nvvm_suld_2d_v2i64_trap:
+  case Intrinsic::nvvm_suld_2d_array_i64_trap:
+  case Intrinsic::nvvm_suld_2d_array_v2i64_trap:
+  case Intrinsic::nvvm_suld_3d_i64_trap:
+  case Intrinsic::nvvm_suld_3d_v2i64_trap:
+  case Intrinsic::nvvm_suld_1d_i64_zero:
+  case Intrinsic::nvvm_suld_1d_v2i64_zero:
+  case Intrinsic::nvvm_suld_1d_array_i64_zero:
+  case Intrinsic::nvvm_suld_1d_array_v2i64_zero:
+  case Intrinsic::nvvm_suld_2d_i64_zero:
+  case Intrinsic::nvvm_suld_2d_v2i64_zero:
+  case Intrinsic::nvvm_suld_2d_array_i64_zero:
+  case Intrinsic::nvvm_suld_2d_array_v2i64_zero:
+  case Intrinsic::nvvm_suld_3d_i64_zero:
+  case Intrinsic::nvvm_suld_3d_v2i64_zero: {
+    Info.opc = getOpcForSurfaceInstr(Intrinsic);
+    Info.memVT = MVT::i64;
+    Info.ptrVal = nullptr;
+    Info.offset = 0;
+    Info.vol = 0;
+    Info.readMem = true;
+    Info.writeMem = false;
+    Info.align = 16;
+    return true;
+  }
   }
   return false;
 }
