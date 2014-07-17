@@ -1929,7 +1929,7 @@ AppleObjCRuntimeV2::ParseClassInfoArray (const DataExtractor &data, uint32_t num
             ClassDescriptorSP descriptor_sp (new ClassDescriptorV2(*this, isa, NULL));
             AddClass (isa, descriptor_sp, name_hash);
             if (log && log->GetVerbose())
-                log->Printf("AppleObjCRuntimeV2 added isa=0x%" PRIx64 ", hash=0x%8.8x", isa, name_hash);
+                log->Printf("AppleObjCRuntimeV2 added isa=0x%" PRIx64 ", hash=0x%8.8x, name=%s", isa, name_hash,descriptor_sp->GetClassName().AsCString("<unknown>"));
         }
     }
 }
@@ -1971,7 +1971,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
         return false;
     
     // Read the total number of classes from the hash table
-    const uint32_t num_classes = 16*1024;
+    const uint32_t num_classes = 128*1024;
     if (num_classes == 0)
     {
         if (log)
@@ -2108,8 +2108,22 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
             uint32_t num_class_infos = return_value.GetScalar().ULong();
             if (log)
                 log->Printf("Discovered %u ObjC classes in shared cache\n",num_class_infos);
+#ifdef LLDB_CONFIGURATION_DEBUG
+            assert (num_class_infos <= num_classes);
+#endif
             if (num_class_infos > 0)
             {
+                if (num_class_infos > num_classes)
+                {
+                    num_class_infos = num_classes;
+                    
+                    success = false;
+                }
+                else
+                {
+                    success = true;
+                }
+                
                 // Read the ClassInfo structures
                 DataBufferHeap buffer (num_class_infos * class_info_byte_size, 0);
                 if (process->ReadMemory(class_infos_addr,
@@ -2125,7 +2139,10 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapSharedCache()
                     ParseClassInfoArray (class_infos_data, num_class_infos);
                 }
             }
-            success = true;
+            else
+            {
+                success = true;
+            }
         }
         else
         {
