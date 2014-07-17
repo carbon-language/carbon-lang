@@ -1,7 +1,7 @@
 #include <clc/clc.h>
-#include "../clcmacro.h"
+#include "relational.h"
 
-_CLC_DEFINE_UNARY_BUILTIN(int, isnan, __builtin_isnan, float)
+_CLC_DEFINE_RELATIONAL_UNARY(int, isnan, __builtin_isnan, float)
 
 #ifdef cl_khr_fp64
 
@@ -13,6 +13,6 @@ _CLC_DEF _CLC_OVERLOAD int isnan(double x) {
   return __builtin_isnan(x);
 }
 
-_CLC_UNARY_VECTORIZE(_CLC_OVERLOAD _CLC_DEF, long, isnan, double)
+_CLC_DEFINE_RELATIONAL_UNARY_VEC_ALL(long, isnan, double)
 
 #endif
