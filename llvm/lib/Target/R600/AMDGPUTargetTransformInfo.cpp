@@ -95,14 +95,12 @@ bool AMDGPUTTI::hasBranchDivergence() const { return true; }
 
 void AMDGPUTTI::getUnrollingPreferences(Loop *L,
                                         UnrollingPreferences &UP) const {
-  for (Loop::block_iterator BI = L->block_begin(), BE = L->block_end();
-                                                  BI != BE; ++BI) {
-    BasicBlock *BB = *BI;
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
-                                                      I != E; ++I) {
-      const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I);
+  for (const BasicBlock *BB : L->getBlocks()) {
+    for (const Instruction &I : *BB) {
+      const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I);
       if (!GEP || GEP->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
         continue;
+
       const Value *Ptr = GEP->getPointerOperand();
       const AllocaInst *Alloca = dyn_cast<AllocaInst>(GetUnderlyingObject(Ptr));
       if (Alloca) {
