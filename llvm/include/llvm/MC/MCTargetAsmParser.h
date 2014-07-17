@@ -164,6 +164,9 @@ public:
                                        unsigned &ErrorInfo,
                                        bool MatchingInlineAsm) = 0;
 
+  /// Allows targets to let registers opt out of clobber lists.
+  virtual bool OmitRegisterFromClobberLists(unsigned RegNo) { return false; }
+
   /// Allow a target to add special case operand matching for things that
   /// tblgen doesn't/can't handle effectively. For example, literal
   /// immediates on ARM. TableGen expects a token operand, but the parser
