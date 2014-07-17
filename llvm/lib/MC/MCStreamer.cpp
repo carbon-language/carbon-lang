@@ -17,6 +17,7 @@
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/MC/MCWin64EH.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/LEB128.h"
 #include "llvm/Support/raw_ostream.h"
@@ -479,9 +480,11 @@ void MCStreamer::EmitWinEHHandlerData() {
 
 void MCStreamer::EmitWinCFIPushReg(unsigned Register) {
   EnsureValidWinFrameInfo();
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(Win64EH::UOP_PushNonVol, Label, Register);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst = Win64EH::Instruction::PushNonVol(Label, Register);
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
 
@@ -493,9 +496,12 @@ void MCStreamer::EmitWinCFISetFrame(unsigned Register, unsigned Offset) {
     report_fatal_error("Misaligned frame pointer offset!");
   if (Offset > 240)
     report_fatal_error("Frame offset must be less than or equal to 240!");
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(Win64EH::UOP_SetFPReg, Label, Register, Offset);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst =
+      Win64EH::Instruction::SetFPReg(Label, Register, Offset);
   CurrentWinFrameInfo->LastFrameInst = CurrentWinFrameInfo->Instructions.size();
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
@@ -506,9 +512,11 @@ void MCStreamer::EmitWinCFIAllocStack(unsigned Size) {
     report_fatal_error("Allocation size must be non-zero!");
   if (Size & 7)
     report_fatal_error("Misaligned stack allocation!");
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(Label, Size);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst = Win64EH::Instruction::Alloc(Label, Size);
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
 
@@ -516,11 +524,12 @@ void MCStreamer::EmitWinCFISaveReg(unsigned Register, unsigned Offset) {
   EnsureValidWinFrameInfo();
   if (Offset & 7)
     report_fatal_error("Misaligned saved register offset!");
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(
-     Offset > 512*1024-8 ? Win64EH::UOP_SaveNonVolBig : Win64EH::UOP_SaveNonVol,
-                            Label, Register, Offset);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst =
+      Win64EH::Instruction::SaveNonVol(Label, Register, Offset);
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
 
@@ -528,11 +537,12 @@ void MCStreamer::EmitWinCFISaveXMM(unsigned Register, unsigned Offset) {
   EnsureValidWinFrameInfo();
   if (Offset & 0x0F)
     report_fatal_error("Misaligned saved vector register offset!");
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(
-    Offset > 512*1024-16 ? Win64EH::UOP_SaveXMM128Big : Win64EH::UOP_SaveXMM128,
-                            Label, Register, Offset);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst =
+      Win64EH::Instruction::SaveXMM(Label, Register, Offset);
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
 
@@ -540,9 +550,11 @@ void MCStreamer::EmitWinCFIPushFrame(bool Code) {
   EnsureValidWinFrameInfo();
   if (CurrentWinFrameInfo->Instructions.size() > 0)
     report_fatal_error("If present, PushMachFrame must be the first UOP");
+
   MCSymbol *Label = getContext().CreateTempSymbol();
-  MCWin64EHInstruction Inst(Win64EH::UOP_PushMachFrame, Label, Code);
   EmitLabel(Label);
+
+  WinEH::Instruction Inst = Win64EH::Instruction::PushMachFrame(Label, Code);
   CurrentWinFrameInfo->Instructions.push_back(Inst);
 }
 

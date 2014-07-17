@@ -15,15 +15,16 @@
 #include "llvm/MC/MCSectionCOFF.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/Win64EH.h"
 
 namespace llvm {
 
 // NOTE: All relocations generated here are 4-byte image-relative.
 
-static uint8_t CountOfUnwindCodes(std::vector<MCWin64EHInstruction> &Insns) {
+static uint8_t CountOfUnwindCodes(std::vector<WinEH::Instruction> &Insns) {
   uint8_t Count = 0;
   for (const auto &I : Insns) {
-    switch (I.Operation) {
+    switch (static_cast<Win64EH::UnwindOpcodes>(I.Operation)) {
     case Win64EH::UOP_PushNonVol:
     case Win64EH::UOP_AllocSmall:
     case Win64EH::UOP_SetFPReg:
@@ -56,11 +57,11 @@ static void EmitAbsDifference(MCStreamer &Streamer, const MCSymbol *LHS,
 }
 
 static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
-                           MCWin64EHInstruction &inst) {
+                           WinEH::Instruction &inst) {
   uint8_t b2;
   uint16_t w;
   b2 = (inst.Operation & 0x0F);
-  switch (inst.Operation) {
+  switch (static_cast<Win64EH::UnwindOpcodes>(inst.Operation)) {
   case Win64EH::UOP_PushNonVol:
     EmitAbsDifference(streamer, inst.Label, begin);
     b2 |= (inst.Register & 0x0F) << 4;
@@ -177,7 +178,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info) {
 
   uint8_t frame = 0;
   if (info->LastFrameInst >= 0) {
-    MCWin64EHInstruction &frameInst = info->Instructions[info->LastFrameInst];
+    WinEH::Instruction &frameInst = info->Instructions[info->LastFrameInst];
     assert(frameInst.Operation == Win64EH::UOP_SetFPReg);
     frame = (frameInst.Register & 0x0F) | (frameInst.Offset & 0xF0);
   }
@@ -186,7 +187,7 @@ static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info) {
   // Emit unwind instructions (in reverse order).
   uint8_t numInst = info->Instructions.size();
   for (uint8_t c = 0; c < numInst; ++c) {
-    MCWin64EHInstruction inst = info->Instructions.back();
+    WinEH::Instruction inst = info->Instructions.back();
     info->Instructions.pop_back();
     EmitUnwindCode(streamer, info->Begin, inst);
   }

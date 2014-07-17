@@ -15,8 +15,8 @@
 #ifndef LLVM_MC_MCWIN64EH_H
 #define LLVM_MC_MCWIN64EH_H
 
+#include "llvm/MC/MCWinEH.h"
 #include "llvm/Support/Win64EH.h"
-#include <cassert>
 #include <vector>
 
 namespace llvm {
@@ -24,37 +24,35 @@ namespace llvm {
   class MCStreamer;
   class MCSymbol;
 
-struct MCWin64EHInstruction {
-  typedef Win64EH::UnwindOpcodes OpType;
-  const OpType Operation;
-  const MCSymbol *Label;
-  const unsigned Offset;
-  const unsigned Register;
-
-  MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg)
-      : Operation(Op), Label(L), Offset(0), Register(Reg) {
-    assert(Op == Win64EH::UOP_PushNonVol);
+namespace Win64EH {
+struct Instruction {
+  static WinEH::Instruction PushNonVol(MCSymbol *L, unsigned Reg) {
+    return WinEH::Instruction(Win64EH::UOP_PushNonVol, L, Reg, -1);
   }
-
-  MCWin64EHInstruction(MCSymbol *L, unsigned Size)
-      : Operation(Size > 128 ? Win64EH::UOP_AllocLarge
-                             : Win64EH::UOP_AllocSmall),
-        Label(L), Offset(Size), Register(-1) {}
-
-  MCWin64EHInstruction(OpType Op, MCSymbol *L, unsigned Reg, unsigned Off)
-      : Operation(Op), Label(L), Offset(Off), Register(Reg) {
-    assert(Op == Win64EH::UOP_SetFPReg ||
-           Op == Win64EH::UOP_SaveNonVol ||
-           Op == Win64EH::UOP_SaveNonVolBig ||
-           Op == Win64EH::UOP_SaveXMM128 ||
-           Op == Win64EH::UOP_SaveXMM128Big);
+  static WinEH::Instruction Alloc(MCSymbol *L, unsigned Size) {
+    return WinEH::Instruction(Size > 128 ? UOP_AllocLarge : UOP_AllocSmall, L,
+                              -1, Size);
   }
-
-  MCWin64EHInstruction(OpType Op, MCSymbol *L, bool Code)
-      : Operation(Op), Label(L), Offset(Code ? 1 : 0), Register(-1) {
-    assert(Op == Win64EH::UOP_PushMachFrame);
+  static WinEH::Instruction PushMachFrame(MCSymbol *L, bool Code) {
+    return WinEH::Instruction(UOP_PushMachFrame, L, -1, Code ? 1 : 0);
+  }
+  static WinEH::Instruction SaveNonVol(MCSymbol *L, unsigned Reg,
+                                       unsigned Offset) {
+    return WinEH::Instruction(Offset > 512 * 1024 - 8 ? UOP_SaveNonVolBig
+                                                      : UOP_SaveNonVol,
+                              L, Reg, Offset);
+  }
+  static WinEH::Instruction SaveXMM(MCSymbol *L, unsigned Reg,
+                                    unsigned Offset) {
+    return WinEH::Instruction(Offset > 512 * 1024 - 8 ? UOP_SaveXMM128Big
+                                                      : UOP_SaveXMM128,
+                              L, Reg, Offset);
+  }
+  static WinEH::Instruction SetFPReg(MCSymbol *L, unsigned Reg, unsigned Off) {
+    return WinEH::Instruction(UOP_SetFPReg, L, Reg, Off);
   }
 };
+}
 
   struct MCWinFrameInfo {
     MCWinFrameInfo()
@@ -72,7 +70,7 @@ struct MCWin64EHInstruction {
     bool HandlesExceptions;
     int LastFrameInst;
     MCWinFrameInfo *ChainedParent;
-    std::vector<MCWin64EHInstruction> Instructions;
+    std::vector<WinEH::Instruction> Instructions;
   };
 
   class MCWin64EHUnwindEmitter {
