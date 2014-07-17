@@ -11626,11 +11626,10 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
       if (Invalid)
         return nullptr;
 
-      return CheckClassTemplate(S, TagSpec, TUK_Friend, TagLoc,
-                                SS, Name, NameLoc, Attr,
-                                TemplateParams, AS_public,
+      return CheckClassTemplate(S, TagSpec, TUK_Friend, TagLoc, SS, Name,
+                                NameLoc, Attr, TemplateParams, AS_public,
                                 /*ModulePrivateLoc=*/SourceLocation(),
-                                TempParamLists.size() - 1,
+                                FriendLoc, TempParamLists.size() - 1,
                                 TempParamLists.data()).get();
     } else {
       // The "template<>" header is extraneous.

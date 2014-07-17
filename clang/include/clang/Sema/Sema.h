@@ -5254,6 +5254,7 @@ public:
                                 TemplateParameterList *TemplateParams,
                                 AccessSpecifier AS,
                                 SourceLocation ModulePrivateLoc,
+                                SourceLocation FriendLoc,
                                 unsigned NumOuterTemplateParamLists,
                             TemplateParameterList **OuterTemplateParamLists);
 

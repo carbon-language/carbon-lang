@@ -10817,6 +10817,7 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                                                SS, Name, NameLoc, Attr,
                                                TemplateParams, AS,
                                                ModulePrivateLoc,
+                                               /*FriendLoc*/SourceLocation(),
                                                TemplateParameterLists.size()-1,
                                                TemplateParameterLists.data());
         return Result.get();

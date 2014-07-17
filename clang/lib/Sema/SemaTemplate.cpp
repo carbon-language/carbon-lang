@@ -838,6 +838,7 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                          AttributeList *Attr,
                          TemplateParameterList *TemplateParams,
                          AccessSpecifier AS, SourceLocation ModulePrivateLoc,
+                         SourceLocation FriendLoc,
                          unsigned NumOuterTemplateParamLists,
                          TemplateParameterList** OuterTemplateParamLists) {
   assert(TemplateParams && TemplateParams->size() > 0 &&
@@ -1123,10 +1124,8 @@ Sema::CheckClassTemplate(Scope *S, unsigned TagSpec, TagUseKind TUK,
                           /* AddToContext = */ false);
     }
 
-    FriendDecl *Friend = FriendDecl::Create(Context, CurContext,
-                                            NewClass->getLocation(),
-                                            NewTemplate,
-                                    /*FIXME:*/NewClass->getLocation());
+    FriendDecl *Friend = FriendDecl::Create(
+        Context, CurContext, NewClass->getLocation(), NewTemplate, FriendLoc);
     Friend->setAccess(AS_public);
     CurContext->addDecl(Friend);
   }
@@ -6123,6 +6122,7 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
                                 Attr,
                                 TemplateParams,
                                 AS_none, /*ModulePrivateLoc=*/SourceLocation(),
+                                /*FriendLoc*/SourceLocation(),
                                 TemplateParameterLists.size() - 1,
                                 TemplateParameterLists.data());
     }
