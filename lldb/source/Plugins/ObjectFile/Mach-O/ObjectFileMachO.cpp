@@ -1669,10 +1669,6 @@ ObjectFileMachO::CreateSections (SectionList &unified_section_list)
 
             offset = load_cmd_offset + load_cmd.cmdsize;
         }
-        
-//        StreamFile s(stdout, false);                    // REMOVE THIS LINE
-//        s.Printf ("Sections for %s:\n", m_file.GetPath().c_str());// REMOVE THIS LINE
-//        m_sections_ap->Dump(&s, NULL, true, UINT32_MAX);// REMOVE THIS LINE
     }
 }
 
@@ -2961,7 +2957,6 @@ ObjectFileMachO::ParseSymtab ()
                                                                             case eSectionTypeData4:
                                                                             case eSectionTypeData8:
                                                                             case eSectionTypeData16:
-                                                                            case eSectionTypeDataPointers:
                                                                                 type = eSymbolTypeData;
                                                                                 break;
                                                                             default:
@@ -3742,7 +3737,6 @@ ObjectFileMachO::ParseSymtab ()
                                         case eSectionTypeData4:
                                         case eSectionTypeData8:
                                         case eSectionTypeData16:
-                                        case eSectionTypeDataPointers:
                                             type = eSymbolTypeData;
                                             break;
                                         default:

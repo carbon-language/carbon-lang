@@ -15,7 +15,6 @@ class ObjCDynamicSBTypeTestCase(TestBase):
 
     @dsym_test
     @skipIfi386
-    @expectedFailureDarwin("llvm.org/pr20270")
     def test_nsimage_dyn_with_dsym(self):
         """Test that we are able to properly report a usable dynamic type."""
         d = {'EXE': self.exe_name}
@@ -25,7 +24,6 @@ class ObjCDynamicSBTypeTestCase(TestBase):
 
     @dwarf_test
     @skipIfi386
-    @expectedFailureDarwin("llvm.org/pr20270")
     def test_nsimage_dyn_with_dwarf(self):
         """Test that we are able to properly report a usable dynamic type."""
         d = {'EXE': self.exe_name}
