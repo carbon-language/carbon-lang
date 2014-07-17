@@ -10,7 +10,7 @@
 // CHECK1: error: error reading '{{.*}}.nonexistent.cpp' [clang-diagnostic-error]
 // CHECK2: error: unknown argument: '-fan-unknown-option' [clang-diagnostic-error]
 
-// CHECK2: :[[@LINE+2]]:9: warning: implicit conversion from 'double' to 'int' changes value
+// CHECK2: :[[@LINE+2]]:9: warning: implicit conversion from 'double' to 'int' changes value from 1.5 to 1 [clang-diagnostic-literal-conversion]
 // CHECK3: :[[@LINE+1]]:9: warning: implicit conversion from 'double' to 'int' changes value
 int a = 1.5;
 
