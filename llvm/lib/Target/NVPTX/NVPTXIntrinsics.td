@@ -4241,6 +4241,8 @@ def SULD_3D_V4I32_ZERO
 //-----------------------------------
 // Texture Query Intrinsics
 //-----------------------------------
+
+let IsSurfTexQuery = 1 in {
 def TXQ_CHANNEL_ORDER
   : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
               "txq.channel_order.b32 \t$d, [$a];",
@@ -4273,6 +4275,7 @@ def TXQ_NUM_MIPMAP_LEVELS
   : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
               "txq.num_mipmap_levels.b32 \t$d, [$a];",
               []>;
+}
 
 def : Pat<(int_nvvm_txq_channel_order Int64Regs:$a),
           (TXQ_CHANNEL_ORDER Int64Regs:$a)>;
@@ -4295,6 +4298,8 @@ def : Pat<(int_nvvm_txq_num_mipmap_levels Int64Regs:$a),
 //-----------------------------------
 // Surface Query Intrinsics
 //-----------------------------------
+
+let IsSurfTexQuery = 1 in {
 def SUQ_CHANNEL_ORDER
   : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
               "suq.channel_order.b32 \t$d, [$a];",
@@ -4319,6 +4324,7 @@ def SUQ_ARRAY_SIZE
   : NVPTXInst<(outs Int32Regs:$d), (ins Int64Regs:$a),
               "suq.array_size.b32 \t$d, [$a];",
               []>;
+}
 
 def : Pat<(int_nvvm_suq_channel_order Int64Regs:$a),
           (SUQ_CHANNEL_ORDER Int64Regs:$a)>;
