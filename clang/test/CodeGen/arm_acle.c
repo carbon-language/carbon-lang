@@ -3,8 +3,30 @@
 
 #include <arm_acle.h>
 
-/* Hints */
+/* 8 SYNCHRONIZATION, BARRIER AND HINT INTRINSICS */
+/* 8.3 Memory Barriers */
+// ARM-LABEL: test_dmb
+// AArch32: call void @llvm.arm.dmb(i32 1)
+// AArch64: call void @llvm.aarch64.dmb(i32 1)
+void test_dmb(void) {
+  __dmb(1);
+}
 
+// ARM-LABEL: test_dsb
+// AArch32: call void @llvm.arm.dsb(i32 2)
+// AArch64: call void @llvm.aarch64.dsb(i32 2)
+void test_dsb(void) {
+  __dsb(2);
+}
+
+// ARM-LABEL: test_isb
+// AArch32: call void @llvm.arm.isb(i32 3)
+// AArch64: call void @llvm.aarch64.isb(i32 3)
+void test_isb(void) {
+  __isb(3);
+}
+
+/* 8.4 Hints */
 // ARM-LABEL: test_yield
 // AArch32: call void @llvm.arm.hint(i32 1)
 // AArch64: call void @llvm.aarch64.hint(i32 1)

@@ -33,8 +33,15 @@
 #if defined(__cplusplus)
 extern "C" {
 #endif
- 
+
 /* 8 SYNCHRONIZATION, BARRIER AND HINT INTRINSICS */
+/* 8.3 Memory barriers */
+#if !defined(_MSC_VER)
+#define __dmb(i) __builtin_arm_dmb(i)
+#define __dsb(i) __builtin_arm_dsb(i)
+#define __isb(i) __builtin_arm_isb(i)
+#endif
+
 /* 8.4 Hints */
 
 #if !defined(_MSC_VER)
