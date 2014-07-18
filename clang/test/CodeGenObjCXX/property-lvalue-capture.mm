@@ -49,5 +49,5 @@ void test(C *c, const A &a) {
 // CHECK:   [[ONE1:%.*]] = load %struct.A** [[AADDR:%.*]], align 8
 // CHECK:   [[TWO1:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_5", !invariant.load ![[MD_NUM]]
 // CHECK:   [[THREE1:%.*]] = bitcast [[TWOT:%.*]]* [[ZERO1:%.*]] to i8*
-// CHECK:   call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, %struct.A*)*)(i8* [[THREE1]], i8* [[TWO1]], %struct.A* nonnull [[ONE1]])
+// CHECK:   call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, %struct.A*)*)(i8* [[THREE1]], i8* [[TWO1]], %struct.A* dereferenceable({{[0-9]+}}) [[ONE1]])
 // CHECK:   store %struct.A* [[ONE1]], %struct.A** [[RESULT:%.*]], align 8

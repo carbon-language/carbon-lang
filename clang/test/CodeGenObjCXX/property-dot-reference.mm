@@ -11,7 +11,7 @@ void GetURL() const;
 
 @implementation TNodeIconAndNameCell     
 - (const TFENode&) node {
-// CHECK: call nonnull %struct.TFENode* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK: call dereferenceable({{[0-9]+}}) %struct.TFENode* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
 // CHECK-NEXT: call void @_ZNK7TFENode6GetURLEv(%struct.TFENode* %{{.*}})
 	self.node.GetURL();
 }	// expected-warning {{control reaches end of non-void function}}
@@ -27,12 +27,12 @@ void f0(const X &parent);
 - (const X&) target;
 @end
 void f1(A *a) {
-// CHECK: [[PRP:%.*]] = call nonnull %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
-// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* nonnull [[PRP]])
+// CHECK: [[PRP:%.*]] = call dereferenceable({{[0-9]+}}) %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* dereferenceable({{[0-9]+}}) [[PRP]])
   f0(a.target);
 
-// CHECK: [[MSG:%.*]] = call nonnull %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
-// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* nonnull [[MSG]])
+// CHECK: [[MSG:%.*]] = call dereferenceable({{[0-9]+}}) %struct.X* bitcast (i8* (i8*, i8*, ...)* @objc_msgSend
+// CHECK-NEXT:call void @_Z2f0RK1X(%struct.X* dereferenceable({{[0-9]+}}) [[MSG]])
   f0([a target]);
 }
 

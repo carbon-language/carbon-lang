@@ -1202,8 +1202,14 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     llvm_unreachable("Invalid ABI kind for return argument");
   }
 
-  if (RetTy->isReferenceType())
-    RetAttrs.addAttribute(llvm::Attribute::NonNull);
+  if (const auto *RefTy = RetTy->getAs<ReferenceType>()) {
+    QualType PTy = RefTy->getPointeeType();
+    if (!PTy->isIncompleteType() && PTy->isConstantSizeType())
+      RetAttrs.addDereferenceableAttr(getContext().getTypeSizeInChars(PTy)
+                                        .getQuantity());
+    else if (getContext().getTargetAddressSpace(PTy) == 0)
+      RetAttrs.addAttribute(llvm::Attribute::NonNull);
+  }
 
   if (RetAttrs.hasAttributes())
     PAL.push_back(llvm::
@@ -1293,8 +1299,14 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     }
     }
 
-    if (ParamType->isReferenceType())
-      Attrs.addAttribute(llvm::Attribute::NonNull);
+    if (const auto *RefTy = ParamType->getAs<ReferenceType>()) {
+      QualType PTy = RefTy->getPointeeType();
+      if (!PTy->isIncompleteType() && PTy->isConstantSizeType())
+        Attrs.addDereferenceableAttr(getContext().getTypeSizeInChars(PTy)
+                                       .getQuantity());
+      else if (getContext().getTargetAddressSpace(PTy) == 0)
+        Attrs.addAttribute(llvm::Attribute::NonNull);
+    }
 
     if (Attrs.hasAttributes())
       PAL.push_back(llvm::AttributeSet::get(getLLVMContext(), Index, Attrs));

@@ -92,4 +92,4 @@ int main() {
   dstY.pr();
 }
 
-// CHECK: define linkonce_odr nonnull %struct.X* @_ZN1XaSERKS_
+// CHECK: define linkonce_odr dereferenceable({{[0-9]+}}) %struct.X* @_ZN1XaSERKS_

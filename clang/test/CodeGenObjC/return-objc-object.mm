@@ -15,5 +15,5 @@ void call_once() {
   f();
   f1();
 }
-// CHECK: call nonnull %0* @_Z1fv()
-// CHECK: call nonnull %0* @_Z2f1v()  
+// CHECK: call dereferenceable({{[0-9]+}}) %0* @_Z1fv()
+// CHECK: call dereferenceable({{[0-9]+}}) %0* @_Z2f1v()  

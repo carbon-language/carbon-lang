@@ -39,4 +39,4 @@ int main()
 }
 
 // CHECK: call i32 (i32)* (%struct.A*)* @_ZN1AcvPFiiEEv
-// CHECK: call nonnull i32 (i32)* (%struct.B*)* @_ZN1BcvRFiiEEv
+// CHECK: call i32 (i32)* (%struct.B*)* @_ZN1BcvRFiiEEv

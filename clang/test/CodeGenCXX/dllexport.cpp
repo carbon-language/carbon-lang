@@ -489,7 +489,7 @@ struct S {
 
 struct __declspec(dllexport) T {
   // Copy assignment operator:
-  // M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.T* @"\01??4T@@QAEAAU0@ABU0@@Z"
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@ABU0@@Z"
 
   // Explicitly defaulted copy constructur:
   T(const T&) = default;
@@ -511,7 +511,7 @@ int T::c;
 template <typename T> struct __declspec(dllexport) U { void foo() {} };
 // The U<int> specialization below must cause the following to be emitted:
 // M32-DAG: define weak_odr dllexport x86_thiscallcc void @"\01?foo@?$U@H@@QAEXXZ"
-// M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.U* @"\01??4?$U@H@@QAEAAU0@ABU0@@Z"
+// M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.U* @"\01??4?$U@H@@QAEAAU0@ABU0@@Z"
 struct __declspec(dllexport) V : public U<int> { };
 
 
@@ -531,7 +531,7 @@ struct __declspec(dllexport) X : public virtual W {};
 
 struct __declspec(dllexport) Y {
   // Move assignment operator:
-  // M32-DAG: define weak_odr dllexport x86_thiscallcc nonnull %struct.Y* @"\01??4Y@@QAEAAU0@$$QAU0@@Z"
+  // M32-DAG: define weak_odr dllexport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.Y* @"\01??4Y@@QAEAAU0@$$QAU0@@Z"
 
   int x;
 };

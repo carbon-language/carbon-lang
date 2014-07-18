@@ -539,11 +539,11 @@ struct __declspec(dllimport) T {
   // MO1-DAG: @"\01?b@T@@2HA" = external dllimport global i32
 
   T& operator=(T&) = default;
-  // MO1-DAG: define available_externally dllimport x86_thiscallcc nonnull %struct.T* @"\01??4T@@QAEAAU0@AAU0@@Z"
+  // MO1-DAG: define available_externally dllimport x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@AAU0@@Z"
 
   T& operator=(T&&) = default;
   // Note: Don't mark inline move operators dllimport because current MSVC versions don't export them.
-  // MO1-DAG: define linkonce_odr x86_thiscallcc nonnull %struct.T* @"\01??4T@@QAEAAU0@$$QAU0@@Z"
+  // MO1-DAG: define linkonce_odr x86_thiscallcc dereferenceable({{[0-9]+}}) %struct.T* @"\01??4T@@QAEAAU0@$$QAU0@@Z"
 };
 USEMEMFUNC(T, a)
 USEVAR(T::b)

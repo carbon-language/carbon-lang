@@ -137,10 +137,10 @@ void call_small_arg_with_dtor() {
 
 // Test that references aren't destroyed in the callee.
 void ref_small_arg_with_dtor(const SmallWithDtor &s) { }
-// WIN32: define void @"\01?ref_small_arg_with_dtor@@YAXABUSmallWithDtor@@@Z"(%struct.SmallWithDtor* nonnull %s) {{.*}} {
+// WIN32: define void @"\01?ref_small_arg_with_dtor@@YAXABUSmallWithDtor@@@Z"(%struct.SmallWithDtor* dereferenceable({{[0-9]+}}) %s) {{.*}} {
 // WIN32-NOT:   call x86_thiscallcc void @"\01??1SmallWithDtor@@QAE@XZ"
 // WIN32: }
-// WIN64-LABEL: define void @"\01?ref_small_arg_with_dtor@@YAXAEBUSmallWithDtor@@@Z"(%struct.SmallWithDtor* nonnull %s)
+// WIN64-LABEL: define void @"\01?ref_small_arg_with_dtor@@YAXAEBUSmallWithDtor@@@Z"(%struct.SmallWithDtor* dereferenceable({{[0-9]+}}) %s)
 
 void big_arg_with_dtor(BigWithDtor s) {}
 // WIN64-LABEL: define void @"\01?big_arg_with_dtor@@YAXUBigWithDtor@@@Z"(%struct.BigWithDtor* %s)

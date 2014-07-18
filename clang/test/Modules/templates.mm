@@ -80,9 +80,9 @@ unsigned testMixedStruct() {
   // CHECK: call {{.*}}memcpy{{.*}}(i8* %{{.*}}, i8* bitcast ({{.*}}* @_ZZ15testMixedStructvE1r to i8*), i64 16,
   ListInt_right r{0, 2};
 
-  // CHECK: call void @_Z10useListIntR4ListIiE(%[[ListInt]]* nonnull %[[l]])
+  // CHECK: call void @_Z10useListIntR4ListIiE(%[[ListInt]]* dereferenceable({{[0-9]+}}) %[[l]])
   useListInt(l);
-  // CHECK: call void @_Z10useListIntR4ListIiE(%[[ListInt]]* nonnull %[[r]])
+  // CHECK: call void @_Z10useListIntR4ListIiE(%[[ListInt]]* dereferenceable({{[0-9]+}}) %[[r]])
   useListInt(r);
 
   // CHECK: load i32* bitcast (i8* getelementptr inbounds (i8* bitcast ({{.*}}* @list_left to i8*), i64 8) to i32*)

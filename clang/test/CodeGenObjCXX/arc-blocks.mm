@@ -38,7 +38,7 @@ namespace test0 {
   // CHECK-NEXT: load
   // CHECK-NEXT: [[T2:%.*]] = bitcast i8* {{.*}} to [[BYREF_A]]*
   // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds [[BYREF_A]]* [[T2]], i32 0, i32 7
-  // CHECK-NEXT: call void @_ZN5test01AC1ERKS0_([[A]]* [[T1]], [[A]]* nonnull [[T3]])
+  // CHECK-NEXT: call void @_ZN5test01AC1ERKS0_([[A]]* [[T1]], [[A]]* dereferenceable({{[0-9]+}}) [[T3]])
   // CHECK-NEXT: ret void
 
   // CHECK:    define internal void [[DISPOSE_HELPER]](

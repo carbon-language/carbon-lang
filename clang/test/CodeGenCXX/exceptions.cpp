@@ -279,7 +279,7 @@ namespace test5 {
   // CHECK-NEXT: [[ADJ:%.*]] = call i8* @__cxa_get_exception_ptr(i8* [[EXN]])
   // CHECK-NEXT: [[SRC:%.*]] = bitcast i8* [[ADJ]] to [[A_T]]*
   // CHECK-NEXT: invoke void @_ZN5test51TC1Ev([[T_T]]* [[T]])
-  // CHECK:      invoke void @_ZN5test51AC1ERKS0_RKNS_1TE([[A_T]]* [[A]], [[A_T]]* nonnull [[SRC]], [[T_T]]* nonnull [[T]])
+  // CHECK:      invoke void @_ZN5test51AC1ERKS0_RKNS_1TE([[A_T]]* [[A]], [[A_T]]* dereferenceable({{[0-9]+}}) [[SRC]], [[T_T]]* dereferenceable({{[0-9]+}}) [[T]])
   // CHECK:      invoke void @_ZN5test51TD1Ev([[T_T]]* [[T]])
   // CHECK:      call i8* @__cxa_begin_catch(i8* [[EXN]]) [[NUW]]
   // CHECK-NEXT: invoke void @_ZN5test51AD1Ev([[A_T]]* [[A]])
