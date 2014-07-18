@@ -163,6 +163,8 @@ std::string ARM_MC::ParseARMTriple(StringRef TT, StringRef CPU) {
   case Triple::ARMSubArch_v4t:
     ARMArchFeature = "+v4t";
     break;
+  case Triple::NoSubArch:
+    break;
   }
 
   if (isThumb) {
