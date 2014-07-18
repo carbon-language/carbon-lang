@@ -1,10 +1,11 @@
-// RUN: %clang_cc1 %s -triple %itanium_abi_triple -Wno-unused-value -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple %itanium_abi_triple -Wno-unused-value -emit-llvm -o - -std=c++11 | FileCheck %s
 namespace std {
 struct type_info;
 }
 
 struct A {
   virtual ~A();
+  operator bool();
 };
 struct B : A {};
 
@@ -53,6 +54,15 @@ void f9(A *x) { typeid(0[x]); }
 // CHECK:       icmp eq {{.*}}, null
 // CHECK-NEXT:  br i1
 
-void f10(A *x) { typeid((const A &)(A)*x); }
-// CHECK-LABEL: define void @_Z3f10P1A
+void f10(A *x, A *y) { typeid(*y ?: *x); }
+// CHECK-LABEL: define void @_Z3f10P1AS0_
+// CHECK:       icmp eq {{.*}}, null
+// CHECK-NEXT:  br i1
+
+void f11(A *x) { typeid((const A &)(A)*x); }
+// CHECK-LABEL: define void @_Z3f11P1A
+// CHECK-NOT:   icmp eq {{.*}}, null
+
+void f12(A *x) { typeid((A &&)*(A *)nullptr); }
+// CHECK-LABEL: define void @_Z3f12P1A
 // CHECK-NOT:   icmp eq {{.*}}, null
