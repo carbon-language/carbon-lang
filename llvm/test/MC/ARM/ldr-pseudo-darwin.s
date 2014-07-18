@@ -156,35 +156,38 @@ f15:
 @ Constant Pools
 @
 @ CHECK: .section __TEXT,b,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp0:
 @ CHECK: .long 65537
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,c,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp1:
 @ CHECK: .long 65538
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp2:
 @ CHECK: .long 65539
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,d,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp3:
 @ CHECK: .long 65540
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp4:
 @ CHECK: .long 65540
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,e,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp5:
 @ CHECK: .long 65542
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp6:
 @ CHECK: .long 65543
 @ CHECK: .end_data_region
@@ -193,49 +196,52 @@ f15:
 @ CHECK-NOT: .section __TEXT,f,regular,pure_instructions
 
 @ CHECK: .section __TEXT,g,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp7:
 @ CHECK: .long foo
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,h,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp8:
 @ CHECK: .long f5
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,i,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp9:
 @ CHECK: .long f12
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,j,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp10:
 @ CHECK: .long 257
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp11:
 @ CHECK: .long bar
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,k,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp12:
 @ CHECK: .long 65544
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp13:
 @ CHECK: .long baz
 @ CHECK: .end_data_region
 
 @ CHECK: .section __TEXT,l,regular,pure_instructions
-@ CHECK: .align 2
 @ CHECK: .data_region
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp14:
 @ CHECK: .long 65545
+@ CHECK: .align 2
 @ CHECK-LABEL: Ltmp15:
 @ CHECK: .long bar+4
 @ CHECK: .end_data_region

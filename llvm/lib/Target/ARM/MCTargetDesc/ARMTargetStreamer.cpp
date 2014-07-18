@@ -28,7 +28,7 @@ ARMTargetStreamer::~ARMTargetStreamer() {}
 // The constant pool handling is shared by all ARMTargetStreamer
 // implementations.
 const MCExpr *ARMTargetStreamer::addConstantPoolEntry(const MCExpr *Expr) {
-  return ConstantPools->addEntry(Streamer, Expr);
+  return ConstantPools->addEntry(Streamer, Expr, 4);
 }
 
 void ARMTargetStreamer::emitCurrentConstantPool() {

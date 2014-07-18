@@ -24,21 +24,22 @@ using namespace llvm;
 void ConstantPool::emitEntries(MCStreamer &Streamer) {
   if (Entries.empty())
     return;
-  Streamer.EmitCodeAlignment(4); // align to 4-byte address
   Streamer.EmitDataRegion(MCDR_DataRegion);
   for (EntryVecTy::const_iterator I = Entries.begin(), E = Entries.end();
        I != E; ++I) {
-    Streamer.EmitLabel(I->first);
-    Streamer.EmitValue(I->second, 4);
+    Streamer.EmitCodeAlignment(I->Size); // align naturally
+    Streamer.EmitLabel(I->Label);
+    Streamer.EmitValue(I->Value, I->Size);
   }
   Streamer.EmitDataRegion(MCDR_DataRegionEnd);
   Entries.clear();
 }
 
-const MCExpr *ConstantPool::addEntry(const MCExpr *Value, MCContext &Context) {
+const MCExpr *ConstantPool::addEntry(const MCExpr *Value, MCContext &Context,
+                                     unsigned Size) {
   MCSymbol *CPEntryLabel = Context.CreateTempSymbol();
 
-  Entries.push_back(std::make_pair(CPEntryLabel, Value));
+  Entries.push_back( { CPEntryLabel, Value, Size } );
   return MCSymbolRefExpr::Create(CPEntryLabel, Context);
 }
 
@@ -89,7 +90,9 @@ void AssemblerConstantPools::emitForCurrentSection(MCStreamer &Streamer) {
 }
 
 const MCExpr *AssemblerConstantPools::addEntry(MCStreamer &Streamer,
-                                               const MCExpr *Expr) {
+                                               const MCExpr *Expr,
+                                               unsigned Size) {
   const MCSection *Section = Streamer.getCurrentSection().first;
-  return getOrCreateConstantPool(Section).addEntry(Expr, Streamer.getContext());
+  return getOrCreateConstantPool(Section).addEntry(Expr, Streamer.getContext(),
+                                                   Size);
 }

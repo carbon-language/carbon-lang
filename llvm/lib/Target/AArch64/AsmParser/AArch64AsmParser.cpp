@@ -25,6 +25,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
@@ -3067,13 +3068,18 @@ bool AArch64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
     if (getParser().parseExpression(SubExprVal))
       return true;
 
+    if (Operands.size() < 2 ||
+        !static_cast<AArch64Operand &>(*Operands[1]).isReg())
+      return true;
+
+    bool IsXReg =
+        AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
+            Operands[1]->getReg());
+
     MCContext& Ctx = getContext();
     E = SMLoc::getFromPointer(Loc.getPointer() - 1);
     // If the op is an imm and can be fit into a mov, then replace ldr with mov.
-    if (isa<MCConstantExpr>(SubExprVal) && Operands.size() >= 2 &&
-        static_cast<AArch64Operand &>(*Operands[1]).isReg()) {
-      bool IsXReg =  AArch64MCRegisterClasses[AArch64::GPR64allRegClassID].contains(
-            Operands[1]->getReg());
+    if (isa<MCConstantExpr>(SubExprVal)) {
       uint64_t Imm = (cast<MCConstantExpr>(SubExprVal))->getValue();
       uint32_t ShiftAmt = 0, MaxShiftAmt = IsXReg ? 48 : 16;
       while(Imm > 0xFFFF && countTrailingZeros(Imm) >= 16) {
@@ -3089,9 +3095,14 @@ bool AArch64AsmParser::parseOperand(OperandVector &Operands, bool isCondCode,
                      ShiftAmt, true, S, E, Ctx));
         return false;
       }
+      APInt Simm = APInt(64, Imm << ShiftAmt);
+      // check if the immediate is an unsigned or signed 32-bit int for W regs
+      if (!IsXReg && !(Simm.isIntN(32) || Simm.isSignedIntN(32)))
+        return Error(Loc, "Immediate too large for register");
     }
     // If it is a label or an imm that cannot fit in a movz, put it into CP.
-    const MCExpr *CPLoc = getTargetStreamer().addConstantPoolEntry(SubExprVal);
+    const MCExpr *CPLoc =
+        getTargetStreamer().addConstantPoolEntry(SubExprVal, IsXReg ? 8 : 4);
     Operands.push_back(AArch64Operand::CreateImm(CPLoc, S, E, Ctx));
     return false;
   }
