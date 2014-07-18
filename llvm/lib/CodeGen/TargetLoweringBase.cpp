@@ -1104,6 +1104,13 @@ void TargetLoweringBase::computeRegisterProperties() {
     }
   }
 
+  if (!isTypeLegal(MVT::f16)) {
+    NumRegistersForVT[MVT::f16] = NumRegistersForVT[MVT::i16];
+    RegisterTypeForVT[MVT::f16] = RegisterTypeForVT[MVT::i16];
+    TransformToType[MVT::f16] = MVT::i16;
+    ValueTypeActions.setTypeAction(MVT::f16, TypeSoftenFloat);
+  }
+
   // Loop over all of the vector value types to see which need transformations.
   for (unsigned i = MVT::FIRST_VECTOR_VALUETYPE;
        i <= (unsigned)MVT::LAST_VECTOR_VALUETYPE; ++i) {

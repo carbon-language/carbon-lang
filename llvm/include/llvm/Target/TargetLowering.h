@@ -1635,7 +1635,7 @@ public:
       LegalizeTypeAction LA = ValueTypeActions.getTypeAction(SVT);
 
       assert(
-        (LA == TypeLegal ||
+        (LA == TypeLegal || LA == TypeSoftenFloat ||
          ValueTypeActions.getTypeAction(NVT) != TypePromoteInteger)
          && "Promote may not follow Expand or Promote");
 
