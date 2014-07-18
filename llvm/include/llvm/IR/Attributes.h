@@ -141,8 +141,8 @@ public:
   /// \brief Return true if the attribute is an Attribute::AttrKind type.
   bool isEnumAttribute() const;
 
-  /// \brief Return true if the attribute is an alignment attribute.
-  bool isAlignAttribute() const;
+  /// \brief Return true if the attribute is an integer attribute.
+  bool isIntAttribute() const;
 
   /// \brief Return true if the attribute is a string (target-dependent)
   /// attribute.

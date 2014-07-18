@@ -47,7 +47,7 @@ Attribute Attribute::get(LLVMContext &Context, Attribute::AttrKind Kind,
     if (!Val)
       PA = new EnumAttributeImpl(Kind);
     else
-      PA = new AlignAttributeImpl(Kind, Val);
+      PA = new IntAttributeImpl(Kind, Val);
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -96,8 +96,8 @@ bool Attribute::isEnumAttribute() const {
   return pImpl && pImpl->isEnumAttribute();
 }
 
-bool Attribute::isAlignAttribute() const {
-  return pImpl && pImpl->isAlignAttribute();
+bool Attribute::isIntAttribute() const {
+  return pImpl && pImpl->isIntAttribute();
 }
 
 bool Attribute::isStringAttribute() const {
@@ -106,15 +106,15 @@ bool Attribute::isStringAttribute() const {
 
 Attribute::AttrKind Attribute::getKindAsEnum() const {
   if (!pImpl) return None;
-  assert((isEnumAttribute() || isAlignAttribute()) &&
+  assert((isEnumAttribute() || isIntAttribute()) &&
          "Invalid attribute type to get the kind as an enum!");
   return pImpl ? pImpl->getKindAsEnum() : None;
 }
 
 uint64_t Attribute::getValueAsInt() const {
   if (!pImpl) return 0;
-  assert(isAlignAttribute() &&
-         "Expected the attribute to be an alignment attribute!");
+  assert(isIntAttribute() &&
+         "Expected the attribute to be an integer attribute!");
   return pImpl ? pImpl->getValueAsInt() : 0;
 }
 
@@ -296,7 +296,7 @@ bool Attribute::operator<(Attribute A) const {
 // Pin the vtables to this file.
 AttributeImpl::~AttributeImpl() {}
 void EnumAttributeImpl::anchor() {}
-void AlignAttributeImpl::anchor() {}
+void IntAttributeImpl::anchor() {}
 void StringAttributeImpl::anchor() {}
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
@@ -310,13 +310,13 @@ bool AttributeImpl::hasAttribute(StringRef Kind) const {
 }
 
 Attribute::AttrKind AttributeImpl::getKindAsEnum() const {
-  assert(isEnumAttribute() || isAlignAttribute());
+  assert(isEnumAttribute() || isIntAttribute());
   return static_cast<const EnumAttributeImpl *>(this)->getEnumKind();
 }
 
 uint64_t AttributeImpl::getValueAsInt() const {
-  assert(isAlignAttribute());
-  return static_cast<const AlignAttributeImpl *>(this)->getAlignment();
+  assert(isIntAttribute());
+  return static_cast<const IntAttributeImpl *>(this)->getValue();
 }
 
 StringRef AttributeImpl::getKindAsString() const {
@@ -334,18 +334,18 @@ bool AttributeImpl::operator<(const AttributeImpl &AI) const {
   // relative to their enum value) and then strings.
   if (isEnumAttribute()) {
     if (AI.isEnumAttribute()) return getKindAsEnum() < AI.getKindAsEnum();
-    if (AI.isAlignAttribute()) return true;
+    if (AI.isIntAttribute()) return true;
     if (AI.isStringAttribute()) return true;
   }
 
-  if (isAlignAttribute()) {
+  if (isIntAttribute()) {
     if (AI.isEnumAttribute()) return false;
-    if (AI.isAlignAttribute()) return getValueAsInt() < AI.getValueAsInt();
+    if (AI.isIntAttribute()) return getValueAsInt() < AI.getValueAsInt();
     if (AI.isStringAttribute()) return true;
   }
 
   if (AI.isEnumAttribute()) return false;
-  if (AI.isAlignAttribute()) return false;
+  if (AI.isIntAttribute()) return false;
   if (getKindAsString() == AI.getKindAsString())
     return getValueAsString() < AI.getValueAsString();
   return getKindAsString() < AI.getKindAsString();
@@ -1029,7 +1029,7 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
 
   for (AttributeSet::iterator I = A.begin(Slot), E = A.end(Slot); I != E; ++I) {
     Attribute Attr = *I;
-    if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
+    if (Attr.isEnumAttribute() || Attr.isIntAttribute()) {
       Attribute::AttrKind Kind = I->getKindAsEnum();
       Attrs[Kind] = false;
 
@@ -1117,7 +1117,7 @@ bool AttrBuilder::hasAttributes(AttributeSet A, uint64_t Index) const {
   for (AttributeSet::iterator I = A.begin(Slot), E = A.end(Slot);
        I != E; ++I) {
     Attribute Attr = *I;
-    if (Attr.isEnumAttribute() || Attr.isAlignAttribute()) {
+    if (Attr.isEnumAttribute() || Attr.isIntAttribute()) {
       if (Attrs[I->getKindAsEnum()])
         return true;
     } else {

@@ -683,7 +683,7 @@ std::error_code BitcodeReader::ParseAttributeGroupBlock() {
             return EC;
 
           B.addAttribute(Kind);
-        } else if (Record[i] == 1) { // Align attribute
+        } else if (Record[i] == 1) { // Integer attribute
           Attribute::AttrKind Kind;
           if (std::error_code EC = ParseAttrKind(Record[++i], &Kind))
             return EC;

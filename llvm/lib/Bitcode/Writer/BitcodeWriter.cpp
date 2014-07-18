@@ -272,7 +272,7 @@ static void WriteAttributeGroupTable(const ValueEnumerator &VE,
         if (Attr.isEnumAttribute()) {
           Record.push_back(0);
           Record.push_back(getAttrKindEncoding(Attr.getKindAsEnum()));
-        } else if (Attr.isAlignAttribute()) {
+        } else if (Attr.isIntAttribute()) {
           Record.push_back(1);
           Record.push_back(getAttrKindEncoding(Attr.getKindAsEnum()));
           Record.push_back(Attr.getValueAsInt());
