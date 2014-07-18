@@ -24,3 +24,39 @@ define void @test_bitcast_to_half(half* %addr, i16 %in) {
   store half %val_fp, half* %addr
   ret void
 }
+
+define float @test_extend32(half* %addr) {
+; CHECK-LABEL: test_extend32:
+; CHECK: fcvt {{s[0-9]+}}, {{h[0-9]+}}
+
+  %val16 = load half* %addr
+  %val32 = fpext half %val16 to float
+  ret float %val32
+}
+
+define double @test_extend64(half* %addr) {
+; CHECK-LABEL: test_extend64:
+; CHECK: fcvt {{d[0-9]+}}, {{h[0-9]+}}
+
+  %val16 = load half* %addr
+  %val32 = fpext half %val16 to double
+  ret double %val32
+}
+
+define void @test_trunc32(float %in, half* %addr) {
+; CHECK-LABEL: test_trunc32:
+; CHECK: fcvt {{h[0-9]+}}, {{s[0-9]+}}
+
+  %val16 = fptrunc float %in to half
+  store half %val16, half* %addr
+  ret void
+}
+
+define void @test_trunc64(double %in, half* %addr) {
+; CHECK-LABEL: test_trunc64:
+; CHECK: fcvt {{h[0-9]+}}, {{d[0-9]+}}
+
+  %val16 = fptrunc double %in to half
+  store half %val16, half* %addr
+  ret void
+}
