@@ -32,8 +32,8 @@ typedef unsigned char      a8;
 typedef unsigned short     a16;  // NOLINT
 typedef unsigned int       a32;
 typedef unsigned long long a64;  // NOLINT
-#if !defined(TSAN_GO) && defined(__SIZEOF_INT128__) \
-    || (__clang_major__ * 100 + __clang_minor__ >= 302)
+#if !defined(TSAN_GO) && (defined(__SIZEOF_INT128__) \
+    || (__clang_major__ * 100 + __clang_minor__ >= 302))
 __extension__ typedef __int128 a128;
 # define __TSAN_HAS_INT128 1
 #else
@@ -234,7 +234,7 @@ static T NoTsanAtomicLoad(const volatile T *a, morder mo) {
   return atomic_load(to_atomic(a), to_mo(mo));
 }
 
-#if __TSAN_HAS_INT128
+#if __TSAN_HAS_INT128 && !defined(TSAN_GO)
 static a128 NoTsanAtomicLoad(const volatile a128 *a, morder mo) {
   SpinMutexLock lock(&mutex128);
   return *a;
@@ -264,7 +264,7 @@ static void NoTsanAtomicStore(volatile T *a, T v, morder mo) {
   atomic_store(to_atomic(a), v, to_mo(mo));
 }
 
-#if __TSAN_HAS_INT128
+#if __TSAN_HAS_INT128 && !defined(TSAN_GO)
 static void NoTsanAtomicStore(volatile a128 *a, a128 v, morder mo) {
   SpinMutexLock lock(&mutex128);
   *a = v;
