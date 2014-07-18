@@ -799,6 +799,11 @@ def : Pat<(i16 (fp_to_f16 Float32Regs:$a)),
 def : Pat<(i16 (fp_to_f16 Float32Regs:$a)),
           (CVT_f16_f32 Float32Regs:$a, CvtRN)>;
 
+def : Pat<(f64 (f16_to_fp Int16Regs:$a)),
+          (CVT_f64_f16 Int16Regs:$a, CvtNONE)>;
+def : Pat<(i16 (fp_to_f16 Float64Regs:$a)),
+          (CVT_f16_f64 Float64Regs:$a, CvtRN)>;
+
 //
 // Bitcast
 //
