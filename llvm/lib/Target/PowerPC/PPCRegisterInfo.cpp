@@ -199,7 +199,16 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   if (PPCFI->needsFP(MF))
     Reserved.set(PPC::R31);
 
-  if (hasBasePointer(MF))
+  if (hasBasePointer(MF)) {
+  	if (Subtarget.isSVR4ABI() && !Subtarget.isPPC64() &&
+        MF.getTarget().getRelocationModel() == Reloc::PIC_)
+      Reserved.set(PPC::R29);
+    else
+      Reserved.set(PPC::R30);
+  }
+
+  if (Subtarget.isSVR4ABI() && !Subtarget.isPPC64() &&
+      MF.getTarget().getRelocationModel() == Reloc::PIC_)
     Reserved.set(PPC::R30);
 
   // Reserve Altivec registers when Altivec is unavailable.
@@ -843,7 +852,14 @@ unsigned PPCRegisterInfo::getBaseRegister(const MachineFunction &MF) const {
   if (!hasBasePointer(MF))
     return getFrameRegister(MF);
 
-  return Subtarget.isPPC64() ? PPC::X30 : PPC::R30;
+  if (Subtarget.isPPC64())
+    return PPC::X30;
+
+  if (Subtarget.isSVR4ABI() &&
+      MF.getTarget().getRelocationModel() == Reloc::PIC_)
+    return PPC::R29;
+
+  return PPC::R30;
 }
 
 bool PPCRegisterInfo::hasBasePointer(const MachineFunction &MF) const {

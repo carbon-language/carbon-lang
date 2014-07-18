@@ -83,7 +83,15 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       llvm_unreachable("Unimplemented");
     case PPC::fixup_ppc_br24:
     case PPC::fixup_ppc_br24abs:
-      Type = ELF::R_PPC_REL24;
+      switch (Modifier) {
+      default: llvm_unreachable("Unsupported Modifier");
+      case MCSymbolRefExpr::VK_None:
+        Type = ELF::R_PPC_REL24;
+        break;
+      case MCSymbolRefExpr::VK_PLT:
+        Type = ELF::R_PPC_PLTREL24;
+        break;
+      }
       break;
     case PPC::fixup_ppc_brcond14:
     case PPC::fixup_ppc_brcond14abs:

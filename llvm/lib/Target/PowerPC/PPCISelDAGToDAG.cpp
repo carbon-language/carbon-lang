@@ -14,6 +14,7 @@
 
 #include "PPC.h"
 #include "MCTargetDesc/PPCPredicates.h"
+#include "PPCMachineFunctionInfo.h"
 #include "PPCTargetMachine.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -275,9 +276,21 @@ SDNode *PPCDAGToDAGISel::getGlobalBaseReg() {
     DebugLoc dl;
 
     if (PPCLowering->getPointerTy() == MVT::i32) {
-      GlobalBaseReg = RegInfo->createVirtualRegister(&PPC::GPRC_NOR0RegClass);
+      if (PPCSubTarget->isTargetELF())
+        GlobalBaseReg = PPC::R30;
+      else
+        GlobalBaseReg =
+          RegInfo->createVirtualRegister(&PPC::GPRC_NOR0RegClass);
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR));
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MFLR), GlobalBaseReg);
+      if (PPCSubTarget->isTargetELF()) {
+        unsigned TempReg = RegInfo->createVirtualRegister(&PPC::GPRCRegClass);
+        BuildMI(FirstMBB, MBBI, dl,
+                TII.get(PPC::GetGBRO), TempReg).addReg(GlobalBaseReg);
+        BuildMI(FirstMBB, MBBI, dl,
+                TII.get(PPC::UpdateGBR)).addReg(GlobalBaseReg).addReg(TempReg);
+        MF->getInfo<PPCFunctionInfo>()->setUsesPICBase(true);
+      }
     } else {
       GlobalBaseReg = RegInfo->createVirtualRegister(&PPC::G8RC_NOX0RegClass);
       BuildMI(FirstMBB, MBBI, dl, TII.get(PPC::MovePCtoLR8));
@@ -1445,7 +1458,13 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->SelectNodeTo(N, Reg, MVT::Other, Chain);
   }
   case PPCISD::TOC_ENTRY: {
-    assert (PPCSubTarget->isPPC64() && "Only supported for 64-bit ABI");
+    if (PPCSubTarget->isSVR4ABI() && !PPCSubTarget->isPPC64()) {
+      SDValue GA = N->getOperand(0);
+      return CurDAG->getMachineNode(PPC::LWZtoc, dl, MVT::i32, GA,
+                                    N->getOperand(1));
+	}
+    assert (PPCSubTarget->isPPC64() &&
+            "Only supported for 64-bit ABI and 32-bit SVR4");
 
     // For medium and large code model, we generate two instructions as
     // described below.  Otherwise we allow SelectCodeCommon to handle this,

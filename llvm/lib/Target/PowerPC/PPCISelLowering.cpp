@@ -1491,10 +1491,9 @@ static bool GetLabelAccessInfo(const TargetMachine &TM, unsigned &HiOpFlags,
   HiOpFlags = PPCII::MO_HA;
   LoOpFlags = PPCII::MO_LO;
 
-  // Don't use the pic base if not in PIC relocation model.  Or if we are on a
-  // non-darwin platform.  We don't support PIC on other platforms yet.
-  bool isPIC = TM.getRelocationModel() == Reloc::PIC_ &&
-               TM.getSubtarget<PPCSubtarget>().isDarwin();
+  // Don't use the pic base if not in PIC relocation model.
+  bool isPIC = TM.getRelocationModel() == Reloc::PIC_;
+
   if (isPIC) {
     HiOpFlags |= PPCII::MO_PIC_FLAG;
     LoOpFlags |= PPCII::MO_PIC_FLAG;
@@ -1550,6 +1549,15 @@ SDValue PPCTargetLowering::LowerConstantPool(SDValue Op,
 
   unsigned MOHiFlag, MOLoFlag;
   bool isPIC = GetLabelAccessInfo(DAG.getTarget(), MOHiFlag, MOLoFlag);
+
+  if (isPIC && Subtarget.isSVR4ABI()) {
+    SDValue GA = DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(),
+                                           PPCII::MO_PIC_FLAG);
+    SDLoc DL(CP);
+    return DAG.getNode(PPCISD::TOC_ENTRY, DL, MVT::i32, GA,
+                       DAG.getNode(PPCISD::GlobalBaseReg, DL, PtrVT));
+  }
+
   SDValue CPIHi =
     DAG.getTargetConstantPool(C, PtrVT, CP->getAlignment(), 0, MOHiFlag);
   SDValue CPILo =
@@ -1571,6 +1579,15 @@ SDValue PPCTargetLowering::LowerJumpTable(SDValue Op, SelectionDAG &DAG) const {
 
   unsigned MOHiFlag, MOLoFlag;
   bool isPIC = GetLabelAccessInfo(DAG.getTarget(), MOHiFlag, MOLoFlag);
+
+  if (isPIC && Subtarget.isSVR4ABI()) {
+    SDValue GA = DAG.getTargetJumpTable(JT->getIndex(), PtrVT,
+                                        PPCII::MO_PIC_FLAG);
+    SDLoc DL(GA);
+    return DAG.getNode(PPCISD::TOC_ENTRY, SDLoc(JT), PtrVT, GA,
+                       DAG.getNode(PPCISD::GlobalBaseReg, DL, PtrVT));
+  }
+
   SDValue JTIHi = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MOHiFlag);
   SDValue JTILo = DAG.getTargetJumpTable(JT->getIndex(), PtrVT, MOLoFlag);
   return LowerLabelRef(JTIHi, JTILo, isPIC, DAG);
@@ -1699,6 +1716,14 @@ SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
 
   unsigned MOHiFlag, MOLoFlag;
   bool isPIC = GetLabelAccessInfo(DAG.getTarget(), MOHiFlag, MOLoFlag, GV);
+
+  if (isPIC && Subtarget.isSVR4ABI()) {
+    SDValue GA = DAG.getTargetGlobalAddress(GV, DL, PtrVT,
+                                            GSDN->getOffset(),
+                                            PPCII::MO_PIC_FLAG);
+    return DAG.getNode(PPCISD::TOC_ENTRY, DL, MVT::i32, GA,
+                       DAG.getNode(PPCISD::GlobalBaseReg, DL, MVT::i32));
+  }
 
   SDValue GAHi =
     DAG.getTargetGlobalAddress(GV, DL, PtrVT, GSDN->getOffset(), MOHiFlag);
@@ -3357,15 +3382,18 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
     // far-call stubs may be outside relocation limits for a BL instruction.
     if (!DAG.getTarget().getSubtarget<PPCSubtarget>().isJITCodeModel()) {
       unsigned OpFlags = 0;
-      if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
+      if ((DAG.getTarget().getRelocationModel() != Reloc::Static &&
           (Subtarget.getTargetTriple().isMacOSX() &&
            Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5)) &&
           (G->getGlobal()->isDeclaration() ||
-           G->getGlobal()->isWeakForLinker())) {
+           G->getGlobal()->isWeakForLinker())) ||
+          (Subtarget.isTargetELF() && !isPPC64 &&
+           !G->getGlobal()->hasLocalLinkage() &&
+           DAG.getTarget().getRelocationModel() == Reloc::PIC_)) {
         // PC-relative references to external symbols should go through $stub,
         // unless we're building with the leopard linker or later, which
         // automatically synthesizes these stubs.
-        OpFlags = PPCII::MO_DARWIN_STUB;
+        OpFlags = PPCII::MO_PLT_OR_STUB;
       }
 
       // If the callee is a GlobalAddress/ExternalSymbol node (quite common,
@@ -3381,13 +3409,15 @@ unsigned PrepareCall(SelectionDAG &DAG, SDValue &Callee, SDValue &InFlag,
   if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     unsigned char OpFlags = 0;
 
-    if (DAG.getTarget().getRelocationModel() != Reloc::Static &&
-        (Subtarget.getTargetTriple().isMacOSX() &&
-         Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5))) {
+    if ((DAG.getTarget().getRelocationModel() != Reloc::Static &&
+         (Subtarget.getTargetTriple().isMacOSX() &&
+          Subtarget.getTargetTriple().isMacOSXVersionLT(10, 5))) ||
+        (Subtarget.isTargetELF() && !isPPC64 &&
+         DAG.getTarget().getRelocationModel() == Reloc::PIC_)	) {
       // PC-relative references to external symbols should go through $stub,
       // unless we're building with the leopard linker or later, which
       // automatically synthesizes these stubs.
-      OpFlags = PPCII::MO_DARWIN_STUB;
+      OpFlags = PPCII::MO_PLT_OR_STUB;
     }
 
     Callee = DAG.getTargetExternalSymbol(S->getSymbol(), Callee.getValueType(),
@@ -6613,7 +6643,10 @@ PPCTargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   // Since FP is only updated here but NOT referenced, it's treated as GPR.
   unsigned FP  = (PVT == MVT::i64) ? PPC::X31 : PPC::R31;
   unsigned SP  = (PVT == MVT::i64) ? PPC::X1 : PPC::R1;
-  unsigned BP  = (PVT == MVT::i64) ? PPC::X30 : PPC::R30;
+  unsigned BP  = (PVT == MVT::i64) ? PPC::X30 :
+                  (Subtarget.isSVR4ABI() &&
+                   MF->getTarget().getRelocationModel() == Reloc::PIC_ ?
+                     PPC::R29 : PPC::R30);
 
   MachineInstrBuilder MIB;
 

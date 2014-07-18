@@ -57,6 +57,9 @@ def SDT_PPCTC_ret : SDTypeProfile<0, 2, [
   SDTCisPtrTy<0>, SDTCisVT<1, i32>
 ]>;
 
+def tocentry32 : Operand<iPTR> {
+  let MIOperandInfo = (ops i32imm:$imm);
+}
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific DAG Nodes.
@@ -2399,6 +2402,18 @@ def LDgotTprelL32: Pseudo<(outs gprc:$rD), (ins s16imm:$disp, gprc_nor0:$reg),
                           (PPCldGotTprelL tglobaltlsaddr:$disp, i32:$reg))]>;
 def : Pat<(PPCaddTls i32:$in, tglobaltlsaddr:$g),
           (ADD4TLS $in, tglobaltlsaddr:$g)>;
+
+// Support for Position-independent code
+def LWZtoc: Pseudo<(outs gprc:$rD), (ins tocentry32:$disp, gprc:$reg),
+                  "#LWZtoc",
+                  [(set i32:$rD,
+                     (PPCtoc_entry tglobaladdr:$disp, i32:$reg))]>;
+// Get Global (GOT) Base Register offset, from the word immediately preceding
+// the function label.
+def GetGBRO:	Pseudo<(outs gprc:$rT), (ins gprc:$rI), "#GetGBRO", []>;
+// Update the Global(GOT) Base Register with the above offset.
+def UpdateGBR:	Pseudo<(outs gprc:$rT), (ins gprc:$rI), "#UpdateGBR", []>;
+
 
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift

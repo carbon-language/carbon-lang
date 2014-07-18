@@ -92,6 +92,12 @@ class PPCFunctionInfo : public MachineFunctionInfo {
   /// 64-bit SVR4 ABI.
   SmallVector<unsigned, 3> MustSaveCRs;
 
+  /// Hold onto our MachineFunction context.
+  MachineFunction &MF;
+
+  /// Whether this uses the PIC Base register or not.
+  bool UsesPICBase;
+
 public:
   explicit PPCFunctionInfo(MachineFunction &MF) 
     : FramePointerSaveIndex(0),
@@ -109,7 +115,9 @@ public:
       VarArgsStackOffset(0),
       VarArgsNumGPR(0),
       VarArgsNumFPR(0),
-      CRSpillFrameIndex(0) {}
+      CRSpillFrameIndex(0),
+      MF(MF),
+      UsesPICBase(0) {}
 
   int getFramePointerSaveIndex() const { return FramePointerSaveIndex; }
   void setFramePointerSaveIndex(int Idx) { FramePointerSaveIndex = Idx; }
@@ -170,6 +178,11 @@ public:
   const SmallVectorImpl<unsigned> &
     getMustSaveCRs() const { return MustSaveCRs; }
   void addMustSaveCR(unsigned Reg) { MustSaveCRs.push_back(Reg); }
+
+  void setUsesPICBase(bool uses) { UsesPICBase = uses; }
+  bool usesPICBase() const { return UsesPICBase; }
+
+  MCSymbol *getPICOffsetSymbol() const;
 };
 
 } // end of namespace llvm

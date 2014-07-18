@@ -458,6 +458,7 @@ enum {
   R_PPC_GOT16_LO              = 15,
   R_PPC_GOT16_HI              = 16,
   R_PPC_GOT16_HA              = 17,
+  R_PPC_PLTREL24              = 18,
   R_PPC_REL32                 = 26,
   R_PPC_TLS                   = 67,
   R_PPC_DTPMOD32              = 68,

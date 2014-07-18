@@ -8,8 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPCMachineFunctionInfo.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/Target/TargetMachine.h"
 
 using namespace llvm;
 
 void PPCFunctionInfo::anchor() { }
 
+MCSymbol *PPCFunctionInfo::getPICOffsetSymbol() const {
+  const DataLayout *DL = MF.getTarget().getDataLayout();
+  return MF.getContext().GetOrCreateSymbol(Twine(DL->getPrivateGlobalPrefix())+
+    Twine(MF.getFunctionNumber())+"$poff");
+}

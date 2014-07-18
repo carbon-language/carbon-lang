@@ -97,12 +97,14 @@ public:
 
   /// getBasePointerSaveOffset - Return the previous frame offset to save the
   /// base pointer.
-  static unsigned getBasePointerSaveOffset(bool isPPC64, bool isDarwinABI) {
+  static unsigned getBasePointerSaveOffset(bool isPPC64,
+                                           bool isDarwinABI,
+                                           bool isPIC) {
     if (isDarwinABI)
       return isPPC64 ? -16U : -8U;
 
     // SVR4 ABI: First slot in the general register save area.
-    return isPPC64 ? -16U : -8U;
+    return isPPC64 ? -16U : isPIC ? -12U : -8U;
   }
 
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
