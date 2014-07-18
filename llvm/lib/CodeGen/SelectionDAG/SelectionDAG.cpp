@@ -2772,6 +2772,32 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
     }
   }
 
+  // Constant fold unary operations with a vector integer operand.
+  if (BuildVectorSDNode *BV = dyn_cast<BuildVectorSDNode>(Operand.getNode())) {
+    APInt Val;
+    APInt DummyUndefs;
+    unsigned SplatBitSize;
+    bool DummyHasUndefs;
+    if (BV->isConstantSplat(Val, DummyUndefs, SplatBitSize, DummyHasUndefs)) {
+      switch (Opcode) {
+      default:
+        // FIXME: Entirely reasonable to perform folding of other unary
+        // operations here as the need arises.
+        break;
+      case ISD::UINT_TO_FP:
+      case ISD::SINT_TO_FP: {
+        APFloat APF(
+            EVTToAPFloatSemantics(VT.getVectorElementType()),
+            APInt::getNullValue(VT.getVectorElementType().getSizeInBits()));
+        (void)APF.convertFromAPInt(Val, Opcode == ISD::SINT_TO_FP,
+                                   APFloat::rmNearestTiesToEven);
+
+        return getConstantFP(APF, VT);
+      }
+      }
+    }
+  }
+
   unsigned OpOpcode = Operand.getNode()->getOpcode();
   switch (Opcode) {
   case ISD::TokenFactor:
