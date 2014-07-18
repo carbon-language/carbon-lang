@@ -123,8 +123,10 @@ public:
     if (Size == 32)
       return (getGeneration() >= EVERGREEN);
 
-    assert(Size == 64);
-    return (getGeneration() >= SOUTHERN_ISLANDS);
+    if (Size == 64)
+      return (getGeneration() >= SOUTHERN_ISLANDS);
+
+    return false;
   }
 
   bool hasMulU24() const {

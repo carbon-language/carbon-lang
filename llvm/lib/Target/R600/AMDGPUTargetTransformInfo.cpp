@@ -77,6 +77,8 @@ public:
   void getUnrollingPreferences(Loop *L,
                                UnrollingPreferences &UP) const override;
 
+  PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const override;
+
   /// @}
 };
 
@@ -118,4 +120,10 @@ void AMDGPUTTI::getUnrollingPreferences(Loop *L,
       }
     }
   }
+}
+
+AMDGPUTTI::PopcntSupportKind
+AMDGPUTTI::getPopcntSupport(unsigned TyWidth) const {
+  assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
+  return ST->hasBCNT(TyWidth) ? PSK_FastHardware : PSK_Software;
 }
