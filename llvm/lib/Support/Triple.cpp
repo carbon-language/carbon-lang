@@ -357,6 +357,28 @@ static Triple::ObjectFormatType parseFormat(StringRef EnvironmentName) {
     .Default(Triple::UnknownObjectFormat);
 }
 
+static Triple::SubArchType parseSubArch(StringRef SubArchName) {
+  return StringSwitch<Triple::SubArchType>(SubArchName)
+    .EndsWith("v8", Triple::ARMSubArch_v8)
+    .EndsWith("v8a", Triple::ARMSubArch_v8)
+    .EndsWith("v7", Triple::ARMSubArch_v7)
+    .EndsWith("v7a", Triple::ARMSubArch_v7)
+    .EndsWith("v7em", Triple::ARMSubArch_v7em)
+    .EndsWith("v7l", Triple::ARMSubArch_v7)
+    .EndsWith("v7m", Triple::ARMSubArch_v7m)
+    .EndsWith("v7r", Triple::ARMSubArch_v7)
+    .EndsWith("v7s", Triple::ARMSubArch_v7s)
+    .EndsWith("v6", Triple::ARMSubArch_v6)
+    .EndsWith("v6m", Triple::ARMSubArch_v6m)
+    .EndsWith("v6t2", Triple::ARMSubArch_v6t2)
+    .EndsWith("v5", Triple::ARMSubArch_v5)
+    .EndsWith("v5e", Triple::ARMSubArch_v5)
+    .EndsWith("v5t", Triple::ARMSubArch_v5)
+    .EndsWith("v5te", Triple::ARMSubArch_v5te)
+    .EndsWith("v4t", Triple::ARMSubArch_v4t)
+    .Default(Triple::NoSubArch);
+}
+
 static const char *getObjectFormatTypeName(Triple::ObjectFormatType Kind) {
   switch (Kind) {
   case Triple::UnknownObjectFormat: return "";
@@ -382,6 +404,7 @@ static Triple::ObjectFormatType getDefaultFormat(const Triple &T) {
 Triple::Triple(const Twine &Str)
     : Data(Str.str()),
       Arch(parseArch(getArchName())),
+      SubArch(parseSubArch(getArchName())),
       Vendor(parseVendor(getVendorName())),
       OS(parseOS(getOSName())),
       Environment(parseEnvironment(getEnvironmentName())),
@@ -399,6 +422,7 @@ Triple::Triple(const Twine &Str)
 Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr).str()),
       Arch(parseArch(ArchStr.str())),
+      SubArch(parseSubArch(ArchStr.str())),
       Vendor(parseVendor(VendorStr.str())),
       OS(parseOS(OSStr.str())),
       Environment(), ObjectFormat(Triple::UnknownObjectFormat) {
@@ -415,6 +439,7 @@ Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr + Twine('-') +
             EnvironmentStr).str()),
       Arch(parseArch(ArchStr.str())),
+      SubArch(parseSubArch(ArchStr.str())),
       Vendor(parseVendor(VendorStr.str())),
       OS(parseOS(OSStr.str())),
       Environment(parseEnvironment(EnvironmentStr.str())),
