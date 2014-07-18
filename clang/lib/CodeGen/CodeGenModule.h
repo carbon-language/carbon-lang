@@ -1018,7 +1018,11 @@ public:
   void reportGlobalToASan(llvm::GlobalVariable *GV, const VarDecl &D,
                           bool IsDynInit = false);
   void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
-                          StringRef Name, bool IsDynInit = false);
+                          StringRef Name, bool IsDynInit = false,
+                          bool IsBlacklisted = false);
+
+  /// Disable sanitizer instrumentation for this global.
+  void disableSanitizerForGlobal(llvm::GlobalVariable *GV);
 
   void addDeferredVTable(const CXXRecordDecl *RD) {
     DeferredVTables.push_back(RD);

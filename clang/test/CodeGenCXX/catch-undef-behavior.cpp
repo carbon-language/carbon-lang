@@ -1,10 +1,17 @@
 // RUN: %clang_cc1 -std=c++11 -fsanitize=signed-integer-overflow,integer-divide-by-zero,float-divide-by-zero,shift,unreachable,return,vla-bound,alignment,null,vptr,object-size,float-cast-overflow,bool,enum,array-bounds,function -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -std=c++11 -fsanitize=vptr,address -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-ASAN
 
 struct S {
   double d;
   int a, b;
   virtual int f();
 };
+
+// Check that type descriptor global is not modified by ASan.
+// CHECK-ASAN: [[TYPE_DESCR:@[0-9]+]] = private unnamed_addr constant { i16, i16, [4 x i8] } { i16 -1, i16 0, [4 x i8] c"'S'\00" }
+
+// Check that type mismatch handler is not modified by ASan.
+// CHECK-ASAN: private unnamed_addr global { { [{{.*}} x i8]*, i32, i32 }, { i16, i16, [4 x i8] }*, i8*, i8 } { {{.*}}, { i16, i16, [4 x i8] }* [[TYPE_DESCR]], {{.*}} }
 
 struct T : S {};
 
@@ -31,6 +38,7 @@ void reference_binding(int *p, S *q) {
 }
 
 // CHECK-LABEL: @_Z13member_access
+// CHECK-ASAN-LABEL: @_Z13member_access
 void member_access(S *p) {
   // (1a) Check 'p' is appropriately sized and aligned for member access.
 

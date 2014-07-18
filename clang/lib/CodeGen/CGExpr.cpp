@@ -2127,6 +2127,7 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
       CGM.getModule(), Descriptor->getType(),
       /*isConstant=*/true, llvm::GlobalVariable::PrivateLinkage, Descriptor);
   GV->setUnnamedAddr(true);
+  CGM.disableSanitizerForGlobal(GV);
 
   // Remember the descriptor for this type.
   CGM.setTypeDescriptorInMap(T, GV);
@@ -2170,14 +2171,23 @@ llvm::Value *CodeGenFunction::EmitCheckValue(llvm::Value *V) {
 /// \endcode
 /// For an invalid SourceLocation, the Filename pointer is null.
 llvm::Constant *CodeGenFunction::EmitCheckSourceLocation(SourceLocation Loc) {
-  PresumedLoc PLoc = getContext().getSourceManager().getPresumedLoc(Loc);
+  llvm::Constant *Filename;
+  int Line, Column;
 
-  llvm::Constant *Data[] = {
-    PLoc.isValid() ? CGM.GetAddrOfConstantCString(PLoc.getFilename(), ".src")
-                   : llvm::Constant::getNullValue(Int8PtrTy),
-    Builder.getInt32(PLoc.isValid() ? PLoc.getLine() : 0),
-    Builder.getInt32(PLoc.isValid() ? PLoc.getColumn() : 0)
-  };
+  PresumedLoc PLoc = getContext().getSourceManager().getPresumedLoc(Loc);
+  if (PLoc.isValid()) {
+    auto FilenameGV = CGM.GetAddrOfConstantCString(PLoc.getFilename(), ".src");
+    CGM.disableSanitizerForGlobal(FilenameGV);
+    Filename = FilenameGV;
+    Line = PLoc.getLine();
+    Column = PLoc.getColumn();
+  } else {
+    Filename = llvm::Constant::getNullValue(Int8PtrTy);
+    Line = Column = 0;
+  }
+
+  llvm::Constant *Data[] = {Filename, Builder.getInt32(Line),
+                            Builder.getInt32(Column)};
 
   return llvm::ConstantStruct::getAnon(Data);
 }
@@ -2214,6 +2224,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
       new llvm::GlobalVariable(CGM.getModule(), Info->getType(), false,
                                llvm::GlobalVariable::PrivateLinkage, Info);
   InfoPtr->setUnnamedAddr(true);
+  CGM.disableSanitizerForGlobal(InfoPtr);
 
   SmallVector<llvm::Value *, 4> Args;
   SmallVector<llvm::Type *, 4> ArgTypes;

@@ -1951,11 +1951,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
 void CodeGenModule::reportGlobalToASan(llvm::GlobalVariable *GV,
                                        SourceLocation Loc, StringRef Name,
-                                       bool IsDynInit) {
+                                       bool IsDynInit, bool IsBlacklisted) {
   if (!LangOpts.Sanitize.Address)
     return;
   IsDynInit &= !SanitizerBL.isIn(*GV, "init");
-  bool IsBlacklisted = SanitizerBL.isIn(*GV);
+  IsBlacklisted |= SanitizerBL.isIn(*GV);
 
   llvm::GlobalVariable *LocDescr = nullptr;
   llvm::GlobalVariable *GlobalName = nullptr;
@@ -2006,6 +2006,13 @@ void CodeGenModule::reportGlobalToASan(llvm::GlobalVariable *GV,
   llvm::raw_string_ostream OS(QualName);
   D.printQualifiedName(OS);
   reportGlobalToASan(GV, D.getLocation(), OS.str(), IsDynInit);
+}
+
+void CodeGenModule::disableSanitizerForGlobal(llvm::GlobalVariable *GV) {
+  // For now, just make sure the global is not modified by the ASan
+  // instrumentation.
+  if (LangOpts.Sanitize.Address)
+    reportGlobalToASan(GV, SourceLocation(), "", false, true);
 }
 
 static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
