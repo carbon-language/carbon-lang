@@ -24,6 +24,8 @@ class MCStreamer;
 class MCSymbol;
 
 struct ConstantPoolEntry {
+  ConstantPoolEntry(MCSymbol *L, const MCExpr *Val, unsigned Sz)
+    : Label(L), Value(Val), Size(Sz) {}
   MCSymbol *Label;
   const MCExpr *Value;
   unsigned Size;

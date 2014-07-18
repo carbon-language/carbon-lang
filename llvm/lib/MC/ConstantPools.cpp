@@ -39,7 +39,7 @@ const MCExpr *ConstantPool::addEntry(const MCExpr *Value, MCContext &Context,
                                      unsigned Size) {
   MCSymbol *CPEntryLabel = Context.CreateTempSymbol();
 
-  Entries.push_back( { CPEntryLabel, Value, Size } );
+  Entries.push_back(ConstantPoolEntry(CPEntryLabel, Value, Size));
   return MCSymbolRefExpr::Create(CPEntryLabel, Context);
 }
 
