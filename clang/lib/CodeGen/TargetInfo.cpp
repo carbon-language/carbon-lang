@@ -3996,8 +3996,12 @@ void ARMABIInfo::computeInfo(CGFunctionInfo &FI) const {
     // GPRs from being used. In this situation, the current argument could
     // only be allocated by rule C.8, so rule C.6 would mark these GPRs as
     // unusable anyway.
+    // We do not have to do this if the argument is being passed ByVal, as the
+    // backend can handle that situation correctly.
     const bool StackUsed = PreAllocationGPRs > NumGPRs || PreAllocationVFPs > NumVFPs;
-    if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs && StackUsed) {
+    const bool IsByVal = I.info.isIndirect() && I.info.getIndirectByVal();
+    if (!IsCPRC && PreAllocationGPRs < NumGPRs && AllocatedGPRs > NumGPRs &&
+        StackUsed && !IsByVal) {
       llvm::Type *PaddingTy = llvm::ArrayType::get(
           llvm::Type::getInt32Ty(getVMContext()), NumGPRs - PreAllocationGPRs);
       if (I.info.canHaveCoerceToType()) {
