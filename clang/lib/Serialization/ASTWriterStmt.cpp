@@ -1903,6 +1903,12 @@ void ASTStmtWriter::VisitOMPBarrierDirective(OMPBarrierDirective *D) {
   Code = serialization::STMT_OMP_BARRIER_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPTaskwaitDirective(OMPTaskwaitDirective *D) {
+  VisitStmt(D);
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TASKWAIT_DIRECTIVE;
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//

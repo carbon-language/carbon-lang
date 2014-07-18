@@ -1933,6 +1933,7 @@ public:
   void EmitOMPTaskDirective(const OMPTaskDirective &S);
   void EmitOMPTaskyieldDirective(const OMPTaskyieldDirective &S);
   void EmitOMPBarrierDirective(const OMPBarrierDirective &S);
+  void EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

@@ -862,6 +862,50 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp taskwait' directive.
+///
+/// \code
+/// #pragma omp taskwait
+/// \endcode
+///
+class OMPTaskwaitDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPTaskwaitDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPTaskwaitDirectiveClass, OMPD_taskwait,
+                               StartLoc, EndLoc, 0, 0) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPTaskwaitDirective()
+      : OMPExecutableDirective(this, OMPTaskwaitDirectiveClass, OMPD_taskwait,
+                               SourceLocation(), SourceLocation(), 0, 0) {}
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  ///
+  static OMPTaskwaitDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPTaskwaitDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTaskwaitDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif
