@@ -1615,6 +1615,29 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
   EmitBlock(DeleteEnd);
 }
 
+static bool isGLValueFromPointerDeref(const Expr *E) {
+  E = E->IgnoreParenCasts();
+
+  if (const auto *UO = dyn_cast<UnaryOperator>(E))
+    if (UO->getOpcode() == UO_Deref)
+      return true;
+
+  if (const auto *BO = dyn_cast<BinaryOperator>(E))
+    if (BO->getOpcode() == BO_Comma)
+      return isGLValueFromPointerDeref(BO->getRHS());
+
+  if (const auto *CO = dyn_cast<ConditionalOperator>(E))
+    return isGLValueFromPointerDeref(CO->getTrueExpr()) ||
+           isGLValueFromPointerDeref(CO->getFalseExpr());
+
+  if (const auto *BCO = dyn_cast<BinaryConditionalOperator>(E))
+    if (const auto *OVE = dyn_cast<OpaqueValueExpr>(BCO->getTrueExpr()))
+      return isGLValueFromPointerDeref(OVE->getSourceExpr()) ||
+             isGLValueFromPointerDeref(BCO->getFalseExpr());
+
+  return false;
+}
+
 static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF, const Expr *E,
                                          llvm::Type *StdTypeInfoPtrTy) {
   // Get the vtable pointer.
@@ -1624,13 +1647,9 @@ static llvm::Value *EmitTypeidFromVTable(CodeGenFunction &CGF, const Expr *E,
   //   If the glvalue expression is obtained by applying the unary * operator to
   //   a pointer and the pointer is a null pointer value, the typeid expression
   //   throws the std::bad_typeid exception.
-  bool IsDeref = false;
-  if (const UnaryOperator *UO = dyn_cast<UnaryOperator>(E->IgnoreParens()))
-    if (UO->getOpcode() == UO_Deref)
-      IsDeref = true;
-
   QualType SrcRecordTy = E->getType();
-  if (CGF.CGM.getCXXABI().shouldTypeidBeNullChecked(IsDeref, SrcRecordTy)) {
+  if (CGF.CGM.getCXXABI().shouldTypeidBeNullChecked(
+          isGLValueFromPointerDeref(E), SrcRecordTy)) {
     llvm::BasicBlock *BadTypeidBlock =
         CGF.createBasicBlock("typeid.bad_typeid");
     llvm::BasicBlock *EndBlock = CGF.createBasicBlock("typeid.end");
