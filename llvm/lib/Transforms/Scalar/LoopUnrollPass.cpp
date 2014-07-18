@@ -274,6 +274,42 @@ static unsigned UnrollCountPragmaValue(const Loop *L) {
   return 0;
 }
 
+// Remove existing unroll metadata and add unroll disable metadata to
+// indicate the loop has already been unrolled.  This prevents a loop
+// from being unrolled more than is directed by a pragma if the loop
+// unrolling pass is run more than once (which it generally is).
+static void SetLoopAlreadyUnrolled(Loop *L) {
+  MDNode *LoopID = L->getLoopID();
+  if (!LoopID) return;
+
+  // First remove any existing loop unrolling metadata.
+  SmallVector<Value *, 4> Vals;
+  // Reserve first location for self reference to the LoopID metadata node.
+  Vals.push_back(nullptr);
+  for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
+    bool IsUnrollMetadata = false;
+    MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
+    if (MD) {
+      const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
+      IsUnrollMetadata = S && S->getString().startswith("llvm.loop.unroll.");
+    }
+    if (!IsUnrollMetadata) Vals.push_back(LoopID->getOperand(i));
+  }
+
+  // Add unroll(disable) metadata to disable future unrolling.
+  LLVMContext &Context = L->getHeader()->getContext();
+  MDNode *DisableNode =
+      MDNode::get(Context, {MDString::get(Context, "llvm.loop.unroll.enable"),
+                            ConstantInt::get(Type::getInt1Ty(Context), 0)});
+  Vals.push_back(DisableNode);
+
+  MDNode *NewLoopID = MDNode::get(Context, Vals);
+  // Set operand 0 to refer to the loop id itself.
+  NewLoopID->replaceOperandWith(0, NewLoopID);
+  L->setLoopID(NewLoopID);
+  LoopID->replaceAllUsesWith(NewLoopID);
+}
+
 unsigned LoopUnroll::selectUnrollCount(
     const Loop *L, unsigned TripCount, bool HasEnablePragma,
     unsigned PragmaCount, const TargetTransformInfo::UnrollingPreferences &UP,
@@ -428,6 +464,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   if (HasPragma) {
+    // Mark loop as unrolled to prevent unrolling beyond that
+    // requested by the pragma.
+    SetLoopAlreadyUnrolled(L);
+
     // Emit optimization remarks if we are unable to unroll the loop
     // as directed by a pragma.
     DebugLoc LoopLoc = L->getStartLoc();

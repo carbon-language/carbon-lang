@@ -1,4 +1,8 @@
 ; RUN: opt < %s -loop-unroll -S | FileCheck %s
+; RUN: opt < %s -loop-unroll -loop-unroll -S | FileCheck %s
+;
+; Run loop unrolling twice to verify that loop unrolling metadata is properly
+; removed and further unrolling is disabled after the pass is run once.
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
