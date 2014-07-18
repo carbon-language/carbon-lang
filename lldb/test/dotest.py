@@ -1004,17 +1004,17 @@ def setupSysPath():
         
         # If our lldb supports the -P option, use it to find the python path:
         init_in_python_dir = 'lldb/__init__.py'
-        import pexpect
         lldb_dash_p_result = None
 
         if lldbHere:
-            lldb_dash_p_result = pexpect.run("%s -P"%(lldbHere))
+            lldb_dash_p_result = subprocess.check_output([lldbHere, "-P"], stderr=subprocess.STDOUT)
         elif lldbExec:
-            lldb_dash_p_result = pexpect.run("%s -P"%(lldbExec))
+            lldb_dash_p_result = subprocess.check_output([lldbExec, "-P"], stderr=subprocess.STDOUT)
 
-        if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")):
+        if lldb_dash_p_result and not lldb_dash_p_result.startswith(("<", "lldb: invalid option:")) \
+							  and not lldb_dash_p_result.startswith("Traceback"):
             lines = lldb_dash_p_result.splitlines()
-            if len(lines) == 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
+            if len(lines) >= 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
                 lldbPath = lines[0]
                 if "freebsd" in sys.platform or "linux" in sys.platform:
                     os.environ['LLDB_LIB_DIR'] = os.path.join(lldbPath, '..', '..')

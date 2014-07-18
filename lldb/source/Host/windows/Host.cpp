@@ -247,6 +247,20 @@ FileSpec
 Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 {
     FileSpec module_filespec;
+
+    HMODULE hmodule = NULL;
+    if (!::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCTSTR)host_addr, &hmodule))
+        return module_filespec;
+
+    std::vector<char> buffer(MAX_PATH);
+    DWORD chars_copied = 0;
+    do {
+        chars_copied = ::GetModuleFileName(hmodule, &buffer[0], buffer.size());
+        if (chars_copied == buffer.size() && ::GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+            buffer.resize(buffer.size() * 2);
+    } while (chars_copied >= buffer.size());
+
+    module_filespec.SetFile(&buffer[0], false);
     return module_filespec;
 }
 

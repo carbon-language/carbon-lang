@@ -1152,6 +1152,10 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 {
                     char raw_path[PATH_MAX];
                     char resolved_path[PATH_MAX];
+#if defined(_WIN32)
+                    lldb_file_spec.AppendPathComponent("../lib/site-packages");
+                    lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
+#else
                     lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
 
 #if defined (__APPLE__)
@@ -1174,7 +1178,7 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 
                         ::strncat(raw_path, python_version_dir.c_str(),
                                   sizeof(raw_path) - strlen(raw_path) - 1);
-
+#endif
 #if defined (__APPLE__)
                     }
 #endif
