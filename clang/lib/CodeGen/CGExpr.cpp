@@ -463,7 +463,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   llvm::Value *Cond = nullptr;
   llvm::BasicBlock *Done = nullptr;
 
-  if (SanOpts->Null) {
+  if (SanOpts->Null || TCK == TCK_DowncastPointer) {
     // The glvalue must not be an empty glvalue.
     Cond = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
