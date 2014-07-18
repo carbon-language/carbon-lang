@@ -59,8 +59,10 @@ public:
     RelocationValueRef Value(
         getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 
-    if (HasExplicitAddend)
+    if (HasExplicitAddend) {
+      RE.Addend = ExplicitAddend;
       Value.Addend = ExplicitAddend;
+    }
 
     bool IsExtern = Obj.getPlainRelocationExternal(RelInfo);
     if (!IsExtern && RE.IsPCRel)
