@@ -919,6 +919,7 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     // that we've already checked once.
     assert(SemaRef.Context.hasSameType(VIE->getType(), ElemType) &&
            "found implicit initialization for the wrong type");
+    (void)VIE;
     if (!VerifyOnly)
       UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
     ++Index;
