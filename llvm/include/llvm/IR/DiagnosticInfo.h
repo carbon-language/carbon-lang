@@ -51,7 +51,7 @@ enum DiagnosticKind {
   DK_OptimizationRemark,
   DK_OptimizationRemarkMissed,
   DK_OptimizationRemarkAnalysis,
-  DK_OptimizationWarning,
+  DK_OptimizationFailure,
   DK_FirstPluginKind
 };
 
@@ -412,8 +412,8 @@ void emitOptimizationRemarkAnalysis(LLVMContext &Ctx, const char *PassName,
                                     const Function &Fn, const DebugLoc &DLoc,
                                     const Twine &Msg);
 
-/// Diagnostic information for optimization warnings.
-class DiagnosticInfoOptimizationWarning
+/// Diagnostic information for optimization failures.
+class DiagnosticInfoOptimizationFailure
     : public DiagnosticInfoOptimizationBase {
 public:
   /// \p Fn is the function where the diagnostic is being emitted. \p DLoc is
@@ -422,13 +422,13 @@ public:
   /// location. \p Msg is the message to show. Note that this class does not
   /// copy this message, so this reference must be valid for the whole life time
   /// of the diagnostic.
-  DiagnosticInfoOptimizationWarning(const Function &Fn, const DebugLoc &DLoc,
+  DiagnosticInfoOptimizationFailure(const Function &Fn, const DebugLoc &DLoc,
                                     const Twine &Msg)
-      : DiagnosticInfoOptimizationBase(DK_OptimizationWarning, DS_Warning,
+      : DiagnosticInfoOptimizationBase(DK_OptimizationFailure, DS_Warning,
                                        nullptr, Fn, DLoc, Msg) {}
 
   static bool classof(const DiagnosticInfo *DI) {
-    return DI->getKind() == DK_OptimizationWarning;
+    return DI->getKind() == DK_OptimizationFailure;
   }
 
   /// \see DiagnosticInfoOptimizationBase::isEnabled.

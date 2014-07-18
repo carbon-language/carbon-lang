@@ -190,19 +190,19 @@ void llvm::emitOptimizationRemarkAnalysis(LLVMContext &Ctx,
       DiagnosticInfoOptimizationRemarkAnalysis(PassName, Fn, DLoc, Msg));
 }
 
-bool DiagnosticInfoOptimizationWarning::isEnabled() const {
+bool DiagnosticInfoOptimizationFailure::isEnabled() const {
   // Only print warnings.
   return getSeverity() == DS_Warning;
 }
 
 void llvm::emitLoopVectorizeWarning(LLVMContext &Ctx, const Function &Fn,
                                     const DebugLoc &DLoc, const Twine &Msg) {
-  Ctx.diagnose(DiagnosticInfoOptimizationWarning(
+  Ctx.diagnose(DiagnosticInfoOptimizationFailure(
       Fn, DLoc, Twine("loop not vectorized: " + Msg)));
 }
 
 void llvm::emitLoopInterleaveWarning(LLVMContext &Ctx, const Function &Fn,
                                      const DebugLoc &DLoc, const Twine &Msg) {
-  Ctx.diagnose(DiagnosticInfoOptimizationWarning(
+  Ctx.diagnose(DiagnosticInfoOptimizationFailure(
       Fn, DLoc, Twine("loop not interleaved: " + Msg)));
 }
