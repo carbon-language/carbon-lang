@@ -207,8 +207,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
     MPM.add(createSimpleLoopUnrollPass());    // Unroll small loops
   addExtensionsToPM(EP_LoopOptimizerEnd, MPM);
 
-  if (OptLevel > 1)
+  if (OptLevel > 1) {
+    MPM.add(createMergedLoadStoreMotionPass()); // Merge load/stores in diamond
     MPM.add(createGVNPass());                 // Remove redundancies
+  }
   MPM.add(createMemCpyOptPass());             // Remove memcpy / form memset
   MPM.add(createSCCPPass());                  // Constant prop with SCCP
 
@@ -346,6 +348,7 @@ void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
   PM.add(createGlobalsModRefPass()); // IP alias analysis.
 
   PM.add(createLICMPass());                 // Hoist loop invariants.
+  PM.add(createMergedLoadStoreMotionPass()); // Merge load/stores in diamonds
   PM.add(createGVNPass(DisableGVNLoadPRE)); // Remove redundancies.
   PM.add(createMemCpyOptPass());            // Remove dead memcpys.
 

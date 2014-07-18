@@ -135,6 +135,12 @@ CAMLprim value llvm_add_tail_call_elimination(LLVMPassManagerRef PM) {
 }
 
 /* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
+CAMLprim value llvm_add_merged_load_store_motion(LLVMPassManagerRef PM) {
+  LLVMAddMergedLoadStoreMotionPass(PM);
+  return Val_unit;
+}
+
+/* [<Llvm.PassManager.any] Llvm.PassManager.t -> unit */
 CAMLprim value llvm_add_gvn(LLVMPassManagerRef PM) {
   LLVMAddGVNPass(PM);
   return Val_unit;
