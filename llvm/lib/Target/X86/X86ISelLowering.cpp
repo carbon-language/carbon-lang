@@ -529,6 +529,11 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::FP_TO_FP16, MVT::f64, Expand);
   setOperationAction(ISD::FP_TO_FP16, MVT::f80, Expand);
 
+  setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f32, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f80, MVT::f16, Expand);
+
   if (Subtarget->hasPOPCNT()) {
     setOperationAction(ISD::CTPOP          , MVT::i8   , Promote);
   } else {
