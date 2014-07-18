@@ -124,13 +124,9 @@ void MipsPassConfig::addIRPasses() {
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.
 bool MipsPassConfig::addInstSelector() {
-  if (getMipsSubtarget().allowMixed16_32()) {
-    addPass(createMipsModuleISelDag(getMipsTargetMachine()));
-    addPass(createMips16ISelDag(getMipsTargetMachine()));
-    addPass(createMipsSEISelDag(getMipsTargetMachine()));
-  } else {
-    addPass(createMipsISelDag(getMipsTargetMachine()));
-  }
+  addPass(createMipsModuleISelDag(getMipsTargetMachine()));
+  addPass(createMips16ISelDag(getMipsTargetMachine()));
+  addPass(createMipsSEISelDag(getMipsTargetMachine()));
   return false;
 }
 
@@ -166,15 +162,9 @@ void MipsTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
 // print out the code after the passes.
 bool MipsPassConfig::addPreEmitPass() {
   MipsTargetMachine &TM = getMipsTargetMachine();
-  const MipsSubtarget &Subtarget = TM.getSubtarget<MipsSubtarget>();
   addPass(createMipsDelaySlotFillerPass(TM));
-
-  if (Subtarget.enableLongBranchPass())
-    addPass(createMipsLongBranchPass(TM));
-  if (Subtarget.inMips16Mode() ||
-      Subtarget.allowMixed16_32())
-    addPass(createMipsConstantIslandPass(TM));
-
+  addPass(createMipsLongBranchPass(TM));
+  addPass(createMipsConstantIslandPass(TM));
   return true;
 }
 

@@ -449,7 +449,8 @@ bool MipsLongBranch::runOnMachineFunction(MachineFunction &F) {
   const MipsInstrInfo *TII =
     static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
 
-  if (TM.getSubtarget<MipsSubtarget>().inMips16Mode())
+  const MipsSubtarget &STI = TM.getSubtarget<MipsSubtarget>();
+  if (STI.inMips16Mode() || !STI.enableLongBranchPass())
     return false;
   if ((TM.getRelocationModel() == Reloc::PIC_) &&
       TM.getSubtarget<MipsSubtarget>().isABI_O32() &&
