@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - -mconstructor-aliases -triple=i386-pc-win32 -fno-rtti > %t
+// RUN: %clang_cc1 -emit-llvm -fno-rtti %s -std=c++11 -o - -mconstructor-aliases -triple=i386-pc-win32 -fno-rtti > %t
 // RUN: FileCheck %s < %t
 // vftables are emitted very late, so do another pass to try to keep the checks
 // in source order.
@@ -404,6 +404,26 @@ void construct_b() {
 // CHECK:               (%"struct.test1::B"* {{.*}}, i32* {{.*}}, i32 1)
 // CHECK: call %"struct.test1::B"* (%"struct.test1::B"*, i32, i8*, ...)* @"\01??0B@test1@@QAA@PBDZZ"
 // CHECK:               (%"struct.test1::B"* {{.*}}, i32 1, i8* {{.*}}, i32 1, i32 2)
+}
+
+namespace implicit_copy_vtable {
+// This was a crash that only reproduced in ABIs without key functions.
+struct ImplicitCopy {
+  // implicit copy ctor
+  virtual ~ImplicitCopy();
+};
+void CreateCopy(ImplicitCopy *a) {
+  new ImplicitCopy(*a);
+}
+// CHECK: store {{.*}} @"\01??_7ImplicitCopy@implicit_copy_vtable@@6B@"
+
+struct MoveOnly {
+  MoveOnly(MoveOnly &&o) = default;
+  virtual ~MoveOnly();
+};
+MoveOnly &&f();
+void g() { new MoveOnly(f()); }
+// CHECK: store {{.*}} @"\01??_7MoveOnly@implicit_copy_vtable@@6B@"
 }
 
 // Dtor thunks for classes in anonymous namespaces should be internal, not

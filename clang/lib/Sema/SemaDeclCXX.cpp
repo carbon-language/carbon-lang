@@ -10384,6 +10384,8 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
   }
 
   CopyConstructor->markUsed(Context);
+  MarkVTableUsed(CurrentLocation, ClassDecl);
+
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(CopyConstructor);
   }
@@ -10542,6 +10544,7 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
   }
 
   MoveConstructor->markUsed(Context);
+  MarkVTableUsed(CurrentLocation, ClassDecl);
 
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(MoveConstructor);
