@@ -299,6 +299,8 @@ public:
     return 0;
   }
 
+  void dump() const;
+
 private:
   unsigned getDefinitionLengthSlow(SourceManager &SM) const;
 
@@ -449,6 +451,8 @@ public:
   /// \brief Find macro definition active in the specified source location. If
   /// this macro was not defined there, return NULL.
   const DefInfo findDirectiveAtLoc(SourceLocation L, SourceManager &SM) const;
+
+  void dump() const;
 
   static bool classof(const MacroDirective *) { return true; }
 };
