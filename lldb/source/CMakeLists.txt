@@ -335,7 +335,7 @@ if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	    add_custom_command( TARGET liblldb
 	        POST_BUILD
             DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py
-	        COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py --buildConfig=${CMAKE_BUILD_TYPE} "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--prefix=${CMAKE_BINARY_DIR}" "--cmakeBuildConfiguration=${CMAKE_CFG_INTDIR}" -m
+	        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py --buildConfig=${CMAKE_BUILD_TYPE} "--srcRoot=${LLDB_SOURCE_DIR}" "--targetDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--cfgBldDir=${CMAKE_CURRENT_BINARY_DIR}/../scripts" "--prefix=${CMAKE_BINARY_DIR}" "--cmakeBuildConfiguration=${CMAKE_CFG_INTDIR}" -m
 	        COMMENT "Python script sym-linking LLDB Python API")
 	endif ()
 endif ()
