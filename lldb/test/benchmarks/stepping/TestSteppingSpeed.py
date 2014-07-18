@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class SteppingSpeedBench(BenchBase):
@@ -36,6 +35,7 @@ class SteppingSpeedBench(BenchBase):
         print "lldb stepping benchmark:", self.stopwatch
 
     def run_lldb_steppings(self, exe, break_spec, count):
+        import pexpect
         # Set self.child_prompt, which is "(lldb) ".
         self.child_prompt = '(lldb) '
         prompt = self.child_prompt

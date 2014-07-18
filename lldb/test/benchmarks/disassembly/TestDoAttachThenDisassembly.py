@@ -5,7 +5,6 @@ inferior and traverses the stack for thread0 to arrive at frame with function
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class AttachThenDisassemblyBench(BenchBase):

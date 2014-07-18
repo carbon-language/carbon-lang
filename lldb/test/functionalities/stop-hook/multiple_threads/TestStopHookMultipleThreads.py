@@ -5,7 +5,6 @@ Test that lldb stop-hook works for multiple threads.
 import os, time
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class StopHookForMultipleThreadsTestCase(TestBase):
@@ -42,6 +41,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
 
     def stop_hook_multiple_threads(self):
         """Test that lldb stop-hook works for multiple threads."""
+        import pexpect
         exe = os.path.join(os.getcwd(), self.exe_name)
         prompt = "(lldb) "
 

@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class FrameVariableResponseBench(BenchBase):
@@ -33,6 +32,7 @@ class FrameVariableResponseBench(BenchBase):
         print "lldb frame variable benchmark:", self.stopwatch
 
     def run_frame_variable_bench(self, exe, break_spec, count):
+        import pexpect
         # Set self.child_prompt, which is "(lldb) ".
         self.child_prompt = '(lldb) '
         prompt = self.child_prompt

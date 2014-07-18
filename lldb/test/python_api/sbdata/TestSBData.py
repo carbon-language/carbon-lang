@@ -3,7 +3,6 @@
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 from math import fabs
 import lldbutil

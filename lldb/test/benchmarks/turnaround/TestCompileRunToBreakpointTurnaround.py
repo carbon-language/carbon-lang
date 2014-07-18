@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class CompileRunToBreakpointBench(BenchBase):
@@ -33,6 +32,7 @@ class CompileRunToBreakpointBench(BenchBase):
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
     def run_lldb_turnaround(self, exe, function, count):
+        import pexpect
         def run_one_round():
             prompt = self.child_prompt
 
@@ -73,6 +73,7 @@ class CompileRunToBreakpointBench(BenchBase):
         self.child = None
 
     def run_gdb_turnaround(self, exe, function, count):
+        import pexpect
         def run_one_round():
             prompt = self.child_prompt
 

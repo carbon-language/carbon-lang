@@ -3,7 +3,6 @@
 import os, time
 import unittest2
 import lldb
-import pexpect
 import sys
 from lldbtest import *
 

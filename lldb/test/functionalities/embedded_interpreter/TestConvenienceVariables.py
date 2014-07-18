@@ -3,7 +3,6 @@
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class ConvenienceVariablesCase(TestBase):
@@ -33,6 +32,7 @@ class ConvenienceVariablesCase(TestBase):
 
     def convenience_variables(self):
         """Test convenience variables lldb.debugger, lldb.target, lldb.process, lldb.thread, and lldb.frame."""
+        import pexpect
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "
         python_prompt = ">>> "

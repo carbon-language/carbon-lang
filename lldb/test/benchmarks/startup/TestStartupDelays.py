@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class StartupDelaysBench(BenchBase):
@@ -40,6 +39,7 @@ class StartupDelaysBench(BenchBase):
         print "lldb startup delay (run to breakpoint) benchmark:", self.stopwatch3
 
     def run_startup_delays_bench(self, exe, break_spec, count):
+        import pexpect
         # Set self.child_prompt, which is "(lldb) ".
         self.child_prompt = '(lldb) '
         prompt = self.child_prompt

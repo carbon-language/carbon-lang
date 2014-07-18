@@ -5,7 +5,6 @@ Test the lldb command line completion mechanism.
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class CommandLineCompletionTestCase(TestBase):
@@ -153,6 +152,7 @@ class CommandLineCompletionTestCase(TestBase):
     def complete_from_to(self, str_input, patterns, turn_off_re_match=False):
         """Test that the completion mechanism completes str_input to patterns,
         where patterns could be a pattern-string or a list of pattern-strings"""
+        import pexpect
         # Patterns should not be None in order to proceed.
         self.assertFalse(patterns is None)
         # And should be either a string or list of strings.  Check for list type

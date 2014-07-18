@@ -5,7 +5,6 @@ Test lldb target stop-hook mechanism to see whether it fires off correctly .
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class StopHookMechanismTestCase(TestBase):
@@ -38,6 +37,7 @@ class StopHookMechanismTestCase(TestBase):
 
     def stop_hook_firing(self):
         """Test the stop-hook mechanism."""
+        import pexpect
         exe = os.path.join(os.getcwd(), "a.out")
         prompt = "(lldb) "
         add_prompt = "Enter your stop hook command(s).  Type 'DONE' to end.\r\n> "

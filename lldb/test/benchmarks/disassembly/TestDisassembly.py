@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 def is_exe(fpath):
@@ -66,6 +65,7 @@ class DisassembleDriverMainLoop(BenchBase):
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
     def run_lldb_disassembly(self, exe, function, count):
+        import pexpect
         # Set self.child_prompt, which is "(lldb) ".
         self.child_prompt = '(lldb) '
         prompt = self.child_prompt
@@ -106,6 +106,7 @@ class DisassembleDriverMainLoop(BenchBase):
         self.child = None
 
     def run_gdb_disassembly(self, exe, function, count):
+        import pexpect
         # Set self.child_prompt, which is "(gdb) ".
         self.child_prompt = '(gdb) '
         prompt = self.child_prompt

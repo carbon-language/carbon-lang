@@ -5,7 +5,6 @@ Base class for gdb-remote test cases.
 import errno
 import os
 import os.path
-import pexpect
 import platform
 import random
 import re
@@ -180,6 +179,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
     def launch_debug_monitor(self, attach_pid=None):
         # Create the command line.
+        import pexpect
         commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
             commandline += " --attach=%d" % attach_pid

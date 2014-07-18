@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class RepeatedExprsCase(BenchBase):
@@ -34,6 +33,7 @@ class RepeatedExprsCase(BenchBase):
         print "lldb_avg/gdb_avg: %f" % (self.lldb_avg/self.gdb_avg)
 
     def run_lldb_repeated_exprs(self, exe_name, count):
+        import pexpect
         exe = os.path.join(os.getcwd(), exe_name)
 
         # Set self.child_prompt, which is "(lldb) ".
@@ -79,6 +79,7 @@ class RepeatedExprsCase(BenchBase):
         self.child = None
 
     def run_gdb_repeated_exprs(self, exe_name, count):
+        import pexpect
         exe = os.path.join(os.getcwd(), exe_name)
 
         # Set self.child_prompt, which is "(gdb) ".

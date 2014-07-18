@@ -5,7 +5,6 @@ Test the command history mechanism
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class CommandHistoryTestCase(TestBase):

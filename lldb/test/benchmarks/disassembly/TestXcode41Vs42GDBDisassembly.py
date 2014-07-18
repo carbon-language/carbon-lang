@@ -3,7 +3,6 @@
 import os, sys
 import unittest2
 import lldb
-import pexpect
 from lldbbench import *
 
 class XCode41Vs42GDBDisassembly(BenchBase):
@@ -47,6 +46,7 @@ class XCode41Vs42GDBDisassembly(BenchBase):
         print "gdb_42_avg/gdb_41_avg: %f" % (self.gdb_42_avg/self.gdb_41_avg)
 
     def run_gdb_disassembly(self, gdb_exe_path, exe, function, count):
+        import pexpect
         # Set self.child_prompt, which is "(gdb) ".
         self.child_prompt = '(gdb) '
         prompt = self.child_prompt

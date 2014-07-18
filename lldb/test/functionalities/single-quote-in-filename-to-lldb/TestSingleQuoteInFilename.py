@@ -5,7 +5,6 @@ Test the lldb command line takes a filename with single quote chars.
 import os
 import unittest2
 import lldb
-import pexpect
 from lldbtest import *
 
 class SingleQuoteInCommandLineTestCase(TestBase):
@@ -25,6 +24,7 @@ class SingleQuoteInCommandLineTestCase(TestBase):
 
     def test_lldb_invocation_with_single_quote_in_filename(self):
         """Test that 'lldb my_file_name' works where my_file_name is a string with a single quote char in it."""
+        import pexpect
         self.buildDefault()
         system(["/bin/sh", "-c", "cp a.out \"%s\"" % self.myexe])
 
