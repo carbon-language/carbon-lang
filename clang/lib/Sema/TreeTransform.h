@@ -6428,12 +6428,17 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
       TClauses.push_back(nullptr);
     }
   }
-  if (!D->getAssociatedStmt()) {
-    return StmtError();
+  StmtResult AssociatedStmt;
+  if (D->hasAssociatedStmt()) {
+    if (!D->getAssociatedStmt()) {
+      return StmtError();
+    }
+    AssociatedStmt = getDerived().TransformStmt(D->getAssociatedStmt());
+    if (AssociatedStmt.isInvalid()) {
+      return StmtError();
+    }
   }
-  StmtResult AssociatedStmt =
-      getDerived().TransformStmt(D->getAssociatedStmt());
-  if (AssociatedStmt.isInvalid() || TClauses.size() != Clauses.size()) {
+  if (TClauses.size() != Clauses.size()) {
     return StmtError();
   }
 
@@ -6546,6 +6551,17 @@ StmtResult
 TreeTransform<Derived>::TransformOMPTaskDirective(OMPTaskDirective *D) {
   DeclarationNameInfo DirName;
   getDerived().getSema().StartOpenMPDSABlock(OMPD_task, DirName, nullptr,
+                                             D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
+StmtResult TreeTransform<Derived>::TransformOMPTaskyieldDirective(
+    OMPTaskyieldDirective *D) {
+  DeclarationNameInfo DirName;
+  getDerived().getSema().StartOpenMPDSABlock(OMPD_taskyield, DirName, nullptr,
                                              D->getLocStart());
   StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
   getDerived().getSema().EndOpenMPDSABlock(Res.get());

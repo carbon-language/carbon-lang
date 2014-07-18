@@ -1815,7 +1815,8 @@ void ASTStmtWriter::VisitOMPExecutableDirective(OMPExecutableDirective *E) {
   for (unsigned i = 0; i < E->getNumClauses(); ++i) {
     ClauseWriter.writeClause(E->getClause(i));
   }
-  Writer.AddStmt(E->getAssociatedStmt());
+  if (E->hasAssociatedStmt())
+    Writer.AddStmt(E->getAssociatedStmt());
 }
 
 void ASTStmtWriter::VisitOMPParallelDirective(OMPParallelDirective *D) {
@@ -1888,6 +1889,12 @@ void ASTStmtWriter::VisitOMPTaskDirective(OMPTaskDirective *D) {
   Record.push_back(D->getNumClauses());
   VisitOMPExecutableDirective(D);
   Code = serialization::STMT_OMP_TASK_DIRECTIVE;
+}
+
+void ASTStmtWriter::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
+  VisitStmt(D);
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_TASKYIELD_DIRECTIVE;
 }
 
 //===----------------------------------------------------------------------===//

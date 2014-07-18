@@ -83,7 +83,10 @@ protected:
   ///
   /// /param S Associated statement.
   ///
-  void setAssociatedStmt(Stmt *S) { *child_begin() = S; }
+  void setAssociatedStmt(Stmt *S) {
+    assert(hasAssociatedStmt() && "no associated statement.");
+    *child_begin() = S;
+  }
 
 public:
   /// \brief Iterates over a filtered subrange of clauses applied to a
@@ -150,8 +153,14 @@ public:
   ///
   OMPClause *getClause(unsigned i) const { return clauses()[i]; }
 
+  /// \brief Returns true if directive has associated statement.
+  bool hasAssociatedStmt() const { return NumChildren > 0; }
+
   /// \brief Returns statement associated with the directive.
-  Stmt *getAssociatedStmt() const { return const_cast<Stmt *>(*child_begin()); }
+  Stmt *getAssociatedStmt() const {
+    assert(hasAssociatedStmt() && "no associated statement.");
+    return const_cast<Stmt *>(*child_begin());
+  }
 
   OpenMPDirectiveKind getDirectiveKind() const { return Kind; }
 
@@ -161,6 +170,8 @@ public:
   }
 
   child_range children() {
+    if (!hasAssociatedStmt())
+      return child_range();
     Stmt **ChildStorage = reinterpret_cast<Stmt **>(getClauses().end());
     return child_range(ChildStorage, ChildStorage + NumChildren);
   }
@@ -760,6 +771,50 @@ public:
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OMPTaskDirectiveClass;
+  }
+};
+
+/// \brief This represents '#pragma omp taskyield' directive.
+///
+/// \code
+/// #pragma omp taskyield
+/// \endcode
+///
+class OMPTaskyieldDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPTaskyieldDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPTaskyieldDirectiveClass, OMPD_taskyield,
+                               StartLoc, EndLoc, 0, 0) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPTaskyieldDirective()
+      : OMPExecutableDirective(this, OMPTaskyieldDirectiveClass, OMPD_taskyield,
+                               SourceLocation(), SourceLocation(), 0, 0) {}
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  ///
+  static OMPTaskyieldDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPTaskyieldDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPTaskyieldDirectiveClass;
   }
 };
 

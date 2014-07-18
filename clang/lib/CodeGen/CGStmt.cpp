@@ -206,6 +206,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTaskDirectiveClass:
     EmitOMPTaskDirective(cast<OMPTaskDirective>(*S));
     break;
+  case Stmt::OMPTaskyieldDirectiveClass:
+    EmitOMPTaskyieldDirective(cast<OMPTaskyieldDirective>(*S));
+    break;
   }
 }
 

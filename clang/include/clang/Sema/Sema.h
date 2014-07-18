@@ -7368,6 +7368,10 @@ public:
   StmtResult ActOnOpenMPTaskDirective(ArrayRef<OMPClause *> Clauses,
                                       Stmt *AStmt, SourceLocation StartLoc,
                                       SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp taskyield' after parsing of the
+  /// associated statement.
+  StmtResult ActOnOpenMPTaskyieldDirective(SourceLocation StartLoc,
+                                           SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,

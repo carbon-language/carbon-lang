@@ -908,6 +908,8 @@ def err_omp_unexpected_clause : Error<
   "unexpected OpenMP clause '%0' in directive '#pragma omp %1'">;
 def err_omp_more_one_clause : Error<
   "directive '#pragma omp %0' cannot contain more than one '%1' clause">;
+def err_omp_immediate_directive : Error<
+  "'#pragma omp %0' cannot be an immediate substatement">;
 
 // Pragma loop support.
 def err_pragma_loop_invalid_option : Error<

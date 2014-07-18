@@ -407,6 +407,10 @@ void StmtProfiler::VisitOMPTaskDirective(const OMPTaskDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPTaskyieldDirective(const OMPTaskyieldDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
 void StmtProfiler::VisitExpr(const Expr *S) {
   VisitStmt(S);
 }

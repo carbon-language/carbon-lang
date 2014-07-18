@@ -2339,7 +2339,12 @@ private:
                                 SmallVectorImpl<Expr *> &VarList,
                                 bool AllowScopeSpecifier);
   /// \brief Parses declarative or executable directive.
-  StmtResult ParseOpenMPDeclarativeOrExecutableDirective();
+  ///
+  /// \param StandAloneAllowed true if allowed stand-alone directives,
+  /// false - otherwise
+  ///
+  StmtResult
+  ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed);
   /// \brief Parses clause of kind \a CKind for directive of a kind \a Kind.
   ///
   /// \param DKind Kind of current directive.

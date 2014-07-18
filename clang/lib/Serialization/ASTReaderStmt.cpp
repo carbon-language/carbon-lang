@@ -1919,7 +1919,8 @@ void ASTStmtReader::VisitOMPExecutableDirective(OMPExecutableDirective *E) {
   for (unsigned i = 0; i < E->getNumClauses(); ++i)
     Clauses.push_back(ClauseReader.readClause());
   E->setClauses(Clauses);
-  E->setAssociatedStmt(Reader.ReadSubStmt());
+  if (E->hasAssociatedStmt())
+    E->setAssociatedStmt(Reader.ReadSubStmt());
 }
 
 void ASTStmtReader::VisitOMPParallelDirective(OMPParallelDirective *D) {
@@ -1986,6 +1987,11 @@ void ASTStmtReader::VisitOMPTaskDirective(OMPTaskDirective *D) {
   VisitStmt(D);
   // The NumClauses field was read in ReadStmtFromStream.
   ++Idx;
+  VisitOMPExecutableDirective(D);
+}
+
+void ASTStmtReader::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
+  VisitStmt(D);
   VisitOMPExecutableDirective(D);
 }
 
@@ -2521,6 +2527,10 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case STMT_OMP_TASK_DIRECTIVE:
       S = OMPTaskDirective::CreateEmpty(
           Context, Record[ASTStmtReader::NumStmtFields], Empty);
+      break;
+
+    case STMT_OMP_TASKYIELD_DIRECTIVE:
+      S = OMPTaskyieldDirective::CreateEmpty(Context, Empty);
       break;
 
     case EXPR_CXX_OPERATOR_CALL:

@@ -1036,6 +1036,14 @@ void Sema::ActOnOpenMPRegionStart(OpenMPDirectiveKind DKind, Scope *CurScope) {
                              Params);
     break;
   }
+  case OMPD_taskyield: {
+    Sema::CapturedParamNameType Params[] = {
+        std::make_pair(StringRef(), QualType()) // __context with shared vars
+    };
+    ActOnCapturedRegionStart(DSAStack->getConstructLoc(), CurScope, CR_OpenMP,
+                             Params);
+    break;
+  }
   case OMPD_threadprivate:
     llvm_unreachable("OpenMP Directive is not allowed");
   case OMPD_unknown:
@@ -1060,6 +1068,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel         | parallel for    | *                                  |
   // | parallel         |parallel sections| *                                  |
   // | parallel         | task            | *                                  |
+  // | parallel         | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | for              | parallel        | *                                  |
   // | for              | for             | +                                  |
@@ -1071,6 +1080,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | for              | parallel for    | *                                  |
   // | for              |parallel sections| *                                  |
   // | for              | task            | *                                  |
+  // | for              | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | master           | parallel        | *                                  |
   // | master           | for             | +                                  |
@@ -1082,6 +1092,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | master           | parallel for    | *                                  |
   // | master           |parallel sections| *                                  |
   // | master           | task            | *                                  |
+  // | master           | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | simd             | parallel        |                                    |
   // | simd             | for             |                                    |
@@ -1093,6 +1104,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | simd             | parallel for    |                                    |
   // | simd             |parallel sections|                                    |
   // | simd             | task            |                                    |
+  // | simd             | taskyield       |                                    |
   // +------------------+-----------------+------------------------------------+
   // | sections         | parallel        | *                                  |
   // | sections         | for             | +                                  |
@@ -1104,6 +1116,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | sections         | parallel for    | *                                  |
   // | sections         |parallel sections| *                                  |
   // | sections         | task            | *                                  |
+  // | sections         | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | section          | parallel        | *                                  |
   // | section          | for             | +                                  |
@@ -1115,6 +1128,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | section          | parallel for    | *                                  |
   // | section          |parallel sections| *                                  |
   // | section          | task            | *                                  |
+  // | section          | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | single           | parallel        | *                                  |
   // | single           | for             | +                                  |
@@ -1126,6 +1140,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | single           | parallel for    | *                                  |
   // | single           |parallel sections| *                                  |
   // | single           | task            | *                                  |
+  // | single           | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | parallel for     | parallel        | *                                  |
   // | parallel for     | for             | +                                  |
@@ -1137,6 +1152,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel for     | parallel for    | *                                  |
   // | parallel for     |parallel sections| *                                  |
   // | parallel for     | task            | *                                  |
+  // | parallel for     | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | parallel sections| parallel        | *                                  |
   // | parallel sections| for             | +                                  |
@@ -1148,6 +1164,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | parallel sections| parallel for    | *                                  |
   // | parallel sections|parallel sections| *                                  |
   // | parallel sections| task            | *                                  |
+  // | parallel sections| taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   // | task             | parallel        | *                                  |
   // | task             | for             | +                                  |
@@ -1159,6 +1176,7 @@ bool CheckNestingOfRegions(Sema &SemaRef, DSAStackTy *Stack,
   // | task             | parallel for    | *                                  |
   // | task             |parallel sections| *                                  |
   // | task             | task            | *                                  |
+  // | task             | taskyield       | *                                  |
   // +------------------+-----------------+------------------------------------+
   if (Stack->getCurScope()) {
     auto ParentRegion = Stack->getParentDirective();
@@ -1219,32 +1237,35 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
                                                 Stmt *AStmt,
                                                 SourceLocation StartLoc,
                                                 SourceLocation EndLoc) {
-  assert(AStmt && isa<CapturedStmt>(AStmt) && "Captured statement expected");
-
   StmtResult Res = StmtError();
   if (CheckNestingOfRegions(*this, DSAStack, Kind, StartLoc))
     return StmtError();
 
-  // Check default data sharing attributes for referenced variables.
-  DSAAttrChecker DSAChecker(DSAStack, *this, cast<CapturedStmt>(AStmt));
-  DSAChecker.Visit(cast<CapturedStmt>(AStmt)->getCapturedStmt());
-  if (DSAChecker.isErrorFound())
-    return StmtError();
-  // Generate list of implicitly defined firstprivate variables.
-  auto &VarsWithInheritedDSA = DSAChecker.getVarsWithInheritedDSA();
   llvm::SmallVector<OMPClause *, 8> ClausesWithImplicit;
-  ClausesWithImplicit.append(Clauses.begin(), Clauses.end());
-
+  llvm::DenseMap<VarDecl *, Expr *> VarsWithInheritedDSA;
   bool ErrorFound = false;
-  if (!DSAChecker.getImplicitFirstprivate().empty()) {
-    if (OMPClause *Implicit = ActOnOpenMPFirstprivateClause(
-            DSAChecker.getImplicitFirstprivate(), SourceLocation(),
-            SourceLocation(), SourceLocation())) {
-      ClausesWithImplicit.push_back(Implicit);
-      ErrorFound = cast<OMPFirstprivateClause>(Implicit)->varlist_size() !=
-                   DSAChecker.getImplicitFirstprivate().size();
-    } else
-      ErrorFound = true;
+  if (AStmt) {
+    assert(isa<CapturedStmt>(AStmt) && "Captured statement expected");
+
+    // Check default data sharing attributes for referenced variables.
+    DSAAttrChecker DSAChecker(DSAStack, *this, cast<CapturedStmt>(AStmt));
+    DSAChecker.Visit(cast<CapturedStmt>(AStmt)->getCapturedStmt());
+    if (DSAChecker.isErrorFound())
+      return StmtError();
+    // Generate list of implicitly defined firstprivate variables.
+    VarsWithInheritedDSA = DSAChecker.getVarsWithInheritedDSA();
+    ClausesWithImplicit.append(Clauses.begin(), Clauses.end());
+
+    if (!DSAChecker.getImplicitFirstprivate().empty()) {
+      if (OMPClause *Implicit = ActOnOpenMPFirstprivateClause(
+              DSAChecker.getImplicitFirstprivate(), SourceLocation(),
+              SourceLocation(), SourceLocation())) {
+        ClausesWithImplicit.push_back(Implicit);
+        ErrorFound = cast<OMPFirstprivateClause>(Implicit)->varlist_size() !=
+                     DSAChecker.getImplicitFirstprivate().size();
+      } else
+        ErrorFound = true;
+    }
   }
 
   switch (Kind) {
@@ -1289,6 +1310,13 @@ StmtResult Sema::ActOnOpenMPExecutableDirective(OpenMPDirectiveKind Kind,
   case OMPD_task:
     Res =
         ActOnOpenMPTaskDirective(ClausesWithImplicit, AStmt, StartLoc, EndLoc);
+    break;
+  case OMPD_taskyield:
+    assert(ClausesWithImplicit.empty() &&
+           "No clauses are allowed for 'omp taskyield' directive");
+    assert(AStmt == nullptr &&
+           "No associated statement allowed for 'omp taskyield' directive");
+    Res = ActOnOpenMPTaskyieldDirective(StartLoc, EndLoc);
     break;
   case OMPD_threadprivate:
     llvm_unreachable("OpenMP Directive is not allowed");
@@ -2031,6 +2059,11 @@ StmtResult Sema::ActOnOpenMPTaskDirective(ArrayRef<OMPClause *> Clauses,
   getCurFunction()->setHasBranchProtectedScope();
 
   return OMPTaskDirective::Create(Context, StartLoc, EndLoc, Clauses, AStmt);
+}
+
+StmtResult Sema::ActOnOpenMPTaskyieldDirective(SourceLocation StartLoc,
+                                               SourceLocation EndLoc) {
+  return OMPTaskyieldDirective::Create(Context, StartLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
