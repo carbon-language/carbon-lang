@@ -818,6 +818,50 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp barrier' directive.
+///
+/// \code
+/// #pragma omp barrier
+/// \endcode
+///
+class OMPBarrierDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPBarrierDirective(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPBarrierDirectiveClass, OMPD_barrier,
+                               StartLoc, EndLoc, 0, 0) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPBarrierDirective()
+      : OMPExecutableDirective(this, OMPBarrierDirectiveClass, OMPD_barrier,
+                               SourceLocation(), SourceLocation(), 0, 0) {}
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  ///
+  static OMPBarrierDirective *
+  Create(const ASTContext &C, SourceLocation StartLoc, SourceLocation EndLoc);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPBarrierDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPBarrierDirectiveClass;
+  }
+};
+
 } // end namespace clang
 
 #endif

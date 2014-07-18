@@ -2175,9 +2175,13 @@ enum CXCursorKind {
    */
   CXCursor_OMPTaskyieldDirective         = 242,
 
+  /** \brief OpenMP barrier directive.
+   */
+  CXCursor_OMPBarrierDirective           = 243,
+
   /** \brief Windows Structured Exception Handling's leave statement.
    */
-  CXCursor_SEHLeaveStmt                  = 243,
+  CXCursor_SEHLeaveStmt                  = 244,
 
   CXCursor_LastStmt                      = CXCursor_SEHLeaveStmt,
 

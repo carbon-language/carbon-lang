@@ -51,6 +51,11 @@ void foo() {
 #pragma omp taskyield
     bar();
   }
+#pragma omp parallel
+  {
+#pragma omp barrier
+    bar();
+  }
 
 // SIMD DIRECTIVE
 #pragma omp simd
@@ -122,6 +127,11 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -214,6 +224,11 @@ void foo() {
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'for' region}}
     bar();
   }
 
@@ -309,6 +324,10 @@ void foo() {
 #pragma omp sections
   {
 #pragma omp taskyield
+  }
+#pragma omp sections
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'sections' region}}
   }
 
 // SECTION DIRECTIVE
@@ -430,6 +449,14 @@ void foo() {
       bar();
     }
   }
+#pragma omp sections
+  {
+#pragma omp section
+    {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'section' region}}
+      bar();
+    }
+  }
 
 // SINGLE DIRECTIVE
 #pragma omp single
@@ -513,6 +540,11 @@ void foo() {
 #pragma omp taskyield
     bar();
   }
+#pragma omp single
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'single' region}}
+    bar();
+  }
 
 // MASTER DIRECTIVE
 #pragma omp master
@@ -594,6 +626,11 @@ void foo() {
 #pragma omp master
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp master
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'master' region}}
     bar();
   }
 
@@ -688,6 +725,11 @@ void foo() {
 #pragma omp taskyield
     bar();
   }
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'parallel for' region}}
+    bar();
+  }
 
 // PARALLEL SECTIONS DIRECTIVE
 #pragma omp parallel sections
@@ -779,6 +821,10 @@ void foo() {
   {
 #pragma omp taskyield
   }
+#pragma omp parallel sections
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'parallel sections' region}}
+  }
 
 // TASK DIRECTIVE
 #pragma omp task
@@ -822,6 +868,11 @@ void foo() {
 #pragma omp task
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp task
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'task' region}}
     bar();
   }
 }
@@ -874,6 +925,11 @@ void foo() {
 #pragma omp parallel
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp parallel
+  {
+#pragma omp barrier
     bar();
   }
 
@@ -940,6 +996,11 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -1023,6 +1084,11 @@ void foo() {
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'for' region}}
     bar();
   }
 
@@ -1105,7 +1171,11 @@ void foo() {
   }
 #pragma omp sections
   {
-#pragma omp task
+#pragma omp taskyield
+  }
+#pragma omp sections
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'sections' region}}
     bar();
   }
 
@@ -1228,6 +1298,14 @@ void foo() {
       bar();
     }
   }
+#pragma omp sections
+  {
+#pragma omp section
+    {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'section' region}}
+      bar();
+    }
+  }
 
 // SINGLE DIRECTIVE
 #pragma omp single
@@ -1304,6 +1382,11 @@ void foo() {
 #pragma omp single
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp single
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'single' region}}
     bar();
   }
 
@@ -1387,6 +1470,11 @@ void foo() {
 #pragma omp master
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp master
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'master' region}}
     bar();
   }
 
@@ -1480,6 +1568,11 @@ void foo() {
 #pragma omp taskyield
     bar();
   }
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'parallel for' region}}
+    bar();
+  }
 
 // PARALLEL SECTIONS DIRECTIVE
 #pragma omp parallel sections
@@ -1569,6 +1662,10 @@ void foo() {
   {
 #pragma omp taskyield
   }
+#pragma omp parallel sections
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'parallel sections' region}}
+  }
 
 // TASK DIRECTIVE
 #pragma omp task
@@ -1612,6 +1709,11 @@ void foo() {
 #pragma omp task
   {
 #pragma omp taskyield
+    bar();
+  }
+#pragma omp task
+  {
+#pragma omp barrier // expected-error {{region cannot be closely nested inside 'task' region}}
     bar();
   }
   return foo<int>();

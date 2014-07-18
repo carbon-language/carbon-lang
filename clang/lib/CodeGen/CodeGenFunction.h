@@ -1932,6 +1932,7 @@ public:
   void EmitOMPParallelSectionsDirective(const OMPParallelSectionsDirective &S);
   void EmitOMPTaskDirective(const OMPTaskDirective &S);
   void EmitOMPTaskyieldDirective(const OMPTaskyieldDirective &S);
+  void EmitOMPBarrierDirective(const OMPBarrierDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

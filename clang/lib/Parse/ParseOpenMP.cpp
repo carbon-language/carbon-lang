@@ -84,6 +84,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_simd:
   case OMPD_task:
   case OMPD_taskyield:
+  case OMPD_barrier:
   case OMPD_for:
   case OMPD_sections:
   case OMPD_section:
@@ -108,7 +109,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///       executable-directive:
 ///         annot_pragma_openmp 'parallel' | 'simd' | 'for' | 'sections' |
 ///         'section' | 'single' | 'master' | 'parallel for' |
-///         'parallel sections' | 'task' | 'taskyield' {clause}
+///         'parallel sections' | 'task' | 'taskyield' | 'barrier' {clause}
 ///         annot_pragma_openmp_end
 ///
 StmtResult
@@ -146,6 +147,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
     SkipUntil(tok::annot_pragma_openmp_end);
     break;
   case OMPD_taskyield:
+  case OMPD_barrier:
     if (!StandAloneAllowed) {
       Diag(Tok, diag::err_omp_immediate_directive)
           << getOpenMPDirectiveName(DKind);

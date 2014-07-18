@@ -1589,3 +1589,17 @@ OMPTaskyieldDirective *OMPTaskyieldDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPTaskyieldDirective();
 }
 
+OMPBarrierDirective *OMPBarrierDirective::Create(const ASTContext &C,
+                                                 SourceLocation StartLoc,
+                                                 SourceLocation EndLoc) {
+  void *Mem = C.Allocate(sizeof(OMPBarrierDirective));
+  OMPBarrierDirective *Dir = new (Mem) OMPBarrierDirective(StartLoc, EndLoc);
+  return Dir;
+}
+
+OMPBarrierDirective *OMPBarrierDirective::CreateEmpty(const ASTContext &C,
+                                                      EmptyShell) {
+  void *Mem = C.Allocate(sizeof(OMPBarrierDirective));
+  return new (Mem) OMPBarrierDirective();
+}
+
