@@ -328,7 +328,7 @@ class SymbolizationLoop(object):
     # E.g. in Chrome several binaries may share a single .dSYM.
     self.binary_name_filter = binary_name_filter
     self.system = os.uname()[0]
-    if self.system not in ['Linux', 'Darwin']:
+    if self.system not in ['Linux', 'Darwin', 'FreeBSD']:
       raise Exception('Unknown system')
     self.llvm_symbolizer = None
     self.frame_no = 0
