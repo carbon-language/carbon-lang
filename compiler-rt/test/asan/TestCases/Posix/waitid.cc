@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <signal.h>
 
 int main(int argc, char **argv) {
   pid_t pid = fork();
