@@ -41,8 +41,8 @@ void Test1() {
     (void)Subclass.classMethod;
 
     // also okay
-    [RootClass property];
-    [Subclass property];
+    (void)[RootClass property];
+    (void)[Subclass property];
     [RootClass method];
     [Subclass method];
     [RootClass classMethod];

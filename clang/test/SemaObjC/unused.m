@@ -81,3 +81,26 @@ void rdar15596883(id x) {
   rdar15596883_foo();
 }
 
+@interface PropertyObject : NSObject 
+@property int length;
+@end
+
+@protocol P
+@property int property;
+@end
+
+void test3(PropertyObject *o)
+{
+  [o length]; // expected-warning {{property access result unused - getters should not be used for side effects}}
+  (void)[o length];
+}
+
+void test4(id o)
+{
+  [o length]; // No warning.
+}
+
+void test5(id <P> p)
+{
+    [p property]; // expected-warning {{property access result unused - getters should not be used for side effects}}
+}

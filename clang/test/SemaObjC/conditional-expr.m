@@ -96,8 +96,8 @@ id f7(int a, id<P0> x, A* p) {
   return a ? x : p;
 }
 
-void f8(int a, A<P0> *x, A *y) {
-  [ (a ? x : y ) intProp ];
+int f8(int a, A<P0> *x, A *y) {
+  return [ (a ? x : y ) intProp ];
 }
 
 void f9(int a, A<P0> *x, A<P1> *y) {
