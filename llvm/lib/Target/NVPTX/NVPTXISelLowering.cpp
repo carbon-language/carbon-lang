@@ -203,8 +203,11 @@ NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
   // Turn FP extload into load/fextend
+  setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
   // Turn FP truncstore into trunc + store.
+  setTruncStoreAction(MVT::f32, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f16, Expand);
   setTruncStoreAction(MVT::f64, MVT::f32, Expand);
 
   // PTX does not support load / store predicate registers
