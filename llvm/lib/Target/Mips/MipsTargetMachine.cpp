@@ -56,7 +56,7 @@ MipsTargetMachine::MipsTargetMachine(const Target &T, StringRef TT,
                                      Reloc::Model RM, CodeModel::Model CM,
                                      CodeGenOpt::Level OL, bool isLittle)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
-      Subtarget(TT, CPU, FS, isLittle, RM, this) {
+      Subtarget(TT, CPU, FS, isLittle, this) {
   initAsmInfo();
 }
 

@@ -104,7 +104,7 @@ static std::string computeDataLayout(const MipsSubtarget &ST) {
 
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little,
-                             Reloc::Model _RM, MipsTargetMachine *_TM)
+                             MipsTargetMachine *_TM)
     : MipsGenSubtargetInfo(TT, CPU, FS), MipsArchVersion(Mips32),
       MipsABI(UnknownABI), IsLittle(little), IsSingleFloat(false),
       IsFPXX(false), IsFP64bit(false), UseOddSPReg(true), IsNaN2008bit(false),
@@ -113,8 +113,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
-      HasMSA(false), RM(_RM), OverrideMode(NoOverride), TM(_TM),
-      TargetTriple(TT),
+      HasMSA(false), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
       TSInfo(DL), JITInfo(), InstrInfo(MipsInstrInfo::create(*TM)),
       FrameLowering(MipsFrameLowering::create(*TM, *this)),
@@ -174,7 +173,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
   // Set UseSmallSection.
   // TODO: Investigate the IsLinux check. I suspect it's really checking for
   //       bare-metal.
-  UseSmallSection = !IsLinux && (RM == Reloc::Static);
+  UseSmallSection = !IsLinux && (TM->getRelocationModel() == Reloc::Static);
 }
 
 /// This overrides the PostRAScheduler bit in the SchedModel for any CPU.
@@ -293,4 +292,8 @@ bool MipsSubtarget::abiUsesSoftFloat() const {
 bool MipsSubtarget::useConstantIslands() {
   DEBUG(dbgs() << "use constant islands " << Mips16ConstantIslands << "\n");
   return Mips16ConstantIslands;
+}
+
+Reloc::Model MipsSubtarget::getRelocationModel() const {
+  return TM->getRelocationModel();
 }
