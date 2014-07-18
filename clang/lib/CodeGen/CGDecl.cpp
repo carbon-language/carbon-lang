@@ -907,8 +907,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       if (isByRef)
         LTy = BuildByRefType(&D);
 
-      llvm::AllocaInst *Alloc = CreateTempAlloca(LTy);
-      Alloc->setName(D.getName());
+      llvm::AllocaInst *Alloc = CreateTempAlloca(LTy, D.getName());
 
       CharUnits allocaAlignment = alignment;
       if (isByRef)
