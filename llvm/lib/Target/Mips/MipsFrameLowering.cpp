@@ -82,9 +82,8 @@ using namespace llvm;
 //
 //===----------------------------------------------------------------------===//
 
-const MipsFrameLowering *MipsFrameLowering::create(MipsTargetMachine &TM,
-                                                   const MipsSubtarget &ST) {
-  if (TM.getSubtargetImpl()->inMips16Mode())
+const MipsFrameLowering *MipsFrameLowering::create(const MipsSubtarget &ST) {
+  if (ST.inMips16Mode())
     return llvm::createMips16FrameLowering(ST);
 
   return llvm::createMipsSEFrameLowering(ST);
