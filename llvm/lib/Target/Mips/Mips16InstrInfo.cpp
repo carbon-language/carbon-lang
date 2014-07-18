@@ -31,9 +31,8 @@ using namespace llvm;
 
 #define DEBUG_TYPE "mips16-instrinfo"
 
-Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
-  : MipsInstrInfo(tm, Mips::Bimm16),
-    RI(*tm.getSubtargetImpl()) {}
+Mips16InstrInfo::Mips16InstrInfo(const MipsSubtarget &STI)
+    : MipsInstrInfo(STI, Mips::Bimm16), RI(STI) {}
 
 const MipsRegisterInfo &Mips16InstrInfo::getRegisterInfo() const {
   return RI;
@@ -450,8 +449,8 @@ void Mips16InstrInfo::BuildAddiuSpImm
   BuildMI(MBB, I, DL, AddiuSpImm(Imm)).addImm(Imm);
 }
 
-const MipsInstrInfo *llvm::createMips16InstrInfo(MipsTargetMachine &TM) {
-  return new Mips16InstrInfo(TM);
+const MipsInstrInfo *llvm::createMips16InstrInfo(const MipsSubtarget &STI) {
+  return new Mips16InstrInfo(STI);
 }
 
 bool Mips16InstrInfo::validImmediate(unsigned Opcode, unsigned Reg,

@@ -24,7 +24,7 @@ class MipsSEInstrInfo : public MipsInstrInfo {
   bool IsN64;
 
 public:
-  explicit MipsSEInstrInfo(MipsTargetMachine &TM);
+  explicit MipsSEInstrInfo(const MipsSubtarget &STI);
 
   const MipsRegisterInfo &getRegisterInfo() const override;
 

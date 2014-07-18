@@ -23,7 +23,7 @@ class Mips16InstrInfo : public MipsInstrInfo {
   const Mips16RegisterInfo RI;
 
 public:
-  explicit Mips16InstrInfo(MipsTargetMachine &TM);
+  explicit Mips16InstrInfo(const MipsSubtarget &STI);
 
   const MipsRegisterInfo &getRegisterInfo() const override;
 

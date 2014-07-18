@@ -30,15 +30,15 @@ using namespace llvm;
 // Pin the vtable to this file.
 void MipsInstrInfo::anchor() {}
 
-MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm, unsigned UncondBr)
-  : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
-    TM(tm), UncondBrOpc(UncondBr) {}
+MipsInstrInfo::MipsInstrInfo(const MipsSubtarget &STI, unsigned UncondBr)
+    : MipsGenInstrInfo(Mips::ADJCALLSTACKDOWN, Mips::ADJCALLSTACKUP),
+      Subtarget(STI), UncondBrOpc(UncondBr) {}
 
-const MipsInstrInfo *MipsInstrInfo::create(MipsTargetMachine &TM) {
-  if (TM.getSubtargetImpl()->inMips16Mode())
-    return llvm::createMips16InstrInfo(TM);
+const MipsInstrInfo *MipsInstrInfo::create(MipsSubtarget &STI) {
+  if (STI.inMips16Mode())
+    return llvm::createMips16InstrInfo(STI);
 
-  return llvm::createMipsSEInstrInfo(TM);
+  return llvm::createMipsSEInstrInfo(STI);
 }
 
 bool MipsInstrInfo::isZeroImm(const MachineOperand &op) const {
@@ -156,7 +156,7 @@ unsigned MipsInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
 
   // Up to 2 branches are removed.
   // Note that indirect branches are not removed.
-  for(removed = 0; I != REnd && removed < 2; ++I, ++removed)
+  for (removed = 0; I != REnd && removed < 2; ++I, ++removed)
     if (!getAnalyzableBrOpc(I->getOpcode()))
       break;
 

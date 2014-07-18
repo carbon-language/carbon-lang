@@ -33,7 +33,7 @@ namespace llvm {
 class MipsInstrInfo : public MipsGenInstrInfo {
   virtual void anchor();
 protected:
-  MipsTargetMachine &TM;
+  const MipsSubtarget &Subtarget;
   unsigned UncondBrOpc;
 
 public:
@@ -46,9 +46,9 @@ public:
     BT_Indirect    // One indirct branch.
   };
 
-  explicit MipsInstrInfo(MipsTargetMachine &TM, unsigned UncondBrOpc);
+  explicit MipsInstrInfo(const MipsSubtarget &STI, unsigned UncondBrOpc);
 
-  static const MipsInstrInfo *create(MipsTargetMachine &TM);
+  static const MipsInstrInfo *create(MipsSubtarget &STI);
 
   /// Branch Analysis
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
@@ -140,8 +140,8 @@ private:
 };
 
 /// Create MipsInstrInfo objects.
-const MipsInstrInfo *createMips16InstrInfo(MipsTargetMachine &TM);
-const MipsInstrInfo *createMipsSEInstrInfo(MipsTargetMachine &TM);
+const MipsInstrInfo *createMips16InstrInfo(const MipsSubtarget &STI);
+const MipsInstrInfo *createMipsSEInstrInfo(const MipsSubtarget &STI);
 
 }
 
