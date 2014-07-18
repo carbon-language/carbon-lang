@@ -298,9 +298,10 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
 
   // Add unroll(disable) metadata to disable future unrolling.
   LLVMContext &Context = L->getHeader()->getContext();
-  MDNode *DisableNode =
-      MDNode::get(Context, {MDString::get(Context, "llvm.loop.unroll.enable"),
-                            ConstantInt::get(Type::getInt1Ty(Context), 0)});
+  SmallVector<Value *, 2> DisableOperands;
+  DisableOperands.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
+  DisableOperands.push_back(ConstantInt::get(Type::getInt1Ty(Context), 0));
+  MDNode *DisableNode = MDNode::get(Context, DisableOperands);
   Vals.push_back(DisableNode);
 
   MDNode *NewLoopID = MDNode::get(Context, Vals);
