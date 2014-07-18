@@ -488,29 +488,6 @@ static bool isNoCommonDefault(const llvm::Triple &Triple) {
   }
 }
 
-// Handle -mfpu=.
-//
-// FIXME: Centralize feature selection, defaulting shouldn't be also in the
-// frontend target.
-static void getAArch64FPUFeatures(const Driver &D, const Arg *A,
-                                  const ArgList &Args,
-                                  std::vector<const char *> &Features) {
-  StringRef FPU = A->getValue();
-  if (FPU == "fp-armv8") {
-    Features.push_back("+fp-armv8");
-  } else if (FPU == "neon-fp-armv8") {
-    Features.push_back("+fp-armv8");
-    Features.push_back("+neon");
-  } else if (FPU == "crypto-neon-fp-armv8") {
-    Features.push_back("+fp-armv8");
-    Features.push_back("+neon");
-    Features.push_back("+crypto");
-  } else if (FPU == "neon") {
-    Features.push_back("+neon");
-  } else
-    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
-}
-
 // Handle -mhwdiv=.
 static void getARMHWDivFeatures(const Driver &D, const Arg *A,
                               const ArgList &Args,
@@ -849,18 +826,21 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
 /// getAArch64TargetCPU - Get the (LLVM) name of the AArch64 cpu we are
 /// targeting.
 static std::string getAArch64TargetCPU(const ArgList &Args) {
-  // If we have -mcpu=, use that.
-  if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
-    StringRef MCPU = A->getValue();
-    // Handle -mcpu=native.
-    if (MCPU == "native")
-      return llvm::sys::getHostCPUName();
-    else
-      return MCPU;
+  Arg *A;
+  std::string CPU;
+  // If we have -mtune or -mcpu, use that.
+  if ((A = Args.getLastArg(options::OPT_mtune_EQ))) {
+    CPU = A->getValue();
+  } else if ((A = Args.getLastArg(options::OPT_mcpu_EQ))) {
+    StringRef Mcpu = A->getValue();
+    CPU = Mcpu.split("+").first;
   }
 
-  // At some point, we may need to check -march here, but for now we only
-  // one arm64 architecture.
+  // Handle CPU name is 'native'.
+  if (CPU == "native")
+    return llvm::sys::getHostCPUName();
+  else if (CPU.size())
+    return CPU;
 
   // Make sure we pick "cyclone" if -arch is used.
   // FIXME: Should this be picked by checking the target triple instead?
@@ -894,9 +874,6 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
 
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
-
-  CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(Args.MakeArgString(getAArch64TargetCPU(Args)));
 
   if (Args.hasArg(options::OPT_mstrict_align)) {
     CmdArgs.push_back("-backend-option");
@@ -1610,13 +1587,126 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
   CmdArgs.push_back ("-machine-sink-split=0");
 }
 
+// Decode AArch64 features from string like +[no]featureA+[no]featureB+...
+static bool DecodeAArch64Features(const Driver &D, const StringRef &text,
+                                  std::vector<const char *> &Features) {
+  SmallVector<StringRef, 8> Split;
+  text.split(Split, StringRef("+"), -1, false);
+
+  for (unsigned I = 0, E = Split.size(); I != E; ++I) {
+    const char *result = llvm::StringSwitch<const char *>(Split[I])
+                             .Case("fp", "+fp-armv8")
+                             .Case("simd", "+neon")
+                             .Case("crc", "+crc")
+                             .Case("crypto", "+crypto")
+                             .Case("nofp", "-fp-armv8")
+                             .Case("nosimd", "-neon")
+                             .Case("nocrc", "-crc")
+                             .Case("nocrypto", "-crypto")
+                             .Default(nullptr);
+    if (result)
+      Features.push_back(result);
+    else if (Split[I] == "neon" || Split[I] == "noneon")
+      D.Diag(diag::err_drv_no_neon_modifier);
+    else
+      return false;
+  }
+  return true;
+}
+
+// Check if the CPU name and feature modifiers in -mcpu are legal. If yes,
+// decode CPU and feature.
+static bool DecodeAArch64Mcpu(const Driver &D, StringRef Mcpu, StringRef &CPU,
+                              std::vector<const char *> &Features) {
+  std::pair<StringRef, StringRef> Split = Mcpu.split("+");
+  CPU = Split.first;
+  if (CPU == "cyclone" || CPU == "cortex-a53" || CPU == "cortex-a57") {
+    Features.push_back("+neon");
+    Features.push_back("+crc");
+    Features.push_back("+crypto");
+  } else if (CPU == "generic") {
+    Features.push_back("+neon");
+  } else {
+    return false;
+  }
+
+  if (Split.second.size() && !DecodeAArch64Features(D, Split.second, Features))
+    return false;
+
+  return true;
+}
+
+static bool
+getAArch64ArchFeaturesFromMarch(const Driver &D, StringRef March,
+                                const ArgList &Args,
+                                std::vector<const char *> &Features) {
+  std::pair<StringRef, StringRef> Split = March.split("+");
+  if (Split.first != "armv8-a")
+    return false;
+
+  if (Split.second.size() && !DecodeAArch64Features(D, Split.second, Features))
+    return false;
+
+  return true;
+}
+
+static bool
+getAArch64ArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
+                               const ArgList &Args,
+                               std::vector<const char *> &Features) {
+  StringRef CPU;
+  if (!DecodeAArch64Mcpu(D, Mcpu, CPU, Features))
+    return false;
+
+  return true;
+}
+
+static bool
+getAArch64MicroArchFeaturesFromMtune(const Driver &D, StringRef Mtune,
+                                     const ArgList &Args,
+                                     std::vector<const char *> &Features) {
+  // Handle CPU name is 'native'.
+  if (Mtune == "native")
+    Mtune = llvm::sys::getHostCPUName();
+  if (Mtune == "cyclone") {
+    Features.push_back("+zcm");
+    Features.push_back("+zcz");
+  }
+  return true;
+}
+
+static bool
+getAArch64MicroArchFeaturesFromMcpu(const Driver &D, StringRef Mcpu,
+                                    const ArgList &Args,
+                                    std::vector<const char *> &Features) {
+  StringRef CPU;
+  std::vector<const char *> DecodedFeature;
+  if (!DecodeAArch64Mcpu(D, Mcpu, CPU, DecodedFeature))
+    return false;
+
+  return getAArch64MicroArchFeaturesFromMtune(D, CPU, Args, Features);
+}
+
 static void getAArch64TargetFeatures(const Driver &D, const ArgList &Args,
                                      std::vector<const char *> &Features) {
-  // Honor -mfpu=.
-  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ))
-    getAArch64FPUFeatures(D, A, Args, Features);
-  else
-    Features.push_back("+neon");
+  Arg *A;
+  bool success = true;
+  // Enable NEON by default.
+  Features.push_back("+neon");
+  if ((A = Args.getLastArg(options::OPT_march_EQ)))
+    success = getAArch64ArchFeaturesFromMarch(D, A->getValue(), Args, Features);
+  else if ((A = Args.getLastArg(options::OPT_mcpu_EQ)))
+    success = getAArch64ArchFeaturesFromMcpu(D, A->getValue(), Args, Features);
+
+  if (success && (A = Args.getLastArg(options::OPT_mtune_EQ)))
+    success =
+        getAArch64MicroArchFeaturesFromMtune(D, A->getValue(), Args, Features);
+  else if (success && (A = Args.getLastArg(options::OPT_mcpu_EQ)))
+    success =
+        getAArch64MicroArchFeaturesFromMcpu(D, A->getValue(), Args, Features);
+
+  if (!success)
+    D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
 
   if (Args.getLastArg(options::OPT_mgeneral_regs_only)) {
     Features.push_back("-fp-armv8");

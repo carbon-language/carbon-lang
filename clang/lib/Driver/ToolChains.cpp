@@ -879,11 +879,6 @@ DerivedArgList *MachO::TranslateArgs(const DerivedArgList &Args,
       DAL->AddJoinedArg(nullptr, MArch, "armv7m");
     else if (Name == "armv7s")
       DAL->AddJoinedArg(nullptr, MArch, "armv7s");
-
-    else if (Name == "arm64")
-      DAL->AddJoinedArg(nullptr, MArch, "arm64");
-    else if (Name == "armv8")
-      DAL->AddJoinedArg(nullptr, MArch, "arm64");
   }
 
   return DAL;

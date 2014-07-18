@@ -4300,7 +4300,6 @@ class AArch64TargetInfo : public TargetInfo {
     NeonMode
   };
 
-  std::string CPU;
   unsigned FPU;
   unsigned CRC;
   unsigned Crypto;
@@ -4358,8 +4357,6 @@ public:
                         .Cases("cortex-a53", "cortex-a57", true)
                         .Case("cyclone", true)
                         .Default(false);
-    if (CPUKnown)
-      CPU = Name;
     return CPUKnown;
   }
 
@@ -4430,23 +4427,6 @@ public:
       Feature == "arm64" ||
       (Feature == "neon" && FPU == NeonMode);
   }
-
-  void getDefaultFeatures(llvm::StringMap<bool> &Features) const override {
-
-  if (CPU == "cyclone") {
-    Features["fp-armv8"] = true;
-    Features["neon"] = true;
-    Features["crypto"] = true;
-    Features["crc"] = true;
-    Features["zcm"] = true;
-    Features["zcz"] = true;
-  } else if (CPU == "cortex-a53" || CPU == "cortex-a57") {
-    Features["fp-armv8"] = true;
-    Features["neon"] = true;
-    Features["crypto"] = true;
-    Features["crc"] = true;
-  }
-}
 
   bool handleTargetFeatures(std::vector<std::string> &Features,
                             DiagnosticsEngine &Diags) override {
