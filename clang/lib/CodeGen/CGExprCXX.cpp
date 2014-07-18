@@ -1618,6 +1618,9 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 static bool isGLValueFromPointerDeref(const Expr *E) {
   E = E->IgnoreParenCasts();
 
+  if (isa<ArraySubscriptExpr>(E))
+    return true;
+
   if (const auto *UO = dyn_cast<UnaryOperator>(E))
     if (UO->getOpcode() == UO_Deref)
       return true;

@@ -42,3 +42,13 @@ void f7(A *x) { typeid((*x)); }
 // CHECK-LABEL: define void @_Z2f7P1A
 // CHECK:       icmp eq {{.*}}, null
 // CHECK-NEXT:  br i1
+
+void f8(A *x) { typeid(x[0]); }
+// CHECK-LABEL: define void @_Z2f8P1A
+// CHECK:       icmp eq {{.*}}, null
+// CHECK-NEXT:  br i1
+
+void f9(A *x) { typeid(0[x]); }
+// CHECK-LABEL: define void @_Z2f9P1A
+// CHECK:       icmp eq {{.*}}, null
+// CHECK-NEXT:  br i1
