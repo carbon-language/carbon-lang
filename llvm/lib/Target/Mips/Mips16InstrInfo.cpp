@@ -267,9 +267,6 @@ void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount,
                                         MachineBasicBlock::iterator I,
                                         unsigned Reg1, unsigned Reg2) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-//  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
-//  unsigned Reg1 = RegInfo.createVirtualRegister(&Mips::CPU16RegsRegClass);
-//  unsigned Reg2 = RegInfo.createVirtualRegister(&Mips::CPU16RegsRegClass);
   //
   // li reg1, constant
   // move reg2, sp
