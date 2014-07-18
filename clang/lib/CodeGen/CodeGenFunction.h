@@ -990,23 +990,6 @@ private:
   void EmitOpenCLKernelMetadata(const FunctionDecl *FD, 
                                 llvm::Function *Fn);
 
-  /// Should we use the LLVM lifetime intrinsics for a local variable of the
-  /// given size in bytes ?
-  bool shouldUseLifetimeMarkers(unsigned Size) const;
-
-  /// A cleanup to call @llvm.lifetime.end.
-  class CallLifetimeEnd : public EHScopeStack::Cleanup {
-    llvm::Value *Addr;
-    llvm::Value *Size;
-  public:
-    CallLifetimeEnd(llvm::Value *addr, llvm::Value *size)
-      : Addr(addr), Size(size) {}
-
-    void Emit(CodeGenFunction &CGF, Flags flags) override {
-      CGF.EmitLifetimeEnd(Size, Addr);
-    }
-  };
-
 public:
   CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext=false);
   ~CodeGenFunction();
@@ -1689,9 +1672,6 @@ public:
 
   void EmitCXXTemporary(const CXXTemporary *Temporary, QualType TempType,
                         llvm::Value *Ptr);
-
-  void EmitLifetimeStart(llvm::Value *Size, llvm::Value *Addr);
-  void EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr);
 
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
