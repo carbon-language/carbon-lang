@@ -1616,14 +1616,13 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 }
 
 static bool isGLValueFromPointerDeref(const Expr *E) {
-  E = E->IgnoreParenCasts();
+  E = E->IgnoreParens();
 
-  if (isa<ArraySubscriptExpr>(E))
-    return true;
-
-  if (const auto *UO = dyn_cast<UnaryOperator>(E))
-    if (UO->getOpcode() == UO_Deref)
-      return true;
+  if (const auto *CE = dyn_cast<CastExpr>(E)) {
+    if (!CE->getSubExpr()->isGLValue())
+      return false;
+    return isGLValueFromPointerDeref(CE->getSubExpr());
+  }
 
   if (const auto *BO = dyn_cast<BinaryOperator>(E))
     if (BO->getOpcode() == BO_Comma)
@@ -1637,6 +1636,15 @@ static bool isGLValueFromPointerDeref(const Expr *E) {
     if (const auto *OVE = dyn_cast<OpaqueValueExpr>(BCO->getTrueExpr()))
       return isGLValueFromPointerDeref(OVE->getSourceExpr()) ||
              isGLValueFromPointerDeref(BCO->getFalseExpr());
+
+  // C++11 [expr.sub]p1:
+  //   The expression E1[E2] is identical (by definition) to *((E1)+(E2))
+  if (isa<ArraySubscriptExpr>(E))
+    return true;
+
+  if (const auto *UO = dyn_cast<UnaryOperator>(E))
+    if (UO->getOpcode() == UO_Deref)
+      return true;
 
   return false;
 }
