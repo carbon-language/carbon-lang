@@ -170,10 +170,60 @@
 // IGNORE-NOT: error: unknown argument
 
 // Test that the warning is displayed on these.
-// RUN: %clang -### -finline-limit=1000 %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING1 %s
-// RUN: %clang -### -finline-limit %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING2 %s
-// CHECK-WARNING1: optimization flag '-finline-limit=1000' is not supported
-// CHECK-WARNING2: optimization flag '-finline-limit' is not supported
+// RUN: %clang -###                                                           \
+// RUN: -finline-limit=1000                                                   \
+// RUN: -finline-limit                                                        \
+// RUN: -fexpensive-optimizations                                             \
+// RUN: -fno-expensive-optimizations                                          \
+// RUN: -fno-defer-pop                                                        \
+// RUN: -finline-functions                                                    \
+// RUN: -fno-keep-inline-functions                                            \
+// RUN: -freorder-blocks                                                      \
+// RUN: -fprofile-dir=/rand/dir                                               \
+// RUN: -fprofile-use                                                         \
+// RUN: -fprofile-use=/rand/dir                                               \
+// RUN: -falign-functions                                                     \
+// RUN: -falign-functions=1                                                   \
+// RUN: -ffloat-store                                                         \
+// RUN: -fgcse                                                                \
+// RUN: -fivopts                                                              \
+// RUN: -fprefetch-loop-arrays                                                \
+// RUN: -fprofile-correction                                                  \
+// RUN: -fprofile-values                                                      \
+// RUN: -frounding-math                                                       \
+// RUN: -fschedule-insns                                                      \
+// RUN: -fsignaling-nans                                                      \
+// RUN: -fstrength-reduce                                                     \
+// RUN: -ftracer                                                              \
+// RUN: -funroll-all-loops                                                    \
+// RUN: -funswitch-loops                                                      \
+// RUN: %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING %s
+// CHECK-WARNING-DAG: optimization flag '-finline-limit=1000' is not supported
+// CHECK-WARNING-DAG: optimization flag '-finline-limit' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fexpensive-optimizations' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fno-expensive-optimizations' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fno-defer-pop' is not supported
+// CHECK-WARNING-DAG: optimization flag '-finline-functions' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fno-keep-inline-functions' is not supported
+// CHECK-WARNING-DAG: optimization flag '-freorder-blocks' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprofile-dir=/rand/dir' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprofile-use' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprofile-use=/rand/dir' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-functions' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-functions=1' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ffloat-store' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fgcse' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fivopts' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprefetch-loop-arrays' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprofile-correction' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fprofile-values' is not supported
+// CHECK-WARNING-DAG: optimization flag '-frounding-math' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fschedule-insns' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fsignaling-nans' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fstrength-reduce' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftracer' is not supported
+// CHECK-WARNING-DAG: optimization flag '-funroll-all-loops' is not supported
+// CHECK-WARNING-DAG: optimization flag '-funswitch-loops' is not supported
 
 // Test that we mute the warning on these
 // RUN: %clang -### -finline-limit=1000 -Wno-invalid-command-line-argument              \
