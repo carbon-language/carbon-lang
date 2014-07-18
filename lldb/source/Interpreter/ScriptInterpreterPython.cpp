@@ -2446,7 +2446,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
     
     {
         Locker py_lock(this,
-                       Locker::AcquireLock | Locker::InitSession | cmd_retobj.GetInteractive() ? 0 : Locker::NoSTDIN,
+                       Locker::AcquireLock | Locker::InitSession | (cmd_retobj.GetInteractive() ? 0 : Locker::NoSTDIN),
                        Locker::FreeLock    | Locker::TearDownSession);
         
         SynchronicityHandler synch_handler(debugger_sp,
