@@ -11,7 +11,9 @@ function(add_python_test_target name test_script args comment)
     )
 endfunction()
 
-string(REGEX REPLACE ".*ccache\ +" "" LLDB_TEST_COMPILER ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
+if ("${LLDB_TEST_COMPILER}" STREQUAL "")
+    string(REGEX REPLACE ".*ccache\ +" "" LLDB_TEST_COMPILER ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
+endif()
 
 # Users can override LLDB_TEST_ARGS to modify the way LLDB tests are run. See help below.
 set(LLDB_TEST_ARGS
