@@ -17,12 +17,33 @@ define i16 @test_bitcast_from_half(half* %addr) {
   ret i16 %val_int
 }
 
+define i16 @test_reg_bitcast_from_half(half %in) {
+; CHECK-LABEL: test_reg_bitcast_from_half:
+; CHECK-NOT: str
+; CHECK-NOT: ldr
+; CHECK-DAG: fmov w0, s0
+; CHECK: ret
+  %val = bitcast half %in to i16
+  ret i16 %val
+}
+
 define void @test_bitcast_to_half(half* %addr, i16 %in) {
 ; CHECK-LABEL: test_bitcast_to_half:
 ; CHECK: strh w1, [x0]
   %val_fp = bitcast i16 %in to half
   store half %val_fp, half* %addr
   ret void
+}
+
+define half @test_reg_bitcast_to_half(i16 %in) {
+; CHECK-LABEL: test_reg_bitcast_to_half:
+; CHECK-NOT: str
+; CHECK-NOT: ldr
+; CHECK-DAG: fmov s0, w0
+; CHECK: ret
+
+  %val = bitcast i16 %in to half
+  ret half %val
 }
 
 define float @test_extend32(half* %addr) {

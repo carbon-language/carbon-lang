@@ -317,6 +317,10 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
   setTruncStoreAction(MVT::f128, MVT::f64, Expand);
   setTruncStoreAction(MVT::f128, MVT::f32, Expand);
   setTruncStoreAction(MVT::f128, MVT::f16, Expand);
+
+  setOperationAction(ISD::BITCAST, MVT::i16, Custom);
+  setOperationAction(ISD::BITCAST, MVT::f16, Custom);
+
   // Indexed loads and stores are supported.
   for (unsigned im = (unsigned)ISD::PRE_INC;
        im != (unsigned)ISD::LAST_INDEXED_MODE; ++im) {
@@ -1510,12 +1514,30 @@ SDValue AArch64TargetLowering::LowerFSINCOS(SDValue Op,
   return CallResult.first;
 }
 
+static SDValue LowerBITCAST(SDValue Op, SelectionDAG &DAG) {
+  if (Op.getValueType() != MVT::f16)
+    return SDValue();
+
+  assert(Op.getOperand(0).getValueType() == MVT::i16);
+  SDLoc DL(Op);
+
+  Op = DAG.getNode(ISD::ANY_EXTEND, DL, MVT::i32, Op.getOperand(0));
+  Op = DAG.getNode(ISD::BITCAST, DL, MVT::f32, Op);
+  return SDValue(
+      DAG.getMachineNode(TargetOpcode::EXTRACT_SUBREG, DL, MVT::f16, Op,
+                         DAG.getTargetConstant(AArch64::hsub, MVT::i32)),
+      0);
+}
+
+
 SDValue AArch64TargetLowering::LowerOperation(SDValue Op,
                                               SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default:
     llvm_unreachable("unimplemented operand");
     return SDValue();
+  case ISD::BITCAST:
+    return LowerBITCAST(Op, DAG);
   case ISD::GlobalAddress:
     return LowerGlobalAddress(Op, DAG);
   case ISD::GlobalTLSAddress:
@@ -7942,11 +7964,32 @@ bool AArch64TargetLowering::getPostIndexedAddressParts(
   return true;
 }
 
+static void ReplaceBITCASTResults(SDNode *N, SmallVectorImpl<SDValue> &Results,
+                                  SelectionDAG &DAG) {
+  if (N->getValueType(0) != MVT::i16)
+    return;
+
+  SDLoc DL(N);
+  SDValue Op = N->getOperand(0);
+  assert(Op.getValueType() == MVT::f16 &&
+         "Inconsistent bitcast? Only 16-bit types should be i16 or f16");
+  Op = SDValue(
+      DAG.getMachineNode(TargetOpcode::INSERT_SUBREG, DL, MVT::f32,
+                         DAG.getUNDEF(MVT::i32), Op,
+                         DAG.getTargetConstant(AArch64::hsub, MVT::i32)),
+      0);
+  Op = DAG.getNode(ISD::BITCAST, DL, MVT::i32, Op);
+  Results.push_back(DAG.getNode(ISD::TRUNCATE, DL, MVT::i16, Op));
+}
+
 void AArch64TargetLowering::ReplaceNodeResults(
     SDNode *N, SmallVectorImpl<SDValue> &Results, SelectionDAG &DAG) const {
   switch (N->getOpcode()) {
   default:
     llvm_unreachable("Don't know how to custom expand this");
+  case ISD::BITCAST:
+    ReplaceBITCASTResults(N, Results, DAG);
+    return;
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
     assert(N->getValueType(0) == MVT::i128 && "unexpected illegal conversion");
