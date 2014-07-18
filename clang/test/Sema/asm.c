@@ -157,3 +157,9 @@ struct foo {
 };
 register struct foo bar asm("sp"); // expected-error {{bad type for named register variable}}
 register float baz asm("sp"); // expected-error {{bad type for named register variable}}
+
+double f_output_constraint(void) {
+  double result;
+  __asm("foo1": "=f" (result)); // expected-error {{invalid output constraint '=f' in asm}}
+  return result;
+}
