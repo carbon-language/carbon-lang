@@ -202,6 +202,14 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
+  case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength4:
+    // ex: call _foo+n (and _foo defined)
+    *kind = branch32;
+    targetAddress = fixupAddress + 4 + readS32(swap, fixupContent);
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+    *addend = targetAddress - reloc.value;
+    break;
   case GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength2:
     // ex: callw _foo (and _foo undefined)
     *kind = branch16;
@@ -214,6 +222,14 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     *kind = branch16;
     targetAddress = fixupAddress + 2 + readS16(swap, fixupContent);
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
+    break;
+  case GENERIC_RELOC_VANILLA | rScattered | rPcRel | rLength2:
+    // ex: callw _foo+n (and _foo defined)
+    *kind = branch16;
+    targetAddress = fixupAddress + 2 + readS16(swap, fixupContent);
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+    *addend = targetAddress - reloc.value;
     break;
   case GENERIC_RELOC_VANILLA | rExtern | rLength4:
     // ex: movl	_foo, %eax   (and _foo undefined)
@@ -370,12 +386,19 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
                                                uint64_t inAtomAddress) {
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int16_t *loc16 = reinterpret_cast<int16_t *>(location);
+  bool useExternalReloc = useExternalRelocationTo(*ref.target());
   switch (ref.kindValue()) {
   case branch32:
-    write32(*loc32, _swap, ref.addend() - (fixupAddress + 4));
+    if (useExternalReloc)
+      write32(*loc32, _swap, ref.addend() - (fixupAddress + 4));
+    else
+      write32(*loc32, _swap, (targetAddress - (fixupAddress+4)) + ref.addend());
     break;
   case branch16:
-    write16(*loc16, _swap, ref.addend() - (fixupAddress + 2));
+    if (useExternalReloc)
+      write16(*loc16, _swap, ref.addend() - (fixupAddress + 2));
+    else
+      write16(*loc16, _swap, (targetAddress - (fixupAddress+2)) + ref.addend());
     break;
   case pointer32:
   case abs32:
@@ -434,20 +457,30 @@ void ArchHandler_x86::appendSectionRelocations(
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   switch (ref.kindValue()) {
   case branch32:
-    if (useExternalReloc)
-      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
-                GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength4);
-    else
-      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
-                GENERIC_RELOC_VANILLA | rPcRel           | rLength4);
+    if (useExternalReloc) {
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
+                  GENERIC_RELOC_VANILLA | rExtern    | rPcRel | rLength4);
+    } else {
+      if (ref.addend() != 0)
+        appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+                  GENERIC_RELOC_VANILLA | rScattered | rPcRel |  rLength4);
+      else
+        appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()),0,
+                  GENERIC_RELOC_VANILLA |              rPcRel | rLength4);
+    }
     break;
   case branch16:
-    if (useExternalReloc)
-      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
-                GENERIC_RELOC_VANILLA | rPcRel | rExtern | rLength2);
-    else
-      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
-                GENERIC_RELOC_VANILLA | rPcRel           | rLength2);
+    if (useExternalReloc) {
+      appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
+                  GENERIC_RELOC_VANILLA | rExtern    | rPcRel | rLength2);
+    } else {
+      if (ref.addend() != 0)
+        appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+                  GENERIC_RELOC_VANILLA | rScattered | rPcRel |  rLength2);
+      else
+        appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()),0,
+                  GENERIC_RELOC_VANILLA |              rPcRel | rLength2);
+    }
     break;
   case pointer32:
   case abs32:
