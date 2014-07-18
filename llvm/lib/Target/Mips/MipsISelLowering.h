@@ -436,7 +436,7 @@ namespace llvm {
     SDValue lowerSTORE(SDValue Op, SelectionDAG &DAG) const;
 
     // Subtarget Info
-    const MipsSubtarget *Subtarget;
+    const MipsSubtarget &Subtarget;
 
   private:
     // Create a TargetGlobalAddress node.
