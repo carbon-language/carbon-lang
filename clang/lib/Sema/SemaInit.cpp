@@ -914,12 +914,11 @@ void InitListChecker::CheckSubElementType(const InitializedEntity &Entity,
     assert(SemaRef.getLangOpts().CPlusPlus &&
            "non-aggregate records are only possible in C++");
     // C++ initialization is handled later.
-  } else if (auto *VIE = dyn_cast<ImplicitValueInitExpr>(expr)) {
+  } else if (isa<ImplicitValueInitExpr>(expr)) {
     // This happens during template instantiation when we see an InitListExpr
     // that we've already checked once.
-    assert(SemaRef.Context.hasSameType(VIE->getType(), ElemType) &&
+    assert(SemaRef.Context.hasSameType(expr->getType(), ElemType) &&
            "found implicit initialization for the wrong type");
-    (void)VIE;
     if (!VerifyOnly)
       UpdateStructuredListElement(StructuredList, StructuredIndex, expr);
     ++Index;
