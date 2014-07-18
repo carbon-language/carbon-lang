@@ -31,216 +31,17 @@ namespace llvm {
 
 namespace object {
 
-struct nlist_base {
-  uint32_t n_strx;
-  uint8_t n_type;
-  uint8_t n_sect;
-  uint16_t n_desc;
-};
-
 struct section_base {
   char sectname[16];
   char segname[16];
 };
 
 template<typename T>
-static void SwapStruct(T &Value);
-
-template<>
-void SwapStruct(MachO::any_relocation_info &H) {
-  sys::swapByteOrder(H.r_word0);
-  sys::swapByteOrder(H.r_word1);
-}
-
-template<>
-void SwapStruct(MachO::load_command &L) {
-  sys::swapByteOrder(L.cmd);
-  sys::swapByteOrder(L.cmdsize);
-}
-
-template<>
-void SwapStruct(nlist_base &S) {
-  sys::swapByteOrder(S.n_strx);
-  sys::swapByteOrder(S.n_desc);
-}
-
-template<>
-void SwapStruct(MachO::section &S) {
-  sys::swapByteOrder(S.addr);
-  sys::swapByteOrder(S.size);
-  sys::swapByteOrder(S.offset);
-  sys::swapByteOrder(S.align);
-  sys::swapByteOrder(S.reloff);
-  sys::swapByteOrder(S.nreloc);
-  sys::swapByteOrder(S.flags);
-  sys::swapByteOrder(S.reserved1);
-  sys::swapByteOrder(S.reserved2);
-}
-
-template<>
-void SwapStruct(MachO::section_64 &S) {
-  sys::swapByteOrder(S.addr);
-  sys::swapByteOrder(S.size);
-  sys::swapByteOrder(S.offset);
-  sys::swapByteOrder(S.align);
-  sys::swapByteOrder(S.reloff);
-  sys::swapByteOrder(S.nreloc);
-  sys::swapByteOrder(S.flags);
-  sys::swapByteOrder(S.reserved1);
-  sys::swapByteOrder(S.reserved2);
-  sys::swapByteOrder(S.reserved3);
-}
-
-template<>
-void SwapStruct(MachO::nlist &S) {
-  sys::swapByteOrder(S.n_strx);
-  sys::swapByteOrder(S.n_desc);
-  sys::swapByteOrder(S.n_value);
-}
-
-template<>
-void SwapStruct(MachO::nlist_64 &S) {
-  sys::swapByteOrder(S.n_strx);
-  sys::swapByteOrder(S.n_desc);
-  sys::swapByteOrder(S.n_value);
-}
-
-template<>
-void SwapStruct(MachO::mach_header &H) {
-  sys::swapByteOrder(H.magic);
-  sys::swapByteOrder(H.cputype);
-  sys::swapByteOrder(H.cpusubtype);
-  sys::swapByteOrder(H.filetype);
-  sys::swapByteOrder(H.ncmds);
-  sys::swapByteOrder(H.sizeofcmds);
-  sys::swapByteOrder(H.flags);
-}
-
-template<>
-void SwapStruct(MachO::mach_header_64 &H) {
-  sys::swapByteOrder(H.magic);
-  sys::swapByteOrder(H.cputype);
-  sys::swapByteOrder(H.cpusubtype);
-  sys::swapByteOrder(H.filetype);
-  sys::swapByteOrder(H.ncmds);
-  sys::swapByteOrder(H.sizeofcmds);
-  sys::swapByteOrder(H.flags);
-  sys::swapByteOrder(H.reserved);
-}
-
-template<>
-void SwapStruct(MachO::symtab_command &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.symoff);
-  sys::swapByteOrder(C.nsyms);
-  sys::swapByteOrder(C.stroff);
-  sys::swapByteOrder(C.strsize);
-}
-
-template<>
-void SwapStruct(MachO::dysymtab_command &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.ilocalsym);
-  sys::swapByteOrder(C.nlocalsym);
-  sys::swapByteOrder(C.iextdefsym);
-  sys::swapByteOrder(C.nextdefsym);
-  sys::swapByteOrder(C.iundefsym);
-  sys::swapByteOrder(C.nundefsym);
-  sys::swapByteOrder(C.tocoff);
-  sys::swapByteOrder(C.ntoc);
-  sys::swapByteOrder(C.modtaboff);
-  sys::swapByteOrder(C.nmodtab);
-  sys::swapByteOrder(C.extrefsymoff);
-  sys::swapByteOrder(C.nextrefsyms);
-  sys::swapByteOrder(C.indirectsymoff);
-  sys::swapByteOrder(C.nindirectsyms);
-  sys::swapByteOrder(C.extreloff);
-  sys::swapByteOrder(C.nextrel);
-  sys::swapByteOrder(C.locreloff);
-  sys::swapByteOrder(C.nlocrel);
-}
-
-template<>
-void SwapStruct(MachO::linkedit_data_command &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.dataoff);
-  sys::swapByteOrder(C.datasize);
-}
-
-template<>
-void SwapStruct(MachO::segment_command &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.vmaddr);
-  sys::swapByteOrder(C.vmsize);
-  sys::swapByteOrder(C.fileoff);
-  sys::swapByteOrder(C.filesize);
-  sys::swapByteOrder(C.maxprot);
-  sys::swapByteOrder(C.initprot);
-  sys::swapByteOrder(C.nsects);
-  sys::swapByteOrder(C.flags);
-}
-
-template<>
-void SwapStruct(MachO::segment_command_64 &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.vmaddr);
-  sys::swapByteOrder(C.vmsize);
-  sys::swapByteOrder(C.fileoff);
-  sys::swapByteOrder(C.filesize);
-  sys::swapByteOrder(C.maxprot);
-  sys::swapByteOrder(C.initprot);
-  sys::swapByteOrder(C.nsects);
-  sys::swapByteOrder(C.flags);
-}
-
-template<>
-void SwapStruct(uint32_t &C) {
-  sys::swapByteOrder(C);
-}
-
-template<>
-void SwapStruct(MachO::linker_options_command &C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.count);
-}
-
-template<>
-void SwapStruct(MachO::version_min_command&C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.version);
-  sys::swapByteOrder(C.reserved);
-}
-
-template<>
-void SwapStruct(MachO::dylib_command&C) {
-  sys::swapByteOrder(C.cmd);
-  sys::swapByteOrder(C.cmdsize);
-  sys::swapByteOrder(C.dylib.name);
-  sys::swapByteOrder(C.dylib.timestamp);
-  sys::swapByteOrder(C.dylib.current_version);
-  sys::swapByteOrder(C.dylib.compatibility_version);
-}
-
-template<>
-void SwapStruct(MachO::data_in_code_entry &C) {
-  sys::swapByteOrder(C.offset);
-  sys::swapByteOrder(C.length);
-  sys::swapByteOrder(C.kind);
-}
-
-template<typename T>
 T getStruct(const MachOObjectFile *O, const char *P) {
   T Cmd;
   memcpy(&Cmd, P, sizeof(T));
   if (O->isLittleEndian() != sys::IsLittleEndianHost)
-    SwapStruct(Cmd);
+    MachO::swapStruct(Cmd);
   return Cmd;
 }
 
@@ -274,10 +75,10 @@ static const char *getPtr(const MachOObjectFile *O, size_t Offset) {
   return O->getData().substr(Offset, 1).data();
 }
 
-static nlist_base
+static MachO::nlist_base
 getSymbolTableEntryBase(const MachOObjectFile *O, DataRefImpl DRI) {
   const char *P = reinterpret_cast<const char *>(DRI.p);
-  return getStruct<nlist_base>(O, P);
+  return getStruct<MachO::nlist_base>(O, P);
 }
 
 static StringRef parseSegmentOrSectionName(const char *P) {
@@ -474,7 +275,7 @@ void MachOObjectFile::moveSymbolNext(DataRefImpl &Symb) const {
 std::error_code MachOObjectFile::getSymbolName(DataRefImpl Symb,
                                                StringRef &Res) const {
   StringRef StringTable = getStringTableData();
-  nlist_base Entry = getSymbolTableEntryBase(this, Symb);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   const char *Start = &StringTable.data()[Entry.n_strx];
   Res = StringRef(Start);
   return object_error::success;
@@ -528,7 +329,7 @@ std::error_code MachOObjectFile::getSymbolAlignment(DataRefImpl DRI,
                                                     uint32_t &Result) const {
   uint32_t flags = getSymbolFlags(DRI);
   if (flags & SymbolRef::SF_Common) {
-    nlist_base Entry = getSymbolTableEntryBase(this, DRI);
+    MachO::nlist_base Entry = getSymbolTableEntryBase(this, DRI);
     Result = 1 << MachO::GET_COMM_ALIGN(Entry.n_desc);
   } else {
     Result = 0;
@@ -542,7 +343,7 @@ std::error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
   uint64_t EndOffset = 0;
   uint8_t SectionIndex;
 
-  nlist_base Entry = getSymbolTableEntryBase(this, DRI);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, DRI);
   uint64_t Value;
   getSymbolAddress(DRI, Value);
   if (Value == UnknownAddressOrSize) {
@@ -587,7 +388,7 @@ std::error_code MachOObjectFile::getSymbolSize(DataRefImpl DRI,
 
 std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
                                                SymbolRef::Type &Res) const {
-  nlist_base Entry = getSymbolTableEntryBase(this, Symb);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   uint8_t n_type = Entry.n_type;
 
   Res = SymbolRef::ST_Other;
@@ -610,7 +411,7 @@ std::error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
 }
 
 uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
-  nlist_base Entry = getSymbolTableEntryBase(this, DRI);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, DRI);
 
   uint8_t MachOType = Entry.n_type;
   uint16_t MachOFlags = Entry.n_desc;
@@ -647,7 +448,7 @@ uint32_t MachOObjectFile::getSymbolFlags(DataRefImpl DRI) const {
 
 std::error_code MachOObjectFile::getSymbolSection(DataRefImpl Symb,
                                                   section_iterator &Res) const {
-  nlist_base Entry = getSymbolTableEntryBase(this, Symb);
+  MachO::nlist_base Entry = getSymbolTableEntryBase(this, Symb);
   uint8_t index = Entry.n_sect;
 
   if (index == 0) {
