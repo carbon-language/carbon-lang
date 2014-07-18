@@ -8,6 +8,8 @@ int b = 1; // expected-error {{'b' causes a section type conflict with 'a'}}
 #pragma data_seg()
 int c = 1;
 __declspec(allocate(".my_const")) int d = 1; // expected-error {{'d' causes a section type conflict with 'a'}}
+#pragma data_seg("\u") // expected-error {{\u used with no following hex digits}}
+#pragma data_seg("a" L"b") // expected-warning {{expected non-wide string literal in '#pragma data_seg'}}
 
 #pragma section(".my_seg", execute) // expected-note 2 {{#pragma entered her}}
 __declspec(allocate(".my_seg")) int int_my_seg;

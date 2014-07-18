@@ -811,6 +811,8 @@ def warn_pragma_extra_tokens_at_eol : Warning<
   InGroup<IgnoredPragmas>;
 def warn_pragma_expected_punc : Warning<
   "expected ')' or ',' in '#pragma %0'">, InGroup<IgnoredPragmas>;
+def warn_pragma_expected_non_wide_string : Warning<
+  "expected non-wide string literal in '#pragma %0'">, InGroup<IgnoredPragmas>;
 // - #pragma options
 def warn_pragma_options_expected_align : Warning<
   "expected 'align' following '#pragma options' - ignored">,

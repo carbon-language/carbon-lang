@@ -467,11 +467,12 @@ void Parser::HandlePragmaMSPragma() {
   PP.EnterTokenStream(TheTokens->first, TheTokens->second, true, true);
   SourceLocation PragmaLocation = ConsumeToken(); // The annotation token.
   assert(Tok.isAnyIdentifier());
-  llvm::StringRef PragmaName = Tok.getIdentifierInfo()->getName();
+  StringRef PragmaName = Tok.getIdentifierInfo()->getName();
   PP.Lex(Tok); // pragma kind
+
   // Figure out which #pragma we're dealing with.  The switch has no default
   // because lex shouldn't emit the annotation token for unrecognized pragmas.
-  typedef unsigned (Parser::*PragmaHandler)(llvm::StringRef, SourceLocation);
+  typedef bool (Parser::*PragmaHandler)(StringRef, SourceLocation);
   PragmaHandler Handler = llvm::StringSwitch<PragmaHandler>(PragmaName)
     .Case("data_seg", &Parser::HandlePragmaMSSegment)
     .Case("bss_seg", &Parser::HandlePragmaMSSegment)
@@ -479,29 +480,46 @@ void Parser::HandlePragmaMSPragma() {
     .Case("code_seg", &Parser::HandlePragmaMSSegment)
     .Case("section", &Parser::HandlePragmaMSSection)
     .Case("init_seg", &Parser::HandlePragmaMSInitSeg);
-  if (auto DiagID = (this->*Handler)(PragmaName, PragmaLocation)) {
-    PP.Diag(PragmaLocation, DiagID) << PragmaName;
+
+  if (!(this->*Handler)(PragmaName, PragmaLocation)) {
+    // Pragma handling failed, and has been diagnosed.  Slurp up the tokens
+    // until eof (really end of line) to prevent follow-on errors.
     while (Tok.isNot(tok::eof))
       PP.Lex(Tok);
     PP.Lex(Tok);
   }
 }
 
-unsigned Parser::HandlePragmaMSSection(llvm::StringRef PragmaName,
-                                       SourceLocation PragmaLocation) {
-  if (Tok.isNot(tok::l_paren))
-    return diag::warn_pragma_expected_lparen;
+bool Parser::HandlePragmaMSSection(StringRef PragmaName,
+                                   SourceLocation PragmaLocation) {
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_lparen) << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // (
   // Parsing code for pragma section
-  if (Tok.isNot(tok::string_literal))
-    return diag::warn_pragma_expected_section_name;
-  StringLiteral *SegmentName =
-    cast<StringLiteral>(ParseStringLiteralExpression().get());
+  if (Tok.isNot(tok::string_literal)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_section_name)
+        << PragmaName;
+    return false;
+  }
+  ExprResult StringResult = ParseStringLiteralExpression();
+  if (StringResult.isInvalid())
+    return false; // Already diagnosed.
+  StringLiteral *SegmentName = cast<StringLiteral>(StringResult.get());
+  if (SegmentName->getCharByteWidth() != 1) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_non_wide_string)
+        << PragmaName;
+    return false;
+  }
   int SectionFlags = 0;
   while (Tok.is(tok::comma)) {
     PP.Lex(Tok); // ,
-    if (!Tok.isAnyIdentifier())
-      return diag::warn_pragma_expected_action_or_r_paren;
+    if (!Tok.isAnyIdentifier()) {
+      PP.Diag(PragmaLocation, diag::warn_pragma_expected_action_or_r_paren)
+          << PragmaName;
+      return false;
+    }
     Sema::PragmaSectionFlag Flag =
       llvm::StringSwitch<Sema::PragmaSectionFlag>(
       Tok.getIdentifierInfo()->getName())
@@ -515,43 +533,51 @@ unsigned Parser::HandlePragmaMSSection(llvm::StringRef PragmaName,
       .Case("remove", Sema::PSF_Invalid)
       .Default(Sema::PSF_None);
     if (Flag == Sema::PSF_None || Flag == Sema::PSF_Invalid) {
-      PP.Diag(PragmaLocation, Flag == Sema::PSF_None ?
-                              diag::warn_pragma_invalid_specific_action :
-                              diag::warn_pragma_unsupported_action)
+      PP.Diag(PragmaLocation, Flag == Sema::PSF_None
+                                  ? diag::warn_pragma_invalid_specific_action
+                                  : diag::warn_pragma_unsupported_action)
           << PragmaName << Tok.getIdentifierInfo()->getName();
-      while (Tok.isNot(tok::eof))
-        PP.Lex(Tok);
-      PP.Lex(Tok);
-      return 0;
+      return false;
     }
     SectionFlags |= Flag;
     PP.Lex(Tok); // Identifier
   }
-  if (Tok.isNot(tok::r_paren))
-    return diag::warn_pragma_expected_rparen;
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_rparen) << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // )
-  if (Tok.isNot(tok::eof))
-    return diag::warn_pragma_extra_tokens_at_eol;
+  if (Tok.isNot(tok::eof)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_extra_tokens_at_eol)
+        << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // eof
   Actions.ActOnPragmaMSSection(PragmaLocation, SectionFlags, SegmentName);
-  return 0;
+  return true;
 }
 
-unsigned Parser::HandlePragmaMSSegment(llvm::StringRef PragmaName,
-                                      SourceLocation PragmaLocation) {
-  if (Tok.isNot(tok::l_paren))
-    return diag::warn_pragma_expected_lparen;
+bool Parser::HandlePragmaMSSegment(StringRef PragmaName,
+                                   SourceLocation PragmaLocation) {
+  if (Tok.isNot(tok::l_paren)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_lparen) << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // (
   Sema::PragmaMsStackAction Action = Sema::PSK_Reset;
-  llvm::StringRef SlotLabel;
+  StringRef SlotLabel;
   if (Tok.isAnyIdentifier()) {
-    llvm::StringRef PushPop = Tok.getIdentifierInfo()->getName();
+    StringRef PushPop = Tok.getIdentifierInfo()->getName();
     if (PushPop == "push")
       Action = Sema::PSK_Push;
     else if (PushPop == "pop")
       Action = Sema::PSK_Pop;
-    else
-      return diag::warn_pragma_expected_section_push_pop_or_name;
+    else {
+      PP.Diag(PragmaLocation,
+              diag::warn_pragma_expected_section_push_pop_or_name)
+          << PragmaName;
+      return false;
+    }
     if (Action != Sema::PSK_Reset) {
       PP.Lex(Tok); // push | pop
       if (Tok.is(tok::comma)) {
@@ -562,41 +588,64 @@ unsigned Parser::HandlePragmaMSSegment(llvm::StringRef PragmaName,
           PP.Lex(Tok); // identifier
           if (Tok.is(tok::comma))
             PP.Lex(Tok);
-          else if (Tok.isNot(tok::r_paren))
-            return diag::warn_pragma_expected_punc;
+          else if (Tok.isNot(tok::r_paren)) {
+            PP.Diag(PragmaLocation, diag::warn_pragma_expected_punc)
+                << PragmaName;
+            return false;
+          }
         }
-      } else if (Tok.isNot(tok::r_paren))
-        return diag::warn_pragma_expected_punc;
+      } else if (Tok.isNot(tok::r_paren)) {
+        PP.Diag(PragmaLocation, diag::warn_pragma_expected_punc) << PragmaName;
+        return false;
+      }
     }
   }
   // Grab the string literal for our section name.
   StringLiteral *SegmentName = nullptr;
   if (Tok.isNot(tok::r_paren)) {
-    if (Tok.isNot(tok::string_literal))
-      return Action != Sema::PSK_Reset ? !SlotLabel.empty() ?
+    if (Tok.isNot(tok::string_literal)) {
+      unsigned DiagID = Action != Sema::PSK_Reset ? !SlotLabel.empty() ?
           diag::warn_pragma_expected_section_name :
           diag::warn_pragma_expected_section_label_or_name :
           diag::warn_pragma_expected_section_push_pop_or_name;
-    SegmentName = cast<StringLiteral>(ParseStringLiteralExpression().get());
+      PP.Diag(PragmaLocation, DiagID) << PragmaName;
+      return false;
+    }
+    ExprResult StringResult = ParseStringLiteralExpression();
+    if (StringResult.isInvalid())
+      return false; // Already diagnosed.
+    SegmentName = cast<StringLiteral>(StringResult.get());
+    if (SegmentName->getCharByteWidth() != 1) {
+      PP.Diag(PragmaLocation, diag::warn_pragma_expected_non_wide_string)
+          << PragmaName;
+      return false;
+    }
     // Setting section "" has no effect
     if (SegmentName->getLength())
       Action = (Sema::PragmaMsStackAction)(Action | Sema::PSK_Set);
   }
-  if (Tok.isNot(tok::r_paren))
-    return diag::warn_pragma_expected_rparen;
+  if (Tok.isNot(tok::r_paren)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_rparen) << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // )
-  if (Tok.isNot(tok::eof))
-    return diag::warn_pragma_extra_tokens_at_eol;
+  if (Tok.isNot(tok::eof)) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_extra_tokens_at_eol)
+        << PragmaName;
+    return false;
+  }
   PP.Lex(Tok); // eof
   Actions.ActOnPragmaMSSeg(PragmaLocation, Action, SlotLabel,
                            SegmentName, PragmaName);
-  return 0;
+  return true;
 }
 
-unsigned Parser::HandlePragmaMSInitSeg(llvm::StringRef PragmaName,
-                                       SourceLocation PragmaLocation) {
-  return PP.getDiagnostics().getCustomDiagID(
-      DiagnosticsEngine::Error, "'#pragma %0' not implemented.");
+bool Parser::HandlePragmaMSInitSeg(StringRef PragmaName,
+                                   SourceLocation PragmaLocation) {
+  PP.Diag(PragmaLocation,
+          PP.getDiagnostics().getCustomDiagID(
+              DiagnosticsEngine::Error, "'#pragma init_seg' not implemented."));
+  return false;
 }
 
 struct PragmaLoopHintInfo {
