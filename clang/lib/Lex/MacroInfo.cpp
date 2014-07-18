@@ -232,4 +232,5 @@ void MacroDirective::dump() const {
       Info->dump();
     }
   }
+  Out << "\n";
 }
