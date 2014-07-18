@@ -5430,7 +5430,7 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
                                     break;
                                 }
                                 
-                                printf ("Saving data for segment at 0x%llx\n", segment.vmaddr);
+                                printf ("Saving data for segment at 0x%" PRIx64 "\n", segment.vmaddr);
                                 addr_t bytes_left = segment.vmsize;
                                 addr_t addr = segment.vmaddr;
                                 Error memory_read_error;
