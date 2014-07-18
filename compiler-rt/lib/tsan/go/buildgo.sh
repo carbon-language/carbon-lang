@@ -4,6 +4,7 @@ SRCS="
 	tsan_go.cc
 	../rtl/tsan_clock.cc
 	../rtl/tsan_flags.cc
+	../rtl/tsan_interface_atomic.cc
 	../rtl/tsan_md5.cc
 	../rtl/tsan_mutex.cc
 	../rtl/tsan_report.cc

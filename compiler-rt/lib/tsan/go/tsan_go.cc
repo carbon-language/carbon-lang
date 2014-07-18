@@ -208,6 +208,14 @@ void __tsan_mutex_before_unlock(ThreadState *thr, uptr addr, uptr write) {
     MutexReadUnlock(thr, 0, addr);
 }
 
+void __tsan_go_ignore_sync_begin(ThreadState *thr) {
+  ThreadIgnoreSyncBegin(thr, 0);
+}
+
+void __tsan_go_ignore_sync_end(ThreadState *thr) {
+  ThreadIgnoreSyncEnd(thr, 0);
+}
+
 }  // extern "C"
 }  // namespace __tsan
 
