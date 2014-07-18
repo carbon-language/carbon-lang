@@ -181,7 +181,7 @@ public:
 
   template <class PredicateLibrary>
   void setCPR1SizeFromPredicates(const PredicateLibrary &P) {
-    if (P.mipsSEUsesSoftFloat())
+    if (P.abiUsesSoftFloat())
       CPR1Size = AFL_REG_NONE;
     else if (P.hasMSA())
       CPR1Size = AFL_REG_128;

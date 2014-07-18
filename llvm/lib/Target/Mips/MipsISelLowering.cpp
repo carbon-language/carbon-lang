@@ -2414,7 +2414,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                     CCInfo, SpecialCallingConv);
 
   MipsCCInfo.analyzeCallOperands(Outs, IsVarArg,
-                                 Subtarget->mipsSEUsesSoftFloat(),
+                                 Subtarget->abiUsesSoftFloat(),
                                  Callee.getNode(), CLI.getArgs());
 
   // Get a count of how many bytes are to be pushed on the stack.
@@ -2615,7 +2615,7 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   MipsCC MipsCCInfo(CallConv, Subtarget->isABI_O32(), Subtarget->isFP64bit(),
                     CCInfo);
 
-  MipsCCInfo.analyzeCallResult(Ins, Subtarget->mipsSEUsesSoftFloat(),
+  MipsCCInfo.analyzeCallResult(Ins, Subtarget->abiUsesSoftFloat(),
                                CallNode, RetTy);
 
   // Copy all of the result registers out of their specified physreg.
@@ -2664,7 +2664,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
                     CCInfo);
   Function::const_arg_iterator FuncArg =
     DAG.getMachineFunction().getFunction()->arg_begin();
-  bool UseSoftFloat = Subtarget->mipsSEUsesSoftFloat();
+  bool UseSoftFloat = Subtarget->abiUsesSoftFloat();
 
   MipsCCInfo.analyzeFormalArguments(Ins, UseSoftFloat, FuncArg);
   MipsFI->setFormalArgInfo(CCInfo.getNextStackOffset(),
@@ -2817,7 +2817,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
                     CCInfo);
 
   // Analyze return values.
-  MipsCCInfo.analyzeReturn(Outs, Subtarget->mipsSEUsesSoftFloat(),
+  MipsCCInfo.analyzeReturn(Outs, Subtarget->abiUsesSoftFloat(),
                            MF.getFunction()->getReturnType());
 
   SDValue Flag;

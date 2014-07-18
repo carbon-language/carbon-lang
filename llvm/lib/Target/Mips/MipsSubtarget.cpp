@@ -200,15 +200,8 @@ MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
   // Initialize scheduling itinerary for the specified CPU.
   InstrItins = getInstrItineraryForCPU(CPUName);
 
-  if (InMips16Mode && !TM->Options.UseSoftFloat) {
-    // Hard float for mips16 means essentially to compile as soft float
-    // but to use a runtime library for soft float that is written with
-    // native mips32 floating point instructions (those runtime routines
-    // run in mips32 hard float mode).
-    TM->Options.UseSoftFloat = true;
-    TM->Options.FloatABIType = FloatABI::Soft;
+  if (InMips16Mode && !TM->Options.UseSoftFloat)
     InMips16HardFloat = true;
-  }
 
   return *this;
 }
@@ -293,7 +286,7 @@ void MipsSubtarget::setHelperClassesMipsSE() {
   assert(FrameLowering && "null frame lowering SE");
 }
 
-bool MipsSubtarget::mipsSEUsesSoftFloat() const {
+bool MipsSubtarget::abiUsesSoftFloat() const {
   return TM->Options.UseSoftFloat && !InMips16HardFloat;
 }
 

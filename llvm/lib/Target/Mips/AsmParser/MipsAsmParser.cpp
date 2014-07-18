@@ -292,7 +292,7 @@ public:
     return STI.getFeatureBits() & Mips::FeatureMips16;
   }
   // TODO: see how can we get this info.
-  bool mipsSEUsesSoftFloat() const { return false; }
+  bool abiUsesSoftFloat() const { return false; }
 
   /// Warn if RegNo is the current assembler temporary.
   void WarnIfAssemblerTemporary(int RegNo, SMLoc Loc);

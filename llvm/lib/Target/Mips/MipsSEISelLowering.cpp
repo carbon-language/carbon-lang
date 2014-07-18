@@ -101,7 +101,7 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
     setTargetDAGCombine(ISD::XOR);
   }
 
-  if (!Subtarget->mipsSEUsesSoftFloat()) {
+  if (!Subtarget->abiUsesSoftFloat()) {
     addRegisterClass(MVT::f32, &Mips::FGR32RegClass);
 
     // When dealing with single precision only, use libcalls

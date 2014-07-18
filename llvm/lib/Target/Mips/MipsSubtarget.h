@@ -234,6 +234,10 @@ public:
   bool inMips16ModeDefault() const {
     return InMips16Mode;
   }
+  // Hard float for mips16 means essentially to compile as soft float
+  // but to use a runtime library for soft float that is written with
+  // native mips32 floating point instructions (those runtime routines
+  // run in mips32 hard float mode).
   bool inMips16HardFloat() const {
     return inMips16Mode() && InMips16HardFloat;
   }
@@ -246,7 +250,7 @@ public:
 
   bool hasStandardEncoding() const { return !inMips16Mode(); }
 
-  bool mipsSEUsesSoftFloat() const;
+  bool abiUsesSoftFloat() const;
 
   bool enableLongBranchPass() const {
     return hasStandardEncoding() || allowMixed16_32();
