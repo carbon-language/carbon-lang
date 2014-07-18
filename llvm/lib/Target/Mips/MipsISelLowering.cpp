@@ -208,9 +208,9 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
-MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
-    : TargetLowering(TM, new MipsTargetObjectFile()),
-      Subtarget(TM.getSubtarget<MipsSubtarget>()) {
+MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM,
+                                       const MipsSubtarget &STI)
+    : TargetLowering(TM, new MipsTargetObjectFile()), Subtarget(STI) {
   // Mips does not have i1 type, so use i32 for
   // setcc operations results (slt, sgt, ...).
   setBooleanContents(ZeroOrOneBooleanContent);
@@ -403,11 +403,12 @@ MipsTargetLowering::MipsTargetLowering(MipsTargetMachine &TM)
   isMicroMips = Subtarget.inMicroMipsMode();
 }
 
-const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM) {
-  if (TM.getSubtargetImpl()->inMips16Mode())
-    return llvm::createMips16TargetLowering(TM);
+const MipsTargetLowering *MipsTargetLowering::create(MipsTargetMachine &TM,
+                                                     const MipsSubtarget &STI) {
+  if (STI.inMips16Mode())
+    return llvm::createMips16TargetLowering(TM, STI);
 
-  return llvm::createMipsSETargetLowering(TM);
+  return llvm::createMipsSETargetLowering(TM, STI);
 }
 
 // Create a fast isel object.

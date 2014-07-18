@@ -19,7 +19,8 @@
 namespace llvm {
   class Mips16TargetLowering : public MipsTargetLowering  {
   public:
-    explicit Mips16TargetLowering(MipsTargetMachine &TM);
+    explicit Mips16TargetLowering(MipsTargetMachine &TM,
+                                  const MipsSubtarget &STI);
 
     bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace,
                                        bool *Fast) const override;

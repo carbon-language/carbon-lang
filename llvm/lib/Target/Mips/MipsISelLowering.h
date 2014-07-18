@@ -214,9 +214,11 @@ namespace llvm {
   class MipsTargetLowering : public TargetLowering  {
     bool isMicroMips;
   public:
-    explicit MipsTargetLowering(MipsTargetMachine &TM);
+    explicit MipsTargetLowering(MipsTargetMachine &TM,
+                                const MipsSubtarget &STI);
 
-    static const MipsTargetLowering *create(MipsTargetMachine &TM);
+    static const MipsTargetLowering *create(MipsTargetMachine &TM,
+                                            const MipsSubtarget &STI);
 
     /// createFastISel - This method returns a target specific FastISel object,
     /// or null if the target does not support "fast" ISel.
@@ -611,8 +613,10 @@ namespace llvm {
   };
 
   /// Create MipsTargetLowering objects.
-  const MipsTargetLowering *createMips16TargetLowering(MipsTargetMachine &TM);
-  const MipsTargetLowering *createMipsSETargetLowering(MipsTargetMachine &TM);
+  const MipsTargetLowering *
+  createMips16TargetLowering(MipsTargetMachine &TM, const MipsSubtarget &STI);
+  const MipsTargetLowering *
+  createMipsSETargetLowering(MipsTargetMachine &TM, const MipsSubtarget &STI);
 
   namespace Mips {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,

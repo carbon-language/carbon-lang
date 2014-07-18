@@ -117,7 +117,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
       TSInfo(DL), JITInfo(), InstrInfo(MipsInstrInfo::create(*this)),
       FrameLowering(MipsFrameLowering::create(*TM, *this)),
-      TLInfo(MipsTargetLowering::create(*TM)) {
+      TLInfo(MipsTargetLowering::create(*TM, *this)) {
 
   PreviousInMips16Mode = InMips16Mode;
 
@@ -256,7 +256,7 @@ void MipsSubtarget::setHelperClassesMips16() {
   if (!InstrInfo16) {
     InstrInfo.reset(MipsInstrInfo::create(*this));
     FrameLowering.reset(MipsFrameLowering::create(*TM, *this));
-    TLInfo.reset(MipsTargetLowering::create(*TM));
+    TLInfo.reset(MipsTargetLowering::create(*TM, *this));
   } else {
     InstrInfo16.swap(InstrInfo);
     FrameLowering16.swap(FrameLowering);
@@ -274,7 +274,7 @@ void MipsSubtarget::setHelperClassesMipsSE() {
   if (!InstrInfoSE) {
     InstrInfo.reset(MipsInstrInfo::create(*this));
     FrameLowering.reset(MipsFrameLowering::create(*TM, *this));
-    TLInfo.reset(MipsTargetLowering::create(*TM));
+    TLInfo.reset(MipsTargetLowering::create(*TM, *this));
   } else {
     InstrInfoSE.swap(InstrInfo);
     FrameLoweringSE.swap(FrameLowering);

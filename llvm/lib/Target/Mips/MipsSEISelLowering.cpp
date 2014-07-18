@@ -34,8 +34,9 @@ static cl::opt<bool> NoDPLoadStore("mno-ldc1-sdc1", cl::init(false),
                                             "stores to their single precision "
                                             "counterparts"));
 
-MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
-  : MipsTargetLowering(TM) {
+MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM,
+                                           const MipsSubtarget &STI)
+    : MipsTargetLowering(TM, STI) {
   // Set up the register classes
   addRegisterClass(MVT::i32, &Mips::GPR32RegClass);
 
@@ -226,8 +227,9 @@ MipsSETargetLowering::MipsSETargetLowering(MipsTargetMachine &TM)
 }
 
 const MipsTargetLowering *
-llvm::createMipsSETargetLowering(MipsTargetMachine &TM) {
-  return new MipsSETargetLowering(TM);
+llvm::createMipsSETargetLowering(MipsTargetMachine &TM,
+                                 const MipsSubtarget &STI) {
+  return new MipsSETargetLowering(TM, STI);
 }
 
 const TargetRegisterClass *
