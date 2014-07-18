@@ -58,6 +58,8 @@ MipsTargetStreamer &MipsAsmPrinter::getTargetStreamer() {
 }
 
 bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  Subtarget = &TM.getSubtarget<MipsSubtarget>();
+
   // Initialize TargetLoweringObjectFile.
   if (Subtarget->allowMixed16_32())
     const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
@@ -672,7 +674,7 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   bool IsABICalls = true;
   if (IsABICalls) {
     getTargetStreamer().emitDirectiveAbiCalls();
-    Reloc::Model RM = Subtarget->getRelocationModel();
+    Reloc::Model RM = TM.getRelocationModel();
     // FIXME: This condition should be a lot more complicated that it is here.
     //        Ideally it should test for properties of the ABI and not the ABI
     //        itself.

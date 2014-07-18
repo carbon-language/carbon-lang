@@ -89,11 +89,14 @@ public:
   const MipsFunctionInfo *MipsFI;
   MipsMCInstLower MCInstLowering;
 
-  explicit MipsAsmPrinter(TargetMachine &TM,  MCStreamer &Streamer)
-    : AsmPrinter(TM, Streamer), MCP(nullptr), InConstantPool(false),
-      MCInstLowering(*this) {
-    Subtarget = &TM.getSubtarget<MipsSubtarget>();
-  }
+  // We initialize the subtarget here and in runOnMachineFunction
+  // since there are certain target specific flags (ABI) that could
+  // reside on the TargetMachine, but are on the subtarget currently
+  // and we need them for the beginning of file output before we've
+  // seen a single function.
+  explicit MipsAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
+      : AsmPrinter(TM, Streamer), MCP(nullptr), InConstantPool(false),
+        Subtarget(&TM.getSubtarget<MipsSubtarget>()), MCInstLowering(*this) {}
 
   const char *getPassName() const override {
     return "Mips Assembly Printer";
