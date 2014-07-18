@@ -874,6 +874,21 @@ define i1 @nonnull_arg(i32* nonnull %i) {
 ; CHECK: ret i1 false
 }
 
+define i1 @nonnull_deref_arg(i32* dereferenceable(4) %i) {
+  %cmp = icmp eq i32* %i, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_deref_arg
+; CHECK: ret i1 false
+}
+
+define i1 @nonnull_deref_as_arg(i32 addrspace(1)* dereferenceable(4) %i) {
+  %cmp = icmp eq i32 addrspace(1)* %i, null
+  ret i1 %cmp
+; CHECK-LABEL: @nonnull_deref_as_arg
+; CHECK: icmp
+; CHECK ret
+}
+
 declare nonnull i32* @returns_nonnull_helper()
 define i1 @returns_nonnull() {
   %call = call nonnull i32* @returns_nonnull_helper()
@@ -881,6 +896,25 @@ define i1 @returns_nonnull() {
   ret i1 %cmp
 ; CHECK-LABEL: @returns_nonnull
 ; CHECK: ret i1 false
+}
+
+declare dereferenceable(4) i32* @returns_nonnull_deref_helper()
+define i1 @returns_nonnull_deref() {
+  %call = call dereferenceable(4) i32* @returns_nonnull_deref_helper()
+  %cmp = icmp eq i32* %call, null
+  ret i1 %cmp
+; CHECK-LABEL: @returns_nonnull_deref
+; CHECK: ret i1 false
+}
+
+declare dereferenceable(4) i32 addrspace(1)* @returns_nonnull_deref_as_helper()
+define i1 @returns_nonnull_as_deref() {
+  %call = call dereferenceable(4) i32 addrspace(1)* @returns_nonnull_deref_as_helper()
+  %cmp = icmp eq i32 addrspace(1)* %call, null
+  ret i1 %cmp
+; CHECK-LABEL: @returns_nonnull_as_deref
+; CHECK: icmp
+; CHECK: ret
 }
 
 ; If a bit is known to be zero for A and known to be one for B,

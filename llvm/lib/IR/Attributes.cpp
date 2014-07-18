@@ -88,6 +88,12 @@ Attribute Attribute::getWithStackAlignment(LLVMContext &Context,
   return get(Context, StackAlignment, Align);
 }
 
+Attribute Attribute::getWithDereferenceableBytes(LLVMContext &Context,
+                                                uint64_t Bytes) {
+  assert(Bytes && "Bytes must be non-zero.");
+  return get(Context, Dereferenceable, Bytes);
+}
+
 //===----------------------------------------------------------------------===//
 // Attribute Accessor Methods
 //===----------------------------------------------------------------------===//
@@ -153,6 +159,14 @@ unsigned Attribute::getAlignment() const {
 unsigned Attribute::getStackAlignment() const {
   assert(hasAttribute(Attribute::StackAlignment) &&
          "Trying to get alignment from non-alignment attribute!");
+  return pImpl->getValueAsInt();
+}
+
+/// This returns the number of dereferenceable bytes.
+uint64_t Attribute::getDereferenceableBytes() const {
+  assert(hasAttribute(Attribute::Dereferenceable) &&
+         "Trying to get dereferenceable bytes from "
+         "non-dereferenceable attribute!");
   return pImpl->getValueAsInt();
 }
 
@@ -252,6 +266,20 @@ std::string Attribute::getAsString(bool InAttrGrp) const {
   if (hasAttribute(Attribute::StackAlignment)) {
     std::string Result;
     Result += "alignstack";
+    if (InAttrGrp) {
+      Result += "=";
+      Result += utostr(getValueAsInt());
+    } else {
+      Result += "(";
+      Result += utostr(getValueAsInt());
+      Result += ")";
+    }
+    return Result;
+  }
+
+  if (hasAttribute(Attribute::Dereferenceable)) {
+    std::string Result;
+    Result += "dereferenceable";
     if (InAttrGrp) {
       Result += "=";
       Result += utostr(getValueAsInt());
@@ -398,6 +426,8 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::InAlloca:        return 1ULL << 43;
   case Attribute::NonNull:         return 1ULL << 44;
   case Attribute::JumpTable:       return 1ULL << 45;
+  case Attribute::Dereferenceable:
+    llvm_unreachable("dereferenceable attribute not supported in raw format");
   }
   llvm_unreachable("Unsupported attribute type");
 }
@@ -482,6 +512,13 @@ unsigned AttributeSetNode::getStackAlignment() const {
   return 0;
 }
 
+uint64_t AttributeSetNode::getDereferenceableBytes() const {
+  for (iterator I = begin(), E = end(); I != E; ++I)
+    if (I->hasAttribute(Attribute::Dereferenceable))
+      return I->getDereferenceableBytes();
+  return 0;
+}
+
 std::string AttributeSetNode::getAsString(bool InAttrGrp) const {
   std::string Str;
   for (iterator I = begin(), E = end(); I != E; ++I) {
@@ -515,6 +552,8 @@ uint64_t AttributeSetImpl::Raw(unsigned Index) const {
         Mask |= (Log2_32(ASN->getAlignment()) + 1) << 16;
       else if (Kind == Attribute::StackAlignment)
         Mask |= (Log2_32(ASN->getStackAlignment()) + 1) << 26;
+      else if (Kind == Attribute::Dereferenceable)
+        llvm_unreachable("dereferenceable not supported in bit mask");
       else
         Mask |= AttributeImpl::getAttrMask(Kind);
     }
@@ -620,6 +659,10 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Index,
     else if (Kind == Attribute::StackAlignment)
       Attrs.push_back(std::make_pair(Index, Attribute::
                               getWithStackAlignment(C, B.getStackAlignment())));
+    else if (Kind == Attribute::Dereferenceable)
+      Attrs.push_back(std::make_pair(Index,
+                                     Attribute::getWithDereferenceableBytes(C,
+                                       B.getDereferenceableBytes())));
     else
       Attrs.push_back(std::make_pair(Index, Attribute::get(C, Kind)));
   }
@@ -877,6 +920,11 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return ASN ? ASN->getStackAlignment() : 0;
 }
 
+uint64_t AttributeSet::getDereferenceableBytes(unsigned Index) const {
+  AttributeSetNode *ASN = getAttributes(Index);
+  return ASN ? ASN->getDereferenceableBytes() : 0;
+}
+
 std::string AttributeSet::getAsString(unsigned Index,
                                       bool InAttrGrp) const {
   AttributeSetNode *ASN = getAttributes(Index);
@@ -956,7 +1004,7 @@ void AttributeSet::dump() const {
 //===----------------------------------------------------------------------===//
 
 AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Index)
-  : Attrs(0), Alignment(0), StackAlignment(0) {
+  : Attrs(0), Alignment(0), StackAlignment(0), DerefBytes(0) {
   AttributeSetImpl *pImpl = AS.pImpl;
   if (!pImpl) return;
 
@@ -973,13 +1021,14 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Index)
 
 void AttrBuilder::clear() {
   Attrs.reset();
-  Alignment = StackAlignment = 0;
+  Alignment = StackAlignment = DerefBytes = 0;
 }
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
   assert((unsigned)Val < Attribute::EndAttrKinds && "Attribute out of range!");
   assert(Val != Attribute::Alignment && Val != Attribute::StackAlignment &&
-         "Adding alignment attribute without adding alignment value!");
+         Val != Attribute::Dereferenceable &&
+         "Adding integer attribute without adding a value!");
   Attrs[Val] = true;
   return *this;
 }
@@ -997,6 +1046,8 @@ AttrBuilder &AttrBuilder::addAttribute(Attribute Attr) {
     Alignment = Attr.getAlignment();
   else if (Kind == Attribute::StackAlignment)
     StackAlignment = Attr.getStackAlignment();
+  else if (Kind == Attribute::Dereferenceable)
+    DerefBytes = Attr.getDereferenceableBytes();
   return *this;
 }
 
@@ -1013,6 +1064,8 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
     Alignment = 0;
   else if (Val == Attribute::StackAlignment)
     StackAlignment = 0;
+  else if (Val == Attribute::Dereferenceable)
+    DerefBytes = 0;
 
   return *this;
 }
@@ -1037,6 +1090,8 @@ AttrBuilder &AttrBuilder::removeAttributes(AttributeSet A, uint64_t Index) {
         Alignment = 0;
       else if (Kind == Attribute::StackAlignment)
         StackAlignment = 0;
+      else if (Kind == Attribute::Dereferenceable)
+        DerefBytes = 0;
     } else {
       assert(Attr.isStringAttribute() && "Invalid attribute type!");
       std::map<std::string, std::string>::iterator
@@ -1079,6 +1134,14 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align) {
   return *this;
 }
 
+AttrBuilder &AttrBuilder::addDereferenceableAttr(uint64_t Bytes) {
+  if (Bytes == 0) return *this;
+
+  Attrs[Attribute::Dereferenceable] = true;
+  DerefBytes = Bytes;
+  return *this;
+}
+
 AttrBuilder &AttrBuilder::merge(const AttrBuilder &B) {
   // FIXME: What if both have alignments, but they don't match?!
   if (!Alignment)
@@ -1086,6 +1149,9 @@ AttrBuilder &AttrBuilder::merge(const AttrBuilder &B) {
 
   if (!StackAlignment)
     StackAlignment = B.StackAlignment;
+
+  if (!DerefBytes)
+    DerefBytes = B.DerefBytes;
 
   Attrs |= B.Attrs;
 
@@ -1142,7 +1208,8 @@ bool AttrBuilder::operator==(const AttrBuilder &B) {
     if (B.TargetDepAttrs.find(I->first) == B.TargetDepAttrs.end())
       return false;
 
-  return Alignment == B.Alignment && StackAlignment == B.StackAlignment;
+  return Alignment == B.Alignment && StackAlignment == B.StackAlignment &&
+         DerefBytes == B.DerefBytes;
 }
 
 AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
@@ -1151,6 +1218,8 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
+    if (I == Attribute::Dereferenceable)
+      continue;
     if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
       Attrs[I] = true;
  
@@ -1184,6 +1253,7 @@ AttributeSet AttributeFuncs::typeIncompatible(Type *Ty, uint64_t Index) {
       .addAttribute(Attribute::NoAlias)
       .addAttribute(Attribute::NoCapture)
       .addAttribute(Attribute::NonNull)
+      .addDereferenceableAttr(1) // the int here is ignored
       .addAttribute(Attribute::ReadNone)
       .addAttribute(Attribute::ReadOnly)
       .addAttribute(Attribute::StructRet)

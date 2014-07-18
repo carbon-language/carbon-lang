@@ -969,6 +969,17 @@ Currently, only the following parameter attributes are defined:
     passed in is non-null, or the callee must ensure that the returned pointer 
     is non-null.
 
+``dereferenceable(<n>)``
+    This indicates that the parameter or return pointer is dereferenceable. This
+    attribute may only be applied to pointer typed parameters. A pointer that
+    is dereferenceable can be loaded from speculatively without a risk of
+    trapping. The number of bytes known to be dereferenceable must be provided
+    in parentheses. It is legal for the number of bytes to be less than the
+    size of the pointee type. The ``nonnull`` attribute does not imply
+    dereferenceability (consider a pointer to one element past the end of an
+    array), however ``dereferenceable(<n>)`` does imply ``nonnull`` in
+    ``addrspace(0)`` (which is the default address space).
+
 .. _gc:
 
 Garbage Collector Names

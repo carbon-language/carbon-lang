@@ -202,6 +202,11 @@ namespace llvm {
       Loc = Lex.getLoc();
       return ParseUInt32(Val);
     }
+    bool ParseUInt64(uint64_t &Val);
+    bool ParseUInt64(uint64_t &Val, LocTy &Loc) {
+      Loc = Lex.getLoc();
+      return ParseUInt64(Val);
+    }
 
     bool ParseTLSModel(GlobalVariable::ThreadLocalMode &TLM);
     bool ParseOptionalThreadLocal(GlobalVariable::ThreadLocalMode &TLM);
@@ -219,6 +224,7 @@ namespace llvm {
     bool ParseOptionalDLLStorageClass(unsigned &DLLStorageClass);
     bool ParseOptionalCallingConv(CallingConv::ID &CC);
     bool ParseOptionalAlignment(unsigned &Alignment);
+    bool ParseOptionalDereferenceableBytes(uint64_t &Bytes);
     bool ParseScopeAndOrdering(bool isAtomic, SynchronizationScope &Scope,
                                AtomicOrdering &Ordering);
     bool ParseOrdering(AtomicOrdering &Ordering);

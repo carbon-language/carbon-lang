@@ -2086,7 +2086,7 @@ bool llvm::isKnownNonNull(const Value *V, const TargetLibraryInfo *TLI) {
     return !GV->hasExternalWeakLinkage();
 
   if (ImmutableCallSite CS = V)
-    if (CS.paramHasAttr(0, Attribute::NonNull))
+    if (CS.isReturnNonNull())
       return true;
 
   // operator new never returns null.

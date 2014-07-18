@@ -15,6 +15,7 @@
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constant.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
@@ -504,9 +505,29 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(V))
     return !GV->hasExternalWeakLinkage();
 
-  // byval arguments are ok.
-  if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValAttr();
+  // byval arguments are okay. Arguments specifically marked as
+  // dereferenceable are okay too.
+  if (const Argument *A = dyn_cast<Argument>(V)) {
+    if (A->hasByValAttr())
+      return true;
+    else if (uint64_t Bytes = A->getDereferenceableBytes()) {
+      Type *Ty = V->getType()->getPointerElementType();
+      if (Ty->isSized() && DL && DL->getTypeStoreSize(Ty) <= Bytes)
+        return true;
+    }
+
+    return false;
+  }
+
+  // Return values from call sites specifically marked as dereferenceable are
+  // also okay.
+  if (ImmutableCallSite CS = V) {
+    if (uint64_t Bytes = CS.getDereferenceableBytes(0)) {
+      Type *Ty = V->getType()->getPointerElementType();
+      if (Ty->isSized() && DL && DL->getTypeStoreSize(Ty) <= Bytes)
+        return true;
+    }
+  }
 
   // For GEPs, determine if the indexing lands within the allocated object.
   if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {

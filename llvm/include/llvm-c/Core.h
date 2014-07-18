@@ -168,6 +168,7 @@ typedef enum {
     LLVMInAllocaAttribute = 1ULL << 36,
     LLVMNonNullAttribute = 1ULL << 37,
     LLVMJumpTableAttribute = 1ULL << 38,
+    LLVMDereferenceableAttribute = 1ULL << 39,
     */
 } LLVMAttribute;
 

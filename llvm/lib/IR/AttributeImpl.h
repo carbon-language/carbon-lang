@@ -116,7 +116,8 @@ public:
   IntAttributeImpl(Attribute::AttrKind Kind, uint64_t Val)
       : EnumAttributeImpl(IntAttrEntry, Kind), Val(Val) {
     assert(
-        (Kind == Attribute::Alignment || Kind == Attribute::StackAlignment) &&
+        (Kind == Attribute::Alignment || Kind == Attribute::StackAlignment ||
+         Kind == Attribute::Dereferenceable) &&
         "Wrong kind for int attribute!");
   }
 
@@ -164,6 +165,7 @@ public:
 
   unsigned getAlignment() const;
   unsigned getStackAlignment() const;
+  uint64_t getDereferenceableBytes() const;
   std::string getAsString(bool InAttrGrp) const;
 
   typedef const Attribute *iterator;

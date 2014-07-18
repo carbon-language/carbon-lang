@@ -229,6 +229,16 @@ define void @f38() unnamed_addr jumptable {
     unreachable
 }
 
+define dereferenceable(2) i8* @f39(i8* dereferenceable(1) %a) {
+; CHECK: define dereferenceable(2) i8* @f39(i8* dereferenceable(1) %a) {
+        ret i8* %a
+}
+
+define dereferenceable(18446744073709551606) i8* @f40(i8* dereferenceable(18446744073709551615) %a) {
+; CHECK: define dereferenceable(18446744073709551606) i8* @f40(i8* dereferenceable(18446744073709551615) %a) {
+        ret i8* %a
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

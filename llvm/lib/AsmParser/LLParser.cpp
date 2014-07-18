@@ -1052,6 +1052,7 @@ bool LLParser::ParseFnAttributeValuePairs(AttrBuilder &B,
               "invalid use of attribute on a function");
       break;
     case lltok::kw_byval:
+    case lltok::kw_dereferenceable:
     case lltok::kw_inalloca:
     case lltok::kw_nest:
     case lltok::kw_noalias:
@@ -1212,6 +1213,16 @@ bool LLParser::ParseUInt32(unsigned &Val) {
   return false;
 }
 
+/// ParseUInt64
+///   ::= uint64
+bool LLParser::ParseUInt64(uint64_t &Val) {
+  if (Lex.getKind() != lltok::APSInt || Lex.getAPSIntVal().isSigned())
+    return TokError("expected integer");
+  Val = Lex.getAPSIntVal().getLimitedValue();
+  Lex.Lex();
+  return false;
+}
+
 /// ParseTLSModel
 ///   := 'localdynamic'
 ///   := 'initialexec'
@@ -1284,6 +1295,13 @@ bool LLParser::ParseOptionalParamAttrs(AttrBuilder &B) {
       continue;
     }
     case lltok::kw_byval:           B.addAttribute(Attribute::ByVal); break;
+    case lltok::kw_dereferenceable: {
+      uint64_t Bytes;
+      if (ParseOptionalDereferenceableBytes(Bytes))
+        return true;
+      B.addDereferenceableAttr(Bytes);
+      continue;
+    }
     case lltok::kw_inalloca:        B.addAttribute(Attribute::InAlloca); break;
     case lltok::kw_inreg:           B.addAttribute(Attribute::InReg); break;
     case lltok::kw_nest:            B.addAttribute(Attribute::Nest); break;
@@ -1341,6 +1359,13 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     switch (Token) {
     default:  // End of attributes.
       return HaveError;
+    case lltok::kw_dereferenceable: {
+      uint64_t Bytes;
+      if (ParseOptionalDereferenceableBytes(Bytes))
+        return true;
+      B.addDereferenceableAttr(Bytes);
+      continue;
+    }
     case lltok::kw_inreg:           B.addAttribute(Attribute::InReg); break;
     case lltok::kw_noalias:         B.addAttribute(Attribute::NoAlias); break;
     case lltok::kw_nonnull:         B.addAttribute(Attribute::NonNull); break;
@@ -1603,6 +1628,26 @@ bool LLParser::ParseOptionalAlignment(unsigned &Alignment) {
     return Error(AlignLoc, "alignment is not a power of two");
   if (Alignment > Value::MaximumAlignment)
     return Error(AlignLoc, "huge alignments are not supported yet");
+  return false;
+}
+
+/// ParseOptionalDereferenceableBytes
+///   ::= /* empty */
+///   ::= 'dereferenceable' '(' 4 ')'
+bool LLParser::ParseOptionalDereferenceableBytes(uint64_t &Bytes) {
+  Bytes = 0;
+  if (!EatIfPresent(lltok::kw_dereferenceable))
+    return false;
+  LocTy ParenLoc = Lex.getLoc();
+  if (!EatIfPresent(lltok::lparen))
+    return Error(ParenLoc, "expected '('");
+  LocTy DerefLoc = Lex.getLoc();
+  if (ParseUInt64(Bytes)) return true;
+  ParenLoc = Lex.getLoc();
+  if (!EatIfPresent(lltok::rparen))
+    return Error(ParenLoc, "expected ')'");
+  if (!Bytes)
+    return Error(DerefLoc, "dereferenceable bytes must be non-zero");
   return false;
 }
 

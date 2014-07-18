@@ -374,7 +374,8 @@ namespace bitc {
     ATTR_KIND_OPTIMIZE_NONE = 37,
     ATTR_KIND_IN_ALLOCA = 38,
     ATTR_KIND_NON_NULL = 39,
-    ATTR_KIND_JUMP_TABLE = 40
+    ATTR_KIND_JUMP_TABLE = 40,
+    ATTR_KIND_DEREFERENCEABLE = 41
   };
 
   enum ComdatSelectionKindCodes {

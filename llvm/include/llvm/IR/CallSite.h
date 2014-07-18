@@ -217,6 +217,12 @@ public:
     CALLSITE_DELEGATE_GETTER(getParamAlignment(i));
   }
 
+  /// @brief Extract the number of dereferenceable bytes for a call or
+  /// parameter (0=unknown).
+  uint64_t getDereferenceableBytes(uint16_t i) const {
+    CALLSITE_DELEGATE_GETTER(getDereferenceableBytes(i));
+  }
+
   /// \brief Return true if the call should not be treated as a call to a
   /// builtin.
   bool isNoBuiltin() const {
@@ -300,6 +306,19 @@ public:
   bool onlyReadsMemory(unsigned ArgNo) const {
     return paramHasAttr(ArgNo + 1, Attribute::ReadOnly) ||
            paramHasAttr(ArgNo + 1, Attribute::ReadNone);
+  }
+
+  /// @brief Return true if the return value is known to be not null.
+  /// This may be because it has the nonnull attribute, or because at least
+  /// one byte is dereferenceable and the pointer is in addrspace(0).
+  bool isReturnNonNull() const {
+    if (paramHasAttr(0, Attribute::NonNull))
+      return true;
+    else if (getDereferenceableBytes(0) > 0 &&
+             getType()->getPointerAddressSpace() == 0)
+      return true;
+
+    return false;
   }
 
   /// hasArgument - Returns true if this CallSite passes the given Value* as an
