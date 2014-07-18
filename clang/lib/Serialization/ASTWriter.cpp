@@ -3089,17 +3089,7 @@ class ASTIdentifierTableTrait {
   }
 
   SubmoduleID getSubmoduleID(MacroDirective *MD) {
-    if (MD->getLocation().isValid())
-      return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
-
-    // If we have no directive location, this macro was installed when
-    // finalizing the ASTReader.
-    if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
-      return DefMD->getInfo()->getOwningModuleID();
-
-    // Skip imports that only produce #undefs for now.
-    // FIXME: We should still re-export them!
-    return 0;
+    return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
   }
 
 public:

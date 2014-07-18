@@ -1366,8 +1366,7 @@ public:
                          bool Complain);
 
   /// \brief Make the names within this set of hidden names visible.
-  void makeNamesVisible(const HiddenNames &Names, Module *Owner,
-                        bool FromFinalization);
+  void makeNamesVisible(const HiddenNames &Names, Module *Owner);
 
   /// \brief Set the AST callbacks listener.
   void setListener(ASTReaderListener *listener) {
@@ -1832,7 +1831,7 @@ public:
                                  ModuleFile &M, uint64_t Offset);
 
   void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
-                            Module *Owner, bool FromFinalization);
+                            Module *Owner);
 
   typedef llvm::TinyPtrVector<DefMacroDirective *> AmbiguousMacros;
   llvm::DenseMap<IdentifierInfo*, AmbiguousMacros> AmbiguousMacroDefs;

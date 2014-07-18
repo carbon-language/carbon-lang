@@ -1790,7 +1790,7 @@ void ASTReader::resolvePendingMacro(IdentifierInfo *II,
     // install if we make this module visible.
     HiddenNamesMap[Owner].HiddenMacros.insert(std::make_pair(II, MMI));
   } else {
-    installImportedMacro(II, MMI, Owner, /*FromFinalization*/false);
+    installImportedMacro(II, MMI, Owner);
   }
 }
 
@@ -1941,11 +1941,11 @@ ASTReader::removeOverriddenMacros(IdentifierInfo *II,
 }
 
 void ASTReader::installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
-                                     Module *Owner, bool FromFinalization) {
+                                     Module *Owner) {
   assert(II && Owner);
 
   SourceLocation ImportLoc = Owner->MacroVisibilityLoc;
-  if (ImportLoc.isInvalid() && !FromFinalization) {
+  if (ImportLoc.isInvalid()) {
     // FIXME: If we made macros from this module visible but didn't provide a
     // source location for the import, we don't have a location for the macro.
     // Use the location at which the containing module file was first imported
@@ -3320,9 +3320,7 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
   }
 }
 
-void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
-                                 bool FromFinalization) {
-  // FIXME: Only do this if Owner->NameVisibility == AllVisible.
+void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner) {
   for (unsigned I = 0, N = Names.HiddenDecls.size(); I != N; ++I) {
     Decl *D = Names.HiddenDecls[I];
     bool wasHidden = D->Hidden;
@@ -3335,12 +3333,10 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
     }
   }
 
-  assert((FromFinalization || Owner->NameVisibility >= Module::MacrosVisible) &&
-         "nothing to make visible?");
   for (HiddenMacrosMap::const_iterator I = Names.HiddenMacros.begin(),
                                        E = Names.HiddenMacros.end();
        I != E; ++I)
-    installImportedMacro(I->first, I->second, Owner, FromFinalization);
+    installImportedMacro(I->first, I->second, Owner);
 }
 
 void ASTReader::makeModuleVisible(Module *Mod,
@@ -3374,8 +3370,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
     // mark them as visible.
     HiddenNamesMapType::iterator Hidden = HiddenNamesMap.find(Mod);
     if (Hidden != HiddenNamesMap.end()) {
-      makeNamesVisible(Hidden->second, Hidden->first,
-                       /*FromFinalization*/false);
+      makeNamesVisible(Hidden->second, Hidden->first);
       HiddenNamesMap.erase(Hidden);
     }
 
@@ -3902,7 +3897,7 @@ void ASTReader::finalizeForWriting() {
   for (HiddenNamesMapType::iterator Hidden = HiddenNamesMap.begin(),
                                  HiddenEnd = HiddenNamesMap.end();
        Hidden != HiddenEnd; ++Hidden) {
-    makeNamesVisible(Hidden->second, Hidden->first, /*FromFinalization*/true);
+    makeNamesVisible(Hidden->second, Hidden->first);
   }
   HiddenNamesMap.clear();
 }
