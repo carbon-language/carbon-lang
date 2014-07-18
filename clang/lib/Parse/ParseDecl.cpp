@@ -825,13 +825,24 @@ void Parser::ParseAvailabilityAttribute(IdentifierInfo &Availability,
     }
     ConsumeToken();
     if (Keyword == Ident_message) {
-      if (Tok.isNot(tok::string_literal)) { // Also reject wide string literals.
+      if (Tok.isNot(tok::string_literal)) {
         Diag(Tok, diag::err_expected_string_literal)
           << /*Source='availability attribute'*/2;
         SkipUntil(tok::r_paren, StopAtSemi);
         return;
       }
       MessageExpr = ParseStringLiteralExpression();
+      // Also reject wide string literals.
+      if (StringLiteral *MessageStringLiteral =
+              cast_or_null<StringLiteral>(MessageExpr.get())) {
+        if (MessageStringLiteral->getCharByteWidth() != 1) {
+          Diag(MessageStringLiteral->getSourceRange().getBegin(),
+               diag::err_expected_string_literal)
+            << /*Source='availability attribute'*/ 2;
+          SkipUntil(tok::r_paren, StopAtSemi);
+          return;
+        }
+      }
       break;
     }
 
