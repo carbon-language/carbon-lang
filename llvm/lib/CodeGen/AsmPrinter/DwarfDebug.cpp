@@ -1569,8 +1569,7 @@ void DwarfDebug::endFunction(const MachineFunction *MF) {
   // Construct abstract scopes.
   for (LexicalScope *AScope : LScopes.getAbstractScopesList()) {
     DISubprogram SP(AScope->getScopeNode());
-    if (!SP.isSubprogram())
-      continue;
+    assert(SP.isSubprogram());
     // Collect info for variables that were optimized out.
     DIArray Variables = SP.getVariables();
     for (unsigned i = 0, e = Variables.getNumElements(); i != e; ++i) {
