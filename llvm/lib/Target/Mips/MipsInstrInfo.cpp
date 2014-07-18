@@ -94,10 +94,10 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   return (BT == BT_None) || (BT == BT_Indirect);
 }
 
-void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
-                                MachineBasicBlock *TBB, DebugLoc DL,
-                                const SmallVectorImpl<MachineOperand>& Cond)
-  const {
+void
+MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+                           DebugLoc DL,
+                           const SmallVectorImpl<MachineOperand> &Cond) const {
   unsigned Opc = Cond[0].getImm();
   const MCInstrDesc &MCID = get(Opc);
   MachineInstrBuilder MIB = BuildMI(&MBB, DL, MCID);
@@ -113,11 +113,9 @@ void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
   MIB.addMBB(TBB);
 }
 
-unsigned MipsInstrInfo::
-InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
-             MachineBasicBlock *FBB,
-             const SmallVectorImpl<MachineOperand> &Cond,
-             DebugLoc DL) const {
+unsigned MipsInstrInfo::InsertBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
   // Shouldn't be a fall through.
   assert(TBB && "InsertBranch must not be told to insert a fallthrough");
 
@@ -145,9 +143,7 @@ InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
   return 1;
 }
 
-unsigned MipsInstrInfo::
-RemoveBranch(MachineBasicBlock &MBB) const
-{
+unsigned MipsInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
   MachineBasicBlock::reverse_iterator FirstBr;
   unsigned removed;
@@ -171,20 +167,18 @@ RemoveBranch(MachineBasicBlock &MBB) const
 
 /// ReverseBranchCondition - Return the inverse opcode of the
 /// specified Branch instruction.
-bool MipsInstrInfo::
-ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
-{
+bool MipsInstrInfo::ReverseBranchCondition(
+    SmallVectorImpl<MachineOperand> &Cond) const {
   assert( (Cond.size() && Cond.size() <= 3) &&
           "Invalid Mips branch condition!");
   Cond[0].setImm(getOppositeBranchOpc(Cond[0].getImm()));
   return false;
 }
 
-MipsInstrInfo::BranchType MipsInstrInfo::
-AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
-              MachineBasicBlock *&FBB, SmallVectorImpl<MachineOperand> &Cond,
-              bool AllowModify,
-              SmallVectorImpl<MachineInstr*> &BranchInstrs) const {
+MipsInstrInfo::BranchType MipsInstrInfo::AnalyzeBranch(
+    MachineBasicBlock &MBB, MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
+    SmallVectorImpl<MachineOperand> &Cond, bool AllowModify,
+    SmallVectorImpl<MachineInstr *> &BranchInstrs) const {
 
   MachineBasicBlock::reverse_iterator I = MBB.rbegin(), REnd = MBB.rend();
 
