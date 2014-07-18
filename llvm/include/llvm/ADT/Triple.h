@@ -105,6 +105,7 @@ public:
     Freescale,
     IBM,
     ImaginationTechnologies,
+    MipsTechnologies,
     NVIDIA,
     CSR
   };
