@@ -252,6 +252,16 @@ ArchHandler_x86::getReferenceInfo(const Relocation &reloc,
     targetAddress = readU32(swap, fixupContent);
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
     break;
+  case GENERIC_RELOC_VANILLA | rScattered | rLength4:
+    // ex: .long _foo+n      (and _foo defined)
+    perms = inAtom->permissions();
+    *kind =
+        ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X) ? abs32
+                                                                 : pointer32;
+    if (E ec = atomFromAddress(0, reloc.value, target, addend))
+      return ec;
+    *addend = readU32(swap, fixupContent) - reloc.value;
+    break;
   default:
     return make_dynamic_error_code(Twine("unsupported i386 relocation type"));
   }
@@ -486,10 +496,15 @@ void ArchHandler_x86::appendSectionRelocations(
   case abs32:
     if (useExternalReloc)
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()),  0,
-                GENERIC_RELOC_VANILLA |         rExtern | rLength4);
-    else
-      appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
+                GENERIC_RELOC_VANILLA |    rExtern     |  rLength4);
+    else {
+      if (ref.addend() != 0)
+        appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+                GENERIC_RELOC_VANILLA |    rScattered  |  rLength4);
+      else
+        appendReloc(relocs, sectionOffset, sectionIndexForAtom(*ref.target()), 0,
                 GENERIC_RELOC_VANILLA |                   rLength4);
+    }
     break;
   case funcRel32:
       appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
@@ -500,7 +515,8 @@ void ArchHandler_x86::appendSectionRelocations(
   case delta32:
       appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
                 GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
-      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) + ref.offsetInAtom(),
+      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
+                                                             ref.offsetInAtom(),
                 GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
     break;
   case lazyPointer:
