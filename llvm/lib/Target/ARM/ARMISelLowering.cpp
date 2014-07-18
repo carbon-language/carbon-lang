@@ -396,8 +396,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     addRegisterClass(MVT::f32, &ARM::SPRRegClass);
     if (!Subtarget->isFPOnlySP())
       addRegisterClass(MVT::f64, &ARM::DPRRegClass);
-
-    setTruncStoreAction(MVT::f64, MVT::f32, Expand);
   }
 
   for (unsigned VT = (unsigned)MVT::FIRST_VECTOR_VALUETYPE;
@@ -582,8 +580,14 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 
   computeRegisterProperties();
 
-  // ARM does not have f32 extending load.
+  // ARM does not have floating-point extending loads.
   setLoadExtAction(ISD::EXTLOAD, MVT::f32, Expand);
+  setLoadExtAction(ISD::EXTLOAD, MVT::f16, Expand);
+
+  // ... or truncating stores
+  setTruncStoreAction(MVT::f64, MVT::f32, Expand);
+  setTruncStoreAction(MVT::f32, MVT::f16, Expand);
+  setTruncStoreAction(MVT::f64, MVT::f16, Expand);
 
   // ARM does not have i1 sign extending load.
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1, Promote);

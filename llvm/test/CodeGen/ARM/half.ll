@@ -1,4 +1,6 @@
-; RUN: llc < %s -mtriple=thumbv7s-apple-ios7.0 | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7-apple-ios7.0 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-OLD
+; RUN: llc < %s -mtriple=thumbv7s-apple-ios7.0 | FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-F16
+; RUN: llc < %s -mtriple=thumbv8-apple-ios7.0 | FileCheck %s --check-prefix=CHECK  --check-prefix=CHECK-V8
 
 define void @test_load_store(half* %in, half* %out) {
 ; CHECK-LABEL: test_load_store:
@@ -22,5 +24,51 @@ define void @test_bitcast_to_half(half* %addr, i16 %in) {
 ; CHECK: strh r1, [r0]
   %val_fp = bitcast i16 %in to half
   store half %val_fp, half* %addr
+  ret void
+}
+
+define float @test_extend32(half* %addr) {
+; CHECK-LABEL: test_extend32:
+
+; CHECK-OLD: b.w ___gnu_h2f_ieee
+; CHECK-F16: vcvtb.f32.f16
+; CHECK-V8: vcvtb.f32.f16
+  %val16 = load half* %addr
+  %val32 = fpext half %val16 to float
+  ret float %val32
+}
+
+define double @test_extend64(half* %addr) {
+; CHECK-LABEL: test_extend64:
+
+; CHECK-OLD: blx ___gnu_h2f_ieee
+; CHECK-OLD: vcvt.f64.f32
+; CHECK-F16: vcvtb.f32.f16
+; CHECK-F16: vcvt.f64.f32
+; CHECK-V8: vcvtb.f64.f16
+  %val16 = load half* %addr
+  %val32 = fpext half %val16 to double
+  ret double %val32
+}
+
+define void @test_trunc32(float %in, half* %addr) {
+; CHECK-LABEL: test_trunc32:
+
+; CHECK-OLD: blx ___gnu_f2h_ieee
+; CHECK-F16: vcvtb.f16.f32
+; CHECK-V8: vcvtb.f16.f32
+  %val16 = fptrunc float %in to half
+  store half %val16, half* %addr
+  ret void
+}
+
+define void @test_trunc64(double %in, half* %addr) {
+; CHECK-LABEL: test_trunc64:
+
+; CHECK-OLD: blx ___truncdfhf2
+; CHECK-F16: blx ___truncdfhf2
+; CHECK-V8: vcvtb.f16.f64
+  %val16 = fptrunc double %in to half
+  store half %val16, half* %addr
   ret void
 }

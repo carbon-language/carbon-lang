@@ -425,6 +425,7 @@ private:
   bool SoftenFloatOperand(SDNode *N, unsigned OpNo);
   SDValue SoftenFloatOp_BITCAST(SDNode *N);
   SDValue SoftenFloatOp_BR_CC(SDNode *N);
+  SDValue SoftenFloatOp_FP_EXTEND(SDNode *N);
   SDValue SoftenFloatOp_FP_ROUND(SDNode *N);
   SDValue SoftenFloatOp_FP_TO_SINT(SDNode *N);
   SDValue SoftenFloatOp_FP_TO_UINT(SDNode *N);
