@@ -139,3 +139,30 @@ define i64 @atom19(i64* %subr, i64 %val) {
   %ret = atomicrmw umin i64* %subr, i64 %val seq_cst
   ret i64 %ret
 }
+
+declare float @llvm.nvvm.atomic.load.add.f32.p0f32(float* %addr, float %val)
+
+; CHECK-LABEL: atomic_add_f32_generic
+define float @atomic_add_f32_generic(float* %addr, float %val) {
+; CHECK: atom.add.f32
+  %ret = call float @llvm.nvvm.atomic.load.add.f32.p0f32(float* %addr, float %val)
+  ret float %ret
+}
+
+declare float @llvm.nvvm.atomic.load.add.f32.p1f32(float addrspace(1)* %addr, float %val)
+
+; CHECK-LABEL: atomic_add_f32_addrspace1
+define float @atomic_add_f32_addrspace1(float addrspace(1)* %addr, float %val) {
+; CHECK: atom.global.add.f32
+  %ret = call float @llvm.nvvm.atomic.load.add.f32.p1f32(float addrspace(1)* %addr, float %val)
+  ret float %ret
+}
+
+declare float @llvm.nvvm.atomic.load.add.f32.p3f32(float addrspace(3)* %addr, float %val)
+
+; CHECK-LABEL: atomic_add_f32_addrspace3
+define float @atomic_add_f32_addrspace3(float addrspace(3)* %addr, float %val) {
+; CHECK: atom.shared.add.f32
+  %ret = call float @llvm.nvvm.atomic.load.add.f32.p3f32(float addrspace(3)* %addr, float %val)
+  ret float %ret
+}
