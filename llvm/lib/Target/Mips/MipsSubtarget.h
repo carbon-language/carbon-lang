@@ -149,12 +149,6 @@ protected:
   std::unique_ptr<const MipsInstrInfo> InstrInfo;
   std::unique_ptr<const MipsFrameLowering> FrameLowering;
   std::unique_ptr<const MipsTargetLowering> TLInfo;
-  std::unique_ptr<const MipsInstrInfo> InstrInfo16;
-  std::unique_ptr<const MipsFrameLowering> FrameLowering16;
-  std::unique_ptr<const MipsTargetLowering> TLInfo16;
-  std::unique_ptr<const MipsInstrInfo> InstrInfoSE;
-  std::unique_ptr<const MipsFrameLowering> FrameLoweringSE;
-  std::unique_ptr<const MipsTargetLowering> TLInfoSE;
 
 public:
   /// This overrides the PostRAScheduler bit in the SchedModel for each CPU.
@@ -216,17 +210,7 @@ public:
   bool isSingleFloat() const { return IsSingleFloat; }
   bool isNotSingleFloat() const { return !IsSingleFloat; }
   bool hasVFPU() const { return HasVFPU; }
-  bool inMips16Mode() const {
-    switch (OverrideMode) {
-    case NoOverride:
-      return InMips16Mode;
-    case Mips16Override:
-      return true;
-    case NoMips16Override:
-      return false;
-    }
-    llvm_unreachable("Unexpected mode");
-  }
+  bool inMips16Mode() const { return InMips16Mode; }
   bool inMips16ModeDefault() const {
     return InMips16Mode;
   }
@@ -273,9 +257,6 @@ public:
 
   // Grab relocation model
   Reloc::Model getRelocationModel() const;
-
-  /// \brief Reset the subtarget for the Mips target.
-  void resetSubtarget(MachineFunction *MF);
 
   MipsSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS,
                                                  const TargetMachine *TM);

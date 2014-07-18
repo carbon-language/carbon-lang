@@ -113,7 +113,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
       HasMips4_32r2(false), HasMips5_32r2(false), InMips16Mode(false),
       InMips16HardFloat(Mips16HardFloat), InMicroMipsMode(false), HasDSP(false),
       HasDSPR2(false), AllowMixed16_32(Mixed16_32 | Mips_Os16), Os16(Mips_Os16),
-      HasMSA(false), OverrideMode(NoOverride), TM(_TM), TargetTriple(TT),
+      HasMSA(false), TM(_TM), TargetTriple(TT),
       DL(computeDataLayout(initializeSubtargetDependencies(CPU, FS, TM))),
       TSInfo(DL), JITInfo(), InstrInfo(MipsInstrInfo::create(*this)),
       FrameLowering(MipsFrameLowering::create(*this)),
@@ -203,86 +203,6 @@ MipsSubtarget::initializeSubtargetDependencies(StringRef CPU, StringRef FS,
     InMips16HardFloat = true;
 
   return *this;
-}
-
-//FIXME: This logic for reseting the subtarget along with
-// the helper classes can probably be simplified but there are a lot of
-// cases so we will defer rewriting this to later.
-//
-void MipsSubtarget::resetSubtarget(MachineFunction *MF) {
-  bool ChangeToMips16 = false, ChangeToNoMips16 = false;
-  DEBUG(dbgs() << "resetSubtargetFeatures" << "\n");
-  AttributeSet FnAttrs = MF->getFunction()->getAttributes();
-  ChangeToMips16 = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                                        "mips16");
-  ChangeToNoMips16 = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
-                                        "nomips16");
-  assert (!(ChangeToMips16 & ChangeToNoMips16) &&
-          "mips16 and nomips16 specified on the same function");
-  if (ChangeToMips16) {
-    if (PreviousInMips16Mode)
-      return;
-    OverrideMode = Mips16Override;
-    PreviousInMips16Mode = true;
-    setHelperClassesMips16();
-    return;
-  } else if (ChangeToNoMips16) {
-    if (!PreviousInMips16Mode)
-      return;
-    OverrideMode = NoMips16Override;
-    PreviousInMips16Mode = false;
-    setHelperClassesMipsSE();
-    return;
-  } else {
-    if (OverrideMode == NoOverride)
-      return;
-    OverrideMode = NoOverride;
-    DEBUG(dbgs() << "back to default" << "\n");
-    if (inMips16Mode() && !PreviousInMips16Mode) {
-      setHelperClassesMips16();
-      PreviousInMips16Mode = true;
-    } else if (!inMips16Mode() && PreviousInMips16Mode) {
-      setHelperClassesMipsSE();
-      PreviousInMips16Mode = false;
-    }
-    return;
-  }
-}
-
-void MipsSubtarget::setHelperClassesMips16() {
-  InstrInfoSE.swap(InstrInfo);
-  FrameLoweringSE.swap(FrameLowering);
-  TLInfoSE.swap(TLInfo);
-  if (!InstrInfo16) {
-    InstrInfo.reset(MipsInstrInfo::create(*this));
-    FrameLowering.reset(MipsFrameLowering::create(*this));
-    TLInfo.reset(MipsTargetLowering::create(*TM, *this));
-  } else {
-    InstrInfo16.swap(InstrInfo);
-    FrameLowering16.swap(FrameLowering);
-    TLInfo16.swap(TLInfo);
-  }
-  assert(TLInfo && "null target lowering 16");
-  assert(InstrInfo && "null instr info 16");
-  assert(FrameLowering && "null frame lowering 16");
-}
-
-void MipsSubtarget::setHelperClassesMipsSE() {
-  InstrInfo16.swap(InstrInfo);
-  FrameLowering16.swap(FrameLowering);
-  TLInfo16.swap(TLInfo);
-  if (!InstrInfoSE) {
-    InstrInfo.reset(MipsInstrInfo::create(*this));
-    FrameLowering.reset(MipsFrameLowering::create(*this));
-    TLInfo.reset(MipsTargetLowering::create(*TM, *this));
-  } else {
-    InstrInfoSE.swap(InstrInfo);
-    FrameLoweringSE.swap(FrameLowering);
-    TLInfoSE.swap(TLInfo);
-  }
-  assert(TLInfo && "null target lowering in SE");
-  assert(InstrInfo && "null instr info SE");
-  assert(FrameLowering && "null frame lowering SE");
 }
 
 bool MipsSubtarget::abiUsesSoftFloat() const {

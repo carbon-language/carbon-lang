@@ -25,7 +25,10 @@ class formatted_raw_ostream;
 class MipsRegisterInfo;
 
 class MipsTargetMachine : public LLVMTargetMachine {
-  MipsSubtarget       Subtarget;
+  MipsSubtarget *Subtarget;
+  MipsSubtarget DefaultSubtarget;
+  MipsSubtarget NoMips16Subtarget;
+  MipsSubtarget Mips16Subtarget;
 
 public:
   MipsTargetMachine(const Target &T, StringRef TT, StringRef CPU, StringRef FS,
@@ -42,14 +45,18 @@ public:
   const TargetFrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }
-  const MipsSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  const MipsSubtarget *getSubtargetImpl() const override {
+    if (Subtarget)
+      return Subtarget;
+    return &DefaultSubtarget;
+  }
   const InstrItineraryData *getInstrItineraryData() const override {
-    return Subtarget.inMips16Mode()
+    return Subtarget->inMips16Mode()
                ? nullptr
                : &getSubtargetImpl()->getInstrItineraryData();
   }
   MipsJITInfo *getJITInfo() override {
-    return Subtarget.getJITInfo();
+    return Subtarget->getJITInfo();
   }
   const MipsRegisterInfo *getRegisterInfo()  const override {
     return getSubtargetImpl()->getRegisterInfo();
@@ -63,6 +70,8 @@ public:
   const MipsSelectionDAGInfo* getSelectionDAGInfo() const override {
     return getSubtargetImpl()->getSelectionDAGInfo();
   }
+  /// \brief Reset the subtarget for the Mips target.
+  void resetSubtarget(MachineFunction *MF);
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

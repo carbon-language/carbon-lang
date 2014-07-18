@@ -37,6 +37,7 @@ using namespace llvm;
 #define DEBUG_TYPE "mips-isel"
 
 bool Mips16DAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
+  Subtarget = &TM.getSubtarget<MipsSubtarget>();
   if (!Subtarget->inMips16Mode())
     return false;
   return MipsDAGToDAGISel::runOnMachineFunction(MF);

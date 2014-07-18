@@ -32,7 +32,7 @@ namespace llvm {
 class MipsDAGToDAGISel : public SelectionDAGISel {
 public:
   explicit MipsDAGToDAGISel(MipsTargetMachine &TM)
-    : SelectionDAGISel(TM), Subtarget(&TM.getSubtarget<MipsSubtarget>()) {}
+      : SelectionDAGISel(TM), Subtarget(nullptr) {}
 
   // Pass Name
   const char *getPassName() const override {

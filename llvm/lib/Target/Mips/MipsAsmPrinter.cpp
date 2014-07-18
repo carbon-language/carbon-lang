@@ -61,9 +61,9 @@ bool MipsAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   Subtarget = &TM.getSubtarget<MipsSubtarget>();
 
   // Initialize TargetLoweringObjectFile.
-  if (Subtarget->allowMixed16_32())
-    const_cast<TargetLoweringObjectFile&>(getObjFileLowering())
+  const_cast<TargetLoweringObjectFile &>(getObjFileLowering())
       .Initialize(OutContext, TM);
+
   MipsFI = MF.getInfo<MipsFunctionInfo>();
   if (Subtarget->inMips16Mode())
     for (std::map<

@@ -20,7 +20,7 @@ namespace llvm {
 
 bool MipsModuleDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(errs() << "In MipsModuleDAGToDAGISel::runMachineFunction\n");
-  const_cast<MipsSubtarget&>(Subtarget).resetSubtarget(&MF);
+  TM.resetSubtarget(&MF);
   return false;
 }
 

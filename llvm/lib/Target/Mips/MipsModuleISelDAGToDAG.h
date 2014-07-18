@@ -37,8 +37,7 @@ public:
   static char ID;
 
   explicit MipsModuleDAGToDAGISel(MipsTargetMachine &TM_)
-    : MachineFunctionPass(ID),
-      TM(TM_), Subtarget(TM.getSubtarget<MipsSubtarget>()) {}
+      : MachineFunctionPass(ID), TM(TM_) {}
 
   // Pass Name
   const char *getPassName() const override {
@@ -48,10 +47,7 @@ public:
   bool runOnMachineFunction(MachineFunction &MF) override;
 
 protected:
-  /// Keep a pointer to the MipsSubtarget around so that we can make the right
-  /// decision when generating code for different targets.
-  const TargetMachine &TM;
-  const MipsSubtarget &Subtarget;
+  MipsTargetMachine &TM;
 };
 
 /// createMipsISelDag - This pass converts a legalized DAG into a
