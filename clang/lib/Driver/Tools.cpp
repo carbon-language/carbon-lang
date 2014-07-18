@@ -5327,7 +5327,7 @@ bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
 bool mips::isFPXXDefault(const llvm::Triple &Triple, StringRef CPUName,
                          StringRef ABIName) {
   if (Triple.getVendor() != llvm::Triple::ImaginationTechnologies &&
-      Triple.getVendorName() != "mti")
+      Triple.getVendor() != llvm::Triple::MipsTechnologies)
     return false;
 
   if (ABIName != "32")
