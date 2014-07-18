@@ -1,6 +1,22 @@
 // RUN: %clang_cc1 -triple armv8 -target-cpu cortex-a57 -fsyntax-only -ffreestanding -verify %s
 
 #include <arm_acle.h>
+/*
+ * Memory barrier intrinsics
+ * Argument for dmb, dsb, isb must be compile-time constant,
+ * otherwise an error should be raised.
+ */
+void test_dmb_const_diag(const unsigned int t) {
+  return __dmb(t);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
+}
+
+void test_dsb_const_diag(const unsigned int t) {
+  return __dsb(t);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
+}
+
+void test_isb_const_diag(const unsigned int t) {
+  return __isb(t);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
+}
 
 /*
  * Saturating intrinsics
