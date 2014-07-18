@@ -242,9 +242,9 @@ Mutex::Mutex (Mutex::Type type) :
 //----------------------------------------------------------------------
 Mutex::~Mutex()
 {
+#if ENABLE_MUTEX_ERROR_CHECKING
     int err = ::pthread_mutex_destroy (&m_mutex);
     assert(err == 0);
-#if ENABLE_MUTEX_ERROR_CHECKING
     if (err == 0)
         error_check_mutex (&m_mutex, eMutexActionDestroyed);
     else
@@ -253,6 +253,8 @@ Mutex::~Mutex()
         assert(err == 0);
     }
     memset (&m_mutex, '\xba', sizeof(m_mutex));
+#else
+    ::pthread_mutex_destroy (&m_mutex);
 #endif
 }
 
