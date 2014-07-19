@@ -195,3 +195,12 @@ void test7(int a[b(0)]) {
   // CHECK-LABEL: define void @test7(
   // CHECK: call i32 @b(i8* null)
 }
+
+// Make sure we emit dereferenceable or nonnull when the static keyword is
+// provided.
+void test8(int a[static 3]) { }
+// CHECK: define void @test8(i32* dereferenceable(12) %a)
+
+void test9(int n, int a[static n]) { }
+// CHECK: define void @test9(i32 %n, i32* nonnull %a)
+
