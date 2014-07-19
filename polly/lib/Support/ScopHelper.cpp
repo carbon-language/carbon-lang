@@ -121,6 +121,6 @@ void polly::splitEntryBlockForAlloca(BasicBlock *EntryBlock, Pass *P) {
 
   // SplitBlock updates DT, DF and LI.
   BasicBlock *NewEntry = SplitBlock(EntryBlock, I, P);
-  if (RegionInfo *RI = P->getAnalysisIfAvailable<RegionInfo>())
-    RI->splitBlock(NewEntry, EntryBlock);
+  if (RegionInfoPass *RIP = P->getAnalysisIfAvailable<RegionInfoPass>())
+    RIP->getRegionInfo().splitBlock(NewEntry, EntryBlock);
 }

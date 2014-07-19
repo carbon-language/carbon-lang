@@ -1051,7 +1051,7 @@ public:
     AU.addRequired<CloogInfo>();
     AU.addRequired<Dependences>();
     AU.addRequired<DominatorTreeWrapperPass>();
-    AU.addRequired<RegionInfo>();
+    AU.addRequired<RegionInfoPass>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<ScopDetection>();
     AU.addRequired<ScopInfo>();
@@ -1067,7 +1067,7 @@ public:
 
     // FIXME: We do not yet add regions for the newly generated code to the
     //        region tree.
-    AU.addPreserved<RegionInfo>();
+    AU.addPreserved<RegionInfoPass>();
     AU.addPreserved<TempScopInfo>();
     AU.addPreserved<ScopInfo>();
     AU.addPreservedID(IndependentBlocksID);
@@ -1084,7 +1084,7 @@ INITIALIZE_PASS_BEGIN(CodeGeneration, "polly-codegen",
 INITIALIZE_PASS_DEPENDENCY(CloogInfo);
 INITIALIZE_PASS_DEPENDENCY(Dependences);
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass);
-INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_DEPENDENCY(DataLayoutPass);

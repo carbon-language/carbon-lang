@@ -1436,7 +1436,7 @@ ScopInfo::~ScopInfo() {
 
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
-  AU.addRequired<RegionInfo>();
+  AU.addRequired<RegionInfoPass>();
   AU.addRequired<ScalarEvolution>();
   AU.addRequired<TempScopInfo>();
   AU.setPreservesAll();
@@ -1472,7 +1472,7 @@ INITIALIZE_PASS_BEGIN(ScopInfo, "polly-scops",
                       "Polly - Create polyhedral description of Scops", false,
                       false);
 INITIALIZE_PASS_DEPENDENCY(LoopInfo);
-INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(TempScopInfo);
 INITIALIZE_PASS_END(ScopInfo, "polly-scops",

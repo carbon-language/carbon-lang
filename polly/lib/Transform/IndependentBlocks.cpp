@@ -17,7 +17,9 @@
 #include "polly/CodeGen/Cloog.h"
 #include "polly/ScopDetection.h"
 #include "polly/Support/ScopHelper.h"
+#include "llvm/Analysis/DominanceFrontier.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
@@ -494,8 +496,8 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<DominanceFrontier>();
   AU.addPreserved<PostDominatorTree>();
-  AU.addRequired<RegionInfo>();
-  AU.addPreserved<RegionInfo>();
+  AU.addRequired<RegionInfoPass>();
+  AU.addPreserved<RegionInfoPass>();
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
   AU.addRequired<ScalarEvolution>();
@@ -510,7 +512,7 @@ void IndependentBlocks::getAnalysisUsage(AnalysisUsage &AU) const {
 bool IndependentBlocks::runOnFunction(llvm::Function &F) {
   bool Changed = false;
 
-  RI = &getAnalysis<RegionInfo>();
+  RI = &getAnalysis<RegionInfoPass>().getRegionInfo();
   LI = &getAnalysis<LoopInfo>();
   SD = &getAnalysis<ScopDetection>();
   SE = &getAnalysis<ScalarEvolution>();
@@ -557,7 +559,7 @@ Pass *polly::createIndependentBlocksPass() { return new IndependentBlocks(); }
 INITIALIZE_PASS_BEGIN(IndependentBlocks, "polly-independent",
                       "Polly - Create independent blocks", false, false);
 INITIALIZE_PASS_DEPENDENCY(LoopInfo);
-INITIALIZE_PASS_DEPENDENCY(RegionInfo);
+INITIALIZE_PASS_DEPENDENCY(RegionInfoPass);
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution);
 INITIALIZE_PASS_DEPENDENCY(ScopDetection);
 INITIALIZE_PASS_END(IndependentBlocks, "polly-independent",
