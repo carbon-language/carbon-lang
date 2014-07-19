@@ -655,14 +655,14 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   // The 2 byte DWARF version.
   MCOS->EmitIntValue(context.getDwarfVersion(), 2);
 
+  const MCAsmInfo &AsmInfo = *context.getAsmInfo();
   // The 4 byte offset to the debug abbrevs from the start of the .debug_abbrev,
   // it is at the start of that section so this is zero.
   if (AbbrevSectionSymbol == nullptr)
     MCOS->EmitIntValue(0, 4);
-  else if (context.getAsmInfo()->needsDwarfSectionOffsetDirective())
-    MCOS->EmitCOFFSecRel32(AbbrevSectionSymbol);
   else
-    MCOS->EmitSymbolValue(AbbrevSectionSymbol, 4);
+    MCOS->EmitSymbolValue(AbbrevSectionSymbol, 4,
+                          AsmInfo.needsDwarfSectionOffsetDirective());
 
   const MCAsmInfo *asmInfo = context.getAsmInfo();
   int AddrSize = asmInfo->getPointerSize();

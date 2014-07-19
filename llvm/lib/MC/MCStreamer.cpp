@@ -148,8 +148,15 @@ void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
   EmitValueImpl(Value, Size, Loc);
 }
 
-void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size) {
-  EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size);
+void MCStreamer::EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
+                                 bool IsSectionRelative) {
+  assert((!IsSectionRelative || Size == 4) &&
+         "SectionRelative value requires 4-bytes");
+
+  if (!IsSectionRelative)
+    EmitValueImpl(MCSymbolRefExpr::Create(Sym, getContext()), Size);
+  else
+    EmitCOFFSecRel32(Sym);
 }
 
 void MCStreamer::EmitGPRel64Value(const MCExpr *Value) {

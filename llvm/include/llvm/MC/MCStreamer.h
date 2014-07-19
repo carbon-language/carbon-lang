@@ -572,7 +572,8 @@ public:
 
   /// EmitSymbolValue - Special case of EmitValue that avoids the client
   /// having to pass in a MCExpr for MCSymbols.
-  void EmitSymbolValue(const MCSymbol *Sym, unsigned Size);
+  void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
+                       bool IsSectionRelative = false);
 
   /// EmitGPRel64Value - Emit the expression @p Value into the output as a
   /// gprel64 (64-bit GP relative) value.
