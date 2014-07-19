@@ -273,19 +273,14 @@ define <4 x i8> @test2c(<4 x i8>* %a, <4 x i8>* %b) {
 define <4 x i8> @test3c(<4 x i8>* %a, <4 x i8>* %b) {
   %A = load <4 x i8>* %a
   %B = load <4 x i8>* %b
-  %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 0, i32 1, i32 5, i32 5>
+  %1 = shufflevector <4 x i8> %A, <4 x i8> %B, <4 x i32> <i32 2, i32 3, i32 5, i32 5>
   %2 = shufflevector <4 x i8> %1, <4 x i8> %B, <4 x i32> <i32 6, i32 7, i32 0, i32 1>
   ret <4 x i8> %2
 }
-; FIXME: this should be lowered as a single movhlps. However, the backend
-; wrongly thinks that shuffle mask [6,7,2,3] is not legal. Therefore, we end up
-; with a sub-optimal sequence of 'shufps+palignr'.
-
 ; CHECK-LABEL: test3c
 ; Mask: [6,7,2,3]
-; CHECK: shufps $84
-; CHECK: palignr $8
-; CHECK: ret
+; CHECK: movhlps
+; CHECK-NEXT: ret
 
 define <4 x i8> @test4c(<4 x i8>* %a, <4 x i8>* %b) {
   %A = load <4 x i8>* %a
