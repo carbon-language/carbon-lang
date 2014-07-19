@@ -1525,8 +1525,24 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 expr_options.SetIgnoreBreakpoints(true);
                 expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
                 StreamString expr;
-                expr.Printf("dlopen (\"%s\", 2)", path);
-                const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
+                expr.Printf(R"(
+                               struct __lldb_dlopen_result { void *image_ptr; const char *error_str; } the_result;
+                               the_result.image_ptr = dlopen ("%s", 2);
+                               if (the_result.image_ptr == (void *) 0x0)
+                               {
+                                   the_result.error_str = dlerror();
+                               }
+                               else
+                               {
+                                   the_result.error_str = (const char *) 0x0;
+                               }
+                               the_result;
+                              )",
+                              path);
+                const char *prefix = R"(
+                                        extern "C" void* dlopen (const char *path, int mode);
+                                        extern "C" const char *dlerror (void);
+                                        )";
                 lldb::ValueObjectSP result_valobj_sp;
                 Error expr_error;
                 ClangUserExpression::Evaluate (exe_ctx,
@@ -1541,7 +1557,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                     if (error.Success())
                     {
                         Scalar scalar;
-                        if (result_valobj_sp->ResolveValue (scalar))
+                        ValueObjectSP image_ptr_sp = result_valobj_sp->GetChildAtIndex(0, true);
+                        if (image_ptr_sp && image_ptr_sp->ResolveValue (scalar))
                         {
                             addr_t image_ptr = scalar.ULongLong(LLDB_INVALID_ADDRESS);
                             if (image_ptr != 0 && image_ptr != LLDB_INVALID_ADDRESS)
@@ -1552,25 +1569,17 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                             }
                             else if (image_ptr == 0)
                             {
-                                prefix = "extern \"C\" const char *dlerror(void);\n";
-                                expr.Clear();
-                                expr.PutCString("dlerror()");
-                                ClangUserExpression::Evaluate (exe_ctx,
-                                                               expr_options,
-                                                               expr.GetData(),
-                                                               prefix,
-                                                               result_valobj_sp,
-                                                               expr_error);
-                                if (result_valobj_sp && error.Success())
+                                ValueObjectSP error_str_sp = result_valobj_sp->GetChildAtIndex(1, true);
+                                if (error_str_sp)
                                 {
-                                    if (result_valobj_sp->IsCStringContainer(true))
+                                    if (error_str_sp->IsCStringContainer(true))
                                     {
                                         StreamString s;
-                                        size_t num_chars = result_valobj_sp->ReadPointedString (s, error);
+                                        size_t num_chars = error_str_sp->ReadPointedString (s, error);
                                         if (error.Success() && num_chars > 0)
                                         {
                                             error.Clear();
-                                            error.SetErrorStringWithFormat("dlopen failed: %s", s.GetData());
+                                            error.SetErrorStringWithFormat("dlopen error: %s", s.GetData());
                                         }
                                     }
                                 }
