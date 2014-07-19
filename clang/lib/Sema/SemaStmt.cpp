@@ -3249,16 +3249,15 @@ StmtResult Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   return CXXTryStmt::Create(Context, TryLoc, TryBlock, Handlers);
 }
 
-StmtResult
-Sema::ActOnSEHTryBlock(bool IsCXXTry,
-                       SourceLocation TryLoc,
-                       Stmt *TryBlock,
-                       Stmt *Handler) {
+StmtResult Sema::ActOnSEHTryBlock(bool IsCXXTry, SourceLocation TryLoc,
+                                  Stmt *TryBlock, Stmt *Handler,
+                                  int HandlerIndex, int HandlerParentIndex) {
   assert(TryBlock && Handler);
 
   getCurFunction()->setHasBranchProtectedScope();
 
-  return SEHTryStmt::Create(Context,IsCXXTry,TryLoc,TryBlock,Handler);
+  return SEHTryStmt::Create(Context, IsCXXTry, TryLoc, TryBlock, Handler,
+                            HandlerIndex, HandlerParentIndex);
 }
 
 StmtResult
