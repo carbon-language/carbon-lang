@@ -101,6 +101,8 @@ bool AMDGPUTTI::hasBranchDivergence() const { return true; }
 
 void AMDGPUTTI::getUnrollingPreferences(Loop *L,
                                         UnrollingPreferences &UP) const {
+  UP.Threshold = 300;
+
   for (const BasicBlock *BB : L->getBlocks()) {
     for (const Instruction &I : *BB) {
       const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I);
@@ -120,7 +122,7 @@ void AMDGPUTTI::getUnrollingPreferences(Loop *L,
         //
         // Don't use the maximum allowed value here as it will make some
         // programs way too big.
-        UP.Threshold = 500;
+        UP.Threshold = 600;
       }
     }
   }
