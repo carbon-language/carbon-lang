@@ -312,7 +312,9 @@ public:
 
   /// @brief Get the entry BasicBlock of the Region.
   /// @return The entry BasicBlock of the region.
-  BlockT *getEntry() const { return RegionNodeT::getEntry(); }
+  BlockT *getEntry() const {
+    return RegionNodeBase<Tr>::getEntry();
+  }
 
   /// @brief Replace the entry basic block of the region with the new basic
   ///        block.
@@ -352,7 +354,9 @@ public:
   /// @brief Get the parent of the Region.
   /// @return The parent of the Region or NULL if this is a top level
   ///         Region.
-  RegionT *getParent() const { return RegionNodeT::getParent(); }
+  RegionT *getParent() const {
+    return RegionNodeBase<Tr>::getParent();
+  }
 
   /// @brief Get the RegionNode representing the current Region.
   /// @return The RegionNode representing the current Region.
@@ -666,7 +670,7 @@ class RegionInfoBase {
   typedef SmallPtrSet<RegionT *, 4> RegionSet;
 
   RegionInfoBase();
-  ~RegionInfoBase();
+  virtual ~RegionInfoBase();
 
   RegionInfoBase(const RegionInfoBase &) LLVM_DELETED_FUNCTION;
   const RegionInfoBase &operator=(const RegionInfoBase &) LLVM_DELETED_FUNCTION;
