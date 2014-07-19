@@ -1,11 +1,9 @@
-# REQUIRES: mips
-
 # Check MIPS specific tags in the dynamic table.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t-so %t-obj
-# RUN: llvm-readobj -dynamic-table %t-so | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -shared --noinhibit-exec -o %t.so %t.o
+# RUN: llvm-readobj -dynamic-table %t.so | FileCheck %s
 
 # CHECK: Format: ELF32-mips
 # CHECK: Arch: mipsel
@@ -30,22 +28,85 @@
 # CHECK-NEXT:  0x00000000 NULL                 0x0
 # CHECK-NEXT: ]
 
-    .abicalls
-    .global glob
-    .ent    glob
-glob:
-    lw      $gp, %got($.str1)($1)
-    addiu   $4, $gp, %lo($.str1)
-    lw      $4, %got($.str2)($1)
-    addiu   $4, $4, %lo($.str2)
-    lw      $25, %call16(glob2)($1)
-    lw      $25, %call16(ext1)($1)
-    .end    glob
+FileHeader:      
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:        
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x18
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:     
+      - Offset:          0x00
+        Symbol:          '$.str1'
+        Type:            R_MIPS_GOT16
+      - Offset:          0x04
+        Symbol:          '$.str1'
+        Type:            R_MIPS_LO16
+      - Offset:          0x08
+        Symbol:          '$.str2'
+        Type:            R_MIPS_GOT16
+      - Offset:          0x0C
+        Symbol:          '$.str2'
+        Type:            R_MIPS_LO16
+      - Offset:          0x10
+        Symbol:          glob2
+        Type:            R_MIPS_CALL16
+      - Offset:          0x14
+        Symbol:          ext1
+        Type:            R_MIPS_CALL16
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x04
+    Size:            0x00
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x04
+    Size:            0x00
+  - Name:            .rodata.str1
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x01
+    Size:            0x05
+  - Name:            .rodata.str2
+    Type:            SHT_PROGBITS
+    AddressAlign:    0x01
+    Size:            0x05
 
-    .section  .rodata.str1
-$.str1:
-    .asciz  "str1"
-
-    .section  .rodata.str2
-$.str2:
-    .asciz  "str2"
+Symbols:         
+  Local:           
+    - Name:            '$.str1'
+      Section:         .rodata.str1
+    - Name:            '$.str2'
+      Section:         .rodata.str2
+    - Name:            .text
+      Type:            STT_SECTION
+      Section:         .text
+    - Name:            .data
+      Type:            STT_SECTION
+      Section:         .data
+    - Name:            .bss
+      Type:            STT_SECTION
+      Section:         .bss
+    - Name:            .rodata.str1
+      Type:            STT_SECTION
+      Section:         .rodata.str1
+    - Name:            .rodata.str2
+      Type:            STT_SECTION
+      Section:         .rodata.str2
+  Global:          
+    - Name:            glob
+      Section:         .text
+    - Name:            ext1
+    - Name:            glob2
