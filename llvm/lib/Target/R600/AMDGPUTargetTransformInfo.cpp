@@ -79,6 +79,10 @@ public:
 
   PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const override;
 
+  unsigned getNumberOfRegisters(bool Vector) const override;
+  unsigned getRegisterBitWidth(bool Vector) const override;
+  unsigned getMaximumUnrollFactor() const override;
+
   /// @}
 };
 
@@ -126,4 +130,24 @@ AMDGPUTTI::PopcntSupportKind
 AMDGPUTTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   return ST->hasBCNT(TyWidth) ? PSK_FastHardware : PSK_Software;
+}
+
+unsigned AMDGPUTTI::getNumberOfRegisters(bool Vec) const {
+  if (Vec)
+    return 0;
+
+  // Number of VGPRs on SI.
+  if (ST->getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS)
+    return 256;
+
+  return 4 * 128; // XXX - 4 channels. Should these count as vector instead?
+}
+
+unsigned AMDGPUTTI::getRegisterBitWidth(bool) const {
+  return 32;
+}
+
+unsigned AMDGPUTTI::getMaximumUnrollFactor() const {
+  // Semi-arbitrary large amount.
+  return 64;
 }
