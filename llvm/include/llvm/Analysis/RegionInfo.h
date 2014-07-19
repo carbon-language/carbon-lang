@@ -37,21 +37,62 @@
 #ifndef LLVM_ANALYSIS_REGIONINFO_H
 #define LLVM_ANALYSIS_REGIONINFO_H
 
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/ADT/iterator_range.h"
-#include "llvm/Analysis/DominanceFrontier.h"
-#include "llvm/Analysis/PostDominators.h"
-#include "llvm/Support/Allocator.h"
+#include "llvm/IR/CFG.h"
+#include "llvm/IR/Dominators.h"
 #include <map>
 #include <memory>
+#include <set>
 
 namespace llvm {
 
-class Region;
-class RegionInfo;
-class raw_ostream;
+// RegionTraits - Class to be specialized for different users of RegionInfo
+// (i.e. BasicBlocks or MachineBasicBlocks). This is only to avoid needing to
+// pass around an unreasonable number of template parameters.
+template <class FuncT_>
+struct RegionTraits {
+  // FuncT
+  // BlockT
+  // RegionT
+  // RegionNodeT
+  // RegionInfoT
+  typedef typename FuncT_::UnknownRegionTypeError BrokenT;
+};
+
+class DominatorTree;
+class DominanceFrontier;
 class Loop;
 class LoopInfo;
+struct PostDominatorTree;
+class raw_ostream;
+class Region;
+template <class RegionTr>
+class RegionBase;
+class RegionNode;
+class RegionInfo;
+template <class RegionTr>
+class RegionInfoBase;
+
+template <>
+struct RegionTraits<Function> {
+  typedef Function FuncT;
+  typedef BasicBlock BlockT;
+  typedef Region RegionT;
+  typedef RegionNode RegionNodeT;
+  typedef RegionInfo RegionInfoT;
+  typedef DominatorTree DomTreeT;
+  typedef DomTreeNode DomTreeNodeT;
+  typedef DominanceFrontier DomFrontierT;
+  typedef PostDominatorTree PostDomTreeT;
+  typedef Instruction InstT;
+  typedef Loop LoopT;
+  typedef LoopInfo LoopInfoT;
+
+  static unsigned getNumSuccessors(BasicBlock *BB) {
+    return BB->getTerminator()->getNumSuccessors();
+  }
+};
 
 /// @brief Marker class to iterate over the elements of a Region in flat mode.
 ///
@@ -65,11 +106,18 @@ class FlatIt {};
 
 /// @brief A RegionNode represents a subregion or a BasicBlock that is part of a
 /// Region.
-class RegionNode {
-  RegionNode(const RegionNode &) LLVM_DELETED_FUNCTION;
-  const RegionNode &operator=(const RegionNode &) LLVM_DELETED_FUNCTION;
+template <class Tr>
+class RegionNodeBase {
+  friend class RegionBase<Tr>;
 
-protected:
+public:
+  typedef typename Tr::BlockT BlockT;
+  typedef typename Tr::RegionT RegionT;
+
+private:
+  RegionNodeBase(const RegionNodeBase &) LLVM_DELETED_FUNCTION;
+  const RegionNodeBase &operator=(const RegionNodeBase &) LLVM_DELETED_FUNCTION;
+
   /// This is the entry basic block that starts this region node.  If this is a
   /// BasicBlock RegionNode, then entry is just the basic block, that this
   /// RegionNode represents.  Otherwise it is the entry of this (Sub)RegionNode.
@@ -80,13 +128,13 @@ protected:
   /// The node can hold either a Region or a BasicBlock.
   /// Use one bit to save, if this RegionNode is a subregion or BasicBlock
   /// RegionNode.
-  PointerIntPair<BasicBlock*, 1, bool> entry;
+  PointerIntPair<BlockT *, 1, bool> entry;
 
   /// @brief The parent Region of this RegionNode.
   /// @see getParent()
-  Region* parent;
+  RegionT *parent;
 
-public:
+protected:
   /// @brief Create a RegionNode.
   ///
   /// @param Parent      The parent of this RegionNode.
@@ -95,9 +143,11 @@ public:
   ///                    BasicBlock itself.  If it represents a subregion, this
   ///                    is the entry BasicBlock of the subregion.
   /// @param isSubRegion If this RegionNode represents a SubRegion.
-  inline RegionNode(Region* Parent, BasicBlock* Entry, bool isSubRegion = 0)
-    : entry(Entry, isSubRegion), parent(Parent) {}
+  inline RegionNodeBase(RegionT *Parent, BlockT *Entry,
+                        bool isSubRegion = false)
+      : entry(Entry, isSubRegion), parent(Parent) {}
 
+public:
   /// @brief Get the parent Region of this RegionNode.
   ///
   /// The parent Region is the Region this RegionNode belongs to. If for
@@ -106,7 +156,7 @@ public:
   /// pointing to the Region this RegionNode belongs to.
   ///
   /// @return Get the parent Region of this RegionNode.
-  inline Region* getParent() const { return parent; }
+  inline RegionT *getParent() const { return parent; }
 
   /// @brief Get the entry BasicBlock of this RegionNode.
   ///
@@ -114,7 +164,7 @@ public:
   /// itself, otherwise we return the entry BasicBlock of the Subregion
   ///
   /// @return The entry BasicBlock of this RegionNode.
-  inline BasicBlock* getEntry() const { return entry.getPointer(); }
+  inline BlockT *getEntry() const { return entry.getPointer(); }
 
   /// @brief Get the content of this RegionNode.
   ///
@@ -122,32 +172,14 @@ public:
   /// check the type of the content with the isSubRegion() function call.
   ///
   /// @return The content of this RegionNode.
-  template<class T>
-  inline T* getNodeAs() const;
+  template <class T> inline T *getNodeAs() const;
 
   /// @brief Is this RegionNode a subregion?
   ///
   /// @return True if it contains a subregion. False if it contains a
   ///         BasicBlock.
-  inline bool isSubRegion() const {
-    return entry.getInt();
-  }
+  inline bool isSubRegion() const { return entry.getInt(); }
 };
-
-/// Print a RegionNode.
-inline raw_ostream &operator<<(raw_ostream &OS, const RegionNode &Node);
-
-template<>
-inline BasicBlock* RegionNode::getNodeAs<BasicBlock>() const {
-  assert(!isSubRegion() && "This is not a BasicBlock RegionNode!");
-  return getEntry();
-}
-
-template<>
-inline Region* RegionNode::getNodeAs<Region>() const {
-  assert(isSubRegion() && "This is not a subregion RegionNode!");
-  return reinterpret_cast<Region*>(const_cast<RegionNode*>(this));
-}
 
 //===----------------------------------------------------------------------===//
 /// @brief A single entry single exit Region.
@@ -211,37 +243,53 @@ inline Region* RegionNode::getNodeAs<Region>() const {
 ///
 /// The first call returns a textual representation of the program structure
 /// tree, the second one creates a graphical representation using graphviz.
-class Region : public RegionNode {
-  friend class RegionInfo;
-  Region(const Region &) LLVM_DELETED_FUNCTION;
-  const Region &operator=(const Region &) LLVM_DELETED_FUNCTION;
+template <class Tr>
+class RegionBase : public RegionNodeBase<Tr> {
+  typedef typename Tr::FuncT FuncT;
+  typedef typename Tr::BlockT BlockT;
+  typedef typename Tr::RegionInfoT RegionInfoT;
+  typedef typename Tr::RegionT RegionT;
+  typedef typename Tr::RegionNodeT RegionNodeT;
+  typedef typename Tr::DomTreeT DomTreeT;
+  typedef typename Tr::LoopT LoopT;
+  typedef typename Tr::LoopInfoT LoopInfoT;
+  typedef typename Tr::InstT InstT;
+
+  typedef GraphTraits<BlockT *> BlockTraits;
+  typedef GraphTraits<Inverse<BlockT *>> InvBlockTraits;
+  typedef typename BlockTraits::ChildIteratorType SuccIterTy;
+  typedef typename InvBlockTraits::ChildIteratorType PredIterTy;
+
+  friend class RegionInfoBase<Tr>;
+  RegionBase(const RegionBase &) LLVM_DELETED_FUNCTION;
+  const RegionBase &operator=(const RegionBase &) LLVM_DELETED_FUNCTION;
 
   // Information necessary to manage this Region.
-  RegionInfo* RI;
-  DominatorTree *DT;
+  RegionInfoT *RI;
+  DomTreeT *DT;
 
   // The exit BasicBlock of this region.
   // (The entry BasicBlock is part of RegionNode)
-  BasicBlock *exit;
+  BlockT *exit;
 
-  typedef std::vector<std::unique_ptr<Region>> RegionSet;
+  typedef std::vector<std::unique_ptr<RegionT>> RegionSet;
 
   // The subregions of this region.
   RegionSet children;
 
-  typedef std::map<BasicBlock*, RegionNode*> BBNodeMapT;
+  typedef std::map<BlockT *, RegionNodeT *> BBNodeMapT;
 
   // Save the BasicBlock RegionNodes that are element of this Region.
   mutable BBNodeMapT BBNodeMap;
 
   /// verifyBBInRegion - Check if a BB is in this Region. This check also works
   /// if the region is incorrectly built. (EXPENSIVE!)
-  void verifyBBInRegion(BasicBlock* BB) const;
+  void verifyBBInRegion(BlockT *BB) const;
 
   /// verifyWalk - Walk over all the BBs of the region starting from BB and
   /// verify that all reachable basic blocks are elements of the region.
   /// (EXPENSIVE!)
-  void verifyWalk(BasicBlock* BB, std::set<BasicBlock*>* visitedBB) const;
+  void verifyWalk(BlockT *BB, std::set<BlockT *> *visitedBB) const;
 
   /// verifyRegionNest - Verify if the region and its children are valid
   /// regions (EXPENSIVE!)
@@ -256,27 +304,27 @@ public:
   /// @param DT     The dominator tree of the current function.
   /// @param Parent The surrounding region or NULL if this is a top level
   ///               region.
-  Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo* RI,
-         DominatorTree *DT, Region *Parent = nullptr);
+  RegionBase(BlockT *Entry, BlockT *Exit, RegionInfoT *RI, DomTreeT *DT,
+             RegionT *Parent = nullptr);
 
   /// Delete the Region and all its subregions.
-  ~Region();
+  ~RegionBase();
 
   /// @brief Get the entry BasicBlock of the Region.
   /// @return The entry BasicBlock of the region.
-  BasicBlock *getEntry() const { return RegionNode::getEntry(); }
+  BlockT *getEntry() const { return RegionNodeT::getEntry(); }
 
   /// @brief Replace the entry basic block of the region with the new basic
   ///        block.
   ///
   /// @param BB  The new entry basic block of the region.
-  void replaceEntry(BasicBlock *BB);
+  void replaceEntry(BlockT *BB);
 
   /// @brief Replace the exit basic block of the region with the new basic
   ///        block.
   ///
   /// @param BB  The new exit basic block of the region.
-  void replaceExit(BasicBlock *BB);
+  void replaceExit(BlockT *BB);
 
   /// @brief Recursively replace the entry basic block of the region.
   ///
@@ -285,7 +333,7 @@ public:
   /// this region.
   ///
   /// @param NewEntry The new entry basic block.
-  void replaceEntryRecursive(BasicBlock *NewEntry);
+  void replaceEntryRecursive(BlockT *NewEntry);
 
   /// @brief Recursively replace the exit basic block of the region.
   ///
@@ -294,22 +342,23 @@ public:
   /// this region.
   ///
   /// @param NewExit The new exit basic block.
-  void replaceExitRecursive(BasicBlock *NewExit);
+  void replaceExitRecursive(BlockT *NewExit);
 
   /// @brief Get the exit BasicBlock of the Region.
   /// @return The exit BasicBlock of the Region, NULL if this is the TopLevel
   ///         Region.
-  BasicBlock *getExit() const { return exit; }
+  BlockT *getExit() const { return exit; }
 
   /// @brief Get the parent of the Region.
   /// @return The parent of the Region or NULL if this is a top level
   ///         Region.
-  Region *getParent() const { return RegionNode::getParent(); }
+  RegionT *getParent() const { return RegionNodeT::getParent(); }
 
   /// @brief Get the RegionNode representing the current Region.
   /// @return The RegionNode representing the current Region.
-  RegionNode* getNode() const {
-    return const_cast<RegionNode*>(reinterpret_cast<const RegionNode*>(this));
+  RegionNodeT *getNode() const {
+    return const_cast<RegionNodeT *>(
+        reinterpret_cast<const RegionNodeT *>(this));
   }
 
   /// @brief Get the nesting level of this Region.
@@ -330,21 +379,21 @@ public:
   /// @return A region also starting at getEntry(), but reaching to the next
   ///         basic block that forms with getEntry() a (non-canonical) region.
   ///         NULL if such a basic block does not exist.
-  Region *getExpandedRegion() const;
+  RegionT *getExpandedRegion() const;
 
   /// @brief Return the first block of this region's single entry edge,
   ///        if existing.
   ///
   /// @return The BasicBlock starting this region's single entry edge,
   ///         else NULL.
-  BasicBlock *getEnteringBlock() const;
+  BlockT *getEnteringBlock() const;
 
   /// @brief Return the first block of this region's single exit edge,
   ///        if existing.
   ///
   /// @return The BasicBlock starting this region's single exit edge,
   ///         else NULL.
-  BasicBlock *getExitingBlock() const;
+  BlockT *getExitingBlock() const;
 
   /// @brief Is this a simple region?
   ///
@@ -358,20 +407,18 @@ public:
   std::string getNameStr() const;
 
   /// @brief Return the RegionInfo object, that belongs to this Region.
-  RegionInfo *getRegionInfo() const {
-    return RI;
-  }
+  RegionInfoT *getRegionInfo() const { return RI; }
 
   /// PrintStyle - Print region in difference ways.
-  enum PrintStyle { PrintNone, PrintBB, PrintRN  };
+  enum PrintStyle { PrintNone, PrintBB, PrintRN };
 
   /// @brief Print the region.
   ///
   /// @param OS The output stream the Region is printed to.
   /// @param printTree Print also the tree of subregions.
   /// @param level The indentation level used for printing.
-  void print(raw_ostream& OS, bool printTree = true, unsigned level = 0,
-             enum PrintStyle Style = PrintNone) const;
+  void print(raw_ostream &OS, bool printTree = true, unsigned level = 0,
+             PrintStyle Style = PrintNone) const;
 
   /// @brief Print the region to stderr.
   void dump() const;
@@ -380,28 +427,28 @@ public:
   ///
   /// @param BB The BasicBlock that might be contained in this Region.
   /// @return True if the block is contained in the region otherwise false.
-  bool contains(const BasicBlock *BB) const;
+  bool contains(const BlockT *BB) const;
 
   /// @brief Check if the region contains another region.
   ///
   /// @param SubRegion The region that might be contained in this Region.
   /// @return True if SubRegion is contained in the region otherwise false.
-  bool contains(const Region *SubRegion) const {
+  bool contains(const RegionT *SubRegion) const {
     // Toplevel Region.
     if (!getExit())
       return true;
 
-    return contains(SubRegion->getEntry())
-      && (contains(SubRegion->getExit()) || SubRegion->getExit() == getExit());
+    return contains(SubRegion->getEntry()) &&
+           (contains(SubRegion->getExit()) ||
+            SubRegion->getExit() == getExit());
   }
 
   /// @brief Check if the region contains an Instruction.
   ///
   /// @param Inst The Instruction that might be contained in this region.
-  /// @return True if the Instruction is contained in the region otherwise false.
-  bool contains(const Instruction *Inst) const {
-    return contains(Inst->getParent());
-  }
+  /// @return True if the Instruction is contained in the region otherwise
+  /// false.
+  bool contains(const InstT *Inst) const { return contains(Inst->getParent()); }
 
   /// @brief Check if the region contains a loop.
   ///
@@ -410,7 +457,7 @@ public:
   ///         In case a NULL pointer is passed to this function the result
   ///         is false, except for the region that describes the whole function.
   ///         In that case true is returned.
-  bool contains(const Loop *L) const;
+  bool contains(const LoopT *L) const;
 
   /// @brief Get the outermost loop in the region that contains a loop.
   ///
@@ -420,7 +467,7 @@ public:
   /// @param L The loop the lookup is started.
   /// @return The outermost loop in the region, NULL if such a loop does not
   ///         exist or if the region describes the whole function.
-  Loop *outermostLoopInRegion(Loop *L) const;
+  LoopT *outermostLoopInRegion(LoopT *L) const;
 
   /// @brief Get the outermost loop in the region that contains a basic block.
   ///
@@ -431,13 +478,13 @@ public:
   /// @param BB The basic block surrounded by the loop.
   /// @return The outermost loop in the region, NULL if such a loop does not
   ///         exist or if the region describes the whole function.
-  Loop *outermostLoopInRegion(LoopInfo *LI, BasicBlock* BB) const;
+  LoopT *outermostLoopInRegion(LoopInfoT *LI, BlockT *BB) const;
 
   /// @brief Get the subregion that starts at a BasicBlock
   ///
   /// @param BB The BasicBlock the subregion should start.
   /// @return The Subregion if available, otherwise NULL.
-  Region* getSubRegionNode(BasicBlock *BB) const;
+  RegionT *getSubRegionNode(BlockT *BB) const;
 
   /// @brief Get the RegionNode for a BasicBlock
   ///
@@ -445,32 +492,32 @@ public:
   /// @return If available, the RegionNode that represents the subregion
   ///         starting at BB. If no subregion starts at BB, the RegionNode
   ///         representing BB.
-  RegionNode* getNode(BasicBlock *BB) const;
+  RegionNodeT *getNode(BlockT *BB) const;
 
   /// @brief Get the BasicBlock RegionNode for a BasicBlock
   ///
   /// @param BB The BasicBlock for which the RegionNode is requested.
   /// @return The RegionNode representing the BB.
-  RegionNode* getBBNode(BasicBlock *BB) const;
+  RegionNodeT *getBBNode(BlockT *BB) const;
 
   /// @brief Add a new subregion to this Region.
   ///
   /// @param SubRegion The new subregion that will be added.
   /// @param moveChildren Move the children of this region, that are also
   ///                     contained in SubRegion into SubRegion.
-  void addSubRegion(Region *SubRegion, bool moveChildren = false);
+  void addSubRegion(RegionT *SubRegion, bool moveChildren = false);
 
   /// @brief Remove a subregion from this Region.
   ///
   /// The subregion is not deleted, as it will probably be inserted into another
   /// region.
   /// @param SubRegion The SubRegion that will be removed.
-  Region *removeSubRegion(Region *SubRegion);
+  RegionT *removeSubRegion(RegionT *SubRegion);
 
   /// @brief Move all direct child nodes of this Region to another Region.
   ///
   /// @param To The Region the child nodes will be transferred to.
-  void transferChildrenTo(Region *To);
+  void transferChildrenTo(RegionT *To);
 
   /// @brief Verify if the region is a correct region.
   ///
@@ -489,8 +536,8 @@ public:
   ///
   /// These iterators iterator over all subregions of this Region.
   //@{
-  typedef RegionSet::iterator iterator;
-  typedef RegionSet::const_iterator const_iterator;
+  typedef typename RegionSet::iterator iterator;
+  typedef typename RegionSet::const_iterator const_iterator;
 
   iterator begin() { return children.begin(); }
   iterator end() { return children.end(); }
@@ -507,18 +554,18 @@ public:
   //@{
   template <bool IsConst>
   class block_iterator_wrapper
-      : public df_iterator<typename std::conditional<IsConst, const BasicBlock,
-                                                     BasicBlock>::type *> {
-    typedef df_iterator<typename std::conditional<IsConst, const BasicBlock,
-                                                  BasicBlock>::type *> super;
+      : public df_iterator<
+            typename std::conditional<IsConst, const BlockT, BlockT>::type *> {
+    typedef df_iterator<
+        typename std::conditional<IsConst, const BlockT, BlockT>::type *> super;
 
   public:
     typedef block_iterator_wrapper<IsConst> Self;
     typedef typename super::pointer pointer;
 
     // Construct the begin iterator.
-    block_iterator_wrapper(pointer Entry, pointer Exit) : super(df_begin(Entry))
-    {
+    block_iterator_wrapper(pointer Entry, pointer Exit)
+        : super(df_begin(Entry)) {
       // Mark the exit of the region as visited, so that the children of the
       // exit and the exit itself, i.e. the block outside the region will never
       // be visited.
@@ -526,35 +573,29 @@ public:
     }
 
     // Construct the end iterator.
-    block_iterator_wrapper() : super(df_end<pointer>((BasicBlock *)nullptr)) {}
+    block_iterator_wrapper() : super(df_end<pointer>((BlockT *)nullptr)) {}
 
     /*implicit*/ block_iterator_wrapper(super I) : super(I) {}
 
     // FIXME: Even a const_iterator returns a non-const BasicBlock pointer.
     //        This was introduced for backwards compatibility, but should
     //        be removed as soon as all users are fixed.
-    BasicBlock *operator*() const {
-      return const_cast<BasicBlock*>(super::operator*());
+    BlockT *operator*() const {
+      return const_cast<BlockT *>(super::operator*());
     }
   };
 
   typedef block_iterator_wrapper<false> block_iterator;
-  typedef block_iterator_wrapper<true>  const_block_iterator;
+  typedef block_iterator_wrapper<true> const_block_iterator;
 
-  block_iterator block_begin() {
-   return block_iterator(getEntry(), getExit());
-  }
+  block_iterator block_begin() { return block_iterator(getEntry(), getExit()); }
 
-  block_iterator block_end() {
-   return block_iterator();
-  }
+  block_iterator block_end() { return block_iterator(); }
 
   const_block_iterator block_begin() const {
     return const_block_iterator(getEntry(), getExit());
   }
-  const_block_iterator block_end() const {
-    return const_block_iterator();
-  }
+  const_block_iterator block_end() const { return const_block_iterator(); }
 
   typedef iterator_range<block_iterator> block_range;
   typedef iterator_range<const_block_iterator> const_block_range;
@@ -578,12 +619,12 @@ public:
   /// are direct children of this Region. It does not iterate over any
   /// RegionNodes that are also element of a subregion of this Region.
   //@{
-  typedef df_iterator<RegionNode*, SmallPtrSet<RegionNode*, 8>, false,
-                      GraphTraits<RegionNode*> > element_iterator;
+  typedef df_iterator<RegionNodeT *, SmallPtrSet<RegionNodeT *, 8>, false,
+                      GraphTraits<RegionNodeT *>> element_iterator;
 
-  typedef df_iterator<const RegionNode*, SmallPtrSet<const RegionNode*, 8>,
-                      false, GraphTraits<const RegionNode*> >
-            const_element_iterator;
+  typedef df_iterator<const RegionNodeT *, SmallPtrSet<const RegionNodeT *, 8>,
+                      false,
+                      GraphTraits<const RegionNodeT *>> const_element_iterator;
 
   element_iterator element_begin();
   element_iterator element_end();
@@ -593,132 +634,147 @@ public:
   //@}
 };
 
+/// Print a RegionNode.
+template <class Tr>
+inline raw_ostream &operator<<(raw_ostream &OS, const RegionNodeBase<Tr> &Node);
+
 //===----------------------------------------------------------------------===//
 /// @brief Analysis that detects all canonical Regions.
 ///
 /// The RegionInfo pass detects all canonical regions in a function. The Regions
 /// are connected using the parent relation. This builds a Program Structure
 /// Tree.
-class RegionInfo : public FunctionPass {
-  typedef DenseMap<BasicBlock*,BasicBlock*> BBtoBBMap;
-  typedef DenseMap<BasicBlock*, Region*> BBtoRegionMap;
-  typedef SmallPtrSet<Region*, 4> RegionSet;
+template <class Tr>
+class RegionInfoBase {
+  typedef typename Tr::BlockT BlockT;
+  typedef typename Tr::FuncT FuncT;
+  typedef typename Tr::RegionT RegionT;
+  typedef typename Tr::RegionInfoT RegionInfoT;
+  typedef typename Tr::DomTreeT DomTreeT;
+  typedef typename Tr::DomTreeNodeT DomTreeNodeT;
+  typedef typename Tr::PostDomTreeT PostDomTreeT;
+  typedef typename Tr::DomFrontierT DomFrontierT;
+  typedef GraphTraits<BlockT *> BlockTraits;
+  typedef GraphTraits<Inverse<BlockT *>> InvBlockTraits;
+  typedef typename BlockTraits::ChildIteratorType SuccIterTy;
+  typedef typename InvBlockTraits::ChildIteratorType PredIterTy;
 
-  RegionInfo(const RegionInfo &) LLVM_DELETED_FUNCTION;
-  const RegionInfo &operator=(const RegionInfo &) LLVM_DELETED_FUNCTION;
+  friend class RegionInfo;
+  friend class MachineRegionInfo;
+  typedef DenseMap<BlockT *, BlockT *> BBtoBBMap;
+  typedef DenseMap<BlockT *, RegionT *> BBtoRegionMap;
+  typedef SmallPtrSet<RegionT *, 4> RegionSet;
 
-  DominatorTree *DT;
-  PostDominatorTree *PDT;
-  DominanceFrontier *DF;
+  RegionInfoBase();
+  ~RegionInfoBase();
+
+  RegionInfoBase(const RegionInfoBase &) LLVM_DELETED_FUNCTION;
+  const RegionInfoBase &operator=(const RegionInfoBase &) LLVM_DELETED_FUNCTION;
+
+  DomTreeT *DT;
+  PostDomTreeT *PDT;
+  DomFrontierT *DF;
 
   /// The top level region.
-  Region *TopLevelRegion;
+  RegionT *TopLevelRegion;
 
+private:
   /// Map every BB to the smallest region, that contains BB.
   BBtoRegionMap BBtoRegion;
 
   // isCommonDomFrontier - Returns true if BB is in the dominance frontier of
   // entry, because it was inherited from exit. In the other case there is an
   // edge going from entry to BB without passing exit.
-  bool isCommonDomFrontier(BasicBlock* BB, BasicBlock* entry,
-                           BasicBlock* exit) const;
+  bool isCommonDomFrontier(BlockT *BB, BlockT *entry, BlockT *exit) const;
 
   // isRegion - Check if entry and exit surround a valid region, based on
   // dominance tree and dominance frontier.
-  bool isRegion(BasicBlock* entry, BasicBlock* exit) const;
+  bool isRegion(BlockT *entry, BlockT *exit) const;
 
   // insertShortCut - Saves a shortcut pointing from entry to exit.
   // This function may extend this shortcut if possible.
-  void insertShortCut(BasicBlock* entry, BasicBlock* exit,
-                      BBtoBBMap* ShortCut) const;
+  void insertShortCut(BlockT *entry, BlockT *exit, BBtoBBMap *ShortCut) const;
 
   // getNextPostDom - Returns the next BB that postdominates N, while skipping
   // all post dominators that cannot finish a canonical region.
-  DomTreeNode *getNextPostDom(DomTreeNode* N, BBtoBBMap *ShortCut) const;
+  DomTreeNodeT *getNextPostDom(DomTreeNodeT *N, BBtoBBMap *ShortCut) const;
 
   // isTrivialRegion - A region is trivial, if it contains only one BB.
-  bool isTrivialRegion(BasicBlock *entry, BasicBlock *exit) const;
+  bool isTrivialRegion(BlockT *entry, BlockT *exit) const;
 
   // createRegion - Creates a single entry single exit region.
-  Region *createRegion(BasicBlock *entry, BasicBlock *exit);
+  RegionT *createRegion(BlockT *entry, BlockT *exit);
 
   // findRegionsWithEntry - Detect all regions starting with bb 'entry'.
-  void findRegionsWithEntry(BasicBlock *entry, BBtoBBMap *ShortCut);
+  void findRegionsWithEntry(BlockT *entry, BBtoBBMap *ShortCut);
 
   // scanForRegions - Detects regions in F.
-  void scanForRegions(Function &F, BBtoBBMap *ShortCut);
+  void scanForRegions(FuncT &F, BBtoBBMap *ShortCut);
 
   // getTopMostParent - Get the top most parent with the same entry block.
-  Region *getTopMostParent(Region *region);
+  RegionT *getTopMostParent(RegionT *region);
 
   // buildRegionsTree - build the region hierarchy after all region detected.
-  void buildRegionsTree(DomTreeNode *N, Region *region);
-
-  // Calculate - detecte all regions in function and build the region tree.
-  void Calculate(Function& F);
-
-  void releaseMemory() override;
+  void buildRegionsTree(DomTreeNodeT *N, RegionT *region);
 
   // updateStatistics - Update statistic about created regions.
-  void updateStatistics(Region *R);
+  virtual void updateStatistics(RegionT *R) = 0;
 
   // isSimple - Check if a region is a simple region with exactly one entry
   // edge and exactly one exit edge.
-  bool isSimple(Region* R) const;
+  bool isSimple(RegionT *R) const;
+
+  // calculate - detect all regions in function and build the region tree.
+  void calculate(FuncT &F);
 
 public:
-  static char ID;
-  explicit RegionInfo();
+  static bool VerifyRegionInfo;
+  static typename RegionT::PrintStyle printStyle;
 
-  ~RegionInfo();
+  void print(raw_ostream &OS) const;
+  void dump() const;
 
-  /// @name FunctionPass interface
-  //@{
-  bool runOnFunction(Function &F) override;
-  void getAnalysisUsage(AnalysisUsage &AU) const override;
-  void print(raw_ostream &OS, const Module *) const override;
-  void verifyAnalysis() const override;
-  //@}
+  void releaseMemory();
 
   /// @brief Get the smallest region that contains a BasicBlock.
   ///
   /// @param BB The basic block.
   /// @return The smallest region, that contains BB or NULL, if there is no
   /// region containing BB.
-  Region *getRegionFor(BasicBlock *BB) const;
+  RegionT *getRegionFor(BlockT *BB) const;
 
   /// @brief  Set the smallest region that surrounds a basic block.
   ///
   /// @param BB The basic block surrounded by a region.
   /// @param R The smallest region that surrounds BB.
-  void setRegionFor(BasicBlock *BB, Region *R);
+  void setRegionFor(BlockT *BB, RegionT *R);
 
   /// @brief A shortcut for getRegionFor().
   ///
   /// @param BB The basic block.
   /// @return The smallest region, that contains BB or NULL, if there is no
   /// region containing BB.
-  Region *operator[](BasicBlock *BB) const;
+  RegionT *operator[](BlockT *BB) const;
 
   /// @brief Return the exit of the maximal refined region, that starts at a
   /// BasicBlock.
   ///
   /// @param BB The BasicBlock the refined region starts.
-  BasicBlock *getMaxRegionExit(BasicBlock *BB) const;
+  BlockT *getMaxRegionExit(BlockT *BB) const;
 
   /// @brief Find the smallest region that contains two regions.
   ///
   /// @param A The first region.
   /// @param B The second region.
   /// @return The smallest region containing A and B.
-  Region *getCommonRegion(Region* A, Region *B) const;
+  RegionT *getCommonRegion(RegionT *A, RegionT *B) const;
 
   /// @brief Find the smallest region that contains two basic blocks.
   ///
   /// @param A The first basic block.
   /// @param B The second basic block.
   /// @return The smallest region that contains A and B.
-  Region* getCommonRegion(BasicBlock* A, BasicBlock *B) const {
+  RegionT *getCommonRegion(BlockT *A, BlockT *B) const {
     return getCommonRegion(getRegionFor(A), getRegionFor(B));
   }
 
@@ -726,23 +782,21 @@ public:
   ///
   /// @param Regions A vector of regions.
   /// @return The smallest region that contains all regions in Regions.
-  Region* getCommonRegion(SmallVectorImpl<Region*> &Regions) const;
+  RegionT *getCommonRegion(SmallVectorImpl<RegionT *> &Regions) const;
 
   /// @brief Find the smallest region that contains a set of basic blocks.
   ///
   /// @param BBs A vector of basic blocks.
   /// @return The smallest region that contains all basic blocks in BBS.
-  Region* getCommonRegion(SmallVectorImpl<BasicBlock*> &BBs) const;
+  RegionT *getCommonRegion(SmallVectorImpl<BlockT *> &BBs) const;
 
-  Region *getTopLevelRegion() const {
-    return TopLevelRegion;
-  }
+  RegionT *getTopLevelRegion() const { return TopLevelRegion; }
 
   /// @brief Update RegionInfo after a basic block was split.
   ///
   /// @param NewBB The basic block that was created before OldBB.
   /// @param OldBB The old basic block.
-  void splitBlock(BasicBlock* NewBB, BasicBlock *OldBB);
+  void splitBlock(BlockT *NewBB, BlockT *OldBB);
 
   /// @brief Clear the Node Cache for all Regions.
   ///
@@ -751,14 +805,104 @@ public:
     if (TopLevelRegion)
       TopLevelRegion->clearNodeCache();
   }
+
+  void verifyAnalysis() const;
 };
 
-inline raw_ostream &operator<<(raw_ostream &OS, const RegionNode &Node) {
-  if (Node.isSubRegion())
-    return OS << Node.getNodeAs<Region>()->getNameStr();
-  else
-    return OS << Node.getNodeAs<BasicBlock>()->getName();
+class Region;
+
+class RegionNode : public RegionNodeBase<RegionTraits<Function>> {
+public:
+  inline RegionNode(Region *Parent, BasicBlock *Entry, bool isSubRegion = false)
+      : RegionNodeBase<RegionTraits<Function>>(Parent, Entry, isSubRegion) {}
+
+  ~RegionNode() {}
+
+  bool operator==(const Region &RN) const {
+    return this == reinterpret_cast<const RegionNode *>(&RN);
+  }
+};
+
+class Region : public RegionBase<RegionTraits<Function>> {
+public:
+  Region(BasicBlock *Entry, BasicBlock *Exit, RegionInfo *RI, DominatorTree *DT,
+         Region *Parent = nullptr);
+  ~Region();
+
+  bool operator==(const RegionNode &RN) const {
+    return &RN == reinterpret_cast<const RegionNode *>(this);
+  }
+};
+
+class RegionInfo : public RegionInfoBase<RegionTraits<Function>> {
+public:
+  explicit RegionInfo();
+
+  virtual ~RegionInfo();
+
+  // updateStatistics - Update statistic about created regions.
+  void updateStatistics(Region *R) final;
+
+  void recalculate(Function &F, DominatorTree *DT, PostDominatorTree *PDT,
+                   DominanceFrontier *DF);
+};
+
+class RegionInfoPass : public FunctionPass {
+  RegionInfo RI;
+
+public:
+  static char ID;
+  explicit RegionInfoPass();
+
+  ~RegionInfoPass();
+
+  RegionInfo &getRegionInfo() { return RI; }
+
+  const RegionInfo &getRegionInfo() const { return RI; }
+
+  /// @name FunctionPass interface
+  //@{
+  bool runOnFunction(Function &F) override;
+  void releaseMemory() override;
+  void verifyAnalysis() const override;
+  void getAnalysisUsage(AnalysisUsage &AU) const override;
+  void print(raw_ostream &OS, const Module *) const override;
+  void dump() const;
+  //@}
+};
+
+template <>
+template <>
+inline BasicBlock *
+RegionNodeBase<RegionTraits<Function>>::getNodeAs<BasicBlock>() const {
+  assert(!isSubRegion() && "This is not a BasicBlock RegionNode!");
+  return getEntry();
 }
+
+template <>
+template <>
+inline Region *
+RegionNodeBase<RegionTraits<Function>>::getNodeAs<Region>() const {
+  assert(isSubRegion() && "This is not a subregion RegionNode!");
+  auto Unconst = const_cast<RegionNodeBase<RegionTraits<Function>> *>(this);
+  return reinterpret_cast<Region *>(Unconst);
+}
+
+template <class Tr>
+inline raw_ostream &operator<<(raw_ostream &OS,
+                               const RegionNodeBase<Tr> &Node) {
+  typedef typename Tr::BlockT BlockT;
+  typedef typename Tr::RegionT RegionT;
+
+  if (Node.isSubRegion())
+    return OS << Node.template getNodeAs<RegionT>()->getNameStr();
+  else
+    return OS << Node.template getNodeAs<BlockT>()->getName();
+}
+
+EXTERN_TEMPLATE_INSTANTIATION(class RegionBase<RegionTraits<Function>>);
+EXTERN_TEMPLATE_INSTANTIATION(class RegionNodeBase<RegionTraits<Function>>);
+EXTERN_TEMPLATE_INSTANTIATION(class RegionInfoBase<RegionTraits<Function>>);
+
 } // End llvm namespace
 #endif
-

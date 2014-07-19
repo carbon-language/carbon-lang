@@ -260,7 +260,7 @@ INITIALIZE_PASS_BEGIN(StructurizeCFG, "structurizecfg", "Structurize the CFG",
                       false, false)
 INITIALIZE_PASS_DEPENDENCY(LowerSwitch)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
-INITIALIZE_PASS_DEPENDENCY(RegionInfo)
+INITIALIZE_PASS_DEPENDENCY(RegionInfoPass)
 INITIALIZE_PASS_END(StructurizeCFG, "structurizecfg", "Structurize the CFG",
                     false, false)
 
@@ -406,11 +406,11 @@ void StructurizeCFG::gatherPredicates(RegionNode *N) {
     } else {
 
       // It's an exit from a sub region
-      while(R->getParent() != ParentRegion)
+      while (R->getParent() != ParentRegion)
         R = R->getParent();
 
       // Edge from inside a subregion to its entry, ignore it
-      if (R == N)
+      if (*R == *N)
         continue;
 
       BasicBlock *Entry = R->getEntry();
