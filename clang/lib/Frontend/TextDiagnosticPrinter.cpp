@@ -43,7 +43,7 @@ void TextDiagnosticPrinter::BeginSourceFile(const LangOptions &LO,
 }
 
 void TextDiagnosticPrinter::EndSourceFile() {
-  TextDiag.reset(nullptr);
+  TextDiag.reset();
 }
 
 /// \brief Print any diagnostic option information to a raw_ostream.

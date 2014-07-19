@@ -100,7 +100,7 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
 }
 
 void FileManager::clearStatCaches() {
-  StatCache.reset(nullptr);
+  StatCache.reset();
 }
 
 /// \brief Retrieve the directory that the given file name resides in.

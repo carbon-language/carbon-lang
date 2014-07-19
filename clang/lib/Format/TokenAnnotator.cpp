@@ -627,8 +627,7 @@ private:
         CurrentToken->Type != TT_RegexLiteral &&
         CurrentToken->Type != TT_TrailingReturnArrow)
       CurrentToken->Type = TT_Unknown;
-    if (CurrentToken->Role)
-      CurrentToken->Role.reset(nullptr);
+    CurrentToken->Role.reset();
     CurrentToken->FakeLParens.clear();
     CurrentToken->FakeRParens = 0;
   }

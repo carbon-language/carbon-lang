@@ -702,5 +702,5 @@ void SDiagsWriter::finish() {
   State->OS->write((char *)&State->Buffer.front(), State->Buffer.size());
   State->OS->flush();
 
-  State->OS.reset(nullptr);
+  State->OS.reset();
 }

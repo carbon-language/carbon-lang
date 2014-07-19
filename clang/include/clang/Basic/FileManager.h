@@ -74,7 +74,7 @@ class FileEntry {
   friend class FileManager;
 
   void closeFile() const {
-    File.reset(nullptr); // rely on destructor to close File
+    File.reset(); // rely on destructor to close File
   }
 
   void operator=(const FileEntry &) LLVM_DELETED_FUNCTION;
