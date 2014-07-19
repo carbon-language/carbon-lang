@@ -27,28 +27,11 @@ using namespace llvm::object;
 
 namespace llvm {
 
-RelocationEntry
-RuntimeDyldMachO::getBasicRelocationEntry(unsigned SectionID,
-                                          ObjectImage &ObjImg,
-                                          const relocation_iterator &RI) const {
-
-  const MachOObjectFile &Obj =
-      static_cast<const MachOObjectFile &>(*ObjImg.getObjectFile());
-  MachO::any_relocation_info RelInfo =
-      Obj.getRelocation(RI->getRawDataRefImpl());
-
-  const SectionEntry &Section = Sections[SectionID];
-  bool IsPCRel = Obj.getAnyRelocationPCRel(RelInfo);
-  unsigned Size = Obj.getAnyRelocationLength(RelInfo);
-  uint64_t Offset;
-  RI->getOffset(Offset);
-  uint8_t *LocalAddress = Section.Address + Offset;
-  unsigned NumBytes = 1 << Size;
+uint64_t RuntimeDyldMachO::decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                                        uint32_t RelType) const {
   uint64_t Addend = 0;
   memcpy(&Addend, LocalAddress, NumBytes);
-  uint32_t RelType = Obj.getAnyRelocationType(RelInfo);
-
-  return RelocationEntry(SectionID, Offset, RelType, Addend, IsPCRel, Size);
+  return Addend;
 }
 
 RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(

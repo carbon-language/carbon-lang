@@ -51,11 +51,9 @@ protected:
 
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
-  /// Parse the given relocation, which must be a non-scattered, and
-  /// return a RelocationEntry representing the information. The 'Addend' field
-  /// will contain the unmodified instruction immediate.
-  RelocationEntry getBasicRelocationEntry(unsigned SectionID, ObjectImage &Obj,
-                                          const relocation_iterator &RI) const;
+  /// Extract the addend encoded in the instruction.
+  uint64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                        uint32_t RelType) const;
 
   /// Construct a RelocationValueRef representing the relocation target.
   /// For Symbols in known sections, this will return a RelocationValueRef
@@ -117,7 +115,33 @@ template <typename Impl>
 class RuntimeDyldMachOCRTPBase : public RuntimeDyldMachO {
 private:
   Impl &impl() { return static_cast<Impl &>(*this); }
-  const Impl &impl() const { return static_cast<Impl &>(*this); }
+  const Impl &impl() const { return static_cast<const Impl &>(*this); }
+
+protected:
+
+  /// Parse the given relocation, which must be a non-scattered, and
+  /// return a RelocationEntry representing the information. The 'Addend' field
+  /// will contain the unmodified instruction immediate.
+  RelocationEntry getBasicRelocationEntry(unsigned SectionID,
+                                          ObjectImage &ObjImg,
+                                          const relocation_iterator &RI) const {
+    const MachOObjectFile &Obj =
+      static_cast<const MachOObjectFile &>(*ObjImg.getObjectFile());
+    MachO::any_relocation_info RelInfo =
+      Obj.getRelocation(RI->getRawDataRefImpl());
+
+    const SectionEntry &Section = Sections[SectionID];
+    bool IsPCRel = Obj.getAnyRelocationPCRel(RelInfo);
+    unsigned Size = Obj.getAnyRelocationLength(RelInfo);
+    uint64_t Offset;
+    RI->getOffset(Offset);
+    uint8_t *LocalAddress = Section.Address + Offset;
+    unsigned NumBytes = 1 << Size;
+    uint32_t RelType = Obj.getAnyRelocationType(RelInfo);
+    uint64_t Addend = impl().decodeAddend(LocalAddress, NumBytes, RelType);
+
+    return RelocationEntry(SectionID, Offset, RelType, Addend, IsPCRel, Size);
+  }
 
 public:
   RuntimeDyldMachOCRTPBase(RTDyldMemoryManager *mm) : RuntimeDyldMachO(mm) {}
