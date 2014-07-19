@@ -158,7 +158,7 @@ namespace llvm {
   };
 
   FunctionPass *
-  createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> &builder,
+  createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> builder,
                               char *customPassID = nullptr);
 }
 

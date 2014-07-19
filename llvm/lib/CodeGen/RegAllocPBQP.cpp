@@ -88,8 +88,8 @@ public:
   static char ID;
 
   /// Construct a PBQP register allocator.
-  RegAllocPBQP(std::unique_ptr<PBQPBuilder> &b, char *cPassID=nullptr)
-      : MachineFunctionPass(ID), builder(b.release()), customPassID(cPassID) {
+  RegAllocPBQP(std::unique_ptr<PBQPBuilder> b, char *cPassID = nullptr)
+      : MachineFunctionPass(ID), builder(std::move(b)), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
@@ -614,18 +614,18 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 }
 
 FunctionPass *
-llvm::createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> &builder,
+llvm::createPBQPRegisterAllocator(std::unique_ptr<PBQPBuilder> builder,
                                   char *customPassID) {
-  return new RegAllocPBQP(builder, customPassID);
+  return new RegAllocPBQP(std::move(builder), customPassID);
 }
 
 FunctionPass* llvm::createDefaultPBQPRegisterAllocator() {
   std::unique_ptr<PBQPBuilder> Builder;
   if (pbqpCoalescing)
-    Builder.reset(new PBQPBuilderWithCoalescing());
+    Builder = llvm::make_unique<PBQPBuilderWithCoalescing>();
   else
-    Builder.reset(new PBQPBuilder());
-  return createPBQPRegisterAllocator(Builder);
+    Builder = llvm::make_unique<PBQPBuilder>();
+  return createPBQPRegisterAllocator(std::move(Builder));
 }
 
 #undef DEBUG_TYPE
