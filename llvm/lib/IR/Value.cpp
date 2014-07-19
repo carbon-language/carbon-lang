@@ -574,6 +574,27 @@ static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
 /// isDereferenceablePointer - Test if this value is always a pointer to
 /// allocated and suitably aligned memory for a simple load or store.
 bool Value::isDereferenceablePointer(const DataLayout *DL) const {
+  // When dereferenceability information is provided by a dereferenceable
+  // attribute, we know exactly how many bytes are dereferenceable. If we can
+  // determine the exact offset to the attributed variable, we can use that
+  // information here.
+  Type *Ty = getType()->getPointerElementType();
+  if (Ty->isSized() && DL) {
+    APInt Offset(DL->getTypeStoreSizeInBits(getType()), 0);
+    const Value *BV = stripAndAccumulateInBoundsConstantOffsets(*DL, Offset);
+
+    APInt DerefBytes(Offset.getBitWidth(), 0);
+    if (const Argument *A = dyn_cast<Argument>(BV))
+      DerefBytes = A->getDereferenceableBytes();
+    else if (ImmutableCallSite CS = BV)
+      DerefBytes = CS.getDereferenceableBytes(0);
+
+    if (DerefBytes.getBoolValue() && Offset.isNonNegative()) {
+      if (DerefBytes.uge(Offset + DL->getTypeStoreSize(Ty)))
+        return true;
+    }
+  }
+
   SmallPtrSet<const Value *, 32> Visited;
   return ::isDereferenceablePointer(this, DL, Visited);
 }
