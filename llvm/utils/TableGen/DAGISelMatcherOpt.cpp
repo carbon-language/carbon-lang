@@ -400,7 +400,7 @@ static void FactorNodes(std::unique_ptr<Matcher> &MatcherPtr) {
   }
   
   if (NewOptionsToMatch.empty()) {
-    MatcherPtr.reset(nullptr);
+    MatcherPtr.reset();
     return;
   }
   

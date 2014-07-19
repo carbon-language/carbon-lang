@@ -267,7 +267,7 @@ INITIALIZE_PASS(CallGraphWrapperPass, "basiccg", "CallGraph Construction",
 
 char CallGraphWrapperPass::ID = 0;
 
-void CallGraphWrapperPass::releaseMemory() { G.reset(nullptr); }
+void CallGraphWrapperPass::releaseMemory() { G.reset(); }
 
 void CallGraphWrapperPass::print(raw_ostream &OS, const Module *) const {
   if (!G) {

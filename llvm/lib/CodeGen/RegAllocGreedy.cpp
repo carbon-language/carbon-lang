@@ -486,7 +486,7 @@ void RAGreedy::LRE_DidCloneVirtReg(unsigned New, unsigned Old) {
 }
 
 void RAGreedy::releaseMemory() {
-  SpillerInstance.reset(nullptr);
+  SpillerInstance.reset();
   ExtraRegInfo.clear();
   GlobalCand.clear();
 }

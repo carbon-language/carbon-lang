@@ -87,7 +87,7 @@ FileOutputBuffer::create(StringRef FilePath, size_t Size,
 
 std::error_code FileOutputBuffer::commit(int64_t NewSmallerSize) {
   // Unmap buffer, letting OS flush dirty pages to file on disk.
-  Region.reset(nullptr);
+  Region.reset();
 
   // If requested, resize file as part of commit.
   if ( NewSmallerSize != -1 ) {

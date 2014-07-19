@@ -157,7 +157,7 @@ void RABasic::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 void RABasic::releaseMemory() {
-  SpillerInstance.reset(nullptr);
+  SpillerInstance.reset();
 }
 
 
