@@ -108,7 +108,8 @@ class MergedLoadStoreMotion : public FunctionPass {
 
 public:
   static char ID; // Pass identification, replacement for typeid
-  explicit MergedLoadStoreMotion(void) : FunctionPass(ID), MD(nullptr) {
+  explicit MergedLoadStoreMotion(void)
+      : FunctionPass(ID), MD(nullptr), MagicCompileTimeControl(250) {
     initializeMergedLoadStoreMotionPass(*PassRegistry::getPassRegistry());
   }
 
@@ -150,7 +151,7 @@ private:
   // where Size0 and Size1 are the #instructions on the two sides of
   // the diamond. The constant chosen here is arbitrary. Compiler Time
   // Control is enforced by the check Size0 * Size1 < MagicCompileTimeControl.
-  const int MagicCompileTimeControl = 250;
+  const int MagicCompileTimeControl;
 };
 
 char MergedLoadStoreMotion::ID = 0;
