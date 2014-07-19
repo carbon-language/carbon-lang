@@ -1524,6 +1524,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                 expr_options.SetUnwindOnError(true);
                 expr_options.SetIgnoreBreakpoints(true);
                 expr_options.SetExecutionPolicy(eExecutionPolicyAlways);
+                expr_options.SetResultIsInternal(true);
+                
                 StreamString expr;
                 expr.Printf(R"(
                                struct __lldb_dlopen_result { void *image_ptr; const char *error_str; } the_result;

@@ -208,6 +208,7 @@ public:
         m_debug(false),
         m_trap_exceptions(true),
         m_generate_debug_info(false),
+        m_result_is_internal(false),
         m_use_dynamic(lldb::eNoDynamicValues),
         m_timeout_usec(default_timeout),
         m_one_thread_timeout_usec(0),
@@ -402,6 +403,18 @@ public:
             return m_cancel_callback (phase, m_cancel_callback_baton);
     }
 
+    void
+    SetResultIsInternal (bool b)
+    {
+        m_result_is_internal = b;
+    }
+
+    bool
+    GetResultIsInternal () const
+    {
+        return m_result_is_internal;
+    }
+
 private:
     ExecutionPolicy m_execution_policy;
     lldb::LanguageType m_language;
@@ -414,6 +427,7 @@ private:
     bool m_debug;
     bool m_trap_exceptions;
     bool m_generate_debug_info;
+    bool m_result_is_internal;
     lldb::DynamicValueType m_use_dynamic;
     uint32_t m_timeout_usec;
     uint32_t m_one_thread_timeout_usec;

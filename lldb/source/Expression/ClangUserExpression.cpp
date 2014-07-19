@@ -1070,6 +1070,11 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                                              user_expression_sp,
                                                              expr_result);
 
+            if (options.GetResultIsInternal())
+            {
+                process->GetTarget().GetPersistentVariables().RemovePersistentVariable (expr_result);
+            }
+
             if (execution_results != lldb::eExpressionCompleted)
             {
                 if (log)
