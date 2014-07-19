@@ -1167,8 +1167,12 @@ defm V_SQRT_F32 : VOP1_32 <0x00000033, "V_SQRT_F32",
 defm V_SQRT_F64 : VOP1_64 <0x00000034, "V_SQRT_F64",
   [(set f64:$dst, (fsqrt f64:$src0))]
 >;
-defm V_SIN_F32 : VOP1_32 <0x00000035, "V_SIN_F32", []>;
-defm V_COS_F32 : VOP1_32 <0x00000036, "V_COS_F32", []>;
+defm V_SIN_F32 : VOP1_32 <0x00000035, "V_SIN_F32",
+  [(set f32:$dst, (AMDGPUsin f32:$src0))]
+>;
+defm V_COS_F32 : VOP1_32 <0x00000036, "V_COS_F32",
+  [(set f32:$dst, (AMDGPUcos f32:$src0))]
+>;
 defm V_NOT_B32 : VOP1_32 <0x00000037, "V_NOT_B32", []>;
 defm V_BFREV_B32 : VOP1_32 <0x00000038, "V_BFREV_B32", []>;
 defm V_FFBH_U32 : VOP1_32 <0x00000039, "V_FFBH_U32", []>;
@@ -2340,16 +2344,6 @@ def : Pat <
 def : Pat<
   (fdiv f64:$src0, f64:$src1),
   (V_MUL_F64 $src0, (V_RCP_F64_e32 $src1), (i64 0))
->;
-
-def : Pat <
-  (fcos f32:$src0),
-  (V_COS_F32_e32 (V_MUL_F32_e32 $src0, (V_MOV_B32_e32 CONST.TWO_PI_INV)))
->;
-
-def : Pat <
-  (fsin f32:$src0),
-  (V_SIN_F32_e32 (V_MUL_F32_e32 $src0, (V_MOV_B32_e32 CONST.TWO_PI_INV)))
 >;
 
 def : Pat <

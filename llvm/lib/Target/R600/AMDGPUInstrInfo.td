@@ -34,6 +34,9 @@ def AMDGPUDivScaleOp : SDTypeProfile<2, 3,
 // This argument to this node is a dword address.
 def AMDGPUdwordaddr : SDNode<"AMDGPUISD::DWORDADDR", SDTIntUnaryOp>;
 
+def AMDGPUcos : SDNode<"AMDGPUISD::COS_HW", SDTFPUnaryOp>;
+def AMDGPUsin : SDNode<"AMDGPUISD::SIN_HW", SDTFPUnaryOp>;
+
 // out = a - floor(a)
 def AMDGPUfract : SDNode<"AMDGPUISD::FRACT", SDTFPUnaryOp>;
 

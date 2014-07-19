@@ -80,6 +80,9 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::SUBC, MVT::i32, Legal);
   setOperationAction(ISD::SUBE, MVT::i32, Legal);
 
+  setOperationAction(ISD::FSIN, MVT::f32, Custom);
+  setOperationAction(ISD::FCOS, MVT::f32, Custom);
+
   // We need to custom lower vector stores from local memory
   setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
@@ -637,6 +640,9 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
+  case ISD::FSIN:
+  case ISD::FCOS:
+    return LowerTrig(Op, DAG);
   case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::FDIV: return LowerFDIV(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
@@ -1114,6 +1120,23 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                         DAG.getTargetConstant(0, MVT::i32));
   }
   return Chain;
+}
+
+SDValue SITargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {
+  EVT VT = Op.getValueType();
+  SDValue Arg = Op.getOperand(0);
+  SDValue FractPart = DAG.getNode(AMDGPUISD::FRACT, SDLoc(Op), VT,
+        DAG.getNode(ISD::FMUL, SDLoc(Op), VT, Arg,
+          DAG.getConstantFP(0.5 / M_PI, VT)));
+
+  switch (Op.getOpcode()) {
+  case ISD::FCOS:
+    return DAG.getNode(AMDGPUISD::COS_HW, SDLoc(Op), VT, FractPart);
+  case ISD::FSIN:
+    return DAG.getNode(AMDGPUISD::SIN_HW, SDLoc(Op), VT, FractPart);
+  default:
+    llvm_unreachable("Wrong trig opcode");
+  }
 }
 
 //===----------------------------------------------------------------------===//
