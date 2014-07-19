@@ -715,6 +715,10 @@ public:
     {
     }
 
+    // Find the address of the C++ vtable pointer
+    virtual lldb::addr_t
+    GetCPPVTableAddress(AddressType &address_type);
+    
     virtual lldb::ValueObjectSP
     Cast (const ClangASTType &clang_ast_type);
     

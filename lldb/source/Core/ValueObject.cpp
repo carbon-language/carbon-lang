@@ -793,7 +793,6 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
     ExecutionContext exe_ctx (GetExecutionContextRef());
     
     child_clang_type = GetClangType().GetChildClangTypeAtIndex (&exe_ctx,
-                                                                GetName().GetCString(),
                                                                 idx,
                                                                 transparent_pointers,
                                                                 omit_empty_base_classes,
@@ -804,7 +803,8 @@ ValueObject::CreateChildAtIndex (size_t idx, bool synthetic_array_member, int32_
                                                                 child_bitfield_bit_size,
                                                                 child_bitfield_bit_offset,
                                                                 child_is_base_class,
-                                                                child_is_deref_of_parent);
+                                                                child_is_deref_of_parent,
+                                                                this);
     if (child_clang_type)
     {
         if (synthetic_index)
@@ -3468,6 +3468,38 @@ ValueObject::CreateConstantValue (const ConstString &name)
     return valobj_sp;
 }
 
+lldb::addr_t
+ValueObject::GetCPPVTableAddress (AddressType &address_type)
+{
+    ClangASTType pointee_type;
+    ClangASTType this_type(GetClangType());
+    uint32_t type_info = this_type.GetTypeInfo(&pointee_type);
+    if (type_info)
+    {
+        bool ptr_or_ref = false;
+        if (type_info & (ClangASTType::eTypeIsPointer | ClangASTType::eTypeIsReference))
+        {
+            ptr_or_ref = true;
+            type_info = pointee_type.GetTypeInfo();
+        }
+        
+        const uint32_t cpp_class = ClangASTType::eTypeIsClass | ClangASTType::eTypeIsCPlusPlus;
+        if ((type_info & cpp_class) == cpp_class)
+        {
+            if (ptr_or_ref)
+            {
+                address_type = GetAddressTypeOfChildren();
+                return GetValueAsUnsigned(LLDB_INVALID_ADDRESS);
+            }
+            else
+                return GetAddressOf (false, &address_type);
+        }
+    }
+
+    address_type = eAddressTypeInvalid;
+    return LLDB_INVALID_ADDRESS;
+}
+
 ValueObjectSP
 ValueObject::Dereference (Error &error)
 {
@@ -3494,7 +3526,6 @@ ValueObject::Dereference (Error &error)
         ExecutionContext exe_ctx (GetExecutionContextRef());
         
         child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
-                                                                GetName().GetCString(),
                                                                 0,
                                                                 transparent_pointers,
                                                                 omit_empty_base_classes,
@@ -3505,7 +3536,8 @@ ValueObject::Dereference (Error &error)
                                                                 child_bitfield_bit_size,
                                                                 child_bitfield_bit_offset,
                                                                 child_is_base_class,
-                                                                child_is_deref_of_parent);
+                                                                child_is_deref_of_parent,
+                                                                this);
         if (child_clang_type && child_byte_size)
         {
             ConstString child_name;

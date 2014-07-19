@@ -22,6 +22,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
+#include "clang/AST/VTableBuilder.h"
 
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -3068,7 +3069,6 @@ ClangASTType::GetNumPointeeChildren () const
 
 ClangASTType
 ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
-                                        const char *parent_name,
                                         size_t idx,
                                         bool transparent_pointers,
                                         bool omit_empty_base_classes,
@@ -3079,7 +3079,8 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                         uint32_t &child_bitfield_bit_size,
                                         uint32_t &child_bitfield_bit_offset,
                                         bool &child_is_base_class,
-                                        bool &child_is_deref_of_parent) const
+                                        bool &child_is_deref_of_parent,
+                                        ValueObject *valobj) const
 {
     if (!IsValid())
         return ClangASTType();
@@ -3146,7 +3147,74 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                             
                             
                             if (base_class->isVirtual())
-                                bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+                            {
+                                bool handled = false;
+                                if (valobj)
+                                {
+                                    Error err;
+                                    AddressType addr_type = eAddressTypeInvalid;
+                                    lldb::addr_t vtable_ptr_addr = valobj->GetCPPVTableAddress(addr_type);
+                                    
+                                    if (vtable_ptr_addr != LLDB_INVALID_ADDRESS && addr_type == eAddressTypeLoad)
+                                    {
+                                        
+                                        ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
+                                        Process *process = exe_ctx.GetProcessPtr();
+                                        if (process)
+                                        {
+                                            clang::VTableContextBase *vtable_ctx = m_ast->getVTableContext();
+                                            if (vtable_ctx)
+                                            {
+                                                if (vtable_ctx->isMicrosoft())
+                                                {
+                                                    clang::MicrosoftVTableContext *msoft_vtable_ctx = static_cast<clang::MicrosoftVTableContext *>(vtable_ctx);
+                                                    
+                                                    if (vtable_ptr_addr)
+                                                    {
+                                                        const lldb::addr_t vbtable_ptr_addr = vtable_ptr_addr + record_layout.getVBPtrOffset().getQuantity();
+                                                        
+                                                        const lldb::addr_t vbtable_ptr = process->ReadPointerFromMemory(vbtable_ptr_addr, err);
+                                                        if (vbtable_ptr != LLDB_INVALID_ADDRESS)
+                                                        {
+                                                            // Get the index into the virtual base table. The index is the index in uint32_t from vbtable_ptr
+                                                            const unsigned vbtable_index = msoft_vtable_ctx->getVBTableIndex(cxx_record_decl, base_class_decl);
+                                                            const lldb::addr_t base_offset_addr = vbtable_ptr + vbtable_index * 4;
+                                                            const uint32_t base_offset = process->ReadUnsignedIntegerFromMemory(base_offset_addr, 4, UINT32_MAX, err);
+                                                            if (base_offset != UINT32_MAX)
+                                                            {
+                                                                handled = true;
+                                                                bit_offset = base_offset * 8;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    clang::ItaniumVTableContext *itanium_vtable_ctx = static_cast<clang::ItaniumVTableContext *>(vtable_ctx);
+                                                    if (vtable_ptr_addr)
+                                                    {
+                                                        const lldb::addr_t vtable_ptr = process->ReadPointerFromMemory(vtable_ptr_addr, err);
+                                                        if (vtable_ptr != LLDB_INVALID_ADDRESS)
+                                                        {
+                                                            clang::CharUnits base_offset_offset = itanium_vtable_ctx->getVirtualBaseOffsetOffset(cxx_record_decl, base_class_decl);
+                                                            const lldb::addr_t base_offset_addr = vtable_ptr + base_offset_offset.getQuantity();
+                                                            const uint32_t base_offset = process->ReadUnsignedIntegerFromMemory(base_offset_addr, 4, UINT32_MAX, err);
+                                                            if (base_offset != UINT32_MAX)
+                                                            {
+                                                                handled = true;
+                                                                bit_offset = base_offset * 8;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+                                if (!handled)
+                                    bit_offset = record_layout.getVBaseClassOffset(base_class_decl).getQuantity() * 8;
+                            }
                             else
                                 bit_offset = record_layout.getBaseClassOffset(base_class_decl).getQuantity() * 8;
                             
@@ -3321,7 +3389,6 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
                     return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        parent_name,
                                                                         idx,
                                                                         transparent_pointers,
                                                                         omit_empty_base_classes,
@@ -3332,11 +3399,13 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                         child_bitfield_bit_size,
                                                                         child_bitfield_bit_offset,
                                                                         child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent);
+                                                                        tmp_child_is_deref_of_parent,
+                                                                        valobj);
                 }
                 else
                 {
                     child_is_deref_of_parent = true;
+                    const char *parent_name = valobj ? valobj->GetName().GetCString() : NULL;
                     if (parent_name)
                     {
                         child_name.assign(1, '*');
@@ -3411,7 +3480,6 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
                     return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        parent_name,
                                                                         idx,
                                                                         transparent_pointers,
                                                                         omit_empty_base_classes,
@@ -3422,12 +3490,14 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                         child_bitfield_bit_size,
                                                                         child_bitfield_bit_offset,
                                                                         child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent);
+                                                                        tmp_child_is_deref_of_parent,
+                                                                        valobj);
                 }
                 else
                 {
                     child_is_deref_of_parent = true;
                     
+                    const char *parent_name = valobj ? valobj->GetName().GetCString() : NULL;
                     if (parent_name)
                     {
                         child_name.assign(1, '*');
@@ -3456,7 +3526,6 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                     child_is_deref_of_parent = false;
                     bool tmp_child_is_deref_of_parent = false;
                     return pointee_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                        parent_name,
                                                                         idx,
                                                                         transparent_pointers,
                                                                         omit_empty_base_classes,
@@ -3467,10 +3536,12 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                         child_bitfield_bit_size,
                                                                         child_bitfield_bit_offset,
                                                                         child_is_base_class,
-                                                                        tmp_child_is_deref_of_parent);
+                                                                        tmp_child_is_deref_of_parent,
+                                                                        valobj);
                 }
                 else
                 {
+                    const char *parent_name = valobj ? valobj->GetName().GetCString() : NULL;
                     if (parent_name)
                     {
                         child_name.assign(1, '&');
@@ -3492,7 +3563,6 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
             {
                 ClangASTType typedefed_clang_type (m_ast, llvm::cast<clang::TypedefType>(parent_qual_type)->getDecl()->getUnderlyingType());
                 return typedefed_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                      parent_name,
                                                                       idx,
                                                                       transparent_pointers,
                                                                       omit_empty_base_classes,
@@ -3503,7 +3573,8 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                       child_bitfield_bit_size,
                                                                       child_bitfield_bit_offset,
                                                                       child_is_base_class,
-                                                                      child_is_deref_of_parent);
+                                                                      child_is_deref_of_parent,
+                                                                      valobj);
             }
             break;
             
@@ -3511,7 +3582,6 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
             {
                 ClangASTType elaborated_clang_type (m_ast, llvm::cast<clang::ElaboratedType>(parent_qual_type)->getNamedType());
                 return elaborated_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                       parent_name,
                                                                        idx,
                                                                        transparent_pointers,
                                                                        omit_empty_base_classes,
@@ -3522,14 +3592,14 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                        child_bitfield_bit_size,
                                                                        child_bitfield_bit_offset,
                                                                        child_is_base_class,
-                                                                       child_is_deref_of_parent);
+                                                                       child_is_deref_of_parent,
+                                                                       valobj);
             }
             
         case clang::Type::Paren:
             {
                 ClangASTType paren_clang_type (m_ast, llvm::cast<clang::ParenType>(parent_qual_type)->desugar());
                 return paren_clang_type.GetChildClangTypeAtIndex (exe_ctx,
-                                                                  parent_name,
                                                                   idx,
                                                                   transparent_pointers,
                                                                   omit_empty_base_classes,
@@ -3540,7 +3610,8 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                                                   child_bitfield_bit_size,
                                                                   child_bitfield_bit_offset,
                                                                   child_is_base_class,
-                                                                  child_is_deref_of_parent);
+                                                                  child_is_deref_of_parent,
+                                                                  valobj);
             }
             
             

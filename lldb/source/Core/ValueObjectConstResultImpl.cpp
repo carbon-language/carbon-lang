@@ -109,7 +109,6 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
     ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
     child_clang_type = clang_type.GetChildClangTypeAtIndex (&exe_ctx,
-                                                            m_impl_backend->GetName().GetCString(),
                                                             idx,
                                                             transparent_pointers,
                                                             omit_empty_base_classes,
@@ -120,7 +119,8 @@ ValueObjectConstResultImpl::CreateChildAtIndex (size_t idx, bool synthetic_array
                                                             child_bitfield_bit_size,
                                                             child_bitfield_bit_offset,
                                                             child_is_base_class,
-                                                            child_is_deref_of_parent);
+                                                            child_is_deref_of_parent,
+                                                            m_impl_backend);
     if (child_clang_type && child_byte_size)
     {
         if (synthetic_index)

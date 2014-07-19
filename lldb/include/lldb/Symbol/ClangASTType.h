@@ -426,7 +426,6 @@ public:
     
     ClangASTType
     GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
-                              const char *parent_name,
                               size_t idx,
                               bool transparent_pointers,
                               bool omit_empty_base_classes,
@@ -437,7 +436,8 @@ public:
                               uint32_t &child_bitfield_bit_size,
                               uint32_t &child_bitfield_bit_offset,
                               bool &child_is_base_class,
-                              bool &child_is_deref_of_parent) const;
+                              bool &child_is_deref_of_parent,
+                              ValueObject *valobj) const;
     
     // Lookup a child given a name. This function will match base class names
     // and member member names in "clang_type" only, not descendants.
