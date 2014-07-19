@@ -491,7 +491,7 @@ void JumpScopeChecker::VerifyJumps() {
     if (GotoStmt *GS = dyn_cast<GotoStmt>(Jump)) {
       CheckJump(GS, GS->getLabel()->getStmt(), GS->getGotoLoc(),
                 diag::err_goto_into_protected_scope,
-                diag::warn_goto_into_protected_scope,
+                diag::ext_goto_into_protected_scope,
                 diag::warn_cxx98_compat_goto_into_protected_scope);
       continue;
     }
@@ -501,7 +501,7 @@ void JumpScopeChecker::VerifyJumps() {
       LabelDecl *Target = IGS->getConstantTarget();
       CheckJump(IGS, Target->getStmt(), IGS->getGotoLoc(),
                 diag::err_goto_into_protected_scope,
-                diag::warn_goto_into_protected_scope,
+                diag::ext_goto_into_protected_scope,
                 diag::warn_cxx98_compat_goto_into_protected_scope);
       continue;
     }

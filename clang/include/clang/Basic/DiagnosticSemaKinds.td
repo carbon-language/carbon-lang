@@ -1069,12 +1069,13 @@ def err_rref_in_exception_spec : Error<
   "rvalue reference type %0 is not allowed in exception specification">;
 def err_mismatched_exception_spec : Error<
   "exception specification in declaration does not match previous declaration">;
-def warn_mismatched_exception_spec : ExtWarn<
-  "exception specification in declaration does not match previous declaration">;
+def ext_mismatched_exception_spec : ExtWarn<
+  "exception specification in declaration does not match previous declaration">,
+  InGroup<Microsoft>;
 def err_override_exception_spec : Error<
   "exception specification of overriding function is more lax than "
   "base version">;
-def warn_override_exception_spec : ExtWarn<
+def ext_override_exception_spec : ExtWarn<
   "exception specification of overriding function is more lax than "
   "base version">, InGroup<Microsoft>;
 def err_incompatible_exception_specs : Error<
@@ -1226,7 +1227,7 @@ def err_member_function_initialization : Error<
   "initializer on function does not look like a pure-specifier">;
 def err_non_virtual_pure : Error<
   "%0 is not virtual and cannot be declared pure">;
-def warn_pure_function_definition : ExtWarn<
+def ext_pure_function_definition : ExtWarn<
   "function definition with pure-specifier is a Microsoft extension">,
   InGroup<Microsoft>;
 def err_implicit_object_parameter_init : Error<
@@ -2648,8 +2649,8 @@ def err_param_default_argument : Error<
   "C does not support default arguments">;
 def err_param_default_argument_redefinition : Error<
   "redefinition of default argument">;
-def warn_param_default_argument_redefinition : ExtWarn<
-  "redefinition of default argument">;
+def ext_param_default_argument_redefinition : ExtWarn<
+  "redefinition of default argument">, InGroup<Microsoft>;
 def err_param_default_argument_missing : Error<
   "missing default argument on parameter">;
 def err_param_default_argument_missing_name : Error<
@@ -3470,7 +3471,7 @@ def err_nested_name_spec_non_tag : Error<
 // C++ Explicit Instantiation
 def err_explicit_instantiation_duplicate : Error<
     "duplicate explicit instantiation of %0">;
-def warn_explicit_instantiation_duplicate : ExtWarn<
+def ext_explicit_instantiation_duplicate : ExtWarn<
     "duplicate explicit instantiation of %0 ignored as a Microsoft extension">,
     InGroup<Microsoft>;
 def note_previous_explicit_instantiation : Note<
@@ -3796,10 +3797,10 @@ def warn_undefined_inline : Warning<"inline function %q0 is not defined">,
   InGroup<DiagGroup<"undefined-inline">>;
 def note_used_here : Note<"used here">;
 
-def warn_internal_in_extern_inline : ExtWarn<
+def ext_internal_in_extern_inline : ExtWarn<
   "static %select{function|variable}0 %1 is used in an inline function with "
   "external linkage">, InGroup<StaticInInline>;
-def ext_internal_in_extern_inline : Extension<
+def ext_internal_in_extern_inline_quiet : Extension<
   "static %select{function|variable}0 %1 is used in an inline function with "
   "external linkage">, InGroup<StaticInInline>;
 def warn_static_local_in_extern_inline : Warning<
@@ -3808,7 +3809,7 @@ def warn_static_local_in_extern_inline : Warning<
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
 
-def warn_redefinition_of_typedef : ExtWarn<
+def ext_redefinition_of_typedef : ExtWarn<
   "redefinition of typedef %0 is a C11 feature">,
   InGroup<DiagGroup<"typedef-redefinition"> >;
 def err_redefinition_variably_modified_typedef : Error<
@@ -3976,15 +3977,15 @@ def err_variable_object_no_init : Error<
   "variable-sized object may not be initialized">;
 def err_excess_initializers : Error<
   "excess elements in %select{array|vector|scalar|union|struct}0 initializer">;
-def warn_excess_initializers : ExtWarn<
+def ext_excess_initializers : ExtWarn<
   "excess elements in %select{array|vector|scalar|union|struct}0 initializer">;
 def err_excess_initializers_in_char_array_initializer : Error<
   "excess elements in char array initializer">;
-def warn_excess_initializers_in_char_array_initializer : ExtWarn<
+def ext_excess_initializers_in_char_array_initializer : ExtWarn<
   "excess elements in char array initializer">;
 def err_initializer_string_for_char_array_too_long : Error<
   "initializer-string for char array is too long">;
-def warn_initializer_string_for_char_array_too_long : ExtWarn<
+def ext_initializer_string_for_char_array_too_long : ExtWarn<
   "initializer-string for char array is too long">;
 def warn_missing_field_initializers : Warning<
   "missing field %0 initializer">,
@@ -4068,7 +4069,7 @@ def warn_unused_label : Warning<"unused label %0">,
   InGroup<UnusedLabel>, DefaultIgnore;
 
 def err_goto_into_protected_scope : Error<"goto into protected scope">;
-def warn_goto_into_protected_scope : ExtWarn<"goto into protected scope">,
+def ext_goto_into_protected_scope : ExtWarn<"goto into protected scope">,
   InGroup<Microsoft>;
 def warn_cxx98_compat_goto_into_protected_scope : Warning<
   "goto would jump into protected scope in C++98">,
@@ -4465,9 +4466,9 @@ def err_offsetof_array_type : Error<"offsetof requires array type, %0 invalid">;
 def ext_offsetof_extended_field_designator : Extension<
   "using extended field designator is an extension">,
   InGroup<DiagGroup<"extended-offsetof">>;
-def warn_offsetof_non_pod_type : ExtWarn<"offset of on non-POD type %0">,
+def ext_offsetof_non_pod_type : ExtWarn<"offset of on non-POD type %0">,
   InGroup<InvalidOffsetof>;
-def warn_offsetof_non_standardlayout_type : ExtWarn<
+def ext_offsetof_non_standardlayout_type : ExtWarn<
   "offset of on non-standard-layout type %0">, InGroup<InvalidOffsetof>;
 def err_offsetof_bitfield : Error<"cannot compute offset of bit-field %0">;
 def err_offsetof_field_of_virtual_base : Error<
@@ -5917,10 +5918,10 @@ def ext_typecheck_cond_incompatible_operands_nonstandard : ExtWarn<
   "pointer type %2">;
 def err_cast_selector_expr : Error<
   "cannot type cast @selector expression">;
-def warn_typecheck_cond_incompatible_pointers : ExtWarn<
+def ext_typecheck_cond_incompatible_pointers : ExtWarn<
   "pointer type mismatch%diff{ ($ and $)|}0,1">,
   InGroup<DiagGroup<"pointer-type-mismatch">>;
-def warn_typecheck_cond_pointer_integer_mismatch : ExtWarn<
+def ext_typecheck_cond_pointer_integer_mismatch : ExtWarn<
   "pointer/integer type mismatch in conditional expression"
   "%diff{ ($ and $)|}0,1">,
   InGroup<DiagGroup<"conditional-type-mismatch">>;
@@ -6413,12 +6414,12 @@ def warn_printf_nonsensical_flag: Warning<
 def warn_format_nonsensical_length: Warning<
   "length modifier '%0' results in undefined behavior or no effect with '%1' conversion specifier">,
   InGroup<Format>;
-def warn_format_non_standard_positional_arg: ExtWarn<
+def warn_format_non_standard_positional_arg: Warning<
   "positional arguments are not supported by ISO C">, InGroup<FormatNonStandard>, DefaultIgnore;
-def warn_format_non_standard: ExtWarn<
+def warn_format_non_standard: Warning<
   "'%0' %select{length modifier|conversion specifier}1 is not supported by ISO C">,
   InGroup<FormatNonStandard>, DefaultIgnore;
-def warn_format_non_standard_conversion_spec: ExtWarn<
+def warn_format_non_standard_conversion_spec: Warning<
   "using length modifier '%0' with conversion specifier '%1' is not supported by ISO C">,
   InGroup<FormatNonStandard>, DefaultIgnore;
 def warn_printf_ignored_flag: Warning<

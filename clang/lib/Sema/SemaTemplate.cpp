@@ -6546,7 +6546,7 @@ Sema::CheckSpecializationInstantiationRedecl(SourceLocation NewLoc,
 
       // MSVCCompat: MSVC silently ignores duplicate explicit instantiations.
       Diag(NewLoc, (getLangOpts().MSVCCompat)
-                       ? diag::warn_explicit_instantiation_duplicate
+                       ? diag::ext_explicit_instantiation_duplicate
                        : diag::err_explicit_instantiation_duplicate)
           << PrevDecl;
       Diag(DiagLocForExplicitInstantiation(PrevDecl, PrevPointOfInstantiation),

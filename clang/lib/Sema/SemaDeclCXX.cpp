@@ -476,7 +476,7 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old,
                                       OldParam->getUninstantiatedDefaultArg());
           else
             NewParam->setDefaultArg(OldParam->getInit());
-          DiagDefaultParamID = diag::warn_param_default_argument_redefinition;
+          DiagDefaultParamID = diag::ext_param_default_argument_redefinition;
           Invalid = false;
         }
       }

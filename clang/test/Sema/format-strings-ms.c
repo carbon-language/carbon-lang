@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -fms-compatibility -triple=i386-pc-win32 -pedantic %s
+// RUN: %clang_cc1 -fsyntax-only -verify -fms-compatibility -triple=i386-pc-win32 -Wformat-non-iso %s
 
 int printf(const char *format, ...) __attribute__((format(printf, 1, 2)));
 

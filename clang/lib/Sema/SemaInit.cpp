@@ -189,7 +189,7 @@ static void CheckStringInit(Expr *Str, QualType &DeclT, const ArrayType *AT,
     // C99 6.7.8p14.
     if (StrLength-1 > CAT->getSize().getZExtValue())
       S.Diag(Str->getLocStart(),
-             diag::warn_initializer_string_for_char_array_too_long)
+             diag::ext_initializer_string_for_char_array_too_long)
         << Str->getSourceRange();
   }
 
@@ -788,7 +788,7 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
     if (StructuredIndex == 1 &&
         IsStringInit(StructuredList->getInit(0), T, SemaRef.Context) ==
             SIF_None) {
-      unsigned DK = diag::warn_excess_initializers_in_char_array_initializer;
+      unsigned DK = diag::ext_excess_initializers_in_char_array_initializer;
       if (SemaRef.getLangOpts().CPlusPlus) {
         DK = diag::err_excess_initializers_in_char_array_initializer;
         hadError = true;
@@ -807,7 +807,7 @@ void InitListChecker::CheckExplicitInitList(const InitializedEntity &Entity,
         CurrentObjectType->isUnionType()? 3 :
         4;
 
-      unsigned DK = diag::warn_excess_initializers;
+      unsigned DK = diag::ext_excess_initializers;
       if (SemaRef.getLangOpts().CPlusPlus) {
         DK = diag::err_excess_initializers;
         hadError = true;

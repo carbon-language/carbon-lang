@@ -1,4 +1,4 @@
-/* RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 -pedantic -std=c89 %s
+/* RUN: %clang_cc1 -fsyntax-only -verify -triple i386-apple-darwin9 -Wformat-non-iso -std=c89 %s
  */
 
 int scanf(const char * restrict, ...);
