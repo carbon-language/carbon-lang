@@ -518,6 +518,34 @@ static std::string getDebugLocString(const Loop *L) {
 }
 #endif
 
+/// \brief Propagate known metadata from one instruction to another.
+static void propagateMetadata(Instruction *To, const Instruction *From) {
+  SmallVector<std::pair<unsigned, MDNode *>, 4> Metadata;
+  From->getAllMetadataOtherThanDebugLoc(Metadata);
+
+  for (auto M : Metadata) {
+    unsigned Kind = M.first;
+
+    // These are safe to transfer (this is safe for TBAA, even when we
+    // if-convert, because should that metadata have had a control dependency
+    // on the condition, and thus actually aliased with some other
+    // non-speculated memory access when the condition was false, this would be
+    // caught by the runtime overlap checks).
+    if (Kind != LLVMContext::MD_tbaa &&
+        Kind != LLVMContext::MD_fpmath)
+      continue;
+
+    To->setMetadata(Kind, M.second);
+  }
+}
+
+/// \brief Propagate known metadata from one instruction to a vector of others.
+static void propagateMetadata(SmallVectorImpl<Value *> &To, const Instruction *From) {
+  for (Value *V : To)
+    if (Instruction *I = dyn_cast<Instruction>(V))
+      propagateMetadata(I, From);
+}
+
 /// LoopVectorizationLegality checks if it is legal to vectorize a loop, and
 /// to what vectorization factor.
 /// This class does not look at the profitability of vectorization, only the
@@ -1734,7 +1762,9 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
       Value *VecPtr = Builder.CreateBitCast(PartPtr,
                                             DataTy->getPointerTo(AddressSpace));
-      Builder.CreateStore(StoredVal[Part], VecPtr)->setAlignment(Alignment);
+      StoreInst *NewSI = Builder.CreateStore(StoredVal[Part], VecPtr);
+      NewSI->setAlignment(Alignment);
+      propagateMetadata(NewSI, SI);
     }
     return;
   }
@@ -1755,9 +1785,10 @@ void InnerLoopVectorizer::vectorizeMemoryInstruction(Instruction *Instr) {
 
     Value *VecPtr = Builder.CreateBitCast(PartPtr,
                                           DataTy->getPointerTo(AddressSpace));
-    Value *LI = Builder.CreateLoad(VecPtr, "wide.load");
-    cast<LoadInst>(LI)->setAlignment(Alignment);
-    Entry[Part] = Reverse ? reverseVector(LI) :  LI;
+    LoadInst *NewLI = Builder.CreateLoad(VecPtr, "wide.load");
+    NewLI->setAlignment(Alignment);
+    propagateMetadata(NewLI, LI);
+    Entry[Part] = Reverse ? reverseVector(NewLI) :  NewLI;
   }
 }
 
@@ -3135,6 +3166,8 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
 
         Entry[Part] = V;
       }
+
+      propagateMetadata(Entry, it);
       break;
     }
     case Instruction::Select: {
@@ -3162,6 +3195,8 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
           Op0[Part],
           Op1[Part]);
       }
+
+      propagateMetadata(Entry, it);
       break;
     }
 
@@ -3181,6 +3216,8 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
           C = Builder.CreateICmp(Cmp->getPredicate(), A[Part], B[Part]);
         Entry[Part] = C;
       }
+
+      propagateMetadata(Entry, it);
       break;
     }
 
@@ -3213,6 +3250,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
         Value *Broadcasted = getBroadcastInstrs(ScalarCast);
         for (unsigned Part = 0; Part < UF; ++Part)
           Entry[Part] = getConsecutiveVector(Broadcasted, VF * Part, false);
+        propagateMetadata(Entry, it);
         break;
       }
       /// Vectorize casts.
@@ -3222,6 +3260,7 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
       VectorParts &A = getVectorValue(it->getOperand(0));
       for (unsigned Part = 0; Part < UF; ++Part)
         Entry[Part] = Builder.CreateCast(CI->getOpcode(), A[Part], DestTy);
+      propagateMetadata(Entry, it);
       break;
     }
 
@@ -3259,6 +3298,8 @@ void InnerLoopVectorizer::vectorizeBlockInLoop(BasicBlock *BB, PhiVector *PV) {
           Function *F = Intrinsic::getDeclaration(M, ID, Tys);
           Entry[Part] = Builder.CreateCall(F, Args);
         }
+
+        propagateMetadata(Entry, it);
         break;
       }
       break;
