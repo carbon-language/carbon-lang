@@ -7227,8 +7227,7 @@ ARMTargetLowering::EmitLowered__chkstk(MachineInstr *MI,
 
   AddDefaultCC(AddDefaultPred(BuildMI(*MBB, MI, DL, TII.get(ARM::t2SUBrr),
                                       ARM::SP)
-                              .addReg(ARM::SP, RegState::Define)
-                              .addReg(ARM::R4, RegState::Kill)));
+                              .addReg(ARM::SP).addReg(ARM::R4)));
 
   MI->eraseFromParent();
   return MBB;
@@ -10622,7 +10621,7 @@ ARMTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op, SelectionDAG &DAG) const 
   Chain = DAG.getCopyToReg(Chain, DL, ARM::R4, Words, Flag);
   Flag = Chain.getValue(1);
 
-  SDVTList NodeTys = DAG.getVTList(MVT::i32, MVT::Glue);
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
   Chain = DAG.getNode(ARMISD::WIN__CHKSTK, DL, NodeTys, Chain, Flag);
 
   SDValue NewSP = DAG.getCopyFromReg(Chain, DL, ARM::SP, MVT::i32);
