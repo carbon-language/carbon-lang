@@ -1,11 +1,9 @@
-# REQUIRES: mips
-
 # Check ELF Header for shared library.
 
 # Build shared library
-# RUN: llvm-mc -triple=mipsel -filetype=obj -relocation-model=pic -o=%t-obj %s
-# RUN: lld -flavor gnu -target mipsel -shared -o %t-so %t-obj
-# RUN: llvm-readobj -file-headers %t-so | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -shared -o %t.so %t.o
+# RUN: llvm-readobj -file-headers %t.so | FileCheck %s
 
 # CHECK: Format: ELF32-mips
 # CHECK: Arch: mipsel
@@ -38,13 +36,45 @@
 # CHECK:  ProgramHeaderEntrySize: 32
 # CHECK:  ProgramHeaderCount: 4
 # CHECK:  SectionHeaderEntrySize: 40
-# CHECK:  SectionHeaderCount: 12
-# CHECK:  StringTableSectionIndex: 9
+# CHECK:  SectionHeaderCount: 11
+# CHECK:  StringTableSectionIndex: 8
 # CHECK:}
 
-    .abicalls
-    .global glob
-    .ent    glob
-glob:
-    nop
-    .end    glob
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x04
+  - Name:            .data
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x04
+    Size:            0x00
+  - Name:            .bss
+    Type:            SHT_NOBITS
+    Flags:           [ SHF_WRITE, SHF_ALLOC ]
+    AddressAlign:    0x04
+    Size:            0x00
+  - Name:            .reginfo
+    Type:            SHT_MIPS_REGINFO
+    Flags:           [ SHF_ALLOC ]
+    AddressAlign:    0x01
+    Size:            0x18
+  - Name:            .MIPS.abiflags
+    Type:            SHT_MIPS_ABIFLAGS
+    Flags:           [ SHF_ALLOC ]
+    AddressAlign:    0x08
+    Size:            0x18
+
+Symbols:
+  Global:
+    - Name:            glob
+      Section:         .text
