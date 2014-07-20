@@ -27,17 +27,15 @@
 using namespace llvm;
 using namespace object;
 
-namespace llvm {
-
-namespace object {
-
-struct section_base {
-  char sectname[16];
-  char segname[16];
-};
+namespace {
+  struct section_base {
+    char sectname[16];
+    char segname[16];
+  };
+}
 
 template<typename T>
-T getStruct(const MachOObjectFile *O, const char *P) {
+static T getStruct(const MachOObjectFile *O, const char *P) {
   T Cmd;
   memcpy(&Cmd, P, sizeof(T));
   if (O->isLittleEndian() != sys::IsLittleEndianHost)
@@ -1745,5 +1743,3 @@ ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
   return Ret.release();
 }
 
-} // end namespace object
-} // end namespace llvm
