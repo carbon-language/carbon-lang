@@ -65,6 +65,7 @@ protected:
                                      uint32_t &Res) const override;
   std::error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const override;
   uint32_t getSymbolFlags(DataRefImpl Symb) const override;
+  std::error_code getSymbolOther(DataRefImpl Symb, uint8_t &Res) const override;
   std::error_code getSymbolType(DataRefImpl Symb,
                                 SymbolRef::Type &Res) const override;
   std::error_code getSymbolSection(DataRefImpl Symb,
@@ -202,6 +203,11 @@ public:
   unsigned getArch() const override;
   StringRef getLoadName() const override;
 
+  std::error_code getPlatformFlags(unsigned &Result) const override {
+    Result = EF.getHeader()->e_flags;
+    return object_error::success;
+  }
+
   const ELFFile<ELFT> *getELFFile() const { return &EF; }
 
   bool isDyldType() const { return isDyldELFObject; }
@@ -291,6 +297,13 @@ template <class ELFT>
 std::error_code ELFObjectFile<ELFT>::getSymbolSize(DataRefImpl Symb,
                                                    uint64_t &Result) const {
   Result = toELFSymIter(Symb)->st_size;
+  return object_error::success;
+}
+
+template <class ELFT>
+std::error_code ELFObjectFile<ELFT>::getSymbolOther(DataRefImpl Symb,
+                                                    uint8_t &Result) const {
+  Result = toELFSymIter(Symb)->st_other;
   return object_error::success;
 }
 

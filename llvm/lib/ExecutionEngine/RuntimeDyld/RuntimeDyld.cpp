@@ -517,7 +517,8 @@ void RuntimeDyldImpl::addRelocationForSymbol(const RelocationEntry &RE,
   }
 }
 
-uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
+uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr,
+                                             unsigned AbiVariant) {
   if (Arch == Triple::aarch64 || Arch == Triple::aarch64_be ||
       Arch == Triple::arm64 || Arch == Triple::arm64_be) {
     // This stub has to be able to access the full address space,
@@ -561,22 +562,31 @@ uint8_t *RuntimeDyldImpl::createStubFunction(uint8_t *Addr) {
     *StubAddr = NopInstr;
     return Addr;
   } else if (Arch == Triple::ppc64 || Arch == Triple::ppc64le) {
-    // PowerPC64 stub: the address points to a function descriptor
-    // instead of the function itself. Load the function address
-    // on r11 and sets it to control register. Also loads the function
-    // TOC in r2 and environment pointer to r11.
+    // Depending on which version of the ELF ABI is in use, we need to
+    // generate one of two variants of the stub.  They both start with
+    // the same sequence to load the target address into r12.
     writeInt32BE(Addr,    0x3D800000); // lis   r12, highest(addr)
     writeInt32BE(Addr+4,  0x618C0000); // ori   r12, higher(addr)
     writeInt32BE(Addr+8,  0x798C07C6); // sldi  r12, r12, 32
     writeInt32BE(Addr+12, 0x658C0000); // oris  r12, r12, h(addr)
     writeInt32BE(Addr+16, 0x618C0000); // ori   r12, r12, l(addr)
-    writeInt32BE(Addr+20, 0xF8410028); // std   r2,  40(r1)
-    writeInt32BE(Addr+24, 0xE96C0000); // ld    r11, 0(r12)
-    writeInt32BE(Addr+28, 0xE84C0008); // ld    r2,  0(r12)
-    writeInt32BE(Addr+32, 0x7D6903A6); // mtctr r11
-    writeInt32BE(Addr+36, 0xE96C0010); // ld    r11, 16(r2)
-    writeInt32BE(Addr+40, 0x4E800420); // bctr
-
+    if (AbiVariant == 2) {
+      // PowerPC64 stub ELFv2 ABI: The address points to the function itself.
+      // The address is already in r12 as required by the ABI.  Branch to it.
+      writeInt32BE(Addr+20, 0xF8410018); // std   r2,  24(r1)
+      writeInt32BE(Addr+24, 0x7D8903A6); // mtctr r12
+      writeInt32BE(Addr+28, 0x4E800420); // bctr
+    } else {
+      // PowerPC64 stub ELFv1 ABI: The address points to a function descriptor.
+      // Load the function address on r11 and sets it to control register. Also
+      // loads the function TOC in r2 and environment pointer to r11.
+      writeInt32BE(Addr+20, 0xF8410028); // std   r2,  40(r1)
+      writeInt32BE(Addr+24, 0xE96C0000); // ld    r11, 0(r12)
+      writeInt32BE(Addr+28, 0xE84C0008); // ld    r2,  0(r12)
+      writeInt32BE(Addr+32, 0x7D6903A6); // mtctr r11
+      writeInt32BE(Addr+36, 0xE96C0010); // ld    r11, 16(r2)
+      writeInt32BE(Addr+40, 0x4E800420); // bctr
+    }
     return Addr;
   } else if (Arch == Triple::systemz) {
     writeInt16BE(Addr,    0xC418);     // lgrl %r1,.+8
