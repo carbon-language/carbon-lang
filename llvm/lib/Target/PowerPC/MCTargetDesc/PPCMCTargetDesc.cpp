@@ -16,7 +16,9 @@
 #include "PPCMCAsmInfo.h"
 #include "PPCTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFStreamer.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
@@ -130,6 +132,9 @@ public:
   virtual void emitAbiVersion(int AbiVersion) override {
     OS << "\t.abiversion " << AbiVersion << '\n';
   }
+  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+    OS << "\t.localentry\t" << *S << ", " << *LocalOffset << '\n';
+  }
 };
 
 class PPCTargetELFStreamer : public PPCTargetStreamer {
@@ -153,6 +158,32 @@ public:
     Flags |= (AbiVersion & ELF::EF_PPC64_ABI);
     MCA.setELFHeaderEFlags(Flags);
   }
+  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+    MCAssembler &MCA = getStreamer().getAssembler();
+    MCSymbolData &Data = getStreamer().getOrCreateSymbolData(S);
+
+    int64_t Res;
+    if (!LocalOffset->EvaluateAsAbsolute(Res, MCA))
+      report_fatal_error(".localentry expression must be absolute.");
+
+    unsigned Encoded = ELF::encodePPC64LocalEntryOffset(Res);
+    if (Res != ELF::decodePPC64LocalEntryOffset(Encoded))
+      report_fatal_error(".localentry expression cannot be encoded.");
+
+    // The "other" values are stored in the last 6 bits of the second byte.
+    // The traditional defines for STO values assume the full byte and thus
+    // the shift to pack it.
+    unsigned Other = MCELF::getOther(Data) << 2;
+    Other &= ~ELF::STO_PPC64_LOCAL_MASK;
+    Other |= Encoded;
+    MCELF::setOther(Data, Other >> 2);
+
+    // For GAS compatibility, unless we already saw a .abiversion directive,
+    // set e_flags to indicate ELFv2 ABI.
+    unsigned Flags = MCA.getELFHeaderEFlags();
+    if ((Flags & ELF::EF_PPC64_ABI) == 0)
+      MCA.setELFHeaderEFlags(Flags | 2);
+  }
 };
 
 class PPCTargetMachOStreamer : public PPCTargetStreamer {
@@ -167,6 +198,9 @@ public:
   }
   virtual void emitAbiVersion(int AbiVersion) override {
     llvm_unreachable("Unknown pseudo-op: .abiversion");
+  }
+  virtual void emitLocalEntry(MCSymbol *S, const MCExpr *LocalOffset) {
+    llvm_unreachable("Unknown pseudo-op: .localentry");
   }
 };
 }

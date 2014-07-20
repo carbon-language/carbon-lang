@@ -505,6 +505,28 @@ enum {
   EF_PPC64_ABI = 3
 };
 
+// Special values for the st_other field in the symbol table entry for PPC64.
+enum {
+  STO_PPC64_LOCAL_BIT = 5,
+  STO_PPC64_LOCAL_MASK = (7 << STO_PPC64_LOCAL_BIT)
+};
+static inline int64_t
+decodePPC64LocalEntryOffset(unsigned Other) {
+  unsigned Val = (Other & STO_PPC64_LOCAL_MASK) >> STO_PPC64_LOCAL_BIT;
+  return ((1 << Val) >> 2) << 2;
+}
+static inline unsigned
+encodePPC64LocalEntryOffset(int64_t Offset) {
+  unsigned Val = (Offset >= 4 * 4
+                  ? (Offset >= 8 * 4
+                     ? (Offset >= 16 * 4 ? 6 : 5)
+                     : 4)
+                  : (Offset >= 2 * 4
+                     ? 3
+                     : (Offset >= 1 * 4 ? 2 : 0)));
+  return Val << STO_PPC64_LOCAL_BIT;
+}
+
 // ELF Relocation types for PPC64
 enum {
   R_PPC64_NONE                = 0,

@@ -30,6 +30,8 @@ namespace {
                                        bool IsPCRel) const;
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
+
+    bool needsRelocateWithSymbol(unsigned Type) const override;
   };
 }
 
@@ -385,6 +387,19 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
                                           const MCFixup &Fixup,
                                           bool IsPCRel) const {
   return getRelocTypeInner(Target, Fixup, IsPCRel);
+}
+
+bool PPCELFObjectWriter::needsRelocateWithSymbol(unsigned Type) const {
+  switch (Type) {
+    default:
+      return false;
+
+    case ELF::R_PPC_REL24:
+      // FIXME: We only need to keep the target symbol of the relocation
+      // if the symbol uses a local entry point.  Unfortunately, we do not
+      // have access to the symbol here ...
+      return true;
+  }
 }
 
 MCObjectWriter *llvm::createPPCELFObjectWriter(raw_ostream &OS,

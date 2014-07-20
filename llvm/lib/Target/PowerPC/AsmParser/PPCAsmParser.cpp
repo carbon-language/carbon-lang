@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
@@ -245,6 +246,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool ParseDirectiveMachine(SMLoc L);
   bool ParseDarwinDirectiveMachine(SMLoc L);
   bool ParseDirectiveAbiVersion(SMLoc L);
+  bool ParseDirectiveLocalEntry(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
@@ -1415,6 +1417,8 @@ bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
       return ParseDirectiveMachine(DirectiveID.getLoc());
     if (IDVal == ".abiversion")
       return ParseDirectiveAbiVersion(DirectiveID.getLoc());
+    if (IDVal == ".localentry")
+      return ParseDirectiveLocalEntry(DirectiveID.getLoc());
   } else {
     if (IDVal == ".machine")
       return ParseDarwinDirectiveMachine(DirectiveID.getLoc());
@@ -1557,6 +1561,43 @@ bool PPCAsmParser::ParseDirectiveAbiVersion(SMLoc L) {
 
   return false;
 }
+
+/// ParseDirectiveLocalEntry
+///  ::= .localentry symbol, expression
+bool PPCAsmParser::ParseDirectiveLocalEntry(SMLoc L) {
+  StringRef Name;
+  if (getParser().parseIdentifier(Name)) {
+    Error(L, "expected identifier in directive");
+    return false;
+  }
+  MCSymbol *Sym = getContext().GetOrCreateSymbol(Name);
+
+  if (getLexer().isNot(AsmToken::Comma)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
+  Lex();
+
+  const MCExpr *Expr;
+  if (getParser().parseExpression(Expr)) {
+    Error(L, "expected expression");
+    return false;
+  }
+
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
+
+  PPCTargetStreamer &TStreamer =
+      *static_cast<PPCTargetStreamer *>(
+           getParser().getStreamer().getTargetStreamer());
+  TStreamer.emitLocalEntry(Sym, Expr);
+
+  return false;
+}
+
+
 
 /// Force static initialization.
 extern "C" void LLVMInitializePowerPCAsmParser() {

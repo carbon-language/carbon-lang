@@ -9,7 +9,9 @@
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
+#include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCAsmBackend.h"
+#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCMachObjectWriter.h"
@@ -125,6 +127,30 @@ public:
     for (unsigned i = 0; i != NumBytes; ++i) {
       unsigned Idx = IsLittleEndian ? i : (NumBytes - 1 - i);
       Data[Offset + i] |= uint8_t((Value >> (Idx * 8)) & 0xff);
+    }
+  }
+
+  void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                         const MCFixup &Fixup, const MCFragment *DF,
+                         const MCValue &Target, uint64_t &Value,
+                         bool &IsResolved) override {
+    switch ((PPC::Fixups)Fixup.getKind()) {
+    default: break;
+    case PPC::fixup_ppc_br24:
+    case PPC::fixup_ppc_br24abs:
+      // If the target symbol has a local entry point we must not attempt
+      // to resolve the fixup directly.  Emit a relocation and leave
+      // resolution of the final target address to the linker.
+      if (const MCSymbolRefExpr *A = Target.getSymA()) {
+        const MCSymbolData &Data = Asm.getSymbolData(A->getSymbol());
+        // The "other" values are stored in the last 6 bits of the second byte.
+        // The traditional defines for STO values assume the full byte and thus
+        // the shift to pack it.
+        unsigned Other = MCELF::getOther(Data) << 2;
+        if ((Other & ELF::STO_PPC64_LOCAL_MASK) != 0)
+          IsResolved = false;
+      }
+      break;
     }
   }
 
