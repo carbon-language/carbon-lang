@@ -54,6 +54,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopIterator.h"
@@ -409,6 +410,8 @@ protected:
   LoopInfo *LI;
   /// Dominator Tree.
   DominatorTree *DT;
+  /// Alias Analysis.
+  AliasAnalysis *AA;
   /// Data Layout.
   const DataLayout *DL;
   /// Target Library Info.
@@ -567,9 +570,9 @@ public:
 
   LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, const DataLayout *DL,
                             DominatorTree *DT, TargetLibraryInfo *TLI,
-                            Function *F)
+                            AliasAnalysis *AA, Function *F)
       : NumLoads(0), NumStores(0), NumPredStores(0), TheLoop(L), SE(SE), DL(DL),
-        DT(DT), TLI(TLI), TheFunction(F), Induction(nullptr),
+        DT(DT), TLI(TLI), AA(AA), TheFunction(F), Induction(nullptr),
         WidestIndTy(nullptr), HasFunNoNaNAttr(false), MaxSafeDepDistBytes(-1U) {
   }
 
@@ -657,11 +660,12 @@ public:
       Ends.clear();
       IsWritePtr.clear();
       DependencySetId.clear();
+      AliasSetId.clear();
     }
 
     /// Insert a pointer and calculate the start and end SCEVs.
     void insert(ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr,
-                unsigned DepSetId, ValueToValueMap &Strides);
+                unsigned DepSetId, unsigned ASId, ValueToValueMap &Strides);
 
     /// This flag indicates if we need to add the runtime check.
     bool Need;
@@ -676,6 +680,8 @@ public:
     /// Holds the id of the set of pointers that could be dependent because of a
     /// shared underlying object.
     SmallVector<unsigned, 2> DependencySetId;
+    /// Holds the id of the disjoint alias set to which this pointer belongs.
+    SmallVector<unsigned, 2> AliasSetId;
   };
 
   /// A struct for saving information about induction variables.
@@ -820,6 +826,8 @@ private:
   DominatorTree *DT;
   /// Target Library Info.
   TargetLibraryInfo *TLI;
+  /// Alias analysis.
+  AliasAnalysis *AA;
   /// Parent function
   Function *TheFunction;
 
@@ -1158,6 +1166,7 @@ struct LoopVectorize : public FunctionPass {
   DominatorTree *DT;
   BlockFrequencyInfo *BFI;
   TargetLibraryInfo *TLI;
+  AliasAnalysis *AA;
   bool DisableUnrolling;
   bool AlwaysVectorize;
 
@@ -1172,6 +1181,7 @@ struct LoopVectorize : public FunctionPass {
     DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
     BFI = &getAnalysis<BlockFrequencyInfo>();
     TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+    AA = &getAnalysis<AliasAnalysis>();
 
     // Compute some weights outside of the loop over the loops. Compute this
     // using a BranchProbability to re-use its scaling math.
@@ -1283,7 +1293,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Check if it is legal to vectorize the loop.
-    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, F);
+    LoopVectorizationLegality LVL(L, SE, DL, DT, TLI, AA, F);
     if (!LVL.canVectorize()) {
       DEBUG(dbgs() << "LV: Not vectorizing: Cannot prove legality.\n");
       emitMissedWarning(F, L, Hints);
@@ -1387,8 +1397,10 @@ struct LoopVectorize : public FunctionPass {
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
     AU.addRequired<TargetTransformInfo>();
+    AU.addRequired<AliasAnalysis>();
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTreeWrapperPass>();
+    AU.addPreserved<AliasAnalysis>();
   }
 
 };
@@ -1444,7 +1456,7 @@ static const SCEV *replaceSymbolicStrideSCEV(ScalarEvolution *SE,
 
 void LoopVectorizationLegality::RuntimePointerCheck::insert(
     ScalarEvolution *SE, Loop *Lp, Value *Ptr, bool WritePtr, unsigned DepSetId,
-    ValueToValueMap &Strides) {
+    unsigned ASId, ValueToValueMap &Strides) {
   // Get the stride replaced scev.
   const SCEV *Sc = replaceSymbolicStrideSCEV(SE, Strides, Ptr);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Sc);
@@ -1456,6 +1468,7 @@ void LoopVectorizationLegality::RuntimePointerCheck::insert(
   Ends.push_back(ScEnd);
   IsWritePtr.push_back(WritePtr);
   DependencySetId.push_back(DepSetId);
+  AliasSetId.push_back(ASId);
 }
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
@@ -2001,6 +2014,9 @@ InnerLoopVectorizer::addRuntimeCheck(Instruction *Loc) {
       // Only need to check pointers between two different dependency sets.
       if (PtrRtCheck->DependencySetId[i] == PtrRtCheck->DependencySetId[j])
        continue;
+      // Only need to check pointers in the same alias set.
+      if (PtrRtCheck->AliasSetId[i] != PtrRtCheck->AliasSetId[j])
+        continue;
 
       unsigned AS0 = Starts[i]->getType()->getPointerAddressSpace();
       unsigned AS1 = Starts[j]->getType()->getPointerAddressSpace();
@@ -3912,19 +3928,22 @@ public:
   /// \brief Set of potential dependent memory accesses.
   typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
 
-  AccessAnalysis(const DataLayout *Dl, DepCandidates &DA) :
-    DL(Dl), DepCands(DA), AreAllWritesIdentified(true),
-    AreAllReadsIdentified(true), IsRTCheckNeeded(false) {}
+  AccessAnalysis(const DataLayout *Dl, AliasAnalysis *AA, DepCandidates &DA) :
+    DL(Dl), AA(AA), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
-  void addLoad(Value *Ptr, bool IsReadOnly) {
+  void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
+    Value *Ptr = const_cast<Value*>(Loc.Ptr);
+    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.TBAATag);
     Accesses.insert(MemAccessInfo(Ptr, false));
     if (IsReadOnly)
       ReadOnlyPtr.insert(Ptr);
   }
 
   /// \brief Register a store.
-  void addStore(Value *Ptr) {
+  void addStore(AliasAnalysis::Location &Loc) {
+    Value *Ptr = const_cast<Value*>(Loc.Ptr);
+    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.TBAATag);
     Accesses.insert(MemAccessInfo(Ptr, true));
   }
 
@@ -3938,10 +3957,7 @@ public:
   /// \brief Goes over all memory accesses, checks whether a RT check is needed
   /// and builds sets of dependent accesses.
   void buildDependenceSets() {
-    // Process read-write pointers first.
-    processMemAccesses(false);
-    // Next, process read pointers.
-    processMemAccesses(true);
+    processMemAccesses();
   }
 
   bool isRTCheckNeeded() { return IsRTCheckNeeded; }
@@ -3953,21 +3969,13 @@ public:
 
 private:
   typedef SetVector<MemAccessInfo> PtrAccessSet;
-  typedef DenseMap<Value*, MemAccessInfo> UnderlyingObjToAccessMap;
 
-  /// \brief Go over all memory access or only the deferred ones if
-  /// \p UseDeferred is true and check whether runtime pointer checks are needed
-  /// and build sets of dependency check candidates.
-  void processMemAccesses(bool UseDeferred);
+  /// \brief Go over all memory access and check whether runtime pointer checks
+  /// are needed /// and build sets of dependency check candidates.
+  void processMemAccesses();
 
   /// Set of all accesses.
   PtrAccessSet Accesses;
-
-  /// Set of access to check after all writes have been processed.
-  PtrAccessSet DeferredAccesses;
-
-  /// Map of pointers to last access encountered.
-  UnderlyingObjToAccessMap ObjToLastAccess;
 
   /// Set of accesses that need a further dependence check.
   MemAccessInfoSet CheckDeps;
@@ -3975,18 +3983,18 @@ private:
   /// Set of pointers that are read only.
   SmallPtrSet<Value*, 16> ReadOnlyPtr;
 
-  /// Set of underlying objects already written to.
-  SmallPtrSet<Value*, 16> WriteObjects;
-
   const DataLayout *DL;
+  AliasAnalysis *AA;
+
+  /// An alias set tracker to partition the access set by underlying object and
+  //intrinsic property (such as TBAA metadata).
+  AliasSetTracker AST;
 
   /// Sets of potentially dependent accesses - members of one set share an
   /// underlying pointer. The set "CheckDeps" identfies which sets really need a
   /// dependence check.
   DepCandidates &DepCands;
 
-  bool AreAllWritesIdentified;
-  bool AreAllReadsIdentified;
   bool IsRTCheckNeeded;
 };
 
@@ -4014,62 +4022,67 @@ bool AccessAnalysis::canCheckPtrAtRT(
     ValueToValueMap &StridesMap, bool ShouldCheckStride) {
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
-  unsigned NumReadPtrChecks = 0;
-  unsigned NumWritePtrChecks = 0;
   bool CanDoRT = true;
 
   bool IsDepCheckNeeded = isDependencyCheckNeeded();
-  // We assign consecutive id to access from different dependence sets.
-  // Accesses within the same set don't need a runtime check.
-  unsigned RunningDepId = 1;
-  DenseMap<Value *, unsigned> DepSetId;
+  NumComparisons = 0;
 
-  for (PtrAccessSet::iterator AI = Accesses.begin(), AE = Accesses.end();
-       AI != AE; ++AI) {
-    const MemAccessInfo &Access = *AI;
-    Value *Ptr = Access.getPointer();
-    bool IsWrite = Access.getInt();
+  // We assign a consecutive id to access from different alias sets.
+  // Accesses between different groups doesn't need to be checked.
+  unsigned ASId = 1;
+  for (auto &AS : AST) {
+    unsigned NumReadPtrChecks = 0;
+    unsigned NumWritePtrChecks = 0;
 
-    // Just add write checks if we have both.
-    if (!IsWrite && Accesses.count(MemAccessInfo(Ptr, true)))
-      continue;
+    // We assign consecutive id to access from different dependence sets.
+    // Accesses within the same set don't need a runtime check.
+    unsigned RunningDepId = 1;
+    DenseMap<Value *, unsigned> DepSetId;
 
-    if (IsWrite)
-      ++NumWritePtrChecks;
-    else
-      ++NumReadPtrChecks;
+    for (auto A : AS) {
+      Value *Ptr = A.getValue();
+      bool IsWrite = Accesses.count(MemAccessInfo(Ptr, true));
+      MemAccessInfo Access(Ptr, IsWrite);
 
-    if (hasComputableBounds(SE, StridesMap, Ptr) &&
-        // When we run after a failing dependency check we have to make sure we
-        // don't have wrapping pointers.
-        (!ShouldCheckStride ||
-         isStridedPtr(SE, DL, Ptr, TheLoop, StridesMap) == 1)) {
-      // The id of the dependence set.
-      unsigned DepId;
+      if (IsWrite)
+        ++NumWritePtrChecks;
+      else
+        ++NumReadPtrChecks;
 
-      if (IsDepCheckNeeded) {
-        Value *Leader = DepCands.getLeaderValue(Access).getPointer();
-        unsigned &LeaderId = DepSetId[Leader];
-        if (!LeaderId)
-          LeaderId = RunningDepId++;
-        DepId = LeaderId;
-      } else
-        // Each access has its own dependence set.
-        DepId = RunningDepId++;
+      if (hasComputableBounds(SE, StridesMap, Ptr) &&
+          // When we run after a failing dependency check we have to make sure we
+          // don't have wrapping pointers.
+          (!ShouldCheckStride ||
+           isStridedPtr(SE, DL, Ptr, TheLoop, StridesMap) == 1)) {
+        // The id of the dependence set.
+        unsigned DepId;
 
-      RtCheck.insert(SE, TheLoop, Ptr, IsWrite, DepId, StridesMap);
+        if (IsDepCheckNeeded) {
+          Value *Leader = DepCands.getLeaderValue(Access).getPointer();
+          unsigned &LeaderId = DepSetId[Leader];
+          if (!LeaderId)
+            LeaderId = RunningDepId++;
+          DepId = LeaderId;
+        } else
+          // Each access has its own dependence set.
+          DepId = RunningDepId++;
 
-      DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *Ptr << '\n');
-    } else {
-      CanDoRT = false;
+        RtCheck.insert(SE, TheLoop, Ptr, IsWrite, DepId, ASId, StridesMap);
+
+        DEBUG(dbgs() << "LV: Found a runtime check ptr:" << *Ptr << '\n');
+      } else {
+        CanDoRT = false;
+      }
     }
-  }
 
-  if (IsDepCheckNeeded && CanDoRT && RunningDepId == 2)
-    NumComparisons = 0; // Only one dependence set.
-  else {
-    NumComparisons = (NumWritePtrChecks * (NumReadPtrChecks +
-                                           NumWritePtrChecks - 1));
+    if (IsDepCheckNeeded && CanDoRT && RunningDepId == 2)
+      NumComparisons += 0; // Only one dependence set.
+    else {
+      NumComparisons += (NumWritePtrChecks * (NumReadPtrChecks +
+                                              NumWritePtrChecks - 1));
+    }
+
+    ++ASId;
   }
 
   // If the pointers that we would use for the bounds comparison have different
@@ -4083,6 +4096,9 @@ bool AccessAnalysis::canCheckPtrAtRT(
       // Only need to check pointers between two different dependency sets.
       if (RtCheck.DependencySetId[i] == RtCheck.DependencySetId[j])
        continue;
+      // Only need to check pointers in the same alias set.
+      if (RtCheck.AliasSetId[i] != RtCheck.AliasSetId[j])
+        continue;
 
       Value *PtrI = RtCheck.Pointers[i];
       Value *PtrJ = RtCheck.Pointers[j];
@@ -4100,90 +4116,99 @@ bool AccessAnalysis::canCheckPtrAtRT(
   return CanDoRT;
 }
 
-static bool isFunctionScopeIdentifiedObject(Value *Ptr) {
-  return isNoAliasArgument(Ptr) || isNoAliasCall(Ptr) || isa<AllocaInst>(Ptr);
-}
-
-void AccessAnalysis::processMemAccesses(bool UseDeferred) {
+void AccessAnalysis::processMemAccesses() {
   // We process the set twice: first we process read-write pointers, last we
   // process read-only pointers. This allows us to skip dependence tests for
   // read-only pointers.
 
-  PtrAccessSet &S = UseDeferred ? DeferredAccesses : Accesses;
-  for (PtrAccessSet::iterator AI = S.begin(), AE = S.end(); AI != AE; ++AI) {
-    const MemAccessInfo &Access = *AI;
-    Value *Ptr = Access.getPointer();
-    bool IsWrite = Access.getInt();
+  DEBUG(dbgs() << "LV: Processing memory accesses...\n");
+  DEBUG(dbgs() << "  AST: "; AST.dump());
+  DEBUG(dbgs() << "LV:   Accesses:\n");
+  DEBUG({
+    for (auto A : Accesses)
+      dbgs() << "\t" << *A.getPointer() << " (" <<
+                (A.getInt() ? "write" : (ReadOnlyPtr.count(A.getPointer()) ?
+                                         "read-only" : "read")) << ")\n";
+  });
 
-    DepCands.insert(Access);
+  // The AliasSetTracker has nicely partitioned our pointers by metadata
+  // compatibility and potential for underlying-object overlap. As a result, we
+  // only need to check for potential pointer dependencies within each alias
+  // set.
+  for (auto &AS : AST) {
+    // Note that both the alias-set tracker and the alias sets themselves used
+    // linked lists internally and so the iteration order here is deterministic
+    // (matching the original instruction order within each set).
 
-    // Memorize read-only pointers for later processing and skip them in the
-    // first round (they need to be checked after we have seen all write
-    // pointers). Note: we also mark pointer that are not consecutive as
-    // "read-only" pointers (so that we check "a[b[i]] +="). Hence, we need the
-    // second check for "!IsWrite".
-    bool IsReadOnlyPtr = ReadOnlyPtr.count(Ptr) && !IsWrite;
-    if (!UseDeferred && IsReadOnlyPtr) {
-      DeferredAccesses.insert(Access);
-      continue;
-    }
+    bool SetHasWrite = false;
 
-    bool NeedDepCheck = false;
-    // Check whether there is the possibility of dependency because of
-    // underlying objects being the same.
-    typedef SmallVector<Value*, 16> ValueVector;
-    ValueVector TempObjects;
-    GetUnderlyingObjects(Ptr, TempObjects, DL);
-    for (ValueVector::iterator UI = TempObjects.begin(), UE = TempObjects.end();
-         UI != UE; ++UI) {
-      Value *UnderlyingObj = *UI;
+    // Map of pointers to last access encountered.
+    typedef DenseMap<Value*, MemAccessInfo> UnderlyingObjToAccessMap;
+    UnderlyingObjToAccessMap ObjToLastAccess;
 
-      // If this is a write then it needs to be an identified object.  If this a
-      // read and all writes (so far) are identified function scope objects we
-      // don't need an identified underlying object but only an Argument (the
-      // next write is going to invalidate this assumption if it is
-      // unidentified).
-      // This is a micro-optimization for the case where all writes are
-      // identified and we have one argument pointer.
-      // Otherwise, we do need a runtime check.
-      if ((IsWrite && !isFunctionScopeIdentifiedObject(UnderlyingObj)) ||
-          (!IsWrite && (!AreAllWritesIdentified ||
-                        !isa<Argument>(UnderlyingObj)) &&
-           !isIdentifiedObject(UnderlyingObj))) {
-        DEBUG(dbgs() << "LV: Found an unidentified " <<
-              (IsWrite ?  "write" : "read" ) << " ptr: " << *UnderlyingObj <<
-              "\n");
-        IsRTCheckNeeded = (IsRTCheckNeeded ||
-                           !isIdentifiedObject(UnderlyingObj) ||
-                           !AreAllReadsIdentified);
+    // Set of access to check after all writes have been processed.
+    PtrAccessSet DeferredAccesses;
+
+    // Iterate over each alias set twice, once to process read/write pointers,
+    // and then to process read-only pointers.
+    for (int SetIteration = 0; SetIteration < 2; ++SetIteration) {
+      bool UseDeferred = SetIteration > 0;
+      PtrAccessSet &S = UseDeferred ? DeferredAccesses : Accesses;
+
+      for (auto A : AS) {
+        Value *Ptr = A.getValue();
+        bool IsWrite = S.count(MemAccessInfo(Ptr, true));
+
+        // If we're using the deferred access set, then it contains only reads.
+        bool IsReadOnlyPtr = ReadOnlyPtr.count(Ptr) && !IsWrite;
+        if (UseDeferred && !IsReadOnlyPtr)
+          continue;
+        // Otherwise, the pointer must be in the PtrAccessSet, either as a read
+        // or a write.
+        assert(((IsReadOnlyPtr && UseDeferred) || IsWrite ||
+                 S.count(MemAccessInfo(Ptr, false))) &&
+               "Alias-set pointer not in the access set?");
+
+        MemAccessInfo Access(Ptr, IsWrite);
+        DepCands.insert(Access);
+
+        // Memorize read-only pointers for later processing and skip them in the
+        // first round (they need to be checked after we have seen all write
+        // pointers). Note: we also mark pointer that are not consecutive as
+        // "read-only" pointers (so that we check "a[b[i]] +="). Hence, we need
+        // the second check for "!IsWrite".
+        if (!UseDeferred && IsReadOnlyPtr) {
+          DeferredAccesses.insert(Access);
+          continue;
+        }
+
+        // If this is a write - check other reads and writes for conflicts.  If
+        // this is a read only check other writes for conflicts (but only if
+        // there is no other write to the ptr - this is an optimization to
+        // catch "a[i] = a[i] + " without having to do a dependence check).
+        if ((IsWrite || IsReadOnlyPtr) && SetHasWrite) {
+          CheckDeps.insert(Access);
+          IsRTCheckNeeded = true;
+        }
 
         if (IsWrite)
-          AreAllWritesIdentified = false;
-        if (!IsWrite)
-          AreAllReadsIdentified = false;
+          SetHasWrite = true;
+
+	// Create sets of pointers connected by a shared alias set and
+	// underlying object.
+        typedef SmallVector<Value*, 16> ValueVector;
+        ValueVector TempObjects;
+        GetUnderlyingObjects(Ptr, TempObjects, DL);
+        for (Value *UnderlyingObj : TempObjects) {
+          UnderlyingObjToAccessMap::iterator Prev =
+            ObjToLastAccess.find(UnderlyingObj);
+          if (Prev != ObjToLastAccess.end())
+            DepCands.unionSets(Access, Prev->second);
+
+          ObjToLastAccess[UnderlyingObj] = Access;
+        }
       }
-
-      // If this is a write - check other reads and writes for conflicts.  If
-      // this is a read only check other writes for conflicts (but only if there
-      // is no other write to the ptr - this is an optimization to catch "a[i] =
-      // a[i] + " without having to do a dependence check).
-      if ((IsWrite || IsReadOnlyPtr) && WriteObjects.count(UnderlyingObj))
-        NeedDepCheck = true;
-
-      if (IsWrite)
-        WriteObjects.insert(UnderlyingObj);
-
-      // Create sets of pointers connected by shared underlying objects.
-      UnderlyingObjToAccessMap::iterator Prev =
-        ObjToLastAccess.find(UnderlyingObj);
-      if (Prev != ObjToLastAccess.end())
-        DepCands.unionSets(Access, Prev->second);
-
-      ObjToLastAccess[UnderlyingObj] = Access;
     }
-
-    if (NeedDepCheck)
-      CheckDeps.insert(Access);
   }
 }
 
@@ -4443,6 +4468,11 @@ bool MemoryDepChecker::isDependent(const MemAccessInfo &A, unsigned AIdx,
   if (!AIsWrite && !BIsWrite)
     return false;
 
+  // We cannot check pointers in different address spaces.
+  if (APtr->getType()->getPointerAddressSpace() !=
+      BPtr->getType()->getPointerAddressSpace())
+    return true;
+
   const SCEV *AScev = replaceSymbolicStrideSCEV(SE, Strides, APtr);
   const SCEV *BScev = replaceSymbolicStrideSCEV(SE, Strides, BPtr);
 
@@ -4673,7 +4703,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   }
 
   AccessAnalysis::DepCandidates DependentAccesses;
-  AccessAnalysis Accesses(DL, DependentAccesses);
+  AccessAnalysis Accesses(DL, AA, DependentAccesses);
 
   // Holds the analyzed pointers. We don't want to call GetUnderlyingObjects
   // multiple times on the same object. If the ptr is accessed twice, once
@@ -4699,7 +4729,15 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // list. At this phase it is only a 'write' list.
     if (Seen.insert(Ptr)) {
       ++NumReadWrites;
-      Accesses.addStore(Ptr);
+
+      AliasAnalysis::Location Loc = AA->getLocation(ST);
+      // The TBAA metadata could have a control dependency on the predication
+      // condition, so we cannot rely on it when determining whether or not we
+      // need runtime pointer checks.
+      if (blockNeedsPredication(ST->getParent()))
+        Loc.TBAATag = nullptr;
+
+      Accesses.addStore(Loc);
     }
   }
 
@@ -4726,7 +4764,15 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       ++NumReads;
       IsReadOnlyPtr = true;
     }
-    Accesses.addLoad(Ptr, IsReadOnlyPtr);
+
+    AliasAnalysis::Location Loc = AA->getLocation(LD);
+    // The TBAA metadata could have a control dependency on the predication
+    // condition, so we cannot rely on it when determining whether or not we
+    // need runtime pointer checks.
+    if (blockNeedsPredication(LD->getParent()))
+      Loc.TBAATag = nullptr;
+
+    Accesses.addLoad(Loc, IsReadOnlyPtr);
   }
 
   // If we write (or read-write) to a single destination and there are no
@@ -5911,6 +5957,7 @@ char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
 INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(BlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(DominatorTreeWrapperPass)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
