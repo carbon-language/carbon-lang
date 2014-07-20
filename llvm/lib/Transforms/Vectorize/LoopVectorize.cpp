@@ -3929,7 +3929,7 @@ public:
   typedef EquivalenceClasses<MemAccessInfo> DepCandidates;
 
   AccessAnalysis(const DataLayout *Dl, AliasAnalysis *AA, DepCandidates &DA) :
-    DL(Dl), AA(AA), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
+    DL(Dl), AST(*AA), DepCands(DA), IsRTCheckNeeded(false) {}
 
   /// \brief Register a load  and whether it is only read from.
   void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
@@ -3984,7 +3984,6 @@ private:
   SmallPtrSet<Value*, 16> ReadOnlyPtr;
 
   const DataLayout *DL;
-  AliasAnalysis *AA;
 
   /// An alias set tracker to partition the access set by underlying object and
   //intrinsic property (such as TBAA metadata).
