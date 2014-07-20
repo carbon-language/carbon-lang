@@ -49,11 +49,10 @@ void MachineRegionInfo::updateStatistics(MachineRegion *R) {
     ++numMachineSimpleRegions;
 }
 
-void MachineRegionInfo::MachineRegionInfo::recalculate(
-  MachineFunction &F,
-  MachineDominatorTree *DT_,
-  MachinePostDominatorTree *PDT_,
-  MachineDominanceFrontier *DF_) {
+void MachineRegionInfo::recalculate(MachineFunction &F,
+                                    MachineDominatorTree *DT_,
+                                    MachinePostDominatorTree *PDT_,
+                                    MachineDominanceFrontier *DF_) {
   DT = DT_;
   PDT = PDT_;
   DF = DF_;
