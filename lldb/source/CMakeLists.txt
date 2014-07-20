@@ -300,7 +300,7 @@ if (LLDB_WRAP_PYTHON OR LLDB_VERS_GENERATED_FILE)
     ${LLDB_VERS_GENERATED_FILE}
     )
 endif()
-target_link_libraries(liblldb ${LLDB_SYSTEM_LIBS})
+target_link_libraries(liblldb ${cmake_2_8_12_PRIVATE} ${LLDB_SYSTEM_LIBS})
 
 # Determine LLDB revision and repository. GetSourceVersion and GetRepositoryPath are shell-scripts, and as
 # such will not work on Windows.
