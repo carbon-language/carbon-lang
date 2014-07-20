@@ -227,6 +227,9 @@ public:
 
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
+  /// FIXME: Should use a command-line option.
+  bool isELFv2ABI() const { return isPPC64() && isSVR4ABI() &&
+                                   isLittleEndian(); }
 
   bool enableEarlyIfConversion() const override { return hasISEL(); }
 

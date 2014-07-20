@@ -33,6 +33,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
@@ -106,6 +107,7 @@ namespace {
 
     void EmitFunctionEntryLabel() override;
 
+    void EmitFunctionBodyStart() override;
     void EmitFunctionBodyEnd() override;
   };
 
@@ -781,6 +783,14 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 }
 
 void PPCLinuxAsmPrinter::EmitStartOfAsmFile(Module &M) {
+  if (Subtarget.isELFv2ABI()) {
+    PPCTargetStreamer *TS =
+      static_cast<PPCTargetStreamer *>(OutStreamer.getTargetStreamer());
+
+    if (TS)
+      TS->emitAbiVersion(2);
+  }
+
   if (Subtarget.isPPC64() || TM.getRelocationModel() != Reloc::PIC_)
     return AsmPrinter::EmitStartOfAsmFile(M);
 
@@ -834,7 +844,11 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
     } else
       return AsmPrinter::EmitFunctionEntryLabel();
   }
-    
+
+  // ELFv2 ABI - Normal entry label.
+  if (Subtarget.isELFv2ABI())
+    return AsmPrinter::EmitFunctionEntryLabel();
+
   // Emit an official procedure descriptor.
   MCSectionSubPair Current = OutStreamer.getCurrentSection();
   const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".opd",
@@ -917,6 +931,68 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   }
 
   return AsmPrinter::doFinalization(M);
+}
+
+/// EmitFunctionBodyStart - Emit a global entry point prefix for ELFv2.
+void PPCLinuxAsmPrinter::EmitFunctionBodyStart() {
+  // In the ELFv2 ABI, in functions that use the TOC register, we need to
+  // provide two entry points.  The ABI guarantees that when calling the
+  // local entry point, r2 is set up by the caller to contain the TOC base
+  // for this function, and when calling the global entry point, r12 is set
+  // up by the caller to hold the address of the global entry point.  We
+  // thus emit a prefix sequence along the following lines:
+  //
+  // func:
+  //         # global entry point
+  //         addis r2,r12,(.TOC.-func)@ha
+  //         addi  r2,r2,(.TOC.-func)@l
+  //         .localentry func, .-func
+  //         # local entry point, followed by function body
+  //
+  // This ensures we have r2 set up correctly while executing the function
+  // body, no matter which entry point is called.
+  if (Subtarget.isELFv2ABI()
+      // Only do all that if the function uses r2 in the first place.
+      && !MF->getRegInfo().use_empty(PPC::X2)) {
+
+    MCSymbol *GlobalEntryLabel = OutContext.CreateTempSymbol();
+    OutStreamer.EmitLabel(GlobalEntryLabel);
+    const MCSymbolRefExpr *GlobalEntryLabelExp =
+      MCSymbolRefExpr::Create(GlobalEntryLabel, OutContext);
+
+    MCSymbol *TOCSymbol = OutContext.GetOrCreateSymbol(StringRef(".TOC."));
+    const MCExpr *TOCDeltaExpr =
+      MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(TOCSymbol, OutContext),
+                              GlobalEntryLabelExp, OutContext);
+
+    const MCExpr *TOCDeltaHi =
+      PPCMCExpr::CreateHa(TOCDeltaExpr, false, OutContext);
+    EmitToStreamer(OutStreamer, MCInstBuilder(PPC::ADDIS)
+                                .addReg(PPC::X2)
+                                .addReg(PPC::X12)
+                                .addExpr(TOCDeltaHi));
+
+    const MCExpr *TOCDeltaLo =
+      PPCMCExpr::CreateLo(TOCDeltaExpr, false, OutContext);
+    EmitToStreamer(OutStreamer, MCInstBuilder(PPC::ADDI)
+                                .addReg(PPC::X2)
+                                .addReg(PPC::X2)
+                                .addExpr(TOCDeltaLo));
+
+    MCSymbol *LocalEntryLabel = OutContext.CreateTempSymbol();
+    OutStreamer.EmitLabel(LocalEntryLabel);
+    const MCSymbolRefExpr *LocalEntryLabelExp =
+       MCSymbolRefExpr::Create(LocalEntryLabel, OutContext);
+    const MCExpr *LocalOffsetExp =
+      MCBinaryExpr::CreateSub(LocalEntryLabelExp,
+                              GlobalEntryLabelExp, OutContext);
+
+    PPCTargetStreamer *TS =
+      static_cast<PPCTargetStreamer *>(OutStreamer.getTargetStreamer());
+
+    if (TS)
+      TS->emitLocalEntry(CurrentFnSym, LocalOffsetExp);
+  }
 }
 
 /// EmitFunctionBodyEnd - Print the traceback table before the .size
