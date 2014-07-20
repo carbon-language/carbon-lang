@@ -91,7 +91,7 @@ struct DOTGraphTraits<ScopDetection *> : public DOTGraphTraits<RegionNode *> {
 
   std::string getNodeLabel(RegionNode *Node, ScopDetection *SD) {
     return DOTGraphTraits<RegionNode *>::getNodeLabel(
-      Node, reinterpret_cast<RegionNode *>(SD->getRI()->getTopLevelRegion()));
+        Node, reinterpret_cast<RegionNode *>(SD->getRI()->getTopLevelRegion()));
   }
 
   static std::string escapeString(std::string String) {
