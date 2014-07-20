@@ -1844,6 +1844,8 @@ ProcessMonitor::StopThread(lldb::tid_t tid)
 
         switch (message.GetKind())
         {
+            case ProcessMessage::eExecMessage:
+                llvm_unreachable("unexpected message");
             case ProcessMessage::eAttachMessage:
             case ProcessMessage::eInvalidMessage:
                 break;
