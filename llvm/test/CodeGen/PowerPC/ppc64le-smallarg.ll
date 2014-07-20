@@ -22,7 +22,7 @@ entry:
   ret void
 }
 ; CHECK: @callee1
-; CHECK: lwz {{[0-9]+}}, 120(1)
+; CHECK: lwz {{[0-9]+}}, 104(1)
 ; CHECK: blr
 
 define void @caller1() {
@@ -32,7 +32,7 @@ entry:
   ret void
 }
 ; CHECK: @caller1
-; CHECK: stw {{[0-9]+}}, 120(1)
+; CHECK: stw {{[0-9]+}}, 104(1)
 ; CHECK: bl test1
 
 declare void @test1(%struct.small_arg* sret, %struct.large_arg* byval, %struct.small_arg* byval)
@@ -42,7 +42,7 @@ entry:
   ret float %x
 }
 ; CHECK: @callee2
-; CHECK: lfs {{[0-9]+}}, 152(1)
+; CHECK: lfs {{[0-9]+}}, 136(1)
 ; CHECK: blr
 
 define void @caller2() {
@@ -52,7 +52,7 @@ entry:
   ret void
 }
 ; CHECK: @caller2
-; CHECK: stfs {{[0-9]+}}, 152(1)
+; CHECK: stfs {{[0-9]+}}, 136(1)
 ; CHECK: bl test2
 
 declare float @test2(float, float, float, float, float, float, float, float, float, float, float, float, float, float)

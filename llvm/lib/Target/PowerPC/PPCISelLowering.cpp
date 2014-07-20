@@ -2190,6 +2190,54 @@ static unsigned CalculateStackSlotAlignment(EVT ArgVT, ISD::ArgFlagsTy Flags,
   return Align;
 }
 
+/// CalculateStackSlotUsed - Return whether this argument will use its
+/// stack slot (instead of being passed in registers).  ArgOffset,
+/// AvailableFPRs, and AvailableVRs must hold the current argument
+/// position, and will be updated to account for this argument.
+static bool CalculateStackSlotUsed(EVT ArgVT, ISD::ArgFlagsTy Flags,
+                                   unsigned PtrByteSize,
+                                   unsigned LinkageSize,
+                                   unsigned ParamAreaSize,
+                                   unsigned &ArgOffset,
+                                   unsigned &AvailableFPRs,
+                                   unsigned &AvailableVRs) {
+  bool UseMemory = false;
+
+  // Respect alignment of argument on the stack.
+  unsigned Align = CalculateStackSlotAlignment(ArgVT, Flags, PtrByteSize);
+  ArgOffset = ((ArgOffset + Align - 1) / Align) * Align;
+  // If there's no space left in the argument save area, we must
+  // use memory (this check also catches zero-sized arguments).
+  if (ArgOffset >= LinkageSize + ParamAreaSize)
+    UseMemory = true;
+
+  // Allocate argument on the stack.
+  ArgOffset += CalculateStackSlotSize(ArgVT, Flags, PtrByteSize);
+  // If we overran the argument save area, we must use memory
+  // (this check catches arguments passed partially in memory)
+  if (ArgOffset > LinkageSize + ParamAreaSize)
+    UseMemory = true;
+
+  // However, if the argument is actually passed in an FPR or a VR,
+  // we don't use memory after all.
+  if (!Flags.isByVal()) {
+    if (ArgVT == MVT::f32 || ArgVT == MVT::f64)
+      if (AvailableFPRs > 0) {
+        --AvailableFPRs;
+        return false;
+      }
+    if (ArgVT == MVT::v4f32 || ArgVT == MVT::v4i32 ||
+        ArgVT == MVT::v8i16 || ArgVT == MVT::v16i8 ||
+        ArgVT == MVT::v2f64 || ArgVT == MVT::v2i64)
+      if (AvailableVRs > 0) {
+        --AvailableVRs;
+        return false;
+      }
+  }
+
+  return UseMemory;
+}
+
 /// EnsureStackAlignment - Round stack frame size up from NumBytes to
 /// ensure minimum alignment required for target.
 static unsigned EnsureStackAlignment(const TargetMachine &Target,
@@ -2275,7 +2323,7 @@ PPCTargetLowering::LowerFormalArguments_32SVR4(
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
-  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(false, false);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(false, false, false);
   CCInfo.AllocateStack(LinkageSize, PtrByteSize);
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_PPC32_SVR4);
@@ -2468,6 +2516,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
                                       SmallVectorImpl<SDValue> &InVals) const {
   // TODO: add description of PPC stack frame format, or at least some docs.
   //
+  bool isELFv2ABI = Subtarget.isELFv2ABI();
   bool isLittleEndian = Subtarget.isLittleEndian();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -2479,8 +2528,8 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
                        (CallConv == CallingConv::Fast));
   unsigned PtrByteSize = 8;
 
-  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false);
-  unsigned ArgOffset = LinkageSize;
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false,
+                                                          isELFv2ABI);
 
   static const MCPhysReg GPR[] = {
     PPC::X3, PPC::X4, PPC::X5, PPC::X6,
@@ -2502,12 +2551,29 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   const unsigned Num_FPR_Regs = 13;
   const unsigned Num_VR_Regs  = array_lengthof(VR);
 
-  unsigned GPR_idx, FPR_idx = 0, VR_idx = 0;
+  // Do a first pass over the arguments to determine whether the ABI
+  // guarantees that our caller has allocated the parameter save area
+  // on its stack frame.  In the ELFv1 ABI, this is always the case;
+  // in the ELFv2 ABI, it is true if this is a vararg function or if
+  // any parameter is located in a stack slot.
+
+  bool HasParameterArea = !isELFv2ABI || isVarArg;
+  unsigned ParamAreaSize = Num_GPR_Regs * PtrByteSize;
+  unsigned NumBytes = LinkageSize;
+  unsigned AvailableFPRs = Num_FPR_Regs;
+  unsigned AvailableVRs = Num_VR_Regs;
+  for (unsigned i = 0, e = Ins.size(); i != e; ++i)
+    if (CalculateStackSlotUsed(Ins[i].VT, Ins[i].Flags,
+                               PtrByteSize, LinkageSize, ParamAreaSize,
+                               NumBytes, AvailableFPRs, AvailableVRs))
+      HasParameterArea = true;
 
   // Add DAG nodes to load the arguments or copy them out of registers.  On
   // entry to a function on PPC, the arguments start after the linkage area,
   // although the first ones are often in registers.
 
+  unsigned ArgOffset = LinkageSize;
+  unsigned GPR_idx, FPR_idx = 0, VR_idx = 0;
   SmallVector<SDValue, 8> MemOps;
   Function::const_arg_iterator FuncArg = MF.getFunction()->arg_begin();
   unsigned CurArgIdx = 0;
@@ -2552,8 +2618,17 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
       }
 
       // Create a stack object covering all stack doublewords occupied
-      // by the argument.
-      int FI = MFI->CreateFixedObject(ArgSize, ArgOffset, true);
+      // by the argument.  If the argument is (fully or partially) on
+      // the stack, or if the argument is fully in registers but the
+      // caller has allocated the parameter save anyway, we can refer
+      // directly to the caller's stack frame.  Otherwise, create a
+      // local copy in our own frame.
+      int FI;
+      if (HasParameterArea ||
+          ArgSize + ArgOffset > LinkageSize + Num_GPR_Regs * PtrByteSize)
+        FI = MFI->CreateFixedObject(ArgSize, ArgOffset, true);
+      else
+        FI = MFI->CreateStackObject(ArgSize, Align, false);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
 
       // Handle aggregates smaller than 8 bytes.
@@ -2697,7 +2772,10 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
   // Area that is at least reserved in the caller of this function.
   unsigned MinReservedArea;
-  MinReservedArea = std::max(ArgOffset, LinkageSize + 8 * PtrByteSize);
+  if (HasParameterArea)
+    MinReservedArea = std::max(ArgOffset, LinkageSize + 8 * PtrByteSize);
+  else
+    MinReservedArea = LinkageSize;
 
   // Set the size that is at least reserved in caller of this function.  Tail
   // call optimized functions' reserved stack space needs to be aligned so that
@@ -2758,7 +2836,8 @@ PPCTargetLowering::LowerFormalArguments_Darwin(
                        (CallConv == CallingConv::Fast));
   unsigned PtrByteSize = isPPC64 ? 8 : 4;
 
-  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true,
+                                                          false);
   unsigned ArgOffset = LinkageSize;
   // Area that is at least reserved in caller of this function.
   unsigned MinReservedArea = ArgOffset;
@@ -3616,6 +3695,8 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
                               int SPDiff, unsigned NumBytes,
                               const SmallVectorImpl<ISD::InputArg> &Ins,
                               SmallVectorImpl<SDValue> &InVals) const {
+
+  bool isELFv2ABI = Subtarget.isELFv2ABI();
   std::vector<EVT> NodeTys;
   SmallVector<SDValue, 8> Ops;
   unsigned CallOpc = PrepareCall(DAG, Callee, InFlag, Chain, dl, SPDiff,
@@ -3691,7 +3772,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, SDLoc dl,
     SDVTList VTs = DAG.getVTList(MVT::Other, MVT::Glue);
     EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
     SDValue StackPtr = DAG.getRegister(PPC::X1, PtrVT);
-    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset();
+    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset(isELFv2ABI);
     SDValue TOCOff = DAG.getIntPtrConstant(TOCSaveOffset);
     SDValue AddTOC = DAG.getNode(ISD::ADD, dl, MVT::i64, StackPtr, TOCOff);
     Chain = DAG.getNode(PPCISD::LOAD_TOC, dl, VTs, Chain, AddTOC, InFlag);
@@ -3784,7 +3865,8 @@ PPCTargetLowering::LowerCall_32SVR4(SDValue Chain, SDValue Callee,
                  getTargetMachine(), ArgLocs, *DAG.getContext());
 
   // Reserve space for the linkage area on the stack.
-  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(false, false), PtrByteSize);
+  CCInfo.AllocateStack(PPCFrameLowering::getLinkageSize(false, false, false),
+                       PtrByteSize);
 
   if (isVarArg) {
     // Handle fixed and variable vector arguments differently.
@@ -4012,9 +4094,11 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     MF.getInfo<PPCFunctionInfo>()->setHasFastCall();
 
   // Count how many bytes are to be pushed on the stack, including the linkage
-  // area, and parameter passing area.  We start with at least 48 bytes, which
-  // is reserved space for [SP][CR][LR][3 x unused].
-  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false);
+  // area, and parameter passing area.  On ELFv1, the linkage area is 48 bytes
+  // reserved space for [SP][CR][LR][2 x unused][TOC]; on ELFv2, the linkage
+  // area is 32 bytes reserved space for [SP][CR][LR][TOC].
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(true, false,
+                                                          isELFv2ABI);
   unsigned NumBytes = LinkageSize;
 
   // Add up all the space actually used.
@@ -4036,6 +4120,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   // Because we cannot tell if this is needed on the caller side, we have to
   // conservatively assume that it is needed.  As such, make sure we have at
   // least enough stack space for the caller to store the 8 GPRs.
+  // FIXME: On ELFv2, it may be unnecessary to allocate the parameter area.
   NumBytes = std::max(NumBytes, LinkageSize + 8 * PtrByteSize);
 
   // Tail call needs the stack to be aligned.
@@ -4374,7 +4459,7 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     // Load r2 into a virtual register and store it to the TOC save area.
     SDValue Val = DAG.getCopyFromReg(Chain, dl, PPC::X2, MVT::i64);
     // TOC save area offset.
-    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset();
+    unsigned TOCSaveOffset = PPCFrameLowering::getTOCSaveOffset(isELFv2ABI);
     SDValue PtrOff = DAG.getIntPtrConstant(TOCSaveOffset);
     SDValue AddPtr = DAG.getNode(ISD::ADD, dl, PtrVT, StackPtr, PtrOff);
     Chain = DAG.getStore(Val.getValue(1), dl, Val, AddPtr, MachinePointerInfo(),
@@ -4434,7 +4519,8 @@ PPCTargetLowering::LowerCall_Darwin(SDValue Chain, SDValue Callee,
   // Count how many bytes are to be pushed on the stack, including the linkage
   // area, and parameter passing area.  We start with 24/48 bytes, which is
   // prereserved space for [SP][CR][LR][3 x unused].
-  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true);
+  unsigned LinkageSize = PPCFrameLowering::getLinkageSize(isPPC64, true,
+                                                          false);
   unsigned NumBytes = LinkageSize;
 
   // Add up all the space actually used.

@@ -76,8 +76,8 @@ public:
 
   /// getTOCSaveOffset - Return the previous frame offset to save the
   /// TOC register -- 64-bit SVR4 ABI only.
-  static unsigned getTOCSaveOffset(void) {
-    return 40;
+  static unsigned getTOCSaveOffset(bool isELFv2ABI) {
+    return isELFv2ABI ? 24 : 40;
   }
 
   /// getFramePointerSaveOffset - Return the previous frame offset to save the
@@ -109,9 +109,10 @@ public:
 
   /// getLinkageSize - Return the size of the PowerPC ABI linkage area.
   ///
-  static unsigned getLinkageSize(bool isPPC64, bool isDarwinABI) {
+  static unsigned getLinkageSize(bool isPPC64, bool isDarwinABI,
+                                 bool isELFv2ABI) {
     if (isDarwinABI || isPPC64)
-      return 6 * (isPPC64 ? 8 : 4);
+      return (isELFv2ABI ? 4 : 6) * (isPPC64 ? 8 : 4);
 
     // SVR4 ABI:
     return 8;

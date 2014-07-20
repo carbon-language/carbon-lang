@@ -7,11 +7,11 @@ target triple = "powerpc64le-unknown-linux-gnu"
 define void @test_indirect(void ()* nocapture %fp) {
 ; CHECK-LABEL: @test_indirect
   tail call void %fp()
-; CHECK-DAG: std 2, 40(1)
+; CHECK-DAG: std 2, 24(1)
 ; CHECK-DAG: mr 12, 3
 ; CHECK-DAG: mtctr 3
 ; CHECK: bctrl
-; CHECK-NEXT: ld 2, 40(1)
+; CHECK-NEXT: ld 2, 24(1)
   ret void
 }
 
