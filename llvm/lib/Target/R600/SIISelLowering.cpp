@@ -12,6 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifdef _MSC_VER
+// Provide M_PI.
+#define _USE_MATH_DEFINES
+#include <cmath>
+#endif
+
 #include "SIISelLowering.h"
 #include "AMDGPU.h"
 #include "AMDGPUIntrinsicInfo.h"
