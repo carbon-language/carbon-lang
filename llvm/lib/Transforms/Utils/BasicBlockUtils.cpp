@@ -549,14 +549,11 @@ void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
 
   // Move the remaining edges from OrigBB to point to NewBB2.
   SmallVector<BasicBlock*, 8> NewBB2Preds;
-  for (pred_iterator i = pred_begin(OrigBB), e = pred_end(OrigBB);
-       i != e; ) {
-    BasicBlock *Pred = *i++;
+  for (BasicBlock *Pred : predecessors(OrigBB)) {
     if (Pred == NewBB1) continue;
     assert(!isa<IndirectBrInst>(Pred->getTerminator()) &&
            "Cannot split an edge from an IndirectBrInst");
     NewBB2Preds.push_back(Pred);
-    e = pred_end(OrigBB);
   }
 
   BasicBlock *NewBB2 = nullptr;

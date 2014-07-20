@@ -365,41 +365,39 @@ void StructurizeCFG::gatherPredicates(RegionNode *N) {
   BBPredicates &Pred = Predicates[BB];
   BBPredicates &LPred = LoopPreds[BB];
 
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
-       PI != PE; ++PI) {
-
+  for (BasicBlock *Predecessor : predecessors(BB)) {
     // Ignore it if it's a branch from outside into our region entry
-    if (!ParentRegion->contains(*PI))
+    if (!ParentRegion->contains(Predecessor))
       continue;
 
-    Region *R = RI->getRegionFor(*PI);
+    Region *R = RI->getRegionFor(Predecessor);
     if (R == ParentRegion) {
 
       // It's a top level block in our region
-      BranchInst *Term = cast<BranchInst>((*PI)->getTerminator());
+      BranchInst *Term = cast<BranchInst>(Predecessor->getTerminator());
       for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
         BasicBlock *Succ = Term->getSuccessor(i);
         if (Succ != BB)
           continue;
 
-        if (Visited.count(*PI)) {
+        if (Visited.count(Predecessor)) {
           // Normal forward edge
           if (Term->isConditional()) {
             // Try to treat it like an ELSE block
             BasicBlock *Other = Term->getSuccessor(!i);
             if (Visited.count(Other) && !Loops.count(Other) &&
-                !Pred.count(Other) && !Pred.count(*PI)) {
+                !Pred.count(Other) && !Pred.count(Predecessor)) {
 
               Pred[Other] = BoolFalse;
-              Pred[*PI] = BoolTrue;
+              Pred[Predecessor] = BoolTrue;
               continue;
             }
           }
-          Pred[*PI] = buildCondition(Term, i, false);
+          Pred[Predecessor] = buildCondition(Term, i, false);
 
         } else {
           // Back edge
-          LPred[*PI] = buildCondition(Term, i, true);
+          LPred[Predecessor] = buildCondition(Term, i, true);
         }
       }
 
@@ -574,11 +572,8 @@ void StructurizeCFG::killTerminator(BasicBlock *BB) {
   if (!Term)
     return;
 
-  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
-       SI != SE; ++SI) {
-
-    delPhiValues(BB, *SI);
-  }
+  for (BasicBlock *Succ : successors(BB))
+    delPhiValues(BB, Succ);
 
   Term->eraseFromParent();
 }
@@ -592,10 +587,7 @@ void StructurizeCFG::changeExit(RegionNode *Node, BasicBlock *NewExit,
     BasicBlock *Dominator = nullptr;
 
     // Find all the edges from the sub region to the exit
-    for (pred_iterator I = pred_begin(OldExit), E = pred_end(OldExit);
-         I != E;) {
-
-      BasicBlock *BB = *I++;
+    for (BasicBlock *BB : predecessors(OldExit)) {
       if (!SubRegion->contains(BB))
         continue;
 

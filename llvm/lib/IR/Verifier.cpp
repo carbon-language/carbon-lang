@@ -2107,8 +2107,8 @@ void Verifier::visitLandingPadInst(LandingPadInst &LPI) {
 
   // The landingpad instruction defines its parent as a landing pad block. The
   // landing pad block may be branched to only by the unwind edge of an invoke.
-  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
-    const InvokeInst *II = dyn_cast<InvokeInst>((*I)->getTerminator());
+  for (BasicBlock *Pred : predecessors(BB)) {
+    const InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator());
     Assert1(II && II->getUnwindDest() == BB && II->getNormalDest() != BB,
             "Block containing LandingPadInst must be jumped to "
             "only by the unwind edge of an invoke.", &LPI);

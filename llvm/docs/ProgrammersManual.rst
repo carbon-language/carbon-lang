@@ -1854,12 +1854,11 @@ iterate over all predecessors of BB:
   #include "llvm/Support/CFG.h"
   BasicBlock *BB = ...;
 
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    BasicBlock *Pred = *PI;
+  for (BasicBlock *Pred : predecessors(BB)) {
     // ...
   }
 
-Similarly, to iterate over successors use ``succ_iterator/succ_begin/succ_end``.
+Similarly, to iterate over successors use ``successors``.
 
 .. _simplechanges:
 

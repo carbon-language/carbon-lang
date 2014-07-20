@@ -292,8 +292,8 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
       if (!Blocks.count(BB) && BB->getTerminator()->getNumSuccessors()) {
         // Loop over all of the successors of this block, deleting any PHI nodes
         // that might include it.
-        for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
-          (*SI)->removePredecessor(BB);
+        for (BasicBlock *Succ : successors(BB))
+          Succ->removePredecessor(BB);
 
         TerminatorInst *BBTerm = BB->getTerminator();
         

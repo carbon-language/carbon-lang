@@ -142,8 +142,8 @@ static void MarkBlocksLiveIn(BasicBlock *BB,
   if (!LiveBBs.insert(BB))
     return; // already been here.
 
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-    MarkBlocksLiveIn(*PI, LiveBBs);
+  for (BasicBlock *Pred : predecessors(BB))
+    MarkBlocksLiveIn(Pred, LiveBBs);
 }
 
 /// substituteLPadValues - Substitute the values returned by the landingpad

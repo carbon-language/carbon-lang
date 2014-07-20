@@ -93,6 +93,12 @@ inline pred_iterator pred_end(BasicBlock *BB) { return pred_iterator(BB, true);}
 inline const_pred_iterator pred_end(const BasicBlock *BB) {
   return const_pred_iterator(BB, true);
 }
+inline iterator_range<pred_iterator> predecessors(BasicBlock *BB) {
+  return make_range(pred_begin(BB), pred_end(BB));
+}
+inline iterator_range<const_pred_iterator> predecessors(const BasicBlock *BB) {
+  return make_range(pred_begin(BB), pred_end(BB));
+}
 
 
 
@@ -256,6 +262,12 @@ inline succ_iterator succ_end(BasicBlock *BB) {
 }
 inline succ_const_iterator succ_end(const BasicBlock *BB) {
   return succ_const_iterator(BB->getTerminator(), true);
+}
+inline iterator_range<succ_iterator> successors(BasicBlock *BB) {
+  return make_range(succ_begin(BB), succ_end(BB));
+}
+inline iterator_range<succ_const_iterator> successors(const BasicBlock *BB) {
+  return make_range(succ_begin(BB), succ_end(BB));
 }
 
 template <typename T, typename U> struct isPodLike<SuccIterator<T, U> > {

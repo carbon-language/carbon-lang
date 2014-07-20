@@ -625,9 +625,9 @@ bool LazyValueInfoCache::solveBlockValueNonLocal(LVILatticeVal &BBLV,
   // Loop over all of our predecessors, merging what we know from them into
   // result.
   bool EdgesMissing = false;
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+  for (BasicBlock *Pred : predecessors(BB)) {
     LVILatticeVal EdgeResult;
-    EdgesMissing |= !getEdgeValue(Val, *PI, BB, EdgeResult);
+    EdgesMissing |= !getEdgeValue(Val, Pred, BB, EdgeResult);
     if (EdgesMissing)
       continue;
 

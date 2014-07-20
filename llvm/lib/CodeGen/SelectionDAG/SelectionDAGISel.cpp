@@ -1052,9 +1052,8 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
 
     if (OptLevel != CodeGenOpt::None) {
       bool AllPredsVisited = true;
-      for (const_pred_iterator PI = pred_begin(LLVMBB), PE = pred_end(LLVMBB);
-           PI != PE; ++PI) {
-        if (!FuncInfo->VisitedBBs.count(*PI)) {
+      for (const BasicBlock *Pred : predecessors(LLVMBB)) {
+        if (!FuncInfo->VisitedBBs.count(Pred)) {
           AllPredsVisited = false;
           break;
         }

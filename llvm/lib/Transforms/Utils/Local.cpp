@@ -1129,8 +1129,8 @@ static void changeToUnreachable(Instruction *I, bool UseLLVMTrap) {
   BasicBlock *BB = I->getParent();
   // Loop over all of the successors, removing BB's entry from any PHI
   // nodes.
-  for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-    (*SI)->removePredecessor(BB);
+  for (BasicBlock *Succ : successors(BB))
+    Succ->removePredecessor(BB);
 
   // Insert a call to llvm.trap right before this.  This turns the undefined
   // behavior into a hard fail instead of falling through into random code.
@@ -1236,9 +1236,9 @@ static bool markAliveBlocks(BasicBlock *BB,
     }
 
     Changed |= ConstantFoldTerminator(BB, true);
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-      if (Reachable.insert(*SI))
-        Worklist.push_back(*SI);
+    for (BasicBlock *Succ : successors(BB))
+      if (Reachable.insert(Succ))
+        Worklist.push_back(Succ);
   } while (!Worklist.empty());
   return Changed;
 }
@@ -1263,9 +1263,9 @@ bool llvm::removeUnreachableBlocks(Function &F) {
     if (Reachable.count(BB))
       continue;
 
-    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-      if (Reachable.count(*SI))
-        (*SI)->removePredecessor(BB);
+    for (BasicBlock *Succ : successors(BB))
+      if (Reachable.count(Succ))
+        Succ->removePredecessor(BB);
     BB->dropAllReferences();
   }
 

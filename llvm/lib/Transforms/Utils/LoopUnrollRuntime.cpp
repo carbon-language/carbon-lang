@@ -66,9 +66,8 @@ static void ConnectProlog(Loop *L, Value *TripCount, unsigned Count,
   // The new PHI node is inserted in the prolog end basic block.
   // The new PHI name is added as an operand of a PHI node in either
   // the loop header or the loop exit block.
-  for (succ_iterator SBI = succ_begin(Latch), SBE = succ_end(Latch);
-       SBI != SBE; ++SBI) {
-    for (BasicBlock::iterator BBI = (*SBI)->begin();
+  for (BasicBlock *Succ : successors(Latch)) {
+    for (BasicBlock::iterator BBI = Succ->begin();
          PHINode *PN = dyn_cast<PHINode>(BBI); ++BBI) {
 
       // Add a new PHI node to the prolog end block and add the

@@ -642,8 +642,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
 /// them to F.
 static void FindUnconditionalPreds(SmallVectorImpl<BasicBlock *> &Blocks,
                                    BasicBlock *BB, DominatorTree *DT) {
-  for (pred_iterator I = pred_begin(BB), E = pred_end(BB); I != E; ++I) {
-    BasicBlock *Pred = *I;
+  for (BasicBlock *Pred : predecessors(BB)) {
     if (Pred == BB) continue;
     TerminatorInst *PredTI = Pred->getTerminator();
     if (PredTI->getNumSuccessors() != 1)

@@ -130,9 +130,9 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
   BasicBlock *SI2BB = SI2->getParent();
   SmallPtrSet<BasicBlock*, 16> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
 
-  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
-    if (SI1Succs.count(*I))
-      for (BasicBlock::iterator BBI = (*I)->begin();
+  for (BasicBlock *Succ : successors(SI2BB))
+    if (SI1Succs.count(Succ))
+      for (BasicBlock::iterator BBI = Succ->begin();
            isa<PHINode>(BBI); ++BBI) {
         PHINode *PN = cast<PHINode>(BBI);
         if (PN->getIncomingValueForBlock(SI1BB) !=
@@ -171,9 +171,9 @@ static bool isProfitableToFoldUnconditional(BranchInst *SI1,
   BasicBlock *SI1BB = SI1->getParent();
   BasicBlock *SI2BB = SI2->getParent();
   SmallPtrSet<BasicBlock*, 16> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
-  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
-    if (SI1Succs.count(*I))
-      for (BasicBlock::iterator BBI = (*I)->begin();
+  for (BasicBlock *Succ : successors(SI2BB))
+    if (SI1Succs.count(Succ))
+      for (BasicBlock::iterator BBI = Succ->begin();
            isa<PHINode>(BBI); ++BBI) {
         PHINode *PN = cast<PHINode>(BBI);
         if (PN->getIncomingValueForBlock(SI1BB) != Cond ||
@@ -683,9 +683,9 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
 
   // Remove PHI node entries for dead edges.
   BasicBlock *CheckEdge = TheRealDest;
-  for (succ_iterator SI = succ_begin(TIBB), e = succ_end(TIBB); SI != e; ++SI)
-    if (*SI != CheckEdge)
-      (*SI)->removePredecessor(TIBB);
+  for (BasicBlock *Succ : successors(TIBB))
+    if (Succ != CheckEdge)
+      Succ->removePredecessor(TIBB);
     else
       CheckEdge = nullptr;
 
@@ -981,9 +981,9 @@ bool SimplifyCFGOpt::FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
 // to put the select in this case.
 static bool isSafeToHoistInvoke(BasicBlock *BB1, BasicBlock *BB2,
                                 Instruction *I1, Instruction *I2) {
-  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
+  for (BasicBlock *Succ : successors(BB1)) {
     PHINode *PN;
-    for (BasicBlock::iterator BBI = SI->begin();
+    for (BasicBlock::iterator BBI = Succ->begin();
          (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
@@ -1063,9 +1063,9 @@ HoistTerminator:
   if (isa<InvokeInst>(I1) && !isSafeToHoistInvoke(BB1, BB2, I1, I2))
     return Changed;
 
-  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
+  for (BasicBlock *Succ : successors(BB1)) {
     PHINode *PN;
-    for (BasicBlock::iterator BBI = SI->begin();
+    for (BasicBlock::iterator BBI = Succ->begin();
          (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
@@ -1094,9 +1094,9 @@ HoistTerminator:
   // them.  If they do, all PHI entries for BB1/BB2 must agree for all PHI
   // nodes, so we insert select instruction to compute the final result.
   std::map<std::pair<Value*,Value*>, SelectInst*> InsertedSelects;
-  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI) {
+  for (BasicBlock *Succ : successors(BB1)) {
     PHINode *PN;
-    for (BasicBlock::iterator BBI = SI->begin();
+    for (BasicBlock::iterator BBI = Succ->begin();
          (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
       Value *BB1V = PN->getIncomingValueForBlock(BB1);
       Value *BB2V = PN->getIncomingValueForBlock(BB2);
@@ -1118,8 +1118,8 @@ HoistTerminator:
   }
 
   // Update any PHI nodes in our new successors.
-  for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI)
-    AddPredecessorToBlock(*SI, BIParent, BB1);
+  for (BasicBlock *Succ : successors(BB1))
+    AddPredecessorToBlock(Succ, BIParent, BB1);
 
   EraseTerminatorInstAndDCECond(BI);
   return true;
@@ -2051,8 +2051,7 @@ bool llvm::FoldBranchToCommonDest(BranchInst *BI, const DataLayout *DL) {
   if (TrueDest == BB || FalseDest == BB)
     return false;
 
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    BasicBlock *PredBlock = *PI;
+  for (BasicBlock *PredBlock : predecessors(BB)) {
     BranchInst *PBI = dyn_cast<BranchInst>(PredBlock->getTerminator());
 
     // Check that we have two conditional branches.  If there is a PHI node in
@@ -2885,8 +2884,8 @@ bool SimplifyCFGOpt::SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder) {
   // Turn all invokes that unwind here into calls and delete the basic block.
   bool InvokeRequiresTableEntry = false;
   bool Changed = false;
-  for (pred_iterator PI = pred_begin(BB), PE = pred_end(BB); PI != PE;) {
-    InvokeInst *II = cast<InvokeInst>((*PI++)->getTerminator());
+  for (BasicBlock *Pred : predecessors(BB)) {
+    InvokeInst *II = cast<InvokeInst>(Pred->getTerminator());
 
     if (II->hasFnAttr(Attribute::UWTable)) {
       // Don't remove an `invoke' instruction if the ABI requires an entry into
@@ -2933,8 +2932,7 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
   // Find predecessors that end with branches.
   SmallVector<BasicBlock*, 8> UncondBranchPreds;
   SmallVector<BranchInst*, 8> CondBranchPreds;
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-    BasicBlock *P = *PI;
+  for (BasicBlock *P : predecessors(BB)) {
     TerminatorInst *PTI = P->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(PTI)) {
       if (BI->isUnconditional())
@@ -4100,8 +4098,8 @@ bool SimplifyCFGOpt::SimplifyCondBranch(BranchInst *BI, IRBuilder<> &Builder) {
         return SimplifyCFG(BB, TTI, DL) | true;
 
   // Scan predecessor blocks for conditional branches.
-  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
-    if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+  for (BasicBlock *Pred : predecessors(BB))
+    if (BranchInst *PBI = dyn_cast<BranchInst>(Pred->getTerminator()))
       if (PBI != BI && PBI->isConditional())
         if (SimplifyCondBranchToCondBranch(PBI, BI))
           return SimplifyCFG(BB, TTI, DL) | true;

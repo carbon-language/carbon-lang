@@ -91,9 +91,8 @@ static SetVector<BasicBlock *> buildExtractionBlockSet(IteratorT BBBegin,
   for (SetVector<BasicBlock *>::iterator I = std::next(Result.begin()),
                                          E = Result.end();
        I != E; ++I)
-    for (pred_iterator PI = pred_begin(*I), PE = pred_end(*I);
-         PI != PE; ++PI)
-      assert(Result.count(*PI) &&
+    for (BasicBlock *Pred : predecessors(*I))
+      assert(Result.count(Pred) &&
              "No blocks in this region may have entries from outside the region"
              " except for the first block!");
 #endif
@@ -721,9 +720,9 @@ Function *CodeExtractor::extractCodeRegion() {
   SmallPtrSet<BasicBlock *, 1> ExitBlocks;
   for (SetVector<BasicBlock *>::iterator I = Blocks.begin(), E = Blocks.end();
        I != E; ++I)
-    for (succ_iterator SI = succ_begin(*I), SE = succ_end(*I); SI != SE; ++SI)
-      if (!Blocks.count(*SI))
-        ExitBlocks.insert(*SI);
+    for (BasicBlock *Succ : successors(*I))
+      if (!Blocks.count(Succ))
+        ExitBlocks.insert(Succ);
   NumExitBlocks = ExitBlocks.size();
 
   // Construct new function based on inputs/outputs & add allocas for all defs.

@@ -229,9 +229,7 @@ void BlockExtractorPass::SplitLandingPadPreds(Function *F) {
     // Look through the landing pad's predecessors. If one of them ends in an
     // 'invoke', then we want to split the landing pad.
     bool Split = false;
-    for (pred_iterator
-           PI = pred_begin(LPad), PE = pred_end(LPad); PI != PE; ++PI) {
-      BasicBlock *BB = *PI;
+    for (BasicBlock *BB : predecessors(LPad)) {
       if (BB->isLandingPad() && BB != Parent &&
           isa<InvokeInst>(Parent->getTerminator())) {
         Split = true;

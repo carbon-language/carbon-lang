@@ -822,9 +822,7 @@ void PromoteMem2Reg::ComputeLiveInBlocks(
     // Since the value is live into BB, it is either defined in a predecessor or
     // live into it to.  Add the preds to the worklist unless they are a
     // defining block.
-    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
-      BasicBlock *P = *PI;
-
+    for (BasicBlock *P : predecessors(BB)) {
       // The value is not live into a predecessor if it defines the value.
       if (DefBlocks.count(P))
         continue;
@@ -885,9 +883,8 @@ void PromoteMem2Reg::DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
       DomTreeNode *Node = Worklist.pop_back_val();
       BasicBlock *BB = Node->getBlock();
 
-      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
-           ++SI) {
-        DomTreeNode *SuccNode = DT.getNode(*SI);
+      for (BasicBlock *Succ : successors(BB)) {
+        DomTreeNode *SuccNode = DT.getNode(Succ);
 
         // Quickly skip all CFG edges that are also dominator tree edges instead
         // of catching them below.

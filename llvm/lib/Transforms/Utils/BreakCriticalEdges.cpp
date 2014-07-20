@@ -233,9 +233,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
       if (PN->getIncomingBlock(i) != NewBB)
         OtherPreds.push_back(PN->getIncomingBlock(i));
   } else {
-    for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB);
-         I != E; ++I) {
-      BasicBlock *P = *I;
+    for (BasicBlock *P : predecessors(DestBB)) {
       if (P != NewBB)
         OtherPreds.push_back(P);
     }
@@ -321,9 +319,7 @@ BasicBlock *llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum,
         // the predecessor must be directly in TIL, not in a subloop, or again
         // LoopSimplify doesn't hold.
         SmallVector<BasicBlock *, 4> LoopPreds;
-        for (pred_iterator I = pred_begin(DestBB), E = pred_end(DestBB); I != E;
-             ++I) {
-          BasicBlock *P = *I;
+        for (BasicBlock *P : predecessors(DestBB)) {
           if (P == NewBB)
             continue; // The new block is known.
           if (LI->getLoopFor(P) != TIL) {

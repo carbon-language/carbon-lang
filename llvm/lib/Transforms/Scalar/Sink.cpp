@@ -258,10 +258,11 @@ bool Sinking::SinkInstruction(Instruction *Inst,
 
   // If no suitable postdominator was found, look at all the successors and
   // decide which one we should sink to, if any.
-  for (succ_iterator I = succ_begin(Inst->getParent()),
-      E = succ_end(Inst->getParent()); I != E && !SuccToSinkTo; ++I) {
-    if (IsAcceptableTarget(Inst, *I))
-      SuccToSinkTo = *I;
+  for (BasicBlock *Succ : successors(Inst->getParent())) {
+    if (SuccToSinkTo)
+      break;
+    if (IsAcceptableTarget(Inst, Succ))
+      SuccToSinkTo = Succ;
   }
 
   // If we couldn't find a block to sink to, ignore this instruction.
