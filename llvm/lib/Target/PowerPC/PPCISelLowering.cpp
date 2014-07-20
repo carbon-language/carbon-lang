@@ -2551,15 +2551,22 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         continue;
       }
 
-      // All aggregates smaller than 8 bytes must be passed right-justified.
-      if (ObjSize < PtrByteSize && !isLittleEndian)
-        CurArgOffset = CurArgOffset + (PtrByteSize - ObjSize);
-      // The value of the object is its address.
-      int FI = MFI->CreateFixedObject(ObjSize, CurArgOffset, true);
+      // Create a stack object covering all stack doublewords occupied
+      // by the argument.
+      int FI = MFI->CreateFixedObject(ArgSize, ArgOffset, true);
       SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-      InVals.push_back(FIN);
 
-      if (ObjSize < 8) {
+      // Handle aggregates smaller than 8 bytes.
+      if (ObjSize < PtrByteSize) {
+        // The value of the object is its address, which differs from the
+        // address of the enclosing doubleword on big-endian systems.
+        SDValue Arg = FIN;
+        if (!isLittleEndian) {
+          SDValue ArgOff = DAG.getConstant(PtrByteSize - ObjSize, PtrVT);
+          Arg = DAG.getNode(ISD::ADD, dl, ArgOff.getValueType(), Arg, ArgOff);
+        }
+        InVals.push_back(Arg);
+
         if (GPR_idx != Num_GPR_Regs) {
           unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
           SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
@@ -2568,18 +2575,13 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
           if (ObjSize==1 || ObjSize==2 || ObjSize==4) {
             EVT ObjType = (ObjSize == 1 ? MVT::i8 :
                            (ObjSize == 2 ? MVT::i16 : MVT::i32));
-            Store = DAG.getTruncStore(Val.getValue(1), dl, Val, FIN,
+            Store = DAG.getTruncStore(Val.getValue(1), dl, Val, Arg,
                                       MachinePointerInfo(FuncArg),
                                       ObjType, false, false, 0);
           } else {
             // For sizes that don't fit a truncating store (3, 5, 6, 7),
             // store the whole register as-is to the parameter save area
-            // slot.  The address of the parameter was already calculated
-            // above (InVals.push_back(FIN)) to be the right-justified
-            // offset within the slot.  For this store, we need a new
-            // frame index that points at the beginning of the slot.
-            int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
-            SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
+            // slot.
             Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
                                  MachinePointerInfo(FuncArg),
                                  false, false, 0);
@@ -2593,27 +2595,29 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
         continue;
       }
 
+      // The value of the object is its address, which is the address of
+      // its first stack doubleword.
+      InVals.push_back(FIN);
+
+      // Store whatever pieces of the object are in registers to memory.
       for (unsigned j = 0; j < ArgSize; j += PtrByteSize) {
-        // Store whatever pieces of the object are in registers
-        // to memory.  ArgOffset will be the address of the beginning
-        // of the object.
-        if (GPR_idx != Num_GPR_Regs) {
-          unsigned VReg;
-          VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
-          int FI = MFI->CreateFixedObject(PtrByteSize, ArgOffset, true);
-          SDValue FIN = DAG.getFrameIndex(FI, PtrVT);
-          SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
-          SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN,
-                                       MachinePointerInfo(FuncArg, j),
-                                       false, false, 0);
-          MemOps.push_back(Store);
-          ++GPR_idx;
-          ArgOffset += PtrByteSize;
-        } else {
-          ArgOffset += ArgSize - j;
+        if (GPR_idx == Num_GPR_Regs)
           break;
+
+        unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
+        SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, PtrVT);
+        SDValue Addr = FIN;
+        if (j) {
+          SDValue Off = DAG.getConstant(j, PtrVT);
+          Addr = DAG.getNode(ISD::ADD, dl, Off.getValueType(), Addr, Off);
         }
+        SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, Addr,
+                                     MachinePointerInfo(FuncArg, j),
+                                     false, false, 0);
+        MemOps.push_back(Store);
+        ++GPR_idx;
       }
+      ArgOffset += ArgSize;
       continue;
     }
 
