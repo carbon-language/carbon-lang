@@ -17,6 +17,18 @@
 	.syntax unified
 	.text
 
+#if __ARM_ARCH_ISA_THUMB == 2
+	.thumb
+#endif
+
+#if __ARM_ARCH_ISA_THUMB == 2
+#define IT(cond)  it cond
+#define ITT(cond) itt cond
+#else
+#define IT(cond)
+#define ITT(cond)
+#endif
+
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)
@@ -30,8 +42,10 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 #else
 	cmp	r1, #1
 	bcc	LOCAL_LABEL(divby0)
+	IT(eq)
 	JMPc(lr, eq)
 	cmp	r0, r1
+	ITT(cc)
 	movcc	r0, #0
 	JMPc(lr, cc)
 	/*
@@ -43,6 +57,7 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 	 * r0 and (r1 << I) have the highest bit set in the same position.
 	 * At the time of JMP, ip := .Ldiv0block - 12 * I.
 	 * This depends on the fixed instruction size of block.
+	 * For ARM mode, this is 12 Bytes, for THUMB mode 14 Bytes.
 	 *
 	 * block(shift) implements the test-and-update-quotient core.
 	 * It assumes (r0 << shift) can be computed without overflow and
@@ -54,12 +69,20 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 	clz	r3, r1
 	/* r0 >= r1 implies clz(r0) <= clz(r1), so ip <= r3. */
 	sub	r3, r3, ip
+#    if __ARM_ARCH_ISA_THUMB == 2
+	adr	ip, LOCAL_LABEL(div0block) + 1
+	sub	ip, ip, r3, lsl #1
+#    else
 	adr	ip, LOCAL_LABEL(div0block)
+#    endif
 	sub	ip, ip, r3, lsl #2
 	sub	ip, ip, r3, lsl #3
 	mov	r3, #0
 	bx	ip
 #  else
+#    if __ARM_ARCH_ISA_THUMB == 2
+#    error THUMB mode requires CLZ or UDIV
+#    endif
 	mov	r2, r0
 	adr	ip, LOCAL_LABEL(div0block)
 
@@ -96,8 +119,9 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 
 #define block(shift) \
 	cmp	r0, r1, lsl IMM shift; \
-	addhs	r3, r3, IMM (1 << shift); \
-	subhs	r0, r0, r1, lsl IMM shift
+	ITT(hs); \
+	addhs.w	r3, r3, IMM (1 << shift); \
+	subhs.w	r0, r0, r1, lsl IMM shift
 
 	block(31)
 	block(30)
