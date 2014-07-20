@@ -16,12 +16,14 @@
 #include "PPCMCAsmInfo.h"
 #include "PPCTargetStreamer.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -125,18 +127,31 @@ public:
   void emitMachine(StringRef CPU) override {
     OS << "\t.machine " << CPU << '\n';
   }
+  virtual void emitAbiVersion(int AbiVersion) override {
+    OS << "\t.abiversion " << AbiVersion << '\n';
+  }
 };
 
 class PPCTargetELFStreamer : public PPCTargetStreamer {
 public:
   PPCTargetELFStreamer(MCStreamer &S) : PPCTargetStreamer(S) {}
-  void emitTCEntry(const MCSymbol &S) override {
+  MCELFStreamer &getStreamer() {
+    return static_cast<MCELFStreamer &>(Streamer);
+  }
+  virtual void emitTCEntry(const MCSymbol &S) override {
     // Creates a R_PPC64_TOC relocation
     Streamer.EmitSymbolValue(&S, 8);
   }
   void emitMachine(StringRef CPU) override {
     // FIXME: Is there anything to do in here or does this directive only
     // limit the parser?
+  }
+  virtual void emitAbiVersion(int AbiVersion) override {
+    MCAssembler &MCA = getStreamer().getAssembler();
+    unsigned Flags = MCA.getELFHeaderEFlags();
+    Flags &= ~ELF::EF_PPC64_ABI;
+    Flags |= (AbiVersion & ELF::EF_PPC64_ABI);
+    MCA.setELFHeaderEFlags(Flags);
   }
 };
 
@@ -149,6 +164,9 @@ public:
   void emitMachine(StringRef CPU) override {
     // FIXME: We should update the CPUType, CPUSubType in the Object file if
     // the new values are different from the defaults.
+  }
+  virtual void emitAbiVersion(int AbiVersion) override {
+    llvm_unreachable("Unknown pseudo-op: .abiversion");
   }
 };
 }

@@ -244,6 +244,7 @@ class PPCAsmParser : public MCTargetAsmParser {
   bool ParseDirectiveTC(unsigned Size, SMLoc L);
   bool ParseDirectiveMachine(SMLoc L);
   bool ParseDarwinDirectiveMachine(SMLoc L);
+  bool ParseDirectiveAbiVersion(SMLoc L);
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
@@ -1412,6 +1413,8 @@ bool PPCAsmParser::ParseDirective(AsmToken DirectiveID) {
       return ParseDirectiveTC(isPPC64()? 8 : 4, DirectiveID.getLoc());
     if (IDVal == ".machine")
       return ParseDirectiveMachine(DirectiveID.getLoc());
+    if (IDVal == ".abiversion")
+      return ParseDirectiveAbiVersion(DirectiveID.getLoc());
   } else {
     if (IDVal == ".machine")
       return ParseDarwinDirectiveMachine(DirectiveID.getLoc());
@@ -1530,6 +1533,27 @@ bool PPCAsmParser::ParseDarwinDirectiveMachine(SMLoc L) {
     Error(L, "unexpected token in directive");
     return false;
   }
+
+  return false;
+}
+
+/// ParseDirectiveAbiVersion
+///  ::= .abiversion constant-expression
+bool PPCAsmParser::ParseDirectiveAbiVersion(SMLoc L) {
+  int64_t AbiVersion;
+  if (getParser().parseAbsoluteExpression(AbiVersion)){
+    Error(L, "expected constant expression");
+    return false;
+  }
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    Error(L, "unexpected token in directive");
+    return false;
+  }
+
+  PPCTargetStreamer &TStreamer =
+      *static_cast<PPCTargetStreamer *>(
+           getParser().getStreamer().getTargetStreamer());
+  TStreamer.emitAbiVersion(AbiVersion);
 
   return false;
 }

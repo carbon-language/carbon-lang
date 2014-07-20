@@ -496,6 +496,15 @@ enum {
   R_PPC_REL16_HA              = 252
 };
 
+// Specific e_flags for PPC64
+enum {
+  // e_flags bits specifying ABI:
+  // 1 for original ABI using function descriptors,
+  // 2 for revised ABI without function descriptors,
+  // 0 for unspecified or not using any features affected by the differences.
+  EF_PPC64_ABI = 3
+};
+
 // ELF Relocation types for PPC64
 enum {
   R_PPC64_NONE                = 0,
