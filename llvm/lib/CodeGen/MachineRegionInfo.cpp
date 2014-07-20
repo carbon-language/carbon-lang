@@ -111,9 +111,11 @@ void MachineRegionInfoPass::print(raw_ostream &OS, const Module *) const {
   RI.print(OS);
 }
 
+#if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void MachineRegionInfoPass::dump() const {
   RI.dump();
 }
+#endif
 
 char MachineRegionInfoPass::ID = 0;
 
