@@ -62,8 +62,7 @@ unequal:
 }
 
 ; CHECK-LABEL: func2:
-; CHECK: addi [[REG1:[0-9]+]], 1, 64
-; CHECK: ld [[REG2:[0-9]+]], 8([[REG1]])
+; CHECK: ld [[REG2:[0-9]+]], 72(1)
 ; CHECK: cmpld {{[0-9]+}}, 4, [[REG2]]
 ; CHECK-DAG: std [[REG2]], -[[OFFSET1:[0-9]+]]
 ; CHECK-DAG: std 4, -[[OFFSET2:[0-9]+]]
@@ -82,8 +81,7 @@ unequal:
 ; DARWIN32: lwz r3, -[[OFFSET2]]
 
 ; DARWIN64: _func2:
-; DARWIN64: addi r[[REG1:[0-9]+]], r1, 64
-; DARWIN64: ld r[[REG2:[0-9]+]], 8(r[[REG1]])
+; DARWIN64: ld r[[REG2:[0-9]+]], 72(r1)
 ; DARWIN64: mr
 ; DARWIN64: mr r[[REG3:[0-9]+]], r[[REGA:[0-9]+]]
 ; DARWIN64: cmpld cr{{[0-9]+}}, r[[REGA]], r[[REG2]]
@@ -108,10 +106,8 @@ unequal:
 }
 
 ; CHECK-LABEL: func3:
-; CHECK: addi [[REG1:[0-9]+]], 1, 64
-; CHECK: addi [[REG2:[0-9]+]], 1, 48
-; CHECK: ld [[REG3:[0-9]+]], 8([[REG1]])
-; CHECK: ld [[REG4:[0-9]+]], 8([[REG2]])
+; CHECK: ld [[REG3:[0-9]+]], 72(1)
+; CHECK: ld [[REG4:[0-9]+]], 56(1)
 ; CHECK: cmpld {{[0-9]+}}, [[REG4]], [[REG3]]
 ; CHECK: std [[REG3]], -[[OFFSET1:[0-9]+]](1)
 ; CHECK: std [[REG4]], -[[OFFSET2:[0-9]+]](1)
@@ -130,10 +126,8 @@ unequal:
 ; DARWIN32: lwz r3, -[[OFFSET1]]
 
 ; DARWIN64: _func3:
-; DARWIN64: addi r[[REG1:[0-9]+]], r1, 64
-; DARWIN64: addi r[[REG2:[0-9]+]], r1, 48
-; DARWIN64: ld r[[REG3:[0-9]+]], 8(r[[REG1]])
-; DARWIN64: ld r[[REG4:[0-9]+]], 8(r[[REG2]])
+; DARWIN64: ld r[[REG3:[0-9]+]], 72(r1)
+; DARWIN64: ld r[[REG4:[0-9]+]], 56(r1)
 ; DARWIN64: cmpld cr{{[0-9]+}}, r[[REG4]], r[[REG3]]
 ; DARWIN64: std r[[REG3]], -[[OFFSET1:[0-9]+]]
 ; DARWIN64: std r[[REG4]], -[[OFFSET2:[0-9]+]]
@@ -157,12 +151,11 @@ unequal:
 }
 
 ; CHECK-LABEL: func4:
-; CHECK: addi [[REG1:[0-9]+]], 1, 128
+; CHECK: ld [[REG3:[0-9]+]], 136(1)
 ; CHECK: ld [[REG2:[0-9]+]], 120(1)
-; CHECK: ld [[REG3:[0-9]+]], 8([[REG1]])
 ; CHECK: cmpld {{[0-9]+}}, [[REG2]], [[REG3]]
-; CHECK: std [[REG2]], -[[OFFSET1:[0-9]+]](1)
 ; CHECK: std [[REG3]], -[[OFFSET2:[0-9]+]](1)
+; CHECK: std [[REG2]], -[[OFFSET1:[0-9]+]](1)
 ; CHECK: ld 3, -[[OFFSET1]](1)
 ; CHECK: ld 3, -[[OFFSET2]](1)
 
@@ -178,9 +171,8 @@ unequal:
 ; DARWIN32: lwz r[[REG1]], -[[OFFSET2]]
 
 ; DARWIN64: _func4:
-; DARWIN64: addi r[[REG1:[0-9]+]], r1, 128
 ; DARWIN64: ld r[[REG2:[0-9]+]], 120(r1)
-; DARWIN64: ld r[[REG3:[0-9]+]], 8(r[[REG1]])
+; DARWIN64: ld r[[REG3:[0-9]+]], 136(r1)
 ; DARWIN64: mr r[[REG4:[0-9]+]], r[[REG2]]
 ; DARWIN64: cmpld cr{{[0-9]+}}, r[[REG2]], r[[REG3]]
 ; DARWIN64: std r[[REG4]], -[[OFFSET1:[0-9]+]]

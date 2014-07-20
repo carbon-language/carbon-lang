@@ -26,8 +26,8 @@ entry:
 ; CHECK-LABEL: foo:
 ; CHECK: lfd 3
 ; CHECK: lfd 4
-; CHECK: lfd 2
 ; CHECK: lfd 1
+; CHECK: lfd 2
 
 define { float, float } @oof() nounwind {
 entry:

@@ -1331,7 +1331,13 @@ bool PPCTargetLowering::SelectAddressRegImm(SDValue N, SDValue &Disp,
       if ((LHSKnownZero.getZExtValue()|~(uint64_t)imm) == ~0ULL) {
         // If all of the bits are known zero on the LHS or RHS, the add won't
         // carry.
-        Base = N.getOperand(0);
+        if (FrameIndexSDNode *FI =
+              dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
+          Base = DAG.getTargetFrameIndex(FI->getIndex(), N.getValueType());
+          fixupFuncForFI(DAG, FI->getIndex(), N.getValueType());
+        } else {
+          Base = N.getOperand(0);
+        }
         Disp = DAG.getTargetConstant(imm, N.getValueType());
         return true;
       }
