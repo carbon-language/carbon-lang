@@ -91,10 +91,8 @@ void RegionInfo::updateStatistics(Region *R) {
     ++numSimpleRegions;
 }
 
-void RegionInfo::RegionInfo::recalculate(Function &F,
-                                         DominatorTree *DT_,
-                                         PostDominatorTree *PDT_,
-                                         DominanceFrontier *DF_) {
+void RegionInfo::recalculate(Function &F, DominatorTree *DT_,
+                             PostDominatorTree *PDT_, DominanceFrontier *DF_) {
   DT = DT_;
   PDT = PDT_;
   DF = DF_;
