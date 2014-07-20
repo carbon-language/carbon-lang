@@ -89,10 +89,6 @@ public:
   bool isTriviallyReMaterializable(const MachineInstr *MI,
                                    AliasAnalysis *AA = nullptr) const;
 
-  unsigned getIEQOpcode() const override {
-    llvm_unreachable("Unimplemented");
-  }
-
   MachineInstr *buildMovInstr(MachineBasicBlock *MBB,
                               MachineBasicBlock::iterator I,
                               unsigned DstReg, unsigned SrcReg) const override;

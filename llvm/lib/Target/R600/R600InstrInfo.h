@@ -152,7 +152,6 @@ namespace llvm {
   /// instruction slots within an instruction group.
   bool isVector(const MachineInstr &MI) const;
 
-  unsigned getIEQOpcode() const override;
   bool isMov(unsigned Opcode) const override;
 
   DFAPacketizer *CreateTargetScheduleState(const TargetMachine *TM,

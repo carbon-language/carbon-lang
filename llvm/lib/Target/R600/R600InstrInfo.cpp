@@ -92,10 +92,6 @@ bool R600InstrInfo::isLegalToSplitMBBAt(MachineBasicBlock &MBB,
   return true;
 }
 
-unsigned R600InstrInfo::getIEQOpcode() const {
-  return AMDGPU::SETE_INT;
-}
-
 bool R600InstrInfo::isMov(unsigned Opcode) const {
 
 
@@ -323,7 +319,7 @@ R600InstrInfo::getSrcs(MachineInstr *MI) const {
         Result.push_back(std::pair<MachineOperand *, int64_t>(&MO, Sel));
         continue;
       }
-      
+
     }
     return Result;
   }

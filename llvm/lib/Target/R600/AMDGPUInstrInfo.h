@@ -144,7 +144,6 @@ public:
 // Pure virtual funtions to be implemented by sub-classes.
 //===---------------------------------------------------------------------===//
 
-  virtual unsigned getIEQOpcode() const = 0;
   virtual bool isMov(unsigned opcode) const = 0;
 
   /// \brief Calculate the "Indirect Address" for the given \p RegIndex and
