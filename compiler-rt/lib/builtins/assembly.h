@@ -22,16 +22,6 @@
 #define SEPARATOR ;
 #endif
 
-#if defined(__arm__)
-#if __ARM_ARCH_ISA_THUMB == 2
-#define IT  it
-#define ITT itt
-#else
-#define IT  @
-#define ITT @
-#endif
-#endif
-
 #if defined(__APPLE__)
 #define HIDDEN(name) .private_extern name
 #define LOCAL_LABEL(name) L_##name
@@ -96,9 +86,7 @@
 
 #ifdef ARM_HAS_BX
 #define JMP(r) bx r
-#define JMPc(r, c)                                                             \
-  IT c;                                                                        \
-  bx##c r
+#define JMPc(r, c) bx##c r
 #else
 #define JMP(r) mov pc, r
 #define JMPc(r, c) mov##c pc, r

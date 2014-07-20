@@ -16,9 +16,6 @@
 
 	.syntax unified
 	.text
-#if __ARM_ARCH_ISA_THUMB == 2
-	.thumb
-#endif
 
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
@@ -35,7 +32,6 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 	bcc	LOCAL_LABEL(divby0)
 	JMPc(lr, eq)
 	cmp	r0, r1
-	IT cc
 	movcc	r0, #0
 	JMPc(lr, cc)
 	/*
@@ -43,14 +39,10 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 	 *
 	 * r0 is the numerator, r1 the denominator.
 	 *
-	 * ARM:
 	 * The code before JMP computes the correct shift I, so that
 	 * r0 and (r1 << I) have the highest bit set in the same position.
 	 * At the time of JMP, ip := .Ldiv0block - 12 * I.
 	 * This depends on the fixed instruction size of block.
-	 *
-	 * Thumb 2:
-	 * Uses a jumptable to jump to the appropriate block.
 	 *
 	 * block(shift) implements the test-and-update-quotient core.
 	 * It assumes (r0 << shift) can be computed without overflow and
@@ -61,57 +53,15 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 	clz	ip, r0
 	clz	r3, r1
 	/* r0 >= r1 implies clz(r0) <= clz(r1), so ip <= r3. */
-#if __ARM_ARCH_ISA_THUMB == 2
-	sub	ip, r3, ip
-	mov	r3, #0
-	tbb	[pc, ip]
-LOCAL_LABEL(JT):
-	.byte (LOCAL_LABEL( 0) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 1) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 2) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 3) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 4) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 5) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 6) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 7) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 8) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL( 9) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(10) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(11) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(12) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(13) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(14) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(15) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(16) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(17) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(18) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(19) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(20) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(21) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(22) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(23) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(24) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(25) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(26) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(27) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(28) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(29) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(30) - LOCAL_LABEL(JT)) / 2
-	.byte (LOCAL_LABEL(31) - LOCAL_LABEL(JT)) / 2
-#else
 	sub	r3, r3, ip
-	adr	ip, LOCAL_LABEL(0)
+	adr	ip, LOCAL_LABEL(div0block)
 	sub	ip, ip, r3, lsl #2
 	sub	ip, ip, r3, lsl #3
 	mov	r3, #0
 	bx	ip
-#endif
 #  else
-#if __ARM_ARCH_ISA_THUMB == 2
-#error unsupported configuration
-#endif
 	mov	r2, r0
-	adr	ip, LOCAL_LABEL(0)
+	adr	ip, LOCAL_LABEL(div0block)
 
 	lsr	r3, r2, #16
 	cmp	r3, r1
@@ -144,12 +94,10 @@ LOCAL_LABEL(JT):
 
 #define	IMM	#
 
-#define block(shift)                                                           \
-LOCAL_LABEL(shift):                                                            \
-	cmp r0, r1, lsl IMM shift;                                             \
-	ITT hs;                                                                \
-	addhs r3, r3, IMM(1 << shift);                                         \
-	subhs r0, r0, r1, lsl IMM shift
+#define block(shift) \
+	cmp	r0, r1, lsl IMM shift; \
+	addhs	r3, r3, IMM (1 << shift); \
+	subhs	r0, r0, r1, lsl IMM shift
 
 	block(31)
 	block(30)
@@ -182,6 +130,7 @@ LOCAL_LABEL(shift):                                                            \
 	block(3)
 	block(2)
 	block(1)
+LOCAL_LABEL(div0block):
 	block(0)
 
 	mov	r0, r3
