@@ -22,6 +22,7 @@ class MCFragment;
 class MCObjectWriter;
 class MCSectionData;
 class MCSymbol;
+class MCSymbolData;
 class MCValue;
 
 class MCELFObjectTargetWriter {
@@ -54,7 +55,8 @@ public:
   virtual unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                                 bool IsPCRel) const = 0;
 
-  virtual bool needsRelocateWithSymbol(unsigned Type) const;
+  virtual bool needsRelocateWithSymbol(const MCSymbolData &SD,
+                                       unsigned Type) const;
 
   /// @name Accessors
   /// @{

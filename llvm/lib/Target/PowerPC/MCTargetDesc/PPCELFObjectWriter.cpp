@@ -11,6 +11,7 @@
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "MCTargetDesc/PPCMCExpr.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCValue.h"
@@ -31,7 +32,8 @@ namespace {
     unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                           bool IsPCRel) const override;
 
-    bool needsRelocateWithSymbol(unsigned Type) const override;
+    bool needsRelocateWithSymbol(const MCSymbolData &SD,
+                                 unsigned Type) const override;
   };
 }
 
@@ -389,16 +391,20 @@ unsigned PPCELFObjectWriter::GetRelocType(const MCValue &Target,
   return getRelocTypeInner(Target, Fixup, IsPCRel);
 }
 
-bool PPCELFObjectWriter::needsRelocateWithSymbol(unsigned Type) const {
+bool PPCELFObjectWriter::needsRelocateWithSymbol(const MCSymbolData &SD,
+                                                 unsigned Type) const {
   switch (Type) {
     default:
       return false;
 
     case ELF::R_PPC_REL24:
-      // FIXME: We only need to keep the target symbol of the relocation
-      // if the symbol uses a local entry point.  Unfortunately, we do not
-      // have access to the symbol here ...
-      return true;
+      // If the target symbol has a local entry point, we must keep the
+      // target symbol to preserve that information for the linker.
+      // The "other" values are stored in the last 6 bits of the second byte.
+      // The traditional defines for STO values assume the full byte and thus
+      // the shift to pack it.
+      unsigned Other = MCELF::getOther(SD) << 2;
+      return (Other & ELF::STO_PPC64_LOCAL_MASK) != 0;
   }
 }
 

@@ -27,6 +27,14 @@ caller:
 	nop
 	.size caller, .-caller
 
+	.section .text.other
+caller_other:
+	bl callee1
+	nop
+	bl callee2
+	nop
+	.size caller_other, .-caller_other
+
 # Verify that use of .localentry implies ABI version 2
 # CHECK: ElfHeader {
 # CHECK: Flags [ (0x2)
@@ -38,6 +46,10 @@ caller:
 # CHECK-NEXT: R_PPC64_REL24 callee1
 # CHECK-NEXT: }
 # CHECK-NOT: R_PPC64_REL24 callee2
+# CHECK: Section ({{[0-9]*}}) .rela.text.other {
+# CHECK-NEXT: R_PPC64_REL24 callee1
+# CHECK-NEXT: R_PPC64_REL24 .text
+# CHECK-NEXT: }
 
 # Verify that .localentry is encoded in the Other field.
 # CHECK: Symbols [

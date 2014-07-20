@@ -782,7 +782,7 @@ bool ELFObjectWriter::shouldRelocateWithSymbol(const MCAssembler &Asm,
   if (Asm.isThumbFunc(&Sym))
     return true;
 
-  if (TargetObjectWriter->needsRelocateWithSymbol(Type))
+  if (TargetObjectWriter->needsRelocateWithSymbol(*SD, Type))
     return true;
   return false;
 }
