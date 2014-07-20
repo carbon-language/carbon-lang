@@ -1241,20 +1241,6 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
 
   switch (N->getOpcode()) {
     default: return AMDGPUTargetLowering::PerformDAGCombine(N, DCI);
-    case ISD::SELECT_CC: {
-      ConstantSDNode *True, *False;
-      // i1 selectcc(l, r, -1, 0, cc) -> i1 setcc(l, r, cc)
-      if ((True = dyn_cast<ConstantSDNode>(N->getOperand(2)))
-          && (False = dyn_cast<ConstantSDNode>(N->getOperand(3)))
-          && True->isAllOnesValue()
-          && False->isNullValue()
-          && VT == MVT::i1) {
-        return DAG.getNode(ISD::SETCC, DL, VT, N->getOperand(0),
-                           N->getOperand(1), N->getOperand(4));
-
-      }
-      break;
-    }
     case ISD::SETCC: {
       SDValue Arg0 = N->getOperand(0);
       SDValue Arg1 = N->getOperand(1);

@@ -1,8 +1,10 @@
-; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
+; RUN: llc -march=r600 -mcpu=redwood < %s | FileCheck -check-prefix=EG -check-prefix=FUNC %s
 
-; CHECK: @test_a
-; CHECK-NOT: CND
-; CHECK: SET{{[NEQGTL]+}}_DX10
+
+; FUNC-LABEL: @test_a
+; EG-NOT: CND
+; EG: SET{{[NEQGTL]+}}_DX10
 
 define void @test_a(i32 addrspace(1)* %out, float %in) {
 entry:
@@ -28,10 +30,10 @@ ENDIF:
 ; Same as test_a, but the branch labels are swapped to produce the inverse cc
 ; for the icmp instruction
 
-; CHECK: @test_b
-; CHECK: SET{{[GTEQN]+}}_DX10
-; CHECK-NEXT: PRED_
-; CHECK-NEXT: ALU clause starting
+; EG-LABEL: @test_b
+; EG: SET{{[GTEQN]+}}_DX10
+; EG-NEXT: PRED_
+; EG-NEXT: ALU clause starting
 define void @test_b(i32 addrspace(1)* %out, float %in) {
 entry:
   %0 = fcmp olt float %in, 0.0
@@ -54,12 +56,24 @@ ENDIF:
 }
 
 ; Test a CND*_INT instruction with float true/false values
-; CHECK: @test_c
-; CHECK: CND{{[GTE]+}}_INT
+; EG-LABEL: @test_c
+; EG: CND{{[GTE]+}}_INT
 define void @test_c(float addrspace(1)* %out, i32 %in) {
 entry:
   %0 = icmp sgt i32 %in, 0
   %1 = select i1 %0, float 2.0, float 3.0
   store float %1, float addrspace(1)* %out
+  ret void
+}
+
+; FUNC-LABEL: @selectcc_bool
+; SI: V_CMP_NE_I32
+; SI-NEXT: V_CNDMASK_B32_e64
+; SI-NOT: CMP
+; SI-NOT: CNDMASK
+define void @selectcc_bool(i32 addrspace(1)* %out, i32 %a, i32 %b) nounwind {
+  %icmp0 = icmp ne i32 %a, %b
+  %ext = select i1 %icmp0, i32 -1, i32 0
+  store i32 %ext, i32 addrspace(1)* %out
   ret void
 }
