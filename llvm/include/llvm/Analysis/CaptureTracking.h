@@ -18,6 +18,8 @@ namespace llvm {
 
   class Value;
   class Use;
+  class Instruction;
+  class DominatorTree;
 
   /// PointerMayBeCaptured - Return true if this pointer value may be captured
   /// by the enclosing function (which is required to exist).  This routine can
@@ -29,6 +31,19 @@ namespace llvm {
   bool PointerMayBeCaptured(const Value *V,
                             bool ReturnCaptures,
                             bool StoreCaptures);
+
+  /// PointerMayBeCapturedBefore - Return true if this pointer value may be
+  /// captured by the enclosing function (which is required to exist). If a
+  /// DominatorTree is provided, only captures which happen before the given
+  /// instruction are considered. This routine can be expensive, so consider
+  /// caching the results.  The boolean ReturnCaptures specifies whether
+  /// returning the value (or part of it) from the function counts as capturing
+  /// it or not.  The boolean StoreCaptures specified whether storing the value
+  /// (or part of it) into memory anywhere automatically counts as capturing it
+  /// or not.
+  bool PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
+                                  bool StoreCaptures, const Instruction *I,
+                                  DominatorTree *DT);
 
   /// This callback is used in conjunction with PointerMayBeCaptured. In
   /// addition to the interface here, you'll need to provide your own getters

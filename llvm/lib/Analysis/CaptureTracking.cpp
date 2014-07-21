@@ -20,8 +20,10 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CaptureTracking.h"
+#include "llvm/Analysis/CFG.h"
 #include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Dominators.h"
 #include "llvm/IR/Instructions.h"
 
 using namespace llvm;
@@ -44,6 +46,57 @@ namespace {
       Captured = true;
       return true;
     }
+
+    bool ReturnCaptures;
+
+    bool Captured;
+  };
+
+  /// Only find pointer captures which happen before the given instruction. Uses
+  /// the dominator tree to determine whether one instruction is before another.
+  /// Only support the case where the Value is defined in the same basic block
+  /// as the given instruction and the use.
+  struct CapturesBefore : public CaptureTracker {
+    CapturesBefore(bool ReturnCaptures, const Instruction *I, DominatorTree *DT)
+      : BeforeHere(I), DT(DT), ReturnCaptures(ReturnCaptures),
+        Captured(false) {}
+
+    void tooManyUses() override { Captured = true; }
+
+    bool shouldExplore(const Use *U) override {
+      Instruction *I = cast<Instruction>(U->getUser());
+      BasicBlock *BB = I->getParent();
+      // We explore this usage only if the usage can reach "BeforeHere".
+      // If use is not reachable from entry, there is no need to explore.
+      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
+        return false;
+      // If the value is defined in the same basic block as use and BeforeHere,
+      // there is no need to explore the use if BeforeHere dominates use.
+      // Check whether there is a path from I to BeforeHere.
+      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
+          !isPotentiallyReachable(I, BeforeHere, DT))
+        return false;
+      return true;
+    }
+
+    bool captured(const Use *U) override {
+      if (isa<ReturnInst>(U->getUser()) && !ReturnCaptures)
+        return false;
+
+      Instruction *I = cast<Instruction>(U->getUser());
+      BasicBlock *BB = I->getParent();
+      // Same logic as in shouldExplore.
+      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
+        return false;
+      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
+          !isPotentiallyReachable(I, BeforeHere, DT))
+        return false;
+      Captured = true;
+      return true;
+    }
+
+    const Instruction *BeforeHere;
+    DominatorTree *DT;
 
     bool ReturnCaptures;
 
@@ -72,6 +125,32 @@ bool llvm::PointerMayBeCaptured(const Value *V,
   SimpleCaptureTracker SCT(ReturnCaptures);
   PointerMayBeCaptured(V, &SCT);
   return SCT.Captured;
+}
+
+/// PointerMayBeCapturedBefore - Return true if this pointer value may be
+/// captured by the enclosing function (which is required to exist). If a
+/// DominatorTree is provided, only captures which happen before the given
+/// instruction are considered. This routine can be expensive, so consider
+/// caching the results.  The boolean ReturnCaptures specifies whether
+/// returning the value (or part of it) from the function counts as capturing
+/// it or not.  The boolean StoreCaptures specified whether storing the value
+/// (or part of it) into memory anywhere automatically counts as capturing it
+/// or not.
+bool llvm::PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
+                                      bool StoreCaptures, const Instruction *I,
+                                      DominatorTree *DT) {
+  assert(!isa<GlobalValue>(V) &&
+         "It doesn't make sense to ask whether a global is captured.");
+
+  if (!DT)
+    return PointerMayBeCaptured(V, ReturnCaptures, StoreCaptures);
+
+  // TODO: See comment in PointerMayBeCaptured regarding what could be done
+  // with StoreCaptures.
+
+  CapturesBefore CB(ReturnCaptures, I, DT);
+  PointerMayBeCaptured(V, &CB);
+  return CB.Captured;
 }
 
 /// TODO: Write a new FunctionPass AliasAnalysis so that it can keep

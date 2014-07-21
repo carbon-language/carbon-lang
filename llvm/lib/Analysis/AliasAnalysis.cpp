@@ -388,53 +388,6 @@ AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
   return ModRef;
 }
 
-namespace {
-  /// Only find pointer captures which happen before the given instruction. Uses
-  /// the dominator tree to determine whether one instruction is before another.
-  /// Only support the case where the Value is defined in the same basic block
-  /// as the given instruction and the use.
-  struct CapturesBefore : public CaptureTracker {
-    CapturesBefore(const Instruction *I, DominatorTree *DT)
-      : BeforeHere(I), DT(DT), Captured(false) {}
-
-    void tooManyUses() override { Captured = true; }
-
-    bool shouldExplore(const Use *U) override {
-      Instruction *I = cast<Instruction>(U->getUser());
-      BasicBlock *BB = I->getParent();
-      // We explore this usage only if the usage can reach "BeforeHere".
-      // If use is not reachable from entry, there is no need to explore.
-      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
-        return false;
-      // If the value is defined in the same basic block as use and BeforeHere,
-      // there is no need to explore the use if BeforeHere dominates use.
-      // Check whether there is a path from I to BeforeHere.
-      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
-          !isPotentiallyReachable(I, BeforeHere, DT))
-        return false;
-      return true;
-    }
-
-    bool captured(const Use *U) override {
-      Instruction *I = cast<Instruction>(U->getUser());
-      BasicBlock *BB = I->getParent();
-      // Same logic as in shouldExplore.
-      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
-        return false;
-      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
-          !isPotentiallyReachable(I, BeforeHere, DT))
-        return false;
-      Captured = true;
-      return true;
-    }
-
-    const Instruction *BeforeHere;
-    DominatorTree *DT;
-
-    bool Captured;
-  };
-}
-
 // FIXME: this is really just shoring-up a deficiency in alias analysis.
 // BasicAA isn't willing to spend linear time determining whether an alloca
 // was captured before or after this particular call, while we are. However,
@@ -454,9 +407,8 @@ AliasAnalysis::callCapturesBefore(const Instruction *I,
   if (!CS.getInstruction() || CS.getInstruction() == Object)
     return AliasAnalysis::ModRef;
 
-  CapturesBefore CB(I, DT);
-  llvm::PointerMayBeCaptured(Object, &CB);
-  if (CB.Captured)
+  if (llvm::PointerMayBeCapturedBefore(Object, /* ReturnCaptures */ true,
+                                       /* StoreCaptures */ true, I, DT))
     return AliasAnalysis::ModRef;
 
   unsigned ArgNo = 0;
