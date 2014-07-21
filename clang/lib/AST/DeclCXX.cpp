@@ -1625,7 +1625,7 @@ CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        VarDecl **Indices,
                                        unsigned NumIndices)
   : Initializee(Member), MemberOrEllipsisLocation(MemberLoc), Init(Init), 
-    LParenLoc(L), RParenLoc(R), IsVirtual(false),
+    LParenLoc(L), RParenLoc(R), IsDelegating(false), IsVirtual(false),
     IsWritten(false), SourceOrderOrNumArrayIndices(NumIndices)
 {
   VarDecl **MyIndices = reinterpret_cast<VarDecl **> (this + 1);
