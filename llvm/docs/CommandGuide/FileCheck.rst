@@ -53,7 +53,7 @@ OPTIONS
 
   Adds implicit negative checks for the specified patterns between positive
   checks. The option allows writing stricter tests without stuffing them with
-  ``CHECK-NOT``s.
+  ``CHECK-NOT``\ s.
 
   For example, "``--implicit-check-not warning:``" can be useful when testing
   diagnostic messages from tools that don't have an option similar to ``clang
