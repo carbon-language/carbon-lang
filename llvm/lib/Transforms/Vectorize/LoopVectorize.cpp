@@ -978,8 +978,8 @@ public:
           << "LV: Unrolling disabled by the pass manager\n");
   }
 
-  /// Return the loop vectorizer metadata prefix.
-  static StringRef Prefix() { return "llvm.loop.vectorize."; }
+  /// Return the loop metadata prefix.
+  static StringRef Prefix() { return "llvm.loop."; }
 
   MDNode *createHint(LLVMContext &Context, StringRef Name, unsigned V) const {
     SmallVector<Value*, 2> Vals;
@@ -1001,8 +1001,10 @@ public:
       for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i)
         Vals.push_back(LoopID->getOperand(i));
 
-    Vals.push_back(createHint(Context, Twine(Prefix(), "width").str(), Width));
-    Vals.push_back(createHint(Context, Twine(Prefix(), "unroll").str(), 1));
+    Vals.push_back(
+        createHint(Context, Twine(Prefix(), "vectorize.width").str(), Width));
+    Vals.push_back(
+        createHint(Context, Twine(Prefix(), "interleave.count").str(), 1));
 
     MDNode *NewLoopID = MDNode::get(Context, Vals);
     // Set operand 0 to refer to the loop id itself.
@@ -1073,7 +1075,7 @@ private:
       if (!S)
         continue;
 
-      // Check if the hint starts with the vectorizer prefix.
+      // Check if the hint starts with the loop metadata prefix.
       StringRef Hint = S->getString();
       if (!Hint.startswith(Prefix()))
         continue;
@@ -1091,22 +1093,22 @@ private:
     if (!C) return;
     unsigned Val = C->getZExtValue();
 
-    if (Hint == "width") {
+    if (Hint == "vectorize.width") {
       if (isPowerOf2_32(Val) && Val <= MaxVectorWidth)
         Width = Val;
       else
         DEBUG(dbgs() << "LV: ignoring invalid width hint metadata\n");
-    } else if (Hint == "unroll") {
-      if (isPowerOf2_32(Val) && Val <= MaxUnrollFactor)
-        Unroll = Val;
-      else
-        DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata\n");
-    } else if (Hint == "enable") {
+    } else if (Hint == "vectorize.enable") {
       if (C->getBitWidth() == 1)
         Force = Val == 1 ? LoopVectorizeHints::FK_Enabled
                          : LoopVectorizeHints::FK_Disabled;
       else
         DEBUG(dbgs() << "LV: ignoring invalid enable hint metadata\n");
+    } else if (Hint == "interleave.count") {
+      if (isPowerOf2_32(Val) && Val <= MaxUnrollFactor)
+        Unroll = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata\n");
     } else {
       DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint << '\n');
     }

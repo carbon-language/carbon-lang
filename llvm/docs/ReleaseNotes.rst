@@ -57,7 +57,9 @@ Non-comprehensive list of changes in this release
   unwinding information.
 
 * The prefix for loop vectorizer hint metadata has been changed from
-  ``llvm.vectorizer`` to ``llvm.loop.vectorize``.
+  ``llvm.vectorizer`` to ``llvm.loop.vectorize``.  In addition,
+  ``llvm.vectorizer.unroll`` metadata has been renamed
+  ``llvm.loop.interleave.count``.
 
 * Some backends previously implemented Atomic NAND(x,y) as ``x & ~y``. Now 
   all backends implement it as ``~(x & y)``, matching the semantics of GCC 4.4

@@ -38,4 +38,4 @@ define void @inc(i32 %n) nounwind uwtable noinline ssp {
 }
 
 !0 = metadata !{metadata !0, metadata !1}
-!1 = metadata !{metadata !"llvm.loop.vectorize.unroll", i32 2}
+!1 = metadata !{metadata !"llvm.loop.interleave.count", i32 2}

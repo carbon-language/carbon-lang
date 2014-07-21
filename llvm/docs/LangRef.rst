@@ -2910,37 +2910,49 @@ suggests an unroll factor to the loop unroller:
       br i1 %exitcond, label %._crit_edge, label %.lr.ph, !llvm.loop !0
     ...
     !0 = metadata !{ metadata !0, metadata !1 }
-    !1 = metadata !{ metadata !"llvm.loop.vectorize.width", i32 4 }
+    !1 = metadata !{ metadata !"llvm.loop.unroll.count", i32 4 }
 
-'``llvm.loop.vectorize``'
-^^^^^^^^^^^^^^^^^^^^^^^^^
+'``llvm.loop.vectorize``' and '``llvm.loop.interleave``'
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Metadata prefixed with ``llvm.loop.vectorize`` is used to control
-per-loop vectorization parameters such as vectorization width and
-interleave count.  ``llvm.loop.vectorize`` metadata should be used in
+Metadata prefixed with ``llvm.loop.vectorize`` or ``llvm.loop.interleave`` are
+used to control per-loop vectorization and interleaving parameters such as
+vectorization width and interleave count.  These metadata should be used in
 conjunction with ``llvm.loop`` loop identification metadata.  The
-``llvm.loop.vectorize`` metadata are only optimization hints and the
-vectorizer will only vectorize loops if it believes it is safe to do
-so.  The ``llvm.mem.parallel_loop_access`` metadata which contains
-information about loop-carried memory dependencies can be helpful in
-determining the safety of loop vectorization.
+``llvm.loop.vectorize`` and ``llvm.loop.interleave`` metadata are only
+optimization hints and the optimizer will only interleave and vectorize loops if
+it believes it is safe to do so.  The ``llvm.mem.parallel_loop_access`` metadata
+which contains information about loop-carried memory dependencies can be helpful
+in determining the safety of these transformations.
 
-'``llvm.loop.vectorize.unroll``' Metadata
+'``llvm.loop.interleave.count``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This metadata suggests an interleave count to the loop vectorizer.
-The first operand is the string ``llvm.loop.vectorize.unroll`` and the
+This metadata suggests an interleave count to the loop interleaver.
+The first operand is the string ``llvm.loop.interleave.count`` and the
 second operand is an integer specifying the interleave count. For
 example:
 
 .. code-block:: llvm
 
-   !0 = metadata !{ metadata !"llvm.loop.vectorize.unroll", i32 4 }
+   !0 = metadata !{ metadata !"llvm.loop.interleave.count", i32 4 }
 
-Note that setting ``llvm.loop.vectorize.unroll`` to 1 disables
-interleaving multiple iterations of the loop.  If
-``llvm.loop.vectorize.unroll`` is set to 0 then the interleave count
-will be determined automatically.
+Note that setting ``llvm.loop.interleave.count`` to 1 disables interleaving
+multiple iterations of the loop.  If ``llvm.loop.interleave.count`` is set to 0
+then the interleave count will be determined automatically.
+
+'``llvm.loop.vectorize.enable``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This metadata selectively enables or disables vectorization for the loop. The
+first operand is the string ``llvm.loop.vectorize.enable`` and the second operand
+is a bit.  If the bit operand value is 1 vectorization is enabled. A value of
+0 disables vectorization:
+
+.. code-block:: llvm
+
+   !0 = metadata !{ metadata !"llvm.loop.vectorize.enable", i1 0 }
+   !1 = metadata !{ metadata !"llvm.loop.vectorize.enable", i1 1 }
 
 '``llvm.loop.vectorize.width``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
