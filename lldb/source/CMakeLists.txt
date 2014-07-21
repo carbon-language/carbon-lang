@@ -331,7 +331,6 @@ endif ()
 if ( LLDB_ENABLE_PYTHON_SCRIPTS_SWIG_API_GENERATION )
 	# Add a Post-Build Event to copy over Python files and create the symlink to liblldb.so for the Python API(hardlink on Windows)
 	if ( NOT LLDB_DISABLE_PYTHON )
-        message("Adding post build step to run finishSwigWrapperClasses.py")
 	    add_custom_command( TARGET liblldb
 	        POST_BUILD
             DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/../scripts/finishSwigWrapperClasses.py
