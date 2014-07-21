@@ -83,6 +83,7 @@ private:
     funcRel32,             /// ex: movl _foo-L1(%eax), %eax
     pointer32,             /// ex: .long _foo
     delta32,               /// ex: .long _foo - .
+    negDelta32,            /// ex: .long . - _foo
 
     // Kinds introduced by Passes:
     lazyPointer,           /// Location contains a lazy pointer.
@@ -120,6 +121,7 @@ const Registry::KindStrings ArchHandler_x86::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(funcRel32),
   LLD_KIND_STRING_ENTRY(pointer32),
   LLD_KIND_STRING_ENTRY(delta32),
+  LLD_KIND_STRING_ENTRY(negDelta32),
   LLD_KIND_STRING_ENTRY(lazyPointer),
   LLD_KIND_STRING_ENTRY(lazyImmediateLocation),
   LLD_KIND_STRING_END
@@ -302,22 +304,28 @@ ArchHandler_x86::getPairReferenceInfo(const normalized::Relocation &reloc1,
     ec = atomFromAddr(0, fromAddress, &fromTarget, &offsetInFrom);
     if (ec)
       return ec;
-    if (fromTarget != inAtom)
-      return make_dynamic_error_code(Twine("SECTDIFF relocation where "
-                                           "subtrahend label is not in atom"));
-    *kind = ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X) ? funcRel32
-                                                                     : delta32;
-    if (*kind == funcRel32) {
-      // SECTDIFF relocations are used in i386 codegen where the function
-      // prolog does a CALL to the next instruction which POPs the return
-      // address into EBX which becomes the pic-base register.  The POP
-      // instruction is label the used for the subtrahend in expressions.
-      // The funcRel32 kind represents the 32-bit delta to some symbol from
-      // the start of the function (atom) containing the funcRel32.
-      uint32_t ta = fromAddress + value - toAddress;
-      *addend = ta - offsetInFrom;
+    if (fromTarget != inAtom) {
+      if (*target != inAtom) 
+        return make_dynamic_error_code(Twine("SECTDIFF relocation where "
+                                             "neither target is in atom"));
+      *kind = negDelta32;
+      *addend = toAddress - value - fromAddress;
+      *target = fromTarget;
     } else {
-      *addend = fromAddress + value - toAddress;
+      if ((perms & DefinedAtom::permR_X) == DefinedAtom::permR_X) {
+        // SECTDIFF relocations are used in i386 codegen where the function
+        // prolog does a CALL to the next instruction which POPs the return
+        // address into EBX which becomes the pic-base register.  The POP
+        // instruction is label the used for the subtrahend in expressions.
+        // The funcRel32 kind represents the 32-bit delta to some symbol from
+        // the start of the function (atom) containing the funcRel32.
+        *kind = funcRel32;
+        uint32_t ta = fromAddress + value - toAddress;
+        *addend = ta - offsetInFrom;
+      } else {
+        *kind = delta32;
+        *addend = fromAddress + value - toAddress;
+      }
     }
     return std::error_code();
     break;
@@ -379,6 +387,9 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *location,
   case delta32:
     write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
     break;
+  case negDelta32:
+    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
+    break;
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
@@ -419,6 +430,9 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
     break;
   case delta32:
     write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
+    break;
+  case negDelta32:
+    write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
     break;
   case lazyPointer:
   case lazyImmediateLocation:
@@ -507,17 +521,24 @@ void ArchHandler_x86::appendSectionRelocations(
     }
     break;
   case funcRel32:
-      appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
-                GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
-      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) - ref.addend(),
-                GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+              GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) - ref.addend(),
+              GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
     break;
   case delta32:
-      appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
-                GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
-      appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
-                                                             ref.offsetInAtom(),
-                GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+              GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
+                                                           ref.offsetInAtom(),
+              GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
+    break;
+  case negDelta32:
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(atom) +
+                                                           ref.offsetInAtom(),
+              GENERIC_RELOC_SECTDIFF |  rScattered    | rLength4);
+    appendReloc(relocs, sectionOffset, 0, addressForAtom(*ref.target()),
+              GENERIC_RELOC_PAIR     |  rScattered    | rLength4);
     break;
   case lazyPointer:
   case lazyImmediateLocation:
