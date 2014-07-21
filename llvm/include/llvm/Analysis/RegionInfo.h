@@ -724,10 +724,6 @@ private:
   // updateStatistics - Update statistic about created regions.
   virtual void updateStatistics(RegionT *R) = 0;
 
-  // isSimple - Check if a region is a simple region with exactly one entry
-  // edge and exactly one exit edge.
-  bool isSimple(RegionT *R) const;
-
   // calculate - detect all regions in function and build the region tree.
   void calculate(FuncT &F);
 
