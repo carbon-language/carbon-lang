@@ -1814,40 +1814,45 @@ def LoopHint : Attr {
       // String "unroll" of "#pragma unroll" is already emitted as the
       // pragma name.
       if (option == UnrollCount)
-        OS << getValueString();
+        printArgument(OS);
       OS << "\n";
       return;
     }
     assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
-    OS << getOptionName(option) << getValueString() << "\n";
+    OS << getOptionName(option);
+    printArgument(OS);
+    OS << "\n";
   }
 
-  // Return a string containing the loop hint argument including the
-  // enclosing parentheses.
-  std::string getValueString() const {
-    std::string ValueName;
+  // Prints the loop hint argument including the enclosing parentheses to OS.
+  void printArgument(raw_ostream &OS) const {
+    OS << "(";
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
-      ValueName = std::to_string(value);
+      OS << value;
     else if (value)
-      ValueName = "enable";
+      OS << "enable";
     else
-      ValueName = "disable";
-
-    return "(" + ValueName + ")";
+      OS << "disable";
+    OS << ")";
   }
 
   // Return a string suitable for identifying this attribute in diagnostics.
   std::string getDiagnosticName() const {
+    std::string DiagnosticName;
+    llvm::raw_string_ostream OS(DiagnosticName);
     unsigned SpellingIndex = getSpellingListIndex();
     if (SpellingIndex == Pragma_unroll && option == Unroll)
-      return "#pragma unroll";
+      OS << "#pragma unroll";
     else if (SpellingIndex == Pragma_unroll && option == UnrollCount) {
-      return "#pragma unroll" + getValueString();
+      OS << "#pragma unroll";
+      printArgument(OS);
     } else {
       assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
-      return std::string(getOptionName(option)) + getValueString();
+      OS << getOptionName(option);
+      printArgument(OS);
     }
+    return OS.str();
   }
   }];
 
