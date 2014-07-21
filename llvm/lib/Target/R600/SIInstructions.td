@@ -2621,10 +2621,10 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
                              MUBUF bothen> {
 
   def : Pat <
-    (vt (int_SI_buffer_load_dword v4i32:$rsrc, i32:$vaddr, i32:$soffset,
+    (vt (int_SI_buffer_load_dword v4i32:$rsrc, (i32 imm), i32:$soffset,
                                   imm:$offset, 0, 0, imm:$glc, imm:$slc,
                                   imm:$tfe)),
-    (offset $rsrc, $vaddr, (as_i16imm $offset), $soffset, (as_i1imm $glc),
+    (offset $rsrc, (as_i16imm $offset), $soffset, (as_i1imm $glc),
             (as_i1imm $slc), (as_i1imm $tfe))
   >;
 

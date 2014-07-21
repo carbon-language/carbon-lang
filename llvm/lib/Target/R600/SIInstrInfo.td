@@ -597,9 +597,9 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
 
     let addr64 = 0 in {
 
-      let offen = 0, idxen = 0 in {
+      let offen = 0, idxen = 0, vaddr = 0 in {
         def _OFFSET : MUBUF <op, (outs regClass:$vdata),
-                             (ins SReg_128:$srsrc, VReg_32:$vaddr,
+                             (ins SReg_128:$srsrc,
                              u16imm:$offset, SSrc_32:$soffset, i1imm:$glc,
                              i1imm:$slc, i1imm:$tfe),
                              asm#" $vdata, $srsrc + $offset + $soffset, glc=$glc, slc=$slc, tfe=$tfe", []>;
