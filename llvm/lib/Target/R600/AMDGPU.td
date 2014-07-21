@@ -130,10 +130,12 @@ def FeatureNorthernIslands : SubtargetFeatureGeneration<"NORTHERN_ISLANDS",
 >;
 
 def FeatureSouthernIslands : SubtargetFeatureGeneration<"SOUTHERN_ISLANDS",
-        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize32768]>;
+        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize32768,
+         FeatureWavefrontSize64]>;
 
 def FeatureSeaIslands : SubtargetFeatureGeneration<"SEA_ISLANDS",
-        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize65536]>;
+        [Feature64BitPtr, FeatureFP64, FeatureLocalMemorySize65536,
+         FeatureWavefrontSize64]>;
 //===----------------------------------------------------------------------===//
 
 def AMDGPUInstrInfo : InstrInfo {
