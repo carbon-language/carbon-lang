@@ -1298,12 +1298,12 @@ public:
   /// By default, performs semantic analysis to build the new statement.
   /// Subclasses may override this routine to provide different behavior.
   StmtResult RebuildOMPExecutableDirective(OpenMPDirectiveKind Kind,
+                                           DeclarationNameInfo DirName,
                                            ArrayRef<OMPClause *> Clauses,
-                                           Stmt *AStmt,
-                                           SourceLocation StartLoc,
+                                           Stmt *AStmt, SourceLocation StartLoc,
                                            SourceLocation EndLoc) {
-    return getSema().ActOnOpenMPExecutableDirective(Kind, Clauses, AStmt,
-                                                    StartLoc, EndLoc);
+    return getSema().ActOnOpenMPExecutableDirective(Kind, DirName, Clauses,
+                                                    AStmt, StartLoc, EndLoc);
   }
 
   /// \brief Build a new OpenMP 'if' clause.
@@ -6445,9 +6445,16 @@ StmtResult TreeTransform<Derived>::TransformOMPExecutableDirective(
     return StmtError();
   }
 
+  // Transform directive name for 'omp critical' directive.
+  DeclarationNameInfo DirName;
+  if (D->getDirectiveKind() == OMPD_critical) {
+    DirName = cast<OMPCriticalDirective>(D)->getDirectiveName();
+    DirName = getDerived().TransformDeclarationNameInfo(DirName);
+  }
+
   return getDerived().RebuildOMPExecutableDirective(
-      D->getDirectiveKind(), TClauses, AssociatedStmt.get(), D->getLocStart(),
-      D->getLocEnd());
+      D->getDirectiveKind(), DirName, TClauses, AssociatedStmt.get(),
+      D->getLocStart(), D->getLocEnd());
 }
 
 template <typename Derived>
@@ -6522,6 +6529,16 @@ TreeTransform<Derived>::TransformOMPMasterDirective(OMPMasterDirective *D) {
   DeclarationNameInfo DirName;
   getDerived().getSema().StartOpenMPDSABlock(OMPD_master, DirName, nullptr,
                                              D->getLocStart());
+  StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
+  getDerived().getSema().EndOpenMPDSABlock(Res.get());
+  return Res;
+}
+
+template <typename Derived>
+StmtResult
+TreeTransform<Derived>::TransformOMPCriticalDirective(OMPCriticalDirective *D) {
+  getDerived().getSema().StartOpenMPDSABlock(
+      OMPD_critical, D->getDirectiveName(), nullptr, D->getLocStart());
   StmtResult Res = getDerived().TransformOMPExecutableDirective(D);
   getDerived().getSema().EndOpenMPDSABlock(Res.get());
   return Res;

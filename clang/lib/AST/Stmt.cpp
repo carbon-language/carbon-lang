@@ -1496,6 +1496,26 @@ OMPMasterDirective *OMPMasterDirective::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPMasterDirective();
 }
 
+OMPCriticalDirective *OMPCriticalDirective::Create(
+    const ASTContext &C, const DeclarationNameInfo &Name,
+    SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCriticalDirective),
+                                           llvm::alignOf<Stmt *>());
+  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+  OMPCriticalDirective *Dir =
+      new (Mem) OMPCriticalDirective(Name, StartLoc, EndLoc);
+  Dir->setAssociatedStmt(AssociatedStmt);
+  return Dir;
+}
+
+OMPCriticalDirective *OMPCriticalDirective::CreateEmpty(const ASTContext &C,
+                                                        EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPCriticalDirective),
+                                           llvm::alignOf<Stmt *>());
+  void *Mem = C.Allocate(Size + sizeof(Stmt *));
+  return new (Mem) OMPCriticalDirective();
+}
+
 OMPParallelForDirective *
 OMPParallelForDirective::Create(const ASTContext &C, SourceLocation StartLoc,
                                 SourceLocation EndLoc, unsigned CollapsedNum,

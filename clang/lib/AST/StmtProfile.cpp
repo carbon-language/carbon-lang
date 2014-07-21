@@ -393,6 +393,11 @@ void StmtProfiler::VisitOMPMasterDirective(const OMPMasterDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 
+void StmtProfiler::VisitOMPCriticalDirective(const OMPCriticalDirective *S) {
+  VisitOMPExecutableDirective(S);
+  VisitName(S->getDirectiveName().getName());
+}
+
 void
 StmtProfiler::VisitOMPParallelForDirective(const OMPParallelForDirective *S) {
   VisitOMPExecutableDirective(S);

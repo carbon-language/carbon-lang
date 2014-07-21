@@ -91,6 +91,7 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
   case OMPD_section:
   case OMPD_single:
   case OMPD_master:
+  case OMPD_critical:
   case OMPD_parallel_for:
   case OMPD_parallel_sections:
     Diag(Tok, diag::err_omp_unexpected_directive)
@@ -109,9 +110,9 @@ Parser::DeclGroupPtrTy Parser::ParseOpenMPDeclarativeDirective() {
 ///
 ///       executable-directive:
 ///         annot_pragma_openmp 'parallel' | 'simd' | 'for' | 'sections' |
-///         'section' | 'single' | 'master' | 'parallel for' |
-///         'parallel sections' | 'task' | 'taskyield' | 'barrier' | 'taskwait'
-///         {clause} annot_pragma_openmp_end
+///         'section' | 'single' | 'master' | 'critical' [ '(' <name> ')' ] |
+///         'parallel for' | 'parallel sections' | 'task' | 'taskyield' |
+///         'barrier' | 'taskwait' {clause} annot_pragma_openmp_end
 ///
 StmtResult
 Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
@@ -162,10 +163,26 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
   case OMPD_single:
   case OMPD_section:
   case OMPD_master:
+  case OMPD_critical:
   case OMPD_parallel_for:
   case OMPD_parallel_sections:
   case OMPD_task: {
     ConsumeToken();
+    // Parse directive name of the 'critical' directive if any.
+    if (DKind == OMPD_critical) {
+      BalancedDelimiterTracker T(*this, tok::l_paren,
+                                 tok::annot_pragma_openmp_end);
+      if (!T.consumeOpen()) {
+        if (Tok.isAnyIdentifier()) {
+          DirName =
+              DeclarationNameInfo(Tok.getIdentifierInfo(), Tok.getLocation());
+          ConsumeAnyToken();
+        } else {
+          Diag(Tok, diag::err_omp_expected_identifier_for_critical);
+        }
+        T.consumeClose();
+      }
+    }
 
     if (isOpenMPLoopDirective(DKind))
       ScopeFlags |= Scope::OpenMPLoopDirectiveScope;
@@ -215,7 +232,7 @@ Parser::ParseOpenMPDeclarativeOrExecutableDirective(bool StandAloneAllowed) {
     }
     if (CreateDirective)
       Directive = Actions.ActOnOpenMPExecutableDirective(
-          DKind, Clauses, AssociatedStmt.get(), Loc, EndLoc);
+          DKind, DirName, Clauses, AssociatedStmt.get(), Loc, EndLoc);
 
     // Exit scope.
     Actions.EndOpenMPDSABlock(Directive.get());

@@ -185,6 +185,7 @@ def OMPSectionsDirective : DStmt<OMPExecutableDirective>;
 def OMPSectionDirective : DStmt<OMPExecutableDirective>;
 def OMPSingleDirective : DStmt<OMPExecutableDirective>;
 def OMPMasterDirective : DStmt<OMPExecutableDirective>;
+def OMPCriticalDirective : DStmt<OMPExecutableDirective>;
 def OMPParallelForDirective : DStmt<OMPExecutableDirective>;
 def OMPParallelSectionsDirective : DStmt<OMPExecutableDirective>;
 def OMPTaskDirective : DStmt<OMPExecutableDirective>;

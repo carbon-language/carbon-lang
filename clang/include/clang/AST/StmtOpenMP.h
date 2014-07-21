@@ -585,6 +585,69 @@ public:
   }
 };
 
+/// \brief This represents '#pragma omp critical' directive.
+///
+/// \code
+/// #pragma omp critical
+/// \endcode
+///
+class OMPCriticalDirective : public OMPExecutableDirective {
+  friend class ASTStmtReader;
+  /// \brief Name of the directive.
+  DeclarationNameInfo DirName;
+  /// \brief Build directive with the given start and end location.
+  ///
+  /// \param Name Name of the directive.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending location of the directive.
+  ///
+  OMPCriticalDirective(const DeclarationNameInfo &Name, SourceLocation StartLoc,
+                       SourceLocation EndLoc)
+      : OMPExecutableDirective(this, OMPCriticalDirectiveClass, OMPD_critical,
+                               StartLoc, EndLoc, 0, 1),
+        DirName(Name) {}
+
+  /// \brief Build an empty directive.
+  ///
+  explicit OMPCriticalDirective()
+      : OMPExecutableDirective(this, OMPCriticalDirectiveClass, OMPD_critical,
+                               SourceLocation(), SourceLocation(), 0, 1),
+        DirName() {}
+
+  /// \brief Set name of the directive.
+  ///
+  /// \param Name Name of the directive.
+  ///
+  void setDirectiveName(const DeclarationNameInfo &Name) { DirName = Name; }
+
+public:
+  /// \brief Creates directive.
+  ///
+  /// \param C AST context.
+  /// \param Name Name of the directive.
+  /// \param StartLoc Starting location of the directive kind.
+  /// \param EndLoc Ending Location of the directive.
+  /// \param AssociatedStmt Statement, associated with the directive.
+  ///
+  static OMPCriticalDirective *
+  Create(const ASTContext &C, const DeclarationNameInfo &Name,
+         SourceLocation StartLoc, SourceLocation EndLoc, Stmt *AssociatedStmt);
+
+  /// \brief Creates an empty directive.
+  ///
+  /// \param C AST context.
+  ///
+  static OMPCriticalDirective *CreateEmpty(const ASTContext &C, EmptyShell);
+
+  /// \brief Return name of the directive.
+  ///
+  DeclarationNameInfo getDirectiveName() const { return DirName; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == OMPCriticalDirectiveClass;
+  }
+};
+
 /// \brief This represents '#pragma omp parallel for' directive.
 ///
 /// \code

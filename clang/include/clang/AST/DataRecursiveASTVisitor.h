@@ -2300,6 +2300,11 @@ DEF_TRAVERSE_STMT(OMPSingleDirective,
 DEF_TRAVERSE_STMT(OMPMasterDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 
+DEF_TRAVERSE_STMT(OMPCriticalDirective, {
+  TRY_TO(TraverseDeclarationNameInfo(S->getDirectiveName()));
+  TRY_TO(TraverseOMPExecutableDirective(S));
+})
+
 DEF_TRAVERSE_STMT(OMPParallelForDirective,
                   { TRY_TO(TraverseOMPExecutableDirective(S)); })
 

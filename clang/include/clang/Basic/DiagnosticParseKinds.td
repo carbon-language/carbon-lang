@@ -910,6 +910,8 @@ def err_omp_more_one_clause : Error<
   "directive '#pragma omp %0' cannot contain more than one '%1' clause">;
 def err_omp_immediate_directive : Error<
   "'#pragma omp %0' cannot be an immediate substatement">;
+def err_omp_expected_identifier_for_critical : Error<
+  "expected identifier specifying the name of the 'omp critical' directive">;
 
 // Pragma loop support.
 def err_pragma_loop_invalid_option : Error<

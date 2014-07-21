@@ -1868,6 +1868,13 @@ void ASTStmtWriter::VisitOMPMasterDirective(OMPMasterDirective *D) {
   Code = serialization::STMT_OMP_MASTER_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPCriticalDirective(OMPCriticalDirective *D) {
+  VisitStmt(D);
+  VisitOMPExecutableDirective(D);
+  Writer.AddDeclarationNameInfo(D->getDirectiveName(), Record);
+  Code = serialization::STMT_OMP_CRITICAL_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
   VisitStmt(D);
   Record.push_back(D->getNumClauses());
