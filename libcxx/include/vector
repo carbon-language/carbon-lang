@@ -1331,10 +1331,10 @@ vector<_Tp, _Allocator>::__move_assign(vector& __c, true_type)
     _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
 {
     deallocate();
+    __base::__move_assign_alloc(__c); // this can throw
     this->__begin_ = __c.__begin_;
     this->__end_ = __c.__end_;
     this->__end_cap() = __c.__end_cap();
-    __base::__move_assign_alloc(__c);
     __c.__begin_ = __c.__end_ = __c.__end_cap() = nullptr;
 #if _LIBCPP_DEBUG_LEVEL >= 2
     __get_db()->swap(this, &__c);
