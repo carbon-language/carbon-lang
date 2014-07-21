@@ -55,9 +55,9 @@ void test(int *List, int Length) {
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave_count(4
 /* expected-error {{expected ')'}} */ #pragma clang loop unroll_count(4
 
-/* expected-error {{missing argument to loop pragma 'vectorize'}} */ #pragma clang loop vectorize()
-/* expected-error {{missing argument to loop pragma 'interleave_count'}} */ #pragma clang loop interleave_count()
-/* expected-error {{missing argument to loop pragma 'unroll'}} */ #pragma clang loop unroll()
+/* expected-error {{missing argument to '#pragma clang loop vectorize'; expected a positive integer value}} */ #pragma clang loop vectorize()
+/* expected-error {{missing argument to '#pragma clang loop interleave_count'; expected a positive integer value}} */ #pragma clang loop interleave_count()
+/* expected-error {{missing argument to '#pragma clang loop unroll'; expected a positive integer value}} */ #pragma clang loop unroll()
 
 /* expected-error {{missing option}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
@@ -110,7 +110,7 @@ void test(int *List, int Length) {
   }
 
 #pragma clang loop vectorize(enable)
-/* expected-error {{expected a for, while, or do-while loop to follow the '#pragma clang loop' directive}} */ int j = Length;
+/* expected-error {{expected a for, while, or do-while loop to follow '#pragma clang loop'}} */ int j = Length;
   List[0] = List[1];
 
   while (j-1 < Length) {

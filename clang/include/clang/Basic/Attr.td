@@ -1779,7 +1779,7 @@ def LoopHint : Attr {
   /// unroll: unroll loop if 'value != 0'.
   /// unroll_count: unrolls loop 'value' times.
 
-  let Spellings = [Pragma<"clang", "loop">];
+  let Spellings = [Pragma<"clang", "loop">, Pragma<"", "unroll">];
 
   /// State of the loop optimization specified by the spelling.
   let Args = [EnumArgument<"Option", "OptionType",
@@ -1809,15 +1809,47 @@ def LoopHint : Attr {
   }
 
   void printPrettyPragma(raw_ostream &OS, const PrintingPolicy &Policy) const {
-    OS << getOptionName(option) << "(";
+    unsigned SpellingIndex = getSpellingListIndex();
+    if (SpellingIndex == Pragma_unroll) {
+      // String "unroll" of "#pragma unroll" is already emitted as the
+      // pragma name.
+      if (option == UnrollCount)
+        OS << getValueString();
+      OS << "\n";
+      return;
+    }
+    assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
+    OS << getOptionName(option) << getValueString() << "\n";
+  }
+
+  // Return a string containing the loop hint argument including the
+  // enclosing parentheses.
+  std::string getValueString() const {
+    std::string ValueName;
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
-      OS << value;
+      ValueName = std::to_string(value);
+    else if (value)
+      ValueName = "enable";
     else
-      OS << getValueName(value);
-    OS << ")\n";
+      ValueName = "disable";
+
+    return "(" + ValueName + ")";
+  }
+
+  // Return a string suitable for identifying this attribute in diagnostics.
+  std::string getDiagnosticName() const {
+    unsigned SpellingIndex = getSpellingListIndex();
+    if (SpellingIndex == Pragma_unroll && option == Unroll)
+      return "#pragma unroll";
+    else if (SpellingIndex == Pragma_unroll && option == UnrollCount) {
+      return "#pragma unroll" + getValueString();
+    } else {
+      assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
+      return std::string(getOptionName(option)) + getValueString();
+    }
   }
   }];
 
-  let Documentation = [LoopHintDocs];
+  let Documentation = [LoopHintDocs, UnrollHintDocs];
 }

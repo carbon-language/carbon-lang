@@ -1045,3 +1045,45 @@ as interleave and unrolling count can be manually specified. See
 for details.
   }];
 }
+
+def UnrollHintDocs : Documentation {
+  let Category = DocCatStmt;
+  let Content = [{
+Loop unrolling optimization hints can be specified with ``#pragma unroll``. The
+pragma is placed immediately before a for, while, do-while, or c++11 range-based
+for loop.
+
+Specifying ``#pragma unroll`` without a parameter directs the loop unroller to
+attempt to fully unroll the loop if the trip count is known at compile time:
+
+.. code-block:: c++
+
+  #pragma unroll
+  for (...) {
+    ...
+  }
+
+Specifying the optional parameter, ``#pragma unroll _value_``, directs the
+unroller to unroll the loop ``_value_`` times.  The parameter may optionally be
+enclosed in parentheses:
+
+.. code-block:: c++
+
+  #pragma unroll 16
+  for (...) {
+    ...
+  }
+
+  #pragma unroll(16)
+  for (...) {
+    ...
+  }
+
+``#pragma unroll`` and ``#pragma unroll _value_`` have identical semantics to
+``#pragma clang loop unroll(enable)`` and ``#pragma clang loop
+unroll_count(_value_)`` respectively. See `language extensions
+<http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>`_
+for further details including limitations of the unroll hints.
+  }];
+}
+

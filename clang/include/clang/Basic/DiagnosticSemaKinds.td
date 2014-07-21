@@ -541,10 +541,9 @@ def err_pragma_loop_invalid_value : Error<
 def err_pragma_loop_invalid_keyword : Error<
   "invalid argument; expected 'enable' or 'disable'">;
 def err_pragma_loop_compatibility : Error<
-  "%select{incompatible|duplicate}0 directives '%1(%2)' and '%3(%4)'">;
+  "%select{incompatible|duplicate}0 directives '%1' and '%2'">;
 def err_pragma_loop_precedes_nonloop : Error<
-  "expected a for, while, or do-while loop to follow the '#pragma clang loop' "
-  "directive">;
+  "expected a for, while, or do-while loop to follow '%0'">;
 
 /// Objective-C parser diagnostics
 def err_duplicate_class_def : Error<

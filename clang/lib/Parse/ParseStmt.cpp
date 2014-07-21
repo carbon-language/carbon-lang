@@ -1833,18 +1833,16 @@ StmtResult Parser::ParsePragmaLoopHint(StmtVector &Stmts, bool OnlyStatement,
   // Create temporary attribute list.
   ParsedAttributesWithRange TempAttrs(AttrFactory);
 
-  // Get vectorize hints and consume annotated token.
+  // Get loop hints and consume annotated token.
   while (Tok.is(tok::annot_pragma_loop_hint)) {
     LoopHint Hint = HandlePragmaLoopHint();
     ConsumeToken();
 
-    if (!Hint.LoopLoc || !Hint.OptionLoc || !Hint.ValueLoc)
-      continue;
-
-    ArgsUnion ArgHints[] = {Hint.OptionLoc, Hint.ValueLoc,
+    ArgsUnion ArgHints[] = {Hint.PragmaNameLoc, Hint.OptionLoc, Hint.ValueLoc,
                             ArgsUnion(Hint.ValueExpr)};
-    TempAttrs.addNew(Hint.LoopLoc->Ident, Hint.Range, nullptr,
-                     Hint.LoopLoc->Loc, ArgHints, 3, AttributeList::AS_Pragma);
+    TempAttrs.addNew(Hint.PragmaNameLoc->Ident, Hint.Range, nullptr,
+                     Hint.PragmaNameLoc->Loc, ArgHints, 4,
+                     AttributeList::AS_Pragma);
   }
 
   // Get the next statement.

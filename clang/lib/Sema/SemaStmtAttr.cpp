@@ -45,35 +45,50 @@ static Attr *handleFallThroughAttr(Sema &S, Stmt *St, const AttributeList &A,
 
 static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
                                 SourceRange) {
+  IdentifierLoc *PragmaNameLoc = A.getArgAsIdent(0);
+  IdentifierLoc *OptionLoc = A.getArgAsIdent(1);
+  IdentifierInfo *OptionInfo = OptionLoc->Ident;
+  IdentifierLoc *ValueLoc = A.getArgAsIdent(2);
+  IdentifierInfo *ValueInfo = ValueLoc ? ValueLoc->Ident : nullptr;
+  Expr *ValueExpr = A.getArgAsExpr(3);
+
+  assert(OptionInfo && "Attribute must have valid option info.");
+
   if (St->getStmtClass() != Stmt::DoStmtClass &&
       St->getStmtClass() != Stmt::ForStmtClass &&
       St->getStmtClass() != Stmt::CXXForRangeStmtClass &&
       St->getStmtClass() != Stmt::WhileStmtClass) {
-    S.Diag(St->getLocStart(), diag::err_pragma_loop_precedes_nonloop);
+    const char *Pragma = PragmaNameLoc->Ident->getName() == "unroll"
+                             ? "#pragma unroll"
+                             : "#pragma clang loop";
+    S.Diag(St->getLocStart(), diag::err_pragma_loop_precedes_nonloop) << Pragma;
     return nullptr;
   }
 
-  IdentifierLoc *OptionLoc = A.getArgAsIdent(0);
-  IdentifierInfo *OptionInfo = OptionLoc->Ident;
-  IdentifierLoc *ValueLoc = A.getArgAsIdent(1);
-  IdentifierInfo *ValueInfo = ValueLoc->Ident;
-  Expr *ValueExpr = A.getArgAsExpr(2);
-
-  assert(OptionInfo && "Attribute must have valid option info.");
-
-  LoopHintAttr::OptionType Option =
-      llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getName())
-          .Case("vectorize", LoopHintAttr::Vectorize)
-          .Case("vectorize_width", LoopHintAttr::VectorizeWidth)
-          .Case("interleave", LoopHintAttr::Interleave)
-          .Case("interleave_count", LoopHintAttr::InterleaveCount)
-          .Case("unroll", LoopHintAttr::Unroll)
-          .Case("unroll_count", LoopHintAttr::UnrollCount)
-          .Default(LoopHintAttr::Vectorize);
+  LoopHintAttr::OptionType Option;
+  LoopHintAttr::Spelling Spelling;
+  if (PragmaNameLoc->Ident->getName() == "unroll") {
+    Option = ValueLoc ? LoopHintAttr::UnrollCount : LoopHintAttr::Unroll;
+    Spelling = LoopHintAttr::Pragma_unroll;
+  } else {
+    Option = llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getName())
+                 .Case("vectorize", LoopHintAttr::Vectorize)
+                 .Case("vectorize_width", LoopHintAttr::VectorizeWidth)
+                 .Case("interleave", LoopHintAttr::Interleave)
+                 .Case("interleave_count", LoopHintAttr::InterleaveCount)
+                 .Case("unroll", LoopHintAttr::Unroll)
+                 .Case("unroll_count", LoopHintAttr::UnrollCount)
+                 .Default(LoopHintAttr::Vectorize);
+    Spelling = LoopHintAttr::Pragma_clang_loop;
+  }
 
   int ValueInt;
-  if (Option == LoopHintAttr::Vectorize || Option == LoopHintAttr::Interleave ||
-      Option == LoopHintAttr::Unroll) {
+  if (Option == LoopHintAttr::Unroll &&
+      Spelling == LoopHintAttr::Pragma_unroll) {
+    ValueInt = 1;
+  } else if (Option == LoopHintAttr::Vectorize ||
+             Option == LoopHintAttr::Interleave ||
+             Option == LoopHintAttr::Unroll) {
     if (!ValueInfo) {
       S.Diag(ValueLoc->Loc, diag::err_pragma_loop_invalid_keyword);
       return nullptr;
@@ -100,12 +115,12 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   } else
     llvm_unreachable("Unknown loop hint option");
 
-  return LoopHintAttr::CreateImplicit(S.Context, Option, ValueInt,
+  return LoopHintAttr::CreateImplicit(S.Context, Spelling, Option, ValueInt,
                                       A.getRange());
 }
 
-static void
-CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
+static void CheckForIncompatibleAttributes(
+    Sema &S, const SmallVectorImpl<const Attr *> &Attrs) {
   // There are 3 categories of loop hints: vectorize, interleave, and
   // unroll. Each comes in two variants: an enable/disable form and a
   // form which takes a numeric argument. For example:
@@ -113,18 +128,9 @@ CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
   // accumulate the hints encountered while iterating through the
   // attributes to check for compatibility.
   struct {
-    int EnableOptionId;
-    int NumericOptionId;
-    bool EnabledIsSet;
-    bool ValueIsSet;
-    bool Enabled;
-    int Value;
-  } Options[] = {{LoopHintAttr::Vectorize, LoopHintAttr::VectorizeWidth, false,
-                  false, false, 0},
-                 {LoopHintAttr::Interleave, LoopHintAttr::InterleaveCount,
-                  false, false, false, 0},
-                 {LoopHintAttr::Unroll, LoopHintAttr::UnrollCount, false, false,
-                  false, 0}};
+    const LoopHintAttr *EnableAttr;
+    const LoopHintAttr *NumericAttr;
+  } HintAttrs[] = {{nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr}};
 
   for (const auto *I : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(I);
@@ -134,8 +140,6 @@ CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
       continue;
 
     int Option = LH->getOption();
-    int ValueInt = LH->getValue();
-
     int Category;
     switch (Option) {
     case LoopHintAttr::Vectorize:
@@ -152,44 +156,34 @@ CheckForIncompatibleAttributes(Sema &S, SmallVectorImpl<const Attr *> &Attrs) {
       break;
     };
 
-    auto &CategoryState = Options[Category];
-    SourceLocation ValueLoc = LH->getRange().getEnd();
+    auto &CategoryState = HintAttrs[Category];
+    SourceLocation OptionLoc = LH->getRange().getBegin();
+    const LoopHintAttr *PrevAttr;
     if (Option == LoopHintAttr::Vectorize ||
         Option == LoopHintAttr::Interleave || Option == LoopHintAttr::Unroll) {
       // Enable|disable hint.  For example, vectorize(enable).
-      if (CategoryState.EnabledIsSet) {
-        // Cannot specify enable/disable state twice.
-        S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
-            << /*Duplicate=*/true << LoopHintAttr::getOptionName(Option)
-            << LoopHintAttr::getValueName(CategoryState.Enabled)
-            << LoopHintAttr::getOptionName(Option)
-            << LoopHintAttr::getValueName(ValueInt);
-      }
-      CategoryState.EnabledIsSet = true;
-      CategoryState.Enabled = ValueInt;
+      PrevAttr = CategoryState.EnableAttr;
+      CategoryState.EnableAttr = LH;
     } else {
-      // Numeric hint.  For example, unroll_count(8).
-      if (CategoryState.ValueIsSet) {
-        // Cannot specify numeric hint twice.
-        S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
-            << /*Duplicate=*/true << LoopHintAttr::getOptionName(Option)
-            << CategoryState.Value << LoopHintAttr::getOptionName(Option)
-            << ValueInt;
-      }
-      CategoryState.ValueIsSet = true;
-      CategoryState.Value = ValueInt;
+      // Numeric hint.  For example, vectorize_width(8).
+      PrevAttr = CategoryState.NumericAttr;
+      CategoryState.NumericAttr = LH;
     }
 
-    if (CategoryState.EnabledIsSet && !CategoryState.Enabled &&
-        CategoryState.ValueIsSet) {
+    if (PrevAttr)
+      // Cannot specify same type of attribute twice.
+      S.Diag(OptionLoc, diag::err_pragma_loop_compatibility)
+          << /*Duplicate=*/true << PrevAttr->getDiagnosticName()
+          << LH->getDiagnosticName();
+
+    if (CategoryState.EnableAttr && !CategoryState.EnableAttr->getValue() &&
+        CategoryState.NumericAttr) {
       // Disable hints are not compatible with numeric hints of the
       // same category.
-      S.Diag(ValueLoc, diag::err_pragma_loop_compatibility)
+      S.Diag(OptionLoc, diag::err_pragma_loop_compatibility)
           << /*Duplicate=*/false
-          << LoopHintAttr::getOptionName(CategoryState.EnableOptionId)
-          << LoopHintAttr::getValueName(CategoryState.Enabled)
-          << LoopHintAttr::getOptionName(CategoryState.NumericOptionId)
-          << CategoryState.Value;
+          << CategoryState.EnableAttr->getDiagnosticName()
+          << CategoryState.NumericAttr->getDiagnosticName();
     }
   }
 }

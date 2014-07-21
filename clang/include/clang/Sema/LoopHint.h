@@ -17,13 +17,22 @@
 
 namespace clang {
 
-/// \brief Loop hint specified by a pragma loop directive.
+/// \brief Loop optimization hint for loop and unroll pragmas.
 struct LoopHint {
+  // Source range of the directive.
   SourceRange Range;
-  Expr *ValueExpr;
-  IdentifierLoc *LoopLoc;
-  IdentifierLoc *ValueLoc;
+  // Identifier corresponding to the name of the pragma.  "loop" for
+  // "#pragma clang loop" directives and "unroll" for "#pragma unroll"
+  // hints.
+  IdentifierLoc *PragmaNameLoc;
+  // Name of the loop hint.  Examples: "unroll", "vectorize".  In the
+  // "#pragma unroll" case, this is identical to PragmaNameLoc.
   IdentifierLoc *OptionLoc;
+  // Identifier for the hint argument.  If null, then the hint has no argument
+  // such as for "#pragma unroll".
+  IdentifierLoc *ValueLoc;
+  // Expression for the hint argument if it exists, null otherwise.
+  Expr *ValueExpr;
 };
 
 } // end namespace clang

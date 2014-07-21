@@ -13,6 +13,8 @@
 // CHECK: #pragma clang loop unroll(enable)
 // CHECK: #pragma clang loop interleave(enable)
 // CHECK: #pragma clang loop vectorize(disable)
+// CHECK: #pragma unroll
+// CHECK: #pragma unroll (32)
 
 #ifndef HEADER
 #define HEADER
@@ -51,6 +53,24 @@ public:
       i++;
     }
   }
+
+  inline void run4(int *List, int Length) {
+    int i = 0;
+#pragma unroll
+    while (i - 3 < Length) {
+      List[i] = i;
+      i++;
+    }
+  }
+
+  inline void run5(int *List, int Length) {
+    int i = 0;
+#pragma unroll 32
+    while (i - 3 < Length) {
+      List[i] = i;
+      i++;
+    }
+  }
 };
 
 #else
@@ -63,6 +83,8 @@ void test() {
   pt.run1(List, 100);
   pt.run2(List, 100);
   pt.run3(List, 100);
+  pt.run4(List, 100);
+  pt.run5(List, 100);
 }
 
 #endif
