@@ -2851,10 +2851,10 @@ vector<bool, _Allocator>::__move_assign(vector& __c, true_type)
     _NOEXCEPT_(is_nothrow_move_assignable<allocator_type>::value)
 {
     deallocate();
+    __move_assign_alloc(__c);
     this->__begin_ = __c.__begin_;
     this->__size_ = __c.__size_;
     this->__cap() = __c.__cap();
-    __move_assign_alloc(__c);
     __c.__begin_ = nullptr;
     __c.__cap() = __c.__size_ = 0;
 }
