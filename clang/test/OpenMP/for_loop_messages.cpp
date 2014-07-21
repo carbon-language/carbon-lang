@@ -678,3 +678,17 @@ void test_loop_firstprivate_lastprivate() {
   for (int i = 0; i < 16; ++i)
     ;
 }
+
+void test_ordered() {
+#pragma omp parallel
+#pragma omp for ordered ordered // expected-error {{directive '#pragma omp for' cannot contain more than one 'ordered' clause}}
+  for (int i = 0; i < 16; ++i)
+    ;
+}
+
+void test_nowait() {
+#pragma omp parallel
+#pragma omp for nowait nowait // expected-error {{directive '#pragma omp for' cannot contain more than one 'nowait' clause}}
+  for (int i = 0; i < 16; ++i)
+    ;
+}

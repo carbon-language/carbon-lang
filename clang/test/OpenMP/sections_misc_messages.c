@@ -24,7 +24,6 @@ void test_no_clause() {
     foo();
     foo(); // expected-error {{statement in 'omp sections' directive must be enclosed into a section region}}
   }
-
 }
 
 void test_branch_protected_scope() {
@@ -291,3 +290,10 @@ void test_firstprivate() {
   }
 }
 
+void test_nowait() {
+#pragma omp parallel
+#pragma omp sections nowait nowait // expected-error {{directive '#pragma omp sections' cannot contain more than one 'nowait' clause}}
+  {
+    ;
+  }
+}

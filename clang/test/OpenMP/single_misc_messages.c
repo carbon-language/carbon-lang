@@ -149,3 +149,8 @@ void test_firstprivate() {
   foo();
 }
 
+void test_nowait() {
+#pragma omp single nowait nowait // expected-error {{directive '#pragma omp single' cannot contain more than one 'nowait' clause}}
+  for (int i = 0; i < 16; ++i)
+    ;
+}
