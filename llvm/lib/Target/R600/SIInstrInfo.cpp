@@ -1639,3 +1639,12 @@ void SIInstrInfo::reserveIndirectRegisters(BitVector &Reserved,
   for (int Index = std::max(0, Begin - 15); Index <= End; ++Index)
     Reserved.set(AMDGPU::VReg_512RegClass.getRegister(Index));
 }
+
+const MachineOperand *SIInstrInfo::getNamedOperand(const MachineInstr& MI,
+                                                   unsigned OperandName) const {
+  int Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), OperandName);
+  if (Idx == -1)
+    return nullptr;
+
+  return &MI.getOperand(Idx);
+}

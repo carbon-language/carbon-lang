@@ -176,6 +176,7 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     // SIFixSGPRCopies can generate a lot of duplicate instructions,
     // so we need to run MachineCSE afterwards.
     addPass(&MachineCSEID);
+    addPass(createSIShrinkInstructionsPass());
     initializeSIFixSGPRLiveRangesPass(*PassRegistry::getPassRegistry());
     insertPass(&RegisterCoalescerID, &SIFixSGPRLiveRangesID);
   }
@@ -185,6 +186,7 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
 bool AMDGPUPassConfig::addPostRegAlloc() {
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
 
+  addPass(createSIShrinkInstructionsPass());
   if (ST.getGeneration() > AMDGPUSubtarget::NORTHERN_ISLANDS) {
     addPass(createSIInsertWaits(*TM));
   }

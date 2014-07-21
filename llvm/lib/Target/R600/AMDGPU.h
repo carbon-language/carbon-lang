@@ -39,6 +39,7 @@ FunctionPass *createAMDGPUCFGStructurizerPass();
 FunctionPass *createSITypeRewriter();
 FunctionPass *createSIAnnotateControlFlowPass();
 FunctionPass *createSILowerI1CopiesPass();
+FunctionPass *createSIShrinkInstructionsPass();
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
 FunctionPass *createSIFixSGPRCopiesPass(TargetMachine &tm);
 FunctionPass *createSIFixSGPRLiveRangesPass();

@@ -48,6 +48,7 @@ add_llvm_target(R600CodeGen
   SILowerI1Copies.cpp
   SIMachineFunctionInfo.cpp
   SIRegisterInfo.cpp
+  SIShrinkInstructions.cpp
   SITypeRewriter.cpp
   )
 

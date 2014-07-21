@@ -38,7 +38,7 @@ entry:
 ; R600-CHECK: @bfi_sha256_ma
 ; R600-CHECK: XOR_INT * [[DST:T[0-9]+\.[XYZW]]], KC0[2].Z, KC0[2].W
 ; R600-CHECK: BFI_INT * {{T[0-9]+\.[XYZW]}}, {{[[DST]]|PV\.[XYZW]}}, KC0[3].X, KC0[2].W
-; SI-CHECK: V_XOR_B32_e64 [[DST:v[0-9]+]], {{[sv][0-9]+, v[0-9]+}}
+; SI-CHECK: V_XOR_B32_e32 [[DST:v[0-9]+]], {{[sv][0-9]+, v[0-9]+}}
 ; SI-CHECK: V_BFI_B32 {{v[0-9]+}}, [[DST]], {{[sv][0-9]+, [sv][0-9]+}}
 
 define void @bfi_sha256_ma(i32 addrspace(1)* %out, i32 %x, i32 %y, i32 %z) {

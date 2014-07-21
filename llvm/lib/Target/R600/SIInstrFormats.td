@@ -288,6 +288,7 @@ class VOPC <bits<8> op, dag ins, string asm, list<dag> pattern> :
   let mayLoad = 0;
   let mayStore = 0;
   let hasSideEffects = 0;
+  let UseNamedOperandTable = 1;
   let VOPC = 1;
 }
 

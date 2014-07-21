@@ -53,7 +53,7 @@ define void @fge_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
 }
 
 ; CHECK: @fne_f64
-; CHECK: V_CMP_NEQ_F64_e64 {{s[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
+; CHECK: V_CMP_NEQ_F64_e32 vcc, {{v[[0-9]+:[0-9]+], v[[0-9]+:[0-9]+]}}
 
 define void @fne_f64(double addrspace(1)* %out, double addrspace(1)* %in1,
                      double addrspace(1)* %in2) {

@@ -829,6 +829,15 @@ def getVOPe64 : InstrMapping {
   let ValueCols = [["8"]];
 }
 
+// Maps an opcode in e64 form to its e32 equivalent
+def getVOPe32 : InstrMapping {
+  let FilterClass = "VOP";
+  let RowFields = ["OpName"];
+  let ColFields = ["Size"];
+  let KeyCol = ["8"];
+  let ValueCols = [["4"]];
+}
+
 // Maps an original opcode to its commuted version
 def getCommuteRev : InstrMapping {
   let FilterClass = "VOP2_REV";

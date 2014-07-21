@@ -43,7 +43,7 @@ define void @v_ctpop_i32(i32 addrspace(1)* noalias %out, i32 addrspace(1)* noali
 ; SI: V_MOV_B32_e32 [[VZERO:v[0-9]+]], 0
 ; SI: V_BCNT_U32_B32_e32 [[MIDRESULT:v[0-9]+]], [[VAL1]], [[VZERO]]
 ; SI-NOT: ADD
-; SI: V_BCNT_U32_B32_e64 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
+; SI: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL0]], [[MIDRESULT]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM
 

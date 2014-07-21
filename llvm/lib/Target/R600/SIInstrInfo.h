@@ -174,11 +174,17 @@ public:
               unsigned SavReg, unsigned IndexReg) const;
 
   void insertNOPs(MachineBasicBlock::iterator MI, int Count) const;
+
+  /// \brief Returns the operand named \p Op.  If \p MI does not have an
+  /// operand named \c Op, this function returns nullptr.
+  const MachineOperand *getNamedOperand(const MachineInstr& MI,
+                                        unsigned OperandName) const;
 };
 
 namespace AMDGPU {
 
   int getVOPe64(uint16_t Opcode);
+  int getVOPe32(uint16_t Opcode);
   int getCommuteRev(uint16_t Opcode);
   int getCommuteOrig(uint16_t Opcode);
   int getMCOpcode(uint16_t Opcode, unsigned Gen);
