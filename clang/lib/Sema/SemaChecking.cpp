@@ -4943,6 +4943,8 @@ struct IntRange {
       T = VT->getElementType().getTypePtr();
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
+    if (const AtomicType *AT = dyn_cast<AtomicType>(T))
+      T = AT->getValueType().getTypePtr();
 
     // For enum types, use the known bit width of the enumerators.
     if (const EnumType *ET = dyn_cast<EnumType>(T)) {
@@ -4978,6 +4980,8 @@ struct IntRange {
       T = VT->getElementType().getTypePtr();
     if (const ComplexType *CT = dyn_cast<ComplexType>(T))
       T = CT->getElementType().getTypePtr();
+    if (const AtomicType *AT = dyn_cast<AtomicType>(T))
+      T = AT->getValueType().getTypePtr();
     if (const EnumType *ET = dyn_cast<EnumType>(T))
       T = C.getCanonicalType(ET->getDecl()->getIntegerType()).getTypePtr();
 
@@ -5380,6 +5384,8 @@ static void DiagnoseOutOfRangeComparison(Sema &S, BinaryOperator *E,
   // TODO: Investigate using GetExprRange() to get tighter bounds
   // on the bit ranges.
   QualType OtherT = Other->getType();
+  if (const AtomicType *AT = dyn_cast<AtomicType>(OtherT))
+    OtherT = AT->getValueType();
   IntRange OtherRange = IntRange::forValueOfType(S.Context, OtherT);
   unsigned OtherWidth = OtherRange.Width;
 

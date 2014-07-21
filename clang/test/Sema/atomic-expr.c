@@ -58,3 +58,6 @@ int func_13 (int x, unsigned y) {
   return x ? data1 : y;
 }
 
+int func_14 () {
+  return data1 == 0;
+}
