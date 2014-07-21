@@ -46,6 +46,8 @@ const char *clang::getOpenMPDirectiveName(OpenMPDirectiveKind Kind) {
 }
 
 OpenMPClauseKind clang::getOpenMPClauseKind(StringRef Str) {
+  if (Str == "flush")
+    return OMPC_unknown;
   return llvm::StringSwitch<OpenMPClauseKind>(Str)
 #define OPENMP_CLAUSE(Name, Class) .Case(#Name, OMPC_##Name)
 #include "clang/Basic/OpenMPKinds.def"
@@ -105,6 +107,7 @@ unsigned clang::getOpenMPSimpleClauseType(OpenMPClauseKind Kind,
   case OMPC_nowait:
   case OMPC_untied:
   case OMPC_mergeable:
+  case OMPC_flush:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");
@@ -163,6 +166,7 @@ const char *clang::getOpenMPSimpleClauseTypeName(OpenMPClauseKind Kind,
   case OMPC_nowait:
   case OMPC_untied:
   case OMPC_mergeable:
+  case OMPC_flush:
     break;
   }
   llvm_unreachable("Invalid OpenMP simple clause kind");
@@ -252,6 +256,9 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
     default:
       break;
     }
+    break;
+  case OMPD_flush:
+    return CKind == OMPC_flush;
     break;
   case OMPD_unknown:
   case OMPD_threadprivate:

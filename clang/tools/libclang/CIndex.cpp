@@ -1870,6 +1870,7 @@ public:
   void VisitOMPTaskyieldDirective(const OMPTaskyieldDirective *D);
   void VisitOMPBarrierDirective(const OMPBarrierDirective *D);
   void VisitOMPTaskwaitDirective(const OMPTaskwaitDirective *D);
+  void VisitOMPFlushDirective(const OMPFlushDirective *D);
 
 private:
   void AddDeclarationNameInfo(const Stmt *S);
@@ -2014,6 +2015,9 @@ void OMPClauseEnqueue::VisitOMPCopyinClause(const OMPCopyinClause *C) {
 }
 void
 OMPClauseEnqueue::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
+  VisitOMPClauseList(C);
+}
+void OMPClauseEnqueue::VisitOMPFlushClause(const OMPFlushClause *C) {
   VisitOMPClauseList(C);
 }
 }
@@ -2362,6 +2366,10 @@ void EnqueueVisitor::VisitOMPBarrierDirective(const OMPBarrierDirective *D) {
 }
 
 void EnqueueVisitor::VisitOMPTaskwaitDirective(const OMPTaskwaitDirective *D) {
+  VisitOMPExecutableDirective(D);
+}
+
+void EnqueueVisitor::VisitOMPFlushDirective(const OMPFlushDirective *D) {
   VisitOMPExecutableDirective(D);
 }
 
@@ -4065,6 +4073,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("OMPBarrierDirective");
   case CXCursor_OMPTaskwaitDirective:
     return cxstring::createRef("OMPTaskwaitDirective");
+  case CXCursor_OMPFlushDirective:
+    return cxstring::createRef("OMPFlushDirective");
   }
 
   llvm_unreachable("Unhandled CXCursorKind");

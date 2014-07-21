@@ -218,6 +218,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPTaskwaitDirectiveClass:
     EmitOMPTaskwaitDirective(cast<OMPTaskwaitDirective>(*S));
     break;
+  case Stmt::OMPFlushDirectiveClass:
+    EmitOMPFlushDirective(cast<OMPFlushDirective>(*S));
+    break;
   }
 }
 

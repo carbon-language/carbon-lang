@@ -903,7 +903,7 @@ def err_omp_unknown_directive : Error<
 def err_omp_unexpected_directive : Error<
   "unexpected OpenMP directive '#pragma omp %0'">;
 def err_omp_expected_punc : Error<
-  "expected ',' or ')' in '%0' clause">;
+  "expected ',' or ')' in '%0' %select{clause|directive}1">;
 def err_omp_unexpected_clause : Error<
   "unexpected OpenMP clause '%0' in directive '#pragma omp %1'">;
 def err_omp_more_one_clause : Error<

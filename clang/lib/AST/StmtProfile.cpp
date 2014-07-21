@@ -352,6 +352,9 @@ void
 OMPClauseProfiler::VisitOMPCopyprivateClause(const OMPCopyprivateClause *C) {
   VisitOMPClauseList(C);
 }
+void OMPClauseProfiler::VisitOMPFlushClause(const OMPFlushClause *C) {
+  VisitOMPClauseList(C);
+}
 }
 
 void
@@ -421,6 +424,10 @@ void StmtProfiler::VisitOMPBarrierDirective(const OMPBarrierDirective *S) {
 }
 
 void StmtProfiler::VisitOMPTaskwaitDirective(const OMPTaskwaitDirective *S) {
+  VisitOMPExecutableDirective(S);
+}
+
+void StmtProfiler::VisitOMPFlushDirective(const OMPFlushDirective *S) {
   VisitOMPExecutableDirective(S);
 }
 

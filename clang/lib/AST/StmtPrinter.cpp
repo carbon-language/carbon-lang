@@ -775,6 +775,12 @@ void OMPClausePrinter::VisitOMPCopyprivateClause(OMPCopyprivateClause *Node) {
   }
 }
 
+void OMPClausePrinter::VisitOMPFlushClause(OMPFlushClause *Node) {
+  if (!Node->varlist_empty()) {
+    VisitOMPClauseList(Node, '(');
+    OS << ")";
+  }
+}
 }
 
 //===----------------------------------------------------------------------===//
@@ -872,6 +878,11 @@ void StmtPrinter::VisitOMPBarrierDirective(OMPBarrierDirective *Node) {
 
 void StmtPrinter::VisitOMPTaskwaitDirective(OMPTaskwaitDirective *Node) {
   Indent() << "#pragma omp taskwait";
+  PrintOMPExecutableDirective(Node);
+}
+
+void StmtPrinter::VisitOMPFlushDirective(OMPFlushDirective *Node) {
+  Indent() << "#pragma omp flush ";
   PrintOMPExecutableDirective(Node);
 }
 

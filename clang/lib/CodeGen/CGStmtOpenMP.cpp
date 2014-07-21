@@ -124,3 +124,7 @@ void CodeGenFunction::EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &) {
   llvm_unreachable("CodeGen for 'omp taskwait' is not supported yet.");
 }
 
+void CodeGenFunction::EmitOMPFlushDirective(const OMPFlushDirective &) {
+  llvm_unreachable("CodeGen for 'omp flush' is not supported yet.");
+}
+

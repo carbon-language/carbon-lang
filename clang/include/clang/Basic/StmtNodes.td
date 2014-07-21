@@ -192,3 +192,4 @@ def OMPTaskDirective : DStmt<OMPExecutableDirective>;
 def OMPTaskyieldDirective : DStmt<OMPExecutableDirective>;
 def OMPBarrierDirective : DStmt<OMPExecutableDirective>;
 def OMPTaskwaitDirective : DStmt<OMPExecutableDirective>;
+def OMPFlushDirective : DStmt<OMPExecutableDirective>;

@@ -69,6 +69,7 @@ OPENMP_DIRECTIVE(critical)
 OPENMP_DIRECTIVE(taskyield)
 OPENMP_DIRECTIVE(barrier)
 OPENMP_DIRECTIVE(taskwait)
+OPENMP_DIRECTIVE(flush)
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 
@@ -94,6 +95,7 @@ OPENMP_CLAUSE(ordered, OMPOrderedClause)
 OPENMP_CLAUSE(nowait, OMPNowaitClause)
 OPENMP_CLAUSE(untied, OMPUntiedClause)
 OPENMP_CLAUSE(mergeable, OMPMergeableClause)
+OPENMP_CLAUSE(flush, OMPFlushClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)

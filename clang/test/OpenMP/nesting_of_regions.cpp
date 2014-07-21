@@ -66,6 +66,11 @@ void foo() {
 #pragma omp taskwait
     bar();
   }
+#pragma omp parallel
+  {
+#pragma omp flush
+    bar();
+  }
 
 // SIMD DIRECTIVE
 #pragma omp simd
@@ -154,6 +159,11 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -262,6 +272,11 @@ void foo() {
 #pragma omp for
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush
     bar();
   }
 
@@ -384,6 +399,10 @@ void foo() {
 #pragma omp sections
   {
 #pragma omp taskwait
+  }
+#pragma omp sections
+  {
+#pragma omp flush
   }
 
 // SECTION DIRECTIVE
@@ -523,6 +542,14 @@ void foo() {
       bar();
     }
   }
+#pragma omp sections
+  {
+#pragma omp section
+    {
+#pragma omp flush
+      bar();
+    }
+  }
 
 // SINGLE DIRECTIVE
 #pragma omp single
@@ -623,6 +650,11 @@ void foo() {
 #pragma omp taskwait
     bar();
   }
+#pragma omp single
+  {
+#pragma omp flush
+    bar();
+  }
 
 // MASTER DIRECTIVE
 #pragma omp master
@@ -721,6 +753,11 @@ void foo() {
 #pragma omp master
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp master
+  {
+#pragma omp flush
     bar();
   }
 
@@ -952,6 +989,11 @@ void foo() {
 #pragma omp taskwait
     bar();
   }
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush
+    bar();
+  }
 
 // PARALLEL SECTIONS DIRECTIVE
 #pragma omp parallel sections
@@ -1059,6 +1101,10 @@ void foo() {
   {
 #pragma omp taskwait
   }
+#pragma omp parallel sections
+  {
+#pragma omp flush
+  }
 
 // TASK DIRECTIVE
 #pragma omp task
@@ -1116,6 +1162,11 @@ void foo() {
 #pragma omp task
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp task
+  {
+#pragma omp flush
     bar();
   }
 }
@@ -1181,6 +1232,11 @@ void foo() {
 #pragma omp parallel
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp parallel
+  {
+#pragma omp flush
     bar();
   }
 
@@ -1264,6 +1320,11 @@ void foo() {
 #pragma omp simd
   for (int i = 0; i < 10; ++i) {
 #pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside a simd region}}
+    bar();
+  }
+#pragma omp simd
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush // expected-error {{OpenMP constructs may not be nested inside a simd region}}
     bar();
   }
 
@@ -1361,6 +1422,11 @@ void foo() {
 #pragma omp taskwait
     bar();
   }
+#pragma omp for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush
+    bar();
+  }
 
 // SECTIONS DIRECTIVE
 #pragma omp sections
@@ -1453,6 +1519,10 @@ void foo() {
 #pragma omp sections
   {
 #pragma omp taskwait
+  }
+#pragma omp sections
+  {
+#pragma omp flush
   }
 
 // SECTION DIRECTIVE
@@ -1592,6 +1662,14 @@ void foo() {
       bar();
     }
   }
+#pragma omp sections
+  {
+#pragma omp section
+    {
+#pragma omp flush
+      bar();
+    }
+  }
 
 // SINGLE DIRECTIVE
 #pragma omp single
@@ -1680,6 +1758,11 @@ void foo() {
 #pragma omp single
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp single
+  {
+#pragma omp flush
     bar();
   }
 
@@ -1780,6 +1863,11 @@ void foo() {
 #pragma omp master
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp master
+  {
+#pragma omp flush
     bar();
   }
 
@@ -2010,6 +2098,11 @@ void foo() {
 #pragma omp taskwait
     bar();
   }
+#pragma omp parallel for
+  for (int i = 0; i < 10; ++i) {
+#pragma omp flush
+    bar();
+  }
 
 // PARALLEL SECTIONS DIRECTIVE
 #pragma omp parallel sections
@@ -2113,6 +2206,10 @@ void foo() {
   {
 #pragma omp taskwait
   }
+#pragma omp parallel sections
+  {
+#pragma omp flush
+  }
 
 // TASK DIRECTIVE
 #pragma omp task
@@ -2169,6 +2266,11 @@ void foo() {
 #pragma omp task
   {
 #pragma omp taskwait
+    bar();
+  }
+#pragma omp task
+  {
+#pragma omp flush
     bar();
   }
   return foo<int>();

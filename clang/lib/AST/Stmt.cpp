@@ -1327,6 +1327,27 @@ OMPReductionClause *OMPReductionClause::CreateEmpty(const ASTContext &C,
   return new (Mem) OMPReductionClause(N);
 }
 
+OMPFlushClause *OMPFlushClause::Create(const ASTContext &C,
+                                       SourceLocation StartLoc,
+                                       SourceLocation LParenLoc,
+                                       SourceLocation EndLoc,
+                                       ArrayRef<Expr *> VL) {
+  void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPFlushClause),
+                                                  llvm::alignOf<Expr *>()) +
+                         sizeof(Expr *) * VL.size());
+  OMPFlushClause *Clause =
+      new (Mem) OMPFlushClause(StartLoc, LParenLoc, EndLoc, VL.size());
+  Clause->setVarRefs(VL);
+  return Clause;
+}
+
+OMPFlushClause *OMPFlushClause::CreateEmpty(const ASTContext &C, unsigned N) {
+  void *Mem = C.Allocate(llvm::RoundUpToAlignment(sizeof(OMPFlushClause),
+                                                  llvm::alignOf<Expr *>()) +
+                         sizeof(Expr *) * N);
+  return new (Mem) OMPFlushClause(N);
+}
+
 OMPParallelDirective *OMPParallelDirective::Create(
                                               const ASTContext &C,
                                               SourceLocation StartLoc,
@@ -1633,5 +1654,27 @@ OMPTaskwaitDirective *OMPTaskwaitDirective::CreateEmpty(const ASTContext &C,
                                                         EmptyShell) {
   void *Mem = C.Allocate(sizeof(OMPTaskwaitDirective));
   return new (Mem) OMPTaskwaitDirective();
+}
+
+OMPFlushDirective *OMPFlushDirective::Create(const ASTContext &C,
+                                             SourceLocation StartLoc,
+                                             SourceLocation EndLoc,
+                                             ArrayRef<OMPClause *> Clauses) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPFlushDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * Clauses.size());
+  OMPFlushDirective *Dir =
+      new (Mem) OMPFlushDirective(StartLoc, EndLoc, Clauses.size());
+  Dir->setClauses(Clauses);
+  return Dir;
+}
+
+OMPFlushDirective *OMPFlushDirective::CreateEmpty(const ASTContext &C,
+                                                  unsigned NumClauses,
+                                                  EmptyShell) {
+  unsigned Size = llvm::RoundUpToAlignment(sizeof(OMPFlushDirective),
+                                           llvm::alignOf<OMPClause *>());
+  void *Mem = C.Allocate(Size + sizeof(OMPClause *) * NumClauses);
+  return new (Mem) OMPFlushDirective(NumClauses);
 }
 

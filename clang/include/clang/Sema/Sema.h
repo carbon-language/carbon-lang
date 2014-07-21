@@ -7382,7 +7382,11 @@ public:
                                          SourceLocation EndLoc);
   /// \brief Called on well-formed '\#pragma omp taskwait'.
   StmtResult ActOnOpenMPTaskwaitDirective(SourceLocation StartLoc,
-                                         SourceLocation EndLoc);
+                                          SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp flush'.
+  StmtResult ActOnOpenMPFlushDirective(ArrayRef<OMPClause *> Clauses,
+                                       SourceLocation StartLoc,
+                                       SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,
@@ -7520,6 +7524,11 @@ public:
                                           SourceLocation StartLoc,
                                           SourceLocation LParenLoc,
                                           SourceLocation EndLoc);
+  /// \brief Called on well-formed 'flush' pseudo clause.
+  OMPClause *ActOnOpenMPFlushClause(ArrayRef<Expr *> VarList,
+                                    SourceLocation StartLoc,
+                                    SourceLocation LParenLoc,
+                                    SourceLocation EndLoc);
 
   /// \brief The kind of conversion being performed.
   enum CheckedConversionKind {

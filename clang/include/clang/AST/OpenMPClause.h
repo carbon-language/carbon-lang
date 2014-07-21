@@ -1390,6 +1390,66 @@ public:
   }
 };
 
+/// \brief This represents pseudo clause 'flush' for the '#pragma omp flush'
+/// directive.
+///
+/// \code
+/// #pragma omp flush(a,b)
+/// \endcode
+/// In this example directive '#pragma omp flush' has pseudo clause 'flush'
+/// with the variables 'a' and 'b'.
+///
+class OMPFlushClause : public OMPVarListClause<OMPFlushClause> {
+  /// \brief Build clause with number of variables \a N.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param N Number of the variables in the clause.
+  ///
+  OMPFlushClause(SourceLocation StartLoc, SourceLocation LParenLoc,
+                 SourceLocation EndLoc, unsigned N)
+      : OMPVarListClause<OMPFlushClause>(OMPC_flush, StartLoc, LParenLoc,
+                                         EndLoc, N) {}
+
+  /// \brief Build an empty clause.
+  ///
+  /// \param N Number of variables.
+  ///
+  explicit OMPFlushClause(unsigned N)
+      : OMPVarListClause<OMPFlushClause>(OMPC_flush, SourceLocation(),
+                                         SourceLocation(), SourceLocation(),
+                                         N) {}
+
+public:
+  /// \brief Creates clause with a list of variables \a VL.
+  ///
+  /// \param C AST context.
+  /// \param StartLoc Starting location of the clause.
+  /// \param LParenLoc Location of '('.
+  /// \param EndLoc Ending location of the clause.
+  /// \param VL List of references to the variables.
+  ///
+  static OMPFlushClause *Create(const ASTContext &C, SourceLocation StartLoc,
+                                SourceLocation LParenLoc, SourceLocation EndLoc,
+                                ArrayRef<Expr *> VL);
+  /// \brief Creates an empty clause with \a N variables.
+  ///
+  /// \param C AST context.
+  /// \param N The number of variables.
+  ///
+  static OMPFlushClause *CreateEmpty(const ASTContext &C, unsigned N);
+
+  StmtRange children() {
+    return StmtRange(reinterpret_cast<Stmt **>(varlist_begin()),
+                     reinterpret_cast<Stmt **>(varlist_end()));
+  }
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_flush;
+  }
+};
+
 } // end namespace clang
 
 #endif
