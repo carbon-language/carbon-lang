@@ -57,6 +57,8 @@ class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
   let VOP3 = 1;
+
+  int Size = 8;
 }
 
 //===----------------------------------------------------------------------===//
