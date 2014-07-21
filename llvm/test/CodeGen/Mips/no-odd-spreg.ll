@@ -1,10 +1,14 @@
-; RUN: llc -march=mipsel -mcpu=mips32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=ODDSPREG
+; RUN: llc -march=mipsel -mcpu=mips32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=ODDSPREG -check-prefix=ODDSPREG-NO-EMIT
 ; RUN: llc -march=mipsel -mcpu=mips32 -mattr=+nooddspreg < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOODDSPREG
-; RUN: llc -march=mipsel -mcpu=mips32r6 -mattr=fp64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=ODDSPREG
+; RUN: llc -march=mipsel -mcpu=mips32r6 -mattr=fp64 < %s | FileCheck %s -check-prefix=ALL -check-prefix=ODDSPREG -check-prefix=ODDSPREG-NO-EMIT
 ; RUN: llc -march=mipsel -mcpu=mips32r6 -mattr=fp64,+nooddspreg < %s | FileCheck %s -check-prefix=ALL -check-prefix=NOODDSPREG
+; RUN: llc -march=mipsel -mcpu=mips32r6 -mattr=fpxx,-nooddspreg < %s | FileCheck %s -check-prefix=ALL -check-prefix=ODDSPREG -check-prefix=ODDSPREG-EMIT
 
-; ODDSPREG:       .module oddspreg
-; NOODDSPREG:     .module nooddspreg
+; We don't emit a directive unless we need to. This is to support versions of
+; GAS which do not support the directive.
+; ODDSPREG-EMIT:        .module oddspreg
+; ODDSPREG-NO-EMIT-NOT: .module oddspreg
+; NOODDSPREG:           .module nooddspreg
 
 define float @two_floats(float %a) {
 entry:

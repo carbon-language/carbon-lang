@@ -710,9 +710,14 @@ void MipsAsmPrinter::EmitStartOfAsmFile(Module &M) {
   getTargetStreamer().updateABIInfo(*Subtarget);
   getTargetStreamer().emitDirectiveModuleFP();
 
-  if (Subtarget->isABI_O32())
-    getTargetStreamer().emitDirectiveModuleOddSPReg(Subtarget->useOddSPReg(),
-                                                    Subtarget->isABI_O32());
+  // If we are targeting O32 then we must emit a '.module [no]oddspreg' ...
+  if (Subtarget->isABI_O32()) {
+    // ... but don't emit it unless we are contradicting the default or an
+    // option has changed the default (i.e. FPXX).
+    if (!Subtarget->useOddSPReg() || Subtarget->isABI_FPXX())
+      getTargetStreamer().emitDirectiveModuleOddSPReg(Subtarget->useOddSPReg(),
+                                                      Subtarget->isABI_O32());
+  }
 }
 
 void MipsAsmPrinter::EmitJal(MCSymbol *Symbol) {
