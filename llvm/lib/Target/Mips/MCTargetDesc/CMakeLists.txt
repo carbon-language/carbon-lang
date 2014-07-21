@@ -8,5 +8,6 @@ add_llvm_library(LLVMMipsDesc
   MipsMCExpr.cpp
   MipsMCTargetDesc.cpp
   MipsNaClELFStreamer.cpp
+  MipsOptionRecord.cpp
   MipsTargetStreamer.cpp
   )

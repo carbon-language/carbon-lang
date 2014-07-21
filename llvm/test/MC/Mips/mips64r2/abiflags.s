@@ -10,7 +10,7 @@
 # Checking if the Mips.abiflags were correctly emitted.
 # CHECK-OBJ:       Section {
 # CHECK-OBJ:         Index: 5
-# CHECK-OBJ-LABEL:   Name: .MIPS.abiflags (12)
+# CHECK-OBJ-LABEL:   Name: .MIPS.abiflags
 # CHECK-OBJ:         Type: SHT_MIPS_ABIFLAGS (0x7000002A)
 # CHECK-OBJ:          Flags [ (0x2)
 # CHECK-OBJ:           SHF_ALLOC (0x2)

@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstPrinter/MipsInstPrinter.h"
+#include "MipsELFStreamer.h"
 #include "MipsMCTargetDesc.h"
 #include "MipsTargetObjectFile.h"
 #include "MipsTargetStreamer.h"
@@ -323,11 +324,7 @@ void MipsTargetELFStreamer::emitLabel(MCSymbol *Symbol) {
 
 void MipsTargetELFStreamer::finish() {
   MCAssembler &MCA = getStreamer().getAssembler();
-  MCContext &Context = MCA.getContext();
-  MCStreamer &OS = getStreamer();
-  const MCObjectFileInfo &OFI = *Context.getObjectFileInfo();
-  Triple T(STI.getTargetTriple());
-  uint64_t Features = STI.getFeatureBits();
+  const MCObjectFileInfo &OFI = *MCA.getContext().getObjectFileInfo();
 
   // .bss, .text and .data are always at least 16-byte aligned.
   MCSectionData &TextSectionData =
@@ -341,42 +338,12 @@ void MipsTargetELFStreamer::finish() {
   DataSectionData.setAlignment(std::max(16u, DataSectionData.getAlignment()));
   BSSSectionData.setAlignment(std::max(16u, BSSSectionData.getAlignment()));
 
-  if (T.isArch64Bit() && (Features & Mips::FeatureN64)) {
-    // The EntrySize value of 1 seems strange since the records are neither
-    // 1-byte long nor fixed length but it matches the value GAS emits.
-    const MCSectionELF *Sec =
-        Context.getELFSection(".MIPS.options", ELF::SHT_MIPS_OPTIONS,
-                              ELF::SHF_ALLOC | ELF::SHF_MIPS_NOSTRIP,
-                              SectionKind::getMetadata(), 1, "");
-    MCA.getOrCreateSectionData(*Sec).setAlignment(8);
-    OS.SwitchSection(Sec);
+  // Emit all the option records.
+  // At the moment we are only emitting .Mips.options (ODK_REGINFO) and
+  // .reginfo.
+  MipsELFStreamer &MEF = static_cast<MipsELFStreamer &>(Streamer);
+  MEF.EmitMipsOptionRecords();
 
-    OS.EmitIntValue(1, 1);  // kind
-    OS.EmitIntValue(40, 1); // size
-    OS.EmitIntValue(0, 2);  // section
-    OS.EmitIntValue(0, 4);  // info
-    OS.EmitIntValue(0, 4);  // ri_gprmask
-    OS.EmitIntValue(0, 4);  // pad
-    OS.EmitIntValue(0, 4);  // ri_cpr[0]mask
-    OS.EmitIntValue(0, 4);  // ri_cpr[1]mask
-    OS.EmitIntValue(0, 4);  // ri_cpr[2]mask
-    OS.EmitIntValue(0, 4);  // ri_cpr[3]mask
-    OS.EmitIntValue(0, 8);  // ri_gp_value
-  } else {
-    const MCSectionELF *Sec =
-        Context.getELFSection(".reginfo", ELF::SHT_MIPS_REGINFO, ELF::SHF_ALLOC,
-                              SectionKind::getMetadata(), 24, "");
-    MCA.getOrCreateSectionData(*Sec)
-        .setAlignment(Features & Mips::FeatureN32 ? 8 : 4);
-    OS.SwitchSection(Sec);
-
-    OS.EmitIntValue(0, 4); // ri_gprmask
-    OS.EmitIntValue(0, 4); // ri_cpr[0]mask
-    OS.EmitIntValue(0, 4); // ri_cpr[1]mask
-    OS.EmitIntValue(0, 4); // ri_cpr[2]mask
-    OS.EmitIntValue(0, 4); // ri_cpr[3]mask
-    OS.EmitIntValue(0, 4); // ri_gp_value
-  }
   emitMipsAbiFlags();
 }
 
