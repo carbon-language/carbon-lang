@@ -146,25 +146,25 @@ following commands:
 
 ::
 
-  $ svn mkdir https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY
+  $ svn mkdir https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XYZ
   $ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XY \
-             https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY/rc1
+             https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XYZ/rc1
 
-  $ svn mkdir https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY
+  $ svn mkdir https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XYZ
   $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
-             https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/rc1
+             https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XYZ/rc1
 
-  $ svn mkdir https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY
+  $ svn mkdir https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XYZ
   $ svn copy https://llvm.org/svn/llvm-project/dragonegg/branches/release_XY \
-             https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY/rc1
+             https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XYZ/rc1
 
-  $ svn mkdir https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY
+  $ svn mkdir https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XYZ
   $ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XY \
-             https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY/rc1
+             https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XYZ/rc1
 
 Similarly, **Release Candidate 2** would be named ``RC2`` and so on.  This keeps
 a permanent copy of the release candidate around for people to export and build
-as they wish.  The final released sources will be tagged in the ``RELEASE_XY``
+as they wish.  The final released sources will be tagged in the ``RELEASE_XYZ``
 directory as ``Final`` (c.f. :ref:`tag`).
 
 The Release Manager may supply pre-packaged source tarballs for users.  This can
@@ -172,10 +172,10 @@ be done with the following commands:
 
 ::
 
-  $ svn export https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY/rc1 llvm-X.Yrc1
-  $ svn export https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/rc1 clang-X.Yrc1
-  $ svn export https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY/rc1 dragonegg-X.Yrc1
-  $ svn export https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY/rc1 llvm-test-X.Yrc1
+  $ svn export https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XYZ/rc1 llvm-X.Yrc1
+  $ svn export https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XYZ/rc1 clang-X.Yrc1
+  $ svn export https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XYZ/rc1 dragonegg-X.Yrc1
+  $ svn export https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XYZ/rc1 llvm-test-X.Yrc1
 
   $ tar -cvf - llvm-X.Yrc1        | gzip > llvm-X.Yrc1.src.tar.gz
   $ tar -cvf - clang-X.Yrc1       | gzip > clang-X.Yrc1.src.tar.gz
@@ -389,16 +389,16 @@ Tag the final release sources using the following procedure:
 ::
 
   $ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XY \
-             https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY/Final
+             https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XYZ/Final
 
   $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
-             https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/Final
+             https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XYZ/Final
 
   $ svn copy https://llvm.org/svn/llvm-project/dragonegg/branches/release_XY \
-             https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY/Final
+             https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XYZ/Final
 
   $ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XY \
-             https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY/Final
+             https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XYZ/Final
 
 Update the LLVM Demo Page
 -------------------------
