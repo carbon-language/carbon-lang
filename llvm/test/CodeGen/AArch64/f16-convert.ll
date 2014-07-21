@@ -18,8 +18,7 @@ define double @load1(i16* nocapture readonly %a) nounwind {
 ; CHECK-NEXT: ret
 
   %tmp = load i16* %a, align 2
-  %tmp1 = tail call float @llvm.convert.from.fp16.f32(i16 %tmp)
-  %conv = fpext float %tmp1 to double
+  %conv = tail call double @llvm.convert.from.fp16.f64(i16 %tmp)
   ret double %conv
 }
 
@@ -45,8 +44,7 @@ define double @load3(i16* nocapture readonly %a, i32 %i) nounwind {
   %idxprom = sext i32 %i to i64
   %arrayidx = getelementptr inbounds i16* %a, i64 %idxprom
   %tmp = load i16* %arrayidx, align 2
-  %tmp1 = tail call float @llvm.convert.from.fp16.f32(i16 %tmp)
-  %conv = fpext float %tmp1 to double
+  %conv = tail call double @llvm.convert.from.fp16.f64(i16 %tmp)
   ret double %conv
 }
 
@@ -70,8 +68,7 @@ define double @load5(i16* nocapture readonly %a, i64 %i) nounwind {
 
   %arrayidx = getelementptr inbounds i16* %a, i64 %i
   %tmp = load i16* %arrayidx, align 2
-  %tmp1 = tail call float @llvm.convert.from.fp16.f32(i16 %tmp)
-  %conv = fpext float %tmp1 to double
+  %conv = tail call double @llvm.convert.from.fp16.f64(i16 %tmp)
   ret double %conv
 }
 
@@ -95,8 +92,7 @@ define double @load7(i16* nocapture readonly %a) nounwind {
 
   %arrayidx = getelementptr inbounds i16* %a, i64 10
   %tmp = load i16* %arrayidx, align 2
-  %tmp1 = tail call float @llvm.convert.from.fp16.f32(i16 %tmp)
-  %conv = fpext float %tmp1 to double
+  %conv = tail call double @llvm.convert.from.fp16.f64(i16 %tmp)
   ret double %conv
 }
 
@@ -120,8 +116,7 @@ define double @load9(i16* nocapture readonly %a) nounwind {
 
   %arrayidx = getelementptr inbounds i16* %a, i64 -10
   %tmp = load i16* %arrayidx, align 2
-  %tmp1 = tail call float @llvm.convert.from.fp16.f32(i16 %tmp)
-  %conv = fpext float %tmp1 to double
+  %conv = tail call double @llvm.convert.from.fp16.f64(i16 %tmp)
   ret double %conv
 }
 
@@ -252,3 +247,5 @@ define void @store9(i16* nocapture %a, double %val) nounwind {
 
 declare i16 @llvm.convert.to.fp16.f32(float) nounwind readnone
 declare float @llvm.convert.from.fp16.f32(i16) nounwind readnone
+declare i16 @llvm.convert.to.fp16.f64(double) nounwind readnone
+declare double @llvm.convert.from.fp16.f64(i16) nounwind readnone
