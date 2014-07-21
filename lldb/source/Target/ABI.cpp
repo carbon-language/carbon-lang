@@ -51,7 +51,6 @@ ABI::~ABI()
 {
 }
 
-
 bool
 ABI::GetRegisterInfoByName (const ConstString &name, RegisterInfo &info)
 {
@@ -172,4 +171,37 @@ ABI::GetReturnValueObject (Thread &thread,
     return return_valobj_sp;
 }
 
+ValueObjectSP
+ABI::GetReturnValueObject(Thread &thread, llvm::Type &ast_type, bool persistent) const
+{
+    ValueObjectSP return_valobj_sp;
+    return_valobj_sp = GetReturnValueObjectImpl( thread, ast_type );
+    return return_valobj_sp;
+}
 
+// specialized to work with llvm IR types
+//
+// for now we will specify a default implementation so that we don't need to
+// modify other ABIs
+lldb::ValueObjectSP
+ABI::GetReturnValueObjectImpl( Thread &thread, llvm::Type &ir_type ) const
+{
+    ValueObjectSP return_valobj_sp;
+
+    /* this is a dummy and will only be called if an ABI does not override this */
+
+    return return_valobj_sp;
+}
+
+bool
+ABI::PrepareTrivialCall (Thread &thread, 
+                    lldb::addr_t sp,
+                    lldb::addr_t functionAddress,
+                    lldb::addr_t returnAddress,
+                    llvm::Type  &returntype,
+                    llvm::ArrayRef<ABI::CallArgument> args) const
+{
+    // dummy prepare trivial call
+    assert( !"Should never get here!" );
+    return false;
+}

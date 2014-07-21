@@ -20,24 +20,58 @@
 
 #include "llvm/ADT/ArrayRef.h"
 
+// forward define the llvm::Type class
+namespace llvm { class Type; }
+
 namespace lldb_private {
 
 class ABI :
     public PluginInterface
 {
 public:
+    
+    struct CallArgument
+    {
+        enum eType
+        {
+            HostPointer = 0,        /* pointer to host data */
+            TargetValue ,           /* value is on the target or literal */
+        };
+        eType  type;                /* value of eType */
+        size_t size;                /* size in bytes of this argument */
+        union {
+            lldb::addr_t  value;    /* literal value */
+            uint8_t      *data;     /* host data pointer */
+        };
+    };
+
     virtual
     ~ABI();
 
     virtual size_t
     GetRedZoneSize () const = 0;
-
+    
     virtual bool
-    PrepareTrivialCall (Thread &thread, 
-                        lldb::addr_t sp,
-                        lldb::addr_t functionAddress,
-                        lldb::addr_t returnAddress, 
-                        llvm::ArrayRef<lldb::addr_t> args) const = 0;
+    PrepareTrivialCall ( lldb_private::Thread &thread, 
+                         lldb::addr_t sp,
+                         lldb::addr_t functionAddress,
+                         lldb::addr_t returnAddress, 
+                         llvm::ArrayRef<lldb::addr_t> args) const = 0;
+
+    // Prepare trivial call used from ThreadPlanFunctionCallGDB
+    // AD:
+    //  . Because i don't want to change other ABI's this is not declared pure virtual.
+    //    The dummy implementation will simply fail.  Only HexagonABI will currently
+    //    use this method.
+    //  . Two PrepareTrivialCall's is not good design so perhaps this should be combined.
+    //
+    virtual bool
+    PrepareTrivialCall ( lldb_private::Thread &thread, 
+                         lldb::addr_t sp,
+                         lldb::addr_t functionAddress,
+                         lldb::addr_t returnAddress,
+                         llvm::Type &prototype,
+                         llvm::ArrayRef<CallArgument> args) const;
 
     virtual bool
     GetArgumentValues (Thread &thread,
@@ -48,6 +82,12 @@ public:
                           ClangASTType &type,
                           bool persistent = true) const;
     
+    // specialized to work with llvm IR types
+    lldb::ValueObjectSP
+    GetReturnValueObject (Thread &thread,
+                          llvm::Type &type,
+                          bool persistent = true) const;
+    
     // Set the Return value object in the current frame as though a function with 
     virtual Error
     SetReturnValueObject(lldb::StackFrameSP &frame_sp, lldb::ValueObjectSP &new_value) = 0;
@@ -56,8 +96,12 @@ protected:
     // This is the method the ABI will call to actually calculate the return value.
     // Don't put it in a persistent value object, that will be done by the ABI::GetReturnValueObject.
     virtual lldb::ValueObjectSP
-    GetReturnValueObjectImpl (Thread &thread,
-                          ClangASTType &type) const = 0;
+    GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type) const = 0;
+    
+    // specialized to work with llvm IR types
+    virtual lldb::ValueObjectSP
+    GetReturnValueObjectImpl( Thread &thread, llvm::Type &ir_type ) const;
+
 public:
     virtual bool
     CreateFunctionEntryUnwindPlan (UnwindPlan &unwind_plan) = 0;
@@ -108,7 +152,6 @@ public:
     virtual bool
     FunctionCallsChangeCFA () = 0;
 
-    
     bool
     GetRegisterInfoByName (const ConstString &name, RegisterInfo &info);
 
