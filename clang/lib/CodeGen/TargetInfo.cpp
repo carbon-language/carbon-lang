@@ -3178,6 +3178,31 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
       return ABIArgInfo::getDirect(CoerceTy);
     }
 
+    // If an aggregate may end up fully in registers, we do not
+    // use the ByVal method, but pass the aggregate as array.
+    // This is usually beneficial since we avoid forcing the
+    // back-end to store the argument to memory.
+    uint64_t Bits = getContext().getTypeSize(Ty);
+    if (Bits > 0 && Bits <= 8 * GPRBits) {
+      llvm::Type *CoerceTy;
+
+      // Types up to 8 bytes are passed as integer type (which will be
+      // properly aligned in the argument save area doubleword).
+      if (Bits <= GPRBits)
+        CoerceTy = llvm::IntegerType::get(getVMContext(),
+                                          llvm::RoundUpToAlignment(Bits, 8));
+      // Larger types are passed as arrays, with the base type selected
+      // according to the required alignment in the save area.
+      else {
+        uint64_t RegBits = ABIAlign * 8;
+        uint64_t NumRegs = llvm::RoundUpToAlignment(Bits, RegBits) / RegBits;
+        llvm::Type *RegTy = llvm::IntegerType::get(getVMContext(), RegBits);
+        CoerceTy = llvm::ArrayType::get(RegTy, NumRegs);
+      }
+
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+
     // All other aggregates are passed ByVal.
     return ABIArgInfo::getIndirect(ABIAlign, /*ByVal=*/true,
                                    /*Realign=*/TyAlign > ABIAlign);

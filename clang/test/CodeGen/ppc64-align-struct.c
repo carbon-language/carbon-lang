@@ -6,27 +6,45 @@ struct test1 { int x; int y; };
 struct test2 { int x; int y; } __attribute__((aligned (16)));
 struct test3 { int x; int y; } __attribute__((aligned (32)));
 struct test4 { int x; int y; int z; };
+struct test5 { int x[17]; };
+struct test6 { int x[17]; } __attribute__((aligned (16)));
+struct test7 { int x[17]; } __attribute__((aligned (32)));
 
-// CHECK: define void @test1(i32 signext %x, %struct.test1* byval align 8 %y)
+// CHECK: define void @test1(i32 signext %x, i64 %y.coerce)
 void test1 (int x, struct test1 y)
 {
 }
 
-// CHECK: define void @test2(i32 signext %x, %struct.test2* byval align 16 %y)
+// CHECK: define void @test2(i32 signext %x, [1 x i128] %y.coerce)
 void test2 (int x, struct test2 y)
 {
 }
 
-// This case requires run-time realignment of the incoming struct
-// CHECK: define void @test3(i32 signext %x, %struct.test3* byval align 16)
-// CHECK: %y = alloca %struct.test3, align 32
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+// CHECK: define void @test3(i32 signext %x, [2 x i128] %y.coerce)
 void test3 (int x, struct test3 y)
 {
 }
 
-// CHECK: define void @test4(i32 signext %x, %struct.test4* byval align 8 %y)
+// CHECK: define void @test4(i32 signext %x, [2 x i64] %y.coerce)
 void test4 (int x, struct test4 y)
+{
+}
+
+// CHECK: define void @test5(i32 signext %x, %struct.test5* byval align 8 %y)
+void test5 (int x, struct test5 y)
+{
+}
+
+// CHECK: define void @test6(i32 signext %x, %struct.test6* byval align 16 %y)
+void test6 (int x, struct test6 y)
+{
+}
+
+// This case requires run-time realignment of the incoming struct
+// CHECK: define void @test7(i32 signext %x, %struct.test7* byval align 16)
+// CHECK: %y = alloca %struct.test7, align 32
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64
+void test7 (int x, struct test7 y)
 {
 }
 

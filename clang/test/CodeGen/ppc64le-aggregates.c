@@ -40,7 +40,7 @@ struct f7 func_f7(struct f7 x) { return x; }
 // CHECK: define [8 x float] @func_f8([8 x float] %x.coerce)
 struct f8 func_f8(struct f8 x) { return x; }
 
-// CHECK: define void @func_f9(%struct.f9* noalias sret %agg.result, %struct.f9* byval align 8 %x)
+// CHECK: define void @func_f9(%struct.f9* noalias sret %agg.result, [5 x i64] %x.coerce)
 struct f9 func_f9(struct f9 x) { return x; }
 
 // CHECK: define [2 x float] @func_fab([2 x float] %x.coerce)
@@ -98,10 +98,11 @@ struct f8 global_f8;
 void call_f8(void) { global_f8 = func_f8(global_f8); }
 
 // CHECK-LABEL: @call_f9
-// CHECK: %[[TMP1:[^ ]+]] = alloca %struct.f9, align 8
-// CHECK: %[[TMP2:[^ ]+]] = bitcast %struct.f9* %[[TMP1]] to i8*
-// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %[[TMP2]], i8* bitcast (%struct.f9* @global_f9 to i8*), i64 36, i32 4, i1 false)
-// CHECK: call void @func_f9(%struct.f9* sret %{{[^ ]+}}, %struct.f9* byval align 8 %[[TMP1]])
+// CHECK: %[[TMP1:[^ ]+]] = alloca [5 x i64]
+// CHECK: %[[TMP2:[^ ]+]] = bitcast [5 x i64]* %[[TMP1]] to i8*
+// CHECK: call void @llvm.memcpy.p0i8.p0i8.i64(i8* %[[TMP2]], i8* bitcast (%struct.f9* @global_f9 to i8*), i64 36, i32 1, i1 false)
+// CHECK: %[[TMP3:[^ ]+]] = load [5 x i64]* %[[TMP1]]
+// CHECK: call void @func_f9(%struct.f9* sret %{{[^ ]+}}, [5 x i64] %[[TMP3]])
 struct f9 global_f9;
 void call_f9(void) { global_f9 = func_f9(global_f9); }
 
