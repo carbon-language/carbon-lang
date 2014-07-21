@@ -389,7 +389,7 @@ multiclass VOPC_Helper <bits<8> op, RegisterClass vrc, RegisterClass arc,
     op, (ins arc:$src0, vrc:$src1),
     opName#"_e32 $dst, $src0, $src1", []
   >, VOP <opName> {
-    let Defs = !if(defExec, [VCC, EXEC], [VCC]);
+    let Defs = !if(defExec, [EXEC], []);
   }
 
   def _e64 : VOP3 <
