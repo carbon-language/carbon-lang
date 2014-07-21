@@ -38,9 +38,13 @@ def get_global_functions(library):
   nm_out = nm_proc.communicate()[0].decode().split('\n')
   if nm_proc.returncode != 0:
     raise subprocess.CalledProcessError(nm_proc.returncode, 'nm')
+  func_symbols = ['T', 'W']
+  # On PowerPC, nm prints function descriptors from .data section.
+  if os.uname()[4] in ["powerpc", "ppc64"]:
+    func_symbols += ['D']
   for line in nm_out:
     cols = line.split(' ')
-    if (len(cols) == 3 and cols[1] in ('T', 'W')) :
+    if len(cols) == 3 and cols[1] in func_symbols :
       functions.append(cols[2])
   return functions
 
