@@ -225,10 +225,9 @@ SDValue DAGTypeLegalizer::PromoteIntRes_AtomicCmpSwap(AtomicSDNode *N,
       N->getOpcode(), SDLoc(N), N->getMemoryVT(), VTs, N->getChain(),
       N->getBasePtr(), Op2, Op3, N->getMemOperand(), N->getSuccessOrdering(),
       N->getFailureOrdering(), N->getSynchScope());
-  // Legalized the chain result - switch anything that used the old chain to
-  // use the new one.
-  unsigned ChainOp = N->getNumValues() - 1;
-  ReplaceValueWith(SDValue(N, ChainOp), Res.getValue(ChainOp));
+  // Update the use to N with the newly created Res.
+  for (unsigned i = 1, NumResults = N->getNumValues(); i < NumResults; ++i)
+    ReplaceValueWith(SDValue(N, i), Res.getValue(i));
   return Res;
 }
 

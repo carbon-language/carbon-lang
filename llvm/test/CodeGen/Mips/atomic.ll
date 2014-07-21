@@ -8,7 +8,7 @@
 
 ; Keep one big-endian check so that we don't reduce testing, but don't add more
 ; since endianness doesn't affect the body of the atomic operations.
-; RUN: llc -march=mips   --disable-machine-licm -mcpu=mips32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=CHECK-EB
+; RUN: llc -march=mips   --disable-machine-licm -mcpu=mips32 < %s | FileCheck %s -check-prefix=ALL -check-prefix=MIPS32-ANY -check-prefix=NO-SEB-SEH -check-prefix=CHECK-EB
 
 @x = common global i32 0, align 4
 
@@ -246,6 +246,7 @@ entry:
 ; NO-SEB-SEH:    sra     $2, $[[R17]], 24
 
 ; HAS-SEB-SEH:   seb     $2, $[[R16]]
+
 }
 
 define signext i8 @AtomicCmpSwap8(i8 signext %oldval, i8 signext %newval) nounwind {
@@ -290,6 +291,49 @@ entry:
 ; NO-SEB-SEH:    sra     $2, $[[R18]], 24
 
 ; HAS-SEB-SEH:   seb     $2, $[[R17]]
+}
+
+define i1 @AtomicCmpSwapRes8(i8* %ptr, i8 %oldval, i8 signext %newval) nounwind {
+entry:
+  %0 = cmpxchg i8* %ptr, i8 %oldval, i8 %newval monotonic monotonic
+  %1 = extractvalue { i8, i1 } %0, 1
+  ret i1 %1
+; ALL-LABEL: AtomicCmpSwapRes8
+
+; ALL:           addiu   $[[R1:[0-9]+]], $zero, -4
+; ALL:           and     $[[R2:[0-9]+]], $4, $[[R1]]
+; ALL:           andi    $[[R3:[0-9]+]], $4, 3
+; CHECK-EL:      sll     $[[R5:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      xori    $[[R4:[0-9]+]], $[[R3]], 3
+; CHECK-EB:      sll     $[[R5:[0-9]+]], $[[R4]], 3
+; ALL:           ori     $[[R6:[0-9]+]], $zero, 255
+; ALL:           sllv    $[[R7:[0-9]+]], $[[R6]], $[[R5]]
+; ALL:           nor     $[[R8:[0-9]+]], $zero, $[[R7]]
+; ALL:           andi    $[[R9:[0-9]+]], $5, 255
+; ALL:           sllv    $[[R10:[0-9]+]], $[[R9]], $[[R5]]
+; ALL:           andi    $[[R11:[0-9]+]], $6, 255
+; ALL:           sllv    $[[R12:[0-9]+]], $[[R11]], $[[R5]]
+
+; ALL:       $[[BB0:[A-Z_0-9]+]]:
+; ALL:           ll      $[[R13:[0-9]+]], 0($[[R2]])
+; ALL:           and     $[[R14:[0-9]+]], $[[R13]], $[[R7]]
+; ALL:           bne     $[[R14]], $[[R10]], $[[BB1:[A-Z_0-9]+]]
+
+; ALL:           and     $[[R15:[0-9]+]], $[[R13]], $[[R8]]
+; ALL:           or      $[[R16:[0-9]+]], $[[R15]], $[[R12]]
+; ALL:           sc      $[[R16]], 0($[[R2]])
+; ALL:           beqz    $[[R16]], $[[BB0]]
+
+; ALL:       $[[BB1]]:
+; ALL:           srlv    $[[R17:[0-9]+]], $[[R14]], $[[R5]]
+
+; NO-SEB-SEH:    sll     $[[R18:[0-9]+]], $[[R17]], 24
+; NO-SEB-SEH:    sra     $[[R19:[0-9]+]], $[[R18]], 24
+
+; HAS-SEB-SEH:   seb     $[[R19:[0-9]+]], $[[R17]]
+
+; ALL:           xor     $[[R20:[0-9]+]], $[[R19]], $5
+; ALL:           sltiu   $2, $[[R20]], 1
 }
 
 ; Check one i16 so that we cover the seh sign extend
