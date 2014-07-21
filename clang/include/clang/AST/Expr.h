@@ -4167,6 +4167,17 @@ public:
     return Designators + NumDesignators;
   }
 
+  typedef llvm::iterator_range<designators_iterator> designators_range;
+  designators_range designators() {
+    return designators_range(designators_begin(), designators_end());
+  }
+
+  typedef llvm::iterator_range<const_designators_iterator>
+          designators_const_range;
+  designators_const_range designators() const {
+    return designators_const_range(designators_begin(), designators_end());
+  }
+
   typedef std::reverse_iterator<designators_iterator>
           reverse_designators_iterator;
   reverse_designators_iterator designators_rbegin() {
