@@ -316,7 +316,9 @@ multiclass VOP1_Helper <bits<8> op, RegisterClass drc, RegisterClass src,
     opName#"_e64 $dst, $src0_modifiers, $clamp, $omod", []
   >, VOP <opName> {
     let src1 = 0;
+    let src1_modifiers = 0;
     let src2 = 0;
+    let src2_modifiers = 0;
   }
 }
 
@@ -348,6 +350,7 @@ multiclass VOP2_Helper <bits<6> op, RegisterClass vrc, RegisterClass arc,
     opName#"_e64 $dst, $src0_modifiers, $src1_modifiers, $clamp, $omod", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let src2 = 0;
+    let src2_modifiers = 0;
   }
 }
 
@@ -376,6 +379,7 @@ multiclass VOP2b_32 <bits<6> op, string opName, list<dag> pattern,
     opName#"_e64 $dst, $src0_modifiers, $src1_modifiers, $clamp, $omod", []
   >, VOP <opName>, VOP2_REV<revOp#"_e64", !eq(revOp, opName)> {
     let src2 = 0;
+    let src2_modifiers = 0;
     /* the VOP2 variant puts the carry out into VCC, the VOP3 variant
        can write it into any SGPR. We currently don't use the carry out,
        so for now hardcode it to VCC as well */
@@ -440,6 +444,7 @@ class VOP3_64_32 <bits <9> op, string opName, list<dag> pattern> : VOP3 <
 >, VOP <opName> {
 
   let src2 = 0;
+  let src2_modifiers = 0;
   let src0_modifiers = 0;
   let clamp = 0;
   let omod = 0;
