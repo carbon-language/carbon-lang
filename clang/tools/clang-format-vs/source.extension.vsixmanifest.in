@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
+<Vsix Version="1.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
   <Identifier Id="20dbc914-1c7a-4992-b236-ef58b37850eb">
     <Name>ClangFormat</Name>
     <Author>LLVM</Author>
-    <Version>1.0</Version>
-    <Description xml:space="preserve">Information about my package</Description>
+    <Version>@CLANG_FORMAT_VS_VERSION@</Version>
+    <Description xml:space="preserve">A tool to format C/C++/Obj-C code.</Description>
     <Locale>1033</Locale>
     <InstalledByMsi>false</InstalledByMsi>
     <SupportedProducts>
