@@ -71,11 +71,11 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
   if (!OnlyVirtualSpecified && KeywordCount == 1)
     return; // Nothing to do.
 
-  DiagnosticBuilder Diag =
-      diag(Method->getLocation(),
-           OnlyVirtualSpecified
-               ? "Prefer using 'override' or 'final' instead of 'virtual'"
-               : "Use exactly one of 'virtual', 'override' and 'final'");
+  DiagnosticBuilder Diag = diag(
+      Method->getLocation(),
+      OnlyVirtualSpecified
+          ? "Prefer using 'override' or 'final' instead of 'virtual'"
+          : "Use exactly one of 'virtual', 'override' or (rarely) 'final'");
 
   CharSourceRange FileRange = Lexer::makeFileCharRange(
       CharSourceRange::getTokenRange(Method->getSourceRange()), Sources,
