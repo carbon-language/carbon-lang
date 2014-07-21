@@ -127,6 +127,11 @@ namespace {
     /// AddToWorkList - Add to the work list making sure its instance is at the
     /// back (next to be processed.)
     void AddToWorkList(SDNode *N) {
+      // Skip handle nodes as they can't usefully be combined and confuse the
+      // zero-use deletion strategy.
+      if (N->getOpcode() == ISD::HANDLENODE)
+        return;
+
       WorkListContents.insert(N);
       WorkListOrder.push_back(N);
     }
@@ -1108,7 +1113,7 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
     // N is deleted from the DAG, since they too may now be dead or may have a
     // reduced number of uses, allowing other xforms.
-    if (N->use_empty() && N != &Dummy) {
+    if (N->use_empty()) {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
         AddToWorkList(N->getOperand(i).getNode());
 
