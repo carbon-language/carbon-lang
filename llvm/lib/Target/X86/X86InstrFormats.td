@@ -184,6 +184,8 @@ class EVEX_KZ : EVEX_K { bit hasEVEX_Z = 1; }
 class EVEX_B { bit hasEVEX_B = 1; }
 class EVEX_RC { bit hasEVEX_RC = 1; }
 class EVEX_V512 { bit hasEVEX_L2 = 1; bit hasVEX_L = 0; }
+class EVEX_V256 { bit hasEVEX_L2 = 0; bit hasVEX_L = 1; }
+class EVEX_V128 { bit hasEVEX_L2 = 0; bit hasVEX_L = 0; }
 
 // Specify AVX512 8-bit compressed displacement encoding based on the vector
 // element size in bits (8, 16, 32, 64) and the CDisp8 form.

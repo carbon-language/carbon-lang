@@ -1666,6 +1666,8 @@ bool X86AsmParser::HandleAVX512Operand(OperandVector &Operands,
         // Recognize only reasonable suffixes.
         const char *BroadcastPrimitive =
           StringSwitch<const char*>(getLexer().getTok().getIdentifier())
+            .Case("to2",  "{1to2}")
+            .Case("to4",  "{1to4}")
             .Case("to8",  "{1to8}")
             .Case("to16", "{1to16}")
             .Default(nullptr);

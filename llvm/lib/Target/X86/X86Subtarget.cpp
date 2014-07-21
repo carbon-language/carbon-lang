@@ -272,6 +272,9 @@ void X86Subtarget::initializeEnvironment() {
   HasERI = false;
   HasCDI = false;
   HasPFI = false;
+  HasDQI = false;
+  HasBWI = false;
+  HasVLX = false;
   HasADX = false;
   HasSHA = false;
   HasPRFCHW = false;

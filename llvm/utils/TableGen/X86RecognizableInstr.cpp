@@ -975,10 +975,18 @@ OperandType RecognizableInstr::typeFromString(const std::string &s,
   TYPE("VR512",               TYPE_XMM512)
   TYPE("VK1",                 TYPE_VK1)
   TYPE("VK1WM",               TYPE_VK1)
+  TYPE("VK2",                 TYPE_VK2)
+  TYPE("VK2WM",               TYPE_VK2)
+  TYPE("VK4",                 TYPE_VK4)
+  TYPE("VK4WM",               TYPE_VK4)
   TYPE("VK8",                 TYPE_VK8)
   TYPE("VK8WM",               TYPE_VK8)
   TYPE("VK16",                TYPE_VK16)
   TYPE("VK16WM",              TYPE_VK16)
+  TYPE("VK32",                TYPE_VK32)
+  TYPE("VK32WM",              TYPE_VK32)
+  TYPE("VK64",                TYPE_VK64)
+  TYPE("VK64WM",              TYPE_VK64)
   TYPE("GR16_NOAX",           TYPE_Rv)
   TYPE("GR32_NOAX",           TYPE_Rv)
   TYPE("GR64_NOAX",           TYPE_R64)
@@ -1101,6 +1109,8 @@ RecognizableInstr::vvvvRegisterEncodingFromString(const std::string &s,
   ENCODING("VR256X",          ENCODING_VVVV)
   ENCODING("VR512",           ENCODING_VVVV)
   ENCODING("VK1",             ENCODING_VVVV)
+  ENCODING("VK2",             ENCODING_VVVV)
+  ENCODING("VK4",             ENCODING_VVVV)
   ENCODING("VK8",             ENCODING_VVVV)
   ENCODING("VK16",            ENCODING_VVVV)
   errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
@@ -1111,8 +1121,12 @@ OperandEncoding
 RecognizableInstr::writemaskRegisterEncodingFromString(const std::string &s,
                                                        uint8_t OpSize) {
   ENCODING("VK1WM",           ENCODING_WRITEMASK)
+  ENCODING("VK2WM",           ENCODING_WRITEMASK)
+  ENCODING("VK4WM",           ENCODING_WRITEMASK)
   ENCODING("VK8WM",           ENCODING_WRITEMASK)
   ENCODING("VK16WM",          ENCODING_WRITEMASK)
+  ENCODING("VK32WM",          ENCODING_WRITEMASK)
+  ENCODING("VK64WM",          ENCODING_WRITEMASK)
   errs() << "Unhandled mask register encoding " << s << "\n";
   llvm_unreachable("Unhandled mask register encoding");
 }

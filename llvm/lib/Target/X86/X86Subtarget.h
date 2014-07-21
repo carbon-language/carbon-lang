@@ -189,13 +189,22 @@ protected:
 
   /// Processor has AVX-512 PreFetch Instructions
   bool HasPFI;
-  
+
   /// Processor has AVX-512 Exponential and Reciprocal Instructions
   bool HasERI;
-  
+
   /// Processor has AVX-512 Conflict Detection Instructions
   bool HasCDI;
-  
+
+  /// Processor has AVX-512 Doubleword and Quadword instructions
+  bool HasDQI;
+
+  /// Processor has AVX-512 Byte and Word instructions
+  bool HasBWI;
+
+  /// Processor has AVX-512 Vector Length eXtenstions
+  bool HasVLX;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -349,6 +358,9 @@ public:
   bool hasCDI() const { return HasCDI; }
   bool hasPFI() const { return HasPFI; }
   bool hasERI() const { return HasERI; }
+  bool hasDQI() const { return HasDQI; }
+  bool hasBWI() const { return HasBWI; }
+  bool hasVLX() const { return HasVLX; }
 
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
   bool isSLM() const { return X86ProcFamily == IntelSLM; }

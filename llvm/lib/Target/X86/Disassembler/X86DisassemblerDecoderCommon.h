@@ -265,7 +265,7 @@ enum attributeBits {
   ENUM_ENTRY(IC_EVEX_L2_W_KZ,        3,  "requires EVEX_KZ, L2 and W")               \
   ENUM_ENTRY(IC_EVEX_L2_W_XS_KZ,     4,  "requires EVEX_KZ, L2, W and XS prefix")    \
   ENUM_ENTRY(IC_EVEX_L2_W_XD_KZ,     4,  "requires EVEX_KZ, L2, W and XD prefix")    \
-  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")     
+  ENUM_ENTRY(IC_EVEX_L2_W_OPSIZE_KZ, 4,  "requires EVEX_KZ, L2, W and OpSize")
 
 #define ENUM_ENTRY(n, r, d) n,
 enum InstructionContext {
@@ -453,8 +453,12 @@ enum OperandEncoding {
   ENUM_ENTRY(TYPE_XMM256,     "32-byte")                                       \
   ENUM_ENTRY(TYPE_XMM512,     "64-byte")                                       \
   ENUM_ENTRY(TYPE_VK1,        "1-bit")                                         \
+  ENUM_ENTRY(TYPE_VK2,        "2-bit")                                         \
+  ENUM_ENTRY(TYPE_VK4,        "4-bit")                                         \
   ENUM_ENTRY(TYPE_VK8,        "8-bit")                                         \
   ENUM_ENTRY(TYPE_VK16,       "16-bit")                                        \
+  ENUM_ENTRY(TYPE_VK32,       "32-bit")                                        \
+  ENUM_ENTRY(TYPE_VK64,       "64-bit")                                        \
   ENUM_ENTRY(TYPE_XMM0,       "Implicit use of XMM0")                          \
   ENUM_ENTRY(TYPE_SEGMENTREG, "Segment register operand")                      \
   ENUM_ENTRY(TYPE_DEBUGREG,   "Debug register operand")                        \

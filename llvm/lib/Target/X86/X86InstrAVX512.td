@@ -1,19 +1,36 @@
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
 let Predicates = [HasAVX512] in {
-  def : Pat<(v8f64  (bitconvert (v16f32 VR512:$src))), (v8f64 VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v8i64 VR512:$src))),  (v8f64 VR512:$src)>;
   def : Pat<(v8f64  (bitconvert (v16i32 VR512:$src))), (v8f64 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v8i64 VR512:$src))),  (v8f64 VR512:$src)>;
-  def : Pat<(v16f32 (bitconvert (v16i32 VR512:$src))), (v16f32 VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v32i16 VR512:$src))),  (v8f64 VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v64i8 VR512:$src))), (v8f64 VR512:$src)>;
+  def : Pat<(v8f64  (bitconvert (v16f32 VR512:$src))), (v8f64 VR512:$src)>;
   def : Pat<(v16f32 (bitconvert (v8i64 VR512:$src))),  (v16f32 VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v16i32 VR512:$src))), (v16f32 VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v32i16 VR512:$src))), (v16f32 VR512:$src)>;
+  def : Pat<(v16f32 (bitconvert (v64i8 VR512:$src))), (v16f32 VR512:$src)>;
   def : Pat<(v16f32 (bitconvert (v8f64 VR512:$src))),  (v16f32 VR512:$src)>;
-  def : Pat<(v8i64  (bitconvert (v16f32 VR512:$src))), (v8i64 VR512:$src)>;
   def : Pat<(v8i64  (bitconvert (v16i32 VR512:$src))), (v8i64 VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v32i16 VR512:$src))), (v8i64 VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v64i8 VR512:$src))), (v8i64 VR512:$src)>;
   def : Pat<(v8i64  (bitconvert (v8f64 VR512:$src))),  (v8i64 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v16f32 VR512:$src))), (v16i32 VR512:$src)>;
-  def : Pat<(v16i32 (bitconvert (v8i64 VR512:$src))),  (v16i32 VR512:$src)>;
+  def : Pat<(v8i64  (bitconvert (v16f32 VR512:$src))), (v8i64 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v8i64 VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v32i16 VR512:$src))),  (v16i32 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v64i8 VR512:$src))),  (v16i32 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v8f64 VR512:$src))),  (v16i32 VR512:$src)>;
-  def : Pat<(v8f64  (bitconvert (v8i64 VR512:$src))),  (v8f64 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v8i64 VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v16i32 VR512:$src))),  (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v64i8 VR512:$src))),  (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v8f64 VR512:$src))),  (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v16f32 VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v32i16 (bitconvert (v16f32 VR512:$src))), (v32i16 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v8i64 VR512:$src))), (v64i8 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v16i32 VR512:$src))), (v64i8 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v32i16 VR512:$src))), (v64i8 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v8f64 VR512:$src))),  (v64i8 VR512:$src)>;
+  def : Pat<(v64i8  (bitconvert (v16f32 VR512:$src))), (v64i8 VR512:$src)>;
 
   def : Pat<(v2i64 (bitconvert (v4i32 VR128X:$src))), (v2i64 VR128X:$src)>;
   def : Pat<(v2i64 (bitconvert (v8i16 VR128X:$src))), (v2i64 VR128X:$src)>;
@@ -135,7 +152,6 @@ def VINSERTI32x4rm : AVX512AIi8<0x38, MRMSrcMem, (outs VR512:$dst),
           (ins VR512:$src1, i128mem:$src2, i8imm:$src3),
           "vinserti32x4\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
           []>, EVEX_4V, EVEX_V512, EVEX_CD8<32, CD8VT4>;
-
 }
 
 let hasSideEffects = 0 in {

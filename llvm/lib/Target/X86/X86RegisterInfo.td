@@ -449,7 +449,7 @@ def FPCCR : RegisterClass<"X86", [i16], 16, (add FPSW)> {
 }
 
 // AVX-512 vector/mask registers.
-def VR512 : RegisterClass<"X86", [v16f32, v8f64, v16i32, v8i64], 512,
+def VR512 : RegisterClass<"X86", [v16f32, v8f64, v64i8, v32i16, v16i32, v8i64], 512,
     (sequence "ZMM%u", 0, 31)>;
 
 // Scalar AVX-512 floating point registers.
@@ -463,13 +463,19 @@ def VR128X : RegisterClass<"X86", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
 def VR256X : RegisterClass<"X86", [v32i8, v16i16, v8i32, v4i64, v8f32, v4f64],
                           256, (sequence "YMM%u", 0, 31)>;
 
-// The size of the all masked registers is 16 bit because we have only one
-// KMOVW istruction that can store this register in memory, and it writes 2 bytes
-def VK1     : RegisterClass<"X86", [i1],    16, (sequence "K%u", 0, 7)>;
-def VK8     : RegisterClass<"X86", [v8i1],  16, (add VK1)> {let Size = 16;}
+// Mask registers
+def VK1     : RegisterClass<"X86", [i1],    16, (sequence "K%u", 0, 7)> {let Size = 16;}
+def VK2     : RegisterClass<"X86", [v2i1],  16, (add VK1)> {let Size = 16;}
+def VK4     : RegisterClass<"X86", [v4i1],  16, (add VK2)> {let Size = 16;}
+def VK8     : RegisterClass<"X86", [v8i1],  16, (add VK4)> {let Size = 16;}
 def VK16    : RegisterClass<"X86", [v16i1], 16, (add VK8)> {let Size = 16;}
+def VK32    : RegisterClass<"X86", [v32i1], 32, (add VK16)> {let Size = 32;}
+def VK64    : RegisterClass<"X86", [v64i1], 64, (add VK32)> {let Size = 64;}
 
 def VK1WM   : RegisterClass<"X86", [i1],    16, (sub VK1, K0)> {let Size = 16;}
+def VK2WM   : RegisterClass<"X86", [v2i1],  16, (sub VK2, K0)> {let Size = 16;}
+def VK4WM   : RegisterClass<"X86", [v4i1],  16, (sub VK4, K0)> {let Size = 16;}
 def VK8WM   : RegisterClass<"X86", [v8i1],  16, (sub VK8, K0)> {let Size = 16;}
-def VK16WM  : RegisterClass<"X86", [v16i1], 16, (add VK8WM)>;
-
+def VK16WM  : RegisterClass<"X86", [v16i1], 16, (add VK8WM)>   {let Size = 16;}
+def VK32WM  : RegisterClass<"X86", [v32i1], 32, (add VK16WM)> {let Size = 32;}
+def VK64WM  : RegisterClass<"X86", [v64i1], 64, (add VK32WM)> {let Size = 64;}
