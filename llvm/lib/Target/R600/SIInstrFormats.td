@@ -142,9 +142,9 @@ class SOPP <bits<7> op, dag ins, string asm, list<dag> pattern> : Enc32 <
   asm,
   pattern > {
 
-  bits <16> SIMM16;
+  bits <16> simm16;
 
-  let Inst{15-0} = SIMM16;
+  let Inst{15-0} = simm16;
   let Inst{22-16} = op;
   let Inst{31-23} = 0x17f; // encoding
 
