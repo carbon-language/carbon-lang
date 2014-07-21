@@ -391,10 +391,15 @@ SDValue SITargetLowering::LowerFormalArguments(
   }
 
   // The pointer to the list of arguments is stored in SGPR0, SGPR1
+	// The pointer to the scratch buffer is stored in SGPR2, SGPR3
   if (Info->getShaderType() == ShaderType::COMPUTE) {
+    Info->NumUserSGPRs = 4;
     CCInfo.AllocateReg(AMDGPU::SGPR0);
     CCInfo.AllocateReg(AMDGPU::SGPR1);
+    CCInfo.AllocateReg(AMDGPU::SGPR2);
+    CCInfo.AllocateReg(AMDGPU::SGPR3);
     MF.addLiveIn(AMDGPU::SGPR0_SGPR1, &AMDGPU::SReg_64RegClass);
+    MF.addLiveIn(AMDGPU::SGPR2_SGPR3, &AMDGPU::SReg_64RegClass);
   }
 
   if (Info->getShaderType() == ShaderType::COMPUTE) {
@@ -509,6 +514,36 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MI->eraseFromParent();
     break;
   }
+  case AMDGPU::SI_BUFFER_RSRC: {
+    unsigned SuperReg = MI->getOperand(0).getReg();
+    unsigned Args[4];
+    for (unsigned i = 0, e = 4; i < e; ++i) {
+      MachineOperand &Arg = MI->getOperand(i + 1);
+
+      if (Arg.isReg()) {
+        Args[i] = Arg.getReg();
+        continue;
+      }
+
+      assert(Arg.isImm());
+      unsigned Reg = MRI.createVirtualRegister(&AMDGPU::SGPR_32RegClass);
+      BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::S_MOV_B32), Reg)
+              .addImm(Arg.getImm());
+      Args[i] = Reg;
+    }
+    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::REG_SEQUENCE),
+            SuperReg)
+            .addReg(Args[0])
+            .addImm(AMDGPU::sub0)
+            .addReg(Args[1])
+            .addImm(AMDGPU::sub1)
+            .addReg(Args[2])
+            .addImm(AMDGPU::sub2)
+            .addReg(Args[3])
+            .addImm(AMDGPU::sub3);
+    MI->eraseFromParent();
+    break;
+  }
   case AMDGPU::V_SUB_F64: {
     unsigned DestReg = MI->getOperand(0).getReg();
     BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F64), DestReg)
@@ -620,6 +655,7 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
+  case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: {
     LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
@@ -658,8 +694,6 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
                          cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
     EVT VT = Op.getValueType();
     SDLoc DL(Op);
-    //XXX: Hardcoded we only use two to store the pointer to the parameters.
-    unsigned NumUserSGPRs = 2;
     switch (IntrinsicID) {
     default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
     case Intrinsic::r600_read_ngroups_x:
@@ -682,13 +716,13 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
       return LowerParameter(DAG, VT, VT, DL, DAG.getEntryNode(), 32, false);
     case Intrinsic::r600_read_tgid_x:
       return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 0), VT);
+                     AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 0), VT);
     case Intrinsic::r600_read_tgid_y:
       return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 1), VT);
+                     AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 1), VT);
     case Intrinsic::r600_read_tgid_z:
       return CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
-                     AMDGPU::SReg_32RegClass.getRegister(NumUserSGPRs + 2), VT);
+                     AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 2), VT);
     case Intrinsic::r600_read_tidig_x:
       return CreateLiveInRegister(DAG, &AMDGPU::VReg_32RegClass,
                                   AMDGPU::VGPR0, VT);
@@ -780,6 +814,21 @@ static SDNode *findUser(SDValue Value, unsigned Opcode) {
       return *I;
   }
   return nullptr;
+}
+
+SDValue SITargetLowering::LowerFrameIndex(SDValue Op, SelectionDAG &DAG) const {
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  const SIInstrInfo *TII =
+    static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+  const SIRegisterInfo &TRI = TII->getRegisterInfo();
+  FrameIndexSDNode *FINode = cast<FrameIndexSDNode>(Op);
+  unsigned FrameIndex = FINode->getIndex();
+
+  CreateLiveInRegister(DAG, &AMDGPU::SReg_32RegClass,
+    TRI.getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET), MVT::i32);
+
+  return DAG.getTargetFrameIndex(FrameIndex, MVT::i32);
 }
 
 /// This transforms the control flow intrinsics to get the branch destination as
@@ -891,6 +940,11 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
+  // Vector private memory loads have already been split, and
+  // all the rest of private memory loads are legal.
+  if (Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
+    return SDValue();
+  }
   SDValue Lowered = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
   if (Lowered.getNode())
     return Lowered;
@@ -1080,6 +1134,12 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
       VT.isVector() && VT.getVectorNumElements() == 2 &&
       VT.getVectorElementType() == MVT::i32)
     return SDValue();
+
+  if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
+    if (VT.isVector() && VT.getVectorNumElements() > 4)
+      return SplitVectorStore(Op, DAG);
+    return SDValue();
+  }
 
   SDValue Ret = AMDGPUTargetLowering::LowerSTORE(Op, DAG);
   if (Ret.getNode())
@@ -1495,9 +1555,19 @@ void SITargetLowering::ensureSRegLimit(SelectionDAG &DAG, SDValue &Operand,
 
   // This is a conservative aproach. It is possible that we can't determine the
   // correct register class and copy too often, but better safe than sorry.
-  SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
-  SDNode *Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, SDLoc(),
-                                    Operand.getValueType(), Operand, RC);
+
+  SDNode *Node;
+  // We can't use COPY_TO_REGCLASS with FrameIndex arguments.
+  if (isa<FrameIndexSDNode>(Operand)) {
+    unsigned Opcode = Operand.getValueType() == MVT::i32 ?
+                      AMDGPU::S_MOV_B32 : AMDGPU::S_MOV_B64;
+    Node = DAG.getMachineNode(Opcode, SDLoc(), Operand.getValueType(),
+                              Operand);
+  } else {
+    SDValue RC = DAG.getTargetConstant(RegClass, MVT::i32);
+    Node = DAG.getMachineNode(TargetOpcode::COPY_TO_REGCLASS, SDLoc(),
+                              Operand.getValueType(), Operand, RC);
+  }
   Operand = SDValue(Node, 0);
 }
 
@@ -1591,6 +1661,14 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
         ensureSRegLimit(DAG, Ops[i], RegClass, ScalarSlotUsed);
       }
       continue;
+    } else {
+      // If it's not a VSrc or SSrc operand check if we have a GlobalAddress.
+      // These will be lowered to immediates, so we will need to insert a MOV.
+      if (isa<GlobalAddressSDNode>(Ops[i])) {
+        SDNode *Node = DAG.getMachineNode(AMDGPU::V_MOV_B32_e32, SDLoc(),
+                                    Operand.getValueType(), Operand);
+        Ops[i] = SDValue(Node, 0);
+      }
     }
 
     if (i == 1 && DescRev && fitsRegClass(DAG, Ops[0], RegClass)) {

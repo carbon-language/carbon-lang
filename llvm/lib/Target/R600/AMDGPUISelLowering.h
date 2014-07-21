@@ -71,13 +71,6 @@ protected:
   static EVT getEquivalentMemType(LLVMContext &Context, EVT VT);
   static EVT getEquivalentLoadRegType(LLVMContext &Context, EVT VT);
 
-  /// \brief Helper function that adds Reg to the LiveIn list of the DAG's
-  /// MachineFunction.
-  ///
-  /// \returns a RegisterSDNode representing Reg.
-  virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
-                                       const TargetRegisterClass *RC,
-                                       unsigned Reg, EVT VT) const;
   virtual SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
                                      SelectionDAG &DAG) const;
   /// \brief Split a vector load into multiple scalar loads.
@@ -160,6 +153,14 @@ public:
     SDValue Op,
     const SelectionDAG &DAG,
     unsigned Depth = 0) const override;
+
+  /// \brief Helper function that adds Reg to the LiveIn list of the DAG's
+  /// MachineFunction.
+  ///
+  /// \returns a RegisterSDNode representing Reg.
+  virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
+                                       const TargetRegisterClass *RC,
+                                       unsigned Reg, EVT VT) const;
 };
 
 namespace AMDGPUISD {

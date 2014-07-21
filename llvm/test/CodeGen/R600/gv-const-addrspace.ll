@@ -76,3 +76,22 @@ define void @array_v1_gv_load(<1 x i32> addrspace(1)* %out, i32 %index) {
   store <1 x i32> %load, <1 x i32> addrspace(1)* %out, align 4
   ret void
 }
+
+define void @gv_addressing_in_branch(float addrspace(1)* %out, i32 %index, i32 %a) {
+entry:
+  %0 = icmp eq i32 0, %a
+  br i1 %0, label %if, label %else
+
+if:
+  %1 = getelementptr inbounds [5 x float] addrspace(2)* @float_gv, i32 0, i32 %index
+  %2 = load float addrspace(2)* %1
+  store float %2, float addrspace(1)* %out
+  br label %endif
+
+else:
+  store float 1.0, float addrspace(1)* %out
+  br label %endif
+
+endif:
+  ret void
+}

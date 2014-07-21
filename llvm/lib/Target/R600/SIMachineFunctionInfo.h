@@ -59,6 +59,7 @@ public:
   SIMachineFunctionInfo(const MachineFunction &MF);
   unsigned PSInputAddr;
   struct RegSpillTracker SpillTracker;
+  unsigned NumUserSGPRs;
 };
 
 } // End namespace llvm

@@ -32,6 +32,7 @@ enum {
 #define   S_00B028_VGPRS(x)                                           (((x) & 0x3F) << 0)
 #define   S_00B028_SGPRS(x)                                           (((x) & 0x0F) << 6)
 #define R_00B84C_COMPUTE_PGM_RSRC2                                      0x00B84C
+#define   S_00B02C_SCRATCH_EN(x)                                      (((x) & 0x1) << 0)
 #define   S_00B84C_LDS_SIZE(x)                                        (((x) & 0x1FF) << 15)
 #define R_0286CC_SPI_PS_INPUT_ENA                                       0x0286CC
 
@@ -84,5 +85,8 @@ enum {
 // precision.
 #define FP_DENORM_MODE_SP(x) (((x) & 0x3) << 4)
 #define FP_DENORM_MODE_DP(x) (((x) & 0x3) << 6)
+
+#define R_00B860_COMPUTE_TMPRING_SIZE                                   0x00B860
+#define   S_00B860_WAVESIZE(x)                                        (((x) & 0x1FFF) << 12)
 
 #endif // SIDEFINES_H_

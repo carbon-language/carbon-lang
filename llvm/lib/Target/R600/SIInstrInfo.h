@@ -106,6 +106,9 @@ public:
   bool isInlineConstant(const MachineOperand &MO) const;
   bool isLiteralConstant(const MachineOperand &MO) const;
 
+  bool isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
+                         const MachineOperand &MO) const;
+
   bool verifyInstruction(const MachineInstr *MI,
                          StringRef &ErrInfo) const override;
 
@@ -181,7 +184,7 @@ namespace AMDGPU {
   int getMCOpcode(uint16_t Opcode, unsigned Gen);
 
   const uint64_t RSRC_DATA_FORMAT = 0xf00000000000LL;
-
+  const uint64_t RSRC_TID_ENABLE = 1LL << 55;
 
 } // End namespace AMDGPU
 

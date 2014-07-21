@@ -32,6 +32,7 @@ private:
       DX10Clamp(0),
       DebugMode(0),
       IEEEMode(0),
+      ScratchSize(0),
       CodeLen(0) {}
 
     // Fields set in PGM_RSRC1 pm4 packet.
@@ -43,6 +44,7 @@ private:
     uint32_t DX10Clamp;
     uint32_t DebugMode;
     uint32_t IEEEMode;
+    uint32_t ScratchSize;
 
     // Bonus information for debugging.
     uint64_t CodeLen;

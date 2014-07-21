@@ -16,6 +16,10 @@
 #include "SIRegisterInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
+#include "SIMachineFunctionInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 
 using namespace llvm;
 
@@ -27,14 +31,36 @@ BitVector SIRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(AMDGPU::EXEC);
   Reserved.set(AMDGPU::INDIRECT_BASE_ADDR);
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo*>(ST.getInstrInfo());
-  TII->reserveIndirectRegisters(Reserved, MF);
   return Reserved;
 }
 
 unsigned SIRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                              MachineFunction &MF) const {
   return RC->getNumRegs();
+}
+
+bool SIRegisterInfo::requiresRegisterScavenging(const MachineFunction &Fn) const {
+  return Fn.getFrameInfo()->hasStackObjects();
+}
+
+void SIRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI,
+                                        int SPAdj, unsigned FIOperandNum,
+                                        RegScavenger *RS) const {
+  MachineFunction *MF = MI->getParent()->getParent();
+  MachineFrameInfo *FrameInfo = MF->getFrameInfo();
+  const SIInstrInfo *TII = static_cast<const SIInstrInfo*>(ST.getInstrInfo());
+  MachineOperand &FIOp = MI->getOperand(FIOperandNum);
+  int Index = MI->getOperand(FIOperandNum).getIndex();
+  int64_t Offset = FrameInfo->getObjectOffset(Index);
+
+  FIOp.ChangeToImmediate(Offset);
+  if (!TII->isImmOperandLegal(MI, FIOperandNum, FIOp)) {
+    unsigned TmpReg = RS->scavengeRegister(&AMDGPU::VReg_32RegClass, MI, SPAdj);
+    BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+            TII->get(AMDGPU::V_MOV_B32_e32), TmpReg)
+            .addImm(Offset);
+    FIOp.ChangeToRegister(TmpReg, false);
+  }
 }
 
 const TargetRegisterClass * SIRegisterInfo::getCFGStructurizerRegClass(
@@ -140,4 +166,22 @@ bool SIRegisterInfo::regClassCanUseImmediate(int RCID) const {
 bool SIRegisterInfo::regClassCanUseImmediate(
                              const TargetRegisterClass *RC) const {
   return regClassCanUseImmediate(RC->getID());
+}
+
+unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
+                                           enum PreloadedValue Value) const {
+
+  const SIMachineFunctionInfo *MFI = MF.getInfo<SIMachineFunctionInfo>();
+  switch (Value) {
+  case SIRegisterInfo::TGID_X:
+    return AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 0);
+  case SIRegisterInfo::TGID_Y:
+    return AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 1);
+  case SIRegisterInfo::TGID_Z:
+    return AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 2);
+  case SIRegisterInfo::SCRATCH_WAVE_OFFSET:
+    return AMDGPU::SReg_32RegClass.getRegister(MFI->NumUserSGPRs + 4);
+  case SIRegisterInfo::SCRATCH_PTR:
+    return AMDGPU::SGPR2_SGPR3;
+  }
 }

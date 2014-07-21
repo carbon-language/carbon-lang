@@ -872,23 +872,23 @@ defm BUFFER_LOAD_DWORDX4 : MUBUF_Load_Helper <
   0x0000000e, "BUFFER_LOAD_DWORDX4", VReg_128, v4i32, global_load
 >;
 
-def BUFFER_STORE_BYTE : MUBUF_Store_Helper <
+defm BUFFER_STORE_BYTE : MUBUF_Store_Helper <
   0x00000018, "BUFFER_STORE_BYTE", VReg_32, i32, truncstorei8_global
 >;
 
-def BUFFER_STORE_SHORT : MUBUF_Store_Helper <
+defm BUFFER_STORE_SHORT : MUBUF_Store_Helper <
   0x0000001a, "BUFFER_STORE_SHORT", VReg_32, i32, truncstorei16_global
 >;
 
-def BUFFER_STORE_DWORD : MUBUF_Store_Helper <
+defm BUFFER_STORE_DWORD : MUBUF_Store_Helper <
   0x0000001c, "BUFFER_STORE_DWORD", VReg_32, i32, global_store
 >;
 
-def BUFFER_STORE_DWORDX2 : MUBUF_Store_Helper <
+defm BUFFER_STORE_DWORDX2 : MUBUF_Store_Helper <
   0x0000001d, "BUFFER_STORE_DWORDX2", VReg_64, v2i32, global_store
 >;
 
-def BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
+defm BUFFER_STORE_DWORDX4 : MUBUF_Store_Helper <
   0x0000001e, "BUFFER_STORE_DWORDX4", VReg_128, v4i32, global_store
 >;
 //def BUFFER_ATOMIC_SWAP : MUBUF_ <0x00000030, "BUFFER_ATOMIC_SWAP", []>;
@@ -1667,6 +1667,12 @@ def SI_ADDR64_RSRC : InstSI <
   "", []
 >;
 
+def SI_BUFFER_RSRC : InstSI <
+  (outs SReg_128:$srsrc),
+  (ins SReg_32:$ptr_lo, SReg_32:$ptr_hi, SSrc_32:$data_lo, SSrc_32:$data_hi),
+  "", []
+>;
+
 def V_SUB_F64 : InstSI <
   (outs VReg_64:$dst),
   (ins VReg_64:$src0, VReg_64:$src1),
@@ -2410,7 +2416,7 @@ def : Ext32Pat <anyext>;
 // Offset in an 32Bit VGPR
 def : Pat <
   (SIload_constant v4i32:$sbase, i32:$voff),
-  (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff, 0, 0, 0, 0)
+  (BUFFER_LOAD_DWORD_OFFEN $sbase, $voff, 0, 0, 0, 0, 0)
 >;
 
 // The multiplication scales from [0,1] to the unsigned integer range
@@ -2599,22 +2605,30 @@ multiclass MUBUFLoad_Pattern <MUBUF Instr_ADDR64, ValueType vt,
      (vt (constant_ld (add i64:$ptr, i64:$offset))),
      (Instr_ADDR64 (SI_ADDR64_RSRC $ptr), $offset, 0)
   >;
+
 }
 
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_SBYTE_ADDR64, i32,
-                          sextloadi8_constant>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32,
-                          az_extloadi8_constant>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_SSHORT_ADDR64, i32,
-                          sextloadi16_constant>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_USHORT_ADDR64, i32,
-                          az_extloadi16_constant>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32,
-                          constant_load>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32,
-                          constant_load>;
-defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32,
-                          constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_SBYTE_ADDR64, i32, sextloadi8_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_UBYTE_ADDR64, i32, az_extloadi8_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_SSHORT_ADDR64, i32, sextloadi16_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_USHORT_ADDR64, i32, az_extloadi16_constant>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORD_ADDR64, i32, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX2_ADDR64, v2i32, constant_load>;
+defm : MUBUFLoad_Pattern <BUFFER_LOAD_DWORDX4_ADDR64, v4i32, constant_load>;
+
+class MUBUFScratchLoadPat <MUBUF Instr, ValueType vt, PatFrag ld> : Pat <
+  (vt (ld (MUBUFScratch v4i32:$srsrc, i32:$vaddr,
+                        i32:$soffset, u16imm:$offset))),
+  (Instr $srsrc, $vaddr, $soffset, $offset, 0, 0, 0)
+>;
+
+def : MUBUFScratchLoadPat <BUFFER_LOAD_SBYTE_OFFEN, i32, sextloadi8_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_UBYTE_OFFEN, i32, extloadi8_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_SSHORT_OFFEN, i32, sextloadi16_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_USHORT_OFFEN, i32, extloadi16_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_DWORD_OFFEN, i32, load_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_DWORDX2_OFFEN, v2i32, load_private>;
+def : MUBUFScratchLoadPat <BUFFER_LOAD_DWORDX4_OFFEN, v4i32, load_private>;
 
 // BUFFER_LOAD_DWORD*, addr64=0
 multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxen,
@@ -2630,9 +2644,9 @@ multiclass MUBUF_Load_Dword <ValueType vt, MUBUF offset, MUBUF offen, MUBUF idxe
 
   def : Pat <
     (vt (int_SI_buffer_load_dword v4i32:$rsrc, i32:$vaddr, i32:$soffset,
-                                  imm, 1, 0, imm:$glc, imm:$slc,
+                                  imm:$offset, 1, 0, imm:$glc, imm:$slc,
                                   imm:$tfe)),
-    (offen $rsrc, $vaddr, $soffset, (as_i1imm $glc), (as_i1imm $slc),
+    (offen $rsrc, $vaddr, $soffset, (as_i16imm $offset), (as_i1imm $glc), (as_i1imm $slc),
            (as_i1imm $tfe))
   >;
 
@@ -2659,6 +2673,34 @@ defm : MUBUF_Load_Dword <v2i32, BUFFER_LOAD_DWORDX2_OFFSET, BUFFER_LOAD_DWORDX2_
                          BUFFER_LOAD_DWORDX2_IDXEN, BUFFER_LOAD_DWORDX2_BOTHEN>;
 defm : MUBUF_Load_Dword <v4i32, BUFFER_LOAD_DWORDX4_OFFSET, BUFFER_LOAD_DWORDX4_OFFEN,
                          BUFFER_LOAD_DWORDX4_IDXEN, BUFFER_LOAD_DWORDX4_BOTHEN>;
+
+class MUBUFScratchStorePat <MUBUF Instr, ValueType vt, PatFrag st> : Pat <
+  (st vt:$value, (MUBUFAddr32 v4i32:$srsrc, i32:$vaddr, i32:$soffset,
+                              u16imm:$offset, i1imm:$offen, i1imm:$idxen,
+                              i1imm:$glc, i1imm:$slc, i1imm:$tfe)),
+  (Instr $value, $srsrc, $vaddr, $soffset, $offset, $offen, $idxen,
+         $glc, $slc, $tfe)
+>;
+
+def : MUBUFScratchStorePat <BUFFER_STORE_BYTE, i32, truncstorei8_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_SHORT, i32, truncstorei16_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORD, i32, store_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2, v2i32, store_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4, v4i32, store_private>;
+
+/*
+class MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> : Pat <
+  (st vt:$value, (MUBUFScratch v4i32:$srsrc, i64:$vaddr, u16imm:$offset)),
+  (Instr $value, $srsrc, $vaddr, $offset)
+>;
+
+def : MUBUFStore_Pattern <BUFFER_STORE_BYTE_ADDR64, i32, truncstorei8_private>;
+def : MUBUFStore_Pattern <BUFFER_STORE_SHORT_ADDR64, i32, truncstorei16_private>;
+def : MUBUFStore_Pattern <BUFFER_STORE_DWORD_ADDR64, i32, store_private>;
+def : MUBUFStore_Pattern <BUFFER_STORE_DWORDX2_ADDR64, v2i32, store_private>;
+def : MUBUFStore_Pattern <BUFFER_STORE_DWORDX4_ADDR64, v4i32, store_private>;
+
+*/
 
 //===----------------------------------------------------------------------===//
 // MTBUF Patterns

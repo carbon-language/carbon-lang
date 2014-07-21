@@ -41,6 +41,8 @@ def UnsafeFPMath : Predicate<"TM.Options.UnsafeFPMath">;
 def InstFlag : OperandWithDefaultOps <i32, (ops (i32 0))>;
 def ADDRIndirect : ComplexPattern<iPTR, 2, "SelectADDRIndirect", [], []>;
 
+let OperandType = "OPERAND_IMMEDIATE" in {
+
 def u32imm : Operand<i32> {
   let PrintMethod = "printU32ImmOperand";
 }
@@ -52,6 +54,8 @@ def u16imm : Operand<i16> {
 def u8imm : Operand<i8> {
   let PrintMethod = "printU8ImmOperand";
 }
+
+} // End OperandType = "OPERAND_IMMEDIATE"
 
 //===--------------------------------------------------------------------===//
 // Custom Operands
@@ -135,6 +139,28 @@ def COND_NULL : PatLeaf <
 //===----------------------------------------------------------------------===//
 // Load/Store Pattern Fragments
 //===----------------------------------------------------------------------===//
+
+class PrivateMemOp <dag ops, dag frag> : PatFrag <ops, frag, [{
+  return cast<MemSDNode>(N)->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS;
+}]>;
+
+class PrivateLoad <SDPatternOperator op> : PrivateMemOp <
+  (ops node:$ptr), (op node:$ptr)
+>;
+
+class PrivateStore <SDPatternOperator op> : PrivateMemOp <
+  (ops node:$value, node:$ptr), (op node:$value, node:$ptr)
+>;
+
+def extloadi8_private : PrivateLoad <extloadi8>;
+def sextloadi8_private : PrivateLoad <sextloadi8>;
+def extloadi16_private : PrivateLoad <extloadi16>;
+def sextloadi16_private : PrivateLoad <sextloadi16>;
+def load_private : PrivateLoad <load>;
+
+def truncstorei8_private : PrivateStore <truncstorei8>;
+def truncstorei16_private : PrivateStore <truncstorei16>;
+def store_private : PrivateStore <store>;
 
 def global_store : PatFrag<(ops node:$val, node:$ptr),
     (store node:$val, node:$ptr), [{

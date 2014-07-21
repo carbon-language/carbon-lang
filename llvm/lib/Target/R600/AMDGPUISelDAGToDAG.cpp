@@ -16,9 +16,13 @@
 #include "AMDGPURegisterInfo.h"
 #include "AMDGPUSubtarget.h"
 #include "R600InstrInfo.h"
+#include "SIDefines.h"
 #include "SIISelLowering.h"
+#include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/IR/Function.h"
@@ -85,7 +89,13 @@ private:
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectADDRIndirect(SDValue Addr, SDValue &Base, SDValue &Offset);
   bool SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr, SDValue &Offset,
-                        SDValue &ImmOffset) const;
+                         SDValue &ImmOffset) const;
+  bool SelectMUBUFScratch(SDValue Addr, SDValue &RSrc, SDValue &VAddr,
+                          SDValue &SOffset, SDValue &ImmOffset) const;
+  bool SelectMUBUFAddr32(SDValue Addr, SDValue &SRsrc, SDValue &VAddr,
+                         SDValue &SOffset, SDValue &Offset, SDValue &Offen,
+                         SDValue &Idxen, SDValue &GLC, SDValue &SLC,
+                         SDValue &TFE) const;
 
   SDNode *SelectADD_SUB_I64(SDNode *N);
   SDNode *SelectDIV_SCALE(SDNode *N);
@@ -730,6 +740,10 @@ static SDValue wrapAddr64Rsrc(SelectionDAG *DAG, SDLoc DL, SDValue Ptr) {
                                      Ptr), 0);
 }
 
+static bool isLegalMUBUFImmOffset(const ConstantSDNode *Imm) {
+  return isUInt<12>(Imm->getZExtValue());
+}
+
 bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr,
                                            SDValue &Offset,
                                            SDValue &ImmOffset) const {
@@ -740,7 +754,7 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr,
     SDValue N1 = Addr.getOperand(1);
     ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
 
-    if (isUInt<12>(C1->getZExtValue())) {
+    if (isLegalMUBUFImmOffset(C1)) {
 
       if (N0.getOpcode() == ISD::ADD) {
         // (add (add N2, N3), C1)
@@ -774,6 +788,95 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr64(SDValue Addr, SDValue &Ptr,
   Offset = Addr;
   ImmOffset = CurDAG->getTargetConstant(0, MVT::i16);
   return true;
+}
+
+/// \brief Return a resource descriptor with the 'Add TID' bit enabled
+///        The TID (Thread ID) is multipled by the stride value (bits [61:48]
+///        of the resource descriptor) to create an offset, which is added to the
+///        resource ponter.
+static SDValue buildScratchRSRC(SelectionDAG *DAG, SDLoc DL, SDValue Ptr) {
+
+  uint64_t Rsrc = AMDGPU::RSRC_DATA_FORMAT | AMDGPU::RSRC_TID_ENABLE |
+                  0xffffffff;
+
+  SDValue PtrLo = DAG->getTargetExtractSubreg(AMDGPU::sub0, DL, MVT::i32, Ptr);
+  SDValue PtrHi = DAG->getTargetExtractSubreg(AMDGPU::sub1, DL, MVT::i32, Ptr);
+  SDValue DataLo = DAG->getTargetConstant(
+      Rsrc & APInt::getAllOnesValue(32).getZExtValue(), MVT::i32);
+  SDValue DataHi = DAG->getTargetConstant(Rsrc >> 32, MVT::i32);
+
+  const SDValue Ops[] = { PtrLo, PtrHi, DataLo, DataHi };
+  return SDValue(DAG->getMachineNode(AMDGPU::SI_BUFFER_RSRC, DL,
+                                     MVT::v4i32, Ops), 0);
+}
+
+bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
+                                            SDValue &VAddr, SDValue &SOffset,
+                                            SDValue &ImmOffset) const {
+
+  SDLoc DL(Addr);
+  MachineFunction &MF = CurDAG->getMachineFunction();
+  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+
+  unsigned ScratchPtrReg =
+      TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_PTR);
+  unsigned ScratchOffsetReg =
+      TRI->getPreloadedValue(MF, SIRegisterInfo::SCRATCH_WAVE_OFFSET);
+
+  Rsrc = buildScratchRSRC(CurDAG, DL, CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL, MRI.getLiveInVirtReg(ScratchPtrReg), MVT::i64));
+  SOffset = CurDAG->getCopyFromReg(CurDAG->getEntryNode(), DL,
+      MRI.getLiveInVirtReg(ScratchOffsetReg), MVT::i32);
+
+  // (add n0, c1)
+  if (CurDAG->isBaseWithConstantOffset(Addr)) {
+    SDValue N1 = Addr.getOperand(1);
+    ConstantSDNode *C1 = cast<ConstantSDNode>(N1);
+
+    if (isLegalMUBUFImmOffset(C1)) {
+      VAddr = Addr.getOperand(0);
+      ImmOffset = CurDAG->getTargetConstant(C1->getZExtValue(), MVT::i16);
+      return true;
+    }
+  }
+
+  // (add FI, n0)
+  if ((Addr.getOpcode() == ISD::ADD || Addr.getOpcode() == ISD::OR) &&
+       isa<FrameIndexSDNode>(Addr.getOperand(0))) {
+    VAddr = Addr.getOperand(1);
+    ImmOffset = Addr.getOperand(0);
+    return true;
+  }
+
+  // (FI)
+  if (isa<FrameIndexSDNode>(Addr)) {
+    VAddr = SDValue(CurDAG->getMachineNode(AMDGPU::V_MOV_B32_e32, DL, MVT::i32,
+                                          CurDAG->getConstant(0, MVT::i32)), 0);
+    ImmOffset = Addr;
+    return true;
+  }
+
+  // (node)
+  VAddr = Addr;
+  ImmOffset = CurDAG->getTargetConstant(0, MVT::i16);
+  return true;
+}
+
+bool AMDGPUDAGToDAGISel::SelectMUBUFAddr32(SDValue Addr, SDValue &SRsrc,
+                                           SDValue &VAddr, SDValue &SOffset,
+                                           SDValue &Offset, SDValue &Offen,
+                                           SDValue &Idxen, SDValue &GLC,
+                                           SDValue &SLC, SDValue &TFE) const {
+
+  GLC = CurDAG->getTargetConstant(0, MVT::i1);
+  SLC = CurDAG->getTargetConstant(0, MVT::i1);
+  TFE = CurDAG->getTargetConstant(0, MVT::i1);
+
+  Idxen = CurDAG->getTargetConstant(0, MVT::i1);
+  Offen = CurDAG->getTargetConstant(1, MVT::i1);
+
+  return SelectMUBUFScratch(Addr, SRsrc, VAddr, SOffset, Offset);
 }
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {

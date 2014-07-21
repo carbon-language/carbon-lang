@@ -127,12 +127,12 @@ entry:
   ret void
 }
 
-; The tgid values are stored in ss offset by the number of user ss.
-; Currently we always use exactly 2 user ss for the pointer to the
+; The tgid values are stored in sgprs offset by the number of user sgprs.
+; Currently we always use exactly 2 user sgprs for the pointer to the
 ; kernel arguments, but this may change in the future.
 
 ; SI-CHECK: @tgid_x
-; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s2
+; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s4
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @tgid_x (i32 addrspace(1)* %out) {
 entry:
@@ -142,7 +142,7 @@ entry:
 }
 
 ; SI-CHECK: @tgid_y
-; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s3
+; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s5
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @tgid_y (i32 addrspace(1)* %out) {
 entry:
@@ -152,7 +152,7 @@ entry:
 }
 
 ; SI-CHECK: @tgid_z
-; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s4
+; SI-CHECK: V_MOV_B32_e32 [[VVAL:v[0-9]+]], s6
 ; SI-CHECK: BUFFER_STORE_DWORD [[VVAL]]
 define void @tgid_z (i32 addrspace(1)* %out) {
 entry:

@@ -561,6 +561,21 @@ static bool compareMachineOp(const MachineOperand &Op0,
   }
 }
 
+bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
+                                 const MachineOperand &MO) const {
+  const MCOperandInfo &OpInfo = get(MI->getOpcode()).OpInfo[OpNo];
+
+  assert(MO.isImm() || MO.isFPImm());
+
+  if (OpInfo.OperandType == MCOI::OPERAND_IMMEDIATE)
+    return true;
+
+  if (OpInfo.RegClass < 0)
+    return false;
+
+  return RI.regClassCanUseImmediate(OpInfo.RegClass);
+}
+
 bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
                                     StringRef &ErrInfo) const {
   uint16_t Opcode = MI->getOpcode();
@@ -589,7 +604,11 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
     }
       break;
     case MCOI::OPERAND_IMMEDIATE:
-      if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFPImm()) {
+      // Check if this operand is an immediate.
+      // FrameIndex operands will be replaced by immediates, so they are
+      // allowed.
+      if (!MI->getOperand(i).isImm() && !MI->getOperand(i).isFPImm() &&
+          !MI->getOperand(i).isFI()) {
         ErrInfo = "Expected immediate, but got non-immediate";
         return false;
       }

@@ -29,6 +29,12 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const override;
 
+  bool requiresRegisterScavenging(const MachineFunction &Fn) const override;
+
+  void eliminateFrameIndex(MachineBasicBlock::iterator MI, int SPAdj,
+                           unsigned FIOperandNum,
+                           RegScavenger *RS) const override;
+
   /// \brief get the register class of the specified type to use in the
   /// CFGStructurizer
   const TargetRegisterClass * getCFGStructurizerRegClass(MVT VT) const override;
@@ -68,6 +74,19 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
   /// \returns True if operands defined with this register class can accept
   /// inline immediates.
   bool regClassCanUseImmediate(const TargetRegisterClass *RC) const;
+
+  enum PreloadedValue {
+    TGID_X,
+    TGID_Y,
+    TGID_Z,
+    SCRATCH_WAVE_OFFSET,
+    SCRATCH_PTR
+  };
+
+  /// \brief Returns the physical register that \p Value is stored in.
+  unsigned getPreloadedValue(const MachineFunction &MF,
+                             enum PreloadedValue Value) const;
+
 };
 
 } // End namespace llvm

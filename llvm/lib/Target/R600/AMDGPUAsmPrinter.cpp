@@ -25,6 +25,7 @@
 #include "SIDefines.h"
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCStreamer.h"
@@ -140,6 +141,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       OutStreamer.emitRawComment(" FloatMode: " + Twine(KernelInfo.FloatMode),
                                  false);
       OutStreamer.emitRawComment(" IeeeMode: " + Twine(KernelInfo.IEEEMode),
+                                 false);
+      OutStreamer.emitRawComment(" ScratchSize: " + Twine(KernelInfo.ScratchSize),
                                  false);
     } else {
       R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
@@ -332,6 +335,9 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   // Do not clamp NAN to 0.
   ProgInfo.DX10Clamp = 0;
 
+  const MachineFrameInfo *FrameInfo = MF.getFrameInfo();
+  ProgInfo.ScratchSize = FrameInfo->estimateStackSize(MF);
+
   ProgInfo.CodeLen = CodeSize;
 }
 
@@ -361,6 +367,15 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
   unsigned LDSBlocks =
     RoundUpToAlignment(MFI->LDSSize, 1 << LDSAlignShift) >> LDSAlignShift;
 
+  // Scratch is allocated in 256 dword blocks.
+  unsigned ScratchAlignShift = 10;
+  // We need to program the hardware with the amount of scratch memory that
+  // is used by the entire wave.  KernelInfo.ScratchSize is the amount of
+  // scratch memory used per thread.
+  unsigned ScratchBlocks =
+    RoundUpToAlignment(KernelInfo.ScratchSize * STM.getWavefrontSize(),
+                       1 << ScratchAlignShift) >> ScratchAlignShift;
+
   if (MFI->getShaderType() == ShaderType::COMPUTE) {
     OutStreamer.EmitIntValue(R_00B848_COMPUTE_PGM_RSRC1, 4);
 
@@ -377,7 +392,14 @@ void AMDGPUAsmPrinter::EmitProgramInfoSI(const MachineFunction &MF,
     OutStreamer.EmitIntValue(ComputePGMRSrc1, 4);
 
     OutStreamer.EmitIntValue(R_00B84C_COMPUTE_PGM_RSRC2, 4);
-    OutStreamer.EmitIntValue(S_00B84C_LDS_SIZE(LDSBlocks), 4);
+    const uint32_t ComputePGMRSrc2 =
+      S_00B84C_LDS_SIZE(LDSBlocks) |
+      S_00B02C_SCRATCH_EN(ScratchBlocks > 0);
+
+    OutStreamer.EmitIntValue(ComputePGMRSrc2, 4);
+
+    OutStreamer.EmitIntValue(R_00B860_COMPUTE_TMPRING_SIZE, 4);
+    OutStreamer.EmitIntValue(S_00B860_WAVESIZE(ScratchBlocks), 4);
   } else {
     OutStreamer.EmitIntValue(RsrcReg, 4);
     OutStreamer.EmitIntValue(S_00B028_VGPRS(KernelInfo.NumVGPR / 4) |
