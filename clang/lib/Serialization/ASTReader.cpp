@@ -3323,8 +3323,7 @@ static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
 void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
                                  bool FromFinalization) {
   // FIXME: Only do this if Owner->NameVisibility == AllVisible.
-  for (unsigned I = 0, N = Names.HiddenDecls.size(); I != N; ++I) {
-    Decl *D = Names.HiddenDecls[I];
+  for (Decl *D : Names.HiddenDecls) {
     bool wasHidden = D->Hidden;
     D->Hidden = false;
 
@@ -3337,10 +3336,8 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names, Module *Owner,
 
   assert((FromFinalization || Owner->NameVisibility >= Module::MacrosVisible) &&
          "nothing to make visible?");
-  for (HiddenMacrosMap::const_iterator I = Names.HiddenMacros.begin(),
-                                       E = Names.HiddenMacros.end();
-       I != E; ++I)
-    installImportedMacro(I->first, I->second, Owner, FromFinalization);
+  for (const auto &Macro : Names.HiddenMacros)
+    installImportedMacro(Macro.first, Macro.second, Owner, FromFinalization);
 }
 
 void ASTReader::makeModuleVisible(Module *Mod,
@@ -3374,9 +3371,12 @@ void ASTReader::makeModuleVisible(Module *Mod,
     // mark them as visible.
     HiddenNamesMapType::iterator Hidden = HiddenNamesMap.find(Mod);
     if (Hidden != HiddenNamesMap.end()) {
-      makeNamesVisible(Hidden->second, Hidden->first,
-                       /*FromFinalization*/false);
+      auto HiddenNames = std::move(*Hidden);
       HiddenNamesMap.erase(Hidden);
+      makeNamesVisible(HiddenNames.second, HiddenNames.first,
+                       /*FromFinalization*/false);
+      assert(HiddenNamesMap.find(Mod) == HiddenNamesMap.end() &&
+             "making names visible added hidden names");
     }
 
     // Push any exported modules onto the stack to be marked as visible.
@@ -3899,12 +3899,12 @@ void ASTReader::InitializeContext() {
 }
 
 void ASTReader::finalizeForWriting() {
-  for (HiddenNamesMapType::iterator Hidden = HiddenNamesMap.begin(),
-                                 HiddenEnd = HiddenNamesMap.end();
-       Hidden != HiddenEnd; ++Hidden) {
-    makeNamesVisible(Hidden->second, Hidden->first, /*FromFinalization*/true);
+  while (!HiddenNamesMap.empty()) {
+    auto HiddenNames = std::move(*HiddenNamesMap.begin());
+    HiddenNamesMap.erase(HiddenNamesMap.begin());
+    makeNamesVisible(HiddenNames.second, HiddenNames.first,
+                     /*FromFinalization*/true);
   }
-  HiddenNamesMap.clear();
 }
 
 /// \brief Given a cursor at the start of an AST file, scan ahead and drop the

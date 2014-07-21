@@ -62,6 +62,8 @@
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/macro-hiding %s -DA1 -DA2 -DB1 -DB2 -DD1
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/macro-hiding %s -DA1 -DA2 -DB1 -DB2 -DC1
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/macro-hiding %s -DA1 -DA2 -DB1 -DB2 -DC1 -DD1
+//
+// RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -I%S/Inputs/macro-hiding %s -DE1
 
 #ifdef A1
 #include "a1.h"
@@ -87,7 +89,15 @@
 #include "d1.h"
 #endif
 
-#if defined(A1) || defined(B2) || defined(C1) || defined(D1)
+#ifdef E1
+#include "e1.h"
+#endif
+
+#ifdef E2
+#include "e2.h"
+#endif
+
+#if defined(A1) || defined(B2) || defined(C1) || defined(D1) || defined(E1) || defined(E2)
 void h() { assert(true); }
 #else
 void assert() {}

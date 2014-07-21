@@ -3034,16 +3034,25 @@ class ASTIdentifierTableTrait {
   MacroDirective *getPublicSubmoduleMacro(MacroDirective *MD,
                                           SubmoduleID &ModID,
                                           OverriddenList &Overridden) {
+    Overridden.clear();
     if (!MD)
       return nullptr;
 
-    Overridden.clear();
     SubmoduleID OrigModID = ModID;
     Optional<bool> IsPublic;
     for (; MD; MD = MD->getPrevious()) {
       SubmoduleID ThisModID = getSubmoduleID(MD);
       if (ThisModID == 0) {
         IsPublic = Optional<bool>();
+
+        // If we have no directive location, this macro was installed when
+        // finalizing the ASTReader.
+        if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
+          if (DefMD->getInfo()->getOwningModuleID())
+            return MD;
+        // Skip imports that only produce #undefs for now.
+        // FIXME: We should still re-export them!
+
         continue;
       }
       if (ThisModID != ModID) {
@@ -3068,7 +3077,7 @@ class ASTIdentifierTableTrait {
           else
             SourceID = Writer.inferSubmoduleIDFromLocation(DefLoc);
         }
-        if (SourceID != OrigModID)
+        if (OrigModID && SourceID != OrigModID)
           Overridden.push_back(SourceID);
       }
 
@@ -3095,17 +3104,7 @@ class ASTIdentifierTableTrait {
   }
 
   SubmoduleID getSubmoduleID(MacroDirective *MD) {
-    if (MD->getLocation().isValid())
-      return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
-
-    // If we have no directive location, this macro was installed when
-    // finalizing the ASTReader.
-    if (DefMacroDirective *DefMD = dyn_cast<DefMacroDirective>(MD))
-      return DefMD->getInfo()->getOwningModuleID();
-
-    // Skip imports that only produce #undefs for now.
-    // FIXME: We should still re-export them!
-    return 0;
+    return Writer.inferSubmoduleIDFromLocation(MD->getLocation());
   }
 
 public:
