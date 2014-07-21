@@ -199,8 +199,14 @@ set( LLVM_LINK_COMPONENTS
 
 
 if ( NOT LLDB_DISABLE_PYTHON )
-  set_source_files_properties(${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp PROPERTIES GENERATED 1)
   set(LLDB_WRAP_PYTHON ${LLDB_BINARY_DIR}/scripts/LLDBWrapPython.cpp)
+
+  set_source_files_properties(${LLDB_WRAP_PYTHON} PROPERTIES GENERATED 1)
+  if (LLVM_COMPILER_IS_GCC_COMPATIBLE AND
+      NOT "${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
+    set_property(SOURCE ${LLDB_WRAP_PYTHON}
+                 APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-sequence-point")
+  endif ()
 endif()
 set(SHARED_LIBRARY 1)
 
