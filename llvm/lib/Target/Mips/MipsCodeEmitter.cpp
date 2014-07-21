@@ -130,6 +130,9 @@ private:
   void expandACCInstr(MachineBasicBlock::instr_iterator MI,
                       MachineBasicBlock &MBB, unsigned Opc) const;
 
+  void expandPseudoIndirectBranch(MachineBasicBlock::instr_iterator MI,
+                                  MachineBasicBlock &MBB) const;
+
   /// \brief Expand pseudo instruction. Return true if MI was expanded.
   bool expandPseudos(MachineBasicBlock::instr_iterator &MI,
                      MachineBasicBlock &MBB) const;
@@ -373,9 +376,44 @@ void MipsCodeEmitter::expandACCInstr(MachineBasicBlock::instr_iterator MI,
     .addReg(MI->getOperand(1).getReg()).addReg(MI->getOperand(2).getReg());
 }
 
+void MipsCodeEmitter::expandPseudoIndirectBranch(
+    MachineBasicBlock::instr_iterator MI, MachineBasicBlock &MBB) const {
+  // This logic is duplicated from MipsAsmPrinter::emitPseudoIndirectBranch()
+  bool HasLinkReg = false;
+  unsigned Opcode = 0;
+
+  if (Subtarget->hasMips64r6()) {
+    // MIPS64r6 should use (JALR64 ZERO_64, $rs)
+    Opcode = Mips::JALR64;
+    HasLinkReg = true;
+  } else if (Subtarget->hasMips32r6()) {
+    // MIPS32r6 should use (JALR ZERO, $rs)
+    Opcode = Mips::JALR;
+    HasLinkReg = true;
+  } else if (Subtarget->inMicroMipsMode())
+    // microMIPS should use (JR_MM $rs)
+    Opcode = Mips::JR_MM;
+  else {
+    // Everything else should use (JR $rs)
+    Opcode = Mips::JR;
+  }
+
+  auto MIB = BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Opcode));
+
+  if (HasLinkReg) {
+    unsigned ZeroReg = Subtarget->isGP64bit() ? Mips::ZERO_64 : Mips::ZERO;
+    MIB.addReg(ZeroReg);
+  }
+
+  MIB.addReg(MI->getOperand(0).getReg());
+}
+
 bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
                                     MachineBasicBlock &MBB) const {
   switch (MI->getOpcode()) {
+  default:
+    llvm_unreachable("Unhandled pseudo");
+    return false;
   case Mips::NOP:
     BuildMI(MBB, &*MI, MI->getDebugLoc(), II->get(Mips::SLL), Mips::ZERO)
       .addReg(Mips::ZERO).addImm(0);
@@ -416,8 +454,17 @@ bool MipsCodeEmitter::expandPseudos(MachineBasicBlock::instr_iterator &MI,
   case Mips::PseudoMSUBU:
     expandACCInstr(MI, MBB, Mips::MSUBU);
     break;
-  default:
-    return false;
+  case Mips::PseudoReturn:
+  case Mips::PseudoReturn64:
+  case Mips::PseudoIndirectBranch:
+  case Mips::PseudoIndirectBranch64:
+      expandPseudoIndirectBranch(MI, MBB);
+      break;
+  case TargetOpcode::CFI_INSTRUCTION:
+  case TargetOpcode::IMPLICIT_DEF:
+  case TargetOpcode::KILL:
+      // Do nothing
+      return false;
   }
 
   (MI--)->eraseFromBundle();
