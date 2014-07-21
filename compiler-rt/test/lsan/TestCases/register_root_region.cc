@@ -13,6 +13,11 @@
 
 #include <sanitizer/lsan_interface.h>
 
+// OSX doesn't have MAP_ANONYMOUS.
+#ifndef MAP_ANONYMOUS
+#  define MAP_ANONYMOUS MAP_ANON
+#endif
+
 int main(int argc, char *argv[]) {
   size_t size = getpagesize() * 2;
   void *p =
