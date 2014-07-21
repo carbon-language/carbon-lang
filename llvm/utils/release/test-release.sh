@@ -67,7 +67,7 @@ while [ $# -gt 0 ]; do
         -release | --release )
             shift
             Release="$1"
-            Release_no_dot="`echo $1 | sed -e 's,\.,,'`"
+            Release_no_dot="`echo $1 | sed -e 's,\.,,g'`"
             ;;
         -rc | --rc | -RC | --RC )
             shift
