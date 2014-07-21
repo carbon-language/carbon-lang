@@ -35,9 +35,11 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginABIMacOSX_arm64.a \
 	lldbPluginABIMacOSX_i386.a \
 	lldbPluginABISysV_x86_64.a \
+	lldbPluginABISysV_hexagon.a \
 	lldbPluginDisassemblerLLVM.a \
 	lldbPluginDynamicLoaderStatic.a \
 	lldbPluginDynamicLoaderPOSIX.a \
+	lldbPluginDynamicLoaderHexagon.a \
 	lldbPluginEmulateInstructionARM.a \
 	lldbPluginEmulateInstructionARM64.a \
 	lldbPluginLanguageRuntimeCPlusPlusItaniumABI.a \

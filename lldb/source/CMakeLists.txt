@@ -49,6 +49,7 @@ set( LLDB_USED_LIBS
   lldbPluginSymbolFileSymtab
   lldbPluginDynamicLoaderStatic
   lldbPluginDynamicLoaderPosixDYLD
+  lldbPluginDynamicLoaderHexagonDYLD
 
   lldbPluginObjectFileMachO
   lldbPluginObjectFileELF
@@ -78,6 +79,7 @@ set( LLDB_USED_LIBS
   lldbPluginABIMacOSX_arm64
   lldbPluginABIMacOSX_i386
   lldbPluginABISysV_x86_64
+  lldbPluginABISysV_hexagon
   lldbPluginInstructionARM
   lldbPluginInstructionARM64
   lldbPluginObjectFilePECOFF
