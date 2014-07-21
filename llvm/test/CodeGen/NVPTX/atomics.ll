@@ -166,3 +166,17 @@ define float @atomic_add_f32_addrspace3(float addrspace(3)* %addr, float %val) {
   %ret = call float @llvm.nvvm.atomic.load.add.f32.p3f32(float addrspace(3)* %addr, float %val)
   ret float %ret
 }
+
+; CHECK-LABEL: atomic_cmpxchg_i32
+define i32 @atomic_cmpxchg_i32(i32* %addr, i32 %cmp, i32 %new) {
+; CHECK: atom.cas.b32
+  %pairold = cmpxchg i32* %addr, i32 %cmp, i32 %new seq_cst seq_cst
+  ret i32 %new
+}
+
+; CHECK-LABEL: atomic_cmpxchg_i64
+define i64 @atomic_cmpxchg_i64(i64* %addr, i64 %cmp, i64 %new) {
+; CHECK: atom.cas.b64
+  %pairold = cmpxchg i64* %addr, i64 %cmp, i64 %new seq_cst seq_cst
+  ret i64 %new
+}
