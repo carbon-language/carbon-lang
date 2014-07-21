@@ -2898,12 +2898,24 @@ PPC32TargetCodeGenInfo::initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
 namespace {
 /// PPC64_SVR4_ABIInfo - The 64-bit PowerPC ELF (SVR4) ABI information.
 class PPC64_SVR4_ABIInfo : public DefaultABIInfo {
+public:
+  enum ABIKind {
+    ELFv1 = 0,
+    ELFv2
+  };
+
+private:
+  static const unsigned GPRBits = 64;
+  ABIKind Kind;
 
 public:
-  PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT) : DefaultABIInfo(CGT) {}
+  PPC64_SVR4_ABIInfo(CodeGen::CodeGenTypes &CGT, ABIKind Kind)
+    : DefaultABIInfo(CGT), Kind(Kind) {}
 
   bool isPromotableTypeForABI(QualType Ty) const;
   bool isAlignedParamType(QualType Ty) const;
+  bool isHomogeneousAggregate(QualType Ty, const Type *&Base,
+                              uint64_t &Members) const;
 
   ABIArgInfo classifyReturnType(QualType RetTy) const;
   ABIArgInfo classifyArgumentType(QualType Ty) const;
@@ -2941,8 +2953,9 @@ public:
 
 class PPC64_SVR4_TargetCodeGenInfo : public TargetCodeGenInfo {
 public:
-  PPC64_SVR4_TargetCodeGenInfo(CodeGenTypes &CGT)
-    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT)) {}
+  PPC64_SVR4_TargetCodeGenInfo(CodeGenTypes &CGT,
+                               PPC64_SVR4_ABIInfo::ABIKind Kind)
+    : TargetCodeGenInfo(new PPC64_SVR4_ABIInfo(CGT, Kind)) {}
 
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &M) const override {
     // This is recovered from gcc output.
@@ -3019,6 +3032,13 @@ PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
       AlignAsType = EltType;
   }
 
+  // Likewise for ELFv2 homogeneous aggregates.
+  const Type *Base = nullptr;
+  uint64_t Members = 0;
+  if (!AlignAsType && Kind == ELFv2 &&
+      isAggregateTypeForABI(Ty) && isHomogeneousAggregate(Ty, Base, Members))
+    AlignAsType = Base;
+
   // With special case aggregates, only vector base types need alignment.
   if (AlignAsType)
     return AlignAsType->isVectorType();
@@ -3029,6 +3049,99 @@ PPC64_SVR4_ABIInfo::isAlignedParamType(QualType Ty) const {
     return true;
 
   return false;
+}
+
+/// isHomogeneousAggregate - Return true if a type is an ELFv2 homogeneous
+/// aggregate.  Base is set to the base element type, and Members is set
+/// to the number of base elements.
+bool
+PPC64_SVR4_ABIInfo::isHomogeneousAggregate(QualType Ty, const Type *&Base,
+                                           uint64_t &Members) const {
+  if (const ConstantArrayType *AT = getContext().getAsConstantArrayType(Ty)) {
+    uint64_t NElements = AT->getSize().getZExtValue();
+    if (NElements == 0)
+      return false;
+    if (!isHomogeneousAggregate(AT->getElementType(), Base, Members))
+      return false;
+    Members *= NElements;
+  } else if (const RecordType *RT = Ty->getAs<RecordType>()) {
+    const RecordDecl *RD = RT->getDecl();
+    if (RD->hasFlexibleArrayMember())
+      return false;
+
+    Members = 0;
+    for (const auto *FD : RD->fields()) {
+      // Ignore (non-zero arrays of) empty records.
+      QualType FT = FD->getType();
+      while (const ConstantArrayType *AT =
+             getContext().getAsConstantArrayType(FT)) {
+        if (AT->getSize().getZExtValue() == 0)
+          return false;
+        FT = AT->getElementType();
+      }
+      if (isEmptyRecord(getContext(), FT, true))
+        continue;
+
+      // For compatibility with GCC, ignore empty bitfields in C++ mode.
+      if (getContext().getLangOpts().CPlusPlus &&
+          FD->isBitField() && FD->getBitWidthValue(getContext()) == 0)
+        continue;
+
+      uint64_t FldMembers;
+      if (!isHomogeneousAggregate(FD->getType(), Base, FldMembers))
+        return false;
+
+      Members = (RD->isUnion() ?
+                 std::max(Members, FldMembers) : Members + FldMembers);
+    }
+
+    if (!Base)
+      return false;
+
+    // Ensure there is no padding.
+    if (getContext().getTypeSize(Base) * Members !=
+        getContext().getTypeSize(Ty))
+      return false;
+  } else {
+    Members = 1;
+    if (const ComplexType *CT = Ty->getAs<ComplexType>()) {
+      Members = 2;
+      Ty = CT->getElementType();
+    }
+
+    // Homogeneous aggregates for ELFv2 must have base types of float,
+    // double, long double, or 128-bit vectors.
+    if (const BuiltinType *BT = Ty->getAs<BuiltinType>()) {
+      if (BT->getKind() != BuiltinType::Float &&
+          BT->getKind() != BuiltinType::Double &&
+          BT->getKind() != BuiltinType::LongDouble)
+        return false;
+    } else if (const VectorType *VT = Ty->getAs<VectorType>()) {
+      if (getContext().getTypeSize(VT) != 128)
+        return false;
+    } else {
+      return false;
+    }
+
+    // The base type must be the same for all members.  Types that
+    // agree in both total size and mode (float vs. vector) are
+    // treated as being equivalent here.
+    const Type *TyPtr = Ty.getTypePtr();
+    if (!Base)
+      Base = TyPtr;
+
+    if (Base->isVectorType() != TyPtr->isVectorType() ||
+        getContext().getTypeSize(Base) != getContext().getTypeSize(TyPtr))
+      return false;
+  }
+
+  // Vector types require one register, floating point types require one
+  // or two registers depending on their size.
+  uint32_t NumRegs = Base->isVectorType() ? 1 :
+                       (getContext().getTypeSize(Base) + 63) / 64;
+
+  // Homogeneous Aggregates may occupy at most 8 registers.
+  return (Members > 0 && Members * NumRegs <= 8);
 }
 
 ABIArgInfo
@@ -3054,6 +3167,18 @@ PPC64_SVR4_ABIInfo::classifyArgumentType(QualType Ty) const {
 
     uint64_t ABIAlign = isAlignedParamType(Ty)? 16 : 8;
     uint64_t TyAlign = getContext().getTypeAlign(Ty) / 8;
+
+    // ELFv2 homogeneous aggregates are passed as array types.
+    const Type *Base = nullptr;
+    uint64_t Members = 0;
+    if (Kind == ELFv2 &&
+        isHomogeneousAggregate(Ty, Base, Members)) {
+      llvm::Type *BaseTy = CGT.ConvertType(QualType(Base, 0));
+      llvm::Type *CoerceTy = llvm::ArrayType::get(BaseTy, Members);
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+
+    // All other aggregates are passed ByVal.
     return ABIArgInfo::getIndirect(ABIAlign, /*ByVal=*/true,
                                    /*Realign=*/TyAlign > ABIAlign);
   }
@@ -3082,8 +3207,36 @@ PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
     }
   }
 
-  if (isAggregateTypeForABI(RetTy))
+  if (isAggregateTypeForABI(RetTy)) {
+    // ELFv2 homogeneous aggregates are returned as array types.
+    const Type *Base = nullptr;
+    uint64_t Members = 0;
+    if (Kind == ELFv2 &&
+        isHomogeneousAggregate(RetTy, Base, Members)) {
+      llvm::Type *BaseTy = CGT.ConvertType(QualType(Base, 0));
+      llvm::Type *CoerceTy = llvm::ArrayType::get(BaseTy, Members);
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+
+    // ELFv2 small aggregates are returned in up to two registers.
+    uint64_t Bits = getContext().getTypeSize(RetTy);
+    if (Kind == ELFv2 && Bits <= 2 * GPRBits) {
+      if (Bits == 0)
+        return ABIArgInfo::getIgnore();
+
+      llvm::Type *CoerceTy;
+      if (Bits > GPRBits) {
+        CoerceTy = llvm::IntegerType::get(getVMContext(), GPRBits);
+        CoerceTy = llvm::StructType::get(CoerceTy, CoerceTy, NULL);
+      } else
+        CoerceTy = llvm::IntegerType::get(getVMContext(),
+                                          llvm::RoundUpToAlignment(Bits, 8));
+      return ABIArgInfo::getDirect(CoerceTy);
+    }
+
+    // All other aggregates are returned indirectly.
     return ABIArgInfo::getIndirect(0);
+  }
 
   return (isPromotableTypeForABI(RetTy) ?
           ABIArgInfo::getExtend() : ABIArgInfo::getDirect());
@@ -6609,13 +6762,20 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
   case llvm::Triple::ppc:
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
   case llvm::Triple::ppc64:
-    if (Triple.isOSBinFormatELF())
-      return *(TheTargetCodeGenInfo = new PPC64_SVR4_TargetCodeGenInfo(Types));
-    else
+    if (Triple.isOSBinFormatELF()) {
+      // FIXME: Should be switchable via command-line option.
+      PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv1;
+      return *(TheTargetCodeGenInfo =
+               new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
+    } else
       return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
-  case llvm::Triple::ppc64le:
+  case llvm::Triple::ppc64le: {
     assert(Triple.isOSBinFormatELF() && "PPC64 LE non-ELF not supported!");
-    return *(TheTargetCodeGenInfo = new PPC64_SVR4_TargetCodeGenInfo(Types));
+    // FIXME: Should be switchable via command-line option.
+    PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv2;
+    return *(TheTargetCodeGenInfo =
+             new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
+  }
 
   case llvm::Triple::nvptx:
   case llvm::Triple::nvptx64:
