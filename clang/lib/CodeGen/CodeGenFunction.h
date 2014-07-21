@@ -436,23 +436,6 @@ public:
     new (Buffer + sizeof(Header)) T(a0, a1, a2, a3);
   }
 
-  /// \brief Queue a cleanup to be pushed after finishing the current
-  /// full-expression.
-  template <class T, class A0, class A1>
-  void pushCleanupAfterFullExpr(CleanupKind Kind, A0 a0, A1 a1) {
-    assert(!isInConditionalBranch() && "can't defer conditional cleanup");
-
-    LifetimeExtendedCleanupHeader Header = { sizeof(T), Kind };
-
-    size_t OldSize = LifetimeExtendedCleanupStack.size();
-    LifetimeExtendedCleanupStack.resize(
-        LifetimeExtendedCleanupStack.size() + sizeof(Header) + Header.Size);
-
-    char *Buffer = &LifetimeExtendedCleanupStack[OldSize];
-    new (Buffer) LifetimeExtendedCleanupHeader(Header);
-    new (Buffer + sizeof(Header)) T(a0, a1);
-  }
-
   /// Set up the last cleaup that was pushed as a conditional
   /// full-expression cleanup.
   void initFullExprCleanup();
@@ -1006,23 +989,6 @@ private:
   ///   "reqd_work_group_size", and three 32-bit integers X, Y and Z.
   void EmitOpenCLKernelMetadata(const FunctionDecl *FD, 
                                 llvm::Function *Fn);
-
-  /// Should we use the LLVM lifetime intrinsics for a local variable of the
-  /// given size in bytes ?
-  bool shouldUseLifetimeMarkers(unsigned Size) const;
-
-  /// A cleanup to call @llvm.lifetime.end.
-  class CallLifetimeEnd : public EHScopeStack::Cleanup {
-    llvm::Value *Addr;
-    llvm::Value *Size;
-  public:
-    CallLifetimeEnd(llvm::Value *addr, llvm::Value *size)
-      : Addr(addr), Size(size) {}
-
-    void Emit(CodeGenFunction &CGF, Flags flags) override {
-      CGF.EmitLifetimeEnd(Size, Addr);
-    }
-  };
 
 public:
   CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext=false);
@@ -1706,9 +1672,6 @@ public:
 
   void EmitCXXTemporary(const CXXTemporary *Temporary, QualType TempType,
                         llvm::Value *Ptr);
-
-  void EmitLifetimeStart(llvm::Value *Size, llvm::Value *Addr);
-  void EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr);
 
   llvm::Value *EmitCXXNewExpr(const CXXNewExpr *E);
   void EmitCXXDeleteExpr(const CXXDeleteExpr *E);
