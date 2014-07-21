@@ -4767,28 +4767,6 @@ bool X86::isZeroNode(SDValue Elt) {
   return false;
 }
 
-/// CommuteVectorShuffle - Swap vector_shuffle operands as well as values in
-/// their permute mask.
-static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
-                                    SelectionDAG &DAG) {
-  MVT VT = SVOp->getSimpleValueType(0);
-  unsigned NumElems = VT.getVectorNumElements();
-  SmallVector<int, 8> MaskVec;
-
-  for (unsigned i = 0; i != NumElems; ++i) {
-    int Idx = SVOp->getMaskElt(i);
-    if (Idx >= 0) {
-      if (Idx < (int)NumElems)
-        Idx += NumElems;
-      else
-        Idx -= NumElems;
-    }
-    MaskVec.push_back(Idx);
-  }
-  return DAG.getVectorShuffle(VT, SDLoc(SVOp), SVOp->getOperand(1),
-                              SVOp->getOperand(0), &MaskVec[0]);
-}
-
 /// ShouldXformToMOVHLPS - Return true if the node should be transformed to
 /// match movhlps. The lower half elements should come from upper half of
 /// V1 (and in order), and the upper half elements should come from the upper
@@ -7952,7 +7930,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   // but in some cases the first operand may be transformed to UNDEF.
   // In this case we should just commute the node.
   if (V1IsUndef)
-    return CommuteVectorShuffle(SVOp, DAG);
+    return DAG.getCommutedVectorShuffle(*SVOp);
 
   // Check for non-undef masks pointing at an undef vector and make the masks
   // undef as well. This makes it easier to match the shuffle based solely on
@@ -7998,7 +7976,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   // V2. This allows us to match the shuffle pattern strictly on how many
   // elements come from V1 without handling the symmetric cases.
   if (NumV2Elements > NumV1Elements)
-    return CommuteVectorShuffle(SVOp, DAG);
+    return DAG.getCommutedVectorShuffle(*SVOp);
 
   // When the number of V1 and V2 elements are the same, try to minimize the
   // number of uses of V2 in the low half of the vector.
@@ -8010,7 +7988,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
       else if (M >= 0)
         ++LowV1Elements;
     if (LowV2Elements > LowV1Elements)
-      return CommuteVectorShuffle(SVOp, DAG);
+      return DAG.getCommutedVectorShuffle(*SVOp);
   }
 
   // For each vector width, delegate to a specialized lowering routine.
@@ -9294,7 +9272,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // but in some cases the first operand may be transformed to UNDEF.
   // In this case we should just commute the node.
   if (V1IsUndef)
-    return CommuteVectorShuffle(SVOp, DAG);
+    return DAG.getCommutedVectorShuffle(*SVOp);
 
   // Vector shuffle lowering takes 3 steps:
   //
@@ -9406,7 +9384,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (ShouldXformToMOVHLPS(M, VT) ||
       ShouldXformToMOVLP(V1.getNode(), V2.getNode(), M, VT))
-    return CommuteVectorShuffle(SVOp, DAG);
+    return DAG.getCommutedVectorShuffle(*SVOp);
 
   if (isShift) {
     // No better options. Use a vshldq / vsrldq.
@@ -9478,7 +9456,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   // Normalize the node to match x86 shuffle ops if needed
   if (!V2IsUndef && (isSHUFPMask(M, VT, /* Commuted */ true)))
-    return CommuteVectorShuffle(SVOp, DAG);
+    return DAG.getCommutedVectorShuffle(*SVOp);
 
   // The checks below are all present in isShuffleMaskLegal, but they are
   // inlined here right now to enable us to directly emit target specific

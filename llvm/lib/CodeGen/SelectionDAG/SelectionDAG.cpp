@@ -1598,6 +1598,27 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
   return SDValue(N, 0);
 }
 
+SDValue SelectionDAG::getCommutedVectorShuffle(const ShuffleVectorSDNode &SV) {
+  MVT VT = SV.getSimpleValueType(0);
+  unsigned NumElems = VT.getVectorNumElements();
+  SmallVector<int, 8> MaskVec;
+
+  for (unsigned i = 0; i != NumElems; ++i) {
+    int Idx = SV.getMaskElt(i);
+    if (Idx >= 0) {
+      if (Idx < (int)NumElems)
+        Idx += NumElems;
+      else
+        Idx -= NumElems;
+    }
+    MaskVec.push_back(Idx);
+  }
+
+  SDValue Op0 = SV.getOperand(0);
+  SDValue Op1 = SV.getOperand(1);
+  return getVectorShuffle(VT, SDLoc(&SV), Op1, Op0, &MaskVec[0]);
+}
+
 SDValue SelectionDAG::getConvertRndSat(EVT VT, SDLoc dl,
                                        SDValue Val, SDValue DTy,
                                        SDValue STy, SDValue Rnd, SDValue Sat,

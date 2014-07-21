@@ -546,6 +546,12 @@ public:
     return getVectorShuffle(VT, dl, N1, N2, MaskElts.data());
   }
 
+  /// \brief Returns an ISD::VECTOR_SHUFFLE node semantically equivalent to
+  /// the shuffle node in input but with swapped operands.
+  ///
+  /// Example: shuffle A, B, <0,5,2,7> -> shuffle B, A, <4,1,6,3>
+  SDValue getCommutedVectorShuffle(const ShuffleVectorSDNode &SV);
+
   /// getAnyExtOrTrunc - Convert Op, which must be of integer type, to the
   /// integer type VT, by either any-extending or truncating it.
   SDValue getAnyExtOrTrunc(SDValue Op, SDLoc DL, EVT VT);
