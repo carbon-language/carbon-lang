@@ -38,7 +38,7 @@ StringRef Binary::getFileName() const {
   return Data->getBufferIdentifier();
 }
 
-ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> &Buffer,
+ErrorOr<Binary *> object::createBinary(std::unique_ptr<MemoryBuffer> Buffer,
                                        LLVMContext *Context) {
   sys::fs::file_magic Type = sys::fs::identify_magic(Buffer->getBuffer());
 
@@ -79,5 +79,5 @@ ErrorOr<Binary *> object::createBinary(StringRef Path) {
       MemoryBuffer::getFileOrSTDIN(Path);
   if (std::error_code EC = FileOrErr.getError())
     return EC;
-  return createBinary(FileOrErr.get());
+  return createBinary(std::move(*FileOrErr));
 }

@@ -181,7 +181,7 @@ Archive::Child::getAsBinary(LLVMContext *Context) const {
   if (std::error_code EC = BuffOrErr.getError())
     return EC;
 
-  return createBinary(*BuffOrErr, Context);
+  return createBinary(std::move(*BuffOrErr), Context);
 }
 
 ErrorOr<Archive *> Archive::create(std::unique_ptr<MemoryBuffer> Source) {

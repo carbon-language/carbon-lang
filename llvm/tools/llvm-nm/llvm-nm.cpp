@@ -993,13 +993,12 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       MemoryBuffer::getFileOrSTDIN(Filename);
   if (error(BufferOrErr.getError(), Filename))
     return;
-  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
 
   LLVMContext &Context = getGlobalContext();
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Buffer, &Context);
+  ErrorOr<Binary *> BinaryOrErr =
+      createBinary(std::move(*BufferOrErr), &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
-  Buffer.release();
   std::unique_ptr<Binary> Bin(BinaryOrErr.get());
 
   if (Archive *A = dyn_cast<Archive>(Bin.get())) {
