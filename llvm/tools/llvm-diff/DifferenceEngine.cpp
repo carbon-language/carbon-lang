@@ -125,8 +125,8 @@ class FunctionDifferenceEngine {
 
   unsigned getUnprocPredCount(BasicBlock *Block) const {
     unsigned Count = 0;
-    for (BasicBlock *Pred : predecessors(Block))
-      if (!Blocks.count(Pred)) Count++;
+    for (pred_iterator I = pred_begin(Block), E = pred_end(Block); I != E; ++I)
+      if (!Blocks.count(*I)) Count++;
     return Count;
   }
 

@@ -335,7 +335,7 @@ bool TailCallElim::markTails(Function &F, bool &AllCallsAreTailCalls) {
       }
     }
 
-    for (auto *SuccBB : successors(BB)) {
+    for (auto *SuccBB : make_range(succ_begin(BB), succ_end(BB))) {
       auto &State = Visited[SuccBB];
       if (State < Escaped) {
         State = Escaped;
@@ -807,7 +807,8 @@ bool TailCallElim::FoldReturnAndProcessPred(BasicBlock *BB,
   // predecessors and perform TRC there. Look for predecessors that end
   // in unconditional branch and recursive call(s).
   SmallVector<BranchInst*, 8> UncondBranchPreds;
-  for (BasicBlock *Pred : predecessors(BB)) {
+  for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+    BasicBlock *Pred = *PI;
     TerminatorInst *PTI = Pred->getTerminator();
     if (BranchInst *BI = dyn_cast<BranchInst>(PTI))
       if (BI->isUnconditional())

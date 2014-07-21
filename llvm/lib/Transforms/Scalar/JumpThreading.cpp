@@ -353,8 +353,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
 
   // If V is a constant, then it is known in all predecessors.
   if (Constant *KC = getKnownConstant(V, Preference)) {
-    for (BasicBlock *Pred : predecessors(BB))
-      Result.push_back(std::make_pair(KC, Pred));
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+      Result.push_back(std::make_pair(KC, *PI));
 
     return true;
   }
@@ -377,7 +377,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
     // "X < 4" and "X < 3" is known true but "X < 4" itself is not available.
     // Perhaps getConstantOnEdge should be smart enough to do this?
 
-    for (BasicBlock *P : predecessors(BB)) {
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      BasicBlock *P = *PI;
       // If the value is known by LazyValueInfo to be a constant in a
       // predecessor, use that information to try to thread this block.
       Constant *PredCst = LVI->getConstantOnEdge(V, P, BB);
@@ -531,7 +532,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
           cast<Instruction>(Cmp->getOperand(0))->getParent() != BB) {
         Constant *RHSCst = cast<Constant>(Cmp->getOperand(1));
 
-        for (BasicBlock *P : predecessors(BB)) {
+        for (pred_iterator PI = pred_begin(BB), E = pred_end(BB);PI != E; ++PI){
+          BasicBlock *P = *PI;
           // If the value is known by LazyValueInfo to be a constant in a
           // predecessor, use that information to try to thread this block.
           LazyValueInfo::Tristate Res =
@@ -604,8 +606,8 @@ ComputeValueKnownInPredecessors(Value *V, BasicBlock *BB, PredValueInfo &Result,
   // If all else fails, see if LVI can figure out a constant value for us.
   Constant *CI = LVI->getConstant(V, BB);
   if (Constant *KC = getKnownConstant(CI, Preference)) {
-    for (BasicBlock *Pred : predecessors(BB))
-      Result.push_back(std::make_pair(KC, Pred));
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+      Result.push_back(std::make_pair(KC, *PI));
   }
 
   return !Result.empty();
@@ -897,7 +899,10 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
 
   // If we got here, the loaded value is transparent through to the start of the
   // block.  Check to see if it is available in any of the predecessor blocks.
-  for (BasicBlock *PredBB : predecessors(LoadBB)) {
+  for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
+       PI != PE; ++PI) {
+    BasicBlock *PredBB = *PI;
+
     // If we already scanned this predecessor, skip it.
     if (!PredsScanned.insert(PredBB))
       continue;
@@ -947,7 +952,9 @@ bool JumpThreading::SimplifyPartiallyRedundantLoad(LoadInst *LI) {
       AvailablePredSet.insert(AvailablePreds[i].first);
 
     // Add all the unavailable predecessors to the PredsToSplit list.
-    for (BasicBlock *P : predecessors(LoadBB)) {
+    for (pred_iterator PI = pred_begin(LoadBB), PE = pred_end(LoadBB);
+         PI != PE; ++PI) {
+      BasicBlock *P = *PI;
       // If the predecessor is an indirect goto, we can't split the edge.
       if (isa<IndirectBrInst>(P->getTerminator()))
         return false;

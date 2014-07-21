@@ -145,7 +145,9 @@ bool LoopInstSimplify::runOnLoop(Loop *L, LPPassManager &LPM) {
       // bodies of subloops. We visit the headers of loops so that we can process
       // their phis, but we contract the rest of the subloop body and only follow
       // edges leading back to the original loop.
-      for (BasicBlock *SuccBB : successors(BB)) {
+      for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE;
+           ++SI) {
+        BasicBlock *SuccBB = *SI;
         if (!Visited.insert(SuccBB))
           continue;
 

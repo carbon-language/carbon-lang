@@ -336,8 +336,9 @@ bool Loop::hasDedicatedExits() const {
   SmallVector<BasicBlock *, 4> ExitBlocks;
   getExitBlocks(ExitBlocks);
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
-    for (BasicBlock *Pred : predecessors(ExitBlocks[i]))
-      if (!contains(Pred))
+    for (pred_iterator PI = pred_begin(ExitBlocks[i]),
+         PE = pred_end(ExitBlocks[i]); PI != PE; ++PI)
+      if (!contains(*PI))
         return false;
   // All the requirements are met.
   return true;
@@ -359,12 +360,12 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
     BasicBlock *current = *BI;
     switchExitBlocks.clear();
 
-    for (BasicBlock *Succ : successors(*BI)) {
+    for (succ_iterator I = succ_begin(*BI), E = succ_end(*BI); I != E; ++I) {
       // If block is inside the loop then it is not a exit block.
-      if (contains(Succ))
+      if (contains(*I))
         continue;
 
-      pred_iterator PI = pred_begin(Succ);
+      pred_iterator PI = pred_begin(*I);
       BasicBlock *firstPred = *PI;
 
       // If current basic block is this exit block's first predecessor
@@ -378,17 +379,17 @@ Loop::getUniqueExitBlocks(SmallVectorImpl<BasicBlock *> &ExitBlocks) const {
       // then it is possible that there are multiple edges from current block
       // to one exit block.
       if (std::distance(succ_begin(current), succ_end(current)) <= 2) {
-        ExitBlocks.push_back(Succ);
+        ExitBlocks.push_back(*I);
         continue;
       }
 
       // In case of multiple edges from current block to exit block, collect
       // only one edge in ExitBlocks. Use switchExitBlocks to keep track of
       // duplicate edges.
-      if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), Succ)
+      if (std::find(switchExitBlocks.begin(), switchExitBlocks.end(), *I)
           == switchExitBlocks.end()) {
-        switchExitBlocks.push_back(Succ);
-        ExitBlocks.push_back(Succ);
+        switchExitBlocks.push_back(*I);
+        ExitBlocks.push_back(*I);
       }
     }
   }

@@ -110,7 +110,8 @@ Value *SSAUpdater::GetValueInMiddleOfBlock(BasicBlock *BB) {
     }
   } else {
     bool isFirstPred = true;
-    for (BasicBlock *PredBB : predecessors(BB)) {
+    for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI) {
+      BasicBlock *PredBB = *PI;
       Value *PredVal = GetValueAtEndOfBlock(PredBB);
       PredValues.push_back(std::make_pair(PredBB, PredVal));
 
@@ -247,7 +248,8 @@ public:
       for (unsigned PI = 0, E = SomePhi->getNumIncomingValues(); PI != E; ++PI)
         Preds->push_back(SomePhi->getIncomingBlock(PI));
     } else {
-      Preds->insert(Preds->end(), pred_begin(BB), pred_end(BB));
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+        Preds->push_back(*PI);
     }
   }
 

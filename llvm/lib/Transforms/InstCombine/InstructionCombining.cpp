@@ -2718,8 +2718,8 @@ bool InstCombiner::DoOneIteration(Function &F, unsigned Iteration) {
       if (UserParent != BB) {
         bool UserIsSuccessor = false;
         // See if the user is one of our successors.
-        for (BasicBlock *Succ : successors(BB))
-          if (Succ == UserParent) {
+        for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+          if (*SI == UserParent) {
             UserIsSuccessor = true;
             break;
           }

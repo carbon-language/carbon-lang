@@ -29,8 +29,9 @@ using namespace llvm;
 bool Interval::isLoop() const {
   // There is a loop in this interval iff one of the predecessors of the header
   // node lives in the interval.
-  for (BasicBlock *Pred : predecessors(HeaderNode))
-    if (contains(Pred))
+  for (::pred_iterator I = ::pred_begin(HeaderNode), E = ::pred_end(HeaderNode);
+       I != E; ++I)
+    if (contains(*I))
       return true;
   return false;
 }

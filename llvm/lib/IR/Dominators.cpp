@@ -179,7 +179,9 @@ bool DominatorTree::dominates(const BasicBlockEdge &BBE,
   // trivially dominates itself, so we only have to find if it dominates the
   // other predecessors. Since the only way out of X is via NormalDest, X can
   // only properly dominate a node if NormalDest dominates that node too.
-  for (const BasicBlock *BB : predecessors(End)) {
+  for (const_pred_iterator PI = pred_begin(End), E = pred_end(End);
+       PI != E; ++PI) {
+    const BasicBlock *BB = *PI;
     if (BB == Start)
       continue;
 

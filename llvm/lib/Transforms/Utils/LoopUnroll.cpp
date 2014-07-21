@@ -328,10 +328,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       L->addBasicBlockToLoop(New, LI->getBase());
 
       // Add phi entries for newly created values to all exit blocks.
-      for (BasicBlock *Succ : successors(*BB)) {
-        if (L->contains(Succ))
+      for (succ_iterator SI = succ_begin(*BB), SE = succ_end(*BB);
+           SI != SE; ++SI) {
+        if (L->contains(*SI))
           continue;
-        for (BasicBlock::iterator BBI = Succ->begin();
+        for (BasicBlock::iterator BBI = (*SI)->begin();
              PHINode *phi = dyn_cast<PHINode>(BBI); ++BBI) {
           Value *Incoming = phi->getIncomingValueForBlock(*BB);
           ValueToValueMapTy::iterator It = LastValueMap.find(Incoming);
@@ -413,10 +414,11 @@ bool llvm::UnrollLoop(Loop *L, unsigned Count, unsigned TripCount,
       // Remove phi operands at this loop exit
       if (Dest != LoopExit) {
         BasicBlock *BB = Latches[i];
-        for (BasicBlock *Succ : successors(BB)) {
-          if (Succ == Headers[i])
+        for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB);
+             SI != SE; ++SI) {
+          if (*SI == Headers[i])
             continue;
-          for (BasicBlock::iterator BBI = Succ->begin();
+          for (BasicBlock::iterator BBI = (*SI)->begin();
                PHINode *Phi = dyn_cast<PHINode>(BBI); ++BBI) {
             Phi->removeIncomingValue(BB, false);
           }

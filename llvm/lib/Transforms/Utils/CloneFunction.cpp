@@ -514,8 +514,9 @@ void llvm::CloneAndPruneFunctionInto(Function *NewFunc, const Function *OldFunc,
       assert(NumPreds < PN->getNumIncomingValues());
       // Count how many times each predecessor comes to this block.
       std::map<BasicBlock*, unsigned> PredCount;
-      for (BasicBlock *Pred : predecessors(NewBB))
-        --PredCount[Pred];
+      for (pred_iterator PI = pred_begin(NewBB), E = pred_end(NewBB);
+           PI != E; ++PI)
+        --PredCount[*PI];
       
       // Figure out how many entries to remove from each PHI.
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)

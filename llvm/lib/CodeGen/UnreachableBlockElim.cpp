@@ -79,8 +79,8 @@ bool UnreachableBlockElim::runOnFunction(Function &F) {
         PN->replaceAllUsesWith(Constant::getNullValue(PN->getType()));
         BB->getInstList().pop_front();
       }
-      for (BasicBlock *S : successors(BB))
-        S->removePredecessor(BB);
+      for (succ_iterator SI = succ_begin(BB), E = succ_end(BB); SI != E; ++SI)
+        (*SI)->removePredecessor(BB);
       BB->dropAllReferences();
     }
 

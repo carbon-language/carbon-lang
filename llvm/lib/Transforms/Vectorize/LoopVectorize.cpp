@@ -2950,8 +2950,9 @@ InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
   Value *Zero = ConstantInt::get(IntegerType::getInt1Ty(BB->getContext()), 0);
   VectorParts BlockMask = getVectorValue(Zero);
 
-  for (BasicBlock *Pred : predecessors(BB)) {
-    VectorParts EM = createEdgeMask(Pred, BB);
+  // For each pred:
+  for (pred_iterator it = pred_begin(BB), e = pred_end(BB); it != e; ++it) {
+    VectorParts EM = createEdgeMask(*it, BB);
     for (unsigned part = 0; part < UF; ++part)
       BlockMask[part] = Builder.CreateOr(BlockMask[part], EM[part]);
   }
