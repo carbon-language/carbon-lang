@@ -177,7 +177,6 @@ Archive::Child::getMemoryBuffer(bool FullPath) const {
 
 ErrorOr<std::unique_ptr<Binary>>
 Archive::Child::getAsBinary(LLVMContext *Context) const {
-  std::unique_ptr<Binary> ret;
   ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr = getMemoryBuffer();
   if (std::error_code EC = BuffOrErr.getError())
     return EC;
