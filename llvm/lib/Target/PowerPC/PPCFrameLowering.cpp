@@ -514,6 +514,7 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Get the ABI.
   bool isDarwinABI = Subtarget.isDarwinABI();
   bool isSVR4ABI = Subtarget.isSVR4ABI();
+  bool isELFv2ABI = Subtarget.isELFv2ABI();
   assert((isDarwinABI || isSVR4ABI) &&
          "Currently only Darwin and SVR4 ABIs are supported for PowerPC.");
 
@@ -627,6 +628,9 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
          "Prologue CR saving supported only in 64-bit mode");
 
   if (!MustSaveCRs.empty()) { // will only occur for PPC64
+    // FIXME: In the ELFv2 ABI, we are not required to save all CR fields.
+    // If only one or two CR fields are clobbered, it could be more
+    // efficient to use mfocrf to selectively save just those fields.
     MachineInstrBuilder MIB =
       BuildMI(MBB, MBBI, dl, TII.get(PPC::MFCR8), TempReg);
     for (unsigned i = 0, e = MustSaveCRs.size(); i != e; ++i)
@@ -795,8 +799,12 @@ void PPCFrameLowering::emitPrologue(MachineFunction &MF) const {
       // For 64-bit SVR4 when we have spilled CRs, the spill location
       // is SP+8, not a frame-relative slot.
       if (isSVR4ABI && isPPC64 && (PPC::CR2 <= Reg && Reg <= PPC::CR4)) {
+        // In the ELFv1 ABI, only CR2 is noted in CFI and stands in for
+        // the whole CR word.  In the ELFv2 ABI, every CR that was
+        // actually saved gets its own CFI record.
+        unsigned CRReg = isELFv2ABI? Reg : (unsigned) PPC::CR2;
         unsigned CFIIndex = MMI.addFrameInst(MCCFIInstruction::createOffset(
-            nullptr, MRI->getDwarfRegNum(PPC::CR2, true), 8));
+            nullptr, MRI->getDwarfRegNum(CRReg, true), 8));
         BuildMI(MBB, MBBI, dl, TII.get(TargetOpcode::CFI_INSTRUCTION))
             .addCFIIndex(CFIIndex);
         continue;
