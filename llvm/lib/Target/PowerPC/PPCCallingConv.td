@@ -31,13 +31,18 @@ def RetCC_PPC : CallingConv<[
   CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
   CCIfType<[i64], CCAssignToReg<[X3, X4, X5, X6]>>,
   CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
+
+  // Floating point types returned as "direct" go into F1 .. F8; note that
+  // only the ELFv2 ABI fully utilizes all these registers.
+  CCIfType<[f32], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+  CCIfType<[f64], CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
   
-  CCIfType<[f32], CCAssignToReg<[F1, F2]>>,
-  CCIfType<[f64], CCAssignToReg<[F1, F2, F3, F4]>>,
-  
-  // Vector types are always returned in V2.
-  CCIfType<[v16i8, v8i16, v4i32, v4f32], CCAssignToReg<[V2]>>,
-  CCIfType<[v2f64, v2i64], CCAssignToReg<[VSH2]>>
+  // Vector types returned as "direct" go into V2 .. V9; note that only the
+  // ELFv2 ABI fully utilizes all these registers.
+  CCIfType<[v16i8, v8i16, v4i32, v4f32],
+           CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9]>>,
+  CCIfType<[v2f64, v2i64],
+           CCAssignToReg<[VSH2, VSH3, VSH4, VSH5, VSH6, VSH7, VSH8, VSH9]>>
 ]>;
 
 
@@ -69,10 +74,12 @@ def RetCC_PPC64_ELF_FIS : CallingConv<[
   CCIfType<[i32],  CCPromoteToType<i64>>,
   CCIfType<[i64],  CCAssignToReg<[X3, X4]>>,
   CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
-  CCIfType<[f32],  CCAssignToReg<[F1, F2]>>,
-  CCIfType<[f64],  CCAssignToReg<[F1, F2, F3, F4]>>,
-  CCIfType<[v16i8, v8i16, v4i32, v4f32], CCAssignToReg<[V2]>>,
-  CCIfType<[v2f64, v2i64], CCAssignToReg<[VSH2]>>
+  CCIfType<[f32],  CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+  CCIfType<[f64],  CCAssignToReg<[F1, F2, F3, F4, F5, F6, F7, F8]>>,
+  CCIfType<[v16i8, v8i16, v4i32, v4f32],
+           CCAssignToReg<[V2, V3, V4, V5, V6, V7, V8, V9]>>,
+  CCIfType<[v2f64, v2i64],
+           CCAssignToReg<[VSH2, VSH3, VSH4, VSH5, VSH6, VSH7, VSH8, VSH9]>>
 ]>;
 
 //===----------------------------------------------------------------------===//

@@ -16,8 +16,8 @@ entry:
   ret void
 }
 
-; CHECK: stfs {{[0-9]+}}, 60(1)
-; CHECK: ld 4, 56(1)
+; CHECK: stfs {{[0-9]+}}, 116(1)
+; CHECK: lwz 4, 116(1)
 ; CHECK: bl
 
 declare void @testvaSf1(i32, ...)

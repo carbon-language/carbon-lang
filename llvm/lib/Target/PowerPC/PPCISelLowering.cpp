@@ -2158,14 +2158,19 @@ static unsigned CalculateStackSlotSize(EVT ArgVT, ISD::ArgFlagsTy Flags,
   unsigned ArgSize = ArgVT.getStoreSize();
   if (Flags.isByVal())
     ArgSize = Flags.getByValSize();
-  ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
+
+  // Round up to multiples of the pointer size, except for array members,
+  // which are always packed.
+  if (!Flags.isInConsecutiveRegs())
+    ArgSize = ((ArgSize + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
 
   return ArgSize;
 }
 
 /// CalculateStackSlotAlignment - Calculates the alignment of this argument
 /// on the stack.
-static unsigned CalculateStackSlotAlignment(EVT ArgVT, ISD::ArgFlagsTy Flags,
+static unsigned CalculateStackSlotAlignment(EVT ArgVT, EVT OrigVT,
+                                            ISD::ArgFlagsTy Flags,
                                             unsigned PtrByteSize) {
   unsigned Align = PtrByteSize;
 
@@ -2187,6 +2192,17 @@ static unsigned CalculateStackSlotAlignment(EVT ArgVT, ISD::ArgFlagsTy Flags,
     }
   }
 
+  // Array members are always packed to their original alignment.
+  if (Flags.isInConsecutiveRegs()) {
+    // If the array member was split into multiple registers, the first
+    // needs to be aligned to the size of the full type.  (Except for
+    // ppcf128, which is only aligned as its f64 components.)
+    if (Flags.isSplit() && OrigVT != MVT::ppcf128)
+      Align = OrigVT.getStoreSize();
+    else
+      Align = ArgVT.getStoreSize();
+  }
+
   return Align;
 }
 
@@ -2194,7 +2210,8 @@ static unsigned CalculateStackSlotAlignment(EVT ArgVT, ISD::ArgFlagsTy Flags,
 /// stack slot (instead of being passed in registers).  ArgOffset,
 /// AvailableFPRs, and AvailableVRs must hold the current argument
 /// position, and will be updated to account for this argument.
-static bool CalculateStackSlotUsed(EVT ArgVT, ISD::ArgFlagsTy Flags,
+static bool CalculateStackSlotUsed(EVT ArgVT, EVT OrigVT,
+                                   ISD::ArgFlagsTy Flags,
                                    unsigned PtrByteSize,
                                    unsigned LinkageSize,
                                    unsigned ParamAreaSize,
@@ -2204,7 +2221,8 @@ static bool CalculateStackSlotUsed(EVT ArgVT, ISD::ArgFlagsTy Flags,
   bool UseMemory = false;
 
   // Respect alignment of argument on the stack.
-  unsigned Align = CalculateStackSlotAlignment(ArgVT, Flags, PtrByteSize);
+  unsigned Align =
+    CalculateStackSlotAlignment(ArgVT, OrigVT, Flags, PtrByteSize);
   ArgOffset = ((ArgOffset + Align - 1) / Align) * Align;
   // If there's no space left in the argument save area, we must
   // use memory (this check also catches zero-sized arguments).
@@ -2213,6 +2231,8 @@ static bool CalculateStackSlotUsed(EVT ArgVT, ISD::ArgFlagsTy Flags,
 
   // Allocate argument on the stack.
   ArgOffset += CalculateStackSlotSize(ArgVT, Flags, PtrByteSize);
+  if (Flags.isInConsecutiveRegsLast())
+    ArgOffset = ((ArgOffset + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
   // If we overran the argument save area, we must use memory
   // (this check catches arguments passed partially in memory)
   if (ArgOffset > LinkageSize + ParamAreaSize)
@@ -2563,7 +2583,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
   unsigned AvailableFPRs = Num_FPR_Regs;
   unsigned AvailableVRs = Num_VR_Regs;
   for (unsigned i = 0, e = Ins.size(); i != e; ++i)
-    if (CalculateStackSlotUsed(Ins[i].VT, Ins[i].Flags,
+    if (CalculateStackSlotUsed(Ins[i].VT, Ins[i].ArgVT, Ins[i].Flags,
                                PtrByteSize, LinkageSize, ParamAreaSize,
                                NumBytes, AvailableFPRs, AvailableVRs))
       HasParameterArea = true;
@@ -2581,6 +2601,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     SDValue ArgVal;
     bool needsLoad = false;
     EVT ObjectVT = Ins[ArgNo].VT;
+    EVT OrigVT = Ins[ArgNo].ArgVT;
     unsigned ObjSize = ObjectVT.getStoreSize();
     unsigned ArgSize = ObjSize;
     ISD::ArgFlagsTy Flags = Ins[ArgNo].Flags;
@@ -2589,7 +2610,7 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
     /* Respect alignment of argument on the stack.  */
     unsigned Align =
-      CalculateStackSlotAlignment(ObjectVT, Flags, PtrByteSize);
+      CalculateStackSlotAlignment(ObjectVT, OrigVT, Flags, PtrByteSize);
     ArgOffset = ((ArgOffset + Align - 1) / Align) * Align;
     unsigned CurArgOffset = ArgOffset;
 
@@ -2701,6 +2722,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::i1:
     case MVT::i32:
     case MVT::i64:
+      // These can be scalar arguments or elements of an integer array type
+      // passed directly.  Clang may use those instead of "byval" aggregate
+      // types to avoid forcing arguments to memory unnecessarily.
       if (GPR_idx != Num_GPR_Regs) {
         unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
@@ -2718,6 +2742,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
     case MVT::f32:
     case MVT::f64:
+      // These can be scalar arguments or elements of a float array type
+      // passed directly.  The latter are used to implement ELFv2 homogenous
+      // float aggregates.
       if (FPR_idx != Num_FPR_Regs) {
         unsigned VReg;
 
@@ -2730,12 +2757,32 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
 
         ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, ObjectVT);
         ++FPR_idx;
+      } else if (GPR_idx != Num_GPR_Regs) {
+        // This can only ever happen in the presence of f32 array types,
+        // since otherwise we never run out of FPRs before running out
+        // of GPRs.
+        unsigned VReg = MF.addLiveIn(GPR[GPR_idx], &PPC::G8RCRegClass);
+        ArgVal = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i64);
+
+        if (ObjectVT == MVT::f32) {
+          if ((ArgOffset % PtrByteSize) == (isLittleEndian ? 4 : 0))
+            ArgVal = DAG.getNode(ISD::SRL, dl, MVT::i64, ArgVal,
+                                 DAG.getConstant(32, MVT::i32));
+          ArgVal = DAG.getNode(ISD::TRUNCATE, dl, MVT::i32, ArgVal);
+        }
+
+        ArgVal = DAG.getNode(ISD::BITCAST, dl, ObjectVT, ArgVal);
       } else {
         needsLoad = true;
-        ArgSize = PtrByteSize;
       }
 
-      ArgOffset += 8;
+      // When passing an array of floats, the array occupies consecutive
+      // space in the argument area; only round up to the next doubleword
+      // at the end of the array.  Otherwise, each float takes 8 bytes.
+      ArgSize = Flags.isInConsecutiveRegs() ? ObjSize : PtrByteSize;
+      ArgOffset += ArgSize;
+      if (Flags.isInConsecutiveRegsLast())
+        ArgOffset = ((ArgOffset + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
       break;
     case MVT::v4f32:
     case MVT::v4i32:
@@ -2743,6 +2790,9 @@ PPCTargetLowering::LowerFormalArguments_64SVR4(
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
+      // These can be scalar arguments or elements of a vector array type
+      // passed directly.  The latter are used to implement ELFv2 homogenous
+      // vector aggregates.
       if (VR_idx != Num_VR_Regs) {
         unsigned VReg = (ObjectVT == MVT::v2f64 || ObjectVT == MVT::v2i64) ?
                         MF.addLiveIn(VSRH[VR_idx], &PPC::VSHRCRegClass) :
@@ -4105,12 +4155,16 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   for (unsigned i = 0; i != NumOps; ++i) {
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
     EVT ArgVT = Outs[i].VT;
+    EVT OrigVT = Outs[i].ArgVT;
 
     /* Respect alignment of argument on the stack.  */
-    unsigned Align = CalculateStackSlotAlignment(ArgVT, Flags, PtrByteSize);
+    unsigned Align =
+      CalculateStackSlotAlignment(ArgVT, OrigVT, Flags, PtrByteSize);
     NumBytes = ((NumBytes + Align - 1) / Align) * Align;
 
     NumBytes += CalculateStackSlotSize(ArgVT, Flags, PtrByteSize);
+    if (Flags.isInConsecutiveRegsLast())
+      NumBytes = ((NumBytes + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
   }
 
   unsigned NumBytesActuallyUsed = NumBytes;
@@ -4187,10 +4241,12 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
   for (unsigned i = 0; i != NumOps; ++i) {
     SDValue Arg = OutVals[i];
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
+    EVT ArgVT = Outs[i].VT;
+    EVT OrigVT = Outs[i].ArgVT;
 
     /* Respect alignment of argument on the stack.  */
     unsigned Align =
-      CalculateStackSlotAlignment(Outs[i].VT, Flags, PtrByteSize);
+      CalculateStackSlotAlignment(ArgVT, OrigVT, Flags, PtrByteSize);
     ArgOffset = ((ArgOffset + Align - 1) / Align) * Align;
 
     /* Compute GPR index associated with argument offset.  */
@@ -4330,6 +4386,9 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
     case MVT::i1:
     case MVT::i32:
     case MVT::i64:
+      // These can be scalar arguments or elements of an integer array type
+      // passed directly.  Clang may use those instead of "byval" aggregate
+      // types to avoid forcing arguments to memory unnecessarily.
       if (GPR_idx != NumGPRs) {
         RegsToPass.push_back(std::make_pair(GPR[GPR_idx], Arg));
       } else {
@@ -4340,39 +4399,70 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
       ArgOffset += PtrByteSize;
       break;
     case MVT::f32:
-    case MVT::f64:
-      if (FPR_idx != NumFPRs) {
+    case MVT::f64: {
+      // These can be scalar arguments or elements of a float array type
+      // passed directly.  The latter are used to implement ELFv2 homogenous
+      // float aggregates.
+
+      // Named arguments go into FPRs first, and once they overflow, the
+      // remaining arguments go into GPRs and then the parameter save area.
+      // Unnamed arguments for vararg functions always go to GPRs and
+      // then the parameter save area.  For now, put all arguments to vararg
+      // routines always in both locations (FPR *and* GPR or stack slot).
+      bool NeedGPROrStack = isVarArg || FPR_idx == NumFPRs;
+
+      // First load the argument into the next available FPR.
+      if (FPR_idx != NumFPRs)
         RegsToPass.push_back(std::make_pair(FPR[FPR_idx++], Arg));
 
-        if (isVarArg) {
-          // A single float or an aggregate containing only a single float
-          // must be passed right-justified in the stack doubleword, and
-          // in the GPR, if one is available.
-          SDValue StoreOff;
-          if (Arg.getSimpleValueType().SimpleTy == MVT::f32 &&
-              !isLittleEndian) {
-            SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
-            StoreOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
-          } else
-            StoreOff = PtrOff;
+      // Next, load the argument into GPR or stack slot if needed.
+      if (!NeedGPROrStack)
+        ;
+      else if (GPR_idx != NumGPRs) {
+        // In the non-vararg case, this can only ever happen in the
+        // presence of f32 array types, since otherwise we never run
+        // out of FPRs before running out of GPRs.
+        SDValue ArgVal;
 
-          SDValue Store = DAG.getStore(Chain, dl, Arg, StoreOff,
-                                       MachinePointerInfo(), false, false, 0);
-          MemOpChains.push_back(Store);
+        // Double values are always passed in a single GPR.
+        if (Arg.getValueType() != MVT::f32) {
+          ArgVal = DAG.getNode(ISD::BITCAST, dl, MVT::i64, Arg);
 
-          // Float varargs are always shadowed in available integer registers
-          if (GPR_idx != NumGPRs) {
-            SDValue Load = DAG.getLoad(PtrVT, dl, Store, PtrOff,
-                                       MachinePointerInfo(), false, false,
-                                       false, 0);
-            MemOpChains.push_back(Load.getValue(1));
-            RegsToPass.push_back(std::make_pair(GPR[GPR_idx], Load));
-          }
-        }
+        // Non-array float values are extended and passed in a GPR.
+        } else if (!Flags.isInConsecutiveRegs()) {
+          ArgVal = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
+          ArgVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i64, ArgVal);
+
+        // If we have an array of floats, we collect every odd element
+        // together with its predecessor into one GPR.
+        } else if (ArgOffset % PtrByteSize != 0) {
+          SDValue Lo, Hi;
+          Lo = DAG.getNode(ISD::BITCAST, dl, MVT::i32, OutVals[i - 1]);
+          Hi = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
+          if (!isLittleEndian)
+            std::swap(Lo, Hi);
+          ArgVal = DAG.getNode(ISD::BUILD_PAIR, dl, MVT::i64, Lo, Hi);
+
+        // The final element, if even, goes into the first half of a GPR.
+        } else if (Flags.isInConsecutiveRegsLast()) {
+          ArgVal = DAG.getNode(ISD::BITCAST, dl, MVT::i32, Arg);
+          ArgVal = DAG.getNode(ISD::ANY_EXTEND, dl, MVT::i64, ArgVal);
+          if (!isLittleEndian)
+            ArgVal = DAG.getNode(ISD::SHL, dl, MVT::i64, ArgVal,
+                                 DAG.getConstant(32, MVT::i32));
+
+        // Non-final even elements are skipped; they will be handled
+        // together the with subsequent argument on the next go-around.
+        } else
+          ArgVal = SDValue();
+
+        if (ArgVal.getNode())
+          RegsToPass.push_back(std::make_pair(GPR[GPR_idx], ArgVal));
       } else {
         // Single-precision floating-point values are mapped to the
         // second (rightmost) word of the stack doubleword.
-        if (Arg.getValueType() == MVT::f32 && !isLittleEndian) {
+        if (Arg.getValueType() == MVT::f32 &&
+            !isLittleEndian && !Flags.isInConsecutiveRegs()) {
           SDValue ConstFour = DAG.getConstant(4, PtrOff.getValueType());
           PtrOff = DAG.getNode(ISD::ADD, dl, PtrVT, PtrOff, ConstFour);
         }
@@ -4381,14 +4471,25 @@ PPCTargetLowering::LowerCall_64SVR4(SDValue Chain, SDValue Callee,
                          true, isTailCall, false, MemOpChains,
                          TailCallArguments, dl);
       }
-      ArgOffset += 8;
+      // When passing an array of floats, the array occupies consecutive
+      // space in the argument area; only round up to the next doubleword
+      // at the end of the array.  Otherwise, each float takes 8 bytes.
+      ArgOffset += (Arg.getValueType() == MVT::f32 &&
+                    Flags.isInConsecutiveRegs()) ? 4 : 8;
+      if (Flags.isInConsecutiveRegsLast())
+        ArgOffset = ((ArgOffset + PtrByteSize - 1)/PtrByteSize) * PtrByteSize;
       break;
+    }
     case MVT::v4f32:
     case MVT::v4i32:
     case MVT::v8i16:
     case MVT::v16i8:
     case MVT::v2f64:
     case MVT::v2i64:
+      // These can be scalar arguments or elements of a vector array type
+      // passed directly.  The latter are used to implement ELFv2 homogenous
+      // vector aggregates.
+
       // For a varargs call, named arguments go into VRs or on the stack as
       // usual; unnamed arguments always go to the stack or the corresponding
       // GPRs when within range.  For now, we always put the value in both

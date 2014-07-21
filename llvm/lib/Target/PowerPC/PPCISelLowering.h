@@ -510,6 +510,20 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &FuncInfo,
                              const TargetLibraryInfo *LibInfo) const override;
 
+    /// \brief Returns true if an argument of type Ty needs to be passed in a
+    /// contiguous block of registers in calling convention CallConv.
+    bool functionArgumentNeedsConsecutiveRegisters(
+      Type *Ty, CallingConv::ID CallConv, bool isVarArg) const override {
+      // We support any array type as "consecutive" block in the parameter
+      // save area.  The element type defines the alignment requirement and
+      // whether the argument should go in GPRs, FPRs, or VRs if available.
+      //
+      // Note that clang uses this capability both to implement the ELFv2
+      // homogeneous float/vector aggregate ABI, and to avoid having to use
+      // "byval" when passing aggregates that might fully fit in registers.
+      return Ty->isArrayTy();
+    }
+
   private:
     SDValue getFramePointerFrameIndex(SelectionDAG & DAG) const;
     SDValue getReturnAddrFrameIndex(SelectionDAG & DAG) const;
