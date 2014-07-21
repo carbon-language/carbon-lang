@@ -183,6 +183,9 @@ ELFHeader::GetRelocationJumpSlotType() const
     case EM_ARM:
         slot = R_ARM_JUMP_SLOT;
         break;
+    case EM_HEXAGON:
+        slot = R_HEX_JMP_SLOT;
+        break;
     }
 
     return slot;

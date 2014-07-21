@@ -12,7 +12,7 @@ LLDB_LEVEL := ../..
 include $(LLDB_LEVEL)/../../Makefile.config
 
 
-DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64 \
+DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64 ABI/SysV-hexagon \
 	Disassembler/llvm \
 	ObjectContainer/BSD-Archive ObjectFile/ELF ObjectFile/PECOFF \
 	ObjectFile/JIT SymbolFile/DWARF SymbolFile/Symtab Process/Utility \
@@ -22,6 +22,7 @@ DIRS := ABI/MacOSX-arm ABI/MacOSX-arm64 ABI/MacOSX-i386 ABI/SysV-x86_64 \
 	LanguageRuntime/CPlusPlus/ItaniumABI \
 	LanguageRuntime/ObjC/AppleObjCRuntime \
 	DynamicLoader/POSIX-DYLD \
+	DynamicLoader/Hexagon-DYLD \
 	OperatingSystem/Python \
 	SymbolVendor/ELF
 
