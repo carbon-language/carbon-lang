@@ -4640,8 +4640,11 @@ void Clang::AddClangCLArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
   // implemented in clang.
   CmdArgs.push_back("--dependent-lib=oldnames");
 
-  if (Arg *A = Args.getLastArg(options::OPT_show_includes))
-    A->render(Args, CmdArgs);
+  // Both /showIncludes and /E (and /EP) write to stdout. Allowing both
+  // would produce interleaved output, so ignore /showIncludes in such cases.
+  if (!Args.hasArg(options::OPT_E) && !Args.hasArg(options::OPT__SLASH_EP))
+    if (Arg *A = Args.getLastArg(options::OPT_show_includes))
+      A->render(Args, CmdArgs);
 
   // This controls whether or not we emit RTTI data for polymorphic types.
   if (Args.hasFlag(options::OPT__SLASH_GR_, options::OPT__SLASH_GR,
