@@ -184,4 +184,5 @@ unsigned SIRegisterInfo::getPreloadedValue(const MachineFunction &MF,
   case SIRegisterInfo::SCRATCH_PTR:
     return AMDGPU::SGPR2_SGPR3;
   }
+  llvm_unreachable("unexpected preloaded value type");
 }
