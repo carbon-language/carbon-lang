@@ -205,7 +205,7 @@ private:
   /// \brief Atoms require pointers equality.
   llvm::DenseSet<const Atom *> _requiresPtrEquality;
 
-  /// \brief References which are candidates for cconverting
+  /// \brief References which are candidates for converting
   /// to the R_MIPS_REL32 relocation.
   std::vector<Reference *> _rel32Candidates;
 
