@@ -13,6 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "AMDGPU.h"
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
 #include "MCTargetDesc/AMDGPUFixupKinds.h"
@@ -40,6 +41,7 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
   void operator=(const SIMCCodeEmitter &) LLVM_DELETED_FUNCTION;
   const MCInstrInfo &MCII;
   const MCRegisterInfo &MRI;
+  MCContext &Ctx;
 
   /// \brief Can this operand also contain immediate values?
   bool isSrcOperand(const MCInstrDesc &Desc, unsigned OpNo) const;
@@ -50,7 +52,7 @@ class SIMCCodeEmitter : public  AMDGPUMCCodeEmitter {
 public:
   SIMCCodeEmitter(const MCInstrInfo &mcii, const MCRegisterInfo &mri,
                   MCContext &ctx)
-    : MCII(mcii), MRI(mri) { }
+    : MCII(mcii), MRI(mri), Ctx(ctx) { }
 
   ~SIMCCodeEmitter() { }
 
@@ -97,6 +99,8 @@ uint32_t SIMCCodeEmitter::getLitEncoding(const MCOperand &MO) const {
     Imm.I = MO.getImm();
   else if (MO.isFPImm())
     Imm.F = MO.getFPImm();
+  else if (MO.isExpr())
+    return 255;
   else
     return ~0;
 
@@ -164,8 +168,13 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     IntFloatUnion Imm;
     if (Op.isImm())
       Imm.I = Op.getImm();
-    else
+    else if (Op.isFPImm())
       Imm.F = Op.getFPImm();
+    else {
+      assert(Op.isExpr());
+      // This will be replaced with a fixup value.
+      Imm.I = 0;
+    }
 
     for (unsigned j = 0; j < 4; j++) {
       OS.write((uint8_t) ((Imm.I >> (8 * j)) & 0xff));
@@ -197,6 +206,22 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                        const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return MRI.getEncodingValue(MO.getReg());
+
+  if (MO.isExpr()) {
+    const MCSymbolRefExpr *Expr = cast<MCSymbolRefExpr>(MO.getExpr());
+    MCFixupKind Kind;
+    const MCSymbol *Sym =
+        Ctx.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+
+    if (&Expr->getSymbol() == Sym) {
+      // Add the offset to the beginning of the constant values.
+      Kind = (MCFixupKind)AMDGPU::fixup_si_end_of_text;
+    } else {
+      // This is used for constant data stored in .rodata.
+     Kind = (MCFixupKind)AMDGPU::fixup_si_rodata;
+    }
+    Fixups.push_back(MCFixup::Create(4, Expr, Kind, MI.getLoc()));
+  }
 
   // Figure out the operand number, needed for isSrcOperand check
   unsigned OpNo = 0;

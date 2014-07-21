@@ -19,6 +19,7 @@
 #include "R600Defines.h"
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1526,6 +1527,19 @@ SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
     return DAG.getMergeValues(Ops, DL);
   }
 
+  // Lower loads constant address space global variable loads
+  if (LoadNode->getAddressSpace() == AMDGPUAS::CONSTANT_ADDRESS &&
+      isa<GlobalVariable>(
+          GetUnderlyingObject(LoadNode->getMemOperand()->getValue()))) {
+
+    SDValue Ptr = DAG.getZExtOrTrunc(LoadNode->getBasePtr(), DL,
+        getPointerTy(AMDGPUAS::PRIVATE_ADDRESS));
+    Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr,
+        DAG.getConstant(2, MVT::i32));
+    return DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, Op->getVTList(),
+                       LoadNode->getChain(), Ptr,
+                       DAG.getTargetConstant(0, MVT::i32), Op.getOperand(2));
+  }
 
   if (LoadNode->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS && VT.isVector()) {
     SDValue MergedValues[2] = {

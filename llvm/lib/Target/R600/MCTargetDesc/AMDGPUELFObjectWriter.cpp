@@ -10,6 +10,7 @@
 
 #include "AMDGPUMCTargetDesc.h"
 #include "llvm/MC/MCELFObjectWriter.h"
+#include "llvm/MC/MCFixup.h"
 
 using namespace llvm;
 
@@ -21,7 +22,7 @@ public:
 protected:
   unsigned GetRelocType(const MCValue &Target, const MCFixup &Fixup,
                         bool IsPCRel) const override {
-    llvm_unreachable("Not implemented");
+    return Fixup.getKind();
   }
 
 };

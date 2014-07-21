@@ -70,6 +70,8 @@ public:
   /// Implemented in AMDGPUMCInstLower.cpp
   void EmitInstruction(const MachineInstr *MI) override;
 
+  void EmitEndOfAsmFile(Module &M) override;
+
 protected:
   bool DisasmEnabled;
   std::vector<std::string> DisasmLines, HexLines;

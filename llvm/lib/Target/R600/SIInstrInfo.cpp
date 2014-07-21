@@ -361,6 +361,26 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
     MI->eraseFromParent();
     break;
   }
+  case AMDGPU::SI_CONSTDATA_PTR: {
+    unsigned Reg = MI->getOperand(0).getReg();
+    unsigned RegLo = RI.getSubReg(Reg, AMDGPU::sub0);
+    unsigned RegHi = RI.getSubReg(Reg, AMDGPU::sub1);
+
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_GETPC_B64), Reg);
+
+    // Add 32-bit offset from this instruction to the start of the constant data.
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_ADD_I32), RegLo)
+            .addReg(RegLo)
+            .addTargetIndex(AMDGPU::TI_CONSTDATA_START)
+            .addReg(AMDGPU::SCC, RegState::Define | RegState::Implicit);
+    BuildMI(MBB, MI, DL, get(AMDGPU::S_ADDC_U32), RegHi)
+            .addReg(RegHi)
+            .addImm(0)
+            .addReg(AMDGPU::SCC, RegState::Define | RegState::Implicit)
+            .addReg(AMDGPU::SCC, RegState::Implicit);
+    MI->eraseFromParent();
+    break;
+  }
   }
   return true;
 }

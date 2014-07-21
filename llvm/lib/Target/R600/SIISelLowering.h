@@ -25,6 +25,8 @@ class SITargetLowering : public AMDGPUTargetLowering {
                          SDValue Chain, unsigned Offset, bool Signed) const;
   SDValue LowerSampleIntrinsic(unsigned Opcode, const SDValue &Op,
                                SelectionDAG &DAG) const;
+  SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
+                             SelectionDAG &DAG) const override;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFastFDIV(SDValue Op, SelectionDAG &DAG) const;

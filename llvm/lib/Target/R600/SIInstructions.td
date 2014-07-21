@@ -139,7 +139,11 @@ def S_SEXT_I32_I16 : SOP1_32 <0x0000001a, "S_SEXT_I32_I16",
 ////def S_BITSET0_B64 : SOP1_BITSET0 <0x0000001c, "S_BITSET0_B64", []>;
 ////def S_BITSET1_B32 : SOP1_BITSET1 <0x0000001d, "S_BITSET1_B32", []>;
 ////def S_BITSET1_B64 : SOP1_BITSET1 <0x0000001e, "S_BITSET1_B64", []>;
-def S_GETPC_B64 : SOP1_64 <0x0000001f, "S_GETPC_B64", []>;
+def S_GETPC_B64 : SOP1 <
+  0x0000001f, (outs SReg_64:$dst), (ins), "S_GETPC_B64 $dst", []
+> {
+  let SSRC0 = 0;
+}
 def S_SETPC_B64 : SOP1_64 <0x00000020, "S_SETPC_B64", []>;
 def S_SWAPPC_B64 : SOP1_64 <0x00000021, "S_SWAPPC_B64", []>;
 def S_RFE_B64 : SOP1_64 <0x00000022, "S_RFE_B64", []>;
@@ -1693,6 +1697,16 @@ defm SI_SPILL_S64  : SI_SPILL_SGPR <SReg_64>;
 defm SI_SPILL_S128 : SI_SPILL_SGPR <SReg_128>;
 defm SI_SPILL_S256 : SI_SPILL_SGPR <SReg_256>;
 defm SI_SPILL_S512 : SI_SPILL_SGPR <SReg_512>;
+
+let Defs = [SCC] in {
+
+def SI_CONSTDATA_PTR : InstSI <
+  (outs SReg_64:$dst),
+  (ins),
+  "", [(set SReg_64:$dst, (i64 SIconstdata_ptr))]
+>;
+
+} // End Defs = [SCC]
 
 } // end IsCodeGenOnly, isPseudo
 

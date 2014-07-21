@@ -63,6 +63,14 @@ extern char &SIFixSGPRLiveRangesID;
 
 extern Target TheAMDGPUTarget;
 
+namespace AMDGPU {
+enum TargetIndex {
+  TI_CONSTDATA_START
+};
+}
+
+#define END_OF_TEXT_LABEL_NAME "EndOfTextLabel"
+
 } // End namespace llvm
 
 namespace ShaderType {

@@ -860,6 +860,34 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
   return Chain;
 }
 
+SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
+                                             SDValue Op,
+                                             SelectionDAG &DAG) const {
+  GlobalAddressSDNode *GSD = cast<GlobalAddressSDNode>(Op);
+
+  if (GSD->getAddressSpace() != AMDGPUAS::CONSTANT_ADDRESS)
+    return AMDGPUTargetLowering::LowerGlobalAddress(MFI, Op, DAG);
+
+  SDLoc DL(GSD);
+  const GlobalValue *GV = GSD->getGlobal();
+  MVT PtrVT = getPointerTy(GSD->getAddressSpace());
+
+  SDValue Ptr = DAG.getNode(AMDGPUISD::CONST_DATA_PTR, DL, PtrVT);
+  SDValue GA = DAG.getTargetGlobalAddress(GV, DL, MVT::i32);
+
+  SDValue PtrLo = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, Ptr,
+                              DAG.getConstant(0, MVT::i32));
+  SDValue PtrHi = DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32, Ptr,
+                              DAG.getConstant(1, MVT::i32));
+
+  SDValue Lo = DAG.getNode(ISD::ADDC, DL, DAG.getVTList(MVT::i32, MVT::Glue),
+                           PtrLo, GA);
+  SDValue Hi = DAG.getNode(ISD::ADDE, DL, DAG.getVTList(MVT::i32, MVT::Glue),
+                           PtrHi, DAG.getConstant(0, MVT::i32),
+                           SDValue(Lo.getNode(), 1));
+  return DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Lo, Hi);
+}
+
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);

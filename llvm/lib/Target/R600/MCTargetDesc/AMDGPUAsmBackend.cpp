@@ -45,7 +45,7 @@ public:
   AMDGPUAsmBackend(const Target &T)
     : MCAsmBackend() {}
 
-  unsigned getNumFixupKinds() const override { return 0; };
+  unsigned getNumFixupKinds() const override { return AMDGPU::NumTargetFixupKinds; };
   void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                   uint64_t Value, bool IsPCRel) const override;
   bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
@@ -77,16 +77,37 @@ void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
                                   unsigned DataSize, uint64_t Value,
                                   bool IsPCRel) const {
 
-  uint16_t *Dst = (uint16_t*)(Data + Fixup.getOffset());
-  assert(Fixup.getKind() == FK_PCRel_4);
-  *Dst = (Value - 4) / 4;
+  switch ((unsigned)Fixup.getKind()) {
+    default: llvm_unreachable("Unknown fixup kind");
+    case AMDGPU::fixup_si_sopp_br: {
+      uint16_t *Dst = (uint16_t*)(Data + Fixup.getOffset());
+      *Dst = (Value - 4) / 4;
+      break;
+    }
+
+    case AMDGPU::fixup_si_rodata: {
+      uint32_t *Dst = (uint32_t*)(Data + Fixup.getOffset());
+      *Dst = Value;
+      break;
+    }
+
+    case AMDGPU::fixup_si_end_of_text: {
+      uint32_t *Dst = (uint32_t*)(Data + Fixup.getOffset());
+      // The value points to the last instruction in the text section, so we
+      // need to add 4 bytes to get to the start of the constants.
+      *Dst = Value + 4;
+      break;
+    }
+  }
 }
 
 const MCFixupKindInfo &AMDGPUAsmBackend::getFixupKindInfo(
                                                        MCFixupKind Kind) const {
   const static MCFixupKindInfo Infos[AMDGPU::NumTargetFixupKinds] = {
     // name                   offset bits  flags
-    { "fixup_si_sopp_br",     0,     16,   MCFixupKindInfo::FKF_IsPCRel }
+    { "fixup_si_sopp_br",     0,     16,   MCFixupKindInfo::FKF_IsPCRel },
+    { "fixup_si_rodata",      0,     32,   0 },
+    { "fixup_si_end_of_text", 0,     32,   MCFixupKindInfo::FKF_IsPCRel }
   };
 
   if (Kind < FirstTargetFixupKind)

@@ -22,7 +22,9 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCObjectStreamer.h"
@@ -77,6 +79,20 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_MachineBasicBlock:
       MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
                                    MO.getMBB()->getSymbol(), Ctx));
+      break;
+    case MachineOperand::MO_GlobalAddress: {
+      const GlobalValue *GV = MO.getGlobal();
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(GV->getName()));
+      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(Sym, Ctx));
+      break;
+    }
+    case MachineOperand::MO_TargetIndex: {
+      assert(MO.getIndex() == AMDGPU::TI_CONSTDATA_START);
+      MCSymbol *Sym = Ctx.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+      const MCSymbolRefExpr *Expr = MCSymbolRefExpr::Create(Sym, Ctx);
+      MCOp = MCOperand::CreateExpr(Expr);
+      break;
+    }
     }
     OutMI.addOperand(MCOp);
   }

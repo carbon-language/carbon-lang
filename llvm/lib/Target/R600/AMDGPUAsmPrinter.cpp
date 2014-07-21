@@ -85,6 +85,16 @@ AMDGPUAsmPrinter::AMDGPUAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
   DisasmEnabled = TM.getSubtarget<AMDGPUSubtarget>().dumpCode();
 }
 
+void AMDGPUAsmPrinter::EmitEndOfAsmFile(Module &M) {
+
+  // This label is used to mark the end of the .text section.
+  const TargetLoweringObjectFile &TLOF = getObjFileLowering();
+  OutStreamer.SwitchSection(TLOF.getTextSection());
+  MCSymbol *EndOfTextLabel =
+      OutContext.GetOrCreateSymbol(StringRef(END_OF_TEXT_LABEL_NAME));
+  OutStreamer.EmitLabel(EndOfTextLabel);
+}
+
 bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 

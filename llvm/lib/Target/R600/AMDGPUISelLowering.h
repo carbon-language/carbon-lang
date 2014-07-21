@@ -78,8 +78,8 @@ protected:
   virtual SDValue CreateLiveInRegister(SelectionDAG &DAG,
                                        const TargetRegisterClass *RC,
                                        unsigned Reg, EVT VT) const;
-  SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
-                             SelectionDAG &DAG) const;
+  virtual SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
+                                     SelectionDAG &DAG) const;
   /// \brief Split a vector load into multiple scalar loads.
   SDValue SplitVectorLoad(const SDValue &Op, SelectionDAG &DAG) const;
   SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
@@ -233,6 +233,8 @@ enum {
   /// T2|v.z| | | |
   /// T3|v.w| | | |
   BUILD_VERTICAL_VECTOR,
+  /// Pointer to the start of the shader's constant data.
+  CONST_DATA_PTR,
   FIRST_MEM_OPCODE_NUMBER = ISD::FIRST_TARGET_MEMORY_OPCODE,
   STORE_MSKOR,
   LOAD_CONSTANT,
