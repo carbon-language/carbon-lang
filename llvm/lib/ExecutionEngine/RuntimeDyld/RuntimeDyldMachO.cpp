@@ -90,7 +90,7 @@ void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
     uint64_t RelocAddr = 0;
     RI->getAddress(RelocAddr);
     unsigned RelocSize = Obj.getAnyRelocationLength(RelInfo);
-    Value.Addend += RelocAddr + (1 << RelocSize);
+    Value.Addend += RelocAddr + (1ULL << RelocSize);
   }
 }
 
