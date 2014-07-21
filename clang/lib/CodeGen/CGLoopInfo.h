@@ -46,7 +46,7 @@ struct LoopAttributes {
   /// \brief llvm.loop.vectorize.width
   unsigned VectorizerWidth;
 
-  /// \brief llvm.loop.vectorize.unroll
+  /// \brief llvm.loop.interleave.count
   unsigned VectorizerUnroll;
 };
 

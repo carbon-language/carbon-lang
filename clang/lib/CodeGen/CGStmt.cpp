@@ -592,7 +592,7 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       break;
     case LoopHintAttr::Interleave:
     case LoopHintAttr::InterleaveCount:
-      MetadataName = "llvm.loop.vectorize.unroll";
+      MetadataName = "llvm.loop.interleave.count";
       break;
     case LoopHintAttr::Unroll:
       MetadataName = "llvm.loop.unroll.enable";

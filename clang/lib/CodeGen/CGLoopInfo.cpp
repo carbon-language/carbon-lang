@@ -39,7 +39,7 @@ static MDNode *createMetadata(LLVMContext &Ctx, const LoopAttributes &Attrs) {
 
   // Setting vectorizer.unroll
   if (Attrs.VectorizerUnroll > 0) {
-    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.vectorize.unroll"),
+    Value *Vals[] = { MDString::get(Ctx, "llvm.loop.interleave.count"),
                       ConstantInt::get(Type::getInt32Ty(Ctx),
                                        Attrs.VectorizerUnroll) };
     Args.push_back(MDNode::get(Ctx, Vals));
