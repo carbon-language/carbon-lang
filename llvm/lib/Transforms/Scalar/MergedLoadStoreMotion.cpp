@@ -243,6 +243,10 @@ bool MergedLoadStoreMotion::isLoadHoistBarrier(Instruction *Inst) {
     return true;
   if (isa<TerminatorInst>(Inst))
     return true;
+  // FIXME: Conservatively let a store instruction block the load.
+  // Use alias analysis instead.
+  if (isa<StoreInst>(Inst))
+    return true;
   // Note: mayHaveSideEffects covers all instructions that could
   // trigger a change to state. Eg. in-flight stores have to be executed
   // before ordered loads or fences, calls could invoke functions that store
@@ -411,8 +415,12 @@ bool MergedLoadStoreMotion::mergeLoads(BasicBlock *BB) {
 
 ///
 /// \brief True when instruction is sink barrier for a store
-///
+/// 
 bool MergedLoadStoreMotion::isStoreSinkBarrier(Instruction *Inst) {
+  // FIXME: Conservatively let a load instruction block the store.
+  // Use alias analysis instead.
+  if (isa<LoadInst>(Inst))
+    return true;
   if (isa<CallInst>(Inst))
     return true;
   if (isa<TerminatorInst>(Inst) && !isa<BranchInst>(Inst))
