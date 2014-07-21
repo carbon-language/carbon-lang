@@ -1784,12 +1784,20 @@ def : Pat <
     (S_MOV_B32 0), sub1)
 >;
 
-} // Predicates = [isSI, isCFDepth0]
-
-let  Predicates = [isSI] in {
 //===----------------------------------------------------------------------===//
 // SOP2 Patterns
 //===----------------------------------------------------------------------===//
+
+// V_ADD_I32_e32/S_ADD_I32 produces carry in VCC/SCC. For the vector
+// case, the sgpr-copies pass will fix this to use the vector version.
+def : Pat <
+  (i32 (addc i32:$src0, i32:$src1)),
+  (S_ADD_I32 $src0, $src1)
+>;
+
+} // Predicates = [isSI, isCFDepth0]
+
+let  Predicates = [isSI] in {
 
 //===----------------------------------------------------------------------===//
 // SOPP Patterns
@@ -1852,6 +1860,11 @@ def : Pat <
         (V_BCNT_U32_B32_e64 (EXTRACT_SUBREG $src, sub0), 0, 0, 0)),
       sub0),
     (V_MOV_B32_e32 0), sub1)
+>;
+
+def : Pat <
+  (addc i32:$src0, i32:$src1),
+  (V_ADD_I32_e32 $src0, $src1)
 >;
 
 /********** ======================= **********/
@@ -2846,13 +2859,6 @@ def : Pat <
 def : Pat <
   (i1 (trunc i32:$a)),
   (V_CMP_EQ_I32_e64 (V_AND_B32_e32 (i32 1), $a), 1)
->;
-
-// V_ADD_I32_e32/S_ADD_I32 produces carry in VCC/SCC. For the vector
-// case, the sgpr-copies pass will fix this to use the vector version.
-def : Pat <
-  (i32 (addc i32:$src0, i32:$src1)),
-  (S_ADD_I32 $src0, $src1)
 >;
 
 //============================================================================//
