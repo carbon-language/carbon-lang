@@ -468,22 +468,6 @@ namespace {
       CGF.EmitCall(FnInfo, CleanupFn, ReturnValueSlot(), Args);
     }
   };
-
-  /// A cleanup to call @llvm.lifetime.end.
-  class CallLifetimeEnd : public EHScopeStack::Cleanup {
-    llvm::Value *Addr;
-    llvm::Value *Size;
-  public:
-    CallLifetimeEnd(llvm::Value *addr, llvm::Value *size)
-      : Addr(addr), Size(size) {}
-
-    void Emit(CodeGenFunction &CGF, Flags flags) override {
-      llvm::Value *castAddr = CGF.Builder.CreateBitCast(Addr, CGF.Int8PtrTy);
-      CGF.Builder.CreateCall2(CGF.CGM.getLLVMLifetimeEndFn(),
-                              Size, castAddr)
-        ->setDoesNotThrow();
-    }
-  };
 }
 
 /// EmitAutoVarWithLifetime - Does the setup required for an automatic
@@ -802,10 +786,9 @@ static bool shouldUseMemSetPlusStoresToInitialize(llvm::Constant *Init,
 }
 
 /// Should we use the LLVM lifetime intrinsics for the given local variable?
-static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, const VarDecl &D,
-                                     unsigned Size) {
+bool CodeGenFunction::shouldUseLifetimeMarkers(unsigned Size) const {
   // For now, only in optimized builds.
-  if (CGF.CGM.getCodeGenOpts().OptimizationLevel == 0)
+  if (CGM.getCodeGenOpts().OptimizationLevel == 0)
     return false;
 
   // Limit the size of marked objects to 32 bytes. We don't want to increase
@@ -815,7 +798,6 @@ static bool shouldUseLifetimeMarkers(CodeGenFunction &CGF, const VarDecl &D,
   return Size > SizeThreshold;
 }
 
-
 /// EmitAutoVarDecl - Emit code and set up an entry in LocalDeclMap for a
 /// variable declaration with auto, register, or no storage class specifier.
 /// These turn into simple stack objects, or GlobalValues depending on target.
@@ -823,6 +805,18 @@ void CodeGenFunction::EmitAutoVarDecl(const VarDecl &D) {
   AutoVarEmission emission = EmitAutoVarAlloca(D);
   EmitAutoVarInit(emission);
   EmitAutoVarCleanups(emission);
+}
+
+void CodeGenFunction::EmitLifetimeStart(llvm::Value *Size, llvm::Value *Addr) {
+  llvm::Value *castAddr = Builder.CreateBitCast(Addr, Int8PtrTy);
+  Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), Size, castAddr)
+      ->setDoesNotThrow();
+}
+
+void CodeGenFunction::EmitLifetimeEnd(llvm::Value *Size, llvm::Value *Addr) {
+  llvm::Value *castAddr = Builder.CreateBitCast(Addr, Int8PtrTy);
+  Builder.CreateCall2(CGM.getLLVMLifetimeEndFn(), Size, castAddr)
+      ->setDoesNotThrow();
 }
 
 /// EmitAutoVarAlloca - Emit the alloca and debug information for a
@@ -920,13 +914,11 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       // Emit a lifetime intrinsic if meaningful.  There's no point
       // in doing this if we don't have a valid insertion point (?).
       uint64_t size = CGM.getDataLayout().getTypeAllocSize(LTy);
-      if (HaveInsertPoint() && shouldUseLifetimeMarkers(*this, D, size)) {
+      if (HaveInsertPoint() && shouldUseLifetimeMarkers(size)) {
         llvm::Value *sizeV = llvm::ConstantInt::get(Int64Ty, size);
 
         emission.SizeForLifetimeMarkers = sizeV;
-        llvm::Value *castAddr = Builder.CreateBitCast(Alloc, Int8PtrTy);
-        Builder.CreateCall2(CGM.getLLVMLifetimeStartFn(), sizeV, castAddr)
-          ->setDoesNotThrow();
+        EmitLifetimeStart(sizeV, Alloc);
       } else {
         assert(!emission.useLifetimeMarkers());
       }

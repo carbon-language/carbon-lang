@@ -353,6 +353,17 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
 
   // Create and initialize the reference temporary.
   llvm::Value *Object = createReferenceTemporary(*this, M, E);
+
+  uint64_t size =
+      CGM.getDataLayout().getTypeStoreSize(ConvertTypeForMem(E->getType()));
+  llvm::Value *sizeV = nullptr;
+  llvm::AllocaInst *Alloca = dyn_cast<llvm::AllocaInst>(Object);
+  bool useLifetimeMarkers = Alloca && shouldUseLifetimeMarkers(size);
+  if (useLifetimeMarkers) {
+    sizeV = llvm::ConstantInt::get(Int64Ty, size);
+    EmitLifetimeStart(sizeV, Object);
+  }
+
   if (auto *Var = dyn_cast<llvm::GlobalVariable>(Object)) {
     // If the temporary is a global and has a constant initializer, we may
     // have already initialized it.
@@ -363,6 +374,20 @@ LValue CodeGenFunction::EmitMaterializeTemporaryExpr(
   } else {
     EmitAnyExprToMem(E, Object, Qualifiers(), /*IsInit*/true);
   }
+
+  if (useLifetimeMarkers)
+    switch (M->getStorageDuration()) {
+    case SD_FullExpression:
+      EHStack.pushCleanup<CallLifetimeEnd>(NormalAndEHCleanup, Object, sizeV);
+      break;
+    case SD_Automatic:
+      pushCleanupAfterFullExpr<CallLifetimeEnd>(NormalAndEHCleanup, Object,
+                                                sizeV);
+      break;
+    default:
+      llvm_unreachable("unexpected storage duration for Lifetime markers");
+    }
+
   pushTemporaryCleanup(*this, M, E, Object);
 
   // Perform derived-to-base casts and/or field accesses, to get from the
