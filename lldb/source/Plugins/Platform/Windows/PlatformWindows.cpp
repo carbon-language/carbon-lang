@@ -291,7 +291,12 @@ PlatformWindows::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite
         break;
 
     case llvm::Triple::hexagon:
-        return 0;
+        {
+            static const uint8_t g_hex_opcode[] = { 0x0c, 0xdb, 0x00, 0x54 };
+            trap_opcode = g_hex_opcode;
+            trap_opcode_size = sizeof(g_hex_opcode);
+        }
+        break;
     default:
         llvm_unreachable("Unhandled architecture in PlatformWindows::GetSoftwareBreakpointTrapOpcode()");
         break;
