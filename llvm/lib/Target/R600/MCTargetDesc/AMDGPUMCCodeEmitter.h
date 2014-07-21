@@ -37,6 +37,12 @@ public:
                                      const MCSubtargetInfo &STI) const {
     return 0;
   }
+
+  virtual unsigned getSOPPBrEncoding(const MCInst &MI, unsigned OpNo,
+                                     SmallVectorImpl<MCFixup> &Fixups,
+                                     const MCSubtargetInfo &STI) const {
+    return 0;
+  }
 };
 
 } // End namespace llvm

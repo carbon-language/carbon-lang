@@ -142,8 +142,17 @@ class SGPRImm <dag frag> : PatLeaf<frag, [{
   return false;
 }]>;
 
+//===----------------------------------------------------------------------===//
+// Custom Operands
+//===----------------------------------------------------------------------===//
+
 def FRAMEri32 : Operand<iPTR> {
   let MIOperandInfo = (ops i32:$ptr, i32imm:$index);
+}
+
+def sopp_brtarget : Operand<OtherVT> {
+  let EncoderMethod = "getSOPPBrEncoding";
+  let OperandType = "OPERAND_PCREL";
 }
 
 //===----------------------------------------------------------------------===//

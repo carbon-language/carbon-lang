@@ -9,9 +9,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
+#include "MCTargetDesc/AMDGPUFixupKinds.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
+#include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCValue.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -58,6 +60,8 @@ public:
   bool writeNopData(uint64_t Count, MCObjectWriter *OW) const override {
     return true;
   }
+
+  const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const override;
 };
 
 } //End anonymous namespace
@@ -76,6 +80,19 @@ void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
   uint16_t *Dst = (uint16_t*)(Data + Fixup.getOffset());
   assert(Fixup.getKind() == FK_PCRel_4);
   *Dst = (Value - 4) / 4;
+}
+
+const MCFixupKindInfo &AMDGPUAsmBackend::getFixupKindInfo(
+                                                       MCFixupKind Kind) const {
+  const static MCFixupKindInfo Infos[AMDGPU::NumTargetFixupKinds] = {
+    // name                   offset bits  flags
+    { "fixup_si_sopp_br",     0,     16,   MCFixupKindInfo::FKF_IsPCRel }
+  };
+
+  if (Kind < FirstTargetFixupKind)
+    return MCAsmBackend::getFixupKindInfo(Kind);
+
+  return Infos[Kind - FirstTargetFixupKind];
 }
 
 //===----------------------------------------------------------------------===//

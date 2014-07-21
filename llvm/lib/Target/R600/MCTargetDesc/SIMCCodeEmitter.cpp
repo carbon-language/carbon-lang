@@ -15,6 +15,7 @@
 
 #include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
+#include "MCTargetDesc/AMDGPUFixupKinds.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCFixup.h"
@@ -60,6 +61,12 @@ public:
 
   /// \returns the encoding for an MCOperand.
   uint64_t getMachineOpValue(const MCInst &MI, const MCOperand &MO,
+                             SmallVectorImpl<MCFixup> &Fixups,
+                             const MCSubtargetInfo &STI) const override;
+
+  /// \brief Use a fixup to encode the simm16 field for SOPP branch
+  ///        instructions.
+  unsigned getSOPPBrEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const override;
 };
@@ -169,19 +176,27 @@ void SIMCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
   }
 }
 
+unsigned SIMCCodeEmitter::getSOPPBrEncoding(const MCInst &MI, unsigned OpNo,
+                                            SmallVectorImpl<MCFixup> &Fixups,
+                                            const MCSubtargetInfo &STI) const {
+  const MCOperand &MO = MI.getOperand(OpNo);
+
+  if (MO.isExpr()) {
+    const MCExpr *Expr = MO.getExpr();
+    MCFixupKind Kind = (MCFixupKind)AMDGPU::fixup_si_sopp_br;
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind, MI.getLoc()));
+    return 0;
+  }
+
+  return getMachineOpValue(MI, MO, Fixups, STI);
+}
+
 uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
                                             const MCOperand &MO,
                                        SmallVectorImpl<MCFixup> &Fixups,
                                        const MCSubtargetInfo &STI) const {
   if (MO.isReg())
     return MRI.getEncodingValue(MO.getReg());
-
-  if (MO.isExpr()) {
-    const MCExpr *Expr = MO.getExpr();
-    MCFixupKind Kind = MCFixupKind(FK_PCRel_4);
-    Fixups.push_back(MCFixup::Create(0, Expr, Kind, MI.getLoc()));
-    return 0;
-  }
 
   // Figure out the operand number, needed for isSrcOperand check
   unsigned OpNo = 0;

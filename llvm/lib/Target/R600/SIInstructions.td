@@ -378,42 +378,42 @@ def S_ENDPGM : SOPP <0x00000001, (ins), "S_ENDPGM",
 
 let isBranch = 1 in {
 def S_BRANCH : SOPP <
-  0x00000002, (ins brtarget:$simm16), "S_BRANCH $simm16",
+  0x00000002, (ins sopp_brtarget:$simm16), "S_BRANCH $simm16",
   [(br bb:$simm16)]> {
   let isBarrier = 1;
 }
 
 let DisableEncoding = "$scc" in {
 def S_CBRANCH_SCC0 : SOPP <
-  0x00000004, (ins brtarget:$simm16, SCCReg:$scc),
+  0x00000004, (ins sopp_brtarget:$simm16, SCCReg:$scc),
   "S_CBRANCH_SCC0 $simm16", []
 >;
 def S_CBRANCH_SCC1 : SOPP <
-  0x00000005, (ins brtarget:$simm16, SCCReg:$scc),
+  0x00000005, (ins sopp_brtarget:$simm16, SCCReg:$scc),
   "S_CBRANCH_SCC1 $simm16",
   []
 >;
 } // End DisableEncoding = "$scc"
 
 def S_CBRANCH_VCCZ : SOPP <
-  0x00000006, (ins brtarget:$simm16, VCCReg:$vcc),
+  0x00000006, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
   "S_CBRANCH_VCCZ $simm16",
   []
 >;
 def S_CBRANCH_VCCNZ : SOPP <
-  0x00000007, (ins brtarget:$simm16, VCCReg:$vcc),
+  0x00000007, (ins sopp_brtarget:$simm16, VCCReg:$vcc),
   "S_CBRANCH_VCCNZ $simm16",
   []
 >;
 
 let DisableEncoding = "$exec" in {
 def S_CBRANCH_EXECZ : SOPP <
-  0x00000008, (ins brtarget:$simm16, EXECReg:$exec),
+  0x00000008, (ins sopp_brtarget:$simm16, EXECReg:$exec),
   "S_CBRANCH_EXECZ $simm16",
   []
 >;
 def S_CBRANCH_EXECNZ : SOPP <
-  0x00000009, (ins brtarget:$simm16, EXECReg:$exec),
+  0x00000009, (ins sopp_brtarget:$simm16, EXECReg:$exec),
   "S_CBRANCH_EXECNZ $simm16",
   []
 >;
