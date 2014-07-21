@@ -57,14 +57,18 @@ namespace {
   /// Only support the case where the Value is defined in the same basic block
   /// as the given instruction and the use.
   struct CapturesBefore : public CaptureTracker {
-    CapturesBefore(bool ReturnCaptures, const Instruction *I, DominatorTree *DT)
+    CapturesBefore(bool ReturnCaptures, const Instruction *I, DominatorTree *DT,
+                   bool IncludeI)
       : BeforeHere(I), DT(DT), ReturnCaptures(ReturnCaptures),
-        Captured(false) {}
+        IncludeI(IncludeI), Captured(false) {}
 
     void tooManyUses() override { Captured = true; }
 
     bool shouldExplore(const Use *U) override {
       Instruction *I = cast<Instruction>(U->getUser());
+      if (BeforeHere == I && !IncludeI)
+        return false;
+
       BasicBlock *BB = I->getParent();
       // We explore this usage only if the usage can reach "BeforeHere".
       // If use is not reachable from entry, there is no need to explore.
@@ -84,6 +88,9 @@ namespace {
         return false;
 
       Instruction *I = cast<Instruction>(U->getUser());
+      if (BeforeHere == I && !IncludeI)
+        return false;
+
       BasicBlock *BB = I->getParent();
       // Same logic as in shouldExplore.
       if (BeforeHere != I && !DT->isReachableFromEntry(BB))
@@ -99,6 +106,7 @@ namespace {
     DominatorTree *DT;
 
     bool ReturnCaptures;
+    bool IncludeI;
 
     bool Captured;
   };
@@ -138,7 +146,7 @@ bool llvm::PointerMayBeCaptured(const Value *V,
 /// or not.
 bool llvm::PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
                                       bool StoreCaptures, const Instruction *I,
-                                      DominatorTree *DT) {
+                                      DominatorTree *DT, bool IncludeI) {
   assert(!isa<GlobalValue>(V) &&
          "It doesn't make sense to ask whether a global is captured.");
 
@@ -148,7 +156,7 @@ bool llvm::PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
   // TODO: See comment in PointerMayBeCaptured regarding what could be done
   // with StoreCaptures.
 
-  CapturesBefore CB(ReturnCaptures, I, DT);
+  CapturesBefore CB(ReturnCaptures, I, DT, IncludeI);
   PointerMayBeCaptured(V, &CB);
   return CB.Captured;
 }

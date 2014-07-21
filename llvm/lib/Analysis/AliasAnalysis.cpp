@@ -408,7 +408,8 @@ AliasAnalysis::callCapturesBefore(const Instruction *I,
     return AliasAnalysis::ModRef;
 
   if (llvm::PointerMayBeCapturedBefore(Object, /* ReturnCaptures */ true,
-                                       /* StoreCaptures */ true, I, DT))
+                                       /* StoreCaptures */ true, I, DT,
+                                       /* include Object */ true))
     return AliasAnalysis::ModRef;
 
   unsigned ArgNo = 0;

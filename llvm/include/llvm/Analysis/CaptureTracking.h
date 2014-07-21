@@ -40,10 +40,11 @@ namespace llvm {
   /// returning the value (or part of it) from the function counts as capturing
   /// it or not.  The boolean StoreCaptures specified whether storing the value
   /// (or part of it) into memory anywhere automatically counts as capturing it
-  /// or not.
+  /// or not. Captures by the provided instruction are considered if the
+  /// final parameter is true.
   bool PointerMayBeCapturedBefore(const Value *V, bool ReturnCaptures,
                                   bool StoreCaptures, const Instruction *I,
-                                  DominatorTree *DT);
+                                  DominatorTree *DT, bool IncludeI = false);
 
   /// This callback is used in conjunction with PointerMayBeCaptured. In
   /// addition to the interface here, you'll need to provide your own getters
