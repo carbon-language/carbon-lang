@@ -90,19 +90,12 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::FCOS, MVT::f32, Custom);
 
   // We need to custom lower vector stores from local memory
-  setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v8i32, Custom);
   setOperationAction(ISD::LOAD, MVT::v16i32, Custom);
 
   setOperationAction(ISD::STORE, MVT::v8i32, Custom);
   setOperationAction(ISD::STORE, MVT::v16i32, Custom);
-
-  // We need to custom lower loads/stores from private memory
-  setOperationAction(ISD::LOAD, MVT::i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::v2i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
-  setOperationAction(ISD::LOAD, MVT::v8i32, Custom);
 
   setOperationAction(ISD::STORE, MVT::i1, Custom);
   setOperationAction(ISD::STORE, MVT::i32, Custom);
@@ -265,15 +258,6 @@ bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
   // see what for specifically. The wording everywhere else seems to be the
   // same.
 
-  // 3.6.4 - Operations using pairs of VGPRs (for example: double-floats) have
-  // no alignment restrictions.
-  if (AddrSpace == AMDGPUAS::PRIVATE_ADDRESS) {
-    // Using any pair of GPRs should be the same as any other pair.
-    if (IsFast)
-      *IsFast = true;
-    return VT.bitsGE(MVT::i64);
-  }
-
   // XXX - The only mention I see of this in the ISA manual is for LDS direct
   // reads the "byte address and must be dword aligned". Is it also true for the
   // normal loads and stores?
@@ -282,6 +266,7 @@ bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
 
   // 8.1.6 - For Dword or larger reads or writes, the two LSBs of the
   // byte-address are ignored, thus forcing Dword alignment.
+  // This applies to private, global, and constant memory.
   if (IsFast)
     *IsFast = true;
   return VT.bitsGT(MVT::i32);
@@ -658,28 +643,11 @@ SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: {
-    LoadSDNode *Load = dyn_cast<LoadSDNode>(Op);
-    EVT VT = Op.getValueType();
-
-    // These loads are legal.
-    if (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS &&
-        VT.isVector() && VT.getVectorNumElements() == 2 &&
-        VT.getVectorElementType() == MVT::i32)
-      return SDValue();
-
-    if (Op.getValueType().isVector() &&
-        (Load->getAddressSpace() == AMDGPUAS::LOCAL_ADDRESS ||
-         Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS ||
-         (Load->getAddressSpace() == AMDGPUAS::GLOBAL_ADDRESS &&
-          Op.getValueType().getVectorNumElements() > 4))) {
-      return SplitVectorLoad(Op, DAG);
-    } else {
-      SDValue Result = LowerLOAD(Op, DAG);
-      assert((!Result.getNode() ||
-              Result.getNode()->getNumValues() == 2) &&
-             "Load should return a value and a chain");
-      return Result;
-    }
+    SDValue Result = LowerLOAD(Op, DAG);
+    assert((!Result.getNode() ||
+            Result.getNode()->getNumValues() == 2) &&
+           "Load should return a value and a chain");
+    return Result;
   }
 
   case ISD::FSIN:
@@ -940,58 +908,26 @@ SDValue SITargetLowering::LowerGlobalAddress(AMDGPUMachineFunction *MFI,
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   LoadSDNode *Load = cast<LoadSDNode>(Op);
-  // Vector private memory loads have already been split, and
-  // all the rest of private memory loads are legal.
-  if (Load->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
-    return SDValue();
-  }
-  SDValue Lowered = AMDGPUTargetLowering::LowerLOAD(Op, DAG);
-  if (Lowered.getNode())
-    return Lowered;
 
-  if (Load->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS) {
-    return SDValue();
-  }
-
-  EVT MemVT = Load->getMemoryVT();
-
-  assert(!MemVT.isVector() && "Private loads should be scalarized");
-  assert(!MemVT.isFloatingPoint() && "FP loads should be promoted to int");
-
-  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Load->getBasePtr(),
-                            DAG.getConstant(2, MVT::i32));
-
-  // FIXME: REGISTER_LOAD should probably have a chain result.
-  SDValue Chain = Load->getChain();
-  SDValue LoLoad = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
-                               Chain, Ptr,
-                               DAG.getTargetConstant(0, MVT::i32),
-                               Op.getOperand(2));
-
-  SDValue Ret = LoLoad.getValue(0);
-  if (MemVT.getSizeInBits() == 64) {
-    // TODO: This needs a test to make sure the right thing is happening with
-    // the chain. That is hard without general function support.
-
-    SDValue IncPtr = DAG.getNode(ISD::ADD, DL, MVT::i32, Ptr,
-                                 DAG.getConstant(1, MVT::i32));
-
-    SDValue HiLoad = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
-                                 Chain, IncPtr,
-                                 DAG.getTargetConstant(0, MVT::i32),
-                                 Op.getOperand(2));
-
-    Ret = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, LoLoad, HiLoad);
-    // Chain = DAG.getNode(ISD::TokenFactor, DL, MVT::Other,
-    //                     LoLoad.getValue(1), HiLoad.getValue(1));
+  if (Op.getValueType().isVector()) {
+    assert(Op.getValueType().getVectorElementType() == MVT::i32 &&
+           "Custom lowering for non-i32 vectors hasn't been implemented.");
+    unsigned NumElements = Op.getValueType().getVectorNumElements();
+    assert(NumElements != 2 && "v2 loads are supported for all address spaces.");
+    switch (Load->getAddressSpace()) {
+      default: break;
+      case AMDGPUAS::GLOBAL_ADDRESS:
+      case AMDGPUAS::PRIVATE_ADDRESS:
+        // v4 loads are supported for private and global memory.
+        if (NumElements <= 4)
+          break;
+        // fall-through
+      case AMDGPUAS::LOCAL_ADDRESS:
+        return SplitVectorLoad(Op, DAG);
+    }
   }
 
-  SDValue Ops[] = {
-    Ret,
-    Chain
-  };
-
-  return DAG.getMergeValues(Ops, DL);
+  return AMDGPUTargetLowering::LowerLOAD(Op, DAG);
 }
 
 SDValue SITargetLowering::LowerSampleIntrinsic(unsigned Opcode,
@@ -1153,67 +1089,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
                         DAG.getSExtOrTrunc(Store->getValue(), DL, MVT::i32),
                         Store->getBasePtr(), MVT::i1, Store->getMemOperand());
 
-  if (Store->getAddressSpace() != AMDGPUAS::PRIVATE_ADDRESS)
-    return SDValue();
-
-  SDValue Ptr = DAG.getNode(ISD::SRL, DL, MVT::i32, Store->getBasePtr(),
-                            DAG.getConstant(2, MVT::i32));
-  SDValue Chain = Store->getChain();
-  SmallVector<SDValue, 8> Values;
-
-  if (Store->isTruncatingStore()) {
-    unsigned Mask = 0;
-    if (Store->getMemoryVT() == MVT::i8) {
-      Mask = 0xff;
-    } else if (Store->getMemoryVT() == MVT::i16) {
-      Mask = 0xffff;
-    }
-    SDValue Dst = DAG.getNode(AMDGPUISD::REGISTER_LOAD, DL, MVT::i32,
-                              Chain, Store->getBasePtr(),
-                              DAG.getConstant(0, MVT::i32));
-    SDValue ByteIdx = DAG.getNode(ISD::AND, DL, MVT::i32, Store->getBasePtr(),
-                                  DAG.getConstant(0x3, MVT::i32));
-    SDValue ShiftAmt = DAG.getNode(ISD::SHL, DL, MVT::i32, ByteIdx,
-                                   DAG.getConstant(3, MVT::i32));
-    SDValue MaskedValue = DAG.getNode(ISD::AND, DL, MVT::i32, Store->getValue(),
-                                      DAG.getConstant(Mask, MVT::i32));
-    SDValue ShiftedValue = DAG.getNode(ISD::SHL, DL, MVT::i32,
-                                       MaskedValue, ShiftAmt);
-    SDValue RotrAmt = DAG.getNode(ISD::SUB, DL, MVT::i32,
-                                  DAG.getConstant(32, MVT::i32), ShiftAmt);
-    SDValue DstMask = DAG.getNode(ISD::ROTR, DL, MVT::i32,
-                                  DAG.getConstant(Mask, MVT::i32),
-                                  RotrAmt);
-    Dst = DAG.getNode(ISD::AND, DL, MVT::i32, Dst, DstMask);
-    Dst = DAG.getNode(ISD::OR, DL, MVT::i32, Dst, ShiftedValue);
-
-    Values.push_back(Dst);
-  } else if (VT == MVT::i64) {
-    for (unsigned i = 0; i < 2; ++i) {
-      Values.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
-                       Store->getValue(), DAG.getConstant(i, MVT::i32)));
-    }
-  } else if (VT == MVT::i128) {
-    for (unsigned i = 0; i < 2; ++i) {
-      for (unsigned j = 0; j < 2; ++j) {
-        Values.push_back(DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i32,
-                           DAG.getNode(ISD::EXTRACT_ELEMENT, DL, MVT::i64,
-                           Store->getValue(), DAG.getConstant(i, MVT::i32)),
-                         DAG.getConstant(j, MVT::i32)));
-      }
-    }
-  } else {
-    Values.push_back(Store->getValue());
-  }
-
-  for (unsigned i = 0; i < Values.size(); ++i) {
-    SDValue PartPtr = DAG.getNode(ISD::ADD, DL, MVT::i32,
-                                  Ptr, DAG.getConstant(i, MVT::i32));
-    Chain = DAG.getNode(AMDGPUISD::REGISTER_STORE, DL, MVT::Other,
-                        Chain, Values[i], PartPtr,
-                        DAG.getTargetConstant(0, MVT::i32));
-  }
-  return Chain;
+  return SDValue();
 }
 
 SDValue SITargetLowering::LowerTrig(SDValue Op, SelectionDAG &DAG) const {

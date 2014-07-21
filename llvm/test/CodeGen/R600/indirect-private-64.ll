@@ -7,9 +7,7 @@ declare void @llvm.AMDGPU.barrier.local() noduplicate nounwind
 ; SI-LABEL: @private_access_f64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX2
-; FIXME: We should be able to use BUFFER_LOAD_DWORDX2
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
+; SI-ALLOCA: BUFFER_LOAD_DWORDX2
 
 ; SI-PROMOTE: DS_WRITE_B64
 ; SI-PROMOTE: DS_READ_B64
@@ -27,11 +25,7 @@ define void @private_access_f64_alloca(double addrspace(1)* noalias %out, double
 ; SI-LABEL: @private_access_v2f64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX4
-; FIXME: We should be able to use BUFFER_LOAD_DWORDX4
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
+; SI-ALLOCA: BUFFER_LOAD_DWORDX4
 
 ; SI-PROMOTE: DS_WRITE_B32
 ; SI-PROMOTE: DS_WRITE_B32
@@ -55,9 +49,7 @@ define void @private_access_v2f64_alloca(<2 x double> addrspace(1)* noalias %out
 ; SI-LABEL: @private_access_i64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX2
-; FIXME: We should be able to use BUFFER_LOAD_DWORDX2
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
+; SI-ALLOCA: BUFFER_LOAD_DWORDX2
 
 ; SI-PROMOTE: DS_WRITE_B64
 ; SI-PROMOTE: DS_READ_B64
@@ -75,11 +67,7 @@ define void @private_access_i64_alloca(i64 addrspace(1)* noalias %out, i64 addrs
 ; SI-LABEL: @private_access_v2i64_alloca:
 
 ; SI-ALLOCA: BUFFER_STORE_DWORDX4
-; FIXME: We should be able to use BUFFER_LOAD_DWORDX4
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
-; SI-ALLOCA: BUFFER_LOAD_DWORD
+; SI-ALLOCA: BUFFER_LOAD_DWORDX4
 
 ; SI-PROMOTE: DS_WRITE_B32
 ; SI-PROMOTE: DS_WRITE_B32

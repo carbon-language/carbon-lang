@@ -43,7 +43,11 @@ define void @load_v3i8_to_v3f32(<3 x float> addrspace(1)* noalias %out, <3 x i8>
 }
 
 ; SI-LABEL: @load_v4i8_to_v4f32:
-; SI: BUFFER_LOAD_DWORD [[LOADREG:v[0-9]+]],
+; We can't use BUFFER_LOAD_DWORD here, because the load is byte aligned, and
+; BUFFER_LOAD_DWORD requires dword alignment.
+; SI: BUFFER_LOAD_USHORT
+; SI: BUFFER_LOAD_USHORT
+; SI: V_OR_B32_e32 [[LOADREG:v[0-9]+]]
 ; SI-NOT: BFE
 ; SI-NOT: LSHR
 ; SI-DAG: V_CVT_F32_UBYTE3_e32 v[[HIRESULT:[0-9]+]], [[LOADREG]]
