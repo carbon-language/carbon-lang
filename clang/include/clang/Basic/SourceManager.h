@@ -566,7 +566,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
   /// non-null, FileEntry pointers.
   llvm::DenseMap<const FileEntry*, SrcMgr::ContentCache*> FileInfos;
 
-  /// \brief True if the ContentCache for files that are overriden by other
+  /// \brief True if the ContentCache for files that are overridden by other
   /// files, should report the original file name. Defaults to true.
   bool OverridenFilesKeepOriginalName;
 
@@ -575,7 +575,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
   bool UserFilesAreVolatile;
 
   struct OverriddenFilesInfoTy {
-    /// \brief Files that have been overriden with the contents from another
+    /// \brief Files that have been overridden with the contents from another
     /// file.
     llvm::DenseMap<const FileEntry *, const FileEntry *> OverriddenFiles;
     /// \brief Files that were overridden with a memory buffer.
@@ -719,7 +719,8 @@ public:
   FileManager &getFileManager() const { return FileMgr; }
 
   /// \brief Set true if the SourceManager should report the original file name
-  /// for contents of files that were overriden by other files.Defaults to true.
+  /// for contents of files that were overridden by other files. Defaults to
+  /// true.
   void setOverridenFilesKeepOriginalName(bool value) {
     OverridenFilesKeepOriginalName = value;
   }
@@ -824,7 +825,7 @@ public:
   /// \brief Override the contents of the given source file by providing an
   /// already-allocated buffer.
   ///
-  /// \param SourceFile the source file whose contents will be overriden.
+  /// \param SourceFile the source file whose contents will be overridden.
   ///
   /// \param Buffer the memory buffer whose contents will be used as the
   /// data in the given source file.
@@ -836,7 +837,7 @@ public:
 
   /// \brief Override the given source file with another one.
   ///
-  /// \param SourceFile the source file which will be overriden.
+  /// \param SourceFile the source file which will be overridden.
   ///
   /// \param NewFile the file whose contents will be used as the
   /// data instead of the contents of the given source file.
