@@ -102,6 +102,12 @@ bool SILowerI1Copies::runOnMachineFunction(MachineFunction &MF) {
         continue;
       }
 
+      if (MI.getOpcode() == AMDGPU::V_XOR_I1) {
+        I1Defs.push_back(MI.getOperand(0).getReg());
+        MI.setDesc(TII->get(AMDGPU::V_XOR_B32_e32));
+        continue;
+      }
+
       if (MI.getOpcode() != AMDGPU::COPY ||
           !TargetRegisterInfo::isVirtualRegister(MI.getOperand(0).getReg()) ||
           !TargetRegisterInfo::isVirtualRegister(MI.getOperand(1).getReg()))

@@ -1521,6 +1521,11 @@ def V_OR_I1 : InstSI <
    [(set i1:$dst, (or i1:$src0, i1:$src1))]
 >;
 
+def V_XOR_I1 : InstSI <
+  (outs VReg_1:$dst), (ins VReg_1:$src0, VReg_1:$src1), "",
+  [(set i1:$dst, (xor i1:$src0, i1:$src1))]
+>;
+
 // SI pseudo instructions. These are used by the CFG structurizer pass
 // and should be lowered to ISA instructions prior to codegen.
 
@@ -1785,11 +1790,6 @@ let  Predicates = [isSI] in {
 //===----------------------------------------------------------------------===//
 // SOP2 Patterns
 //===----------------------------------------------------------------------===//
-
-def : Pat <
-  (i1 (xor i1:$src0, i1:$src1)),
-  (S_XOR_B64 $src0, $src1)
->;
 
 //===----------------------------------------------------------------------===//
 // SOPP Patterns
