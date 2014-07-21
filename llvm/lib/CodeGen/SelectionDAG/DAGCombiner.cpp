@@ -10743,6 +10743,28 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
     }
   }
 
+  // Canonicalize shuffles according to rules:
+  //  shuffle(A, shuffle(A, B)) -> shuffle(shuffle(A,B), A)
+  //  shuffle(B, shuffle(A, B)) -> shuffle(shuffle(A,B), B)
+  //  shuffle(B, shuffle(A, Undef)) -> shuffle(shuffle(A, Undef), B)
+  if (N1.getOpcode() == ISD::VECTOR_SHUFFLE && N0.getOpcode() != ISD::UNDEF &&
+      N0.getOpcode() != ISD::VECTOR_SHUFFLE && Level < AfterLegalizeDAG &&
+      TLI.isTypeLegal(VT)) {
+    // The incoming shuffle must be of the same type as the result of the
+    // current shuffle.
+    assert(N1->getOperand(0).getValueType() == VT &&
+           "Shuffle types don't match");
+
+    SDValue SV0 = N1->getOperand(0);
+    SDValue SV1 = N1->getOperand(1);
+    bool HasSameOp0 = N0 == SV0;
+    bool IsSV1Undef = SV1.getOpcode() == ISD::UNDEF;
+    if (HasSameOp0 || IsSV1Undef || N0 == SV1)
+      // Commute the operands of this shuffle so that next rule
+      // will trigger.
+      return DAG.getCommutedVectorShuffle(*SVN);
+  }
+
   // Try to fold according to rules:
   //   shuffle(shuffle(A, B, M0), B, M1) -> shuffle(A, B, M2)
   //   shuffle(shuffle(A, B, M0), A, M1) -> shuffle(A, B, M2)
