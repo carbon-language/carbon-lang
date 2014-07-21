@@ -945,7 +945,10 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
 }
 
 void __asan_describe_address(uptr addr) {
+  // Thread registry must be locked while we're describing an address.
+  asanThreadRegistry().Lock();
   DescribeAddress(addr, 1);
+  asanThreadRegistry().Unlock();
 }
 
 extern "C" {
