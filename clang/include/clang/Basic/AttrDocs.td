@@ -1051,6 +1051,7 @@ This attribute is incompatible with the ``always_inline`` attribute.
 
 def LoopHintDocs : Documentation {
   let Category = DocCatStmt;
+  let Heading = "#pragma clang loop, #pragma unroll";
   let Content = [{
 The ``#pragma clang loop`` directive allows loop optimization hints to be
 specified for the subsequent loop. The directive allows vectorization,
