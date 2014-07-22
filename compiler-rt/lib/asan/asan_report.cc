@@ -427,8 +427,12 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
                                   prev_var_end, next_var_beg);
   }
   Printf("HINT: this may be a false positive if your program uses "
-             "some custom stack unwind mechanism or swapcontext\n"
-             "      (longjmp and C++ exceptions *are* supported)\n");
+         "some custom stack unwind mechanism or swapcontext\n");
+  if (SANITIZER_WINDOWS)
+    Printf("      (longjmp, SEH and C++ exceptions *are* supported)\n");
+  else
+    Printf("      (longjmp and C++ exceptions *are* supported)\n");
+
   DescribeThread(t);
   return true;
 }
