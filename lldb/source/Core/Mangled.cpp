@@ -5158,7 +5158,6 @@ Mangled::GetDemangledName () const
 
         // Don't bother running anything that isn't mangled
         const char *mangled_cstr = m_mangled.GetCString();
-        long mangled_length = m_mangled.GetLength();
         if (cstring_is_mangled(mangled_cstr))
         {
             if (!m_mangled.GetMangledCounterpart(m_demangled))
@@ -5170,7 +5169,7 @@ Mangled::GetDemangledName () const
                 // performance win, falling back to the full demangler only
                 // when necessary
                 char *demangled_name = FastDemangle (mangled_cstr,
-                                                     mangled_length);
+                                                     m_mangled.GetLength());
                 if (!demangled_name)
                     demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 #elif defined(_MSC_VER)
