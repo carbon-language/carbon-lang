@@ -5436,7 +5436,7 @@ void Parser::ParseParameterDeclarationClause(
           if (!ConsumeAndStoreInitializer(*DefArgToks, CIK_DefaultArgument)) {
             delete DefArgToks;
             DefArgToks = nullptr;
-            Actions.ActOnParamDefaultArgumentError(Param);
+            Actions.ActOnParamDefaultArgumentError(Param, EqualLoc);
           } else {
             // Mark the end of the default argument so that we know when to
             // stop when we parse it later on.
@@ -5465,7 +5465,7 @@ void Parser::ParseParameterDeclarationClause(
           } else
             DefArgResult = ParseAssignmentExpression();
           if (DefArgResult.isInvalid()) {
-            Actions.ActOnParamDefaultArgumentError(Param);
+            Actions.ActOnParamDefaultArgumentError(Param, EqualLoc);
             SkipUntil(tok::comma, tok::r_paren, StopAtSemi | StopBeforeMatch);
           } else {
             // Inform the actions module about the default argument

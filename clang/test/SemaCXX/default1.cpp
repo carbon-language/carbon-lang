@@ -62,3 +62,6 @@ int i2() {
     j(2, 3); // expected-error{{too many arguments to function call, expected at most single argument 'f', have 2}}
   }
 }
+
+int pr20055_f(int x = 0, int y = UNDEFINED); // expected-error{{use of undeclared identifier}}
+int pr20055_v = pr20055_f(0);

@@ -344,13 +344,16 @@ void Sema::ActOnParamUnparsedDefaultArgument(Decl *param,
 
 /// ActOnParamDefaultArgumentError - Parsing or semantic analysis of
 /// the default argument for the parameter param failed.
-void Sema::ActOnParamDefaultArgumentError(Decl *param) {
+void Sema::ActOnParamDefaultArgumentError(Decl *param,
+                                          SourceLocation EqualLoc) {
   if (!param)
     return;
 
   ParmVarDecl *Param = cast<ParmVarDecl>(param);
   Param->setInvalidDecl();
   UnparsedDefaultArgLocs.erase(Param);
+  Param->setDefaultArg(new(Context)
+                       OpaqueValueExpr(EqualLoc, Param->getType(), VK_RValue));
 }
 
 /// CheckExtraCXXDefaultArguments - Check for any extra default

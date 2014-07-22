@@ -1625,7 +1625,7 @@ public:
   void ActOnParamUnparsedDefaultArgument(Decl *param,
                                          SourceLocation EqualLoc,
                                          SourceLocation ArgLoc);
-  void ActOnParamDefaultArgumentError(Decl *param);
+  void ActOnParamDefaultArgumentError(Decl *param, SourceLocation EqualLoc);
   bool SetParamDefaultArgument(ParmVarDecl *Param, Expr *DefaultArg,
                                SourceLocation EqualLoc);
 
