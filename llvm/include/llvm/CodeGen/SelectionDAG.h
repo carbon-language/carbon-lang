@@ -1198,6 +1198,7 @@ public:
   unsigned getEVTAlignment(EVT MemoryVT) const;
 
 private:
+  void InsertNode(SDNode *N);
   bool RemoveNodeFromCSEMaps(SDNode *N);
   void AddModifiedNodeToCSEMaps(SDNode *N);
   SDNode *FindModifiedNodeSlot(SDNode *N, SDValue Op, void *&InsertPos);

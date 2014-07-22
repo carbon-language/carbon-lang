@@ -702,6 +702,57 @@ void SelectionDAG::DeallocateNode(SDNode *N) {
     DbgVals[i]->setIsInvalidated();
 }
 
+#ifndef NDEBUG
+/// VerifySDNode - Sanity check the given SDNode.  Aborts if it is invalid.
+static void VerifySDNode(SDNode *N) {
+  switch (N->getOpcode()) {
+  default:
+    break;
+  case ISD::BUILD_PAIR: {
+    EVT VT = N->getValueType(0);
+    assert(N->getNumValues() == 1 && "Too many results!");
+    assert(!VT.isVector() && (VT.isInteger() || VT.isFloatingPoint()) &&
+           "Wrong return type!");
+    assert(N->getNumOperands() == 2 && "Wrong number of operands!");
+    assert(N->getOperand(0).getValueType() == N->getOperand(1).getValueType() &&
+           "Mismatched operand types!");
+    assert(N->getOperand(0).getValueType().isInteger() == VT.isInteger() &&
+           "Wrong operand type!");
+    assert(VT.getSizeInBits() == 2 * N->getOperand(0).getValueSizeInBits() &&
+           "Wrong return type size");
+    break;
+  }
+  case ISD::BUILD_VECTOR: {
+    assert(N->getNumValues() == 1 && "Too many results!");
+    assert(N->getValueType(0).isVector() && "Wrong return type!");
+    assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
+           "Wrong number of operands!");
+    EVT EltVT = N->getValueType(0).getVectorElementType();
+    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
+      assert((I->getValueType() == EltVT ||
+             (EltVT.isInteger() && I->getValueType().isInteger() &&
+              EltVT.bitsLE(I->getValueType()))) &&
+            "Wrong operand type!");
+      assert(I->getValueType() == N->getOperand(0).getValueType() &&
+             "Operands must all have the same type");
+    }
+    break;
+  }
+  }
+}
+#endif // NDEBUG
+
+/// \brief Insert a newly allocated node into the DAG.
+///
+/// Handles insertion into the all nodes list and CSE map, as well as
+/// verification and other common operations when a new node is allocated.
+void SelectionDAG::InsertNode(SDNode *N) {
+  AllNodes.push_back(N);
+#ifndef NDEBUG
+  VerifySDNode(N);
+#endif
+}
+
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
 /// correspond to it.  This is useful when we're about to delete or repurpose
 /// the node.  We don't want future request for structurally identical nodes
@@ -838,46 +889,6 @@ SDNode *SelectionDAG::FindModifiedNodeSlot(SDNode *N, ArrayRef<SDValue> Ops,
   SDNode *Node = CSEMap.FindNodeOrInsertPos(ID, InsertPos);
   return Node;
 }
-
-#ifndef NDEBUG
-/// VerifySDNode - Sanity check the given SDNode.  Aborts if it is invalid.
-static void VerifySDNode(SDNode *N) {
-  switch (N->getOpcode()) {
-  default:
-    break;
-  case ISD::BUILD_PAIR: {
-    EVT VT = N->getValueType(0);
-    assert(N->getNumValues() == 1 && "Too many results!");
-    assert(!VT.isVector() && (VT.isInteger() || VT.isFloatingPoint()) &&
-           "Wrong return type!");
-    assert(N->getNumOperands() == 2 && "Wrong number of operands!");
-    assert(N->getOperand(0).getValueType() == N->getOperand(1).getValueType() &&
-           "Mismatched operand types!");
-    assert(N->getOperand(0).getValueType().isInteger() == VT.isInteger() &&
-           "Wrong operand type!");
-    assert(VT.getSizeInBits() == 2 * N->getOperand(0).getValueSizeInBits() &&
-           "Wrong return type size");
-    break;
-  }
-  case ISD::BUILD_VECTOR: {
-    assert(N->getNumValues() == 1 && "Too many results!");
-    assert(N->getValueType(0).isVector() && "Wrong return type!");
-    assert(N->getNumOperands() == N->getValueType(0).getVectorNumElements() &&
-           "Wrong number of operands!");
-    EVT EltVT = N->getValueType(0).getVectorElementType();
-    for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
-      assert((I->getValueType() == EltVT ||
-             (EltVT.isInteger() && I->getValueType().isInteger() &&
-              EltVT.bitsLE(I->getValueType()))) &&
-            "Wrong operand type!");
-      assert(I->getValueType() == N->getOperand(0).getValueType() &&
-             "Operands must all have the same type");
-    }
-    break;
-  }
-  }
-}
-#endif // NDEBUG
 
 /// getEVTAlignment - Compute the default alignment value for the
 /// given type.
@@ -1148,7 +1159,7 @@ SDValue SelectionDAG::getConstant(const ConstantInt &Val, EVT VT, bool isT,
   if (!N) {
     N = new (NodeAllocator) ConstantSDNode(isT, isO, Elt, EltVT);
     CSEMap.InsertNode(N, IP);
-    AllNodes.push_back(N);
+    InsertNode(N);
   }
 
   SDValue Result(N, 0);
@@ -1190,7 +1201,7 @@ SDValue SelectionDAG::getConstantFP(const ConstantFP& V, EVT VT, bool isTarget){
   if (!N) {
     N = new (NodeAllocator) ConstantFPSDNode(isTarget, &V, EltVT);
     CSEMap.InsertNode(N, IP);
-    AllNodes.push_back(N);
+    InsertNode(N);
   }
 
   SDValue Result(N, 0);
@@ -1253,7 +1264,7 @@ SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV, SDLoc DL,
                                                       DL.getDebugLoc(), GV, VT,
                                                       Offset, TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+    InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1268,7 +1279,7 @@ SDValue SelectionDAG::getFrameIndex(int FI, EVT VT, bool isTarget) {
 
   SDNode *N = new (NodeAllocator) FrameIndexSDNode(FI, VT, isTarget);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1288,7 +1299,7 @@ SDValue SelectionDAG::getJumpTable(int JTI, EVT VT, bool isTarget,
   SDNode *N = new (NodeAllocator) JumpTableSDNode(JTI, VT, isTarget,
                                                   TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1315,7 +1326,7 @@ SDValue SelectionDAG::getConstantPool(const Constant *C, EVT VT,
   SDNode *N = new (NodeAllocator) ConstantPoolSDNode(isTarget, C, VT, Offset,
                                                      Alignment, TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1343,7 +1354,7 @@ SDValue SelectionDAG::getConstantPool(MachineConstantPoolValue *C, EVT VT,
   SDNode *N = new (NodeAllocator) ConstantPoolSDNode(isTarget, C, VT, Offset,
                                                      Alignment, TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1361,7 +1372,7 @@ SDValue SelectionDAG::getTargetIndex(int Index, EVT VT, int64_t Offset,
   SDNode *N = new (NodeAllocator) TargetIndexSDNode(Index, VT, Offset,
                                                     TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1375,7 +1386,7 @@ SDValue SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
 
   SDNode *N = new (NodeAllocator) BasicBlockSDNode(MBB);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1389,7 +1400,7 @@ SDValue SelectionDAG::getValueType(EVT VT) {
 
   if (N) return SDValue(N, 0);
   N = new (NodeAllocator) VTSDNode(VT);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1397,7 +1408,7 @@ SDValue SelectionDAG::getExternalSymbol(const char *Sym, EVT VT) {
   SDNode *&N = ExternalSymbols[Sym];
   if (N) return SDValue(N, 0);
   N = new (NodeAllocator) ExternalSymbolSDNode(false, Sym, 0, VT);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1408,7 +1419,7 @@ SDValue SelectionDAG::getTargetExternalSymbol(const char *Sym, EVT VT,
                                                                TargetFlags)];
   if (N) return SDValue(N, 0);
   N = new (NodeAllocator) ExternalSymbolSDNode(true, Sym, TargetFlags, VT);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1419,7 +1430,7 @@ SDValue SelectionDAG::getCondCode(ISD::CondCode Cond) {
   if (!CondCodeNodes[Cond]) {
     CondCodeSDNode *N = new (NodeAllocator) CondCodeSDNode(Cond);
     CondCodeNodes[Cond] = N;
-    AllNodes.push_back(N);
+    InsertNode(N);
   }
 
   return SDValue(CondCodeNodes[Cond], 0);
@@ -1557,7 +1568,7 @@ SDValue SelectionDAG::getVectorShuffle(EVT VT, SDLoc dl, SDValue N1,
                                             dl.getDebugLoc(), N1, N2,
                                             MaskAlloc);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1603,7 +1614,7 @@ SDValue SelectionDAG::getConvertRndSat(EVT VT, SDLoc dl,
                                                            dl.getDebugLoc(),
                                                            Ops, Code);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1617,7 +1628,7 @@ SDValue SelectionDAG::getRegister(unsigned RegNo, EVT VT) {
 
   SDNode *N = new (NodeAllocator) RegisterSDNode(RegNo, VT);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1631,7 +1642,7 @@ SDValue SelectionDAG::getRegisterMask(const uint32_t *RegMask) {
 
   SDNode *N = new (NodeAllocator) RegisterMaskSDNode(RegMask);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1647,7 +1658,7 @@ SDValue SelectionDAG::getEHLabel(SDLoc dl, SDValue Root, MCSymbol *Label) {
   SDNode *N = new (NodeAllocator) EHLabelSDNode(dl.getIROrder(),
                                                 dl.getDebugLoc(), Root, Label);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1670,7 +1681,7 @@ SDValue SelectionDAG::getBlockAddress(const BlockAddress *BA, EVT VT,
   SDNode *N = new (NodeAllocator) BlockAddressSDNode(Opc, VT, BA, Offset,
                                                      TargetFlags);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1688,7 +1699,7 @@ SDValue SelectionDAG::getSrcValue(const Value *V) {
 
   SDNode *N = new (NodeAllocator) SrcValueSDNode(V);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1704,7 +1715,7 @@ SDValue SelectionDAG::getMDNode(const MDNode *MD) {
 
   SDNode *N = new (NodeAllocator) MDNodeSDNode(MD);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -1725,7 +1736,7 @@ SDValue SelectionDAG::getAddrSpaceCast(SDLoc dl, EVT VT, SDValue Ptr,
                                                       dl.getDebugLoc(),
                                                       VT, Ptr, SrcAS, DestAS);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -2639,10 +2650,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT) {
                                          DL.getDebugLoc(), getVTList(VT));
   CSEMap.InsertNode(N, IP);
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -2941,10 +2949,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL,
                                         DL.getDebugLoc(), VTs, Operand);
   }
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -3536,10 +3541,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
     N = GetBinarySDNode(Opcode, DL, VTs, N1, N2, nuw, nsw, exact);
   }
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -3643,10 +3645,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
                                           DL.getDebugLoc(), VTs, N1, N2, N3);
   }
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4406,7 +4405,7 @@ SDValue SelectionDAG::getAtomic(unsigned Opcode, SDLoc dl, EVT MemVT,
                                                SuccessOrdering, FailureOrdering,
                                                SynchScope);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4603,7 +4602,7 @@ SelectionDAG::getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
                                                dl.getDebugLoc(), VTList, Ops,
                                                MemVT, MMO);
   }
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4719,7 +4718,7 @@ SelectionDAG::getLoad(ISD::MemIndexedMode AM, ISD::LoadExtType ExtType,
                                              dl.getDebugLoc(), VTs, AM, ExtType,
                                              MemVT, MMO);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4826,7 +4825,7 @@ SDValue SelectionDAG::getStore(SDValue Chain, SDLoc dl, SDValue Val,
                                               dl.getDebugLoc(), VTs,
                                               ISD::UNINDEXED, false, VT, MMO);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4895,7 +4894,7 @@ SDValue SelectionDAG::getTruncStore(SDValue Chain, SDLoc dl, SDValue Val,
                                               dl.getDebugLoc(), VTs,
                                               ISD::UNINDEXED, true, SVT, MMO);
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -4922,7 +4921,7 @@ SelectionDAG::getIndexedStore(SDValue OrigStore, SDLoc dl, SDValue Base,
                                               ST->getMemoryVT(),
                                               ST->getMemOperand());
   CSEMap.InsertNode(N, IP);
-  AllNodes.push_back(N);
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -5001,10 +5000,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT,
                                    VTs, Ops);
   }
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -5084,10 +5080,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, SDVTList VTList,
                                      VTList, Ops);
     }
   }
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return SDValue(N, 0);
 }
 
@@ -5712,10 +5705,7 @@ SelectionDAG::getMachineNode(unsigned Opcode, SDLoc DL, SDVTList VTs,
   if (DoCSE)
     CSEMap.InsertNode(N, IP);
 
-  AllNodes.push_back(N);
-#ifndef NDEBUG
-  VerifySDNode(N);
-#endif
+  InsertNode(N);
   return N;
 }
 
