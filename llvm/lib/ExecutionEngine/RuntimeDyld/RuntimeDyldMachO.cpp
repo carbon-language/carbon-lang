@@ -27,9 +27,9 @@ using namespace llvm::object;
 
 namespace llvm {
 
-uint64_t RuntimeDyldMachO::decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                                        uint32_t RelType) const {
-  uint64_t Addend = 0;
+int64_t RuntimeDyldMachO::decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                                       uint32_t RelType) const {
+  int64_t Addend = 0;
   memcpy(&Addend, LocalAddress, NumBytes);
   return Addend;
 }

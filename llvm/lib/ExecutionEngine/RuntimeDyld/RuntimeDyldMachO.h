@@ -52,8 +52,8 @@ protected:
   RuntimeDyldMachO(RTDyldMemoryManager *mm) : RuntimeDyldImpl(mm) {}
 
   /// Extract the addend encoded in the instruction.
-  uint64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                        uint32_t RelType) const;
+  int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                       uint32_t RelType) const;
 
   /// Construct a RelocationValueRef representing the relocation target.
   /// For Symbols in known sections, this will return a RelocationValueRef
@@ -138,7 +138,7 @@ protected:
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
     uint32_t RelType = Obj.getAnyRelocationType(RelInfo);
-    uint64_t Addend = impl().decodeAddend(LocalAddress, NumBytes, RelType);
+    int64_t Addend = impl().decodeAddend(LocalAddress, NumBytes, RelType);
 
     return RelocationEntry(SectionID, Offset, RelType, Addend, IsPCRel, Size);
   }
