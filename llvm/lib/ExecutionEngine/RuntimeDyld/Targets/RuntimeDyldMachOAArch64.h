@@ -26,6 +26,98 @@ public:
 
   unsigned getStubAlignment() override { return 8; }
 
+  /// Extract the addend encoded in the instruction / memory location.
+  int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                       uint32_t RelType) const {
+    int64_t Addend = 0;
+    // Verify that the relocation has the correct size and alignment.
+    switch (RelType) {
+    default:
+      llvm_unreachable("Unsupported relocation type!");
+    case MachO::ARM64_RELOC_UNSIGNED:
+      assert((NumBytes >= 4 && NumBytes <= 8) && "Invalid relocation size.");
+      break;
+    case MachO::ARM64_RELOC_BRANCH26:
+    case MachO::ARM64_RELOC_PAGE21:
+    case MachO::ARM64_RELOC_PAGEOFF12:
+    case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
+    case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
+      assert(NumBytes == 4 && "Invalid relocation size.");
+      assert((((uintptr_t)LocalAddress & 0x3) == 0) &&
+             "Instruction address is not aligned to 4 bytes.");
+      break;
+    }
+
+    switch (RelType) {
+    default:
+      llvm_unreachable("Unsupported relocation type!");
+    case MachO::ARM64_RELOC_UNSIGNED:
+      // This could be an unaligned memory location - use memcpy.
+      memcpy(&Addend, LocalAddress, NumBytes);
+      break;
+    case MachO::ARM64_RELOC_BRANCH26: {
+      // Verify that the relocation points to the expected branch instruction.
+      uint32_t *p = (uint32_t *)LocalAddress;
+      assert((*p & 0xFC000000) == 0x14000000 && "Expected branch instruction.");
+
+      // Get the 26 bit addend encoded in the branch instruction and sign-extend
+      // to 64 bit. The lower 2 bits are always zeros and are therefore implicit
+      // (<< 2).
+      Addend = (*p & 0x03FFFFFF) << 2;
+      Addend = SignExtend64(Addend, 28);
+      break;
+    }
+    case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
+    case MachO::ARM64_RELOC_PAGE21: {
+      // Verify that the relocation points to the expected adrp instruction.
+      uint32_t *p = (uint32_t *)LocalAddress;
+      assert((*p & 0x9F000000) == 0x90000000 && "Expected adrp instruction.");
+
+      // Get the 21 bit addend encoded in the adrp instruction and sign-extend
+      // to 64 bit. The lower 12 bits (4096 byte page) are always zeros and are
+      // therefore implicit (<< 12).
+      Addend = ((*p & 0x60000000) >> 29) | ((*p & 0x01FFFFE0) >> 3) << 12;
+      Addend = SignExtend64(Addend, 33);
+      break;
+    }
+    case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12: {
+      // Verify that the relocation points to one of the expected load / store
+      // instructions.
+      uint32_t *p = (uint32_t *)LocalAddress;
+      assert((*p & 0x3B000000) == 0x39000000 &&
+             "Only expected load / store instructions.");
+    } // fall-through
+    case MachO::ARM64_RELOC_PAGEOFF12: {
+      // Verify that the relocation points to one of the expected load / store
+      // or add / sub instructions.
+      uint32_t *p = (uint32_t *)LocalAddress;
+      assert((((*p & 0x3B000000) == 0x39000000) ||
+              ((*p & 0x11C00000) == 0x11000000)   ) &&
+             "Expected load / store  or add/sub instruction.");
+
+      // Get the 12 bit addend encoded in the instruction.
+      Addend = (*p & 0x003FFC00) >> 10;
+
+      // Check which instruction we are decoding to obtain the implicit shift
+      // factor of the instruction.
+      int ImplicitShift = 0;
+      if ((*p & 0x3B000000) == 0x39000000) { // << load / store
+        // For load / store instructions the size is encoded in bits 31:30.
+        ImplicitShift = ((*p >> 30) & 0x3);
+        if (ImplicitShift == 0) {
+          // Check if this a vector op to get the correct shift value.
+          if ((*p & 0x04800000) == 0x04800000)
+            ImplicitShift = 4;
+        }
+      }
+      // Compensate for implicit shift.
+      Addend <<= ImplicitShift;
+      break;
+    }
+    }
+    return Addend;
+  }
+
   relocation_iterator
   processRelocationRef(unsigned SectionID, relocation_iterator RelI,
                        ObjectImage &ObjImg, ObjSectionToIDMap &ObjSectionToID,
