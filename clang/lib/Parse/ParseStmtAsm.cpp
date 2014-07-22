@@ -590,7 +590,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   }
   DeclSpec DS(AttrFactory);
   SourceLocation Loc = Tok.getLocation();
-  ParseTypeQualifierListOpt(DS, true, false);
+  ParseTypeQualifierListOpt(DS, AR_VendorAttributesParsed);
 
   // GNU asms accept, but warn, about type-qualifiers other than volatile.
   if (DS.getTypeQualifiers() & DeclSpec::TQ_const)

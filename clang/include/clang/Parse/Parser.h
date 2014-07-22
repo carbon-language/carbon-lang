@@ -2207,8 +2207,21 @@ private:
   void ParseDeclaratorInternal(Declarator &D,
                                DirectDeclParseFunction DirectDeclParser);
 
-  void ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed = true,
-                                 bool CXX11AttributesAllowed = true,
+  enum AttrRequirements {
+    AR_NoAttributesParsed = 0, ///< No attributes are diagnosed.
+    AR_GNUAttributesParsedAndRejected = 1 << 0, ///< Diagnose GNU attributes.
+    AR_GNUAttributesParsed = 1 << 1,
+    AR_CXX11AttributesParsed = 1 << 2,
+    AR_DeclspecAttributesParsed = 1 << 3,
+    AR_AllAttributesParsed = AR_GNUAttributesParsed |
+                             AR_CXX11AttributesParsed |
+                             AR_DeclspecAttributesParsed,
+    AR_VendorAttributesParsed = AR_GNUAttributesParsed |
+                                AR_DeclspecAttributesParsed
+  };
+
+  void ParseTypeQualifierListOpt(DeclSpec &DS,
+                                 unsigned AttrReqs = AR_AllAttributesParsed,
                                  bool AtomicAllowed = true,
                                  bool IdentifierRequired = false);
   void ParseDirectDeclarator(Declarator &D);
