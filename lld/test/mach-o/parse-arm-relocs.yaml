@@ -1,4 +1,5 @@
-# RUN: lld -flavor darwin -arch armv7 -r -print_atoms %s -o %t  | FileCheck %s
+# RUN: lld -flavor darwin -arch armv7 -r -print_atoms %s -o %t  | FileCheck %s \
+# RUN: && lld -flavor darwin -arch armv7 -r -print_atoms %t -o %t2  | FileCheck %s
 #
 # Test parsing of armv7 relocations.
 #

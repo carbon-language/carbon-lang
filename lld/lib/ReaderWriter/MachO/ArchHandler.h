@@ -185,7 +185,11 @@ protected:
     rLength1   = 0x0000,
     rLength2   = 0x0100,
     rLength4   = 0x0200,
-    rLength8   = 0x0300
+    rLength8   = 0x0300,
+    rLenArmLo  = rLength1,
+    rLenArmHi  = rLength2,
+    rLenThmbLo = rLength4,
+    rLenThmbHi = rLength8
   };
   /// Extract RelocPattern from normalized mach-o relocation.
   static RelocPattern relocPattern(const normalized::Relocation &reloc);
