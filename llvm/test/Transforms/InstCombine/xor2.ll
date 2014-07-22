@@ -105,3 +105,23 @@ define i32 @test8(i32 %a, i32 %b) #0 {
 ; CHECK-NEXT: %1 = xor i32 %b, -1
 ; CHECK-NEXT: %xor = or i32 %a, %1
 }
+
+; (A & B) ^ (A ^ B) -> (A | B)
+define i32 @test9(i32 %b, i32 %c) {
+ %and = and i32 %b, %c
+ %xor = xor i32 %b, %c
+ %xor2 = xor i32 %and, %xor
+ ret i32 %xor2
+; CHECK-LABEL: @test9(
+; CHECK-NEXT: %xor2 = or i32 %b, %c
+}
+
+; (A ^ B) ^ (A & B) -> (A | B)
+define i32 @test10(i32 %b, i32 %c) {
+ %xor = xor i32 %b, %c
+ %and = and i32 %b, %c
+ %xor2 = xor i32 %xor, %and
+ ret i32 %xor2
+; CHECK-LABEL: @test10(
+; CHECK-NEXT: %xor2 = or i32 %b, %c
+}
