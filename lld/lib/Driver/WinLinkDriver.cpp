@@ -1196,6 +1196,10 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.addInitialUndefinedSymbol(ctx.allocate(inputArg->getValue()));
       break;
 
+    case OPT_noentry:
+      ctx.setHasEntry(false);
+      break;
+
     case OPT_nodefaultlib_all:
       ctx.setNoDefaultLibAll(true);
       break;
@@ -1289,7 +1293,7 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     ctx.addInitialUndefinedSymbol(entry);
 
   // Specify /noentry without /dll is an error.
-  if (parsedArgs->getLastArg(OPT_noentry) && !parsedArgs->getLastArg(OPT_dll)) {
+  if (!ctx.hasEntry() && !parsedArgs->getLastArg(OPT_dll)) {
     diag << "/noentry must be specified with /dll\n";
     return false;
   }

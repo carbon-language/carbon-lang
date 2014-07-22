@@ -36,7 +36,7 @@ class Group;
 class PECOFFLinkingContext : public LinkingContext {
 public:
   PECOFFLinkingContext()
-      : _mutex(), _allocMutex(), _baseAddress(invalidBaseAddress),
+      : _mutex(), _allocMutex(), _hasEntry(true), _baseAddress(invalidBaseAddress),
         _stackReserve(1024 * 1024), _stackCommit(4096),
         _heapReserve(1024 * 1024), _heapCommit(4096), _noDefaultLibAll(false),
         _sectionDefaultAlignment(4096),
@@ -117,6 +117,9 @@ public:
     if (!name.empty())
       LinkingContext::setEntrySymbolName(decorateSymbol(name));
   }
+
+  void setHasEntry(bool val) { _hasEntry = val; }
+  bool hasEntry() const { return _hasEntry; }
 
   void setBaseAddress(uint64_t addr) { _baseAddress = addr; }
   uint64_t getBaseAddress() const;
@@ -304,6 +307,9 @@ private:
 
   std::recursive_mutex _mutex;
   mutable std::mutex _allocMutex;
+
+  // False if /noentry option is given.
+  bool _hasEntry;
 
   // The start address for the program. The default value for the executable is
   // 0x400000, but can be altered using /base command line option.
