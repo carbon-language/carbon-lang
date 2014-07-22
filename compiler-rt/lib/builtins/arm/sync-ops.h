@@ -18,6 +18,7 @@
 #define SYNC_OP_4(op) \
         .p2align 2 ; \
         .thumb ; \
+        .syntax unified ; \
         DEFINE_COMPILERRT_FUNCTION(__sync_fetch_and_ ## op) \
         dmb ; \
         mov r12, r0 ; \
@@ -25,13 +26,15 @@
         ldrex r0, [r12] ; \
         op(r2, r0, r1) ; \
         strex r3, r2, [r12] ; \
-        cbnz r3, LOCAL_LABEL(tryatomic_ ## op) ; \
+        cmp r3, #0 ; \
+        bne LOCAL_LABEL(tryatomic_ ## op) ; \
         dmb ; \
         bx lr
 
 #define SYNC_OP_8(op) \
         .p2align 2 ; \
         .thumb ; \
+        .syntax unified ; \
         DEFINE_COMPILERRT_FUNCTION(__sync_fetch_and_ ## op) \
         push {r4, r5, r6, lr} ; \
         dmb ; \
@@ -40,7 +43,8 @@
         ldrexd r0, r1, [r12] ; \
         op(r4, r5, r0, r1, r2, r3) ; \
         strexd r6, r4, r5, [r12] ; \
-        cbnz r6, LOCAL_LABEL(tryatomic_ ## op) ; \
+        cmp r6, #0 ; \
+        bne LOCAL_LABEL(tryatomic_ ## op) ; \
         dmb ; \
         pop {r4, r5, r6, pc}
 
