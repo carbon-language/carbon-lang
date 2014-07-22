@@ -251,6 +251,9 @@ INTERFACE_FUNCTION(__asan_unpoison_stack_memory)
 INTERFACE_FUNCTION(__asan_poison_memory_region)
 INTERFACE_FUNCTION(__asan_unpoison_memory_region)
 
+INTERFACE_FUNCTION(__asan_address_is_poisoned)
+INTERFACE_FUNCTION(__asan_region_is_poisoned)
+
 INTERFACE_FUNCTION(__asan_get_current_fake_stack)
 INTERFACE_FUNCTION(__asan_addr_is_in_fake_stack)
 
@@ -307,6 +310,7 @@ WRAP_W_W(_expand_dbg)
 
 INTERCEPT_LIBRARY_FUNCTION(atoi);
 INTERCEPT_LIBRARY_FUNCTION(atol);
+INTERCEPT_LIBRARY_FUNCTION(_except_handler3);
 INTERCEPT_LIBRARY_FUNCTION(frexp);
 INTERCEPT_LIBRARY_FUNCTION(longjmp);
 INTERCEPT_LIBRARY_FUNCTION(memchr);
