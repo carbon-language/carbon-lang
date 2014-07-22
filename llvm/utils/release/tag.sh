@@ -17,7 +17,7 @@ set -e
 release=""
 rc=""
 rebranch="no"
-projects="llvm cfe dragonegg test-suite compiler-rt libcxx clang-tools-extra polly lldb lld"
+projects="llvm cfe dragonegg test-suite compiler-rt libcxx clang-tools-extra polly lldb lld openmp"
 
 base_url="https://llvm.org/svn/llvm-project"
 
