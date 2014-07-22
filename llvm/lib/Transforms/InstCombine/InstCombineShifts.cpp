@@ -488,7 +488,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, Constant *Op1,
       }
 
 
-      // If the operand is an bitwise operator with a constant RHS, and the
+      // If the operand is a bitwise operator with a constant RHS, and the
       // shift is the only use, we can pull it out of the shift.
       if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
         bool isValid = true;     // Valid only for And, Or, Xor
