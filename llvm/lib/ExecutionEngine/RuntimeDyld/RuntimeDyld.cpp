@@ -206,12 +206,10 @@ ObjectImage *RuntimeDyldImpl::loadObject(ObjectImage *InputObject) {
       I = processRelocationRef(SectionID, I, *Obj, LocalSections, LocalSymbols,
                                Stubs);
 
-#ifndef NDEBUG
     // If there is an attached checker, notify it about the stubs for this
     // section so that they can be verified.
     if (Checker)
       Checker->registerStubMap(Obj->getImageName(), SectionID, Stubs);
-#endif
   }
 
   // Give the subclasses a chance to tie-up any loose ends.
