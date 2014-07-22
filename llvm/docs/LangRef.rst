@@ -921,6 +921,13 @@ Currently, only the following parameter attributes are defined:
     the first parameter. This is not a valid attribute for return
     values.
 
+``align <n>``
+    This indicates that the pointer value may be assumed by the optimizer to
+    have the specified alignment.
+
+    Note that this attribute has additional semantics when combined with the
+    ``byval`` attribute.
+
 .. _noalias:
 
 ``noalias``

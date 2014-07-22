@@ -239,6 +239,11 @@ define dereferenceable(18446744073709551606) i8* @f40(i8* dereferenceable(184467
         ret i8* %a
 }
 
+define void @f41(i8* align 32, double* align 64) {
+; CHECK: define void @f41(i8* align 32, double* align 64) {
+        ret void
+}
+
 ; CHECK: attributes #0 = { noreturn }
 ; CHECK: attributes #1 = { nounwind }
 ; CHECK: attributes #2 = { readnone }

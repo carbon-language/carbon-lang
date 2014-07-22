@@ -308,13 +308,9 @@ void llvm::computeKnownBits(Value *V, APInt &KnownZero, APInt &KnownOne,
   }
 
   if (Argument *A = dyn_cast<Argument>(V)) {
-    unsigned Align = 0;
+    unsigned Align = A->getType()->isPointerTy() ? A->getParamAlignment() : 0;
 
-    if (A->hasByValOrInAllocaAttr()) {
-      // Get alignment information off byval/inalloca arguments if specified in
-      // the IR.
-      Align = A->getParamAlignment();
-    } else if (TD && A->hasStructRetAttr()) {
+    if (!Align && TD && A->hasStructRetAttr()) {
       // An sret parameter has at least the ABI alignment of the return type.
       Type *EltTy = cast<PointerType>(A->getType())->getElementType();
       if (EltTy->isSized())
