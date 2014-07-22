@@ -89,6 +89,9 @@ class AArch64FastISel : public FastISel {
   const AArch64Subtarget *Subtarget;
   LLVMContext *Context;
 
+  bool FastLowerCall(CallLoweringInfo &CLI) override;
+  bool FastLowerIntrinsicCall(const IntrinsicInst *II) override;
+
 private:
   // Selection routines.
   bool SelectLoad(const Instruction *I);
@@ -102,8 +105,6 @@ private:
   bool SelectFPToInt(const Instruction *I, bool Signed);
   bool SelectIntToFP(const Instruction *I, bool Signed);
   bool SelectRem(const Instruction *I, unsigned ISDOpcode);
-  bool SelectCall(const Instruction *I, const char *IntrMemName);
-  bool SelectIntrinsicCall(const IntrinsicInst &I);
   bool SelectRet(const Instruction *I);
   bool SelectTrunc(const Instruction *I);
   bool SelectIntExt(const Instruction *I);
@@ -135,14 +136,9 @@ private:
   // Call handling routines.
 private:
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC) const;
-  bool ProcessCallArgs(SmallVectorImpl<Value *> &Args,
-                       SmallVectorImpl<unsigned> &ArgRegs,
-                       SmallVectorImpl<MVT> &ArgVTs,
-                       SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
-                       SmallVectorImpl<unsigned> &RegArgs, CallingConv::ID CC,
+  bool ProcessCallArgs(CallLoweringInfo &CLI, SmallVectorImpl<MVT> &ArgVTs,
                        unsigned &NumBytes);
-  bool FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
-                  const Instruction *I, CallingConv::ID CC, unsigned &NumBytes);
+  bool FinishCall(CallLoweringInfo &CLI, unsigned NumBytes);
 
 public:
   // Backend specific FastISel code.
@@ -1192,14 +1188,13 @@ bool AArch64FastISel::SelectIntToFP(const Instruction *I, bool Signed) {
   return true;
 }
 
-bool AArch64FastISel::ProcessCallArgs(
-    SmallVectorImpl<Value *> &Args, SmallVectorImpl<unsigned> &ArgRegs,
-    SmallVectorImpl<MVT> &ArgVTs, SmallVectorImpl<ISD::ArgFlagsTy> &ArgFlags,
-    SmallVectorImpl<unsigned> &RegArgs, CallingConv::ID CC,
-    unsigned &NumBytes) {
+bool AArch64FastISel::ProcessCallArgs(CallLoweringInfo &CLI,
+                                      SmallVectorImpl<MVT> &OutVTs,
+                                      unsigned &NumBytes) {
+  CallingConv::ID CC = CLI.CallConv;
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CC, false, *FuncInfo.MF, TM, ArgLocs, *Context);
-  CCInfo.AnalyzeCallOperands(ArgVTs, ArgFlags, CCAssignFnForCall(CC));
+  CCInfo.AnalyzeCallOperands(OutVTs, CLI.OutFlags, CCAssignFnForCall(CC));
 
   // Get a count of how many bytes are to be pushed on the stack.
   NumBytes = CCInfo.getNextStackOffset();
@@ -1207,13 +1202,17 @@ bool AArch64FastISel::ProcessCallArgs(
   // Issue CALLSEQ_START
   unsigned AdjStackDown = TII.getCallFrameSetupOpcode();
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackDown))
-      .addImm(NumBytes);
+    .addImm(NumBytes);
 
   // Process the args.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    unsigned Arg = ArgRegs[VA.getValNo()];
-    MVT ArgVT = ArgVTs[VA.getValNo()];
+    const Value *ArgVal = CLI.OutVals[VA.getValNo()];
+    MVT ArgVT = OutVTs[VA.getValNo()];
+
+    unsigned ArgReg = getRegForValue(ArgVal);
+    if (!ArgReg)
+      return false;
 
     // Handle arg promotion: SExt, ZExt, AExt.
     switch (VA.getLocInfo()) {
@@ -1222,8 +1221,8 @@ bool AArch64FastISel::ProcessCallArgs(
     case CCValAssign::SExt: {
       MVT DestVT = VA.getLocVT();
       MVT SrcVT = ArgVT;
-      Arg = EmitIntExt(SrcVT, Arg, DestVT, /*isZExt*/ false);
-      if (Arg == 0)
+      ArgReg = EmitIntExt(SrcVT, ArgReg, DestVT, /*isZExt=*/false);
+      if (!ArgReg)
         return false;
       break;
     }
@@ -1232,8 +1231,8 @@ bool AArch64FastISel::ProcessCallArgs(
     case CCValAssign::ZExt: {
       MVT DestVT = VA.getLocVT();
       MVT SrcVT = ArgVT;
-      Arg = EmitIntExt(SrcVT, Arg, DestVT, /*isZExt*/ true);
-      if (Arg == 0)
+      ArgReg = EmitIntExt(SrcVT, ArgReg, DestVT, /*isZExt=*/true);
+      if (!ArgReg)
         return false;
       break;
     }
@@ -1244,8 +1243,8 @@ bool AArch64FastISel::ProcessCallArgs(
     // Now copy/store arg to correct locations.
     if (VA.isRegLoc() && !VA.needsCustom()) {
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(TargetOpcode::COPY), VA.getLocReg()).addReg(Arg);
-      RegArgs.push_back(VA.getLocReg());
+              TII.get(TargetOpcode::COPY), VA.getLocReg()).addReg(ArgReg);
+      CLI.OutRegs.push_back(VA.getLocReg());
     } else if (VA.needsCustom()) {
       // FIXME: Handle custom args.
       return false;
@@ -1264,21 +1263,21 @@ bool AArch64FastISel::ProcessCallArgs(
       Addr.setReg(AArch64::SP);
       Addr.setOffset(VA.getLocMemOffset() + BEAlign);
 
-      if (!EmitStore(ArgVT, Arg, Addr))
+      if (!EmitStore(ArgVT, ArgReg, Addr))
         return false;
     }
   }
   return true;
 }
 
-bool AArch64FastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
-                                 const Instruction *I, CallingConv::ID CC,
-                                 unsigned &NumBytes) {
+bool AArch64FastISel::FinishCall(CallLoweringInfo &CLI, unsigned NumBytes) {
+  CallingConv::ID CC = CLI.CallConv;
+  MVT RetVT = MVT::getVT(CLI.RetTy);
+
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AdjStackUp))
-      .addImm(NumBytes)
-      .addImm(0);
+    .addImm(NumBytes).addImm(0);
 
   // Now the return value.
   if (RetVT != MVT::isVoid) {
@@ -1294,134 +1293,84 @@ bool AArch64FastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
     MVT CopyVT = RVLocs[0].getValVT();
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(CopyVT));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(TargetOpcode::COPY),
-            ResultReg).addReg(RVLocs[0].getLocReg());
-    UsedRegs.push_back(RVLocs[0].getLocReg());
+            TII.get(TargetOpcode::COPY), ResultReg)
+      .addReg(RVLocs[0].getLocReg());
+    CLI.InRegs.push_back(RVLocs[0].getLocReg());
 
-    // Finally update the result.
-    UpdateValueMap(I, ResultReg);
+    CLI.ResultReg = ResultReg;
+    CLI.NumResultRegs = 1;
   }
 
   return true;
 }
 
-bool AArch64FastISel::SelectCall(const Instruction *I,
-                                 const char *IntrMemName = nullptr) {
-  const CallInst *CI = cast<CallInst>(I);
-  const Value *Callee = CI->getCalledValue();
-
-  // Don't handle inline asm or intrinsics.
-  if (isa<InlineAsm>(Callee))
-    return false;
+bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
+  CallingConv::ID CC  = CLI.CallConv;
+  bool IsVarArg       = CLI.IsVarArg;
+  const Value *Callee = CLI.Callee;
+  const char *SymName = CLI.SymName;
 
   // Only handle global variable Callees.
   const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
   if (!GV)
     return false;
 
-  // Check the calling convention.
-  ImmutableCallSite CS(CI);
-  CallingConv::ID CC = CS.getCallingConv();
-
   // Let SDISel handle vararg functions.
-  PointerType *PT = cast<PointerType>(CS.getCalledValue()->getType());
-  FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  if (FTy->isVarArg())
+  if (IsVarArg)
     return false;
 
-  // Handle *simple* calls for now.
+  // FIXME: Only handle *simple* calls for now.
   MVT RetVT;
-  Type *RetTy = I->getType();
-  if (RetTy->isVoidTy())
+  if (CLI.RetTy->isVoidTy())
     RetVT = MVT::isVoid;
-  else if (!isTypeLegal(RetTy, RetVT))
+  else if (!isTypeLegal(CLI.RetTy, RetVT))
     return false;
+
+  for (auto Flag : CLI.OutFlags)
+    if (Flag.isInReg() || Flag.isSRet() || Flag.isNest() || Flag.isByVal())
+      return false;
 
   // Set up the argument vectors.
-  SmallVector<Value *, 8> Args;
-  SmallVector<unsigned, 8> ArgRegs;
-  SmallVector<MVT, 8> ArgVTs;
-  SmallVector<ISD::ArgFlagsTy, 8> ArgFlags;
-  Args.reserve(CS.arg_size());
-  ArgRegs.reserve(CS.arg_size());
-  ArgVTs.reserve(CS.arg_size());
-  ArgFlags.reserve(CS.arg_size());
+  SmallVector<MVT, 16> OutVTs;
+  OutVTs.reserve(CLI.OutVals.size());
 
-  for (ImmutableCallSite::arg_iterator i = CS.arg_begin(), e = CS.arg_end();
-       i != e; ++i) {
-    // If we're lowering a memory intrinsic instead of a regular call, skip the
-    // last two arguments, which shouldn't be passed to the underlying function.
-    if (IntrMemName && e - i <= 2)
-      break;
-
-    unsigned Arg = getRegForValue(*i);
-    if (Arg == 0)
-      return false;
-
-    ISD::ArgFlagsTy Flags;
-    unsigned AttrInd = i - CS.arg_begin() + 1;
-    if (CS.paramHasAttr(AttrInd, Attribute::SExt))
-      Flags.setSExt();
-    if (CS.paramHasAttr(AttrInd, Attribute::ZExt))
-      Flags.setZExt();
-
-    // FIXME: Only handle *easy* calls for now.
-    if (CS.paramHasAttr(AttrInd, Attribute::InReg) ||
-        CS.paramHasAttr(AttrInd, Attribute::StructRet) ||
-        CS.paramHasAttr(AttrInd, Attribute::Nest) ||
-        CS.paramHasAttr(AttrInd, Attribute::ByVal))
-      return false;
-
-    MVT ArgVT;
-    Type *ArgTy = (*i)->getType();
-    if (!isTypeLegal(ArgTy, ArgVT) &&
-        !(ArgVT == MVT::i1 || ArgVT == MVT::i8 || ArgVT == MVT::i16))
+  for (auto *Val : CLI.OutVals) {
+    MVT VT;
+    if (!isTypeLegal(Val->getType(), VT) &&
+        !(VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16))
       return false;
 
     // We don't handle vector parameters yet.
-    if (ArgVT.isVector() || ArgVT.getSizeInBits() > 64)
+    if (VT.isVector() || VT.getSizeInBits() > 64)
       return false;
 
-    unsigned OriginalAlignment = DL.getABITypeAlignment(ArgTy);
-    Flags.setOrigAlign(OriginalAlignment);
-
-    Args.push_back(*i);
-    ArgRegs.push_back(Arg);
-    ArgVTs.push_back(ArgVT);
-    ArgFlags.push_back(Flags);
+    OutVTs.push_back(VT);
   }
 
   // Handle the arguments now that we've gotten them.
-  SmallVector<unsigned, 4> RegArgs;
   unsigned NumBytes;
-  if (!ProcessCallArgs(Args, ArgRegs, ArgVTs, ArgFlags, RegArgs, CC, NumBytes))
+  if (!ProcessCallArgs(CLI, OutVTs, NumBytes))
     return false;
 
   // Issue the call.
   MachineInstrBuilder MIB;
   MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::BL));
-  if (!IntrMemName)
+  CLI.Call = MIB;
+  if (!SymName)
     MIB.addGlobalAddress(GV, 0, 0);
   else
-    MIB.addExternalSymbol(IntrMemName, 0);
+    MIB.addExternalSymbol(SymName, 0);
 
   // Add implicit physical register uses to the call.
-  for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
-    MIB.addReg(RegArgs[i], RegState::Implicit);
+  for (auto Reg : CLI.OutRegs)
+    MIB.addReg(Reg, RegState::Implicit);
 
   // Add a register mask with the call-preserved registers.
   // Proper defs for return values will be added by setPhysRegsDeadExcept().
-  MIB.addRegMask(TRI.getCallPreservedMask(CS.getCallingConv()));
+  MIB.addRegMask(TRI.getCallPreservedMask(CC));
 
   // Finish off the call including any return values.
-  SmallVector<unsigned, 4> UsedRegs;
-  if (!FinishCall(RetVT, UsedRegs, I, CC, NumBytes))
-    return false;
-
-  // Set all unused physreg defs as dead.
-  static_cast<MachineInstr *>(MIB)->setPhysRegsDeadExcept(UsedRegs, TRI);
-
-  return true;
+  return FinishCall(CLI, NumBytes);
 }
 
 bool AArch64FastISel::IsMemCpySmall(uint64_t Len, unsigned Alignment) {
@@ -1486,62 +1435,62 @@ bool AArch64FastISel::TryEmitSmallMemCpy(Address Dest, Address Src,
   return true;
 }
 
-bool AArch64FastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
+bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
   // FIXME: Handle more intrinsics.
-  switch (I.getIntrinsicID()) {
+  switch (II->getIntrinsicID()) {
   default:
     return false;
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
-    const MemTransferInst &MTI = cast<MemTransferInst>(I);
+    const auto *MTI = cast<MemTransferInst>(II);
     // Don't handle volatile.
-    if (MTI.isVolatile())
+    if (MTI->isVolatile())
       return false;
 
     // Disable inlining for memmove before calls to ComputeAddress.  Otherwise,
     // we would emit dead code because we don't currently handle memmoves.
-    bool isMemCpy = (I.getIntrinsicID() == Intrinsic::memcpy);
-    if (isa<ConstantInt>(MTI.getLength()) && isMemCpy) {
+    bool IsMemCpy = (II->getIntrinsicID() == Intrinsic::memcpy);
+    if (isa<ConstantInt>(MTI->getLength()) && IsMemCpy) {
       // Small memcpy's are common enough that we want to do them without a call
       // if possible.
-      uint64_t Len = cast<ConstantInt>(MTI.getLength())->getZExtValue();
-      unsigned Alignment = MTI.getAlignment();
+      uint64_t Len = cast<ConstantInt>(MTI->getLength())->getZExtValue();
+      unsigned Alignment = MTI->getAlignment();
       if (IsMemCpySmall(Len, Alignment)) {
         Address Dest, Src;
-        if (!ComputeAddress(MTI.getRawDest(), Dest) ||
-            !ComputeAddress(MTI.getRawSource(), Src))
+        if (!ComputeAddress(MTI->getRawDest(), Dest) ||
+            !ComputeAddress(MTI->getRawSource(), Src))
           return false;
         if (TryEmitSmallMemCpy(Dest, Src, Len, Alignment))
           return true;
       }
     }
 
-    if (!MTI.getLength()->getType()->isIntegerTy(64))
+    if (!MTI->getLength()->getType()->isIntegerTy(64))
       return false;
 
-    if (MTI.getSourceAddressSpace() > 255 || MTI.getDestAddressSpace() > 255)
+    if (MTI->getSourceAddressSpace() > 255 || MTI->getDestAddressSpace() > 255)
       // Fast instruction selection doesn't support the special
       // address spaces.
       return false;
 
-    const char *IntrMemName = isa<MemCpyInst>(I) ? "memcpy" : "memmove";
-    return SelectCall(&I, IntrMemName);
+    const char *IntrMemName = isa<MemCpyInst>(II) ? "memcpy" : "memmove";
+    return LowerCallTo(II, IntrMemName, II->getNumArgOperands() - 2);
   }
   case Intrinsic::memset: {
-    const MemSetInst &MSI = cast<MemSetInst>(I);
+    const MemSetInst *MSI = cast<MemSetInst>(II);
     // Don't handle volatile.
-    if (MSI.isVolatile())
+    if (MSI->isVolatile())
       return false;
 
-    if (!MSI.getLength()->getType()->isIntegerTy(64))
+    if (!MSI->getLength()->getType()->isIntegerTy(64))
       return false;
 
-    if (MSI.getDestAddressSpace() > 255)
+    if (MSI->getDestAddressSpace() > 255)
       // Fast instruction selection doesn't support the special
       // address spaces.
       return false;
 
-    return SelectCall(&I, "memset");
+    return LowerCallTo(II, "memset", II->getNumArgOperands() - 2);
   }
   case Intrinsic::trap: {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::BRK))
@@ -1966,10 +1915,6 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     return SelectRem(I, ISD::SREM);
   case Instruction::URem:
     return SelectRem(I, ISD::UREM);
-  case Instruction::Call:
-    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
-      return SelectIntrinsicCall(*II);
-    return SelectCall(I);
   case Instruction::Ret:
     return SelectRet(I);
   case Instruction::Trunc:

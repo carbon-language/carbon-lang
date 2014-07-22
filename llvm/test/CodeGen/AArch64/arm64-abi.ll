@@ -78,7 +78,7 @@ entry:
 ; CHECK-LABEL: fixed_4i
 ; CHECK: str [[REG_1:q[0-9]+]], [sp, #16]
 ; FAST-LABEL: fixed_4i
-; FAST: sub sp, sp, #64
+; FAST: sub sp, sp
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str [[REG_1:q[0-9]+]], [x[[ADDR]], #16]
   %0 = load <4 x i32>* %in, align 16

@@ -487,7 +487,7 @@ entry:
 ; CHECK: str {{w[0-9]+}}, [sp, #16]
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp]
 ; FAST-LABEL: i128_split
-; FAST: sub sp, sp, #48
+; FAST: sub sp, sp
 ; FAST: mov x[[ADDR:[0-9]+]], sp
 ; FAST: str {{w[0-9]+}}, [x[[ADDR]], #16]
 ; Load/Store opt is disabled with -O0, so the i128 is split.
