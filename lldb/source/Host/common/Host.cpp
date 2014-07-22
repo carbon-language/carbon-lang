@@ -1057,7 +1057,8 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
             static ConstString g_lldb_so_dir;
             if (!g_lldb_so_dir)
             {
-                FileSpec lldb_file_spec (Host::GetModuleFileSpecForHostAddress ((void *)Host::GetLLDBPath));
+                FileSpec lldb_file_spec(Host::GetModuleFileSpecForHostAddress(
+                    reinterpret_cast<void *>(reinterpret_cast<intptr_t>(Host::GetLLDBPath))));
                 g_lldb_so_dir = lldb_file_spec.GetDirectory();
                 if (log)
                     log->Printf("Host::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", g_lldb_so_dir.GetCString());
