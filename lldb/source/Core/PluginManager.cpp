@@ -79,6 +79,12 @@ SetPluginInfo (const FileSpec &plugin_file_spec, const PluginInfo &plugin_info)
     plugin_map[plugin_file_spec] = plugin_info;
 }
 
+template <typename FPtrTy>
+static FPtrTy
+CastToFPtr (void *VPtr)
+{
+    return reinterpret_cast<FPtrTy>(reinterpret_cast<intptr_t>(VPtr));
+}
 
 static FileSpec::EnumerateDirectoryResult 
 LoadPluginCallback 
@@ -115,7 +121,11 @@ LoadPluginCallback
             if (plugin_info.plugin_handle)
             {
                 bool success = false;
-                plugin_info.plugin_init_callback = (PluginInitCallback)Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginInitialize", error);
+                plugin_info.plugin_init_callback =
+                    CastToFPtr<PluginInitCallback>(
+                        Host::DynamicLibraryGetSymbol(plugin_info.plugin_handle,
+                                                      "LLDBPluginInitialize",
+                                                      error));
                 if (plugin_info.plugin_init_callback)
                 {
                     // Call the plug-in "bool LLDBPluginInitialize(void)" function
@@ -125,7 +135,11 @@ LoadPluginCallback
                 if (success)
                 {
                     // It is ok for the "LLDBPluginTerminate" symbol to be NULL
-                    plugin_info.plugin_term_callback = (PluginTermCallback)Host::DynamicLibraryGetSymbol (plugin_info.plugin_handle, "LLDBPluginTerminate", error);
+                    plugin_info.plugin_term_callback =
+                        CastToFPtr<PluginTermCallback>(
+                            Host::DynamicLibraryGetSymbol(
+                                plugin_info.plugin_handle, "LLDBPluginTerminate",
+                                error));
                 }
                 else 
                 {
