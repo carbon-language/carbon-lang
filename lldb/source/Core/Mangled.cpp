@@ -3932,15 +3932,15 @@ parse_nested_name(const char* first, const char* last, C& db)
         const char* t0 = parse_cv_qualifiers(first+1, last, cv);
         if (t0 == last)
             return first;
-        db.ref = 0;
+        unsigned ref = 0;
         if (*t0 == 'R')
         {
-            db.ref = 1;
+            ref = 1;
             ++t0;
         }
         else if (*t0 == 'O')
         {
-            db.ref = 2;
+            ref = 2;
             ++t0;
         }
         db.names.emplace_back();
@@ -4054,6 +4054,7 @@ parse_nested_name(const char* first, const char* last, C& db)
             }
         }
         first = t0 + 1;
+        db.ref = ref;
         db.cv = cv;
         if (pop_subs && !db.subs.empty())
             db.subs.pop_back();
@@ -4413,7 +4414,7 @@ parse_special_name(const char* first, const char* last, C& db)
                 {
                     if (db.names.empty())
                         return first;
-                    if (first[2] == 'v')
+                    if (first[1] == 'v')
                     {
                         db.names.back().first.insert(0, "virtual thunk to ");
                         first = t;
