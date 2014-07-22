@@ -82,3 +82,26 @@ define i32 @test6(i32 %x) {
 ; CHECK: lshr i32 %x, 16
 ; CHECK: ret
 }
+
+
+; (A | B) ^ (~A) -> (A | ~B)
+define i32 @test7(i32 %a, i32 %b) #0 {
+ %or = or i32 %a, %b
+ %neg = xor i32 %a, -1
+ %xor = xor i32 %or, %neg
+ ret i32 %xor
+; CHECK-LABEL: @test7(
+; CHECK-NEXT: %1 = xor i32 %b, -1
+; CHECK-NEXT: %xor = or i32 %a, %1
+}
+
+; (~A) ^ (A | B) -> (A | ~B)
+define i32 @test8(i32 %a, i32 %b) #0 {
+ %neg = xor i32 %a, -1
+ %or = or i32 %a, %b
+ %xor = xor i32 %neg, %or
+ ret i32 %xor
+; CHECK-LABEL: @test8(
+; CHECK-NEXT: %1 = xor i32 %b, -1
+; CHECK-NEXT: %xor = or i32 %a, %1
+}

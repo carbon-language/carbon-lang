@@ -2446,6 +2446,12 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
   }
 
+  // (A | B)^(~A) -> (A | ~B)
+  Value *A = nullptr, *B = nullptr;
+  if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+      match(Op1, m_Not(m_Specific(A))))
+    return BinaryOperator::CreateOr(A, Builder->CreateNot(B));
+
   // (icmp1 A, B) ^ (icmp2 A, B) --> (icmp3 A, B)
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(I.getOperand(1)))
     if (ICmpInst *LHS = dyn_cast<ICmpInst>(I.getOperand(0)))
