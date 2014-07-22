@@ -37,6 +37,7 @@ protected:
         : EHFrameSID(RTDYLD_INVALID_SECTION_ID),
           TextSID(RTDYLD_INVALID_SECTION_ID),
           ExceptTabSID(RTDYLD_INVALID_SECTION_ID) {}
+
     EHFrameRelatedSections(SID EH, SID T, SID Ex)
         : EHFrameSID(EH), TextSID(T), ExceptTabSID(Ex) {}
     SID EHFrameSID;

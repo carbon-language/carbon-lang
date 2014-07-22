@@ -50,6 +50,11 @@ public:
 
   virtual /* Triple::ArchType */ unsigned getArch() const = 0;
 
+  // Return the name associated with this ObjectImage.
+  // This is usually the name of the file or MemoryBuffer that the the
+  // ObjectBuffer was constructed from.
+  StringRef getImageName() const { return Buffer->getBufferIdentifier(); }
+
   // Subclasses can override these methods to update the image with loaded
   // addresses for sections and common symbols
   virtual void updateSectionAddress(const object::SectionRef &Sec,

@@ -26,10 +26,11 @@ namespace object {
 }
 
 class RuntimeDyldImpl;
+class RuntimeDyldCheckerImpl;
 class ObjectImage;
 
 class RuntimeDyld {
-  friend class RuntimeDyldChecker;
+  friend class RuntimeDyldCheckerImpl;
 
   RuntimeDyld(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
   void operator=(const RuntimeDyld &) LLVM_DELETED_FUNCTION;
@@ -39,6 +40,7 @@ class RuntimeDyld {
   RuntimeDyldImpl *Dyld;
   RTDyldMemoryManager *MM;
   bool ProcessAllSections;
+  RuntimeDyldCheckerImpl *Checker;
 protected:
   // Change the address associated with a section when resolving relocations.
   // Any relocations already associated with the symbol will be re-resolved.

@@ -347,6 +347,8 @@ static int linkAndVerify() {
   // Instantiate a dynamic linker.
   TrivialMemoryManager MemMgr;
   RuntimeDyld Dyld(&MemMgr);
+  RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
+                             llvm::dbgs());
 
   // If we don't have any input files, read from stdin.
   if (!InputFileList.size())
@@ -370,8 +372,6 @@ static int linkAndVerify() {
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
 
-  RuntimeDyldChecker Checker(Dyld, Disassembler.get(), InstPrinter.get(),
-                             llvm::dbgs());
   return checkAllExpressions(Checker);
 }
 

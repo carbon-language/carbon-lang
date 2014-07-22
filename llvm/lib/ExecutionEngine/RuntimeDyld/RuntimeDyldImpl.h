@@ -159,7 +159,7 @@ public:
 };
 
 class RuntimeDyldImpl {
-  friend class RuntimeDyldChecker;
+  friend class RuntimeDyldCheckerImpl;
 private:
 
   uint64_t getAnySymbolRemoteAddress(StringRef Symbol) {
@@ -171,6 +171,9 @@ private:
 protected:
   // The MemoryManager to load objects into.
   RTDyldMemoryManager *MemMgr;
+
+  // Attached RuntimeDyldChecker instance. Null if no instance attached.
+  RuntimeDyldCheckerImpl *Checker;
 
   // A list of all sections emitted by the dynamic linker.  These sections are
   // referenced in the code by means of their index in this list - SectionID.
@@ -210,6 +213,7 @@ protected:
   // external when they aren't found in the global symbol table of all loaded
   // modules.  This map is indexed by symbol name.
   StringMap<RelocationList> ExternalSymbolRelocations;
+
 
   typedef std::map<RelocationValueRef, uintptr_t> StubMap;
 
@@ -349,13 +353,17 @@ protected:
 
 public:
   RuntimeDyldImpl(RTDyldMemoryManager *mm)
-      : MemMgr(mm), ProcessAllSections(false), HasError(false) {
+    : MemMgr(mm), Checker(nullptr), ProcessAllSections(false), HasError(false) {
   }
 
   virtual ~RuntimeDyldImpl();
 
   void setProcessAllSections(bool ProcessAllSections) {
     this->ProcessAllSections = ProcessAllSections;
+  }
+
+  void setRuntimeDyldChecker(RuntimeDyldCheckerImpl *Checker) {
+    this->Checker = Checker;
   }
 
   ObjectImage *loadObject(ObjectImage *InputObject);
