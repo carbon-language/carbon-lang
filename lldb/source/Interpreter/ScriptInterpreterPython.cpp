@@ -804,7 +804,7 @@ public:
             int num_threads = PyThreadState_SetAsyncExc(tid, PyExc_KeyboardInterrupt);
             if (log)
                 log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, tid = %ld, num_threads = %d, state = %p",
-                            tid,num_threads,state);
+                            tid, num_threads, static_cast<void *>(state));
         }
         else if (log)
             log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, state = NULL");
