@@ -408,3 +408,22 @@ define i32 @test38(i32* %xp, i32 %y) {
   %or = or i32 %x, %sext
   ret i32 %or
 }
+
+define i32 @test39(i32 %a, i32 %b) {
+; CHECK-LABEL: test39(
+; CHECK-NEXT: %or = or i32 %a, %b
+ %xor = xor i32 %a, -1
+ %and = and i32 %xor, %b
+ %or = or i32 %and, %a
+ ret i32 %or
+}
+
+define i32 @test40(i32 %a, i32 %b) {
+; CHECK-LABEL: test40(
+; CHECK-NEXT:   %1 = xor i32 %a, -1 
+; CHECK-NEXT: %or = or i32 %1, %b
+ %and = and i32 %a, %b
+ %xor = xor i32 %a, -1
+ %or = or i32 %and, %xor
+ ret i32 %or
+}
