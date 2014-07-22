@@ -733,7 +733,7 @@ ObjectFileELF::~ObjectFileELF()
 bool
 ObjectFileELF::IsExecutable() const
 {
-    return m_header.e_entry != 0;
+    return ((m_header.e_type & ET_EXEC) != 0) || (m_header.e_entry != 0);
 }
 
 bool
