@@ -41,16 +41,14 @@ public:
     // addend for the following relocation. If found: (1) store the associated
     // addend, (2) consume the next relocation, and (3) use the stored addend to
     // override the addend.
-    bool HasExplicitAddend = false;
     int64_t ExplicitAddend = 0;
     if (Obj.getAnyRelocationType(RelInfo) == MachO::ARM64_RELOC_ADDEND) {
       assert(!Obj.getPlainRelocationExternal(RelInfo));
       assert(!Obj.getAnyRelocationPCRel(RelInfo));
       assert(Obj.getAnyRelocationLength(RelInfo) == 2);
-      HasExplicitAddend = true;
       int64_t RawAddend = Obj.getPlainRelocationSymbolNum(RelInfo);
       // Sign-extend the 24-bit to 64-bit.
-      ExplicitAddend = (RawAddend << 40) >> 40;
+      ExplicitAddend = SignExtend64(RawAddend, 24);
       ++RelI;
       RelInfo = Obj.getRelocation(RelI->getRawDataRefImpl());
     }
@@ -59,7 +57,9 @@ public:
     RelocationValueRef Value(
         getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 
-    if (HasExplicitAddend) {
+    assert((ExplicitAddend == 0 || RE.Addend == 0) && "Relocation has "\
+      "ARM64_RELOC_ADDEND and embedded addend in the instruction.");
+    if (ExplicitAddend) {
       RE.Addend = ExplicitAddend;
       Value.Addend = ExplicitAddend;
     }
