@@ -1,16 +1,26 @@
-# REQUIRES: mips
-
 # Check name of executable entry symbol.
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
-# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t2 %t1
-# RUN: llvm-objdump -t %t2 | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel --noinhibit-exec -o %t.exe %t.o
+# RUN: llvm-nm %t.exe | FileCheck %s
 
-# CHECK: SYMBOL TABLE:
-# CHECK: {{[0-9a-f]+}} g     F .text  00000004 main
-# CHECK: 00000000              *UND*  00000000 __start
+# CHECK:          U __start
+# CHECK: 00400108 T main
 
-    .global main
-    .ent    main
-main:
-    nop
-    .end    main
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x04
+    Size:            0x04
+
+Symbols:
+  Global:
+    - Name:            main
+      Section:         .text
