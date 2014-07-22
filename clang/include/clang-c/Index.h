@@ -2190,10 +2190,14 @@ enum CXCursorKind {
   /** \brief OpenMP flush directive.
    */
   CXCursor_OMPFlushDirective             = 246,
+  
+  /** \brief OpenMP ordered directive.
+   */
+  CXCursor_OMPOrderedDirective           = 247,
 
   /** \brief Windows Structured Exception Handling's leave statement.
    */
-  CXCursor_SEHLeaveStmt                  = 247,
+  CXCursor_SEHLeaveStmt                  = 248,
 
   CXCursor_LastStmt                      = CXCursor_SEHLeaveStmt,
 

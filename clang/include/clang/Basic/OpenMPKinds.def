@@ -70,6 +70,7 @@ OPENMP_DIRECTIVE(taskyield)
 OPENMP_DIRECTIVE(barrier)
 OPENMP_DIRECTIVE(taskwait)
 OPENMP_DIRECTIVE(flush)
+OPENMP_DIRECTIVE(ordered)
 OPENMP_DIRECTIVE_EXT(parallel_for, "parallel for")
 OPENMP_DIRECTIVE_EXT(parallel_sections, "parallel sections")
 
