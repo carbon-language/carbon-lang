@@ -3629,7 +3629,6 @@ def : Pat <(v8f64 (int_x86_avx512_rcp28_pd (v8f64 VR512:$src),
            (VRCP28PDZrb VR512:$src)>;
 
 multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                              Intrinsic V16F32Int, Intrinsic V8F64Int,
                               OpndItins itins_s, OpndItins itins_d> {
   def PSZrr :AVX512PSI<opc, MRMSrcReg, (outs VR512:$dst), (ins VR512:$src),
              !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
@@ -3655,27 +3654,6 @@ multiclass avx512_sqrt_packed<bits<8> opc, string OpcodeStr, SDNode OpNode,
                   (v8f64 (bitconvert (memopv16f32 addr:$src)))))],
                 itins_d.rm>, EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
-let isCodeGenOnly = 1 in {
-  def PSZr_Int : AVX512PSI<opc, MRMSrcReg, (outs VR512:$dst), (ins VR512:$src),
-                           !strconcat(OpcodeStr,
-                                      "ps\t{$src, $dst|$dst, $src}"),
-                           [(set VR512:$dst, (V16F32Int VR512:$src))]>, 
-                           EVEX, EVEX_V512;
-  def PSZm_Int : AVX512PSI<opc, MRMSrcMem, (outs VR512:$dst), (ins f512mem:$src),
-                          !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                          [(set VR512:$dst, 
-                           (V16F32Int (memopv16f32 addr:$src)))]>, EVEX,
-                          EVEX_V512, EVEX_CD8<32, CD8VF>;
-  def PDZr_Int : AVX512PDI<opc, MRMSrcReg, (outs VR512:$dst), (ins VR512:$src),
-                           !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                           [(set VR512:$dst, (V8F64Int VR512:$src))]>, 
-                           EVEX, EVEX_V512, VEX_W;
-  def PDZm_Int : AVX512PDI<opc, MRMSrcMem, (outs VR512:$dst), (ins f512mem:$src),
-                         !strconcat(OpcodeStr,
-                         "pd\t{$src, $dst|$dst, $src}"),
-                         [(set VR512:$dst, (V8F64Int (memopv8f64 addr:$src)))]>,
-                         EVEX, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>; 
-} // isCodeGenOnly = 1
 }
 
 multiclass avx512_sqrt_scalar<bits<8> opc, string OpcodeStr,
@@ -3744,10 +3722,16 @@ defm VSQRT  : avx512_sqrt_scalar<0x51, "sqrt",
                 int_x86_avx512_sqrt_ss, int_x86_avx512_sqrt_sd, 
                 SSE_SQRTSS, SSE_SQRTSD>,
               avx512_sqrt_packed<0x51, "vsqrt", fsqrt,
-                int_x86_avx512_sqrt_ps_512, int_x86_avx512_sqrt_pd_512,
                 SSE_SQRTPS, SSE_SQRTPD>;
 
 let Predicates = [HasAVX512] in {
+  def : Pat<(v16f32 (int_x86_avx512_sqrt_ps_512 (v16f32 VR512:$src1),
+                    (bc_v16f32 (v16i32 immAllZerosV)), (i16 -1), FROUND_CURRENT)),
+                   (VSQRTPSZrr VR512:$src1)>;
+  def : Pat<(v8f64 (int_x86_avx512_sqrt_pd_512 (v8f64 VR512:$src1),
+                    (bc_v8f64 (v16i32 immAllZerosV)), (i8 -1), FROUND_CURRENT)),
+                   (VSQRTPDZrr VR512:$src1)>;
+  
   def : Pat<(f32 (fsqrt FR32X:$src)),
             (VSQRTSSZr (f32 (IMPLICIT_DEF)), FR32X:$src)>;
   def : Pat<(f32 (fsqrt (load addr:$src))),
