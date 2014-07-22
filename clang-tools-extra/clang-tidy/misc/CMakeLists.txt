@@ -6,6 +6,7 @@ add_clang_library(clangTidyMiscModule
   MiscTidyModule.cpp
   RedundantSmartptrGet.cpp
   SwappedArgumentsCheck.cpp
+  UnusedRAII.cpp
   UseOverride.cpp
 
   LINK_LIBS
