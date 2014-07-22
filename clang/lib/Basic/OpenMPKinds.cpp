@@ -260,6 +260,16 @@ bool clang::isAllowedClauseForDirective(OpenMPDirectiveKind DKind,
   case OMPD_flush:
     return CKind == OMPC_flush;
     break;
+  case OMPD_atomic:
+    switch (CKind) {
+#define OPENMP_ATOMIC_CLAUSE(Name)                                             \
+  case OMPC_##Name:                                                            \
+    return true;
+#include "clang/Basic/OpenMPKinds.def"
+    default:
+      break;
+    }
+    break;
   case OMPD_unknown:
   case OMPD_threadprivate:
   case OMPD_section:

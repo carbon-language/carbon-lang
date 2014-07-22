@@ -224,6 +224,9 @@ void CodeGenFunction::EmitStmt(const Stmt *S) {
   case Stmt::OMPOrderedDirectiveClass:
     EmitOMPOrderedDirective(cast<OMPOrderedDirective>(*S));
     break;
+  case Stmt::OMPAtomicDirectiveClass:
+    EmitOMPAtomicDirective(cast<OMPAtomicDirective>(*S));
+    break;
   }
 }
 

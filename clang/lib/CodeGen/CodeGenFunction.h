@@ -1937,6 +1937,7 @@ public:
   void EmitOMPTaskwaitDirective(const OMPTaskwaitDirective &S);
   void EmitOMPFlushDirective(const OMPFlushDirective &S);
   void EmitOMPOrderedDirective(const OMPOrderedDirective &S);
+  void EmitOMPAtomicDirective(const OMPAtomicDirective &S);
 
   //===--------------------------------------------------------------------===//
   //                         LValue Expression Emission

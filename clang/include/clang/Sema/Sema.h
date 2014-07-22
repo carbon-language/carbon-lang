@@ -7395,10 +7395,15 @@ public:
   StmtResult ActOnOpenMPFlushDirective(ArrayRef<OMPClause *> Clauses,
                                        SourceLocation StartLoc,
                                        SourceLocation EndLoc);
-  /// \brief Called on well-formed '\#pragma omp master' after parsing of the
+  /// \brief Called on well-formed '\#pragma omp ordered' after parsing of the
   /// associated statement.
   StmtResult ActOnOpenMPOrderedDirective(Stmt *AStmt, SourceLocation StartLoc,
                                          SourceLocation EndLoc);
+  /// \brief Called on well-formed '\#pragma omp atomic' after parsing of the
+  /// associated statement.
+  StmtResult ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
+                                        Stmt *AStmt, SourceLocation StartLoc,
+                                        SourceLocation EndLoc);
 
   OMPClause *ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind,
                                          Expr *Expr,

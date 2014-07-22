@@ -1905,6 +1905,13 @@ void ASTStmtWriter::VisitOMPTaskDirective(OMPTaskDirective *D) {
   Code = serialization::STMT_OMP_TASK_DIRECTIVE;
 }
 
+void ASTStmtWriter::VisitOMPAtomicDirective(OMPAtomicDirective *D) {
+  VisitStmt(D);
+  Record.push_back(D->getNumClauses());
+  VisitOMPExecutableDirective(D);
+  Code = serialization::STMT_OMP_ATOMIC_DIRECTIVE;
+}
+
 void ASTStmtWriter::VisitOMPTaskyieldDirective(OMPTaskyieldDirective *D) {
   VisitStmt(D);
   VisitOMPExecutableDirective(D);

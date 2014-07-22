@@ -7127,6 +7127,8 @@ def err_omp_prohibited_region : Error<
   "; perhaps you forget to enclose 'omp %3' directive into a for or a parallel for region with 'ordered' clause?}2">;
 def err_omp_prohibited_region_simd : Error<
   "OpenMP constructs may not be nested inside a simd region">;
+def err_omp_prohibited_region_atomic : Error<
+  "OpenMP constructs may not be nested inside an atomic region">;
 def err_omp_prohibited_region_critical_same_name : Error<
   "cannot nest 'critical' regions having the same name %0">;
 def note_omp_previous_critical_region : Note<

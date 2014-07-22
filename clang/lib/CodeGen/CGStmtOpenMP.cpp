@@ -132,3 +132,7 @@ void CodeGenFunction::EmitOMPOrderedDirective(const OMPOrderedDirective &) {
   llvm_unreachable("CodeGen for 'omp ordered' is not supported yet.");
 }
 
+void CodeGenFunction::EmitOMPAtomicDirective(const OMPAtomicDirective &) {
+  llvm_unreachable("CodeGen for 'omp atomic' is not supported yet.");
+}
+
