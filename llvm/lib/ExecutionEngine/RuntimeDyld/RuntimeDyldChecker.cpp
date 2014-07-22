@@ -519,7 +519,7 @@ private:
       std::tie(SubExprResult, RemainingExpr) = evalParensExpr(Expr, PCtx);
     else if (Expr[0] == '*')
       std::tie(SubExprResult, RemainingExpr) = evalLoadExpr(Expr);
-    else if (isalpha(Expr[0]))
+    else if (isalpha(Expr[0]) || Expr[0] == '_')
       std::tie(SubExprResult, RemainingExpr) = evalIdentifierExpr(Expr, PCtx);
     else if (isdigit(Expr[0]))
       std::tie(SubExprResult, RemainingExpr) = evalNumberExpr(Expr);
