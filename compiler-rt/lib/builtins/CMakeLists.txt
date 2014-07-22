@@ -251,6 +251,7 @@ add_custom_target(builtins)
 if (NOT WIN32)
   foreach(arch x86_64 i386 arm)
     if(CAN_TARGET_${arch})
+      set_source_files_properties(${${arch}_SOURCES} PROPERTIES LANGUAGE C)
       add_compiler_rt_runtime(clang_rt.builtins-${arch} ${arch} STATIC
         SOURCES ${${arch}_SOURCES}
         CFLAGS "-std=c99")
