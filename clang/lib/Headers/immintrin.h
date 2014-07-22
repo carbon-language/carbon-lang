@@ -76,6 +76,14 @@
 #include <fmaintrin.h>
 #endif
 
+#ifdef __AVX512F__
+#include <avx512fintrin.h>
+#endif
+
+#ifdef __AVX512ER__
+#include <avx512erintrin.h>
+#endif
+
 #ifdef __RDRND__
 static __inline__ int __attribute__((__always_inline__, __nodebug__))
 _rdrand16_step(unsigned short *__p)
