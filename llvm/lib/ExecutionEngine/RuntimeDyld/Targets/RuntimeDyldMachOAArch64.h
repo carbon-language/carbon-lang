@@ -84,6 +84,7 @@ public:
       // Verify that the relocation points to one of the expected load / store
       // instructions.
       uint32_t *p = (uint32_t *)LocalAddress;
+      (void)p;
       assert((*p & 0x3B000000) == 0x39000000 &&
              "Only expected load / store instructions.");
     } // fall-through
