@@ -4,10 +4,7 @@
 // XFAIL: win32
 
 #include <assert.h>
-#include <setjmp.h>
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <sanitizer/asan_interface.h>
 
 __attribute__((noinline))
