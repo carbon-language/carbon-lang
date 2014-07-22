@@ -4794,49 +4794,8 @@ is_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
 
 template <class _Compare, class _RandomAccessIterator>
 void
-__push_heap_front(_RandomAccessIterator __first, _RandomAccessIterator, _Compare __comp,
-                  typename iterator_traits<_RandomAccessIterator>::difference_type __len)
-{
-    typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
-    typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
-    if (__len > 1)
-    {
-        difference_type __p = 0;
-        _RandomAccessIterator __pp = __first;
-        difference_type __c = 2;
-        _RandomAccessIterator __cp = __first + __c;
-        if (__c == __len || __comp(*__cp, *(__cp - 1)))
-        {
-            --__c;
-            --__cp;
-        }
-        if (__comp(*__pp, *__cp))
-        {
-            value_type __t(_VSTD::move(*__pp));
-            do
-            {
-                *__pp = _VSTD::move(*__cp);
-                __pp = __cp;
-                __p = __c;
-                __c = (__p + 1) * 2;
-                if (__c > __len)
-                    break;
-                __cp = __first + __c;
-                if (__c == __len || __comp(*__cp, *(__cp - 1)))
-                {
-                    --__c;
-                    --__cp;
-                }
-            } while (__comp(__t, *__cp));
-            *__pp = _VSTD::move(__t);
-        }
-    }
-}
-
-template <class _Compare, class _RandomAccessIterator>
-void
-__push_heap_back(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp,
-                 typename iterator_traits<_RandomAccessIterator>::difference_type __len)
+__sift_up(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp,
+          typename iterator_traits<_RandomAccessIterator>::difference_type __len)
 {
     typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
     typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
@@ -4869,10 +4828,10 @@ push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare 
 #ifdef _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<__debug_less<_Compare> >::type _Comp_ref;
     __debug_less<_Compare> __c(__comp);
-    __push_heap_back<_Comp_ref>(__first, __last, __c, __last - __first);
+    __sift_up<_Comp_ref>(__first, __last, __c, __last - __first);
 #else  // _LIBCPP_DEBUG
     typedef typename add_lvalue_reference<_Compare>::type _Comp_ref;
-    __push_heap_back<_Comp_ref>(__first, __last, __comp, __last - __first);
+    __sift_up<_Comp_ref>(__first, __last, __comp, __last - __first);
 #endif  // _LIBCPP_DEBUG
 }
 
@@ -4887,6 +4846,60 @@ push_heap(_RandomAccessIterator __first, _RandomAccessIterator __last)
 // pop_heap
 
 template <class _Compare, class _RandomAccessIterator>
+void
+__sift_down(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp,
+            typename iterator_traits<_RandomAccessIterator>::difference_type __len,
+            _RandomAccessIterator __start)
+{
+    typedef typename iterator_traits<_RandomAccessIterator>::difference_type difference_type;
+    typedef typename iterator_traits<_RandomAccessIterator>::value_type value_type;
+    // left-child of __start is at 2 * __start + 1
+    // right-child of __start is at 2 * __start + 2
+    difference_type __child = __start - __first;
+
+    if (__len < 2 || (__len - 2) / 2 < __child)
+        return;
+
+    __child = 2 * __child + 1;
+    _RandomAccessIterator __child_i = __first + __child;
+
+    if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
+        // right-child exists and is greater than left-child
+        ++__child_i;
+        ++__child;
+    }
+
+    // check if we are in heap-order
+    if (__comp(*__child_i, *__start))
+        // we are, __start is larger than it's largest child
+        return;
+
+    value_type __top(_VSTD::move(*__start));
+    do
+    {
+        // we are not in heap-order, swap the parent with it's largest child
+        *__start = _VSTD::move(*__child_i);
+        __start = __child_i;
+
+        if ((__len - 2) / 2 < __child)
+            break;
+
+        // recompute the child based off of the updated parent
+        __child = 2 * __child + 1;
+        __child_i = __first + __child;
+
+        if ((__child + 1) < __len && __comp(*__child_i, *(__child_i + 1))) {
+            // right-child exists and is greater than left-child
+            ++__child_i;
+            ++__child;
+        }
+
+        // check if we are in heap-order
+    } while (!__comp(*__child_i, __top));
+    *__start = _VSTD::move(__top);
+}
+
+template <class _Compare, class _RandomAccessIterator>
 inline _LIBCPP_INLINE_VISIBILITY
 void
 __pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare __comp,
@@ -4895,7 +4908,7 @@ __pop_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compare
     if (__len > 1)
     {
         swap(*__first, *--__last);
-        __push_heap_front<_Compare>(__first, __last, __comp, __len-1);
+        __sift_down<_Compare>(__first, __last, __comp, __len - 1, __first);
     }
 }
 
@@ -4932,10 +4945,11 @@ __make_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _Compar
     difference_type __n = __last - __first;
     if (__n > 1)
     {
-        __last = __first;
-        ++__last;
-        for (difference_type __i = 1; __i < __n;)
-            __push_heap_back<_Compare>(__first, ++__last, __comp, ++__i);
+        // start from the first parent, there is no need to consider children
+        for (difference_type __start = (__n - 2) / 2; __start >= 0; --__start)
+        {
+            __sift_down<_Compare>(__first, __last, __comp, __n, __first + __start);
+        }
     }
 }
 
@@ -5010,7 +5024,7 @@ __partial_sort(_RandomAccessIterator __first, _RandomAccessIterator __middle, _R
         if (__comp(*__i, *__first))
         {
             swap(*__i, *__first);
-            __push_heap_front<_Compare>(__first, __middle, __comp, __len);
+            __sift_down<_Compare>(__first, __middle, __comp, __len, __first);
         }
     }
     __sort_heap<_Compare>(__first, __middle, __comp);
@@ -5051,15 +5065,15 @@ __partial_sort_copy(_InputIterator __first, _InputIterator __last,
     _RandomAccessIterator __r = __result_first;
     if (__r != __result_last)
     {
-        typename iterator_traits<_RandomAccessIterator>::difference_type __len = 0;
-        for (; __first != __last && __r != __result_last; ++__first, ++__r, ++__len)
+        for (; __first != __last && __r != __result_last; ++__first, ++__r)
             *__r = *__first;
         __make_heap<_Compare>(__result_first, __r, __comp);
+        typename iterator_traits<_RandomAccessIterator>::difference_type __len = __r - __result_first;
         for (; __first != __last; ++__first)
             if (__comp(*__first, *__result_first))
             {
                 *__result_first = *__first;
-                __push_heap_front<_Compare>(__result_first, __r, __comp, __len);
+                __sift_down<_Compare>(__result_first, __r, __comp, __len, __result_first);
             }
         __sort_heap<_Compare>(__result_first, __r, __comp);
     }
