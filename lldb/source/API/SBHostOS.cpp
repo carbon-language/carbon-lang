@@ -51,7 +51,7 @@ SBHostOS::ThreadCreate
 
     if (log)
         log->Printf ("SBHostOS::ThreadCreate (name=\"%s\", thread_function=%p, thread_arg=%p, error_ptr=%p)",
-                     name, reinterpret_cast<void*>(thread_function),
+                     name, reinterpret_cast<void*>(reinterpret_cast<intptr_t>(thread_function)),
                      static_cast<void*>(thread_arg),
                      static_cast<void*>(error_ptr));
 
