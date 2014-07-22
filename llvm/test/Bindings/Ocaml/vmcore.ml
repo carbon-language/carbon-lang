@@ -126,6 +126,12 @@ let test_constants () =
   ignore (define_global "const_int_string" c m);
   insist (i32_type = type_of c);
 
+  if Sys.word_size = 64; then begin
+    group "long int";
+    let c = const_int i64_type (1 lsl 61) in
+    insist (c = const_of_int64 i64_type (Int64.of_int (1 lsl 61)) false)
+  end;
+
   (* CHECK: @const_string = global {{.*}}c"cruel\00world"
    *)
   group "string";

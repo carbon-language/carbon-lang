@@ -695,7 +695,7 @@ CAMLprim value llvm_append_namedmd(LLVMModuleRef M, value Name, LLVMValueRef Val
 
 /* lltype -> int -> llvalue */
 CAMLprim LLVMValueRef llvm_const_int(LLVMTypeRef IntTy, value N) {
-  return LLVMConstInt(IntTy, (long long) Int_val(N), 1);
+  return LLVMConstInt(IntTy, (long long) Long_val(N), 1);
 }
 
 /* lltype -> Int64.t -> bool -> llvalue */
