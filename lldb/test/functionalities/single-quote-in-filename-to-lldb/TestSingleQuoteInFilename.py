@@ -26,7 +26,7 @@ class SingleQuoteInCommandLineTestCase(TestBase):
         """Test that 'lldb my_file_name' works where my_file_name is a string with a single quote char in it."""
         import pexpect
         self.buildDefault()
-        system(["/bin/sh", "-c", "cp a.out \"%s\"" % self.myexe])
+        system([["cp", "a.out", "\"%s\"" % self.myexe]])
 
         # The default lldb prompt.
         prompt = "(lldb) "

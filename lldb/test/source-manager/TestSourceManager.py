@@ -92,8 +92,8 @@ class SourceManagerTestCase(TestBase):
         os.rename(main_c, main_c_hidden)
 
         if self.TraceOn():
-            system(["ls"])
-            system(["ls", "hidden"])
+            system([["ls"]])
+            system([["ls", "hidden"]])
 
         # Restore main.c after the test.
         self.addTearDownHook(lambda: os.rename(main_c_hidden, main_c))

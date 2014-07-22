@@ -135,7 +135,7 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         # Skip the following tests if the condition is met.
         if self.getCompiler().endswith('gcc') and not self.getCompiler().endswith('llvm-gcc'):
            import re
-           gcc_version_output = system([lldbutil.which(self.getCompiler()), "-v"])[1]
+           gcc_version_output = system([[lldbutil.which(self.getCompiler()), "-v"]])[1]
            #print "my output:", gcc_version_output
            for line in gcc_version_output.split(os.linesep):
                m = re.search('\(Apple Inc\. build ([0-9]+)\)', line)

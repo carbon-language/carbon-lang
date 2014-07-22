@@ -7,19 +7,13 @@ from builder_base import *
 
 def buildDsym(sender=None, architecture=None, compiler=None, dictionary=None, clean=True):
     """Build the binaries with dsym debug info."""
+    commands = []
+
     if clean:
-        lldbtest.system(["/bin/sh", "-c",
-                         "make clean" + getCmdLine(dictionary)
-                         + "; make MAKE_DSYM=YES"
-                         + getArchSpec(architecture) + getCCSpec(compiler)
-                         + getCmdLine(dictionary)],
-                        sender=sender)
-    else:
-        lldbtest.system(["/bin/sh", "-c",
-                         "make MAKE_DSYM=YES"
-                         + getArchSpec(architecture) + getCCSpec(compiler)
-                         + getCmdLine(dictionary)],
-                        sender=sender)
+        commands.append(["make", "clean", getCmdLine(dictionary)])
+    commands.append(["make", "MAKE_DSYM=YES", getArchSpec(architecture), getCCSpec(compiler), getCmdLine(dictionary)])
+
+    lldbtest.system(commands, sender=sender)
 
     # True signifies that we can handle building dsym.
     return True
