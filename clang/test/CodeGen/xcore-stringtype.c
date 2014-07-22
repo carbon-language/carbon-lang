@@ -5,17 +5,25 @@
 
 // In the tests below, some types are not supported by the ABI (_Complex,
 // variable length arrays) and will thus emit no meta data.
-// The 33 tests that do emit typestrings are gathered into '!xcore.typestrings'
+// The 38 tests that do emit typestrings are gathered into '!xcore.typestrings'
 // Please see 'Tools Development Guide' section 2.16.2 for format details:
 // <https://www.xmos.com/download/public/Tools-Development-Guide%28X9114A%29.pdf>
 
-// CHECK: !xcore.typestrings = !{!1, !2, !3, !4, !5, !6, !7, !8, !9, !10, !11,
-// CHECK: !12, !13, !14, !15, !16, !17, !18, !19, !20, !21, !22, !23, !24, !25,
-// CHECK: !26, !27, !28, !29, !30, !31, !32, !33, !34, !35, !36, !37, !38}
+// CHECK: !xcore.typestrings = !{
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}},
+// CHECK: !{{[0-9]+}}, !{{[0-9]+}}, !{{[0-9]+}}
+// CHECK-NOT: , !{{[0-9]+}}
+// CHECK: }
 
 
 // test BuiltinType
-// CHECK: !1 = metadata !{void (i1, i8, i8, i8, i16, i16, i16, i32, i32, i32,
+// CHECK: !{{[0-9]+}} = metadata !{void (i1, i8, i8, i8, i16, i16, i16, i32, i32, i32,
 // CHECK:      i32, i32, i32, i64, i64, i64, float, double, double)*
 // CHECK:      @builtinType, metadata !"f{0}(b,uc,uc,sc,ss,us,ss,si,ui,si,sl,
 // CHECK:      ul,sl,sll,ull,sll,ft,d,ld)"}
@@ -28,14 +36,14 @@ double _Complex Complex; // not supported
 
 
 // test FunctionType & Qualifiers
-// CHECK: !2 = metadata !{void ()* @gI, metadata !"f{0}()"}
-// CHECK: !3 = metadata !{void (...)* @eI, metadata !"f{0}()"}
-// CHECK: !4 = metadata !{void ()* @gV, metadata !"f{0}(0)"}
-// CHECK: !5 = metadata !{void ()* @eV, metadata !"f{0}(0)"}
-// CHECK: !6 = metadata !{void (i32, ...)* @gVA, metadata !"f{0}(si,va)"}
-// CHECK: !7 = metadata !{void (i32, ...)* @eVA, metadata !"f{0}(si,va)"}
-// CHECK: !8 = metadata !{i32* (i32*)* @gQ, metadata !"f{crv:p(cv:si)}(p(cv:si))"}
-// CHECK: !9 = metadata !{i32* (i32*)* @eQ, metadata !"f{crv:p(cv:si)}(p(cv:si))"}
+// CHECK: !{{[0-9]+}} = metadata !{void ()* @gI, metadata !"f{0}()"}
+// CHECK: !{{[0-9]+}} = metadata !{void (...)* @eI, metadata !"f{0}()"}
+// CHECK: !{{[0-9]+}} = metadata !{void ()* @gV, metadata !"f{0}(0)"}
+// CHECK: !{{[0-9]+}} = metadata !{void ()* @eV, metadata !"f{0}(0)"}
+// CHECK: !{{[0-9]+}} = metadata !{void (i32, ...)* @gVA, metadata !"f{0}(si,va)"}
+// CHECK: !{{[0-9]+}} = metadata !{void (i32, ...)* @eVA, metadata !"f{0}(si,va)"}
+// CHECK: !{{[0-9]+}} = metadata !{i32* (i32*)* @gQ, metadata !"f{crv:p(cv:si)}(p(cv:si))"}
+// CHECK: !{{[0-9]+}} = metadata !{i32* (i32*)* @eQ, metadata !"f{crv:p(cv:si)}(p(cv:si))"}
 extern void eI();
 void gI() {eI();};
 extern void eV(void);
@@ -49,10 +57,10 @@ const volatile int* volatile restrict const
 
 
 // test PointerType
-// CHECK: !10 = metadata !{i32* (i32*, i32* (i32*)*)*
+// CHECK: !{{[0-9]+}} = metadata !{i32* (i32*, i32* (i32*)*)*
 // CHECK:       @pointerType, metadata !"f{p(si)}(p(si),p(f{p(si)}(p(si))))"}
-// CHECK: !11 = metadata !{i32** @EP, metadata !"p(si)"}
-// CHECK: !12 = metadata !{i32** @GP, metadata !"p(si)"}
+// CHECK: !{{[0-9]+}} = metadata !{i32** @EP, metadata !"p(si)"}
+// CHECK: !{{[0-9]+}} = metadata !{i32** @GP, metadata !"p(si)"}
 extern int* EP;
 int* GP;
 int* pointerType(int *I, int * (*FP)(int *)) {
@@ -60,19 +68,19 @@ int* pointerType(int *I, int * (*FP)(int *)) {
 }
 
 // test ArrayType
-// CHECK: !13 = metadata !{[2 x i32]* (i32*, i32*, [2 x i32]*, [2 x i32]*, i32*)*
+// CHECK: !{{[0-9]+}} = metadata !{[2 x i32]* (i32*, i32*, [2 x i32]*, [2 x i32]*, i32*)*
 // CHECK:       @arrayType, metadata !"f{p(a(2:si))}(p(si),p(cv:si),p(a(2:si)),
 // CHECK:       p(a(2:si)),p(si))"}
-// CHECK: !14 = metadata !{[0 x i32]* @EA1, metadata !"a(*:cv:si)"}
-// CHECK: !15 = metadata !{[2 x i32]* @EA2, metadata !"a(2:si)"}
-// CHECK: !16 = metadata !{[0 x [2 x i32]]* @EA3, metadata !"a(*:a(2:si))"}
-// CHECK: !17 = metadata !{[3 x [2 x i32]]* @EA4, metadata !"a(3:a(2:si))"}
-// CHECK: !18 = metadata !{[2 x i32]* @GA1, metadata !"a(2:cv:si)"}
-// CHECK: !19 = metadata !{void ([2 x i32]*)* @arrayTypeVariable1,
+// CHECK: !{{[0-9]+}} = metadata !{[0 x i32]* @EA1, metadata !"a(*:cv:si)"}
+// CHECK: !{{[0-9]+}} = metadata !{[2 x i32]* @EA2, metadata !"a(2:si)"}
+// CHECK: !{{[0-9]+}} = metadata !{[0 x [2 x i32]]* @EA3, metadata !"a(*:a(2:si))"}
+// CHECK: !{{[0-9]+}} = metadata !{[3 x [2 x i32]]* @EA4, metadata !"a(3:a(2:si))"}
+// CHECK: !{{[0-9]+}} = metadata !{[2 x i32]* @GA1, metadata !"a(2:cv:si)"}
+// CHECK: !{{[0-9]+}} = metadata !{void ([2 x i32]*)* @arrayTypeVariable1,
 // CHECK:       metadata !"f{0}(p(a(2:si)))"}
-// CHECK: !20 = metadata !{void (void ([2 x i32]*)*)* @arrayTypeVariable2,
+// CHECK: !{{[0-9]+}} = metadata !{void (void ([2 x i32]*)*)* @arrayTypeVariable2,
 // CHECK:       metadata !"f{0}(p(f{0}(p(a(2:si)))))"}
-// CHECK: !21 = metadata !{[3 x [2 x i32]]* @GA2, metadata !"a(3:a(2:si))"}
+// CHECK: !{{[0-9]+}} = metadata !{[3 x [2 x i32]]* @GA2, metadata !"a(3:a(2:si))"}
 extern int GA2[3][2];
 extern const volatile int EA1[];
 extern int EA2[2];
@@ -100,16 +108,16 @@ RetType* arrayType(int A1[], int const volatile A2[2], int A3[][2],
 
 
 // test StructureType
-// CHECK: !22 = metadata !{void (%struct.S1*)* @structureType1, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%struct.S1*)* @structureType1, metadata
 // CHECK:       !"f{0}(s(S1){m(ps2){p(s(S2){m(ps3){p(s(S3){m(s1){s(S1){}}})}})}})"}
-// CHECK: !23 = metadata !{void (%struct.S2*)* @structureType2, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%struct.S2*)* @structureType2, metadata
 // CHECK:       !"f{0}(s(S2){m(ps3){p(s(S3){m(s1){s(S1){m(ps2){p(s(S2){})}}}})}})"}
-// CHECK: !24 = metadata !{void (%struct.S3*)* @structureType3, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%struct.S3*)* @structureType3, metadata
 // CHECK:       !"f{0}(s(S3){m(s1){s(S1){m(ps2){p(s(S2){m(ps3){p(s(S3){})}})}}}})"}
-// CHECK: !25 = metadata !{void (%struct.S4*)* @structureType4, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%struct.S4*)* @structureType4, metadata
 // CHECK:       !"f{0}(s(S4){m(s1){s(S1){m(ps2){p(s(S2){m(ps3){p(s(S3){m(s1){s(S1){}}})}})}}}})"}
-// CHECK: !26 = metadata !{%struct.anon* @StructAnon, metadata !"s(){m(A){si}}"}
-// CHECK: !27 = metadata !{i32 (%struct.SB*)* @structureTypeB, metadata
+// CHECK: !{{[0-9]+}} = metadata !{%struct.anon* @StructAnon, metadata !"s(){m(A){si}}"}
+// CHECK: !{{[0-9]+}} = metadata !{i32 (%struct.SB*)* @structureTypeB, metadata
 // CHECK:       !"f{si}(s(SB){m(){b(4:si)},m(){b(2:si)},m(N4){b(4:si)},
 // CHECK:       m(N2){b(2:si)},m(){b(4:ui)},m(){b(4:si)},m(){b(4:c:si)},
 // CHECK:       m(){b(4:c:si)},m(){b(4:cv:si)}})"}
@@ -130,16 +138,16 @@ int structureTypeB(struct SB sb){return StructAnon.A;}
 
 
 // test UnionType
-// CHECK: !28 = metadata !{void (%union.U1*)* @unionType1, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%union.U1*)* @unionType1, metadata
 // CHECK:       !"f{0}(u(U1){m(pu2){p(u(U2){m(pu3){p(u(U3){m(u1){u(U1){}}})}})}})"}
-// CHECK: !29 = metadata !{void (%union.U2*)* @unionType2, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%union.U2*)* @unionType2, metadata
 // CHECK:       !"f{0}(u(U2){m(pu3){p(u(U3){m(u1){u(U1){m(pu2){p(u(U2){})}}}})}})"}
-// CHECK: !30 = metadata !{void (%union.U3*)* @unionType3, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%union.U3*)* @unionType3, metadata
 // CHECK:       !"f{0}(u(U3){m(u1){u(U1){m(pu2){p(u(U2){m(pu3){p(u(U3){})}})}}}})"}
-// CHECK: !31 = metadata !{void (%union.U4*)* @unionType4, metadata
+// CHECK: !{{[0-9]+}} = metadata !{void (%union.U4*)* @unionType4, metadata
 // CHECK:       !"f{0}(u(U4){m(u1){u(U1){m(pu2){p(u(U2){m(pu3){p(u(U3){m(u1){u(U1){}}})}})}}}})"}
-// CHECK: !32 = metadata !{%union.anon* @UnionAnon, metadata !"u(){m(A){si}}"}
-// CHECK: !33 = metadata !{i32 (%union.UB*)* @unionTypeB, metadata
+// CHECK: !{{[0-9]+}} = metadata !{%union.anon* @UnionAnon, metadata !"u(){m(A){si}}"}
+// CHECK: !{{[0-9]+}} = metadata !{i32 (%union.UB*)* @unionTypeB, metadata
 // CHECK:       !"f{si}(u(UB){m(N2){b(2:si)},m(N4){b(4:si)},m(){b(2:si)},
 // CHECK:       m(){b(4:c:si)},m(){b(4:c:si)},m(){b(4:cv:si)},m(){b(4:si)},
 // CHECK:       m(){b(4:si)},m(){b(4:ui)}})"}
@@ -160,17 +168,17 @@ int unionTypeB(union UB ub) {return UnionAnon.A;}
 
 
 // test EnumType
-// CHECK: !34 = metadata !{i32* @EnumAnon, metadata !"e(){m(EA){3}}"}
-// CHECK: !35 = metadata !{i32 (i32)* @enumType, metadata
+// CHECK: !{{[0-9]+}} = metadata !{i32* @EnumAnon, metadata !"e(){m(EA){3}}"}
+// CHECK: !{{[0-9]+}} = metadata !{i32 (i32)* @enumType, metadata
 // CHECK:       !"f{si}(e(E){m(A){7},m(B){6},m(C){5},m(D){0}})"}
 enum E {D, C=5, B, A};
 enum {EA=3} EnumAnon = EA;
 int enumType(enum E e) {return EnumAnon;}
 
 
-// CHECK: !36 = metadata !{i32 ()* @testReDecl, metadata !"f{si}()"}
-// CHECK: !37 = metadata !{[10 x i32]* @After, metadata !"a(10:si)"}
-// CHECK: !38 = metadata !{[10 x i32]* @Before, metadata !"a(10:si)"}
+// CHECK: !{{[0-9]+}} = metadata !{i32 ()* @testReDecl, metadata !"f{si}()"}
+// CHECK: !{{[0-9]+}} = metadata !{[10 x i32]* @After, metadata !"a(10:si)"}
+// CHECK: !{{[0-9]+}} = metadata !{[10 x i32]* @Before, metadata !"a(10:si)"}
 extern int After[];
 extern int Before[10];
 int testReDecl() {return After[0] + Before[0];}
