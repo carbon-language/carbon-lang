@@ -713,8 +713,23 @@ std::pair<uint64_t, std::string> RuntimeDyldCheckerImpl::getStubAddrFor(
     bool IsInsideLoad) const {
 
   auto SI1 = Stubs.find(FileName);
-  if (SI1 == Stubs.end())
-    return std::make_pair(0, ("File '" + FileName + "' not found.\n").str());
+  if (SI1 == Stubs.end()) {
+    std::string ErrorMsg = "File '";
+    ErrorMsg += FileName;
+    ErrorMsg += "' not found. ";
+    if (Stubs.empty())
+      ErrorMsg += "No stubs registered.";
+    else {
+      ErrorMsg += "Available files are:";
+      for (const auto& StubEntry : Stubs) {
+        ErrorMsg += " '";
+        ErrorMsg += StubEntry.first;
+        ErrorMsg += "'";
+      }
+    }
+    ErrorMsg += "\n";
+    return std::make_pair(0, ErrorMsg);
+  }
 
   const SectionStubMap &SectionStubs = SI1->second;
   auto SI2 = SectionStubs.find(SectionName);
