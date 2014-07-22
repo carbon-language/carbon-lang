@@ -56,9 +56,7 @@ static lldb::addr_t findSymbolAddress( Process *proc, ConstString findName )
     lldb_private::Symtab *symtab = exe->GetSymtab( );
     assert( symtab != nullptr );
 
-    int nSyms = symtab->GetNumSymbols( );
-
-    for ( int i = 0; i < symtab->GetNumSymbols( ); i++ )
+    for ( size_t i = 0; i < symtab->GetNumSymbols( ); i++ )
     {
         const Symbol* sym = symtab->SymbolAtIndex( i );
         assert( sym != nullptr );
@@ -403,7 +401,7 @@ DynamicLoaderHexagonDYLD::RendezvousBreakpointHit(void *baton,
             dyld_instance->m_rendezvous.SetRendezvousAddress( structAddr );
 
             if ( log )
-                log->Printf( "Found _rtld_debug structure @ 0x%08x", structAddr );
+                log->Printf( "Found _rtld_debug structure @ 0x%08lx", structAddr );
         }
         else
         {

@@ -244,7 +244,7 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
     lldb::ProcessSP proc = thread.GetProcess( );
 
     // push host data onto target
-    for ( int i = 0; i < args.size( ); i++ )
+    for ( size_t i = 0; i < args.size( ); i++ )
     {
         const ABI::CallArgument &arg = args[i];
         // skip over target values
@@ -269,7 +269,7 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
 
 #if HEX_ABI_DEBUG
     // print the original stack pointer
-    printf( "sp : %04x \n", sp );
+    printf( "sp : %04lx \n", sp );
 #endif
 
     // make sure number of parameters matches prototype
@@ -296,8 +296,6 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
     // pass arguments that are passed via registers
     for ( int i = 0; i < nRegArgs; i++ )
     {
-        // get this parameter type
-        llvm::Type *argType = prototype.getFunctionParamType( i );
         // get the parameter as a u32
         uint32_t param = (uint32_t)args[i].value;
         // write argument into register
@@ -314,7 +312,7 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
         sp -= 4;
 
     // arguments that are passed on the stack
-    for ( int i = nRegArgs, offs=0; i < args.size( ); i++ )
+    for ( size_t i = nRegArgs, offs=0; i < args.size( ); i++ )
     {
         // get the parameter as a u32
         uint32_t param = (uint32_t)args[i].value;
@@ -339,25 +337,13 @@ ABISysV_hexagon::PrepareTrivialCall ( Thread &thread,
         uint32_t data = 0;
         lldb::addr_t addr = sp + i * 4;
         proc->ReadMemory( addr, (void*)&data, sizeof( data ), error );
-        printf( "\n0x%04x 0x%08x ", addr, data );
+        printf( "\n0x%04lx 0x%08x ", addr, data );
         if ( i == 0 ) printf( "<<-- sp" );
     }
     printf( "\n" );
 #endif 
     
     return true;
-}
-
-static bool
-ReadIntegerArgument ( Scalar &scalar,
-                      unsigned int bit_width,
-                      bool is_signed,
-                      Thread &thread,
-                      uint32_t *argument_register_ids,
-                      unsigned int &current_argument_register,
-                      addr_t &current_stack_argument)
-{
-    return false;
 }
 
 bool
