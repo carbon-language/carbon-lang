@@ -142,10 +142,23 @@ Sema::CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     break;
   case Builtin::BI__builtin_stdarg_start:
   case Builtin::BI__builtin_va_start:
-  case Builtin::BI__va_start:
     if (SemaBuiltinVAStart(TheCall))
       return ExprError();
     break;
+  case Builtin::BI__va_start: {
+    switch (Context.getTargetInfo().getTriple().getArch()) {
+    case llvm::Triple::arm:
+    case llvm::Triple::thumb:
+      if (SemaBuiltinVAStartARM(TheCall))
+        return ExprError();
+      break;
+    default:
+      if (SemaBuiltinVAStart(TheCall))
+        return ExprError();
+      break;
+    }
+    break;
+  }
   case Builtin::BI__builtin_isgreater:
   case Builtin::BI__builtin_isgreaterequal:
   case Builtin::BI__builtin_isless:
@@ -1736,6 +1749,58 @@ bool Sema::SemaBuiltinVAStart(CallExpr *TheCall) {
   }
 
   TheCall->setType(Context.VoidTy);
+  return false;
+}
+
+bool Sema::SemaBuiltinVAStartARM(CallExpr *Call) {
+  // void __va_start(va_list *ap, const char *named_addr, size_t slot_size,
+  //                 const char *named_addr);
+
+  Expr *Func = Call->getCallee();
+
+  if (Call->getNumArgs() < 3)
+    return Diag(Call->getLocEnd(),
+                diag::err_typecheck_call_too_few_args_at_least)
+           << 0 /*function call*/ << 3 << Call->getNumArgs();
+
+  // Determine whether the current function is variadic or not.
+  bool IsVariadic;
+  if (BlockScopeInfo *CurBlock = getCurBlock())
+    IsVariadic = CurBlock->TheDecl->isVariadic();
+  else if (FunctionDecl *FD = getCurFunctionDecl())
+    IsVariadic = FD->isVariadic();
+  else if (ObjCMethodDecl *MD = getCurMethodDecl())
+    IsVariadic = MD->isVariadic();
+  else
+    llvm_unreachable("unexpected statement type");
+
+  if (!IsVariadic) {
+    Diag(Func->getLocStart(), diag::err_va_start_used_in_non_variadic_function);
+    return true;
+  }
+
+  // Type-check the first argument normally.
+  if (checkBuiltinArgument(*this, Call, 0))
+    return true;
+
+  static const struct {
+    unsigned ArgNo;
+    QualType Type;
+  } ArgumentTypes[] = {
+    { 1, Context.getPointerType(Context.CharTy.withConst()) },
+    { 2, Context.getSizeType() },
+  };
+
+  for (const auto &AT : ArgumentTypes) {
+    const Expr *Arg = Call->getArg(AT.ArgNo)->IgnoreParens();
+    if (Arg->getType().getCanonicalType() == AT.Type.getCanonicalType())
+      continue;
+    Diag(Arg->getLocStart(), diag::err_typecheck_convert_incompatible)
+      << Arg->getType() << AT.Type << 1 /* different class */
+      << 0 /* qualifier difference */ << 3 /* parameter mismatch */
+      << AT.ArgNo + 1 << Arg->getType() << AT.Type;
+  }
+
   return false;
 }
 
