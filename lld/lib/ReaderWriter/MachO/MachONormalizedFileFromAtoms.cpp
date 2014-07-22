@@ -951,7 +951,12 @@ void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
 }
 
 uint32_t Util::fileFlags() {
-  return 0;  //FIX ME
+  // FIXME: these need to determined at runtime.
+  if (_context.outputMachOType() == MH_OBJECT) {
+    return MH_SUBSECTIONS_VIA_SYMBOLS;
+  } else {
+    return MH_DYLDLINK | MH_NOUNDEFS | MH_TWOLEVEL;
+  }
 }
 
 } // end anonymous namespace

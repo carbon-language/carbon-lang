@@ -185,8 +185,8 @@ const ArchHandler::StubInfo ArchHandler_arm::_sStubInfoArmPIC = {
     0x00, 0xF0, 0x9C, 0xE5,       // ldr	pc, [ip]
     0x00, 0x00, 0x00, 0x00,       // L1: .long fFastStubGOTAtom - (helper+16)
     0x00, 0x00, 0x00, 0x00 },     // L2: .long dyld_stub_binder - (helper+28)
-  { Reference::KindArch::ARM, delta32, 28, 0 },
-  { Reference::KindArch::ARM, delta32, 32, 0 }
+  { Reference::KindArch::ARM, delta32, 28, 0xC },
+  { Reference::KindArch::ARM, delta32, 32, 0x04 }
 };
 
 const ArchHandler::StubInfo &ArchHandler_arm::stubInfo() {
@@ -548,7 +548,7 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
                                            "subtrahend label is not in atom"));
     *kind = delta32;
     value = clearThumbBit(instruction, *target);
-    *addend = value - (toAddress - fromAddress);
+    *addend = (int32_t)(value - (toAddress - fixupAddress));
   } else if (funcRel) {
     toAddress = reloc1.value;
     fromAddress = reloc2.value;
@@ -618,7 +618,6 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   assert(ref.kindArch() == Reference::KindArch::ARM);
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int32_t displacement;
-  // FIXME: these writes may need a swap.
   switch (ref.kindValue()) {
   case thumb_b22:
     // FIXME
@@ -652,10 +651,10 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
     // FIXME
     break;
   case pointer32:
-    // FIXME
+    write32(*loc32, _swap, targetAddress + ref.addend());
     break;
   case delta32:
-    // FIXME
+    write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
     break;
   case lazyPointer:
   case lazyImmediateLocation:
