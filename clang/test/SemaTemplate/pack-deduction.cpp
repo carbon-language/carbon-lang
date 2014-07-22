@@ -37,3 +37,31 @@ namespace RetainExprPacks {
   template<typename ...Ts> int g(X<Ts...>, decltype(f(Ts()...)));
   int n = g<int, int>(X<int, int, int>(), 0);
 }
+
+namespace PR14615 {
+  namespace comment0 {
+    template <class A, class...> struct X {};
+    template <class... B> struct X<int, B...> {
+      typedef int type;
+      struct valid {};
+    };
+    template <typename A, typename... B, typename T = X<A, B...>,
+              typename = typename T::valid>
+    typename T::type check(int);
+    int i = check<int, char>(1);
+  }
+
+  namespace comment2 {
+    template <class...> struct X;
+    template <typename... B, typename X<B...>::type I = 0>
+    char check(B...); // expected-note {{undefined template 'PR14615::comment2::X<char, int>'}}
+    void f() { check<char>(1, 2); } // expected-error {{no matching function}}
+  }
+
+  namespace comment3 {
+    template <class...> struct X;
+    template <typename... B, typename X<B...>::type I = (typename X<B...>::type)0>
+    char check(B...); // expected-note {{undefined template 'PR14615::comment3::X<char, int>'}}
+    void f() { check<char>(1, 2); } // expected-error {{no matching function}}
+  }
+}
