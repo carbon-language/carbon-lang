@@ -232,13 +232,12 @@ private:
 // next visit.
 class ExportedSymbolRenameFile : public impl::VirtualArchiveLibraryFile {
 public:
-  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx)
-      : VirtualArchiveLibraryFile("<export>") {
+  ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx,
+                           std::shared_ptr<ResolvableSymbols> syms)
+      : VirtualArchiveLibraryFile("<export>"), _syms(syms) {
     for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
       _exportedSyms.insert(desc.name);
   }
-
-  void addResolvableSymbols(File *file) { _syms.add(file); }
 
   const File *find(StringRef sym, bool dataSymbolOnly) const override {
     if (_exportedSyms.count(sym) == 0)
@@ -254,7 +253,7 @@ private:
   // by @number suffix.
   bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
     sym.append("@");
-    const std::set<std::string> &defined = _syms.defined();
+    const std::set<std::string> &defined = _syms->defined();
     auto it = defined.lower_bound(sym);
     for (auto e = defined.end(); it != e; ++it) {
       if (!StringRef(*it).startswith(sym))
@@ -271,7 +270,7 @@ private:
   }
 
   std::set<std::string> _exportedSyms;
-  mutable ResolvableSymbols _syms;
+  mutable std::shared_ptr<ResolvableSymbols> _syms;
   mutable llvm::BumpPtrAllocator _alloc;
 };
 

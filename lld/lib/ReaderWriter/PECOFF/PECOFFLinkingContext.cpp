@@ -119,14 +119,15 @@ bool PECOFFLinkingContext::createImplicitFiles(
   getInputGraph().insertElementAt(std::move(impFileNode),
                                   InputGraph::Position::END);
 
+  std::shared_ptr<pecoff::ResolvableSymbols> syms(
+      new pecoff::ResolvableSymbols());
+  getInputGraph().registerObserver([=](File *file) { syms->add(file); });
+
   // Create a file for dllexported symbols.
   std::unique_ptr<SimpleFileNode> exportNode(new SimpleFileNode("<export>"));
-  pecoff::ExportedSymbolRenameFile *renameFile =
-      new pecoff::ExportedSymbolRenameFile(*this);
+  auto *renameFile = new pecoff::ExportedSymbolRenameFile(*this, syms);
   exportNode->appendInputFile(std::unique_ptr<File>(renameFile));
   getLibraryGroup()->addFile(std::move(exportNode));
-  getInputGraph().registerObserver(
-      [=](File *file) { renameFile->addResolvableSymbols(file); });
   return true;
 }
 
