@@ -771,7 +771,7 @@ static unsigned getPatternSize(const TreePatternNode *P,
 
 /// Compute the complexity metric for the input pattern.  This roughly
 /// corresponds to the number of nodes that are covered.
-int PatternToMatch::
+unsigned PatternToMatch::
 getPatternComplexity(const CodeGenDAGPatterns &CGP) const {
   return getPatternSize(getSrcPattern(), CGP) + getAddedComplexity();
 }
