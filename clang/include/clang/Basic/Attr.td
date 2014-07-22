@@ -1767,6 +1767,18 @@ def MSVtorDisp : InheritableAttr {
   let Documentation = [Undocumented];
 }
 
+def InitSeg : Attr {
+  let Spellings = [Pragma<"", "init_seg">];
+  let Args = [StringArgument<"Section">];
+  let SemaHandler = 0;
+  let Documentation = [InitSegDocs];
+  let AdditionalMembers = [{
+  void printPrettyPragma(raw_ostream &OS, const PrintingPolicy &Policy) const {
+    OS << '(' << getSection() << ')';
+  }
+  }];
+}
+
 def Unaligned : IgnoredAttr {
   let Spellings = [Keyword<"__unaligned">];
 }

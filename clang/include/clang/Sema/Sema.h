@@ -330,6 +330,10 @@ public:
   PragmaStack<StringLiteral *> ConstSegStack;
   PragmaStack<StringLiteral *> CodeSegStack;
 
+  /// Last section used with #pragma init_seg.
+  StringLiteral *CurInitSeg;
+  SourceLocation CurInitSegLoc;
+
   /// VisContext - Manages the stack for \#pragma GCC visibility.
   void *VisContext; // Really a "PragmaVisStack*"
 
@@ -7178,6 +7182,10 @@ public:
   /// \brief Called on well formed \#pragma section().
   void ActOnPragmaMSSection(SourceLocation PragmaLocation,
                             int SectionFlags, StringLiteral *SegmentName);
+
+  /// \brief Called on well-formed \#pragma init_seg().
+  void ActOnPragmaMSInitSeg(SourceLocation PragmaLocation,
+                            StringLiteral *SegmentName);
 
   /// ActOnPragmaDetectMismatch - Call on well-formed \#pragma detect_mismatch
   void ActOnPragmaDetectMismatch(StringRef Name, StringRef Value);

@@ -652,12 +652,61 @@ bool Parser::HandlePragmaMSSegment(StringRef PragmaName,
   return true;
 }
 
+// #pragma init_seg({ compiler | lib | user | "section-name" [, func-name]} )
 bool Parser::HandlePragmaMSInitSeg(StringRef PragmaName,
                                    SourceLocation PragmaLocation) {
-  PP.Diag(PragmaLocation,
-          PP.getDiagnostics().getCustomDiagID(
-              DiagnosticsEngine::Error, "'#pragma init_seg' not implemented."));
-  return false;
+  if (ExpectAndConsume(tok::l_paren, diag::warn_pragma_expected_lparen,
+                       PragmaName))
+    return false;
+
+  // Parse either the known section names or the string section name.
+  StringLiteral *SegmentName = nullptr;
+  if (Tok.isAnyIdentifier()) {
+    auto *II = Tok.getIdentifierInfo();
+    StringRef Section = llvm::StringSwitch<StringRef>(II->getName())
+                            .Case("compiler", "\".CRT$XCC\"")
+                            .Case("lib", "\".CRT$XCL\"")
+                            .Case("user", "\".CRT$XCU\"")
+                            .Default("");
+
+    if (!Section.empty()) {
+      // Pretend the user wrote the appropriate string literal here.
+      Token Toks[1];
+      Toks[0].startToken();
+      Toks[0].setKind(tok::string_literal);
+      Toks[0].setLocation(Tok.getLocation());
+      Toks[0].setLiteralData(Section.data());
+      Toks[0].setLength(Section.size());
+      SegmentName =
+          cast<StringLiteral>(Actions.ActOnStringLiteral(Toks, nullptr).get());
+      PP.Lex(Tok);
+    }
+  } else if (Tok.is(tok::string_literal)) {
+    ExprResult StringResult = ParseStringLiteralExpression();
+    if (StringResult.isInvalid())
+      return false;
+    SegmentName = cast<StringLiteral>(StringResult.get());
+    if (SegmentName->getCharByteWidth() != 1) {
+      PP.Diag(PragmaLocation, diag::warn_pragma_expected_non_wide_string)
+          << PragmaName;
+      return false;
+    }
+    // FIXME: Add support for the '[, func-name]' part of the pragma.
+  }
+
+  if (!SegmentName) {
+    PP.Diag(PragmaLocation, diag::warn_pragma_expected_init_seg) << PragmaName;
+    return false;
+  }
+
+  if (ExpectAndConsume(tok::r_paren, diag::warn_pragma_expected_rparen,
+                       PragmaName) ||
+      ExpectAndConsume(tok::eof, diag::warn_pragma_extra_tokens_at_eol,
+                       PragmaName))
+    return false;
+
+  Actions.ActOnPragmaMSInitSeg(PragmaLocation, SegmentName);
+  return true;
 }
 
 struct PragmaLoopHintInfo {

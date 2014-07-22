@@ -725,7 +725,7 @@ private:
   /// returned.
   bool ExpectAndConsume(tok::TokenKind ExpectedTok,
                         unsigned Diag = diag::err_expected,
-                        const char *DiagMsg = "");
+                        StringRef DiagMsg = "");
 
   /// \brief The parser expects a semicolon and, if present, will consume it.
   ///

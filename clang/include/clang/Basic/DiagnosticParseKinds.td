@@ -800,6 +800,9 @@ def warn_pragma_expected_section_push_pop_or_name : Warning<
 def warn_pragma_expected_section_label_or_name : Warning<
   "expected a stack label or a string literal for the section name in '#pragma %0' - ignored">,
   InGroup<IgnoredPragmas>;
+def warn_pragma_expected_init_seg : Warning<
+  "expected 'compiler', 'lib', 'user', or a string literal for the section name in '#pragma %0' - ignored">,
+  InGroup<IgnoredPragmas>;
 def warn_pragma_expected_integer : Warning<
   "expected integer between %0 and %1 inclusive in '#pragma %2' - ignored">,
   InGroup<IgnoredPragmas>;

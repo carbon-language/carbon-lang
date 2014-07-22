@@ -36,6 +36,22 @@ global variable or function should be in after translation.
   let Heading = "section (gnu::section, __declspec(allocate))";
 }
 
+def InitSegDocs : Documentation {
+  let Category = DocCatVariable;
+  let Content = [{
+The attribute applied by ``pragma init_seg()`` controls the section into
+which global initialization function pointers are emitted.  It is only
+available with ``-fms-extensions``.  Typically, this function pointer is
+emitted into ``.CRT$XCU`` on Windows.  The user can change the order of
+initialization by using a different section name with the same
+``.CRT$XC`` prefix and a suffix that sorts lexicographically before or
+after the standard ``.CRT$XCU`` sections.  See the init_seg_
+documentation on MSDN for more information.
+
+.. _init_seg: http://msdn.microsoft.com/en-us/library/7977wcck(v=vs.110).aspx
+  }];
+}
+
 def TLSModelDocs : Documentation {
   let Category = DocCatVariable;
   let Content = [{

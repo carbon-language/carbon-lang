@@ -1103,6 +1103,9 @@ private:
                                     llvm::GlobalVariable *Addr,
                                     bool PerformInit);
 
+  void EmitPointerToInitFunc(const VarDecl *VD, llvm::GlobalVariable *Addr,
+                             llvm::Function *InitFunc, InitSegAttr *ISA);
+
   // FIXME: Hardcoding priority here is gross.
   void AddGlobalCtor(llvm::Function *Ctor, int Priority = 65535,
                      llvm::Constant *AssociatedData = 0);
