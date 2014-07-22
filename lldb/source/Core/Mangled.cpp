@@ -20,6 +20,14 @@
 
 #ifdef LLDB_USE_BUILTIN_DEMANGLER
 
+// Provide a fast-path demangler implemented in FastDemangle.cpp until it can
+// replace the existing C++ demangler with a complete implementation
+namespace lldb_private
+{
+    extern char * FastDemangle (const char * mangled_name,
+                                long mangled_name_length);
+}
+
 //----------------------------------------------------------------------
 // Inlined copy of:
 // http://llvm.org/svn/llvm-project/libcxxabi/trunk/src/cxa_demangle.cpp
@@ -5129,7 +5137,6 @@ Mangled::SetValue (const ConstString &name)
     }
 }
 
-
 //----------------------------------------------------------------------
 // Generate the demangled name on demand using this accessor. Code in
 // this class will need to use this accessor if it wishes to decode
@@ -5151,6 +5158,7 @@ Mangled::GetDemangledName () const
 
         // Don't bother running anything that isn't mangled
         const char *mangled_cstr = m_mangled.GetCString();
+        long mangled_length = m_mangled.GetLength();
         if (cstring_is_mangled(mangled_cstr))
         {
             if (!m_mangled.GetMangledCounterpart(m_demangled))
@@ -5158,7 +5166,13 @@ Mangled::GetDemangledName () const
                 // We didn't already mangle this name, demangle it and if all goes well
                 // add it to our map.
 #ifdef LLDB_USE_BUILTIN_DEMANGLER
-                char *demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
+                // Try to use the fast-path demangler first for the
+                // performance win, falling back to the full demangler only
+                // when necessary
+                char *demangled_name = FastDemangle (mangled_cstr,
+                                                     mangled_length);
+                if (!demangled_name)
+                    demangled_name = __cxa_demangle (mangled_cstr, NULL, NULL, NULL);
 #elif defined(_MSC_VER)
                 // Cannot demangle on msvc.
                 char *demangled_name = nullptr;

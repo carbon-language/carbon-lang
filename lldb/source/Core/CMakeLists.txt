@@ -25,6 +25,7 @@ add_lldb_library(lldbCore
   EmulateInstruction.cpp
   Error.cpp
   Event.cpp
+  FastDemangle.cpp
   FileLineResolver.cpp
   FileSpecList.cpp
   History.cpp
