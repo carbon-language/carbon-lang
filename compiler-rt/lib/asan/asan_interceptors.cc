@@ -295,6 +295,14 @@ INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
 }
 #endif
 
+#if SANITIZER_WINDOWS
+INTERCEPTOR_WINAPI(void, RaiseException, void *a, void *b, void *c, void *d) {
+  CHECK(REAL(RaiseException));
+  __asan_handle_no_return();
+  REAL(RaiseException)(a, b, c, d);
+}
+#endif
+
 #if ASAN_INTERCEPT_MLOCKX
 // intercept mlock and friends.
 // Since asan maps 16T of RAM, mlock is completely unfriendly to asan.
@@ -728,6 +736,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
 namespace __asan {
 void InitializeWindowsInterceptors() {
   ASAN_INTERCEPT_FUNC(CreateThread);
+  ASAN_INTERCEPT_FUNC(RaiseException);
 }
 
 }  // namespace __asan
