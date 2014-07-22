@@ -1,6 +1,7 @@
 # RUN: llvm-mc -triple=arm64-apple-ios7.0.0 -code-model=small -relocation-model=pic -filetype=obj -o %t.o %s
 # RUN: llvm-rtdyld -triple=arm64-apple-ios7.0.0 -verify -check=%s %t.o
 # RUN: rm %t.o
+# XFAIL: mips
 
 # FIXME: Add GOT relocation tests once GOT testing is supported.
 
