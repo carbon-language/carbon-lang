@@ -250,7 +250,7 @@ SBCommunication::SetReadThreadBytesReceivedCallback
     if (log)
         log->Printf ("SBCommunication(%p)::SetReadThreadBytesReceivedCallback (callback=%p, baton=%p) => %i",
                      static_cast<void*>(m_opaque),
-                     reinterpret_cast<void*>(callback),
+                     reinterpret_cast<void*>(reinterpret_cast<intptr_t>(callback)),
                      static_cast<void*>(callback_baton), result);
 
     return result;
