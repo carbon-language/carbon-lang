@@ -1311,8 +1311,7 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
       Cmp, IP, false, MDBuilder(*C).createBranchWeights(1, 100000));
   IRB.SetInsertPoint(Ins);
   IRB.SetCurrentDebugLocation(EntryLoc);
-  // We pass &F to __sanitizer_cov. We could avoid this and rely on
-  // GET_CALLER_PC, but having the PC of the first instruction is just nice.
+  // __sanitizer_cov gets the PC of the instruction using GET_CALLER_PC.
   IRB.CreateCall(AsanCovFunction);
   StoreInst *Store = IRB.CreateStore(ConstantInt::get(Int8Ty, 1), Guard);
   Store->setAtomic(Monotonic);
@@ -1324,7 +1323,7 @@ void AddressSanitizer::InjectCoverageAtBlock(Function &F, BasicBlock &BB) {
 // as the function and inject this code into the entry block (-asan-coverage=1)
 // or all blocks (-asan-coverage=2):
 // if (*Guard) {
-//    __sanitizer_cov(&F);
+//    __sanitizer_cov();
 //    *Guard = 1;
 // }
 // The accesses to Guard are atomic. The rest of the logic is
