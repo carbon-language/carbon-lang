@@ -14,11 +14,11 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Target/Platform.h"
+#include "Plugins/Platform/POSIX/PlatformPOSIX.h"
 
 namespace lldb_private {
 
-    class PlatformLinux : public Platform
+    class PlatformLinux : public PlatformPOSIX
     {
     public:
 
@@ -45,11 +45,11 @@ namespace lldb_private {
         static const char *
         GetPluginDescriptionStatic (bool is_host);
 
-        virtual lldb_private::ConstString
-        GetPluginName();
+        lldb_private::ConstString
+        GetPluginName() override;
         
-        virtual uint32_t
-        GetPluginVersion()
+        uint32_t
+        GetPluginVersion() override
         {
             return 1;
         }
@@ -57,51 +57,47 @@ namespace lldb_private {
         //------------------------------------------------------------
         // lldb_private::Platform functions
         //------------------------------------------------------------
-        virtual Error
+        Error
         ResolveExecutable (const FileSpec &exe_file,
                            const ArchSpec &arch,
                            lldb::ModuleSP &module_sp,
-                           const FileSpecList *module_search_paths_ptr);
+                           const FileSpecList *module_search_paths_ptr) override;
 
-        virtual const char *
-        GetDescription ()
+        const char *
+        GetDescription () override
         {
             return GetPluginDescriptionStatic(IsHost());
         }
 
-        virtual void
-        GetStatus (Stream &strm);
+        void
+        GetStatus (Stream &strm) override;
 
-        virtual Error
+        Error
         GetFileWithUUID (const FileSpec &platform_file,
-                         const UUID* uuid, FileSpec &local_file);
+                         const UUID* uuid, FileSpec &local_file) override;
 
-        virtual bool
-        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info);
+        bool
+        GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &proc_info) override;
 
-        virtual bool
-        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch);
+        bool
+        GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch) override;
 
-        virtual size_t
+        size_t
         GetSoftwareBreakpointTrapOpcode (Target &target, 
-                                         BreakpointSite *bp_site);
+                                         BreakpointSite *bp_site) override;
 
-        virtual lldb_private::Error
-        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info);
+        lldb_private::Error
+        LaunchProcess (lldb_private::ProcessLaunchInfo &launch_info) override;
 
-        virtual lldb::ProcessSP
+        lldb::ProcessSP
         Attach(ProcessAttachInfo &attach_info, Debugger &debugger,
-               Target *target, Listener &listener, Error &error);
+               Target *target, Listener &listener, Error &error) override;
 
-        // Linux processes can not be launched by spawning and attaching.
-        virtual bool
-        CanDebugProcess ()
-        {
-            return false;
-        }
+        bool
+        CanDebugProcess () override;
 
-        virtual void
-        CalculateTrapHandlerSymbolNames ();
+        void
+        CalculateTrapHandlerSymbolNames () override;
 
         Error
         LaunchNativeProcess (
@@ -113,9 +109,6 @@ namespace lldb_private {
         AttachNativeProcess (lldb::pid_t pid,
                              lldb_private::NativeProcessProtocol::NativeDelegate &native_delegate,
                              NativeProcessProtocolSP &process_sp) override;
-
-    protected:
-        lldb::PlatformSP m_remote_platform_sp; // Allow multiple ways to connect to a remote darwin OS
 
     private:
         DISALLOW_COPY_AND_ASSIGN (PlatformLinux);

@@ -33,7 +33,16 @@ public:
     //------------------------------------------------------------
     virtual lldb_private::OptionGroupOptions*
     GetConnectionOptions (lldb_private::CommandInterpreter& interpreter);
-    
+
+    const char *
+    GetHostname () override;
+
+    const char *
+    GetUserName (uint32_t uid) override;
+
+    const char *
+    GetGroupName (uint32_t gid) override;
+
     virtual lldb_private::Error
     PutFile (const lldb_private::FileSpec& source,
              const lldb_private::FileSpec& destination,
@@ -79,7 +88,22 @@ public:
     
     virtual bool
     SetRemoteWorkingDirectory(const lldb_private::ConstString &path);
-    
+
+    bool
+    GetRemoteOSVersion () override;
+
+    bool
+    GetRemoteOSBuildString (std::string &s) override;
+
+    bool
+    GetRemoteOSKernelDescription (std::string &s) override;
+
+    lldb_private::ArchSpec
+    GetRemoteSystemArchitecture () override;
+
+    bool
+    IsConnected () const override;
+
     virtual lldb_private::Error
     RunShellCommand (const char *command,           // Shouldn't be NULL
                      const char *working_dir,       // Pass NULL to use the current working directory
@@ -103,6 +127,13 @@ public:
     virtual lldb_private::Error
     Unlink (const char *path);
 
+    lldb::ProcessSP
+    DebugProcess (lldb_private::ProcessLaunchInfo &launch_info,
+                  lldb_private::Debugger &debugger,
+                  lldb_private::Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                  lldb_private::Listener &listener,
+                  lldb_private::Error &error) override;
+
     virtual std::string
     GetPlatformSpecificConnectionInformation();
     
@@ -113,6 +144,12 @@ public:
 
     virtual void
     CalculateTrapHandlerSymbolNames ();
+
+    lldb_private::Error
+    ConnectRemote (lldb_private::Args& args) override;
+
+    lldb_private::Error
+    DisconnectRemote () override;
 
 protected:
     std::unique_ptr<lldb_private::OptionGroupOptions> m_options;

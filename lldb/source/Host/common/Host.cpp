@@ -1093,6 +1093,29 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                         ::strncpy (framework_pos, "/Resources", PATH_MAX - (framework_pos - raw_path));
 #endif
                     }
+#elif defined (__linux__) || defined (__FreeBSD__) || defined (__NetBSD__)
+                    // Linux/*BSD will attempt to replace a */lib with */bin as the base directory for
+                    // helper exe programs.  This will fail if the /lib and /bin directories are rooted in entirely
+                    // different trees.
+                    if (log)
+                        log->Printf ("Host::%s() attempting to derive the bin path (ePathTypeSupportExecutableDir) from this path: %s", __FUNCTION__, raw_path);
+                    char *lib_pos = ::strstr (raw_path, "/lib");
+                    if (lib_pos != nullptr)
+                    {
+                        // First terminate the raw path at the start of lib.
+                        *lib_pos = '\0';
+
+                        // Now write in bin in place of lib.
+                        ::strncpy (lib_pos, "/bin", PATH_MAX - (lib_pos - raw_path));
+
+                        if (log)
+                            log->Printf ("Host::%s() derived the bin path as: %s", __FUNCTION__, raw_path);
+                    }
+                    else
+                    {
+                        if (log)
+                            log->Printf ("Host::%s() failed to find /lib/liblldb within the shared lib path, bailing on bin path construction", __FUNCTION__);
+                    }
 #endif  // #if defined (__APPLE__)
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_support_exe_dir.SetCString(resolved_path);

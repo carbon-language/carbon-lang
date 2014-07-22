@@ -24,6 +24,7 @@
 #include "lldb/Core/ConnectionFileDescriptor.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/PluginManager.h"
@@ -346,9 +347,13 @@ PlatformRemoteGDBServer::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &p
 Error
 PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
+    Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PLATFORM));
     Error error;
     lldb::pid_t pid = LLDB_INVALID_PROCESS_ID;
-    
+
+    if (log)
+        log->Printf ("PlatformRemoteGDBServer::%s() called", __FUNCTION__);
+
     m_gdb_client.SetSTDIN ("/dev/null");
     m_gdb_client.SetSTDOUT ("/dev/null");
     m_gdb_client.SetSTDERR ("/dev/null");
@@ -378,7 +383,9 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
     const char *arch_triple = arch_spec.GetTriple().str().c_str();
     
     m_gdb_client.SendLaunchArchPacket(arch_triple);
-    
+    if (log)
+        log->Printf ("PlatformRemoteGDBServer::%s() set launch architecture triple to '%s'", __FUNCTION__, arch_triple ? arch_triple : "<NULL>");
+
     const uint32_t old_packet_timeout = m_gdb_client.SetPacketTimeout (5);
     int arg_packet_err = m_gdb_client.SendArgumentsPacket (launch_info);
     m_gdb_client.SetPacketTimeout (old_packet_timeout);
@@ -389,11 +396,23 @@ PlatformRemoteGDBServer::LaunchProcess (ProcessLaunchInfo &launch_info)
         {
             pid = m_gdb_client.GetCurrentProcessID ();
             if (pid != LLDB_INVALID_PROCESS_ID)
+            {
                 launch_info.SetProcessID (pid);
+                if (log)
+                    log->Printf ("PlatformRemoteGDBServer::%s() pid %" PRIu64 " launched successfully", __FUNCTION__, pid);
+            }
+            else
+            {
+                if (log)
+                    log->Printf ("PlatformRemoteGDBServer::%s() launch succeeded but we didn't get a valid process id back!", __FUNCTION__);
+                // FIXME isn't this an error condition? Do we need to set an error here?  Check with Greg.
+            }
         }
         else
         {
             error.SetErrorString (error_str.c_str());
+            if (log)
+                log->Printf ("PlatformRemoteGDBServer::%s() launch failed: %s", __FUNCTION__, error.AsCString ());
         }
     }
     else

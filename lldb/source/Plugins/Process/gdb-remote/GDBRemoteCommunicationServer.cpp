@@ -1824,14 +1824,18 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
 #ifdef _WIN32
     return SendErrorResponse(9);
 #else
+    Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
+
     // Spawn a local debugserver as a platform so we can then attach or launch
     // a process...
 
     if (m_is_platform)
     {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s() called", __FUNCTION__);
+
         // Sleep and wait a bit for debugserver to start to listen...
         ConnectionFileDescriptor file_conn;
-        Error error;
         std::string hostname;
         // TODO: /tmp/ should not be hardcoded. User might want to override /tmp
         // with the TMPDIR environment variable
@@ -1852,53 +1856,57 @@ GDBRemoteCommunicationServer::Handle_qLaunchGDBServer (StringExtractorGDBRemote 
         // Spawn a new thread to accept the port that gets bound after
         // binding to port 0 (zero).
 
+        // Spawn a debugserver and try to get the port it listens to.
+        ProcessLaunchInfo debugserver_launch_info;
+        if (hostname.empty())
+            hostname = "127.0.0.1";
+        if (log)
+            log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);
+
+        debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
+
+        Error error = StartDebugserverProcess (hostname.empty() ? NULL : hostname.c_str(),
+                                         port,
+                                         debugserver_launch_info,
+                                         port);
+
+        lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
+
+
+        if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+        {
+            Mutex::Locker locker (m_spawned_pids_mutex);
+            m_spawned_pids.insert(debugserver_pid);
+            if (port > 0)
+                AssociatePortWithProcess(port, debugserver_pid);
+        }
+        else
+        {
+            if (port > 0)
+                FreePort (port);
+        }
+
         if (error.Success())
         {
-            // Spawn a debugserver and try to get the port it listens to.
-            ProcessLaunchInfo debugserver_launch_info;
-            if (hostname.empty())
-                hostname = "127.0.0.1";
-            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
             if (log)
-                log->Printf("Launching debugserver with: %s:%u...\n", hostname.c_str(), port);
+                log->Printf ("GDBRemoteCommunicationServer::%s() debugserver launched successfully as pid %" PRIu64, __FUNCTION__, debugserver_pid);
 
-            debugserver_launch_info.SetMonitorProcessCallback(ReapDebugserverProcess, this, false);
-            
-            error = StartDebugserverProcess (hostname.empty() ? NULL : hostname.c_str(),
-                                             port,
-                                             debugserver_launch_info,
-                                             port);
+            char response[256];
+            const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
+            assert (response_len < (int)sizeof(response));
+            PacketResult packet_result = SendPacketNoLock (response, response_len);
 
-            lldb::pid_t debugserver_pid = debugserver_launch_info.GetProcessID();
-
-
-            if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+            if (packet_result != PacketResult::Success)
             {
-                Mutex::Locker locker (m_spawned_pids_mutex);
-                m_spawned_pids.insert(debugserver_pid);
-                if (port > 0)
-                    AssociatePortWithProcess(port, debugserver_pid);
+                if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
+                    ::kill (debugserver_pid, SIGINT);
             }
-            else
-            {
-                if (port > 0)
-                    FreePort (port);
-            }
-
-            if (error.Success())
-            {
-                char response[256];
-                const int response_len = ::snprintf (response, sizeof(response), "pid:%" PRIu64 ";port:%u;", debugserver_pid, port + m_port_offset);
-                assert (response_len < (int)sizeof(response));
-                PacketResult packet_result = SendPacketNoLock (response, response_len);
-
-                if (packet_result != PacketResult::Success)
-                {
-                    if (debugserver_pid != LLDB_INVALID_PROCESS_ID)
-                        ::kill (debugserver_pid, SIGINT);
-                }
-                return packet_result;
-            }
+            return packet_result;
+        }
+        else
+        {
+            if (log)
+                log->Printf ("GDBRemoteCommunicationServer::%s() debugserver launch failed: %s", __FUNCTION__, error.AsCString ());
         }
     }
     return SendErrorResponse (9);

@@ -20,6 +20,7 @@
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Target/ProcessLaunchInfo.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -55,6 +56,16 @@ PlatformPOSIX::GetConnectionOptions (lldb_private::CommandInterpreter& interpret
         m_options->Append(new OptionGroupPlatformCaching());
     }
     return m_options.get();
+}
+
+bool
+PlatformPOSIX::IsConnected () const
+{
+    if (IsHost())
+        return true;
+    else if (m_remote_platform_sp)
+        return m_remote_platform_sp->IsConnected();
+    return false;
 }
 
 lldb_private::Error
@@ -587,6 +598,176 @@ PlatformPOSIX::SetRemoteWorkingDirectory(const lldb_private::ConstString &path)
         return m_remote_platform_sp->SetRemoteWorkingDirectory(path);
     else
         return Platform::SetRemoteWorkingDirectory(path);
+}
+
+bool
+PlatformPOSIX::GetRemoteOSVersion ()
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetOSVersion (m_major_os_version,
+                                                   m_minor_os_version,
+                                                   m_update_os_version);
+    return false;
+}
+
+bool
+PlatformPOSIX::GetRemoteOSBuildString (std::string &s)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetRemoteOSBuildString (s);
+    s.clear();
+    return false;
+}
+
+bool
+PlatformPOSIX::GetRemoteOSKernelDescription (std::string &s)
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetRemoteOSKernelDescription (s);
+    s.clear();
+    return false;
+}
+
+// Remote Platform subclasses need to override this function
+ArchSpec
+PlatformPOSIX::GetRemoteSystemArchitecture ()
+{
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetRemoteSystemArchitecture ();
+    return ArchSpec();
+}
+
+const char *
+PlatformPOSIX::GetHostname ()
+{
+    if (IsHost())
+        return Platform::GetHostname();
+
+    if (m_remote_platform_sp)
+        return m_remote_platform_sp->GetHostname ();
+    return NULL;
+}
+
+const char *
+PlatformPOSIX::GetUserName (uint32_t uid)
+{
+    // Check the cache in Platform in case we have already looked this uid up
+    const char *user_name = Platform::GetUserName(uid);
+    if (user_name)
+        return user_name;
+
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetUserName(uid);
+    return NULL;
+}
+
+const char *
+PlatformPOSIX::GetGroupName (uint32_t gid)
+{
+    const char *group_name = Platform::GetGroupName(gid);
+    if (group_name)
+        return group_name;
+
+    if (IsRemote() && m_remote_platform_sp)
+        return m_remote_platform_sp->GetGroupName(gid);
+    return NULL;
+}
+
+Error
+PlatformPOSIX::ConnectRemote (Args& args)
+{
+    Error error;
+    if (IsHost())
+    {
+        error.SetErrorStringWithFormat ("can't connect to the host platform '%s', always connected", GetPluginName().GetCString());
+    }
+    else
+    {
+        if (!m_remote_platform_sp)
+            m_remote_platform_sp = Platform::Create ("remote-gdb-server", error);
+
+        if (m_remote_platform_sp && error.Success())
+            error = m_remote_platform_sp->ConnectRemote (args);
+        else
+            error.SetErrorString ("failed to create a 'remote-gdb-server' platform");
+
+        if (error.Fail())
+            m_remote_platform_sp.reset();
+    }
+
+    if (error.Success() && m_remote_platform_sp)
+    {
+        if (m_options.get())
+        {
+            OptionGroupOptions* options = m_options.get();
+            OptionGroupPlatformRSync* m_rsync_options = (OptionGroupPlatformRSync*)options->GetGroupWithOption('r');
+            OptionGroupPlatformSSH* m_ssh_options = (OptionGroupPlatformSSH*)options->GetGroupWithOption('s');
+            OptionGroupPlatformCaching* m_cache_options = (OptionGroupPlatformCaching*)options->GetGroupWithOption('c');
+
+            if (m_rsync_options->m_rsync)
+            {
+                SetSupportsRSync(true);
+                SetRSyncOpts(m_rsync_options->m_rsync_opts.c_str());
+                SetRSyncPrefix(m_rsync_options->m_rsync_prefix.c_str());
+                SetIgnoresRemoteHostname(m_rsync_options->m_ignores_remote_hostname);
+            }
+            if (m_ssh_options->m_ssh)
+            {
+                SetSupportsSSH(true);
+                SetSSHOpts(m_ssh_options->m_ssh_opts.c_str());
+            }
+            SetLocalCacheDirectory(m_cache_options->m_cache_dir.c_str());
+        }
+    }
+
+    return error;
+}
+
+Error
+PlatformPOSIX::DisconnectRemote ()
+{
+    Error error;
+
+    if (IsHost())
+    {
+        error.SetErrorStringWithFormat ("can't disconnect from the host platform '%s', always connected", GetPluginName().GetCString());
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            error = m_remote_platform_sp->DisconnectRemote ();
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return error;
+}
+
+lldb::ProcessSP
+PlatformPOSIX::DebugProcess (ProcessLaunchInfo &launch_info,
+                              Debugger &debugger,
+                              Target *target,       // Can be NULL, if NULL create a new target, else use existing one
+                              Listener &listener,
+                              Error &error)
+{
+    ProcessSP process_sp;
+
+    if (IsHost())
+    {
+        // We are going to hand this process off to debugserver which will be in charge of setting the exit status.
+        // We still need to reap it from lldb but if we let the monitor thread also set the exit status, we set up a
+        // race between debugserver & us for who will find out about the debugged process's death.
+        launch_info.GetFlags().Set(eLaunchFlagDontSetExitStatus);
+        process_sp = Platform::DebugProcess (launch_info, debugger, target, listener, error);
+    }
+    else
+    {
+        if (m_remote_platform_sp)
+            process_sp = m_remote_platform_sp->DebugProcess (launch_info, debugger, target, listener, error);
+        else
+            error.SetErrorString ("the platform is not currently connected");
+    }
+    return process_sp;
+
 }
 
 void

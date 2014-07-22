@@ -2368,7 +2368,8 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
     
     if (!launch_info.GetArchitecture().IsValid())
         launch_info.GetArchitecture() = GetArchitecture();
-    
+
+    // If we're not already connected to the process, and if we have a platform that can launch a process for debugging, go ahead and do that here.
     if (state != eStateConnected && platform_sp && platform_sp->CanDebugProcess ())
     {
         m_process_sp = GetPlatform()->DebugProcess (launch_info,
@@ -2385,10 +2386,12 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
         }
         else
         {
+            // Use a Process plugin to construct the process.
             const char *plugin_name = launch_info.GetProcessPluginName();
             CreateProcess (listener, plugin_name, NULL);
         }
-        
+
+        // Since we didn't have a platform launch the process, launch it here.
         if (m_process_sp)
             error = m_process_sp->Launch (launch_info);
     }

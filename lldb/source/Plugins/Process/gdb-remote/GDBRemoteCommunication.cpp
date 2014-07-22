@@ -29,7 +29,11 @@
 // Project includes
 #include "ProcessGDBRemoteLog.h"
 
-#define DEBUGSERVER_BASENAME    "debugserver"
+#if defined(__APPLE__)
+# define DEBUGSERVER_BASENAME    "debugserver"
+#else
+# define DEBUGSERVER_BASENAME    "lldb-gdbserver"
+#endif
 
 using namespace lldb;
 using namespace lldb_private;
@@ -650,6 +654,10 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                                                  lldb_private::ProcessLaunchInfo &launch_info,
                                                  uint16_t &out_port)
 {
+    Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
+    if (log)
+        log->Printf ("GDBRemoteCommunication::%s(hostname=%s, in_port=%" PRIu16 ", out_port=%" PRIu16, __FUNCTION__, hostname ? hostname : "<empty>", in_port, out_port);
+
     out_port = in_port;
     Error error;
     // If we locate debugserver, keep that located version around
@@ -662,7 +670,11 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
     // to the debugserver to use and use it if we do.
     const char *env_debugserver_path = getenv("LLDB_DEBUGSERVER_PATH");
     if (env_debugserver_path)
+    {
         debugserver_file_spec.SetFile (env_debugserver_path, false);
+        if (log)
+            log->Printf ("GDBRemoteCommunication::%s() gdb-remote stub exe path set from environment variable: %s", __FUNCTION__, env_debugserver_path);
+    }
     else
         debugserver_file_spec = g_debugserver_file_spec;
     bool debugserver_exists = debugserver_file_spec.Exists();
@@ -676,10 +688,16 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
             debugserver_exists = debugserver_file_spec.Exists();
             if (debugserver_exists)
             {
+                if (log)
+                    log->Printf ("GDBRemoteCommunication::%s() found gdb-remote stub exe '%s'", __FUNCTION__, debugserver_file_spec.GetPath ().c_str ());
+
                 g_debugserver_file_spec = debugserver_file_spec;
             }
             else
             {
+                if (log)
+                    log->Printf ("GDBRemoteCommunication::%s() could not find gdb-remote stub exe '%s'", __FUNCTION__, debugserver_file_spec.GetPath ().c_str ());
+
                 g_debugserver_file_spec.Clear();
                 debugserver_file_spec.Clear();
             }
