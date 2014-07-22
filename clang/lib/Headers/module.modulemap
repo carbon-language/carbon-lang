@@ -96,6 +96,17 @@ module _Builtin_intrinsics [system] {
       header "avx2intrin.h"
     }
 
+    explicit module avx512f {
+      requires avx512f
+      export avx2
+      header "avx512fintrin.h"
+    }
+
+    explicit module avx512er {
+      requires avx512er
+      header "avx512erintrin.h"
+    }
+
     explicit module bmi {
       requires bmi
       header "bmiintrin.h"
