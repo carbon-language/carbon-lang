@@ -1973,6 +1973,16 @@ def t2SXTAH : T2I_exta_rrot<0b000, "sxtah",
                         BinOpFrag<(add node:$LHS, (sext_inreg node:$RHS,i16))>>;
 def t2SXTAB16 : T2I_exta_rrot_np<0b010, "sxtab16">;
 
+// A simple right-shift can also be used in most cases (the exception is the
+// SXTH operations with a rotate of 24: there the non-contiguous bits are
+// relevant).
+def : Pat<(add rGPR:$Rn, (sext_inreg (srl rGPR:$Rm, rot_imm:$rot), i8)),
+          (t2SXTAB rGPR:$Rn, rGPR:$Rm, rot_imm:$rot)>,
+      Requires<[HasT2ExtractPack, IsThumb2]>;
+def : Pat<(add rGPR:$Rn, (sext_inreg (srl rGPR:$Rm, imm8_or_16:$rot), i16)),
+          (t2SXTAH rGPR:$Rn, rGPR:$Rm, rot_imm:$rot)>,
+      Requires<[HasT2ExtractPack, IsThumb2]>;
+
 // Zero extenders
 
 let AddedComplexity = 16 in {
@@ -1999,7 +2009,15 @@ def t2UXTAB : T2I_exta_rrot<0b101, "uxtab",
 def t2UXTAH : T2I_exta_rrot<0b001, "uxtah",
                            BinOpFrag<(add node:$LHS, (and node:$RHS, 0xFFFF))>>;
 def t2UXTAB16 : T2I_exta_rrot_np<0b011, "uxtab16">;
+
+def : Pat<(add rGPR:$Rn, (and (srl rGPR:$Rm, rot_imm:$rot), 0xFF)),
+          (t2UXTAB rGPR:$Rn, rGPR:$Rm, rot_imm:$rot)>,
+      Requires<[HasT2ExtractPack, IsThumb2]>;
+def : Pat<(add rGPR:$Rn, (and (srl rGPR:$Rm, imm8_or_16:$rot), 0xFFFF)),
+          (t2UXTAH rGPR:$Rn, rGPR:$Rm, rot_imm:$rot)>,
+      Requires<[HasT2ExtractPack, IsThumb2]>;
 }
+
 
 //===----------------------------------------------------------------------===//
 //  Arithmetic Instructions.

@@ -2,14 +2,14 @@
 ; RUN:  | FileCheck %s
 
 define i32 @test0(i8 %A) {
-; CHECK: test0
+; CHECK-LABEL: test0:
 ; CHECK: sxtb r0, r0
         %B = sext i8 %A to i32
 	ret i32 %B
 }
 
 define signext i8 @test1(i32 %A)  {
-; CHECK: test1
+; CHECK-LABEL: test1:
 ; CHECK: lsrs r0, r0, #8
 ; CHECK: sxtb r0, r0
 	%B = lshr i32 %A, 8
@@ -20,9 +20,8 @@ define signext i8 @test1(i32 %A)  {
 }
 
 define signext i32 @test2(i32 %A, i32 %X)  {
-; CHECK: test2
-; CHECK: lsrs r0, r0, #8
-; CHECK: sxtab  r0, r1, r0
+; CHECK-LABEL: test2:
+; CHECK: sxtab  r0, r1, r0, ror #8
 	%B = lshr i32 %A, 8
 	%C = shl i32 %A, 24
 	%D = or i32 %B, %C
@@ -30,4 +29,15 @@ define signext i32 @test2(i32 %A, i32 %X)  {
         %F = sext i8 %E to i32
         %G = add i32 %F, %X
 	ret i32 %G
+}
+
+define i32 @test3(i32 %A, i32 %X) {
+; CHECK-LABEL: test3:
+; CHECK: sxtah r0, r0, r1, ror #8
+  %X.hi = lshr i32 %X, 8
+  %X.trunc = trunc i32 %X.hi to i16
+  %addend = sext i16 %X.trunc to i32
+
+  %sum = add i32 %A, %addend
+  ret i32 %sum
 }

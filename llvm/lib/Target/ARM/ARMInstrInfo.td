@@ -633,6 +633,8 @@ def imm32 : Operand<i32>, ImmLeaf<i32, [{ return Imm == 32; }]> {
   let ParserMatchClass = Imm32AsmOperand;
 }
 
+def imm8_or_16 : ImmLeaf<i32, [{ return Imm == 8 || Imm == 16;}]>;
+
 /// imm1_7 predicate - Immediate in the range [1,7].
 def Imm1_7AsmOperand: ImmAsmOperand { let Name = "Imm1_7"; }
 def imm1_7 : Operand<i32>, ImmLeaf<i32, [{ return Imm > 0 && Imm < 8; }]> {
