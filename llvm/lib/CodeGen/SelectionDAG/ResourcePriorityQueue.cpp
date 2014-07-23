@@ -51,19 +51,20 @@ ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
   ResourcesModel = TII->CreateTargetScheduleState(&TM, nullptr);
   // This hard requirement could be relaxed, but for now
   // do not let it procede.
-   assert (ResourcesModel && "Unimplemented CreateTargetScheduleState.");
+  assert(ResourcesModel && "Unimplemented CreateTargetScheduleState.");
 
-   unsigned NumRC = TRI->getNumRegClasses();
-   RegLimit.resize(NumRC);
-   RegPressure.resize(NumRC);
-   std::fill(RegLimit.begin(), RegLimit.end(), 0);
-   std::fill(RegPressure.begin(), RegPressure.end(), 0);
-   for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
-        E = TRI->regclass_end(); I != E; ++I)
-     RegLimit[(*I)->getID()] = TRI->getRegPressureLimit(*I, *IS->MF);
+  unsigned NumRC = TRI->getNumRegClasses();
+  RegLimit.resize(NumRC);
+  RegPressure.resize(NumRC);
+  std::fill(RegLimit.begin(), RegLimit.end(), 0);
+  std::fill(RegPressure.begin(), RegPressure.end(), 0);
+  for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
+                                             E = TRI->regclass_end();
+       I != E; ++I)
+    RegLimit[(*I)->getID()] = TRI->getRegPressureLimit(*I, *IS->MF);
 
-   ParallelLiveRanges = 0;
-   HorizontalVerticalBalance = 0;
+  ParallelLiveRanges = 0;
+  HorizontalVerticalBalance = 0;
 }
 
 unsigned
