@@ -1315,7 +1315,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
 
   // Add the library group to the input graph.
   if (!isReadingDirectiveSection) {
-    auto group = std::unique_ptr<Group>(new PECOFFGroup(ctx));
+    // The container for the entry point file.
+    std::unique_ptr<SimpleFileNode> entry(new SimpleFileNode("<entry>"));
+    ctx.setEntryNode(entry.get());
+    ctx.getInputGraph().addInputElement(std::move(entry));
+
+    // The container for all library files.
+    std::unique_ptr<Group> group(new PECOFFGroup(ctx));
     ctx.setLibraryGroup(group.get());
     ctx.getInputGraph().addInputElement(std::move(group));
   }

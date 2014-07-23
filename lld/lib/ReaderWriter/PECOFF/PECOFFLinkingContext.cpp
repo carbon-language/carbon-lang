@@ -129,11 +129,8 @@ bool PECOFFLinkingContext::createImplicitFiles(
   getLibraryGroup()->addFile(std::move(exportNode));
 
   // Create a file for the entry point function.
-  std::unique_ptr<SimpleFileNode> entryFileNode(new SimpleFileNode("<entry>"));
-  entryFileNode->appendInputFile(
+  getEntryNode()->appendInputFile(
       std::unique_ptr<File>(new pecoff::EntryPointFile(*this, syms)));
-  getInputGraph().insertElementAt(std::move(entryFileNode),
-                                  InputGraph::Position::END);
   return true;
 }
 

@@ -277,6 +277,9 @@ public:
 
   virtual bool hasInputGraph() { return !!_inputGraph; }
 
+  void setEntryNode(SimpleFileNode *node) { _entryNode = node; }
+  SimpleFileNode *getEntryNode() const { return _entryNode; }
+
   void setLibraryGroup(Group *group) { _libraryGroup = group; }
   Group *getLibraryGroup() const { return _libraryGroup; }
 
@@ -386,6 +389,9 @@ private:
   // a small DOS program that prints out a message "This program requires
   // Microsoft Windows." This feature was somewhat useful before Windows 95.
   ArrayRef<uint8_t> _dosStub;
+
+  // The node containing the entry point file.
+  SimpleFileNode *_entryNode;
 
   // The PECOFFGroup that contains all the .lib files.
   Group *_libraryGroup;
