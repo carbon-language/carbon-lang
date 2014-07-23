@@ -3067,6 +3067,8 @@ static unsigned CopyToFromAsymmetricReg(unsigned DestReg, unsigned SrcReg,
 inline static bool MaskRegClassContains(unsigned Reg) {
   return X86::VK8RegClass.contains(Reg) ||
          X86::VK16RegClass.contains(Reg) ||
+         X86::VK32RegClass.contains(Reg) ||
+         X86::VK64RegClass.contains(Reg) ||
          X86::VK1RegClass.contains(Reg);
 }
 static

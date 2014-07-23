@@ -1505,6 +1505,11 @@ void X86TargetLowering::resetOperationActions() {
     }
   }// has  AVX-512
 
+  if (!TM.Options.UseSoftFloat && Subtarget->hasBWI()) {
+    addRegisterClass(MVT::v32i1,  &X86::VK32RegClass);
+    addRegisterClass(MVT::v64i1,  &X86::VK64RegClass);
+  }
+
   // SIGN_EXTEND_INREGs are evaluated by the extend type. Handle the expansion
   // of this type with custom code.
   for (int VT = MVT::FIRST_VECTOR_VALUETYPE;
@@ -2312,6 +2317,10 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         RC = &X86::VK8RegClass;
       else if (RegVT == MVT::v16i1)
         RC = &X86::VK16RegClass;
+      else if (RegVT == MVT::v32i1)
+        RC = &X86::VK32RegClass;
+      else if (RegVT == MVT::v64i1)
+        RC = &X86::VK64RegClass;
       else
         llvm_unreachable("Unknown argument type!");
 

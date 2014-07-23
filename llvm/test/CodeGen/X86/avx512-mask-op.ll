@@ -5,8 +5,10 @@ define i16 @mask16(i16 %x) {
   %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <16 x i1> %m1 to i16
   ret i16 %ret
-; CHECK: mask16
-; CHECK: knotw
+; CHECK-LABEL: mask16
+; CHECK: kmovw
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw
 ; CHECK: ret
 }
 
@@ -15,8 +17,38 @@ define i8 @mask8(i8 %x) {
   %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
   %ret = bitcast <8 x i1> %m1 to i8
   ret i8 %ret
-; CHECK: mask8
-; CHECK: knotw
+; CHECK-LABEL: mask8
+; CHECK: kmovw
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw
+; CHECK: ret
+}
+
+define void @mask16_mem(i16* %ptr) {
+  %x = load i16* %ptr, align 4
+  %m0 = bitcast i16 %x to <16 x i1>
+  %m1 = xor <16 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
+  %ret = bitcast <16 x i1> %m1 to i16
+  store i16 %ret, i16* %ptr, align 4
+  ret void
+; CHECK-LABEL: mask16_mem
+; CHECK: kmovw (%rdi), %k{{[0-7]}}
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw %k{{[0-7]}}, (%rdi)
+; CHECK: ret
+}
+
+define void @mask8_mem(i8* %ptr) {
+  %x = load i8* %ptr, align 4
+  %m0 = bitcast i8 %x to <8 x i1>
+  %m1 = xor <8 x i1> %m0, <i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1, i1 -1>
+  %ret = bitcast <8 x i1> %m1 to i8
+  store i8 %ret, i8* %ptr, align 4
+  ret void
+; CHECK-LABEL: mask8_mem
+; CHECK: kmovw (%rdi), %k{{[0-7]}}
+; CHECK-NEXT: knotw
+; CHECK-NEXT: kmovw %k{{[0-7]}}, (%rdi)
 ; CHECK: ret
 }
 

@@ -2489,6 +2489,54 @@
 // CHECK:  encoding: [0x62,0x71,0x24,0x50,0x5c,0xb2,0xfc,0xfd,0xff,0xff]
           vsubps -516(%rdx){1to16}, %zmm27, %zmm14
 
+// CHECK: knotw  %k6, %k3
+// CHECK:  encoding: [0xc5,0xf8,0x44,0xde]
+          knotw  %k6, %k3
+
+// check: kmovw  %k5, %k4
+// check:  encoding: [0xc5,0xf8,0x90,0xe5]
+          kmovw  %k5, %k4
+
+// check: kmovw  (%rcx), %k4
+// check:  encoding: [0xc5,0xf8,0x90,0x21]
+          kmovw  (%rcx), %k4
+
+// check: kmovw  291(%rax,%r14,8), %k4
+// check:  encoding: [0xc4,0xa1,0x78,0x90,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          kmovw  291(%rax,%r14,8), %k4
+
+// check: kmovw  %k4, (%rcx)
+// check:  encoding: [0xc5,0xf8,0x91,0x21]
+          kmovw  %k4, (%rcx)
+
+// check: kmovw  %k4, 291(%rax,%r14,8)
+// check:  encoding: [0xc4,0xa1,0x78,0x91,0xa4,0xf0,0x23,0x01,0x00,0x00]
+          kmovw  %k4, 291(%rax,%r14,8)
+
+// check: kmovw  %eax, %k3
+// check:  encoding: [0xc5,0xf8,0x92,0xd8]
+          kmovw  %eax, %k3
+
+// check: kmovw  %ebp, %k3
+// check:  encoding: [0xc5,0xf8,0x92,0xdd]
+          kmovw  %ebp, %k3
+
+// check: kmovw  %r13d, %k3
+// check:  encoding: [0xc4,0xc1,0x78,0x92,0xdd]
+          kmovw  %r13d, %k3
+
+// check: kmovw  %k2, %eax
+// check:  encoding: [0xc5,0xf8,0x93,0xc2]
+          kmovw  %k2, %eax
+
+// check: kmovw  %k2, %ebp
+// check:  encoding: [0xc5,0xf8,0x93,0xea]
+          kmovw  %k2, %ebp
+
+// check: kmovw  %k2, %r13d
+// check:  encoding: [0xc5,0x78,0x93,0xea]
+          kmovw  %k2, %r13d
+
 // CHECK: vpmovqb %zmm2, %xmm3
 // CHECK:  encoding: [0x62,0xf2,0x7e,0x48,0x32,0xd3]
           vpmovqb %zmm2, %xmm3
