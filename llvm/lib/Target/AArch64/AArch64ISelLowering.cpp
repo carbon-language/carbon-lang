@@ -6501,14 +6501,14 @@ static SDValue performVectorCompareAndMaskUnaryOpCombine(SDNode *N,
       VT.getSizeInBits() != N->getOperand(0)->getValueType(0).getSizeInBits())
     return SDValue();
 
-  // Now check that the other operand of the AND is a constant splat. We could
+  // Now check that the other operand of the AND is a constant. We could
   // make the transformation for non-constant splats as well, but it's unclear
   // that would be a benefit as it would not eliminate any operations, just
   // perform one more step in scalar code before moving to the vector unit.
   if (BuildVectorSDNode *BV =
           dyn_cast<BuildVectorSDNode>(N->getOperand(0)->getOperand(1))) {
-    // Bail out if the vector isn't a constant splat.
-    if (!BV->getConstantSplatNode())
+    // Bail out if the vector isn't a constant.
+    if (!BV->isConstant())
       return SDValue();
 
     // Everything checks out. Build up the new and improved node.
