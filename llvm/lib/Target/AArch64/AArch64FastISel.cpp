@@ -138,7 +138,7 @@ private:
   CCAssignFn *CCAssignFnForCall(CallingConv::ID CC) const;
   bool ProcessCallArgs(CallLoweringInfo &CLI, SmallVectorImpl<MVT> &ArgVTs,
                        unsigned &NumBytes);
-  bool FinishCall(CallLoweringInfo &CLI, unsigned NumBytes);
+  bool FinishCall(CallLoweringInfo &CLI, MVT RetVT, unsigned NumBytes);
 
 public:
   // Backend specific FastISel code.
@@ -1270,9 +1270,9 @@ bool AArch64FastISel::ProcessCallArgs(CallLoweringInfo &CLI,
   return true;
 }
 
-bool AArch64FastISel::FinishCall(CallLoweringInfo &CLI, unsigned NumBytes) {
+bool AArch64FastISel::FinishCall(CallLoweringInfo &CLI, MVT RetVT,
+                                 unsigned NumBytes) {
   CallingConv::ID CC = CLI.CallConv;
-  MVT RetVT = MVT::getVT(CLI.RetTy);
 
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
@@ -1370,7 +1370,7 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   MIB.addRegMask(TRI.getCallPreservedMask(CC));
 
   // Finish off the call including any return values.
-  return FinishCall(CLI, NumBytes);
+  return FinishCall(CLI, RetVT, NumBytes);
 }
 
 bool AArch64FastISel::IsMemCpySmall(uint64_t Len, unsigned Alignment) {
