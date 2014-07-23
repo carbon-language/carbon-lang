@@ -383,7 +383,9 @@ def UnnamedTypeTemplateArgs : DiagGroup<"unnamed-type-template-args",
 def UnsupportedFriend : DiagGroup<"unsupported-friend">;
 def UnusedArgument : DiagGroup<"unused-argument">;
 def UnusedCommandLineArgument : DiagGroup<"unused-command-line-argument">;
-def InvalidCommandLineArgument : DiagGroup<"invalid-command-line-argument">;
+def IgnoredOptimizationArgument : DiagGroup<"ignored-optimization-argument">;
+def InvalidCommandLineArgument : DiagGroup<"invalid-command-line-argument",
+                                           [IgnoredOptimizationArgument]>;
 def UnusedComparison : DiagGroup<"unused-comparison">;
 def UnusedExceptionParameter : DiagGroup<"unused-exception-parameter">;
 def UnneededInternalDecl : DiagGroup<"unneeded-internal-declaration">;

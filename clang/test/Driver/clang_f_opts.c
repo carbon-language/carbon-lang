@@ -230,6 +230,9 @@
 // RUN:     %s 2>&1 | FileCheck --check-prefix=CHECK-NO-WARNING1 %s
 // RUN: %clang -### -finline-limit -Wno-invalid-command-line-argument                   \
 // RUN:     %s 2>&1 | FileCheck --check-prefix=CHECK-NO-WARNING2 %s
+// RUN: %clang -### -finline-limit \
+// RUN:     -Winvalid-command-line-argument -Wno-ignored-optimization-argument          \
+// RUN:     %s 2>&1 | FileCheck --check-prefix=CHECK-NO-WARNING2 %s
 // CHECK-NO-WARNING1-NOT: optimization flag '-finline-limit=1000' is not supported
 // CHECK-NO-WARNING2-NOT: optimization flag '-finline-limit' is not supported
 
