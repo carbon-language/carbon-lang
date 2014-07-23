@@ -1,9 +1,6 @@
 # RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %T/foo.o %s
 # RUN: sed "s,<filename>,%/T/foo.o,g" %s > %T/foo.s
-# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%T/foo.s %T/foo.o
-
-# FIXME: Fix searching StubMap with '/' and '\\' on Win32.
-# REQUIRES: shell
+# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%T/foo.s %/T/foo.o
 
         .section	__TEXT,__text,regular,pure_instructions
 	.globl	foo
