@@ -486,9 +486,12 @@ Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
                                    bool hardware)
 {
     SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
+    bool skip =
+      (skip_prologue == eLazyBoolCalculate) ? GetSkipPrologue()
+                                            : static_cast<bool>(skip_prologue);
     BreakpointResolverSP resolver_sp(new BreakpointResolverName (NULL, 
                                                                  func_regex, 
-                                                                 skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+                                                                 skip));
 
     return CreateBreakpoint (filter_sp, resolver_sp, internal, hardware, true);
 }

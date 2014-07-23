@@ -2243,7 +2243,9 @@ ObjectFileMachO::ParseSymtab ()
 
         const size_t function_starts_count = function_starts.GetSize();
 
-        const user_id_t TEXT_eh_frame_sectID = eh_frame_section_sp.get() ? eh_frame_section_sp->GetID() : NO_SECT;
+        const user_id_t TEXT_eh_frame_sectID =
+            eh_frame_section_sp.get() ? eh_frame_section_sp->GetID()
+                                      : static_cast<user_id_t>(NO_SECT);
 
         lldb::offset_t nlist_data_offset = 0;
 
