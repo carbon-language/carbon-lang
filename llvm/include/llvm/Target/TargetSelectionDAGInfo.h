@@ -46,7 +46,7 @@ public:
   /// more efficient than using a library call. This function can return a null
   /// SDValue if the target declines to use custom code and a different
   /// lowering strategy should be used.
-  /// 
+  ///
   /// If AlwaysInline is true, the size is constant and the target should not
   /// emit any calls and is strongly encouraged to attempt to emit inline code
   /// even if it is beyond the usual threshold because this intrinsic is being

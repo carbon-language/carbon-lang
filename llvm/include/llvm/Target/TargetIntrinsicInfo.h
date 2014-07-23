@@ -52,7 +52,7 @@ public:
 
   /// Returns true if the intrinsic can be overloaded.
   virtual bool isOverloaded(unsigned IID) const = 0;
-  
+
   /// Create or insert an LLVM Function declaration for an intrinsic,
   /// and return it. The Tys and numTys are for intrinsics with overloaded
   /// types. See above for more information.

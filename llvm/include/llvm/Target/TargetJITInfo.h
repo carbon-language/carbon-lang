@@ -104,7 +104,6 @@ namespace llvm {
                           unsigned NumRelocs, unsigned char* GOTBase) {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
-    
 
     /// allocateThreadLocalMemory - Each target has its own way of
     /// handling thread local variables. This method returns a value only

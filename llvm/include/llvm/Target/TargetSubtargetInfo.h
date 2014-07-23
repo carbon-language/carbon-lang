@@ -90,26 +90,26 @@ public:
   // dependency.
   virtual void adjustSchedDependency(SUnit *def, SUnit *use,
                                      SDep& dep) const { }
-  
+
   // For use with PostRAScheduling: get the anti-dependence breaking that should
   // be performed before post-RA scheduling.
   virtual AntiDepBreakMode getAntiDepBreakMode() const {
     return ANTIDEP_NONE;
   }
-  
+
   // For use with PostRAScheduling: in CriticalPathRCs, return any register
   // classes that should only be considered for anti-dependence breaking if they
   // are on the critical path.
   virtual void getCriticalPathRCs(RegClassVector &CriticalPathRCs) const {
     return CriticalPathRCs.clear();
   }
-  
+
   // For use with PostRAScheduling: get the minimum optimization level needed
   // to enable post-RA scheduling.
   virtual CodeGenOpt::Level getOptLevelToEnablePostRAScheduler() const {
     return CodeGenOpt::Default;
   }
-  
+
   /// \brief True if the subtarget should run the local reassignment
   /// heuristic of the register allocator.
   /// This heuristic may be compile time intensive, \p OptLevel provides
