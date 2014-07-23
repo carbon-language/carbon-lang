@@ -21,3 +21,13 @@ define i16* @earlyclobber-strh-post(i16* %addr) nounwind {
   %new = getelementptr i16* %addr, i32 1
   ret i16* %new
 }
+
+define i8* @earlyclobber-strb-post(i8* %addr) nounwind {
+; CHECK-LABEL: earlyclobber-strb-post
+; CHECK-NOT: strb r[[REG:[0-9]+]], [r[[REG]]], #1
+  %val = ptrtoint i8* %addr to i32
+  %tr = trunc i32 %val to i8
+  store i8 %tr, i8* %addr
+  %new = getelementptr i8* %addr, i32 1
+  ret i8* %new
+}
