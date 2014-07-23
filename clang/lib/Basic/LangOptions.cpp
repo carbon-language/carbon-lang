@@ -36,5 +36,6 @@ void LangOptions::resetNonModularOptions() {
   Sanitize = SanitizerOptions::Disabled;
 
   CurrentModule.clear();
+  ImplementationOfModule.clear();
 }
 

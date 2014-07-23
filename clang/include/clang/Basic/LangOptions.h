@@ -88,6 +88,11 @@ public:
   /// \brief The name of the current module.
   std::string CurrentModule;
 
+  /// \brief The name of the module that the translation unit is an
+  /// implementation of. Prevents semantic imports, but does not otherwise
+  /// treat this as the CurrentModule.
+  std::string ImplementationOfModule;
+
   /// \brief Options for parsing comments.
   CommentOptions CommentOpts;
   

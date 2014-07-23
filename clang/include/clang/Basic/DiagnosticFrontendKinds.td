@@ -178,6 +178,10 @@ def note_module_def_undef_here : Note<
 def remark_module_build : Remark<"building module '%0' as '%1'">,
   InGroup<DiagGroup<"module-build">>, DefaultIgnore;
 
+def err_conflicting_module_names : Error<
+  "conflicting module names specified: '-fmodule-name=%0' and "
+  "'-fmodule-implementation-of %1'">;
+
 def err_missing_vfs_overlay_file : Error<
   "virtual filesystem overlay file '%0' not found">, DefaultFatal;
 def err_invalid_vfs_overlay : Error<
