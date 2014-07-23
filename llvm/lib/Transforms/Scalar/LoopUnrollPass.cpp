@@ -457,9 +457,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   }
 
   if (HasPragma) {
-    // Mark loop as unrolled to prevent unrolling beyond that
-    // requested by the pragma.
-    SetLoopAlreadyUnrolled(L);
+    if (PragmaCount != 0)
+      // If loop has an unroll count pragma mark loop as unrolled to prevent
+      // unrolling beyond that requested by the pragma.
+      SetLoopAlreadyUnrolled(L);
 
     // Emit optimization remarks if we are unable to unroll the loop
     // as directed by a pragma.
