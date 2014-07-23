@@ -643,6 +643,12 @@ TEST(DeclarationMatcher, HasDescendant) {
       "};", ZDescendantClassXDescendantClassY));
 }
 
+TEST(DeclarationMatcher, HasDescendantMemoization) {
+  DeclarationMatcher CannotMemoize =
+      decl(hasDescendant(typeLoc().bind("x")), has(decl()));
+  EXPECT_TRUE(matches("void f() { int i; }", CannotMemoize));
+}
+
 // Implements a run method that returns whether BoundNodes contains a
 // Decl bound to Id that can be dynamically cast to T.
 // Optionally checks that the check succeeded a specific number of times.

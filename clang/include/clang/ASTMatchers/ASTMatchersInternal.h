@@ -103,6 +103,16 @@ public:
     return NodeMap;
   }
 
+  /// \brief Returns \c true if this \c BoundNodesMap can be compared, i.e. all
+  /// stored nodes have memoization data.
+  bool isComparable() const {
+    for (const auto &IDAndNode : NodeMap) {
+      if (!IDAndNode.second.getMemoizationData())
+        return false;
+    }
+    return true;
+  }
+
 private:
   IDToNodeMap NodeMap;
 };
@@ -151,6 +161,16 @@ public:
   /// \brief Imposes an order on BoundNodesTreeBuilders.
   bool operator<(const BoundNodesTreeBuilder &Other) const {
     return Bindings < Other.Bindings;
+  }
+
+  /// \brief Returns \c true if this \c BoundNodesTreeBuilder can be compared,
+  /// i.e. all stored node maps have memoization data.
+  bool isComparable() const {
+    for (const BoundNodesMap &NodesMap : Bindings) {
+      if (!NodesMap.isComparable())
+        return false;
+    }
+    return true;
   }
 
 private:
