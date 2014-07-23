@@ -526,6 +526,7 @@ Key value pairs are one of:
 cputype: is a number that is the mach-o CPU type that is being debugged (base 10)
 cpusubtype: is a number that is the mach-o CPU subtype type that is being debugged (base 10)
 triple: a string for the target triple (x86_64-apple-macosx) that can be used to specify arch + vendor + os in one entry
+The triple string must be sent as hexadecimal bytes, for the above example this being 7838365f36342d6170706c652d6d61636f7378 
 vendor: a string for the vendor (apple), not needed if "triple" is specified
 ostype: a string for the OS being debugged (darwin, linux, freebsd), not needed if "triple" is specified
 endian: is one of "little", "big", or "pdp"
