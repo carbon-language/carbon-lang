@@ -424,6 +424,9 @@ private:
   SDValue LowerCONCAT_VECTORS(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFSINCOS(SDValue Op, SelectionDAG &DAG) const;
 
+  SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
+                        std::vector<SDNode *> *Created) const;
+
   ConstraintType
   getConstraintType(const std::string &Constraint) const override;
   unsigned getRegisterByName(const char* RegName, EVT VT) const override;

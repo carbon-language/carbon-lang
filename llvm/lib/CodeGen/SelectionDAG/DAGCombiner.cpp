@@ -304,6 +304,7 @@ namespace {
     SDValue CombineConsecutiveLoads(SDNode *N, EVT VT);
     SDValue ConstantFoldBITCASTofBUILD_VECTOR(SDNode *, EVT);
     SDValue BuildSDIV(SDNode *N);
+    SDValue BuildSDIVPow2(SDNode *N);
     SDValue BuildUDIV(SDNode *N);
     SDValue MatchBSwapHWordLow(SDNode *N, SDValue N0, SDValue N1,
                                bool DemandHighBits = true);
@@ -2032,6 +2033,11 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
     // fold.
     if (TLI.isPow2DivCheap())
       return SDValue();
+
+    // Target-specific implementation of sdiv x, pow2.
+    SDValue Res = BuildSDIVPow2(N);
+    if (Res.getNode())
+      return Res;
 
     unsigned lg2 = N1C->getAPIntValue().countTrailingZeros();
 
@@ -11482,9 +11488,9 @@ SDValue DAGCombiner::SimplifySetCC(EVT VT, SDValue N0,
   return TLI.SimplifySetCC(VT, N0, N1, Cond, foldBooleans, DagCombineInfo, DL);
 }
 
-/// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
-/// return a DAG expression to select that will generate the same value by
-/// multiplying by a magic number.  See:
+/// BuildSDIV - Given an ISD::SDIV node expressing a divide by constant, return
+/// a DAG expression to select that will generate the same value by multiplying
+/// by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue DAGCombiner::BuildSDIV(SDNode *N) {
   ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
@@ -11498,6 +11504,26 @@ SDValue DAGCombiner::BuildSDIV(SDNode *N) {
   std::vector<SDNode*> Built;
   SDValue S =
       TLI.BuildSDIV(N, C->getAPIntValue(), DAG, LegalOperations, &Built);
+
+  for (SDNode *N : Built)
+    AddToWorklist(N);
+  return S;
+}
+
+/// BuildSDIVPow2 - Given an ISD::SDIV node expressing a divide by constant
+/// power of 2, return a DAG expression to select that will generate the same
+/// value by right shifting.
+SDValue DAGCombiner::BuildSDIVPow2(SDNode *N) {
+  ConstantSDNode *C = isConstOrConstSplat(N->getOperand(1));
+  if (!C)
+    return SDValue();
+
+  // Avoid division by zero.
+  if (!C->getAPIntValue())
+    return SDValue();
+
+  std::vector<SDNode *> Built;
+  SDValue S = TLI.BuildSDIVPow2(N, C->getAPIntValue(), DAG, &Built);
 
   for (SDNode *N : Built)
     AddToWorklist(N);

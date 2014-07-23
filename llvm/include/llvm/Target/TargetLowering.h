@@ -2545,6 +2545,11 @@ public:
   SDValue BuildUDIV(SDNode *N, const APInt &Divisor, SelectionDAG &DAG,
                     bool IsAfterLegalization,
                     std::vector<SDNode *> *Created) const;
+  virtual SDValue BuildSDIVPow2(SDNode *N, const APInt &Divisor,
+                                SelectionDAG &DAG,
+                                std::vector<SDNode *> *Created) const {
+    return SDValue();
+  }
 
   //===--------------------------------------------------------------------===//
   // Legalization utility functions

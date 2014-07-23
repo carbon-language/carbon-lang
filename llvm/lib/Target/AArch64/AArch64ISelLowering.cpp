@@ -6382,6 +6382,48 @@ static SDValue performXorCombine(SDNode *N, SelectionDAG &DAG,
   return performIntegerAbsCombine(N, DAG);
 }
 
+SDValue
+AArch64TargetLowering::BuildSDIVPow2(SDNode *N, const APInt &Divisor,
+                                     SelectionDAG &DAG,
+                                     std::vector<SDNode *> *Created) const {
+  // fold (sdiv X, pow2)
+  EVT VT = N->getValueType(0);
+  if ((VT != MVT::i32 && VT != MVT::i64) ||
+      !(Divisor.isPowerOf2() || (-Divisor).isPowerOf2()))
+    return SDValue();
+
+  SDLoc DL(N);
+  SDValue N0 = N->getOperand(0);
+  unsigned Lg2 = Divisor.countTrailingZeros();
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue Pow2MinusOne = DAG.getConstant((1 << Lg2) - 1, VT);
+
+  // Add (N0 < 0) ? Pow2 - 1 : 0;
+  SDValue CCVal;
+  SDValue Cmp = getAArch64Cmp(N0, Zero, ISD::SETLT, CCVal, DAG, DL);
+  SDValue Add = DAG.getNode(ISD::ADD, DL, VT, N0, Pow2MinusOne);
+  SDValue CSel = DAG.getNode(AArch64ISD::CSEL, DL, VT, Add, N0, CCVal, Cmp);
+
+  if (Created) {
+    Created->push_back(Cmp.getNode());
+    Created->push_back(Add.getNode());
+    Created->push_back(CSel.getNode());
+  }
+
+  // Divide by pow2.
+  SDValue SRA =
+      DAG.getNode(ISD::SRA, DL, VT, CSel, DAG.getConstant(Lg2, MVT::i64));
+
+  // If we're dividing by a positive value, we're done.  Otherwise, we must
+  // negate the result.
+  if (Divisor.isNonNegative())
+    return SRA;
+
+  if (Created)
+    Created->push_back(SRA.getNode());
+  return DAG.getNode(ISD::SUB, DL, VT, DAG.getConstant(0, VT), SRA);
+}
+
 static SDValue performMulCombine(SDNode *N, SelectionDAG &DAG,
                                  TargetLowering::DAGCombinerInfo &DCI,
                                  const AArch64Subtarget *Subtarget) {
