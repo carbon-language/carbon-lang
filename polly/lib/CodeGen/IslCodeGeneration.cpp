@@ -778,7 +778,7 @@ IslNodeBuilder::getUpperBound(__isl_keep isl_ast_node *For,
 }
 
 unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
-  isl_union_map *Schedule = IslAstInfo::getSchedule(Build);
+  isl_union_map *Schedule = IslAstInfo::getSchedule(For);
   isl_set *LoopDomain = isl_set_from_union_set(isl_union_map_range(Schedule));
   int NumberOfIterations = polly::getNumberOfIterations(LoopDomain);
   if (NumberOfIterations == -1)
@@ -836,7 +836,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
   for (int i = 1; i < VectorWidth; i++)
     IVS[i] = Builder.CreateAdd(IVS[i - 1], ValueInc, "p_vector_iv");
 
-  isl_union_map *Schedule = IslAstInfo::getSchedule(Build);
+  isl_union_map *Schedule = IslAstInfo::getSchedule(For);
   assert(Schedule && "For statement annotation does not contain its schedule");
 
   IDToValue[IteratorID] = ValueLB;
