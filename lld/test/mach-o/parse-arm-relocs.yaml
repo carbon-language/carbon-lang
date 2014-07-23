@@ -570,6 +570,8 @@ undefined-symbols:
 # CHECK:          addend:          4
 # CHECK:    - name:            _foo_thumb
 # CHECK:      references:
+# CHECK:        - kind:            modeThumbCode
+# CHECK:          offset:          0
 # CHECK:        - kind:            thumb_b22
 # CHECK:          offset:          0
 # CHECK:          target:          _x
@@ -652,8 +654,12 @@ undefined-symbols:
 # CHECK:          addend:          8
 # CHECK:    - name:            _t1
 # CHECK:      content:         [ C0, 46 ]
+# CHECK:      references:
+# CHECK:        - kind:            modeThumbCode
+# CHECK:          offset:          0
 # CHECK:    - name:            _foo_arm
 # CHECK:      references:
+# CHECK-NOT:    - kind:            modeThumbCode
 # CHECK:        - kind:            arm_b24
 # CHECK:          offset:          0
 # CHECK:          target:          _x

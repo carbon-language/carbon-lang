@@ -562,6 +562,7 @@ std::error_code convertRelocs(const Section &section,
                            handler.kindArch());
     }
   }
+
   return std::error_code();
 }
 
@@ -605,6 +606,11 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
     if (std::error_code ec = convertRelocs(sect, normalizedFile, *file, *handler))
         return ec;
   }
+
+  // Add additional arch-specific References
+  file->eachDefinedAtom([&](MachODefinedAtom* atom) -> void {
+    handler->addAdditionalReferences(*atom);
+  });
 
   // Sort references in each atom to their canonical order.
   for (const DefinedAtom* defAtom : file->defined()) {

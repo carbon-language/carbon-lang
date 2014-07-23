@@ -69,6 +69,9 @@ public:
                                 FindAddressForAtom,
                                 normalized::Relocations &) override;
 
+  void addAdditionalReferences(MachODefinedAtom &atom) override;
+
+  bool isThumbFunction(const DefinedAtom &atom) override;
 
 private:
   static const Registry::KindStrings _sKindStrings[];
@@ -76,6 +79,9 @@ private:
 
   enum : Reference::KindValue {
     invalid,               /// for error condition
+
+    modeThumbCode,         /// Content starting at this offset is thumb.
+    modeArmCode,           /// Content starting at this offset is arm.
 
     // Kinds found in mach-o .o files:
     thumb_b22,             /// ex: bl _foo
@@ -115,12 +121,12 @@ private:
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
                        uint64_t fixupAddress, uint64_t targetAddress,
-                       uint64_t inAtomAddress);
+                       uint64_t inAtomAddress, bool &thumbMode);
 
   void applyFixupRelocatable(const Reference &ref, uint8_t *location,
                              uint64_t fixupAddress,
                              uint64_t targetAddress,
-                             uint64_t inAtomAddress);
+                             uint64_t inAtomAddress, bool &thumbMode);
   
   const bool _swap;
 };
@@ -135,6 +141,8 @@ ArchHandler_arm::ArchHandler_arm() :
 ArchHandler_arm::~ArchHandler_arm() { }
 
 const Registry::KindStrings ArchHandler_arm::_sKindStrings[] = {
+  LLD_KIND_STRING_ENTRY(modeThumbCode),
+  LLD_KIND_STRING_ENTRY(modeArmCode),
   LLD_KIND_STRING_ENTRY(thumb_b22),
   LLD_KIND_STRING_ENTRY(thumb_movw),
   LLD_KIND_STRING_ENTRY(thumb_movt),
@@ -712,7 +720,8 @@ ArchHandler_arm::getPairReferenceInfo(const normalized::Relocation &reloc1,
 void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
                                       uint64_t fixupAddress,
                                       uint64_t targetAddress,
-                                      uint64_t inAtomAddress) {
+                                      uint64_t inAtomAddress,
+                                      bool &thumbMode) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::ARM);
@@ -720,43 +729,59 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   int32_t displacement;
   uint16_t value16;
   switch (ref.kindValue()) {
+  case modeThumbCode:
+    thumbMode = true;
+    break;
+  case modeArmCode:
+    thumbMode = false;
+    break;
   case thumb_b22:
+    assert(thumbMode);
     displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
     write32(*loc32, _swap, setDisplacementInThumbBranch(*loc32, displacement));
     break;
   case thumb_movw:
+    assert(thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt:
+    assert(thumbMode);
     value16 = (targetAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movw_funcRel:
+    assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt_funcRel:
+    assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case arm_b24:
+    assert(!thumbMode);
     displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
     *loc32 = setDisplacementInArmBranch(*loc32, displacement);
     break;
   case arm_movw:
+    assert(!thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt:
+    assert(!thumbMode);
     value16 = (targetAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movw_funcRel:
+    assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt_funcRel:
+    assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
@@ -783,6 +808,7 @@ void ArchHandler_arm::generateAtomContent(const DefinedAtom &atom,
   // Copy raw bytes.
   memcpy(atomContentBuffer, atom.rawContent().data(), atom.size());
   // Apply fix-ups.
+  bool thumbMode = false;
   for (const Reference *ref : atom) {
     uint32_t offset = ref->offsetInAtom();
     const Atom *target = ref->target();
@@ -794,11 +820,11 @@ void ArchHandler_arm::generateAtomContent(const DefinedAtom &atom,
     if (relocatable) {
       applyFixupRelocatable(*ref, &atomContentBuffer[offset],
                                         fixupAddress, targetAddress,
-                                        atomAddress);
+                                        atomAddress, thumbMode);
     } else {
       applyFixupFinal(*ref, &atomContentBuffer[offset],
                                   fixupAddress, targetAddress,
-                                  atomAddress);
+                                  atomAddress, thumbMode);
     }
   }
 }
@@ -829,13 +855,21 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
                                              uint8_t *location,
                                              uint64_t fixupAddress,
                                              uint64_t targetAddress,
-                                             uint64_t inAtomAddress)  {
+                                             uint64_t inAtomAddress,
+                                             bool &thumbMode) {
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int32_t displacement;
   uint16_t value16;
   switch (ref.kindValue()) {
+  case modeThumbCode:
+    thumbMode = true;
+    break;
+  case modeArmCode:
+    thumbMode = false;
+    break;
   case thumb_b22:
+    assert(thumbMode);
     if (useExternalReloc)
       displacement = (ref.addend() - (fixupAddress + 4));
     else
@@ -843,6 +877,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setDisplacementInThumbBranch(*loc32, displacement));
     break;
   case thumb_movw:
+    assert(thumbMode);
     if (useExternalReloc)
       value16 = ref.addend() & 0xFFFF;
     else
@@ -850,6 +885,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt:
+    assert(thumbMode);
     if (useExternalReloc)
       value16 = ref.addend() >> 16;
     else
@@ -857,14 +893,17 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movw_funcRel:
+    assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt_funcRel:
+    assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case arm_b24:
+    assert(!thumbMode);
     if (useExternalReloc)
       displacement = (ref.addend() - (fixupAddress + 8));
     else
@@ -872,6 +911,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setDisplacementInArmBranch(*loc32, displacement));
     break;
   case arm_movw:
+    assert(!thumbMode);
     if (useExternalReloc)
       value16 = ref.addend() & 0xFFFF;
     else
@@ -879,6 +919,7 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt:
+    assert(!thumbMode);
     if (useExternalReloc)
       value16 = ref.addend() >> 16;
     else
@@ -886,10 +927,12 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movw_funcRel:
+    assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt_funcRel:
+    assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) >> 16;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
@@ -926,6 +969,10 @@ void ArchHandler_arm::appendSectionRelocations(
   uint32_t fromAtomAddress;
   uint16_t other16;
   switch (ref.kindValue()) {
+  case modeThumbCode:
+  case modeArmCode:
+    // Do nothing.
+    break;
   case thumb_b22:
     if (useExternalReloc) {
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,
@@ -1113,6 +1160,25 @@ void ArchHandler_arm::appendSectionRelocations(
     llvm_unreachable("invalid ARM Reference Kind");
     break;
   }
+}
+
+void ArchHandler_arm::addAdditionalReferences(MachODefinedAtom &atom) {
+  if (atom.isThumb()) {
+    atom.addReference(0, modeThumbCode, &atom, 0, Reference::KindArch::ARM);
+  }
+}
+
+bool ArchHandler_arm::isThumbFunction(const DefinedAtom &atom) {
+  for (const Reference *ref : atom) {
+    if (ref->offsetInAtom() != 0)
+      return false;
+    if (ref->kindNamespace() != Reference::KindNamespace::mach_o)
+      continue;
+     assert(ref->kindArch() == Reference::KindArch::ARM);
+    if (ref->kindValue() == modeThumbCode)
+      return true;
+  }
+  return false;
 }
 
 std::unique_ptr<mach_o::ArchHandler> ArchHandler::create_arm() {

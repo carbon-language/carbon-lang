@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "MachONormalizedFile.h"
+#include "Atoms.h"
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
@@ -136,6 +137,11 @@ public:
                                         FindAddressForAtom,
                                         normalized::Relocations&) = 0;
 
+  /// Add arch-specific References.
+  virtual void addAdditionalReferences(MachODefinedAtom &atom) { }
+
+  /// Only relevant for 32-bit arm archs.
+  virtual bool isThumbFunction(const DefinedAtom &atom) { return false; }
 
   struct ReferenceInfo {
     Reference::KindArch arch;

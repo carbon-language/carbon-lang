@@ -617,6 +617,8 @@ uint16_t Util::descBits(const DefinedAtom* atom) {
   }
   if (atom->contentType() == lld::DefinedAtom::typeResolver)
     desc |= N_SYMBOL_RESOLVER;
+  if (_archHandler.isThumbFunction(*atom))
+    desc |= N_ARM_THUMB_DEF;
   return desc;
 }
 
@@ -656,7 +658,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
           sym.type  = N_SECT;
           sym.scope = scopeBits(atom);
           sym.sect  = sect->finalSectionIndex;
-          sym.desc  = 0;
+          sym.desc  = descBits(atom);
           sym.value = _atomToAddress[atom];
           _atomToSymbolIndex[atom] = file.localSymbols.size();
           file.localSymbols.push_back(sym);

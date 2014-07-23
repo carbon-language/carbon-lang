@@ -139,6 +139,16 @@ public:
     return pos->second;
   }
   
+  typedef std::function<void (MachODefinedAtom* atom)> DefinedAtomVisitor;
+
+  void eachDefinedAtom(DefinedAtomVisitor vistor) {
+    for (auto &sectAndAtoms : _sectionAtoms) {
+      for (auto &offAndAtom : sectAndAtoms.second) {
+        vistor(offAndAtom.atom);
+      }
+    }
+  }
+
   llvm::BumpPtrAllocator &allocator() { return _allocator; }
   
 private:
