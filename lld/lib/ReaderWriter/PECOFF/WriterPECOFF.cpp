@@ -968,14 +968,14 @@ void PECOFFWriter::build(const File &linkedFile) {
       // Find the virtual address of the entry point symbol if any.  PECOFF spec
       // says that entry point for dll images is optional, in which case it must
       // be set to 0.
-      if (_ctx.entrySymbolName().empty() && _ctx.isDll()) {
-        peHeader->setAddressOfEntryPoint(0);
-      } else {
+      if (_ctx.hasEntry()) {
         uint64_t entryPointAddress =
             dyn_cast<AtomChunk>(section)
-                ->getAtomVirtualAddress(_ctx.entrySymbolName());
+                ->getAtomVirtualAddress(_ctx.getEntrySymbolName());
         if (entryPointAddress != 0)
           peHeader->setAddressOfEntryPoint(entryPointAddress);
+      } else {
+        peHeader->setAddressOfEntryPoint(0);
       }
     }
     if (section->getSectionName() == ".data")

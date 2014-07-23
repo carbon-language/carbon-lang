@@ -303,6 +303,8 @@ private:
       StringRef entrySym = _ctx->allocate(_ctx->decorateSymbol(getEntry()));
       _undefinedAtoms._atoms.push_back(
           new (_alloc) SimpleUndefinedAtom(*this, entrySym));
+      _ctx->setHasEntry(true);
+      _ctx->setEntrySymbolName(entrySym);
       if (_ctx->deadStrip())
         _ctx->addDeadStripRoot(entrySym);
     }
