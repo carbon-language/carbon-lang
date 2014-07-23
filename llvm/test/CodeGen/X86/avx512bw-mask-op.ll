@@ -45,9 +45,9 @@ define void @mask32_mem(i32* %ptr) {
   store i32 %ret, i32* %ptr, align 4
   ret void
 ; CHECK-LABEL: mask32_mem
-; CHECK: kmovd (%rdi), %k{{[0-7]}}
+; CHECK: kmovd ([[ARG1:%rdi|%rcx]]), %k{{[0-7]}}
 ; CHECK-NEXT: knotd
-; CHECK-NEXT: kmovd %k{{[0-7]}}, (%rdi)
+; CHECK-NEXT: kmovd %k{{[0-7]}}, ([[ARG1]])
 ; CHECK_NEXT: ret
 }
 
@@ -66,8 +66,8 @@ define void @mask64_mem(i64* %ptr) {
   store i64 %ret, i64* %ptr, align 4
   ret void
 ; CHECK-LABEL: mask64_mem
-; CHECK: kmovq (%rdi), %k{{[0-7]}}
+; CHECK: kmovq ([[ARG1]]), %k{{[0-7]}}
 ; CHECK-NEXT: knotq
-; CHECK-NEXT: kmovq %k{{[0-7]}}, (%rdi)
+; CHECK-NEXT: kmovq %k{{[0-7]}}, ([[ARG1]])
 ; CHECK_NEXT: ret
 }

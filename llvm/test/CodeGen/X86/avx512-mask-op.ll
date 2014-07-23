@@ -32,9 +32,9 @@ define void @mask16_mem(i16* %ptr) {
   store i16 %ret, i16* %ptr, align 4
   ret void
 ; CHECK-LABEL: mask16_mem
-; CHECK: kmovw (%rdi), %k{{[0-7]}}
+; CHECK: kmovw ([[ARG1:%rdi|%rcx]]), %k{{[0-7]}}
 ; CHECK-NEXT: knotw
-; CHECK-NEXT: kmovw %k{{[0-7]}}, (%rdi)
+; CHECK-NEXT: kmovw %k{{[0-7]}}, ([[ARG1]])
 ; CHECK: ret
 }
 
@@ -46,9 +46,9 @@ define void @mask8_mem(i8* %ptr) {
   store i8 %ret, i8* %ptr, align 4
   ret void
 ; CHECK-LABEL: mask8_mem
-; CHECK: kmovw (%rdi), %k{{[0-7]}}
+; CHECK: kmovw ([[ARG1]]), %k{{[0-7]}}
 ; CHECK-NEXT: knotw
-; CHECK-NEXT: kmovw %k{{[0-7]}}, (%rdi)
+; CHECK-NEXT: kmovw %k{{[0-7]}}, ([[ARG1]])
 ; CHECK: ret
 }
 
