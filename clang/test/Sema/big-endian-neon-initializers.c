@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -triple arm64_be -target-feature +neon -verify -fsyntax-only -ffreestanding
+// RUN: %clang_cc1 %s -triple aarch64_be -target-feature +neon -verify -fsyntax-only -ffreestanding
 // RUN: %clang_cc1 %s -triple armebv7 -target-cpu cortex-a8 -verify -fsyntax-only -ffreestanding
 
 #include <arm_neon.h>

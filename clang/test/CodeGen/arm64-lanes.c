@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -O3 -triple arm64-apple-ios7 -target-feature +neon -ffreestanding -emit-llvm -o - %s | FileCheck %s
-// RUN: %clang_cc1 -O3 -triple arm64_be-linux-gnu -target-feature +neon -ffreestanding -emit-llvm -o - %s | FileCheck %s --check-prefix CHECK-BE
+// RUN: %clang_cc1 -O3 -triple aarch64_be-linux-gnu -target-feature +neon -ffreestanding -emit-llvm -o - %s | FileCheck %s --check-prefix CHECK-BE
 
 #include <arm_neon.h>
 

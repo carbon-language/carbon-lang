@@ -1,4 +1,4 @@
-// RUN:  %clang_cc1 -triple arm64_be-linux-gnu -ffreestanding -emit-llvm -O0 -o - %s | FileCheck %s
+// RUN:  %clang_cc1 -triple aarch64_be-linux-gnu -ffreestanding -emit-llvm -O0 -o - %s | FileCheck %s
 
 struct bt3 { signed b2:10; signed b3:10; } b16;
 

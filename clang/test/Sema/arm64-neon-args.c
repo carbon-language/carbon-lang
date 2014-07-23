@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -triple arm64-apple-darwin -target-feature +neon -fsyntax-only -ffreestanding -verify %s
-// RUN: %clang_cc1 -triple arm64_be-none-linux-gnu -target-feature +neon -fsyntax-only -ffreestanding -verify %s
+// RUN: %clang_cc1 -triple aarch64_be-none-linux-gnu -target-feature +neon -fsyntax-only -ffreestanding -verify %s
 
 #include <arm_neon.h>
 
