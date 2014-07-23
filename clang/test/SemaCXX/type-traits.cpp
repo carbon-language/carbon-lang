@@ -146,6 +146,10 @@ struct ThreeArgCtor {
   ThreeArgCtor(int*, char*, int);
 };
 
+struct VariadicCtor {
+  template<typename...T> VariadicCtor(T...);
+};
+
 void is_pod()
 {
   { int arr[T(__is_pod(int))]; }
@@ -1968,6 +1972,10 @@ void constructible_checks() {
   // PR19178
   { int arr[F(__is_constructible(Abstract))]; }
   { int arr[F(__is_nothrow_constructible(Abstract))]; }
+
+  // PR20228
+  { int arr[T(__is_constructible(VariadicCtor,
+                                 int, int, int, int, int, int, int, int, int))]; }
 }
 
 // Instantiation of __is_trivially_constructible

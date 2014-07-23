@@ -3651,12 +3651,13 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
       if (T->isObjectType() || T->isFunctionType())
         T = S.Context.getRValueReferenceType(T);
       OpaqueArgExprs.push_back(
-        OpaqueValueExpr(Args[I]->getTypeLoc().getLocStart(), 
+        OpaqueValueExpr(Args[I]->getTypeLoc().getLocStart(),
                         T.getNonLValueExprType(S.Context),
                         Expr::getValueKindForType(T)));
-      ArgExprs.push_back(&OpaqueArgExprs.back());
     }
-    
+    for (Expr &E : OpaqueArgExprs)
+      ArgExprs.push_back(&E);
+
     // Perform the initialization in an unevaluated context within a SFINAE 
     // trap at translation unit scope.
     EnterExpressionEvaluationContext Unevaluated(S, Sema::Unevaluated);
