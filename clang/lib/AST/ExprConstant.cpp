@@ -201,8 +201,7 @@ namespace {
 
     /// Determine whether this is a one-past-the-end pointer.
     bool isOnePastTheEnd() const {
-      if (Invalid)
-        return false;
+      assert(!Invalid);
       if (IsOnePastTheEnd)
         return true;
       if (MostDerivedArraySize &&
@@ -1310,7 +1309,7 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
   }
 
   // Does this refer one past the end of some object?
-  if (Designator.isOnePastTheEnd()) {
+  if (!Designator.Invalid && Designator.isOnePastTheEnd()) {
     const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>();
     Info.Diag(Loc, diag::note_constexpr_past_end, 1)
       << !Designator.Entries.empty() << !!VD << VD;
