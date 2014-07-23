@@ -120,3 +120,9 @@ namespace pr19253 {
   };
   E e;
 }
+
+namespace pr20420 {
+// No warning is expected. This used to crash.
+void *array_storage[1];
+const int &global_reference = *(int *)array_storage;
+}

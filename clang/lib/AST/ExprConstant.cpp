@@ -201,6 +201,8 @@ namespace {
 
     /// Determine whether this is a one-past-the-end pointer.
     bool isOnePastTheEnd() const {
+      if (Invalid)
+        return false;
       if (IsOnePastTheEnd)
         return true;
       if (MostDerivedArraySize &&
