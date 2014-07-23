@@ -13,7 +13,6 @@
 #include "IdataPass.h"
 #include "LinkerGeneratedSymbolFile.h"
 #include "LoadConfigPass.h"
-#include "SetSubsystemPass.h"
 
 #include "lld/Core/PassManager.h"
 #include "lld/Core/Simple.h"
@@ -128,6 +127,13 @@ bool PECOFFLinkingContext::createImplicitFiles(
   auto *renameFile = new pecoff::ExportedSymbolRenameFile(*this, syms);
   exportNode->appendInputFile(std::unique_ptr<File>(renameFile));
   getLibraryGroup()->addFile(std::move(exportNode));
+
+  // Create a file for the entry point function.
+  std::unique_ptr<SimpleFileNode> entryFileNode(new SimpleFileNode("<entry>"));
+  entryFileNode->appendInputFile(
+      std::unique_ptr<File>(new pecoff::EntryPointFile(*this, syms)));
+  getInputGraph().insertElementAt(std::move(entryFileNode),
+                                  InputGraph::Position::END);
   return true;
 }
 
@@ -296,7 +302,6 @@ std::string PECOFFLinkingContext::getOutputImportLibraryPath() const {
 }
 
 void PECOFFLinkingContext::addPasses(PassManager &pm) {
-  pm.add(std::unique_ptr<Pass>(new pecoff::SetSubsystemPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::EdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new pecoff::IdataPass(*this)));
   pm.add(std::unique_ptr<Pass>(new LayoutPass(registry())));

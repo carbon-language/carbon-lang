@@ -113,10 +113,8 @@ public:
   StringRef decorateSymbol(StringRef name) const;
   StringRef undecorateSymbol(StringRef name) const;
 
-  void setEntrySymbolName(StringRef name) {
-    if (!name.empty())
-      LinkingContext::setEntrySymbolName(decorateSymbol(name));
-  }
+  void setEntrySymbolName(StringRef name) { _entry = name; }
+  StringRef getEntrySymbolName() const { return _entry; }
 
   void setHasEntry(bool val) { _hasEntry = val; }
   bool hasEntry() const { return _hasEntry; }
@@ -307,6 +305,8 @@ private:
 
   std::recursive_mutex _mutex;
   mutable std::mutex _allocMutex;
+
+  std::string _entry;
 
   // False if /noentry option is given.
   bool _hasEntry;

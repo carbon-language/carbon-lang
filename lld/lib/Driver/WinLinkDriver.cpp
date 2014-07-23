@@ -638,22 +638,6 @@ static void processLibEnv(PECOFFLinkingContext &ctx) {
       ctx.appendInputSearchPath(ctx.allocate(path));
 }
 
-// Returns a default entry point symbol name depending on context image type and
-// subsystem. These default names are MS CRT compliant.
-static StringRef getDefaultEntrySymbolName(PECOFFLinkingContext &ctx) {
-  if (ctx.isDll()) {
-    if (ctx.getMachineType() == llvm::COFF::IMAGE_FILE_MACHINE_I386)
-      return "_DllMainCRTStartup@12";
-    return "_DllMainCRTStartup";
-  }
-  llvm::COFF::WindowsSubsystem subsystem = ctx.getSubsystem();
-  if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_GUI)
-    return "WinMainCRTStartup";
-  if (subsystem == llvm::COFF::WindowsSubsystem::IMAGE_SUBSYSTEM_WINDOWS_CUI)
-    return "mainCRTStartup";
-  return "";
-}
-
 namespace {
 class DriverStringSaver : public llvm::cl::StringSaver {
 public:
@@ -1284,13 +1268,6 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       files.push_back(std::unique_ptr<FileNode>(new PECOFFFileNode(ctx, path)));
     }
   }
-
-  // Use the default entry name if /entry option is not given.
-  if (ctx.entrySymbolName().empty() && !parsedArgs->getLastArg(OPT_noentry))
-    ctx.setEntrySymbolName(getDefaultEntrySymbolName(ctx));
-  StringRef entry = ctx.entrySymbolName();
-  if (!entry.empty())
-    ctx.addInitialUndefinedSymbol(entry);
 
   // Specify /noentry without /dll is an error.
   if (!ctx.hasEntry() && !parsedArgs->getLastArg(OPT_dll)) {

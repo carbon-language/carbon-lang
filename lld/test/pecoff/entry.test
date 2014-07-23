@@ -1,9 +1,27 @@
 # REQUIRES: asserts
-# Verify that entry atom will not be dead-stripped.
 
-# RUN: yaml2obj %p/Inputs/main.obj.yaml > %t.obj
-# RUN: lld -flavor link /mllvm:-debug-only=WriterPECOFF /out:%t1.exe \
-# RUN:   /subsystem:console /entry:main /force -- %t.obj >& %t1.log
-# RUN: FileCheck -check-prefix=CHECK %s < %t1.log
+# RUN: yaml2obj %p/Inputs/entry.obj.yaml > %t.obj
 
-CHECK: : _main
+# RUN: not lld -flavor link /out:%t.exe /alternatename:_main=_foo \
+# RUN:   -- %t.obj 2> %t.log
+# RUN: FileCheck -check-prefix=MAIN %s < %t.log
+
+MAIN: _mainCRTStartup
+
+# RUN: not lld -flavor link /out:%t.exe /alternatename:_wmain=_foo \
+# RUN:   -- %t.obj 2> %t.log
+# RUN: FileCheck -check-prefix=WMAIN %s < %t.log
+
+WMAIN: _wmainCRTStartup
+
+# RUN: not lld -flavor link /out:%t.exe /alternatename:_WinMain=_foo \
+# RUN:   -- %t.obj 2> %t.log
+# RUN: FileCheck -check-prefix=WINMAIN %s < %t.log
+
+WINMAIN: _WinMainCRTStartup
+
+# RUN: not lld -flavor link /out:%t.exe /alternatename:_wWinMain=_foo \
+# RUN:   -- %t.obj 2> %t.log
+# RUN: FileCheck -check-prefix=WWINMAIN %s < %t.log
+
+WWINMAIN: _wWinMainCRTStartup

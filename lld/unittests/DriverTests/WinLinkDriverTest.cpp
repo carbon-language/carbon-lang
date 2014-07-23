@@ -38,7 +38,7 @@ TEST_F(WinLinkParserTest, Basic) {
   EXPECT_EQ(llvm::COFF::IMAGE_SUBSYSTEM_WINDOWS_CUI, _context.getSubsystem());
   EXPECT_EQ(llvm::COFF::IMAGE_FILE_MACHINE_I386, _context.getMachineType());
   EXPECT_EQ("a.exe", _context.outputPath());
-  EXPECT_EQ("_start", _context.entrySymbolName());
+  EXPECT_EQ("start", _context.getEntrySymbolName());
   EXPECT_EQ(4, inputFileCount());
   EXPECT_EQ("a.obj", inputFile(0));
   EXPECT_EQ("b.obj", inputFile(1));
@@ -683,28 +683,4 @@ TEST_F(WinLinkParserTest, DashDash) {
   EXPECT_EQ("a.obj", inputFile(0));
   EXPECT_EQ("b.obj", inputFile(1));
   EXPECT_EQ("-c.obj", inputFile(2));
-}
-
-//
-// Tests for entry symbol name.
-//
-
-TEST_F(WinLinkParserTest, DefEntryNameConsole) {
-  EXPECT_TRUE(parse("link.exe", "/subsystem:console", "a.obj", nullptr));
-  EXPECT_EQ("_mainCRTStartup", _context.entrySymbolName());
-}
-
-TEST_F(WinLinkParserTest, DefEntryNameWindows) {
-  EXPECT_TRUE(parse("link.exe", "/subsystem:windows", "a.obj", nullptr));
-  EXPECT_EQ("_WinMainCRTStartup", _context.entrySymbolName());
-}
-
-TEST_F(WinLinkParserTest, DefEntryNameDll32) {
-  EXPECT_TRUE(parse("link.exe", "/dll", "/machine:x86", "a.obj", nullptr));
-  EXPECT_EQ("__DllMainCRTStartup@12", _context.entrySymbolName());
-}
-
-TEST_F(WinLinkParserTest, DefEntryNameDll64) {
-  EXPECT_TRUE(parse("link.exe", "/dll", "/machine:x64", "a.obj", nullptr));
-  EXPECT_EQ("_DllMainCRTStartup", _context.entrySymbolName());
 }
