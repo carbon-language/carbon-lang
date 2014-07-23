@@ -12,7 +12,7 @@ TEMPORARY_FILE=$3.cpp
 sed 's#// *[A-Z-]\+:.*#//#' ${INPUT_FILE} > ${TEMPORARY_FILE}
 
 clang-tidy ${TEMPORARY_FILE} -fix --checks="-*,${CHECK_TO_RUN}" -- --std=c++11 \
-  > ${TEMPORARY_FILE}.msg 2>&1
+  > ${TEMPORARY_FILE}.msg 2>&1 || exit $?
 
 FileCheck -input-file=${TEMPORARY_FILE} ${INPUT_FILE} \
   -check-prefix=CHECK-FIXES -strict-whitespace || exit $?
