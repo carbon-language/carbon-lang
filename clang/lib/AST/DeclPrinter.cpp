@@ -784,9 +784,11 @@ void DeclPrinter::VisitCXXRecordDecl(CXXRecordDecl *D) {
           Out << "virtual ";
 
         AccessSpecifier AS = Base->getAccessSpecifierAsWritten();
-        if (AS != AS_none)
+        if (AS != AS_none) {
           Print(AS);
-        Out << " " << Base->getType().getAsString(Policy);
+          Out << " ";
+        }
+        Out << Base->getType().getAsString(Policy);
 
         if (Base->isPackExpansion())
           Out << "...";

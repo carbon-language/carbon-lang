@@ -268,8 +268,8 @@ TEST(DeclPrinter, TestCXXRecordDecl4) {
     "class Z { int a; };"
     "class A : Z { int b; };",
     "A",
-    "class A :  Z {\n}"));
-    // Should be: with semicolon, with { ... }, without two spaces
+    "class A : Z {\n}"));
+    // Should be: with semicolon, with { ... }
 }
 
 TEST(DeclPrinter, TestCXXRecordDecl5) {
@@ -277,8 +277,8 @@ TEST(DeclPrinter, TestCXXRecordDecl5) {
     "struct Z { int a; };"
     "struct A : Z { int b; };",
     "A",
-    "struct A :  Z {\n}"));
-    // Should be: with semicolon, with { ... }, without two spaces
+    "struct A : Z {\n}"));
+    // Should be: with semicolon, with { ... }
 }
 
 TEST(DeclPrinter, TestCXXRecordDecl6) {
@@ -313,8 +313,8 @@ TEST(DeclPrinter, TestCXXRecordDecl9) {
     "class Z { int a; };"
     "class A : virtual Z { int b; };",
     "A",
-    "class A : virtual  Z {\n}"));
-    // Should be: with semicolon, with { ... }, without two spaces
+    "class A : virtual Z {\n}"));
+    // Should be: with semicolon, with { ... }
 }
 
 TEST(DeclPrinter, TestCXXRecordDecl10) {
