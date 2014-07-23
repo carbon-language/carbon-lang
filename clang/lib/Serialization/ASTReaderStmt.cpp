@@ -1721,6 +1721,9 @@ OMPClause *OMPClauseReader::readClause() {
   case OMPC_write:
     C = new (Context) OMPWriteClause();
     break;
+  case OMPC_update:
+    C = new (Context) OMPUpdateClause();
+    break;
   case OMPC_private:
     C = OMPPrivateClause::CreateEmpty(Context, Record[Idx++]);
     break;
@@ -1818,6 +1821,8 @@ void OMPClauseReader::VisitOMPMergeableClause(OMPMergeableClause *) {}
 void OMPClauseReader::VisitOMPReadClause(OMPReadClause *) {}
 
 void OMPClauseReader::VisitOMPWriteClause(OMPWriteClause *) {}
+
+void OMPClauseReader::VisitOMPUpdateClause(OMPUpdateClause *) {}
 
 void OMPClauseReader::VisitOMPPrivateClause(OMPPrivateClause *C) {
   C->setLParenLoc(Reader->ReadSourceLocation(Record, Idx));

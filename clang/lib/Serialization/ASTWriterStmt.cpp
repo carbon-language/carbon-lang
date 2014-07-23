@@ -1739,6 +1739,8 @@ void OMPClauseWriter::VisitOMPReadClause(OMPReadClause *) {}
 
 void OMPClauseWriter::VisitOMPWriteClause(OMPWriteClause *) {}
 
+void OMPClauseWriter::VisitOMPUpdateClause(OMPUpdateClause *) {}
+
 void OMPClauseWriter::VisitOMPPrivateClause(OMPPrivateClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

@@ -1405,24 +1405,28 @@ void foo() {
 
 // ATOMIC DIRECTIVE
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp for // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp sections // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1430,6 +1434,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp section // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1437,6 +1442,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp single // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1444,6 +1450,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp master // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1451,6 +1458,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp critical // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1458,12 +1466,14 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel for // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel sections // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1471,6 +1481,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp task // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -1478,31 +1489,37 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp flush // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp ordered // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp atomic // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     ++a;
@@ -2746,24 +2763,28 @@ void foo() {
 
 // ATOMIC DIRECTIVE
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp for // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp simd // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp sections // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2771,6 +2792,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp section // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2778,6 +2800,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp single // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2785,6 +2808,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp master // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2792,6 +2816,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp critical // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2799,12 +2824,14 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel for // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     for (int i = 0; i < 10; ++i)
       ;
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp parallel sections // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2812,6 +2839,7 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp task // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     {
@@ -2819,31 +2847,37 @@ void foo() {
     }
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp taskyield // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp barrier // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp taskwait // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp flush // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp ordered // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     bar();
   }
 #pragma omp atomic
+// expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
   {
 #pragma omp atomic // expected-error {{OpenMP constructs may not be nested inside an atomic region}}
     ++a;

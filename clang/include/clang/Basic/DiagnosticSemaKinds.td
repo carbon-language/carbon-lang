@@ -7154,6 +7154,9 @@ def err_omp_atomic_read_not_expression_statement : Error<
 def err_omp_atomic_write_not_expression_statement : Error<
   "the statement for 'atomic write' must be an expression statement of form 'x = expr;',"
   " where x is an l-value expression with scalar type">;
+def err_omp_atomic_update_not_expression_statement : Error<
+  "the statement for 'atomic%select{| update}0' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x',"
+  " where x is an l-value expression with scalar type">;
 def err_omp_atomic_several_clauses : Error<
   "directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause">;
 def note_omp_atomic_previous_clause : Note<

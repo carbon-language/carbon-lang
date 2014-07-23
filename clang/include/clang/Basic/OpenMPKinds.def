@@ -103,6 +103,7 @@ OPENMP_CLAUSE(mergeable, OMPMergeableClause)
 OPENMP_CLAUSE(flush, OMPFlushClause)
 OPENMP_CLAUSE(read, OMPReadClause)
 OPENMP_CLAUSE(write, OMPWriteClause)
+OPENMP_CLAUSE(update, OMPUpdateClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -203,6 +204,7 @@ OPENMP_TASK_CLAUSE(mergeable)
 // TODO More clauses allowed for OpenMP directive 'atomic'.
 OPENMP_ATOMIC_CLAUSE(read)
 OPENMP_ATOMIC_CLAUSE(write)
+OPENMP_ATOMIC_CLAUSE(update)
 
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND
