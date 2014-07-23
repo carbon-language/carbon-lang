@@ -366,7 +366,12 @@ public:
     static const mask alpha  = _CTYPE_A;
     static const mask digit  = _CTYPE_D;
     static const mask punct  = _CTYPE_P;
+# if defined(__ANDROID__)
+    static const mask xdigit = _CTYPE_X | _CTYPE_D;
+# else
     static const mask xdigit = _CTYPE_X;
+# endif
+
 # if defined(__NetBSD__)
     static const mask blank  = _CTYPE_BL;
 # else
