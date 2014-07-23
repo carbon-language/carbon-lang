@@ -34,7 +34,6 @@ void UnusedRAIICheck::registerMatchers(MatchFinder *Finder) {
               anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
                     functionDecl(ast_matchers::isTemplateInstantiation()))))),
           hasParent(compoundStmt().bind("compound")),
-          hasDescendant(typeLoc().bind("typeloc")),
           hasType(recordDecl(hasUserDeclaredDestructor())),
           anyOf(has(BindTemp), has(functionalCastExpr(has(BindTemp)))))
           .bind("expr"),
@@ -71,8 +70,12 @@ void UnusedRAIICheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-  // Otherwise just suggest adding a name.
-  const auto *TL = Result.Nodes.getNodeAs<TypeLoc>("typeloc");
+  // Otherwise just suggest adding a name. To find the place to insert the name
+  // find the first TypeLoc in the children of E, which always points to the
+  // written type.
+  const auto *TL =
+      selectFirst<TypeLoc>("t", match(expr(hasDescendant(typeLoc().bind("t"))),
+                                      *E, *Result.Context));
   D << FixItHint::CreateInsertion(
       Lexer::getLocForEndOfToken(TL->getLocEnd(), 0, *Result.SourceManager,
                                  Result.Context->getLangOpts()),
