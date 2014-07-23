@@ -133,7 +133,7 @@ PlatformDarwinKernel::CreateInstance (bool force, const ArchSpec *arch)
             is_ios_debug_session = eLazyBoolNo;
             break;
         case llvm::Triple::arm:
-        case llvm::Triple::arm64:
+        case llvm::Triple::aarch64:
         case llvm::Triple::thumb:
             is_ios_debug_session = eLazyBoolYes;
             break;

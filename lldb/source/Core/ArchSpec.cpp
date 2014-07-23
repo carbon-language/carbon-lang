@@ -77,7 +77,7 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7k        , "thumbv7k"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7m        , "thumbv7m"  },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::thumb  , ArchSpec::eCore_thumbv7em       , "thumbv7em" },
-    { eByteOrderLittle, 8, 4, 4, llvm::Triple::arm64  , ArchSpec::eCore_arm_arm64       , "arm64"     },
+    { eByteOrderLittle, 8, 4, 4, llvm::Triple::aarch64, ArchSpec::eCore_arm_arm64       , "arm64"     },
 
     { eByteOrderBig   , 8, 4, 4, llvm::Triple::mips64 , ArchSpec::eCore_mips64          , "mips64"    },
     
@@ -739,7 +739,7 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
 
                     switch (core_def->machine)
                     {
-                        case llvm::Triple::arm64:
+                        case llvm::Triple::aarch64:
                         case llvm::Triple::arm:
                         case llvm::Triple::thumb:
                             m_triple.setOS (llvm::Triple::IOS);

@@ -1338,7 +1338,7 @@ CreateProcessInfoResponse_DebugServerStyle (const ProcessInstanceInfo &proc_info
             switch (proc_triple.getArch ())
             {
                 case llvm::Triple::arm:
-                case llvm::Triple::arm64:
+                case llvm::Triple::aarch64:
                     ostype = "ios";
                     break;
                 default:

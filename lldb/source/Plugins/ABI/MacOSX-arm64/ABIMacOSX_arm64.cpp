@@ -219,7 +219,7 @@ ABISP
 ABIMacOSX_arm64::CreateInstance (const ArchSpec &arch)
 {
     static ABISP g_abi_sp;
-    if (arch.GetTriple().getArch() == llvm::Triple::arm64)
+    if (arch.GetTriple().getArch() == llvm::Triple::aarch64)
     {
         if (!g_abi_sp)
             g_abi_sp.reset (new ABIMacOSX_arm64);

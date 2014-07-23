@@ -51,7 +51,7 @@ bool ExpressionSourceCode::GetText (std::string &text, lldb::LanguageType wrappi
     
     if (Target *target = exe_ctx.GetTargetPtr())
     {
-        if (target->GetArchitecture().GetMachine() == llvm::Triple::arm64)
+        if (target->GetArchitecture().GetMachine() == llvm::Triple::aarch64)
         {
             target_specific_defines = "typedef bool BOOL;\n";
         }

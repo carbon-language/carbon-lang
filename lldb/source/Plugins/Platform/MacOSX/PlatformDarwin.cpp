@@ -531,7 +531,7 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite 
         }
         break;
 
-    case llvm::Triple::arm64:
+    case llvm::Triple::aarch64:
         {
             // TODO: fix this with actual darwin breakpoint opcode for arm64.
             // right now debugging uses the Z packets with GDB remote so this

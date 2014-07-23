@@ -326,7 +326,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
         {
             return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x7fff5fc00000ull);
         }
-        else if (exe_arch.GetMachine() == llvm::Triple::arm || exe_arch.GetMachine() == llvm::Triple::thumb || exe_arch.GetMachine() == llvm::Triple::arm64)
+        else if (exe_arch.GetMachine() == llvm::Triple::arm || exe_arch.GetMachine() == llvm::Triple::thumb || exe_arch.GetMachine() == llvm::Triple::aarch64)
         {
             return ReadDYLDInfoFromMemoryAndSetNotificationCallback(0x2fe00000);
         }

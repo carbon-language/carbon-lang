@@ -807,7 +807,7 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                 {
                     const ArchSpec &arch = m_thread.GetProcess()->GetTarget().GetArchitecture();
                     if (arch.IsValid()
-                        && arch.GetMachine() == llvm::Triple::arm64
+                        && arch.GetMachine() == llvm::Triple::aarch64
                         && arch.GetTriple().getVendor() == llvm::Triple::Apple
                         && arch.GetTriple().getOS() == llvm::Triple::IOS)
                     {
