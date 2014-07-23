@@ -66,3 +66,25 @@ define i64 @mulwideu32(i32 %a, i32 %b) {
   %val2 = mul i64 %val0, %val1
   ret i64 %val2
 }
+
+; OPT-LABEL: @mulwideu7
+; NOOPT-LABEL: @mulwideu7
+define i64 @mulwideu7(i7 %a, i7 %b) {
+; OPT: mul.wide.u32
+; NOOPT: mul.lo.s64
+  %val0 = zext i7 %a to i64
+  %val1 = zext i7 %b to i64
+  %val2 = mul i64 %val0, %val1
+  ret i64 %val2
+}
+
+; OPT-LABEL: @mulwides7
+; NOOPT-LABEL: @mulwides7
+define i64 @mulwides7(i7 %a, i7 %b) {
+; OPT: mul.wide.s32
+; NOOPT: mul.lo.s64
+  %val0 = sext i7 %a to i64
+  %val1 = sext i7 %b to i64
+  %val2 = mul i64 %val0, %val1
+  ret i64 %val2
+}
