@@ -457,8 +457,6 @@ static bool isSignedCharDefault(const llvm::Triple &Triple) {
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-  case llvm::Triple::arm64:
-  case llvm::Triple::arm64_be:
   case llvm::Triple::arm:
   case llvm::Triple::armeb:
     if (Triple.isOSDarwin() || Triple.isOSWindows())
@@ -1362,8 +1360,6 @@ static std::string getCPUName(const ArgList &Args, const llvm::Triple &T) {
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-  case llvm::Triple::arm64:
-  case llvm::Triple::arm64_be:
     return getAArch64TargetCPU(Args);
 
   case llvm::Triple::arm:
@@ -1757,8 +1753,6 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     break;
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-  case llvm::Triple::arm64:
-  case llvm::Triple::arm64_be:
     getAArch64TargetFeatures(D, Args, Features);
     break;
   case llvm::Triple::x86:
@@ -2601,7 +2595,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     case llvm::Triple::thumb:
     case llvm::Triple::thumbeb:
     case llvm::Triple::aarch64:
-    case llvm::Triple::arm64:
     case llvm::Triple::mips:
     case llvm::Triple::mipsel:
     case llvm::Triple::mips64:
@@ -2682,7 +2675,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // PIC or PIE options above, if these show up, PIC is disabled.
   llvm::Triple Triple(TripleStr);
   if (KernelOrKext && (!Triple.isiOS() || Triple.isOSVersionLT(6) ||
-                       Triple.getArch() == llvm::Triple::arm64 ||
                        Triple.getArch() == llvm::Triple::aarch64))
     PIC = PIE = false;
   if (Args.hasArg(options::OPT_static))
@@ -3019,8 +3011,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   case llvm::Triple::aarch64:
   case llvm::Triple::aarch64_be:
-  case llvm::Triple::arm64:
-  case llvm::Triple::arm64_be:
     AddAArch64TargetArgs(Args, CmdArgs);
     break;
 
@@ -3655,18 +3645,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
         CmdArgs.push_back("-backend-option");
         if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be ||
-            getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
+            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
           CmdArgs.push_back("-aarch64-strict-align");
         else
           CmdArgs.push_back("-arm-strict-align");
       } else {
         CmdArgs.push_back("-backend-option");
         if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be ||
-            getToolChain().getTriple().getArch() == llvm::Triple::arm64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::arm64_be)
+            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
           CmdArgs.push_back("-aarch64-no-strict-align");
         else
           CmdArgs.push_back("-arm-no-strict-align");
@@ -5370,7 +5356,7 @@ llvm::Triple::ArchType darwin::getArchTypeForMachOArchName(StringRef Str) {
     .Cases("arm", "armv4t", "armv5", "armv6", "armv6m", llvm::Triple::arm)
     .Cases("armv7", "armv7em", "armv7k", "armv7m", llvm::Triple::arm)
     .Cases("armv7s", "xscale", llvm::Triple::arm)
-    .Case("arm64", llvm::Triple::arm64)
+    .Case("arm64", llvm::Triple::aarch64)
     .Case("r600", llvm::Triple::r600)
     .Case("nvptx", llvm::Triple::nvptx)
     .Case("nvptx64", llvm::Triple::nvptx64)
@@ -7195,11 +7181,9 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
   } else if (ToolChain.getArch() == llvm::Triple::x86 ||
              ToolChain.getArch() == llvm::Triple::sparc)
     return "/lib/ld-linux.so.2";
-  else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
-           ToolChain.getArch() == llvm::Triple::arm64)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64)
     return "/lib/ld-linux-aarch64.so.1";
-  else if (ToolChain.getArch() == llvm::Triple::aarch64_be ||
-           ToolChain.getArch() == llvm::Triple::arm64_be)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
     return "/lib/ld-linux-aarch64_be.so.1";
   else if (ToolChain.getArch() == llvm::Triple::arm ||
            ToolChain.getArch() == llvm::Triple::thumb) {
@@ -7307,11 +7291,9 @@ void gnutools::Link::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-m");
   if (ToolChain.getArch() == llvm::Triple::x86)
     CmdArgs.push_back("elf_i386");
-  else if (ToolChain.getArch() == llvm::Triple::aarch64 ||
-           ToolChain.getArch() == llvm::Triple::arm64)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64)
     CmdArgs.push_back("aarch64linux");
-  else if (ToolChain.getArch() == llvm::Triple::aarch64_be ||
-           ToolChain.getArch() == llvm::Triple::arm64_be)
+  else if (ToolChain.getArch() == llvm::Triple::aarch64_be)
     CmdArgs.push_back("aarch64_be_linux");
   else if (ToolChain.getArch() == llvm::Triple::arm
            ||  ToolChain.getArch() == llvm::Triple::thumb)

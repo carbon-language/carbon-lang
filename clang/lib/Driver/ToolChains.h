@@ -362,7 +362,7 @@ public:
 
   bool isKernelStatic() const override {
     return !isTargetIPhoneOS() || isIPhoneOSVersionLT(6, 0) ||
-           getTriple().getArch() == llvm::Triple::arm64;
+           getTriple().getArch() == llvm::Triple::aarch64;
   }
 
 protected:
