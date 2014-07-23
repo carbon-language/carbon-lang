@@ -55,6 +55,6 @@ private:
   typedef std::map<std::string, SectionStubMap> StubMap;
   StubMap Stubs;
 };
-};
+}
 
 #endif // LLVM_RUNTIMEDYLDCHECKERIMPL_H
