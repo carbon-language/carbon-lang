@@ -176,6 +176,7 @@ public:
       uint32_t *p = (uint32_t *)LocalAddress;
       assert((*p & 0x3B000000) == 0x39000000 &&
              "Only expected load / store instructions.");
+      (void)p;
     } // fall-through
     case MachO::ARM64_RELOC_PAGEOFF12: {
       // Verify that the relocation points to one of the expected load / store
