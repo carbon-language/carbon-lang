@@ -45,3 +45,21 @@ entry:
     %tmp2 = ashr i32 %tmp, 1
     ret i32 %tmp2
 }
+
+define signext i8 @f6(i32 %a) {
+; CHECK-LABEL: f6:
+; CHECK: sbfx r0, r0, #23, #8
+
+  %tmp = lshr i32 %a, 23
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
+
+define signext i8 @f7(i32 %a) {
+; CHECK-LABEL: f7:
+; CHECK-NOT: sbfx
+
+  %tmp = lshr i32 %a, 25
+  %res = trunc i32 %tmp to i8
+  ret i8 %res
+}
