@@ -40,19 +40,17 @@ static cl::opt<signed> RegPressureThreshold(
   "dfa-sched-reg-pressure-threshold", cl::Hidden, cl::ZeroOrMore, cl::init(5),
   cl::desc("Track reg pressure and switch priority to in-depth"));
 
-
-ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS) :
-  Picker(this),
- InstrItins(IS->getTargetLowering()->getTargetMachine().getInstrItineraryData())
-{
-   TII = IS->getTargetLowering()->getTargetMachine().getInstrInfo();
-   TRI = IS->getTargetLowering()->getTargetMachine().getRegisterInfo();
-   TLI = IS->getTargetLowering();
-
-   const TargetMachine &tm = (*IS->MF).getTarget();
-   ResourcesModel = tm.getInstrInfo()->CreateTargetScheduleState(&tm,nullptr);
-   // This hard requirement could be relaxed, but for now
-   // do not let it procede.
+ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
+    : Picker(this),
+      InstrItins(
+          IS->getTargetLowering()->getTargetMachine().getInstrItineraryData()) {
+  const TargetMachine &TM = (*IS->MF).getTarget();
+  TRI = TM.getRegisterInfo();
+  TLI = IS->getTargetLowering();
+  TII = TM.getInstrInfo();
+  ResourcesModel = TII->CreateTargetScheduleState(&TM, nullptr);
+  // This hard requirement could be relaxed, but for now
+  // do not let it procede.
    assert (ResourcesModel && "Unimplemented CreateTargetScheduleState.");
 
    unsigned NumRC = TRI->getNumRegClasses();
