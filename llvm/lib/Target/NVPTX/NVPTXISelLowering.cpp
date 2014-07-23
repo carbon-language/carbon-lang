@@ -4053,13 +4053,13 @@ static bool IsMulWideOperandDemotable(SDValue Op,
   if (Op.getOpcode() == ISD::SIGN_EXTEND ||
       Op.getOpcode() == ISD::SIGN_EXTEND_INREG) {
     EVT OrigVT = Op.getOperand(0).getValueType();
-    if (OrigVT.getSizeInBits() == OptSize) {
+    if (OrigVT.getSizeInBits() <= OptSize) {
       S = Signed;
       return true;
     }
   } else if (Op.getOpcode() == ISD::ZERO_EXTEND) {
     EVT OrigVT = Op.getOperand(0).getValueType();
-    if (OrigVT.getSizeInBits() == OptSize) {
+    if (OrigVT.getSizeInBits() <= OptSize) {
       S = Unsigned;
       return true;
     }
