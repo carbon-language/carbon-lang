@@ -1,4 +1,4 @@
-; RUN: llc < %s -asm-verbose=false -march=arm64 -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -asm-verbose=false -mtriple=arm64-apple-ios | FileCheck %s
 
 define <4 x float> @foo(<4 x float> %val, <4 x float> %test) nounwind {
 ; CHECK-LABEL: foo:
