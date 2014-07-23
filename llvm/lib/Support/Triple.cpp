@@ -178,7 +178,6 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Case("aarch64", aarch64)
     .Case("aarch64_be", aarch64_be)
     .Case("arm64", aarch64) // "arm64" is an alias for "aarch64"
-    .Case("arm64_be", aarch64_be) // "arm64_be" is an alias for "aarch64_be"
     .Case("arm", arm)
     .Case("armeb", armeb)
     .Case("mips", mips)
@@ -251,7 +250,6 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Case("aarch64", Triple::aarch64)
     .Case("aarch64_be", Triple::aarch64_be)
     .Case("arm64", Triple::aarch64)
-    .Case("arm64_be", Triple::aarch64_be)
     .Cases("arm", "xscale", Triple::arm)
     // FIXME: It would be good to replace these with explicit names for all the
     // various suffixes supported.

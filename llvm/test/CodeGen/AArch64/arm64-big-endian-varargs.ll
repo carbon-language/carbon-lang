@@ -3,7 +3,7 @@
 ; Vararg saving must save Q registers using the equivalent of STR/STP.
 
 target datalayout = "E-m:e-i64:64-i128:128-n32:64-S128"
-target triple = "arm64_be-arm-none-eabi"
+target triple = "aarch64_be-arm-none-eabi"
 
 %struct.__va_list = type { i8*, i8*, i8*, i32, i32 }
 

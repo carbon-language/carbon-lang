@@ -1,4 +1,4 @@
-; RUN: llc -mtriple arm64_be-linux-gnu -filetype obj < %s | llvm-objdump -s - | FileCheck %s
+; RUN: llc -mtriple aarch64_be-linux-gnu -filetype obj < %s | llvm-objdump -s - | FileCheck %s
 
 ; ARM EHABI for big endian
 ; This test case checks whether CIE length record is laid out in big endian format.

@@ -518,7 +518,5 @@ void AArch64AsmPrinter::EmitInstruction(const MachineInstr *MI) {
 extern "C" void LLVMInitializeAArch64AsmPrinter() {
   RegisterAsmPrinter<AArch64AsmPrinter> X(TheAArch64leTarget);
   RegisterAsmPrinter<AArch64AsmPrinter> Y(TheAArch64beTarget);
-
-  RegisterAsmPrinter<AArch64AsmPrinter> Z(TheARM64leTarget);
-  RegisterAsmPrinter<AArch64AsmPrinter> W(TheARM64beTarget);
+  RegisterAsmPrinter<AArch64AsmPrinter> Z(TheARM64Target);
 }

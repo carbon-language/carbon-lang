@@ -1,5 +1,5 @@
 ; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64-apple-darwin | FileCheck %s
-; RUN: llc < %s -O0 -fast-isel-abort -mtriple=arm64_be-linux-gnu | FileCheck %s --check-prefix=CHECK-BE
+; RUN: llc < %s -O0 -fast-isel-abort -mtriple=aarch64_be-linux-gnu | FileCheck %s --check-prefix=CHECK-BE
 
 define void @call0() nounwind {
 entry:

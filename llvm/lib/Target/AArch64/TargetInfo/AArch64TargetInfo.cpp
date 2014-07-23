@@ -14,17 +14,14 @@ using namespace llvm;
 namespace llvm {
 Target TheAArch64leTarget;
 Target TheAArch64beTarget;
-Target TheARM64leTarget;
-Target TheARM64beTarget;
+Target TheARM64Target;
 } // end namespace llvm
 
 extern "C" void LLVMInitializeAArch64TargetInfo() {
   // Now register the "arm64" name for use with "-march". We don't want it to
   // take possession of the Triple::aarch64 tag though.
   RegisterTarget<Triple::UnknownArch, /*HasJIT=*/true> X(
-      TheARM64leTarget, "arm64", "ARM64 (little endian)");
-  RegisterTarget<Triple::UnknownArch, /*HasJIT=*/true> Y(
-      TheARM64beTarget, "arm64_be", "ARM64 (big endian)");
+      TheARM64Target, "arm64", "ARM64 (little endian)");
 
   RegisterTarget<Triple::aarch64, /*HasJIT=*/true> Z(
       TheAArch64leTarget, "aarch64", "AArch64 (little endian)");
