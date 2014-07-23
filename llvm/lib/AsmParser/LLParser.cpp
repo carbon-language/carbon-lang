@@ -254,8 +254,6 @@ bool LLParser::ParseTopLevelEntities() {
     //               ('constant'|'global') ...
     case lltok::kw_private:             // OptionalLinkage
     case lltok::kw_internal:            // OptionalLinkage
-    case lltok::kw_linker_private:      // Obsolete OptionalLinkage
-    case lltok::kw_linker_private_weak: // Obsolete OptionalLinkage
     case lltok::kw_weak:                // OptionalLinkage
     case lltok::kw_weak_odr:            // OptionalLinkage
     case lltok::kw_linkonce:            // OptionalLinkage
@@ -1434,10 +1432,6 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
 ///   ::= 'common'
 ///   ::= 'extern_weak'
 ///   ::= 'external'
-///
-///   Deprecated Values:
-///     ::= 'linker_private'
-///     ::= 'linker_private_weak'
 bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   HasLinkage = false;
   switch (Lex.getKind()) {
@@ -1455,15 +1449,6 @@ bool LLParser::ParseOptionalLinkage(unsigned &Res, bool &HasLinkage) {
   case lltok::kw_common:         Res = GlobalValue::CommonLinkage;        break;
   case lltok::kw_extern_weak:    Res = GlobalValue::ExternalWeakLinkage;  break;
   case lltok::kw_external:       Res = GlobalValue::ExternalLinkage;      break;
-
-  case lltok::kw_linker_private:
-  case lltok::kw_linker_private_weak:
-    Lex.Warning("'" + Lex.getStrVal() + "' is deprecated, treating as"
-                " PrivateLinkage");
-    Lex.Lex();
-    // treat linker_private and linker_private_weak as PrivateLinkage
-    Res = GlobalValue::PrivateLinkage;
-    return false;
   }
   Lex.Lex();
   HasLinkage = true;
