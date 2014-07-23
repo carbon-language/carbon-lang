@@ -491,3 +491,20 @@ foo2:
 @ CHECK-ERRORS:                 ^
 @ CHECK-ERRORS: error: immediate expression for mov requires :lower16: or :upper16
 @ CHECK-ERRORS:                  ^
+
+        str r0, [r0, #4]!
+        str r0, [r0, r1]!
+        str r0, [r0], #4
+        str r0, [r0], r1
+@ CHECK-ERRORS: error: source register and base register can't be identical
+@ CHECK-ERRORS: str r0, [r0, #4]!
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: source register and base register can't be identical
+@ CHECK-ERRORS: str r0, [r0, r1]!
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: source register and base register can't be identical
+@ CHECK-ERRORS: str r0, [r0], #4
+@ CHECK-ERRORS:         ^
+@ CHECK-ERRORS: error: source register and base register can't be identical
+@ CHECK-ERRORS: str r0, [r0], r1
+@ CHECK-ERRORS:         ^

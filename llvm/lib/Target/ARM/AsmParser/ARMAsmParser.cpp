@@ -5728,6 +5728,19 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
                    "source operands must be sequential");
     return false;
   }
+  case ARM::STR_PRE_IMM:
+  case ARM::STR_PRE_REG:
+  case ARM::STR_POST_IMM:
+  case ARM::STR_POST_REG: {
+    // Rt must be different from Rn.
+    const unsigned Rt = MRI->getEncodingValue(Inst.getOperand(1).getReg());
+    const unsigned Rn = MRI->getEncodingValue(Inst.getOperand(2).getReg());
+
+    if (Rt == Rn)
+      return Error(Operands[3]->getStartLoc(),
+                   "source register and base register can't be identical");
+    return false;
+  }
   case ARM::SBFX:
   case ARM::UBFX: {
     // Width must be in range [1, 32-lsb].
