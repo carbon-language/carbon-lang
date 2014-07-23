@@ -7,6 +7,11 @@ module _Builtin_intrinsics [system] {
   explicit module arm {
     requires arm
 
+    explicit module acle {
+      header "arm_acle.h"
+      export *
+    }
+
     explicit module neon {
       requires neon
       header "arm_neon.h"
