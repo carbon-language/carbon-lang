@@ -71,6 +71,8 @@ static cl::opt<bool> DisableCGP("disable-cgp", cl::Hidden,
     cl::desc("Disable Codegen Prepare"));
 static cl::opt<bool> DisableCopyProp("disable-copyprop", cl::Hidden,
     cl::desc("Disable Copy Propagation pass"));
+static cl::opt<bool> DisablePartialLibcallInlining("disable-partial-libcall-inlining",
+    cl::Hidden, cl::desc("Disable Partial Libcall Inlining"));
 static cl::opt<bool> PrintLSR("print-lsr-output", cl::Hidden,
     cl::desc("Print LLVM IR produced by the loop-reduce pass"));
 static cl::opt<bool> PrintISelInput("print-isel-input", cl::Hidden,
@@ -399,6 +401,9 @@ void TargetPassConfig::addIRPasses() {
   // Prepare expensive constants for SelectionDAG.
   if (getOptLevel() != CodeGenOpt::None && !DisableConstantHoisting)
     addPass(createConstantHoistingPass());
+
+  if (getOptLevel() != CodeGenOpt::None && !DisablePartialLibcallInlining)
+    addPass(createPartiallyInlineLibCallsPass());
 }
 
 /// Turn exception handling constructs into something the code generators can

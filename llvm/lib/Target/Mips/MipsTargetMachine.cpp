@@ -141,7 +141,6 @@ void MipsPassConfig::addIRPasses() {
     addPass(createMipsOs16(getMipsTargetMachine()));
   if (getMipsSubtarget().inMips16HardFloat())
     addPass(createMips16HardFloat(getMipsTargetMachine()));
-  addPass(createPartiallyInlineLibCallsPass());
 }
 // Install an instruction selector pass using
 // the ISelDag to gen Mips code.

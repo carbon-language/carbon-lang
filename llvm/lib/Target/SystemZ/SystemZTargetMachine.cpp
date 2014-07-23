@@ -49,7 +49,6 @@ public:
 
 void SystemZPassConfig::addIRPasses() {
   TargetPassConfig::addIRPasses();
-  addPass(createPartiallyInlineLibCallsPass());
 }
 
 bool SystemZPassConfig::addInstSelector() {
