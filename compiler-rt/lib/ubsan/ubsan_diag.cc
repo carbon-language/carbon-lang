@@ -22,7 +22,7 @@
 
 using namespace __ubsan;
 
-static void InitializeSanitizerCommon() {
+static void InitializeSanitizerCommonAndFlags() {
   static StaticSpinMutex init_mu;
   SpinMutexLock l(&init_mu);
   static bool initialized;
@@ -34,6 +34,8 @@ static void InitializeSanitizerCommon() {
     CommonFlags *cf = common_flags();
     SetCommonFlagsDefaults(cf);
     cf->print_summary = false;
+    // Common flags may only be modified via UBSAN_OPTIONS.
+    ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
   }
   initialized = true;
 }
@@ -60,7 +62,7 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
 Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
   if (!Loc)
     return Location();
-  InitializeSanitizerCommon();
+  InitializeSanitizerCommonAndFlags();
 
   AddressInfo Info;
   if (!Symbolizer::GetOrInit()->SymbolizePC(Loc, &Info, 1) ||
@@ -274,7 +276,7 @@ static void renderMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
 }
 
 Diag::~Diag() {
-  InitializeSanitizerCommon();
+  InitializeSanitizerCommonAndFlags();
   Decorator Decor;
   SpinMutexLock l(&CommonSanitizerReportMutex);
   Printf(Decor.Bold());
