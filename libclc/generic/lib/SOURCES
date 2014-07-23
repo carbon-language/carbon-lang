@@ -40,6 +40,7 @@ math/mix.cl
 math/clc_nextafter.cl
 math/nextafter.cl
 math/pown.cl
+math/sin.cl
 math/sincos.cl
 math/sincos_helpers.cl
 relational/all.cl
