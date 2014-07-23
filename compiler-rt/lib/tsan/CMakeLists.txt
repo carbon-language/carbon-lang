@@ -103,7 +103,8 @@ endif()
 add_dependencies(compiler-rt tsan)
 
 # Build libcxx instrumented with TSan.
-if(COMPILER_RT_HAS_LIBCXX_SOURCES AND
+if(TSAN_SUPPORTED_ARCH AND
+   COMPILER_RT_HAS_LIBCXX_SOURCES AND
    COMPILER_RT_TEST_COMPILER_ID STREQUAL "Clang")
   set(LIBCXX_PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libcxx_tsan)
   add_custom_libcxx(libcxx_tsan ${LIBCXX_PREFIX}
