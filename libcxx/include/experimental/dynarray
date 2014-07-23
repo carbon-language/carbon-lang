@@ -38,18 +38,18 @@ class dynarray
 public:
     // construct/copy/destroy:
     explicit dynarray(size_type c);
-    template <typename Alloc>
-      dynarray(size_type c, const Alloc& alloc);
     dynarray(size_type c, const T& v);
-    template <typename Alloc>
-      dynarray(size_type c, const T& v, const Alloc& alloc);
     dynarray(const dynarray& d);
-    template <typename Alloc>
-      dynarray(const dynarray& d, const Alloc& alloc);
     dynarray(initializer_list<T>);
-    template <typename Alloc>
-      dynarray(initializer_list<T>, const Alloc& alloc);
 
+    template <class Alloc>
+      dynarray(allocator_arg_t, const Alloc& a, size_type c, const Alloc& alloc);
+    template <class Alloc>
+      dynarray(allocator_arg_t, const Alloc& a, size_type c, const T& v, const Alloc& alloc);
+    template <class Alloc>
+      dynarray(allocator_arg_t, const Alloc& a, const dynarray& d, const Alloc& alloc);
+    template <class Alloc>
+      dynarray(allocator_arg_t, const Alloc& a, initializer_list<T>, const Alloc& alloc);
     dynarray& operator=(const dynarray&) = delete;
     ~dynarray();
 
@@ -163,15 +163,15 @@ public:
     dynarray(initializer_list<value_type>);
 
 //  We're not implementing these right now.
-//  Waiting for the resolution of LWG issue #2235
+//  Updated with the resolution of LWG issue #2255
 //     template <typename _Alloc>
-//       dynarray(size_type __c, const _Alloc& __alloc);
+//       dynarray(allocator_arg_t, const _Alloc& __alloc, size_type __c);
 //     template <typename _Alloc>
-//       dynarray(size_type __c, const value_type& __v, const _Alloc& __alloc);
+//       dynarray(allocator_arg_t, const _Alloc& __alloc, size_type __c, const value_type& __v);
 //     template <typename _Alloc>
-//       dynarray(const dynarray& __d, const _Alloc& __alloc);
+//       dynarray(allocator_arg_t, const _Alloc& __alloc, const dynarray& __d);
 //     template <typename _Alloc>
-//       dynarray(initializer_list<value_type>, const _Alloc& __alloc);
+//       dynarray(allocator_arg_t, const _Alloc& __alloc, initializer_list<value_type>);
 
     dynarray& operator=(const dynarray&) = delete;
     ~dynarray();
