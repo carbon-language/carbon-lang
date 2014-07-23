@@ -29,6 +29,7 @@ integer/sub_sat_impl.ll
 integer/upsample.cl
 math/atan.cl
 math/atan2.cl
+math/cos.cl
 math/exp.cl
 math/exp10.cl
 math/fmax.cl
@@ -40,6 +41,7 @@ math/clc_nextafter.cl
 math/nextafter.cl
 math/pown.cl
 math/sincos.cl
+math/sincos_helpers.cl
 relational/all.cl
 relational/any.cl
 relational/isequal.cl

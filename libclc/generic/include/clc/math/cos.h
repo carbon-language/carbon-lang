@@ -1,6 +1,3 @@
-#undef cos
-#define cos __clc_cos
-
-#define __CLC_FUNCTION __clc_cos
-#define __CLC_INTRINSIC "llvm.cos"
-#include <clc/math/unary_intrin.inc>
+#define __CLC_BODY <clc/math/cos.inc>
+#include <clc/math/gentype.inc>
+#undef __CLC_BODY
