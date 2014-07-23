@@ -615,9 +615,13 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
   // Patch the pointer to LLVM function in debug info descriptor.
   auto DI = FunctionDIs.find(F);
-  if (DI != FunctionDIs.end())
-    DI->second.replaceFunction(NF);
-  
+  if (DI != FunctionDIs.end()) {
+    DISubprogram SP = DI->second;
+    SP.replaceFunction(NF);
+    FunctionDIs.erase(DI);
+    FunctionDIs[NF] = SP;
+  }
+
   DEBUG(dbgs() << "ARG PROMOTION:  Promoting to:" << *NF << "\n"
         << "From: " << *F);
   
