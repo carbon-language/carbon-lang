@@ -562,8 +562,6 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
                                          AliasAnalysis *AA) const {
   const MachineFunction &MF = *MI->getParent()->getParent();
   const MachineRegisterInfo &MRI = MF.getRegInfo();
-  const TargetMachine &TM = MF.getTarget();
-  const TargetInstrInfo &TII = *TM.getInstrInfo();
 
   // Remat clients assume operand 0 is the defined register.
   if (!MI->getNumOperands() || !MI->getOperand(0).isReg())
@@ -582,7 +580,7 @@ isReallyTriviallyReMaterializableGeneric(const MachineInstr *MI,
   // redundant with subsequent checks, but it's target-independent,
   // simple, and a common case.
   int FrameIdx = 0;
-  if (TII.isLoadFromStackSlot(MI, FrameIdx) &&
+  if (isLoadFromStackSlot(MI, FrameIdx) &&
       MF.getFrameInfo()->isImmutableObjectIndex(FrameIdx))
     return true;
 
