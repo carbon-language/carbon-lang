@@ -1788,7 +1788,7 @@ def LoopHint : Attr {
   /// vectorize_width: vectorize loop operations with width 'value'.
   /// interleave: interleave multiple loop iterations if 'value != 0'.
   /// interleave_count: interleaves 'value' loop interations.
-  /// unroll: unroll loop if 'value != 0'.
+  /// unroll: fully unroll loop if 'value != 0'.
   /// unroll_count: unrolls loop 'value' times.
 
   let Spellings = [Pragma<"clang", "loop">, Pragma<"", "unroll">];
@@ -1842,6 +1842,10 @@ def LoopHint : Attr {
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
       OS << value;
+    else if (option == Unroll && value)
+      // Unroll loop hint does not use the keyword "enable". Instead, a nonzero value
+      // indicates full unrolling which uses the keyword "full".
+      OS << "full";
     else if (value)
       OS << "enable";
     else

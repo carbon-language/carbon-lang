@@ -601,13 +601,14 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       MetadataName = "llvm.loop.interleave.count";
       break;
     case LoopHintAttr::Unroll:
-      MetadataName = "llvm.loop.unroll.enable";
+      // With the unroll loop hint, a non-zero value indicates full unrolling.
+      MetadataName =
+          ValueInt == 0 ? "llvm.loop.unroll.disable" : "llvm.loop.unroll.full";
       break;
     case LoopHintAttr::UnrollCount:
       MetadataName = "llvm.loop.unroll.count";
       break;
     }
-
     llvm::Value *Value;
     llvm::MDString *Name;
     switch (Option) {
@@ -625,22 +626,20 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       // Fallthrough.
     case LoopHintAttr::VectorizeWidth:
     case LoopHintAttr::InterleaveCount:
+    case LoopHintAttr::UnrollCount:
       Name = llvm::MDString::get(Context, MetadataName);
       Value = llvm::ConstantInt::get(Int32Ty, ValueInt);
       break;
     case LoopHintAttr::Unroll:
       Name = llvm::MDString::get(Context, MetadataName);
-      Value = (ValueInt == 0) ? Builder.getFalse() : Builder.getTrue();
-      break;
-    case LoopHintAttr::UnrollCount:
-      Name = llvm::MDString::get(Context, MetadataName);
-      Value = llvm::ConstantInt::get(Int32Ty, ValueInt);
+      Value = nullptr;
       break;
     }
 
     SmallVector<llvm::Value *, 2> OpValues;
     OpValues.push_back(Name);
-    OpValues.push_back(Value);
+    if (Value)
+      OpValues.push_back(Value);
 
     // Set or overwrite metadata indicated by Name.
     Metadata.push_back(llvm::MDNode::get(Context, OpValues));

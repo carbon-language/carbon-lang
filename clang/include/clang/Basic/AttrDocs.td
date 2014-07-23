@@ -1097,7 +1097,7 @@ enclosed in parentheses:
   }
 
 ``#pragma unroll`` and ``#pragma unroll _value_`` have identical semantics to
-``#pragma clang loop unroll(enable)`` and ``#pragma clang loop
+``#pragma clang loop unroll(full)`` and ``#pragma clang loop
 unroll_count(_value_)`` respectively. See `language extensions
 <http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>`_
 for further details including limitations of the unroll hints.

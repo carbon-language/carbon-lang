@@ -8,7 +8,7 @@ void test(int *List, int Length) {
 
 #pragma clang loop vectorize(enable)
 #pragma clang loop interleave(enable)
-#pragma clang loop unroll(enable)
+#pragma clang loop unroll(full)
   while (i + 1 < Length) {
     List[i] = i;
   }
@@ -49,15 +49,15 @@ void test(int *List, int Length) {
 
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize(enable
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave(enable
-/* expected-error {{expected ')'}} */ #pragma clang loop unroll(enable
+/* expected-error {{expected ')'}} */ #pragma clang loop unroll(full
 
 /* expected-error {{expected ')'}} */ #pragma clang loop vectorize_width(4
 /* expected-error {{expected ')'}} */ #pragma clang loop interleave_count(4
 /* expected-error {{expected ')'}} */ #pragma clang loop unroll_count(4
 
-/* expected-error {{missing argument to '#pragma clang loop vectorize'; expected a positive integer value}} */ #pragma clang loop vectorize()
-/* expected-error {{missing argument to '#pragma clang loop interleave_count'; expected a positive integer value}} */ #pragma clang loop interleave_count()
-/* expected-error {{missing argument to '#pragma clang loop unroll'; expected a positive integer value}} */ #pragma clang loop unroll()
+/* expected-error {{missing argument to '#pragma clang loop vectorize'}} */ #pragma clang loop vectorize()
+/* expected-error {{missing argument to '#pragma clang loop interleave_count'}} */ #pragma clang loop interleave_count()
+/* expected-error {{missing argument to '#pragma clang loop unroll'}} */ #pragma clang loop unroll()
 
 /* expected-error {{missing option}} */ #pragma clang loop
 /* expected-error {{invalid option 'badkeyword'}} */ #pragma clang loop badkeyword
@@ -92,7 +92,7 @@ void test(int *List, int Length) {
 
 /* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop vectorize(badidentifier)
 /* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop interleave(badidentifier)
-/* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
+/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(badidentifier)
   while (i-7 < Length) {
     List[i] = i;
   }
@@ -101,7 +101,7 @@ void test(int *List, int Length) {
 // constants crash FE.
 /* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop vectorize(()
 /* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop interleave(*)
-/* expected-error {{invalid argument; expected 'enable' or 'disable'}} */ #pragma clang loop unroll(=)
+/* expected-error {{invalid argument; expected 'full' or 'disable'}} */ #pragma clang loop unroll(=)
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(^)
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(/)
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(==)
@@ -136,7 +136,7 @@ void test(int *List, int Length) {
 #pragma clang loop vectorize(disable)
 /* expected-error {{duplicate directives 'interleave(disable)' and 'interleave(enable)'}} */ #pragma clang loop interleave(enable)
 #pragma clang loop interleave(disable)
-/* expected-error {{duplicate directives 'unroll(disable)' and 'unroll(enable)'}} */ #pragma clang loop unroll(enable)
+/* expected-error {{duplicate directives 'unroll(disable)' and 'unroll(full)'}} */ #pragma clang loop unroll(full)
 #pragma clang loop unroll(disable)
   while (i-9 < Length) {
     List[i] = i;
@@ -157,6 +157,13 @@ void test(int *List, int Length) {
 /* expected-error {{duplicate directives 'interleave_count(4)' and 'interleave_count(8)'}} */ #pragma clang loop interleave_count(8)
 #pragma clang loop interleave_count(4)
 /* expected-error {{duplicate directives 'unroll_count(4)' and 'unroll_count(8)'}} */ #pragma clang loop unroll_count(8)
+#pragma clang loop unroll_count(4)
+  while (i-11 < Length) {
+    List[i] = i;
+  }
+
+
+/* expected-error {{incompatible directives 'unroll(full)' and 'unroll_count(4)'}} */ #pragma clang loop unroll(full)
 #pragma clang loop unroll_count(4)
   while (i-11 < Length) {
     List[i] = i;

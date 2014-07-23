@@ -539,7 +539,7 @@ def note_surrounding_namespace_starts_here : Note<
 def err_pragma_loop_invalid_value : Error<
   "invalid argument; expected a positive integer value">;
 def err_pragma_loop_invalid_keyword : Error<
-  "invalid argument; expected 'enable' or 'disable'">;
+  "invalid argument; expected '%0' or 'disable'">;
 def err_pragma_loop_compatibility : Error<
   "%select{incompatible|duplicate}0 directives '%1' and '%2'">;
 def err_pragma_loop_precedes_nonloop : Error<

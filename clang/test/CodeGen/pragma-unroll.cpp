@@ -86,8 +86,8 @@ void template_test(double *List, int Length) {
   for_template_define_test<double>(List, Length, Value);
 }
 
-// CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLLENABLE_1:.*]]}
-// CHECK: ![[UNROLLENABLE_1]] = metadata !{metadata !"llvm.loop.unroll.enable", i1 true}
+// CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLL_FULL:.*]]}
+// CHECK: ![[UNROLL_FULL]] = metadata !{metadata !"llvm.loop.unroll.full"}
 // CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2:.*]], metadata ![[UNROLL_16:.*]]}
 // CHECK: ![[UNROLL_16]] = metadata !{metadata !"llvm.loop.unroll.count", i32 16}
 // CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_8:.*]]}

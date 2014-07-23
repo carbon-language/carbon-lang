@@ -818,7 +818,7 @@ def warn_pragma_expected_non_wide_string : Warning<
   "expected non-wide string literal in '#pragma %0'">, InGroup<IgnoredPragmas>;
 // - Generic errors
 def err_pragma_missing_argument : Error<
-  "missing argument to '#pragma %0'; expected %1">;
+  "missing argument to '#pragma %0'%select{|; expected %2}1">;
 // - #pragma options
 def warn_pragma_options_expected_align : Warning<
   "expected 'align' following '#pragma options' - ignored">,

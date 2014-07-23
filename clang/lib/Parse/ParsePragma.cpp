@@ -1719,8 +1719,7 @@ void PragmaOptimizeHandler::HandlePragma(Preprocessor &PP,
   PP.Lex(Tok);
   if (Tok.is(tok::eod)) {
     PP.Diag(Tok.getLocation(), diag::err_pragma_missing_argument)
-        << "clang optimize"
-        << "'on' or 'off'";
+        << "clang optimize" << /*Expected=*/true << "'on' or 'off'";
     return;
   }
   if (Tok.isNot(tok::identifier)) {
@@ -1767,8 +1766,12 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token Tok, Token &PragmaName,
                "Unexpected pragma name");
         PragmaString = "unroll";
       }
+      // Don't try to emit what the pragma is expecting with the diagnostic
+      // because the logic is non-trivial and we give expected values in sema
+      // diagnostics if an invalid argument is given.  Here, just note that the
+      // pragma is missing an argument.
       PP.Diag(Tok.getLocation(), diag::err_pragma_missing_argument)
-          << PragmaString << "a positive integer value";
+          << PragmaString << /*Expected=*/false;
       return true;
     }
   }
@@ -1800,13 +1803,17 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token Tok, Token &PragmaName,
 ///  loop-hint:
 ///    'vectorize' '(' loop-hint-keyword ')'
 ///    'interleave' '(' loop-hint-keyword ')'
-///    'unroll' '(' loop-hint-keyword ')'
+///    'unroll' '(' unroll-hint-keyword ')'
 ///    'vectorize_width' '(' loop-hint-value ')'
 ///    'interleave_count' '(' loop-hint-value ')'
 ///    'unroll_count' '(' loop-hint-value ')'
 ///
 ///  loop-hint-keyword:
 ///    'enable'
+///    'disable'
+///
+///  unroll-hint-keyword:
+///    'full'
 ///    'disable'
 ///
 ///  loop-hint-value:
@@ -1823,12 +1830,10 @@ static bool ParseLoopHintValue(Preprocessor &PP, Token Tok, Token &PragmaName,
 /// only works on inner loops.
 ///
 /// The unroll and unroll_count directives control the concatenation
-/// unroller. Specifying unroll(enable) instructs llvm to try to
+/// unroller. Specifying unroll(full) instructs llvm to try to
 /// unroll the loop completely, and unroll(disable) disables unrolling
 /// for the loop. Specifying unroll_count(_value_) instructs llvm to
 /// try to unroll the loop the number of times indicated by the value.
-/// If unroll(enable) and unroll_count are both specified only
-/// unroll_count takes effect.
 void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
                                          PragmaIntroducerKind Introducer,
                                          Token &Tok) {

@@ -1843,7 +1843,7 @@ iterations. Full unrolling is only possible if the loop trip count is known at
 compile time. Partial unrolling replicates the loop body within the loop and
 reduces the trip count.
 
-If ``unroll(enable)`` is specified the unroller will attempt to fully unroll the
+If ``unroll(full)`` is specified the unroller will attempt to fully unroll the
 loop if the trip count is known at compile time. If the loop count is not known
 or the fully unrolled code size is greater than the limit specified by the
 `-pragma-unroll-threshold` command line option the loop will be partially
@@ -1851,7 +1851,7 @@ unrolled subject to the same limit.
 
 .. code-block:: c++
 
-  #pragma clang loop unroll(enable)
+  #pragma clang loop unroll(full)
   for(...) {
     ...
   }
