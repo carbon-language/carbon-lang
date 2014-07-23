@@ -5426,7 +5426,8 @@ ObjectFileMachO::SaveCore (const lldb::ProcessSP &process_sp,
                             // Now write the file data for all memory segments in the process
                             for (const auto &segment : segment_load_commands)
                             {
-                                if (segment.fileoff != core_file.SeekFromStart(segment.fileoff))
+                                off_t offset = core_file.SeekFromStart(segment.fileoff);
+                                if (offset < 0 || segment.fileoff != static_cast<uint64_t>(offset))
                                 {
                                     error.SetErrorStringWithFormat("unable to seek to offset 0x%" PRIx64 " in '%s'", segment.fileoff, core_file_path.c_str());
                                     break;
