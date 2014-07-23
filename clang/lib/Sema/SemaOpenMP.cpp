@@ -92,16 +92,15 @@ private:
     Scope *CurScope;
     SourceLocation ConstructLoc;
     bool OrderedRegion;
-    SourceLocation AtomicClauseLoc;
     SharingMapTy(OpenMPDirectiveKind DKind, DeclarationNameInfo Name,
                  Scope *CurScope, SourceLocation Loc)
         : SharingMap(), AlignedMap(), DefaultAttr(DSA_unspecified),
           Directive(DKind), DirectiveName(std::move(Name)), CurScope(CurScope),
-          ConstructLoc(Loc), OrderedRegion(false), AtomicClauseLoc() {}
+          ConstructLoc(Loc), OrderedRegion(false) {}
     SharingMapTy()
         : SharingMap(), AlignedMap(), DefaultAttr(DSA_unspecified),
           Directive(OMPD_unknown), DirectiveName(), CurScope(nullptr),
-          ConstructLoc(), OrderedRegion(false), AtomicClauseLoc() {}
+          ConstructLoc(), OrderedRegion(false) {}
   };
 
   typedef SmallVector<SharingMapTy, 64> StackTy;
@@ -206,22 +205,6 @@ public:
     if (Stack.size() > 2)
       return Stack[Stack.size() - 2].OrderedRegion;
     return false;
-  }
-
-  /// \brief Checks if the 'atomic' construct has explicitly specified 'read',
-  /// 'update', 'write' or 'capture' clause.
-  bool hasAtomicClause() const {
-    return Stack.back().AtomicClauseLoc.isValid();
-  }
-  /// \brief Gets location of explicitly specified clause for 'atomic'
-  /// construct.
-  SourceLocation getAtomicClauseLoc() const {
-    return Stack.back().AtomicClauseLoc;
-  }
-  /// \brief Sets location of explicitly specified clause for 'atomic'
-  /// directive.
-  void setAtomicClauseLoc(SourceLocation Loc) {
-    Stack.back().AtomicClauseLoc = Loc;
   }
 
   Scope *getCurScope() const { return Stack.back().CurScope; }
@@ -2403,13 +2386,32 @@ StmtResult Sema::ActOnOpenMPAtomicDirective(ArrayRef<OMPClause *> Clauses,
   // The point of exit cannot be a branch out of the structured block.
   // longjmp() and throw() must not violate the entry/exit criteria.
   // TODO further analysis of associated statements and clauses.
+  OpenMPClauseKind AtomicKind = OMPC_unknown;
+  SourceLocation AtomicKindLoc;
   for (auto *C : Clauses) {
-    if (C->getClauseKind() == OMPC_read) {
-      if (!isa<Expr>(CS->getCapturedStmt())) {
-          Diag(CS->getCapturedStmt()->getLocStart(),
-               diag::err_omp_atomic_read_not_expression_statement);
-        return StmtError();
+    if (C->getClauseKind() == OMPC_read || C->getClauseKind() == OMPC_write) {
+      if (AtomicKind != OMPC_unknown) {
+        Diag(C->getLocStart(), diag::err_omp_atomic_several_clauses)
+            << SourceRange(C->getLocStart(), C->getLocEnd());
+        Diag(AtomicKindLoc, diag::note_omp_atomic_previous_clause)
+            << getOpenMPClauseName(AtomicKind);
+      } else {
+        AtomicKind = C->getClauseKind();
+        AtomicKindLoc = C->getLocStart();
       }
+    }
+  }
+  if (AtomicKind == OMPC_read) {
+    if (!isa<Expr>(CS->getCapturedStmt())) {
+      Diag(CS->getCapturedStmt()->getLocStart(),
+           diag::err_omp_atomic_read_not_expression_statement);
+      return StmtError();
+    }
+  } else if (AtomicKind == OMPC_write) {
+    if (!isa<Expr>(CS->getCapturedStmt())) {
+      Diag(CS->getCapturedStmt()->getLocStart(),
+           diag::err_omp_atomic_write_not_expression_statement);
+      return StmtError();
     }
   }
 
@@ -2458,6 +2460,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_threadprivate:
   case OMPC_flush:
   case OMPC_read:
+  case OMPC_write:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2500,7 +2503,6 @@ OMPClause *Sema::ActOnOpenMPFinalClause(Expr *Condition,
 
   return new (Context) OMPFinalClause(ValExpr, StartLoc, LParenLoc, EndLoc);
 }
-
 ExprResult Sema::PerformOpenMPImplicitIntegerConversion(SourceLocation Loc,
                                                         Expr *Op) {
   if (!Op)
@@ -2662,6 +2664,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_threadprivate:
   case OMPC_flush:
   case OMPC_read:
+  case OMPC_write:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2778,6 +2781,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_threadprivate:
   case OMPC_flush:
   case OMPC_read:
+  case OMPC_write:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2860,6 +2864,9 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_read:
     Res = ActOnOpenMPReadClause(StartLoc, EndLoc);
     break;
+  case OMPC_write:
+    Res = ActOnOpenMPWriteClause(StartLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_final:
   case OMPC_num_threads:
@@ -2908,8 +2915,12 @@ OMPClause *Sema::ActOnOpenMPMergeableClause(SourceLocation StartLoc,
 
 OMPClause *Sema::ActOnOpenMPReadClause(SourceLocation StartLoc,
                                        SourceLocation EndLoc) {
-  DSAStack->setAtomicClauseLoc(StartLoc);
   return new (Context) OMPReadClause(StartLoc, EndLoc);
+}
+
+OMPClause *Sema::ActOnOpenMPWriteClause(SourceLocation StartLoc,
+                                        SourceLocation EndLoc) {
+  return new (Context) OMPWriteClause(StartLoc, EndLoc);
 }
 
 OMPClause *Sema::ActOnOpenMPVarListClause(
@@ -2966,6 +2977,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_mergeable:
   case OMPC_threadprivate:
   case OMPC_read:
+  case OMPC_write:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -4266,3 +4278,4 @@ OMPClause *Sema::ActOnOpenMPFlushClause(ArrayRef<Expr *> VarList,
 
   return OMPFlushClause::Create(Context, StartLoc, LParenLoc, EndLoc, VarList);
 }
+

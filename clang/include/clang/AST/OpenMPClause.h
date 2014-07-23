@@ -798,6 +798,35 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
+/// \brief This represents 'write' clause in the '#pragma omp atomic' directive.
+///
+/// \code
+/// #pragma omp atomic write
+/// \endcode
+/// In this example directive '#pragma omp atomic' has 'write' clause.
+///
+class OMPWriteClause : public OMPClause {
+public:
+  /// \brief Build 'write' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPWriteClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_write, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPWriteClause()
+      : OMPClause(OMPC_write, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_write;
+  }
+
+  StmtRange children() { return StmtRange(); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

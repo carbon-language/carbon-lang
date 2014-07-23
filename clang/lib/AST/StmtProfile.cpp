@@ -312,6 +312,8 @@ void OMPClauseProfiler::VisitOMPMergeableClause(const OMPMergeableClause *) {}
 
 void OMPClauseProfiler::VisitOMPReadClause(const OMPReadClause *) {}
 
+void OMPClauseProfiler::VisitOMPWriteClause(const OMPWriteClause *) {}
+
 template<typename T>
 void OMPClauseProfiler::VisitOMPClauseList(T *Node) {
   for (auto *I : Node->varlists())

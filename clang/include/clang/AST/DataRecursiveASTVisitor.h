@@ -2426,6 +2426,11 @@ bool RecursiveASTVisitor<Derived>::VisitOMPReadClause(OMPReadClause *) {
 }
 
 template <typename Derived>
+bool RecursiveASTVisitor<Derived>::VisitOMPWriteClause(OMPWriteClause *) {
+  return true;
+}
+
+template <typename Derived>
 template <typename T>
 bool RecursiveASTVisitor<Derived>::VisitOMPClauseList(T *Node) {
   for (auto *E : Node->varlists()) {

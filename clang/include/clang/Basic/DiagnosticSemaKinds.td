@@ -7151,6 +7151,13 @@ def err_omp_parallel_reduction_in_task_firstprivate : Error<
 def err_omp_atomic_read_not_expression_statement : Error<
   "the statement for 'atomic read' must be an expression statement of form 'v = x;',"
   " where v and x are both l-value expressions with scalar type">;
+def err_omp_atomic_write_not_expression_statement : Error<
+  "the statement for 'atomic write' must be an expression statement of form 'x = expr;',"
+  " where x is an l-value expression with scalar type">;
+def err_omp_atomic_several_clauses : Error<
+  "directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause">;
+def note_omp_atomic_previous_clause : Note<
+  "'%0' clause used here">;
 } // end of OpenMP category
 
 let CategoryName = "Related Result Type Issue" in {

@@ -45,3 +45,59 @@ int read() {
 
   return read<int>();
 }
+
+template <class T>
+T write() {
+  T a, b = 0;
+// Test for atomic write
+#pragma omp atomic write
+// expected-error@+1 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is an l-value expression with scalar type}}
+  ;
+// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
+#pragma omp atomic write write
+  a = b;
+
+  return T();
+}
+
+int write() {
+  int a, b = 0;
+// Test for atomic write
+#pragma omp atomic write
+// expected-error@+1 {{the statement for 'atomic write' must be an expression statement of form 'x = expr;', where x is an l-value expression with scalar type}}
+  ;
+// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'write' clause}}
+#pragma omp atomic write write
+  a = b;
+
+  return write<int>();
+}
+
+template <class T>
+T mixed() {
+  T a, b = T();
+// expected-error@+2 2 {{directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause}}
+// expected-note@+1 2 {{'read' clause used here}}
+#pragma omp atomic read write
+  a = b;
+// expected-error@+2 2 {{directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause}}
+// expected-note@+1 2 {{'write' clause used here}}
+#pragma omp atomic write read
+  a = b;
+  return T();
+}
+
+int mixed() {
+  int a, b = 0;
+// expected-error@+2 {{directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause}}
+// expected-note@+1 {{'read' clause used here}}
+#pragma omp atomic read write
+  a = b;
+// expected-error@+2 {{directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause}}
+// expected-note@+1 {{'write' clause used here}}
+#pragma omp atomic write read
+  a = b;
+// expected-note@+1 {{in instantiation of function template specialization 'mixed<int>' requested here}}
+  return mixed<int>();
+}
+

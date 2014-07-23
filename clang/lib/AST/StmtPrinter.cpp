@@ -667,6 +667,8 @@ void OMPClausePrinter::VisitOMPMergeableClause(OMPMergeableClause *) {
 
 void OMPClausePrinter::VisitOMPReadClause(OMPReadClause *) { OS << "read"; }
 
+void OMPClausePrinter::VisitOMPWriteClause(OMPWriteClause *) { OS << "write"; }
+
 template<typename T>
 void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),
