@@ -14,6 +14,7 @@
 #define UBSAN_DIAG_H
 
 #include "ubsan_value.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
 
 namespace __ubsan {
 
@@ -202,6 +203,13 @@ public:
   Diag &operator<<(const Value &V);
   Diag &operator<<(const Range &R) { return AddRange(R); }
 };
+
+void MaybePrintStackTrace(uptr pc, uptr bp);
+
+#define MAYBE_PRINT_STACK_TRACE() do { \
+  GET_CALLER_PC_BP_SP; \
+  MaybePrintStackTrace(pc, bp); \
+} while (0)
 
 } // namespace __ubsan
 

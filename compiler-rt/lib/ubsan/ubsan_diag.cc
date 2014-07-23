@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ubsan_diag.h"
+#include "ubsan_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
@@ -37,7 +38,26 @@ static void InitializeSanitizerCommonAndFlags() {
     // Common flags may only be modified via UBSAN_OPTIONS.
     ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
   }
+  // Initialize UBSan-specific flags.
+  InitializeFlags();
   initialized = true;
+}
+
+void __ubsan::MaybePrintStackTrace(uptr pc, uptr bp) {
+  // We assume that flags are already parsed: InitializeSanitizerCommonAndFlags
+  // will definitely be called when we print the first diagnostics message.
+  if (!flags()->print_stacktrace)
+    return;
+  // We can only use slow unwind, as we don't have any information about stack
+  // top/bottom.
+  // FIXME: It's better to respect "fast_unwind_on_fatal" runtime flag and
+  // fetch stack top/bottom information if we have it (e.g. if we're running
+  // under ASan).
+  if (StackTrace::WillUseFastUnwind(false))
+    return;
+  StackTrace stack;
+  stack.Unwind(kStackTraceMax, pc, bp, 0, 0, 0, false);
+  stack.Print();
 }
 
 namespace {

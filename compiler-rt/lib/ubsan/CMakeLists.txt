@@ -2,6 +2,7 @@
 
 set(UBSAN_SOURCES
   ubsan_diag.cc
+  ubsan_flags.cc
   ubsan_handlers.cc
   ubsan_value.cc
   )

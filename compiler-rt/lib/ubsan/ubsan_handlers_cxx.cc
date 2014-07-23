@@ -60,6 +60,7 @@ static void HandleDynamicTypeCacheMiss(
       << MangledName(DTI.getSubobjectTypeName())
       << Range(Pointer, Pointer + sizeof(uptr), "vptr for %2 base class of %1");
 
+  MAYBE_PRINT_STACK_TRACE();
   if (Abort)
     Die();
 }
