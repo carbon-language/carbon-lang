@@ -952,6 +952,8 @@ void mips::getMipsCPUAndABI(const ArgList &Args,
       .Cases("n32", "n64", DefMips64CPU)
       .Default("");
   }
+
+  // FIXME: Warn on inconsistent use of -march and -mabi.
 }
 
 // Convert ABI name to the GNU tools acceptable variant.
