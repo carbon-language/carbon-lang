@@ -42,13 +42,13 @@ namespace lldb_private {
         uint32_t max_opcode_byte_size;
         llvm::Triple::ArchType machine;
         ArchSpec::Core core;
-        const char *name;
+        const char * const name;
     };
 
 }
 
 // This core information can be looked using the ArchSpec::Core as the index
-static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
+static const CoreDefinition g_core_definitions[] =
 {
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_generic     , "arm"       },
     { eByteOrderLittle, 4, 2, 4, llvm::Triple::arm    , ArchSpec::eCore_arm_armv4       , "armv4"     },
@@ -118,6 +118,11 @@ static const CoreDefinition g_core_definitions[ArchSpec::kNumCores] =
     { eByteOrderLittle, 4, 1, 1 , llvm::Triple::kalimba , ArchSpec::eCore_kalimba  , "kalimba" }
 };
 
+// Ensure that we have an entry in the g_core_definitions for each core. If you comment out an entry above,
+// you will need to comment out the corresponding ArchSpec::Core enumeration.
+static_assert(llvm::array_lengthof(g_core_definitions) == ArchSpec::kNumCores, "make sure we have one core definition for each core");
+
+
 struct ArchDefinitionEntry
 {
     ArchSpec::Core core;
@@ -142,7 +147,7 @@ ArchSpec::AutoComplete (const char *name, StringList &matches)
     uint32_t i;
     if (name && name[0])
     {
-        for (i = 0; i < ArchSpec::kNumCores; ++i)
+        for (i = 0; i < llvm::array_lengthof(g_core_definitions); ++i)
         {
             if (NameMatches(g_core_definitions[i].name, eNameMatchStartsWith, name))
                 matches.AppendString (g_core_definitions[i].name);
@@ -150,7 +155,7 @@ ArchSpec::AutoComplete (const char *name, StringList &matches)
     }
     else
     {
-        for (i = 0; i < ArchSpec::kNumCores; ++i)
+        for (i = 0; i < llvm::array_lengthof(g_core_definitions); ++i)
             matches.AppendString (g_core_definitions[i].name);
     }
     return matches.GetSize();
@@ -312,7 +317,7 @@ FindArchDefinition (ArchitectureType arch_type)
 static const CoreDefinition *
 FindCoreDefinition (llvm::StringRef name)
 {
-    for (unsigned int i = 0; i < ArchSpec::kNumCores; ++i)
+    for (unsigned int i = 0; i < llvm::array_lengthof(g_core_definitions); ++i)
     {
         if (name.equals_lower(g_core_definitions[i].name))
             return &g_core_definitions[i];
@@ -323,7 +328,7 @@ FindCoreDefinition (llvm::StringRef name)
 static inline const CoreDefinition *
 FindCoreDefinition (ArchSpec::Core core)
 {
-    if (core >= 0 && core < ArchSpec::kNumCores)
+    if (core >= 0 && core < llvm::array_lengthof(g_core_definitions))
         return &g_core_definitions[core];
     return NULL;
 }
