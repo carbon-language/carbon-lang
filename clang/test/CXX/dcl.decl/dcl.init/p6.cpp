@@ -10,15 +10,15 @@ struct NoUserDefault : public MakeNonPOD { };
 struct HasUserDefault { HasUserDefault(); };
 
 void test_const_default_init() {
-  const NoUserDefault x1; // expected-error{{default initialization of an object of const type 'const NoUserDefault' requires a user-provided default constructor}}
+  const NoUserDefault x1; // expected-error{{default initialization of an object of const type 'const NoUserDefault' without a user-provided default constructor}} expected-note {{add an explicit initializer to initialize 'x1'}}
   const HasUserDefault x2;
-  const int x3; // expected-error{{default initialization of an object of const type 'const int'}}
+  const int x3; // expected-error{{default initialization of an object of const type 'const int'}} expected-note{{add an explicit initializer to initialize 'x3'}}
 }
 
 // rdar://8501008
 struct s0 {};
 struct s1 { static const s0 foo; };
-const struct s0 s1::foo; // expected-error{{default initialization of an object of const type 'const struct s0' requires a user-provided default constructor}}
+const struct s0 s1::foo; // expected-error{{default initialization of an object of const type 'const struct s0' without a user-provided default constructor}} expected-note {{add an explicit initializer to initialize 'foo'}}
 
 template<typename T>
 struct s2 {

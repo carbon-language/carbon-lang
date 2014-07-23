@@ -58,13 +58,13 @@ namespace out_of_line {
     template<typename T, typename T0> static CONST T b = T(100);
     template<typename T> static CONST T b<T,int>;
   };
-  template<typename T, typename T0> CONST T B4::a; // expected-error {{default initialization of an object of const type 'const int'}}
+  template<typename T, typename T0> CONST T B4::a; // expected-error {{default initialization of an object of const type 'const int'}} expected-note {{add an explicit initializer to initialize 'a<int, char>'}}
   template<typename T> CONST T B4::a<T,int>;
   template CONST int B4::a<int,char>; // expected-note {{in instantiation of}}
   template CONST int B4::a<int,int>;
 
   template<typename T, typename T0> CONST T B4::b;
-  template<typename T> CONST T B4::b<T,int>; // expected-error {{default initialization of an object of const type 'const int'}}
+  template<typename T> CONST T B4::b<T,int>; // expected-error {{default initialization of an object of const type 'const int'}} expected-note {{add an explicit initializer to initialize 'b<int, int>'}}
   template CONST int B4::b<int,char>;
   template CONST int B4::b<int,int>; // expected-note {{in instantiation of}}
 }

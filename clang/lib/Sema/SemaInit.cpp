@@ -6455,6 +6455,26 @@ static void diagnoseListInit(Sema &S, const InitializedEntity &Entity,
          "Inconsistent init list check result.");
 }
 
+/// Prints a fixit for adding a null initializer for |Entity|. Call this only
+/// right after emitting a diagnostic.
+static void maybeEmitZeroInitializationFixit(Sema &S,
+                                             InitializationSequence &Sequence,
+                                             const InitializedEntity &Entity) {
+  if (Entity.getKind() != InitializedEntity::EK_Variable)
+    return;
+
+  VarDecl *VD = cast<VarDecl>(Entity.getDecl());
+  if (VD->getInit() || VD->getLocEnd().isMacroID())
+    return;
+
+  QualType VariableTy = VD->getType().getCanonicalType();
+  SourceLocation Loc = S.getLocForEndOfToken(VD->getLocEnd());
+  std::string Init = S.getFixItZeroInitializerForType(VariableTy, Loc);
+
+  S.Diag(Loc, diag::note_add_initializer)
+      << VD << FixItHint::CreateInsertion(Loc, Init);
+}
+
 bool InitializationSequence::Diagnose(Sema &S,
                                       const InitializedEntity &Entity,
                                       const InitializationKind &Kind,
@@ -6785,7 +6805,8 @@ bool InitializationSequence::Diagnose(Sema &S,
         << Entity.getName();
     } else {
       S.Diag(Kind.getLocation(), diag::err_default_init_const)
-        << DestType << (bool)DestType->getAs<RecordType>();
+          << DestType << (bool)DestType->getAs<RecordType>();
+      maybeEmitZeroInitializationFixit(S, *this, Entity);
     }
     break;
 
