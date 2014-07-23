@@ -33,6 +33,8 @@
 
 /* 6.11.2 Math Functions */
 #include <clc/math/atan.h>
+#include <clc/math/atan2.h>
+#include <clc/math/copysign.h>
 #include <clc/math/cos.h>
 #include <clc/math/ceil.h>
 #include <clc/math/exp.h>
