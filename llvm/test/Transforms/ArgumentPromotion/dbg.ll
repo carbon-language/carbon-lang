@@ -1,14 +1,17 @@
 ; RUN: opt < %s -argpromotion -S | FileCheck %s
-; CHECK: call void @test(), !dbg [[DBG_LOC:![0-9]]]
-; CHECK: [[TEST_FN:.*]] = {{.*}} void ()* @test
-; CHECK: [[DBG_LOC]] = metadata !{i32 8, i32 0, metadata [[TEST_FN]], null}
+; CHECK: call void @test(i32 %
+; CHECK: void (i32)* @test, {{.*}} ; [ DW_TAG_subprogram ] {{.*}} [test]
+
+declare void @sink(i32)
 
 define internal void @test(i32* %X) {
+  %1 = load i32* %X, align 8
+  call void @sink(i32 %1)
   ret void
 }
 
-define void @caller() {
-  call void @test(i32* null), !dbg !1
+define void @caller(i32* %Y) {
+  call void @test(i32* %Y)
   ret void
 }
 
