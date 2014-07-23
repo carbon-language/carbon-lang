@@ -30,40 +30,6 @@ while.end:                                        ; preds = %while.cond
   ret void
 }
 
-
-; DAGCombiner shouldn't fold the sdiv (ashr) away.
-; rdar://8636812
-; CHECK-LABEL: test2:
-; CHECK:   sarl
-
-define i32 @test2() nounwind {
-entry:
-  %i = alloca i32, align 4
-  %j = alloca i8, align 1
-  store i32 127, i32* %i, align 4
-  store i8 0, i8* %j, align 1
-  %tmp3 = load i32* %i, align 4
-  %mul = mul nsw i32 %tmp3, 2
-  %conv4 = trunc i32 %mul to i8
-  %conv5 = sext i8 %conv4 to i32
-  %div6 = sdiv i32 %conv5, 2
-  %conv7 = trunc i32 %div6 to i8
-  %conv9 = sext i8 %conv7 to i32
-  %cmp = icmp eq i32 %conv9, -1
-  br i1 %cmp, label %if.then, label %if.end
-
-if.then:                                          ; preds = %entry
-  ret i32 0
-
-if.end:                                           ; preds = %entry
-  call void @abort() noreturn
-  unreachable
-}
-
-declare void @abort() noreturn
-
-declare void @exit(i32) noreturn
-
 ; DAG Combiner can't fold this into a load of the 1'th byte.
 ; PR8757
 define i32 @test3(i32 *%P) nounwind ssp {

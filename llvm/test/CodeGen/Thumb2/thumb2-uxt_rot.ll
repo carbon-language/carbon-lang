@@ -25,7 +25,7 @@ define zeroext i32 @test2(i32 %A.u, i32 %B.u)  {
 
 define zeroext i32 @test3(i32 %A.u)  {
 ; A8: test3
-; A8: uxth.w r0, r0, ror #8
+; A8: ubfx  r0, r0, #8, #16
     %B.u = lshr i32 %A.u, 8
     %C.u = shl i32 %A.u, 24
     %D.u = or i32 %B.u, %C.u

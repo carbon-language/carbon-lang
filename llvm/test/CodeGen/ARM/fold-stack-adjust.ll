@@ -167,9 +167,9 @@ end:
 define void @test_varsize(...) minsize {
 ; CHECK-T1-LABEL: test_varsize:
 ; CHECK-T1: sub	sp, #16
-; CHECK-T1: push	{r2, r3, r4, r5, r7, lr}
+; CHECK-T1: push	{r5, r6, r7, lr}
 ; ...
-; CHECK-T1: pop	{r2, r3, r4, r5, r7}
+; CHECK-T1: pop	{r2, r3, r7}
 ; CHECK-T1: pop	{r3}
 ; CHECK-T1: add	sp, #16
 ; CHECK-T1: bx	r3

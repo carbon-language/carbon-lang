@@ -35,7 +35,7 @@ if.then9.i39:                                     ; preds = %if.end7.i37
   br i1 %lnot.i.i16.i23, label %return, label %lor.rhs.i.i49
 
 ; CHECK: .LBB0_7:
-; CHECK:	beq 1, .LBB0_10
+; CHECK:	bne 1, .LBB0_10
 ; CHECK:	beq 0, .LBB0_10
 ; CHECK: .LBB0_9:
 

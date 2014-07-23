@@ -34,8 +34,8 @@ entry:
 ; X64: movb	%sil, 1(%rdi)
 
 ; X32-LABEL: test2:
-; X32: movb	8(%esp), %[[REG:[abcd]l]]
-; X32: movb	%[[REG]], 1(%{{.*}})
+; X32: movzbl	8(%esp), %e[[REG:[abcd]]]x
+; X32: movb	%[[REG]]l, 1(%{{.*}})
 }
 
 define void @test3(i32* nocapture %a0, i16 zeroext %a1) nounwind ssp {

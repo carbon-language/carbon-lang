@@ -4,8 +4,8 @@ define void @t1(float* %R, <4 x float>* %P1) nounwind {
 ; CHECK-LABEL: @t1
 ; CHECK:         movl 4(%esp), %[[R0:e[abcd]x]]
 ; CHECK-NEXT:    movl 8(%esp), %[[R1:e[abcd]x]]
-; CHECK-NEXT:    movl 12(%[[R1]]), %[[R2:e[abcd]x]]
-; CHECK-NEXT:    movl %[[R2]], (%[[R0]])
+; CHECK-NEXT:    movss 12(%[[R1]]), %[[R2:xmm.*]]
+; CHECK-NEXT:    movss %[[R2]], (%[[R0]])
 ; CHECK-NEXT:    retl
 
 	%X = load <4 x float>* %P1

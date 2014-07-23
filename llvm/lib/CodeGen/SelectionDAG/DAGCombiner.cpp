@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
@@ -87,25 +88,21 @@ namespace {
     bool LegalTypes;
     bool ForCodeSize;
 
-    // Worklist of all of the nodes that need to be simplified.
-    //
-    // This has the semantics that when adding to the worklist,
-    // the item added must be next to be processed. It should
-    // also only appear once. The naive approach to this takes
-    // linear time.
-    //
-    // To reduce the insert/remove time to logarithmic, we use
-    // a set and a vector to maintain our worklist.
-    //
-    // The set contains the items on the worklist, but does not
-    // maintain the order they should be visited.
-    //
-    // The vector maintains the order nodes should be visited, but may
-    // contain duplicate or removed nodes. When choosing a node to
-    // visit, we pop off the order stack until we find an item that is
-    // also in the contents set. All operations are O(log N).
-    SmallPtrSet<SDNode*, 64> WorklistContents;
-    SmallVector<SDNode*, 64> WorklistOrder;
+    /// \brief Worklist of all of the nodes that need to be simplified.
+    ///
+    /// This must behave as a stack -- new nodes to process are pushed onto the
+    /// back and when processing we pop off of the back.
+    ///
+    /// The worklist will not contain duplicates but may contain null entries
+    /// due to nodes being deleted from the underlying DAG.
+    SmallVector<SDNode *, 64> Worklist;
+
+    /// \brief Mapping from an SDNode to its position on the worklist.
+    ///
+    /// This is used to find and remove nodes from the worklist (by nulling
+    /// them) when they are deleted from the underlying DAG. It relies on
+    /// stable indices of nodes within the worklist.
+    DenseMap<SDNode *, unsigned> WorklistMap;
 
     // AA - Used for DAG load/store alias analysis.
     AliasAnalysis &AA;
@@ -132,15 +129,23 @@ namespace {
       if (N->getOpcode() == ISD::HANDLENODE)
         return;
 
-      WorklistContents.insert(N);
-      WorklistOrder.push_back(N);
+      if (WorklistMap.insert(std::make_pair(N, Worklist.size())).second)
+        Worklist.push_back(N);
     }
 
     /// removeFromWorklist - remove all instances of N from the worklist.
     ///
     void removeFromWorklist(SDNode *N) {
-      WorklistContents.erase(N);
+      auto It = WorklistMap.find(N);
+      if (It == WorklistMap.end())
+        return; // Not in the worklist.
+
+      // Null out the entry rather than erasing it to avoid a linear operation.
+      Worklist[It->second] = nullptr;
+      WorklistMap.erase(It);
     }
+
+    bool recursivelyDeleteUnusedNodes(SDNode *N);
 
     SDValue CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
                       bool AddTo = true);
@@ -1072,6 +1077,35 @@ bool DAGCombiner::PromoteLoad(SDValue Op) {
   return false;
 }
 
+/// \brief Recursively delete a node which has no uses and any operands for
+/// which it is the only use.
+///
+/// Note that this both deletes the nodes and removes them from the worklist.
+/// It also adds any nodes who have had a user deleted to the worklist as they
+/// may now have only one use and subject to other combines.
+bool DAGCombiner::recursivelyDeleteUnusedNodes(SDNode *N) {
+  if (!N->use_empty())
+    return false;
+
+  SmallSetVector<SDNode *, 16> Nodes;
+  Nodes.insert(N);
+  do {
+    N = Nodes.pop_back_val();
+    if (!N)
+      continue;
+
+    if (N->use_empty()) {
+      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+        Nodes.insert(N->getOperand(i).getNode());
+
+      removeFromWorklist(N);
+      DAG.DeleteNode(N);
+    } else {
+      AddToWorklist(N);
+    }
+  } while (!Nodes.empty());
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 //  Main DAG Combiner implementation
@@ -1099,27 +1133,25 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
 
   // while the worklist isn't empty, find a node and
   // try and combine it.
-  while (!WorklistContents.empty()) {
+  while (!WorklistMap.empty()) {
     SDNode *N;
-    // The WorklistOrder holds the SDNodes in order, but it may contain
-    // duplicates.
-    // In order to avoid a linear scan, we use a set (O(log N)) to hold what the
-    // worklist *should* contain, and check the node we want to visit is should
-    // actually be visited.
+    // The Worklist holds the SDNodes in order, but it may contain null entries.
     do {
-      N = WorklistOrder.pop_back_val();
-    } while (!WorklistContents.erase(N));
+      N = Worklist.pop_back_val();
+    } while (!N);
+
+    bool GoodWorklistEntry = WorklistMap.erase(N);
+    (void)GoodWorklistEntry;
+    assert(GoodWorklistEntry &&
+           "Found a worklist entry without a corresponding map entry!");
 
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
     // N is deleted from the DAG, since they too may now be dead or may have a
     // reduced number of uses, allowing other xforms.
-    if (N->use_empty()) {
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        AddToWorklist(N->getOperand(i).getNode());
-
-      DAG.DeleteNode(N);
+    if (recursivelyDeleteUnusedNodes(N))
       continue;
-    }
+
+    WorklistRemover DeadNodes(*this);
 
     SDValue RV = combine(N);
 
@@ -1147,7 +1179,6 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
 
     // Transfer debug value.
     DAG.TransferDbgValues(SDValue(N, 0), RV);
-    WorklistRemover DeadNodes(*this);
     if (N->getNumValues() == RV.getNode()->getNumValues())
       DAG.ReplaceAllUsesWith(N, RV.getNode());
     else {
@@ -1161,23 +1192,11 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     AddToWorklist(RV.getNode());
     AddUsersToWorklist(RV.getNode());
 
-    // Add any uses of the old node to the worklist in case this node is the
-    // last one that uses them.  They may become dead after this node is
-    // deleted.
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      AddToWorklist(N->getOperand(i).getNode());
-
     // Finally, if the node is now dead, remove it from the graph.  The node
     // may not be dead if the replacement process recursively simplified to
-    // something else needing this node.
-    if (N->use_empty()) {
-      // Nodes can be reintroduced into the worklist.  Make sure we do not
-      // process a node that has been replaced.
-      removeFromWorklist(N);
-
-      // Finally, since the node is now dead, remove it from the graph.
-      DAG.DeleteNode(N);
-    }
+    // something else needing this node. This will also take care of adding any
+    // operands which have lost a user to the worklist.
+    recursivelyDeleteUnusedNodes(N);
   }
 
   // If the root changed (e.g. it was a dead load, update the root).
