@@ -51,6 +51,21 @@ IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.props
 IF EXIST %D%\LLVM-vs2013_xp del %D%\LLVM-vs2013_xp\toolset.targets
 IF EXIST %D%\LLVM-vs2013_xp rmdir %D%\LLVM-vs2013_xp
 
+SET D="%ProgramFiles%\MSBuild\Microsoft.Cpp\v4.0\V140\Platforms\%PLATFORM%\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2014 del %D%\LLVM-vs2014\toolset.props
+IF EXIST %D%\LLVM-vs2014 del %D%\LLVM-vs2014\toolset.targets
+IF EXIST %D%\LLVM-vs2014 rmdir %D%\LLVM-vs2014
+IF EXIST %D%\LLVM-vs2014_xp del %D%\LLVM-vs2014_xp\toolset.props
+IF EXIST %D%\LLVM-vs2014_xp del %D%\LLVM-vs2014_xp\toolset.targets
+IF EXIST %D%\LLVM-vs2014_xp rmdir %D%\LLVM-vs2014_xp
+SET D="%ProgramFiles(x86)%\MSBuild\Microsoft.Cpp\v4.0\V140\Platforms\%PLATFORM%\PlatformToolsets"
+IF EXIST %D%\LLVM-vs2014 del %D%\LLVM-vs2014\toolset.props
+IF EXIST %D%\LLVM-vs2014 del %D%\LLVM-vs2014\toolset.targets
+IF EXIST %D%\LLVM-vs2014 rmdir %D%\LLVM-vs2014
+IF EXIST %D%\LLVM-vs2014_xp del %D%\LLVM-vs2014_xp\toolset.props
+IF EXIST %D%\LLVM-vs2014_xp del %D%\LLVM-vs2014_xp\toolset.targets
+IF EXIST %D%\LLVM-vs2014_xp rmdir %D%\LLVM-vs2014_xp
+
 
 GOTO START
 
