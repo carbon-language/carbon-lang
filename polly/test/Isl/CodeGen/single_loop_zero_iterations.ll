@@ -66,5 +66,4 @@ return:                                           ; preds = %if.else, %if.then
 }
 
 ; CHECK: for region: 'for.cond => for.end.region' in function 'main':
-; CHECK-NEXT: main():
 ; CHECK-NOT:   Stmt_for_body(0);

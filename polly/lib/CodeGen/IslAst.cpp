@@ -392,14 +392,6 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   isl_union_map *Schedule =
       isl_union_map_intersect_domain(S->getSchedule(), S->getDomains());
 
-  Function *F = Scop->getRegion().getEntry()->getParent();
-  (void)F;
-
-  DEBUG(dbgs() << ":: isl ast :: " << F->getName()
-               << " :: " << Scop->getRegion().getNameStr() << "\n");
-
-  DEBUG(dbgs() << S->getContextStr() << "\n"; isl_union_map_dump(Schedule));
-
   if (DetectParallel || PollyVectorizerChoice != VECTORIZER_NONE) {
     BuildInfo.Deps = &D;
     BuildInfo.InParallelFor = 0;
@@ -415,8 +407,6 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
   Root = isl_ast_build_ast_from_schedule(Context, Schedule);
 
   isl_ast_build_free(Context);
-
-  DEBUG(pprint(dbgs()));
 }
 
 IslAst::~IslAst() {
@@ -424,40 +414,10 @@ IslAst::~IslAst() {
   isl_ast_expr_free(RunCondition);
 }
 
-/// Print a C like representation of the program.
-void IslAst::pprint(llvm::raw_ostream &OS) {
-  isl_ast_node *Root;
-  isl_ast_print_options *Options;
-
-  Options = isl_ast_print_options_alloc(S->getIslCtx());
-  Options = isl_ast_print_options_set_print_for(Options, &printFor, nullptr);
-
-  isl_printer *P = isl_printer_to_str(S->getIslCtx());
-  P = isl_printer_set_output_format(P, ISL_FORMAT_C);
-
-  P = isl_printer_print_ast_expr(P, RunCondition);
-  char *result = isl_printer_get_str(P);
-  P = isl_printer_flush(P);
-
-  OS << "\nif (" << result << ")\n\n";
-  P = isl_printer_indent(P, 4);
-
-  Root = getAst();
-  P = isl_ast_node_print(Root, P, Options);
-  result = isl_printer_get_str(P);
-  OS << result << "\n";
-  OS << "else\n";
-  OS << "    {  /* original code */ }\n\n";
-  isl_printer_free(P);
-  isl_ast_node_free(Root);
-}
-
 __isl_give isl_ast_node *IslAst::getAst() { return isl_ast_node_copy(Root); }
 __isl_give isl_ast_expr *IslAst::getRunCondition() {
   return isl_ast_expr_copy(RunCondition);
 }
-
-void IslAstInfo::pprint(llvm::raw_ostream &OS) { Ast->pprint(OS); }
 
 void IslAstInfo::releaseMemory() {
   if (Ast) {
@@ -476,20 +436,13 @@ bool IslAstInfo::runOnScop(Scop &Scop) {
 
   Ast = new IslAst(&Scop, D);
 
+  DEBUG(printScop(dbgs()));
   return false;
 }
 
-__isl_give isl_ast_node *IslAstInfo::getAst() { return Ast->getAst(); }
-__isl_give isl_ast_expr *IslAstInfo::getRunCondition() {
+__isl_give isl_ast_node *IslAstInfo::getAst() const { return Ast->getAst(); }
+__isl_give isl_ast_expr *IslAstInfo::getRunCondition() const {
   return Ast->getRunCondition();
-}
-
-void IslAstInfo::printScop(raw_ostream &OS) const {
-  Function *F = S->getRegion().getEntry()->getParent();
-
-  OS << F->getName() << "():\n";
-
-  Ast->pprint(OS);
 }
 
 IslAstUserPayload *IslAstInfo::getNodePayload(__isl_keep isl_ast_node *Node) {
@@ -521,6 +474,43 @@ bool IslAstInfo::isOuterParallel(__isl_keep isl_ast_node *Node) {
 bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
   IslAstUserPayload *Payload = getNodePayload(Node);
   return Payload && Payload->IsReductionParallel;
+}
+
+void IslAstInfo::printScop(raw_ostream &OS) const {
+  isl_ast_print_options *Options;
+  isl_ast_node *RootNode = getAst();
+  isl_ast_expr *RunCondition = getRunCondition();
+  char *RtCStr, *AstStr;
+
+  Scop &S = getCurScop();
+  Options = isl_ast_print_options_alloc(S.getIslCtx());
+  Options = isl_ast_print_options_set_print_for(Options, printFor, nullptr);
+
+  isl_printer *P = isl_printer_to_str(S.getIslCtx());
+  P = isl_printer_print_ast_expr(P, RunCondition);
+  RtCStr = isl_printer_get_str(P);
+  P = isl_printer_flush(P);
+  P = isl_printer_indent(P, 4);
+  P = isl_printer_set_output_format(P, ISL_FORMAT_C);
+  P = isl_ast_node_print(RootNode, P, Options);
+  AstStr = isl_printer_get_str(P);
+
+  Function *F = S.getRegion().getEntry()->getParent();
+  isl_union_map *Schedule =
+      isl_union_map_intersect_domain(S.getSchedule(), S.getDomains());
+
+  OS << ":: isl ast :: " << F->getName() << " :: " << S.getRegion().getNameStr()
+     << "\n";
+  DEBUG(dbgs() << S.getContextStr() << "\n"; isl_union_map_dump(Schedule));
+  OS << "\nif (" << RtCStr << ")\n\n";
+  OS << AstStr << "\n";
+  OS << "else\n";
+  OS << "    {  /* original code */ }\n\n";
+
+  isl_ast_expr_free(RunCondition);
+  isl_union_map_free(Schedule);
+  isl_ast_node_free(RootNode);
+  isl_printer_free(P);
 }
 
 void IslAstInfo::getAnalysisUsage(AnalysisUsage &AU) const {

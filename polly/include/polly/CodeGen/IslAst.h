@@ -59,12 +59,16 @@ class IslAstInfo : public ScopPass {
 
 public:
   static char ID;
-  IslAstInfo() : ScopPass(ID), Ast(NULL) {}
+  IslAstInfo() : ScopPass(ID), S(nullptr), Ast(nullptr) {}
 
-  /// Print a source code representation of the program.
-  void pprint(llvm::raw_ostream &OS);
+  /// @brief Build the AST for the given SCoP @p S.
+  bool runOnScop(Scop &S);
 
-  isl_ast_node *getAst();
+  /// @brief Print a source code representation of the program.
+  void printScop(llvm::raw_ostream &OS) const;
+
+  /// @brief Return a copy of the AST root node.
+  __isl_give isl_ast_node *getAst() const;
 
   /// @brief Get the run conditon.
   ///
@@ -72,10 +76,7 @@ public:
   /// assumptions that have been taken hold. If the run condition evaluates to
   /// zero/false some assumptions do not hold and the original code needs to
   /// be executed.
-  __isl_give isl_ast_expr *getRunCondition();
-
-  bool runOnScop(Scop &S);
-  void printScop(llvm::raw_ostream &OS) const;
+  __isl_give isl_ast_expr *getRunCondition() const;
 
   /// @name Extract information attached to an isl ast (for) node.
   ///
