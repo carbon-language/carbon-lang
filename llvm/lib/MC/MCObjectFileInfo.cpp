@@ -24,7 +24,7 @@ static bool useCompactUnwind(const Triple &T) {
     return false;
 
   // aarch64 always has it.
-  if (T.getArch() == Triple::arm64 || T.getArch() == Triple::aarch64)
+  if (T.getArch() == Triple::aarch64)
     return true;
 
   // Use it on newer version of OS X.
@@ -43,8 +43,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   // MachO
   SupportsWeakOmittedEHFrame = false;
 
-  if (T.isOSDarwin() &&
-      (T.getArch() == Triple::arm64 || T.getArch() == Triple::aarch64))
+  if (T.isOSDarwin() && T.getArch() == Triple::aarch64)
     SupportsCompactUnwindWithoutEHFrame = true;
 
   PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel
@@ -178,7 +177,7 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
 
     if (T.getArch() == Triple::x86_64 || T.getArch() == Triple::x86)
       CompactUnwindDwarfEHFrameOnly = 0x04000000;
-    else if (T.getArch() == Triple::arm64 || T.getArch() == Triple::aarch64)
+    else if (T.getArch() == Triple::aarch64)
       CompactUnwindDwarfEHFrameOnly = 0x03000000;
   }
 
@@ -321,8 +320,6 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     break;
   case Triple::aarch64:
   case Triple::aarch64_be:
-  case Triple::arm64:
-  case Triple::arm64_be:
     // The small model guarantees static code/data size < 4GB, but not where it
     // will be in memory. Most of these could end up >2GB away so even a signed
     // pc-relative 32-bit address is insufficient, theoretically.
@@ -827,7 +824,7 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
   // cellspu-apple-darwin. Perhaps we should fix in Triple?
   if ((Arch == Triple::x86 || Arch == Triple::x86_64 ||
        Arch == Triple::arm || Arch == Triple::thumb ||
-       Arch == Triple::arm64 || Arch == Triple::aarch64 ||
+       Arch == Triple::aarch64 ||
        Arch == Triple::ppc || Arch == Triple::ppc64 ||
        Arch == Triple::UnknownArch) &&
       (TT.isOSDarwin() || TT.isOSBinFormatMachO())) {

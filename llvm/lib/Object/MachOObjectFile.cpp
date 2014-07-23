@@ -755,7 +755,6 @@ MachOObjectFile::getRelocationTypeName(DataRefImpl Rel,
         res = Table[RType];
       break;
     }
-    case Triple::arm64:
     case Triple::aarch64: {
       static const char *const Table[] = {
         "ARM64_RELOC_UNSIGNED",           "ARM64_RELOC_SUBTRACTOR",
@@ -1303,7 +1302,7 @@ Triple::ArchType MachOObjectFile::getArch(uint32_t CPUType) {
   case llvm::MachO::CPU_TYPE_ARM:
     return Triple::arm;
   case llvm::MachO::CPU_TYPE_ARM64:
-    return Triple::arm64;
+    return Triple::aarch64;
   case llvm::MachO::CPU_TYPE_POWERPC:
     return Triple::ppc;
   case llvm::MachO::CPU_TYPE_POWERPC64:

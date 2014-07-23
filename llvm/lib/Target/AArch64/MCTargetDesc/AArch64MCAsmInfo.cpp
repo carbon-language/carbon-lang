@@ -66,7 +66,7 @@ const MCExpr *AArch64MCAsmInfoDarwin::getExprForPersonalitySymbol(
 
 AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {
   Triple T(TT);
-  if (T.getArch() == Triple::arm64_be || T.getArch() == Triple::aarch64_be)
+  if (T.getArch() == Triple::aarch64_be)
     IsLittleEndian = false;
 
   // We prefer NEON instructions to be printed in the short form.
