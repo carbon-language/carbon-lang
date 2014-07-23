@@ -15,7 +15,7 @@ decltype(4.5_baz) operator"" _baz(char);
 // CHECK: const char *operator "" _quux(const char *);
 const char *operator"" _quux(const char *);
 
-// CHECK: template <char...> const char *operator "" _fritz();
+// CHECK: template <char ...> const char *operator "" _fritz();
 template<char...> const char *operator"" _fritz();
 
 // CHECK: const char *p1 = "bar1"_foo;

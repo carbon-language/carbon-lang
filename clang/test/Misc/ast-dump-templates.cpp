@@ -39,6 +39,18 @@ void baz() {
 // CHECK1: template <int A, typename B> B bar()
 // CHECK2: template <int A, typename B> B bar()
 
+// CHECK1-LABEL: template <typename ...T> struct A {
+// CHECK1-NEXT:    template <T ...x[3]> struct B {
+template <typename ...T> struct A {
+  template <T ...x[3]> struct B {};
+};
+
+// CHECK1-LABEL: template <typename ...T> void f(T ...[3]) {
+// CHECK1-NEXT:    A<T [3]...> a;
+template <typename ...T> void f(T ...[3]) {
+  A<T [3]...> a;
+}
+
 namespace test2 {
 void func(int);
 void func(float);
