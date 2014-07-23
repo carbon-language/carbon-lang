@@ -2987,20 +2987,6 @@ identification metadata. The ``llvm.loop.unroll`` metadata are only
 optimization hints and the unrolling will only be performed if the
 optimizer believes it is safe to do so.
 
-'``llvm.loop.unroll.enable``' Metadata
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-This metadata either disables loop unrolling or suggests that the loop
-be unrolled fully. The first operand is the string
-``llvm.loop.unroll.enable`` and the second operand is a bit.  If the
-bit operand value is 0 loop unrolling is disabled. A value of 1
-indicates that the loop should be fully unrolled. For example:
-
-.. code-block:: llvm
-
-   !0 = metadata !{ metadata !"llvm.loop.unroll.enable", i1 0 }
-   !1 = metadata !{ metadata !"llvm.loop.unroll.enable", i1 1 }
-
 '``llvm.loop.unroll.count``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -3016,12 +3002,26 @@ example:
 If the trip count of the loop is less than the unroll count the loop
 will be partially unrolled.
 
-If a loop has both a ``llvm.loop.unroll.enable`` metadata and
-``llvm.loop.unroll.count`` metadata the behavior depends upon the
-value of the ``llvm.loop.unroll.enable`` operand.  If the value is 0,
-the loop will not be unrolled.  If the value is 1, the loop will be
-unrolled with a factor determined by the ``llvm.loop.unroll.count``
-operand effectively ignoring the ``llvm.loop.unroll.enable`` metadata.
+'``llvm.loop.unroll.disable``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This metadata either disables loop unrolling. The metadata has a single operand
+which is the string ``llvm.loop.unroll.disable``.  For example:
+
+.. code-block:: llvm
+
+   !0 = metadata !{ metadata !"llvm.loop.unroll.disable" }
+
+'``llvm.loop.unroll.full``' Metadata
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This metadata either suggests that the loop should be unrolled fully. The
+metadata has a single operand which is the string ``llvm.loop.unroll.disable``.
+For example:
+
+.. code-block:: llvm
+
+   !0 = metadata !{ metadata !"llvm.loop.unroll.full" }
 
 '``llvm.mem``'
 ^^^^^^^^^^^^^^^

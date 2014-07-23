@@ -52,7 +52,7 @@ UnrollRuntime("unroll-runtime", cl::ZeroOrMore, cl::init(false), cl::Hidden,
 
 static cl::opt<unsigned>
 PragmaUnrollThreshold("pragma-unroll-threshold", cl::init(16 * 1024), cl::Hidden,
-  cl::desc("Unrolled size limit for loops with an unroll(enable) or "
+  cl::desc("Unrolled size limit for loops with an unroll(full) or "
            "unroll_count pragma."));
 
 namespace {
@@ -138,11 +138,10 @@ namespace {
     // SetExplicitly is set to true if the unroll count is is set by
     // the user or a pragma rather than selected heuristically.
     unsigned
-    selectUnrollCount(const Loop *L, unsigned TripCount, bool HasEnablePragma,
+    selectUnrollCount(const Loop *L, unsigned TripCount, bool PragmaFullUnroll,
                       unsigned PragmaCount,
                       const TargetTransformInfo::UnrollingPreferences &UP,
                       bool &SetExplicitly);
-
 
     // Select threshold values used to limit unrolling based on a
     // total unrolled size.  Parameters Threshold and PartialThreshold
@@ -219,13 +218,13 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
   return LoopSize;
 }
 
-// Returns the value associated with the given metadata node name (for
-// example, "llvm.loop.unroll.count").  If no such named metadata node
-// exists, then nullptr is returned.
-static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
-                                                 StringRef Name) {
+// Returns the loop hint metadata node with the given name (for example,
+// "llvm.loop.unroll.count").  If no such metadata node exists, then nullptr is
+// returned.
+const MDNode *GetUnrollMetadata(const Loop *L, StringRef Name) {
   MDNode *LoopID = L->getLoopID();
-  if (!LoopID) return nullptr;
+  if (!LoopID)
+    return nullptr;
 
   // First operand should refer to the loop id itself.
   assert(LoopID->getNumOperands() > 0 && "requires at least one operand");
@@ -233,41 +232,37 @@ static const ConstantInt *GetUnrollMetadataValue(const Loop *L,
 
   for (unsigned i = 1, e = LoopID->getNumOperands(); i < e; ++i) {
     const MDNode *MD = dyn_cast<MDNode>(LoopID->getOperand(i));
-    if (!MD) continue;
+    if (!MD)
+      continue;
 
     const MDString *S = dyn_cast<MDString>(MD->getOperand(0));
-    if (!S) continue;
+    if (!S)
+      continue;
 
-    if (Name.equals(S->getString())) {
-      assert(MD->getNumOperands() == 2 &&
-             "Unroll hint metadata should have two operands.");
-      return cast<ConstantInt>(MD->getOperand(1));
-    }
+    if (Name.equals(S->getString()))
+      return MD;
   }
   return nullptr;
 }
 
-// Returns true if the loop has an unroll(enable) pragma.
-static bool HasUnrollEnablePragma(const Loop *L) {
-  const ConstantInt *EnableValue =
-      GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
-  return (EnableValue && EnableValue->getZExtValue());
+// Returns true if the loop has an unroll(full) pragma.
+static bool HasUnrollFullPragma(const Loop *L) {
+  return GetUnrollMetadata(L, "llvm.loop.unroll.full");
 }
 
 // Returns true if the loop has an unroll(disable) pragma.
 static bool HasUnrollDisablePragma(const Loop *L) {
-  const ConstantInt *EnableValue =
-      GetUnrollMetadataValue(L, "llvm.loop.unroll.enable");
-  return (EnableValue && !EnableValue->getZExtValue());
+  return GetUnrollMetadata(L, "llvm.loop.unroll.disable");
 }
 
 // If loop has an unroll_count pragma return the (necessarily
 // positive) value from the pragma.  Otherwise return 0.
 static unsigned UnrollCountPragmaValue(const Loop *L) {
-  const ConstantInt *CountValue =
-      GetUnrollMetadataValue(L, "llvm.loop.unroll.count");
-  if (CountValue) {
-    unsigned Count = CountValue->getZExtValue();
+  const MDNode *MD = GetUnrollMetadata(L, "llvm.loop.unroll.count");
+  if (MD) {
+    assert(MD->getNumOperands() == 2 &&
+           "Unroll count hint metadata should have two operands.");
+    unsigned Count = cast<ConstantInt>(MD->getOperand(1))->getZExtValue();
     assert(Count >= 1 && "Unroll count must be positive.");
     return Count;
   }
@@ -298,9 +293,8 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
 
   // Add unroll(disable) metadata to disable future unrolling.
   LLVMContext &Context = L->getHeader()->getContext();
-  SmallVector<Value *, 2> DisableOperands;
-  DisableOperands.push_back(MDString::get(Context, "llvm.loop.unroll.enable"));
-  DisableOperands.push_back(ConstantInt::get(Type::getInt1Ty(Context), 0));
+  SmallVector<Value *, 1> DisableOperands;
+  DisableOperands.push_back(MDString::get(Context, "llvm.loop.unroll.disable"));
   MDNode *DisableNode = MDNode::get(Context, DisableOperands);
   Vals.push_back(DisableNode);
 
@@ -312,7 +306,7 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
 }
 
 unsigned LoopUnroll::selectUnrollCount(
-    const Loop *L, unsigned TripCount, bool HasEnablePragma,
+    const Loop *L, unsigned TripCount, bool PragmaFullUnroll,
     unsigned PragmaCount, const TargetTransformInfo::UnrollingPreferences &UP,
     bool &SetExplicitly) {
   SetExplicitly = true;
@@ -326,9 +320,7 @@ unsigned LoopUnroll::selectUnrollCount(
   if (Count == 0) {
     if (PragmaCount) {
       Count = PragmaCount;
-    } else if (HasEnablePragma) {
-      // unroll(enable) pragma without an unroll_count pragma
-      // indicates to unroll loop fully.
+    } else if (PragmaFullUnroll) {
       Count = TripCount;
     }
   }
@@ -368,9 +360,9 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (HasUnrollDisablePragma(L)) {
     return false;
   }
-  bool HasEnablePragma = HasUnrollEnablePragma(L);
+  bool PragmaFullUnroll = HasUnrollFullPragma(L);
   unsigned PragmaCount = UnrollCountPragmaValue(L);
-  bool HasPragma = HasEnablePragma || PragmaCount > 0;
+  bool HasPragma = PragmaFullUnroll || PragmaCount > 0;
 
   TargetTransformInfo::UnrollingPreferences UP;
   getUnrollingPreferences(L, TTI, UP);
@@ -390,8 +382,8 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   // Select an initial unroll count.  This may be reduced later based
   // on size thresholds.
   bool CountSetExplicitly;
-  unsigned Count = selectUnrollCount(L, TripCount, HasEnablePragma, PragmaCount,
-                                     UP, CountSetExplicitly);
+  unsigned Count = selectUnrollCount(L, TripCount, PragmaFullUnroll,
+                                     PragmaCount, UP, CountSetExplicitly);
 
   unsigned NumInlineCandidates;
   bool notDuplicatable;
@@ -474,16 +466,16 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
     DebugLoc LoopLoc = L->getStartLoc();
     Function *F = Header->getParent();
     LLVMContext &Ctx = F->getContext();
-    if (HasEnablePragma && PragmaCount == 0) {
+    if (PragmaFullUnroll && PragmaCount == 0) {
       if (TripCount && Count != TripCount) {
         emitOptimizationRemarkMissed(
             Ctx, DEBUG_TYPE, *F, LoopLoc,
-            "Unable to fully unroll loop as directed by unroll(enable) pragma "
+            "Unable to fully unroll loop as directed by unroll(full) pragma "
             "because unrolled size is too large.");
       } else if (!TripCount) {
         emitOptimizationRemarkMissed(
             Ctx, DEBUG_TYPE, *F, LoopLoc,
-            "Unable to fully unroll loop as directed by unroll(enable) pragma "
+            "Unable to fully unroll loop as directed by unroll(full) pragma "
             "because loop has a runtime trip count.");
       }
     } else if (PragmaCount > 0 && Count != OriginalCount) {

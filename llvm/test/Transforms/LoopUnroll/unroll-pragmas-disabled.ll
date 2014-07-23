@@ -6,9 +6,9 @@
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-linux-gnu"
 
-; #pragma clang loop  vectorize(enable) unroll(enable) unroll_count(4) vectorize_width(8)
+; #pragma clang loop  vectorize(enable) unroll(full) unroll_count(4) vectorize_width(8)
 ;
-; Unroll metadata should be replaces with unroll(disable).  Vectorize
+; Unroll metadata should be replaced with unroll(disable).  Vectorize
 ; metadata should be untouched.
 ;
 ; CHECK-LABEL: @loop1(
@@ -32,7 +32,7 @@ for.end:                                          ; preds = %for.body
 }
 !1 = metadata !{metadata !1, metadata !2, metadata !3, metadata !4, metadata !5}
 !2 = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
-!3 = metadata !{metadata !"llvm.loop.unroll.enable", i1 true}
+!3 = metadata !{metadata !"llvm.loop.unroll.full"}
 !4 = metadata !{metadata !"llvm.loop.unroll.count", i32 4}
 !5 = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
 
@@ -60,10 +60,10 @@ for.end:                                          ; preds = %for.body
   ret void
 }
 !6 = metadata !{metadata !6, metadata !7}
-!7 = metadata !{metadata !"llvm.loop.unroll.enable", i1 false}
+!7 = metadata !{metadata !"llvm.loop.unroll.disable"}
 
 ; CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[VEC_ENABLE:.*]], metadata ![[WIDTH_8:.*]], metadata ![[UNROLL_DISABLE:.*]]}
 ; CHECK: ![[VEC_ENABLE]] = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 ; CHECK: ![[WIDTH_8]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
-; CHECK: ![[UNROLL_DISABLE]] = metadata !{metadata !"llvm.loop.unroll.enable", i1 false}
+; CHECK: ![[UNROLL_DISABLE]] = metadata !{metadata !"llvm.loop.unroll.disable"}
 ; CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2]], metadata ![[UNROLL_DISABLE:.*]]}
