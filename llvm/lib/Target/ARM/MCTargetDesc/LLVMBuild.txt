@@ -19,5 +19,5 @@
 type = Library
 name = ARMDesc
 parent = ARM
-required_libraries = ARMAsmPrinter ARMInfo MC Support
+required_libraries = ARMAsmPrinter ARMInfo MCDisassembler Support
 add_to_library_groups = ARM
