@@ -18783,49 +18783,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   SDValue N1 = N->getOperand(1);
   EVT VT = N->getValueType(0);
 
-  // Canonicalize shuffles that perform 'addsub' on packed float vectors
-  // according to the rule:
-  //  (shuffle (FADD A, B), (FSUB A, B), Mask) ->
-  //  (shuffle (FSUB A, -B), (FADD A, -B), Mask)
-  //
-  // Where 'Mask' is:
-  //  <0,5,2,7>             -- for v4f32 and v4f64 shuffles;
-  //  <0,3>                 -- for v2f64 shuffles;
-  //  <0,9,2,11,4,13,6,15>  -- for v8f32 shuffles.
-  //
-  // This helps pattern-matching more SSE3/AVX ADDSUB instructions
-  // during ISel stage.
-  if (N->getOpcode() == ISD::VECTOR_SHUFFLE &&
-      ((Subtarget->hasSSE3() && (VT == MVT::v4f32 || VT == MVT::v2f64)) ||
-       (Subtarget->hasAVX() && (VT == MVT::v8f32 || VT == MVT::v4f64))) &&
-      N0->getOpcode() == ISD::FADD && N1->getOpcode() == ISD::FSUB &&
-      // Operands to the FADD and FSUB must be the same.
-      ((N0->getOperand(0) == N1->getOperand(0) &&
-        N0->getOperand(1) == N1->getOperand(1)) ||
-       // FADD is commutable. See if by commuting the operands of the FADD
-       // we would still be able to match the operands of the FSUB dag node.
-       (N0->getOperand(1) == N1->getOperand(0) &&
-        N0->getOperand(0) == N1->getOperand(1))) &&
-      N0->getOperand(0)->getOpcode() != ISD::UNDEF &&
-      N0->getOperand(1)->getOpcode() != ISD::UNDEF) {
-    
-    ShuffleVectorSDNode *SV = cast<ShuffleVectorSDNode>(N);
-    unsigned NumElts = VT.getVectorNumElements();
-    ArrayRef<int> Mask = SV->getMask();
-    bool CanFold = true;
-
-    for (unsigned i = 0, e = NumElts; i != e && CanFold; ++i)
-      CanFold = Mask[i] == (int)((i & 1) ? i + NumElts : i);
-
-    if (CanFold) {
-      SDValue Op0 = N1->getOperand(0);
-      SDValue Op1 = DAG.getNode(ISD::FNEG, dl, VT, N1->getOperand(1));
-      SDValue Sub = DAG.getNode(ISD::FSUB, dl, VT, Op0, Op1);
-      SDValue Add = DAG.getNode(ISD::FADD, dl, VT, Op0, Op1);
-      return DAG.getVectorShuffle(VT, dl, Sub, Add, Mask);
-    }
-  }
-
   // Don't create instructions with illegal types after legalize types has run.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
   if (!DCI.isBeforeLegalize() && !TLI.isTypeLegal(VT.getVectorElementType()))
