@@ -14,7 +14,6 @@
 #include "BoolPointerImplicitConversion.h"
 #include "RedundantSmartptrGet.h"
 #include "SwappedArgumentsCheck.h"
-#include "UnusedRAII.h"
 #include "UseOverride.h"
 
 namespace clang {
@@ -35,9 +34,6 @@ public:
     CheckFactories.addCheckFactory(
         "misc-swapped-arguments",
         new ClangTidyCheckFactory<SwappedArgumentsCheck>());
-    CheckFactories.addCheckFactory(
-        "misc-unused-raii",
-        new ClangTidyCheckFactory<UnusedRAIICheck>());
     CheckFactories.addCheckFactory(
         "misc-use-override",
         new ClangTidyCheckFactory<UseOverride>());
