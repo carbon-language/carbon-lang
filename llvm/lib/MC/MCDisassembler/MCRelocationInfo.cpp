@@ -1,4 +1,4 @@
-//==-- lib/MC/MCRelocationInfo.cpp -------------------------------*- C++ -*-==//
+//==-- MCRelocationInfo.cpp ------------------------------------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //

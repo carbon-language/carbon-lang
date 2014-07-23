@@ -1,4 +1,4 @@
-//===-- lib/MC/MCExternalSymbolizer.cpp - External symbolizer ---*- C++ -*-===//
+//===-- MCExternalSymbolizer.cpp - External symbolizer --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -11,13 +11,11 @@ add_llvm_library(LLVMMC
   MCCodeEmitter.cpp
   MCCodeGenInfo.cpp
   MCContext.cpp
-  MCDisassembler.cpp
   MCDwarf.cpp
   MCELF.cpp
   MCELFObjectTargetWriter.cpp
   MCELFStreamer.cpp
   MCExpr.cpp
-  MCExternalSymbolizer.cpp
   MCInst.cpp
   MCInstPrinter.cpp
   MCInstrAnalysis.cpp
@@ -30,7 +28,6 @@ add_llvm_library(LLVMMC
   MCObjectStreamer.cpp
   MCObjectWriter.cpp
   MCRegisterInfo.cpp
-  MCRelocationInfo.cpp
   MCSection.cpp
   MCSectionCOFF.cpp
   MCSectionELF.cpp

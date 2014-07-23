@@ -1,4 +1,4 @@
-//===-- lib/MC/MCDisassembler.cpp - Disassembler interface ------*- C++ -*-===//
+//===-- MCDisassembler.cpp - Disassembler interface -----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
