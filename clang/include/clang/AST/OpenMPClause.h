@@ -770,6 +770,34 @@ public:
   StmtRange children() { return StmtRange(); }
 };
 
+/// \brief This represents 'read' clause in the '#pragma omp atomic' directive.
+///
+/// \code
+/// #pragma omp atomic read
+/// \endcode
+/// In this example directive '#pragma omp atomic' has 'read' clause.
+///
+class OMPReadClause : public OMPClause {
+public:
+  /// \brief Build 'read' clause.
+  ///
+  /// \param StartLoc Starting location of the clause.
+  /// \param EndLoc Ending location of the clause.
+  ///
+  OMPReadClause(SourceLocation StartLoc, SourceLocation EndLoc)
+      : OMPClause(OMPC_read, StartLoc, EndLoc) {}
+
+  /// \brief Build an empty clause.
+  ///
+  OMPReadClause() : OMPClause(OMPC_read, SourceLocation(), SourceLocation()) {}
+
+  static bool classof(const OMPClause *T) {
+    return T->getClauseKind() == OMPC_read;
+  }
+
+  StmtRange children() { return StmtRange(); }
+};
+
 /// \brief This represents clause 'private' in the '#pragma omp ...' directives.
 ///
 /// \code

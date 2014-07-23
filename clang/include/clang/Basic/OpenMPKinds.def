@@ -101,6 +101,7 @@ OPENMP_CLAUSE(nowait, OMPNowaitClause)
 OPENMP_CLAUSE(untied, OMPUntiedClause)
 OPENMP_CLAUSE(mergeable, OMPMergeableClause)
 OPENMP_CLAUSE(flush, OMPFlushClause)
+OPENMP_CLAUSE(read, OMPReadClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -197,6 +198,9 @@ OPENMP_TASK_CLAUSE(firstprivate)
 OPENMP_TASK_CLAUSE(shared)
 OPENMP_TASK_CLAUSE(untied)
 OPENMP_TASK_CLAUSE(mergeable)
+
+// TODO More clauses allowed for OpenMP directive 'atomic'.
+OPENMP_ATOMIC_CLAUSE(read)
 
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND

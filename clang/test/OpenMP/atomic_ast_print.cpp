@@ -11,23 +11,33 @@ T foo(T arg) {
   T a;
 #pragma omp atomic
   a++;
+#pragma omp atomic read
+  a = arg;
   return T();
 }
 
 // CHECK: int a;
 // CHECK-NEXT: #pragma omp atomic
 // CHECK-NEXT: a++;
+// CHECK-NEXT: #pragma omp atomic read
+// CHECK-NEXT: a = arg;
 // CHECK: T a;
 // CHECK-NEXT: #pragma omp atomic
 // CHECK-NEXT: a++;
+// CHECK-NEXT: #pragma omp atomic read
+// CHECK-NEXT: a = arg;
 
 int main(int argc, char **argv) {
   int a;
 // CHECK: int a;
 #pragma omp atomic
   a++;
+#pragma omp atomic read
+  a = argc;
   // CHECK-NEXT: #pragma omp atomic
   // CHECK-NEXT: a++;
+  // CHECK-NEXT: #pragma omp atomic read
+  // CHECK-NEXT: a = argc;
   return foo(a);
 }
 
