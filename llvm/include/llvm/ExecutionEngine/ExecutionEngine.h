@@ -172,39 +172,6 @@ public:
 
   virtual ~ExecutionEngine();
 
-  /// create - This is the factory method for creating an execution engine which
-  /// is appropriate for the current machine.  This takes ownership of the
-  /// module.
-  ///
-  /// \param GVsWithCode - Allocating globals with code breaks
-  /// freeMachineCodeForFunction and is probably unsafe and bad for performance.
-  /// However, we have clients who depend on this behavior, so we must support
-  /// it.  Eventually, when we're willing to break some backwards compatibility,
-  /// this flag should be flipped to false, so that by default
-  /// freeMachineCodeForFunction works.
-  static ExecutionEngine *create(Module *M,
-                                 bool ForceInterpreter = false,
-                                 std::string *ErrorStr = nullptr,
-                                 CodeGenOpt::Level OptLevel =
-                                 CodeGenOpt::Default,
-                                 bool GVsWithCode = true);
-
-  /// createJIT - This is the factory method for creating a JIT for the current
-  /// machine, it does not fall back to the interpreter.  This takes ownership
-  /// of the Module and JITMemoryManager if successful.
-  ///
-  /// Clients should make sure to initialize targets prior to calling this
-  /// function.
-  static ExecutionEngine *createJIT(Module *M,
-                                    std::string *ErrorStr = nullptr,
-                                    JITMemoryManager *JMM = nullptr,
-                                    CodeGenOpt::Level OptLevel =
-                                    CodeGenOpt::Default,
-                                    bool GVsWithCode = true,
-                                    Reloc::Model RM = Reloc::Default,
-                                    CodeModel::Model CMM =
-                                    CodeModel::JITDefault);
-
   /// addModule - Add a Module to the list of modules that we can JIT from.
   /// Note that this takes ownership of the Module: when the ExecutionEngine is
   /// destroyed, it destroys the Module as well.

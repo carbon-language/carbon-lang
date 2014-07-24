@@ -91,21 +91,6 @@ public:
   ///
   TargetJITInfo &getJITInfo() const { return TJI; }
 
-  /// create - Create an return a new JIT compiler if there is one available
-  /// for the current target.  Otherwise, return null.
-  ///
-  static ExecutionEngine *create(Module *M,
-                                 std::string *Err,
-                                 JITMemoryManager *JMM,
-                                 CodeGenOpt::Level OptLevel =
-                                   CodeGenOpt::Default,
-                                 bool GVsWithCode = true,
-                                 Reloc::Model RM = Reloc::Default,
-                                 CodeModel::Model CMM = CodeModel::JITDefault) {
-    return ExecutionEngine::createJIT(M, Err, JMM, OptLevel, GVsWithCode,
-                                      RM, CMM);
-  }
-
   void addModule(Module *M) override;
 
   /// removeModule - Remove a Module from the list of modules.  Returns true if
