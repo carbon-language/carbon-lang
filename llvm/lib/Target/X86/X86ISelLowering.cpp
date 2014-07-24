@@ -2680,8 +2680,12 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // arguments passed in memory when using inalloca.
   if (!Outs.empty() && Outs.back().Flags.isInAlloca()) {
     NumBytesToPush = 0;
-    assert(ArgLocs.back().getLocMemOffset() == 0 &&
-           "an inalloca argument must be the only memory argument");
+    if (!ArgLocs.back().isMemLoc())
+      report_fatal_error("cannot use inalloca attribute on a register "
+                         "parameter");
+    if (ArgLocs.back().getLocMemOffset() != 0)
+      report_fatal_error("any parameter with the inalloca attribute must be "
+                         "the only memory argument");
   }
 
   if (!IsSibcall)
