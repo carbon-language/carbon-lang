@@ -17,7 +17,7 @@ namespace clang {
 namespace ast_matchers {
 AST_MATCHER(CXXRecordDecl, hasUserDeclaredDestructor) {
   // TODO: If the dtor is there but empty we don't want to warn either.
-  return Node.hasUserDeclaredDestructor();
+  return Node.hasDefinition() && Node.hasUserDeclaredDestructor();
 }
 } // namespace ast_matchers
 
@@ -73,9 +73,9 @@ void UnusedRAIICheck::check(const MatchFinder::MatchResult &Result) {
   // Otherwise just suggest adding a name. To find the place to insert the name
   // find the first TypeLoc in the children of E, which always points to the
   // written type.
-  const auto *TL =
-      selectFirst<TypeLoc>("t", match(expr(hasDescendant(typeLoc().bind("t"))),
-                                      *E, *Result.Context));
+  auto Matches =
+      match(expr(hasDescendant(typeLoc().bind("t"))), *E, *Result.Context);
+  const auto *TL = selectFirst<TypeLoc>("t", Matches);
   D << FixItHint::CreateInsertion(
       Lexer::getLocForEndOfToken(TL->getLocEnd(), 0, *Result.SourceManager,
                                  Result.Context->getLangOpts()),
