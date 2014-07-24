@@ -257,6 +257,12 @@ def VTX_READ_GLOBAL_128_eg : VTX_READ_128_eg <1,
 
 let Predicates = [isEGorCayman] in {
 
+// Should be predicated on FeatureFP64
+// def FMA_64 : R600_3OP <
+//   0xA, "FMA_64",
+//   [(set f64:$dst, (fma f64:$src0, f64:$src1, f64:$src2))]
+// >;
+
 // BFE_UINT - bit_extract, an optimization for mask and shift
 // Src0 = Input
 // Src1 = Offset
@@ -313,6 +319,7 @@ def BIT_ALIGN_INT_eg : R600_3OP <0xC, "BIT_ALIGN_INT", [], VecALU>;
 def : ROTRPattern <BIT_ALIGN_INT_eg>;
 def MULADD_eg : MULADD_Common<0x14>;
 def MULADD_IEEE_eg : MULADD_IEEE_Common<0x18>;
+def FMA_eg : FMA_Common<0x7>;
 def ASHR_eg : ASHR_Common<0x15>;
 def LSHR_eg : LSHR_Common<0x16>;
 def LSHL_eg : LSHL_Common<0x17>;
