@@ -11,11 +11,10 @@
 
 #include <experimental/utility>
 
+#ifndef _LIBCPP_UTILITY
+#   error "<experimental/utility> must include <utility>"
+#endif
+
 int main()
 {
-#if _LIBCPP_STD_VER > 11
-# ifndef _LIBCPP_UTILITY
-#   error "<experimental/utility> must include <utility>"
-# endif
-#endif /* _LIBCPP_STD_VER > 11 */
 }

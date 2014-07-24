@@ -13,8 +13,5 @@
 
 int main()
 {
-#if _LIBCPP_STD_VER > 11
-    using std::experimental::erased_type;
-    constexpr erased_type e{};
-#endif
+    std::experimental::erased_type e();
 }
