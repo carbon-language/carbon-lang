@@ -104,6 +104,7 @@ OPENMP_CLAUSE(flush, OMPFlushClause)
 OPENMP_CLAUSE(read, OMPReadClause)
 OPENMP_CLAUSE(write, OMPWriteClause)
 OPENMP_CLAUSE(update, OMPUpdateClause)
+OPENMP_CLAUSE(capture, OMPCaptureClause)
 
 // Clauses allowed for OpenMP directive 'parallel'.
 OPENMP_PARALLEL_CLAUSE(if)
@@ -205,6 +206,7 @@ OPENMP_TASK_CLAUSE(mergeable)
 OPENMP_ATOMIC_CLAUSE(read)
 OPENMP_ATOMIC_CLAUSE(write)
 OPENMP_ATOMIC_CLAUSE(update)
+OPENMP_ATOMIC_CLAUSE(capture)
 
 #undef OPENMP_SCHEDULE_KIND
 #undef OPENMP_PROC_BIND_KIND
