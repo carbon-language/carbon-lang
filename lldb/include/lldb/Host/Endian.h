@@ -20,7 +20,7 @@ namespace endian {
     {
         uint32_t num;
         uint8_t  bytes[sizeof(uint32_t)];
-    } const endianTest = { (uint16_t)0x01020304 };
+    } const endianTest = { 0x01020304 };
     
     inline ByteOrder InlHostByteOrder() { return (ByteOrder)endianTest.bytes[0]; }
 
