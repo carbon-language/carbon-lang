@@ -226,7 +226,7 @@ DSAStackTy::DSAVarData DSAStackTy::getDSA(StackTy::reverse_iterator Iter,
     //  File-scope or namespace-scope variables referenced in called routines
     //  in the region are shared unless they appear in a threadprivate
     //  directive.
-    if (!D->isFunctionOrMethodVarDecl())
+    if (!D->isFunctionOrMethodVarDecl() && !isa<ParmVarDecl>(D))
       DVar.CKind = OMPC_shared;
 
     // OpenMP [2.9.1.2, Data-sharing Attribute Rules for Variables Referenced
@@ -393,8 +393,10 @@ DSAStackTy::DSAVarData DSAStackTy::getTopDSA(VarDecl *D, bool FromParent) {
     StartI = std::next(StartI);
   }
   if (!isParallelOrTaskRegion(Kind)) {
-    if (isOpenMPLocal(D, StartI) && D->isLocalVarDecl() &&
-        (D->getStorageClass() == SC_Auto || D->getStorageClass() == SC_None)) {
+    if (isOpenMPLocal(D, StartI) &&
+        ((D->isLocalVarDecl() && (D->getStorageClass() == SC_Auto ||
+                                  D->getStorageClass() == SC_None)) ||
+         isa<ParmVarDecl>(D))) {
       DVar.CKind = OMPC_private;
       return DVar;
     }

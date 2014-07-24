@@ -155,3 +155,23 @@ int main(int argc, char **argv) {
 
   return tmain(argc, argv); // expected-note {{in instantiation of function template specialization 'tmain<int, char>' requested here}}
 }
+
+extern void abort(void);
+
+void
+single(int a, int b) {
+#pragma omp single copyprivate(a) copyprivate(b)
+  {
+    a = b = 5;
+  }
+
+  if (a != b)
+    abort();
+}
+
+int parallel() {
+#pragma omp parallel
+  single(1, 2);
+
+  return 0;
+}
