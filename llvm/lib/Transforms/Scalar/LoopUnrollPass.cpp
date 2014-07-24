@@ -302,7 +302,6 @@ static void SetLoopAlreadyUnrolled(Loop *L) {
   // Set operand 0 to refer to the loop id itself.
   NewLoopID->replaceOperandWith(0, NewLoopID);
   L->setLoopID(NewLoopID);
-  LoopID->replaceAllUsesWith(NewLoopID);
 }
 
 unsigned LoopUnroll::selectUnrollCount(

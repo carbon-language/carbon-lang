@@ -11,9 +11,9 @@ target triple = "x86_64-unknown-linux-gnu"
 ; Unroll count metadata should be replaced with unroll(disable).  Vectorize
 ; metadata should be untouched.
 ;
-; CHECK-LABEL: @loop1(
+; CHECK-LABEL: @unroll_count_4(
 ; CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_1:.*]]
-define void @loop1(i32* nocapture %a) {
+define void @unroll_count_4(i32* nocapture %a) {
 entry:
   br label %for.body
 
@@ -42,9 +42,9 @@ for.end:                                          ; preds = %for.body
 ; because the trip count is dynamic.  The full unroll metadata should remain
 ; after unrolling.
 ;
-; CHECK-LABEL: @loop2(
+; CHECK-LABEL: @unroll_full(
 ; CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_2:.*]]
-define void @loop2(i32* nocapture %a, i32 %b) {
+define void @unroll_full(i32* nocapture %a, i32 %b) {
 entry:
   %cmp3 = icmp sgt i32 %b, 0
   br i1 %cmp3, label %for.body, label %for.end, !llvm.loop !5
@@ -70,9 +70,9 @@ for.end:                                          ; preds = %for.body, %entry
 ;
 ; Unroll metadata should not change.
 ;
-; CHECK-LABEL: @loop3(
+; CHECK-LABEL: @unroll_disable(
 ; CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_3:.*]]
-define void @loop3(i32* nocapture %a) {
+define void @unroll_disable(i32* nocapture %a) {
 entry:
   br label %for.body
 
@@ -92,6 +92,52 @@ for.end:                                          ; preds = %for.body
 !7 = metadata !{metadata !7, metadata !8}
 !8 = metadata !{metadata !"llvm.loop.unroll.disable"}
 
+; This function contains two loops which share the same llvm.loop metadata node
+; with an llvm.loop.unroll.count 2 hint.  Both loops should be unrolled.  This
+; verifies that adding disable metadata to a loop after unrolling doesn't affect
+; other loops which previously shared the same llvm.loop metadata.
+;
+; CHECK-LABEL: @shared_metadata(
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_4:.*]]
+; CHECK: store i32
+; CHECK: store i32
+; CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_5:.*]]
+define void @shared_metadata(i32* nocapture %List) #0 {
+entry:
+  br label %for.body3
+
+for.body3:                                        ; preds = %for.body3, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body3 ]
+  %arrayidx = getelementptr inbounds i32* %List, i64 %indvars.iv
+  %0 = load i32* %arrayidx, align 4
+  %add4 = add nsw i32 %0, 10
+  store i32 %add4, i32* %arrayidx, align 4
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  %exitcond = icmp eq i64 %indvars.iv.next, 4
+  br i1 %exitcond, label %for.body3.1.preheader, label %for.body3, !llvm.loop !9
+
+for.body3.1.preheader:                            ; preds = %for.body3
+  br label %for.body3.1
+
+for.body3.1:                                      ; preds = %for.body3.1.preheader, %for.body3.1
+  %indvars.iv.1 = phi i64 [ %1, %for.body3.1 ], [ 0, %for.body3.1.preheader ]
+  %1 = add nsw i64 %indvars.iv.1, 1
+  %arrayidx.1 = getelementptr inbounds i32* %List, i64 %1
+  %2 = load i32* %arrayidx.1, align 4
+  %add4.1 = add nsw i32 %2, 10
+  store i32 %add4.1, i32* %arrayidx.1, align 4
+  %exitcond.1 = icmp eq i64 %1, 4
+  br i1 %exitcond.1, label %for.inc5.1, label %for.body3.1, !llvm.loop !9
+
+for.inc5.1:                                       ; preds = %for.body3.1
+  ret void
+}
+!9 = metadata !{metadata !9, metadata !10}
+!10 = metadata !{metadata !"llvm.loop.unroll.count", i32 2}
+
+
 ; CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[VEC_ENABLE:.*]], metadata ![[WIDTH_8:.*]], metadata ![[UNROLL_DISABLE:.*]]}
 ; CHECK: ![[VEC_ENABLE]] = metadata !{metadata !"llvm.loop.vectorize.enable", i1 true}
 ; CHECK: ![[WIDTH_8]] = metadata !{metadata !"llvm.loop.vectorize.width", i32 8}
@@ -99,3 +145,5 @@ for.end:                                          ; preds = %for.body
 ; CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2]], metadata ![[UNROLL_FULL:.*]]}
 ; CHECK: ![[UNROLL_FULL]] = metadata !{metadata !"llvm.loop.unroll.full"}
 ; CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_4]] = metadata !{metadata ![[LOOP_4]], metadata ![[UNROLL_DISABLE:.*]]}
+; CHECK: ![[LOOP_5]] = metadata !{metadata ![[LOOP_5]], metadata ![[UNROLL_DISABLE:.*]]}
