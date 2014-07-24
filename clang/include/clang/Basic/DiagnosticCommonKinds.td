@@ -102,10 +102,12 @@ def ext_cxx11_longlong : Extension<
 def warn_cxx98_compat_longlong : Warning<
   "'long long' is incompatible with C++98">,
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
-def err_integer_too_large : Error<
-  "integer constant is larger than the largest %0-bit unsigned integer type">;
-def ext_integer_too_large_for_signed : ExtWarn<
-  "integer constant is larger than the largest %0-bit signed integer type">,
+def err_integer_literal_too_large : Error<
+  "integer literal is too large to be represented in any %select{signed |}0"
+  "integer type">;
+def ext_integer_literal_too_large_for_signed : ExtWarn<
+  "integer literal is too large to be represented in a signed integer type, "
+  "interpreting as unsigned">,
   InGroup<DiagGroup<"implicitly-unsigned-literal">>;
 
 // Sema && AST

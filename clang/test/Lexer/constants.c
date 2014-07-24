@@ -15,9 +15,9 @@ float Y = 08.123456;
 #endif
 #if -01000000000000000000000  // should not warn.
 #endif
-#if 9223372036854775808 // expected-warning {{integer constant is larger than the largest 64-bit signed integer type}}
+#if 9223372036854775808 // expected-warning {{integer literal is too large to be represented in a signed integer type, interpreting as unsigned}}
 #endif
-#if 0x10000000000000000 // expected-error {{integer constant is larger than the largest 64-bit unsigned integer type}}
+#if 0x10000000000000000 // expected-error {{integer literal is too large to be represented in any integer type}}
 #endif
 
 int c[] = {
