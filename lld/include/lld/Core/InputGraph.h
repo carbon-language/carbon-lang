@@ -49,10 +49,6 @@ public:
   typedef std::vector<std::unique_ptr<File> > FileVectorT;
   typedef FileVectorT::iterator FileIterT;
 
-  /// Where do we want to insert the input element when calling the
-  /// insertElementAt.
-  enum Position : uint8_t { BEGIN, END };
-
   /// \brief Initialize the inputgraph
   InputGraph() : _nextElementIndex(0), _currentInputElement(nullptr) {}
 
@@ -77,6 +73,9 @@ public:
   /// \brief Adds a node into the InputGraph
   void addInputElement(std::unique_ptr<InputElement>);
 
+  /// \brief Adds a node at the beginning of the InputGraph
+  void addInputElementFront(std::unique_ptr<InputElement>);
+
   /// Normalize the InputGraph. It calls expand() on each node and then replace
   /// it with getReplacements() results.
   void normalize();
@@ -90,9 +89,6 @@ public:
 
   /// \brief Dump the input Graph
   bool dump(raw_ostream &diagnostics = llvm::errs());
-
-  /// \brief Insert an element into the input graph at position.
-  void insertElementAt(std::unique_ptr<InputElement>, Position position);
 
 protected:
   // Input arguments

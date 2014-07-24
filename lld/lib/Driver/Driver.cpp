@@ -101,8 +101,7 @@ bool Driver::link(LinkingContext &context, raw_ostream &diagnostics) {
   context.createImplicitFiles(implicitFiles);
   if (implicitFiles.size())
     fileNode->addFiles(std::move(implicitFiles));
-  context.getInputGraph().insertElementAt(std::move(fileNode),
-                                          InputGraph::Position::BEGIN);
+  context.getInputGraph().addInputElementFront(std::move(fileNode));
 
   // Do core linking.
   ScopedTask resolveTask(getDefaultDomain(), "Resolve");

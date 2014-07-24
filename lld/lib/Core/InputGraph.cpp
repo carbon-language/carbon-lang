@@ -46,22 +46,15 @@ void InputGraph::addInputElement(std::unique_ptr<InputElement> ie) {
   _inputArgs.push_back(std::move(ie));
 }
 
+void InputGraph::addInputElementFront(std::unique_ptr<InputElement> ie) {
+  _inputArgs.insert(_inputArgs.begin(), std::move(ie));
+}
+
 bool InputGraph::dump(raw_ostream &diagnostics) {
   for (std::unique_ptr<InputElement> &ie : _inputArgs)
     if (!ie->dump(diagnostics))
       return false;
   return true;
-}
-
-/// \brief Insert element at position
-void InputGraph::insertElementAt(std::unique_ptr<InputElement> element,
-                                 Position position) {
-  if (position == InputGraph::Position::BEGIN) {
-    _inputArgs.insert(_inputArgs.begin(), std::move(element));
-    return;
-  }
-  assert(position == InputGraph::Position::END);
-  _inputArgs.push_back(std::move(element));
 }
 
 /// \brief Helper functions for the resolver
