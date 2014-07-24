@@ -1,0 +1,482 @@
+//=-- CoverageMappingReader.cpp - Code coverage mapping reader ----*- C++ -*-=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// This file contains support for reading coverage mapping data for
+// instrumentation based coverage.
+//
+//===----------------------------------------------------------------------===//
+
+#include "llvm/ProfileData/CoverageMappingReader.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/Object/ObjectFile.h"
+#include "llvm/Support/LEB128.h"
+
+using namespace llvm;
+using namespace coverage;
+using namespace object;
+
+void CoverageMappingIterator::increment() {
+  // Check if all the records were read or if an error occurred while reading
+  // the next record.
+  if (Reader->readNextRecord(Record))
+    *this = CoverageMappingIterator();
+}
+
+std::error_code RawCoverageReader::readULEB128(uint64_t &Result) {
+  if (Data.size() < 1)
+    return error(instrprof_error::truncated);
+  unsigned N = 0;
+  Result = decodeULEB128(reinterpret_cast<const uint8_t *>(Data.data()), &N);
+  if (N > Data.size())
+    return error(instrprof_error::malformed);
+  Data = Data.substr(N);
+  return success();
+}
+
+std::error_code RawCoverageReader::readIntMax(uint64_t &Result,
+                                              uint64_t MaxPlus1) {
+  if (auto Err = readULEB128(Result))
+    return Err;
+  if (Result >= MaxPlus1)
+    return error(instrprof_error::malformed);
+  return success();
+}
+
+std::error_code RawCoverageReader::readSize(uint64_t &Result) {
+  if (auto Err = readULEB128(Result))
+    return Err;
+  // Sanity check the number.
+  if (Result > Data.size())
+    return error(instrprof_error::malformed);
+  return success();
+}
+
+std::error_code RawCoverageReader::readString(StringRef &Result) {
+  uint64_t Length;
+  if (auto Err = readSize(Length))
+    return Err;
+  Result = Data.substr(0, Length);
+  Data = Data.substr(Length);
+  return success();
+}
+
+std::error_code RawCoverageFilenamesReader::read() {
+  uint64_t NumFilenames;
+  if (auto Err = readSize(NumFilenames))
+    return Err;
+  for (size_t I = 0; I < NumFilenames; ++I) {
+    StringRef Filename;
+    if (auto Err = readString(Filename))
+      return Err;
+    Filenames.push_back(Filename);
+  }
+  return success();
+}
+
+std::error_code RawCoverageMappingReader::decodeCounter(unsigned Value,
+                                                        Counter &C) {
+  auto Tag = Value & Counter::EncodingTagMask;
+  switch (Tag) {
+  case Counter::Zero:
+    C = Counter::getZero();
+    return success();
+  case Counter::CounterValueReference:
+    C = Counter::getCounter(Value >> Counter::EncodingTagBits);
+    return success();
+  default:
+    break;
+  }
+  Tag -= Counter::Expression;
+  switch (Tag) {
+  case CounterExpression::Subtract:
+  case CounterExpression::Add: {
+    auto ID = Value >> Counter::EncodingTagBits;
+    if (ID >= Expressions.size())
+      return error(instrprof_error::malformed);
+    Expressions[ID].Kind = CounterExpression::ExprKind(Tag);
+    C = Counter::getExpression(ID);
+    break;
+  }
+  default:
+    return error(instrprof_error::malformed);
+  }
+  return success();
+}
+
+std::error_code RawCoverageMappingReader::readCounter(Counter &C) {
+  uint64_t EncodedCounter;
+  if (auto Err =
+          readIntMax(EncodedCounter, std::numeric_limits<unsigned>::max()))
+    return Err;
+  if (auto Err = decodeCounter(EncodedCounter, C))
+    return Err;
+  return success();
+}
+
+static const unsigned EncodingExpansionRegionBit = 1
+                                                   << Counter::EncodingTagBits;
+
+/// \brief Read the sub-array of regions for the given inferred file id.
+/// \param NumFileIDs: the number of file ids that are defined for this
+/// function.
+std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
+    std::vector<CounterMappingRegion> &MappingRegions, unsigned InferredFileID,
+    size_t NumFileIDs) {
+  uint64_t NumRegions;
+  if (auto Err = readSize(NumRegions))
+    return Err;
+  unsigned LineStart = 0;
+  for (size_t I = 0; I < NumRegions; ++I) {
+    Counter C;
+    CounterMappingRegion::RegionKind Kind = CounterMappingRegion::CodeRegion;
+
+    // Read the combined counter + region kind.
+    uint64_t EncodedCounterAndRegion;
+    if (auto Err = readIntMax(EncodedCounterAndRegion,
+                              std::numeric_limits<unsigned>::max()))
+      return Err;
+    unsigned Tag = EncodedCounterAndRegion & Counter::EncodingTagMask;
+    uint64_t ExpandedFileID = 0;
+    if (Tag != Counter::Zero) {
+      if (auto Err = decodeCounter(EncodedCounterAndRegion, C))
+        return Err;
+    } else {
+      // Is it an expansion region?
+      if (EncodedCounterAndRegion & EncodingExpansionRegionBit) {
+        Kind = CounterMappingRegion::ExpansionRegion;
+        ExpandedFileID = EncodedCounterAndRegion >>
+                         Counter::EncodingCounterTagAndExpansionRegionTagBits;
+        if (ExpandedFileID >= NumFileIDs)
+          return error(instrprof_error::malformed);
+      } else {
+        switch (EncodedCounterAndRegion >>
+                Counter::EncodingCounterTagAndExpansionRegionTagBits) {
+        case CounterMappingRegion::CodeRegion:
+          // Don't do anything when we have a code region with a zero counter.
+          break;
+        case CounterMappingRegion::EmptyRegion:
+          Kind = CounterMappingRegion::EmptyRegion;
+          break;
+        case CounterMappingRegion::SkippedRegion:
+          Kind = CounterMappingRegion::SkippedRegion;
+          break;
+        default:
+          return error(instrprof_error::malformed);
+        }
+      }
+    }
+
+    // Read the source range.
+    uint64_t LineStartDelta, ColumnStart, NumLines, ColumnEnd;
+    if (auto Err =
+            readIntMax(LineStartDelta, std::numeric_limits<unsigned>::max()))
+      return Err;
+    if (auto Err =
+            readIntMax(ColumnStart, std::numeric_limits<unsigned>::max()))
+      return Err;
+    if (auto Err = readIntMax(NumLines, std::numeric_limits<unsigned>::max()))
+      return Err;
+    if (auto Err = readIntMax(ColumnEnd, std::numeric_limits<unsigned>::max()))
+      return Err;
+    LineStart += LineStartDelta;
+    // Adjust the column locations for the empty regions that are supposed to
+    // cover whole lines. Those regions should be encoded with the
+    // column range (1 -> std::numeric_limits<unsigned>::max()), but because
+    // the encoded std::numeric_limits<unsigned>::max() is several bytes long,
+    // we set the column range to (0 -> 0) to ensure that the column start and
+    // column end take up one byte each.
+    // The std::numeric_limits<unsigned>::max() is used to represent a column
+    // position at the end of the line without knowing the length of that line.
+    if (ColumnStart == 0 && ColumnEnd == 0) {
+      ColumnStart = 1;
+      ColumnEnd = std::numeric_limits<unsigned>::max();
+    }
+    MappingRegions.push_back(
+        CounterMappingRegion(C, InferredFileID, LineStart, ColumnStart,
+                             LineStart + NumLines, ColumnEnd, Kind));
+    MappingRegions.back().ExpandedFileID = ExpandedFileID;
+  }
+  return success();
+}
+
+std::error_code RawCoverageMappingReader::read(CoverageMappingRecord &Record) {
+
+  // Read the virtual file mapping.
+  llvm::SmallVector<unsigned, 8> VirtualFileMapping;
+  uint64_t NumFileMappings;
+  if (auto Err = readSize(NumFileMappings))
+    return Err;
+  for (size_t I = 0; I < NumFileMappings; ++I) {
+    uint64_t FilenameIndex;
+    if (auto Err = readIntMax(FilenameIndex, TranslationUnitFilenames.size()))
+      return Err;
+    VirtualFileMapping.push_back(FilenameIndex);
+  }
+
+  // Construct the files using unique filenames and virtual file mapping.
+  for (auto I : VirtualFileMapping) {
+    Filenames.push_back(TranslationUnitFilenames[I]);
+  }
+
+  // Read the expressions.
+  uint64_t NumExpressions;
+  if (auto Err = readSize(NumExpressions))
+    return Err;
+  // Create an array of dummy expressions that get the proper counters
+  // when the expressions are read, and the proper kinds when the counters
+  // are decoded.
+  Expressions.resize(
+      NumExpressions,
+      CounterExpression(CounterExpression::Subtract, Counter(), Counter()));
+  for (size_t I = 0; I < NumExpressions; ++I) {
+    if (auto Err = readCounter(Expressions[I].LHS))
+      return Err;
+    if (auto Err = readCounter(Expressions[I].RHS))
+      return Err;
+  }
+
+  // Read the mapping regions sub-arrays.
+  for (unsigned InferredFileID = 0, S = VirtualFileMapping.size();
+       InferredFileID < S; ++InferredFileID) {
+    if (auto Err = readMappingRegionsSubArray(MappingRegions, InferredFileID,
+                                              VirtualFileMapping.size()))
+      return Err;
+  }
+
+  // Set the counters for the expansion regions.
+  // i.e. Counter of expansion region = counter of the first region
+  // from the expanded file.
+  // Perform multiple passes to correctly propagate the counters through
+  // all the nested expansion regions.
+  for (unsigned Pass = 1, S = VirtualFileMapping.size(); Pass < S; ++Pass) {
+    for (auto &I : MappingRegions) {
+      if (I.Kind == CounterMappingRegion::ExpansionRegion) {
+        for (const auto &J : MappingRegions) {
+          if (J.FileID == I.ExpandedFileID) {
+            I.Count = J.Count;
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  Record.FunctionName = FunctionName;
+  Record.Filenames = Filenames;
+  Record.Expressions = Expressions;
+  Record.MappingRegions = MappingRegions;
+  return success();
+}
+
+ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
+    StringRef FileName)
+    : CurrentRecord(0) {
+  auto File = llvm::object::ObjectFile::createObjectFile(FileName);
+  if (!File)
+    error(File.getError());
+  else
+    Object.reset(File.get());
+}
+
+ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
+    std::unique_ptr<MemoryBuffer> &ObjectBuffer, sys::fs::file_magic Type)
+    : CurrentRecord(0) {
+  auto File = llvm::object::ObjectFile::createObjectFile(ObjectBuffer, Type);
+  if (!File)
+    error(File.getError());
+  else
+    Object.reset(File.get());
+}
+
+namespace {
+/// \brief The coverage mapping data for a single function.
+/// It points to the function's name.
+template <typename IntPtrT> struct CoverageMappingFunctionRecord {
+  IntPtrT FunctionNamePtr;
+  uint32_t FunctionNameSize;
+  uint32_t CoverageMappingSize;
+};
+
+/// \brief The coverage mapping data for a single translation unit.
+/// It points to the array of function coverage mapping records and the encoded
+/// filenames array.
+template <typename IntPtrT> struct CoverageMappingTURecord {
+  uint32_t FunctionRecordsSize;
+  uint32_t FilenamesSize;
+  uint32_t CoverageMappingsSize;
+  uint32_t Version;
+};
+
+/// \brief A helper structure to access the data from a section
+/// in an object file.
+struct SectionData {
+  StringRef Data;
+  uint64_t Address;
+
+  std::error_code load(SectionRef &Section) {
+    if (auto Err = Section.getContents(Data))
+      return Err;
+    return Section.getAddress(Address);
+  }
+
+  std::error_code get(uint64_t Pointer, size_t Size, StringRef &Result) {
+    if (Pointer < Address)
+      return instrprof_error::malformed;
+    auto Offset = Pointer - Address;
+    if (Offset + Size > Data.size())
+      return instrprof_error::malformed;
+    Result = Data.substr(Pointer - Address, Size);
+    return instrprof_error::success;
+  }
+};
+}
+
+template <typename T>
+std::error_code readCoverageMappingData(
+    SectionRef &ProfileNames, SectionRef &CoverageMapping,
+    std::vector<ObjectFileCoverageMappingReader::ProfileMappingRecord> &Records,
+    std::vector<StringRef> &Filenames) {
+  llvm::DenseSet<T> UniqueFunctionMappingData;
+
+  // Get the contents of the given sections.
+  StringRef Data;
+  if (auto Err = CoverageMapping.getContents(Data))
+    return Err;
+  SectionData ProfileNamesData;
+  if (auto Err = ProfileNamesData.load(ProfileNames))
+    return Err;
+
+  // Read the records in the coverage data section.
+  while (!Data.empty()) {
+    if (Data.size() < sizeof(CoverageMappingTURecord<T>))
+      return instrprof_error::malformed;
+    auto TU = reinterpret_cast<const CoverageMappingTURecord<T> *>(Data.data());
+    Data = Data.substr(sizeof(CoverageMappingTURecord<T>));
+    switch (TU->Version) {
+    case CoverageMappingVersion1:
+      break;
+    default:
+      return instrprof_error::unsupported_version;
+    }
+    auto Version = CoverageMappingVersion(TU->Version);
+
+    // Get the function records.
+    auto FunctionRecords =
+        reinterpret_cast<const CoverageMappingFunctionRecord<T> *>(Data.data());
+    if (Data.size() <
+        sizeof(CoverageMappingFunctionRecord<T>) * TU->FunctionRecordsSize)
+      return instrprof_error::malformed;
+    Data = Data.substr(sizeof(CoverageMappingFunctionRecord<T>) *
+                       TU->FunctionRecordsSize);
+
+    // Get the filenames.
+    if (Data.size() < TU->FilenamesSize)
+      return instrprof_error::malformed;
+    auto RawFilenames = Data.substr(0, TU->FilenamesSize);
+    Data = Data.substr(TU->FilenamesSize);
+    size_t FilenamesBegin = Filenames.size();
+    RawCoverageFilenamesReader Reader(RawFilenames, Filenames);
+    if (auto Err = Reader.read())
+      return Err;
+
+    // Get the coverage mappings.
+    if (Data.size() < TU->CoverageMappingsSize)
+      return instrprof_error::malformed;
+    auto CoverageMappings = Data.substr(0, TU->CoverageMappingsSize);
+    Data = Data.substr(TU->CoverageMappingsSize);
+
+    for (unsigned I = 0; I < TU->FunctionRecordsSize; ++I) {
+      auto &MappingRecord = FunctionRecords[I];
+
+      // Get the coverage mapping.
+      if (CoverageMappings.size() < MappingRecord.CoverageMappingSize)
+        return instrprof_error::malformed;
+      auto Mapping =
+          CoverageMappings.substr(0, MappingRecord.CoverageMappingSize);
+      CoverageMappings =
+          CoverageMappings.substr(MappingRecord.CoverageMappingSize);
+
+      // Ignore this record if we already have a record that points to the same
+      // function name.
+      // This is useful to ignore the redundant records for the functions
+      // with ODR linkage.
+      if (UniqueFunctionMappingData.count(MappingRecord.FunctionNamePtr))
+        continue;
+      UniqueFunctionMappingData.insert(MappingRecord.FunctionNamePtr);
+      StringRef FunctionName;
+      if (auto Err = ProfileNamesData.get(MappingRecord.FunctionNamePtr,
+                                          MappingRecord.FunctionNameSize,
+                                          FunctionName))
+        return Err;
+      Records.push_back(ObjectFileCoverageMappingReader::ProfileMappingRecord(
+          Version, FunctionName, Mapping, FilenamesBegin,
+          Filenames.size() - FilenamesBegin));
+    }
+  }
+
+  return instrprof_error::success;
+}
+
+std::error_code ObjectFileCoverageMappingReader::readHeader() {
+  if (!Object)
+    return getError();
+  auto BytesInAddress = Object->getBytesInAddress();
+  if (BytesInAddress != 4 && BytesInAddress != 8)
+    return error(instrprof_error::malformed);
+
+  // Look for the sections that we are interested in.
+  int FoundSectionCount = 0;
+  SectionRef ProfileNames, CoverageMapping;
+  for (const auto &Section : Object->sections()) {
+    StringRef Name;
+    if (auto Err = Section.getName(Name))
+      return Err;
+    if (Name == "__llvm_prf_names") {
+      ProfileNames = Section;
+    } else if (Name == "__llvm_covmap") {
+      CoverageMapping = Section;
+    } else
+      continue;
+    ++FoundSectionCount;
+  }
+  if (FoundSectionCount != 2)
+    return error(instrprof_error::bad_header);
+
+  // Load the data from the found sections.
+  std::error_code Err;
+  if (BytesInAddress == 4)
+    Err = readCoverageMappingData<uint32_t>(ProfileNames, CoverageMapping,
+                                            MappingRecords, Filenames);
+  else
+    Err = readCoverageMappingData<uint64_t>(ProfileNames, CoverageMapping,
+                                            MappingRecords, Filenames);
+  if (Err)
+    return error(Err);
+
+  return success();
+}
+
+std::error_code
+ObjectFileCoverageMappingReader::readNextRecord(CoverageMappingRecord &Record) {
+  if (CurrentRecord >= MappingRecords.size())
+    return error(instrprof_error::eof);
+
+  FunctionsFilenames.clear();
+  Expressions.clear();
+  MappingRegions.clear();
+  auto &R = MappingRecords[CurrentRecord];
+  RawCoverageMappingReader Reader(
+      R.FunctionName, R.CoverageMapping,
+      makeArrayRef(Filenames.data() + R.FilenamesBegin, R.FilenamesSize),
+      FunctionsFilenames, Expressions, MappingRegions);
+  if (auto Err = Reader.read(Record))
+    return Err;
+  ++CurrentRecord;
+  return success();
+}
