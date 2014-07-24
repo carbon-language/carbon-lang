@@ -584,7 +584,7 @@ void Value::mergeUseListsImpl(Use *L, Use *R, Use **Next, Compare Cmp) {
   }
   *Next = L;
   mergeUseListsImpl(L->Next, R, &L->Next, Cmp);
-};
+}
 
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
