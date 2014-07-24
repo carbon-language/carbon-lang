@@ -120,6 +120,9 @@ public:
   unsigned getOpcodeAfterMemoryUnfold(unsigned Opc,
                                bool UnfoldLoad, bool UnfoldStore,
                                unsigned *LoadRegIndex = nullptr) const override;
+
+  bool enableClusterLoads() const override;
+
   bool shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
                                int64_t Offset1, int64_t Offset2,
                                unsigned NumLoads) const override;

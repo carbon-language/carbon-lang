@@ -215,6 +215,10 @@ AMDGPUInstrInfo::getOpcodeAfterMemoryUnfold(unsigned Opc,
   return 0;
 }
 
+bool AMDGPUInstrInfo::enableClusterLoads() const {
+  return true;
+}
+
 bool AMDGPUInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
                                              int64_t Offset1, int64_t Offset2,
                                              unsigned NumLoads) const {
