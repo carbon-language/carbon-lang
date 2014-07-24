@@ -1051,7 +1051,7 @@ This attribute is incompatible with the ``always_inline`` attribute.
 
 def LoopHintDocs : Documentation {
   let Category = DocCatStmt;
-  let Heading = "#pragma clang loop, #pragma unroll";
+  let Heading = "#pragma clang loop";
   let Content = [{
 The ``#pragma clang loop`` directive allows loop optimization hints to be
 specified for the subsequent loop. The directive allows vectorization,
@@ -1065,6 +1065,7 @@ for details.
 
 def UnrollHintDocs : Documentation {
   let Category = DocCatStmt;
+  let Heading = "#pragma unroll";
   let Content = [{
 Loop unrolling optimization hints can be specified with ``#pragma unroll``. The
 pragma is placed immediately before a for, while, do-while, or c++11 range-based
