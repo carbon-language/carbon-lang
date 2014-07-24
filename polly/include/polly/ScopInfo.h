@@ -106,7 +106,6 @@ private:
   const Value *BaseAddr;
   std::string BaseName;
   isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
-  void setBaseName();
   ScopStmt *Statement;
 
   /// @brief Reduction type for reduction like accesses, RT_NONE otherwise

@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "polly/Support/GICHelper.h"
+#include "llvm/IR/Value.h"
 #include "isl/aff.h"
 #include "isl/map.h"
 #include "isl/schedule.h"
@@ -123,4 +124,31 @@ std::string polly::stringFromIslObj(__isl_keep isl_aff *aff) {
 std::string polly::stringFromIslObj(__isl_keep isl_pw_aff *pwaff) {
   return stringFromIslObjInternal(pwaff, isl_pw_aff_get_ctx,
                                   isl_printer_print_pw_aff);
+}
+
+static void replace(std::string &str, const std::string &find,
+                    const std::string &replace) {
+  size_t pos = 0;
+  while ((pos = str.find(find, pos)) != std::string::npos) {
+    str.replace(pos, find.length(), replace);
+    pos += replace.length();
+  }
+}
+
+static void makeIslCompatible(std::string &str) {
+  replace(str, ".", "_");
+  replace(str, "\"", "_");
+}
+
+std::string polly::getIslCompatibleName(std::string Prefix, const Value *Val,
+                                        std::string Suffix) {
+  std::string ValStr;
+  raw_string_ostream OS(ValStr);
+  Val->printAsOperand(OS, false);
+  ValStr = OS.str();
+  // Remove the leading %
+  ValStr.erase(0, 1);
+  ValStr = Prefix + ValStr + Suffix;
+  makeIslCompatible(ValStr);
+  return ValStr;
 }

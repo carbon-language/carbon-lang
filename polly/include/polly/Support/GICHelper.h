@@ -18,6 +18,8 @@
 #include "isl/ctx.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <string>
+
 struct isl_map;
 struct isl_union_map;
 struct isl_set;
@@ -28,6 +30,10 @@ struct isl_pw_multi_aff;
 struct isl_aff;
 struct isl_pw_aff;
 struct isl_val;
+
+namespace llvm {
+class Value;
+}
 
 namespace polly {
 __isl_give isl_val *isl_valFromAPInt(isl_ctx *Ctx, const llvm::APInt Int,
@@ -58,6 +64,11 @@ inline llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   OS << polly::stringFromIslObj(Map);
   return OS;
 }
+
+/// @brief Return @p Prefix + @p Val->getName() + @p Suffix but Isl compatible.
+std::string getIslCompatibleName(std::string Prefix, const llvm::Value *Val,
+                                 std::string Suffix);
+
 } // end namespace polly
 
 #endif

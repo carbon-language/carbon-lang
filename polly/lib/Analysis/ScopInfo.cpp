@@ -309,30 +309,6 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(newAccessRelation);
 }
 
-static void replace(std::string &str, const std::string &find,
-                    const std::string &replace) {
-  size_t pos = 0;
-  while ((pos = str.find(find, pos)) != std::string::npos) {
-    str.replace(pos, find.length(), replace);
-    pos += replace.length();
-  }
-}
-
-static void makeIslCompatible(std::string &str) {
-  str.erase(0, 1);
-  replace(str, ".", "_");
-  replace(str, "\"", "_");
-}
-
-void MemoryAccess::setBaseName() {
-  raw_string_ostream OS(BaseName);
-  getBaseAddr()->printAsOperand(OS, false);
-  BaseName = OS.str();
-
-  makeIslCompatible(BaseName);
-  BaseName = "MemRef_" + BaseName;
-}
-
 isl_map *MemoryAccess::getAccessRelation() const {
   return isl_map_copy(AccessRelation);
 }
@@ -424,7 +400,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
     : Statement(Statement), Inst(AccInst), newAccessRelation(nullptr) {
 
   BaseAddr = Access.getBase();
-  setBaseName();
+  BaseName = getIslCompatibleName("MemRef_", getBaseAddr(), "");
 
   if (!Access.isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
@@ -809,12 +785,7 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
     NestLoops[i] = Nest[i];
   }
 
-  raw_string_ostream OS(BaseName);
-  bb.printAsOperand(OS, false);
-  BaseName = OS.str();
-
-  makeIslCompatible(BaseName);
-  BaseName = "Stmt_" + BaseName;
+  BaseName = getIslCompatibleName("Stmt_", &bb, "");
 
   Domain = buildDomain(tempScop, CurRegion);
   buildScattering(Scatter);
