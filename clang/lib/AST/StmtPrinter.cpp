@@ -677,6 +677,10 @@ void OMPClausePrinter::VisitOMPCaptureClause(OMPCaptureClause *) {
   OS << "capture";
 }
 
+void OMPClausePrinter::VisitOMPSeqCstClause(OMPSeqCstClause *) {
+  OS << "seq_cst";
+}
+
 template<typename T>
 void OMPClausePrinter::VisitOMPClauseList(T *Node, char StartSym) {
   for (typename T::varlist_iterator I = Node->varlist_begin(),

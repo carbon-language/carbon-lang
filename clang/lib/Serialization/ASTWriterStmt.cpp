@@ -1743,6 +1743,8 @@ void OMPClauseWriter::VisitOMPUpdateClause(OMPUpdateClause *) {}
 
 void OMPClauseWriter::VisitOMPCaptureClause(OMPCaptureClause *) {}
 
+void OMPClauseWriter::VisitOMPSeqCstClause(OMPSeqCstClause *) {}
+
 void OMPClauseWriter::VisitOMPPrivateClause(OMPPrivateClause *C) {
   Record.push_back(C->varlist_size());
   Writer->Writer.AddSourceLocation(C->getLParenLoc(), Record);

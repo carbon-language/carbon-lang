@@ -25,6 +25,21 @@ T foo(T argc) {
     a = b;
     b++;
   }
+#pragma omp atomic seq_cst
+  a++;
+#pragma omp atomic read seq_cst
+  a = argc;
+#pragma omp atomic seq_cst write
+  a = argc + argc;
+#pragma omp atomic update seq_cst
+  a = a + argc;
+#pragma omp atomic seq_cst capture
+  a = b++;
+#pragma omp atomic capture seq_cst
+  {
+    a = b;
+    b++;
+  }
   return T();
 }
 
@@ -44,6 +59,21 @@ T foo(T argc) {
 // CHECK-NEXT: a = b;
 // CHECK-NEXT: b++;
 // CHECK-NEXT: }
+// CHECK-NEXT: #pragma omp atomic seq_cst
+// CHECK-NEXT: a++;
+// CHECK-NEXT: #pragma omp atomic read seq_cst
+// CHECK-NEXT: a = argc;
+// CHECK-NEXT: #pragma omp atomic seq_cst write
+// CHECK-NEXT: a = argc + argc;
+// CHECK-NEXT: #pragma omp atomic update seq_cst
+// CHECK-NEXT: a = a + argc;
+// CHECK-NEXT: #pragma omp atomic seq_cst capture
+// CHECK-NEXT: a = b++;
+// CHECK-NEXT: #pragma omp atomic capture seq_cst
+// CHECK-NEXT: {
+// CHECK-NEXT: a = b;
+// CHECK-NEXT: b++;
+// CHECK-NEXT: }
 // CHECK: T a = T();
 // CHECK-NEXT: #pragma omp atomic
 // CHECK-NEXT: a++;
@@ -56,6 +86,21 @@ T foo(T argc) {
 // CHECK-NEXT: #pragma omp atomic capture
 // CHECK-NEXT: a = b++;
 // CHECK-NEXT: #pragma omp atomic capture
+// CHECK-NEXT: {
+// CHECK-NEXT: a = b;
+// CHECK-NEXT: b++;
+// CHECK-NEXT: }
+// CHECK-NEXT: #pragma omp atomic seq_cst
+// CHECK-NEXT: a++;
+// CHECK-NEXT: #pragma omp atomic read seq_cst
+// CHECK-NEXT: a = argc;
+// CHECK-NEXT: #pragma omp atomic seq_cst write
+// CHECK-NEXT: a = argc + argc;
+// CHECK-NEXT: #pragma omp atomic update seq_cst
+// CHECK-NEXT: a = a + argc;
+// CHECK-NEXT: #pragma omp atomic seq_cst capture
+// CHECK-NEXT: a = b++;
+// CHECK-NEXT: #pragma omp atomic capture seq_cst
 // CHECK-NEXT: {
 // CHECK-NEXT: a = b;
 // CHECK-NEXT: b++;
@@ -80,6 +125,21 @@ int main(int argc, char **argv) {
     a = b;
     b++;
   }
+#pragma omp atomic seq_cst
+  a++;
+#pragma omp atomic read seq_cst
+  a = argc;
+#pragma omp atomic seq_cst write
+  a = argc + argc;
+#pragma omp atomic update seq_cst
+  a = a + argc;
+#pragma omp atomic seq_cst capture
+  a = b++;
+#pragma omp atomic capture seq_cst
+  {
+    a = b;
+    b++;
+  }
   // CHECK-NEXT: #pragma omp atomic
   // CHECK-NEXT: a++;
   // CHECK-NEXT: #pragma omp atomic read
@@ -91,6 +151,21 @@ int main(int argc, char **argv) {
   // CHECK-NEXT: #pragma omp atomic capture
   // CHECK-NEXT: a = b++;
   // CHECK-NEXT: #pragma omp atomic capture
+  // CHECK-NEXT: {
+  // CHECK-NEXT: a = b;
+  // CHECK-NEXT: b++;
+  // CHECK-NEXT: }
+  // CHECK-NEXT: #pragma omp atomic seq_cst
+  // CHECK-NEXT: a++;
+  // CHECK-NEXT: #pragma omp atomic read seq_cst
+  // CHECK-NEXT: a = argc;
+  // CHECK-NEXT: #pragma omp atomic seq_cst write
+  // CHECK-NEXT: a = argc + argc;
+  // CHECK-NEXT: #pragma omp atomic update seq_cst
+  // CHECK-NEXT: a = a + argc;
+  // CHECK-NEXT: #pragma omp atomic seq_cst capture
+  // CHECK-NEXT: a = b++;
+  // CHECK-NEXT: #pragma omp atomic capture seq_cst
   // CHECK-NEXT: {
   // CHECK-NEXT: a = b;
   // CHECK-NEXT: b++;

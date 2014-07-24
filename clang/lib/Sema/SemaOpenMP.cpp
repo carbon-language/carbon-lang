@@ -2485,6 +2485,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprClause(OpenMPClauseKind Kind, Expr *Expr,
   case OMPC_write:
   case OMPC_update:
   case OMPC_capture:
+  case OMPC_seq_cst:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2691,6 +2692,7 @@ OMPClause *Sema::ActOnOpenMPSimpleClause(
   case OMPC_write:
   case OMPC_update:
   case OMPC_capture:
+  case OMPC_seq_cst:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2810,6 +2812,7 @@ OMPClause *Sema::ActOnOpenMPSingleExprWithArgClause(
   case OMPC_write:
   case OMPC_update:
   case OMPC_capture:
+  case OMPC_seq_cst:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }
@@ -2901,6 +2904,9 @@ OMPClause *Sema::ActOnOpenMPClause(OpenMPClauseKind Kind,
   case OMPC_capture:
     Res = ActOnOpenMPCaptureClause(StartLoc, EndLoc);
     break;
+  case OMPC_seq_cst:
+    Res = ActOnOpenMPSeqCstClause(StartLoc, EndLoc);
+    break;
   case OMPC_if:
   case OMPC_final:
   case OMPC_num_threads:
@@ -2967,6 +2973,11 @@ OMPClause *Sema::ActOnOpenMPCaptureClause(SourceLocation StartLoc,
   return new (Context) OMPCaptureClause(StartLoc, EndLoc);
 }
 
+OMPClause *Sema::ActOnOpenMPSeqCstClause(SourceLocation StartLoc,
+                                         SourceLocation EndLoc) {
+  return new (Context) OMPSeqCstClause(StartLoc, EndLoc);
+}
+
 OMPClause *Sema::ActOnOpenMPVarListClause(
     OpenMPClauseKind Kind, ArrayRef<Expr *> VarList, Expr *TailExpr,
     SourceLocation StartLoc, SourceLocation LParenLoc, SourceLocation ColonLoc,
@@ -3024,6 +3035,7 @@ OMPClause *Sema::ActOnOpenMPVarListClause(
   case OMPC_write:
   case OMPC_update:
   case OMPC_capture:
+  case OMPC_seq_cst:
   case OMPC_unknown:
     llvm_unreachable("Clause is not allowed.");
   }

@@ -144,6 +144,41 @@ int capture() {
 }
 
 template <class T>
+T seq_cst() {
+  T a, b = 0;
+// Test for atomic seq_cst
+#pragma omp atomic seq_cst
+  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  ;
+// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'seq_cst' clause}}
+#pragma omp atomic seq_cst seq_cst
+  a += b;
+
+#pragma omp atomic update seq_cst
+  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  ;
+
+  return T();
+}
+
+int seq_cst() {
+  int a, b = 0;
+// Test for atomic seq_cst
+#pragma omp atomic seq_cst
+  // expected-error@+1 {{the statement for 'atomic' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  ;
+// expected-error@+1 {{directive '#pragma omp atomic' cannot contain more than one 'seq_cst' clause}}
+#pragma omp atomic seq_cst seq_cst
+  a += b;
+
+#pragma omp atomic update seq_cst
+  // expected-error@+1 {{the statement for 'atomic update' must be an expression statement of form '++x;', '--x;', 'x++;', 'x--;', 'x binop= expr;', 'x = x binop expr' or 'x = expr binop x', where x is an l-value expression with scalar type}}
+  ;
+
+ return seq_cst<int>();
+}
+
+template <class T>
 T mixed() {
   T a, b = T();
 // expected-error@+2 2 {{directive '#pragma omp atomic' cannot contain more than one 'read', 'write', 'update' or 'capture' clause}}
