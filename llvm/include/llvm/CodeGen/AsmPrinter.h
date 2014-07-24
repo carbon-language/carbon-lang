@@ -264,6 +264,9 @@ public:
   /// function.
   virtual void EmitFunctionBodyEnd() {}
 
+  /// Targets can override this to emit stuff at the end of a basic block.
+  virtual void EmitBasicBlockEnd(const MachineBasicBlock &MBB) {}
+
   /// Targets should implement this to emit instructions.
   virtual void EmitInstruction(const MachineInstr *) {
     llvm_unreachable("EmitInstruction not implemented");

@@ -804,6 +804,8 @@ void AsmPrinter::EmitFunctionBody() {
         }
       }
     }
+
+    EmitBasicBlockEnd(MBB);
   }
 
   // If the last instruction was a prolog label, then we have a situation where
