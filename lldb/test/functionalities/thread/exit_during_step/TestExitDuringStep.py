@@ -15,13 +15,27 @@ class ExitDuringStepTestCase(TestBase):
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
+    def test_thread_state_is_stopped_with_dsym(self):
+        """Test thread exit during step handling."""
+        self.buildDsym(dictionary=self.getBuildFlags())
+        self.thread_state_is_stopped()
+
+    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
+    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
+    @dwarf_test
+    def test_thread_state_is_stopped_with_dwarf(self):
+        """Test thread exit during step handling."""
+        self.buildDwarf(dictionary=self.getBuildFlags())
+        self.thread_state_is_stopped()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @dsym_test
     def test_with_dsym(self):
         """Test thread exit during step handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
         self.exit_during_step_inst_test()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_step_over_with_dsym(self):
         """Test thread exit during step-over handling."""
@@ -29,31 +43,24 @@ class ExitDuringStepTestCase(TestBase):
         self.exit_during_step_over_test()
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
     @dsym_test
     def test_step_in_with_dsym(self):
         """Test thread exit during step-in handling."""
         self.buildDsym(dictionary=self.getBuildFlags())
         self.exit_during_step_in_test()
 
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_with_dwarf(self):
         """Test thread exit during step handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.exit_during_step_inst_test()
 
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_step_over_with_dwarf(self):
         """Test thread exit during step-over handling."""
         self.buildDwarf(dictionary=self.getBuildFlags())
         self.exit_during_step_over_test()
 
-    @expectedFailureDarwin("llvm.org/pr15824") # thread states not properly maintained
-    @expectedFailureFreeBSD("llvm.org/pr18190") # thread states not properly maintained
     @dwarf_test
     def test_step_in_with_dwarf(self):
         """Test thread exit during step-in handling."""
@@ -69,17 +76,21 @@ class ExitDuringStepTestCase(TestBase):
 
     def exit_during_step_inst_test(self):
         """Test thread exit while using step-inst."""
-        self.exit_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step')
+        self.exit_during_step_base("thread step-inst -m all-threads", 'stop reason = instruction step', False)
 
     def exit_during_step_over_test(self):
         """Test thread exit while using step-over."""
-        self.exit_during_step_base("thread step-over -m all-threads", 'stop reason = step over')
+        self.exit_during_step_base("thread step-over -m all-threads", 'stop reason = step over', False)
 
     def exit_during_step_in_test(self):
         """Test thread exit while using step-in."""
-        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in')
+        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', False)
 
-    def exit_during_step_base(self, step_cmd, step_stop_reason):
+    def thread_state_is_stopped (self):
+        """Go to first point where all threads are stopped, and test that the thread state is correctly set."""
+        self.exit_during_step_base("thread step-in -m all-threads", 'stop reason = step in', True)
+
+    def exit_during_step_base(self, step_cmd, step_stop_reason, test_thread_state):
         """Test thread exit during step handling."""
         exe = os.path.join(os.getcwd(), "a.out")
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -115,9 +126,11 @@ class ExitDuringStepTestCase(TestBase):
         thread3 = process.GetThreadAtIndex(2)
 
         # Make sure all threads are stopped
-        self.assertTrue(thread1.IsStopped(), "Thread 1 didn't stop during breakpoint")
-        self.assertTrue(thread2.IsStopped(), "Thread 2 didn't stop during breakpoint")
-        self.assertTrue(thread3.IsStopped(), "Thread 3 didn't stop during breakpoint")
+        if test_thread_state:
+            self.assertTrue(thread1.IsStopped(), "Thread 1 didn't stop during breakpoint")
+            self.assertTrue(thread2.IsStopped(), "Thread 2 didn't stop during breakpoint")
+            self.assertTrue(thread3.IsStopped(), "Thread 3 didn't stop during breakpoint")
+            return
 
         # Find the thread that is stopped at the breakpoint
         stepping_thread = None
