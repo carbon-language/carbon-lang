@@ -1,0 +1,7 @@
+RUN: llvm-vtabledump %p/Inputs/trivial.obj.coff-i386 \
+RUN:   | FileCheck %s
+
+CHECK:      ??_7S@@6B@[0]: ??_R4S@@6B@
+CHECK-NEXT: ??_7S@@6B@[4]: ??_GS@@UAEPAXI@Z
+CHECK-NEXT: ??_8S@@7B@[0]: -4
+CHECK-NEXT: ??_8S@@7B@[4]: 4
