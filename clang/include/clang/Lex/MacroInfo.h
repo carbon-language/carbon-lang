@@ -45,7 +45,7 @@ class MacroInfo {
 
   /// \see ArgumentList
   unsigned NumArguments;
-  
+
   /// \brief This is the list of tokens that the macro is defined to.
   SmallVector<Token, 8> ReplacementTokens;
 
@@ -78,8 +78,7 @@ class MacroInfo {
 
   /// \brief Whether this macro contains the sequence ", ## __VA_ARGS__"
   bool HasCommaPasting : 1;
-  
-private:
+
   //===--------------------------------------------------------------------===//
   // State that changes as the macro is used.
 
@@ -107,28 +106,11 @@ private:
   /// \brief Whether this macro was used as header guard.
   bool UsedForHeaderGuard : 1;
 
-  ~MacroInfo() {
-    assert(!ArgumentList && "Didn't call destroy before dtor!");
-  }
+  // Only the Preprocessor gets to create and destroy these.
+  MacroInfo(SourceLocation DefLoc);
+  ~MacroInfo() {}
 
 public:
-  MacroInfo(SourceLocation DefLoc);
-  
-  /// \brief Free the argument list of the macro.
-  ///
-  /// This restores this MacroInfo to a state where it can be reused for other
-  /// devious purposes.
-  void FreeArgumentList() {
-    ArgumentList = nullptr;
-    NumArguments = 0;
-  }
-
-  /// \brief Destroy this MacroInfo object.
-  void Destroy() {
-    FreeArgumentList();
-    this->~MacroInfo();
-  }
-
   /// \brief Return the location that the macro was defined at.
   SourceLocation getDefinitionLoc() const { return Location; }
 

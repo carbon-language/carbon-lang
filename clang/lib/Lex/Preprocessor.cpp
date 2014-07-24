@@ -141,9 +141,11 @@ Preprocessor::~Preprocessor() {
 
   IncludeMacroStack.clear();
 
-  // Free any macro definitions.
-  for (MacroInfoChain *I = MIChainHead; I; I = I->Next)
-    I->MI.Destroy();
+  // Destroy any macro definitions.
+  while (MacroInfoChain *I = MIChainHead) {
+    MIChainHead = I->Next;
+    I->~MacroInfoChain();
+  }
 
   // Free any cached macro expanders.
   // This populates MacroArgCache, so all TokenLexers need to be destroyed
@@ -152,8 +154,10 @@ Preprocessor::~Preprocessor() {
     delete TokenLexerCache[i];
   CurTokenLexer.reset();
 
-  for (DeserializedMacroInfoChain *I = DeserialMIChainHead ; I ; I = I->Next)
-    I->MI.Destroy();
+  while (DeserializedMacroInfoChain *I = DeserialMIChainHead) {
+    DeserialMIChainHead = I->Next;
+    I->~DeserializedMacroInfoChain();
+  }
 
   // Free any cached MacroArgs.
   for (MacroArgs *ArgList = MacroArgCache; ArgList;)

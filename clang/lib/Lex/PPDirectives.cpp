@@ -85,10 +85,11 @@ Preprocessor::AllocateVisibilityMacroDirective(SourceLocation Loc,
   return MD;
 }
 
-/// \brief Release the specified MacroInfo to be reused for allocating
-/// new MacroInfo objects.
+/// \brief Clean up a MacroInfo that was allocated but not used due to an
+/// error in the macro definition.
 void Preprocessor::ReleaseMacroInfo(MacroInfo *MI) {
-  MI->Destroy();
+  // Don't try to reuse the storage; this only happens on error paths.
+  MI->~MacroInfo();
 }
 
 /// \brief Read and discard all tokens remaining on the current line until
