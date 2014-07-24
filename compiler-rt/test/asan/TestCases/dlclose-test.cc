@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
   size_t page_beg = ((size_t)addr) & ~(PageSize - 1);
   void *res = mmap((void*)(page_beg), PageSize,
                    PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE, 0, 0);
+                   MAP_PRIVATE | MAP_ANON | MAP_FIXED | MAP_NORESERVE, -1, 0);
   if (res == (char*)-1L) {
     printf("failed to mmap\n");
     return 1;

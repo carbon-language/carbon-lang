@@ -27,7 +27,8 @@ int main() {
   void *p = my_memalign(kPageSize, 1024 * 1024);
   free(p);
 
-  char *q = (char *)mmap(p, kPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON | MAP_FIXED, 0, 0);
+  char *q = (char *)mmap(p, kPageSize, PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANON | MAP_FIXED, -1, 0);
   assert(q == p);
 
   memset(q, 42, kPageSize);
