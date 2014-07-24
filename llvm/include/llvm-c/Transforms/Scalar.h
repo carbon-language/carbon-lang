@@ -132,6 +132,9 @@ void LLVMAddLowerExpectIntrinsicPass(LLVMPassManagerRef PM);
 /** See llvm::createTypeBasedAliasAnalysisPass function */
 void LLVMAddTypeBasedAliasAnalysisPass(LLVMPassManagerRef PM);
 
+/** See llvm::createScopedNoAliasAAPass function */
+void LLVMAddScopedNoAliasAAPass(LLVMPassManagerRef PM);
+
 /** See llvm::createBasicAliasAnalysisPass function */
 void LLVMAddBasicAliasAnalysisPass(LLVMPassManagerRef PM);
 

@@ -70,8 +70,8 @@ public:
 /// AAMDNodes - A collection of metadata nodes that might be associated with a
 /// memory access used by the alias-analysis infrastructure.
 struct AAMDNodes {
-  AAMDNodes(MDNode *T = nullptr)
-    : TBAA(T) {}
+  AAMDNodes(MDNode *T = nullptr, MDNode *S = nullptr, MDNode *N = nullptr)
+    : TBAA(T), Scope(S), NoAlias(N) {}
 
   bool operator == (const AAMDNodes &A) const {
     return equals(A);
@@ -82,15 +82,21 @@ struct AAMDNodes {
   }
 
   operator bool() const {
-    return TBAA;
+    return TBAA || Scope || NoAlias;
   }
 
   /// TBAA - The tag for type-based alias analysis.
   MDNode *TBAA;
 
+  /// Scope - The tag for alias scope specification (used with noalias).
+  MDNode *Scope;
+
+  /// NoAlias - The tag specifying the noalias scope.
+  MDNode *NoAlias;
+
 protected:
   bool equals(const AAMDNodes &A) const {
-    return TBAA == A.TBAA;
+    return TBAA == A.TBAA && Scope == A.Scope && NoAlias == A.NoAlias;
   }
 };
 
@@ -98,13 +104,15 @@ protected:
 template<>
 struct DenseMapInfo<AAMDNodes> {
   static inline AAMDNodes getEmptyKey() {
-    return AAMDNodes(DenseMapInfo<MDNode *>::getEmptyKey());
+    return AAMDNodes(DenseMapInfo<MDNode *>::getEmptyKey(), 0, 0);
   }
   static inline AAMDNodes getTombstoneKey() {
-    return AAMDNodes(DenseMapInfo<MDNode *>::getTombstoneKey());
+    return AAMDNodes(DenseMapInfo<MDNode *>::getTombstoneKey(), 0, 0);
   }
   static unsigned getHashValue(const AAMDNodes &Val) {
-    return DenseMapInfo<MDNode *>::getHashValue(Val.TBAA);
+    return DenseMapInfo<MDNode *>::getHashValue(Val.TBAA) ^
+           DenseMapInfo<MDNode *>::getHashValue(Val.Scope) ^
+           DenseMapInfo<MDNode *>::getHashValue(Val.NoAlias);
   }
   static bool isEqual(const AAMDNodes &LHS, const AAMDNodes &RHS) {
     return LHS == RHS;
@@ -214,6 +222,8 @@ public:
   bool isTBAAVtableAccess() const;
 
   /// Methods for metadata merging.
+  static MDNode *concatenate(MDNode *A, MDNode *B);
+  static MDNode *intersect(MDNode *A, MDNode *B);
   static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B);
   static AAMDNodes getMostGenericAA(const AAMDNodes &A, const AAMDNodes &B);
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);

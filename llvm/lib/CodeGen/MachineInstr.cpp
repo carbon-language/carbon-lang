@@ -523,6 +523,34 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
     OS << ")";
   }
 
+  // Print AA scope info.
+  if (const MDNode *ScopeInfo = MMO.getAAInfo().Scope) {
+    OS << "(alias.scope=";
+    if (ScopeInfo->getNumOperands() > 0)
+      for (unsigned i = 0, ie = ScopeInfo->getNumOperands(); i != ie; ++i) {
+        ScopeInfo->getOperand(i)->printAsOperand(OS, /*PrintType=*/false);
+        if (i != ie-1)
+          OS << ",";
+      }
+    else
+      OS << "<unknown>";
+    OS << ")";
+  }
+
+  // Print AA noalias scope info.
+  if (const MDNode *NoAliasInfo = MMO.getAAInfo().NoAlias) {
+    OS << "(noalias=";
+    if (NoAliasInfo->getNumOperands() > 0)
+      for (unsigned i = 0, ie = NoAliasInfo->getNumOperands(); i != ie; ++i) {
+        NoAliasInfo->getOperand(i)->printAsOperand(OS, /*PrintType=*/false);
+        if (i != ie-1)
+          OS << ",";
+      }
+    else
+      OS << "<unknown>";
+    OS << ")";
+  }
+
   // Print nontemporal info.
   if (MMO.isNonTemporal())
     OS << "(nontemporal)";

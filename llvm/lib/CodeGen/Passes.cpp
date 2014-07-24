@@ -377,6 +377,7 @@ void TargetPassConfig::addIRPasses() {
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
   addPass(createTypeBasedAliasAnalysisPass());
+  addPass(createScopedNoAliasAAPass());
   addPass(createBasicAliasAnalysisPass());
 
   // Before running any passes, run the verifier to determine if the input

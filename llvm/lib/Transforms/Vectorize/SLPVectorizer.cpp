@@ -230,6 +230,10 @@ static Instruction *propagateMetadata(Instruction *I, ArrayRef<Value *> VL) {
       case LLVMContext::MD_tbaa:
         MD = MDNode::getMostGenericTBAA(MD, IMD);
         break;
+      case LLVMContext::MD_alias_scope:
+      case LLVMContext::MD_noalias:
+        MD = MDNode::intersect(MD, IMD);
+        break;
       case LLVMContext::MD_fpmath:
         MD = MDNode::getMostGenericFPMath(MD, IMD);
         break;

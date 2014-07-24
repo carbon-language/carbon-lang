@@ -535,6 +535,8 @@ static void propagateMetadata(Instruction *To, const Instruction *From) {
     // non-speculated memory access when the condition was false, this would be
     // caught by the runtime overlap checks).
     if (Kind != LLVMContext::MD_tbaa &&
+        Kind != LLVMContext::MD_alias_scope &&
+        Kind != LLVMContext::MD_noalias &&
         Kind != LLVMContext::MD_fpmath)
       continue;
 

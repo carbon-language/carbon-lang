@@ -107,6 +107,7 @@ PassManagerBuilder::addInitialAliasAnalysisPasses(PassManagerBase &PM) const {
   // BasicAliasAnalysis wins if they disagree. This is intended to help
   // support "obvious" type-punning idioms.
   PM.add(createTypeBasedAliasAnalysisPass());
+  PM.add(createScopedNoAliasAAPass());
   PM.add(createBasicAliasAnalysisPass());
 }
 

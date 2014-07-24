@@ -62,7 +62,8 @@ static CallInst *createCallHelper(Value *Callee, ArrayRef<Value *> Ops,
 
 CallInst *IRBuilderBase::
 CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
-             bool isVolatile, MDNode *TBAATag) {
+             bool isVolatile, MDNode *TBAATag, MDNode *ScopeTag,
+             MDNode *NoAliasTag) {
   Ptr = getCastedInt8PtrValue(Ptr);
   Value *Ops[] = { Ptr, Val, Size, getInt32(Align), getInt1(isVolatile) };
   Type *Tys[] = { Ptr->getType(), Size->getType() };
@@ -74,13 +75,20 @@ CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
   // Set the TBAA info if present.
   if (TBAATag)
     CI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
-  
+
+  if (ScopeTag)
+    CI->setMetadata(LLVMContext::MD_alias_scope, ScopeTag);
+ 
+  if (NoAliasTag)
+    CI->setMetadata(LLVMContext::MD_noalias, NoAliasTag);
+ 
   return CI;
 }
 
 CallInst *IRBuilderBase::
 CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
-             bool isVolatile, MDNode *TBAATag, MDNode *TBAAStructTag) {
+             bool isVolatile, MDNode *TBAATag, MDNode *TBAAStructTag,
+             MDNode *ScopeTag, MDNode *NoAliasTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
 
@@ -98,13 +106,20 @@ CreateMemCpy(Value *Dst, Value *Src, Value *Size, unsigned Align,
   // Set the TBAA Struct info if present.
   if (TBAAStructTag)
     CI->setMetadata(LLVMContext::MD_tbaa_struct, TBAAStructTag);
-  
+ 
+  if (ScopeTag)
+    CI->setMetadata(LLVMContext::MD_alias_scope, ScopeTag);
+ 
+  if (NoAliasTag)
+    CI->setMetadata(LLVMContext::MD_noalias, NoAliasTag);
+ 
   return CI;  
 }
 
 CallInst *IRBuilderBase::
 CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
-              bool isVolatile, MDNode *TBAATag) {
+              bool isVolatile, MDNode *TBAATag, MDNode *ScopeTag,
+              MDNode *NoAliasTag) {
   Dst = getCastedInt8PtrValue(Dst);
   Src = getCastedInt8PtrValue(Src);
   
@@ -118,7 +133,13 @@ CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
   // Set the TBAA info if present.
   if (TBAATag)
     CI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
-  
+ 
+  if (ScopeTag)
+    CI->setMetadata(LLVMContext::MD_alias_scope, ScopeTag);
+ 
+  if (NoAliasTag)
+    CI->setMetadata(LLVMContext::MD_noalias, NoAliasTag);
+ 
   return CI;  
 }
 

@@ -66,6 +66,16 @@ LLVMContext::LLVMContext() : pImpl(new LLVMContextImpl(*this)) {
   unsigned InvariantLdId = getMDKindID("invariant.load");
   assert(InvariantLdId == MD_invariant_load && "invariant.load kind id drifted");
   (void)InvariantLdId;
+
+  // Create the 'alias.scope' metadata kind.
+  unsigned AliasScopeID = getMDKindID("alias.scope");
+  assert(AliasScopeID == MD_alias_scope && "alias.scope kind id drifted");
+  (void)AliasScopeID;
+
+  // Create the 'noalias' metadata kind.
+  unsigned NoAliasID = getMDKindID("noalias");
+  assert(NoAliasID == MD_noalias && "noalias kind id drifted");
+  (void)NoAliasID;
 }
 LLVMContext::~LLVMContext() { delete pImpl; }
 

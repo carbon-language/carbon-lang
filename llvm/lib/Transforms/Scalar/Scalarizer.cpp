@@ -312,6 +312,8 @@ bool Scalarizer::canTransferMetadata(unsigned Tag) {
           || Tag == LLVMContext::MD_fpmath
           || Tag == LLVMContext::MD_tbaa_struct
           || Tag == LLVMContext::MD_invariant_load
+          || Tag == LLVMContext::MD_alias_scope
+          || Tag == LLVMContext::MD_noalias
           || Tag == ParallelLoopAccessMDKind);
 }
 
