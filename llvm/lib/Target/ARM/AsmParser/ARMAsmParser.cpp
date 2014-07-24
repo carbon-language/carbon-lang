@@ -5732,6 +5732,8 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
   case ARM::STR_PRE_REG:
   case ARM::STR_POST_IMM:
   case ARM::STR_POST_REG:
+  case ARM::STRH_PRE:
+  case ARM::STRH_POST:
   case ARM::STRB_PRE_IMM:
   case ARM::STRB_PRE_REG:
   case ARM::STRB_POST_IMM:
