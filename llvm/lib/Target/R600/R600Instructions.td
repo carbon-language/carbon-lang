@@ -1068,7 +1068,7 @@ class RECIP_CLAMPED_Common <bits<11> inst> : R600_1OP <
 }
 
 class RECIP_IEEE_Common <bits<11> inst> : R600_1OP <
-  inst, "RECIP_IEEE", [(set f32:$dst, (fdiv FP_ONE, f32:$src0))]
+  inst, "RECIP_IEEE", [(set f32:$dst, (AMDGPUrcp f32:$src0))]
 > {
   let Itinerary = TransALU;
 }
@@ -1114,6 +1114,7 @@ def FNEG_R600 : FNEG<R600_Reg32>;
 // Helper patterns for complex intrinsics
 //===----------------------------------------------------------------------===//
 
+// FIXME: Should be predicated on unsafe fp math.
 multiclass DIV_Common <InstR600 recip_ieee> {
 def : Pat<
   (int_AMDGPU_div f32:$src0, f32:$src1),
@@ -1124,6 +1125,8 @@ def : Pat<
   (fdiv f32:$src0, f32:$src1),
   (MUL_IEEE $src0, (recip_ieee $src1))
 >;
+
+def : RcpPat<recip_ieee, f32>;
 }
 
 class TGSI_LIT_Z_Common <InstR600 mul_lit, InstR600 log_clamped, InstR600 exp_ieee>
@@ -1180,6 +1183,8 @@ let Predicates = [isR600] in {
   def TGSI_LIT_Z_r600 : TGSI_LIT_Z_Common<MUL_LIT_r600, LOG_CLAMPED_r600, EXP_IEEE_r600>;
 
   def : Pat<(fsqrt f32:$src), (MUL $src, (RECIPSQRT_CLAMPED_r600 $src))>;
+  defm : RsqPat<RECIPSQRT_IEEE_r600, f32>;
+
   def : FROUNDPat <CNDGE_r600>;
 
   def R600_ExportSwz : ExportSwzInst {
