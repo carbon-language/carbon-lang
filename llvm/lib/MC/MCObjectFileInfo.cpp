@@ -286,6 +286,7 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
     if (Ctx->getAsmInfo()->getExceptionHandlingType() == ExceptionHandling::ARM)
       break;
     // Fallthrough if not using EHABI
+  case Triple::ppc:
   case Triple::x86:
     PersonalityEncoding = (RelocM == Reloc::PIC_)
      ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4
