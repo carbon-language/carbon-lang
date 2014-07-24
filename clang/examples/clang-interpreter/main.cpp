@@ -85,7 +85,14 @@ int main(int argc, const char **argv, char * const *envp) {
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
-  Driver TheDriver(Path, llvm::sys::getProcessTriple(), Diags);
+
+  // Use ELF on windows for now.
+  std::string TripleStr = llvm::sys::getProcessTriple();
+  llvm::Triple T(TripleStr);
+  if (T.isOSBinFormatCOFF())
+    T.setObjectFormat(llvm::Triple::ELF);
+
+  Driver TheDriver(Path, T.str(), Diags);
   TheDriver.setTitle("clang interpreter");
   TheDriver.setCheckInputsExist(false);
 
