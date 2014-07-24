@@ -84,13 +84,20 @@ IslAstInfo::IslAstUserPayload::~IslAstUserPayload() {
   isl_ast_build_free(Build);
 }
 
-// Temporary information used when building the ast.
+/// @brief Temporary information used when building the ast.
 struct AstBuildUserInfo {
-  // The dependence information.
+  /// @brief Construct and initialize the helper struct for AST creation.
+  AstBuildUserInfo()
+      : Deps(nullptr), InParallelFor(false), LastForNodeId(nullptr) {}
+
+  /// @brief The dependence information used for the parallelism check.
   Dependences *Deps;
 
-  // We are inside a parallel for node.
-  int InParallelFor;
+  /// @brief Flag to indicate that we are inside a parallel for node.
+  bool InParallelFor;
+
+  /// @brief The last iterator id created for the current SCoP.
+  isl_id *LastForNodeId;
 };
 
 // Print a loop annotated with OpenMP or vector pragmas.
@@ -237,50 +244,11 @@ static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
   IslAstUserPayload *NodeInfo = new IslAstUserPayload();
   isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
   Id = isl_id_set_free_user(Id, freeIslAstUserPayload);
+  BuildInfo->LastForNodeId = Id;
 
   markOpenmpParallel(Build, BuildInfo, NodeInfo);
 
   return Id;
-}
-
-// Returns 0 when Node contains loops, otherwise returns -1. This search
-// function uses ISL's way to iterate over lists of isl_ast_nodes with
-// isl_ast_node_list_foreach. Please use the single argument wrapper function
-// that returns a bool instead of using this function directly.
-static int containsLoops(__isl_take isl_ast_node *Node, void *User) {
-  if (!Node)
-    return -1;
-
-  switch (isl_ast_node_get_type(Node)) {
-  case isl_ast_node_for:
-    isl_ast_node_free(Node);
-    return 0;
-  case isl_ast_node_block: {
-    isl_ast_node_list *List = isl_ast_node_block_get_children(Node);
-    int Res = isl_ast_node_list_foreach(List, &containsLoops, nullptr);
-    isl_ast_node_list_free(List);
-    isl_ast_node_free(Node);
-    return Res;
-  }
-  case isl_ast_node_if: {
-    int Res = -1;
-    if (0 == containsLoops(isl_ast_node_if_get_then(Node), nullptr) ||
-        (isl_ast_node_if_has_else(Node) &&
-         0 == containsLoops(isl_ast_node_if_get_else(Node), nullptr)))
-      Res = 0;
-    isl_ast_node_free(Node);
-    return Res;
-  }
-  case isl_ast_node_user:
-  default:
-    isl_ast_node_free(Node);
-    return -1;
-  }
-}
-
-// Returns true when Node contains loops.
-static bool containsLoops(__isl_take isl_ast_node *Node) {
-  return 0 == containsLoops(Node, nullptr);
 }
 
 // This method is executed after the construction of a for node.
@@ -299,10 +267,12 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
   IslAstUserPayload *Info = (IslAstUserPayload *)isl_id_get_user(Id);
   AstBuildUserInfo *BuildInfo = (AstBuildUserInfo *)User;
 
+  bool IsInnermost = (Id == BuildInfo->LastForNodeId);
+
   if (Info) {
     if (Info->IsOutermostParallel)
       BuildInfo->InParallelFor = 0;
-    if (!containsLoops(isl_ast_node_for_get_body(Node)))
+    if (IsInnermost)
       if (astScheduleDimIsParallel(Build, BuildInfo->Deps,
                                    Info->IsReductionParallel))
         Info->IsInnermostParallel = 1;

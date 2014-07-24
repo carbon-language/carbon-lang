@@ -1,4 +1,16 @@
-; RUN: opt %loadPolly %defaultOpts -polly-ast -analyze < %s | FileCheck %s
+; RUN: opt %loadPolly %defaultOpts -polly-ast -polly-ast-detect-parallel -analyze < %s | FileCheck %s
+
+; Verify that we actually detect this loop as the innermost loop even though
+; there is a conditional inside.
+
+; CHECK: #pragma simd
+; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1) {
+; CHECK:   if (c1 >= m + 1025) {
+; CHECK:     Stmt_if_else(c1);
+; CHECK:   } else
+; CHECK:     Stmt_if_then(c1);
+; CHECK:   Stmt_if_end(c1);
+; CHECK: }
 
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
 target triple = "x86_64-unknown-linux-gnu"
@@ -127,11 +139,3 @@ return:                                           ; preds = %for.end35, %if.then
 }
 
 declare void @llvm.memset.p0i8.i64(i8* nocapture, i8, i64, i32, i1) nounwind
-
-; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1) {
-; CHECK:   if (c1 >= m + 1025) {
-; CHECK:     Stmt_if_else(c1);
-; CHECK:   } else
-; CHECK:     Stmt_if_then(c1);
-; CHECK:   Stmt_if_end(c1);
-; CHECK: }
