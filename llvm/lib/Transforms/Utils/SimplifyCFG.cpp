@@ -3627,7 +3627,7 @@ Value *SwitchLookupTable::BuildLookup(Value *Index, uint64_t TableSize,
     case ArrayKind: {
       // Make sure the table index will not overflow when treated as signed.
       if (IntegerType *IT = dyn_cast<IntegerType>(Index->getType()))
-        if (TableSize > (1 << (IT->getBitWidth() - 1)))
+        if (TableSize > (1ULL << (IT->getBitWidth() - 1)))
           Index = Builder.CreateZExt(Index,
                                      IntegerType::get(IT->getContext(),
                                                       IT->getBitWidth() + 1),
