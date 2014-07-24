@@ -470,7 +470,7 @@ private:
   ///
   /// \return the first element in the list.
   ///
-  /// \note Completely ignores \a Prev (doesn't read, doesn't update).
+  /// \note Completely ignores \a Use::Prev (doesn't read, doesn't update).
   template <class Compare>
   static Use *mergeUseLists(Use *L, Use *R, Compare Cmp) {
     Use *Merged;
