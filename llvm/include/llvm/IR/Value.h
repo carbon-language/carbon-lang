@@ -456,6 +456,34 @@ public:
     VTy = Ty;
   }
 
+  /// \brief Sort the use-list.
+  ///
+  /// Sorts the Value's use-list by Cmp using a stable mergesort.  Cmp is
+  /// expected to compare two \a Use references.
+  template <class Compare> void sortUseList(Compare Cmp);
+
+private:
+  /// \brief Merge two lists together.
+  ///
+  /// Merges \c L and \c R using \c Cmp.  To enable stable sorts, always pushes
+  /// "equal" items from L before items from R.
+  ///
+  /// \return the first element in the list.
+  ///
+  /// \note Completely ignores \a Prev (doesn't read, doesn't update).
+  template <class Compare>
+  static Use *mergeUseLists(Use *L, Use *R, Compare Cmp) {
+    Use *Merged;
+    mergeUseListsImpl(L, R, &Merged, Cmp);
+    return Merged;
+  }
+
+  /// \brief Tail-recursive helper for \a mergeUseLists().
+  ///
+  /// \param[out] Next the first element in the list.
+  template <class Compare>
+  static void mergeUseListsImpl(Use *L, Use *R, Use **Next, Compare Cmp);
+
 protected:
   unsigned short getSubclassDataFromValue() const { return SubclassData; }
   void setValueSubclassData(unsigned short D) { SubclassData = D; }
@@ -472,6 +500,91 @@ void Use::set(Value *V) {
   if (V) V->addUse(*this);
 }
 
+template <class Compare> void Value::sortUseList(Compare Cmp) {
+  if (!UseList || !UseList->Next)
+    // No need to sort 0 or 1 uses.
+    return;
+
+  // Note: this function completely ignores Prev pointers until the end when
+  // they're fixed en masse.
+
+  // Create a binomial vector of sorted lists, visiting uses one at a time and
+  // merging lists as necessary.
+  const unsigned MaxSlots = 32;
+  Use *Slots[MaxSlots];
+
+  // Collect the first use, turning it into a single-item list.
+  Use *Next = UseList->Next;
+  UseList->Next = nullptr;
+  unsigned NumSlots = 1;
+  Slots[0] = UseList;
+
+  // Collect all but the last use.
+  while (Next->Next) {
+    Use *Current = Next;
+    Next = Current->Next;
+
+    // Turn Current into a single-item list.
+    Current->Next = nullptr;
+
+    // Save Current in the first available slot, merging on collisions.
+    unsigned I;
+    for (I = 0; I < NumSlots; ++I) {
+      if (!Slots[I])
+        break;
+
+      // Merge two lists, doubling the size of Current and emptying slot I.
+      //
+      // Since the uses in Slots[I] originally preceded those in Current, send
+      // Slots[I] in as the left parameter to maintain a stable sort.
+      Current = mergeUseLists(Slots[I], Current, Cmp);
+      Slots[I] = nullptr;
+    }
+    // Check if this is a new slot.
+    if (I == NumSlots) {
+      ++NumSlots;
+      assert(NumSlots <= MaxSlots && "Use list bigger than 2^32");
+    }
+
+    // Found an open slot.
+    Slots[I] = Current;
+  }
+
+  // Merge all the lists together.
+  assert(Next && "Expected one more Use");
+  assert(!Next->Next && "Expected only one Use");
+  UseList = Next;
+  for (unsigned I = 0; I < NumSlots; ++I)
+    if (Slots[I])
+      // Since the uses in Slots[I] originally preceded those in UseList, send
+      // Slots[I] in as the left parameter to maintain a stable sort.
+      UseList = mergeUseLists(Slots[I], UseList, Cmp);
+
+  // Fix the Prev pointers.
+  for (Use *I = UseList, **Prev = &UseList; I; I = I->Next) {
+    I->setPrev(Prev);
+    Prev = &I->Next;
+  }
+}
+
+template <class Compare>
+void Value::mergeUseListsImpl(Use *L, Use *R, Use **Next, Compare Cmp) {
+  if (!L) {
+    *Next = R;
+    return;
+  }
+  if (!R) {
+    *Next = L;
+    return;
+  }
+  if (Cmp(*R, *L)) {
+    *Next = R;
+    mergeUseListsImpl(L, R->Next, &R->Next, Cmp);
+    return;
+  }
+  *Next = L;
+  mergeUseListsImpl(L->Next, R, &L->Next, Cmp);
+};
 
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
