@@ -2191,19 +2191,19 @@ enum CXCursorKind {
    */
   CXCursor_OMPFlushDirective             = 246,
 
+  /** \brief Windows Structured Exception Handling's leave statement.
+   */
+  CXCursor_SEHLeaveStmt                  = 247,
+
   /** \brief OpenMP ordered directive.
    */
-  CXCursor_OMPOrderedDirective           = 247,
+  CXCursor_OMPOrderedDirective           = 248,
 
   /** \brief OpenMP atomic directive.
    */
-  CXCursor_OMPAtomicDirective            = 248,
+  CXCursor_OMPAtomicDirective            = 249,
 
-  /** \brief Windows Structured Exception Handling's leave statement.
-   */
-  CXCursor_SEHLeaveStmt                  = 249,
-
-  CXCursor_LastStmt                      = CXCursor_SEHLeaveStmt,
+  CXCursor_LastStmt                      = CXCursor_OMPAtomicDirective,
 
   /**
    * \brief Cursor that represents the translation unit itself.
