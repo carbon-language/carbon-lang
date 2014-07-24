@@ -45,6 +45,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(RebaseLocation)
 LLVM_YAML_IS_SEQUENCE_VECTOR(BindLocation)
 LLVM_YAML_IS_SEQUENCE_VECTOR(Export)
 LLVM_YAML_IS_SEQUENCE_VECTOR(StringRef)
+LLVM_YAML_IS_SEQUENCE_VECTOR(DataInCode)
 
 
 // for compatibility with gcc-4.7 in C++11 mode, add extra namespace
@@ -596,6 +597,31 @@ struct MappingTraits<Export> {
   }
 };
 
+template <>
+struct ScalarEnumerationTraits<DataRegionType> {
+  static void enumeration(IO &io, DataRegionType &value) {
+    io.enumCase(value, "DICE_KIND_DATA",
+                        llvm::MachO::DICE_KIND_DATA);
+    io.enumCase(value, "DICE_KIND_JUMP_TABLE8",
+                        llvm::MachO::DICE_KIND_JUMP_TABLE8);
+    io.enumCase(value, "DICE_KIND_JUMP_TABLE16",
+                        llvm::MachO::DICE_KIND_JUMP_TABLE16);
+    io.enumCase(value, "DICE_KIND_JUMP_TABLE32",
+                        llvm::MachO::DICE_KIND_JUMP_TABLE32);
+    io.enumCase(value, "DICE_KIND_ABS_JUMP_TABLE32",
+                        llvm::MachO::DICE_KIND_ABS_JUMP_TABLE32);
+  }
+};
+
+template <>
+struct MappingTraits<DataInCode> {
+  static void mapping(IO &io, DataInCode &entry) {
+    io.mapRequired("offset",       entry.offset);
+    io.mapRequired("length",       entry.length);
+    io.mapRequired("kind",         entry.kind);
+  }
+};
+
 
 template <>
 struct MappingTraits<NormalizedFile> {
@@ -622,6 +648,7 @@ struct MappingTraits<NormalizedFile> {
     io.mapOptional("weak-bindings",    file.weakBindingInfo);
     io.mapOptional("lazy-bindings",    file.lazyBindingInfo);
     io.mapOptional("exports",          file.exportInfo);
+    io.mapOptional("dataInCode",       file.dataInCode);
   }
   static StringRef validate(IO &io, NormalizedFile &file) {
     return StringRef();

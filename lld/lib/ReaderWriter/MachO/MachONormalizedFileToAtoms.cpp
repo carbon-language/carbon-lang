@@ -426,6 +426,17 @@ std::error_code processSection(DefinedAtom::ContentType atomType,
   return std::error_code();
 }
 
+const Section* findSectionCoveringAddress(const NormalizedFile &normalizedFile,
+                                          uint64_t address) {
+  for (const Section &s : normalizedFile.sections) {
+    uint64_t sAddr = s.address;
+    if ((sAddr <= address) && (address < sAddr+s.content.size())) {
+      return &s;
+    }
+  }
+  return nullptr;
+}
+
 // Walks all relocations for a section in a normalized .o file and
 // creates corresponding lld::Reference objects.
 std::error_code convertRelocs(const Section &section,
@@ -441,17 +452,10 @@ std::error_code convertRelocs(const Section &section,
                                      "index (") + Twine(sectIndex) + ")");
     const Section *sect = nullptr;
     if (sectIndex == 0) {
-      for (const Section &s : normalizedFile.sections) {
-        uint64_t sAddr = s.address;
-        if ((sAddr <= addr) && (addr < sAddr+s.content.size())) {
-          sect = &s;
-          break;
-        }
-      }
-      if (!sect) {
+      sect = findSectionCoveringAddress(normalizedFile, addr);
+      if (!sect)
         return make_dynamic_error_code(Twine("address (" + Twine(addr)
-                                           + ") is not in any section"));
-      }
+                                       + ") is not in any section"));
     } else {
       sect = &normalizedFile.sections[sectIndex-1];
     }
@@ -611,6 +615,50 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
   file->eachDefinedAtom([&](MachODefinedAtom* atom) -> void {
     handler->addAdditionalReferences(*atom);
   });
+
+  // Process mach-o data-in-code regions array. That information is encoded in
+  // atoms as References at each transition point.
+  unsigned nextIndex = 0;
+  for (const DataInCode &entry : normalizedFile.dataInCode) {
+    ++nextIndex;
+    const Section* s = findSectionCoveringAddress(normalizedFile, entry.offset);
+    if (!s) {
+      return make_dynamic_error_code(Twine("LC_DATA_IN_CODE address ("
+                                     + Twine(entry.offset)
+                                     + ") is not in any section"));
+    }
+    uint64_t offsetInSect = entry.offset - s->address;
+    uint32_t offsetInAtom;
+    MachODefinedAtom *atom = file->findAtomCoveringAddress(*s, offsetInSect,
+                                                           &offsetInAtom);
+    if (offsetInAtom + entry.length > atom->size()) {
+      return make_dynamic_error_code(Twine("LC_DATA_IN_CODE entry (offset="
+                                     + Twine(entry.offset)
+                                     + ", length="
+                                     + Twine(entry.length)
+                                     + ") crosses atom boundary."));
+    }
+    // Add reference that marks start of data-in-code.
+    atom->addReference(offsetInAtom,
+                       handler->dataInCodeTransitionStart(*atom), atom,
+                       entry.kind, handler->kindArch());
+
+    // Peek at next entry, if it starts where this one ends, skip ending ref.
+    if (nextIndex < normalizedFile.dataInCode.size()) {
+      const DataInCode &nextEntry = normalizedFile.dataInCode[nextIndex];
+      if (nextEntry.offset == (entry.offset + entry.length))
+        continue;
+    }
+
+    // If data goes to end of function, skip ending ref.
+    if ((offsetInAtom + entry.length) == atom->size())
+      continue;
+
+    // Add reference that marks end of data-in-code.
+    atom->addReference(offsetInAtom+entry.length,
+                       handler->dataInCodeTransitionEnd(*atom), atom, 0,
+                       handler->kindArch());
+  }
 
   // Sort references in each atom to their canonical order.
   for (const DefinedAtom* defAtom : file->defined()) {

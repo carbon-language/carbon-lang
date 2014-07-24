@@ -74,11 +74,13 @@ private:
   void        writeRebaseInfo();
   void        writeBindingInfo();
   void        writeLazyBindingInfo();
+  void        writeDataInCodeInfo();
   void        writeLinkEditContent();
   void        buildLinkEditInfo();
   void        buildRebaseInfo();
   void        buildBindInfo();
   void        buildLazyBindInfo();
+  void        computeDataInCodeSize();
   void        computeSymbolTableSizes();
   void        buildSectionRelocations();
   void        appendSymbols(const std::vector<Symbol> &symbols,
@@ -162,6 +164,7 @@ private:
   uint32_t              _countOfLoadCommands;
   uint32_t              _endOfLoadCommands;
   uint32_t              _startOfRelocations;
+  uint32_t              _startOfDataInCode;
   uint32_t              _startOfSymbols;
   uint32_t              _startOfIndirectSymbols;
   uint32_t              _startOfSymbolStrings;
@@ -171,6 +174,7 @@ private:
   uint32_t              _symbolTableUndefinesStartIndex;
   uint32_t              _symbolStringPoolSize;
   uint32_t              _symbolTableSize;
+  uint32_t              _dataInCodeSize;
   uint32_t              _indirectSymbolTableCount;
   // Used in object file creation only
   uint32_t              _startOfSectionsContent;
@@ -227,7 +231,10 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
                                + file.sections.size() * sectsSize
                                + sizeof(symtab_command);
     _countOfLoadCommands = 2;
-
+    if (!_file.dataInCode.empty()) {
+      _endOfLoadCommands += sizeof(linkedit_data_command);
+      _countOfLoadCommands++;
+    }
     // Accumulate size of each section.
     _startOfSectionsContent = _endOfLoadCommands;
     _endOfSectionsContent = _startOfSectionsContent;
@@ -239,10 +246,12 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
     }
 
     computeSymbolTableSizes();
+    computeDataInCodeSize();
 
     // Align start of relocations.
     _startOfRelocations = pointerAlign(_endOfSectionsContent);
-    _startOfSymbols = _startOfRelocations + relocCount * 8;
+    _startOfDataInCode = _startOfRelocations + relocCount * 8;
+    _startOfSymbols = _startOfDataInCode + _dataInCodeSize;
     // Add Indirect symbol table.
     _startOfIndirectSymbols = _startOfSymbols + _symbolTableSize;
     // Align start of symbol table and symbol strings.
@@ -273,15 +282,15 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
 
     // LINKEDIT of final linked images has in order:
     // rebase info, binding info, lazy binding info, weak binding info,
-    // indirect symbol table, symbol table, symbol table strings.
+    // data-in-code, symbol table, indirect symbol table, symbol table strings.
     _startOfRebaseInfo = _startOfLinkEdit;
     _endOfRebaseInfo = _startOfRebaseInfo + _rebaseInfo.size();
     _startOfBindingInfo = _endOfRebaseInfo;
     _endOfBindingInfo = _startOfBindingInfo + _bindingInfo.size();
     _startOfLazyBindingInfo = _endOfBindingInfo;
     _endOfLazyBindingInfo = _startOfLazyBindingInfo + _lazyBindingInfo.size();
-
-    _startOfSymbols = _endOfLazyBindingInfo;
+    _startOfDataInCode = _endOfLazyBindingInfo;
+    _startOfSymbols = _startOfDataInCode + _dataInCodeSize;
     _startOfIndirectSymbols = _startOfSymbols + _symbolTableSize;
     _startOfSymbolStrings = _startOfIndirectSymbols
                   + pointerAlign(_indirectSymbolTableCount * sizeof(uint32_t));
@@ -300,6 +309,7 @@ MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
       << "  endOfBindingInfo=" << _endOfBindingInfo << "\n"
       << "  startOfLazyBindingInfo=" << _startOfLazyBindingInfo << "\n"
       << "  endOfLazyBindingInfo=" << _endOfLazyBindingInfo << "\n"
+      << "  startOfDataInCode=" << _startOfDataInCode << "\n"
       << "  startOfSymbols=" << _startOfSymbols << "\n"
       << "  startOfSymbolStrings=" << _startOfSymbolStrings << "\n"
       << "  endOfSymbolStrings=" << _endOfSymbolStrings << "\n"
@@ -620,6 +630,18 @@ std::error_code MachOFileLayout::writeLoadCommands() {
     st->strsize = _endOfSymbolStrings - _startOfSymbolStrings;
     if (_swap)
       swapStruct(*st);
+    lc += sizeof(symtab_command);
+    // Add LC_DATA_IN_CODE if needed.
+    if (_dataInCodeSize != 0) {
+      linkedit_data_command* dl = reinterpret_cast<linkedit_data_command*>(lc);
+      dl->cmd      = LC_DATA_IN_CODE;
+      dl->cmdsize  = sizeof(linkedit_data_command);
+      dl->dataoff  = _startOfDataInCode;
+      dl->datasize = _dataInCodeSize;
+      if (_swap)
+        swapStruct(*dl);
+      lc += sizeof(linkedit_data_command);
+    }
   } else {
     // Final linked images have sections under segments.
     if (_is64)
@@ -804,6 +826,20 @@ void MachOFileLayout::appendSymbols(const std::vector<Symbol> &symbols,
   }
 }
 
+void MachOFileLayout::writeDataInCodeInfo() {
+  uint32_t offset = _startOfDataInCode;
+  for (const DataInCode &entry : _file.dataInCode) {
+    data_in_code_entry *dst = reinterpret_cast<data_in_code_entry*>(
+                                                             &_buffer[offset]);
+    dst->offset = entry.offset;
+    dst->length = entry.length;
+    dst->kind   = entry.kind;
+    if (_swap)
+      swapStruct(*dst);
+    offset += sizeof(data_in_code_entry);
+  }
+}
+
 void MachOFileLayout::writeSymbolTable() {
   // Write symbol table and symbol strings in parallel.
   uint32_t symOffset = _startOfSymbols;
@@ -860,6 +896,7 @@ void MachOFileLayout::buildLinkEditInfo() {
   buildBindInfo();
   buildLazyBindInfo();
   computeSymbolTableSizes();
+  computeDataInCodeSize();
 }
 
 void MachOFileLayout::buildSectionRelocations() {
@@ -941,10 +978,14 @@ void MachOFileLayout::computeSymbolTableSizes() {
   }
 }
 
+void MachOFileLayout::computeDataInCodeSize() {
+  _dataInCodeSize = _file.dataInCode.size() * sizeof(data_in_code_entry);
+}
 
 void MachOFileLayout::writeLinkEditContent() {
   if (_file.fileType == llvm::MachO::MH_OBJECT) {
     writeRelocations();
+    writeDataInCodeInfo();
     writeSymbolTable();
   } else {
     writeRebaseInfo();

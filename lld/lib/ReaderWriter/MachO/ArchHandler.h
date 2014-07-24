@@ -140,6 +140,30 @@ public:
   /// Add arch-specific References.
   virtual void addAdditionalReferences(MachODefinedAtom &atom) { }
 
+  // Add Reference for data-in-code marker.
+  virtual void addDataInCodeReference(MachODefinedAtom &atom, uint32_t atomOff,
+                                      uint16_t length, uint16_t kind) { }
+
+  /// Returns true if the specificed Reference value marks the start or end
+  /// of a data-in-code range in an atom.
+  virtual bool isDataInCodeTransition(Reference::KindValue refKind) {
+    return false;
+  }
+
+  /// Returns the Reference value for a Reference that marks that start of
+  /// a data-in-code range.
+  virtual Reference::KindValue dataInCodeTransitionStart(
+                                                const MachODefinedAtom &atom) {
+    return 0;
+  }
+
+  /// Returns the Reference value for a Reference that marks that end of
+  /// a data-in-code range.
+  virtual Reference::KindValue dataInCodeTransitionEnd(
+                                                const MachODefinedAtom &atom) {
+    return 0;
+  }
+
   /// Only relevant for 32-bit arm archs.
   virtual bool isThumbFunction(const DefinedAtom &atom) { return false; }
 

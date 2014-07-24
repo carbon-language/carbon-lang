@@ -229,6 +229,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
     return ec;
 
   // Walk load commands looking for segments/sections and the symbol table.
+  const data_in_code_entry *dataInCode = nullptr;
+  uint32_t dataInCodeSize = 0;
   ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
                     [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
     if (is64) {
@@ -387,20 +389,31 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             f->localSymbols.push_back(sout);
         }
       }
-    }
-    if (cmd == LC_ID_DYLIB) {
+    } else if (cmd == LC_ID_DYLIB) {
       const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
-      dylib_command tempDL;
-      if (swap) {
-        tempDL = *dl; swapStruct(tempDL); dl = &tempDL;
-      }
-
-      f->installName = lc + dl->dylib.name;
+      f->installName = lc + read32(swap, dl->dylib.name);
+    } else if (cmd == LC_DATA_IN_CODE) {
+      const linkedit_data_command *ldc =
+                            reinterpret_cast<const linkedit_data_command*>(lc);
+      dataInCode = reinterpret_cast<const data_in_code_entry*>(
+                                            start + read32(swap, ldc->dataoff));
+      dataInCodeSize = read32(swap, ldc->datasize);
     }
     return false;
   });
   if (ec)
     return ec;
+
+  if (dataInCode) {
+    // Convert on-disk data_in_code_entry array to DataInCode vector.
+    for (unsigned i=0; i < dataInCodeSize/sizeof(data_in_code_entry); ++i) {
+      DataInCode entry;
+      entry.offset = read32(swap, dataInCode[i].offset);
+      entry.length = read16(swap, dataInCode[i].length);
+      entry.kind   = (DataRegionType)read16(swap, dataInCode[i].kind);
+      f->dataInCode.push_back(entry);
+    }
+  }
 
   return std::move(f);
 }

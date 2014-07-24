@@ -71,6 +71,28 @@ public:
 
   void addAdditionalReferences(MachODefinedAtom &atom) override;
 
+  bool isDataInCodeTransition(Reference::KindValue refKind) override {
+    switch (refKind) {
+    case modeThumbCode:
+    case modeArmCode:
+    case modeData:
+      return true;
+    default:
+      return false;
+      break;
+    }
+  }
+
+  Reference::KindValue dataInCodeTransitionStart(
+                                        const MachODefinedAtom &atom) override {
+    return modeData;
+  }
+
+  Reference::KindValue dataInCodeTransitionEnd(
+                                        const MachODefinedAtom &atom) override {
+    return atom.isThumb() ? modeThumbCode : modeArmCode;
+  }
+
   bool isThumbFunction(const DefinedAtom &atom) override;
 
 private:
@@ -82,6 +104,7 @@ private:
 
     modeThumbCode,         /// Content starting at this offset is thumb.
     modeArmCode,           /// Content starting at this offset is arm.
+    modeData,              /// Content starting at this offset is data.
 
     // Kinds found in mach-o .o files:
     thumb_b22,             /// ex: bl _foo
@@ -143,6 +166,7 @@ ArchHandler_arm::~ArchHandler_arm() { }
 const Registry::KindStrings ArchHandler_arm::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(modeThumbCode),
   LLD_KIND_STRING_ENTRY(modeArmCode),
+  LLD_KIND_STRING_ENTRY(modeData),
   LLD_KIND_STRING_ENTRY(thumb_b22),
   LLD_KIND_STRING_ENTRY(thumb_movw),
   LLD_KIND_STRING_ENTRY(thumb_movt),
@@ -735,6 +759,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case modeArmCode:
     thumbMode = false;
     break;
+  case modeData:
+    break;
   case thumb_b22:
     assert(thumbMode);
     displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
@@ -868,6 +894,8 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
   case modeArmCode:
     thumbMode = false;
     break;
+  case modeData:
+    break;
   case thumb_b22:
     assert(thumbMode);
     if (useExternalReloc)
@@ -971,6 +999,8 @@ void ArchHandler_arm::appendSectionRelocations(
   switch (ref.kindValue()) {
   case modeThumbCode:
   case modeArmCode:
+  case modeData:
+    break;
     // Do nothing.
     break;
   case thumb_b22:
@@ -1174,7 +1204,7 @@ bool ArchHandler_arm::isThumbFunction(const DefinedAtom &atom) {
       return false;
     if (ref->kindNamespace() != Reference::KindNamespace::mach_o)
       continue;
-     assert(ref->kindArch() == Reference::KindArch::ARM);
+    assert(ref->kindArch() == Reference::KindArch::ARM);
     if (ref->kindValue() == modeThumbCode)
       return true;
   }

@@ -69,12 +69,36 @@ public:
                                 FindAddressForAtom addressForAtom,
                                 normalized::Relocations &relocs) override;
 
+  bool isDataInCodeTransition(Reference::KindValue refKind) override {
+    switch (refKind) {
+    case modeCode:
+    case modeData:
+      return true;
+    default:
+      return false;
+      break;
+    }
+  }
+
+  Reference::KindValue dataInCodeTransitionStart(
+                                        const MachODefinedAtom &atom) override {
+    return modeData;
+  }
+
+  Reference::KindValue dataInCodeTransitionEnd(
+                                        const MachODefinedAtom &atom) override {
+    return modeCode;
+  }
+
 private:
   static const Registry::KindStrings _sKindStrings[];
   static const StubInfo              _sStubInfo;
 
   enum : Reference::KindValue {
     invalid,               /// for error condition
+
+    modeCode,              /// Content starting at this offset is code.
+    modeData,              /// Content starting at this offset is data.
 
     // Kinds found in mach-o .o files:
     branch32,              /// ex: call _foo
@@ -115,6 +139,8 @@ ArchHandler_x86::~ArchHandler_x86() { }
   
 const Registry::KindStrings ArchHandler_x86::_sKindStrings[] = {
   LLD_KIND_STRING_ENTRY(invalid),
+  LLD_KIND_STRING_ENTRY(modeCode),
+  LLD_KIND_STRING_ENTRY(modeData),
   LLD_KIND_STRING_ENTRY(branch32),
   LLD_KIND_STRING_ENTRY(branch16),
   LLD_KIND_STRING_ENTRY(abs32),
@@ -390,6 +416,8 @@ void ArchHandler_x86::applyFixupFinal(const Reference &ref, uint8_t *location,
   case negDelta32:
     write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
     break;
+  case modeCode:
+  case modeData:
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
@@ -434,6 +462,8 @@ void ArchHandler_x86::applyFixupRelocatable(const Reference &ref,
   case negDelta32:
     write32(*loc32, _swap, fixupAddress - targetAddress + ref.addend());
     break;
+  case modeCode:
+  case modeData:
   case lazyPointer:
   case lazyImmediateLocation:
     // do nothing
@@ -480,6 +510,9 @@ void ArchHandler_x86::appendSectionRelocations(
   uint32_t sectionOffset = atomSectionOffset + ref.offsetInAtom();
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   switch (ref.kindValue()) {
+  case modeCode:
+  case modeData:
+    break;
   case branch32:
     if (useExternalReloc) {
       appendReloc(relocs, sectionOffset, symbolIndexForAtom(*ref.target()), 0,

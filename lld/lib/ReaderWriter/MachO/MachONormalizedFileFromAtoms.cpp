@@ -102,6 +102,7 @@ public:
   void      addIndirectSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addRebaseAndBindingInfo(const lld::File &, NormalizedFile &file);
   void      addSectionRelocs(const lld::File &, NormalizedFile &file);
+  void      buildDataInCodeArray(const lld::File &, NormalizedFile &file);
   void      addDependentDylibs(const lld::File &, NormalizedFile &file);
   void      copyEntryPointAddress(NormalizedFile &file);
 
@@ -899,6 +900,46 @@ void Util::addSectionRelocs(const lld::File &, NormalizedFile &file) {
   }
 }
 
+void Util::buildDataInCodeArray(const lld::File &, NormalizedFile &file) {
+  for (SectionInfo *si : _sectionInfos) {
+    for (const AtomInfo &info : si->atomsAndOffsets) {
+      // Atoms that contain data-in-code have "transition" references
+      // which mark a point where the embedded data starts of ends.
+      // This needs to be converted to the mach-o format which is an array
+      // of data-in-code ranges.
+      uint32_t startOffset = 0;
+      DataRegionType mode = DataRegionType(0);
+      for (const Reference *ref : *info.atom) {
+        if (ref->kindNamespace() != Reference::KindNamespace::mach_o)
+          continue;
+        if (_archHandler.isDataInCodeTransition(ref->kindValue())) {
+          DataRegionType nextMode = (DataRegionType)ref->addend();
+          if (mode != nextMode) {
+            if (mode != 0) {
+              // Found end data range, so make range entry.
+              DataInCode entry;
+              entry.offset = si->address + info.offsetInSection + startOffset;
+              entry.length = ref->offsetInAtom() - startOffset;
+              entry.kind   = mode;
+              file.dataInCode.push_back(entry);
+            }
+          }
+          mode = nextMode;
+          startOffset = ref->offsetInAtom();
+        }
+      }
+      if (mode != 0) {
+        // Function ends with data (no end transition).
+        DataInCode entry;
+        entry.offset = si->address + info.offsetInSection + startOffset;
+        entry.length = info.atom->size() - startOffset;
+        entry.kind   = mode;
+        file.dataInCode.push_back(entry);
+      }
+    }
+  }
+}
+
 void Util::addRebaseAndBindingInfo(const lld::File &atomFile,
                                                         NormalizedFile &nFile) {
   if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)
@@ -992,6 +1033,7 @@ normalizedFromAtoms(const lld::File &atomFile,
   util.addIndirectSymbols(atomFile, normFile);
   util.addRebaseAndBindingInfo(atomFile, normFile);
   util.addSectionRelocs(atomFile, normFile);
+  util.buildDataInCodeArray(atomFile, normFile);
   util.copyEntryPointAddress(normFile);
 
   return std::move(f);
