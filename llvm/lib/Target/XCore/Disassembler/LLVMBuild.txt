@@ -19,5 +19,5 @@
 type = Library
 name = XCoreDisassembler
 parent = XCore
-required_libraries = MC MCDisassembler Support XCoreInfo
+required_libraries = MCDisassembler Support XCoreInfo
 add_to_library_groups = XCore

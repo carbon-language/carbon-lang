@@ -19,5 +19,5 @@
 type = Library
 name = PowerPCDisassembler
 parent = PowerPC
-required_libraries = MC MCDisassembler PowerPCInfo Support
+required_libraries = MCDisassembler PowerPCInfo Support
 add_to_library_groups = PowerPC
