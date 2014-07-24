@@ -233,11 +233,20 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
 
     if (&data != &m_reg_data)
     {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        assert (m_reg_data.GetByteSize() >= reg_info->byte_offset + reg_info->byte_size);
+#endif  
+        // If our register context and our register info disagree, which should never happen, don't
+        // read past the end of the buffer.
+        if (m_reg_data.GetByteSize() < reg_info->byte_offset + reg_info->byte_size)
+            return false;
+
         // If we aren't extracting into our own buffer (which
         // only happens when this function is called from
         // ReadRegisterValue(uint32_t, Scalar&)) then
         // we transfer bytes from our buffer into the data
         // buffer that was passed in
+
         data.SetByteOrder (m_reg_data.GetByteOrder());
         data.SetData (m_reg_data, reg_info->byte_offset, reg_info->byte_size);
     }
@@ -322,6 +331,16 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
 // state has been changed.
 //    if (gdb_comm.IsRunning())
 //        return false;
+
+
+#if defined (LLDB_CONFIGURATION_DEBUG)
+    assert (m_reg_data.GetByteSize() >= reg_info->byte_offset + reg_info->byte_size);
+#endif
+
+    // If our register context and our register info disagree, which should never happen, don't
+    // overwrite past the end of the buffer.
+    if (m_reg_data.GetByteSize() < reg_info->byte_offset + reg_info->byte_size)
+        return false;
 
     // Grab a pointer to where we are going to put this register
     uint8_t *dst = const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size));
