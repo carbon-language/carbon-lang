@@ -37,6 +37,9 @@
 #include <mach/mach_init.h>
 #include <mach-o/dyld.h>
 #include <AvailabilityMacros.h>
+#ifndef CPU_SUBTYPE_X86_64_H
+#define CPU_SUBTYPE_X86_64_H ((cpu_subtype_t)8)
+#endif
 #endif
 
 #if defined (__linux__) || defined (__FreeBSD__) || defined (__FreeBSD_kernel__) || defined (__APPLE__) || defined(__NetBSD__)
