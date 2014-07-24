@@ -162,10 +162,10 @@ ScalarEvolutionAliasAnalysis::alias(const Location &LocA,
   if ((AO && AO != LocA.Ptr) || (BO && BO != LocB.Ptr))
     if (alias(Location(AO ? AO : LocA.Ptr,
                        AO ? +UnknownSize : LocA.Size,
-                       AO ? nullptr : LocA.TBAATag),
+                       AO ? AAMDNodes() : LocA.AATags),
               Location(BO ? BO : LocB.Ptr,
                        BO ? +UnknownSize : LocB.Size,
-                       BO ? nullptr : LocB.TBAATag)) == NoAlias)
+                       BO ? AAMDNodes() : LocB.AATags)) == NoAlias)
       return NoAlias;
 
   // Forward the query to the next analysis.

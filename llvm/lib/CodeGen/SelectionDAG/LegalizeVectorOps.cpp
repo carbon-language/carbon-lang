@@ -480,7 +480,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                                  LD->getPointerInfo().getWithOffset(Offset),
                                  LD->isVolatile(), LD->isNonTemporal(),
                                  LD->isInvariant(), LD->getAlignment(),
-                                 LD->getTBAAInfo());
+                                 LD->getAAInfo());
       } else {
         EVT LoadVT = WideVT;
         while (RemainingBytes < LoadBytes) {
@@ -491,7 +491,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                                     LD->getPointerInfo().getWithOffset(Offset),
                                     LoadVT, LD->isVolatile(),
                                     LD->isNonTemporal(), LD->getAlignment(),
-                                    LD->getTBAAInfo());
+                                    LD->getAAInfo());
       }
 
       RemainingBytes -= LoadBytes;
@@ -562,7 +562,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                 Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
                 SrcVT.getScalarType(),
                 LD->isVolatile(), LD->isNonTemporal(),
-                LD->getAlignment(), LD->getTBAAInfo());
+                LD->getAlignment(), LD->getAAInfo());
 
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                          DAG.getConstant(Stride, BasePTR.getValueType()));
@@ -593,7 +593,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
   unsigned Alignment = ST->getAlignment();
   bool isVolatile = ST->isVolatile();
   bool isNonTemporal = ST->isNonTemporal();
-  const MDNode *TBAAInfo = ST->getTBAAInfo();
+  AAMDNodes AAInfo = ST->getAAInfo();
 
   unsigned NumElem = StVT.getVectorNumElements();
   // The type of the data we want to save
@@ -621,7 +621,7 @@ SDValue VectorLegalizer::ExpandStore(SDValue Op) {
     // This scalar TruncStore may be illegal, but we legalize it later.
     SDValue Store = DAG.getTruncStore(Chain, dl, Ex, BasePTR,
                ST->getPointerInfo().getWithOffset(Idx*Stride), MemSclVT,
-               isVolatile, isNonTemporal, Alignment, TBAAInfo);
+               isVolatile, isNonTemporal, Alignment, AAInfo);
 
     BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,
                                DAG.getConstant(Stride, BasePTR.getValueType()));

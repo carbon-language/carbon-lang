@@ -1000,8 +1000,8 @@ bool SystemZDAGToDAGISel::canUseBlockOperation(StoreSDNode *Store,
   if (V1 == V2 && End1 == End2)
     return false;
 
-  return !AA->alias(AliasAnalysis::Location(V1, End1, Load->getTBAAInfo()),
-                    AliasAnalysis::Location(V2, End2, Store->getTBAAInfo()));
+  return !AA->alias(AliasAnalysis::Location(V1, End1, Load->getAAInfo()),
+                    AliasAnalysis::Location(V2, End2, Store->getAAInfo()));
 }
 
 bool SystemZDAGToDAGISel::storeLoadCanUseMVC(SDNode *N) const {

@@ -1088,8 +1088,8 @@ public:
   // Returns the offset from the location of the access.
   int64_t getSrcValueOffset() const { return MMO->getOffset(); }
 
-  /// Returns the TBAAInfo that describes the dereference.
-  const MDNode *getTBAAInfo() const { return MMO->getTBAAInfo(); }
+  /// Returns the AA info that describes the dereference.
+  AAMDNodes getAAInfo() const { return MMO->getAAInfo(); }
 
   /// Returns the Ranges that describes the dereference.
   const MDNode *getRanges() const { return MMO->getRanges(); }

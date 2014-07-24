@@ -1246,13 +1246,13 @@ SDValue MipsSETargetLowering::lowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   // i32 store to lower address.
   Chain = DAG.getStore(Chain, DL, Lo, Ptr, MachinePointerInfo(),
                        Nd.isVolatile(), Nd.isNonTemporal(), Nd.getAlignment(),
-                       Nd.getTBAAInfo());
+                       Nd.getAAInfo());
 
   // i32 store to higher address.
   Ptr = DAG.getNode(ISD::ADD, DL, PtrVT, Ptr, DAG.getConstant(4, PtrVT));
   return DAG.getStore(Chain, DL, Hi, Ptr, MachinePointerInfo(),
                       Nd.isVolatile(), Nd.isNonTemporal(),
-                      std::min(Nd.getAlignment(), 4U), Nd.getTBAAInfo());
+                      std::min(Nd.getAlignment(), 4U), Nd.getAAInfo());
 }
 
 SDValue MipsSETargetLowering::lowerMulDiv(SDValue Op, unsigned NewOpc,

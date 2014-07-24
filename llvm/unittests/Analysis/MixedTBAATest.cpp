@@ -65,7 +65,7 @@ TEST_F(MixedTBAATest, MixedTBAA) {
   // Run the TBAA eval pass on a mixture of path-aware and non-path-aware TBAA.
   // The order of the metadata (path-aware vs non-path-aware) is important,
   // because the AA eval pass only runs one test per store-pair.
-  const char* args[] = { "MixedTBAATest", "-evaluate-tbaa" };
+  const char* args[] = { "MixedTBAATest", "-evaluate-aa-metadata" };
   cl::ParseCommandLineOptions(sizeof(args) / sizeof(const char*), args);
   PM.add(createTypeBasedAliasAnalysisPass());
   PM.add(createAAEvalPass());

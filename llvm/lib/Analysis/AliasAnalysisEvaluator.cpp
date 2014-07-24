@@ -43,7 +43,7 @@ static cl::opt<bool> PrintMod("print-mod", cl::ReallyHidden);
 static cl::opt<bool> PrintRef("print-ref", cl::ReallyHidden);
 static cl::opt<bool> PrintModRef("print-modref", cl::ReallyHidden);
 
-static cl::opt<bool> EvalTBAA("evaluate-tbaa", cl::ReallyHidden);
+static cl::opt<bool> EvalAAMD("evaluate-aa-metadata", cl::ReallyHidden);
 
 namespace {
   class AAEval : public FunctionPass {
@@ -153,9 +153,9 @@ bool AAEval::runOnFunction(Function &F) {
   for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I) {
     if (I->getType()->isPointerTy()) // Add all pointer instructions.
       Pointers.insert(&*I);
-    if (EvalTBAA && isa<LoadInst>(&*I))
+    if (EvalAAMD && isa<LoadInst>(&*I))
       Loads.insert(&*I);
-    if (EvalTBAA && isa<StoreInst>(&*I))
+    if (EvalAAMD && isa<StoreInst>(&*I))
       Stores.insert(&*I);
     Instruction &Inst = *I;
     if (CallSite CS = cast<Value>(&Inst)) {
@@ -213,7 +213,7 @@ bool AAEval::runOnFunction(Function &F) {
     }
   }
 
-  if (EvalTBAA) {
+  if (EvalAAMD) {
     // iterate over all pairs of load, store
     for (SetVector<Value *>::iterator I1 = Loads.begin(), E = Loads.end();
          I1 != E; ++I1) {

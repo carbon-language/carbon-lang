@@ -39,6 +39,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/CallSite.h"
+#include "llvm/IR/Metadata.h"
 
 namespace llvm {
 
@@ -112,13 +113,14 @@ public:
     /// there are restrictions on stepping out of one object and into another.
     /// See http://llvm.org/docs/LangRef.html#pointeraliasing
     uint64_t Size;
-    /// TBAATag - The metadata node which describes the TBAA type of
-    /// the location, or null if there is no known unique tag.
-    const MDNode *TBAATag;
+    /// AATags - The metadata nodes which describes the aliasing of the
+    /// location (each member is null if that kind of information is
+    /// unavailable)..
+    AAMDNodes AATags;
 
     explicit Location(const Value *P = nullptr, uint64_t S = UnknownSize,
-                      const MDNode *N = nullptr)
-      : Ptr(P), Size(S), TBAATag(N) {}
+                      const AAMDNodes &N = AAMDNodes())
+      : Ptr(P), Size(S), AATags(N) {}
 
     Location getWithNewPtr(const Value *NewPtr) const {
       Location Copy(*this);
@@ -132,9 +134,9 @@ public:
       return Copy;
     }
 
-    Location getWithoutTBAATag() const {
+    Location getWithoutAATags() const {
       Location Copy(*this);
-      Copy.TBAATag = nullptr;
+      Copy.AATags = AAMDNodes();
       return Copy;
     }
   };
@@ -578,13 +580,13 @@ struct DenseMapInfo<AliasAnalysis::Location> {
   static unsigned getHashValue(const AliasAnalysis::Location &Val) {
     return DenseMapInfo<const Value *>::getHashValue(Val.Ptr) ^
            DenseMapInfo<uint64_t>::getHashValue(Val.Size) ^
-           DenseMapInfo<const MDNode *>::getHashValue(Val.TBAATag);
+           DenseMapInfo<AAMDNodes>::getHashValue(Val.AATags);
   }
   static bool isEqual(const AliasAnalysis::Location &LHS,
                       const AliasAnalysis::Location &RHS) {
     return LHS.Ptr == RHS.Ptr &&
            LHS.Size == RHS.Size &&
-           LHS.TBAATag == RHS.TBAATag;
+           LHS.AATags == RHS.AATags;
   }
 };
 

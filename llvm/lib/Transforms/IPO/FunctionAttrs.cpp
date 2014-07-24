@@ -204,9 +204,11 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
                  CI != CE; ++CI) {
               Value *Arg = *CI;
               if (Arg->getType()->isPointerTy()) {
+                AAMDNodes AAInfo;
+                I->getAAMetadata(AAInfo);
+
                 AliasAnalysis::Location Loc(Arg,
-                                            AliasAnalysis::UnknownSize,
-                                            I->getMetadata(LLVMContext::MD_tbaa));
+                                            AliasAnalysis::UnknownSize, AAInfo);
                 if (!AA->pointsToConstantMemory(Loc, /*OrLocal=*/true)) {
                   if (MRB & AliasAnalysis::Mod)
                     // Writes non-local memory.  Give up.

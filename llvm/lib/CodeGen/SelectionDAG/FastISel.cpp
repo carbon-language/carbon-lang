@@ -2158,8 +2158,10 @@ FastISel::createMachineMemOperandFor(const Instruction *I) const {
 
   bool IsNonTemporal = I->getMetadata("nontemporal") != nullptr;
   bool IsInvariant = I->getMetadata("invariant.load") != nullptr;
-  const MDNode *TBAAInfo = I->getMetadata(LLVMContext::MD_tbaa);
   const MDNode *Ranges = I->getMetadata(LLVMContext::MD_range);
+
+  AAMDNodes AAInfo;
+  I->getAAMetadata(AAInfo);
 
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0.
     Alignment = DL.getABITypeAlignment(ValTy);
@@ -2174,5 +2176,5 @@ FastISel::createMachineMemOperandFor(const Instruction *I) const {
     Flags |= MachineMemOperand::MOInvariant;
 
   return FuncInfo.MF->getMachineMemOperand(MachinePointerInfo(Ptr), Flags, Size,
-                                           Alignment, TBAAInfo, Ranges);
+                                           Alignment, AAInfo, Ranges);
 }

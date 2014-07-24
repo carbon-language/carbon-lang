@@ -563,9 +563,9 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 
   AliasAnalysis::AliasResult AAResult = AA->alias(
       AliasAnalysis::Location(MMOa->getValue(), Overlapa,
-                              UseTBAA ? MMOa->getTBAAInfo() : nullptr),
+                              UseTBAA ? MMOa->getAAInfo() : AAMDNodes()),
       AliasAnalysis::Location(MMOb->getValue(), Overlapb,
-                              UseTBAA ? MMOb->getTBAAInfo() : nullptr));
+                              UseTBAA ? MMOb->getAAInfo() : AAMDNodes()));
 
   return (AAResult != AliasAnalysis::NoAlias);
 }

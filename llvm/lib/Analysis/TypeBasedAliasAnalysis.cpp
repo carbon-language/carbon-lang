@@ -454,9 +454,9 @@ TypeBasedAliasAnalysis::alias(const Location &LocA,
 
   // Get the attached MDNodes. If either value lacks a tbaa MDNode, we must
   // be conservative.
-  const MDNode *AM = LocA.TBAATag;
+  const MDNode *AM = LocA.AATags.TBAA;
   if (!AM) return AliasAnalysis::alias(LocA, LocB);
-  const MDNode *BM = LocB.TBAATag;
+  const MDNode *BM = LocB.AATags.TBAA;
   if (!BM) return AliasAnalysis::alias(LocA, LocB);
 
   // If they may alias, chain to the next AliasAnalysis.
@@ -472,7 +472,7 @@ bool TypeBasedAliasAnalysis::pointsToConstantMemory(const Location &Loc,
   if (!EnableTBAA)
     return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
-  const MDNode *M = Loc.TBAATag;
+  const MDNode *M = Loc.AATags.TBAA;
   if (!M) return AliasAnalysis::pointsToConstantMemory(Loc, OrLocal);
 
   // If this is an "immutable" type, we can assume the pointer is pointing
@@ -513,7 +513,7 @@ TypeBasedAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
   if (!EnableTBAA)
     return AliasAnalysis::getModRefInfo(CS, Loc);
 
-  if (const MDNode *L = Loc.TBAATag)
+  if (const MDNode *L = Loc.AATags.TBAA)
     if (const MDNode *M =
           CS.getInstruction()->getMetadata(LLVMContext::MD_tbaa))
       if (!Aliases(L, M))
@@ -611,3 +611,12 @@ MDNode *MDNode::getMostGenericTBAA(MDNode *A, MDNode *B) {
   Value *Ops[3] = { Ret, Ret, ConstantInt::get(Int64, 0) };
   return MDNode::get(A->getContext(), Ops);
 }
+
+void Instruction::getAAMetadata(AAMDNodes &N, bool Merge) const {
+  if (Merge)
+    N.TBAA = MDNode::getMostGenericTBAA(N.TBAA,
+                                        getMetadata(LLVMContext::MD_tbaa));
+  else
+    N.TBAA = getMetadata(LLVMContext::MD_tbaa);
+}
+

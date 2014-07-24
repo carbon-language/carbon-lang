@@ -25,6 +25,7 @@ namespace llvm {
 class FastMathFlags;
 class LLVMContext;
 class MDNode;
+struct AAMDNodes;
 
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
@@ -168,6 +169,11 @@ public:
       getAllMetadataOtherThanDebugLocImpl(MDs);
   }
 
+  /// getAAMetadata - Fills the AAMDNodes structure with AA metadata from
+  /// this instruction. When Merge is true, the existing AA metadata is
+  /// merged with that from this instruction providing the most-general result.
+  void getAAMetadata(AAMDNodes &N, bool Merge = false) const;
+
   /// setMetadata - Set the metadata of the specified kind to the specified
   /// node.  This updates/replaces metadata if already present, or removes it if
   /// Node is null.
@@ -188,6 +194,10 @@ public:
     unsigned IDs[] = {ID1, ID2};
     return dropUnknownMetadata(IDs);
   }
+
+  /// setAAMetadata - Sets the metadata on this instruction from the
+  /// AAMDNodes structure.
+  void setAAMetadata(const AAMDNodes &N);
 
   /// setDebugLoc - Set the debug location information for this instruction.
   void setDebugLoc(const DebugLoc &Loc) { DbgLoc = Loc; }

@@ -3937,7 +3937,7 @@ public:
   /// \brief Register a load  and whether it is only read from.
   void addLoad(AliasAnalysis::Location &Loc, bool IsReadOnly) {
     Value *Ptr = const_cast<Value*>(Loc.Ptr);
-    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.TBAATag);
+    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.AATags);
     Accesses.insert(MemAccessInfo(Ptr, false));
     if (IsReadOnly)
       ReadOnlyPtr.insert(Ptr);
@@ -3946,7 +3946,7 @@ public:
   /// \brief Register a store.
   void addStore(AliasAnalysis::Location &Loc) {
     Value *Ptr = const_cast<Value*>(Loc.Ptr);
-    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.TBAATag);
+    AST.add(Ptr, AliasAnalysis::UnknownSize, Loc.AATags);
     Accesses.insert(MemAccessInfo(Ptr, true));
   }
 
@@ -4737,7 +4737,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       // condition, so we cannot rely on it when determining whether or not we
       // need runtime pointer checks.
       if (blockNeedsPredication(ST->getParent()))
-        Loc.TBAATag = nullptr;
+        Loc.AATags.TBAA = nullptr;
 
       Accesses.addStore(Loc);
     }
@@ -4772,7 +4772,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     // condition, so we cannot rely on it when determining whether or not we
     // need runtime pointer checks.
     if (blockNeedsPredication(LD->getParent()))
-      Loc.TBAATag = nullptr;
+      Loc.AATags.TBAA = nullptr;
 
     Accesses.addLoad(Loc, IsReadOnlyPtr);
   }

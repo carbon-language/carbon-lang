@@ -687,6 +687,10 @@ void Instruction::setMetadata(unsigned KindID, MDNode *Node) {
   // Otherwise, removing an entry that doesn't exist on the instruction.
 }
 
+void Instruction::setAAMetadata(const AAMDNodes &N) {
+  setMetadata(LLVMContext::MD_tbaa, N.TBAA);
+}
+
 MDNode *Instruction::getMetadataImpl(unsigned KindID) const {
   // Handle 'dbg' as a special case since it is not stored in the hash table.
   if (KindID == LLVMContext::MD_dbg)

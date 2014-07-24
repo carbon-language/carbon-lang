@@ -229,10 +229,10 @@ MachineFunction::DeleteMachineBasicBlock(MachineBasicBlock *MBB) {
 MachineMemOperand *
 MachineFunction::getMachineMemOperand(MachinePointerInfo PtrInfo, unsigned f,
                                       uint64_t s, unsigned base_alignment,
-                                      const MDNode *TBAAInfo,
+                                      const AAMDNodes &AAInfo,
                                       const MDNode *Ranges) {
   return new (Allocator) MachineMemOperand(PtrInfo, f, s, base_alignment,
-                                           TBAAInfo, Ranges);
+                                           AAInfo, Ranges);
 }
 
 MachineMemOperand *
@@ -279,7 +279,7 @@ MachineFunction::extractLoadMemRefs(MachineInstr::mmo_iterator Begin,
           getMachineMemOperand((*I)->getPointerInfo(),
                                (*I)->getFlags() & ~MachineMemOperand::MOStore,
                                (*I)->getSize(), (*I)->getBaseAlignment(),
-                               (*I)->getTBAAInfo());
+                               (*I)->getAAInfo());
         Result[Index] = JustLoad;
       }
       ++Index;
@@ -311,7 +311,7 @@ MachineFunction::extractStoreMemRefs(MachineInstr::mmo_iterator Begin,
           getMachineMemOperand((*I)->getPointerInfo(),
                                (*I)->getFlags() & ~MachineMemOperand::MOLoad,
                                (*I)->getSize(), (*I)->getBaseAlignment(),
-                               (*I)->getTBAAInfo());
+                               (*I)->getAAInfo());
         Result[Index] = JustStore;
       }
       ++Index;

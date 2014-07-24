@@ -969,7 +969,7 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
                        N->getBasePtr(), N->getPointerInfo(),
                        N->isVolatile(), N->isNonTemporal(),
                        N->isInvariant(), N->getAlignment(),
-                       N->getTBAAInfo(), N->getRanges());
+                       N->getAAInfo(), N->getRanges());
   }
   if (N->getMemoryVT() == MVT::i16) {
     if (N->getAlignment() < 2)
@@ -977,13 +977,13 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i16,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getTBAAInfo());
+                          N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i8,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getTBAAInfo());
+                          N->getAlignment(), N->getAAInfo());
   return SDValue();
 }
 
@@ -999,7 +999,7 @@ LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getStore(N->getChain(), SDLoc(Op), N->getVal(),
                         N->getBasePtr(), N->getPointerInfo(),
                         N->isVolatile(), N->isNonTemporal(),
-                        N->getAlignment(), N->getTBAAInfo());
+                        N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i16) {
     if (N->getAlignment() < 2)
@@ -1007,13 +1007,13 @@ LowerATOMIC_STORE(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i16,
                              N->isVolatile(), N->isNonTemporal(),
-                             N->getAlignment(), N->getTBAAInfo());
+                             N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getTruncStore(N->getChain(), SDLoc(Op), N->getVal(),
                              N->getBasePtr(), N->getPointerInfo(), MVT::i8,
                              N->isVolatile(), N->isNonTemporal(),
-                             N->getAlignment(), N->getTBAAInfo());
+                             N->getAlignment(), N->getAAInfo());
   return SDValue();
 }
 

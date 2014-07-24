@@ -21,6 +21,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/ArrayRecycler.h"
 #include "llvm/Support/Recycler.h"
@@ -399,7 +400,7 @@ public:
   MachineMemOperand *getMachineMemOperand(MachinePointerInfo PtrInfo,
                                           unsigned f, uint64_t s,
                                           unsigned base_alignment,
-                                          const MDNode *TBAAInfo = nullptr,
+                                          const AAMDNodes &AAInfo = AAMDNodes(),
                                           const MDNode *Ranges = nullptr);
   
   /// getMachineMemOperand - Allocate a new MachineMemOperand by copying

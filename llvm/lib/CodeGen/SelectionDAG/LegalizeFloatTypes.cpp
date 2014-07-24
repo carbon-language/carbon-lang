@@ -543,7 +543,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
                        NVT, dl, L->getChain(), L->getBasePtr(), L->getOffset(),
                        L->getPointerInfo(), NVT, L->isVolatile(),
                        L->isNonTemporal(), false, L->getAlignment(),
-                       L->getTBAAInfo());
+                       L->getAAInfo());
     // Legalized the chain result - switch anything that used the old chain to
     // use the new one.
     ReplaceValueWith(SDValue(N, 1), NewL.getValue(1));
@@ -556,7 +556,7 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_LOAD(SDNode *N) {
                      L->getBasePtr(), L->getOffset(), L->getPointerInfo(),
                      L->getMemoryVT(), L->isVolatile(),
                      L->isNonTemporal(), false, L->getAlignment(),
-                     L->getTBAAInfo());
+                     L->getAAInfo());
   // Legalized the chain result - switch anything that used the old chain to
   // use the new one.
   ReplaceValueWith(SDValue(N, 1), NewL.getValue(1));

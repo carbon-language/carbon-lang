@@ -1,4 +1,4 @@
-; RUN: opt < %s -tbaa -basicaa -aa-eval -evaluate-tbaa -print-no-aliases -print-may-aliases -disable-output 2>&1 | FileCheck %s
+; RUN: opt < %s -tbaa -basicaa -aa-eval -evaluate-aa-metadata -print-no-aliases -print-may-aliases -disable-output 2>&1 | FileCheck %s
 ; RUN: opt < %s -tbaa -basicaa -gvn -S | FileCheck %s --check-prefix=OPT
 ; Generated from clang/test/CodeGen/tbaa.cpp with "-O1 -struct-path-tbaa -disable-llvm-optzns".
 

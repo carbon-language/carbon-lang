@@ -456,8 +456,8 @@ namespace {
       assert(AliasCache.empty() && "AliasCache must be cleared after use!");
       assert(notDifferentParent(LocA.Ptr, LocB.Ptr) &&
              "BasicAliasAnalysis doesn't support interprocedural queries.");
-      AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.TBAATag,
-                                     LocB.Ptr, LocB.Size, LocB.TBAATag);
+      AliasResult Alias = aliasCheck(LocA.Ptr, LocA.Size, LocA.AATags,
+                                     LocB.Ptr, LocB.Size, LocB.AATags);
       // AliasCache rarely has more than 1 or 2 elements, always use
       // shrink_and_clear so it quickly returns to the inline capacity of the
       // SmallDenseMap if it ever grows larger.
@@ -544,28 +544,28 @@ namespace {
     // aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP
     // instruction against another.
     AliasResult aliasGEP(const GEPOperator *V1, uint64_t V1Size,
-                         const MDNode *V1TBAAInfo,
+                         const AAMDNodes &V1AAInfo,
                          const Value *V2, uint64_t V2Size,
-                         const MDNode *V2TBAAInfo,
+                         const AAMDNodes &V2AAInfo,
                          const Value *UnderlyingV1, const Value *UnderlyingV2);
 
     // aliasPHI - Provide a bunch of ad-hoc rules to disambiguate a PHI
     // instruction against another.
     AliasResult aliasPHI(const PHINode *PN, uint64_t PNSize,
-                         const MDNode *PNTBAAInfo,
+                         const AAMDNodes &PNAAInfo,
                          const Value *V2, uint64_t V2Size,
-                         const MDNode *V2TBAAInfo);
+                         const AAMDNodes &V2AAInfo);
 
     /// aliasSelect - Disambiguate a Select instruction against another value.
     AliasResult aliasSelect(const SelectInst *SI, uint64_t SISize,
-                            const MDNode *SITBAAInfo,
+                            const AAMDNodes &SIAAInfo,
                             const Value *V2, uint64_t V2Size,
-                            const MDNode *V2TBAAInfo);
+                            const AAMDNodes &V2AAInfo);
 
     AliasResult aliasCheck(const Value *V1, uint64_t V1Size,
-                           const MDNode *V1TBAATag,
+                           AAMDNodes V1AATag,
                            const Value *V2, uint64_t V2Size,
-                           const MDNode *V2TBAATag);
+                           AAMDNodes V2AATag);
   };
 }  // End of anonymous namespace
 
@@ -851,9 +851,9 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
 ///
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
-                             const MDNode *V1TBAAInfo,
+                             const AAMDNodes &V1AAInfo,
                              const Value *V2, uint64_t V2Size,
-                             const MDNode *V2TBAAInfo,
+                             const AAMDNodes &V2AAInfo,
                              const Value *UnderlyingV1,
                              const Value *UnderlyingV2) {
   int64_t GEP1BaseOffset;
@@ -873,8 +873,8 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
     if ((BaseAlias == MayAlias) && V1Size == V2Size) {
       // Do the base pointers alias assuming type and size.
       AliasResult PreciseBaseAlias = aliasCheck(UnderlyingV1, V1Size,
-                                                V1TBAAInfo, UnderlyingV2,
-                                                V2Size, V2TBAAInfo);
+                                                V1AAInfo, UnderlyingV2,
+                                                V2Size, V2AAInfo);
       if (PreciseBaseAlias == NoAlias) {
         // See if the computed offset from the common pointer tells us about the
         // relation of the resulting pointer.
@@ -950,7 +950,7 @@ BasicAliasAnalysis::aliasGEP(const GEPOperator *GEP1, uint64_t V1Size,
       return MayAlias;
 
     AliasResult R = aliasCheck(UnderlyingV1, UnknownSize, nullptr,
-                               V2, V2Size, V2TBAAInfo);
+                               V2, V2Size, V2AAInfo);
     if (R != MustAlias)
       // If V2 may alias GEP base pointer, conservatively returns MayAlias.
       // If V2 is known not to alias GEP base pointer, then the two values
@@ -1056,33 +1056,33 @@ MergeAliasResults(AliasAnalysis::AliasResult A, AliasAnalysis::AliasResult B) {
 /// instruction against another.
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
-                                const MDNode *SITBAAInfo,
+                                const AAMDNodes &SIAAInfo,
                                 const Value *V2, uint64_t V2Size,
-                                const MDNode *V2TBAAInfo) {
+                                const AAMDNodes &V2AAInfo) {
   // If the values are Selects with the same condition, we can do a more precise
   // check: just check for aliases between the values on corresponding arms.
   if (const SelectInst *SI2 = dyn_cast<SelectInst>(V2))
     if (SI->getCondition() == SI2->getCondition()) {
       AliasResult Alias =
-        aliasCheck(SI->getTrueValue(), SISize, SITBAAInfo,
-                   SI2->getTrueValue(), V2Size, V2TBAAInfo);
+        aliasCheck(SI->getTrueValue(), SISize, SIAAInfo,
+                   SI2->getTrueValue(), V2Size, V2AAInfo);
       if (Alias == MayAlias)
         return MayAlias;
       AliasResult ThisAlias =
-        aliasCheck(SI->getFalseValue(), SISize, SITBAAInfo,
-                   SI2->getFalseValue(), V2Size, V2TBAAInfo);
+        aliasCheck(SI->getFalseValue(), SISize, SIAAInfo,
+                   SI2->getFalseValue(), V2Size, V2AAInfo);
       return MergeAliasResults(ThisAlias, Alias);
     }
 
   // If both arms of the Select node NoAlias or MustAlias V2, then returns
   // NoAlias / MustAlias. Otherwise, returns MayAlias.
   AliasResult Alias =
-    aliasCheck(V2, V2Size, V2TBAAInfo, SI->getTrueValue(), SISize, SITBAAInfo);
+    aliasCheck(V2, V2Size, V2AAInfo, SI->getTrueValue(), SISize, SIAAInfo);
   if (Alias == MayAlias)
     return MayAlias;
 
   AliasResult ThisAlias =
-    aliasCheck(V2, V2Size, V2TBAAInfo, SI->getFalseValue(), SISize, SITBAAInfo);
+    aliasCheck(V2, V2Size, V2AAInfo, SI->getFalseValue(), SISize, SIAAInfo);
   return MergeAliasResults(ThisAlias, Alias);
 }
 
@@ -1090,9 +1090,9 @@ BasicAliasAnalysis::aliasSelect(const SelectInst *SI, uint64_t SISize,
 // against another.
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
-                             const MDNode *PNTBAAInfo,
+                             const AAMDNodes &PNAAInfo,
                              const Value *V2, uint64_t V2Size,
-                             const MDNode *V2TBAAInfo) {
+                             const AAMDNodes &V2AAInfo) {
   // Track phi nodes we have visited. We use this information when we determine
   // value equivalence.
   VisitedPhiBBs.insert(PN->getParent());
@@ -1102,8 +1102,8 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   // on corresponding edges.
   if (const PHINode *PN2 = dyn_cast<PHINode>(V2))
     if (PN2->getParent() == PN->getParent()) {
-      LocPair Locs(Location(PN, PNSize, PNTBAAInfo),
-                   Location(V2, V2Size, V2TBAAInfo));
+      LocPair Locs(Location(PN, PNSize, PNAAInfo),
+                   Location(V2, V2Size, V2AAInfo));
       if (PN > V2)
         std::swap(Locs.first, Locs.second);
       // Analyse the PHIs' inputs under the assumption that the PHIs are
@@ -1121,9 +1121,9 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
 
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
         AliasResult ThisAlias =
-          aliasCheck(PN->getIncomingValue(i), PNSize, PNTBAAInfo,
+          aliasCheck(PN->getIncomingValue(i), PNSize, PNAAInfo,
                      PN2->getIncomingValueForBlock(PN->getIncomingBlock(i)),
-                     V2Size, V2TBAAInfo);
+                     V2Size, V2AAInfo);
         Alias = MergeAliasResults(ThisAlias, Alias);
         if (Alias == MayAlias)
           break;
@@ -1150,8 +1150,8 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       V1Srcs.push_back(PV1);
   }
 
-  AliasResult Alias = aliasCheck(V2, V2Size, V2TBAAInfo,
-                                 V1Srcs[0], PNSize, PNTBAAInfo);
+  AliasResult Alias = aliasCheck(V2, V2Size, V2AAInfo,
+                                 V1Srcs[0], PNSize, PNAAInfo);
   // Early exit if the check of the first PHI source against V2 is MayAlias.
   // Other results are not possible.
   if (Alias == MayAlias)
@@ -1162,8 +1162,8 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
   for (unsigned i = 1, e = V1Srcs.size(); i != e; ++i) {
     Value *V = V1Srcs[i];
 
-    AliasResult ThisAlias = aliasCheck(V2, V2Size, V2TBAAInfo,
-                                       V, PNSize, PNTBAAInfo);
+    AliasResult ThisAlias = aliasCheck(V2, V2Size, V2AAInfo,
+                                       V, PNSize, PNAAInfo);
     Alias = MergeAliasResults(ThisAlias, Alias);
     if (Alias == MayAlias)
       break;
@@ -1177,9 +1177,9 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
 //
 AliasAnalysis::AliasResult
 BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
-                               const MDNode *V1TBAAInfo,
+                               AAMDNodes V1AAInfo,
                                const Value *V2, uint64_t V2Size,
-                               const MDNode *V2TBAAInfo) {
+                               AAMDNodes V2AAInfo) {
   // If either of the memory references is empty, it doesn't matter what the
   // pointer values are.
   if (V1Size == 0 || V2Size == 0)
@@ -1259,8 +1259,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
 
   // Check the cache before climbing up use-def chains. This also terminates
   // otherwise infinitely recursive queries.
-  LocPair Locs(Location(V1, V1Size, V1TBAAInfo),
-               Location(V2, V2Size, V2TBAAInfo));
+  LocPair Locs(Location(V1, V1Size, V1AAInfo),
+               Location(V2, V2Size, V2AAInfo));
   if (V1 > V2)
     std::swap(Locs.first, Locs.second);
   std::pair<AliasCacheTy::iterator, bool> Pair =
@@ -1274,32 +1274,32 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
     std::swap(O1, O2);
-    std::swap(V1TBAAInfo, V2TBAAInfo);
+    std::swap(V1AAInfo, V2AAInfo);
   }
   if (const GEPOperator *GV1 = dyn_cast<GEPOperator>(V1)) {
-    AliasResult Result = aliasGEP(GV1, V1Size, V1TBAAInfo, V2, V2Size, V2TBAAInfo, O1, O2);
+    AliasResult Result = aliasGEP(GV1, V1Size, V1AAInfo, V2, V2Size, V2AAInfo, O1, O2);
     if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
   if (isa<PHINode>(V2) && !isa<PHINode>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
-    std::swap(V1TBAAInfo, V2TBAAInfo);
+    std::swap(V1AAInfo, V2AAInfo);
   }
   if (const PHINode *PN = dyn_cast<PHINode>(V1)) {
-    AliasResult Result = aliasPHI(PN, V1Size, V1TBAAInfo,
-                                  V2, V2Size, V2TBAAInfo);
+    AliasResult Result = aliasPHI(PN, V1Size, V1AAInfo,
+                                  V2, V2Size, V2AAInfo);
     if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
   if (isa<SelectInst>(V2) && !isa<SelectInst>(V1)) {
     std::swap(V1, V2);
     std::swap(V1Size, V2Size);
-    std::swap(V1TBAAInfo, V2TBAAInfo);
+    std::swap(V1AAInfo, V2AAInfo);
   }
   if (const SelectInst *S1 = dyn_cast<SelectInst>(V1)) {
-    AliasResult Result = aliasSelect(S1, V1Size, V1TBAAInfo,
-                                     V2, V2Size, V2TBAAInfo);
+    AliasResult Result = aliasSelect(S1, V1Size, V1AAInfo,
+                                     V2, V2Size, V2AAInfo);
     if (Result != MayAlias) return AliasCache[Locs] = Result;
   }
 
@@ -1312,8 +1312,8 @@ BasicAliasAnalysis::aliasCheck(const Value *V1, uint64_t V1Size,
       return AliasCache[Locs] = PartialAlias;
 
   AliasResult Result =
-    AliasAnalysis::alias(Location(V1, V1Size, V1TBAAInfo),
-                         Location(V2, V2Size, V2TBAAInfo));
+    AliasAnalysis::alias(Location(V1, V1Size, V1AAInfo),
+                         Location(V2, V2Size, V2AAInfo));
   return AliasCache[Locs] = Result;
 }
 

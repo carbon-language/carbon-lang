@@ -15,6 +15,7 @@
 #ifndef LLVM_IR_MDBUILDER_H
 #define LLVM_IR_MDBUILDER_H
 
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include <utility>
 
@@ -25,7 +26,6 @@ template <typename T> class ArrayRef;
 class LLVMContext;
 class MDNode;
 class MDString;
-class StringRef;
 
 class MDBuilder {
   LLVMContext &Context;

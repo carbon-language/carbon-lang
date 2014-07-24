@@ -836,12 +836,13 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   InsertNewInstBefore(NewSI, *BBI);
   NewSI->setDebugLoc(OtherStore->getDebugLoc());
 
-  // If the two stores had the same TBAA tag, preserve it.
-  if (MDNode *TBAATag = SI.getMetadata(LLVMContext::MD_tbaa))
-    if ((TBAATag = MDNode::getMostGenericTBAA(TBAATag,
-                               OtherStore->getMetadata(LLVMContext::MD_tbaa))))
-      NewSI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
-
+  // If the two stores had AA tags, merge them.
+  AAMDNodes AATags;
+  SI.getAAMetadata(AATags);
+  if (AATags) {
+    OtherStore->getAAMetadata(AATags, /* Merge = */ true);
+    NewSI->setAAMetadata(AATags);
+  }
 
   // Nuke the old stores.
   EraseInstFromFunction(SI);

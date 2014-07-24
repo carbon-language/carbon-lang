@@ -17,6 +17,7 @@
 #define LLVM_IR_METADATA_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/iterator_range.h"
@@ -66,6 +67,49 @@ public:
   }
 };
 
+/// AAMDNodes - A collection of metadata nodes that might be associated with a
+/// memory access used by the alias-analysis infrastructure.
+struct AAMDNodes {
+  AAMDNodes(MDNode *T = nullptr)
+    : TBAA(T) {}
+
+  bool operator == (const AAMDNodes &A) const {
+    return equals(A);
+  }
+
+  bool operator != (const AAMDNodes &A) const {
+    return !equals(A);
+  }
+
+  operator bool() const {
+    return TBAA;
+  }
+
+  /// TBAA - The tag for type-based alias analysis.
+  MDNode *TBAA;
+
+protected:
+  bool equals(const AAMDNodes &A) const {
+    return TBAA == A.TBAA;
+  }
+};
+
+// Specialize DenseMapInfo for AAMDNodes.
+template<>
+struct DenseMapInfo<AAMDNodes> {
+  static inline AAMDNodes getEmptyKey() {
+    return AAMDNodes(DenseMapInfo<MDNode *>::getEmptyKey());
+  }
+  static inline AAMDNodes getTombstoneKey() {
+    return AAMDNodes(DenseMapInfo<MDNode *>::getTombstoneKey());
+  }
+  static unsigned getHashValue(const AAMDNodes &Val) {
+    return DenseMapInfo<MDNode *>::getHashValue(Val.TBAA);
+  }
+  static bool isEqual(const AAMDNodes &LHS, const AAMDNodes &RHS) {
+    return LHS == RHS;
+  }
+};
 
 class MDNodeOperand;
 
@@ -171,6 +215,7 @@ public:
 
   /// Methods for metadata merging.
   static MDNode *getMostGenericTBAA(MDNode *A, MDNode *B);
+  static AAMDNodes getMostGenericAA(const AAMDNodes &A, const AAMDNodes &B);
   static MDNode *getMostGenericFPMath(MDNode *A, MDNode *B);
   static MDNode *getMostGenericRange(MDNode *A, MDNode *B);
 private:

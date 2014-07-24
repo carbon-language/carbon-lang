@@ -1333,12 +1333,15 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
         LoadInst *FalseLoad =
           Builder.CreateLoad(SI->getFalseValue(), LI->getName()+".f");
 
-        // Transfer alignment and TBAA info if present.
+        // Transfer alignment and AA info if present.
         TrueLoad->setAlignment(LI->getAlignment());
         FalseLoad->setAlignment(LI->getAlignment());
-        if (MDNode *Tag = LI->getMetadata(LLVMContext::MD_tbaa)) {
-          TrueLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
-          FalseLoad->setMetadata(LLVMContext::MD_tbaa, Tag);
+
+        AAMDNodes Tags;
+        LI->getAAMetadata(Tags);
+        if (Tags) {
+          TrueLoad->setAAMetadata(Tags);
+          FalseLoad->setAAMetadata(Tags);
         }
 
         Value *V = Builder.CreateSelect(SI->getCondition(), TrueLoad, FalseLoad);
@@ -1364,10 +1367,12 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
     PHINode *NewPN = PHINode::Create(LoadTy, PN->getNumIncomingValues(),
                                      PN->getName()+".ld", PN);
 
-    // Get the TBAA tag and alignment to use from one of the loads.  It doesn't
+    // Get the AA tags and alignment to use from one of the loads.  It doesn't
     // matter which one we get and if any differ, it doesn't matter.
     LoadInst *SomeLoad = cast<LoadInst>(PN->user_back());
-    MDNode *TBAATag = SomeLoad->getMetadata(LLVMContext::MD_tbaa);
+
+    AAMDNodes AATags;
+    SomeLoad->getAAMetadata(AATags);
     unsigned Align = SomeLoad->getAlignment();
 
     // Rewrite all loads of the PN to use the new PHI.
@@ -1389,7 +1394,7 @@ static bool tryToMakeAllocaBePromotable(AllocaInst *AI, const DataLayout *DL) {
                             PN->getName() + "." + Pred->getName(),
                             Pred->getTerminator());
         Load->setAlignment(Align);
-        if (TBAATag) Load->setMetadata(LLVMContext::MD_tbaa, TBAATag);
+        if (AATags) Load->setAAMetadata(AATags);
       }
 
       NewPN->addIncoming(Load, Pred);
