@@ -34,23 +34,10 @@ using namespace clang;
 //===----------------------------------------------------------------------===//
 
 MacroInfo *Preprocessor::AllocateMacroInfo() {
-  MacroInfoChain *MIChain;
-
-  if (MICache) {
-    MIChain = MICache;
-    MICache = MICache->Next;
-  }
-  else {
-    MIChain = BP.Allocate<MacroInfoChain>();
-  }
-
+  MacroInfoChain *MIChain = BP.Allocate<MacroInfoChain>();
   MIChain->Next = MIChainHead;
-  MIChain->Prev = nullptr;
-  if (MIChainHead)
-    MIChainHead->Prev = MIChain;
   MIChainHead = MIChain;
-
-  return &(MIChain->MI);
+  return &MIChain->MI;
 }
 
 MacroInfo *Preprocessor::AllocateMacroInfo(SourceLocation L) {
@@ -101,20 +88,6 @@ Preprocessor::AllocateVisibilityMacroDirective(SourceLocation Loc,
 /// \brief Release the specified MacroInfo to be reused for allocating
 /// new MacroInfo objects.
 void Preprocessor::ReleaseMacroInfo(MacroInfo *MI) {
-  MacroInfoChain *MIChain = (MacroInfoChain *)MI;
-  if (MacroInfoChain *Prev = MIChain->Prev) {
-    MacroInfoChain *Next = MIChain->Next;
-    Prev->Next = Next;
-    if (Next)
-      Next->Prev = Prev;
-  } else {
-    assert(MIChainHead == MIChain);
-    MIChainHead = MIChain->Next;
-    MIChainHead->Prev = nullptr;
-  }
-  MIChain->Next = MICache;
-  MICache = MIChain;
-
   MI->Destroy();
 }
 

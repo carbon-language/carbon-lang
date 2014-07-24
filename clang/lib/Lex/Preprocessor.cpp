@@ -70,7 +70,7 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
       SkipMainFilePreamble(0, true), CurPPLexer(nullptr),
       CurDirLookup(nullptr), CurLexerKind(CLK_Lexer), CurSubmodule(nullptr),
       Callbacks(nullptr), MacroArgCache(nullptr), Record(nullptr),
-      MIChainHead(nullptr), MICache(nullptr), DeserialMIChainHead(nullptr) {
+      MIChainHead(nullptr), DeserialMIChainHead(nullptr) {
   OwnsHeaderSearch = OwnsHeaders;
   
   ScratchBuf = new ScratchBuffer(SourceMgr);
@@ -142,7 +142,7 @@ Preprocessor::~Preprocessor() {
   IncludeMacroStack.clear();
 
   // Free any macro definitions.
-  for (MacroInfoChain *I = MIChainHead ; I ; I = I->Next)
+  for (MacroInfoChain *I = MIChainHead; I; I = I->Next)
     I->MI.Destroy();
 
   // Free any cached macro expanders.

@@ -433,16 +433,11 @@ private:  // Cached tokens state.
   struct MacroInfoChain {
     MacroInfo MI;
     MacroInfoChain *Next;
-    MacroInfoChain *Prev;
   };
 
   /// MacroInfos are managed as a chain for easy disposal.  This is the head
   /// of that list.
   MacroInfoChain *MIChainHead;
-
-  /// A "freelist" of MacroInfo objects that can be reused for quick
-  /// allocation.
-  MacroInfoChain *MICache;
 
   struct DeserializedMacroInfoChain {
     MacroInfo MI;
