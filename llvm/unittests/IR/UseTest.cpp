@@ -15,6 +15,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
+#include <string>
+
 using namespace llvm;
 
 namespace {
