@@ -73,9 +73,19 @@ protected:
 
   virtual SDValue LowerGlobalAddress(AMDGPUMachineFunction *MFI, SDValue Op,
                                      SelectionDAG &DAG) const;
-  /// \brief Split a vector load into multiple scalar loads.
-  SDValue SplitVectorLoad(const SDValue &Op, SelectionDAG &DAG) const;
+
+  /// \brief Split a vector load into a scalar load of each component.
+  SDValue ScalarizeVectorLoad(SDValue Op, SelectionDAG &DAG) const;
+
+  /// \brief Split a vector load into 2 loads of half the vector.
+  SDValue SplitVectorLoad(SDValue Op, SelectionDAG &DAG) const;
+
+  /// \brief Split a vector store into a scalar store of each component.
+  SDValue ScalarizeVectorStore(SDValue Op, SelectionDAG &DAG) const;
+
+  /// \brief Split a vector store into 2 stores of half the vector.
   SDValue SplitVectorStore(SDValue Op, SelectionDAG &DAG) const;
+
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;

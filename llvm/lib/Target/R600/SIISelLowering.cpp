@@ -923,7 +923,7 @@ SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
           break;
         // fall-through
       case AMDGPUAS::LOCAL_ADDRESS:
-        return SplitVectorLoad(Op, DAG);
+        return ScalarizeVectorLoad(Op, DAG);
     }
   }
 
@@ -1073,7 +1073,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 
   if (Store->getAddressSpace() == AMDGPUAS::PRIVATE_ADDRESS) {
     if (VT.isVector() && VT.getVectorNumElements() > 4)
-      return SplitVectorStore(Op, DAG);
+      return ScalarizeVectorStore(Op, DAG);
     return SDValue();
   }
 
@@ -1082,7 +1082,7 @@ SDValue SITargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
     return Ret;
 
   if (VT.isVector() && VT.getVectorNumElements() >= 8)
-      return SplitVectorStore(Op, DAG);
+      return ScalarizeVectorStore(Op, DAG);
 
   if (VT == MVT::i1)
     return DAG.getTruncStore(Store->getChain(), DL,
