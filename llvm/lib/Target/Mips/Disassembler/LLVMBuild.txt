@@ -19,5 +19,5 @@
 type = Library
 name = MipsDisassembler
 parent = Mips
-required_libraries = MC MipsInfo Support
+required_libraries = MC MCDisassembler MipsInfo Support
 add_to_library_groups = Mips

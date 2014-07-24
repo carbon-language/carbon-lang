@@ -19,5 +19,5 @@
 type = Library
 name = SystemZDisassembler
 parent = SystemZ
-required_libraries = MC Support SystemZDesc SystemZInfo
+required_libraries = MC MCDisassembler Support SystemZDesc SystemZInfo
 add_to_library_groups = SystemZ
