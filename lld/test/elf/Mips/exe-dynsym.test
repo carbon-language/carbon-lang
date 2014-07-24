@@ -1,17 +1,15 @@
-# REQUIRES: mips
-
 # Check that symbol referenced by an entry in the global part of GOT
 # has a corresponded entry in the .dynsym section.
 
 # Build executable
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t-main %s
-# RUN: lld -flavor gnu -target mipsel -e glob -o %t-exe %t-main
-# RUN: llvm-readobj -dyn-symbols %t-exe | FileCheck -check-prefix=CHECK-DYN %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -e glob -o %t.exe %t.o
+# RUN: llvm-readobj -dyn-symbols %t.exe | FileCheck -check-prefix=CHECK-DYN %s
 
 # Build executabl (yaml format)e
 # RUN: lld -flavor gnu -target mipsel -e glob \
-# RUN:     --output-filetype=yaml -o %t-yaml %t-main
-# RUN: FileCheck -check-prefix=CHECK-GOT %s < %t-yaml
+# RUN:     --output-filetype=yaml -o %t.yaml %t.o
+# RUN: FileCheck -check-prefix=CHECK-GOT %s < %t.yaml
 
 # CHECK-DYN: Format: ELF32-mips
 # CHECK-DYN: Arch: mipsel
@@ -62,10 +60,32 @@
 # CHECK-GOT:       offset:          0
 # CHECK-GOT:       target:          weakf
 
-    .abicalls
-    .global glob
-    .ent    glob
-glob:
-    lw      $4,%got(weakf)($28)
-    .end    glob
-    .weak   weakf
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_PIC, EF_MIPS_CPIC,
+                     EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Size:            0x04
+  - Name:            .rel.text
+    Type:            SHT_REL
+    Link:            .symtab
+    AddressAlign:    0x04
+    Info:            .text
+    Relocations:
+      - Offset:          0x00
+        Symbol:          weakf
+        Type:            R_MIPS_GOT16
+
+Symbols:
+  Global:
+    - Name:            glob
+      Section:         .text
+  Weak:
+    - Name:            weakf
