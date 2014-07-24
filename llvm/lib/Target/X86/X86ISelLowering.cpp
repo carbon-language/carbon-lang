@@ -9069,7 +9069,9 @@ static SDValue getINSERTPS(ShuffleVectorSDNode *SVOp, SDLoc &dl,
     // should assume we're changing V2's element's place and behave
     // accordingly.
     int FromV2 = std::count_if(Mask.begin(), Mask.end(), FromV2Predicate);
-    if (FromV1 == FromV2 && DestIndex == Mask[DestIndex] % 4) {
+    assert(DestIndex <= INT32_MAX && "truncated destination index");
+    if (FromV1 == FromV2 &&
+        static_cast<int>(DestIndex) == Mask[DestIndex] % 4) {
       From = V2;
       To = V1;
       DestIndex =
