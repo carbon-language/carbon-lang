@@ -210,7 +210,13 @@ public:
               "Attempted to default construct a reference element in a tuple");}
 
     template <class _Tp,
-              class = typename enable_if<is_constructible<_Hp, _Tp>::value>::type>
+              class = typename enable_if<
+                  __lazy_and<
+                      __lazy_not<is_same<typename decay<_Tp>::type, __tuple_leaf>>
+                    , is_constructible<_Hp, _Tp>
+                    >::value
+                >::type
+            >
         _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
         explicit __tuple_leaf(_Tp&& __t) _NOEXCEPT_((is_nothrow_constructible<_Hp, _Tp>::value))
             : value(_VSTD::forward<_Tp>(__t))
@@ -316,7 +322,13 @@ public:
             : _Hp(__a) {}
 
     template <class _Tp,
-              class = typename enable_if<is_constructible<_Hp, _Tp>::value>::type>
+              class = typename enable_if<
+                  __lazy_and<
+                        __lazy_not<is_same<typename decay<_Tp>::type, __tuple_leaf>>
+                      , is_constructible<_Hp, _Tp>
+                    >::value
+                >::type
+            >
         _LIBCPP_INLINE_VISIBILITY _LIBCPP_CONSTEXPR_AFTER_CXX11
         explicit __tuple_leaf(_Tp&& __t) _NOEXCEPT_((is_nothrow_constructible<_Hp, _Tp>::value))
             : _Hp(_VSTD::forward<_Tp>(__t)) {}
@@ -335,6 +347,9 @@ public:
         _LIBCPP_INLINE_VISIBILITY
         explicit __tuple_leaf(integral_constant<int, 2>, const _Alloc& __a, _Tp&& __t)
             : _Hp(_VSTD::forward<_Tp>(__t), __a) {}
+
+    __tuple_leaf(__tuple_leaf const &) = default;
+    __tuple_leaf(__tuple_leaf &&) = default;
 
     template <class _Tp>
         _LIBCPP_INLINE_VISIBILITY

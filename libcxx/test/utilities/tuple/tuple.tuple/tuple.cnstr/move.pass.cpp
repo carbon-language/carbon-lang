@@ -18,6 +18,18 @@
 
 #include "../MoveOnly.h"
 
+struct ConstructsWithTupleLeaf
+{
+    ConstructsWithTupleLeaf() {}
+
+    ConstructsWithTupleLeaf(ConstructsWithTupleLeaf const &) { assert(false); }
+    ConstructsWithTupleLeaf(ConstructsWithTupleLeaf &&) {}
+
+    template <class T>
+    ConstructsWithTupleLeaf(T t)
+    { assert(false); }
+};
+
 int main()
 {
     {
@@ -45,5 +57,13 @@ int main()
         assert(std::get<0>(t) == 0);
         assert(std::get<1>(t) == 1);
         assert(std::get<2>(t) == 2);
+    }
+    // A bug in tuple caused __tuple_leaf to use its explicit converting constructor
+    //  as its move constructor. This tests that ConstructsWithTupleLeaf is not called
+    // (w/ __tuple_leaf)
+    {
+        typedef std::tuple<ConstructsWithTupleLeaf> d_t;
+        d_t d((ConstructsWithTupleLeaf()));
+        d_t d2(static_cast<d_t &&>(d));
     }
 }
