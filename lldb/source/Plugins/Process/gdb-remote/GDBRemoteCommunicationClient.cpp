@@ -227,8 +227,18 @@ GDBRemoteCommunicationClient::QueryNoAckModeSupported ()
         m_send_acks = true;
         m_supports_not_sending_acks = eLazyBoolNo;
 
+        // This is the first real packet that we'll send in a debug session and it may take a little
+        // longer than normal to receive a reply.  Wait at least 6 seconds for a reply to this packet.
+
+        const uint32_t minimum_timeout = 6;
+        uint32_t old_timeout = GetPacketTimeoutInMicroSeconds() / lldb_private::TimeValue::MicroSecPerSec;
+        SetPacketTimeout (std::max (old_timeout, minimum_timeout));
+
         StringExtractorGDBRemote response;
-        if (SendPacketAndWaitForResponse("QStartNoAckMode", response, false) == PacketResult::Success)
+        PacketResult packet_send_result = SendPacketAndWaitForResponse("QStartNoAckMode", response, false);
+        SetPacketTimeout (old_timeout);
+
+        if (packet_send_result == PacketResult::Success)
         {
             if (response.IsOKResponse())
             {

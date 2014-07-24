@@ -25,6 +25,10 @@
 #include <sys/types.h>
 #include <crt_externs.h> // for _NSGetEnviron()
 
+#if defined (__APPLE__)
+#include <sched.h>
+#endif
+
 #include "CFString.h"
 #include "DNB.h"
 #include "DNBLog.h"
@@ -876,6 +880,19 @@ int
 main (int argc, char *argv[])
 {
     const char *argv_sub_zero = argv[0]; // save a copy of argv[0] for error reporting post-launch
+
+#if defined (__APPLE__)
+    pthread_setname_np ("main thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+    struct sched_param thread_param;
+    int thread_sched_policy;
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    {
+        thread_param.sched_priority = 47;
+        pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+    }
+#endif
+#endif
 
     g_isatty = ::isatty (STDIN_FILENO);
 

@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <unistd.h>
+#include <pthread.h>
 #include "MacOSX/CFUtils.h"
 #include "SysSignal.h"
 
@@ -1445,6 +1446,10 @@ MachProcess::STDIOThread(void *arg)
     MachProcess *proc = (MachProcess*) arg;
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s ( arg = %p ) thread starting...", __FUNCTION__, arg);
 
+#if defined (__APPLE__)
+    pthread_setname_np ("stdio monitoring thread");
+#endif
+
     // We start use a base and more options so we can control if we
     // are currently using a timeout on the mach_msg. We do this to get a
     // bunch of related exceptions on our exception port so we can process
@@ -1610,6 +1615,10 @@ MachProcess::ProfileThread(void *arg)
 {
     MachProcess *proc = (MachProcess*) arg;
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::%s ( arg = %p ) thread starting...", __FUNCTION__, arg);
+
+#if defined (__APPLE__)
+    pthread_setname_np ("performance profiling thread");
+#endif
 
     while (proc->IsProfilingEnabled())
     {

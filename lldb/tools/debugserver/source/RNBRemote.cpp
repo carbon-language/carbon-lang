@@ -20,6 +20,11 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
+#if defined (__APPLE__)
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 #include "DNB.h"
 #include "DNBDataRef.h"
 #include "DNBLog.h"
@@ -755,6 +760,20 @@ RNBRemote::ThreadFunctionReadRemoteData(void *arg)
     RNBRemoteSP remoteSP(g_remoteSP);
     if (remoteSP.get() != NULL)
     {
+
+#if defined (__APPLE__)
+        pthread_setname_np ("read gdb-remote packets thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+        struct sched_param thread_param;
+        int thread_sched_policy;
+        if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+        {
+            thread_param.sched_priority = 47;
+            pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+        }
+#endif
+#endif
+
         RNBRemote* remote = remoteSP.get();
         PThreadEvent& events = remote->Context().Events();
         events.SetEvents (RNBContext::event_read_thread_running);

@@ -23,6 +23,11 @@
 #include <mach/mach_vm.h>
 #import <sys/sysctl.h>
 
+#if defined (__APPLE__)
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 // C++ Includes
 #include <iomanip>
 #include <sstream>
@@ -640,6 +645,7 @@ bool
 MachTask::StartExceptionThread(DNBError &err)
 {
     DNBLogThreadedIf(LOG_EXCEPTIONS, "MachTask::%s ( )", __FUNCTION__);
+
     task_t task = TaskPortForProcessID(err);
     if (MachTask::IsValid(task))
     {
@@ -730,6 +736,19 @@ MachTask::ExceptionThread (void *arg)
     MachTask *mach_task = (MachTask*) arg;
     MachProcess *mach_proc = mach_task->Process();
     DNBLogThreadedIf(LOG_EXCEPTIONS, "MachTask::%s ( arg = %p ) starting thread...", __FUNCTION__, arg);
+
+#if defined (__APPLE__)
+    pthread_setname_np ("exception monitoring thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+    struct sched_param thread_param;
+    int thread_sched_policy;
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    {
+        thread_param.sched_priority = 47;
+        pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+    }
+#endif
+#endif
 
     // We keep a count of the number of consecutive exceptions received so
     // we know to grab all exceptions without a timeout. We do this to get a

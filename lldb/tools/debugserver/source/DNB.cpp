@@ -26,6 +26,11 @@
 #include <vector>
 #include <libproc.h>
 
+#if defined (__APPLE__)
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 #define TRY_KQUEUE 1
 
 #ifdef TRY_KQUEUE
@@ -141,6 +146,19 @@ kqueue_thread (void *arg)
 {
     int kq_id = (int) (intptr_t) arg;
     
+#if defined (__APPLE__)
+    pthread_setname_np ("kqueue thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+    struct sched_param thread_param;
+    int thread_sched_policy;
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    {
+        thread_param.sched_priority = 47;
+        pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+    }
+#endif
+#endif
+
     struct kevent death_event;
     while (1)
     {        
@@ -265,6 +283,20 @@ waitpid_thread (void *arg)
 {
     const pid_t pid = (pid_t)(intptr_t)arg;
     int status;
+
+#if defined (__APPLE__)
+    pthread_setname_np ("waitpid thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+    struct sched_param thread_param;
+    int thread_sched_policy;
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    {
+        thread_param.sched_priority = 47;
+        pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+    }
+#endif
+#endif
+
     while (1)
     {
         pid_t child_pid = waitpid(pid, &status, 0);

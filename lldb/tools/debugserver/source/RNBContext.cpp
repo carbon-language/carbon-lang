@@ -16,6 +16,11 @@
 #include <sys/stat.h>
 #include <sstream>
 
+#if defined (__APPLE__)
+#include <pthread.h>
+#include <sched.h>
+#endif
+
 #include "RNBRemote.h"
 #include "DNB.h"
 #include "DNBLog.h"
@@ -145,6 +150,20 @@ RNBContext::ThreadFunctionProcessStatus(void *arg)
     nub_process_t pid = ctx.ProcessID();
     DNBLogThreadedIf(LOG_RNB_PROC, "RNBContext::%s (arg=%p, pid=%4.4x): thread starting...", __FUNCTION__, arg, pid);
     ctx.Events().SetEvents (RNBContext::event_proc_thread_running);
+
+#if defined (__APPLE__)
+    pthread_setname_np ("child process status watcher thread");
+#if defined (__arm__) || defined (__arm64__) || defined (__aarch64__)
+    struct sched_param thread_param;
+    int thread_sched_policy;
+    if (pthread_getschedparam(pthread_self(), &thread_sched_policy, &thread_param) == 0) 
+    {
+        thread_param.sched_priority = 47;
+        pthread_setschedparam(pthread_self(), thread_sched_policy, &thread_param);
+    }
+#endif
+#endif
+
     bool done = false;
     while (!done)
     {
