@@ -42,12 +42,19 @@ std::string GetExecutablePath(const char *Argv0) {
   return llvm::sys::fs::getMainExecutable(Argv0, MainAddr);
 }
 
+static llvm::ExecutionEngine *createExecutionEngine(llvm::Module *M,
+                                                    std::string *ErrorStr) {
+  llvm::EngineBuilder EB = llvm::EngineBuilder(M)
+                               .setEngineKind(llvm::EngineKind::Either)
+                               .setErrorStr(ErrorStr);
+  return EB.create();
+}
+
 static int Execute(llvm::Module *Mod, char * const *envp) {
   llvm::InitializeNativeTarget();
 
   std::string Error;
-  std::unique_ptr<llvm::ExecutionEngine> EE(
-      llvm::ExecutionEngine::create(Mod, /*ForceInterpreter*/ false, &Error));
+  std::unique_ptr<llvm::ExecutionEngine> EE(createExecutionEngine(Mod, &Error));
   if (!EE) {
     llvm::errs() << "unable to make execution engine: " << Error << "\n";
     return 255;
