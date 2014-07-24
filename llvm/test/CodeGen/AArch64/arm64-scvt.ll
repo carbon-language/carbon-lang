@@ -1,4 +1,5 @@
-; RUN: llc < %s -march=arm64 -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=arm64 -mcpu=cyclone -aarch64-neon-syntax=apple | FileCheck %s
+; RUN: llc < %s -march=arm64 -mcpu=cortex-a57 | FileCheck --check-prefix=CHECK-A57 %s
 ; rdar://13082402
 
 define float @t1(i32* nocapture %src) nounwind ssp {
@@ -409,6 +410,10 @@ define float @sfct1(i8* nocapture %sp0) {
 ; CHECK-NEXT: sshll.4s v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:s[0-9]+]], s[[SEXTREG]]
 ; CHECK-NEXT: fmul s0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct1:
+; CHECK-A57: ldrsb w[[REGNUM:[0-9]+]], [x0, #1]
+; CHECK-A57-NEXT: scvtf [[REG:s[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul s0, [[REG]], [[REG]]
 entry:
   %addr = getelementptr i8* %sp0, i64 1
   %pix_sp0.0.copyload = load i8* %addr, align 1
@@ -466,6 +471,10 @@ define float @sfct5(i8* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: sshll.4s v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:s[0-9]+]], s[[SEXTREG]]
 ; CHECK-NEXT: fmul s0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct5:
+; CHECK-A57: ldrsb w[[REGNUM:[0-9]+]], [x0, x1]
+; CHECK-A57-NEXT: scvtf [[REG:s[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul s0, [[REG]], [[REG]]
 entry:
   %addr = getelementptr i8* %sp0, i64 %offset
   %pix_sp0.0.copyload = load i8* %addr, align 1
@@ -536,6 +545,10 @@ define double @sfct10(i16* nocapture %sp0) {
 ; CHECK-NEXT: sshll.2d v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:d[0-9]+]], d[[SEXTREG]]
 ; CHECK-NEXT: fmul d0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct10:
+; CHECK-A57: ldrsh w[[REGNUM:[0-9]+]], [x0, #2]
+; CHECK-A57-NEXT: scvtf [[REG:d[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul d0, [[REG]], [[REG]]
 entry:
   %addr = getelementptr i16* %sp0, i64 1
   %pix_sp0.0.copyload = load i16* %addr, align 1
@@ -592,6 +605,10 @@ define double @sfct14(i16* nocapture %sp0, i64 %offset) {
 ; CHECK-NEXT: sshll.2d v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:d[0-9]+]], d[[SEXTREG]]
 ; CHECK-NEXT: fmul d0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct14:
+; CHECK-A57: ldrsh w[[REGNUM:[0-9]+]], [x0, x1, lsl #1]
+; CHECK-A57-NEXT: scvtf [[REG:d[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul d0, [[REG]], [[REG]]
 entry:
   %addr = getelementptr i16* %sp0, i64 %offset
   %pix_sp0.0.copyload = load i16* %addr, align 1
@@ -636,6 +653,10 @@ entry:
 ; CHECK-NEXT: sshll.4s v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:s[0-9]+]], s[[SEXTREG]]
 ; CHECK-NEXT: fmul s0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct17:
+; CHECK-A57: ldursb w[[REGNUM:[0-9]+]], [x0, #-1]
+; CHECK-A57-NEXT: scvtf [[REG:s[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul s0, [[REG]], [[REG]]
   %bitcast = ptrtoint i8* %sp0 to i64
   %add = add i64 %bitcast, -1
   %addr = inttoptr i64 %add to i8*
@@ -713,6 +734,10 @@ define double @sfct22(i16* nocapture %sp0) {
 ; CHECK-NEXT: sshll.2d v[[SEXTREG:[0-9]+]], [[SEXTREG1]], #0
 ; CHECK: scvtf [[REG:d[0-9]+]], d[[SEXTREG]]
 ; CHECK-NEXT: fmul d0, [[REG]], [[REG]]
+; CHECK-A57-LABEL: sfct22:
+; CHECK-A57: ldursh w[[REGNUM:[0-9]+]], [x0, #1]
+; CHECK-A57-NEXT: scvtf [[REG:d[0-9]+]], w[[REGNUM]]
+; CHECK-A57-NEXT: fmul d0, [[REG]], [[REG]]
   %bitcast = ptrtoint i16* %sp0 to i64
   %add = add i64 %bitcast, 1
   %addr = inttoptr i64 %add to i16*

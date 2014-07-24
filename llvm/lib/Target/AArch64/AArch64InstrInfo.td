@@ -24,6 +24,7 @@ def HasCRC           : Predicate<"Subtarget->hasCRC()">,
                                  AssemblerPredicate<"FeatureCRC", "crc">;
 def IsLE             : Predicate<"Subtarget->isLittleEndian()">;
 def IsBE             : Predicate<"!Subtarget->isLittleEndian()">;
+def IsCyclone        : Predicate<"Subtarget->isCyclone()">;
 
 //===----------------------------------------------------------------------===//
 // AArch64-specific DAG Nodes.
@@ -4386,7 +4387,7 @@ class SExtLoadi8CVTf32Pat<dag addrmode, dag INST>
                                     0),
                                   dsub)),
                                0),
-                             ssub)))>, Requires<[NotForCodeSize]>;
+                             ssub)))>, Requires<[NotForCodeSize, IsCyclone]>;
 
 def : SExtLoadi8CVTf32Pat<(ro8.Wpat GPR64sp:$Rn, GPR32:$Rm, ro8.Wext:$ext),
                           (LDRBroW  GPR64sp:$Rn, GPR32:$Rm, ro8.Wext:$ext)>;
@@ -4439,8 +4440,8 @@ class SExtLoadi16CVTf64Pat<dag addrmode, dag INST>
                                      0),
                                    dsub)),
                                0),
-                             dsub)))>, Requires<[NotForCodeSize]>;
-
+                             dsub)))>, Requires<[NotForCodeSize, IsCyclone]>;
+ 
 def : SExtLoadi16CVTf64Pat<(ro16.Wpat GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext),
                            (LDRHroW GPR64sp:$Rn, GPR32:$Rm, ro16.Wext:$ext)>;
 def : SExtLoadi16CVTf64Pat<(ro16.Xpat GPR64sp:$Rn, GPR64:$Rm, ro16.Xext:$ext),
