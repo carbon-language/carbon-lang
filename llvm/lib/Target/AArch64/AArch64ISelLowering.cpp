@@ -4180,9 +4180,22 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
   if (SourceVecs.size() > 2)
     return SDValue();
 
-  SDValue ShuffleSrcs[2] = { DAG.getUNDEF(VT), DAG.getUNDEF(VT) };
+  // Find out the smallest element size among result and two sources, and use
+  // it as element size to build the shuffle_vector.
+  EVT SmallestEltTy = VT.getVectorElementType();
+  for (unsigned i = 0; i < SourceVecs.size(); ++i) {
+    EVT SrcEltTy = SourceVecs[i].getValueType().getVectorElementType();
+    if (SrcEltTy.bitsLT(SmallestEltTy)) {
+      SmallestEltTy = SrcEltTy;
+    }
+  }
+  unsigned ResMultiplier =
+      VT.getVectorElementType().getSizeInBits() / SmallestEltTy.getSizeInBits();
   int VEXTOffsets[2] = { 0, 0 };
   int OffsetMultipliers[2] = { 1, 1 };
+  NumElts = VT.getSizeInBits() / SmallestEltTy.getSizeInBits();
+  EVT ShuffleVT = EVT::getVectorVT(*DAG.getContext(), SmallestEltTy, NumElts);
+  SDValue ShuffleSrcs[2] = {DAG.getUNDEF(ShuffleVT), DAG.getUNDEF(ShuffleVT)};
 
   // This loop extracts the usage patterns of the source vectors
   // and prepares appropriate SDValues for a shuffle if possible.
@@ -4190,15 +4203,15 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
     unsigned NumSrcElts = SourceVecs[i].getValueType().getVectorNumElements();
     SDValue CurSource = SourceVecs[i];
     if (SourceVecs[i].getValueType().getVectorElementType() !=
-        VT.getVectorElementType()) {
-      // It may hit this case if SourceVecs[i] is AssertSext/AssertZext.
-      // Then bitcast it to the vector which holds asserted element type,
-      // and record the multiplier of element width between SourceVecs and
-      // Build_vector which is needed to extract the correct lanes later.
-      EVT CastVT =
-          EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
-                           SourceVecs[i].getValueSizeInBits() /
-                               VT.getVectorElementType().getSizeInBits());
+        ShuffleVT.getVectorElementType()) {
+      // As ShuffleVT holds smallest element size, it may hit here only if
+      // the element type of SourceVecs is bigger than that of ShuffleVT.
+      // Adjust the element size of SourceVecs to match ShuffleVT, and record
+      // the multipliers.
+      EVT CastVT = EVT::getVectorVT(
+          *DAG.getContext(), ShuffleVT.getVectorElementType(),
+          SourceVecs[i].getValueSizeInBits() /
+              ShuffleVT.getVectorElementType().getSizeInBits());
 
       CurSource = DAG.getNode(ISD::BITCAST, dl, CastVT, SourceVecs[i]);
       OffsetMultipliers[i] = CastVT.getVectorNumElements() / NumSrcElts;
@@ -4207,7 +4220,7 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
       MinElts[i] *= OffsetMultipliers[i];
     }
 
-    if (CurSource.getValueType() == VT) {
+    if (CurSource.getValueType() == ShuffleVT) {
       // No VEXT necessary
       ShuffleSrcs[i] = CurSource;
       VEXTOffsets[i] = 0;
@@ -4215,8 +4228,9 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
     } else if (NumSrcElts < NumElts) {
       // We can pad out the smaller vector for free, so if it's part of a
       // shuffle...
-      ShuffleSrcs[i] = DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, CurSource,
-                                   DAG.getUNDEF(CurSource.getValueType()));
+      ShuffleSrcs[i] =
+          DAG.getNode(ISD::CONCAT_VECTORS, dl, ShuffleVT, CurSource,
+                      DAG.getUNDEF(CurSource.getValueType()));
       continue;
     }
 
@@ -4233,50 +4247,61 @@ SDValue AArch64TargetLowering::ReconstructShuffle(SDValue Op,
     if (MinElts[i] >= NumElts) {
       // The extraction can just take the second half
       VEXTOffsets[i] = NumElts;
-      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, CurSource,
-                                   DAG.getIntPtrConstant(NumElts));
+      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ShuffleVT,
+                                   CurSource, DAG.getIntPtrConstant(NumElts));
     } else if (MaxElts[i] < NumElts) {
       // The extraction can just take the first half
       VEXTOffsets[i] = 0;
-      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, CurSource,
-                                   DAG.getIntPtrConstant(0));
+      ShuffleSrcs[i] = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ShuffleVT,
+                                   CurSource, DAG.getIntPtrConstant(0));
     } else {
       // An actual VEXT is needed
       VEXTOffsets[i] = MinElts[i];
-      SDValue VEXTSrc1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, CurSource,
-                                     DAG.getIntPtrConstant(0));
-      SDValue VEXTSrc2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, CurSource,
-                                     DAG.getIntPtrConstant(NumElts));
+      SDValue VEXTSrc1 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ShuffleVT,
+                                     CurSource, DAG.getIntPtrConstant(0));
+      SDValue VEXTSrc2 = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, ShuffleVT,
+                                     CurSource, DAG.getIntPtrConstant(NumElts));
       unsigned Imm = VEXTOffsets[i] * getExtFactor(VEXTSrc1);
-      ShuffleSrcs[i] = DAG.getNode(AArch64ISD::EXT, dl, VT, VEXTSrc1, VEXTSrc2,
-                                   DAG.getConstant(Imm, MVT::i32));
+      ShuffleSrcs[i] = DAG.getNode(AArch64ISD::EXT, dl, ShuffleVT, VEXTSrc1,
+                                   VEXTSrc2, DAG.getConstant(Imm, MVT::i32));
     }
   }
 
   SmallVector<int, 8> Mask;
+  unsigned VTEltSize = VT.getVectorElementType().getSizeInBits();
 
-  for (unsigned i = 0; i < NumElts; ++i) {
+  for (unsigned i = 0; i < VT.getVectorNumElements(); ++i) {
     SDValue Entry = Op.getOperand(i);
-    if (Entry.getOpcode() == ISD::UNDEF) {
-      Mask.push_back(-1);
-      continue;
+    int SourceNum = 1;
+    unsigned LanePartNum = 0;
+    int ExtractElt;
+    if (Entry.getOpcode() != ISD::UNDEF) {
+      // Check how many parts of source lane should be inserted.
+      SDValue ExtractVec = Entry.getOperand(0);
+      if (ExtractVec == SourceVecs[0])
+        SourceNum = 0;
+      ExtractElt = cast<ConstantSDNode>(Entry.getOperand(1))->getSExtValue();
+      unsigned ExtEltSize =
+          ExtractVec.getValueType().getVectorElementType().getSizeInBits();
+      unsigned SmallerSize = ExtEltSize < VTEltSize ? ExtEltSize : VTEltSize;
+      LanePartNum = SmallerSize / SmallestEltTy.getSizeInBits();
     }
 
-    SDValue ExtractVec = Entry.getOperand(0);
-    int ExtractElt =
-        cast<ConstantSDNode>(Op.getOperand(i).getOperand(1))->getSExtValue();
-    if (ExtractVec == SourceVecs[0]) {
-      Mask.push_back(ExtractElt * OffsetMultipliers[0] - VEXTOffsets[0]);
-    } else {
-      Mask.push_back(ExtractElt * OffsetMultipliers[1] + NumElts -
-                     VEXTOffsets[1]);
+    for (unsigned j = 0; j != ResMultiplier; ++j) {
+      if (j < LanePartNum)
+        Mask.push_back(ExtractElt * OffsetMultipliers[SourceNum] +
+                       NumElts * SourceNum - VEXTOffsets[SourceNum] + j);
+      else
+        Mask.push_back(-1);
     }
   }
 
   // Final check before we try to produce nonsense...
-  if (isShuffleMaskLegal(Mask, VT))
-    return DAG.getVectorShuffle(VT, dl, ShuffleSrcs[0], ShuffleSrcs[1],
-                                &Mask[0]);
+  if (isShuffleMaskLegal(Mask, ShuffleVT)) {
+    SDValue Shuffle = DAG.getVectorShuffle(ShuffleVT, dl, ShuffleSrcs[0],
+                                           ShuffleSrcs[1], &Mask[0]);
+    return DAG.getNode(ISD::BITCAST, dl, VT, Shuffle);
+  }
 
   return SDValue();
 }

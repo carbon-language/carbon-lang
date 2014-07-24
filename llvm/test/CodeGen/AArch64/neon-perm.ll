@@ -1387,6 +1387,13 @@ entry:
   ret <8 x i16> %shuffle.i
 }
 
+define <4 x i8> @test_vzip1_v4i8(<8 x i8> %p) {
+; CHECK-LABEL: test_vzip1_v4i8:
+; CHECK: zip1 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
+ %lo = shufflevector <8 x i8> %p, <8 x i8> undef, <4 x i32> <i32 0, i32 1, i32 2, i32 3>
+ ret <4 x i8> %lo
+}
+
 define <8 x i8> @test_same_vzip2_s8(<8 x i8> %a) {
 ; CHECK-LABEL: test_same_vzip2_s8:
 ; CHECK: zip2 {{v[0-9]+}}.8b, {{v[0-9]+}}.8b, {{v[0-9]+}}.8b
