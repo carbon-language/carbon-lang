@@ -757,24 +757,9 @@ define i32 @slti6(i32 %a) nounwind readnone {
 
 ; ALL-LABEL: slti6:
 
-; 32-CMOV-DAG: slti [[R1:\$[0-9]+]], $4, 7
-; 32-CMOV-DAG: xori [[R1]], [[R1]], 1
-; 32-CMOV-DAG: addiu [[R2:\$[0-9]+]], [[R1]], 3
-; 32-CMOV-NOT: movn
-
-; 32-CMP-DAG:  slti [[R1:\$[0-9]+]], $4, 7
-; 32-CMP-DAG:  xori [[R1]], [[R1]], 1
-; 32-CMP-DAG:  addiu [[R2:\$[0-9]+]], [[R1]], 3
-; 32-CMP-NOT:  seleqz
-; 32-CMP-NOT:  selnez
-
-; 64-CMOV-DAG: slti [[R1:\$[0-9]+]], $4, 7
-; 64-CMOV-DAG: xori [[R1]], [[R1]], 1
-; 64-CMOV-DAG: addiu [[R2:\$[0-9]+]], [[R1]], 3
-; 64-CMOV-NOT: movn
-
-; 64-CMP-DAG:  slti [[R1:\$[0-9]+]], $4, 7
-; 64-CMP-DAG:  xori [[R1]], [[R1]], 1
-; 64-CMP-DAG:  addiu [[R2:\$[0-9]+]], [[R1]], 3
-; 64-CMP-NOT:  seleqz
-; 64-CMP-NOT:  selnez
+; ALL-DAG: addiu [[R1:\$[0-9]+]], $zero, 6
+; ALL-DAG: slt [[R1]], [[R1]], $4
+; ALL-DAG: addiu [[R2:\$[0-9]+]], [[R1]], 3
+; ALL-NOT: movn
+; ALL-NOT:  seleqz
+; ALL-NOT:  selnez

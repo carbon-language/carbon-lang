@@ -284,7 +284,7 @@ entry:
 define i32 @func_test1(i32 %p1) nounwind uwtable {
 entry:
 ; CHECK-LABEL: func_test1:
-; CHECK: testb
+; CHECK: andb
 ; CHECK: j
 ; CHECK: ret
   %0 = load i32* @b, align 4

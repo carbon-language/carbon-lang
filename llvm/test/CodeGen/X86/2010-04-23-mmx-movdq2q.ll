@@ -7,7 +7,7 @@ entry:
         %tmp1 = bitcast double %a to <8 x i8>
         %tmp2 = bitcast double %b to <8 x i8>
         %tmp3 = add <8 x i8> %tmp1, %tmp2
-; CHECK:  paddw
+; CHECK:  paddb
         store <8 x i8> %tmp3, <8 x i8>* null
         ret void
 }
@@ -18,7 +18,7 @@ entry:
         %tmp1 = bitcast double %a to <4 x i16>
         %tmp2 = bitcast double %b to <4 x i16>
         %tmp3 = add <4 x i16> %tmp1, %tmp2
-; CHECK:  paddd
+; CHECK:  paddw
         store <4 x i16> %tmp3, <4 x i16>* null
         ret void
 }
@@ -29,7 +29,7 @@ entry:
         %tmp1 = bitcast double %a to <2 x i32>
         %tmp2 = bitcast double %b to <2 x i32>
         %tmp3 = add <2 x i32> %tmp1, %tmp2
-; CHECK:  paddq
+; CHECK:  paddd
         store <2 x i32> %tmp3, <2 x i32>* null
         ret void
 }

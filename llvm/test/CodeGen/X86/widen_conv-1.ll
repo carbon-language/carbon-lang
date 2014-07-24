@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mattr=+sse4.2 | FileCheck %s
-; CHECK: paddq
+; CHECK: paddd
 
 ; truncate v2i64 to v2i32
 

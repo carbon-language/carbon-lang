@@ -3,7 +3,7 @@
 
 declare {i8, i1} @llvm.umul.with.overflow.i8(i8 %a, i8 %b)
 define i8 @testumulo(i32 %argc) {
-; CHECK: imulw
+; CHECK: imull
 ; CHECK: testb %{{.+}}, %{{.+}}
 ; CHECK: je [[NOOVERFLOWLABEL:.+]]
 ; CHECK: {{.*}}[[NOOVERFLOWLABEL]]:

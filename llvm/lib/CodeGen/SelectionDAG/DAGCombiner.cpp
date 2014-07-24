@@ -104,6 +104,12 @@ namespace {
     /// stable indices of nodes within the worklist.
     DenseMap<SDNode *, unsigned> WorklistMap;
 
+    /// \brief Set of nodes which have been combined (at least once).
+    ///
+    /// This is used to allow us to reliably add any operands of a DAG node
+    /// which have not yet been combined to the worklist.
+    SmallPtrSet<SDNode *, 64> CombinedNodes;
+
     // AA - Used for DAG load/store alias analysis.
     AliasAnalysis &AA;
 
@@ -136,6 +142,8 @@ namespace {
     /// removeFromWorklist - remove all instances of N from the worklist.
     ///
     void removeFromWorklist(SDNode *N) {
+      CombinedNodes.erase(N);
+
       auto It = WorklistMap.find(N);
       if (It == WorklistMap.end())
         return; // Not in the worklist.
@@ -1152,6 +1160,17 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     if (recursivelyDeleteUnusedNodes(N))
       continue;
 
+    DEBUG(dbgs() << "\nCombining: ";
+          N->dump(&DAG));
+
+    // Add any operands of the new node which have not yet been combined to the
+    // worklist as well. Because the worklist uniques things already, this
+    // won't repeatedly process the same operand.
+    CombinedNodes.insert(N);
+    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+      if (!CombinedNodes.count(N->getOperand(i).getNode()))
+        AddToWorklist(N->getOperand(i).getNode());
+
     WorklistRemover DeadNodes(*this);
 
     SDValue RV = combine(N);
@@ -1172,11 +1191,8 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
            RV.getNode()->getOpcode() != ISD::DELETED_NODE &&
            "Node was deleted but visit returned new node!");
 
-    DEBUG(dbgs() << "\nReplacing.3 ";
-          N->dump(&DAG);
-          dbgs() << "\nWith: ";
-          RV.getNode()->dump(&DAG);
-          dbgs() << '\n');
+    DEBUG(dbgs() << " ... into: ";
+          RV.getNode()->dump(&DAG));
 
     // Transfer debug value.
     DAG.TransferDbgValues(SDValue(N, 0), RV);

@@ -92,12 +92,10 @@ define arm_aapcs_vfpcc void @test_1double_misaligned([4 x double], [4 x double],
   call arm_aapcs_vfpcc void @test_1double_misaligned([4 x double] undef, [4 x double] undef, float undef, double 1.0)
 
 ; CHECK-LABEL: test_1double_misaligned:
-; CHECK-DAG: mov [[ONELO:r[0-9]+]], #0
-; CHECK-DAG: mov r[[BASE:[0-9]+]], sp
 ; CHECK-DAG: movw [[ONEHI:r[0-9]+]], #0
+; CHECK-DAG: mov [[ONELO:r[0-9]+]], #0
 ; CHECK-DAG: movt [[ONEHI]], #16368
-; CHECK-DAG: str [[ONELO]], [r[[BASE]], #8]!
-; CHECK-DAG: str [[ONEHI]], [r[[BASE]], #4]
+; CHECK-DAG: strd [[ONELO]], [[ONEHI]], [sp, #8]
 
 ; CHECK-M4F-LABEL: test_1double_misaligned:
 ; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0

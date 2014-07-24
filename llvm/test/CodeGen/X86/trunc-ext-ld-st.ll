@@ -32,7 +32,7 @@ define void @load_2_i16(<2 x i16>* %A)  {
 
 ;CHECK-LABEL: load_2_i32:
 ;CHECK: pmovzxdq
-;CHECK: paddq
+;CHECK: paddd
 ;CHECK: pshufd
 ;CHECK: ret
 define void @load_2_i32(<2 x i32>* %A)  {
@@ -56,7 +56,7 @@ define void @load_4_i8(<4 x i8>* %A)  {
 
 ;CHECK-LABEL: load_4_i16:
 ;CHECK: pmovzxwd
-;CHECK: paddd
+;CHECK: paddw
 ;CHECK: pshufb
 ;CHECK: ret
 define void @load_4_i16(<4 x i16>* %A)  {
@@ -68,7 +68,7 @@ define void @load_4_i16(<4 x i16>* %A)  {
 
 ;CHECK-LABEL: load_8_i8:
 ;CHECK: pmovzxbw
-;CHECK: paddw
+;CHECK: paddb
 ;CHECK: pshufb
 ;CHECK: ret
 define void @load_8_i8(<8 x i8>* %A)  {

@@ -2,12 +2,12 @@
 ; RUN: llc -march=x86 -mcpu=atom < %s | FileCheck -check-prefix=ATOM %s
 
 ; CHECK: movl
-; CHECK: paddd
+; CHECK: paddw
 ; CHECK: movlpd
 
 ; Scheduler causes produce a different instruction order
 ; ATOM: movl
-; ATOM: paddd
+; ATOM: paddw
 ; ATOM: movlpd
 
 ; bitcast a v4i16 to v2i32

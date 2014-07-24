@@ -91,10 +91,9 @@ define void @add3i16(%i16vec3* nocapture sret %ret, %i16vec3* %ap, %i16vec3* %bp
 %i16vec4 = type <4 x i16>
 define void @add4i16(%i16vec4* nocapture sret %ret, %i16vec4* %ap, %i16vec4* %bp) nounwind {
 ; CHECK-LABEL: add4i16:
-; CHECK:         pmovzxwd (%{{.*}}), %[[R0:xmm[0-9]+]]
-; CHECK-NEXT:    pmovzxwd (%{{.*}}), %[[R1:xmm[0-9]+]]
-; CHECK-NEXT:    paddd   %[[R0]], %[[R1]]
-; CHECK-NEXT:    pshufb  {{.*}}, %[[R1]]
+; CHECK:         movq    (%{{.*}}), %[[R0:xmm[0-9]+]]
+; CHECK-NEXT:    movq    (%{{.*}}), %[[R1:xmm[0-9]+]]
+; CHECK-NEXT:    paddw   %[[R0]], %[[R1]]
 ; CHECK-NEXT:    movq    %[[R1]], (%{{.*}})
 	%a = load %i16vec4* %ap, align 16
 	%b = load %i16vec4* %bp, align 16
