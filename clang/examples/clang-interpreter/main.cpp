@@ -18,7 +18,7 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/ExecutionEngine/MCJIT.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Host.h"
@@ -45,6 +45,7 @@ std::string GetExecutablePath(const char *Argv0) {
 static llvm::ExecutionEngine *createExecutionEngine(llvm::Module *M,
                                                     std::string *ErrorStr) {
   llvm::EngineBuilder EB = llvm::EngineBuilder(M)
+                               .setUseMCJIT(true)
                                .setEngineKind(llvm::EngineKind::Either)
                                .setErrorStr(ErrorStr);
   return EB.create();
@@ -52,6 +53,7 @@ static llvm::ExecutionEngine *createExecutionEngine(llvm::Module *M,
 
 static int Execute(llvm::Module *Mod, char * const *envp) {
   llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
 
   std::string Error;
   std::unique_ptr<llvm::ExecutionEngine> EE(createExecutionEngine(Mod, &Error));
@@ -70,6 +72,7 @@ static int Execute(llvm::Module *Mod, char * const *envp) {
   std::vector<std::string> Args;
   Args.push_back(Mod->getModuleIdentifier());
 
+  EE->finalizeObject();
   return EE->runFunctionAsMain(EntryFn, Args, envp);
 }
 
