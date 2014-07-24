@@ -331,9 +331,8 @@ ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
 
   class ActionFactory : public FrontendActionFactory {
   public:
-    ActionFactory(ClangTidyASTConsumerFactory *ConsumerFactory)
-        : ConsumerFactory(ConsumerFactory) {}
-    FrontendAction *create() override { return new Action(ConsumerFactory); }
+    ActionFactory(ClangTidyContext &Context) : ConsumerFactory(Context) {}
+    FrontendAction *create() override { return new Action(&ConsumerFactory); }
 
   private:
     class Action : public ASTFrontendAction {
@@ -348,10 +347,11 @@ ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
       ClangTidyASTConsumerFactory *Factory;
     };
 
-    ClangTidyASTConsumerFactory *ConsumerFactory;
+    ClangTidyASTConsumerFactory ConsumerFactory;
   };
 
-  Tool.run(new ActionFactory(new ClangTidyASTConsumerFactory(Context)));
+  ActionFactory Factory(Context);
+  Tool.run(&Factory);
   *Errors = Context.getErrors();
   return Context.getStats();
 }

@@ -736,8 +736,8 @@ int main(int Argc, const char **Argv) {
   ClangTool Tool(*Compilations, Headers);
   Tool.appendArgumentsAdjuster(new AddDependenciesAdjuster(Dependencies));
   int HadErrors = 0;
-  HadErrors |= Tool.run(
-      new ModularizeFrontendActionFactory(Entities, *PPTracker, HadErrors));
+  ModularizeFrontendActionFactory Factory(Entities, *PPTracker, HadErrors);
+  HadErrors |= Tool.run(&Factory);
 
   // Create a place to save duplicate entity locations, separate bins per kind.
   typedef SmallVector<Location, 8> LocationArray;

@@ -46,8 +46,8 @@ int UseNullptrTransform::apply(const CompilationDatabase &Database,
   NullptrFixer Fixer(AcceptedChanges, MacroNames, /*Owner=*/ *this);
 
   Finder.addMatcher(makeCastSequenceMatcher(), &Fixer);
-
-  if (int result = UseNullptrTool.run(createActionFactory(Finder))) {
+  std::unique_ptr<FrontendActionFactory> Factory(createActionFactory(Finder));
+  if (int result = UseNullptrTool.run(Factory.get())) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

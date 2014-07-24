@@ -255,9 +255,10 @@ CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
                                                         ErrorMessage);
   // Try to auto-detect a compilation database from the first source.
   if (!SourcePaths.empty()) {
-    if (CompilationDatabase *Compilations =
-            CompilationDatabase::autoDetectFromSource(SourcePaths[0],
-                                                      ErrorMessage)) {
+    std::unique_ptr<CompilationDatabase> Compilations(
+        CompilationDatabase::autoDetectFromSource(SourcePaths[0],
+                                                  ErrorMessage));
+    if (Compilations) {
       // FIXME: just pass SourcePaths[0] once getCompileCommands supports
       // non-absolute paths.
       SmallString<64> Path(SourcePaths[0]);
@@ -267,7 +268,7 @@ CompilationDatabase *autoDetectCompilations(std::string &ErrorMessage) {
       // Ignore a detected compilation database that doesn't contain source0
       // since it is probably an unrelated compilation database.
       if (!Commands.empty())
-        return Compilations;
+        return Compilations.release();
     }
     // Reset ErrorMessage since a fix compilation database will be created if
     // it fails to detect one from source.

@@ -199,8 +199,8 @@ int main(int Argc, const char **Argv) {
 
   // Create the tool and run the compilation.
   ClangTool Tool(*Compilations, SourcePaths);
-  int HadErrors =
-      Tool.run(new PPTraceFrontendActionFactory(Ignore, CallbackCalls));
+  PPTraceFrontendActionFactory Factory(Ignore, CallbackCalls);
+  int HadErrors = Tool.run(&Factory);
 
   // If we had errors, exit early.
   if (HadErrors)
