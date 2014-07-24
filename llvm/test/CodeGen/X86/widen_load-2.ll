@@ -75,13 +75,12 @@ define void @add3i16(%i16vec3* nocapture sret %ret, %i16vec3* %ap, %i16vec3* %bp
 ; CHECK-LABEL: add3i16:
 ; CHECK:         pmovzxwd (%{{.*}}), %[[R0:xmm[0-9]+]]
 ; CHECK-NEXT:    pmovzxwd (%{{.*}}), %[[R1:xmm[0-9]+]]
-; CHECK-NEXT:    paddd   %[[R0]], %[[R1]]
-; CHECK-NEXT:    movdqa  %[[R1]], %[[R0]]
-; CHECK-NEXT:    pshufb  {{.*}}, %[[R0]]
-; CHECK-NEXT:    movd    %[[R0]], %r[[R3:[abcd]]]x
-; CHECK-NEXT:    movd    %r[[R3]]x, %[[R0]]
-; CHECK-NEXT:    pextrw  $4, %[[R1]], 4(%{{.*}})
-; CHECK-NEXT:    movd    %[[R0]], (%{{.*}})
+; CHECK-NEXT:    paddd    %[[R0]], %[[R1]]
+; CHECK-NEXT:    movdqa   %[[R1]], %[[R0]]
+; CHECK-NEXT:    pshufb   {{.*}}, %[[R0]]
+; CHECK-NEXT:    pmovzxdq %[[R0]], %[[R0]]
+; CHECK-NEXT:    pextrw   $4, %[[R1]], 4(%{{.*}})
+; CHECK-NEXT:    movd     %[[R0]], (%{{.*}})
 	%a = load %i16vec3* %ap, align 16
 	%b = load %i16vec3* %bp, align 16
 	%x = add %i16vec3 %a, %b
@@ -145,12 +144,13 @@ define void @add3i8(%i8vec3* nocapture sret %ret, %i8vec3* %ap, %i8vec3* %bp) no
 ; CHECK-LABEL: add3i8:
 ; CHECK:         pmovzxbd (%{{.*}}), %[[R0:xmm[0-9]+]]
 ; CHECK-NEXT:    pmovzxbd (%{{.*}}), %[[R1:xmm[0-9]+]]
-; CHECK-NEXT:    paddd   %[[R0]], %[[R1]]
-; CHECK-NEXT:    movdqa  %[[R1]], %[[R0]]
-; CHECK-NEXT:    pshufb  {{.*}}, %[[R0]]
-; CHECK-NEXT:    movd    %[[R0]], %e[[R3:[abcd]]]x
-; CHECK-NEXT:    pextrb  $8, %[[R1]], 2(%{{.*}})
-; CHECK-NEXT:    movw    %[[R3]]x, (%{{.*}})
+; CHECK-NEXT:    paddd    %[[R0]], %[[R1]]
+; CHECK-NEXT:    movdqa   %[[R1]], %[[R0]]
+; CHECK-NEXT:    pshufb   {{.*}}, %[[R0]]
+; CHECK-NEXT:    pmovzxwq %[[R0]], %[[R0]]
+; CHECK-NEXT:    pextrb   $8, %[[R1]], 2(%{{.*}})
+; CHECK-NEXT:    movd     %[[R0]], %e[[R2:[abcd]]]x
+; CHECK-NEXT:    movw     %[[R2]]x, (%{{.*}})
 	%a = load %i8vec3* %ap, align 16
 	%b = load %i8vec3* %bp, align 16
 	%x = add %i8vec3 %a, %b
@@ -184,11 +184,13 @@ define void @rot(%i8vec3pack* nocapture sret %result, %i8vec3pack* %X, %i8vec3pa
 ; CHECK:         movdqa  {{.*}}, %[[CONSTANT0:xmm[0-9]+]]
 ; CHECK-NEXT:    movdqa  {{.*}}, %[[SHUFFLE_MASK:xmm[0-9]+]]
 ; CHECK-NEXT:    pshufb  %[[SHUFFLE_MASK]], %[[CONSTANT0]]
+; CHECK-NEXT:    pmovzxwq %[[CONSTANT0]], %[[CONSTANT0]]
 ; CHECK-NEXT:    movd    %[[CONSTANT0]], %e[[R0:[abcd]]]x
 ; CHECK-NEXT:    movw    %[[R0]]x, (%[[PTR0:.*]])
 ; CHECK-NEXT:    movb    $-98, 2(%[[PTR0]])
 ; CHECK-NEXT:    movdqa  {{.*}}, %[[CONSTANT1:xmm[0-9]+]]
 ; CHECK-NEXT:    pshufb  %[[SHUFFLE_MASK]], %[[CONSTANT1]]
+; CHECK-NEXT:    pmovzxwq %[[CONSTANT1]], %[[CONSTANT1]]
 ; CHECK-NEXT:    movd    %[[CONSTANT1]], %e[[R1:[abcd]]]x
 ; CHECK-NEXT:    movw    %[[R1]]x, (%[[PTR1:.*]])
 ; CHECK-NEXT:    movb    $1, 2(%[[PTR1]])
@@ -207,8 +209,9 @@ define void @rot(%i8vec3pack* nocapture sret %result, %i8vec3pack* %X, %i8vec3pa
 ; CHECK-NEXT:    pinsrd  $3, %e[[R0]]x, %[[X1]]
 ; CHECK-NEXT:    movdqa  %[[X1]], %[[X2:xmm[0-9]+]]
 ; CHECK-NEXT:    pshufb  %[[SHUFFLE_MASK]], %[[X2]]
-; CHECK-NEXT:    movd    %[[X2]], %e[[R0:[abcd]]]x
+; CHECK-NEXT:    pmovzxwq %[[X2]], %[[X3:xmm[0-9]+]]
 ; CHECK-NEXT:    pextrb  $8, %[[X1]], 2(%{{.*}})
+; CHECK-NEXT:    movd    %[[X3]], %e[[R0:[abcd]]]x
 ; CHECK-NEXT:    movw    %[[R0]]x, (%{{.*}})
 
 entry:

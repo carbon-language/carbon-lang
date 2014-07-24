@@ -199,12 +199,29 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   if (Op.getOpcode() == ISD::LOAD) {
     LoadSDNode *LD = cast<LoadSDNode>(Op.getNode());
     ISD::LoadExtType ExtType = LD->getExtensionType();
-    if (LD->getMemoryVT().isVector() && ExtType != ISD::NON_EXTLOAD) {
-      if (TLI.isLoadExtLegal(LD->getExtensionType(), LD->getMemoryVT()))
+    if (LD->getMemoryVT().isVector() && ExtType != ISD::NON_EXTLOAD)
+      switch (TLI.getLoadExtAction(LD->getExtensionType(), LD->getMemoryVT())) {
+      default: llvm_unreachable("This action is not supported yet!");
+      case TargetLowering::Legal:
         return TranslateLegalizeResults(Op, Result);
-      Changed = true;
-      return LegalizeOp(ExpandLoad(Op));
-    }
+      case TargetLowering::Custom:
+        if (SDValue Lowered = TLI.LowerOperation(Result, DAG)) {
+          Changed = true;
+          if (Lowered->getNumValues() != Op->getNumValues()) {
+            // This expanded to something other than the load. Assume the
+            // lowering code took care of any chain values, and just handle the
+            // returned value.
+            assert(Result.getValue(1).use_empty() &&
+                   "There are still live users of the old chain!");
+            return LegalizeOp(Lowered);
+          } else {
+            return TranslateLegalizeResults(Op, Lowered);
+          }
+        }
+      case TargetLowering::Expand:
+        Changed = true;
+        return LegalizeOp(ExpandLoad(Op));
+      }
   } else if (Op.getOpcode() == ISD::STORE) {
     StoreSDNode *ST = cast<StoreSDNode>(Op.getNode());
     EVT StVT = ST->getMemoryVT();

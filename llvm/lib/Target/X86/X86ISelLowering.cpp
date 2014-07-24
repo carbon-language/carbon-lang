@@ -1011,6 +1011,22 @@ void X86TargetLowering::resetOperationActions() {
       setOperationAction(ISD::EXTRACT_VECTOR_ELT, VT, Custom);
     }
 
+    // We support custom legalizing of sext and anyext loads for specific
+    // memory vector types which we can load as a scalar (or sequence of
+    // scalars) and extend in-register to a legal 128-bit vector type. For sext
+    // loads these must work with a single scalar load.
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v4i8, Custom);
+    if (Subtarget->is64Bit()) {
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v4i16, Custom);
+      setLoadExtAction(ISD::SEXTLOAD, MVT::v8i8, Custom);
+    }
+    setLoadExtAction(ISD::EXTLOAD, MVT::v2i8, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::v2i16, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::v2i32, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::v4i16, Custom);
+    setLoadExtAction(ISD::EXTLOAD, MVT::v8i8, Custom);
+
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2f64, Custom);
     setOperationAction(ISD::BUILD_VECTOR,       MVT::v2i64, Custom);
     setOperationAction(ISD::VECTOR_SHUFFLE,     MVT::v2f64, Custom);
@@ -1105,6 +1121,12 @@ void X86TargetLowering::resetOperationActions() {
     // There is no BLENDI for byte vectors. We don't need to custom lower
     // some vselects for now.
     setOperationAction(ISD::VSELECT,            MVT::v16i8, Legal);
+
+    // SSE41 brings specific instructions for doing vector sign extend even in
+    // cases where we don't have SRA.
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i8, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i16, Custom);
+    setLoadExtAction(ISD::SEXTLOAD, MVT::v2i32, Custom);
 
     // i8 and i16 vectors are custom , because the source register and source
     // source memory operand types are not the same width.  f32 vectors are
@@ -12826,6 +12848,209 @@ static SDValue LowerSIGN_EXTEND(SDValue Op, const X86Subtarget *Subtarget,
   return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
 }
 
+// Lower vector extended loads using a shuffle. If SSSE3 is not available we
+// may emit an illegal shuffle but the expansion is still better than scalar
+// code. We generate X86ISD::VSEXT for SEXTLOADs if it's available, otherwise
+// we'll emit a shuffle and a arithmetic shift.
+// TODO: It is possible to support ZExt by zeroing the undef values during
+// the shuffle phase or after the shuffle.
+static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
+                                 SelectionDAG &DAG) {
+  MVT RegVT = Op.getSimpleValueType();
+  assert(RegVT.isVector() && "We only custom lower vector sext loads.");
+  assert(RegVT.isInteger() &&
+         "We only custom lower integer vector sext loads.");
+
+  // Nothing useful we can do without SSE2 shuffles.
+  assert(Subtarget->hasSSE2() && "We only custom lower sext loads with SSE2.");
+
+  LoadSDNode *Ld = cast<LoadSDNode>(Op.getNode());
+  SDLoc dl(Ld);
+  EVT MemVT = Ld->getMemoryVT();
+  const TargetLowering &TLI = DAG.getTargetLoweringInfo();
+  unsigned RegSz = RegVT.getSizeInBits();
+
+  ISD::LoadExtType Ext = Ld->getExtensionType();
+
+  assert((Ext == ISD::EXTLOAD || Ext == ISD::SEXTLOAD)
+         && "Only anyext and sext are currently implemented.");
+  assert(MemVT != RegVT && "Cannot extend to the same type");
+  assert(MemVT.isVector() && "Must load a vector from memory");
+
+  unsigned NumElems = RegVT.getVectorNumElements();
+  unsigned MemSz = MemVT.getSizeInBits();
+  assert(RegSz > MemSz && "Register size must be greater than the mem size");
+
+  if (Ext == ISD::SEXTLOAD && RegSz == 256 && !Subtarget->hasInt256()) {
+    // The only way in which we have a legal 256-bit vector result but not the
+    // integer 256-bit operations needed to directly lower a sextload is if we
+    // have AVX1 but not AVX2. In that case, we can always emit a sextload to
+    // a 128-bit vector and a normal sign_extend to 256-bits that should get
+    // correctly legalized. We do this late to allow the canonical form of
+    // sextload to persist throughout the rest of the DAG combiner -- it wants
+    // to fold together any extensions it can, and so will fuse a sign_extend
+    // of an sextload into an sextload targeting a wider value.
+    SDValue Load;
+    if (MemSz == 128) {
+      // Just switch this to a normal load.
+      assert(TLI.isTypeLegal(MemVT) && "If the memory type is a 128-bit type, "
+                                       "it must be a legal 128-bit vector "
+                                       "type!");
+      Load = DAG.getLoad(MemVT, dl, Ld->getChain(), Ld->getBasePtr(),
+                  Ld->getPointerInfo(), Ld->isVolatile(), Ld->isNonTemporal(),
+                  Ld->isInvariant(), Ld->getAlignment());
+    } else {
+      assert(MemSz < 128 &&
+             "Can't extend a type wider than 128 bits to a 256 bit vector!");
+      // Do an sext load to a 128-bit vector type. We want to use the same
+      // number of elements, but elements half as wide. This will end up being
+      // recursively lowered by this routine, but will succeed as we definitely
+      // have all the necessary features if we're using AVX1.
+      EVT HalfEltVT =
+          EVT::getIntegerVT(*DAG.getContext(), RegVT.getScalarSizeInBits() / 2);
+      EVT HalfVecVT = EVT::getVectorVT(*DAG.getContext(), HalfEltVT, NumElems);
+      Load =
+          DAG.getExtLoad(Ext, dl, HalfVecVT, Ld->getChain(), Ld->getBasePtr(),
+                         Ld->getPointerInfo(), MemVT, Ld->isVolatile(),
+                         Ld->isNonTemporal(), Ld->getAlignment());
+    }
+
+    // Replace chain users with the new chain.
+    assert(Load->getNumValues() == 2 && "Loads must carry a chain!");
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), Load.getValue(1));
+
+    // Finally, do a normal sign-extend to the desired register.
+    return DAG.getSExtOrTrunc(Load, dl, RegVT);
+  }
+
+  // All sizes must be a power of two.
+  assert(isPowerOf2_32(RegSz * MemSz * NumElems) &&
+         "Non-power-of-two elements are not custom lowered!");
+
+  // Attempt to load the original value using scalar loads.
+  // Find the largest scalar type that divides the total loaded size.
+  MVT SclrLoadTy = MVT::i8;
+  for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
+       tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
+    MVT Tp = (MVT::SimpleValueType)tp;
+    if (TLI.isTypeLegal(Tp) && ((MemSz % Tp.getSizeInBits()) == 0)) {
+      SclrLoadTy = Tp;
+    }
+  }
+
+  // On 32bit systems, we can't save 64bit integers. Try bitcasting to F64.
+  if (TLI.isTypeLegal(MVT::f64) && SclrLoadTy.getSizeInBits() < 64 &&
+      (64 <= MemSz))
+    SclrLoadTy = MVT::f64;
+
+  // Calculate the number of scalar loads that we need to perform
+  // in order to load our vector from memory.
+  unsigned NumLoads = MemSz / SclrLoadTy.getSizeInBits();
+
+  assert((Ext != ISD::SEXTLOAD || NumLoads == 1) &&
+         "Can only lower sext loads with a single scalar load!");
+
+  unsigned loadRegZize = RegSz;
+  if (Ext == ISD::SEXTLOAD && RegSz == 256)
+    loadRegZize /= 2;
+
+  // Represent our vector as a sequence of elements which are the
+  // largest scalar that we can load.
+  EVT LoadUnitVecVT = EVT::getVectorVT(
+      *DAG.getContext(), SclrLoadTy, loadRegZize / SclrLoadTy.getSizeInBits());
+
+  // Represent the data using the same element type that is stored in
+  // memory. In practice, we ''widen'' MemVT.
+  EVT WideVecVT =
+      EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
+                       loadRegZize / MemVT.getScalarType().getSizeInBits());
+
+  assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
+         "Invalid vector type");
+
+  // We can't shuffle using an illegal type.
+  assert(TLI.isTypeLegal(WideVecVT) &&
+         "We only lower types that form legal widened vector types");
+
+  SmallVector<SDValue, 8> Chains;
+  SDValue Ptr = Ld->getBasePtr();
+  SDValue Increment =
+      DAG.getConstant(SclrLoadTy.getSizeInBits() / 8, TLI.getPointerTy());
+  SDValue Res = DAG.getUNDEF(LoadUnitVecVT);
+
+  for (unsigned i = 0; i < NumLoads; ++i) {
+    // Perform a single load.
+    SDValue ScalarLoad =
+        DAG.getLoad(SclrLoadTy, dl, Ld->getChain(), Ptr, Ld->getPointerInfo(),
+                    Ld->isVolatile(), Ld->isNonTemporal(), Ld->isInvariant(),
+                    Ld->getAlignment());
+    Chains.push_back(ScalarLoad.getValue(1));
+    // Create the first element type using SCALAR_TO_VECTOR in order to avoid
+    // another round of DAGCombining.
+    if (i == 0)
+      Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LoadUnitVecVT, ScalarLoad);
+    else
+      Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, LoadUnitVecVT, Res,
+                        ScalarLoad, DAG.getIntPtrConstant(i));
+
+    Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
+  }
+
+  SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Chains);
+
+  // Bitcast the loaded value to a vector of the original element type, in
+  // the size of the target vector type.
+  SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, Res);
+  unsigned SizeRatio = RegSz / MemSz;
+
+  if (Ext == ISD::SEXTLOAD) {
+    // If we have SSE4.1 we can directly emit a VSEXT node.
+    if (Subtarget->hasSSE41()) {
+      SDValue Sext = DAG.getNode(X86ISD::VSEXT, dl, RegVT, SlicedVec);
+      DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), TF);
+      return Sext;
+    }
+
+    // Otherwise we'll shuffle the small elements in the high bits of the
+    // larger type and perform an arithmetic shift. If the shift is not legal
+    // it's better to scalarize.
+    assert(TLI.isOperationLegalOrCustom(ISD::SRA, RegVT) &&
+           "We can't implement an sext load without a arithmetic right shift!");
+
+    // Redistribute the loaded elements into the different locations.
+    SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
+    for (unsigned i = 0; i != NumElems; ++i)
+      ShuffleVec[i * SizeRatio + SizeRatio - 1] = i;
+
+    SDValue Shuff = DAG.getVectorShuffle(
+        WideVecVT, dl, SlicedVec, DAG.getUNDEF(WideVecVT), &ShuffleVec[0]);
+
+    Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
+
+    // Build the arithmetic shift.
+    unsigned Amt = RegVT.getVectorElementType().getSizeInBits() -
+                   MemVT.getVectorElementType().getSizeInBits();
+    Shuff =
+        DAG.getNode(ISD::SRA, dl, RegVT, Shuff, DAG.getConstant(Amt, RegVT));
+
+    DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), TF);
+    return Shuff;
+  }
+
+  // Redistribute the loaded elements into the different locations.
+  SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
+  for (unsigned i = 0; i != NumElems; ++i)
+    ShuffleVec[i * SizeRatio] = i;
+
+  SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
+                                       DAG.getUNDEF(WideVecVT), &ShuffleVec[0]);
+
+  // Bitcast to the requested type.
+  Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
+  DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), TF);
+  return Shuff;
+}
+
 // isAndOrOfSingleUseSetCCs - Return true if node is an ISD::AND or
 // ISD::OR of two X86ISD::SETCC nodes each of which has no other use apart
 // from the AND / OR.
@@ -16255,6 +16480,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
   case ISD::FP_EXTEND:          return LowerFP_EXTEND(Op, DAG);
+  case ISD::LOAD:               return LowerExtendedLoad(Op, Subtarget, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
@@ -20843,7 +21069,6 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   EVT MemVT = Ld->getMemoryVT();
   SDLoc dl(Ld);
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  unsigned RegSz = RegVT.getSizeInBits();
 
   // On Sandybridge unaligned 256bit loads are inefficient.
   ISD::LoadExtType Ext = Ld->getExtensionType();
@@ -20877,153 +21102,6 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     NewVec = Insert128BitVector(NewVec, Load1, 0, DAG, dl);
     NewVec = Insert128BitVector(NewVec, Load2, NumElems/2, DAG, dl);
     return DCI.CombineTo(N, NewVec, TF, true);
-  }
-
-  // If this is a vector EXT Load then attempt to optimize it using a
-  // shuffle. If SSSE3 is not available we may emit an illegal shuffle but the
-  // expansion is still better than scalar code.
-  // We generate X86ISD::VSEXT for SEXTLOADs if it's available, otherwise we'll
-  // emit a shuffle and a arithmetic shift.
-  // TODO: It is possible to support ZExt by zeroing the undef values
-  // during the shuffle phase or after the shuffle.
-  if (RegVT.isVector() && RegVT.isInteger() && Subtarget->hasSSE2() &&
-      (Ext == ISD::EXTLOAD || Ext == ISD::SEXTLOAD)) {
-    assert(MemVT != RegVT && "Cannot extend to the same type");
-    assert(MemVT.isVector() && "Must load a vector from memory");
-
-    unsigned NumElems = RegVT.getVectorNumElements();
-    unsigned MemSz = MemVT.getSizeInBits();
-    assert(RegSz > MemSz && "Register size must be greater than the mem size");
-
-    if (Ext == ISD::SEXTLOAD && RegSz == 256 && !Subtarget->hasInt256())
-      return SDValue();
-
-    // All sizes must be a power of two.
-    if (!isPowerOf2_32(RegSz * MemSz * NumElems))
-      return SDValue();
-
-    // Attempt to load the original value using scalar loads.
-    // Find the largest scalar type that divides the total loaded size.
-    MVT SclrLoadTy = MVT::i8;
-    for (unsigned tp = MVT::FIRST_INTEGER_VALUETYPE;
-         tp < MVT::LAST_INTEGER_VALUETYPE; ++tp) {
-      MVT Tp = (MVT::SimpleValueType)tp;
-      if (TLI.isTypeLegal(Tp) && ((MemSz % Tp.getSizeInBits()) == 0)) {
-        SclrLoadTy = Tp;
-      }
-    }
-
-    // On 32bit systems, we can't save 64bit integers. Try bitcasting to F64.
-    if (TLI.isTypeLegal(MVT::f64) && SclrLoadTy.getSizeInBits() < 64 &&
-        (64 <= MemSz))
-      SclrLoadTy = MVT::f64;
-
-    // Calculate the number of scalar loads that we need to perform
-    // in order to load our vector from memory.
-    unsigned NumLoads = MemSz / SclrLoadTy.getSizeInBits();
-    if (Ext == ISD::SEXTLOAD && NumLoads > 1)
-      return SDValue();
-
-    unsigned loadRegZize = RegSz;
-    if (Ext == ISD::SEXTLOAD && RegSz == 256)
-      loadRegZize /= 2;
-
-    // Represent our vector as a sequence of elements which are the
-    // largest scalar that we can load.
-    EVT LoadUnitVecVT = EVT::getVectorVT(*DAG.getContext(), SclrLoadTy,
-      loadRegZize/SclrLoadTy.getSizeInBits());
-
-    // Represent the data using the same element type that is stored in
-    // memory. In practice, we ''widen'' MemVT.
-    EVT WideVecVT =
-          EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
-                       loadRegZize/MemVT.getScalarType().getSizeInBits());
-
-    assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
-      "Invalid vector type");
-
-    // We can't shuffle using an illegal type.
-    if (!TLI.isTypeLegal(WideVecVT))
-      return SDValue();
-
-    SmallVector<SDValue, 8> Chains;
-    SDValue Ptr = Ld->getBasePtr();
-    SDValue Increment = DAG.getConstant(SclrLoadTy.getSizeInBits()/8,
-                                        TLI.getPointerTy());
-    SDValue Res = DAG.getUNDEF(LoadUnitVecVT);
-
-    for (unsigned i = 0; i < NumLoads; ++i) {
-      // Perform a single load.
-      SDValue ScalarLoad = DAG.getLoad(SclrLoadTy, dl, Ld->getChain(),
-                                       Ptr, Ld->getPointerInfo(),
-                                       Ld->isVolatile(), Ld->isNonTemporal(),
-                                       Ld->isInvariant(), Ld->getAlignment());
-      Chains.push_back(ScalarLoad.getValue(1));
-      // Create the first element type using SCALAR_TO_VECTOR in order to avoid
-      // another round of DAGCombining.
-      if (i == 0)
-        Res = DAG.getNode(ISD::SCALAR_TO_VECTOR, dl, LoadUnitVecVT, ScalarLoad);
-      else
-        Res = DAG.getNode(ISD::INSERT_VECTOR_ELT, dl, LoadUnitVecVT, Res,
-                          ScalarLoad, DAG.getIntPtrConstant(i));
-
-      Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr, Increment);
-    }
-
-    SDValue TF = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, Chains);
-
-    // Bitcast the loaded value to a vector of the original element type, in
-    // the size of the target vector type.
-    SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, Res);
-    unsigned SizeRatio = RegSz/MemSz;
-
-    if (Ext == ISD::SEXTLOAD) {
-      // If we have SSE4.1 we can directly emit a VSEXT node.
-      if (Subtarget->hasSSE41()) {
-        SDValue Sext = DAG.getNode(X86ISD::VSEXT, dl, RegVT, SlicedVec);
-        return DCI.CombineTo(N, Sext, TF, true);
-      }
-
-      // Otherwise we'll shuffle the small elements in the high bits of the
-      // larger type and perform an arithmetic shift. If the shift is not legal
-      // it's better to scalarize.
-      if (!TLI.isOperationLegalOrCustom(ISD::SRA, RegVT))
-        return SDValue();
-
-      // Redistribute the loaded elements into the different locations.
-      SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
-      for (unsigned i = 0; i != NumElems; ++i)
-        ShuffleVec[i*SizeRatio + SizeRatio-1] = i;
-
-      SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
-                                           DAG.getUNDEF(WideVecVT),
-                                           &ShuffleVec[0]);
-
-      Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
-
-      // Build the arithmetic shift.
-      unsigned Amt = RegVT.getVectorElementType().getSizeInBits() -
-                     MemVT.getVectorElementType().getSizeInBits();
-      Shuff = DAG.getNode(ISD::SRA, dl, RegVT, Shuff,
-                          DAG.getConstant(Amt, RegVT));
-
-      return DCI.CombineTo(N, Shuff, TF, true);
-    }
-
-    // Redistribute the loaded elements into the different locations.
-    SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
-    for (unsigned i = 0; i != NumElems; ++i)
-      ShuffleVec[i*SizeRatio] = i;
-
-    SDValue Shuff = DAG.getVectorShuffle(WideVecVT, dl, SlicedVec,
-                                         DAG.getUNDEF(WideVecVT),
-                                         &ShuffleVec[0]);
-
-    // Bitcast to the requested type.
-    Shuff = DAG.getNode(ISD::BITCAST, dl, RegVT, Shuff);
-    // Replace the original load with the new sequence
-    // and return the new chain.
-    return DCI.CombineTo(N, Shuff, TF, true);
   }
 
   return SDValue();
