@@ -58,9 +58,11 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
       St->getStmtClass() != Stmt::ForStmtClass &&
       St->getStmtClass() != Stmt::CXXForRangeStmtClass &&
       St->getStmtClass() != Stmt::WhileStmtClass) {
-    const char *Pragma = PragmaNameLoc->Ident->getName() == "unroll"
-                             ? "#pragma unroll"
-                             : "#pragma clang loop";
+    const char *Pragma =
+        llvm::StringSwitch<const char *>(PragmaNameLoc->Ident->getName())
+            .Case("unroll", "#pragma unroll")
+            .Case("nounroll", "#pragma nounroll")
+            .Default("#pragma clang loop");
     S.Diag(St->getLocStart(), diag::err_pragma_loop_precedes_nonloop) << Pragma;
     return nullptr;
   }
@@ -70,6 +72,9 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   if (PragmaNameLoc->Ident->getName() == "unroll") {
     Option = ValueLoc ? LoopHintAttr::UnrollCount : LoopHintAttr::Unroll;
     Spelling = LoopHintAttr::Pragma_unroll;
+  } else if (PragmaNameLoc->Ident->getName() == "nounroll") {
+    Option = LoopHintAttr::Unroll;
+    Spelling = LoopHintAttr::Pragma_nounroll;
   } else {
     Option = llvm::StringSwitch<LoopHintAttr::OptionType>(OptionInfo->getName())
                  .Case("vectorize", LoopHintAttr::Vectorize)
@@ -86,6 +91,9 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
   if (Option == LoopHintAttr::Unroll &&
       Spelling == LoopHintAttr::Pragma_unroll) {
     ValueInt = 1;
+  } else if (Option == LoopHintAttr::Unroll &&
+             Spelling == LoopHintAttr::Pragma_nounroll) {
+    ValueInt = 0;
   } else if (Option == LoopHintAttr::Vectorize ||
              Option == LoopHintAttr::Interleave ||
              Option == LoopHintAttr::Unroll) {

@@ -111,12 +111,13 @@ interleaving, and unrolling to be enabled or disabled. Vector width as well
 as interleave and unrolling count can be manually specified.  See language
 extensions for details.
 
-Clang now supports the `#pragma unroll` directive to specify loop unrolling
-optimization hints.  Placed just prior to the desired loop, `#pragma unroll`
-directs the loop unroller to attempt to fully unroll the loop.  The pragma may
-also be specified with a positive integer parameter indicating the desired
-unroll count: `#pragma unroll _value_`.  The unroll count parameter can be
-optionally enclosed in parentheses.
+Clang now supports the `#pragma unroll` and `#pragma nounroll` directives to
+specify loop unrolling optimization hints.  Placed just prior to the desired
+loop, `#pragma unroll` directs the loop unroller to attempt to fully unroll the
+loop.  The pragma may also be specified with a positive integer parameter
+indicating the desired unroll count: `#pragma unroll _value_`.  The unroll count
+parameter can be optionally enclosed in parentheses. The directive `#pragma
+nounroll` indicates that the loop should not be unrolled.
 
 C Language Changes in Clang
 ---------------------------

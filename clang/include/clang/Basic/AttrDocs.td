@@ -1065,11 +1065,11 @@ for details.
 
 def UnrollHintDocs : Documentation {
   let Category = DocCatStmt;
-  let Heading = "#pragma unroll";
+  let Heading = "#pragma unroll, #pragma nounroll";
   let Content = [{
-Loop unrolling optimization hints can be specified with ``#pragma unroll``. The
-pragma is placed immediately before a for, while, do-while, or c++11 range-based
-for loop.
+Loop unrolling optimization hints can be specified with ``#pragma unroll`` and
+``#pragma nounroll``. The pragma is placed immediately before a for, while,
+do-while, or c++11 range-based for loop.
 
 Specifying ``#pragma unroll`` without a parameter directs the loop unroller to
 attempt to fully unroll the loop if the trip count is known at compile time:
@@ -1097,9 +1097,20 @@ enclosed in parentheses:
     ...
   }
 
+Specifying ``#pragma nounroll`` indicates that the loop should not be unrolled:
+
+.. code-block:: c++
+
+  #pragma nounroll
+  for (...) {
+    ...
+  }
+
 ``#pragma unroll`` and ``#pragma unroll _value_`` have identical semantics to
-``#pragma clang loop unroll(full)`` and ``#pragma clang loop
-unroll_count(_value_)`` respectively. See `language extensions
+``#pragma clang loop unroll(full)`` and
+``#pragma clang loop unroll_count(_value_)`` respectively. ``#pragma nounroll``
+is equivalent to ``#pragma clang loop unroll(disable)``.  See
+`language extensions
 <http://clang.llvm.org/docs/LanguageExtensions.html#extensions-for-loop-hint-optimizations>`_
 for further details including limitations of the unroll hints.
   }];

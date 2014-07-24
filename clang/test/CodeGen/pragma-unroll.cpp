@@ -17,7 +17,7 @@ void while_test(int *List, int Length) {
 void do_test(int *List, int Length) {
   int i = 0;
 
-#pragma unroll 16
+#pragma nounroll
   do {
     // CHECK: br i1 {{.*}}, label {{.*}}, label {{.*}}, !llvm.loop ![[LOOP_2:.*]]
     List[i] = i * 2;
@@ -88,8 +88,8 @@ void template_test(double *List, int Length) {
 
 // CHECK: ![[LOOP_1]] = metadata !{metadata ![[LOOP_1]], metadata ![[UNROLL_FULL:.*]]}
 // CHECK: ![[UNROLL_FULL]] = metadata !{metadata !"llvm.loop.unroll.full"}
-// CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2:.*]], metadata ![[UNROLL_16:.*]]}
-// CHECK: ![[UNROLL_16]] = metadata !{metadata !"llvm.loop.unroll.count", i32 16}
+// CHECK: ![[LOOP_2]] = metadata !{metadata ![[LOOP_2:.*]], metadata ![[UNROLL_DISABLE:.*]]}
+// CHECK: ![[UNROLL_DISABLE]] = metadata !{metadata !"llvm.loop.unroll.disable"}
 // CHECK: ![[LOOP_3]] = metadata !{metadata ![[LOOP_3]], metadata ![[UNROLL_8:.*]]}
 // CHECK: ![[UNROLL_8]] = metadata !{metadata !"llvm.loop.unroll.count", i32 8}
 // CHECK: ![[LOOP_4]] = metadata !{metadata ![[LOOP_4]], metadata ![[UNROLL_4:.*]]}

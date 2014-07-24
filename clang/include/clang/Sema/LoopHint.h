@@ -26,7 +26,8 @@ struct LoopHint {
   // hints.
   IdentifierLoc *PragmaNameLoc;
   // Name of the loop hint.  Examples: "unroll", "vectorize".  In the
-  // "#pragma unroll" case, this is identical to PragmaNameLoc.
+  // "#pragma unroll" and "#pragma nounroll" cases, this is identical to
+  // PragmaNameLoc.
   IdentifierLoc *OptionLoc;
   // Identifier for the hint argument.  If null, then the hint has no argument
   // such as for "#pragma unroll".

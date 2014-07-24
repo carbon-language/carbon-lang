@@ -11,6 +11,11 @@ void test(int *List, int Length) {
     List[i] = i;
   }
 
+#pragma nounroll
+  while (i < Length) {
+    List[i] = i;
+  }
+
 #pragma unroll 4
   while (i - 1 < Length) {
     List[i] = i;
@@ -28,6 +33,11 @@ void test(int *List, int Length) {
     List[i] = i;
   }
 
+/* expected-warning {{extra tokens at end of '#pragma nounroll'}} */ #pragma nounroll 1
+  while (i-7 < Length) {
+    List[i] = i;
+  }
+
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll(()
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll -
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma unroll(0)
@@ -42,6 +52,8 @@ void test(int *List, int Length) {
 /* expected-error {{expected a for, while, or do-while loop to follow '#pragma unroll'}} */ int j = Length;
 #pragma unroll 4
 /* expected-error {{expected a for, while, or do-while loop to follow '#pragma unroll'}} */ int k = Length;
+#pragma nounroll
+/* expected-error {{expected a for, while, or do-while loop to follow '#pragma nounroll'}} */ int l = Length;
 
 /* expected-error {{incompatible directives 'unroll(disable)' and '#pragma unroll(4)'}} */ #pragma unroll 4
 #pragma clang loop unroll(disable)
@@ -58,6 +70,18 @@ void test(int *List, int Length) {
 /* expected-error {{incompatible directives '#pragma unroll' and '#pragma unroll(4)'}} */ #pragma unroll(4)
 #pragma unroll
   while (i-11 < Length) {
+    List[i] = i;
+  }
+
+/* expected-error {{incompatible directives '#pragma nounroll' and 'unroll_count(4)'}} */ #pragma clang loop unroll_count(4)
+#pragma nounroll
+  while (i-12 < Length) {
+    List[i] = i;
+  }
+
+/* expected-error {{duplicate directives '#pragma nounroll' and '#pragma nounroll'}} */ #pragma nounroll
+#pragma nounroll
+  while (i-13 < Length) {
     List[i] = i;
   }
 

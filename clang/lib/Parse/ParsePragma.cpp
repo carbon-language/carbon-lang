@@ -227,6 +227,9 @@ void Parser::initializePragmaHandlers() {
 
   UnrollHintHandler.reset(new PragmaUnrollHintHandler("unroll"));
   PP.AddPragmaHandler(UnrollHintHandler.get());
+
+  NoUnrollHintHandler.reset(new PragmaUnrollHintHandler("nounroll"));
+  PP.AddPragmaHandler(NoUnrollHintHandler.get());
 }
 
 void Parser::resetPragmaHandlers() {
@@ -290,6 +293,9 @@ void Parser::resetPragmaHandlers() {
 
   PP.RemovePragmaHandler(UnrollHintHandler.get());
   UnrollHintHandler.reset();
+
+  PP.RemovePragmaHandler(NoUnrollHintHandler.get());
+  NoUnrollHintHandler.reset();
 }
 
 /// \brief Handle the annotation token produced for #pragma unused(...)
@@ -1908,29 +1914,36 @@ void PragmaLoopHintHandler::HandlePragma(Preprocessor &PP,
 ///  #pragma unroll
 ///  #pragma unroll unroll-hint-value
 ///  #pragma unroll '(' unroll-hint-value ')'
+///  #pragma nounroll
 ///
 ///  unroll-hint-value:
 ///    constant-expression
 ///
-/// Loop unrolling hints are specified with '#pragma unroll'. '#pragma unroll'
-/// can take a numeric argument optionally contained in parentheses. With no
-/// argument the directive instructs llvm to try to unroll the loop
-/// completely. A positive integer argument can be specified to indicate the
-/// number of times the loop should be unrolled.  To maximize compatibility with
-/// other compilers the unroll count argument can be specified with or without
-/// parentheses.
+/// Loop unrolling hints can be specified with '#pragma unroll' or
+/// '#pragma nounroll'. '#pragma unroll' can take a numeric argument optionally
+/// contained in parentheses. With no argument the directive instructs llvm to
+/// try to unroll the loop completely. A positive integer argument can be
+/// specified to indicate the number of times the loop should be unrolled.  To
+/// maximize compatibility with other compilers the unroll count argument can be
+/// specified with or without parentheses.  Specifying, '#pragma nounroll'
+/// disables unrolling of the loop.
 void PragmaUnrollHintHandler::HandlePragma(Preprocessor &PP,
                                            PragmaIntroducerKind Introducer,
                                            Token &Tok) {
-  // Incoming token is "unroll" of "#pragma unroll".
+  // Incoming token is "unroll" for "#pragma unroll", or "nounroll" for
+  // "#pragma nounroll".
   Token PragmaName = Tok;
   PP.Lex(Tok);
   auto *Info = new (PP.getPreprocessorAllocator()) PragmaLoopHintInfo;
   if (Tok.is(tok::eod)) {
-    // Unroll pragma without an argument.
+    // nounroll or unroll pragma without an argument.
     Info->PragmaName = PragmaName;
     Info->Option = PragmaName;
     Info->HasValue = false;
+  } else if (PragmaName.getIdentifierInfo()->getName() == "nounroll") {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+        << "nounroll";
+    return;
   } else {
     // Unroll pragma with an argument: "#pragma unroll N" or
     // "#pragma unroll(N)".

@@ -15,6 +15,7 @@
 // CHECK: #pragma clang loop vectorize(disable)
 // CHECK: #pragma unroll
 // CHECK: #pragma unroll (32)
+// CHECK: #pragma nounroll
 
 #ifndef HEADER
 #define HEADER
@@ -71,8 +72,16 @@ public:
       i++;
     }
   }
-};
 
+  inline void run6(int *List, int Length) {
+    int i = 0;
+#pragma nounroll
+    while (i - 3 < Length) {
+      List[i] = i;
+      i++;
+    }
+  }
+};
 #else
 
 void test() {
@@ -85,6 +94,7 @@ void test() {
   pt.run3(List, 100);
   pt.run4(List, 100);
   pt.run5(List, 100);
+  pt.run6(List, 100);
 }
 
 #endif
