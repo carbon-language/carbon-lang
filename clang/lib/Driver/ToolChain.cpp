@@ -50,7 +50,7 @@ const SanitizerArgs& ToolChain::getSanitizerArgs() const {
   return *SanitizerArguments.get();
 }
 
-std::string ToolChain::getDefaultUniversalArchName() const {
+StringRef ToolChain::getDefaultUniversalArchName() const {
   // In universal driver terms, the arch name accepted by -arch isn't exactly
   // the same as the ones that appear in the triple. Roughly speaking, this is
   // an inverse of the darwin::getArchTypeForDarwinArchName() function, but the
