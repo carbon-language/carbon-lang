@@ -44,16 +44,27 @@ class LLVM_LIBRARY_VISIBILITY X86AsmPrinter : public AsmPrinter {
     ~StackMapShadowTracker();
     void startFunction(MachineFunction &MF);
     void count(MCInst &Inst, const MCSubtargetInfo &STI);
+
+    // Called to signal the start of a shadow of RequiredSize bytes.
     void reset(unsigned RequiredSize) {
       RequiredShadowSize = RequiredSize;
       CurrentShadowSize = 0;
-      Count = true;
+      InShadow = true;
     }
+
+    // Called before every stackmap/patchpoint, and at the end of basic blocks,
+    // to emit any necessary padding-NOPs.
     void emitShadowPadding(MCStreamer &OutStreamer, const MCSubtargetInfo &STI);
   private:
     TargetMachine &TM;
     std::unique_ptr<MCCodeEmitter> CodeEmitter;
-    bool Count;
+    bool InShadow;
+
+    // RequiredShadowSize holds the length of the shadow specified in the most
+    // recently encountered STACKMAP instruction.
+    // CurrentShadowSize counts the number of bytes encoded since the most
+    // recently encountered STACKMAP, stopping when that number is greater than
+    // or equal to RequiredShadowSize.
     unsigned RequiredShadowSize, CurrentShadowSize;
   };
 

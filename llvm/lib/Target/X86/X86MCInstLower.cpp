@@ -66,7 +66,7 @@ static void EmitNops(MCStreamer &OS, unsigned NumBytes, bool Is64Bit,
 
 namespace llvm {
    X86AsmPrinter::StackMapShadowTracker::StackMapShadowTracker(TargetMachine &TM)
-     : TM(TM), Count(false), RequiredShadowSize(0), CurrentShadowSize(0) {}
+     : TM(TM), InShadow(false), RequiredShadowSize(0), CurrentShadowSize(0) {}
 
   X86AsmPrinter::StackMapShadowTracker::~StackMapShadowTracker() {}
 
@@ -80,7 +80,7 @@ namespace llvm {
 
   void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,
                                                    const MCSubtargetInfo &STI) {
-    if (Count) {
+    if (InShadow) {
       SmallString<256> Code;
       SmallVector<MCFixup, 4> Fixups;
       raw_svector_ostream VecOS(Code);
@@ -88,16 +88,17 @@ namespace llvm {
       VecOS.flush();
       CurrentShadowSize += Code.size();
       if (CurrentShadowSize >= RequiredShadowSize)
-        Count = false; // The shadow is big enough. Stop counting.
+        InShadow = false; // The shadow is big enough. Stop counting.
     }
   }
 
   void X86AsmPrinter::StackMapShadowTracker::emitShadowPadding(
     MCStreamer &OutStreamer, const MCSubtargetInfo &STI) {
-    if (Count && CurrentShadowSize < RequiredShadowSize)
+    if (InShadow && CurrentShadowSize < RequiredShadowSize) {
+      InShadow = false;
       EmitNops(OutStreamer, RequiredShadowSize - CurrentShadowSize,
                TM.getSubtarget<X86Subtarget>().is64Bit(), STI);
-    Count = false;
+    }
   }
 
   void X86AsmPrinter::EmitAndCountInstruction(MCInst &Inst) {
