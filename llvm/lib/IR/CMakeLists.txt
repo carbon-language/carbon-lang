@@ -39,6 +39,7 @@ add_llvm_library(LLVMCore
   Type.cpp
   TypeFinder.cpp
   Use.cpp
+  UseListOrder.cpp
   User.cpp
   Value.cpp
   ValueSymbolTable.cpp

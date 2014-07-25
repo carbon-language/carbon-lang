@@ -118,6 +118,11 @@ ModulePass *createInternalizePass(ArrayRef<const char *> ExportList);
 /// createInternalizePass - Same as above, but with an empty exportList.
 ModulePass *createInternalizePass();
 
+/// \brief Verify that use-list order doesn't change after shuffling.
+///
+/// \note This is a transformation, since the use-list order changes.
+ModulePass *createVerifyUseListOrderPass();
+
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
 /// which are not used by the body of the function.

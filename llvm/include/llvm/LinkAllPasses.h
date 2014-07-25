@@ -161,6 +161,7 @@ namespace {
       (void) llvm::createPartiallyInlineLibCallsPass();
       (void) llvm::createScalarizerPass();
       (void) llvm::createSeparateConstOffsetFromGEPPass();
+      (void) llvm::createVerifyUseListOrderPass();
 
       (void)new llvm::IntervalPartition();
       (void)new llvm::FindUsedTypes();
