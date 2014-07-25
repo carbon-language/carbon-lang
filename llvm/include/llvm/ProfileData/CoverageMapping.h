@@ -139,10 +139,6 @@ struct CounterMappingRegion {
     /// such as for a macro instantiation or #include file.
     ExpansionRegion,
 
-    /// \brief An EmptyRegion represents a source range without code,
-    /// but with a distinct counter.
-    EmptyRegion,
-
     /// \brief A SkippedRegion represents a source range with code that
     /// was skipped by a preprocessor or similar means.
     SkippedRegion

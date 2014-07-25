@@ -160,9 +160,6 @@ std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
         case CounterMappingRegion::CodeRegion:
           // Don't do anything when we have a code region with a zero counter.
           break;
-        case CounterMappingRegion::EmptyRegion:
-          Kind = CounterMappingRegion::EmptyRegion;
-          break;
         case CounterMappingRegion::SkippedRegion:
           Kind = CounterMappingRegion::SkippedRegion;
           break;

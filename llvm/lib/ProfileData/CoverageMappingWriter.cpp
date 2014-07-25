@@ -172,11 +172,6 @@ void CoverageMappingWriter::write(raw_ostream &OS) {
       encodeULEB128(EncodedTagExpandedFileID, OS);
       break;
     }
-    case CounterMappingRegion::EmptyRegion:
-      encodeULEB128(unsigned(I.Kind)
-                        << Counter::EncodingCounterTagAndExpansionRegionTagBits,
-                    OS);
-      break;
     case CounterMappingRegion::SkippedRegion:
       assert(Count.isZero());
       encodeULEB128(unsigned(I.Kind)
