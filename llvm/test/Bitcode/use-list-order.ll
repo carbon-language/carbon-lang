@@ -1,4 +1,4 @@
-; RUN: opt -S < %s -preserve-bc-use-list-order -verify-use-list-order
+; RUN: llvm-uselistorder < %s -preserve-bc-use-list-order
 ; XFAIL: *
 
 @a = global [4 x i1] [i1 0, i1 1, i1 0, i1 1]

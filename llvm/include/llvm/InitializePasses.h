@@ -268,7 +268,6 @@ void initializeUnifyFunctionExitNodesPass(PassRegistry&);
 void initializeUnreachableBlockElimPass(PassRegistry&);
 void initializeUnreachableMachineBlockElimPass(PassRegistry&);
 void initializeVerifierLegacyPassPass(PassRegistry&);
-void initializeVerifyUseListOrderPass(PassRegistry&);
 void initializeVirtRegMapPass(PassRegistry&);
 void initializeVirtRegRewriterPass(PassRegistry&);
 void initializeInstSimplifierPass(PassRegistry&);

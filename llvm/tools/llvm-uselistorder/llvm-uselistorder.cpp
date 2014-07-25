@@ -1,4 +1,4 @@
-//===- VerifyUseListOrder.cpp - Use List Order Verifier ---------*- C++ -*-===//
+//===- opt.cpp - The LLVM Modular Optimizer -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,14 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Pass to verify use-list order doesn't change after serialization.
-//
-// Despite it being a verifier, this pass *does* transform the module, since it
-// shuffles the use-list of every value.
+// Optimizations may be specified an arbitrary number of times on the command
+// line, They are run in the order specified.
 //
 //===----------------------------------------------------------------------===//
-
-#include "llvm/Transforms/IPO.h"
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/AsmParser/Parser.h"
@@ -22,17 +18,27 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/UseListOrder.h"
-#include "llvm/Pass.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/SystemUtils.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "use-list-order"
+
+static cl::opt<std::string> InputFilename(cl::Positional,
+                                          cl::desc("<input bitcode file>"),
+                                          cl::init("-"),
+                                          cl::value_desc("filename"));
 
 namespace {
 
@@ -329,42 +335,45 @@ static bool verifyAssemblyUseListOrder(const Module &M) {
   return matches(ValueMapping(M), ValueMapping(*OtherM));
 }
 
-namespace {
-class VerifyUseListOrder : public ModulePass {
-public:
-  static char ID;
-  VerifyUseListOrder();
-  bool runOnModule(Module &M) override;
-};
-} // end anonymous namespace
+int main(int argc, char **argv) {
+  sys::PrintStackTraceOnErrorSignal();
+  llvm::PrettyStackTraceProgram X(argc, argv);
 
-char VerifyUseListOrder::ID = 0;
-INITIALIZE_PASS(VerifyUseListOrder, "verify-use-list-order",
-                "Verify Use List Order", false, false)
-VerifyUseListOrder::VerifyUseListOrder() : ModulePass(ID) {
-  initializeVerifyUseListOrderPass(*PassRegistry::getPassRegistry());
-}
+  // Enable debug stream buffering.
+  EnableDebugBuffering = true;
 
-bool VerifyUseListOrder::runOnModule(Module &M) {
+  llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
+  LLVMContext &Context = getGlobalContext();
+
+  cl::ParseCommandLineOptions(argc, argv,
+                              "llvm tool to verify use-list order\n");
+
+  SMDiagnostic Err;
+
+  // Load the input module...
+  std::unique_ptr<Module> M;
+  M.reset(ParseIRFile(InputFilename, Err, Context));
+
+  if (!M.get()) {
+    Err.print(argv[0], errs());
+    return 1;
+  }
+
   DEBUG(dbgs() << "*** verify-use-list-order ***\n");
   if (!shouldPreserveBitcodeUseListOrder()) {
     // Can't verify if order isn't preserved.
     DEBUG(dbgs() << "warning: cannot verify bitcode; "
                     "try -preserve-bc-use-list-order\n");
-    return false;
+    return 0;
   }
 
-  shuffleUseLists(M);
-  if (!verifyBitcodeUseListOrder(M))
+  shuffleUseLists(*M);
+  if (!verifyBitcodeUseListOrder(*M))
     report_fatal_error("bitcode use-list order changed");
 
   if (shouldPreserveBitcodeUseListOrder())
-    if (!verifyAssemblyUseListOrder(M))
+    if (!verifyAssemblyUseListOrder(*M))
       report_fatal_error("assembly use-list order changed");
 
-  return true;
-}
-
-ModulePass *llvm::createVerifyUseListOrderPass() {
-  return new VerifyUseListOrder;
+  return 0;
 }
