@@ -45,10 +45,6 @@
 # endif
 #endif
 
-#ifndef ASAN_USE_PREINIT_ARRAY
-# define ASAN_USE_PREINIT_ARRAY (SANITIZER_LINUX && !SANITIZER_ANDROID)
-#endif
-
 #ifndef ASAN_DYNAMIC
 # ifdef PIC
 #  define ASAN_DYNAMIC 1

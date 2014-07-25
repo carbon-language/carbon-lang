@@ -10,14 +10,10 @@
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
 // Call __asan_init at the very early stage of process startup.
-// On Linux we use .preinit_array section (unless PIC macro is defined).
 //===----------------------------------------------------------------------===//
 #include "asan_internal.h"
 
-#if ASAN_USE_PREINIT_ARRAY && !defined(PIC)
-  // On Linux, we force __asan_init to be called before anyone else
-  // by placing it into .preinit_array section.
-  // FIXME: do we have anything like this on Mac?
+#if SANITIZER_CAN_USE_PREINIT_ARRAY
   // The symbol is called __local_asan_preinit, because it's not intended to be
   // exported.
   __attribute__((section(".preinit_array"), used))
