@@ -13,15 +13,10 @@
 
 #include <sanitizer/lsan_interface.h>
 
-// OSX doesn't have MAP_ANONYMOUS.
-#ifndef MAP_ANONYMOUS
-#  define MAP_ANONYMOUS MAP_ANON
-#endif
-
 int main(int argc, char *argv[]) {
   size_t size = getpagesize() * 2;
   void *p =
-      mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+      mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
   assert(p);
   // Make half of the memory inaccessible. LSan must not crash trying to read it.
   assert(0 == mprotect((char *)p + size / 2, size / 2, PROT_NONE));
