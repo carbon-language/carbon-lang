@@ -22,6 +22,7 @@
 //===----------------------------------------------------------------------===//
 
 namespace llvm {
+class ConstantDataSequential;
 class MVT;
 
 enum {
@@ -59,6 +60,8 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 /// different datatypes and vector widths.
 void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
+void DecodePSHUFBMask(const ConstantDataSequential *C,
+                      SmallVectorImpl<int> &ShuffleMask);
 
 void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask);

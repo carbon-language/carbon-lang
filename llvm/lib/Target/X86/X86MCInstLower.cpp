@@ -16,8 +16,11 @@
 #include "X86RegisterInfo.h"
 #include "InstPrinter/X86ATTInstPrinter.h"
 #include "MCTargetDesc/X86BaseInfo.h"
+#include "Utils/X86ShuffleDecode.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/CodeGen/StackMaps.h"
 #include "llvm/IR/DataLayout.h"
@@ -963,6 +966,83 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case X86::SEH_EndPrologue:
     OutStreamer.EmitWinCFIEndProlog();
     return;
+
+  case X86::PSHUFBrm:
+    // Lower PSHUFB normally but add a comment if we can find a constant
+    // shuffle mask. We won't be able to do this at the MC layer because the
+    // mask isn't an immediate.
+    std::string Comment;
+    raw_string_ostream CS(Comment);
+    SmallVector<int, 16> Mask;
+
+    assert(MI->getNumOperands() == 7 &&
+           "Wrong number of operansd for PSHUFBrm");
+    const MachineOperand &DstOp = MI->getOperand(0);
+    const MachineOperand &SrcOp = MI->getOperand(1);
+    const MachineOperand &MaskOp = MI->getOperand(5);
+
+    // Compute the name for a register. This is really goofy because we have
+    // multiple instruction printers that could (in theory) use different
+    // names. Fortunately most people use the ATT style (outside of Windows)
+    // and they actually agree on register naming here. Ultimately, this is
+    // a comment, and so its OK if it isn't perfect.
+    auto GetRegisterName = [](unsigned RegNum) -> StringRef {
+      return X86ATTInstPrinter::getRegisterName(RegNum);
+    };
+
+    StringRef DstName = DstOp.isReg() ? GetRegisterName(DstOp.getReg()) : "mem";
+    StringRef SrcName = SrcOp.isReg() ? GetRegisterName(SrcOp.getReg()) : "mem";
+    CS << DstName << " = ";
+
+    if (MaskOp.isCPI()) {
+      ArrayRef<MachineConstantPoolEntry> Constants =
+          MI->getParent()->getParent()->getConstantPool()->getConstants();
+      const MachineConstantPoolEntry &MaskConstantEntry =
+          Constants[MI->getOperand(5).getIndex()];
+      Type *MaskTy = MaskConstantEntry.getType();
+      if (!MaskConstantEntry.isMachineConstantPoolEntry())
+        if (auto *C = dyn_cast<ConstantDataSequential>(
+                MaskConstantEntry.Val.ConstVal)) {
+          assert(MaskTy == C->getType() &&
+                 "Expected a constant of the same type!");
+
+          DecodePSHUFBMask(C, Mask);
+          assert(Mask.size() == MaskTy->getVectorNumElements() &&
+                 "Shuffle mask has a different size than its type!");
+        }
+    }
+
+    if (!Mask.empty()) {
+      bool NeedComma = false;
+      bool InSrc = false;
+      for (int M : Mask) {
+        // Wrap up any prior entry...
+        if (M == SM_SentinelZero && InSrc) {
+          InSrc = false;
+          CS << "]";
+        }
+        if (NeedComma)
+          CS << ",";
+        else
+          NeedComma = true;
+
+        // Print this shuffle...
+        if (M == SM_SentinelZero) {
+          CS << "zero";
+        } else {
+          if (!InSrc) {
+            InSrc = true;
+            CS << SrcName << "[";
+          }
+          CS << M;
+        }
+      }
+      if (InSrc)
+        CS << "]";
+
+      OutStreamer.AddComment(CS.str());
+    }
+    break;
   }
 
   MCInst TmpInst;

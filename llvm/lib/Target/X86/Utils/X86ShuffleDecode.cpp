@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86ShuffleDecode.h"
+#include "llvm/IR/Constants.h"
 #include "llvm/CodeGen/MachineValueType.h"
 
 //===----------------------------------------------------------------------===//
@@ -204,6 +205,38 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
     unsigned HalfBegin = ((Imm >> (l*4)) & 0x3) * HalfSize;
     for (unsigned i = HalfBegin, e = HalfBegin+HalfSize; i != e; ++i)
       ShuffleMask.push_back(i);
+  }
+}
+
+/// \brief Decode PSHUFB masks stored in an LLVM Constant.
+void DecodePSHUFBMask(const ConstantDataSequential *C,
+                      SmallVectorImpl<int> &ShuffleMask) {
+  Type *MaskTy = C->getType();
+  assert(MaskTy->isVectorTy() && "Expected a vector constant mask!");
+  Type *EltTy = MaskTy->getVectorElementType();
+  assert(EltTy->isIntegerTy(8) && "Expected i8 constant mask elements!");
+  int NumElements = MaskTy->getVectorNumElements();
+  // FIXME: Add support for AVX-512.
+  assert((NumElements == 16 || NumElements == 32) &&
+         "Only 128-bit and 256-bit vectors supported!");
+  assert((unsigned)NumElements == C->getNumElements() &&
+         "Constant mask has a different number of elements!");
+
+  ShuffleMask.reserve(NumElements);
+  for (int i = 0; i < NumElements; ++i) {
+    // For AVX vectors with 32 bytes the base of the shuffle is the half of the
+    // vector we're inside.
+    int Base = i < 16 ? 0 : 16;
+    uint64_t Element = C->getElementAsInteger(i);
+    // If the high bit (7) of the byte is set, the element is zeroed.
+    if (Element & (1 << 7))
+      ShuffleMask.push_back(SM_SentinelZero);
+    else {
+      int Index = Base + Element;
+      assert((Index >= 0 && Index < NumElements) ||
+             "Out of bounds shuffle index for pshub instruction!");
+      ShuffleMask.push_back(Index);
+    }
   }
 }
 
