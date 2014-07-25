@@ -561,6 +561,9 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfInfoDWOSection =
     Ctx->getELFSection(".debug_info.dwo", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+  DwarfTypesDWOSection =
+    Ctx->getELFSection(".debug_types.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
   DwarfAbbrevDWOSection =
     Ctx->getELFSection(".debug_abbrev.dwo", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
@@ -736,6 +739,10 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                           COFF::IMAGE_SCN_MEM_DISCARDABLE |
                           COFF::IMAGE_SCN_MEM_READ,
                           SectionKind::getMetadata());
+  DwarfTypesDWOSection =
+      Ctx->getCOFFSection(".debug_types.dwo", COFF::IMAGE_SCN_MEM_DISCARDABLE |
+                                                  COFF::IMAGE_SCN_MEM_READ,
+                          SectionKind::getMetadata());
   DwarfAbbrevDWOSection =
       Ctx->getCOFFSection(".debug_abbrev.dwo",
                           COFF::IMAGE_SCN_MEM_DISCARDABLE |
@@ -845,13 +852,6 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef T, Reloc::Model relocm,
 const MCSection *MCObjectFileInfo::getDwarfTypesSection(uint64_t Hash) const {
   return Ctx->getELFSection(".debug_types", ELF::SHT_PROGBITS, ELF::SHF_GROUP,
                             SectionKind::getMetadata(), 0, utostr(Hash));
-}
-
-const MCSection *
-MCObjectFileInfo::getDwarfTypesDWOSection(uint64_t Hash) const {
-  return Ctx->getELFSection(".debug_types.dwo", ELF::SHT_PROGBITS,
-                            ELF::SHF_GROUP, SectionKind::getMetadata(), 0,
-                            utostr(Hash));
 }
 
 void MCObjectFileInfo::InitEHFrameSection() {

@@ -1640,9 +1640,12 @@ void DwarfDebug::emitSectionLabels() {
   // Dwarf sections base addresses.
   DwarfInfoSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
-  if (useSplitDwarf())
+  if (useSplitDwarf()) {
     DwarfInfoDWOSectionSym =
         emitSectionSym(Asm, TLOF.getDwarfInfoDWOSection(), "section_info_dwo");
+    DwarfTypesDWOSectionSym =
+        emitSectionSym(Asm, TLOF.getDwarfTypesDWOSection(), "section_types_dwo");
+  }
   DwarfAbbrevSectionSym =
       emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
   if (useSplitDwarf())
@@ -2406,9 +2409,9 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   bool TopLevelType = TypeUnitsUnderConstruction.empty();
   AddrPool.resetUsedFlag();
 
-  auto OwnedUnit =
-      make_unique<DwarfTypeUnit>(InfoHolder.getUnits().size(), CU, Asm, this,
-                                 &InfoHolder, getDwoLineTable(CU));
+  auto OwnedUnit = make_unique<DwarfTypeUnit>(
+      InfoHolder.getUnits().size() + TypeUnitsUnderConstruction.size(), CU, Asm,
+      this, &InfoHolder, getDwoLineTable(CU));
   DwarfTypeUnit &NewTU = *OwnedUnit;
   DIE &UnitDie = NewTU.getUnitDie();
   TU = &NewTU;
@@ -2421,15 +2424,14 @@ void DwarfDebug::addDwarfTypeUnitType(DwarfCompileUnit &CU,
   uint64_t Signature = makeTypeSignature(Identifier);
   NewTU.setTypeSignature(Signature);
 
-  if (!useSplitDwarf())
+  if (useSplitDwarf())
+    NewTU.initSection(Asm->getObjFileLowering().getDwarfTypesDWOSection(),
+                      DwarfTypesDWOSectionSym);
+  else {
     CU.applyStmtList(UnitDie);
-
-  // FIXME: Skip using COMDAT groups for type units in the .dwo file once tools
-  // such as DWP ( http://gcc.gnu.org/wiki/DebugFissionDWP ) can cope with it.
-  NewTU.initSection(
-      useSplitDwarf()
-          ? Asm->getObjFileLowering().getDwarfTypesDWOSection(Signature)
-          : Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+    NewTU.initSection(
+        Asm->getObjFileLowering().getDwarfTypesSection(Signature));
+  }
 
   NewTU.setType(NewTU.createTypeDIE(CTy));
 
