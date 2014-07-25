@@ -1438,8 +1438,34 @@ bool AArch64FastISel::TryEmitSmallMemCpy(Address Dest, Address Src,
 bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
   // FIXME: Handle more intrinsics.
   switch (II->getIntrinsicID()) {
-  default:
-    return false;
+  default: return false;
+  case Intrinsic::frameaddress: {
+    MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
+    MFI->setFrameAddressIsTaken(true);
+
+    const AArch64RegisterInfo *RegInfo =
+      static_cast<const AArch64RegisterInfo *>(TM.getRegisterInfo());
+    unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
+    unsigned SrcReg = FramePtr;
+
+    // Recursively load frame address
+    // ldr x0, [fp]
+    // ldr x0, [x0]
+    // ldr x0, [x0]
+    // ...
+    unsigned DestReg;
+    unsigned Depth = cast<ConstantInt>(II->getOperand(0))->getZExtValue();
+    while (Depth--) {
+      DestReg = createResultReg(&AArch64::GPR64RegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(AArch64::LDRXui), DestReg)
+        .addReg(SrcReg).addImm(0);
+      SrcReg = DestReg;
+    }
+
+    UpdateValueMap(II, SrcReg);
+    return true;
+  }
   case Intrinsic::memcpy:
   case Intrinsic::memmove: {
     const auto *MTI = cast<MemTransferInst>(II);
