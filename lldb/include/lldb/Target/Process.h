@@ -1027,10 +1027,6 @@ public:
     ///
     /// Launch a new process by spawning a new process using the
     /// target object's executable module's file as the file to launch.
-    /// Arguments are given in \a argv, and the environment variables
-    /// are in \a envp. Standard input and output files can be
-    /// optionally re-directed to \a stdin_path, \a stdout_path, and
-    /// \a stderr_path.
     ///
     /// This function is not meant to be overridden by Process
     /// subclasses. It will first call Process::WillLaunch (Module *)
@@ -1040,32 +1036,9 @@ public:
     /// DoLaunch returns \b true, then Process::DidLaunch() will be
     /// called.
     ///
-    /// @param[in] argv
-    ///     The argument array.
-    ///
-    /// @param[in] envp
-    ///     The environment array.
-    ///
-    /// @param[in] launch_flags
-    ///     Flags to modify the launch (@see lldb::LaunchFlags)
-    ///
-    /// @param[in] stdin_path
-    ///     The path to use when re-directing the STDIN of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stdout_path
-    ///     The path to use when re-directing the STDOUT of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stderr_path
-    ///     The path to use when re-directing the STDERR of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] working_directory
-    ///     The working directory to have the child process run in
+    /// @param[in] launch_info
+    ///     Details regarding the environment, STDIN/STDOUT/STDERR
+    ///     redirection, working path, etc. related to the requested launch.
     ///
     /// @return
     ///     An error object. Call GetID() to get the process ID if
@@ -1519,46 +1492,21 @@ public:
     //------------------------------------------------------------------
     /// Launch a new process.
     ///
-    /// Launch a new process by spawning a new process using \a module's
-    /// file as the file to launch. Arguments are given in \a argv,
-    /// and the environment variables are in \a envp. Standard input
-    /// and output files can be optionally re-directed to \a stdin_path,
-    /// \a stdout_path, and \a stderr_path.
+    /// Launch a new process by spawning a new process using
+    /// \a exe_module's file as the file to launch. Launch details are
+    /// provided in \a launch_info.
     ///
-    /// @param[in] module
+    /// @param[in] exe_module
     ///     The module from which to extract the file specification and
     ///     launch.
     ///
-    /// @param[in] argv
-    ///     The argument array.
-    ///
-    /// @param[in] envp
-    ///     The environment array.
-    ///
-    /// @param[in] launch_flags
-    ///     Flags to modify the launch (@see lldb::LaunchFlags)
-    ///
-    /// @param[in] stdin_path
-    ///     The path to use when re-directing the STDIN of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stdout_path
-    ///     The path to use when re-directing the STDOUT of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] stderr_path
-    ///     The path to use when re-directing the STDERR of the new
-    ///     process. If all stdXX_path arguments are NULL, a pseudo
-    ///     terminal will be used.
-    ///
-    /// @param[in] working_directory
-    ///     The working directory to have the child process run in
+    /// @param[in] launch_info
+    ///     Details (e.g. arguments, stdio redirection, etc.) for the
+    ///     requested launch.
     ///
     /// @return
-    ///     A new valid process ID, or LLDB_INVALID_PROCESS_ID if
-    ///     launching fails.
+    ///     An Error instance indicating success or failure of the
+    ///     operation.
     //------------------------------------------------------------------
     virtual Error
     DoLaunch (Module *exe_module,
