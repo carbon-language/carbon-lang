@@ -36,11 +36,13 @@ invoke.cont44:                                    ; preds = %if.end
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!8}
 
-!0 = metadata !{i32 786449, metadata !6, i32 4, metadata !"clang version 3.3 (trunk 168984) (llvm/trunk 168983)", i1 true, metadata !"", i32 0, metadata !2, metadata !7, null, null, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Bullet/MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp] [DW_LANG_C_plus_plus]
-!2 = metadata !{null}
+!0 = metadata !{i32 786449, metadata !6, i32 4, metadata !"clang version 3.3 (trunk 168984) (llvm/trunk 168983)", i1 true, metadata !"", i32 0, null, null, metadata !1, null, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Bullet/MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp] [DW_LANG_C_plus_plus]
+!1 = metadata !{metadata !2}
+!2 = metadata !{i32 786478, metadata !6, metadata !5, metadata !"test", metadata !"test", null, i32 0, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, void ()* @test, null, null, null, i32 1} ; [ DW_TAG_subprogram ] [def] [test]
 !3 = metadata !{i32 786688, null, metadata !"callback", null, i32 214, metadata !4, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [callback] [line 214]
 !4 = metadata !{i32 786451, metadata !6, null, metadata !"btCompoundLeafCallback", i32 90, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, null, null, null} ; [ DW_TAG_structure_type ] [btCompoundLeafCallback] [line 90, size 512, align 64, offset 0] [def] [from ]
 !5 = metadata !{i32 786473, metadata !6} ; [ DW_TAG_file_type ]
 !6 = metadata !{metadata !"MultiSource/Benchmarks/Bullet/btCompoundCollisionAlgorithm.cpp", metadata !"MultiSource/Benchmarks/Bullet"}
-!7 = metadata !{i32 0}
+!7 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!9 = metadata !{null}

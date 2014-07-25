@@ -26,7 +26,7 @@ entry:
 !llvm.dbg.cu = !{!2}
 !llvm.module.flags = !{!20}
 
-!0 = metadata !{i32 786478, metadata !19, metadata !1, metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [__OpenCL_test_kernel]
+!0 = metadata !{i32 786478, metadata !19, metadata !1, metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", metadata !"__OpenCL_test_kernel", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i32 addrspace(1)*)* @__OpenCL_test_kernel, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [__OpenCL_test_kernel]
 !1 = metadata !{i32 786473, metadata !19} ; [ DW_TAG_file_type ]
 !2 = metadata !{i32 786449, metadata !19, i32 1, metadata !"clc", i1 false, metadata !"", i32 0, metadata !12, metadata !12, metadata !18, null,  null, null} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !19, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]

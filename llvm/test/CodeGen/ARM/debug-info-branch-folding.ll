@@ -3,6 +3,7 @@ target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:32-
 target triple = "thumbv7-apple-macosx10.6.7"
 
 ;CHECK: 	vadd.f32	q4, q8, q8
+;CHECK-NEXT: Ltmp1
 ;CHECK-NEXT: LBB0_1
 
 ;CHECK:@DEBUG_VALUE: x <- Q4{{$}}
@@ -39,6 +40,7 @@ declare i32 @printf(i8* nocapture, ...) nounwind
 declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !llvm.module.flags = !{!56}
+!llvm.dbg.cu = !{!2}
 
 !0 = metadata !{i32 786478, metadata !54, null, metadata !"test0001", metadata !"test0001", metadata !"", i32 3, metadata !3, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, <4 x float> (float)* @test0001, null, null, metadata !51, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !54} ; [ DW_TAG_file_type ]
@@ -73,7 +75,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !30 = metadata !{i32 786689, metadata !14, metadata !"F", metadata !15, i32 16777257, metadata !31, i32 0, null} ; [ DW_TAG_arg_variable ]
 !31 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !32} ; [ DW_TAG_pointer_type ]
 !32 = metadata !{i32 786454, metadata !55, metadata !2, metadata !"FV", i32 25, i64 0, i64 0, i64 0, i32 0, metadata !33} ; [ DW_TAG_typedef ]
-!33 = metadata !{i32 786455, metadata !55, metadata !2, metadata !"", i32 22, i64 128, i64 128, i64 0, i32 0, i32 0, metadata !34, i32 0, i32 0} ; [ DW_TAG_union_type ]
+!33 = metadata !{i32 786455, metadata !55, metadata !2, metadata !"", i32 22, i64 128, i64 128, i64 0, i32 0, i32 0, metadata !34, i32 0, null} ; [ DW_TAG_union_type ]
 !34 = metadata !{metadata !35, metadata !37}
 !35 = metadata !{i32 786445, metadata !55, metadata !15, metadata !"V", i32 23, i64 128, i64 128, i64 0, i32 0, metadata !36} ; [ DW_TAG_member ]
 !36 = metadata !{i32 786454, metadata !55, metadata !2, metadata !"v4sf", i32 3, i64 0, i64 0, i64 0, i32 0, metadata !6} ; [ DW_TAG_typedef ]

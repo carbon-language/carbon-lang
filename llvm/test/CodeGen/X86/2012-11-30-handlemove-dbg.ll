@@ -38,7 +38,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!12}
 
-!0 = metadata !{i32 786449, metadata !11, i32 12, metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !2, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Olden/bh/newbh.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !11, i32 12, metadata !"clang version 3.3 (trunk 168918) (llvm/trunk 168920)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !13, metadata !2, null, metadata !""} ; [ DW_TAG_compile_unit ] [MultiSource/Benchmarks/Olden/bh/newbh.c] [DW_LANG_C99]
 !2 = metadata !{}
 !4 = metadata !{i32 786689, null, metadata !"hg", metadata !5, i32 67109589, metadata !6, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [hg] [line 725]
 !5 = metadata !{i32 786473, metadata !11} ; [ DW_TAG_file_type ]
@@ -46,3 +46,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !7 = metadata !{i32 786451, metadata !11, null, metadata !"", i32 487, i64 512, i64 64, i32 0, i32 0, null, null, i32 0, null, i32 0, null} ; [ DW_TAG_structure_type ] [line 487, size 512, align 64, offset 0] [def] [from ]
 !11 = metadata !{metadata !"MultiSource/Benchmarks/Olden/bh/newbh.c", metadata !"MultiSource/Benchmarks/Olden/bh"}
 !12 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
+!13 = metadata !{metadata !14}
+!14 = metadata !{i32 786478, metadata !11, metadata !5, metadata !"subdivp", metadata !"subdivp", null, i32 0, metadata !15, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i16 (%struct.node.0.27*, double, double, %struct.hgstruct.2.29* )* @subdivp, null, null, null, i32 1} ; [ DW_TAG_subprogram ] [def] [subdivp]
+!15 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !16, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
+!16 = metadata !{null}
