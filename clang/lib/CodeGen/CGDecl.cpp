@@ -1656,7 +1656,9 @@ void CodeGenFunction::EmitParmDecl(const VarDecl &D, llvm::Value *Arg,
     DeclPtr = Arg->getType() == IRTy ? Arg : Builder.CreateBitCast(Arg, IRTy,
                                                                    D.getName());
     // Push a destructor cleanup for this parameter if the ABI requires it.
-    if (!IsScalar &&
+    // Don't push a cleanup in a thunk for a method that will also emit a
+    // cleanup.
+    if (!IsScalar && !CurFuncIsThunk &&
         getTarget().getCXXABI().areArgsDestroyedLeftToRightInCallee()) {
       const CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
       if (RD && RD->hasNonTrivialDestructor())

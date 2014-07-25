@@ -258,6 +258,10 @@ public:
     ~SanitizerScope();
   };
 
+  /// In C++, whether we are code generating a thunk.  This controls whether we
+  /// should emit cleanups.
+  bool CurFuncIsThunk;
+
   /// In ARC, whether we should autorelease the return value.
   bool AutoreleaseResult;
 

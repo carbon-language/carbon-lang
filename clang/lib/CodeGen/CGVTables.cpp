@@ -194,6 +194,7 @@ void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
                                  const CGFunctionInfo &FnInfo) {
   assert(!CurGD.getDecl() && "CurGD was already set!");
   CurGD = GD;
+  CurFuncIsThunk = true;
 
   // Build FunctionArgs.
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
