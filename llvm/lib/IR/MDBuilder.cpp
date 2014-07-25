@@ -60,11 +60,13 @@ MDNode *MDBuilder::createRange(const APInt &Lo, const APInt &Hi) {
   return MDNode::get(Context, Range);
 }
 
-MDNode *MDBuilder::createAnonymousAARoot(StringRef Name) {
+MDNode *MDBuilder::createAnonymousAARoot(StringRef Name, MDNode *Extra) {
   // To ensure uniqueness the root node is self-referential.
   MDNode *Dummy = MDNode::getTemporary(Context, ArrayRef<Value*>());
 
-  SmallVector<Value *, 2> Args(1, Dummy);
+  SmallVector<Value *, 3> Args(1, Dummy);
+  if (Extra)
+    Args.push_back(Extra);
   if (!Name.empty())
     Args.push_back(createString(Name));
   MDNode *Root = MDNode::get(Context, Args);
@@ -98,12 +100,12 @@ MDNode *MDBuilder::createTBAANode(StringRef Name, MDNode *Parent,
   }
 }
 
-MDNode *MDBuilder::createAliasScopeRoot(StringRef Name) {
+MDNode *MDBuilder::createAliasScopeDomain(StringRef Name) {
   return MDNode::get(Context, createString(Name));
 }
 
-MDNode *MDBuilder::createAliasScopeNode(StringRef Name, MDNode *Parent) {
-  Value *Ops[2] = { createString(Name), Parent };
+MDNode *MDBuilder::createAliasScope(StringRef Name, MDNode *Domain) {
+  Value *Ops[2] = { createString(Name), Domain };
   return MDNode::get(Context, Ops);
 }
 

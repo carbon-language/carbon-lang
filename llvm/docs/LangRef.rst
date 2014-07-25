@@ -2837,50 +2837,58 @@ noalias memory-access sets. This means that some collection of memory access
 instructions (loads, stores, memory-accessing calls, etc.) that carry
 ``noalias`` metadata can specifically be specified not to alias with some other
 collection of memory access instructions that carry ``alias.scope`` metadata.
-Each type of metadata specifies a list of scopes, and when evaluating an
-aliasing query, if one of the instructions has a scope in its ``alias.scope``
-list that is identical to a scope in the other instruction's ``noalias`` list,
-or is a descendant (in the scope hierarchy) of a scope in the other
-instruction's ``noalias`` list , then the two memory accesses are assumed not
-to alias.
+Each type of metadata specifies a list of scopes where each scope has an id and
+a domain. When evaluating an aliasing query, if for some some domain, the set
+of scopes with that domain in one instruction's ``alias.scope`` list is a
+subset of (or qual to) the set of scopes for that domain in another
+instruction's ``noalias`` list, then the two memory accesses are assumed not to
+alias.
 
-The metadata identifying each scope is itself a list containing one or two
-entries. The first entry is the name of the scope. Note that if the name is a
+The metadata identifying each domain is itself a list containing one or two
+entries. The first entry is the name of the domain. Note that if the name is a
 string then it can be combined accross functions and translation units. A
-self-reference can be used to create globally unique scope names.
-Optionally, a metadata reference to a parent scope can be provided as a second
-entry in the list.
+self-reference can be used to create globally unique domain names. A
+descriptive string may optionally be provided as a second list entry.
+
+The metadata identifying each scope is also itself a list containing two or
+three entries. The first entry is the name of the scope. Note that if the name
+is a string then it can be combined accross functions and translation units. A
+self-reference can be used to create globally unique scope names. A metadata
+reference to the scope's domain is the second entry. A descriptive string may
+optionally be provided as a third list entry.
 
 For example,
 
 .. code-block:: llvm
 
-    ; A root scope (which doubles as a list of itself):
+    ; Two scope domains:
     !0 = metadata !{metadata !0}
+    !1 = metadata !{metadata !1}
 
-    ; Two child scopes (which must be self-referential to avoid being "uniqued"):
-    !1 = metadata !{metadata !2} ; A list containing only scope !2
-    !2 = metadata !{metadata !2, metadata !0} ; Scope !2 is a descendant of scope !0
+    ; Some scopes in these domains:
+    !2 = metadata !{metadata !2, metadata !0}
+    !3 = metadata !{metadata !3, metadata !0}
+    !4 = metadata !{metadata !4, metadata !1}
 
-    !3 = metadata !{metadata !4} ; A list containing only scope !4
-    !4 = metadata !{metadata !4, metadata !0} ; Scope !4 is a descendant of scope !0
+    ; Some scope lists:
+    !5 = metadata !{metadata !4} ; A list containing only scope !4
+    !6 = metadata !{metadata !4, metadata !3, metadata !2}
+    !7 = metadata !{metadata !3}
 
     ; These two instructions don't alias:
-    %0 = load float* %c, align 4, !alias.scope !0
-    store float %0, float* %arrayidx.i, align 4, !noalias !0
+    %0 = load float* %c, align 4, !alias.scope !5
+    store float %0, float* %arrayidx.i, align 4, !noalias !5
 
-    ; These two instructions may alias (scope !2 and scope !4 are peers):
-    %2 = load float* %c, align 4, !alias.scope !1
-    store float %2, float* %arrayidx.i2, align 4, !noalias !3
+    ; These two instructions also don't alias (for domain !1, the set of scopes
+    ; in the !alias.scope equals that in the !noalias list):
+    %2 = load float* %c, align 4, !alias.scope !5
+    store float %2, float* %arrayidx.i2, align 4, !noalias !6
 
-    ; These two instructions don't alias (scope !2 is a descendant of scope !0
-    ; and the store does not alias with anything in scope !0 or any of its descendants):
-    %2 = load float* %c, align 4, !alias.scope !1
-    store float %0, float* %arrayidx.i, align 4, !noalias !0
-
-    ; These two instructions may alias:
-    %2 = load float* %c, align 4, !alias.scope !0
-    store float %0, float* %arrayidx.i, align 4, !noalias !1
+    ; These two instructions don't alias (for domain !0, the set of scopes in
+    ; the !noalias list is not a superset of, or equal to, the scopes in the
+    ; !alias.scope list):
+    %2 = load float* %c, align 4, !alias.scope !6
+    store float %0, float* %arrayidx.i, align 4, !noalias !7
 
 '``fpmath``' Metadata
 ^^^^^^^^^^^^^^^^^^^^^

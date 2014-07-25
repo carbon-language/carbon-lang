@@ -10,13 +10,14 @@
 // This file defines the ScopedNoAlias alias-analysis pass, which implements
 // metadata-based scoped no-alias support.
 //
-// Alias-analysis scopes are defined similar to TBAA nodes:
+// Alias-analysis scopes are defined by an id (which can be a string or some
+// other metadata node), a domain node, and an optional descriptive string.
+// A domain is defined by an id (which can be a string or some other metadata
+// node), and an optional descriptive string.
 //
-// !scope0 = metadata !{ metadata !"scope of foo()" }
-// !scope1 = metadata !{ metadata !"scope 1", metadata !scope0 }
-// !scope2 = metadata !{ metadata !"scope 2", metadata !scope0 }
-// !scope3 = metadata !{ metadata !"scope 2.1", metadata !scope2 }
-// !scope4 = metadata !{ metadata !"scope 2.2", metadata !scope2 }
+// !dom0 =   metadata !{ metadata !"domain of foo()" }
+// !scope1 = metadata !{ metadata !scope1, metadata !dom0, metadata !"scope 1" }
+// !scope2 = metadata !{ metadata !scope2, metadata !dom0, metadata !"scope 2" }
 //
 // Loads and stores can be tagged with an alias-analysis scope, and also, with
 // a noalias tag for a specific scope:
@@ -25,17 +26,13 @@
 // ... = load %ptr2, !alias.scope !{ !scope1, !scope2 }, !noalias !{ !scope1 }
 //
 // When evaluating an aliasing query, if one of the instructions is associated
-// with an alias.scope id that is identical to the noalias scope associated
-// with the other instruction, or is a descendant (in the scope hierarchy) of
-// the noalias scope associated with the other instruction, then the two memory
+// has a set of noalias scopes in some domain that is superset of the alias
+// scopes in that domain of some other instruction, then the two memory
 // accesses are assumed not to alias.
-//
-// Note that if the first element of the scope metadata is a string, then it
-// can be combined accross functions and translation units. The string can be
-// replaced by a self-reference to create globally unqiue scope identifiers.
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/IR/Constants.h"
@@ -66,15 +63,11 @@ public:
   /// getNode - Get the MDNode for this AliasScopeNode.
   const MDNode *getNode() const { return Node; }
 
-  /// getParent - Get this AliasScopeNode's Alias tree parent.
-  AliasScopeNode getParent() const {
+  /// getDomain - Get the MDNode for this AliasScopeNode's domain.
+  const MDNode *getDomain() const {
     if (Node->getNumOperands() < 2)
-      return AliasScopeNode();
-    MDNode *P = dyn_cast_or_null<MDNode>(Node->getOperand(1));
-    if (!P)
-      return AliasScopeNode();
-    // Ok, this node has a valid parent. Return it.
-    return AliasScopeNode(P);
+      return nullptr;
+    return dyn_cast_or_null<MDNode>(Node->getOperand(1));
   }
 };
 
@@ -102,8 +95,9 @@ public:
   }
 
 protected:
-  bool mayAlias(const MDNode *A, const MDNode *B) const;
   bool mayAliasInScopes(const MDNode *Scopes, const MDNode *NoAlias) const;
+  void collectMDInDomain(const MDNode *List, const MDNode *Domain,
+                         SmallPtrSetImpl<const MDNode *> &Nodes) const;
 
 private:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -133,24 +127,13 @@ ScopedNoAliasAA::getAnalysisUsage(AnalysisUsage &AU) const {
   AliasAnalysis::getAnalysisUsage(AU);
 }
 
-/// mayAlias - Test whether the scope represented by A may alias the
-/// scope represented by B. Specifically, A is the target scope, and B is the
-/// noalias scope.
-bool
-ScopedNoAliasAA::mayAlias(const MDNode *A,
-                          const MDNode *B) const {
-  // Climb the tree from A to see if we reach B.
-  for (AliasScopeNode T(A); ; ) {
-    if (T.getNode() == B)
-      // B is an ancestor of A.
-      return false;
-
-    T = T.getParent();
-    if (!T.getNode())
-      break;
-  }
-
-  return true;
+void
+ScopedNoAliasAA::collectMDInDomain(const MDNode *List, const MDNode *Domain,
+                   SmallPtrSetImpl<const MDNode *> &Nodes) const {
+  for (unsigned i = 0, ie = List->getNumOperands(); i != ie; ++i)
+    if (const MDNode *MD = dyn_cast<MDNode>(List->getOperand(i)))
+      if (AliasScopeNode(MD).getDomain() == Domain)
+        Nodes.insert(MD);
 }
 
 bool
@@ -159,14 +142,35 @@ ScopedNoAliasAA::mayAliasInScopes(const MDNode *Scopes,
   if (!Scopes || !NoAlias)
     return true;
 
-  for (unsigned i = 0, ie = Scopes->getNumOperands(); i != ie; ++i)
-    if (const MDNode *SMD = dyn_cast<MDNode>(Scopes->getOperand(i)))
-      for (unsigned j = 0, je = NoAlias->getNumOperands(); j != je; ++j)
-        if (const MDNode *NAMD = dyn_cast<MDNode>(NoAlias->getOperand(j)))
-          if (!mayAlias(SMD, NAMD))
-            return false;
+  // Collect the set of scope domains relevant to the noalias scopes.
+  SmallPtrSet<const MDNode *, 16> Domains;
+  for (unsigned i = 0, ie = NoAlias->getNumOperands(); i != ie; ++i)
+    if (const MDNode *NAMD = dyn_cast<MDNode>(NoAlias->getOperand(i)))
+      if (const MDNode *Domain = AliasScopeNode(NAMD).getDomain())
+        Domains.insert(Domain);
 
-  return true; 
+  // We alias unless, for some domain, the set of noalias scopes in that domain
+  // is a superset of the set of alias scopes in that domain.
+  for (const MDNode *Domain : Domains) {
+    SmallPtrSet<const MDNode *, 16> NANodes, ScopeNodes;
+    collectMDInDomain(NoAlias, Domain, NANodes);
+    collectMDInDomain(Scopes, Domain, ScopeNodes);
+    if (!ScopeNodes.size())
+      continue;
+
+    // To not alias, all of the nodes in ScopeNodes must be in NANodes.
+    bool FoundAll = true;
+    for (const MDNode *SMD : ScopeNodes)
+      if (!NANodes.count(SMD)) {
+        FoundAll = false;
+        break;
+      }
+
+    if (FoundAll)
+      return false;
+  }
+
+  return true;
 }
 
 AliasAnalysis::AliasResult

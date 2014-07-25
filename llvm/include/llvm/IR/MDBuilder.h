@@ -70,7 +70,8 @@ protected:
   /// \brief Return metadata appropriate for a AA root node (scope or TBAA).
   /// Each returned node is distinct from all other metadata and will never
   /// be identified (uniqued) with anything else.
-  MDNode *createAnonymousAARoot(StringRef Name = StringRef());
+  MDNode *createAnonymousAARoot(StringRef Name = StringRef(),
+                                MDNode *Extra = nullptr);
 
 public:
   /// \brief Return metadata appropriate for a TBAA root node. Each returned
@@ -80,11 +81,19 @@ public:
     return createAnonymousAARoot();
   }
 
+  /// \brief Return metadata appropriate for an alias scope domain node.
+  /// Each returned node is distinct from all other metadata and will never
+  /// be identified (uniqued) with anything else.
+  MDNode *createAnonymousAliasScopeDomain(StringRef Name = StringRef()) {
+    return createAnonymousAARoot(Name);
+  }
+
   /// \brief Return metadata appropriate for an alias scope root node.
   /// Each returned node is distinct from all other metadata and will never
   /// be identified (uniqued) with anything else.
-  MDNode *createAnonymousAliasScopeRoot(StringRef Name = StringRef()) {
-    return createAnonymousAARoot(Name);
+  MDNode *createAnonymousAliasScope(MDNode *Domain,
+                                    StringRef Name = StringRef()) {
+    return createAnonymousAARoot(Name, Domain);
   }
 
   /// \brief Return metadata appropriate for a TBAA root node with the given
@@ -92,19 +101,20 @@ public:
   /// name.
   MDNode *createTBAARoot(StringRef Name);
 
-  /// \brief Return metadata appropriate for an alias scope root node with
+  /// \brief Return metadata appropriate for an alias scope domain node with
   /// the given name. This may be identified (uniqued) with other roots with
   /// the same name.
-  MDNode *createAliasScopeRoot(StringRef Name);
+  MDNode *createAliasScopeDomain(StringRef Name);
+
+  /// \brief Return metadata appropriate for an alias scope node with
+  /// the given name. This may be identified (uniqued) with other scopes with
+  /// the same name and domain.
+  MDNode *createAliasScope(StringRef Name, MDNode *Domain);
 
   /// \brief Return metadata for a non-root TBAA node with the given name,
   /// parent in the TBAA tree, and value for 'pointsToConstantMemory'.
   MDNode *createTBAANode(StringRef Name, MDNode *Parent,
                          bool isConstant = false);
-
-  /// \brief Return metadata for a non-root alias scope node with the given
-  /// name and parent in the scope tree.
-  MDNode *createAliasScopeNode(StringRef Name, MDNode *Parent);
 
   struct TBAAStructField {
     uint64_t Offset;
