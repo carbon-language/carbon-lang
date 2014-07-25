@@ -128,12 +128,31 @@ llvm::Value *CGOpenMPRuntime::GetOpenMPGlobalThreadNum(CodeGenFunction &CGF,
   if (I != OpenMPGtidMap.end()) {
     GTid = I->second;
   } else {
-    // Generate "int32 .kmpc_global_thread_num.addr;"
-    CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
-    CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
-    llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc)};
-    GTid = CGF.EmitRuntimeCall(
-        CreateRuntimeFunction(OMPRTL__kmpc_global_thread_num), Args);
+    // Check if current function is a function which has first parameter
+    // with type int32 and name ".global_tid.".
+    if (!CGF.CurFn->arg_empty() &&
+        CGF.CurFn->arg_begin()->getType()->isPointerTy() &&
+        CGF.CurFn->arg_begin()
+            ->getType()
+            ->getPointerElementType()
+            ->isIntegerTy() &&
+        CGF.CurFn->arg_begin()
+                ->getType()
+                ->getPointerElementType()
+                ->getIntegerBitWidth() == 32 &&
+        CGF.CurFn->arg_begin()->hasName() &&
+        CGF.CurFn->arg_begin()->getName() == ".global_tid.") {
+      CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
+      CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
+      GTid = CGF.Builder.CreateLoad(CGF.CurFn->arg_begin());
+    } else {
+      // Generate "int32 .kmpc_global_thread_num.addr;"
+      CGBuilderTy::InsertPointGuard IPG(CGF.Builder);
+      CGF.Builder.SetInsertPoint(CGF.AllocaInsertPt);
+      llvm::Value *Args[] = {EmitOpenMPUpdateLocation(CGF, Loc)};
+      GTid = CGF.EmitRuntimeCall(
+          CreateRuntimeFunction(OMPRTL__kmpc_global_thread_num), Args);
+    }
     OpenMPGtidMap[CGF.CurFn] = GTid;
   }
   return GTid;
