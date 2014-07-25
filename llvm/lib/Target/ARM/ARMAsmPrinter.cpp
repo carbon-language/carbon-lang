@@ -478,6 +478,9 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   // Emit ARM Build Attributes
   if (Subtarget->isTargetELF())
     emitAttributes();
+
+  if (!M.getModuleInlineAsm().empty() && Subtarget->isThumb())
+    OutStreamer.EmitAssemblerFlag(MCAF_Code16);
 }
 
 static void
