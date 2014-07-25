@@ -74,9 +74,10 @@ static void shuffleValueUseLists(Value *V, std::minstd_rand0 &Gen,
       [&Order](const Use &L, const Use &R) { return Order[&L] < Order[&R]; });
 
   DEBUG({
-    for (const Use &U : V->uses())
-      DEBUG(dbgs() << " - order: " << Order.lookup(&U) << ", U = ";
-            U.getUser()->dump());
+    for (const Use &U : V->uses()) {
+      dbgs() << " - order: " << Order.lookup(&U) << ", U = ";
+      U.getUser()->dump();
+    }
   });
 }
 
