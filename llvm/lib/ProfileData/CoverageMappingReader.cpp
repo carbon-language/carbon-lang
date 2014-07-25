@@ -123,7 +123,7 @@ static const unsigned EncodingExpansionRegionBit = 1
                                                    << Counter::EncodingTagBits;
 
 /// \brief Read the sub-array of regions for the given inferred file id.
-/// \param NumFileIDs: the number of file ids that are defined for this
+/// \param NumFileIDs the number of file ids that are defined for this
 /// function.
 std::error_code RawCoverageMappingReader::readMappingRegionsSubArray(
     std::vector<CounterMappingRegion> &MappingRegions, unsigned InferredFileID,
