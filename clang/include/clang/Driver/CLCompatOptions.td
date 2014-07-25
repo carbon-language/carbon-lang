@@ -132,6 +132,12 @@ def _SLASH_vd : CLJoined<"vd">, HelpText<"Control vtordisp placement">,
 def _SLASH_Z7 : CLFlag<"Z7">, Alias<gline_tables_only>;
 def _SLASH_Zi : CLFlag<"Zi">, HelpText<"Enable debug information">,
   Alias<gline_tables_only>;
+def _SLASH_Zp : CLJoined<"Zp">,
+  HelpText<"Specify the default maximum struct packing alignment">,
+  Alias<fpack_struct_EQ>;
+def _SLASH_Zp_flag : CLFlag<"Zp">,
+  HelpText<"Set the default maximum struct packing alignment to 1">,
+  Alias<fpack_struct_EQ>, AliasArgs<["1"]>;
 def _SLASH_Zs : CLFlag<"Zs">, HelpText<"Syntax-check only">,
   Alias<fsyntax_only>;
 
@@ -274,5 +280,4 @@ def _SLASH_Ze : CLFlag<"Ze">;
 def _SLASH_Zg : CLFlag<"Zg">;
 def _SLASH_ZI : CLFlag<"ZI">;
 def _SLASH_Zl : CLFlag<"Zl">;
-def _SLASH_Zp : CLJoined<"Zp">;
 def _SLASH_ZW : CLJoined<"ZW">;
