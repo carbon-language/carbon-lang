@@ -9119,7 +9119,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   StoreSDNode *Index = St;
   while (Index) {
     // If the chain has more than one use, then we can't reorder the mem ops.
-    if (Index != St && !SDValue(Index, 1)->hasOneUse())
+    if (Index != St && !SDValue(Index, 0)->hasOneUse())
       break;
 
     // Find the base pointer and offset for this memory node.
