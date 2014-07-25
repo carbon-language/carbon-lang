@@ -9427,6 +9427,46 @@ Semantics:
 
 This intrinsic is lowered to the ``val``.
 
+'``llvm.assume``' Intrinsic
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Syntax:
+"""""""
+
+::
+
+      declare void @llvm.assume(i1 %cond)
+
+Overview:
+"""""""""
+
+The ``llvm.assume`` allows the optimizer to assume that the provided
+condition is true. This information can then be used in simplifying other parts
+of the code.
+
+Arguments:
+""""""""""
+
+The condition which the optimizer may assume is always true.
+
+Semantics:
+""""""""""
+
+The intrinsic allows the optimizer to assume that the provided condition is
+always true whenever the control flow reaches the intrinsic call. No code is
+generated for this intrinsic, and instructions that contribute only to the
+provided condition are not used for code generation. If the condition is
+violated during execution, the behavior is undefined.
+
+Please note that optimizer might limit the transformations performed on values
+used by the ``llvm.assume`` intrinsic in order to preserve the instructions
+only used to form the intrinsic's input argument. This might prove undesirable
+if the extra information provided by the ``llvm.assume`` intrinsic does cause
+sufficient overall improvement in code quality. For this reason,
+``llvm.assume`` should not be used to document basic mathematical invariants
+that the optimizer can otherwise deduce or facts that are of little use to the
+optimizer.
+
 '``llvm.donothing``' Intrinsic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

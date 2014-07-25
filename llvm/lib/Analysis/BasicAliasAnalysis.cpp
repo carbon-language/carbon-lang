@@ -471,10 +471,7 @@ namespace {
                                const Location &Loc) override;
 
     ModRefResult getModRefInfo(ImmutableCallSite CS1,
-                               ImmutableCallSite CS2) override {
-      // The AliasAnalysis base class has some smarts, lets use them.
-      return AliasAnalysis::getModRefInfo(CS1, CS2);
-    }
+                               ImmutableCallSite CS2) override;
 
     /// pointsToConstantMemory - Chase pointers until we find a (constant
     /// global) or not.
@@ -788,6 +785,14 @@ BasicAliasAnalysis::getArgLocation(ImmutableCallSite CS, unsigned ArgIdx,
   return Loc;
 }
 
+static bool isAssumeIntrinsic(ImmutableCallSite CS) {
+  const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction());
+  if (II && II->getIntrinsicID() == Intrinsic::assume)
+    return true;
+
+  return false;
+}
+
 /// getModRefInfo - Check to see if the specified callsite can clobber the
 /// specified memory object.  Since we only look at local properties of this
 /// function, we really can't say much about this query.  We do, however, use
@@ -840,8 +845,27 @@ BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS,
       return NoModRef;
   }
 
+  // While the assume intrinsic is marked as arbitrarily writing so that
+  // proper control dependencies will be maintained, it never aliases any
+  // particular memory location.
+  if (isAssumeIntrinsic(CS))
+    return NoModRef;
+
   // The AliasAnalysis base class has some smarts, lets use them.
   return AliasAnalysis::getModRefInfo(CS, Loc);
+}
+
+AliasAnalysis::ModRefResult
+BasicAliasAnalysis::getModRefInfo(ImmutableCallSite CS1,
+                                  ImmutableCallSite CS2) {
+  // While the assume intrinsic is marked as arbitrarily writing so that
+  // proper control dependencies will be maintained, it never aliases any
+  // particular memory location.
+  if (isAssumeIntrinsic(CS1) || isAssumeIntrinsic(CS2))
+    return NoModRef;
+
+  // The AliasAnalysis base class has some smarts, lets use them.
+  return AliasAnalysis::getModRefInfo(CS1, CS2);
 }
 
 /// aliasGEP - Provide a bunch of ad-hoc rules to disambiguate a GEP instruction

@@ -5304,8 +5304,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // Drop the intrinsic, but forward the value
     setValue(&I, getValue(I.getOperand(0)));
     return nullptr;
+  case Intrinsic::assume:
   case Intrinsic::var_annotation:
-    // Discard annotate attributes
+    // Discard annotate attributes and assumptions
     return nullptr;
 
   case Intrinsic::init_trampoline: {
