@@ -13,3 +13,11 @@ module d {
   module d1 { header "d1.h" export * }
   module d2 { header "d2.h" export * }
 }
+module e {
+  module e1 { header "e1.h" export * }
+  module e2 { header "e2.h" export * }
+}
+module f {
+  module f1 { header "f1.h" export * }
+  module f2 { header "f2.h" export * }
+}

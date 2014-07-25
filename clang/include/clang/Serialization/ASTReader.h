@@ -1832,17 +1832,18 @@ public:
                                  ModuleFile &M, uint64_t Offset);
 
   void installImportedMacro(IdentifierInfo *II, ModuleMacroInfo *MMI,
-                            Module *Owner, bool FromFinalization);
+                            Module *Owner);
 
   typedef llvm::TinyPtrVector<DefMacroDirective *> AmbiguousMacros;
   llvm::DenseMap<IdentifierInfo*, AmbiguousMacros> AmbiguousMacroDefs;
 
   void
-  removeOverriddenMacros(IdentifierInfo *II, AmbiguousMacros &Ambig,
+  removeOverriddenMacros(IdentifierInfo *II, SourceLocation Loc,
+                         AmbiguousMacros &Ambig,
                          ArrayRef<serialization::SubmoduleID> Overrides);
 
   AmbiguousMacros *
-  removeOverriddenMacros(IdentifierInfo *II,
+  removeOverriddenMacros(IdentifierInfo *II, SourceLocation Loc,
                          ArrayRef<serialization::SubmoduleID> Overrides);
 
   /// \brief Retrieve the macro with the given ID.

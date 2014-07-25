@@ -64,25 +64,30 @@ MacroInfo *Preprocessor::AllocateDeserializedMacroInfo(SourceLocation L,
 
 DefMacroDirective *
 Preprocessor::AllocateDefMacroDirective(MacroInfo *MI, SourceLocation Loc,
-                                        bool isImported) {
-  DefMacroDirective *MD = BP.Allocate<DefMacroDirective>();
-  new (MD) DefMacroDirective(MI, Loc, isImported);
-  return MD;
+                                        unsigned ImportedFromModuleID,
+                                        ArrayRef<unsigned> Overrides) {
+  unsigned NumExtra = (ImportedFromModuleID ? 1 : 0) + Overrides.size();
+  return new (BP.Allocate(sizeof(DefMacroDirective) +
+                              sizeof(unsigned) * NumExtra,
+                          llvm::alignOf<DefMacroDirective>()))
+      DefMacroDirective(MI, Loc, ImportedFromModuleID, Overrides);
 }
 
 UndefMacroDirective *
-Preprocessor::AllocateUndefMacroDirective(SourceLocation UndefLoc) {
-  UndefMacroDirective *MD = BP.Allocate<UndefMacroDirective>();
-  new (MD) UndefMacroDirective(UndefLoc);
-  return MD;
+Preprocessor::AllocateUndefMacroDirective(SourceLocation UndefLoc,
+                                          unsigned ImportedFromModuleID,
+                                          ArrayRef<unsigned> Overrides) {
+  unsigned NumExtra = (ImportedFromModuleID ? 1 : 0) + Overrides.size();
+  return new (BP.Allocate(sizeof(UndefMacroDirective) +
+                              sizeof(unsigned) * NumExtra,
+                          llvm::alignOf<UndefMacroDirective>()))
+      UndefMacroDirective(UndefLoc, ImportedFromModuleID, Overrides);
 }
 
 VisibilityMacroDirective *
 Preprocessor::AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                bool isPublic) {
-  VisibilityMacroDirective *MD = BP.Allocate<VisibilityMacroDirective>();
-  new (MD) VisibilityMacroDirective(Loc, isPublic);
-  return MD;
+  return new (BP) VisibilityMacroDirective(Loc, isPublic);
 }
 
 /// \brief Clean up a MacroInfo that was allocated but not used due to an

@@ -600,13 +600,15 @@ public:
   void appendMacroDirective(IdentifierInfo *II, MacroDirective *MD);
   DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI,
                                              SourceLocation Loc,
-                                             bool isImported) {
-    DefMacroDirective *MD = AllocateDefMacroDirective(MI, Loc, isImported);
+                                             unsigned ImportedFromModuleID,
+                                             ArrayRef<unsigned> Overrides) {
+    DefMacroDirective *MD =
+        AllocateDefMacroDirective(MI, Loc, ImportedFromModuleID, Overrides);
     appendMacroDirective(II, MD);
     return MD;
   }
   DefMacroDirective *appendDefMacroDirective(IdentifierInfo *II, MacroInfo *MI){
-    return appendDefMacroDirective(II, MI, MI->getDefinitionLoc(), false);
+    return appendDefMacroDirective(II, MI, MI->getDefinitionLoc(), 0, None);
   }
   /// \brief Set a MacroDirective that was loaded from a PCH file.
   void setLoadedMacroDirective(IdentifierInfo *II, MacroDirective *MD);
@@ -1365,10 +1367,14 @@ private:
   /// \brief Allocate a new MacroInfo object.
   MacroInfo *AllocateMacroInfo();
 
-  DefMacroDirective *AllocateDefMacroDirective(MacroInfo *MI,
-                                               SourceLocation Loc,
-                                               bool isImported);
-  UndefMacroDirective *AllocateUndefMacroDirective(SourceLocation UndefLoc);
+  DefMacroDirective *
+  AllocateDefMacroDirective(MacroInfo *MI, SourceLocation Loc,
+                            unsigned ImportedFromModuleID = 0,
+                            ArrayRef<unsigned> Overrides = None);
+  UndefMacroDirective *
+  AllocateUndefMacroDirective(SourceLocation UndefLoc,
+                              unsigned ImportedFromModuleID = 0,
+                              ArrayRef<unsigned> Overrides = None);
   VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                              bool isPublic);
 

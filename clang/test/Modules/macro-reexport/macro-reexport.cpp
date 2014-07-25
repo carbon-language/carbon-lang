@@ -1,13 +1,30 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -fsyntax-only -DD2 -I. %s -fmodules-cache-path=%t -verify
-// RUN: %clang_cc1 -fsyntax-only -DD2 -I. -fmodules %s -fmodules-cache-path=%t -verify
 // RUN: %clang_cc1 -fsyntax-only -DC1 -I. %s -fmodules-cache-path=%t -verify
 // RUN: %clang_cc1 -fsyntax-only -DC1 -I. -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD1 -I. %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD1 -I. -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD2 -I. %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DD2 -I. -fmodules %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DF1 -I. %s -fmodules-cache-path=%t -verify
+// RUN: %clang_cc1 -fsyntax-only -DF1 -I. -fmodules %s -fmodules-cache-path=%t -verify
 
-#ifdef D2
+#if defined(F1)
+#include "f1.h"
+void f() { return assert(true); } // expected-error {{undeclared identifier 'd'}}
+#include "e2.h" // undefines d1's macro
+void g() { return assert(true); } // expected-error {{undeclared identifier 'assert'}}
+#elif defined(D1)
+#include "e1.h" // undefines c1's macro but not d1's macro
+#include "d1.h"
+void f() { return assert(true); } // expected-error {{undeclared identifier 'd'}}
+#include "e2.h" // undefines d1's macro
+void g() { return assert(true); } // expected-error {{undeclared identifier 'assert'}}
+#elif defined(D2)
 #include "d2.h"
 void f() { return assert(true); } // expected-error {{undeclared identifier 'b'}}
 #else
+// e2 undefines d1's macro, which overrides c1's macro.
+#include "e2.h"
 #include "c1.h"
-void f() { return assert(true); } // expected-error {{undeclared identifier 'c'}}
+void f() { return assert(true); } // expected-error {{undeclared identifier 'assert'}}
 #endif
