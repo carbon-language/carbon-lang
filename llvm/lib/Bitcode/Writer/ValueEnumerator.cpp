@@ -18,6 +18,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/UseListOrder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -178,6 +179,11 @@ void ValueEnumerator::print(raw_ostream &OS, const ValueMapType &Map,
 /// OptimizeConstants - Reorder constant pool for denser encoding.
 void ValueEnumerator::OptimizeConstants(unsigned CstStart, unsigned CstEnd) {
   if (CstStart == CstEnd || CstStart+1 == CstEnd) return;
+
+  if (shouldPreserveBitcodeUseListOrder())
+    // Optimizing constants makes the use-list order difficult to predict.
+    // Disable it for now when trying to preserve the order.
+    return;
 
   std::stable_sort(Values.begin() + CstStart, Values.begin() + CstEnd,
                    [this](const std::pair<const Value *, unsigned> &LHS,
