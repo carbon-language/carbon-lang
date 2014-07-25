@@ -652,6 +652,17 @@ TEST_F(WinLinkParserTest, OptUnknown) {
 }
 
 //
+// Test for /PROFILE
+//
+
+TEST_F(WinLinkParserTest, Profile) {
+  EXPECT_TRUE(parse("link.exe", "/profile", "a.obj", nullptr));
+  EXPECT_TRUE(_context.deadStrip());
+  EXPECT_FALSE(_context.getBaseRelocationEnabled());
+  EXPECT_FALSE(_context.getDynamicBaseEnabled());
+}
+
+//
 // Test for command line flags that are ignored.
 //
 

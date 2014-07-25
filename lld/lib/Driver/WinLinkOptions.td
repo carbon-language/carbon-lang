@@ -63,6 +63,7 @@ def verbose : F<"verbose">;
 def debug : F<"debug">;
 def swaprun_cd : F<"swaprun:cd">;
 def swaprun_net : F<"swaprun:net">;
+def profile : F<"profile">;
 
 def force : F<"force">,
     HelpText<"Allow undefined symbols when creating executables">;

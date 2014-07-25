@@ -1162,6 +1162,13 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       ctx.setSwapRunFromNet(true);
       break;
 
+    case OPT_profile:
+      // /profile implies /opt:ref, /opt:noicf, /incremental:no and /fixed:no.
+      ctx.setDeadStripping(true);
+      ctx.setBaseRelocationEnabled(false);
+      ctx.setDynamicBaseEnabled(false);
+      break;
+
     case OPT_implib:
       ctx.setOutputImportLibraryPath(inputArg->getValue());
       break;
