@@ -157,7 +157,6 @@ static void BackgroundThread(void *arg) {
   }
 
   u64 last_flush = NanoTime();
-  u64 last_rss_check = NanoTime();
   uptr last_rss = 0;
   for (int i = 0;
       atomic_load(&ctx->stop_background_thread, memory_order_relaxed) == 0;
@@ -175,8 +174,7 @@ static void BackgroundThread(void *arg) {
       }
     }
     // GetRSS can be expensive on huge programs, so don't do it every 100ms.
-    if (flags()->memory_limit_mb > 0 && last_rss_check + 1000 * kMs2Ns < now) {
-      last_rss_check = now;
+    if (flags()->memory_limit_mb > 0) {
       uptr rss = GetRSS();
       uptr limit = uptr(flags()->memory_limit_mb) << 20;
       if (flags()->verbosity > 0) {
