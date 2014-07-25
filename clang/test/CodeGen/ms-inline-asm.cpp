@@ -22,11 +22,7 @@ void t1() {
   __asm mov eax, dword ptr [Foo :: ptr]
   __asm mov eax, dword ptr [Foo :: ptr]
 // CHECK: @_Z2t1v
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE)
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3Bar3ptrE)
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE)
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE)
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE)
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0\0A\09mov eax, dword ptr $1\0A\09mov eax, dword ptr $2\0A\09mov eax, dword ptr $3\0A\09mov eax, dword ptr $4", "*m,*m,*m,*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE, i32** @_ZN3Foo3Bar3ptrE, i32** @_ZN3Foo3ptrE, i32** @_ZN3Foo3ptrE, i32** @_ZN3Foo3ptrE)
 }
 
 int gvar = 10;
@@ -35,38 +31,26 @@ void t2() {
   __asm mov eax, offset Foo::ptr
   __asm mov eax, offset Foo::Bar::ptr
 // CHECK: t2
-// CHECK: call void asm sideeffect inteldialect "mov eax, $0", "r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE)
-// CHECK: call void asm sideeffect inteldialect "mov eax, $0", "r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3Bar3ptrE)
+// CHECK: call void asm sideeffect inteldialect "mov eax, $0\0A\09mov eax, $1", "r,r,~{eax},~{dirflag},~{fpsr},~{flags}"(i32** @_ZN3Foo3ptrE, i32** @_ZN3Foo3Bar3ptrE)
 }
 
 // CHECK-LABEL: define void @_Z2t3v()
 void t3() {
   __asm mov eax, LENGTH Foo::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, LENGTH Foo::Bar::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, LENGTH Foo::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, LENGTH Foo::Bar::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$2", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 
   __asm mov eax, TYPE Foo::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, TYPE Foo::Bar::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, TYPE Foo::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, TYPE Foo::Bar::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$1", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 
   __asm mov eax, SIZE Foo::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, SIZE Foo::Bar::ptr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$4", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, SIZE Foo::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$16", "~{eax},~{dirflag},~{fpsr},~{flags}"()
   __asm mov eax, SIZE Foo::Bar::arr
-// CHECK: call void asm sideeffect inteldialect "mov eax, $$2", "~{eax},~{dirflag},~{fpsr},~{flags}"()
+// CHECK: call void asm sideeffect inteldialect "mov eax, $$1\0A\09mov eax, $$1\0A\09mov eax, $$4\0A\09mov eax, $$2\0A\09mov eax, $$4\0A\09mov eax, $$4\0A\09mov eax, $$4\0A\09mov eax, $$1\0A\09mov eax, $$4\0A\09mov eax, $$4\0A\09mov eax, $$16\0A\09mov eax, $$2", "~{eax},~{dirflag},~{fpsr},~{flags}"()
 
 }
 
@@ -82,9 +66,8 @@ void T4::test() {
 // CHECK: [[THIS:%.*]] = load [[T4]]** [[T0]]
 // CHECK: [[X:%.*]] = getelementptr inbounds [[T4]]* [[THIS]], i32 0, i32 0
   __asm mov eax, x;
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $0", "*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* [[X]])
   __asm mov y, eax;
-// CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, eax", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* @_ZN2T41yE)
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $1\0A\09mov dword ptr $0, eax", "=*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* @_ZN2T41yE, i32* %x)
 }
 
 template <class T> struct T5 {
@@ -97,11 +80,9 @@ void test5() {
   // CHECK: [[Y:%.*]] = alloca i32
   int x, y;
   __asm push y
-  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0", "=*m,~{esp},~{dirflag},~{fpsr},~{flags}"(i32* [[Y]])
   __asm call T5<int>::create<float>
-  // CHECK: call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(i32 (float)* @_ZN2T5IiE6createIfEEiT_)
   __asm mov x, eax
-  // CHECK: call void asm sideeffect inteldialect "mov dword ptr $0, eax", "=*m,~{dirflag},~{fpsr},~{flags}"(i32* [[X]])
+  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0\0A\09call $2\0A\09mov dword ptr $1, eax", "=*m,=*m,r,~{esp},~{dirflag},~{fpsr},~{flags}"(i32* %y, i32* %x, i32 (float)* @_ZN2T5IiE6createIfEEiT_)
 }
 
 // Just verify this doesn't emit an error.

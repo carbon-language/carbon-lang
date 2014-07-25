@@ -50,4 +50,4 @@ void t11() {
 }
 int t_fail() { // expected-note {{to match this}}
   __asm 
-  __asm { // expected-error 3 {{expected}} expected-note {{to match this}}
+  __asm { // expected-error 2 {{expected}} expected-note {{to match this}}

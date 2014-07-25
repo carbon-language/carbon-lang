@@ -60,13 +60,13 @@ int t2(int *arr, int i) {
   }
 
   // expected-error@+1 {{cannot use base register with variable reference}}
-  __asm mov eax, arr[ebp + 1 + (2 * 5) - 3 + 1<<1]
+  __asm { mov eax, arr[ebp + 1 + (2 * 5) - 3 + 1<<1] }
   // expected-error@+1 {{cannot use index register with variable reference}}
-  __asm mov eax, arr[esi * 4]
+  __asm { mov eax, arr[esi * 4] }
   // expected-error@+1 {{cannot use more than one symbol in memory operand}}
-  __asm mov eax, arr[i]
+  __asm { mov eax, arr[i] }
   // expected-error@+1 {{cannot use more than one symbol in memory operand}}
-  __asm mov eax, global[i]
+  __asm { mov eax, global[i] }
 
   // FIXME: Why don't we diagnose this?
   // expected-Xerror@+1 {{cannot reference multiple local variables in assembly operand}}
@@ -80,22 +80,22 @@ typedef struct {
 } A;
 
 void t3() {
-  __asm mov eax, [eax] UndeclaredId // expected-error {{unknown token in expression}}
+  __asm { mov eax, [eax] UndeclaredId } // expected-error {{unknown token in expression}}
 
   // FIXME: Only emit one diagnostic here.
   // expected-error@+2 {{unexpected type name 'A': expected expression}}
   // expected-error@+1 {{unknown token in expression}}
-  __asm mov eax, [eax] A
+  __asm { mov eax, [eax] A }
 }
 
 void t4() {
   // The dot in the "intel dot operator" is optional in MSVC.  MSVC also does
   // global field lookup, but we don't.
-  __asm mov eax, [0] A.a
-  __asm mov eax, [0].A.a
-  __asm mov eax, [0].a    // expected-error {{Unable to lookup field reference!}}
-  __asm mov eax, fs:[0] A.a
-  __asm mov eax, fs:[0].A.a
-  __asm mov eax, fs:[0].a // expected-error {{Unable to lookup field reference!}}
-  __asm mov eax, fs:[0]. A.a  // expected-error {{Unexpected token type!}}
+  __asm { mov eax, [0] A.a }
+  __asm { mov eax, [0].A.a }
+  __asm { mov eax, [0].a } // expected-error {{Unable to lookup field reference!}}
+  __asm { mov eax, fs:[0] A.a }
+  __asm { mov eax, fs:[0].A.a }
+  __asm { mov eax, fs:[0].a } // expected-error {{Unable to lookup field reference!}}
+  __asm { mov eax, fs:[0]. A.a } // expected-error {{Unexpected token type!}}
 }
