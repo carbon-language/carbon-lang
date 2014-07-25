@@ -347,7 +347,15 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
       if (iter == _followOnRoots.end()) {
         // If the targetAtom is not a root of any chain, let's make the root of
         // the targetAtom to the root of the current chain.
-        _followOnRoots[targetAtom] = _followOnRoots[ai];
+
+        // The expression m[i] = m[j] where m is a DenseMap and i != j is not
+        // safe. m[j] returns a reference, which would be invalidated when a
+        // rehashing occurs. If rehashing occurs to make room for m[i], m[j]
+        // becomes invalid, and that invalid reference would be used as the RHS
+        // value of the expression.
+        // Copy the value to workaround.
+        const DefinedAtom *tmp = _followOnRoots[ai];
+        _followOnRoots[targetAtom] = tmp;
         continue;
       }
       if (iter->second == targetAtom) {
@@ -368,7 +376,8 @@ void LayoutPass::buildFollowOnTable(MutableFile::DefinedAtomRange &range) {
       if (currentAtomSize == 0) {
         const DefinedAtom *targetPrevAtom = findAtomFollowedBy(targetAtom);
         _followOnNexts[targetPrevAtom] = ai;
-        _followOnRoots[ai] = _followOnRoots[targetPrevAtom];
+        const DefinedAtom *tmp = _followOnRoots[targetPrevAtom];
+        _followOnRoots[ai] = tmp;
         continue;
       }
       if (!checkAllPrevAtomsZeroSize(targetAtom))
