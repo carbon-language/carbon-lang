@@ -170,6 +170,7 @@ bool TempFile::init(const std::string &Ext) {
   SmallVector<char, 64> Vector;
   DEBUG(dbgs() << " - create-temp-file\n");
   if (auto EC = sys::fs::createTemporaryFile("use-list-order", Ext, Vector)) {
+    (void)EC;
     DEBUG(dbgs() << "error: " << EC.message() << "\n");
     return true;
   }
