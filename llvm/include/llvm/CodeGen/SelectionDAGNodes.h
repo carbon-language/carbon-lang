@@ -117,11 +117,13 @@ namespace ISD {
 /// of information is represented with the SDValue value type.
 ///
 class SDValue {
+  friend struct DenseMapInfo<SDValue>;
+
   SDNode *Node;       // The node defining the value we are using.
   unsigned ResNo;     // Which return value of the node we are using.
 public:
   SDValue() : Node(nullptr), ResNo(0) {}
-  SDValue(SDNode *node, unsigned resno) : Node(node), ResNo(resno) {}
+  SDValue(SDNode *node, unsigned resno);
 
   /// get the index which selects a specific result in the SDNode
   unsigned getResNo() const { return ResNo; }
@@ -208,10 +210,14 @@ public:
 
 template<> struct DenseMapInfo<SDValue> {
   static inline SDValue getEmptyKey() {
-    return SDValue((SDNode*)-1, -1U);
+    SDValue V;
+    V.ResNo = -1U;
+    return V;
   }
   static inline SDValue getTombstoneKey() {
-    return SDValue((SDNode*)-1, 0);
+    SDValue V;
+    V.ResNo = -2U;
+    return V;
   }
   static unsigned getHashValue(const SDValue &Val) {
     return ((unsigned)((uintptr_t)Val.getNode() >> 4) ^
@@ -876,6 +882,18 @@ public:
 
 
 // Define inline functions from the SDValue class.
+
+inline SDValue::SDValue(SDNode *node, unsigned resno)
+    : Node(node), ResNo(resno) {
+// This is currently disabled because it fires pretty widely, but I wanted to
+// commit it so others could help reproduce and aid in the cleanup. It will get
+// enabled ASAP.
+#if 0
+  assert((!Node || ResNo < Node->getNumValues()) &&
+         "Invalid result number for the given node!");
+#endif
+  assert(ResNo < -2U && "Cannot use result numbers reserved for DenseMaps.");
+}
 
 inline unsigned SDValue::getOpcode() const {
   return Node->getOpcode();

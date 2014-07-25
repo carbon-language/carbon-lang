@@ -9088,7 +9088,7 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     return false;
 
   // Only look at ends of store sequences.
-  SDValue Chain = SDValue(St, 1);
+  SDValue Chain = SDValue(St, 0);
   if (Chain->hasOneUse() && Chain->use_begin()->getOpcode() == ISD::STORE)
     return false;
 
