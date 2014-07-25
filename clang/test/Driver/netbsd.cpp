@@ -31,6 +31,9 @@
 // RUN: %clangxx -no-canonical-prefixes -target sparc64--netbsd \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=SPARC64 %s
+// RUN: %clangxx -no-canonical-prefixes -target powerpc--netbsd \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=POWERPC %s
 
 // RUN: %clangxx -no-canonical-prefixes -target x86_64--netbsd -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
@@ -65,6 +68,9 @@
 // RUN: %clangxx -no-canonical-prefixes -target sparc64--netbsd -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-SPARC64 %s
+// RUN: %clangxx -no-canonical-prefixes -target powerpc--netbsd -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-POWERPC %s
 
 // X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // X86_64: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -141,6 +147,13 @@
 // SPARC64: "-lm" "-lc" "-lgcc" "--as-needed" "-lgcc_s" "--no-as-needed"
 // SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
+// POWERPC: clang{{.*}}" "-cc1" "-triple" "powerpc--netbsd"
+// POWERPC: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// POWERPC: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// POWERPC: "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// POWERPC: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc++"
+// POWERPC: "-lm" "-lc" "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
 // S-X86_64: clang{{.*}}" "-cc1" "-triple" "x86_64--netbsd"
 // S-X86_64: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
 // S-X86_64: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o" "{{.*}}/usr/lib{{/|\\\\}}crti.o"
@@ -215,3 +228,10 @@
 // S-SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lstdc++"
 // S-SPARC64: "-lm" "-lc" "-lgcc_eh" "-lc" "-lgcc"
 // S-SPARC64: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-POWERPC: clang{{.*}}" "-cc1" "-triple" "powerpc--netbsd"
+// S-POWERPC: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-POWERPC: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// S-POWERPC: "{{.*}}/usr/lib{{/|\\\\}}crti.o"
+// S-POWERPC: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc++"
+// S-POWERPC: "-lm" "-lc" "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
