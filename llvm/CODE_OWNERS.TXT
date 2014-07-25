@@ -49,7 +49,7 @@ D: Hexagon Backend
 
 N: Hal Finkel
 E: hfinkel@anl.gov
-D: BBVectorize, the loop reroller and the PowerPC target
+D: BBVectorize, the loop reroller, scoped-noalias metadata and the PowerPC target
 
 N: Venkatraman Govindaraju
 E: venkatra@cs.wisc.edu
