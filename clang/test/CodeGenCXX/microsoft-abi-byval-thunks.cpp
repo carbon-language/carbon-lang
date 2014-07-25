@@ -19,7 +19,7 @@ C c;
 // CHECK64-LABEL: define linkonce_odr void @"\01?foo@C@byval_thunk@@W7EAAXUAgg@2@@Z"
 // CHECK64:             (%"struct.byval_thunk::C"* %this, %"struct.byval_thunk::Agg"* %x)
 // CHECK64:   getelementptr i8* %{{.*}}, i32 -8
-// CHECK64:   call void @"\01?foo@C@byval_thunk@@UEAAXUAgg@2@@Z"(%"struct.byval_thunk::C"* %2, %"struct.byval_thunk::Agg"* %x)
+// CHECK64:   call void @"\01?foo@C@byval_thunk@@UEAAXUAgg@2@@Z"(%"struct.byval_thunk::C"* %{{.*}}, %"struct.byval_thunk::Agg"* %x)
 // CHECK64-NOT: call
 // CHECK64:   ret void
 }
