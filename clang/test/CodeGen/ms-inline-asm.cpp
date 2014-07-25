@@ -67,7 +67,7 @@ void T4::test() {
 // CHECK: [[X:%.*]] = getelementptr inbounds [[T4]]* [[THIS]], i32 0, i32 0
   __asm mov eax, x;
   __asm mov y, eax;
-// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $1\0A\09mov dword ptr $0, eax", "=*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* @_ZN2T41yE, i32* %x)
+// CHECK: call void asm sideeffect inteldialect "mov eax, dword ptr $1\0A\09mov dword ptr $0, eax", "=*m,*m,~{eax},~{dirflag},~{fpsr},~{flags}"(i32* @_ZN2T41yE, i32* {{.*}})
 }
 
 template <class T> struct T5 {
