@@ -135,14 +135,6 @@ private:
   /// scopes seen as a component.
   unsigned short MSLocalManglingNumber;
 
-  /// \brief SEH __try blocks get uniquely numbered within a function.  This
-  /// variable holds the index for an SEH try block.
-  short SEHTryIndex;
-
-  /// \brief SEH __try blocks get uniquely numbered within a function.  This
-  /// variable holds the next free index at a function's scope.
-  short SEHTryIndexPool;
-
   /// PrototypeDepth - This is the number of function prototype scopes
   /// enclosing this scope, including this scope.
   unsigned short PrototypeDepth;
@@ -155,7 +147,6 @@ private:
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
   Scope *MSLocalManglingParent;
-  Scope *SEHTryParent;
 
   /// BreakParent/ContinueParent - This is a direct link to the innermost
   /// BreakScope/ContinueScope which contains the contents of this scope
@@ -292,14 +283,6 @@ public:
     if (const Scope *MSLMP = getMSLocalManglingParent())
       return MSLMP->MSLocalManglingNumber;
     return 1;
-  }
-
-  int getSEHTryIndex() {
-    return SEHTryIndex;
-  }
-
-  int getSEHTryParentIndex() const {
-    return SEHTryParent ? SEHTryParent->SEHTryIndex : -1;
   }
 
   /// isDeclScope - Return true if this is the scope that the specified decl is

@@ -39,9 +39,6 @@ void Scope::Init(Scope *parent, unsigned flags) {
     BlockParent    = parent->BlockParent;
     TemplateParamParent = parent->TemplateParamParent;
     MSLocalManglingParent = parent->MSLocalManglingParent;
-    SEHTryParent = parent->SEHTryParent;
-    if (parent->Flags & SEHTryScope)
-      SEHTryParent = parent;
     if ((Flags & (FnScope | ClassScope | BlockScope | TemplateParamScope |
                   FunctionPrototypeScope | AtCatchScope | ObjCMethodScope)) ==
         0)
@@ -50,17 +47,13 @@ void Scope::Init(Scope *parent, unsigned flags) {
     Depth = 0;
     PrototypeDepth = 0;
     PrototypeIndex = 0;
-    SEHTryParent = MSLocalManglingParent = FnParent = BlockParent = nullptr;
+    MSLocalManglingParent = FnParent = BlockParent = nullptr;
     TemplateParamParent = nullptr;
     MSLocalManglingNumber = 1;
   }
 
   // If this scope is a function or contains breaks/continues, remember it.
   if (flags & FnScope)            FnParent = this;
-  SEHTryIndexPool = 0;
-  SEHTryIndex = -1;
-  if (flags & SEHTryScope)
-    SEHTryIndex = FnParent ? FnParent->SEHTryIndexPool++ : -1;
   // The MS mangler uses the number of scopes that can hold declarations as
   // part of an external name.
   if (Flags & (ClassScope | FnScope)) {

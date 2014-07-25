@@ -956,20 +956,22 @@ Expr* ReturnStmt::getRetValue() {
   return cast_or_null<Expr>(RetExpr);
 }
 
-SEHTryStmt::SEHTryStmt(bool IsCXXTry, SourceLocation TryLoc, Stmt *TryBlock,
-                       Stmt *Handler, int HandlerIndex, int HandlerParentIndex)
-    : Stmt(SEHTryStmtClass), IsCXXTry(IsCXXTry), TryLoc(TryLoc),
-      HandlerIndex(HandlerIndex), HandlerParentIndex(HandlerParentIndex) {
-  Children[TRY] = TryBlock;
+SEHTryStmt::SEHTryStmt(bool IsCXXTry,
+                       SourceLocation TryLoc,
+                       Stmt *TryBlock,
+                       Stmt *Handler)
+  : Stmt(SEHTryStmtClass),
+    IsCXXTry(IsCXXTry),
+    TryLoc(TryLoc)
+{
+  Children[TRY]     = TryBlock;
   Children[HANDLER] = Handler;
 }
 
-SEHTryStmt *SEHTryStmt::Create(const ASTContext &C, bool IsCXXTry,
+SEHTryStmt* SEHTryStmt::Create(const ASTContext &C, bool IsCXXTry,
                                SourceLocation TryLoc, Stmt *TryBlock,
-                               Stmt *Handler, int HandlerIndex,
-                               int HandlerParentIndex) {
-  return new (C) SEHTryStmt(IsCXXTry, TryLoc, TryBlock, Handler, HandlerIndex,
-                            HandlerParentIndex);
+                               Stmt *Handler) {
+  return new(C) SEHTryStmt(IsCXXTry,TryLoc,TryBlock,Handler);
 }
 
 SEHExceptStmt* SEHTryStmt::getExceptHandler() const {
