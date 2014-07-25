@@ -502,5 +502,5 @@ void t41(unsigned short a) {
 // CHECK: mov gs, word ptr $4
   __asm mov ss, a;
 // CHECK: mov ss, word ptr $5
-// CHECK: "*m,*m,*m,*m,*m,*m,~{dirflag},~{fpsr},~{flags}"(i16* %a.addr, i16* %a.addr, i16* %a.addr, i16* %a.addr, i16* %a.addr, i16* %a.addr)
+// CHECK: "*m,*m,*m,*m,*m,*m,~{dirflag},~{fpsr},~{flags}"(i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}})
 }
