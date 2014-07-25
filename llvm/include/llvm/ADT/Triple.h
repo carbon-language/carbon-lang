@@ -473,10 +473,6 @@ public:
   /// environment components with a single string.
   void setOSAndEnvironmentName(StringRef Str);
 
-  /// getArchNameForAssembler - Get an architecture name that is understood by
-  /// the target assembler.
-  const char *getArchNameForAssembler();
-
   /// @}
   /// @name Helpers to build variants of a particular triple.
   /// @{

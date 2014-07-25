@@ -210,34 +210,6 @@ Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
     .Default(UnknownArch);
 }
 
-// Returns architecture name that is understood by the target assembler.
-const char *Triple::getArchNameForAssembler() {
-  if (!isOSDarwin() && getVendor() != Triple::Apple)
-    return nullptr;
-
-  return StringSwitch<const char*>(getArchName())
-    .Case("i386", "i386")
-    .Case("x86_64", "x86_64")
-    .Case("powerpc", "ppc")
-    .Case("powerpc64", "ppc64")
-    .Case("powerpc64le", "ppc64le")
-    .Case("arm", "arm")
-    .Cases("armv4t", "thumbv4t", "armv4t")
-    .Cases("armv5", "armv5e", "thumbv5", "thumbv5e", "armv5")
-    .Cases("armv6", "thumbv6", "armv6")
-    .Cases("armv7", "thumbv7", "armv7")
-    .Case("armeb", "armeb")
-    .Case("arm64", "arm64")
-    .Case("r600", "r600")
-    .Case("nvptx", "nvptx")
-    .Case("nvptx64", "nvptx64")
-    .Case("le32", "le32")
-    .Case("amdil", "amdil")
-    .Case("spir", "spir")
-    .Case("spir64", "spir64")
-    .Default(nullptr);
-}
-
 static Triple::ArchType parseArch(StringRef ArchName) {
   return StringSwitch<Triple::ArchType>(ArchName)
     .Cases("i386", "i486", "i586", "i686", Triple::x86)
