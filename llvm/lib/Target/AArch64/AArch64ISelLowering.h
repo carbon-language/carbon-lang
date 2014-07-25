@@ -324,6 +324,7 @@ public:
 
   bool shouldExpandAtomicInIR(Instruction *Inst) const override;
 
+  bool useLoadStackGuardNode() const override;
   TargetLoweringBase::LegalizeTypeAction
   getPreferredVectorAction(EVT VT) const override;
 

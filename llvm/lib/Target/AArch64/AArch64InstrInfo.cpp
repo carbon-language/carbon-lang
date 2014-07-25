@@ -848,6 +848,56 @@ bool AArch64InstrInfo::optimizeCompareInstr(
   return true;
 }
 
+bool
+AArch64InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
+  if (MI->getOpcode() != TargetOpcode::LOAD_STACK_GUARD)
+    return false;
+
+  MachineBasicBlock &MBB = *MI->getParent();
+  DebugLoc DL = MI->getDebugLoc();
+  unsigned Reg = MI->getOperand(0).getReg();
+  const GlobalValue *GV =
+      cast<GlobalValue>((*MI->memoperands_begin())->getValue());
+  const TargetMachine &TM = MBB.getParent()->getTarget();
+  unsigned char OpFlags = Subtarget.ClassifyGlobalReference(GV, TM);
+  const unsigned char MO_NC = AArch64II::MO_NC;
+
+  if ((OpFlags & AArch64II::MO_GOT) != 0) {
+    BuildMI(MBB, MI, DL, get(AArch64::LOADgot), Reg)
+        .addGlobalAddress(GV, 0, AArch64II::MO_GOT);
+    BuildMI(MBB, MI, DL, get(AArch64::LDRXui), Reg)
+        .addReg(Reg, RegState::Kill).addImm(0)
+        .addMemOperand(*MI->memoperands_begin());
+  } else if (TM.getCodeModel() == CodeModel::Large) {
+    BuildMI(MBB, MI, DL, get(AArch64::MOVZXi), Reg)
+        .addGlobalAddress(GV, 0, AArch64II::MO_G3).addImm(48);
+    BuildMI(MBB, MI, DL, get(AArch64::MOVKXi), Reg)
+        .addReg(Reg, RegState::Kill)
+        .addGlobalAddress(GV, 0, AArch64II::MO_G2 | MO_NC).addImm(32);
+    BuildMI(MBB, MI, DL, get(AArch64::MOVKXi), Reg)
+        .addReg(Reg, RegState::Kill)
+        .addGlobalAddress(GV, 0, AArch64II::MO_G1 | MO_NC).addImm(16);
+    BuildMI(MBB, MI, DL, get(AArch64::MOVKXi), Reg)
+        .addReg(Reg, RegState::Kill)
+        .addGlobalAddress(GV, 0, AArch64II::MO_G0 | MO_NC).addImm(0);
+    BuildMI(MBB, MI, DL, get(AArch64::LDRXui), Reg)
+        .addReg(Reg, RegState::Kill).addImm(0)
+        .addMemOperand(*MI->memoperands_begin());
+  } else {
+    BuildMI(MBB, MI, DL, get(AArch64::ADRP), Reg)
+        .addGlobalAddress(GV, 0, OpFlags | AArch64II::MO_PAGE);
+    unsigned char LoFlags = OpFlags | AArch64II::MO_PAGEOFF | MO_NC;
+    BuildMI(MBB, MI, DL, get(AArch64::LDRXui), Reg)
+        .addReg(Reg, RegState::Kill)
+        .addGlobalAddress(GV, 0, LoFlags)
+        .addMemOperand(*MI->memoperands_begin());
+  }
+
+  MBB.erase(MI);
+
+  return true;
+}
+
 /// Return true if this is this instruction has a non-zero immediate
 bool AArch64InstrInfo::hasShiftedReg(const MachineInstr *MI) const {
   switch (MI->getOpcode()) {

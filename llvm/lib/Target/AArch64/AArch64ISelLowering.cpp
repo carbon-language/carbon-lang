@@ -8095,6 +8095,10 @@ bool AArch64TargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
   return Inst->getType()->getPrimitiveSizeInBits() <= 128;
 }
 
+bool AArch64TargetLowering::useLoadStackGuardNode() const {
+  return true;
+}
+
 TargetLoweringBase::LegalizeTypeAction
 AArch64TargetLowering::getPreferredVectorAction(EVT VT) const {
   MVT SVT = VT.getSimpleVT();

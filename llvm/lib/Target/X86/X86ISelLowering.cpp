@@ -1645,6 +1645,12 @@ void X86TargetLowering::resetOperationActions() {
   setPrefFunctionAlignment(4); // 2^4 bytes.
 }
 
+// This has so far only been implemented for 64-bit MachO.
+bool X86TargetLowering::useLoadStackGuardNode() const {
+  return Subtarget->getTargetTriple().getObjectFormat() == Triple::MachO &&
+         Subtarget->is64Bit();
+}
+
 TargetLoweringBase::LegalizeTypeAction
 X86TargetLowering::getPreferredVectorAction(EVT VT) const {
   if (ExperimentalVectorWideningLegalization &&

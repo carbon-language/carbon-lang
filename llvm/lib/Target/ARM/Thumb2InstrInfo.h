@@ -61,6 +61,10 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   const Thumb2RegisterInfo &getRegisterInfo() const override { return RI; }
+
+private:
+  void expandLoadStackGuard(MachineBasicBlock::iterator MI,
+                            Reloc::Model RM) const override;
 };
 
 /// getITInstrPredicate - Valid only in Thumb2 mode. This function is identical

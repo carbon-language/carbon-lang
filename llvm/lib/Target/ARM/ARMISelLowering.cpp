@@ -10804,6 +10804,11 @@ bool ARMTargetLowering::shouldExpandAtomicInIR(Instruction *Inst) const {
   return Inst->getType()->getPrimitiveSizeInBits() <= AtomicLimit;
 }
 
+// This has so far only been implemented for MachO.
+bool ARMTargetLowering::useLoadStackGuardNode() const {
+  return Subtarget->getTargetTriple().getObjectFormat() == Triple::MachO;
+}
+
 Value *ARMTargetLowering::emitLoadLinked(IRBuilder<> &Builder, Value *Addr,
                                          AtomicOrdering Ord) const {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();

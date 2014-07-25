@@ -37,6 +37,10 @@ public:
   /// always be able to get register info as well (through this method).
   ///
   const ARMRegisterInfo &getRegisterInfo() const override { return RI; }
+
+private:
+  void expandLoadStackGuard(MachineBasicBlock::iterator MI,
+                            Reloc::Model RM) const override;
 };
 
 }

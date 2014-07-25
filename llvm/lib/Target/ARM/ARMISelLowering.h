@@ -398,6 +398,8 @@ namespace llvm {
 
     bool shouldExpandAtomicInIR(Instruction *Inst) const override;
 
+    bool useLoadStackGuardNode() const override;
+
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
     findRepresentativeClass(MVT VT) const override;

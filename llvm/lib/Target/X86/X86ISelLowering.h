@@ -796,6 +796,7 @@ namespace llvm {
     /// \brief Reset the operation actions based on target options.
     void resetOperationActions() override;
 
+    bool useLoadStackGuardNode() const override;
     /// \brief Customize the preferred legalization strategy for certain types.
     LegalizeTypeAction getPreferredVectorAction(EVT VT) const override;
 

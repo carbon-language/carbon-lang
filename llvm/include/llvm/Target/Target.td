@@ -841,6 +841,14 @@ def PATCHPOINT : Instruction {
   let mayLoad = 1;
   let usesCustomInserter = 1;
 }
+def LOAD_STACK_GUARD : Instruction {
+  let OutOperandList = (outs ptr_rc:$dst);
+  let InOperandList = (ins);
+  let mayLoad = 1;
+  bit isReMaterializable = 1;
+  let hasSideEffects = 0;
+  bit isPseudo = 1;
+}
 }
 
 //===----------------------------------------------------------------------===//
