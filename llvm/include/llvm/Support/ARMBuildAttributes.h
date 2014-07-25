@@ -146,6 +146,12 @@ enum {
   AllowNeon2 = 2,     // SIMDv2 was permitted (Half-precision FP, MAC operations)
   AllowNeonARMv8 = 3, // ARM v8-A SIMD was permitted
 
+  // Tag_ABI_PCS_R9_use, (=14), uleb128
+  R9IsGPR = 0,        // R9 used as v6 (just another callee-saved register)
+  R9IsSB = 1,         // R9 used as a global static base rgister
+  R9IsTLSPointer = 2, // R9 used as a thread local storage pointer
+  R9Reserved = 3,     // R9 not used by code associated with attributed entity
+
   // Tag_ABI_PCS_RW_data, (=15), uleb128
   AddressRWPCRel = 1, // Address RW static data PC-relative
   AddressRWSBRel = 2, // Address RW static data SB-relative

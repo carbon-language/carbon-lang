@@ -760,6 +760,17 @@ void ARMAsmPrinter::emitAttributes() {
     }
   }
 
+  // TODO: We currently only support either reserving the register, or treating
+  // it as another callee-saved register, but not as SB or a TLS pointer; It
+  // would instead be nicer to push this from the frontend as metadata, as we do
+  // for the wchar and enum size tags
+  if (Subtarget->isR9Reserved())
+      ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_R9_use,
+                        ARMBuildAttrs::R9Reserved);
+  else
+      ATS.emitAttribute(ARMBuildAttrs::ABI_PCS_R9_use,
+                        ARMBuildAttrs::R9IsGPR);
+
   if (Subtarget->hasTrustZone() && Subtarget->hasVirtualization())
       ATS.emitAttribute(ARMBuildAttrs::Virtualization_use,
                         ARMBuildAttrs::AllowTZVirtualization);

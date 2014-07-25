@@ -38,6 +38,8 @@
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=default | FileCheck %s --check-prefix=RELOC-OTHER
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -relocation-model=dynamic-no-pic | FileCheck %s --check-prefix=RELOC-OTHER
 ; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=RELOC-OTHER
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi | FileCheck %s --check-prefix=PCS-R9-USE
+; RUN: llc < %s -mtriple=arm-none-linux-gnueabi -arm-reserve-r9 | FileCheck %s --check-prefix=PCS-R9-RESERVE
 
 ; XSCALE:      .eabi_attribute 6, 5
 ; XSCALE:      .eabi_attribute 8, 1
@@ -462,6 +464,9 @@
 ; RELOC-PIC:  .eabi_attribute 16, 1
 ; RELOC-PIC:  .eabi_attribute 17, 2
 ; RELOC-OTHER:  .eabi_attribute 17, 1
+
+; PCS-R9-USE:  .eabi_attribute 14, 0
+; PCS-R9-RESERVE:  .eabi_attribute 14, 3
 
 define i32 @f(i64 %z) {
 	ret i32 0
