@@ -885,13 +885,8 @@ public:
 
 inline SDValue::SDValue(SDNode *node, unsigned resno)
     : Node(node), ResNo(resno) {
-// This is currently disabled because it fires pretty widely, but I wanted to
-// commit it so others could help reproduce and aid in the cleanup. It will get
-// enabled ASAP.
-#if 0
   assert((!Node || ResNo < Node->getNumValues()) &&
          "Invalid result number for the given node!");
-#endif
   assert(ResNo < -2U && "Cannot use result numbers reserved for DenseMaps.");
 }
 

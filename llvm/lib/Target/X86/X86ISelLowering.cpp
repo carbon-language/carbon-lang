@@ -15478,9 +15478,10 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
     Highs = DAG.getNode(ISD::SUB, dl, VT, Highs, Fixup);
   }
 
-  // The low part of a MUL_LOHI is supposed to be the first value and the
-  // high part the second value.
-  return DAG.getNode(ISD::MERGE_VALUES, dl, Op.getValueType(), Lows, Highs);
+  // THe first result of MUL_LOHI is actually the high value, followed by the
+  // low value.
+  SDValue Ops[] = {Highs, Lows};
+  return DAG.getMergeValues(Ops, dl);
 }
 
 static SDValue LowerScalarImmediateShift(SDValue Op, SelectionDAG &DAG,

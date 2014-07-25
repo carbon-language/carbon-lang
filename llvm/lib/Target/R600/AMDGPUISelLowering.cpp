@@ -823,8 +823,8 @@ SDValue AMDGPUTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op,
       SDValue Denominator = Op.getOperand(2);
       SDValue Src0 = Param->isAllOnesValue() ? Numerator : Denominator;
 
-      return DAG.getNode(AMDGPUISD::DIV_SCALE, DL, VT,
-                         Src0, Denominator, Numerator);
+      return DAG.getNode(AMDGPUISD::DIV_SCALE, DL, Op->getVTList(), Src0,
+                         Denominator, Numerator);
     }
 
     case Intrinsic::AMDGPU_div_fmas:
