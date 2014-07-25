@@ -27,6 +27,7 @@
 //   COMMON_INTERCEPTOR_MUTEX_REPAIR
 //   COMMON_INTERCEPTOR_SET_PTHREAD_NAME
 //   COMMON_INTERCEPTOR_HANDLE_RECVMSG
+//   COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED
 //===----------------------------------------------------------------------===//
 #include "interception/interception.h"
 #include "sanitizer_addrhashmap.h"
@@ -87,6 +88,10 @@
 #ifndef COMMON_INTERCEPTOR_ENTER_NOIGNORE
 #define COMMON_INTERCEPTOR_ENTER_NOIGNORE(ctx, ...) \
   COMMON_INTERCEPTOR_ENTER(ctx, __VA_ARGS__)
+#endif
+
+#ifndef COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED
+#define COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED (0)
 #endif
 
 struct FileMetadata {
@@ -174,6 +179,8 @@ INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
 }
 
 INTERCEPTOR(int, strncmp, const char *s1, const char *s2, uptr size) {
+  if (COMMON_INTERCEPTOR_NOTHING_IS_INITIALIZED)
+    return internal_strncmp(s1, s2, size);
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, strncmp, s1, s2, size);
   unsigned char c1 = 0, c2 = 0;
