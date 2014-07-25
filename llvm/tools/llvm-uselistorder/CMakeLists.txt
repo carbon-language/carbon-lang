@@ -1,7 +1,10 @@
 set(LLVM_LINK_COMPONENTS
-  Support
-  IRReader
+  AsmParser
+  BitReader
   BitWriter
+  Core
+  IRReader
+  Support
   )
 
 add_llvm_tool(llvm-uselistorder

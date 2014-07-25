@@ -9,7 +9,7 @@
 
 LEVEL := ../..
 TOOLNAME := llvm-uselistorder
-LINK_COMPONENTS := support irreader bitwriter
+LINK_COMPONENTS := AsmParser BitReader BitWriter Core IRReader Support
 
 # This tool has no plugins, optimize startup time.
 TOOL_NO_EXPORTS := 1
