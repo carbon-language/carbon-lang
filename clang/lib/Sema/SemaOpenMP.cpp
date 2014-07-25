@@ -1641,6 +1641,8 @@ class OpenMPIterationSpaceChecker {
   SourceRange ConditionSrcRange;
   /// \brief Loop variable.
   VarDecl *Var;
+  /// \brief Reference to loop variable.
+  DeclRefExpr *VarRef;
   /// \brief Lower bound (initializer for the var).
   Expr *LB;
   /// \brief Upper bound.
@@ -1661,9 +1663,9 @@ class OpenMPIterationSpaceChecker {
 public:
   OpenMPIterationSpaceChecker(Sema &SemaRef, SourceLocation DefaultLoc)
       : SemaRef(SemaRef), DefaultLoc(DefaultLoc), ConditionLoc(DefaultLoc),
-        ConditionSrcRange(SourceRange()), Var(nullptr), LB(nullptr),
-        UB(nullptr), Step(nullptr), TestIsLessOp(false), TestIsStrictOp(false),
-        SubtractStep(false) {}
+        ConditionSrcRange(SourceRange()), Var(nullptr), VarRef(nullptr),
+        LB(nullptr), UB(nullptr), Step(nullptr), TestIsLessOp(false),
+        TestIsStrictOp(false), SubtractStep(false) {}
   /// \brief Check init-expr for canonical loop form and save loop counter
   /// variable - #Var and its initialization value - #LB.
   bool CheckInit(Stmt *S);
@@ -1675,6 +1677,8 @@ public:
   bool CheckInc(Expr *S);
   /// \brief Return the loop counter variable.
   VarDecl *GetLoopVar() const { return Var; }
+  /// \brief Return the reference expression to loop counter variable.
+  DeclRefExpr *GetLoopVarRefExpr() const { return VarRef; }
   /// \brief Return true if any expression is dependent.
   bool Dependent() const;
 
@@ -1683,7 +1687,7 @@ private:
   /// expression.
   bool CheckIncRHS(Expr *RHS);
   /// \brief Helper to set loop counter variable and its initializer.
-  bool SetVarAndLB(VarDecl *NewVar, Expr *NewLB);
+  bool SetVarAndLB(VarDecl *NewVar, DeclRefExpr *NewVarRefExpr, Expr *NewLB);
   /// \brief Helper to set upper bound.
   bool SetUB(Expr *NewUB, bool LessOp, bool StrictOp, const SourceRange &SR,
              const SourceLocation &SL);
@@ -1700,13 +1704,16 @@ bool OpenMPIterationSpaceChecker::Dependent() const {
          (UB && UB->isValueDependent()) || (Step && Step->isValueDependent());
 }
 
-bool OpenMPIterationSpaceChecker::SetVarAndLB(VarDecl *NewVar, Expr *NewLB) {
+bool OpenMPIterationSpaceChecker::SetVarAndLB(VarDecl *NewVar,
+                                              DeclRefExpr *NewVarRefExpr,
+                                              Expr *NewLB) {
   // State consistency checking to ensure correct usage.
-  assert(Var == nullptr && LB == nullptr && UB == nullptr && Step == nullptr &&
-         !TestIsLessOp && !TestIsStrictOp);
+  assert(Var == nullptr && LB == nullptr && VarRef == nullptr &&
+         UB == nullptr && Step == nullptr && !TestIsLessOp && !TestIsStrictOp);
   if (!NewVar || !NewLB)
     return true;
   Var = NewVar;
+  VarRef = NewVarRefExpr;
   LB = NewLB;
   return false;
 }
@@ -1794,7 +1801,8 @@ bool OpenMPIterationSpaceChecker::CheckInit(Stmt *S) {
   if (auto BO = dyn_cast<BinaryOperator>(S)) {
     if (BO->getOpcode() == BO_Assign)
       if (auto DRE = dyn_cast<DeclRefExpr>(BO->getLHS()->IgnoreParens()))
-        return SetVarAndLB(dyn_cast<VarDecl>(DRE->getDecl()), BO->getLHS());
+        return SetVarAndLB(dyn_cast<VarDecl>(DRE->getDecl()), DRE,
+                           BO->getLHS());
   } else if (auto DS = dyn_cast<DeclStmt>(S)) {
     if (DS->isSingleDecl()) {
       if (auto Var = dyn_cast_or_null<VarDecl>(DS->getSingleDecl())) {
@@ -1804,14 +1812,15 @@ bool OpenMPIterationSpaceChecker::CheckInit(Stmt *S) {
             SemaRef.Diag(S->getLocStart(),
                          diag::ext_omp_loop_not_canonical_init)
                 << S->getSourceRange();
-          return SetVarAndLB(Var, Var->getInit());
+          return SetVarAndLB(Var, nullptr, Var->getInit());
         }
       }
     }
   } else if (auto CE = dyn_cast<CXXOperatorCallExpr>(S))
     if (CE->getOperator() == OO_Equal)
       if (auto DRE = dyn_cast<DeclRefExpr>(CE->getArg(0)))
-        return SetVarAndLB(dyn_cast<VarDecl>(DRE->getDecl()), CE->getArg(1));
+        return SetVarAndLB(dyn_cast<VarDecl>(DRE->getDecl()), DRE,
+                           CE->getArg(1));
 
   SemaRef.Diag(S->getLocStart(), diag::err_omp_loop_not_canonical_init)
       << S->getSourceRange();
@@ -2056,6 +2065,9 @@ static bool CheckOpenMPIterationSpace(
   // The loop iteration variable(s) in the associated for-loop(s) of a for or
   // parallel for construct may be listed in a private or lastprivate clause.
   DSAStackTy::DSAVarData DVar = DSA.getTopDSA(Var, false);
+  auto LoopVarRefExpr = ISC.GetLoopVarRefExpr();
+  // If LoopVarRefExpr is nullptr it means the corresponding loop variable is
+  // declared in the loop and it is predetermined as a private.
   auto PredeterminedCKind =
       isOpenMPSimdDirective(DKind)
           ? ((NestedLoopCount == 1) ? OMPC_linear : OMPC_lastprivate)
@@ -2070,11 +2082,11 @@ static bool CheckOpenMPIterationSpace(
         << getOpenMPClauseName(PredeterminedCKind);
     ReportOriginalDSA(SemaRef, &DSA, Var, DVar, true);
     HasErrors = true;
-  } else {
+  } else if (LoopVarRefExpr != nullptr) {
     // Make the loop iteration variable private (for worksharing constructs),
     // linear (for simd directives with the only one associated loop) or
     // lastprivate (for simd directives with several collapsed loops).
-    DSA.addDSA(Var, nullptr, PredeterminedCKind);
+    DSA.addDSA(Var, LoopVarRefExpr, PredeterminedCKind);
   }
 
   assert(isOpenMPLoopDirective(DKind) && "DSA for non-loop vars");

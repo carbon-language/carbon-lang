@@ -190,6 +190,16 @@ void test_collapse() {
 #pragma omp for collapse(5 - 5)
   for (i = 0; i < 16; ++i)
     ;
+#pragma omp parallel
+#pragma omp for collapse(2)
+  for (i = 0; i < 16; ++i)
+// expected-note@+1 {{variable with automatic storage duration is predetermined as private; perhaps you forget to enclose 'omp for' directive into a parallel or another task region?}}
+    for (int j = 0; j < 16; ++j)
+// expected-error@+2 {{private variable cannot be reduction}}
+// expected-error@+1 {{region cannot be closely nested inside 'for' region; perhaps you forget to enclose 'omp for' directive into a parallel region?}}
+#pragma omp for reduction(+ : i, j)
+      for (int k = 0; k < 16; ++k)
+        i += j;
 }
 
 void test_private() {
