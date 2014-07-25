@@ -1,5 +1,5 @@
-; RUN: llc -march thumb -no-integrated-as %s -o - | FileCheck %s --check-prefix=THUMB
-; RUN: llc -march arm -no-integrated-as %s -o - | FileCheck %s --check-prefix=ARM
+; RUN: llc -march thumb -no-integrated-as < %s | FileCheck %s --check-prefix=THUMB
+; RUN: llc -march arm -no-integrated-as < %s | FileCheck %s --check-prefix=ARM
 
 ; In thumb mode, emit ".code 16" before global inline-asm instructions.
 
