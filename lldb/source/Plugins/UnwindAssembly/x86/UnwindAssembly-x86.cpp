@@ -373,6 +373,12 @@ bool AssemblyParse_x86::push_reg_p (int& regno) {
 
 //  movq %rax, -0x10(%rbp) [0x48 0x89 0x45 0xf0]
 //  movl %eax, -0xc(%ebp)  [0x89 0x45 0xf4]
+
+// The offset value returned in rbp_offset will be positive -- 
+// but it must be subtraced from the frame base register to get
+// the actual location.  The positive value returned for the offset
+// is a convention used elsewhere for CFA offsets et al.
+
 bool AssemblyParse_x86::mov_reg_to_local_stack_frame_p (int& regno, int& rbp_offset) {
     uint8_t *p = m_cur_insn_bytes;
     int src_reg_prefix_bit = 0;
@@ -633,7 +639,13 @@ AssemblyParse_x86::get_non_call_site_unwind_plan (UnwindPlan &unwind_plan)
             {
                 row->SetOffset (current_func_text_offset + insn_len);
                 UnwindPlan::Row::RegisterLocation regloc;
-                regloc.SetAtCFAPlusOffset (-row->GetCFAOffset());
+
+                // stack_offset for 'movq %r15, -80(%rbp)' will be 80.
+                // In the Row, we want to express this as the offset from the CFA.  If the frame base
+                // is rbp (like the above instruction), the CFA offset for rbp is probably 16.  So we
+                // want to say that the value is stored at the CFA address - 96.
+                regloc.SetAtCFAPlusOffset (-(stack_offset + row->GetCFAOffset()));
+
                 row->SetRegisterInfo (lldb_regno, regloc);
                 unwind_plan.AppendRow (row);
                 // Allocate a new Row, populate it with the existing Row contents.
