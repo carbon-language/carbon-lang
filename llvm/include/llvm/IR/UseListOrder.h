@@ -15,27 +15,20 @@
 #ifndef LLVM_IR_USELISTORDER_H
 #define LLVM_IR_USELISTORDER_H
 
+#include "llvm/ADT/ArrayRef.h"
+
 namespace llvm {
 
 class Module;
 
 /// \brief Whether to preserve use-list ordering.
 bool shouldPreserveBitcodeUseListOrder();
+bool shouldPreserveAssemblyUseListOrder();
 
 /// \brief Shuffle all use-lists in a module.
 ///
 /// Adds \c SeedOffset to the default seed for the random number generator.
 void shuffleUseLists(Module &M, unsigned SeedOffset = 0);
-
-/// \brief Verify use-list order after serializing to bitcode.
-///
-/// \return \c true if there are no errors.
-bool verifyBitcodeUseListOrder(const Module &M);
-
-/// \brief Verify use-list order after serializing to assembly.
-///
-/// \return \c true if there are no errors.
-bool verifyAssemblyUseListOrder(const Module &M);
 
 } // end namespace llvm
 
