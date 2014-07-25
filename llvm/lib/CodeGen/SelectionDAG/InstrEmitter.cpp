@@ -265,12 +265,16 @@ void InstrEmitter::CreateVirtualRegisters(SDNode *Node,
       MIB.addReg(VRBase, RegState::Define);
     }
 
-    SDValue Op(Node, i);
-    if (IsClone)
-      VRBaseMap.erase(Op);
-    bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
-    (void)isNew; // Silence compiler warning.
-    assert(isNew && "Node emitted out of order - early");
+    // If this def corresponds to a result of the SDNode insert the VRBase into
+    // the lookup map.
+    if (i < NumResults) {
+      SDValue Op(Node, i);
+      if (IsClone)
+        VRBaseMap.erase(Op);
+      bool isNew = VRBaseMap.insert(std::make_pair(Op, VRBase)).second;
+      (void)isNew; // Silence compiler warning.
+      assert(isNew && "Node emitted out of order - early");
+    }
   }
 }
 
