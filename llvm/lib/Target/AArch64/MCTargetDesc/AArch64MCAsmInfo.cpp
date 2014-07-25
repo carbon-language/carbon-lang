@@ -13,8 +13,8 @@
 
 #include "AArch64MCAsmInfo.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;

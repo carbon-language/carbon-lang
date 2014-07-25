@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64.h"
-#include "AArch64MachineFunctionInfo.h"
 #include "AArch64MCInstLower.h"
+#include "AArch64MachineFunctionInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64Subtarget.h"
 #include "InstPrinter/AArch64InstPrinter.h"
@@ -23,8 +23,8 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
+#include "llvm/CodeGen/StackMaps.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DebugInfo.h"

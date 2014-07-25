@@ -14,9 +14,9 @@
 #ifndef AArch64SUBTARGET_H
 #define AArch64SUBTARGET_H
 
-#include "AArch64InstrInfo.h"
 #include "AArch64FrameLowering.h"
 #include "AArch64ISelLowering.h"
+#include "AArch64InstrInfo.h"
 #include "AArch64RegisterInfo.h"
 #include "AArch64SelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
