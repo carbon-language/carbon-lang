@@ -24,7 +24,7 @@ using namespace llvm;
 #include "AMDGPUGenIntrinsics.inc"
 #undef GET_LLVM_INTRINSIC_FOR_GCC_BUILTIN
 
-AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo(TargetMachine *tm)
+AMDGPUIntrinsicInfo::AMDGPUIntrinsicInfo()
     : TargetIntrinsicInfo() {}
 
 std::string AMDGPUIntrinsicInfo::getName(unsigned IntrID, Type **Tys,

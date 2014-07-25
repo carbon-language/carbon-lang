@@ -33,7 +33,7 @@ enum ID {
 
 class AMDGPUIntrinsicInfo : public TargetIntrinsicInfo {
 public:
-  AMDGPUIntrinsicInfo(TargetMachine *tm);
+  AMDGPUIntrinsicInfo();
   std::string getName(unsigned IntrId, Type **Tys = nullptr,
                       unsigned numTys = 0) const override;
   unsigned lookupName(const char *Name, unsigned Len) const override;
