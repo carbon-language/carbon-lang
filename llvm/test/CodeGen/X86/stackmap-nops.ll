@@ -224,6 +224,9 @@ entry:
   tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 28, i32 28)
   tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 29, i32 29)
   tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 30, i32 30)
+; Add an extra stackmap with a zero-length shadow to thwart the shadow
+; optimization. This will force all 15 bytes of the previous shadow to be
+; padded with nops.
   tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 31, i32 0)
   ret void
 }
