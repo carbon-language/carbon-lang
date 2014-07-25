@@ -17,6 +17,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_flags.h"
+#include "sanitizer_freebsd.h"
 #include "sanitizer_linux.h"
 #include "sanitizer_placement_new.h"
 #include "sanitizer_procmaps.h"
@@ -35,6 +36,7 @@
 
 #if SANITIZER_FREEBSD
 #include <pthread_np.h>
+#include <osreldate.h>
 #define pthread_getattr_np pthread_attr_get_np
 #endif
 
@@ -471,6 +473,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules,
 #else  // SANITIZER_ANDROID
 # if !SANITIZER_FREEBSD
 typedef ElfW(Phdr) Elf_Phdr;
+# elif SANITIZER_WORDSIZE == 32 && __FreeBSD_version <= 902001  // v9.2
+#  define Elf_Phdr XElf32_Phdr
+#  define dl_phdr_info xdl_phdr_info
+#  define dl_iterate_phdr(c, b) xdl_iterate_phdr((c), (b))
 # endif
 
 struct DlIteratePhdrData {
