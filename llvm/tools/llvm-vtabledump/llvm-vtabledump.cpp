@@ -15,7 +15,6 @@
 #include "llvm-vtabledump.h"
 #include "Error.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Debug.h"
@@ -71,7 +70,7 @@ static void reportError(StringRef Input, std::error_code EC) {
 
 static void dumpVTables(const ObjectFile *Obj) {
   std::map<std::pair<StringRef, uint64_t>, StringRef> VFTableEntries;
-  StringMap<ArrayRef<aligned_little32_t>> VBTables;
+  std::map<StringRef, ArrayRef<aligned_little32_t>> VBTables;
   for (const object::SymbolRef &Sym : Obj->symbols()) {
     StringRef SymName;
     if (error(Sym.getName(SymName)))
@@ -126,12 +125,13 @@ static void dumpVTables(const ObjectFile *Obj) {
     StringRef SymName = VFTableEntry.second;
     outs() << VFTableName << '[' << Offset << "]: " << SymName << '\n';
   }
-  for (const StringMapEntry<ArrayRef<aligned_little32_t>> &VBTable : VBTables) {
-    StringRef VBTableName = VBTable.getKey();
+  for (const std::pair<StringRef, ArrayRef<aligned_little32_t>> &VBTable :
+       VBTables) {
+    StringRef VBTableName = VBTable.first;
     uint32_t Idx = 0;
-    for (aligned_little32_t Offset : VBTable.getValue()) {
+    for (aligned_little32_t Offset : VBTable.second) {
       outs() << VBTableName << '[' << Idx << "]: " << Offset << '\n';
-      Idx += sizeof(aligned_little32_t);
+      Idx += sizeof(Offset);
     }
   }
 }
