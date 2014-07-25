@@ -47,6 +47,7 @@ add_polly_library(Polly
   CodeGen/LoopGenerators.cpp
   CodeGen/IRBuilder.cpp
   CodeGen/Utils.cpp
+  CodeGen/RuntimeDebugBuilder.cpp
   ${GPGPU_CODEGEN_FILES}
   Exchange/JSONExporter.cpp
   ${POLLY_SCOPLIB_FILES}

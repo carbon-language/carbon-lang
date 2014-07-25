@@ -61,6 +61,7 @@ SOURCES= Polly.cpp \
 	 CodeGen/LoopGenerators.cpp \
 	 CodeGen/IRBuilder.cpp \
 	 CodeGen/Utils.cpp \
+	 CodeGen/RuntimeDebugBuilder.cpp \
 	 Exchange/JSONExporter.cpp \
 	 Transform/Canonicalization.cpp \
 	 Transform/CodePreparation.cpp \
