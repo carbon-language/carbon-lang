@@ -25,13 +25,12 @@ typedef CompactSizeClassMap InternalSizeClassMap;
 
 static const uptr kInternalAllocatorSpace = 0;
 static const u64 kInternalAllocatorSize = SANITIZER_MMAP_RANGE_SIZE;
-#if SANITIZER_WORDSIZE == 32
 static const uptr kInternalAllocatorRegionSizeLog = 20;
+#if SANITIZER_WORDSIZE == 32
 static const uptr kInternalAllocatorNumRegions =
     kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
 typedef FlatByteMap<kInternalAllocatorNumRegions> ByteMap;
 #else
-static const uptr kInternalAllocatorRegionSizeLog = 24;
 static const uptr kInternalAllocatorNumRegions =
     kInternalAllocatorSize >> kInternalAllocatorRegionSizeLog;
 typedef TwoLevelByteMap<(kInternalAllocatorNumRegions >> 12), 1 << 12> ByteMap;
