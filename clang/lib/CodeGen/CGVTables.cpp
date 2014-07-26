@@ -225,12 +225,11 @@ void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
   CXXThisValue = CXXABIThisValue;
 }
 
-void CodeGenFunction::EmitCallAndReturnForThunk(GlobalDecl GD,
-                                                llvm::Value *Callee,
+void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
                                                 const ThunkInfo *Thunk) {
   assert(isa<CXXMethodDecl>(CurGD.getDecl()) &&
          "Please use a new CGF for this thunk");
-  const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CurGD.getDecl());
 
   // Adjust the 'this' pointer if necessary
   llvm::Value *AdjustedThisPtr = Thunk ? CGM.getCXXABI().performThisAdjustment(
@@ -243,12 +242,11 @@ void CodeGenFunction::EmitCallAndReturnForThunk(GlobalDecl GD,
   CallArgs.add(RValue::get(AdjustedThisPtr), ThisType);
 
   if (isa<CXXDestructorDecl>(MD))
-    CGM.getCXXABI().adjustCallArgsForDestructorThunk(*this, GD, CallArgs);
+    CGM.getCXXABI().adjustCallArgsForDestructorThunk(*this, CurGD, CallArgs);
 
   // Add the rest of the arguments.
-  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I)
-    EmitDelegateCallArg(CallArgs, *I, (*I)->getLocStart());
+  for (const ParmVarDecl *PD : MD->params())
+    EmitDelegateCallArg(CallArgs, PD, PD->getLocStart());
 
   const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
 
@@ -272,7 +270,7 @@ void CodeGenFunction::EmitCallAndReturnForThunk(GlobalDecl GD,
 
   // Determine whether we have a return value slot to use.
   QualType ResultType =
-      CGM.getCXXABI().HasThisReturn(GD) ? ThisType : FPT->getReturnType();
+      CGM.getCXXABI().HasThisReturn(CurGD) ? ThisType : FPT->getReturnType();
   ReturnValueSlot Slot;
   if (!ResultType->isVoidType() &&
       CurFnInfo->getReturnInfo().getKind() == ABIArgInfo::Indirect &&
@@ -307,7 +305,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty, /*ForVTable=*/true);
 
   // Make the call and return the result.
-  EmitCallAndReturnForThunk(GD, Callee, &Thunk);
+  EmitCallAndReturnForThunk(Callee, &Thunk);
 
   // Set the right linkage.
   CGM.setFunctionLinkage(GD, Fn);
