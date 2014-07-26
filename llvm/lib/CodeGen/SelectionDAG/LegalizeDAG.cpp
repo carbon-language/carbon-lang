@@ -180,6 +180,9 @@ public:
     }
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
+    assert(Old->getNumValues() == New->getNumValues() &&
+           "Replacing one node with another that produces a different number "
+           "of values!");
     DAG.ReplaceAllUsesWith(Old, New);
     for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
       DAG.TransferDbgValues(SDValue(Old, i), SDValue(New, i));
