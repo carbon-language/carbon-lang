@@ -233,7 +233,7 @@ void DecodePSHUFBMask(const ConstantDataSequential *C,
       ShuffleMask.push_back(SM_SentinelZero);
     else {
       int Index = Base + Element;
-      assert((Index >= 0 && Index < NumElements) ||
+      assert((Index >= 0 && Index < NumElements) &&
              "Out of bounds shuffle index for pshub instruction!");
       ShuffleMask.push_back(Index);
     }
