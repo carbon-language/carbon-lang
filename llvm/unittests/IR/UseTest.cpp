@@ -13,9 +13,9 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/User.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
-#include <string>
 
 using namespace llvm;
 
@@ -37,6 +37,7 @@ TEST(UseTest, sort) {
                              "  ret void\n"
                              "}\n";
   SMDiagnostic Err;
+  char vnbuf[8];
   Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
@@ -48,16 +49,20 @@ TEST(UseTest, sort) {
     return L.getUser()->getName() < R.getUser()->getName();
   });
   unsigned I = 0;
-  for (User *U : X.users())
-    EXPECT_EQ("v" + std::to_string(I++), U->getName());
+  for (User *U : X.users()) {
+    snprintf(vnbuf, sizeof(vnbuf), "v%u", I++);
+    EXPECT_EQ(vnbuf, U->getName());
+  }
   ASSERT_EQ(8u, I);
 
   X.sortUseList([](const Use &L, const Use &R) {
     return L.getUser()->getName() > R.getUser()->getName();
   });
   I = 0;
-  for (User *U : X.users())
-    EXPECT_EQ("v" + std::to_string((7 - I++)), U->getName());
+  for (User *U : X.users()) {
+    snprintf(vnbuf, sizeof(vnbuf), "v%u", (7 - I++));
+    EXPECT_EQ(vnbuf, U->getName());
+  }
   ASSERT_EQ(8u, I);
 }
 
