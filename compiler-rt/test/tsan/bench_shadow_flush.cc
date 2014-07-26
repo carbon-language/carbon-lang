@@ -11,6 +11,7 @@
 
 const long kSmallPage = 4 << 10;
 const long kLargePage = 2 << 20;
+const long kStride    = 1 << 10;
 
 typedef unsigned long uptr;
 
@@ -24,15 +25,20 @@ int main(int argc, const char **argv) {
   int niter = 1;
   if (argc > 3)
     niter = atoi(argv[3]);
+  int stride2 = 1;
+  if (argc > 4)
+    stride2 = atoi(argv[4]);
 
-  void *p = mmap(0, mem_size + kLargePage, PROT_READ | PROT_WRITE,
-      MAP_ANON | MAP_PRIVATE, -1, 0);
+  uptr sz = mem_size + stride2 * kStride + kLargePage;
+  void *p = mmap(0, sz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
   uptr a = ((uptr)p + kLargePage - 1) & ~(kLargePage - 1);
   volatile char *mem = (volatile char *)a;
 
   for (int i = 0; i < niter; i++) {
-    for (uptr off = 0; off < mem_size; off += stride)
-      mem[off] = 42;
+    for (uptr off = 0; off < mem_size; off += stride) {
+      for (uptr off2 = 0; off2 < stride2; off2++)
+        mem[off + off2 * kStride] = 42;
+    }
   }
 
   fprintf(stderr, "DONE\n");
