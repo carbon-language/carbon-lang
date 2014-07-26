@@ -20,7 +20,7 @@
 #if defined(__APPLE__)
 	.const
 #elif defined(__ELF__)
-	.rodata
+	.section .rodata
 #else
 	.section .rdata,"rd"
 #endif

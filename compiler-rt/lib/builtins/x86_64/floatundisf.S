@@ -14,6 +14,8 @@
 #else
 	.section .rdata,"rd"
 #endif
+
+	.balign 16
 two:
 	.single 2.0
 

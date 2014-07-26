@@ -14,7 +14,8 @@
 #else
 	.section .rdata,"rd"
 #endif
-	.balign 4
+
+	.balign 16
 twop64:
 	.quad 0x43f0000000000000
 
