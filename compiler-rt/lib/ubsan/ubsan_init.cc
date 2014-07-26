@@ -17,6 +17,7 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_mutex.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 
 using namespace __ubsan;
 
@@ -42,6 +43,7 @@ void __ubsan::InitIfNecessary() {
     cf->print_summary = false;
     // Common flags may only be modified via UBSAN_OPTIONS.
     ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
+    Symbolizer::GetOrInit();
   }
   // Initialize UBSan-specific flags.
   InitializeFlags();

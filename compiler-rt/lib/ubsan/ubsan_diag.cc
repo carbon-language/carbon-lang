@@ -63,8 +63,8 @@ Location __ubsan::getFunctionLocation(uptr Loc, const char **FName) {
   InitIfNecessary();
 
   AddressInfo Info;
-  if (!Symbolizer::GetOrInit()->SymbolizePC(Loc, &Info, 1) ||
-      !Info.module || !*Info.module)
+  if (!Symbolizer::Get()->SymbolizePC(Loc, &Info, 1) || !Info.module ||
+      !*Info.module)
     return Location(Loc);
 
   if (FName && Info.function)
@@ -148,7 +148,7 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
         Printf("%s", A.String);
         break;
       case Diag::AK_Mangled: {
-        Printf("'%s'", Symbolizer::GetOrInit()->Demangle(A.String));
+        Printf("'%s'", Symbolizer::Get()->Demangle(A.String));
         break;
       }
       case Diag::AK_SInt:
