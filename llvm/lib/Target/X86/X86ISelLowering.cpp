@@ -15444,29 +15444,16 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
                              DAG.getNode(Opcode, dl, MulVT, Odd0, Odd1));
 
   // Shuffle it back into the right order.
-  // The internal representation is big endian.
-  // In other words, a i64 bitcasted to 2 x i32 has its high part at index 0
-  // and its low part at index 1.
-  // Moreover, we have: Mul1 = <ae|cg> ; Mul2 = <bf|dh>
-  // Vector index                0 1   ;          2 3
-  // We want      <ae|bf|cg|dh>
-  // Vector index   0  2  1  3
-  // Since each element is seen as 2 x i32, we get:
-  // high_mask[i] = 2 x vector_index[i]
-  // low_mask[i] = 2 x vector_index[i] + 1
-  // where vector_index = {0, Size/2, 1, Size/2 + 1, ...,
-  //                       Size/2 - 1, Size/2 + Size/2 - 1}
-  // where Size is the number of element of the final vector.
   SDValue Highs, Lows;
   if (VT == MVT::v8i32) {
-    const int HighMask[] = {0, 8, 2, 10, 4, 12, 6, 14};
+    const int HighMask[] = {1, 9, 3, 11, 5, 13, 7, 15};
     Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-    const int LowMask[] = {1, 9, 3, 11, 5, 13, 7, 15};
+    const int LowMask[] = {0, 8, 2, 10, 4, 12, 6, 14};
     Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
   } else {
-    const int HighMask[] = {0, 4, 2, 6};
+    const int HighMask[] = {1, 5, 3, 7};
     Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-    const int LowMask[] = {1, 5, 3, 7};
+    const int LowMask[] = {1, 4, 2, 6};
     Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
   }
 
@@ -15484,9 +15471,9 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
     Highs = DAG.getNode(ISD::SUB, dl, VT, Highs, Fixup);
   }
 
-  // THe first result of MUL_LOHI is actually the high value, followed by the
-  // low value.
-  SDValue Ops[] = {Highs, Lows};
+  // The first result of MUL_LOHI is actually the low value, followed by the
+  // high value.
+  SDValue Ops[] = {Lows, Highs};
   return DAG.getMergeValues(Ops, dl);
 }
 
