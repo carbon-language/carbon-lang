@@ -223,7 +223,7 @@ define <2 x i16> @test12() {
 
 define <4 x i32> @PR20355(<4 x i32> %a) {
 ; SSE-LABEL: PR20355:
-; SSE:         movdqa {{.*}}, %[[X1:xmm[0-9]+]]
+; SSE:         movdqa {{(.*LCPI|__xmm@55555556555555565555555655555556).*}}, %[[X1:xmm[0-9]+]]
 ; SSE-NEXT:    movdqa %[[X1]], %[[X2:xmm[0-9]+]]
 ; SSE-NEXT:    psrad  $31, %[[X2]]
 ; SSE-NEXT:    pand   %xmm0, %[[X2]]
@@ -244,7 +244,7 @@ define <4 x i32> @PR20355(<4 x i32> %a) {
 ; SSE-NEXT:    retq
 ;
 ; SSE41-LABEL: PR20355:
-; SSE41:         movdqa {{.*}}, %[[X1:xmm[0-9]+]]
+; SSE41:         movdqa {{(.*LCPI|__xmm@55555556555555565555555655555556).*}}, %[[X1:xmm[0-9]+]]
 ; SSE41-NEXT:    pshufd {{.*}} # [[X2:xmm[0-9]+]] = xmm0[1,0,3,0]
 ; SSE41-NEXT:    pmuldq %[[X1]], %xmm0
 ; SSE41-NEXT:    pshufd {{.*}} # [[X1]] = [[X1]][1,0,3,0]
