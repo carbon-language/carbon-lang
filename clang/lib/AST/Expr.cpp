@@ -195,12 +195,12 @@ SourceLocation Expr::getExprLoc() const {
   case Stmt::NoStmtClass: llvm_unreachable("statement without class");
 #define ABSTRACT_STMT(type)
 #define STMT(type, base) \
-  case Stmt::type##Class: llvm_unreachable(#type " is not an Expr"); break;
+  case Stmt::type##Class: break;
 #define EXPR(type, base) \
   case Stmt::type##Class: return getExprLocImpl<type>(this, &type::getExprLoc);
 #include "clang/AST/StmtNodes.inc"
   }
-  llvm_unreachable("unknown statement kind");
+  llvm_unreachable("unknown expression kind");
 }
 
 //===----------------------------------------------------------------------===//
