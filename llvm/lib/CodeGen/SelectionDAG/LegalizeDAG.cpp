@@ -1344,15 +1344,19 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
       // a complete mess.
       SDValue Res = TLI.LowerOperation(SDValue(Node, 0), DAG);
       if (Res.getNode()) {
-        SmallVector<SDValue, 8> ResultVals;
-        for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
-          if (e == 1)
-            ResultVals.push_back(Res);
-          else
-            ResultVals.push_back(Res.getValue(i));
+        if (!(Res.getNode() != Node || Res.getResNo() != 0))
+          return;
+
+        if (Node->getNumValues() == 1) {
+          // We can just directly replace this node with the lowered value.
+          ReplaceNode(SDValue(Node, 0), Res);
+          return;
         }
-        if (Res.getNode() != Node || Res.getResNo() != 0)
-          ReplaceNode(Node, ResultVals.data());
+
+        SmallVector<SDValue, 8> ResultVals;
+        for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+          ResultVals.push_back(Res.getValue(i));
+        ReplaceNode(Node, ResultVals.data());
         return;
       }
     }
