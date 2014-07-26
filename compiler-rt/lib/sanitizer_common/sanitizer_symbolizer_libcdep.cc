@@ -20,7 +20,7 @@ Symbolizer *Symbolizer::GetOrInit() {
   SpinMutexLock l(&init_mu_);
   if (symbolizer_)
     return symbolizer_;
-  if (symbolizer_ = PlatformInit())
+  if ((symbolizer_ = PlatformInit()))
     return symbolizer_;
   return Disable();
 }
