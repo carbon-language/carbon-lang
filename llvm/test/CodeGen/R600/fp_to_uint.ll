@@ -52,8 +52,8 @@ define void @fp_to_uint_v4i32(<4 x i32> addrspace(1)* %out, <4 x float> addrspac
 ; EG-DAG: XOR_INT
 ; EG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 
 ; SI: S_ENDPGM
 define void @fp_to_uint_i64(i64 addrspace(1)* %out, float %x) {
@@ -82,8 +82,8 @@ define void @fp_to_uint_i64(i64 addrspace(1)* %out, float %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 ; EG-DAG: AND_INT
 ; EG-DAG: LSHR
 ; EG-DAG: SUB_INT
@@ -103,8 +103,8 @@ define void @fp_to_uint_i64(i64 addrspace(1)* %out, float %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 
 ; SI: S_ENDPGM
 define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
@@ -133,8 +133,8 @@ define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 ; EG-DAG: AND_INT
 ; EG-DAG: LSHR
 ; EG-DAG: SUB_INT
@@ -154,8 +154,8 @@ define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 ; EG-DAG: AND_INT
 ; EG-DAG: LSHR
 ; EG-DAG: SUB_INT
@@ -175,8 +175,8 @@ define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 ; EG-DAG: AND_INT
 ; EG-DAG: LSHR
 ; EG-DAG: SUB_INT
@@ -196,8 +196,8 @@ define void @fp_to_uint_v2i64(<2 x i64> addrspace(1)* %out, <2 x float> %x) {
 ; EG-DAG: XOR_INT
 ; EG-DAG: SUB_INT
 ; EG-DAG: SUB_INT
-; EG-DAG: CNDGE_INT
-; EG-DAG: CNDGE_INT
+; EG-DAG: CNDE_INT
+; EG-DAG: CNDE_INT
 
 ; SI: S_ENDPGM
 define void @fp_to_uint_v4i64(<4 x i64> addrspace(1)* %out, <4 x float> %x) {

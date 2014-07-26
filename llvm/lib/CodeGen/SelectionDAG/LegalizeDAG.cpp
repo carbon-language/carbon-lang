@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -53,11 +54,16 @@ class SelectionDAGLegalize : public SelectionDAG::DAGUpdateListener {
   const TargetLowering &TLI;
   SelectionDAG &DAG;
 
-  /// LegalizePosition - The iterator for walking through the node list.
-  SelectionDAG::allnodes_iterator LegalizePosition;
+  /// \brief The iterator being used to walk the DAG. We hold a reference to it
+  /// in order to update it as necessary on node deletion.
+  SelectionDAG::allnodes_iterator &LegalizePosition;
 
-  /// LegalizedNodes - The set of nodes which have already been legalized.
-  SmallPtrSet<SDNode *, 16> LegalizedNodes;
+  /// \brief The set of nodes which have already been legalized. We hold a
+  /// reference to it in order to update as necessary on node deletion.
+  SmallPtrSetImpl<SDNode *> &LegalizedNodes;
+
+  /// \brief A set of all the nodes updated during legalization.
+  SmallSetVector<SDNode *, 16> *UpdatedNodes;
 
   EVT getSetCCResultType(EVT VT) const {
     return TLI.getSetCCResultType(*DAG.getContext(), VT);
@@ -66,14 +72,19 @@ class SelectionDAGLegalize : public SelectionDAG::DAGUpdateListener {
   // Libcall insertion helpers.
 
 public:
-  explicit SelectionDAGLegalize(SelectionDAG &DAG);
+  SelectionDAGLegalize(SelectionDAG &DAG,
+                       SelectionDAG::allnodes_iterator &LegalizePosition,
+                       SmallPtrSetImpl<SDNode *> &LegalizedNodes,
+                       SmallSetVector<SDNode *, 16> *UpdatedNodes = nullptr)
+      : SelectionDAG::DAGUpdateListener(DAG), TM(DAG.getTarget()),
+        TLI(DAG.getTargetLoweringInfo()), DAG(DAG),
+        LegalizePosition(LegalizePosition), LegalizedNodes(LegalizedNodes),
+        UpdatedNodes(UpdatedNodes) {}
 
-  void LegalizeDAG();
-
-private:
-  /// LegalizeOp - Legalizes the given operation.
+  /// \brief Legalizes the given operation.
   void LegalizeOp(SDNode *Node);
 
+private:
   SDValue OptimizeFloatStore(StoreSDNode *ST);
 
   void LegalizeLoadOps(SDNode *Node);
@@ -149,6 +160,8 @@ private:
     LegalizedNodes.erase(N);
     if (LegalizePosition == SelectionDAG::allnodes_iterator(N))
       ++LegalizePosition;
+    if (UpdatedNodes)
+      UpdatedNodes->remove(N);
   }
 
 public:
@@ -168,14 +181,25 @@ public:
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
     DAG.ReplaceAllUsesWith(Old, New);
+    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
+      DAG.TransferDbgValues(SDValue(Old, i), SDValue(New, i));
+    if (UpdatedNodes)
+      UpdatedNodes->insert(New);
     ReplacedNode(Old);
   }
   void ReplaceNode(SDValue Old, SDValue New) {
     DAG.ReplaceAllUsesWith(Old, New);
+    DAG.TransferDbgValues(Old, New);
+    if (UpdatedNodes)
+      UpdatedNodes->insert(New.getNode());
     ReplacedNode(Old.getNode());
   }
   void ReplaceNode(SDNode *Old, const SDValue *New) {
     DAG.ReplaceAllUsesWith(Old, New);
+    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
+      DAG.TransferDbgValues(SDValue(Old, i), New[i]);
+    if (UpdatedNodes)
+      UpdatedNodes->insert(New->getNode());
     ReplacedNode(Old);
   }
 };
@@ -211,40 +235,6 @@ SelectionDAGLegalize::ShuffleWithNarrowerEltType(EVT NVT, EVT VT,  SDLoc dl,
   assert(NewMask.size() == NumDestElts && "Non-integer NumEltsGrowth?");
   assert(TLI.isShuffleMaskLegal(NewMask, NVT) && "Shuffle not legal?");
   return DAG.getVectorShuffle(NVT, dl, N1, N2, &NewMask[0]);
-}
-
-SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
-  : SelectionDAG::DAGUpdateListener(dag),
-    TM(dag.getTarget()), TLI(dag.getTargetLoweringInfo()),
-    DAG(dag) {
-}
-
-void SelectionDAGLegalize::LegalizeDAG() {
-  DAG.AssignTopologicalOrder();
-
-  // Visit all the nodes. We start in topological order, so that we see
-  // nodes with their original operands intact. Legalization can produce
-  // new nodes which may themselves need to be legalized. Iterate until all
-  // nodes have been legalized.
-  for (;;) {
-    bool AnyLegalized = false;
-    for (LegalizePosition = DAG.allnodes_end();
-         LegalizePosition != DAG.allnodes_begin(); ) {
-      --LegalizePosition;
-
-      SDNode *N = LegalizePosition;
-      if (LegalizedNodes.insert(N)) {
-        AnyLegalized = true;
-        LegalizeOp(N);
-      }
-    }
-    if (!AnyLegalized)
-      break;
-
-  }
-
-  // Remove dead nodes now.
-  DAG.RemoveDeadNodes();
 }
 
 /// ExpandConstantFP - Expands the ConstantFP node to an integer constant or
@@ -928,6 +918,10 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       assert(RVal.getNode() != Node && "Load must be completely replaced");
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), RVal);
       DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), RChain);
+      if (UpdatedNodes) {
+        UpdatedNodes->insert(RVal.getNode());
+        UpdatedNodes->insert(RChain.getNode());
+      }
       ReplacedNode(Node);
     }
     return;
@@ -1148,6 +1142,10 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
     assert(Value.getNode() != Node && "Load must be completely replaced");
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Value);
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Chain);
+    if (UpdatedNodes) {
+      UpdatedNodes->insert(Value.getNode());
+      UpdatedNodes->insert(Chain.getNode());
+    }
     ReplacedNode(Node);
   }
 }
@@ -1335,10 +1333,7 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
     }
 
     if (NewNode != Node) {
-      DAG.ReplaceAllUsesWith(Node, NewNode);
-      for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-        DAG.TransferDbgValues(SDValue(Node, i), SDValue(NewNode, i));
-      ReplacedNode(Node);
+      ReplaceNode(Node, NewNode);
       Node = NewNode;
     }
     switch (Action) {
@@ -1356,12 +1351,8 @@ void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
           else
             ResultVals.push_back(Res.getValue(i));
         }
-        if (Res.getNode() != Node || Res.getResNo() != 0) {
-          DAG.ReplaceAllUsesWith(Node, ResultVals.data());
-          for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
-            DAG.TransferDbgValues(SDValue(Node, i), ResultVals[i]);
-          ReplacedNode(Node);
-        }
+        if (Res.getNode() != Node || Res.getResNo() != 0)
+          ReplaceNode(Node, ResultVals.data());
         return;
       }
     }
@@ -4179,6 +4170,10 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
     // use the new one.
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 0), Tmp2);
     DAG.ReplaceAllUsesOfValueWith(SDValue(Node, 1), Chain);
+    if (UpdatedNodes) {
+      UpdatedNodes->insert(Tmp2.getNode());
+      UpdatedNodes->insert(Chain.getNode());
+    }
     ReplacedNode(Node);
     break;
   }
@@ -4285,7 +4280,48 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
 // SelectionDAG::Legalize - This is the entry point for the file.
 //
 void SelectionDAG::Legalize() {
-  /// run - This is the main entry point to this class.
-  ///
-  SelectionDAGLegalize(*this).LegalizeDAG();
+  AssignTopologicalOrder();
+
+  allnodes_iterator LegalizePosition;
+  SmallPtrSet<SDNode *, 16> LegalizedNodes;
+  SelectionDAGLegalize Legalizer(*this, LegalizePosition, LegalizedNodes);
+
+  // Visit all the nodes. We start in topological order, so that we see
+  // nodes with their original operands intact. Legalization can produce
+  // new nodes which may themselves need to be legalized. Iterate until all
+  // nodes have been legalized.
+  for (;;) {
+    bool AnyLegalized = false;
+    for (LegalizePosition = allnodes_end();
+         LegalizePosition != allnodes_begin(); ) {
+      --LegalizePosition;
+
+      SDNode *N = LegalizePosition;
+      if (LegalizedNodes.insert(N)) {
+        AnyLegalized = true;
+        Legalizer.LegalizeOp(N);
+      }
+    }
+    if (!AnyLegalized)
+      break;
+
+  }
+
+  // Remove dead nodes now.
+  RemoveDeadNodes();
+}
+
+bool SelectionDAG::LegalizeOp(SDNode *N,
+                              SmallSetVector<SDNode *, 16> &UpdatedNodes) {
+  allnodes_iterator LegalizePosition(N);
+  SmallPtrSet<SDNode *, 16> LegalizedNodes;
+  SelectionDAGLegalize Legalizer(*this, LegalizePosition, LegalizedNodes,
+                                 &UpdatedNodes);
+
+  // Directly insert the node in question, and legalize it. This will recurse
+  // as needed through operands.
+  LegalizedNodes.insert(N);
+  Legalizer.LegalizeOp(N);
+
+  return LegalizedNodes.count(N);
 }

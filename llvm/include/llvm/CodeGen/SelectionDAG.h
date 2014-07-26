@@ -16,6 +16,7 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/DAGCombine.h"
@@ -363,6 +364,27 @@ public:
   /// Note that this is an involved process that may invalidate pointers into
   /// the graph.
   void Legalize();
+
+  /// \brief Transforms a SelectionDAG node and any operands to it into a node
+  /// that is compatible with the target instruction selector, as indicated by
+  /// the TargetLowering object.
+  ///
+  /// \returns true if \c N is a valid, legal node after calling this.
+  ///
+  /// This essentially runs a single recursive walk of the \c Legalize process
+  /// over the given node (and its operands). This can be used to incrementally
+  /// legalize the DAG. All of the nodes which are directly replaced,
+  /// potentially including N, are added to the output parameter \c
+  /// UpdatedNodes so that the delta to the DAG can be understood by the
+  /// caller.
+  ///
+  /// When this returns false, N has been legalized in a way that make the
+  /// pointer passed in no longer valid. It may have even been deleted from the
+  /// DAG, and so it shouldn't be used further. When this returns true, the
+  /// N passed in is a legal node, and can be immediately processed as such.
+  /// This may still have done some work on the DAG, and will still populate
+  /// UpdatedNodes with any new nodes replacing those originally in the DAG.
+  bool LegalizeOp(SDNode *N, SmallSetVector<SDNode *, 16> &UpdatedNodes);
 
   /// LegalizeVectors - This transforms the SelectionDAG into a SelectionDAG
   /// that only uses vector math operations supported by the target.  This is

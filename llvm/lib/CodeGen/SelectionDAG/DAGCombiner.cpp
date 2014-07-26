@@ -1136,10 +1136,6 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   // changes of the root.
   HandleSDNode Dummy(DAG.getRoot());
 
-  // The root of the dag may dangle to deleted nodes until the dag combiner is
-  // done.  Set it to null to avoid confusion.
-  DAG.setRoot(SDValue());
-
   // while the worklist isn't empty, find a node and
   // try and combine it.
   while (!WorklistMap.empty()) {
@@ -1172,6 +1168,20 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
         AddToWorklist(N->getOperand(i).getNode());
 
     WorklistRemover DeadNodes(*this);
+
+    // If this combine is running after legalizing the DAG, re-legalize any
+    // nodes pulled off the worklist.
+    if (Level == AfterLegalizeDAG) {
+      SmallSetVector<SDNode *, 16> UpdatedNodes;
+      bool NIsValid = DAG.LegalizeOp(N, UpdatedNodes);
+
+      for (SDNode *LN : UpdatedNodes) {
+        AddToWorklist(LN);
+        AddUsersToWorklist(LN);
+      }
+      if (!NIsValid)
+        continue;
+    }
 
     SDValue RV = combine(N);
 
