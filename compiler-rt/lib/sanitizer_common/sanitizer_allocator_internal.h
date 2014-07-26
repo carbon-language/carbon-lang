@@ -37,7 +37,7 @@ static const uptr kInternalAllocatorNumRegions =
 typedef TwoLevelByteMap<(kInternalAllocatorNumRegions >> 12), 1 << 12> ByteMap;
 #endif
 typedef SizeClassAllocator32<
-    kInternalAllocatorSpace, kInternalAllocatorSize, 16, InternalSizeClassMap,
+    kInternalAllocatorSpace, kInternalAllocatorSize, 0, InternalSizeClassMap,
     kInternalAllocatorRegionSizeLog, ByteMap> PrimaryInternalAllocator;
 
 typedef SizeClassAllocatorLocalCache<PrimaryInternalAllocator>
