@@ -306,8 +306,7 @@ void Initialize(ThreadState *thr) {
   InitializeSuppressions();
 #ifndef TSAN_GO
   InitializeLibIgnore();
-  Symbolizer::Init(common_flags()->external_symbolizer_path);
-  Symbolizer::Get()->AddHooks(EnterSymbolizer, ExitSymbolizer);
+  Symbolizer::GetOrInit()->AddHooks(EnterSymbolizer, ExitSymbolizer);
 #endif
   StartBackgroundThread();
 #ifndef TSAN_GO

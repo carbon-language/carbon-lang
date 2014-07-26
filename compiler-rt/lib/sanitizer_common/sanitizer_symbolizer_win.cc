@@ -110,7 +110,7 @@ class WinSymbolizer : public Symbolizer {
   bool initialized_;
 };
 
-Symbolizer *Symbolizer::PlatformInit(const char *path_to_external) {
+Symbolizer *Symbolizer::PlatformInit() {
   static bool called_once = false;
   CHECK(!called_once && "Shouldn't create more than one symbolizer");
   called_once = true;

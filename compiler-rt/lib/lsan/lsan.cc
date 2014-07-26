@@ -60,7 +60,7 @@ extern "C" void __lsan_init() {
   ThreadStart(tid, GetTid());
   SetCurrentThread(tid);
 
-  Symbolizer::Init(common_flags()->external_symbolizer_path);
+  Symbolizer::GetOrInit();
 
   InitCommonLsan();
   if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit)

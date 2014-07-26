@@ -78,14 +78,9 @@ class Symbolizer {
   /// Returns platform-specific implementation of Symbolizer, or null if not
   /// initialized.
   static Symbolizer *GetOrNull();
-  /// Returns platform-specific implementation of Symbolizer.  Will
-  /// automatically initialize symbolizer as if by calling Init(0) if needed.
+  /// Initialize and return platform-specific implementation of symbolizer
+  /// (if it wasn't already initialized).
   static Symbolizer *GetOrInit();
-  /// Initialize and return the symbolizer, given an optional path to an
-  /// external symbolizer.  The path argument is only required for legacy
-  /// reasons as this function will check $PATH for an external symbolizer.  Not
-  /// thread safe.
-  static Symbolizer *Init(const char* path_to_external = 0);
   // Fills at most "max_frames" elements of "frames" with descriptions
   // for a given address (in all inlined functions). Returns the number
   // of descriptions actually filled.
@@ -122,10 +117,7 @@ class Symbolizer {
 
  private:
   /// Platform-specific function for creating a Symbolizer object.
-  static Symbolizer *PlatformInit(const char *path_to_external);
-  /// Create a symbolizer and store it to symbolizer_ without checking if one
-  /// already exists.  Not thread safe.
-  static Symbolizer *CreateAndStore(const char *path_to_external);
+  static Symbolizer *PlatformInit();
   /// Initialize the symbolizer in a disabled state.  Not thread safe.
   static Symbolizer *Disable();
 

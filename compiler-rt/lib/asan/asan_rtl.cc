@@ -656,7 +656,7 @@ static void AsanInitInternal() {
   // fork() on Mac locks the allocator.
   InitializeAllocator();
 
-  Symbolizer::Init(common_flags()->external_symbolizer_path);
+  Symbolizer::GetOrInit();
 
   // On Linux AsanThread::ThreadStart() calls malloc() that's why asan_inited
   // should be set to 1 prior to initializing the threads.
