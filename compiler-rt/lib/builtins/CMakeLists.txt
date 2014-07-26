@@ -249,15 +249,26 @@ set(arm_SOURCES
 add_custom_target(builtins)
 
 if (NOT WIN32)
-  foreach(arch x86_64 i386 arm)
-    if(CAN_TARGET_${arch})
+  foreach (arch x86_64 i386 arm)
+    if (CAN_TARGET_${arch})
+      # Filter out generic versions of routines that are re-implemented in
+      # architecture specific manner.  This prevents multiple definitions of the
+      # same symbols, making the symbol selection non-deterministic.
+      foreach (_file ${${arch}_SOURCES})
+        if (${_file} MATCHES ${arch}/*)
+          get_filename_component(_name ${_file} NAME)
+          string(REPLACE ".S" ".c" _cname "${_name}")
+          list(REMOVE_ITEM ${arch}_SOURCES ${_cname})
+        endif ()
+      endforeach ()
+
       set_source_files_properties(${${arch}_SOURCES} PROPERTIES LANGUAGE C)
       add_compiler_rt_runtime(clang_rt.builtins-${arch} ${arch} STATIC
-        SOURCES ${${arch}_SOURCES}
-        CFLAGS "-std=c99")
+                              SOURCES ${${arch}_SOURCES}
+                              CFLAGS "-std=c99")
       add_dependencies(builtins clang_rt.builtins-${arch})
-    endif()
-  endforeach()
-endif()
+    endif ()
+  endforeach ()
+endif ()
 
 add_dependencies(compiler-rt builtins)
