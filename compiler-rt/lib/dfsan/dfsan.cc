@@ -269,7 +269,7 @@ static void dfsan_init(int argc, char **argv, char **envp) {
   InitializeInterceptors();
 }
 
-#ifndef DFSAN_NOLIBC && SANITIZER_CAN_USE_PREINIT_ARRAY
+#if !defined(DFSAN_NOLIBC) && SANITIZER_CAN_USE_PREINIT_ARRAY
 __attribute__((section(".preinit_array"), used))
 static void (*dfsan_init_ptr)(int, char **, char **) = dfsan_init;
 #endif
