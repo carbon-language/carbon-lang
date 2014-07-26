@@ -55,12 +55,19 @@ END_COMPILERRT_FUNCTION(__floatundisf)
 #ifndef __ELF__
 .const
 #endif
-.balign 8
-twop52: .quad 0x4330000000000000
-		.quad 0x0000000000000fff
-sticky: .quad 0x0000000000000000
-		.long 0x00000012
-twelve:	.long 0x00000000
+	.balign 16
+twop52:
+	.quad 0x4330000000000000
+	.quad 0x0000000000000fff
+
+	.balign 16
+sticky:
+	.quad 0x0000000000000000
+	.long 0x00000012
+
+	.balign 16
+twelve:
+	.long 0x00000000
 
 #define			TWOp52			twop52-0b(%ecx)
 #define			STICKY			sticky-0b(%ecx,%eax,8)

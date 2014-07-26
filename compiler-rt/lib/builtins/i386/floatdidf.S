@@ -10,9 +10,14 @@
 #ifndef __ELF__
 .const
 #endif
-.balign 4
-twop52: .quad 0x4330000000000000
-twop32: .quad 0x41f0000000000000
+
+	.balign 16
+twop52:
+	.quad 0x4330000000000000
+
+	.balign 16
+twop32:
+	.quad 0x41f0000000000000
 
 #define REL_ADDR(_a)	(_a)-0b(%eax)
 
