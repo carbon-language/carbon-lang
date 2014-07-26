@@ -509,6 +509,6 @@ DiagnosticNoteRenderer::emitBuildingModuleLocation(SourceLocation Loc,
     Message << "while building module '" << ModuleName << "' imported from "
             << PLoc.getFilename() << ':' << PLoc.getLine() << ":";
   else
-    Message << "while building module '" << ModuleName << ":";
+    Message << "while building module '" << ModuleName << "':";
   emitNote(Loc, Message.str(), &SM);
 }
