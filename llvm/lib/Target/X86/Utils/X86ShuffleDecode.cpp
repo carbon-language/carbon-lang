@@ -213,8 +213,8 @@ void DecodePSHUFBMask(const ConstantDataSequential *C,
                       SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
   assert(MaskTy->isVectorTy() && "Expected a vector constant mask!");
-  Type *EltTy = MaskTy->getVectorElementType();
-  assert(EltTy->isIntegerTy(8) && "Expected i8 constant mask elements!");
+  assert(MaskTy->getVectorElementType()->isIntegerTy(8) &&
+         "Expected i8 constant mask elements!");
   int NumElements = MaskTy->getVectorNumElements();
   // FIXME: Add support for AVX-512.
   assert((NumElements == 16 || NumElements == 32) &&
