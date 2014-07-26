@@ -18,8 +18,3 @@
 
 // CHECK-GM-NOT: "-mglobal-merge"
 
-// RUN: %clang -target armv7-apple-darwin10 \
-// RUN:   -mno-global-merge -c %s
-
-// RUN: %clang -target armv7-apple-darwin10 \
-// RUN:   -mglobal-merge -c %s
