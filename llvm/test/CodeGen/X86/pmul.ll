@@ -1,9 +1,9 @@
-; RUN: llc < %s -march=x86 -mattr=sse4.1 -mcpu=nehalem -stack-alignment=16 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mattr=sse4.1 | FileCheck %s
 
 define <4 x i32> @a(<4 x i32> %i) nounwind  {
 ; CHECK-LABEL: a:
 ; CHECK:         pmulld
-; CHECK-NEXT:    retl
+; CHECK-NEXT:    retq
 entry:
   %A = mul <4 x i32> %i, < i32 117, i32 117, i32 117, i32 117 >
   ret <4 x i32> %A
@@ -22,7 +22,7 @@ entry:
 define <4 x i32> @c(<4 x i32> %i, <4 x i32> %j) nounwind  {
 ; CHECK-LABEL: c:
 ; CHECK:         pmulld
-; CHECK-NEXT:    retl
+; CHECK-NEXT:    retq
 entry:
   %A = mul <4 x i32> %i, %j
   ret <4 x i32> %A
@@ -42,9 +42,9 @@ declare void @foo()
 
 define <4 x i32> @e(<4 x i32> %i, <4 x i32> %j) nounwind  {
 ; CHECK-LABEL: e:
-; CHECK:         pmulld {{[0-9]+}}(%esp), %xmm
-; CHECK-NEXT:    addl ${{[0-9]+}}, %esp
-; CHECK-NEXT:    retl
+; CHECK:         pmulld {{[0-9]+}}(%rsp), %xmm
+; CHECK-NEXT:    addq ${{[0-9]+}}, %rsp
+; CHECK-NEXT:    retq
 entry:
   ; Use a call to force spills.
   call void @foo()
