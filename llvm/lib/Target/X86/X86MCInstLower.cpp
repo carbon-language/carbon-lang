@@ -1000,6 +1000,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       const MachineConstantPoolEntry &MaskConstantEntry =
           Constants[MI->getOperand(5).getIndex()];
       Type *MaskTy = MaskConstantEntry.getType();
+      (void)MaskTy;
       if (!MaskConstantEntry.isMachineConstantPoolEntry())
         if (auto *C = dyn_cast<ConstantDataSequential>(
                 MaskConstantEntry.Val.ConstVal)) {
