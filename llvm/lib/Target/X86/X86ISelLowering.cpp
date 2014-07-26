@@ -970,6 +970,7 @@ void X86TargetLowering::resetOperationActions() {
     setOperationAction(ISD::MUL,                MVT::v4i32, Custom);
     setOperationAction(ISD::MUL,                MVT::v2i64, Custom);
     setOperationAction(ISD::UMUL_LOHI,          MVT::v4i32, Custom);
+    setOperationAction(ISD::SMUL_LOHI,          MVT::v4i32, Custom);
     setOperationAction(ISD::MULHU,              MVT::v8i16, Legal);
     setOperationAction(ISD::MULHS,              MVT::v8i16, Legal);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
@@ -1111,8 +1112,6 @@ void X86TargetLowering::resetOperationActions() {
 
     // FIXME: Do we need to handle scalar-to-vector here?
     setOperationAction(ISD::MUL,                MVT::v4i32, Legal);
-
-    setOperationAction(ISD::SMUL_LOHI,          MVT::v4i32, Custom);
 
     setOperationAction(ISD::VSELECT,            MVT::v2f64, Custom);
     setOperationAction(ISD::VSELECT,            MVT::v2i64, Custom);
@@ -15433,9 +15432,8 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   // ints.
   MVT MulVT = VT == MVT::v4i32 ? MVT::v2i64 : MVT::v4i64;
   bool IsSigned = Op->getOpcode() == ISD::SMUL_LOHI;
-  assert((!IsSigned || Subtarget->hasSSE41()) &&
-         "We need PMULDQ for signed multiplies!");
-  unsigned Opcode = IsSigned ? X86ISD::PMULDQ : X86ISD::PMULUDQ;
+  unsigned Opcode =
+      (!IsSigned || !Subtarget->hasSSE41()) ? X86ISD::PMULUDQ : X86ISD::PMULDQ;
   // PMULUDQ <4 x i32> <a|b|c|d>, <4 x i32> <e|f|g|h>
   // => <2 x i64> <ae|cg>
   SDValue Mul1 = DAG.getNode(ISD::BITCAST, dl, VT,

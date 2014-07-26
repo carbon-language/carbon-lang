@@ -84,10 +84,10 @@ entry:
 }
 
 define <2 x i64> @f(<2 x i64> %i, <2 x i64> %j) nounwind  {
-; ALL-LABEL: f:
-; ALL:         pmuludq
-; ALL:         pmuludq
-; ALL:         pmuludq
+; CHECK-LABEL: f:
+; CHECK:         pmuludq
+; CHECK:         pmuludq
+; CHECK:         pmuludq
 entry:
   ; Use a call to force spills.
   call void @foo()
