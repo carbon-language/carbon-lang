@@ -16,7 +16,7 @@ C::C() {} // force emission
 
 // CHECK32-LABEL: define linkonce_odr x86_thiscallcc void @"\01?foo@C@byval_thunk@@W3AEXUAgg@2@@Z"
 // CHECK32:             (%"struct.byval_thunk::C"* %this, <{ %"struct.byval_thunk::Agg" }>* inalloca)
-// CHECK32:   %2 = getelementptr i8* %{{.*}}, i32 -4
+// CHECK32:   getelementptr i8* %{{.*}}, i32 -4
 // CHECK32:   musttail call x86_thiscallcc void @"\01?foo@C@byval_thunk@@UAEXUAgg@2@@Z"
 // CHECK32:       (%"struct.byval_thunk::C"* %{{.*}}, <{ %"struct.byval_thunk::Agg" }>* inalloca %0)
 // CHECK32-NEXT: ret void
