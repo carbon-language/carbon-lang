@@ -6,7 +6,6 @@ import os.path
 import platform
 import Queue
 import re
-import select
 import socket_packet_pump
 import subprocess
 import time

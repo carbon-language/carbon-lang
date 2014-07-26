@@ -8,6 +8,7 @@ import os.path
 import platform
 import random
 import re
+import select
 import sets
 import signal
 import socket
@@ -55,6 +56,7 @@ class GdbRemoteTestCaseBase(TestBase):
         self.named_pipe = None
         self.named_pipe_fd = None
         self.stub_sends_two_stop_notifications_on_kill = False
+        self.stub_hostname = "localhost"
 
     def get_next_port(self):
         return 12000 + random.randint(0,3999)
@@ -165,7 +167,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         self.addTearDownHook(shutdown_socket)
 
-        connect_info = ("localhost", self.port)
+        connect_info = (self.stub_hostname, self.port)
         # print "connecting to stub on {}:{}".format(connect_info[0], connect_info[1])
         sock.connect(connect_info)
 
@@ -177,17 +179,21 @@ class GdbRemoteTestCaseBase(TestBase):
     def set_inferior_startup_attach(self):
         self._inferior_startup = self._STARTUP_ATTACH
 
-    def launch_debug_monitor(self, attach_pid=None):
-        # Create the command line.
-        import pexpect
+    def get_debug_monitor_command_line(self, attach_pid=None):
         commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
             commandline += " --attach=%d" % attach_pid
         if self.named_pipe_path:
             commandline += " --named-pipe %s" % self.named_pipe_path
+        return commandline
+
+    def launch_debug_monitor(self, attach_pid=None, logfile=None):
+        # Create the command line.
+        import pexpect
+        commandline = self.get_debug_monitor_command_line(attach_pid=attach_pid)
 
         # Start the server.
-        server = pexpect.spawn(commandline)
+        server = pexpect.spawn(commandline, logfile=logfile)
         self.assertIsNotNone(server)
         server.expect(r"(debugserver|lldb-gdbserver)", timeout=10)
 
@@ -331,6 +337,45 @@ class GdbRemoteTestCaseBase(TestBase):
             self.add_verified_launch_packets(launch_args)
 
         return {"inferior":inferior, "server":server}
+
+    def expect_socket_recv(self, sock, expected_content_regex, timeout_seconds):
+        response = ""
+        timeout_time = time.time() + timeout_seconds
+
+        while not expected_content_regex.match(response) and time.time() < timeout_time: 
+            can_read, _, _ = select.select([sock], [], [], timeout_seconds)
+            if can_read and sock in can_read:
+                recv_bytes = sock.recv(4096)
+                if recv_bytes:
+                    response += recv_bytes
+
+        self.assertTrue(expected_content_regex.match(response))
+
+    def expect_socket_send(self, sock, content, timeout_seconds):
+        request_bytes_remaining = content
+        timeout_time = time.time() + timeout_seconds
+
+        while len(request_bytes_remaining) > 0 and time.time() < timeout_time:
+            _, can_write, _ = select.select([], [sock], [], timeout_seconds)
+            if can_write and sock in can_write:
+                written_byte_count = sock.send(request_bytes_remaining)
+                request_bytes_remaining = request_bytes_remaining[written_byte_count:]
+        self.assertEquals(len(request_bytes_remaining), 0)
+
+    def do_handshake(self, stub_socket, timeout_seconds=5):
+        # Write the ack.
+        self.expect_socket_send(stub_socket, "+", timeout_seconds)
+
+        # Send the start no ack mode packet.
+        NO_ACK_MODE_REQUEST = "$QStartNoAckMode#b0"
+        bytes_sent = stub_socket.send(NO_ACK_MODE_REQUEST)
+        self.assertEquals(bytes_sent, len(NO_ACK_MODE_REQUEST))
+
+        # Receive the ack and "OK"
+        self.expect_socket_recv(stub_socket, re.compile(r"^\+\$OK#[0-9a-fA-F]{2}$"), timeout_seconds)
+
+        # Send the final ack.
+        self.expect_socket_send(stub_socket, "+", timeout_seconds)
 
     def add_no_ack_remote_stream(self):
         self.test_sequence.add_log_lines(

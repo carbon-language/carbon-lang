@@ -53,9 +53,9 @@ using namespace lldb_private;
 
 namespace
 {
-    static lldb::thread_t s_listen_thread = LLDB_INVALID_HOST_THREAD;
-    static std::unique_ptr<ConnectionFileDescriptor> s_listen_connection_up;
-    static std::string s_listen_url;
+    lldb::thread_t s_listen_thread = LLDB_INVALID_HOST_THREAD;
+    std::unique_ptr<ConnectionFileDescriptor> s_listen_connection_up;
+    std::string s_listen_url;
 }
 
 //----------------------------------------------------------------------
@@ -76,6 +76,7 @@ static struct option g_long_options[] =
     { "attach",             required_argument,  NULL,               'a' },
     { "named-pipe",         required_argument,  NULL,               'P' },
     { "native-regs",        no_argument,        NULL,               'r' },  // Specify to use the native registers instead of the gdb defaults for the architecture.  NOTE: this is a do-nothing arg as it's behavior is default now.  FIXME remove call from lldb-platform.
+    { "reverse-connect",    no_argument,        NULL,               'R' },  // Specifies that llgs attaches to the client address:port rather than llgs listening for a connection from address on port.
     { "setsid",             no_argument,        NULL,               'S' },  // Call setsid() to make llgs run in its own session.
     { NULL,                 0,                  NULL,               0   }
 };
@@ -322,16 +323,17 @@ JoinListenThread ()
 }
 
 void
-start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
+ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect, const char *const host_and_port, const char *const progname, const char *const named_pipe_path)
 {
     Error error;
 
     if (host_and_port && host_and_port[0])
     {
+        // Parse out host and port.
         std::string final_host_and_port;
-        std::string listening_host;
-        std::string listening_port;
-        uint32_t listening_portno = 0;
+        std::string connection_host;
+        std::string connection_port;
+        uint32_t connection_portno = 0;
 
         // If host_and_port starts with ':', default the host to be "localhost" and expect the remainder to be the port.
         if (host_and_port[0] == ':')
@@ -341,9 +343,9 @@ start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host
         const std::string::size_type colon_pos = final_host_and_port.find (':');
         if (colon_pos != std::string::npos)
         {
-            listening_host = final_host_and_port.substr (0, colon_pos);
-            listening_port = final_host_and_port.substr (colon_pos + 1);
-            listening_portno = Args::StringToUInt32 (listening_port.c_str (), 0);
+            connection_host = final_host_and_port.substr (0, colon_pos);
+            connection_port = final_host_and_port.substr (colon_pos + 1);
+            connection_portno = Args::StringToUInt32 (connection_port.c_str (), 0);
         }
         else
         {
@@ -352,51 +354,89 @@ start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host
             exit (1);
         }
 
-        // Start the listener on a new thread.  We need to do this so we can resolve the
-        // bound listener port.
-        StartListenThread(listening_host.c_str (), static_cast<uint16_t> (listening_portno));
-        printf ("Listening to port %s for a connection from %s...\n", listening_port.c_str (), listening_host.c_str ());
-
-        // If we have a named pipe to write the port number back to, do that now.
-        if (named_pipe_path && named_pipe_path[0] && listening_portno == 0)
+        if (reverse_connect)
         {
-            // FIXME use new generic named pipe support.
-            int fd = ::open(named_pipe_path, O_WRONLY);
-            if (fd > -1)
+            // llgs will connect to the gdb-remote client.
+
+            // Ensure we have a port number for the connection.
+            if (connection_portno == 0)
             {
-                const uint16_t bound_port = s_listen_connection_up->GetBoundPort (10);
-
-                char port_str[64];
-                const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", bound_port);
-                // Write the port number as a C string with the NULL terminator.
-                ::write (fd, port_str, port_str_len + 1);
-                close (fd);
+                fprintf (stderr, "error: port number must be specified on when using reverse connect");
+                exit (1);
             }
-            else
+
+            // Build the connection string.
+            char connection_url[512];
+            snprintf(connection_url, sizeof(connection_url), "connect://%s", final_host_and_port.c_str ());
+
+            // Create the connection.
+            std::unique_ptr<ConnectionFileDescriptor> connection_up (new ConnectionFileDescriptor ());
+            connection_up.reset (new ConnectionFileDescriptor ());
+            auto connection_result = connection_up->Connect (connection_url, &error);
+            if (connection_result != eConnectionStatusSuccess)
             {
-                fprintf (stderr, "failed to open named pipe '%s' for writing\n", named_pipe_path);
+                fprintf (stderr, "error: failed to connect to client at '%s' (connection status: %d)", connection_url, static_cast<int> (connection_result));
+                exit (-1);
             }
-        }
+            if (error.Fail ())
+            {
+                fprintf (stderr, "error: failed to connect to client at '%s': %s", connection_url, error.AsCString ());
+                exit (-1);
+            }
 
-        // Join the listener thread.
-        if (!JoinListenThread ())
-        {
-            fprintf (stderr, "failed to join the listener thread\n");
-            display_usage (progname);
-            exit (1);
-        }
-
-        // Ensure we connected.
-        if (s_listen_connection_up)
-        {
+            // We're connected.
             printf ("Connection established.\n");
-            gdb_server.SetConnection (s_listen_connection_up.release());
+            gdb_server.SetConnection (connection_up.release());
         }
         else
         {
-            fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
-            display_usage (progname);
-            exit (1);
+            // llgs will listen for connections on the given port from the given address.
+            // Start the listener on a new thread.  We need to do this so we can resolve the
+            // bound listener port.
+            StartListenThread(connection_host.c_str (), static_cast<uint16_t> (connection_portno));
+            printf ("Listening to port %s for a connection from %s...\n", connection_port.c_str (), connection_host.c_str ());
+
+            // If we have a named pipe to write the port number back to, do that now.
+            if (named_pipe_path && named_pipe_path[0] && connection_portno == 0)
+            {
+                // FIXME use new generic named pipe support.
+                int fd = ::open(named_pipe_path, O_WRONLY);
+                if (fd > -1)
+                {
+                    const uint16_t bound_port = s_listen_connection_up->GetBoundPort (10);
+
+                    char port_str[64];
+                    const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", bound_port);
+                    // Write the port number as a C string with the NULL terminator.
+                    ::write (fd, port_str, port_str_len + 1);
+                    close (fd);
+                }
+                else
+                {
+                    fprintf (stderr, "failed to open named pipe '%s' for writing\n", named_pipe_path);
+                }
+            }
+
+            // Join the listener thread.
+            if (!JoinListenThread ())
+            {
+                fprintf (stderr, "failed to join the listener thread\n");
+                display_usage (progname);
+                exit (1);
+            }
+
+            // Ensure we connected.
+            if (s_listen_connection_up)
+            {
+                printf ("Connection established.\n");
+                gdb_server.SetConnection (s_listen_connection_up.release());
+            }
+            else
+            {
+                fprintf (stderr, "failed to connect to '%s': %s\n", final_host_and_port.c_str (), error.AsCString ());
+                display_usage (progname);
+                exit (1);
+            }
         }
     }
 
@@ -411,7 +451,7 @@ start_listener (GDBRemoteCommunicationServer &gdb_server, const char *const host
 
             bool interrupt = false;
             bool done = false;
-            while (!interrupt && !done && (g_sighup_received_count < 1))
+            while (!interrupt && !done && (g_sighup_received_count < 2))
             {
                 const GDBRemoteCommunication::PacketResult result = gdb_server.GetPacketAndSendResponse (TIMEOUT_USEC, error, interrupt, done);
                 if ((result != GDBRemoteCommunication::PacketResult::Success) &&
@@ -462,6 +502,7 @@ main (int argc, char *argv[])
     std::string platform_name;
     std::string attach_target;
     std::string named_pipe_path;
+    bool reverse_connect = false;
 
     initialize_lldb_gdbserver ();
 
@@ -545,6 +586,10 @@ main (int argc, char *argv[])
 
         case 'r':
             // Do nothing, native regs is the default these days
+            break;
+
+        case 'R':
+            reverse_connect = true;
             break;
 
 #ifndef _WIN32
@@ -631,7 +676,7 @@ main (int argc, char *argv[])
     // Print version info.
     printf("%s-%s", LLGS_PROGRAM_NAME, LLGS_VERSION_STR);
 
-    start_listener (gdb_server, host_and_port, progname, named_pipe_path.c_str ());
+    ConnectToRemote (gdb_server, reverse_connect, host_and_port, progname, named_pipe_path.c_str ());
 
     terminate_lldb_gdbserver ();
 
