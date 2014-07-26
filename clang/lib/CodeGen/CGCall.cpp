@@ -2045,19 +2045,8 @@ void CodeGenFunction::EmitDelegateCallArg(CallArgList &args,
     return args.add(RValue::get(Builder.CreateLoad(local)), type);
   }
 
-  if (isInAllocaArgument(CGM.getCXXABI(), type)) {
-    AggValueSlot Slot = createPlaceholderSlot(*this, type);
-    Slot.setExternallyDestructed();
-
-    // FIXME: Either emit a copy constructor call, or figure out how to do
-    // guaranteed tail calls with perfect forwarding in LLVM.
-    CGM.ErrorUnsupported(param, "non-trivial argument copy for thunk");
-    EmitNullInitialization(Slot.getAddr(), type);
-
-    RValue RV = Slot.asRValue();
-    args.add(RV, type);
-    return;
-  }
+  assert(!isInAllocaArgument(CGM.getCXXABI(), type) &&
+         "cannot emit delegate call arguments for inalloca arguments!");
 
   args.add(convertTempToRValue(local, type, loc), type);
 }

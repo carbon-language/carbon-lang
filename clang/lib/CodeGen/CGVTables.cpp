@@ -236,6 +236,18 @@ void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
                                              *this, LoadCXXThis(), Thunk->This)
                                        : LoadCXXThis();
 
+  if (CurFnInfo->usesInAlloca()) {
+    // We don't handle return adjusting thunks, because they require us to call
+    // the copy constructor.  For now, fall through and pretend the return
+    // adjustment was empty so we don't crash.
+    if (Thunk && !Thunk->Return.isEmpty()) {
+      CGM.ErrorUnsupported(
+          MD, "non-trivial argument copy for return-adjusting thunk");
+    }
+    EmitMustTailThunk(MD, AdjustedThisPtr, Callee);
+    return;
+  }
+
   // Start building CallArgs.
   CallArgList CallArgs;
   QualType ThisType = MD->getThisType(getContext());
@@ -278,8 +290,9 @@ void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
     Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
   
   // Now emit our call.
-  RValue RV = EmitCall(*CurFnInfo, Callee, Slot, CallArgs, MD);
-  
+  llvm::Instruction *CallOrInvoke;
+  RValue RV = EmitCall(*CurFnInfo, Callee, Slot, CallArgs, MD, &CallOrInvoke);
+
   // Consider return adjustment if we have ThunkInfo.
   if (Thunk && !Thunk->Return.isEmpty())
     RV = PerformReturnAdjustment(*this, ResultType, RV, *Thunk);
@@ -291,6 +304,62 @@ void CodeGenFunction::EmitCallAndReturnForThunk(llvm::Value *Callee,
   // Disable the final ARC autorelease.
   AutoreleaseResult = false;
 
+  FinishFunction();
+}
+
+void CodeGenFunction::EmitMustTailThunk(const CXXMethodDecl *MD,
+                                        llvm::Value *AdjustedThisPtr,
+                                        llvm::Value *Callee) {
+  // Emitting a musttail call thunk doesn't use any of the CGCall.cpp machinery
+  // to translate AST arguments into LLVM IR arguments.  For thunks, we know
+  // that the caller prototype more or less matches the callee prototype with
+  // the exception of 'this'.
+  SmallVector<llvm::Value *, 8> Args;
+  for (llvm::Argument &A : CurFn->args())
+    Args.push_back(&A);
+
+  // Set the adjusted 'this' pointer.
+  const ABIArgInfo &ThisAI = CurFnInfo->arg_begin()->info;
+  if (ThisAI.isDirect()) {
+    const ABIArgInfo &RetAI = CurFnInfo->getReturnInfo();
+    int ThisArgNo = RetAI.isIndirect() && !RetAI.isSRetAfterThis() ? 1 : 0;
+    llvm::Type *ThisType = Args[ThisArgNo]->getType();
+    if (ThisType != AdjustedThisPtr->getType())
+      AdjustedThisPtr = Builder.CreateBitCast(AdjustedThisPtr, ThisType);
+    Args[ThisArgNo] = AdjustedThisPtr;
+  } else {
+    assert(ThisAI.isInAlloca() && "this is passed directly or inalloca");
+    llvm::Value *ThisAddr = GetAddrOfLocalVar(CXXABIThisDecl);
+    llvm::Type *ThisType =
+        cast<llvm::PointerType>(ThisAddr->getType())->getElementType();
+    if (ThisType != AdjustedThisPtr->getType())
+      AdjustedThisPtr = Builder.CreateBitCast(AdjustedThisPtr, ThisType);
+    Builder.CreateStore(AdjustedThisPtr, ThisAddr);
+  }
+
+  // Emit the musttail call manually.  Even if the prologue pushed cleanups, we
+  // don't actually want to run them.
+  llvm::CallInst *Call = Builder.CreateCall(Callee, Args);
+  Call->setTailCallKind(llvm::CallInst::TCK_MustTail);
+
+  // Apply the standard set of call attributes.
+  unsigned CallingConv;
+  CodeGen::AttributeListType AttributeList;
+  CGM.ConstructAttributeList(*CurFnInfo, MD, AttributeList, CallingConv,
+                             /*AttrOnCallSite=*/true);
+  llvm::AttributeSet Attrs =
+      llvm::AttributeSet::get(getLLVMContext(), AttributeList);
+  Call->setAttributes(Attrs);
+  Call->setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
+
+  if (Call->getType()->isVoidTy())
+    Builder.CreateRetVoid();
+  else
+    Builder.CreateRet(Call);
+
+  // Finish the function to maintain CodeGenFunction invariants.
+  // FIXME: Don't emit unreachable code.
+  EmitBlock(createBasicBlock());
   FinishFunction();
 }
 
