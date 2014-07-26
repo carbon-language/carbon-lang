@@ -83,6 +83,8 @@ namespace {
   public:
     /// \brief Type code that corresponds to the record generated.
     TypeCode Code;
+    /// \brief Abbreviation to use for the record, if any.
+    unsigned AbbrevToUse;
 
     ASTTypeWriter(ASTWriter &Writer, ASTWriter::RecordDataImpl &Record)
       : Writer(Writer), Record(Record), Code(TYPE_EXT_QUAL) { }
@@ -190,6 +192,9 @@ void ASTTypeWriter::VisitFunctionType(const FunctionType *T) {
   // FIXME: need to stabilize encoding of calling convention...
   Record.push_back(C.getCC());
   Record.push_back(C.getProducesResult());
+
+  if (C.getHasRegParm() || C.getRegParm() || C.getProducesResult())
+    AbbrevToUse = 0;
 }
 
 void ASTTypeWriter::VisitFunctionNoProtoType(const FunctionNoProtoType *T) {
@@ -216,14 +221,21 @@ static void addExceptionSpec(ASTWriter &Writer, const FunctionProtoType *T,
 
 void ASTTypeWriter::VisitFunctionProtoType(const FunctionProtoType *T) {
   VisitFunctionType(T);
-  Record.push_back(T->getNumParams());
-  for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
-    Writer.AddTypeRef(T->getParamType(I), Record);
+
   Record.push_back(T->isVariadic());
   Record.push_back(T->hasTrailingReturn());
   Record.push_back(T->getTypeQuals());
   Record.push_back(static_cast<unsigned>(T->getRefQualifier()));
   addExceptionSpec(Writer, T, Record);
+
+  Record.push_back(T->getNumParams());
+  for (unsigned I = 0, N = T->getNumParams(); I != N; ++I)
+    Writer.AddTypeRef(T->getParamType(I), Record);
+
+  if (T->isVariadic() || T->hasTrailingReturn() || T->getTypeQuals() ||
+      T->getRefQualifier() || T->getExceptionSpecType() != EST_None)
+    AbbrevToUse = 0;
+
   Code = TYPE_FUNCTION_PROTO;
 }
 
@@ -649,6 +661,40 @@ void TypeLocWriter::VisitAtomicTypeLoc(AtomicTypeLoc TL) {
   Writer.AddSourceLocation(TL.getRParenLoc(), Record);
 }
 
+void ASTWriter::WriteTypeAbbrevs() {
+  using namespace llvm;
+
+  BitCodeAbbrev *Abv;
+
+  // Abbreviation for TYPE_EXT_QUAL
+  Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(serialization::TYPE_EXT_QUAL));
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // Type
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 3));   // Quals
+  TypeExtQualAbbrev = Stream.EmitAbbrev(Abv);
+
+  // Abbreviation for TYPE_FUNCTION_PROTO
+  Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(serialization::TYPE_FUNCTION_PROTO));
+  // FunctionType
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // ReturnType
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); // NoReturn
+  Abv->Add(BitCodeAbbrevOp(0));                         // HasRegParm
+  Abv->Add(BitCodeAbbrevOp(0));                         // RegParm
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 4)); // CC
+  Abv->Add(BitCodeAbbrevOp(0));                         // ProducesResult
+  // FunctionProtoType
+  Abv->Add(BitCodeAbbrevOp(0));                         // IsVariadic
+  Abv->Add(BitCodeAbbrevOp(0));                         // HasTrailingReturn
+  Abv->Add(BitCodeAbbrevOp(0));                         // TypeQuals
+  Abv->Add(BitCodeAbbrevOp(0));                         // RefQualifier
+  Abv->Add(BitCodeAbbrevOp(EST_None));                  // ExceptionSpec
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // NumParams
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Array));
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6));   // Params
+  TypeFunctionProtoAbbrev = Stream.EmitAbbrev(Abv);
+}
+
 //===----------------------------------------------------------------------===//
 // ASTWriter Implementation
 //===----------------------------------------------------------------------===//
@@ -684,6 +730,7 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
 #define RECORD(X) EmitRecordID(X, #X, Stream, Record)
   RECORD(STMT_STOP);
   RECORD(STMT_NULL_PTR);
+  RECORD(STMT_REF_PTR);
   RECORD(STMT_NULL);
   RECORD(STMT_COMPOUND);
   RECORD(STMT_CASE);
@@ -752,6 +799,9 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
   RECORD(STMT_OBJC_AT_SYNCHRONIZED);
   RECORD(STMT_OBJC_AT_THROW);
   RECORD(EXPR_OBJC_BOOL_LITERAL);
+  RECORD(STMT_CXX_CATCH);
+  RECORD(STMT_CXX_TRY);
+  RECORD(STMT_CXX_FOR_RANGE);
   RECORD(EXPR_CXX_OPERATOR_CALL);
   RECORD(EXPR_CXX_CONSTRUCT);
   RECORD(EXPR_CXX_STATIC_CAST);
@@ -765,11 +815,10 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
   RECORD(EXPR_CXX_NULL_PTR_LITERAL);
   RECORD(EXPR_CXX_TYPEID_EXPR);
   RECORD(EXPR_CXX_TYPEID_TYPE);
-  RECORD(EXPR_CXX_UUIDOF_EXPR);
-  RECORD(EXPR_CXX_UUIDOF_TYPE);
   RECORD(EXPR_CXX_THIS);
   RECORD(EXPR_CXX_THROW);
   RECORD(EXPR_CXX_DEFAULT_ARG);
+  RECORD(EXPR_CXX_DEFAULT_INIT);
   RECORD(EXPR_CXX_BIND_TEMPORARY);
   RECORD(EXPR_CXX_SCALAR_VALUE_INIT);
   RECORD(EXPR_CXX_NEW);
@@ -781,12 +830,22 @@ static void AddStmtsExprs(llvm::BitstreamWriter &Stream,
   RECORD(EXPR_CXX_UNRESOLVED_CONSTRUCT);
   RECORD(EXPR_CXX_UNRESOLVED_MEMBER);
   RECORD(EXPR_CXX_UNRESOLVED_LOOKUP);
+  RECORD(EXPR_CXX_EXPRESSION_TRAIT);
   RECORD(EXPR_CXX_NOEXCEPT);
   RECORD(EXPR_OPAQUE_VALUE);
+  RECORD(EXPR_BINARY_CONDITIONAL_OPERATOR);
+  RECORD(EXPR_TYPE_TRAIT);
+  RECORD(EXPR_ARRAY_TYPE_TRAIT);
   RECORD(EXPR_PACK_EXPANSION);
   RECORD(EXPR_SIZEOF_PACK);
+  RECORD(EXPR_SUBST_NON_TYPE_TEMPLATE_PARM);
   RECORD(EXPR_SUBST_NON_TYPE_TEMPLATE_PARM_PACK);
+  RECORD(EXPR_FUNCTION_PARM_PACK);
+  RECORD(EXPR_MATERIALIZE_TEMPORARY);
   RECORD(EXPR_CUDA_KERNEL_CALL);
+  RECORD(EXPR_CXX_UUIDOF_EXPR);
+  RECORD(EXPR_CXX_UUIDOF_TYPE);
+  RECORD(EXPR_LAMBDA);
 #undef RECORD
 }
 
@@ -922,6 +981,7 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(TYPE_SUBST_TEMPLATE_TYPE_PARM_PACK);
   RECORD(TYPE_ATOMIC);
   RECORD(DECL_TYPEDEF);
+  RECORD(DECL_TYPEALIAS);
   RECORD(DECL_ENUM);
   RECORD(DECL_RECORD);
   RECORD(DECL_ENUM_CONSTANT);
@@ -2274,7 +2334,7 @@ void ASTWriter::WriteSubmodules(Module *WritingModule) {
   }
   
   // Enter the submodule description block.
-  Stream.EnterSubblock(SUBMODULE_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
+  Stream.EnterSubblock(SUBMODULE_BLOCK_ID, /*bits for abbreviations*/4);
   
   // Write the abbreviations needed for the submodules block.
   using namespace llvm;
@@ -2614,12 +2674,14 @@ void ASTWriter::WriteType(QualType T) {
 
   // Emit the type's representation.
   ASTTypeWriter W(*this, Record);
+  W.AbbrevToUse = 0;
 
   if (T.hasLocalNonFastQualifiers()) {
     Qualifiers Qs = T.getLocalQualifiers();
     AddTypeRef(T.getLocalUnqualifiedType(), Record);
     Record.push_back(Qs.getAsOpaqueValue());
     W.Code = TYPE_EXT_QUAL;
+    W.AbbrevToUse = TypeExtQualAbbrev;
   } else {
     switch (T->getTypeClass()) {
       // For all of the concrete, non-dependent types, call the
@@ -2632,7 +2694,7 @@ void ASTWriter::WriteType(QualType T) {
   }
 
   // Emit the serialized record.
-  Stream.EmitRecord(W.Code, Record);
+  Stream.EmitRecord(W.Code, Record, W.AbbrevToUse);
 
   // Flush any expressions that were written as part of this type.
   FlushStmts();
@@ -3676,8 +3738,6 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   Record.push_back(BucketOffset);
   Stream.EmitRecordWithBlob(DeclContextVisibleLookupAbbrev, Record,
                             LookupTable.str());
-
-  Stream.EmitRecord(DECL_CONTEXT_VISIBLE, Record);
   ++NumVisibleDeclContexts;
   return Offset;
 }
@@ -3980,29 +4040,25 @@ void ASTWriter::SetSelectorOffset(Selector Sel, uint32_t Offset) {
 }
 
 ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
-  : Stream(Stream), Context(nullptr), PP(nullptr), Chain(nullptr),
-    WritingModule(nullptr), WritingAST(false), DoneWritingDeclsAndTypes(false),
-    ASTHasCompilerErrors(false),
-    FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
-    FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
-    FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID),
-    FirstMacroID(NUM_PREDEF_MACRO_IDS), NextMacroID(FirstMacroID),
-    FirstSubmoduleID(NUM_PREDEF_SUBMODULE_IDS), 
-    NextSubmoduleID(FirstSubmoduleID),
-    FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
-    CollectedStmts(&StmtsToEmit),
-    NumStatements(0), NumMacros(0), NumLexicalDeclContexts(0),
-    NumVisibleDeclContexts(0),
-    NextCXXBaseSpecifiersID(1),
-    DeclParmVarAbbrev(0), DeclContextLexicalAbbrev(0),
-    DeclContextVisibleLookupAbbrev(0), UpdateVisibleAbbrev(0),
-    DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
-    DeclRecordAbbrev(0), IntegerLiteralAbbrev(0),
-    DeclTypedefAbbrev(0),
-    DeclVarAbbrev(0), DeclFieldAbbrev(0),
-    DeclEnumAbbrev(0), DeclObjCIvarAbbrev(0)
-{
-}
+    : Stream(Stream), Context(nullptr), PP(nullptr), Chain(nullptr),
+      WritingModule(nullptr), WritingAST(false),
+      DoneWritingDeclsAndTypes(false), ASTHasCompilerErrors(false),
+      FirstDeclID(NUM_PREDEF_DECL_IDS), NextDeclID(FirstDeclID),
+      FirstTypeID(NUM_PREDEF_TYPE_IDS), NextTypeID(FirstTypeID),
+      FirstIdentID(NUM_PREDEF_IDENT_IDS), NextIdentID(FirstIdentID),
+      FirstMacroID(NUM_PREDEF_MACRO_IDS), NextMacroID(FirstMacroID),
+      FirstSubmoduleID(NUM_PREDEF_SUBMODULE_IDS),
+      NextSubmoduleID(FirstSubmoduleID),
+      FirstSelectorID(NUM_PREDEF_SELECTOR_IDS), NextSelectorID(FirstSelectorID),
+      CollectedStmts(&StmtsToEmit), NumStatements(0), NumMacros(0),
+      NumLexicalDeclContexts(0), NumVisibleDeclContexts(0),
+      NextCXXBaseSpecifiersID(1), TypeExtQualAbbrev(0),
+      TypeFunctionProtoAbbrev(0), DeclParmVarAbbrev(0),
+      DeclContextLexicalAbbrev(0), DeclContextVisibleLookupAbbrev(0),
+      UpdateVisibleAbbrev(0), DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
+      DeclRecordAbbrev(0), IntegerLiteralAbbrev(0), DeclTypedefAbbrev(0),
+      DeclVarAbbrev(0), DeclFieldAbbrev(0), DeclEnumAbbrev(0),
+      DeclObjCIvarAbbrev(0), DeclCXXMethodAbbrev(0) {}
 
 ASTWriter::~ASTWriter() {
   llvm::DeleteContainerSeconds(FileDeclIDs);
@@ -4374,8 +4430,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // Keep writing types, declarations, and declaration update records
   // until we've emitted all of them.
-  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, NUM_ALLOWED_ABBREVS_SIZE);
-  WriteDeclsBlockAbbrevs();
+  Stream.EnterSubblock(DECLTYPES_BLOCK_ID, /*bits for abbreviations*/5);
+  WriteTypeAbbrevs();
+  WriteDeclAbbrevs();
   for (DeclsToRewriteTy::iterator I = DeclsToRewrite.begin(),
                                   E = DeclsToRewrite.end();
        I != E; ++I)
