@@ -17,9 +17,14 @@
 
 #ifdef __i386__
 
-#ifndef __ELF__
-.const
+#if defined(__APPLE__)
+	.const
+#elif defined(__ELF__)
+	.rodata
+#else
+	.section .rdata,"rd"
 #endif
+
 	.balign 16
 twop52:
 	.quad 0x4330000000000000
