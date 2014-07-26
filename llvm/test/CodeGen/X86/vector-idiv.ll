@@ -131,18 +131,12 @@ define <4 x i32> @test8(<4 x i32> %a) {
 ; SSE41: psrad $2
 ; SSE41: padd
 
+; FIXME: scalarized -- there is no signed multiply in SSE.
 ; SSE-LABEL: test8:
-; SSE: pmuludq
-; SSE: pshufd	$49
-; SSE: pshufd	$49
-; SSE: pmuludq
-; SSE: shufps	$-35
-; SSE: pshufd	$-40
-; SSE: psubd
-; SSE: padd
-; SSE: psrld $31
-; SSE: psrad $2
-; SSE: padd
+; SSE: imulq
+; SSE: imulq
+; SSE: imulq
+; SSE: imulq
 
 ; AVX-LABEL: test8:
 ; AVX: vpmuldq
