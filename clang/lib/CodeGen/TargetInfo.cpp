@@ -1002,6 +1002,26 @@ X86_32ABIInfo::addFieldToArgStruct(SmallVector<llvm::Type *, 6> &FrameFields,
   }
 }
 
+static bool isArgInAlloca(const ABIArgInfo &Info) {
+  // Leave ignored and inreg arguments alone.
+  switch (Info.getKind()) {
+  case ABIArgInfo::InAlloca:
+    return true;
+  case ABIArgInfo::Indirect:
+    assert(Info.getIndirectByVal());
+    return true;
+  case ABIArgInfo::Ignore:
+    return false;
+  case ABIArgInfo::Direct:
+  case ABIArgInfo::Extend:
+  case ABIArgInfo::Expand:
+    if (Info.getInReg())
+      return false;
+    return true;
+  }
+  llvm_unreachable("invalid enum");
+}
+
 void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
   assert(IsWin32StructABI && "inalloca only supported on win32");
 
@@ -1009,9 +1029,19 @@ void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
   SmallVector<llvm::Type *, 6> FrameFields;
 
   unsigned StackOffset = 0;
+  CGFunctionInfo::arg_iterator I = FI.arg_begin(), E = FI.arg_end();
+
+  // Put 'this' into the struct before 'sret', if necessary.
+  bool IsThisCall =
+      FI.getCallingConvention() == llvm::CallingConv::X86_ThisCall;
+  ABIArgInfo &Ret = FI.getReturnInfo();
+  if (Ret.isIndirect() && Ret.isSRetAfterThis() && !IsThisCall &&
+      isArgInAlloca(I->info)) {
+    addFieldToArgStruct(FrameFields, StackOffset, I->info, I->type);
+    ++I;
+  }
 
   // Put the sret parameter into the inalloca struct if it's in memory.
-  ABIArgInfo &Ret = FI.getReturnInfo();
   if (Ret.isIndirect() && !Ret.getInReg()) {
     CanQualType PtrTy = getContext().getPointerType(FI.getReturnType());
     addFieldToArgStruct(FrameFields, StackOffset, Ret, PtrTy);
@@ -1020,30 +1050,13 @@ void X86_32ABIInfo::rewriteWithInAlloca(CGFunctionInfo &FI) const {
   }
 
   // Skip the 'this' parameter in ecx.
-  CGFunctionInfo::arg_iterator I = FI.arg_begin(), E = FI.arg_end();
-  if (FI.getCallingConvention() == llvm::CallingConv::X86_ThisCall)
+  if (IsThisCall)
     ++I;
 
   // Put arguments passed in memory into the struct.
   for (; I != E; ++I) {
-
-    // Leave ignored and inreg arguments alone.
-    switch (I->info.getKind()) {
-    case ABIArgInfo::Indirect:
-      assert(I->info.getIndirectByVal());
-      break;
-    case ABIArgInfo::Ignore:
-      continue;
-    case ABIArgInfo::Direct:
-    case ABIArgInfo::Extend:
-      if (I->info.getInReg())
-        continue;
-      break;
-    default:
-      break;
-    }
-
-    addFieldToArgStruct(FrameFields, StackOffset, I->info, I->type);
+    if (isArgInAlloca(I->info))
+      addFieldToArgStruct(FrameFields, StackOffset, I->info, I->type);
   }
 
   FI.setArgStruct(llvm::StructType::get(getVMContext(), FrameFields,
