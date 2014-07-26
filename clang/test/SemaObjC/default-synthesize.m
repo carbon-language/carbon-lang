@@ -88,7 +88,7 @@
 @end
 
 @protocol TopProtocol
-  @property (readonly) id myString;
+  @property (readonly) id myString; // expected-warning {{auto property synthesis will not synthesize property 'myString' because it will be synthesize by its super class}}
 @end
 
 @interface TopClass <TopProtocol> 
@@ -97,10 +97,10 @@
 }
 @end
 
-@interface SubClass : TopClass <TopProtocol> 
+@interface SubClass : TopClass <TopProtocol>
 @end
 
-@implementation SubClass @end 
+@implementation SubClass @end  // expected-note {{detected while default synthesizing properties in class implementation}}
 
 // rdar://7920807
 @interface C @end

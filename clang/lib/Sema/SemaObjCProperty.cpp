@@ -1555,20 +1555,23 @@ void Sema::DefaultSynthesizeProperties(Scope *S, ObjCImplDecl* IMPDecl,
            ObjCPropertyDecl::OBJC_PR_readonly) &&
           !IMPDecl->getInstanceMethod(Prop->getSetterName()) &&
           !IDecl->HasUserDeclaredSetterMethod(Prop)) {
-            Diag(Prop->getLocation(), diag::warn_no_autosynthesis_property)
-              << Prop->getIdentifier();
-            Diag(PropInSuperClass->getLocation(), diag::note_property_declare);
+        Diag(Prop->getLocation(), diag::warn_no_autosynthesis_property)
+          << Prop->getIdentifier();
+        Diag(PropInSuperClass->getLocation(), diag::note_property_declare);
+      }
+      else {
+        Diag(Prop->getLocation(), diag::warn_autosynthesis_property_in_superclass)
+          << Prop->getIdentifier();
+        Diag(IMPDecl->getLocation(), diag::note_while_in_implementation);
       }
       continue;
     }
     if (ObjCPropertyImplDecl *PID =
         IMPDecl->FindPropertyImplIvarDecl(Prop->getIdentifier())) {
-      if (PID->getPropertyDecl() != Prop) {
-        Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
-          << Prop->getIdentifier();
-        if (!PID->getLocation().isInvalid())
-          Diag(PID->getLocation(), diag::note_property_synthesize);
-      }
+      Diag(Prop->getLocation(), diag::warn_no_autosynthesis_shared_ivar_property)
+        << Prop->getIdentifier();
+      if (!PID->getLocation().isInvalid())
+        Diag(PID->getLocation(), diag::note_property_synthesize);
       continue;
     }
     if (ObjCProtocolDecl *Proto =

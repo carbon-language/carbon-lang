@@ -199,7 +199,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 // synthesized in the parent, let the parent invalidate it.
 
 @protocol IDEBuildable <NSObject>
-@property (readonly, strong) id <Invalidation2> ObjB;
+@property (readonly, strong) id <Invalidation2> ObjB; // expected-warning {{auto property synthesis will not synthesize property 'ObjB'}}
 @end
 
 @interface Parent : NSObject <IDEBuildable, Invalidation2> {
@@ -231,7 +231,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 }
 @end
 
-@implementation Child
+@implementation Child // expected-note {{detected while default synthesizing properties in class implementation}}
 - (void)invalidate{ 
   // no-warning
 } 
