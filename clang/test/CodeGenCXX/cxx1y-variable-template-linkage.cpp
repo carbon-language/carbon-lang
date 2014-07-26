@@ -21,7 +21,7 @@ static int &foo() {
 #if !__has_feature(cxx_exceptions) // File A
 // CHECKA-DAG: define dereferenceable(4) i32* @_Z3barv(
 int &bar() { 
-	// CHECKA-DAG: %call = call dereferenceable(4) i32* @_ZL3foov()
+	// CHECKA-DAG: call dereferenceable(4) i32* @_ZL3foov()
 	return foo();
 }
 
@@ -31,8 +31,8 @@ int &bar() {
 int &bar();
 
 int main() {
-	// CHECKB-DAG: %call = call dereferenceable(4) i32* @_Z3barv()
-	// CHECKB-DAG: %call1 = call dereferenceable(4) i32* @_ZL3foov()
+	// CHECKB-DAG: call dereferenceable(4) i32* @_Z3barv()
+	// CHECKB-DAG: call dereferenceable(4) i32* @_ZL3foov()
 	&bar() == &foo() ? throw 0 : (void)0; // Should not throw exception at runtime.
 }
 
