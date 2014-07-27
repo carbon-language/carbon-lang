@@ -21,14 +21,6 @@
 	.thumb
 #endif
 
-#if __ARM_ARCH_ISA_THUMB == 2
-#define IT(cond)  it cond
-#define ITT(cond) itt cond
-#else
-#define IT(cond)
-#define ITT(cond)
-#endif
-
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)

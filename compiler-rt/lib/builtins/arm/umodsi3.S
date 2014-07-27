@@ -20,14 +20,6 @@
 	.thumb
 #endif
 
-#if __ARM_ARCH_ISA_THUMB == 2
-#define IT(cond)  it cond
-#define ITT(cond) itt cond
-#else
-#define IT(cond)
-#define ITT(cond)
-#endif
-
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 #if __ARM_ARCH_EXT_IDIV__
