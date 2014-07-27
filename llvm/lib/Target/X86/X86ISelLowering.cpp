@@ -18696,6 +18696,265 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// \brief Combine an arbitrary chain of shuffles into a single instruction if
+/// possible.
+///
+/// This is the leaf of the recursive combinine below. When we have found some
+/// chain of single-use x86 shuffle instructions and accumulated the combined
+/// shuffle mask represented by them, this will try to pattern match that mask
+/// into either a single instruction if there is a special purpose instruction
+/// for this operation, or into a PSHUFB instruction which is a fully general
+/// instruction but should only be used to replace chains over a certain depth.
+static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
+                                   int Depth, SelectionDAG &DAG,
+                                   TargetLowering::DAGCombinerInfo &DCI,
+                                   const X86Subtarget *Subtarget) {
+  assert(!Mask.empty() && "Cannot combine an empty shuffle mask!");
+
+  // Find the operand that enters the chain. Note that multiple uses are OK
+  // here, we're not going to remove the operand we find.
+  SDValue Input = Op.getOperand(0);
+  while (Input.getOpcode() == ISD::BITCAST)
+    Input = Input.getOperand(0);
+
+  MVT VT = Input.getSimpleValueType();
+  MVT RootVT = Root.getSimpleValueType();
+  SDLoc DL(Root);
+
+  // Just remove no-op shuffle masks.
+  if (Mask.size() == 1) {
+    DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Input),
+                  /*AddTo*/ true);
+    return true;
+  }
+
+  // Use the float domain if the operand type is a floatingc point type.
+  bool FloatDomain = VT.isFloatingPoint();
+
+  // If we don't have access to VEX encodings, the generic PSHUF instructions
+  // are preferable to some of the specialized forms despite requiring one more
+  // byte to encode because they can implicitly copy.
+  //
+  // IF we *do* have VEX encodings, than we can use shorter, more specific
+  // shuffle instructions freely as they can copy due to the extra register
+  // operand.
+  if (Subtarget->hasAVX()) {
+    // We have both floatincg point and integer variants of shuffles that dup
+    // either tho low or high half of the vector.
+    if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
+      bool Lo = Mask.equals(0, 0);
+      unsigned Shuffle = FloatDomain ? (Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS)
+                                     : (Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH);
+      MVT ShuffleVT = FloatDomain ? MVT::v4f32 : MVT::v2i64;
+      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+      DCI.AddToWorklist(Op.getNode());
+      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
+      DCI.AddToWorklist(Op.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                    /*AddTo*/ true);
+      return true;
+    }
+
+    // FIXME: We should match UNPCKLPS and UNPCKHPS here.
+
+    // For the integer domain we have specialized instructions for duplicating
+    // any element size from the low or high half.
+    if (!FloatDomain &&
+        (Mask.equals(0, 0, 1, 1) || Mask.equals(2, 2, 3, 3) ||
+         Mask.equals(0, 0, 1, 1, 2, 2, 3, 3) ||
+         Mask.equals(4, 4, 5, 5, 6, 6, 7, 7) ||
+         Mask.equals(0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7) ||
+         Mask.equals(8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
+                     15))) {
+      bool Lo = Mask[0] == 0;
+      MVT ShuffleVT;
+      switch (Mask.size()) {
+      case 4: ShuffleVT = MVT::v4i32; break;
+      case 8: ShuffleVT = MVT::v8i32; break;
+      case 16: ShuffleVT = MVT::v16i32; break;
+      };
+      Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
+      DCI.AddToWorklist(Op.getNode());
+      Op = DAG.getNode(Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH, DL, ShuffleVT, Op,
+                       Op);
+      DCI.AddToWorklist(Op.getNode());
+      DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                    /*AddTo*/ true);
+      return true;
+    }
+  }
+
+  // Bail if we have fewer than 3 shuffle instructions in the chain.
+  if (Depth < 3)
+    return false;
+
+  // If we have 3 or more shuffle instructions, we can replace them with
+  // a single PSHUFB instruction profitably. Intel's manuals suggest only using
+  // PSHUFB if doing so replacing 5 instructions, but in practice PSHUFB tends
+  // to be *very* fast so we're more aggressive.
+  if (Subtarget->hasSSSE3()) {
+    SmallVector<SDValue, 16> PSHUFBMask;
+    assert(Mask.size() <= 16 && "Can't shuffle elements smaller than bytes!");
+    int Ratio = 16 / Mask.size();
+    for (unsigned i = 0; i < 16; ++i) {
+      int M = Ratio * Mask[i / Ratio] + i % Ratio;
+      PSHUFBMask.push_back(DAG.getConstant(M, MVT::i8));
+    }
+    Op = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Input);
+    DCI.AddToWorklist(Op.getNode());
+    SDValue PSHUFBMaskOp =
+        DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, PSHUFBMask);
+    DCI.AddToWorklist(PSHUFBMaskOp.getNode());
+    Op = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, Op, PSHUFBMaskOp);
+    DCI.AddToWorklist(Op.getNode());
+    DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
+                  /*AddTo*/ true);
+    return true;
+  }
+
+  // Failed to find any combines.
+  return false;
+}
+
+/// \brief Fully generic combining of x86 shuffle instructions.
+///
+/// This should be the last combine run over the x86 shuffle instructions. Once
+/// they have been fully optimized, this will recursively consdier all chains
+/// of single-use shuffle instructions, build a generic model of the cumulative
+/// shuffle operation, and check for simpler instructions which implement this
+/// operation. We use this primarily for two purposes:
+///
+/// 1) Collapse generic shuffles to specialized single instructions when
+///    equivalent. In most cases, this is just an encoding size win, but
+///    sometimes we will collapse multiple generic shuffles into a single
+///    special-purpose shuffle.
+/// 2) Look for sequences of shuffle instructions with 3 or more total
+///    instructions, and replace them with the slightly more expensive SSSE3
+///    PSHUFB instruction if available. We do this as the last combining step
+///    to ensure we avoid using PSHUFB if we can implement the shuffle with
+///    a suitable short sequence of other instructions. The PHUFB will either
+///    use a register or have to read from memory and so is slightly (but only
+///    slightly) more expensive than the other shuffle instructions.
+///
+/// Because this is inherently a quadratic operation (for each shuffle in
+/// a chain, we recurse up the chain), the depth is limited to 8 instructions.
+/// This should never be an issue in practice as the shuffle lowering doesn't
+/// produce sequences of more than 8 instructions.
+///
+/// FIXME: Currently, we don't collapse instructions *into* PSHUFB. We should,
+/// and we should do so more aggressively than we form PSHUFB because once we
+/// have a PSHUFB, we might as well do as much shuffling as we can.
+///
+/// FIXME: We will currently miss some cases where the redundant shuffling
+/// would simplify under the threshold for PSHUFB formation because of
+/// combine-ordering. To fix this, we should do the redundant instruction
+/// combining in this recursive walk.
+static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
+                                          ArrayRef<int> IncomingMask, int Depth,
+                                          SelectionDAG &DAG,
+                                          TargetLowering::DAGCombinerInfo &DCI,
+                                          const X86Subtarget *Subtarget) {
+  // Bound the depth of our recursive combine because this is ultimately
+  // quadratic in nature.
+  if (Depth > 8)
+    return false;
+
+  // Directly rip through bitcasts to find the underlying operand.
+  while (Op.getOpcode() == ISD::BITCAST && Op.getOperand(0).hasOneUse())
+    Op = Op.getOperand(0);
+
+  MVT VT = Op.getSimpleValueType();
+  if (!VT.isVector())
+    return false; // Bail if we hit a non-vector.
+  // FIXME: This routine should be taught about 256-bit shuffles, or a 256-bit
+  // version should be added.
+  if (VT.getSizeInBits() != 128)
+    return false;
+
+  MVT RootVT = Root.getSimpleValueType();
+  assert(RootVT.isVector() && "Shuffles operate on vector types!");
+  assert(VT.getSizeInBits() == RootVT.getSizeInBits() &&
+         "Can only combine shuffles of the same vector register size.");
+
+  if (!isTargetShuffle(Op.getOpcode()))
+    return false;
+  SmallVector<int, 16> OpMask;
+  bool IsUnary;
+  bool HaveMask = getTargetShuffleMask(Op.getNode(), VT, OpMask, IsUnary);
+  // We only can combine unary shuffles which we can decode the mask for.
+  if (!HaveMask || !IsUnary)
+    return false;
+
+  assert(VT.getVectorNumElements() == OpMask.size() &&
+         "Different mask size from vector size!");
+
+  SmallVector<int, 16> Mask;
+  Mask.reserve(std::max(OpMask.size(), IncomingMask.size()));
+
+  // Merge this shuffle operation's mask into our accumulated mask. This is
+  // a bit tricky as the shuffle may have a different size from the root.
+  if (OpMask.size() == IncomingMask.size()) {
+    for (int M : IncomingMask)
+      Mask.push_back(OpMask[M]);
+  } else if (OpMask.size() < IncomingMask.size()) {
+    assert(IncomingMask.size() % OpMask.size() == 0 &&
+           "The smaller number of elements must divide the larger.");
+    int Ratio = IncomingMask.size() / OpMask.size();
+    for (int M : IncomingMask)
+      Mask.push_back(Ratio * OpMask[M / Ratio] + M % Ratio);
+  } else {
+    assert(OpMask.size() > IncomingMask.size() && "All other cases handled!");
+    assert(OpMask.size() % IncomingMask.size() == 0 &&
+           "The smaller number of elements must divide the larger.");
+    int Ratio = OpMask.size() / IncomingMask.size();
+    for (int i = 0, e = OpMask.size(); i < e; ++i)
+      Mask.push_back(OpMask[Ratio * IncomingMask[i / Ratio] + i % Ratio]);
+  }
+
+  // See if we can recurse into the operand to combine more things.
+  switch (Op.getOpcode()) {
+    case X86ISD::PSHUFD:
+    case X86ISD::PSHUFHW:
+    case X86ISD::PSHUFLW:
+      if (Op.getOperand(0).hasOneUse() &&
+          combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
+                                        DAG, DCI, Subtarget))
+        return true;
+      break;
+
+    case X86ISD::UNPCKL:
+    case X86ISD::UNPCKH:
+      assert(Op.getOperand(0) == Op.getOperand(1) && "We only combine unary shuffles!");
+      // We can't check for single use, we have to check that this shuffle is the only user.
+      if (Op->isOnlyUserOf(Op.getOperand(0).getNode()) &&
+          combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
+                                        DAG, DCI, Subtarget))
+          return true;
+      break;
+  }
+
+  // Minor canonicalization of the accumulated shuffle mask to make it easier
+  // to match below. All this does is detect masks with squential pairs of
+  // elements, and shrink them to the half-width mask. It does this in a loop
+  // so it will reduce the size of the mask to the minimal width mask which
+  // performs an equivalent shuffle.
+  while (Mask.size() > 1) {
+    SmallVector<int, 16> NewMask;
+    for (int i = 0, e = Mask.size()/2; i < e; ++i) {
+      if (Mask[2*i] % 2 != 0 || Mask[2*i] != Mask[2*i + 1] + 1) {
+        NewMask.clear();
+        break;
+      }
+      NewMask.push_back(Mask[2*i] / 2);
+    }
+    if (NewMask.empty())
+      break;
+    Mask.swap(NewMask);
+  }
+
+  return combineX86ShuffleChain(Op, Root, Mask, Depth, DAG, DCI, Subtarget);
+}
+
 /// \brief Get the PSHUF-style mask from PSHUF node.
 ///
 /// This is a very minor wrapper around getTargetShuffleMask to easy forming v4
@@ -19113,6 +19372,17 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
         PerformTargetShuffleCombine(SDValue(N, 0), DAG, DCI, Subtarget);
     if (Shuffle.getNode())
       return Shuffle;
+
+    // Try recursively combining arbitrary sequences of x86 shuffle
+    // instructions into higher-order shuffles. We do this after combining
+    // specific PSHUF instruction sequences into their minimal form so that we
+    // can evaluate how many specialized shuffle instructions are involved in
+    // a particular chain.
+    SmallVector<int, 1> NonceMask; // Just a placeholder.
+    NonceMask.push_back(0);
+    if (combineX86ShufflesRecursively(SDValue(N, 0), SDValue(N, 0), NonceMask,
+                                      /*Depth*/ 1, DAG, DCI, Subtarget))
+      return SDValue(); // This routine will use CombineTo to replace N.
   }
 
   return SDValue();

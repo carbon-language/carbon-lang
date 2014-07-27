@@ -2309,7 +2309,7 @@ declare <8 x i32> @llvm.x86.avx.vperm2f128.si.256(<8 x i32>, <8 x i32>, i8) noun
 
 define <2 x double> @test_x86_avx_vpermil_pd(<2 x double> %a0) {
   ; CHECK: vpermilpd
-  %res = call <2 x double> @llvm.x86.avx.vpermil.pd(<2 x double> %a0, i8 7) ; <<2 x double>> [#uses=1]
+  %res = call <2 x double> @llvm.x86.avx.vpermil.pd(<2 x double> %a0, i8 1) ; <<2 x double>> [#uses=1]
   ret <2 x double> %res
 }
 declare <2 x double> @llvm.x86.avx.vpermil.pd(<2 x double>, i8) nounwind readnone

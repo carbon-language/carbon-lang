@@ -83,7 +83,7 @@ entry:
 }
 
 ; CHECK: vpshufd $-96
-; CHECK: vpshufd $-6
+; CHECK: vpunpckhdq
 ; CHECK: vinsertf128 $1
 define <8 x i32> @D(<8 x i32> %a, <8 x i32> %b) nounwind uwtable readnone ssp {
 entry:
