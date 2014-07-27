@@ -3810,7 +3810,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   if (VT == MVT::Other) {
     unsigned AS = 0;
     if (DstAlign >= TLI.getDataLayout()->getPointerPrefAlignment(AS) ||
-        TLI.allowsUnalignedMemoryAccesses(VT, AS)) {
+        TLI.allowsMisalignedMemoryAccesses(VT, AS, DstAlign)) {
       VT = TLI.getPointerTy();
     } else {
       switch (DstAlign & 7) {
@@ -3870,7 +3870,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       unsigned AS = 0;
       if (NumMemOps && AllowOverlap &&
           VTSize >= 8 && NewVTSize < Size &&
-          TLI.allowsUnalignedMemoryAccesses(VT, AS, &Fast) && Fast)
+          TLI.allowsMisalignedMemoryAccesses(VT, AS, DstAlign, &Fast) && Fast)
         VTSize = Size;
       else {
         VT = NewVT;

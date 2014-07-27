@@ -212,10 +212,11 @@ public:
 
   MVT getScalarShiftAmountTy(EVT LHSTy) const override;
 
-  /// allowsUnalignedMemoryAccesses - Returns true if the target allows
+  /// allowsMisalignedMemoryAccesses - Returns true if the target allows
   /// unaligned memory accesses. of the specified type.
-  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AddrSpace = 0,
-                                     bool *Fast = nullptr) const override {
+  bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AddrSpace = 0,
+                                      unsigned Align = 1,
+                                      bool *Fast = nullptr) const override {
     if (RequireStrictAlign)
       return false;
     // FIXME: True for Cyclone, but not necessary others.

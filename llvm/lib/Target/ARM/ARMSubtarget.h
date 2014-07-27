@@ -188,7 +188,7 @@ protected:
 
   /// AllowsUnalignedMem - If true, the subtarget allows unaligned memory
   /// accesses for some types.  For details, see
-  /// ARMTargetLowering::allowsUnalignedMemoryAccesses().
+  /// ARMTargetLowering::allowsMisalignedMemoryAccesses().
   bool AllowsUnalignedMem;
 
   /// RestrictIT - If true, the subtarget disallows generation of deprecated IT

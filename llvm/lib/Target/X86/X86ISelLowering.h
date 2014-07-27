@@ -565,10 +565,10 @@ namespace llvm {
     /// legal as the hook is used before type legalization.
     bool isSafeMemOpType(MVT VT) const override;
 
-    /// allowsUnalignedMemoryAccesses - Returns true if the target allows
+    /// allowsMisalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type. Returns whether it
     /// is "fast" by reference in the second argument.
-    bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
+    bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS, unsigned Align,
                                        bool *Fast) const override;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.

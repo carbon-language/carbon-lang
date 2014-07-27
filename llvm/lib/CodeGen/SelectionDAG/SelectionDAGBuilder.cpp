@@ -5725,9 +5725,10 @@ bool SelectionDAGBuilder::visitMemCmpCall(const CallInst &I) {
       unsigned SrcAS = RHS->getType()->getPointerAddressSpace();
       // TODO: Handle 5 byte compare as 4-byte + 1 byte.
       // TODO: Handle 8 byte compare on x86-32 as two 32-bit loads.
+      // TODO: Check alignment of src and dest ptrs.
       if (!TLI->isTypeLegal(LoadVT) ||
-          !TLI->allowsUnalignedMemoryAccesses(LoadVT, SrcAS) ||
-          !TLI->allowsUnalignedMemoryAccesses(LoadVT, DstAS))
+          !TLI->allowsMisalignedMemoryAccesses(LoadVT, SrcAS) ||
+          !TLI->allowsMisalignedMemoryAccesses(LoadVT, DstAS))
         ActuallyDoIt = false;
     }
 

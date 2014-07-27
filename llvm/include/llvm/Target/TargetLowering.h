@@ -782,9 +782,10 @@ public:
   /// copy/move/set is converted to a sequence of store operations. Its use
   /// helps to ensure that such replacements don't generate code that causes an
   /// alignment error (trap) on the target machine.
-  virtual bool allowsUnalignedMemoryAccesses(EVT,
-                                             unsigned AddrSpace = 0,
-                                             bool * /*Fast*/ = nullptr) const {
+  virtual bool allowsMisalignedMemoryAccesses(EVT,
+                                              unsigned AddrSpace = 0,
+                                              unsigned Align = 1,
+                                              bool * /*Fast*/ = nullptr) const {
     return false;
   }
 

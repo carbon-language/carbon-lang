@@ -59,8 +59,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
-  bool allowsUnalignedMemoryAccesses(EVT VT, unsigned AS,
-                                     bool *IsFast) const override;
+  bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS,
+                                      unsigned Align,
+                                      bool *IsFast) const override;
 
   TargetLoweringBase::LegalizeTypeAction
   getPreferredVectorAction(EVT VT) const override;

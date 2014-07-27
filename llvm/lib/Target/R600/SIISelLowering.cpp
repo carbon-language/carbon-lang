@@ -240,14 +240,12 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 // TargetLowering queries
 //===----------------------------------------------------------------------===//
 
-bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
-                                                     unsigned AddrSpace,
-                                                     bool *IsFast) const {
+bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT  VT,
+                                                      unsigned AddrSpace,
+                                                      unsigned Align,
+                                                      bool *IsFast) const {
   if (IsFast)
     *IsFast = false;
-
-  // XXX: This depends on the address space and also we may want to revist
-  // the alignment values we specify in the DataLayout.
 
   // TODO: I think v3i32 should allow unaligned accesses on CI with DS_READ_B96,
   // which isn't a simple VT.
@@ -261,8 +259,12 @@ bool SITargetLowering::allowsUnalignedMemoryAccesses(EVT  VT,
   // XXX - The only mention I see of this in the ISA manual is for LDS direct
   // reads the "byte address and must be dword aligned". Is it also true for the
   // normal loads and stores?
-  if (AddrSpace == AMDGPUAS::LOCAL_ADDRESS)
-    return false;
+  if (AddrSpace == AMDGPUAS::LOCAL_ADDRESS) {
+    // ds_read/write_b64 require 8-byte alignment, but we can do a 4 byte
+    // aligned, 8 byte access in a single operation using ds_read2/write2_b32
+    // with adjacent offsets.
+    return Align % 4 == 0;
+  }
 
   // 8.1.6 - For Dword or larger reads or writes, the two LSBs of the
   // byte-address are ignored, thus forcing Dword alignment.
