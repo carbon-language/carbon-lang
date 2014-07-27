@@ -1014,6 +1014,7 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
         Toks.push_back(Tok);
         ConsumeToken();
         if (Tok.is(tok::less)) {
+          ++AngleCount;
           ++KnownTemplateCount;
           Toks.push_back(Tok);
           ConsumeToken();
