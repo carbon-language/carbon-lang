@@ -87,13 +87,17 @@ entry:
   ret i32 %1
 }
 
-define i32 @constraint_J(i32 %i, i32 %j) nounwind {
+define i32 @constraint_J(i32 %i, i32 %j, i64 %k) nounwind {
 entry:
   ; CHECK-LABEL: constraint_J:
   %0 = tail call i32 asm sideeffect "sub ${0:w}, ${1:w}, $2", "=r,r,J"(i32 %i, i32 -16773120) nounwind
-  ; CHECK: sub   {{w[0-9]+}}, {{w[0-9]+}}, #4278194176
+  ; CHECK: sub   {{w[0-9]+}}, {{w[0-9]+}}, #-16773120
   %1 = tail call i32 asm sideeffect "sub ${0:w}, ${1:w}, $2", "=r,r,J"(i32 %i, i32 -1) nounwind
-  ; CHECK: sub   {{w[0-9]+}}, {{w[0-9]+}}, #4294967295
+  ; CHECK: sub   {{w[0-9]+}}, {{w[0-9]+}}, #-1
+  %2 = tail call i64 asm sideeffect "sub ${0:x}, ${1:x}, $2", "=r,r,J"(i64 %k, i32 -1) nounwind
+  ; CHECK: sub   {{x[0-9]+}}, {{x[0-9]+}}, #-1
+  %3 = tail call i64 asm sideeffect "sub ${0:x}, ${1:x}, $2", "=r,r,J"(i64 %k, i64 -1) nounwind
+  ; CHECK: sub   {{x[0-9]+}}, {{x[0-9]+}}, #-1
   ret i32 %1
 }
 

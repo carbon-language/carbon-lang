@@ -4013,8 +4013,10 @@ void AArch64TargetLowering::LowerAsmOperandForConstraint(
       return;
     case 'J': {
       uint64_t NVal = -C->getSExtValue();
-      if (isUInt<12>(NVal) || isShiftedUInt<12, 12>(NVal))
+      if (isUInt<12>(NVal) || isShiftedUInt<12, 12>(NVal)) {
+        CVal = C->getSExtValue();
         break;
+      }
       return;
     }
     // The K and L constraints apply *only* to logical immediates, including
