@@ -18871,9 +18871,9 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   if (VT.getSizeInBits() != 128)
     return false;
 
-  MVT RootVT = Root.getSimpleValueType();
-  assert(RootVT.isVector() && "Shuffles operate on vector types!");
-  assert(VT.getSizeInBits() == RootVT.getSizeInBits() &&
+  assert(Root.getSimpleValueType().isVector() &&
+         "Shuffles operate on vector types!");
+  assert(VT.getSizeInBits() == Root.getSimpleValueType().getSizeInBits() &&
          "Can only combine shuffles of the same vector register size.");
 
   if (!isTargetShuffle(Op.getOpcode()))
