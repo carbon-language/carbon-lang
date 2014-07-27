@@ -112,8 +112,8 @@ DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 #define block(shift)                                                           \
 	cmp	r0, r1, lsl IMM shift;                                         \
 	ITT(hs);                                                               \
-	addhs.w	r3, r3, IMM (1 << shift);                                      \
-	subhs.w	r0, r0, r1, lsl IMM shift
+	WIDE(addhs)	r3, r3, IMM (1 << shift);                              \
+	WIDE(subhs)	r0, r0, r1, lsl IMM shift
 
 	block(31)
 	block(30)

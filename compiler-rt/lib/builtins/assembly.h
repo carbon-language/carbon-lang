@@ -99,6 +99,12 @@
 #define IT(cond)
 #define ITT(cond)
 #endif
+
+#if __ARM_ARCH_ISA_THUMB == 2
+#define WIDE(op) op.w
+#else
+#define WIDE(op) op
+#endif
 #endif
 
 #define GLUE2(a, b) a##b

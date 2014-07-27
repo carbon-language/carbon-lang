@@ -107,7 +107,7 @@ DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 #define block(shift)                                                           \
 	cmp	r0, r1, lsl IMM shift;                                         \
 	IT(hs);                                                                \
-	subhs.w	r0, r0, r1, lsl IMM shift
+	WIDE(subhs)	r0, r0, r1, lsl IMM shift
 
 	block(31)
 	block(30)
