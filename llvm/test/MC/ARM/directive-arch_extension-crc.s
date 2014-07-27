@@ -37,21 +37,21 @@ crc:
 nocrc:
 	crc32b r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 	crc32h r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 	crc32w r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 
 	crc32cb r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 	crc32ch r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 	crc32cw r0, r1, r2
 @ CHECK-V7: error: instruction requires: crc armv8
-@ CHECK-V8: error: instruction requires: crc arm-mode
+@ CHECK-V8: error: instruction requires: crc
 

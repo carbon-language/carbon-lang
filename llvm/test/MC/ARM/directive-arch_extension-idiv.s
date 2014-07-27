@@ -43,11 +43,11 @@ noidiv:
 	udiv r0, r1, r2
 @ CHECK-ARMv6: error: instruction requires: divide in ARM
 @ CHECK-THUMBv6: error: instruction requires: divide in ARM arm-mode
-@ CHECK-ARMv7: error: instruction requires: divide in ARM arm-mode
+@ CHECK-ARMv7: error: instruction requires: divide in ARM
 @ CHECK-THUMBv7: error: instruction requires: divide in THUMB
 	sdiv r0, r1, r2
 @ CHECK-ARMv6: error: instruction requires: divide in ARM
 @ CHECK-THUMBv6: error: instruction requires: divide in ARM arm-mode
-@ CHECK-ARMv7: error: instruction requires: divide in ARM arm-mode
+@ CHECK-ARMv7: error: instruction requires: divide in ARM
 @ CHECK-THUMBv7: error: instruction requires: divide in THUMB
 

@@ -9420,22 +9420,23 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
     if (Extension.Name != Name)
       continue;
 
-    unsigned FB = getAvailableFeatures();
-    if ((FB & Extension.ArchCheck) != Extension.ArchCheck) {
+    if (!Extension.Features)
+      report_fatal_error("unsupported architectural extension: " + Name);
+
+    if ((getAvailableFeatures() & Extension.ArchCheck) != Extension.ArchCheck) {
       Error(ExtLoc, "architectural extension '" + Name + "' is not "
             "allowed for the current base architecture");
       return false;
     }
 
-    if (!Extension.Features)
-      report_fatal_error("unsupported architectural extension: " + Name);
-
-    if (EnableFeature)
-      FB |= ComputeAvailableFeatures(Extension.Features);
-    else
-      FB &= ~ComputeAvailableFeatures(Extension.Features);
-
-    setAvailableFeatures(FB);
+    bool ToggleFeatures = EnableFeature
+                              ? (~STI.getFeatureBits() & Extension.Features)
+                              : ( STI.getFeatureBits() & Extension.Features);
+    if (ToggleFeatures) {
+      unsigned Features =
+          ComputeAvailableFeatures(STI.ToggleFeature(Extension.Features));
+      setAvailableFeatures(Features);
+    }
     return false;
   }
 
