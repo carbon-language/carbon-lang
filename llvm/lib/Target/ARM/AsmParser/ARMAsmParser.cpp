@@ -9368,8 +9368,8 @@ extern "C" void LLVMInitializeARMAsmParser() {
 #define GET_MATCHER_IMPLEMENTATION
 #include "ARMGenAsmMatcher.inc"
 
-static const struct ExtMapEntry {
-  const char *Extension;
+static const struct {
+  const char *Name;
   const unsigned ArchCheck;
   const uint64_t Features;
 } Extensions[] = {
@@ -9406,40 +9406,40 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
     return false;
   }
 
-  StringRef Extension = Parser.getTok().getString();
+  StringRef Name = Parser.getTok().getString();
   SMLoc ExtLoc = Parser.getTok().getLoc();
   getLexer().Lex();
 
   bool EnableFeature = true;
-  if (Extension.startswith_lower("no")) {
+  if (Name.startswith_lower("no")) {
     EnableFeature = false;
-    Extension = Extension.substr(2);
+    Name = Name.substr(2);
   }
 
-  for (unsigned EI = 0, EE = array_lengthof(Extensions); EI != EE; ++EI) {
-    if (Extensions[EI].Extension != Extension)
+  for (const auto &Extension : Extensions) {
+    if (Extension.Name != Name)
       continue;
 
     unsigned FB = getAvailableFeatures();
-    if ((FB & Extensions[EI].ArchCheck) != Extensions[EI].ArchCheck) {
-      Error(ExtLoc, "architectural extension '" + Extension + "' is not "
+    if ((FB & Extension.ArchCheck) != Extension.ArchCheck) {
+      Error(ExtLoc, "architectural extension '" + Name + "' is not "
             "allowed for the current base architecture");
       return false;
     }
 
-    if (!Extensions[EI].Features)
-      report_fatal_error("unsupported architectural extension: " + Extension);
+    if (!Extension.Features)
+      report_fatal_error("unsupported architectural extension: " + Name);
 
     if (EnableFeature)
-      FB |= ComputeAvailableFeatures(Extensions[EI].Features);
+      FB |= ComputeAvailableFeatures(Extension.Features);
     else
-      FB &= ~ComputeAvailableFeatures(Extensions[EI].Features);
+      FB &= ~ComputeAvailableFeatures(Extension.Features);
 
     setAvailableFeatures(FB);
     return false;
   }
 
-  Error(ExtLoc, "unknown architectural extension: " + Extension);
+  Error(ExtLoc, "unknown architectural extension: " + Name);
   Parser.eatToEndOfStatement();
   return false;
 }
