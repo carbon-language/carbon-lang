@@ -1860,6 +1860,24 @@ void ASTWriter::WriteDeclAbbrevs() {
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 2)); // getKind
   CharacterLiteralAbbrev = Stream.EmitAbbrev(Abv);
 
+  // Abbreviation for EXPR_IMPLICIT_CAST
+  Abv = new BitCodeAbbrev();
+  Abv->Add(BitCodeAbbrevOp(serialization::EXPR_IMPLICIT_CAST));
+  // Stmt
+  // Expr
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // Type
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); //TypeDependent
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); //ValueDependent
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); //InstantiationDependent
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 1)); //UnexpandedParamPack
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3)); //GetValueKind
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 3)); //GetObjectKind
+  // CastExpr
+  Abv->Add(BitCodeAbbrevOp(0)); // PathSize
+  Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Fixed, 6)); // CastKind
+  // ImplicitCastExpr
+  ExprImplicitCastAbbrev = Stream.EmitAbbrev(Abv);
+
   Abv = new BitCodeAbbrev();
   Abv->Add(BitCodeAbbrevOp(serialization::DECL_CONTEXT_LEXICAL));
   Abv->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));

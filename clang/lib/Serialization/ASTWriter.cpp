@@ -4055,10 +4055,11 @@ ASTWriter::ASTWriter(llvm::BitstreamWriter &Stream)
       NextCXXBaseSpecifiersID(1), TypeExtQualAbbrev(0),
       TypeFunctionProtoAbbrev(0), DeclParmVarAbbrev(0),
       DeclContextLexicalAbbrev(0), DeclContextVisibleLookupAbbrev(0),
-      UpdateVisibleAbbrev(0), DeclRefExprAbbrev(0), CharacterLiteralAbbrev(0),
-      DeclRecordAbbrev(0), IntegerLiteralAbbrev(0), DeclTypedefAbbrev(0),
+      UpdateVisibleAbbrev(0), DeclRecordAbbrev(0), DeclTypedefAbbrev(0),
       DeclVarAbbrev(0), DeclFieldAbbrev(0), DeclEnumAbbrev(0),
-      DeclObjCIvarAbbrev(0), DeclCXXMethodAbbrev(0) {}
+      DeclObjCIvarAbbrev(0), DeclCXXMethodAbbrev(0), DeclRefExprAbbrev(0),
+      CharacterLiteralAbbrev(0), IntegerLiteralAbbrev(0),
+      ExprImplicitCastAbbrev(0) {}
 
 ASTWriter::~ASTWriter() {
   llvm::DeleteContainerSeconds(FileDeclIDs);

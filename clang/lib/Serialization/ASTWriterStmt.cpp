@@ -635,6 +635,10 @@ ASTStmtWriter::VisitBinaryConditionalOperator(BinaryConditionalOperator *E) {
 
 void ASTStmtWriter::VisitImplicitCastExpr(ImplicitCastExpr *E) {
   VisitCastExpr(E);
+
+  if (E->path_size() == 0)
+    AbbrevToUse = Writer.getExprImplicitCastAbbrev();
+
   Code = serialization::EXPR_IMPLICIT_CAST;
 }
 
