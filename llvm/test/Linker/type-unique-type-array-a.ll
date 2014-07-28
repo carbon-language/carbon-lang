@@ -20,7 +20,7 @@
 ;    13	}
 ;
 ; CHECK: DW_TAG_compile_unit
-; ; CHECK: DW_TAG_class_type
+; CHECK: DW_TAG_class_type
 ; CHECK-NEXT:   DW_AT_name {{.*}} "A"
 ; CHECK: DW_TAG_subprogram
 ; CHECK: DW_AT_MIPS_linkage_name {{.*}} "_ZN1A5testAE2SA"
