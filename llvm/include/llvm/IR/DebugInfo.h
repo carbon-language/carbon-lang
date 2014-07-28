@@ -425,8 +425,8 @@ class DICompositeType : public DIDerivedType {
 public:
   explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
 
-  DIArray getTypeArray() const { return getFieldAs<DIArray>(10); }
-  void setTypeArray(DIArray Elements, DIArray TParams = DIArray());
+  DIArray getElements() const { return getFieldAs<DIArray>(10); }
+  void setArrays(DIArray Elements, DIArray TParams = DIArray());
   unsigned getRunTimeLang() const { return getUnsignedField(11); }
   DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(12); }
   void setContainingType(DICompositeType ContainingType);

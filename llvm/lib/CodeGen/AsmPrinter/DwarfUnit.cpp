@@ -690,7 +690,7 @@ void DwarfUnit::addBlockByrefAddress(const DbgVariable &DV, DIE &Die,
 
   // Find the __forwarding field and the variable field in the __Block_byref
   // struct.
-  DIArray Fields = blockStruct.getTypeArray();
+  DIArray Fields = blockStruct.getElements();
   DIDerivedType varField;
   DIDerivedType forwardingField;
 
@@ -1161,7 +1161,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     break;
   case dwarf::DW_TAG_subroutine_type: {
     // Add return type. A void return won't have a type.
-    DIArray Elements = CTy.getTypeArray();
+    DIArray Elements = CTy.getElements();
     DIType RTy(Elements.getElement(0));
     if (RTy)
       addType(Buffer, RTy);
@@ -1191,7 +1191,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_class_type: {
     // Add elements to structure type.
-    DIArray Elements = CTy.getTypeArray();
+    DIArray Elements = CTy.getElements();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDescriptor Element = Elements.getElement(i);
       if (Element.isSubprogram())
@@ -1456,7 +1456,7 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
-  DIArray Args = SPTy.getTypeArray();
+  DIArray Args = SPTy.getElements();
   // Add a return type. If this is a type like a C/C++ void type we don't add a
   // return type.
   if (Args.getElement(0))
@@ -1740,7 +1740,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
   }
 
   // Add subranges to array type.
-  DIArray Elements = CTy.getTypeArray();
+  DIArray Elements = CTy.getElements();
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
     DIDescriptor Element = Elements.getElement(i);
     if (Element.getTag() == dwarf::DW_TAG_subrange_type)
@@ -1750,7 +1750,7 @@ void DwarfUnit::constructArrayTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
 /// constructEnumTypeDIE - Construct an enum type DIE from DICompositeType.
 void DwarfUnit::constructEnumTypeDIE(DIE &Buffer, DICompositeType CTy) {
-  DIArray Elements = CTy.getTypeArray();
+  DIArray Elements = CTy.getElements();
 
   // Add enumerators to enumeration type.
   for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {

@@ -150,7 +150,7 @@ DIType DbgVariable::getType() const {
     if (tag == dwarf::DW_TAG_pointer_type)
       subType = resolve(DIDerivedType(Ty).getTypeDerivedFrom());
 
-    DIArray Elements = DICompositeType(subType).getTypeArray();
+    DIArray Elements = DICompositeType(subType).getElements();
     for (unsigned i = 0, N = Elements.getNumElements(); i < N; ++i) {
       DIDerivedType DT(Elements.getElement(i));
       if (getName() == DT.getName())
@@ -468,7 +468,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(
 
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
-    DIArray FnArgs = SP.getType().getTypeArray();
+    DIArray FnArgs = SP.getType().getElements();
     if (FnArgs.getElement(FnArgs.getNumElements() - 1)
             .isUnspecifiedParameter()) {
       Children.push_back(

@@ -676,7 +676,7 @@ static void VerifySubsetOf(const MDNode *LHS, const MDNode *RHS) {
 #endif
 
 /// \brief Set the array of member DITypes.
-void DICompositeType::setTypeArray(DIArray Elements, DIArray TParams) {
+void DICompositeType::setArrays(DIArray Elements, DIArray TParams) {
   assert((!TParams || DbgNode->getNumOperands() == 15) &&
          "If you're setting the template parameters this should include a slot "
          "for that!");
@@ -1064,7 +1064,7 @@ void DebugInfoFinder::processType(DIType DT) {
   if (DT.isCompositeType()) {
     DICompositeType DCT(DT);
     processType(DCT.getTypeDerivedFrom().resolve(TypeIdentifierMap));
-    DIArray DA = DCT.getTypeArray();
+    DIArray DA = DCT.getElements();
     for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
       DIDescriptor D = DA.getElement(i);
       if (D.isType())
@@ -1347,7 +1347,7 @@ void DIDerivedType::printInternal(raw_ostream &OS) const {
 
 void DICompositeType::printInternal(raw_ostream &OS) const {
   DIType::printInternal(OS);
-  DIArray A = getTypeArray();
+  DIArray A = getElements();
   OS << " [" << A.getNumElements() << " elements]";
 }
 

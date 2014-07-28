@@ -396,7 +396,7 @@ private:
         Elements.push_back(getOrCreateType(T->getStructElementType(i)));
 
       // set struct elements
-      StructDescriptor.setTypeArray(Builder.getOrCreateArray(Elements));
+      StructDescriptor.setArrays(Builder.getOrCreateArray(Elements));
     } else if (T->isPointerTy()) {
       Type *PointeeTy = T->getPointerElementType();
       if (!(N = getType(PointeeTy)))
