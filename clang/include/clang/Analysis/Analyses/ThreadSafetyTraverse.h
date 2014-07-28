@@ -433,6 +433,7 @@ public:
 #include "ThreadSafetyOps.def"
 #undef TIL_OPCODE_DEF
     }
+    llvm_unreachable("invalid enum");
   }
 };
 
