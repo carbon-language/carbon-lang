@@ -130,13 +130,15 @@ private:
   static bool isThumbMovt(uint32_t instruction);
   static bool isArmMovw(uint32_t instruction);
   static bool isArmMovt(uint32_t instruction);
-  static int32_t getDisplacementFromThumbBranch(uint32_t instruction);
+  static int32_t getDisplacementFromThumbBranch(uint32_t instruction, uint32_t);
   static int32_t getDisplacementFromArmBranch(uint32_t instruction);
   static uint16_t getWordFromThumbMov(uint32_t instruction);
   static uint16_t getWordFromArmMov(uint32_t instruction);
   static uint32_t clearThumbBit(uint32_t value, const Atom *target);
-  static uint32_t setDisplacementInArmBranch(uint32_t instr, int32_t disp);
-  static uint32_t setDisplacementInThumbBranch(uint32_t instr, int32_t disp);
+  static uint32_t setDisplacementInArmBranch(uint32_t instr, int32_t disp, 
+                                             bool targetIsThumb);
+  static uint32_t setDisplacementInThumbBranch(uint32_t instr, uint32_t ia,
+                                               int32_t disp, bool targetThumb);
   static uint32_t setWordFromThumbMov(uint32_t instruction, uint16_t word);
   static uint32_t setWordFromArmMov(uint32_t instruction, uint16_t word);
   
@@ -144,12 +146,14 @@ private:
 
   void applyFixupFinal(const Reference &ref, uint8_t *location,
                        uint64_t fixupAddress, uint64_t targetAddress,
-                       uint64_t inAtomAddress, bool &thumbMode);
+                       uint64_t inAtomAddress, bool &thumbMode,
+                       bool targetIsThumb);
 
   void applyFixupRelocatable(const Reference &ref, uint8_t *location,
                              uint64_t fixupAddress,
                              uint64_t targetAddress,
-                             uint64_t inAtomAddress, bool &thumbMode);
+                             uint64_t inAtomAddress, bool &thumbMode,
+                             bool targetIsThumb);
   
   const bool _swap;
 };
@@ -256,23 +260,7 @@ bool ArchHandler_arm::isPairedReloc(const Relocation &reloc) {
   }
 }
 
-int32_t ArchHandler_arm::getDisplacementFromThumbBranch(uint32_t instruction) {
-  uint32_t s = (instruction >> 10) & 0x1;
-  uint32_t j1 = (instruction >> 29) & 0x1;
-  uint32_t j2 = (instruction >> 27) & 0x1;
-  uint32_t imm10 = instruction & 0x3FF;
-  uint32_t imm11 = (instruction >> 16) & 0x7FF;
-  uint32_t i1 = (j1 == s);
-  uint32_t i2 = (j2 == s);
-  uint32_t dis =
-      (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1);
-  int32_t sdis = dis;
-  if (s)
-    return (sdis | 0xFE000000);
-  else
-    return sdis;
-}
-
+/// Extract displacement from an ARM b/bl/blx instruction.
 int32_t ArchHandler_arm::getDisplacementFromArmBranch(uint32_t instruction) {
   // Sign-extend imm24
   int32_t displacement = (instruction & 0x00FFFFFF) << 2;
@@ -284,18 +272,88 @@ int32_t ArchHandler_arm::getDisplacementFromArmBranch(uint32_t instruction) {
   return displacement;
 }
 
+/// Update an ARM b/bl/blx instruction, switching bl <-> blx as needed.
 uint32_t ArchHandler_arm::setDisplacementInArmBranch(uint32_t instruction,
-                                                     int32_t displacement) {
-  // FIXME: handle BLX and out-of-range.
+                                                     int32_t displacement,
+                                                     bool targetIsThumb) {
+  assert((displacement <= 33554428) && (displacement > (-33554432))
+                                              && "arm branch out of range");
+  bool is_blx = ((instruction & 0xF0000000) == 0xF0000000);
   uint32_t newInstruction = (instruction & 0xFF000000);
-  newInstruction |= ((displacement >> 2) & 0x00FFFFFF);
+  uint32_t h = 0;
+  if (targetIsThumb) {
+    // Force use of BLX.
+    newInstruction = 0xFA000000;
+    if (!is_blx) {
+      bool isConditionalBranch = ((instruction & 0xF0000000) != 0xE0000000);
+      assert(!isConditionalBranch && "no conditional arm blx");
+      bool is_bl = ((instruction & 0xFF000000) == 0xEB000000);
+      assert(is_bl && "no arm pc-rel BX instruction");
+    }
+    if (displacement & 2)
+      h = 1;
+  }
+  else {
+    // Force use of B/BL.
+    if (is_blx)
+      newInstruction = 0xEB000000;
+  }
+  newInstruction |= (h << 24) | ((displacement >> 2) & 0x00FFFFFF);
   return newInstruction;
 }
 
+/// Extract displacement from a thumb b/bl/blx instruction.
+int32_t ArchHandler_arm::getDisplacementFromThumbBranch(uint32_t instruction,
+                                                        uint32_t instrAddr) {
+  bool is_blx = ((instruction & 0xD000F800) == 0xC000F000);
+  uint32_t s = (instruction >> 10) & 0x1;
+  uint32_t j1 = (instruction >> 29) & 0x1;
+  uint32_t j2 = (instruction >> 27) & 0x1;
+  uint32_t imm10 = instruction & 0x3FF;
+  uint32_t imm11 = (instruction >> 16) & 0x7FF;
+  uint32_t i1 = (j1 == s);
+  uint32_t i2 = (j2 == s);
+  uint32_t dis =
+      (s << 24) | (i1 << 23) | (i2 << 22) | (imm10 << 12) | (imm11 << 1);
+  int32_t sdis = dis;
+  int32_t result = s ? (sdis | 0xFE000000) : sdis;
+  if (is_blx && (instrAddr & 0x2)) {
+    // The thumb blx instruction always has low bit of imm11 as zero.  The way
+    // a 2-byte aligned blx can branch to a 4-byte aligned ARM target is that
+    // the blx instruction always 4-byte aligns the pc before adding the
+    // displacement from the blx.  We must emulate that when decoding this.
+    result -= 2;
+  }
+  return result;
+}
+
+/// Update a thumb b/bl/blx instruction, switching bl <-> blx as needed.
 uint32_t ArchHandler_arm::setDisplacementInThumbBranch(uint32_t instruction,
-                                                       int32_t displacement) {
-  // FIXME: handle BLX and out-of-range.
+                                                       uint32_t instrAddr,
+                                                       int32_t displacement,
+                                                       bool targetIsThumb) {
+  assert((displacement <= 16777214) && (displacement > (-16777216))
+                                              && "thumb branch out of range");
+	bool is_bl = ((instruction & 0xD000F800) == 0xD000F000);
+	bool is_blx = ((instruction & 0xD000F800) == 0xC000F000);
+	bool is_b = ((instruction & 0xD000F800) == 0x9000F000);
   uint32_t newInstruction = (instruction & 0xF800D000);
+  if (is_bl || is_blx) {
+    if (targetIsThumb) {
+      newInstruction = 0xD000F000; // Use bl
+    } else {
+      newInstruction = 0xC000F000; // Use blx
+      // See note in getDisplacementFromThumbBranch() about blx.
+      if (instrAddr & 0x2)
+        displacement += 2;
+    }
+  } else if (is_b) {
+    assert(!targetIsThumb && "no pc-rel thumb branch instruction that "
+                             "switches to arm mode");
+  }
+  else {
+    llvm_unreachable("thumb branch22 reloc on a non-branch instruction");
+  }
   uint32_t s = (uint32_t)(displacement >> 24) & 0x1;
   uint32_t i1 = (uint32_t)(displacement >> 23) & 0x1;
   uint32_t i2 = (uint32_t)(displacement >> 22) & 0x1;
@@ -392,19 +450,19 @@ std::error_code ArchHandler_arm::getReferenceInfo(
     if (E ec = atomFromSymbolIndex(reloc.symbol, target))
       return ec;
     // Instruction contains branch to addend.
-    displacement = getDisplacementFromThumbBranch(instruction);
+    displacement = getDisplacementFromThumbBranch(instruction, fixupAddress);
     *addend = fixupAddress + 4 + displacement;
     return std::error_code();
   case ARM_THUMB_RELOC_BR22 | rPcRel | rLength4:
     // ex: bl _foo (and _foo is defined)
     *kind = thumb_b22;
-    displacement = getDisplacementFromThumbBranch(instruction);
+    displacement = getDisplacementFromThumbBranch(instruction, fixupAddress);
     targetAddress = fixupAddress + 4 + displacement;
     return atomFromAddress(reloc.symbol, targetAddress, target, addend);
   case ARM_THUMB_RELOC_BR22 | rScattered | rPcRel | rLength4:
     // ex: bl _foo+4 (and _foo is defined)
     *kind = thumb_b22;
-    displacement = getDisplacementFromThumbBranch(instruction);
+    displacement = getDisplacementFromThumbBranch(instruction, fixupAddress);
     targetAddress = fixupAddress + 4 + displacement;
     if (E ec = atomFromAddress(0, reloc.value, target, addend))
       return ec;
@@ -745,13 +803,14 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
                                       uint64_t fixupAddress,
                                       uint64_t targetAddress,
                                       uint64_t inAtomAddress,
-                                      bool &thumbMode) {
+                                      bool &thumbMode, bool targetIsThumb) {
   if (ref.kindNamespace() != Reference::KindNamespace::mach_o)
     return;
   assert(ref.kindArch() == Reference::KindArch::ARM);
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int32_t displacement;
   uint16_t value16;
+  uint32_t value32;
   switch (ref.kindValue()) {
   case modeThumbCode:
     thumbMode = true;
@@ -764,7 +823,9 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case thumb_b22:
     assert(thumbMode);
     displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
-    write32(*loc32, _swap, setDisplacementInThumbBranch(*loc32, displacement));
+    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress, displacement,
+                                           targetIsThumb);
+    write32(*loc32, _swap, value32);
     break;
   case thumb_movw:
     assert(thumbMode);
@@ -789,7 +850,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case arm_b24:
     assert(!thumbMode);
     displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
-    *loc32 = setDisplacementInArmBranch(*loc32, displacement);
+    value32 = setDisplacementInArmBranch(*loc32, displacement, targetIsThumb);
+    write32(*loc32, _swap, value32);
     break;
   case arm_movw:
     assert(!thumbMode);
@@ -812,7 +874,10 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case pointer32:
-    write32(*loc32, _swap, targetAddress + ref.addend());
+    if (targetIsThumb)
+      write32(*loc32, _swap, targetAddress + ref.addend() + 1);
+    else
+      write32(*loc32, _swap, targetAddress + ref.addend());
     break;
   case delta32:
     write32(*loc32, _swap, targetAddress - fixupAddress + ref.addend());
@@ -839,18 +904,20 @@ void ArchHandler_arm::generateAtomContent(const DefinedAtom &atom,
     uint32_t offset = ref->offsetInAtom();
     const Atom *target = ref->target();
     uint64_t targetAddress = 0;
-    if (isa<DefinedAtom>(target))
+    bool targetIsThumb = false;
+    if (const DefinedAtom *defTarg = dyn_cast<DefinedAtom>(target)) {
       targetAddress = findAddress(*target);
+      targetIsThumb = isThumbFunction(*defTarg);
+    }
     uint64_t atomAddress = findAddress(atom);
     uint64_t fixupAddress = atomAddress + offset;
     if (relocatable) {
-      applyFixupRelocatable(*ref, &atomContentBuffer[offset],
-                                        fixupAddress, targetAddress,
-                                        atomAddress, thumbMode);
+      applyFixupRelocatable(*ref, &atomContentBuffer[offset], fixupAddress,
+                            targetAddress, atomAddress, thumbMode,
+                            targetIsThumb);
     } else {
-      applyFixupFinal(*ref, &atomContentBuffer[offset],
-                                  fixupAddress, targetAddress,
-                                  atomAddress, thumbMode);
+      applyFixupFinal(*ref, &atomContentBuffer[offset], fixupAddress,
+                      targetAddress, atomAddress, thumbMode, targetIsThumb);
     }
   }
 }
@@ -882,11 +949,13 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
                                              uint64_t fixupAddress,
                                              uint64_t targetAddress,
                                              uint64_t inAtomAddress,
-                                             bool &thumbMode) {
+                                             bool &thumbMode,
+                                             bool targetIsThumb) {
   bool useExternalReloc = useExternalRelocationTo(*ref.target());
   int32_t *loc32 = reinterpret_cast<int32_t *>(location);
   int32_t displacement;
   uint16_t value16;
+  uint32_t value32;
   switch (ref.kindValue()) {
   case modeThumbCode:
     thumbMode = true;
@@ -902,7 +971,9 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       displacement = (ref.addend() - (fixupAddress + 4));
     else
       displacement = (targetAddress - (fixupAddress + 4)) + ref.addend();
-    write32(*loc32, _swap, setDisplacementInThumbBranch(*loc32, displacement));
+    value32 = setDisplacementInThumbBranch(*loc32, fixupAddress, displacement,
+                                           targetIsThumb);
+    write32(*loc32, _swap, value32);
     break;
   case thumb_movw:
     assert(thumbMode);
@@ -936,7 +1007,8 @@ void ArchHandler_arm::applyFixupRelocatable(const Reference &ref,
       displacement = (ref.addend() - (fixupAddress + 8));
     else
       displacement = (targetAddress - (fixupAddress + 8)) + ref.addend();
-    write32(*loc32, _swap, setDisplacementInArmBranch(*loc32, displacement));
+    value32 = setDisplacementInArmBranch(*loc32, displacement, targetIsThumb);
+    write32(*loc32, _swap, value32);
     break;
   case arm_movw:
     assert(!thumbMode);

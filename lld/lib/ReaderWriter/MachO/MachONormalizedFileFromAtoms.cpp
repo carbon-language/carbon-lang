@@ -563,7 +563,10 @@ void Util::copySections(NormalizedFile &file) {
 
 void Util::copyEntryPointAddress(NormalizedFile &nFile) {
   if (_context.outputTypeHasEntry()) {
-    nFile.entryAddress = _atomToAddress[_entryAtom];
+    if (_archHandler.isThumbFunction(*_entryAtom))
+      nFile.entryAddress = (_atomToAddress[_entryAtom] | 1);
+    else
+      nFile.entryAddress = _atomToAddress[_entryAtom];
   }
 }
 
