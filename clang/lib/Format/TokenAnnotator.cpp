@@ -311,8 +311,7 @@ private:
         if (CurrentToken->isOneOf(tok::r_paren, tok::r_square))
           return false;
         updateParameterCount(Left, CurrentToken);
-        if (CurrentToken->is(tok::colon) &&
-            Style.Language != FormatStyle::LK_Proto) {
+        if (CurrentToken->is(tok::colon)) {
           if (CurrentToken->getPreviousNonComment()->is(tok::identifier))
             CurrentToken->getPreviousNonComment()->Type = TT_SelectorName;
           Left->Type = TT_DictLiteral;
@@ -1683,6 +1682,9 @@ bool TokenAnnotator::mustBreakBefore(const AnnotatedLine &Line,
   } else if (isAllmanBrace(Left) || isAllmanBrace(Right)) {
     return Style.BreakBeforeBraces == FormatStyle::BS_Allman ||
            Style.BreakBeforeBraces == FormatStyle::BS_GNU;
+  } else if (Style.Language == FormatStyle::LK_Proto &&
+             Left.isNot(tok::l_brace) && Right.Type == TT_SelectorName) {
+    return true;
   }
 
   // If the last token before a '}' is a comma or a comment, the intention is to

@@ -150,7 +150,8 @@ bool ContinuationIndenter::mustBreak(const LineState &State) {
       Previous.Type != TT_InlineASMColon &&
       Previous.Type != TT_ConditionalExpr && nextIsMultilineString(State))
     return true;
-  if (((Previous.Type == TT_DictLiteral && Previous.is(tok::l_brace)) ||
+  if (Style.Language != FormatStyle::LK_Proto &&
+      ((Previous.Type == TT_DictLiteral && Previous.is(tok::l_brace)) ||
        Previous.Type == TT_ArrayInitializerLSquare) &&
       Style.ColumnLimit > 0 &&
       getLengthToMatchingParen(Previous) + State.Column > getColumnLimit(State))
