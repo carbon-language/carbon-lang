@@ -330,7 +330,8 @@ namespace bitc {
   };
 
   enum UseListCodes {
-    USELIST_CODE_ENTRY = 1   // USELIST_CODE_ENTRY: TBD.
+    USELIST_CODE_DEFAULT = 1, // DEFAULT: [index..., value-id]
+    USELIST_CODE_BB      = 2  // BB: [index..., bb-id]
   };
 
   enum AttributeKindCodes {

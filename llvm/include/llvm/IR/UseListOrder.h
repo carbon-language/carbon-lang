@@ -16,10 +16,23 @@
 #define LLVM_IR_USELISTORDER_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
+#include <vector>
 
 namespace llvm {
 
 class Module;
+class Function;
+class Value;
+
+/// \brief Structure to hold a use-list order.
+struct UseListOrder {
+  const Function *F;
+  const Value *V;
+  SmallVector<unsigned, 8> Shuffle;
+};
+
+typedef std::vector<UseListOrder> UseListOrderStack;
 
 /// \brief Whether to preserve use-list ordering.
 bool shouldPreserveBitcodeUseListOrder();

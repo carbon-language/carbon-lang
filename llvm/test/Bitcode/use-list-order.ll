@@ -1,5 +1,4 @@
 ; RUN: llvm-uselistorder < %s -preserve-bc-use-list-order
-; XFAIL: *
 
 @a = global [4 x i1] [i1 0, i1 1, i1 0, i1 1]
 @b = alias i1* getelementptr ([4 x i1]* @a, i64 0, i64 2)

@@ -1602,6 +1602,39 @@ static void WriteValueSymbolTable(const ValueSymbolTable &VST,
   Stream.ExitBlock();
 }
 
+static void WriteUseList(ValueEnumerator &VE, UseListOrder &&Order,
+                         BitstreamWriter &Stream) {
+  assert(Order.Shuffle.size() >= 2 && "Shuffle too small");
+  unsigned Code;
+  if (isa<BasicBlock>(Order.V))
+    Code = bitc::USELIST_CODE_BB;
+  else
+    Code = bitc::USELIST_CODE_DEFAULT;
+
+  SmallVector<uint64_t, 64> Record;
+  for (unsigned I : Order.Shuffle)
+    Record.push_back(I);
+  Record.push_back(VE.getValueID(Order.V));
+  Stream.EmitRecord(Code, Record);
+}
+
+static void WriteUseListBlock(const Function *F, ValueEnumerator &VE,
+                              BitstreamWriter &Stream) {
+  auto hasMore = [&]() {
+    return !VE.UseListOrders.empty() && VE.UseListOrders.back().F == F;
+  };
+  if (!hasMore())
+    // Nothing to do.
+    return;
+
+  Stream.EnterSubblock(bitc::USELIST_BLOCK_ID, 3);
+  while (hasMore()) {
+    WriteUseList(VE, std::move(VE.UseListOrders.back()), Stream);
+    VE.UseListOrders.pop_back();
+  }
+  Stream.ExitBlock();
+}
+
 /// WriteFunction - Emit a function body to the module stream.
 static void WriteFunction(const Function &F, ValueEnumerator &VE,
                           BitstreamWriter &Stream) {
@@ -1670,6 +1703,8 @@ static void WriteFunction(const Function &F, ValueEnumerator &VE,
 
   if (NeedsMetadataAttachment)
     WriteMetadataAttachment(F, VE, Stream);
+  if (shouldPreserveBitcodeUseListOrder())
+    WriteUseListBlock(&F, VE, Stream);
   VE.purgeFunction();
   Stream.ExitBlock();
 }
@@ -1835,98 +1870,6 @@ static void WriteBlockInfo(const ValueEnumerator &VE, BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
-// Sort the Users based on the order in which the reader parses the bitcode
-// file.
-static bool bitcodereader_order(const User *lhs, const User *rhs) {
-  // TODO: Implement.
-  return true;
-}
-
-static void WriteUseList(const Value *V, const ValueEnumerator &VE,
-                         BitstreamWriter &Stream) {
-
-  // One or zero uses can't get out of order.
-  if (V->use_empty() || V->hasNUses(1))
-    return;
-
-  // Make a copy of the in-memory use-list for sorting.
-  SmallVector<const User*, 8> UserList(V->user_begin(), V->user_end());
-
-  // Sort the copy based on the order read by the BitcodeReader.
-  std::sort(UserList.begin(), UserList.end(), bitcodereader_order);
-
-  // TODO: Generate a diff between the BitcodeWriter in-memory use-list and the
-  // sorted list (i.e., the expected BitcodeReader in-memory use-list).
-
-  // TODO: Emit the USELIST_CODE_ENTRYs.
-}
-
-static void WriteFunctionUseList(const Function *F, ValueEnumerator &VE,
-                                 BitstreamWriter &Stream) {
-  VE.incorporateFunction(*F);
-
-  for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
-       AI != AE; ++AI)
-    WriteUseList(AI, VE, Stream);
-  for (Function::const_iterator BB = F->begin(), FE = F->end(); BB != FE;
-       ++BB) {
-    WriteUseList(BB, VE, Stream);
-    for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end(); II != IE;
-         ++II) {
-      WriteUseList(II, VE, Stream);
-      for (User::const_op_iterator OI = II->op_begin(), E = II->op_end();
-           OI != E; ++OI) {
-        if ((isa<Constant>(*OI) && !isa<GlobalValue>(*OI)) ||
-            isa<InlineAsm>(*OI))
-          WriteUseList(*OI, VE, Stream);
-      }
-    }
-  }
-  VE.purgeFunction();
-}
-
-// Emit use-lists.
-static void WriteModuleUseLists(const Module *M, ValueEnumerator &VE,
-                                BitstreamWriter &Stream) {
-  Stream.EnterSubblock(bitc::USELIST_BLOCK_ID, 3);
-
-  // XXX: this modifies the module, but in a way that should never change the
-  // behavior of any pass or codegen in LLVM. The problem is that GVs may
-  // contain entries in the use_list that do not exist in the Module and are
-  // not stored in the .bc file.
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
-       I != E; ++I)
-    I->removeDeadConstantUsers();
-
-  // Write the global variables.
-  for (Module::const_global_iterator GI = M->global_begin(),
-         GE = M->global_end(); GI != GE; ++GI) {
-    WriteUseList(GI, VE, Stream);
-
-    // Write the global variable initializers.
-    if (GI->hasInitializer())
-      WriteUseList(GI->getInitializer(), VE, Stream);
-  }
-
-  // Write the functions.
-  for (Module::const_iterator FI = M->begin(), FE = M->end(); FI != FE; ++FI) {
-    WriteUseList(FI, VE, Stream);
-    if (!FI->isDeclaration())
-      WriteFunctionUseList(FI, VE, Stream);
-    if (FI->hasPrefixData())
-      WriteUseList(FI->getPrefixData(), VE, Stream);
-  }
-
-  // Write the aliases.
-  for (Module::const_alias_iterator AI = M->alias_begin(), AE = M->alias_end();
-       AI != AE; ++AI) {
-    WriteUseList(AI, VE, Stream);
-    WriteUseList(AI->getAliasee(), VE, Stream);
-  }
-
-  Stream.ExitBlock();
-}
-
 /// WriteModule - Emit the specified module to the bitstream.
 static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   Stream.EnterSubblock(bitc::MODULE_BLOCK_ID, 3);
@@ -1969,9 +1912,9 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit names for globals/functions etc.
   WriteValueSymbolTable(M->getValueSymbolTable(), VE, Stream);
 
-  // Emit use-lists.
+  // Emit module-level use-lists.
   if (shouldPreserveBitcodeUseListOrder())
-    WriteModuleUseLists(M, VE, Stream);
+    WriteUseListBlock(nullptr, VE, Stream);
 
   // Emit function bodies.
   for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)

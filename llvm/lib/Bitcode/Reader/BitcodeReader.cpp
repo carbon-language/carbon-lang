@@ -1620,9 +1620,8 @@ std::error_code BitcodeReader::ParseUseLists() {
   if (Stream.EnterSubBlock(bitc::USELIST_BLOCK_ID))
     return Error(InvalidRecord);
 
-  SmallVector<uint64_t, 64> Record;
-
   // Read all the records.
+  SmallVector<uint64_t, 64> Record;
   while (1) {
     BitstreamEntry Entry = Stream.advanceSkippingSubblocks();
 
@@ -1639,14 +1638,42 @@ std::error_code BitcodeReader::ParseUseLists() {
 
     // Read a use list record.
     Record.clear();
+    bool IsBB = false;
     switch (Stream.readRecord(Entry.ID, Record)) {
     default:  // Default behavior: unknown type.
       break;
-    case bitc::USELIST_CODE_ENTRY: { // USELIST_CODE_ENTRY: TBD.
+    case bitc::USELIST_CODE_BB:
+      IsBB = true;
+      // fallthrough
+    case bitc::USELIST_CODE_DEFAULT: {
       unsigned RecordLength = Record.size();
-      if (RecordLength < 1)
+      if (RecordLength < 3)
+        // Records should have at least an ID and two indexes.
         return Error(InvalidRecord);
-      UseListRecords.push_back(Record);
+      unsigned ID = Record.back();
+      Record.pop_back();
+
+      Value *V;
+      if (IsBB) {
+        assert(ID < FunctionBBs.size() && "Basic block not found");
+        V = FunctionBBs[ID];
+      } else
+        V = ValueList[ID];
+      unsigned NumUses = 0;
+      SmallDenseMap<const Use *, unsigned, 16> Order;
+      for (const Use &U : V->uses()) {
+        if (NumUses > Record.size())
+          break;
+        Order[&U] = Record[NumUses++];
+      }
+      if (Order.size() != Record.size() || NumUses > Record.size())
+        // Mismatches can happen if the functions are being materialized lazily
+        // (out-of-order), or a value has been upgraded.
+        break;
+
+      V->sortUseList([&](const Use &L, const Use &R) {
+        return Order.lookup(&L) < Order.lookup(&R);
+      });
       break;
     }
     }
@@ -2296,6 +2323,10 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
         break;
       case bitc::METADATA_BLOCK_ID:
         if (std::error_code EC = ParseMetadata())
+          return EC;
+        break;
+      case bitc::USELIST_BLOCK_ID:
+        if (std::error_code EC = ParseUseLists())
           return EC;
         break;
       }

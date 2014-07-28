@@ -25,14 +25,207 @@
 #include <algorithm>
 using namespace llvm;
 
+namespace {
+typedef DenseMap<const Value *, std::pair<unsigned, bool>> OrderMap;
+}
+
+static void orderValue(const Value *V, OrderMap &OM) {
+  if (OM.lookup(V).first)
+    return;
+
+  if (const Constant *C = dyn_cast<Constant>(V))
+    if (C->getNumOperands() && !isa<GlobalValue>(C))
+      for (const Value *Op : C->operands())
+        if (!isa<BasicBlock>(Op))
+          orderValue(Op, OM);
+
+  // Note: we cannot cache this lookup above, since inserting into the map
+  // changes the map's size, and thus affects the ID.
+  OM[V].first = OM.size() + 1;
+}
+
+static OrderMap orderModule(const Module *M) {
+  // This needs to match the order used by ValueEnumerator::ValueEnumerator()
+  // and ValueEnumerator::incorporateFunction().
+  OrderMap OM;
+
+  for (const GlobalVariable &G : M->globals())
+    orderValue(&G, OM);
+  for (const Function &F : *M)
+    orderValue(&F, OM);
+  for (const GlobalAlias &A : M->aliases())
+    orderValue(&A, OM);
+  for (const GlobalVariable &G : M->globals())
+    if (G.hasInitializer())
+      orderValue(G.getInitializer(), OM);
+  for (const GlobalAlias &A : M->aliases())
+    orderValue(A.getAliasee(), OM);
+  for (const Function &F : *M)
+    if (F.hasPrefixData())
+      orderValue(F.getPrefixData(), OM);
+
+  for (const Function &F : *M) {
+    if (F.isDeclaration())
+      continue;
+    // Here we need to match the union of ValueEnumerator::incorporateFunction()
+    // and WriteFunction().  Basic blocks are implicitly declared before
+    // anything else (by declaring their size).
+    for (const BasicBlock &BB : F)
+      orderValue(&BB, OM);
+    for (const Argument &A : F.args())
+      orderValue(&A, OM);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        for (const Value *Op : I.operands())
+          if ((isa<Constant>(*Op) && !isa<GlobalValue>(*Op)) ||
+              isa<InlineAsm>(*Op))
+            orderValue(Op, OM);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        orderValue(&I, OM);
+  }
+  return OM;
+}
+
+static void predictValueUseListOrderImpl(const Value *V, const Function *F,
+                                         unsigned ID, const OrderMap &OM,
+                                         UseListOrderStack &Stack) {
+  // Predict use-list order for this one.
+  typedef std::pair<const Use *, unsigned> Entry;
+  SmallVector<Entry, 64> List;
+  for (const Use &U : V->uses())
+    // Check if this user will be serialized.
+    if (OM.lookup(U.getUser()).first)
+      List.push_back(std::make_pair(&U, List.size()));
+
+  if (List.size() < 2)
+    // We may have lost some users.
+    return;
+
+  std::sort(List.begin(), List.end(),
+            [&OM, ID](const Entry &L, const Entry &R) {
+    const Use *LU = L.first;
+    const Use *RU = R.first;
+    auto LID = OM.lookup(LU->getUser()).first;
+    auto RID = OM.lookup(RU->getUser()).first;
+    // If ID is 4, then expect: 7 6 5 1 2 3.
+    if (LID < RID) {
+      if (RID < ID)
+        return true;
+      return false;
+    }
+    if (RID < LID) {
+      if (LID < ID)
+        return false;
+      return true;
+    }
+    // LID and RID are equal, so we have different operands of the same user.
+    // Assume operands are added in order for all instructions.
+    if (LU->getOperandNo() < RU->getOperandNo())
+      return LID < ID;
+    return ID < LID;
+  });
+
+  if (std::is_sorted(
+          List.begin(), List.end(),
+          [](const Entry &L, const Entry &R) { return L.second < R.second; }))
+    // Order is already correct.
+    return;
+
+  // Store the shuffle.
+  UseListOrder O;
+  O.V = V;
+  O.F = F;
+  for (auto &I : List)
+    O.Shuffle.push_back(I.second);
+  Stack.push_back(O);
+}
+
+static void predictValueUseListOrder(const Value *V, const Function *F,
+                                     OrderMap &OM, UseListOrderStack &Stack) {
+  auto &IDPair = OM[V];
+  assert(IDPair.first && "Unmapped value");
+  if (IDPair.second)
+    // Already predicted.
+    return;
+
+  // Do the actual prediction.
+  IDPair.second = true;
+  if (!V->use_empty() && std::next(V->use_begin()) != V->use_end())
+    predictValueUseListOrderImpl(V, F, IDPair.first, OM, Stack);
+
+  // Recursive descent into constants.
+  if (const Constant *C = dyn_cast<Constant>(V))
+    if (C->getNumOperands() && !isa<GlobalValue>(C))
+      for (const Value *Op : C->operands())
+        if (isa<Constant>(Op) && !isa<GlobalValue>(Op))
+          predictValueUseListOrder(Op, F, OM, Stack);
+}
+
+static UseListOrderStack predictUseListOrder(const Module *M) {
+  OrderMap OM = orderModule(M);
+
+  // Use-list orders need to be serialized after all the users have been added
+  // to a value, or else the shuffles will be incomplete.  Store them per
+  // function in a stack.
+  //
+  // Aside from function order, the order of values doesn't matter much here.
+  UseListOrderStack Stack;
+
+  // We want to visit the functions backward now so we can list function-local
+  // constants in the last Function they're used in.  Module-level constants
+  // have already been visited above.
+  for (auto I = M->rbegin(), E = M->rend(); I != E; ++I) {
+    const Function &F = *I;
+    if (F.isDeclaration())
+      continue;
+    for (const BasicBlock &BB : F)
+      predictValueUseListOrder(&BB, &F, OM, Stack);
+    for (const Argument &A : F.args())
+      predictValueUseListOrder(&A, &F, OM, Stack);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        for (const Value *Op : I.operands())
+          if ((isa<Constant>(*Op) && !isa<GlobalValue>(*Op)) ||
+              isa<InlineAsm>(*Op))
+            predictValueUseListOrder(Op, &F, OM, Stack);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        predictValueUseListOrder(&I, &F, OM, Stack);
+  }
+
+  // Visit globals last, since the module-level use-list block will be seen
+  // before the function bodies are processed.
+  for (const GlobalVariable &G : M->globals())
+    predictValueUseListOrder(&G, nullptr, OM, Stack);
+  for (const Function &F : *M)
+    predictValueUseListOrder(&F, nullptr, OM, Stack);
+  for (const GlobalAlias &A : M->aliases())
+    predictValueUseListOrder(&A, nullptr, OM, Stack);
+  for (const GlobalVariable &G : M->globals())
+    if (G.hasInitializer())
+      predictValueUseListOrder(G.getInitializer(), nullptr, OM, Stack);
+  for (const GlobalAlias &A : M->aliases())
+    predictValueUseListOrder(A.getAliasee(), nullptr, OM, Stack);
+  for (const Function &F : *M)
+    if (F.hasPrefixData())
+      predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
+
+  return Stack;
+}
+
 static bool isIntOrIntVectorValue(const std::pair<const Value*, unsigned> &V) {
   return V.first->getType()->isIntOrIntVectorTy();
 }
 
 /// ValueEnumerator - Enumerate module-level information.
 ValueEnumerator::ValueEnumerator(const Module *M) {
+  if (shouldPreserveBitcodeUseListOrder())
+    UseListOrders = predictUseListOrder(M);
+
   // Enumerate the global variables.
   for (Module::const_global_iterator I = M->global_begin(),
+
          E = M->global_end(); I != E; ++I)
     EnumerateValue(I);
 

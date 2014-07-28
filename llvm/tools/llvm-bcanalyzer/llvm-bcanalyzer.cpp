@@ -271,7 +271,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
   case bitc::USELIST_BLOCK_ID:
     switch(CodeID) {
     default:return nullptr;
-    case bitc::USELIST_CODE_ENTRY:   return "USELIST_CODE_ENTRY";
+    case bitc::USELIST_CODE_DEFAULT: return "USELIST_CODE_DEFAULT";
+    case bitc::USELIST_CODE_BB:      return "USELIST_CODE_BB";
     }
   }
 }

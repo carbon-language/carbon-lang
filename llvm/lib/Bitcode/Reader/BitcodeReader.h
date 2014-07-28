@@ -138,7 +138,6 @@ class BitcodeReader : public GVMaterializer {
   BitcodeReaderMDValueList MDValueList;
   std::vector<Comdat *> ComdatList;
   SmallVector<Instruction *, 64> InstructionList;
-  SmallVector<SmallVector<uint64_t, 64>, 64> UseListRecords;
 
   std::vector<std::pair<GlobalVariable*, unsigned> > GlobalInits;
   std::vector<std::pair<GlobalAlias*, unsigned> > AliasInits;
