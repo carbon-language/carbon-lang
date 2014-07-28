@@ -30,7 +30,7 @@ br1:
 # variable ptr. ldr encodes the offset of the variable within the page. The ldr
 # instruction perfroms an implicit shift on the encoded immediate (imm<<3).
 # rtdyld-check:  decode_operand(adrp1, 1) = (_ptr[32:12] - adrp1[32:12])
-# rtdyld-check:  decode_operand(ldr1, 2) = (_ptr[11:3])
+# rtdyld-check:  decode_operand(ldr1, 2) = _ptr[11:3]
     .globl  _test_adrp_ldr
     .align  2
 _test_adrp_ldr:
@@ -48,7 +48,7 @@ ldr1:
 # encoded immediate (imm<<3).
 # rtdyld-check:  *{8}(stub_addr(<filename>, __text, _ptr)) = _ptr
 # rtdyld-check:  decode_operand(adrp2, 1) = (stub_addr(<filename>, __text, _ptr)[32:12] - adrp2[32:12])
-# rtdyld-check:  decode_operand(ldr2, 2) = (stub_addr(<filename>, __text, _ptr)[11:3])
+# rtdyld-check:  decode_operand(ldr2, 2) = stub_addr(<filename>, __text, _ptr)[11:3]
     .globl  _test_adrp_ldr
     .align  2
 _test_got_adrp_ldr:
