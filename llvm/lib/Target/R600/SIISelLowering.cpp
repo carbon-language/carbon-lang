@@ -290,19 +290,27 @@ bool SITargetLowering::shouldConvertConstantLoadToIntImm(const APInt &Imm,
 }
 
 SDValue SITargetLowering::LowerParameter(SelectionDAG &DAG, EVT VT, EVT MemVT,
-                                         SDLoc DL, SDValue Chain,
+                                         SDLoc SL, SDValue Chain,
                                          unsigned Offset, bool Signed) const {
-  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
-  PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
-                                            AMDGPUAS::CONSTANT_ADDRESS);
-  SDValue BasePtr =  DAG.getCopyFromReg(Chain, DL,
-                           MRI.getLiveInVirtReg(AMDGPU::SGPR0_SGPR1), MVT::i64);
-  SDValue Ptr = DAG.getNode(ISD::ADD, DL, MVT::i64, BasePtr,
-                                             DAG.getConstant(Offset, MVT::i64));
-  return DAG.getExtLoad(Signed ? ISD::SEXTLOAD : ISD::ZEXTLOAD, DL, VT, Chain, Ptr,
-                            MachinePointerInfo(UndefValue::get(PtrTy)), MemVT,
-                            false, false, MemVT.getSizeInBits() >> 3);
+  const DataLayout *DL = getDataLayout();
 
+  Type *Ty = VT.getTypeForEVT(*DAG.getContext());
+
+  MachineRegisterInfo &MRI = DAG.getMachineFunction().getRegInfo();
+  PointerType *PtrTy = PointerType::get(Ty, AMDGPUAS::CONSTANT_ADDRESS);
+  SDValue BasePtr =  DAG.getCopyFromReg(Chain, SL,
+                           MRI.getLiveInVirtReg(AMDGPU::SGPR0_SGPR1), MVT::i64);
+  SDValue Ptr = DAG.getNode(ISD::ADD, SL, MVT::i64, BasePtr,
+                                             DAG.getConstant(Offset, MVT::i64));
+  SDValue PtrOffset = DAG.getUNDEF(getPointerTy(AMDGPUAS::CONSTANT_ADDRESS));
+  MachinePointerInfo PtrInfo(UndefValue::get(PtrTy));
+
+  return DAG.getLoad(ISD::UNINDEXED, Signed ? ISD::SEXTLOAD : ISD::ZEXTLOAD,
+                     VT, SL, Chain, Ptr, PtrOffset, PtrInfo, MemVT,
+                     false, // isVolatile
+                     true, // isNonTemporal
+                     true, // isInvariant
+                     DL->getABITypeAlignment(Ty)); // Alignment
 }
 
 SDValue SITargetLowering::LowerFormalArguments(
