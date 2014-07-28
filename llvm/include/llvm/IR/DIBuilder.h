@@ -38,7 +38,6 @@ namespace llvm {
   class DIFile;
   class DIEnumerator;
   class DIType;
-  class DIArray;
   class DIGlobalVariable;
   class DIImportedEntity;
   class DINameSpace;
@@ -469,6 +468,9 @@ namespace llvm {
 
     /// getOrCreateArray - Get a DIArray, create one if required.
     DIArray getOrCreateArray(ArrayRef<Value *> Elements);
+
+    /// getOrCreateTypeArray - Get a DITypeArray, create one if required.
+    DITypeArray getOrCreateTypeArray(ArrayRef<Value *> Elements);
 
     /// getOrCreateSubrange - Create a descriptor for a value range.  This
     /// implicitly uniques the values returned.

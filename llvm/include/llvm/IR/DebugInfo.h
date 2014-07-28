@@ -167,16 +167,19 @@ public:
   bool Verify() const;
 };
 
-/// DIArray - This descriptor holds an array of descriptors.
-class DIArray : public DIDescriptor {
+/// DITypedArray - This descriptor holds an array of nodes with type T.
+template <typename T> class DITypedArray : public DIDescriptor {
 public:
-  explicit DIArray(const MDNode *N = nullptr) : DIDescriptor(N) {}
-
-  unsigned getNumElements() const;
-  DIDescriptor getElement(unsigned Idx) const {
-    return getDescriptorField(Idx);
+  explicit DITypedArray(const MDNode *N = nullptr) : DIDescriptor(N) {}
+  unsigned getNumElements() const {
+    return DbgNode ? DbgNode->getNumOperands() : 0;
+  }
+  T getElement(unsigned Idx) const {
+    return getFieldAs<T>(Idx);
   }
 };
+
+typedef DITypedArray<DIDescriptor> DIArray;
 
 /// DIEnumerator - A wrapper for an enumerator (e.g. X and Y in 'enum {X,Y}').
 /// FIXME: it seems strange that this doesn't have either a reference to the
@@ -196,6 +199,7 @@ public:
 template <typename T> class DIRef;
 typedef DIRef<DIScope> DIScopeRef;
 typedef DIRef<DIType> DITypeRef;
+typedef DITypedArray<DITypeRef> DITypeArray;
 
 /// DIScope - A base class for various scopes.
 ///
@@ -421,12 +425,19 @@ public:
 class DICompositeType : public DIDerivedType {
   friend class DIDescriptor;
   void printInternal(raw_ostream &OS) const;
+  void setArraysHelper(MDNode *Elements, MDNode *TParams);
 
 public:
   explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
 
   DIArray getElements() const { return getFieldAs<DIArray>(10); }
-  void setArrays(DIArray Elements, DIArray TParams = DIArray());
+  template <typename T>
+  void setArrays(DITypedArray<T> Elements, DIArray TParams = DIArray()) {
+    assert((!TParams || DbgNode->getNumOperands() == 15) &&
+           "If you're setting the template parameters this should include a slot "
+           "for that!");
+    setArraysHelper(Elements, TParams);
+  }
   unsigned getRunTimeLang() const { return getUnsignedField(11); }
   DITypeRef getContainingType() const { return getFieldAs<DITypeRef>(12); }
   void setContainingType(DICompositeType ContainingType);

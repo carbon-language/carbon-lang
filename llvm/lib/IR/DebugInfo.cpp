@@ -338,12 +338,6 @@ bool DIDescriptor::isImportedEntity() const {
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
 
-unsigned DIArray::getNumElements() const {
-  if (!DbgNode)
-    return 0;
-  return DbgNode->getNumOperands();
-}
-
 /// replaceAllUsesWith - Replace all uses of the MDNode used by this
 /// type with the one in the passed descriptor.
 void DIType::replaceAllUsesWith(LLVMContext &VMContext, DIDescriptor D) {
@@ -676,10 +670,7 @@ static void VerifySubsetOf(const MDNode *LHS, const MDNode *RHS) {
 #endif
 
 /// \brief Set the array of member DITypes.
-void DICompositeType::setArrays(DIArray Elements, DIArray TParams) {
-  assert((!TParams || DbgNode->getNumOperands() == 15) &&
-         "If you're setting the template parameters this should include a slot "
-         "for that!");
+void DICompositeType::setArraysHelper(MDNode *Elements, MDNode *TParams) {
   TrackingVH<MDNode> N(*this);
   if (Elements) {
 #ifndef NDEBUG
