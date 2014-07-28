@@ -475,11 +475,11 @@ bool SIInstrInfo::isDS(uint16_t Opcode) const {
   return ::AMDGPU::isDS(Opcode) != -1;
 }
 
-int SIInstrInfo::isMIMG(uint16_t Opcode) const {
+bool SIInstrInfo::isMIMG(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::MIMG;
 }
 
-int SIInstrInfo::isSMRD(uint16_t Opcode) const {
+bool SIInstrInfo::isSMRD(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::SMRD;
 }
 
