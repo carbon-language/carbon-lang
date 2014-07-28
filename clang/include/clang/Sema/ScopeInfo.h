@@ -187,8 +187,6 @@ public:
     /// Used to find the proper base profile for a given base expression.
     static BaseInfoTy getBaseInfo(const Expr *BaseE);
 
-    // For use in DenseMap.
-    friend class DenseMapInfo;
     inline WeakObjectProfileTy();
     static inline WeakObjectProfileTy getSentinel();
 
