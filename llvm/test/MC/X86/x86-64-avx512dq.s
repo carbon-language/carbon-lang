@@ -1,5 +1,29 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=skx  --show-encoding %s | FileCheck %s
 
+// CHECK: kandb  %k6, %k5, %k2
+// CHECK:  encoding: [0xc5,0xd5,0x41,0xd6]
+          kandb  %k6, %k5, %k2
+
+// CHECK: kandnb %k4, %k6, %k5
+// CHECK:  encoding: [0xc5,0xcd,0x42,0xec]
+          kandnb %k4, %k6, %k5
+
+// CHECK: korb   %k5, %k4, %k4
+// CHECK:  encoding: [0xc5,0xdd,0x45,0xe5]
+          korb   %k5, %k4, %k4
+
+// CHECK: kxnorb %k7, %k6, %k4
+// CHECK:  encoding: [0xc5,0xcd,0x46,0xe7]
+          kxnorb %k7, %k6, %k4
+
+// CHECK: kxorb  %k5, %k6, %k4
+// CHECK:  encoding: [0xc5,0xcd,0x47,0xe5]
+          kxorb  %k5, %k6, %k4
+
+// CHECK: knotb  %k4, %k5
+// CHECK:  encoding: [0xc5,0xf9,0x44,0xec]
+          knotb  %k4, %k5
+
 // CHECK: knotb  %k3, %k3
 // CHECK:  encoding: [0xc5,0xf9,0x44,0xdb]
           knotb  %k3, %k3

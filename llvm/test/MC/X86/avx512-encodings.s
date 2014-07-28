@@ -2489,6 +2489,26 @@
 // CHECK:  encoding: [0x62,0x71,0x24,0x50,0x5c,0xb2,0xfc,0xfd,0xff,0xff]
           vsubps -516(%rdx){1to16}, %zmm27, %zmm14
 
+// CHECK: kandw  %k6, %k5, %k2
+// CHECK:  encoding: [0xc5,0xd4,0x41,0xd6]
+          kandw  %k6, %k5, %k2
+
+// CHECK: kandnw %k7, %k6, %k4
+// CHECK:  encoding: [0xc5,0xcc,0x42,0xe7]
+          kandnw %k7, %k6, %k4
+
+// CHECK: korw   %k7, %k6, %k4
+// CHECK:  encoding: [0xc5,0xcc,0x45,0xe7]
+          korw   %k7, %k6, %k4
+
+// CHECK: kxnorw %k5, %k5, %k3
+// CHECK:  encoding: [0xc5,0xd4,0x46,0xdd]
+          kxnorw %k5, %k5, %k3
+
+// CHECK: kxorw  %k7, %k6, %k2
+// CHECK:  encoding: [0xc5,0xcc,0x47,0xd7]
+          kxorw  %k7, %k6, %k2
+
 // CHECK: knotw  %k6, %k3
 // CHECK:  encoding: [0xc5,0xf8,0x44,0xde]
           knotw  %k6, %k3

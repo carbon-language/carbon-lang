@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -mcpu=knl | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=knl | FileCheck %s
 
 define i16 @mask16(i16 %x) {
   %m0 = bitcast i16 %x to <16 x i1>

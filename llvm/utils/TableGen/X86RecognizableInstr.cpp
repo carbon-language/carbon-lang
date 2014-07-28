@@ -1117,6 +1117,8 @@ RecognizableInstr::vvvvRegisterEncodingFromString(const std::string &s,
   ENCODING("VK4",             ENCODING_VVVV)
   ENCODING("VK8",             ENCODING_VVVV)
   ENCODING("VK16",            ENCODING_VVVV)
+  ENCODING("VK32",            ENCODING_VVVV)
+  ENCODING("VK64",            ENCODING_VVVV)
   errs() << "Unhandled VEX.vvvv register encoding " << s << "\n";
   llvm_unreachable("Unhandled VEX.vvvv register encoding");
 }

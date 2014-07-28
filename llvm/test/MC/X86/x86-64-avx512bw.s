@@ -1,5 +1,45 @@
 // RUN: llvm-mc -triple x86_64-unknown-unknown -mcpu=skx  --show-encoding %s | FileCheck %s
 
+// CHECK: kandq  %k7, %k5, %k5
+// CHECK:  encoding: [0xc4,0xe1,0xd4,0x41,0xef]
+          kandq  %k7, %k5, %k5
+
+// CHECK: kandd  %k4, %k5, %k5
+// CHECK:  encoding: [0xc4,0xe1,0xd5,0x41,0xec]
+          kandd  %k4, %k5, %k5
+
+// CHECK: kandnq %k4, %k5, %k2
+// CHECK:  encoding: [0xc4,0xe1,0xd4,0x42,0xd4]
+          kandnq %k4, %k5, %k2
+
+// CHECK: kandnd %k6, %k6, %k3
+// CHECK:  encoding: [0xc4,0xe1,0xcd,0x42,0xde]
+          kandnd %k6, %k6, %k3
+
+// CHECK: korq   %k4, %k5, %k4
+// CHECK:  encoding: [0xc4,0xe1,0xd4,0x45,0xe4]
+          korq   %k4, %k5, %k4
+
+// CHECK: kord   %k6, %k6, %k5
+// CHECK:  encoding: [0xc4,0xe1,0xcd,0x45,0xee]
+          kord   %k6, %k6, %k5
+
+// CHECK: kxnorq %k6, %k5, %k2
+// CHECK:  encoding: [0xc4,0xe1,0xd4,0x46,0xd6]
+          kxnorq %k6, %k5, %k2
+
+// CHECK: kxnord %k5, %k3, %k5
+// CHECK:  encoding: [0xc4,0xe1,0xe5,0x46,0xed]
+          kxnord %k5, %k3, %k5
+
+// CHECK: kxorq  %k4, %k3, %k2
+// CHECK:  encoding: [0xc4,0xe1,0xe4,0x47,0xd4]
+          kxorq  %k4, %k3, %k2
+
+// CHECK: kxord  %k6, %k5, %k2
+// CHECK:  encoding: [0xc4,0xe1,0xd5,0x47,0xd6]
+          kxord  %k6, %k5, %k2
+
 // CHECK: knotq  %k6, %k3
 // CHECK:  encoding: [0xc4,0xe1,0xf8,0x44,0xde]
           knotq  %k6, %k3

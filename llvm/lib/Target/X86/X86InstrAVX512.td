@@ -1247,31 +1247,38 @@ def : Pat<(not VK8:$src),
 // Mask binary operation
 // - KAND, KANDN, KOR, KXNOR, KXOR
 multiclass avx512_mask_binop<bits<8> opc, string OpcodeStr,
-                           RegisterClass KRC, SDPatternOperator OpNode> {
-  let Predicates = [HasAVX512] in
+                           RegisterClass KRC, SDPatternOperator OpNode,
+                           Predicate prd> {
+  let Predicates = [prd] in
     def rr : I<opc, MRMSrcReg, (outs KRC:$dst), (ins KRC:$src1, KRC:$src2),
                !strconcat(OpcodeStr,
                           " \t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                [(set KRC:$dst, (OpNode KRC:$src1, KRC:$src2))]>;
 }
 
-multiclass avx512_mask_binop_w<bits<8> opc, string OpcodeStr,
-                             SDPatternOperator OpNode> {
-  defm W : avx512_mask_binop<opc, !strconcat(OpcodeStr, "w"), VK16, OpNode>,
-                           VEX_4V, VEX_L, PS;
+multiclass avx512_mask_binop_all<bits<8> opc, string OpcodeStr,
+                               SDPatternOperator OpNode> {
+  defm B : avx512_mask_binop<opc, !strconcat(OpcodeStr, "b"), VK8, OpNode,
+                             HasDQI>, VEX_4V, VEX_L, PD;
+  defm W : avx512_mask_binop<opc, !strconcat(OpcodeStr, "w"), VK16, OpNode,
+                             HasAVX512>, VEX_4V, VEX_L, PS;
+  defm D : avx512_mask_binop<opc, !strconcat(OpcodeStr, "d"), VK32, OpNode,
+                             HasBWI>, VEX_4V, VEX_L, VEX_W, PD;
+  defm Q : avx512_mask_binop<opc, !strconcat(OpcodeStr, "q"), VK64, OpNode,
+                             HasBWI>, VEX_4V, VEX_L, VEX_W, PS;
 }
 
 def andn : PatFrag<(ops node:$i0, node:$i1), (and (not node:$i0), node:$i1)>;
 def xnor : PatFrag<(ops node:$i0, node:$i1), (not (xor node:$i0, node:$i1))>;
 
 let isCommutable = 1 in {
-  defm KAND  : avx512_mask_binop_w<0x41, "kand",  and>;
-  let isCommutable = 0 in
-  defm KANDN : avx512_mask_binop_w<0x42, "kandn", andn>;
-  defm KOR   : avx512_mask_binop_w<0x45, "kor",   or>;
-  defm KXNOR : avx512_mask_binop_w<0x46, "kxnor", xnor>;
-  defm KXOR  : avx512_mask_binop_w<0x47, "kxor",  xor>;
+  defm KAND  : avx512_mask_binop_all<0x41, "kand",  and>;
+  defm KOR   : avx512_mask_binop_all<0x45, "kor",   or>;
+  defm KXNOR : avx512_mask_binop_all<0x46, "kxnor", xnor>;
+  defm KXOR  : avx512_mask_binop_all<0x47, "kxor",  xor>;
 }
+let isCommutable = 0 in
+  defm KANDN : avx512_mask_binop_all<0x42, "kandn", andn>;
 
 def : Pat<(xor VK1:$src1, VK1:$src2),
      (COPY_TO_REGCLASS (KXORWrr (COPY_TO_REGCLASS VK1:$src1, VK16),
