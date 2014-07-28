@@ -434,8 +434,9 @@ namespace llvm {
     ///                        includes return type at 0th index.
     /// @param Flags           E.g.: LValueReference.
     ///                        These flags are used to emit dwarf attributes.
-    DICompositeType createSubroutineType(DIFile File, DIArray ParameterTypes,
-                                         unsigned Flags = 0);
+    DISubroutineType createSubroutineType(DIFile File,
+                                          DITypeArray ParameterTypes,
+                                          unsigned Flags = 0);
 
     /// createArtificialType - Create a new DIType with "artificial" flag set.
     DIType createArtificialType(DIType Ty);

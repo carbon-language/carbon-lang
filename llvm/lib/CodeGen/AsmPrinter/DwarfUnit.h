@@ -422,7 +422,7 @@ public:
                                             bool Abstract = false);
 
   /// constructSubprogramArguments - Construct function argument DIEs.
-  void constructSubprogramArguments(DIE &Buffer, DIArray Args);
+  void constructSubprogramArguments(DIE &Buffer, DITypeArray Args);
 
   /// Create a DIE with the given Tag, add the DIE to its parent, and
   /// call insertDIE if MD is not null.

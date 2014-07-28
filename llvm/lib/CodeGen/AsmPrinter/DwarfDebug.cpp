@@ -468,8 +468,8 @@ DIE *DwarfDebug::createScopeChildrenDIE(
 
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
-    DIArray FnArgs = SP.getType().getElements();
-    if (FnArgs.getElement(FnArgs.getNumElements() - 1)
+    DITypeArray FnArgs = SP.getType().getTypeArray();
+    if (resolve(FnArgs.getElement(FnArgs.getNumElements() - 1))
             .isUnspecifiedParameter()) {
       Children.push_back(
           make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));

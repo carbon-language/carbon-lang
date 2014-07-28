@@ -440,7 +440,7 @@ private:
       Params.push_back(getOrCreateType(T));
     }
 
-    DIArray ParamArray = Builder.getOrCreateArray(Params);
+    DITypeArray ParamArray = Builder.getOrCreateTypeArray(Params);
     return Builder.createSubroutineType(DIFile(FileNode), ParamArray);
   }
 

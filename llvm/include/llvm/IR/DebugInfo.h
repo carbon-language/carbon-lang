@@ -127,6 +127,7 @@ public:
 
   bool isDerivedType() const;
   bool isCompositeType() const;
+  bool isSubroutineType() const;
   bool isBasicType() const;
   bool isTrivialType() const;
   bool isVariable() const;
@@ -430,7 +431,10 @@ class DICompositeType : public DIDerivedType {
 public:
   explicit DICompositeType(const MDNode *N = nullptr) : DIDerivedType(N) {}
 
-  DIArray getElements() const { return getFieldAs<DIArray>(10); }
+  DIArray getElements() const {
+    assert(!isSubroutineType() && "no elements for DISubroutineType");
+    return getFieldAs<DIArray>(10);
+  }
   template <typename T>
   void setArrays(DITypedArray<T> Elements, DIArray TParams = DIArray()) {
     assert((!TParams || DbgNode->getNumOperands() == 15) &&
@@ -446,6 +450,14 @@ public:
 
   /// Verify - Verify that a composite type descriptor is well formed.
   bool Verify() const;
+};
+
+class DISubroutineType : public DICompositeType {
+public:
+  explicit DISubroutineType(const MDNode *N = nullptr) : DICompositeType(N) {}
+  DITypedArray<DITypeRef> getTypeArray() const {
+    return getFieldAs<DITypedArray<DITypeRef>>(10);
+  }
 };
 
 /// DIFile - This is a wrapper for a file.
@@ -501,7 +513,7 @@ public:
   StringRef getDisplayName() const { return getStringField(4); }
   StringRef getLinkageName() const { return getStringField(5); }
   unsigned getLineNumber() const { return getUnsignedField(6); }
-  DICompositeType getType() const { return getFieldAs<DICompositeType>(7); }
+  DISubroutineType getType() const { return getFieldAs<DISubroutineType>(7); }
 
   /// isLocalToUnit - Return true if this subprogram is local to the current
   /// compile unit, like 'static' in C.

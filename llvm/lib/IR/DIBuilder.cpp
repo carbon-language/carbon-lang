@@ -720,9 +720,9 @@ DICompositeType DIBuilder::createUnionType(DIDescriptor Scope, StringRef Name,
 }
 
 /// createSubroutineType - Create subroutine type.
-DICompositeType DIBuilder::createSubroutineType(DIFile File,
-                                                DIArray ParameterTypes,
-                                                unsigned Flags) {
+DISubroutineType DIBuilder::createSubroutineType(DIFile File,
+                                                 DITypeArray ParameterTypes,
+                                                 unsigned Flags) {
   // TAG_subroutine_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subroutine_type),
@@ -741,7 +741,7 @@ DICompositeType DIBuilder::createSubroutineType(DIFile File,
     nullptr,
     nullptr  // Type Identifer
   };
-  return DICompositeType(MDNode::get(VMContext, Elts));
+  return DISubroutineType(MDNode::get(VMContext, Elts));
 }
 
 /// createEnumerationType - Create debugging information entry for an

@@ -1129,9 +1129,9 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 }
 
 /// constructSubprogramArguments - Construct function argument DIEs.
-void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DIArray Args) {
+void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
   for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
-    DIDescriptor Ty = Args.getElement(i);
+    DIType Ty = resolve(Args.getElement(i));
     if (Ty.isUnspecifiedParameter()) {
       assert(i == N-1 && "Unspecified parameter must be the last argument");
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
@@ -1161,14 +1161,14 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
     break;
   case dwarf::DW_TAG_subroutine_type: {
     // Add return type. A void return won't have a type.
-    DIArray Elements = CTy.getElements();
-    DIType RTy(Elements.getElement(0));
+    DITypeArray Elements = DISubroutineType(CTy).getTypeArray();
+    DIType RTy(resolve(Elements.getElement(0)));
     if (RTy)
       addType(Buffer, RTy);
 
     bool isPrototyped = true;
     if (Elements.getNumElements() == 2 &&
-        Elements.getElement(1).isUnspecifiedParameter())
+        resolve(Elements.getElement(1)).isUnspecifiedParameter())
       isPrototyped = false;
 
     constructSubprogramArguments(Buffer, Elements);
@@ -1452,15 +1452,15 @@ void DwarfUnit::applySubprogramAttributes(DISubprogram SP, DIE &SPDie) {
        Language == dwarf::DW_LANG_ObjC))
     addFlag(SPDie, dwarf::DW_AT_prototyped);
 
-  DICompositeType SPTy = SP.getType();
+  DISubroutineType SPTy = SP.getType();
   assert(SPTy.getTag() == dwarf::DW_TAG_subroutine_type &&
          "the type of a subprogram should be a subroutine");
 
-  DIArray Args = SPTy.getElements();
+  DITypeArray Args = SPTy.getTypeArray();
   // Add a return type. If this is a type like a C/C++ void type we don't add a
   // return type.
-  if (Args.getElement(0))
-    addType(SPDie, DIType(Args.getElement(0)));
+  if (resolve(Args.getElement(0)))
+    addType(SPDie, DIType(resolve(Args.getElement(0))));
 
   unsigned VK = SP.getVirtuality();
   if (VK) {

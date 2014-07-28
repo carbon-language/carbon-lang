@@ -159,6 +159,10 @@ bool DIDescriptor::isTrivialType() const {
   return DbgNode && getTag() == dwarf::DW_TAG_unspecified_parameters;
 }
 
+bool DIDescriptor::isSubroutineType() const {
+  return isCompositeType() && getTag() == dwarf::DW_TAG_subroutine_type;
+}
+
 /// isBasicType - Return true if the specified tag is legal for
 /// DIBasicType.
 bool DIDescriptor::isBasicType() const {
@@ -1055,6 +1059,12 @@ void DebugInfoFinder::processType(DIType DT) {
   if (DT.isCompositeType()) {
     DICompositeType DCT(DT);
     processType(DCT.getTypeDerivedFrom().resolve(TypeIdentifierMap));
+    if (DT.isSubroutineType()) {
+      DITypeArray DTA = DISubroutineType(DT).getTypeArray();
+      for (unsigned i = 0, e = DTA.getNumElements(); i != e; ++i)
+        processType(DTA.getElement(i).resolve(TypeIdentifierMap));
+      return;
+    }
     DIArray DA = DCT.getElements();
     for (unsigned i = 0, e = DA.getNumElements(); i != e; ++i) {
       DIDescriptor D = DA.getElement(i);
