@@ -784,7 +784,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
       EltTys.push_back(DBuilder.createUnspecifiedParameter());
   }
 
-  llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
+  llvm::DITypeArray EltTypeArray = DBuilder.getOrCreateTypeArray(EltTys);
   return DBuilder.createSubroutineType(Unit, EltTypeArray);
 }
 
@@ -986,8 +986,8 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
 llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
     QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit) {
   // Add "this" pointer.
-  llvm::DIArray Args = llvm::DICompositeType(
-      getOrCreateType(QualType(Func, 0), Unit)).getElements();
+  llvm::DITypeArray Args = llvm::DISubroutineType(
+      getOrCreateType(QualType(Func, 0), Unit)).getTypeArray();
   assert (Args.getNumElements() && "Invalid number of arguments!");
 
   SmallVector<llvm::Value *, 16> Elts;
@@ -1024,7 +1024,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
   for (unsigned i = 1, e = Args.getNumElements(); i != e; ++i)
     Elts.push_back(Args.getElement(i));
 
-  llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
+  llvm::DITypeArray EltTypeArray = DBuilder.getOrCreateTypeArray(Elts);
 
   unsigned Flags = 0;
   if (Func->getExtProtoInfo().RefQualifier == RQ_LValue)
@@ -1374,7 +1374,7 @@ llvm::DIType CGDebugInfo::getOrCreateVTablePtrType(llvm::DIFile Unit) {
 
   /* Function type */
   llvm::Value *STy = getOrCreateType(Context.IntTy, Unit);
-  llvm::DIArray SElements = DBuilder.getOrCreateArray(STy);
+  llvm::DITypeArray SElements = DBuilder.getOrCreateTypeArray(STy);
   llvm::DIType SubTy = DBuilder.createSubroutineType(Unit, SElements);
   unsigned Size = Context.getTypeSize(Context.VoidPtrTy);
   llvm::DIType vtbl_ptr_type = DBuilder.createPointerType(SubTy, Size, 0,
@@ -2392,7 +2392,8 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     // llvm::DISubprogram::Verify() would return false, and
     // subprogram DIE will miss DW_AT_decl_file and
     // DW_AT_decl_line fields.
-    return DBuilder.createSubroutineType(F, DBuilder.getOrCreateArray(None));
+    return DBuilder.createSubroutineType(F,
+                                         DBuilder.getOrCreateTypeArray(None));
 
   if (const CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(D))
     return getOrCreateMethodType(Method, F);
@@ -2420,7 +2421,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
     for (const auto *PI : OMethod->params())
       Elts.push_back(getOrCreateType(PI->getType(), F));
 
-    llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(Elts);
+    llvm::DITypeArray EltTypeArray = DBuilder.getOrCreateTypeArray(Elts);
     return DBuilder.createSubroutineType(F, EltTypeArray);
   }
 
@@ -2434,7 +2435,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateFunctionType(const Decl *D,
         for (unsigned i = 0, e = FPT->getNumParams(); i != e; ++i)
           EltTys.push_back(getOrCreateType(FPT->getParamType(i), F));
       EltTys.push_back(DBuilder.createUnspecifiedParameter());
-      llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
+      llvm::DITypeArray EltTypeArray = DBuilder.getOrCreateTypeArray(EltTys);
       return DBuilder.createSubroutineType(F, EltTypeArray);
     }
 
