@@ -3972,6 +3972,13 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
 
     if (SemaRef.getLangOpts().GNUMode)
       Consumer.addKeywordResult("typeof");
+  } else if (CCC.WantFunctionLikeCasts) {
+    static const char *const CastableTypeSpecs[] = {
+      "char", "double", "float", "int", "long", "short",
+      "signed", "unsigned", "void"
+    };
+    for (auto *kw : CastableTypeSpecs)
+      Consumer.addKeywordResult(kw);
   }
 
   if (CCC.WantCXXNamedCasts && SemaRef.getLangOpts().CPlusPlus) {
@@ -4461,7 +4468,8 @@ FunctionCallFilterCCC::FunctionCallFilterCCC(Sema &SemaRef, unsigned NumArgs,
                                              MemberExpr *ME)
     : NumArgs(NumArgs), HasExplicitTemplateArgs(HasExplicitTemplateArgs),
       CurContext(SemaRef.CurContext), MemberFn(ME) {
-  WantTypeSpecifiers = SemaRef.getLangOpts().CPlusPlus;
+  WantTypeSpecifiers = false;
+  WantFunctionLikeCasts = SemaRef.getLangOpts().CPlusPlus && NumArgs == 1;
   WantRemainingKeywords = false;
 }
 

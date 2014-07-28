@@ -300,3 +300,12 @@ namespace PR19681 {
     (void)static_cast<void(TypoB::*)(int)>(&TypoA::private_memfn);  // expected-error{{no member named 'private_memfn' in 'PR19681::TypoA'; did you mean '::PR19681::TypoB::private_memfn'?}}
   }
 }
+
+namespace testWantFunctionLikeCasts {
+  long test(bool a) {
+    if (a)
+      return struc(5.7);  // expected-error-re {{use of undeclared identifier 'struc'{{$}}}}
+    else
+      return lon(8.0);  // expected-error {{use of undeclared identifier 'lon'; did you mean 'long'?}}
+  }
+}
