@@ -3,7 +3,7 @@
 ; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=emit-llvm \
 ; RUN:    -shared %t.o -o %t2.o
-; RUN: llvm-dis %t2.o -o /dev/null
+; RUN: llvm-dis %t2.o -o - | FileCheck %s
 
 ; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
 ; RUN:    --plugin-opt=also-emit-llvm \
@@ -16,3 +16,15 @@
 ; RUN: llvm-dis %t4 -o /dev/null
 
 target triple = "x86_64-unknown-linux-gnu"
+
+; CHECK: define internal void @f()
+define hidden void @f() {
+  ret void
+}
+
+; CHECK: define hidden void @g()
+define hidden void @g() {
+  ret void
+}
+
+@llvm.used = appending global [1 x i8*] [ i8* bitcast (void ()* @g to i8*)]
