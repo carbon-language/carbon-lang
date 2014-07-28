@@ -463,9 +463,9 @@ namespace llvm {
     /// through debug info anchors.
     void retainType(DIType T);
 
-    /// createUnspecifiedParameter - Create unspecified type descriptor
+    /// createUnspecifiedParameter - Create unspecified parameter type
     /// for a subroutine type.
-    DIDescriptor createUnspecifiedParameter();
+    DITrivialType createUnspecifiedParameter();
 
     /// getOrCreateArray - Get a DIArray, create one if required.
     DIArray getOrCreateArray(ArrayRef<Value *> Elements);
