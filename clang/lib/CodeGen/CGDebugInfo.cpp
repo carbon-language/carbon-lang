@@ -425,7 +425,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
         DBuilder.createStructType(TheCU, "objc_object", getOrCreateMainFile(),
                                   0, 0, 0, 0, llvm::DIType(), llvm::DIArray());
 
-    ObjTy.setTypeArray(DBuilder.getOrCreateArray(&*DBuilder.createMemberType(
+    ObjTy.setArrays(DBuilder.getOrCreateArray(&*DBuilder.createMemberType(
         ObjTy, "isa", getOrCreateMainFile(), 0, Size, 0, 0, 0, ISATy)));
     return ObjTy;
   }
@@ -987,7 +987,7 @@ llvm::DICompositeType CGDebugInfo::getOrCreateInstanceMethodType(
     QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit) {
   // Add "this" pointer.
   llvm::DIArray Args = llvm::DICompositeType(
-      getOrCreateType(QualType(Func, 0), Unit)).getTypeArray();
+      getOrCreateType(QualType(Func, 0), Unit)).getElements();
   assert (Args.getNumElements() && "Invalid number of arguments!");
 
   SmallVector<llvm::Value *, 16> Elts;
@@ -1589,7 +1589,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const RecordType *Ty) {
   RegionMap.erase(Ty->getDecl());
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  FwdDecl.setTypeArray(Elements);
+  FwdDecl.setArrays(Elements);
 
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
   return FwdDecl;
@@ -1796,7 +1796,7 @@ llvm::DIType CGDebugInfo::CreateTypeDefinition(const ObjCInterfaceType *Ty, llvm
   }
 
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  RealDecl.setTypeArray(Elements);
+  RealDecl.setArrays(Elements);
 
   LexicalBlockStack.pop_back();
   return RealDecl;
@@ -2214,7 +2214,7 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(const RecordType *Ty,
   // Propagate members from the declaration to the definition
   // CreateType(const RecordType*) will overwrite this with the members in the
   // correct order if the full type is needed.
-  Res.setTypeArray(T.getTypeArray());
+  Res.setArrays(T.getElements());
 
   // And update the type cache.
   TypeCache[QTy.getAsOpaquePtr()] = Res;
@@ -2273,7 +2273,7 @@ llvm::DICompositeType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
 
   if (const ClassTemplateSpecializationDecl *TSpecial =
           dyn_cast<ClassTemplateSpecializationDecl>(RD))
-    RealDecl.setTypeArray(llvm::DIArray(),
+    RealDecl.setArrays(llvm::DIArray(),
                           CollectCXXTemplateParams(TSpecial, DefUnit));
   return RealDecl;
 }
