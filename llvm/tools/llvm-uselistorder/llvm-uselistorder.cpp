@@ -40,6 +40,9 @@ static cl::opt<std::string> InputFilename(cl::Positional,
                                           cl::init("-"),
                                           cl::value_desc("filename"));
 
+static cl::opt<bool> SaveTemps("save-temps", cl::desc("Save temp files"),
+                               cl::init(false));
+
 namespace {
 
 struct TempFile {
@@ -89,7 +92,7 @@ bool TempFile::init(const std::string &Ext) {
   assert(!Vector.empty());
 
   Filename.assign(Vector.data(), Vector.data() + Vector.size());
-  Remover.setFile(Filename);
+  Remover.setFile(Filename, !SaveTemps);
   DEBUG(dbgs() << " - filename = " << Filename << "\n");
   return false;
 }
