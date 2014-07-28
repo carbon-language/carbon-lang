@@ -32,6 +32,40 @@ using namespace lldb_private;
 
 static uint32_t g_initialize_count = 0;
 
+namespace
+{
+    class SupportedArchList
+    {
+    public:
+        SupportedArchList()
+        {
+            AddArch(ArchSpec("i686-pc-windows"));
+            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture));
+            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture32));
+            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture64));
+            AddArch(ArchSpec("i386-pc-windows"));
+        }
+
+        size_t Count() const { return m_archs.size(); }
+
+        const ArchSpec& operator[](int idx) { return m_archs[idx]; }
+
+    private:
+        void AddArch(const ArchSpec& spec)
+        {
+            auto iter = std::find_if(
+                m_archs.begin(), m_archs.end(), 
+                [spec](const ArchSpec& rhs) { return spec.IsExactMatch(rhs); });
+            if (iter != m_archs.end())
+                return;
+            if (spec.IsValid())
+                m_archs.push_back(spec);
+        }
+
+        std::vector<ArchSpec> m_archs;
+    };
+}
+
 Platform *
 PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
 {
@@ -605,26 +639,12 @@ PlatformWindows::GetSharedModule (const ModuleSpec &module_spec,
 bool
 PlatformWindows::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    // From macosx;s plugin code. For FreeBSD we may want to support more archs.
-    if (idx == 0)
-    {
-        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
-        return arch.IsValid();
-    }
-    else if (idx == 1)
-    {
-        ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
-        ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
-        if (platform_arch.IsExactMatch(platform_arch64))
-        {
-            // This freebsd platform supports both 32 and 64 bit. Since we already
-            // returned the 64 bit arch for idx == 0, return the 32 bit arch
-            // for idx == 1
-            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
-            return arch.IsValid();
-        }
-    }
-    return false;
+    static SupportedArchList architectures;
+
+    if (idx >= architectures.Count())
+        return false;
+    arch = architectures[idx];
+    return true;
 }
 
 void

@@ -18,6 +18,31 @@ class ObjectFilePECOFF :
     public lldb_private::ObjectFile
 {
 public:
+    typedef enum MachineType
+    {
+        MachineUnknown = 0x0,
+        MachineAm33 = 0x1d3,
+        MachineAmd64 = 0x8664,
+        MachineArm = 0x1c0,
+        MachineArmNt = 0x1c4,
+        MachineArm64 = 0xaa64,
+        MachineEbc = 0xebc,
+        MachineX86 = 0x14c,
+        MachineIA64 = 0x200,
+        MachineM32R = 0x9041,
+        MachineMips16 = 0x266,
+        MachineMipsFpu = 0x366,
+        MachineMipsFpu16 = 0x466,
+        MachinePowerPc = 0x1f0,
+        MachinePowerPcfp = 0x1f1,
+        MachineR4000 = 0x166,
+        MachineSh3 = 0x1a2,
+        MachineSh3dsp = 0x1a3,
+        MachineSh4 = 0x1a6,
+        MachineSh5 = 0x1a8,
+        MachineThumb = 0x1c2,
+        MachineWcemIpsv2 = 0x169
+    };
     
     //------------------------------------------------------------------
     // Static Functions
