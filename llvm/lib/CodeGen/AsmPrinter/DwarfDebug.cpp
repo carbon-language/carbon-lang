@@ -762,8 +762,13 @@ void DwarfDebug::beginModule() {
     for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
       SPMap.insert(std::make_pair(SPs.getElement(i), &CU));
     DIArray EnumTypes = CUNode.getEnumTypes();
-    for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
-      CU.getOrCreateTypeDIE(EnumTypes.getElement(i));
+    for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i) {
+      DIType Ty(EnumTypes.getElement(i));
+      // The enum types array by design contains pointers to
+      // MDNodes rather than DIRefs. Unique them here.
+      DIType UniqueTy(resolve(Ty.getRef()));
+      CU.getOrCreateTypeDIE(UniqueTy);
+    }
     DIArray RetainedTypes = CUNode.getRetainedTypes();
     for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i) {
       DIType Ty(RetainedTypes.getElement(i));
