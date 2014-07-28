@@ -93,6 +93,42 @@ _mm512_setzero_pd(void)
 
 /* Arithmetic */
 
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_add_pd(__m512d __a, __m512d __b)
+{
+  return __a + __b;
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_add_ps(__m512 __a, __m512 __b)
+{
+  return __a + __b;
+}
+
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_mul_pd(__m512d __a, __m512d __b)
+{
+  return __a * __b;
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_mul_ps(__m512 __a, __m512 __b)
+{
+  return __a * __b;
+}
+
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_sub_pd(__m512d __a, __m512d __b)
+{
+  return __a - __b;
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_sub_ps(__m512 __a, __m512 __b)
+{
+  return __a - __b;
+}
+
 static  __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
 _mm512_max_pd(__m512d __A, __m512d __B)
 {

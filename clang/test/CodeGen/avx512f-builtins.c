@@ -32,3 +32,31 @@ __m512 test_mm512_rsqrt14_ps(__m512 a)
   // CHECK: @llvm.x86.avx512.rsqrt14.ps.512
   return _mm512_rsqrt14_ps(a);
 }
+
+__m512 test_mm512_add_ps(__m512 a, __m512 b)
+{
+  // CHECK-LABEL: @test_mm512_add_ps
+  // CHECK: fadd <16 x float>
+  return _mm512_add_ps(a, b);
+}
+
+__m512d test_mm512_add_pd(__m512d a, __m512d b)
+{
+  // CHECK-LABEL: @test_mm512_add_pd
+  // CHECK: fadd <8 x double>
+  return _mm512_add_pd(a, b);
+}
+
+__m512 test_mm512_mul_ps(__m512 a, __m512 b)
+{
+  // CHECK-LABEL: @test_mm512_mul_ps
+  // CHECK: fmul <16 x float>
+  return _mm512_mul_ps(a, b);
+}
+
+__m512d test_mm512_mul_pd(__m512d a, __m512d b)
+{
+  // CHECK-LABEL: @test_mm512_mul_pd
+  // CHECK: fmul <8 x double>
+  return _mm512_mul_pd(a, b);
+}
