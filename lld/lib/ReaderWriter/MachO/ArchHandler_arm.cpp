@@ -285,10 +285,10 @@ uint32_t ArchHandler_arm::setDisplacementInArmBranch(uint32_t instruction,
     // Force use of BLX.
     newInstruction = 0xFA000000;
     if (!is_blx) {
-      bool isConditionalBranch = ((instruction & 0xF0000000) != 0xE0000000);
-      assert(!isConditionalBranch && "no conditional arm blx");
-      bool is_bl = ((instruction & 0xFF000000) == 0xEB000000);
-      assert(is_bl && "no arm pc-rel BX instruction");
+      assert(((instruction & 0xF0000000) == 0xE0000000)
+                                                   && "no conditional arm blx");
+      assert(((instruction & 0xFF000000) == 0xEB000000)
+                                             && "no arm pc-rel BX instruction");
     }
     if (displacement & 2)
       h = 1;
