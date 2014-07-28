@@ -69,12 +69,8 @@ private:
       // parameters.
       // FIXME: This is getting out of hand, write a decent parser.
       if (CurrentToken->Previous->isOneOf(tok::pipepipe, tok::ampamp) &&
-          ((CurrentToken->Previous->Type == TT_BinaryOperator &&
-            // Toplevel bool expressions do not make lots of sense;
-            // If we're on the top level, it contains only the base context and
-            // the context for the current opening angle bracket.
-            Contexts.size() > 2) ||
-           Contexts[Contexts.size() - 2].IsExpression) &&
+          CurrentToken->Previous->Type == TT_BinaryOperator &&
+          Contexts[Contexts.size() - 2].IsExpression &&
           Line.First->isNot(tok::kw_template))
         return false;
       updateParameterCount(Left, CurrentToken);
@@ -924,7 +920,7 @@ private:
 
     if (NextToken->is(tok::l_square) && NextToken->Type != TT_LambdaLSquare)
       return TT_PointerOrReference;
-    if (NextToken->is(tok::kw_operator))
+    if (NextToken->isOneOf(tok::kw_operator, tok::comma))
       return TT_PointerOrReference;
 
     if (PrevToken->is(tok::r_paren) && PrevToken->MatchingParen &&
