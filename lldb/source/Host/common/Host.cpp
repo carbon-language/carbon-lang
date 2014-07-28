@@ -75,6 +75,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 
 #if defined (__APPLE__)
@@ -828,6 +829,19 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
 #endif
 
 FileSpec
+Host::GetUserProfileFileSpec ()
+{
+    static FileSpec g_profile_filespec;
+    if (!g_profile_filespec)
+    {
+        llvm::SmallString<64> path;
+        llvm::sys::path::home_directory(path);
+        return FileSpec(path.c_str(), false);
+    }
+    return g_profile_filespec;
+}
+
+FileSpec
 Host::GetProgramFileSpec ()
 {
     static FileSpec g_program_filespec;
@@ -867,6 +881,10 @@ Host::GetProgramFileSpec ()
                 g_program_filespec.SetFile(exe_path, false);
             delete[] exe_path;
         }
+#elif defined(_WIN32)
+        std::vector<char> buffer(PATH_MAX);
+        ::GetModuleFileName(NULL, &buffer[0], buffer.size());
+        g_program_filespec.SetFile(&buffer[0], false, FileSpec::ePathSyntaxWindows);
 #endif
     }
     return g_program_filespec;

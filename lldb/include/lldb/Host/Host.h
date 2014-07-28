@@ -19,6 +19,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Host/File.h"
+#include "lldb/Host/FileSpec.h"
 
 namespace lldb_private {
 
@@ -359,6 +360,17 @@ public:
     ///     otherwise.
     static bool
     SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name, size_t len);
+
+    //------------------------------------------------------------------
+    /// Gets the FileSpec of the user profile directory.  On Posix-platforms
+    /// this is ~, and on windows this is generally something like
+    /// C:\Users\Alice.
+    ///
+    /// @return
+    ///     \b A file spec with the path to the user's home directory.
+    //------------------------------------------------------------------
+    static FileSpec
+    GetUserProfileFileSpec ();
 
     //------------------------------------------------------------------
     /// Gets the FileSpec of the current process (the process that

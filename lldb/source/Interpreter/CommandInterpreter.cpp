@@ -2381,7 +2381,9 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         // "-" and the name of the program. If this file doesn't exist, we fall
         // back to just the "~/.lldbinit" file. We also obey any requests to not
         // load the init files.
-        const char *init_file_path = "~/.lldbinit";
+        FileSpec profilePath = Host::GetUserProfileFileSpec();
+        profilePath.AppendPathComponent(".lldbinit");
+        std::string init_file_path = profilePath.GetPath();
 
         if (m_skip_app_init_files == false)
         {
@@ -2391,7 +2393,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
             if (program_name)
             {
                 char program_init_file_name[PATH_MAX];
-                ::snprintf (program_init_file_name, sizeof(program_init_file_name), "%s-%s", init_file_path, program_name);
+                ::snprintf (program_init_file_name, sizeof(program_init_file_name), "%s-%s", init_file_path.c_str(), program_name);
                 init_file.SetFile (program_init_file_name, true);
                 if (!init_file.Exists())
                     init_file.Clear();
@@ -2399,7 +2401,7 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         }
         
         if (!init_file && !m_skip_lldbinit_files)
-			init_file.SetFile (init_file_path, true);
+			init_file.SetFile (init_file_path.c_str(), false);
     }
 
     // If the file exists, tell HandleCommand to 'source' it; this will do the actual broadcasting

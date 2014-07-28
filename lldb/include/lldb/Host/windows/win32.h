@@ -19,7 +19,7 @@ char * strcasestr(const char *s, const char* find);
 char* realpath(const char * name, char * resolved);
 
 #ifndef PATH_MAX
-#define PATH_MAX MAX_PATH
+#define PATH_MAX 32768
 #endif
 
 #define O_NOCTTY    0
