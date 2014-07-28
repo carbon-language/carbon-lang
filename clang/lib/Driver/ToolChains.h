@@ -537,7 +537,7 @@ public:
     return 2;
   }
 
-  virtual bool IsIntegratedAssemblerDefault() const {
+  virtual bool IsIntegratedAssemblerDefault() const override {
     if (getTriple().getArch() == llvm::Triple::ppc ||
         getTriple().getArch() == llvm::Triple::sparc ||
         getTriple().getArch() == llvm::Triple::sparcv9)
