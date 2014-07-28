@@ -35,7 +35,7 @@ dnl address for reporting bugs.
 AC_INIT([LLVM],[3.5.0svn],[http://llvm.org/bugs/])
 
 LLVM_VERSION_MAJOR=3
-LLVM_VERSION_MINOR=5
+LLVM_VERSION_MINOR=6
 LLVM_VERSION_PATCH=0
 LLVM_VERSION_SUFFIX=svn
 
