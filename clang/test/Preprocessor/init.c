@@ -4916,6 +4916,15 @@
 // PPC64-LINUX:#define __powerpc__ 1
 // PPC64-LINUX:#define __ppc64__ 1
 // PPC64-LINUX:#define __ppc__ 1
+
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv1 < /dev/null | FileCheck -check-prefix PPC64-ELFv1 %s
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64le-unknown-linux-gnu -target-abi elfv2 < /dev/null | FileCheck -check-prefix PPC64-ELFv2 %s
+// PPC64-ELFv1:#define _CALL_ELF 1
+// PPC64-ELFv2:#define _CALL_ELF 2
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix PPC %s
 //

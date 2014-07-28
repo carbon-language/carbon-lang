@@ -1228,6 +1228,35 @@ static void getPPCTargetFeatures(const ArgList &Args,
                    options::OPT_fno_altivec, "altivec");
 }
 
+void Clang::AddPPCTargetArgs(const ArgList &Args,
+                             ArgStringList &CmdArgs) const {
+  // Select the ABI to use.
+  const char *ABIName = nullptr;
+  if (Arg *A = Args.getLastArg(options::OPT_mabi_EQ)) {
+    ABIName = A->getValue();
+  } else if (getToolChain().getTriple().isOSLinux())
+    switch(getToolChain().getArch()) {
+    case llvm::Triple::ppc64:
+      ABIName = "elfv1";
+      break;
+    case llvm::Triple::ppc64le:
+      ABIName = "elfv2";
+      break;
+    default:
+      break;
+  }
+
+  if (ABIName) {
+    CmdArgs.push_back("-target-abi");
+    CmdArgs.push_back(ABIName);
+  }
+}
+
+bool ppc::hasPPCAbiArg(const ArgList &Args, const char *Value) {
+  Arg *A = Args.getLastArg(options::OPT_mabi_EQ);
+  return A && (A->getValue() == StringRef(Value));
+}
+
 /// Get the (LLVM) name of the R600 gpu we are targeting.
 static std::string getR600TargetGPU(const ArgList &Args) {
   if (Arg *A = Args.getLastArg(options::OPT_mcpu_EQ)) {
@@ -3019,6 +3048,12 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   case llvm::Triple::mips64:
   case llvm::Triple::mips64el:
     AddMIPSTargetArgs(Args, CmdArgs);
+    break;
+
+  case llvm::Triple::ppc:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ppc64le:
+    AddPPCTargetArgs(Args, CmdArgs);
     break;
 
   case llvm::Triple::sparc:
@@ -7212,11 +7247,16 @@ static StringRef getLinuxDynamicLinker(const ArgList &Args,
                ? "/lib64/ld-linux-mipsn8.so.1" : "/lib64/ld.so.1";
   } else if (ToolChain.getArch() == llvm::Triple::ppc)
     return "/lib/ld.so.1";
-  else if (ToolChain.getArch() == llvm::Triple::ppc64 ||
-           ToolChain.getArch() == llvm::Triple::systemz)
+  else if (ToolChain.getArch() == llvm::Triple::ppc64) {
+    if (ppc::hasPPCAbiArg(Args, "elfv2"))
+      return "/lib64/ld64.so.2";
     return "/lib64/ld64.so.1";
-  else if (ToolChain.getArch() == llvm::Triple::ppc64le)
+  } else if (ToolChain.getArch() == llvm::Triple::ppc64le) {
+    if (ppc::hasPPCAbiArg(Args, "elfv1"))
+      return "/lib64/ld64.so.1";
     return "/lib64/ld64.so.2";
+  } else if (ToolChain.getArch() == llvm::Triple::systemz)
+    return "/lib64/ld64.so.1";
   else if (ToolChain.getArch() == llvm::Triple::sparcv9)
     return "/lib64/ld-linux.so.2";
   else if (ToolChain.getArch() == llvm::Triple::x86_64 &&

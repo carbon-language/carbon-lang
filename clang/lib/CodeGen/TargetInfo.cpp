@@ -6799,16 +6799,20 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     return *(TheTargetCodeGenInfo = new PPC32TargetCodeGenInfo(Types));
   case llvm::Triple::ppc64:
     if (Triple.isOSBinFormatELF()) {
-      // FIXME: Should be switchable via command-line option.
       PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv1;
+      if (getTarget().getABI() == "elfv2")
+        Kind = PPC64_SVR4_ABIInfo::ELFv2;
+
       return *(TheTargetCodeGenInfo =
                new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
     } else
       return *(TheTargetCodeGenInfo = new PPC64TargetCodeGenInfo(Types));
   case llvm::Triple::ppc64le: {
     assert(Triple.isOSBinFormatELF() && "PPC64 LE non-ELF not supported!");
-    // FIXME: Should be switchable via command-line option.
     PPC64_SVR4_ABIInfo::ABIKind Kind = PPC64_SVR4_ABIInfo::ELFv2;
+    if (getTarget().getABI() == "elfv1")
+      Kind = PPC64_SVR4_ABIInfo::ELFv1;
+
     return *(TheTargetCodeGenInfo =
              new PPC64_SVR4_TargetCodeGenInfo(Types, Kind));
   }

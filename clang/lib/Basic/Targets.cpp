@@ -682,6 +682,9 @@ class PPCTargetInfo : public TargetInfo {
   // Target cpu features.
   bool HasVSX;
 
+protected:
+  std::string ABI;
+
 public:
   PPCTargetInfo(const llvm::Triple &Triple)
       : TargetInfo(Triple), HasVSX(false) {
@@ -769,6 +772,9 @@ public:
 
     return CPUKnown;
   }
+
+
+  StringRef getABI() const override { return ABI; }
 
   void getTargetBuiltins(const Builtin::Info *&Records,
                          unsigned &NumRecords) const override {
@@ -965,12 +971,17 @@ void PPCTargetInfo::getTargetDefines(const LangOptions &Opts,
   // Target properties.
   if (getTriple().getArch() == llvm::Triple::ppc64le) {
     Builder.defineMacro("_LITTLE_ENDIAN");
-    Builder.defineMacro("_CALL_ELF","2");
   } else {
     if (getTriple().getOS() != llvm::Triple::NetBSD &&
         getTriple().getOS() != llvm::Triple::OpenBSD)
       Builder.defineMacro("_BIG_ENDIAN");
   }
+
+  // ABI options.
+  if (ABI == "elfv1")
+    Builder.defineMacro("_CALL_ELF", "1");
+  if (ABI == "elfv2")
+    Builder.defineMacro("_CALL_ELF", "2");
 
   // Subtarget options.
   Builder.defineMacro("__NATURAL_ALIGNMENT__");
@@ -1121,6 +1132,9 @@ void PPCTargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     .Default(false);
 
   Features["qpx"] = (CPU == "a2q");
+
+  if (!ABI.empty())
+    Features[ABI] = true;
 }
 
 bool PPCTargetInfo::hasFeature(StringRef Feature) const {
@@ -1283,16 +1297,26 @@ public:
     } else {
       if ((Triple.getArch() == llvm::Triple::ppc64le)) {
         DescriptionString = "e-m:e-i64:64-n32:64";
+        ABI = "elfv2";
       } else {
         DescriptionString = "E-m:e-i64:64-n32:64";
+        ABI = "elfv1";
       }
-}
+    }
 
     // PPC64 supports atomics up to 8 bytes.
     MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::CharPtrBuiltinVaList;
+  }
+  // PPC64 Linux-specifc ABI options.
+  bool setABI(const std::string &Name) override {
+    if (Name == "elfv1" || Name == "elfv2") {
+      ABI = Name;
+      return true;
+    }
+    return false;
   }
 };
 } // end anonymous namespace.
