@@ -71,7 +71,7 @@ attributes #3 = { nounwind }
 !llvm.module.flags = !{!21, !22}
 !llvm.ident = !{!23}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 (trunk 214102:214113M) (llvm/trunk 214102:214115M)", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !14, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/Users/manmanren/test-Nov/type_unique/rdar_di_array/b.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.5.0 (trunk 214102:214113M) (llvm/trunk 214102:214115M)", i1 false, metadata !"", i32 0, metadata !2, metadata !3, metadata !14, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [b.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"b.cpp", metadata !"/Users/manmanren/test-Nov/type_unique/rdar_di_array"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !10}
@@ -87,7 +87,7 @@ attributes #3 = { nounwind }
 !13 = metadata !{i32 786468, null, null, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ] [int] [line 0, size 32, align 32, offset 0, enc DW_ATE_signed]
 !14 = metadata !{metadata !15, metadata !20}
 !15 = metadata !{i32 786478, metadata !1, metadata !16, metadata !"topB", metadata !"topB", metadata !"_Z4topBP1B2SA", i32 11, metadata !17, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.B*, i32)* @_Z4topBP1B2SA, null, null, metadata !2, i32 11} ; [ DW_TAG_subprogram ] [line 11] [def] [topB]
-!16 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [/Users/manmanren/test-Nov/type_unique/rdar_di_array/b.cpp]
+!16 = metadata !{i32 786473, metadata !1}         ; [ DW_TAG_file_type ] [b.cpp]
 !17 = metadata !{i32 786453, i32 0, null, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !18, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !18 = metadata !{null, metadata !19, metadata !"_ZTS2SA"}
 !19 = metadata !{i32 786447, null, null, metadata !"", i32 0, i64 64, i64 64, i64 0, i32 0, metadata !"_ZTS1B"} ; [ DW_TAG_pointer_type ] [line 0, size 64, align 64, offset 0] [from _ZTS1B]
