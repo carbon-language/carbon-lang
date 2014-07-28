@@ -6,6 +6,8 @@ RUN: llvm-nm %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
 RUN: llvm-nm -o %p/Inputs/trivial-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF-o
+RUN: llvm-nm -u %p/Inputs/trivial-object-test.elf-i386 \
+RUN:         | FileCheck %s -check-prefix ELF-u
 RUN: llvm-nm %p/Inputs/trivial-object-test.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF64
 RUN: llvm-nm %p/Inputs/weak.elf-x86-64 \
@@ -32,6 +34,8 @@ RUN: llvm-nm -o %p/Inputs/macho-text-data-bss.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix macho-o
 RUN: llvm-nm -p -a %p/Inputs/macho-hello-g.macho-x86_64 \
 RUN:         | FileCheck %s -check-prefix macho-pa
+RUN: llvm-nm -u %p/Inputs/macho-hello-g.macho-x86_64 \
+RUN:         | FileCheck %s -check-prefix macho-u
 RUN: llvm-nm %p/Inputs/common.coff-i386 \
 RUN:         | FileCheck %s -check-prefix COFF-COMMON
 RUN: llvm-nm %p/Inputs/relocatable-with-section-address.elf-x86-64 \
@@ -69,6 +73,9 @@ ELF:          U puts
 ELF-o: {{.*}}/trivial-object-test.elf-i386:          U SomeOtherFunction
 ELF-o: {{.*}}/trivial-object-test.elf-i386: 00000000 T main
 ELF-o: {{.*}}/trivial-object-test.elf-i386:          U puts
+
+ELF-u:          U SomeOtherFunction
+ELF-u:          U puts
 
 ELF64:                  U SomeOtherFunction
 ELF64: 0000000000000000 T main
@@ -144,6 +151,9 @@ macho-pa: 0000000100000000 T __mh_execute_header
 macho-pa: 0000000100000f30 T _main
 macho-pa:                  U _printf
 macho-pa:                  U dyld_stub_binder
+
+macho-u: _printf
+macho-u: dyld_stub_binder
 
 Test that nm uses addresses even with ELF .o files.
 ELF-SEC-ADDR64:      0000000000000058 D a

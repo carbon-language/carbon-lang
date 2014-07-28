@@ -583,7 +583,7 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName,
         outs() << ArchiveName << ":";
       outs() << CurrentFilename << ": ";
     }
-    if (JustSymbolName) {
+    if (JustSymbolName || (UndefinedOnly && isa<MachOObjectFile>(Obj))) {
       outs() << I->Name << "\n";
       continue;
     }
