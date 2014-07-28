@@ -437,76 +437,43 @@ bool Dependences::isValidScattering(StatementToIslMapTy *NewScattering) {
   return IsValid;
 }
 
-isl_union_map *getCombinedScheduleForSpace(Scop *scop, unsigned dimLevel) {
-  isl_space *Space = scop->getParamSpace();
-  isl_union_map *schedule = isl_union_map_empty(Space);
+// Check if the current scheduling dimension is parallel.
+//
+// We check for parallelism by verifying that the loop does not carry any
+// dependences.
+//
+// Parallelism test: if the distance is zero in all outer dimensions, then it
+// has to be zero in the current dimension as well.
+//
+// Implementation: first, translate dependences into time space, then force
+// outer dimensions to be equal. If the distance is zero in the current
+// dimension, then the loop is parallel. The distance is zero in the current
+// dimension if it is a subset of a map with equal values for the current
+// dimension.
+bool Dependences::isParallel(isl_union_map *Schedule, isl_union_map *Deps) {
+  isl_map *ScheduleDeps, *Test;
+  unsigned Dimension, IsParallel;
 
-  for (ScopStmt *Stmt : *scop) {
-    unsigned remainingDimensions = Stmt->getNumScattering() - dimLevel;
-    isl_map *Scattering = isl_map_project_out(
-        Stmt->getScattering(), isl_dim_out, dimLevel, remainingDimensions);
-    schedule = isl_union_map_add_map(schedule, Scattering);
-  }
-
-  return schedule;
-}
-
-bool Dependences::isParallelDimension(__isl_take isl_set *ScheduleSubset,
-                                      unsigned ParallelDim) {
-  // To check if a loop is parallel, we perform the following steps:
-  //
-  // o Move dependences from 'Domain -> Domain' to 'Schedule -> Schedule' space.
-  // o Limit dependences to the schedule space enumerated by the loop.
-  // o Calculate distances of the dependences.
-  // o Check if one of the distances is invalid in presence of parallelism.
-
-  isl_union_map *Schedule, *Deps;
-  isl_map *ScheduleDeps;
-  Scop *S = &getCurScop();
-
-  if (!hasValidDependences()) {
-    isl_set_free(ScheduleSubset);
-    return false;
-  }
-
-  // FIXME: We can remove ignore reduction dependences in case we privatize the
-  //        memory locations the reduction statements reduce into.
-  Deps = getDependences(TYPE_RAW | TYPE_WAW | TYPE_WAR | TYPE_RED);
-
-  if (isl_union_map_is_empty(Deps)) {
-    isl_union_map_free(Deps);
-    isl_set_free(ScheduleSubset);
-    return true;
-  }
-
-  Schedule = getCombinedScheduleForSpace(S, ParallelDim);
   Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
-  Deps = isl_union_map_apply_domain(Deps, Schedule);
+  Deps = isl_union_map_apply_domain(Deps, isl_union_map_copy(Schedule));
 
   if (isl_union_map_is_empty(Deps)) {
     isl_union_map_free(Deps);
-    isl_set_free(ScheduleSubset);
     return true;
   }
 
   ScheduleDeps = isl_map_from_union_map(Deps);
-  ScheduleDeps =
-      isl_map_intersect_domain(ScheduleDeps, isl_set_copy(ScheduleSubset));
-  ScheduleDeps = isl_map_intersect_range(ScheduleDeps, ScheduleSubset);
+  Dimension = isl_map_dim(ScheduleDeps, isl_dim_out) - 1;
 
-  isl_set *Distances = isl_map_deltas(ScheduleDeps);
-  isl_space *Space = isl_set_get_space(Distances);
-  isl_set *Invalid = isl_set_universe(Space);
+  for (unsigned i = 0; i < Dimension; i++)
+    ScheduleDeps = isl_map_equate(ScheduleDeps, isl_dim_out, i, isl_dim_in, i);
 
-  // [0, ..., 0, +] - All zeros and last dimension larger than zero
-  for (unsigned i = 0; i < ParallelDim - 1; i++)
-    Invalid = isl_set_fix_si(Invalid, isl_dim_set, i, 0);
+  Test = isl_map_universe(isl_map_get_space(ScheduleDeps));
+  Test = isl_map_equate(Test, isl_dim_out, Dimension, isl_dim_in, Dimension);
+  IsParallel = isl_map_is_subset(ScheduleDeps, Test);
 
-  Invalid = isl_set_lower_bound_si(Invalid, isl_dim_set, ParallelDim - 1, 1);
-  Invalid = isl_set_intersect(Invalid, Distances);
-
-  bool IsParallel = isl_set_is_empty(Invalid);
-  isl_set_free(Invalid);
+  isl_map_free(Test);
+  isl_map_free(ScheduleDeps);
 
   return IsParallel;
 }

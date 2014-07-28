@@ -861,13 +861,35 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   ClastVars.erase(F->iterator);
 }
 
+static isl_union_map *getCombinedScheduleForSpace(Scop *S, unsigned dimLevel) {
+  isl_space *Space = S->getParamSpace();
+  isl_union_map *schedule = isl_union_map_empty(Space);
+
+  for (ScopStmt *Stmt : *S) {
+    unsigned remainingDimensions = Stmt->getNumScattering() - dimLevel;
+    isl_map *Scattering = isl_map_project_out(
+        Stmt->getScattering(), isl_dim_out, dimLevel, remainingDimensions);
+    schedule = isl_union_map_add_map(schedule, Scattering);
+  }
+
+  return schedule;
+}
+
 bool ClastStmtCodeGen::isParallelFor(const clast_for *f) {
   isl_set *Domain = isl_set_copy(isl_set_from_cloog_domain(f->domain));
   assert(Domain && "Cannot access domain of loop");
 
   Dependences &D = P->getAnalysis<Dependences>();
-
-  return D.isParallelDimension(Domain, isl_set_n_dim(Domain));
+  isl_union_map *Deps =
+      D.getDependences(Dependences::TYPE_RAW | Dependences::TYPE_WAW |
+                       Dependences::TYPE_WAR | Dependences::TYPE_RAW);
+  isl_union_map *Schedule =
+      getCombinedScheduleForSpace(S, isl_set_n_dim(Domain));
+  Schedule =
+      isl_union_map_intersect_range(Schedule, isl_union_set_from_set(Domain));
+  bool IsParallel = D.isParallel(Schedule, Deps);
+  isl_union_map_free(Schedule);
+  return IsParallel;
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {

@@ -139,56 +139,6 @@ printFor(__isl_take isl_printer *Printer,
   return Printer;
 }
 
-// Check if the current scheduling dimension is parallel.
-//
-// We check for parallelism by verifying that the loop does not carry any
-// dependences.
-//
-// Parallelism test: if the distance is zero in all outer dimensions, then it
-// has to be zero in the current dimension as well.
-//
-// Implementation: first, translate dependences into time space, then force
-// outer dimensions to be equal. If the distance is zero in the current
-// dimension, then the loop is parallel. The distance is zero in the current
-// dimension if it is a subset of a map with equal values for the current
-// dimension.
-static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
-                                     __isl_take isl_union_map *Deps) {
-  isl_union_map *Schedule;
-  isl_map *ScheduleDeps, *Test;
-  isl_space *ScheduleSpace;
-  unsigned Dimension, IsParallel;
-
-  Schedule = isl_ast_build_get_schedule(Build);
-  ScheduleSpace = isl_ast_build_get_schedule_space(Build);
-
-  Dimension = isl_space_dim(ScheduleSpace, isl_dim_out) - 1;
-
-  Deps = isl_union_map_apply_range(Deps, isl_union_map_copy(Schedule));
-  Deps = isl_union_map_apply_domain(Deps, Schedule);
-
-  if (isl_union_map_is_empty(Deps)) {
-    isl_union_map_free(Deps);
-    isl_space_free(ScheduleSpace);
-    return true;
-  }
-
-  ScheduleDeps = isl_map_from_union_map(Deps);
-
-  for (unsigned i = 0; i < Dimension; i++)
-    ScheduleDeps = isl_map_equate(ScheduleDeps, isl_dim_out, i, isl_dim_in, i);
-
-  Test = isl_map_universe(isl_map_get_space(ScheduleDeps));
-  Test = isl_map_equate(Test, isl_dim_out, Dimension, isl_dim_in, Dimension);
-  IsParallel = isl_map_is_subset(ScheduleDeps, Test);
-
-  isl_space_free(ScheduleSpace);
-  isl_map_free(Test);
-  isl_map_free(ScheduleDeps);
-
-  return IsParallel;
-}
-
 /// @brief Check if the current scheduling dimension is parallel
 ///
 /// In case the dimension is parallel we also check if any reduction
@@ -205,15 +155,17 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   if (!D->hasValidDependences())
     return false;
 
+  isl_union_map *Schedule = isl_ast_build_get_schedule(Build);
   isl_union_map *Deps = D->getDependences(
       Dependences::TYPE_RAW | Dependences::TYPE_WAW | Dependences::TYPE_WAR);
-  if (!astScheduleDimIsParallel(Build, Deps))
+  if (!D->isParallel(Schedule, Deps) && !isl_union_map_free(Schedule))
     return false;
 
   isl_union_map *RedDeps = D->getDependences(Dependences::TYPE_TC_RED);
-  if (!astScheduleDimIsParallel(Build, RedDeps))
+  if (!D->isParallel(Schedule, RedDeps))
     IsReductionParallel = true;
 
+  isl_union_map_free(Schedule);
   return true;
 }
 
