@@ -2023,10 +2023,15 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                        llvm::Attribute::NoUnwind);
 
   // Slap the source location of the inline asm into a !srcloc metadata on the
-  // call.  FIXME: Handle metadata for MS-style inline asms.
-  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(&S))
+  // call.
+  if (const GCCAsmStmt *gccAsmStmt = dyn_cast<GCCAsmStmt>(&S)) {
     Result->setMetadata("srcloc", getAsmSrcLocInfo(gccAsmStmt->getAsmString(),
                                                    *this));
+  } else {
+    // At least put the line number on MS inline asm blobs.
+    auto Loc = llvm::ConstantInt::get(Int32Ty, S.getAsmLoc().getRawEncoding());
+    Result->setMetadata("srcloc", llvm::MDNode::get(getLLVMContext(), Loc));
+  }
 
   // Extract all of the register value results from the asm.
   std::vector<llvm::Value*> RegResults;
