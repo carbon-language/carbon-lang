@@ -74,6 +74,7 @@ class ReturnValueTestCase(TestBase):
 
     def tearDown (self):
         self.dbg.HandleCommand ("settings set target.process.thread.step-out-avoid-nodebug false")
+        TestBase.tearDown(self)
 
     def hit_correct_line (self, pattern):
         target_line = line_number (self.main_source, pattern)
@@ -104,7 +105,7 @@ class ReturnValueTestCase(TestBase):
         threads = lldbutil.get_threads_stopped_at_breakpoint (self.process, inner_bkpt)
         self.assertTrue(len(threads) == 1, "Stopped at inner breakpoint.")
         self.thread = threads[0]
-    
+
     def do_step_out_past_nodebug(self):
         # The first step out takes us to the called_from_nodebug frame, just to make sure setting
         # step-out-avoid-nodebug doesn't change the behavior in frames with debug info.
