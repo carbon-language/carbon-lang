@@ -18,13 +18,14 @@
 
 namespace clang {
 
-class DataflowWorklist {
+class DataflowWorklistBase {
+protected:
   PostOrderCFGView::iterator PO_I, PO_E;
   PostOrderCFGView::BlockOrderCompare comparator;
   SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
 
-  DataflowWorklist(const CFG &cfg, PostOrderCFGView &view)
+  DataflowWorklistBase(const CFG &cfg, PostOrderCFGView &view)
     : PO_I(view.begin()), PO_E(view.end()),
       comparator(view.getComparator()),
       enqueuedBlocks(cfg.getNumBlockIDs(), true) {
@@ -35,10 +36,13 @@ class DataflowWorklist {
           ++PO_I;
         }
       }
+};
+
+class DataflowWorklist : DataflowWorklistBase {
 
 public:
   DataflowWorklist(const CFG &cfg, AnalysisDeclContext &Ctx)
-    : DataflowWorklist(cfg, *Ctx.getAnalysis<PostOrderCFGView>()) {}
+    : DataflowWorklistBase(cfg, *Ctx.getAnalysis<PostOrderCFGView>()) {}
 
   void enqueueBlock(const CFGBlock *block);
   void enqueuePredecessors(const CFGBlock *block);
