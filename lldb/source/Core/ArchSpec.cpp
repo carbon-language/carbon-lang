@@ -120,7 +120,7 @@ static const CoreDefinition g_core_definitions[] =
 
 // Ensure that we have an entry in the g_core_definitions for each core. If you comment out an entry above,
 // you will need to comment out the corresponding ArchSpec::Core enumeration.
-static_assert(llvm::array_lengthof(g_core_definitions) == ArchSpec::kNumCores, "make sure we have one core definition for each core");
+static_assert(sizeof(g_core_definitions) / sizeof(CoreDefinition) == ArchSpec::kNumCores, "make sure we have one core definition for each core");
 
 
 struct ArchDefinitionEntry
