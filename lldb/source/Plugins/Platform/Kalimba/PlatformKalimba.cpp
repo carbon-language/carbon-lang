@@ -310,6 +310,7 @@ PlatformKalimba::Attach(ProcessAttachInfo &attach_info,
 void
 PlatformKalimba::CalculateTrapHandlerSymbolNames ()
 {   
+    // TODO Research this sometime.
 }   
 
 Error
