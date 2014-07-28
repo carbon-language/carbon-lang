@@ -2830,7 +2830,7 @@ Note that the fields need not be contiguous. In this example, there is a
 does not carry useful data and need not be preserved.
 
 '``noalias``' and '``alias.scope``' Metadata
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``noalias`` and ``alias.scope`` metadata provide the ability to specify generic
 noalias memory-access sets. This means that some collection of memory access
