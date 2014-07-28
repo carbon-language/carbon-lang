@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -x c++ -std=c++11 -triple x86_64-unknown-linux -emit-llvm -O2 < %s | FileCheck %s
+// RUN: %clang_cc1 -I %S/Inputs -x c++ -std=c++11 -triple x86_64-unknown-linux -emit-llvm -O2 < %s | FileCheck %s
 
 #pragma clang optimize off
 
@@ -96,11 +96,50 @@ int container3 (int par) {
 // CHECK-DAG: @_Z6thriceIiET_S0_{{.*}} [[ATTRTHRICEINT:#[0-9]+]]
 
 
+// Test that we can re-open and re-close an "off" region after the first one,
+// and that this works as expected.
+
+#pragma clang optimize off
+
+int another_optnone(int x) {
+    return x << 1;
+}
+// CHECK-DAG: @_Z15another_optnonei{{.*}} [[ATTRANOTHEROPTNONE:#[0-9]+]]
+
+#pragma clang optimize on
+
+int another_normal(int x) {
+    return x << 2;
+}
+// CHECK-DAG: @_Z14another_normali{{.*}} [[ATTRANOTHERNORMAL:#[0-9]+]]
+
+
+// Test that we can re-open an "off" region by including a header with the
+// pragma and that this works as expected (i.e. the off region "falls through"
+// the end of the header into this file).
+
+#include <header-with-pragma-optimize-off.h>
+
+int yet_another_optnone(int x) {
+    return x << 3;
+}
+// CHECK-DAG: @_Z19yet_another_optnonei{{.*}} [[ATTRYETANOTHEROPTNONE:#[0-9]+]]
+
+#pragma clang optimize on
+
+int yet_another_normal(int x) {
+    return x << 4;
+}
+// CHECK-DAG: @_Z18yet_another_normali{{.*}} [[ATTRYETANOTHERNORMAL:#[0-9]+]]
+
+
 // Check for both noinline and optnone on each function that should have them.
 // CHECK-DAG: attributes [[ATTRBAR]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
 // CHECK-DAG: attributes [[ATTRCREATED]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
 // CHECK-DAG: attributes [[ATTRMETHOD]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
 // CHECK-DAG: attributes [[ATTRTHRICEFLOAT]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
+// CHECK-DAG: attributes [[ATTRANOTHEROPTNONE]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
+// CHECK-DAG: attributes [[ATTRYETANOTHEROPTNONE]] = { {{.*}}noinline{{.*}}optnone{{.*}} }
 
 // Check that the other functions do NOT have optnone.
 // CHECK-DAG-NOT: attributes [[ATTRFOO]] = { {{.*}}optnone{{.*}} }
@@ -111,3 +150,5 @@ int container3 (int par) {
 // CHECK-DAG-NOT: attributes [[ATTRCONTAINER2]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRCONTAINER3]] = { {{.*}}optnone{{.*}} }
 // CHECK-DAG-NOT: attributes [[ATTRTHRICEINT]] = { {{.*}}optnone{{.*}} }
+// CHECK-DAG-NOT: attributes [[ATTRANOTHERNORMAL]] = { {{.*}}optnone{{.*}} }
+// CHECK-DAG-NOT: attributes [[ATTRYETANOTHERNORMAL]] = { {{.*}}optnone{{.*}} }
