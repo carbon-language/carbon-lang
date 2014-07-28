@@ -755,7 +755,7 @@ private:
           Contexts.back().CaretFound = true;
       } else if (Current.isOneOf(tok::minusminus, tok::plusplus)) {
         Current.Type = determineIncrementUsage(Current);
-      } else if (Current.is(tok::exclaim)) {
+      } else if (Current.isOneOf(tok::exclaim, tok::tilde)) {
         Current.Type = TT_UnaryOperator;
       } else if (Current.is(tok::question)) {
         Current.Type = TT_ConditionalExpr;
