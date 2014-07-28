@@ -88,7 +88,7 @@
 @end
 
 @protocol TopProtocol
-  @property (readonly) id myString; // expected-warning {{auto property synthesis will not synthesize property 'myString' because it will be synthesize by its super class}}
+  @property (readonly) id myString; // expected-warning {{auto property synthesis will not synthesize property 'myString' because it will be implemented by its superclass}}
 @end
 
 @interface TopClass <TopProtocol> 

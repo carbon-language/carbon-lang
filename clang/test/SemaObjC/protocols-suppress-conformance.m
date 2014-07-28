@@ -34,7 +34,7 @@ __attribute__((objc_protocol_requires_explicit_implementation))
 @end
 
 @interface ClassB_AlsoGood : ClassA <Protocol>
-@property (readonly) id theWorstOfTimes; // expected-warning {{auto property synthesis will not synthesize property 'theWorstOfTimes' because it will be synthesize by its super class}}
+@property (readonly) id theWorstOfTimes; // expected-warning {{auto property synthesis will not synthesize property 'theWorstOfTimes' because it will be implemented by its superclass}}
 @end
 
 // Default synthesis acts as if @dynamic
