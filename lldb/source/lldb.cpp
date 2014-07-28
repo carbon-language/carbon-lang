@@ -78,6 +78,10 @@
 #include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
+#if defined (_WIN32)
+#include "Plugins/Process/Windows/ProcessWindows.h"
+#endif
+
 #if defined (__FreeBSD__)
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "Plugins/Process/FreeBSD/ProcessFreeBSD.h"
@@ -158,6 +162,9 @@ lldb_private::Initialize ()
         // Linux hosted plugins
         //----------------------------------------------------------------------
         ProcessLinux::Initialize();
+#endif
+#if defined(_WIN32)
+        ProcessWindows::Initialize();
 #endif
 #if defined (__FreeBSD__)
         ProcessFreeBSD::Initialize();
