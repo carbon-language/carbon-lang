@@ -371,7 +371,7 @@ int main(int argc, char **argv) {
   if (!verifyBitcodeUseListOrder(*M))
     report_fatal_error("bitcode use-list order changed");
 
-  if (shouldPreserveBitcodeUseListOrder())
+  if (shouldPreserveAssemblyUseListOrder())
     if (!verifyAssemblyUseListOrder(*M))
       report_fatal_error("assembly use-list order changed");
 
