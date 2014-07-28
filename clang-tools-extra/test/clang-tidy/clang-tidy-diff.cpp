@@ -9,10 +9,10 @@ struct A {
 // CHECK-NOT: warning
 struct B : public A {
   void placeholder_for_f() {}
-// CHECK-SANITY: [[@LINE-1]]:8: warning: Use exactly
-// CHECK: [[@LINE-2]]:8: warning: Use exactly
+// CHECK-SANITY: [[@LINE-1]]:8: warning: Annotate this
+// CHECK: [[@LINE-2]]:8: warning: Annotate this
   void g() {}
-// CHECK-SANITY: [[@LINE-1]]:8: warning: Use exactly
+// CHECK-SANITY: [[@LINE-1]]:8: warning: Annotate this
 // CHECK-NOT: warning:
 };
 // CHECK-SANITY-NOT: Suppressed

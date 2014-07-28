@@ -32,11 +32,11 @@ struct Base {
 struct SimpleCases : public Base {
 public:
   virtual ~SimpleCases();
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using 'override' or 'final' instead of 'virtual'
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Prefer using 'override' or (rarely) 'final' instead of 'virtual'
   // CHECK-FIXES: {{^  ~SimpleCases\(\) override;}}
 
   void a();
-  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Annotate this
   // CHECK-FIXES: {{^  void a\(\) override;}}
 
   void b() override;
@@ -48,7 +48,7 @@ public:
   // CHECK-FIXES: {{^  void c\(\) override;}}
 
   virtual void d() override;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void d\(\) override;}}
 
   virtual void e() = 0;
@@ -76,7 +76,7 @@ public:
   // CHECK-FIXES: {{^  bool l\(\) override MUST_USE_RESULT;}}
 
   virtual void m() override final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void m\(\) final;}}
 };
 
@@ -98,7 +98,7 @@ struct DefaultedDestructor : public Base {
 struct FinalSpecified : public Base {
 public:
   virtual ~FinalSpecified() final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: Annotate this
   // CHECK-FIXES: {{^  ~FinalSpecified\(\) final;}}
 
   void b() final;
@@ -106,19 +106,19 @@ public:
   // CHECK-FIXES: {{^  void b\(\) final;}}
 
   virtual void d() final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void d\(\) final;}}
 
   virtual void e() final = 0;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void e\(\) final = 0;}}
 
   virtual void j() const final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void j\(\) const final;}}
 
   virtual bool l() final MUST_USE_RESULT;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  bool l\(\) final MUST_USE_RESULT;}}
 };
 
@@ -129,7 +129,7 @@ public:
   // CHECK-FIXES: {{^  ~InlineDefinitions\(\) override {}}}
 
   void a() {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: Annotate this
   // CHECK-FIXES: {{^  void a\(\) override {}}}
 
   void b() override {}
@@ -141,7 +141,7 @@ public:
   // CHECK-FIXES: {{^  void c\(\) override {}}}
 
   virtual void d() override {}
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  void d\(\) override {}}}
 
   virtual void j() const {}
@@ -161,7 +161,7 @@ struct Macros : public Base {
   // Tests for 'virtual' and 'override' being defined through macros. Basically
   // give up for now.
   NOT_VIRTUAL void a() NOT_OVERRIDE;
-  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:20: warning: Annotate this
   // CHECK-FIXES: {{^  NOT_VIRTUAL void a\(\) override NOT_OVERRIDE;}}
 
   VIRTUAL void b() NOT_OVERRIDE;
@@ -173,7 +173,7 @@ struct Macros : public Base {
   // CHECK-FIXES: {{^  NOT_VIRTUAL void c\(\) OVERRIDE;}}
 
   VIRTUAL void d() OVERRIDE;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  VIRTUAL void d\(\) OVERRIDE;}}
 
 #define FUNC(return_type, name) return_type name()
@@ -185,7 +185,7 @@ struct Macros : public Base {
   // CHECK-FIXES: {{^  F}}
 
   VIRTUAL void g() OVERRIDE final;
-  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Use exactly
+  // CHECK-MESSAGES: :[[@LINE-1]]:16: warning: Annotate this
   // CHECK-FIXES: {{^  VIRTUAL void g\(\) final;}}
 };
 

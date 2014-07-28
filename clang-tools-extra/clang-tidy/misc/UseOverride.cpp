@@ -74,8 +74,8 @@ void UseOverride::check(const MatchFinder::MatchResult &Result) {
   DiagnosticBuilder Diag = diag(
       Method->getLocation(),
       OnlyVirtualSpecified
-          ? "Prefer using 'override' or 'final' instead of 'virtual'"
-          : "Use exactly one of 'virtual', 'override' or (rarely) 'final'");
+          ? "Prefer using 'override' or (rarely) 'final' instead of 'virtual'"
+          : "Annotate this function with 'override' or (rarely) 'final'");
 
   CharSourceRange FileRange = Lexer::makeFileCharRange(
       CharSourceRange::getTokenRange(Method->getSourceRange()), Sources,
