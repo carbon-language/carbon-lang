@@ -698,7 +698,8 @@ private:
            Previous = Previous->Previous) {
         if (Previous->isOneOf(tok::r_square, tok::r_paren))
           Previous = Previous->MatchingParen;
-        if (Previous->Type == TT_BinaryOperator &&
+        if ((Previous->Type == TT_BinaryOperator ||
+             Previous->Type == TT_UnaryOperator) &&
             Previous->isOneOf(tok::star, tok::amp)) {
           Previous->Type = TT_PointerOrReference;
         }
