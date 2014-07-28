@@ -36,6 +36,8 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
+#define DEBUG_TYPE "legalizedag"
+
 //===----------------------------------------------------------------------===//
 /// SelectionDAGLegalize - This takes an arbitrary SelectionDAG as input and
 /// hacks on it until the target machine can handle it.  This involves
@@ -180,6 +182,9 @@ public:
     }
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
+    DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG);
+          dbgs() << "     with:      "; New->dump(&DAG));
+
     assert(Old->getNumValues() == New->getNumValues() &&
            "Replacing one node with another that produces a different number "
            "of values!");
@@ -191,6 +196,9 @@ public:
     ReplacedNode(Old);
   }
   void ReplaceNode(SDValue Old, SDValue New) {
+    DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG);
+          dbgs() << "     with:      "; New->dump(&DAG));
+
     DAG.ReplaceAllUsesWith(Old, New);
     DAG.TransferDbgValues(Old, New);
     if (UpdatedNodes)
@@ -198,11 +206,17 @@ public:
     ReplacedNode(Old.getNode());
   }
   void ReplaceNode(SDNode *Old, const SDValue *New) {
+    DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG));
+
     DAG.ReplaceAllUsesWith(Old, New);
-    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i)
+    for (unsigned i = 0, e = Old->getNumValues(); i != e; ++i) {
+      DEBUG(dbgs() << (i == 0 ? "     with:      "
+                              : "      and:      ");
+            New[i]->dump(&DAG));
       DAG.TransferDbgValues(SDValue(Old, i), New[i]);
-    if (UpdatedNodes)
-      UpdatedNodes->insert(New->getNode());
+      if (UpdatedNodes)
+        UpdatedNodes->insert(New[i].getNode());
+    }
     ReplacedNode(Old);
   }
 };
@@ -1160,6 +1174,8 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
 /// LegalizeOp - Return a legal replacement for the given operation, with
 /// all legal operands.
 void SelectionDAGLegalize::LegalizeOp(SDNode *Node) {
+  DEBUG(dbgs() << "\nLegalizing: "; Node->dump(&DAG));
+
   if (Node->getOpcode() == ISD::TargetConstant) // Allow illegal target nodes.
     return;
 

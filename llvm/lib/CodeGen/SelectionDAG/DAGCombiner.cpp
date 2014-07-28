@@ -1156,9 +1156,6 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
     if (recursivelyDeleteUnusedNodes(N))
       continue;
 
-    DEBUG(dbgs() << "\nCombining: ";
-          N->dump(&DAG));
-
     // Add any operands of the new node which have not yet been combined to the
     // worklist as well. Because the worklist uniques things already, this
     // won't repeatedly process the same operand.
@@ -1182,6 +1179,8 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
       if (!NIsValid)
         continue;
     }
+
+    DEBUG(dbgs() << "\nCombining: "; N->dump(&DAG));
 
     SDValue RV = combine(N);
 
