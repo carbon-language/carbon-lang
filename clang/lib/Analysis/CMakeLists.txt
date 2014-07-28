@@ -12,6 +12,7 @@ add_clang_library(clangAnalysis
   CocoaConventions.cpp
   Consumed.cpp
   Dominators.cpp
+  DataflowWorklist.cpp
   FormatString.cpp
   LiveVariables.cpp
   ObjCNoReturn.cpp
