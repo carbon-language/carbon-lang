@@ -137,6 +137,11 @@ public:
   /// The Function constant iterator
   typedef FunctionListType::const_iterator               const_iterator;
 
+  /// The Function reverse iterator.
+  typedef FunctionListType::reverse_iterator             reverse_iterator;
+  /// The Function constant reverse iterator.
+  typedef FunctionListType::const_reverse_iterator const_reverse_iterator;
+
   /// The Global Alias iterators.
   typedef AliasListType::iterator                        alias_iterator;
   /// The Global Alias constant iterator
@@ -546,6 +551,10 @@ public:
   const_iterator          begin() const { return FunctionList.begin(); }
   iterator                end  ()       { return FunctionList.end();   }
   const_iterator          end  () const { return FunctionList.end();   }
+  reverse_iterator        rbegin()      { return FunctionList.rbegin(); }
+  const_reverse_iterator  rbegin() const{ return FunctionList.rbegin(); }
+  reverse_iterator        rend()        { return FunctionList.rend(); }
+  const_reverse_iterator  rend() const  { return FunctionList.rend(); }
   size_t                  size() const  { return FunctionList.size(); }
   bool                    empty() const { return FunctionList.empty(); }
 
