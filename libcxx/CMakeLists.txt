@@ -152,13 +152,16 @@ if ("${LIBCXX_CXX_ABI}" STREQUAL "libstdc++" OR
     "${_LIBSUPCXX_LIBNAME}" "${_LIBSUPCXX_INCLUDE_FILES}" "bits"
     )
 elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxabi")
-  setup_abi_lib("LIBCXX_LIBCXXABI_INCLUDE_PATHS" ""
-    "c++abi" "cxxabi.h" ""
-    )
-
   if (LIBCXX_CXX_ABI_INTREE)
-    add_dependencies(LIBCXX_CXX_ABI_DEPS cxxabi)
-  endif ()
+    # Link against just-built "cxxabi" target.
+    set(CXXABI_LIBNAME cxxabi)
+  else()
+    # Assume c++abi is installed in the system, rely on -lc++abi link flag.
+    set(CXXABI_LIBNAME "c++abi")
+  endif()
+  setup_abi_lib("LIBCXX_LIBCXXABI_INCLUDE_PATHS" ""
+    ${CXXABI_LIBNAME} "cxxabi.h" ""
+    )
 elseif ("${LIBCXX_CXX_ABI}" STREQUAL "libcxxrt")
   setup_abi_lib("LIBCXX_LIBCXXRT_INCLUDE_PATHS" "-DLIBCXXRT"
     "cxxrt" "cxxabi.h;unwind.h;unwind-arm.h;unwind-itanium.h" ""
