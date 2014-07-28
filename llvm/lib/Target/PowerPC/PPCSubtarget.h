@@ -109,6 +109,12 @@ protected:
   /// OptLevel - What default optimization level we're emitting code for.
   CodeGenOpt::Level OptLevel;
 
+  enum {
+    PPC_ABI_UNKNOWN,
+    PPC_ABI_ELFv1,
+    PPC_ABI_ELFv2
+  } TargetABI;
+
   PPCFrameLowering FrameLowering;
   const DataLayout DL;
   PPCInstrInfo InstrInfo;
@@ -227,9 +233,7 @@ public:
 
   bool isDarwinABI() const { return isDarwin(); }
   bool isSVR4ABI() const { return !isDarwin(); }
-  /// FIXME: Should use a command-line option.
-  bool isELFv2ABI() const { return isPPC64() && isSVR4ABI() &&
-                                   isLittleEndian(); }
+  bool isELFv2ABI() const { return TargetABI == PPC_ABI_ELFv2; }
 
   bool enableEarlyIfConversion() const override { return hasISEL(); }
 

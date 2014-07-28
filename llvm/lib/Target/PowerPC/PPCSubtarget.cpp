@@ -78,7 +78,7 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, PPCTargetMachine &TM,
                            bool is64Bit, CodeGenOpt::Level OptLevel)
     : PPCGenSubtargetInfo(TT, CPU, FS), IsPPC64(is64Bit), TargetTriple(TT),
-      OptLevel(OptLevel),
+      OptLevel(OptLevel), TargetABI(PPC_ABI_UNKNOWN),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
       DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this),
       TLInfo(TM), TSInfo(&DL) {}
@@ -203,6 +203,16 @@ void PPCSubtarget::resetSubtargetFeatures(StringRef CPU, StringRef FS) {
   // issues in those instructions can be addressed.
   if (IsLittleEndian)
     HasVSX = false;
+
+  // Determine default ABI.
+  if (TargetABI == PPC_ABI_UNKNOWN) {
+    if (!isDarwin() && IsPPC64) {
+      if (IsLittleEndian)
+        TargetABI = PPC_ABI_ELFv2;
+      else
+        TargetABI = PPC_ABI_ELFv1;
+    }
+  }
 }
 
 /// hasLazyResolverStub - Return true if accesses to the specified global have

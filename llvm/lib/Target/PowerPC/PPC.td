@@ -108,6 +108,16 @@ def DeprecatedDST    : SubtargetFeature<"", "DeprecatedDST", "true",
 // VSX          p7                 vector-scalar instruction set
 
 //===----------------------------------------------------------------------===//
+// ABI Selection                                                              //
+//===----------------------------------------------------------------------===//
+
+def FeatureELFv1 : SubtargetFeature<"elfv1", "TargetABI", "PPC_ABI_ELFv1",
+                                    "Use the ELFv1 ABI">;
+
+def FeatureELFv2 : SubtargetFeature<"elfv2", "TargetABI", "PPC_ABI_ELFv2",
+                                    "Use the ELFv2 ABI">;
+
+//===----------------------------------------------------------------------===//
 // Classes used for relation maps.
 //===----------------------------------------------------------------------===//
 // RecFormRel - Filter class used to relate non-record-form instructions with
