@@ -144,7 +144,9 @@ public:
   }
 
   iterator begin() { return Data; }
+  const_iterator begin() const { return Data; }
   iterator end() { return Data + Size; }
+  const_iterator end() const { return Data + Size; }
 
   const_iterator cbegin() const { return Data; }
   const_iterator cend() const { return Data + Size; }

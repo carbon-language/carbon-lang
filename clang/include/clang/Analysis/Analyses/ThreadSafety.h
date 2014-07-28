@@ -24,7 +24,7 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace clang {
-namespace thread_safety {
+namespace threadSafety {
 
 /// This enum distinguishes between different kinds of operations that may
 /// need to be protected by locks. We use this enum in error handling.
@@ -190,5 +190,5 @@ void runThreadSafetyAnalysis(AnalysisDeclContext &AC,
 /// of access.
 LockKind getLockKindFromAccessKind(AccessKind AK);
 
-}} // end namespace clang::thread_safety
+}} // end namespace clang::threadSafety
 #endif

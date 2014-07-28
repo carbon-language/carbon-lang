@@ -219,18 +219,16 @@ public:
   /// should be evaluated; multiple calling contexts can be chained together
   /// by the lock_returned attribute.
   struct CallingContext {
+    CallingContext  *Prev;      // The previous context; or 0 if none.
     const NamedDecl *AttrDecl;  // The decl to which the attr is attached.
     const Expr *SelfArg;        // Implicit object argument -- e.g. 'this'
     unsigned NumArgs;           // Number of funArgs
     const Expr *const *FunArgs; // Function arguments
-    CallingContext *Prev;       // The previous context; or 0 if none.
     bool SelfArrow;             // is Self referred to with -> or .?
 
-    CallingContext(const NamedDecl *D = nullptr, const Expr *S = nullptr,
-                   unsigned N = 0, const Expr *const *A = nullptr,
-                   CallingContext *P = nullptr)
-        : AttrDecl(D), SelfArg(S), NumArgs(N), FunArgs(A), Prev(P),
-          SelfArrow(false)
+    CallingContext(CallingContext *P, const NamedDecl *D = nullptr)
+        : Prev(P), AttrDecl(D), SelfArg(nullptr),
+          NumArgs(0), FunArgs(nullptr), SelfArrow(false)
     {}
   };
 
@@ -241,6 +239,13 @@ public:
     SelfVar = new (Arena) til::Variable(nullptr);
     SelfVar->setKind(til::Variable::VK_SFun);
   }
+
+  // Translate a clang expression in an attribute to a til::SExpr.
+  // Constructs the context from D, DeclExp, and SelfDecl.
+  til::SExpr *translateAttrExpr(const Expr *AttrExp, const NamedDecl *D,
+                                const Expr *DeclExp, VarDecl *SelfDecl=nullptr);
+
+  til::SExpr *translateAttrExpr(const Expr *AttrExp, CallingContext *Ctx);
 
   // Translate a clang statement or expression to a TIL expression.
   // Also performs substitution of variables; Ctx provides the context.
@@ -262,7 +267,8 @@ private:
                                    CallingContext *Ctx) ;
   til::SExpr *translateCXXThisExpr(const CXXThisExpr *TE, CallingContext *Ctx);
   til::SExpr *translateMemberExpr(const MemberExpr *ME, CallingContext *Ctx);
-  til::SExpr *translateCallExpr(const CallExpr *CE, CallingContext *Ctx);
+  til::SExpr *translateCallExpr(const CallExpr *CE, CallingContext *Ctx,
+                                const Expr *SelfE = nullptr);
   til::SExpr *translateCXXMemberCallExpr(const CXXMemberCallExpr *ME,
                                          CallingContext *Ctx);
   til::SExpr *translateCXXOperatorCallExpr(const CXXOperatorCallExpr *OCE,
@@ -280,10 +286,8 @@ private:
   til::SExpr *translateCastExpr(const CastExpr *CE, CallingContext *Ctx);
   til::SExpr *translateArraySubscriptExpr(const ArraySubscriptExpr *E,
                                           CallingContext *Ctx);
-  til::SExpr *translateConditionalOperator(const ConditionalOperator *C,
-                                           CallingContext *Ctx);
-  til::SExpr *translateBinaryConditionalOperator(
-      const BinaryConditionalOperator *C, CallingContext *Ctx);
+  til::SExpr *translateAbstractConditionalOperator(
+      const AbstractConditionalOperator *C, CallingContext *Ctx);
 
   til::SExpr *translateDeclStmt(const DeclStmt *S, CallingContext *Ctx);
 
@@ -362,16 +366,19 @@ private:
   void mergePhiNodesBackEdge(const CFGBlock *Blk);
 
 private:
+  // Set to true when parsing capability expressions, which get translated
+  // inaccurately in order to hack around smart pointers etc.
+  static const bool CapabilityExprMode = true;
+
   til::MemRegionRef Arena;
   til::Variable *SelfVar;       // Variable to use for 'this'.  May be null.
-  til::SCFG *Scfg;
 
+  til::SCFG *Scfg;
   StatementMap SMap;                       // Map from Stmt to TIL Variables
   LVarIndexMap LVarIdxMap;                 // Indices of clang local vars.
   std::vector<til::BasicBlock *> BlockMap; // Map from clang to til BBs.
   std::vector<BlockInfo> BBInfo;           // Extra information per BB.
                                            // Indexed by clang BlockID.
-  std::unique_ptr<SExprBuilder::CallingContext> CallCtx; // Root calling context
 
   LVarDefinitionMap CurrentLVarMap;
   std::vector<til::Variable*> CurrentArguments;

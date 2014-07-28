@@ -95,6 +95,13 @@ public:
 };
 
 
+template <class K, class T>
+class MyMap {
+public:
+  T& operator[](const K& k);
+};
+
+
 
 Mutex sls_mu;
 
@@ -2280,6 +2287,15 @@ void test() {
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[1] : fooArray[b]).a = 0;
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
+}
+
+
+void test2() {
+  Foo *fooArray;
+  Bar bar;
+  int a;
+  int b;
+  int c;
 
   bar.getFoo().mu_.Lock();
   bar.getFooey().a = 0; // \
@@ -2295,20 +2311,20 @@ void test() {
 
   bar.getFoo3(a, b).mu_.Lock();
   bar.getFoo3(a, c).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo3(a,c).mu_' exclusively}} \
-    // expected-note {{'bar.getFoo3(a,b).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex 'bar.getFoo3(a, c).mu_' exclusively}} \
+    // expected-note {{found near match 'bar.getFoo3(a, b).mu_'}}
   bar.getFoo3(a, b).mu_.Unlock();
 
   getBarFoo(bar, a).mu_.Lock();
   getBarFoo(bar, b).a = 0;  // \
-    // expected-warning {{writing variable 'a' requires holding mutex 'getBarFoo(bar,b).mu_' exclusively}} \
-    // expected-note {{'getBarFoo(bar,a).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex 'getBarFoo(bar, b).mu_' exclusively}} \
+    // expected-note {{found near match 'getBarFoo(bar, a).mu_'}}
   getBarFoo(bar, a).mu_.Unlock();
 
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
   (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
-    // expected-warning {{writing variable 'a' requires holding mutex '((a#_)#_#fooArray[b]).mu_' exclusively}} \
-    // expected-note {{'((a#_)#_#fooArray[_]).mu_'}}
+    // expected-warning {{writing variable 'a' requires holding mutex '((0 < a) ? fooArray[b] : fooArray[c]).mu_' exclusively}} \
+    // expected-note {{found near match '((0 < a) ? fooArray[1] : fooArray[b]).mu_'}}
   (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
 }
 
@@ -4378,3 +4394,126 @@ class Foo {
 };
 
 }  // end namespace ThreadAttributesOnLambdas
+
+
+
+namespace AttributeExpressionCornerCases {
+
+class Foo {
+  int a GUARDED_BY(getMu());
+
+  Mutex* getMu()   LOCK_RETURNED("");
+  Mutex* getUniv() LOCK_RETURNED("*");
+
+  void test1() {
+    a = 0;
+  }
+
+  void test2() EXCLUSIVE_LOCKS_REQUIRED(getUniv()) {
+    a = 0;
+  }
+
+  void foo(Mutex* mu) EXCLUSIVE_LOCKS_REQUIRED(mu);
+
+  void test3() {
+    foo(nullptr);
+  }
+};
+
+
+class MapTest {
+  struct MuCell { Mutex* mu; };
+
+  MyMap<MyString, Mutex*> map;
+  MyMap<MyString, MuCell> mapCell;
+
+  int a GUARDED_BY(map["foo"]);
+  int b GUARDED_BY(mapCell["foo"].mu);
+
+  void test() {
+    map["foo"]->Lock();
+    a = 0;
+    map["foo"]->Unlock();
+  }
+
+  void test2() {
+    mapCell["foo"].mu->Lock();
+    b = 0;
+    mapCell["foo"].mu->Unlock();
+  }
+};
+
+
+class PreciseSmartPtr {
+  SmartPtr<Mutex> mu;
+  int val GUARDED_BY(mu);
+
+  static bool compare(PreciseSmartPtr& a, PreciseSmartPtr &b) {
+    a.mu->Lock();
+    bool result = (a.val == b.val);   // expected-warning {{reading variable 'val' requires holding mutex 'b.mu'}} \
+                                      // expected-note {{found near match 'a.mu'}}
+    a.mu->Unlock();
+    return result;
+  }
+};
+
+
+class SmartRedeclare {
+  SmartPtr<Mutex> mu;
+  int val GUARDED_BY(mu);
+
+  void test()  EXCLUSIVE_LOCKS_REQUIRED(mu);
+  void test2() EXCLUSIVE_LOCKS_REQUIRED(mu.get());
+  void test3() EXCLUSIVE_LOCKS_REQUIRED(mu.get());
+};
+
+
+void SmartRedeclare::test() EXCLUSIVE_LOCKS_REQUIRED(mu.get()) {
+  val = 0;
+}
+
+void SmartRedeclare::test2() EXCLUSIVE_LOCKS_REQUIRED(mu) {
+  val = 0;
+}
+
+void SmartRedeclare::test3() {
+  val = 0;
+}
+
+
+namespace CustomMutex {
+
+
+class LOCKABLE BaseMutex { };
+class DerivedMutex : public BaseMutex { };
+
+void customLock(const BaseMutex *m)   EXCLUSIVE_LOCK_FUNCTION(m);
+void customUnlock(const BaseMutex *m) UNLOCK_FUNCTION(m);
+
+static struct DerivedMutex custMu;
+
+static void doSomethingRequiringLock() EXCLUSIVE_LOCKS_REQUIRED(custMu) { }
+
+void customTest() {
+  customLock(reinterpret_cast<BaseMutex*>(&custMu));  // ignore casts
+  doSomethingRequiringLock();
+  customUnlock(reinterpret_cast<BaseMutex*>(&custMu));
+}
+
+} // end namespace CustomMutex
+
+} // end AttributeExpressionCornerCases
+
+
+namespace ScopedLockReturnedInvalid {
+
+class Opaque;
+
+Mutex* getMutex(Opaque* o) LOCK_RETURNED("");
+
+void test(Opaque* o) {
+  MutexLock lock(getMutex(o));
+}
+
+}  // end namespace ScopedLockReturnedInvalid
+

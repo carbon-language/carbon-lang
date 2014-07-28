@@ -1444,9 +1444,9 @@ struct SortDiagBySourceLocation {
 // -Wthread-safety
 //===----------------------------------------------------------------------===//
 namespace clang {
-namespace thread_safety {
-namespace {
-class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
+namespace threadSafety {
+
+class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
   Sema &S;
   DiagList Warnings;
   SourceLocation FunLocation, FunEndLocation;
@@ -1608,7 +1608,7 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 };
-}
+
 }
 }
 
@@ -1896,11 +1896,11 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (P.enableThreadSafetyAnalysis) {
     SourceLocation FL = AC.getDecl()->getLocation();
     SourceLocation FEL = AC.getDecl()->getLocEnd();
-    thread_safety::ThreadSafetyReporter Reporter(S, FL, FEL);
+    threadSafety::ThreadSafetyReporter Reporter(S, FL, FEL);
     if (!Diags.isIgnored(diag::warn_thread_safety_beta, D->getLocStart()))
       Reporter.setIssueBetaWarnings(true);
 
-    thread_safety::runThreadSafetyAnalysis(AC, Reporter);
+    threadSafety::runThreadSafetyAnalysis(AC, Reporter);
     Reporter.emitDiagnostics();
   }
 

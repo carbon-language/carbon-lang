@@ -91,6 +91,102 @@ til::SCFG *SExprBuilder::buildCFG(CFGWalker &Walker) {
 }
 
 
+
+inline bool isCalleeArrow(const Expr *E) {
+  const MemberExpr *ME = dyn_cast<MemberExpr>(E->IgnoreParenCasts());
+  return ME ? ME->isArrow() : false;
+}
+
+
+/// \brief Translate a clang expression in an attribute to a til::SExpr.
+/// Constructs the context from D, DeclExp, and SelfDecl.
+///
+/// \param AttrExp The expression to translate.
+/// \param D       The declaration to which the attribute is attached.
+/// \param DeclExp An expression involving the Decl to which the attribute
+///                is attached.  E.g. the call to a function.
+til::SExpr *SExprBuilder::translateAttrExpr(const Expr *AttrExp,
+                                            const NamedDecl *D,
+                                            const Expr *DeclExp,
+                                            VarDecl *SelfDecl) {
+  // If we are processing a raw attribute expression, with no substitutions.
+  if (!DeclExp)
+    return translateAttrExpr(AttrExp, nullptr);
+
+  CallingContext Ctx(nullptr, D);
+
+  // Examine DeclExp to find SelfArg and FunArgs, which are used to substitute
+  // for formal parameters when we call buildMutexID later.
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(DeclExp)) {
+    Ctx.SelfArg   = ME->getBase();
+    Ctx.SelfArrow = ME->isArrow();
+  } else if (const CXXMemberCallExpr *CE =
+             dyn_cast<CXXMemberCallExpr>(DeclExp)) {
+    Ctx.SelfArg   = CE->getImplicitObjectArgument();
+    Ctx.SelfArrow = isCalleeArrow(CE->getCallee());
+    Ctx.NumArgs   = CE->getNumArgs();
+    Ctx.FunArgs   = CE->getArgs();
+  } else if (const CallExpr *CE = dyn_cast<CallExpr>(DeclExp)) {
+    Ctx.NumArgs = CE->getNumArgs();
+    Ctx.FunArgs = CE->getArgs();
+  } else if (const CXXConstructExpr *CE =
+             dyn_cast<CXXConstructExpr>(DeclExp)) {
+    Ctx.SelfArg = nullptr;  // Will be set below
+    Ctx.NumArgs = CE->getNumArgs();
+    Ctx.FunArgs = CE->getArgs();
+  } else if (D && isa<CXXDestructorDecl>(D)) {
+    // There's no such thing as a "destructor call" in the AST.
+    Ctx.SelfArg = DeclExp;
+  }
+
+  // Hack to handle constructors, where self cannot be recovered from
+  // the expression.
+  if (SelfDecl && !Ctx.SelfArg) {
+    DeclRefExpr SelfDRE(SelfDecl, false, SelfDecl->getType(), VK_LValue,
+                        SelfDecl->getLocation());
+    Ctx.SelfArg = &SelfDRE;
+
+    // If the attribute has no arguments, then assume the argument is "this".
+    if (!AttrExp)
+      return translateAttrExpr(Ctx.SelfArg, nullptr);
+    else  // For most attributes.
+      return translateAttrExpr(AttrExp, &Ctx);
+  }
+
+  // If the attribute has no arguments, then assume the argument is "this".
+  if (!AttrExp)
+    return translateAttrExpr(Ctx.SelfArg, nullptr);
+  else  // For most attributes.
+    return translateAttrExpr(AttrExp, &Ctx);
+}
+
+
+/// \brief Translate a clang expression in an attribute to a til::SExpr.
+// This assumes a CallingContext has already been created.
+til::SExpr *SExprBuilder::translateAttrExpr(const Expr *AttrExp,
+                                            CallingContext *Ctx) {
+  if (const StringLiteral* SLit = dyn_cast_or_null<StringLiteral>(AttrExp)) {
+    if (SLit->getString() == StringRef("*"))
+      // The "*" expr is a universal lock, which essentially turns off
+      // checks until it is removed from the lockset.
+      return new (Arena) til::Wildcard();
+    else
+      // Ignore other string literals for now.
+      return nullptr;
+  }
+
+  til::SExpr *E = translate(AttrExp, Ctx);
+
+  // Hack to deal with smart pointers -- strip off top-level pointer casts.
+  if (auto *CE = dyn_cast_or_null<til::Cast>(E)) {
+    if (CE->castOpcode() == til::CAST_objToPtr)
+      return CE->expr();
+  }
+  return E;
+}
+
+
+
 // Translate a clang statement or expression to a TIL expression.
 // Also performs substitution of variables; Ctx provides the context.
 // Dispatches on the type of S.
@@ -125,9 +221,10 @@ til::SExpr *SExprBuilder::translate(const Stmt *S, CallingContext *Ctx) {
   case Stmt::ArraySubscriptExprClass:
     return translateArraySubscriptExpr(cast<ArraySubscriptExpr>(S), Ctx);
   case Stmt::ConditionalOperatorClass:
-    return translateConditionalOperator(cast<ConditionalOperator>(S), Ctx);
+    return translateAbstractConditionalOperator(
+             cast<ConditionalOperator>(S), Ctx);
   case Stmt::BinaryConditionalOperatorClass:
-    return translateBinaryConditionalOperator(
+    return translateAbstractConditionalOperator(
              cast<BinaryConditionalOperator>(S), Ctx);
 
   // We treat these as no-ops
@@ -160,6 +257,7 @@ til::SExpr *SExprBuilder::translate(const Stmt *S, CallingContext *Ctx) {
 
   return new (Arena) til::Undefined(S);
 }
+
 
 
 til::SExpr *SExprBuilder::translateDeclRefExpr(const DeclRefExpr *DRE,
@@ -197,17 +295,72 @@ til::SExpr *SExprBuilder::translateCXXThisExpr(const CXXThisExpr *TE,
 }
 
 
+const ValueDecl *getValueDeclFromSExpr(const til::SExpr *E) {
+  if (auto *V = dyn_cast<til::Variable>(E))
+    return V->clangDecl();
+  if (auto *P = dyn_cast<til::Project>(E))
+    return P->clangDecl();
+  if (auto *L = dyn_cast<til::LiteralPtr>(E))
+    return L->clangDecl();
+  return 0;
+}
+
+bool hasCppPointerType(const til::SExpr *E) {
+  auto *VD = getValueDeclFromSExpr(E);
+  if (VD && VD->getType()->isPointerType())
+    return true;
+  if (auto *C = dyn_cast<til::Cast>(E))
+    return C->castOpcode() == til::CAST_objToPtr;
+
+  return false;
+}
+
+
+// Grab the very first declaration of virtual method D
+const CXXMethodDecl* getFirstVirtualDecl(const CXXMethodDecl *D) {
+  while (true) {
+    D = D->getCanonicalDecl();
+    CXXMethodDecl::method_iterator I = D->begin_overridden_methods(),
+                                   E = D->end_overridden_methods();
+    if (I == E)
+      return D;  // Method does not override anything
+    D = *I;      // FIXME: this does not work with multiple inheritance.
+  }
+  return nullptr;
+}
+
 til::SExpr *SExprBuilder::translateMemberExpr(const MemberExpr *ME,
                                               CallingContext *Ctx) {
-  til::SExpr *E = translate(ME->getBase(), Ctx);
-  E = new (Arena) til::SApply(E);
-  return new (Arena) til::Project(E, ME->getMemberDecl());
+  til::SExpr *BE = translate(ME->getBase(), Ctx);
+  til::SExpr *E  = new (Arena) til::SApply(BE);
+
+  const ValueDecl *D = ME->getMemberDecl();
+  if (auto *VD = dyn_cast<CXXMethodDecl>(D))
+    D = getFirstVirtualDecl(VD);
+
+  til::Project *P = new (Arena) til::Project(E, D);
+  if (hasCppPointerType(BE))
+    P->setArrow(true);
+  return P;
 }
 
 
 til::SExpr *SExprBuilder::translateCallExpr(const CallExpr *CE,
-                                            CallingContext *Ctx) {
-  // TODO -- Lock returned
+                                            CallingContext *Ctx,
+                                            const Expr *SelfE) {
+  if (CapabilityExprMode) {
+    // Handle LOCK_RETURNED
+    const FunctionDecl *FD = CE->getDirectCallee()->getMostRecentDecl();
+    if (LockReturnedAttr* At = FD->getAttr<LockReturnedAttr>()) {
+      CallingContext LRCallCtx(Ctx);
+      LRCallCtx.AttrDecl = CE->getDirectCallee();
+      LRCallCtx.SelfArg  = SelfE;
+      LRCallCtx.NumArgs  = CE->getNumArgs();
+      LRCallCtx.FunArgs  = CE->getArgs();
+      return translateAttrExpr(At->getArg(), &LRCallCtx);
+    }
+  }
+
   til::SExpr *E = translate(CE->getCallee(), Ctx);
   for (const auto *Arg : CE->arguments()) {
     til::SExpr *A = translate(Arg, Ctx);
@@ -219,12 +372,31 @@ til::SExpr *SExprBuilder::translateCallExpr(const CallExpr *CE,
 
 til::SExpr *SExprBuilder::translateCXXMemberCallExpr(
     const CXXMemberCallExpr *ME, CallingContext *Ctx) {
-  return translateCallExpr(cast<CallExpr>(ME), Ctx);
+  if (CapabilityExprMode) {
+    // Ignore calls to get() on smart pointers.
+    if (ME->getMethodDecl()->getNameAsString() == "get" &&
+        ME->getNumArgs() == 0) {
+      auto *E = translate(ME->getImplicitObjectArgument(), Ctx);
+      return new (Arena) til::Cast(til::CAST_objToPtr, E);
+      // return E;
+    }
+  }
+  return translateCallExpr(cast<CallExpr>(ME), Ctx,
+                           ME->getImplicitObjectArgument());
 }
 
 
 til::SExpr *SExprBuilder::translateCXXOperatorCallExpr(
     const CXXOperatorCallExpr *OCE, CallingContext *Ctx) {
+  if (CapabilityExprMode) {
+    // Ignore operator * and operator -> on smart pointers.
+    OverloadedOperatorKind k = OCE->getOperator();
+    if (k == OO_Star || k == OO_Arrow) {
+      auto *E = translate(OCE->getArg(0), Ctx);
+      return new (Arena) til::Cast(til::CAST_objToPtr, E);
+      // return E;
+    }
+  }
   return translateCallExpr(cast<CallExpr>(OCE), Ctx);
 }
 
@@ -238,8 +410,23 @@ til::SExpr *SExprBuilder::translateUnaryOperator(const UnaryOperator *UO,
   case UO_PreDec:
     return new (Arena) til::Undefined(UO);
 
+  case UO_AddrOf: {
+    if (CapabilityExprMode) {
+      // interpret &Graph::mu_ as an existential.
+      if (DeclRefExpr* DRE = dyn_cast<DeclRefExpr>(UO->getSubExpr())) {
+        if (DRE->getDecl()->isCXXInstanceMember()) {
+          // This is a pointer-to-member expression, e.g. &MyClass::mu_.
+          // We interpret this syntax specially, as a wildcard.
+          auto *W = new (Arena) til::Wildcard();
+          return new (Arena) til::Project(W, DRE->getDecl());
+        }
+      }
+    }
+    // otherwise, & is a no-op
+    return translate(UO->getSubExpr(), Ctx);
+  }
+
   // We treat these as no-ops
-  case UO_AddrOf:
   case UO_Deref:
   case UO_Plus:
     return translate(UO->getSubExpr(), Ctx);
@@ -360,7 +547,9 @@ til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
         return E0;
     }
     til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
-    return new (Arena) til::Load(E0);
+    return E0;
+    // FIXME!! -- get Load working properly
+    // return new (Arena) til::Load(E0);
   }
   case CK_NoOp:
   case CK_DerivedToBase:
@@ -373,6 +562,8 @@ til::SExpr *SExprBuilder::translateCastExpr(const CastExpr *CE,
   default: {
     // FIXME: handle different kinds of casts.
     til::SExpr *E0 = translate(CE->getSubExpr(), Ctx);
+    if (CapabilityExprMode)
+      return E0;
     return new (Arena) til::Cast(til::CAST_none, E0);
   }
   }
@@ -389,15 +580,12 @@ SExprBuilder::translateArraySubscriptExpr(const ArraySubscriptExpr *E,
 
 
 til::SExpr *
-SExprBuilder::translateConditionalOperator(const ConditionalOperator *C,
-                                           CallingContext *Ctx) {
-  return new (Arena) til::Undefined(C);
-}
-
-
-til::SExpr *SExprBuilder::translateBinaryConditionalOperator(
-    const BinaryConditionalOperator *C, CallingContext *Ctx) {
-  return new (Arena) til::Undefined(C);
+SExprBuilder::translateAbstractConditionalOperator(
+    const AbstractConditionalOperator *CO, CallingContext *Ctx) {
+  auto *C = translate(CO->getCond(), Ctx);
+  auto *T = translate(CO->getTrueExpr(), Ctx);
+  auto *E = translate(CO->getFalseExpr(), Ctx);
+  return new (Arena) til::IfThenElse(C, T, E);
 }
 
 
@@ -430,9 +618,7 @@ SExprBuilder::translateDeclStmt(const DeclStmt *S, CallingContext *Ctx) {
 // If E is trivial returns E.
 til::SExpr *SExprBuilder::addStatement(til::SExpr* E, const Stmt *S,
                                        const ValueDecl *VD) {
-  if (!E)
-    return nullptr;
-  if (til::ThreadSafetyTIL::isTrivial(E))
+  if (!E || !CurrentBB || til::ThreadSafetyTIL::isTrivial(E))
     return E;
 
   til::Variable *V = new (Arena) til::Variable(E, VD);
@@ -631,7 +817,6 @@ void SExprBuilder::enterCFG(CFG *Cfg, const NamedDecl *D,
     BB->reserveInstructions(B->size());
     BlockMap[B->getBlockID()] = BB;
   }
-  CallCtx.reset(new SExprBuilder::CallingContext(D));
 
   CurrentBB = lookupBlock(&Cfg->getEntry());
   auto Parms = isa<ObjCMethodDecl>(D) ? cast<ObjCMethodDecl>(D)->parameters()
@@ -697,7 +882,7 @@ void SExprBuilder::enterCFGBlockBody(const CFGBlock *B) {
 
 
 void SExprBuilder::handleStatement(const Stmt *S) {
-  til::SExpr *E = translate(S, CallCtx.get());
+  til::SExpr *E = translate(S, nullptr);
   addStatement(E, S);
 }
 
@@ -730,7 +915,7 @@ void SExprBuilder::exitCFGBlockBody(const CFGBlock *B) {
     CurrentBB->setTerminator(Tm);
   }
   else if (N == 2) {
-    til::SExpr *C = translate(B->getTerminatorCondition(true), CallCtx.get());
+    til::SExpr *C = translate(B->getTerminatorCondition(true), nullptr);
     til::BasicBlock *BB1 = *It ? lookupBlock(*It) : nullptr;
     ++It;
     til::BasicBlock *BB2 = *It ? lookupBlock(*It) : nullptr;
@@ -775,18 +960,15 @@ void SExprBuilder::exitCFG(const CFGBlock *Last) {
 }
 
 
-
-class TILPrinter : public til::PrettyPrinter<TILPrinter, llvm::raw_ostream> {};
-
-
+/*
 void printSCFG(CFGWalker &Walker) {
   llvm::BumpPtrAllocator Bpa;
   til::MemRegionRef Arena(&Bpa);
-  SExprBuilder builder(Arena);
-  til::SCFG *Cfg = builder.buildCFG(Walker);
-  TILPrinter::print(Cfg, llvm::errs());
+  SExprBuilder SxBuilder(Arena);
+  til::SCFG *Scfg = SxBuilder.buildCFG(Walker);
+  TILPrinter::print(Scfg, llvm::errs());
 }
-
+*/
 
 
 } // end namespace threadSafety

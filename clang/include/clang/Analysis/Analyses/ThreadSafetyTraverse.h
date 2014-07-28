@@ -19,6 +19,8 @@
 
 #include "ThreadSafetyTIL.h"
 
+#include <ostream>
+
 namespace clang {
 namespace threadSafety {
 namespace til {
@@ -423,7 +425,7 @@ protected:
   Self *self() { return reinterpret_cast<Self *>(this); }
 
 public:
-  bool compareByCase(SExpr *E1, SExpr* E2) {
+  bool compareByCase(const SExpr *E1, const SExpr* E2) {
     switch (E1->opcode()) {
 #define TIL_OPCODE_DEF(X)                                                     \
     case COP_##X:                                                             \
@@ -449,26 +451,71 @@ public:
   bool compareStrings (StringRef s, StringRef r)     { return s == r; }
   bool comparePointers(const void* P, const void* Q) { return P == Q; }
 
-  bool compare(SExpr *E1, SExpr* E2) {
+  bool compare(const SExpr *E1, const SExpr* E2) {
     if (E1->opcode() != E2->opcode())
       return false;
     return compareByCase(E1, E2);
   }
 
   // TODO -- handle alpha-renaming of variables
-  void enterScope(Variable* V1, Variable* V2) { }
+  void enterScope(const Variable* V1, const Variable* V2) { }
   void leaveScope() { }
 
-  bool compareVariableRefs(Variable* V1, Variable* V2) {
+  bool compareVariableRefs(const Variable* V1, const Variable* V2) {
     return V1 == V2;
   }
 
-  static bool compareExprs(SExpr *E1, SExpr* E2) {
+  static bool compareExprs(const SExpr *E1, const SExpr* E2) {
     EqualsComparator Eq;
     return Eq.compare(E1, E2);
   }
 };
 
+
+
+class MatchComparator : public Comparator<MatchComparator> {
+public:
+  // Result type for the comparison, e.g. bool for simple equality,
+  // or int for lexigraphic comparison (-1, 0, 1).  Must have one value which
+  // denotes "true".
+  typedef bool CType;
+
+  CType trueResult() { return true; }
+  bool notTrue(CType ct) { return !ct; }
+
+  bool compareIntegers(unsigned i, unsigned j)       { return i == j; }
+  bool compareStrings (StringRef s, StringRef r)     { return s == r; }
+  bool comparePointers(const void* P, const void* Q) { return P == Q; }
+
+  bool compare(const SExpr *E1, const SExpr* E2) {
+    // Wildcards match anything.
+    if (E1->opcode() == COP_Wildcard || E2->opcode() == COP_Wildcard)
+      return true;
+    // otherwise normal equality.
+    if (E1->opcode() != E2->opcode())
+      return false;
+    return compareByCase(E1, E2);
+  }
+
+  // TODO -- handle alpha-renaming of variables
+  void enterScope(const Variable* V1, const Variable* V2) { }
+  void leaveScope() { }
+
+  bool compareVariableRefs(const Variable* V1, const Variable* V2) {
+    return V1 == V2;
+  }
+
+  static bool compareExprs(const SExpr *E1, const SExpr* E2) {
+    MatchComparator Matcher;
+    return Matcher.compare(E1, E2);
+  }
+};
+
+
+
+inline std::ostream& operator<<(std::ostream& SS, llvm::StringRef R) {
+  return SS.write(R.data(), R.size());
+}
 
 // Pretty printer for TIL expressions
 template <typename Self, typename StreamType>
@@ -476,11 +523,14 @@ class PrettyPrinter {
 private:
   bool Verbose;  // Print out additional information
   bool Cleanup;  // Omit redundant decls.
+  bool CStyle;   // Print exprs in C-like syntax.
 
 public:
-  PrettyPrinter(bool V = false, bool C = true) : Verbose(V), Cleanup(C) { }
+  PrettyPrinter(bool V = false, bool C = true, bool CS = true)
+     : Verbose(V), Cleanup(C), CStyle(CS)
+  {}
 
-  static void print(SExpr *E, StreamType &SS) {
+  static void print(const SExpr *E, StreamType &SS) {
     Self printer;
     printer.printSExpr(E, SS, Prec_MAX);
   }
@@ -502,7 +552,7 @@ protected:
   static const unsigned Prec_MAX = 6;
 
   // Return the precedence of a given node, for use in pretty printing.
-  unsigned precedence(SExpr *E) {
+  unsigned precedence(const SExpr *E) {
     switch (E->opcode()) {
       case COP_Future:     return Prec_Atom;
       case COP_Undefined:  return Prec_Atom;
@@ -529,7 +579,7 @@ protected:
 
       case COP_UnaryOp:    return Prec_Unary;
       case COP_BinaryOp:   return Prec_Binary;
-      case COP_Cast:       return Prec_Unary;
+      case COP_Cast:       return Prec_Atom;
 
       case COP_SCFG:       return Prec_Decl;
       case COP_BasicBlock: return Prec_MAX;
@@ -544,7 +594,7 @@ protected:
     return Prec_MAX;
   }
 
-  void printBlockLabel(StreamType & SS, BasicBlock *BB, unsigned index) {
+  void printBlockLabel(StreamType & SS, const BasicBlock *BB, unsigned index) {
     if (!BB) {
       SS << "BB_null";
       return;
@@ -555,7 +605,7 @@ protected:
     SS << index;
   }
 
-  void printSExpr(SExpr *E, StreamType &SS, unsigned P) {
+  void printSExpr(const SExpr *E, StreamType &SS, unsigned P) {
     if (!E) {
       self()->printNull(SS);
       return;
@@ -582,28 +632,28 @@ protected:
     SS << "#null";
   }
 
-  void printFuture(Future *E, StreamType &SS) {
+  void printFuture(const Future *E, StreamType &SS) {
     self()->printSExpr(E->maybeGetResult(), SS, Prec_Atom);
   }
 
-  void printUndefined(Undefined *E, StreamType &SS) {
+  void printUndefined(const Undefined *E, StreamType &SS) {
     SS << "#undefined";
   }
 
-  void printWildcard(Wildcard *E, StreamType &SS) {
-    SS << "_";
+  void printWildcard(const Wildcard *E, StreamType &SS) {
+    SS << "*";
   }
 
   template<class T>
-  void printLiteralT(LiteralT<T> *E, StreamType &SS) {
+  void printLiteralT(const LiteralT<T> *E, StreamType &SS) {
     SS << E->value();
   }
 
-  void printLiteralT(LiteralT<uint8_t> *E, StreamType &SS) {
+  void printLiteralT(const LiteralT<uint8_t> *E, StreamType &SS) {
     SS << "'" << E->value() << "'";
   }
 
-  void printLiteral(Literal *E, StreamType &SS) {
+  void printLiteral(const Literal *E, StreamType &SS) {
     if (E->clangExpr()) {
       SS << getSourceLiteralString(E->clangExpr());
       return;
@@ -685,13 +735,13 @@ protected:
     SS << "#lit";
   }
 
-  void printLiteralPtr(LiteralPtr *E, StreamType &SS) {
+  void printLiteralPtr(const LiteralPtr *E, StreamType &SS) {
     SS << E->clangDecl()->getNameAsString();
   }
 
-  void printVariable(Variable *V, StreamType &SS, bool IsVarDecl = false) {
+  void printVariable(const Variable *V, StreamType &SS, bool IsVarDecl = false) {
     if (!IsVarDecl && Cleanup) {
-      SExpr* E = getCanonicalVal(V);
+      const SExpr* E = getCanonicalVal(V);
       if (E != V) {
         printSExpr(E, SS, Prec_Atom);
         return;
@@ -699,11 +749,13 @@ protected:
     }
     if (V->kind() == Variable::VK_LetBB)
       SS << V->name() << V->getBlockID() << "_" << V->getID();
+    else if (CStyle && V->kind() == Variable::VK_SFun)
+      SS << "this";
     else
       SS << V->name() << V->getID();
   }
 
-  void printFunction(Function *E, StreamType &SS, unsigned sugared = 0) {
+  void printFunction(const Function *E, StreamType &SS, unsigned sugared = 0) {
     switch (sugared) {
       default:
         SS << "\\(";   // Lambda
@@ -719,7 +771,7 @@ protected:
     SS << ": ";
     self()->printSExpr(E->variableDecl()->definition(), SS, Prec_MAX);
 
-    SExpr *B = E->body();
+    const SExpr *B = E->body();
     if (B && B->opcode() == COP_Function)
       self()->printFunction(cast<Function>(B), SS, 2);
     else {
@@ -728,29 +780,29 @@ protected:
     }
   }
 
-  void printSFunction(SFunction *E, StreamType &SS) {
+  void printSFunction(const SFunction *E, StreamType &SS) {
     SS << "@";
     self()->printVariable(E->variableDecl(), SS, true);
     SS << " ";
     self()->printSExpr(E->body(), SS, Prec_Decl);
   }
 
-  void printCode(Code *E, StreamType &SS) {
+  void printCode(const Code *E, StreamType &SS) {
     SS << ": ";
     self()->printSExpr(E->returnType(), SS, Prec_Decl-1);
     SS << " -> ";
     self()->printSExpr(E->body(), SS, Prec_Decl);
   }
 
-  void printField(Field *E, StreamType &SS) {
+  void printField(const Field *E, StreamType &SS) {
     SS << ": ";
     self()->printSExpr(E->range(), SS, Prec_Decl-1);
     SS << " = ";
     self()->printSExpr(E->body(), SS, Prec_Decl);
   }
 
-  void printApply(Apply *E, StreamType &SS, bool sugared = false) {
-    SExpr *F = E->fun();
+  void printApply(const Apply *E, StreamType &SS, bool sugared = false) {
+    const SExpr *F = E->fun();
     if (F->opcode() == COP_Apply) {
       printApply(cast<Apply>(F), SS, true);
       SS << ", ";
@@ -763,7 +815,7 @@ protected:
       SS << ")$";
   }
 
-  void printSApply(SApply *E, StreamType &SS) {
+  void printSApply(const SApply *E, StreamType &SS) {
     self()->printSExpr(E->sfun(), SS, Prec_Postfix);
     if (E->isDelegation()) {
       SS << "@(";
@@ -772,14 +824,36 @@ protected:
     }
   }
 
-  void printProject(Project *E, StreamType &SS) {
+  void printProject(const Project *E, StreamType &SS) {
+    if (CStyle) {
+      // Omit the  this->
+      if (const SApply *SAP = dyn_cast<SApply>(E->record())) {
+        if (const Variable *V = dyn_cast<Variable>(SAP->sfun())) {
+          if (!SAP->isDelegation() && V->kind() == Variable::VK_SFun) {
+            SS << E->slotName();
+            return;
+          }
+        }
+      }
+      if (isa<Wildcard>(E->record())) {
+        // handle existentials
+        SS << "&";
+        SS << E->clangDecl()->getQualifiedNameAsString();
+        return;
+      }
+    }
     self()->printSExpr(E->record(), SS, Prec_Postfix);
-    SS << ".";
+    if (CStyle && E->isArrow()) {
+      SS << "->";
+    }
+    else {
+      SS << ".";
+    }
     SS << E->slotName();
   }
 
-  void printCall(Call *E, StreamType &SS) {
-    SExpr *T = E->target();
+  void printCall(const Call *E, StreamType &SS) {
+    const SExpr *T = E->target();
     if (T->opcode() == COP_Apply) {
       self()->printApply(cast<Apply>(T), SS, true);
       SS << ")";
@@ -790,52 +864,60 @@ protected:
     }
   }
 
-  void printAlloc(Alloc *E, StreamType &SS) {
+  void printAlloc(const Alloc *E, StreamType &SS) {
     SS << "new ";
     self()->printSExpr(E->dataType(), SS, Prec_Other-1);
   }
 
-  void printLoad(Load *E, StreamType &SS) {
+  void printLoad(const Load *E, StreamType &SS) {
     self()->printSExpr(E->pointer(), SS, Prec_Postfix);
-    SS << "^";
+    if (!CStyle)
+      SS << "^";
   }
 
-  void printStore(Store *E, StreamType &SS) {
+  void printStore(const Store *E, StreamType &SS) {
     self()->printSExpr(E->destination(), SS, Prec_Other-1);
     SS << " := ";
     self()->printSExpr(E->source(), SS, Prec_Other-1);
   }
 
-  void printArrayIndex(ArrayIndex *E, StreamType &SS) {
+  void printArrayIndex(const ArrayIndex *E, StreamType &SS) {
     self()->printSExpr(E->array(), SS, Prec_Postfix);
     SS << "[";
     self()->printSExpr(E->index(), SS, Prec_MAX);
     SS << "]";
   }
 
-  void printArrayAdd(ArrayAdd *E, StreamType &SS) {
+  void printArrayAdd(const ArrayAdd *E, StreamType &SS) {
     self()->printSExpr(E->array(), SS, Prec_Postfix);
     SS << " + ";
     self()->printSExpr(E->index(), SS, Prec_Atom);
   }
 
-  void printUnaryOp(UnaryOp *E, StreamType &SS) {
+  void printUnaryOp(const UnaryOp *E, StreamType &SS) {
     SS << getUnaryOpcodeString(E->unaryOpcode());
     self()->printSExpr(E->expr(), SS, Prec_Unary);
   }
 
-  void printBinaryOp(BinaryOp *E, StreamType &SS) {
+  void printBinaryOp(const BinaryOp *E, StreamType &SS) {
     self()->printSExpr(E->expr0(), SS, Prec_Binary-1);
     SS << " " << getBinaryOpcodeString(E->binaryOpcode()) << " ";
     self()->printSExpr(E->expr1(), SS, Prec_Binary-1);
   }
 
-  void printCast(Cast *E, StreamType &SS) {
-    SS << "%";
+  void printCast(const Cast *E, StreamType &SS) {
+    if (!CStyle) {
+      SS << "cast[";
+      SS << E->castOpcode();
+      SS << "](";
+      self()->printSExpr(E->expr(), SS, Prec_Unary);
+      SS << ")";
+      return;
+    }
     self()->printSExpr(E->expr(), SS, Prec_Unary);
   }
 
-  void printSCFG(SCFG *E, StreamType &SS) {
+  void printSCFG(const SCFG *E, StreamType &SS) {
     SS << "CFG {\n";
     for (auto BBI : *E) {
       printBasicBlock(BBI, SS);
@@ -844,7 +926,7 @@ protected:
     newline(SS);
   }
 
-  void printBasicBlock(BasicBlock *E, StreamType &SS) {
+  void printBasicBlock(const BasicBlock *E, StreamType &SS) {
     SS << "BB_" << E->blockID() << ":";
     if (E->parent())
       SS << " BB_" << E->parent()->blockID();
@@ -867,7 +949,7 @@ protected:
       SS << ";";
       newline(SS);
     }
-    SExpr *T = E->terminator();
+    const SExpr *T = E->terminator();
     if (T) {
       self()->printSExpr(T, SS, Prec_MAX);
       SS << ";";
@@ -876,7 +958,7 @@ protected:
     newline(SS);
   }
 
-  void printPhi(Phi *E, StreamType &SS) {
+  void printPhi(const Phi *E, StreamType &SS) {
     SS << "phi(";
     if (E->status() == Phi::PH_SingleVal)
       self()->printSExpr(E->values()[0], SS, Prec_MAX);
@@ -891,12 +973,12 @@ protected:
     SS << ")";
   }
 
-  void printGoto(Goto *E, StreamType &SS) {
+  void printGoto(const Goto *E, StreamType &SS) {
     SS << "goto ";
     printBlockLabel(SS, E->targetBlock(), E->index());
   }
 
-  void printBranch(Branch *E, StreamType &SS) {
+  void printBranch(const Branch *E, StreamType &SS) {
     SS << "branch (";
     self()->printSExpr(E->condition(), SS, Prec_MAX);
     SS << ") ";
@@ -905,11 +987,19 @@ protected:
     printBlockLabel(SS, E->elseBlock(), E->elseIndex());
   }
 
-  void printIdentifier(Identifier *E, StreamType &SS) {
+  void printIdentifier(const Identifier *E, StreamType &SS) {
     SS << E->name();
   }
 
-  void printIfThenElse(IfThenElse *E, StreamType &SS) {
+  void printIfThenElse(const IfThenElse *E, StreamType &SS) {
+    if (CStyle) {
+      printSExpr(E->condition(), SS, Prec_Unary);
+      SS << " ? ";
+      printSExpr(E->thenExpr(), SS, Prec_Unary);
+      SS << " : ";
+      printSExpr(E->elseExpr(), SS, Prec_Unary);
+      return;
+    }
     SS << "if (";
     printSExpr(E->condition(), SS, Prec_MAX);
     SS << ") then ";
@@ -918,7 +1008,7 @@ protected:
     printSExpr(E->elseExpr(), SS, Prec_Other);
   }
 
-  void printLet(Let *E, StreamType &SS) {
+  void printLet(const Let *E, StreamType &SS) {
     SS << "let ";
     printVariable(E->variableDecl(), SS, true);
     SS << " = ";
@@ -927,6 +1017,10 @@ protected:
     printSExpr(E->body(), SS, Prec_Decl-1);
   }
 };
+
+
+class StdPrinter : public PrettyPrinter<StdPrinter, std::ostream> { };
+
 
 
 } // end namespace til

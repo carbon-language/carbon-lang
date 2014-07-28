@@ -88,10 +88,42 @@ void SCFG::renumberVars() {
 
 
 
+// If E is a variable, then trace back through any aliases or redundant
+// Phi nodes to find the canonical definition.
+const SExpr *getCanonicalVal(const SExpr *E) {
+  while (auto *V = dyn_cast<Variable>(E)) {
+    const SExpr *D;
+    do {
+      if (V->kind() != Variable::VK_Let)
+        return V;
+      D = V->definition();
+      auto *V2 = dyn_cast<Variable>(D);
+      if (V2)
+        V = V2;
+      else
+        break;
+    } while (true);
+
+    if (ThreadSafetyTIL::isTrivial(D))
+      return D;
+
+    if (const Phi *Ph = dyn_cast<Phi>(D)) {
+      if (Ph->status() == Phi::PH_SingleVal) {
+        E = Ph->values()[0];
+        continue;
+      }
+    }
+    return V;
+  }
+  return E;
+}
+
+
 
 // If E is a variable, then trace back through any aliases or redundant
 // Phi nodes to find the canonical definition.
-SExpr *getCanonicalVal(SExpr *E) {
+// The non-const version will simplify incomplete Phi nodes.
+SExpr *simplifyToCanonicalVal(SExpr *E) {
   while (auto *V = dyn_cast<Variable>(E)) {
     SExpr *D;
     do {
@@ -123,6 +155,7 @@ SExpr *getCanonicalVal(SExpr *E) {
 }
 
 
+
 // Trace the arguments of an incomplete Phi node to see if they have the same
 // canonical definition.  If so, mark the Phi node as redundant.
 // getCanonicalVal() will recursively call simplifyIncompletePhi().
@@ -132,9 +165,9 @@ void simplifyIncompleteArg(Variable *V, til::Phi *Ph) {
   // eliminate infinite recursion -- assume that this node is not redundant.
   Ph->setStatus(Phi::PH_MultiVal);
 
-  SExpr *E0 = getCanonicalVal(Ph->values()[0]);
+  SExpr *E0 = simplifyToCanonicalVal(Ph->values()[0]);
   for (unsigned i=1, n=Ph->values().size(); i<n; ++i) {
-    SExpr *Ei = getCanonicalVal(Ph->values()[i]);
+    SExpr *Ei = simplifyToCanonicalVal(Ph->values()[i]);
     if (Ei == V)
       continue;  // Recursive reference to itself.  Don't count.
     if (Ei != E0) {
