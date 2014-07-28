@@ -2075,6 +2075,9 @@ void ASTDeclReader::mergeTemplatePattern(RedeclarableTemplateDecl *D,
                              Result);
   if (auto *DVar = dyn_cast<VarDecl>(DPattern))
     return mergeRedeclarable(DVar, cast<VarDecl>(ExistingPattern), Result);
+  if (auto *DAlias = dyn_cast<TypeAliasDecl>(DPattern))
+    return mergeRedeclarable(DAlias, cast<TypedefNameDecl>(ExistingPattern),
+                             Result);
   llvm_unreachable("merged an unknown kind of redeclarable template");
 }
 

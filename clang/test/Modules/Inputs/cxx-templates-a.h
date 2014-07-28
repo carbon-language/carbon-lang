@@ -73,3 +73,5 @@ template<typename T> struct MergeTemplateDefinitions {
   static constexpr int g();
 };
 template<typename T> constexpr int MergeTemplateDefinitions<T>::f() { return 1; }
+
+template<typename T> using AliasTemplate = T;
