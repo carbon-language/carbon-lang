@@ -842,6 +842,10 @@ private:
       LeftOfParens = Tok.MatchingParen->getPreviousNonComment();
     if (LeftOfParens && LeftOfParens->is(tok::r_paren))
       return false;
+    if (LeftOfParens && LeftOfParens->is(tok::r_square) &&
+        LeftOfParens->MatchingParen &&
+        LeftOfParens->MatchingParen->Type == TT_LambdaLSquare)
+      return false;
     bool IsCast = false;
     bool ParensAreEmpty = Tok.Previous == Tok.MatchingParen;
     bool ParensAreType = !Tok.Previous ||
