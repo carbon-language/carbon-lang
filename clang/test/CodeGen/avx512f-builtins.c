@@ -60,3 +60,31 @@ __m512d test_mm512_mul_pd(__m512d a, __m512d b)
   // CHECK: fmul <8 x double>
   return _mm512_mul_pd(a, b);
 }
+
+void test_mm512_storeu_ps(void *p, __m512 a)
+{
+  // CHECK-LABEL: @test_mm512_storeu_ps
+  // CHECK: @llvm.x86.avx512.mask.storeu.ps.512
+  _mm512_storeu_ps(p, a);
+}
+
+void test_mm512_storeu_pd(void *p, __m512d a)
+{
+  // CHECK-LABEL: @test_mm512_storeu_pd
+  // CHECK: @llvm.x86.avx512.mask.storeu.pd.512
+  _mm512_storeu_pd(p, a);
+}
+
+void test_mm512_store_ps(void *p, __m512 a)
+{
+  // CHECK-LABEL: @test_mm512_store_ps
+  // CHECK: store <16 x float>
+  _mm512_store_ps(p, a);
+}
+
+void test_mm512_store_pd(void *p, __m512d a)
+{
+  // CHECK-LABEL: @test_mm512_store_pd
+  // CHECK: store <8 x double>
+  _mm512_store_pd(p, a);
+}

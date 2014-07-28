@@ -761,10 +761,34 @@ _mm512_mask_storeu_pd(void *__P, __mmask8 __U, __m512d __A)
 }
 
 static __inline void __attribute__ ((__always_inline__, __nodebug__))
+_mm512_storeu_pd(void *__P, __m512d __A)
+{
+  __builtin_ia32_storeupd512_mask((__v8df *)__P, (__v8df)__A, (__mmask8)-1);
+}
+
+static __inline void __attribute__ ((__always_inline__, __nodebug__))
 _mm512_mask_storeu_ps(void *__P, __mmask16 __U, __m512 __A)
 {
   __builtin_ia32_storeups512_mask ((__v16sf *)__P, (__v16sf) __A,
                                    (__mmask16) __U);
+}
+
+static __inline void __attribute__ ((__always_inline__, __nodebug__))
+_mm512_storeu_ps(void *__P, __m512 __A)
+{
+  __builtin_ia32_storeups512_mask((__v16sf *)__P, (__v16sf)__A, (__mmask16)-1);
+}
+
+static __inline void __attribute__ ((__always_inline__, __nodebug__))
+_mm512_store_ps(void *__P, __m512 __A)
+{
+  *(__m512*)__P = __A;
+}
+
+static __inline void __attribute__ ((__always_inline__, __nodebug__))
+_mm512_store_pd(void *__P, __m512d __A)
+{
+  *(__m512d*)__P = __A;
 }
 
 #endif // __AVX512FINTRIN_H
