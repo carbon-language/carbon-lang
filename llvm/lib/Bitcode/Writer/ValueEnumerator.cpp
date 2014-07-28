@@ -133,12 +133,11 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
     return;
 
   // Store the shuffle.
-  UseListOrder O;
-  O.V = V;
-  O.F = F;
-  for (auto &I : List)
-    O.Shuffle.push_back(I.second);
-  Stack.push_back(O);
+  UseListOrder O(V, F, List.size());
+  assert(List.size() == O.Shuffle.size() && "Wrong size");
+  for (size_t I = 0, E = List.size(); I != E; ++I)
+    O.Shuffle[I] = List[I].second;
+  Stack.emplace_back(std::move(O));
 }
 
 static void predictValueUseListOrder(const Value *V, const Function *F,
