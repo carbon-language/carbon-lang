@@ -3131,8 +3131,8 @@ def : InstAlias<"mfxer $Rx", (MFSPR gprc:$Rx, 1)>;
 def : InstAlias<"mtdscr $Rx", (MTSPR 17, gprc:$Rx)>;
 def : InstAlias<"mfdscr $Rx", (MFSPR gprc:$Rx, 17)>;
 
-def : InstAlias<"mtdsir $Rx", (MTSPR 18, gprc:$Rx)>;
-def : InstAlias<"mfdsir $Rx", (MFSPR gprc:$Rx, 18)>;
+def : InstAlias<"mtdsisr $Rx", (MTSPR 18, gprc:$Rx)>;
+def : InstAlias<"mfdsisr $Rx", (MFSPR gprc:$Rx, 18)>;
 
 def : InstAlias<"mtdar $Rx", (MTSPR 19, gprc:$Rx)>;
 def : InstAlias<"mfdar $Rx", (MFSPR gprc:$Rx, 19)>;

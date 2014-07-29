@@ -3427,10 +3427,10 @@
             mfdscr 2
 # CHECK-BE: mtspr 18, 2                     # encoding: [0x7c,0x52,0x03,0xa6]
 # CHECK-LE: mtspr 18, 2                     # encoding: [0xa6,0x03,0x52,0x7c]
-            mtdsir 2
+            mtdsisr 2
 # CHECK-BE: mfspr 2, 18                     # encoding: [0x7c,0x52,0x02,0xa6]
 # CHECK-LE: mfspr 2, 18                     # encoding: [0xa6,0x02,0x52,0x7c]
-            mfdsir 2
+            mfdsisr 2
 # CHECK-BE: mtspr 19, 2                     # encoding: [0x7c,0x53,0x03,0xa6]
 # CHECK-LE: mtspr 19, 2                     # encoding: [0xa6,0x03,0x53,0x7c]
             mtdar 2
