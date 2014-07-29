@@ -1212,6 +1212,10 @@ static bool ValidateCheckPrefixes() {
        I != E; ++I) {
     StringRef Prefix(*I);
 
+    // Reject empty prefixes.
+    if (Prefix == "")
+      return false;
+
     if (!PrefixSet.insert(Prefix))
       return false;
 
