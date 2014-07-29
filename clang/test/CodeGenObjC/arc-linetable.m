@@ -76,7 +76,7 @@ typedef signed char BOOL;
 - (int)testMultiline:(NSString *)foo {
   // CHECK: ![[MSG4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
   int r = [self testSideEffect :foo];
-  // CHECK: ![[EXP4]] = metadata !{i32 [[@LINE+1]], i32 10, metadata !{{.*}}, null}
+  // CHECK: ![[EXP4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
   return r;
   // CHECK: ![[RET4]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
 }
@@ -94,7 +94,7 @@ typedef signed char BOOL;
 }
 
 - (int)testNoCleanupSideEffect {
-  // CHECK: ![[MSG7]] = metadata !{i32 [[@LINE+1]], i32 4, metadata !{{.*}}, null}
+  // CHECK: ![[MSG7]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
   [self testVoid :@"foo"];
   // CHECK: ![[RET7]] = metadata !{i32 [[@LINE+1]], i32 0, metadata !{{.*}}, null}
   return 1;
@@ -102,7 +102,7 @@ typedef signed char BOOL;
 
 - (void)testCleanupVoid:(BOOL)skip withDelegate: (AppDelegate *) delegate {
   static BOOL skip_all;
-  // CHECK: ![[SKIP1]] = metadata !{i32 [[@LINE+1]], i32 8,
+  // CHECK: ![[SKIP1]] = metadata !{i32 [[@LINE+1]], i32 0,
   if (!skip_all) {
     if (!skip) {
       return;
