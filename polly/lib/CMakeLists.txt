@@ -18,6 +18,7 @@ endif (CLOOG_FOUND)
 
 set(ISL_CODEGEN_FILES
     CodeGen/IslAst.cpp
+    CodeGen/IslExprBuilder.cpp
     CodeGen/IslCodeGeneration.cpp)
 
 if (GPU_CODEGEN)
