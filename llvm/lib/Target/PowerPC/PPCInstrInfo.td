@@ -3066,6 +3066,8 @@ def TLBIEL : XForm_16b<31, 274, (outs), (ins gprc:$RB),
 def TLBIE : XForm_26<31, 306, (outs), (ins gprc:$RS, gprc:$RB),
                           "tlbie $RB,$RS", IIC_SprTLBIE, []>;
 
+def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_BrB, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //

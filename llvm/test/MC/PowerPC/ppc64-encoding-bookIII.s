@@ -141,3 +141,6 @@
 # CHECK-LE: tlbie 4,0                       # encoding: [0x64,0x22,0x00,0x7c]
             tlbie %r4
 
+# CHECK-BE: rfi                             # encoding: [0x4c,0x00,0x00,0x64]
+# CHECK-LE: rfi                             # encoding: [0x64,0x00,0x00,0x4c]
+            rfi
