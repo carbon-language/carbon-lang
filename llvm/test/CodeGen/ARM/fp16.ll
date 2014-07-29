@@ -73,7 +73,7 @@ define arm_aapcs_vfpcc i16 @test_to_fp16(double %in) {
 ; CHECK-ARMV8: vcvtb.f16.f64 [[TMP:s[0-9]+]], d0
 ; CHECK-ARMV8: vmov r0, [[TMP]]
 
-; CHECK-SOFTFLOAT: bl __truncdfhf2
+; CHECK-SOFTFLOAT: bl __aeabi_d2h
   ret i16 %val
 }
 
