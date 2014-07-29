@@ -73,4 +73,5 @@ template<typename T> void UseDefinedInBImplIndirectly(T &v) {
 void TriggerInstantiation() {
   UseDefinedInBImpl<void>();
   Std::f<int>();
+  PartiallyInstantiatePartialSpec<int*>::foo();
 }
