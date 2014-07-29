@@ -78,6 +78,26 @@ CheckFiles("check",
            cl::desc("File containing RuntimeDyld verifier checks."),
            cl::ZeroOrMore);
 
+static cl::opt<uint64_t>
+TargetAddrStart("target-addr-start",
+                cl::desc("For -verify only: start of phony target address "
+                         "range."),
+                cl::init(4096), // Start at "page 1" - no allocating at "null".
+                cl::Hidden);
+
+static cl::opt<uint64_t>
+TargetAddrEnd("target-addr-end",
+              cl::desc("For -verify only: end of phony target address range."),
+              cl::init(~0ULL),
+              cl::Hidden);
+
+static cl::opt<uint64_t>
+TargetSectionSep("target-section-sep",
+                 cl::desc("For -verify only: Separation between sections in "
+                          "phony target address space."),
+                 cl::init(0),
+                 cl::Hidden);
+
 /* *** */
 
 // A trivial memory manager that doesn't do anything fancy, just uses the
@@ -300,6 +320,50 @@ static int checkAllExpressions(RuntimeDyldChecker &Checker) {
   return 0;
 }
 
+// Scatter sections in all directions!
+// Remaps section addresses for -verify mode. The following command line options
+// can be used to customize the layout of the memory within the phony target's
+// address space:
+// -target-addr-start <s> -- Specify where the phony target addres range starts.
+// -target-addr-end   <e> -- Specify where the phony target address range ends.
+// -target-section-sep <d> -- Specify how big a gap should be left between the
+//                            end of one section and the start of the next.
+//                            Defaults to zero. Set to something big
+//                            (e.g. 1 << 32) to stress-test stubs, GOTs, etc.
+//
+void remapSections(const llvm::Triple &TargetTriple,
+                   const TrivialMemoryManager &MemMgr,
+                   RuntimeDyld &RTDyld) {
+
+  // If the -target-addr-end option wasn't explicitly passed, then set it to a
+  // sensible default based on the target triple.
+  if (TargetAddrEnd.getNumOccurrences() == 0) {
+    if (TargetTriple.isArch16Bit())
+      TargetAddrEnd = (1ULL << 16) - 1;
+    else if (TargetTriple.isArch32Bit())
+      TargetAddrEnd = (1ULL << 32) - 1;
+    // TargetAddrEnd already has a sensible default for 64-bit systems, so
+    // there's nothing to do in the 64-bit case.
+  }
+
+  uint64_t NextSectionAddress = TargetAddrStart;
+
+  // Remap code sections.
+  for (const auto& CodeSection : MemMgr.FunctionMemory) {
+    RTDyld.mapSectionAddress(CodeSection.base(), NextSectionAddress);
+    NextSectionAddress += CodeSection.size() + TargetSectionSep;
+  }
+
+  // Remap data sections.
+  for (const auto& DataSection : MemMgr.DataMemory) {
+    RTDyld.mapSectionAddress(DataSection.base(), NextSectionAddress);
+    NextSectionAddress += DataSection.size() + TargetSectionSep;
+  }
+}
+
+// Load and link the objects specified on the command line, but do not execute
+// anything. Instead, attach a RuntimeDyldChecker instance and call it to
+// verify the correctness of the linked memory.
 static int linkAndVerify() {
 
   // Check for missing triple.

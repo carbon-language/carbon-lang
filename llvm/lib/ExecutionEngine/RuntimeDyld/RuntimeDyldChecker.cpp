@@ -749,12 +749,12 @@ std::pair<uint64_t, std::string> RuntimeDyldCheckerImpl::getStubAddrFor(
 
   uint64_t Addr;
   if (IsInsideLoad) {
-    uint64_t SectionBase = getRTDyld().Sections[SectionID].LoadAddress;
-    Addr = SectionBase + StubOffset;
-  } else {
     uintptr_t SectionBase =
         reinterpret_cast<uintptr_t>(getRTDyld().Sections[SectionID].Address);
     Addr = static_cast<uint64_t>(SectionBase) + StubOffset;
+  } else {
+    uint64_t SectionBase = getRTDyld().Sections[SectionID].LoadAddress;
+    Addr = SectionBase + StubOffset;
   }
 
   return std::make_pair(Addr, std::string(""));
