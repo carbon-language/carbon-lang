@@ -3419,6 +3419,60 @@
 # CHECK-BE: mfspr 2, 1                      # encoding: [0x7c,0x41,0x02,0xa6]
 # CHECK-LE: mfspr 2, 1                      # encoding: [0xa6,0x02,0x41,0x7c]
             mfxer 2
+# CHECK-BE: mtspr 17, 2                     # encoding: [0x7c,0x51,0x03,0xa6]
+# CHECK-LE: mtspr 17, 2                     # encoding: [0xa6,0x03,0x51,0x7c]
+            mtdscr 2
+# CHECK-BE: mfspr 2, 17                     # encoding: [0x7c,0x51,0x02,0xa6]
+# CHECK-LE: mfspr 2, 17                     # encoding: [0xa6,0x02,0x51,0x7c]
+            mfdscr 2
+# CHECK-BE: mtspr 18, 2                     # encoding: [0x7c,0x52,0x03,0xa6]
+# CHECK-LE: mtspr 18, 2                     # encoding: [0xa6,0x03,0x52,0x7c]
+            mtdsir 2
+# CHECK-BE: mfspr 2, 18                     # encoding: [0x7c,0x52,0x02,0xa6]
+# CHECK-LE: mfspr 2, 18                     # encoding: [0xa6,0x02,0x52,0x7c]
+            mfdsir 2
+# CHECK-BE: mtspr 19, 2                     # encoding: [0x7c,0x53,0x03,0xa6]
+# CHECK-LE: mtspr 19, 2                     # encoding: [0xa6,0x03,0x53,0x7c]
+            mtdar 2
+# CHECK-BE: mfspr 2, 19                     # encoding: [0x7c,0x53,0x02,0xa6]
+# CHECK-LE: mfspr 2, 19                     # encoding: [0xa6,0x02,0x53,0x7c]
+            mfdar 2
+# CHECK-BE: mtspr 22, 2                     # encoding: [0x7c,0x56,0x03,0xa6]
+# CHECK-LE: mtspr 22, 2                     # encoding: [0xa6,0x03,0x56,0x7c]
+            mtdec 2
+# CHECK-BE: mfspr 2, 22                     # encoding: [0x7c,0x56,0x02,0xa6]
+# CHECK-LE: mfspr 2, 22                     # encoding: [0xa6,0x02,0x56,0x7c]
+            mfdec 2
+# CHECK-BE: mtspr 25, 2                     # encoding: [0x7c,0x59,0x03,0xa6]
+# CHECK-LE: mtspr 25, 2                     # encoding: [0xa6,0x03,0x59,0x7c]
+            mtsdr1 2
+# CHECK-BE: mfspr 2, 25                     # encoding: [0x7c,0x59,0x02,0xa6]
+# CHECK-LE: mfspr 2, 25                     # encoding: [0xa6,0x02,0x59,0x7c]
+            mfsdr1 2
+# CHECK-BE: mtspr 26, 2                     # encoding: [0x7c,0x5a,0x03,0xa6]
+# CHECK-LE: mtspr 26, 2                     # encoding: [0xa6,0x03,0x5a,0x7c]
+            mtsrr0 2
+# CHECK-BE: mfspr 2, 26                     # encoding: [0x7c,0x5a,0x02,0xa6]
+# CHECK-LE: mfspr 2, 26                     # encoding: [0xa6,0x02,0x5a,0x7c]
+            mfsrr0 2
+# CHECK-BE: mtspr 27, 2                     # encoding: [0x7c,0x5b,0x03,0xa6]
+# CHECK-LE: mtspr 27, 2                     # encoding: [0xa6,0x03,0x5b,0x7c]
+            mtsrr1 2
+# CHECK-BE: mfspr 2, 27                     # encoding: [0x7c,0x5b,0x02,0xa6]
+# CHECK-LE: mfspr 2, 27                     # encoding: [0xa6,0x02,0x5b,0x7c]
+            mfsrr1 2
+# CHECK-BE: mtspr 28, 2                     # encoding: [0x7c,0x5c,0x03,0xa6]
+# CHECK-LE: mtspr 28, 2                     # encoding: [0xa6,0x03,0x5c,0x7c]
+            mtcfar 2
+# CHECK-BE: mfspr 2, 28                     # encoding: [0x7c,0x5c,0x02,0xa6]
+# CHECK-LE: mfspr 2, 28                     # encoding: [0xa6,0x02,0x5c,0x7c]
+            mfcfar 2
+# CHECK-BE: mtspr 29, 2                     # encoding: [0x7c,0x5d,0x03,0xa6]
+# CHECK-LE: mtspr 29, 2                     # encoding: [0xa6,0x03,0x5d,0x7c]
+            mtamr 2
+# CHECK-BE: mfspr 2, 29                     # encoding: [0x7c,0x5d,0x02,0xa6]
+# CHECK-LE: mfspr 2, 29                     # encoding: [0xa6,0x02,0x5d,0x7c]
+            mfamr 2
 # CHECK-BE: mtlr 2                          # encoding: [0x7c,0x48,0x03,0xa6]
 # CHECK-LE: mtlr 2                          # encoding: [0xa6,0x03,0x48,0x7c]
             mtlr 2

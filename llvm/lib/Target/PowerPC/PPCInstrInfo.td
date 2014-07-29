@@ -3107,6 +3107,33 @@ def : InstAlias<"crnot $bx, $by", (CRNOR crbitrc:$bx, crbitrc:$by, crbitrc:$by)>
 def : InstAlias<"mtxer $Rx", (MTSPR 1, gprc:$Rx)>;
 def : InstAlias<"mfxer $Rx", (MFSPR gprc:$Rx, 1)>;
 
+def : InstAlias<"mtdscr $Rx", (MTSPR 17, gprc:$Rx)>;
+def : InstAlias<"mfdscr $Rx", (MFSPR gprc:$Rx, 17)>;
+
+def : InstAlias<"mtdsir $Rx", (MTSPR 18, gprc:$Rx)>;
+def : InstAlias<"mfdsir $Rx", (MFSPR gprc:$Rx, 18)>;
+
+def : InstAlias<"mtdar $Rx", (MTSPR 19, gprc:$Rx)>;
+def : InstAlias<"mfdar $Rx", (MFSPR gprc:$Rx, 19)>;
+
+def : InstAlias<"mtdec $Rx", (MTSPR 22, gprc:$Rx)>;
+def : InstAlias<"mfdec $Rx", (MFSPR gprc:$Rx, 22)>;
+
+def : InstAlias<"mtsdr1 $Rx", (MTSPR 25, gprc:$Rx)>;
+def : InstAlias<"mfsdr1 $Rx", (MFSPR gprc:$Rx, 25)>;
+
+def : InstAlias<"mtsrr0 $Rx", (MTSPR 26, gprc:$Rx)>;
+def : InstAlias<"mfsrr0 $Rx", (MFSPR gprc:$Rx, 26)>;
+
+def : InstAlias<"mtsrr1 $Rx", (MTSPR 27, gprc:$Rx)>;
+def : InstAlias<"mfsrr1 $Rx", (MFSPR gprc:$Rx, 27)>;
+
+def : InstAlias<"mtcfar $Rx", (MTSPR 28, gprc:$Rx)>;
+def : InstAlias<"mfcfar $Rx", (MFSPR gprc:$Rx, 28)>;
+
+def : InstAlias<"mtamr $Rx", (MTSPR 29, gprc:$Rx)>;
+def : InstAlias<"mfamr $Rx", (MFSPR gprc:$Rx, 29)>;
+
 def : InstAlias<"mftb $Rx", (MFTB gprc:$Rx, 268)>;
 def : InstAlias<"mftbu $Rx", (MFTB gprc:$Rx, 269)>;
 
