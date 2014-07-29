@@ -13,10 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUINSTRUCTIONINFO_H
-#define AMDGPUINSTRUCTIONINFO_H
+#ifndef AMDGPUINSTRINFO_H
+#define AMDGPUINSTRINFO_H
 
-#include "AMDGPUInstrInfo.h"
 #include "AMDGPURegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include <map>
