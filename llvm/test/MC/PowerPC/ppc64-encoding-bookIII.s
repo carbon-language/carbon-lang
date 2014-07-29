@@ -144,3 +144,6 @@
 # CHECK-BE: rfi                             # encoding: [0x4c,0x00,0x00,0x64]
 # CHECK-LE: rfi                             # encoding: [0x64,0x00,0x00,0x4c]
             rfi
+# CHECK-BE: rfci                            # encoding: [0x4c,0x00,0x00,0x66]
+# CHECK-LE: rfci                            # encoding: [0x66,0x00,0x00,0x4c]
+            rfci
