@@ -28,7 +28,7 @@ namespace __ubsan {
 
 static void HandleDynamicTypeCacheMiss(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash,
-    bool Abort) {
+    bool Abort, uptr pc, uptr bp) {
   if (checkDynamicType((void*)Pointer, Data->TypeInfo, Hash))
     // Just a cache miss. The type matches after all.
     return;
@@ -60,16 +60,18 @@ static void HandleDynamicTypeCacheMiss(
       << MangledName(DTI.getSubobjectTypeName())
       << Range(Pointer, Pointer + sizeof(uptr), "vptr for %2 base class of %1");
 
-  MAYBE_PRINT_STACK_TRACE();
+  MaybePrintStackTrace(pc, bp);
   if (Abort)
     Die();
 }
 
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
-  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, false);
+  GET_CALLER_PC_BP;
+  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, false, pc, bp);
 }
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
     DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
-  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, true);
+  GET_CALLER_PC_BP;
+  HandleDynamicTypeCacheMiss(Data, Pointer, Hash, true, pc, bp);
 }

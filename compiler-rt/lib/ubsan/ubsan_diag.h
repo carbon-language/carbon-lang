@@ -206,12 +206,6 @@ public:
 
 void MaybePrintStackTrace(uptr pc, uptr bp);
 
-#define MAYBE_PRINT_STACK_TRACE() do { \
-  GET_CALLER_PC_BP_SP; \
-  (void)sp; \
-  MaybePrintStackTrace(pc, bp); \
-} while (0)
-
 } // namespace __ubsan
 
 #endif // UBSAN_DIAG_H

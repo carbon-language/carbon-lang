@@ -88,6 +88,10 @@ struct StackTrace {
   uptr local_stack;                           \
   uptr sp = (uptr)&local_stack
 
+#define GET_CALLER_PC_BP \
+  uptr bp = GET_CURRENT_FRAME();              \
+  uptr pc = GET_CALLER_PC();
+
 // Use this macro if you want to print stack trace with the current
 // function in the top frame.
 #define GET_CURRENT_PC_BP_SP \
