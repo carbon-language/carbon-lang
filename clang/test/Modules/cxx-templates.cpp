@@ -105,7 +105,6 @@ void g() {
 
   int &p = WithPartialSpecializationUse().f();
   int &q = WithExplicitSpecializationUse().inner_template<int>();
-  int *r = PartiallyInstantiatePartialSpec<int*>::bar();
 }
 
 static_assert(Outer<int>::Inner<int>::f() == 1, "");

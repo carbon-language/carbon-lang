@@ -75,10 +75,3 @@ template<typename T> struct MergeTemplateDefinitions {
 template<typename T> constexpr int MergeTemplateDefinitions<T>::f() { return 1; }
 
 template<typename T> using AliasTemplate = T;
-
-template<typename T> struct PartiallyInstantiatePartialSpec {};
-template<typename T> struct PartiallyInstantiatePartialSpec<T*> {
-  static T *foo() { return reinterpret_cast<T*>(0); }
-  static T *bar() { return reinterpret_cast<T*>(0); }
-};
-typedef PartiallyInstantiatePartialSpec<int*> PartiallyInstantiatePartialSpecHelper;
