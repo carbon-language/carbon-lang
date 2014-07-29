@@ -42,12 +42,18 @@ class UseListShuffleVector {
     return isSmall() ? Storage.Array : Storage.Ptr;
   }
 
-public:
-  UseListShuffleVector() : Size(0) {}
-  UseListShuffleVector(UseListShuffleVector &&X) {
+  void destroy() {
+    if (!isSmall())
+      delete[] Storage.Ptr;
+  }
+  void moveUnchecked(UseListShuffleVector &X) {
     std::memcpy(this, &X, sizeof(UseListShuffleVector));
     X.Size = 0;
   }
+
+public:
+  UseListShuffleVector() : Size(0) {}
+  UseListShuffleVector(UseListShuffleVector &&X) { moveUnchecked(X); }
   UseListShuffleVector(const UseListShuffleVector &X) {
     std::memcpy(this, &X, sizeof(UseListShuffleVector));
     if (!isSmall()) {
@@ -59,10 +65,7 @@ public:
     if (!isSmall())
       Storage.Ptr = new unsigned[Size];
   }
-  ~UseListShuffleVector() {
-    if (!isSmall())
-      delete[] Storage.Ptr;
-  }
+  ~UseListShuffleVector() { destroy(); }
 
   typedef unsigned *iterator;
   typedef const unsigned *const_iterator;
