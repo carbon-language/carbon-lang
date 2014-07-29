@@ -46,6 +46,10 @@ const char *clang::getOpenMPDirectiveName(OpenMPDirectiveKind Kind) {
 }
 
 OpenMPClauseKind clang::getOpenMPClauseKind(StringRef Str) {
+  // 'flush' clause cannot be specified explicitly, because this is an implicit
+  // clause for 'flush' directive. If the 'flush' clause is explicitly specified
+  // the Parser should generate a warning about extra tokens at the end of the
+  // directive.
   if (Str == "flush")
     return OMPC_unknown;
   return llvm::StringSwitch<OpenMPClauseKind>(Str)

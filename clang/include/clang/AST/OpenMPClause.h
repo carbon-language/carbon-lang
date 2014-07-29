@@ -61,7 +61,7 @@ public:
   ConstStmtRange children() const {
     return const_cast<OMPClause *>(this)->children();
   }
-  static bool classof(const OMPClause *T) { return true; }
+  static bool classof(const OMPClause *) { return true; }
 };
 
 /// \brief This represents clauses with the list of variables like 'private',
@@ -1537,13 +1537,17 @@ public:
   }
 };
 
-/// \brief This represents pseudo clause 'flush' for the '#pragma omp flush'
+/// \brief This represents implicit clause 'flush' for the '#pragma omp flush'
 /// directive.
+/// This clause does not exist by itself, it can be only as a part of 'omp
+/// flush' directive. This clause is introduced to keep the original structure
+/// of \a OMPExecutableDirective class and its derivatives and to use the
+/// existing infrastructure of clauses with the list of variables.
 ///
 /// \code
 /// #pragma omp flush(a,b)
 /// \endcode
-/// In this example directive '#pragma omp flush' has pseudo clause 'flush'
+/// In this example directive '#pragma omp flush' has implicit clause 'flush'
 /// with the variables 'a' and 'b'.
 ///
 class OMPFlushClause : public OMPVarListClause<OMPFlushClause> {
@@ -1600,3 +1604,4 @@ public:
 } // end namespace clang
 
 #endif
+
