@@ -1,6 +1,5 @@
 # RUN: llvm-mc -triple=arm64-apple-ios7.0.0 -code-model=small -relocation-model=pic -filetype=obj -o %T/foo.o %s
-# RUN: sed "s,<filename>,%/T/foo.o,g" %s > %T/foo.s
-# RUN: llvm-rtdyld -triple=arm64-apple-ios7.0.0 -verify -check=%T/foo.s %/T/foo.o
+# RUN: llvm-rtdyld -triple=arm64-apple-ios7.0.0 -verify -check=%s %/T/foo.o
 
     .section  __TEXT,__text,regular,pure_instructions
     .ios_version_min 7, 0
@@ -39,15 +38,14 @@ ldr1:
     ldr  x0, [x0, _ptr@PAGEOFF]
     ret
 
-
 # Test ARM64_RELOC_GOT_LOAD_PAGE21 and ARM64_RELOC_GOT_LOAD_PAGEOFF12
 # relocation. adrp encodes the PC-relative page (4 KiB) difference between the
 # adrp instruction and the GOT entry for ptr. ldr encodes the offset of the GOT
 # entry within the page. The ldr instruction perfroms an implicit shift on the
 # encoded immediate (imm<<3).
-# rtdyld-check:  *{8}(stub_addr(<filename>, __text, _ptr)) = _ptr
-# rtdyld-check:  decode_operand(adrp2, 1) = (stub_addr(<filename>, __text, _ptr)[32:12] - adrp2[32:12])
-# rtdyld-check:  decode_operand(ldr2, 2) = stub_addr(<filename>, __text, _ptr)[11:3]
+# rtdyld-check:  *{8}(stub_addr(foo.o, __text, _ptr)) = _ptr
+# rtdyld-check:  decode_operand(adrp2, 1) = (stub_addr(foo.o, __text, _ptr)[32:12] - adrp2[32:12])
+# rtdyld-check:  decode_operand(ldr2, 2) = stub_addr(foo.o, __text, _ptr)[11:3]
     .globl  _test_adrp_ldr
     .align  2
 _test_got_adrp_ldr:

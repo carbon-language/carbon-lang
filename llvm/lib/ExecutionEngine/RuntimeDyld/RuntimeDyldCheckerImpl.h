@@ -34,7 +34,7 @@ private:
   uint64_t getSymbolLinkerAddr(StringRef Symbol) const;
   uint64_t getSymbolRemoteAddr(StringRef Symbol) const;
   uint64_t readMemoryAtAddr(uint64_t Addr, unsigned Size) const;
-  std::pair<uint64_t, std::string> getStubAddrFor(StringRef FileName,
+  std::pair<uint64_t, std::string> getStubAddrFor(StringRef FilePath,
                                                   StringRef SectionName,
                                                   StringRef Symbol,
                                                   bool IsInsideLoad) const;

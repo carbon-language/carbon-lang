@@ -13,6 +13,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/Support/StringRefMemoryObject.h"
+#include "llvm/Support/Path.h"
 #include "RuntimeDyldCheckerImpl.h"
 #include "RuntimeDyldImpl.h"
 #include <cctype>
@@ -772,8 +773,9 @@ RuntimeDyldCheckerImpl::getSubsectionStartingAt(StringRef Name) const {
 }
 
 void RuntimeDyldCheckerImpl::registerStubMap(
-    StringRef FileName, unsigned SectionID,
+    StringRef FilePath, unsigned SectionID,
     const RuntimeDyldImpl::StubMap &RTDyldStubs) {
+  StringRef FileName = sys::path::filename(FilePath);
   const SectionEntry &Section = getRTDyld().Sections[SectionID];
   StringRef SectionName = Section.Name;
   for (auto &StubMapEntry : RTDyldStubs) {

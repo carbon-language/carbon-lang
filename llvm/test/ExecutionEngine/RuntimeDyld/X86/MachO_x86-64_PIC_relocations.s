@@ -1,6 +1,5 @@
 # RUN: llvm-mc -triple=x86_64-apple-macosx10.9 -relocation-model=pic -filetype=obj -o %T/foo.o %s
-# RUN: sed "s,<filename>,%/T/foo.o,g" %s > %T/foo.s
-# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%T/foo.s %/T/foo.o
+# RUN: llvm-rtdyld -triple=x86_64-apple-macosx10.9 -verify -check=%s %/T/foo.o
 
         .section	__TEXT,__text,regular,pure_instructions
 	.globl	foo
@@ -24,8 +23,8 @@ insn2:
 # Test PC-rel GOT relocation.
 # Verify both the contents of the GOT entry for y, and that the movq instruction
 # references the correct GOT entry address:
-# rtdyld-check: *{8}(stub_addr(<filename>, __text, y)) = y
-# rtdyld-check: decode_operand(insn3, 4) = stub_addr(<filename>, __text, y) - next_pc(insn3)
+# rtdyld-check: *{8}(stub_addr(foo.o, __text, y)) = y
+# rtdyld-check: decode_operand(insn3, 4) = stub_addr(foo.o, __text, y) - next_pc(insn3)
 insn3:
         movq	y@GOTPCREL(%rip), %rax
 
