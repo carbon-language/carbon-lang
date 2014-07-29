@@ -469,11 +469,13 @@ DIE *DwarfDebug::createScopeChildrenDIE(
     // If this is a variadic function, add an unspecified parameter.
     DISubprogram SP(Scope->getScopeNode());
     DITypeArray FnArgs = SP.getType().getTypeArray();
-    if (resolve(FnArgs.getElement(FnArgs.getNumElements() - 1))
-            .isUnspecifiedParameter()) {
+    // If we have a single element of null, it is a function that returns void.
+    // If we have more than one elements and the last one is null, it is a
+    // variadic function.
+    if (FnArgs.getNumElements() > 1 &&
+        !resolve(FnArgs.getElement(FnArgs.getNumElements() - 1)))
       Children.push_back(
           make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
-    }
   }
 
   // Collect lexical scope children first.

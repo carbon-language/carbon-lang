@@ -465,7 +465,7 @@ namespace llvm {
 
     /// createUnspecifiedParameter - Create unspecified parameter type
     /// for a subroutine type.
-    DITrivialType createUnspecifiedParameter();
+    DIBasicType createUnspecifiedParameter();
 
     /// getOrCreateArray - Get a DIArray, create one if required.
     DIArray getOrCreateArray(ArrayRef<Value *> Elements);

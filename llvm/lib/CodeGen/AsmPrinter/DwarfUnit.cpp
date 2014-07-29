@@ -1132,7 +1132,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
 void DwarfUnit::constructSubprogramArguments(DIE &Buffer, DITypeArray Args) {
   for (unsigned i = 1, N = Args.getNumElements(); i < N; ++i) {
     DIType Ty = resolve(Args.getElement(i));
-    if (Ty.isUnspecifiedParameter()) {
+    if (!Ty) {
       assert(i == N-1 && "Unspecified parameter must be the last argument");
       createAndAddDIE(dwarf::DW_TAG_unspecified_parameters, Buffer);
     } else {
@@ -1168,7 +1168,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
     bool isPrototyped = true;
     if (Elements.getNumElements() == 2 &&
-        resolve(Elements.getElement(1)).isUnspecifiedParameter())
+        !resolve(Elements.getElement(1)))
       isPrototyped = false;
 
     constructSubprogramArguments(Buffer, Elements);

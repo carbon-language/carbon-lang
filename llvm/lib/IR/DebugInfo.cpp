@@ -39,7 +39,6 @@ bool DIDescriptor::Verify() const {
   return DbgNode &&
          (DIDerivedType(DbgNode).Verify() ||
           DICompositeType(DbgNode).Verify() || DIBasicType(DbgNode).Verify() ||
-          DITrivialType(DbgNode).Verify() ||
           DIVariable(DbgNode).Verify() || DISubprogram(DbgNode).Verify() ||
           DIGlobalVariable(DbgNode).Verify() || DIFile(DbgNode).Verify() ||
           DICompileUnit(DbgNode).Verify() || DINameSpace(DbgNode).Verify() ||
@@ -155,10 +154,6 @@ MDNode *DIVariable::getInlinedAt() const { return getNodeField(DbgNode, 7); }
 // Predicates
 //===----------------------------------------------------------------------===//
 
-bool DIDescriptor::isTrivialType() const {
-  return DbgNode && getTag() == dwarf::DW_TAG_unspecified_parameters;
-}
-
 bool DIDescriptor::isSubroutineType() const {
   return isCompositeType() && getTag() == dwarf::DW_TAG_subroutine_type;
 }
@@ -233,8 +228,7 @@ bool DIDescriptor::isVariable() const {
 
 /// isType - Return true if the specified tag is legal for DIType.
 bool DIDescriptor::isType() const {
-  return isBasicType() || isCompositeType() || isDerivedType() ||
-         isTrivialType();
+  return isBasicType() || isCompositeType() || isDerivedType();
 }
 
 /// isSubprogram - Return true if the specified tag is legal for
@@ -248,12 +242,6 @@ bool DIDescriptor::isSubprogram() const {
 bool DIDescriptor::isGlobalVariable() const {
   return DbgNode && (getTag() == dwarf::DW_TAG_variable ||
                      getTag() == dwarf::DW_TAG_constant);
-}
-
-/// isUnspecifiedParmeter - Return true if the specified tag is
-/// DW_TAG_unspecified_parameters.
-bool DIDescriptor::isUnspecifiedParameter() const {
-  return DbgNode && getTag() == dwarf::DW_TAG_unspecified_parameters;
 }
 
 /// isScope - Return true if the specified tag is one of the scope
@@ -459,7 +447,7 @@ bool DIType::Verify() const {
 
   // FIXME: Sink this into the various subclass verifies.
   uint16_t Tag = getTag();
-  if (!isBasicType() && !isTrivialType() && Tag != dwarf::DW_TAG_const_type &&
+  if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
       Tag != dwarf::DW_TAG_ptr_to_member_type &&
       Tag != dwarf::DW_TAG_reference_type &&
@@ -474,8 +462,6 @@ bool DIType::Verify() const {
   // a CompositeType.
   if (isBasicType())
     return DIBasicType(DbgNode).Verify();
-  else if (isTrivialType())
-    return DITrivialType(DbgNode).Verify();
   else if (isCompositeType())
     return DICompositeType(DbgNode).Verify();
   else if (isDerivedType())
@@ -487,10 +473,6 @@ bool DIType::Verify() const {
 /// Verify - Verify that a basic type descriptor is well formed.
 bool DIBasicType::Verify() const {
   return isBasicType() && DbgNode->getNumOperands() == 10;
-}
-
-bool DITrivialType::Verify() const {
-  return isTrivialType() && DbgNode->getNumOperands() == 1;
 }
 
 /// Verify - Verify that a derived type descriptor is well formed.
@@ -1297,7 +1279,7 @@ void DIEnumerator::printInternal(raw_ostream &OS) const {
 }
 
 void DIType::printInternal(raw_ostream &OS) const {
-  if (!DbgNode || isTrivialType())
+  if (!DbgNode)
     return;
 
   StringRef Res = getName();

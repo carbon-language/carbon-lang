@@ -875,11 +875,8 @@ void DIBuilder::retainType(DIType T) {
 
 /// createUnspecifiedParameter - Create unspeicified type descriptor
 /// for the subroutine type.
-DITrivialType DIBuilder::createUnspecifiedParameter() {
-  Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_unspecified_parameters)
-  };
-  return DITrivialType(MDNode::get(VMContext, Elts));
+DIBasicType DIBuilder::createUnspecifiedParameter() {
+  return DIBasicType(nullptr);
 }
 
 /// createForwardDecl - Create a temporary forward-declared type that
