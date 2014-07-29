@@ -752,6 +752,15 @@ ArchSpec::SetArchitecture (ArchitectureType arch_type, uint32_t cpu, uint32_t su
                             
                         case llvm::Triple::x86:
                         case llvm::Triple::x86_64:
+                            // Don't set the OS for x86_64 or for x86 as we want to leave it as an "unspecified unknown"
+                            // which means if we ask for the OS from the llvm::Triple we get back llvm::Triple::UnknownOS, but
+                            // if we ask for the string value for the OS it will come back empty (unspecified).
+                            // We do this because we now have iOS and MacOSX as the OS values for x86 and x86_64 for
+                            // normal desktop and simulator binaries. And if we compare a "x86_64-apple-ios" to a "x86_64-apple-"
+                            // triple, it will say it is compatible (because the OS is unspecified in the second one and will match
+                            // anything in the first
+                            break;
+
                         default:
                             m_triple.setOS (llvm::Triple::MacOSX);
                             break;

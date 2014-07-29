@@ -4365,10 +4365,14 @@ ObjectFileMachO::GetArchitecture (const llvm::MachO::mach_header &header,
                 offset = cmd_offset + load_cmd.cmdsize;
             }
             
+            // Only set the OS to iOS for ARM, we don't want to set it for x86 and x86_64.
+            // We do this because we now have MacOSX or iOS as the OS value for x86 and
+            // x86_64 for normal desktop (MacOSX) and simulator (iOS) binaries. And if
+            // we compare a "x86_64-apple-ios" to a "x86_64-apple-" triple, it will say
+            // it is compatible (because the OS is unspecified in the second one and will
+            // match anything in the first
             if (header.cputype == CPU_TYPE_ARM || header.cputype == CPU_TYPE_ARM64)
                 triple.setOS (llvm::Triple::IOS);
-            else
-                triple.setOS (llvm::Triple::MacOSX);
         }
     }
     return arch.IsValid();
