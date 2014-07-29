@@ -106,6 +106,9 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
             [&OM, ID](const Entry &L, const Entry &R) {
     const Use *LU = L.first;
     const Use *RU = R.first;
+    if (LU == RU)
+      return false;
+
     auto LID = OM.lookup(LU->getUser()).first;
     auto RID = OM.lookup(RU->getUser()).first;
     // If ID is 4, then expect: 7 6 5 1 2 3.

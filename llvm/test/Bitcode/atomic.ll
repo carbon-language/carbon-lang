@@ -1,4 +1,5 @@
 ; RUN: llvm-as %s -o - | llvm-dis | FileCheck %s
+; RUN: llvm-uselistorder < %s -preserve-bc-use-list-order -num-shuffles=5
 
 define void @test_cmpxchg(i32* %addr, i32 %desired, i32 %new) {
   cmpxchg i32* %addr, i32 %desired, i32 %new seq_cst seq_cst
