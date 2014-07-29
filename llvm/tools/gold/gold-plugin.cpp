@@ -33,13 +33,6 @@
 #include <system_error>
 #include <vector>
 
-// Support Windows/MinGW crazyness.
-#ifdef _WIN32
-# include <io.h>
-# define lseek _lseek
-# define read _read
-#endif
-
 #ifndef LDPO_PIE
 // FIXME: remove this declaration when we stop maintaining Ubuntu Quantal and
 // Precise and Debian Wheezy (binutils 2.23 is required)
