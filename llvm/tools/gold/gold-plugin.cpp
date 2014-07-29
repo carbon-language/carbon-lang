@@ -18,16 +18,8 @@
 #include "llvm/CodeGen/CommandFlags.h"
 #include "llvm/LTO/LTOCodeGenerator.h"
 #include "llvm/LTO/LTOModule.h"
-#include "llvm/Support/Errno.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/Path.h"
-#include "llvm/Support/Program.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/Support/ToolOutputFile.h"
-#include <cerrno>
-#include <cstdlib>
-#include <cstring>
 #include <list>
 #include <plugin-api.h>
 #include <system_error>
