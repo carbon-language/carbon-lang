@@ -129,7 +129,6 @@ ObjectFilePECOFF::GetModuleSpecifications (const lldb_private::FileSpec& file,
             if (ParseCOFFHeader(data, &offset, coff_header))
             {
                 ArchSpec spec;
-                llvm::Triple::ArchType archType = llvm::Triple::UnknownArch;
                 if (coff_header.machine == MachineAmd64)
                     spec.SetTriple("x86_64-pc-windows");
                 else if (coff_header.machine == MachineX86)
