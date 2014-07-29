@@ -150,12 +150,6 @@ public:
   MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                ScopStmt *Statement);
 
-  // @brief Create a memory access that reads a complete memory object.
-  //
-  // @param BaseAddress The base address of the memory object.
-  // @param Statement   The statement that contains this access.
-  MemoryAccess(const Value *BaseAddress, ScopStmt *Statement);
-
   ~MemoryAccess();
 
   /// @brief Get the type of a memory access.

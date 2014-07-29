@@ -456,16 +456,6 @@ void MemoryAccess::realignParams() {
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
-MemoryAccess::MemoryAccess(const Value *BaseAddress, ScopStmt *Statement)
-    : Type(READ), BaseAddr(BaseAddress), Statement(Statement),
-      newAccessRelation(nullptr) {
-
-  isl_basic_map *BasicAccessMap = createBasicAccessMap(Statement);
-  AccessRelation = isl_map_from_basic_map(BasicAccessMap);
-  isl_space *ParamSpace = Statement->getParent()->getParamSpace();
-  AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
-}
-
 raw_ostream &polly::operator<<(raw_ostream &OS,
                                MemoryAccess::ReductionType RT) {
   switch (RT) {
