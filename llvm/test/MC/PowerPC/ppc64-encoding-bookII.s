@@ -56,6 +56,8 @@
 # CHECK-BE: mbar 1                          # encoding: [0x7c,0x20,0x06,0xac]
 # CHECK-LE: mbar 1                          # encoding: [0xac,0x06,0x20,0x7c]
             mbar 1
+# CHECK-BE: mbar 0
+            mbar
 
 # Extended mnemonics
 

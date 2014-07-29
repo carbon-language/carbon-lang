@@ -3123,6 +3123,8 @@ def : InstAlias<"wait", (WAIT 0)>;
 def : InstAlias<"waitrsv", (WAIT 1)>;
 def : InstAlias<"waitimpl", (WAIT 2)>;
 
+def : InstAlias<"mbar", (MBAR 0)>, Requires<[IsBookE]>;
+
 def : InstAlias<"crset $bx", (CREQV crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
 def : InstAlias<"crclr $bx", (CRXOR crbitrc:$bx, crbitrc:$bx, crbitrc:$bx)>;
 def : InstAlias<"crmove $bx, $by", (CROR crbitrc:$bx, crbitrc:$by, crbitrc:$by)>;
