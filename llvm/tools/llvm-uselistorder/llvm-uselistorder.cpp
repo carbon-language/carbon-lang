@@ -1,4 +1,4 @@
-//===- opt.cpp - The LLVM Modular Optimizer -------------------------------===//
+//===- llvm-uselistorder.cpp - The LLVM Modular Optimizer -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Optimizations may be specified an arbitrary number of times on the command
-// line, They are run in the order specified.
+// Verify that use-list order can be serialized correctly.
 //
 //===----------------------------------------------------------------------===//
 
