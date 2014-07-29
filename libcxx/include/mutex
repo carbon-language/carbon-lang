@@ -425,7 +425,7 @@ lock(_L0& __l0, _L1& __l1, _L2& __l2, _L3& ...__l3)
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
-struct _LIBCPP_TYPE_VIS once_flag;
+struct _LIBCPP_TYPE_VIS_ONLY once_flag;
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
