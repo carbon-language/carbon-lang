@@ -62,8 +62,8 @@ public:
 
     if (LHSResult.getValue() != RHSResult.getValue()) {
       Checker.ErrStream << "Expression '" << Expr << "' is false: "
-                        << format("0x%lx", LHSResult.getValue())
-                        << " != " << format("0x%lx", RHSResult.getValue())
+                        << format("0x%" PRIx64, LHSResult.getValue())
+                        << " != " << format("0x%" PRIx64, RHSResult.getValue())
                         << "\n";
       return false;
     }
