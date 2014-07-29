@@ -468,6 +468,15 @@ class XForm_sr<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let Inst{21-30} = xo;
 }
 
+class XForm_mbar<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin>
+         : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5> MO;
+
+  let Inst{6-10} = MO;
+  let Inst{21-30} = xo;
+}
+
 class XForm_srin<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
                 InstrItinClass itin>
          : I<opcode, OOL, IOL, asmstr, itin> {

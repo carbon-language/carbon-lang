@@ -3046,6 +3046,9 @@ def EIEIO : XForm_24_eieio<31, 854, (outs), (ins),
 def WAIT : XForm_24_sync<31, 62, (outs), (ins i32imm:$L),
                          "wait $L", IIC_LdStLoad, []>;
 
+def MBAR : XForm_mbar<31, 854, (outs), (ins u5imm:$MO),
+                         "mbar $MO", IIC_LdStLoad>, Requires<[IsBookE]>;
+
 def MTSR: XForm_sr<31, 210, (outs), (ins gprc:$RS, u4imm:$SR),
             "mtsr $SR, $RS", IIC_SprMTSR>;
 
