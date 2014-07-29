@@ -7591,9 +7591,9 @@ static bool isConsecutiveLS(LSBaseSDNode *LS, LSBaseSDNode *Base,
 
 // Return true is there is a nearyby consecutive load to the one provided
 // (regardless of alignment). We search up and down the chain, looking though
-// token factors and other loads (but nothing else). As a result, a true
-// results indicates that it is safe to create a new consecutive load adjacent
-// to the load provided.
+// token factors and other loads (but nothing else). As a result, a true result
+// indicates that it is safe to create a new consecutive load adjacent to the
+// load provided.
 static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
   SDValue Chain = LD->getChain();
   EVT VT = LD->getMemoryVT();
