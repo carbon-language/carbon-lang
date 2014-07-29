@@ -28,17 +28,6 @@ using namespace llvm;
 namespace {
 struct OrderMap {
   DenseMap<const Value *, std::pair<unsigned, bool>> IDs;
-  unsigned LastGlobalConstantID;
-  unsigned LastGlobalValueID;
-
-  OrderMap() : LastGlobalConstantID(0), LastGlobalValueID(0) {}
-
-  bool isGlobalConstant(unsigned ID) const {
-    return ID <= LastGlobalConstantID;
-  }
-  bool isGlobalValue(unsigned ID) const {
-    return ID <= LastGlobalValueID && !isGlobalConstant(ID);
-  }
 
   unsigned size() const { return IDs.size(); }
   std::pair<unsigned, bool> &operator[](const Value *V) { return IDs[V]; }
@@ -55,7 +44,7 @@ static void orderValue(const Value *V, OrderMap &OM) {
   if (const Constant *C = dyn_cast<Constant>(V))
     if (C->getNumOperands() && !isa<GlobalValue>(C))
       for (const Value *Op : C->operands())
-        if (!isa<BasicBlock>(Op) && !isa<GlobalValue>(Op))
+        if (!isa<BasicBlock>(Op))
           orderValue(Op, OM);
 
   // Note: we cannot cache this lookup above, since inserting into the map
@@ -68,11 +57,12 @@ static OrderMap orderModule(const Module *M) {
   // and ValueEnumerator::incorporateFunction().
   OrderMap OM;
 
-  // In the reader, initializers of GlobalValues are set *after* all the
-  // globals have been read.  Rather than awkwardly modeling this behaviour
-  // directly in predictValueUseListOrderImpl(), just assign IDs to
-  // initializers of GlobalValues before GlobalValues themselves to model this
-  // implicitly.
+  for (const GlobalVariable &G : M->globals())
+    orderValue(&G, OM);
+  for (const Function &F : *M)
+    orderValue(&F, OM);
+  for (const GlobalAlias &A : M->aliases())
+    orderValue(&A, OM);
   for (const GlobalVariable &G : M->globals())
     if (G.hasInitializer())
       orderValue(G.getInitializer(), OM);
@@ -81,23 +71,6 @@ static OrderMap orderModule(const Module *M) {
   for (const Function &F : *M)
     if (F.hasPrefixData())
       orderValue(F.getPrefixData(), OM);
-  OM.LastGlobalConstantID = OM.size();
-
-  // Initializers of GlobalValues are processed in
-  // BitcodeReader::ResolveGlobalAndAliasInits().  Match the order there rather
-  // than ValueEnumerator, and match the code in predictValueUseListOrderImpl()
-  // by giving IDs in reverse order.
-  //
-  // Since GlobalValues never reference each other directly (just through
-  // initializers), their relative IDs only matter for determining order of
-  // uses in their initializers.
-  for (const Function &F : *M)
-    orderValue(&F, OM);
-  for (const GlobalAlias &A : M->aliases())
-    orderValue(&A, OM);
-  for (const GlobalVariable &G : M->globals())
-    orderValue(&G, OM);
-  OM.LastGlobalValueID = OM.size();
 
   for (const Function &F : *M) {
     if (F.isDeclaration())
@@ -137,8 +110,8 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
     // We may have lost some users.
     return;
 
-  bool IsGlobalValue = OM.isGlobalValue(ID);
-  std::sort(List.begin(), List.end(), [&](const Entry &L, const Entry &R) {
+  std::sort(List.begin(), List.end(),
+            [&OM, ID](const Entry &L, const Entry &R) {
     const Use *LU = L.first;
     const Use *RU = R.first;
     if (LU == RU)
@@ -146,36 +119,22 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
 
     auto LID = OM.lookup(LU->getUser()).first;
     auto RID = OM.lookup(RU->getUser()).first;
-
-    // Global values are processed in reverse order.
-    //
-    // Moreover, initializers of GlobalValues are set *after* all the globals
-    // have been read (despite having earlier IDs).  Rather than awkwardly
-    // modeling this behaviour here, orderModule() has assigned IDs to
-    // initializers of GlobalValues before GlobalValues themselves.
-    if (OM.isGlobalValue(LID) && OM.isGlobalValue(RID))
-      return LID < RID;
-
     // If ID is 4, then expect: 7 6 5 1 2 3.
     if (LID < RID) {
       if (RID < ID)
-        if (!IsGlobalValue) // GlobalValue uses don't get reversed.
-          return true;
+        return true;
       return false;
     }
     if (RID < LID) {
       if (LID < ID)
-        if (!IsGlobalValue) // GlobalValue uses don't get reversed.
-          return false;
+        return false;
       return true;
     }
-
     // LID and RID are equal, so we have different operands of the same user.
     // Assume operands are added in order for all instructions.
-    if (LID < ID)
-      if (!IsGlobalValue) // GlobalValue uses don't get reversed.
-        return LU->getOperandNo() < RU->getOperandNo();
-    return LU->getOperandNo() > RU->getOperandNo();
+    if (LU->getOperandNo() < RU->getOperandNo())
+      return LID < ID;
+    return ID < LID;
   });
 
   if (std::is_sorted(
