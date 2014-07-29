@@ -420,6 +420,15 @@ def u2imm   : Operand<i32> {
   let PrintMethod = "printU2ImmOperand";
   let ParserMatchClass = PPCU2ImmAsmOperand;
 }
+
+def PPCU4ImmAsmOperand : AsmOperandClass {
+  let Name = "U4Imm"; let PredicateMethod = "isU4Imm";
+  let RenderMethod = "addImmOperands";
+}
+def u4imm   : Operand<i32> {
+  let PrintMethod = "printU4ImmOperand";
+  let ParserMatchClass = PPCU4ImmAsmOperand;
+}
 def PPCS5ImmAsmOperand : AsmOperandClass {
   let Name = "S5Imm"; let PredicateMethod = "isS5Imm";
   let RenderMethod = "addImmOperands";
@@ -3036,6 +3045,18 @@ def EIEIO : XForm_24_eieio<31, 854, (outs), (ins),
 
 def WAIT : XForm_24_sync<31, 62, (outs), (ins i32imm:$L),
                          "wait $L", IIC_LdStLoad, []>;
+
+def MTSR: XForm_sr<31, 210, (outs), (ins gprc:$RS, u4imm:$SR),
+            "mtsr $SR, $RS", IIC_SprMTSR>;
+
+def MFSR: XForm_sr<31, 595, (outs gprc:$RS), (ins u4imm:$SR),
+            "mfsr $RS, $SR", IIC_SprMFSR>;
+
+def MTSRIN: XForm_srin<31, 242, (outs), (ins gprc:$RS, gprc:$RB),
+            "mtsrin $RS, $RB", IIC_SprMTSR>;
+
+def MFSRIN: XForm_srin<31, 659, (outs gprc:$RS), (ins gprc:$RB),
+            "mfsrin $RS, $RB", IIC_SprMFSR>;
 
 def MTMSR: XForm_mtmsr<31, 146, (outs), (ins gprc:$RS, i32imm:$L),
                     "mtmsr $RS, $L", IIC_SprMTMSR>;

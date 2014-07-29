@@ -767,3 +767,17 @@
 # CHECK-LE: mfocrf 16, 8                    # encoding: [0x26,0x80,0x10,0x7e]
             mfocrf 16, 8
 
+# Move to/from segment register
+# CHECK-BE: mtsr    12, 10                    # encoding: [0x7d,0x4c,0x01,0xa4]
+# CHECK-LE: mtsr    12, 10                    # encoding: [0xa4,0x01,0x4c,0x7d]
+            mtsr    12,%r10
+# CHECK-BE: mfsr    10, 12                    # encoding: [0x7d,0x4c,0x04,0xa6]
+# CHECK-LE: mfsr    10, 12                    # encoding: [0xa6,0x04,0x4c,0x7d]
+            mfsr    %r10,12
+
+# CHECK-BE: mtsrin  10, 12                    # encoding: [0x7d,0x40,0x61,0xe4]
+# CHECK-LE: mtsrin  10, 12                    # encoding: [0xe4,0x61,0x40,0x7d]
+            mtsrin  %r10,%r12
+# CHECK-BE: mfsrin  10, 12                    # encoding: [0x7d,0x40,0x65,0x26]
+# CHECK-LE: mfsrin  10, 12                    # encoding: [0x26,0x65,0x40,0x7d]
+            mfsrin  %r10,%r12
