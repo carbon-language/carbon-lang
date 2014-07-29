@@ -5,14 +5,13 @@ struct A
   // CHECK-DAG: ", i32 [[@LINE+1]], metadata ![[ATY:[0-9]+]]{{.*}}[ DW_TAG_subprogram ]{{.*}}[a]
   void a(int c, ...) {}
   // CHECK: ![[ATY]] ={{.*}} metadata ![[AARGS:[0-9]+]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
-  // CHECK: ![[AARGS]] = {{.*}} metadata ![[UNSPEC:[0-9]+]]}
-  // CHECK: ![[UNSPEC]] = {{.*}} [ DW_TAG_unspecified_parameters ]
+  // CHECK: ![[AARGS]] = metadata !{null, metadata !{{[0-9]+}}, metadata !{{[0-9]+}}, null}
 };
 
   // CHECK: ", i32 [[@LINE+1]], metadata ![[BTY:[0-9]+]]{{.*}}[ DW_TAG_subprogram ]{{.*}}[b]
 void b(int c, ...) {
   // CHECK: ![[BTY]] ={{.*}} metadata ![[BARGS:[0-9]+]], i32 0, null, null, null} ; [ DW_TAG_subroutine_type ]
-  // CHECK: ![[BARGS]] = {{.*}} metadata ![[UNSPEC:[0-9]+]]}
+  // CHECK: ![[BARGS]] = metadata !{null, metadata !{{[0-9]+}}, null}
 
   A a;
 
