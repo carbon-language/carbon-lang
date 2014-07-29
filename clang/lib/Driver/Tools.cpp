@@ -799,6 +799,18 @@ void Clang::AddARMTargetArgs(const ArgList &Args,
     CmdArgs.push_back("-arm-use-movt=0");
   }
 
+  // -mkernel implies -mstrict-align; don't add the redundant option.
+  if (!KernelOrKext) {
+    if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
+                                 options::OPT_munaligned_access)) {
+      CmdArgs.push_back("-backend-option");
+      if (A->getOption().matches(options::OPT_mno_unaligned_access))
+        CmdArgs.push_back("-arm-strict-align");
+      else
+        CmdArgs.push_back("-arm-no-strict-align");
+    }
+  }
+
   // Setting -mno-global-merge disables the codegen global merge pass. Setting 
   // -mglobal-merge has no effect as the pass is enabled by default.
   if (Arg *A = Args.getLastArg(options::OPT_mglobal_merge,
@@ -873,9 +885,13 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
   CmdArgs.push_back("-target-abi");
   CmdArgs.push_back(ABIName);
 
-  if (Args.hasArg(options::OPT_mstrict_align)) {
+  if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
+                               options::OPT_munaligned_access)) {
     CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back("-aarch64-strict-align");
+    if (A->getOption().matches(options::OPT_mno_unaligned_access))
+      CmdArgs.push_back("-aarch64-strict-align");
+    else
+      CmdArgs.push_back("-aarch64-no-strict-align");
   }
 
   // Setting -mno-global-merge disables the codegen global merge pass. Setting
@@ -3672,27 +3688,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_mstack_alignment)) {
     StringRef alignment = Args.getLastArgValue(options::OPT_mstack_alignment);
     CmdArgs.push_back(Args.MakeArgString("-mstack-alignment=" + alignment));
-  }
-  // -mkernel implies -mstrict-align; don't add the redundant option.
-  if (!KernelOrKext) {
-    if (Arg *A = Args.getLastArg(options::OPT_mno_unaligned_access,
-                                 options::OPT_munaligned_access)) {
-      if (A->getOption().matches(options::OPT_mno_unaligned_access)) {
-        CmdArgs.push_back("-backend-option");
-        if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
-          CmdArgs.push_back("-aarch64-strict-align");
-        else
-          CmdArgs.push_back("-arm-strict-align");
-      } else {
-        CmdArgs.push_back("-backend-option");
-        if (getToolChain().getTriple().getArch() == llvm::Triple::aarch64 ||
-            getToolChain().getTriple().getArch() == llvm::Triple::aarch64_be)
-          CmdArgs.push_back("-aarch64-no-strict-align");
-        else
-          CmdArgs.push_back("-arm-no-strict-align");
-      }
-    }
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mrestrict_it,

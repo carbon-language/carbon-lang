@@ -44,5 +44,8 @@
 // RUN: %clang -target aarch64-none-gnueabi -munaligned-access -mstrict-align -### %s 2> %t
 // RUN: FileCheck --check-prefix=CHECK-ALIGNED-AARCH64 < %t %s
 
+// RUN: %clang -target aarch64-none-gnueabi -mkernel -mno-unaligned-access -### %s 2> %t
+// RUN: FileCheck --check-prefix=CHECK-ALIGNED-AARCH64 < %t %s
+
 // CHECK-ALIGNED-ARM: "-backend-option" "-arm-strict-align"
 // CHECK-ALIGNED-AARCH64: "-backend-option" "-aarch64-strict-align"

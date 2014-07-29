@@ -1113,7 +1113,7 @@ def munaligned_access : Flag<["-"], "munaligned-access">, Group<m_arm_Features_G
 def mno_unaligned_access : Flag<["-"], "mno-unaligned-access">, Group<m_arm_Features_Group>,
   HelpText<"Force all memory accesses to be aligned (AArch32/AArch64 only)">;
 def mstrict_align : Flag<["-"], "mstrict-align">, Alias<mno_unaligned_access>, Flags<[CC1Option,HelpHidden]>,
-  HelpText<"Force all memory accesses to be aligned (AArch64 only, same as mno-unaligned-access)">;
+  HelpText<"Force all memory accesses to be aligned (same as mno-unaligned-access)">;
 def mno_thumb : Flag<["-"], "mno-thumb">, Group<m_arm_Features_Group>;
 def mrestrict_it: Flag<["-"], "mrestrict-it">, Group<m_arm_Features_Group>,
   HelpText<"Disallow generation of deprecated IT blocks for ARMv8. It is on by default for ARMv8 Thumb mode.">;
