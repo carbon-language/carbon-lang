@@ -28,16 +28,16 @@ ExpressionSourceCode::g_expression_prefix = R"(
 #define nil (__null)
 #define YES ((BOOL)1)
 #define NO ((BOOL)0)
-typedef signed __INT8_TYPE__ int8_t;
-typedef unsigned __INT8_TYPE__ uint8_t;
-typedef signed __INT16_TYPE__ int16_t;
-typedef unsigned __INT16_TYPE__ uint16_t;
-typedef signed __INT32_TYPE__ int32_t;
-typedef unsigned __INT32_TYPE__ uint32_t;
-typedef signed __INT64_TYPE__ int64_t;
-typedef unsigned __INT64_TYPE__ uint64_t;
-typedef signed __INTPTR_TYPE__ intptr_t;
-typedef unsigned __INTPTR_TYPE__ uintptr_t;
+typedef __INT8_TYPE__ int8_t;
+typedef __UINT8_TYPE__ uint8_t;
+typedef __INT16_TYPE__ int16_t;
+typedef __UINT16_TYPE__ uint16_t;
+typedef __INT32_TYPE__ int32_t;
+typedef __UINT32_TYPE__ uint32_t;
+typedef __INT64_TYPE__ int64_t;
+typedef __UINT64_TYPE__ uint64_t;
+typedef __INTPTR_TYPE__ intptr_t;
+typedef __UINTPTR_TYPE__ uintptr_t;
 typedef __SIZE_TYPE__ size_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef unsigned short unichar;
