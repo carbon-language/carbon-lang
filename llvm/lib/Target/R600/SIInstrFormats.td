@@ -185,6 +185,9 @@ class SMRD <bits<5> op, bits<1> imm, dag outs, dag ins, string asm,
 
   let LGKM_CNT = 1;
   let SMRD = 1;
+  let mayStore = 0;
+  let mayLoad = 1;
+  let UseNamedOperandTable = 1;
 }
 
 //===----------------------------------------------------------------------===//
