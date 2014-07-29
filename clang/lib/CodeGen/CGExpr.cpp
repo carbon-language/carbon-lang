@@ -1258,6 +1258,9 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *value, LValue lvalue,
 /// method emits the address of the lvalue, then loads the result as an rvalue,
 /// returning the rvalue.
 RValue CodeGenFunction::EmitLoadOfLValue(LValue LV, SourceLocation Loc) {
+  if (CGDebugInfo *DI = getDebugInfo())
+    DI->EmitLocation(Builder, Loc, true);
+
   if (LV.isObjCWeak()) {
     // load of a __weak object.
     llvm::Value *AddrWeakObj = LV.getAddress();
