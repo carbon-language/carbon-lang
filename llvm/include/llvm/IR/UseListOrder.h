@@ -54,7 +54,7 @@ public:
   }
   ~UseListShuffleVector() {
     if (!isSmall())
-      delete Storage.Ptr;
+      delete[] Storage.Ptr;
   }
 
   typedef unsigned *iterator;
