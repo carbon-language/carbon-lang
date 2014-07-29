@@ -251,15 +251,19 @@ std::error_code RawCoverageMappingReader::read(CoverageMappingRecord &Record) {
   // from the expanded file.
   // Perform multiple passes to correctly propagate the counters through
   // all the nested expansion regions.
+  SmallVector<CounterMappingRegion *, 8> FileIDExpansionRegionMapping;
+  FileIDExpansionRegionMapping.resize(VirtualFileMapping.size(), nullptr);
   for (unsigned Pass = 1, S = VirtualFileMapping.size(); Pass < S; ++Pass) {
-    for (auto &I : MappingRegions) {
-      if (I.Kind == CounterMappingRegion::ExpansionRegion) {
-        for (const auto &J : MappingRegions) {
-          if (J.FileID == I.ExpandedFileID) {
-            I.Count = J.Count;
-            break;
-          }
-        }
+    for (auto &R : MappingRegions) {
+      if (R.Kind != CounterMappingRegion::ExpansionRegion)
+        continue;
+      assert(!FileIDExpansionRegionMapping[R.ExpandedFileID]);
+      FileIDExpansionRegionMapping[R.ExpandedFileID] = &R;
+    }
+    for (auto &R : MappingRegions) {
+      if (FileIDExpansionRegionMapping[R.FileID]) {
+        FileIDExpansionRegionMapping[R.FileID]->Count = R.Count;
+        FileIDExpansionRegionMapping[R.FileID] = nullptr;
       }
     }
   }
