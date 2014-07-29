@@ -1636,7 +1636,7 @@ class AddSubRegAlias<string asm, Instruction inst, RegisterClass dstRegtype,
 
 multiclass AddSub<bit isSub, string mnemonic,
                   SDPatternOperator OpNode = null_frag> {
-  let hasSideEffects = 0 in {
+  let hasSideEffects = 0, isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   // Add/Subtract immediate
   def Wri  : BaseAddSubImm<isSub, 0, GPR32sp, GPR32sp, addsub_shifted_imm32,
                            mnemonic, OpNode> {
@@ -1961,14 +1961,14 @@ class LogicalRegAlias<string asm, Instruction inst, RegisterClass regtype>
 
 multiclass LogicalImm<bits<2> opc, string mnemonic, SDNode OpNode,
                       string Alias> {
-  let AddedComplexity = 6 in
+  let AddedComplexity = 6, isReMaterializable = 1, isAsCheapAsAMove = 1 in
   def Wri : BaseLogicalImm<opc, GPR32sp, GPR32, logical_imm32, mnemonic,
                            [(set GPR32sp:$Rd, (OpNode GPR32:$Rn,
                                                logical_imm32:$imm))]> {
     let Inst{31} = 0;
     let Inst{22} = 0; // 64-bit version has an additional bit of immediate.
   }
-  let AddedComplexity = 6 in
+  let AddedComplexity = 6, isReMaterializable = 1, isAsCheapAsAMove = 1 in
   def Xri : BaseLogicalImm<opc, GPR64sp, GPR64, logical_imm64, mnemonic,
                            [(set GPR64sp:$Rd, (OpNode GPR64:$Rn,
                                                logical_imm64:$imm))]> {
@@ -2013,8 +2013,10 @@ class BaseLogicalRegPseudo<RegisterClass regtype, SDPatternOperator OpNode>
 // Split from LogicalImm as not all instructions have both.
 multiclass LogicalReg<bits<2> opc, bit N, string mnemonic,
                       SDPatternOperator OpNode> {
+  let isReMaterializable = 1, isAsCheapAsAMove = 1 in {
   def Wrr : BaseLogicalRegPseudo<GPR32, OpNode>;
   def Xrr : BaseLogicalRegPseudo<GPR64, OpNode>;
+  }
 
   def Wrs : BaseLogicalSReg<opc, N, GPR32, logical_shifted_reg32, mnemonic,
                             [(set GPR32:$Rd, (OpNode GPR32:$Rn,
