@@ -22,7 +22,9 @@
 
 template <class char_type>
 void
-test(const char_type* A, std::ctype_base::mask expected, bool icase = false)
+test(const char_type* A,
+     typename std::regex_traits<char_type>::char_class_type expected,
+     bool icase = false)
 {
     std::regex_traits<char_type> t;
     typedef forward_iterator<const char_type*> F;

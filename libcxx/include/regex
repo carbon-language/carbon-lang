@@ -1192,7 +1192,8 @@ regex_traits<_CharT>::__lookup_collatename(_ForwardIterator __f,
 
 // lookup_classname
 
-ctype_base::mask _LIBCPP_FUNC_VIS __get_classname(const char* __s, bool __icase);
+regex_traits<char>::char_class_type _LIBCPP_FUNC_VIS
+__get_classname(const char* __s, bool __icase);
 
 template <class _CharT>
 template <class _ForwardIterator>
@@ -2184,8 +2185,8 @@ class __bracket_expression
     vector<pair<string_type, string_type> > __ranges_;
     vector<pair<_CharT, _CharT> > __digraphs_;
     vector<string_type> __equivalences_;
-    ctype_base::mask __mask_;
-    ctype_base::mask __neg_mask_;
+    typename regex_traits<_CharT>::char_class_type __mask_;
+    typename regex_traits<_CharT>::char_class_type __neg_mask_;
     bool __negate_;
     bool __icase_;
     bool __collate_;
@@ -2281,10 +2282,10 @@ public:
     void __add_equivalence(const string_type& __s)
         {__equivalences_.push_back(__s);}
     _LIBCPP_INLINE_VISIBILITY
-    void __add_class(ctype_base::mask __mask)
+    void __add_class(typename regex_traits<_CharT>::char_class_type __mask)
         {__mask_ |= __mask;}
     _LIBCPP_INLINE_VISIBILITY
-    void __add_neg_class(ctype_base::mask __mask)
+    void __add_neg_class(typename regex_traits<_CharT>::char_class_type __mask)
         {__neg_mask_ |= __mask;}
 };
 
