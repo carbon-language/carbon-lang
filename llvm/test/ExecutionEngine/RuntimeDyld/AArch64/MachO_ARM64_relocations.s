@@ -1,7 +1,6 @@
 # RUN: llvm-mc -triple=arm64-apple-ios7.0.0 -code-model=small -relocation-model=pic -filetype=obj -o %T/foo.o %s
 # RUN: sed "s,<filename>,%/T/foo.o,g" %s > %T/foo.s
 # RUN: llvm-rtdyld -triple=arm64-apple-ios7.0.0 -verify -check=%T/foo.s %/T/foo.o
-# XFAIL: mips
 
     .section  __TEXT,__text,regular,pure_instructions
     .ios_version_min 7, 0

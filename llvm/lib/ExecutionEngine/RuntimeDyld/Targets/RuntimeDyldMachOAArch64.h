@@ -11,6 +11,7 @@
 #define LLVM_RUNTIMEDYLDMACHOAARCH64_H
 
 #include "../RuntimeDyldMachO.h"
+#include "llvm/Support/Endian.h"
 
 #define DEBUG_TYPE "dyld"
 
@@ -35,7 +36,7 @@ public:
     default:
       llvm_unreachable("Unsupported relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED:
-      assert((NumBytes >= 4 && NumBytes <= 8) && "Invalid relocation size.");
+      assert((NumBytes == 4 || NumBytes == 8) && "Invalid relocation size.");
       break;
     case MachO::ARM64_RELOC_BRANCH26:
     case MachO::ARM64_RELOC_PAGE21:
@@ -52,12 +53,15 @@ public:
     default:
       llvm_unreachable("Unsupported relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED:
-      // This could be an unaligned memory location - use memcpy.
-      memcpy(&Addend, LocalAddress, NumBytes);
+      // This could be an unaligned memory location.
+      if (NumBytes == 4)
+        Addend = *reinterpret_cast<support::ulittle32_t *>(LocalAddress);
+      else
+        Addend = *reinterpret_cast<support::ulittle64_t *>(LocalAddress);
       break;
     case MachO::ARM64_RELOC_BRANCH26: {
       // Verify that the relocation points to the expected branch instruction.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((*p & 0xFC000000) == 0x14000000 && "Expected branch instruction.");
 
       // Get the 26 bit addend encoded in the branch instruction and sign-extend
@@ -70,7 +74,7 @@ public:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
     case MachO::ARM64_RELOC_PAGE21: {
       // Verify that the relocation points to the expected adrp instruction.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((*p & 0x9F000000) == 0x90000000 && "Expected adrp instruction.");
 
       // Get the 21 bit addend encoded in the adrp instruction and sign-extend
@@ -83,7 +87,7 @@ public:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12: {
       // Verify that the relocation points to one of the expected load / store
       // instructions.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       (void)p;
       assert((*p & 0x3B000000) == 0x39000000 &&
              "Only expected load / store instructions.");
@@ -91,7 +95,7 @@ public:
     case MachO::ARM64_RELOC_PAGEOFF12: {
       // Verify that the relocation points to one of the expected load / store
       // or add / sub instructions.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((((*p & 0x3B000000) == 0x39000000) ||
               ((*p & 0x11C00000) == 0x11000000)   ) &&
              "Expected load / store  or add/sub instruction.");
@@ -120,19 +124,21 @@ public:
   }
 
   /// Extract the addend encoded in the instruction.
-  void encodeAddend(uint8_t *LocalAddress, MachO::RelocationInfoType RelType,
-                    int64_t Addend) const {
+  void encodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
+                    MachO::RelocationInfoType RelType, int64_t Addend) const {
     // Verify that the relocation has the correct alignment.
     switch (RelType) {
     default:
       llvm_unreachable("Unsupported relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED:
-      llvm_unreachable("Invalid relocation type for instruction.");
+      assert((NumBytes == 4 || NumBytes == 8) && "Invalid relocation size.");
+      break;
     case MachO::ARM64_RELOC_BRANCH26:
     case MachO::ARM64_RELOC_PAGE21:
     case MachO::ARM64_RELOC_PAGEOFF12:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
+      assert(NumBytes == 4 && "Invalid relocation size.");
       assert((((uintptr_t)LocalAddress & 0x3) == 0) &&
              "Instruction address is not aligned to 4 bytes.");
       break;
@@ -141,9 +147,16 @@ public:
     switch (RelType) {
     default:
       llvm_unreachable("Unsupported relocation type!");
+    case MachO::ARM64_RELOC_UNSIGNED:
+      // This could be an unaligned memory location.
+      if (NumBytes == 4)
+        *reinterpret_cast<support::ulittle32_t *>(LocalAddress) = Addend;
+      else
+        *reinterpret_cast<support::ulittle64_t *>(LocalAddress) = Addend;
+      break;
     case MachO::ARM64_RELOC_BRANCH26: {
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       // Verify that the relocation points to the expected branch instruction.
-      uint32_t *p = (uint32_t *)LocalAddress;
       assert((*p & 0xFC000000) == 0x14000000 && "Expected branch instruction.");
 
       // Verify addend value.
@@ -157,7 +170,7 @@ public:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
     case MachO::ARM64_RELOC_PAGE21: {
       // Verify that the relocation points to the expected adrp instruction.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((*p & 0x9F000000) == 0x90000000 && "Expected adrp instruction.");
 
       // Check that the addend fits into 21 bits (+ 12 lower bits).
@@ -173,7 +186,7 @@ public:
     case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12: {
       // Verify that the relocation points to one of the expected load / store
       // instructions.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((*p & 0x3B000000) == 0x39000000 &&
              "Only expected load / store instructions.");
       (void)p;
@@ -181,7 +194,7 @@ public:
     case MachO::ARM64_RELOC_PAGEOFF12: {
       // Verify that the relocation points to one of the expected load / store
       // or add / sub instructions.
-      uint32_t *p = (uint32_t *)LocalAddress;
+      auto *p = reinterpret_cast<support::aligned_ulittle32_t *>(LocalAddress);
       assert((((*p & 0x3B000000) == 0x39000000) ||
               ((*p & 0x11C00000) == 0x11000000)   ) &&
              "Expected load / store  or add/sub instruction.");
@@ -298,7 +311,7 @@ public:
       if (RE.Size < 2)
         llvm_unreachable("Invalid size for ARM64_RELOC_UNSIGNED");
 
-      writeBytesUnaligned(LocalAddress, Value + RE.Addend, 1 << RE.Size);
+      encodeAddend(LocalAddress, 1 << RE.Size, RelType, Value + RE.Addend);
       break;
     }
     case MachO::ARM64_RELOC_BRANCH26: {
@@ -306,7 +319,7 @@ public:
       // Check if branch is in range.
       uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
       int64_t PCRelVal = Value - FinalAddress + RE.Addend;
-      encodeAddend(LocalAddress, RelType, PCRelVal);
+      encodeAddend(LocalAddress, /*Size=*/4, RelType, PCRelVal);
       break;
     }
     case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
@@ -316,7 +329,7 @@ public:
       uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
       int64_t PCRelVal =
         ((Value + RE.Addend) & (-4096)) - (FinalAddress & (-4096));
-      encodeAddend(LocalAddress, RelType, PCRelVal);
+      encodeAddend(LocalAddress, /*Size=*/4, RelType, PCRelVal);
       break;
     }
     case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
@@ -326,7 +339,7 @@ public:
       Value += RE.Addend;
       // Mask out the page address and only use the lower 12 bits.
       Value &= 0xFFF;
-      encodeAddend(LocalAddress, RelType, Value);
+      encodeAddend(LocalAddress, /*Size=*/4, RelType, Value);
       break;
     }
     case MachO::ARM64_RELOC_SUBTRACTOR:
