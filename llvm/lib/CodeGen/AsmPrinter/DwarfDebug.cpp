@@ -473,7 +473,7 @@ DIE *DwarfDebug::createScopeChildrenDIE(
     // If we have more than one elements and the last one is null, it is a
     // variadic function.
     if (FnArgs.getNumElements() > 1 &&
-        !resolve(FnArgs.getElement(FnArgs.getNumElements() - 1)))
+        !FnArgs.getElement(FnArgs.getNumElements() - 1))
       Children.push_back(
           make_unique<DIE>(dwarf::DW_TAG_unspecified_parameters));
   }

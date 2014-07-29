@@ -1168,7 +1168,7 @@ void DwarfUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
 
     bool isPrototyped = true;
     if (Elements.getNumElements() == 2 &&
-        !resolve(Elements.getElement(1)))
+        !Elements.getElement(1))
       isPrototyped = false;
 
     constructSubprogramArguments(Buffer, Elements);

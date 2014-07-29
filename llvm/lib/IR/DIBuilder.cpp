@@ -876,7 +876,7 @@ void DIBuilder::retainType(DIType T) {
 /// createUnspecifiedParameter - Create unspeicified type descriptor
 /// for the subroutine type.
 DIBasicType DIBuilder::createUnspecifiedParameter() {
-  return DIBasicType(nullptr);
+  return DIBasicType();
 }
 
 /// createForwardDecl - Create a temporary forward-declared type that
