@@ -89,7 +89,7 @@ namespace options {
   // as plugin exclusive to pass to the code generator.
   // For example, "generate-api-file" and "as"options are for the plugin
   // use only and will not be passed.
-  static std::vector<std::string> extra;
+  static std::vector<const char *> extra;
 
   static void process_plugin_option(const char* opt_)
   {
@@ -122,7 +122,7 @@ namespace options {
       }
     } else {
       // Save this option to pass to the code generator.
-      extra.push_back(opt);
+      extra.push_back(opt_);
     }
   }
 }
@@ -237,10 +237,8 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
 
   // Pass through extra options to the code generator.
   if (!options::extra.empty()) {
-    for (std::vector<std::string>::iterator it = options::extra.begin();
-         it != options::extra.end(); ++it) {
-      CodeGen->setCodeGenDebugOptions((*it).c_str());
-    }
+    for (const char *Opt : options::extra)
+      CodeGen->setCodeGenDebugOptions(Opt);
   }
 
   CodeGen->parseCodeGenDebugOptions();
