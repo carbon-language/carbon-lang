@@ -77,12 +77,12 @@ public:
 
   Dependences();
 
-  // @brief Check if a new scattering is valid.
-  //
-  // @param NewScattering The new scatterings
-  //
-  // @return bool True if the new scattering is valid, false it it reverses
-  //              dependences.
+  /// @brief Check if a new scattering is valid.
+  ///
+  /// @param NewScattering The new scatterings
+  ///
+  /// @return bool True if the new scattering is valid, false it it reverses
+  ///              dependences.
   bool isValidScattering(StatementToIslMapTy *NewScatterings);
 
   /// @brief Check if a partial schedule is parallel wrt to @p Deps.
@@ -111,7 +111,7 @@ public:
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
 private:
-  // The different kinds of dependences we calculate.
+  /// @brief The different kinds of dependences we calculate.
   isl_union_map *RAW;
   isl_union_map *WAR;
   isl_union_map *WAW;
@@ -130,7 +130,7 @@ private:
   /// @brief Calculate and add at the privatization dependences
   void addPrivatizationDependences();
 
-  // @brief Calculate the dependences for a certain SCoP.
+  /// @brief Calculate the dependences for a certain SCoP.
   void calculateDependences(Scop &S);
 };
 
