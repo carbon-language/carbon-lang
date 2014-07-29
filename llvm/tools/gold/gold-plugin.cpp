@@ -46,11 +46,11 @@ static ld_plugin_status discard_message(int level, const char *format, ...) {
   abort();
 }
 
-static ld_plugin_add_symbols add_symbols = NULL;
-static ld_plugin_get_symbols get_symbols = NULL;
-static ld_plugin_add_input_file add_input_file = NULL;
-static ld_plugin_set_extra_library_path set_extra_library_path = NULL;
-static ld_plugin_get_view get_view = NULL;
+static ld_plugin_add_symbols add_symbols = nullptr;
+static ld_plugin_get_symbols get_symbols = nullptr;
+static ld_plugin_add_input_file add_input_file = nullptr;
+static ld_plugin_set_extra_library_path set_extra_library_path = nullptr;
+static ld_plugin_get_view get_view = nullptr;
 static ld_plugin_message message = discard_message;
 static lto_codegen_model output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
 static std::string output_name = "";
@@ -78,7 +78,7 @@ namespace options {
 
   static void process_plugin_option(const char* opt_)
   {
-    if (opt_ == NULL)
+    if (opt_ == nullptr)
       return;
     llvm::StringRef opt = opt_;
 
@@ -306,7 +306,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     cf.syms.push_back(ld_plugin_symbol());
     ld_plugin_symbol &sym = cf.syms.back();
     sym.name = strdup(M->getSymbolName(i));
-    sym.version = NULL;
+    sym.version = nullptr;
 
     int scope = attrs & LTO_SYMBOL_SCOPE_MASK;
     bool CanBeHidden = scope == LTO_SYMBOL_SCOPE_DEFAULT_CAN_BE_HIDDEN;
@@ -330,7 +330,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     }
 
     int definition = attrs & LTO_SYMBOL_DEFINITION_MASK;
-    sym.comdat_key = NULL;
+    sym.comdat_key = nullptr;
     switch (definition) {
       case LTO_SYMBOL_DEFINITION_REGULAR:
         sym.def = LDPK_DEF;
