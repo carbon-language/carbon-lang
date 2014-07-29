@@ -16,6 +16,8 @@ set(UBSAN_CXX_SOURCES
 include_directories(..)
 
 set(UBSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
+append_no_rtti_flag(UBSAN_CFLAGS)
+set(UBSAN_CXXFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 add_custom_target(ubsan)
 
@@ -25,7 +27,7 @@ if(APPLE)
     ARCH ${UBSAN_SUPPORTED_ARCH}
     SOURCES ${UBSAN_SOURCES} ${UBSAN_CXX_SOURCES}
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    CFLAGS ${UBSAN_CFLAGS})
+    CFLAGS ${UBSAN_CXXFLAGS})
   add_dependencies(ubsan clang_rt.ubsan_osx)
 else()
   # Build separate libraries for each target.
@@ -37,7 +39,7 @@ else()
     # C++-specific parts of UBSan runtime. Requires a C++ ABI library.
     add_compiler_rt_runtime(clang_rt.ubsan_cxx-${arch} ${arch} STATIC
       SOURCES ${UBSAN_CXX_SOURCES}
-      CFLAGS ${UBSAN_CFLAGS})
+      CFLAGS ${UBSAN_CXXFLAGS})
     add_dependencies(ubsan
       clang_rt.san-${arch}
       clang_rt.ubsan-${arch}
