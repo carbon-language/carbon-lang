@@ -101,9 +101,9 @@ void CounterMappingContext::dump(const Counter &C,
       return;
     const auto &E = Expressions[C.getExpressionID()];
     OS << '(';
-    dump(E.LHS);
+    dump(E.LHS, OS);
     OS << (E.Kind == CounterExpression::Subtract ? " - " : " + ");
-    dump(E.RHS);
+    dump(E.RHS, OS);
     OS << ')';
     break;
   }
