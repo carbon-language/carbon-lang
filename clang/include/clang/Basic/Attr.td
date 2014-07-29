@@ -1803,7 +1803,7 @@ def LoopHint : Attr {
               DefaultIntArgument<"Value", 1>];
 
   let AdditionalMembers = [{
-  static StringRef getOptionName(int Option) {
+  static const char *getOptionName(int Option) {
     switch(Option) {
     case Vectorize: return "vectorize";
     case VectorizeWidth: return "vectorize_width";
@@ -1815,12 +1815,6 @@ def LoopHint : Attr {
     llvm_unreachable("Unhandled LoopHint option.");
   }
 
-  static StringRef getValueName(int Value) {
-    if (Value)
-      return "enable";
-    return "disable";
-  }
-
   void printPrettyPragma(raw_ostream &OS, const PrintingPolicy &Policy) const {
     unsigned SpellingIndex = getSpellingListIndex();
     // For "#pragma unroll" and "#pragma nounroll" the string "unroll" or
@@ -1829,52 +1823,44 @@ def LoopHint : Attr {
       OS << "\n";
       return;
     }
-    if (SpellingIndex == Pragma_unroll) {
-      if (option == UnrollCount)
-        printArgument(OS);
-      OS << "\n";
+    else if (SpellingIndex == Pragma_unroll) {
+      OS << getValueString(Policy) << "\n";
       return;
     }
+
     assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
-    OS << getOptionName(option);
-    printArgument(OS);
-    OS << "\n";
+    OS << getOptionName(option) << getValueString(Policy) << "\n";
   }
 
-  // Prints the loop hint argument including the enclosing parentheses to OS.
-  void printArgument(raw_ostream &OS) const {
+  // Return a string containing the loop hint argument including the
+  // enclosing parentheses.
+  std::string getValueString(const PrintingPolicy &Policy) const {
+    std::string ValueName;
+    llvm::raw_string_ostream OS(ValueName);
     OS << "(";
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
       OS << value;
-    else if (option == Unroll && value)
-      // Unroll loop hint does not use the keyword "enable". Instead, a nonzero value
-      // indicates full unrolling which uses the keyword "full".
-      OS << "full";
-    else if (value)
-      OS << "enable";
+    else if (value < 0)
+      return "";
+    else if (value > 0)
+      OS << (option == Unroll ? "full" : "enable");
     else
       OS << "disable";
     OS << ")";
+    return OS.str();
   }
 
   // Return a string suitable for identifying this attribute in diagnostics.
-  std::string getDiagnosticName() const {
-    std::string DiagnosticName;
-    llvm::raw_string_ostream OS(DiagnosticName);
+  std::string getDiagnosticName(const PrintingPolicy &Policy) const {
     unsigned SpellingIndex = getSpellingListIndex();
     if (SpellingIndex == Pragma_nounroll)
-      OS << "#pragma nounroll";
-    else if (SpellingIndex == Pragma_unroll) {
-      OS << "#pragma unroll";
-      if (option == UnrollCount)
-        printArgument(OS);
-    } else {
-      assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
-      OS << getOptionName(option);
-      printArgument(OS);
-    }
-    return OS.str();
+      return "#pragma nounroll";
+    else if (SpellingIndex == Pragma_unroll)
+      return "#pragma unroll" + getValueString(Policy);
+
+    assert(SpellingIndex == Pragma_clang_loop && "Unexpected spelling");
+    return getOptionName(option) + getValueString(Policy);
   }
   }];
 

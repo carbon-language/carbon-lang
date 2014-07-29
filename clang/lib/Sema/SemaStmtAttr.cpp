@@ -87,10 +87,11 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const AttributeList &A,
     Spelling = LoopHintAttr::Pragma_clang_loop;
   }
 
-  int ValueInt;
+  int ValueInt = -1;
   if (Option == LoopHintAttr::Unroll &&
       Spelling == LoopHintAttr::Pragma_unroll) {
-    ValueInt = 1;
+    if (ValueInfo)
+      ValueInt = (ValueInfo->isStr("disable") ? 0 : 1);
   } else if (Option == LoopHintAttr::Unroll &&
              Spelling == LoopHintAttr::Pragma_nounroll) {
     ValueInt = 0;
@@ -174,7 +175,6 @@ static void CheckForIncompatibleAttributes(
     };
 
     auto &CategoryState = HintAttrs[Category];
-    SourceLocation OptionLoc = LH->getRange().getBegin();
     const LoopHintAttr *PrevAttr;
     if (Option == LoopHintAttr::Vectorize ||
         Option == LoopHintAttr::Interleave || Option == LoopHintAttr::Unroll) {
@@ -187,11 +187,13 @@ static void CheckForIncompatibleAttributes(
       CategoryState.NumericAttr = LH;
     }
 
+    PrintingPolicy Policy(S.Context.getLangOpts());
+    SourceLocation OptionLoc = LH->getRange().getBegin();
     if (PrevAttr)
       // Cannot specify same type of attribute twice.
       S.Diag(OptionLoc, diag::err_pragma_loop_compatibility)
-          << /*Duplicate=*/true << PrevAttr->getDiagnosticName()
-          << LH->getDiagnosticName();
+          << /*Duplicate=*/true << PrevAttr->getDiagnosticName(Policy)
+          << LH->getDiagnosticName(Policy);
 
     if (CategoryState.EnableAttr && CategoryState.NumericAttr &&
         (Category == Unroll || !CategoryState.EnableAttr->getValue())) {
@@ -200,8 +202,8 @@ static void CheckForIncompatibleAttributes(
       // compatible with "enable" form of the unroll pragma, unroll(full).
       S.Diag(OptionLoc, diag::err_pragma_loop_compatibility)
           << /*Duplicate=*/false
-          << CategoryState.EnableAttr->getDiagnosticName()
-          << CategoryState.NumericAttr->getDiagnosticName();
+          << CategoryState.EnableAttr->getDiagnosticName(Policy)
+          << CategoryState.NumericAttr->getDiagnosticName(Policy);
     }
   }
 }
