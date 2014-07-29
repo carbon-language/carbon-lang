@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_SEMA_SCOPE_INFO_H
 #define LLVM_CLANG_SEMA_SCOPE_INFO_H
 
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/CapturedStmt.h"
 #include "clang/Basic/PartialDiagnostic.h"
@@ -41,8 +42,6 @@ class SwitchStmt;
 class TemplateTypeParmDecl;
 class TemplateParameterList;
 class VarDecl;
-class DeclRefExpr;
-class MemberExpr;
 class ObjCIvarRefExpr;
 class ObjCPropertyRefExpr;
 class ObjCMessageExpr;
