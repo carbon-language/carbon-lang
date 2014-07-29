@@ -32,6 +32,64 @@ SIInstrInfo::SIInstrInfo(const AMDGPUSubtarget &st)
 // TargetInstrInfo callbacks
 //===----------------------------------------------------------------------===//
 
+bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
+                                       unsigned &BaseReg, unsigned &Offset,
+                                       const TargetRegisterInfo *TRI) const {
+  unsigned Opc = LdSt->getOpcode();
+  if (isDS(Opc)) {
+
+    const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
+                                                      AMDGPU::OpName::offset);
+
+    if (!OffsetImm) {
+      // The 2 offset instructions use offset0 and offset1 instead. This
+      // function only handles simple instructions with only a single offset, so
+      // we ignore them.
+
+      // TODO: Handle consecutive offsets as a single load.
+      return false;
+    }
+
+    const MachineOperand *AddrReg = getNamedOperand(*LdSt,
+                                                    AMDGPU::OpName::addr);
+
+    BaseReg = AddrReg->getReg();
+    Offset = OffsetImm->getImm();
+    return true;
+  }
+
+  if (isMUBUF(Opc) || isMTBUF(Opc)) {
+    if (AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::soffset) != -1)
+      return false;
+
+    const MachineOperand *AddrReg = getNamedOperand(*LdSt,
+                                                    AMDGPU::OpName::vaddr);
+    if (!AddrReg)
+      return false;
+
+    const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
+                                                      AMDGPU::OpName::offset);
+    BaseReg = AddrReg->getReg();
+    Offset = OffsetImm->getImm();
+    return true;
+  }
+
+  if (isSMRD(Opc)) {
+    const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
+                                                      AMDGPU::OpName::offset);
+    if (!OffsetImm)
+      return false;
+
+    const MachineOperand *SBaseReg = getNamedOperand(*LdSt,
+                                                     AMDGPU::OpName::sbase);
+    BaseReg = SBaseReg->getReg();
+    Offset = OffsetImm->getImm();
+    return true;
+  }
+
+  return false;
+}
+
 void
 SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                          MachineBasicBlock::iterator MI, DebugLoc DL,
