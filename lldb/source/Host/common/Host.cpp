@@ -884,7 +884,7 @@ Host::GetProgramFileSpec ()
 #elif defined(_WIN32)
         std::vector<char> buffer(PATH_MAX);
         ::GetModuleFileName(NULL, &buffer[0], buffer.size());
-        g_program_filespec.SetFile(&buffer[0], false, FileSpec::ePathSyntaxWindows);
+        g_program_filespec.SetFile(&buffer[0], false);
 #endif
     }
     return g_program_filespec;
