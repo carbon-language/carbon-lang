@@ -139,6 +139,38 @@ namespace llvm {
     BufEnd = BufPtr+Size;
     return false;
   }
+
+  const std::error_category &BitcodeErrorCategory();
+  enum class BitcodeError {
+    BitcodeStreamInvalidSize,
+    ConflictingMETADATA_KINDRecords,
+    CouldNotFindFunctionInStream,
+    ExpectedConstant,
+    InsufficientFunctionProtos,
+    InvalidBitcodeSignature,
+    InvalidBitcodeWrapperHeader,
+    InvalidConstantReference,
+    InvalidID, // A read identifier is not found in the table it should be in.
+    InvalidInstructionWithNoBB,
+    InvalidRecord, // A read record doesn't have the expected size or structure
+    InvalidTypeForValue, // Type read OK, but is invalid for its use
+    InvalidTYPETable,
+    InvalidType,    // We were unable to read a type
+    MalformedBlock, // We are unable to advance in the stream.
+    MalformedGlobalInitializerSet,
+    InvalidMultipleBlocks, // We found multiple blocks of a kind that should
+                           // have only one
+    NeverResolvedValueFoundInFunction,
+    InvalidValue // Invalid version, inst number, attr number, etc
+  };
+  inline std::error_code make_error_code(BitcodeError E) {
+    return std::error_code(static_cast<int>(E), BitcodeErrorCategory());
+  }
+
 } // End llvm namespace
+
+namespace std {
+template <> struct is_error_code_enum<llvm::BitcodeError> : std::true_type {};
+}
 
 #endif

@@ -193,35 +193,8 @@ class BitcodeReader : public GVMaterializer {
   /// not need this flag.
   bool UseRelativeIDs;
 
-  static const std::error_category &BitcodeErrorCategory();
-
 public:
-  enum ErrorType {
-    BitcodeStreamInvalidSize,
-    ConflictingMETADATA_KINDRecords,
-    CouldNotFindFunctionInStream,
-    ExpectedConstant,
-    InsufficientFunctionProtos,
-    InvalidBitcodeSignature,
-    InvalidBitcodeWrapperHeader,
-    InvalidConstantReference,
-    InvalidID, // A read identifier is not found in the table it should be in.
-    InvalidInstructionWithNoBB,
-    InvalidRecord, // A read record doesn't have the expected size or structure
-    InvalidTypeForValue, // Type read OK, but is invalid for its use
-    InvalidTYPETable,
-    InvalidType, // We were unable to read a type
-    MalformedBlock, // We are unable to advance in the stream.
-    MalformedGlobalInitializerSet,
-    InvalidMultipleBlocks, // We found multiple blocks of a kind that should
-                           // have only one
-    NeverResolvedValueFoundInFunction,
-    InvalidValue // Invalid version, inst number, attr number, etc
-  };
-
-  std::error_code Error(ErrorType E) {
-    return std::error_code(E, BitcodeErrorCategory());
-  }
+  std::error_code Error(BitcodeError E) { return make_error_code(E); }
 
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
       : Context(C), TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
