@@ -103,7 +103,9 @@ private:
   isl_map *AccessRelation;
   enum AccessType Type;
 
-  const Value *BaseAddr;
+  /// @brief The base address (e.g., A for A[i+j]).
+  Value *BaseAddr;
+
   std::string BaseName;
   isl_basic_map *createBasicAccessMap(ScopStmt *Statement);
   ScopStmt *Statement;
@@ -178,7 +180,8 @@ public:
   /// @brief Get an isl string representing this access function.
   std::string getAccessRelationStr() const;
 
-  const Value *getBaseAddr() const { return BaseAddr; }
+  /// @brief Get the base address of this access (e.g. A for A[i+j]).
+  Value *getBaseAddr() const { return BaseAddr; }
 
   const std::string &getBaseName() const { return BaseName; }
 

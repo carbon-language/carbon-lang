@@ -35,7 +35,7 @@ extern bool PollyDelinearize;
 /// @brief A memory access described by a SCEV expression and the access type.
 class IRAccess {
 public:
-  const Value *BaseAddress;
+  Value *BaseAddress;
 
   const SCEV *Offset;
 
@@ -53,7 +53,7 @@ private:
 public:
   SmallVector<const SCEV *, 4> Subscripts, Sizes;
 
-  explicit IRAccess(TypeKind Type, const Value *BaseAddress, const SCEV *Offset,
+  explicit IRAccess(TypeKind Type, Value *BaseAddress, const SCEV *Offset,
                     unsigned elemBytes, bool Affine,
                     SmallVector<const SCEV *, 4> Subscripts,
                     SmallVector<const SCEV *, 4> Sizes)
@@ -62,7 +62,7 @@ public:
 
   enum TypeKind getType() const { return Type; }
 
-  const Value *getBase() const { return BaseAddress; }
+  Value *getBase() const { return BaseAddress; }
 
   const SCEV *getOffset() const { return Offset; }
 

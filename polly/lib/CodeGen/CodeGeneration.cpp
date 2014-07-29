@@ -667,7 +667,7 @@ SetVector<Value *> ClastStmtCodeGen::getGPUValues(unsigned &OutputBytes) {
   // Record the memory reference base addresses.
   for (ScopStmt *Stmt : *S) {
     for (MemoryAccess *MA : *Stmt) {
-      Value *BaseAddr = const_cast<Value *>(MA->getBaseAddr());
+      Value *BaseAddr = MA->getBaseAddr();
       Values.insert((BaseAddr));
 
       // FIXME: we assume that there is one and only one array to be written

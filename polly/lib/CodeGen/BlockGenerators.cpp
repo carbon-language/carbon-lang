@@ -307,7 +307,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
     NewPointer =
         getNewValue(Pointer, BBMap, GlobalMap, LTS, getLoopForInst(Inst));
   } else {
-    Value *BaseAddress = const_cast<Value *>(Access.getBaseAddr());
+    Value *BaseAddress = Access.getBaseAddr();
     NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, BBMap,
                                      GlobalMap, LTS, getLoopForInst(Inst));
   }
