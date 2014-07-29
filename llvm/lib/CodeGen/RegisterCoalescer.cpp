@@ -751,7 +751,7 @@ bool RegisterCoalescer::reMaterializeTrivialDef(CoalescerPair &CP,
     IsDefCopy = true;
     return false;
   }
-  if (!DefMI->isAsCheapAsAMove())
+  if (!TII->isAsCheapAsAMove(DefMI))
     return false;
   if (!TII->isTriviallyReMaterializable(DefMI, AA))
     return false;

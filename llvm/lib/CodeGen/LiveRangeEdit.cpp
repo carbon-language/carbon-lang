@@ -135,7 +135,7 @@ bool LiveRangeEdit::canRematerializeAt(Remat &RM,
   }
 
   // If only cheap remats were requested, bail out early.
-  if (cheapAsAMove && !RM.OrigMI->isAsCheapAsAMove())
+  if (cheapAsAMove && !TII.isAsCheapAsAMove(RM.OrigMI))
     return false;
 
   // Verify that all used registers are available with the same values.

@@ -614,7 +614,6 @@ public:
   /// are not marking copies from and to the same register class with this flag.
   bool isAsCheapAsAMove(QueryType Type = AllInBundle) const {
     // Only returns true for a bundle if all bundled instructions are cheap.
-    // FIXME: This probably requires a target hook.
     return hasProperty(MCID::CheapAsAMove, Type);
   }
 

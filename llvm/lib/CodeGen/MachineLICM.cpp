@@ -1039,7 +1039,7 @@ bool MachineLICM::HasHighOperandLatency(MachineInstr &MI,
 /// IsCheapInstruction - Return true if the instruction is marked "cheap" or
 /// the operand latency between its def and a use is one or less.
 bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
-  if (MI.isAsCheapAsAMove() || MI.isCopyLike())
+  if (TII->isAsCheapAsAMove(&MI) || MI.isCopyLike())
     return true;
   if (!InstrItins || InstrItins->isEmpty())
     return false;

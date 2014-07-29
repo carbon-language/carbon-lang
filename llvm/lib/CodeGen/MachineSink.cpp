@@ -292,7 +292,7 @@ bool MachineSinking::isWorthBreakingCriticalEdge(MachineInstr *MI,
   if (!CEBCandidates.insert(std::make_pair(From, To)))
     return true;
 
-  if (!MI->isCopy() && !MI->isAsCheapAsAMove())
+  if (!MI->isCopy() && !TII->isAsCheapAsAMove(MI))
     return true;
 
   // MI is cheap, we probably don't want to break the critical edge for it.

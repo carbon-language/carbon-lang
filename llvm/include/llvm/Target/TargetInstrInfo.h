@@ -200,6 +200,15 @@ public:
                                  unsigned &Size, unsigned &Offset,
                                  const TargetMachine *TM) const;
 
+  /// isAsCheapAsAMove - Return true if the instruction is as cheap as a move
+  /// instruction.
+  ///
+  /// Targets for different archs need to override this, and different
+  /// micro-architectures can also be finely tuned inside.
+  virtual bool isAsCheapAsAMove(const MachineInstr *MI) const {
+    return MI->isAsCheapAsAMove();
+  }
+
   /// reMaterialize - Re-issue the specified 'original' instruction at the
   /// specific location targeting a new destination register.
   /// The register in Orig->getOperand(0).getReg() will be substituted by

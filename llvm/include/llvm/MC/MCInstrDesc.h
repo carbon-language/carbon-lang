@@ -451,9 +451,12 @@ public:
   }
 
   /// isRematerializable - Returns true if this instruction is a candidate for
-  /// remat.  This flag is deprecated, please don't use it anymore.  If this
-  /// flag is set, the isReallyTriviallyReMaterializable() method is called to
-  /// verify the instruction is really rematable.
+  /// remat. This flag is only used in TargetInstrInfo method
+  /// isTriviallyRematerializable.
+  ///
+  /// If this flag is set, the isReallyTriviallyReMaterializable()
+  /// or isReallyTriviallyReMaterializableGeneric methods are called to verify
+  /// the instruction is really rematable.
   bool isRematerializable() const {
     return Flags & (1 << MCID::Rematerializable);
   }
@@ -464,6 +467,9 @@ public:
   /// where we would like to remat or hoist the instruction, but not if it costs
   /// more than moving the instruction into the appropriate register. Note, we
   /// are not marking copies from and to the same register class with this flag.
+  ///
+  /// This method could be called by interface TargetInstrInfo::isAsCheapAsAMove
+  /// for different subtargets.
   bool isAsCheapAsAMove() const {
     return Flags & (1 << MCID::CheapAsAMove);
   }

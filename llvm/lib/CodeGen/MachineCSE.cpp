@@ -380,7 +380,7 @@ bool MachineCSE::isProfitableToCSE(unsigned CSReg, unsigned Reg,
   // Heuristics #1: Don't CSE "cheap" computation if the def is not local or in
   // an immediate predecessor. We don't want to increase register pressure and
   // end up causing other computation to be spilled.
-  if (MI->isAsCheapAsAMove()) {
+  if (TII->isAsCheapAsAMove(MI)) {
     MachineBasicBlock *CSBB = CSMI->getParent();
     MachineBasicBlock *BB = MI->getParent();
     if (CSBB != BB && !CSBB->isSuccessor(BB))
