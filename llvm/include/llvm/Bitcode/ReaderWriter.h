@@ -142,7 +142,6 @@ namespace llvm {
 
   const std::error_category &BitcodeErrorCategory();
   enum class BitcodeError {
-    BitcodeStreamInvalidSize,
     ConflictingMETADATA_KINDRecords,
     CouldNotFindFunctionInStream,
     ExpectedConstant,

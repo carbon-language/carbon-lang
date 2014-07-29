@@ -3350,12 +3350,8 @@ std::error_code BitcodeReader::InitStreamFromBuffer() {
   const unsigned char *BufPtr = (const unsigned char*)Buffer->getBufferStart();
   const unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
 
-  if (Buffer->getBufferSize() & 3) {
-    if (!isRawBitcode(BufPtr, BufEnd) && !isBitcodeWrapper(BufPtr, BufEnd))
-      return Error(BitcodeError::InvalidBitcodeSignature);
-    else
-      return Error(BitcodeError::BitcodeStreamInvalidSize);
-  }
+  if (Buffer->getBufferSize() & 3)
+    return Error(BitcodeError::InvalidBitcodeSignature);
 
   // If we have a wrapper header, parse it and ignore the non-bc file contents.
   // The magic number is 0x0B17C0DE stored in little endian.
@@ -3378,7 +3374,7 @@ std::error_code BitcodeReader::InitLazyStream() {
 
   unsigned char buf[16];
   if (Bytes->readBytes(0, 16, buf) == -1)
-    return Error(BitcodeError::BitcodeStreamInvalidSize);
+    return Error(BitcodeError::InvalidBitcodeSignature);
 
   if (!isBitcode(buf, buf + 16))
     return Error(BitcodeError::InvalidBitcodeSignature);
@@ -3401,8 +3397,6 @@ class BitcodeErrorCategoryType : public std::error_category {
   std::string message(int IE) const override {
     BitcodeError E = static_cast<BitcodeError>(IE);
     switch (E) {
-    case BitcodeError::BitcodeStreamInvalidSize:
-      return "Bitcode stream length should be >= 16 bytes and a multiple of 4";
     case BitcodeError::ConflictingMETADATA_KINDRecords:
       return "Conflicting METADATA_KIND records";
     case BitcodeError::CouldNotFindFunctionInStream:
