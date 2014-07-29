@@ -501,6 +501,7 @@ class DS <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
     InstSI <outs, ins, asm, pattern> , DSe<op> {
 
   let LGKM_CNT = 1;
+  let UseNamedOperandTable = 1;
 }
 
 class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
