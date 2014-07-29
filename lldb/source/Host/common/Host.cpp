@@ -379,6 +379,17 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
                     cpusubtype32 = CPU_SUBTYPE_ARM_V7S;
 #endif
                 g_host_arch_32.SetArchitecture (eArchTypeMachO, cputype & ~(CPU_ARCH_MASK), cpusubtype32);
+                
+                if (cputype == CPU_TYPE_ARM || cputype == CPU_TYPE_ARM64)
+                {
+                    g_host_arch_32.GetTriple().setOS(llvm::Triple::IOS);
+                    g_host_arch_64.GetTriple().setOS(llvm::Triple::IOS);
+                }
+                else
+                {
+                    g_host_arch_32.GetTriple().setOS(llvm::Triple::MacOSX);
+                    g_host_arch_64.GetTriple().setOS(llvm::Triple::MacOSX);
+                }
             }
             else
             {

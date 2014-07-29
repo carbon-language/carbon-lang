@@ -92,6 +92,11 @@ TargetList::CreateTarget (Debugger &debugger,
         ModuleSpecList module_specs;
         ModuleSpec module_spec;
         module_spec.GetFileSpec().SetFile(user_exe_path, true);
+        
+        // Resolve the executable in case we are given a path to a application bundle
+        // like a .app bundle on MacOSX
+        Host::ResolveExecutableInBundle (module_spec.GetFileSpec());
+
         lldb::offset_t file_offset = 0;
         lldb::offset_t file_size = 0;
         const size_t num_specs = ObjectFile::GetModuleSpecifications (module_spec.GetFileSpec(), file_offset, file_size, module_specs);
