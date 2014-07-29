@@ -24,7 +24,10 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   field bits<1> VOP3 = 0;
   field bits<1> VOPC = 0;
   field bits<1> SALU = 0;
+  field bits<1> MUBUF = 0;
+  field bits<1> MTBUF = 0;
 
+  // These need to be kept in sync with the enum in SIInstrFlags.
   let TSFlags{0} = VM_CNT;
   let TSFlags{1} = EXP_CNT;
   let TSFlags{2} = LGKM_CNT;
@@ -35,6 +38,8 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
   let TSFlags{7} = VOP3;
   let TSFlags{8} = VOPC;
   let TSFlags{9} = SALU;
+  let TSFlags{10} = MUBUF;
+  let TSFlags{11} = MTBUF;
 }
 
 class Enc32 {
@@ -503,6 +508,7 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let VM_CNT = 1;
   let EXP_CNT = 1;
+  let MUBUF = 1;
 
   let neverHasSideEffects = 1;
   let UseNamedOperandTable = 1;
@@ -513,6 +519,7 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
 
   let VM_CNT = 1;
   let EXP_CNT = 1;
+  let MTBUF = 1;
 
   let neverHasSideEffects = 1;
 }

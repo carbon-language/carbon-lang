@@ -483,6 +483,14 @@ bool SIInstrInfo::isSMRD(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::SMRD;
 }
 
+bool SIInstrInfo::isMUBUF(uint16_t Opcode) const {
+  return get(Opcode).TSFlags & SIInstrFlags::MUBUF;
+}
+
+bool SIInstrInfo::isMTBUF(uint16_t Opcode) const {
+  return get(Opcode).TSFlags & SIInstrFlags::MTBUF;
+}
+
 bool SIInstrInfo::isVOP1(uint16_t Opcode) const {
   return get(Opcode).TSFlags & SIInstrFlags::VOP1;
 }

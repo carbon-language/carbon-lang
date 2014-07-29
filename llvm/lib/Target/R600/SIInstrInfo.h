@@ -98,6 +98,8 @@ public:
   bool isDS(uint16_t Opcode) const;
   bool isMIMG(uint16_t Opcode) const;
   bool isSMRD(uint16_t Opcode) const;
+  bool isMUBUF(uint16_t Opcode) const;
+  bool isMTBUF(uint16_t Opcode) const;
   bool isVOP1(uint16_t Opcode) const;
   bool isVOP2(uint16_t Opcode) const;
   bool isVOP3(uint16_t Opcode) const;

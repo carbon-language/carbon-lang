@@ -12,6 +12,7 @@
 #define SIDEFINES_H_
 
 namespace SIInstrFlags {
+// This needs to be kept in sync with the field bits in InstSI.
 enum {
   MIMG = 1 << 3,
   SMRD = 1 << 4,
@@ -19,7 +20,9 @@ enum {
   VOP2 = 1 << 6,
   VOP3 = 1 << 7,
   VOPC = 1 << 8,
-  SALU = 1 << 9
+  SALU = 1 << 9,
+  MUBUF = 1 << 10,
+  MTBUF = 1 << 11
 };
 }
 
