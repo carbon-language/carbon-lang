@@ -48,6 +48,13 @@ public:
     std::memcpy(this, &X, sizeof(UseListShuffleVector));
     X.Size = 0;
   }
+  UseListShuffleVector(const UseListShuffleVector &X) {
+    std::memcpy(this, &X, sizeof(UseListShuffleVector));
+    if (!isSmall()) {
+      Storage.Ptr = new unsigned[Size];
+      std::memcpy(Storage.Ptr, X.Storage.Ptr, Size * sizeof(*Storage.Ptr));
+    }
+  }
   explicit UseListShuffleVector(size_t Size) : Size(Size) {
     if (!isSmall())
       Storage.Ptr = new unsigned[Size];
