@@ -239,22 +239,12 @@ astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
 static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
                                              __isl_keep isl_ast_build *Build,
                                              void *User) {
-  IslAstUserPayload *Info = nullptr;
-  isl_id *Id = isl_ast_node_get_annotation(Node);
+  assert(!isl_ast_node_get_annotation(Node) && "Node already annotated");
+  IslAstUserPayload *NodeInfo = new IslAstUserPayload();
+  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
+  Id = isl_id_set_free_user(Id, freeIslAstUserPayload);
 
-  if (Id)
-    Info = (IslAstUserPayload *)isl_id_get_user(Id);
-
-  if (!Info) {
-    // Allocate annotations once: parallel for detection might have already
-    // allocated the annotations for this node.
-    Info = new IslAstUserPayload();
-    Id = isl_id_alloc(isl_ast_node_get_ctx(Node), nullptr, Info);
-    Id = isl_id_set_free_user(Id, freeIslAstUserPayload);
-  }
-
-  if (!Info->Build)
-    Info->Build = isl_ast_build_copy(Build);
+  NodeInfo->Build = isl_ast_build_copy(Build);
 
   return isl_ast_node_set_annotation(Node, Id);
 }
