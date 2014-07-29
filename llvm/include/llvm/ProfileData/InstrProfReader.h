@@ -275,8 +275,7 @@ private:
     LLVM_DELETED_FUNCTION;
 public:
   IndexedInstrProfReader(std::unique_ptr<MemoryBuffer> DataBuffer)
-      : DataBuffer(std::move(DataBuffer)), Index(nullptr),
-        RecordIterator(InstrProfReaderIndex::data_iterator()) {}
+      : DataBuffer(std::move(DataBuffer)), Index(nullptr) {}
 
   /// Return true if the given buffer is in an indexed instrprof format.
   static bool hasFormat(const MemoryBuffer &DataBuffer);
