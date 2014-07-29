@@ -142,11 +142,11 @@ private:
   void assumeNoOutOfBound(const IRAccess &Access);
 
 public:
-  // @brief Create a memory access from an access in LLVM-IR.
-  //
-  // @param Access     The memory access.
-  // @param Statement  The statement that contains the access.
-  // @param SE         The ScalarEvolution analysis.
+  /// @brief Create a memory access from an access in LLVM-IR.
+  ///
+  /// @param Access     The memory access.
+  /// @param Statement  The statement that contains the access.
+  /// @param SE         The ScalarEvolution analysis.
   MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                ScopStmt *Statement);
 
@@ -239,7 +239,7 @@ public:
 llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
                               MemoryAccess::ReductionType RT);
 
-//===----------------------------------------------------------------------===//
+///===----------------------------------------------------------------------===//
 /// @brief Statement of the Scop
 ///
 /// A Scop statement represents an instruction in the Scop.
@@ -460,7 +460,7 @@ static inline raw_ostream &operator<<(raw_ostream &O, const ScopStmt &S) {
   return O;
 }
 
-//===----------------------------------------------------------------------===//
+///===----------------------------------------------------------------------===//
 /// @brief Static Control Part
 ///
 /// A Scop is the polyhedral representation of a control flow region detected
@@ -722,7 +722,7 @@ static inline raw_ostream &operator<<(raw_ostream &O, const Scop &scop) {
   return O;
 }
 
-//===---------------------------------------------------------------------===//
+///===---------------------------------------------------------------------===//
 /// @brief Build the Polly IR (Scop and ScopStmt) on a Region.
 ///
 class ScopInfo : public RegionPass {
