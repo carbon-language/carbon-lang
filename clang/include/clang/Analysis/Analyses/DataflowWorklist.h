@@ -7,7 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// DataflowWorklist is used in LiveVariables and UninitializedValues analyses
+// DataflowWorklist keeps track of blocks for dataflow analysis. It maintains a
+// vector of blocks for priority processing, and falls back upon a reverse
+// post-order iterator. It supports both forward (used in UninitializedValues)
+// and reverse (used in LiveVariables) analyses.
 //
 //===----------------------------------------------------------------------===//
 
