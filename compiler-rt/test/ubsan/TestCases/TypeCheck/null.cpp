@@ -1,6 +1,6 @@
 // RUN: %clangxx -fsanitize=null %s -O3 -o %t
 // RUN: %run %t l 2>&1 | FileCheck %s --check-prefix=CHECK-LOAD
-// RUN: %run %t s 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
+// RUN: not --crash %run %t s 2>&1 | FileCheck %s --check-prefix=CHECK-STORE
 // RUN: %run %t r 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
 // RUN: %run %t m 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %run %t f 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN

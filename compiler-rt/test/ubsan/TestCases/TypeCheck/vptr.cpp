@@ -31,7 +31,10 @@ struct T : S {
 
 struct U : S, T { virtual int v() { return 2; } };
 
-T *p = 0;  // Make p global so that lsan does not complain.
+// Make p global so that lsan does not complain.
+T *p = 0;
+
+int access_p(T *p, char type);
 
 int main(int, char **argv) {
   T t;
@@ -70,7 +73,12 @@ int main(int, char **argv) {
     break;
   }
 
-  switch (argv[1][0]) {
+  access_p(p, argv[1][0]);
+  return 0;
+}
+
+int access_p(T *p, char type) {
+  switch (type) {
   case 'r':
     // Binding a reference to storage of appropriate size and alignment is OK.
     {T &r = *p;}
@@ -82,7 +90,7 @@ int main(int, char **argv) {
     // CHECK-MEMBER-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-MEMBER-NEXT: {{^              vptr for}} [[DYN_TYPE]]
-    // CHECK-MEMBER-NEXT: #0 {{.*}} in main {{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-MEMBER-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
     return p->b;
 
     // CHECK-NULL-MEMBER: vptr.cpp:[[@LINE-2]]:15: runtime error: member access within address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
@@ -90,7 +98,7 @@ int main(int, char **argv) {
     // CHECK-NULL-MEMBER-NEXT: {{^  ?.. .. .. ..  ?00 00 00 00  ?00 00 00 00  ?}}
     // CHECK-NULL-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-NULL-MEMBER-NEXT: {{^              invalid vptr}}
-    // CHECK-NULL-MEMBER-NEXT: #0 {{.*}} in main {{.*}}vptr.cpp:[[@LINE-7]]
+    // CHECK-NULL-MEMBER-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE-7]]
 
   case 'f':
     // CHECK-MEMFUN: vptr.cpp:[[@LINE+6]]:12: runtime error: member call on address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
@@ -107,7 +115,7 @@ int main(int, char **argv) {
     // CHECK-OFFSET-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-OFFSET-NEXT: {{^              \^                        (                         ~~~~~~~~~~~~)?~~~~~~~~~~~ *$}}
     // CHECK-OFFSET-NEXT: {{^                                       (                         )?vptr for}} 'T' base class of [[DYN_TYPE]]
-    // CHECK-OFFSET-NEXT: #0 {{.*}} in main {{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-OFFSET-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
     return reinterpret_cast<U*>(p)->v() - 2;
 
   case 'c':
@@ -116,7 +124,7 @@ int main(int, char **argv) {
     // CHECK-DOWNCAST-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-DOWNCAST-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-DOWNCAST-NEXT: {{^              vptr for}} [[DYN_TYPE]]
-    // CHECK-DOWNCAST-NEXT: #0 {{.*}} in main {{.*}}vptr.cpp:[[@LINE+1]]
+    // CHECK-DOWNCAST-NEXT: #0 {{.*}} in access_p{{.*}}vptr.cpp:[[@LINE+1]]
     static_cast<T*>(reinterpret_cast<S*>(p));
     return 0;
   }

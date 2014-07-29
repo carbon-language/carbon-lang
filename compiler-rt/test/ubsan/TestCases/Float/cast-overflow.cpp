@@ -1,3 +1,4 @@
+// FIXME: run this (and other) UBSan tests in both 32- and 64-bit modes (?).
 // RUN: %clangxx -fsanitize=float-cast-overflow %s -o %t
 // RUN: %run %t _
 // RUN: %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
@@ -8,22 +9,8 @@
 // RUN: %run %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
 // RUN: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
 // FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
-// RUN: %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
-// RUN: %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
-
-// FIXME: run all ubsan tests in 32- and 64-bit modes (?).
-// FIXME: %clangxx -fsanitize=float-cast-overflow -m32 %s -o %t
-// FIXME: %run %t _
-// FIXME: %run %t 0 2>&1 | FileCheck %s --check-prefix=CHECK-0
-// FIXME: %run %t 1 2>&1 | FileCheck %s --check-prefix=CHECK-1
-// FIXME: %run %t 2 2>&1 | FileCheck %s --check-prefix=CHECK-2
-// FIXME: %run %t 3 2>&1 | FileCheck %s --check-prefix=CHECK-3
-// FIXME: %run %t 4 2>&1 | FileCheck %s --check-prefix=CHECK-4
-// FIXME: %run %t 5 2>&1 | FileCheck %s --check-prefix=CHECK-5
-// FIXME: %run %t 6 2>&1 | FileCheck %s --check-prefix=CHECK-6
-// FIXME: %run %t 7 2>&1 | FileCheck %s --check-prefix=CHECK-7
-// FIXME: %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
-// FIXME: %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
+// RUN: not %run %t 8 2>&1 | FileCheck %s --check-prefix=CHECK-8
+// RUN: not %run %t 9 2>&1 | FileCheck %s --check-prefix=CHECK-9
 
 // This test assumes float and double are IEEE-754 single- and double-precision.
 
