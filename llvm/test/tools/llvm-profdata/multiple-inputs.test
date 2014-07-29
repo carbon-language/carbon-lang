@@ -1,3 +1,5 @@
+Some very basic tests for the multiple input cases.
+
 RUN: llvm-profdata merge %p/Inputs/foo3-1.profdata %p/Inputs/foo3-2.profdata -o %t
 RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO3
 RUN: llvm-profdata merge %p/Inputs/foo3-2.profdata %p/Inputs/foo3-1.profdata -o %t

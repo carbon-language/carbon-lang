@@ -83,8 +83,8 @@ void InstrProfIterator::Increment() {
 }
 
 std::error_code TextInstrProfReader::readNextRecord(InstrProfRecord &Record) {
-  // Skip empty lines.
-  while (!Line.is_at_end() && Line->empty())
+  // Skip empty lines and comments.
+  while (!Line.is_at_end() && (Line->empty() || Line->startswith("#")))
     ++Line;
   // If we hit EOF while looking for a name, we're done.
   if (Line.is_at_end())
