@@ -309,6 +309,10 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(newAccessRelation);
 }
 
+isl_id *MemoryAccess::getArrayId() const {
+  return isl_map_get_tuple_id(AccessRelation, isl_dim_out);
+}
+
 isl_map *MemoryAccess::getAccessRelation() const {
   return isl_map_copy(AccessRelation);
 }
@@ -327,7 +331,6 @@ isl_map *MemoryAccess::getNewAccessRelation() const {
 
 isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
   isl_space *Space = isl_space_set_alloc(Statement->getIslCtx(), 0, 1);
-  Space = isl_space_set_tuple_name(Space, isl_dim_set, getBaseName().c_str());
   Space = isl_space_align_params(Space, Statement->getDomainSpace());
 
   return isl_basic_map_from_domain_and_range(
@@ -399,8 +402,10 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
                            ScopStmt *Statement)
     : Statement(Statement), Inst(AccInst), newAccessRelation(nullptr) {
 
+  isl_ctx *Ctx = Statement->getIslCtx();
   BaseAddr = Access.getBase();
   BaseName = getIslCompatibleName("MemRef_", getBaseAddr(), "");
+  isl_id *BaseAddrId = isl_id_alloc(Ctx, getBaseName().c_str(), nullptr);
 
   if (!Access.isAffine()) {
     // We overapproximate non-affine accesses with a possible access to the
@@ -408,14 +413,15 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
     // access must or may happen. However, for write accesses it is important to
     // differentiate between writes that must happen and writes that may happen.
     AccessRelation = isl_map_from_basic_map(createBasicAccessMap(Statement));
+    AccessRelation =
+        isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
     Type = Access.isRead() ? READ : MAY_WRITE;
     return;
   }
 
   Type = Access.isRead() ? READ : MUST_WRITE;
 
-  isl_space *Space = isl_space_alloc(Statement->getIslCtx(), 0,
-                                     Statement->getNumIterators(), 0);
+  isl_space *Space = isl_space_alloc(Ctx, 0, Statement->getNumIterators(), 0);
   AccessRelation = isl_map_universe(Space);
 
   for (int i = 0, Size = Access.Subscripts.size(); i < Size; ++i) {
@@ -431,9 +437,7 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
       // two subsequent values of 'i' index two values that are stored next to
       // each other in memory. By this division we make this characteristic
       // obvious again.
-      isl_val *v;
-      v = isl_val_int_from_si(isl_pw_aff_get_ctx(Affine),
-                              Access.getElemSizeInBytes());
+      isl_val *v = isl_val_int_from_si(Ctx, Access.getElemSizeInBytes());
       Affine = isl_pw_aff_scale_down_val(Affine, v);
     }
 
@@ -445,10 +449,11 @@ MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
   Space = Statement->getDomainSpace();
   AccessRelation = isl_map_set_tuple_id(
       AccessRelation, isl_dim_in, isl_space_get_tuple_id(Space, isl_dim_set));
-  isl_space_free(Space);
-  AccessRelation = isl_map_set_tuple_name(AccessRelation, isl_dim_out,
-                                          getBaseName().c_str());
+  AccessRelation =
+      isl_map_set_tuple_id(AccessRelation, isl_dim_out, BaseAddrId);
+
   assumeNoOutOfBound(Access);
+  isl_space_free(Space);
 }
 
 void MemoryAccess::realignParams() {

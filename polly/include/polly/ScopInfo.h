@@ -183,6 +183,9 @@ public:
   /// @brief Get the base address of this access (e.g. A for A[i+j]).
   Value *getBaseAddr() const { return BaseAddr; }
 
+  /// @brief Get the base array isl_id for this access.
+  __isl_give isl_id *getArrayId() const;
+
   const std::string &getBaseName() const { return BaseName; }
 
   const Instruction *getAccessInstruction() const { return Inst; }
