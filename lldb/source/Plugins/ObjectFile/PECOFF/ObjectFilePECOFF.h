@@ -42,7 +42,7 @@ public:
         MachineSh5 = 0x1a8,
         MachineThumb = 0x1c2,
         MachineWcemIpsv2 = 0x169
-    };
+    } MachineType;
     
     //------------------------------------------------------------------
     // Static Functions
