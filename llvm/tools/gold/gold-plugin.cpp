@@ -291,6 +291,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   if (!LTOModule::isBitcodeFile(view, file->filesize))
     return LDPS_OK;
 
+  *claimed = 1;
+
   std::string Error;
   LTOModule *M =
       LTOModule::createFromBuffer(view, file->filesize, TargetOpts, Error);
@@ -298,10 +300,9 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
     (*message)(LDPL_ERROR,
                "LLVM gold plugin has failed to create LTO module: %s",
                Error.c_str());
-    return LDPS_OK;
+    return LDPS_ERR;
   }
 
-  *claimed = 1;
   Modules.resize(Modules.size() + 1);
   claimed_file &cf = Modules.back();
 
