@@ -54,7 +54,7 @@ protected:
 
   /// Extract the addend encoded in the instruction.
   int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                       uint32_t RelType) const;
+                       MachO::RelocationInfoType RelType) const;
 
   /// Construct a RelocationValueRef representing the relocation target.
   /// For Symbols in known sections, this will return a RelocationValueRef
@@ -138,7 +138,8 @@ protected:
     RI->getOffset(Offset);
     uint8_t *LocalAddress = Section.Address + Offset;
     unsigned NumBytes = 1 << Size;
-    uint32_t RelType = Obj.getAnyRelocationType(RelInfo);
+    MachO::RelocationInfoType RelType =
+      static_cast<MachO::RelocationInfoType>(Obj.getAnyRelocationType(RelInfo));
     int64_t Addend = impl().decodeAddend(LocalAddress, NumBytes, RelType);
 
     return RelocationEntry(SectionID, Offset, RelType, Addend, IsPCRel, Size);

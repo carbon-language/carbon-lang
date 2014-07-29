@@ -28,7 +28,7 @@ public:
 
   /// Extract the addend encoded in the instruction / memory location.
   int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                       uint32_t RelType) const {
+                       MachO::RelocationInfoType RelType) const {
     int64_t Addend = 0;
     // Verify that the relocation has the correct size and alignment.
     switch (RelType) {
@@ -120,7 +120,7 @@ public:
   }
 
   /// Extract the addend encoded in the instruction.
-  void encodeAddend(uint8_t *LocalAddress, uint32_t RelType,
+  void encodeAddend(uint8_t *LocalAddress, MachO::RelocationInfoType RelType,
                     int64_t Addend) const {
     // Verify that the relocation has the correct alignment.
     switch (RelType) {
@@ -285,8 +285,10 @@ public:
 
     const SectionEntry &Section = Sections[RE.SectionID];
     uint8_t *LocalAddress = Section.Address + RE.Offset;
+    MachO::RelocationInfoType RelType =
+      static_cast<MachO::RelocationInfoType>(RE.RelType);
 
-    switch (RE.RelType) {
+    switch (RelType) {
     default:
       llvm_unreachable("Invalid relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED: {
@@ -304,7 +306,7 @@ public:
       // Check if branch is in range.
       uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
       int64_t PCRelVal = Value - FinalAddress + RE.Addend;
-      encodeAddend(LocalAddress, RE.RelType, PCRelVal);
+      encodeAddend(LocalAddress, RelType, PCRelVal);
       break;
     }
     case MachO::ARM64_RELOC_GOT_LOAD_PAGE21:
@@ -314,7 +316,7 @@ public:
       uint64_t FinalAddress = Section.LoadAddress + RE.Offset;
       int64_t PCRelVal =
         ((Value + RE.Addend) & (-4096)) - (FinalAddress & (-4096));
-      encodeAddend(LocalAddress, RE.RelType, PCRelVal);
+      encodeAddend(LocalAddress, RelType, PCRelVal);
       break;
     }
     case MachO::ARM64_RELOC_GOT_LOAD_PAGEOFF12:
@@ -324,7 +326,7 @@ public:
       Value += RE.Addend;
       // Mask out the page address and only use the lower 12 bits.
       Value &= 0xFFF;
-      encodeAddend(LocalAddress, RE.RelType, Value);
+      encodeAddend(LocalAddress, RelType, Value);
       break;
     }
     case MachO::ARM64_RELOC_SUBTRACTOR:
