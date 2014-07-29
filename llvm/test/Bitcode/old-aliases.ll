@@ -1,4 +1,5 @@
 ; RUN: llvm-dis < %s.bc | FileCheck %s
+; RUN: llvm-uselistorder < %s.bc -preserve-bc-use-list-order -num-shuffles=5
 
 ; old-aliases.bc consist of this file assembled with an old llvm-as (3.5 trunk)
 ; from when aliases contained a ConstantExpr.
