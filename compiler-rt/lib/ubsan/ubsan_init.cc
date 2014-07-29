@@ -15,7 +15,6 @@
 #include "ubsan_flags.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
-#include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
@@ -38,11 +37,7 @@ void __ubsan::InitIfNecessary() {
     // common flags. It means, that we are not allowed to *use* common flags
     // in this function.
     SanitizerToolName = "UndefinedBehaviorSanitizer";
-    CommonFlags *cf = common_flags();
-    SetCommonFlagsDefaults(cf);
-    cf->print_summary = false;
-    // Common flags may only be modified via UBSAN_OPTIONS.
-    ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
+    InitializeCommonFlags();
     Symbolizer::GetOrInit();
   }
   // Initialize UBSan-specific flags.

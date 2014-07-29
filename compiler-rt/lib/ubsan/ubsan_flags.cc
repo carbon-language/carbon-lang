@@ -17,18 +17,29 @@
 
 namespace __ubsan {
 
+void InitializeCommonFlags() {
+  CommonFlags *cf = common_flags();
+  SetCommonFlagsDefaults(cf);
+  cf->print_summary = false;
+  // Common flags may be overriden in UBSAN_OPTIONS.
+  ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
+}
+
 Flags ubsan_flags;
+
+static void ParseFlagsFromString(Flags *f, const char *str) {
+  if (!str)
+    return;
+  ParseFlag(str, &f->print_stacktrace, "print_stacktrace",
+            "Include full stacktrace into an error report");
+}
 
 void InitializeFlags() {
   Flags *f = flags();
   // Default values.
   f->print_stacktrace = false;
-
-  const char *options = GetEnv("UBSAN_OPTIONS");
-  if (options) {
-    ParseFlag(options, &f->print_stacktrace, "print_stacktrace",
-              "Include full stacktrace into an error report");
-  }
+  // Override from environment variable.
+  ParseFlagsFromString(f, GetEnv("UBSAN_OPTIONS"));
 }
 
 }  // namespace __ubsan
