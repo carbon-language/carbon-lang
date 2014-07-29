@@ -51,15 +51,17 @@ class UseListShuffleVector {
     X.Size = 0;
   }
 
+  UseListShuffleVector(const UseListShuffleVector &X) LLVM_DELETED_FUNCTION;
+  UseListShuffleVector &
+  operator=(const UseListShuffleVector &X) LLVM_DELETED_FUNCTION;
+
 public:
   UseListShuffleVector() : Size(0) {}
   UseListShuffleVector(UseListShuffleVector &&X) { moveUnchecked(X); }
-  UseListShuffleVector(const UseListShuffleVector &X) {
-    std::memcpy(this, &X, sizeof(UseListShuffleVector));
-    if (!isSmall()) {
-      Storage.Ptr = new unsigned[Size];
-      std::memcpy(Storage.Ptr, X.Storage.Ptr, Size * sizeof(*Storage.Ptr));
-    }
+  UseListShuffleVector &operator=(UseListShuffleVector &&X) {
+    destroy();
+    moveUnchecked(X);
+    return *this;
   }
   explicit UseListShuffleVector(size_t Size) : Size(Size) {
     if (!isSmall())
