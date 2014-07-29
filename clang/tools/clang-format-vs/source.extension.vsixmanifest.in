@@ -6,6 +6,8 @@
     <Version>@CLANG_FORMAT_VS_VERSION@</Version>
     <Description xml:space="preserve">A tool to format C/C++/Obj-C code.</Description>
     <Locale>1033</Locale>
+    <MoreInfoUrl>http://clang.llvm.org/docs/ClangFormat.html</MoreInfoUrl>
+    <License>license.txt</License>
     <InstalledByMsi>false</InstalledByMsi>
     <SupportedProducts>
       <VisualStudio Version="10.0">

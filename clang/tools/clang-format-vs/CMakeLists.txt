@@ -6,6 +6,11 @@ if (BUILD_CLANG_FORMAT_VS_PLUGIN)
       "${CMAKE_CURRENT_SOURCE_DIR}/ClangFormat/clang-format.exe"
       DEPENDS clang-format)
 
+  add_custom_target(clang_format_license
+      ${CMAKE_COMMAND} -E copy_if_different
+      "${CLANG_SOURCE_DIR}/LICENSE.TXT"
+      "${CMAKE_CURRENT_SOURCE_DIR}/ClangFormat/license.txt")
+
   if (NOT CLANG_FORMAT_VS_VERSION)
     set(CLANG_FORMAT_VS_VERSION "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
   endif()
@@ -19,5 +24,5 @@ if (BUILD_CLANG_FORMAT_VS_PLUGIN)
       COMMAND ${CMAKE_COMMAND} -E copy_if_different
       "${CMAKE_CURRENT_SOURCE_DIR}/ClangFormat/bin/Release/ClangFormat.vsix"
       "${LLVM_TOOLS_BINARY_DIR}/${CMAKE_CFG_INTDIR}/ClangFormat.vsix"
-      DEPENDS clang_format_exe_for_vsix)
+      DEPENDS clang_format_exe_for_vsix clang_format_license)
 endif()
