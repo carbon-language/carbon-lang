@@ -457,6 +457,9 @@ protected:
     PacketResult
     Handle_QRestoreRegisterState (StringExtractorGDBRemote &packet);
 
+    PacketResult
+    Handle_vAttach (StringExtractorGDBRemote &packet);
+
     void
     SetCurrentThreadID (lldb::tid_t tid);
 

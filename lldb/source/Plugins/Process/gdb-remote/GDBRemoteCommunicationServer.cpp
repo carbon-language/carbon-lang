@@ -422,6 +422,10 @@ GDBRemoteCommunicationServer::GetPacketAndSendResponse (uint32_t timeout_usec,
         case StringExtractorGDBRemote::eServerPacketType_QRestoreRegisterState:
             packet_result = Handle_QRestoreRegisterState (packet);
             break;
+
+        case StringExtractorGDBRemote::eServerPacketType_vAttach:
+            packet_result = Handle_vAttach (packet);
+            break;
         }
     }
     else
@@ -4109,6 +4113,44 @@ GDBRemoteCommunicationServer::Handle_QRestoreRegisterState (StringExtractorGDBRe
     }
 
     return SendOKResponse();
+}
+
+GDBRemoteCommunicationServer::PacketResult
+GDBRemoteCommunicationServer::Handle_vAttach (StringExtractorGDBRemote &packet)
+{
+    Log *log (GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PROCESS));
+
+    // We don't support if we're not llgs.
+    if (!IsGdbServer())
+        return SendUnimplementedResponse ("only supported for lldb-gdbserver");
+
+    // Consume the ';' after vAttach.
+    packet.SetFilePos (strlen ("vAttach"));
+    if (!packet.GetBytesLeft () || packet.GetChar () != ';')
+        return SendIllFormedResponse (packet, "vAttach missing expected ';'");
+
+    // Grab the PID to which we will attach (assume hex encoding).
+    lldb::pid_t pid = packet.GetU32 (LLDB_INVALID_PROCESS_ID, 16);
+    if (pid == LLDB_INVALID_PROCESS_ID)
+        return SendIllFormedResponse (packet, "vAttach failed to parse the process id");
+
+    // Attempt to attach.
+    if (log)
+        log->Printf ("GDBRemoteCommunicationServer::%s attempting to attach to pid %" PRIu64, __FUNCTION__, pid);
+
+    Error error = AttachToProcess (pid);
+
+    if (error.Fail ())
+    {
+        if (log)
+            log->Printf ("GDBRemoteCommunicationServer::%s failed to attach to pid %" PRIu64 ": %s\n", __FUNCTION__, pid, error.AsCString());
+        return SendErrorResponse (0x01);
+    }
+
+    // Notify we attached by sending a stop packet.
+    return SendStopReasonForState (m_debugged_process_sp->GetState (), true);
+
+    return PacketResult::Success;
 }
 
 void

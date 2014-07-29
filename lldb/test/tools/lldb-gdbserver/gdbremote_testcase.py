@@ -32,7 +32,11 @@ class GdbRemoteTestCaseBase(TestBase):
     _LOGGING_LEVEL = logging.WARNING
     # _LOGGING_LEVEL = logging.DEBUG
 
+    # Start the inferior separately, attach to the inferior on the stub command line.
     _STARTUP_ATTACH = "attach"
+    # Start the inferior separately, start the stub without attaching, allow the test to attach to the inferior however it wants (e.g. $vAttach;pid).
+    _STARTUP_ATTACH_MANUALLY = "attach_manually"
+    # Start the stub, and launch the inferior with an $A packet via the initial packet stream.
     _STARTUP_LAUNCH = "launch"
 
     # GDB Signal numbers that are not target-specific used for common exceptions
@@ -179,6 +183,9 @@ class GdbRemoteTestCaseBase(TestBase):
     def set_inferior_startup_attach(self):
         self._inferior_startup = self._STARTUP_ATTACH
 
+    def set_inferior_startup_attach_manually(self):
+        self._inferior_startup = self._STARTUP_ATTACH_MANUALLY
+
     def get_debug_monitor_command_line(self, attach_pid=None):
         commandline = "{}{} localhost:{}".format(self.debug_monitor_exe, self.debug_monitor_extra_args, self.port)
         if attach_pid:
@@ -314,12 +321,14 @@ class GdbRemoteTestCaseBase(TestBase):
         inferior = None
         attach_pid = None
 
-        if self._inferior_startup == self._STARTUP_ATTACH:
+        if self._inferior_startup == self._STARTUP_ATTACH or self._inferior_startup == self._STARTUP_ATTACH_MANUALLY:
             # Launch the process that we'll use as the inferior.
             inferior = self.launch_process_for_attach(inferior_args=inferior_args, sleep_seconds=inferior_sleep_seconds)
             self.assertIsNotNone(inferior)
             self.assertTrue(inferior.pid > 0)
-            attach_pid = inferior.pid
+            if self._inferior_startup == self._STARTUP_ATTACH:
+                # In this case, we want the stub to attach via the command line, so set the command line attach pid here.
+                attach_pid = inferior.pid
 
         # Launch the debug monitor stub, attaching to the inferior.
         server = self.connect_to_debug_monitor(attach_pid=attach_pid)
