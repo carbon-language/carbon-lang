@@ -573,7 +573,8 @@ def warn_readonly_property : Warning<
   "'readwrite' of property inherited from %1">;
 
 def warn_property_attribute : Warning<
-  "'%1' attribute on property %0 does not match the property inherited from %2">;
+  "'%1' attribute on property %0 does not match the property inherited from %2">,
+  InGroup<PropertyAttr>;
 def warn_property_types_are_incompatible : Warning<
   "property type %0 is incompatible with type %1 inherited from %2">;
 def warn_protocol_property_mismatch : Warning<
@@ -743,7 +744,8 @@ def warn_objc_property_default_assign_on_object : Warning<
   "default property attribute 'assign' not appropriate for non-GC object">,
   InGroup<ObjCPropertyNoAttribute>;
 def warn_property_attr_mismatch : Warning<
-  "property attribute in class extension does not match the primary class">;
+  "property attribute in class extension does not match the primary class">,
+  InGroup<PropertyAttr>;
 def warn_property_implicitly_mismatched : Warning <
   "primary property declaration is implicitly strong while redeclaration "
   "in class extension is weak">,
