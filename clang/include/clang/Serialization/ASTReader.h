@@ -1245,6 +1245,7 @@ private:
   void PassInterestingDeclToConsumer(Decl *D);
 
   void finishPendingActions();
+  void diagnoseOdrViolations();
 
   void pushExternalDeclIntoScope(NamedDecl *D, DeclarationName Name);
 

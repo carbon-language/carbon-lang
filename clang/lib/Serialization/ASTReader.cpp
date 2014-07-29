@@ -8054,7 +8054,7 @@ void ASTReader::finishPendingActions() {
   while (!PendingIdentifierInfos.empty() ||
          !PendingIncompleteDeclChains.empty() || !PendingDeclChains.empty() ||
          !PendingMacroIDs.empty() || !PendingDeclContextInfos.empty() ||
-         !PendingUpdateRecords.empty() || !PendingOdrMergeChecks.empty()) {
+         !PendingUpdateRecords.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
     typedef llvm::DenseMap<IdentifierInfo *, SmallVector<Decl *, 2> >
@@ -8134,78 +8134,6 @@ void ASTReader::finishPendingActions() {
       ReadingKindTracker ReadingKind(Read_Decl, *this);
       loadDeclUpdateRecords(Update.first, Update.second);
     }
-
-    // Trigger the import of the full definition of each class that had any
-    // odr-merging problems, so we can produce better diagnostics for them.
-    for (auto &Merge : PendingOdrMergeFailures) {
-      Merge.first->buildLookup();
-      Merge.first->decls_begin();
-      Merge.first->bases_begin();
-      Merge.first->vbases_begin();
-      for (auto *RD : Merge.second) {
-        RD->decls_begin();
-        RD->bases_begin();
-        RD->vbases_begin();
-      }
-    }
-
-    // For each declaration from a merged context, check that the canonical
-    // definition of that context also contains a declaration of the same
-    // entity.
-    while (!PendingOdrMergeChecks.empty()) {
-      NamedDecl *D = PendingOdrMergeChecks.pop_back_val();
-
-      // FIXME: Skip over implicit declarations for now. This matters for things
-      // like implicitly-declared special member functions. This isn't entirely
-      // correct; we can end up with multiple unmerged declarations of the same
-      // implicit entity.
-      if (D->isImplicit())
-        continue;
-
-      DeclContext *CanonDef = D->getDeclContext();
-      DeclContext::lookup_result R = CanonDef->lookup(D->getDeclName());
-
-      bool Found = false;
-      const Decl *DCanon = D->getCanonicalDecl();
-
-      llvm::SmallVector<const NamedDecl*, 4> Candidates;
-      for (DeclContext::lookup_iterator I = R.begin(), E = R.end();
-           !Found && I != E; ++I) {
-        for (auto RI : (*I)->redecls()) {
-          if (RI->getLexicalDeclContext() == CanonDef) {
-            // This declaration is present in the canonical definition. If it's
-            // in the same redecl chain, it's the one we're looking for.
-            if (RI->getCanonicalDecl() == DCanon)
-              Found = true;
-            else
-              Candidates.push_back(cast<NamedDecl>(RI));
-            break;
-          }
-        }
-      }
-
-      if (!Found) {
-        D->setInvalidDecl();
-
-        std::string CanonDefModule =
-            getOwningModuleNameForDiagnostic(cast<Decl>(CanonDef));
-        Diag(D->getLocation(), diag::err_module_odr_violation_missing_decl)
-          << D << getOwningModuleNameForDiagnostic(D)
-          << CanonDef << CanonDefModule.empty() << CanonDefModule;
-
-        if (Candidates.empty())
-          Diag(cast<Decl>(CanonDef)->getLocation(),
-               diag::note_module_odr_violation_no_possible_decls) << D;
-        else {
-          for (unsigned I = 0, N = Candidates.size(); I != N; ++I)
-            Diag(Candidates[I]->getLocation(),
-                 diag::note_module_odr_violation_possible_decl)
-              << Candidates[I];
-        }
-
-        DiagnosedOdrMergeFailures.insert(CanonDef);
-      }
-    }
   }
   
   // If we deserialized any C++ or Objective-C class definitions, any
@@ -8272,9 +8200,88 @@ void ASTReader::finishPendingActions() {
       MD->setLazyBody(PB->second);
   }
   PendingBodies.clear();
+}
+
+void ASTReader::diagnoseOdrViolations() {
+  // Trigger the import of the full definition of each class that had any
+  // odr-merging problems, so we can produce better diagnostics for them.
+  for (auto &Merge : PendingOdrMergeFailures) {
+    Merge.first->buildLookup();
+    Merge.first->decls_begin();
+    Merge.first->bases_begin();
+    Merge.first->vbases_begin();
+    for (auto *RD : Merge.second) {
+      RD->decls_begin();
+      RD->bases_begin();
+      RD->vbases_begin();
+    }
+  }
+
+  // For each declaration from a merged context, check that the canonical
+  // definition of that context also contains a declaration of the same
+  // entity.
+  //
+  // Caution: this loop does things that might invalidate iterators into
+  // PendingOdrMergeChecks. Don't turn this into a range-based for loop!
+  while (!PendingOdrMergeChecks.empty()) {
+    NamedDecl *D = PendingOdrMergeChecks.pop_back_val();
+
+    // FIXME: Skip over implicit declarations for now. This matters for things
+    // like implicitly-declared special member functions. This isn't entirely
+    // correct; we can end up with multiple unmerged declarations of the same
+    // implicit entity.
+    if (D->isImplicit())
+      continue;
+
+    DeclContext *CanonDef = D->getDeclContext();
+    DeclContext::lookup_result R = CanonDef->lookup(D->getDeclName());
+
+    bool Found = false;
+    const Decl *DCanon = D->getCanonicalDecl();
+
+    llvm::SmallVector<const NamedDecl*, 4> Candidates;
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end();
+         !Found && I != E; ++I) {
+      for (auto RI : (*I)->redecls()) {
+        if (RI->getLexicalDeclContext() == CanonDef) {
+          // This declaration is present in the canonical definition. If it's
+          // in the same redecl chain, it's the one we're looking for.
+          if (RI->getCanonicalDecl() == DCanon)
+            Found = true;
+          else
+            Candidates.push_back(cast<NamedDecl>(RI));
+          break;
+        }
+      }
+    }
+
+    if (!Found) {
+      D->setInvalidDecl();
+
+      std::string CanonDefModule =
+          getOwningModuleNameForDiagnostic(cast<Decl>(CanonDef));
+      Diag(D->getLocation(), diag::err_module_odr_violation_missing_decl)
+        << D << getOwningModuleNameForDiagnostic(D)
+        << CanonDef << CanonDefModule.empty() << CanonDefModule;
+
+      if (Candidates.empty())
+        Diag(cast<Decl>(CanonDef)->getLocation(),
+             diag::note_module_odr_violation_no_possible_decls) << D;
+      else {
+        for (unsigned I = 0, N = Candidates.size(); I != N; ++I)
+          Diag(Candidates[I]->getLocation(),
+               diag::note_module_odr_violation_possible_decl)
+            << Candidates[I];
+      }
+
+      DiagnosedOdrMergeFailures.insert(CanonDef);
+    }
+  }
 
   // Issue any pending ODR-failure diagnostics.
   for (auto &Merge : PendingOdrMergeFailures) {
+    // If we've already pointed out a specific problem with this class, don't
+    // bother issuing a general "something's different" diagnostic.
     if (!DiagnosedOdrMergeFailures.insert(Merge.first))
       continue;
 
@@ -8324,10 +8331,13 @@ void ASTReader::FinishedDeserializing() {
   }
   --NumCurrentElementsDeserializing;
 
-  if (NumCurrentElementsDeserializing == 0 && Consumer) {
+  if (NumCurrentElementsDeserializing == 0) {
+    diagnoseOdrViolations();
+
     // We are not in recursive loading, so it's safe to pass the "interesting"
     // decls to the consumer.
-    PassInterestingDeclsToConsumer();
+    if (Consumer)
+      PassInterestingDeclsToConsumer();
   }
 }
 
