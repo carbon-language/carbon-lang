@@ -26,7 +26,15 @@
 using namespace llvm;
 
 namespace {
-typedef DenseMap<const Value *, std::pair<unsigned, bool>> OrderMap;
+struct OrderMap {
+  DenseMap<const Value *, std::pair<unsigned, bool>> IDs;
+
+  unsigned size() const { return IDs.size(); }
+  std::pair<unsigned, bool> &operator[](const Value *V) { return IDs[V]; }
+  std::pair<unsigned, bool> lookup(const Value *V) const {
+    return IDs.lookup(V);
+  }
+};
 }
 
 static void orderValue(const Value *V, OrderMap &OM) {
