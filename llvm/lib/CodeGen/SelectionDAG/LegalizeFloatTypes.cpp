@@ -377,10 +377,15 @@ SDValue DAGTypeLegalizer::SoftenFloatRes_FP_EXTEND(SDNode *N) {
   // There's only a libcall for f16 -> f32, so proceed in two stages. Also, it's
   // entirely possible for both f16 and f32 to be legal, so use the fully
   // hard-float FP_EXTEND rather than FP16_TO_FP.
-  if (Op.getValueType() == MVT::f16 && N->getValueType(0) != MVT::f32)
+  if (Op.getValueType() == MVT::f16 && N->getValueType(0) != MVT::f32) {
     Op = DAG.getNode(ISD::FP_EXTEND, SDLoc(N), MVT::f32, Op);
+    if (getTypeAction(MVT::f32) == TargetLowering::TypeSoftenFloat)
+      SoftenFloatResult(Op.getNode(), 0);
+  }
 
   RTLIB::Libcall LC = RTLIB::getFPEXT(Op.getValueType(), N->getValueType(0));
+  if (getTypeAction(Op.getValueType()) == TargetLowering::TypeSoftenFloat)
+    Op = GetSoftenedFloat(Op);
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported FP_EXTEND!");
   return TLI.makeLibCall(DAG, LC, NVT, &Op, 1, false, SDLoc(N)).first;
 }
