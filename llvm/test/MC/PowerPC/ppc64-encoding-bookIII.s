@@ -172,3 +172,13 @@
 # CHECK-BE: wrteei 1                        # encoding: [0x7c,0x00,0x81,0x46]
 # CHECK-LE: wrteei 1                        # encoding: [0x46,0x81,0x00,0x7c]
             wrteei 1
+
+# CHECK-BE: tlbre                           # encoding: [0x7c,0x00,0x07,0x64]
+# CHECK-LE: tlbre                           # encoding: [0x64,0x07,0x00,0x7c]
+            tlbre
+# CHECK-BE: tlbwe                           # encoding: [0x7c,0x00,0x07,0xa4]
+# CHECK-LE: tlbwe                           # encoding: [0xa4,0x07,0x00,0x7c]
+            tlbwe
+# CHECK-BE: tlbivax 11, 12                  # encoding: [0x7c,0x0b,0x66,0x24]
+# CHECK-LE: tlbivax 11, 12                  # encoding: [0x24,0x66,0x0b,0x7c]
+            tlbivax %r11, %r12

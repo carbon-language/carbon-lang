@@ -3103,6 +3103,21 @@ def TLBIEL : XForm_16b<31, 274, (outs), (ins gprc:$RB),
 def TLBIE : XForm_26<31, 306, (outs), (ins gprc:$RS, gprc:$RB),
                           "tlbie $RB,$RS", IIC_SprTLBIE, []>;
 
+def TLBIVAX : I<31, (outs), (ins gprc:$RA, gprc:$RB), "tlbivax $RA, $RB",
+                IIC_LdStLoad>, Requires<[IsBookE]> {
+  bits<5> RA;
+  bits<5> RB;
+  let Inst{11-15} = RA;
+  let Inst{16-20} = RB;
+  let Inst{21-30} = 786;
+}
+
+def TLBRE : XForm_24_eieio<31, 946, (outs), (ins),
+                           "tlbre", IIC_LdStLoad, []>, Requires<[IsBookE]>;
+
+def TLBWE : XForm_24_eieio<31, 978, (outs), (ins),
+                           "tlbwe", IIC_LdStLoad, []>, Requires<[IsBookE]>;
+
 def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_BrB, []>,
                   Requires<[IsBookE]>;
 def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,
