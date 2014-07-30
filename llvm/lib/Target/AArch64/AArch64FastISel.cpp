@@ -1533,6 +1533,177 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
         .addImm(1);
     return true;
   }
+  case Intrinsic::sadd_with_overflow:
+  case Intrinsic::uadd_with_overflow:
+  case Intrinsic::ssub_with_overflow:
+  case Intrinsic::usub_with_overflow:
+  case Intrinsic::smul_with_overflow:
+  case Intrinsic::umul_with_overflow: {
+    // This implements the basic lowering of the xalu with overflow intrinsics.
+    const Function *Callee = II->getCalledFunction();
+    auto *Ty = cast<StructType>(Callee->getReturnType());
+    Type *RetTy = Ty->getTypeAtIndex(0U);
+    Type *CondTy = Ty->getTypeAtIndex(1);
+
+    MVT VT;
+    if (!isTypeLegal(RetTy, VT))
+      return false;
+
+    if (VT != MVT::i32 && VT != MVT::i64)
+      return false;
+
+    const Value *LHS = II->getArgOperand(0);
+    const Value *RHS = II->getArgOperand(1);
+    // Canonicalize immediate to the RHS.
+    if (isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS) &&
+        isCommutativeIntrinsic(II))
+      std::swap(LHS, RHS);
+
+    unsigned LHSReg = getRegForValue(LHS);
+    if (!LHSReg)
+      return false;
+    bool LHSIsKill = hasTrivialKill(LHS);
+
+    unsigned RHSReg = 0;
+    bool RHSIsKill = false;
+    bool UseImm = true;
+    if (!isa<ConstantInt>(RHS)) {
+      RHSReg = getRegForValue(RHS);
+      if (!RHSReg)
+        return false;
+      RHSIsKill = hasTrivialKill(RHS);
+      UseImm = false;
+    }
+
+    unsigned Opc = 0;
+    unsigned MulReg = 0;
+    AArch64CC::CondCode CC = AArch64CC::Invalid;
+    bool Is64Bit = VT == MVT::i64;
+    switch (II->getIntrinsicID()) {
+    default: llvm_unreachable("Unexpected intrinsic!");
+    case Intrinsic::sadd_with_overflow:
+      if (UseImm)
+        Opc = Is64Bit ? AArch64::ADDSXri : AArch64::ADDSWri;
+      else
+        Opc = Is64Bit ? AArch64::ADDSXrr : AArch64::ADDSWrr;
+      CC = AArch64CC::VS;
+      break;
+    case Intrinsic::uadd_with_overflow:
+      if (UseImm)
+        Opc = Is64Bit ? AArch64::ADDSXri : AArch64::ADDSWri;
+      else
+        Opc = Is64Bit ? AArch64::ADDSXrr : AArch64::ADDSWrr;
+      CC = AArch64CC::HS;
+      break;
+    case Intrinsic::ssub_with_overflow:
+      if (UseImm)
+        Opc = Is64Bit ? AArch64::SUBSXri : AArch64::SUBSWri;
+      else
+        Opc = Is64Bit ? AArch64::SUBSXrr : AArch64::SUBSWrr;
+      CC = AArch64CC::VS;
+      break;
+    case Intrinsic::usub_with_overflow:
+      if (UseImm)
+        Opc = Is64Bit ? AArch64::SUBSXri : AArch64::SUBSWri;
+      else
+        Opc = Is64Bit ? AArch64::SUBSXrr : AArch64::SUBSWrr;
+      CC = AArch64CC::LO;
+      break;
+    case Intrinsic::smul_with_overflow: {
+      CC = AArch64CC::NE;
+      if (UseImm) {
+        RHSReg = getRegForValue(RHS);
+        if (!RHSReg)
+          return false;
+        RHSIsKill = hasTrivialKill(RHS);
+      }
+      if (VT == MVT::i32) {
+        MulReg = Emit_SMULL_rr(MVT::i64, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
+        unsigned ShiftReg = Emit_LSR_ri(MVT::i64, MulReg, false, 32);
+        MulReg = FastEmitInst_extractsubreg(VT, MulReg, /*IsKill=*/true,
+                                            AArch64::sub_32);
+        ShiftReg = FastEmitInst_extractsubreg(VT, ShiftReg, /*IsKill=*/true,
+                                              AArch64::sub_32);
+        unsigned CmpReg = createResultReg(TLI.getRegClassFor(VT));
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(AArch64::SUBSWrs), CmpReg)
+          .addReg(ShiftReg, getKillRegState(true))
+          .addReg(MulReg, getKillRegState(false))
+          .addImm(159); // 159 <-> asr #31
+      } else {
+        assert(VT == MVT::i64 && "Unexpected value type.");
+        MulReg = Emit_MUL_rr(VT, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
+        unsigned SMULHReg = FastEmit_rr(VT, VT, ISD::MULHS, LHSReg, LHSIsKill,
+                                        RHSReg, RHSIsKill);
+        unsigned CmpReg = createResultReg(TLI.getRegClassFor(VT));
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(AArch64::SUBSXrs), CmpReg)
+          .addReg(SMULHReg, getKillRegState(true))
+          .addReg(MulReg, getKillRegState(false))
+          .addImm(191); // 191 <-> asr #63
+      }
+      break;
+    }
+    case Intrinsic::umul_with_overflow: {
+      CC = AArch64CC::NE;
+      if (UseImm) {
+        RHSReg = getRegForValue(RHS);
+        if (!RHSReg)
+          return false;
+        RHSIsKill = hasTrivialKill(RHS);
+      }
+      if (VT == MVT::i32) {
+        MulReg = Emit_UMULL_rr(MVT::i64, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
+        unsigned CmpReg = createResultReg(TLI.getRegClassFor(MVT::i64));
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(AArch64::SUBSXrs), CmpReg)
+          .addReg(AArch64::XZR, getKillRegState(true))
+          .addReg(MulReg, getKillRegState(false))
+          .addImm(96); // 96 <-> lsr #32
+        MulReg = FastEmitInst_extractsubreg(VT, MulReg, /*IsKill=*/true,
+                                            AArch64::sub_32);
+      } else {
+        assert(VT == MVT::i64 && "Unexpected value type.");
+        MulReg = Emit_MUL_rr(VT, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
+        unsigned UMULHReg = FastEmit_rr(VT, VT, ISD::MULHU, LHSReg, LHSIsKill,
+                                        RHSReg, RHSIsKill);
+        unsigned CmpReg = createResultReg(TLI.getRegClassFor(VT));
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(AArch64::SUBSXrr), CmpReg)
+        .addReg(AArch64::XZR, getKillRegState(true))
+        .addReg(UMULHReg, getKillRegState(false));
+      }
+      break;
+    }
+    }
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    if (Opc) {
+      MachineInstrBuilder MIB;
+      MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc),
+                    ResultReg)
+              .addReg(LHSReg, getKillRegState(LHSIsKill));
+      if (UseImm)
+        MIB.addImm(cast<ConstantInt>(RHS)->getZExtValue());
+      else
+        MIB.addReg(RHSReg, getKillRegState(RHSIsKill));
+    }
+    else
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(TargetOpcode::COPY), ResultReg)
+        .addReg(MulReg);
+
+    unsigned ResultReg2 = FuncInfo.CreateRegs(CondTy);
+    assert((ResultReg+1) == ResultReg2 && "Nonconsecutive result registers.");
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::CSINCWr),
+            ResultReg2)
+      .addReg(AArch64::WZR, getKillRegState(true))
+      .addReg(AArch64::WZR, getKillRegState(true))
+      .addImm(getInvertedCondCode(CC));
+
+    UpdateValueMap(II, ResultReg, 2);
+    return true;
+  }
   }
   return false;
 }
