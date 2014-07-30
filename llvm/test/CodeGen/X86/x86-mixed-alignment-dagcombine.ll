@@ -1,4 +1,4 @@
-; RUN: llc  -mcpu=core2 -mattr=+64bit,+sse2 < %s | FileCheck %s
+; RUN: llc  -mtriple=x86_64-apple-macosx10.9.0  -mcpu=core2 -mattr=+64bit,+sse2 < %s | FileCheck %s
 
 ; DAGCombine may choose to rewrite 2 loads feeding a select as a select of
 ; addresses feeding a load. This test ensures that when it does that it creates
