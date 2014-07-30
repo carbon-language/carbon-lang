@@ -433,6 +433,9 @@ static int linkAndVerify() {
     }
   }
 
+  // Re-map the section addresses into the phony target address space.
+  remapSections(TheTriple, MemMgr, Dyld);
+
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
 
