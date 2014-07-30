@@ -3191,6 +3191,9 @@ def : InstAlias<"mfcfar $Rx", (MFSPR gprc:$Rx, 28)>;
 def : InstAlias<"mtamr $Rx", (MTSPR 29, gprc:$Rx)>;
 def : InstAlias<"mfamr $Rx", (MFSPR gprc:$Rx, 29)>;
 
+def : InstAlias<"mtpid $Rx", (MTSPR 48, gprc:$Rx)>, Requires<[IsBookE]>;
+def : InstAlias<"mfpid $Rx", (MFSPR gprc:$Rx, 48)>, Requires<[IsBookE]>;
+
 def : InstAlias<"mftb $Rx", (MFTB gprc:$Rx, 268)>;
 def : InstAlias<"mftbu $Rx", (MFTB gprc:$Rx, 269)>;
 
