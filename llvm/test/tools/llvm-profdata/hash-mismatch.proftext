@@ -1,5 +1,5 @@
 # RUN: llvm-profdata merge %s -o %t.out 2>&1 | FileCheck %s
-# CHECK: hash-mismatch.profdata: foo: Function hash mismatch
+# CHECK: hash-mismatch.proftext: foo: Function hash mismatch
 
 foo
 3
