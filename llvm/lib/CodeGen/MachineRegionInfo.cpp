@@ -4,6 +4,8 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/RegionInfoImpl.h"
 
+#define DEBUG_TYPE "region"
+
 using namespace llvm;
 
 STATISTIC(numMachineRegions,       "The # of machine regions");
