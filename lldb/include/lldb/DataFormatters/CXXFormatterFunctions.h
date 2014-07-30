@@ -27,6 +27,9 @@
 namespace lldb_private {
     namespace formatters
     {
+        StackFrame*
+        GetViableFrame (ExecutionContext exe_ctx);
+        
         bool
         ExtractValueFromObjCExpression (ValueObject &valobj,
                                         const char* target_type,

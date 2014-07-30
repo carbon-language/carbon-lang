@@ -220,7 +220,9 @@ lldb_private::formatters::NSDictionaryCodeRunningSyntheticFrontEnd::GetChildAtIn
     lldb::ValueObjectSP child_sp;
     EvaluateExpressionOptions options;
     options.SetKeepInMemory(true);
-    m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(), m_backend.GetFrameSP().get(), child_sp,
+    m_backend.GetTargetSP()->EvaluateExpression(object_fetcher_expr.GetData(),
+                                                GetViableFrame(m_backend.GetTargetSP().get()),
+                                                child_sp,
                                                 options);
     if (child_sp)
         child_sp->SetName(ConstString(idx_name.GetData()));
