@@ -45,6 +45,8 @@ void NORETURN
     ReportStackOverflow(uptr pc, uptr sp, uptr bp, void *context, uptr addr);
 void NORETURN ReportSIGSEGV(const char *description, uptr pc, uptr sp, uptr bp,
                             void *context, uptr addr);
+void NORETURN ReportNewDeleteSizeMismatch(uptr addr, uptr delete_size,
+                                          StackTrace *free_stack);
 void NORETURN ReportDoubleFree(uptr addr, StackTrace *free_stack);
 void NORETURN ReportFreeNotMalloced(uptr addr, StackTrace *free_stack);
 void NORETURN ReportAllocTypeMismatch(uptr addr, StackTrace *free_stack,

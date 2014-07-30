@@ -105,6 +105,11 @@ CXX_OPERATOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&) {
   OPERATOR_DELETE_BODY(FROM_NEW_BR);
 }
+CXX_OPERATOR_ATTRIBUTE
+void operator delete(void *ptr, size_t size) throw() {
+  GET_STACK_TRACE_FREE;
+  asan_sized_free(ptr, size, &stack, FROM_NEW);
+}
 
 #else  // SANITIZER_MAC
 INTERCEPTOR(void, _ZdlPv, void *ptr) {

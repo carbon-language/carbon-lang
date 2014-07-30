@@ -142,6 +142,8 @@ struct AsanThreadLocalMallocStorage {
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
                     AllocType alloc_type);
 void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type);
+void asan_sized_free(void *ptr, uptr size, StackTrace *stack,
+                     AllocType alloc_type);
 
 void *asan_malloc(uptr size, StackTrace *stack);
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack);

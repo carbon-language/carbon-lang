@@ -168,23 +168,6 @@ struct AsanChunk: ChunkBase {
     }
     return reinterpret_cast<void*>(Beg() - RZLog2Size(rz_log));
   }
-  // If we don't use stack depot, we store the alloc/free stack traces
-  // in the chunk itself.
-  u32 *AllocStackBeg() {
-    return (u32*)(Beg() - RZLog2Size(rz_log));
-  }
-  uptr AllocStackSize() {
-    CHECK_LE(RZLog2Size(rz_log), kChunkHeaderSize);
-    return (RZLog2Size(rz_log) - kChunkHeaderSize) / sizeof(u32);
-  }
-  u32 *FreeStackBeg() {
-    return (u32*)(Beg() + kChunkHeader2Size);
-  }
-  uptr FreeStackSize() {
-    if (user_requested_size < kChunkHeader2Size) return 0;
-    uptr available = RoundUpTo(user_requested_size, SHADOW_GRANULARITY);
-    return (available - kChunkHeader2Size) / sizeof(u32);
-  }
   bool AddrIsInside(uptr addr, bool locked_version = false) {
     return (addr >= Beg()) && (addr < Beg() + UsedSize(locked_version));
   }
@@ -464,12 +447,17 @@ static void QuarantineChunk(AsanChunk *m, void *ptr,
   }
 }
 
-static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
+static void Deallocate(void *ptr, uptr delete_size, StackTrace *stack,
+                       AllocType alloc_type) {
   uptr p = reinterpret_cast<uptr>(ptr);
   if (p == 0) return;
 
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
+  if (delete_size && flags()->new_delete_size_mismatch &&
+      delete_size != m->UsedSize()) {
+    ReportNewDeleteSizeMismatch(p, delete_size, stack);
+  }
   ASAN_FREE_HOOK(ptr);
   // Must mark the chunk as quarantined before any changes to its metadata.
   AtomicallySetQuarantineFlag(m, ptr, stack);
@@ -496,7 +484,7 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
     // If realloc() races with free(), we may start copying freed memory.
     // However, we will report racy double-free later anyway.
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
-    Deallocate(old_ptr, stack, FROM_MALLOC);
+    Deallocate(old_ptr, 0, stack, FROM_MALLOC);
   }
   return new_ptr;
 }
@@ -595,7 +583,12 @@ void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
 }
 
 void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type) {
-  Deallocate(ptr, stack, alloc_type);
+  Deallocate(ptr, 0, stack, alloc_type);
+}
+
+void asan_sized_free(void *ptr, uptr size, StackTrace *stack,
+                     AllocType alloc_type) {
+  Deallocate(ptr, size, stack, alloc_type);
 }
 
 void *asan_malloc(uptr size, StackTrace *stack) {
@@ -617,7 +610,7 @@ void *asan_realloc(void *p, uptr size, StackTrace *stack) {
   if (p == 0)
     return Allocate(size, 8, stack, FROM_MALLOC, true);
   if (size == 0) {
-    Deallocate(p, stack, FROM_MALLOC);
+    Deallocate(p, 0, stack, FROM_MALLOC);
     return 0;
   }
   return Reallocate(p, size, stack);
