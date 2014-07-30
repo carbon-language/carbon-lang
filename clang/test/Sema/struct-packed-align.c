@@ -120,6 +120,7 @@ extern int m1[sizeof(struct packed_fas2) == 1 ? 1 : -1];
 extern int m2[__alignof(struct packed_fas2) == 1 ? 1 : -1];
 
 // Attribute aligned can round down typedefs.  PR9253
+// REQUIRES: LP64
 typedef long long  __attribute__((aligned(1))) nt;
 
 struct nS {
