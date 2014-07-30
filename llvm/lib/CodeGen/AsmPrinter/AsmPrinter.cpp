@@ -253,8 +253,7 @@ bool AsmPrinter::doInitialization(Module &M) {
 }
 
 static bool canBeHidden(const GlobalValue *GV, const MCAsmInfo &MAI) {
-  GlobalValue::LinkageTypes Linkage = GV->getLinkage();
-  if (Linkage != GlobalValue::LinkOnceODRLinkage)
+  if (!GV->hasLinkOnceODRLinkage())
     return false;
 
   if (!MAI.hasWeakDefCanBeHiddenDirective())

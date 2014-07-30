@@ -349,9 +349,7 @@ void LTOModule::addDefinedFunctionSymbol(const char *Name, const Function *F) {
 
 static bool canBeHidden(const GlobalValue *GV) {
   // FIXME: this is duplicated with another static function in AsmPrinter.cpp
-  GlobalValue::LinkageTypes L = GV->getLinkage();
-
-  if (L != GlobalValue::LinkOnceODRLinkage)
+  if (!GV->hasLinkOnceODRLinkage())
     return false;
 
   if (GV->hasUnnamedAddr())

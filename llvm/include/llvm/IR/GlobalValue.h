@@ -246,6 +246,7 @@ public:
   bool hasLinkOnceLinkage() const {
     return isLinkOnceLinkage(Linkage);
   }
+  bool hasLinkOnceODRLinkage() const { return isLinkOnceODRLinkage(Linkage); }
   bool hasWeakLinkage() const {
     return isWeakLinkage(Linkage);
   }

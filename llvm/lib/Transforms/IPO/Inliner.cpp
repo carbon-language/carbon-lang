@@ -357,8 +357,7 @@ bool Inliner::shouldInline(CallSite CS) {
   // FIXME: All of this logic should be sunk into getInlineCost. It relies on
   // the internal implementation of the inline cost metrics rather than
   // treating them as truly abstract units etc.
-  if (Caller->hasLocalLinkage() ||
-      Caller->getLinkage() == GlobalValue::LinkOnceODRLinkage) {
+  if (Caller->hasLocalLinkage() || Caller->hasLinkOnceODRLinkage()) {
     int TotalSecondaryCost = 0;
     // The candidate cost to be imposed upon the current function.
     int CandidateCost = IC.getCost() - (InlineConstants::CallPenalty + 1);
