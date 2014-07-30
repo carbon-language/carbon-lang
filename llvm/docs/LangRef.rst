@@ -1966,8 +1966,8 @@ type. Vector types are considered :ref:`first class <t_firstclass>`.
       < <# elements> x <elementtype> >
 
 The number of elements is a constant integer value larger than 0;
-elementtype may be any integer or floating point type, or a pointer to
-these types. Vectors of size zero are not allowed.
+elementtype may be any integer, floating point or pointer type. Vectors
+of size zero are not allowed.
 
 :Examples:
 
