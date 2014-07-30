@@ -83,8 +83,6 @@ defm S_BUFFER_LOAD_DWORDX16 : SMRD_Helper <
 // SOP1 Instructions
 //===----------------------------------------------------------------------===//
 
-let neverHasSideEffects = 1 in {
-
 let isMoveImm = 1 in {
 def S_MOV_B32 : SOP1_32 <0x00000003, "S_MOV_B32", []>;
 def S_MOV_B64 : SOP1_64 <0x00000004, "S_MOV_B64", []>;
@@ -105,7 +103,6 @@ def S_BREV_B32 : SOP1_32 <0x0000000b, "S_BREV_B32",
   [(set i32:$dst, (AMDGPUbrev i32:$src0))]
 >;
 def S_BREV_B64 : SOP1_64 <0x0000000c, "S_BREV_B64", []>;
-} // End neverHasSideEffects = 1
 
 ////def S_BCNT0_I32_B32 : SOP1_BCNT0 <0x0000000d, "S_BCNT0_I32_B32", []>;
 ////def S_BCNT0_I32_B64 : SOP1_BCNT0 <0x0000000e, "S_BCNT0_I32_B64", []>;
@@ -1047,9 +1044,9 @@ defm IMAGE_SAMPLE_C_CD_CL_O : MIMG_Sampler <0x0000006f, "IMAGE_SAMPLE_C_CD_CL_O"
 
 //def V_NOP : VOP1_ <0x00000000, "V_NOP", []>;
 
-let neverHasSideEffects = 1, isMoveImm = 1 in {
+let isMoveImm = 1 in {
 defm V_MOV_B32 : VOP1_32 <0x00000001, "V_MOV_B32", []>;
-} // End neverHasSideEffects = 1, isMoveImm = 1
+} // End isMoveImm = 1
 
 let Uses = [EXEC] in {
 
@@ -1394,8 +1391,6 @@ defm V_CVT_PKRTZ_F16_F32 : VOP2_32 <0x0000002f, "V_CVT_PKRTZ_F16_F32",
 // VOP3 Instructions
 //===----------------------------------------------------------------------===//
 
-let neverHasSideEffects = 1 in {
-
 defm V_MAD_LEGACY_F32 : VOP3_32 <0x00000140, "V_MAD_LEGACY_F32", []>;
 defm V_MAD_F32 : VOP3_32 <0x00000141, "V_MAD_F32",
   [(set f32:$dst, (fadd (fmul f32:$src0, f32:$src1), f32:$src2))]
@@ -1407,19 +1402,15 @@ defm V_MAD_U32_U24 : VOP3_32 <0x00000143, "V_MAD_U32_U24",
   [(set i32:$dst, (AMDGPUmad_u24 i32:$src0, i32:$src1, i32:$src2))]
 >;
 
-} // End neverHasSideEffects
-
 defm V_CUBEID_F32 : VOP3_32 <0x00000144, "V_CUBEID_F32", []>;
 defm V_CUBESC_F32 : VOP3_32 <0x00000145, "V_CUBESC_F32", []>;
 defm V_CUBETC_F32 : VOP3_32 <0x00000146, "V_CUBETC_F32", []>;
 defm V_CUBEMA_F32 : VOP3_32 <0x00000147, "V_CUBEMA_F32", []>;
 
-let neverHasSideEffects = 1, mayLoad = 0, mayStore = 0 in {
 defm V_BFE_U32 : VOP3_32 <0x00000148, "V_BFE_U32",
   [(set i32:$dst, (AMDGPUbfe_u32 i32:$src0, i32:$src1, i32:$src2))]>;
 defm V_BFE_I32 : VOP3_32 <0x00000149, "V_BFE_I32",
   [(set i32:$dst, (AMDGPUbfe_i32 i32:$src0, i32:$src1, i32:$src2))]>;
-}
 
 defm V_BFI_B32 : VOP3_32 <0x0000014a, "V_BFI_B32",
   [(set i32:$dst, (AMDGPUbfi i32:$src0, i32:$src1, i32:$src2))]>;
@@ -2726,7 +2717,6 @@ def : MTBUF_StoreResource <v4i32, 4, TBUFFER_STORE_FORMAT_XYZW>;
 let SubtargetPredicate = isCI in {
 
 // Sea island new arithmetic instructinos
-let neverHasSideEffects = 1 in {
 defm V_TRUNC_F64 : VOP1_64 <0x00000017, "V_TRUNC_F64",
   [(set f64:$dst, (ftrunc f64:$src0))]
 >;
@@ -2747,7 +2737,6 @@ def V_MAD_U64_U32 : VOP3_64 <0x00000176, "V_MAD_U64_U32", []>;
 
 // XXX - Does this set VCC?
 def V_MAD_I64_I32 : VOP3_64 <0x00000177, "V_MAD_I64_I32", []>;
-} // End neverHasSideEffects = 1
 
 // Remaining instructions:
 // FLAT_*
