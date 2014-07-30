@@ -838,7 +838,7 @@ Driver::MainLoop ()
     }
 
     // Now we handle options we got from the command line
-    SBStream commands_stream;./
+    SBStream commands_stream;
     
     // First source in the commands specified to be run before the file arguments are processed.
     WriteInitialCommands(true, commands_stream);
