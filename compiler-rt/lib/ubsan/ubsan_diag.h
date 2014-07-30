@@ -206,6 +206,18 @@ public:
 
 void MaybePrintStackTrace(uptr pc, uptr bp);
 
+/// \brief Instantiate this class before printing diagnostics in the error
+/// report. This class ensures that reports from different threads and from
+/// different sanitizers won't be mixed. If DieAfterReport is specified, it
+/// will terminate the program in the destructor.
+class ScopedReport {
+  bool DieAfterReport;
+
+public:
+  ScopedReport(bool DieAfterReport);
+  ~ScopedReport();
+};
+
 } // namespace __ubsan
 
 #endif // UBSAN_DIAG_H

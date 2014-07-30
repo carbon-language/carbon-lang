@@ -37,6 +37,8 @@ static void HandleDynamicTypeCacheMiss(
   if (Loc.isDisabled())
     return;
 
+  ScopedReport R(Abort);
+
   Diag(Loc, DL_Error,
        "%0 address %1 which does not point to an object of type %2")
     << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
@@ -61,8 +63,6 @@ static void HandleDynamicTypeCacheMiss(
       << Range(Pointer, Pointer + sizeof(uptr), "vptr for %2 base class of %1");
 
   MaybePrintStackTrace(pc, bp);
-  if (Abort)
-    Die();
 }
 
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss(

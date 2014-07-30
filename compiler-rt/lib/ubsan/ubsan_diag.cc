@@ -274,9 +274,9 @@ static void renderMemorySnippet(const Decorator &Decor, MemoryLocation Loc,
 }
 
 Diag::~Diag() {
-  InitIfNecessary();
+  // All diagnostics should be printed under report mutex.
+  CommonSanitizerReportMutex.CheckLocked();
   Decorator Decor;
-  SpinMutexLock l(&CommonSanitizerReportMutex);
   Printf(Decor.Bold());
 
   renderLocation(Loc);
@@ -299,4 +299,16 @@ Diag::~Diag() {
   if (Loc.isMemoryLocation())
     renderMemorySnippet(Decor, Loc.getMemoryLocation(), Ranges,
                         NumRanges, Args);
+}
+
+ScopedReport::ScopedReport(bool DieAfterReport)
+    : DieAfterReport(DieAfterReport) {
+  InitIfNecessary();
+  CommonSanitizerReportMutex.Lock();
+}
+
+ScopedReport::~ScopedReport() {
+  CommonSanitizerReportMutex.Unlock();
+  if (DieAfterReport)
+    Die();
 }
