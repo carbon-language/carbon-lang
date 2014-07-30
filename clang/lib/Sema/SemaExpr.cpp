@@ -12440,6 +12440,7 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   Var->setReferenced();
 
   TemplateSpecializationKind TSK = Var->getTemplateSpecializationKind();
+  bool MarkODRUsed = true;
 
   // If the context is not potentially evaluated, this is not an odr-use and
   // does not trigger instantiation.
@@ -12475,6 +12476,9 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
 
     if (!isTemplateInstantiation(TSK))
     	return;
+
+    // Instantiate, but do not mark as odr-used, variable templates.
+    MarkODRUsed = false;
   }
 
   VarTemplateSpecializationDecl *VarSpec =
@@ -12524,6 +12528,8 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
       }
     }
   }
+
+  if(!MarkODRUsed) return;
 
   // Per C++11 [basic.def.odr], a variable is odr-used "unless it satisfies
   // the requirements for appearing in a constant expression (5.19) and, if

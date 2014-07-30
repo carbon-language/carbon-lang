@@ -1,4 +1,7 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -verify %s
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y -verify %s -DCXX1Y
+
+#ifndef CXX1Y
 
 template<typename T, typename U, U> using alias_ref = T;
 template<typename T, typename U, U> void func_ref() {}
@@ -20,6 +23,7 @@ void f() {
   (void)func_ref<int, int&, U<1>::a>(); // expected-note {{here}}
   (void)class_ref<int, int&, U<2>::a>(); // expected-note {{here}}
 };
+
 
 template<int N>
 void fi() {
@@ -44,4 +48,12 @@ namespace N {
   }
   int j = f<int>();
 }
+
+#else
+// expected-no-diagnostics
+
+namespace { template<typename> extern int n; }
+template<typename T> int g() { return n<int>; }
+
+#endif
 
