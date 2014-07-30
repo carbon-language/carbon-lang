@@ -130,6 +130,12 @@ private:
                  bool UseUnscaled = false);
   unsigned EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt);
+  unsigned Emit_MUL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                       unsigned Op1, bool Op1IsKill);
+  unsigned Emit_SMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                         unsigned Op1, bool Op1IsKill);
+  unsigned Emit_UMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                         unsigned Op1, bool Op1IsKill);
   unsigned Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
   unsigned Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
   unsigned Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
@@ -1726,6 +1732,62 @@ unsigned AArch64FastISel::Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt) {
   }
 }
 
+unsigned AArch64FastISel::Emit_MUL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                      unsigned Op1, bool Op1IsKill) {
+  unsigned Opc, ZReg;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    RetVT = MVT::i32;
+    Opc = AArch64::MADDWrrr; ZReg = AArch64::WZR; break;
+  case MVT::i64:
+    Opc = AArch64::MADDXrrr; ZReg = AArch64::XZR; break;
+  }
+
+  // Create the base instruction, then add the operands.
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+    .addReg(Op0, getKillRegState(Op0IsKill))
+    .addReg(Op1, getKillRegState(Op1IsKill))
+    .addReg(ZReg, getKillRegState(true));
+
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::Emit_SMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                        unsigned Op1, bool Op1IsKill) {
+  if (RetVT != MVT::i64)
+    return 0;
+
+  // Create the base instruction, then add the operands.
+  unsigned ResultReg = createResultReg(&AArch64::GPR64RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::SMADDLrrr),
+          ResultReg)
+    .addReg(Op0, getKillRegState(Op0IsKill))
+    .addReg(Op1, getKillRegState(Op1IsKill))
+    .addReg(AArch64::XZR, getKillRegState(true));
+
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::Emit_UMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                        unsigned Op1, bool Op1IsKill) {
+  if (RetVT != MVT::i64)
+    return 0;
+
+  // Create the base instruction, then add the operands.
+  unsigned ResultReg = createResultReg(&AArch64::GPR64RegClass);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::UMADDLrrr),
+          ResultReg)
+    .addReg(Op0, getKillRegState(Op0IsKill))
+    .addReg(Op1, getKillRegState(Op1IsKill))
+    .addReg(AArch64::XZR, getKillRegState(true));
+
+  return ResultReg;
+}
+
 unsigned AArch64FastISel::Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
                                       uint64_t Shift) {
   unsigned Opc, ImmR, ImmS;
@@ -1930,38 +1992,22 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
       SrcVT != MVT::i8)
     return false;
 
-  unsigned Opc;
-  unsigned ZReg;
-  switch (SrcVT.SimpleTy) {
-  default:
-    return false;
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    ZReg = AArch64::WZR;
-    Opc = AArch64::MADDWrrr;
-    SrcVT = MVT::i32;
-    break;
-  case MVT::i64:
-    ZReg = AArch64::XZR;
-    Opc = AArch64::MADDXrrr;
-    break;
-  }
-
   unsigned Src0Reg = getRegForValue(I->getOperand(0));
   if (!Src0Reg)
     return false;
+  bool Src0IsKill = hasTrivialKill(I->getOperand(0));
 
   unsigned Src1Reg = getRegForValue(I->getOperand(1));
   if (!Src1Reg)
     return false;
+  bool Src1IsKill = hasTrivialKill(I->getOperand(1));
 
-  // Create the base instruction, then add the operands.
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(SrcVT));
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-      .addReg(Src0Reg)
-      .addReg(Src1Reg)
-      .addReg(ZReg);
+  unsigned ResultReg =
+    Emit_MUL_rr(SrcVT, Src0Reg, Src0IsKill, Src1Reg, Src1IsKill);
+
+  if (!ResultReg)
+    return false;
+
   UpdateValueMap(I, ResultReg);
   return true;
 }
