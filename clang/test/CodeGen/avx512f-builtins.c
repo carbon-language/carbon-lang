@@ -109,3 +109,10 @@ __m512d test_mm512_castpd256_pd512(__m256d a)
   // CHECK: shufflevector <4 x double> {{.*}} <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
   return _mm512_castpd256_pd512(a);
 }
+
+__mmask16 test_mm512_knot(__mmask16 a)
+{
+  // CHECK-LABEL: @test_mm512_knot
+  // CHECK: @llvm.x86.avx512.knot.w
+  return _mm512_knot(a);
+}

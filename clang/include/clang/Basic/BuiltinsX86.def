@@ -862,5 +862,6 @@ BUILTIN(__builtin_ia32_scatterpfdpd, "vUcV8iv*CiCi", "")
 BUILTIN(__builtin_ia32_scatterpfdps, "vUsV16iv*CiCi", "")
 BUILTIN(__builtin_ia32_scatterpfqpd, "vUcV8LLiv*CiCi", "")
 BUILTIN(__builtin_ia32_scatterpfqps, "vUcV8LLiv*CiCi", "")
+BUILTIN(__builtin_ia32_knothi, "UsUs", "")
 
 #undef BUILTIN

@@ -844,4 +844,12 @@ _mm512_store_pd(void *__P, __m512d __A)
   *(__m512d*)__P = __A;
 }
 
+/* Mask ops */
+
+static __inline __mmask16 __attribute__ ((__always_inline__, __nodebug__))
+_mm512_knot(__mmask16 __M)
+{
+  return __builtin_ia32_knothi(__M);
+}
+
 #endif // __AVX512FINTRIN_H
