@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify
 // expected-no-diagnostics
 
+// FIXME: This test is incompatible to MS compat mode.
+// REQUIRES: shell
+
 // Packed structs.
 struct s {
     char a;
