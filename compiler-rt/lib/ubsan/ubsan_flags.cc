@@ -17,11 +17,24 @@
 
 namespace __ubsan {
 
+static const char *GetRuntimeFlagsFromCompileDefinition() {
+#ifdef UBSAN_DEFAULT_OPTIONS
+// Stringize the macro value
+# define UBSAN_STRINGIZE(x) #x
+# define UBSAN_STRINGIZE_OPTIONS(options) UBSAN_STRINGIZE(options)
+  return UBSAN_STRINGIZE_OPTIONS(UBSAN_DEFAULT_OPTIONS);
+#else
+  return "";
+#endif
+}
+
 void InitializeCommonFlags() {
   CommonFlags *cf = common_flags();
   SetCommonFlagsDefaults(cf);
   cf->print_summary = false;
-  // Common flags may be overriden in UBSAN_OPTIONS.
+  // Override from compile definition.
+  ParseCommonFlagsFromString(cf, GetRuntimeFlagsFromCompileDefinition());
+  // Override from environment variable.
   ParseCommonFlagsFromString(cf, GetEnv("UBSAN_OPTIONS"));
 }
 
@@ -38,6 +51,8 @@ void InitializeFlags() {
   Flags *f = flags();
   // Default values.
   f->print_stacktrace = false;
+  // Override from compile definition.
+  ParseFlagsFromString(f, GetRuntimeFlagsFromCompileDefinition());
   // Override from environment variable.
   ParseFlagsFromString(f, GetEnv("UBSAN_OPTIONS"));
 }
