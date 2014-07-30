@@ -26,3 +26,12 @@ kernel void foo3(__global half * X) {
 // CHECK: metadata !{metadata !"kernel_arg_type", metadata !"half*"}
 // CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !""}
 // CHECK: metadata !{metadata !"kernel_arg_name", metadata !"X"}
+
+typedef unsigned int myunsignedint;
+kernel void foo4(__global unsigned int * X, __global myunsignedint * Y) {
+}
+// CHECK: metadata !{metadata !"kernel_arg_addr_space", i32 1, i32 1}
+// CHECK: metadata !{metadata !"kernel_arg_access_qual", metadata !"none", metadata !"none"}
+// CHECK: metadata !{metadata !"kernel_arg_type", metadata !"uint*", metadata !"myunsignedint*"}
+// CHECK: metadata !{metadata !"kernel_arg_type_qual", metadata !"", metadata !""}
+// CHECK: metadata !{metadata !"kernel_arg_name", metadata !"X", metadata !"Y"}
