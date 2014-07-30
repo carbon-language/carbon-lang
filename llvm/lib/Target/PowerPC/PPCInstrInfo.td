@@ -3064,6 +3064,19 @@ def MFSRIN: XForm_srin<31, 659, (outs gprc:$RS), (ins gprc:$RB),
 def MTMSR: XForm_mtmsr<31, 146, (outs), (ins gprc:$RS, i32imm:$L),
                     "mtmsr $RS, $L", IIC_SprMTMSR>;
 
+def WRTEE: XForm_mtmsr<31, 131, (outs), (ins gprc:$RS),
+                    "wrtee $RS", IIC_SprMTMSR>, Requires<[IsBookE]> {
+  let L = 0;
+}
+
+def WRTEEI: I<31, (outs), (ins i1imm:$E), "wrteei $E", IIC_SprMTMSR>,
+              Requires<[IsBookE]> {
+  bits<1> E;
+
+  let Inst{16} = E;
+  let Inst{21-30} = 163;
+}
+
 def MFMSR : XForm_rs<31, 83, (outs gprc:$RT), (ins),
                   "mfmsr $RT", IIC_SprMFMSR, []>;
 

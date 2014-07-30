@@ -160,3 +160,15 @@
 # CHECK-BE: rfci                            # encoding: [0x4c,0x00,0x00,0x66]
 # CHECK-LE: rfci                            # encoding: [0x66,0x00,0x00,0x4c]
             rfci
+
+# CHECK-BE: wrtee 12                        # encoding: [0x7d,0x80,0x01,0x06]
+# CHECK-LE: wrtee 12                        # encoding: [0x06,0x01,0x80,0x7d]
+            wrtee %r12
+
+# CHECK-BE: wrteei 0                        # encoding: [0x7c,0x00,0x01,0x46]
+# CHECK-LE: wrteei 0                        # encoding: [0x46,0x01,0x00,0x7c]
+            wrteei 0
+
+# CHECK-BE: wrteei 1                        # encoding: [0x7c,0x00,0x81,0x46]
+# CHECK-LE: wrteei 1                        # encoding: [0x46,0x81,0x00,0x7c]
+            wrteei 1
