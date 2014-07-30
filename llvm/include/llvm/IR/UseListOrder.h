@@ -54,15 +54,12 @@ class UseListShuffleVector {
   UseListShuffleVector(const UseListShuffleVector &X) LLVM_DELETED_FUNCTION;
   UseListShuffleVector &
   operator=(const UseListShuffleVector &X) LLVM_DELETED_FUNCTION;
+  UseListShuffleVector &
+  operator=(UseListShuffleVector &&X) LLVM_DELETED_FUNCTION;
 
 public:
   UseListShuffleVector() : Size(0) {}
   UseListShuffleVector(UseListShuffleVector &&X) { moveUnchecked(X); }
-  UseListShuffleVector &operator=(UseListShuffleVector &&X) {
-    destroy();
-    moveUnchecked(X);
-    return *this;
-  }
   explicit UseListShuffleVector(size_t Size) : Size(Size) {
     if (!isSmall())
       Storage.Ptr = new unsigned[Size];
@@ -93,16 +90,11 @@ struct UseListOrder {
   UseListOrder() : V(0), F(0) {}
   UseListOrder(UseListOrder &&X)
       : V(X.V), F(X.F), Shuffle(std::move(X.Shuffle)) {}
-  UseListOrder &operator=(UseListOrder &&X) {
-    V = X.V;
-    F = X.F;
-    Shuffle = std::move(X.Shuffle);
-    return *this;
-  }
 
 private:
   UseListOrder(const UseListOrder &X) LLVM_DELETED_FUNCTION;
   UseListOrder &operator=(const UseListOrder &X) LLVM_DELETED_FUNCTION;
+  UseListOrder &operator=(UseListOrder &&X) LLVM_DELETED_FUNCTION;
 };
 
 typedef std::vector<UseListOrder> UseListOrderStack;
