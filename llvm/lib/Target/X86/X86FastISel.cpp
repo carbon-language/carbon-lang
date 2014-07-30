@@ -2163,18 +2163,6 @@ bool X86FastISel::TryEmitSmallMemcpy(X86AddressMode DestAM,
   return true;
 }
 
-static bool isCommutativeIntrinsic(IntrinsicInst const *II) {
-  switch (II->getIntrinsicID()) {
-  case Intrinsic::sadd_with_overflow:
-  case Intrinsic::uadd_with_overflow:
-  case Intrinsic::smul_with_overflow:
-  case Intrinsic::umul_with_overflow:
-    return true;
-  default:
-    return false;
-  }
-}
-
 bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
   // FIXME: Handle more intrinsics.
   switch (II->getIntrinsicID()) {

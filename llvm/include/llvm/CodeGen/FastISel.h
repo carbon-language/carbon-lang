@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/IR/CallingConv.h"
+#include "llvm/IR/IntrinsicInst.h"
 
 namespace llvm {
 
@@ -30,7 +31,6 @@ class CallInst;
 class DataLayout;
 class FunctionLoweringInfo;
 class Instruction;
-class IntrinsicInst;
 class LoadInst;
 class MVT;
 class MachineConstantPool;
@@ -532,6 +532,18 @@ protected:
 
   bool LowerCallTo(const CallInst *CI, const char *SymName, unsigned NumArgs);
   bool LowerCallTo(CallLoweringInfo &CLI);
+
+  bool isCommutativeIntrinsic(IntrinsicInst const *II) {
+    switch (II->getIntrinsicID()) {
+    case Intrinsic::sadd_with_overflow:
+    case Intrinsic::uadd_with_overflow:
+    case Intrinsic::smul_with_overflow:
+    case Intrinsic::umul_with_overflow:
+      return true;
+    default:
+      return false;
+    }
+  }
 
 private:
   bool SelectBinaryOp(const User *I, unsigned ISDOpcode);
