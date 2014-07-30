@@ -137,7 +137,7 @@ std::unique_ptr<Module> TempFile::readBitcode(LLVMContext &Context) const {
   }
 
   std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOr.get());
-  ErrorOr<Module *> ModuleOr = parseBitcodeFile(Buffer.release(), Context);
+  ErrorOr<Module *> ModuleOr = parseBitcodeFile(Buffer.get(), Context);
   if (!ModuleOr) {
     DEBUG(dbgs() << "error: " << ModuleOr.getError().message() << "\n");
     return nullptr;
