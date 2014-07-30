@@ -1000,21 +1000,17 @@ CFGBlock *CFGBuilder::addInitializer(CXXCtorInitializer *I) {
   if (!BuildOpts.AddInitializers)
     return Block;
 
-  bool IsReference = false;
   bool HasTemporaries = false;
 
   // Destructors of temporaries in initialization expression should be called
   // after initialization finishes.
   Expr *Init = I->getInit();
   if (Init) {
-    if (FieldDecl *FD = I->getAnyMember())
-      IsReference = FD->getType()->isReferenceType();
     HasTemporaries = isa<ExprWithCleanups>(Init);
 
     if (BuildOpts.AddTemporaryDtors && HasTemporaries) {
       // Generate destructors for temporaries in initialization expression.
-      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr(),
-          IsReference);
+      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr());
     }
   }
 
@@ -1946,7 +1942,6 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
     return Block;
   }
 
-  bool IsReference = false;
   bool HasTemporaries = false;
 
   // Guard static initializers under a branch.
@@ -1968,13 +1963,11 @@ CFGBlock *CFGBuilder::VisitDeclSubExpr(DeclStmt *DS) {
   // after initialization finishes.
   Expr *Init = VD->getInit();
   if (Init) {
-    IsReference = VD->getType()->isReferenceType();
     HasTemporaries = isa<ExprWithCleanups>(Init);
 
     if (BuildOpts.AddTemporaryDtors && HasTemporaries) {
       // Generate destructors for temporaries in initialization expression.
-      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr(),
-          IsReference);
+      VisitForTemporaryDtors(cast<ExprWithCleanups>(Init)->getSubExpr());
     }
   }
 
@@ -3492,13 +3485,32 @@ tryAgain:
       E = cast<CastExpr>(E)->getSubExpr();
       goto tryAgain;
 
+    case Stmt::CXXFunctionalCastExprClass:
+      // For functional cast we want BindToTemporary to be passed further.
+      E = cast<CXXFunctionalCastExpr>(E)->getSubExpr();
+      goto tryAgain;
+
     case Stmt::ParenExprClass:
       E = cast<ParenExpr>(E)->getSubExpr();
       goto tryAgain;
 
-    case Stmt::MaterializeTemporaryExprClass:
-      E = cast<MaterializeTemporaryExpr>(E)->GetTemporaryExpr();
+    case Stmt::MaterializeTemporaryExprClass: {
+      const MaterializeTemporaryExpr* MTE = cast<MaterializeTemporaryExpr>(E);
+      BindToTemporary = (MTE->getStorageDuration() != SD_FullExpression);
+      SmallVector<const Expr *, 2> CommaLHSs;
+      SmallVector<SubobjectAdjustment, 2> Adjustments;
+      // Find the expression whose lifetime needs to be extended.
+      E = const_cast<Expr *>(
+          cast<MaterializeTemporaryExpr>(E)
+              ->GetTemporaryExpr()
+              ->skipRValueSubobjectAdjustments(CommaLHSs, Adjustments));
+      // Visit the skipped comma operator left-hand sides for other temporaries.
+      for (const Expr *CommaLHS : CommaLHSs) {
+        VisitForTemporaryDtors(const_cast<Expr *>(CommaLHS),
+                               /*BindToTemporary=*/false);
+      }
       goto tryAgain;
+    }
 
     case Stmt::BlockExprClass:
       // Don't recurse into blocks; their subexpressions don't get evaluated

@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -std=c++11 %s > %t 2>&1
+// RUN: %clang_cc1 -analyze -analyzer-checker=debug.DumpCFG -triple x86_64-apple-darwin12 -analyzer-config cfg-temporary-dtors=true -std=c++11 %s > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
 
 // CHECK-LABEL: void checkWrap(int i)
@@ -374,6 +374,61 @@ void test_placement_new() {
 void test_placement_new_array() {
   int buffer[16];
   MyClass* obj = new (buffer) MyClass[5];
+}
+
+
+// CHECK-LABEL: void test_lifetime_extended_temporaries()
+// CHECK: [B1]
+struct LifetimeExtend { LifetimeExtend(int); ~LifetimeExtend(); };
+struct Aggregate { const LifetimeExtend a; const LifetimeExtend b; };
+struct AggregateRef { const LifetimeExtend &a; const LifetimeExtend &b; };
+void test_lifetime_extended_temporaries() {
+  // CHECK: LifetimeExtend(1);
+  // CHECK-NEXT: : 1
+  // CHECK-NEXT: ~LifetimeExtend()
+  // CHECK-NOT: ~LifetimeExtend()
+  {
+    const LifetimeExtend &l = LifetimeExtend(1);
+    1;
+  }
+  // CHECK: LifetimeExtend(2)
+  // CHECK-NEXT: ~LifetimeExtend()
+  // CHECK-NEXT: : 2
+  // CHECK-NOT: ~LifetimeExtend()
+  {
+    // No life-time extension.
+    const int &l = (LifetimeExtend(2), 2);
+    2;
+  }
+  // CHECK: LifetimeExtend(3)
+  // CHECK-NEXT: : 3
+  // CHECK-NEXT: ~LifetimeExtend()
+  // CHECK-NOT: ~LifetimeExtend()
+  {
+    // The last one is lifetime extended.
+    const LifetimeExtend &l = (3, LifetimeExtend(3));
+    3;
+  }
+  // CHECK: LifetimeExtend(4)
+  // CHECK-NEXT: ~LifetimeExtend()
+  // CHECK-NEXT: ~LifetimeExtend()
+  // CHECK-NEXT: : 4
+  // CHECK-NOT: ~LifetimeExtend()
+  {
+    Aggregate a{LifetimeExtend(4), LifetimeExtend(4)};
+    4;
+  }
+  // CHECK: LifetimeExtend(5)
+  // CHECK-NEXT: : 5
+  // FIXME: We want to emit the destructors of the lifetime
+  // extended variables here.
+  // CHECK-NOT: ~LifetimeExtend()
+  {
+    AggregateRef a{LifetimeExtend(5), LifetimeExtend(5)};
+    5;
+  }
+  // FIXME: Add tests for lifetime extension via subobject
+  // references (LifetimeExtend().some_member).
 }
 
 
