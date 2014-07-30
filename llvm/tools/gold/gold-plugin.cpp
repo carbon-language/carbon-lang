@@ -387,10 +387,9 @@ static bool mustPreserve(const claimed_file &F, int i) {
   return false;
 }
 
-/// all_symbols_read_hook - gold informs us that all symbols have been read.
-/// At this point, we use get_symbols to see if any of our definitions have
-/// been overridden by a native object file. Then, perform optimization and
-/// codegen.
+/// gold informs us that all symbols have been read. At this point, we use
+/// get_symbols to see if any of our definitions have been overridden by a
+/// native object file. Then, perform optimization and codegen.
 static ld_plugin_status all_symbols_read_hook(void) {
   // FIXME: raw_fd_ostream should be able to represent an unopened file.
   std::unique_ptr<raw_fd_ostream> api_file;
