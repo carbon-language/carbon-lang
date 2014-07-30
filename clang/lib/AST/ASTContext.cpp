@@ -1432,12 +1432,13 @@ bool ASTContext::isAlignmentRequired(QualType T) const {
 }
 
 TypeInfo ASTContext::getTypeInfo(const Type *T) const {
-  TypeInfo TI = MemoizedTypeInfo[T];
-  if (!TI.Align) {
-    // This call can invalidate MemoizedTypeInfo[T], so we need a second lookup.
-    TI = getTypeInfoImpl(T);
-    MemoizedTypeInfo[T] = TI;
-  }
+  TypeInfoMap::iterator I = MemoizedTypeInfo.find(T);
+  if (I != MemoizedTypeInfo.end())
+    return I->second;
+
+  // This call can invalidate MemoizedTypeInfo[T], so we need a second lookup.
+  TypeInfo TI = getTypeInfoImpl(T);
+  MemoizedTypeInfo[T] = TI;
   return TI;
 }
 
