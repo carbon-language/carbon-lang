@@ -830,6 +830,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case thumb_movw:
     assert(thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
+    if (targetIsThumb)
+      value16 |= 1;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt:
@@ -840,6 +842,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case thumb_movw_funcRel:
     assert(thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
+    if (targetIsThumb)
+      value16 |= 1;
     write32(*loc32, _swap, setWordFromThumbMov(*loc32, value16));
     break;
   case thumb_movt_funcRel:
@@ -856,6 +860,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case arm_movw:
     assert(!thumbMode);
     value16 = (targetAddress + ref.addend()) & 0xFFFF;
+    if (targetIsThumb)
+      value16 |= 1;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt:
@@ -866,6 +872,8 @@ void ArchHandler_arm::applyFixupFinal(const Reference &ref, uint8_t *location,
   case arm_movw_funcRel:
     assert(!thumbMode);
     value16 = (targetAddress - inAtomAddress + ref.addend()) & 0xFFFF;
+    if (targetIsThumb)
+      value16 |= 1;
     write32(*loc32, _swap, setWordFromArmMov(*loc32, value16));
     break;
   case arm_movt_funcRel:
