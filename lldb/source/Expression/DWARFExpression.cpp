@@ -1456,14 +1456,11 @@ DWARFExpression::Evaluate
                         if (process)
                         {
                             lldb::addr_t pointer_addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
-                            uint8_t addr_bytes[sizeof(lldb::addr_t)];
-                            uint32_t addr_size = process->GetAddressByteSize();
                             Error error;
-                            if (process->ReadMemory(pointer_addr, &addr_bytes, addr_size, error) == addr_size)
+                            lldb:addr_t pointer_value = process->ReadPointerFromMemory(pointer_addr, error);
+                            if (pointer_value != LLDB_INVALID_ADDRESS)
                             {
-                                DataExtractor addr_data(addr_bytes, sizeof(addr_bytes), process->GetByteOrder(), addr_size);
-                                lldb::offset_t addr_data_offset = 0;
-                                stack.back().GetScalar() = addr_data.GetPointer(&addr_data_offset);
+                                stack.back().GetScalar() = pointer_value;
                                 stack.back().ClearContext();
                             }
                             else
