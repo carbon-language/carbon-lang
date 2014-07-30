@@ -32,6 +32,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 #include <memory>
 
 using namespace llvm;
@@ -2389,34 +2390,18 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   const char *Suffixes = Base[0] != 'f' ? "bwlq" : "slt\0";
 
   // Check for the various suffix matches.
-  Tmp[Base.size()] = Suffixes[0];
   unsigned ErrorInfoIgnore;
   unsigned ErrorInfoMissingFeature = 0; // Init suppresses compiler warnings.
-  unsigned Match1, Match2, Match3, Match4;
+  unsigned Match[4];
 
-  Match1 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
-                                MatchingInlineAsm, isParsingIntelSyntax());
-  // If this returned as a missing feature failure, remember that.
-  if (Match1 == Match_MissingFeature)
-    ErrorInfoMissingFeature = ErrorInfoIgnore;
-  Tmp[Base.size()] = Suffixes[1];
-  Match2 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
-                                MatchingInlineAsm, isParsingIntelSyntax());
-  // If this returned as a missing feature failure, remember that.
-  if (Match2 == Match_MissingFeature)
-    ErrorInfoMissingFeature = ErrorInfoIgnore;
-  Tmp[Base.size()] = Suffixes[2];
-  Match3 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
-                                MatchingInlineAsm, isParsingIntelSyntax());
-  // If this returned as a missing feature failure, remember that.
-  if (Match3 == Match_MissingFeature)
-    ErrorInfoMissingFeature = ErrorInfoIgnore;
-  Tmp[Base.size()] = Suffixes[3];
-  Match4 = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
-                                MatchingInlineAsm, isParsingIntelSyntax());
-  // If this returned as a missing feature failure, remember that.
-  if (Match4 == Match_MissingFeature)
-    ErrorInfoMissingFeature = ErrorInfoIgnore;
+  for (unsigned I = 0, E = array_lengthof(Match); I != E; ++I) {
+    Tmp.back() = Suffixes[I];
+    Match[I] = MatchInstructionImpl(Operands, Inst, ErrorInfoIgnore,
+                                  MatchingInlineAsm, isParsingIntelSyntax());
+    // If this returned as a missing feature failure, remember that.
+    if (Match[I] == Match_MissingFeature)
+      ErrorInfoMissingFeature = ErrorInfoIgnore;
+  }
 
   // Restore the old token.
   Op.setTokenValue(Base);
@@ -2425,8 +2410,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // instruction will already have been filled in correctly, since the failing
   // matches won't have modified it).
   unsigned NumSuccessfulMatches =
-    (Match1 == Match_Success) + (Match2 == Match_Success) +
-    (Match3 == Match_Success) + (Match4 == Match_Success);
+      std::count(std::begin(Match), std::end(Match), Match_Success);
   if (NumSuccessfulMatches == 1) {
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
@@ -2442,10 +2426,9 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (NumSuccessfulMatches > 1) {
     char MatchChars[4];
     unsigned NumMatches = 0;
-    if (Match1 == Match_Success) MatchChars[NumMatches++] = Suffixes[0];
-    if (Match2 == Match_Success) MatchChars[NumMatches++] = Suffixes[1];
-    if (Match3 == Match_Success) MatchChars[NumMatches++] = Suffixes[2];
-    if (Match4 == Match_Success) MatchChars[NumMatches++] = Suffixes[3];
+    for (unsigned I = 0, E = array_lengthof(Match); I != E; ++I)
+      if (Match[I] == Match_Success)
+        MatchChars[NumMatches++] = Suffixes[I];
 
     SmallString<126> Msg;
     raw_svector_ostream OS(Msg);
@@ -2466,8 +2449,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   // If all of the instructions reported an invalid mnemonic, then the original
   // mnemonic was invalid.
-  if ((Match1 == Match_MnemonicFail) && (Match2 == Match_MnemonicFail) &&
-      (Match3 == Match_MnemonicFail) && (Match4 == Match_MnemonicFail)) {
+  if (std::count(std::begin(Match), std::end(Match), Match_MnemonicFail) == 4) {
     if (!WasOriginallyInvalidOperand) {
       ArrayRef<SMRange> Ranges =
           MatchingInlineAsm ? EmptyRanges : Op.getLocRange();
@@ -2495,8 +2477,8 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   // If one instruction matched with a missing feature, report this as a
   // missing feature.
-  if ((Match1 == Match_MissingFeature) + (Match2 == Match_MissingFeature) +
-      (Match3 == Match_MissingFeature) + (Match4 == Match_MissingFeature) == 1){
+  if (std::count(std::begin(Match), std::end(Match),
+                 Match_MissingFeature) == 1) {
     std::string Msg = "instruction requires:";
     unsigned Mask = 1;
     for (unsigned i = 0; i < (sizeof(ErrorInfoMissingFeature)*8-1); ++i) {
@@ -2511,8 +2493,8 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   // If one instruction matched with an invalid operand, report this as an
   // operand failure.
-  if ((Match1 == Match_InvalidOperand) + (Match2 == Match_InvalidOperand) +
-      (Match3 == Match_InvalidOperand) + (Match4 == Match_InvalidOperand) == 1){
+  if (std::count(std::begin(Match), std::end(Match),
+                 Match_InvalidOperand) == 1) {
     Error(IDLoc, "invalid operand for instruction", EmptyRanges,
           MatchingInlineAsm);
     return true;
