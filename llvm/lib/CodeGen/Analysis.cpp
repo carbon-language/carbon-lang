@@ -25,6 +25,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Transforms/Utils/GlobalStatus.h"
 using namespace llvm;
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
@@ -605,4 +606,30 @@ bool llvm::returnTypeIsEligibleForTailCall(const Function *F,
   } while(nextRealType(RetSubTypes, RetPath));
 
   return true;
+}
+
+bool llvm::canBeOmittedFromSymbolTable(const GlobalValue *GV) {
+  if (!GV->hasLinkOnceODRLinkage())
+    return false;
+
+  if (GV->hasUnnamedAddr())
+    return true;
+
+  // If it is a non constant variable, it needs to be uniqued across shared
+  // objects.
+  if (const GlobalVariable *Var = dyn_cast<GlobalVariable>(GV)) {
+    if (!Var->isConstant())
+      return false;
+  }
+
+  // An alias can point to a variable. We could try to resolve the alias to
+  // decide, but for now just don't hide them.
+  if (isa<GlobalAlias>(GV))
+    return false;
+
+  GlobalStatus GS;
+  if (GlobalStatus::analyzeGlobal(GV, GS))
+    return false;
+
+  return !GS.IsCompared;
 }
