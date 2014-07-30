@@ -1640,6 +1640,10 @@ struct DetectedMultilibs {
   llvm::Optional<Multilib> BiarchSibling;
 };
 
+static Multilib makeMultilib(StringRef commonSuffix) {
+  return Multilib(commonSuffix, commonSuffix, commonSuffix);
+}
+
 static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
                               const llvm::opt::ArgList &Args,
                               DetectedMultilibs &Result) {
@@ -1673,64 +1677,37 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   // Check for FSF toolchain multilibs
   MultilibSet FSFMipsMultilibs;
   {
-    Multilib MArchMips32 = Multilib()
-      .gccSuffix("/mips32")
-      .osSuffix("/mips32")
-      .includeSuffix("/mips32")
+    auto MArchMips32 = makeMultilib("/mips32")
       .flag("+m32").flag("-m64").flag("-mmicromips").flag("+march=mips32");
 
-    Multilib MArchMicroMips = Multilib()
-      .gccSuffix("/micromips")
-      .osSuffix("/micromips")
-      .includeSuffix("/micromips")
+    auto MArchMicroMips = makeMultilib("/micromips")
       .flag("+m32").flag("-m64").flag("+mmicromips");
 
-    Multilib MArchMips64r2 = Multilib()
-      .gccSuffix("/mips64r2")
-      .osSuffix("/mips64r2")
-      .includeSuffix("/mips64r2")
+    auto MArchMips64r2 = makeMultilib("/mips64r2")
       .flag("-m32").flag("+m64").flag("+march=mips64r2");
 
-    Multilib MArchMips64 = Multilib()
-      .gccSuffix("/mips64")
-      .osSuffix("/mips64")
-      .includeSuffix("/mips64")
+    auto MArchMips64 = makeMultilib("/mips64")
       .flag("-m32").flag("+m64").flag("-march=mips64r2");
 
-    Multilib MArchDefault = Multilib()
+    auto MArchDefault = makeMultilib("")
       .flag("+m32").flag("-m64").flag("-mmicromips").flag("+march=mips32r2");
 
-    Multilib Mips16 = Multilib()
-      .gccSuffix("/mips16")
-      .osSuffix("/mips16")
-      .includeSuffix("/mips16")
+    auto Mips16 = makeMultilib("/mips16")
       .flag("+mips16");
 
-    Multilib MAbi64 = Multilib()
-      .gccSuffix("/64")
-      .osSuffix("/64")
-      .includeSuffix("/64")
+    auto MAbi64 = makeMultilib("/64")
       .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
-    Multilib BigEndian = Multilib()
+    auto BigEndian = makeMultilib("")
       .flag("+EB").flag("-EL");
 
-    Multilib LittleEndian = Multilib()
-      .gccSuffix("/el")
-      .osSuffix("/el")
-      .includeSuffix("/el")
+    auto LittleEndian = makeMultilib("/el")
       .flag("+EL").flag("-EB");
 
-    Multilib SoftFloat = Multilib()
-      .gccSuffix("/sof")
-      .osSuffix("/sof")
-      .includeSuffix("/sof")
+    auto SoftFloat = makeMultilib("/sof")
       .flag("+msoft-float");
 
-    Multilib Nan2008 = Multilib()
-      .gccSuffix("/nan2008")
-      .osSuffix("/nan2008")
-      .includeSuffix("/nan2008")
+    auto Nan2008 = makeMultilib("/nan2008")
       .flag("+mnan=2008");
 
     FSFMipsMultilibs = MultilibSet()
@@ -1755,47 +1732,32 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   // Check for Code Sourcery toolchain multilibs
   MultilibSet CSMipsMultilibs;
   {
-    Multilib MArchMips16 = Multilib()
-      .gccSuffix("/mips16")
-      .osSuffix("/mips16")
-      .includeSuffix("/mips16")
+    auto MArchMips16 = makeMultilib("/mips16")
       .flag("+m32").flag("+mips16");
 
-    Multilib MArchMicroMips = Multilib()
-      .gccSuffix("/micromips")
-      .osSuffix("/micromips")
-      .includeSuffix("/micromips")
+    auto MArchMicroMips = makeMultilib("/micromips")
       .flag("+m32").flag("+mmicromips");
 
-    Multilib MArchDefault = Multilib()
+    auto MArchDefault = makeMultilib("")
       .flag("-mips16").flag("-mmicromips");
 
-    Multilib SoftFloat = Multilib()
-      .gccSuffix("/soft-float")
-      .osSuffix("/soft-float")
-      .includeSuffix("/soft-float")
+    auto SoftFloat = makeMultilib("/soft-float")
       .flag("+msoft-float");
 
-    Multilib Nan2008 = Multilib()
-      .gccSuffix("/nan2008")
-      .osSuffix("/nan2008")
-      .includeSuffix("/nan2008")
+    auto Nan2008 = makeMultilib("/nan2008")
       .flag("+mnan=2008");
 
-    Multilib DefaultFloat = Multilib()
+    auto DefaultFloat = makeMultilib("")
       .flag("-msoft-float").flag("-mnan=2008");
 
-    Multilib BigEndian = Multilib()
+    auto BigEndian = makeMultilib("")
       .flag("+EB").flag("-EL");
 
-    Multilib LittleEndian = Multilib()
-      .gccSuffix("/el")
-      .osSuffix("/el")
-      .includeSuffix("/el")
+    auto LittleEndian = makeMultilib("/el")
       .flag("+EL").flag("-EB");
 
     // Note that this one's osSuffix is ""
-    Multilib MAbi64 = Multilib()
+    auto MAbi64 = makeMultilib("")
       .gccSuffix("/64")
       .includeSuffix("/64")
       .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
@@ -1838,22 +1800,13 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
 
   MultilibSet ImgMultilibs;
   {
-    Multilib Mips64r6 = Multilib()
-      .gccSuffix("/mips64r6")
-      .osSuffix("/mips64r6")
-      .includeSuffix("/mips64r6")
+    auto Mips64r6 = makeMultilib("/mips64r6")
       .flag("+m64").flag("-m32");
 
-    Multilib LittleEndian = Multilib()
-      .gccSuffix("/el")
-      .osSuffix("/el")
-      .includeSuffix("/el")
+    auto LittleEndian = makeMultilib("/el")
       .flag("+EL").flag("-EB");
 
-    Multilib MAbi64 = Multilib()
-      .gccSuffix("/64")
-      .osSuffix("/64")
-      .includeSuffix("/64")
+    auto MAbi64 = makeMultilib("/64")
       .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
     ImgMultilibs = MultilibSet()
