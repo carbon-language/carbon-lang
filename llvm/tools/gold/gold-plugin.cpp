@@ -100,8 +100,9 @@ namespace options {
       llvm::StringRef path = opt.substr(strlen("also-emit-llvm="));
       generate_bc_file = BC_ALSO;
       if (!bc_path.empty()) {
-        (*message)(LDPL_WARNING, "Path to the output IL file specified twice. "
-                   "Discarding %s", opt_);
+        message(LDPL_WARNING, "Path to the output IL file specified twice. "
+                              "Discarding %s",
+                opt_);
       } else {
         bc_path = path;
       }
@@ -150,8 +151,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
             output_type = LTO_CODEGEN_PIC_MODEL_STATIC;
             break;
           default:
-            (*message)(LDPL_ERROR, "Unknown output file type %d",
-                       tv->tv_u.tv_val);
+            message(LDPL_ERROR, "Unknown output file type %d", tv->tv_u.tv_val);
             return LDPS_ERR;
         }
         break;
@@ -207,11 +207,11 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
   }
 
   if (!registeredClaimFile) {
-    (*message)(LDPL_ERROR, "register_claim_file not passed to LLVMgold.");
+    message(LDPL_ERROR, "register_claim_file not passed to LLVMgold.");
     return LDPS_ERR;
   }
   if (!add_symbols) {
-    (*message)(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
+    message(LDPL_ERROR, "add_symbols not passed to LLVMgold.");
     return LDPS_ERR;
   }
 
@@ -252,7 +252,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   std::unique_ptr<MemoryBuffer> buffer;
   if (get_view) {
     if (get_view(file->handle, &view) != LDPS_OK) {
-      (*message)(LDPL_ERROR, "Failed to get a view of %s", file->name);
+      message(LDPL_ERROR, "Failed to get a view of %s", file->name);
       return LDPS_ERR;
     }
   } else {
@@ -266,7 +266,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         MemoryBuffer::getOpenFileSlice(file->fd, file->name, file->filesize,
                                        offset);
     if (std::error_code EC = BufferOrErr.getError()) {
-      (*message)(LDPL_ERROR, EC.message().c_str());
+      message(LDPL_ERROR, EC.message().c_str());
       return LDPS_ERR;
     }
     buffer = std::move(BufferOrErr.get());
@@ -282,9 +282,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   LTOModule *M =
       LTOModule::createFromBuffer(view, file->filesize, TargetOpts, Error);
   if (!M) {
-    (*message)(LDPL_ERROR,
-               "LLVM gold plugin has failed to create LTO module: %s",
-               Error.c_str());
+    message(LDPL_ERROR, "LLVM gold plugin has failed to create LTO module: %s",
+            Error.c_str());
     return LDPS_ERR;
   }
 
@@ -325,7 +324,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         sym.visibility = LDPV_DEFAULT;
         break;
       default:
-        (*message)(LDPL_ERROR, "Unknown scope attribute: %d", scope);
+        message(LDPL_ERROR, "Unknown scope attribute: %d", scope);
         return LDPS_ERR;
     }
 
@@ -349,7 +348,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
         sym.def = LDPK_WEAKUNDEF;
         break;
       default:
-        (*message)(LDPL_ERROR, "Unknown definition attribute: %d", definition);
+        message(LDPL_ERROR, "Unknown definition attribute: %d", definition);
         return LDPS_ERR;
     }
 
@@ -361,8 +360,8 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   cf.syms.reserve(cf.syms.size());
 
   if (!cf.syms.empty()) {
-    if ((*add_symbols)(cf.handle, cf.syms.size(), &cf.syms[0]) != LDPS_OK) {
-      (*message)(LDPL_ERROR, "Unable to add symbols!");
+    if (add_symbols(cf.handle, cf.syms.size(), &cf.syms[0]) != LDPS_OK) {
+      message(LDPL_ERROR, "Unable to add symbols!");
       return LDPS_ERR;
     }
   }
@@ -370,7 +369,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   if (CodeGen) {
     std::string Error;
     if (!CodeGen->addModule(M, Error)) {
-      (*message)(LDPL_ERROR, "Error linking module: %s", Error.c_str());
+      message(LDPL_ERROR, "Error linking module: %s", Error.c_str());
       return LDPS_ERR;
     }
   }
@@ -402,15 +401,15 @@ static ld_plugin_status all_symbols_read_hook(void) {
     std::string Error;
     api_file.reset(new raw_fd_ostream("apifile.txt", Error, sys::fs::F_None));
     if (!Error.empty())
-      (*message)(LDPL_FATAL, "Unable to open apifile.txt for writing: %s",
-                 Error.c_str());
+      message(LDPL_FATAL, "Unable to open apifile.txt for writing: %s",
+              Error.c_str());
   }
 
   for (std::list<claimed_file>::iterator I = Modules.begin(),
          E = Modules.end(); I != E; ++I) {
     if (I->syms.empty())
       continue;
-    (*get_symbols)(I->handle, I->syms.size(), &I->syms[0]);
+    get_symbols(I->handle, I->syms.size(), &I->syms[0]);
     for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
       if (mustPreserve(*I, i)) {
         CodeGen->addMustPreserveSymbol(I->syms[i].name);
@@ -436,7 +435,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
       path = output_name + ".bc";
     std::string Error;
     if (!CodeGen->writeMergedModules(path.c_str(), Error))
-      (*message)(LDPL_FATAL, "Failed to write the output file.");
+      message(LDPL_FATAL, "Failed to write the output file.");
     if (options::generate_bc_file == options::BC_ONLY) {
       delete CodeGen;
       exit(0);
@@ -449,7 +448,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
     std::string Error;
     if (!CodeGen->compile_to_file(&Temp, /*DisableOpt*/ false, /*DisableInline*/
                                   false, /*DisableGVNLoadPRE*/ false, Error))
-      (*message)(LDPL_ERROR, "Could not produce a combined object file\n");
+      message(LDPL_ERROR, "Could not produce a combined object file\n");
     ObjPath = Temp;
   }
 
@@ -462,15 +461,15 @@ static ld_plugin_status all_symbols_read_hook(void) {
     }
   }
 
-  if ((*add_input_file)(ObjPath.c_str()) != LDPS_OK) {
-    (*message)(LDPL_ERROR, "Unable to add .o file to the link.");
-    (*message)(LDPL_ERROR, "File left behind in: %s", ObjPath.c_str());
+  if (add_input_file(ObjPath.c_str()) != LDPS_OK) {
+    message(LDPL_ERROR, "Unable to add .o file to the link.");
+    message(LDPL_ERROR, "File left behind in: %s", ObjPath.c_str());
     return LDPS_ERR;
   }
 
   if (!options::extra_library_path.empty() &&
       set_extra_library_path(options::extra_library_path.c_str()) != LDPS_OK) {
-    (*message)(LDPL_ERROR, "Unable to set the extra library path.");
+    message(LDPL_ERROR, "Unable to set the extra library path.");
     return LDPS_ERR;
   }
 
@@ -484,8 +483,8 @@ static ld_plugin_status cleanup_hook(void) {
   for (int i = 0, e = Cleanup.size(); i != e; ++i) {
     std::error_code EC = sys::fs::remove(Cleanup[i]);
     if (EC)
-      (*message)(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
-                 EC.message().c_str());
+      message(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
+              EC.message().c_str());
   }
 
   return LDPS_OK;
