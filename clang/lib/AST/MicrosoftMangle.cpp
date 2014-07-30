@@ -1179,10 +1179,20 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     }
     break;
   }
-  case TemplateArgument::Template:
-    mangleType(cast<TagDecl>(
-        TA.getAsTemplate().getAsTemplateDecl()->getTemplatedDecl()));
+  case TemplateArgument::Template: {
+    const NamedDecl *ND =
+        TA.getAsTemplate().getAsTemplateDecl()->getTemplatedDecl();
+    if (const auto *TD = dyn_cast<TagDecl>(ND)) {
+      mangleType(TD);
+    } else if (isa<TypeAliasDecl>(ND)) {
+      // FIXME: The mangling, while compatible with VS "14", is horribly
+      // broken.  Update this when they release their next compiler.
+      Out << '?';
+    } else {
+      llvm_unreachable("unexpected template template NamedDecl!");
+    }
     break;
+  }
   }
 }
 

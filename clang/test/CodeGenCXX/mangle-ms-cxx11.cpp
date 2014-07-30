@@ -139,3 +139,17 @@ void templ_fun_with_pack() {}
 
 template void templ_fun_with_pack<>();
 // CHECK-DAG: @"\01??$templ_fun_with_pack@$S@@YAXXZ"
+
+namespace PR20047 {
+template <typename T>
+struct A {};
+
+template <typename T>
+using AliasA = A<T>;
+
+template <template <typename> class>
+void f() {}
+
+template void f<AliasA>();
+// CHECK-DAG: @"\01??$f@?@PR20047@@YAXXZ"
+}
