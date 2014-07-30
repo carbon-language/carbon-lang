@@ -162,7 +162,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         ld_plugin_register_claim_file callback;
         callback = tv->tv_u.tv_register_claim_file;
 
-        if ((*callback)(claim_file_hook) != LDPS_OK)
+        if (callback(claim_file_hook) != LDPS_OK)
           return LDPS_ERR;
 
         registeredClaimFile = true;
@@ -171,7 +171,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         ld_plugin_register_all_symbols_read callback;
         callback = tv->tv_u.tv_register_all_symbols_read;
 
-        if ((*callback)(all_symbols_read_hook) != LDPS_OK)
+        if (callback(all_symbols_read_hook) != LDPS_OK)
           return LDPS_ERR;
 
         RegisteredAllSymbolsRead = true;
@@ -180,7 +180,7 @@ ld_plugin_status onload(ld_plugin_tv *tv) {
         ld_plugin_register_cleanup callback;
         callback = tv->tv_u.tv_register_cleanup;
 
-        if ((*callback)(cleanup_hook) != LDPS_OK)
+        if (callback(cleanup_hook) != LDPS_OK)
           return LDPS_ERR;
       } break;
       case LDPT_ADD_SYMBOLS:
