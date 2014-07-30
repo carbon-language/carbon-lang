@@ -43,8 +43,6 @@ static void InitializeFlags() {
   f->resolution = 0;
   f->max_leaks = 0;
   f->exitcode = 23;
-  f->print_suppressions = true;
-  f->suppressions="";
   f->use_registers = true;
   f->use_globals = true;
   f->use_stacks = true;
@@ -72,8 +70,6 @@ static void InitializeFlags() {
     ParseFlag(options, &f->log_pointers, "log_pointers", "");
     ParseFlag(options, &f->log_threads, "log_threads", "");
     ParseFlag(options, &f->exitcode, "exitcode", "");
-    ParseFlag(options, &f->print_suppressions, "print_suppressions", "");
-    ParseFlag(options, &f->suppressions, "suppressions", "");
   }
 }
 
@@ -91,12 +87,12 @@ void InitializeSuppressions() {
   SuppressionContext::Init();
   char *suppressions_from_file;
   uptr buffer_size;
-  if (ReadFileToBuffer(flags()->suppressions, &suppressions_from_file,
+  if (ReadFileToBuffer(common_flags()->suppressions, &suppressions_from_file,
                        &buffer_size, 1 << 26 /* max_len */))
     SuppressionContext::Get()->Parse(suppressions_from_file);
-  if (flags()->suppressions[0] && !buffer_size) {
+  if (common_flags()->suppressions[0] && !buffer_size) {
     Printf("LeakSanitizer: failed to read suppressions file '%s'\n",
-           flags()->suppressions);
+           common_flags()->suppressions);
     Die();
   }
   if (&__lsan_default_suppressions)
@@ -446,7 +442,7 @@ void DoLeakCheck() {
     Printf("%s", d.End());
     param.leak_report.ReportTopLeaks(flags()->max_leaks);
   }
-  if (flags()->print_suppressions)
+  if (common_flags()->print_suppressions)
     PrintMatchedSuppressions();
   if (unsuppressed_count > 0) {
     param.leak_report.PrintSummary();

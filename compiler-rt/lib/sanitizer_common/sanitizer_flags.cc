@@ -63,6 +63,8 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->coverage_direct = SANITIZER_ANDROID;
   f->coverage_dir = ".";
   f->full_address_space = false;
+  f->suppressions = "";
+  f->print_suppressions = true;
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -144,6 +146,9 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->full_address_space, "full_address_space",
             "Sanitize complete address space; "
             "by default kernel area on 32-bit platforms will not be sanitized");
+  ParseFlag(str, &f->suppressions, "suppressions", "Suppressions file name.");
+  ParseFlag(str, &f->print_suppressions, "print_suppressions",
+            "Print matched suppressions at exit.");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

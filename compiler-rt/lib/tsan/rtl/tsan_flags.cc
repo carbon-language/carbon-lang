@@ -44,8 +44,6 @@ static void ParseFlags(Flags *f, const char *env) {
   ParseFlag(env, &f->report_signal_unsafe, "report_signal_unsafe", "");
   ParseFlag(env, &f->report_atomic_races, "report_atomic_races", "");
   ParseFlag(env, &f->force_seq_cst_atomics, "force_seq_cst_atomics", "");
-  ParseFlag(env, &f->suppressions, "suppressions", "");
-  ParseFlag(env, &f->print_suppressions, "print_suppressions", "");
   ParseFlag(env, &f->print_benign, "print_benign", "");
   ParseFlag(env, &f->exitcode, "exitcode", "");
   ParseFlag(env, &f->halt_on_error, "halt_on_error", "");
@@ -78,8 +76,6 @@ void InitializeFlags(Flags *f, const char *env) {
   f->report_signal_unsafe = true;
   f->report_atomic_races = true;
   f->force_seq_cst_atomics = false;
-  f->suppressions = "";
-  f->print_suppressions = false;
   f->print_benign = false;
   f->exitcode = 66;
   f->halt_on_error = false;
@@ -101,6 +97,7 @@ void InitializeFlags(Flags *f, const char *env) {
   // Override some common flags defaults.
   f->allow_addr2line = true;
   f->detect_deadlocks = true;
+  f->print_suppressions = false;
 
   // Let a frontend override.
   ParseFlags(f, __tsan_default_options());
