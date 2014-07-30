@@ -380,6 +380,11 @@ class XForm_base_r3xo<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asms
   let Inst{31}    = RC;
 }
 
+class XForm_tlb<bits<10> xo, dag OOL, dag IOL, string asmstr,
+                InstrItinClass itin> : XForm_base_r3xo<31, xo, OOL, IOL, asmstr, itin, []> {
+  let RST = 0;
+}
+
 // This is the same as XForm_base_r3xo, but the first two operands are swapped
 // when code is emitted.
 class XForm_base_r3xo_swapped

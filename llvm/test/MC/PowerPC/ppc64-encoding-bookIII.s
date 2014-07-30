@@ -182,3 +182,6 @@
 # CHECK-BE: tlbivax 11, 12                  # encoding: [0x7c,0x0b,0x66,0x24]
 # CHECK-LE: tlbivax 11, 12                  # encoding: [0x24,0x66,0x0b,0x7c]
             tlbivax %r11, %r12
+# CHECK-BE: tlbsx 11, 12                    # encoding: [0x7c,0x0b,0x67,0x24]
+# CHECK-LE: tlbsx 11, 12                    # encoding: [0x24,0x67,0x0b,0x7c]
+            tlbsx %r11, %r12
