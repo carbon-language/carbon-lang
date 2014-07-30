@@ -79,7 +79,8 @@ RelocationValueRef RuntimeDyldMachO::getRelocationValueRef(
 
 void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
                                             ObjectImage &ObjImg,
-                                            const relocation_iterator &RI) {
+                                            const relocation_iterator &RI,
+                                            unsigned OffsetToNextPC) {
   const MachOObjectFile &Obj =
       static_cast<const MachOObjectFile &>(*ObjImg.getObjectFile());
   MachO::any_relocation_info RelInfo =
@@ -89,8 +90,7 @@ void RuntimeDyldMachO::makeValueAddendPCRel(RelocationValueRef &Value,
   if (IsPCRel) {
     uint64_t RelocAddr = 0;
     RI->getAddress(RelocAddr);
-    unsigned RelocSize = Obj.getAnyRelocationLength(RelInfo);
-    Value.Addend += RelocAddr + (1ULL << RelocSize);
+    Value.Addend += RelocAddr + OffsetToNextPC;
   }
 }
 

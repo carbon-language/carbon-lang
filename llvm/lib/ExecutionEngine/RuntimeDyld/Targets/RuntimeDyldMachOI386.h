@@ -62,7 +62,7 @@ public:
     //   Value.Addend += RelocAddr + 4;
     // }
     if (RE.IsPCRel)
-      makeValueAddendPCRel(Value, ObjImg, RelI);
+      makeValueAddendPCRel(Value, ObjImg, RelI, 1 << RE.Size);
 
     RE.Addend = Value.Addend;
 

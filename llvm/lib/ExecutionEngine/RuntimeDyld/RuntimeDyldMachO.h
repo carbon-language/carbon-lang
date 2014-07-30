@@ -73,7 +73,8 @@ protected:
 
   /// Make the RelocationValueRef addend PC-relative.
   void makeValueAddendPCRel(RelocationValueRef &Value, ObjectImage &ObjImg,
-                            const relocation_iterator &RI);
+                            const relocation_iterator &RI,
+                            unsigned OffsetToNextPC);
 
   /// Dump information about the relocation entry (RE) and resolved value.
   void dumpRelocationToResolve(const RelocationEntry &RE, uint64_t Value) const;
