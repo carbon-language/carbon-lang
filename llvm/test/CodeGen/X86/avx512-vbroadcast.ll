@@ -53,7 +53,8 @@ define   <16 x float> @_xmm16xfloat(<16 x float> %a) {
 }
 
 define <16 x i32> @test_vbroadcast() {
-  ; CHECK: vpbroadcastd
+; CHECK-LABEL: _test_vbroadcast:
+; CHECK: vpbroadcastd
 entry:
   %0 = sext <16 x i1> zeroinitializer to <16 x i32>
   %1 = fcmp uno <16 x float> undef, zeroinitializer
