@@ -2,6 +2,11 @@
 // RUN:                                         not %run %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=new_delete_type_mismatch=1 not %run %t 2>&1 | FileCheck %s
 // RUN: ASAN_OPTIONS=new_delete_type_mismatch=0     %run %t
+
+// Sized-delete is implemented with a weak delete() definition.
+// Weak symbols are kind of broken on Android.
+// XFAIL: android
+
 #include <new>
 #include <stdio.h>
 
