@@ -138,7 +138,7 @@ static LibIgnore *libignore() {
 }
 
 void InitializeLibIgnore() {
-  libignore()->Init(*GetSuppressionContext());
+  libignore()->Init(*SuppressionContext::Get());
   libignore()->OnLibraryLoaded(0);
 }
 

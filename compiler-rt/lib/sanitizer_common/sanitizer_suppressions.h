@@ -39,14 +39,20 @@ struct Suppression {
 
 class SuppressionContext {
  public:
-  SuppressionContext() : suppressions_(1), can_parse_(true) {}
   void Parse(const char *str);
   bool Match(const char* str, SuppressionType type, Suppression **s);
   uptr SuppressionCount() const;
   const Suppression *SuppressionAt(uptr i) const;
   void GetMatched(InternalMmapVector<Suppression *> *matched);
 
+  // Create a SuppressionContext singleton. Not thread safe. Must be called
+  // early during initialization.
+  static void Init();
+  // Returns a SuppressionContext singleton.
+  static SuppressionContext *Get();
+
  private:
+  SuppressionContext() : suppressions_(1), can_parse_(true) {}
   InternalMmapVector<Suppression> suppressions_;
   bool can_parse_;
 

@@ -16,6 +16,7 @@
 #include "sanitizer_allocator_internal.h"
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_placement_new.h"
 
 namespace __sanitizer {
 
@@ -63,6 +64,19 @@ bool TemplateMatch(char *templ, const char *str) {
     asterisk = false;
   }
   return true;
+}
+
+ALIGNED(64) static char placeholder[sizeof(SuppressionContext)];
+static SuppressionContext *suppression_ctx = 0;
+
+SuppressionContext *SuppressionContext::Get() {
+  CHECK(suppression_ctx);
+  return suppression_ctx;
+}
+
+void SuppressionContext::Init() {
+  CHECK(!suppression_ctx);
+  suppression_ctx = new(placeholder) SuppressionContext;
 }
 
 bool SuppressionContext::Match(const char *str, SuppressionType type,
