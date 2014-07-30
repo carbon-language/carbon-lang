@@ -78,16 +78,14 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
                 clang::TagDecl *tag_decl = tag_type->getDecl();
                 if (tag_decl)
                 {
-                    if (!tag_decl->hasExternalLexicalStorage())
+                    if (tag_decl->isCompleteDefinition())
+                        return true;
+                    
+                    if (!allow_completion)
+                        return false;
+                    
+                    if (tag_decl->hasExternalLexicalStorage())
                     {
-                        if (tag_decl->isCompleteDefinition())
-                            return true;
-                    }
-                    else
-                    {
-                        if (!allow_completion)
-                            return false;
-
                         if (ast)
                         {
                             clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
