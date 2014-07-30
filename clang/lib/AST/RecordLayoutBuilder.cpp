@@ -1413,9 +1413,9 @@ void RecordLayoutBuilder::LayoutWideBitField(uint64_t FieldSize,
 void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   bool FieldPacked = Packed || D->hasAttr<PackedAttr>();
   uint64_t FieldSize = D->getBitWidthValue(Context);
-  std::pair<uint64_t, unsigned> FieldInfo = Context.getTypeInfo(D->getType());
-  uint64_t TypeSize = FieldInfo.first;
-  unsigned FieldAlign = FieldInfo.second;
+  TypeInfo FieldInfo = Context.getTypeInfo(D->getType());
+  uint64_t TypeSize = FieldInfo.Width;
+  unsigned FieldAlign = FieldInfo.Align;
 
   // UnfilledBitsInLastUnit is the difference between the end of the
   // last allocated bitfield (i.e. the first bit offset available for
@@ -2260,12 +2260,18 @@ MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
 MicrosoftRecordLayoutBuilder::ElementInfo
 MicrosoftRecordLayoutBuilder::getAdjustedElementInfo(
     const FieldDecl *FD) {
+  // Get the alignment of the field type's natural alignment, ignore any
+  // alignment attributes.
   ElementInfo Info;
   std::tie(Info.Size, Info.Alignment) =
-      Context.getTypeInfoInChars(FD->getType());
-  // Respect align attributes.
-  CharUnits FieldRequiredAlignment = 
+      Context.getTypeInfoInChars(FD->getType()->getUnqualifiedDesugaredType());
+  // Respect align attributes on the field.
+  CharUnits FieldRequiredAlignment =
       Context.toCharUnitsFromBits(FD->getMaxAlignment());
+  // Respect align attributes on the type.
+  if (Context.isAlignmentRequired(FD->getType()))
+    FieldRequiredAlignment = std::max(
+        Context.getTypeAlignInChars(FD->getType()), FieldRequiredAlignment);
   // Respect attributes applied to subobjects of the field.
   if (FD->isBitField())
     // For some reason __declspec align impacts alignment rather than required

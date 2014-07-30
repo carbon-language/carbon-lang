@@ -803,13 +803,15 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
   llvm::DIFile file = getOrCreateFile(loc);
   unsigned line = getLineNumber(loc);
 
-  uint64_t sizeInBits = 0;
-  unsigned alignInBits = 0;
+  uint64_t SizeInBits = 0;
+  unsigned AlignInBits = 0;
   if (!type->isIncompleteArrayType()) {
-    std::tie(sizeInBits, alignInBits) = CGM.getContext().getTypeInfo(type);
+    TypeInfo TI = CGM.getContext().getTypeInfo(type);
+    SizeInBits = TI.Width;
+    AlignInBits = TI.Align;
 
     if (sizeInBitsOverride)
-      sizeInBits = sizeInBitsOverride;
+      SizeInBits = sizeInBitsOverride;
   }
 
   unsigned flags = 0;
@@ -818,8 +820,8 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
   else if (AS == clang::AS_protected)
     flags |= llvm::DIDescriptor::FlagProtected;
 
-  return DBuilder.createMemberType(scope, name, file, line, sizeInBits,
-                                   alignInBits, offsetInBits, flags, debugType);
+  return DBuilder.createMemberType(scope, name, file, line, SizeInBits,
+                                   AlignInBits, offsetInBits, flags, debugType);
 }
 
 /// CollectRecordLambdaFields - Helper for CollectRecordFields.
@@ -3030,15 +3032,15 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
 
     llvm::DIType fieldType;
     if (capture->isByRef()) {
-      std::pair<uint64_t,unsigned> ptrInfo = C.getTypeInfo(C.VoidPtrTy);
+      TypeInfo PtrInfo = C.getTypeInfo(C.VoidPtrTy);
 
       // FIXME: this creates a second copy of this type!
       uint64_t xoffset;
       fieldType = EmitTypeForVarWithBlocksAttr(variable, &xoffset);
-      fieldType = DBuilder.createPointerType(fieldType, ptrInfo.first);
-      fieldType = DBuilder.createMemberType(tunit, name, tunit, line,
-                                            ptrInfo.first, ptrInfo.second,
-                                            offsetInBits, 0, fieldType);
+      fieldType = DBuilder.createPointerType(fieldType, PtrInfo.Width);
+      fieldType =
+          DBuilder.createMemberType(tunit, name, tunit, line, PtrInfo.Width,
+                                    PtrInfo.Align, offsetInBits, 0, fieldType);
     } else {
       fieldType = createFieldType(name, variable->getType(), 0,
                                   loc, AS_public, offsetInBits, tunit, tunit);

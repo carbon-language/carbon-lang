@@ -652,7 +652,94 @@ struct OD : OC {};
 // CHECK-X64-NEXT:      | [sizeof=12, align=1
 // CHECK-X64-NEXT:      |  nvsize=8, nvalign=1]
 
+struct __declspec(align(4)) PA {
+  int c;
+};
 
+typedef __declspec(align(8)) PA PB;
+
+#pragma pack(push, 1)
+struct PC {
+  char a;
+  PB x;
+};
+#pragma pack(pop)
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:         0 | struct PC
+// CHECK-NEXT:    0 |   char a
+// CHECK-NEXT:    8 |   struct PA x
+// CHECK-NEXT:    8 |     int c
+// CHECK-NEXT:      |   [sizeof=4, align=4
+// CHECK-NEXT:      |    nvsize=4, nvalign=4]
+// CHECK-NEXT:      | [sizeof=16, align=8
+// CHECK-NEXT:      |  nvsize=12, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:         0 | struct PC
+// CHECK-X64-NEXT:    0 |   char a
+// CHECK-X64-NEXT:    8 |   struct PA x
+// CHECK-X64-NEXT:    8 |     int c
+// CHECK-X64-NEXT:      |   [sizeof=4, align=4
+// CHECK-X64-NEXT:      |    nvsize=4, nvalign=4]
+// CHECK-X64-NEXT:      | [sizeof=16, align=8
+// CHECK-X64-NEXT:      |  nvsize=12, nvalign=8]
+
+typedef int __declspec(align(2)) QA;
+#pragma pack(push, 1)
+struct QB {
+  char a;
+  QA b;
+};
+#pragma pack(pop)
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct QB
+// CHECK-NEXT:    0 |   char a
+// CHECK-NEXT:    2 |   QA b
+// CHECK-NEXT:      | [sizeof=6, align=2
+// CHECK-NEXT:      |  nvsize=6, nvalign=2]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct QB
+// CHECK-X64-NEXT:    0 |   char a
+// CHECK-X64-NEXT:    2 |   QA b
+// CHECK-X64-NEXT:      | [sizeof=6, align=2
+// CHECK-X64-NEXT:      |  nvsize=6, nvalign=2]
+
+struct QC {
+  char a;
+  QA b;
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct QC
+// CHECK-NEXT:    0 |   char a
+// CHECK-NEXT:    4 |   QA b
+// CHECK-NEXT:      | [sizeof=8, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct QC
+// CHECK-X64-NEXT:    0 |   char a
+// CHECK-X64-NEXT:    4 |   QA b
+// CHECK-X64-NEXT:      | [sizeof=8, align=4
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
+
+struct QD {
+  char a;
+  QA b : 3;
+};
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK-NEXT:    0 | struct QD
+// CHECK-NEXT:    0 |   char a
+// CHECK-NEXT:    4 |   QA b
+// CHECK-NEXT:      | [sizeof=8, align=4
+// CHECK-NEXT:      |  nvsize=8, nvalign=4]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64-NEXT:    0 | struct QD
+// CHECK-X64-NEXT:    0 |   char a
+// CHECK-X64-NEXT:    4 |   QA b
+// CHECK-X64-NEXT:      | [sizeof=8, align=4
+// CHECK-X64-NEXT:      |  nvsize=8, nvalign=4]
 
 int a[
 sizeof(X)+
@@ -680,4 +767,8 @@ sizeof(RC)+
 sizeof(RE)+
 sizeof(ND)+
 sizeof(OD)+
+sizeof(PC)+
+sizeof(QB)+
+sizeof(QC)+
+sizeof(QD)+
 0];

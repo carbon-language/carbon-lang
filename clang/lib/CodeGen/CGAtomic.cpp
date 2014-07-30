@@ -46,17 +46,21 @@ namespace {
 
       ASTContext &C = CGF.getContext();
 
-      uint64_t valueAlignInBits;
-      std::tie(ValueSizeInBits, valueAlignInBits) = C.getTypeInfo(ValueTy);
+      uint64_t ValueAlignInBits;
+      uint64_t AtomicAlignInBits;
+      TypeInfo ValueTI = C.getTypeInfo(ValueTy);
+      ValueSizeInBits = ValueTI.Width;
+      ValueAlignInBits = ValueTI.Align;
 
-      uint64_t atomicAlignInBits;
-      std::tie(AtomicSizeInBits, atomicAlignInBits) = C.getTypeInfo(AtomicTy);
+      TypeInfo AtomicTI = C.getTypeInfo(AtomicTy);
+      AtomicSizeInBits = AtomicTI.Width;
+      AtomicAlignInBits = AtomicTI.Align;
 
       assert(ValueSizeInBits <= AtomicSizeInBits);
-      assert(valueAlignInBits <= atomicAlignInBits);
+      assert(ValueAlignInBits <= AtomicAlignInBits);
 
-      AtomicAlign = C.toCharUnitsFromBits(atomicAlignInBits);
-      ValueAlign = C.toCharUnitsFromBits(valueAlignInBits);
+      AtomicAlign = C.toCharUnitsFromBits(AtomicAlignInBits);
+      ValueAlign = C.toCharUnitsFromBits(ValueAlignInBits);
       if (lvalue.getAlignment().isZero())
         lvalue.setAlignment(AtomicAlign);
 
