@@ -427,6 +427,12 @@ public:
   /// \brief Perform LICM and CSE on the newly generated gather sequences.
   void optimizeGatherSequence();
 
+  /// \brief Get the instruction numbering for a given Instruction.
+  int getIndex(Instruction *I) {
+    BlockNumbering &BN = getBlockNumbering(I->getParent());
+    return BN.getIndex(I);
+  }
+
 private:
   struct TreeEntry;
 
@@ -2231,7 +2237,8 @@ private:
   unsigned collectStores(BasicBlock *BB, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
-  bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R);
+  bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R,
+                          BinaryOperator *V = nullptr);
 
   /// \brief Try to vectorize a list of operands.
   /// \@param BuildVector A list of users to ignore for the purpose of
@@ -2404,10 +2411,23 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
   return count;
 }
 
-bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R) {
+bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R,
+                                       BinaryOperator *V) {
   if (!A || !B)
     return false;
   Value *VL[] = { A, B };
+
+  // Canonicalize operands based on source order, so that the ordering in the
+  // expression tree more closely matches the ordering of the source.
+  if (V && V->isCommutative() && isa<Instruction>(A) && isa<Instruction>(B) &&
+      cast<Instruction>(A)->getParent() == cast<Instruction>(B)->getParent()) {
+    assert(V->getOperand(0) == A && V->getOperand(1) == B &&
+           "Expected operands in order.");
+    int IndexA = R.getIndex(cast<Instruction>(A));
+    int IndexB = R.getIndex(cast<Instruction>(B));
+    if (IndexA > IndexB)
+      std::swap(VL[0], VL[1]);
+  }
   return tryToVectorizeList(VL, R);
 }
 
@@ -2508,7 +2528,7 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
     return false;
 
   // Try to vectorize V.
-  if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R))
+  if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R, V))
     return true;
 
   BinaryOperator *A = dyn_cast<BinaryOperator>(V->getOperand(0));
@@ -3018,15 +3038,15 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
       }
 
       for (int i = 0; i < 2; ++i) {
-         if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i))) {
-            if (tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R)) {
-              Changed = true;
-              // We would like to start over since some instructions are deleted
-              // and the iterator may become invalid value.
-              it = BB->begin();
-              e = BB->end();
-            }
-         }
+        if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i))) {
+          if (tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R, BI)) {
+            Changed = true;
+            // We would like to start over since some instructions are deleted
+            // and the iterator may become invalid value.
+            it = BB->begin();
+            e = BB->end();
+          }
+        }
       }
       continue;
     }
