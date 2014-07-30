@@ -125,3 +125,23 @@ define i32 @test10(i32 %b, i32 %c) {
 ; CHECK-LABEL: @test10(
 ; CHECK-NEXT: %xor2 = or i32 %b, %c
 }
+
+define i32 @test11(i32 %A, i32 %B) {
+  %xor1 = xor i32 %B, %A
+  %not = xor i32 %A, -1
+  %xor2 = xor i32 %not, %B
+  %and = and i32 %xor1, %xor2
+  ret i32 %and
+; CHECK-LABEL: @test11(
+; CHECK-NEXT: ret i32 0
+}
+
+define i32 @test12(i32 %A, i32 %B) {
+  %xor1 = xor i32 %B, %A
+  %not = xor i32 %A, -1
+  %xor2 = xor i32 %not, %B
+  %and = and i32 %xor1, %xor2
+  ret i32 %and
+; CHECK-LABEL: @test12(
+; CHECK-NEXT: ret i32 0
+}

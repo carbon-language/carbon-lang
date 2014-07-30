@@ -1283,6 +1283,18 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     if (match(Op1, m_Or(m_Not(m_Specific(Op0)), m_Value(A))) ||
         match(Op1, m_Or(m_Value(A), m_Not(m_Specific(Op0)))))
       return BinaryOperator::CreateAnd(A, Op0);
+
+    // (A ^ B) & ((B ^ C) ^ A) -> (A ^ B) & ~C
+    if (match(Op0, m_Xor(m_Value(A), m_Value(B))))
+      if (match(Op1, m_Xor(m_Xor(m_Specific(B), m_Value(C)), m_Specific(A))))
+        if (Op1->hasOneUse() || cast<BinaryOperator>(Op1)->hasOneUse())
+          return BinaryOperator::CreateAnd(Op0, Builder->CreateNot(C));
+
+    // ((A ^ C) ^ B) & (B ^ A) -> (B ^ A) & ~C
+    if (match(Op0, m_Xor(m_Xor(m_Value(A), m_Value(C)), m_Value(B))))
+      if (match(Op1, m_Xor(m_Specific(B), m_Specific(A))))
+        if (Op0->hasOneUse() || cast<BinaryOperator>(Op0)->hasOneUse())
+          return BinaryOperator::CreateAnd(Op1, Builder->CreateNot(C));
   }
 
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1))
@@ -2079,6 +2091,18 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (Ret) return Ret;
     }
   }
+
+  // (A ^ B) | ((B ^ C) ^ A) -> (A ^ B) | C
+  if (match(Op0, m_Xor(m_Value(A), m_Value(B))))
+    if (match(Op1, m_Xor(m_Xor(m_Specific(B), m_Value(C)), m_Specific(A))))
+      if (Op1->hasOneUse() || cast<BinaryOperator>(Op1)->hasOneUse())
+        return BinaryOperator::CreateOr(Op0, C);
+
+  // ((A ^ C) ^ B) | (B ^ A) -> (B ^ A) | C
+  if (match(Op0, m_Xor(m_Xor(m_Value(A), m_Value(C)), m_Value(B))))
+    if (match(Op1, m_Xor(m_Specific(B), m_Specific(A))))
+      if (Op0->hasOneUse() || cast<BinaryOperator>(Op0)->hasOneUse())
+        return BinaryOperator::CreateOr(Op1, C);
 
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
   if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {

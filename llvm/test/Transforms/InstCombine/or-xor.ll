@@ -92,3 +92,23 @@ define i32 @test9(i32 %x, i32 %y) nounwind {
 ; CHECK-NEXT: %z = or i32 %y.not, %x
 ; CHECK-NEXT: ret i32 %z
 }
+
+define i32 @test10(i32 %A, i32 %B) {
+  %xor1 = xor i32 %B, %A
+  %not = xor i32 %A, -1
+  %xor2 = xor i32 %not, %B
+  %or = or i32 %xor1, %xor2
+  ret i32 %or
+; CHECK-LABEL: @test10(
+; CHECK-NEXT: ret i32 -1
+}
+
+define i32 @test11(i32 %A, i32 %B) {
+  %xor1 = xor i32 %B, %A
+  %not = xor i32 %A, -1
+  %xor2 = xor i32 %not, %B
+  %or = or i32 %xor1, %xor2
+  ret i32 %or
+; CHECK-LABEL: @test11(
+; CHECK-NEXT: ret i32 -1
+}
