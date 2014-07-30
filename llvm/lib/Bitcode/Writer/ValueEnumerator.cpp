@@ -34,6 +34,11 @@ struct OrderMap {
   std::pair<unsigned, bool> lookup(const Value *V) const {
     return IDs.lookup(V);
   }
+  void index(const Value *V) {
+    // Explicitly sequence get-size and insert-value operations to avoid UB.
+    unsigned ID = IDs.size() + 1;
+    IDs[V].first = ID;
+  }
 };
 }
 
@@ -48,8 +53,8 @@ static void orderValue(const Value *V, OrderMap &OM) {
           orderValue(Op, OM);
 
   // Note: we cannot cache this lookup above, since inserting into the map
-  // changes the map's size, and thus affects the ID.
-  OM[V].first = OM.size() + 1;
+  // changes the map's size, and thus affects the other IDs.
+  OM.index(V);
 }
 
 static OrderMap orderModule(const Module *M) {
