@@ -43,7 +43,7 @@ add_llvm_tool_subdirectory(llvm-bcanalyzer)
 add_llvm_tool_subdirectory(llvm-stress)
 add_llvm_tool_subdirectory(llvm-mcmarkup)
 
-add_llvm_tool_subdirectory(llvm-uselistorder)
+add_llvm_tool_subdirectory(verify-uselistorder)
 
 add_llvm_tool_subdirectory(llvm-symbolizer)
 

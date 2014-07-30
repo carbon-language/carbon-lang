@@ -1,4 +1,4 @@
-//===- llvm-uselistorder.cpp - The LLVM Modular Optimizer -----------------===//
+//===- verify-uselistorder.cpp - The LLVM Modular Optimizer ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

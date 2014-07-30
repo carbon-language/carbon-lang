@@ -1,4 +1,4 @@
-##===- tools/llvm-uselistorder/Makefile --------------------*- Makefile -*-===##
+##===- tools/verify-uselistorder/Makefile ------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL := ../..
-TOOLNAME := llvm-uselistorder
+TOOLNAME := verify-uselistorder
 LINK_COMPONENTS := AsmParser BitReader BitWriter Core IRReader Support
 
 # This tool has no plugins, optimize startup time.

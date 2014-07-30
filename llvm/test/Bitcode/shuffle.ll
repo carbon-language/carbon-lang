@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis -disable-output
-; RUN: llvm-uselistorder < %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder < %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; <rdar://problem/8622574>
 ; tests the bitcodereader can handle the case where the reader will initially

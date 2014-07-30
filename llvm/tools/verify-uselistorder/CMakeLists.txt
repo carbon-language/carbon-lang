@@ -7,6 +7,6 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_llvm_tool(llvm-uselistorder
-  llvm-uselistorder.cpp
+add_llvm_tool(verify-uselistorder
+  verify-uselistorder.cpp
   )
