@@ -11181,13 +11181,17 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
     }
 
     SDValue Load;
+    // It is safe to replace the two loads if they have different alignments,
+    // but the new load must be the minimum (most restrictive) alignment of the
+    // inputs.
+    unsigned Alignment = std::min(LLD->getAlignment(),RLD->getAlignment());
     if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
       Load = DAG.getLoad(TheSelect->getValueType(0),
                          SDLoc(TheSelect),
                          // FIXME: Discards pointer and AA info.
                          LLD->getChain(), Addr, MachinePointerInfo(),
                          LLD->isVolatile(), LLD->isNonTemporal(),
-                         LLD->isInvariant(), LLD->getAlignment());
+                         LLD->isInvariant(), Alignment);
     } else {
       Load = DAG.getExtLoad(LLD->getExtensionType() == ISD::EXTLOAD ?
                             RLD->getExtensionType() : LLD->getExtensionType(),
@@ -11196,7 +11200,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
                             // FIXME: Discards pointer and AA info.
                             LLD->getChain(), Addr, MachinePointerInfo(),
                             LLD->getMemoryVT(), LLD->isVolatile(),
-                            LLD->isNonTemporal(), LLD->getAlignment());
+                            LLD->isNonTemporal(), Alignment);
     }
 
     // Users of the select now use the result of the load.
