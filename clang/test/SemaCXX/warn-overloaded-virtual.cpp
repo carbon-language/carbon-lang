@@ -48,8 +48,8 @@ struct Base {
 void Base::foo(int) { }
 
 struct Derived : public Base {
-  virtual void foo(int);   
-  void foo(int, int);   
+  virtual void foo(int);
+  void foo(int, int);
 };
 }
 
@@ -137,4 +137,22 @@ namespace {
     virtual int foo(int) const;
     // expected-warning@-1{{hides overloaded virtual functions}}
   };
+}
+
+namespace {
+struct base {
+  void f(char) {}
+};
+
+struct derived : base {
+  void f(int) {}
+};
+
+void foo(derived &d) {
+  d.f('1'); // FIXME: this should warn about calling (anonymous namespace)::derived::f(int)
+            // instead of (anonymous namespace)::base::f(char).
+            // Note: this should be under a new diagnostic flag and eventually moved to a
+            // new test case since it's not strictly related to virtual functions.
+  d.f(12);  // This should not warn.
+}
 }

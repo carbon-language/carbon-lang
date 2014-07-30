@@ -5945,7 +5945,14 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
       if (!MD->isVirtual())
         continue;
       // If the method we are checking overrides a method from its base
-      // don't warn about the other overloaded methods.
+      // don't warn about the other overloaded methods. Clang deviates from GCC
+      // by only diagnosing overloads of inherited virtual functions that do not
+      // override any other virtual functions in the base. GCC's
+      // -Woverloaded-virtual diagnoses any derived function hiding a virtual
+      // function from a base class. These cases may be better served by a
+      // warning (not specific to virtual functions) on call sites when the call
+      // would select a different function from the base class, were it visible.
+      // See FIXME in test/SemaCXX/warn-overload-virtual.cpp for an example.
       if (!Data.S->IsOverload(Data.Method, MD, false))
         return true;
       // Collect the overload only if its hidden.
