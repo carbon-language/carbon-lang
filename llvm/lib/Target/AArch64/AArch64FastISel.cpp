@@ -1052,54 +1052,56 @@ bool AArch64FastISel::SelectSelect(const Instruction *I) {
       DestVT != MVT::f64)
     return false;
 
-  unsigned CondReg = getRegForValue(SI->getCondition());
-  if (CondReg == 0)
-    return false;
-  unsigned TrueReg = getRegForValue(SI->getTrueValue());
-  if (TrueReg == 0)
-    return false;
-  unsigned FalseReg = getRegForValue(SI->getFalseValue());
-  if (FalseReg == 0)
-    return false;
+  unsigned SelectOpc;
+  switch (DestVT.SimpleTy) {
+  default: return false;
+  case MVT::i32: SelectOpc = AArch64::CSELWr;    break;
+  case MVT::i64: SelectOpc = AArch64::CSELXr;    break;
+  case MVT::f32: SelectOpc = AArch64::FCSELSrrr; break;
+  case MVT::f64: SelectOpc = AArch64::FCSELDrrr; break;
+  }
 
+  const Value *Cond = SI->getCondition();
+  bool NeedTest = true;
+  AArch64CC::CondCode CC = AArch64CC::NE;
+  if (foldXALUIntrinsic(CC, I, Cond))
+    NeedTest = false;
 
-  MRI.constrainRegClass(CondReg, &AArch64::GPR32RegClass);
-  unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
-          ANDReg)
-      .addReg(CondReg)
+  unsigned CondReg = getRegForValue(Cond);
+  if (!CondReg)
+    return false;
+  bool CondIsKill = hasTrivialKill(Cond);
+
+  if (NeedTest) {
+    MRI.constrainRegClass(CondReg, &AArch64::GPR32RegClass);
+    unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
+            ANDReg)
+      .addReg(CondReg, getKillRegState(CondIsKill))
       .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
 
-  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::SUBSWri))
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::SUBSWri))
       .addReg(ANDReg)
       .addReg(ANDReg)
       .addImm(0)
       .addImm(0);
-
-  unsigned SelectOpc;
-  switch (DestVT.SimpleTy) {
-  default:
-    return false;
-  case MVT::i32:
-    SelectOpc = AArch64::CSELWr;
-    break;
-  case MVT::i64:
-    SelectOpc = AArch64::CSELXr;
-    break;
-  case MVT::f32:
-    SelectOpc = AArch64::FCSELSrrr;
-    break;
-  case MVT::f64:
-    SelectOpc = AArch64::FCSELDrrr;
-    break;
   }
+
+  unsigned TrueReg = getRegForValue(SI->getTrueValue());
+  bool TrueIsKill = hasTrivialKill(SI->getTrueValue());
+
+  unsigned FalseReg = getRegForValue(SI->getFalseValue());
+  bool FalseIsKill = hasTrivialKill(SI->getFalseValue());
+
+  if (!TrueReg || !FalseReg)
+    return false;
 
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(SelectOpc),
           ResultReg)
-      .addReg(TrueReg)
-      .addReg(FalseReg)
-      .addImm(AArch64CC::NE);
+    .addReg(TrueReg, getKillRegState(TrueIsKill))
+    .addReg(FalseReg, getKillRegState(FalseIsKill))
+    .addImm(CC);
 
   UpdateValueMap(I, ResultReg);
   return true;
