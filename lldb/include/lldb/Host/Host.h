@@ -460,7 +460,7 @@ public:
     ///     \b true if \a resource_path was resolved, \a false otherwise.
     //------------------------------------------------------------------
     static bool
-    GetLLDBPath (PathType path_type,
+    GetLLDBPath (lldb::PathType path_type,
                  FileSpec &file_spec);
 
     //------------------------------------------------------------------

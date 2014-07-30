@@ -105,24 +105,6 @@ typedef enum SortOrder
     eSortOrderByName
 } SortOrder;
 
-
-//----------------------------------------------------------------------
-// Used in conjunction with Host::GetLLDBPath () to find files that
-// are related to 
-//----------------------------------------------------------------------
-typedef enum PathType
-{
-    ePathTypeLLDBShlibDir,          // The directory where the lldb.so (unix) or LLDB mach-o file in LLDB.framework (MacOSX) exists
-    ePathTypeSupportExecutableDir,  // Find LLDB support executable directory (debugserver, etc)
-    ePathTypeHeaderDir,             // Find LLDB header file directory
-    ePathTypePythonDir,             // Find Python modules (PYTHONPATH) directory
-    ePathTypeLLDBSystemPlugins,     // System plug-ins directory
-    ePathTypeLLDBUserPlugins,       // User plug-ins directory
-    ePathTypeLLDBTempSystemDir      // The LLDB temp directory for this system that will be cleaned up on exit
-
-} PathType;
-
-
 typedef enum ObjCRuntimeVersions {
     eObjC_VersionUnknown = 0,
     eAppleObjC_V1 = 1,

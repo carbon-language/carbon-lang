@@ -3243,6 +3243,7 @@ Process::Halt (bool clear_thread_plans)
     EventSP event_sp;
     Error error (WillHalt());
     
+    bool restored_process_events = false;
     if (error.Success())
     {
         
@@ -3254,6 +3255,10 @@ Process::Halt (bool clear_thread_plans)
         {
             if (m_public_state.GetValue() == eStateAttaching)
             {
+                // Don't hijack and eat the eStateExited as the code that was doing
+                // the attach will be waiting for this event...
+                RestorePrivateProcessEvents();
+                restored_process_events = true;
                 SetExitStatus(SIGKILL, "Cancelled async attach.");
                 Destroy ();
             }
@@ -3302,7 +3307,8 @@ Process::Halt (bool clear_thread_plans)
         }
     }
     // Resume our private state thread before we post the event (if any)
-    RestorePrivateProcessEvents();
+    if (!restored_process_events)
+        RestorePrivateProcessEvents();
 
     // Post any event we might have consumed. If all goes well, we will have
     // stopped the process, intercepted the event and set the interrupted

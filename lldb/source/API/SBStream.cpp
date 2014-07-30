@@ -82,6 +82,8 @@ SBStream::RedirectToFile (const char *path, bool append)
     uint32_t open_options = File::eOpenOptionWrite | File::eOpenOptionCanCreate;
     if (append)
         open_options |= File::eOpenOptionAppend;
+    else
+        open_options |= File::eOpenOptionTruncate;
     stream_file->GetFile().Open (path, open_options, lldb::eFilePermissionsFileDefault);
 
     m_opaque_ap.reset (stream_file);

@@ -25,6 +25,9 @@ public:
     static lldb::SBFileSpec
     GetLLDBPythonPath ();
 
+    static lldb::SBFileSpec
+    GetLLDBPath (lldb::PathType path_type);
+
     static void
     ThreadCreated (const char *name);
 

@@ -536,6 +536,9 @@ protected:
 
                 if (error.Success())
                 {
+                    // Update the execution context so the current target and process are now selected
+                    // in case we interrupt
+                    m_interpreter.UpdateExecutionContext(NULL);
                     ListenerSP listener_sp (new Listener("lldb.CommandObjectProcessAttach.DoExecute.attach.hijack"));
                     m_options.attach_info.SetHijackListener(listener_sp);
                     process->HijackProcessEvents(listener_sp.get());
@@ -557,7 +560,11 @@ protected:
                         }
                         else
                         {
-                            result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
+                            const char *exit_desc = process->GetExitDescription();
+                            if (exit_desc)
+                                result.AppendErrorWithFormat ("attach failed: %s", exit_desc);
+                            else
+                                result.AppendError ("attach failed: process did not stop (no such process or permission problem?)");
                             process->Destroy();
                             result.SetStatus (eReturnStatusFailed);
                         }

@@ -52,7 +52,7 @@ public:
     GetScriptLanguage() const;
 
     void
-    ExecuteInitialCommands (bool before_file);
+    WriteInitialCommands (bool before_file, lldb::SBStream &strm);
     
     bool
     GetDebugMode() const;

@@ -477,63 +477,19 @@ Driver::GetScriptLanguage() const
 }
 
 void
-Driver::ExecuteInitialCommands (bool before_file)
+Driver::WriteInitialCommands (bool before_file, SBStream &strm)
 {
-    size_t num_commands;
-    std::vector<std::pair<bool, std::string> > *command_set;
-    if (before_file)
-        command_set = &(m_option_data.m_initial_commands);
-    else
-        command_set = &(m_option_data.m_after_file_commands);
+    std::vector<std::pair<bool, std::string> > &command_set = before_file ? m_option_data.m_initial_commands :
+                                                                            m_option_data.m_after_file_commands;
     
-    num_commands = command_set->size();
-    SBCommandReturnObject result;
-    bool old_async = GetDebugger().GetAsync();
-    GetDebugger().SetAsync(false);
-    for (size_t idx = 0; idx < num_commands; idx++)
+    for (const auto &command_pair : command_set)
     {
-        bool is_file = (*command_set)[idx].first;
-        const char *command = (*command_set)[idx].second.c_str();
-        char command_string[PATH_MAX * 2];
-        const bool dump_stream_only_if_no_immediate = true;
-        const char *executed_command = command;
-        if (is_file)
-        {
-            ::snprintf (command_string, sizeof(command_string), "command source -s %i '%s'", m_option_data.m_source_quietly, command);
-            executed_command = command_string;
-        }
-        
-        m_debugger.GetCommandInterpreter().HandleCommand (executed_command, result, false);
-        if (!m_option_data.m_source_quietly || result.Succeeded() == false)
-        {
-            const size_t output_size = result.GetOutputSize();
-            if (output_size > 0)
-            {
-                const char *cstr = result.GetOutput(dump_stream_only_if_no_immediate);
-                if (cstr)
-                    printf ("%s", cstr);
-            }
-            const size_t error_size = result.GetErrorSize();
-            if (error_size > 0)
-            {
-                const char *cstr = result.GetError(dump_stream_only_if_no_immediate);
-                if (cstr)
-                    printf ("%s", cstr);
-            }
-        }
-        
-        if (result.Succeeded() == false)
-        {
-            const char *type = before_file ? "before file" : "after_file";
-            if (is_file)
-                ::fprintf(stderr, "Aborting %s command execution, command file: '%s' failed.\n", type, command);
-            else
-                ::fprintf(stderr, "Aborting %s command execution, command: '%s' failed.\n", type, command);
-            break;
-        }
-        result.Clear();
+        const char *command = command_pair.second.c_str();
+        if (command_pair.first)
+            strm.Printf("command source -s %i '%s'\n", m_option_data.m_source_quietly, command);
+        else
+            strm.Printf("%s\n", command);
     }
-    GetDebugger().SetAsync(old_async);
 }
 
 bool
@@ -857,8 +813,8 @@ Driver::MainLoop ()
 
     m_debugger.SetErrorFileHandle (stderr, false);
     m_debugger.SetOutputFileHandle (stdout, false);
-    m_debugger.SetInputFileHandle (stdin, true);
-    
+    m_debugger.SetInputFileHandle (stdin, false); // Don't take ownership of STDIN yet...
+
     m_debugger.SetUseExternalEditor(m_option_data.m_use_external_editor);
 
     struct winsize window_size;
@@ -882,77 +838,56 @@ Driver::MainLoop ()
     }
 
     // Now we handle options we got from the command line
+    SBStream commands_stream;./
+    
     // First source in the commands specified to be run before the file arguments are processed.
-    ExecuteInitialCommands(true);
-    
-    // Was there a core file specified?
-    std::string core_file_spec("");
-    if (!m_option_data.m_core_file.empty())
-        core_file_spec.append("--core ").append(m_option_data.m_core_file);
-    
-    char command_string[PATH_MAX * 2];
+    WriteInitialCommands(true, commands_stream);
+        
     const size_t num_args = m_option_data.m_args.size();
     if (num_args > 0)
     {
-        char arch_name[64];
-        if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
-            ::snprintf (command_string,
-                        sizeof (command_string),
-                        "target create --arch=%s %s \"%s\"",
-                        arch_name,
-                        core_file_spec.c_str(),
-                        m_option_data.m_args[0].c_str());
-        else
-            ::snprintf (command_string,
-                        sizeof(command_string),
-                        "target create %s \"%s\"",
-                        core_file_spec.c_str(),
-                        m_option_data.m_args[0].c_str());
-        
-        m_debugger.HandleCommand (command_string);
+        commands_stream.Printf("target create \"%s\"", m_option_data.m_args[0].c_str());
+        if (!m_option_data.m_core_file.empty())
+        {
+            commands_stream.Printf(" --core \"%s\"", m_option_data.m_core_file.c_str());
+        }
+        commands_stream.Printf("\n");
         
         if (num_args > 1)
         {
-            m_debugger.HandleCommand ("settings clear target.run-args");
-            char arg_cstr[1024];
+            commands_stream.Printf ("settings set -- target.run-args ");
             for (size_t arg_idx = 1; arg_idx < num_args; ++arg_idx)
             {
-                ::snprintf (arg_cstr,
-                            sizeof(arg_cstr),
-                            "settings append target.run-args \"%s\"",
-                            m_option_data.m_args[arg_idx].c_str());
-                m_debugger.HandleCommand (arg_cstr);
+                const char *arg_cstr = m_option_data.m_args[arg_idx].c_str();
+                if (strchr(arg_cstr, '"') == NULL)
+                    commands_stream.Printf(" \"%s\"", arg_cstr);
+                else
+                    commands_stream.Printf(" '%s'", arg_cstr);
             }
+            commands_stream.Printf("\n");
         }
     }
-    else if (!core_file_spec.empty())
+    else if (!m_option_data.m_core_file.empty())
     {
-        ::snprintf (command_string,
-                    sizeof(command_string),
-                    "target create %s",
-                    core_file_spec.c_str());
-        m_debugger.HandleCommand (command_string);;
+        commands_stream.Printf("target create --core \"%s\"\n", m_option_data.m_core_file.c_str());
     }
     else if (!m_option_data.m_process_name.empty())
     {
-        ::snprintf (command_string, 
-                    sizeof(command_string), 
-                    "process attach --name '%s'%s", 
-                    m_option_data.m_process_name.c_str(), 
-                    m_option_data.m_wait_for ? " --waitfor" : "");
-        m_debugger.HandleCommand (command_string);
+        commands_stream.Printf ("process attach --name \"%s\"", m_option_data.m_process_name.c_str());
+        
+        if (m_option_data.m_wait_for)
+            commands_stream.Printf(" --waitfor");
+
+        commands_stream.Printf("\n");
+
     }
     else if (LLDB_INVALID_PROCESS_ID != m_option_data.m_process_pid)
     {
-        ::snprintf (command_string, 
-                    sizeof(command_string), 
-                    "process attach --pid %" PRIu64, 
-                    m_option_data.m_process_pid);
-        m_debugger.HandleCommand (command_string);
+        commands_stream.Printf ("process attach --pid %" PRIu64 "\n", m_option_data.m_process_pid);
     }
 
-    ExecuteInitialCommands(false);
-
+    WriteInitialCommands(false, commands_stream);
+    
     // Now that all option parsing is done, we try and parse the .lldbinit
     // file in the current working directory
     sb_interpreter.SourceInitFileInCurrentWorkingDirectory (result);
@@ -964,6 +899,56 @@ Driver::MainLoop ()
     
     bool handle_events = true;
     bool spawn_thread = false;
+
+    // Check if we have any data in the commands stream, and if so, save it to a temp file
+    // so we can then run the command interpreter using the file contents. 
+    if (commands_stream.GetData() && commands_stream.GetSize())
+    {
+        char lldb_cmds_file[PATH_MAX];
+        SBFileSpec lldb_temp_dir_spec = SBHostOS::GetLLDBPath (lldb::ePathTypeLLDBTempSystemDir);
+        lldb_temp_dir_spec.SetFilename("lldb-cmds.XXXXXX");
+        
+        if (lldb_temp_dir_spec.GetPath(lldb_cmds_file, sizeof(lldb_cmds_file)))
+        {
+            int fd = mkstemp(lldb_cmds_file);
+            if (fd == -1)
+            {
+                fprintf(stderr, "error: can't create temporary file for LLDB commands\n");
+                exit (1);
+            }
+            FILE *file = fdopen(fd, "r+");
+            if (file == NULL)
+            {
+                fprintf(stderr, "error: fdopen(%i, \"r+\") failed (errno = %i)\n", fd, errno);
+                exit (2);
+            }
+            // Redirect the stream to a file and it will save its temp buffer out to the file on disk
+            commands_stream.RedirectToFileHandle(file, true);
+
+            // Close the stream which will close the file and flush it to disk
+            commands_stream.Clear();
+            
+            // Now re-open the file so we can use it as an input file handle for the real
+            // command interpreter
+            FILE *commands_file = ::fopen(lldb_cmds_file, "r");
+            if (commands_file)
+            {
+                // Hand ownership over to the debugger for "commands_file".
+                m_debugger.SetInputFileHandle (commands_file, true);
+                m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+            }
+            else
+            {
+                fprintf(stderr, "error: fopen(\"%s\", \"r\") failed (errno = %i) when trying to open LLDB commands file\n", lldb_cmds_file, errno);
+                exit (3);
+            }
+        }
+    }
+
+    // Now set the input file handle to STDIN and run the command
+    // interpreter again in interactive mode and let the debugger
+    // take ownership of stdin
+    m_debugger.SetInputFileHandle (stdin, true);
     m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
     
     reset_stdin_termios();
