@@ -41,45 +41,10 @@ extern "C" const char *WEAK __tsan_default_suppressions() {
 
 namespace __tsan {
 
-static char *ReadFile(const char *filename) {
-  if (filename == 0 || filename[0] == 0)
-    return 0;
-  InternalScopedBuffer<char> tmp(4*1024);
-  if (filename[0] == '/' || GetPwd() == 0)
-    internal_snprintf(tmp.data(), tmp.size(), "%s", filename);
-  else
-    internal_snprintf(tmp.data(), tmp.size(), "%s/%s", GetPwd(), filename);
-  uptr openrv = OpenFile(tmp.data(), false);
-  if (internal_iserror(openrv)) {
-    Printf("ThreadSanitizer: failed to open suppressions file '%s'\n",
-               tmp.data());
-    Die();
-  }
-  fd_t fd = openrv;
-  const uptr fsize = internal_filesize(fd);
-  if (fsize == (uptr)-1) {
-    Printf("ThreadSanitizer: failed to stat suppressions file '%s'\n",
-               tmp.data());
-    Die();
-  }
-  char *buf = (char*)internal_alloc(MBlockSuppression, fsize + 1);
-  if (fsize != internal_read(fd, buf, fsize)) {
-    Printf("ThreadSanitizer: failed to read suppressions file '%s'\n",
-               tmp.data());
-    Die();
-  }
-  internal_close(fd);
-  buf[fsize] = 0;
-  return buf;
-}
-
 void InitializeSuppressions() {
   SuppressionContext::Init();
-  const char *supp = ReadFile(flags()->suppressions);
-  SuppressionContext::Get()->Parse(supp);
 #ifndef TSAN_GO
-  supp = __tsan_default_suppressions();
-  SuppressionContext::Get()->Parse(supp);
+  SuppressionContext::Get()->Parse(__tsan_default_suppressions());
   SuppressionContext::Get()->Parse(std_suppressions);
 #endif
 }

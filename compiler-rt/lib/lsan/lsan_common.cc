@@ -85,16 +85,6 @@ static void InitializeFlags() {
 
 void InitializeSuppressions() {
   SuppressionContext::Init();
-  char *suppressions_from_file;
-  uptr buffer_size;
-  if (ReadFileToBuffer(common_flags()->suppressions, &suppressions_from_file,
-                       &buffer_size, 1 << 26 /* max_len */))
-    SuppressionContext::Get()->Parse(suppressions_from_file);
-  if (common_flags()->suppressions[0] && !buffer_size) {
-    Printf("LeakSanitizer: failed to read suppressions file '%s'\n",
-           common_flags()->suppressions);
-    Die();
-  }
   if (&__lsan_default_suppressions)
     SuppressionContext::Get()->Parse(__lsan_default_suppressions());
 }
