@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
   int volatile z;
   x = z;
 
-  signal(SIGUSR1, SignalHandler);
-  kill(getpid(), SIGUSR1);
-  signal(SIGUSR1, SIG_DFL);
+  signal(SIGHUP, SignalHandler);
+  kill(getpid(), SIGHUP);
+  signal(SIGHUP, SIG_DFL);
 
   return y;
 }
