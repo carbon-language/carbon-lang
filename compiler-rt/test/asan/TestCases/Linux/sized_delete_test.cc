@@ -1,7 +1,7 @@
 // RUN: %clangxx_asan -Xclang -fsized-deallocation -O0 %s -o %t
 // RUN:                                         not %run %t 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=new_delete_size_mismatch=1 not %run %t 2>&1 | FileCheck %s
-// RUN: ASAN_OPTIONS=new_delete_size_mismatch=0     %run %t
+// RUN: ASAN_OPTIONS=new_delete_type_mismatch=1 not %run %t 2>&1 | FileCheck %s
+// RUN: ASAN_OPTIONS=new_delete_type_mismatch=0     %run %t
 #include <new>
 #include <stdio.h>
 
@@ -51,8 +51,10 @@ int main() {
   // Here asan should bark as we are passing a wrong type of pointer
   // to sized delete.
   Del12(reinterpret_cast<S12*>(new S20));
-  // CHECK: AddressSanitizer: new-delete-size-mismatch
-  // CHECK: sized operator delete called with size
+  // CHECK: AddressSanitizer: new-delete-type-mismatch
+  // CHECK:  object passed to delete has wrong type:
+  // CHECK:  size of the allocated type:   20 bytes;
+  // CHECK:  size of the deallocated type: 12 bytes.
   // CHECK: is located 0 bytes inside of 20-byte region
-  // CHECK: SUMMARY: AddressSanitizer: new-delete-size-mismatch
+  // CHECK: SUMMARY: AddressSanitizer: new-delete-type-mismatch
 }

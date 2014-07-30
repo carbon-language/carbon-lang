@@ -58,7 +58,7 @@ struct Flags {
   bool poison_heap;
   bool poison_partial;
   bool alloc_dealloc_mismatch;
-  bool new_delete_size_mismatch;
+  bool new_delete_type_mismatch;
   bool strict_memcmp;
   bool strict_init_order;
   bool start_deactivated;

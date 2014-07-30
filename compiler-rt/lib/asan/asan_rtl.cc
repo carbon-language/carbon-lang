@@ -199,7 +199,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch",
       "Report errors on malloc/delete, new/free, new/delete[], etc.");
 
-  ParseFlag(str, &f->new_delete_size_mismatch, "new_delete_size_mismatch",
+  ParseFlag(str, &f->new_delete_type_mismatch, "new_delete_type_mismatch",
       "Report errors on mismatch betwen size of new and delete.");
 
   ParseFlag(str, &f->strict_memcmp, "strict_memcmp",
@@ -278,7 +278,7 @@ void InitializeFlags(Flags *f, const char *env) {
   // https://code.google.com/p/address-sanitizer/issues/detail?id=309
   // TODO(glider,timurrrr): Fix known issues and enable this back.
   f->alloc_dealloc_mismatch = (SANITIZER_MAC == 0) && (SANITIZER_WINDOWS == 0);
-  f->new_delete_size_mismatch = true;
+  f->new_delete_type_mismatch = true;
   f->strict_memcmp = true;
   f->strict_init_order = false;
   f->start_deactivated = false;

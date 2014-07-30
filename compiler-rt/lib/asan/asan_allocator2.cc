@@ -454,7 +454,7 @@ static void Deallocate(void *ptr, uptr delete_size, StackTrace *stack,
 
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
-  if (delete_size && flags()->new_delete_size_mismatch &&
+  if (delete_size && flags()->new_delete_type_mismatch &&
       delete_size != m->UsedSize()) {
     ReportNewDeleteSizeMismatch(p, delete_size, stack);
   }

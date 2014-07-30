@@ -659,19 +659,21 @@ void ReportNewDeleteSizeMismatch(uptr addr, uptr delete_size,
   Printf("%s", d.Warning());
   char tname[128];
   u32 curr_tid = GetCurrentTidOrInvalid();
-  Report("ERROR: AddressSanitizer: new-delete-size-mismatch on %p in "
+  Report("ERROR: AddressSanitizer: new-delete-type-mismatch on %p in "
          "thread T%d%s:\n",
          addr, curr_tid,
          ThreadNameWithParenthesis(curr_tid, tname, sizeof(tname)));
-  Printf("%s  sized operator delete called with size %zd\n", d.EndWarning(),
-         delete_size);
+  Printf("%s  object passed to delete has wrong type:\n", d.EndWarning());
+  Printf("  size of the allocated type:   %zd bytes;\n"
+         "  size of the deallocated type: %zd bytes.\n",
+         asan_mz_size(reinterpret_cast<void*>(addr)), delete_size);
   CHECK_GT(free_stack->size, 0);
   GET_STACK_TRACE_FATAL(free_stack->trace[0], free_stack->top_frame_bp);
   stack.Print();
   DescribeHeapAddress(addr, 1);
-  ReportErrorSummary("new-delete-size-mismatch", &stack);
+  ReportErrorSummary("new-delete-type-mismatch", &stack);
   Report("HINT: if you don't care about these warnings you may set "
-         "ASAN_OPTIONS=new_delete_size_mismatch=0\n");
+         "ASAN_OPTIONS=new_delete_type_mismatch=0\n");
 }
 
 void ReportFreeNotMalloced(uptr addr, StackTrace *free_stack) {
