@@ -1,4 +1,5 @@
 ; RUN: opt < %s -S | FileCheck %s
+; RUN: verify-uselistorder < %s -preserve-bc-use-list-order -num-shuffles=5
 ; CHECK-NOT: {@llvm\\.palign}
 
 define <4 x i32> @align1(<4 x i32> %a, <4 x i32> %b) nounwind readnone ssp {
