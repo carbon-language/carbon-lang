@@ -1457,7 +1457,7 @@ DWARFExpression::Evaluate
                         {
                             lldb::addr_t pointer_addr = stack.back().GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
                             Error error;
-                            lldb:addr_t pointer_value = process->ReadPointerFromMemory(pointer_addr, error);
+                            lldb::addr_t pointer_value = process->ReadPointerFromMemory(pointer_addr, error);
                             if (pointer_value != LLDB_INVALID_ADDRESS)
                             {
                                 stack.back().GetScalar() = pointer_value;
