@@ -26,7 +26,7 @@ int t6 __attribute__((visibility("protected")));
 // CHECK: @t12 = global i32 0, section "SECT"
 int t12 __attribute__((section("SECT")));
 
-// CHECK: @t9 = alias weak bitcast (void ()* @__t8 to void (...)*)
+// CHECK: @t9 = weak alias bitcast (void ()* @__t8 to void (...)*)
 void __t8() {}
 void t9() __attribute__((weak, alias("__t8")));
 

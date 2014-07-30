@@ -7,16 +7,16 @@
 
 // CHECK-DAG: @both = alias void ()* @__both
 // CHECK-DAG: @both2 = alias void ()* @__both2
-// CHECK-DAG: @weakvar_alias = alias weak i32* @__weakvar_alias
-// CHECK-DAG: @foo = alias weak void ()* @__foo
-// CHECK-DAG: @foo2 = alias weak void ()* @__foo2
-// CHECK-DAG: @stutter = alias weak void ()* @__stutter
-// CHECK-DAG: @stutter2 = alias weak void ()* @__stutter2
-// CHECK-DAG: @declfirst = alias weak void ()* @__declfirst
-// CHECK-DAG: @declfirstattr = alias weak void ()* @__declfirstattr
-// CHECK-DAG: @mix2 = alias weak void ()* @__mix2
-// CHECK-DAG: @a1 = alias weak void ()* @__a1
-// CHECK-DAG: @xxx = alias weak void ()* @__xxx
+// CHECK-DAG: @weakvar_alias = weak alias i32* @__weakvar_alias
+// CHECK-DAG: @foo = weak alias void ()* @__foo
+// CHECK-DAG: @foo2 = weak alias void ()* @__foo2
+// CHECK-DAG: @stutter = weak alias void ()* @__stutter
+// CHECK-DAG: @stutter2 = weak alias void ()* @__stutter2
+// CHECK-DAG: @declfirst = weak alias void ()* @__declfirst
+// CHECK-DAG: @declfirstattr = weak alias void ()* @__declfirstattr
+// CHECK-DAG: @mix2 = weak alias void ()* @__mix2
+// CHECK-DAG: @a1 = weak alias void ()* @__a1
+// CHECK-DAG: @xxx = weak alias void ()* @__xxx
 
 
 
