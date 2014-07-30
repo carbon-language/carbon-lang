@@ -37,25 +37,51 @@ bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
                                        const TargetRegisterInfo *TRI) const {
   unsigned Opc = LdSt->getOpcode();
   if (isDS(Opc)) {
-
     const MachineOperand *OffsetImm = getNamedOperand(*LdSt,
                                                       AMDGPU::OpName::offset);
+    if (OffsetImm) {
+      // Normal, single offset LDS instruction.
+      const MachineOperand *AddrReg = getNamedOperand(*LdSt,
+                                                      AMDGPU::OpName::addr);
 
-    if (!OffsetImm) {
-      // The 2 offset instructions use offset0 and offset1 instead. This
-      // function only handles simple instructions with only a single offset, so
-      // we ignore them.
-
-      // TODO: Handle consecutive offsets as a single load.
-      return false;
+      BaseReg = AddrReg->getReg();
+      Offset = OffsetImm->getImm();
+      return true;
     }
 
-    const MachineOperand *AddrReg = getNamedOperand(*LdSt,
-                                                    AMDGPU::OpName::addr);
+    // The 2 offset instructions use offset0 and offset1 instead. We can treat
+    // these as a load with a single offset if the 2 offsets are consecutive. We
+    // will use this for some partially aligned loads.
+    const MachineOperand *Offset0Imm = getNamedOperand(*LdSt,
+                                                       AMDGPU::OpName::offset0);
+    const MachineOperand *Offset1Imm = getNamedOperand(*LdSt,
+                                                       AMDGPU::OpName::offset1);
 
-    BaseReg = AddrReg->getReg();
-    Offset = OffsetImm->getImm();
-    return true;
+    uint8_t Offset0 = Offset0Imm->getImm();
+    uint8_t Offset1 = Offset1Imm->getImm();
+    assert(Offset1 > Offset0);
+
+    if (Offset1 - Offset0 == 1) {
+      // Each of these offsets is in element sized units, so we need to convert
+      // to bytes of the individual reads.
+
+      unsigned EltSize;
+      if (LdSt->mayLoad())
+        EltSize = getOpRegClass(*LdSt, 0)->getSize() / 2;
+      else {
+        assert(LdSt->mayStore());
+        int Data0Idx = AMDGPU::getNamedOperandIdx(Opc, AMDGPU::OpName::data0);
+        EltSize = getOpRegClass(*LdSt, Data0Idx)->getSize();
+      }
+
+      const MachineOperand *AddrReg = getNamedOperand(*LdSt,
+                                                      AMDGPU::OpName::addr);
+      BaseReg = AddrReg->getReg();
+      Offset = EltSize * Offset0;
+      return true;
+    }
+
+    return false;
   }
 
   if (isMUBUF(Opc) || isMTBUF(Opc)) {
