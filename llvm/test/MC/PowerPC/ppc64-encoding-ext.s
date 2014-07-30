@@ -3579,3 +3579,11 @@
 # CHECK-BE: mtspr 275, 4                    # encoding: [0x7c,0x93,0x43,0xa6]
 # CHECK-LE: mtspr 275, 4                    # encoding: [0xa6,0x43,0x93,0x7c]
             mtsprg3 %r4
+
+# e500/e500mc instructions:
+# CHECK-BE: rfdi                            # encoding: [0x4c,0x00,0x00,0x4e]
+# CHECK-LE: rfdi                            # encoding: [0x4e,0x00,0x00,0x4c]
+            rfdi
+# CHECK-BE: rfmci                            # encoding: [0x4c,0x00,0x00,0x4c]
+# CHECK-LE: rfmci                            # encoding: [0x4c,0x00,0x00,0x4c]
+            rfmci

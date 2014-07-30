@@ -3123,6 +3123,9 @@ def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_BrB, []>,
 def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,
                    Requires<[IsBookE]>;
 
+def RFDI : XForm_0<19, 39, (outs), (ins), "rfdi", IIC_BrB, []>;
+def RFMCI : XForm_0<19, 38, (outs), (ins), "rfmci", IIC_BrB, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //
