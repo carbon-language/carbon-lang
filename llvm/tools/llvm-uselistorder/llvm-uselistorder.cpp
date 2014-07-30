@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// Verify that use-list order can be serialized correctly.
+// Verify that use-list order can be serialized correctly.  After reading the
+// provided IR, this tool shuffles the use-lists and then writes and reads to a
+// separate Module whose use-list orders are compared to the original.
 //
 //===----------------------------------------------------------------------===//
 
