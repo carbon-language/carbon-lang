@@ -78,14 +78,16 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type, bool all
                 clang::TagDecl *tag_decl = tag_type->getDecl();
                 if (tag_decl)
                 {
-                    if (tag_decl->isCompleteDefinition())
-                        return true;
-                    
-                    if (!allow_completion)
-                        return false;
-                    
-                    if (tag_decl->hasExternalLexicalStorage())
+                    if (!tag_decl->hasExternalLexicalStorage())
                     {
+                        if (tag_decl->isCompleteDefinition())
+                            return true;
+                    }
+                    else
+                    {
+                        if (!allow_completion)
+                            return false;
+
                         if (ast)
                         {
                             clang::ExternalASTSource *external_ast_source = ast->getExternalSource();
@@ -3294,9 +3296,9 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                         
                                         child_name.assign(superclass_interface_decl->getNameAsString().c_str());
                                         
-                                        std::pair<uint64_t, unsigned> ivar_type_info = m_ast->getTypeInfo(ivar_qual_type.getTypePtr());
+                                        clang::TypeInfo ivar_type_info = m_ast->getTypeInfo(ivar_qual_type.getTypePtr());
                                         
-                                        child_byte_size = ivar_type_info.first / 8;
+                                        child_byte_size = ivar_type_info.Width / 8;
                                         child_byte_offset = 0;
                                         child_is_base_class = true;
                                         
@@ -3326,9 +3328,9 @@ ClangASTType::GetChildClangTypeAtIndex (ExecutionContext *exe_ctx,
                                     
                                     child_name.assign(ivar_decl->getNameAsString().c_str());
                                     
-                                    std::pair<uint64_t, unsigned> ivar_type_info = m_ast->getTypeInfo(ivar_qual_type.getTypePtr());
+                                    clang::TypeInfo  ivar_type_info = m_ast->getTypeInfo(ivar_qual_type.getTypePtr());
                                     
-                                    child_byte_size = ivar_type_info.first / 8;
+                                    child_byte_size = ivar_type_info.Width / 8;
                                     
                                     // Figure out the field offset within the current struct/union/class type
                                     // For ObjC objects, we can't trust the bit offset we get from the Clang AST, since
@@ -5825,7 +5827,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
                     // Indent and print the base class type name
                     s->Printf("\n%*s%s ", depth + DEPTH_INCREMENT, "", base_class_type_name.c_str());
 
-                    std::pair<uint64_t, unsigned> base_class_type_info = m_ast->getTypeInfo(base_class_qual_type);
+                    clang::TypeInfo base_class_type_info = m_ast->getTypeInfo(base_class_qual_type);
 
                     // Dump the value of the member
                     ClangASTType base_clang_type(m_ast, base_class_qual_type);
@@ -5834,7 +5836,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
                                                base_clang_type.GetFormat(),         // The format with which to display the member
                                                data,                                // Data buffer containing all bytes for this type
                                                data_byte_offset + field_byte_offset,// Offset into "data" where to grab value from
-                                               base_class_type_info.first / 8,      // Size of this type in bytes
+                                               base_class_type_info.Width / 8,      // Size of this type in bytes
                                                0,                                   // Bitfield bit size
                                                0,                                   // Bitfield bit offset
                                                show_types,                          // Boolean indicating if we should show the variable types
@@ -5864,7 +5866,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
                 // Print the member type if requested
                 // Figure out the type byte size (field_type_info.first) and
                 // alignment (field_type_info.second) from the AST context.
-                std::pair<uint64_t, unsigned> field_type_info = m_ast->getTypeInfo(field_type);
+                clang::TypeInfo field_type_info = m_ast->getTypeInfo(field_type);
                 assert(field_idx < record_layout.getFieldCount());
                 // Figure out the field offset within the current struct/union/class type
                 field_bit_offset = record_layout.getFieldOffset (field_idx);
@@ -5893,7 +5895,7 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
                                             field_clang_type.GetFormat(),   // The format with which to display the member
                                             data,                           // Data buffer containing all bytes for this type
                                             data_byte_offset + field_byte_offset,// Offset into "data" where to grab value from
-                                            field_type_info.first / 8,      // Size of this type in bytes
+                                            field_type_info.Width / 8,      // Size of this type in bytes
                                             field_bitfield_bit_size,        // Bitfield bit size
                                             field_bitfield_bit_offset,      // Bitfield bit offset
                                             show_types,                     // Boolean indicating if we should show the variable types
@@ -5943,11 +5945,11 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
 
             const uint64_t element_count = array->getSize().getLimitedValue();
 
-            std::pair<uint64_t, unsigned> field_type_info = m_ast->getTypeInfo(element_qual_type);
+            clang::TypeInfo field_type_info = m_ast->getTypeInfo(element_qual_type);
 
             uint32_t element_idx = 0;
             uint32_t element_offset = 0;
-            uint64_t element_byte_size = field_type_info.first / 8;
+            uint64_t element_byte_size = field_type_info.Width / 8;
             uint32_t element_stride = element_byte_size;
 
             if (is_array_of_characters)
@@ -6006,8 +6008,8 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
             
             ClangASTType typedef_clang_type (m_ast, typedef_qual_type);
             lldb::Format typedef_format = typedef_clang_type.GetFormat();
-            std::pair<uint64_t, unsigned> typedef_type_info = m_ast->getTypeInfo(typedef_qual_type);
-            uint64_t typedef_byte_size = typedef_type_info.first / 8;
+            clang::TypeInfo typedef_type_info = m_ast->getTypeInfo(typedef_qual_type);
+            uint64_t typedef_byte_size = typedef_type_info.Width / 8;
 
             return typedef_clang_type.DumpValue (exe_ctx,
                                                  s,                  // Stream to dump to
@@ -6029,8 +6031,8 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
             clang::QualType elaborated_qual_type = llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType();
             ClangASTType elaborated_clang_type (m_ast, elaborated_qual_type);
             lldb::Format elaborated_format = elaborated_clang_type.GetFormat();
-            std::pair<uint64_t, unsigned> elaborated_type_info = m_ast->getTypeInfo(elaborated_qual_type);
-            uint64_t elaborated_byte_size = elaborated_type_info.first / 8;
+            clang::TypeInfo elaborated_type_info = m_ast->getTypeInfo(elaborated_qual_type);
+            uint64_t elaborated_byte_size = elaborated_type_info.Width / 8;
 
             return elaborated_clang_type.DumpValue (exe_ctx,
                                                     s,                  // Stream to dump to
@@ -6053,8 +6055,8 @@ ClangASTType::DumpValue (ExecutionContext *exe_ctx,
             ClangASTType desugar_clang_type (m_ast, desugar_qual_type);
 
             lldb::Format desugar_format = desugar_clang_type.GetFormat();
-            std::pair<uint64_t, unsigned> desugar_type_info = m_ast->getTypeInfo(desugar_qual_type);
-            uint64_t desugar_byte_size = desugar_type_info.first / 8;
+            clang::TypeInfo desugar_type_info = m_ast->getTypeInfo(desugar_qual_type);
+            uint64_t desugar_byte_size = desugar_type_info.Width / 8;
             
             return desugar_clang_type.DumpValue (exe_ctx,
                                                  s,                  // Stream to dump to
@@ -6121,8 +6123,8 @@ ClangASTType::DumpTypeValue (Stream *s,
                 ClangASTType typedef_clang_type (m_ast, typedef_qual_type);
                 if (format == eFormatDefault)
                     format = typedef_clang_type.GetFormat();
-                std::pair<uint64_t, unsigned> typedef_type_info = m_ast->getTypeInfo(typedef_qual_type);
-                uint64_t typedef_byte_size = typedef_type_info.first / 8;
+                clang::TypeInfo typedef_type_info = m_ast->getTypeInfo(typedef_qual_type);
+                uint64_t typedef_byte_size = typedef_type_info.Width / 8;
 
                 return typedef_clang_type.DumpTypeValue (s,
                                                          format,                 // The format with which to display the element
