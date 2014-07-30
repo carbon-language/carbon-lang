@@ -83,6 +83,9 @@ void test(int *List, int Length) {
     List[i] = i;
   }
 
+/* expected-error {{expected ')'}} */ #pragma clang loop vectorize_width(1 +) 1
+/* expected-warning {{extra tokens at end of '#pragma clang loop'}} */ #pragma clang loop vectorize_width(1) +1
+
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop vectorize_width(badvalue)
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop interleave_count(badvalue)
 /* expected-error {{invalid argument; expected a positive integer value}} */ #pragma clang loop unroll_count(badvalue)

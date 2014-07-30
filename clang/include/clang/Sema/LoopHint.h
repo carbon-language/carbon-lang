@@ -29,11 +29,15 @@ struct LoopHint {
   // "#pragma unroll" and "#pragma nounroll" cases, this is identical to
   // PragmaNameLoc.
   IdentifierLoc *OptionLoc;
-  // Identifier for the hint argument.  If null, then the hint has no argument
-  // such as for "#pragma unroll".
-  IdentifierLoc *ValueLoc;
+  // Identifier for the hint state argument.  If null, then the state is
+  // default value such as for "#pragma unroll".
+  IdentifierLoc *StateLoc;
   // Expression for the hint argument if it exists, null otherwise.
   Expr *ValueExpr;
+
+  LoopHint()
+      : PragmaNameLoc(nullptr), OptionLoc(nullptr), StateLoc(nullptr),
+        ValueExpr(nullptr) {}
 };
 
 } // end namespace clang
