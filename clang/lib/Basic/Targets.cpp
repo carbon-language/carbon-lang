@@ -1691,7 +1691,7 @@ class X86TargetInfo : public TargetInfo {
   bool HasTBM;
   bool HasFMA;
   bool HasF16C;
-  bool HasAVX512CD, HasAVX512ER, HasAVX512PF;
+  bool HasAVX512CD, HasAVX512ER, HasAVX512PF, HasAVX512DQ, HasAVX512BW, HasAVX512VL;
   bool HasSHA;
   bool HasCX16;
 
@@ -1783,6 +1783,10 @@ class X86TargetInfo : public TargetInfo {
     /// Knights Landing processor.
     CK_KNL,
 
+    /// \name Skylake Server
+    /// Skylake server processor.
+    CK_SKX,
+
     /// \name K6
     /// K6 architecture processors.
     //@{
@@ -1856,7 +1860,8 @@ public:
         HasRDRND(false), HasBMI(false), HasBMI2(false), HasPOPCNT(false),
         HasRTM(false), HasPRFCHW(false), HasRDSEED(false), HasTBM(false),
         HasFMA(false), HasF16C(false), HasAVX512CD(false), HasAVX512ER(false),
-        HasAVX512PF(false), HasSHA(false), HasCX16(false), CPU(CK_Generic),
+        HasAVX512PF(false), HasAVX512DQ(false), HasAVX512BW(false), HasAVX512VL(false),
+        HasSHA(false), HasCX16(false), CPU(CK_Generic),
         FPMath(FP_Default) {
     BigEndian = false;
     LongDoubleFormat = &llvm::APFloat::x87DoubleExtended;
@@ -1950,6 +1955,7 @@ public:
       .Case("core-avx-i", CK_CoreAVXi)
       .Case("core-avx2", CK_CoreAVX2)
       .Case("knl", CK_KNL)
+      .Case("skx", CK_SKX)
       .Case("k6", CK_K6)
       .Case("k6-2", CK_K6_2)
       .Case("k6-3", CK_K6_3)
@@ -2028,6 +2034,7 @@ public:
     case CK_CoreAVXi:
     case CK_CoreAVX2:
     case CK_KNL:
+    case CK_SKX:
     case CK_Athlon64:
     case CK_Athlon64SSE3:
     case CK_AthlonFX:
@@ -2166,6 +2173,22 @@ void X86TargetInfo::getDefaultFeatures(llvm::StringMap<bool> &Features) const {
     setFeatureEnabledImpl(Features, "avx512cd", true);
     setFeatureEnabledImpl(Features, "avx512er", true);
     setFeatureEnabledImpl(Features, "avx512pf", true);
+    setFeatureEnabledImpl(Features, "aes", true);
+    setFeatureEnabledImpl(Features, "pclmul", true);
+    setFeatureEnabledImpl(Features, "lzcnt", true);
+    setFeatureEnabledImpl(Features, "rdrnd", true);
+    setFeatureEnabledImpl(Features, "f16c", true);
+    setFeatureEnabledImpl(Features, "bmi", true);
+    setFeatureEnabledImpl(Features, "bmi2", true);
+    setFeatureEnabledImpl(Features, "rtm", true);
+    setFeatureEnabledImpl(Features, "fma", true);
+    break;
+  case CK_SKX:
+    setFeatureEnabledImpl(Features, "avx512f", true);
+    setFeatureEnabledImpl(Features, "avx512cd", true);
+    setFeatureEnabledImpl(Features, "avx512dq", true);
+    setFeatureEnabledImpl(Features, "avx512bw", true);
+    setFeatureEnabledImpl(Features, "avx512vl", true);
     setFeatureEnabledImpl(Features, "aes", true);
     setFeatureEnabledImpl(Features, "pclmul", true);
     setFeatureEnabledImpl(Features, "lzcnt", true);
@@ -2317,8 +2340,8 @@ void X86TargetInfo::setSSELevel(llvm::StringMap<bool> &Features,
   case AVX2:
     Features["avx2"] = false;
   case AVX512F:
-    Features["avx512f"] = Features["avx512cd"] = Features["avx512er"] =
-      Features["avx512pf"] = false;
+    Features["avx512f"] = Features["avx512cd"] = Features["avx512er"] = Features["avx512pf"] =
+    Features["avx512dq"] = Features["avx512bw"] = Features["avx512vl"] = false;
   }
 }
 
@@ -2417,7 +2440,8 @@ void X86TargetInfo::setFeatureEnabledImpl(llvm::StringMap<bool> &Features,
     setSSELevel(Features, AVX2, Enabled);
   } else if (Name == "avx512f") {
     setSSELevel(Features, AVX512F, Enabled);
-  } else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf") {
+  } else if (Name == "avx512cd" || Name == "avx512er" || Name == "avx512pf"
+          || Name == "avx512dq" || Name == "avx512bw" || Name == "avx512vl") {
     if (Enabled)
       setSSELevel(Features, AVX512F, Enabled);
   } else if (Name == "fma") {
@@ -2527,6 +2551,21 @@ bool X86TargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
 
     if (Feature == "avx512pf") {
       HasAVX512PF = true;
+      continue;
+    }
+
+    if (Feature == "avx512dq") {
+      HasAVX512DQ = true;
+      continue;
+    }
+
+    if (Feature == "avx512bw") {
+      HasAVX512BW = true;
+      continue;
+    }
+
+    if (Feature == "avx512vl") {
+      HasAVX512VL = true;
       continue;
     }
 
@@ -2696,6 +2735,9 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
   case CK_KNL:
     defineCPUMacros(Builder, "knl");
     break;
+  case CK_SKX:
+    defineCPUMacros(Builder, "skx");
+    break;
   case CK_K6_2:
     Builder.defineMacro("__k6_2__");
     Builder.defineMacro("__tune_k6_2__");
@@ -2823,6 +2865,12 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__AVX512ER__");
   if (HasAVX512PF)
     Builder.defineMacro("__AVX512PF__");
+  if (HasAVX512DQ)
+    Builder.defineMacro("__AVX512DQ__");
+  if (HasAVX512BW)
+    Builder.defineMacro("__AVX512BW__");
+  if (HasAVX512VL)
+    Builder.defineMacro("__AVX512VL__");
 
   if (HasSHA)
     Builder.defineMacro("__SHA__");
@@ -2906,6 +2954,9 @@ bool X86TargetInfo::hasFeature(StringRef Feature) const {
       .Case("avx512cd", HasAVX512CD)
       .Case("avx512er", HasAVX512ER)
       .Case("avx512pf", HasAVX512PF)
+      .Case("avx512dq", HasAVX512DQ)
+      .Case("avx512bw", HasAVX512BW)
+      .Case("avx512vl", HasAVX512VL)
       .Case("bmi", HasBMI)
       .Case("bmi2", HasBMI2)
       .Case("cx16", HasCX16)
