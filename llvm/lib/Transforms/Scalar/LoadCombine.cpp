@@ -58,6 +58,8 @@ public:
         C(nullptr), DL(nullptr) {
     initializeSROAPass(*PassRegistry::getPassRegistry());
   }
+  
+  using llvm::Pass::doInitialization;
   bool doInitialization(Function &) override;
   bool runOnBasicBlock(BasicBlock &BB) override;
   void getAnalysisUsage(AnalysisUsage &AU) const override;

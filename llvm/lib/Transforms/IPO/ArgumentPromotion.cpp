@@ -83,6 +83,8 @@ namespace {
     CallGraphNode *DoPromotion(Function *F,
                                SmallPtrSet<Argument*, 8> &ArgsToPromote,
                                SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
+    
+    using llvm::Pass::doInitialization;
     bool doInitialization(CallGraph &CG) override;
     /// The maximum number of elements to expand, or 0 for unlimited.
     unsigned maxElements;
