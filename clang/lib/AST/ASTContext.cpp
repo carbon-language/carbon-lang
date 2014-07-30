@@ -1433,13 +1433,12 @@ bool ASTContext::isAlignmentRequired(QualType T) const {
 
 TypeInfo ASTContext::getTypeInfo(const Type *T) const {
   TypeInfo TI = MemoizedTypeInfo[T];
-  if (TI.Align)
-    return TI;
-
-  // This call can invalidate TI, so we need a second lookup.
-  TypeInfo Temp = getTypeInfoImpl(T);
-  MemoizedTypeInfo[T] = Temp;
-  return Temp;
+  if (!TI.Align) {
+    // This call can invalidate MemoizedTypeInfo[T], so we need a second lookup.
+    TI = getTypeInfoImpl(T);
+    MemoizedTypeInfo[T] = TI;
+  }
+  return TI;
 }
 
 /// getTypeInfoImpl - Return the size of the specified type, in bits.  This
