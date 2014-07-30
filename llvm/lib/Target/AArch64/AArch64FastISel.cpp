@@ -122,6 +122,9 @@ private:
   bool IsMemCpySmall(uint64_t Len, unsigned Alignment);
   bool TryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len,
                           unsigned Alignment);
+  bool foldXALUIntrinsic(AArch64CC::CondCode &CC, const Instruction *I,
+                         const Value *Cond);
+
   // Emit functions.
   bool EmitCmp(Value *Src1Value, Value *Src2Value, bool isZExt);
   bool EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
@@ -768,10 +771,11 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
   MachineBasicBlock *TBB = FuncInfo.MBBMap[BI->getSuccessor(0)];
   MachineBasicBlock *FBB = FuncInfo.MBBMap[BI->getSuccessor(1)];
 
+  AArch64CC::CondCode CC = AArch64CC::NE;
   if (const CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition())) {
     if (CI->hasOneUse() && (CI->getParent() == I->getParent())) {
       // We may not handle every CC for now.
-      AArch64CC::CondCode CC = getCompareCC(CI->getPredicate());
+      CC = getCompareCC(CI->getPredicate());
       if (CC == AArch64CC::AL)
         return false;
 
@@ -814,7 +818,6 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
           .addImm(0)
           .addImm(0);
 
-      unsigned CC = AArch64CC::NE;
       if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
         std::swap(TBB, FBB);
         CC = AArch64CC::EQ;
@@ -833,6 +836,21 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::B))
         .addMBB(Target);
     FuncInfo.MBB->addSuccessor(Target);
+    return true;
+  } else if (foldXALUIntrinsic(CC, I, BI->getCondition())) {
+    // Fake request the condition, otherwise the intrinsic might be completely
+    // optimized away.
+    unsigned CondReg = getRegForValue(BI->getCondition());
+    if (!CondReg)
+      return false;
+
+    // Emit the branch.
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::Bcc))
+      .addImm(CC)
+      .addMBB(TBB);
+    FuncInfo.MBB->addSuccessor(TBB);
+
+    FastEmitBranch(FBB, DbgLoc);
     return true;
   }
 
@@ -853,7 +871,6 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
       .addImm(0)
       .addImm(0);
 
-  unsigned CC = AArch64CC::NE;
   if (FuncInfo.MBB->isLayoutSuccessor(TBB)) {
     std::swap(TBB, FBB);
     CC = AArch64CC::EQ;
@@ -1442,6 +1459,63 @@ bool AArch64FastISel::TryEmitSmallMemCpy(Address Dest, Address Src,
     Src.setOffset(OrigSrc.getOffset() + UnscaledOffset);
   }
 
+  return true;
+}
+
+/// \brief Check if it is possible to fold the condition from the XALU intrinsic
+/// into the user. The condition code will only be updated on success.
+bool AArch64FastISel::foldXALUIntrinsic(AArch64CC::CondCode &CC,
+                                        const Instruction *I,
+                                        const Value *Cond) {
+  if (!isa<ExtractValueInst>(Cond))
+    return false;
+
+  const auto *EV = cast<ExtractValueInst>(Cond);
+  if (!isa<IntrinsicInst>(EV->getAggregateOperand()))
+    return false;
+
+  const auto *II = cast<IntrinsicInst>(EV->getAggregateOperand());
+  MVT RetVT;
+  const Function *Callee = II->getCalledFunction();
+  Type *RetTy =
+  cast<StructType>(Callee->getReturnType())->getTypeAtIndex(0U);
+  if (!isTypeLegal(RetTy, RetVT))
+    return false;
+
+  if (RetVT != MVT::i32 && RetVT != MVT::i64)
+    return false;
+
+  AArch64CC::CondCode TmpCC;
+  switch (II->getIntrinsicID()) {
+    default: return false;
+    case Intrinsic::sadd_with_overflow:
+    case Intrinsic::ssub_with_overflow: TmpCC = AArch64CC::VS; break;
+    case Intrinsic::uadd_with_overflow: TmpCC = AArch64CC::HS; break;
+    case Intrinsic::usub_with_overflow: TmpCC = AArch64CC::LO; break;
+    case Intrinsic::smul_with_overflow:
+    case Intrinsic::umul_with_overflow: TmpCC = AArch64CC::NE; break;
+  }
+
+  // Check if both instructions are in the same basic block.
+  if (II->getParent() != I->getParent())
+    return false;
+
+  // Make sure nothing is in the way
+  BasicBlock::const_iterator Start = I;
+  BasicBlock::const_iterator End = II;
+  for (auto Itr = std::prev(Start); Itr != End; --Itr) {
+    // We only expect extractvalue instructions between the intrinsic and the
+    // instruction to be selected.
+    if (!isa<ExtractValueInst>(Itr))
+      return false;
+
+    // Check that the extractvalue operand comes from the intrinsic.
+    const auto *EVI = cast<ExtractValueInst>(Itr);
+    if (EVI->getAggregateOperand() != II)
+      return false;
+  }
+
+  CC = TmpCC;
   return true;
 }
 
