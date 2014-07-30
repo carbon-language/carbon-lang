@@ -88,3 +88,17 @@ void test_mm512_store_pd(void *p, __m512d a)
   // CHECK: store <8 x double>
   _mm512_store_pd(p, a);
 }
+
+__m512d test_mm512_set1_pd(double d)
+{
+  // CHECK-LABEL: @test_mm512_set1_pd
+  // CHECK: insertelement <8 x double> {{.*}}, i32 0
+  // CHECK: insertelement <8 x double> {{.*}}, i32 1
+  // CHECK: insertelement <8 x double> {{.*}}, i32 2
+  // CHECK: insertelement <8 x double> {{.*}}, i32 3
+  // CHECK: insertelement <8 x double> {{.*}}, i32 4
+  // CHECK: insertelement <8 x double> {{.*}}, i32 5
+  // CHECK: insertelement <8 x double> {{.*}}, i32 6
+  // CHECK: insertelement <8 x double> {{.*}}, i32 7
+  return _mm512_set1_pd(d);
+}

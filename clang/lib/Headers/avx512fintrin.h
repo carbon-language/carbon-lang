@@ -91,6 +91,32 @@ _mm512_setzero_pd(void)
   return (__m512d){ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
 }
 
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_set1_ps(float __w)
+{
+  return (__m512){ __w, __w, __w, __w, __w, __w, __w, __w,
+                   __w, __w, __w, __w, __w, __w, __w, __w  };
+}
+
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_set1_pd(double __w)
+{
+  return (__m512d){ __w, __w, __w, __w, __w, __w, __w, __w };
+}
+
+static __inline __m512i __attribute__((__always_inline__, __nodebug__))
+_mm512_set1_epi32(int __s)
+{
+  return (__m512i)(__v16si){ __s, __s, __s, __s, __s, __s, __s, __s,
+                             __s, __s, __s, __s, __s, __s, __s, __s };
+}
+
+static __inline __m512i __attribute__((__always_inline__, __nodebug__))
+_mm512_set1_epi64(long long __d)
+{
+  return (__m512i)(__v8di){ __d, __d, __d, __d, __d, __d, __d, __d };
+}
+
 /* Arithmetic */
 
 static __inline __m512d __attribute__((__always_inline__, __nodebug__))
