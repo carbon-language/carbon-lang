@@ -117,6 +117,33 @@ _mm512_set1_epi64(long long __d)
   return (__m512i)(__v8di){ __d, __d, __d, __d, __d, __d, __d, __d };
 }
 
+/* Cast between vector types */
+
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_castpd256_pd512(__m256d __a)
+{
+  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3, -1, -1, -1, -1);
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_castps256_ps512(__m256 __a)
+{
+  return __builtin_shufflevector(__a, __a, 0,  1,  2,  3,  4,  5,  6,  7,
+                                          -1, -1, -1, -1, -1, -1, -1, -1);
+}
+
+static __inline __m128d __attribute__((__always_inline__, __nodebug__))
+_mm512_castpd512_pd128(__m512d __a)
+{
+  return __builtin_shufflevector(__a, __a, 0, 1);
+}
+
+static __inline __m128 __attribute__((__always_inline__, __nodebug__))
+_mm512_castps512_ps128(__m512 __a)
+{
+  return __builtin_shufflevector(__a, __a, 0, 1, 2, 3);
+}
+
 /* Arithmetic */
 
 static __inline __m512d __attribute__((__always_inline__, __nodebug__))

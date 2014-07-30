@@ -102,3 +102,10 @@ __m512d test_mm512_set1_pd(double d)
   // CHECK: insertelement <8 x double> {{.*}}, i32 7
   return _mm512_set1_pd(d);
 }
+
+__m512d test_mm512_castpd256_pd512(__m256d a)
+{
+  // CHECK-LABEL: @test_mm512_castpd256_pd512
+  // CHECK: shufflevector <4 x double> {{.*}} <i32 0, i32 1, i32 2, i32 3, i32 undef, i32 undef, i32 undef, i32 undef>
+  return _mm512_castpd256_pd512(a);
+}
