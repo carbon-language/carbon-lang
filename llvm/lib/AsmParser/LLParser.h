@@ -258,8 +258,8 @@ namespace llvm {
                      bool HasLinkage, unsigned Visibility,
                      unsigned DLLStorageClass,
                      GlobalVariable::ThreadLocalMode TLM, bool UnnamedAddr);
-    bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Visibility,
-                    unsigned DLLStorageClass,
+    bool ParseAlias(const std::string &Name, LocTy Loc, unsigned Linkage,
+                    unsigned Visibility, unsigned DLLStorageClass,
                     GlobalVariable::ThreadLocalMode TLM, bool UnnamedAddr);
     bool parseComdat();
     bool ParseStandaloneMetadata();

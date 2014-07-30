@@ -70,7 +70,7 @@ define weak_odr dllexport void @weak1() {
 
 ; CHECK: .weak weak_alias
 ; CHECK: weak_alias = f1
-@weak_alias = dllexport alias weak_odr void()* @f1
+@weak_alias = weak_odr dllexport alias void()* @f1
 
 @blob = global [6 x i8] c"\B8*\00\00\00\C3", section ".text", align 16
 @blob_alias = dllexport alias bitcast ([6 x i8]* @blob to i32 ()*)

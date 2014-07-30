@@ -21,7 +21,7 @@ declare void @f()
 
 
 @test3_a = global i32 42
-@test3_b = alias weak i32* @test3_a
+@test3_b = weak alias i32* @test3_a
 @test3_c = alias i32* @test3_b
 ; CHECK: Alias cannot point to a weak alias
 ; CHECK-NEXT: i32* @test3_c

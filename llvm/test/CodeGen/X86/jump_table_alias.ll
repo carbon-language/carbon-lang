@@ -5,7 +5,7 @@ entry:
   ret i32 0
 }
 
-@i = alias internal i32 ()* @f
+@i = internal alias i32 ()* @f
 @j = alias i32 ()* @f
 
 define i32 @main(i32 %argc, i8** %argv) {

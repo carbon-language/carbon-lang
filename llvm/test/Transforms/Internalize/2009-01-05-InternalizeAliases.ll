@@ -4,10 +4,10 @@
 ; CHECK: @A = internal global i32 0
 
 @B = alias i32* @A
-; CHECK: @B = alias internal i32* @A
+; CHECK: @B = internal alias i32* @A
 
 @C = alias i32* @A
-; CHECK: @C = alias internal i32* @A
+; CHECK: @C = internal alias i32* @A
 
 define i32 @main() {
 	%tmp = load i32* @C

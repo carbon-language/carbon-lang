@@ -30,12 +30,12 @@ define i32 @foo_f() {
   ret i32 0
 }
 ; CHECK-DAG: .weak	bar_f
-@bar_f = alias weak %FunTy* @foo_f
+@bar_f = weak alias %FunTy* @foo_f
 
-@bar_l = alias linkonce_odr i32* @bar
+@bar_l = linkonce_odr alias i32* @bar
 ; CHECK-DAG: .weak	bar_l
 
-@bar_i = alias internal i32* @bar
+@bar_i = internal alias i32* @bar
 
 ; CHECK-DAG: .globl	A
 @A = alias bitcast (i32* @bar to i64*)

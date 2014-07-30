@@ -4,7 +4,7 @@
 
 @i = internal global i8 42
 ; CHECK: @ia = internal global i8 42
-@ia = alias internal i8* @i
+@ia = internal alias i8* @i
 
 @llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
 ; CHECK-DAG: @llvm.used = appending global [3 x i8*] [i8* bitcast (void ()* @fa to i8*), i8* bitcast (void ()* @f to i8*), i8* @ca], section "llvm.metadata"
@@ -18,17 +18,17 @@
 @other = global i32* bitcast (void ()* @fa to i32*)
 ; CHECK-DAG: @other = global i32* bitcast (void ()* @f to i32*)
 
-@fa = alias internal void ()* @f
-; CHECK: @fa = alias internal void ()* @f
+@fa = internal alias void ()* @f
+; CHECK: @fa = internal alias void ()* @f
 
-@fa2 = alias internal void ()* @f
+@fa2 = internal alias void ()* @f
 ; CHECK-NOT: @fa2
 
-@fa3 = alias internal void ()* @f
+@fa3 = internal alias void ()* @f
 ; CHECK: @fa3
 
-@ca = alias internal i8* @c
-; CHECK: @ca = alias internal i8* @c
+@ca = internal alias i8* @c
+; CHECK: @ca = internal alias i8* @c
 
 define void @f() {
   ret void

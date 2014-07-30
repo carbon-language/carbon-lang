@@ -13,7 +13,7 @@ entry:
 ; CHECK: leal	v@TLSGD
 ; CHECK: __tls_get_addr
 
-@alias = alias internal i32* @v
+@alias = internal alias i32* @v
 define i32 @f_alias() nounwind {
 entry:
           %t = load i32* @v

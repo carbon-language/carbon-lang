@@ -8,9 +8,9 @@
 @v3 = weak hidden global i32 0
 
 ; Aliases
-@a1 = hidden alias weak i32* @v1
-@a2 = protected alias weak i32* @v2
-@a3 = hidden alias weak i32* @v3
+@a1 = weak hidden alias i32* @v1
+@a2 = weak protected alias i32* @v2
+@a3 = weak hidden alias i32* @v3
 
 ; Functions
 define weak hidden void @f1() {

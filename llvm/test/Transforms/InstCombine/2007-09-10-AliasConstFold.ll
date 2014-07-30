@@ -1,7 +1,7 @@
 ; RUN: opt < %s -instcombine -S | grep icmp
 ; PR1646
 
-@__gthrw_pthread_cancel = alias weak i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=1]
+@__gthrw_pthread_cancel = weak alias i32 (i32)* @pthread_cancel		; <i32 (i32)*> [#uses=1]
 @__gthread_active_ptr.5335 = internal constant i8* bitcast (i32 (i32)* @__gthrw_pthread_cancel to i8*)		; <i8**> [#uses=1]
 define weak i32 @pthread_cancel(i32) {
        ret i32 0

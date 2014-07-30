@@ -89,7 +89,7 @@ define weak_odr dllexport void @weak1() {
 
 ; CHECK: .weak _weak_alias
 ; CHECK: _weak_alias = _f1
-@weak_alias = dllexport alias weak_odr void()* @f1
+@weak_alias = weak_odr dllexport alias void()* @f1
 
 
 ; CHECK: .section .drectve

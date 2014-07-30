@@ -1,6 +1,6 @@
 ; RUN: llc < %s -mtriple=i686-pc-linux-gnu | FileCheck %s
 
-@__gthrw_pthread_once = alias weak i32 (i32*, void ()*)* @pthread_once		; <i32 (i32*, void ()*)*> [#uses=0]
+@__gthrw_pthread_once = weak alias i32 (i32*, void ()*)* @pthread_once		; <i32 (i32*, void ()*)*> [#uses=0]
 
 define weak i32 @pthread_once(i32*, void ()*) {
   ret i32 0
