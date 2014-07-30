@@ -379,11 +379,11 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   return LDPS_OK;
 }
 
-static bool mustPreserve(const claimed_file &F, int i) {
-  if (F.syms[i].resolution == LDPR_PREVAILING_DEF)
+static bool mustPreserve(const claimed_file &F, ld_plugin_symbol &Sym) {
+  if (Sym.resolution == LDPR_PREVAILING_DEF)
     return true;
-  if (F.syms[i].resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
-    return CannotBeHidden.count(F.syms[i].name);
+  if (Sym.resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
+    return CannotBeHidden.count(Sym.name);
   return false;
 }
 
@@ -404,17 +404,16 @@ static ld_plugin_status all_symbols_read_hook(void) {
               Error.c_str());
   }
 
-  for (std::list<claimed_file>::iterator I = Modules.begin(),
-         E = Modules.end(); I != E; ++I) {
-    if (I->syms.empty())
+  for (claimed_file &F : Modules) {
+    if (F.syms.empty())
       continue;
-    get_symbols(I->handle, I->syms.size(), &I->syms[0]);
-    for (unsigned i = 0, e = I->syms.size(); i != e; i++) {
-      if (mustPreserve(*I, i)) {
-        CodeGen->addMustPreserveSymbol(I->syms[i].name);
+    get_symbols(F.handle, F.syms.size(), &F.syms[0]);
+    for (ld_plugin_symbol &Sym : F.syms) {
+      if (mustPreserve(F, Sym)) {
+        CodeGen->addMustPreserveSymbol(Sym.name);
 
         if (options::generate_api_file)
-          (*api_file) << I->syms[i].name << "\n";
+          (*api_file) << Sym.name << "\n";
       }
     }
   }
@@ -452,12 +451,9 @@ static ld_plugin_status all_symbols_read_hook(void) {
   }
 
   delete CodeGen;
-  for (std::list<claimed_file>::iterator I = Modules.begin(),
-         E = Modules.end(); I != E; ++I) {
-    for (unsigned i = 0; i != I->syms.size(); ++i) {
-      ld_plugin_symbol &sym = I->syms[i];
-      free(sym.name);
-    }
+  for (claimed_file &F : Modules) {
+    for (ld_plugin_symbol &Sym : F.syms)
+      free(Sym.name);
   }
 
   if (add_input_file(ObjPath.c_str()) != LDPS_OK) {
@@ -479,10 +475,10 @@ static ld_plugin_status all_symbols_read_hook(void) {
 }
 
 static ld_plugin_status cleanup_hook(void) {
-  for (int i = 0, e = Cleanup.size(); i != e; ++i) {
-    std::error_code EC = sys::fs::remove(Cleanup[i]);
+  for (std::string &Name : Cleanup) {
+    std::error_code EC = sys::fs::remove(Name);
     if (EC)
-      message(LDPL_ERROR, "Failed to delete '%s': %s", Cleanup[i].c_str(),
+      message(LDPL_ERROR, "Failed to delete '%s': %s", Name.c_str(),
               EC.message().c_str());
   }
 
