@@ -166,6 +166,12 @@ public:
     _existingPaths.insert(path);
   }
 
+  /// Add section alignment constraint on final layout.
+  void addSectionAlignment(StringRef seg, StringRef sect, uint8_t align2);
+
+  /// Returns true if specified section had alignment constraints.
+  bool sectionAligned(StringRef seg, StringRef sect, uint8_t &align2) const;
+
   StringRef dyldPath() const { return "/usr/lib/dyld"; }
 
   /// Stub creation Pass should be run.
@@ -201,6 +207,12 @@ private:
     uint32_t                  cpusubtype;
   };
 
+  struct SectionAlign {
+    StringRef segmentName;
+    StringRef sectionName;
+    uint8_t   align2;
+  };
+
   static ArchInfo _s_archInfos[];
 
   std::set<StringRef> _existingPaths; // For testing only.
@@ -222,6 +234,7 @@ private:
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
+  std::vector<SectionAlign> _sectAligns;
 };
 
 } // end namespace lld

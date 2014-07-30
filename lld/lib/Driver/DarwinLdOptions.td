@@ -92,6 +92,9 @@ def path_exists : Separate<["-"], "path_exists">,
 // general options
 def output : Separate<["-"], "o">, HelpText<"Output file path">;
 def arch : Separate<["-"], "arch">, HelpText<"Architecture to link">;
+def sectalign : MultiArg<["-"], "sectalign", 3>,
+                HelpText<"alignment for segment/section">;
+
 
 // extras
 def help : Flag<["-"], "help">;

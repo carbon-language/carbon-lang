@@ -51,7 +51,8 @@ struct AtomInfo {
 };
 
 struct SectionInfo {
-  SectionInfo(StringRef seg, StringRef sect, SectionType type, uint32_t attr=0);
+  SectionInfo(StringRef seg, StringRef sect, SectionType type,
+              const MachOLinkingContext &ctxt, uint32_t attr=0);
 
   StringRef                 segmentName;
   StringRef                 sectionName;
@@ -65,10 +66,15 @@ struct SectionInfo {
   uint32_t                  finalSectionIndex;
 };
 
-SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t, uint32_t a)
- : segmentName(sg), sectionName(sct), type(t), attributes(a),
+SectionInfo::SectionInfo(StringRef sg, StringRef sct, SectionType t,
+                         const MachOLinkingContext &ctxt, uint32_t attrs)
+ : segmentName(sg), sectionName(sct), type(t), attributes(attrs),
                  address(0), size(0), alignment(0),
                  normalizedSectionIndex(0), finalSectionIndex(0) {
+  uint8_t align;
+  if (ctxt.sectionAligned(segmentName, sectionName, align)) {
+    alignment = align;
+  }
 }
 
 struct SegmentInfo {
@@ -79,10 +85,11 @@ struct SegmentInfo {
   uint64_t                   size;
   uint32_t                   access;
   std::vector<SectionInfo*>  sections;
+  uint32_t                   normalizedSegmentIndex;
 };
 
 SegmentInfo::SegmentInfo(StringRef n)
- : name(n), address(0), size(0), access(0) {
+ : name(n), address(0), size(0), access(0), normalizedSegmentIndex(0) {
 }
 
 
@@ -93,10 +100,11 @@ public:
 
   void      assignAtomsToSections(const lld::File &atomFile);
   void      organizeSections();
-  void      assignAddressesToSections();
+  void      assignAddressesToSections(const NormalizedFile &file);
   uint32_t  fileFlags();
   void      copySegmentInfo(NormalizedFile &file);
-  void      copySections(NormalizedFile &file);
+  void      copySectionInfo(NormalizedFile &file);
+  void      updateSectionInfo(NormalizedFile &file);
   void      buildAtomToAddressMap();
   void      addSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addIndirectSymbols(const lld::File &atomFile, NormalizedFile &file);
@@ -105,6 +113,7 @@ public:
   void      buildDataInCodeArray(const lld::File &, NormalizedFile &file);
   void      addDependentDylibs(const lld::File &, NormalizedFile &file);
   void      copyEntryPointAddress(NormalizedFile &file);
+  void      copySectionContent(NormalizedFile &file);
 
 private:
   typedef std::map<DefinedAtom::ContentType, SectionInfo*> TypeToSection;
@@ -119,7 +128,7 @@ private:
   void         appendAtom(SectionInfo *sect, const DefinedAtom *atom);
   SegmentInfo *segmentForName(StringRef segName);
   void         layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr);
-  void         layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr);
+  void         layoutSectionsInTextSegment(size_t, SegmentInfo *, uint64_t &);
   void         copySectionContent(SectionInfo *si, ContentBytes &content);
   uint8_t      scopeBits(const DefinedAtom* atom);
   uint16_t     descBits(const DefinedAtom* atom);
@@ -180,7 +189,8 @@ SectionInfo *Util::getRelocatableSection(DefinedAtom::ContentType type) {
   }
   // Otherwise allocate new SectionInfo object.
   SectionInfo *sect = new (_allocator) SectionInfo(segmentName, sectionName, 
-                                                   sectionType, sectionAttrs);
+                                                   sectionType, _context,
+                                                   sectionAttrs);
   _sectionInfos.push_back(sect);
   _sectionMap[type] = sect;
   return sect;
@@ -255,6 +265,7 @@ SectionInfo *Util::getFinalSection(DefinedAtom::ContentType atomType) {
     SectionInfo *sect = new (_allocator) SectionInfo(p.segmentName,
                                                      p.sectionName,
                                                      p.sectionType,
+                                                     _context,
                                                      sectionAttrs);
     _sectionInfos.push_back(sect);
     _sectionMap[atomType] = sect;
@@ -290,7 +301,7 @@ SectionInfo *Util::sectionForAtom(const DefinedAtom *atom) {
     StringRef segName = customName.slice(0, seperatorIndex);
     StringRef sectName = customName.drop_front(seperatorIndex + 1);
     SectionInfo *sect = new (_allocator) SectionInfo(segName, sectName,
-                                                     S_REGULAR);
+                                                    S_REGULAR, _context);
     _customSections.push_back(sect);
     _sectionInfos.push_back(sect);
     return sect;
@@ -402,11 +413,13 @@ void Util::organizeSections() {
     }
 
     // Record final section indexes.
+    uint32_t segmentIndex = 0;
     uint32_t sectionIndex = 1;
     for (SegmentInfo *seg : _segmentInfos) {
-        for (SectionInfo *sect : seg->sections) {
-          sect->finalSectionIndex = sectionIndex++;
-        }
+      seg->normalizedSegmentIndex = segmentIndex++;
+      for (SectionInfo *sect : seg->sections) {
+        sect->finalSectionIndex = sectionIndex++;
+      }
     }
   }
 
@@ -428,7 +441,8 @@ void Util::layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr) {
 
 
 // __TEXT segment lays out backwards so padding is at front after load commands.
-void Util::layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr) {
+void Util::layoutSectionsInTextSegment(size_t hlcSize, SegmentInfo *seg,
+                                                               uint64_t &addr) {
   seg->address = addr;
   // Walks sections starting at end to calculate padding for start.
   int64_t taddr = 0;
@@ -437,11 +451,11 @@ void Util::layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr) {
     taddr -= sect->size;
     taddr = taddr & (0 - (1 << sect->alignment));
   }
-  int64_t padding = taddr;
+  int64_t padding = taddr - hlcSize;
   while (padding < 0)
     padding += _context.pageSize();
   // Start assigning section address starting at padded offset.
-  addr += padding;
+  addr += (padding + hlcSize);
   for (SectionInfo *sect : seg->sections) {
     sect->address = alignTo(addr, sect->alignment);
     addr = sect->address + sect->size;
@@ -450,7 +464,8 @@ void Util::layoutSectionsInTextSegment(SegmentInfo *seg, uint64_t &addr) {
 }
 
 
-void Util::assignAddressesToSections() {
+void Util::assignAddressesToSections(const NormalizedFile &file) {
+  size_t hlcSize = headerAndLoadCommandsSize(file);
   uint64_t address = 0;  // FIXME
   if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
     for (SegmentInfo *seg : _segmentInfos) {
@@ -459,7 +474,7 @@ void Util::assignAddressesToSections() {
         address += seg->size;
       }
       else if (seg->name.equals("__TEXT"))
-        layoutSectionsInTextSegment(seg, address);
+        layoutSectionsInTextSegment(hlcSize, seg, address);
       else
         layoutSectionsInSegment(seg, address);
 
@@ -510,16 +525,7 @@ void Util::copySegmentInfo(NormalizedFile &file) {
 }
 
 void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
-  const bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
-
-  // Utility function for ArchHandler to find address of atom in output file.
-  auto addrForAtom = [&] (const Atom &atom) -> uint64_t {
-    auto pos = _atomToAddress.find(&atom);
-    assert(pos != _atomToAddress.end());
-    return pos->second;
-  };
-
-  // Add new empty section to end of file.sections.
+   // Add new empty section to end of file.sections.
   Section temp;
   file.sections.push_back(std::move(temp));
   Section* normSect = &file.sections.back();
@@ -532,19 +538,35 @@ void Util::appendSection(SectionInfo *si, NormalizedFile &file) {
   normSect->alignment     = si->alignment;
   // Record where normalized section is.
   si->normalizedSectionIndex = file.sections.size()-1;
-  // Copy content from atoms to content buffer for section.
-  if (si->type == llvm::MachO::S_ZEROFILL)
-    return;
-  uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
-  normSect->content = llvm::makeArrayRef(sectionContent, si->size);
-  for (AtomInfo &ai : si->atomsAndOffsets) {
-    uint8_t *atomContent = reinterpret_cast<uint8_t*>
+}
+
+void Util::copySectionContent(NormalizedFile &file) {
+  const bool r = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
+
+  // Utility function for ArchHandler to find address of atom in output file.
+  auto addrForAtom = [&] (const Atom &atom) -> uint64_t {
+    auto pos = _atomToAddress.find(&atom);
+    assert(pos != _atomToAddress.end());
+    return pos->second;
+  };
+
+  for (SectionInfo *si : _sectionInfos) {
+    if (si->type == llvm::MachO::S_ZEROFILL)
+      continue;
+    // Copy content from atoms to content buffer for section.
+    uint8_t *sectionContent = file.ownedAllocations.Allocate<uint8_t>(si->size);
+    Section *normSect = &file.sections[si->normalizedSectionIndex];
+    normSect->content = llvm::makeArrayRef(sectionContent, si->size);
+    for (AtomInfo &ai : si->atomsAndOffsets) {
+      uint8_t *atomContent = reinterpret_cast<uint8_t*>
                                           (&sectionContent[ai.offsetInSection]);
-    _archHandler.generateAtomContent(*ai.atom, rMode, addrForAtom, atomContent);
+      _archHandler.generateAtomContent(*ai.atom, r, addrForAtom, atomContent);
+    }
   }
 }
 
-void Util::copySections(NormalizedFile &file) {
+
+void Util::copySectionInfo(NormalizedFile &file) {
   file.sections.reserve(_sectionInfos.size());
   // For final linked images, write sections grouped by segment.
   if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
@@ -557,6 +579,28 @@ void Util::copySections(NormalizedFile &file) {
     // Object files write sections in default order.
     for (SectionInfo *si : _sectionInfos) {
       appendSection(si, file);
+    }
+  }
+}
+
+void Util::updateSectionInfo(NormalizedFile &file) {
+  file.sections.reserve(_sectionInfos.size());
+  if (_context.outputMachOType() != llvm::MachO::MH_OBJECT) {
+    // For final linked images, sections grouped by segment.
+    for (SegmentInfo *sgi : _segmentInfos) {
+      Segment *normSeg = &file.segments[sgi->normalizedSegmentIndex];
+      normSeg->address = sgi->address;
+      normSeg->size = sgi->size;
+      for (SectionInfo *si : sgi->sections) {
+        Section *normSect = &file.sections[si->normalizedSectionIndex];
+        normSect->address = si->address;
+      }
+    }
+  } else {
+    // Object files write sections in default order.
+    for (SectionInfo *si : _sectionInfos) {
+      Section *normSect = &file.sections[si->normalizedSectionIndex];
+      normSect->address = si->address;
     }
   }
 }
@@ -1020,18 +1064,20 @@ normalizedFromAtoms(const lld::File &atomFile,
   Util util(context);
   util.assignAtomsToSections(atomFile);
   util.organizeSections();
-  util.assignAddressesToSections();
-  util.buildAtomToAddressMap();
 
   std::unique_ptr<NormalizedFile> f(new NormalizedFile());
   NormalizedFile &normFile = *f.get();
-  f->arch = context.arch();
-  f->fileType = context.outputMachOType();
-  f->flags = util.fileFlags();
-  f->installName = context.installName();
-  util.copySegmentInfo(normFile);
-  util.copySections(normFile);
+  normFile.arch = context.arch();
+  normFile.fileType = context.outputMachOType();
+  normFile.flags = util.fileFlags();
+  normFile.installName = context.installName();
   util.addDependentDylibs(atomFile, normFile);
+  util.copySegmentInfo(normFile);
+  util.copySectionInfo(normFile);
+  util.assignAddressesToSections(normFile);
+  util.buildAtomToAddressMap();
+  util.updateSectionInfo(normFile);
+  util.copySectionContent(normFile);
   util.addSymbols(atomFile, normFile);
   util.addIndirectSymbols(atomFile, normFile);
   util.addRebaseAndBindingInfo(atomFile, normFile);

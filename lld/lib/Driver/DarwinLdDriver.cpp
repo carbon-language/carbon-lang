@@ -23,6 +23,7 @@
 #include "llvm/Option/Option.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/ManagedStatic.h"
@@ -252,6 +253,30 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
       ctx.setDoNothing(true);
       return true;
     }
+  }
+
+  // Handle -sectalign segname sectname align
+  for (auto &alignArg : parsedArgs->filtered(OPT_sectalign)) {
+    const char* segName   = alignArg->getValue(0);
+    const char* sectName  = alignArg->getValue(1);
+    const char* alignStr  = alignArg->getValue(2);
+    if ((alignStr[0] == '0') && (alignStr[1] == 'x'))
+      alignStr += 2;
+    unsigned long long alignValue;
+    if (llvm::getAsUnsignedInteger(alignStr, 16, alignValue)) {
+      diagnostics << "error: -sectalign alignment value '"
+                  << alignStr << "' not a valid number\n";
+      return false;
+    }
+    uint8_t align2 = llvm::countTrailingZeros(alignValue);
+    if ( (unsigned long)(1 << align2) != alignValue ) {
+      diagnostics << "warning: alignment for '-sectalign "
+                  << segName << " " << sectName
+                  << llvm::format(" 0x%llX", alignValue)
+                  << "' is not a power of two, using "
+                  << llvm::format("0x%08X", (1 << align2)) << "\n";
+    }
+    ctx.addSectionAlignment(segName, sectName, align2);
   }
 
   // Handle -mllvm

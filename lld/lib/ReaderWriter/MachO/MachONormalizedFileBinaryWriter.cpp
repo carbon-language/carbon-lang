@@ -58,6 +58,9 @@ public:
   /// Returns the final file size as computed in the constructor.
   size_t      size() const;
 
+  // Returns size of the mach_header and load commands.
+  size_t      headerAndLoadCommandsSize() const;
+
   /// Writes the normalized file as a binary mach-o file to the specified
   /// path.  This does not have a stream interface because the generated
   /// file may need the 'x' bit set.
@@ -200,7 +203,7 @@ private:
 
 size_t headerAndLoadCommandsSize(const NormalizedFile &file) {
   MachOFileLayout layout(file);
-  return layout.size();
+  return layout.headerAndLoadCommandsSize();
 }
 
 StringRef MachOFileLayout::dyldPath() {
@@ -212,6 +215,9 @@ uint32_t MachOFileLayout::pointerAlign(uint32_t value) {
 }
 
 
+size_t MachOFileLayout::headerAndLoadCommandsSize() const {
+  return _endOfLoadCommands;
+}
 
 
 MachOFileLayout::MachOFileLayout(const NormalizedFile &file)
