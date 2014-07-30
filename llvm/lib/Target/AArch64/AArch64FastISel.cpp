@@ -109,6 +109,7 @@ private:
   bool SelectTrunc(const Instruction *I);
   bool SelectIntExt(const Instruction *I);
   bool SelectMul(const Instruction *I);
+  bool SelectShift(const Instruction *I, bool IsLeftShift, bool IsArithmetic);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -129,6 +130,9 @@ private:
                  bool UseUnscaled = false);
   unsigned EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt);
+  unsigned Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
+  unsigned Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
+  unsigned Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
 
   unsigned AArch64MaterializeFP(const ConstantFP *CFP, MVT VT);
   unsigned AArch64MaterializeGV(const GlobalValue *GV);
@@ -1722,6 +1726,60 @@ unsigned AArch64FastISel::Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt) {
   }
 }
 
+unsigned AArch64FastISel::Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                      uint64_t Shift) {
+  unsigned Opc, ImmR, ImmS;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    RetVT = MVT::i32;
+    Opc = AArch64::UBFMWri; ImmR = -Shift % 32; ImmS = 31 - Shift; break;
+  case MVT::i64:
+    Opc = AArch64::UBFMXri; ImmR = -Shift % 64; ImmS = 63 - Shift; break;
+  }
+
+  return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, ImmR,
+                          ImmS);
+}
+
+unsigned AArch64FastISel::Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                      uint64_t Shift) {
+  unsigned Opc, ImmS;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    RetVT = MVT::i32;
+    Opc = AArch64::UBFMWri; ImmS = 31; break;
+  case MVT::i64:
+    Opc = AArch64::UBFMXri; ImmS = 63; break;
+  }
+
+  return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, Shift,
+                          ImmS);
+}
+
+unsigned AArch64FastISel::Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                      uint64_t Shift) {
+  unsigned Opc, ImmS;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    RetVT = MVT::i32;
+    Opc = AArch64::SBFMWri; ImmS = 31; break;
+  case MVT::i64:
+    Opc = AArch64::SBFMXri; ImmS = 63; break;
+  }
+
+  return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, Shift,
+                          ImmS);
+}
+
 unsigned AArch64FastISel::EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
                                      bool isZExt) {
   assert(DestVT != MVT::i1 && "ZeroExt/SignExt an i1?");
@@ -1908,6 +1966,40 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
   return true;
 }
 
+bool AArch64FastISel::SelectShift(const Instruction *I, bool IsLeftShift,
+                                  bool IsArithmetic) {
+  EVT RetEVT = TLI.getValueType(I->getType(), true);
+  if (!RetEVT.isSimple())
+    return false;
+  MVT RetVT = RetEVT.getSimpleVT();
+
+  if (!isa<ConstantInt>(I->getOperand(1)))
+    return false;
+
+  unsigned Op0Reg = getRegForValue(I->getOperand(0));
+  if (!Op0Reg)
+    return false;
+  bool Op0IsKill = hasTrivialKill(I->getOperand(0));
+
+  uint64_t ShiftVal = cast<ConstantInt>(I->getOperand(1))->getZExtValue();
+
+  unsigned ResultReg;
+  if (IsLeftShift)
+    ResultReg = Emit_LSL_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+  else {
+    if (IsArithmetic)
+      ResultReg = Emit_ASR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+    else
+      ResultReg = Emit_LSR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+  }
+
+  if (!ResultReg)
+    return false;
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -1948,9 +2040,17 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   case Instruction::ZExt:
   case Instruction::SExt:
     return SelectIntExt(I);
+
+  // FIXME: All of these should really be handled by the target-independent
+  // selector -> improve FastISel tblgen.
   case Instruction::Mul:
-    // FIXME: This really should be handled by the target-independent selector.
     return SelectMul(I);
+  case Instruction::Shl:
+      return SelectShift(I, /*IsLeftShift=*/true, /*IsArithmetic=*/false);
+  case Instruction::LShr:
+    return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/false);
+  case Instruction::AShr:
+    return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/true);
   }
   return false;
   // Silence warnings.
