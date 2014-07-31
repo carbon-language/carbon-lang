@@ -247,12 +247,12 @@ static bool compareSymbolName(const NMSymbol &A, const NMSymbol &B) {
   }
 }
 
-static char isSymbolList64Bit(SymbolicFile *Obj) {
+static char isSymbolList64Bit(SymbolicFile &Obj) {
   if (isa<IRObjectFile>(Obj))
     return false;
   else if (isa<COFFObjectFile>(Obj))
     return false;
-  else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj))
+  else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj))
     return MachO->is64Bit();
   else if (isa<ELF32LEObjectFile>(Obj))
     return false;
@@ -535,7 +535,7 @@ static void darwinPrintStab(MachOObjectFile *MachO, SymbolListT::iterator I) {
   outs() << Str;
 }
 
-static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName,
+static void sortAndPrintSymbolList(SymbolicFile &Obj, bool printName,
                                    std::string ArchiveName,
                                    std::string ArchitectureName) {
   if (!NoSort) {
@@ -607,7 +607,7 @@ static void sortAndPrintSymbolList(SymbolicFile *Obj, bool printName,
     // nm(1) -m output or hex, else if OutputFormat is darwin or we are
     // printing Mach-O symbols in hex and not a Mach-O object fall back to
     // OutputFormat bsd (see below).
-    MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
+    MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj);
     if ((OutputFormat == darwin || FormatMachOasHex) && MachO) {
       darwinPrintSymbol(MachO, I, SymbolAddrStr, printBlanks);
     } else if (OutputFormat == posix) {
@@ -794,7 +794,7 @@ static char getSymbolNMTypeChar(IRObjectFile &Obj, basic_symbol_iterator I) {
 }
 
 template <class ELFT>
-static bool isObject(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
+static bool isELFObject(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
   typedef typename ELFObjectFile<ELFT>::Elf_Sym Elf_Sym;
 
   DataRefImpl Symb = I->getRawDataRefImpl();
@@ -803,19 +803,19 @@ static bool isObject(ELFObjectFile<ELFT> &Obj, symbol_iterator I) {
   return ESym->getType() == ELF::STT_OBJECT;
 }
 
-static bool isObject(SymbolicFile *Obj, basic_symbol_iterator I) {
-  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
-    return isObject(*ELF, I);
-  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
-    return isObject(*ELF, I);
-  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
-    return isObject(*ELF, I);
-  if (ELF64BEObjectFile *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
-    return isObject(*ELF, I);
+static bool isObject(SymbolicFile &Obj, basic_symbol_iterator I) {
+  if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(&Obj))
+    return isELFObject(*ELF, I);
+  if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(&Obj))
+    return isELFObject(*ELF, I);
+  if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(&Obj))
+    return isELFObject(*ELF, I);
+  if (ELF64BEObjectFile *ELF = dyn_cast<ELF64BEObjectFile>(&Obj))
+    return isELFObject(*ELF, I);
   return false;
 }
 
-static char getNMTypeChar(SymbolicFile *Obj, basic_symbol_iterator I) {
+static char getNMTypeChar(SymbolicFile &Obj, basic_symbol_iterator I) {
   uint32_t Symflags = I->getFlags();
   if ((Symflags & object::SymbolRef::SF_Weak) && !isa<MachOObjectFile>(Obj)) {
     char Ret = isObject(Obj, I) ? 'v' : 'w';
@@ -833,20 +833,20 @@ static char getNMTypeChar(SymbolicFile *Obj, basic_symbol_iterator I) {
   char Ret = '?';
   if (Symflags & object::SymbolRef::SF_Absolute)
     Ret = 'a';
-  else if (IRObjectFile *IR = dyn_cast<IRObjectFile>(Obj))
+  else if (IRObjectFile *IR = dyn_cast<IRObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*IR, I);
-  else if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(Obj))
+  else if (COFFObjectFile *COFF = dyn_cast<COFFObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*COFF, I);
-  else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj))
+  else if (MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*MachO, I);
-  else if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+  else if (ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*ELF, I);
-  else if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+  else if (ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*ELF, I);
-  else if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+  else if (ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(&Obj))
     Ret = getSymbolNMTypeChar(*ELF, I);
   else
-    Ret = getSymbolNMTypeChar(*cast<ELF64BEObjectFile>(Obj), I);
+    Ret = getSymbolNMTypeChar(cast<ELF64BEObjectFile>(Obj), I);
 
   if (Symflags & object::SymbolRef::SF_Global)
     Ret = toupper(Ret);
@@ -894,19 +894,19 @@ static unsigned getNsectInMachO(MachOObjectFile &Obj, basic_symbol_iterator I) {
   return 0;
 }
 
-static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName,
+static void dumpSymbolNamesFromObject(SymbolicFile &Obj, bool printName,
                                       std::string ArchiveName = std::string(),
                                       std::string ArchitectureName =
                                         std::string()) {
-  basic_symbol_iterator IBegin = Obj->symbol_begin();
-  basic_symbol_iterator IEnd = Obj->symbol_end();
+  basic_symbol_iterator IBegin = Obj.symbol_begin();
+  basic_symbol_iterator IEnd = Obj.symbol_end();
   if (DynamicSyms) {
-    if (!Obj->isELF()) {
-      error("File format has no dynamic symbol table", Obj->getFileName());
+    if (!Obj.isELF()) {
+      error("File format has no dynamic symbol table", Obj.getFileName());
       return;
     }
     std::pair<symbol_iterator, symbol_iterator> IDyn =
-        getELFDynamicSymbolIterators(Obj);
+        getELFDynamicSymbolIterators(&Obj);
     IBegin = IDyn.first;
     IEnd = IDyn.second;
   }
@@ -915,7 +915,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName,
   // If a "-s segname sectname" option was specified and this is a Mach-O
   // file get the section number for that section in this object file.
   unsigned int Nsect = 0;
-  MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(Obj);
+  MachOObjectFile *MachO = dyn_cast<MachOObjectFile>(&Obj);
   if (SegSect.size() != 0 && MachO) {
     Nsect = getNsectForSegSect(MachO);
     // If this section is not in the object file no symbols are printed.
@@ -927,7 +927,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName,
     if (!DebugSyms && (SymFlags & SymbolRef::SF_FormatSpecific))
       continue;
     if (WithoutAliases) {
-      if (IRObjectFile *IR = dyn_cast<IRObjectFile>(Obj)) {
+      if (IRObjectFile *IR = dyn_cast<IRObjectFile>(&Obj)) {
         const GlobalValue *GV = IR->getSymbolGV(I->getRawDataRefImpl());
         if (GV && isa<GlobalAlias>(GV))
           continue;
@@ -964,7 +964,7 @@ static void dumpSymbolNamesFromObject(SymbolicFile *Obj, bool printName,
     P += strlen(P) + 1;
   }
 
-  CurrentFilename = Obj->getFileName();
+  CurrentFilename = Obj.getFileName();
   sortAndPrintSymbolList(Obj, printName, ArchiveName, ArchitectureName);
 }
 
@@ -1051,7 +1051,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
             outs() << O->getFileName();
           outs() << ":\n";
         }
-        dumpSymbolNamesFromObject(O, false, Filename);
+        dumpSymbolNamesFromObject(*O, false, Filename);
       }
     }
     return;
@@ -1085,7 +1085,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                          << I->getArchTypeName() << ")"
                          << ":\n";
               }
-              dumpSymbolNamesFromObject(Obj.get(), false, ArchiveName,
+              dumpSymbolNamesFromObject(*Obj, false, ArchiveName,
                                         ArchitectureName);
             } else if (!I->getAsArchive(A)) {
               for (Archive::child_iterator AI = A->child_begin(),
@@ -1110,7 +1110,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                     }
                     outs() << ":\n";
                   }
-                  dumpSymbolNamesFromObject(O, false, ArchiveName,
+                  dumpSymbolNamesFromObject(*O, false, ArchiveName,
                                             ArchitectureName);
                 }
               }
@@ -1139,7 +1139,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
           ArchiveName.clear();
           if (ObjOrErr) {
             std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
-            dumpSymbolNamesFromObject(Obj.get(), false);
+            dumpSymbolNamesFromObject(*Obj, false);
           } else if (!I->getAsArchive(A)) {
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
@@ -1156,7 +1156,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                   outs() << "\n" << A->getFileName() << "(" << O->getFileName()
                          << ")"
                          << ":\n";
-                dumpSymbolNamesFromObject(O, false, ArchiveName);
+                dumpSymbolNamesFromObject(*O, false, ArchiveName);
               }
             }
           }
@@ -1189,8 +1189,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
             outs() << " (for architecture " << I->getArchTypeName() << ")";
           outs() << ":\n";
         }
-        dumpSymbolNamesFromObject(Obj.get(), false, ArchiveName,
-                                  ArchitectureName);
+        dumpSymbolNamesFromObject(*Obj, false, ArchiveName, ArchitectureName);
       } else if (!I->getAsArchive(A)) {
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
@@ -1214,7 +1213,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
                 outs() << ":" << O->getFileName();
               outs() << ":\n";
             }
-            dumpSymbolNamesFromObject(O, false, ArchiveName, ArchitectureName);
+            dumpSymbolNamesFromObject(*O, false, ArchiveName, ArchitectureName);
           }
         }
       }
@@ -1224,7 +1223,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
   if (SymbolicFile *O = dyn_cast<SymbolicFile>(Bin.get())) {
     if (!checkMachOAndArchFlags(O, Filename))
       return;
-    dumpSymbolNamesFromObject(O, true);
+    dumpSymbolNamesFromObject(*O, true);
     return;
   }
   error("unrecognizable file type", Filename);
