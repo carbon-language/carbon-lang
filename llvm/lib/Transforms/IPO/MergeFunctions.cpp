@@ -286,7 +286,7 @@ private:
   /// 6.4.Load: range metadata (as integer numbers)
   /// On this stage its better to see the code, since its not more than 10-15
   /// strings for particular instruction, and could change sometimes.
-  int cmpOperation(const Instruction *L, const Instruction *R) const;
+  int cmpOperations(const Instruction *L, const Instruction *R) const;
 
   /// Compare two GEPs for equivalent pointer arithmetic.
   /// Parts to be compared for each comparison stage,
@@ -705,8 +705,8 @@ int FunctionComparator::cmpType(Type *TyL, Type *TyR) const {
 // and pointer-to-B are equivalent. This should be kept in sync with
 // Instruction::isSameOperationAs.
 // Read method declaration comments for more details.
-int FunctionComparator::cmpOperation(const Instruction *L,
-                                     const Instruction *R) const {
+int FunctionComparator::cmpOperations(const Instruction *L,
+                                      const Instruction *R) const {
   // Differences from Instruction::isSameOperationAs:
   //  * replace type comparison with calls to isEquivalentType.
   //  * we test for I->hasSameSubclassOptionalData (nuw/nsw/tail) at the top
@@ -948,7 +948,7 @@ int FunctionComparator::compare(const BasicBlock *BBL, const BasicBlock *BBR) {
       if (int Res = cmpGEP(GEPL, GEPR))
         return Res;
     } else {
-      if (int Res = cmpOperation(InstL, InstR))
+      if (int Res = cmpOperations(InstL, InstR))
         return Res;
       assert(InstL->getNumOperands() == InstR->getNumOperands());
 
