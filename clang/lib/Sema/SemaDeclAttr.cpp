@@ -548,10 +548,6 @@ static void checkAttrArgsAreCapabilityObjs(Sema &S, Decl *D,
 // Attribute Implementations
 //===----------------------------------------------------------------------===//
 
-// FIXME: All this manual attribute parsing code is gross. At the
-// least add some helper functions to check most argument patterns (#
-// and types of args).
-
 static void handlePtGuardedVarAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   if (!threadSafetyCheckIsPointer(S, D, Attr))
