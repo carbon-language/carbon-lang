@@ -25,7 +25,7 @@ SymbolicFile::SymbolicFile(unsigned int Type,
 
 SymbolicFile::~SymbolicFile() {}
 
-ErrorOr<SymbolicFile *>
+ErrorOr<std::unique_ptr<SymbolicFile>>
 SymbolicFile::createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
                                  sys::fs::file_magic Type,
                                  LLVMContext *Context) {

@@ -884,12 +884,12 @@ static void DumpInput(StringRef file) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<Binary *> BinaryOrErr = createBinary(file);
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(file);
   if (std::error_code EC = BinaryOrErr.getError()) {
     errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
     return;
   }
-  std::unique_ptr<Binary> binary(BinaryOrErr.get());
+  std::unique_ptr<Binary> binary = std::move(BinaryOrErr.get());
 
   if (Archive *a = dyn_cast<Archive>(binary.get()))
     DumpArchive(a);

@@ -27,6 +27,8 @@ namespace llvm {
 namespace object {
 
 class ObjectFile;
+class COFFObjectFile;
+class MachOObjectFile;
 
 class SymbolRef;
 class symbol_iterator;
@@ -343,11 +345,13 @@ public:
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
   /// @brief Create ObjectFile from path.
-  static ErrorOr<ObjectFile *> createObjectFile(StringRef ObjectPath);
-  static ErrorOr<ObjectFile *>
+  static ErrorOr<std::unique_ptr<ObjectFile>>
+  createObjectFile(StringRef ObjectPath);
+
+  static ErrorOr<std::unique_ptr<ObjectFile>>
   createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
                    sys::fs::file_magic Type);
-  static ErrorOr<ObjectFile *>
+  static ErrorOr<std::unique_ptr<ObjectFile>>
   createObjectFile(std::unique_ptr<MemoryBuffer> &Object) {
     return createObjectFile(Object, sys::fs::file_magic::unknown);
   }
@@ -358,11 +362,13 @@ public:
   }
 
 public:
-  static ErrorOr<ObjectFile *>
+  static ErrorOr<std::unique_ptr<COFFObjectFile>>
   createCOFFObjectFile(std::unique_ptr<MemoryBuffer> Object);
-  static ErrorOr<ObjectFile *>
+
+  static ErrorOr<std::unique_ptr<ObjectFile>>
   createELFObjectFile(std::unique_ptr<MemoryBuffer> &Object);
-  static ErrorOr<ObjectFile *>
+
+  static ErrorOr<std::unique_ptr<MachOObjectFile>>
   createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Object);
 };
 

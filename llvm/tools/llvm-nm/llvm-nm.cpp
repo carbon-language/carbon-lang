@@ -1009,11 +1009,11 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     return;
 
   LLVMContext &Context = getGlobalContext();
-  ErrorOr<Binary *> BinaryOrErr =
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr =
       createBinary(std::move(*BufferOrErr), &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
-  std::unique_ptr<Binary> Bin(BinaryOrErr.get());
+  std::unique_ptr<Binary> Bin = std::move(BinaryOrErr.get());
 
   if (Archive *A = dyn_cast<Archive>(Bin.get())) {
     if (ArchiveMap) {

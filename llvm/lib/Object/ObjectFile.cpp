@@ -11,6 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Object/COFF.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -45,7 +47,7 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
   return section_iterator(SectionRef(Sec, this));
 }
 
-ErrorOr<ObjectFile *>
+ErrorOr<std::unique_ptr<ObjectFile>>
 ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
                              sys::fs::file_magic Type) {
   if (Type == sys::fs::file_magic::unknown)
@@ -82,7 +84,8 @@ ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
   llvm_unreachable("Unexpected Object File Type");
 }
 
-ErrorOr<ObjectFile *> ObjectFile::createObjectFile(StringRef ObjectPath) {
+ErrorOr<std::unique_ptr<ObjectFile>>
+ObjectFile::createObjectFile(StringRef ObjectPath) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFile(ObjectPath);
   if (std::error_code EC = FileOrErr.getError())

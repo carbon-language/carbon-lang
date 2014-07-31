@@ -260,12 +260,12 @@ bool DWARFUnit::parseDWO() {
     sys::path::append(AbsolutePath, CompilationDir);
   }
   sys::path::append(AbsolutePath, DWOFileName);
-  ErrorOr<object::ObjectFile *> DWOFile =
+  ErrorOr<std::unique_ptr<object::ObjectFile>> DWOFile =
       object::ObjectFile::createObjectFile(AbsolutePath);
   if (!DWOFile)
     return false;
   // Reset DWOHolder.
-  DWO.reset(new DWOHolder(DWOFile.get()));
+  DWO.reset(new DWOHolder(DWOFile.get().get()));
   DWARFUnit *DWOCU = DWO->getUnit();
   // Verify that compile unit in .dwo file is valid.
   if (!DWOCU || DWOCU->getDWOId() != getDWOId()) {

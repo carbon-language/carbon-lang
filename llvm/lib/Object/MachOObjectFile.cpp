@@ -1721,7 +1721,7 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
   }
 }
 
-ErrorOr<ObjectFile *>
+ErrorOr<std::unique_ptr<MachOObjectFile>>
 ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);
   std::error_code EC;
@@ -1739,6 +1739,6 @@ ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
 
   if (EC)
     return EC;
-  return Ret.release();
+  return std::move(Ret);
 }
 

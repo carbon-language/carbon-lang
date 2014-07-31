@@ -300,9 +300,9 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
     return I->second;
   Binary *Bin = nullptr;
   Binary *DbgBin = nullptr;
-  ErrorOr<Binary *> BinaryOrErr = createBinary(Path);
+  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(Path);
   if (!error(BinaryOrErr.getError())) {
-    std::unique_ptr<Binary> ParsedBinary(BinaryOrErr.get());
+    std::unique_ptr<Binary> ParsedBinary = std::move(BinaryOrErr.get());
     // Check if it's a universal binary.
     Bin = ParsedBinary.get();
     ParsedBinariesAndObjects.push_back(std::move(ParsedBinary));
@@ -314,8 +314,8 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
       BinaryOrErr = createBinary(ResourcePath);
       std::error_code EC = BinaryOrErr.getError();
       if (EC != errc::no_such_file_or_directory && !error(EC)) {
-        DbgBin = BinaryOrErr.get();
-        ParsedBinariesAndObjects.push_back(std::unique_ptr<Binary>(DbgBin));
+        DbgBin = BinaryOrErr.get().get();
+        ParsedBinariesAndObjects.push_back(std::move(BinaryOrErr.get()));
       }
     }
     // Try to locate the debug binary using .gnu_debuglink section.
@@ -327,8 +327,8 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
           findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath)) {
         BinaryOrErr = createBinary(DebugBinaryPath);
         if (!error(BinaryOrErr.getError())) {
-          DbgBin = BinaryOrErr.get();
-          ParsedBinariesAndObjects.push_back(std::unique_ptr<Binary>(DbgBin));
+          DbgBin = BinaryOrErr.get().get();
+          ParsedBinariesAndObjects.push_back(std::move(BinaryOrErr.get()));
         }
       }
     }

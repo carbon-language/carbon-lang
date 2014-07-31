@@ -142,15 +142,16 @@ public:
   }
 
   // construction aux.
-  static ErrorOr<SymbolicFile *>
+  static ErrorOr<std::unique_ptr<SymbolicFile>>
   createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
                      sys::fs::file_magic Type, LLVMContext *Context);
 
-  static ErrorOr<SymbolicFile *>
+  static ErrorOr<std::unique_ptr<SymbolicFile>>
   createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object) {
     return createSymbolicFile(Object, sys::fs::file_magic::unknown, nullptr);
   }
-  static ErrorOr<SymbolicFile *> createSymbolicFile(StringRef ObjectPath);
+  static ErrorOr<std::unique_ptr<SymbolicFile>>
+  createSymbolicFile(StringRef ObjectPath);
 
   static inline bool classof(const Binary *v) {
     return v->isSymbolic();

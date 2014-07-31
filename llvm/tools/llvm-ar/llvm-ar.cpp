@@ -698,12 +698,12 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
                                               E = Members.end();
        I != E; ++I, ++MemberNum) {
     std::unique_ptr<MemoryBuffer> &MemberBuffer = Buffers[MemberNum];
-    ErrorOr<object::SymbolicFile *> ObjOrErr =
+    ErrorOr<std::unique_ptr<object::SymbolicFile>> ObjOrErr =
         object::SymbolicFile::createSymbolicFile(
             MemberBuffer, sys::fs::file_magic::unknown, &Context);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
-    std::unique_ptr<object::SymbolicFile> Obj(ObjOrErr.get());
+    std::unique_ptr<object::SymbolicFile> Obj = std::move(ObjOrErr.get());
 
     if (!StartOffset) {
       printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);

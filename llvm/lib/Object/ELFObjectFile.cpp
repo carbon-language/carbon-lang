@@ -17,7 +17,7 @@
 namespace llvm {
 using namespace object;
 
-ErrorOr<ObjectFile *>
+ErrorOr<std::unique_ptr<ObjectFile>>
 ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
   std::pair<unsigned char, unsigned char> Ident =
       getElfArchType(Obj->getBuffer());
@@ -80,7 +80,7 @@ ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
 
   if (EC)
     return EC;
-  return R.release();
+  return std::move(R);
 }
 
 } // end namespace llvm

@@ -282,7 +282,7 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
   if (!File)
     error(File.getError());
   else
-    Object.reset(File.get());
+    Object = std::move(File.get());
 }
 
 ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
@@ -292,7 +292,7 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
   if (!File)
     error(File.getError());
   else
-    Object.reset(File.get());
+    Object = std::move(File.get());
 }
 
 namespace {
