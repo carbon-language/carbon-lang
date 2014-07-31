@@ -89,6 +89,20 @@ void test_mm512_store_pd(void *p, __m512d a)
   _mm512_store_pd(p, a);
 }
 
+__m512 test_mm512_loadu_ps(void *p)
+{
+  // CHECK-LABEL: @test_mm512_loadu_ps
+  // CHECK: load <16 x float>* {{.*}}, align 1{{$}}
+  return _mm512_loadu_ps(p);
+}
+
+__m512d test_mm512_loadu_pd(void *p)
+{
+  // CHECK-LABEL: @test_mm512_loadu_pd
+  // CHECK: load <8 x double>* {{.*}}, align 1{{$}}
+  return _mm512_loadu_pd(p);
+}
+
 __m512d test_mm512_set1_pd(double d)
 {
   // CHECK-LABEL: @test_mm512_set1_pd

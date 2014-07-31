@@ -791,6 +791,24 @@ _mm512_maskz_loadu_pd(__mmask8 __U, void const *__P)
                                                    (__mmask8) __U);
 }
 
+static __inline __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_loadu_pd(double const *__p)
+{
+  struct __loadu_pd {
+    __m512d __v;
+  } __attribute__((packed, may_alias));
+  return ((struct __loadu_pd*)__p)->__v;
+}
+
+static __inline __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_loadu_ps(float const *__p)
+{
+  struct __loadu_ps {
+    __m512 __v;
+  } __attribute__((packed, may_alias));
+  return ((struct __loadu_ps*)__p)->__v;
+}
+
 /* SIMD store ops */
 
 static __inline void __attribute__ ((__always_inline__, __nodebug__))
