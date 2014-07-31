@@ -733,7 +733,11 @@ bool Parser::HandlePragmaLoopHint(LoopHint &Hint) {
   Hint.PragmaNameLoc = IdentifierLoc::create(
       Actions.Context, Info->PragmaName.getLocation(), PragmaNameInfo);
 
-  IdentifierInfo *OptionInfo = Info->Option.getIdentifierInfo();
+  // It is possible that the loop hint has no option identifier, such as
+  // #pragma unroll(4).
+  IdentifierInfo *OptionInfo = Info->Option.is(tok::identifier)
+                                   ? Info->Option.getIdentifierInfo()
+                                   : nullptr;
   Hint.OptionLoc = IdentifierLoc::create(
       Actions.Context, Info->Option.getLocation(), OptionInfo);
 
