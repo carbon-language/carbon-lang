@@ -46,11 +46,15 @@ public:
   struct IslAstUserPayload {
     /// @brief Construct and initialize the payload.
     IslAstUserPayload()
-        : IsInnermostParallel(false), IsOutermostParallel(false),
-          IsReductionParallel(false), Build(nullptr) {}
+        : IsInnermost(false), IsInnermostParallel(false),
+          IsOutermostParallel(false), IsReductionParallel(false),
+          Build(nullptr) {}
 
     /// @brief Cleanup all isl structs on destruction.
     ~IslAstUserPayload();
+
+    /// @brief Flag to mark innermost loops.
+    bool IsInnermost;
 
     /// @brief Flag to mark innermost parallel loops.
     bool IsInnermostParallel;
@@ -96,6 +100,9 @@ public:
 
   /// @brief Get the complete payload attached to @p Node.
   static IslAstUserPayload *getNodePayload(__isl_keep isl_ast_node *Node);
+
+  /// @brief Is this loop an innermost loop?
+  static bool isInnermost(__isl_keep isl_ast_node *Node);
 
   /// @brief Is this loop a parallel loop?
   static bool isParallel(__isl_keep isl_ast_node *Node);
