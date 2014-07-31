@@ -15,36 +15,40 @@ if ("${LLDB_TEST_COMPILER}" STREQUAL "")
     string(REGEX REPLACE ".*ccache\ +" "" LLDB_TEST_COMPILER ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
 endif()
 
-# Users can override LLDB_TEST_ARGS to modify the way LLDB tests are run. See help below.
-set(LLDB_TEST_ARGS
-  -C
-  ${LLDB_TEST_COMPILER}
-  CACHE STRING "Specify compiler(s) and architecture(s) with which run LLDB tests. For example: '-C gcc -C clang -A i386 -A x86_64'"
-  )
-string(REPLACE " " ";" LLDB_TEST_ARGS ${LLDB_TEST_ARGS})
+# The default architecture with which to compile test executables is the default LLVM target
+# architecture, which itself defaults to the host architecture.
+string(TOLOWER "${LLVM_TARGET_ARCH}" LLDB_DEFAULT_TEST_ARCH)
+if( LLDB_DEFAULT_TEST_ARCH STREQUAL "host" )
+  string(REGEX MATCH "^[^-]*" LLDB_DEFAULT_TEST_ARCH ${LLVM_HOST_TRIPLE})
+endif ()
 
-set(LLDB_TRACE_DIR "${CMAKE_BINARY_DIR}/lldb-test-traces"
-  CACHE STRING "Set directory to output LLDB test traces (for tests that do not pass.)"
-  )
+# Allow the user to override the default by setting LLDB_TEST_ARCH
+set(LLDB_TEST_ARCH
+	${LLDB_DEFAULT_TEST_ARCH}
+	CACHED STRING "Specify the architecture to run LLDB tests as (x86|x64).  Determines whether tests are compiled with -m32 or -m64")
 
-set(LLDB_COMMON_TEST_ARGS
+# Users can override LLDB_TEST_USER_ARGS to specify arbitrary arguments to pass to the script
+set(LLDB_TEST_USER_ARGS
+  -C ${LLDB_TEST_COMPILER}
+  CACHE STRING "Specify additional arguments to pass to test runner. For example: '-C gcc -C clang -A i386 -A x86_64'")
+
+set(LLDB_TEST_COMMON_ARGS
+  --arch=${LLDB_TEST_ARCH}
   --executable
   ${CMAKE_BINARY_DIR}/bin/lldb${CMAKE_EXECUTABLE_SUFFIX}
   -s
-  ${LLDB_TRACE_DIR}
+  ${CMAKE_BINARY_DIR}/lldb-test-traces
   -u CXXFLAGS
   -u CFLAGS
   )
 
 add_python_test_target(check-lldb-single
   ${LLDB_SOURCE_DIR}/test/dotest.py
-  "${LLDB_COMMON_TEST_ARGS};${LLDB_TEST_ARGS}"
-  "Testing LLDB with args: ${LLDB_COMMON_TEST_ARGS};${LLDB_TEST_ARGS}"
+  "${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
+  "Testing LLDB with args: ${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}"
   )
 
-set(LLDB_DOSEP_ARGS
-  -o;\"-q;${LLDB_COMMON_TEST_ARGS};${LLDB_TEST_ARGS}\"
-  )
+set(LLDB_DOSEP_ARGS -o;\"-q;${LLDB_TEST_COMMON_ARGS};${LLDB_TEST_USER_ARGS}\")
 
 # If tests crash cause LLDB to crash, or things are otherwise unstable, or if machine-parsable
 # output is desired (i.e. in continuous integration contexts) check-lldb-sep is a better target.

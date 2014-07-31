@@ -578,10 +578,7 @@ def parseOptionsAndInitTestdirs():
             if arch.startswith('arm') and platform_system == 'Darwin':
                 os.environ['SDKROOT'] = commands.getoutput('xcodebuild -version -sdk iphoneos.internal Path')
     else:
-        if (platform_system == 'Darwin' or (platform_system == 'Linux' and compilers == ['clang'])) and platform_machine == 'x86_64':
-            archs = ['x86_64', 'i386']
-        else:
-            archs = [platform_machine]
+        archs = [platform_machine]
 
     if args.categoriesList:
         categoriesList = set(validate_categories(args.categoriesList))
