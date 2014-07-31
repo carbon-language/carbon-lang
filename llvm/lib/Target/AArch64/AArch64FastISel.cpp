@@ -55,9 +55,10 @@ class AArch64FastISel : public FastISel {
       int FI;
     } Base;
     int64_t Offset;
+    const GlobalValue *GV;
 
   public:
-    Address() : Kind(RegBase), Offset(0) { Base.Reg = 0; }
+    Address() : Kind(RegBase), Offset(0), GV(nullptr) { Base.Reg = 0; }
     void setKind(BaseKind K) { Kind = K; }
     BaseKind getKind() const { return Kind; }
     bool isRegBase() const { return Kind == RegBase; }
@@ -80,6 +81,9 @@ class AArch64FastISel : public FastISel {
     }
     void setOffset(int64_t O) { Offset = O; }
     int64_t getOffset() { return Offset; }
+
+    void setGlobalValue(const GlobalValue *G) { GV = G; }
+    const GlobalValue *getGlobalValue() { return GV; }
 
     bool isValid() { return isFIBase() || (isRegBase() && getReg() != 0); }
   };
@@ -115,6 +119,7 @@ private:
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
   bool ComputeAddress(const Value *Obj, Address &Addr);
+  bool ComputeCallAddress(const Value *V, Address &Addr);
   bool SimplifyAddress(Address &Addr, MVT VT, int64_t ScaleFactor,
                        bool UseUnscaled);
   void AddLoadStoreOperands(Address &Addr, const MachineInstrBuilder &MIB,
@@ -419,6 +424,56 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr) {
     Addr.setReg(getRegForValue(Obj));
   return Addr.isValid();
 }
+
+bool AArch64FastISel::ComputeCallAddress(const Value *V, Address &Addr) {
+  const User *U = nullptr;
+  unsigned Opcode = Instruction::UserOp1;
+  bool InMBB = true;
+
+  if (const auto *I = dyn_cast<Instruction>(V)) {
+    Opcode = I->getOpcode();
+    U = I;
+    InMBB = I->getParent() == FuncInfo.MBB->getBasicBlock();
+  } else if (const auto *C = dyn_cast<ConstantExpr>(V)) {
+    Opcode = C->getOpcode();
+    U = C;
+  }
+
+  switch (Opcode) {
+  default: break;
+  case Instruction::BitCast:
+    // Look past bitcasts if its operand is in the same BB.
+    if (InMBB)
+      return ComputeCallAddress(U->getOperand(0), Addr);
+    break;
+  case Instruction::IntToPtr:
+    // Look past no-op inttoptrs if its operand is in the same BB.
+    if (InMBB &&
+        TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
+      return ComputeCallAddress(U->getOperand(0), Addr);
+    break;
+  case Instruction::PtrToInt:
+    // Look past no-op ptrtoints if its operand is in the same BB.
+    if (InMBB &&
+        TLI.getValueType(U->getType()) == TLI.getPointerTy())
+      return ComputeCallAddress(U->getOperand(0), Addr);
+    break;
+  }
+
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) {
+    Addr.setGlobalValue(GV);
+    return true;
+  }
+
+  // If all else fails, try to materialize the value in a register.
+  if (!Addr.getGlobalValue()) {
+    Addr.setReg(getRegForValue(V));
+    return Addr.getReg() != 0;
+  }
+
+  return false;
+}
+
 
 bool AArch64FastISel::isTypeLegal(Type *Ty, MVT &VT) {
   EVT evt = TLI.getValueType(Ty, true);
@@ -1343,9 +1398,13 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   const Value *Callee = CLI.Callee;
   const char *SymName = CLI.SymName;
 
-  // Only handle global variable Callees.
-  const GlobalValue *GV = dyn_cast<GlobalValue>(Callee);
-  if (!GV)
+  CodeModel::Model CM = TM.getCodeModel();
+  // Only support the small and large code model.
+  if (CM != CodeModel::Small && CM != CodeModel::Large)
+    return false;
+
+  // FIXME: Add large code model support for ELF.
+  if (CM == CodeModel::Large && !Subtarget->isTargetMachO())
     return false;
 
   // Let SDISel handle vararg functions.
@@ -1380,6 +1439,10 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
     OutVTs.push_back(VT);
   }
 
+  Address Addr;
+  if (!ComputeCallAddress(Callee, Addr))
+    return false;
+
   // Handle the arguments now that we've gotten them.
   unsigned NumBytes;
   if (!ProcessCallArgs(CLI, OutVTs, NumBytes))
@@ -1387,12 +1450,42 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
 
   // Issue the call.
   MachineInstrBuilder MIB;
-  MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::BL));
-  CLI.Call = MIB;
-  if (!SymName)
-    MIB.addGlobalAddress(GV, 0, 0);
-  else
-    MIB.addExternalSymbol(SymName, 0);
+  if (CM == CodeModel::Small) {
+    unsigned CallOpc = Addr.getReg() ? AArch64::BLR : AArch64::BL;
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CallOpc));
+    if (SymName)
+      MIB.addExternalSymbol(SymName, 0);
+    else if (Addr.getGlobalValue())
+      MIB.addGlobalAddress(Addr.getGlobalValue(), 0, 0);
+    else if (Addr.getReg())
+      MIB.addReg(Addr.getReg());
+    else
+      return false;
+  } else {
+    unsigned CallReg = 0;
+    if (SymName) {
+      unsigned ADRPReg = createResultReg(&AArch64::GPR64commonRegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
+              ADRPReg)
+        .addExternalSymbol(SymName, AArch64II::MO_GOT | AArch64II::MO_PAGE);
+
+      CallReg = createResultReg(&AArch64::GPR64RegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::LDRXui),
+              CallReg)
+        .addReg(ADRPReg)
+        .addExternalSymbol(SymName, AArch64II::MO_GOT | AArch64II::MO_PAGEOFF |
+                           AArch64II::MO_NC);
+    } else if (Addr.getGlobalValue()) {
+      CallReg = AArch64MaterializeGV(Addr.getGlobalValue());
+    } else if (Addr.getReg())
+      CallReg = Addr.getReg();
+
+    if (!CallReg)
+      return false;
+
+    MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                  TII.get(AArch64::BLR)).addReg(CallReg);
+  }
 
   // Add implicit physical register uses to the call.
   for (auto Reg : CLI.OutRegs)
@@ -1401,6 +1494,8 @@ bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   // Add a register mask with the call-preserved registers.
   // Proper defs for return values will be added by setPhysRegsDeadExcept().
   MIB.addRegMask(TRI.getCallPreservedMask(CC));
+
+  CLI.Call = MIB;
 
   // Finish off the call including any return values.
   return FinishCall(CLI, RetVT, NumBytes);
