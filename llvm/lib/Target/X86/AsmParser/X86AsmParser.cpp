@@ -1880,8 +1880,10 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseMemOperand(unsigned SegReg,
     return nullptr;
   }
 
-  return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
-                               MemStart, MemEnd);
+  if (SegReg || BaseReg || IndexReg)
+    return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
+                                 MemStart, MemEnd);
+  return X86Operand::CreateMem(Disp, MemStart, MemEnd);
 }
 
 bool X86AsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,

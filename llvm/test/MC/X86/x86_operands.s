@@ -52,6 +52,11 @@
         call *%eax
 # CHECK: calll *4(%eax)
         call *4(%eax)
+foo:
+	calll foo()
+# CHECK: calll foo{{$}}
+	calll foo(,)
+# CHECK: calll foo{{$}}
 
 # CHECK: movl	%gs:8, %eax
 movl %gs:8, %eax
