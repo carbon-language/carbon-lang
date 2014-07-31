@@ -114,6 +114,7 @@ private:
   bool SelectIntExt(const Instruction *I);
   bool SelectMul(const Instruction *I);
   bool SelectShift(const Instruction *I, bool IsLeftShift, bool IsArithmetic);
+  bool SelectBitCast(const Instruction *I);
 
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
@@ -2411,6 +2412,40 @@ bool AArch64FastISel::SelectShift(const Instruction *I, bool IsLeftShift,
   return true;
 }
 
+bool AArch64FastISel::SelectBitCast(const Instruction *I) {
+  MVT RetVT, SrcVT;
+
+  if (!isTypeLegal(I->getOperand(0)->getType(), SrcVT))
+    return false;
+  if (!isTypeLegal(I->getType(), RetVT))
+    return false;
+
+  unsigned Opc;
+  if (RetVT == MVT::f32 && SrcVT == MVT::i32)
+    Opc = AArch64::FMOVWSr;
+  else if (RetVT == MVT::f64 && SrcVT == MVT::i64)
+    Opc = AArch64::FMOVXDr;
+  else if (RetVT == MVT::i32 && SrcVT == MVT::f32)
+    Opc = AArch64::FMOVSWr;
+  else if (RetVT == MVT::i64 && SrcVT == MVT::f64)
+    Opc = AArch64::FMOVDXr;
+  else
+    return false;
+
+  unsigned Op0Reg = getRegForValue(I->getOperand(0));
+  if (!Op0Reg)
+    return false;
+  bool Op0IsKill = hasTrivialKill(I->getOperand(0));
+  unsigned ResultReg = FastEmitInst_r(Opc, TLI.getRegClassFor(RetVT),
+                                      Op0Reg, Op0IsKill);
+
+  if (!ResultReg)
+    return false;
+
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
 bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   switch (I->getOpcode()) {
   default:
@@ -2462,6 +2497,8 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
     return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/false);
   case Instruction::AShr:
     return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/true);
+  case Instruction::BitCast:
+    return SelectBitCast(I);
   }
   return false;
   // Silence warnings.

@@ -440,3 +440,24 @@ define zeroext i64 @zext_i16_i64(i16 zeroext %in) {
   %big = zext i16 %in to i64
   ret i64 %big
 }
+
+define float @bitcast_i32_to_float(i32 %a) {
+  %1 = bitcast i32 %a to float
+  ret float %1
+}
+
+define double @bitcast_i64_to_double(i64 %a) {
+  %1 = bitcast i64 %a to double
+  ret double %1
+}
+
+define i32 @bitcast_float_to_i32(float %a) {
+  %1 = bitcast float %a to i32
+  ret i32 %1
+}
+
+define i64 @bitcast_double_to_i64(double %a) {
+  %1 = bitcast double %a to i64
+  ret i64 %1
+}
+
