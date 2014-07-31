@@ -69,6 +69,11 @@ ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU GNU/kFreeBSD))
     LLVMLibsOptions += -Wl,--no-undefined
 endif
 
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU GNU/kFreeBSD))
+    # Define a default symbol version
+    LLVMLibsOptions += -Wl,--default-symver
+endif
+
 ifeq ($(HOST_OS),SunOS)
     # add -z allextract ahead of other libraries on Solaris
     LLVMLibsOptions := -Wl,-z -Wl,allextract $(LLVMLibsOptions)
