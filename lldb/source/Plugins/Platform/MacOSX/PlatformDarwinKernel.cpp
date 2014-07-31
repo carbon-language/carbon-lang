@@ -370,6 +370,16 @@ PlatformDarwinKernel::GetGenericSDKDirectoriesToSearch (std::vector<lldb_private
     {
         directories.push_back (generic_sdk);
     }
+
+    // The KDKs distributed from Apple installed on external
+    // developer systems may be in directories like
+    // /Library/Developer/KDKs/KDK_10.10_14A298i.kdk
+    FileSpec installed_kdks("/Library/Developer/KDKs", true);
+    if (installed_kdks.Exists() && installed_kdks.IsDirectory())
+    {
+        directories.push_back (installed_kdks);
+    }
+
 }
 
 void
@@ -487,12 +497,32 @@ PlatformDarwinKernel::GetKextDirectoriesInSDK (void *baton,
             || file_spec.GetFileNameExtension() == ConstString("kdk")))
     {
         std::string kext_directory_path = file_spec.GetPath();
-        kext_directory_path.append ("/System/Library/Extensions");
-        FileSpec kext_directory (kext_directory_path.c_str(), true);
-        if (kext_directory.Exists() && kext_directory.IsDirectory())
+
+        // Append the raw directory path, e.g. /Library/Developer/KDKs/KDK_10.10_14A298i.kdk
+        // to the directory search list -- there may be kexts sitting directly
+        // in that directory instead of being in a System/Library/Extensions subdir.
+        ((std::vector<lldb_private::FileSpec> *)baton)->push_back(file_spec);
+
+        // Check to see if there is a System/Library/Extensions subdir & add it if it exists
+
+        std::string sle_kext_directory_path (kext_directory_path);
+        sle_kext_directory_path.append ("/System/Library/Extensions");
+        FileSpec sle_kext_directory (sle_kext_directory_path.c_str(), true);
+        if (sle_kext_directory.Exists() && sle_kext_directory.IsDirectory())
         {
-            ((std::vector<lldb_private::FileSpec> *)baton)->push_back(kext_directory);
+            ((std::vector<lldb_private::FileSpec> *)baton)->push_back(sle_kext_directory);
         }
+
+        // Check to see if there is a Library/Extensions subdir & add it if it exists
+
+        std::string le_kext_directory_path (kext_directory_path);
+        le_kext_directory_path.append ("/Library/Extensions");
+        FileSpec le_kext_directory (le_kext_directory_path.c_str(), true);
+        if (le_kext_directory.Exists() && le_kext_directory.IsDirectory())
+        {
+            ((std::vector<lldb_private::FileSpec> *)baton)->push_back(le_kext_directory);
+        }
+
     }
     return FileSpec::eEnumerateDirectoryResultNext;
 }
