@@ -46,3 +46,7 @@ movl %eax,(,%bx)
 
 // 32: error: invalid operand for instruction
 outb al, 4
+
+// 32: error: invalid segment register
+// 64: error: invalid segment register
+movl %eax:0x00, %ebx

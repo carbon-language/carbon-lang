@@ -1632,6 +1632,9 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseATTOperand() {
     if (getLexer().isNot(AsmToken::Colon))
       return X86Operand::CreateReg(RegNo, Start, End);
 
+    if (!X86MCRegisterClasses[X86::SEGMENT_REGRegClassID].contains(RegNo))
+      return ErrorOperand(Start, "invalid segment register");
+
     getParser().Lex(); // Eat the colon.
     return ParseMemOperand(RegNo, Start);
   }
