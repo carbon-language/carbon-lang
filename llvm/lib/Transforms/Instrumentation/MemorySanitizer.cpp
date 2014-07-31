@@ -763,6 +763,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       return VectorType::get(IntegerType::get(*MS.C, EltSize),
                              VT->getNumElements());
     }
+    if (ArrayType *AT = dyn_cast<ArrayType>(OrigTy)) {
+      return ArrayType::get(getShadowTy(AT->getElementType()),
+                            AT->getNumElements());
+    }
     if (StructType *ST = dyn_cast<StructType>(OrigTy)) {
       SmallVector<Type*, 4> Elements;
       for (unsigned i = 0, n = ST->getNumElements(); i < n; i++)
@@ -882,11 +886,18 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     assert(ShadowTy);
     if (isa<IntegerType>(ShadowTy) || isa<VectorType>(ShadowTy))
       return Constant::getAllOnesValue(ShadowTy);
-    StructType *ST = cast<StructType>(ShadowTy);
-    SmallVector<Constant *, 4> Vals;
-    for (unsigned i = 0, n = ST->getNumElements(); i < n; i++)
-      Vals.push_back(getPoisonedShadow(ST->getElementType(i)));
-    return ConstantStruct::get(ST, Vals);
+    if (ArrayType *AT = dyn_cast<ArrayType>(ShadowTy)) {
+      SmallVector<Constant *, 4> Vals(AT->getNumElements(),
+                                      getPoisonedShadow(AT->getElementType()));
+      return ConstantArray::get(AT, Vals);
+    }
+    if (StructType *ST = dyn_cast<StructType>(ShadowTy)) {
+      SmallVector<Constant *, 4> Vals;
+      for (unsigned i = 0, n = ST->getNumElements(); i < n; i++)
+        Vals.push_back(getPoisonedShadow(ST->getElementType(i)));
+      return ConstantStruct::get(ST, Vals);
+    }
+    llvm_unreachable("Unexpected shadow type");
   }
 
   /// \brief Create a dirty shadow for a given value.
