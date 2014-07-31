@@ -3866,8 +3866,8 @@ static SDValue PerformADDCombineWithOperands(SDNode *N, SDValue N0, SDValue N1,
   }
   else if (N0.getOpcode() == ISD::FMUL) {
     if (VT == MVT::f32 || VT == MVT::f64) {
-      NVPTXTargetLowering *TLI =
-        (NVPTXTargetLowering *)&DAG.getTargetLoweringInfo();
+      const auto *TLI = static_cast<const NVPTXTargetLowering *>(
+          &DAG.getTargetLoweringInfo());
       if (!TLI->allowFMA(DAG.getMachineFunction(), OptLevel))
         return SDValue();
 
