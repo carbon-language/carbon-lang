@@ -75,6 +75,7 @@ public:
   virtual ~Chunk() {}
   virtual void write(uint8_t *buffer) = 0;
   virtual uint64_t size() const { return _size; }
+  virtual uint64_t onDiskSize() const { return size(); }
   virtual uint64_t align() const { return 1; }
 
   uint64_t fileOffset() const { return _fileOffset; }
@@ -175,6 +176,12 @@ private:
 
 class SectionChunk : public Chunk {
 public:
+  uint64_t onDiskSize() const override {
+    if (_characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+      return 0;
+    return llvm::RoundUpToAlignment(size(), SECTOR_SIZE);
+  }
+
   uint64_t align() const override { return SECTOR_SIZE; }
   uint32_t getCharacteristics() const { return _characteristics; }
   StringRef getSectionName() const { return _sectionName; }
@@ -730,19 +737,18 @@ SectionHeaderTableChunk::createSectionHeader(SectionChunk *chunk) {
                std::min(sizeof(header.Name), sectionName.size()));
 
   uint32_t characteristics = chunk->getCharacteristics();
+  header.VirtualSize = chunk->size();
   header.VirtualAddress = chunk->getVirtualAddress();
+  header.SizeOfRawData = chunk->onDiskSize();
   header.PointerToRelocations = 0;
   header.PointerToLinenumbers = 0;
   header.NumberOfRelocations = 0;
   header.NumberOfLinenumbers = 0;
-  header.SizeOfRawData = chunk->size();
   header.Characteristics = characteristics;
 
   if (characteristics & llvm::COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA) {
-    header.VirtualSize = 0;
     header.PointerToRawData = 0;
   } else {
-    header.VirtualSize = chunk->size();
     header.PointerToRawData = chunk->fileOffset();
   }
   return header;
@@ -1018,7 +1024,8 @@ std::error_code PECOFFWriter::writeFile(const File &linkedFile,
     this->build<llvm::object::pe32_header>(linkedFile);
   }
 
-  uint64_t totalSize = _chunks.back()->fileOffset() + _chunks.back()->size();
+  uint64_t totalSize =
+      _chunks.back()->fileOffset() + _chunks.back()->onDiskSize();
   std::unique_ptr<llvm::FileOutputBuffer> buffer;
   std::error_code ec = llvm::FileOutputBuffer::create(
       path, totalSize, buffer, llvm::FileOutputBuffer::F_executable);
@@ -1144,7 +1151,7 @@ void PECOFFWriter::setImageSizeOnDisk() {
     _imageSizeOnDisk =
         llvm::RoundUpToAlignment(_imageSizeOnDisk, chunk->align());
     chunk->setFileOffset(_imageSizeOnDisk);
-    _imageSizeOnDisk += chunk->size();
+    _imageSizeOnDisk += chunk->onDiskSize();
   }
 }
 
@@ -1154,7 +1161,7 @@ uint64_t PECOFFWriter::calcSectionSize(
   for (auto &cp : _chunks)
     if (SectionChunk *chunk = dyn_cast<SectionChunk>(&*cp))
       if (chunk->getCharacteristics() & sectionType)
-        ret += chunk->size();
+        ret += chunk->onDiskSize();
   return ret;
 }
 

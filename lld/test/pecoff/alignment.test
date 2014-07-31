@@ -5,7 +5,7 @@
 # RUN: llvm-readobj -sections %t.exe | FileCheck %s
 
 CHECK: Name: .bss (2E 62 73 73 00 00 00 00)
-CHECK: RawDataSize: 18
+CHECK: RawDataSize: 0
 
 CHECK:      Name: .data (2E 64 61 74 61 00 00 00)
 CHECK-NEXT: VirtualSize: 0x6

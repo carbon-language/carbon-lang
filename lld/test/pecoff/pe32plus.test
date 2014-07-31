@@ -22,7 +22,7 @@ CHECK-NEXT: }
 CHECK-NEXT: ImageOptionalHeader {
 CHECK-NEXT:   MajorLinkerVersion: 0
 CHECK-NEXT:   MinorLinkerVersion: 0
-CHECK-NEXT:   SizeOfCode: 1
+CHECK-NEXT:   SizeOfCode: 512
 CHECK-NEXT:   SizeOfInitializedData: 0
 CHECK-NEXT:   SizeOfUninitializedData: 0
 CHECK-NEXT:   AddressOfEntryPoint: 0x1000
