@@ -11185,7 +11185,7 @@ bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDValue LHS,
     // but the new load must be the minimum (most restrictive) alignment of the
     // inputs.
     bool isInvariant = LLD->getAlignment() & RLD->getAlignment();
-    unsigned Alignment = std::min(LLD->getAlignment(),RLD->getAlignment());
+    unsigned Alignment = std::min(LLD->getAlignment(), RLD->getAlignment());
     if (LLD->getExtensionType() == ISD::NON_EXTLOAD) {
       Load = DAG.getLoad(TheSelect->getValueType(0),
                          SDLoc(TheSelect),
