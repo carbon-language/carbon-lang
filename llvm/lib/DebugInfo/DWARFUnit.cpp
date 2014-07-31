@@ -235,9 +235,10 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
   return DieArray.size();
 }
 
-DWARFUnit::DWOHolder::DWOHolder(object::ObjectFile *DWOFile)
-    : DWOFile(DWOFile),
-      DWOContext(cast<DWARFContext>(DIContext::getDWARFContext(*DWOFile))),
+DWARFUnit::DWOHolder::DWOHolder(std::unique_ptr<object::ObjectFile> DWOFile)
+    : DWOFile(std::move(DWOFile)),
+      DWOContext(
+          cast<DWARFContext>(DIContext::getDWARFContext(*this->DWOFile))),
       DWOU(nullptr) {
   if (DWOContext->getNumDWOCompileUnits() > 0)
     DWOU = DWOContext->getDWOCompileUnitAtIndex(0);
@@ -265,7 +266,7 @@ bool DWARFUnit::parseDWO() {
   if (!DWOFile)
     return false;
   // Reset DWOHolder.
-  DWO.reset(new DWOHolder(DWOFile.get().get()));
+  DWO = llvm::make_unique<DWOHolder>(std::move(*DWOFile));
   DWARFUnit *DWOCU = DWO->getUnit();
   // Verify that compile unit in .dwo file is valid.
   if (!DWOCU || DWOCU->getDWOId() != getDWOId()) {

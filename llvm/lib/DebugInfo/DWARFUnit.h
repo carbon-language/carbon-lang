@@ -52,7 +52,7 @@ class DWARFUnit {
     std::unique_ptr<DWARFContext> DWOContext;
     DWARFUnit *DWOU;
   public:
-    DWOHolder(object::ObjectFile *DWOFile);
+    DWOHolder(std::unique_ptr<object::ObjectFile> DWOFile);
     DWARFUnit *getUnit() const { return DWOU; }
   };
   std::unique_ptr<DWOHolder> DWO;
