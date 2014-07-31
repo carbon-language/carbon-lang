@@ -525,7 +525,7 @@ private:
 
   /// \brief Handle the annotation token produced for
   /// #pragma clang loop and #pragma unroll.
-  LoopHint HandlePragmaLoopHint();
+  bool HandlePragmaLoopHint(LoopHint &Hint);
 
   /// GetLookAheadToken - This peeks ahead N tokens and returns that token
   /// without consuming any tokens.  LookAhead(0) returns 'Tok', LookAhead(1)
