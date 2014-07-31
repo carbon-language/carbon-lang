@@ -3590,8 +3590,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           // identified reduction value with an outside user.
           if (!hasOutsideLoopUser(TheLoop, it, AllowedExit))
             continue;
-          emitAnalysis(Report(it) << "value that could not be identified as "
-                                     "reduction is used outside the loop");
+          emitAnalysis(Report(it) << "value could not be identified as "
+                                     "an induction or reduction variable");
           return false;
         }
 
@@ -3676,7 +3676,8 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           continue;
         }
 
-        emitAnalysis(Report(it) << "unvectorizable operation");
+        emitAnalysis(Report(it) << "value that could not be identified as "
+                                   "reduction is used outside the loop");
         DEBUG(dbgs() << "LV: Found an unidentified PHI."<< *Phi <<"\n");
         return false;
       }// end of PHI handling
