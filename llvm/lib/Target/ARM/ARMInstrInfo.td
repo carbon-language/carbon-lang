@@ -4117,7 +4117,7 @@ def UDIV : ADivA1I<0b011, (outs GPR:$Rd), (ins GPR:$Rn, GPR:$Rm), IIC_iDIV,
 //  Misc. Arithmetic Instructions.
 //
 
-def CLZ  : AMiscA1I<0b000010110, 0b0001, (outs GPR:$Rd), (ins GPR:$Rm),
+def CLZ  : AMiscA1I<0b00010110, 0b0001, (outs GPR:$Rd), (ins GPR:$Rm),
               IIC_iUNAr, "clz", "\t$Rd, $Rm",
               [(set GPR:$Rd, (ctlz GPR:$Rm))]>, Requires<[IsARM, HasV5T]>,
            Sched<[WriteALU]>;
