@@ -2302,27 +2302,22 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   // FIXME: This should be replaced with a real .td file alias mechanism.
   // Also, MatchInstructionImpl should actually *do* the EmitInstruction
   // call.
-  if (Op.getToken() == "fstsw" || Op.getToken() == "fstcw" ||
-      Op.getToken() == "fstsww" || Op.getToken() == "fstcww" ||
-      Op.getToken() == "finit" || Op.getToken() == "fsave" ||
-      Op.getToken() == "fstenv" || Op.getToken() == "fclex") {
+  const char *Repl = StringSwitch<const char *>(Op.getToken())
+                         .Case("finit", "fninit")
+                         .Case("fsave", "fnsave")
+                         .Case("fstcw", "fnstcw")
+                         .Case("fstcww", "fnstcw")
+                         .Case("fstenv", "fnstenv")
+                         .Case("fstsw", "fnstsw")
+                         .Case("fstsww", "fnstsw")
+                         .Case("fclex", "fnclex")
+                         .Default(nullptr);
+  if (Repl) {
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
     Inst.setLoc(IDLoc);
     if (!MatchingInlineAsm)
       EmitInstruction(Inst, Operands, Out);
-
-    const char *Repl = StringSwitch<const char *>(Op.getToken())
-                           .Case("finit", "fninit")
-                           .Case("fsave", "fnsave")
-                           .Case("fstcw", "fnstcw")
-                           .Case("fstcww", "fnstcw")
-                           .Case("fstenv", "fnstenv")
-                           .Case("fstsw", "fnstsw")
-                           .Case("fstsww", "fnstsw")
-                           .Case("fclex", "fnclex")
-                           .Default(nullptr);
-    assert(Repl && "Unknown wait-prefixed instruction");
     Operands[0] = X86Operand::CreateToken(Repl, IDLoc);
   }
 
