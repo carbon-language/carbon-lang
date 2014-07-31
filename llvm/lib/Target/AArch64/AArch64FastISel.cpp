@@ -1280,6 +1280,10 @@ bool AArch64FastISel::ProcessCallArgs(CallLoweringInfo &CLI,
     } else {
       assert(VA.isMemLoc() && "Assuming store on stack.");
 
+      // Don't emit stores for undef values.
+      if (isa<UndefValue>(ArgVal))
+        continue;
+
       // Need to store on the stack.
       unsigned ArgSize = (ArgVT.getSizeInBits() + 7) / 8;
 

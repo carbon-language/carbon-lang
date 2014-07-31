@@ -2831,6 +2831,11 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
       OutRegs.push_back(VA.getLocReg());
     } else {
       assert(VA.isMemLoc());
+
+      // Don't emit stores for undef values.
+      if (isa<UndefValue>(ArgVal))
+        continue;
+
       unsigned LocMemOffset = VA.getLocMemOffset();
       X86AddressMode AM;
       AM.Base.Reg = RegInfo->getStackRegister();
