@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | not grep " bitcast ("
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 @.Base64_1 = external constant [4 x i8]         ; <[4 x i8]*> [#uses=1]
 

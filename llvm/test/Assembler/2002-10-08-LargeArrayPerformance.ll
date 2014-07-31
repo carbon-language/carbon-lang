@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 ; This testcase comes from the following really simple c file:
 ;; int foo[30000]
 ;;; We should not be soo slow for such a simple case!

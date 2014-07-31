@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | llvm-dis > %t0
 ; RUN: opt -S < %s > %t1
 ; RUN: diff %t0 %t1
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
 ; PR6140
 
 ; Make sure the flags are serialized/deserialized properly for both

@@ -1,7 +1,7 @@
 ; This test checks to make sure that constant exprs fold in some simple situations
 
 ; RUN: llvm-as < %s | llvm-dis | not grep cast
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 @A = global i32* bitcast (i8* null to i32*)  ; Cast null -> fold
 @B = global i32** bitcast (i32** @A to i32**)   ; Cast to same type -> fold

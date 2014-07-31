@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s | llvm-dis | \
 ; RUN:   not grep "getelementptr.*getelementptr"
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 %struct.TTriangleItem = type { i8*, i8*, [3 x %struct.TUVVertex] }
 %struct.TUVVertex = type { i16, i16, i16, i16 }

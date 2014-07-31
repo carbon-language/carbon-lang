@@ -11,6 +11,21 @@
 // provided IR, this tool shuffles the use-lists and then writes and reads to a
 // separate Module whose use-list orders are compared to the original.
 //
+// The shuffles are deterministic and somewhat naive.  On a given shuffle, some
+// use-lists will not change at all.  The algorithm per iteration is as follows:
+//
+//  1. Seed the random number generator.  The seed is different for each
+//     shuffle.  Shuffle 0 uses default+0, shuffle 1 uses default+1, and so on.
+//
+//  2. Visit every Value in a deterministic order.
+//
+//  3. Assign a random number to each Use in the Value's use-list in order.
+//
+//  4. Sort the use-list using Value::sortUseList(), which is a stable sort.
+//
+// Shuffling a larger number of times provides a better statistical guarantee
+// that each use-list has changed at least once.
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/DenseMap.h"
@@ -47,7 +62,7 @@ static cl::opt<bool> SaveTemps("save-temps", cl::desc("Save temp files"),
 static cl::opt<unsigned>
     NumShuffles("num-shuffles",
                 cl::desc("Number of times to shuffle and verify use-lists"),
-                cl::init(1));
+                cl::init(5));
 
 namespace {
 

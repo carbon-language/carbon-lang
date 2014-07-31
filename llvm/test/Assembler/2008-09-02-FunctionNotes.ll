@@ -1,6 +1,6 @@
 ; Test function attributes
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 ; CHECK: define void @fn1() #0
 define void @fn1() alwaysinline {

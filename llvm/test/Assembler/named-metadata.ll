@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 !0 = metadata !{metadata !"zero"}
 !1 = metadata !{metadata !"one"}

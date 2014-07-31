@@ -2,7 +2,7 @@
 ; situations
 
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 
 ; Even give it a datalayout, to tempt folding as much as possible.
 target datalayout = "p:32:32"

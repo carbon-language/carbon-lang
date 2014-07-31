@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order
 ; PR2480
 
 define i32 @test(i32 %X) nounwind {
