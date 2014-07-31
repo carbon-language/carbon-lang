@@ -288,6 +288,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_print_atoms))
     ctx.setPrintAtoms();
 
+  // Handle -t (trace) option.
+  if (parsedArgs->getLastArg(OPT_t))
+    ctx.setLogInputFiles(true);
+
   // In -test_libresolution mode, we'll be given an explicit list of paths that
   // exist. We'll also be expected to print out information about how we located
   // libraries and so on that the user specified, but not to actually do any

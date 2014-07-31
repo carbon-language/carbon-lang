@@ -94,6 +94,8 @@ def output : Separate<["-"], "o">, HelpText<"Output file path">;
 def arch : Separate<["-"], "arch">, HelpText<"Architecture to link">;
 def sectalign : MultiArg<["-"], "sectalign", 3>,
                 HelpText<"alignment for segment/section">;
+def t : Flag<["-"], "t">,
+     HelpText<"Print the names of the input files as ld processes them">;
 
 
 // extras
