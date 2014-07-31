@@ -403,7 +403,7 @@ class JMP_IDX_COMPACT_FM<bits<6> funct> : MipsR6Inst {
   bits<32> Inst;
 
   let Inst{31-26} = funct;
-  let Inst{25-21} = 0b000000;
+  let Inst{25-21} = 0b00000;
   let Inst{20-16} = rt;
   let Inst{15-0} = offset;
 }
