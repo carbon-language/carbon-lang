@@ -322,6 +322,7 @@ namespace dr324 { // dr324: yes
   int *f = &(true ? s.n : s.n); // expected-error {{address of bit-field}}
   int &g = (void(), s.n); // expected-error {{non-const reference cannot bind to bit-field}}
   int *h = &(void(), s.n); // expected-error {{address of bit-field}}
+  int *i = &++s.n; // expected-error {{address of bit-field}}
 }
 
 namespace dr326 { // dr326: yes
