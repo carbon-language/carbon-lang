@@ -119,6 +119,7 @@ public:
                             int FrameIndex, const TargetRegisterClass *RC,
                             const TargetRegisterInfo *TRI) const override;
 
+  using TargetInstrInfo::foldMemoryOperandImpl;
   MachineInstr *
   foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
                         const SmallVectorImpl<unsigned> &Ops,
