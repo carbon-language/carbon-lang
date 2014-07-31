@@ -183,6 +183,36 @@ MIPS64r2, and MIPS64r6 as well as some of the Application Specific Extensions
 such as MSA. It also supports several of the MIPS specific assembler directives
 such as ``.set``, ``.module``, ``.cpload``, etc.
 
+Changes to the PowerPC Target
+=============================
+
+The PowerPC 64-bit Little Endian subtarget (powerpc64le-unknown-linux-gnu) is
+now fully supported.  This includes support for the Altivec instruction set.
+
+The Power Architecture 64-Bit ELFv2 ABI Specification is now supported, and
+is the default ABI for Little Endian.  The ELFv1 ABI remains the default ABI
+for Big Endian.  Although use of ELFv1 on Little Endian or ELFv2 on Big
+Endian can be selected via command-line option, this is not recommended or
+even advisable.
+
+Links to the ELFv2 ABI specification and to the Power ISA Version 2.07
+specification may be found `here <https://www-03.ibm.com/technologyconnect/tgcm/TGCMServlet.wss?alias=OpenPOWER&linkid=1n0000>`_ (free registration required).
+Efforts are underway to move this to a location that doesn't require
+registration, but the planned site isn't ready yet.
+
+Experimental support for the VSX instruction set introduced with ISA 2.06
+is now available using the ``-mvsx`` switch.  Work remains on this, so it
+is not recommended for production use.  VSX is disabled for Little Endian
+regardless of this switch setting.
+
+Load/store cost estimates have been improved.
+
+Constant hoisting has been enabled.
+
+Global named register support has been enabled.
+
+Position-independent code can now be generated for the 32-bit ELF subtarget.
+
 External Open Source Projects Using LLVM 3.5
 ============================================
 
