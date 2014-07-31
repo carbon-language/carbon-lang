@@ -1,4 +1,5 @@
-; RUN: llc < %s -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone                             < %s | FileCheck %s
+; RUN: llc -mtriple=arm64-apple-darwin -enable-misched=0 -mcpu=cyclone -fast-isel -fast-isel-abort < %s | FileCheck %s
 
 ; Trivial patchpoint codegen
 ;
@@ -41,73 +42,6 @@ entry:
   ret void
 }
 
-; Test the webkit_jscc calling convention.
-; One argument will be passed in register, the other will be pushed on the stack.
-; Return value in x0.
-define void @jscall_patchpoint_codegen(i64 %p1, i64 %p2, i64 %p3, i64 %p4) {
-entry:
-; CHECK-LABEL: jscall_patchpoint_codegen:
-; CHECK:      Ltmp
-; CHECK:      str x{{.+}}, [sp]
-; CHECK-NEXT: mov  x0, x{{.+}}
-; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #0xffff, lsl #32
-; CHECK-NEXT: movk  x16, #0xdead, lsl #16
-; CHECK-NEXT: movk  x16, #0xbeef
-; CHECK-NEXT: blr x16
-  %resolveCall2 = inttoptr i64 281474417671919 to i8*
-  %result = tail call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 20, i8* %resolveCall2, i32 2, i64 %p4, i64 %p2)
-  %resolveCall3 = inttoptr i64 244837814038255 to i8*
-  tail call webkit_jscc void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 6, i32 20, i8* %resolveCall3, i32 2, i64 %p4, i64 %result)
-  ret void
-}
-
-; Test if the arguments are properly aligned and that we don't store undef arguments.
-define i64 @jscall_patchpoint_codegen2(i64 %callee) {
-entry:
-; CHECK-LABEL: jscall_patchpoint_codegen2:
-; CHECK:      Ltmp
-; CHECK:      orr w{{.+}}, wzr, #0x6
-; CHECK-NEXT: str x{{.+}}, [sp, #24]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x4
-; CHECK-NEXT: str w{{.+}}, [sp, #16]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
-; CHECK-NEXT: str x{{.+}}, [sp]
-; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #0xffff, lsl #32
-; CHECK-NEXT: movk  x16, #0xdead, lsl #16
-; CHECK-NEXT: movk  x16, #0xbeef
-; CHECK-NEXT: blr x16
-  %call = inttoptr i64 281474417671919 to i8*
-  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 6, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6)
-  ret i64 %result
-}
-
-; Test if the arguments are properly aligned and that we don't store undef arguments.
-define i64 @jscall_patchpoint_codegen3(i64 %callee) {
-entry:
-; CHECK-LABEL: jscall_patchpoint_codegen3:
-; CHECK:      Ltmp
-; CHECK:      movz  w{{.+}}, #0xa
-; CHECK-NEXT: str x{{.+}}, [sp, #48]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x8
-; CHECK-NEXT: str w{{.+}}, [sp, #36]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x6
-; CHECK-NEXT: str x{{.+}}, [sp, #24]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x4
-; CHECK-NEXT: str w{{.+}}, [sp, #16]
-; CHECK-NEXT: orr w{{.+}}, wzr, #0x2
-; CHECK-NEXT: str x{{.+}}, [sp]
-; CHECK:      Ltmp
-; CHECK-NEXT: movz  x16, #0xffff, lsl #32
-; CHECK-NEXT: movk  x16, #0xdead, lsl #16
-; CHECK-NEXT: movk  x16, #0xbeef
-; CHECK-NEXT: blr x16
-  %call = inttoptr i64 281474417671919 to i8*
-  %result = call webkit_jscc i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 7, i32 20, i8* %call, i32 10, i64 %callee, i64 2, i64 undef, i32 4, i32 undef, i64 6, i32 undef, i32 8, i32 undef, i64 10)
-  ret i64 %result
-}
-
 ; Test patchpoints reusing the same TargetConstant.
 ; <rdar:15390785> Assertion failed: (CI.getNumArgOperands() >= NumArgs + 4)
 ; There is no way to verify this, since it depends on memory allocation.
@@ -144,28 +78,7 @@ entry:
   ret void
 }
 
-; Test that scratch registers are spilled around patchpoints
-; CHECK: InlineAsm End
-; CHECK-NEXT: mov x{{[0-9]+}}, x16
-; CHECK-NEXT: mov x{{[0-9]+}}, x17
-; CHECK-NEXT: Ltmp
-; CHECK-NEXT: nop
-define void @clobberScratch(i32* %p) {
-  %v = load i32* %p
-  tail call void asm sideeffect "nop", "~{x0},~{x1},~{x2},~{x3},~{x4},~{x5},~{x6},~{x7},~{x8},~{x9},~{x10},~{x11},~{x12},~{x13},~{x14},~{x15},~{x18},~{x19},~{x20},~{x21},~{x22},~{x23},~{x24},~{x25},~{x26},~{x27},~{x28},~{x29},~{x30},~{x31}"() nounwind
-  tail call void (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.void(i64 5, i32 20, i8* null, i32 0, i32* %p, i32 %v)
-  store i32 %v, i32* %p
-  ret void
-}
-
 declare void @llvm.experimental.stackmap(i64, i32, ...)
 declare void @llvm.experimental.patchpoint.void(i64, i32, i8*, i32, ...)
 declare i64 @llvm.experimental.patchpoint.i64(i64, i32, i8*, i32, ...)
 
-; CHECK-LABEL: test_i16:
-; CHECK: ldrh [[BREG:w[0-9]+]], [sp]
-; CHECK: add w0, w0, [[BREG]]
-define webkit_jscc i16 @test_i16(i16 zeroext %a, i16 zeroext %b) {
-  %sum = add i16 %a, %b
-  ret i16 %sum
-}
