@@ -450,7 +450,7 @@ MCBasicBlock *MCObjectDisassembler::getBBAt(MCModule *Module, MCFunction *MCFN,
     RemoveDupsFromAddressVector(BBI->SuccAddrs);
     for (AddressSetTy::const_iterator SI = BBI->SuccAddrs.begin(),
          SE = BBI->SuccAddrs.end();
-         SE != SE; ++SI) {
+         SI != SE; ++SI) {
       MCBasicBlock *Succ = BBInfos[*SI].BB;
       BB->addSuccessor(Succ);
       Succ->addPredecessor(BB);
