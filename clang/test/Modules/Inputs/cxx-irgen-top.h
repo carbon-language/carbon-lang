@@ -14,3 +14,21 @@ template<typename T> struct CtorInit {
   int a;
   CtorInit() : a(f()) {}
 };
+
+namespace ImplicitSpecialMembers {
+  struct A {
+    A(const A&);
+  };
+  struct B {
+    A a;
+    B(int);
+  };
+  struct C {
+    A a;
+    C(int);
+  };
+  struct D {
+    A a;
+    D(int);
+  };
+}

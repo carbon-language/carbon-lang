@@ -135,13 +135,16 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
 void
 Sema::UpdateExceptionSpec(FunctionDecl *FD,
                           const FunctionProtoType::ExceptionSpecInfo &ESI) {
-  const FunctionProtoType *Proto =
-      FD->getType()->castAs<FunctionProtoType>();
+  for (auto *Redecl : FD->redecls()) {
+    auto *RedeclFD = dyn_cast<FunctionDecl>(Redecl);
+    const FunctionProtoType *Proto =
+        RedeclFD->getType()->castAs<FunctionProtoType>();
 
-  // Overwrite the exception spec and rebuild the function type.
-  FD->setType(Context.getFunctionType(
-      Proto->getReturnType(), Proto->getParamTypes(),
-      Proto->getExtProtoInfo().withExceptionSpec(ESI)));
+    // Overwrite the exception spec and rebuild the function type.
+    RedeclFD->setType(Context.getFunctionType(
+        Proto->getReturnType(), Proto->getParamTypes(),
+        Proto->getExtProtoInfo().withExceptionSpec(ESI)));
+  }
 
   // If we've fully resolved the exception specification, notify listeners.
   if (!isUnresolvedExceptionSpec(ESI.Type))

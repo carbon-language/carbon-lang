@@ -199,9 +199,10 @@ namespace clang {
         TypeIDForTypeDecl(0), HasPendingBody(false) { }
 
     template <typename DeclT>
-    static void attachPreviousDeclImpl(Redeclarable<DeclT> *D, Decl *Previous);
-    static void attachPreviousDeclImpl(...);
-    static void attachPreviousDecl(Decl *D, Decl *previous);
+    static void attachPreviousDeclImpl(ASTReader &Reader,
+                                       Redeclarable<DeclT> *D, Decl *Previous);
+    static void attachPreviousDeclImpl(ASTReader &Reader, ...);
+    static void attachPreviousDecl(ASTReader &Reader, Decl *D, Decl *Previous);
 
     template <typename DeclT>
     static void attachLatestDeclImpl(Redeclarable<DeclT> *D, Decl *Latest);
@@ -2484,22 +2485,68 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
 }
 
 template<typename DeclT>
-void ASTDeclReader::attachPreviousDeclImpl(Redeclarable<DeclT> *D,
+void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
+                                           Redeclarable<DeclT> *D,
                                            Decl *Previous) {
   D->RedeclLink.setPrevious(cast<DeclT>(Previous));
 }
-void ASTDeclReader::attachPreviousDeclImpl(...) {
+template<>
+void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
+                                           Redeclarable<FunctionDecl> *D,
+                                           Decl *Previous) {
+  FunctionDecl *FD = static_cast<FunctionDecl*>(D);
+  FunctionDecl *PrevFD = cast<FunctionDecl>(Previous);
+
+  FD->RedeclLink.setPrevious(PrevFD);
+
+  // If the previous declaration is an inline function declaration, then this
+  // declaration is too.
+  if (PrevFD->IsInline != FD->IsInline) {
+    // FIXME: [dcl.fct.spec]p4:
+    //   If a function with external linkage is declared inline in one
+    //   translation unit, it shall be declared inline in all translation
+    //   units in which it appears.
+    //
+    // Be careful of this case:
+    //
+    // module A:
+    //   template<typename T> struct X { void f(); };
+    //   template<typename T> inline void X<T>::f() {}
+    //
+    // module B instantiates the declaration of X<int>::f
+    // module C instantiates the definition of X<int>::f
+    //
+    // If module B and C are merged, we do not have a violation of this rule.
+    FD->IsInline = true;
+  }
+
+  // If this declaration has an unresolved exception specification but the
+  // previous declaration had a resolved one, resolve the exception
+  // specification now.
+  auto *FPT = FD->getType()->getAs<FunctionProtoType>();
+  auto *PrevFPT = PrevFD->getType()->getAs<FunctionProtoType>();
+  if (FPT && PrevFPT &&
+      isUnresolvedExceptionSpec(FPT->getExceptionSpecType()) &&
+      !isUnresolvedExceptionSpec(PrevFPT->getExceptionSpecType())) {
+    FunctionProtoType::ExtProtoInfo EPI = PrevFPT->getExtProtoInfo();
+    FD->setType(Reader.Context.getFunctionType(
+        FPT->getReturnType(), FPT->getParamTypes(),
+        FPT->getExtProtoInfo().withExceptionSpec(EPI.ExceptionSpec)));
+  }
+}
+void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader, ...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
 }
 
-void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
+void ASTDeclReader::attachPreviousDecl(ASTReader &Reader, Decl *D,
+                                       Decl *Previous) {
   assert(D && Previous);
 
   switch (D->getKind()) {
 #define ABSTRACT_DECL(TYPE)
-#define DECL(TYPE, BASE)                                   \
-  case Decl::TYPE:                                         \
-    attachPreviousDeclImpl(cast<TYPE##Decl>(D), Previous); \
+#define DECL(TYPE, BASE)                                           \
+  case Decl::TYPE:                                                 \
+    attachPreviousDeclImpl(Reader, cast<TYPE##Decl>(D), Previous); \
     break;
 #include "clang/AST/DeclNodes.inc"
   }
@@ -2517,32 +2564,6 @@ void ASTDeclReader::attachPreviousDecl(Decl *D, Decl *Previous) {
   // be too.
   if (Previous->Used)
     D->Used = true;
-
-  // If the previous declaration is an inline function declaration, then this
-  // declaration is too.
-  if (auto *FD = dyn_cast<FunctionDecl>(D)) {
-    if (cast<FunctionDecl>(Previous)->IsInline != FD->IsInline) {
-      // FIXME: [dcl.fct.spec]p4:
-      //   If a function with external linkage is declared inline in one
-      //   translation unit, it shall be declared inline in all translation
-      //   units in which it appears.
-      //
-      // Be careful of this case:
-      //
-      // module A:
-      //   template<typename T> struct X { void f(); };
-      //   template<typename T> inline void X<T>::f() {}
-      //
-      // module B instantiates the declaration of X<int>::f
-      // module C instantiates the definition of X<int>::f
-      //
-      // If module B and C are merged, we do not have a violation of this rule.
-      //
-      //if (!FD->IsInline || Previous->getOwningModule())
-      //  Diag(FD->getLocation(), diag::err_odr_differing_inline);
-      FD->IsInline = true;
-    }
-  }
 }
 
 template<typename DeclT>
@@ -3041,7 +3062,7 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
     if (Chain[I] == CanonDecl)
       continue;
 
-    ASTDeclReader::attachPreviousDecl(Chain[I], MostRecent);
+    ASTDeclReader::attachPreviousDecl(*this, Chain[I], MostRecent);
     MostRecent = Chain[I];
   }
   
@@ -3171,6 +3192,46 @@ void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
   ModuleMgr.visit(ObjCCategoriesVisitor::visit, &Visitor);
 }
 
+namespace {
+/// Iterator over the redeclarations of a declaration that have already
+/// been merged into the same redeclaration chain.
+template<typename DeclT>
+class MergedRedeclIterator {
+  DeclT *Start, *Canonical, *Current;
+public:
+  MergedRedeclIterator() : Current(nullptr) {}
+  MergedRedeclIterator(DeclT *Start)
+      : Start(Start), Canonical(nullptr), Current(Start) {}
+
+  DeclT *operator*() { return Current; }
+
+  MergedRedeclIterator &operator++() {
+    if (Current->isFirstDecl())
+      Canonical = Current;
+    Current = Current->getPreviousDecl();
+
+    // If we started in the merged portion, we'll reach our start position
+    // eventually. Otherwise, we'll never reach it, but the second declaration
+    // we reached was the canonical declaration, so stop when we see that one
+    // again.
+    if (Current == Start || Current == Canonical)
+      Current = nullptr;
+    return *this;
+  }
+
+  friend bool operator!=(const MergedRedeclIterator &A,
+                         const MergedRedeclIterator &B) {
+    return A.Current != B.Current;
+  }
+};
+}
+template<typename DeclT>
+llvm::iterator_range<MergedRedeclIterator<DeclT>> merged_redecls(DeclT *D) {
+  return llvm::iterator_range<MergedRedeclIterator<DeclT>>(
+      MergedRedeclIterator<DeclT>(D),
+      MergedRedeclIterator<DeclT>());
+}
+
 void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
                                const RecordData &Record) {
   while (Idx < Record.size()) {
@@ -3288,14 +3349,24 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     }
 
     case UPD_CXX_RESOLVED_EXCEPTION_SPEC: {
-      auto *FD = cast<FunctionDecl>(D);
-      auto *FPT = FD->getType()->castAs<FunctionProtoType>();
-      SmallVector<QualType, 8> ExceptionStorage;
+      // FIXME: This doesn't send the right notifications if there are
+      // ASTMutationListeners other than an ASTWriter.
       FunctionProtoType::ExceptionSpecInfo ESI;
+      SmallVector<QualType, 8> ExceptionStorage;
       Reader.readExceptionSpec(ModuleFile, ExceptionStorage, ESI, Record, Idx);
-      FD->setType(Reader.Context.getFunctionType(
-          FPT->getReturnType(), FPT->getParamTypes(),
-          FPT->getExtProtoInfo().withExceptionSpec(ESI)));
+      for (auto *Redecl : merged_redecls(D)) {
+        auto *FD = cast<FunctionDecl>(Redecl);
+        auto *FPT = FD->getType()->castAs<FunctionProtoType>();
+        if (!isUnresolvedExceptionSpec(FPT->getExceptionSpecType())) {
+          // AST invariant: if any exception spec in the redecl chain is
+          // resolved, all are resolved. We don't need to go any further.
+          // FIXME: If the exception spec is resolved, check that it matches.
+          break;
+        }
+        FD->setType(Reader.Context.getFunctionType(
+            FPT->getReturnType(), FPT->getParamTypes(),
+            FPT->getExtProtoInfo().withExceptionSpec(ESI)));
+      }
       break;
     }
 
