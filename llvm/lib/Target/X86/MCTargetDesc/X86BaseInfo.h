@@ -303,17 +303,18 @@ namespace X86II {
     //// MRM_XX - A mod/rm byte of exactly 0xXX.
     MRM_C0 = 32, MRM_C1 = 33, MRM_C2 = 34, MRM_C3 = 35,
     MRM_C4 = 36, MRM_C8 = 37, MRM_C9 = 38, MRM_CA = 39,
-    MRM_CB = 40, MRM_D0 = 41, MRM_D1 = 42, MRM_D4 = 43,
-    MRM_D5 = 44, MRM_D6 = 45, MRM_D8 = 46, MRM_D9 = 47,
-    MRM_DA = 48, MRM_DB = 49, MRM_DC = 50, MRM_DD = 51,
-    MRM_DE = 52, MRM_DF = 53, MRM_E0 = 54, MRM_E1 = 55,
-    MRM_E2 = 56, MRM_E3 = 57, MRM_E4 = 58, MRM_E5 = 59,
-    MRM_E8 = 60, MRM_E9 = 61, MRM_EA = 62, MRM_EB = 63,
-    MRM_EC = 64, MRM_ED = 65, MRM_EE = 66, MRM_F0 = 67,
-    MRM_F1 = 68, MRM_F2 = 69, MRM_F3 = 70, MRM_F4 = 71,
-    MRM_F5 = 72, MRM_F6 = 73, MRM_F7 = 74, MRM_F8 = 75,
-    MRM_F9 = 76, MRM_FA = 77, MRM_FB = 78, MRM_FC = 79,
-    MRM_FD = 80, MRM_FE = 81, MRM_FF = 82,
+    MRM_CB = 40, MRM_CF = 41, MRM_D0 = 42, MRM_D1 = 43,
+    MRM_D4 = 44, MRM_D5 = 45, MRM_D6 = 46, MRM_D7 = 47,
+    MRM_D8 = 48, MRM_D9 = 49, MRM_DA = 50, MRM_DB = 51,
+    MRM_DC = 52, MRM_DD = 53, MRM_DE = 54, MRM_DF = 55,
+    MRM_E0 = 56, MRM_E1 = 57, MRM_E2 = 58, MRM_E3 = 59,
+    MRM_E4 = 60, MRM_E5 = 61, MRM_E8 = 62, MRM_E9 = 63,
+    MRM_EA = 64, MRM_EB = 65, MRM_EC = 66, MRM_ED = 67,
+    MRM_EE = 68, MRM_F0 = 69, MRM_F1 = 70, MRM_F2 = 71,
+    MRM_F3 = 72, MRM_F4 = 73, MRM_F5 = 74, MRM_F6 = 75,
+    MRM_F7 = 76, MRM_F8 = 77, MRM_F9 = 78, MRM_FA = 79,
+    MRM_FB = 80, MRM_FC = 81, MRM_FD = 82, MRM_FE = 83,
+    MRM_FF = 84,
 
     FormMask       = 127,
 
@@ -697,20 +698,21 @@ namespace X86II {
     case X86II::MRM_C0: case X86II::MRM_C1: case X86II::MRM_C2:
     case X86II::MRM_C3: case X86II::MRM_C4: case X86II::MRM_C8:
     case X86II::MRM_C9: case X86II::MRM_CA: case X86II::MRM_CB:
-    case X86II::MRM_D0: case X86II::MRM_D1: case X86II::MRM_D4:
-    case X86II::MRM_D5: case X86II::MRM_D6: case X86II::MRM_D8:
-    case X86II::MRM_D9: case X86II::MRM_DA: case X86II::MRM_DB:
-    case X86II::MRM_DC: case X86II::MRM_DD: case X86II::MRM_DE:
-    case X86II::MRM_DF: case X86II::MRM_E0: case X86II::MRM_E1:
-    case X86II::MRM_E2: case X86II::MRM_E3: case X86II::MRM_E4:
-    case X86II::MRM_E5: case X86II::MRM_E8: case X86II::MRM_E9:
-    case X86II::MRM_EA: case X86II::MRM_EB: case X86II::MRM_EC:
-    case X86II::MRM_ED: case X86II::MRM_EE: case X86II::MRM_F0:
-    case X86II::MRM_F1: case X86II::MRM_F2: case X86II::MRM_F3:
-    case X86II::MRM_F4: case X86II::MRM_F5: case X86II::MRM_F6:
-    case X86II::MRM_F7: case X86II::MRM_F8: case X86II::MRM_F9:
-    case X86II::MRM_FA: case X86II::MRM_FB: case X86II::MRM_FC:
-    case X86II::MRM_FD: case X86II::MRM_FE: case X86II::MRM_FF:
+    case X86II::MRM_CF: case X86II::MRM_D0: case X86II::MRM_D1:
+    case X86II::MRM_D4: case X86II::MRM_D5: case X86II::MRM_D6:
+    case X86II::MRM_D7: case X86II::MRM_D8: case X86II::MRM_D9:
+    case X86II::MRM_DA: case X86II::MRM_DB: case X86II::MRM_DC:
+    case X86II::MRM_DD: case X86II::MRM_DE: case X86II::MRM_DF:
+    case X86II::MRM_E0: case X86II::MRM_E1: case X86II::MRM_E2:
+    case X86II::MRM_E3: case X86II::MRM_E4: case X86II::MRM_E5:
+    case X86II::MRM_E8: case X86II::MRM_E9: case X86II::MRM_EA:
+    case X86II::MRM_EB: case X86II::MRM_EC: case X86II::MRM_ED:
+    case X86II::MRM_EE: case X86II::MRM_F0: case X86II::MRM_F1:
+    case X86II::MRM_F2: case X86II::MRM_F3: case X86II::MRM_F4:
+    case X86II::MRM_F5: case X86II::MRM_F6: case X86II::MRM_F7:
+    case X86II::MRM_F8: case X86II::MRM_F9: case X86II::MRM_FA:
+    case X86II::MRM_FB: case X86II::MRM_FC: case X86II::MRM_FD:
+    case X86II::MRM_FE: case X86II::MRM_FF:
       return -1;
     }
   }

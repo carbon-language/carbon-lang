@@ -32,48 +32,50 @@ using namespace llvm;
   MAP(C9, 38)           \
   MAP(CA, 39)           \
   MAP(CB, 40)           \
-  MAP(D0, 41)           \
-  MAP(D1, 42)           \
-  MAP(D4, 43)           \
-  MAP(D5, 44)           \
-  MAP(D6, 45)           \
-  MAP(D8, 46)           \
-  MAP(D9, 47)           \
-  MAP(DA, 48)           \
-  MAP(DB, 49)           \
-  MAP(DC, 50)           \
-  MAP(DD, 51)           \
-  MAP(DE, 52)           \
-  MAP(DF, 53)           \
-  MAP(E0, 54)           \
-  MAP(E1, 55)           \
-  MAP(E2, 56)           \
-  MAP(E3, 57)           \
-  MAP(E4, 58)           \
-  MAP(E5, 59)           \
-  MAP(E8, 60)           \
-  MAP(E9, 61)           \
-  MAP(EA, 62)           \
-  MAP(EB, 63)           \
-  MAP(EC, 64)           \
-  MAP(ED, 65)           \
-  MAP(EE, 66)           \
-  MAP(F0, 67)           \
-  MAP(F1, 68)           \
-  MAP(F2, 69)           \
-  MAP(F3, 70)           \
-  MAP(F4, 71)           \
-  MAP(F5, 72)           \
-  MAP(F6, 73)           \
-  MAP(F7, 74)           \
-  MAP(F8, 75)           \
-  MAP(F9, 76)           \
-  MAP(FA, 77)           \
-  MAP(FB, 78)           \
-  MAP(FC, 79)           \
-  MAP(FD, 80)           \
-  MAP(FE, 81)           \
-  MAP(FF, 82)
+  MAP(CF, 41)           \
+  MAP(D0, 42)           \
+  MAP(D1, 43)           \
+  MAP(D4, 44)           \
+  MAP(D5, 45)           \
+  MAP(D6, 46)           \
+  MAP(D7, 47)           \
+  MAP(D8, 48)           \
+  MAP(D9, 49)           \
+  MAP(DA, 50)           \
+  MAP(DB, 51)           \
+  MAP(DC, 52)           \
+  MAP(DD, 53)           \
+  MAP(DE, 54)           \
+  MAP(DF, 55)           \
+  MAP(E0, 56)           \
+  MAP(E1, 57)           \
+  MAP(E2, 58)           \
+  MAP(E3, 59)           \
+  MAP(E4, 60)           \
+  MAP(E5, 61)           \
+  MAP(E8, 62)           \
+  MAP(E9, 63)           \
+  MAP(EA, 64)           \
+  MAP(EB, 65)           \
+  MAP(EC, 66)           \
+  MAP(ED, 67)           \
+  MAP(EE, 68)           \
+  MAP(F0, 69)           \
+  MAP(F1, 70)           \
+  MAP(F2, 71)           \
+  MAP(F3, 72)           \
+  MAP(F4, 73)           \
+  MAP(F5, 74)           \
+  MAP(F6, 75)           \
+  MAP(F7, 76)           \
+  MAP(F8, 77)           \
+  MAP(F9, 78)           \
+  MAP(FA, 79)           \
+  MAP(FB, 80)           \
+  MAP(FC, 81)           \
+  MAP(FD, 82)           \
+  MAP(FE, 83)           \
+  MAP(FF, 84)
 
 // A clone of X86 since we can't depend on something that is generated.
 namespace X86Local {
@@ -769,20 +771,21 @@ void RecognizableInstr::emitInstructionSpecifier() {
   case X86Local::MRM_C0: case X86Local::MRM_C1: case X86Local::MRM_C2:
   case X86Local::MRM_C3: case X86Local::MRM_C4: case X86Local::MRM_C8:
   case X86Local::MRM_C9: case X86Local::MRM_CA: case X86Local::MRM_CB:
-  case X86Local::MRM_D0: case X86Local::MRM_D1: case X86Local::MRM_D4:
-  case X86Local::MRM_D5: case X86Local::MRM_D6: case X86Local::MRM_D8:
-  case X86Local::MRM_D9: case X86Local::MRM_DA: case X86Local::MRM_DB:
-  case X86Local::MRM_DC: case X86Local::MRM_DD: case X86Local::MRM_DE:
-  case X86Local::MRM_DF: case X86Local::MRM_E0: case X86Local::MRM_E1:
-  case X86Local::MRM_E2: case X86Local::MRM_E3: case X86Local::MRM_E4:
-  case X86Local::MRM_E5: case X86Local::MRM_E8: case X86Local::MRM_E9:
-  case X86Local::MRM_EA: case X86Local::MRM_EB: case X86Local::MRM_EC:
-  case X86Local::MRM_ED: case X86Local::MRM_EE: case X86Local::MRM_F0:
-  case X86Local::MRM_F1: case X86Local::MRM_F2: case X86Local::MRM_F3:
-  case X86Local::MRM_F4: case X86Local::MRM_F5: case X86Local::MRM_F6:
-  case X86Local::MRM_F7: case X86Local::MRM_F9: case X86Local::MRM_FA:
-  case X86Local::MRM_FB: case X86Local::MRM_FC: case X86Local::MRM_FD:
-  case X86Local::MRM_FE: case X86Local::MRM_FF:
+  case X86Local::MRM_CF: case X86Local::MRM_D0: case X86Local::MRM_D1:
+  case X86Local::MRM_D4: case X86Local::MRM_D5: case X86Local::MRM_D6:
+  case X86Local::MRM_D7: case X86Local::MRM_D8: case X86Local::MRM_D9:
+  case X86Local::MRM_DA: case X86Local::MRM_DB: case X86Local::MRM_DC:
+  case X86Local::MRM_DD: case X86Local::MRM_DE: case X86Local::MRM_DF:
+  case X86Local::MRM_E0: case X86Local::MRM_E1: case X86Local::MRM_E2:
+  case X86Local::MRM_E3: case X86Local::MRM_E4: case X86Local::MRM_E5:
+  case X86Local::MRM_E8: case X86Local::MRM_E9: case X86Local::MRM_EA:
+  case X86Local::MRM_EB: case X86Local::MRM_EC: case X86Local::MRM_ED:
+  case X86Local::MRM_EE: case X86Local::MRM_F0: case X86Local::MRM_F1:
+  case X86Local::MRM_F2: case X86Local::MRM_F3: case X86Local::MRM_F4:
+  case X86Local::MRM_F5: case X86Local::MRM_F6: case X86Local::MRM_F7:
+  case X86Local::MRM_F9: case X86Local::MRM_FA: case X86Local::MRM_FB:
+  case X86Local::MRM_FC: case X86Local::MRM_FD: case X86Local::MRM_FE:
+  case X86Local::MRM_FF:
     // Ignored.
     break;
   }
