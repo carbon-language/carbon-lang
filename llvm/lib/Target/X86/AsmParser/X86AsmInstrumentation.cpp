@@ -43,14 +43,23 @@ std::string FuncName(unsigned AccessSize, bool IsWrite) {
 
 class X86AddressSanitizer : public X86AsmInstrumentation {
 public:
-  X86AddressSanitizer(const MCSubtargetInfo &STI) : STI(STI) {}
+  X86AddressSanitizer(const MCSubtargetInfo &STI)
+      : X86AsmInstrumentation(STI), RepPrefix(false) {}
   virtual ~X86AddressSanitizer() {}
 
   // X86AsmInstrumentation implementation:
-  virtual void InstrumentInstruction(
+  virtual void InstrumentAndEmitInstruction(
       const MCInst &Inst, OperandVector &Operands, MCContext &Ctx,
       const MCInstrInfo &MII, MCStreamer &Out) override {
+    InstrumentMOVS(Inst, Operands, Ctx, MII, Out);
+    if (RepPrefix)
+      EmitInstruction(Out, MCInstBuilder(X86::REP_PREFIX));
+
     InstrumentMOV(Inst, Operands, Ctx, MII, Out);
+
+    RepPrefix = (Inst.getOpcode() == X86::REP_PREFIX);
+    if (!RepPrefix)
+      EmitInstruction(Out, Inst);
   }
 
   // Should be implemented differently in x86_32 and x86_64 subclasses.
@@ -60,19 +69,23 @@ public:
   virtual void InstrumentMemOperandLargeImpl(
       X86Operand &Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
       MCStreamer &Out) = 0;
+  virtual void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
+                                  MCStreamer &Out) = 0;
 
   void InstrumentMemOperand(MCParsedAsmOperand &Op, unsigned AccessSize,
                             bool IsWrite, MCContext &Ctx, MCStreamer &Out);
+  void InstrumentMOVSBase(unsigned DstReg, unsigned SrcReg, unsigned CntReg,
+                          unsigned AccessSize, MCContext &Ctx, MCStreamer &Out);
+  void InstrumentMOVS(const MCInst &Inst, OperandVector &Operands,
+                      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
   void InstrumentMOV(const MCInst &Inst, OperandVector &Operands,
                      MCContext &Ctx, const MCInstrInfo &MII, MCStreamer &Out);
-  void EmitInstruction(MCStreamer &Out, const MCInst &Inst) {
-    Out.EmitInstruction(Inst, STI);
-  }
 
   void EmitLabel(MCStreamer &Out, MCSymbol *Label) { Out.EmitLabel(Label); }
 
 protected:
-  const MCSubtargetInfo &STI;
+  // True when previous instruction was actually REP prefix.
+  bool RepPrefix;
 };
 
 void X86AddressSanitizer::InstrumentMemOperand(
@@ -92,6 +105,74 @@ void X86AddressSanitizer::InstrumentMemOperand(
     InstrumentMemOperandSmallImpl(MemOp, AccessSize, IsWrite, Ctx, Out);
   else
     InstrumentMemOperandLargeImpl(MemOp, AccessSize, IsWrite, Ctx, Out);
+}
+
+void X86AddressSanitizer::InstrumentMOVSBase(
+    unsigned DstReg, unsigned SrcReg, unsigned CntReg, unsigned AccessSize,
+    MCContext &Ctx, MCStreamer &Out) {
+  // FIXME: check whole ranges [DstReg .. DstReg + AccessSize * (CntReg - 1)]
+  // and [SrcReg .. SrcReg + AccessSize * (CntReg - 1)].
+
+  // FIXME: extract prolog and epilogue from InstrumentMemOperand()
+  // and optimize this sequence of InstrumentMemOperand() calls.
+
+  // Test (%SrcReg)
+  {
+    const MCExpr *Disp = MCConstantExpr::Create(0, Ctx);
+    std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
+        0, Disp, SrcReg, 0, AccessSize, SMLoc(), SMLoc()));
+    InstrumentMemOperand(*Op, AccessSize, false /* IsWrite */, Ctx, Out);
+  }
+
+  // Test -1(%SrcReg, %CntReg, AccessSize)
+  {
+    const MCExpr *Disp = MCConstantExpr::Create(-1, Ctx);
+    std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
+        0, Disp, SrcReg, CntReg, AccessSize, SMLoc(), SMLoc()));
+    InstrumentMemOperand(*Op, AccessSize, false /* IsWrite */, Ctx, Out);
+  }
+
+  // Test (%DstReg)
+  {
+    const MCExpr *Disp = MCConstantExpr::Create(0, Ctx);
+    std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
+        0, Disp, DstReg, 0, AccessSize, SMLoc(), SMLoc()));
+    InstrumentMemOperand(*Op, AccessSize, true /* IsWrite */, Ctx, Out);
+  }
+
+  // Test -1(%DstReg, %CntReg, AccessSize)
+  {
+    const MCExpr *Disp = MCConstantExpr::Create(-1, Ctx);
+    std::unique_ptr<X86Operand> Op(X86Operand::CreateMem(
+        0, Disp, DstReg, CntReg, AccessSize, SMLoc(), SMLoc()));
+    InstrumentMemOperand(*Op, AccessSize, true /* IsWrite */, Ctx, Out);
+  }
+}
+
+void X86AddressSanitizer::InstrumentMOVS(
+    const MCInst &Inst, OperandVector &Operands, MCContext &Ctx,
+    const MCInstrInfo &MII, MCStreamer &Out) {
+  // Access size in bytes.
+  unsigned AccessSize = 0;
+
+  switch (Inst.getOpcode()) {
+  case X86::MOVSB:
+    AccessSize = 1;
+    break;
+  case X86::MOVSW:
+    AccessSize = 2;
+    break;
+  case X86::MOVSL:
+    AccessSize = 4;
+    break;
+  case X86::MOVSQ:
+    AccessSize = 8;
+    break;
+  default:
+    return;
+  }
+
+  InstrumentMOVSImpl(AccessSize, Ctx, Out);
 }
 
 void X86AddressSanitizer::InstrumentMOV(
@@ -154,6 +235,8 @@ public:
   virtual void InstrumentMemOperandLargeImpl(
       X86Operand &Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
       MCStreamer &Out) override;
+  virtual void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
+                                  MCStreamer &Out) override;
 
  private:
   void EmitCallAsanReport(MCContext &Ctx, MCStreamer &Out, unsigned AccessSize,
@@ -165,8 +248,7 @@ public:
                              .addReg(X86::ESP).addImm(-16));
     EmitInstruction(Out, MCInstBuilder(X86::PUSH32r).addReg(AddressReg));
 
-
-    const std::string& Fn = FuncName(AccessSize, IsWrite);
+    const std::string &Fn = FuncName(AccessSize, IsWrite);
     MCSymbol *FnSym = Ctx.GetOrCreateSymbol(StringRef(Fn));
     const MCSymbolRefExpr *FnExpr =
         MCSymbolRefExpr::Create(FnSym, MCSymbolRefExpr::VK_PLT, Ctx);
@@ -306,6 +388,25 @@ void X86AddressSanitizer32::InstrumentMemOperandLargeImpl(
   EmitInstruction(Out, MCInstBuilder(X86::POP32r).addReg(X86::EAX));
 }
 
+void X86AddressSanitizer32::InstrumentMOVSImpl(
+    unsigned AccessSize, MCContext &Ctx, MCStreamer &Out) {
+  EmitInstruction(Out, MCInstBuilder(X86::PUSHF32));
+
+  // No need to test when ECX is equals to zero.
+  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
+  EmitInstruction(
+      Out, MCInstBuilder(X86::TEST32rr).addReg(X86::ECX).addReg(X86::ECX));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+
+  // Instrument first and last elements in src and dst range.
+  InstrumentMOVSBase(X86::EDI /* DstReg */, X86::ESI /* SrcReg */,
+                     X86::ECX /* CntReg */, AccessSize, Ctx, Out);
+
+  EmitLabel(Out, DoneSym);
+  EmitInstruction(Out, MCInstBuilder(X86::POPF32));
+}
+
 class X86AddressSanitizer64 : public X86AddressSanitizer {
 public:
   static const long kShadowOffset = 0x7fff8000;
@@ -320,6 +421,8 @@ public:
   virtual void InstrumentMemOperandLargeImpl(
       X86Operand &Op, unsigned AccessSize, bool IsWrite, MCContext &Ctx,
       MCStreamer &Out) override;
+  virtual void InstrumentMOVSImpl(unsigned AccessSize, MCContext &Ctx,
+                                  MCStreamer &Out) override;
 
 private:
   void EmitAdjustRSP(MCContext &Ctx, MCStreamer &Out, long Offset) {
@@ -342,7 +445,7 @@ private:
     EmitInstruction(Out, MCInstBuilder(X86::AND64ri8).addReg(X86::RSP)
                              .addReg(X86::RSP).addImm(-16));
 
-    const std::string& Fn = FuncName(AccessSize, IsWrite);
+    const std::string &Fn = FuncName(AccessSize, IsWrite);
     MCSymbol *FnSym = Ctx.GetOrCreateSymbol(StringRef(Fn));
     const MCSymbolRefExpr *FnExpr =
         MCSymbolRefExpr::Create(FnSym, MCSymbolRefExpr::VK_PLT, Ctx);
@@ -480,14 +583,42 @@ void X86AddressSanitizer64::InstrumentMemOperandLargeImpl(
   EmitAdjustRSP(Ctx, Out, 128);
 }
 
+void X86AddressSanitizer64::InstrumentMOVSImpl(
+    unsigned AccessSize, MCContext &Ctx, MCStreamer &Out) {
+  EmitInstruction(Out, MCInstBuilder(X86::PUSHF64));
+
+  // No need to test when RCX is equals to zero.
+  MCSymbol *DoneSym = Ctx.CreateTempSymbol();
+  const MCExpr *DoneExpr = MCSymbolRefExpr::Create(DoneSym, Ctx);
+  EmitInstruction(
+      Out, MCInstBuilder(X86::TEST64rr).addReg(X86::RCX).addReg(X86::RCX));
+  EmitInstruction(Out, MCInstBuilder(X86::JE_4).addExpr(DoneExpr));
+
+  // Instrument first and last elements in src and dst range.
+  InstrumentMOVSBase(X86::RDI /* DstReg */, X86::RSI /* SrcReg */,
+                     X86::RCX /* CntReg */, AccessSize, Ctx, Out);
+
+  EmitLabel(Out, DoneSym);
+  EmitInstruction(Out, MCInstBuilder(X86::POPF64));
+}
+
 } // End anonymous namespace
 
-X86AsmInstrumentation::X86AsmInstrumentation() {}
+X86AsmInstrumentation::X86AsmInstrumentation(const MCSubtargetInfo &STI)
+    : STI(STI) {}
+
 X86AsmInstrumentation::~X86AsmInstrumentation() {}
 
-void X86AsmInstrumentation::InstrumentInstruction(
+void X86AsmInstrumentation::InstrumentAndEmitInstruction(
     const MCInst &Inst, OperandVector &Operands, MCContext &Ctx,
-    const MCInstrInfo &MII, MCStreamer &Out) {}
+    const MCInstrInfo &MII, MCStreamer &Out) {
+  EmitInstruction(Out, Inst);
+}
+
+void X86AsmInstrumentation::EmitInstruction(MCStreamer &Out,
+                                            const MCInst &Inst) {
+  Out.EmitInstruction(Inst, STI);
+}
 
 X86AsmInstrumentation *
 CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
@@ -501,7 +632,7 @@ CreateX86AsmInstrumentation(const MCTargetOptions &MCOptions,
     if ((STI.getFeatureBits() & X86::Mode64Bit) != 0)
       return new X86AddressSanitizer64(STI);
   }
-  return new X86AsmInstrumentation();
+  return new X86AsmInstrumentation(STI);
 }
 
 } // End llvm namespace

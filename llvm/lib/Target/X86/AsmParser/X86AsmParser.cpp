@@ -2284,9 +2284,8 @@ static const char *getSubtargetFeatureName(unsigned Val);
 
 void X86AsmParser::EmitInstruction(MCInst &Inst, OperandVector &Operands,
                                    MCStreamer &Out) {
-  Instrumentation->InstrumentInstruction(Inst, Operands, getContext(), MII,
-                                         Out);
-  Out.EmitInstruction(Inst, STI);
+  Instrumentation->InstrumentAndEmitInstruction(Inst, Operands, getContext(),
+                                                MII, Out);
 }
 
 bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,

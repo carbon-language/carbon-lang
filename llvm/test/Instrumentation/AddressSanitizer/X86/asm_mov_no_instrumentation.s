@@ -5,6 +5,8 @@
 	.align	16, 0x90
 	.type	mov1b,@function
 # CHECK-LABEL: mov1b
+# CHECK: movb (%rsi), %al
+# CHECK: movb %al, (%rdi)
 # CHECK-NOT: callq __asan_report_load1@PLT
 # CHECK-NOT: callq __asan_report_store1@PLT
 mov1b:                                  # @mov1b
