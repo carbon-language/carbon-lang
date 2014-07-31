@@ -1,4 +1,4 @@
-//===-- llvm/MC/MCObjectSymbolizer.h --------------------------------------===//
+//===-- MCObjectSymbolizer.h ----------------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCOBJECTSYMBOLIZER_H
-#define LLVM_MC_MCOBJECTSYMBOLIZER_H
+#ifndef LLVM_MC_MCANALYSIS_MCOBJECTSYMBOLIZER_H
+#define LLVM_MC_MCANALYSIS_MCOBJECTSYMBOLIZER_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/MC/MCSymbolizer.h"

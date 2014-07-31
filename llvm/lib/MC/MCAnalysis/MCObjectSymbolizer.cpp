@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/MC/MCObjectSymbolizer.h"
+#include "llvm/MC/MCAnalysis/MCObjectSymbolizer.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
