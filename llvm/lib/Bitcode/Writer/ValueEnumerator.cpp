@@ -166,13 +166,13 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
 
     // If ID is 4, then expect: 7 6 5 1 2 3.
     if (LID < RID) {
-      if (RID < ID)
+      if (RID <= ID)
         if (!IsGlobalValue) // GlobalValue uses don't get reversed.
           return true;
       return false;
     }
     if (RID < LID) {
-      if (LID < ID)
+      if (LID <= ID)
         if (!IsGlobalValue) // GlobalValue uses don't get reversed.
           return false;
       return true;
@@ -180,7 +180,7 @@ static void predictValueUseListOrderImpl(const Value *V, const Function *F,
 
     // LID and RID are equal, so we have different operands of the same user.
     // Assume operands are added in order for all instructions.
-    if (LID < ID)
+    if (LID <= ID)
       if (!IsGlobalValue) // GlobalValue uses don't get reversed.
         return LU->getOperandNo() < RU->getOperandNo();
     return LU->getOperandNo() > RU->getOperandNo();

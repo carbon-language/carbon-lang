@@ -1,4 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; Dominance relationships is not calculated correctly for unreachable blocks,
 ; which causes the verifier to barf on this input.
