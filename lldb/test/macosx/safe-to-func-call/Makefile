@@ -25,4 +25,4 @@ main.o: main.c
 	$(CC) $(CFLAGS) -c main.c
 
 clean:
-	rm -rf *.o *~ *.dylib *.so a.out *.dSYM
+	rm -rf $(wildcard *.o *~ *.dylib *.so a.out *.dSYM)

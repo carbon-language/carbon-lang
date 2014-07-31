@@ -45,4 +45,4 @@ $(LIB_REEXPORT): reexport.o $(LIB_INDIRECT)
 reexport.o: reexport.c
 	$(CC) $(CFLAGS) -c reexport.c
 clean:
-	rm -rf *.o *~ *.dylib *.so a.out *.dSYM
+	rm -rf $(wildcard *.o *~ *.dylib *.so a.out *.dSYM)

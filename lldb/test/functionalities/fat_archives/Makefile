@@ -10,5 +10,5 @@ all: clean
 		$(CC) -o a.out main.o -L. -la
 
 clean:
-		rm -rf a.o a.out liba-i386.a liba-x86_64.a liba.a *un~ .*un~ main.o *.pyc
+		rm -rf a.o a.out liba-i386.a liba-x86_64.a liba.a $(wildcard *un~ .*un~ main.o *.pyc)
 

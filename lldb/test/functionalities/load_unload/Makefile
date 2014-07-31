@@ -76,4 +76,4 @@ d.o: d.c
 	$(CC) $(CFLAGS) -c d.c
 
 clean:
-	rm -rf *.o *~ *.dylib *.so a.out *.dSYM hidden/*
+	rm -rf $(wildcard *.o *~ *.dylib *.so a.out *.dSYM hidden/*)
