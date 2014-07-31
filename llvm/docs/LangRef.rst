@@ -75,7 +75,7 @@ identifiers, for different purposes:
 #. Named values are represented as a string of characters with their
    prefix. For example, ``%foo``, ``@DivisionByZero``,
    ``%a.really.long.identifier``. The actual regular expression used is
-   '``[%@][a-zA-Z$._][a-zA-Z$._0-9]*``'. Identifiers which require other
+   '``[%@][a-zA-Z$._][a-zA-Z$._0-9]*``'. Identifiers that require other
    characters in their names can be surrounded with quotes. Special
    characters may be escaped using ``"\xx"`` where ``xx`` is the ASCII
    code for the character in hexadecimal. In this way, any character can
@@ -501,7 +501,7 @@ Structure Types
 LLVM IR allows you to specify both "identified" and "literal" :ref:`structure
 types <t_struct>`.  Literal types are uniqued structurally, but identified types
 are never uniqued.  An :ref:`opaque structural type <t_opaque>` can also be used
-to forward declare a type which is not yet available.
+to forward declare a type that is not yet available.
 
 An example of a identified structure specification is:
 
@@ -728,7 +728,7 @@ Comdats
 
 Comdat IR provides access to COFF and ELF object file COMDAT functionality.
 
-Comdats have a name which represents the COMDAT key.  All global objects which
+Comdats have a name which represents the COMDAT key.  All global objects that
 specify this key will only end up in the final object file if the linker chooses
 that key over some other key.  Aliases are placed in the same COMDAT that their
 aliasee computes to, if any.
@@ -933,7 +933,7 @@ Currently, only the following parameter attributes are defined:
 
 ``noalias``
     This indicates that pointer values :ref:`based <pointeraliasing>` on
-    the argument or return value do not alias pointer values which are
+    the argument or return value do not alias pointer values that are
     not *based* on it, ignoring certain "irrelevant" dependencies. For a
     call to the parent function, dependencies between memory references
     from before or after the call and from those during the call are
@@ -1001,7 +1001,7 @@ string:
     define void @f() gc "name" { ... }
 
 The compiler declares the supported values of *name*. Specifying a
-collector which will cause the compiler to alter its output in order to
+collector will cause the compiler to alter its output in order to
 support the named garbage collection algorithm.
 
 .. _prefixdata:
@@ -1117,7 +1117,7 @@ example:
     This indicates that the callee function at a call site should be
     recognized as a built-in function, even though the function's declaration
     uses the ``nobuiltin`` attribute. This is only valid at call sites for
-    direct calls to functions which are declared with the ``nobuiltin``
+    direct calls to functions that are declared with the ``nobuiltin``
     attribute.
 ``cold``
     This attribute indicates that this function is rarely called. When
@@ -1612,7 +1612,7 @@ Given that definition, R\ :sub:`byte` is defined as follows:
 
 -  If R is volatile, the result is target-dependent. (Volatile is
    supposed to give guarantees which can support ``sig_atomic_t`` in
-   C/C++, and may be used for accesses to addresses which do not behave
+   C/C++, and may be used for accesses to addresses that do not behave
    like normal memory. It does not generally provide cross-thread
    synchronization.)
 -  Otherwise, if there is no write to the same byte that happens before
@@ -1700,7 +1700,7 @@ For a simpler introduction to the ordering constraints, see the
     address. This corresponds to the C++0x/C1x ``memory_order_acq_rel``.
 ``seq_cst`` (sequentially consistent)
     In addition to the guarantees of ``acq_rel`` (``acquire`` for an
-    operation which only reads, ``release`` for an operation which only
+    operation that only reads, ``release`` for an operation that only
     writes), there is a global total order on all
     sequentially-consistent operations on all addresses, which is
     consistent with the *happens-before* partial order and with the
@@ -2403,8 +2403,8 @@ Poison Values
 
 Poison values are similar to :ref:`undef values <undefvalues>`, however
 they also represent the fact that an instruction or constant expression
-which cannot evoke side effects has nevertheless detected a condition
-which results in undefined behavior.
+that cannot evoke side effects has nevertheless detected a condition
+that results in undefined behavior.
 
 There is currently no way of representing a poison value in the IR; they
 only exist when produced by operations such as :ref:`add <i_add>` with
@@ -2441,8 +2441,8 @@ Poison value behavior is defined in terms of value *dependence*:
    successor.
 -  Dependence is transitive.
 
-Poison Values have the same behavior as :ref:`undef values <undefvalues>`,
-with the additional affect that any instruction which has a *dependence*
+Poison values have the same behavior as :ref:`undef values <undefvalues>`,
+with the additional effect that any instruction that has a *dependence*
 on a poison value has undefined behavior.
 
 Here are some examples:
