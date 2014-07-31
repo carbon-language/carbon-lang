@@ -191,9 +191,8 @@ now fully supported.  This includes support for the Altivec instruction set.
 
 The Power Architecture 64-Bit ELFv2 ABI Specification is now supported, and
 is the default ABI for Little Endian.  The ELFv1 ABI remains the default ABI
-for Big Endian.  Although use of ELFv1 on Little Endian or ELFv2 on Big
-Endian can be selected via command-line option, this is not recommended or
-even advisable.
+for Big Endian.  Currently, it is not possible to override these defaults.
+That capability will be available (albeit not recommended) in a future release.
 
 Links to the ELFv2 ABI specification and to the Power ISA Version 2.07
 specification may be found `here <https://www-03.ibm.com/technologyconnect/tgcm/TGCMServlet.wss?alias=OpenPOWER&linkid=1n0000>`_ (free registration required).
