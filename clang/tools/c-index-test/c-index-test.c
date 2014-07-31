@@ -1363,6 +1363,19 @@ static enum CXChildVisitResult PrintTypeSize(CXCursor cursor, CXCursor p,
 }
 
 /******************************************************************************/
+/* Mangling testing.                                                          */
+/******************************************************************************/
+
+static enum CXChildVisitResult PrintMangledName(CXCursor cursor, CXCursor p,
+                                                CXClientData d) {
+  CXString MangledName;
+  PrintCursor(cursor, NULL);
+  MangledName = clang_Cursor_getMangling(cursor);
+  printf(" [mangled=%s]\n", clang_getCString(MangledName));
+  return CXChildVisit_Continue;
+}
+
+/******************************************************************************/
 /* Bitwidth testing.                                                          */
 /******************************************************************************/
 
@@ -4081,6 +4094,8 @@ int cindextest_main(int argc, const char **argv) {
   else if (argc > 2 && strcmp(argv[1], "-test-print-bitwidth") == 0)
     return perform_test_load_source(argc - 2, argv + 2, "all",
                                     PrintBitWidth, 0);
+  else if (argc > 2 && strcmp(argv[1], "-test-print-mangle") == 0)
+    return perform_test_load_tu(argv[2], "all", NULL, PrintMangledName, NULL);
   else if (argc > 1 && strcmp(argv[1], "-print-usr") == 0) {
     if (argc > 2)
       return print_usrs(argv + 2, argv + argc);

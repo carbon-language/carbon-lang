@@ -22,6 +22,7 @@
 #include "CXType.h"
 #include "CursorVisitor.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/Mangle.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticCategories.h"
@@ -3665,6 +3666,31 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
   CXSourceLocation CXLoc = clang_getCursorLocation(C);
   SourceLocation Loc = cxloc::translateSourceLocation(CXLoc);
   return cxloc::translateSourceRange(Ctx, Loc);
+}
+
+CXString clang_Cursor_getMangling(CXCursor C) {
+  if (clang_isInvalid(C.kind) || !clang_isDeclaration(C.kind))
+    return cxstring::createEmpty();
+
+  const Decl *D = getCursorDecl(C);
+  // Mangling only works for functions and variables.
+  if (!D || !(isa<FunctionDecl>(D) || isa<VarDecl>(D)))
+    return cxstring::createEmpty();
+
+  const NamedDecl *ND = cast<NamedDecl>(D);
+  std::unique_ptr<MangleContext> MC(ND->getASTContext().createMangleContext());
+
+  std::string Buf;
+  llvm::raw_string_ostream OS(Buf);
+  MC->mangleName(ND, OS);
+  OS.flush();
+
+  // The Microsoft mangler may insert a special character in the beginning to
+  // prevent further mangling. We can strip that for display purposes.
+  if (Buf[0] == '\x01') {
+    Buf.erase(0, 1);
+  }
+  return cxstring::createDup(Buf);
 }
 
 CXString clang_getCursorDisplayName(CXCursor C) {
