@@ -3140,28 +3140,22 @@ void
 CommandInterpreter::RunCommandInterpreter(bool auto_handle_events,
                                           bool spawn_thread)
 {
-    const bool multiple_lines = false; // Only get one line at a time
-    if (m_command_io_handler_sp)
-    {
-        // Copy the current debugger file handles in case they changed.
-        m_command_io_handler_sp->GetInputStreamFile() = m_debugger.GetInputFile();
-        m_command_io_handler_sp->GetOutputStreamFile() = m_debugger.GetOutputFile();
-        m_command_io_handler_sp->GetErrorStreamFile() = m_debugger.GetErrorFile();
-        m_command_io_handler_sp->SetIsDone(false);
-    }
-    else
-    {
-        m_command_io_handler_sp.reset(new IOHandlerEditline (m_debugger,
-                                                             m_debugger.GetInputFile(),
-                                                             m_debugger.GetOutputFile(),
-                                                             m_debugger.GetErrorFile(),
-                                                             eHandleCommandFlagEchoCommand | eHandleCommandFlagPrintResult,
-                                                             "lldb",
-                                                             m_debugger.GetPrompt(),
-                                                             multiple_lines,
-                                                             0,            // Don't show line numbers
-                                                             *this));
-    }
+    // Only get one line at a time
+    const bool multiple_lines = false;
+    
+    // Always re-create the IOHandlerEditline in case the input
+    // changed. The old instance might have had a non-interactive
+    // input and now it does or vice versa.
+    m_command_io_handler_sp.reset(new IOHandlerEditline (m_debugger,
+                                                         m_debugger.GetInputFile(),
+                                                         m_debugger.GetOutputFile(),
+                                                         m_debugger.GetErrorFile(),
+                                                         eHandleCommandFlagEchoCommand | eHandleCommandFlagPrintResult,
+                                                         "lldb",
+                                                         m_debugger.GetPrompt(),
+                                                         multiple_lines,
+                                                         0,            // Don't show line numbers
+                                                         *this));
 
     m_debugger.PushIOHandler(m_command_io_handler_sp);
     
