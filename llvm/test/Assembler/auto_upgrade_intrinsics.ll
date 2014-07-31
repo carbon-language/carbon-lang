@@ -1,5 +1,6 @@
 ; Test to make sure intrinsics are automatically upgraded.
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 declare i8 @llvm.ctlz.i8(i8)
 declare i16 @llvm.ctlz.i16(i16)

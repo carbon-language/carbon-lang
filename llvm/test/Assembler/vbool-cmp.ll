@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 ; Rudimentary test of fcmp/icmp on vectors returning vector of bool
 
 ; CHECK: @ffoo

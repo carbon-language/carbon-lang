@@ -1,6 +1,7 @@
 ; Test return attributes
 ; RUN: llvm-as < %s | llvm-dis | grep "define inreg i32"
 ; RUN: llvm-as < %s | llvm-dis | grep "call inreg i32"
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 define inreg i32 @fn1() {
   ret i32 0

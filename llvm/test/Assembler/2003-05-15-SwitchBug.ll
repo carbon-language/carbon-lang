@@ -1,4 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; Check minimal switch statement
 

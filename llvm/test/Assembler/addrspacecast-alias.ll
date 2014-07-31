@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; Test that global aliases are allowed to be constant addrspacecast
 

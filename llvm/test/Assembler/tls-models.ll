@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; CHECK: @a = thread_local global i32 0
 ; CHECK: @b = thread_local(localdynamic) global i32 0

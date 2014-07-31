@@ -1,5 +1,6 @@
 ; PR1553
 ; RUN: llvm-as < %s > /dev/null
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 define void @bar() {
         %t = call i8 @foo( i8 10 )
         zext i8 %t to i32

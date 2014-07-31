@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 define { i32 } @foob() nounwind {
   ret {i32}{ i32 0 }

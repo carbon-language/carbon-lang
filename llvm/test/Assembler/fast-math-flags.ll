@@ -1,5 +1,6 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
 ; RUN: opt -S < %s | FileCheck %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 @addr   = external global i64
 @select = external global i1

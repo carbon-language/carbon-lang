@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
         %struct.S_102 = type { float, float }
 

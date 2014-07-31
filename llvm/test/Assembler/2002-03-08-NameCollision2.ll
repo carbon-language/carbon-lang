@@ -1,4 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 ; Another name collision problem.  Here the problem was that if a forward
 ; declaration for a method was found, that this would cause spurious conflicts

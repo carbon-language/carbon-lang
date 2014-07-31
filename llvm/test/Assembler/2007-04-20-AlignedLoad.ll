@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | grep "align 1024"
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 define i32 @test(i32* %arg) {
 entry:

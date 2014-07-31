@@ -1,4 +1,5 @@
 ; RUN: opt < %s -instcombine -simplifycfg -S | not grep br
+; RUN: verify-uselistorder %s -preserve-bc-use-list-order -num-shuffles=5
 
 @.str_1 = internal constant [6 x i8] c"_Bool\00"                ; <[6 x i8]*> [#uses=2]
 
