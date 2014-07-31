@@ -1784,18 +1784,12 @@ def Unaligned : IgnoredAttr {
 }
 
 def LoopHint : Attr {
-  /// #pragma clang loop <option> directive
-  /// vectorize: vectorizes loop operations if State == Enable.
-  /// vectorize_width: vectorize loop operations with width 'Value'.
-  /// interleave: interleave multiple loop iterations if State == Enable.
-  /// interleave_count: interleaves 'Value' loop interations.
-  /// unroll: fully unroll loop if State == Enable.
-  /// unroll_count: unrolls loop 'Value' times.
-
-  /// #pragma unroll <argument> directive
-  /// <no arg>: fully unrolls loop.
-  /// boolean: fully unrolls loop if State == Enable.
-  /// expression: unrolls loop 'Value' times.
+  /// vectorize: vectorizes loop operations if 'value != 0'.
+  /// vectorize_width: vectorize loop operations with width 'value'.
+  /// interleave: interleave multiple loop iterations if 'value != 0'.
+  /// interleave_count: interleaves 'value' loop interations.
+  /// unroll: fully unroll loop if 'value != 0'.
+  /// unroll_count: unrolls loop 'value' times.
 
   let Spellings = [Pragma<"clang", "loop">, Pragma<"", "unroll">,
                    Pragma<"", "nounroll">];
@@ -1806,9 +1800,6 @@ def LoopHint : Attr {
                            "unroll", "unroll_count"],
                           ["Vectorize", "VectorizeWidth", "Interleave", "InterleaveCount",
                            "Unroll", "UnrollCount"]>,
-              EnumArgument<"State", "LoopHintState",
-                           ["default", "enable", "disable"],
-                           ["Default", "Enable", "Disable"]>,
               DefaultIntArgument<"Value", 1>];
 
   let AdditionalMembers = [{
@@ -1850,9 +1841,9 @@ def LoopHint : Attr {
     if (option == VectorizeWidth || option == InterleaveCount ||
         option == UnrollCount)
       OS << value;
-    else if (state == Default)
+    else if (value < 0)
       return "";
-    else if (state == Enable)
+    else if (value > 0)
       OS << (option == Unroll ? "full" : "enable");
     else
       OS << "disable";

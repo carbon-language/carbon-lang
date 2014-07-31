@@ -588,7 +588,6 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       continue;
 
     LoopHintAttr::OptionType Option = LH->getOption();
-    LoopHintAttr::LoopHintState State = LH->getState();
     int ValueInt = LH->getValue();
 
     const char *MetadataName;
@@ -603,8 +602,8 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
       break;
     case LoopHintAttr::Unroll:
       // With the unroll loop hint, a non-zero value indicates full unrolling.
-      MetadataName = State == LoopHintAttr::Disable ? "llvm.loop.unroll.disable"
-                                                    : "llvm.loop.unroll.full";
+      MetadataName =
+          ValueInt == 0 ? "llvm.loop.unroll.disable" : "llvm.loop.unroll.full";
       break;
     case LoopHintAttr::UnrollCount:
       MetadataName = "llvm.loop.unroll.count";
@@ -615,7 +614,7 @@ void CodeGenFunction::EmitCondBrHints(llvm::LLVMContext &Context,
     switch (Option) {
     case LoopHintAttr::Vectorize:
     case LoopHintAttr::Interleave:
-      if (State != LoopHintAttr::Disable) {
+      if (ValueInt == 1) {
         // FIXME: In the future I will modifiy the behavior of the metadata
         // so we can enable/disable vectorization and interleaving separately.
         Name = llvm::MDString::get(Context, "llvm.loop.vectorize.enable");
