@@ -17,3 +17,8 @@ void *f12(float i, int k, int f, int *j) __attribute__((ownership_returns(foo, 4
 
 void f13(int *i, int *j) __attribute__((ownership_holds(foo, 1))) __attribute__((ownership_takes(foo, 2)));
 void f14(int i, int j, int *k) __attribute__((ownership_holds(foo, 3))) __attribute__((ownership_takes(foo, 3)));  // expected-error {{'ownership_holds' and 'ownership_takes' attributes are not compatible}}
+
+void f15(int, int)
+  __attribute__((ownership_returns(foo, 1)))  // expected-note {{declared with index 1 here}}
+  __attribute__((ownership_returns(foo, 2))); // expected-error {{'ownership_returns' attribute index does not match; here it is 2}}
+void f16(int *i, int *j) __attribute__((ownership_holds(foo, 1))) __attribute__((ownership_holds(foo, 1))); // OK, same index

@@ -1949,6 +1949,10 @@ def err_attribute_invalid_implicit_this_argument : Error<
   "%0 attribute is invalid for the implicit this argument">;
 def err_ownership_type : Error<
   "%0 attribute only applies to %select{pointer|integer}1 arguments">;
+def err_ownership_returns_index_mismatch : Error<
+  "'ownership_returns' attribute index does not match; here it is %0">;
+def note_ownership_returns_index_mismatch : Note<
+  "declared with index %0 here">;
 def err_format_strftime_third_parameter : Error<
   "strftime format attribute requires 3rd parameter to be 0">;
 def err_format_attribute_requires_variadic : Error<
