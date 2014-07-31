@@ -237,7 +237,7 @@ size_t DWARFUnit::extractDIEsIfNeeded(bool CUDieOnly) {
 
 DWARFUnit::DWOHolder::DWOHolder(object::ObjectFile *DWOFile)
     : DWOFile(DWOFile),
-      DWOContext(cast<DWARFContext>(DIContext::getDWARFContext(DWOFile))),
+      DWOContext(cast<DWARFContext>(DIContext::getDWARFContext(*DWOFile))),
       DWOU(nullptr) {
   if (DWOContext->getNumDWOCompileUnits() > 0)
     DWOU = DWOContext->getDWOCompileUnitAtIndex(0);

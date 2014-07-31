@@ -124,7 +124,7 @@ public:
   virtual ~DIContext();
 
   /// getDWARFContext - get a context for binary DWARF data.
-  static DIContext *getDWARFContext(object::ObjectFile *);
+  static DIContext *getDWARFContext(object::ObjectFile &);
 
   virtual void dump(raw_ostream &OS, DIDumpType DumpType = DIDT_All) = 0;
 

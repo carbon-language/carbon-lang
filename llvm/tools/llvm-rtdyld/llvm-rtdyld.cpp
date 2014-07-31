@@ -213,7 +213,7 @@ static int printLineInfoForInput() {
     Dyld.resolveRelocations();
 
     std::unique_ptr<DIContext> Context(
-        DIContext::getDWARFContext(LoadedObject->getObjectFile()));
+        DIContext::getDWARFContext(*LoadedObject->getObjectFile()));
 
     // Use symbol info to iterate functions in the object.
     for (object::symbol_iterator I = LoadedObject->begin_symbols(),

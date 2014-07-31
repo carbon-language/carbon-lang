@@ -13,6 +13,6 @@ using namespace llvm;
 
 DIContext::~DIContext() {}
 
-DIContext *DIContext::getDWARFContext(object::ObjectFile *Obj) {
+DIContext *DIContext::getDWARFContext(object::ObjectFile &Obj) {
   return new DWARFContextInMemory(Obj);
 }

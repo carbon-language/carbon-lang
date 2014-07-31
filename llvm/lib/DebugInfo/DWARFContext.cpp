@@ -621,10 +621,10 @@ static bool consumeCompressedDebugSectionHeader(StringRef &data,
   return true;
 }
 
-DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
-    : IsLittleEndian(Obj->isLittleEndian()),
-      AddressSize(Obj->getBytesInAddress()) {
-  for (const SectionRef &Section : Obj->sections()) {
+DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile &Obj)
+    : IsLittleEndian(Obj.isLittleEndian()),
+      AddressSize(Obj.getBytesInAddress()) {
+  for (const SectionRef &Section : Obj.sections()) {
     StringRef name;
     Section.getName(name);
     StringRef data;
@@ -687,7 +687,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
     }
 
     section_iterator RelocatedSection = Section.getRelocatedSection();
-    if (RelocatedSection == Obj->section_end())
+    if (RelocatedSection == Obj.section_end())
       continue;
 
     StringRef RelSecName;
@@ -724,12 +724,12 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj)
         Reloc.getType(Type);
         uint64_t SymAddr = 0;
         // ELF relocations may need the symbol address
-        if (Obj->isELF()) {
+        if (Obj.isELF()) {
           object::symbol_iterator Sym = Reloc.getSymbol();
           Sym->getAddress(SymAddr);
         }
 
-        object::RelocVisitor V(Obj->getFileFormatName());
+        object::RelocVisitor V(Obj.getFileFormatName());
         // The section address is always 0 for debug sections.
         object::RelocToApply R(V.visit(Type, Reloc, 0, SymAddr));
         if (V.error()) {

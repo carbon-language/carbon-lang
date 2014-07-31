@@ -388,7 +388,7 @@ LLVMSymbolizer::getOrCreateModuleInfo(const std::string &ModuleName) {
     Modules.insert(make_pair(ModuleName, (ModuleInfo *)nullptr));
     return nullptr;
   }
-  DIContext *Context = DIContext::getDWARFContext(DbgObj);
+  DIContext *Context = DIContext::getDWARFContext(*DbgObj);
   assert(Context);
   ModuleInfo *Info = new ModuleInfo(Obj, Context);
   Modules.insert(make_pair(ModuleName, Info));

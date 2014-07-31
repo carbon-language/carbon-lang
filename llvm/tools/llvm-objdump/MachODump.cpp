@@ -298,7 +298,7 @@ static void DisassembleInputMachO2(StringRef Filename,
     }
 
     // Setup the DIContext
-    diContext.reset(DIContext::getDWARFContext(DbgObj));
+    diContext.reset(DIContext::getDWARFContext(*DbgObj));
   }
 
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {

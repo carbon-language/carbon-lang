@@ -82,7 +82,7 @@ static void DumpInput(const StringRef &Filename) {
   }
   std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
 
-  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
+  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(*Obj));
 
   outs() << Filename
          << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
