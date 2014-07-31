@@ -80,12 +80,15 @@ static OrderMap orderModule(const Module *M) {
   // implicitly.
   for (const GlobalVariable &G : M->globals())
     if (G.hasInitializer())
-      orderValue(G.getInitializer(), OM);
+      if (!isa<GlobalValue>(G.getInitializer()))
+        orderValue(G.getInitializer(), OM);
   for (const GlobalAlias &A : M->aliases())
-    orderValue(A.getAliasee(), OM);
+    if (!isa<GlobalValue>(A.getAliasee()))
+      orderValue(A.getAliasee(), OM);
   for (const Function &F : *M)
     if (F.hasPrefixData())
-      orderValue(F.getPrefixData(), OM);
+      if (!isa<GlobalValue>(F.getPrefixData()))
+        orderValue(F.getPrefixData(), OM);
   OM.LastGlobalConstantID = OM.size();
 
   // Initializers of GlobalValues are processed in

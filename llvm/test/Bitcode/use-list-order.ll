@@ -22,6 +22,19 @@
 @globalAndFunction = global i4 4
 @globalAndFunctionGlobalUser = global i4* @globalAndFunction
 
+; Check use-list order for constants used by globals that are themselves used
+; as aliases.  This confirms that this globals are recognized as GlobalValues
+; (not general constants).
+@const.global = global i63 0
+@const.global.ptr = global i63* @const.global
+@const.global.2 = global i63 0
+
+; Same as above, but for aliases.
+@const.target = global i62 1
+@const.alias = alias i62* @const.target
+@const.alias.ptr = alias i62* @const.alias
+@const.alias.2 = alias i62* @const.target
+
 define i64 @f(i64 %f) {
 entry:
   %sum = add i64 %f, 0
