@@ -1158,6 +1158,8 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
            N->getOpcode() == ISD::ATOMIC_LOAD         ||
            N->getOpcode() == ISD::ATOMIC_STORE        ||
+           N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
+           N->getOpcode() == ISD::INTRINSIC_VOID      ||
            N->isTargetMemoryOpcode();
   }
 };
