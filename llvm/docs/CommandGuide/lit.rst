@@ -84,6 +84,10 @@ OUTPUT OPTIONS
 
  Do not use curses based progress bar.
 
+.. option:: --show-unsupported
+
+ Show the names of unsupported tests.
+
 .. _execution-options:
 
 EXECUTION OPTIONS
