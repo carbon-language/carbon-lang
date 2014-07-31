@@ -474,7 +474,7 @@ LowerFormalArguments_32(SDValue Chain,
                           DAG.getConstant(Offset, MVT::i32));
       Load = DAG.getExtLoad(LoadOp, dl, MVT::i32, Chain, FIPtr,
                             MachinePointerInfo(),
-                            VA.getValVT(), false, false,0);
+                            VA.getValVT(), false, false, false,0);
       Load = DAG.getNode(ISD::TRUNCATE, dl, VA.getValVT(), Load);
     }
     InVals.push_back(Load);

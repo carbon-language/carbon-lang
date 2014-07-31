@@ -463,14 +463,15 @@ LowerLOAD(SDValue Op, SelectionDAG &DAG) const {
   if (LD->getAlignment() == 2) {
     SDValue Low = DAG.getExtLoad(ISD::ZEXTLOAD, DL, MVT::i32, Chain,
                                  BasePtr, LD->getPointerInfo(), MVT::i16,
-                                 LD->isVolatile(), LD->isNonTemporal(), 2);
+                                 LD->isVolatile(), LD->isNonTemporal(),
+                                 LD->isInvariant(), 2);
     SDValue HighAddr = DAG.getNode(ISD::ADD, DL, MVT::i32, BasePtr,
                                    DAG.getConstant(2, MVT::i32));
     SDValue High = DAG.getExtLoad(ISD::EXTLOAD, DL, MVT::i32, Chain,
                                   HighAddr,
                                   LD->getPointerInfo().getWithOffset(2),
                                   MVT::i16, LD->isVolatile(),
-                                  LD->isNonTemporal(), 2);
+                                  LD->isNonTemporal(), LD->isInvariant(), 2);
     SDValue HighShifted = DAG.getNode(ISD::SHL, DL, MVT::i32, High,
                                       DAG.getConstant(16, MVT::i32));
     SDValue Result = DAG.getNode(ISD::OR, DL, MVT::i32, Low, HighShifted);
@@ -981,13 +982,13 @@ LowerATOMIC_LOAD(SDValue Op, SelectionDAG &DAG) const {
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i16,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getAAInfo());
+                          N->isInvariant(), N->getAlignment(), N->getAAInfo());
   }
   if (N->getMemoryVT() == MVT::i8)
     return DAG.getExtLoad(ISD::EXTLOAD, SDLoc(Op), MVT::i32, N->getChain(),
                           N->getBasePtr(), N->getPointerInfo(), MVT::i8,
                           N->isVolatile(), N->isNonTemporal(),
-                          N->getAlignment(), N->getAAInfo());
+                          N->isInvariant(), N->getAlignment(), N->getAAInfo());
   return SDValue();
 }
 

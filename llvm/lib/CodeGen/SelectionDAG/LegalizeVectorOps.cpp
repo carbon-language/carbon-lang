@@ -507,8 +507,8 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
         ScalarLoad = DAG.getExtLoad(ISD::EXTLOAD, dl, WideVT, Chain, BasePTR,
                                     LD->getPointerInfo().getWithOffset(Offset),
                                     LoadVT, LD->isVolatile(),
-                                    LD->isNonTemporal(), LD->getAlignment(),
-                                    LD->getAAInfo());
+                                    LD->isNonTemporal(), LD->isInvariant(),
+                                    LD->getAlignment(), LD->getAAInfo());
       }
 
       RemainingBytes -= LoadBytes;
@@ -578,7 +578,7 @@ SDValue VectorLegalizer::ExpandLoad(SDValue Op) {
                 Op.getNode()->getValueType(0).getScalarType(),
                 Chain, BasePTR, LD->getPointerInfo().getWithOffset(Idx * Stride),
                 SrcVT.getScalarType(),
-                LD->isVolatile(), LD->isNonTemporal(),
+                LD->isVolatile(), LD->isNonTemporal(), LD->isInvariant(),
                 LD->getAlignment(), LD->getAAInfo());
 
       BasePTR = DAG.getNode(ISD::ADD, dl, BasePTR.getValueType(), BasePTR,

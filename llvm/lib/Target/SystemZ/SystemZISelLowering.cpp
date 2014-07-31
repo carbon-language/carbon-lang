@@ -1192,7 +1192,7 @@ static void adjustSubwordCmp(SelectionDAG &DAG, Comparison &C) {
                            Load->getChain(), Load->getBasePtr(),
                            Load->getPointerInfo(), Load->getMemoryVT(),
                            Load->isVolatile(), Load->isNonTemporal(),
-                           Load->getAlignment());
+                           Load->isInvariant(), Load->getAlignment());
 
   // Make sure that the second operand is an i32 with the right value.
   if (C.Op1.getValueType() != MVT::i32 ||

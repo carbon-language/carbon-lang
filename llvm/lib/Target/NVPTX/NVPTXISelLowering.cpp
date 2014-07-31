@@ -2142,7 +2142,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
                                      ISD::SEXTLOAD : ISD::ZEXTLOAD;
             p = DAG.getExtLoad(ExtOp, dl, Ins[InsIdx].VT, Root, srcAddr,
                                MachinePointerInfo(srcValue), partVT, false,
-                               false, partAlign);
+                               false, false, partAlign);
           } else {
             p = DAG.getLoad(partVT, dl, Root, srcAddr,
                             MachinePointerInfo(srcValue), false, false, false,
@@ -2275,6 +2275,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
                                        ISD::SEXTLOAD : ISD::ZEXTLOAD;
         p = DAG.getExtLoad(ExtOp, dl, Ins[InsIdx].VT, Root, Arg,
                            MachinePointerInfo(srcValue), ObjectVT, false, false,
+                           false,
         TD->getABITypeAlignment(ObjectVT.getTypeForEVT(F->getContext())));
       } else {
         p = DAG.getLoad(Ins[InsIdx].VT, dl, Root, Arg,

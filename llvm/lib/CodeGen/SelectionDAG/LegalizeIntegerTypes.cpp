@@ -1868,7 +1868,8 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     EVT MemVT = N->getMemoryVT();
 
     Lo = DAG.getExtLoad(ExtType, dl, NVT, Ch, Ptr, N->getPointerInfo(),
-                        MemVT, isVolatile, isNonTemporal, Alignment, AAInfo);
+                        MemVT, isVolatile, isNonTemporal, isInvariant,
+                        Alignment, AAInfo);
 
     // Remember the chain.
     Ch = Lo.getValue(1);
@@ -1903,7 +1904,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
                       DAG.getConstant(IncrementSize, Ptr.getValueType()));
     Hi = DAG.getExtLoad(ExtType, dl, NVT, Ch, Ptr,
                         N->getPointerInfo().getWithOffset(IncrementSize), NEVT,
-                        isVolatile, isNonTemporal,
+                        isVolatile, isNonTemporal, isInvariant,
                         MinAlign(Alignment, IncrementSize), AAInfo);
 
     // Build a factor node to remember that this load is independent of the
@@ -1922,7 +1923,8 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     Hi = DAG.getExtLoad(ExtType, dl, NVT, Ch, Ptr, N->getPointerInfo(),
                         EVT::getIntegerVT(*DAG.getContext(),
                                           MemVT.getSizeInBits() - ExcessBits),
-                        isVolatile, isNonTemporal, Alignment, AAInfo);
+                        isVolatile, isNonTemporal, isInvariant, Alignment,
+                        AAInfo);
 
     // Increment the pointer to the other half.
     Ptr = DAG.getNode(ISD::ADD, dl, Ptr.getValueType(), Ptr,
@@ -1931,7 +1933,7 @@ void DAGTypeLegalizer::ExpandIntRes_LOAD(LoadSDNode *N,
     Lo = DAG.getExtLoad(ISD::ZEXTLOAD, dl, NVT, Ch, Ptr,
                         N->getPointerInfo().getWithOffset(IncrementSize),
                         EVT::getIntegerVT(*DAG.getContext(), ExcessBits),
-                        isVolatile, isNonTemporal,
+                        isVolatile, isNonTemporal, isInvariant,
                         MinAlign(Alignment, IncrementSize), AAInfo);
 
     // Build a factor node to remember that this load is independent of the
@@ -2853,7 +2855,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
                                    FudgePtr,
                                    MachinePointerInfo::getConstantPool(),
                                    MVT::f32,
-                                   false, false, Alignment);
+                                   false, false, false, Alignment);
     return DAG.getNode(ISD::FADD, dl, DstVT, SignedConv, Fudge);
   }
 

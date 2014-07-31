@@ -10637,7 +10637,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     if (Subtarget->is64Bit())
       IDX = DAG.getExtLoad(ISD::ZEXTLOAD, dl, getPointerTy(), Chain,
                            IDX, MachinePointerInfo(), MVT::i32,
-                           false, false, 0);
+                           false, false, false, 0);
     else
       IDX = DAG.getLoad(getPointerTy(), dl, Chain, IDX, MachinePointerInfo(),
                         false, false, false, 0);
@@ -11022,7 +11022,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   // FIXME: Avoid the extend by constructing the right constant pool?
   SDValue Fudge = DAG.getExtLoad(ISD::EXTLOAD, dl, MVT::f80, DAG.getEntryNode(),
                                  FudgePtr, MachinePointerInfo::getConstantPool(),
-                                 MVT::f32, false, false, 4);
+                                 MVT::f32, false, false, false, 4);
   // Extend everything to 80 bits to force it to be done on x87.
   SDValue Add = DAG.getNode(ISD::FADD, dl, MVT::f80, Fild, Fudge);
   return DAG.getNode(ISD::FP_ROUND, dl, DstVT, Add, DAG.getIntPtrConstant(0));
@@ -12919,7 +12919,8 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
       Load =
           DAG.getExtLoad(Ext, dl, HalfVecVT, Ld->getChain(), Ld->getBasePtr(),
                          Ld->getPointerInfo(), MemVT, Ld->isVolatile(),
-                         Ld->isNonTemporal(), Ld->getAlignment());
+                         Ld->isNonTemporal(), Ld->isInvariant(),
+                         Ld->getAlignment());
     }
 
     // Replace chain users with the new chain.

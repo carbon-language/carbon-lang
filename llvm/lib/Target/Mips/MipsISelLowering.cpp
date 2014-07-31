@@ -1488,7 +1488,7 @@ SDValue MipsTargetLowering::lowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
   EVT MemVT = EVT::getIntegerVT(*DAG.getContext(), EntrySize * 8);
   Addr = DAG.getExtLoad(ISD::SEXTLOAD, DL, PTy, Chain, Addr,
                         MachinePointerInfo::getJumpTable(), MemVT, false, false,
-                        0);
+                        false, 0);
   Chain = Addr.getValue(1);
 
   if ((getTargetMachine().getRelocationModel() == Reloc::PIC_) ||
@@ -3628,7 +3628,8 @@ passByValArg(SDValue Chain, SDLoc DL,
                                       DAG.getConstant(OffsetInBytes, PtrTy));
         SDValue LoadVal = DAG.getExtLoad(
             ISD::ZEXTLOAD, DL, RegTy, Chain, LoadPtr, MachinePointerInfo(),
-            MVT::getIntegerVT(LoadSizeInBytes * 8), false, false, Alignment);
+            MVT::getIntegerVT(LoadSizeInBytes * 8), false, false, false,
+            Alignment);
         MemOpChains.push_back(LoadVal.getValue(1));
 
         // Shift the loaded value.

@@ -1038,7 +1038,7 @@ SDValue AMDGPUTargetLowering::ScalarizeVectorLoad(const SDValue Op,
                        Load->getChain(), Ptr,
                        SrcValue.getWithOffset(i * MemEltSize),
                        MemEltVT, Load->isVolatile(), Load->isNonTemporal(),
-                       Load->getAlignment());
+                       Load->isInvariant(), Load->getAlignment());
     Loads.push_back(NewLoad.getValue(0));
     Chains.push_back(NewLoad.getValue(1));
   }
@@ -1079,7 +1079,7 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
                      Load->getChain(), BasePtr,
                      SrcValue,
                      LoMemVT, Load->isVolatile(), Load->isNonTemporal(),
-                     Load->getAlignment());
+                     Load->isInvariant(), Load->getAlignment());
 
   SDValue HiPtr = DAG.getNode(ISD::ADD, SL, PtrVT, BasePtr,
                               DAG.getConstant(LoMemVT.getStoreSize(), PtrVT));
@@ -1089,7 +1089,7 @@ SDValue AMDGPUTargetLowering::SplitVectorLoad(const SDValue Op,
                      Load->getChain(), HiPtr,
                      SrcValue.getWithOffset(LoMemVT.getStoreSize()),
                      HiMemVT, Load->isVolatile(), Load->isNonTemporal(),
-                     Load->getAlignment());
+                     Load->isInvariant(), Load->getAlignment());
 
   SDValue Ops[] = {
     DAG.getNode(ISD::CONCAT_VECTORS, SL, VT, LoLoad, HiLoad),
