@@ -184,7 +184,7 @@ such as MSA. It also supports several of the MIPS specific assembler directives
 such as ``.set``, ``.module``, ``.cpload``, etc.
 
 Changes to the PowerPC Target
-=============================
+-----------------------------
 
 The PowerPC 64-bit Little Endian subtarget (powerpc64le-unknown-linux-gnu) is
 now fully supported.  This includes support for the Altivec instruction set.
