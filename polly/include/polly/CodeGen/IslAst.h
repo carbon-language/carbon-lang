@@ -62,7 +62,7 @@ public:
     /// @brief Flag to mark outermost parallel loops.
     bool IsOutermostParallel;
 
-    /// @brief Flag to mark reduction parallel loops.
+    /// @brief Flag to mark parallel loops which break reductions.
     bool IsReductionParallel;
 
     /// @brief The build environment at the time this node was constructed.
@@ -107,8 +107,8 @@ public:
   /// @brief Is this loop a parallel loop?
   static bool isParallel(__isl_keep isl_ast_node *Node);
 
-  /// @brief Is this loop an outer parallel loop?
-  static bool isOuterParallel(__isl_keep isl_ast_node *Node);
+  /// @brief Is this loop an outermost parallel loop?
+  static bool isOutermostParallel(__isl_keep isl_ast_node *Node);
 
   /// @brief Is this loop an innermost parallel loop?
   static bool isInnermostParallel(__isl_keep isl_ast_node *Node);

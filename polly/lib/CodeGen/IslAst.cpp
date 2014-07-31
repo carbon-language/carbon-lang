@@ -118,7 +118,7 @@ static isl_printer *cbPrintFor(__isl_take isl_printer *Printer,
   if (IslAstInfo::isInnermost(Node) && IslAstInfo::isReductionParallel(Node))
     Printer = printLine(Printer, "#pragma simd reduction");
 
-  if (IslAstInfo::isOuterParallel(Node))
+  if (IslAstInfo::isOutermostParallel(Node))
     Printer = printLine(Printer, "#pragma omp parallel for");
 
   if (!IslAstInfo::isInnermost(Node) && IslAstInfo::isReductionParallel(Node))
@@ -157,20 +157,6 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
   return true;
 }
 
-// Mark a for node openmp parallel, if it is the outermost parallel for node.
-static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
-                               AstBuildUserInfo *BuildInfo,
-                               IslAstUserPayload *NodeInfo) {
-  if (BuildInfo->InParallelFor)
-    return;
-
-  if (astScheduleDimIsParallel(Build, BuildInfo->Deps,
-                               NodeInfo->IsReductionParallel)) {
-    BuildInfo->InParallelFor = 1;
-    NodeInfo->IsOutermostParallel = 1;
-  }
-}
-
 // This method is executed before the construction of a for node. It creates
 // an isl_id that is used to annotate the subsequently generated ast for nodes.
 //
@@ -181,12 +167,16 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
 static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
                                             void *User) {
   AstBuildUserInfo *BuildInfo = (AstBuildUserInfo *)User;
-  IslAstUserPayload *NodeInfo = new IslAstUserPayload();
-  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
+  IslAstUserPayload *Payload = new IslAstUserPayload();
+  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", Payload);
   Id = isl_id_set_free_user(Id, freeIslAstUserPayload);
   BuildInfo->LastForNodeId = Id;
 
-  markOpenmpParallel(Build, BuildInfo, NodeInfo);
+  // Test for parallelism only if we are not already inside a parallel loop
+  if (!BuildInfo->InParallelFor)
+    BuildInfo->InParallelFor = Payload->IsOutermostParallel =
+        astScheduleDimIsParallel(Build, BuildInfo->Deps,
+                                 Payload->IsReductionParallel);
 
   return Id;
 }
@@ -202,21 +192,26 @@ static __isl_give isl_ast_node *
 astBuildAfterFor(__isl_take isl_ast_node *Node, __isl_keep isl_ast_build *Build,
                  void *User) {
   isl_id *Id = isl_ast_node_get_annotation(Node);
-  if (!Id)
-    return Node;
-  IslAstUserPayload *Info = (IslAstUserPayload *)isl_id_get_user(Id);
+  assert(Id && "Post order visit assumes annotated for nodes");
+  IslAstUserPayload *Payload = (IslAstUserPayload *)isl_id_get_user(Id);
+  assert(Payload && "Post order visit assumes annotated for nodes");
+
   AstBuildUserInfo *BuildInfo = (AstBuildUserInfo *)User;
+  assert(!Payload->Build && "Build environment already set");
+  Payload->Build = isl_ast_build_copy(Build);
+  Payload->IsInnermost = (Id == BuildInfo->LastForNodeId);
 
-  Info->IsInnermost = (Id == BuildInfo->LastForNodeId);
-
-  if (Info->IsOutermostParallel)
-    BuildInfo->InParallelFor = 0;
-  if (Info->IsInnermost)
-    if (astScheduleDimIsParallel(Build, BuildInfo->Deps,
-                                  Info->IsReductionParallel))
-      Info->IsInnermostParallel = 1;
-  if (!Info->Build)
-    Info->Build = isl_ast_build_copy(Build);
+  // Innermost loops that are surrounded by parallel loops have not yet been
+  // tested for parallelism. Test them here to ensure we check all innermost
+  // loops for parallelism.
+  if (Payload->IsInnermost && BuildInfo->InParallelFor)
+    if (Payload->IsOutermostParallel)
+      Payload->IsInnermostParallel = true;
+    else
+      Payload->IsInnermostParallel = astScheduleDimIsParallel(
+          Build, BuildInfo->Deps, Payload->IsReductionParallel);
+  else if (Payload->IsOutermostParallel)
+    BuildInfo->InParallelFor = false;
 
   isl_id_free(Id);
   return Node;
@@ -226,11 +221,12 @@ static __isl_give isl_ast_node *AtEachDomain(__isl_take isl_ast_node *Node,
                                              __isl_keep isl_ast_build *Build,
                                              void *User) {
   assert(!isl_ast_node_get_annotation(Node) && "Node already annotated");
-  IslAstUserPayload *NodeInfo = new IslAstUserPayload();
-  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
+
+  IslAstUserPayload *Payload = new IslAstUserPayload();
+  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", Payload);
   Id = isl_id_set_free_user(Id, freeIslAstUserPayload);
 
-  NodeInfo->Build = isl_ast_build_copy(Build);
+  Payload->Build = isl_ast_build_copy(Build);
 
   return isl_ast_node_set_annotation(Node, Id);
 }
@@ -348,8 +344,10 @@ bool IslAstInfo::isInnermost(__isl_keep isl_ast_node *Node) {
 }
 
 bool IslAstInfo::isParallel(__isl_keep isl_ast_node *Node) {
-  return (isInnermostParallel(Node) || isOuterParallel(Node)) &&
-         !isReductionParallel(Node);
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload &&
+         (Payload->IsInnermostParallel || Payload->IsOutermostParallel) &&
+         !Payload->IsReductionParallel;
 }
 
 bool IslAstInfo::isInnermostParallel(__isl_keep isl_ast_node *Node) {
@@ -358,7 +356,7 @@ bool IslAstInfo::isInnermostParallel(__isl_keep isl_ast_node *Node) {
          !Payload->IsReductionParallel;
 }
 
-bool IslAstInfo::isOuterParallel(__isl_keep isl_ast_node *Node) {
+bool IslAstInfo::isOutermostParallel(__isl_keep isl_ast_node *Node) {
   IslAstUserPayload *Payload = getNodePayload(Node);
   return Payload && Payload->IsOutermostParallel &&
          !Payload->IsReductionParallel;
