@@ -238,8 +238,11 @@ public:
         return false;
     }
 
-    void
+    size_t
     ResizeData(size_t len);
+    
+    size_t
+    AppendDataToHostBuffer (const Value &rhs);
 
     DataBufferHeap &
     GetBuffer ()

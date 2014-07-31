@@ -1347,6 +1347,7 @@ DWARFExpression::Evaluate
 
     /// Insertion point for evaluating multi-piece expression.
     uint64_t op_piece_offset = 0;
+    Value pieces; // Used for DW_OP_piece
 
     // Make sure all of the data is available in opcodes.
     if (!opcodes.ValidOffsetForDataOfSize(opcodes_offset, opcodes_length))
@@ -2574,116 +2575,134 @@ DWARFExpression::Evaluate
         // variable a particular DWARF expression refers to.
         //----------------------------------------------------------------------
         case DW_OP_piece:
-            if (stack.size() < 1 ||
-                (op_piece_offset > 0 && stack.size() < 2))
-            {
-                // In a multi-piece expression, this means that the current piece is not available.
-                // We don't have a way to signal partial availabilty.
-                if (error_ptr)
-                    error_ptr->SetErrorString("Partially unavailable DW_OP_piece expressions are not yet supported.");
-                return false;
-            }
-            else
             {
                 const uint64_t piece_byte_size = opcodes.GetULEB128(&offset);
-                switch (stack.back().GetValueType())
+
+                if (piece_byte_size > 0)
                 {
-                    case Value::eValueTypeScalar:
-                    case Value::eValueTypeFileAddress:
-                    case Value::eValueTypeLoadAddress:
-                    case Value::eValueTypeHostAddress:
-                        {
-                            uint32_t bit_size = piece_byte_size * 8;
-                            uint32_t bit_offset = 0;
-                            if (!stack.back().GetScalar().ExtractBitfield (bit_size, bit_offset))
-                            {
-                                if (error_ptr)
-                                    error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte scalar value.", piece_byte_size, (uint64_t)stack.back().GetScalar().GetByteSize());
-                                return false;
-                            }
+                    Value curr_piece;
 
-                            // Multiple pieces of a large value are assembled in a memory buffer value.
-                            if (op_piece_offset)
-                            {
-                                Error error;
-                                Scalar cur_piece = stack.back().GetScalar();
-                                stack.pop_back();
-                                
-                                switch (stack.back().GetValueType())
-                                {
-                                    case  Value::eValueTypeScalar:
-                                        {
-                                            // We already have something on the stack that will becomes the first
-                                            // bytes of our buffer, we need to populate these bytes into the buffer
-                                            // and then we will add the current bytes to it.
-                                            
-                                            // Promote top of stack to a memory buffer.
-                                            Scalar prev_piece = stack.back().GetScalar();
-                                            stack.pop_back();
-                                            stack.push_back(Value());
-                                            Value &piece_value = stack.back();
-                                            piece_value.ResizeData(op_piece_offset);
-                                            prev_piece.GetAsMemoryData(piece_value.GetBuffer().GetBytes(), op_piece_offset, lldb::endian::InlHostByteOrder(), error);
-                                            if (error.Fail())
-                                            {
-                                                if (error_ptr)
-                                                    error_ptr->SetErrorString(error.AsCString());
-                                                return false;
-                                            }
-                                        }
-                                        // Fall through to host address case...
-                                        
-                                    case Value::eValueTypeHostAddress:
-                                        {
-                                            if (stack.back().GetBuffer().GetByteSize() != op_piece_offset)
-                                            {
-                                                if (error_ptr)
-                                                    error_ptr->SetErrorStringWithFormat ("DW_OP_piece for offset %" PRIu64 " but top of stack is of size %" PRIu64,
-                                                                                         op_piece_offset,
-                                                                                         stack.back().GetBuffer().GetByteSize());
-                                                return false;
-                                            }
-                                            
-                                            // Append the current piece to the buffer.
-                                            size_t len = op_piece_offset + piece_byte_size;
-                                            stack.back().ResizeData(len);
-                                            cur_piece.GetAsMemoryData (stack.back().GetBuffer().GetBytes() + op_piece_offset,
-                                                                       piece_byte_size,
-                                                                       lldb::endian::InlHostByteOrder(),
-                                                                       error);
-                                            if (error.Fail())
-                                            {
-                                                if (error_ptr)
-                                                    error_ptr->SetErrorString(error.AsCString());
-                                                return false;
-                                            }
-                                        }
-                                        break;
-                                        
-                                    default:
-                                        // Expect top of stack to be a memory buffer.
-                                        if (error_ptr)
-                                            error_ptr->SetErrorStringWithFormat("DW_OP_piece for offset %" PRIu64 ": top of stack is not a piece", op_piece_offset);
-                                        return false;
-                                }
-
-                            }
-                            op_piece_offset += piece_byte_size;
-                        }
-                        break;
+                    if (stack.empty())
+                    {
+                        // In a multi-piece expression, this means that the current piece is not available.
+                        // Fill with zeros for now by resizing the data and appending it
+                        curr_piece.ResizeData(piece_byte_size);
+                        ::memset (curr_piece.GetBuffer().GetBytes(), 0, piece_byte_size);
+                        pieces.AppendDataToHostBuffer(curr_piece);
+                    }
+                    else
+                    {
+                        Error error;
+                        // Extract the current piece into "curr_piece"
+                        Value curr_piece_source_value(stack.back());
+                        stack.pop_back();
                         
-                    case Value::eValueTypeVector:
+                        const Value::ValueType curr_piece_source_value_type = curr_piece_source_value.GetValueType();
+                        switch (curr_piece_source_value_type)
                         {
-                            if (stack.back().GetVector().length >= piece_byte_size)
-                                stack.back().GetVector().length = piece_byte_size;
-                            else
+                        case Value::eValueTypeLoadAddress:
+                            if (process)
+                            {
+                                if (curr_piece.ResizeData(piece_byte_size) == piece_byte_size)
+                                {
+                                    lldb::addr_t load_addr = curr_piece_source_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                                    if (process->ReadMemory(load_addr, curr_piece.GetBuffer().GetBytes(), piece_byte_size, error) != piece_byte_size)
+                                    {
+                                        if (error_ptr)
+                                            error_ptr->SetErrorStringWithFormat ("failed to read memory DW_OP_piece(%" PRIu64 ") from 0x%" PRIx64,
+                                                                                 piece_byte_size,
+                                                                                 load_addr);
+                                        return false;
+                                    }
+                                }
+                                else
+                                {
+                                    if (error_ptr)
+                                        error_ptr->SetErrorStringWithFormat ("failed to resize the piece memory buffer for DW_OP_piece(%" PRIu64 ")", piece_byte_size);
+                                    return false;
+                                }
+                            }
+                            break;
+                            
+                        case Value::eValueTypeFileAddress:
+                        case Value::eValueTypeHostAddress:
+                            if (error_ptr)
+                            {
+                                lldb::addr_t addr = curr_piece_source_value.GetScalar().ULongLong(LLDB_INVALID_ADDRESS);
+                                error_ptr->SetErrorStringWithFormat ("failed to read memory DW_OP_piece(%" PRIu64 ") from %s address 0x%" PRIx64,
+                                                                     piece_byte_size,
+                                                                     curr_piece_source_value.GetValueType() == Value::eValueTypeFileAddress ? "file" : "host",
+                                                                     addr);
+                            }
+                            return false;
+
+                        case Value::eValueTypeScalar:
+                            {
+                                uint32_t bit_size = piece_byte_size * 8;
+                                uint32_t bit_offset = 0;
+                                if (!curr_piece_source_value.GetScalar().ExtractBitfield (bit_size, bit_offset))
+                                {
+                                    if (error_ptr)
+                                        error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte scalar value.", piece_byte_size, (uint64_t)curr_piece_source_value.GetScalar().GetByteSize());
+                                    return false;
+                                }
+                                curr_piece = curr_piece_source_value;
+                            }
+                            break;
+                                
+                        case Value::eValueTypeVector:
+                            {
+                                if (curr_piece_source_value.GetVector().length >= piece_byte_size)
+                                    curr_piece_source_value.GetVector().length = piece_byte_size;
+                                else
+                                {
+                                    if (error_ptr)
+                                        error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte vector value.", piece_byte_size, (uint64_t)curr_piece_source_value.GetVector().length);
+                                    return false;
+                                }
+                            }
+                            break;
+
+                        default:
+                            if (error_ptr)
+                                error_ptr->SetErrorStringWithFormat ("unhandled value typpe for DW_OP_piece(%" PRIu64 ")", piece_byte_size);
+                            return false;
+
+                        }
+                        
+                        // Check if this is the first piece?
+                        if (op_piece_offset == 0)
+                        {
+                            // This is the first piece, we should push it back onto the stack so subsequent
+                            // pieces will be able to access this piece and add to it
+                            if (pieces.AppendDataToHostBuffer(curr_piece) == 0)
                             {
                                 if (error_ptr)
-                                    error_ptr->SetErrorStringWithFormat("unable to extract %" PRIu64 " bytes from a %" PRIu64 " byte vector value.", piece_byte_size, (uint64_t)stack.back().GetVector().length);
+                                    error_ptr->SetErrorString("failed to append piece data");
                                 return false;
                             }
                         }
-                        break;
+                        else if (!stack.empty())
+                        {
+                            // If this is the second or later piece there should be a value on the stack
+                            if (pieces.GetBuffer().GetByteSize() != op_piece_offset)
+                            {
+                                if (error_ptr)
+                                    error_ptr->SetErrorStringWithFormat ("DW_OP_piece for offset %" PRIu64 " but top of stack is of size %" PRIu64,
+                                                                         op_piece_offset,
+                                                                         pieces.GetBuffer().GetByteSize());
+                                return false;
+                            }
+                            
+                            if (pieces.AppendDataToHostBuffer(curr_piece) == 0)
+                            {
+                                if (error_ptr)
+                                    error_ptr->SetErrorString("failed to append piece data");
+                                return false;
+                            }
+                        }
+                        op_piece_offset += piece_byte_size;
+                    }
                 }
             }
             break;
@@ -2702,9 +2721,6 @@ DWARFExpression::Evaluate
                 switch (stack.back().GetValueType())
                 {
                 case Value::eValueTypeScalar:
-                case Value::eValueTypeFileAddress:
-                case Value::eValueTypeLoadAddress:
-                case Value::eValueTypeHostAddress:
                     {
                         if (!stack.back().GetScalar().ExtractBitfield (piece_bit_size, piece_bit_offset))
                         {
@@ -2717,11 +2733,22 @@ DWARFExpression::Evaluate
                         }
                     }
                     break;
-                    
+
+                case Value::eValueTypeFileAddress:
+                case Value::eValueTypeLoadAddress:
+                case Value::eValueTypeHostAddress:
+                    if (error_ptr)
+                    {
+                        error_ptr->SetErrorStringWithFormat ("unable to extract DW_OP_bit_piece(bit_size = %" PRIu64 ", bit_offset = %" PRIu64 ") from an addresss value.",
+                                                             piece_bit_size,
+                                                             piece_bit_offset);
+                    }
+                    return false;
+
                 case Value::eValueTypeVector:
                     if (error_ptr)
                     {
-                        error_ptr->SetErrorStringWithFormat ("unable to extract %" PRIu64 " bit value with %" PRIu64 " bit offset from a vector value.",
+                        error_ptr->SetErrorStringWithFormat ("unable to extract DW_OP_bit_piece(bit_size = %" PRIu64 ", bit_offset = %" PRIu64 ") from a vector value.",
                                                              piece_bit_size,
                                                              piece_bit_offset);
                     }
@@ -2896,24 +2923,34 @@ DWARFExpression::Evaluate
 
     if (stack.empty())
     {
-        if (error_ptr)
-            error_ptr->SetErrorString ("Stack empty after evaluation.");
-        return false;
-    }
-    else if (log && log->GetVerbose())
-    {
-        size_t count = stack.size();
-        log->Printf("Stack after operation has %" PRIu64 " values:", (uint64_t)count);
-        for (size_t i=0; i<count; ++i)
+        // Nothing on the stack, check if we created a piece value from DW_OP_piece or DW_OP_bit_piece opcodes
+        if (pieces.GetBuffer().GetByteSize())
         {
-            StreamString new_value;
-            new_value.Printf("[%" PRIu64 "]", (uint64_t)i);
-            stack[i].Dump(&new_value);
-            log->Printf("  %s", new_value.GetData());
+            result = pieces;
+        }
+        else
+        {
+            if (error_ptr)
+                error_ptr->SetErrorString ("Stack empty after evaluation.");
+            return false;
         }
     }
-
-    result = stack.back();
+    else
+    {
+        if (log && log->GetVerbose())
+        {
+            size_t count = stack.size();
+            log->Printf("Stack after operation has %" PRIu64 " values:", (uint64_t)count);
+            for (size_t i=0; i<count; ++i)
+            {
+                StreamString new_value;
+                new_value.Printf("[%" PRIu64 "]", (uint64_t)i);
+                stack[i].Dump(&new_value);
+                log->Printf("  %s", new_value.GetData());
+            }
+        }
+        result = stack.back();
+    }
     return true;    // Return true on success
 }
 

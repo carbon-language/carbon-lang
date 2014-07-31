@@ -172,12 +172,74 @@ Value::GetType()
     return NULL;
 }
 
-void
+size_t
+Value::AppendDataToHostBuffer (const Value &rhs)
+{
+    size_t curr_size = m_data_buffer.GetByteSize();
+    Error error;
+    switch (rhs.GetValueType())
+    {
+    case eValueTypeScalar:
+        {
+            const size_t scalar_size = rhs.m_value.GetByteSize();
+            if (scalar_size > 0)
+            {
+                const size_t new_size = curr_size + scalar_size;
+                if (ResizeData(new_size) == new_size)
+                {
+                    rhs.m_value.GetAsMemoryData (m_data_buffer.GetBytes() + curr_size,
+                                                 scalar_size,
+                                                 lldb::endian::InlHostByteOrder(),
+                                                 error);
+                    return scalar_size;
+                }
+            }
+        }
+        break;
+    case eValueTypeVector:
+        {
+            const size_t vector_size = rhs.m_vector.length;
+            if (vector_size > 0)
+            {
+                const size_t new_size = curr_size + vector_size;
+                if (ResizeData(new_size) == new_size)
+                {
+                    ::memcpy (m_data_buffer.GetBytes() + curr_size,
+                              rhs.m_vector.bytes,
+                              vector_size);
+                    return vector_size;
+                }
+            }
+        }
+        break;
+    case eValueTypeFileAddress:
+    case eValueTypeLoadAddress:
+    case eValueTypeHostAddress:
+        {
+            const uint8_t *src = rhs.GetBuffer().GetBytes();
+            const size_t src_len = rhs.GetBuffer().GetByteSize();
+            if (src && src_len > 0)
+            {
+                const size_t new_size = curr_size + src_len;
+                if (ResizeData(new_size) == new_size)
+                {
+                    ::memcpy (m_data_buffer.GetBytes() + curr_size, src, src_len);
+                    return src_len;
+                }
+            }
+        }
+        break;
+    }
+    return 0;
+}
+
+size_t
 Value::ResizeData(size_t len)
 {
     m_value_type = eValueTypeHostAddress;
     m_data_buffer.SetByteSize(len);
     m_value = (uintptr_t)m_data_buffer.GetBytes();
+    return m_data_buffer.GetByteSize();
 }
 
 bool
