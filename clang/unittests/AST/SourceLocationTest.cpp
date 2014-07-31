@@ -486,5 +486,17 @@ TEST(FriendDecl, InstantiationSourceRange) {
       friendDecl(hasParent(recordDecl(isTemplateInstantiation())))));
 }
 
+TEST(ObjCMessageExpr, CXXConstructExprRange) {
+  RangeVerifier<CXXConstructExpr> Verifier;
+  Verifier.expectRange(5, 25, 5, 27);
+  EXPECT_TRUE(Verifier.match(
+      "struct A { int a; };\n"
+      "@interface B {}\n"
+      "+ (void) f1: (A)arg;\n"
+      "@end\n"
+      "void f2() { A a; [B f1: (a)]; }\n",
+      constructExpr(), Lang_OBJCXX));
+}
+
 } // end namespace ast_matchers
 } // end namespace clang
