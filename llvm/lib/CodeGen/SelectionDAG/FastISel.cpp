@@ -769,7 +769,7 @@ bool FastISel::SelectPatchpoint(const CallInst *I) {
 
   // Assume that the callee is a constant address or null pointer.
   // FIXME: handle function symbols in the future.
-  unsigned CalleeAddr;
+  uint64_t CalleeAddr;
   if (const auto *C = dyn_cast<IntToPtrInst>(Callee))
     CalleeAddr = cast<ConstantInt>(C->getOperand(0))->getZExtValue();
   else if (const auto *C = dyn_cast<ConstantExpr>(Callee)) {

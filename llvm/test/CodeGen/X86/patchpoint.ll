@@ -39,7 +39,6 @@ entry:
   ret void
 }
 
-
 ; Test patchpoints reusing the same TargetConstant.
 ; <rdar:15390785> Assertion failed: (CI.getNumArgOperands() >= NumArgs + 4)
 ; There is no way to verify this, since it depends on memory allocation.
@@ -70,6 +69,17 @@ entry:
 ; CHECK-NEXT: ret
   %result = tail call i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 5, i32 5, i8* null, i32 2, i64 %p1, i64 %p2)
   ret void
+}
+
+; Test large target address.
+define i64 @large_target_address_patchpoint_codegen() {
+entry:
+; CHECK-LABEL: large_target_address_patchpoint_codegen:
+; CHECK:      movabsq $6153737369414576827, %r11
+; CHECK-NEXT: callq *%r11
+  %resolveCall2 = inttoptr i64 6153737369414576827 to i8*
+  %result = tail call i64 (i64, i32, i8*, i32, ...)* @llvm.experimental.patchpoint.i64(i64 2, i32 15, i8* %resolveCall2, i32 0)
+  ret i64 %result
 }
 
 declare void @llvm.experimental.stackmap(i64, i32, ...)
