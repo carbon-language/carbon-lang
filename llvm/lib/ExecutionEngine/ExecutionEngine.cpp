@@ -57,7 +57,6 @@ ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
   Module *M,
   std::string *ErrorStr,
   RTDyldMemoryManager *MCJMM,
-  bool GVsWithCode,
   TargetMachine *TM) = nullptr;
 ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
                                                 std::string *ErrorStr) =nullptr;
@@ -471,7 +470,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
     ExecutionEngine *EE = nullptr;
     if (UseMCJIT && ExecutionEngine::MCJITCtor)
       EE = ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
-                                      AllocateGVsWithCode, TheTM.release());
+                                      TheTM.release());
     else if (ExecutionEngine::JITCtor)
       EE = ExecutionEngine::JITCtor(M, ErrorStr, JMM,
                                     AllocateGVsWithCode, TheTM.release());

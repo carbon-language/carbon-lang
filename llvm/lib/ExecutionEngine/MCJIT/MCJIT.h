@@ -101,8 +101,7 @@ private:
 // called.
 
 class MCJIT : public ExecutionEngine {
-  MCJIT(Module *M, TargetMachine *tm, RTDyldMemoryManager *MemMgr,
-        bool AllocateGVsWithCode);
+  MCJIT(Module *M, TargetMachine *tm, RTDyldMemoryManager *MemMgr);
 
   typedef llvm::SmallPtrSet<Module *, 4> ModulePtrSet;
 
@@ -328,7 +327,6 @@ public:
   static ExecutionEngine *createJIT(Module *M,
                                     std::string *ErrorStr,
                                     RTDyldMemoryManager *MemMgr,
-                                    bool GVsWithCode,
                                     TargetMachine *TM);
 
   // @}

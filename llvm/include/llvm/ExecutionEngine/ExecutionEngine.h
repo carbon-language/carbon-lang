@@ -151,7 +151,6 @@ protected:
     Module *M,
     std::string *ErrorStr,
     RTDyldMemoryManager *MCJMM,
-    bool GVsWithCode,
     TargetMachine *TM);
   static ExecutionEngine *(*InterpCtor)(Module *M, std::string *ErrorStr);
 

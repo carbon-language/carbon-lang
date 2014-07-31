@@ -45,19 +45,16 @@ extern "C" void LLVMLinkInMCJIT() {
 ExecutionEngine *MCJIT::createJIT(Module *M,
                                   std::string *ErrorStr,
                                   RTDyldMemoryManager *MemMgr,
-                                  bool GVsWithCode,
                                   TargetMachine *TM) {
   // Try to register the program as a source of symbols to resolve against.
   //
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
-  return new MCJIT(M, TM, MemMgr ? MemMgr : new SectionMemoryManager(),
-                   GVsWithCode);
+  return new MCJIT(M, TM, MemMgr ? MemMgr : new SectionMemoryManager());
 }
 
-MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM,
-             bool AllocateGVsWithCode)
+MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM)
   : ExecutionEngine(m), TM(tm), Ctx(nullptr), MemMgr(this, MM), Dyld(&MemMgr),
     ObjCache(nullptr) {
 
