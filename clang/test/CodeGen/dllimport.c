@@ -44,6 +44,14 @@ __declspec(dllimport) extern int GlobalRedecl3;
                       extern int GlobalRedecl3; // dllimport ignored
 USEVAR(GlobalRedecl3)
 
+// Redeclaration in local context.
+// CHECK: @GlobalRedecl4 = external dllimport global i32
+__declspec(dllimport) int GlobalRedecl4;
+int functionScope() {
+  extern int GlobalRedecl4; // still dllimport
+  return GlobalRedecl4;
+}
+
 
 
 //===----------------------------------------------------------------------===//

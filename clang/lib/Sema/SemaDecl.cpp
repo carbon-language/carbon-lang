@@ -5047,7 +5047,7 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
   }
 
   // A redeclaration is not allowed to drop a dllimport attribute, the only
-  // exception being inline function definitions.
+  // exceptions being inline function definitions and local extern declarations.
   // NB: MSVC converts such a declaration to dllexport.
   bool IsInline = false, IsStaticDataMember = false;
   if (const auto *VD = dyn_cast<VarDecl>(NewDecl))
@@ -5057,7 +5057,8 @@ static void checkDLLAttributeRedeclaration(Sema &S, NamedDecl *OldDecl,
   else if (const auto *FD = dyn_cast<FunctionDecl>(NewDecl))
     IsInline = FD->isInlined();
 
-  if (OldImportAttr && !HasNewAttr && !IsInline && !IsStaticDataMember) {
+  if (OldImportAttr && !HasNewAttr && !IsInline && !IsStaticDataMember &&
+      !NewDecl->isLocalExternDecl()) {
     S.Diag(NewDecl->getLocation(),
            diag::warn_redeclaration_without_attribute_prev_attribute_ignored)
       << NewDecl << OldImportAttr;

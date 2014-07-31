@@ -74,6 +74,7 @@ __declspec(dllimport) static int StaticGlobal; // expected-error{{'StaticGlobal'
 __declspec(dllimport) float LocalRedecl1; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl2; // expected-note{{previous definition is here}}
 __declspec(dllimport) float LocalRedecl3; // expected-note{{previous definition is here}}
+__declspec(dllimport) float LocalRedecl4;
 void functionScope() {
   __declspec(dllimport) int LocalRedecl1; // expected-error{{redefinition of 'LocalRedecl1' with a different type: 'int' vs 'float'}}
   int *__attribute__((dllimport)) LocalRedecl2; // expected-error{{redefinition of 'LocalRedecl2' with a different type: 'int *' vs 'float'}}
@@ -84,6 +85,9 @@ void functionScope() {
   __declspec(dllimport) extern int ExternLocalVarDecl;
   __declspec(dllimport) extern int ExternLocalVarDef = 1; // expected-error{{definition of dllimport data}}
   __declspec(dllimport) static int StaticLocalVar; // expected-error{{'StaticLocalVar' must have external linkage when declared 'dllimport'}}
+
+  // Local extern redeclaration does not drop the attribute.
+  extern float LocalRedecl4;
 }
 
 
