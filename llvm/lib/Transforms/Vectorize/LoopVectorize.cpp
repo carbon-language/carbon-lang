@@ -1021,24 +1021,20 @@ public:
 
   std::string emitRemark() const {
     Report R;
-    R << "vectorization ";
-    switch (Force) {
-    case LoopVectorizeHints::FK_Disabled:
-      R << "is explicitly disabled";
-      break;
-    case LoopVectorizeHints::FK_Enabled:
-      R << "is explicitly enabled";
-      if (Width != 0 && Unroll != 0)
-        R << " with width " << Width << " and interleave count " << Unroll;
-      else if (Width != 0)
-        R << " with width " << Width;
-      else if (Unroll != 0)
-        R << " with interleave count " << Unroll;
-      break;
-    case LoopVectorizeHints::FK_Undefined:
-      R << "was not specified";
-      break;
+    if (Force == LoopVectorizeHints::FK_Disabled)
+      R << "vectorization is explicitly disabled";
+    else {
+      R << "use -Rpass-analysis=loop-vectorize for more info";
+      if (Force == LoopVectorizeHints::FK_Enabled) {
+        R << " (Force=true";
+        if (Width != 0)
+          R << ", Vector Width=" << Width;
+        if (Unroll != 0)
+          R << ", Interleave Count=" << Unroll;
+        R << ")";
+      }
     }
+
     return R.str();
   }
 
