@@ -26,24 +26,24 @@ test()
 int main()
 {
     test<bool, false>();
-    test<char, true>();
-    test<signed char, true>();
+//    test<char, false>(); // don't know
+    test<signed char, false>();
     test<unsigned char, true>();
-    test<wchar_t, true>();
+//    test<wchar_t, false>(); // don't know
 #ifndef _LIBCPP_HAS_NO_UNICODE_CHARS
     test<char16_t, true>();
     test<char32_t, true>();
 #endif  // _LIBCPP_HAS_NO_UNICODE_CHARS
-    test<short, true>();
+    test<short, false>();
     test<unsigned short, true>();
-    test<int, true>();
+    test<int, false>();
     test<unsigned int, true>();
-    test<long, true>();
+    test<long, false>();
     test<unsigned long, true>();
-    test<long long, true>();
+    test<long long, false>();
     test<unsigned long long, true>();
 #ifndef _LIBCPP_HAS_NO_INT128
-    test<__int128_t, true>();
+    test<__int128_t, false>();
     test<__uint128_t, true>();
 #endif
     test<float, false>();
