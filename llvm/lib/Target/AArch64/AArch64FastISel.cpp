@@ -1708,6 +1708,25 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
         .addImm(1);
     return true;
   }
+  case Intrinsic::sqrt: {
+    Type *RetTy = II->getCalledFunction()->getReturnType();
+
+    MVT VT;
+    if (!isTypeLegal(RetTy, VT))
+      return false;
+
+    unsigned Op0Reg = getRegForValue(II->getOperand(0));
+    if (!Op0Reg)
+      return false;
+    bool Op0IsKill = hasTrivialKill(II->getOperand(0));
+
+    unsigned ResultReg = FastEmit_r(VT, VT, ISD::FSQRT, Op0Reg, Op0IsKill);
+    if (!ResultReg)
+      return false;
+
+    UpdateValueMap(II, ResultReg);
+    return true;
+  }
   case Intrinsic::sadd_with_overflow:
   case Intrinsic::uadd_with_overflow:
   case Intrinsic::ssub_with_overflow:
