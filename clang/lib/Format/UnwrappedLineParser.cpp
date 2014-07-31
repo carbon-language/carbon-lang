@@ -1327,10 +1327,8 @@ void UnwrappedLineParser::parseEnum() {
 
 void UnwrappedLineParser::parseRecord() {
   nextToken();
-  if (FormatTok->Tok.is(tok::identifier) ||
-      FormatTok->Tok.is(tok::kw___attribute) ||
-      FormatTok->Tok.is(tok::kw___declspec) ||
-      FormatTok->Tok.is(tok::kw_alignas)) {
+  if (FormatTok->isOneOf(tok::identifier, tok::coloncolon, tok::kw___attribute,
+                         tok::kw___declspec, tok::kw_alignas)) {
     nextToken();
     // We can have macros or attributes in between 'class' and the class name.
     if (FormatTok->Tok.is(tok::l_paren)) {
