@@ -2072,13 +2072,12 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
     if (!getLangOpts().CPlusPlus11) {
       BadAllocType = Context.getTypeDeclType(getStdBadAlloc());
       assert(StdBadAlloc && "Must have std::bad_alloc declared");
-      EPI.ExceptionSpecType = EST_Dynamic;
-      EPI.NumExceptions = 1;
-      EPI.Exceptions = &BadAllocType;
+      EPI.ExceptionSpec.Type = EST_Dynamic;
+      EPI.ExceptionSpec.Exceptions = llvm::makeArrayRef(BadAllocType);
     }
   } else {
-    EPI.ExceptionSpecType = getLangOpts().CPlusPlus11 ?
-                                EST_BasicNoexcept : EST_DynamicNone;
+    EPI.ExceptionSpec =
+        getLangOpts().CPlusPlus11 ? EST_BasicNoexcept : EST_DynamicNone;
   }
 
   QualType Params[] = { Param1, Param2 };

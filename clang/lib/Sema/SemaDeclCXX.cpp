@@ -4818,8 +4818,8 @@ static FunctionProtoType::ExtProtoInfo getImplicitMethodEPI(Sema &S,
   FunctionProtoType::ExtProtoInfo EPI;
 
   // Build an exception specification pointing back at this member.
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = MD;
+  EPI.ExceptionSpec.Type = EST_Unevaluated;
+  EPI.ExceptionSpec.SourceDecl = MD;
 
   // Set the calling convention to the default for C++ instance methods.
   EPI.ExtInfo = EPI.ExtInfo.withCallingConv(
@@ -4834,14 +4834,10 @@ void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) 
     return;
 
   // Evaluate the exception specification.
-  ImplicitExceptionSpecification ExceptSpec =
-      computeImplicitExceptionSpec(*this, Loc, MD);
-
-  FunctionProtoType::ExtProtoInfo EPI;
-  ExceptSpec.getEPI(EPI);
+  auto ESI = computeImplicitExceptionSpec(*this, Loc, MD).getExceptionSpec();
 
   // Update the type of the special member to use it.
-  UpdateExceptionSpec(MD, EPI);
+  UpdateExceptionSpec(MD, ESI);
 
   // A user-provided destructor can be defined outside the class. When that
   // happens, be sure to update the exception specification on both
@@ -4849,7 +4845,7 @@ void Sema::EvaluateImplicitExceptionSpec(SourceLocation Loc, CXXMethodDecl *MD) 
   const FunctionProtoType *CanonicalFPT =
     MD->getCanonicalDecl()->getType()->castAs<FunctionProtoType>();
   if (CanonicalFPT->getExceptionSpecType() == EST_Unevaluated)
-    UpdateExceptionSpec(MD->getCanonicalDecl(), EPI);
+    UpdateExceptionSpec(MD->getCanonicalDecl(), ESI);
 }
 
 void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
@@ -4995,8 +4991,8 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     //  -- it is implicitly considered to have the same exception-specification
     //     as if it had been implicitly declared,
     FunctionProtoType::ExtProtoInfo EPI = Type->getExtProtoInfo();
-    EPI.ExceptionSpecType = EST_Unevaluated;
-    EPI.ExceptionSpecDecl = MD;
+    EPI.ExceptionSpec.Type = EST_Unevaluated;
+    EPI.ExceptionSpec.SourceDecl = MD;
     MD->setType(Context.getFunctionType(ReturnType,
                                         ArrayRef<QualType>(&ArgType,
                                                            ExpectedParams),
@@ -5030,7 +5026,8 @@ void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
   CallingConv CC = Context.getDefaultCallingConvention(/*IsVariadic=*/false,
                                                        /*IsCXXMethod=*/true);
   FunctionProtoType::ExtProtoInfo EPI(CC);
-  computeImplicitExceptionSpec(*this, MD->getLocation(), MD).getEPI(EPI);
+  EPI.ExceptionSpec = computeImplicitExceptionSpec(*this, MD->getLocation(), MD)
+                          .getExceptionSpec();
   const FunctionProtoType *ImplicitType = cast<FunctionProtoType>(
     Context.getFunctionType(Context.VoidTy, None, EPI));
 
@@ -8744,8 +8741,8 @@ private:
     // Build an unevaluated exception specification for this constructor.
     const FunctionProtoType *FPT = DerivedType->castAs<FunctionProtoType>();
     FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-    EPI.ExceptionSpecType = EST_Unevaluated;
-    EPI.ExceptionSpecDecl = DerivedCtor;
+    EPI.ExceptionSpec.Type = EST_Unevaluated;
+    EPI.ExceptionSpec.SourceDecl = DerivedCtor;
     DerivedCtor->setType(Context.getFunctionType(FPT->getReturnType(),
                                                  FPT->getParamTypes(), EPI));
 
@@ -9002,8 +8999,8 @@ void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
   // the only thing of interest in the destructor type is its extended info.
   // The return and arguments are fixed.
   FunctionProtoType::ExtProtoInfo EPI = DtorType->getExtProtoInfo();
-  EPI.ExceptionSpecType = EST_Unevaluated;
-  EPI.ExceptionSpecDecl = Destructor;
+  EPI.ExceptionSpec.Type = EST_Unevaluated;
+  EPI.ExceptionSpec.SourceDecl = Destructor;
   Destructor->setType(Context.getFunctionType(Context.VoidTy, None, EPI));
 
   // FIXME: If the destructor has a body that could throw, and the newly created
@@ -12981,9 +12978,9 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
                                   ArrayRef<SourceRange> DynamicExceptionRanges,
                                   Expr *NoexceptExpr,
                                   SmallVectorImpl<QualType> &Exceptions,
-                                  FunctionProtoType::ExtProtoInfo &EPI) {
+                                  FunctionProtoType::ExceptionSpecInfo &ESI) {
   Exceptions.clear();
-  EPI.ExceptionSpecType = EST;
+  ESI.Type = EST;
   if (EST == EST_Dynamic) {
     Exceptions.reserve(DynamicExceptions.size());
     for (unsigned ei = 0, ee = DynamicExceptions.size(); ei != ee; ++ei) {
@@ -13004,11 +13001,10 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
       if (!CheckSpecifiedExceptionType(ET, DynamicExceptionRanges[ei]))
         Exceptions.push_back(ET);
     }
-    EPI.NumExceptions = Exceptions.size();
-    EPI.Exceptions = Exceptions.data();
+    ESI.Exceptions = Exceptions;
     return;
   }
-  
+
   if (EST == EST_ComputedNoexcept) {
     // If an error occurred, there's no expression here.
     if (NoexceptExpr) {
@@ -13017,15 +13013,15 @@ Sema::checkExceptionSpecification(ExceptionSpecificationType EST,
               Context.BoolTy) &&
              "Parser should have made sure that the expression is boolean");
       if (NoexceptExpr && DiagnoseUnexpandedParameterPack(NoexceptExpr)) {
-        EPI.ExceptionSpecType = EST_BasicNoexcept;
+        ESI.Type = EST_BasicNoexcept;
         return;
       }
-      
+
       if (!NoexceptExpr->isValueDependent())
         NoexceptExpr = VerifyIntegerConstantExpression(NoexceptExpr, nullptr,
                          diag::err_noexcept_needs_constant_expression,
                          /*AllowFold*/ false).get();
-      EPI.NoexceptExpr = NoexceptExpr;
+      ESI.NoexceptExpr = NoexceptExpr;
     }
     return;
   }

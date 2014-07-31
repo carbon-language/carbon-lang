@@ -2994,7 +2994,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                       DynamicExceptionRanges,
                                       NoexceptExpr,
                                       Exceptions,
-                                      EPI);
+                                      EPI.ExceptionSpec);
 
         T = Context.getFunctionType(T, ParamTys, EPI);
       }

@@ -1142,7 +1142,7 @@ private:
   QualType readTypeRecord(unsigned Index);
   void readExceptionSpec(ModuleFile &ModuleFile,
                          SmallVectorImpl<QualType> &ExceptionStorage,
-                         FunctionProtoType::ExtProtoInfo &EPI,
+                         FunctionProtoType::ExceptionSpecInfo &ESI,
                          const RecordData &Record, unsigned &Index);
   RecordLocation TypeCursorForIndex(unsigned Index);
   void LoadedDecl(unsigned Index, Decl *D);

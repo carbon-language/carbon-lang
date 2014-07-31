@@ -3290,11 +3290,12 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_CXX_RESOLVED_EXCEPTION_SPEC: {
       auto *FD = cast<FunctionDecl>(D);
       auto *FPT = FD->getType()->castAs<FunctionProtoType>();
-      auto EPI = FPT->getExtProtoInfo();
       SmallVector<QualType, 8> ExceptionStorage;
-      Reader.readExceptionSpec(ModuleFile, ExceptionStorage, EPI, Record, Idx);
-      FD->setType(Reader.Context.getFunctionType(FPT->getReturnType(),
-                                                 FPT->getParamTypes(), EPI));
+      FunctionProtoType::ExceptionSpecInfo ESI;
+      Reader.readExceptionSpec(ModuleFile, ExceptionStorage, ESI, Record, Idx);
+      FD->setType(Reader.Context.getFunctionType(
+          FPT->getReturnType(), FPT->getParamTypes(),
+          FPT->getExtProtoInfo().withExceptionSpec(ESI)));
       break;
     }
 

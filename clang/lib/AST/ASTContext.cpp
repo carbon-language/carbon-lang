@@ -2846,7 +2846,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
 
   // Determine whether the type being created is already canonical or not.
   bool isCanonical =
-    EPI.ExceptionSpecType == EST_None && isCanonicalResultType(ResultTy) &&
+    EPI.ExceptionSpec.Type == EST_None && isCanonicalResultType(ResultTy) &&
     !EPI.HasTrailingReturn;
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
@@ -2863,8 +2863,7 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
 
     FunctionProtoType::ExtProtoInfo CanonicalEPI = EPI;
     CanonicalEPI.HasTrailingReturn = false;
-    CanonicalEPI.ExceptionSpecType = EST_None;
-    CanonicalEPI.NumExceptions = 0;
+    CanonicalEPI.ExceptionSpec = FunctionProtoType::ExceptionSpecInfo();
 
     // Result types do not have ARC lifetime qualifiers.
     QualType CanResultTy = getCanonicalType(ResultTy);
@@ -2892,13 +2891,13 @@ ASTContext::getFunctionType(QualType ResultTy, ArrayRef<QualType> ArgArray,
   // specification.
   size_t Size = sizeof(FunctionProtoType) +
                 NumArgs * sizeof(QualType);
-  if (EPI.ExceptionSpecType == EST_Dynamic) {
-    Size += EPI.NumExceptions * sizeof(QualType);
-  } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+  if (EPI.ExceptionSpec.Type == EST_Dynamic) {
+    Size += EPI.ExceptionSpec.Exceptions.size() * sizeof(QualType);
+  } else if (EPI.ExceptionSpec.Type == EST_ComputedNoexcept) {
     Size += sizeof(Expr*);
-  } else if (EPI.ExceptionSpecType == EST_Uninstantiated) {
+  } else if (EPI.ExceptionSpec.Type == EST_Uninstantiated) {
     Size += 2 * sizeof(FunctionDecl*);
-  } else if (EPI.ExceptionSpecType == EST_Unevaluated) {
+  } else if (EPI.ExceptionSpec.Type == EST_Unevaluated) {
     Size += sizeof(FunctionDecl*);
   }
   if (EPI.ConsumedParameters)

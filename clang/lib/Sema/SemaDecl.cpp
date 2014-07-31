@@ -7110,12 +7110,10 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     const FunctionProtoType *FPT = R->getAs<FunctionProtoType>();
     if ((Name.getCXXOverloadedOperator() == OO_Delete ||
          Name.getCXXOverloadedOperator() == OO_Array_Delete) &&
-        getLangOpts().CPlusPlus11 && FPT && !FPT->hasExceptionSpec()) {
-      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
-      EPI.ExceptionSpecType = EST_BasicNoexcept;
-      NewFD->setType(Context.getFunctionType(FPT->getReturnType(),
-                                             FPT->getParamTypes(), EPI));
-    }
+        getLangOpts().CPlusPlus11 && FPT && !FPT->hasExceptionSpec())
+      NewFD->setType(Context.getFunctionType(
+          FPT->getReturnType(), FPT->getParamTypes(),
+          FPT->getExtProtoInfo().withExceptionSpec(EST_BasicNoexcept)));
   }
 
   // Filter out previous declarations that don't match the scope.

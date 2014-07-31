@@ -1596,8 +1596,9 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
                    result->isInstantiationDependentType(),
                    result->isVariablyModifiedType(),
                    result->containsUnexpandedParameterPack(), epi.ExtInfo),
-      NumParams(params.size()), NumExceptions(epi.NumExceptions),
-      ExceptionSpecType(epi.ExceptionSpecType),
+      NumParams(params.size()),
+      NumExceptions(epi.ExceptionSpec.Exceptions.size()),
+      ExceptionSpecType(epi.ExceptionSpec.Type),
       HasAnyConsumedParams(epi.ConsumedParameters != nullptr),
       Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
       RefQualifier(epi.RefQualifier) {
@@ -1620,27 +1621,28 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
   if (getExceptionSpecType() == EST_Dynamic) {
     // Fill in the exception array.
     QualType *exnSlot = argSlot + NumParams;
-    for (unsigned i = 0, e = epi.NumExceptions; i != e; ++i) {
-      if (epi.Exceptions[i]->isDependentType())
+    unsigned I = 0;
+    for (QualType ExceptionType : epi.ExceptionSpec.Exceptions) {
+      if (ExceptionType->isDependentType())
         setDependent();
-      else if (epi.Exceptions[i]->isInstantiationDependentType())
+      else if (ExceptionType->isInstantiationDependentType())
         setInstantiationDependent();
-      
-      if (epi.Exceptions[i]->containsUnexpandedParameterPack())
+
+      if (ExceptionType->containsUnexpandedParameterPack())
         setContainsUnexpandedParameterPack();
 
-      exnSlot[i] = epi.Exceptions[i];
+      exnSlot[I++] = ExceptionType;
     }
   } else if (getExceptionSpecType() == EST_ComputedNoexcept) {
     // Store the noexcept expression and context.
     Expr **noexSlot = reinterpret_cast<Expr **>(argSlot + NumParams);
-    *noexSlot = epi.NoexceptExpr;
-    
-    if (epi.NoexceptExpr) {
-      if (epi.NoexceptExpr->isValueDependent() 
-          || epi.NoexceptExpr->isTypeDependent())
+    *noexSlot = epi.ExceptionSpec.NoexceptExpr;
+
+    if (epi.ExceptionSpec.NoexceptExpr) {
+      if (epi.ExceptionSpec.NoexceptExpr->isValueDependent() 
+          || epi.ExceptionSpec.NoexceptExpr->isTypeDependent())
         setDependent();
-      else if (epi.NoexceptExpr->isInstantiationDependent())
+      else if (epi.ExceptionSpec.NoexceptExpr->isInstantiationDependent())
         setInstantiationDependent();
     }
   } else if (getExceptionSpecType() == EST_Uninstantiated) {
@@ -1648,8 +1650,8 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
     // exception specification.
     FunctionDecl **slot =
         reinterpret_cast<FunctionDecl **>(argSlot + NumParams);
-    slot[0] = epi.ExceptionSpecDecl;
-    slot[1] = epi.ExceptionSpecTemplate;
+    slot[0] = epi.ExceptionSpec.SourceDecl;
+    slot[1] = epi.ExceptionSpec.SourceTemplate;
     // This exception specification doesn't make the type dependent, because
     // it's not instantiated as part of instantiating the type.
   } else if (getExceptionSpecType() == EST_Unevaluated) {
@@ -1657,7 +1659,7 @@ FunctionProtoType::FunctionProtoType(QualType result, ArrayRef<QualType> params,
     // exception specification.
     FunctionDecl **slot =
         reinterpret_cast<FunctionDecl **>(argSlot + NumParams);
-    slot[0] = epi.ExceptionSpecDecl;
+    slot[0] = epi.ExceptionSpec.SourceDecl;
   }
 
   if (epi.ConsumedParameters) {
@@ -1755,20 +1757,21 @@ void FunctionProtoType::Profile(llvm::FoldingSetNodeID &ID, QualType Result,
   assert(!(unsigned(epi.Variadic) & ~1) &&
          !(unsigned(epi.TypeQuals) & ~255) &&
          !(unsigned(epi.RefQualifier) & ~3) &&
-         !(unsigned(epi.ExceptionSpecType) & ~7) &&
+         !(unsigned(epi.ExceptionSpec.Type) & ~7) &&
          "Values larger than expected.");
   ID.AddInteger(unsigned(epi.Variadic) +
                 (epi.TypeQuals << 1) +
                 (epi.RefQualifier << 9) +
-                (epi.ExceptionSpecType << 11));
-  if (epi.ExceptionSpecType == EST_Dynamic) {
-    for (unsigned i = 0; i != epi.NumExceptions; ++i)
-      ID.AddPointer(epi.Exceptions[i].getAsOpaquePtr());
-  } else if (epi.ExceptionSpecType == EST_ComputedNoexcept && epi.NoexceptExpr){
-    epi.NoexceptExpr->Profile(ID, Context, false);
-  } else if (epi.ExceptionSpecType == EST_Uninstantiated ||
-             epi.ExceptionSpecType == EST_Unevaluated) {
-    ID.AddPointer(epi.ExceptionSpecDecl->getCanonicalDecl());
+                (epi.ExceptionSpec.Type << 11));
+  if (epi.ExceptionSpec.Type == EST_Dynamic) {
+    for (QualType Ex : epi.ExceptionSpec.Exceptions)
+      ID.AddPointer(Ex.getAsOpaquePtr());
+  } else if (epi.ExceptionSpec.Type == EST_ComputedNoexcept &&
+             epi.ExceptionSpec.NoexceptExpr) {
+    epi.ExceptionSpec.NoexceptExpr->Profile(ID, Context, false);
+  } else if (epi.ExceptionSpec.Type == EST_Uninstantiated ||
+             epi.ExceptionSpec.Type == EST_Unevaluated) {
+    ID.AddPointer(epi.ExceptionSpec.SourceDecl->getCanonicalDecl());
   }
   if (epi.ConsumedParameters) {
     for (unsigned i = 0; i != NumParams; ++i)

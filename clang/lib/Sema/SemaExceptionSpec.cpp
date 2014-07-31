@@ -132,21 +132,19 @@ Sema::ResolveExceptionSpec(SourceLocation Loc, const FunctionProtoType *FPT) {
   return SourceDecl->getType()->castAs<FunctionProtoType>();
 }
 
-void Sema::UpdateExceptionSpec(FunctionDecl *FD,
-                               const FunctionProtoType::ExtProtoInfo &EPI) {
-  const FunctionProtoType *Proto = FD->getType()->castAs<FunctionProtoType>();
+void
+Sema::UpdateExceptionSpec(FunctionDecl *FD,
+                          const FunctionProtoType::ExceptionSpecInfo &ESI) {
+  const FunctionProtoType *Proto =
+      FD->getType()->castAs<FunctionProtoType>();
 
   // Overwrite the exception spec and rebuild the function type.
-  FunctionProtoType::ExtProtoInfo NewEPI = Proto->getExtProtoInfo();
-  NewEPI.ExceptionSpecType = EPI.ExceptionSpecType;
-  NewEPI.NumExceptions = EPI.NumExceptions;
-  NewEPI.Exceptions = EPI.Exceptions;
-  NewEPI.NoexceptExpr = EPI.NoexceptExpr;
-  FD->setType(Context.getFunctionType(Proto->getReturnType(),
-                                      Proto->getParamTypes(), NewEPI));
+  FD->setType(Context.getFunctionType(
+      Proto->getReturnType(), Proto->getParamTypes(),
+      Proto->getExtProtoInfo().withExceptionSpec(ESI)));
 
   // If we've fully resolved the exception specification, notify listeners.
-  if (!isUnresolvedExceptionSpec(EPI.ExceptionSpecType))
+  if (!isUnresolvedExceptionSpec(ESI.Type))
     if (auto *Listener = getASTMutationListener())
       Listener->ResolvedExceptionSpec(FD);
 }
@@ -227,32 +225,28 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
       (Old->getLocation().isInvalid() ||
        Context.getSourceManager().isInSystemHeader(Old->getLocation())) &&
       Old->isExternC()) {
-    FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-    EPI.ExceptionSpecType = EST_DynamicNone;
-    QualType NewType = Context.getFunctionType(NewProto->getReturnType(),
-                                               NewProto->getParamTypes(), EPI);
-    New->setType(NewType);
+    New->setType(Context.getFunctionType(
+        NewProto->getReturnType(), NewProto->getParamTypes(),
+        NewProto->getExtProtoInfo().withExceptionSpec(EST_DynamicNone)));
     return false;
   }
 
   const FunctionProtoType *OldProto =
     Old->getType()->castAs<FunctionProtoType>();
 
-  FunctionProtoType::ExtProtoInfo EPI = NewProto->getExtProtoInfo();
-  EPI.ExceptionSpecType = OldProto->getExceptionSpecType();
-  if (EPI.ExceptionSpecType == EST_Dynamic) {
-    EPI.NumExceptions = OldProto->getNumExceptions();
-    EPI.Exceptions = OldProto->exception_begin();
-  } else if (EPI.ExceptionSpecType == EST_ComputedNoexcept) {
+  FunctionProtoType::ExceptionSpecInfo ESI = OldProto->getExceptionSpecType();
+  if (ESI.Type == EST_Dynamic) {
+    ESI.Exceptions = OldProto->exceptions();
+  } else if (ESI.Type == EST_ComputedNoexcept) {
     // FIXME: We can't just take the expression from the old prototype. It
     // likely contains references to the old prototype's parameters.
   }
 
   // Update the type of the function with the appropriate exception
   // specification.
-  QualType NewType = Context.getFunctionType(NewProto->getReturnType(),
-                                             NewProto->getParamTypes(), EPI);
-  New->setType(NewType);
+  New->setType(Context.getFunctionType(
+      NewProto->getReturnType(), NewProto->getParamTypes(),
+      NewProto->getExtProtoInfo().withExceptionSpec(ESI)));
 
   // Warn about the lack of exception specification.
   SmallString<128> ExceptionSpecString;

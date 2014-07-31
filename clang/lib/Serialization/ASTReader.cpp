@@ -5268,7 +5268,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     EPI.TypeQuals = Record[Idx++];
     EPI.RefQualifier = static_cast<RefQualifierKind>(Record[Idx++]);
     SmallVector<QualType, 8> ExceptionStorage;
-    readExceptionSpec(*Loc.F, ExceptionStorage, EPI, Record, Idx);
+    readExceptionSpec(*Loc.F, ExceptionStorage, EPI.ExceptionSpec, Record, Idx);
 
     unsigned NumParams = Record[Idx++];
     SmallVector<QualType, 16> ParamTypes;
@@ -5537,24 +5537,22 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
 
 void ASTReader::readExceptionSpec(ModuleFile &ModuleFile,
                                   SmallVectorImpl<QualType> &Exceptions,
-                                  FunctionProtoType::ExtProtoInfo &EPI,
+                                  FunctionProtoType::ExceptionSpecInfo &ESI,
                                   const RecordData &Record, unsigned &Idx) {
   ExceptionSpecificationType EST =
       static_cast<ExceptionSpecificationType>(Record[Idx++]);
-  EPI.ExceptionSpecType = EST;
+  ESI.Type = EST;
   if (EST == EST_Dynamic) {
-    EPI.NumExceptions = Record[Idx++];
-    for (unsigned I = 0; I != EPI.NumExceptions; ++I)
+    for (unsigned I = 0, N = Record[Idx++]; I != N; ++I)
       Exceptions.push_back(readType(ModuleFile, Record, Idx));
-    EPI.Exceptions = Exceptions.data();
+    ESI.Exceptions = Exceptions;
   } else if (EST == EST_ComputedNoexcept) {
-    EPI.NoexceptExpr = ReadExpr(ModuleFile);
+    ESI.NoexceptExpr = ReadExpr(ModuleFile);
   } else if (EST == EST_Uninstantiated) {
-    EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
-    EPI.ExceptionSpecTemplate =
-        ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+    ESI.SourceDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+    ESI.SourceTemplate = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
   } else if (EST == EST_Unevaluated) {
-    EPI.ExceptionSpecDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
+    ESI.SourceDecl = ReadDeclAs<FunctionDecl>(ModuleFile, Record, Idx);
   }
 }
 
