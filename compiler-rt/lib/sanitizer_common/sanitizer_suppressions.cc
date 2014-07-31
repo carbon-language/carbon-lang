@@ -78,12 +78,14 @@ SuppressionContext *SuppressionContext::Get() {
 void SuppressionContext::Init() {
   CHECK(!suppression_ctx);
   suppression_ctx = new(placeholder) SuppressionContext;
+  if (common_flags()->suppressions[0] == '\0')
+    return;
   char *suppressions_from_file;
   uptr buffer_size;
   uptr contents_size =
       ReadFileToBuffer(common_flags()->suppressions, &suppressions_from_file,
                        &buffer_size, 1 << 26 /* max_len */);
-  if (common_flags()->suppressions[0] && contents_size == 0) {
+  if (contents_size == 0) {
     Printf("%s: failed to read suppressions file '%s'\n", SanitizerToolName,
            common_flags()->suppressions);
     Die();
