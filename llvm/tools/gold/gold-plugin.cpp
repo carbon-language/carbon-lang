@@ -379,7 +379,7 @@ static ld_plugin_status claim_file_hook(const ld_plugin_input_file *file,
   return LDPS_OK;
 }
 
-static bool mustPreserve(const claimed_file &F, ld_plugin_symbol &Sym) {
+static bool mustPreserve(ld_plugin_symbol &Sym) {
   if (Sym.resolution == LDPR_PREVAILING_DEF)
     return true;
   if (Sym.resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
@@ -409,7 +409,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
       continue;
     get_symbols(F.handle, F.syms.size(), &F.syms[0]);
     for (ld_plugin_symbol &Sym : F.syms) {
-      if (mustPreserve(F, Sym)) {
+      if (mustPreserve(Sym)) {
         CodeGen->addMustPreserveSymbol(Sym.name);
 
         if (options::generate_api_file)
