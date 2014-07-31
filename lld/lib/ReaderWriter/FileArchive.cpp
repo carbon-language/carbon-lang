@@ -157,7 +157,7 @@ protected:
     auto objOrErr(ObjectFile::createObjectFile(mb));
     if (auto ec = objOrErr.getError())
       return ec;
-    std::unique_ptr<ObjectFile> obj(objOrErr.get());
+    std::unique_ptr<ObjectFile> obj = std::move(objOrErr.get());
     SymbolRef::Type symtype;
     uint32_t symflags;
     symbol_iterator ibegin = obj->symbol_begin();

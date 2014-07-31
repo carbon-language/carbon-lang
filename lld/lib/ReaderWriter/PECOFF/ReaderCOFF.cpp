@@ -288,7 +288,7 @@ FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
   auto binaryOrErr = llvm::object::createBinary(std::move(mb));
   if ((ec = binaryOrErr.getError()))
     return;
-  std::unique_ptr<llvm::object::Binary> bin(binaryOrErr.get());
+  std::unique_ptr<llvm::object::Binary> bin = std::move(binaryOrErr.get());
 
   _obj.reset(dyn_cast<const llvm::object::COFFObjectFile>(bin.get()));
   if (!_obj) {
