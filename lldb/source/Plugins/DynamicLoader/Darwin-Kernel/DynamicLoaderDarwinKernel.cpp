@@ -326,6 +326,8 @@ DynamicLoaderDarwinKernel::SearchForKernelNearPC (Process *process)
             return addr + 0x1000;
         if (CheckForKernelImageAtAddress (addr + 0x2000, process).IsValid())
             return addr + 0x2000;
+        if (CheckForKernelImageAtAddress (addr + 0x4000, process).IsValid())
+            return addr + 0x4000;
         i++;
         addr -= 0x100000;
     }
@@ -376,6 +378,8 @@ DynamicLoaderDarwinKernel::SearchForKernelViaExhaustiveSearch (Process *process)
             return addr + 0x1000;
         if (CheckForKernelImageAtAddress (addr + 0x2000, process).IsValid())
             return addr + 0x2000;
+        if (CheckForKernelImageAtAddress (addr + 0x4000, process).IsValid())
+            return addr + 0x4000;
         addr += 0x100000;
     }
     return LLDB_INVALID_ADDRESS;
