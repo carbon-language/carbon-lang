@@ -1038,7 +1038,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 #elif defined(_AIX)
     return (const unsigned int *)__lc_ctype_ptr->obj->mask;
 #elif defined(__ANDROID__)
-    return _ctype_ + 1;
+    return reinterpret_cast<const unsigned char*>(_ctype_) + 1;
 #else
     // Platform not supported: abort so the person doing the port knows what to
     // fix

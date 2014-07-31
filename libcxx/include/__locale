@@ -356,7 +356,7 @@ public:
 #elif defined(__EMSCRIPTEN__) ||  defined(__NetBSD__)
     typedef unsigned short mask;
 #elif defined(__ANDROID__)
-    typedef char mask;
+    typedef unsigned char mask;
 #endif
     static const mask space  = _CTYPE_S;
     static const mask print  = _CTYPE_R;
