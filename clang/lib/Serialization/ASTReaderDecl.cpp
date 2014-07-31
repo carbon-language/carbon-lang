@@ -2490,6 +2490,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Decl *Previous) {
   D->RedeclLink.setPrevious(cast<DeclT>(Previous));
 }
+namespace clang {
 template<>
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
                                            Redeclarable<FunctionDecl> *D,
@@ -2533,6 +2534,7 @@ void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader,
         FPT->getReturnType(), FPT->getParamTypes(),
         FPT->getExtProtoInfo().withExceptionSpec(EPI.ExceptionSpec)));
   }
+}
 }
 void ASTDeclReader::attachPreviousDeclImpl(ASTReader &Reader, ...) {
   llvm_unreachable("attachPreviousDecl on non-redeclarable declaration");
