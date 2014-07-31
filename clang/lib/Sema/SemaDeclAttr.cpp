@@ -148,30 +148,43 @@ static unsigned getNumAttributeArgs(const AttributeList &Attr) {
   return Attr.getNumArgs() + Attr.hasParsedType();
 }
 
-/// \brief Check if the attribute has exactly as many args as Num. May
-/// output an error.
-static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
-                                  unsigned Num) {
-  if (getNumAttributeArgs(Attr) != Num) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments)
-      << Attr.getName() << Num;
+template <typename Compare>
+static bool checkAttributeNumArgsImpl(Sema &S, const AttributeList &Attr,
+                                      unsigned Num, unsigned Diag,
+                                      Compare Comp) {
+  if (Comp(getNumAttributeArgs(Attr), Num)) {
+    S.Diag(Attr.getLoc(), Diag) << Attr.getName() << Num;
     return false;
   }
 
   return true;
 }
 
+/// \brief Check if the attribute has exactly as many args as Num. May
+/// output an error.
+static bool checkAttributeNumArgs(Sema &S, const AttributeList &Attr,
+                                  unsigned Num) {
+  return checkAttributeNumArgsImpl(S, Attr, Num,
+                                   diag::err_attribute_wrong_number_arguments,
+                                   std::not_equal_to<unsigned>());
+}
+
 /// \brief Check if the attribute has at least as many args as Num. May
 /// output an error.
 static bool checkAttributeAtLeastNumArgs(Sema &S, const AttributeList &Attr,
                                          unsigned Num) {
-  if (getNumAttributeArgs(Attr) < Num) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_few_arguments)
-      << Attr.getName() << Num;
-    return false;
-  }
+  return checkAttributeNumArgsImpl(S, Attr, Num,
+                                   diag::err_attribute_too_few_arguments,
+                                   std::less<unsigned>());
+}
 
-  return true;
+/// \brief Check if the attribute has at most as many args as Num. May
+/// output an error.
+static bool checkAttributeAtMostNumArgs(Sema &S, const AttributeList &Attr,
+                                         unsigned Num) {
+  return checkAttributeNumArgsImpl(S, Attr, Num,
+                                   diag::err_attribute_too_many_arguments,
+                                   std::greater<unsigned>());
 }
 
 /// \brief If Expr is a valid integer constant, get the value of the integer
@@ -856,8 +869,6 @@ static void handleCallableWhenAttr(Sema &S, Decl *D,
 
 static void handleParamTypestateAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1)) return;
-    
   ParamTypestateAttr::ConsumedState ParamState;
   
   if (Attr.isArgIdent(0)) {
@@ -896,8 +907,6 @@ static void handleParamTypestateAttr(Sema &S, Decl *D,
 
 static void handleReturnTypestateAttr(Sema &S, Decl *D,
                                       const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1)) return;
-  
   ReturnTypestateAttr::ConsumedState ReturnState;
   
   if (Attr.isArgIdent(0)) {
@@ -946,9 +955,6 @@ static void handleReturnTypestateAttr(Sema &S, Decl *D,
 
 
 static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1))
-    return;
-  
   if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
     return;
   
@@ -974,9 +980,6 @@ static void handleSetTypestateAttr(Sema &S, Decl *D, const AttributeList &Attr) 
 
 static void handleTestTypestateAttr(Sema &S, Decl *D,
                                     const AttributeList &Attr) {
-  if (!checkAttributeNumArgs(S, Attr, 1))
-    return;
-  
   if (!checkForConsumableClass(S, cast<CXXMethodDecl>(D), Attr))
     return;
   
@@ -1593,15 +1596,8 @@ static void handleUsedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-      << Attr.getName() << 1;
-    return;
-  }
-
   uint32_t priority = ConstructorAttr::DefaultPriority;
-  if (Attr.getNumArgs() > 0 &&
+  if (Attr.getNumArgs() &&
       !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), priority))
     return;
 
@@ -1611,15 +1607,8 @@ static void handleConstructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-      << Attr.getName() << 1;
-    return;
-  }
-
   uint32_t priority = DestructorAttr::DefaultPriority;
-  if (Attr.getNumArgs() > 0 &&
+  if (Attr.getNumArgs() &&
       !checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), priority))
     return;
 
@@ -1631,16 +1620,9 @@ static void handleDestructorAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 template <typename AttrTy>
 static void handleAttrWithMessage(Sema &S, Decl *D,
                                   const AttributeList &Attr) {
-  unsigned NumArgs = Attr.getNumArgs();
-  if (NumArgs > 1) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-      << Attr.getName() << 1;
-    return;
-  }
-
   // Handle the case where the attribute has a text message.
   StringRef Str;
-  if (NumArgs == 1 && !S.checkStringLiteralArgumentAttr(Attr, 0, Str))
+  if (Attr.getNumArgs() == 1 && !S.checkStringLiteralArgumentAttr(Attr, 0, Str))
     return;
 
   D->addAttr(::new (S.Context) AttrTy(Attr.getRange(), S.Context, Str,
@@ -2043,13 +2025,6 @@ static void handleBlocksAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 static void handleSentinelAttr(Sema &S, Decl *D, const AttributeList &Attr) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() > 2) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-      << Attr.getName() << 2;
-    return;
-  }
-
   unsigned sentinel = (unsigned)SentinelAttr::DefaultSentinel;
   if (Attr.getNumArgs() > 0) {
     Expr *E = Attr.getArgAsExpr(0);
@@ -3249,14 +3224,6 @@ bool Sema::CheckRegparmAttr(const AttributeList &Attr, unsigned &numParams) {
 
 static void handleLaunchBoundsAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
-  // check the attribute arguments.
-  if (Attr.getNumArgs() != 1 && Attr.getNumArgs() != 2) {
-    // FIXME: 0 is not okay.
-    S.Diag(Attr.getLoc(), diag::err_attribute_too_many_arguments)
-      << Attr.getName() << 2;
-    return;
-  }
-
   uint32_t MaxThreads, MinBlocks = 0;
   if (!checkUInt32Argument(S, Attr, Attr.getArgAsExpr(0), MaxThreads, 1))
     return;
@@ -4027,11 +3994,20 @@ static bool handleCommonAttributeFeatures(Sema &S, Scope *scope, Decl *D,
   if (!Attr.diagnoseLangOpts(S))
     return true;
 
-  // If there are no optional arguments, then checking for the argument count
-  // is trivial.
-  if (Attr.getMinArgs() == Attr.getMaxArgs() &&
-      !checkAttributeNumArgs(S, Attr, Attr.getMinArgs()))
-    return true;
+  if (Attr.getMinArgs() == Attr.getMaxArgs()) {
+    // If there are no optional arguments, then checking for the argument count
+    // is trivial.
+    if (!checkAttributeNumArgs(S, Attr, Attr.getMinArgs()))
+      return true;
+  } else {
+    // There are optional arguments, so checking is slightly more involved.
+    if (Attr.getMinArgs() &&
+        !checkAttributeAtLeastNumArgs(S, Attr, Attr.getMinArgs()))
+      return true;
+    else if (!Attr.hasVariadicArg() && Attr.getMaxArgs() &&
+             !checkAttributeAtMostNumArgs(S, Attr, Attr.getMaxArgs()))
+      return true;
+  }
 
   // Check whether the attribute appertains to the given subject.
   if (!Attr.diagnoseAppertainsTo(S, D))

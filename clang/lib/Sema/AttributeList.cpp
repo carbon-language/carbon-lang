@@ -206,3 +206,11 @@ bool AttributeList::isKnownToGCC() const {
 unsigned AttributeList::getSemanticSpelling() const {
   return getInfo(*this).SpellingIndexToSemanticSpelling(*this);
 }
+
+bool AttributeList::hasVariadicArg() const {
+  // If the attribute has the maximum number of optional arguments, we will
+  // claim that as being variadic. If we someday get an attribute that
+  // legitimately bumps up against that maximum, we can use another bit to track
+  // whether it's truly variadic or not.
+  return getInfo(*this).OptArgs == 15;
+}
