@@ -20,3 +20,11 @@ define i64 @pow2b(i32 %x) {
   ret i64 %e2
 ; CHECK: ret i64 %e
 }
+
+define i32 @sub_neg_nuw(i32 %x, i32 %y) {
+; CHECK-LABEL: @sub_neg_nuw(
+  %neg = sub nuw i32 0, %y
+  %sub = sub i32 %x, %neg
+  ret i32 %sub
+; CHECK: ret i32 %x
+}

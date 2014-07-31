@@ -676,6 +676,18 @@ static Value *SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
   if (Op0 == Op1)
     return Constant::getNullValue(Op0->getType());
 
+  // X - (0 - Y) -> X if the second sub is NUW.
+  // If Y != 0, 0 - Y is a poison value.
+  // If Y == 0, 0 - Y simplifies to 0.
+  if (BinaryOperator::isNeg(Op1)) {
+    if (const auto *BO = dyn_cast<BinaryOperator>(Op1)) {
+      assert(BO->getOpcode() == Instruction::Sub &&
+             "Expected a subtraction operator!");
+      if (BO->hasNoUnsignedWrap())
+        return Op0;
+    }
+  }
+
   // (X + Y) - Z -> X + (Y - Z) or Y + (X - Z) if everything simplifies.
   // For example, (X + Y) - Y -> X; (Y + X) - Y -> X
   Value *X = nullptr, *Y = nullptr, *Z = Op1;
