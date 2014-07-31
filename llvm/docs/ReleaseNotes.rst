@@ -210,7 +210,8 @@ Constant hoisting has been enabled.
 
 Global named register support has been enabled.
 
-Position-independent code can now be generated for the 32-bit ELF subtarget.
+Initial support for PIC code has been added for the 32-bit ELF subtarget.
+Further support will be available in a future release.
 
 External Open Source Projects Using LLVM 3.5
 ============================================
