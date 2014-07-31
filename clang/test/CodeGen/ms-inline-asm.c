@@ -504,3 +504,9 @@ void t41(unsigned short a) {
 // CHECK: mov ss, word ptr $5
 // CHECK: "*m,*m,*m,*m,*m,*m,~{dirflag},~{fpsr},~{flags}"(i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}}, i16* {{.*}})
 }
+
+void call_clobber() {
+  __asm call t41
+  // CHECK-LABEL: define void @call_clobber
+  // CHECK: call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void (i16)* @t41)
+}
