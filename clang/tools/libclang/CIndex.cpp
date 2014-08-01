@@ -27,6 +27,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticCategories.h"
 #include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -41,6 +42,8 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Config/llvm-config.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Mangler.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/Format.h"
@@ -3672,25 +3675,31 @@ CXString clang_Cursor_getMangling(CXCursor C) {
   if (clang_isInvalid(C.kind) || !clang_isDeclaration(C.kind))
     return cxstring::createEmpty();
 
-  const Decl *D = getCursorDecl(C);
   // Mangling only works for functions and variables.
+  const Decl *D = getCursorDecl(C);
   if (!D || !(isa<FunctionDecl>(D) || isa<VarDecl>(D)))
     return cxstring::createEmpty();
 
+  // First apply frontend mangling.
   const NamedDecl *ND = cast<NamedDecl>(D);
-  std::unique_ptr<MangleContext> MC(ND->getASTContext().createMangleContext());
+  ASTContext &Ctx = ND->getASTContext();
+  std::unique_ptr<MangleContext> MC(Ctx.createMangleContext());
 
-  std::string Buf;
-  llvm::raw_string_ostream OS(Buf);
-  MC->mangleName(ND, OS);
-  OS.flush();
+  std::string FrontendBuf;
+  llvm::raw_string_ostream FrontendBufOS(FrontendBuf);
+  MC->mangleName(ND, FrontendBufOS);
 
-  // The Microsoft mangler may insert a special character in the beginning to
-  // prevent further mangling. We can strip that for display purposes.
-  if (Buf[0] == '\x01') {
-    Buf.erase(0, 1);
-  }
-  return cxstring::createDup(Buf);
+  // Now apply backend mangling.
+  std::unique_ptr<llvm::DataLayout> DL(
+      new llvm::DataLayout(Ctx.getTargetInfo().getTargetDescription()));
+  llvm::Mangler BackendMangler(DL.get());
+
+  std::string FinalBuf;
+  llvm::raw_string_ostream FinalBufOS(FinalBuf);
+  BackendMangler.getNameWithPrefix(FinalBufOS,
+                                   llvm::Twine(FrontendBufOS.str()));
+
+  return cxstring::createDup(FinalBufOS.str());
 }
 
 CXString clang_getCursorDisplayName(CXCursor C) {
