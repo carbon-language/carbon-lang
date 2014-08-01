@@ -94,9 +94,11 @@ namespace {
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         Builder->EmitTopLevelDecl(*I);
 
-      // Emit any deferred inline method definitions.
-      for (CXXMethodDecl *MD : DeferredInlineMethodDefinitions)
-        Builder->EmitTopLevelDecl(MD);
+      // Emit any deferred inline method definitions. Note that more deferred
+      // methods may be added during this loop, since ASTConsumer callbacks
+      // can be invoked if AST inspection results in declarations being added.
+      for (unsigned I = 0; I != DeferredInlineMethodDefinitions.size(); ++I)
+        Builder->EmitTopLevelDecl(DeferredInlineMethodDefinitions[I]);
       DeferredInlineMethodDefinitions.clear();
 
       return true;
