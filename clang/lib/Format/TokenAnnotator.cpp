@@ -1480,7 +1480,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
   if (Right.isOneOf(tok::semi, tok::comma))
     return false;
   if (Right.is(tok::less) &&
-      (Left.is(tok::kw_template) ||
+      (Left.isOneOf(tok::kw_template, tok::r_paren) ||
        (Line.Type == LT_ObjCDecl && Style.ObjCSpaceBeforeProtocolList)))
     return true;
   if (Left.is(tok::arrow) || Right.is(tok::arrow))
@@ -1509,13 +1509,14 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
            ((Left.Type != TT_PointerOrReference) && Left.isNot(tok::l_paren) &&
             Style.PointerAlignment != FormatStyle::PAS_Left);
   if (Right.Type == TT_FunctionTypeLParen && Left.isNot(tok::l_paren) &&
-      (Left.Type != TT_PointerOrReference || Style.PointerAlignment != FormatStyle::PAS_Right))
+      (Left.Type != TT_PointerOrReference ||
+       Style.PointerAlignment != FormatStyle::PAS_Right))
     return true;
   if (Left.Type == TT_PointerOrReference)
     return Right.Tok.isLiteral() || Right.Type == TT_BlockComment ||
            ((Right.Type != TT_PointerOrReference) &&
-            Right.isNot(tok::l_paren) && Style.PointerAlignment != FormatStyle::PAS_Right &&
-            Left.Previous &&
+            Right.isNot(tok::l_paren) &&
+            Style.PointerAlignment != FormatStyle::PAS_Right && Left.Previous &&
             !Left.Previous->isOneOf(tok::l_paren, tok::coloncolon));
   if (Right.is(tok::star) && Left.is(tok::l_paren))
     return false;
