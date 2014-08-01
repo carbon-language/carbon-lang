@@ -50,13 +50,18 @@ public:
       return Subtarget;
     return &DefaultSubtarget;
   }
+  MipsSubtarget *getSubtargetImpl() override {
+    if (Subtarget)
+      return Subtarget;
+    return &DefaultSubtarget;
+  }
   const InstrItineraryData *getInstrItineraryData() const override {
     return Subtarget->inMips16Mode()
                ? nullptr
                : &getSubtargetImpl()->getInstrItineraryData();
   }
   MipsJITInfo *getJITInfo() override {
-    return Subtarget->getJITInfo();
+    return getSubtargetImpl()->getJITInfo();
   }
   const MipsRegisterInfo *getRegisterInfo()  const override {
     return getSubtargetImpl()->getRegisterInfo();

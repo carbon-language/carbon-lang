@@ -35,6 +35,7 @@ public:
     return getSubtargetImpl()->getFrameLowering();
   }
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  SparcSubtarget *getSubtargetImpl() override { return &Subtarget; }
   const SparcRegisterInfo *getRegisterInfo() const override {
     return getSubtargetImpl()->getRegisterInfo();
   }
@@ -44,7 +45,9 @@ public:
   const SparcSelectionDAGInfo *getSelectionDAGInfo() const override {
     return getSubtargetImpl()->getSelectionDAGInfo();
   }
-  SparcJITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
+  SparcJITInfo *getJITInfo() override {
+    return getSubtargetImpl()->getJITInfo();
+  }
   const DataLayout *getDataLayout() const override {
     return getSubtargetImpl()->getDataLayout();
   }

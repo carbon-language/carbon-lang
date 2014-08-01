@@ -38,7 +38,7 @@ public:
   const PPCFrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }
-  PPCJITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
+  PPCJITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
   const PPCTargetLowering *getTargetLowering() const override {
     return getSubtargetImpl()->getTargetLowering();
   }
@@ -53,6 +53,7 @@ public:
     return getSubtargetImpl()->getDataLayout();
   }
   const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
+  PPCSubtarget  *getSubtargetImpl() override { return &Subtarget; }
   const InstrItineraryData *getInstrItineraryData() const override {
     return &getSubtargetImpl()->getInstrItineraryData();
   }

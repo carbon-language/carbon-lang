@@ -41,8 +41,9 @@ public:
   const TargetFrameLowering *getFrameLowering() const override {
     return getSubtargetImpl()->getFrameLowering();
   }
-  X86JITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
+  X86JITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
+  X86Subtarget *getSubtargetImpl() override { return &Subtarget; }
   const X86TargetLowering *getTargetLowering() const override {
     return getSubtargetImpl()->getTargetLowering();
   }

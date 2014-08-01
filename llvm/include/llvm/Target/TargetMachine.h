@@ -100,6 +100,7 @@ public:
   virtual const TargetSubtargetInfo *getSubtargetImpl() const {
     return nullptr;
   }
+  virtual TargetSubtargetInfo *getSubtargetImpl() { return nullptr; }
 
   mutable TargetOptions Options;
 

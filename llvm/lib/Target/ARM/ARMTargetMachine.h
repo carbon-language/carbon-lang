@@ -33,6 +33,7 @@ public:
                        bool isLittle);
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  ARMSubtarget *getSubtargetImpl() override { return &Subtarget; }
   const ARMBaseRegisterInfo *getRegisterInfo() const override {
     return getSubtargetImpl()->getRegisterInfo();
   }
@@ -54,7 +55,7 @@ public:
   const DataLayout *getDataLayout() const override {
     return getSubtargetImpl()->getDataLayout();
   }
-  ARMJITInfo *getJITInfo() override { return Subtarget.getJITInfo(); }
+  ARMJITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
 
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
