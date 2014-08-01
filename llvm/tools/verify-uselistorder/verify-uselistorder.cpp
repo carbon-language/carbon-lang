@@ -64,7 +64,7 @@ static cl::opt<bool> SaveTemps("save-temps", cl::desc("Save temp files"),
 static cl::opt<unsigned>
     NumShuffles("num-shuffles",
                 cl::desc("Number of times to shuffle and verify use-lists"),
-                cl::init(5));
+                cl::init(1));
 
 namespace {
 
@@ -413,43 +413,70 @@ static void shuffleValueUseLists(Value *V, std::minstd_rand0 &Gen,
   });
 }
 
-/// Shuffle all use-lists in a module.
-static void shuffleUseLists(Module &M, unsigned SeedOffset) {
-  DEBUG(dbgs() << "*** shuffle-use-lists ***\n");
-  std::minstd_rand0 Gen(std::minstd_rand0::default_seed + SeedOffset);
-  DenseSet<Value *> Seen;
+static void reverseValueUseLists(Value *V, DenseSet<Value *> &Seen) {
+  if (!Seen.insert(V).second)
+    return;
 
-  // Shuffle the use-list of each value that would be serialized to an IR file
-  // (bitcode or assembly).
-  auto shuffle = [&](Value *V) { shuffleValueUseLists(V, Gen, Seen); };
+  if (auto *C = dyn_cast<Constant>(V))
+    if (!isa<GlobalValue>(C))
+      for (Value *Op : C->operands())
+        reverseValueUseLists(Op, Seen);
 
+  if (V->use_empty() || std::next(V->use_begin()) == V->use_end())
+    // Nothing to shuffle for 0 or 1 users.
+    return;
+
+  DEBUG({
+    dbgs() << "V = ";
+    V->dump();
+    for (const Use &U : V->uses()) {
+      dbgs() << " - order: op = " << U.getOperandNo() << ", U = ";
+      U.getUser()->dump();
+    }
+    dbgs() << " => reverse\n";
+  });
+
+  V->reverseUseList();
+
+  DEBUG({
+    for (const Use &U : V->uses()) {
+      dbgs() << " - order: op = " << U.getOperandNo() << ", U = ";
+      U.getUser()->dump();
+    }
+  });
+}
+
+template <class Changer>
+static void changeUseLists(Module &M, Changer changeValueUseList) {
+  // Visit every value that would be serialized to an IR file.
+  //
   // Globals.
   for (GlobalVariable &G : M.globals())
-    shuffle(&G);
+    changeValueUseList(&G);
   for (GlobalAlias &A : M.aliases())
-    shuffle(&A);
+    changeValueUseList(&A);
   for (Function &F : M)
-    shuffle(&F);
+    changeValueUseList(&F);
 
   // Constants used by globals.
   for (GlobalVariable &G : M.globals())
     if (G.hasInitializer())
-      shuffle(G.getInitializer());
+      changeValueUseList(G.getInitializer());
   for (GlobalAlias &A : M.aliases())
-    shuffle(A.getAliasee());
+    changeValueUseList(A.getAliasee());
   for (Function &F : M)
     if (F.hasPrefixData())
-      shuffle(F.getPrefixData());
+      changeValueUseList(F.getPrefixData());
 
   // Function bodies.
   for (Function &F : M) {
     for (Argument &A : F.args())
-      shuffle(&A);
+      changeValueUseList(&A);
     for (BasicBlock &BB : F)
-      shuffle(&BB);
+      changeValueUseList(&BB);
     for (BasicBlock &BB : F)
       for (Instruction &I : BB)
-        shuffle(&I);
+        changeValueUseList(&I);
 
     // Constants used by instructions.
     for (BasicBlock &BB : F)
@@ -457,9 +484,22 @@ static void shuffleUseLists(Module &M, unsigned SeedOffset) {
         for (Value *Op : I.operands())
           if ((isa<Constant>(Op) && !isa<GlobalValue>(*Op)) ||
               isa<InlineAsm>(Op))
-            shuffle(Op);
+            changeValueUseList(Op);
   }
+}
 
+static void shuffleUseLists(Module &M, unsigned SeedOffset) {
+  DEBUG(dbgs() << "*** shuffle-use-lists ***\n");
+  std::minstd_rand0 Gen(std::minstd_rand0::default_seed + SeedOffset);
+  DenseSet<Value *> Seen;
+  changeUseLists(M, [&](Value *V) { shuffleValueUseLists(V, Gen, Seen); });
+  DEBUG(dbgs() << "\n");
+}
+
+static void reverseUseLists(Module &M) {
+  DEBUG(dbgs() << "*** reverse-use-lists ***\n");
+  DenseSet<Value *> Seen;
+  changeUseLists(M, [&](Value *V) { reverseValueUseLists(V, Seen); });
   DEBUG(dbgs() << "\n");
 }
 
@@ -495,12 +535,20 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  // Verify the use lists now and after reversing them.
+  verifyUseListOrder(*M);
+  reverseUseLists(*M);
+  verifyUseListOrder(*M);
+
   for (unsigned I = 0, E = NumShuffles; I != E; ++I) {
     DEBUG(dbgs() << "*** iteration: " << I << " ***\n");
 
-    // Shuffle with a different seed each time so that use-lists that aren't
-    // modified the first time are likely to be modified the next time.
+    // Shuffle with a different (deterministic) seed each time.
     shuffleUseLists(*M, I);
+
+    // Verify again before and after reversing.
+    verifyUseListOrder(*M);
+    reverseUseLists(*M);
     verifyUseListOrder(*M);
   }
 
