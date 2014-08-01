@@ -11,6 +11,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/IR/DebugInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <algorithm>
@@ -36,7 +37,7 @@ void DbgValueHistoryMap::startInstrRange(const MDNode *Var,
                                          const MachineInstr &MI) {
   // Instruction range should start with a DBG_VALUE instruction for the
   // variable.
-  assert(MI.isDebugValue() && MI.getDebugVariable() == Var);
+  assert(MI.isDebugValue() && getEntireVariable(MI.getDebugVariable()) == Var);
   auto &Ranges = VarInstrRanges[Var];
   if (!Ranges.empty() && Ranges.back().second == nullptr &&
       Ranges.back().first->isIdenticalTo(&MI)) {
@@ -182,7 +183,10 @@ void calculateDbgValueHistory(const MachineFunction *MF,
       }
 
       assert(MI.getNumOperands() > 1 && "Invalid DBG_VALUE instruction!");
-      const MDNode *Var = MI.getDebugVariable();
+      // Use the base variable (without any DW_OP_piece expressions)
+      // as index into History. The full variables including the
+      // piece expressions are attached to the MI.
+      DIVariable Var = getEntireVariable(MI.getDebugVariable());
 
       if (unsigned PrevReg = Result.getRegisterForVar(Var))
         dropRegDescribedVar(RegVars, PrevReg, Var);

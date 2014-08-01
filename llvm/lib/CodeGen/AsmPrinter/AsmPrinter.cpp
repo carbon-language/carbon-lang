@@ -618,7 +618,11 @@ static bool emitDebugValueComment(const MachineInstr *MI, AsmPrinter &AP) {
     if (!Name.empty())
       OS << Name << ":";
   }
-  OS << V.getName() << " <- ";
+  OS << V.getName();
+  if (V.isVariablePiece())
+    OS << " [piece offset=" << V.getPieceOffset()
+       << " size="<<V.getPieceSize()<<"]";
+  OS << " <- ";
 
   // The second operand is only an offset if it's an immediate.
   bool Deref = MI->getOperand(0).isReg() && MI->getOperand(1).isImm();

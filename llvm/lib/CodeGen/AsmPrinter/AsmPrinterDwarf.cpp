@@ -214,13 +214,10 @@ static void emitDwarfRegOpIndirect(ByteStreamer &Streamer, int Reg, int Offset,
     Streamer.EmitInt8(dwarf::DW_OP_deref, "DW_OP_deref");
 }
 
-/// Emit a dwarf register operation for describing
-/// - a small value occupying only part of a register or
-/// - a small register representing only part of a value.
-static void emitDwarfOpPiece(ByteStreamer &Streamer, unsigned SizeInBits,
-                             unsigned OffsetInBits) {
-  assert(SizeInBits > 0 && "zero-sized piece");
-  unsigned SizeOfByte = 8;
+void AsmPrinter::EmitDwarfOpPiece(ByteStreamer &Streamer, unsigned SizeInBits,
+                                  unsigned OffsetInBits) const {
+  assert(SizeInBits > 0 && "piece has size zero");
+  const unsigned SizeOfByte = 8;
   if (OffsetInBits > 0 || SizeInBits % SizeOfByte) {
     Streamer.EmitInt8(dwarf::DW_OP_bit_piece, "DW_OP_bit_piece");
     Streamer.EmitULEB128(SizeInBits, Twine(SizeInBits));
@@ -255,7 +252,7 @@ void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
   // If this is a valid register number, emit it.
   if (Reg >= 0) {
     emitDwarfRegOp(Streamer, Reg);
-    emitDwarfOpPiece(Streamer, PieceSizeInBits, PieceOffsetInBits);
+    EmitDwarfOpPiece(Streamer, PieceSizeInBits, PieceOffsetInBits);
     return;
   }
 
@@ -266,19 +263,19 @@ void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
     if (Reg >= 0) {
       unsigned Idx = TRI->getSubRegIndex(*SR, MLoc.getReg());
       unsigned Size = TRI->getSubRegIdxSize(Idx);
-      unsigned Offset = TRI->getSubRegIdxOffset(Idx);
+      unsigned RegOffset = TRI->getSubRegIdxOffset(Idx);
       OutStreamer.AddComment("super-register");
       emitDwarfRegOp(Streamer, Reg);
-      if (PieceOffsetInBits == Offset) {
-        emitDwarfOpPiece(Streamer, Size, Offset);
+      if (PieceOffsetInBits == RegOffset) {
+        EmitDwarfOpPiece(Streamer, Size, RegOffset);
       } else {
         // If this is part of a variable in a sub-register at a
         // non-zero offset, we need to manually shift the value into
         // place, since the DW_OP_piece describes the part of the
         // variable, not the position of the subregister.
-        emitDwarfOpPiece(Streamer, Size, PieceOffsetInBits);
-        if (Offset)
-          emitDwarfOpShr(Streamer, Offset);
+        if (RegOffset)
+          emitDwarfOpShr(Streamer, RegOffset);
+        EmitDwarfOpPiece(Streamer, Size, PieceOffsetInBits);
       }
       return;
     }
@@ -312,7 +309,7 @@ void AsmPrinter::EmitDwarfRegOpPiece(ByteStreamer &Streamer,
     if (Reg >= 0 && Intersection.any()) {
       OutStreamer.AddComment("sub-register");
       emitDwarfRegOp(Streamer, Reg);
-      emitDwarfOpPiece(Streamer, Size, Offset == CurPos ? 0 : Offset);
+      EmitDwarfOpPiece(Streamer, Size, Offset == CurPos ? 0 : Offset);
       CurPos = Offset + Size;
 
       // Mark it as emitted.

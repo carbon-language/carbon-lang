@@ -85,7 +85,7 @@ namespace llvm {
 
     public:
     explicit DIBuilder(Module &M);
-    enum ComplexAddrKind { OpPlus=1, OpDeref };
+    enum ComplexAddrKind { OpPlus=1, OpDeref, OpPiece };
     enum DebugEmissionKind { FullDebug=1, LineTablesOnly };
 
     /// finalize - Construct any deferred debug info descriptors.
@@ -560,6 +560,16 @@ namespace llvm {
                                      StringRef Name, DIFile F, unsigned LineNo,
                                      DITypeRef Ty, ArrayRef<Value *> Addr,
                                      unsigned ArgNo = 0);
+
+    /// createVariablePiece - Create a descriptor to describe one part
+    /// of aggregate variable that is fragmented across multiple Values.
+    ///
+    /// @param Variable      Variable that is partially represented by this.
+    /// @param OffsetInBytes Offset of the piece in bytes.
+    /// @param SizeInBytes   Size of the piece in bytes.
+    DIVariable createVariablePiece(DIVariable Variable,
+                                   unsigned OffsetInBytes,
+                                   unsigned SizeInBytes);
 
     /// createFunction - Create a new descriptor for the specified subprogram.
     /// See comments in DISubprogram for descriptions of these fields.

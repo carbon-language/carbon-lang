@@ -1100,6 +1100,28 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
   return DIVariable(MDNode::get(VMContext, Elts));
 }
 
+/// createVariablePiece - Create a descriptor to describe one part
+/// of aggregate variable that is fragmented across multiple Values.
+DIVariable DIBuilder::createVariablePiece(DIVariable Variable,
+                                          unsigned OffsetInBytes,
+                                          unsigned SizeInBytes) {
+  assert(SizeInBytes > 0 && "zero-size piece");
+  Value *Addr[] = {
+    ConstantInt::get(Type::getInt32Ty(VMContext), OpPiece),
+    ConstantInt::get(Type::getInt32Ty(VMContext), OffsetInBytes),
+    ConstantInt::get(Type::getInt32Ty(VMContext), SizeInBytes)
+  };
+
+  assert((Variable->getNumOperands() == 8 || Variable.isVariablePiece()) &&
+         "variable already has a complex address");
+  SmallVector<Value *, 9> Elts;
+  for (unsigned i = 0; i < 8; ++i)
+    Elts.push_back(Variable->getOperand(i));
+
+  Elts.push_back(MDNode::get(VMContext, Addr));
+  return DIVariable(MDNode::get(VMContext, Elts));
+}
+
 /// createFunction - Create a new descriptor for the specified function.
 /// FIXME: this is added for dragonegg. Once we update dragonegg
 /// to call resolve function, this will be removed.

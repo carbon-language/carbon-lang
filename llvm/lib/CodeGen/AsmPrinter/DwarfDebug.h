@@ -535,6 +535,12 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Populate LexicalScope entries with variables' info.
   void collectVariableInfo(SmallPtrSet<const MDNode *, 16> &ProcessedVars);
 
+  /// \brief Build the location list for all DBG_VALUEs in the
+  /// function that describe the same variable.
+  void buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
+                         const DbgValueHistoryMap::InstrRanges &Ranges,
+                         DwarfCompileUnit *TheCU);
+
   /// \brief Collect variable information from the side table maintained
   /// by MMI.
   void collectVariableInfoFromMMITable(SmallPtrSet<const MDNode *, 16> &P);
@@ -642,6 +648,13 @@ public:
   /// \brief Emit an entry for the debug loc section. This can be used to
   /// handle an entry that's going to be emitted into the debug loc section.
   void emitDebugLocEntry(ByteStreamer &Streamer, const DebugLocEntry &Entry);
+  /// \brief emit a single value for the debug loc section.
+  void emitDebugLocValue(ByteStreamer &Streamer,
+                         const DebugLocEntry::Value &Value);
+  /// Emits an optimal (=sorted) sequence of DW_OP_pieces.
+  void emitLocPieces(ByteStreamer &Streamer,
+                     const DITypeIdentifierMap &Map,
+                     ArrayRef<DebugLocEntry::Value> Values);
 
   /// Emit the location for a debug loc entry, including the size header.
   void emitDebugLocEntryLocation(const DebugLocEntry &Entry);

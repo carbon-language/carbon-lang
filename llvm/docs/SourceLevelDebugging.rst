@@ -589,6 +589,12 @@ The context is either the subprogram or block where the variable is defined.
 Name the source variable name.  Context and line indicate where the variable
 was defined.  Type descriptor defines the declared type of the variable.
 
+The ``OpPiece`` operator is used for (typically larger aggregate)
+variables that are fragmented across several locations. It takes two
+i32 arguments, an offset and a size in bytes to describe which piece
+of the variable is at this location.
+
+
 .. _format_common_intrinsics:
 
 Debugger intrinsic functions

@@ -359,7 +359,8 @@ public:
   void addTemplateParams(DIE &Buffer, DIArray TParams);
 
   /// addRegisterOp - Add register operand.
-  void addRegisterOp(DIELoc &TheDie, unsigned Reg);
+  void addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
+                          unsigned SizeInBits = 0, unsigned OffsetInBits = 0);
 
   /// addRegisterOffset - Add register offset.
   void addRegisterOffset(DIELoc &TheDie, unsigned Reg, int64_t Offset);

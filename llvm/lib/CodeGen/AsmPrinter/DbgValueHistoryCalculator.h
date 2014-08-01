@@ -28,9 +28,11 @@ class DbgValueHistoryMap {
   // range. If end is not specified, location is valid until the start
   // instruction of the next instruction range, or until the end of the
   // function.
+public:
   typedef std::pair<const MachineInstr *, const MachineInstr *> InstrRange;
   typedef SmallVector<InstrRange, 4> InstrRanges;
   typedef MapVector<const MDNode *, InstrRanges> InstrRangesMap;
+private:
   InstrRangesMap VarInstrRanges;
 
 public:

@@ -725,6 +725,17 @@ public:
   /// information for an inlined function arguments.
   bool isInlinedFnArgument(const Function *CurFn);
 
+  /// isVariablePiece - Return whether this is a piece of an aggregate
+  /// variable.
+  bool isVariablePiece() const;
+  /// getPieceOffset - Return the offset of this piece in bytes.
+  uint64_t getPieceOffset() const;
+  /// getPieceSize - Return the size of this piece in bytes.
+  uint64_t getPieceSize() const;
+
+  /// Return the size reported by the variable's type.
+  unsigned getSizeInBits(const DITypeIdentifierMap &Map);
+
   void printExtendedName(raw_ostream &OS) const;
 };
 
@@ -841,6 +852,9 @@ DIVariable createInlinedVariable(MDNode *DV, MDNode *InlinedScope,
 
 /// cleanseInlinedVariable - Remove inlined scope from the variable.
 DIVariable cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext);
+
+/// getEntireVariable - Remove OpPiece exprs from the variable.
+DIVariable getEntireVariable(DIVariable DV);
 
 /// Construct DITypeIdentifierMap by going through retained types of each CU.
 DITypeIdentifierMap generateDITypeIdentifierMap(const NamedMDNode *CU_Nodes);

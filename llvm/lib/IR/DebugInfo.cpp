@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -149,6 +150,36 @@ uint64_t DIVariable::getAddrElement(unsigned Idx) const {
 
 /// getInlinedAt - If this variable is inlined then return inline location.
 MDNode *DIVariable::getInlinedAt() const { return getNodeField(DbgNode, 7); }
+
+bool DIVariable::isVariablePiece() const {
+  return hasComplexAddress() && getAddrElement(0) == DIBuilder::OpPiece;
+}
+
+uint64_t DIVariable::getPieceOffset() const {
+  assert(isVariablePiece());
+  return getAddrElement(1);
+}
+
+uint64_t DIVariable::getPieceSize() const {
+  assert(isVariablePiece());
+  return getAddrElement(2);
+}
+
+/// Return the size reported by the variable's type.
+unsigned DIVariable::getSizeInBits(const DITypeIdentifierMap &Map) {
+  DIType Ty = getType().resolve(Map);
+  // Follow derived types until we reach a type that
+  // reports back a size.
+  while (Ty.isDerivedType() && !Ty.getSizeInBits()) {
+    DIDerivedType DT(&*Ty);
+    Ty = DT.getTypeDerivedFrom().resolve(Map);
+  }
+  assert(Ty.getSizeInBits() && "type with size 0");
+  return Ty.getSizeInBits();
+}
+
+
+
 
 //===----------------------------------------------------------------------===//
 // Predicates
@@ -904,6 +935,19 @@ DIVariable llvm::cleanseInlinedVariable(MDNode *DV, LLVMContext &VMContext) {
   return DIVariable(MDNode::get(VMContext, Elts));
 }
 
+
+/// getEntireVariable - Remove OpPiece exprs from the variable.
+DIVariable llvm::getEntireVariable(DIVariable DV) {
+  if (!DV.isVariablePiece())
+    return DV;
+
+  SmallVector<Value *, 8> Elts;
+  for (unsigned i = 0; i < 8; ++i)
+    Elts.push_back(DV->getOperand(i));
+
+  return DIVariable(MDNode::get(DV->getContext(), Elts));
+}
+
 /// getDISubprogram - Find subprogram that is enclosing this scope.
 DISubprogram llvm::getDISubprogram(const MDNode *Scope) {
   DIDescriptor D(Scope);
@@ -1393,6 +1437,10 @@ void DIVariable::printInternal(raw_ostream &OS) const {
     OS << " [" << Res << ']';
 
   OS << " [line " << getLineNumber() << ']';
+
+  if (isVariablePiece())
+    OS << " [piece, size " << getPieceSize()
+       << ", offset " << getPieceOffset() << ']';
 }
 
 void DIObjCProperty::printInternal(raw_ostream &OS) const {
