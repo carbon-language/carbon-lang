@@ -187,8 +187,7 @@ public:
 
   /// \brief Returns the operand named \p Op.  If \p MI does not have an
   /// operand named \c Op, this function returns nullptr.
-  const MachineOperand *getNamedOperand(const MachineInstr& MI,
-                                        unsigned OperandName) const;
+  MachineOperand *getNamedOperand(MachineInstr &MI, unsigned OperandName) const;
 };
 
 namespace AMDGPU {

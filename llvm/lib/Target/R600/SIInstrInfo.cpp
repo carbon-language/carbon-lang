@@ -1736,7 +1736,7 @@ void SIInstrInfo::reserveIndirectRegisters(BitVector &Reserved,
     Reserved.set(AMDGPU::VReg_512RegClass.getRegister(Index));
 }
 
-const MachineOperand *SIInstrInfo::getNamedOperand(const MachineInstr& MI,
+MachineOperand *SIInstrInfo::getNamedOperand(MachineInstr &MI,
                                                    unsigned OperandName) const {
   int Idx = AMDGPU::getNamedOperandIdx(MI.getOpcode(), OperandName);
   if (Idx == -1)

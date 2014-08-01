@@ -34,6 +34,20 @@ endif:                                            ; preds = %else, %if
   ret void
 }
 
+; Test that we fold an immediate that was illegal for a 64-bit op into the
+; 32-bit op when we shrink it.
+
+; FUNC-LABEL: @add_fold
+; SI: V_ADD_F32_e32 v{{[0-9]+}}, 0x44800000
+define void @add_fold(float addrspace(1)* %out) {
+entry:
+  %tmp = call i32 @llvm.r600.read.tidig.x()
+  %tmp1 = uitofp i32 %tmp to float
+  %tmp2 = fadd float %tmp1, 1.024000e+03
+  store float %tmp2, float addrspace(1)* %out
+  ret void
+}
+
 ; Function Attrs: nounwind readnone
 declare i32 @llvm.r600.read.tidig.x() #0
 
