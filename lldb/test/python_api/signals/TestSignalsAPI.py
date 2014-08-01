@@ -9,7 +9,7 @@ from lldbutil import get_stopped_thread, state_type_to_str
 from lldbtest import *
 
 class SignalsAPITestCase(TestBase):
-    mydir = os.path.join("python_api", "signals")
+    mydir = TestBase.compute_mydir(__file__)
 
     @python_api_test
     def test_ignore_signal(self):
