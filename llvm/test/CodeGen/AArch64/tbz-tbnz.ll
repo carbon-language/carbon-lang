@@ -135,7 +135,7 @@ define void @test8(i64 %val1, i64 %val2, i64 %val3) {
   br i1 %tst1, label %if.then1, label %if.end
 
 ; CHECK: tst x0, x1
-; CHECK-NEXT: b.ge .L
+; CHECK-NEXT: b.ge
 
 if.then1:
   %and2 = and i64 %val2, %val3
@@ -144,7 +144,7 @@ if.then1:
 
 ; CHECK: and [[CMP:x[0-9]+]], x1, x2
 ; CHECK-NOT: cmp
-; CHECK: tbnz [[CMP]], #63, .LBB7_5
+; CHECK: tbnz [[CMP]], #63
 
 if.then2:
   %shifted_op1 = shl i64 %val2, 63
@@ -153,7 +153,7 @@ if.then2:
   br i1 %tst3, label %if.then3, label %if.end
 
 ; CHECK: tst x0, x1, lsl #63
-; CHECK: b.ge .L
+; CHECK: b.ge
 
 if.then3:
   %shifted_op2 = shl i64 %val2, 62
@@ -162,7 +162,7 @@ if.then3:
   br i1 %tst4, label %if.then4, label %if.end
 
 ; CHECK: tst x0, x1, lsl #62
-; CHECK: b.lt .L
+; CHECK: b.lt
 
 if.then4:
   call void @t()
@@ -178,7 +178,7 @@ define void @test9(i64 %val1) {
   br i1 %tst, label %if.then, label %if.end
 
 ; CHECK-NOT: cmp
-; CHECK: tbz x0, #63, .L
+; CHECK: tbz x0, #63
 
 if.then:
   call void @t()
@@ -194,7 +194,7 @@ define void @test10(i64 %val1) {
   br i1 %tst, label %if.then, label %if.end
 
 ; CHECK-NOT: cmp
-; CHECK: tbz x0, #63, .L
+; CHECK: tbz x0, #63
 
 if.then:
   call void @t()
@@ -209,7 +209,7 @@ define void @test11(i64 %val1, i64* %ptr) {
 
 ; CHECK: ldr [[CMP:x[0-9]+]], [x1]
 ; CHECK-NOT: cmp
-; CHECK: tbz [[CMP]], #63, .L
+; CHECK: tbz [[CMP]], #63
 
   %val = load i64* %ptr
   %tst = icmp slt i64 %val, 0
@@ -229,7 +229,7 @@ define void @test12(i64 %val1) {
   br i1 %tst, label %if.then, label %if.end
 
 ; CHECK-NOT: cmp
-; CHECK: tbz x0, #63, .L
+; CHECK: tbz x0, #63
 
 if.then:
   call void @t()
@@ -247,7 +247,7 @@ define void @test13(i64 %val1, i64 %val2) {
 
 ; CHECK: orr [[CMP:x[0-9]+]], x0, x1
 ; CHECK-NOT: cmp
-; CHECK: tbz [[CMP]], #63, .L
+; CHECK: tbz [[CMP]], #63
 
 if.then:
   call void @t()
