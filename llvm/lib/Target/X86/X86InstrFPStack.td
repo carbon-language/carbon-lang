@@ -114,9 +114,6 @@ let usesCustomInserter = 1 in {  // Expanded after instruction selection.
 // a pattern) and the FPI instruction should have emission info (e.g. opcode
 // encoding and asm printing info).
 
-// Pseudo Instruction for FP stack return values.
-def FpPOP_RETVAL : FpI_<(outs RFP80:$dst), (ins), SpecialFP, []>;
-
 // FpIf32, FpIf64 - Floating Point Pseudo Instruction template.
 // f32 instructions can use SSE1 and are predicated on FPStackf32 == !SSE1.
 // f64 instructions can use SSE2 and are predicated on FPStackf64 == !SSE2.

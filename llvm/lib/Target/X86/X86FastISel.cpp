@@ -1017,7 +1017,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
     // The calling-convention tables for x87 returns don't tell
     // the whole story.
-    if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1)
+    if (VA.getLocReg() == X86::FP0 || VA.getLocReg() == X86::FP1)
       return false;
 
     unsigned SrcReg = Reg + VA.getValNo();
@@ -2989,39 +2989,33 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
       report_fatal_error("SSE register return with SSE disabled");
     }
 
-    // If this is a call to a function that returns an fp value on the floating
-    // point stack, we must guarantee the value is popped from the stack, so
-    // a COPY is not good enough - the copy instruction may be eliminated if the
-    // return value is not used. We use the FpPOP_RETVAL instruction instead.
-    if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1) {
-      // If we prefer to use the value in xmm registers, copy it out as f80 and
-      // use a truncate to move it from fp stack reg to xmm reg.
-      if (isScalarFPTypeInSSEReg(VA.getValVT())) {
-        CopyVT = MVT::f80;
-        CopyReg = createResultReg(&X86::RFP80RegClass);
-      }
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(X86::FpPOP_RETVAL), CopyReg);
+    // If we prefer to use the value in xmm registers, copy it out as f80 and
+    // use a truncate to move it from fp stack reg to xmm reg.
+    if ((VA.getLocReg() == X86::FP0 || VA.getLocReg() == X86::FP1) &&
+        isScalarFPTypeInSSEReg(VA.getValVT())) {
+      CopyVT = MVT::f80;
+      CopyReg = createResultReg(&X86::RFP80RegClass);
+    }
 
-      // Round the f80 to the right size, which also moves it to the appropriate
-      // xmm register. This is accomplished by storing the f80 value in memory
-      // and then loading it back.
-      if (CopyVT != VA.getValVT()) {
-        EVT ResVT = VA.getValVT();
-        unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
-        unsigned MemSize = ResVT.getSizeInBits()/8;
-        int FI = MFI.CreateStackObject(MemSize, MemSize, false);
-        addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                  TII.get(Opc)), FI)
-          .addReg(CopyReg);
-        Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
-        addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                  TII.get(Opc), ResultReg + i), FI);
-      }
-    } else {
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(TargetOpcode::COPY), CopyReg).addReg(VA.getLocReg());
-      InRegs.push_back(VA.getLocReg());
+    // Copy out the result.
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), CopyReg).addReg(VA.getLocReg());
+    InRegs.push_back(VA.getLocReg());
+
+    // Round the f80 to the right size, which also moves it to the appropriate
+    // xmm register. This is accomplished by storing the f80 value in memory
+    // and then loading it back.
+    if (CopyVT != VA.getValVT()) {
+      EVT ResVT = VA.getValVT();
+      unsigned Opc = ResVT == MVT::f32 ? X86::ST_Fp80m32 : X86::ST_Fp80m64;
+      unsigned MemSize = ResVT.getSizeInBits()/8;
+      int FI = MFI.CreateStackObject(MemSize, MemSize, false);
+      addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                TII.get(Opc)), FI)
+        .addReg(CopyReg);
+      Opc = ResVT == MVT::f32 ? X86::MOVSSrm : X86::MOVSDrm;
+      addFrameReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                TII.get(Opc), ResultReg + i), FI);
     }
   }
 

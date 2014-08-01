@@ -340,3 +340,65 @@ entry:
   %0 = tail call i32 asm "fcomi $2, $1; pushf; pop $0", "=r,{st},{st(1)},~{dirflag},~{fpsr},~{flags}"(double 2.000000e+00, double 2.000000e+00) nounwind
   ret i32 %0
 }
+
+; <rdar://problem/16952634>
+; X87 stackifier asserted when there was an ST register defined by an
+; inline-asm instruction and the ST register was live across another
+; inline-asm instruction.
+;
+; INLINEASM <es:frndint> [sideeffect] [attdialect], $0:[regdef], %ST0<imp-def,tied5>, $1:[reguse tiedto:$0], %ST0<tied3>, $2:[clobber], %EFLAGS<earlyclobber,imp-def,dead>
+; INLINEASM <es:fldcw $0> [sideeffect] [mayload] [attdialect], $0:[mem], %EAX<undef>, 1, %noreg, 0, %noreg, $1:[clobber], %EFLAGS<earlyclobber,imp-def,dead>
+; %FP0<def> = COPY %ST0
+
+; CHECK-LABEL: _test_live_st
+; CHECK: ## InlineAsm Start
+; CHECK: frndint
+; CHECK: ## InlineAsm End
+; CHECK: ## InlineAsm Start
+; CHECK: fldcw
+; CHECK: ## InlineAsm End
+
+%struct.fpu_t = type { [8 x x86_fp80], x86_fp80, %struct.anon1, %struct.anon2, i32, i8, [15 x i8] }
+%struct.anon1 = type { i32, i32, i32 }
+%struct.anon2 = type { i32, i32, i32, i32 }
+
+@fpu = external global %struct.fpu_t, align 16
+
+; Function Attrs: ssp
+define void @test_live_st(i32 %a1) {
+entry:
+  %0 = load x86_fp80* undef, align 16
+  %cond = icmp eq i32 %a1, 1
+  br i1 %cond, label %sw.bb4.i, label %_Z5tointRKe.exit
+
+sw.bb4.i:
+  %1 = call x86_fp80 asm sideeffect "frndint", "={st},0,~{dirflag},~{fpsr},~{flags}"(x86_fp80 %0)
+  call void asm sideeffect "fldcw $0", "*m,~{dirflag},~{fpsr},~{flags}"(i32* undef)
+  br label %_Z5tointRKe.exit
+
+_Z5tointRKe.exit:
+  %result.0.i = phi x86_fp80 [ %1, %sw.bb4.i ], [ %0, %entry ]
+  %conv.i1814 = fptosi x86_fp80 %result.0.i to i32
+  %conv626 = sitofp i32 %conv.i1814 to x86_fp80
+  store x86_fp80 %conv626, x86_fp80* getelementptr inbounds (%struct.fpu_t* @fpu, i32 0, i32 1)
+  br label %return
+
+return:
+  ret void
+}
+
+; Check that x87 stackifier is correctly rewriting FP registers to ST registers.
+;
+; CHECK-LABEL: _test_operand_rewrite
+; CHECK: ## InlineAsm Start
+; CHECK: foo %st(0), %st(1)
+; CHECK: ## InlineAsm End
+
+define double @test_operand_rewrite() {
+entry:
+  %0 = tail call { double, double } asm sideeffect "foo $0, $1", "={st},={st(1)},~{dirflag},~{fpsr},~{flags}"()
+  %asmresult = extractvalue { double, double } %0, 0
+  %asmresult1 = extractvalue { double, double } %0, 1
+  %sub = fsub double %asmresult, %asmresult1
+  ret double %sub
+}

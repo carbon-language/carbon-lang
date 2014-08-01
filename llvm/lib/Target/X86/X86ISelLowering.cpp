@@ -1968,8 +1968,8 @@ X86TargetLowering::LowerReturn(SDValue Chain,
 
     // Returns in ST0/ST1 are handled specially: these are pushed as operands to
     // the RET instruction and handled by the FP Stackifier.
-    if (VA.getLocReg() == X86::ST0 ||
-        VA.getLocReg() == X86::ST1) {
+    if (VA.getLocReg() == X86::FP0 ||
+        VA.getLocReg() == X86::FP1) {
       // If this is a copy from an xmm register to ST(0), use an FPExtend to
       // change the value to the FP stack register class.
       if (isScalarFPTypeInSSEReg(VA.getValVT()))
@@ -2107,33 +2107,21 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
       report_fatal_error("SSE register return with SSE disabled");
     }
 
-    SDValue Val;
+    // If we prefer to use the value in xmm registers, copy it out as f80 and
+    // use a truncate to move it from fp stack reg to xmm reg.
+    if ((VA.getLocReg() == X86::FP0 || VA.getLocReg() == X86::FP1) &&
+        isScalarFPTypeInSSEReg(VA.getValVT()))
+      CopyVT = MVT::f80;
 
-    // If this is a call to a function that returns an fp value on the floating
-    // point stack, we must guarantee the value is popped from the stack, so
-    // a CopyFromReg is not good enough - the copy instruction may be eliminated
-    // if the return value is not used. We use the FpPOP_RETVAL instruction
-    // instead.
-    if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1) {
-      // If we prefer to use the value in xmm registers, copy it out as f80 and
-      // use a truncate to move it from fp stack reg to xmm reg.
-      if (isScalarFPTypeInSSEReg(VA.getValVT())) CopyVT = MVT::f80;
-      SDValue Ops[] = { Chain, InFlag };
-      Chain = SDValue(DAG.getMachineNode(X86::FpPOP_RETVAL, dl, CopyVT,
-                                         MVT::Other, MVT::Glue, Ops), 1);
-      Val = Chain.getValue(0);
+    Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
+                               CopyVT, InFlag).getValue(1);
+    SDValue Val = Chain.getValue(0);
 
-      // Round the f80 to the right size, which also moves it to the appropriate
-      // xmm register.
-      if (CopyVT != VA.getValVT())
-        Val = DAG.getNode(ISD::FP_ROUND, dl, VA.getValVT(), Val,
-                          // This truncation won't change the value.
-                          DAG.getIntPtrConstant(1));
-    } else {
-      Chain = DAG.getCopyFromReg(Chain, dl, VA.getLocReg(),
-                                 CopyVT, InFlag).getValue(1);
-      Val = Chain.getValue(0);
-    }
+    if (CopyVT != VA.getValVT())
+      Val = DAG.getNode(ISD::FP_ROUND, dl, VA.getValVT(), Val,
+                        // This truncation won't change the value.
+                        DAG.getIntPtrConstant(1));
+
     InFlag = Chain.getValue(2);
     InVals.push_back(Val);
   }
@@ -3291,7 +3279,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
     CCInfo.AnalyzeCallResult(Ins, RetCC_X86);
     for (unsigned i = 0, e = RVLocs.size(); i != e; ++i) {
       CCValAssign &VA = RVLocs[i];
-      if (VA.getLocReg() == X86::ST0 || VA.getLocReg() == X86::ST1)
+      if (VA.getLocReg() == X86::FP0 || VA.getLocReg() == X86::FP1)
         return false;
     }
   }
@@ -23078,14 +23066,14 @@ X86TargetLowering::getRegForInlineAsmConstraint(const std::string &Constraint,
         Constraint[5] == ')' &&
         Constraint[6] == '}') {
 
-      Res.first = X86::ST0+Constraint[4]-'0';
+      Res.first = X86::FP0+Constraint[4]-'0';
       Res.second = &X86::RFP80RegClass;
       return Res;
     }
 
     // GCC allows "st(0)" to be called just plain "st".
     if (StringRef("{st}").equals_lower(Constraint)) {
-      Res.first = X86::ST0;
+      Res.first = X86::FP0;
       Res.second = &X86::RFP80RegClass;
       return Res;
     }

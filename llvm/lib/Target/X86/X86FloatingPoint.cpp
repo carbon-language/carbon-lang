@@ -25,15 +25,18 @@
 
 #include "X86.h"
 #include "X86InstrInfo.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/EdgeBundles.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/Support/Debug.h"
@@ -50,6 +53,8 @@ STATISTIC(NumFXCH, "Number of fxch instructions inserted");
 STATISTIC(NumFP  , "Number of floating point instructions");
 
 namespace {
+  const unsigned ScratchFPReg = 7;
+
   struct FPS : public MachineFunctionPass {
     static char ID;
     FPS() : MachineFunctionPass(ID) {
@@ -137,7 +142,7 @@ namespace {
     unsigned StackTop;          // The current top of the FP stack.
 
     enum {
-      NumFPRegs = 16            // Including scratch pseudo-registers.
+      NumFPRegs = 8             // Including scratch pseudo-registers.
     };
 
     // For each live FP<n> register, point to its Stack[] entry.
@@ -145,27 +150,6 @@ namespace {
     // used when we need slightly different live registers than what the
     // register allocator thinks.
     unsigned RegMap[NumFPRegs];
-
-    // Pending fixed registers - Inline assembly needs FP registers to appear
-    // in fixed stack slot positions. This is handled by copying FP registers
-    // to ST registers before the instruction, and copying back after the
-    // instruction.
-    //
-    // This is modeled with pending ST registers. NumPendingSTs is the number
-    // of ST registers (ST0-STn) we are tracking. PendingST[n] points to an FP
-    // register that holds the ST value. The ST registers are not moved into
-    // place until immediately before the instruction that needs them.
-    //
-    // It can happen that we need an ST register to be live when no FP register
-    // holds the value:
-    //
-    //   %ST0 = COPY %FP4<kill>
-    //
-    // When that happens, we allocate a scratch FP register to hold the ST
-    // value. That means every register in PendingST must be live.
-
-    unsigned NumPendingSTs;
-    unsigned char PendingST[8];
 
     // Set up our stack model to match the incoming registers to MBB.
     void setupBlockStack();
@@ -180,9 +164,6 @@ namespace {
         dbgs() << " FP" << Stack[i];
         assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!");
       }
-      for (unsigned i = 0; i != NumPendingSTs; ++i)
-        dbgs() << ", ST" << i << " in FP" << unsigned(PendingST[i]);
-      dbgs() << "\n";
     }
 #endif
 
@@ -197,19 +178,6 @@ namespace {
     bool isLive(unsigned RegNo) const {
       unsigned Slot = getSlot(RegNo);
       return Slot < StackTop && Stack[Slot] == RegNo;
-    }
-
-    /// getScratchReg - Return an FP register that is not currently in use.
-    unsigned getScratchReg() const {
-      for (int i = NumFPRegs - 1; i >= 8; --i)
-        if (!isLive(i))
-          return i;
-      llvm_unreachable("Ran out of scratch FP registers");
-    }
-
-    /// isScratchReg - Returns trus if RegNo is a scratch FP register.
-    static bool isScratchReg(unsigned RegNo) {
-      return RegNo > 8 && RegNo < NumFPRegs;
     }
 
     /// getStackEntry - Return the X86::FP<n> register in register ST(i).
@@ -263,21 +231,6 @@ namespace {
       BuildMI(*MBB, I, dl, TII->get(X86::LD_Frr)).addReg(STReg);
     }
 
-    /// duplicatePendingSTBeforeKill - The instruction at I is about to kill
-    /// RegNo. If any PendingST registers still need the RegNo value, duplicate
-    /// them to new scratch registers.
-    void duplicatePendingSTBeforeKill(unsigned RegNo, MachineInstr *I) {
-      for (unsigned i = 0; i != NumPendingSTs; ++i) {
-        if (PendingST[i] != RegNo)
-          continue;
-        unsigned SR = getScratchReg();
-        DEBUG(dbgs() << "Duplicating pending ST" << i
-                     << " in FP" << RegNo << " to FP" << SR << '\n');
-        duplicateToTop(RegNo, SR, I);
-        PendingST[i] = SR;
-      }
-    }
-
     /// popStackAfter - Pop the current value off of the top of the FP stack
     /// after the specified instruction.
     void popStackAfter(MachineBasicBlock::iterator &I);
@@ -304,6 +257,7 @@ namespace {
 
     bool processBasicBlock(MachineFunction &MF, MachineBasicBlock &MBB);
 
+    void handleCall(MachineBasicBlock::iterator &I);
     void handleZeroArgFP(MachineBasicBlock::iterator &I);
     void handleOneArgFP(MachineBasicBlock::iterator &I);
     void handleOneArgFPRW(MachineBasicBlock::iterator &I);
@@ -320,6 +274,8 @@ namespace {
       return X86::RFP80RegClass.contains(DstReg) ||
         X86::RFP80RegClass.contains(SrcReg);
     }
+
+    void setKillFlags(MachineBasicBlock &MBB) const;
   };
   char FPS::ID = 0;
 }
@@ -409,8 +365,8 @@ void FPS::bundleCFG(MachineFunction &MF) {
 bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   bool Changed = false;
   MBB = &BB;
-  NumPendingSTs = 0;
 
+  setKillFlags(BB);
   setupBlockStack();
 
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
@@ -426,6 +382,9 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     if (MI->isImplicitDef() &&
         X86::RFP80RegClass.contains(MI->getOperand(0).getReg()))
+      FPInstClass = X86II::SpecialFP;
+
+    if (MI->isCall())
       FPInstClass = X86II::SpecialFP;
 
     if (FPInstClass == X86II::NotFP)
@@ -462,7 +421,9 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     // after definition.  If so, pop them.
     for (unsigned i = 0, e = DeadRegs.size(); i != e; ++i) {
       unsigned Reg = DeadRegs[i];
-      if (Reg >= X86::FP0 && Reg <= X86::FP6) {
+      // Check if Reg is live on the stack. An inline-asm register operand that
+      // is in the clobber list and marked dead might not be live on the stack.
+      if (Reg >= X86::FP0 && Reg <= X86::FP6 && isLive(Reg-X86::FP0)) {
         DEBUG(dbgs() << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
         freeStackSlotAfter(I, Reg-X86::FP0);
       }
@@ -966,6 +927,31 @@ void FPS::shuffleStackTop(const unsigned char *FixStack,
 // Instruction transformation implementation
 //===----------------------------------------------------------------------===//
 
+void FPS::handleCall(MachineBasicBlock::iterator &I) {
+  unsigned STReturns = 0;
+
+  for (const auto &MO : I->operands()) {
+    if (!MO.isReg())
+      continue;
+
+    unsigned R = MO.getReg() - X86::FP0;
+
+    if (R < 8) {
+      assert(MO.isDef() && MO.isImplicit());
+      STReturns |= 1 << R;
+    }
+  }
+
+  unsigned N = CountTrailingOnes_32(STReturns);
+
+  // FP registers used for function return must be consecutive starting at
+  // FP0.
+  assert(STReturns == 0 || isMask_32(STReturns) && N <= 2);
+
+  for (unsigned I = 0; I < N; ++I)
+    pushReg(N - I - 1);
+}
+
 /// handleZeroArgFP - ST(0) = fld0    ST(0) = flds <mem>
 ///
 void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
@@ -992,9 +978,6 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(NumOps-1));
   bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
-  if (KillsSrc)
-    duplicatePendingSTBeforeKill(Reg, I);
-
   // FISTP64m is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
@@ -1015,7 +998,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
        MI->getOpcode() == X86::ISTT_Fp32m80 ||
        MI->getOpcode() == X86::ISTT_Fp64m80 ||
        MI->getOpcode() == X86::ST_FpP80m)) {
-    duplicateToTop(Reg, getScratchReg(), I);
+    duplicateToTop(Reg, ScratchFPReg, I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
@@ -1058,7 +1041,6 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   bool KillsSrc = MI->killsRegister(X86::FP0+Reg);
 
   if (KillsSrc) {
-    duplicatePendingSTBeforeKill(Reg, I);
     // If this is the last use of the source register, just make sure it's on
     // the top of the stack.
     moveToTop(Reg, I);
@@ -1316,68 +1298,19 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
 ///
 void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
+
+  if (MI->isCall()) {
+    handleCall(I);
+    return;
+  }
+
   switch (MI->getOpcode()) {
   default: llvm_unreachable("Unknown SpecialFP instruction!");
   case TargetOpcode::COPY: {
     // We handle three kinds of copies: FP <- FP, FP <- ST, and ST <- FP.
     const MachineOperand &MO1 = MI->getOperand(1);
     const MachineOperand &MO0 = MI->getOperand(0);
-    unsigned DstST = MO0.getReg() - X86::ST0;
-    unsigned SrcST = MO1.getReg() - X86::ST0;
     bool KillsSrc = MI->killsRegister(MO1.getReg());
-
-    // ST = COPY FP. Set up a pending ST register.
-    if (DstST < 8) {
-      unsigned SrcFP = getFPReg(MO1);
-      assert(isLive(SrcFP) && "Cannot copy dead register");
-      assert(!MO0.isDead() && "Cannot copy to dead ST register");
-
-      // Unallocated STs are marked as the nonexistent FP255.
-      while (NumPendingSTs <= DstST)
-        PendingST[NumPendingSTs++] = NumFPRegs;
-
-      // STi could still be live from a previous inline asm.
-      if (isScratchReg(PendingST[DstST])) {
-        DEBUG(dbgs() << "Clobbering old ST in FP" << unsigned(PendingST[DstST])
-                     << '\n');
-        freeStackSlotBefore(MI, PendingST[DstST]);
-      }
-
-      // When the source is killed, allocate a scratch FP register.
-      if (KillsSrc) {
-        duplicatePendingSTBeforeKill(SrcFP, I);
-        unsigned Slot = getSlot(SrcFP);
-        unsigned SR = getScratchReg();
-        PendingST[DstST] = SR;
-        Stack[Slot] = SR;
-        RegMap[SR] = Slot;
-      } else
-        PendingST[DstST] = SrcFP;
-      break;
-    }
-
-    // FP = COPY ST. Extract fixed stack value.
-    // Any instruction defining ST registers must have assigned them to a
-    // scratch register.
-    if (SrcST < 8) {
-      unsigned DstFP = getFPReg(MO0);
-      assert(!isLive(DstFP) && "Cannot copy ST to live FP register");
-      assert(NumPendingSTs > SrcST && "Cannot copy from dead ST register");
-      unsigned SrcFP = PendingST[SrcST];
-      assert(isScratchReg(SrcFP) && "Expected ST in a scratch register");
-      assert(isLive(SrcFP) && "Scratch holding ST is dead");
-
-      // DstFP steals the stack slot from SrcFP.
-      unsigned Slot = getSlot(SrcFP);
-      Stack[Slot] = DstFP;
-      RegMap[DstFP] = Slot;
-
-      // Always treat the ST as killed.
-      PendingST[SrcST] = NumFPRegs;
-      while (NumPendingSTs && PendingST[NumPendingSTs - 1] == NumFPRegs)
-        --NumPendingSTs;
-      break;
-    }
 
     // FP <- FP copy.
     unsigned DstFP = getFPReg(MO0);
@@ -1403,36 +1336,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     DEBUG(dbgs() << "Emitting LD_F0 for implicit FP" << Reg << '\n');
     BuildMI(*MBB, I, MI->getDebugLoc(), TII->get(X86::LD_F0));
     pushReg(Reg);
-    break;
-  }
-
-  case X86::FpPOP_RETVAL: {
-    // The FpPOP_RETVAL instruction is used after calls that return a value on
-    // the floating point stack. We cannot model this with ST defs since CALL
-    // instructions have fixed clobber lists. This instruction is interpreted
-    // to mean that there is one more live register on the stack than we
-    // thought.
-    //
-    // This means that StackTop does not match the hardware stack between a
-    // call and the FpPOP_RETVAL instructions.  We do tolerate FP instructions
-    // between CALL and FpPOP_RETVAL as long as they don't overflow the
-    // hardware stack.
-    unsigned DstFP = getFPReg(MI->getOperand(0));
-
-    // Move existing stack elements up to reflect reality.
-    assert(StackTop < 8 && "Stack overflowed before FpPOP_RETVAL");
-    if (StackTop) {
-      std::copy_backward(Stack, Stack + StackTop, Stack + StackTop + 1);
-      for (unsigned i = 0; i != NumFPRegs; ++i)
-        ++RegMap[i];
-    }
-    ++StackTop;
-
-    // DstFP is the new bottom of the stack.
-    Stack[0] = DstFP;
-    RegMap[DstFP] = 0;
-
-    // DstFP will be killed by processBasicBlock if this was a dead def.
     break;
   }
 
@@ -1472,18 +1375,29 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     // only tell clobbers from defs by looking at the asm descriptor.
     unsigned STUses = 0, STDefs = 0, STClobbers = 0, STDeadDefs = 0;
     unsigned NumOps = 0;
+    SmallSet<unsigned, 1> FRegIdx;
+    unsigned RCID;
+
     for (unsigned i = InlineAsm::MIOp_FirstOperand, e = MI->getNumOperands();
          i != e && MI->getOperand(i).isImm(); i += 1 + NumOps) {
       unsigned Flags = MI->getOperand(i).getImm();
+
       NumOps = InlineAsm::getNumOperandRegisters(Flags);
       if (NumOps != 1)
         continue;
       const MachineOperand &MO = MI->getOperand(i + 1);
       if (!MO.isReg())
         continue;
-      unsigned STReg = MO.getReg() - X86::ST0;
+      unsigned STReg = MO.getReg() - X86::FP0;
       if (STReg >= 8)
         continue;
+
+      // If the flag has a register class constraint, this must be an operand
+      // with constraint "f". Record its index and continue.
+      if (InlineAsm::hasRegClassConstraint(Flags, RCID)) {
+        FRegIdx.insert(i + 1);
+        continue;
+      }
 
       switch (InlineAsm::getKind(Flags)) {
       case InlineAsm::Kind_RegUse:
@@ -1527,71 +1441,42 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     DEBUG(dbgs() << "Asm uses " << NumSTUses << " fixed regs, pops "
                  << NumSTPopped << ", and defines " << NumSTDefs << " regs.\n");
 
-    // Scan the instruction for FP uses corresponding to "f" constraints.
-    // Collect FP registers to kill afer the instruction.
-    // Always kill all the scratch regs.
+#ifndef NDEBUG
+    // If any input operand uses constraint "f", all output register
+    // constraints must be early-clobber defs.
+    for (unsigned I = 0, E = MI->getNumOperands(); I < E; ++I)
+      if (FRegIdx.count(I)) {
+        assert((1 << getFPReg(MI->getOperand(I)) & STDefs) == 0 &&
+               "Operands with constraint \"f\" cannot overlap with defs");
+      }
+#endif
+
+    // Collect all FP registers (register operands with constraints "t", "u",
+    // and "f") to kill afer the instruction.
     unsigned FPKills = ((1u << NumFPRegs) - 1) & ~0xff;
-    unsigned FPUsed = 0;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &Op = MI->getOperand(i);
       if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
-      if (!Op.isUse())
-        MI->emitError("illegal \"f\" output constraint");
       unsigned FPReg = getFPReg(Op);
-      FPUsed |= 1U << FPReg;
 
       // If we kill this operand, make sure to pop it from the stack after the
       // asm.  We just remember it for now, and pop them all off at the end in
       // a batch.
-      if (Op.isKill())
+      if (Op.isUse() && Op.isKill())
         FPKills |= 1U << FPReg;
     }
 
-    // The popped inputs will be killed by the instruction, so duplicate them
-    // if the FP register needs to be live after the instruction, or if it is
-    // used in the instruction itself. We effectively treat the popped inputs
-    // as early clobbers.
-    for (unsigned i = 0; i < NumSTPopped; ++i) {
-      if ((FPKills & ~FPUsed) & (1u << PendingST[i]))
-        continue;
-      unsigned SR = getScratchReg();
-      duplicateToTop(PendingST[i], SR, I);
-      DEBUG(dbgs() << "Duplicating ST" << i << " in FP"
-                   << unsigned(PendingST[i]) << " to avoid clobbering it.\n");
-      PendingST[i] = SR;
-    }
-
-    // Make sure we have a unique live register for every fixed use. Some of
-    // them could be undef uses, and we need to emit LD_F0 instructions.
-    for (unsigned i = 0; i < NumSTUses; ++i) {
-      if (i < NumPendingSTs && PendingST[i] < NumFPRegs) {
-        // Check for shared assignments.
-        for (unsigned j = 0; j < i; ++j) {
-          if (PendingST[j] != PendingST[i])
-            continue;
-          // STi and STj are inn the same register, create a copy.
-          unsigned SR = getScratchReg();
-          duplicateToTop(PendingST[i], SR, I);
-          DEBUG(dbgs() << "Duplicating ST" << i << " in FP"
-                       << unsigned(PendingST[i])
-                       << " to avoid collision with ST" << j << '\n');
-          PendingST[i] = SR;
-        }
-        continue;
-      }
-      unsigned SR = getScratchReg();
-      DEBUG(dbgs() << "Emitting LD_F0 for ST" << i << " in FP" << SR << '\n');
-      BuildMI(*MBB, I, MI->getDebugLoc(), TII->get(X86::LD_F0));
-      pushReg(SR);
-      PendingST[i] = SR;
-      if (NumPendingSTs == i)
-        ++NumPendingSTs;
-    }
-    assert(NumPendingSTs >= NumSTUses && "Fixed registers should be assigned");
+    // Do not include registers that are implicitly popped by defs/clobbers.
+    FPKills &= ~(STDefs | STClobbers);
 
     // Now we can rearrange the live registers to match what was requested.
-    shuffleStackTop(PendingST, NumPendingSTs, I);
+    unsigned char STUsesArray[8];
+
+    for (unsigned I = 0; I < NumSTUses; ++I)
+      STUsesArray[I] = I;
+
+    shuffleStackTop(STUsesArray, NumSTUses, I);
     DEBUG({dbgs() << "Before asm: "; dumpStack();});
 
     // With the stack layout fixed, rewrite the FP registers.
@@ -1599,36 +1484,22 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
       MachineOperand &Op = MI->getOperand(i);
       if (!Op.isReg() || Op.getReg() < X86::FP0 || Op.getReg() > X86::FP6)
         continue;
+
       unsigned FPReg = getFPReg(Op);
-      Op.setReg(getSTReg(FPReg));
+
+      if (FRegIdx.count(i))
+        // Operand with constraint "f".
+        Op.setReg(getSTReg(FPReg));
+      else
+        // Operand with a single register class constraint ("t" or "u").
+        Op.setReg(X86::ST0 + FPReg);
     }
 
     // Simulate the inline asm popping its inputs and pushing its outputs.
     StackTop -= NumSTPopped;
 
-    // Hold the fixed output registers in scratch FP registers. They will be
-    // transferred to real FP registers by copies.
-    NumPendingSTs = 0;
-    for (unsigned i = 0; i < NumSTDefs; ++i) {
-      unsigned SR = getScratchReg();
-      pushReg(SR);
-      FPKills &= ~(1u << SR);
-    }
     for (unsigned i = 0; i < NumSTDefs; ++i)
-      PendingST[NumPendingSTs++] = getStackEntry(i);
-    DEBUG({dbgs() << "After asm: "; dumpStack();});
-
-    // If any of the ST defs were dead, pop them immediately. Our caller only
-    // handles dead FP defs.
-    MachineBasicBlock::iterator InsertPt = MI;
-    for (unsigned i = 0; STDefs & (1u << i); ++i) {
-      if (!(STDeadDefs & (1u << i)))
-        continue;
-      freeStackSlotAfter(InsertPt, PendingST[i]);
-      PendingST[i] = NumFPRegs;
-    }
-    while (NumPendingSTs && PendingST[NumPendingSTs - 1] == NumFPRegs)
-      --NumPendingSTs;
+      pushReg(NumSTDefs - i - 1);
 
     // If this asm kills any FP registers (is the last use of them) we must
     // explicitly emit pop instructions for them.  Do this now after the asm has
@@ -1640,9 +1511,10 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     while (FPKills) {
       unsigned FPReg = countTrailingZeros(FPKills);
       if (isLive(FPReg))
-        freeStackSlotAfter(InsertPt, FPReg);
+        freeStackSlotAfter(I, FPReg);
       FPKills &= ~(1U << FPReg);
     }
+
     // Don't delete the inline asm!
     return;
   }
@@ -1738,7 +1610,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
       // Duplicate the TOS so that we return it twice.  Just pick some other FPx
       // register to hold it.
-      unsigned NewReg = getScratchReg();
+      unsigned NewReg = ScratchFPReg;
       duplicateToTop(FirstFPRegOp, NewReg, MI);
       FirstFPRegOp = NewReg;
     }
@@ -1770,4 +1642,42 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     I = BuildMI(*MBB, I, DebugLoc(), TII->get(TargetOpcode::KILL));
   } else
     --I;
+}
+
+void FPS::setKillFlags(MachineBasicBlock &MBB) const {
+  const TargetRegisterInfo *TRI = MBB.getParent()->getTarget()
+    .getRegisterInfo();
+  LivePhysRegs LPR(TRI);
+
+  LPR.addLiveOuts(&MBB);
+
+  for (MachineBasicBlock::reverse_iterator I = MBB.rbegin(), E = MBB.rend();
+       I != E; ++I) {
+    BitVector Defs(8);
+    SmallVector<MachineOperand *, 2> Uses;
+    MachineInstr &MI = *I;
+
+    for (auto &MO : I->operands()) {
+      if (!MO.isReg())
+        continue;
+
+      unsigned Reg = MO.getReg() - X86::FP0;
+
+      if (Reg >= 8)
+        continue;
+
+      if (MO.isDef()) {
+        Defs.set(Reg);
+        if (!LPR.contains(MO.getReg()))
+          MO.setIsDead();
+      } else
+        Uses.push_back(&MO);
+    }
+
+    for (auto *MO : Uses)
+      if (Defs.test(getFPReg(*MO)) || !LPR.contains(MO->getReg()))
+        MO->setIsKill();
+
+    LPR.stepBackward(MI);
+  }
 }
