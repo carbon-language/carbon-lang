@@ -19,6 +19,7 @@
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolution.h"
@@ -47,6 +48,8 @@ using namespace llvm;
 
 #define SV_NAME "slp-vectorizer"
 #define DEBUG_TYPE "SLP"
+
+STATISTIC(NumVectorInstructions, "Number of vector instructions generated");
 
 static cl::opt<int>
     SLPCostThreshold("slp-threshold", cl::init(0), cl::Hidden,
@@ -1720,6 +1723,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       CastInst *CI = dyn_cast<CastInst>(VL0);
       Value *V = Builder.CreateCast(CI->getOpcode(), InVec, VecTy);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
       return V;
     }
     case Instruction::FCmp:
@@ -1746,6 +1750,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         V = Builder.CreateICmp(P0, L, R);
 
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
       return V;
     }
     case Instruction::Select: {
@@ -1767,6 +1772,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       Value *V = Builder.CreateSelect(Cond, True, False);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
       return V;
     }
     case Instruction::Add:
@@ -1811,6 +1817,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       BinaryOperator *BinOp = cast<BinaryOperator>(VL0);
       Value *V = Builder.CreateBinOp(BinOp->getOpcode(), LHS, RHS);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
 
       if (Instruction *I = dyn_cast<Instruction>(V))
         return propagateMetadata(I, E->Scalars);
@@ -1833,6 +1840,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         Alignment = DL->getABITypeAlignment(LI->getPointerOperand()->getType());
       LI->setAlignment(Alignment);
       E->VectorizedValue = LI;
+      ++NumVectorInstructions;
       return propagateMetadata(LI, E->Scalars);
     }
     case Instruction::Store: {
@@ -1854,6 +1862,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
         Alignment = DL->getABITypeAlignment(SI->getPointerOperand()->getType());
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
+      ++NumVectorInstructions;
       return propagateMetadata(S, E->Scalars);
     }
     case Instruction::GetElementPtr: {
@@ -1878,6 +1887,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       Value *V = Builder.CreateGEP(Op0, OpVecs);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
 
       if (Instruction *I = dyn_cast<Instruction>(V))
         return propagateMetadata(I, E->Scalars);
@@ -1918,6 +1928,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       Function *CF = Intrinsic::getDeclaration(M, ID, Tys);
       Value *V = Builder.CreateCall(CF, OpVecs);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
       return V;
     }
     case Instruction::ShuffleVector: {
@@ -1958,6 +1969,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 
       Value *V = Builder.CreateShuffleVector(V0, V1, ShuffleMask);
       E->VectorizedValue = V;
+      ++NumVectorInstructions;
       if (Instruction *I = dyn_cast<Instruction>(V))
         return propagateMetadata(I, E->Scalars);
 
