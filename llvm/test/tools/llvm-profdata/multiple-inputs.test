@@ -12,34 +12,6 @@ FOO3: Total functions: 1
 FOO3: Maximum function count: 8
 FOO3: Maximum internal block count: 7
 
-RUN: llvm-profdata merge %p/Inputs/foo4-1.proftext %p/Inputs/foo4-2.proftext -o %t
-RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO4
-RUN: llvm-profdata merge %p/Inputs/foo4-2.proftext %p/Inputs/foo4-1.proftext -o %t
-RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO4
-FOO4: foo:
-FOO4: Counters: 4
-FOO4: Function count: 18
-FOO4: Block counts: [28, 38, 48]
-FOO4: Total functions: 1
-FOO4: Maximum function count: 18
-FOO4: Maximum internal block count: 48
-
-RUN: llvm-profdata merge %p/Inputs/foo3bar3-1.proftext %p/Inputs/foo3bar3-2.proftext -o %t
-RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
-RUN: llvm-profdata merge %p/Inputs/foo3bar3-2.proftext %p/Inputs/foo3bar3-1.proftext -o %t
-RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO3BAR3
-FOO3BAR3: foo:
-FOO3BAR3: Counters: 3
-FOO3BAR3: Function count: 19
-FOO3BAR3: Block counts: [22, 28]
-FOO3BAR3: bar:
-FOO3BAR3: Counters: 3
-FOO3BAR3: Function count: 36
-FOO3BAR3: Block counts: [42, 50]
-FOO3BAR3: Total functions: 2
-FOO3BAR3: Maximum function count: 36
-FOO3BAR3: Maximum internal block count: 50
-
 RUN: llvm-profdata merge %p/Inputs/empty.proftext %p/Inputs/foo3-1.proftext -o %t
 RUN: llvm-profdata show %t -all-functions -counts | FileCheck %s --check-prefix=FOO3EMPTY
 FOO3EMPTY: foo:
