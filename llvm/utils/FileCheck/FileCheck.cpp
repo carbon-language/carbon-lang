@@ -631,7 +631,7 @@ struct CheckString {
 ///
 /// \param PreserveHorizontal Don't squash consecutive horizontal whitespace
 /// characters to a single space.
-static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB,
+static MemoryBuffer *CanonicalizeInputFile(std::unique_ptr<MemoryBuffer> MB,
                                            bool PreserveHorizontal) {
   SmallString<128> NewFile;
   NewFile.reserve(MB->getBufferSize());
@@ -657,12 +657,8 @@ static MemoryBuffer *CanonicalizeInputFile(MemoryBuffer *MB,
       ++Ptr;
   }
 
-  // Free the old buffer and return a new one.
-  MemoryBuffer *MB2 =
-    MemoryBuffer::getMemBufferCopy(NewFile.str(), MB->getBufferIdentifier());
-
-  delete MB;
-  return MB2;
+  return MemoryBuffer::getMemBufferCopy(NewFile.str(),
+                                        MB->getBufferIdentifier());
 }
 
 static bool IsPartOfWord(char c) {
@@ -837,7 +833,7 @@ static bool ReadCheckFile(SourceMgr &SM,
 
   // If we want to canonicalize whitespace, strip excess whitespace from the
   // buffer containing the CHECK lines. Remove DOS style line endings.
-  MemoryBuffer *F = CanonicalizeInputFile(FileOrErr.get().release(),
+  MemoryBuffer *F = CanonicalizeInputFile(std::move(FileOrErr.get()),
                                           NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
@@ -1272,7 +1268,7 @@ int main(int argc, char **argv) {
   // Remove duplicate spaces in the input file if requested.
   // Remove DOS style line endings.
   MemoryBuffer *F =
-    CanonicalizeInputFile(File.release(), NoCanonicalizeWhiteSpace);
+    CanonicalizeInputFile(std::move(File), NoCanonicalizeWhiteSpace);
 
   SM.AddNewSourceBuffer(F, SMLoc());
 
