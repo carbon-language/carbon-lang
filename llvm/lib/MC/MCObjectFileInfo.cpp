@@ -583,6 +583,12 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfAddrSection =
     Ctx->getELFSection(".debug_addr", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+
+  StackMapSection =
+    Ctx->getELFSection(".llvm_stackmaps", ELF::SHT_PROGBITS,
+                       ELF::SHF_ALLOC,
+                       SectionKind::getMetadata());
+
 }
 
 
