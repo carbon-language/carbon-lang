@@ -553,6 +553,14 @@ foo2:
         ldrsh r0, [r0, r1]!
         ldrsh r0, [r0], #2
         ldrsh r0, [r0], r1
+        ldrb r0, [r0, #1]!
+        ldrb r0, [r0, r1]!
+        ldrb r0, [r0], #1
+        ldrb r0, [r0], r1
+        ldrsb r0, [r0, #1]!
+        ldrsb r0, [r0, r1]!
+        ldrsb r0, [r0], #1
+        ldrsb r0, [r0], r1
 @ CHECK-ERRORS: error: destination register and base register can't be identical
 @ CHECK-ERRORS: ldr r0, [r0, #4]!
 @ CHECK-ERRORS:         ^
@@ -588,4 +596,28 @@ foo2:
 @ CHECK-ERRORS:           ^
 @ CHECK-ERRORS: error: destination register and base register can't be identical
 @ CHECK-ERRORS: ldrsh r0, [r0], r1
+@ CHECK-ERRORS:           ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrb r0, [r0, #1]!
+@ CHECK-ERRORS:          ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrb r0, [r0, r1]!
+@ CHECK-ERRORS:          ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrb r0, [r0], #1
+@ CHECK-ERRORS:          ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrb r0, [r0], r1
+@ CHECK-ERRORS:          ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrsb r0, [r0, #1]!
+@ CHECK-ERRORS:           ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrsb r0, [r0, r1]!
+@ CHECK-ERRORS:           ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrsb r0, [r0], #1
+@ CHECK-ERRORS:           ^
+@ CHECK-ERRORS: error: destination register and base register can't be identical
+@ CHECK-ERRORS: ldrsb r0, [r0], r1
 @ CHECK-ERRORS:           ^
