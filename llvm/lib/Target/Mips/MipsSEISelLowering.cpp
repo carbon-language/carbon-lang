@@ -578,10 +578,9 @@ static SDValue performANDCombine(SDNode *N, SelectionDAG &DAG,
     if ((Op0Opcode == MipsISD::VEXTRACT_ZEXT_ELT && Log2 >= ExtendTySize) ||
         Log2 == ExtendTySize) {
       SDValue Ops[] = { Op0->getOperand(0), Op0->getOperand(1), Op0Op2 };
-      DAG.MorphNodeTo(Op0.getNode(), MipsISD::VEXTRACT_ZEXT_ELT,
-                      Op0->getVTList(),
-                      makeArrayRef(Ops, Op0->getNumOperands()));
-      return Op0;
+      return DAG.getNode(MipsISD::VEXTRACT_ZEXT_ELT, SDLoc(Op0),
+                         Op0->getVTList(),
+                         makeArrayRef(Ops, Op0->getNumOperands()));
     }
   }
 
@@ -923,10 +922,9 @@ static SDValue performSRACombine(SDNode *N, SelectionDAG &DAG,
            TotalBits <= 32)) {
         SDValue Ops[] = { Op0Op0->getOperand(0), Op0Op0->getOperand(1),
                           Op0Op0->getOperand(2) };
-        DAG.MorphNodeTo(Op0Op0.getNode(), MipsISD::VEXTRACT_SEXT_ELT,
-                        Op0Op0->getVTList(),
-                        makeArrayRef(Ops, Op0Op0->getNumOperands()));
-        return Op0Op0;
+        return DAG.getNode(MipsISD::VEXTRACT_SEXT_ELT, SDLoc(Op0Op0),
+                           Op0Op0->getVTList(),
+                           makeArrayRef(Ops, Op0Op0->getNumOperands()));
       }
     }
   }

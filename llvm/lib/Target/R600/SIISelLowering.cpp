@@ -774,7 +774,9 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
       BR->getOperand(0),
       BRCOND.getOperand(2)
     };
-    DAG.MorphNodeTo(BR, ISD::BR, BR->getVTList(), Ops);
+    SDValue NewBR = DAG.getNode(ISD::BR, DL, BR->getVTList(), Ops);
+    DAG.ReplaceAllUsesWith(BR, NewBR.getNode());
+    BR = NewBR.getNode();
   }
 
   SDValue Chain = SDValue(Result, Result->getNumValues() - 1);

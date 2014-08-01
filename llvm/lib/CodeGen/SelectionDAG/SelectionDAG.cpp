@@ -5467,6 +5467,10 @@ SDNode *SelectionDAG::UpdadeSDLocOnMergedSDNode(SDNode *N, SDLoc OLoc) {
 /// node, and because it doesn't require CSE recalculation for any of
 /// the node's users.
 ///
+/// However, note that MorphNodeTo recursively deletes dead nodes from the DAG.
+/// As a consequence it isn't appropriate to use from within the DAG combiner or
+/// the legalizer which maintain worklists that would need to be updated when
+/// deleting things.
 SDNode *SelectionDAG::MorphNodeTo(SDNode *N, unsigned Opc,
                                   SDVTList VTs, ArrayRef<SDValue> Ops) {
   unsigned NumOps = Ops.size();
