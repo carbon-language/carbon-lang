@@ -486,9 +486,10 @@ namespace {
     }
     void writeValue(raw_ostream &OS) const override {
       OS << "\";\n";
-      OS << "    assert(is" << getLowerName() << "Expr && " << getLowerName()
-         << "Expr != nullptr);\n";
-      OS << "    " << getLowerName() << "Expr->printPretty(OS, 0, Policy);\n";
+      // The aligned attribute argument expression is optional.
+      OS << "    if (is" << getLowerName() << "Expr && "
+         << getLowerName() << "Expr)\n";
+      OS << "      " << getLowerName() << "Expr->printPretty(OS, 0, Policy);\n";
       OS << "    OS << \"";
     }
     void writeDump(raw_ostream &OS) const override {
@@ -1120,6 +1121,11 @@ writePrettyPrintFunction(Record &R,
       continue;
     }
 
+    // FIXME: always printing the parenthesis isn't the correct behavior for
+    // attributes which have optional arguments that were not provided. For
+    // instance: __attribute__((aligned)) will be pretty printed as
+    // __attribute__((aligned())). The logic should check whether there is only
+    // a single argument, and if it is optional, whether it has been provided.
     if (!Args.empty())
       OS << "(";
     if (Spelling == "availability") {

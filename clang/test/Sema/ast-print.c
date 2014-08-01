@@ -39,3 +39,6 @@ int rvarr(int n, int a[restrict static n]) {
   return a[2];
 }
 
+typedef struct {
+  int f;
+} T __attribute__ ((__aligned__));
