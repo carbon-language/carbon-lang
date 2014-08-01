@@ -1013,9 +1013,9 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       createBinary(std::move(*BufferOrErr), &Context);
   if (error(BinaryOrErr.getError(), Filename))
     return;
-  std::unique_ptr<Binary> Bin = std::move(BinaryOrErr.get());
+  Binary &Bin = *BinaryOrErr.get();
 
-  if (Archive *A = dyn_cast<Archive>(Bin.get())) {
+  if (Archive *A = dyn_cast<Archive>(&Bin)) {
     if (ArchiveMap) {
       Archive::symbol_iterator I = A->symbol_begin();
       Archive::symbol_iterator E = A->symbol_end();
@@ -1056,7 +1056,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     }
     return;
   }
-  if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(Bin.get())) {
+  if (MachOUniversalBinary *UB = dyn_cast<MachOUniversalBinary>(&Bin)) {
     // If we have a list of architecture flags specified dump only those.
     if (!ArchAll && ArchFlags.size() != 0) {
       // Look for a slice in the universal binary that matches each ArchFlag.
@@ -1076,16 +1076,16 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
             ArchiveName.clear();
             ArchitectureName.clear();
             if (ObjOrErr) {
-              std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
+              ObjectFile &Obj = *ObjOrErr.get();
               if (ArchFlags.size() > 1) {
                 if (PrintFileName)
                   ArchitectureName = I->getArchTypeName();
                 else
-                  outs() << "\n" << Obj->getFileName() << " (for architecture "
+                  outs() << "\n" << Obj.getFileName() << " (for architecture "
                          << I->getArchTypeName() << ")"
                          << ":\n";
               }
-              dumpSymbolNamesFromObject(*Obj, false, ArchiveName,
+              dumpSymbolNamesFromObject(Obj, false, ArchiveName,
                                         ArchitectureName);
             } else if (!I->getAsArchive(A)) {
               for (Archive::child_iterator AI = A->child_begin(),
@@ -1138,8 +1138,8 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
           std::string ArchiveName;
           ArchiveName.clear();
           if (ObjOrErr) {
-            std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
-            dumpSymbolNamesFromObject(*Obj, false);
+            ObjectFile &Obj = *ObjOrErr.get();
+            dumpSymbolNamesFromObject(Obj, false);
           } else if (!I->getAsArchive(A)) {
             for (Archive::child_iterator AI = A->child_begin(),
                                          AE = A->child_end();
@@ -1177,19 +1177,19 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
       ArchiveName.clear();
       ArchitectureName.clear();
       if (ObjOrErr) {
-        std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
+        ObjectFile &Obj = *ObjOrErr.get();
         if (PrintFileName) {
-          if (isa<MachOObjectFile>(Obj.get()) && moreThanOneArch)
+          if (isa<MachOObjectFile>(Obj) && moreThanOneArch)
             ArchitectureName = I->getArchTypeName();
         } else {
           if (moreThanOneArch)
             outs() << "\n";
-          outs() << Obj->getFileName();
-          if (isa<MachOObjectFile>(Obj.get()) && moreThanOneArch)
+          outs() << Obj.getFileName();
+          if (isa<MachOObjectFile>(Obj) && moreThanOneArch)
             outs() << " (for architecture " << I->getArchTypeName() << ")";
           outs() << ":\n";
         }
-        dumpSymbolNamesFromObject(*Obj, false, ArchiveName, ArchitectureName);
+        dumpSymbolNamesFromObject(Obj, false, ArchiveName, ArchitectureName);
       } else if (!I->getAsArchive(A)) {
         for (Archive::child_iterator AI = A->child_begin(), AE = A->child_end();
              AI != AE; ++AI) {
@@ -1220,7 +1220,7 @@ static void dumpSymbolNamesFromFile(std::string &Filename) {
     }
     return;
   }
-  if (SymbolicFile *O = dyn_cast<SymbolicFile>(Bin.get())) {
+  if (SymbolicFile *O = dyn_cast<SymbolicFile>(&Bin)) {
     if (!checkMachOAndArchFlags(O, Filename))
       return;
     dumpSymbolNamesFromObject(*O, true);

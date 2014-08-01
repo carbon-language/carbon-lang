@@ -80,12 +80,12 @@ static void DumpInput(const StringRef &Filename) {
     errs() << Filename << ": " << EC.message() << '\n';
     return;
   }
-  std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
+  ObjectFile &Obj = *ObjOrErr.get();
 
-  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(*Obj));
+  std::unique_ptr<DIContext> DICtx(DIContext::getDWARFContext(Obj));
 
   outs() << Filename
-         << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
+         << ":\tfile format " << Obj.getFileFormatName() << "\n\n";
   // Dump the complete DWARF structure.
   DICtx->dump(outs(), DumpType);
 }

@@ -703,7 +703,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
             MemberBuffer, sys::fs::file_magic::unknown, &Context);
     if (!ObjOrErr)
       continue;  // FIXME: check only for "not an object file" errors.
-    std::unique_ptr<object::SymbolicFile> Obj = std::move(ObjOrErr.get());
+    object::SymbolicFile &Obj = *ObjOrErr.get();
 
     if (!StartOffset) {
       printMemberHeader(Out, "", sys::TimeValue::now(), 0, 0, 0, 0);
@@ -711,7 +711,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
       print32BE(Out, 0);
     }
 
-    for (const object::BasicSymbolRef &S : Obj->symbols()) {
+    for (const object::BasicSymbolRef &S : Obj.symbols()) {
       uint32_t Symflags = S.getFlags();
       if (Symflags & object::SymbolRef::SF_FormatSpecific)
         continue;
@@ -725,7 +725,7 @@ writeSymbolTable(raw_fd_ostream &Out, ArrayRef<NewArchiveIterator> Members,
       MemberOffsetRefs.push_back(std::make_pair(Out.tell(), MemberNum));
       print32BE(Out, 0);
     }
-    MemberBuffer.reset(Obj->releaseBuffer());
+    MemberBuffer.reset(Obj.releaseBuffer());
   }
   Out << NameOS.str();
 
@@ -763,7 +763,7 @@ static void performWriteOperation(ArchiveOperation Operation,
   MemberBuffers.resize(NewMembers.size());
 
   for (unsigned I = 0, N = NewMembers.size(); I < N; ++I) {
-    std::unique_ptr<MemoryBuffer> MemberBuffer;
+    std::unique_ptr<MemoryBuffer> &MemberBuffer = MemberBuffers[I];
     NewArchiveIterator &Member = NewMembers[I];
 
     if (Member.isNewMember()) {
@@ -781,7 +781,6 @@ static void performWriteOperation(ArchiveOperation Operation,
       failIfError(MemberBufferOrErr.getError());
       MemberBuffer = std::move(MemberBufferOrErr.get());
     }
-    MemberBuffers[I].reset(MemberBuffer.release());
   }
 
   if (Symtab) {

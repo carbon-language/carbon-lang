@@ -1258,7 +1258,7 @@ int main(int argc, char **argv) {
            << "': " << EC.message() << '\n';
     return 2;
   }
-  std::unique_ptr<MemoryBuffer> File = std::move(FileOrErr.get());
+  std::unique_ptr<MemoryBuffer> &File = FileOrErr.get();
 
   if (File->getBufferSize() == 0) {
     errs() << "FileCheck error: '" << InputFilename << "' is empty.\n";

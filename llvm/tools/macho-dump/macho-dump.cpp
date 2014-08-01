@@ -406,9 +406,9 @@ int main(int argc, char **argv) {
   ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(InputFile);
   if (std::error_code EC = BinaryOrErr.getError())
     return Error("unable to read input: '" + EC.message() + "'");
-  std::unique_ptr<Binary> Binary = std::move((BinaryOrErr.get()));
+  Binary &Binary = *BinaryOrErr.get();
 
-  const MachOObjectFile *InputObject = dyn_cast<MachOObjectFile>(Binary.get());
+  const MachOObjectFile *InputObject = dyn_cast<MachOObjectFile>(&Binary);
   if (!InputObject)
     return Error("Not a MachO object");
 

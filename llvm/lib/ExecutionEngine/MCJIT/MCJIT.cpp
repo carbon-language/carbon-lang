@@ -307,7 +307,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
           ChildIt->getAsBinary();
       if (ChildBinOrErr.getError())
         continue;
-      std::unique_ptr<object::Binary> ChildBin = std::move(ChildBinOrErr.get());
+      std::unique_ptr<object::Binary> &ChildBin = ChildBinOrErr.get();
       if (ChildBin->isObject()) {
         std::unique_ptr<object::ObjectFile> OF(
             static_cast<object::ObjectFile *>(ChildBin.release()));

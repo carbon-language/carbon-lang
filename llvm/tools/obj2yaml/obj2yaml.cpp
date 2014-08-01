@@ -36,9 +36,9 @@ static std::error_code dumpInput(StringRef File) {
   if (std::error_code EC = BinaryOrErr.getError())
     return EC;
 
-  std::unique_ptr<Binary> Binary = std::move(BinaryOrErr.get());
+  Binary &Binary = *BinaryOrErr.get();
   // TODO: If this is an archive, then burst it and dump each entry
-  if (ObjectFile *Obj = dyn_cast<ObjectFile>(Binary.get()))
+  if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
     return dumpObject(*Obj);
 
   return obj2yaml_error::unrecognized_file_format;

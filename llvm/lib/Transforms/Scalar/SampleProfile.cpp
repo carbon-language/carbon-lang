@@ -457,8 +457,8 @@ bool SampleModuleProfile::loadText() {
     M.getContext().diagnose(DiagnosticInfoSampleProfile(Filename.data(), Msg));
     return false;
   }
-  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
-  line_iterator LineIt(*Buffer, '#');
+  MemoryBuffer &Buffer = *BufferOrErr.get();
+  line_iterator LineIt(Buffer, '#');
 
   // Read the profile of each function. Since each function may be
   // mentioned more than once, and we are collecting flat profiles,

@@ -192,15 +192,15 @@ int main(int argc, char **argv) {
         MemoryBuffer::getFileOrSTDIN(Input);
     if (!BufOrErr)
       return 1;
-    std::unique_ptr<MemoryBuffer> Buf = std::move(BufOrErr.get());
+    MemoryBuffer &Buf = *BufOrErr.get();
 
     llvm::SourceMgr sm;
     if (DumpTokens) {
-      yaml::dumpTokens(Buf->getBuffer(), outs());
+      yaml::dumpTokens(Buf.getBuffer(), outs());
     }
 
     if (DumpCanonical) {
-      yaml::Stream stream(Buf->getBuffer(), sm);
+      yaml::Stream stream(Buf.getBuffer(), sm);
       dumpStream(stream);
     }
   }

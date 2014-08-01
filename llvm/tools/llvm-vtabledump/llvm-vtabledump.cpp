@@ -169,11 +169,11 @@ static void dumpInput(StringRef File) {
     reportError(File, EC);
     return;
   }
-  std::unique_ptr<Binary> Binary = std::move(BinaryOrErr.get());
+  Binary &Binary = *BinaryOrErr.get();
 
-  if (Archive *Arc = dyn_cast<Archive>(Binary.get()))
+  if (Archive *Arc = dyn_cast<Archive>(&Binary))
     dumpArchive(Arc);
-  else if (ObjectFile *Obj = dyn_cast<ObjectFile>(Binary.get()))
+  else if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
     dumpVTables(Obj);
   else
     reportError(File, vtabledump_error::unrecognized_file_format);

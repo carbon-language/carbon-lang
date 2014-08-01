@@ -182,7 +182,7 @@ int llvm::DiffFilesWithTolerance(StringRef NameA,
       *Error = EC.message();
     return 2;
   }
-  std::unique_ptr<MemoryBuffer> F1 = std::move(F1OrErr.get());
+  MemoryBuffer &F1 = *F1OrErr.get();
 
   ErrorOr<std::unique_ptr<MemoryBuffer>> F2OrErr = MemoryBuffer::getFile(NameB);
   if (std::error_code EC = F2OrErr.getError()) {
@@ -190,17 +190,17 @@ int llvm::DiffFilesWithTolerance(StringRef NameA,
       *Error = EC.message();
     return 2;
   }
-  std::unique_ptr<MemoryBuffer> F2 = std::move(F2OrErr.get());
+  MemoryBuffer &F2 = *F2OrErr.get();
 
   // Okay, now that we opened the files, scan them for the first difference.
-  const char *File1Start = F1->getBufferStart();
-  const char *File2Start = F2->getBufferStart();
-  const char *File1End = F1->getBufferEnd();
-  const char *File2End = F2->getBufferEnd();
+  const char *File1Start = F1.getBufferStart();
+  const char *File2Start = F2.getBufferStart();
+  const char *File1End = F1.getBufferEnd();
+  const char *File2End = F2.getBufferEnd();
   const char *F1P = File1Start;
   const char *F2P = File2Start;
-  uint64_t A_size = F1->getBufferSize();
-  uint64_t B_size = F2->getBufferSize();
+  uint64_t A_size = F1.getBufferSize();
+  uint64_t B_size = F2.getBufferSize();
 
   // Are the buffers identical?  Common case: Handle this efficiently.
   if (A_size == B_size &&

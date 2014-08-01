@@ -635,11 +635,11 @@ static bool ExpandResponseFile(const char *FName, StringSaver &Saver,
       MemoryBuffer::getFile(FName);
   if (!MemBufOrErr)
     return false;
-  std::unique_ptr<MemoryBuffer> MemBuf = std::move(MemBufOrErr.get());
-  StringRef Str(MemBuf->getBufferStart(), MemBuf->getBufferSize());
+  MemoryBuffer &MemBuf = *MemBufOrErr.get();
+  StringRef Str(MemBuf.getBufferStart(), MemBuf.getBufferSize());
 
   // If we have a UTF-16 byte order mark, convert to UTF-8 for parsing.
-  ArrayRef<char> BufRef(MemBuf->getBufferStart(), MemBuf->getBufferEnd());
+  ArrayRef<char> BufRef(MemBuf.getBufferStart(), MemBuf.getBufferEnd());
   std::string UTF8Buf;
   if (hasUTF16ByteOrderMark(BufRef)) {
     if (!convertUTF16ToUTF8String(BufRef, UTF8Buf))

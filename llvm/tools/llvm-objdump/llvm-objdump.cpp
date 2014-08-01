@@ -891,11 +891,11 @@ static void DumpInput(StringRef file) {
     errs() << ToolName << ": '" << file << "': " << EC.message() << ".\n";
     return;
   }
-  std::unique_ptr<Binary> binary = std::move(BinaryOrErr.get());
+  Binary &Binary = *BinaryOrErr.get();
 
-  if (Archive *a = dyn_cast<Archive>(binary.get()))
+  if (Archive *a = dyn_cast<Archive>(&Binary))
     DumpArchive(a);
-  else if (ObjectFile *o = dyn_cast<ObjectFile>(binary.get()))
+  else if (ObjectFile *o = dyn_cast<ObjectFile>(&Binary))
     DumpObject(o);
   else
     errs() << ToolName << ": '" << file << "': " << "Unrecognized file type.\n";

@@ -302,7 +302,7 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
   Binary *DbgBin = nullptr;
   ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(Path);
   if (!error(BinaryOrErr.getError())) {
-    std::unique_ptr<Binary> ParsedBinary = std::move(BinaryOrErr.get());
+    std::unique_ptr<Binary> &ParsedBinary = BinaryOrErr.get();
     // Check if it's a universal binary.
     Bin = ParsedBinary.get();
     ParsedBinariesAndObjects.push_back(std::move(ParsedBinary));
