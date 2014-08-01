@@ -3511,7 +3511,8 @@ void XCore::addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
 void XCore::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                          ArgStringList &CC1Args) const {
   if (DriverArgs.hasArg(options::OPT_nostdinc) ||
-      DriverArgs.hasArg(options::OPT_nostdlibinc))
+      DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
     return;
   if (const char *cl_include_dir = getenv("XCC_CPLUS_INCLUDE_PATH")) {
     SmallVector<StringRef, 4> Dirs;
