@@ -414,7 +414,7 @@ static void shuffleValueUseLists(Value *V, std::minstd_rand0 &Gen,
 }
 
 /// Shuffle all use-lists in a module.
-void shuffleUseLists(Module &M, unsigned SeedOffset) {
+static void shuffleUseLists(Module &M, unsigned SeedOffset) {
   DEBUG(dbgs() << "*** shuffle-use-lists ***\n");
   std::minstd_rand0 Gen(std::minstd_rand0::default_seed + SeedOffset);
   DenseSet<Value *> Seen;
