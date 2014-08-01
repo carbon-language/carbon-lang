@@ -10,58 +10,66 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/AsmParser/Parser.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/PassManager.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/SourceMgr.h"
 #include "gtest/gtest.h"
 
-namespace llvm {
+using namespace llvm;
+
 namespace {
 
-static Module *makeLLVMModule() {
-  Module* Mod = new Module("test-mem", getGlobalContext());
+std::unique_ptr<Module> parseAssembly(const char *Assembly) {
+  auto M = make_unique<Module>("Module", getGlobalContext());
 
-  FunctionType* FuncTy =
-    FunctionType::get(Type::getVoidTy(Mod->getContext()), false);
-  Function* Func = Function::Create(FuncTy,GlobalValue::ExternalLinkage,
-                                    "func", Mod);
+  SMDiagnostic Error;
+  bool Parsed =
+      ParseAssemblyString(Assembly, M.get(), Error, M->getContext()) == M.get();
 
-  BasicBlock* Entry = BasicBlock::Create(Mod->getContext(), "entry", Func);
-  new UnreachableInst(Mod->getContext(), Entry);
+  std::string ErrMsg;
+  raw_string_ostream OS(ErrMsg);
+  Error.print("", OS);
 
-  BasicBlock* BB = BasicBlock::Create(Mod->getContext(), "bb", Func);
-  new UnreachableInst(Mod->getContext(), BB);
+  // A failure here means that the test itself is buggy.
+  if (!Parsed)
+    report_fatal_error(OS.str().c_str());
 
-  PointerType* Int8Ptr = Type::getInt8PtrTy(Mod->getContext());
-  new GlobalVariable(*Mod, Int8Ptr, /*isConstant=*/true,
-                     GlobalValue::ExternalLinkage,
-                     BlockAddress::get(BB), "table");
-
-  return Mod;
+  return M;
 }
 
-static void writeModuleToBuffer(SmallVectorImpl<char> &Buffer) {
-  std::unique_ptr<Module> Mod(makeLLVMModule());
+static void writeModuleToBuffer(std::unique_ptr<Module> Mod,
+                                SmallVectorImpl<char> &Buffer) {
   raw_svector_ostream OS(Buffer);
   WriteBitcodeToFile(Mod.get(), OS);
 }
 
-TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
-  SmallString<1024> Mem;
-  writeModuleToBuffer(Mem);
+static std::unique_ptr<Module> getLazyModuleFromAssembly(LLVMContext &Context,
+                                                         SmallString<1024> &Mem,
+                                                         const char *Assembly) {
+  writeModuleToBuffer(parseAssembly(Assembly), Mem);
   MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
-  ErrorOr<Module *> ModuleOrErr =
-      getLazyBitcodeModule(Buffer, getGlobalContext());
-  std::unique_ptr<Module> m(ModuleOrErr.get());
-  PassManager passes;
-  passes.add(createVerifierPass());
-  passes.add(createDebugInfoVerifierPass());
-  passes.run(*m);
+  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  return std::unique_ptr<Module>(ModuleOrErr.get());
 }
 
+TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
+  SmallString<1024> Mem;
+
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getLazyModuleFromAssembly(
+      Context, Mem, "@table = constant i8* blockaddress(@func, %bb)\n"
+                    "define void @func() {\n"
+                    "  unreachable\n"
+                    "bb:\n"
+                    "  unreachable\n"
+                    "}\n");
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }
-}
+
+} // end namespace
