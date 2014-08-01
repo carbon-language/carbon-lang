@@ -1982,7 +1982,9 @@ void PragmaUnrollHintHandler::HandlePragma(Preprocessor &PP,
     if (ValueInParens)
       PP.Lex(Tok);
 
-    if (ParseLoopHintValue(PP, Tok, PragmaName, Token(), ValueInParens, *Info))
+    Token Option;
+    Option.startToken();
+    if (ParseLoopHintValue(PP, Tok, PragmaName, Option, ValueInParens, *Info))
       return;
 
     // In CUDA, the argument to '#pragma unroll' should not be contained in
