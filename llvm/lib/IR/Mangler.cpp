@@ -27,6 +27,13 @@ static void getNameWithPrefixx(raw_ostream &OS, const Twine &GVName,
   StringRef Name = GVName.toStringRef(TmpData);
   assert(!Name.empty() && "getNameWithPrefix requires non-empty name");
 
+  // No need to do anything special if the global has the special "do not
+  // mangle" flag in the name.
+  if (Name[0] == '\1') {
+    OS << Name.substr(1);
+    return;
+  }
+
   if (PrefixTy == Mangler::Private)
     OS << DL.getPrivateGlobalPrefix();
   else if (PrefixTy == Mangler::LinkerPrivate)
@@ -100,17 +107,10 @@ void Mangler::getNameWithPrefix(raw_ostream &OS, const GlobalValue *GV,
 
   StringRef Name = GV->getName();
 
-  // No need to do anything special if the global has the special "do not
-  // mangle" flag in the name.
-  if (Name[0] == '\1') {
-    OS << Name.substr(1);
-    return;
-  }
-
   bool UseAt = false;
   const Function *MSFunc = nullptr;
   CallingConv::ID CC;
-  if (DL->hasMicrosoftFastStdCallMangling()) {
+  if (Name[0] != '\1' && DL->hasMicrosoftFastStdCallMangling()) {
     if ((MSFunc = dyn_cast<Function>(GV))) {
       CC = MSFunc->getCallingConv();
       // fastcall functions need to start with @ instead of _.
