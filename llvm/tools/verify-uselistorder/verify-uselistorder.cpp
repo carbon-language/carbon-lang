@@ -359,6 +359,15 @@ static bool verifyAssemblyUseListOrder(const Module &M) {
   return matches(ValueMapping(M), ValueMapping(*OtherM));
 }
 
+static void verifyUseListOrder(const Module &M) {
+  if (!verifyBitcodeUseListOrder(M))
+    report_fatal_error("bitcode use-list order changed");
+
+  if (shouldPreserveAssemblyUseListOrder())
+    if (!verifyAssemblyUseListOrder(M))
+      report_fatal_error("assembly use-list order changed");
+}
+
 int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc, argv);
@@ -397,12 +406,7 @@ int main(int argc, char **argv) {
     // Shuffle with a different seed each time so that use-lists that aren't
     // modified the first time are likely to be modified the next time.
     shuffleUseLists(*M, I);
-    if (!verifyBitcodeUseListOrder(*M))
-      report_fatal_error("bitcode use-list order changed");
-
-    if (shouldPreserveAssemblyUseListOrder())
-      if (!verifyAssemblyUseListOrder(*M))
-        report_fatal_error("assembly use-list order changed");
+    verifyUseListOrder(*M);
   }
 
   return 0;
