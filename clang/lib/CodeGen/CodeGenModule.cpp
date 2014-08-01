@@ -1510,26 +1510,18 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
       // this will be unnecessary.
       //
       // We also don't emit a definition for a function if it's going to be an
-      // entry
-      // in a vtable, unless it's already marked as used.
+      // entry in a vtable, unless it's already marked as used.
     } else if (getLangOpts().CPlusPlus && D) {
       // Look for a declaration that's lexically in a record.
-      const auto *FD = cast<FunctionDecl>(D);
-      FD = FD->getMostRecentDecl();
-      do {
+      for (const auto *FD = cast<FunctionDecl>(D)->getMostRecentDecl(); FD;
+           FD = FD->getPreviousDecl()) {
         if (isa<CXXRecordDecl>(FD->getLexicalDeclContext())) {
-          if (FD->isImplicit() && !ForVTable) {
-            assert(FD->isUsed() &&
-                   "Sema didn't mark implicit function as used!");
-            addDeferredDeclToEmit(F, GD.getWithDecl(FD));
-            break;
-          } else if (FD->doesThisDeclarationHaveABody()) {
+          if (FD->doesThisDeclarationHaveABody()) {
             addDeferredDeclToEmit(F, GD.getWithDecl(FD));
             break;
           }
         }
-        FD = FD->getPreviousDecl();
-      } while (FD);
+      }
     }
   }
 

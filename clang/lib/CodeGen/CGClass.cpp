@@ -711,7 +711,9 @@ void CodeGenFunction::EmitConstructorBody(FunctionArgList &Args) {
     return;
   }
 
-  Stmt *Body = Ctor->getBody();
+  const FunctionDecl *Definition = 0;
+  Stmt *Body = Ctor->getBody(Definition);
+  assert(Definition == Ctor && "emitting wrong constructor body");
 
   // Enter the function-try-block before the constructor prologue if
   // applicable.

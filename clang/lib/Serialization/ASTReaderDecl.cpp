@@ -3241,6 +3241,8 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
     case UPD_CXX_ADDED_IMPLICIT_MEMBER: {
       Decl *MD = Reader.ReadDecl(ModuleFile, Record, Idx);
       assert(MD && "couldn't read decl from update record");
+      // FIXME: We should call addHiddenDecl instead, to add the member
+      // to its DeclContext.
       cast<CXXRecordDecl>(D)->addedMember(MD);
       break;
     }

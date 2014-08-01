@@ -30,7 +30,7 @@ namespace ImplicitSpecialMembers {
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2EOS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1BC2ERKS0_(
-  // FIXME CHECK-NOT: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
+  // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
 
   extern B b1;
   B b2(b1);
