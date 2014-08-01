@@ -1372,6 +1372,7 @@ static enum CXChildVisitResult PrintMangledName(CXCursor cursor, CXCursor p,
   PrintCursor(cursor, NULL);
   MangledName = clang_Cursor_getMangling(cursor);
   printf(" [mangled=%s]\n", clang_getCString(MangledName));
+  clang_disposeString(MangledName);
   return CXChildVisit_Continue;
 }
 
