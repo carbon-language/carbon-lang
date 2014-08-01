@@ -88,11 +88,9 @@ MCJIT::~MCJIT() {
   LoadedObjects.clear();
 
 
-  SmallVector<object::Archive *, 2>::iterator ArIt, ArEnd;
-  for (ArIt = Archives.begin(), ArEnd = Archives.end(); ArIt != ArEnd; ++ArIt) {
-    object::Archive *A = *ArIt;
+  for (object::Archive *A : Archives)
     delete A;
-  }
+
   Archives.clear();
 
   delete TM;
@@ -296,9 +294,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   if (Addr)
     return Addr;
 
-  SmallVector<object::Archive*, 2>::iterator I, E;
-  for (I = Archives.begin(), E = Archives.end(); I != E; ++I) {
-    object::Archive *A = *I;
+  for (object::Archive *A : Archives) {
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {
