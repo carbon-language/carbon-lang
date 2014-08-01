@@ -112,13 +112,15 @@ static isl_printer *printLine(__isl_take isl_printer *Printer,
 static isl_printer *cbPrintFor(__isl_take isl_printer *Printer,
                                __isl_take isl_ast_print_options *Options,
                                __isl_keep isl_ast_node *Node, void *) {
-  if (IslAstInfo::isInnermostParallel(Node))
+  if (IslAstInfo::isInnermostParallel(Node) &&
+      !IslAstInfo::isReductionParallel(Node))
     Printer = printLine(Printer, "#pragma simd");
 
   if (IslAstInfo::isInnermost(Node) && IslAstInfo::isReductionParallel(Node))
     Printer = printLine(Printer, "#pragma simd reduction");
 
-  if (IslAstInfo::isOutermostParallel(Node))
+  if (IslAstInfo::isOutermostParallel(Node) &&
+      !IslAstInfo::isReductionParallel(Node))
     Printer = printLine(Printer, "#pragma omp parallel for");
 
   if (!IslAstInfo::isInnermost(Node) && IslAstInfo::isReductionParallel(Node))
@@ -344,22 +346,18 @@ bool IslAstInfo::isInnermost(__isl_keep isl_ast_node *Node) {
 }
 
 bool IslAstInfo::isParallel(__isl_keep isl_ast_node *Node) {
-  IslAstUserPayload *Payload = getNodePayload(Node);
-  return Payload &&
-         (Payload->IsInnermostParallel || Payload->IsOutermostParallel) &&
-         !Payload->IsReductionParallel;
+  return IslAstInfo::isInnermostParallel(Node) ||
+         IslAstInfo::isOutermostParallel(Node);
 }
 
 bool IslAstInfo::isInnermostParallel(__isl_keep isl_ast_node *Node) {
   IslAstUserPayload *Payload = getNodePayload(Node);
-  return Payload && Payload->IsInnermostParallel &&
-         !Payload->IsReductionParallel;
+  return Payload && Payload->IsInnermostParallel;
 }
 
 bool IslAstInfo::isOutermostParallel(__isl_keep isl_ast_node *Node) {
   IslAstUserPayload *Payload = getNodePayload(Node);
-  return Payload && Payload->IsOutermostParallel &&
-         !Payload->IsReductionParallel;
+  return Payload && Payload->IsOutermostParallel;
 }
 
 bool IslAstInfo::isReductionParallel(__isl_keep isl_ast_node *Node) {
