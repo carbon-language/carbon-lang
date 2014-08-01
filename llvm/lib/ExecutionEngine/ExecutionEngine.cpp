@@ -125,6 +125,10 @@ void ExecutionEngine::addObjectFile(std::unique_ptr<object::ObjectFile> O) {
   llvm_unreachable("ExecutionEngine subclass doesn't implement addObjectFile.");
 }
 
+void ExecutionEngine::addArchive(std::unique_ptr<object::Archive> A) {
+  llvm_unreachable("ExecutionEngine subclass doesn't implement addArchive.");
+}
+
 bool ExecutionEngine::removeModule(Module *M) {
   for(SmallVectorImpl<Module *>::iterator I = Modules.begin(),
         E = Modules.end(); I != E; ++I) {
