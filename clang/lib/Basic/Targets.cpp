@@ -931,7 +931,6 @@ const Builtin::Info PPCTargetInfo::BuiltinInfo[] = {
 /// configured set of features.
 bool PPCTargetInfo::handleTargetFeatures(std::vector<std::string> &Features,
                                          DiagnosticsEngine &Diags) {
-  // Remember the maximum enabled sselevel.
   for (unsigned i = 0, e = Features.size(); i !=e; ++i) {
     // Ignore disabled features.
     if (Features[i][0] == '-')
