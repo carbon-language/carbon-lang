@@ -462,6 +462,9 @@ public:
   /// expected to compare two \a Use references.
   template <class Compare> void sortUseList(Compare Cmp);
 
+  /// \brief Reverse the use-list.
+  void reverseUseList();
+
 private:
   /// \brief Merge two lists together.
   ///

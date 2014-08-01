@@ -614,6 +614,25 @@ Value *Value::DoPHITranslation(const BasicBlock *CurBB,
 
 LLVMContext &Value::getContext() const { return VTy->getContext(); }
 
+void Value::reverseUseList() {
+  if (!UseList || !UseList->Next)
+    // No need to reverse 0 or 1 uses.
+    return;
+
+  Use *Head = UseList;
+  Use *Current = UseList->Next;
+  Head->Next = nullptr;
+  while (Current) {
+    Use *Next = Current->Next;
+    Current->Next = Head;
+    Head->setPrev(&Current->Next);
+    Head = Current;
+    Current = Next;
+  }
+  UseList = Head;
+  Head->setPrev(&UseList);
+}
+
 //===----------------------------------------------------------------------===//
 //                             ValueHandleBase Class
 //===----------------------------------------------------------------------===//
