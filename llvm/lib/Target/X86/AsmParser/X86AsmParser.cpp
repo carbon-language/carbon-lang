@@ -731,6 +731,13 @@ private:
                     (X86::Mode64Bit | X86::Mode32Bit | X86::Mode16Bit)));
   }
 
+  unsigned getPointerWidth() {
+    if (is16BitMode()) return 16;
+    if (is32BitMode()) return 32;
+    if (is64BitMode()) return 64;
+    llvm_unreachable("invalid mode");
+  }
+
   bool isParsingIntelSyntax() {
     return getParser().getAssemblerDialect();
   }
@@ -982,15 +989,20 @@ std::unique_ptr<X86Operand> X86AsmParser::CreateMemForInlineAsm(
     unsigned SegReg, const MCExpr *Disp, unsigned BaseReg, unsigned IndexReg,
     unsigned Scale, SMLoc Start, SMLoc End, unsigned Size, StringRef Identifier,
     InlineAsmIdentifierInfo &Info) {
-  // If this is not a VarDecl then assume it is a FuncDecl or some other label
-  // reference.  We need an 'r' constraint here, so we need to create register
-  // operand to ensure proper matching.  Just pick a GPR based on the size of
-  // a pointer.
-  if (isa<MCSymbolRefExpr>(Disp) && !Info.IsVarDecl) {
-    unsigned RegNo =
-        is64BitMode() ? X86::RBX : (is32BitMode() ? X86::EBX : X86::BX);
-    return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true,
-                                 SMLoc(), Identifier, Info.OpDecl);
+  // If we found a decl other than a VarDecl, then assume it is a FuncDecl or
+  // some other label reference.
+  if (isa<MCSymbolRefExpr>(Disp) && Info.OpDecl && !Info.IsVarDecl) {
+    // Insert an explicit size if the user didn't have one.
+    if (!Size) {
+      Size = getPointerWidth();
+      InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_SizeDirective, Start,
+                                                  /*Len=*/0, Size));
+    }
+
+    // Create an absolute memory reference in order to match against
+    // instructions taking a PC relative operand.
+    return X86Operand::CreateMem(Disp, Start, End, Size, Identifier,
+                                 Info.OpDecl);
   }
 
   // We either have a direct symbol reference, or an offset from a symbol.  The
