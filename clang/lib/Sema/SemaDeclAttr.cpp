@@ -91,9 +91,9 @@ static QualType getFunctionOrMethodParamType(const Decl *D, unsigned Idx) {
 static SourceRange getFunctionOrMethodParamRange(const Decl *D, unsigned Idx) {
   if (const auto *FD = dyn_cast<FunctionDecl>(D))
     return FD->getParamDecl(Idx)->getSourceRange();
-  else if (const auto *MD = dyn_cast<ObjCMethodDecl>(D))
+  if (const auto *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->parameters()[Idx]->getSourceRange();
-  else if (const auto *BD = dyn_cast<BlockDecl>(D))
+  if (const auto *BD = dyn_cast<BlockDecl>(D))
     return BD->getParamDecl(Idx)->getSourceRange();
   return SourceRange();
 }
@@ -107,7 +107,7 @@ static QualType getFunctionOrMethodResultType(const Decl *D) {
 static SourceRange getFunctionOrMethodResultSourceRange(const Decl *D) {
   if (const auto *FD = dyn_cast<FunctionDecl>(D))
     return FD->getReturnTypeSourceRange();
-  else if (const auto *MD = dyn_cast<ObjCMethodDecl>(D))
+  if (const auto *MD = dyn_cast<ObjCMethodDecl>(D))
     return MD->getReturnTypeSourceRange();
   return SourceRange();
 }
@@ -116,11 +116,11 @@ static bool isFunctionOrMethodVariadic(const Decl *D) {
   if (const FunctionType *FnTy = D->getFunctionType()) {
     const FunctionProtoType *proto = cast<FunctionProtoType>(FnTy);
     return proto->isVariadic();
-  } else if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
-    return BD->isVariadic();
-  else {
-    return cast<ObjCMethodDecl>(D)->isVariadic();
   }
+  if (const BlockDecl *BD = dyn_cast<BlockDecl>(D))
+    return BD->isVariadic();
+
+  return cast<ObjCMethodDecl>(D)->isVariadic();
 }
 
 static bool isInstanceMethod(const Decl *D) {
