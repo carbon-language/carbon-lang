@@ -4,9 +4,9 @@
 ;
 ; Get the actual value of the overflow bit.
 ;
-define zeroext i1 @saddo.i32(i32 %v1, i32 %v2, i32* %res) {
+define zeroext i1 @saddo1.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
-; CHECK-LABEL:  saddo.i32
+; CHECK-LABEL:  saddo1.i32
 ; CHECK:        adds {{w[0-9]+}}, w0, w1
 ; CHECK-NEXT:   cset {{w[0-9]+}}, vs
   %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 %v2)
@@ -16,12 +16,75 @@ entry:
   ret i1 %obit
 }
 
-define zeroext i1 @saddo.i64(i64 %v1, i64 %v2, i64* %res) {
+; Test the immediate version.
+define zeroext i1 @saddo2.i32(i32 %v1, i32* %res) {
 entry:
-; CHECK-LABEL:  saddo.i64
+; CHECK-LABEL:  saddo2.i32
+; CHECK:        adds {{w[0-9]+}}, w0, #4
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 4)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+; Test negative immediates.
+define zeroext i1 @saddo3.i32(i32 %v1, i32* %res) {
+entry:
+; CHECK-LABEL:  saddo3.i32
+; CHECK:        subs {{w[0-9]+}}, w0, #4
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 -4)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+; Test immediates that are too large to be encoded.
+define zeroext i1 @saddo4.i32(i32 %v1, i32* %res) {
+entry:
+; CHECK-LABEL:  saddo4.i32
+; CHECK:        adds {{w[0-9]+}}, w0, {{w[0-9]+}}
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 16777215)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo1.i64(i64 %v1, i64 %v2, i64* %res) {
+entry:
+; CHECK-LABEL:  saddo1.i64
 ; CHECK:        adds {{x[0-9]+}}, x0, x1
 ; CHECK-NEXT:   cset {{w[0-9]+}}, vs
   %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 %v2)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  store i64 %val, i64* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo2.i64(i64 %v1, i64* %res) {
+entry:
+; CHECK-LABEL:  saddo2.i64
+; CHECK:        adds {{x[0-9]+}}, x0, #4
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 4)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  store i64 %val, i64* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo3.i64(i64 %v1, i64* %res) {
+entry:
+; CHECK-LABEL:  saddo3.i64
+; CHECK:        subs {{x[0-9]+}}, x0, #4
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 -4)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
   store i64 %val, i64* %res
@@ -52,12 +115,24 @@ entry:
   ret i1 %obit
 }
 
-define zeroext i1 @ssubo.i32(i32 %v1, i32 %v2, i32* %res) {
+define zeroext i1 @ssubo1.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
-; CHECK-LABEL:  ssubo.i32
+; CHECK-LABEL:  ssubo1.i32
 ; CHECK:        subs {{w[0-9]+}}, w0, w1
 ; CHECK-NEXT:   cset {{w[0-9]+}}, vs
   %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 %v2)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @ssubo2.i32(i32 %v1, i32* %res) {
+entry:
+; CHECK-LABEL:  ssubo2.i32
+; CHECK:        adds {{w[0-9]+}}, w0, #4
+; CHECK-NEXT:   cset {{w[0-9]+}}, vs
+  %t = call {i32, i1} @llvm.ssub.with.overflow.i32(i32 %v1, i32 -4)
   %val = extractvalue {i32, i1} %t, 0
   %obit = extractvalue {i32, i1} %t, 1
   store i32 %val, i32* %res

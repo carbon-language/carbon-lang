@@ -1759,59 +1759,53 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
       return false;
     bool LHSIsKill = hasTrivialKill(LHS);
 
-    unsigned RHSReg = 0;
-    bool RHSIsKill = false;
-    bool UseImm = true;
-    if (!isa<ConstantInt>(RHS)) {
-      RHSReg = getRegForValue(RHS);
-      if (!RHSReg)
-        return false;
-      RHSIsKill = hasTrivialKill(RHS);
-      UseImm = false;
+    // Check if the immediate can be encoded in the instruction and if we should
+    // invert the instruction (adds -> subs) to handle negative immediates.
+    bool UseImm = false;
+    bool UseInverse = false;
+    uint64_t Imm = 0;
+    if (const auto *C = dyn_cast<ConstantInt>(RHS)) {
+      if (C->isNegative()) {
+        UseInverse = true;
+        Imm = -(C->getSExtValue());
+      } else
+        Imm = C->getZExtValue();
+
+      if (isUInt<12>(Imm))
+        UseImm = true;
+
+      UseInverse = UseImm && UseInverse;
     }
 
+    static const unsigned OpcTable[2][2][2] = {
+      { {AArch64::ADDSWrr, AArch64::ADDSXrr},
+        {AArch64::ADDSWri, AArch64::ADDSXri} },
+      { {AArch64::SUBSWrr, AArch64::SUBSXrr},
+        {AArch64::SUBSWri, AArch64::SUBSXri} }
+    };
     unsigned Opc = 0;
     unsigned MulReg = 0;
+    unsigned RHSReg = 0;
+    bool RHSIsKill = false;
     AArch64CC::CondCode CC = AArch64CC::Invalid;
     bool Is64Bit = VT == MVT::i64;
     switch (II->getIntrinsicID()) {
     default: llvm_unreachable("Unexpected intrinsic!");
     case Intrinsic::sadd_with_overflow:
-      if (UseImm)
-        Opc = Is64Bit ? AArch64::ADDSXri : AArch64::ADDSWri;
-      else
-        Opc = Is64Bit ? AArch64::ADDSXrr : AArch64::ADDSWrr;
-      CC = AArch64CC::VS;
-      break;
+      Opc = OpcTable[UseInverse][UseImm][Is64Bit]; CC = AArch64CC::VS; break;
     case Intrinsic::uadd_with_overflow:
-      if (UseImm)
-        Opc = Is64Bit ? AArch64::ADDSXri : AArch64::ADDSWri;
-      else
-        Opc = Is64Bit ? AArch64::ADDSXrr : AArch64::ADDSWrr;
-      CC = AArch64CC::HS;
-      break;
+      Opc = OpcTable[UseInverse][UseImm][Is64Bit]; CC = AArch64CC::HS; break;
     case Intrinsic::ssub_with_overflow:
-      if (UseImm)
-        Opc = Is64Bit ? AArch64::SUBSXri : AArch64::SUBSWri;
-      else
-        Opc = Is64Bit ? AArch64::SUBSXrr : AArch64::SUBSWrr;
-      CC = AArch64CC::VS;
-      break;
+      Opc = OpcTable[!UseInverse][UseImm][Is64Bit]; CC = AArch64CC::VS; break;
     case Intrinsic::usub_with_overflow:
-      if (UseImm)
-        Opc = Is64Bit ? AArch64::SUBSXri : AArch64::SUBSWri;
-      else
-        Opc = Is64Bit ? AArch64::SUBSXrr : AArch64::SUBSWrr;
-      CC = AArch64CC::LO;
-      break;
+      Opc = OpcTable[!UseInverse][UseImm][Is64Bit]; CC = AArch64CC::LO; break;
     case Intrinsic::smul_with_overflow: {
       CC = AArch64CC::NE;
-      if (UseImm) {
-        RHSReg = getRegForValue(RHS);
-        if (!RHSReg)
-          return false;
-        RHSIsKill = hasTrivialKill(RHS);
-      }
+      RHSReg = getRegForValue(RHS);
+      if (!RHSReg)
+        return false;
+      RHSIsKill = hasTrivialKill(RHS);
+
       if (VT == MVT::i32) {
         MulReg = Emit_SMULL_rr(MVT::i64, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
         unsigned ShiftReg = Emit_LSR_ri(MVT::i64, MulReg, false, 32);
@@ -1841,12 +1835,11 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     }
     case Intrinsic::umul_with_overflow: {
       CC = AArch64CC::NE;
-      if (UseImm) {
-        RHSReg = getRegForValue(RHS);
-        if (!RHSReg)
-          return false;
-        RHSIsKill = hasTrivialKill(RHS);
-      }
+      RHSReg = getRegForValue(RHS);
+      if (!RHSReg)
+        return false;
+      RHSIsKill = hasTrivialKill(RHS);
+
       if (VT == MVT::i32) {
         MulReg = Emit_UMULL_rr(MVT::i64, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
         unsigned CmpReg = createResultReg(TLI.getRegClassFor(MVT::i64));
@@ -1872,15 +1865,23 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     }
     }
 
+    if (!UseImm) {
+      RHSReg = getRegForValue(RHS);
+      if (!RHSReg)
+        return false;
+      RHSIsKill = hasTrivialKill(RHS);
+    }
+
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
     if (Opc) {
       MachineInstrBuilder MIB;
       MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc),
                     ResultReg)
               .addReg(LHSReg, getKillRegState(LHSIsKill));
-      if (UseImm)
-        MIB.addImm(cast<ConstantInt>(RHS)->getZExtValue());
-      else
+      if (UseImm) {
+        MIB.addImm(Imm);
+        MIB.addImm(0);
+      } else
         MIB.addReg(RHSReg, getKillRegState(RHSIsKill));
     }
     else
