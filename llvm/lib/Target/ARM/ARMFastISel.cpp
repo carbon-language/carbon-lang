@@ -1941,6 +1941,7 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
   // Process the args.
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign &VA = ArgLocs[i];
+    const Value *ArgVal = Args[VA.getValNo()];
     unsigned Arg = ArgRegs[VA.getValNo()];
     MVT ArgVT = ArgVTs[VA.getValNo()];
 
@@ -2001,6 +2002,11 @@ bool ARMFastISel::ProcessCallArgs(SmallVectorImpl<Value*> &Args,
     } else {
       assert(VA.isMemLoc());
       // Need to store on the stack.
+
+      // Don't emit stores for undef values.
+      if (isa<UndefValue>(ArgVal))
+        continue;
+
       Address Addr;
       Addr.BaseType = Address::RegBase;
       Addr.Base.Reg = ARM::SP;

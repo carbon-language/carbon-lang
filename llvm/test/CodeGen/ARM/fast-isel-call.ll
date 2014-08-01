@@ -250,4 +250,19 @@ entry:
   ret void
 }
 
+declare void @bar2(i32 %a1, i32 %a2, i32 %a3, i32 %a4, i32 %a5, i32 %a6)
+
+define void @call_undef_args() {
+; ARM-LABEL: call_undef_args
+; ARM:       movw  r0, #1
+; ARM-NEXT:  movw  r1, #2
+; ARM-NEXT:  movw  r2, #3
+; ARM-NEXT:  movw  r3, #4
+; ARM-NOT:   str {{r[0-9]+}}, [sp]
+; ARM:       movw  [[REG:l?r[0-9]*]], #6
+; ARM-NEXT:  str [[REG]], [sp, #4]
+  call void @bar2(i32 1, i32 2, i32 3, i32 4, i32 undef, i32 6)
+  ret void
+}
+
 declare void @print(float)
