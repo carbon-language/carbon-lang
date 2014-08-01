@@ -1970,6 +1970,7 @@ void PragmaUnrollHintHandler::HandlePragma(Preprocessor &PP,
     // nounroll or unroll pragma without an argument.
     Info->PragmaName = PragmaName;
     Info->HasValue = false;
+    Info->Option.startToken();
   } else if (PragmaName.getIdentifierInfo()->getName() == "nounroll") {
     PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
         << "nounroll";
