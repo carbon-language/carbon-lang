@@ -1542,8 +1542,14 @@ INTERCEPTOR_WITH_SUFFIX(int, wait, int *status) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ctx, status, sizeof(*status));
   return res;
 }
+// On FreeBSD id_t is always 64-bit wide.
+#if SANITIZER_FREEBSD && (SANITIZER_WORDSIZE == 32)
+INTERCEPTOR_WITH_SUFFIX(int, waitid, int idtype, long long id, void *infop,
+                        int options) {
+#else
 INTERCEPTOR_WITH_SUFFIX(int, waitid, int idtype, int id, void *infop,
                         int options) {
+#endif
   void *ctx;
   COMMON_INTERCEPTOR_ENTER(ctx, waitid, idtype, id, infop, options);
   // FIXME: under ASan the call below may write to freed memory and corrupt
