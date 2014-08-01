@@ -235,6 +235,20 @@ INTERFACE_FUNCTION(__asan_report_load8)
 INTERFACE_FUNCTION(__asan_report_load16)
 INTERFACE_FUNCTION(__asan_report_load_n)
 
+INTERFACE_FUNCTION(__asan_store1)
+INTERFACE_FUNCTION(__asan_store2)
+INTERFACE_FUNCTION(__asan_store4)
+INTERFACE_FUNCTION(__asan_store8)
+INTERFACE_FUNCTION(__asan_store16)
+INTERFACE_FUNCTION(__asan_storeN)
+
+INTERFACE_FUNCTION(__asan_load1)
+INTERFACE_FUNCTION(__asan_load2)
+INTERFACE_FUNCTION(__asan_load4)
+INTERFACE_FUNCTION(__asan_load8)
+INTERFACE_FUNCTION(__asan_load16)
+INTERFACE_FUNCTION(__asan_loadN)
+
 INTERFACE_FUNCTION(__asan_memcpy);
 INTERFACE_FUNCTION(__asan_memset);
 INTERFACE_FUNCTION(__asan_memmove);
