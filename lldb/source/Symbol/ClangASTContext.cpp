@@ -1754,12 +1754,10 @@ ClangASTContext::CreateFunctionType (ASTContext *ast,
     // TODO: Detect calling convention in DWARF?
     FunctionProtoType::ExtProtoInfo proto_info;
     proto_info.Variadic = is_variadic;
-    proto_info.ExceptionSpecType = EST_None;
+    proto_info.ExceptionSpec = EST_None;
     proto_info.TypeQuals = type_quals;
     proto_info.RefQualifier = RQ_None;
-    proto_info.NumExceptions = 0;
-    proto_info.Exceptions = nullptr;
-    
+
     return ClangASTType (ast, ast->getFunctionType (result_type.GetQualType(),
                                                     qual_type_args,
                                                     proto_info).getAsOpaquePtr());
