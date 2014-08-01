@@ -51,14 +51,10 @@ using namespace llvm;
 /// will attempt merge setcc and brc instructions into brcc's.
 ///
 namespace {
-class SelectionDAGLegalize : public SelectionDAG::DAGUpdateListener {
+class SelectionDAGLegalize {
   const TargetMachine &TM;
   const TargetLowering &TLI;
   SelectionDAG &DAG;
-
-  /// \brief The iterator being used to walk the DAG. We hold a reference to it
-  /// in order to update it as necessary on node deletion.
-  SelectionDAG::allnodes_iterator &LegalizePosition;
 
   /// \brief The set of nodes which have already been legalized. We hold a
   /// reference to it in order to update as necessary on node deletion.
@@ -75,13 +71,10 @@ class SelectionDAGLegalize : public SelectionDAG::DAGUpdateListener {
 
 public:
   SelectionDAGLegalize(SelectionDAG &DAG,
-                       SelectionDAG::allnodes_iterator &LegalizePosition,
                        SmallPtrSetImpl<SDNode *> &LegalizedNodes,
                        SmallSetVector<SDNode *, 16> *UpdatedNodes = nullptr)
-      : SelectionDAG::DAGUpdateListener(DAG), TM(DAG.getTarget()),
-        TLI(DAG.getTargetLoweringInfo()), DAG(DAG),
-        LegalizePosition(LegalizePosition), LegalizedNodes(LegalizedNodes),
-        UpdatedNodes(UpdatedNodes) {}
+      : TM(DAG.getTarget()), TLI(DAG.getTargetLoweringInfo()), DAG(DAG),
+        LegalizedNodes(LegalizedNodes), UpdatedNodes(UpdatedNodes) {}
 
   /// \brief Legalizes the given operation.
   void LegalizeOp(SDNode *Node);
@@ -158,28 +151,10 @@ private:
   void ExpandNode(SDNode *Node);
   void PromoteNode(SDNode *Node);
 
-  void ForgetNode(SDNode *N) {
-    LegalizedNodes.erase(N);
-    if (LegalizePosition == SelectionDAG::allnodes_iterator(N))
-      ++LegalizePosition;
-    if (UpdatedNodes)
-      UpdatedNodes->remove(N);
-  }
-
 public:
-  // DAGUpdateListener implementation.
-  void NodeDeleted(SDNode *N, SDNode *E) override {
-    ForgetNode(N);
-  }
-  void NodeUpdated(SDNode *N) override {}
-
   // Node replacement helpers
   void ReplacedNode(SDNode *N) {
-    if (N->use_empty()) {
-      DAG.RemoveDeadNode(N);
-    } else {
-      ForgetNode(N);
-    }
+    LegalizedNodes.erase(N);
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
     DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG);
@@ -3830,9 +3805,11 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       TopHalf = DAG.getNode(ISD::EXTRACT_ELEMENT, dl, VT, Ret,
                             DAG.getIntPtrConstant(1));
       // Ret is a node with an illegal type. Because such things are not
-      // generally permitted during this phase of legalization, delete the
-      // node. The above EXTRACT_ELEMENT nodes should have been folded.
-      DAG.DeleteNode(Ret.getNode());
+      // generally permitted during this phase of legalization, make sure the
+      // node has no more uses. The above EXTRACT_ELEMENT nodes should have been
+      // folded.
+      assert(Ret->use_empty() &&
+             "Unexpected uses of illegally type from expanded lib call.");
     }
 
     if (isSigned) {
@@ -4315,9 +4292,8 @@ void SelectionDAGLegalize::PromoteNode(SDNode *Node) {
 void SelectionDAG::Legalize() {
   AssignTopologicalOrder();
 
-  allnodes_iterator LegalizePosition;
   SmallPtrSet<SDNode *, 16> LegalizedNodes;
-  SelectionDAGLegalize Legalizer(*this, LegalizePosition, LegalizedNodes);
+  SelectionDAGLegalize Legalizer(*this, LegalizedNodes);
 
   // Visit all the nodes. We start in topological order, so that we see
   // nodes with their original operands intact. Legalization can produce
@@ -4325,14 +4301,24 @@ void SelectionDAG::Legalize() {
   // nodes have been legalized.
   for (;;) {
     bool AnyLegalized = false;
-    for (LegalizePosition = allnodes_end();
-         LegalizePosition != allnodes_begin(); ) {
-      --LegalizePosition;
+    for (auto NI = allnodes_end(); NI != allnodes_begin();) {
+      --NI;
 
-      SDNode *N = LegalizePosition;
+      SDNode *N = NI;
+      if (N->use_empty() && N != getRoot().getNode()) {
+        ++NI;
+        DeleteNode(N);
+        continue;
+      }
+
       if (LegalizedNodes.insert(N)) {
         AnyLegalized = true;
         Legalizer.LegalizeOp(N);
+
+        if (N->use_empty() && N != getRoot().getNode()) {
+          ++NI;
+          DeleteNode(N);
+        }
       }
     }
     if (!AnyLegalized)
@@ -4346,10 +4332,8 @@ void SelectionDAG::Legalize() {
 
 bool SelectionDAG::LegalizeOp(SDNode *N,
                               SmallSetVector<SDNode *, 16> &UpdatedNodes) {
-  allnodes_iterator LegalizePosition(N);
   SmallPtrSet<SDNode *, 16> LegalizedNodes;
-  SelectionDAGLegalize Legalizer(*this, LegalizePosition, LegalizedNodes,
-                                 &UpdatedNodes);
+  SelectionDAGLegalize Legalizer(*this, LegalizedNodes, &UpdatedNodes);
 
   // Directly insert the node in question, and legalize it. This will recurse
   // as needed through operands.
