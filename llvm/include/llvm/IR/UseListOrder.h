@@ -1,4 +1,4 @@
-//===- llvm/IR/UseListOrder.h - LLVM Use List Order functions ---*- C++ -*-===//
+//===- llvm/IR/UseListOrder.h - LLVM Use List Order -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file has functions to modify the use-list order and to verify that it
-// doesn't change after serialization.
+// This file has structures and command-line options for preserving use-list
+// order.
 //
 //===----------------------------------------------------------------------===//
 
@@ -110,11 +110,6 @@ typedef std::vector<UseListOrder> UseListOrderStack;
 /// \brief Whether to preserve use-list ordering.
 bool shouldPreserveBitcodeUseListOrder();
 bool shouldPreserveAssemblyUseListOrder();
-
-/// \brief Shuffle all use-lists in a module.
-///
-/// Adds \c SeedOffset to the default seed for the random number generator.
-void shuffleUseLists(Module &M, unsigned SeedOffset = 0);
 
 } // end namespace llvm
 
