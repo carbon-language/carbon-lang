@@ -1092,6 +1092,11 @@ Value *DFSanFunction::loadShadow(Value *Addr, uint64_t Size, uint64_t Align,
 
 void DFSanVisitor::visitLoadInst(LoadInst &LI) {
   uint64_t Size = DFSF.DFS.DL->getTypeStoreSize(LI.getType());
+  if (Size == 0) {
+    DFSF.setShadow(&LI, DFSF.DFS.ZeroShadow);
+    return;
+  }
+
   uint64_t Align;
   if (ClPreserveAlignment) {
     Align = LI.getAlignment();
@@ -1166,6 +1171,9 @@ void DFSanFunction::storeShadow(Value *Addr, uint64_t Size, uint64_t Align,
 void DFSanVisitor::visitStoreInst(StoreInst &SI) {
   uint64_t Size =
       DFSF.DFS.DL->getTypeStoreSize(SI.getValueOperand()->getType());
+  if (Size == 0)
+    return;
+
   uint64_t Align;
   if (ClPreserveAlignment) {
     Align = SI.getAlignment();
