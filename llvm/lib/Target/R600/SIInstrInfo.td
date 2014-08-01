@@ -795,7 +795,7 @@ class DS_Load2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS <
   op,
   (outs regClass:$vdst),
   (ins i1imm:$gds, VReg_32:$addr, u8imm:$offset0, u8imm:$offset1),
-  asm#" $gds, $vdst, $addr, $offset0, $offset1, [M0]",
+  asm#" $vdst, $addr, $offset0, $offset1, [M0]",
   []> {
   let data0 = 0;
   let data1 = 0;
