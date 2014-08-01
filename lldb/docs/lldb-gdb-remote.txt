@@ -526,7 +526,6 @@ Key value pairs are one of:
 cputype: is a number that is the mach-o CPU type that is being debugged (base 10)
 cpusubtype: is a number that is the mach-o CPU subtype type that is being debugged (base 10)
 triple: a string for the target triple (x86_64-apple-macosx) that can be used to specify arch + vendor + os in one entry
-The triple string must be sent as hexadecimal bytes, for the above example this being 7838365f36342d6170706c652d6d61636f7378 
 vendor: a string for the vendor (apple), not needed if "triple" is specified
 ostype: a string for the OS being debugged (darwin, linux, freebsd), not needed if "triple" is specified
 endian: is one of "little", "big", or "pdp"
@@ -1110,7 +1109,7 @@ for this region.
 //  "all_users"   bool      A boolean value that specifies if processes should
 //                          be listed for all users, not just the user that the 
 //                          platform is running as
-//  "triple"      ascii-hex An ASCII hex target triple string ("x86_64", 
+//  "triple"      string    An ASCII triple string ("x86_64", 
 //                          "x86_64-apple-macosx", "armv7-apple-ios")
 //
 // The response consists of key/value pairs where the key is separated from the
@@ -1120,9 +1119,9 @@ for this region.
 //
 // Sample packet/response:
 // send packet: $qfProcessInfo#00
-// read packet: $pid:60001;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:7838365f36342d6170706c652d6d61636f7378;#00
+// read packet: $pid:60001;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:x86_64-apple-macosx;#00
 // send packet: $qsProcessInfo#00
-// read packet: $pid:59992;ppid:192;uid:7746;gid:11;euid:7746;egid:11;name:6d64776f726b6572;triple:7838365f36342d6170706c652d6d61636f7378;#00
+// read packet: $pid:59992;ppid:192;uid:7746;gid:11;euid:7746;egid:11;name:6d64776f726b6572;triple:x86_64-apple-macosx;#00
 // send packet: $qsProcessInfo#00
 // read packet: $E04#00
 //----------------------------------------------------------------------
@@ -1190,11 +1189,11 @@ for this region.
 //  "euid"        integer   A string value containing the decimal effective user ID
 //  "egid"        integer   A string value containing the decimal effective group ID
 //  "name"        ascii-hex An ASCII hex string that contains the name of the process
-//  "triple"      ascii-hex A target triple ("x86_64-apple-macosx", "armv7-apple-ios")
+//  "triple"      string    A target triple ("x86_64-apple-macosx", "armv7-apple-ios")
 //
 // Sample packet/response:
 // send packet: $qProcessInfoPID:60050#00
-// read packet: $pid:60050;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:7838365f36342d6170706c652d6d61636f7378;#00
+// read packet: $pid:60050;ppid:59948;uid:7746;gid:11;euid:7746;egid:11;name:6c6c6462;triple:x86_64-apple-macosx;#00
 //----------------------------------------------------------------------
 
 //----------------------------------------------------------------------
