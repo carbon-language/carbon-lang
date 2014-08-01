@@ -3503,10 +3503,17 @@ const std::error_category &llvm::BitcodeErrorCategory() {
 // External interface
 //===----------------------------------------------------------------------===//
 
-/// getLazyBitcodeModule - lazy function-at-a-time loading from a file.
+/// \brief Get a lazy one-at-time loading module from bitcode.
 ///
-ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
-                                             LLVMContext &Context) {
+/// This isn't always used in a lazy context.  In particular, it's also used by
+/// \a parseBitcodeFile().  If this is truly lazy, then we need to eagerly pull
+/// in forward-referenced functions from block address references.
+///
+/// \param[in] WillMaterializeAll Set to \c true if the caller promises to
+/// materialize everything -- in particular, if this isn't truly lazy.
+static ErrorOr<Module *> getLazyBitcodeModuleImpl(MemoryBuffer *Buffer,
+                                                  LLVMContext &Context,
+                                                  bool WillMaterializeAll) {
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
   M->setMaterializer(R);
@@ -3520,12 +3527,18 @@ ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
   if (std::error_code EC = R->ParseBitcodeInto(M))
     return cleanupOnError(EC);
 
-  if (std::error_code EC = R->materializeForwardReferencedFunctions())
-    return cleanupOnError(EC);
+  if (!WillMaterializeAll)
+    // Resolve forward references from blockaddresses.
+    if (std::error_code EC = R->materializeForwardReferencedFunctions())
+      return cleanupOnError(EC);
 
   return M;
 }
 
+ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
+                                             LLVMContext &Context) {
+  return getLazyBitcodeModuleImpl(Buffer, Context, false);
+}
 
 Module *llvm::getStreamedBitcodeModule(const std::string &name,
                                        DataStreamer *streamer,
@@ -3545,7 +3558,8 @@ Module *llvm::getStreamedBitcodeModule(const std::string &name,
 
 ErrorOr<Module *> llvm::parseBitcodeFile(MemoryBuffer *Buffer,
                                          LLVMContext &Context) {
-  ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+  ErrorOr<Module *> ModuleOrErr =
+      getLazyBitcodeModuleImpl(Buffer, Context, true);
   if (!ModuleOrErr)
     return ModuleOrErr;
   Module *M = ModuleOrErr.get();

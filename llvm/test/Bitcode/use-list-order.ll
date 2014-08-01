@@ -131,3 +131,38 @@ loop2:
   %var = phi i32 [ %var, %loop1 ], [ %var, %loop2 ]
   br label %loop1
 }
+
+; Check that block addresses work.
+@ba1 = constant i8* blockaddress (@bafunc1, %bb)
+@ba2 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+@ba3 = constant i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+
+define i8* @babefore() {
+  ret i8* getelementptr (i8* blockaddress (@bafunc2, %bb), i61 0)
+bb1:
+  ret i8* blockaddress (@bafunc1, %bb)
+bb2:
+  ret i8* blockaddress (@bafunc3, %bb)
+}
+define void @bafunc1() {
+  unreachable
+bb:
+  unreachable
+}
+define void @bafunc2() {
+  unreachable
+bb:
+  unreachable
+}
+define void @bafunc3() {
+  unreachable
+bb:
+  unreachable
+}
+define i8* @baafter() {
+  ret i8* blockaddress (@bafunc2, %bb)
+bb1:
+  ret i8* blockaddress (@bafunc1, %bb)
+bb2:
+  ret i8* blockaddress (@bafunc3, %bb)
+}
