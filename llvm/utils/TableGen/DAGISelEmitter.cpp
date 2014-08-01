@@ -94,8 +94,8 @@ struct PatternSortingPredicate {
     // Otherwise, if the patterns might both match, sort based on complexity,
     // which means that we prefer to match patterns that cover more nodes in the
     // input over nodes that cover fewer.
-    unsigned LHSSize = LHS->getPatternComplexity(CGP);
-    unsigned RHSSize = RHS->getPatternComplexity(CGP);
+    int LHSSize = LHS->getPatternComplexity(CGP);
+    int RHSSize = RHS->getPatternComplexity(CGP);
     if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
     if (LHSSize < RHSSize) return false;
 

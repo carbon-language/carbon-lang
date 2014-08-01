@@ -667,7 +667,7 @@ public:
   PatternToMatch(Record *srcrecord, ListInit *preds,
                  TreePatternNode *src, TreePatternNode *dst,
                  const std::vector<Record*> &dstregs,
-                 unsigned complexity, unsigned uid)
+                 int complexity, unsigned uid)
     : SrcRecord(srcrecord), Predicates(preds), SrcPattern(src), DstPattern(dst),
       Dstregs(dstregs), AddedComplexity(complexity), ID(uid) {}
 
@@ -676,7 +676,7 @@ public:
   TreePatternNode *SrcPattern;  // Source pattern to match.
   TreePatternNode *DstPattern;  // Resulting pattern.
   std::vector<Record*> Dstregs; // Physical register defs being matched.
-  unsigned         AddedComplexity; // Add to matching pattern complexity.
+  int              AddedComplexity; // Add to matching pattern complexity.
   unsigned         ID;          // Unique ID for the record.
 
   Record          *getSrcRecord()  const { return SrcRecord; }
@@ -684,13 +684,13 @@ public:
   TreePatternNode *getSrcPattern() const { return SrcPattern; }
   TreePatternNode *getDstPattern() const { return DstPattern; }
   const std::vector<Record*> &getDstRegs() const { return Dstregs; }
-  unsigned         getAddedComplexity() const { return AddedComplexity; }
+  int         getAddedComplexity() const { return AddedComplexity; }
 
   std::string getPredicateCheck() const;
 
   /// Compute the complexity metric for the input pattern.  This roughly
   /// corresponds to the number of nodes that are covered.
-  unsigned getPatternComplexity(const CodeGenDAGPatterns &CGP) const;
+  int getPatternComplexity(const CodeGenDAGPatterns &CGP) const;
 };
 
 class CodeGenDAGPatterns {
