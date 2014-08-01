@@ -87,10 +87,6 @@ MCJIT::~MCJIT() {
   }
   LoadedObjects.clear();
 
-
-  for (object::Archive *A : Archives)
-    delete A;
-
   Archives.clear();
 
   delete TM;
@@ -118,8 +114,8 @@ void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
   NotifyObjectEmitted(*LoadedObject);
 }
 
-void MCJIT::addArchive(object::Archive *A) {
-  Archives.push_back(A);
+void MCJIT::addArchive(std::unique_ptr<object::Archive> A) {
+  Archives.push_back(std::move(A));
 }
 
 
@@ -294,7 +290,7 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   if (Addr)
     return Addr;
 
-  for (object::Archive *A : Archives) {
+  for (std::unique_ptr<object::Archive> &A : Archives) {
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {

@@ -196,9 +196,7 @@ public:
   /// resolve external symbols in objects it is loading.  If a symbol is found
   /// in the Archive the contained object file will be extracted (in memory)
   /// and loaded for possible execution.
-  ///
-  /// MCJIT will take ownership of the Archive.
-  virtual void addArchive(object::Archive *A) {
+  virtual void addArchive(std::unique_ptr<object::Archive> A) {
     llvm_unreachable("ExecutionEngine subclass doesn't implement addArchive.");
   }
 

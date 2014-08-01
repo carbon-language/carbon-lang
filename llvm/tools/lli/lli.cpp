@@ -545,12 +545,14 @@ int main(int argc, char **argv, char * const *envp) {
       return 1;
     }
     std::error_code EC;
-    object::Archive *Ar = new object::Archive(std::move(ArBuf.get()), EC);
-    if (EC || !Ar) {
+    std::unique_ptr<object::Archive> Ar =
+        llvm::make_unique<object::Archive>(std::move(ArBuf.get()), EC);
+    assert(Ar);
+    if (EC) {
       Err.print(argv[0], errs());
       return 1;
     }
-    EE->addArchive(Ar);
+    EE->addArchive(std::move(Ar));
   }
 
   // If the target is Cygwin/MingW and we are generating remote code, we
