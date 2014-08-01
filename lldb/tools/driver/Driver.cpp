@@ -15,6 +15,14 @@
 #include <limits.h>
 #include <fcntl.h>
 
+// Includes for pipe()
+#if defined(_WIN32)
+#include <io.h>
+#include <fcntl.h>
+#else
+#include <unistd.h>
+#endif
+
 #include <string>
 
 #include <thread>
@@ -901,48 +909,82 @@ Driver::MainLoop ()
     bool spawn_thread = false;
 
     // Check if we have any data in the commands stream, and if so, save it to a temp file
-    // so we can then run the command interpreter using the file contents. 
-    if (commands_stream.GetData() && commands_stream.GetSize())
+    // so we can then run the command interpreter using the file contents.
+    const char *commands_data = commands_stream.GetData();
+    const size_t commands_size = commands_stream.GetSize();
+    if (commands_data && commands_size)
     {
-        char lldb_cmds_file[PATH_MAX];
-        SBFileSpec lldb_temp_dir_spec = SBHostOS::GetLLDBPath (lldb::ePathTypeLLDBTempSystemDir);
-        lldb_temp_dir_spec.SetFilename("lldb-cmds.XXXXXX");
-        
-        if (lldb_temp_dir_spec.GetPath(lldb_cmds_file, sizeof(lldb_cmds_file)))
-        {
-            int fd = mkstemp(lldb_cmds_file);
-            if (fd == -1)
-            {
-                fprintf(stderr, "error: can't create temporary file for LLDB commands\n");
-                exit (1);
-            }
-            FILE *file = fdopen(fd, "r+");
-            if (file == NULL)
-            {
-                fprintf(stderr, "error: fdopen(%i, \"r+\") failed (errno = %i)\n", fd, errno);
-                exit (2);
-            }
-            // Redirect the stream to a file and it will save its temp buffer out to the file on disk
-            commands_stream.RedirectToFileHandle(file, true);
+        enum PIPES { READ, WRITE }; // Constants 0 and 1 for READ and WRITE
 
-            // Close the stream which will close the file and flush it to disk
-            commands_stream.Clear();
-            
-            // Now re-open the file so we can use it as an input file handle for the real
-            // command interpreter
-            FILE *commands_file = ::fopen(lldb_cmds_file, "r");
-            if (commands_file)
+        bool success = true;
+        int fds[2] = { -1, -1 };
+        int err = 0;
+#ifdef _WIN32
+        err = _pipe(fds, commands_size, O_BINARY);
+#else
+        err = pipe(fds);
+#endif
+        if (err == 0)
+        {
+            if (write (fds[WRITE], commands_data, commands_size) == commands_size)
             {
-                // Hand ownership over to the debugger for "commands_file".
-                m_debugger.SetInputFileHandle (commands_file, true);
-                m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
-            }
-            else
-            {
-                fprintf(stderr, "error: fopen(\"%s\", \"r\") failed (errno = %i) when trying to open LLDB commands file\n", lldb_cmds_file, errno);
-                exit (3);
+                // Close the write end of the pipe so when we give the read end to
+                // the debugger/command interpreter it will exit when it consumes all
+                // of the data
+#ifdef _WIN32
+                _close(fds[WRITE]); fds[WRITE] = -1;
+#else
+                close(fds[WRITE]); fds[WRITE] = -1;
+#endif
+                // Now open the read file descriptor in a FILE * that we can give to
+                // the debugger as an input handle
+                FILE *commands_file = fdopen(fds[READ], "r");
+                if (commands_file)
+                {
+                    fds[READ] = -1; // The FILE * 'commands_file' now owns the read descriptor
+                    // Hand ownership if the FILE * over to the debugger for "commands_file".
+                    m_debugger.SetInputFileHandle (commands_file, true);
+                    m_debugger.RunCommandInterpreter(handle_events, spawn_thread);
+                }
+                else
+                {
+                    fprintf(stderr, "error: fdopen(%i, \"r\") failed (errno = %i) when trying to open LLDB commands pipe\n", fds[READ], errno);
+                    success = false;
+                }
             }
         }
+        else
+        {
+            fprintf(stderr, "error: can't create pipe file descriptors for LLDB commands\n");
+            success = false;
+        }
+
+        // Close any pipes that we still have ownership of
+        if ( fds[WRITE] != -1)
+        {
+#ifdef _WIN32
+            _close(fds[WRITE]); fds[WRITE] = -1;
+#else
+            close(fds[WRITE]); fds[WRITE] = -1;
+#endif
+            
+        }
+
+        if ( fds[READ] != -1)
+        {
+#ifdef _WIN32
+            _close(fds[READ]); fds[READ] = -1;
+#else
+            close(fds[READ]); fds[READ] = -1;
+#endif
+        }
+
+        // Something went wrong with command pipe
+        if (!success)
+        {
+            exit(1);
+        }
+
     }
 
     // Now set the input file handle to STDIN and run the command
