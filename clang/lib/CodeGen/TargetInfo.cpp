@@ -5560,7 +5560,39 @@ void MipsABIInfo::computeInfo(CGFunctionInfo &FI) const {
 
 llvm::Value* MipsABIInfo::EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
                                     CodeGenFunction &CGF) const {
-  return nullptr;
+  llvm::Type *BP = CGF.Int8PtrTy;
+  llvm::Type *BPP = CGF.Int8PtrPtrTy;
+ 
+  CGBuilderTy &Builder = CGF.Builder;
+  llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
+  llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
+  int64_t TypeAlign = getContext().getTypeAlign(Ty) / 8;
+  llvm::Type *PTy = llvm::PointerType::getUnqual(CGF.ConvertType(Ty));
+  llvm::Value *AddrTyped;
+  unsigned PtrWidth = getTarget().getPointerWidth(0);
+  llvm::IntegerType *IntTy = (PtrWidth == 32) ? CGF.Int32Ty : CGF.Int64Ty;
+
+  if (TypeAlign > MinABIStackAlignInBytes) {
+    llvm::Value *AddrAsInt = CGF.Builder.CreatePtrToInt(Addr, IntTy);
+    llvm::Value *Inc = llvm::ConstantInt::get(IntTy, TypeAlign - 1);
+    llvm::Value *Mask = llvm::ConstantInt::get(IntTy, -TypeAlign);
+    llvm::Value *Add = CGF.Builder.CreateAdd(AddrAsInt, Inc);
+    llvm::Value *And = CGF.Builder.CreateAnd(Add, Mask);
+    AddrTyped = CGF.Builder.CreateIntToPtr(And, PTy);
+  }
+  else
+    AddrTyped = Builder.CreateBitCast(Addr, PTy);  
+
+  llvm::Value *AlignedAddr = Builder.CreateBitCast(AddrTyped, BP);
+  TypeAlign = std::max((unsigned)TypeAlign, MinABIStackAlignInBytes);
+  uint64_t Offset =
+    llvm::RoundUpToAlignment(CGF.getContext().getTypeSize(Ty) / 8, TypeAlign);
+  llvm::Value *NextAddr =
+    Builder.CreateGEP(AlignedAddr, llvm::ConstantInt::get(IntTy, Offset),
+                      "ap.next");
+  Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+  
+  return AddrTyped;
 }
 
 bool
