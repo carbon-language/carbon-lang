@@ -63,17 +63,20 @@ static void shuffleValueUseLists(Value *V, std::minstd_rand0 &Gen,
   DEBUG(dbgs() << "V = "; V->dump());
   std::uniform_int_distribution<short> Dist(10, 99);
   SmallDenseMap<const Use *, short, 16> Order;
-  for (const Use &U : V->uses()) {
-    auto I = Dist(Gen);
-    Order[&U] = I;
-    DEBUG(dbgs() << " - order: " << I << ", op = " << U.getOperandNo()
-                 << ", U = ";
-          U.getUser()->dump());
-  }
+  auto compareUses =
+      [&Order](const Use &L, const Use &R) { return Order[&L] < Order[&R]; };
+  do {
+    for (const Use &U : V->uses()) {
+      auto I = Dist(Gen);
+      Order[&U] = I;
+      DEBUG(dbgs() << " - order: " << I << ", op = " << U.getOperandNo()
+                   << ", U = ";
+            U.getUser()->dump());
+    }
+  } while (std::is_sorted(V->use_begin(), V->use_end(), compareUses));
 
   DEBUG(dbgs() << " => shuffle\n");
-  V->sortUseList(
-      [&Order](const Use &L, const Use &R) { return Order[&L] < Order[&R]; });
+  V->sortUseList(compareUses);
 
   DEBUG({
     for (const Use &U : V->uses()) {
