@@ -472,14 +472,14 @@ bool SIInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
                                               bool NewMI) const {
 
-  MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
   if (MI->getNumOperands() < 3 || !MI->getOperand(1).isReg())
     return nullptr;
 
-  // Cannot commute VOP2 if src0 is SGPR.
-  if (isVOP2(MI->getOpcode()) && MI->getOperand(1).isReg() &&
-      RI.isSGPRClass(MRI.getRegClass(MI->getOperand(1).getReg())))
-   return nullptr;
+  // Make sure it s legal to commute operands for VOP2.
+  if (isVOP2(MI->getOpcode()) &&
+      (!isOperandLegal(MI, 1, &MI->getOperand(2)) ||
+       !isOperandLegal(MI, 2, &MI->getOperand(1))))
+    return nullptr;
 
   if (!MI->getOperand(2).isReg()) {
     // XXX: Commute instructions with FPImm operands
@@ -988,8 +988,36 @@ unsigned SIInstrInfo::split64BitImm(SmallVectorImpl<MachineInstr *> &Worklist,
   return Dst;
 }
 
+bool SIInstrInfo::isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
+                                 const MachineOperand *MO) const {
+  const MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+  const MCInstrDesc &InstDesc = get(MI->getOpcode());
+  const MCOperandInfo &OpInfo = InstDesc.OpInfo[OpIdx];
+  const TargetRegisterClass *DefinedRC =
+      OpInfo.RegClass != -1 ? RI.getRegClass(OpInfo.RegClass) : nullptr;
+  if (!MO)
+    MO = &MI->getOperand(OpIdx);
+
+  if (MO->isReg()) {
+    assert(DefinedRC);
+    const TargetRegisterClass *RC = MRI.getRegClass(MO->getReg());
+    return RI.getCommonSubClass(RC, RI.getRegClass(OpInfo.RegClass));
+  }
+
+
+  // Handle non-register types that are treated like immediates.
+  assert(MO->isImm() || MO->isFPImm() || MO->isTargetIndex() || MO->isFI());
+
+  if (!DefinedRC)
+    // This opperand expects an immediate
+    return true;
+
+  return RI.regClassCanUseImmediate(DefinedRC);
+}
+
 void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   MachineRegisterInfo &MRI = MI->getParent()->getParent()->getRegInfo();
+
   int Src0Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
                                            AMDGPU::OpName::src0);
   int Src1Idx = AMDGPU::getNamedOperandIdx(MI->getOpcode(),
@@ -999,34 +1027,26 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
 
   // Legalize VOP2
   if (isVOP2(MI->getOpcode()) && Src1Idx != -1) {
-    MachineOperand &Src0 = MI->getOperand(Src0Idx);
-    MachineOperand &Src1 = MI->getOperand(Src1Idx);
-
-    // If the instruction implicitly reads VCC, we can't have any SGPR operands,
-    // so move any.
-    bool ReadsVCC = MI->readsRegister(AMDGPU::VCC, &RI);
-    if (ReadsVCC && Src0.isReg() &&
-        RI.isSGPRClass(MRI.getRegClass(Src0.getReg()))) {
+    // Legalize src0
+    if (!isOperandLegal(MI, Src0Idx))
       legalizeOpWithMove(MI, Src0Idx);
+
+    // Legalize src1
+    if (isOperandLegal(MI, Src1Idx))
       return;
+
+    // Usually src0 of VOP2 instructions allow more types of inputs
+    // than src1, so try to commute the instruction to decrease our
+    // chances of having to insert a MOV instruction to legalize src1.
+    if (MI->isCommutable()) {
+      if (commuteInstruction(MI))
+        // If we are successful in commuting, then we know MI is legal, so
+        // we are done.
+        return;
     }
 
-    if (ReadsVCC && Src1.isReg() &&
-        RI.isSGPRClass(MRI.getRegClass(Src1.getReg()))) {
-      legalizeOpWithMove(MI, Src1Idx);
-      return;
-    }
-
-    // Legalize VOP2 instructions where src1 is not a VGPR. An SGPR input must
-    // be the first operand, and there can only be one.
-    if (Src1.isImm() || Src1.isFPImm() ||
-        (Src1.isReg() && RI.isSGPRClass(MRI.getRegClass(Src1.getReg())))) {
-      if (MI->isCommutable()) {
-        if (commuteInstruction(MI))
-          return;
-      }
-      legalizeOpWithMove(MI, Src1Idx);
-    }
+    legalizeOpWithMove(MI, Src1Idx);
+    return;
   }
 
   // XXX - Do any VOP3 instructions read VCC?

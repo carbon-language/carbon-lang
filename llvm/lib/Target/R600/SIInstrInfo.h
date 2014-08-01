@@ -150,6 +150,11 @@ public:
   /// instead of MOV.
   void legalizeOpWithMove(MachineInstr *MI, unsigned OpIdx) const;
 
+  /// \brief Check if \p MO is a legal operand if it was the \p OpIdx Operand
+  /// for \p MI.
+  bool isOperandLegal(const MachineInstr *MI, unsigned OpIdx,
+                      const MachineOperand *MO = nullptr) const;
+
   /// \brief Legalize all operands in this instruction.  This function may
   /// create new instruction and insert them before \p MI.
   void legalizeOperands(MachineInstr *MI) const;
