@@ -266,6 +266,7 @@ void InstrInfoEmitter::emitOperandNameMappings(raw_ostream &OS,
   OS << "#undef GET_INSTRINFO_NAMED_OPS\n";
   OS << "namespace llvm {";
   OS << "namespace " << Namespace << " {\n";
+  OS << "LLVM_READONLY\n";
   OS << "int16_t getNamedOperandIdx(uint16_t Opcode, uint16_t NamedIdx) {\n";
   if (!Operands.empty()) {
     OS << "  static const int16_t OperandMap [][" << Operands.size()
