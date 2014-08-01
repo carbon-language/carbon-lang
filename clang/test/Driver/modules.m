@@ -8,11 +8,11 @@
 // NOFILE: no such file or directory: 'doesntexist'
 
 // REQUIRES: shell
-// RUN: touch -m -a -t 201408011501 %t.build-session-file
+// RUN: touch -m -a -t 201008011501 %t.build-session-file
 // RUN: %clang -fbuild-session-file=%t.build-session-file -### %s 2>&1 | FileCheck -check-prefix=TIMESTAMP_ONLY %s
 
-// RUN: %clang -fbuild-session-timestamp=1406930460 -### %s 2>&1 | FileCheck -check-prefix=TIMESTAMP_ONLY %s
-// TIMESTAMP_ONLY: -fbuild-session-timestamp=1406930460
+// RUN: %clang -fbuild-session-timestamp=1280703457 -### %s 2>&1 | FileCheck -check-prefix=TIMESTAMP_ONLY %s
+// TIMESTAMP_ONLY: -fbuild-session-timestamp=128
 
 // RUN: %clang -fbuild-session-file=%t.build-session-file -fbuild-session-timestamp=123 -### %s 2>&1 | FileCheck -check-prefix=CONFLICT %s
 // CONFLICT: error: invalid argument '-fbuild-session-file={{.*}}.build-session-file' not allowed with '-fbuild-session-timestamp'
@@ -22,7 +22,7 @@
 // MODULES_VALIDATE_ONCE: -fmodules-validate-once-per-build-session
 
 // RUN: %clang -fbuild-session-file=%t.build-session-file -fmodules-validate-once-per-build-session -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_ONCE_FILE %s
-// MODULES_VALIDATE_ONCE_FILE: -fbuild-session-timestamp=1406930460
+// MODULES_VALIDATE_ONCE_FILE: -fbuild-session-timestamp=128
 // MODULES_VALIDATE_ONCE_FILE: -fmodules-validate-once-per-build-session
 
 // RUN: %clang -fmodules-validate-once-per-build-session -### %s 2>&1 | FileCheck -check-prefix=MODULES_VALIDATE_ONCE_ERR %s
