@@ -149,7 +149,6 @@ private:
 
   /// @brief Set the reduction dependences for @p MA to @p Deps.
   void setReductionDependences(MemoryAccess *MA, __isl_take isl_map *Deps);
-
 };
 
 } // End polly namespace.
