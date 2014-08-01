@@ -160,8 +160,6 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
         }
       }
       if (ConstantFolded) {
-        for (MachineOperand &Use : MRI.use_operands(Reg))
-          Use.getParent()->dump();
         if (MRI.use_empty(Reg))
           Def->eraseFromParent();
         ++NumLiteralConstantsFolded;
