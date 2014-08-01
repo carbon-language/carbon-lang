@@ -93,7 +93,7 @@ public:
   /// @brief Return a copy of the AST root node.
   __isl_give isl_ast_node *getAst() const;
 
-  /// @brief Get the run conditon.
+  /// @brief Get the run condition.
   ///
   /// Only if the run condition evaluates at run-time to a non-zero value, the
   /// assumptions that have been taken hold. If the run condition evaluates to
