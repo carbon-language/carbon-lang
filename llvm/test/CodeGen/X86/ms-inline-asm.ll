@@ -126,7 +126,7 @@ entry:
 ; CHECK: ret
 }
 
-declare void @other_func()
+declare hidden void @other_func()
 
 define void @naked() #0 {
   call void asm sideeffect inteldialect "call dword ptr $0", "*m,~{eax},~{ebx},~{ecx},~{edx},~{edi},~{esi},~{esp},~{ebp},~{dirflag},~{fpsr},~{flags}"(void()* @other_func)
