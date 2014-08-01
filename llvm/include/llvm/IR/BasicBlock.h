@@ -173,6 +173,13 @@ public:
   /// right after \p MovePos in the function \p MovePos lives in.
   void moveAfter(BasicBlock *MovePos);
 
+  /// \brief Insert unlinked basic block into a function.
+  ///
+  /// Inserts an unlinked basic block into \c Parent.  If \c InsertBefore is
+  /// provided, inserts before that basic block, otherwise inserts at the end.
+  ///
+  /// \pre \a getParent() is \c nullptr.
+  void insertInto(Function *Parent, BasicBlock *InsertBefore = nullptr);
 
   /// \brief Return the predecessor of this block if it has a single predecessor
   /// block. Otherwise return a null pointer.

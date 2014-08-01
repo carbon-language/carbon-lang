@@ -50,17 +50,24 @@ BasicBlock::BasicBlock(LLVMContext &C, const Twine &Name, Function *NewParent,
   // Make sure that we get added to a function
   LeakDetector::addGarbageObject(this);
 
-  if (InsertBefore) {
-    assert(NewParent &&
+  if (NewParent)
+    insertInto(NewParent, InsertBefore);
+  else
+    assert(!InsertBefore &&
            "Cannot insert block before another block with no function!");
-    NewParent->getBasicBlockList().insert(InsertBefore, this);
-  } else if (NewParent) {
-    NewParent->getBasicBlockList().push_back(this);
-  }
 
   setName(Name);
 }
 
+void BasicBlock::insertInto(Function *NewParent, BasicBlock *InsertBefore) {
+  assert(NewParent && "Expected a parent");
+  assert(!Parent && "Already has a parent");
+
+  if (InsertBefore)
+    NewParent->getBasicBlockList().insert(InsertBefore, this);
+  else
+    NewParent->getBasicBlockList().push_back(this);
+}
 
 BasicBlock::~BasicBlock() {
   // If the address of the block is taken and it is being deleted (e.g. because
