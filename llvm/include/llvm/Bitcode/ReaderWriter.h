@@ -160,6 +160,7 @@ namespace llvm {
     InvalidMultipleBlocks, // We found multiple blocks of a kind that should
                            // have only one
     NeverResolvedValueFoundInFunction,
+    NeverResolvedFunctionFromBlockAddress,
     InvalidValue // Invalid version, inst number, attr number, etc
   };
   inline std::error_code make_error_code(BitcodeError E) {

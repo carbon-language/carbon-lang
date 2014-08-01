@@ -31,11 +31,31 @@ enum {
   SWITCH_INST_MAGIC = 0x4B5 // May 2012 => 1205 => Hex
 };
 
-void BitcodeReader::materializeForwardReferencedFunctions() {
+std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
+  if (WillMaterializeAllForwardRefs)
+    return std::error_code();
+
+  // Prevent recursion.
+  WillMaterializeAllForwardRefs = true;
+
   while (!BlockAddrFwdRefs.empty()) {
     Function *F = BlockAddrFwdRefs.begin()->first;
-    F->Materialize();
+    assert(F && "Expected valid function");
+    // Check for a function that isn't materializable to prevent an infinite
+    // loop.  When parsing a blockaddress stored in a global variable, there
+    // isn't a trivial way to check if a function will have a body without a
+    // linear search through FunctionsWithBodies, so just check it here.
+    if (!F->isMaterializable())
+      return Error(BitcodeError::NeverResolvedFunctionFromBlockAddress);
+
+    // Try to materialize F.
+    if (std::error_code EC = Materialize(F))
+      return EC;
   }
+
+  // Reset state.
+  WillMaterializeAllForwardRefs = false;
+  return std::error_code();
 }
 
 void BitcodeReader::FreeState() {
@@ -1586,6 +1606,9 @@ std::error_code BitcodeReader::ParseConstants() {
         dyn_cast_or_null<Function>(ValueList.getConstantFwdRef(Record[1],FnTy));
       if (!Fn)
         return Error(BitcodeError::InvalidRecord);
+
+      // Don't let Fn get dematerialized.
+      BlockAddressesTaken.insert(Fn);
 
       // If the function is already parsed we can insert the block address right
       // away.
@@ -3274,13 +3297,21 @@ std::error_code BitcodeReader::Materialize(GlobalValue *GV) {
     }
   }
 
-  return std::error_code();
+  // Bring in any functions that this function forward-referenced via
+  // blockaddresses.
+  return materializeForwardReferencedFunctions();
 }
 
 bool BitcodeReader::isDematerializable(const GlobalValue *GV) const {
   const Function *F = dyn_cast<Function>(GV);
   if (!F || F->isDeclaration())
     return false;
+
+  // Dematerializing F would leave dangling references that wouldn't be
+  // reconnected on re-materialization.
+  if (BlockAddressesTaken.count(F))
+    return false;
+
   return DeferredFunctionInfo.count(const_cast<Function*>(F));
 }
 
@@ -3299,6 +3330,10 @@ void BitcodeReader::Dematerialize(GlobalValue *GV) {
 std::error_code BitcodeReader::MaterializeModule(Module *M) {
   assert(M == TheModule &&
          "Can only Materialize the Module this BitcodeReader is attached to.");
+
+  // Promise to materialize all forward references.
+  WillMaterializeAllForwardRefs = true;
+
   // Iterate over the module, deserializing any functions that are still on
   // disk.
   for (Module::iterator F = TheModule->begin(), E = TheModule->end();
@@ -3313,6 +3348,11 @@ std::error_code BitcodeReader::MaterializeModule(Module *M) {
   // of the bits in the module have been read.
   if (NextUnreadBit)
     ParseModule(true);
+
+  // Check that all block address forward references got resolved (as we
+  // promised above).
+  if (!BlockAddrFwdRefs.empty())
+    return Error(BitcodeError::NeverResolvedFunctionFromBlockAddress);
 
   // Upgrade any intrinsic calls that slipped through (should not happen!) and
   // delete the old functions to clean up. We can't do this unless the entire
@@ -3431,6 +3471,8 @@ class BitcodeErrorCategoryType : public std::error_category {
       return "Invalid multiple blocks";
     case BitcodeError::NeverResolvedValueFoundInFunction:
       return "Never resolved value found in function";
+    case BitcodeError::NeverResolvedFunctionFromBlockAddress:
+      return "Never resolved function from blockaddress";
     case BitcodeError::InvalidValue:
       return "Invalid value";
     }
@@ -3455,13 +3497,18 @@ ErrorOr<Module *> llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
   Module *M = new Module(Buffer->getBufferIdentifier(), Context);
   BitcodeReader *R = new BitcodeReader(Buffer, Context);
   M->setMaterializer(R);
-  if (std::error_code EC = R->ParseBitcodeInto(M)) {
+
+  auto cleanupOnError = [&](std::error_code EC) {
     R->releaseBuffer(); // Never take ownership on error.
     delete M;  // Also deletes R.
     return EC;
-  }
+  };
 
-  R->materializeForwardReferencedFunctions();
+  if (std::error_code EC = R->ParseBitcodeInto(M))
+    return cleanupOnError(EC);
+
+  if (std::error_code EC = R->materializeForwardReferencedFunctions())
+    return cleanupOnError(EC);
 
   return M;
 }

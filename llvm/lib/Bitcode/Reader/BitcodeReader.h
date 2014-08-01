@@ -193,20 +193,29 @@ class BitcodeReader : public GVMaterializer {
   /// not need this flag.
   bool UseRelativeIDs;
 
+  /// True if all functions will be materialized, negating the need to process
+  /// (e.g.) blockaddress forward references.
+  bool WillMaterializeAllForwardRefs;
+
+  /// Functions that have block addresses taken.  This is usually empty.
+  SmallPtrSet<const Function *, 4> BlockAddressesTaken;
+
 public:
   std::error_code Error(BitcodeError E) { return make_error_code(E); }
 
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
       : Context(C), TheModule(nullptr), Buffer(buffer), LazyStreamer(nullptr),
         NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false) {}
+        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
+        WillMaterializeAllForwardRefs(false) {}
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
       : Context(C), TheModule(nullptr), Buffer(nullptr), LazyStreamer(streamer),
         NextUnreadBit(0), SeenValueSymbolTable(false), ValueList(C),
-        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false) {}
+        MDValueList(C), SeenFirstFunctionBody(false), UseRelativeIDs(false),
+        WillMaterializeAllForwardRefs(false) {}
   ~BitcodeReader() { FreeState(); }
 
-  void materializeForwardReferencedFunctions();
+  std::error_code materializeForwardReferencedFunctions();
 
   void FreeState();
 

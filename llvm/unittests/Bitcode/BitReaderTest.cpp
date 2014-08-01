@@ -70,6 +70,74 @@ TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
                     "  unreachable\n"
                     "}\n");
   EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Try (and fail) to dematerialize @func.
+  M->getFunction("func")->Dematerialize();
+  EXPECT_FALSE(M->getFunction("func")->empty());
+}
+
+TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionBefore) {
+  SmallString<1024> Mem;
+
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getLazyModuleFromAssembly(
+      Context, Mem, "define i8* @before() {\n"
+                    "  ret i8* blockaddress(@func, %bb)\n"
+                    "}\n"
+                    "define void @other() {\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define void @func() {\n"
+                    "  unreachable\n"
+                    "bb:\n"
+                    "  unreachable\n"
+                    "}\n");
+  EXPECT_TRUE(M->getFunction("before")->empty());
+  EXPECT_TRUE(M->getFunction("func")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize @before, pulling in @func.
+  EXPECT_FALSE(M->getFunction("before")->Materialize());
+  EXPECT_FALSE(M->getFunction("func")->empty());
+  EXPECT_TRUE(M->getFunction("other")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Try (and fail) to dematerialize @func.
+  M->getFunction("func")->Dematerialize();
+  EXPECT_FALSE(M->getFunction("func")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+}
+
+TEST(BitReaderTest, MaterializeFunctionsForBlockAddrInFunctionAfter) {
+  SmallString<1024> Mem;
+
+  LLVMContext Context;
+  std::unique_ptr<Module> M = getLazyModuleFromAssembly(
+      Context, Mem, "define void @func() {\n"
+                    "  unreachable\n"
+                    "bb:\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define void @other() {\n"
+                    "  unreachable\n"
+                    "}\n"
+                    "define i8* @after() {\n"
+                    "  ret i8* blockaddress(@func, %bb)\n"
+                    "}\n");
+  EXPECT_TRUE(M->getFunction("after")->empty());
+  EXPECT_TRUE(M->getFunction("func")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Materialize @after, pulling in @func.
+  EXPECT_FALSE(M->getFunction("after")->Materialize());
+  EXPECT_FALSE(M->getFunction("func")->empty());
+  EXPECT_TRUE(M->getFunction("other")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
+
+  // Try (and fail) to dematerialize @func.
+  M->getFunction("func")->Dematerialize();
+  EXPECT_FALSE(M->getFunction("func")->empty());
+  EXPECT_FALSE(verifyModule(*M, &dbgs()));
 }
 
 } // end namespace
