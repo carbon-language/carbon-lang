@@ -106,7 +106,7 @@ static void ComputePTXValueVTs(const TargetLowering &TLI, Type *Ty,
 }
 
 // NVPTXTargetLowering Constructor.
-NVPTXTargetLowering::NVPTXTargetLowering(NVPTXTargetMachine &TM)
+NVPTXTargetLowering::NVPTXTargetLowering(const NVPTXTargetMachine &TM)
     : TargetLowering(TM, new NVPTXTargetObjectFile()), nvTM(&TM),
       nvptxSubtarget(TM.getSubtarget<NVPTXSubtarget>()) {
 
