@@ -94,13 +94,10 @@ namespace {
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         Builder->EmitTopLevelDecl(*I);
 
-      // Emit any deferred inline method definitions. Note that more deferred
-      // methods may be added during this loop.
-      while (!DeferredInlineMethodDefinitions.empty()) {
-        CXXMethodDecl *MD = DeferredInlineMethodDefinitions.back();
-        DeferredInlineMethodDefinitions.pop_back();
+      // Emit any deferred inline method definitions.
+      for (CXXMethodDecl *MD : DeferredInlineMethodDefinitions)
         Builder->EmitTopLevelDecl(MD);
-      }
+      DeferredInlineMethodDefinitions.clear();
 
       return true;
     }
