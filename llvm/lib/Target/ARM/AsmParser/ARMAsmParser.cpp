@@ -5750,7 +5750,11 @@ bool ARMAsmParser::validateInstruction(MCInst &Inst,
   case ARM::LDR_PRE_IMM:
   case ARM::LDR_PRE_REG:
   case ARM::LDR_POST_IMM:
-  case ARM::LDR_POST_REG: {
+  case ARM::LDR_POST_REG:
+  case ARM::LDRH_PRE:
+  case ARM::LDRH_POST:
+  case ARM::LDRSH_PRE:
+  case ARM::LDRSH_POST: {
     // Rt must be different from Rn.
     const unsigned Rt = MRI->getEncodingValue(Inst.getOperand(0).getReg());
     const unsigned Rn = MRI->getEncodingValue(Inst.getOperand(2).getReg());
