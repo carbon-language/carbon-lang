@@ -355,6 +355,42 @@ void Dependences::calculateDependences(Scop &S) {
   DEBUG(dbgs() << "Final Wrapped Dependences:\n"; printScop(dbgs());
         dbgs() << "\n");
 
+  // RED_SIN is used to collect all reduction dependences again after we
+  // split them according to the causing memory accesses. The current assumption
+  // is that our method of splitting will not have any leftovers. In the end
+  // we validate this assumption until we have more confidence in this method.
+  isl_union_map *RED_SIN = isl_union_map_empty(isl_union_map_get_space(RAW));
+
+  // For each reduction like memory access, check if there are reduction
+  // dependences with the access relation of the memory access as a domain
+  // (wrapped space!). If so these dependences are caused by this memory access.
+  // We then move this portion of reduction dependences back to the statement ->
+  // statement space and add a mapping from the memory access to these
+  // dependences.
+  for (ScopStmt *Stmt : S) {
+    for (MemoryAccess *MA : *Stmt) {
+      if (!MA->isReductionLike())
+        continue;
+
+      isl_set *AccDomW = isl_map_wrap(MA->getAccessRelation());
+      isl_union_map *AccRedDepU = isl_union_map_intersect_domain(
+          isl_union_map_copy(TC_RED), isl_union_set_from_set(AccDomW));
+      if (isl_union_map_is_empty(AccRedDepU) && !isl_union_map_free(AccRedDepU))
+        continue;
+
+      isl_map *AccRedDep = isl_map_from_union_map(AccRedDepU);
+      RED_SIN = isl_union_map_add_map(RED_SIN, isl_map_copy(AccRedDep));
+      AccRedDep = isl_map_zip(AccRedDep);
+      AccRedDep = isl_set_unwrap(isl_map_domain(AccRedDep));
+      setReductionDependences(MA, AccRedDep);
+    }
+  }
+
+  assert(isl_union_map_is_equal(RED_SIN, TC_RED) &&
+         "Intersecting the reduction dependence domain with the wrapped access "
+         "relation is not enough, we need to loosen the access relation also");
+  isl_union_map_free(RED_SIN);
+
   RAW = isl_union_map_zip(RAW);
   WAW = isl_union_map_zip(WAW);
   WAR = isl_union_map_zip(WAR);
@@ -506,6 +542,10 @@ void Dependences::releaseMemory() {
   isl_union_map_free(TC_RED);
 
   RED = RAW = WAR = WAW = TC_RED = nullptr;
+
+  for (auto &ReductionDeps : ReductionDependences)
+    isl_map_free(ReductionDeps.second);
+  ReductionDependences.clear();
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {
@@ -535,6 +575,16 @@ isl_union_map *Dependences::getDependences(int Kinds) {
 
 bool Dependences::hasValidDependences() {
   return (RAW != nullptr) && (WAR != nullptr) && (WAW != nullptr);
+}
+
+isl_map *Dependences::getReductionDependences(MemoryAccess *MA) {
+  return isl_map_copy(ReductionDependences[MA]);
+}
+
+void Dependences::setReductionDependences(MemoryAccess *MA, isl_map *D) {
+  assert(ReductionDependences.count(MA) == 0 &&
+         "Reduction dependences set twice!");
+  ReductionDependences[MA] = D;
 }
 
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {

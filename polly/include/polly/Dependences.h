@@ -40,6 +40,7 @@ namespace polly {
 
 class Scop;
 class ScopStmt;
+class MemoryAccess;
 
 class Dependences : public ScopPass {
 public:
@@ -105,6 +106,16 @@ public:
   /// @brief Report if valid dependences are available.
   bool hasValidDependences();
 
+  /// @brief Return the reduction dependences caused by @p MA.
+  ///
+  /// @return The reduction dependences caused by @p MA or nullptr if None.
+  __isl_give isl_map *getReductionDependences(MemoryAccess *MA);
+
+  /// @brief Return the reduction dependences mapped by the causing @p MA.
+  const DenseMap<MemoryAccess *, isl_map *> &getReductionDependences() const {
+    return ReductionDependences;
+  }
+
   bool runOnScop(Scop &S);
   void printScop(raw_ostream &OS) const;
   virtual void releaseMemory();
@@ -122,6 +133,9 @@ private:
   /// @brief The (reverse) transitive closure of reduction dependences
   isl_union_map *TC_RED = nullptr;
 
+  /// @brief Map from memory accesses to their reduction dependences.
+  DenseMap<MemoryAccess *, isl_map *> ReductionDependences;
+
   /// @brief Collect information about the SCoP.
   void collectInfo(Scop &S, isl_union_map **Read, isl_union_map **Write,
                    isl_union_map **MayWrite, isl_union_map **AccessSchedule,
@@ -132,6 +146,10 @@ private:
 
   /// @brief Calculate the dependences for a certain SCoP.
   void calculateDependences(Scop &S);
+
+  /// @brief Set the reduction dependences for @p MA to @p Deps.
+  void setReductionDependences(MemoryAccess *MA, __isl_take isl_map *Deps);
+
 };
 
 } // End polly namespace.

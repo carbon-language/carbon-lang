@@ -34,15 +34,19 @@ class raw_ostream;
 struct isl_ast_node;
 struct isl_ast_expr;
 struct isl_ast_build;
+struct isl_union_map;
 struct isl_pw_multi_aff;
 
 namespace polly {
 class Scop;
 class IslAst;
+class MemoryAccess;
 
 class IslAstInfo : public ScopPass {
 public:
-  /// @brief Payload information used to annoate an ast node.
+  using MemoryAccessSet = SmallPtrSet<MemoryAccess *, 4>;
+
+  /// @brief Payload information used to annotate an AST node.
   struct IslAstUserPayload {
     /// @brief Construct and initialize the payload.
     IslAstUserPayload()
@@ -67,6 +71,9 @@ public:
 
     /// @brief The build environment at the time this node was constructed.
     isl_ast_build *Build;
+
+    /// @brief Set of accesses which break reduction dependences.
+    MemoryAccessSet BrokenReductions;
   };
 
 private:
@@ -118,6 +125,9 @@ public:
 
   /// @brief Get the nodes schedule or a nullptr if not available.
   static __isl_give isl_union_map *getSchedule(__isl_keep isl_ast_node *Node);
+
+  /// @brief Get the nodes broken reductions or a nullptr if not available.
+  static MemoryAccessSet *getBrokenReductions(__isl_keep isl_ast_node *Node);
 
   ///}
 
