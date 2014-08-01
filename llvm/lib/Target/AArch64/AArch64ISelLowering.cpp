@@ -2916,11 +2916,6 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
             isPowerOf2_64(LHS.getConstantOperandVal(1))) {
           SDValue Test = LHS.getOperand(0);
           uint64_t Mask = LHS.getConstantOperandVal(1);
-
-          // TBZ only operates on i64's, but the ext should be free.
-          if (Test.getValueType() == MVT::i32)
-            Test = DAG.getAnyExtOrTrunc(Test, dl, MVT::i64);
-
           return DAG.getNode(AArch64ISD::TBZ, dl, MVT::Other, Chain, Test,
                              DAG.getConstant(Log2_64(Mask), MVT::i64), Dest);
         }
@@ -2936,17 +2931,28 @@ SDValue AArch64TargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
             isPowerOf2_64(LHS.getConstantOperandVal(1))) {
           SDValue Test = LHS.getOperand(0);
           uint64_t Mask = LHS.getConstantOperandVal(1);
-
-          // TBNZ only operates on i64's, but the ext should be free.
-          if (Test.getValueType() == MVT::i32)
-            Test = DAG.getAnyExtOrTrunc(Test, dl, MVT::i64);
-
           return DAG.getNode(AArch64ISD::TBNZ, dl, MVT::Other, Chain, Test,
                              DAG.getConstant(Log2_64(Mask), MVT::i64), Dest);
         }
 
         return DAG.getNode(AArch64ISD::CBNZ, dl, MVT::Other, Chain, LHS, Dest);
+      } else if (CC == ISD::SETLT && LHS.getOpcode() != ISD::AND) {
+        // Don't combine AND since emitComparison converts the AND to an ANDS
+        // (a.k.a. TST) and the test in the test bit and branch instruction
+        // becomes redundant.  This would also increase register pressure.
+        uint64_t Mask = LHS.getValueType().getSizeInBits() - 1;
+        return DAG.getNode(AArch64ISD::TBNZ, dl, MVT::Other, Chain, LHS,
+                           DAG.getConstant(Mask, MVT::i64), Dest);
       }
+    }
+    if (RHSC && RHSC->getSExtValue() == -1 && CC == ISD::SETGT &&
+        LHS.getOpcode() != ISD::AND) {
+      // Don't combine AND since emitComparison converts the AND to an ANDS
+      // (a.k.a. TST) and the test in the test bit and branch instruction
+      // becomes redundant.  This would also increase register pressure.
+      uint64_t Mask = LHS.getValueType().getSizeInBits() - 1;
+      return DAG.getNode(AArch64ISD::TBZ, dl, MVT::Other, Chain, LHS,
+                         DAG.getConstant(Mask, MVT::i64), Dest);
     }
 
     SDValue CCVal;
