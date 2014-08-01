@@ -133,7 +133,7 @@ def COND_NE : PatLeaf <
 
 def COND_NULL : PatLeaf <
   (cond),
-  [{return false;}]
+  [{(void)N; return false;}]
 >;
 
 //===----------------------------------------------------------------------===//
