@@ -48,6 +48,7 @@ relational/any.cl
 relational/isequal.cl
 relational/isgreater.cl
 relational/isgreaterequal.cl
+relational/isless.cl
 relational/isnan.cl
 relational/isnotequal.cl
 relational/signbit.cl
