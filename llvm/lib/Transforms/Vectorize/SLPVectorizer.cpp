@@ -396,7 +396,8 @@ public:
   BoUpSLP(Function *Func, ScalarEvolution *Se, const DataLayout *Dl,
           TargetTransformInfo *Tti, TargetLibraryInfo *TLi, AliasAnalysis *Aa,
           LoopInfo *Li, DominatorTree *Dt)
-      : F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
+      : NumLoadsWantToKeepOrder(0), NumLoadsWantToChangeOrder(0),
+        F(Func), SE(Se), DL(Dl), TTI(Tti), TLI(TLi), AA(Aa), LI(Li), DT(Dt),
         Builder(Se->getContext()) {}
 
   /// \brief Vectorize the tree that starts with the elements in \p VL.
@@ -419,6 +420,8 @@ public:
     MustGather.clear();
     ExternalUses.clear();
     MemBarrierIgnoreList.clear();
+    NumLoadsWantToKeepOrder = 0;
+    NumLoadsWantToChangeOrder = 0;
   }
 
   /// \returns true if the memory operations A and B are consecutive.
@@ -427,10 +430,9 @@ public:
   /// \brief Perform LICM and CSE on the newly generated gather sequences.
   void optimizeGatherSequence();
 
-  /// \brief Get the instruction numbering for a given Instruction.
-  int getIndex(Instruction *I) {
-    BlockNumbering &BN = getBlockNumbering(I->getParent());
-    return BN.getIndex(I);
+  /// \returns true if it is benefitial to reverse the vector order.
+  bool shouldReorder() const {
+    return NumLoadsWantToChangeOrder > NumLoadsWantToKeepOrder;
   }
 
 private:
@@ -585,6 +587,12 @@ private:
 
   /// List of users to ignore during scheduling and that don't need extracting.
   ArrayRef<Value *> UserIgnoreList;
+
+  // Number of load-bundles, which contain consecutive loads.
+  int NumLoadsWantToKeepOrder;
+
+  // Number of load-bundles of size 2, which are consecutive loads if reversed.
+  int NumLoadsWantToChangeOrder;
 
   // Analysis and block reference.
   Function *F;
@@ -879,12 +887,21 @@ void BoUpSLP::buildTree_rec(ArrayRef<Value *> VL, unsigned Depth) {
       // Check if the loads are consecutive or of we need to swizzle them.
       for (unsigned i = 0, e = VL.size() - 1; i < e; ++i) {
         LoadInst *L = cast<LoadInst>(VL[i]);
-        if (!L->isSimple() || !isConsecutiveAccess(VL[i], VL[i + 1])) {
+        if (!L->isSimple()) {
           newTreeEntry(VL, false);
-          DEBUG(dbgs() << "SLP: Need to swizzle loads.\n");
+          DEBUG(dbgs() << "SLP: Gathering non-simple loads.\n");
+          return;
+        }
+        if (!isConsecutiveAccess(VL[i], VL[i + 1])) {
+          if (VL.size() == 2 && isConsecutiveAccess(VL[1], VL[0])) {
+            ++NumLoadsWantToChangeOrder;
+          }
+          newTreeEntry(VL, false);
+          DEBUG(dbgs() << "SLP: Gathering non-consecutive loads.\n");
           return;
         }
       }
+      ++NumLoadsWantToKeepOrder;
       newTreeEntry(VL, true);
       DEBUG(dbgs() << "SLP: added a vector of loads.\n");
       return;
@@ -2237,15 +2254,15 @@ private:
   unsigned collectStores(BasicBlock *BB, BoUpSLP &R);
 
   /// \brief Try to vectorize a chain that starts at two arithmetic instrs.
-  bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R,
-                          BinaryOperator *V = nullptr);
+  bool tryToVectorizePair(Value *A, Value *B, BoUpSLP &R);
 
   /// \brief Try to vectorize a list of operands.
   /// \@param BuildVector A list of users to ignore for the purpose of
   ///                     scheduling and that don't need extracting.
   /// \returns true if a value was vectorized.
   bool tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
-                          ArrayRef<Value *> BuildVector = None);
+                          ArrayRef<Value *> BuildVector = None,
+                          bool allowReorder = false);
 
   /// \brief Try to vectorize a chain that may start at the operands of \V;
   bool tryToVectorize(BinaryOperator *V, BoUpSLP &R);
@@ -2411,28 +2428,16 @@ unsigned SLPVectorizer::collectStores(BasicBlock *BB, BoUpSLP &R) {
   return count;
 }
 
-bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R,
-                                       BinaryOperator *V) {
+bool SLPVectorizer::tryToVectorizePair(Value *A, Value *B, BoUpSLP &R) {
   if (!A || !B)
     return false;
   Value *VL[] = { A, B };
-
-  // Canonicalize operands based on source order, so that the ordering in the
-  // expression tree more closely matches the ordering of the source.
-  if (V && V->isCommutative() && isa<Instruction>(A) && isa<Instruction>(B) &&
-      cast<Instruction>(A)->getParent() == cast<Instruction>(B)->getParent()) {
-    assert(V->getOperand(0) == A && V->getOperand(1) == B &&
-           "Expected operands in order.");
-    int IndexA = R.getIndex(cast<Instruction>(A));
-    int IndexB = R.getIndex(cast<Instruction>(B));
-    if (IndexA > IndexB)
-      std::swap(VL[0], VL[1]);
-  }
-  return tryToVectorizeList(VL, R);
+  return tryToVectorizeList(VL, R, None, true);
 }
 
 bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
-                                       ArrayRef<Value *> BuildVector) {
+                                       ArrayRef<Value *> BuildVector,
+                                       bool allowReorder) {
   if (VL.size() < 2)
     return false;
 
@@ -2487,6 +2492,14 @@ bool SLPVectorizer::tryToVectorizeList(ArrayRef<Value *> VL, BoUpSLP &R,
       BuildVectorSlice = BuildVector.slice(i, OpsWidth);
 
     R.buildTree(Ops, BuildVectorSlice);
+    // TODO: check if we can allow reordering also for other cases than
+    // tryToVectorizePair()
+    if (allowReorder && R.shouldReorder()) {
+      assert(Ops.size() == 2);
+      assert(BuildVectorSlice.empty());
+      Value *ReorderedOps[] = { Ops[1], Ops[0] };
+      R.buildTree(ReorderedOps, None);
+    }
     int Cost = R.getTreeCost();
 
     if (Cost < -SLPCostThreshold) {
@@ -2528,7 +2541,7 @@ bool SLPVectorizer::tryToVectorize(BinaryOperator *V, BoUpSLP &R) {
     return false;
 
   // Try to vectorize V.
-  if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R, V))
+  if (tryToVectorizePair(V->getOperand(0), V->getOperand(1), R))
     return true;
 
   BinaryOperator *A = dyn_cast<BinaryOperator>(V->getOperand(0));
@@ -3039,7 +3052,7 @@ bool SLPVectorizer::vectorizeChainsInBlock(BasicBlock *BB, BoUpSLP &R) {
 
       for (int i = 0; i < 2; ++i) {
         if (BinaryOperator *BI = dyn_cast<BinaryOperator>(CI->getOperand(i))) {
-          if (tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R, BI)) {
+          if (tryToVectorizePair(BI->getOperand(0), BI->getOperand(1), R)) {
             Changed = true;
             // We would like to start over since some instructions are deleted
             // and the iterator may become invalid value.
