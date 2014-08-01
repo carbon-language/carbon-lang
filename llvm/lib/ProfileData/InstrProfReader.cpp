@@ -307,8 +307,8 @@ std::error_code IndexedInstrProfReader::readHeader() {
     return error(instrprof_error::bad_magic);
 
   // Read the version.
-  uint64_t Version = endian::readNext<uint64_t, little, unaligned>(Cur);
-  if (Version != IndexedInstrProf::Version)
+  FormatVersion = endian::readNext<uint64_t, little, unaligned>(Cur);
+  if (FormatVersion > IndexedInstrProf::Version)
     return error(instrprof_error::unsupported_version);
 
   // Read the maximal function count.
@@ -331,18 +331,31 @@ std::error_code IndexedInstrProfReader::readHeader() {
 }
 
 std::error_code IndexedInstrProfReader::getFunctionCounts(
-    StringRef FuncName, uint64_t &FuncHash, std::vector<uint64_t> &Counts) {
-  const auto &Iter = Index->find(FuncName);
+    StringRef FuncName, uint64_t FuncHash, std::vector<uint64_t> &Counts) {
+  auto Iter = Index->find(FuncName);
   if (Iter == Index->end())
     return error(instrprof_error::unknown_function);
 
-  // Found it. Make sure it's valid before giving back a result.
-  const InstrProfRecord &Record = *Iter;
-  if (Record.Name.empty())
-    return error(instrprof_error::malformed);
-  FuncHash = Record.Hash;
-  Counts = Record.Counts;
-  return success();
+  // Found it. Look for counters with the right hash.
+  ArrayRef<uint64_t> Data = (*Iter).Data;
+  uint64_t NumCounts;
+  for (uint64_t I = 0, E = Data.size(); I != E; I += NumCounts) {
+    // The function hash comes first.
+    uint64_t FoundHash = Data[I++];
+    // In v1, we have at least one count. Later, we have the number of counts.
+    if (I == E)
+      return error(instrprof_error::malformed);
+    NumCounts = FormatVersion == 1 ? E - I : Data[I++];
+    // If we have more counts than data, this is bogus.
+    if (I + NumCounts > E)
+      return error(instrprof_error::malformed);
+    // Check for a match and fill the vector if there is one.
+    if (FoundHash == FuncHash) {
+      Counts = Data.slice(I, NumCounts);
+      return success();
+    }
+  }
+  return error(instrprof_error::hash_mismatch);
 }
 
 std::error_code
@@ -351,10 +364,30 @@ IndexedInstrProfReader::readNextRecord(InstrProfRecord &Record) {
   if (RecordIterator == Index->data_end())
     return error(instrprof_error::eof);
 
-  // Read the next one.
-  Record = *RecordIterator;
-  ++RecordIterator;
-  if (Record.Name.empty())
+  // Record the current function name.
+  Record.Name = (*RecordIterator).Name;
+
+  ArrayRef<uint64_t> Data = (*RecordIterator).Data;
+  // Valid data starts with a hash and either a count or the number of counts.
+  if (CurrentOffset + 1 > Data.size())
     return error(instrprof_error::malformed);
+  // First we have a function hash.
+  Record.Hash = Data[CurrentOffset++];
+  // In version 1 we knew the number of counters implicitly, but in newer
+  // versions we store the number of counters next.
+  uint64_t NumCounts =
+      FormatVersion == 1 ? Data.size() - CurrentOffset : Data[CurrentOffset++];
+  if (CurrentOffset + NumCounts > Data.size())
+    return error(instrprof_error::malformed);
+  // And finally the counts themselves.
+  Record.Counts = Data.slice(CurrentOffset, NumCounts);
+
+  // If we've exhausted this function's data, increment the record.
+  CurrentOffset += NumCounts;
+  if (CurrentOffset == Data.size()) {
+    ++RecordIterator;
+    CurrentOffset = 0;
+  }
+
   return success();
 }

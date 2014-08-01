@@ -1,0 +1,47 @@
+# Compatibility tests for older profile format versions. These ensure
+# that we don't break compatibility with an older profile version
+# without noticing it.
+
+# The input file at %S/Inputs/compat.profdata.v1 was generated with
+# llvm-profdata merge from r214548.
+
+# RUN: llvm-profdata show %S/Inputs/compat.profdata.v1 --function function_count_only --counts | FileCheck %s -check-prefix=FUNC_COUNT_ONLY
+function_count_only
+0
+1
+97531
+# FUNC_COUNT_ONLY:      Hash: 0x{{0+$}}
+# FUNC_COUNT_ONLY-NEXT: Counters: 1
+# FUNC_COUNT_ONLY-NEXT: Function count: 97531
+# FUNC_COUNT_ONLY-NEXT: Block counts: []
+
+# RUN: llvm-profdata show %S/Inputs/compat.profdata.v1 --function "name with spaces" --counts | FileCheck %s -check-prefix=SPACES
+name with spaces
+1024
+2
+0
+0
+# SPACES:      Hash: 0x{{0+}}400
+# SPACES-NEXT: Counters: 2
+# SPACES-NEXT: Function count: 0
+# SPACES-NEXT: Block counts: [0]
+
+# RUN: llvm-profdata show %S/Inputs/compat.profdata.v1 --function large_numbers --counts | FileCheck %s -check-prefix=LARGENUM
+large_numbers
+4611686018427387903
+6
+2305843009213693952
+1152921504606846976
+576460752303423488
+288230376151711744
+144115188075855872
+72057594037927936
+# LARGENUM:      Hash: 0x3fffffffffffffff
+# LARGENUM-NEXT: Counters: 6
+# LARGENUM-NEXT: Function count: 2305843009213693952
+# LARGENUM-NEXT: Block counts: [1152921504606846976, 576460752303423488, 288230376151711744, 144115188075855872, 72057594037927936]
+
+# RUN: llvm-profdata show %S/Inputs/compat.profdata.v1 | FileCheck %s -check-prefix=SUMMARY
+# SUMMARY: Total functions: 3
+# SUMMARY: Maximum function count: 2305843009213693952
+# SUMMARY: Maximum internal block count: 1152921504606846976

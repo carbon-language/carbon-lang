@@ -45,7 +45,9 @@ public:
     offset_type N = K.size();
     LE.write<offset_type>(N);
 
-    offset_type M = (1 + V->Counts.size()) * sizeof(uint64_t);
+    offset_type M = 0;
+    for (const auto &Counts : *V)
+      M += (2 + Counts.second.size()) * sizeof(uint64_t);
     LE.write<offset_type>(M);
 
     return std::make_pair(N, M);
@@ -59,9 +61,13 @@ public:
                        offset_type) {
     using namespace llvm::support;
     endian::Writer<little> LE(Out);
-    LE.write<uint64_t>(V->Hash);
-    for (uint64_t I : V->Counts)
-      LE.write<uint64_t>(I);
+
+    for (const auto &Counts : *V) {
+      LE.write<uint64_t>(Counts.first);
+      LE.write<uint64_t>(Counts.second.size());
+      for (uint64_t I : Counts.second)
+        LE.write<uint64_t>(I);
+    }
   }
 };
 }
@@ -70,41 +76,44 @@ std::error_code
 InstrProfWriter::addFunctionCounts(StringRef FunctionName,
                                    uint64_t FunctionHash,
                                    ArrayRef<uint64_t> Counters) {
-  auto Where = FunctionData.find(FunctionName);
-  if (Where == FunctionData.end()) {
-    // If this is the first time we've seen this function, just add it.
-    auto &Data = FunctionData[FunctionName];
-    Data.Hash = FunctionHash;
-    Data.Counts = Counters;
+  auto &CounterData = FunctionData[FunctionName];
+
+  auto Where = CounterData.find(FunctionHash);
+  if (Where == CounterData.end()) {
+    // We've never seen a function with this name and hash, add it.
+    CounterData[FunctionHash] = Counters;
+    // We keep track of the max function count as we go for simplicity.
+    if (Counters[0] > MaxFunctionCount)
+      MaxFunctionCount = Counters[0];
     return instrprof_error::success;
   }
 
-  auto &Data = Where->getValue();
-  // We can only add to existing functions if they match, so we check the hash
-  // and number of counters.
-  if (Data.Hash != FunctionHash)
-    return instrprof_error::hash_mismatch;
-  if (Data.Counts.size() != Counters.size())
+  // We're updating a function we've seen before.
+  auto &FoundCounters = Where->second;
+  // If the number of counters doesn't match we either have bad data or a hash
+  // collision.
+  if (FoundCounters.size() != Counters.size())
     return instrprof_error::count_mismatch;
-  // These match, add up the counters.
+
   for (size_t I = 0, E = Counters.size(); I < E; ++I) {
-    if (Data.Counts[I] + Counters[I] < Data.Counts[I])
+    if (FoundCounters[I] + Counters[I] < FoundCounters[I])
       return instrprof_error::counter_overflow;
-    Data.Counts[I] += Counters[I];
+    FoundCounters[I] += Counters[I];
   }
+  // We keep track of the max function count as we go for simplicity.
+  if (FoundCounters[0] > MaxFunctionCount)
+    MaxFunctionCount = FoundCounters[0];
+
   return instrprof_error::success;
 }
 
 void InstrProfWriter::write(raw_fd_ostream &OS) {
   OnDiskChainedHashTableGenerator<InstrProfRecordTrait> Generator;
-  uint64_t MaxFunctionCount = 0;
 
   // Populate the hash table generator.
-  for (const auto &I : FunctionData) {
+  std::vector<uint64_t> CounterBuffer;
+  for (const auto &I : FunctionData)
     Generator.insert(I.getKey(), &I.getValue());
-    if (I.getValue().Counts[0] > MaxFunctionCount)
-      MaxFunctionCount = I.getValue().Counts[0];
-  }
 
   using namespace llvm::support;
   endian::Writer<little> LE(OS);
