@@ -1058,12 +1058,14 @@ bool AArch64InstrInfo::isGPRCopy(const MachineInstr *MI) const {
              MI->getOperand(3).getImm() == 0 && "invalid ORRrs operands");
       return true;
     }
+    break;
   case AArch64::ADDXri: // add Xd, Xn, #0 (LSL #0)
     if (MI->getOperand(2).getImm() == 0) {
       assert(MI->getDesc().getNumOperands() == 4 &&
              MI->getOperand(3).getImm() == 0 && "invalid ADDXri operands");
       return true;
     }
+    break;
   }
   return false;
 }
@@ -1086,6 +1088,7 @@ bool AArch64InstrInfo::isFPRCopy(const MachineInstr *MI) const {
              "invalid ORRv16i8 operands");
       return true;
     }
+    break;
   }
   return false;
 }
