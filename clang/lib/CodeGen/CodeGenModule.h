@@ -17,6 +17,7 @@
 #include "CGVTables.h"
 #include "CodeGenTypes.h"
 #include "SanitizerBlacklist.h"
+#include "SanitizerMetadata.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
@@ -472,6 +473,8 @@ class CodeGenModule : public CodeGenTypeCache {
   GlobalDecl initializedGlobalDecl;
 
   SanitizerBlacklist SanitizerBL;
+
+  std::unique_ptr<SanitizerMetadata> SanitizerMD;
 
   /// @}
 public:
@@ -1013,14 +1016,9 @@ public:
     return SanitizerBL;
   }
 
-  void reportGlobalToASan(llvm::GlobalVariable *GV, const VarDecl &D,
-                          bool IsDynInit = false);
-  void reportGlobalToASan(llvm::GlobalVariable *GV, SourceLocation Loc,
-                          StringRef Name, bool IsDynInit = false,
-                          bool IsBlacklisted = false);
-
-  /// Disable sanitizer instrumentation for this global.
-  void disableSanitizerForGlobal(llvm::GlobalVariable *GV);
+  SanitizerMetadata *getSanitizerMetadata() {
+    return SanitizerMD.get();
+  }
 
   void addDeferredVTable(const CXXRecordDecl *RD) {
     DeferredVTables.push_back(RD);
