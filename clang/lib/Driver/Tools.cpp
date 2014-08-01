@@ -3855,8 +3855,22 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
 
   Args.AddLastArg(CmdArgs, options::OPT_fbuild_session_timestamp);
 
+  if (Arg *A = Args.getLastArg(options::OPT_fbuild_session_file)) {
+    if (Args.hasArg(options::OPT_fbuild_session_timestamp))
+      D.Diag(diag::err_drv_argument_not_allowed_with)
+          << A->getAsString(Args) << "-fbuild-session-timestamp";
+
+    llvm::sys::fs::file_status Status;
+    if (llvm::sys::fs::status(A->getValue(), Status))
+      D.Diag(diag::err_drv_no_such_file) << A->getValue();
+    auto Timestamp = Status.getLastModificationTime().toEpochTime();
+    CmdArgs.push_back(Args.MakeArgString("-fbuild-session-timestamp=" +
+                                         std::to_string(Timestamp)));
+  }
+
   if (Args.getLastArg(options::OPT_fmodules_validate_once_per_build_session)) {
-    if (!Args.getLastArg(options::OPT_fbuild_session_timestamp))
+    if (!Args.getLastArg(options::OPT_fbuild_session_timestamp,
+                         options::OPT_fbuild_session_file))
       D.Diag(diag::err_drv_modules_validate_once_requires_timestamp);
 
     Args.AddLastArg(CmdArgs,

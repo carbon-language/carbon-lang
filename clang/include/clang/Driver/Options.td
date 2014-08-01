@@ -617,6 +617,9 @@ def fmodules_search_all : Flag <["-"], "fmodules-search-all">, Group<f_Group>,
 def fbuild_session_timestamp : Joined<["-"], "fbuild-session-timestamp=">,
   Group<i_Group>, Flags<[CC1Option]>, MetaVarName<"<time since Epoch in seconds>">,
   HelpText<"Time when the current build session started">;
+def fbuild_session_file : Joined<["-"], "fbuild-session-file=">,
+  Group<i_Group>, MetaVarName<"<file>">,
+  HelpText<"Use the last modification time of <file> as the build session timestamp">;
 def fmodules_validate_once_per_build_session : Flag<["-"], "fmodules-validate-once-per-build-session">,
   Group<i_Group>, Flags<[CC1Option]>,
   HelpText<"Don't verify input files for the modules if the module has been "
