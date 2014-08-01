@@ -1550,7 +1550,7 @@ std::unique_ptr<X86Operand> X86AsmParser::ParseIntelOperand() {
   if (Size) {
     Parser.Lex(); // Eat operand size (e.g., byte, word).
     if (Tok.getString() != "PTR" && Tok.getString() != "ptr")
-      return ErrorOperand(Start, "Expected 'PTR' or 'ptr' token!");
+      return ErrorOperand(Tok.getLoc(), "Expected 'PTR' or 'ptr' token!");
     Parser.Lex(); // Eat ptr.
   }
   Start = Tok.getLoc();
