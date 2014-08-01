@@ -1,9 +1,9 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; CHECK: Reduction Type: ADD
-; CHECK: Reduction Type: ADD
-; CHECK: Reduction Type: MUL
-; CHECK: Reduction Type: MUL
+; CHECK: Reduction Type: +
+; CHECK: Reduction Type: +
+; CHECK: Reduction Type: *
+; CHECK: Reduction Type: *
 ;
 ; void f(int *sums) {
 ;   for (int i = 0; i < 1024; i++) {

@@ -1,21 +1,21 @@
 ; RUN: opt -basicaa %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
 ; CHECK: Stmt_for_body
-; CHECK: Reduction Type: MUL
+; CHECK: Reduction Type: *
 ; CHECK: MemRef_sum
-; CHECK: Reduction Type: MUL
+; CHECK: Reduction Type: *
 ; CHECK: MemRef_sum
 ; CHECK: Stmt_for_body3
 ; CHECK: Reduction Type: NONE
 ; CHECK: MemRef_A
-; CHECK: Reduction Type: ADD
+; CHECK: Reduction Type: +
 ; CHECK: MemRef_sum
-; CHECK: Reduction Type: ADD
+; CHECK: Reduction Type: +
 ; CHECK: MemRef_sum
 ; CHECK: Stmt_for_end
-; CHECK: Reduction Type: MUL
+; CHECK: Reduction Type: *
 ; CHECK: MemRef_sum
-; CHECK: Reduction Type: MUL
+; CHECK: Reduction Type: *
 ; CHECK: MemRef_sum
 ;
 ; void f(int *restrict A, int *restrict sum) {

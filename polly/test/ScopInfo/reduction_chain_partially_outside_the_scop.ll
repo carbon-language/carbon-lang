@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; CHECK-NOT: Reduction like: 1
+; CHECK: Reduction Type: NONE
 ;
 ;    int c, d;
 ;    void f(int *sum) {

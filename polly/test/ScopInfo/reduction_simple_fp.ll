@@ -3,7 +3,7 @@
 ; CHECK: Function: f_no_fast_math
 ; CHECK: Reduction Type: NONE
 ; CHECK: Function: f_fast_math
-; CHECK: Reduction Type: ADD
+; CHECK: Reduction Type: +
 ;
 ; void f(float *sum) {
 ;   for (int i = 0; i < 100; i++)

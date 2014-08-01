@@ -1,6 +1,6 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; CHECK-NOT: Reduction like: 1
+; CHECK: Reduction Type: NONE
 ;
 ; Check that we do not mark these accesses as reduction like.
 ; We do this for the case the loads are modelt with the same LLVM-IR value and

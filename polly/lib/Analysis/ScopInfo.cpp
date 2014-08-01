@@ -272,6 +272,27 @@ int SCEVAffinator::getLoopDepth(const Loop *L) {
   return L->getLoopDepth() - outerLoop->getLoopDepth();
 }
 
+const std::string
+MemoryAccess::getReductionOperatorStr(MemoryAccess::ReductionType RT) {
+  switch (RT) {
+  case MemoryAccess::RT_NONE:
+    llvm_unreachable("Requested a reduction operator string for a memory "
+                     "access which isn't a reduction");
+  case MemoryAccess::RT_ADD:
+    return "+";
+  case MemoryAccess::RT_MUL:
+    return "*";
+  case MemoryAccess::RT_BOR:
+    return "|";
+  case MemoryAccess::RT_BXOR:
+    return "^";
+  case MemoryAccess::RT_BAND:
+    return "&";
+  }
+  llvm_unreachable("Unknown reduction type");
+  return "";
+}
+
 /// @brief Return the reduction type for a given binary operator
 static MemoryAccess::ReductionType getReductionType(const BinaryOperator *BinOp,
                                                     const Instruction *Load) {
@@ -461,28 +482,16 @@ void MemoryAccess::realignParams() {
   AccessRelation = isl_map_align_params(AccessRelation, ParamSpace);
 }
 
+const std::string MemoryAccess::getReductionOperatorStr() const {
+  return MemoryAccess::getReductionOperatorStr(getReductionType());
+}
+
 raw_ostream &polly::operator<<(raw_ostream &OS,
                                MemoryAccess::ReductionType RT) {
-  switch (RT) {
-  case MemoryAccess::RT_NONE:
+  if (RT == MemoryAccess::RT_NONE)
     OS << "NONE";
-    break;
-  case MemoryAccess::RT_ADD:
-    OS << "ADD";
-    break;
-  case MemoryAccess::RT_MUL:
-    OS << "MUL";
-    break;
-  case MemoryAccess::RT_BOR:
-    OS << "BOR";
-    break;
-  case MemoryAccess::RT_BXOR:
-    OS << "BXOR";
-    break;
-  case MemoryAccess::RT_BAND:
-    OS << "BAND";
-    break;
-  }
+  else
+    OS << MemoryAccess::getReductionOperatorStr(RT);
   return OS;
 }
 

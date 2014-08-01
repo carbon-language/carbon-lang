@@ -10,8 +10,8 @@
 ;   }
 ; }
 ;
-; CHECK-NOT: Reduction Type: ADD
-; CHECK-NOT: Reduction Type: MUL
+; CHECK-NOT: Reduction Type: +
+; CHECK-NOT: Reduction Type: *
 target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
 
 define void @f(i32* %sums) {

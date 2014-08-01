@@ -186,6 +186,12 @@ public:
   /// @brief Get the base array isl_id for this access.
   __isl_give isl_id *getArrayId() const;
 
+  /// @brief Return a string representation of the accesse's reduction type.
+  const std::string getReductionOperatorStr() const;
+
+  /// @brief Return a string representation of the reduction type @p RT.
+  static const std::string getReductionOperatorStr(ReductionType RT);
+
   const std::string &getBaseName() const { return BaseName; }
 
   const Instruction *getAccessInstruction() const { return Inst; }

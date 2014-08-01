@@ -6,9 +6,9 @@
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[i0] };
 ; CHECK: MustWriteAccess :=  [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_first[0] };
-; CHECK: ReadAccess :=       [Reduction Type: ADD
+; CHECK: ReadAccess :=       [Reduction Type: +
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
-; CHECK: MustWriteAccess :=  [Reduction Type: ADD
+; CHECK: MustWriteAccess :=  [Reduction Type: +
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
 ; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[-1 + i0] };
@@ -16,9 +16,9 @@
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[i0] };
 ; CHECK: MustWriteAccess :=  [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_middle[0] };
-; CHECK: ReadAccess :=       [Reduction Type: MUL
+; CHECK: ReadAccess :=       [Reduction Type: *
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_prod[0] };
-; CHECK: MustWriteAccess :=  [Reduction Type: MUL
+; CHECK: MustWriteAccess :=  [Reduction Type: *
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_prod[0] };
 ; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_A[-1 + i0] };

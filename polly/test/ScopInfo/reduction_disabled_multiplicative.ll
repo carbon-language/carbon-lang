@@ -1,8 +1,8 @@
 ; RUN: opt -basicaa %loadPolly -polly-scops -analyze -polly-disable-multiplicative-reductions < %s | FileCheck %s
 ;
-; CHECK: ReadAccess :=       [Reduction Type: ADD
+; CHECK: ReadAccess :=       [Reduction Type: +
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
-; CHECK: MustWriteAccess :=  [Reduction Type: ADD
+; CHECK: MustWriteAccess :=  [Reduction Type: +
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_sum[0] };
 ; CHECK: ReadAccess :=       [Reduction Type: NONE
 ; CHECK:     { Stmt_for_body[i0] -> MemRef_prod[0] };

@@ -6,11 +6,11 @@
 ; CHECK: Reduction Type: NONE
 ; CHECK: MemRef_sum_12
 ; CHECK: Stmt_for_inc
-; CHECK: Reduction Type: ADD
+; CHECK: Reduction Type: +
 ; CHECK: MemRef_sum_12
 ; CHECK: Reduction Type: NONE
 ; CHECK: MemRef_A
-; CHECK: Reduction Type: ADD
+; CHECK: Reduction Type: +
 ; CHECK: MemRef_sum_12
 ; CHECK: Stmt_for_inc5
 ; CHECK: Reduction Type: NONE
