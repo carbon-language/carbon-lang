@@ -1295,6 +1295,16 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       if (match(Op1, m_Xor(m_Specific(B), m_Specific(A))))
         if (Op0->hasOneUse() || cast<BinaryOperator>(Op0)->hasOneUse())
           return BinaryOperator::CreateAnd(Op1, Builder->CreateNot(C));
+
+    // (A | B) & ((~A) ^ B) -> (A & B)
+    if (match(Op0, m_Or(m_Value(A), m_Value(B))) &&
+        match(Op1, m_Xor(m_Not(m_Specific(A)), m_Specific(B))))
+      return BinaryOperator::CreateAnd(A, B);
+
+    // ((~A) ^ B) & (A | B) -> (A & B)
+    if (match(Op0, m_Xor(m_Not(m_Value(A)), m_Value(B))) &&
+        match(Op1, m_Or(m_Specific(A), m_Specific(B))))
+      return BinaryOperator::CreateAnd(A, B);
   }
 
   if (ICmpInst *RHS = dyn_cast<ICmpInst>(Op1))
