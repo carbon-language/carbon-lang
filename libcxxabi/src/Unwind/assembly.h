@@ -34,13 +34,32 @@
 #define GLUE(a, b) GLUE2(a, b)
 #define SYMBOL_NAME(name) GLUE(__USER_LABEL_PREFIX__, name)
 
+#if defined(__APPLE__)
+#define SYMBOL_IS_FUNC(name)
+#elif defined(__ELF__)
+#define LOCAL_LABEL(name) .L_##name
+#if defined(__arm__)
+#define SYMBOL_IS_FUNC(name) .type name,%function
+#else
+#define SYMBOL_IS_FUNC(name) .type name,@function
+#endif
+#else
+#define SYMBOL_IS_FUNC(name)                                                   \
+  .def name SEPARATOR                                                          \
+    .scl 2 SEPARATOR                                                           \
+    .type 32 SEPARATOR                                                         \
+  .endef
+#endif
+
 #define DEFINE_LIBUNWIND_FUNCTION(name)                   \
   .globl SYMBOL_NAME(name) SEPARATOR                      \
+  SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR             \
   SYMBOL_NAME(name):
 
 #define DEFINE_LIBUNWIND_PRIVATE_FUNCTION(name)           \
   .globl SYMBOL_NAME(name) SEPARATOR                      \
   HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR            \
+  SYMBOL_IS_FUNC(SYMBOL_NAME(name)) SEPARATOR             \
   SYMBOL_NAME(name):
 
 #endif /* UNWIND_ASSEMBLY_H */
