@@ -642,8 +642,10 @@ private:
     bool IsScheduled;
   };
 
+#ifndef NDEBUG
   friend raw_ostream &operator<<(raw_ostream &os,
                                  const BoUpSLP::ScheduleData &SD);
+#endif
 
   /// Contains all scheduling data for a basic block.
   ///
@@ -827,11 +829,13 @@ private:
   /// Instruction builder to construct the vectorized tree.
   IRBuilder<> Builder;
 };
-  
+
+#ifndef NDEBUG
 raw_ostream &operator<<(raw_ostream &os, const BoUpSLP::ScheduleData &SD) {
   SD.dump(os);
   return os;
 }
+#endif
 
 void BoUpSLP::buildTree(ArrayRef<Value *> Roots,
                         ArrayRef<Value *> UserIgnoreLst) {
