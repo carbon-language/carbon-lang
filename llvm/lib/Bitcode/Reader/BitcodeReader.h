@@ -179,10 +179,10 @@ class BitcodeReader : public GVMaterializer {
   /// stream.
   DenseMap<Function*, uint64_t> DeferredFunctionInfo;
 
-  /// BlockAddrFwdRefs - These are blockaddr references to basic blocks.  These
-  /// are resolved lazily when functions are loaded.
-  typedef std::pair<unsigned, GlobalVariable*> BlockAddrRefTy;
-  DenseMap<Function*, std::vector<BlockAddrRefTy> > BlockAddrFwdRefs;
+  /// These are basic blocks forward-referenced by block addresses.  They are
+  /// inserted lazily into functions when they're loaded.
+  typedef std::pair<unsigned, BasicBlock *> BasicBlockRefTy;
+  DenseMap<Function *, std::vector<BasicBlockRefTy>> BasicBlockFwdRefs;
 
   /// UseRelativeIDs - Indicates that we are using a new encoding for
   /// instruction operands where most operands in the current
