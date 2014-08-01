@@ -952,6 +952,13 @@ ObjCInterfaceDecl *ObjCMethodDecl::getClassInterface() {
   llvm_unreachable("unknown method context");
 }
 
+SourceRange ObjCMethodDecl::getReturnTypeSourceRange() const {
+  const auto *TSI = getReturnTypeSourceInfo();
+  if (TSI)
+    return TSI->getTypeLoc().getSourceRange();
+  return SourceRange();
+}
+
 static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
                                             const ObjCMethodDecl *Method,
                                SmallVectorImpl<const ObjCMethodDecl *> &Methods,

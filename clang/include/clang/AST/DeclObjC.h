@@ -329,6 +329,7 @@ public:
 
   QualType getReturnType() const { return MethodDeclType; }
   void setReturnType(QualType T) { MethodDeclType = T; }
+  SourceRange getReturnTypeSourceRange() const;
 
   /// \brief Determine the type of an expression that sends a message to this
   /// function.
