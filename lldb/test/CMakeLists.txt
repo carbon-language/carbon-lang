@@ -25,7 +25,7 @@ endif ()
 # Allow the user to override the default by setting LLDB_TEST_ARCH
 set(LLDB_TEST_ARCH
 	${LLDB_DEFAULT_TEST_ARCH}
-	CACHED STRING "Specify the architecture to run LLDB tests as (x86|x64).  Determines whether tests are compiled with -m32 or -m64")
+	CACHE STRING "Specify the architecture to run LLDB tests as (x86|x64).  Determines whether tests are compiled with -m32 or -m64")
 
 # Users can override LLDB_TEST_USER_ARGS to specify arbitrary arguments to pass to the script
 set(LLDB_TEST_USER_ARGS
