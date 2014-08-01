@@ -2167,6 +2167,16 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return BinaryOperator::CreateOr(Not, Op0);
       }
 
+  // (A & B) | ((~A) ^ B) -> (~A ^ B)
+  if (match(Op0, m_And(m_Value(A), m_Value(B))) &&
+      match(Op1, m_Xor(m_Not(m_Specific(A)), m_Specific(B))))
+    return BinaryOperator::CreateXor(Builder->CreateNot(A), B);
+
+  // ((~A) ^ B) | (A & B) -> (~A ^ B)
+  if (match(Op0, m_Xor(m_Not(m_Value(A)), m_Value(B))) &&
+      match(Op1, m_And(m_Specific(A), m_Specific(B))))
+    return BinaryOperator::CreateXor(Builder->CreateNot(A), B);
+
   if (SwappedForXor)
     std::swap(Op0, Op1);
 
