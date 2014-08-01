@@ -1,0 +1,34 @@
+# RUN: not llvm-mc -disassemble %s -triple=thumbv7-apple-darwin9 -mcpu cortex-m3 2>&1 | FileCheck %s
+
+#------------------------------------------------------------------------------
+# Undefined encodings for mrs
+#------------------------------------------------------------------------------
+
+# invalid SYSm
+# CHECK: warning: invalid instruction encoding
+# CHECK-NEXT: [0xef 0xf3 0x80 0x80]
+[0xef 0xf3 0x80 0x80]
+
+#------------------------------------------------------------------------------
+# Undefined encodings for msr
+#------------------------------------------------------------------------------
+
+# invalid mask = '00'
+# CHECK: warning: invalid instruction encoding
+# CHECK-NEXT: [0x80 0xf3 0x00 0x80]
+[0x80 0xf3 0x00 0x80]
+
+# invalid mask = '11' with SYSm not in {0..3}
+# CHECK: warning: invalid instruction encoding
+# CHECK-NEXT: [0x80 0xf3 0x04 0x8c]
+[0x80 0xf3 0x04 0x8c]
+
+# invalid mask = '01' (Cortex-M3 does not have the DSP extension)
+# CHECK: warning: invalid instruction encoding
+# CHECK-NEXT: [0x80 0xf3 0x00 0x84]
+[0x80 0xf3 0x00 0x84]
+
+# invalid SYSm
+# CHECK: warning: invalid instruction encoding
+# CHECK-NEXT: [0x80 0xf3 0x80 0x88]
+[0x80 0xf3 0x80 0x88]
