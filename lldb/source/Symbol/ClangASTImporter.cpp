@@ -573,13 +573,13 @@ ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
+    lldb::user_id_t user_id = LLDB_INVALID_UID;
+    ClangASTMetadata *metadata = m_master.GetDeclMetadata(from);
+    if (metadata)
+        user_id = metadata->GetUserID();
+    
     if (log)
     {
-        lldb::user_id_t user_id;
-        ClangASTMetadata *metadata = m_master.GetDeclMetadata(from);
-        if (metadata)
-            user_id = metadata->GetUserID();
-
         if (NamedDecl *from_named_decl = dyn_cast<clang::NamedDecl>(from))
         {
             std::string name_string;
@@ -611,8 +611,12 @@ ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
 
         if (origin_iter != origins.end())
         {
-            to_context_md->m_origins[to] = origin_iter->second;
-
+            if (to_context_md->m_origins.find(to) == to_context_md->m_origins.end() ||
+                user_id != LLDB_INVALID_UID)
+            {
+                to_context_md->m_origins[to] = origin_iter->second;
+            }
+                
             MinionSP direct_completer = m_master.GetMinion(&to->getASTContext(), origin_iter->second.ctx);
 
             if (direct_completer.get() != this)
@@ -636,9 +640,13 @@ ClangASTImporter::Minion::Imported (clang::Decl *from, clang::Decl *to)
                     if (!m_decls_already_deported->count(to_named_decl))
                         m_decls_to_deport->insert(to_named_decl);
                 }
-
             }
-            to_context_md->m_origins[to] = DeclOrigin(m_source_ctx, from);
+            
+            if (to_context_md->m_origins.find(to) == to_context_md->m_origins.end() ||
+                user_id != LLDB_INVALID_UID)
+            {
+                to_context_md->m_origins[to] = DeclOrigin(m_source_ctx, from);
+            }
 
             if (log)
                 log->Printf("    [ClangASTImporter] Decl has no origin information in (ASTContext*)%p",
