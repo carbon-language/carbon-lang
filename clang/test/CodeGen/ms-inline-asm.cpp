@@ -82,7 +82,7 @@ void test5() {
   __asm push y
   __asm call T5<int>::create<float>
   __asm mov x, eax
-  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0\0A\09call $2\0A\09mov dword ptr $1, eax", "=*m,=*m,r,~{esp},~{dirflag},~{fpsr},~{flags}"(i32* %y, i32* %x, i32 (float)* @_ZN2T5IiE6createIfEEiT_)
+  // CHECK: call void asm sideeffect inteldialect "push dword ptr $0\0A\09call dword ptr $2\0A\09mov dword ptr $1, eax", "=*m,=*m,*m,~{esp},~{dirflag},~{fpsr},~{flags}"(i32* %y, i32* %x, i32 (float)* @_ZN2T5IiE6createIfEEiT_)
 }
 
 // Just verify this doesn't emit an error.
