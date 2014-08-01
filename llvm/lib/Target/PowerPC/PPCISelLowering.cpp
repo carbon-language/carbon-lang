@@ -7549,16 +7549,12 @@ SDValue PPCTargetLowering::DAGCombineFastRecipFSQRT(SDValue Op,
   return SDValue();
 }
 
-// Like SelectionDAG::isConsecutiveLoad, but also works for stores, and does
-// not enforce equality of the chain operands.
-static bool isConsecutiveLS(LSBaseSDNode *LS, LSBaseSDNode *Base,
+static bool isConsecutiveLSLoc(SDValue Loc, EVT VT, LSBaseSDNode *Base,
                             unsigned Bytes, int Dist,
                             SelectionDAG &DAG) {
-  EVT VT = LS->getMemoryVT();
   if (VT.getSizeInBits() / 8 != Bytes)
     return false;
 
-  SDValue Loc = LS->getBasePtr();
   SDValue BaseLoc = Base->getBasePtr();
   if (Loc.getOpcode() == ISD::FrameIndex) {
     if (BaseLoc.getOpcode() != ISD::FrameIndex)
@@ -7589,6 +7585,64 @@ static bool isConsecutiveLS(LSBaseSDNode *LS, LSBaseSDNode *Base,
   return false;
 }
 
+// Like SelectionDAG::isConsecutiveLoad, but also works for stores, and does
+// not enforce equality of the chain operands.
+static bool isConsecutiveLS(SDNode *N, LSBaseSDNode *Base,
+                            unsigned Bytes, int Dist,
+                            SelectionDAG &DAG) {
+  if (LSBaseSDNode *LS = dyn_cast<LSBaseSDNode>(N)) {
+    EVT VT = LS->getMemoryVT();
+    SDValue Loc = LS->getBasePtr();
+    return isConsecutiveLSLoc(Loc, VT, Base, Bytes, Dist, DAG);
+  }
+
+  if (N->getOpcode() == ISD::INTRINSIC_W_CHAIN) {
+    EVT VT;
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    default: return false;
+    case Intrinsic::ppc_altivec_lvx:
+    case Intrinsic::ppc_altivec_lvxl:
+      VT = MVT::v4i32;
+      break;
+    case Intrinsic::ppc_altivec_lvebx:
+      VT = MVT::i8;
+      break;
+    case Intrinsic::ppc_altivec_lvehx:
+      VT = MVT::i16;
+      break;
+    case Intrinsic::ppc_altivec_lvewx:
+      VT = MVT::i32;
+      break;
+    }
+
+    return isConsecutiveLSLoc(N->getOperand(2), VT, Base, Bytes, Dist, DAG);
+  }
+
+  if (N->getOpcode() == ISD::INTRINSIC_VOID) {
+    EVT VT;
+    switch (cast<ConstantSDNode>(N->getOperand(1))->getZExtValue()) {
+    default: return false;
+    case Intrinsic::ppc_altivec_stvx:
+    case Intrinsic::ppc_altivec_stvxl:
+      VT = MVT::v4i32;
+      break;
+    case Intrinsic::ppc_altivec_stvebx:
+      VT = MVT::i8;
+      break;
+    case Intrinsic::ppc_altivec_stvehx:
+      VT = MVT::i16;
+      break;
+    case Intrinsic::ppc_altivec_stvewx:
+      VT = MVT::i32;
+      break;
+    }
+
+    return isConsecutiveLSLoc(N->getOperand(3), VT, Base, Bytes, Dist, DAG);
+  }
+
+  return false;
+}
+
 // Return true is there is a nearyby consecutive load to the one provided
 // (regardless of alignment). We search up and down the chain, looking though
 // token factors and other loads (but nothing else). As a result, a true result
@@ -7610,7 +7664,7 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
     if (!Visited.insert(ChainNext))
       continue;
 
-    if (LoadSDNode *ChainLD = dyn_cast<LoadSDNode>(ChainNext)) {
+    if (MemSDNode *ChainLD = dyn_cast<MemSDNode>(ChainNext)) {
       if (isConsecutiveLS(ChainLD, LD, VT.getStoreSize(), 1, DAG))
         return true;
 
@@ -7641,14 +7695,14 @@ static bool findConsecutiveLoad(LoadSDNode *LD, SelectionDAG &DAG) {
       if (!Visited.insert(LoadRoot))
         continue;
 
-      if (LoadSDNode *ChainLD = dyn_cast<LoadSDNode>(LoadRoot))
+      if (MemSDNode *ChainLD = dyn_cast<MemSDNode>(LoadRoot))
         if (isConsecutiveLS(ChainLD, LD, VT.getStoreSize(), 1, DAG))
           return true;
 
       for (SDNode::use_iterator UI = LoadRoot->use_begin(),
            UE = LoadRoot->use_end(); UI != UE; ++UI)
-        if (((isa<LoadSDNode>(*UI) &&
-            cast<LoadSDNode>(*UI)->getChain().getNode() == LoadRoot) ||
+        if (((isa<MemSDNode>(*UI) &&
+            cast<MemSDNode>(*UI)->getChain().getNode() == LoadRoot) ||
             UI->getOpcode() == ISD::TokenFactor) && !Visited.count(*UI))
           Queue.push_back(*UI);
     }
