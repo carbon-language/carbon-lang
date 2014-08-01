@@ -33,6 +33,19 @@ namespace {
     std::unique_ptr<const llvm::DataLayout> TD;
     ASTContext *Ctx;
     const CodeGenOptions CodeGenOpts;  // Intentionally copied in.
+
+    unsigned HandlingTopLevelDecls;
+    struct HandlingTopLevelDeclRAII {
+      CodeGeneratorImpl &Self;
+      HandlingTopLevelDeclRAII(CodeGeneratorImpl &Self) : Self(Self) {
+        ++Self.HandlingTopLevelDecls;
+      }
+      ~HandlingTopLevelDeclRAII() {
+        if (--Self.HandlingTopLevelDecls == 0)
+          Self.EmitDeferredDecls();
+      }
+    };
+
   protected:
     std::unique_ptr<llvm::Module> M;
     std::unique_ptr<CodeGen::CodeGenModule> Builder;
@@ -40,7 +53,7 @@ namespace {
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
                       const CodeGenOptions &CGO, llvm::LLVMContext& C)
-      : Diags(diags), CodeGenOpts(CGO),
+      : Diags(diags), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
         M(new llvm::Module(ModuleName, C)) {}
 
     virtual ~CodeGeneratorImpl() {}
@@ -90,18 +103,22 @@ namespace {
       if (Diags.hasErrorOccurred())
         return true;
 
+      HandlingTopLevelDeclRAII HandlingDecl(*this);
+
       // Make sure to emit all elements of a Decl.
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)
         Builder->EmitTopLevelDecl(*I);
 
+      return true;
+    }
+
+    void EmitDeferredDecls() {
       // Emit any deferred inline method definitions. Note that more deferred
       // methods may be added during this loop, since ASTConsumer callbacks
       // can be invoked if AST inspection results in declarations being added.
-      for (unsigned I = 0; I != DeferredInlineMethodDefinitions.size(); ++I)
+      for (unsigned I = 0; I < DeferredInlineMethodDefinitions.size(); ++I)
         Builder->EmitTopLevelDecl(DeferredInlineMethodDefinitions[I]);
       DeferredInlineMethodDefinitions.clear();
-
-      return true;
     }
 
     void HandleInlineMethodDefinition(CXXMethodDecl *D) override {
