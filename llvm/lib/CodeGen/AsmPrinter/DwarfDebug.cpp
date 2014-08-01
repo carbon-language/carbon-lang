@@ -1279,7 +1279,7 @@ buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     }
     // Add this value to the list of open ranges.
     if (DIVar.isVariablePiece())
-      OpenRanges.push_back({DIVar, Value});
+      OpenRanges.push_back(std::make_pair(DIVar, Value));
 
     DEBUG(dbgs() << "Values:\n";
           for (auto Value : DebugLoc.back().getValues())
