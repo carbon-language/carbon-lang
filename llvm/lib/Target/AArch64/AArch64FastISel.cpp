@@ -419,6 +419,13 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr) {
     }
     break;
   }
+  case Instruction::Add:
+    // Adds of constants are common and easy enough.
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
+      Addr.setOffset(Addr.getOffset() + (uint64_t)CI->getSExtValue());
+      return ComputeAddress(U->getOperand(0), Addr);
+    }
+    break;
   }
 
   // Try to get this in a register if nothing else has worked.
