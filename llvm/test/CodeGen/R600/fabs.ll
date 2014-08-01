@@ -50,8 +50,9 @@ entry:
 }
 
 ; SI-CHECK-LABEL: @fabs_fold
+; SI-CHECK: S_LOAD_DWORD [[ABS_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
 ; SI-CHECK-NOT: V_AND_B32_e32
-; SI-CHECK: V_MUL_F32_e64 v{{[0-9]+}}, s{{[0-9]+}}, |v{{[0-9]+}}|
+; SI-CHECK: V_MUL_F32_e64 v{{[0-9]+}}, |[[ABS_VALUE]]|, v{{[0-9]+}}
 define void @fabs_fold(float addrspace(1)* %out, float %in0, float %in1) {
 entry:
   %0 = call float @fabs(float %in0)

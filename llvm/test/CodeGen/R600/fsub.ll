@@ -20,8 +20,8 @@ declare void @llvm.AMDGPU.store.output(float, i32)
 ; R600-CHECK-DAG: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[3].X, -KC0[3].Z
 ; R600-CHECK-DAG: ADD {{\** *}}T{{[0-9]+\.[XYZW]}}, KC0[2].W, -KC0[3].Y
 ; SI-CHECK: @fsub_v2f32
-; SI-CHECK: V_SUB_F32
-; SI-CHECK: V_SUB_F32
+; SI-CHECK: V_SUBREV_F32
+; SI-CHECK: V_SUBREV_F32
 define void @fsub_v2f32(<2 x float> addrspace(1)* %out, <2 x float> %a, <2 x float> %b) {
 entry:
   %0 = fsub <2 x float> %a, %b
@@ -35,10 +35,10 @@ entry:
 ; R600-CHECK: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 ; R600-CHECK: ADD {{\** *}}T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW], -T[0-9]+\.[XYZW]}}
 ; SI-CHECK: @fsub_v4f32
-; SI-CHECK: V_SUB_F32
-; SI-CHECK: V_SUB_F32
-; SI-CHECK: V_SUB_F32
-; SI-CHECK: V_SUB_F32
+; SI-CHECK: V_SUBREV_F32
+; SI-CHECK: V_SUBREV_F32
+; SI-CHECK: V_SUBREV_F32
+; SI-CHECK: V_SUBREV_F32
 define void @fsub_v4f32(<4 x float> addrspace(1)* %out, <4 x float> addrspace(1)* %in) {
   %b_ptr = getelementptr <4 x float> addrspace(1)* %in, i32 1
   %a = load <4 x float> addrspace(1) * %in

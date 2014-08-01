@@ -61,8 +61,9 @@ entry:
 }
 
 ; SI-CHECK-LABEL: @fneg_fold
+; SI-CHECK: S_LOAD_DWORD [[NEG_VALUE:s[0-9]+]], s[{{[0-9]+:[0-9]+}}], 0xb
 ; SI-CHECK-NOT: V_XOR_B32
-; SI-CHECK: V_MUL_F32_e64 v{{[0-9]+}}, s{{[0-9]+}}, -v{{[0-9]+}}
+; SI-CHECK: V_MUL_F32_e64 v{{[0-9]+}}, -[[NEG_VALUE]], v{{[0-9]+}}
 define void @fneg_fold(float addrspace(1)* %out, float %in) {
 entry:
   %0 = fsub float -0.0, %in

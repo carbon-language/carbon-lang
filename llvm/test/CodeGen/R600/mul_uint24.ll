@@ -23,7 +23,7 @@ entry:
 ; EG: BFE_INT {{[* ]*}}T{{[0-9]}}.{{[XYZW]}}, PV.[[MUL_CHAN]], 0.0, literal.x
 ; EG: 16
 ; SI: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 16,
+; SI: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 16
 define void @i16_mul24(i32 addrspace(1)* %out, i16 %a, i16 %b) {
 entry:
   %0 = mul i16 %a, %b
@@ -37,7 +37,7 @@ entry:
 ; The result must be sign-extended
 ; EG: BFE_INT {{[* ]*}}T{{[0-9]}}.{{[XYZW]}}, PV.[[MUL_CHAN]], 0.0, literal.x
 ; SI: V_MUL_U32_U24_e{{(32|64)}} [[MUL:v[0-9]]], {{[sv][0-9], [sv][0-9]}}
-; SI: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 8,
+; SI: V_BFE_I32 v{{[0-9]}}, [[MUL]], 0, 8
 
 define void @i8_mul24(i32 addrspace(1)* %out, i8 %a, i8 %b) {
 entry:

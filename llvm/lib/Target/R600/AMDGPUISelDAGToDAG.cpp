@@ -96,6 +96,9 @@ private:
                          SDValue &SOffset, SDValue &Offset, SDValue &Offen,
                          SDValue &Idxen, SDValue &GLC, SDValue &SLC,
                          SDValue &TFE) const;
+  bool SelectVOP3Mods(SDValue In, SDValue &Src, SDValue &SrcMods) const;
+  bool SelectVOP3Mods0(SDValue In, SDValue &Src, SDValue &SrcMods,
+                       SDValue &Clamp, SDValue &Omod) const;
 
   SDNode *SelectADD_SUB_I64(SDNode *N);
   SDNode *SelectDIV_SCALE(SDNode *N);
@@ -877,6 +880,38 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFAddr32(SDValue Addr, SDValue &SRsrc,
   Offen = CurDAG->getTargetConstant(1, MVT::i1);
 
   return SelectMUBUFScratch(Addr, SRsrc, VAddr, SOffset, Offset);
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3Mods(SDValue In, SDValue &Src,
+                                        SDValue &SrcMods) const {
+
+  unsigned Mods = 0;
+
+  Src = In;
+
+  if (Src.getOpcode() == ISD::FNEG) {
+    Mods |= SISrcMods::NEG;
+    Src = Src.getOperand(0);
+  }
+
+  if (Src.getOpcode() == ISD::FABS) {
+    Mods |= SISrcMods::ABS;
+    Src = Src.getOperand(0);
+  }
+
+  SrcMods = CurDAG->getTargetConstant(Mods, MVT::i32);
+
+  return true;
+}
+
+bool AMDGPUDAGToDAGISel::SelectVOP3Mods0(SDValue In, SDValue &Src,
+                                         SDValue &SrcMods, SDValue &Clamp,
+                                         SDValue &Omod) const {
+  // FIXME: Handle Clamp and Omod
+  Clamp = CurDAG->getTargetConstant(0, MVT::i32);
+  Omod = CurDAG->getTargetConstant(0, MVT::i32);
+
+  return SelectVOP3Mods(In, Src, SrcMods);
 }
 
 void AMDGPUDAGToDAGISel::PostprocessISelDAG() {

@@ -119,6 +119,9 @@ public:
   /// This function will return false if you pass it a 32-bit instruction.
   bool hasVALU32BitEncoding(unsigned Opcode) const;
 
+  /// \brief Return true if this instruction has any modifiers.
+  ///  e.g. src[012]_mod, omod, clamp.
+  bool hasModifiers(unsigned Opcode) const;
   bool verifyInstruction(const MachineInstr *MI,
                          StringRef &ErrInfo) const override;
 
@@ -216,6 +219,13 @@ namespace SIInstrFlags {
     VM_CNT = 1 << 0,
     EXP_CNT = 1 << 1,
     LGKM_CNT = 1 << 2
+  };
+}
+
+namespace SISrcMods {
+  enum {
+   NEG = 1 << 0,
+   ABS = 1 << 1
   };
 }
 

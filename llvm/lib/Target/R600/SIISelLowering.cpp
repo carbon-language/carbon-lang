@@ -566,8 +566,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
       .addReg(MI->getOperand(1).getReg())
       .addImm(1)  // SRC1 modifiers
       .addReg(MI->getOperand(2).getReg())
-      .addImm(0)  // SRC2 modifiers
-      .addImm(0)  // src2
       .addImm(0)  // CLAMP
       .addImm(0); // OMOD
     MI->eraseFromParent();
@@ -1636,39 +1634,23 @@ SDNode *SITargetLowering::foldOperands(MachineSDNode *Node,
       continue;
     if (!Operand.isMachineOpcode())
       continue;
-    if (Operand.getMachineOpcode() == AMDGPU::FNEG_SI) {
-      Ops.pop_back();
-      Ops.push_back(Operand.getOperand(0));
-      InputModifiers[i] = 1;
-      Promote2e64 = true;
-      if (!DescE64)
-        continue;
-      Desc = DescE64;
-      DescE64 = nullptr;
-    }
-    else if (Operand.getMachineOpcode() == AMDGPU::FABS_SI) {
-      Ops.pop_back();
-      Ops.push_back(Operand.getOperand(0));
-      InputModifiers[i] = 2;
-      Promote2e64 = true;
-      if (!DescE64)
-        continue;
-      Desc = DescE64;
-      DescE64 = nullptr;
-    }
   }
 
   if (Promote2e64) {
     std::vector<SDValue> OldOps(Ops);
     Ops.clear();
+    bool HasModifiers = TII->hasModifiers(Desc->Opcode);
     for (unsigned i = 0; i < OldOps.size(); ++i) {
       // src_modifier
-      Ops.push_back(DAG.getTargetConstant(InputModifiers[i], MVT::i32));
+      if (HasModifiers)
+        Ops.push_back(DAG.getTargetConstant(InputModifiers[i], MVT::i32));
       Ops.push_back(OldOps[i]);
     }
     // Add the modifier flags while promoting
-    for (unsigned i = 0; i < 2; ++i)
-      Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
+    if (HasModifiers) {
+      for (unsigned i = 0; i < 2; ++i)
+        Ops.push_back(DAG.getTargetConstant(0, MVT::i32));
+    }
   }
 
   // Add optional chain and glue

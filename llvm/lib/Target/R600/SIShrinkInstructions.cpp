@@ -93,7 +93,7 @@ static bool canShrink(MachineInstr &MI, const SIInstrInfo *TII,
   const MachineOperand *Src1Mod =
       TII->getNamedOperand(MI, AMDGPU::OpName::src1_modifiers);
 
-  if (Src1 && (!isVGPR(Src1, TRI, MRI) || Src1Mod->getImm() != 0))
+  if (Src1 && (!isVGPR(Src1, TRI, MRI) || (Src1Mod && Src1Mod->getImm() != 0)))
     return false;
 
   // We don't need to check src0, all input types are legal, so just make

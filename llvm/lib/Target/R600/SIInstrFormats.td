@@ -61,9 +61,16 @@ class VOP3Common <dag outs, dag ins, string asm, list<dag> pattern> :
   let mayStore = 0;
   let hasSideEffects = 0;
   let UseNamedOperandTable = 1;
+  // Using complex patterns gives VOP3 patterns a very high complexity rating,
+  // but standalone patterns are almost always prefered, so we need to adjust the
+  // priority lower.  The goal is to use a high number to reduce complexity to
+  // zero (or less than zero).
+  let AddedComplexity = -1000;
+
   let VOP3 = 1;
 
   int Size = 8;
+  let Uses = [EXEC];
 }
 
 //===----------------------------------------------------------------------===//

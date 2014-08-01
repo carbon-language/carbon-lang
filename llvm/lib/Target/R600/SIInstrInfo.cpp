@@ -488,12 +488,19 @@ MachineInstr *SIInstrInfo::commuteInstruction(MachineInstr *MI,
       return nullptr;
     }
 
-    // XXX: Commute VOP3 instructions with abs and neg set.
-    if (isVOP3(MI->getOpcode()) &&
-        (MI->getOperand(AMDGPU::getNamedOperandIdx(MI->getOpcode(),
-                        AMDGPU::OpName::abs)).getImm() ||
-         MI->getOperand(AMDGPU::getNamedOperandIdx(MI->getOpcode(),
-                        AMDGPU::OpName::neg)).getImm()))
+    // XXX: Commute VOP3 instructions with abs and neg set .
+    const MachineOperand *Abs = getNamedOperand(*MI, AMDGPU::OpName::abs);
+    const MachineOperand *Neg = getNamedOperand(*MI, AMDGPU::OpName::neg);
+    const MachineOperand *Src0Mods = getNamedOperand(*MI,
+                                          AMDGPU::OpName::src0_modifiers);
+    const MachineOperand *Src1Mods = getNamedOperand(*MI,
+                                          AMDGPU::OpName::src1_modifiers);
+    const MachineOperand *Src2Mods = getNamedOperand(*MI,
+                                          AMDGPU::OpName::src2_modifiers);
+
+    if ((Abs && Abs->getImm()) || (Neg && Neg->getImm()) ||
+        (Src0Mods && Src0Mods->getImm()) || (Src1Mods && Src1Mods->getImm()) ||
+        (Src2Mods && Src2Mods->getImm()))
       return nullptr;
 
     unsigned Reg = MI->getOperand(1).getReg();
@@ -672,6 +679,14 @@ bool SIInstrInfo::hasVALU32BitEncoding(unsigned Opcode) const {
   return AMDGPU::getVOPe32(Opcode) != -1;
 }
 
+bool SIInstrInfo::hasModifiers(unsigned Opcode) const {
+  // The src0_modifier operand is present on all instructions
+  // that have modifiers.
+
+  return AMDGPU::getNamedOperandIdx(Opcode,
+                                    AMDGPU::OpName::src0_modifiers) != -1;
+}
+
 bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
                                     StringRef &ErrInfo) const {
   uint16_t Opcode = MI->getOpcode();
@@ -688,14 +703,20 @@ bool SIInstrInfo::verifyInstruction(const MachineInstr *MI,
   }
 
   // Make sure the register classes are correct
-  for (unsigned i = 0, e = Desc.getNumOperands(); i != e; ++i) {
+  for (int i = 0, e = Desc.getNumOperands(); i != e; ++i) {
     switch (Desc.OpInfo[i].OperandType) {
     case MCOI::OPERAND_REGISTER: {
       int RegClass = Desc.OpInfo[i].RegClass;
       if (!RI.regClassCanUseImmediate(RegClass) &&
           (MI->getOperand(i).isImm() || MI->getOperand(i).isFPImm())) {
-        ErrInfo = "Expected register, but got immediate";
-        return false;
+        // Handle some special cases:
+        // Src0 can of VOP1, VOP2, VOPC can be an immediate no matter what
+        // the register class.
+        if (i != Src0Idx || (!isVOP1(Opcode) && !isVOP2(Opcode) &&
+                                  !isVOPC(Opcode))) {
+          ErrInfo = "Expected register, but got immediate";
+          return false;
+        }
       }
     }
       break;
@@ -1423,17 +1444,9 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
       // We are converting these to a BFE, so we need to add the missing
       // operands for the size and offset.
       unsigned Size = (Opcode == AMDGPU::S_SEXT_I32_I8) ? 8 : 16;
-      Inst->addOperand(Inst->getOperand(1));
-      Inst->getOperand(1).ChangeToImmediate(0);
-      Inst->addOperand(MachineOperand::CreateImm(0));
-      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(Size));
 
-      // XXX - Other pointless operands. There are 4, but it seems you only need
-      // 3 to not hit an assertion later in MCInstLower.
-      Inst->addOperand(MachineOperand::CreateImm(0));
-      Inst->addOperand(MachineOperand::CreateImm(0));
     } else if (Opcode == AMDGPU::S_BCNT1_I32_B32) {
       // The VALU version adds the second operand to the result, so insert an
       // extra 0 operand.
@@ -1452,16 +1465,9 @@ void SIInstrInfo::moveToVALU(MachineInstr &TopInst) const {
 
       uint32_t Offset = Imm & 0x3f; // Extract bits [5:0].
       uint32_t BitWidth = (Imm & 0x7f0000) >> 16; // Extract bits [22:16].
-
       Inst->RemoveOperand(2); // Remove old immediate.
-      Inst->addOperand(Inst->getOperand(1));
-      Inst->getOperand(1).ChangeToImmediate(0);
-      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(Offset));
-      Inst->addOperand(MachineOperand::CreateImm(0));
       Inst->addOperand(MachineOperand::CreateImm(BitWidth));
-      Inst->addOperand(MachineOperand::CreateImm(0));
-      Inst->addOperand(MachineOperand::CreateImm(0));
     }
 
     // Update the destination register class.

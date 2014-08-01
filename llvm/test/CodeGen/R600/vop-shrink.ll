@@ -1,9 +1,4 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
-; XXX: This testis for a bug in the SIShrinkInstruction pass and it will be
-;       relevant once we are selecting 64-bit instructions.  We are
-;       currently selecting mostly 32-bit instruction, so the
-;       SIShrinkInstructions pass isn't doing much.
-; XFAIL: *
 
 ; Test that we correctly commute a sub instruction
 ; FUNC-LABEL: @sub_rev
