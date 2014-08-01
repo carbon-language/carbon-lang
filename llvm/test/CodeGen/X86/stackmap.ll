@@ -9,11 +9,11 @@
 ; CHECK-NEXT:   .byte 0
 ; CHECK-NEXT:   .short 0
 ; Num Functions
-; CHECK-NEXT:   .long 15
+; CHECK-NEXT:   .long 16
 ; Num LargeConstants
 ; CHECK-NEXT:   .long 3
 ; Num Callsites
-; CHECK-NEXT:   .long 19
+; CHECK-NEXT:   .long 20
 
 ; Functions and stack size
 ; CHECK-NEXT:   .quad _constantargs
@@ -46,6 +46,8 @@
 ; CHECK-NEXT:   .quad 8
 ; CHECK-NEXT:   .quad _clobberScratch
 ; CHECK-NEXT:   .quad 56
+; CHECK-NEXT:   .quad _needsStackRealignment
+; CHECK-NEXT:   .quad -1
 
 ; Large Constants
 ; CHECK-NEXT:   .quad   2147483648
@@ -463,6 +465,23 @@ define void @clobberScratch(i32 %a) {
   tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 16, i32 8, i32 %a)
   ret void
 }
+
+; A stack frame which needs to be realigned at runtime (to meet alignment 
+; criteria for values on the stack) does not have a fixed frame size. 
+; CHECK-LABEL:  .long L{{.*}}-_needsStackRealignment
+; CHECK-NEXT:   .short 0
+; 0 locations
+; CHECK-NEXT:   .short 0
+define void @needsStackRealignment() {
+  %val = alloca i64, i32 3, align 128
+  tail call void (...)* @escape_values(i64* %val)
+; Note: Adding any non-constant to the stackmap would fail because we
+; expected to be able to address off the frame pointer.  In a realigned
+; frame, we must use the stack pointer instead.  This is a separate bug.
+  tail call void (i64, i32, ...)* @llvm.experimental.stackmap(i64 0, i32 0)
+  ret void
+}
+declare void @escape_values(...)
 
 declare void @llvm.experimental.stackmap(i64, i32, ...)
 declare void @llvm.experimental.patchpoint.void(i64, i32, i8*, i32, ...)

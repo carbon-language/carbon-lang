@@ -236,8 +236,11 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 
   // Record the stack size of the current function.
   const MachineFrameInfo *MFI = AP.MF->getFrameInfo();
+  const TargetRegisterInfo *RegInfo = AP.MF->getTarget().getRegisterInfo();
+  const bool DynamicFrameSize = MFI->hasVarSizedObjects() ||
+    RegInfo->needsStackRealignment(*(AP.MF));
   FnStackSize[AP.CurrentFnSym] =
-    MFI->hasVarSizedObjects() ? UINT64_MAX : MFI->getStackSize();
+    DynamicFrameSize ? UINT64_MAX : MFI->getStackSize();
 }
 
 void StackMaps::recordStackMap(const MachineInstr &MI) {
