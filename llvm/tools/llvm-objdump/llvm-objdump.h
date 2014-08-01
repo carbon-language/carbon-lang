@@ -18,6 +18,7 @@
 namespace llvm {
 namespace object {
   class COFFObjectFile;
+  class MachOObjectFile;
   class ObjectFile;
   class RelocationRef;
 }
@@ -31,6 +32,8 @@ bool RelocAddressLess(object::RelocationRef a, object::RelocationRef b);
 void DumpBytes(StringRef bytes);
 void DisassembleInputMachO(StringRef Filename);
 void printCOFFUnwindInfo(const object::COFFObjectFile* o);
+void printMachOUnwindInfo(const object::MachOObjectFile* o);
+
 void printELFFileHeader(const object::ObjectFile *o);
 void printCOFFFileHeader(const object::ObjectFile *o);
 

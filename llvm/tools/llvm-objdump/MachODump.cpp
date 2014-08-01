@@ -30,6 +30,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/Support/MachO.h"
@@ -458,5 +459,227 @@ static void DisassembleInputMachO2(StringRef Filename,
         }
       }
     }
+  }
+}
+
+namespace {
+struct CompactUnwindEntry {
+  uint32_t OffsetInSection;
+
+  uint64_t FunctionAddr;
+  uint32_t Length;
+  uint32_t CompactEncoding;
+  uint64_t PersonalityAddr;
+  uint64_t LSDAAddr;
+
+  RelocationRef FunctionReloc;
+  RelocationRef PersonalityReloc;
+  RelocationRef LSDAReloc;
+
+  CompactUnwindEntry(StringRef Contents, unsigned Offset, bool Is64)
+    : OffsetInSection(Offset) {
+    if (Is64)
+      read<uint64_t>(Contents.data() + Offset);
+    else
+      read<uint32_t>(Contents.data() + Offset);
+  }
+
+private:
+  template<typename T>
+  static uint64_t readNext(const char *&Buf) {
+    using llvm::support::little;
+    using llvm::support::unaligned;
+
+    uint64_t Val = support::endian::read<T, little, unaligned>(Buf);
+    Buf += sizeof(T);
+    return Val;
+  }
+
+  template<typename UIntPtr>
+  void read(const char *Buf) {
+    FunctionAddr = readNext<UIntPtr>(Buf);
+    Length = readNext<uint32_t>(Buf);
+    CompactEncoding = readNext<uint32_t>(Buf);
+    PersonalityAddr = readNext<UIntPtr>(Buf);
+    LSDAAddr = readNext<UIntPtr>(Buf);
+  }
+};
+}
+
+/// Given a relocation from __compact_unwind, consisting of the RelocationRef
+/// and data being relocated, determine the best base Name and Addend to use for
+/// display purposes.
+///
+/// 1. An Extern relocation will directly reference a symbol (and the data is
+///    then already an addend), so use that.
+/// 2. Otherwise the data is an offset in the object file's layout; try to find
+//     a symbol before it in the same section, and use the offset from there.
+/// 3. Finally, if all that fails, fall back to an offset from the start of the
+///    referenced section.
+static void findUnwindRelocNameAddend(const MachOObjectFile *Obj,
+                                      std::map<uint64_t, SymbolRef> &Symbols,
+                                      const RelocationRef &Reloc,
+                                      uint64_t Addr,
+                                      StringRef &Name, uint64_t &Addend) {
+  if (Reloc.getSymbol() != Obj->symbol_end()) {
+    Reloc.getSymbol()->getName(Name);
+    Addend = Addr;
+    return;
+  }
+
+  auto RE = Obj->getRelocation(Reloc.getRawDataRefImpl());
+  SectionRef RelocSection = Obj->getRelocationSection(RE);
+
+  uint64_t SectionAddr;
+  RelocSection.getAddress(SectionAddr);
+
+  auto Sym = Symbols.upper_bound(Addr);
+  if (Sym == Symbols.begin()) {
+    // The first symbol in the object is after this reference, the best we can
+    // do is section-relative notation.
+    RelocSection.getName(Name);
+    Addend = Addr - SectionAddr;
+    return;
+  }
+
+  // Go back one so that SymbolAddress <= Addr.
+  --Sym;
+
+  section_iterator SymSection = Obj->section_end();
+  Sym->second.getSection(SymSection);
+  if (RelocSection == *SymSection) {
+    // There's a valid symbol in the same section before this reference.
+    Sym->second.getName(Name);
+    Addend = Addr - Sym->first;
+    return;
+  }
+
+  // There is a symbol before this reference, but it's in a different
+  // section. Probably not helpful to mention it, so use the section name.
+  RelocSection.getName(Name);
+  Addend = Addr - SectionAddr;
+}
+
+static void printUnwindRelocDest(const MachOObjectFile *Obj,
+                                 std::map<uint64_t, SymbolRef> &Symbols,
+                                 const RelocationRef &Reloc,
+                                 uint64_t Addr) {
+  StringRef Name;
+  uint64_t Addend;
+
+  findUnwindRelocNameAddend(Obj, Symbols, Reloc, Addr, Name, Addend);
+
+  outs() << Name;
+  if (Addend)
+    outs() << " + " << format("0x%x", Addend);
+}
+
+static void
+printMachOCompactUnwindSection(const MachOObjectFile *Obj,
+                               std::map<uint64_t, SymbolRef> &Symbols,
+                               const SectionRef &CompactUnwind) {
+
+  assert(Obj->isLittleEndian() &&
+         "There should not be a big-endian .o with __compact_unwind");
+
+  bool Is64 = Obj->is64Bit();
+  uint32_t PointerSize = Is64 ? sizeof(uint64_t) : sizeof(uint32_t);
+  uint32_t EntrySize = 3 * PointerSize + 2 * sizeof(uint32_t);
+
+  StringRef Contents;
+  CompactUnwind.getContents(Contents);
+
+  SmallVector<CompactUnwindEntry, 4> CompactUnwinds;
+
+  // First populate the initial raw offsets, encodings and so on from the entry.
+  for (unsigned Offset = 0; Offset < Contents.size(); Offset += EntrySize) {
+    CompactUnwindEntry Entry(Contents.data(), Offset, Is64);
+    CompactUnwinds.push_back(Entry);
+  }
+
+  // Next we need to look at the relocations to find out what objects are
+  // actually being referred to.
+  for (const RelocationRef &Reloc : CompactUnwind.relocations()) {
+    uint64_t RelocAddress;
+    Reloc.getOffset(RelocAddress);
+
+    uint32_t EntryIdx = RelocAddress / EntrySize;
+    uint32_t OffsetInEntry = RelocAddress - EntryIdx * EntrySize;
+    CompactUnwindEntry &Entry = CompactUnwinds[EntryIdx];
+
+    if (OffsetInEntry == 0)
+      Entry.FunctionReloc = Reloc;
+    else if (OffsetInEntry == PointerSize + 2 * sizeof(uint32_t))
+      Entry.PersonalityReloc = Reloc;
+    else if (OffsetInEntry == 2 * PointerSize + 2 * sizeof(uint32_t))
+      Entry.LSDAReloc = Reloc;
+    else
+      llvm_unreachable("Unexpected relocation in __compact_unwind section");
+  }
+
+  // Finally, we're ready to print the data we've gathered.
+  outs() << "Contents of __compact_unwind section:\n";
+  for (auto &Entry : CompactUnwinds) {
+    outs() << "  Entry at offset " << format("0x%x", Entry.OffsetInSection)
+           << ":\n";
+
+    // 1. Start of the region this entry applies to.
+    outs() << "    start:                "
+           << format("0x%x", Entry.FunctionAddr) << ' ';
+    printUnwindRelocDest(Obj, Symbols, Entry.FunctionReloc,
+                         Entry.FunctionAddr);
+    outs() << '\n';
+
+    // 2. Length of the region this entry applies to.
+    outs() << "    length:               "
+           << format("0x%x", Entry.Length) << '\n';
+    // 3. The 32-bit compact encoding.
+    outs() << "    compact encoding:     "
+           << format("0x%08x", Entry.CompactEncoding) << '\n';
+
+    // 4. The personality function, if present.
+    if (Entry.PersonalityReloc.getObjectFile()) {
+      outs() << "    personality function: "
+             << format("0x%x", Entry.PersonalityAddr) << ' ';
+      printUnwindRelocDest(Obj, Symbols, Entry.PersonalityReloc,
+                           Entry.PersonalityAddr);
+      outs() << '\n';
+    }
+
+    // 5. This entry's language-specific data area.
+    if (Entry.LSDAReloc.getObjectFile()) {
+      outs() << "    LSDA:                 "
+             << format("0x%x", Entry.LSDAAddr) << ' ';
+      printUnwindRelocDest(Obj, Symbols, Entry.LSDAReloc, Entry.LSDAAddr);
+      outs() << '\n';
+    }
+  }
+}
+
+void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
+  std::map<uint64_t, SymbolRef> Symbols;
+  for (const SymbolRef &SymRef : Obj->symbols()) {
+    // Discard any undefined or absolute symbols. They're not going to take part
+    // in the convenience lookup for unwind info and just take up resources.
+    section_iterator Section = Obj->section_end();
+    SymRef.getSection(Section);
+    if (Section == Obj->section_end())
+      continue;
+
+    uint64_t Addr;
+    SymRef.getAddress(Addr);
+    Symbols.insert(std::make_pair(Addr, SymRef));
+  }
+
+  for (const SectionRef &Section : Obj->sections()) {
+    StringRef SectName;
+    Section.getName(SectName);
+    if (SectName == "__compact_unwind")
+      printMachOCompactUnwindSection(Obj, Symbols, Section);
+    else if (SectName == "__unwind_info")
+      outs() << "llvm-objdump: warning: unhandled __unwind_info section\n";
+    else if (SectName == "__eh_frame")
+      outs() << "llvm-objdump: warning: unhandled __eh_frame section\n";
+
   }
 }
