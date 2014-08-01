@@ -1,15 +1,26 @@
-# REQUIRES: mips
-
 # Check program interpreter setup.
-# RUN: llvm-mc -triple=mipsel -filetype=obj -o=%t1 %s
-# RUN: lld -flavor gnu -target mipsel -e main -o %t2 %t1
-# RUN: llvm-objdump -s %t2 | FileCheck %s
+# RUN: yaml2obj -format=elf %s > %t.o
+# RUN: lld -flavor gnu -target mipsel -e main -o %t.exe %t.o
+# RUN: llvm-objdump -s %t.exe | FileCheck %s
 
 # CHECK: Contents of section .interp:
 # CHECK-NEXT: {{[0-9a-f]+}} 2f6c6962 2f6c642e 736f2e31 00 /lib/ld.so.1.
 
-    .global main
-    .ent    main
-main:
-    nop
-    .end    main
+FileHeader:
+  Class:           ELFCLASS32
+  Data:            ELFDATA2LSB
+  Type:            ET_REL
+  Machine:         EM_MIPS
+  Flags:           [ EF_MIPS_CPIC, EF_MIPS_ABI_O32, EF_MIPS_ARCH_32 ]
+
+Sections:
+  - Name:            .text
+    Type:            SHT_PROGBITS
+    Flags:           [ SHF_ALLOC, SHF_EXECINSTR ]
+    AddressAlign:    0x10
+    Size:            0x04
+
+Symbols:
+  Global:
+    - Name:            main
+      Section:         .text
