@@ -26,6 +26,9 @@
 ; CHECK-DWARF:               Ending address offset: [[END:.*]]
 ; CHECK-DWARF:                Location description: 76 78 93 08 54 93 04
 
+target datalayout = "e-m:o-i64:64-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-apple-macosx10.9.0"
+
 ; Function Attrs: nounwind ssp uwtable
 define i32 @foo(i64 %s.coerce0, i32 %s.coerce1) #0 {
 entry:
