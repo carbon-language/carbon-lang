@@ -3247,7 +3247,7 @@ void CodeGenModule::EmitTargetMetadata() {
   // loop over those declarations for which we couldn't emit the target
   // metadata when we emitted the declaration.
   for (unsigned I = 0; I != MangledDeclNames.size(); ++I) {
-    auto &Val = *(MangledDeclNames.begin() + I);
+    auto Val = *(MangledDeclNames.begin() + I);
     const Decl *D = Val.first.getDecl()->getMostRecentDecl();
     llvm::GlobalValue *GV = GetGlobalValue(Val.second);
     getTargetCodeGenInfo().emitTargetMD(D, GV, *this);
