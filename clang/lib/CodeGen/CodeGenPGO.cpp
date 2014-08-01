@@ -917,13 +917,15 @@ void CodeGenPGO::loadRegionCounts(llvm::IndexedInstrProfReader *PGOReader,
                                   bool IsInMainFile) {
   CGM.getPGOStats().addVisited(IsInMainFile);
   RegionCounts.reset(new std::vector<uint64_t>);
-  uint64_t Hash;
-  if (PGOReader->getFunctionCounts(getFuncName(), Hash, *RegionCounts)) {
-    CGM.getPGOStats().addMissing(IsInMainFile);
-    RegionCounts.reset();
-  } else if (Hash != FunctionHash ||
-             RegionCounts->size() != NumRegionCounters) {
-    CGM.getPGOStats().addMismatched(IsInMainFile);
+  if (std::error_code EC = PGOReader->getFunctionCounts(
+          getFuncName(), FunctionHash, *RegionCounts)) {
+    if (EC == llvm::instrprof_error::unknown_function)
+      CGM.getPGOStats().addMissing(IsInMainFile);
+    else if (EC == llvm::instrprof_error::hash_mismatch)
+      CGM.getPGOStats().addMismatched(IsInMainFile);
+    else if (EC == llvm::instrprof_error::malformed)
+      // TODO: Consider a more specific warning for this case.
+      CGM.getPGOStats().addMismatched(IsInMainFile);
     RegionCounts.reset();
   }
 }
