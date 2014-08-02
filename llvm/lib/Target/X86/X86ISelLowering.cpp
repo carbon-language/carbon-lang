@@ -3408,6 +3408,7 @@ static bool MayFoldIntoStore(SDValue Op) {
 static bool isTargetShuffle(unsigned Opcode) {
   switch(Opcode) {
   default: return false;
+  case X86ISD::PSHUFB:
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:
@@ -5186,6 +5187,67 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     DecodePSHUFLWMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
     IsUnary = true;
     break;
+  case X86ISD::PSHUFB: {
+    IsUnary = true;
+    SDValue MaskNode = N->getOperand(1);
+    while (MaskNode->getOpcode() == ISD::BITCAST)
+      MaskNode = MaskNode->getOperand(0);
+
+    if (MaskNode->getOpcode() == ISD::BUILD_VECTOR) {
+      // If we have a build-vector, then things are easy.
+      EVT VT = MaskNode.getValueType();
+      assert(VT.isVector() &&
+             "Can't produce a non-vector with a build_vector!");
+      if (!VT.isInteger())
+        return false;
+
+      int NumBytesPerElement = VT.getVectorElementType().getSizeInBits() / 8;
+
+      SmallVector<uint64_t, 32> RawMask;
+      for (int i = 0, e = MaskNode->getNumOperands(); i < e; ++i) {
+        auto *CN = dyn_cast<ConstantSDNode>(MaskNode->getOperand(i));
+        if (!CN)
+          return false;
+        APInt MaskElement = CN->getAPIntValue();
+
+        // We now have to decode the element which could be any integer size and
+        // extract each byte of it.
+        for (int j = 0; j < NumBytesPerElement; ++j) {
+          // Note that this is x86 and so always little endian: the low byte is
+          // the first byte of the mask.
+          RawMask.push_back(MaskElement.getLoBits(8).getZExtValue());
+          MaskElement = MaskElement.lshr(8);
+        }
+      }
+      DecodePSHUFBMask(RawMask, Mask);
+      break;
+    }
+
+    auto *MaskLoad = dyn_cast<LoadSDNode>(MaskNode);
+    if (!MaskLoad)
+      return false;
+
+    SDValue Ptr = MaskLoad->getBasePtr();
+    if (Ptr->getOpcode() == X86ISD::Wrapper)
+      Ptr = Ptr->getOperand(0);
+
+    auto *MaskCP = dyn_cast<ConstantPoolSDNode>(Ptr);
+    if (!MaskCP || MaskCP->isMachineConstantPoolEntry())
+      return false;
+
+    if (auto *C = dyn_cast<ConstantDataSequential>(MaskCP->getConstVal())) {
+      // FIXME: Support AVX-512 here.
+      if (!C->getType()->isVectorTy() ||
+          (C->getNumElements() != 16 && C->getNumElements() != 32))
+        return false;
+
+      assert(C->getType()->isVectorTy() && "Expected a vector constant.");
+      DecodePSHUFBMask(C, Mask);
+      break;
+    }
+
+    return false;
+  }
   case X86ISD::VPERMI:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeVPERMMask(cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
@@ -7841,6 +7903,37 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     SDValue Odds = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, OMask);
 
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
+  }
+
+  // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
+  // with PSHUFB. It is important to do this before we attempt to generate any
+  // blends but after all of the single-input lowerings. If the single input
+  // lowerings can find an instruction sequence that is faster than a PSHUFB, we
+  // want to preserve that and we can DAG combine any longer sequences into
+  // a PSHUFB in the end. But once we start blending from multiple inputs,
+  // the complexity of DAG combining bad patterns back into PSHUFB is too high,
+  // and there are *very* few patterns that would actually be faster than the
+  // PSHUFB approach because of its ability to zero lanes.
+  //
+  // FIXME: The only exceptions to the above are blends which are exact
+  // interleavings with direct instructions supporting them. We currently don't
+  // handle those well here.
+  if (Subtarget->hasSSSE3()) {
+    SDValue V1Mask[16];
+    SDValue V2Mask[16];
+    for (int i = 0; i < 16; ++i)
+      if (Mask[i] == -1) {
+        V1Mask[i] = V2Mask[i] = DAG.getConstant(0x80, MVT::i8);
+      } else {
+        V1Mask[i] = DAG.getConstant(Mask[i] < 16 ? Mask[i] : 0x80, MVT::i8);
+        V2Mask[i] =
+            DAG.getConstant(Mask[i] < 16 ? 0x80 : Mask[i] - 16, MVT::i8);
+      }
+    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
+    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
+    return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
   }
 
   int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
@@ -18712,7 +18805,7 @@ static SDValue PerformShuffleCombine256(SDNode *N, SelectionDAG &DAG,
 /// for this operation, or into a PSHUFB instruction which is a fully general
 /// instruction but should only be used to replace chains over a certain depth.
 static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
-                                   int Depth, SelectionDAG &DAG,
+                                   int Depth, bool HasPSHUFB, SelectionDAG &DAG,
                                    TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget *Subtarget) {
   assert(!Mask.empty() && "Cannot combine an empty shuffle mask!");
@@ -18794,15 +18887,16 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
     }
   }
 
-  // Bail if we have fewer than 3 shuffle instructions in the chain.
-  if (Depth < 3)
+  // Don't try to re-form single instruction chains under any circumstances now
+  // that we've done encoding canonicalization for them.
+  if (Depth < 2)
     return false;
 
-  // If we have 3 or more shuffle instructions, we can replace them with
-  // a single PSHUFB instruction profitably. Intel's manuals suggest only using
-  // PSHUFB if doing so replacing 5 instructions, but in practice PSHUFB tends
-  // to be *very* fast so we're more aggressive.
-  if (Subtarget->hasSSSE3()) {
+  // If we have 3 or more shuffle instructions or a chain involving PSHUFB, we
+  // can replace them with a single PSHUFB instruction profitably. Intel's
+  // manuals suggest only using PSHUFB if doing so replacing 5 instructions, but
+  // in practice PSHUFB tends to be *very* fast so we're more aggressive.
+  if ((Depth >= 3 || HasPSHUFB) && Subtarget->hasSSSE3()) {
     SmallVector<SDValue, 16> PSHUFBMask;
     assert(Mask.size() <= 16 && "Can't shuffle elements smaller than bytes!");
     int Ratio = 16 / Mask.size();
@@ -18861,7 +18955,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
 /// combining in this recursive walk.
 static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
                                           ArrayRef<int> IncomingMask, int Depth,
-                                          SelectionDAG &DAG,
+                                          bool HasPSHUFB, SelectionDAG &DAG,
                                           TargetLowering::DAGCombinerInfo &DCI,
                                           const X86Subtarget *Subtarget) {
   // Bound the depth of our recursive combine because this is ultimately
@@ -18923,12 +19017,14 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
 
   // See if we can recurse into the operand to combine more things.
   switch (Op.getOpcode()) {
+    case X86ISD::PSHUFB:
+      HasPSHUFB = true;
     case X86ISD::PSHUFD:
     case X86ISD::PSHUFHW:
     case X86ISD::PSHUFLW:
       if (Op.getOperand(0).hasOneUse() &&
           combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
-                                        DAG, DCI, Subtarget))
+                                        HasPSHUFB, DAG, DCI, Subtarget))
         return true;
       break;
 
@@ -18938,7 +19034,7 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
       // We can't check for single use, we have to check that this shuffle is the only user.
       if (Op->isOnlyUserOf(Op.getOperand(0).getNode()) &&
           combineX86ShufflesRecursively(Op.getOperand(0), Root, Mask, Depth + 1,
-                                        DAG, DCI, Subtarget))
+                                        HasPSHUFB, DAG, DCI, Subtarget))
           return true;
       break;
   }
@@ -18962,7 +19058,8 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
     Mask.swap(NewMask);
   }
 
-  return combineX86ShuffleChain(Op, Root, Mask, Depth, DAG, DCI, Subtarget);
+  return combineX86ShuffleChain(Op, Root, Mask, Depth, HasPSHUFB, DAG, DCI,
+                                Subtarget);
 }
 
 /// \brief Get the PSHUF-style mask from PSHUF node.
@@ -19391,7 +19488,8 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
     SmallVector<int, 1> NonceMask; // Just a placeholder.
     NonceMask.push_back(0);
     if (combineX86ShufflesRecursively(SDValue(N, 0), SDValue(N, 0), NonceMask,
-                                      /*Depth*/ 1, DAG, DCI, Subtarget))
+                                      /*Depth*/ 1, /*HasPSHUFB*/ false, DAG,
+                                      DCI, Subtarget))
       return SDValue(); // This routine will use CombineTo to replace N.
   }
 
@@ -22431,6 +22529,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::UNPCKL:
   case X86ISD::MOVHLPS:
   case X86ISD::MOVLHPS:
+  case X86ISD::PSHUFB:
   case X86ISD::PSHUFD:
   case X86ISD::PSHUFHW:
   case X86ISD::PSHUFLW:

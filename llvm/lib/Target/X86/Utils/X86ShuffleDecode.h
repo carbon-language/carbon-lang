@@ -16,6 +16,7 @@
 #define X86_SHUFFLE_DECODE_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/ArrayRef.h"
 
 //===----------------------------------------------------------------------===//
 //  Vector Mask Decoding
@@ -60,7 +61,13 @@ void DecodeUNPCKHMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 /// different datatypes and vector widths.
 void DecodeUNPCKLMask(MVT VT, SmallVectorImpl<int> &ShuffleMask);
 
+/// \brief Decode a PSHUFB mask from an IR-level vector constant.
 void DecodePSHUFBMask(const ConstantDataSequential *C,
+                      SmallVectorImpl<int> &ShuffleMask);
+
+/// \brief Decode a PSHUFB mask from a raw array of constants such as from
+/// BUILD_VECTOR.
+void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
                       SmallVectorImpl<int> &ShuffleMask);
 
 void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,

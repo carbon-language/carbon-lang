@@ -208,7 +208,6 @@ void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
   }
 }
 
-/// \brief Decode PSHUFB masks stored in an LLVM Constant.
 void DecodePSHUFBMask(const ConstantDataSequential *C,
                       SmallVectorImpl<int> &ShuffleMask) {
   Type *MaskTy = C->getType();
@@ -234,6 +233,25 @@ void DecodePSHUFBMask(const ConstantDataSequential *C,
     else {
       int Index = Base + Element;
       assert((Index >= 0 && Index < NumElements) &&
+             "Out of bounds shuffle index for pshub instruction!");
+      ShuffleMask.push_back(Index);
+    }
+  }
+}
+
+void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
+                      SmallVectorImpl<int> &ShuffleMask) {
+  for (int i = 0, e = RawMask.size(); i < e; ++i) {
+    uint64_t M = RawMask[i];
+    // For AVX vectors with 32 bytes the base of the shuffle is the half of
+    // the vector we're inside.
+    int Base = i < 16 ? 0 : 16;
+    // If the high bit (7) of the byte is set, the element is zeroed.
+    if (M & (1 << 7))
+      ShuffleMask.push_back(SM_SentinelZero);
+    else {
+      int Index = Base + M;
+      assert((Index >= 0 && (unsigned)Index < RawMask.size()) &&
              "Out of bounds shuffle index for pshub instruction!");
       ShuffleMask.push_back(Index);
     }

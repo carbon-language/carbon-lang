@@ -214,8 +214,7 @@ define <8 x i16> @shuffle_v8i16_26401375(<8 x i16> %a, <8 x i16> %b) {
 ;
 ; SSSE3-LABEL: @shuffle_v8i16_26401375
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,1,4,5,8,9,12,13,2,3,6,7,14,15,10,11]
-; SSSE3-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,3,2,0,4,5,6,7]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[4,5,12,13,8,9,0,1,2,3,6,7,14,15,10,11]
 ; SSSE3-NEXT:    retq
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 2, i32 6, i32 4, i32 0, i32 1, i32 3, i32 7, i32 5>
   ret <8 x i16> %shuffle
