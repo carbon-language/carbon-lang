@@ -9414,6 +9414,13 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   if (LoadNodes.size() < 2)
     return false;
 
+  // If we have load/store pair instructions and we only have two values,
+  // don't bother.
+  unsigned RequiredAlignment;
+  if (LoadNodes.size() == 2 && TLI.hasPairedLoad(MemVT, RequiredAlignment) &&
+      St->getAlignment() >= RequiredAlignment)
+    return false;
+
   // Scan the memory operations on the chain and find the first non-consecutive
   // load memory address. These variables hold the index in the store node
   // array.
