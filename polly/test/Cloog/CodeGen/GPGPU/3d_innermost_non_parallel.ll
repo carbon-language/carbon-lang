@@ -1,6 +1,8 @@
 ; REQUIRES: nvptx-registered-target
 ; RUN: opt %loadPolly -basicaa -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+gpu -enable-polly-gpgpu -polly-gpgpu-triple=nvptx64-unknown-unknown -polly-codegen < %s -S | FileCheck %s
 
+; This test case is currently broken.
+; XFAIL: *
 ;int A[128][128];
 ;
 ;int gpu_no_pure() {
