@@ -18734,7 +18734,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
     return true;
   }
 
-  // Use the float domain if the operand type is a floatingc point type.
+  // Use the float domain if the operand type is a floating point type.
   bool FloatDomain = VT.isFloatingPoint();
 
   // If we don't have access to VEX encodings, the generic PSHUF instructions
@@ -18745,8 +18745,8 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
   // shuffle instructions freely as they can copy due to the extra register
   // operand.
   if (Subtarget->hasAVX()) {
-    // We have both floatincg point and integer variants of shuffles that dup
-    // either tho low or high half of the vector.
+    // We have both floating point and integer variants of shuffles that dup
+    // either the low or high half of the vector.
     if (Mask.equals(0, 0) || Mask.equals(1, 1)) {
       bool Lo = Mask.equals(0, 0);
       unsigned Shuffle = FloatDomain ? (Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS)
