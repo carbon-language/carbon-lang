@@ -1,4 +1,4 @@
-; RUN: llc <%s -march=x86 -mcpu=penryn -mattr=sse4.1 | FileCheck %s
+; RUN: llc <%s -mtriple=i686-unknown-unknown -mcpu=penryn -mattr=sse4.1 | FileCheck %s
 
 ; Splat test for v8i16
 define <8 x i16> @shuf_8i16_0(<8 x i16> %T0, <8 x i16> %T1) nounwind readnone {
