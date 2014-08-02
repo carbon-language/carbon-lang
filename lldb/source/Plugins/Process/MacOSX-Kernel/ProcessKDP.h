@@ -105,7 +105,7 @@ public:
     DoAttachToProcessWithName (const char *process_name, const lldb_private::ProcessAttachInfo &attach_info);
     
     virtual void
-    DidAttach ();
+    DidAttach (lldb_private::ArchSpec &process_arch);
     
     lldb::addr_t
     GetImageInfoAddress();

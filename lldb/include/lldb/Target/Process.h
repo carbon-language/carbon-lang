@@ -1446,11 +1446,17 @@ public:
     //------------------------------------------------------------------
     /// Called after attaching a process.
     ///
+    /// @param[in] process_arch
+    ///     If you can figure out the process architecture after attach, fill it in here.
+    ///
     /// Allow Process plug-ins to execute some code after attaching to
     /// a process.
     //------------------------------------------------------------------
     virtual void
-    DidAttach () {}
+    DidAttach (ArchSpec &process_arch)
+    {
+        process_arch.Clear();
+    }
 
 
     //------------------------------------------------------------------

@@ -3063,7 +3063,11 @@ Process::CompleteAttach ()
 {
     // Let the process subclass figure out at much as it can about the process
     // before we go looking for a dynamic loader plug-in.
-    DidAttach();
+    ArchSpec process_arch;
+    DidAttach(process_arch);
+    
+    if (process_arch.IsValid())
+        m_target.SetArchitecture(process_arch);
 
     // We just attached.  If we have a platform, ask it for the process architecture, and if it isn't
     // the same as the one we've already set, switch architectures.
@@ -3082,7 +3086,7 @@ Process::CompleteAttach ()
                 m_target.SetArchitecture(platform_arch);
             }
         }
-        else
+        else if (!process_arch.IsValid())
         {
             ProcessInstanceInfo process_info;
             platform_sp->GetProcessInfo (GetID(), process_info);

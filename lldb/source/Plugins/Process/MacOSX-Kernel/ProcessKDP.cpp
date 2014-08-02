@@ -428,8 +428,10 @@ ProcessKDP::DoAttachToProcessWithName (const char *process_name, const ProcessAt
 
 
 void
-ProcessKDP::DidAttach ()
+ProcessKDP::DidAttach (ArchSpec &process_arch)
 {
+    Process::DidAttach(process_arch);
+    
     Log *log (ProcessKDPLog::GetLogIfAllCategoriesSet (KDP_LOG_PROCESS));
     if (log)
         log->Printf ("ProcessKDP::DidAttach()");

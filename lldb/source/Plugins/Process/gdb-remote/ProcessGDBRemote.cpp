@@ -1011,7 +1011,7 @@ ProcessGDBRemote::ConnectToDebugserver (const char *connect_url)
 }
 
 void
-ProcessGDBRemote::DidLaunchOrAttach ()
+ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
 {
     Log *log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
     if (log)
@@ -1022,16 +1022,17 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         // See if the GDB server supports the qHostInfo information
 
-        ArchSpec gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
 
         // See if the GDB server supports the qProcessInfo packet, if so
         // prefer that over the Host information as it will be more specific
         // to our process.
 
         if (m_gdb_comm.GetProcessArchitecture().IsValid())
-            gdb_remote_arch = m_gdb_comm.GetProcessArchitecture();
+            process_arch = m_gdb_comm.GetProcessArchitecture();
+        else
+            process_arch = m_gdb_comm.GetHostArchitecture();
 
-        if (gdb_remote_arch.IsValid())
+        if (process_arch.IsValid())
         {
             ArchSpec &target_arch = GetTarget().GetArchitecture();
 
@@ -1044,15 +1045,15 @@ ProcessGDBRemote::DidLaunchOrAttach ()
                 // it has, so we really need to take the remote host architecture as our
                 // defacto architecture in this case.
 
-                if (gdb_remote_arch.GetMachine() == llvm::Triple::arm &&
-                    gdb_remote_arch.GetTriple().getVendor() == llvm::Triple::Apple)
+                if (process_arch.GetMachine() == llvm::Triple::arm &&
+                    process_arch.GetTriple().getVendor() == llvm::Triple::Apple)
                 {
-                    target_arch = gdb_remote_arch;
+                    target_arch = process_arch;
                 }
                 else
                 {
                     // Fill in what is missing in the triple
-                    const llvm::Triple &remote_triple = gdb_remote_arch.GetTriple();
+                    const llvm::Triple &remote_triple = process_arch.GetTriple();
                     llvm::Triple &target_triple = target_arch.GetTriple();
                     if (target_triple.getVendorName().size() == 0)
                     {
@@ -1072,7 +1073,7 @@ ProcessGDBRemote::DidLaunchOrAttach ()
             {
                 // The target doesn't have a valid architecture yet, set it from
                 // the architecture we got from the remote GDB server
-                target_arch = gdb_remote_arch;
+                target_arch = process_arch;
             }
         }
     }
@@ -1081,7 +1082,8 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 void
 ProcessGDBRemote::DidLaunch ()
 {
-    DidLaunchOrAttach ();
+    ArchSpec process_arch;
+    DidLaunchOrAttach (process_arch);
 }
 
 UnixSignals&
@@ -1199,9 +1201,11 @@ ProcessGDBRemote::SetExitStatus (int exit_status, const char *cstr)
 }
 
 void
-ProcessGDBRemote::DidAttach ()
+ProcessGDBRemote::DidAttach (ArchSpec &process_arch)
 {
-    DidLaunchOrAttach ();
+    // If you can figure out what the architecture is, fill it in here.
+    process_arch.Clear();
+    DidLaunchOrAttach (process_arch);
 }
 
 
