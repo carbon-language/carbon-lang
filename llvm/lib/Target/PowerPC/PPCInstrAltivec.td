@@ -258,48 +258,64 @@ class VX2_Int_Ty2<bits<11> xo, string opc, Intrinsic IntID, ValueType OutTy,
 def HasAltivec : Predicate<"PPCSubTarget->hasAltivec()">;
 let Predicates = [HasAltivec] in {
 
-let isCodeGenOnly = 1 in {
-def DSS      : DSS_Form<822, (outs),
-                        (ins u5imm:$ZERO0, u5imm:$STRM,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dss $STRM", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
-def DSSALL   : DSS_Form<822, (outs),
-                        (ins u5imm:$ONE, u5imm:$ZERO0,u5imm:$ZERO1,u5imm:$ZERO2),
-                        "dssall", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
-def DST      : DSS_Form<342, (outs),
-                        (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
-def DSTT     : DSS_Form<342, (outs),
-                        (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
-def DSTST    : DSS_Form<374, (outs),
-                        (ins u5imm:$ZERO, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
-def DSTSTT   : DSS_Form<374, (outs),
-                        (ins u5imm:$ONE, u5imm:$STRM, gprc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
+def DSS      : DSS_Form<0, 822, (outs), (ins u5imm:$STRM),
+                        "dss $STRM", IIC_LdStLoad /*FIXME*/, [(int_ppc_altivec_dss imm:$STRM)]>,
+                        Deprecated<DeprecatedDST> {
+  let A = 0;
+  let B = 0;
+}
+
+def DSSALL   : DSS_Form<1, 822, (outs), (ins),
+                        "dssall", IIC_LdStLoad /*FIXME*/, [(int_ppc_altivec_dssall)]>,
+                        Deprecated<DeprecatedDST> {
+  let STRM = 0;
+  let A = 0;
+  let B = 0;
+}
+
+def DST      : DSS_Form<0, 342, (outs), (ins u5imm:$STRM, gprc:$rA, gprc:$rB),
+                        "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                        [(int_ppc_altivec_dst i32:$rA, i32:$rB, imm:$STRM)]>,
                         Deprecated<DeprecatedDST>;
 
-def DST64    : DSS_Form<342, (outs),
-                        (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
+def DSTT     : DSS_Form<1, 342, (outs), (ins u5imm:$STRM, gprc:$rA, gprc:$rB),
+                        "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                        [(int_ppc_altivec_dstt i32:$rA, i32:$rB, imm:$STRM)]>,
                         Deprecated<DeprecatedDST>;
-def DSTT64   : DSS_Form<342, (outs),
-                        (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
+
+def DSTST    : DSS_Form<0, 374, (outs), (ins u5imm:$STRM, gprc:$rA, gprc:$rB),
+                        "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                        [(int_ppc_altivec_dstst i32:$rA, i32:$rB, imm:$STRM)]>,
                         Deprecated<DeprecatedDST>;
-def DSTST64  : DSS_Form<374, (outs),
-                        (ins u5imm:$ZERO, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
+
+def DSTSTT   : DSS_Form<1, 374, (outs), (ins u5imm:$STRM, gprc:$rA, gprc:$rB),
+                        "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                        [(int_ppc_altivec_dststt i32:$rA, i32:$rB, imm:$STRM)]>,
                         Deprecated<DeprecatedDST>;
-def DSTSTT64 : DSS_Form<374, (outs),
-                        (ins u5imm:$ONE, u5imm:$STRM, g8rc:$rA, gprc:$rB),
-                        "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/, []>,
-                        Deprecated<DeprecatedDST>;
+
+let isCodeGenOnly = 1 in {
+  // The very same instructions as above, but formally matching 64bit registers.
+  def DST64    : DSS_Form<0, 342, (outs), (ins u5imm:$STRM, g8rc:$rA, gprc:$rB),
+                          "dst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                          [(int_ppc_altivec_dst i64:$rA, i32:$rB, imm:$STRM)]>,
+                          Deprecated<DeprecatedDST>;
+
+  def DSTT64   : DSS_Form<1, 342, (outs), (ins u5imm:$STRM, g8rc:$rA, gprc:$rB),
+                          "dstt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                          [(int_ppc_altivec_dstt i64:$rA, i32:$rB, imm:$STRM)]>,
+                          Deprecated<DeprecatedDST>;
+
+  def DSTST64  : DSS_Form<0, 374, (outs), (ins u5imm:$STRM, g8rc:$rA, gprc:$rB),
+                          "dstst $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                          [(int_ppc_altivec_dstst i64:$rA, i32:$rB,
+                                                  imm:$STRM)]>,
+                          Deprecated<DeprecatedDST>;
+
+  def DSTSTT64 : DSS_Form<1, 374, (outs), (ins u5imm:$STRM, g8rc:$rA, gprc:$rB),
+                          "dststt $rA, $rB, $STRM", IIC_LdStLoad /*FIXME*/,
+                          [(int_ppc_altivec_dststt i64:$rA, i32:$rB,
+                                                   imm:$STRM)]>,
+                          Deprecated<DeprecatedDST>;
 }
 
 def MFVSCR : VXForm_4<1540, (outs vrrc:$vD), (ins),
@@ -746,30 +762,6 @@ def V_SETALLONES  : VXForm_3<908, (outs vrrc:$vD), (ins),
 //===----------------------------------------------------------------------===//
 // Additional Altivec Patterns
 //
-
-// DS* intrinsics
-def : Pat<(int_ppc_altivec_dssall), (DSSALL 1, 0, 0, 0)>;
-def : Pat<(int_ppc_altivec_dss imm:$STRM), (DSS 0, imm:$STRM, 0, 0)>;
-
-//  * 32-bit
-def : Pat<(int_ppc_altivec_dst i32:$rA, i32:$rB, imm:$STRM),
-          (DST 0, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dstt i32:$rA, i32:$rB, imm:$STRM),
-          (DSTT 1, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dstst i32:$rA, i32:$rB, imm:$STRM),
-          (DSTST 0, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dststt i32:$rA, i32:$rB, imm:$STRM),
-          (DSTSTT 1, imm:$STRM, $rA, $rB)>;
-
-//  * 64-bit
-def : Pat<(int_ppc_altivec_dst i64:$rA, i32:$rB, imm:$STRM),
-          (DST64 0, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dstt i64:$rA, i32:$rB, imm:$STRM),
-          (DSTT64 1, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dstst i64:$rA, i32:$rB, imm:$STRM),
-          (DSTST64 0, imm:$STRM, $rA, $rB)>;
-def : Pat<(int_ppc_altivec_dststt i64:$rA, i32:$rB, imm:$STRM),
-          (DSTSTT64 1, imm:$STRM, $rA, $rB)>;
 
 // Loads.
 def : Pat<(v4i32 (load xoaddr:$src)), (LVX xoaddr:$src)>;

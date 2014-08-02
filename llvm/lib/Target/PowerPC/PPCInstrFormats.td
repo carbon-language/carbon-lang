@@ -800,10 +800,9 @@ class DCB_Form<bits<10> xo, bits<5> immfield, dag OOL, dag IOL, string asmstr,
 
 
 // DSS_Form - Form X instruction, used for altivec dss* instructions.
-class DSS_Form<bits<10> xo, dag OOL, dag IOL, string asmstr, 
+class DSS_Form<bits<1> T, bits<10> xo, dag OOL, dag IOL, string asmstr,
                       InstrItinClass itin, list<dag> pattern>
   : I<31, OOL, IOL, asmstr, itin> {
-  bits<1> T;
   bits<2> STRM;
   bits<5> A;
   bits<5> B;

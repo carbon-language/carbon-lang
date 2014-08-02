@@ -3593,3 +3593,23 @@
 # CHECK-BE: rfmci                            # encoding: [0x4c,0x00,0x00,0x4c]
 # CHECK-LE: rfmci                            # encoding: [0x4c,0x00,0x00,0x4c]
             rfmci
+
+# Altivec Data Stream instruction:
+# CHECK-BE: dss 3                            # encoding: [0x7c,0x60,0x06,0x6c]
+# CHECK-LE: dss 3                            # encoding: [0x6c,0x06,0x60,0x7c]
+            dss 3
+# CHECK-BE: dssall                           # encoding: [0x7e,0x00,0x06,0x6c]
+# CHECK-LE: dssall                           # encoding: [0x6c,0x06,0x00,0x7e]
+            dssall
+# CHECK-BE: dst 12, 11, 3                    # encoding: [0x7c,0x6c,0x5a,0xac]
+# CHECK-LE: dst 12, 11, 3                    # encoding: [0xac,0x5a,0x6c,0x7c]
+            dst %r12, %r11, 3
+# CHECK-BE: dstt 12, 11, 3                   # encoding: [0x7e,0x6c,0x5a,0xac]
+# CHECK-LE: dstt 12, 11, 3                   # encoding: [0xac,0x5a,0x6c,0x7e]
+            dstt %r12, %r11, 3
+# CHECK-BE: dstst 12, 11, 3                  # encoding: [0x7c,0x6c,0x5a,0xec]
+# CHECK-LE: dstst 12, 11, 3                  # encoding: [0xec,0x5a,0x6c,0x7c]
+            dstst %r12, %r11, 3
+# CHECK-BE: dststt 12, 11, 3                 # encoding: [0x7e,0x6c,0x5a,0xec]
+# CHECK-LE: dststt 12, 11, 3                 # encoding: [0xec,0x5a,0x6c,0x7e]
+            dststt %r12, %r11, 3
