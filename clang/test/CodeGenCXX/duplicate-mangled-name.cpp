@@ -4,7 +4,7 @@
 class MyClass {
  static void meth();
 };
-void MyClass::meth() { }
+void MyClass::meth() { } // expected-note {{previous}}
 extern "C" {
   void _ZN7MyClass4methEv() { } // expected-error {{definition with same mangled name as another definition}}
 }

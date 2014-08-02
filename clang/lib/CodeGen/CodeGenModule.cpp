@@ -549,9 +549,9 @@ StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
     Str = II->getName();
   }
 
-  auto &Mangled = Manglings.GetOrCreateValue(Str);
-  Mangled.second = GD;
-  return FoundStr = Mangled.first();
+  // Keep the first result in the case of a mangling collision.
+  auto Result = Manglings.insert(std::make_pair(Str, GD));
+  return FoundStr = Result.first->first();
 }
 
 StringRef CodeGenModule::getBlockMangledName(GlobalDecl GD,
@@ -571,9 +571,8 @@ StringRef CodeGenModule::getBlockMangledName(GlobalDecl GD,
   else
     MangleCtx.mangleBlock(cast<DeclContext>(D), BD, Out);
 
-  auto &Mangled = Manglings.GetOrCreateValue(Out.str());
-  Mangled.second = BD;
-  return Mangled.first();
+  auto Result = Manglings.insert(std::make_pair(Out.str(), BD));
+  return Result.first->first();
 }
 
 llvm::GlobalValue *CodeGenModule::GetGlobalValue(StringRef Name) {
@@ -2192,6 +2191,9 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD,
 
   if (!GV->isDeclaration()) {
     getDiags().Report(D->getLocation(), diag::err_duplicate_mangled_name);
+    GlobalDecl OldGD = Manglings.lookup(GV->getName());
+    if (auto *Prev = OldGD.getDecl())
+      getDiags().Report(Prev->getLocation(), diag::note_previous_definition);
     return;
   }
 
