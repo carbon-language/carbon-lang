@@ -587,14 +587,16 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     const SIInstrInfo *TII =
       static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+
+    DebugLoc DL = MI->getDebugLoc();
+    unsigned DestReg = MI->getOperand(0).getReg();
     unsigned Reg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_MOV_B32_e32),
-            Reg)
-            .addImm(0x7fffffff);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_AND_B32_e32),
-            MI->getOperand(0).getReg())
-            .addReg(MI->getOperand(1).getReg())
-            .addReg(Reg);
+
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_MOV_B32_e32), Reg)
+      .addImm(0x7fffffff);
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_AND_B32_e32), DestReg)
+      .addReg(MI->getOperand(1).getReg())
+      .addReg(Reg);
     MI->eraseFromParent();
     break;
   }
@@ -602,28 +604,32 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
     const SIInstrInfo *TII =
       static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
+
+    DebugLoc DL = MI->getDebugLoc();
+    unsigned DestReg = MI->getOperand(0).getReg();
     unsigned Reg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_MOV_B32_e32),
-            Reg)
-            .addImm(0x80000000);
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_XOR_B32_e32),
-            MI->getOperand(0).getReg())
-            .addReg(MI->getOperand(1).getReg())
-            .addReg(Reg);
+
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_MOV_B32_e32), Reg)
+      .addImm(0x80000000);
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_XOR_B32_e32), DestReg)
+      .addReg(MI->getOperand(1).getReg())
+      .addReg(Reg);
     MI->eraseFromParent();
     break;
   }
   case AMDGPU::FCLAMP_SI: {
     const SIInstrInfo *TII =
       static_cast<const SIInstrInfo*>(getTargetMachine().getInstrInfo());
-    BuildMI(*BB, I, MI->getDebugLoc(), TII->get(AMDGPU::V_ADD_F32_e64),
-            MI->getOperand(0).getReg())
-            .addImm(0) // SRC0 modifiers
-            .addOperand(MI->getOperand(1))
-            .addImm(0) // SRC1 modifiers
-            .addImm(0) // SRC1
-            .addImm(1) // CLAMP
-            .addImm(0); // OMOD
+
+    DebugLoc DL = MI->getDebugLoc();
+    unsigned DestReg = MI->getOperand(0).getReg();
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_ADD_F32_e64), DestReg)
+      .addImm(0) // SRC0 modifiers
+      .addOperand(MI->getOperand(1))
+      .addImm(0) // SRC1 modifiers
+      .addImm(0) // SRC1
+      .addImm(1) // CLAMP
+      .addImm(0); // OMOD
     MI->eraseFromParent();
   }
   }
