@@ -105,11 +105,6 @@ public:
       Value >>= 2;
       // Mask the value to 24 bits.
       uint64_t FinalValue = Value & 0xffffff;
-      // Check for overflow.
-      if (Value != FinalValue) {
-        Error("ARM BR24 relocation out of range.");
-        return;
-      }
       // FIXME: If the destination is a Thumb function (and the instruction
       // is a non-predicated BL instruction), we need to change it to a BLX
       // instruction instead.
