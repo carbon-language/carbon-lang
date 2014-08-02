@@ -3621,3 +3621,7 @@
 # CHECK-BE: mtdcr 178, 3                     # encoding: [0x7c,0x72,0x2b,0x86]
 # CHECK-LE: mtdcr 178, 3                     # encoding: [0x86,0x2b,0x72,0x7c]
             mtdcr 178,3
+
+# CHECK-BE: tlbia                            # encoding: [0x7c,0x00,0x02,0xe4]
+# CHECK-LE: tlbia                            # encoding: [0xe4,0x02,0x00,0x7c]
+            tlbia

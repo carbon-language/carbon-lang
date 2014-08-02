@@ -3094,6 +3094,9 @@ def SLBMFEE : XForm_26<31, 915, (outs gprc:$RT), (ins gprc:$RB),
 
 def SLBIA : XForm_0<31, 498, (outs), (ins), "slbia", IIC_SprSLBIA, []>;
 
+def TLBIA : XForm_0<31, 370, (outs), (ins),
+                        "tlbia", IIC_SprTLBIA, []>;
+
 def TLBSYNC : XForm_0<31, 566, (outs), (ins),
                         "tlbsync", IIC_SprTLBSYNC, []>;
 
