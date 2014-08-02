@@ -8443,8 +8443,6 @@ static SDValue PerformVMOVRRDCombine(SDNode *N,
     if (DCI.DAG.getTargetLoweringInfo().isBigEndian())
       std::swap (NewLD1, NewLD2);
     SDValue Result = DCI.CombineTo(N, NewLD1, NewLD2);
-    DCI.RemoveFromWorklist(LD);
-    DAG.DeleteNode(LD);
     return Result;
   }
 
