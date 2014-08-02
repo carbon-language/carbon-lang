@@ -3830,7 +3830,10 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   const bool GeneratingCoveredLookupTable = MaxTableSize == TableSize;
   if (GeneratingCoveredLookupTable) {
     Builder.CreateBr(LookupBB);
-    SI->getDefaultDest()->removePredecessor(SI->getParent());
+    // We cached PHINodes in PHIs, to avoid accessing deleted PHINodes later,
+    // do not delete PHINodes here.
+    SI->getDefaultDest()->removePredecessor(SI->getParent(),
+                                            true/*DontDeleteUselessPHIs*/);
   } else {
     Value *Cmp = Builder.CreateICmpULT(TableIndex, ConstantInt::get(
                                        MinCaseVal->getType(), TableSize));
