@@ -5,28 +5,24 @@
 // REQUIRES: shell
 
 int global;
-// CHECK: [[GLOBAL_LOC:@.asan_loc_descr[0-9]*]] = private unnamed_addr constant {{.*}} i32 [[@LINE-1]], i32 5
-// CHECK: [[GLOBAL_NAME:@.str[0-9]+]] = private unnamed_addr constant {{.*}} c"global\00"
 int dyn_init_global = global;
-// CHECK: [[DYN_INIT_LOC:@.asan_loc_descr[0-9]*]] = {{.*}} i32 [[@LINE-1]], i32 5
-// CHECK: [[DYN_INIT_NAME:@.str[0-9]+]] = private unnamed_addr constant {{.*}} c"dyn_init_global\00"
 int blacklisted_global;
 
 void func() {
   static int static_var = 0;
-  // CHECK: [[STATIC_LOC:@.asan_loc_descr[0-9]*]] = {{.*}} i32 [[@LINE-1]], i32 14
-  // CHECK: [[STATIC_NAME:@.str[0-9]+]] = private unnamed_addr constant {{.*}} c"static_var\00"
   const char *literal = "Hello, world!";
-  // CHECK: [[LITERAL_LOC:@.asan_loc_descr[0-9]*]] = {{.*}} i32 [[@LINE-1]], i32 25
-  // CHECK: [[LITERAL_NAME:@.str[0-9]+]] = private unnamed_addr constant {{.*}} c"<string literal>\00"
 }
 
 // CHECK: !llvm.asan.globals = !{![[GLOBAL:[0-9]+]], ![[DYN_INIT_GLOBAL:[0-9]+]], ![[BLACKLISTED_GLOBAL:[0-9]+]], ![[STATIC_VAR:[0-9]+]], ![[LITERAL:[0-9]+]]}
-// CHECK: ![[GLOBAL]] = metadata !{{{.*}} [[GLOBAL_LOC]], {{.*}} [[GLOBAL_NAME]], i1 false, i1 false}
-// CHECK: ![[DYN_INIT_GLOBAL]] = metadata !{{{.*}} [[DYN_INIT_LOC]], {{.*}} [[DYN_INIT_NAME]], i1 true, i1 false}
+// CHECK: ![[GLOBAL]] = metadata !{{{.*}} metadata ![[GLOBAL_LOC:[0-9]+]], metadata !"global", i1 false, i1 false}
+// CHECK: ![[GLOBAL_LOC]] = metadata !{metadata !"{{.*}}asan-globals.cpp", i32 7, i32 5}
+// CHECK: ![[DYN_INIT_GLOBAL]] = metadata !{{{.*}} metadata ![[DYN_INIT_LOC:[0-9]+]], metadata !"dyn_init_global", i1 true, i1 false}
+// CHECK: ![[DYN_INIT_LOC]] = metadata !{metadata !"{{.*}}asan-globals.cpp", i32 8, i32 5}
 // CHECK: ![[BLACKLISTED_GLOBAL]] = metadata !{{{.*}}, null, null, i1 false, i1 true}
-// CHECK: ![[STATIC_VAR]] = metadata !{{{.*}} [[STATIC_LOC]], {{.*}} [[STATIC_NAME]], i1 false, i1 false}
-// CHECK: ![[LITERAL]] = metadata !{{{.*}} [[LITERAL_LOC]], {{.*}} [[LITERAL_NAME]], i1 false, i1 false}
+// CHECK: ![[STATIC_VAR]] = metadata !{{{.*}} metadata ![[STATIC_LOC:[0-9]+]], metadata !"static_var", i1 false, i1 false}
+// CHECK: ![[STATIC_LOC]] = metadata !{metadata !"{{.*}}asan-globals.cpp", i32 12, i32 14}
+// CHECK: ![[LITERAL]] = metadata !{{{.*}} metadata ![[LITERAL_LOC:[0-9]+]], metadata !"<string literal>", i1 false, i1 false}
+// CHECK: ![[LITERAL_LOC]] = metadata !{metadata !"{{.*}}asan-globals.cpp", i32 13, i32 25}
 
 // BLACKLIST-SRC: !llvm.asan.globals = !{![[GLOBAL:[0-9]+]], ![[DYN_INIT_GLOBAL:[0-9]+]], ![[BLACKLISTED_GLOBAL:[0-9]+]], ![[STATIC_VAR:[0-9]+]], ![[LITERAL:[0-9]+]]}
 // BLACKLIST-SRC: ![[GLOBAL]] = metadata !{{{.*}} null, null, i1 false, i1 true}

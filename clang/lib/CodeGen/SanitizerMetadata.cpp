@@ -28,35 +28,15 @@ void SanitizerMetadata::reportGlobalToASan(llvm::GlobalVariable *GV,
   IsDynInit &= !CGM.getSanitizerBlacklist().isIn(*GV, "init");
   IsBlacklisted |= CGM.getSanitizerBlacklist().isIn(*GV);
 
-  llvm::GlobalVariable *LocDescr = nullptr;
-  llvm::GlobalVariable *GlobalName = nullptr;
+  llvm::Value *LocDescr = nullptr;
+  llvm::Value *GlobalName = nullptr;
   llvm::LLVMContext &VMContext = CGM.getLLVMContext();
   if (!IsBlacklisted) {
     // Don't generate source location and global name if it is blacklisted -
     // it won't be instrumented anyway.
-    PresumedLoc PLoc = CGM.getContext().getSourceManager().getPresumedLoc(Loc);
-    if (PLoc.isValid()) {
-      llvm::Constant *LocData[] = {
-          CGM.GetAddrOfConstantCString(PLoc.getFilename()),
-          llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                 PLoc.getLine()),
-          llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                                 PLoc.getColumn()),
-      };
-      auto LocStruct = llvm::ConstantStruct::getAnon(LocData);
-      LocDescr = new llvm::GlobalVariable(
-          CGM.getModule(), LocStruct->getType(), true,
-          llvm::GlobalValue::PrivateLinkage, LocStruct, ".asan_loc_descr");
-      LocDescr->setUnnamedAddr(true);
-      // Add LocDescr to llvm.compiler.used, so that it won't be removed by
-      // the optimizer before the ASan instrumentation pass.
-      CGM.addCompilerUsedGlobal(LocDescr);
-    }
-    if (!Name.empty()) {
-      GlobalName = CGM.GetAddrOfConstantCString(Name);
-      // GlobalName shouldn't be removed by the optimizer.
-      CGM.addCompilerUsedGlobal(GlobalName);
-    }
+    LocDescr = getLocationMetadata(Loc);
+    if (!Name.empty())
+      GlobalName = llvm::MDString::get(VMContext, Name);
   }
 
   llvm::Value *GlobalMetadata[] = {
@@ -85,4 +65,18 @@ void SanitizerMetadata::disableSanitizerForGlobal(llvm::GlobalVariable *GV) {
   // instrumentation.
   if (CGM.getLangOpts().Sanitize.Address)
     reportGlobalToASan(GV, SourceLocation(), "", false, true);
+}
+
+llvm::MDNode *SanitizerMetadata::getLocationMetadata(SourceLocation Loc) {
+  PresumedLoc PLoc = CGM.getContext().getSourceManager().getPresumedLoc(Loc);
+  if (!PLoc.isValid())
+    return nullptr;
+  llvm::LLVMContext &VMContext = CGM.getLLVMContext();
+  llvm::Value *LocMetadata[] = {
+      llvm::MDString::get(VMContext, PLoc.getFilename()),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), PLoc.getLine()),
+      llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                             PLoc.getColumn()),
+  };
+  return llvm::MDNode::get(VMContext, LocMetadata);
 }

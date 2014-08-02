@@ -18,6 +18,7 @@
 
 namespace llvm {
 class GlobalVariable;
+class MDNode;
 }
 
 namespace clang {
@@ -40,6 +41,8 @@ public:
                           StringRef Name, bool IsDynInit = false,
                           bool IsBlacklisted = false);
   void disableSanitizerForGlobal(llvm::GlobalVariable *GV);
+private:
+  llvm::MDNode *getLocationMetadata(SourceLocation Loc);
 };
 }  // end namespace CodeGen
 }  // end namespace clang

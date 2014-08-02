@@ -11,28 +11,18 @@ target triple = "x86_64-unknown-linux-gnu"
 @.str = private unnamed_addr constant [14 x i8] c"Hello, world!\00", align 1
 @llvm.global_ctors = appending global [1 x { i32, void ()*, i8* }] [{ i32, void ()*, i8* } { i32 65535, void ()* @_GLOBAL__sub_I_asan_globals.cpp, i8* null }]
 
-; Sanitizer location descriptors:
-@.str1 = private unnamed_addr constant [22 x i8] c"/tmp/asan-globals.cpp\00", align 1
-@.asan_loc_descr = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 5, i32 5 }
-@.asan_loc_descr1 = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 7, i32 5 }
-@.asan_loc_descr2 = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 12, i32 14 }
-@.asan_loc_descr4 = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 14, i32 25 }
-
-; Global names:
-@.str2 = private unnamed_addr constant [7 x i8] c"global\00", align 1
-@.str3 = private unnamed_addr constant [16 x i8] c"dyn_init_global\00", align 1
-@.str4 = private unnamed_addr constant [11 x i8] c"static_var\00", align 1
-@.str5 = private unnamed_addr constant [17 x i8] c"<string literal>\00", align 1
-
-; Check that globals were instrumented, but sanitizer location descriptors weren't:
+; Check that globals were instrumented:
 ; CHECK: @global = global { i32, [60 x i8] } zeroinitializer, align 32
 ; CHECK: @.str = internal unnamed_addr constant { [14 x i8], [50 x i8] } { [14 x i8] c"Hello, world!\00", [50 x i8] zeroinitializer }, align 32
-; CHECK: @.asan_loc_descr = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* @.str1, i32 5, i32 5 }
-; CHECK: @.str2 = private unnamed_addr constant [7 x i8] c"global\00", align 1
+
+; Check emitted location descriptions:
+; CHECK: [[VARNAME:@__asan_gen_[0-9]+]] = private unnamed_addr constant [7 x i8] c"global\00", align 1
+; CHECK: [[FILENAME:@__asan_gen_[0-9]+]] = private unnamed_addr constant [22 x i8] c"/tmp/asan-globals.cpp\00", align 1
+; CHECK: [[LOCDESCR:@__asan_gen_[0-9]+]] = private unnamed_addr constant { [22 x i8]*, i32, i32 } { [22 x i8]* [[FILENAME]], i32 5, i32 5 }
 
 ; Check that location decriptors and global names were passed into __asan_register_globals:
-; CHECK: i64 ptrtoint ([7 x i8]* @.str2 to i64)
-; CHECK: i64 ptrtoint ({ [22 x i8]*, i32, i32 }* @.asan_loc_descr to i64)
+; CHECK: i64 ptrtoint ([7 x i8]* [[VARNAME]] to i64)
+; CHECK: i64 ptrtoint ({ [22 x i8]*, i32, i32 }* [[LOCDESCR]] to i64)
 
 ; Function Attrs: nounwind sanitize_address
 define internal void @__cxx_global_var_init() #0 section ".text.startup" {
@@ -63,9 +53,15 @@ attributes #1 = { nounwind sanitize_address "less-precise-fpmad"="false" "no-fra
 !llvm.asan.globals = !{!0, !1, !2, !3, !4}
 !llvm.ident = !{!5}
 
-!0 = metadata !{i32* @global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr, [7 x i8]* @.str2, i1 false, i1 false}
-!1 = metadata !{i32* @dyn_init_global, { [22 x i8]*, i32, i32 }* @.asan_loc_descr1, [16 x i8]* @.str3, i1 true, i1 false}
+!0 = metadata !{i32* @global, metadata !6, metadata !"global", i1 false, i1 false}
+!1 = metadata !{i32* @dyn_init_global, metadata !7, metadata !"dyn_init_global", i1 true, i1 false}
 !2 = metadata !{i32* @blacklisted_global, null, null, i1 false, i1 true}
-!3 = metadata !{i32* @_ZZ4funcvE10static_var, { [22 x i8]*, i32, i32 }* @.asan_loc_descr2, [11 x i8]* @.str4, i1 false, i1 false}
-!4 = metadata !{[14 x i8]* @.str, { [22 x i8]*, i32, i32 }* @.asan_loc_descr4, [17 x i8]* @.str5, i1 false, i1 false}
+!3 = metadata !{i32* @_ZZ4funcvE10static_var, metadata !8, metadata !"static_var", i1 false, i1 false}
+!4 = metadata !{[14 x i8]* @.str, metadata !9, metadata !"<string literal>", i1 false, i1 false}
+
 !5 = metadata !{metadata !"clang version 3.5.0 (211282)"}
+
+!6 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 5, i32 5}
+!7 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 7, i32 5}
+!8 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 12, i32 14}
+!9 = metadata !{metadata !"/tmp/asan-globals.cpp", i32 14, i32 25}

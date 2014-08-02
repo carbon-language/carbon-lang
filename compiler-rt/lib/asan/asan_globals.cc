@@ -73,8 +73,13 @@ ALWAYS_INLINE void PoisonRedZones(const Global &g) {
 
 static void ReportGlobal(const Global &g, const char *prefix) {
   Report("%s Global[%p]: beg=%p size=%zu/%zu name=%s module=%s dyn_init=%zu\n",
-         prefix, &g, (void*)g.beg, g.size, g.size_with_redzone, g.name,
+         prefix, &g, (void *)g.beg, g.size, g.size_with_redzone, g.name,
          g.module_name, g.has_dynamic_init);
+  if (g.location) {
+    Report("  location (%p): name=%s[%p], %d %d\n", g.location,
+           g.location->filename, g.location->filename, g.location->line_no,
+           g.location->column_no);
+  }
 }
 
 bool DescribeAddressIfGlobal(uptr addr, uptr size) {
