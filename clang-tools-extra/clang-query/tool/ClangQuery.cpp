@@ -30,7 +30,7 @@
 #include "QueryParser.h"
 #include "QuerySession.h"
 #include "clang/Frontend/ASTUnit.h"
-#include "clang/Tooling/CompilationDatabase.h"
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/LineEditor/LineEditor.h"
 #include "llvm/Support/CommandLine.h"
@@ -46,45 +46,30 @@ using namespace clang::query;
 using namespace clang::tooling;
 using namespace llvm;
 
-static cl::opt<std::string> BuildPath("b", cl::desc("Specify build path"),
-                                      cl::value_desc("<path>"));
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::OptionCategory ClangQueryCategory("clang-query options");
 
 static cl::list<std::string> Commands("c", cl::desc("Specify command to run"),
-                                      cl::value_desc("<command>"));
+                                      cl::value_desc("command"),
+                                      cl::cat(ClangQueryCategory));
 
 static cl::list<std::string> CommandFiles("f",
                                           cl::desc("Read commands from file"),
-                                          cl::value_desc("<file>"));
-
-static cl::list<std::string> SourcePaths(cl::Positional,
-                                         cl::desc("<source0> [... <sourceN>]"),
-                                         cl::OneOrMore);
+                                          cl::value_desc("file"),
+                                          cl::cat(ClangQueryCategory));
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  cl::ParseCommandLineOptions(argc, argv);
+
+  CommonOptionsParser OptionsParser(argc, argv, ClangQueryCategory);
 
   if (!Commands.empty() && !CommandFiles.empty()) {
     llvm::errs() << argv[0] << ": cannot specify both -c and -f\n";
     return 1;
   }
 
-  std::unique_ptr<CompilationDatabase> Compilations(
-      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-  if (!Compilations) {  // Couldn't find a compilation DB from the command line
-    std::string ErrorMessage;
-    Compilations.reset(
-      !BuildPath.empty() ?
-        CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage) :
-        CompilationDatabase::autoDetectFromSource(SourcePaths[0], ErrorMessage)
-      );
-
-    // Still no compilation DB? - bail.
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
-  }
-
-  ClangTool Tool(*Compilations, SourcePaths);
+  ClangTool Tool(OptionsParser.getCompilations(),
+                 OptionsParser.getSourcePathList());
   std::vector<std::unique_ptr<ASTUnit>> ASTs;
   if (Tool.buildASTs(ASTs) != 0)
     return 1;
