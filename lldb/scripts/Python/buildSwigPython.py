@@ -26,6 +26,7 @@
 
 # Python modules:
 import os			# Provide directory and file handling, determine OS information
+import sys			# sys.executable
 import time			# Time access and conversions
 import subprocess 	# Call external programs
 import shutil		# File handling
@@ -533,7 +534,7 @@ def run_python_script( vDictArgs, vstrArgs ):
 	strMsg = "";
 	bDbg = vDictArgs.has_key( "-d" );
 	
-	strPy = "python %s" % vstrArgs;
+	strPy = "%s %s" % (sys.executable, vstrArgs);
 	process = subprocess.Popen( strPy, shell=True );
 	strStdOut, strStdErr = process.communicate();
 	nResult = process.returncode;
