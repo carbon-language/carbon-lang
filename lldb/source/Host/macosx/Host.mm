@@ -1061,6 +1061,8 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
                         {
                             if (strncmp(cstr, "SIMULATOR_UDID=", strlen("SIMULATOR_UDID=")) == 0)
                                 process_info.GetArchitecture().GetTriple().setOS(llvm::Triple::IOS);
+                            else
+                                process_info.GetArchitecture().GetTriple().setOS(llvm::Triple::MacOSX);
                         }
 
                         proc_env.AppendArgument(cstr);
