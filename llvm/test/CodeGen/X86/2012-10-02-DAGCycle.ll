@@ -1,5 +1,5 @@
-; RUN: llc -mtriple=i386-apple-macosx -relocation-model=pic < %s
-; RUN: llc -mtriple=x86_64-apple-macosx -relocation-model=pic < %s
+; RUN: llc -mtriple=i386-apple-macosx -relocation-model=pic < %s > /dev/null
+; RUN: llc -mtriple=x86_64-apple-macosx -relocation-model=pic < %s > /dev/null
 
 ; rdar://12393897
 
