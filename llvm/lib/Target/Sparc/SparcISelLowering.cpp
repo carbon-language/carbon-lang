@@ -2754,9 +2754,10 @@ static SDValue LowerUMULO_SMULO(SDValue Op, SelectionDAG &DAG,
                            ISD::SETNE);
   }
   // MulResult is a node with an illegal type. Because such things are not
-  // generally permitted during this phase of legalization, delete the
-  // node. The above EXTRACT_ELEMENT nodes should have been folded.
-  DAG.DeleteNode(MulResult.getNode());
+  // generally permitted during this phase of legalization, ensure that
+  // nothing is left using the node. The above EXTRACT_ELEMENT nodes should have
+  // been folded.
+  assert(MulResult->use_empty() && "Illegally typed node still in use!");
 
   SDValue Ops[2] = { BottomHalf, TopHalf } ;
   return DAG.getMergeValues(Ops, dl);
