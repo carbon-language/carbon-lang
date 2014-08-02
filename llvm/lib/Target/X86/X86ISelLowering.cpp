@@ -18945,10 +18945,6 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
 /// This should never be an issue in practice as the shuffle lowering doesn't
 /// produce sequences of more than 8 instructions.
 ///
-/// FIXME: Currently, we don't collapse instructions *into* PSHUFB. We should,
-/// and we should do so more aggressively than we form PSHUFB because once we
-/// have a PSHUFB, we might as well do as much shuffling as we can.
-///
 /// FIXME: We will currently miss some cases where the redundant shuffling
 /// would simplify under the threshold for PSHUFB formation because of
 /// combine-ordering. To fix this, we should do the redundant instruction
