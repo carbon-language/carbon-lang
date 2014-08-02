@@ -44,6 +44,7 @@ class TestingProgressDisplay(object):
 
         shouldShow = test.result.code.isFailure or \
             (self.opts.show_unsupported and test.result.code.name == 'UNSUPPORTED') or \
+            (self.opts.show_xfail and test.result.code.name == 'XFAIL') or \
             (not self.opts.quiet and not self.opts.succinct)
         if not shouldShow:
             return
@@ -172,6 +173,9 @@ def main(builtinParameters = {}):
                      action="store_false", default=True)
     group.add_option("", "--show-unsupported", dest="show_unsupported",
                      help="Show unsupported tests",
+                     action="store_true", default=False)
+    group.add_option("", "--show-xfail", dest="show_xfail",
+                     help="Show tests that were expected to fail",
                      action="store_true", default=False)
     parser.add_option_group(group)
 
