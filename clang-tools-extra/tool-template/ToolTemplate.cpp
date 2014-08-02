@@ -39,7 +39,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Lex/Lexer.h"
-#include "clang/Tooling/CompilationDatabase.h"
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
@@ -56,11 +56,11 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
  public:
   ToolTemplateCallback(Replacements *Replace) : Replace(Replace) {}
 
-  virtual void run(const MatchFinder::MatchResult &Result) {
-//  TODO: This routine will get called for each thing that the matchers find.
-//  At this point, you can examine the match, and do whatever you want,
-//  including replacing the matched text with other text
-  (void) Replace; // This to prevent an "unused member variable" warning;
+  void run(const MatchFinder::MatchResult &Result) override {
+    // TODO: This routine will get called for each thing that the matchers find.
+    // At this point, you can examine the match, and do whatever you want,
+    // including replacing the matched text with other text
+    (void)Replace; // This to prevent an "unused member variable" warning;
   }
 
  private:
@@ -69,39 +69,20 @@ class ToolTemplateCallback : public MatchFinder::MatchCallback {
 } // end anonymous namespace
 
 // Set up the command line options
-cl::opt<std::string> BuildPath(
-  cl::Positional,
-  cl::desc("<build-path>"));
-
-cl::list<std::string> SourcePaths(
-  cl::Positional,
-  cl::desc("<source0> [... <sourceN>]"),
-  cl::OneOrMore);
+static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static cl::OptionCategory ToolTemplateCategory("tool-template options");
 
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
-  std::unique_ptr<CompilationDatabase> Compilations(
-      FixedCompilationDatabase::loadFromCommandLine(argc, argv));
-  cl::ParseCommandLineOptions(argc, argv);
-  if (!Compilations) {  // Couldn't find a compilation DB from the command line
-    std::string ErrorMessage;
-    Compilations.reset(
-      !BuildPath.empty() ?
-        CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage) :
-        CompilationDatabase::autoDetectFromSource(SourcePaths[0], ErrorMessage)
-      );
-
-//  Still no compilation DB? - bail.
-    if (!Compilations)
-      llvm::report_fatal_error(ErrorMessage);
-    }
-  RefactoringTool Tool(*Compilations, SourcePaths);
+  CommonOptionsParser OptionsParser(argc, argv, ToolTemplateCategory);
+  RefactoringTool Tool(OptionsParser.getCompilations(),
+                       OptionsParser.getSourcePathList());
   ast_matchers::MatchFinder Finder;
   ToolTemplateCallback Callback(&Tool.getReplacements());
 
-// TODO: Put your matchers here.
-// Use Finder.addMatcher(...) to define the patterns in the AST that you
-// want to match against. You are not limited to just one matcher!
+  // TODO: Put your matchers here.
+  // Use Finder.addMatcher(...) to define the patterns in the AST that you
+  // want to match against. You are not limited to just one matcher!
 
   return Tool.run(newFrontendActionFactory(&Finder).get());
 }
