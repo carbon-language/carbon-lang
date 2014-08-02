@@ -209,6 +209,7 @@ namespace {
 // Forward declarations.
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
+class LoopVectorizeHints;
 
 /// Optimization analysis message produced during vectorization. Messages inform
 /// the user why vectorization did not occur.
@@ -877,8 +878,9 @@ public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
                              const TargetTransformInfo &TTI,
-                             const DataLayout *DL, const TargetLibraryInfo *TLI)
-      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI) {}
+                             const DataLayout *DL, const TargetLibraryInfo *TLI,
+                             const Function *F, const LoopVectorizeHints *Hints)
+      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI), DL(DL), TLI(TLI), TheFunction(F), Hints(Hints) {}
 
   /// Information about vectorization costs
   struct VectorizationFactor {
@@ -889,9 +891,7 @@ public:
   /// This method checks every power of two up to VF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
-  VectorizationFactor selectVectorizationFactor(bool OptForSize,
-                                                unsigned UserVF,
-                                                bool ForceVectorization);
+  VectorizationFactor selectVectorizationFactor(bool OptForSize);
 
   /// \return The size (in bits) of the widest type in the code that
   /// needs to be vectorized. We ignore values that remain scalar such as
@@ -903,8 +903,7 @@ public:
   /// based on register pressure and other parameters.
   /// VF and LoopCost are the selected vectorization factor and the cost of the
   /// selected VF.
-  unsigned selectUnrollFactor(bool OptForSize, unsigned UserUF, unsigned VF,
-                              unsigned LoopCost);
+  unsigned selectUnrollFactor(bool OptForSize, unsigned VF, unsigned LoopCost);
 
   /// \brief A struct that represents some properties of the register usage
   /// of a loop.
@@ -940,6 +939,16 @@ private:
   /// as a vector operation.
   bool isConsecutiveLoadOrStore(Instruction *I);
 
+  /// Report an analysis message to assist the user in diagnosing loops that are
+  /// not vectorized.
+  void emitAnalysis(Report &Message) {
+    DebugLoc DL = TheLoop->getStartLoc();
+    if (Instruction *I = Message.getInstr())
+      DL = I->getDebugLoc();
+    emitOptimizationRemarkAnalysis(TheFunction->getContext(), DEBUG_TYPE,
+                                   *TheFunction, DL, Message.str());
+  }
+
   /// The loop that we evaluate.
   Loop *TheLoop;
   /// Scev analysis.
@@ -954,6 +963,9 @@ private:
   const DataLayout *DL;
   /// Target Library Info.
   const TargetLibraryInfo *TLI;
+  const Function *TheFunction;
+  // Loop Vectorize Hint.
+  const LoopVectorizeHints *Hints;
 };
 
 /// Utility class for getting and setting loop vectorizer hints in the form
@@ -1301,7 +1313,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL, TLI);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI, DL, TLI, F, &Hints);
 
     // Check the function attributes to find out if this function should be
     // optimized for size.
@@ -1336,13 +1348,11 @@ struct LoopVectorize : public FunctionPass {
 
     // Select the optimal vectorization factor.
     const LoopVectorizationCostModel::VectorizationFactor VF =
-        CM.selectVectorizationFactor(OptForSize, Hints.getWidth(),
-                                     Hints.getForce() ==
-                                         LoopVectorizeHints::FK_Enabled);
+        CM.selectVectorizationFactor(OptForSize);
 
     // Select the unroll factor.
     const unsigned UF =
-        CM.selectUnrollFactor(OptForSize, Hints.getUnroll(), VF.Width, VF.Cost);
+        CM.selectUnrollFactor(OptForSize, VF.Width, VF.Cost);
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop (" << VF.Width << ") in "
                  << DebugLocStr << '\n');
@@ -5263,17 +5273,17 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
 }
 
 LoopVectorizationCostModel::VectorizationFactor
-LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
-                                                      unsigned UserVF,
-                                                      bool ForceVectorization) {
+LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize) {
   // Width 1 means no vectorize
   VectorizationFactor Factor = { 1U, 0U };
   if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
+    emitAnalysis(Report() << "runtime pointer checks needed. Enable vectorization of this loop with '#pragma clang loop vectorize(enable)' when compiling with -Os");
     DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
     return Factor;
   }
 
   if (!EnableCondStoresVectorization && Legal->NumPredStores) {
+    emitAnalysis(Report() << "store that is conditionally executed prevents vectorization");
     DEBUG(dbgs() << "LV: No vectorization. There are conditional stores.\n");
     return Factor;
   }
@@ -5308,6 +5318,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   if (OptForSize) {
     // If we are unable to calculate the trip count then don't try to vectorize.
     if (TC < 2) {
+      emitAnalysis(Report() << "unable to calculate the loop count due to complex control flow");
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
       return Factor;
     }
@@ -5321,11 +5332,13 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     // If the trip count that we found modulo the vectorization factor is not
     // zero then we require a tail.
     if (VF < 2) {
+      emitAnalysis(Report() << "cannot optimize for size and vectorize at the same time. Enable vectorization of this loop with '#pragma clang loop vectorize(enable)' when compiling with -Os"); 
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
       return Factor;
     }
   }
 
+  int UserVF = Hints->getWidth();
   if (UserVF != 0) {
     assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
     DEBUG(dbgs() << "LV: Using user VF " << UserVF << ".\n");
@@ -5341,6 +5354,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   unsigned Width = 1;
   DEBUG(dbgs() << "LV: Scalar loop costs: " << (int)ScalarCost << ".\n");
 
+  bool ForceVectorization = Hints->getForce() == LoopVectorizeHints::FK_Enabled;
   // Ignore scalar width, because the user explicitly wants vectorization.
   if (ForceVectorization && VF > 1) {
     Width = 2;
@@ -5410,7 +5424,6 @@ unsigned LoopVectorizationCostModel::getWidestType() {
 
 unsigned
 LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
-                                               unsigned UserUF,
                                                unsigned VF,
                                                unsigned LoopCost) {
 
@@ -5429,6 +5442,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // to the increased register pressure.
 
   // Use the user preference, unless 'auto' is selected.
+  int UserUF = Hints->getUnroll();
   if (UserUF != 0)
     return UserUF;
 
