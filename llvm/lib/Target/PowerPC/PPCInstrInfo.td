@@ -3123,6 +3123,11 @@ def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,
 def RFDI : XForm_0<19, 39, (outs), (ins), "rfdi", IIC_BrB, []>;
 def RFMCI : XForm_0<19, 38, (outs), (ins), "rfmci", IIC_BrB, []>;
 
+def MFDCR : XFXForm_1<31, 323, (outs gprc:$RT), (ins i32imm:$SPR),
+                      "mfdcr $RT, $SPR", IIC_SprMFSPR>;
+def MTDCR : XFXForm_1<31, 451, (outs), (ins gprc:$RT, i32imm:$SPR),
+                      "mtdcr $SPR, $RT", IIC_SprMTSPR>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases
 //

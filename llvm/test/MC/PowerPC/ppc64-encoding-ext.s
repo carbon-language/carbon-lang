@@ -3613,3 +3613,11 @@
 # CHECK-BE: dststt 12, 11, 3                 # encoding: [0x7e,0x6c,0x5a,0xec]
 # CHECK-LE: dststt 12, 11, 3                 # encoding: [0xec,0x5a,0x6c,0x7e]
             dststt %r12, %r11, 3
+
+# PPC 403 support
+# CHECK-BE: mfdcr 3, 178                     # encoding: [0x7c,0x72,0x2a,0x86]
+# CHECK-LE: mfdcr 3, 178                     # encoding: [0x86,0x2a,0x72,0x7c]
+            mfdcr 3,178
+# CHECK-BE: mtdcr 178, 3                     # encoding: [0x7c,0x72,0x2b,0x86]
+# CHECK-LE: mtdcr 178, 3                     # encoding: [0x86,0x2b,0x72,0x7c]
+            mtdcr 178,3
