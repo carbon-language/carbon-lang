@@ -968,6 +968,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     return;
 
   case X86::PSHUFBrm:
+  case X86::VPSHUFBrm:
     // Lower PSHUFB normally but add a comment if we can find a constant
     // shuffle mask. We won't be able to do this at the MC layer because the
     // mask isn't an immediate.
@@ -975,8 +976,8 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     raw_string_ostream CS(Comment);
     SmallVector<int, 16> Mask;
 
-    assert(MI->getNumOperands() == 7 &&
-           "Wrong number of operansd for PSHUFBrm");
+    assert(MI->getNumOperands() >= 6 &&
+           "Wrong number of operansd for PSHUFBrm or VPSHUFBrm");
     const MachineOperand &DstOp = MI->getOperand(0);
     const MachineOperand &SrcOp = MI->getOperand(1);
     const MachineOperand &MaskOp = MI->getOperand(5);
