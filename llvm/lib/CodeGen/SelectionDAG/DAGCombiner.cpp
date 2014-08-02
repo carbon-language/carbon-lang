@@ -6893,6 +6893,14 @@ SDValue DAGCombiner::visitFMA(SDNode *N) {
   EVT VT = N->getValueType(0);
   SDLoc dl(N);
 
+
+  // Constant fold FMA.
+  if (isa<ConstantFPSDNode>(N0) &&
+      isa<ConstantFPSDNode>(N1) &&
+      isa<ConstantFPSDNode>(N2)) {
+    return DAG.getNode(ISD::FMA, dl, VT, N0, N1, N2);
+  }
+
   if (DAG.getTarget().Options.UnsafeFPMath) {
     if (N0CFP && N0CFP->isZero())
       return N2;
@@ -7292,6 +7300,10 @@ SDValue DAGCombiner::visitFP_EXTEND(SDNode *N) {
 SDValue DAGCombiner::visitFNEG(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
+
+  // Constant fold FNEG.
+  if (isa<ConstantFPSDNode>(N0))
+    return DAG.getNode(ISD::FNEG, SDLoc(N), VT, N->getOperand(0));
 
   if (VT.isVector()) {
     SDValue FoldedVOp = SimplifyVUnaryOp(N);
