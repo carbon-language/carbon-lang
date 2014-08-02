@@ -806,7 +806,7 @@ private:
 
   /// Performs the "real" scheduling. Done before vectorization is actually
   /// performed in a basic block.
-  void scheduleBlock(BasicBlock *BB);
+  void scheduleBlock(BlockScheduling *BS);
 
   /// List of users to ignore during scheduling and that don't need extracting.
   ArrayRef<Value *> UserIgnoreList;
@@ -1741,8 +1741,6 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
     setInsertPointAfterBundle(E->Scalars);
     return Gather(E->Scalars, VecTy);
   }
-  BasicBlock *BB = VL0->getParent();
-  scheduleBlock(BB);
 
   unsigned Opcode = getSameOpcode(E->Scalars);
 
@@ -2076,6 +2074,12 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
 }
 
 Value *BoUpSLP::vectorizeTree() {
+  
+  // All blocks must be scheduled before any instructions are inserted.
+  for (auto &BSIter : BlocksSchedules) {
+    scheduleBlock(BSIter.second.get());
+  }
+
   Builder.SetInsertPoint(F->getEntryBlock().begin());
   vectorizeTree(&VectorizableTree[0]);
 
@@ -2548,12 +2552,12 @@ void BoUpSLP::BlockScheduling::resetSchedule() {
   ReadyInsts.clear();
 }
 
-void BoUpSLP::scheduleBlock(BasicBlock *BB) {
-  DEBUG(dbgs() << "SLP: schedule block " << BB->getName() << "\n");
-
-  BlockScheduling *BS = BlocksSchedules[BB].get();
-  if (!BS || !BS->ScheduleStart)
+void BoUpSLP::scheduleBlock(BlockScheduling *BS) {
+  
+  if (!BS->ScheduleStart)
     return;
+  
+  DEBUG(dbgs() << "SLP: schedule block " << BS->BB->getName() << "\n");
 
   BS->resetSchedule();
 
@@ -2598,8 +2602,8 @@ void BoUpSLP::scheduleBlock(BasicBlock *BB) {
     while (BundleMember) {
       Instruction *pickedInst = BundleMember->Inst;
       if (LastScheduledInst->getNextNode() != pickedInst) {
-        BB->getInstList().remove(pickedInst);
-        BB->getInstList().insert(LastScheduledInst, pickedInst);
+        BS->BB->getInstList().remove(pickedInst);
+        BS->BB->getInstList().insert(LastScheduledInst, pickedInst);
       }
       LastScheduledInst = pickedInst;
       BundleMember = BundleMember->NextInBundle;
