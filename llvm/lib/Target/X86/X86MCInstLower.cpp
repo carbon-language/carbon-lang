@@ -999,7 +999,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
       ArrayRef<MachineConstantPoolEntry> Constants =
           MI->getParent()->getParent()->getConstantPool()->getConstants();
       const MachineConstantPoolEntry &MaskConstantEntry =
-          Constants[MI->getOperand(5).getIndex()];
+          Constants[MaskOp.getIndex()];
       Type *MaskTy = MaskConstantEntry.getType();
       (void)MaskTy;
       if (!MaskConstantEntry.isMachineConstantPoolEntry())
