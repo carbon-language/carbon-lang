@@ -23,7 +23,6 @@ using namespace polly;
 void polly::registerCanonicalicationPasses(llvm::PassManagerBase &PM,
                                            bool SCEVCodegen) {
   PM.add(llvm::createPromoteMemoryToRegisterPass());
-  PM.add(llvm::createPromoteMemoryToRegisterPass());
   PM.add(llvm::createInstructionCombiningPass());
   PM.add(llvm::createCFGSimplificationPass());
   PM.add(llvm::createTailCallEliminationPass());
