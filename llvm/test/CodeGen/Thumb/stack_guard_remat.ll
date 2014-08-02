@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=pic -no-integrated-as | FileCheck %s -check-prefix=PIC
-; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=static -no-integrated-as | FileCheck %s -check-prefix=STATIC
+; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=static -no-integrated-as | FileCheck %s -check-prefix=NO-PIC  -check-prefix=STATIC
+; RUN: llc < %s -mtriple=thumb-apple-darwin -relocation-model=dynamic-no-pic -no-integrated-as | FileCheck %s  -check-prefix=NO-PIC -check-prefix=DYNAMIC-NO-PIC
 
 ;PIC:   foo2
 ;PIC:   ldr [[R0:r[0-9]+]], [[LABEL0:LCPI[0-9_]+]]
@@ -11,12 +12,16 @@
 ;PIC:      [[LABEL0]]:
 ;PIC-NEXT:   .long L___stack_chk_guard$non_lazy_ptr-([[LABEL1]]+4)
 
-;STATIC:   foo2
-;STATIC:   ldr [[R0:r[0-9]+]], [[LABEL0:LCPI[0-9_]+]]
-;STATIC:   ldr {{r[0-9]+}}, {{\[}}[[R0]]{{\]}}
+;NO-PIC:   foo2
+;NO-PIC:   ldr [[R0:r[0-9]+]], [[LABEL0:LCPI[0-9_]+]]
+;NO-PIC-NOT: LPC
+;NO-PIC:   ldr {{r[0-9]+}}, {{\[}}[[R0]]{{\]}}
 
 ;STATIC:      [[LABEL0]]:
 ;STATIC-NEXT:   .long ___stack_chk_guard
+
+;DYNAMIC-NO-PIC:      [[LABEL0]]:
+;DYNAMIC-NO-PIC-NEXT:   .long L___stack_chk_guard$non_lazy_ptr
 
 ; Function Attrs: nounwind ssp
 define i32 @test_stack_guard_remat() #0 {

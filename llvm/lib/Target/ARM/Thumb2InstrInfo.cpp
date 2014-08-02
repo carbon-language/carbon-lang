@@ -212,10 +212,10 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 void
 Thumb2InstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI,
                                       Reloc::Model RM) const {
-  if (RM == Reloc::Static)
-    expandLoadStackGuardBase(MI, ARM::t2MOVi32imm, ARM::t2LDRi12, RM);
-  else
+  if (RM == Reloc::PIC_)
     expandLoadStackGuardBase(MI, ARM::t2MOV_ga_pcrel, ARM::t2LDRi12, RM);
+  else
+    expandLoadStackGuardBase(MI, ARM::t2MOVi32imm, ARM::t2LDRi12, RM);
 }
 
 void llvm::emitT2RegPlusImmediate(MachineBasicBlock &MBB,

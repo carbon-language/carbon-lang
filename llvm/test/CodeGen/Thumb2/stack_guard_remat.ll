@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -relocation-model=pic -no-integrated-as | FileCheck %s -check-prefix=PIC
 ; RUN: llc < %s -mtriple=thumbv7-apple-ios -relocation-model=static -no-integrated-as | FileCheck %s -check-prefix=STATIC
+; RUN: llc < %s -mtriple=thumbv7-apple-ios -relocation-model=dynamic-no-pic -no-integrated-as | FileCheck %s  -check-prefix=DYNAMIC-NO-PIC
 
 ;PIC:   foo2
 ;PIC:   movw  [[R0:r[0-9]+]], :lower16:(L___stack_chk_guard$non_lazy_ptr-([[LABEL0:LPC[0-9_]+]]+4))
@@ -13,6 +14,11 @@
 ;STATIC:   movw  [[R0:r[0-9]+]], :lower16:___stack_chk_guard
 ;STATIC:   movt  [[R0]], :upper16:___stack_chk_guard
 ;STATIC:   ldr {{r[0-9]+}}, {{\[}}[[R0]]{{\]}}
+
+;DYNAMIC-NO-PIC:   foo2
+;DYNAMIC-NO-PIC:   movw  [[R0:r[0-9]+]], :lower16:L___stack_chk_guard$non_lazy_ptr
+;DYNAMIC-NO-PIC:   movt  [[R0]], :upper16:L___stack_chk_guard$non_lazy_ptr
+;DYNAMIC-NO-PIC:   ldr {{r[0-9]+}}, {{\[}}[[R0]]{{\]}}
 
 ; Function Attrs: nounwind ssp
 define i32 @test_stack_guard_remat() #0 {
