@@ -2449,8 +2449,6 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
   case ISD::BasicBlock:
   case ISD::Register:
   case ISD::RegisterMask:
-  //case ISD::VALUETYPE:
-  //case ISD::CONDCODE:
   case ISD::HANDLENODE:
   case ISD::MDNODE_SDNODE:
   case ISD::TargetConstant:
