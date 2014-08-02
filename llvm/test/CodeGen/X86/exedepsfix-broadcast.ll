@@ -93,10 +93,10 @@ define <4 x double> @ExeDepsFix_broadcastsd256(<4 x double> %arg, <4 x double> %
 
 
 ; CHECK-LABEL: ExeDepsFix_broadcastsd_inreg
-; ExeDepsFix works top down, thus it coalesces vmovlhps domain with
-; vandps and there is nothing more you can do to match vmaxpd.
-; CHECK: vmovlhps
-; CHECK: vandps
+; ExeDepsFix works top down, thus it coalesces vpunpcklqdq domain with
+; vpand and there is nothing more you can do to match vmaxpd.
+; CHECK: vpunpcklqdq
+; CHECK: vpand
 ; CHECK: vmaxpd
 ; CHECK: ret
 define <2 x double> @ExeDepsFix_broadcastsd_inreg(<2 x double> %arg, <2 x double> %arg2, i64 %broadcastvalue) {

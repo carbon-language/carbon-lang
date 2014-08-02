@@ -5133,30 +5133,38 @@ static SDValue getShuffleVectorZeroOrUndef(SDValue V2, unsigned Idx,
 }
 
 /// getTargetShuffleMask - Calculates the shuffle mask corresponding to the
-/// target specific opcode. Returns true if the Mask could be calculated.
-/// Sets IsUnary to true if only uses one source.
+/// target specific opcode. Returns true if the Mask could be calculated. Sets
+/// IsUnary to true if only uses one source. Note that this will set IsUnary for
+/// shuffles which use a single input multiple times, and in those cases it will
+/// adjust the mask to only have indices within that single input.
 static bool getTargetShuffleMask(SDNode *N, MVT VT,
                                  SmallVectorImpl<int> &Mask, bool &IsUnary) {
   unsigned NumElems = VT.getVectorNumElements();
   SDValue ImmN;
 
   IsUnary = false;
+  bool IsFakeUnary = false;
   switch(N->getOpcode()) {
   case X86ISD::SHUFP:
     ImmN = N->getOperand(N->getNumOperands()-1);
     DecodeSHUFPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(), Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::UNPCKH:
     DecodeUNPCKHMask(VT, Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::UNPCKL:
     DecodeUNPCKLMask(VT, Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::MOVHLPS:
     DecodeMOVHLPSMask(NumElems, Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::MOVLHPS:
     DecodeMOVLHPSMask(NumElems, Mask);
+    IsUnary = IsFakeUnary = N->getOperand(0) == N->getOperand(1);
     break;
   case X86ISD::PALIGNR:
     ImmN = N->getOperand(N->getNumOperands()-1);
@@ -5209,6 +5217,14 @@ static bool getTargetShuffleMask(SDNode *N, MVT VT,
     return false;
   default: llvm_unreachable("unknown target shuffle node");
   }
+
+  // If we have a fake unary shuffle, the shuffle mask is spread across two
+  // inputs that are actually the same node. Re-map the mask to always point
+  // into the first input.
+  if (IsFakeUnary)
+    for (int &M : Mask)
+      if (M >= (int)Mask.size())
+        M -= Mask.size();
 
   return true;
 }
@@ -18735,6 +18751,8 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
       bool Lo = Mask.equals(0, 0);
       unsigned Shuffle = FloatDomain ? (Lo ? X86ISD::MOVLHPS : X86ISD::MOVHLPS)
                                      : (Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH);
+      if (Depth == 1 && Root->getOpcode() == Shuffle)
+        return false; // Nothing to do!
       MVT ShuffleVT = FloatDomain ? MVT::v4f32 : MVT::v2i64;
       Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
       DCI.AddToWorklist(Op.getNode());
@@ -18757,16 +18775,18 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
          Mask.equals(8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14, 15,
                      15))) {
       bool Lo = Mask[0] == 0;
+      unsigned Shuffle = Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH;
+      if (Depth == 1 && Root->getOpcode() == Shuffle)
+        return false; // Nothing to do!
       MVT ShuffleVT;
       switch (Mask.size()) {
       case 4: ShuffleVT = MVT::v4i32; break;
-      case 8: ShuffleVT = MVT::v8i32; break;
-      case 16: ShuffleVT = MVT::v16i32; break;
+      case 8: ShuffleVT = MVT::v8i16; break;
+      case 16: ShuffleVT = MVT::v16i8; break;
       };
       Op = DAG.getNode(ISD::BITCAST, DL, ShuffleVT, Input);
       DCI.AddToWorklist(Op.getNode());
-      Op = DAG.getNode(Lo ? X86ISD::UNPCKL : X86ISD::UNPCKH, DL, ShuffleVT, Op,
-                       Op);
+      Op = DAG.getNode(Shuffle, DL, ShuffleVT, Op, Op);
       DCI.AddToWorklist(Op.getNode());
       DCI.CombineTo(Root.getNode(), DAG.getNode(ISD::BITCAST, DL, RootVT, Op),
                     /*AddTo*/ true);
