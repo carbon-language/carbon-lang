@@ -87,6 +87,7 @@ add_clang_library(libclang ${ENABLE_SHARED} ${ENABLE_STATIC}
 
   LINK_COMPONENTS
   BitReader
+  Core
   Support
   )
 
