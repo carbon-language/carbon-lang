@@ -3863,9 +3863,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     llvm::sys::fs::file_status Status;
     if (llvm::sys::fs::status(A->getValue(), Status))
       D.Diag(diag::err_drv_no_such_file) << A->getValue();
-    auto Timestamp = Status.getLastModificationTime().toEpochTime();
-    CmdArgs.push_back(Args.MakeArgString("-fbuild-session-timestamp=" +
-                                         std::to_string(Timestamp)));
+    char TimeStamp[48];
+    snprintf(TimeStamp, sizeof(TimeStamp), "-fbuild-session-timestamp=%" PRIu64,
+             (uint64_t)Status.getLastModificationTime().toEpochTime());
+    CmdArgs.push_back(Args.MakeArgString(TimeStamp));
   }
 
   if (Args.getLastArg(options::OPT_fmodules_validate_once_per_build_session)) {
