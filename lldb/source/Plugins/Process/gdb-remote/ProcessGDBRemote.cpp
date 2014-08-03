@@ -1048,7 +1048,7 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
                 if (process_arch.GetMachine() == llvm::Triple::arm &&
                     process_arch.GetTriple().getVendor() == llvm::Triple::Apple)
                 {
-                    target_arch = process_arch;
+                    GetTarget().SetArchitecture (process_arch);
                 }
                 else
                 {
@@ -1073,7 +1073,7 @@ ProcessGDBRemote::DidLaunchOrAttach (ArchSpec& process_arch)
             {
                 // The target doesn't have a valid architecture yet, set it from
                 // the architecture we got from the remote GDB server
-                target_arch = process_arch;
+                GetTarget().SetArchitecture (process_arch);
             }
         }
     }
