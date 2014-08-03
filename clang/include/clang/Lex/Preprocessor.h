@@ -1378,11 +1378,6 @@ private:
   VisibilityMacroDirective *AllocateVisibilityMacroDirective(SourceLocation Loc,
                                                              bool isPublic);
 
-  /// \brief Release the specified MacroInfo for re-use.
-  ///
-  /// This memory will  be reused for allocating new MacroInfo objects.
-  void ReleaseMacroInfo(MacroInfo* MI);
-
   /// \brief Lex and validate a macro name, which occurs after a
   /// \#define or \#undef. 
   ///
