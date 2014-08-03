@@ -1109,7 +1109,7 @@ void MCAsmStreamer::EmitWinEHHandlerData() {
   // cause the section switch to be visible in the emitted assembly.
   // We only do this so the section switch that terminates the handler
   // data block is visible.
-  MCWinFrameInfo *CurFrame = getCurrentWinFrameInfo();
+  WinEH::FrameInfo *CurFrame = getCurrentWinFrameInfo();
   StringRef suffix=MCWin64EHUnwindEmitter::GetSectionSuffix(CurFrame->Function);
   const MCSection *xdataSect = getWin64EHTableSection(suffix, getContext());
   if (xdataSect)

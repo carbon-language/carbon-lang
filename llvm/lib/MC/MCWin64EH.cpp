@@ -56,7 +56,7 @@ static void EmitAbsDifference(MCStreamer &Streamer, const MCSymbol *LHS,
   Streamer.EmitAbsValue(Diff, 1);
 }
 
-static void EmitUnwindCode(MCStreamer &streamer, MCSymbol *begin,
+static void EmitUnwindCode(MCStreamer &streamer, const MCSymbol *begin,
                            WinEH::Instruction &inst) {
   uint8_t b2;
   uint16_t w;
@@ -136,7 +136,7 @@ static void EmitSymbolRefWithOfs(MCStreamer &streamer,
 }
 
 static void EmitRuntimeFunction(MCStreamer &streamer,
-                                const MCWinFrameInfo *info) {
+                                const WinEH::FrameInfo *info) {
   MCContext &context = streamer.getContext();
 
   streamer.EmitValueToAlignment(4);
@@ -147,14 +147,17 @@ static void EmitRuntimeFunction(MCStreamer &streamer,
                                              context), 4);
 }
 
-static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info) {
+static void EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info) {
   // If this UNWIND_INFO already has a symbol, it's already been emitted.
-  if (info->Symbol) return;
+  if (info->Symbol)
+    return;
 
   MCContext &context = streamer.getContext();
+  MCSymbol *Label = context.CreateTempSymbol();
+
   streamer.EmitValueToAlignment(4);
-  info->Symbol = context.CreateTempSymbol();
-  streamer.EmitLabel(info->Symbol);
+  streamer.EmitLabel(Label);
+  info->Symbol = Label;
 
   // Upper 3 bits are the version number (currently 1).
   uint8_t flags = 0x01;
@@ -256,7 +259,7 @@ static const MCSection *getWin64EHFuncTableSection(StringRef suffix,
 }
 
 void MCWin64EHUnwindEmitter::EmitUnwindInfo(MCStreamer &streamer,
-                                            MCWinFrameInfo *info) {
+                                            WinEH::FrameInfo *info) {
   // Switch sections (the static function above is meant to be called from
   // here and from Emit().
   MCContext &context = streamer.getContext();

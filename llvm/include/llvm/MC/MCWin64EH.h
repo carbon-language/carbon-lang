@@ -54,25 +54,6 @@ struct Instruction {
 };
 }
 
-  struct MCWinFrameInfo {
-    MCWinFrameInfo()
-      : Begin(nullptr), End(nullptr),ExceptionHandler(nullptr),
-        Function(nullptr), PrologEnd(nullptr), Symbol(nullptr),
-        HandlesUnwind(false), HandlesExceptions(false), LastFrameInst(-1),
-        ChainedParent(nullptr), Instructions() {}
-    MCSymbol *Begin;
-    MCSymbol *End;
-    const MCSymbol *ExceptionHandler;
-    const MCSymbol *Function;
-    MCSymbol *PrologEnd;
-    MCSymbol *Symbol;
-    bool HandlesUnwind;
-    bool HandlesExceptions;
-    int LastFrameInst;
-    MCWinFrameInfo *ChainedParent;
-    std::vector<WinEH::Instruction> Instructions;
-  };
-
   class MCWin64EHUnwindEmitter {
   public:
     static StringRef GetSectionSuffix(const MCSymbol *func);
@@ -80,7 +61,7 @@ struct Instruction {
     // This emits the unwind info sections (.pdata and .xdata in PE/COFF).
     //
     static void Emit(MCStreamer &streamer);
-    static void EmitUnwindInfo(MCStreamer &streamer, MCWinFrameInfo *info);
+    static void EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info);
   };
 } // end namespace llvm
 

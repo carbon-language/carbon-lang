@@ -429,11 +429,11 @@ void MCStreamer::EnsureValidWinFrameInfo() {
 void MCStreamer::EmitWinCFIStartProc(const MCSymbol *Symbol) {
   if (CurrentWinFrameInfo && !CurrentWinFrameInfo->End)
     report_fatal_error("Starting a function before ending the previous one!");
-  MCWinFrameInfo *Frame = new MCWinFrameInfo;
-  Frame->Begin = getContext().CreateTempSymbol();
-  Frame->Function = Symbol;
-  EmitLabel(Frame->Begin);
-  WinFrameInfos.push_back(Frame);
+
+  MCSymbol *StartProc = getContext().CreateTempSymbol();
+  EmitLabel(StartProc);
+
+  WinFrameInfos.push_back(new WinEH::FrameInfo(Symbol, StartProc));
   CurrentWinFrameInfo = WinFrameInfos.back();
 }
 
@@ -441,18 +441,20 @@ void MCStreamer::EmitWinCFIEndProc() {
   EnsureValidWinFrameInfo();
   if (CurrentWinFrameInfo->ChainedParent)
     report_fatal_error("Not all chained regions terminated!");
-  CurrentWinFrameInfo->End = getContext().CreateTempSymbol();
-  EmitLabel(CurrentWinFrameInfo->End);
+
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+  CurrentWinFrameInfo->End = Label;
 }
 
 void MCStreamer::EmitWinCFIStartChained() {
   EnsureValidWinFrameInfo();
-  MCWinFrameInfo *Frame = new MCWinFrameInfo;
-  Frame->Begin = getContext().CreateTempSymbol();
-  Frame->Function = CurrentWinFrameInfo->Function;
-  Frame->ChainedParent = CurrentWinFrameInfo;
-  EmitLabel(Frame->Begin);
-  WinFrameInfos.push_back(Frame);
+
+  MCSymbol *StartProc = getContext().CreateTempSymbol();
+  EmitLabel(StartProc);
+
+  WinFrameInfos.push_back(new WinEH::FrameInfo(CurrentWinFrameInfo->Function,
+                                               StartProc, CurrentWinFrameInfo));
   CurrentWinFrameInfo = WinFrameInfos.back();
 }
 
@@ -460,9 +462,13 @@ void MCStreamer::EmitWinCFIEndChained() {
   EnsureValidWinFrameInfo();
   if (!CurrentWinFrameInfo->ChainedParent)
     report_fatal_error("End of a chained region outside a chained region!");
-  CurrentWinFrameInfo->End = getContext().CreateTempSymbol();
-  EmitLabel(CurrentWinFrameInfo->End);
-  CurrentWinFrameInfo = CurrentWinFrameInfo->ChainedParent;
+
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+
+  CurrentWinFrameInfo->End = Label;
+  CurrentWinFrameInfo =
+      const_cast<WinEH::FrameInfo *>(CurrentWinFrameInfo->ChainedParent);
 }
 
 void MCStreamer::EmitWinEHHandler(const MCSymbol *Sym, bool Unwind,
@@ -567,8 +573,11 @@ void MCStreamer::EmitWinCFIPushFrame(bool Code) {
 
 void MCStreamer::EmitWinCFIEndProlog() {
   EnsureValidWinFrameInfo();
-  CurrentWinFrameInfo->PrologEnd = getContext().CreateTempSymbol();
-  EmitLabel(CurrentWinFrameInfo->PrologEnd);
+
+  MCSymbol *Label = getContext().CreateTempSymbol();
+  EmitLabel(Label);
+
+  CurrentWinFrameInfo->PrologEnd = Label;
 }
 
 void MCStreamer::EmitCOFFSectionIndex(MCSymbol const *Symbol) {
