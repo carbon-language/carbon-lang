@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "polly/Config/config.h"
+#include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/IslAst.h"
@@ -61,6 +62,8 @@ public:
       : Builder(Builder), Annotator(Annotator), ExprBuilder(Builder, IDToValue),
         P(P) {}
 
+  /// @brief Add the mappings from array id's to array llvm::Value's.
+  void addMemoryAccesses(Scop &S);
   void addParameters(__isl_take isl_set *Context);
   void create(__isl_take isl_ast_node *Node);
   IslExprBuilder &getExprBuilder() { return ExprBuilder; }
@@ -485,8 +488,10 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   isl_ast_expr_free(StmtExpr);
 
   Stmt = (ScopStmt *)isl_id_get_user(Id);
+
   createSubstitutions(Expr, Stmt, VMap, LTS);
-  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P);
+  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P,
+                           IslAstInfo::getBuild(User), &ExprBuilder);
 
   isl_ast_node_free(User);
   isl_id_free(Id);
@@ -545,6 +550,15 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
   isl_set_free(Context);
 }
 
+void IslNodeBuilder::addMemoryAccesses(Scop &S) {
+  for (ScopStmt *Stmt : S)
+    for (MemoryAccess *MA : *Stmt) {
+      isl_id *Id = MA->getArrayId();
+      IDToValue[Id] = MA->getBaseAddr();
+      isl_id_free(Id);
+    }
+}
+
 namespace {
 class IslCodeGeneration : public ScopPass {
 public:
@@ -570,6 +584,7 @@ public:
     IslNodeBuilder NodeBuilder(Builder, Annotator, this);
 
     Builder.SetInsertPoint(StartBlock->getSinglePredecessor()->begin());
+    NodeBuilder.addMemoryAccesses(S);
     NodeBuilder.addParameters(S.getContext());
     // Build condition that evaluates at run-time if all assumptions taken
     // for the scop hold. If we detect some assumptions do not hold, the

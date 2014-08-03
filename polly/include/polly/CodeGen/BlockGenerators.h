@@ -24,6 +24,8 @@
 
 #include <vector>
 
+struct isl_ast_build;
+
 namespace llvm {
 class Pass;
 class Region;
@@ -35,6 +37,8 @@ extern bool SCEVCodegen;
 
 using namespace llvm;
 class ScopStmt;
+class MemoryAccess;
+class IslExprBuilder;
 
 typedef DenseMap<const Value *, Value *> ValueMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
@@ -63,16 +67,22 @@ class BlockGenerator {
 public:
   /// @brief Generate a new BasicBlock for a ScopStmt.
   ///
-  /// @param Builder   The LLVM-IR Builder used to generate the statement. The
-  ///                  code is generated at the location, the Builder points to.
-  /// @param Stmt      The statement to code generate.
-  /// @param GlobalMap A map that defines for certain Values referenced from the
-  ///                  original code new Values they should be replaced with.
-  /// @param P         A reference to the pass this function is called from.
-  ///                  The pass is needed to update other analysis.
+  /// @param Builder     The LLVM-IR Builder used to generate the statement. The
+  ///                    code is generated at the location, the Builder points
+  ///                    to.
+  /// @param Stmt        The statement to code generate.
+  /// @param GlobalMap   A map that defines for certain Values referenced from
+  ///                    the original code new Values they should be replaced
+  ///                    with.
+  /// @param P           A reference to the pass this function is called from.
+  ///                    The pass is needed to update other analysis.
+  /// @param Build       The AST build with the new schedule.
+  /// @param ExprBuilder An expression builder to generate new access functions.
   static void generate(PollyIRBuilder &Builder, ScopStmt &Stmt,
-                       ValueMapT &GlobalMap, LoopToScevMapT &LTS, Pass *P) {
-    BlockGenerator Generator(Builder, Stmt, P);
+                       ValueMapT &GlobalMap, LoopToScevMapT &LTS, Pass *P,
+                       __isl_keep isl_ast_build *Build = nullptr,
+                       IslExprBuilder *ExprBuilder = nullptr) {
+    BlockGenerator Generator(Builder, Stmt, P, Build, ExprBuilder);
     Generator.copyBB(GlobalMap, LTS);
   }
 
@@ -81,8 +91,11 @@ protected:
   ScopStmt &Statement;
   Pass *P;
   ScalarEvolution &SE;
+  isl_ast_build *Build;
+  IslExprBuilder *ExprBuilder;
 
-  BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P);
+  BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
+                 __isl_keep isl_ast_build *Build, IslExprBuilder *ExprBuilder);
 
   /// @brief Get the new version of a Value.
   ///
@@ -128,25 +141,8 @@ protected:
   /// @return The innermost loop that surrounds the instruction.
   Loop *getLoopForInst(const Instruction *Inst);
 
-  /// @brief Get the memory access offset to be added to the base address
-  ///
-  /// @param L The loop that surrounded the instruction that referenced this
-  ///          memory subscript in the original code.
-  std::vector<Value *> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
-                                            Value *BaseAddress,
-                                            ValueMapT &BBMap,
-                                            ValueMapT &GlobalMap,
-                                            LoopToScevMapT &LTS, Loop *L);
-
-  /// @brief Get the new operand address according to the changed access in
-  ///        JSCOP file.
-  ///
-  /// @param L The loop that surrounded the instruction that used this operand
-  ///          in the original code.
-  Value *getNewAccessOperand(__isl_keep isl_map *NewAccessRelation,
-                             Value *BaseAddress, ValueMapT &BBMap,
-                             ValueMapT &GlobalMap, LoopToScevMapT &LTS,
-                             Loop *L);
+  /// @brief Get the new operand address according to access relation of @p MA.
+  Value *getNewAccessOperand(const MemoryAccess &MA);
 
   /// @brief Generate the operand address
   Value *generateLocationAccessed(const Instruction *Inst, const Value *Pointer,

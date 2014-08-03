@@ -103,21 +103,38 @@ Value *IslExprBuilder::createOpAccess(isl_ast_expr *Expr) {
   assert(isl_ast_expr_get_op_n_arg(Expr) == 2 &&
          "Multidimensional access functions are not supported yet");
 
-  Value *Base = create(isl_ast_expr_get_op_arg(Expr, 0));
+  Value *Base, *IndexOp, *Zero, *Access;
+  SmallVector<Value *, 4> Indices;
+  Type *PtrElTy;
+
+  Base = create(isl_ast_expr_get_op_arg(Expr, 0));
   assert(Base->getType()->isPointerTy() && "Access base should be a pointer");
 
-  Value *Index = create(isl_ast_expr_get_op_arg(Expr, 1));
-  assert(Index->getType()->isIntegerTy() &&
+  IndexOp = create(isl_ast_expr_get_op_arg(Expr, 1));
+  assert(IndexOp->getType()->isIntegerTy() &&
          "Access index should be an integer");
+  Zero = ConstantInt::getNullValue(IndexOp->getType());
 
-  // TODO: Change the type of base before we create the GEP.
-  Type *PtrElTy = Base->getType()->getPointerElementType();
+  // If base is a array type like,
+  //   int A[N][M][K];
+  // we have to adjust the GEP. The easiest way is to transform accesses like,
+  //   A[i][j][k]
+  // into equivalent ones like,
+  //   A[0][0][ i*N*M + j*M + k]
+  // because SCEV already folded the "peudo dimensions" into one. Thus our index
+  // operand will be 'i*N*M + j*M + k' anyway.
+  PtrElTy = Base->getType()->getPointerElementType();
+  while (PtrElTy->isArrayTy()) {
+    Indices.push_back(Zero);
+    PtrElTy = PtrElTy->getArrayElementType();
+  }
+
+  Indices.push_back(IndexOp);
   assert((PtrElTy->isIntOrIntVectorTy() || PtrElTy->isFPOrFPVectorTy()) &&
          "We do not yet change the type of the access base during code "
          "generation.");
 
-  Twine Name = "polly.access." + Base->getName();
-  Value *Access = Builder.CreateGEP(Base, Index, Name);
+  Access = Builder.CreateGEP(Base, Indices, "polly.access." + Base->getName());
 
   isl_ast_expr_free(Expr);
   return Access;

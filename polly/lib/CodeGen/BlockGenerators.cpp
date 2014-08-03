@@ -15,9 +15,12 @@
 
 #include "polly/ScopInfo.h"
 #include "isl/aff.h"
+#include "isl/ast.h"
+#include "isl/ast_build.h"
 #include "isl/set.h"
 #include "polly/CodeGen/BlockGenerators.h"
 #include "polly/CodeGen/CodeGeneration.h"
+#include "polly/CodeGen/IslExprBuilder.h"
 #include "polly/Options.h"
 #include "polly/Support/GICHelper.h"
 #include "polly/Support/SCEVValidator.h"
@@ -63,103 +66,11 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
   return L && I == L->getCanonicalInductionVariable() && R->contains(L);
 }
 
-// Helper class to generate memory location.
-namespace {
-class IslGenerator {
-public:
-  IslGenerator(PollyIRBuilder &Builder, std::vector<Value *> &IVS)
-      : Builder(Builder), IVS(IVS) {}
-  Value *generateIslVal(__isl_take isl_val *Val);
-  Value *generateIslAff(__isl_take isl_aff *Aff);
-  Value *generateIslPwAff(__isl_take isl_pw_aff *PwAff);
-
-private:
-  typedef struct {
-    Value *Result;
-    class IslGenerator *Generator;
-  } IslGenInfo;
-
-  PollyIRBuilder &Builder;
-  std::vector<Value *> &IVS;
-  static int mergeIslAffValues(__isl_take isl_set *Set, __isl_take isl_aff *Aff,
-                               void *User);
-};
-}
-
-Value *IslGenerator::generateIslVal(__isl_take isl_val *Val) {
-  Value *IntValue = Builder.getInt(APIntFromVal(Val));
-  return IntValue;
-}
-
-Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
-  Value *Result;
-  Value *ConstValue;
-  isl_val *Val;
-
-  Val = isl_aff_get_constant_val(Aff);
-  ConstValue = generateIslVal(Val);
-  Type *Ty = Builder.getInt64Ty();
-
-  // FIXME: We should give the constant and coefficients the right type. Here
-  // we force it into i64.
-  Result = Builder.CreateSExtOrBitCast(ConstValue, Ty);
-
-  unsigned int NbInputDims = isl_aff_dim(Aff, isl_dim_in);
-
-  assert((IVS.size() == NbInputDims) &&
-         "The Dimension of Induction Variables must match the dimension of the "
-         "affine space.");
-
-  for (unsigned int i = 0; i < NbInputDims; ++i) {
-    Value *CoefficientValue;
-    Val = isl_aff_get_coefficient_val(Aff, isl_dim_in, i);
-
-    if (isl_val_is_zero(Val)) {
-      isl_val_free(Val);
-      continue;
-    }
-
-    CoefficientValue = generateIslVal(Val);
-    CoefficientValue = Builder.CreateIntCast(CoefficientValue, Ty, true);
-    Value *IV = Builder.CreateIntCast(IVS[i], Ty, true);
-    Value *PAdd = Builder.CreateMul(CoefficientValue, IV, "p_mul_coeff");
-    Result = Builder.CreateAdd(Result, PAdd, "p_sum_coeff");
-  }
-
-  isl_aff_free(Aff);
-
-  return Result;
-}
-
-int IslGenerator::mergeIslAffValues(__isl_take isl_set *Set,
-                                    __isl_take isl_aff *Aff, void *User) {
-  IslGenInfo *GenInfo = (IslGenInfo *)User;
-
-  assert((GenInfo->Result == nullptr) &&
-         "Result is already set. Currently only single isl_aff is supported");
-  assert(isl_set_plain_is_universe(Set) &&
-         "Code generation failed because the set is not universe");
-
-  GenInfo->Result = GenInfo->Generator->generateIslAff(Aff);
-
-  isl_set_free(Set);
-  return 0;
-}
-
-Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
-  IslGenInfo User;
-  User.Result = nullptr;
-  User.Generator = this;
-  isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &User);
-  assert(User.Result && "Code generation for isl_pw_aff failed");
-
-  isl_pw_aff_free(PwAff);
-  return User.Result;
-}
-
-BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P)
-    : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()) {
-}
+BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
+                               isl_ast_build *Build,
+                               IslExprBuilder *ExprBuilder)
+    : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()),
+      Build(Build), ExprBuilder(ExprBuilder) {}
 
 Value *BlockGenerator::lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
                                             ValueMapT &GlobalMap) const {
@@ -252,41 +163,30 @@ void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
     NewInst->setName("p_" + Inst->getName());
 }
 
-std::vector<Value *> BlockGenerator::getMemoryAccessIndex(
-    __isl_keep isl_map *AccessRelation, Value *BaseAddress, ValueMapT &BBMap,
-    ValueMapT &GlobalMap, LoopToScevMapT &LTS, Loop *L) {
-  assert((isl_map_dim(AccessRelation, isl_dim_out) == 1) &&
-         "Only single dimensional access functions supported");
+Value *BlockGenerator::getNewAccessOperand(const MemoryAccess &MA) {
+  isl_pw_multi_aff *PWSchedule, *PWAccRel;
+  isl_union_map *ScheduleU;
+  isl_map *Schedule, *AccRel;
+  isl_ast_expr *Expr;
 
-  std::vector<Value *> IVS;
-  for (unsigned i = 0; i < Statement.getNumIterators(); ++i) {
-    const Value *OriginalIV = Statement.getInductionVariableForDimension(i);
-    Value *NewIV = getNewValue(OriginalIV, BBMap, GlobalMap, LTS, L);
-    IVS.push_back(NewIV);
-  }
+  assert(ExprBuilder && Build &&
+         "Cannot generate new value without IslExprBuilder!");
 
-  isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
-  IslGenerator IslGen(Builder, IVS);
-  Value *OffsetValue = IslGen.generateIslPwAff(PwAff);
+  AccRel = MA.getNewAccessRelation();
+  assert(AccRel && "We generate new code only for new access relations!");
 
-  Type *Ty = Builder.getInt64Ty();
-  OffsetValue = Builder.CreateIntCast(OffsetValue, Ty, true);
+  ScheduleU = isl_ast_build_get_schedule(Build);
+  ScheduleU = isl_union_map_intersect_domain(
+      ScheduleU, isl_union_set_from_set(MA.getStatement()->getDomain()));
+  Schedule = isl_map_from_union_map(ScheduleU);
 
-  std::vector<Value *> IndexArray;
-  Value *NullValue = Constant::getNullValue(Ty);
-  IndexArray.push_back(NullValue);
-  IndexArray.push_back(OffsetValue);
-  return IndexArray;
-}
+  PWSchedule = isl_pw_multi_aff_from_map(isl_map_reverse(Schedule));
+  PWAccRel = isl_pw_multi_aff_from_map(AccRel);
+  PWAccRel = isl_pw_multi_aff_pullback_pw_multi_aff(PWAccRel, PWSchedule);
 
-Value *BlockGenerator::getNewAccessOperand(
-    __isl_keep isl_map *NewAccessRelation, Value *BaseAddress, ValueMapT &BBMap,
-    ValueMapT &GlobalMap, LoopToScevMapT &LTS, Loop *L) {
-  std::vector<Value *> IndexArray = getMemoryAccessIndex(
-      NewAccessRelation, BaseAddress, BBMap, GlobalMap, LTS, L);
-  Value *NewOperand =
-      Builder.CreateGEP(BaseAddress, IndexArray, "p_newarrayidx_");
-  return NewOperand;
+  Expr = isl_ast_build_access_from_pw_multi_aff(Build, PWAccRel);
+
+  return ExprBuilder->create(Expr);
 }
 
 Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
@@ -294,26 +194,17 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
                                                 ValueMapT &BBMap,
                                                 ValueMapT &GlobalMap,
                                                 LoopToScevMapT &LTS) {
-  const MemoryAccess &Access = Statement.getAccessFor(Inst);
-  isl_map *CurrentAccessRelation = Access.getAccessRelation();
-  isl_map *NewAccessRelation = Access.getNewAccessRelation();
-
-  assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation) &&
-         "Current and new access function use different spaces");
+  const MemoryAccess &MA = Statement.getAccessFor(Inst);
+  isl_map *NewAccRel = MA.getNewAccessRelation();
 
   Value *NewPointer;
-
-  if (!NewAccessRelation) {
+  if (NewAccRel)
+    NewPointer = getNewAccessOperand(MA);
+  else
     NewPointer =
         getNewValue(Pointer, BBMap, GlobalMap, LTS, getLoopForInst(Inst));
-  } else {
-    Value *BaseAddress = Access.getBaseAddr();
-    NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, BBMap,
-                                     GlobalMap, LTS, getLoopForInst(Inst));
-  }
 
-  isl_map_free(CurrentAccessRelation);
-  isl_map_free(NewAccessRelation);
+  isl_map_free(NewAccRel);
   return NewPointer;
 }
 
@@ -397,8 +288,8 @@ VectorBlockGenerator::VectorBlockGenerator(PollyIRBuilder &B,
                                            ScopStmt &Stmt,
                                            __isl_keep isl_map *Schedule,
                                            Pass *P)
-    : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps), VLTS(VLTS),
-      Schedule(Schedule) {
+    : BlockGenerator(B, Stmt, P, nullptr, nullptr), GlobalMaps(GlobalMaps),
+      VLTS(VLTS), Schedule(Schedule) {
   assert(GlobalMaps.size() > 1 && "Only one vector lane found");
   assert(Schedule && "No statement domain provided");
 }

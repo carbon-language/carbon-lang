@@ -231,7 +231,7 @@ public:
   ReductionType getReductionType() const { return RedType; }
 
   /// @brief Set the updated access relation read from JSCOP file.
-  void setNewAccessRelation(isl_map *newAccessRelation);
+  void setNewAccessRelation(__isl_take isl_map *newAccessRelation);
 
   /// @brief Mark this a reduction like access
   void markAsReductionLike(ReductionType RT) { RedType = RT; }

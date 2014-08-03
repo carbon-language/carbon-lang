@@ -129,6 +129,9 @@ public:
   /// @brief Get the nodes broken reductions or a nullptr if not available.
   static MemoryAccessSet *getBrokenReductions(__isl_keep isl_ast_node *Node);
 
+  /// @brief Get the nodes build context or a nullptr if not available.
+  static __isl_give isl_ast_build *getBuild(__isl_keep isl_ast_node *Node);
+
   ///}
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;

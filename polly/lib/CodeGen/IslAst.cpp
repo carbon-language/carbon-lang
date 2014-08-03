@@ -413,6 +413,11 @@ IslAstInfo::getBrokenReductions(__isl_keep isl_ast_node *Node) {
   return Payload ? &Payload->BrokenReductions : nullptr;
 }
 
+isl_ast_build *IslAstInfo::getBuild(__isl_keep isl_ast_node *Node) {
+  IslAstUserPayload *Payload = getNodePayload(Node);
+  return Payload ? Payload->Build : nullptr;
+}
+
 void IslAstInfo::printScop(raw_ostream &OS) const {
   isl_ast_print_options *Options;
   isl_ast_node *RootNode = getAst();

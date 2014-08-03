@@ -1,5 +1,7 @@
 ;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHCONST %s
 ;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen-isl < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
+;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withconst -polly-codegen-isl -polly-codegen-scev < %s -S | FileCheck -check-prefix=WITHCONST %s
+;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed+withoutconst -polly-codegen-isl -polly-codegen-scev < %s -S | FileCheck -check-prefix=WITHOUTCONST %s
 
 ;int A[1040];
 ;
@@ -55,20 +57,19 @@ for.end6:                                         ; preds = %for.cond
   ret i32 0
 }
 
-; WITHCONST:  [[REG1:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
-; WITHCONST:  %p_mul_coeff = mul i64 16, [[REG1]]
-; WITHCONST:  %p_sum_coeff = add i64 5, %p_mul_coeff
-; WITHCONST:  [[REG2:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
-; WITHCONST:  %p_mul_coeff8 = mul i64 2, [[REG2]]
-; WITHCONST:  %p_sum_coeff9 = add i64 %p_sum_coeff, %p_mul_coeff8
-; WITHCONST:  %p_newarrayidx_ = getelementptr [1040 x i32]* @A, i64 0, i64 %p_sum_coeff9
-; WITHCONST:  store i32 100, i32* %p_newarrayidx_
+; WITHCONST:  %[[IVOut:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
+; WITHCONST:  %[[IVIn:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
+; WITHCONST:  %[[MUL1:[._a-zA-Z0-9]+]] = mul nsw i64 16, %[[IVOut]]
+; WITHCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
+; WITHCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
+; WITHCONST:  %[[SUM2:[._a-zA-Z0-9]+]] = add nsw i64 %[[SUM1]], 5
+; WITHCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr [1040 x i32]* @A, i64 0, i64 %[[SUM2]]
+; WITHCONST:  store i32 100, i32* %[[ACC]]
 
-; WITHOUTCONST:  [[REG1:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
-; WITHOUTCONST:  %p_mul_coeff = mul i64 16, [[REG1]]
-; WITHOUTCONST:  %p_sum_coeff = add i64 0, %p_mul_coeff
-; WITHOUTCONST:  [[REG2:%[0-9]+]] = sext i32 %{{[0-9]+}} to i64
-; WITHOUTCONST:  %p_mul_coeff8 = mul i64 2, [[REG2]]
-; WITHOUTCONST:  %p_sum_coeff9 = add i64 %p_sum_coeff, %p_mul_coeff8
-; WITHOUTCONST:  %p_newarrayidx_ = getelementptr [1040 x i32]* @A, i64 0, i64 %p_sum_coeff9
-; WITHOUTCONST:  store i32 100, i32* %p_newarrayidx_
+; WITHOUTCONST:  %[[IVOut:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
+; WITHOUTCONST:  %[[IVIn:polly.indvar[0-9]*]] = phi i64 [ 0, %polly.loop_preheader{{[0-9]*}} ], [ %polly.indvar_next{{[0-9]*}}, %polly.{{[._a-zA-Z0-9]*}} ]
+; WITHOUTCONST:  %[[MUL1:[._a-zA-Z0-9]+]] = mul nsw i64 16, %[[IVOut]]
+; WITHOUTCONST:  %[[MUL2:[._a-zA-Z0-9]+]] = mul nsw i64 2, %[[IVIn]]
+; WITHOUTCONST:  %[[SUM1:[._a-zA-Z0-9]+]] = add nsw i64 %[[MUL1]], %[[MUL2]]
+; WITHOUTCONST:  %[[ACC:[._a-zA-Z0-9]*]] = getelementptr [1040 x i32]* @A, i64 0, i64 %[[SUM1]]
+; WITHOUTCONST:  store i32 100, i32* %[[ACC]]
