@@ -366,9 +366,9 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 // expression of each array evaluates for each statement instance that is
 // executed to a value that is larger than zero and strictly smaller than the
 // size of the corresponding dimension). The only exception is the outermost
-// dimension for which we do not assume any upper bound.  At this point we
-// formalize this assumption to ensure that at code generation time the relevant
-// run-time checks can be generated.
+// dimension for which we do not need to assume any upper bound.  At this point
+// we formalize this assumption to ensure that at code generation time the
+// relevant run-time checks can be generated.
 //
 // To find the set of constraints necessary to avoid out of bound accesses, we
 // first build the set of data locations that are not within array bounds. We
@@ -383,7 +383,7 @@ isl_basic_map *MemoryAccess::createBasicAccessMap(ScopStmt *Statement) {
 void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
   isl_space *Space = isl_space_range(getAccessRelationSpace());
   isl_set *Outside = isl_set_empty(isl_space_copy(Space));
-  for (int i = 0, Size = Access.Subscripts.size(); i < Size; ++i) {
+  for (int i = 1, Size = Access.Subscripts.size(); i < Size; ++i) {
     isl_local_space *LS = isl_local_space_from_space(isl_space_copy(Space));
     isl_pw_aff *Var =
         isl_pw_aff_var_on_domain(isl_local_space_copy(LS), isl_dim_set, i);
@@ -391,22 +391,17 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
 
     isl_set *DimOutside;
 
-    if (i == 0) {
-      DimOutside = isl_pw_aff_lt_set(Var, Zero);
-    } else {
-      DimOutside = isl_pw_aff_lt_set(isl_pw_aff_copy(Var), Zero);
-      isl_pw_aff *SizeE =
-          SCEVAffinator::getPwAff(Statement, Access.Sizes[i - 1]);
+    DimOutside = isl_pw_aff_lt_set(isl_pw_aff_copy(Var), Zero);
+    isl_pw_aff *SizeE = SCEVAffinator::getPwAff(Statement, Access.Sizes[i - 1]);
 
-      SizeE = isl_pw_aff_drop_dims(SizeE, isl_dim_in, 0,
-                                   Statement->getNumIterators());
-      SizeE = isl_pw_aff_add_dims(SizeE, isl_dim_in,
-                                  isl_space_dim(Space, isl_dim_set));
-      SizeE = isl_pw_aff_set_tuple_id(
-          SizeE, isl_dim_in, isl_space_get_tuple_id(Space, isl_dim_set));
+    SizeE = isl_pw_aff_drop_dims(SizeE, isl_dim_in, 0,
+                                 Statement->getNumIterators());
+    SizeE = isl_pw_aff_add_dims(SizeE, isl_dim_in,
+                                isl_space_dim(Space, isl_dim_set));
+    SizeE = isl_pw_aff_set_tuple_id(SizeE, isl_dim_in,
+                                    isl_space_get_tuple_id(Space, isl_dim_set));
 
-      DimOutside = isl_set_union(DimOutside, isl_pw_aff_le_set(SizeE, Var));
-    }
+    DimOutside = isl_set_union(DimOutside, isl_pw_aff_le_set(SizeE, Var));
 
     Outside = isl_set_union(Outside, DimOutside);
   }
