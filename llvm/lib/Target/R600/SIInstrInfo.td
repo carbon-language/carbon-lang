@@ -442,7 +442,7 @@ class VOPProfile <list<ValueType> _ArgVT> {
   field dag Ins64 = getIns64<Src0RC64, Src1RC64, Src2RC64, NumSrcArgs,
                              HasModifiers>.ret;
 
-  field string Asm32 = "_e32 "#getAsm32<NumSrcArgs>.ret;
+  field string Asm32 = "_e32"#getAsm32<NumSrcArgs>.ret;
   field string Asm64 = getAsm64<NumSrcArgs, HasModifiers>.ret;
 }
 
