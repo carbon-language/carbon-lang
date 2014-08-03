@@ -1,4 +1,4 @@
-; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-apple-ios7.0 | FileCheck %s
+; RUN: llc -verify-machineinstrs -o - %s -mtriple=arm64-apple-ios7.0 -mcpu=cyclone | FileCheck %s
 
 define i32 @test_madd32(i32 %val0, i32 %val1, i32 %val2) {
 ; CHECK-LABEL: test_madd32:

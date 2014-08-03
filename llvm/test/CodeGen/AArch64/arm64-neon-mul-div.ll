@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon | FileCheck %s
+; RUN: llc < %s -verify-machineinstrs -mtriple=arm64-none-linux-gnu -mattr=+neon -mcpu=cyclone | FileCheck %s
 ; arm64 has its own copy of this because of the intrinsics
 
 define <8 x i8> @mul8xi8(<8 x i8> %A, <8 x i8> %B) {
@@ -450,8 +450,8 @@ define <1 x i32> @srem1x32(<1 x i32> %A, <1 x i32> %B) {
 define <2 x i32> @srem2x32(<2 x i32> %A, <2 x i32> %B) {
 ; CHECK-LABEL: srem2x32:
 ; CHECK: sdiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: sdiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 ; CHECK: msub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
+; CHECK: sdiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 ; CHECK: msub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 	%tmp3 = srem <2 x i32> %A, %B;
 	ret <2 x i32> %tmp3
@@ -482,8 +482,8 @@ define <1 x i64> @srem1x64(<1 x i64> %A, <1 x i64> %B) {
 define <2 x i64> @srem2x64(<2 x i64> %A, <2 x i64> %B) {
 ; CHECK-LABEL: srem2x64:
 ; CHECK: sdiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
-; CHECK: sdiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 ; CHECK: msub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
+; CHECK: sdiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 ; CHECK: msub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 	%tmp3 = srem <2 x i64> %A, %B;
 	ret <2 x i64> %tmp3
@@ -612,8 +612,8 @@ define <1 x i32> @urem1x32(<1 x i32> %A, <1 x i32> %B) {
 define <2 x i32> @urem2x32(<2 x i32> %A, <2 x i32> %B) {
 ; CHECK-LABEL: urem2x32:
 ; CHECK: udiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
-; CHECK: udiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 ; CHECK: msub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
+; CHECK: udiv {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 ; CHECK: msub {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}, {{w[0-9]+}}
 	%tmp3 = urem <2 x i32> %A, %B;
 	ret <2 x i32> %tmp3
@@ -644,8 +644,8 @@ define <1 x i64> @urem1x64(<1 x i64> %A, <1 x i64> %B) {
 define <2 x i64> @urem2x64(<2 x i64> %A, <2 x i64> %B) {
 ; CHECK-LABEL: urem2x64:
 ; CHECK: udiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
-; CHECK: udiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 ; CHECK: msub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
+; CHECK: udiv {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 ; CHECK: msub {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}, {{x[0-9]+}}
 	%tmp3 = urem <2 x i64> %A, %B;
 	ret <2 x i64> %tmp3
