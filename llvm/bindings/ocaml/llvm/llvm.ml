@@ -479,6 +479,8 @@ external const_named_struct : lltype -> llvalue array -> llvalue
 external const_packed_struct : llcontext -> llvalue array -> llvalue
                              = "llvm_const_packed_struct"
 external const_vector : llvalue array -> llvalue = "llvm_const_vector"
+external string_of_const : llvalue -> string option = "llvm_string_of_const"
+external const_element : llvalue -> int -> llvalue = "llvm_const_element"
 
 (*--... Constant expressions ...............................................--*)
 external align_of : lltype -> llvalue = "LLVMAlignOf"

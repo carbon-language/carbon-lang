@@ -782,6 +782,31 @@ CAMLprim LLVMValueRef llvm_const_vector(value ElementVals) {
                          Wosize_val(ElementVals));
 }
 
+/* llvalue -> string option */
+CAMLprim value llvm_string_of_const(LLVMValueRef Const) {
+  const char *S;
+  size_t Len;
+  CAMLparam0();
+  CAMLlocal2(Option, Str);
+
+  if(LLVMIsAConstantDataSequential(Const) && LLVMIsConstantString(Const)) {
+    S = LLVMGetAsString(Const, &Len);
+    Str = caml_alloc_string(Len);
+    memcpy(String_val(Str), S, Len);
+
+    Option = alloc(1, 0);
+    Field(Option, 0) = Str;
+    CAMLreturn(Option);
+  } else {
+    CAMLreturn(Val_int(0));
+  }
+}
+
+/* llvalue -> int -> llvalue */
+CAMLprim LLVMValueRef llvm_const_element(LLVMValueRef Const, value N) {
+  return LLVMGetElementAsConstant(Const, Int_val(N));
+}
+
 /*--... Constant expressions ...............................................--*/
 
 /* Icmp.t -> llvalue -> llvalue -> llvalue */

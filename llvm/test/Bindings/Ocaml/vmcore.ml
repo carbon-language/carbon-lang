@@ -125,6 +125,7 @@ let test_constants () =
   let c = const_int_of_string i32_type "-1" 10 in
   ignore (define_global "const_int_string" c m);
   insist (i32_type = type_of c);
+  insist (None = (string_of_const c));
 
   if Sys.word_size = 64; then begin
     group "long int";
@@ -138,6 +139,7 @@ let test_constants () =
   let c = const_string context "cruel\000world" in
   ignore (define_global "const_string" c m);
   insist ((array_type i8_type 11) = type_of c);
+  insist ((Some "cruel\000world") = (string_of_const c));
 
   (* CHECK: const_stringz{{.*}}"hi\00again\00"
    *)
@@ -175,7 +177,9 @@ let test_constants () =
   let c = const_array i32_type [| three; four |] in
   ignore (define_global "const_array" c m);
   insist ((array_type i32_type 2) = (type_of c));
-  
+  insist (three = (const_element c 0));
+  insist (four = (const_element c 1));
+
   (* CHECK: const_vector{{.*}}<i16 1, i16 2{{.*}}>
    *)
   group "vector";
