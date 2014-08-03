@@ -144,8 +144,7 @@ MachineCombiner::getDepth(SmallVectorImpl<MachineInstr *> &InsInstrs,
           InstrIdxForVirtReg.find(MO.getReg());
       if (II != InstrIdxForVirtReg.end()) {
         // Operand is new virtual register not in trace
-        assert(II->second >= 0 && II->second < InstrDepth.size() &&
-               "Bad Index");
+        assert(II->second < InstrDepth.size() && "Bad Index");
         MachineInstr *DefInstr = InsInstrs[II->second];
         assert(DefInstr &&
                "There must be a definition for a new virtual register");
