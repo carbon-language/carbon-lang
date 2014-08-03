@@ -208,7 +208,7 @@ protected:
     return CurrentWinFrameInfo;
   }
 
-  void EmitWindowsUnwindTables();
+  virtual void EmitWindowsUnwindTables();
 
   virtual void EmitRawTextImpl(StringRef String);
 

@@ -601,10 +601,6 @@ void MCStreamer::EmitRawText(const Twine &T) {
 }
 
 void MCStreamer::EmitWindowsUnwindTables() {
-  if (!getNumWinFrameInfos())
-    return;
-
-  MCWin64EHUnwindEmitter::Emit(*this);
 }
 
 void MCStreamer::Finish() {
