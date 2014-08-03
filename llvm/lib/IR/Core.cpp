@@ -790,11 +790,27 @@ LLVMValueRef LLVMConstString(const char *Str, unsigned Length,
   return LLVMConstStringInContext(LLVMGetGlobalContext(), Str, Length,
                                   DontNullTerminate);
 }
+
+LLVMValueRef LLVMGetElementAsConstant(LLVMValueRef c, unsigned idx) {
+  return wrap(static_cast<ConstantDataSequential*>(unwrap(c))->getElementAsConstant(idx));
+}
+
+LLVMBool LLVMIsConstantString(LLVMValueRef c) {
+  return static_cast<ConstantDataSequential*>(unwrap(c))->isString();
+}
+
+const char *LLVMGetAsString(LLVMValueRef c, size_t* Length) {
+  StringRef str = static_cast<ConstantDataSequential*>(unwrap(c))->getAsString();
+  *Length = str.size();
+  return str.data();
+}
+
 LLVMValueRef LLVMConstArray(LLVMTypeRef ElementTy,
                             LLVMValueRef *ConstantVals, unsigned Length) {
   ArrayRef<Constant*> V(unwrap<Constant>(ConstantVals, Length), Length);
   return wrap(ConstantArray::get(ArrayType::get(unwrap(ElementTy), Length), V));
 }
+
 LLVMValueRef LLVMConstStruct(LLVMValueRef *ConstantVals, unsigned Count,
                              LLVMBool Packed) {
   return LLVMConstStructInContext(LLVMGetGlobalContext(), ConstantVals, Count,
