@@ -49,6 +49,7 @@ add_llvm_library(LLVMCodeGen
   MachineBranchProbabilityInfo.cpp
   MachineCSE.cpp
   MachineCodeEmitter.cpp
+  MachineCombiner.cpp
   MachineCopyPropagation.cpp
   MachineDominators.cpp
   MachineDominanceFrontier.cpp

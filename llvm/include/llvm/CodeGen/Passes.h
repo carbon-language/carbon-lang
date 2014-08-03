@@ -489,6 +489,10 @@ namespace llvm {
   /// inserting cmov instructions.
   extern char &EarlyIfConverterID;
 
+  /// This pass performs instruction combining using trace metrics to estimate
+  /// critical-path and resource depth.
+  extern char &MachineCombinerID;
+
   /// StackSlotColoring - This pass performs stack coloring and merging.
   /// It merges disjoint allocas to reduce the stack size.
   extern char &StackColoringID;

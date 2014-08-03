@@ -264,8 +264,9 @@ public:
     /// classes are included. For the caller to account for extra machine
     /// instructions, it must first resolve each instruction's scheduling class.
     unsigned getResourceLength(
-                ArrayRef<const MachineBasicBlock*> Extrablocks = None,
-                ArrayRef<const MCSchedClassDesc*> ExtraInstrs = None) const;
+        ArrayRef<const MachineBasicBlock *> Extrablocks = None,
+        ArrayRef<const MCSchedClassDesc *> ExtraInstrs = None,
+        ArrayRef<const MCSchedClassDesc *> RemoveInstrs = None) const;
 
     /// Return the length of the (data dependency) critical path through the
     /// trace.
@@ -286,6 +287,12 @@ public:
     /// Return the Depth of a PHI instruction in a trace center block successor.
     /// The PHI does not have to be part of the trace.
     unsigned getPHIDepth(const MachineInstr *PHI) const;
+
+    /// A dependence is useful if the basic block of the defining instruction
+    /// is part of the trace of the user instruction. It is assumed that DefMI
+    /// dominates UseMI (see also isUsefulDominator).
+    bool isDepInTrace(const MachineInstr *DefMI,
+                      const MachineInstr *UseMI) const;
   };
 
   /// A trace ensemble is a collection of traces selected using the same

@@ -15,9 +15,12 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineCombinerPattern.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
 
@@ -571,6 +574,42 @@ public:
   MachineInstr* foldMemoryOperand(MachineBasicBlock::iterator MI,
                                   const SmallVectorImpl<unsigned> &Ops,
                                   MachineInstr* LoadMI) const;
+
+  /// hasPattern - return true when there is potentially a faster code sequence
+  /// for an instruction chain ending in \p Root. All potential pattern are
+  /// returned in the \p Pattern vector. Pattern should be sorted in priority
+  /// order since the pattern evaluator stops checking as soon as it finds a
+  /// faster sequence.
+  /// \param Root - Instruction that could be combined with one of its operands
+  /// \param Pattern - Vector of possible combination pattern
+
+  virtual bool hasPattern(
+      MachineInstr &Root,
+      SmallVectorImpl<MachineCombinerPattern::MC_PATTERN> &Pattern) const {
+    return false;
+  }
+
+  /// genAlternativeCodeSequence - when hasPattern() finds a pattern this
+  /// function generates the instructions that could replace the original code
+  /// sequence. The client has to decide whether the actual replacementment is
+  /// beneficial or not.
+  /// \param Root - Instruction that could be combined with one of its operands
+  /// \param P - Combination pattern for Root
+  /// \param InsInstr - Vector of new instructions that implement P
+  /// \param DelInstr - Old instructions, including Root, that could be replaced
+  /// by InsInstr
+  /// \param InstrIdxForVirtReg - map of virtual register to instruction in
+  /// InsInstr that defines it
+  virtual void genAlternativeCodeSequence(
+      MachineInstr &Root, MachineCombinerPattern::MC_PATTERN P,
+      SmallVectorImpl<MachineInstr *> &InsInstrs,
+      SmallVectorImpl<MachineInstr *> &DelInstrs,
+      DenseMap<unsigned, unsigned> &InstrIdxForVirtReg) const {
+    return;
+  }
+
+  /// useMachineCombiner - return true when a target supports MachineCombiner
+  virtual bool useMachineCombiner(void) const { return false; }
 
 protected:
   /// foldMemoryOperandImpl - Target-dependent implementation for

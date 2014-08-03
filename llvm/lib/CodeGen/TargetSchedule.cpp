@@ -225,6 +225,28 @@ unsigned TargetSchedModel::computeOperandLatency(
   return DefMI->isTransient() ? 0 : TII->defaultDefLatency(&SchedModel, DefMI);
 }
 
+unsigned TargetSchedModel::computeInstrLatency(unsigned Opcode) const {
+  assert(hasInstrSchedModel() && "Only call this function with a SchedModel");
+
+  unsigned SCIdx = TII->get(Opcode).getSchedClass();
+  const MCSchedClassDesc *SCDesc = SchedModel.getSchedClassDesc(SCIdx);
+  unsigned Latency = 0;
+
+  if (SCDesc->isValid() && !SCDesc->isVariant()) {
+    for (unsigned DefIdx = 0, DefEnd = SCDesc->NumWriteLatencyEntries;
+         DefIdx != DefEnd; ++DefIdx) {
+      // Lookup the definition's write latency in SubtargetInfo.
+      const MCWriteLatencyEntry *WLEntry =
+          STI->getWriteLatencyEntry(SCDesc, DefIdx);
+      Latency = std::max(Latency, capLatency(WLEntry->Cycles));
+    }
+    return Latency;
+  }
+
+  assert(Latency && "No MI sched latency");
+  return 0;
+}
+
 unsigned
 TargetSchedModel::computeInstrLatency(const MachineInstr *MI,
                                       bool UseDefaultDefLatency) const {
