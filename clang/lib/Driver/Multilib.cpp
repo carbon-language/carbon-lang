@@ -37,7 +37,7 @@ static void normalizePathSegment(std::string &Segment) {
 
   // Prune trailing "/" or "./"
   while (1) {
-    StringRef last = *--path::end(seg);
+    StringRef last = path::filename(seg);
     if (last != ".")
       break;
     seg = path::parent_path(seg);
