@@ -1,8 +1,8 @@
-;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -polly-codegen -instnamer < %s -S | FileCheck %s
+;RUN: opt %loadPolly -polly-import-jscop -polly-import-jscop-dir=%S -polly-import-jscop-postfix=transformed -polly-codegen-isl -instnamer < %s -S | FileCheck %s
 
 ;int A[100];
 ;
-;int codegen_constant_offset() {
+;int codegen_simple () {
 ;  for (int i = 0; i < 12; i++)
 ;    A[13] = A[i] + A[i-1];
 ;
@@ -14,7 +14,7 @@ target triple = "i386-pc-linux-gnu"
 
 @A = common global [100 x i32] zeroinitializer, align 4
 
-define i32 @codegen_constant_offset() nounwind {
+define i32 @codegen_simple() nounwind {
 entry:
   br label %for.cond
 
@@ -40,4 +40,4 @@ for.inc:                                          ; preds = %for.body
 for.end:                                          ; preds = %for.cond
   ret i32 0
 }
-; CHECK: load i32* getelementptr inbounds ([100 x i32]* @A, i64 0, i64 10)
+; CHECK: load i32* getelementptr inbounds ([100 x i32]* @A, i64 0, i64 0)

@@ -1,5 +1,5 @@
 {
-   "context" : "{ [] }",
+   "context" : "{  :  }",
    "name" : "for.cond4 => for.end14",
    "statements" : [
       {

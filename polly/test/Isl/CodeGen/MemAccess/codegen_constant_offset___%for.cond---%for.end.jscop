@@ -1,12 +1,12 @@
 {
-   "context" : "{ [] }",
+   "context" : "{  :  }",
    "name" : "for.cond => for.end",
    "statements" : [
       {
          "accesses" : [
             {
                "kind" : "read",
-               "relation" : "{ Stmt_for_body[i0] -> MemRef_A[0] }"
+               "relation" : "{ Stmt_for_body[i0] -> MemRef_A[i0] }"
             },
             {
                "kind" : "read",
