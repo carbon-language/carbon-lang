@@ -77,10 +77,10 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
     auto D = diag(FirstParm->getLocation(),
                   "all parameters should be named in a function");
 
-    // Fallback to an unused marker.
-    StringRef NewName = "unused";
-
     for (auto P : UnnamedParams) {
+      // Fallback to an unused marker.
+      StringRef NewName = "unused";
+
       // If the method is overridden, try to copy the name from the base method
       // into the overrider.
       const auto *M = dyn_cast<CXXMethodDecl>(P.first);

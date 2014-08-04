@@ -74,6 +74,13 @@ struct Derived : public Base {
 void FDef(int);
 // CHECK-MESSAGES: :[[@LINE-1]]:14: warning: all parameters should be named in a function
 // CHECK-FIXES: void FDef(int /*n*/);
-void FDef(int n) {};
+void FDef(int n) {}
+
+void FDef2(int, int);
+// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: all parameters should be named in a function
+// CHECK-FIXES: void FDef2(int /*n*/, int /*unused*/);
+void FDef2(int n, int) {}
+// CHECK-MESSAGES: :[[@LINE-1]]:22: warning: all parameters should be named in a function
+// CHECK-FIXES: void FDef2(int n, int /*unused*/) {}
 
 void FNoDef(int);
