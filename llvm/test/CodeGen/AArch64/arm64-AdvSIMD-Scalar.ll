@@ -65,3 +65,44 @@ define double @add_sub_su64(<2 x i64> %a, <2 x i64> %b) nounwind readnone {
   %retval = bitcast i64 %sub.i to double
   ret double %retval
 }
+define double @and_su64(<2 x i64> %a, <2 x i64> %b) nounwind readnone {
+; CHECK-LABEL: and_su64:
+; CHECK: and.8b v0, v1, v0
+; CHECK-NEXT: ret
+; GENERIC-LABEL: and_su64:
+; GENERIC: and v0.8b, v1.8b, v0.8b
+; GENERIC-NEXT: ret
+  %vecext = extractelement <2 x i64> %a, i32 0
+  %vecext1 = extractelement <2 x i64> %b, i32 0
+  %or.i = and i64 %vecext1, %vecext
+  %retval = bitcast i64 %or.i to double
+  ret double %retval
+}
+
+define double @orr_su64(<2 x i64> %a, <2 x i64> %b) nounwind readnone {
+; CHECK-LABEL: orr_su64:
+; CHECK: orr.8b v0, v1, v0
+; CHECK-NEXT: ret
+; GENERIC-LABEL: orr_su64:
+; GENERIC: orr v0.8b, v1.8b, v0.8b
+; GENERIC-NEXT: ret
+  %vecext = extractelement <2 x i64> %a, i32 0
+  %vecext1 = extractelement <2 x i64> %b, i32 0
+  %or.i = or i64 %vecext1, %vecext
+  %retval = bitcast i64 %or.i to double
+  ret double %retval
+}
+
+define double @xorr_su64(<2 x i64> %a, <2 x i64> %b) nounwind readnone {
+; CHECK-LABEL: xorr_su64:
+; CHECK: eor.8b v0, v1, v0
+; CHECK-NEXT: ret
+; GENERIC-LABEL: xorr_su64:
+; GENERIC: eor v0.8b, v1.8b, v0.8b
+; GENERIC-NEXT: ret
+  %vecext = extractelement <2 x i64> %a, i32 0
+  %vecext1 = extractelement <2 x i64> %b, i32 0
+  %xor.i = xor i64 %vecext1, %vecext
+  %retval = bitcast i64 %xor.i to double
+  ret double %retval
+}

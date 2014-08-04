@@ -166,6 +166,12 @@ static int getTransformOpcode(unsigned Opc) {
     return AArch64::ADDv1i64;
   case AArch64::SUBXrr:
     return AArch64::SUBv1i64;
+  case AArch64::ANDXrr:
+    return AArch64::ANDv8i8;
+  case AArch64::EORXrr:
+    return AArch64::EORv8i8;
+  case AArch64::ORRXrr:
+    return AArch64::ORRv8i8;
   }
   // No AdvSIMD equivalent, so just return the original opcode.
   return Opc;
