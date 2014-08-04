@@ -213,7 +213,7 @@ Compile unit descriptors
     metadata   ;; List of global variables
     metadata   ;; List of imported entities
     metadata   ;; Split debug filename
-    i32        ;; Debug info emission kind (0 = Line Tables Only, 1 = Full Debug Info)
+    i32        ;; Debug info emission kind (1 = Full Debug Info, 2 = Line Tables Only)
   }
 
 These descriptors contain a source language ID for the file (we use the DWARF
