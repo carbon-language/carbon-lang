@@ -818,7 +818,8 @@ class DS_Store_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
 class DS_Store2_Helper <bits<8> op, string asm, RegisterClass regClass> : DS_1A <
   op,
   (outs),
-  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, u8imm:$offset0, u8imm:$offset1),
+  (ins i1imm:$gds, VReg_32:$addr, regClass:$data0, regClass:$data1,
+       u8imm:$offset0, u8imm:$offset1),
   asm#" $addr, $data0, $data1, $offset0, $offset1 [M0]",
   []> {
   let mayStore = 1;

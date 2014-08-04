@@ -826,8 +826,8 @@ def DS_READ_U16 : DS_Load_Helper <0x0000003c, "DS_READ_U16", VReg_32>;
 def DS_READ_B64 : DS_Load_Helper <0x00000076, "DS_READ_B64", VReg_64>;
 
 // 2 forms.
-def DS_WRITE2_B32 : DS_Load2_Helper <0x0000000E, "DS_WRITE2_B32", VReg_64>;
-def DS_WRITE2_B64 : DS_Load2_Helper <0x0000004E, "DS_WRITE2_B64", VReg_128>;
+def DS_WRITE2_B32 : DS_Store2_Helper <0x0000000E, "DS_WRITE2_B32", VReg_32>;
+def DS_WRITE2_B64 : DS_Store2_Helper <0x0000004E, "DS_WRITE2_B64", VReg_64>;
 
 def DS_READ2_B32 : DS_Load2_Helper <0x00000037, "DS_READ2_B32", VReg_64>;
 def DS_READ2_B64 : DS_Load2_Helper <0x00000075, "DS_READ2_B64", VReg_128>;
