@@ -1707,8 +1707,10 @@ TypeInfo ASTContext::getTypeInfoImpl(const Type *T) const {
     if (unsigned AttrAlign = Typedef->getMaxAlignment()) {
       Align = AttrAlign;
       AlignIsRequired = true;
-    } else
+    } else {
       Align = Info.Align;
+      AlignIsRequired = Info.AlignIsRequired;
+    }
     Width = Info.Width;
     break;
   }

@@ -684,6 +684,34 @@ struct PC {
 // CHECK-X64-NEXT:      | [sizeof=16, align=8
 // CHECK-X64-NEXT:      |  nvsize=12, nvalign=8]
 
+typedef PB PD;
+
+#pragma pack(push, 1)
+struct PE {
+  char a;
+  PD x;
+};
+#pragma pack(pop)
+
+// CHECK: *** Dumping AST Record Layout
+// CHECK:         0 | struct PE
+// CHECK-NEXT:    0 |   char a
+// CHECK-NEXT:    8 |   struct PA x
+// CHECK-NEXT:    8 |     int c
+// CHECK-NEXT:      |   [sizeof=4, align=4
+// CHECK-NEXT:      |    nvsize=4, nvalign=4]
+// CHECK-NEXT:      | [sizeof=16, align=8
+// CHECK-NEXT:      |  nvsize=12, nvalign=8]
+// CHECK-X64: *** Dumping AST Record Layout
+// CHECK-X64:         0 | struct PE
+// CHECK-X64-NEXT:    0 |   char a
+// CHECK-X64-NEXT:    8 |   struct PA x
+// CHECK-X64-NEXT:    8 |     int c
+// CHECK-X64-NEXT:      |   [sizeof=4, align=4
+// CHECK-X64-NEXT:      |    nvsize=4, nvalign=4]
+// CHECK-X64-NEXT:      | [sizeof=16, align=8
+// CHECK-X64-NEXT:      |  nvsize=12, nvalign=8]
+
 typedef int __declspec(align(2)) QA;
 #pragma pack(push, 1)
 struct QB {
@@ -768,6 +796,7 @@ sizeof(RE)+
 sizeof(ND)+
 sizeof(OD)+
 sizeof(PC)+
+sizeof(PE)+
 sizeof(QB)+
 sizeof(QC)+
 sizeof(QD)+
