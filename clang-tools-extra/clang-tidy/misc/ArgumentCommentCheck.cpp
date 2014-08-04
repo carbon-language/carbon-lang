@@ -86,10 +86,10 @@ ArgumentCommentCheck::isLikelyTypo(llvm::ArrayRef<ParmVarDecl *> Params,
   if (ThisED >= UpperBound)
     return false;
 
-  for (const auto &Param : Params) {
-    if (&Param - Params.begin() == ArgIndex)
+  for (unsigned I = 0, E = Params.size(); I != E; ++I) {
+    if (I == ArgIndex)
       continue;
-    IdentifierInfo *II = Param->getIdentifier();
+    IdentifierInfo *II = Params[I]->getIdentifier();
     if (!II)
       continue;
 
