@@ -852,7 +852,8 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
 /// FIXME: Iterating over the instruction stream is unnecessary. We can simply
 /// iterate over the vreg use list, which at this point only contains machine
 /// operands for which eliminateFrameIndex need a new scratch reg.
-void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
+void
+PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
   // Run through the instructions and find any virtual registers.
   for (MachineFunction::iterator BB = Fn.begin(),
        E = Fn.end(); BB != E; ++BB) {
@@ -903,12 +904,16 @@ void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
           // Replace this reference to the virtual register with the
           // scratch register.
           assert (ScratchReg && "Missing scratch register!");
+          MachineRegisterInfo &MRI = Fn.getRegInfo();
           Fn.getRegInfo().replaceRegWith(Reg, ScratchReg);
+          
+          // Make sure MRI now accounts this register as used.
+          MRI.setPhysRegUsed(ScratchReg);
 
           // Because this instruction was processed by the RS before this
           // register was allocated, make sure that the RS now records the
           // register as being used.
-          RS->setUsed(ScratchReg);
+          RS->setRegUsed(ScratchReg);
         }
       }
 

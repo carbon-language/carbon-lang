@@ -799,11 +799,9 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
       RS->enterBasicBlock(PredBB);
       if (!PredBB->empty())
         RS->forward(std::prev(PredBB->end()));
-      BitVector RegsLiveAtExit(TRI->getNumRegs());
-      RS->getRegsUsed(RegsLiveAtExit, false);
       for (MachineBasicBlock::livein_iterator I = TailBB->livein_begin(),
              E = TailBB->livein_end(); I != E; ++I) {
-        if (!RegsLiveAtExit[*I])
+        if (!RS->isRegUsed(*I, false))
           // If a register is previously livein to the tail but it's not live
           // at the end of predecessor BB, then it should be added to its
           // livein list.

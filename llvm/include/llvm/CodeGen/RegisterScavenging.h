@@ -34,7 +34,7 @@ class RegScavenger {
   MachineRegisterInfo* MRI;
   MachineBasicBlock *MBB;
   MachineBasicBlock::iterator MBBI;
-  unsigned NumPhysRegs;
+  unsigned NumRegUnits;
 
   /// Tracking - True if RegScavenger is currently tracking the liveness of 
   /// registers.
@@ -58,22 +58,19 @@ class RegScavenger {
   /// A vector of information on scavenged registers.
   SmallVector<ScavengedInfo, 2> Scavenged;
 
-  /// CalleeSavedrRegs - A bitvector of callee saved registers for the target.
-  ///
-  BitVector CalleeSavedRegs;
-
-  /// RegsAvailable - The current state of all the physical registers immediately
-  /// before MBBI. One bit per physical register. If bit is set that means it's
-  /// available, unset means the register is currently being used.
-  BitVector RegsAvailable;
+  /// RegUnitsAvailable - The current state of each reg unit immediatelly
+  /// before MBBI. One bit per register unit. If bit is not set it means any
+  /// register containing that register unit is currently being used.
+  BitVector RegUnitsAvailable;
 
   // These BitVectors are only used internally to forward(). They are members
   // to avoid frequent reallocations.
-  BitVector KillRegs, DefRegs;
+  BitVector KillRegUnits, DefRegUnits;
+  BitVector TmpRegUnits;
 
 public:
   RegScavenger()
-    : MBB(nullptr), NumPhysRegs(0), Tracking(false) {}
+    : MBB(nullptr), NumRegUnits(0), Tracking(false) {}
 
   /// enterBasicBlock - Start tracking liveness from the begin of the specific
   /// basic block.
@@ -112,9 +109,9 @@ public:
   MachineBasicBlock::iterator getCurrentPosition() const {
     return MBBI;
   }
-
-  /// getRegsUsed - return all registers currently in use in used.
-  void getRegsUsed(BitVector &used, bool includeReserved);
+  
+  /// isRegUsed - return if a specific register is currently used.
+  bool isRegUsed(unsigned Reg, bool includeReserved = true) const;
 
   /// getRegsAvailable - Return all available registers in the register class
   /// in Mask.
@@ -157,40 +154,29 @@ public:
     return scavengeRegister(RegClass, MBBI, SPAdj);
   }
 
-  /// setUsed - Tell the scavenger a register is used.
+  /// setRegUsed - Tell the scavenger a register is used.
   ///
-  void setUsed(unsigned Reg);
+  void setRegUsed(unsigned Reg);
 private:
   /// isReserved - Returns true if a register is reserved. It is never "unused".
   bool isReserved(unsigned Reg) const { return MRI->isReserved(Reg); }
 
-  /// isUsed - Test if a register is currently being used.  When called by the
-  /// isAliasUsed function, we only check isReserved if this is the original
-  /// register, not an alias register.
+  /// setUsed / setUnused - Mark the state of one or a number of register units.
   ///
-  bool isUsed(unsigned Reg, bool CheckReserved = true) const   {
-    return !RegsAvailable.test(Reg) || (CheckReserved && isReserved(Reg));
+  void setUsed(BitVector &RegUnits) {
+    RegUnitsAvailable.reset(RegUnits);
+  }
+  void setUnused(BitVector &RegUnits) {
+    RegUnitsAvailable |= RegUnits;
   }
 
-  /// isAliasUsed - Is Reg or an alias currently in use?
-  bool isAliasUsed(unsigned Reg) const;
-
-  /// setUsed / setUnused - Mark the state of one or a number of registers.
-  ///
-  void setUsed(BitVector &Regs) {
-    RegsAvailable.reset(Regs);
-  }
-  void setUnused(BitVector &Regs) {
-    RegsAvailable |= Regs;
-  }
-
-  /// Processes the current instruction and fill the KillRegs and DefRegs bit
-  /// vectors.
+  /// Processes the current instruction and fill the KillRegUnits and
+  /// DefRegUnits bit vectors.
   void determineKillsAndDefs();
-
-  /// Add Reg and all its sub-registers to BV.
-  void addRegWithSubRegs(BitVector &BV, unsigned Reg);
-
+  
+  /// Add all Reg Units that Reg contains to BV.
+  void addRegUnits(BitVector &BV, unsigned Reg);
+  
   /// findSurvivorReg - Return the candidate register that is unused for the
   /// longest after StartMI. UseMI is set to the instruction where the search
   /// stopped.

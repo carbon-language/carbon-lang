@@ -389,10 +389,8 @@ void BranchFolder::MaintainLiveIns(MachineBasicBlock *CurMBB,
     RS->enterBasicBlock(CurMBB);
     if (!CurMBB->empty())
       RS->forward(std::prev(CurMBB->end()));
-    BitVector RegsLiveAtExit(TRI->getNumRegs());
-    RS->getRegsUsed(RegsLiveAtExit, false);
-    for (unsigned int i = 0, e = TRI->getNumRegs(); i != e; i++)
-      if (RegsLiveAtExit[i])
+    for (unsigned int i = 1, e = TRI->getNumRegs(); i != e; i++)
+      if (RS->isRegUsed(i, false))
         NewMBB->addLiveIn(i);
   }
 }
