@@ -7766,6 +7766,74 @@ static SDValue lowerV8I16VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                      DAG.getNode(X86ISD::UNPCKL, DL, MVT::v2i64, LoV, HiV));
 }
 
+/// \brief Check whether a compaction lowering can be done by dropping even
+/// elements and compute how many times even elements must be dropped.
+///
+/// This handles shuffles which take every Nth element where N is a power of
+/// two. Example shuffle masks:
+///
+///  N = 1:  0,  2,  4,  6,  8, 10, 12, 14,  0,  2,  4,  6,  8, 10, 12, 14
+///  N = 1:  0,  2,  4,  6,  8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+///  N = 2:  0,  4,  8, 12,  0,  4,  8, 12,  0,  4,  8, 12,  0,  4,  8, 12
+///  N = 2:  0,  4,  8, 12, 16, 20, 24, 28,  0,  4,  8, 12, 16, 20, 24, 28
+///  N = 3:  0,  8,  0,  8,  0,  8,  0,  8,  0,  8,  0,  8,  0,  8,  0,  8
+///  N = 3:  0,  8, 16, 24,  0,  8, 16, 24,  0,  8, 16, 24,  0,  8, 16, 24
+///
+/// Any of these lanes can of course be undef.
+///
+/// This routine only supports N <= 3.
+/// FIXME: Evaluate whether either AVX or AVX-512 have any opportunities here
+/// for larger N.
+///
+/// \returns N above, or the number of times even elements must be dropped if
+/// there is such a number. Otherwise returns zero.
+static int canLowerByDroppingEvenElements(ArrayRef<int> Mask) {
+  // Figure out whether we're looping over two inputs or just one.
+  bool IsSingleInput = isSingleInputShuffleMask(Mask);
+
+  // The modulus for the shuffle vector entries is based on whether this is
+  // a single input or not.
+  int ShuffleModulus = Mask.size() * (IsSingleInput ? 1 : 2);
+  assert(isPowerOf2_32((uint32_t)ShuffleModulus) &&
+         "We should only be called with masks with a power-of-2 size!");
+
+  uint64_t ModMask = (uint64_t)ShuffleModulus - 1;
+
+  // We track whether the input is viable for all power-of-2 strides 2^1, 2^2,
+  // and 2^3 simultaneously. This is because we may have ambiguity with
+  // partially undef inputs.
+  bool ViableForN[3] = {true, true, true};
+
+  for (int i = 0, e = Mask.size(); i < e; ++i) {
+    // Ignore undef lanes, we'll optimistically collapse them to the pattern we
+    // want.
+    if (Mask[i] == -1)
+      continue;
+
+    bool IsAnyViable = false;
+    for (unsigned j = 0; j != array_lengthof(ViableForN); ++j)
+      if (ViableForN[j]) {
+        uint64_t N = j + 1;
+
+        // The shuffle mask must be equal to (i * 2^N) % M.
+        if ((uint64_t)Mask[i] == (((uint64_t)i << N) & ModMask))
+          IsAnyViable = true;
+        else
+          ViableForN[j] = false;
+      }
+    // Early exit if we exhaust the possible powers of two.
+    if (!IsAnyViable)
+      break;
+  }
+
+  for (unsigned j = 0; j != array_lengthof(ViableForN); ++j)
+    if (ViableForN[j])
+      return j + 1;
+
+  // Return 0 as there is no viable power of two.
+  return 0;
+}
+
 /// \brief Generic lowering of v16i8 shuffles.
 ///
 /// This is a hybrid strategy to lower v16i8 vectors. It first attempts to
@@ -7903,6 +7971,44 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     SDValue Odds = DAG.getVectorShuffle(MVT::v16i8, DL, V1, V2, OMask);
 
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
+  }
+
+  // Check whether a compaction lowering can be done. This handles shuffles
+  // which take every Nth element for some even N. See the helper function for
+  // details.
+  //
+  // We special case these as they can be particularly efficiently handled with
+  // the PACKUSB instruction on x86 and they show up in common patterns of
+  // rearranging bytes to truncate wide elements.
+  if (int NumEvenDrops = canLowerByDroppingEvenElements(Mask)) {
+    // NumEvenDrops is the power of two stride of the elements. Another way of
+    // thinking about it is that we need to drop the even elements this many
+    // times to get the original input.
+    bool IsSingleInput = isSingleInputShuffleMask(Mask);
+
+    // First we need to zero all the dropped bytes.
+    assert(NumEvenDrops <= 3 &&
+           "No support for dropping even elements more than 3 times.");
+    // We use the mask type to pick which bytes are preserved based on how many
+    // elements are dropped.
+    MVT MaskVTs[] = { MVT::v8i16, MVT::v4i32, MVT::v2i64 };
+    SDValue ByteClearMask =
+        DAG.getNode(ISD::BITCAST, DL, MVT::v16i8,
+                    DAG.getConstant(0xFF, MaskVTs[NumEvenDrops - 1]));
+    V1 = DAG.getNode(ISD::AND, DL, MVT::v16i8, V1, ByteClearMask);
+    if (!IsSingleInput)
+      V2 = DAG.getNode(ISD::AND, DL, MVT::v16i8, V2, ByteClearMask);
+
+    // Now pack things back together.
+    V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V1);
+    V2 = IsSingleInput ? V1 : DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, V2);
+    SDValue Result = DAG.getNode(X86ISD::PACKUS, DL, MVT::v16i8, V1, V2);
+    for (int i = 1; i < NumEvenDrops; ++i) {
+      Result = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16, Result);
+      Result = DAG.getNode(X86ISD::PACKUS, DL, MVT::v16i8, Result, Result);
+    }
+
+    return Result;
   }
 
   // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
