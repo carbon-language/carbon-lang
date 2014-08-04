@@ -3279,6 +3279,9 @@ def : InstAlias<"mfdear $Rx", (MFSPR gprc:$Rx, 981)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mtesr $Rx", (MTSPR 980, gprc:$Rx)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mfesr $Rx", (MFSPR gprc:$Rx, 980)>, Requires<[IsPPC4xx]>;
 
+def : InstAlias<"mttcr $Rx", (MTSPR 986, gprc:$Rx)>, Requires<[IsPPC4xx]>;
+def : InstAlias<"mftcr $Rx", (MFSPR gprc:$Rx, 986)>, Requires<[IsPPC4xx]>;
+
 def LAx : PPCAsmPseudo<"la $rA, $addr", (ins gprc:$rA, memri:$addr)>;
 
 def SUBI : PPCAsmPseudo<"subi $rA, $rB, $imm",

@@ -70,3 +70,10 @@
 # CHECK-BE: mtspr 980, 2                    # encoding: [0x7c,0x54,0xf3,0xa6]
 # CHECK-LE: mtspr 980, 2                    # encoding: [0xa6,0xf3,0x54,0x7c]
             mtesr %r2
+
+# CHECK-BE: mfspr 2, 986                    # encoding: [0x7c,0x5a,0xf2,0xa6]
+# CHECK-LE: mfspr 2, 986                    # encoding: [0xa6,0xf2,0x5a,0x7c]
+            mftcr %r2
+# CHECK-BE: mtspr 986, 2                    # encoding: [0x7c,0x5a,0xf3,0xa6]
+# CHECK-LE: mtspr 986, 2                    # encoding: [0xa6,0xf3,0x5a,0x7c]
+            mttcr %r2
