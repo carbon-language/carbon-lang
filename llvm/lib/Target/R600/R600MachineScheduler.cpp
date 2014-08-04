@@ -14,7 +14,6 @@
 
 #include "R600MachineScheduler.h"
 #include "AMDGPUSubtarget.h"
-#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
