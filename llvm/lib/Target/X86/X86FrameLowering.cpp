@@ -849,6 +849,11 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
   unsigned StackPtr = RegInfo->getStackRegister();
 
+  bool IsWinEH =
+      MF.getTarget().getMCAsmInfo()->getExceptionHandlingType() ==
+      ExceptionHandling::WinEH;
+  bool NeedsWinEH = IsWinEH && MF.getFunction()->needsUnwindTableEntry();
+
   switch (RetOpcode) {
   default:
     llvm_unreachable("Can only insert epilog into returning blocks");
@@ -933,16 +938,28 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
       unsigned Opc = getLEArOpcode(IsLP64);
       addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
                    FramePtr, false, -CSSize);
+      --MBBI;
     } else {
       unsigned Opc = (Is64Bit ? X86::MOV64rr : X86::MOV32rr);
       BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
         .addReg(FramePtr);
+      --MBBI;
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
     emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, IsLP64, UseLEA,
                  TII, *RegInfo);
+    --MBBI;
   }
+
+  // Windows unwinder will not invoke function's exception handler if IP is
+  // either in prologue or in epilogue.  This behavior causes a problem when a
+  // call immediately precedes an epilogue, because the return address points
+  // into the epilogue.  To cope with that, we insert an epilogue marker here,
+  // then replace it with a 'nop' if it ends up immediately after a CALL in the
+  // final emitted code.
+  if (NeedsWinEH)
+    BuildMI(MBB, MBBI, DL, TII.get(X86::SEH_Epilogue));
 
   // We're returning from function via eh_return.
   if (RetOpcode == X86::EH_RETURN || RetOpcode == X86::EH_RETURN64) {

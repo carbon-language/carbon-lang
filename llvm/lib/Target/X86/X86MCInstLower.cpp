@@ -826,6 +826,20 @@ void X86AsmPrinter::LowerPATCHPOINT(const MachineInstr &MI) {
            getSubtargetInfo());
 }
 
+// Returns instruction preceding MBBI in MachineFunction.
+// If MBBI is the first instruction of the first basic block, returns null.
+static MachineBasicBlock::const_iterator
+PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
+  const MachineBasicBlock *MBB = MBBI->getParent();
+  while (MBBI == MBB->begin()) {
+    if (MBB == MBB->getParent()->begin())
+      return nullptr;
+    MBB = MBB->getPrevNode();
+    MBBI = MBB->end();
+  }
+  return --MBBI;
+}
+
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(*MF, *this);
   const X86RegisterInfo *RI =
@@ -966,6 +980,21 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   case X86::SEH_EndPrologue:
     OutStreamer.EmitWinCFIEndProlog();
     return;
+
+  case X86::SEH_Epilogue: {
+    MachineBasicBlock::const_iterator MBBI(MI);
+    // Check if preceded by a call and emit nop if so.
+    for (MBBI = PrevCrossBBInst(MBBI); MBBI; MBBI = PrevCrossBBInst(MBBI)) {
+      // Conservatively assume that pseudo instructions don't emit code and keep
+      // looking for a call. We may emit an unnecessary nop in some cases.
+      if (!MBBI->isPseudo()) {
+        if (MBBI->isCall())
+          EmitAndCountInstruction(MCInstBuilder(X86::NOOP));
+        break;
+      }
+    }
+    return;
+  }
 
   case X86::PSHUFBrm:
   case X86::VPSHUFBrm:
