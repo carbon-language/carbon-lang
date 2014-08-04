@@ -1003,7 +1003,8 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
 bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
-  TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
+  TII = static_cast<const Thumb2InstrInfo *>(
+      TM.getSubtargetImpl()->getInstrInfo());
   STI = &TM.getSubtarget<ARMSubtarget>();
 
   // Optimizing / minimizing size?

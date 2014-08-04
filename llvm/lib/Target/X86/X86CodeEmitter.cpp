@@ -107,7 +107,7 @@ namespace {
                           intptr_t PCAdj = 0);
 
     unsigned getX86RegNum(unsigned RegNo) const {
-      const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+      const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
       return TRI->getEncodingValue(RegNo) & 0x7;
     }
 
@@ -131,8 +131,8 @@ bool Emitter<CodeEmitter>::runOnMachineFunction(MachineFunction &MF) {
   MMI = &getAnalysis<MachineModuleInfo>();
   MCE.setModuleInfo(MMI);
 
-  II = TM.getInstrInfo();
-  TD = TM.getDataLayout();
+  II = TM.getSubtargetImpl()->getInstrInfo();
+  TD = TM.getSubtargetImpl()->getDataLayout();
   Is64BitMode = TM.getSubtarget<X86Subtarget>().is64Bit();
   IsPIC = TM.getRelocationModel() == Reloc::PIC_;
 
@@ -1147,7 +1147,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
       emitConstant(0, X86II::getSizeOfImm(Desc->TSFlags));
       // Remember PIC base.
       PICBaseOffset = (intptr_t) MCE.getCurrentPCOffset();
-      X86JITInfo *JTI = TM.getJITInfo();
+      X86JITInfo *JTI = TM.getSubtargetImpl()->getJITInfo();
       JTI->setPICBase(MCE.getCurrentPCValue());
       break;
     }

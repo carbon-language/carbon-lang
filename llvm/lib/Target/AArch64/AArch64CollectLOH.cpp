@@ -101,6 +101,7 @@
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64MachineFunctionInfo.h"
+#include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
@@ -283,7 +284,7 @@ static void initReachingDef(MachineFunction &MF,
                             const MapRegToId &RegToId,
                             const MachineInstr *DummyOp, bool ADRPMode) {
   const TargetMachine &TM = MF.getTarget();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
 
   unsigned NbReg = RegToId.size();
 
@@ -1043,7 +1044,7 @@ static void collectInvolvedReg(MachineFunction &MF, MapRegToId &RegToId,
 
 bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
-  const TargetRegisterInfo *TRI = TM.getRegisterInfo();
+  const TargetRegisterInfo *TRI = TM.getSubtargetImpl()->getRegisterInfo();
   const MachineDominatorTree *MDT = &getAnalysis<MachineDominatorTree>();
 
   MapRegToId RegToId;
@@ -1059,8 +1060,8 @@ bool AArch64CollectLOH::runOnMachineFunction(MachineFunction &MF) {
 
   MachineInstr *DummyOp = nullptr;
   if (BasicBlockScopeOnly) {
-    const AArch64InstrInfo *TII =
-        static_cast<const AArch64InstrInfo *>(TM.getInstrInfo());
+    const AArch64InstrInfo *TII = static_cast<const AArch64InstrInfo *>(
+        TM.getSubtargetImpl()->getInstrInfo());
     // For local analysis, create a dummy operation to record uses that are not
     // local.
     DummyOp = MF.CreateMachineInstr(TII->get(AArch64::COPY), DebugLoc());

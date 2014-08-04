@@ -27,6 +27,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -41,13 +42,14 @@ static cl::opt<signed> RegPressureThreshold(
   cl::desc("Track reg pressure and switch priority to in-depth"));
 
 ResourcePriorityQueue::ResourcePriorityQueue(SelectionDAGISel *IS)
-    : Picker(this),
-      InstrItins(
-          IS->getTargetLowering()->getTargetMachine().getInstrItineraryData()) {
+    : Picker(this), InstrItins(IS->getTargetLowering()
+                                   ->getTargetMachine()
+                                   .getSubtargetImpl()
+                                   ->getInstrItineraryData()) {
   const TargetMachine &TM = (*IS->MF).getTarget();
-  TRI = TM.getRegisterInfo();
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
   TLI = IS->getTargetLowering();
-  TII = TM.getInstrInfo();
+  TII = TM.getSubtargetImpl()->getInstrInfo();
   ResourcesModel = TII->CreateTargetScheduleState(&TM, nullptr);
   // This hard requirement could be relaxed, but for now
   // do not let it procede.

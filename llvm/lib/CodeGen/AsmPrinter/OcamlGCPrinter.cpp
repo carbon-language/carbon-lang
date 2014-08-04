@@ -26,6 +26,7 @@
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <cctype>
 using namespace llvm;
 
@@ -91,7 +92,8 @@ void OcamlGCMetadataPrinter::beginAssembly(AsmPrinter &AP) {
 /// either condition is detected in a function which uses the GC.
 ///
 void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
-  unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
+  unsigned IntPtrSize =
+      AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
   AP.OutStreamer.SwitchSection(AP.getObjFileLowering().getTextSection());
   EmitCamlGlobal(getModule(), AP, "code_end");

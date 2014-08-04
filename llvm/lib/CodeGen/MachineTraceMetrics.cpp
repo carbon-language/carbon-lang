@@ -52,8 +52,8 @@ void MachineTraceMetrics::getAnalysisUsage(AnalysisUsage &AU) const {
 
 bool MachineTraceMetrics::runOnMachineFunction(MachineFunction &Func) {
   MF = &Func;
-  TII = MF->getTarget().getInstrInfo();
-  TRI = MF->getTarget().getRegisterInfo();
+  TII = MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  TRI = MF->getTarget().getSubtargetImpl()->getRegisterInfo();
   MRI = &MF->getRegInfo();
   Loops = &getAnalysis<MachineLoopInfo>();
   const TargetSubtargetInfo &ST =

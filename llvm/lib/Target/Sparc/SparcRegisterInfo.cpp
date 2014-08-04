@@ -108,7 +108,8 @@ static void replaceFI(MachineFunction &MF,
     return;
   }
 
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
 
   // FIXME: it would be better to scavenge a register here instead of
   // reserving G1 all of the time.
@@ -174,7 +175,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 
   if (!Subtarget.isV9() || !Subtarget.hasHardQuad()) {
     if (MI.getOpcode() == SP::STQFri) {
-      const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+      const TargetInstrInfo &TII =
+          *MF.getTarget().getSubtargetImpl()->getInstrInfo();
       unsigned SrcReg = MI.getOperand(2).getReg();
       unsigned SrcEvenReg = getSubReg(SrcReg, SP::sub_even64);
       unsigned SrcOddReg  = getSubReg(SrcReg, SP::sub_odd64);
@@ -186,7 +188,8 @@ SparcRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.getOperand(2).setReg(SrcOddReg);
       Offset += 8;
     } else if (MI.getOpcode() == SP::LDQFri) {
-      const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+      const TargetInstrInfo &TII =
+          *MF.getTarget().getSubtargetImpl()->getInstrInfo();
       unsigned DestReg     = MI.getOperand(0).getReg();
       unsigned DestEvenReg = getSubReg(DestReg, SP::sub_even64);
       unsigned DestOddReg  = getSubReg(DestReg, SP::sub_odd64);

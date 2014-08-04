@@ -257,13 +257,21 @@ protected:
   /// so that we can use initializer lists for subtarget initialization.
   ARMSubtarget &initializeSubtargetDependencies(StringRef CPU, StringRef FS);
 
-  const DataLayout *getDataLayout() const { return &DL; }
-  const ARMSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  ARMJITInfo *getJITInfo() { return &JITInfo; }
-  const ARMBaseInstrInfo *getInstrInfo() const { return InstrInfo.get(); }
-  const ARMTargetLowering *getTargetLowering() const { return &TLInfo; }
-  const ARMFrameLowering *getFrameLowering() const { return FrameLowering.get(); }
-  const ARMBaseRegisterInfo *getRegisterInfo() const {
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return &TSInfo;
+  }
+  ARMJITInfo *getJITInfo() override { return &JITInfo; }
+  const ARMBaseInstrInfo *getInstrInfo() const override {
+    return InstrInfo.get();
+  }
+  const ARMTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
+  }
+  const ARMFrameLowering *getFrameLowering() const override {
+    return FrameLowering.get();
+  }
+  const ARMBaseRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo->getRegisterInfo();
   }
 
@@ -433,7 +441,9 @@ public:
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.
-  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
+  const InstrItineraryData *getInstrItineraryData() const {
+    return &InstrItins;
+  }
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

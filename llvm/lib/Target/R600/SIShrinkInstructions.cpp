@@ -10,6 +10,7 @@
 //
 
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -177,7 +178,7 @@ static void foldImmediates(MachineInstr &MI, const SIInstrInfo *TII,
 bool SIShrinkInstructions::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-      MF.getTarget().getInstrInfo());
+      MF.getTarget().getSubtargetImpl()->getInstrInfo());
   const SIRegisterInfo &TRI = TII->getRegisterInfo();
   std::vector<unsigned> I1Defs;
 

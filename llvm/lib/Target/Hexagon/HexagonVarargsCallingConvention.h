@@ -74,10 +74,14 @@ static bool CC_Hexagon32_VarArgs(unsigned ValNo, EVT ValVT,
   }
 
   const Type* ArgTy = LocVT.getTypeForEVT(State.getContext());
-  unsigned Alignment =
-    State.getTarget().getDataLayout()->getABITypeAlignment(ArgTy);
+  unsigned Alignment = State.getTarget()
+                           .getSubtargetImpl()
+                           ->getDataLayout()
+                           ->getABITypeAlignment(ArgTy);
   unsigned Size =
-    State.getTarget().getDataLayout()->getTypeSizeInBits(ArgTy) / 8;
+      State.getTarget().getSubtargetImpl()->getDataLayout()->getTypeSizeInBits(
+          ArgTy) /
+      8;
 
   // If it's passed by value, then we need the size of the aggregate not of
   // the pointer.
@@ -129,10 +133,14 @@ static bool RetCC_Hexagon32_VarArgs(unsigned ValNo, EVT ValVT,
   }
 
   const Type* ArgTy = LocVT.getTypeForEVT(State.getContext());
-  unsigned Alignment =
-    State.getTarget().getDataLayout()->getABITypeAlignment(ArgTy);
+  unsigned Alignment = State.getTarget()
+                           .getSubtargetImpl()
+                           ->getDataLayout()
+                           ->getABITypeAlignment(ArgTy);
   unsigned Size =
-    State.getTarget().getDataLayout()->getTypeSizeInBits(ArgTy) / 8;
+      State.getTarget().getSubtargetImpl()->getDataLayout()->getTypeSizeInBits(
+          ArgTy) /
+      8;
 
   unsigned Offset3 = State.AllocateStack(Size, Alignment);
   State.addLoc(CCValAssign::getMem(ValNo, ValVT.getSimpleVT(), Offset3,

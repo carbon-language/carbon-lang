@@ -46,7 +46,8 @@ void SparcFrameLowering::emitSPAdjustment(MachineFunction &MF,
 
   DebugLoc dl = (MBBI != MBB.end()) ? MBBI->getDebugLoc() : DebugLoc();
   const SparcInstrInfo &TII =
-    *static_cast<const SparcInstrInfo*>(MF.getTarget().getInstrInfo());
+      *static_cast<const SparcInstrInfo *>(
+          MF.getTarget().getSubtargetImpl()->getInstrInfo());
 
   if (NumBytes >= -4096 && NumBytes < 4096) {
     BuildMI(MBB, MBBI, dl, TII.get(ADDri), SP::O6)
@@ -88,7 +89,8 @@ void SparcFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const SparcInstrInfo &TII =
-    *static_cast<const SparcInstrInfo*>(MF.getTarget().getInstrInfo());
+      *static_cast<const SparcInstrInfo *>(
+          MF.getTarget().getSubtargetImpl()->getInstrInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
@@ -153,7 +155,8 @@ void SparcFrameLowering::emitEpilogue(MachineFunction &MF,
   SparcMachineFunctionInfo *FuncInfo = MF.getInfo<SparcMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const SparcInstrInfo &TII =
-    *static_cast<const SparcInstrInfo*>(MF.getTarget().getInstrInfo());
+      *static_cast<const SparcInstrInfo *>(
+          MF.getTarget().getSubtargetImpl()->getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
   assert(MBBI->getOpcode() == SP::RETL &&
          "Can only put epilog before 'retl' instruction!");

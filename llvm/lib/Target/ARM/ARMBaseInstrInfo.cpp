@@ -108,7 +108,7 @@ ARMBaseInstrInfo::CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
                                                const ScheduleDAG *DAG) const {
   if (usePreRAHazardRecognizer()) {
     const InstrItineraryData *II =
-        &static_cast<const ARMSubtarget *>(STI)->getInstrItineraryData();
+        static_cast<const ARMSubtarget *>(STI)->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG, "pre-RA-sched");
   }
   return TargetInstrInfo::CreateTargetHazardRecognizer(STI, DAG);

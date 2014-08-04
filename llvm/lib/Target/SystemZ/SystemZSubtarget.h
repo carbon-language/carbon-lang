@@ -55,14 +55,20 @@ public:
   SystemZSubtarget(const std::string &TT, const std::string &CPU,
                    const std::string &FS, const TargetMachine &TM);
 
-  const TargetFrameLowering *getFrameLowering() const { return &FrameLowering; }
-  const SystemZInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  const DataLayout *getDataLayout() const { return &DL; }
-  const SystemZRegisterInfo *getRegisterInfo() const {
+  const TargetFrameLowering *getFrameLowering() const override {
+    return &FrameLowering;
+  }
+  const SystemZInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const SystemZRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  const SystemZTargetLowering *getTargetLowering() const { return &TLInfo; }
-  const TargetSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
+  const SystemZTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
+  }
+  const TargetSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return &TSInfo;
+  }
 
   // This is important for reducing register pressure in vector code.
   bool useAA() const override { return true; }

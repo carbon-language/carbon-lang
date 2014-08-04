@@ -74,7 +74,7 @@ FunctionPass *llvm::createSIFixSGPRLiveRangesPass() {
 bool SIFixSGPRLiveRanges::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
   const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
-      MF.getTarget().getRegisterInfo());
+      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
   LiveIntervals *LIS = &getAnalysis<LiveIntervals>();
 
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();

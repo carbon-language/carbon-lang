@@ -48,8 +48,8 @@ public:
   }
 
   X86TTI(const X86TargetMachine *TM)
-    : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
-      TLI(TM->getTargetLowering()) {
+      : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeX86TTIPass(*PassRegistry::getPassRegistry());
   }
 

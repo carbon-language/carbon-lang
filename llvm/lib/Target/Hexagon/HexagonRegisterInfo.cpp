@@ -128,12 +128,14 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Addressable stack objects are accessed using neg. offsets from %fp.
   MachineFunction &MF = *MI.getParent()->getParent();
   const HexagonInstrInfo &TII =
-    *static_cast<const HexagonInstrInfo*>(MF.getTarget().getInstrInfo());
+      *static_cast<const HexagonInstrInfo *>(
+          MF.getTarget().getSubtargetImpl()->getInstrInfo());
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
   MachineFrameInfo &MFI = *MF.getFrameInfo();
 
   unsigned FrameReg = getFrameRegister(MF);
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetFrameLowering *TFI =
+      MF.getTarget().getSubtargetImpl()->getFrameLowering();
   if (!TFI->hasFP(MF)) {
     // We will not reserve space on the stack for the lr and fp registers.
     Offset -= 2 * Hexagon_WordSize;
@@ -278,7 +280,8 @@ unsigned HexagonRegisterInfo::getRARegister() const {
 
 unsigned HexagonRegisterInfo::getFrameRegister(const MachineFunction
                                                &MF) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetFrameLowering *TFI =
+      MF.getTarget().getSubtargetImpl()->getFrameLowering();
   if (TFI->hasFP(MF)) {
     return Hexagon::R30;
   }

@@ -203,8 +203,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl,
 
   // ESI might be used as a base pointer, in that case we can't simply overwrite
   // the register.  Fall back to generic code.
-  const X86RegisterInfo *TRI =
-      static_cast<const X86RegisterInfo *>(DAG.getTarget().getRegisterInfo());
+  const X86RegisterInfo *TRI = static_cast<const X86RegisterInfo *>(
+      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
   if (TRI->hasBasePointer(DAG.getMachineFunction()) &&
       TRI->getBaseRegister() == X86::ESI)
     return SDValue();

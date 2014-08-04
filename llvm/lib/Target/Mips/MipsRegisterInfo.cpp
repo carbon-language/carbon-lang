@@ -62,7 +62,8 @@ MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
   case Mips::GPR32RegClassID:
   case Mips::GPR64RegClassID:
   case Mips::DSPRRegClassID: {
-    const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+    const TargetFrameLowering *TFI =
+        MF.getTarget().getSubtargetImpl()->getFrameLowering();
     return 28 - TFI->hasFP(MF);
   }
   case Mips::FGR32RegClassID:
@@ -161,7 +162,7 @@ getReservedRegs(const MachineFunction &MF) const {
       Reserved.set(*Reg);
   }
   // Reserve FP if this function should have a dedicated frame pointer register.
-  if (MF.getTarget().getFrameLowering()->hasFP(MF)) {
+  if (MF.getTarget().getSubtargetImpl()->getFrameLowering()->hasFP(MF)) {
     if (Subtarget.inMips16Mode())
       Reserved.set(Mips::S0);
     else {
@@ -250,7 +251,8 @@ eliminateFrameIndex(MachineBasicBlock::iterator II, int SPAdj,
 
 unsigned MipsRegisterInfo::
 getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+  const TargetFrameLowering *TFI =
+      MF.getTarget().getSubtargetImpl()->getFrameLowering();
   bool IsN64 = Subtarget.isABI_N64();
 
   if (Subtarget.inMips16Mode())

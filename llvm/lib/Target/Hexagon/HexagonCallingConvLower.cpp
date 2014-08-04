@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 Hexagon_CCState::Hexagon_CCState(CallingConv::ID CC, bool isVarArg,
@@ -31,7 +32,8 @@ Hexagon_CCState::Hexagon_CCState(CallingConv::ID CC, bool isVarArg,
   // No stack is used.
   StackOffset = 0;
 
-  UsedRegs.resize((TM.getRegisterInfo()->getNumRegs()+31)/32);
+  UsedRegs.resize(
+      (TM.getSubtargetImpl()->getRegisterInfo()->getNumRegs() + 31) / 32);
 }
 
 // HandleByVal - Allocate a stack slot large enough to pass an argument by
@@ -55,7 +57,7 @@ void Hexagon_CCState::HandleByVal(unsigned ValNo, EVT ValVT,
 
 /// MarkAllocated - Mark a register and all of its aliases as allocated.
 void Hexagon_CCState::MarkAllocated(unsigned Reg) {
-  const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
+  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
   for (MCRegAliasIterator AI(Reg, &TRI, true); AI.isValid(); ++AI)
     UsedRegs[*AI/32] |= 1 << (*AI&31);
 }

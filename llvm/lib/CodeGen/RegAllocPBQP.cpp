@@ -50,6 +50,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <limits>
 #include <memory>
 #include <set>
@@ -188,7 +189,8 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
 
   LiveIntervals *LIS = const_cast<LiveIntervals*>(lis);
   MachineRegisterInfo *mri = &mf->getRegInfo();
-  const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
+  const TargetRegisterInfo *tri =
+      mf->getTarget().getSubtargetImpl()->getRegisterInfo();
 
   std::unique_ptr<PBQPRAProblem> p(new PBQPRAProblem());
   PBQPRAGraph &g = p->getGraph();
@@ -317,7 +319,7 @@ PBQPRAProblem *PBQPBuilderWithCoalescing::build(MachineFunction *mf,
   PBQPRAGraph &g = p->getGraph();
 
   const TargetMachine &tm = mf->getTarget();
-  CoalescerPair cp(*tm.getRegisterInfo());
+  CoalescerPair cp(*tm.getSubtargetImpl()->getRegisterInfo());
 
   // Scan the machine function and add a coalescing cost whenever CoalescerPair
   // gives the Ok.
@@ -532,8 +534,8 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
 
   mf = &MF;
   tm = &mf->getTarget();
-  tri = tm->getRegisterInfo();
-  tii = tm->getInstrInfo();
+  tri = tm->getSubtargetImpl()->getRegisterInfo();
+  tii = tm->getSubtargetImpl()->getInstrInfo();
   mri = &mf->getRegInfo();
 
   lis = &getAnalysis<LiveIntervals>();

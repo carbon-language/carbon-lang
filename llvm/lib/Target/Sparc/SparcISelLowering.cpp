@@ -915,7 +915,7 @@ SparcTargetLowering::LowerCall_32(TargetLowering::CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const SparcRegisterInfo *TRI =
-    ((const SparcTargetMachine&)getTargetMachine()).getRegisterInfo();
+      getTargetMachine().getSubtarget<SparcSubtarget>().getRegisterInfo();
   const uint32_t *Mask = ((hasReturnsTwice)
                           ? TRI->getRTCallPreservedMask(CallConv)
                           : TRI->getCallPreservedMask(CallConv));
@@ -1228,10 +1228,10 @@ SparcTargetLowering::LowerCall_64(TargetLowering::CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const SparcRegisterInfo *TRI =
-    ((const SparcTargetMachine&)getTargetMachine()).getRegisterInfo();
-  const uint32_t *Mask = ((hasReturnsTwice)
-                          ? TRI->getRTCallPreservedMask(CLI.CallConv)
-                          : TRI->getCallPreservedMask(CLI.CallConv));
+      getTargetMachine().getSubtarget<SparcSubtarget>().getRegisterInfo();
+  const uint32_t *Mask =
+      ((hasReturnsTwice) ? TRI->getRTCallPreservedMask(CLI.CallConv)
+                         : TRI->getCallPreservedMask(CLI.CallConv));
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
 
@@ -1905,7 +1905,9 @@ SDValue SparcTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     Ops.push_back(Symbol);
     Ops.push_back(DAG.getRegister(SP::O0, PtrVT));
     const uint32_t *Mask = getTargetMachine()
-      .getRegisterInfo()->getCallPreservedMask(CallingConv::C);
+                               .getSubtargetImpl()
+                               ->getRegisterInfo()
+                               ->getCallPreservedMask(CallingConv::C);
     assert(Mask && "Missing call preserved mask for calling convention");
     Ops.push_back(DAG.getRegisterMask(Mask));
     Ops.push_back(InFlag);
@@ -2901,7 +2903,8 @@ MachineBasicBlock*
 SparcTargetLowering::expandSelectCC(MachineInstr *MI,
                                     MachineBasicBlock *BB,
                                     unsigned BROpcode) const {
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *getTargetMachine().getSubtargetImpl()->getInstrInfo();
   DebugLoc dl = MI->getDebugLoc();
   unsigned CC = (SPCC::CondCodes)MI->getOperand(3).getImm();
 
@@ -2962,7 +2965,8 @@ SparcTargetLowering::expandAtomicRMW(MachineInstr *MI,
                                      MachineBasicBlock *MBB,
                                      unsigned Opcode,
                                      unsigned CondCode) const {
-  const TargetInstrInfo &TII = *getTargetMachine().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *getTargetMachine().getSubtargetImpl()->getInstrInfo();
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   DebugLoc DL = MI->getDebugLoc();
 

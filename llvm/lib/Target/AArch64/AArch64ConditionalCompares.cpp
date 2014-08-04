@@ -191,8 +191,8 @@ public:
   /// runOnMachineFunction - Initialize per-function data structures.
   void runOnMachineFunction(MachineFunction &MF) {
     this->MF = &MF;
-    TII = MF.getTarget().getInstrInfo();
-    TRI = MF.getTarget().getRegisterInfo();
+    TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+    TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
     MRI = &MF.getRegInfo();
   }
 
@@ -891,8 +891,8 @@ bool AArch64ConditionalCompares::tryConvert(MachineBasicBlock *MBB) {
 bool AArch64ConditionalCompares::runOnMachineFunction(MachineFunction &MF) {
   DEBUG(dbgs() << "********** AArch64 Conditional Compares **********\n"
                << "********** Function: " << MF.getName() << '\n');
-  TII = MF.getTarget().getInstrInfo();
-  TRI = MF.getTarget().getRegisterInfo();
+  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   SchedModel =
       MF.getTarget().getSubtarget<TargetSubtargetInfo>().getSchedModel();
   MRI = &MF.getRegInfo();

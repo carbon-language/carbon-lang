@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AArch64InstrInfo.h"
+#include "AArch64Subtarget.h"
 #include "MCTargetDesc/AArch64AddressingModes.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -931,8 +932,9 @@ bool AArch64LoadStoreOpt::optimizeBlock(MachineBasicBlock &MBB) {
 
 bool AArch64LoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
-  TII = static_cast<const AArch64InstrInfo *>(TM.getInstrInfo());
-  TRI = TM.getRegisterInfo();
+  TII = static_cast<const AArch64InstrInfo *>(
+      TM.getSubtargetImpl()->getInstrInfo());
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
 
   bool Modified = false;
   for (auto &MBB : Fn)

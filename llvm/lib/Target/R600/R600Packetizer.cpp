@@ -149,10 +149,11 @@ private:
 public:
   // Ctor.
   R600PacketizerList(MachineFunction &MF, MachineLoopInfo &MLI,
-                        MachineDominatorTree &MDT)
-  : VLIWPacketizerList(MF, MLI, MDT, true),
-    TII (static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo())),
-    TRI(TII->getRegisterInfo()) {
+                     MachineDominatorTree &MDT)
+      : VLIWPacketizerList(MF, MLI, MDT, true),
+        TII(static_cast<const R600InstrInfo *>(
+            MF.getTarget().getSubtargetImpl()->getInstrInfo())),
+        TRI(TII->getRegisterInfo()) {
     VLIW5 = !MF.getTarget().getSubtarget<AMDGPUSubtarget>().hasCaymanISA();
   }
 
@@ -328,7 +329,8 @@ public:
 };
 
 bool R600Packetizer::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo *TII =
+      Fn.getTarget().getSubtargetImpl()->getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
 

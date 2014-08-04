@@ -191,7 +191,8 @@ HexagonPacketizerList::HexagonPacketizerList(
 }
 
 bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetInstrInfo *TII = Fn.getTarget().getInstrInfo();
+  const TargetInstrInfo *TII =
+      Fn.getTarget().getSubtargetImpl()->getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   const MachineBranchProbabilityInfo *MBPI =
@@ -324,8 +325,8 @@ bool HexagonPacketizerList::IsCallDependent(MachineInstr* MI,
                                           unsigned DepReg) {
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  const HexagonRegisterInfo* QRI =
-              (const HexagonRegisterInfo *) TM.getRegisterInfo();
+  const HexagonRegisterInfo *QRI =
+      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
 
   // Check for lr dependence
   if (DepReg == QRI->getRARegister()) {
@@ -549,8 +550,8 @@ bool HexagonPacketizerList::CanPromoteToNewValueStore( MachineInstr *MI,
       GetStoreValueOperand(MI).getReg() != DepReg)
     return false;
 
-  const HexagonRegisterInfo* QRI =
-                            (const HexagonRegisterInfo *) TM.getRegisterInfo();
+  const HexagonRegisterInfo *QRI =
+      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
   const MCInstrDesc& MCID = PacketMI->getDesc();
   // first operand is always the result
 
@@ -724,8 +725,8 @@ bool HexagonPacketizerList::CanPromoteToNewValue( MachineInstr *MI,
 {
 
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
-  const HexagonRegisterInfo* QRI =
-                            (const HexagonRegisterInfo *) TM.getRegisterInfo();
+  const HexagonRegisterInfo *QRI =
+      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
   if (!QRI->Subtarget.hasV4TOps() ||
       !QII->mayBeNewStore(MI))
     return false;
@@ -1007,8 +1008,8 @@ bool HexagonPacketizerList::isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
   MachineBasicBlock::iterator II = I;
 
   const unsigned FrameSize = MF.getFrameInfo()->getStackSize();
-  const HexagonRegisterInfo* QRI =
-                      (const HexagonRegisterInfo *) TM.getRegisterInfo();
+  const HexagonRegisterInfo *QRI =
+      (const HexagonRegisterInfo *)TM.getSubtargetImpl()->getRegisterInfo();
   const HexagonInstrInfo *QII = (const HexagonInstrInfo *) TII;
 
   // Inline asm cannot go in the packet.

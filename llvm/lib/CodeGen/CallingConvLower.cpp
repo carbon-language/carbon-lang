@@ -21,14 +21,15 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 CCState::CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &mf,
                  const TargetMachine &tm, SmallVectorImpl<CCValAssign> &locs,
                  LLVMContext &C)
-  : CallingConv(CC), IsVarArg(isVarArg), MF(mf), TM(tm),
-    TRI(*TM.getRegisterInfo()), Locs(locs), Context(C),
-    CallOrPrologue(Unknown) {
+    : CallingConv(CC), IsVarArg(isVarArg), MF(mf), TM(tm),
+      TRI(*TM.getSubtargetImpl()->getRegisterInfo()), Locs(locs), Context(C),
+      CallOrPrologue(Unknown) {
   // No stack is used.
   StackOffset = 0;
 
@@ -50,7 +51,7 @@ void CCState::HandleByVal(unsigned ValNo, MVT ValVT,
   if (MinAlign > (int)Align)
     Align = MinAlign;
   MF.getFrameInfo()->ensureMaxAlignment(Align);
-  TM.getTargetLowering()->HandleByVal(this, Size, Align);
+  TM.getSubtargetImpl()->getTargetLowering()->HandleByVal(this, Size, Align);
   unsigned Offset = AllocateStack(Size, Align);
   addLoc(CCValAssign::getMem(ValNo, ValVT, Offset, LocVT, LocInfo));
 }

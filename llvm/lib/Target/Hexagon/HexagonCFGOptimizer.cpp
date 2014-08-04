@@ -72,7 +72,7 @@ static bool IsUnconditionalJump(int Opc) {
 void
 HexagonCFGOptimizer::InvertAndChangeJumpTarget(MachineInstr* MI,
                                                MachineBasicBlock* NewTarget) {
-  const HexagonInstrInfo *QII = QTM.getInstrInfo();
+  const HexagonInstrInfo *QII = QTM.getSubtargetImpl()->getInstrInfo();
   int NewOpcode = 0;
   switch(MI->getOpcode()) {
   case Hexagon::JMP_t:

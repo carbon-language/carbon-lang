@@ -42,7 +42,9 @@ class BasicTTI final : public ImmutablePass, public TargetTransformInfo {
   /// Estimate the cost overhead of SK_Alternate shuffle.
   unsigned getAltShuffleOverhead(Type *Ty) const;
 
-  const TargetLoweringBase *getTLI() const { return TM->getTargetLowering(); }
+  const TargetLoweringBase *getTLI() const {
+    return TM->getSubtargetImpl()->getTargetLowering();
+  }
 
 public:
   BasicTTI() : ImmutablePass(ID), TM(nullptr) {

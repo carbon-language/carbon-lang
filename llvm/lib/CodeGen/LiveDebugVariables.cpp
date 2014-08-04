@@ -39,6 +39,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 #include <memory>
 
@@ -698,7 +699,7 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   LIS = &pass.getAnalysis<LiveIntervals>();
   MDT = &pass.getAnalysis<MachineDominatorTree>();
-  TRI = mf.getTarget().getRegisterInfo();
+  TRI = mf.getTarget().getSubtargetImpl()->getRegisterInfo();
   LS.initialize(mf);
   DEBUG(dbgs() << "********** COMPUTING LIVE DEBUG VARIABLES: "
                << mf.getName() << " **********\n");
@@ -993,7 +994,8 @@ void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
   DEBUG(dbgs() << "********** EMITTING LIVE DEBUG VARIABLES **********\n");
   if (!MF)
     return;
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  const TargetInstrInfo *TII =
+      MF->getTarget().getSubtargetImpl()->getInstrInfo();
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
     DEBUG(userValues[i]->print(dbgs(), &MF->getTarget()));
     userValues[i]->rewriteLocations(*VRM, *TRI);

@@ -16,6 +16,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -138,8 +139,8 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
-  TII = MF.getTarget().getInstrInfo();
-  TRI = MF.getTarget().getRegisterInfo();
+  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   MRI = &MF.getRegInfo();
   assert(MRI->isSSA() && "ProcessImplicitDefs only works on SSA form.");
   assert(WorkList.empty() && "Inconsistent worklist state");

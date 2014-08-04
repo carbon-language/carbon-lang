@@ -606,7 +606,7 @@ SDValue AMDGPUTargetLowering::LowerConstantInitializer(const Constant* Init,
                                                        const SDValue &InitPtr,
                                                        SDValue Chain,
                                                        SelectionDAG &DAG) const {
-  const DataLayout *TD = getTargetMachine().getDataLayout();
+  const DataLayout *TD = getTargetMachine().getSubtargetImpl()->getDataLayout();
   SDLoc DL(InitPtr);
   Type *InitTy = Init->getType();
 
@@ -683,7 +683,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
                                                  SDValue Op,
                                                  SelectionDAG &DAG) const {
 
-  const DataLayout *TD = getTargetMachine().getDataLayout();
+  const DataLayout *TD = getTargetMachine().getSubtargetImpl()->getDataLayout();
   GlobalAddressSDNode *G = cast<GlobalAddressSDNode>(Op);
   const GlobalValue *GV = G->getGlobal();
 
@@ -778,8 +778,8 @@ SDValue AMDGPUTargetLowering::LowerFrameIndex(SDValue Op,
                                               SelectionDAG &DAG) const {
 
   MachineFunction &MF = DAG.getMachineFunction();
-  const AMDGPUFrameLowering *TFL =
-   static_cast<const AMDGPUFrameLowering*>(getTargetMachine().getFrameLowering());
+  const AMDGPUFrameLowering *TFL = static_cast<const AMDGPUFrameLowering *>(
+      getTargetMachine().getSubtargetImpl()->getFrameLowering());
 
   FrameIndexSDNode *FIN = cast<FrameIndexSDNode>(Op);
 

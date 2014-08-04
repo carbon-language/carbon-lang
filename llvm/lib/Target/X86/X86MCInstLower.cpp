@@ -75,10 +75,10 @@ namespace llvm {
 
   void
   X86AsmPrinter::StackMapShadowTracker::startFunction(MachineFunction &MF) {
-    CodeEmitter.reset(TM.getTarget().createMCCodeEmitter(*TM.getInstrInfo(),
-                                                         *TM.getRegisterInfo(),
-                                                         *TM.getSubtargetImpl(),
-                                                         MF.getContext()));
+    CodeEmitter.reset(TM.getTarget().createMCCodeEmitter(
+        *TM.getSubtargetImpl()->getInstrInfo(),
+        *TM.getSubtargetImpl()->getRegisterInfo(), *TM.getSubtargetImpl(),
+        MF.getContext()));
   }
 
   void X86AsmPrinter::StackMapShadowTracker::count(MCInst &Inst,
@@ -124,7 +124,7 @@ MachineModuleInfoMachO &X86MCInstLower::getMachOMMI() const {
 /// operand to an MCSymbol.
 MCSymbol *X86MCInstLower::
 GetSymbolFromOperand(const MachineOperand &MO) const {
-  const DataLayout *DL = TM.getDataLayout();
+  const DataLayout *DL = TM.getSubtargetImpl()->getDataLayout();
   assert((MO.isGlobal() || MO.isSymbol() || MO.isMBB()) && "Isn't a symbol reference");
 
   SmallString<128> Name;
@@ -842,8 +842,8 @@ PrevCrossBBInst(MachineBasicBlock::const_iterator MBBI) {
 
 void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
   X86MCInstLower MCInstLowering(*MF, *this);
-  const X86RegisterInfo *RI =
-      static_cast<const X86RegisterInfo *>(TM.getRegisterInfo());
+  const X86RegisterInfo *RI = static_cast<const X86RegisterInfo *>(
+      TM.getSubtargetImpl()->getRegisterInfo());
 
   switch (MI->getOpcode()) {
   case TargetOpcode::DBG_VALUE:

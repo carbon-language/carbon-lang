@@ -72,7 +72,8 @@ void Mips16DAGToDAGISel::initGlobalBaseReg(MachineFunction &MF) {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator I = MBB.begin();
   MachineRegisterInfo &RegInfo = MF.getRegInfo();
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned V0, V1, V2, GlobalBaseReg = MipsFI->getGlobalBaseReg();
   const TargetRegisterClass *RC =
@@ -103,7 +104,8 @@ void Mips16DAGToDAGISel::initMips16SPAliasReg(MachineFunction &MF) {
 
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator I = MBB.begin();
-  const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
+  const TargetInstrInfo &TII =
+      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   unsigned Mips16SPAliasReg = MipsFI->getMips16SPAliasReg();
 
@@ -135,8 +137,9 @@ void Mips16DAGToDAGISel::getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg) {
         switch (SD->getMemoryVT().getSizeInBits()) {
         case 8:
         case 16:
-          AliasReg = TM.getFrameLowering()->hasFP(*MF)?
-            AliasFPReg: getMips16SPAliasReg();
+          AliasReg = TM.getSubtargetImpl()->getFrameLowering()->hasFP(*MF)
+                         ? AliasFPReg
+                         : getMips16SPAliasReg();
           return;
         }
         break;
@@ -146,8 +149,9 @@ void Mips16DAGToDAGISel::getMips16SPRefReg(SDNode *Parent, SDValue &AliasReg) {
         switch (SD->getMemoryVT().getSizeInBits()) {
         case 8:
         case 16:
-          AliasReg = TM.getFrameLowering()->hasFP(*MF)?
-            AliasFPReg: getMips16SPAliasReg();
+          AliasReg = TM.getSubtargetImpl()->getFrameLowering()->hasFP(*MF)
+                         ? AliasFPReg
+                         : getMips16SPAliasReg();
           return;
         }
         break;

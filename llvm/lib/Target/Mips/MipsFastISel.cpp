@@ -54,8 +54,9 @@ public:
                         const TargetLibraryInfo *libInfo)
       : FastISel(funcInfo, libInfo),
         M(const_cast<Module &>(*funcInfo.Fn->getParent())),
-        TM(funcInfo.MF->getTarget()), TII(*TM.getInstrInfo()),
-        TLI(*TM.getTargetLowering()),
+        TM(funcInfo.MF->getTarget()),
+        TII(*TM.getSubtargetImpl()->getInstrInfo()),
+        TLI(*TM.getSubtargetImpl()->getTargetLowering()),
         Subtarget(&TM.getSubtarget<MipsSubtarget>()) {
     MFI = funcInfo.MF->getInfo<MipsFunctionInfo>();
     Context = &funcInfo.Fn->getContext();

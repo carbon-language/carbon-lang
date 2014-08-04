@@ -19,6 +19,7 @@
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "R600RegisterInfo.h"
+#include "AMDGPUSubtarget.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
@@ -65,7 +66,8 @@ void R600ExpandSpecialInstrsPass::SetFlagInNewMI(MachineInstr *NewMI,
 }
 
 bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
-  TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
+  TII = static_cast<const R600InstrInfo *>(
+      MF.getTarget().getSubtargetImpl()->getInstrInfo());
 
   const R600RegisterInfo &TRI = TII->getRegisterInfo();
 

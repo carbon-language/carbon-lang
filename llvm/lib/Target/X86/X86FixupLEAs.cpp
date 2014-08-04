@@ -155,7 +155,8 @@ bool FixupLEAPass::runOnMachineFunction(MachineFunction &Func) {
   if (!ST.LEAusesAG() && !ST.slowLEA())
     return false;
 
-  TII = static_cast<const X86InstrInfo *>(TM->getInstrInfo());
+  TII =
+      static_cast<const X86InstrInfo *>(TM->getSubtargetImpl()->getInstrInfo());
 
   DEBUG(dbgs() << "Start X86FixupLEAs\n";);
   // Process all basic blocks.
@@ -217,7 +218,8 @@ FixupLEAPass::searchBackwards(MachineOperand &p, MachineBasicBlock::iterator &I,
     if (usesRegister(p, CurInst) == RU_Write) {
       return CurInst;
     }
-    InstrDistance += TII->getInstrLatency(TM->getInstrItineraryData(), CurInst);
+    InstrDistance += TII->getInstrLatency(
+        TM->getSubtargetImpl()->getInstrItineraryData(), CurInst);
     Found = getPreviousInstr(CurInst, MFI);
   }
   return nullptr;

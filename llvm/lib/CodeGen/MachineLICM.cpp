@@ -39,6 +39,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "machine-licm"
@@ -325,12 +326,12 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
 
   Changed = FirstInLoop = false;
   TM = &MF.getTarget();
-  TII = TM->getInstrInfo();
-  TLI = TM->getTargetLowering();
-  TRI = TM->getRegisterInfo();
+  TII = TM->getSubtargetImpl()->getInstrInfo();
+  TLI = TM->getSubtargetImpl()->getTargetLowering();
+  TRI = TM->getSubtargetImpl()->getRegisterInfo();
   MFI = MF.getFrameInfo();
   MRI = &MF.getRegInfo();
-  InstrItins = TM->getInstrItineraryData();
+  InstrItins = TM->getSubtargetImpl()->getInstrItineraryData();
 
   PreRegAlloc = MRI->isSSA();
 

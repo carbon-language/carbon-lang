@@ -458,7 +458,8 @@ bool SystemZElimCompare::processBlock(MachineBasicBlock &MBB) {
 }
 
 bool SystemZElimCompare::runOnMachineFunction(MachineFunction &F) {
-  TII = static_cast<const SystemZInstrInfo *>(F.getTarget().getInstrInfo());
+  TII = static_cast<const SystemZInstrInfo *>(
+      F.getTarget().getSubtargetImpl()->getInstrInfo());
   TRI = &TII->getRegisterInfo();
 
   bool Changed = false;

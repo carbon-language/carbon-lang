@@ -13,6 +13,7 @@
 #include "SystemZInstrInfo.h"
 #include "SystemZMachineFunctionInfo.h"
 #include "SystemZRegisterInfo.h"
+#include "SystemZSubtarget.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterScavenging.h"
@@ -65,7 +66,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineFrameInfo *MFFrame = MF.getFrameInfo();
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  const TargetRegisterInfo *TRI = MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo *TRI =
+      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   bool HasFP = hasFP(MF);
   SystemZMachineFunctionInfo *MFI = MF.getInfo<SystemZMachineFunctionInfo>();
   bool IsVarArg = MF.getFunction()->isVarArg();
@@ -108,7 +110,8 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 // and end registers.
 static void addSavedGPR(MachineBasicBlock &MBB, MachineInstrBuilder &MIB,
                         unsigned GPR64, bool IsImplicit) {
-  const TargetRegisterInfo *RI = MBB.getParent()->getTarget().getRegisterInfo();
+  const TargetRegisterInfo *RI =
+      MBB.getParent()->getTarget().getSubtargetImpl()->getRegisterInfo();
   unsigned GPR32 = RI->getSubReg(GPR64, SystemZ::subreg_l32);
   bool IsLive = MBB.isLiveIn(GPR64) || MBB.isLiveIn(GPR32);
   if (!IsLive || !IsImplicit) {
@@ -127,7 +130,8 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     return false;
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
+  const TargetInstrInfo *TII =
+      MF.getTarget().getSubtargetImpl()->getInstrInfo();
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   bool IsVarArg = MF.getFunction()->isVarArg();
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -216,7 +220,8 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     return false;
 
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo *TII = MF.getTarget().getInstrInfo();
+  const TargetInstrInfo *TII =
+      MF.getTarget().getSubtargetImpl()->getInstrInfo();
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   bool HasFP = hasFP(MF);
   DebugLoc DL = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
@@ -310,8 +315,8 @@ static void emitIncrement(MachineBasicBlock &MBB,
 void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFFrame = MF.getFrameInfo();
-  auto *ZII =
-    static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
+  auto *ZII = static_cast<const SystemZInstrInfo *>(
+      MF.getTarget().getSubtargetImpl()->getInstrInfo());
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineModuleInfo &MMI = MF.getMMI();
@@ -407,8 +412,8 @@ void SystemZFrameLowering::emitPrologue(MachineFunction &MF) const {
 void SystemZFrameLowering::emitEpilogue(MachineFunction &MF,
                                         MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
-  auto *ZII =
-    static_cast<const SystemZInstrInfo*>(MF.getTarget().getInstrInfo());
+  auto *ZII = static_cast<const SystemZInstrInfo *>(
+      MF.getTarget().getSubtargetImpl()->getInstrInfo());
   SystemZMachineFunctionInfo *ZFI = MF.getInfo<SystemZMachineFunctionInfo>();
 
   // Skip the return instruction.

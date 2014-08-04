@@ -34,28 +34,6 @@ public:
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
   ARMSubtarget *getSubtargetImpl() override { return &Subtarget; }
-  const ARMBaseRegisterInfo *getRegisterInfo() const override {
-    return getSubtargetImpl()->getRegisterInfo();
-  }
-  const ARMTargetLowering *getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
-    return getSubtargetImpl()->getSelectionDAGInfo();
-  }
-  const ARMBaseInstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
-  const ARMFrameLowering *getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  const InstrItineraryData *getInstrItineraryData() const override {
-    return &getSubtargetImpl()->getInstrItineraryData();
-  }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
-  ARMJITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
 
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;

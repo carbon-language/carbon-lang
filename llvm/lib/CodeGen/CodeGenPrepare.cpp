@@ -168,7 +168,8 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   PromotedInsts.clear();
 
   ModifiedDT = false;
-  if (TM) TLI = TM->getTargetLowering();
+  if (TM)
+    TLI = TM->getSubtargetImpl()->getTargetLowering();
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DominatorTreeWrapperPass *DTWP =
       getAnalysisIfAvailable<DominatorTreeWrapperPass>();

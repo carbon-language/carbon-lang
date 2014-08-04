@@ -21,7 +21,7 @@
 #include "llvm/CodeGen/StackMapLivenessAnalysis.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -67,7 +67,7 @@ bool StackMapLiveness::runOnMachineFunction(MachineFunction &_MF) {
   DEBUG(dbgs() << "********** COMPUTING STACKMAP LIVENESS: "
                << _MF.getName() << " **********\n");
   MF = &_MF;
-  TRI = MF->getTarget().getRegisterInfo();
+  TRI = MF->getTarget().getSubtargetImpl()->getRegisterInfo();
   ++NumStackMapFuncVisited;
 
   // Skip this function if there are no patchpoints to process.

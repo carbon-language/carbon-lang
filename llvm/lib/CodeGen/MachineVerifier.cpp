@@ -46,6 +46,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 namespace {
@@ -292,8 +293,8 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
 
   this->MF = &MF;
   TM = &MF.getTarget();
-  TII = TM->getInstrInfo();
-  TRI = TM->getRegisterInfo();
+  TII = TM->getSubtargetImpl()->getInstrInfo();
+  TRI = TM->getSubtargetImpl()->getRegisterInfo();
   MRI = &MF.getRegInfo();
 
   LiveVars = nullptr;

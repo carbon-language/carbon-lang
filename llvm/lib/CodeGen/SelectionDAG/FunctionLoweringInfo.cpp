@@ -36,6 +36,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -57,7 +58,7 @@ static bool isUsedOutsideOfDefiningBlock(const Instruction *I) {
 
 void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
                                SelectionDAG *DAG) {
-  const TargetLowering *TLI = TM.getTargetLowering();
+  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   Fn = &fn;
   MF = &mf;
@@ -106,7 +107,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
               (unsigned)TLI->getDataLayout()->getPrefTypeAlignment(
                 AI->getAllocatedType()),
               AI->getAlignment());
-          unsigned StackAlign = TM.getFrameLowering()->getStackAlignment();
+          unsigned StackAlign =
+              TM.getSubtargetImpl()->getFrameLowering()->getStackAlignment();
           if (Align <= StackAlign)
             Align = 0;
           // Inform the Frame Information that we have variable-sized objects.
@@ -208,7 +210,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       for (unsigned vti = 0, vte = ValueVTs.size(); vti != vte; ++vti) {
         EVT VT = ValueVTs[vti];
         unsigned NumRegisters = TLI->getNumRegisters(Fn->getContext(), VT);
-        const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+        const TargetInstrInfo *TII =
+            MF->getTarget().getSubtargetImpl()->getInstrInfo();
         for (unsigned i = 0; i != NumRegisters; ++i)
           BuildMI(MBB, DL, TII->get(TargetOpcode::PHI), PHIReg + i);
         PHIReg += NumRegisters;
@@ -245,8 +248,8 @@ void FunctionLoweringInfo::clear() {
 
 /// CreateReg - Allocate a single virtual register for the given type.
 unsigned FunctionLoweringInfo::CreateReg(MVT VT) {
-  return RegInfo->
-    createVirtualRegister(TM.getTargetLowering()->getRegClassFor(VT));
+  return RegInfo->createVirtualRegister(
+      TM.getSubtargetImpl()->getTargetLowering()->getRegClassFor(VT));
 }
 
 /// CreateRegs - Allocate the appropriate number of virtual registers of
@@ -257,7 +260,7 @@ unsigned FunctionLoweringInfo::CreateReg(MVT VT) {
 /// will assign registers for each member or element.
 ///
 unsigned FunctionLoweringInfo::CreateRegs(Type *Ty) {
-  const TargetLowering *TLI = TM.getTargetLowering();
+  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   SmallVector<EVT, 4> ValueVTs;
   ComputeValueVTs(*TLI, Ty, ValueVTs);
@@ -306,7 +309,7 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
   if (!Ty->isIntegerTy() || Ty->isVectorTy())
     return;
 
-  const TargetLowering *TLI = TM.getTargetLowering();
+  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   SmallVector<EVT, 1> ValueVTs;
   ComputeValueVTs(*TLI, Ty, ValueVTs);

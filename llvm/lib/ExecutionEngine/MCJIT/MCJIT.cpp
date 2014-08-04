@@ -28,6 +28,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/MutexGuard.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -59,7 +60,7 @@ MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM)
     ObjCache(nullptr) {
 
   OwnedModules.addModule(m);
-  setDataLayout(TM->getDataLayout());
+  setDataLayout(TM->getSubtargetImpl()->getDataLayout());
 }
 
 MCJIT::~MCJIT() {
@@ -133,7 +134,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
 
   PassManager PM;
 
-  M->setDataLayout(TM->getDataLayout());
+  M->setDataLayout(TM->getSubtargetImpl()->getDataLayout());
   PM.add(new DataLayoutPass(M));
 
   // The RuntimeDyld will take ownership of this shortly
@@ -251,7 +252,7 @@ void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
 }
 
 uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
-  Mangler Mang(TM->getDataLayout());
+  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
   SmallString<128> FullName;
   Mang.getNameWithPrefix(FullName, Name);
   return Dyld.getSymbolLoadAddress(FullName);
@@ -365,7 +366,7 @@ void *MCJIT::getPointerToFunction(Function *F) {
   //
   // This is the accessor for the target address, so make sure to check the
   // load address of the symbol, not the local address.
-  Mangler Mang(TM->getDataLayout());
+  Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
   SmallString<128> Name;
   TM->getNameWithPrefix(Name, F, Mang);
   return (void*)Dyld.getSymbolLoadAddress(Name);

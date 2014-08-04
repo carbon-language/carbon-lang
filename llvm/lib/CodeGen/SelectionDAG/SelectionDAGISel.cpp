@@ -411,9 +411,9 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
          "-fast-isel-abort requires -fast-isel");
 
   const Function &Fn = *mf.getFunction();
-  const TargetInstrInfo &TII = *TM.getInstrInfo();
-  const TargetRegisterInfo &TRI = *TM.getRegisterInfo();
-  const TargetLowering *TLI = TM.getTargetLowering();
+  const TargetInstrInfo &TII = *TM.getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
+  const TargetLowering *TLI = TM.getSubtargetImpl()->getTargetLowering();
 
   MF = &mf;
   RegInfo = &MF->getRegInfo();
@@ -534,7 +534,8 @@ bool SelectionDAGISel::runOnMachineFunction(MachineFunction &mf) {
       break;
 
     for (const auto &MI : MBB) {
-      const MCInstrDesc &MCID = TM.getInstrInfo()->get(MI.getOpcode());
+      const MCInstrDesc &MCID =
+          TM.getSubtargetImpl()->getInstrInfo()->get(MI.getOpcode());
       if ((MCID.isCall() && !MCID.isReturn()) ||
           MI.isStackAligningInlineAsm()) {
         MFI->setHasCalls(true);
@@ -901,7 +902,8 @@ void SelectionDAGISel::PrepareEHLandingPad() {
   // Assign the call site to the landing pad's begin label.
   MF->getMMI().setCallSiteLandingPad(Label, SDB->LPadToCallSiteMap[MBB]);
 
-  const MCInstrDesc &II = TM.getInstrInfo()->get(TargetOpcode::EH_LABEL);
+  const MCInstrDesc &II =
+      TM.getSubtargetImpl()->getInstrInfo()->get(TargetOpcode::EH_LABEL);
   BuildMI(*MBB, FuncInfo->InsertPt, SDB->getCurDebugLoc(), II)
     .addSym(Label);
 
@@ -3074,7 +3076,8 @@ SelectCodeCommon(SDNode *NodeToMatch, const unsigned char *MatcherTable,
       if (EmitNodeInfo & OPFL_MemRefs) {
         // Only attach load or store memory operands if the generated
         // instruction may load or store.
-        const MCInstrDesc &MCID = TM.getInstrInfo()->get(TargetOpc);
+        const MCInstrDesc &MCID =
+            TM.getSubtargetImpl()->getInstrInfo()->get(TargetOpc);
         bool mayLoad = MCID.mayLoad();
         bool mayStore = MCID.mayStore();
 

@@ -3289,9 +3289,11 @@ void X86InstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   assert(MF.getFrameInfo()->getObjectSize(FrameIdx) >= RC->getSize() &&
          "Stack slot too small for store");
   unsigned Alignment = std::max<uint32_t>(RC->getSize(), 16);
-  bool isAligned =
-      (MF.getTarget().getFrameLowering()->getStackAlignment() >= Alignment) ||
-      RI.canRealignStack(MF);
+  bool isAligned = (MF.getTarget()
+                        .getSubtargetImpl()
+                        ->getFrameLowering()
+                        ->getStackAlignment() >= Alignment) ||
+                   RI.canRealignStack(MF);
   unsigned Opc = getStoreRegOpcode(SrcReg, RC, isAligned, Subtarget);
   DebugLoc DL = MBB.findDebugLoc(MI);
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc)), FrameIdx)
@@ -3326,9 +3328,11 @@ void X86InstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         const TargetRegisterInfo *TRI) const {
   const MachineFunction &MF = *MBB.getParent();
   unsigned Alignment = std::max<uint32_t>(RC->getSize(), 16);
-  bool isAligned =
-      (MF.getTarget().getFrameLowering()->getStackAlignment() >= Alignment) ||
-      RI.canRealignStack(MF);
+  bool isAligned = (MF.getTarget()
+                        .getSubtargetImpl()
+                        ->getFrameLowering()
+                        ->getStackAlignment() >= Alignment) ||
+                   RI.canRealignStack(MF);
   unsigned Opc = getLoadRegOpcode(DestReg, RC, isAligned, Subtarget);
   DebugLoc DL = MBB.findDebugLoc(MI);
   addFrameReference(BuildMI(MBB, MI, DL, get(Opc), DestReg), FrameIdx);
@@ -4377,8 +4381,10 @@ X86InstrInfo::foldMemoryOperandImpl(MachineFunction &MF, MachineInstr *MI,
   // If the function stack isn't realigned we don't want to fold instructions
   // that need increased alignment.
   if (!RI.needsStackRealignment(MF))
-    Alignment = std::min(
-        Alignment, MF.getTarget().getFrameLowering()->getStackAlignment());
+    Alignment = std::min(Alignment, MF.getTarget()
+                                        .getSubtargetImpl()
+                                        ->getFrameLowering()
+                                        ->getStackAlignment());
   if (Ops.size() == 2 && Ops[0] == 0 && Ops[1] == 1) {
     unsigned NewOpc = 0;
     unsigned RCSize = 0;
@@ -5453,7 +5459,7 @@ namespace {
       MachineBasicBlock::iterator MBBI = FirstMBB.begin();
       DebugLoc DL = FirstMBB.findDebugLoc(MBBI);
       MachineRegisterInfo &RegInfo = MF.getRegInfo();
-      const X86InstrInfo *TII = TM->getInstrInfo();
+      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
 
       unsigned PC;
       if (TM->getSubtarget<X86Subtarget>().isPICStyleGOT())
@@ -5551,7 +5557,7 @@ namespace {
       const X86TargetMachine *TM =
           static_cast<const X86TargetMachine *>(&MF->getTarget());
       const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
-      const X86InstrInfo *TII = TM->getInstrInfo();
+      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
 
       // Insert a Copy from TLSBaseAddrReg to RAX/EAX.
       MachineInstr *Copy = BuildMI(*I->getParent(), I, I->getDebugLoc(),
@@ -5572,7 +5578,7 @@ namespace {
       const X86TargetMachine *TM =
           static_cast<const X86TargetMachine *>(&MF->getTarget());
       const bool is64Bit = TM->getSubtarget<X86Subtarget>().is64Bit();
-      const X86InstrInfo *TII = TM->getInstrInfo();
+      const X86InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
 
       // Create a virtual register for the TLS base address.
       MachineRegisterInfo &RegInfo = MF->getRegInfo();

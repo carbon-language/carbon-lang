@@ -31,31 +31,8 @@ public:
                    StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
-
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
-  const X86InstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
-  const TargetFrameLowering *getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  X86JITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
   X86Subtarget *getSubtargetImpl() override { return &Subtarget; }
-  const X86TargetLowering *getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const X86SelectionDAGInfo *getSelectionDAGInfo() const override {
-    return getSubtargetImpl()->getSelectionDAGInfo();
-  }
-  const X86RegisterInfo  *getRegisterInfo() const override {
-    return &getInstrInfo()->getRegisterInfo();
-  }
-  const InstrItineraryData *getInstrItineraryData() const override {
-    return &getSubtargetImpl()->getInstrItineraryData();
-  }
 
   /// \brief Register X86 analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;

@@ -18,6 +18,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Pass.h"
 
 namespace llvm {
@@ -57,7 +58,7 @@ public:
   virtual ~SelectionDAGISel();
 
   const TargetLowering *getTargetLowering() const {
-    return TM.getTargetLowering();
+    return TM.getSubtargetImpl()->getTargetLowering();
   }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;

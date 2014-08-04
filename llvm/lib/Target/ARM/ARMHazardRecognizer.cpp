@@ -46,8 +46,8 @@ ARMHazardRecognizer::getHazardType(SUnit *SU, int Stalls) {
       const MCInstrDesc &LastMCID = LastMI->getDesc();
       const TargetMachine &TM =
         MI->getParent()->getParent()->getTarget();
-      const ARMBaseInstrInfo &TII =
-        *static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
+      const ARMBaseInstrInfo &TII = *static_cast<const ARMBaseInstrInfo *>(
+                                        TM.getSubtargetImpl()->getInstrInfo());
 
       // Skip over one non-VFP / NEON instruction.
       if (!LastMI->isBarrier() &&

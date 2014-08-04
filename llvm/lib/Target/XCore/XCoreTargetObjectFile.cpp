@@ -145,9 +145,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind, Mangler &Mang,
     if (Kind.isMergeableConst16())      return MergeableConst16Section;
   }
   Type *ObjType = GV->getType()->getPointerElementType();
-  if (TM.getCodeModel() == CodeModel::Small ||
-      !ObjType->isSized() ||
-      TM.getDataLayout()->getTypeAllocSize(ObjType) < CodeModelLargeSize) {
+  if (TM.getCodeModel() == CodeModel::Small || !ObjType->isSized() ||
+      TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(ObjType) <
+          CodeModelLargeSize) {
     if (Kind.isReadOnly())              return UseCPRel? ReadOnlySection
                                                        : DataRelROSection;
     if (Kind.isBSS() || Kind.isCommon())return BSSSection;

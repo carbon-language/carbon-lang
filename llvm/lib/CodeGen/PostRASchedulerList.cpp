@@ -200,9 +200,11 @@ SchedulePostRATDList::SchedulePostRATDList(
   : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
 
   const TargetMachine &TM = MF.getTarget();
-  const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
+  const InstrItineraryData *InstrItins =
+      TM.getSubtargetImpl()->getInstrItineraryData();
   HazardRec =
-    TM.getInstrInfo()->CreateTargetPostRAHazardRecognizer(InstrItins, this);
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetPostRAHazardRecognizer(
+          InstrItins, this);
 
   assert((AntiDepMode == TargetSubtargetInfo::ANTIDEP_NONE ||
           MRI.tracksLiveness()) &&
@@ -265,7 +267,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   if (skipOptnoneFunction(*Fn.getFunction()))
     return false;
 
-  TII = Fn.getTarget().getInstrInfo();
+  TII = Fn.getTarget().getSubtargetImpl()->getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();

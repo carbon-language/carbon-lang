@@ -177,8 +177,8 @@ bool AMDGPUAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void AMDGPUAsmPrinter::EmitProgramInfoR600(const MachineFunction &MF) {
   unsigned MaxGPR = 0;
   bool killPixel = false;
-  const R600RegisterInfo *RI
-    = static_cast<const R600RegisterInfo*>(TM.getRegisterInfo());
+  const R600RegisterInfo *RI = static_cast<const R600RegisterInfo *>(
+      TM.getSubtargetImpl()->getRegisterInfo());
   const R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
   const AMDGPUSubtarget &STM = TM.getSubtarget<AMDGPUSubtarget>();
 
@@ -240,8 +240,8 @@ void AMDGPUAsmPrinter::getSIProgramInfo(SIProgramInfo &ProgInfo,
   unsigned MaxSGPR = 0;
   unsigned MaxVGPR = 0;
   bool VCCUsed = false;
-  const SIRegisterInfo *RI
-    = static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
+  const SIRegisterInfo *RI = static_cast<const SIRegisterInfo *>(
+      TM.getSubtargetImpl()->getRegisterInfo());
 
   for (const MachineBasicBlock &MBB : MF) {
     for (const MachineInstr &MI : MBB) {

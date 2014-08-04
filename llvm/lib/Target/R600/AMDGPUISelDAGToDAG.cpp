@@ -138,7 +138,8 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
 
   switch (N->getMachineOpcode()) {
   default: {
-    const MCInstrDesc &Desc = TM.getInstrInfo()->get(N->getMachineOpcode());
+    const MCInstrDesc &Desc =
+        TM.getSubtargetImpl()->getInstrInfo()->get(N->getMachineOpcode());
     unsigned OpIdx = Desc.getNumDefs() + OpNo;
     if (OpIdx >= Desc.getNumOperands())
       return nullptr;
@@ -146,15 +147,17 @@ const TargetRegisterClass *AMDGPUDAGToDAGISel::getOperandRegClass(SDNode *N,
     if (RegClass == -1)
       return nullptr;
 
-    return TM.getRegisterInfo()->getRegClass(RegClass);
+    return TM.getSubtargetImpl()->getRegisterInfo()->getRegClass(RegClass);
   }
   case AMDGPU::REG_SEQUENCE: {
     unsigned RCID = cast<ConstantSDNode>(N->getOperand(0))->getZExtValue();
-    const TargetRegisterClass *SuperRC = TM.getRegisterInfo()->getRegClass(RCID);
+    const TargetRegisterClass *SuperRC =
+        TM.getSubtargetImpl()->getRegisterInfo()->getRegClass(RCID);
 
     SDValue SubRegOp = N->getOperand(OpNo + 1);
     unsigned SubRegIdx = cast<ConstantSDNode>(SubRegOp)->getZExtValue();
-    return TM.getRegisterInfo()->getSubClassWithSubReg(SuperRC, SubRegIdx);
+    return TM.getSubtargetImpl()->getRegisterInfo()->getSubClassWithSubReg(
+        SuperRC, SubRegIdx);
   }
   }
 }
@@ -242,10 +245,10 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
   case AMDGPUISD::BUILD_VERTICAL_VECTOR:
   case ISD::BUILD_VECTOR: {
     unsigned RegClassID;
-    const AMDGPURegisterInfo *TRI =
-                   static_cast<const AMDGPURegisterInfo*>(TM.getRegisterInfo());
-    const SIRegisterInfo *SIRI =
-                   static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
+    const AMDGPURegisterInfo *TRI = static_cast<const AMDGPURegisterInfo *>(
+        TM.getSubtargetImpl()->getRegisterInfo());
+    const SIRegisterInfo *SIRI = static_cast<const SIRegisterInfo *>(
+        TM.getSubtargetImpl()->getRegisterInfo());
     EVT VT = N->getValueType(0);
     unsigned NumVectorElts = VT.getVectorNumElements();
     EVT EltVT = VT.getVectorElementType();
@@ -819,7 +822,8 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
 
   SDLoc DL(Addr);
   MachineFunction &MF = CurDAG->getMachineFunction();
-  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
+      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
 

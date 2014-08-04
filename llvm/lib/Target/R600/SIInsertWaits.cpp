@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
+#include "AMDGPUSubtarget.h"
 #include "SIInstrInfo.h"
 #include "SIMachineFunctionInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -346,8 +347,10 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
   bool Changes = false;
 
-  TII = static_cast<const SIInstrInfo*>(MF.getTarget().getInstrInfo());
-  TRI = static_cast<const SIRegisterInfo*>(MF.getTarget().getRegisterInfo());
+  TII = static_cast<const SIInstrInfo *>(
+      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  TRI = static_cast<const SIRegisterInfo *>(
+      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
 
   MRI = &MF.getRegInfo();
 

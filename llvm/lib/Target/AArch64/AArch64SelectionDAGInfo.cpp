@@ -36,8 +36,7 @@ SDValue AArch64SelectionDAGInfo::EmitTargetCodeForMemset(
   // instead of memset.
   if (bzeroEntry && (!SizeValue || SizeValue->getZExtValue() > 256)) {
     const AArch64TargetLowering &TLI =
-        *static_cast<const AArch64TargetLowering *>(
-            DAG.getTarget().getTargetLowering());
+        *DAG.getTarget().getSubtarget<AArch64Subtarget>().getTargetLowering();
 
     EVT IntPtr = TLI.getPointerTy();
     Type *IntPtrTy = getDataLayout()->getIntPtrType(*DAG.getContext());

@@ -185,7 +185,7 @@ void RegPressureTracker::init(const MachineFunction *mf,
   reset();
 
   MF = mf;
-  TRI = MF->getTarget().getRegisterInfo();
+  TRI = MF->getTarget().getSubtargetImpl()->getRegisterInfo();
   RCI = rci;
   MRI = &MF->getRegInfo();
   MBB = mbb;

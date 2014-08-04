@@ -152,14 +152,25 @@ public:
 
   /// getInstrItins - Return the instruction itineraries based on subtarget
   /// selection.
-  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
+  const InstrItineraryData *getInstrItineraryData() const override {
+    return &InstrItins;
+  }
 
-  const PPCFrameLowering *getFrameLowering() const { return &FrameLowering; }
-  const DataLayout *getDataLayout() const { return &DL; }
-  const PPCInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  PPCJITInfo *getJITInfo() { return &JITInfo; }
-  const PPCTargetLowering *getTargetLowering() const { return &TLInfo; }
-  const PPCSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
+  const PPCFrameLowering *getFrameLowering() const override {
+    return &FrameLowering;
+  }
+  const DataLayout *getDataLayout() const override { return &DL; }
+  const PPCInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  PPCJITInfo *getJITInfo() override { return &JITInfo; }
+  const PPCTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
+  }
+  const PPCSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return &TSInfo;
+  }
+  const PPCRegisterInfo *getRegisterInfo() const override {
+    return &getInstrInfo()->getRegisterInfo();
+  }
 
   /// initializeSubtargetDependencies - Initializes using a CPU and feature string
   /// so that we can use initializer lists for subtarget initialization.

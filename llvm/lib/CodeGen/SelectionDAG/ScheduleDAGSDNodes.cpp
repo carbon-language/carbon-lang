@@ -47,8 +47,8 @@ static cl::opt<int> HighLatencyCycles(
            "instructions take for targets with no itinerary"));
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
-  : ScheduleDAG(mf), BB(nullptr), DAG(nullptr),
-    InstrItins(mf.getTarget().getInstrItineraryData()) {}
+    : ScheduleDAG(mf), BB(nullptr), DAG(nullptr),
+      InstrItins(mf.getTarget().getSubtargetImpl()->getInstrItineraryData()) {}
 
 /// Run - perform scheduling.
 ///

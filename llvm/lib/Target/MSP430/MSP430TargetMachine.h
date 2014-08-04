@@ -32,26 +32,8 @@ public:
                       Reloc::Model RM, CodeModel::Model CM,
                       CodeGenOpt::Level OL);
 
-  const TargetFrameLowering *getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  const MSP430InstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
   const MSP430Subtarget *getSubtargetImpl() const override {
     return &Subtarget;
-  }
-  const TargetRegisterInfo *getRegisterInfo() const override {
-    return getSubtargetImpl()->getRegisterInfo();
-  }
-  const MSP430TargetLowering *getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const MSP430SelectionDAGInfo *getSelectionDAGInfo() const override {
-    return getSubtargetImpl()->getSelectionDAGInfo();
   }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 }; // MSP430TargetMachine.

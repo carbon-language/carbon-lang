@@ -58,8 +58,10 @@ public:
 
   /// getInstrItins - Return the instruction itineraies based on subtarget
   /// selection.
-  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
-  const HexagonInstrInfo *getInstrInfo() const { return &InstrInfo; }
+  const InstrItineraryData *getInstrItineraryData() const {
+    return &InstrItins;
+  }
+  const HexagonInstrInfo *getInstrInfo() const override { return &InstrInfo; }
   const HexagonRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

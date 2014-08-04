@@ -774,7 +774,8 @@ AArch64TargetLowering::EmitF128CSEL(MachineInstr *MI,
   // EndBB:
   //     Dest = PHI [IfTrue, TrueBB], [IfFalse, OrigBB]
 
-  const TargetInstrInfo *TII = getTargetMachine().getInstrInfo();
+  const TargetInstrInfo *TII =
+      getTargetMachine().getSubtargetImpl()->getInstrInfo();
   MachineFunction *MF = MBB->getParent();
   const BasicBlock *LLVM_BB = MBB->getBasicBlock();
   DebugLoc DL = MI->getDebugLoc();
@@ -2440,7 +2441,8 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Add a register mask operand representing the call-preserved registers.
   const uint32_t *Mask;
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *TRI =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   const AArch64RegisterInfo *ARI =
       static_cast<const AArch64RegisterInfo *>(TRI);
   if (IsThisReturn) {
@@ -2651,7 +2653,8 @@ AArch64TargetLowering::LowerDarwinGlobalTLSAddress(SDValue Op,
   // TLS calls preserve all registers except those that absolutely must be
   // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *TRI =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   const AArch64RegisterInfo *ARI =
       static_cast<const AArch64RegisterInfo *>(TRI);
   const uint32_t *Mask = ARI->getTLSCallPreservedMask();
@@ -2701,7 +2704,8 @@ SDValue AArch64TargetLowering::LowerELFTLSDescCall(SDValue SymAddr,
   // TLS calls preserve all registers except those that absolutely must be
   // trashed: X0 (it takes an argument), LR (it's a call) and NZCV (let's not be
   // silly).
-  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *TRI =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   const AArch64RegisterInfo *ARI =
       static_cast<const AArch64RegisterInfo *>(TRI);
   const uint32_t *Mask = ARI->getTLSCallPreservedMask();

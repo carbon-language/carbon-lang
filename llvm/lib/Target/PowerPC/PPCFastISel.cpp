@@ -92,12 +92,11 @@ class PPCFastISel final : public FastISel {
   public:
     explicit PPCFastISel(FunctionLoweringInfo &FuncInfo,
                          const TargetLibraryInfo *LibInfo)
-    : FastISel(FuncInfo, LibInfo),
-      TM(FuncInfo.MF->getTarget()),
-      TII(*TM.getInstrInfo()),
-      TLI(*TM.getTargetLowering()),
-      PPCSubTarget(&TM.getSubtarget<PPCSubtarget>()),
-      Context(&FuncInfo.Fn->getContext()) { }
+        : FastISel(FuncInfo, LibInfo), TM(FuncInfo.MF->getTarget()),
+          TII(*TM.getSubtargetImpl()->getInstrInfo()),
+          TLI(*TM.getSubtargetImpl()->getTargetLowering()),
+          PPCSubTarget(&TM.getSubtarget<PPCSubtarget>()),
+          Context(&FuncInfo.Fn->getContext()) {}
 
   // Backend specific FastISel code.
   private:

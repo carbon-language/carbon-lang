@@ -92,11 +92,11 @@ class ARMFastISel final : public FastISel {
   public:
     explicit ARMFastISel(FunctionLoweringInfo &funcInfo,
                          const TargetLibraryInfo *libInfo)
-    : FastISel(funcInfo, libInfo),
-      M(const_cast<Module&>(*funcInfo.Fn->getParent())),
-      TM(funcInfo.MF->getTarget()),
-      TII(*TM.getInstrInfo()),
-      TLI(*TM.getTargetLowering()) {
+        : FastISel(funcInfo, libInfo),
+          M(const_cast<Module &>(*funcInfo.Fn->getParent())),
+          TM(funcInfo.MF->getTarget()),
+          TII(*TM.getSubtargetImpl()->getInstrInfo()),
+          TLI(*TM.getSubtargetImpl()->getTargetLowering()) {
       Subtarget = &TM.getSubtarget<ARMSubtarget>();
       AFI = funcInfo.MF->getInfo<ARMFunctionInfo>();
       isThumb2 = AFI->isThumbFunction();
@@ -189,7 +189,9 @@ class ARMFastISel final : public FastISel {
     unsigned ARMSelectCallOp(bool UseReg);
     unsigned ARMLowerPICELF(const GlobalValue *GV, unsigned Align, MVT VT);
 
-    const TargetLowering *getTargetLowering() { return TM.getTargetLowering(); }
+    const TargetLowering *getTargetLowering() {
+      return TM.getSubtargetImpl()->getTargetLowering();
+    }
 
     // Call handling routines.
   private:
@@ -2493,7 +2495,8 @@ bool ARMFastISel::SelectIntrinsicCall(const IntrinsicInst &I) {
     }
 
     const ARMBaseRegisterInfo *RegInfo =
-          static_cast<const ARMBaseRegisterInfo*>(TM.getRegisterInfo());
+        static_cast<const ARMBaseRegisterInfo *>(
+            TM.getSubtargetImpl()->getRegisterInfo());
     unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     unsigned SrcReg = FramePtr;
 

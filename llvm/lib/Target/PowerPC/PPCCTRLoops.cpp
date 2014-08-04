@@ -214,7 +214,7 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
 
       if (!TM)
         return true;
-      const TargetLowering *TLI = TM->getTargetLowering();
+      const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
 
       if (Function *F = CI->getCalledFunction()) {
         // Most intrinsics don't become function calls, but some might.
@@ -384,7 +384,7 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(J)) {
       if (!TM)
         return true;
-      const TargetLowering *TLI = TM->getTargetLowering();
+      const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
 
       if (TLI->supportJumpTables() &&
           SI->getNumCases()+1 >= (unsigned) TLI->getMinimumJumpTableEntries())

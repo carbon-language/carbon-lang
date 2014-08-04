@@ -923,7 +923,7 @@ a realistic example:
 
   void MyGCPrinter::finishAssembly(AsmPrinter &AP) {
     MCStreamer &OS = AP.OutStreamer;
-    unsigned IntPtrSize = AP.TM.getDataLayout()->getPointerSize();
+    unsigned IntPtrSize = AP.TM.getSubtargetImpl()->getDataLayout()->getPointerSize();
 
     // Put this in the data section.
     OS.SwitchSection(AP.getObjFileLowering().getDataSection());

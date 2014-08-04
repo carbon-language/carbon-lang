@@ -150,7 +150,8 @@ bool SystemZShortenInst::processBlock(MachineBasicBlock &MBB) {
 }
 
 bool SystemZShortenInst::runOnMachineFunction(MachineFunction &F) {
-  TII = static_cast<const SystemZInstrInfo *>(F.getTarget().getInstrInfo());
+  TII = static_cast<const SystemZInstrInfo *>(
+      F.getTarget().getSubtargetImpl()->getInstrInfo());
 
   bool Changed = false;
   for (auto &MBB : F)

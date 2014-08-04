@@ -48,7 +48,7 @@ public:
 
   PPCTTI(const PPCTargetMachine *TM)
       : ImmutablePass(ID), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializePPCTTIPass(*PassRegistry::getPassRegistry());
   }
 

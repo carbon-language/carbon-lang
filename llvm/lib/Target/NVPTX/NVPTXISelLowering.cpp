@@ -1451,8 +1451,8 @@ SDValue NVPTXTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
       EVT ObjectVT = getValueType(retTy);
       unsigned NumElts = ObjectVT.getVectorNumElements();
       EVT EltVT = ObjectVT.getVectorElementType();
-      assert(nvTM->getTargetLowering()->getNumRegisters(F->getContext(),
-                                                        ObjectVT) == NumElts &&
+      assert(nvTM->getSubtargetImpl()->getTargetLowering()->getNumRegisters(
+                 F->getContext(), ObjectVT) == NumElts &&
              "Vector was not scalarized");
       unsigned sz = EltVT.getSizeInBits();
       bool needTruncate = sz < 8 ? true : false;
@@ -2028,7 +2028,8 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
 
   const Function *F = MF.getFunction();
   const AttributeSet &PAL = F->getAttributes();
-  const TargetLowering *TLI = DAG.getTarget().getTargetLowering();
+  const TargetLowering *TLI =
+      DAG.getTarget().getSubtargetImpl()->getTargetLowering();
 
   SDValue Root = DAG.getRoot();
   std::vector<SDValue> OutChains;

@@ -127,7 +127,7 @@ private:
   bool X86SelectFPTrunc(const Instruction *I);
 
   const X86InstrInfo *getInstrInfo() const {
-    return getTargetMachine()->getInstrInfo();
+    return getTargetMachine()->getSubtargetImpl()->getInstrInfo();
   }
   const X86TargetMachine *getTargetMachine() const {
     return static_cast<const X86TargetMachine *>(&TM);
@@ -2188,8 +2188,8 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     MachineFrameInfo *MFI = FuncInfo.MF->getFrameInfo();
     MFI->setFrameAddressIsTaken(true);
 
-    const X86RegisterInfo *RegInfo =
-      static_cast<const X86RegisterInfo*>(TM.getRegisterInfo());
+    const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
+        TM.getSubtargetImpl()->getRegisterInfo());
     unsigned FrameReg = RegInfo->getFrameRegister(*(FuncInfo.MF));
     assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
             (FrameReg == X86::EBP && VT == MVT::i32)) &&
@@ -2755,8 +2755,8 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
     .addImm(NumBytes);
 
   // Walk the register/memloc assignments, inserting copies/loads.
-  const X86RegisterInfo *RegInfo =
-    static_cast<const X86RegisterInfo *>(TM.getRegisterInfo());
+  const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
+      TM.getSubtargetImpl()->getRegisterInfo());
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     CCValAssign const &VA = ArgLocs[i];
     const Value *ArgVal = OutVals[VA.getValNo()];

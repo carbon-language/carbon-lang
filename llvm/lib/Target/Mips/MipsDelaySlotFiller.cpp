@@ -275,7 +275,11 @@ static void addLiveInRegs(Iter Filler, MachineBasicBlock &MBB) {
 
 #ifndef NDEBUG
     const MachineFunction &MF = *MBB.getParent();
-    assert(MF.getTarget().getRegisterInfo()->getAllocatableSet(MF).test(R) &&
+    assert(MF.getTarget()
+               .getSubtargetImpl()
+               ->getRegisterInfo()
+               ->getAllocatableSet(MF)
+               .test(R) &&
            "Shouldn't move an instruction with unallocatable registers across "
            "basic block boundaries.");
 #endif
@@ -286,8 +290,8 @@ static void addLiveInRegs(Iter Filler, MachineBasicBlock &MBB) {
 }
 
 RegDefsUses::RegDefsUses(TargetMachine &TM)
-  : TRI(*TM.getRegisterInfo()), Defs(TRI.getNumRegs(), false),
-    Uses(TRI.getNumRegs(), false) {}
+    : TRI(*TM.getSubtargetImpl()->getRegisterInfo()),
+      Defs(TRI.getNumRegs(), false), Uses(TRI.getNumRegs(), false) {}
 
 void RegDefsUses::init(const MachineInstr &MI) {
   // Add all register operands which are explicit and non-variadic.
@@ -515,8 +519,8 @@ bool Filler::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     }
 
     // Bundle the NOP to the instruction with the delay slot.
-    const MipsInstrInfo *TII =
-      static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+    const MipsInstrInfo *TII = static_cast<const MipsInstrInfo *>(
+        TM.getSubtargetImpl()->getInstrInfo());
     BuildMI(MBB, std::next(I), I->getDebugLoc(), TII->get(Mips::NOP));
     MIBundleBuilder(MBB, I, std::next(I, 2));
   }
@@ -554,9 +558,10 @@ bool Filler::searchRange(MachineBasicBlock &MBB, IterTy Begin, IterTy End,
       // branches are not checked because non-NaCl targets never put them in
       // delay slots.
       unsigned AddrIdx;
-      if ((isBasePlusOffsetMemoryAccess(I->getOpcode(), &AddrIdx)
-           && baseRegNeedsLoadStoreMask(I->getOperand(AddrIdx).getReg()))
-          || I->modifiesRegister(Mips::SP, TM.getRegisterInfo()))
+      if ((isBasePlusOffsetMemoryAccess(I->getOpcode(), &AddrIdx) &&
+           baseRegNeedsLoadStoreMask(I->getOperand(AddrIdx).getReg())) ||
+          I->modifiesRegister(Mips::SP,
+                              TM.getSubtargetImpl()->getRegisterInfo()))
         continue;
     }
 
@@ -667,7 +672,7 @@ MachineBasicBlock *Filler::selectSuccBB(MachineBasicBlock &B) const {
 std::pair<MipsInstrInfo::BranchType, MachineInstr *>
 Filler::getBranch(MachineBasicBlock &MBB, const MachineBasicBlock &Dst) const {
   const MipsInstrInfo *TII =
-    static_cast<const MipsInstrInfo*>(TM.getInstrInfo());
+      static_cast<const MipsInstrInfo *>(TM.getSubtargetImpl()->getInstrInfo());
   MachineBasicBlock *TrueBB = nullptr, *FalseBB = nullptr;
   SmallVector<MachineInstr*, 2> BranchInstrs;
   SmallVector<MachineOperand, 2> Cond;

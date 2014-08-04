@@ -19,12 +19,19 @@
 
 namespace llvm {
 
+class DataLayout;
 class MachineFunction;
 class MachineInstr;
 class SDep;
 class SUnit;
+class TargetFrameLowering;
+class TargetInstrInfo;
+class TargetJITInfo;
+class TargetLowering;
 class TargetRegisterClass;
+class TargetRegisterInfo;
 class TargetSchedModel;
+class TargetSelectionDAGInfo;
 struct MachineSchedPolicy;
 template <typename T> class SmallVectorImpl;
 
@@ -46,6 +53,43 @@ public:
   typedef SmallVectorImpl<const TargetRegisterClass*> RegClassVector;
 
   virtual ~TargetSubtargetInfo();
+
+  // Interfaces to the major aspects of target machine information:
+  //
+  // -- Instruction opcode and operand information
+  // -- Pipelines and scheduling information
+  // -- Stack frame information
+  // -- Selection DAG lowering information
+  //
+  // N.B. These objects may change during compilation. It's not safe to cache
+  // them between functions.
+  virtual const TargetInstrInfo *getInstrInfo() const { return nullptr; }
+  virtual const TargetFrameLowering *getFrameLowering() const {
+    return nullptr;
+  }
+  virtual const TargetLowering *getTargetLowering() const { return nullptr; }
+  virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
+    return nullptr;
+  }
+  virtual const DataLayout *getDataLayout() const { return nullptr; }
+
+  /// getRegisterInfo - If register information is available, return it.  If
+  /// not, return null.  This is kept separate from RegInfo until RegInfo has
+  /// details of graph coloring register allocation removed from it.
+  ///
+  virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
+
+  /// getJITInfo - If this target supports a JIT, return information for it,
+  /// otherwise return null.
+  ///
+  virtual TargetJITInfo *getJITInfo() { return nullptr; }
+
+  /// getInstrItineraryData - Returns instruction itinerary data for the target
+  /// or specific subtarget.
+  ///
+  virtual const InstrItineraryData *getInstrItineraryData() const {
+    return nullptr;
+  }
 
   /// Resolve a SchedClass at runtime, where SchedClass identifies an
   /// MCSchedClassDesc with the isVariant property. This may return the ID of

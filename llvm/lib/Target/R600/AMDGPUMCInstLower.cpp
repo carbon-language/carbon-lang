@@ -104,7 +104,7 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
 #ifdef _DEBUG
   StringRef Err;
-  if (!TM.getInstrInfo()->verifyInstruction(MI, Err)) {
+  if (!TM.getSubtargetImpl()->getInstrInfo()->verifyInstruction(MI, Err)) {
     errs() << "Warning: Illegal instruction detected: " << Err << "\n";
     MI->dump();
   }
@@ -128,8 +128,9 @@ void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       std::string &DisasmLine = DisasmLines.back();
       raw_string_ostream DisasmStream(DisasmLine);
 
-      AMDGPUInstPrinter InstPrinter(*TM.getMCAsmInfo(), *TM.getInstrInfo(),
-                                    *TM.getRegisterInfo());
+      AMDGPUInstPrinter InstPrinter(*TM.getMCAsmInfo(),
+                                    *TM.getSubtargetImpl()->getInstrInfo(),
+                                    *TM.getSubtargetImpl()->getRegisterInfo());
       InstPrinter.printInst(&TmpInst, DisasmStream, StringRef());
 
       // Disassemble instruction/operands to hex representation.

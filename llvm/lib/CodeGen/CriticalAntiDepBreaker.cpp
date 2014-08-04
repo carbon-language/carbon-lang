@@ -22,22 +22,20 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
 #define DEBUG_TYPE "post-RA-sched"
 
-CriticalAntiDepBreaker::
-CriticalAntiDepBreaker(MachineFunction& MFi, const RegisterClassInfo &RCI) :
-  AntiDepBreaker(), MF(MFi),
-  MRI(MF.getRegInfo()),
-  TII(MF.getTarget().getInstrInfo()),
-  TRI(MF.getTarget().getRegisterInfo()),
-  RegClassInfo(RCI),
-  Classes(TRI->getNumRegs(), nullptr),
-  KillIndices(TRI->getNumRegs(), 0),
-  DefIndices(TRI->getNumRegs(), 0),
-  KeepRegs(TRI->getNumRegs(), false) {}
+CriticalAntiDepBreaker::CriticalAntiDepBreaker(MachineFunction &MFi,
+                                               const RegisterClassInfo &RCI)
+    : AntiDepBreaker(), MF(MFi), MRI(MF.getRegInfo()),
+      TII(MF.getTarget().getSubtargetImpl()->getInstrInfo()),
+      TRI(MF.getTarget().getSubtargetImpl()->getRegisterInfo()),
+      RegClassInfo(RCI), Classes(TRI->getNumRegs(), nullptr),
+      KillIndices(TRI->getNumRegs(), 0), DefIndices(TRI->getNumRegs(), 0),
+      KeepRegs(TRI->getNumRegs(), false) {}
 
 CriticalAntiDepBreaker::~CriticalAntiDepBreaker() {
 }

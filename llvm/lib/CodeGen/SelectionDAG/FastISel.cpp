@@ -65,6 +65,7 @@
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "isel"
@@ -1588,18 +1589,12 @@ FastISel::SelectOperator(const User *I, unsigned Opcode) {
 
 FastISel::FastISel(FunctionLoweringInfo &funcInfo,
                    const TargetLibraryInfo *libInfo)
-  : FuncInfo(funcInfo),
-    MF(funcInfo.MF),
-    MRI(FuncInfo.MF->getRegInfo()),
-    MFI(*FuncInfo.MF->getFrameInfo()),
-    MCP(*FuncInfo.MF->getConstantPool()),
-    TM(FuncInfo.MF->getTarget()),
-    DL(*TM.getDataLayout()),
-    TII(*TM.getInstrInfo()),
-    TLI(*TM.getTargetLowering()),
-    TRI(*TM.getRegisterInfo()),
-    LibInfo(libInfo) {
-}
+    : FuncInfo(funcInfo), MF(funcInfo.MF), MRI(FuncInfo.MF->getRegInfo()),
+      MFI(*FuncInfo.MF->getFrameInfo()), MCP(*FuncInfo.MF->getConstantPool()),
+      TM(FuncInfo.MF->getTarget()), DL(*TM.getSubtargetImpl()->getDataLayout()),
+      TII(*TM.getSubtargetImpl()->getInstrInfo()),
+      TLI(*TM.getSubtargetImpl()->getTargetLowering()),
+      TRI(*TM.getSubtargetImpl()->getRegisterInfo()), LibInfo(libInfo) {}
 
 FastISel::~FastISel() {}
 
@@ -2166,7 +2161,8 @@ FastISel::createMachineMemOperandFor(const Instruction *I) const {
   if (Alignment == 0)  // Ensure that codegen never sees alignment 0.
     Alignment = DL.getABITypeAlignment(ValTy);
 
-  unsigned Size = TM.getDataLayout()->getTypeStoreSize(ValTy);
+  unsigned Size =
+      TM.getSubtargetImpl()->getDataLayout()->getTypeStoreSize(ValTy);
 
   if (IsVolatile)
     Flags |= MachineMemOperand::MOVolatile;

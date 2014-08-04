@@ -139,21 +139,16 @@ private:
   ~InlineSpiller() {}
 
 public:
-  InlineSpiller(MachineFunctionPass &pass,
-                MachineFunction &mf,
-                VirtRegMap &vrm)
-    : MF(mf),
-      LIS(pass.getAnalysis<LiveIntervals>()),
-      LSS(pass.getAnalysis<LiveStacks>()),
-      AA(&pass.getAnalysis<AliasAnalysis>()),
-      MDT(pass.getAnalysis<MachineDominatorTree>()),
-      Loops(pass.getAnalysis<MachineLoopInfo>()),
-      VRM(vrm),
-      MFI(*mf.getFrameInfo()),
-      MRI(mf.getRegInfo()),
-      TII(*mf.getTarget().getInstrInfo()),
-      TRI(*mf.getTarget().getRegisterInfo()),
-      MBFI(pass.getAnalysis<MachineBlockFrequencyInfo>()) {}
+  InlineSpiller(MachineFunctionPass &pass, MachineFunction &mf, VirtRegMap &vrm)
+      : MF(mf), LIS(pass.getAnalysis<LiveIntervals>()),
+        LSS(pass.getAnalysis<LiveStacks>()),
+        AA(&pass.getAnalysis<AliasAnalysis>()),
+        MDT(pass.getAnalysis<MachineDominatorTree>()),
+        Loops(pass.getAnalysis<MachineLoopInfo>()), VRM(vrm),
+        MFI(*mf.getFrameInfo()), MRI(mf.getRegInfo()),
+        TII(*mf.getTarget().getSubtargetImpl()->getInstrInfo()),
+        TRI(*mf.getTarget().getSubtargetImpl()->getRegisterInfo()),
+        MBFI(pass.getAnalysis<MachineBlockFrequencyInfo>()) {}
 
   void spill(LiveRangeEdit &) override;
 

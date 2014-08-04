@@ -144,11 +144,12 @@ char MipsCodeEmitter::ID = 0;
 bool MipsCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MipsTargetMachine &Target = static_cast<MipsTargetMachine &>(
                                 const_cast<TargetMachine &>(MF.getTarget()));
-
-  JTI = Target.getJITInfo();
-  II = Target.getInstrInfo();
-  TD = Target.getDataLayout();
-  Subtarget = &TM.getSubtarget<MipsSubtarget> ();
+  // Initialize the subtarget so that we can grab the subtarget dependent
+  // variables from it.
+  Subtarget = &TM.getSubtarget<MipsSubtarget>();
+  JTI = Target.getSubtargetImpl()->getJITInfo();
+  II = Subtarget->getInstrInfo();
+  TD = Subtarget->getDataLayout();
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = nullptr;
   if (MF.getJumpTableInfo()) MJTEs = &MF.getJumpTableInfo()->getJumpTables();
@@ -294,7 +295,8 @@ unsigned MipsCodeEmitter::getSimm19Lsl2Encoding(const MachineInstr &MI,
 unsigned MipsCodeEmitter::getMachineOpValue(const MachineInstr &MI,
                                             const MachineOperand &MO) const {
   if (MO.isReg())
-    return TM.getRegisterInfo()->getEncodingValue(MO.getReg());
+    return TM.getSubtargetImpl()->getRegisterInfo()->getEncodingValue(
+        MO.getReg());
   else if (MO.isImm())
     return static_cast<unsigned>(MO.getImm());
   else if (MO.isGlobal())

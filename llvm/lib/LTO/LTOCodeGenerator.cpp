@@ -48,6 +48,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/ObjCARC.h"
@@ -390,12 +391,13 @@ void LTOCodeGenerator::applyScopeRestrictions() {
   passes.add(createDebugInfoVerifierPass());
 
   // mark which symbols can not be internalized
-  Mangler Mangler(TargetMach->getDataLayout());
+  Mangler Mangler(TargetMach->getSubtargetImpl()->getDataLayout());
   std::vector<const char*> MustPreserveList;
   SmallPtrSet<GlobalValue*, 8> AsmUsed;
   std::vector<StringRef> Libcalls;
   TargetLibraryInfo TLI(Triple(TargetMach->getTargetTriple()));
-  accumulateAndSortLibcalls(Libcalls, TLI, TargetMach->getTargetLowering());
+  accumulateAndSortLibcalls(
+      Libcalls, TLI, TargetMach->getSubtargetImpl()->getTargetLowering());
 
   for (Module::iterator f = mergedModule->begin(),
          e = mergedModule->end(); f != e; ++f)
@@ -461,7 +463,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   passes.add(createDebugInfoVerifierPass());
 
   // Add an appropriate DataLayout instance for this module...
-  mergedModule->setDataLayout(TargetMach->getDataLayout());
+  mergedModule->setDataLayout(TargetMach->getSubtargetImpl()->getDataLayout());
   passes.add(new DataLayoutPass(mergedModule));
 
   // Add appropriate TargetLibraryInfo for this module.

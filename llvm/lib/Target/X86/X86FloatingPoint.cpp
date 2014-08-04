@@ -44,6 +44,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -310,7 +311,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   if (!FPIsUsed) return false;
 
   Bundles = &getAnalysis<EdgeBundles>();
-  TII = MF.getTarget().getInstrInfo();
+  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
 
   // Prepare cross-MBB liveness.
   bundleCFG(MF);
@@ -1645,8 +1646,8 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &Inst) {
 }
 
 void FPS::setKillFlags(MachineBasicBlock &MBB) const {
-  const TargetRegisterInfo *TRI = MBB.getParent()->getTarget()
-    .getRegisterInfo();
+  const TargetRegisterInfo *TRI =
+      MBB.getParent()->getTarget().getSubtargetImpl()->getRegisterInfo();
   LivePhysRegs LPR(TRI);
 
   LPR.addLiveOuts(&MBB);

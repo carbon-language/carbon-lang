@@ -34,6 +34,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -92,10 +93,10 @@ bool BranchFolderPass::runOnMachineFunction(MachineFunction &MF) {
   bool EnableTailMerge = !MF.getTarget().requiresStructuredCFG() &&
       PassConfig->getEnableTailMerge();
   BranchFolder Folder(EnableTailMerge, /*CommonHoist=*/true);
-  return Folder.OptimizeFunction(MF,
-                                 MF.getTarget().getInstrInfo(),
-                                 MF.getTarget().getRegisterInfo(),
-                                 getAnalysisIfAvailable<MachineModuleInfo>());
+  return Folder.OptimizeFunction(
+      MF, MF.getTarget().getSubtargetImpl()->getInstrInfo(),
+      MF.getTarget().getSubtargetImpl()->getRegisterInfo(),
+      getAnalysisIfAvailable<MachineModuleInfo>());
 }
 
 

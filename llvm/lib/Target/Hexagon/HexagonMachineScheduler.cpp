@@ -208,8 +208,12 @@ void ConvergingVLIWScheduler::initialize(ScheduleDAGMI *dag) {
   const TargetMachine &TM = DAG->MF.getTarget();
   delete Top.HazardRec;
   delete Bot.HazardRec;
-  Top.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
-  Bot.HazardRec = TM.getInstrInfo()->CreateTargetMIHazardRecognizer(Itin, DAG);
+  Top.HazardRec =
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetMIHazardRecognizer(
+          Itin, DAG);
+  Bot.HazardRec =
+      TM.getSubtargetImpl()->getInstrInfo()->CreateTargetMIHazardRecognizer(
+          Itin, DAG);
 
   delete Top.ResourceModel;
   delete Bot.ResourceModel;

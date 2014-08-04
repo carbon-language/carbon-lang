@@ -48,8 +48,8 @@ EnableFastISelOption("fast-isel", cl::Hidden,
   cl::desc("Enable the \"fast\" instruction selector"));
 
 void LLVMTargetMachine::initAsmInfo() {
-  MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(*getRegisterInfo(),
-                                                    TargetTriple);
+  MCAsmInfo *TmpAsmInfo = TheTarget.createMCAsmInfo(
+      *getSubtargetImpl()->getRegisterInfo(), getTargetTriple());
   // TargetSelect.h moved to a different directory between LLVM 2.9 and 3.0,
   // and if the old one gets included then MCAsmInfo will be NULL and
   // we'll crash later.
@@ -110,9 +110,9 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
-  MachineModuleInfo *MMI =
-    new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
-                          &TM->getTargetLowering()->getObjFileLowering());
+  MachineModuleInfo *MMI = new MachineModuleInfo(
+      *TM->getMCAsmInfo(), *TM->getSubtargetImpl()->getRegisterInfo(),
+      &TM->getSubtargetImpl()->getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
@@ -165,10 +165,10 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   if (Options.MCOptions.MCSaveTempLabels)
     Context->setAllowTemporaryLabels(false);
 
-  const MCAsmInfo &MAI = *getMCAsmInfo();
-  const MCRegisterInfo &MRI = *getRegisterInfo();
-  const MCInstrInfo &MII = *getInstrInfo();
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
+  const MCAsmInfo &MAI = *getMCAsmInfo();
+  const MCRegisterInfo &MRI = *getSubtargetImpl()->getRegisterInfo();
+  const MCInstrInfo &MII = *getSubtargetImpl()->getInstrInfo();
   std::unique_ptr<MCStreamer> AsmStreamer;
 
   switch (FileType) {
@@ -265,10 +265,10 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
 
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
-  const MCRegisterInfo &MRI = *getRegisterInfo();
+  const MCRegisterInfo &MRI = *getSubtargetImpl()->getRegisterInfo();
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(), MRI,
-                                                       STI, *Ctx);
+  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(
+      *getSubtargetImpl()->getInstrInfo(), MRI, STI, *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(MRI, getTargetTriple(),
                                                      TargetCPU);
   if (!MCE || !MAB)

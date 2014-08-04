@@ -94,7 +94,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
     MachineFunction *MF = I->getParent()->getParent();
     const AArch64TargetMachine *TM =
         static_cast<const AArch64TargetMachine *>(&MF->getTarget());
-    const AArch64InstrInfo *TII = TM->getInstrInfo();
+    const AArch64InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
 
     // Insert a Copy from TLSBaseAddrReg to x0, which is where the rest of the
     // code sequence assumes the address will be.
@@ -114,7 +114,7 @@ struct LDTLSCleanup : public MachineFunctionPass {
     MachineFunction *MF = I->getParent()->getParent();
     const AArch64TargetMachine *TM =
         static_cast<const AArch64TargetMachine *>(&MF->getTarget());
-    const AArch64InstrInfo *TII = TM->getInstrInfo();
+    const AArch64InstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
 
     // Create a virtual register for the TLS base address.
     MachineRegisterInfo &RegInfo = MF->getRegInfo();

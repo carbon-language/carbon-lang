@@ -51,7 +51,7 @@ public:
 
   AArch64TTI(const AArch64TargetMachine *TM)
       : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeAArch64TTIPass(*PassRegistry::getPassRegistry());
   }
 

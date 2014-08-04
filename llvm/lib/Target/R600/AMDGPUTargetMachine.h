@@ -33,30 +33,10 @@ public:
                       StringRef CPU, TargetOptions Options, Reloc::Model RM,
                       CodeModel::Model CM, CodeGenOpt::Level OL);
   ~AMDGPUTargetMachine();
-  const AMDGPUFrameLowering *getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const override {
-    return &IntrinsicInfo;
-  }
-  const AMDGPUInstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
   const AMDGPUSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
   }
-  const AMDGPURegisterInfo *getRegisterInfo() const override {
-    return getSubtargetImpl()->getRegisterInfo();
-  }
-  AMDGPUTargetLowering *getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const InstrItineraryData *getInstrItineraryData() const override {
-    return &getSubtargetImpl()->getInstrItineraryData();
-  }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
+  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const { return &IntrinsicInfo; }
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
 
   /// \brief Register R600 analysis passes with a pass manager.

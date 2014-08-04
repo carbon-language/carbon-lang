@@ -36,6 +36,7 @@
 #include "AArch64.h"
 #include "AArch64InstrInfo.h"
 #include "AArch64RegisterInfo.h"
+#include "AArch64Subtarget.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -377,7 +378,8 @@ bool AArch64AdvSIMDScalar::runOnMachineFunction(MachineFunction &mf) {
 
   const TargetMachine &TM = mf.getTarget();
   MRI = &mf.getRegInfo();
-  TII = static_cast<const AArch64InstrInfo *>(TM.getInstrInfo());
+  TII = static_cast<const AArch64InstrInfo *>(
+      TM.getSubtargetImpl()->getInstrInfo());
 
   // Just check things on a one-block-at-a-time basis.
   for (MachineFunction::iterator I = mf.begin(), E = mf.end(); I != E; ++I)

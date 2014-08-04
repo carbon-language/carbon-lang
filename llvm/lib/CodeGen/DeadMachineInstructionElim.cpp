@@ -20,6 +20,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen-dce"
@@ -90,8 +92,8 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
 
   bool AnyChanges = false;
   MRI = &MF.getRegInfo();
-  TRI = MF.getTarget().getRegisterInfo();
-  TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
 
   // Loop over all instructions in all blocks, from bottom to top, so that it's
   // more likely that chains of dependent but ultimately dead instructions will

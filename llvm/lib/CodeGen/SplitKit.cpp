@@ -40,16 +40,11 @@ STATISTIC(NumRepairs,  "Number of invalid live ranges repaired");
 //                                 Split Analysis
 //===----------------------------------------------------------------------===//
 
-SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm,
-                             const LiveIntervals &lis,
+SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm, const LiveIntervals &lis,
                              const MachineLoopInfo &mli)
-  : MF(vrm.getMachineFunction()),
-    VRM(vrm),
-    LIS(lis),
-    Loops(mli),
-    TII(*MF.getTarget().getInstrInfo()),
-    CurLI(nullptr),
-    LastSplitPoint(MF.getNumBlockIDs()) {}
+    : MF(vrm.getMachineFunction()), VRM(vrm), LIS(lis), Loops(mli),
+      TII(*MF.getTarget().getSubtargetImpl()->getInstrInfo()), CurLI(nullptr),
+      LastSplitPoint(MF.getNumBlockIDs()) {}
 
 void SplitAnalysis::clear() {
   UseSlots.clear();
@@ -321,22 +316,20 @@ void SplitAnalysis::analyze(const LiveInterval *li) {
 //===----------------------------------------------------------------------===//
 
 /// Create a new SplitEditor for editing the LiveInterval analyzed by SA.
-SplitEditor::SplitEditor(SplitAnalysis &sa,
-                         LiveIntervals &lis,
-                         VirtRegMap &vrm,
+SplitEditor::SplitEditor(SplitAnalysis &sa, LiveIntervals &lis, VirtRegMap &vrm,
                          MachineDominatorTree &mdt,
                          MachineBlockFrequencyInfo &mbfi)
-  : SA(sa), LIS(lis), VRM(vrm),
-    MRI(vrm.getMachineFunction().getRegInfo()),
-    MDT(mdt),
-    TII(*vrm.getMachineFunction().getTarget().getInstrInfo()),
-    TRI(*vrm.getMachineFunction().getTarget().getRegisterInfo()),
-    MBFI(mbfi),
-    Edit(nullptr),
-    OpenIdx(0),
-    SpillMode(SM_Partition),
-    RegAssign(Allocator)
-{}
+    : SA(sa), LIS(lis), VRM(vrm), MRI(vrm.getMachineFunction().getRegInfo()),
+      MDT(mdt), TII(*vrm.getMachineFunction()
+                         .getTarget()
+                         .getSubtargetImpl()
+                         ->getInstrInfo()),
+      TRI(*vrm.getMachineFunction()
+               .getTarget()
+               .getSubtargetImpl()
+               ->getRegisterInfo()),
+      MBFI(mbfi), Edit(nullptr), OpenIdx(0), SpillMode(SM_Partition),
+      RegAssign(Allocator) {}
 
 void SplitEditor::reset(LiveRangeEdit &LRE, ComplementSpillMode SM) {
   Edit = &LRE;

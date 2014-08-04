@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <cctype>
 using namespace llvm;
 
@@ -2177,7 +2178,8 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
     std::make_pair(0u, static_cast<const TargetRegisterClass*>(nullptr));
 
   // Figure out which register class contains this reg.
-  const TargetRegisterInfo *RI = getTargetMachine().getRegisterInfo();
+  const TargetRegisterInfo *RI =
+      getTargetMachine().getSubtargetImpl()->getRegisterInfo();
   for (TargetRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
        E = RI->regclass_end(); RCI != E; ++RCI) {
     const TargetRegisterClass *RC = *RCI;

@@ -25,6 +25,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "codegen-cp"
@@ -335,8 +336,8 @@ bool MachineCopyPropagation::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
-  TRI = MF.getTarget().getRegisterInfo();
-  TII = MF.getTarget().getInstrInfo();
+  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
   MRI = &MF.getRegInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

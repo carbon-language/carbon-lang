@@ -48,6 +48,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "dwarfdebug"
@@ -318,7 +319,7 @@ DIE &DwarfDebug::updateSubprogramScopeDIE(DwarfCompileUnit &SPCU,
 
   attachLowHighPC(SPCU, *SPDie, FunctionBeginSym, FunctionEndSym);
 
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   MachineLocation Location(RI->getFrameRegister(*Asm->MF));
   SPCU.addAddress(*SPDie, dwarf::DW_AT_frame_base, Location);
 
@@ -1531,7 +1532,8 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
   Asm->OutStreamer.EmitLabel(FunctionBeginSym);
 
   // Calculate history for local variables.
-  calculateDbgValueHistory(MF, Asm->TM.getRegisterInfo(), DbgValues);
+  calculateDbgValueHistory(MF, Asm->TM.getSubtargetImpl()->getRegisterInfo(),
+                           DbgValues);
 
   // Request labels for the full history.
   for (const auto &I : DbgValues) {

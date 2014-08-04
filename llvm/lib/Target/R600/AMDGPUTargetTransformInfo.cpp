@@ -52,7 +52,7 @@ public:
 
   AMDGPUTTI(const AMDGPUTargetMachine *TM)
       : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeAMDGPUTTIPass(*PassRegistry::getPassRegistry());
   }
 

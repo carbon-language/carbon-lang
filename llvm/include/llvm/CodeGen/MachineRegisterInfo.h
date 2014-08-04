@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <vector>
 
 namespace llvm {
@@ -126,7 +127,7 @@ public:
   ~MachineRegisterInfo();
 
   const TargetRegisterInfo *getTargetRegisterInfo() const {
-    return TM.getRegisterInfo();
+    return TM.getSubtargetImpl()->getRegisterInfo();
   }
 
   void resetDelegate(Delegate *delegate) {

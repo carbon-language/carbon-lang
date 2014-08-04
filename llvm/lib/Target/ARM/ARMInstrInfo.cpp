@@ -121,8 +121,9 @@ namespace {
       ARMConstantPoolValue *CPV = ARMConstantPoolSymbol::Create(
           *Context, "_GLOBAL_OFFSET_TABLE_", ARMPCLabelIndex, PCAdj);
 
-      unsigned Align = TM->getDataLayout()
-          ->getPrefTypeAlignment(Type::getInt32PtrTy(*Context));
+      unsigned Align =
+          TM->getSubtargetImpl()->getDataLayout()->getPrefTypeAlignment(
+              Type::getInt32PtrTy(*Context));
       unsigned Idx = MF.getConstantPool()->getConstantPoolIndex(CPV, Align);
 
       MachineBasicBlock &FirstMBB = MF.front();
@@ -132,7 +133,7 @@ namespace {
           MF.getRegInfo().createVirtualRegister(&ARM::rGPRRegClass);
       unsigned Opc = TM->getSubtarget<ARMSubtarget>().isThumb2() ?
                      ARM::t2LDRpci : ARM::LDRcp;
-      const TargetInstrInfo &TII = *TM->getInstrInfo();
+      const TargetInstrInfo &TII = *TM->getSubtargetImpl()->getInstrInfo();
       MachineInstrBuilder MIB = BuildMI(FirstMBB, MBBI, DL,
                                         TII.get(Opc), TempReg)
                                 .addConstantPoolIndex(Idx);

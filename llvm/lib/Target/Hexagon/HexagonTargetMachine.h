@@ -31,29 +31,8 @@ public:
                        Reloc::Model RM, CodeModel::Model CM,
                        CodeGenOpt::Level OL);
 
-  const HexagonInstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
   const HexagonSubtarget *getSubtargetImpl() const override {
     return &Subtarget;
-  }
-  const HexagonRegisterInfo *getRegisterInfo() const override {
-    return getSubtargetImpl()->getRegisterInfo();
-  }
-  const InstrItineraryData* getInstrItineraryData() const override {
-    return &getSubtargetImpl()->getInstrItineraryData();
-  }
-  const HexagonTargetLowering* getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const HexagonFrameLowering* getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  const HexagonSelectionDAGInfo* getSelectionDAGInfo() const override {
-    return getSubtargetImpl()->getSelectionDAGInfo();
-  }
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
   }
   static unsigned getModuleMatchQuality(const Module &M);
 

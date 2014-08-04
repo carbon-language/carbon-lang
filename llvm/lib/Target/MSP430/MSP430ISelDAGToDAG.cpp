@@ -97,9 +97,9 @@ namespace {
 
   public:
     MSP430DAGToDAGISel(MSP430TargetMachine &TM, CodeGenOpt::Level OptLevel)
-      : SelectionDAGISel(TM, OptLevel),
-        Lowering(*TM.getTargetLowering()),
-        Subtarget(*TM.getSubtargetImpl()) { }
+        : SelectionDAGISel(TM, OptLevel),
+          Lowering(*TM.getSubtargetImpl()->getTargetLowering()),
+          Subtarget(*TM.getSubtargetImpl()) {}
 
     const char *getPassName() const override {
       return "MSP430 DAG->DAG Pattern Instruction Selection";

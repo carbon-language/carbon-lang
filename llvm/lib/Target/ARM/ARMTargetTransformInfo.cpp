@@ -49,7 +49,7 @@ public:
 
   ARMTTI(const ARMBaseTargetMachine *TM)
       : ImmutablePass(ID), TM(TM), ST(TM->getSubtargetImpl()),
-        TLI(TM->getTargetLowering()) {
+        TLI(TM->getSubtargetImpl()->getTargetLowering()) {
     initializeARMTTIPass(*PassRegistry::getPassRegistry());
   }
 

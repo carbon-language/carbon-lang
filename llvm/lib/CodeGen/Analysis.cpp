@@ -25,7 +25,9 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
+
 using namespace llvm;
 
 /// ComputeLinearIndex - Given an LLVM IR aggregate type and a sequence
@@ -509,8 +511,8 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, const TargetMachine &TM) {
         return false;
     }
 
-  return returnTypeIsEligibleForTailCall(ExitBB->getParent(), I, Ret,
-                                         *TM.getTargetLowering());
+  return returnTypeIsEligibleForTailCall(
+      ExitBB->getParent(), I, Ret, *TM.getSubtargetImpl()->getTargetLowering());
 }
 
 bool llvm::returnTypeIsEligibleForTailCall(const Function *F,

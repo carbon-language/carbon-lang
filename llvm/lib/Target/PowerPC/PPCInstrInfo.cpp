@@ -75,7 +75,7 @@ PPCInstrInfo::CreateTargetHazardRecognizer(const TargetSubtargetInfo *STI,
   if (Directive == PPC::DIR_440 || Directive == PPC::DIR_A2 ||
       Directive == PPC::DIR_E500mc || Directive == PPC::DIR_E5500) {
     const InstrItineraryData *II =
-        &static_cast<const PPCSubtarget *>(STI)->getInstrItineraryData();
+        static_cast<const PPCSubtarget *>(STI)->getInstrItineraryData();
     return new ScoreboardHazardRecognizer(II, DAG);
   }
 
@@ -1827,7 +1827,7 @@ public:
 
       LIS = &getAnalysis<LiveIntervals>();
 
-      TII = TM->getInstrInfo();
+      TII = TM->getSubtargetImpl()->getInstrInfo();
 
       bool Changed = false;
 
@@ -1980,7 +1980,7 @@ public:
       // If we don't have VSX on the subtarget, don't do anything.
       if (!TM->getSubtargetImpl()->hasVSX())
         return false;
-      TII = TM->getInstrInfo();
+      TII = TM->getSubtargetImpl()->getInstrInfo();
 
       bool Changed = false;
 
@@ -2057,7 +2057,7 @@ public:
       // If we don't have VSX don't bother doing anything here.
       if (!TM->getSubtargetImpl()->hasVSX())
         return false;
-      TII = TM->getInstrInfo();
+      TII = TM->getSubtargetImpl()->getInstrInfo();
 
       bool Changed = false;
 
@@ -2214,7 +2214,7 @@ protected:
 public:
     bool runOnMachineFunction(MachineFunction &MF) override {
       TM = static_cast<const PPCTargetMachine *>(&MF.getTarget());
-      TII = TM->getInstrInfo();
+      TII = TM->getSubtargetImpl()->getInstrInfo();
 
       bool Changed = false;
 

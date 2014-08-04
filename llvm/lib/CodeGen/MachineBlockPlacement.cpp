@@ -42,6 +42,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -1111,8 +1112,8 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
   MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
   MLI = &getAnalysis<MachineLoopInfo>();
-  TII = F.getTarget().getInstrInfo();
-  TLI = F.getTarget().getTargetLowering();
+  TII = F.getTarget().getSubtargetImpl()->getInstrInfo();
+  TLI = F.getTarget().getSubtargetImpl()->getTargetLowering();
   assert(BlockToChain.empty());
 
   buildCFGChains(F);

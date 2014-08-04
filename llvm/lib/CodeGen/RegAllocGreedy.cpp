@@ -2320,8 +2320,8 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
 
   MF = &mf;
   const TargetMachine &TM = MF->getTarget();
-  TRI = TM.getRegisterInfo();
-  TII = TM.getInstrInfo();
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
+  TII = TM.getSubtargetImpl()->getInstrInfo();
   RCI.runOnMachineFunction(mf);
 
   EnableLocalReassign = EnableLocalReassignment ||

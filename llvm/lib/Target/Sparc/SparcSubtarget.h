@@ -49,15 +49,21 @@ public:
   SparcSubtarget(const std::string &TT, const std::string &CPU,
                  const std::string &FS, TargetMachine &TM, bool is64bit);
 
-  const SparcInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  const TargetFrameLowering *getFrameLowering() const { return &FrameLowering; }
-  const SparcRegisterInfo *getRegisterInfo() const {
+  const SparcInstrInfo *getInstrInfo() const override { return &InstrInfo; }
+  const TargetFrameLowering *getFrameLowering() const override {
+    return &FrameLowering;
+  }
+  const SparcRegisterInfo *getRegisterInfo() const override {
     return &InstrInfo.getRegisterInfo();
   }
-  const SparcTargetLowering *getTargetLowering() const { return &TLInfo; }
-  const SparcSelectionDAGInfo *getSelectionDAGInfo() const { return &TSInfo; }
-  SparcJITInfo *getJITInfo() { return &JITInfo; }
-  const DataLayout *getDataLayout() const { return &DL; }
+  const SparcTargetLowering *getTargetLowering() const override {
+    return &TLInfo;
+  }
+  const SparcSelectionDAGInfo *getSelectionDAGInfo() const override {
+    return &TSInfo;
+  }
+  SparcJITInfo *getJITInfo() override { return &JITInfo; }
+  const DataLayout *getDataLayout() const override { return &DL; }
 
   bool isV9() const { return IsV9; }
   bool isVIS() const { return IsVIS; }

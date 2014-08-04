@@ -79,7 +79,8 @@ IsGlobalInSmallSection(const GlobalValue *GV, const TargetMachine &TM,
 
   if (Kind.isBSS() || Kind.isDataNoRel() || Kind.isCommon()) {
     Type *Ty = GV->getType()->getElementType();
-    return IsInSmallSection(TM.getDataLayout()->getTypeAllocSize(Ty));
+    return IsInSmallSection(
+        TM.getSubtargetImpl()->getDataLayout()->getTypeAllocSize(Ty));
   }
 
   return false;

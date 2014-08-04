@@ -664,8 +664,8 @@ static bool UpdateOperandRegClass(MachineInstr *Instr) {
   MachineFunction *MF = MBB->getParent();
   assert(MF && "Can't get MachineFunction here");
   const TargetMachine *TM = &MF->getTarget();
-  const TargetInstrInfo *TII = TM->getInstrInfo();
-  const TargetRegisterInfo *TRI = TM->getRegisterInfo();
+  const TargetInstrInfo *TII = TM->getSubtargetImpl()->getInstrInfo();
+  const TargetRegisterInfo *TRI = TM->getSubtargetImpl()->getRegisterInfo();
   MachineRegisterInfo *MRI = &MF->getRegInfo();
 
   for (unsigned OpIdx = 0, EndIdx = Instr->getNumOperands(); OpIdx < EndIdx;

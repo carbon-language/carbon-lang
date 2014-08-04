@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "reg-scavenging"
@@ -71,8 +72,8 @@ void RegScavenger::initRegState() {
 void RegScavenger::enterBasicBlock(MachineBasicBlock *mbb) {
   MachineFunction &MF = *mbb->getParent();
   const TargetMachine &TM = MF.getTarget();
-  TII = TM.getInstrInfo();
-  TRI = TM.getRegisterInfo();
+  TII = TM.getSubtargetImpl()->getInstrInfo();
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
   MRI = &MF.getRegInfo();
 
   assert((NumPhysRegs == 0 || NumPhysRegs == TRI->getNumRegs()) &&

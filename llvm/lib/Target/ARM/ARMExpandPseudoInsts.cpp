@@ -867,8 +867,9 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       if (RI.hasBasePointer(MF)) {
         int32_t NumBytes = AFI->getFramePtrSpillOffset();
         unsigned FramePtr = RI.getFrameRegister(MF);
-        assert(MF.getTarget().getFrameLowering()->hasFP(MF) &&
-               "base pointer without frame pointer?");
+        assert(
+            MF.getTarget().getSubtargetImpl()->getFrameLowering()->hasFP(MF) &&
+            "base pointer without frame pointer?");
 
         if (AFI->isThumb2Function()) {
           emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,
@@ -1343,8 +1344,9 @@ bool ARMExpandPseudo::ExpandMBB(MachineBasicBlock &MBB) {
 
 bool ARMExpandPseudo::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
-  TII = static_cast<const ARMBaseInstrInfo*>(TM.getInstrInfo());
-  TRI = TM.getRegisterInfo();
+  TII = static_cast<const ARMBaseInstrInfo *>(
+      TM.getSubtargetImpl()->getInstrInfo());
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
   STI = &TM.getSubtarget<ARMSubtarget>();
   AFI = MF.getInfo<ARMFunctionInfo>();
 

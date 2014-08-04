@@ -32,31 +32,8 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL, bool is64Bit);
 
-  const PPCInstrInfo *getInstrInfo() const override {
-    return getSubtargetImpl()->getInstrInfo();
-  }
-  const PPCFrameLowering *getFrameLowering() const override {
-    return getSubtargetImpl()->getFrameLowering();
-  }
-  PPCJITInfo *getJITInfo() override { return getSubtargetImpl()->getJITInfo(); }
-  const PPCTargetLowering *getTargetLowering() const override {
-    return getSubtargetImpl()->getTargetLowering();
-  }
-  const PPCSelectionDAGInfo* getSelectionDAGInfo() const override {
-    return getSubtargetImpl()->getSelectionDAGInfo();
-  }
-  const PPCRegisterInfo *getRegisterInfo() const override {
-    return &getInstrInfo()->getRegisterInfo();
-  }
-
-  const DataLayout *getDataLayout() const override {
-    return getSubtargetImpl()->getDataLayout();
-  }
-  const PPCSubtarget  *getSubtargetImpl() const override { return &Subtarget; }
-  PPCSubtarget  *getSubtargetImpl() override { return &Subtarget; }
-  const InstrItineraryData *getInstrItineraryData() const override {
-    return &getSubtargetImpl()->getInstrItineraryData();
-  }
+  const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
+  PPCSubtarget *getSubtargetImpl() override { return &Subtarget; }
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

@@ -80,7 +80,7 @@ char HexagonSplitTFRCondSets::ID = 0;
 
 bool HexagonSplitTFRCondSets::runOnMachineFunction(MachineFunction &Fn) {
 
-  const TargetInstrInfo *TII = QTM.getInstrInfo();
+  const TargetInstrInfo *TII = QTM.getSubtargetImpl()->getInstrInfo();
 
   // Loop over all of the basic blocks.
   for (MachineFunction::iterator MBBb = Fn.begin(), MBBe = Fn.end();

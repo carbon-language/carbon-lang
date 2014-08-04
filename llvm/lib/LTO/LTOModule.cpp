@@ -40,6 +40,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Transforms/Utils/GlobalStatus.h"
 #include <system_error>
 using namespace llvm;
@@ -146,7 +147,7 @@ LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
   TargetMachine *target = march->createTargetMachine(TripleStr, CPU, FeatureStr,
                                                      options);
   M->materializeAllPermanently(true);
-  M->setDataLayout(target->getDataLayout());
+  M->setDataLayout(target->getSubtargetImpl()->getDataLayout());
 
   std::unique_ptr<object::IRObjectFile> IRObj(
       new object::IRObjectFile(std::move(Buffer), std::move(M)));
@@ -574,8 +575,10 @@ void LTOModule::parseMetadata() {
         MDString *MDOption = cast<MDString>(MDOptions->getOperand(ii));
         StringRef Op = _linkeropt_strings.
             GetOrCreateValue(MDOption->getString()).getKey();
-        StringRef DepLibName = _target->getTargetLowering()->
-            getObjFileLowering().getDepLibFromLinkerOpt(Op);
+        StringRef DepLibName = _target->getSubtargetImpl()
+                                   ->getTargetLowering()
+                                   ->getObjFileLowering()
+                                   .getDepLibFromLinkerOpt(Op);
         if (!DepLibName.empty())
           _deplibs.push_back(DepLibName.data());
         else if (!Op.empty())

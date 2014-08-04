@@ -1670,7 +1670,8 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     MFI->setFrameAddressIsTaken(true);
 
     const AArch64RegisterInfo *RegInfo =
-      static_cast<const AArch64RegisterInfo *>(TM.getRegisterInfo());
+        static_cast<const AArch64RegisterInfo *>(
+            TM.getSubtargetImpl()->getRegisterInfo());
     unsigned FramePtr = RegInfo->getFrameRegister(*(FuncInfo.MF));
     unsigned SrcReg = FramePtr;
 

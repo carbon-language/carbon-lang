@@ -30,6 +30,7 @@
 #include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 using namespace llvm;
 
@@ -495,7 +496,7 @@ void DwarfUnit::addVariableAddress(const DbgVariable &DV, DIE &Die,
 // AsmPrinter::EmitDwarfRegOpPiece.
 void DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
                                    unsigned SizeInBits, unsigned OffsetInBits) {
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   int DWReg = RI->getDwarfRegNum(Reg, false);
   bool isSubRegister = DWReg < 0;
 
@@ -557,9 +558,9 @@ void DwarfUnit::addRegisterOpPiece(DIELoc &TheDie, unsigned Reg,
 /// addRegisterOffset - Add register offset.
 void DwarfUnit::addRegisterOffset(DIELoc &TheDie, unsigned Reg,
                                   int64_t Offset) {
-  const TargetRegisterInfo *RI = Asm->TM.getRegisterInfo();
+  const TargetRegisterInfo *RI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   unsigned DWReg = RI->getDwarfRegNum(Reg, false);
-  const TargetRegisterInfo *TRI = Asm->TM.getRegisterInfo();
+  const TargetRegisterInfo *TRI = Asm->TM.getSubtargetImpl()->getRegisterInfo();
   if (Reg == TRI->getFrameRegister(*Asm->MF))
     // If variable offset is based in frame register then use fbreg.
     addUInt(TheDie, dwarf::DW_FORM_data1, dwarf::DW_OP_fbreg);
@@ -1877,7 +1878,8 @@ std::unique_ptr<DIE> DwarfUnit::constructVariableDIEImpl(const DbgVariable &DV,
   int FI = DV.getFrameIndex();
   if (FI != ~0) {
     unsigned FrameReg = 0;
-    const TargetFrameLowering *TFI = Asm->TM.getFrameLowering();
+    const TargetFrameLowering *TFI =
+        Asm->TM.getSubtargetImpl()->getFrameLowering();
     int Offset = TFI->getFrameIndexReference(*Asm->MF, FI, FrameReg);
     MachineLocation Location(FrameReg, Offset);
     addVariableAddress(DV, *VariableDie, Location);

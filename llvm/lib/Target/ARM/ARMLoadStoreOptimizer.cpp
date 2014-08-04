@@ -1725,10 +1725,10 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
 
 bool ARMLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
   const TargetMachine &TM = Fn.getTarget();
-  TL = TM.getTargetLowering();
+  TL = TM.getSubtargetImpl()->getTargetLowering();
   AFI = Fn.getInfo<ARMFunctionInfo>();
-  TII = TM.getInstrInfo();
-  TRI = TM.getRegisterInfo();
+  TII = TM.getSubtargetImpl()->getInstrInfo();
+  TRI = TM.getSubtargetImpl()->getRegisterInfo();
   STI = &TM.getSubtarget<ARMSubtarget>();
   RS = new RegScavenger();
   isThumb2 = AFI->isThumb2Function();
@@ -1793,9 +1793,9 @@ namespace {
 }
 
 bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
-  TD  = Fn.getTarget().getDataLayout();
-  TII = Fn.getTarget().getInstrInfo();
-  TRI = Fn.getTarget().getRegisterInfo();
+  TD = Fn.getTarget().getSubtargetImpl()->getDataLayout();
+  TII = Fn.getTarget().getSubtargetImpl()->getInstrInfo();
+  TRI = Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
   STI = &Fn.getTarget().getSubtarget<ARMSubtarget>();
   MRI = &Fn.getRegInfo();
   MF  = &Fn;

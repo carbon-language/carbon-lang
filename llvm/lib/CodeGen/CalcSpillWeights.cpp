@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 using namespace llvm;
 
 #define DEBUG_TYPE "calcspillweights"
@@ -95,7 +96,8 @@ static bool isRematerializable(const LiveInterval &LI,
 void
 VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
-  const TargetRegisterInfo &tri = *MF.getTarget().getRegisterInfo();
+  const TargetRegisterInfo &tri =
+      *MF.getTarget().getSubtargetImpl()->getRegisterInfo();
   MachineBasicBlock *mbb = nullptr;
   MachineLoop *loop = nullptr;
   bool isExiting = false;
@@ -186,7 +188,8 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   // it is a preferred candidate for spilling.
   // FIXME: this gets much more complicated once we support non-trivial
   // re-materialization.
-  if (isRematerializable(li, LIS, *MF.getTarget().getInstrInfo()))
+  if (isRematerializable(li, LIS,
+                         *MF.getTarget().getSubtargetImpl()->getInstrInfo()))
     totalWeight *= 0.5F;
 
   li.weight = normalize(totalWeight, li.getSize());

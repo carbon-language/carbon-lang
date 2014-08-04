@@ -136,7 +136,7 @@ class SGPRImm <dag frag> : PatLeaf<frag, [{
     return false;
   }
   const SIRegisterInfo *SIRI =
-                       static_cast<const SIRegisterInfo*>(TM.getRegisterInfo());
+                       static_cast<const SIRegisterInfo*>(TM.getSubtargetImpl()->getRegisterInfo());
   for (SDNode::use_iterator U = N->use_begin(), E = SDNode::use_end();
                                                 U != E; ++U) {
     if (SIRI->isSGPRClass(getOperandRegClass(*U, U.getOperandNo()))) {

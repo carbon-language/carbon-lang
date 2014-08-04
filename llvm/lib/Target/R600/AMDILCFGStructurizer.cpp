@@ -11,6 +11,7 @@
 #include "AMDGPU.h"
 #include "AMDGPUInstrInfo.h"
 #include "R600InstrInfo.h"
+#include "AMDGPUSubtarget.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/SmallVector.h"
@@ -160,7 +161,8 @@ public:
   bool prepare();
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    TII = static_cast<const R600InstrInfo *>(MF.getTarget().getInstrInfo());
+    TII = static_cast<const R600InstrInfo *>(
+        MF.getTarget().getSubtargetImpl()->getInstrInfo());
     TRI = &TII->getRegisterInfo();
     DEBUG(MF.dump(););
     OrderedBlks.clear();
