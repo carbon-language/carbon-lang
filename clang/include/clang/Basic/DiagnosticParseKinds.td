@@ -601,13 +601,13 @@ def warn_cxx98_compat_two_right_angle_brackets : Warning<
   "consecutive right angle brackets are incompatible with C++98 (use '> >')">,
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_multiple_template_declarators : Error<
-    "%select{|a template declaration|an explicit template specialization|"
-    "an explicit template instantiation}0 can "
-    "only %select{|declare|declare|instantiate}0 a single entity">;
+  "%select{|a template declaration|an explicit template specialization|"
+  "an explicit template instantiation}0 can "
+  "only %select{|declare|declare|instantiate}0 a single entity">;
 def err_explicit_instantiation_with_definition : Error<
-    "explicit template instantiation cannot have a definition; if this "
-    "definition is meant to be an explicit specialization, add '<>' after the "
-    "'template' keyword">;
+  "explicit template instantiation cannot have a definition; if this "
+  "definition is meant to be an explicit specialization, add '<>' after the "
+  "'template' keyword">;
 def err_template_defn_explicit_instantiation : Error<
   "%select{function|class|variable}0 cannot be defined in an explicit instantiation; if this "
   "declaration is meant to be a %select{function|class|variable}0 definition, remove the 'template' keyword">;
@@ -615,7 +615,7 @@ def err_friend_explicit_instantiation : Error<
   "friend cannot be declared in an explicit instantiation; if this "
   "declaration is meant to be a friend declaration, remove the 'template' keyword">;
 def err_explicit_instantiation_enum : Error<
-    "enumerations cannot be explicitly instantiated">;
+  "enumerations cannot be explicitly instantiated">;
 def err_expected_template_parameter : Error<"expected template parameter">;
 
 def err_missing_dependent_template_keyword : Error<
@@ -702,7 +702,7 @@ def err_alias_declaration_not_identifier : Error<
   "name defined in alias declaration must be an identifier">;
 def err_alias_declaration_specialization : Error<
   "%select{partial specialization|explicit specialization|explicit instantiation}0 of alias templates is not permitted">;
-    
+
 // C++11 override control
 def ext_override_control_keyword : ExtWarn<
   "'%0' keyword is a C++11 extension">, InGroup<CXX11>;
