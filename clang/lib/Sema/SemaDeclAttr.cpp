@@ -2362,10 +2362,9 @@ static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       !isCFStringType(Ty, S.Context) &&
       (!Ty->isPointerType() ||
        !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
-    // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_not)
-    << (not_nsstring_type ? "a string type" : "an NSString")
-       << IdxExpr->getSourceRange();
+        << (not_nsstring_type ? "a string type" : "an NSString")
+        << IdxExpr->getSourceRange() << getFunctionOrMethodParamRange(D, 0);
     return;
   }
   Ty = getFunctionOrMethodResultType(D);
@@ -2373,10 +2372,9 @@ static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
       !isCFStringType(Ty, S.Context) &&
       (!Ty->isPointerType() ||
        !Ty->getAs<PointerType>()->getPointeeType()->isCharType())) {
-    // FIXME: Should highlight the actual expression that has the wrong type.
     S.Diag(Attr.getLoc(), diag::err_format_attribute_result_not)
-    << (not_nsstring_type ? "string type" : "NSString")
-       << IdxExpr->getSourceRange();
+        << (not_nsstring_type ? "string type" : "NSString")
+        << IdxExpr->getSourceRange() << getFunctionOrMethodParamRange(D, 0);
     return;
   }
 
