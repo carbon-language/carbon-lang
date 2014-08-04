@@ -58,10 +58,10 @@ inline bool matches(const til::SExpr *E1, const til::SExpr *E2) {
 }
 
 inline bool partiallyMatches(const til::SExpr *E1, const til::SExpr *E2) {
-  auto *PE1 = dyn_cast_or_null<til::Project>(E1);
+  const auto *PE1 = dyn_cast_or_null<til::Project>(E1);
   if (!PE1)
     return false;
-  auto *PE2 = dyn_cast_or_null<til::Project>(E2);
+  const auto *PE2 = dyn_cast_or_null<til::Project>(E2);
   if (!PE2)
     return false;
   return PE1->clangDecl() == PE2->clangDecl();
