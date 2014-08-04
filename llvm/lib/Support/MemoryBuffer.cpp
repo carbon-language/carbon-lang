@@ -305,6 +305,14 @@ static bool shouldUseMmap(int FD,
   if ((FileSize & (PageSize -1)) == 0)
     return false;
 
+#if defined(__CYGWIN__)
+  // Don't try to map files that are exactly a multiple of the physical page size
+  // if we need a null terminator.
+  // FIXME: We should reorganize again getPageSize() on Win32.
+  if ((FileSize & (4096 - 1)) == 0)
+    return false;
+#endif
+
   return true;
 }
 
