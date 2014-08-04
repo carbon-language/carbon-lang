@@ -7931,6 +7931,10 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
       }
     V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
                      DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
+    if (isSingleInputShuffleMask(Mask))
+      return V1; // Single inputs are easy.
+
+    // Otherwise, blend the two.
     V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
                      DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
     return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);

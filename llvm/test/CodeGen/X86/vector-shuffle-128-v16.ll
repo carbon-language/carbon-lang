@@ -179,9 +179,7 @@ define <16 x i8> @shuffle_v16i8_03_02_01_00_07_06_05_04_11_10_09_08_15_14_13_12(
 ;
 ; SSSE3-LABEL: @shuffle_v16i8_03_02_01_00_07_06_05_04_11_10_09_08_15_14_13_12
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*}} # xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
 ; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[3,2,1,0,7,6,5,4,11,10,9,8,15,14,13,12]
-; SSSE3-NEXT:    por %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> %b, <16 x i32> <i32 3, i32 2, i32 1, i32 0, i32 7, i32 6, i32 5, i32 4, i32 11, i32 10, i32 9, i32 8, i32 15, i32 14, i32 13, i32 12>
   ret <16 x i8> %shuffle
@@ -275,9 +273,7 @@ define <16 x i8> @trunc_v4i32_shuffle(<16 x i8> %a) {
 ;
 ; SSSE3-LABEL: @trunc_v4i32_shuffle
 ; SSSE3:       # BB#0:
-; SSSE3-NEXT:    pshufb {{.*}} # xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
 ; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
-; SSSE3-NEXT:    por %xmm1, %xmm0
 ; SSSE3-NEXT:    retq
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 4, i32 8, i32 12, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i8> %shuffle
