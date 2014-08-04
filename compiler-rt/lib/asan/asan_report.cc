@@ -59,6 +59,7 @@ class Decorator: public __sanitizer::SanitizerCommonDecorator {
     switch (byte) {
       case kAsanHeapLeftRedzoneMagic:
       case kAsanHeapRightRedzoneMagic:
+      case kAsanArrayCookieMagic:
         return Red();
       case kAsanHeapFreeMagic:
         return Magenta();
@@ -143,6 +144,8 @@ static void PrintLegend(InternalScopedString *str) {
                   kAsanUserPoisonedMemoryMagic);
   PrintShadowByte(str, "  Container overflow:      ",
                   kAsanContiguousContainerOOBMagic);
+  PrintShadowByte(str, "  Array cookie:            ",
+                  kAsanArrayCookieMagic);
   PrintShadowByte(str, "  ASan internal:           ", kAsanInternalHeapMagic);
 }
 
@@ -905,6 +908,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp, uptr addr, int is_write,
     switch (*shadow_addr) {
       case kAsanHeapLeftRedzoneMagic:
       case kAsanHeapRightRedzoneMagic:
+      case kAsanArrayCookieMagic:
         bug_descr = "heap-buffer-overflow";
         break;
       case kAsanHeapFreeMagic:

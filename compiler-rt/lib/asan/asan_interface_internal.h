@@ -162,6 +162,9 @@ extern "C" {
       void* __asan_memset(void *s, int c, uptr n);
   SANITIZER_INTERFACE_ATTRIBUTE
       void* __asan_memmove(void* dest, const void* src, uptr n);
+
+  SANITIZER_INTERFACE_ATTRIBUTE
+  void __asan_poison_cxx_array_cookie(uptr p);
 }  // extern "C"
 
 #endif  // ASAN_INTERFACE_INTERNAL_H

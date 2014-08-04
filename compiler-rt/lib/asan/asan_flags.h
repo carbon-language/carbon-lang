@@ -57,6 +57,7 @@ struct Flags {
   bool print_full_thread_history;
   bool poison_heap;
   bool poison_partial;
+  bool poison_array_cookie;
   bool alloc_dealloc_mismatch;
   bool new_delete_type_mismatch;
   bool strict_memcmp;
