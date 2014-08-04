@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s  -triple x86_64-pc-linux-gnu
 template<int I, int J>
 struct Bitfields {
   int simple : I; // expected-error{{bit-field 'simple' has zero width}}

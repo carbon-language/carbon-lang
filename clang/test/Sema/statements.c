@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -fsyntax-only -verify
+// RUN: %clang_cc1 %s -fsyntax-only -verify  -triple x86_64-pc-linux-gnu
 
 typedef unsigned __uint32_t;
 
