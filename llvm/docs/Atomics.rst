@@ -24,10 +24,10 @@ optimized code generation for the following:
 
 * Proper semantics for Java-style memory, for both ``volatile`` and regular
   shared variables. (`Java Specification
-  <http://java.sun.com/docs/books/jls/third_edition/html/memory.html>`_)
+  <http://docs.oracle.com/javase/specs/jls/se8/html/jls-17.html>`_)
 
 * gcc-compatible ``__sync_*`` builtins. (`Description
-  <http://gcc.gnu.org/onlinedocs/gcc/Atomic-Builtins.html>`_)
+  <https://gcc.gnu.org/onlinedocs/gcc/_005f_005fsync-Builtins.html>`_)
 
 * Other scenarios with atomic semantics, including ``static`` variables with
   non-trivial constructors in C++.
