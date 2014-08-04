@@ -42,9 +42,9 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit, const Triple& T) {
   UseIntegratedAssembler = true;
 }
 
-void PPCLinuxMCAsmInfo::anchor() { }
+void PPCELFMCAsmInfo::anchor() { }
 
-PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit, const Triple& T) {
+PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const Triple& T) {
   if (is64Bit) {
     PointerSize = CalleeSaveStackSlotSize = 8;
   }
