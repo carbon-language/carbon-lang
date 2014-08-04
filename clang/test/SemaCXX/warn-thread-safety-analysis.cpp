@@ -36,6 +36,9 @@ class  __attribute__((lockable)) Mutex {
   bool ReaderTryLock() __attribute__((shared_trylock_function(true)));
   void LockWhen(const int &cond) __attribute__((exclusive_lock_function));
 
+  // for negative capabilities
+  const Mutex& operator!() const { return *this; }
+
   void AssertHeld()       ASSERT_EXCLUSIVE_LOCK();
   void AssertReaderHeld() ASSERT_SHARED_LOCK();
 };
@@ -4516,4 +4519,106 @@ void test(Opaque* o) {
 }
 
 }  // end namespace ScopedLockReturnedInvalid
+
+
+namespace NegativeRequirements {
+
+class Bar {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+public:
+  void baz() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    mu.Lock();
+    a = 0;
+    mu.Unlock();
+  }
+};
+
+
+class Foo {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+public:
+  void foo() {
+    mu.Lock();    // warning?  needs !mu?
+    baz();        // expected-warning {{cannot call function 'baz' while mutex 'mu' is held}}
+    bar();
+    mu.Unlock();
+  }
+
+  void bar() {
+    baz();        // expected-warning {{calling function 'baz' requires holding  '!mu'}}
+  }
+
+  void baz() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    mu.Lock();
+    a = 0;
+    mu.Unlock();
+  }
+
+  void test() {
+    Bar b;
+    b.baz();     // no warning -- in different class.
+  }
+};
+
+}   // end namespace NegativeRequirements
+
+
+namespace NegativeThreadRoles {
+
+typedef int __attribute__((capability("role"))) ThreadRole;
+
+void acquire(ThreadRole R) __attribute__((exclusive_lock_function(R))) __attribute__((no_thread_safety_analysis)) {}
+void release(ThreadRole R) __attribute__((unlock_function(R))) __attribute__((no_thread_safety_analysis)) {}
+
+ThreadRole FlightControl, Logger;
+
+extern void enque_log_msg(const char *msg);
+void log_msg(const char *msg) {
+  enque_log_msg(msg);
+}
+
+void dispatch_log(const char *msg) __attribute__((requires_capability(!FlightControl))) {}
+void dispatch_log2(const char *msg) __attribute__((requires_capability(Logger))) {}
+
+void flight_control_entry(void) __attribute__((requires_capability(FlightControl))) {
+  dispatch_log("wrong"); /* expected-warning {{cannot call function 'dispatch_log' while mutex 'FlightControl' is held}} */
+  dispatch_log2("also wrong"); /* expected-warning {{calling function 'dispatch_log2' requires holding role 'Logger' exclusively}} */
+}
+
+void spawn_fake_flight_control_thread(void) {
+  acquire(FlightControl);
+  flight_control_entry();
+  release(FlightControl);
+}
+
+extern const char *deque_log_msg(void) __attribute__((requires_capability(Logger)));
+void logger_entry(void) __attribute__((requires_capability(Logger))) {
+  const char *msg;
+
+  while ((msg = deque_log_msg())) {
+    dispatch_log(msg);
+  }
+}
+
+void spawn_fake_logger_thread(void) {
+  acquire(Logger);
+  logger_entry();
+  release(Logger);
+}
+
+int main(void) {
+  spawn_fake_flight_control_thread();
+  spawn_fake_logger_thread();
+
+  for (;;)
+    ; /* Pretend to dispatch things. */
+
+  return 0;
+}
+
+}
 

@@ -38,9 +38,9 @@ enum ProtectedOperationKind {
 /// example, it is an error to write a variable protected by shared version of a
 /// mutex.
 enum LockKind {
-  LK_Shared, ///< Shared/reader lock of a mutex.
+  LK_Shared,    ///< Shared/reader lock of a mutex.
   LK_Exclusive, ///< Exclusive/writer lock of a mutex.
-  LK_Generic  ///<  Can be either Shared or Exclusive
+  LK_Generic    ///< Can be either Shared or Exclusive
 };
 
 /// This enum distinguishes between different ways to access (read or write) a

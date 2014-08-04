@@ -24,15 +24,58 @@
 
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 #include "clang/Analysis/Analyses/ThreadSafetyTIL.h"
+#include "clang/Analysis/Analyses/ThreadSafetyTraverse.h"
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/OperatorKinds.h"
 
 #include <memory>
+#include <ostream>
+#include <sstream>
 #include <vector>
 
 
 namespace clang {
 namespace threadSafety {
+
+
+// Various helper functions on til::SExpr
+namespace sx {
+
+inline bool equals(const til::SExpr *E1, const til::SExpr *E2) {
+  return til::EqualsComparator::compareExprs(E1, E2);
+}
+
+inline bool matches(const til::SExpr *E1, const til::SExpr *E2) {
+  // We treat a top-level wildcard as the "univsersal" lock.
+  // It matches everything for the purpose of checking locks, but not
+  // for unlocking them.
+  if (isa<til::Wildcard>(E1))
+    return isa<til::Wildcard>(E2);
+  if (isa<til::Wildcard>(E2))
+    return isa<til::Wildcard>(E1);
+
+  return til::MatchComparator::compareExprs(E1, E2);
+}
+
+inline bool partiallyMatches(const til::SExpr *E1, const til::SExpr *E2) {
+  auto *PE1 = dyn_cast_or_null<til::Project>(E1);
+  if (!PE1)
+    return false;
+  auto *PE2 = dyn_cast_or_null<til::Project>(E2);
+  if (!PE2)
+    return false;
+  return PE1->clangDecl() == PE2->clangDecl();
+}
+
+inline std::string toString(const til::SExpr *E) {
+  std::stringstream ss;
+  til::StdPrinter::print(E, ss);
+  return ss.str();
+}
+
+}  // end namespace sx
+
+
 
 // This class defines the interface of a clang CFG Visitor.
 // CFGWalker will invoke the following methods.
@@ -206,6 +249,59 @@ private:
 };
 
 
+
+
+class CapabilityExpr {
+  // TODO: move this back into ThreadSafety.cpp
+  // This is specific to thread safety.  It is here because
+  // translateAttrExpr needs it, but that should be moved too.
+
+private:
+  const til::SExpr* CapExpr;   //< The capability expression.
+  bool Negated;                //< True if this is a negative capability
+
+public:
+  CapabilityExpr(const til::SExpr *E, bool Neg) : CapExpr(E), Negated(Neg) {}
+
+  const til::SExpr* sexpr()    const { return CapExpr; }
+  bool              negative() const { return Negated; }
+
+  CapabilityExpr operator!() const {
+    return CapabilityExpr(CapExpr, !Negated);
+  }
+
+  bool equals(const CapabilityExpr &other) const {
+    return (Negated == other.Negated) && sx::equals(CapExpr, other.CapExpr);
+  }
+
+  bool matches(const CapabilityExpr &other) const {
+    return (Negated == other.Negated) && sx::matches(CapExpr, other.CapExpr);
+  }
+
+  bool matchesUniv(const CapabilityExpr &CapE) const {
+    return isUniversal() || matches(CapE);
+  }
+
+  bool partiallyMatches(const CapabilityExpr &other) const {
+    return (Negated == other.Negated) &&
+            sx::partiallyMatches(CapExpr, other.CapExpr);
+  }
+
+  std::string toString() const {
+    if (Negated)
+      return "!" + sx::toString(CapExpr);
+    return sx::toString(CapExpr);
+  }
+
+  bool shouldIgnore() const { return CapExpr == nullptr; }
+
+  bool isInvalid() const { return sexpr() && isa<til::Undefined>(sexpr()); }
+
+  bool isUniversal() const { return sexpr() && isa<til::Wildcard>(sexpr()); }
+};
+
+
+
 // Translate clang::Expr to til::SExpr.
 class SExprBuilder {
 public:
@@ -242,10 +338,10 @@ public:
 
   // Translate a clang expression in an attribute to a til::SExpr.
   // Constructs the context from D, DeclExp, and SelfDecl.
-  til::SExpr *translateAttrExpr(const Expr *AttrExp, const NamedDecl *D,
-                                const Expr *DeclExp, VarDecl *SelfDecl=nullptr);
+  CapabilityExpr translateAttrExpr(const Expr *AttrExp, const NamedDecl *D,
+                                   const Expr *DeclExp, VarDecl *SelfD=nullptr);
 
-  til::SExpr *translateAttrExpr(const Expr *AttrExp, CallingContext *Ctx);
+  CapabilityExpr translateAttrExpr(const Expr *AttrExp, CallingContext *Ctx);
 
   // Translate a clang statement or expression to a TIL expression.
   // Also performs substitution of variables; Ctx provides the context.

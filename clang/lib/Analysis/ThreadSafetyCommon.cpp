@@ -105,10 +105,10 @@ inline bool isCalleeArrow(const Expr *E) {
 /// \param D       The declaration to which the attribute is attached.
 /// \param DeclExp An expression involving the Decl to which the attribute
 ///                is attached.  E.g. the call to a function.
-til::SExpr *SExprBuilder::translateAttrExpr(const Expr *AttrExp,
-                                            const NamedDecl *D,
-                                            const Expr *DeclExp,
-                                            VarDecl *SelfDecl) {
+CapabilityExpr SExprBuilder::translateAttrExpr(const Expr *AttrExp,
+                                               const NamedDecl *D,
+                                               const Expr *DeclExp,
+                                               VarDecl *SelfDecl) {
   // If we are processing a raw attribute expression, with no substitutions.
   if (!DeclExp)
     return translateAttrExpr(AttrExp, nullptr);
@@ -163,26 +163,48 @@ til::SExpr *SExprBuilder::translateAttrExpr(const Expr *AttrExp,
 
 /// \brief Translate a clang expression in an attribute to a til::SExpr.
 // This assumes a CallingContext has already been created.
-til::SExpr *SExprBuilder::translateAttrExpr(const Expr *AttrExp,
-                                            CallingContext *Ctx) {
-  if (const StringLiteral* SLit = dyn_cast_or_null<StringLiteral>(AttrExp)) {
+CapabilityExpr SExprBuilder::translateAttrExpr(const Expr *AttrExp,
+                                               CallingContext *Ctx) {
+  if (!AttrExp)
+    return CapabilityExpr(nullptr, false);
+
+  if (auto* SLit = dyn_cast<StringLiteral>(AttrExp)) {
     if (SLit->getString() == StringRef("*"))
       // The "*" expr is a universal lock, which essentially turns off
       // checks until it is removed from the lockset.
-      return new (Arena) til::Wildcard();
+      return CapabilityExpr(new (Arena) til::Wildcard(), false);
     else
       // Ignore other string literals for now.
-      return nullptr;
+      return CapabilityExpr(nullptr, false);
+  }
+
+  bool Neg = false;
+  if (auto *OE = dyn_cast<CXXOperatorCallExpr>(AttrExp)) {
+    if (OE->getOperator() == OO_Exclaim) {
+      Neg = true;
+      AttrExp = OE->getArg(0);
+    }
+  }
+  else if (auto *UO = dyn_cast<UnaryOperator>(AttrExp)) {
+    if (UO->getOpcode() == UO_LNot) {
+      Neg = true;
+      AttrExp = UO->getSubExpr();
+    }
   }
 
   til::SExpr *E = translate(AttrExp, Ctx);
 
+  // Trap mutex expressions like nullptr, or 0.
+  // Any literal value is nonsense.
+  if (!E || isa<til::Literal>(E))
+    return CapabilityExpr(nullptr, false);
+
   // Hack to deal with smart pointers -- strip off top-level pointer casts.
   if (auto *CE = dyn_cast_or_null<til::Cast>(E)) {
     if (CE->castOpcode() == til::CAST_objToPtr)
-      return CE->expr();
+      return CapabilityExpr(CE->expr(), Neg);
   }
-  return E;
+  return CapabilityExpr(E, Neg);
 }
 
 
@@ -357,7 +379,8 @@ til::SExpr *SExprBuilder::translateCallExpr(const CallExpr *CE,
       LRCallCtx.SelfArg  = SelfE;
       LRCallCtx.NumArgs  = CE->getNumArgs();
       LRCallCtx.FunArgs  = CE->getArgs();
-      return translateAttrExpr(At->getArg(), &LRCallCtx);
+      return const_cast<til::SExpr*>(
+          translateAttrExpr(At->getArg(), &LRCallCtx).sexpr());
     }
   }
 
