@@ -106,6 +106,9 @@
 # CHECK-BE: mftb 2, 268                     # encoding: [0x7c,0x4c,0x42,0xe6]
 # CHECK-LE: mftb 2, 268                     # encoding: [0xe6,0x42,0x4c,0x7c]
             mftb 2
+# CHECK-BE: mftb 2, 268                     # encoding: [0x7c,0x4c,0x42,0xe6]
+# CHECK-LE: mftb 2, 268                     # encoding: [0xe6,0x42,0x4c,0x7c]
+            mftbl 2
 # CHECK-BE: mftb 2, 269                     # encoding: [0x7c,0x4d,0x42,0xe6]
 # CHECK-LE: mftb 2, 269                     # encoding: [0xe6,0x42,0x4d,0x7c]
             mftbu 2
