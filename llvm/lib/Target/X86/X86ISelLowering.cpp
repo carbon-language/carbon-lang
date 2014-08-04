@@ -7973,6 +7973,41 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v16i8, Evens, Odds);
   }
 
+  // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
+  // with PSHUFB. It is important to do this before we attempt to generate any
+  // blends but after all of the single-input lowerings. If the single input
+  // lowerings can find an instruction sequence that is faster than a PSHUFB, we
+  // want to preserve that and we can DAG combine any longer sequences into
+  // a PSHUFB in the end. But once we start blending from multiple inputs,
+  // the complexity of DAG combining bad patterns back into PSHUFB is too high,
+  // and there are *very* few patterns that would actually be faster than the
+  // PSHUFB approach because of its ability to zero lanes.
+  //
+  // FIXME: The only exceptions to the above are blends which are exact
+  // interleavings with direct instructions supporting them. We currently don't
+  // handle those well here.
+  if (Subtarget->hasSSSE3()) {
+    SDValue V1Mask[16];
+    SDValue V2Mask[16];
+    for (int i = 0; i < 16; ++i)
+      if (Mask[i] == -1) {
+        V1Mask[i] = V2Mask[i] = DAG.getConstant(0x80, MVT::i8);
+      } else {
+        V1Mask[i] = DAG.getConstant(Mask[i] < 16 ? Mask[i] : 0x80, MVT::i8);
+        V2Mask[i] =
+            DAG.getConstant(Mask[i] < 16 ? 0x80 : Mask[i] - 16, MVT::i8);
+      }
+    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
+    if (isSingleInputShuffleMask(Mask))
+      return V1; // Single inputs are easy.
+
+    // Otherwise, blend the two.
+    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
+                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
+    return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
+  }
+
   // Check whether a compaction lowering can be done. This handles shuffles
   // which take every Nth element for some even N. See the helper function for
   // details.
@@ -8009,41 +8044,6 @@ static SDValue lowerV16I8VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     }
 
     return Result;
-  }
-
-  // Check for SSSE3 which lets us lower all v16i8 shuffles much more directly
-  // with PSHUFB. It is important to do this before we attempt to generate any
-  // blends but after all of the single-input lowerings. If the single input
-  // lowerings can find an instruction sequence that is faster than a PSHUFB, we
-  // want to preserve that and we can DAG combine any longer sequences into
-  // a PSHUFB in the end. But once we start blending from multiple inputs,
-  // the complexity of DAG combining bad patterns back into PSHUFB is too high,
-  // and there are *very* few patterns that would actually be faster than the
-  // PSHUFB approach because of its ability to zero lanes.
-  //
-  // FIXME: The only exceptions to the above are blends which are exact
-  // interleavings with direct instructions supporting them. We currently don't
-  // handle those well here.
-  if (Subtarget->hasSSSE3()) {
-    SDValue V1Mask[16];
-    SDValue V2Mask[16];
-    for (int i = 0; i < 16; ++i)
-      if (Mask[i] == -1) {
-        V1Mask[i] = V2Mask[i] = DAG.getConstant(0x80, MVT::i8);
-      } else {
-        V1Mask[i] = DAG.getConstant(Mask[i] < 16 ? Mask[i] : 0x80, MVT::i8);
-        V2Mask[i] =
-            DAG.getConstant(Mask[i] < 16 ? 0x80 : Mask[i] - 16, MVT::i8);
-      }
-    V1 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V1,
-                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V1Mask));
-    if (isSingleInputShuffleMask(Mask))
-      return V1; // Single inputs are easy.
-
-    // Otherwise, blend the two.
-    V2 = DAG.getNode(X86ISD::PSHUFB, DL, MVT::v16i8, V2,
-                     DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v16i8, V2Mask));
-    return DAG.getNode(ISD::OR, DL, MVT::v16i8, V1, V2);
   }
 
   int V1LoBlendMask[8] = {-1, -1, -1, -1, -1, -1, -1, -1};

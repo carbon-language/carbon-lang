@@ -262,10 +262,10 @@ define <16 x i8> @trunc_v4i32_shuffle(<16 x i8> %a) {
 ; SSE2-NEXT:    packuswb %xmm0, %xmm0
 ; SSE2-NEXT:    retq
 ;
-; FIXME-SSSE3-LABEL: @trunc_v4i32_shuffle
-; FIXME-SSSE3:       # BB#0:
-; FIXME-SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
-; FIXME-SSSE3-NEXT:    retq
+; SSSE3-LABEL: @trunc_v4i32_shuffle
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,4,8,12],zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero,zero
+; SSSE3-NEXT:    retq
   %shuffle = shufflevector <16 x i8> %a, <16 x i8> undef, <16 x i32> <i32 0, i32 4, i32 8, i32 12, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
   ret <16 x i8> %shuffle
 }
