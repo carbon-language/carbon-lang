@@ -946,7 +946,7 @@ void FPS::handleCall(MachineBasicBlock::iterator &I) {
 
   // FP registers used for function return must be consecutive starting at
   // FP0.
-  assert((STReturns == 0 || isMask_32(STReturns)) && N <= 2);
+  assert(STReturns == 0 || (isMask_32(STReturns) && N <= 2));
 
   for (unsigned I = 0; I < N; ++I)
     pushReg(N - I - 1);
