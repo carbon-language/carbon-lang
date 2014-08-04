@@ -97,11 +97,11 @@ public:
 /// shared.
 class FactEntry : public CapabilityExpr {
 private:
-  LockKind          LKind;            //<  exclusive or shared
-  SourceLocation    AcquireLoc;       //<  where it was acquired.
-  bool              Managed;          //<  for ScopedLockable objects
-  bool              Asserted;         //<  true if the lock was asserted
-  const til::SExpr* UnderlyingMutex;  //<  for ScopedLockable objects
+  LockKind          LKind;            ///<  exclusive or shared
+  SourceLocation    AcquireLoc;       ///<  where it was acquired.
+  bool              Managed;          ///<  for ScopedLockable objects
+  bool              Asserted;         ///<  true if the lock was asserted
+  const til::SExpr* UnderlyingMutex;  ///<  for ScopedLockable objects
 
 public:
   FactEntry(const CapabilityExpr &CE, LockKind LK, SourceLocation Loc,

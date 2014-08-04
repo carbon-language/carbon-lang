@@ -257,8 +257,8 @@ class CapabilityExpr {
   // translateAttrExpr needs it, but that should be moved too.
 
 private:
-  const til::SExpr* CapExpr;   //< The capability expression.
-  bool Negated;                //< True if this is a negative capability
+  const til::SExpr* CapExpr;   ///< The capability expression.
+  bool Negated;                ///< True if this is a negative capability
 
 public:
   CapabilityExpr(const til::SExpr *E, bool Neg) : CapExpr(E), Negated(Neg) {}
