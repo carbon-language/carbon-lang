@@ -229,6 +229,7 @@ void __sanitizer_unaligned_store64(uu64 *p, u64 x) {
 
 extern "C" SANITIZER_INTERFACE_ATTRIBUTE
 void __asan_poison_cxx_array_cookie(uptr p) {
+  if (SANITIZER_WORDSIZE != 64) return;
   if (!flags()->poison_array_cookie) return;
   uptr s = MEM_TO_SHADOW(p);
   *reinterpret_cast<u8*>(s) = 0xac;
