@@ -73,6 +73,7 @@ PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit, const Triple& T) {
   ZeroDirective = "\t.space\t";
   Data64bitsDirective = is64Bit ? "\t.quad\t" : nullptr;
   AssemblerDialect = 1;           // New-Style mnemonics.
+  LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
 
   if (T.getOS() == llvm::Triple::FreeBSD ||
       (T.getOS() == llvm::Triple::NetBSD && !is64Bit) ||
