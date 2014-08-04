@@ -907,8 +907,6 @@ inline bool ThreadSafetyAnalyzer::inCurrentScope(const CapabilityExpr &CapE) {
 
 
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
-/// \param Mutex   -- the Mutex expression for the lock
-/// \param LDat    -- the LockData for the lock
 /// \param ReqAttr -- true if this is part of an initial Requires attribute.
 void ThreadSafetyAnalyzer::addLock(FactSet &FSet, const FactEntry &Entry,
                                    StringRef DiagKind, bool ReqAttr) {
@@ -941,7 +939,6 @@ void ThreadSafetyAnalyzer::addLock(FactSet &FSet, const FactEntry &Entry,
 
 
 /// \brief Remove a lock from the lockset, warning if the lock is not there.
-/// \param Mutex The lock expression corresponding to the lock to be removed
 /// \param UnlockLoc The source location of the unlock (only used in error msg)
 void ThreadSafetyAnalyzer::removeLock(FactSet &FSet, const CapabilityExpr &Cp,
                                       SourceLocation UnlockLoc,
