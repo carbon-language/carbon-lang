@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-apple-darwin9
 // RUN: %clang_cc1 %s -pedantic -verify -triple=mips64-linux-gnu
+// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-unknown-linux
+// RUN: %clang_cc1 %s -pedantic -verify -triple=x86_64-unknown-linux-gnux32
 
 // rdar://6097662
 typedef int (*T)[2];
