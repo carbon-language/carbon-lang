@@ -706,7 +706,7 @@ SDValue AMDGPUTargetLowering::LowerGlobalAddress(AMDGPUMachineFunction* MFI,
       Offset = MFI->LocalMemoryObjects[GV];
     }
 
-    return DAG.getConstant(Offset, getPointerTy(G->getAddressSpace()));
+    return DAG.getConstant(Offset, getPointerTy(AMDGPUAS::LOCAL_ADDRESS));
   }
   case AMDGPUAS::CONSTANT_ADDRESS: {
     MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
