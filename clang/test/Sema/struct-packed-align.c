@@ -1,9 +1,6 @@
 // RUN: %clang_cc1 %s -fsyntax-only -verify
 // expected-no-diagnostics
 
-// FIXME: This test is incompatible to MS compat mode.
-// REQUIRES: shell
-
 // Packed structs.
 struct s {
     char a;
@@ -123,7 +120,6 @@ extern int m1[sizeof(struct packed_fas2) == 1 ? 1 : -1];
 extern int m2[__alignof(struct packed_fas2) == 1 ? 1 : -1];
 
 // Attribute aligned can round down typedefs.  PR9253
-// REQUIRES: LP64
 typedef long long  __attribute__((aligned(1))) nt;
 
 struct nS {
@@ -131,5 +127,11 @@ struct nS {
   nt start_lba;
 };
 
+#if defined(_WIN32) && !defined(__declspec) // _MSC_VER is unavailable in cc1.
+// Alignment doesn't affect packing in MS mode.
+extern int n1[sizeof(struct nS) == 16 ? 1 : -1];
+extern int n2[__alignof(struct nS) == 8 ? 1 : -1];
+#else
 extern int n1[sizeof(struct nS) == 9 ? 1 : -1];
 extern int n2[__alignof(struct nS) == 1 ? 1 : -1];
+#endif
