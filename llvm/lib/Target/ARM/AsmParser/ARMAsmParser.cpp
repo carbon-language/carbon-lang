@@ -3118,9 +3118,10 @@ static int MatchCoprocessorOperandName(StringRef Name, char CoprocOp) {
       return -1;
     switch (Name[1]) {
     default:  return -1;
-    // p10 and p11 are invalid for coproc instructions (reserved for FP/NEON)
-    case '0': return CoprocOp == 'p'? -1: 10;
-    case '1': return CoprocOp == 'p'? -1: 11;
+    // CP10 and CP11 are VFP/NEON and so vector instructions should be used.
+    // However, old cores (v5/v6) did use them in that way.
+    case '0': return 10;
+    case '1': return 11;
     case '2': return 12;
     case '3': return 13;
     case '4': return 14;
@@ -3176,6 +3177,9 @@ ARMAsmParser::parseCoprocNumOperand(OperandVector &Operands) {
 
   int Num = MatchCoprocessorOperandName(Tok.getString(), 'p');
   if (Num == -1)
+    return MatchOperand_NoMatch;
+  // ARMv7 and v8 don't allow cp10/cp11 due to VFP/NEON specific instructions
+  if ((hasV7Ops() || hasV8Ops()) && (Num == 10 || Num == 11))
     return MatchOperand_NoMatch;
 
   Parser.Lex(); // Eat identifier token.
