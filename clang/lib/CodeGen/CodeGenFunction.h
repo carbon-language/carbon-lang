@@ -2425,7 +2425,6 @@ public:
   /// CreateStaticVarDecl - Create a zero-initialized LLVM global for
   /// a static local variable.
   llvm::Constant *CreateStaticVarDecl(const VarDecl &D,
-                                      const char *Separator,
                                       llvm::GlobalValue::LinkageTypes Linkage);
 
   /// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the

@@ -146,8 +146,7 @@ void CodeGenFunction::EmitVarDecl(const VarDecl &D) {
   return EmitAutoVarDecl(D);
 }
 
-static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
-                                     const char *Separator) {
+static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D) {
   CodeGenModule &CGM = CGF.CGM;
 
   if (CGF.getLangOpts().CPlusPlus)
@@ -169,12 +168,11 @@ static std::string GetStaticDeclName(CodeGenFunction &CGF, const VarDecl &D,
   else
     llvm_unreachable("Unknown context for static var decl");
 
-  return ContextName.str() + Separator + D.getNameAsString();
+  return ContextName.str() + "." + D.getNameAsString();
 }
 
 llvm::Constant *
 CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
-                                     const char *Separator,
                                      llvm::GlobalValue::LinkageTypes Linkage) {
   QualType Ty = D.getType();
   assert(Ty->isConstantSizeType() && "VLAs can't be static");
@@ -184,7 +182,7 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   if (D.hasAttr<AsmLabelAttr>())
     Name = CGM.getMangledName(&D);
   else
-    Name = GetStaticDeclName(*this, D, Separator);
+    Name = GetStaticDeclName(*this, D);
 
   llvm::Type *LTy = CGM.getTypes().ConvertTypeForMem(Ty);
   unsigned AddrSpace =
@@ -302,7 +300,7 @@ void CodeGenFunction::EmitStaticVarDecl(const VarDecl &D,
     CGM.getStaticLocalDeclAddress(&D);
 
   if (!addr)
-    addr = CreateStaticVarDecl(D, ".", Linkage);
+    addr = CreateStaticVarDecl(D, Linkage);
 
   // Store into LocalDeclMap before generating initializer to handle
   // circular references.
@@ -1129,7 +1127,7 @@ void CodeGenFunction::EmitAutoVarInit(const AutoVarEmission &emission) {
   } else {
     // Otherwise, create a temporary global with the initializer then
     // memcpy from the global to the alloca.
-    std::string Name = GetStaticDeclName(*this, D, ".");
+    std::string Name = GetStaticDeclName(*this, D);
     llvm::GlobalVariable *GV =
       new llvm::GlobalVariable(CGM.getModule(), constant->getType(), true,
                                llvm::GlobalValue::PrivateLinkage,
