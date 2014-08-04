@@ -3266,41 +3266,22 @@ def : InstAlias<"subc. $rA, $rB, $rC", (SUBFC8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
 def : InstAlias<"mtmsrd $RS", (MTMSRD gprc:$RS, 0)>;
 def : InstAlias<"mtmsr $RS", (MTMSR gprc:$RS, 0)>;
 
-def : InstAlias<"mfsprg $RT, 0", (MFSPR gprc:$RT, 272)>;
-def : InstAlias<"mfsprg $RT, 1", (MFSPR gprc:$RT, 273)>;
-def : InstAlias<"mfsprg $RT, 2", (MFSPR gprc:$RT, 274)>;
-def : InstAlias<"mfsprg $RT, 3", (MFSPR gprc:$RT, 275)>;
-def : InstAlias<"mfsprg $RT, 4", (MFSPR gprc:$RT, 260)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg $RT, 5", (MFSPR gprc:$RT, 261)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg $RT, 6", (MFSPR gprc:$RT, 262)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg $RT, 7", (MFSPR gprc:$RT, 263)>, Requires<[IsBookE]>;
-
-def : InstAlias<"mfsprg0 $RT", (MFSPR gprc:$RT, 272)>;
-def : InstAlias<"mfsprg1 $RT", (MFSPR gprc:$RT, 273)>;
-def : InstAlias<"mfsprg2 $RT", (MFSPR gprc:$RT, 274)>;
-def : InstAlias<"mfsprg3 $RT", (MFSPR gprc:$RT, 275)>;
-def : InstAlias<"mfsprg4 $RT", (MFSPR gprc:$RT, 260)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg5 $RT", (MFSPR gprc:$RT, 261)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg6 $RT", (MFSPR gprc:$RT, 262)>, Requires<[IsBookE]>;
-def : InstAlias<"mfsprg7 $RT", (MFSPR gprc:$RT, 263)>, Requires<[IsBookE]>;
-
-def : InstAlias<"mtsprg 0, $RT", (MTSPR 272, gprc:$RT)>;
-def : InstAlias<"mtsprg 1, $RT", (MTSPR 273, gprc:$RT)>;
-def : InstAlias<"mtsprg 2, $RT", (MTSPR 274, gprc:$RT)>;
-def : InstAlias<"mtsprg 3, $RT", (MTSPR 275, gprc:$RT)>;
-def : InstAlias<"mtsprg 4, $RT", (MTSPR 260, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg 5, $RT", (MTSPR 261, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg 6, $RT", (MTSPR 262, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg 7, $RT", (MTSPR 263, gprc:$RT)>, Requires<[IsBookE]>;
-
-def : InstAlias<"mtsprg0 $RT", (MTSPR 272, gprc:$RT)>;
-def : InstAlias<"mtsprg1 $RT", (MTSPR 273, gprc:$RT)>;
-def : InstAlias<"mtsprg2 $RT", (MTSPR 274, gprc:$RT)>;
-def : InstAlias<"mtsprg3 $RT", (MTSPR 275, gprc:$RT)>;
-def : InstAlias<"mtsprg4 $RT", (MTSPR 260, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg5 $RT", (MTSPR 261, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg6 $RT", (MTSPR 262, gprc:$RT)>, Requires<[IsBookE]>;
-def : InstAlias<"mtsprg7 $RT", (MTSPR 263, gprc:$RT)>, Requires<[IsBookE]>;
+foreach SPRG = 0-3 in {
+  def : InstAlias<"mfsprg $RT, "#SPRG, (MFSPR gprc:$RT, !add(SPRG, 272))>;
+  def : InstAlias<"mfsprg"#SPRG#" $RT", (MFSPR gprc:$RT, !add(SPRG, 272))>;
+  def : InstAlias<"mtsprg "#SPRG#", $RT", (MTSPR !add(SPRG, 272), gprc:$RT)>;
+  def : InstAlias<"mtsprg"#SPRG#" $RT", (MTSPR !add(SPRG, 272), gprc:$RT)>;
+}
+foreach SPRG = 4-7 in {
+  def : InstAlias<"mfsprg $RT, "#SPRG, (MFSPR gprc:$RT, !add(SPRG, 256))>,
+                  Requires<[IsBookE]>;
+  def : InstAlias<"mfsprg"#SPRG#" $RT", (MFSPR gprc:$RT, !add(SPRG, 256))>,
+                  Requires<[IsBookE]>;
+  def : InstAlias<"mtsprg "#SPRG#", $RT", (MTSPR !add(SPRG, 256), gprc:$RT)>,
+                  Requires<[IsBookE]>;
+  def : InstAlias<"mtsprg"#SPRG#" $RT", (MTSPR !add(SPRG, 256), gprc:$RT)>,
+                  Requires<[IsBookE]>;
+}
 
 def : InstAlias<"mtasr $RS", (MTSPR 280, gprc:$RS)>;
 
