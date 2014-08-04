@@ -23,6 +23,9 @@
 #endif
 
 #include "test_iterators.h"
+#include "counting_predicates.hpp"
+
+bool equal2 ( int i ) { return i == 2; }
 
 template <class Iter>
 void
@@ -30,7 +33,9 @@ test()
 {
     int ia[] = {0, 1, 2, 3, 4, 2, 3, 4, 2};
     const unsigned sa = sizeof(ia)/sizeof(ia[0]);
-    int* r = std::remove_if(ia, ia+sa, std::bind2nd(std::equal_to<int>(), 2));
+//     int* r = std::remove_if(ia, ia+sa, std::bind2nd(std::equal_to<int>(), 2));
+    unary_counting_predicate<bool(*)(int), int> cp(equal2);
+    int* r = std::remove_if(ia, ia+sa, std::ref(cp));
     assert(r == ia + sa-3);
     assert(ia[0] == 0);
     assert(ia[1] == 1);
@@ -38,6 +43,7 @@ test()
     assert(ia[3] == 4);
     assert(ia[4] == 3);
     assert(ia[5] == 4);
+    assert(cp.count() == sa);
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES

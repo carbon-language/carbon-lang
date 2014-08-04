@@ -11,16 +11,13 @@
 #define __COUNTING_PREDICATES_H
 
 
-template <typename Predicate>
-struct unary_counting_predicate {
+template <typename Predicate, typename Arg>
+struct unary_counting_predicate : public std::unary_function<Arg, bool>  {
 public:
 	unary_counting_predicate(Predicate p) : p_(p), count_(0) {}
 	~unary_counting_predicate() {}
 	
-	typedef typename Predicate::argument_type argument_type;
-	typedef bool result_type;
-	
-	bool operator () (const argument_type &a) const { ++count_; return p_(a); }
+	bool operator () (const Arg &a) const { ++count_; return p_(a); }
 	size_t count() const { return count_; }
 	void reset() { count_ = 0; }
 	

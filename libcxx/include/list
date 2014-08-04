@@ -2046,6 +2046,8 @@ list<_Tp, _Alloc>::remove(const value_type& __x)
             for (; __j != __e && *__j == __x; ++__j)
                 ;
             __i = erase(__i, __j);
+            if (__i != __e)
+                __i = _VSTD::next(__i);
         }
         else
             ++__i;
@@ -2065,6 +2067,8 @@ list<_Tp, _Alloc>::remove_if(_Pred __pred)
             for (; __j != __e && __pred(*__j); ++__j)
                 ;
             __i = erase(__i, __j);
+            if (__i != __e)
+                __i = _VSTD::next(__i);
         }
         else
             ++__i;
