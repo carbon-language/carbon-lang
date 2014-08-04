@@ -100,3 +100,10 @@ mtdbatu 3, %r12
 # CHECK-BE: mtspr 543, 12                    # encoding: [0x7d,0x9f,0x83,0xa6]
 # CHECK-LE: mtspr 543, 12                    # encoding: [0xa6,0x83,0x9f,0x7d]
 mtdbatl 3, %r12
+
+# CHECK-BE: tlbld 4                        # encoding: [0x7c,0x00,0x27,0xa4]
+# CHECK-LE: tlbld 4                        # encoding: [0xa4,0x27,0x00,0x7c]
+tlbld %r4
+# CHECK-BE: tlbli 4                        # encoding: [0x7c,0x00,0x27,0xe4]
+# CHECK-LE: tlbli 4                        # encoding: [0xe4,0x27,0x00,0x7c]
+tlbli %r4

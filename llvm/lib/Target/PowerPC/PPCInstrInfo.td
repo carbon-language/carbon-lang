@@ -3106,6 +3106,11 @@ def TLBSYNC : XForm_0<31, 566, (outs), (ins),
 def TLBIEL : XForm_16b<31, 274, (outs), (ins gprc:$RB),
                           "tlbiel $RB", IIC_SprTLBIEL, []>;
 
+def TLBLD : XForm_16b<31, 978, (outs), (ins gprc:$RB),
+                          "tlbld $RB", IIC_LdStLoad, []>, Requires<[IsPPC6xx]>;
+def TLBLI : XForm_16b<31, 1010, (outs), (ins gprc:$RB),
+                          "tlbli $RB", IIC_LdStLoad, []>, Requires<[IsPPC6xx]>;
+
 def TLBIE : XForm_26<31, 306, (outs), (ins gprc:$RS, gprc:$RB),
                           "tlbie $RB,$RS", IIC_SprTLBIE, []>;
 
