@@ -3121,6 +3121,20 @@ def TLBRE : XForm_24_eieio<31, 946, (outs), (ins),
 def TLBWE : XForm_24_eieio<31, 978, (outs), (ins),
                            "tlbwe", IIC_LdStLoad, []>, Requires<[IsBookE]>;
 
+def TLBRE2 : XForm_tlbws<31, 946, (outs gprc:$RS), (ins gprc:$A, i1imm:$WS),
+               "tlbre $RS, $A, $WS", IIC_LdStLoad, []>, Requires<[IsPPC4xx]>;
+
+def TLBWE2 : XForm_tlbws<31, 978, (outs), (ins gprc:$RS, gprc:$A, i1imm:$WS),
+               "tlbwe $RS, $A, $WS", IIC_LdStLoad, []>, Requires<[IsPPC4xx]>;
+
+def TLBSX2 : XForm_base_r3xo<31, 914, (outs), (ins gprc:$RST, gprc:$A, gprc:$B),
+                             "tlbsx $RST, $A, $B", IIC_LdStLoad, []>,
+                             Requires<[IsPPC4xx]>;
+def TLBSX2D : XForm_base_r3xo<31, 914, (outs),
+                              (ins gprc:$RST, gprc:$A, gprc:$B),
+                              "tlbsx. $RST, $A, $B", IIC_LdStLoad, []>,
+                              Requires<[IsPPC4xx]>, isDOT;
+
 def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_BrB, []>,
                   Requires<[IsBookE]>;
 def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,
@@ -3300,6 +3314,15 @@ def : InstAlias<"mtsrr0 $RT", (MTSPR 26, gprc:$RT)>;
 def : InstAlias<"mtsrr1 $RT", (MTSPR 27, gprc:$RT)>;
 
 def : InstAlias<"tlbie $RB", (TLBIE R0, gprc:$RB)>;
+
+def : InstAlias<"tlbrehi $RS, $A", (TLBRE2 gprc:$RS, gprc:$A, 0)>,
+                Requires<[IsPPC4xx]>;
+def : InstAlias<"tlbrelo $RS, $A", (TLBRE2 gprc:$RS, gprc:$A, 1)>,
+                Requires<[IsPPC4xx]>;
+def : InstAlias<"tlbwehi $RS, $A", (TLBWE2 gprc:$RS, gprc:$A, 0)>,
+                Requires<[IsPPC4xx]>;
+def : InstAlias<"tlbwelo $RS, $A", (TLBWE2 gprc:$RS, gprc:$A, 1)>,
+                Requires<[IsPPC4xx]>;
 
 def EXTLWI : PPCAsmPseudo<"extlwi $rA, $rS, $n, $b",
                           (ins gprc:$rA, gprc:$rS, u5imm:$n, u5imm:$b)>;

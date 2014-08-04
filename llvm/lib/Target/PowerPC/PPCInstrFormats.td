@@ -422,6 +422,22 @@ class XForm_rs<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
   let B = 0;
 }
 
+class XForm_tlbws<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
+              InstrItinClass itin, list<dag> pattern>
+  : I<opcode, OOL, IOL, asmstr, itin> {
+  bits<5> RST;
+  bits<5> A;
+  bits<1> WS;
+
+  let Pattern = pattern;
+
+  let Inst{6-10}  = RST;
+  let Inst{11-15} = A;
+  let Inst{20}    = WS;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
 class XForm_6<bits<6> opcode, bits<10> xo, dag OOL, dag IOL, string asmstr,
               InstrItinClass itin, list<dag> pattern> 
   : XForm_base_r3xo_swapped<opcode, xo, OOL, IOL, asmstr, itin> {
