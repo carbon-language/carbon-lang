@@ -141,7 +141,7 @@ TEST(Support, Path) {
     StringRef filename(temp_store.begin(), temp_store.size()), stem, ext;
     stem = path::stem(filename);
     ext  = path::extension(filename);
-    EXPECT_EQ(*(--sys::path::end(filename)), (stem + ext).str());
+    EXPECT_EQ(*sys::path::rbegin(filename), (stem + ext).str());
 
     path::native(*i, temp_store);
   }
@@ -227,7 +227,7 @@ TEST(Support, AbsolutePathIteratorEnd) {
 #endif
 
   for (StringRef Path : Paths) {
-    StringRef LastComponent = *--path::end(Path);
+    StringRef LastComponent = *path::rbegin(Path);
     EXPECT_EQ(".", LastComponent);
   }
 
@@ -239,7 +239,7 @@ TEST(Support, AbsolutePathIteratorEnd) {
 #endif
 
   for (StringRef Path : RootPaths) {
-    StringRef LastComponent = *--path::end(Path);
+    StringRef LastComponent = *path::rbegin(Path);
     EXPECT_EQ(1u, LastComponent.size());
     EXPECT_TRUE(path::is_separator(LastComponent[0]));
   }

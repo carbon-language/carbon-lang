@@ -308,7 +308,30 @@ const_iterator &const_iterator::operator++() {
   return *this;
 }
 
-const_iterator &const_iterator::operator--() {
+bool const_iterator::operator==(const const_iterator &RHS) const {
+  return Path.begin() == RHS.Path.begin() && Position == RHS.Position;
+}
+
+ptrdiff_t const_iterator::operator-(const const_iterator &RHS) const {
+  return Position - RHS.Position;
+}
+
+reverse_iterator rbegin(StringRef Path) {
+  reverse_iterator I;
+  I.Path = Path;
+  I.Position = Path.size();
+  return ++I;
+}
+
+reverse_iterator rend(StringRef Path) {
+  reverse_iterator I;
+  I.Path = Path;
+  I.Component = Path.substr(0, 0);
+  I.Position = 0;
+  return I;
+}
+
+reverse_iterator &reverse_iterator::operator++() {
   // If we're at the end and the previous char was a '/', return '.' unless
   // we are the root path.
   size_t root_dir_pos = root_dir_start(Path);
@@ -335,17 +358,9 @@ const_iterator &const_iterator::operator--() {
   return *this;
 }
 
-bool const_iterator::operator==(const const_iterator &RHS) const {
-  return Path.begin() == RHS.Path.begin() &&
+bool reverse_iterator::operator==(const reverse_iterator &RHS) const {
+  return Path.begin() == RHS.Path.begin() && Component == RHS.Component &&
          Position == RHS.Position;
-}
-
-bool const_iterator::operator!=(const const_iterator &RHS) const {
-  return !(*this == RHS);
-}
-
-ptrdiff_t const_iterator::operator-(const const_iterator &RHS) const {
-  return Position - RHS.Position;
 }
 
 const StringRef root_path(StringRef path) {
@@ -532,7 +547,7 @@ void native(SmallVectorImpl<char> &path) {
 }
 
 const StringRef filename(StringRef path) {
-  return *(--end(path));
+  return *rbegin(path);
 }
 
 const StringRef stem(StringRef path) {
