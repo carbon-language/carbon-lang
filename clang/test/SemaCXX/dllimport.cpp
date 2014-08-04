@@ -243,6 +243,13 @@ __declspec(dllimport) void friend1();
 __declspec(dllimport) void friend4(); // expected-error{{redeclaration of 'friend4' cannot add 'dllimport' attribute}}
 __declspec(dllimport) inline void friend5() {} // expected-error{{redeclaration of 'friend5' cannot add 'dllimport' attribute}}
 
+void __declspec(dllimport) friend6(); // expected-note{{previous declaration is here}} expected-note{{previous attribute is here}}
+void __declspec(dllimport) friend7();
+struct FuncFriend2 {
+  friend void friend6(); // expected-warning{{'friend6' redeclared without 'dllimport' attribute: previous 'dllimport' ignored}}
+  friend void ::friend7();
+};
+
 // Implicit declarations can be redeclared with dllimport.
 __declspec(dllimport) void* operator new(__SIZE_TYPE__ n);
 
