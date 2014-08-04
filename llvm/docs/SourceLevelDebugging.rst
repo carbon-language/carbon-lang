@@ -213,6 +213,7 @@ Compile unit descriptors
     metadata   ;; List of global variables
     metadata   ;; List of imported entities
     metadata   ;; Split debug filename
+    i32        ;; Debug info emission kind (0 = Line Tables Only, 1 = Full Debug Info)
   }
 
 These descriptors contain a source language ID for the file (we use the DWARF
@@ -855,6 +856,7 @@ a C/C++ front-end would generate the following descriptors:
     metadata !2,  ;; Global variables
     metadata !2,  ;; Imported entities (declarations and namespaces)
     metadata !""  ;; Split debug filename
+    1,            ;; Full debug info
   }
 
   ;;
@@ -937,6 +939,7 @@ a C/C++ front-end would generate the following descriptors:
     metadata !3,                      ;; Global Variables
     metadata !1,                      ;; Imported entities
     "",                               ;; Split debug filename
+    1,                                ;; Full debug info
   } ; [ DW_TAG_compile_unit ]
 
   ;; The Array of Global Variables
