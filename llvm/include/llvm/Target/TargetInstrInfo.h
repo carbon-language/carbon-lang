@@ -595,8 +595,8 @@ public:
   /// beneficial or not.
   /// \param Root - Instruction that could be combined with one of its operands
   /// \param P - Combination pattern for Root
-  /// \param InsInstr - Vector of new instructions that implement P
-  /// \param DelInstr - Old instructions, including Root, that could be replaced
+  /// \param InsInstrs - Vector of new instructions that implement P
+  /// \param DelInstrs - Old instructions, including Root, that could be replaced
   /// by InsInstr
   /// \param InstrIdxForVirtReg - map of virtual register to instruction in
   /// InsInstr that defines it
