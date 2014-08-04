@@ -144,17 +144,24 @@ struct CounterMappingRegion {
     SkippedRegion
   };
 
+  static const unsigned EncodingHasCodeBeforeBits = 1;
+
   Counter Count;
   unsigned FileID, ExpandedFileID;
   unsigned LineStart, ColumnStart, LineEnd, ColumnEnd;
   RegionKind Kind;
+  /// \brief A flag that is set to true when there is already code before
+  /// this region on the same line.
+  /// This is useful to accurately compute the execution counts for a line.
+  bool HasCodeBefore;
 
   CounterMappingRegion(Counter Count, unsigned FileID, unsigned LineStart,
                        unsigned ColumnStart, unsigned LineEnd,
-                       unsigned ColumnEnd, RegionKind Kind = CodeRegion)
+                       unsigned ColumnEnd, bool HasCodeBefore = false,
+                       RegionKind Kind = CodeRegion)
       : Count(Count), FileID(FileID), ExpandedFileID(0), LineStart(LineStart),
         ColumnStart(ColumnStart), LineEnd(LineEnd), ColumnEnd(ColumnEnd),
-        Kind(Kind) {}
+        Kind(Kind), HasCodeBefore(HasCodeBefore) {}
 
   bool operator<(const CounterMappingRegion &Other) const {
     if (FileID != Other.FileID)

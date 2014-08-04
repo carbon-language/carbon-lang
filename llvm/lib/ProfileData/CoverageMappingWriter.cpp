@@ -181,7 +181,11 @@ void CoverageMappingWriter::write(raw_ostream &OS) {
     }
     assert(I.LineStart >= PrevLineStart);
     encodeULEB128(I.LineStart - PrevLineStart, OS);
-    encodeULEB128(I.ColumnStart, OS);
+    uint64_t CodeBeforeColumnStart =
+        uint64_t(I.HasCodeBefore) |
+        (uint64_t(I.ColumnStart)
+         << CounterMappingRegion::EncodingHasCodeBeforeBits);
+    encodeULEB128(CodeBeforeColumnStart, OS);
     assert(I.LineEnd >= I.LineStart);
     encodeULEB128(I.LineEnd - I.LineStart, OS);
     encodeULEB128(I.ColumnEnd, OS);
