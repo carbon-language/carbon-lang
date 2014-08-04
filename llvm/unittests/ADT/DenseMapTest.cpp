@@ -244,6 +244,11 @@ TYPED_TEST(DenseMapTest, AssignmentTest) {
 
   EXPECT_EQ(1u, copyMap.size());
   EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
+
+  // test self-assignment.
+  copyMap = copyMap;
+  EXPECT_EQ(1u, copyMap.size());
+  EXPECT_EQ(this->getValue(), copyMap[this->getKey()]);
 }
 
 // Test swap method

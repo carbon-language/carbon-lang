@@ -305,6 +305,7 @@ protected:
 
   template <typename OtherBaseT>
   void copyFrom(const DenseMapBase<OtherBaseT, KeyT, ValueT, KeyInfoT>& other) {
+    assert(&other != this);
     assert(getNumBuckets() == other.getNumBuckets());
 
     setNumEntries(other.getNumEntries());
@@ -574,7 +575,8 @@ public:
   }
 
   DenseMap& operator=(const DenseMap& other) {
-    copyFrom(other);
+    if (&other != this)
+      copyFrom(other);
     return *this;
   }
 
@@ -799,7 +801,8 @@ public:
   }
 
   SmallDenseMap& operator=(const SmallDenseMap& other) {
-    copyFrom(other);
+    if (&other != this)
+      copyFrom(other);
     return *this;
   }
 
