@@ -1,9 +1,8 @@
 // RUN: %clang_cc1 -emit-llvm -fblocks -o - -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-fragile-10.5 %s | FileCheck %s
 
-// CHECK: @_ZGVZZ3foovEUb_E5value = internal global i64 0
-// CHECK: @_ZZZN26externally_visible_statics1S3fooEiEd_Ub_E1k = linkonce_odr global i32 0
-// CHECK: @_ZZ26externally_visible_statics1S1xMUb_E1j = linkonce_odr global i32 0
-// CHECK: @_ZZZN26externally_visible_statics10inlinefuncEvEUb_E1i = linkonce_odr global i32 0
+// CHECK: @_ZZZN26externally_visible_statics1S3fooEiEd_Ub0_E1k = linkonce_odr global i32 0
+// CHECK: @_ZZ26externally_visible_statics1S1xMUb0_E1j = linkonce_odr global i32 0
+// CHECK: @_ZZZN26externally_visible_statics10inlinefuncEvEUb0_E1i = linkonce_odr global i32 0
 
 int f();
 
@@ -27,7 +26,7 @@ int i = ^(int x) { return x;}(i);
 - (void)method { 
   // CHECK: define internal signext i8 @"__11-[A method]_block_invoke"
   (void)^(int x) {
-    // CHECK: @"_ZZZ11-[A method]EUb0_E4name"
+    // CHECK: @"_ZZZ11-[A method]EUb1_E4name"
     static const char *name = "hello";
     return name[x];
   };
@@ -45,7 +44,7 @@ namespace N {
   // CHECK-LABEL: define internal signext i8 @___Z3fooi_block_invoke
   void bar() {
     (void)^(int x) { 
-      // CHECK: @_ZZZN1N3barEvEUb2_E4name
+      // CHECK: @_ZZZN1N3barEvEUb3_E4name
       static const char *name = "hello";
       return name[x];
     };
@@ -57,7 +56,7 @@ class C {
 };
 C::C() {
   (void)^(int x) { 
-    // CHECK: @_ZZZN1CC1EvEUb3_E5nameb
+    // CHECK: @_ZZZN1CC1EvEUb4_E5nameb
     static const char *nameb = "hello";
     return nameb[x];
   };

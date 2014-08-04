@@ -1409,8 +1409,8 @@ void CXXNameMangler::mangleUnqualifiedBlock(const BlockDecl *Block) {
   if (!Number)
     Number = Context.getBlockId(Block, false);
   Out << "Ub";
-  if (Number > 1)
-    Out << Number - 2;
+  if (Number > 0)
+    Out << Number - 1;
   Out << '_';
 }
 
