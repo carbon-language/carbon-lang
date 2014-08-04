@@ -2,7 +2,7 @@
 
 ; CHECK-LABEL: test1
 ; CHECK: vcmpleps
-; CHECK: vmovups
+; CHECK: vmovaps
 ; CHECK: ret
 define <16 x float> @test1(<16 x float> %x, <16 x float> %y) nounwind {
   %mask = fcmp ole <16 x float> %x, %y
@@ -12,7 +12,7 @@ define <16 x float> @test1(<16 x float> %x, <16 x float> %y) nounwind {
 
 ; CHECK-LABEL: test2
 ; CHECK: vcmplepd
-; CHECK: vmovupd
+; CHECK: vmovapd
 ; CHECK: ret
 define <8 x double> @test2(<8 x double> %x, <8 x double> %y) nounwind {
   %mask = fcmp ole <8 x double> %x, %y
@@ -22,7 +22,7 @@ define <8 x double> @test2(<8 x double> %x, <8 x double> %y) nounwind {
 
 ; CHECK-LABEL: test3
 ; CHECK: vpcmpeqd  (%rdi)
-; CHECK: vmovdqu32
+; CHECK: vmovdqa32
 ; CHECK: ret
 define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %yp) nounwind {
   %y = load <16 x i32>* %yp, align 4
@@ -33,7 +33,7 @@ define <16 x i32> @test3(<16 x i32> %x, <16 x i32> %x1, <16 x i32>* %yp) nounwin
 
 ; CHECK-LABEL: @test4_unsigned
 ; CHECK: vpcmpnltud
-; CHECK: vmovdqu32
+; CHECK: vmovdqa32
 ; CHECK: ret
 define <16 x i32> @test4_unsigned(<16 x i32> %x, <16 x i32> %y) nounwind {
   %mask = icmp uge <16 x i32> %x, %y
@@ -43,7 +43,7 @@ define <16 x i32> @test4_unsigned(<16 x i32> %x, <16 x i32> %y) nounwind {
 
 ; CHECK-LABEL: test5
 ; CHECK: vpcmpeqq {{.*}}%k1
-; CHECK: vmovdqu64 {{.*}}%k1
+; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
 define <8 x i64> @test5(<8 x i64> %x, <8 x i64> %y) nounwind {
   %mask = icmp eq <8 x i64> %x, %y
@@ -53,7 +53,7 @@ define <8 x i64> @test5(<8 x i64> %x, <8 x i64> %y) nounwind {
 
 ; CHECK-LABEL: test6_unsigned
 ; CHECK: vpcmpnleuq {{.*}}%k1
-; CHECK: vmovdqu64 {{.*}}%k1
+; CHECK: vmovdqa64 {{.*}}%k1
 ; CHECK: ret
 define <8 x i64> @test6_unsigned(<8 x i64> %x, <8 x i64> %y) nounwind {
   %mask = icmp ugt <8 x i64> %x, %y
