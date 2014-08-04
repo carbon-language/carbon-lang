@@ -629,6 +629,8 @@ def In32BitMode  : Predicate<"!PPCSubTarget->isPPC64()">;
 def In64BitMode  : Predicate<"PPCSubTarget->isPPC64()">;
 def IsBookE  : Predicate<"PPCSubTarget->isBookE()">;
 def IsNotBookE  : Predicate<"!PPCSubTarget->isBookE()">;
+def IsPPC4xx  : Predicate<"PPCSubTarget->isPPC4xx()">;
+def IsE500  : Predicate<"PPCSubTarget->isE500()">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Multiclass Definitions.
@@ -3123,13 +3125,15 @@ def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_BrB, []>,
 def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,
                    Requires<[IsBookE]>;
 
-def RFDI : XForm_0<19, 39, (outs), (ins), "rfdi", IIC_BrB, []>;
-def RFMCI : XForm_0<19, 38, (outs), (ins), "rfmci", IIC_BrB, []>;
+def RFDI : XForm_0<19, 39, (outs), (ins), "rfdi", IIC_BrB, []>,
+                   Requires<[IsE500]>;
+def RFMCI : XForm_0<19, 38, (outs), (ins), "rfmci", IIC_BrB, []>,
+                    Requires<[IsE500]>;
 
 def MFDCR : XFXForm_1<31, 323, (outs gprc:$RT), (ins i32imm:$SPR),
-                      "mfdcr $RT, $SPR", IIC_SprMFSPR>;
+                      "mfdcr $RT, $SPR", IIC_SprMFSPR>, Requires<[IsPPC4xx]>;
 def MTDCR : XFXForm_1<31, 451, (outs), (ins gprc:$RT, i32imm:$SPR),
-                      "mtdcr $SPR, $RT", IIC_SprMTSPR>;
+                      "mtdcr $SPR, $RT", IIC_SprMTSPR>, Requires<[IsPPC4xx]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Assembler Instruction Aliases

@@ -1,0 +1,7 @@
+# RUN: llvm-mc --disassemble %s -triple powerpc64-unknown-unknown -mcpu=pwr7 | FileCheck %s
+
+# CHECK: rfdi
+0x4c 0x00 0x00 0x4e
+# CHECK: rfmci
+0x4c 0x00 0x00 0x4c
+

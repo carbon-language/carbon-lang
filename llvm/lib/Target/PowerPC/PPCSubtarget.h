@@ -97,6 +97,8 @@ protected:
   bool HasPOPCNTD;
   bool HasLDBRX;
   bool IsBookE;
+  bool IsE500;
+  bool IsPPC4xx;
   bool DeprecatedMFTB;
   bool DeprecatedDST;
   bool HasLazyResolverStubs;
@@ -218,6 +220,8 @@ public:
   bool hasPOPCNTD() const { return HasPOPCNTD; }
   bool hasLDBRX() const { return HasLDBRX; }
   bool isBookE() const { return IsBookE; }
+  bool isPPC4xx() const { return IsPPC4xx; }
+  bool isE500() const { return IsE500; }
   bool isDeprecatedMFTB() const { return DeprecatedMFTB; }
   bool isDeprecatedDST() const { return DeprecatedDST; }
 

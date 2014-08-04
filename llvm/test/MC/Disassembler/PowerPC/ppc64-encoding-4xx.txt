@@ -1,0 +1,6 @@
+# RUN: llvm-mc --disassemble %s -triple powerpc64-unknown-unknown -mcpu=pwr7 | FileCheck %s
+
+# CHECK: mfdcr 3, 178
+0x7c 0x72 0x2a 0x86
+# CHECK: mtdcr 178, 3
+0x7c 0x72 0x2b 0x86
