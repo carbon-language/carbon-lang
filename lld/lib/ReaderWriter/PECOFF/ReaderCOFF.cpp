@@ -957,7 +957,7 @@ public:
     // Interpret .drectve section if the section has contents.
     StringRef directives = file->getLinkerDirectives();
     if (!directives.empty())
-      if (std::error_code ec = handleDirectiveSection(registry, directives))
+      if (std::error_code ec = handleDirectiveSection(directives))
         return ec;
 
     if (std::error_code ec = file->parse())
@@ -991,8 +991,7 @@ private:
   //
   // The section mainly contains /defaultlib (-l in Unix), but can contain any
   // options as long as they are valid.
-  std::error_code handleDirectiveSection(const Registry &registry,
-                                         StringRef directives) const {
+  std::error_code handleDirectiveSection(StringRef directives) const {
     DEBUG(llvm::dbgs() << ".drectve: " << directives << "\n");
 
     // Split the string into tokens, as the shell would do for argv.
