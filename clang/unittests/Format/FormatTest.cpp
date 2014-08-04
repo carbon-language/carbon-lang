@@ -4580,6 +4580,7 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaa >> aaaaa);",
                getLLVMStyleWithColumns(60));
   verifyFormat("static_assert(is_convertible<A &&, B>::value, \"AAA\");");
+  verifyFormat("Constructor(A... a) : a_(X<A>{std::forward<A>(a)}...) {}");
 }
 
 TEST_F(FormatTest, UnderstandsBinaryOperators) {
