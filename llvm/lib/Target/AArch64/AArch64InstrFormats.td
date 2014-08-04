@@ -1351,15 +1351,14 @@ class BaseMulAccum<bit isSub, bits<3> opc, RegisterClass multype,
 }
 
 multiclass MulAccum<bit isSub, string asm, SDNode AccNode> {
-  // MADD/MSUB generation is decided by MachineCombiner.cpp
   def Wrrr : BaseMulAccum<isSub, 0b000, GPR32, GPR32, asm,
-      [/*(set GPR32:$Rd, (AccNode GPR32:$Ra, (mul GPR32:$Rn, GPR32:$Rm)))*/]>,
+      [(set GPR32:$Rd, (AccNode GPR32:$Ra, (mul GPR32:$Rn, GPR32:$Rm)))]>,
       Sched<[WriteIM32, ReadIM, ReadIM, ReadIMA]> {
     let Inst{31} = 0;
   }
 
   def Xrrr : BaseMulAccum<isSub, 0b000, GPR64, GPR64, asm,
-      [/*(set GPR64:$Rd, (AccNode GPR64:$Ra, (mul GPR64:$Rn, GPR64:$Rm)))*/]>,
+      [(set GPR64:$Rd, (AccNode GPR64:$Ra, (mul GPR64:$Rn, GPR64:$Rm)))]>,
       Sched<[WriteIM64, ReadIM, ReadIM, ReadIMA]> {
     let Inst{31} = 1;
   }

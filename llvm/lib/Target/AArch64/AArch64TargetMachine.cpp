@@ -24,10 +24,6 @@ static cl::opt<bool>
 EnableCCMP("aarch64-ccmp", cl::desc("Enable the CCMP formation pass"),
            cl::init(true), cl::Hidden);
 
-static cl::opt<bool> EnableMCR("aarch64-mcr",
-                               cl::desc("Enable the machine combiner pass"),
-                               cl::init(true), cl::Hidden);
-
 static cl::opt<bool>
 EnableStPairSuppress("aarch64-stp-suppress", cl::desc("Suppress STP for AArch64"),
                      cl::init(true), cl::Hidden);
@@ -178,8 +174,6 @@ bool AArch64PassConfig::addInstSelector() {
 bool AArch64PassConfig::addILPOpts() {
   if (EnableCCMP)
     addPass(createAArch64ConditionalCompares());
-  if (EnableMCR)
-    addPass(&MachineCombinerID);
   addPass(&EarlyIfConverterID);
   if (EnableStPairSuppress)
     addPass(createAArch64StorePairSuppressPass());
