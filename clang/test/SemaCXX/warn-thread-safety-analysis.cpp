@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -fcxx-exceptions %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta -Wno-thread-safety-negative -fcxx-exceptions %s
 
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
@@ -4549,7 +4549,11 @@ public:
   }
 
   void bar() {
-    baz();        // expected-warning {{calling function 'baz' requires holding  '!mu'}}
+    bar2();       // expected-warning {{calling function 'bar2' requires holding  '!mu'}}
+  }
+
+  void bar2() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
+    baz();
   }
 
   void baz() EXCLUSIVE_LOCKS_REQUIRED(!mu) {
@@ -4620,5 +4624,24 @@ int main(void) {
   return 0;
 }
 
-}
+} // end namespace NegativeThreadRoles
+
+
+namespace AssertSharedExclusive {
+
+void doSomething();
+
+class Foo {
+  Mutex mu;
+  int a GUARDED_BY(mu);
+
+  void test() SHARED_LOCKS_REQUIRED(mu) {
+    mu.AssertHeld();
+    if (a > 0)
+      doSomething();
+  }
+};
+
+} // end namespace AssertSharedExclusive
+
 

@@ -1601,6 +1601,15 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
     }
   }
 
+  virtual void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
+                                     SourceLocation Loc) {
+    PartialDiagnosticAt Warning(Loc,
+        S.PDiag(diag::warn_acquire_requires_negative_cap)
+        << Kind << LockName << Neg);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
+  }
+
+
   void handleFunExcludesLock(StringRef Kind, Name FunName, Name LockName,
                              SourceLocation Loc) override {
     PartialDiagnosticAt Warning(Loc, S.PDiag(diag::warn_fun_excludes_mutex)

@@ -173,6 +173,17 @@ public:
 
   bool isEmpty() const { return FactIDs.size() == 0; }
 
+  // Return true if the set contains only negative facts
+  bool isEmpty(FactManager &FactMan) const {
+    for (FactID FID : *this) {
+      if (!FactMan[FID].negative())
+        return false;
+    }
+    return true;
+  }
+
+  void addLockByID(FactID ID) { FactIDs.push_back(ID); }
+
   FactID addLock(FactManager& FM, const FactEntry &Entry) {
     FactID F = FM.newFact(Entry);
     FactIDs.push_back(F);
@@ -765,7 +776,10 @@ public:
   ThreadSafetyAnalyzer(ThreadSafetyHandler &H)
      : Arena(&Bpa), SxBuilder(Arena), Handler(H) {}
 
-  void addLock(FactSet &FSet, const FactEntry &Entry, StringRef DiagKind);
+  bool inCurrentScope(const CapabilityExpr &CapE);
+
+  void addLock(FactSet &FSet, const FactEntry &Entry, StringRef DiagKind,
+               bool ReqAttr = false);
   void removeLock(FactSet &FSet, const CapabilityExpr &CapE,
                   SourceLocation UnlockLoc, bool FullyRemove, LockKind Kind,
                   StringRef DiagKind);
@@ -879,20 +893,47 @@ ClassifyDiagnostic(const AttrTy *A) {
   return "mutex";
 }
 
+
+inline bool ThreadSafetyAnalyzer::inCurrentScope(const CapabilityExpr &CapE) {
+  if (!CurrentMethod)
+      return false;
+  if (auto *P = dyn_cast_or_null<til::Project>(CapE.sexpr())) {
+    auto *VD = P->clangDecl();
+    if (VD)
+      return VD->getDeclContext() == CurrentMethod->getDeclContext();
+  }
+  return false;
+}
+
+
 /// \brief Add a new lock to the lockset, warning if the lock is already there.
-/// \param Mutex -- the Mutex expression for the lock
-/// \param LDat  -- the LockData for the lock
+/// \param Mutex   -- the Mutex expression for the lock
+/// \param LDat    -- the LockData for the lock
+/// \param ReqAttr -- true if this is part of an initial Requires attribute.
 void ThreadSafetyAnalyzer::addLock(FactSet &FSet, const FactEntry &Entry,
-                                   StringRef DiagKind) {
+                                   StringRef DiagKind, bool ReqAttr) {
   if (Entry.shouldIgnore())
     return;
 
-
+  if (!ReqAttr && !Entry.negative()) {
+    // look for the negative capability, and remove it from the fact set.
+    CapabilityExpr NegC = !Entry;
+    FactEntry *Nen = FSet.findLock(FactMan, NegC);
+    if (Nen) {
+      FSet.removeLock(FactMan, NegC);
+    }
+    else {
+      if (inCurrentScope(Entry) && !Entry.asserted())
+        Handler.handleNegativeNotHeld(DiagKind, Entry.toString(),
+                                      NegC.toString(), Entry.loc());
+    }
+  }
 
   // FIXME: deal with acquired before/after annotations.
   // FIXME: Don't always warn when we have support for reentrant locks.
-  if (!Entry.asserted() && FSet.findLock(FactMan, Entry)) {
-    Handler.handleDoubleLock(DiagKind, Entry.toString(), Entry.loc());
+  if (FSet.findLock(FactMan, Entry)) {
+    if (!Entry.asserted())
+      Handler.handleDoubleLock(DiagKind, Entry.toString(), Entry.loc());
   } else {
     FSet.addLock(FactMan, Entry);
   }
@@ -920,18 +961,22 @@ void ThreadSafetyAnalyzer::removeLock(FactSet &FSet, const CapabilityExpr &Cp,
   if (ReceivedKind != LK_Generic && LDat->kind() != ReceivedKind) {
     Handler.handleIncorrectUnlockKind(DiagKind, Cp.toString(),
                                       LDat->kind(), ReceivedKind, UnlockLoc);
-    return;
   }
 
   if (LDat->underlying()) {
+    assert(!Cp.negative() && "Managing object cannot be negative.");
     CapabilityExpr UnderCp(LDat->underlying(), false);
+    FactEntry UnderEntry(!UnderCp, LK_Exclusive, UnlockLoc);
 
     // This is scoped lockable object, which manages the real mutex.
     if (FullyRemove) {
       // We're destroying the managing object.
       // Remove the underlying mutex if it exists; but don't warn.
-      if (FSet.findLock(FactMan, UnderCp))
+      if (FSet.findLock(FactMan, UnderCp)) {
         FSet.removeLock(FactMan, UnderCp);
+        FSet.addLock(FactMan, UnderEntry);
+      }
+      FSet.removeLock(FactMan, Cp);
     } else {
       // We're releasing the underlying mutex, but not destroying the
       // managing object.  Warn on dual release.
@@ -939,10 +984,16 @@ void ThreadSafetyAnalyzer::removeLock(FactSet &FSet, const CapabilityExpr &Cp,
         Handler.handleUnmatchedUnlock(DiagKind, UnderCp.toString(), UnlockLoc);
       }
       FSet.removeLock(FactMan, UnderCp);
-      return;
+      FSet.addLock(FactMan, UnderEntry);
     }
+    return;
   }
+  // else !LDat->underlying()
+
   FSet.removeLock(FactMan, Cp);
+  if (!Cp.negative()) {
+    FSet.addLock(FactMan, FactEntry(!Cp, LK_Exclusive, UnlockLoc));
+  }
 }
 
 
@@ -1164,9 +1215,7 @@ class BuildLockset : public StmtVisitor<BuildLockset> {
   LocalVariableMap::Context LVarCtx;
   unsigned CtxIndex;
 
-  // Helper functions
-  bool inCurrentScope(const CapabilityExpr &CapE);
-
+  // helper functions
   void warnIfMutexNotHeld(const NamedDecl *D, const Expr *Exp, AccessKind AK,
                           Expr *MutexExp, ProtectedOperationKind POK,
                           StringRef DiagKind);
@@ -1196,18 +1245,6 @@ public:
 };
 
 
-inline bool BuildLockset::inCurrentScope(const CapabilityExpr &CapE) {
-  if (!Analyzer->CurrentMethod)
-      return false;
-  if (auto *P = dyn_cast_or_null<til::Project>(CapE.sexpr())) {
-    auto *VD = P->clangDecl();
-    if (VD)
-      return VD->getDeclContext() == Analyzer->CurrentMethod->getDeclContext();
-  }
-  return false;
-}
-
-
 /// \brief Warn if the LSet does not contain a lock sufficient to protect access
 /// of at least the passed in AccessKind.
 void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, const Expr *Exp,
@@ -1235,7 +1272,7 @@ void BuildLockset::warnIfMutexNotHeld(const NamedDecl *D, const Expr *Exp,
 
     // If this does not refer to a negative capability in the same class,
     // then stop here.
-    if (!inCurrentScope(Cp))
+    if (!Analyzer->inCurrentScope(Cp))
       return;
 
     // Otherwise the negative requirement must be propagated to the caller.
@@ -1326,9 +1363,10 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
   if (!D || !D->hasAttrs())
     return;
 
-  if (D->hasAttr<GuardedVarAttr>() && FSet.isEmpty())
+  if (D->hasAttr<GuardedVarAttr>() && FSet.isEmpty(Analyzer->FactMan)) {
     Analyzer->Handler.handleNoMutexHeld("mutex", D, POK_VarAccess, AK,
                                         Exp->getExprLoc());
+  }
 
   for (const auto *I : D->specific_attrs<GuardedByAttr>())
     warnIfMutexNotHeld(D, Exp, AK, I->getArg(), POK_VarAccess,
@@ -1359,7 +1397,7 @@ void BuildLockset::checkPtAccess(const Expr *Exp, AccessKind AK) {
   if (!D || !D->hasAttrs())
     return;
 
-  if (D->hasAttr<PtGuardedVarAttr>() && FSet.isEmpty())
+  if (D->hasAttr<PtGuardedVarAttr>() && FSet.isEmpty(Analyzer->FactMan))
     Analyzer->Handler.handleNoMutexHeld("mutex", D, POK_VarDereference, AK,
                                         Exp->getExprLoc());
 
@@ -1692,7 +1730,7 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
         }
       }
       else if (!LDat2->managed() && !LDat2->asserted() &&
-               !LDat2->isUniversal()) {
+               !LDat2->negative() && !LDat2->isUniversal()) {
         Handler.handleMutexHeldEndOfScope("mutex", LDat2->toString(),
                                           LDat2->loc(), JoinLoc, LEK1);
       }
@@ -1717,7 +1755,7 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
         }
       }
       else if (!LDat1->managed() && !LDat1->asserted() &&
-               !LDat1->isUniversal()) {
+               !LDat1->negative() && !LDat1->isUniversal()) {
         Handler.handleMutexHeldEndOfScope("mutex", LDat1->toString(),
                                           LDat1->loc(), JoinLoc, LEK2);
       }
@@ -1844,10 +1882,10 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     // FIXME -- Loc can be wrong here.
     for (const auto &Mu : ExclusiveLocksToAdd)
       addLock(InitialLockset, FactEntry(Mu, LK_Exclusive, Loc),
-              CapDiagKind);
+              CapDiagKind, true);
     for (const auto &Mu : SharedLocksToAdd)
       addLock(InitialLockset, FactEntry(Mu, LK_Shared, Loc),
-              CapDiagKind);
+              CapDiagKind, true);
   }
 
   for (const auto *CurrBlock : *SortedGraph) {

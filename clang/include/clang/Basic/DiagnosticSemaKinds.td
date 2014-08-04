@@ -2317,6 +2317,11 @@ def warn_cannot_resolve_lock : Warning<
   "cannot resolve lock expression">,
   InGroup<ThreadSafetyAnalysis>, DefaultIgnore;
 
+// Thread safety warnings negative capabilities
+def warn_acquire_requires_negative_cap : Warning<
+  "acquiring %0 '%1' requires negative capability '%2'">,
+  InGroup<ThreadSafetyNegative>, DefaultIgnore;
+
 // Imprecise thread safety warnings
 def warn_variable_requires_lock : Warning<
   "%select{reading|writing}3 variable '%1' requires holding %0 "

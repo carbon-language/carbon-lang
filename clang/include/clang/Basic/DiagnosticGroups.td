@@ -589,10 +589,12 @@ def Most : DiagGroup<"most", [
 def ThreadSafetyAttributes : DiagGroup<"thread-safety-attributes">;
 def ThreadSafetyAnalysis   : DiagGroup<"thread-safety-analysis">;
 def ThreadSafetyPrecise    : DiagGroup<"thread-safety-precise">;
+def ThreadSafetyNegative   : DiagGroup<"thread-safety-negative">;
 def ThreadSafety : DiagGroup<"thread-safety",
                              [ThreadSafetyAttributes, 
                               ThreadSafetyAnalysis,
-                              ThreadSafetyPrecise]>;
+                              ThreadSafetyPrecise,
+                              ThreadSafetyNegative]>;
 def ThreadSafetyBeta : DiagGroup<"thread-safety-beta">;
 
 // Uniqueness Analysis warnings
