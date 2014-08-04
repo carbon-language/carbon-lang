@@ -133,7 +133,3 @@ struct nS {
 
 extern int n1[sizeof(struct nS) == 9 ? 1 : -1];
 extern int n2[__alignof(struct nS) == 1 ? 1 : -1];
-
-
-
-
