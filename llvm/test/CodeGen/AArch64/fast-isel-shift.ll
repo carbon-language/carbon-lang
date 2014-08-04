@@ -1,14 +1,14 @@
 ; RUN: llc -fast-isel -fast-isel-abort -mtriple=arm64-apple-darwin < %s | FileCheck %s
 
 ; CHECK-LABEL: lsl_i8
-; CHECK: lsl {{w[0-9]*}}, {{w[0-9]*}}, #4
+; CHECK: ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #4
 define zeroext i8 @lsl_i8(i8 %a) {
   %1 = shl i8 %a, 4
   ret i8 %1
 }
 
 ; CHECK-LABEL: lsl_i16
-; CHECK: lsl {{w[0-9]*}}, {{w[0-9]*}}, #8
+; CHECK: ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #8, #8
 define zeroext i16 @lsl_i16(i16 %a) {
   %1 = shl i16 %a, 8
   ret i16 %1
@@ -30,14 +30,14 @@ define i64 @lsl_i64(i64 %a) {
 }
 
 ; CHECK-LABEL: lsr_i8
-; CHECK: lsr {{w[0-9]*}}, {{w[0-9]*}}, #4
+; CHECK: ubfx {{w[0-9]*}}, {{w[0-9]*}}, #4, #4
 define zeroext i8 @lsr_i8(i8 %a) {
   %1 = lshr i8 %a, 4
   ret i8 %1
 }
 
 ; CHECK-LABEL: lsr_i16
-; CHECK: lsr {{w[0-9]*}}, {{w[0-9]*}}, #8
+; CHECK: ubfx {{w[0-9]*}}, {{w[0-9]*}}, #8, #8
 define zeroext i16 @lsr_i16(i16 %a) {
   %1 = lshr i16 %a, 8
   ret i16 %1
@@ -59,14 +59,14 @@ define i64 @lsr_i64(i64 %a) {
 }
 
 ; CHECK-LABEL: asr_i8
-; CHECK: asr {{w[0-9]*}}, {{w[0-9]*}}, #4
+; CHECK: sbfx {{w[0-9]*}}, {{w[0-9]*}}, #4, #4
 define zeroext i8 @asr_i8(i8 %a) {
   %1 = ashr i8 %a, 4
   ret i8 %1
 }
 
 ; CHECK-LABEL: asr_i16
-; CHECK: asr {{w[0-9]*}}, {{w[0-9]*}}, #8
+; CHECK: sbfx {{w[0-9]*}}, {{w[0-9]*}}, #8, #8
 define zeroext i16 @asr_i16(i16 %a) {
   %1 = ashr i16 %a, 8
   ret i16 %1
@@ -85,5 +85,15 @@ define zeroext i32 @asr_i32(i32 %a) {
 define i64 @asr_i64(i64 %a) {
   %1 = ashr i64 %a, 32
   ret i64 %1
+}
+
+; CHECK-LABEL: shift_test1
+; CHECK:       ubfiz {{w[0-9]*}}, {{w[0-9]*}}, #4, #4
+; CHECK-NEXT:  sbfx  {{w[0-9]*}}, {{w[0-9]*}}, #4, #4
+define i32 @shift_test1(i8 %a) {
+  %1 = shl i8 %a, 4
+  %2 = ashr i8 %1, 4
+  %3 = sext i8 %2 to i32
+  ret i32 %3
 }
 

@@ -2202,14 +2202,16 @@ unsigned AArch64FastISel::Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
   switch (RetVT.SimpleTy) {
   default: return 0;
   case MVT::i8:
+    Opc = AArch64::UBFMWri; ImmR = -Shift % 32; ImmS =  7 - Shift; break;
   case MVT::i16:
+    Opc = AArch64::UBFMWri; ImmR = -Shift % 32; ImmS = 15 - Shift; break;
   case MVT::i32:
-    RetVT = MVT::i32;
     Opc = AArch64::UBFMWri; ImmR = -Shift % 32; ImmS = 31 - Shift; break;
   case MVT::i64:
     Opc = AArch64::UBFMXri; ImmR = -Shift % 64; ImmS = 63 - Shift; break;
   }
 
+  RetVT.SimpleTy = std::max(MVT::i32, RetVT.SimpleTy);
   return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, ImmR,
                           ImmS);
 }
@@ -2219,15 +2221,13 @@ unsigned AArch64FastISel::Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
   unsigned Opc, ImmS;
   switch (RetVT.SimpleTy) {
   default: return 0;
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    RetVT = MVT::i32;
-    Opc = AArch64::UBFMWri; ImmS = 31; break;
-  case MVT::i64:
-    Opc = AArch64::UBFMXri; ImmS = 63; break;
+  case MVT::i8:  Opc = AArch64::UBFMWri; ImmS =  7; break;
+  case MVT::i16: Opc = AArch64::UBFMWri; ImmS = 15; break;
+  case MVT::i32: Opc = AArch64::UBFMWri; ImmS = 31; break;
+  case MVT::i64: Opc = AArch64::UBFMXri; ImmS = 63; break;
   }
 
+  RetVT.SimpleTy = std::max(MVT::i32, RetVT.SimpleTy);
   return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, Shift,
                           ImmS);
 }
@@ -2237,15 +2237,13 @@ unsigned AArch64FastISel::Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
   unsigned Opc, ImmS;
   switch (RetVT.SimpleTy) {
   default: return 0;
-  case MVT::i8:
-  case MVT::i16:
-  case MVT::i32:
-    RetVT = MVT::i32;
-    Opc = AArch64::SBFMWri; ImmS = 31; break;
-  case MVT::i64:
-    Opc = AArch64::SBFMXri; ImmS = 63; break;
+  case MVT::i8:  Opc = AArch64::SBFMWri; ImmS =  7; break;
+  case MVT::i16: Opc = AArch64::SBFMWri; ImmS = 15; break;
+  case MVT::i32: Opc = AArch64::SBFMWri; ImmS = 31; break;
+  case MVT::i64: Opc = AArch64::SBFMXri; ImmS = 63; break;
   }
 
+  RetVT.SimpleTy = std::max(MVT::i32, RetVT.SimpleTy);
   return FastEmitInst_rii(Opc, TLI.getRegClassFor(RetVT), Op0, Op0IsKill, Shift,
                           ImmS);
 }
