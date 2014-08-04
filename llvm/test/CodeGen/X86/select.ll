@@ -365,3 +365,39 @@ define i32 @trunc_select_miscompile(i32 %a, i1 zeroext %cc) {
   %tmp2 = shl i32 %a, %tmp1
   ret i32 %tmp2
 }
+
+define void @test19() {
+; This is a massive reduction of an llvm-stress test case that generates
+; interesting chains feeding setcc and eventually a f32 select operation. This
+; is intended to exercise the SELECT formation in the DAG combine simplifying
+; a simplified select_cc node. If it it regresses and is no longer triggering
+; that code path, it can be deleted.
+;
+; CHECK-LABEL: @test19
+; CHECK: testb
+; CHECK: cmpl
+; CHECK: ucomiss
+
+BB:
+  br label %CF
+
+CF:
+  %Cmp10 = icmp ule i8 undef, undef
+  br i1 %Cmp10, label %CF, label %CF250
+
+CF250:
+  %E12 = extractelement <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, i32 2
+  %Cmp32 = icmp ugt i1 %Cmp10, false
+  br i1 %Cmp32, label %CF, label %CF242
+
+CF242:
+  %Cmp38 = icmp uge i32 %E12, undef
+  %FC = uitofp i1 %Cmp38 to float
+  %Sl59 = select i1 %Cmp32, float %FC, float undef
+  %Cmp60 = fcmp ugt float undef, undef
+  br i1 %Cmp60, label %CF242, label %CF244
+
+CF244:
+  %B122 = fadd float %Sl59, undef
+  ret void
+}
