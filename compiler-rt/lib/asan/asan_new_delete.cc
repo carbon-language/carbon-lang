@@ -110,6 +110,11 @@ void operator delete(void *ptr, size_t size) throw() {
   GET_STACK_TRACE_FREE;
   asan_sized_free(ptr, size, &stack, FROM_NEW);
 }
+CXX_OPERATOR_ATTRIBUTE
+void operator delete[](void *ptr, size_t size) throw() {
+  GET_STACK_TRACE_FREE;
+  asan_sized_free(ptr, size, &stack, FROM_NEW_BR);
+}
 
 #else  // SANITIZER_MAC
 INTERCEPTOR(void, _ZdlPv, void *ptr) {
