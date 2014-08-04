@@ -63,6 +63,7 @@ add_clang_library(clangCodeGen
   SanitizerBlacklist.cpp
   SanitizerMetadata.cpp
   TargetInfo.cpp
+  CoverageMappingGen.cpp
 
   DEPENDS
   intrinsics_gen
