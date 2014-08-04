@@ -2075,9 +2075,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
   }
 
-  // static_assert-declaration
-  if (Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert)) {
-    // FIXME: Check for templates
+  // static_assert-declaration. A templated static_assert declaration is
+  // diagnosed in Parser::ParseSingleDeclarationAfterTemplate.
+  if (!TemplateInfo.Kind &&
+      (Tok.is(tok::kw_static_assert) || Tok.is(tok::kw__Static_assert))) {
     SourceLocation DeclEnd;
     ParseStaticAssertDeclaration(DeclEnd);
     return;

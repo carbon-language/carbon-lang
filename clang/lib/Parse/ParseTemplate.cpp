@@ -166,6 +166,14 @@ Parser::ParseSingleDeclarationAfterTemplate(
   assert(TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
          "Template information required");
 
+  if (Tok.is(tok::kw_static_assert)) {
+    // A static_assert declaration may not be templated.
+    Diag(Tok.getLocation(), diag::err_templated_invalid_declaration)
+      << TemplateInfo.getSourceRange();
+    // Parse the static_assert declaration to improve error recovery.
+    return ParseStaticAssertDeclaration(DeclEnd);
+  }
+
   if (Context == Declarator::MemberContext) {
     // We are parsing a member template.
     ParseCXXClassMemberDeclaration(AS, AccessAttrs, TemplateInfo,
