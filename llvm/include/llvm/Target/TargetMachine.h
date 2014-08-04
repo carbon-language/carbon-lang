@@ -100,7 +100,10 @@ public:
   virtual const TargetSubtargetInfo *getSubtargetImpl() const {
     return nullptr;
   }
-  virtual TargetSubtargetInfo *getSubtargetImpl() { return nullptr; }
+  virtual TargetSubtargetInfo *getSubtargetImpl() {
+    const TargetMachine *TM = this;
+    return const_cast<TargetSubtargetInfo *>(TM->getSubtargetImpl());
+  }
 
   mutable TargetOptions Options;
 
