@@ -630,6 +630,7 @@ def In64BitMode  : Predicate<"PPCSubTarget->isPPC64()">;
 def IsBookE  : Predicate<"PPCSubTarget->isBookE()">;
 def IsNotBookE  : Predicate<"!PPCSubTarget->isBookE()">;
 def IsPPC4xx  : Predicate<"PPCSubTarget->isPPC4xx()">;
+def IsPPC6xx  : Predicate<"PPCSubTarget->isPPC6xx()">;
 def IsE500  : Predicate<"PPCSubTarget->isE500()">;
 
 //===----------------------------------------------------------------------===//
@@ -3218,6 +3219,33 @@ def : InstAlias<"not $rA, $rB", (NOR8 g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 def : InstAlias<"not. $rA, $rB", (NOR8o g8rc:$rA, g8rc:$rB, g8rc:$rB)>;
 
 def : InstAlias<"mtcr $rA", (MTCRF8 255, g8rc:$rA)>;
+
+foreach BATR = 0-3 in {
+    def : InstAlias<"mtdbatu "#BATR#", $Rx",
+                    (MTSPR !add(BATR, !add(BATR, 536)), gprc:$Rx)>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mfdbatu $Rx, "#BATR,
+                    (MFSPR gprc:$Rx, !add(BATR, !add(BATR, 536)))>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mtdbatl "#BATR#", $Rx",
+                    (MTSPR !add(BATR, !add(BATR, 537)), gprc:$Rx)>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mfdbatl $Rx, "#BATR,
+                    (MFSPR gprc:$Rx, !add(BATR, !add(BATR, 537)))>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mtibatu "#BATR#", $Rx",
+                    (MTSPR !add(BATR, !add(BATR, 528)), gprc:$Rx)>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mfibatu $Rx, "#BATR,
+                    (MFSPR gprc:$Rx, !add(BATR, !add(BATR, 528)))>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mtibatl "#BATR#", $Rx",
+                    (MTSPR !add(BATR, !add(BATR, 529)), gprc:$Rx)>,
+                    Requires<[IsPPC6xx]>;
+    def : InstAlias<"mfibatl $Rx, "#BATR,
+                    (MFSPR gprc:$Rx, !add(BATR, !add(BATR, 529)))>,
+                    Requires<[IsPPC6xx]>;
+}
 
 def LAx : PPCAsmPseudo<"la $rA, $addr", (ins gprc:$rA, memri:$addr)>;
 
