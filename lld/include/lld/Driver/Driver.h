@@ -24,6 +24,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace lld {
@@ -112,7 +113,8 @@ public:
   /// Returns true iff there was an error.
   static bool parse(int argc, const char *argv[], PECOFFLinkingContext &info,
                     raw_ostream &diagnostics = llvm::errs(),
-                    bool isDirective = false);
+                    bool isDirective = false,
+                    std::set<StringRef> *undefinedSymbols = nullptr);
 
 private:
   WinLinkDriver() LLVM_DELETED_FUNCTION;

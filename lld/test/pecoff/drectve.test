@@ -22,3 +22,11 @@ IMPORT-NEXT:        1  fn
 IMPORT-NEXT:        1
 
 ERROR-NOT: foo
+
+
+# drectve2.obj contains "/include:foo".
+# RUN: yaml2obj %p/Inputs/drectve2.obj.yaml > %t2.obj
+# RUN: not lld -flavor link /out:%t2.exe /entry:main -- %t2.obj >& %t2.log
+# RUN: FileCheck -check-prefix=UNDEF %s < %t2.log
+
+UNDEF: Undefined symbol: {{.*}}: foo

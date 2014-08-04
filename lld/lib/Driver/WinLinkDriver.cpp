@@ -811,7 +811,8 @@ bool WinLinkDriver::linkPECOFF(int argc, const char **argv, raw_ostream &diag) {
 
 bool WinLinkDriver::parse(int argc, const char *argv[],
                           PECOFFLinkingContext &ctx, raw_ostream &diag,
-                          bool isReadingDirectiveSection) {
+                          bool isReadingDirectiveSection,
+                          std::set<StringRef> *undefinedSymbols) {
   // Parse may be called from multiple threads simultaneously to parse .drectve
   // sections. This function is not thread-safe because it mutates the context
   // object. So acquire the lock.
@@ -1183,9 +1184,15 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
       break;
     }
 
-    case OPT_incl:
-      ctx.addInitialUndefinedSymbol(ctx.allocate(inputArg->getValue()));
+    case OPT_incl: {
+      StringRef sym = ctx.allocate(inputArg->getValue());
+      if (isReadingDirectiveSection) {
+        undefinedSymbols->insert(sym);
+      } else {
+        ctx.addInitialUndefinedSymbol(sym);
+      }
       break;
+    }
 
     case OPT_noentry:
       ctx.setHasEntry(false);

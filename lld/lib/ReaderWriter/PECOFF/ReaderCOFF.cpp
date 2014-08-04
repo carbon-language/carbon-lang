@@ -92,6 +92,10 @@ public:
     _definedAtoms._atoms.push_back(atom);
   }
 
+  void addUndefinedSymbol(StringRef sym) {
+    _undefinedAtoms._atoms.push_back(new (_alloc) COFFUndefinedAtom(*this, sym));
+  }
+
   mutable llvm::BumpPtrAllocator _alloc;
 
 private:
@@ -954,10 +958,15 @@ public:
     if (ec)
       return ec;
 
+    // The set to contain the symbols specified as arguments of
+    // /INCLUDE option.
+    std::set<StringRef> undefinedSymbols;
+
     // Interpret .drectve section if the section has contents.
     StringRef directives = file->getLinkerDirectives();
     if (!directives.empty())
-      if (std::error_code ec = handleDirectiveSection(directives))
+      if (std::error_code ec = handleDirectiveSection(
+              directives, &undefinedSymbols))
         return ec;
 
     if (std::error_code ec = file->parse())
@@ -980,6 +989,12 @@ public:
     // function iterate over defined atoms and create alias atoms if needed.
     createAlternateNameAtoms(*file);
 
+    for (StringRef sym : undefinedSymbols) {
+      file->addUndefinedSymbol(sym);
+      if (_ctx.deadStrip())
+        _ctx.addDeadStripRoot(sym);
+    }
+
     result.push_back(std::move(file));
     return std::error_code();
   }
@@ -991,7 +1006,8 @@ private:
   //
   // The section mainly contains /defaultlib (-l in Unix), but can contain any
   // options as long as they are valid.
-  std::error_code handleDirectiveSection(StringRef directives) const {
+  std::error_code handleDirectiveSection(StringRef directives,
+                                         std::set<StringRef> *undefinedSymbols) const {
     DEBUG(llvm::dbgs() << ".drectve: " << directives << "\n");
 
     // Split the string into tokens, as the shell would do for argv.
@@ -1007,7 +1023,8 @@ private:
     std::string errorMessage;
     llvm::raw_string_ostream stream(errorMessage);
     bool parseFailed = !WinLinkDriver::parse(argc, argv, _ctx, stream,
-                                             /*isDirective*/ true);
+                                             /*isDirective*/ true,
+                                             undefinedSymbols);
     stream.flush();
     // Print error message if error.
     if (parseFailed) {
