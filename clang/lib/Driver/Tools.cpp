@@ -3230,6 +3230,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       Args.hasArg(options::OPT_coverage))
     CmdArgs.push_back("-femit-coverage-data");
 
+  if (Args.hasArg(options::OPT_fcoverage_mapping) &&
+      !Args.hasArg(options::OPT_fprofile_instr_generate))
+    D.Diag(diag::err_drv_argument_only_allowed_with)
+      << "-fcoverage-mapping" << "-fprofile-instr-generate";
+
+  if (Args.hasArg(options::OPT_fcoverage_mapping))
+    CmdArgs.push_back("-fcoverage-mapping");
+
   if (C.getArgs().hasArg(options::OPT_c) ||
       C.getArgs().hasArg(options::OPT_S)) {
     if (Output.isFilename()) {

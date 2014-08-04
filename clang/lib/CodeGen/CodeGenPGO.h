@@ -42,11 +42,16 @@ private:
   std::unique_ptr<llvm::DenseMap<const Stmt *, uint64_t>> StmtCountMap;
   std::unique_ptr<std::vector<uint64_t>> RegionCounts;
   uint64_t CurrentRegionCount;
+  std::string CoverageMapping;
+  /// \brief A flag that is set to true when this function doesn't need
+  /// to have coverage mapping data.
+  bool SkipCoverageMapping;
 
 public:
   CodeGenPGO(CodeGenModule &CGM)
       : CGM(CGM), NumRegionCounters(0), FunctionHash(0),
-        RegionCounters(nullptr), CurrentRegionCount(0) {}
+        RegionCounters(nullptr), CurrentRegionCount(0),
+        SkipCoverageMapping(false) {}
 
   /// Whether or not we have PGO region data for the current function. This is
   /// false both when we have no data at all and when our data has been
@@ -99,6 +104,8 @@ public:
   llvm::MDNode *createBranchWeights(ArrayRef<uint64_t> Weights);
   llvm::MDNode *createLoopWeights(const Stmt *Cond, RegionCounter &Cnt);
 
+  /// Check if we need to emit coverage mapping for a given declaration
+  void checkGlobalDecl(GlobalDecl GD);
   /// Assign counters to regions and configure them for PGO of a given
   /// function. Does nothing if instrumentation is not enabled and either
   /// generates global variables or associates PGO data with each of the
@@ -111,9 +118,14 @@ public:
   void destroyRegionCounters();
   /// Emit static initialization code, if any.
   static llvm::Function *emitInitialization(CodeGenModule &CGM);
-
+  /// Emit a coverage mapping range with a counter zero
+  /// for an unused declaration.
+  void emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
+                               llvm::GlobalValue::LinkageTypes Linkage);
 private:
   void setFuncName(llvm::Function *Fn);
+  void setFuncName(StringRef Name, llvm::GlobalValue::LinkageTypes Linkage);
+  void setVarLinkage(llvm::GlobalValue::LinkageTypes Linkage);
   void mapRegionCounters(const Decl *D);
   void computeRegionCounts(const Decl *D);
   void applyFunctionAttributes(llvm::IndexedInstrProfReader *PGOReader,
@@ -122,6 +134,7 @@ private:
                         bool IsInMainFile);
   void emitCounterVariables();
   llvm::GlobalVariable *buildDataVar();
+  void emitCounterRegionMapping(const Decl *D);
 
   /// Emit code to increment the counter at the given index
   void emitCounterIncrement(CGBuilderTy &Builder, unsigned Counter);

@@ -24,6 +24,7 @@ namespace llvm {
 
 namespace clang {
   class DiagnosticsEngine;
+  class CoverageSourceInfo;
   class LangOptions;
   class CodeGenOptions;
   class TargetOptions;
@@ -44,7 +45,8 @@ namespace clang {
                                    const std::string &ModuleName,
                                    const CodeGenOptions &CGO,
                                    const TargetOptions &TO,
-                                   llvm::LLVMContext& C);
+                                   llvm::LLVMContext& C,
+                                   CoverageSourceInfo *CoverageInfo = nullptr);
 }
 
 #endif

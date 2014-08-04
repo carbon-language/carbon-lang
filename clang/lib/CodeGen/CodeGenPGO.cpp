@@ -13,6 +13,7 @@
 
 #include "CodeGenPGO.h"
 #include "CodeGenFunction.h"
+#include "CoverageMappingGen.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/IR/MDBuilder.h"
@@ -24,8 +25,9 @@
 using namespace clang;
 using namespace CodeGen;
 
-void CodeGenPGO::setFuncName(llvm::Function *Fn) {
-  RawFuncName = Fn->getName();
+void CodeGenPGO::setFuncName(StringRef Name,
+                             llvm::GlobalValue::LinkageTypes Linkage) {
+  RawFuncName = Name;
 
   // Function names may be prefixed with a binary '1' to indicate
   // that the backend should not modify the symbols due to any platform
@@ -33,7 +35,7 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
   if (RawFuncName[0] == '\1')
     RawFuncName = RawFuncName.substr(1);
 
-  if (!Fn->hasLocalLinkage()) {
+  if (!llvm::GlobalValue::isLocalLinkage(Linkage)) {
     PrefixedFuncName.reset(new std::string(RawFuncName));
     return;
   }
@@ -47,6 +49,27 @@ void CodeGenPGO::setFuncName(llvm::Function *Fn) {
     PrefixedFuncName->assign("<unknown>");
   PrefixedFuncName->append(":");
   PrefixedFuncName->append(RawFuncName);
+}
+
+void CodeGenPGO::setFuncName(llvm::Function *Fn) {
+  setFuncName(Fn->getName(), Fn->getLinkage());
+}
+
+void CodeGenPGO::setVarLinkage(llvm::GlobalValue::LinkageTypes Linkage) {
+  // Set the linkage for variables based on the function linkage.  Usually, we
+  // want to match it, but available_externally and extern_weak both have the
+  // wrong semantics.
+  VarLinkage = Linkage;
+  switch (VarLinkage) {
+  case llvm::GlobalValue::ExternalWeakLinkage:
+    VarLinkage = llvm::GlobalValue::LinkOnceAnyLinkage;
+    break;
+  case llvm::GlobalValue::AvailableExternallyLinkage:
+    VarLinkage = llvm::GlobalValue::LinkOnceODRLinkage;
+    break;
+  default:
+    break;
+  }
 }
 
 static llvm::Function *getRegisterFunc(CodeGenModule &CGM) {
@@ -120,37 +143,48 @@ llvm::GlobalVariable *CodeGenPGO::buildDataVar() {
   auto *Int64Ty = llvm::Type::getInt64Ty(Ctx);
   auto *Int8PtrTy = llvm::Type::getInt8PtrTy(Ctx);
   auto *Int64PtrTy = llvm::Type::getInt64PtrTy(Ctx);
-  llvm::Type *DataTypes[] = {
-    Int32Ty, Int32Ty, Int64Ty, Int8PtrTy, Int64PtrTy
-  };
-  auto *DataTy = llvm::StructType::get(Ctx, makeArrayRef(DataTypes));
-  llvm::Constant *DataVals[] = {
-    llvm::ConstantInt::get(Int32Ty, getFuncName().size()),
-    llvm::ConstantInt::get(Int32Ty, NumRegionCounters),
-    llvm::ConstantInt::get(Int64Ty, FunctionHash),
-    llvm::ConstantExpr::getBitCast(Name, Int8PtrTy),
-    llvm::ConstantExpr::getBitCast(RegionCounters, Int64PtrTy)
-  };
-  auto *Data =
-    new llvm::GlobalVariable(CGM.getModule(), DataTy, true, VarLinkage,
-                             llvm::ConstantStruct::get(DataTy, DataVals),
-                             getFuncVarName("data"));
+  llvm::GlobalVariable *Data = nullptr;
+  if (RegionCounters) {
+    llvm::Type *DataTypes[] = {
+      Int32Ty, Int32Ty, Int64Ty, Int8PtrTy, Int64PtrTy
+    };
+    auto *DataTy = llvm::StructType::get(Ctx, makeArrayRef(DataTypes));
+    llvm::Constant *DataVals[] = {
+      llvm::ConstantInt::get(Int32Ty, getFuncName().size()),
+      llvm::ConstantInt::get(Int32Ty, NumRegionCounters),
+      llvm::ConstantInt::get(Int64Ty, FunctionHash),
+      llvm::ConstantExpr::getBitCast(Name, Int8PtrTy),
+      llvm::ConstantExpr::getBitCast(RegionCounters, Int64PtrTy)
+    };
+    Data =
+      new llvm::GlobalVariable(CGM.getModule(), DataTy, true, VarLinkage,
+                               llvm::ConstantStruct::get(DataTy, DataVals),
+                               getFuncVarName("data"));
 
-  // All the data should be packed into an array in its own section.
-  Data->setSection(getDataSection(CGM));
-  Data->setAlignment(8);
+    // All the data should be packed into an array in its own section.
+    Data->setSection(getDataSection(CGM));
+    Data->setAlignment(8);
+  }
+
+  // Create coverage mapping data variable.
+  if (!CoverageMapping.empty())
+    CGM.getCoverageMapping()->addFunctionMappingRecord(Name,
+                                                       getFuncName().size(),
+                                                       CoverageMapping);
 
   // Hide all these symbols so that we correctly get a copy for each
   // executable.  The profile format expects names and counters to be
   // contiguous, so references into shared objects would be invalid.
   if (!llvm::GlobalValue::isLocalLinkage(VarLinkage)) {
     Name->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    Data->setVisibility(llvm::GlobalValue::HiddenVisibility);
-    RegionCounters->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    if (Data) {
+      Data->setVisibility(llvm::GlobalValue::HiddenVisibility);
+      RegionCounters->setVisibility(llvm::GlobalValue::HiddenVisibility);
+    }
   }
 
   // Make sure the data doesn't get deleted.
-  CGM.addUsedGlobal(Data);
+  if (Data) CGM.addUsedGlobal(Data);
   return Data;
 }
 
@@ -807,6 +841,20 @@ static void emitRuntimeHook(CodeGenModule &CGM) {
   CGM.addUsedGlobal(User);
 }
 
+void CodeGenPGO::checkGlobalDecl(GlobalDecl GD) {
+  // Make sure we only emit coverage mapping for one constructor/destructor.
+  // Clang emits several functions for the constructor and the destructor of
+  // a class. Every function is instrumented, but we only want to provide
+  // coverage for one of them. Because of that we only emit the coverage mapping
+  // for the base constructor/destructor.
+  if ((isa<CXXConstructorDecl>(GD.getDecl()) &&
+       GD.getCtorType() != Ctor_Base) ||
+      (isa<CXXDestructorDecl>(GD.getDecl()) &&
+       GD.getDtorType() != Dtor_Base)) {
+    SkipCoverageMapping = true;
+  }
+}
+
 void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
   bool InstrumentRegions = CGM.getCodeGenOpts().ProfileInstrGenerate;
   llvm::IndexedInstrProfReader *PGOReader = CGM.getPGOReader();
@@ -814,27 +862,16 @@ void CodeGenPGO::assignRegionCounters(const Decl *D, llvm::Function *Fn) {
     return;
   if (D->isImplicit())
     return;
+  CGM.ClearUnusedCoverageMapping(D);
   setFuncName(Fn);
-
-  // Set the linkage for variables based on the function linkage.  Usually, we
-  // want to match it, but available_externally and extern_weak both have the
-  // wrong semantics.
-  VarLinkage = Fn->getLinkage();
-  switch (VarLinkage) {
-  case llvm::GlobalValue::ExternalWeakLinkage:
-    VarLinkage = llvm::GlobalValue::LinkOnceAnyLinkage;
-    break;
-  case llvm::GlobalValue::AvailableExternallyLinkage:
-    VarLinkage = llvm::GlobalValue::LinkOnceODRLinkage;
-    break;
-  default:
-    break;
-  }
+  setVarLinkage(Fn->getLinkage());
 
   mapRegionCounters(D);
   if (InstrumentRegions) {
     emitRuntimeHook(CGM);
     emitCounterVariables();
+    if (CGM.getCodeGenOpts().CoverageMapping)
+      emitCounterRegionMapping(D);
   }
   if (PGOReader) {
     SourceManager &SM = CGM.getContext().getSourceManager();
@@ -858,6 +895,45 @@ void CodeGenPGO::mapRegionCounters(const Decl *D) {
   assert(Walker.NextCounter > 0 && "no entry counter mapped for decl");
   NumRegionCounters = Walker.NextCounter;
   FunctionHash = Walker.Hash.finalize();
+}
+
+void CodeGenPGO::emitCounterRegionMapping(const Decl *D) {
+  if (SkipCoverageMapping)
+    return;
+  // Don't map the functions inside the system headers
+  auto Loc = D->getBody()->getLocStart();
+  if (CGM.getContext().getSourceManager().isInSystemHeader(Loc))
+    return;
+
+  llvm::raw_string_ostream OS(CoverageMapping);
+  CoverageMappingGen MappingGen(*CGM.getCoverageMapping(),
+                                CGM.getContext().getSourceManager(),
+                                CGM.getLangOpts(), RegionCounterMap.get(),
+                                NumRegionCounters);
+  MappingGen.emitCounterMapping(D, OS);
+  OS.flush();
+}
+
+void
+CodeGenPGO::emitEmptyCounterMapping(const Decl *D, StringRef FuncName,
+                                    llvm::GlobalValue::LinkageTypes Linkage) {
+  if (SkipCoverageMapping)
+    return;
+  setFuncName(FuncName, Linkage);
+  setVarLinkage(Linkage);
+
+  // Don't map the functions inside the system headers
+  auto Loc = D->getBody()->getLocStart();
+  if (CGM.getContext().getSourceManager().isInSystemHeader(Loc))
+    return;
+
+  llvm::raw_string_ostream OS(CoverageMapping);
+  CoverageMappingGen MappingGen(*CGM.getCoverageMapping(),
+                                CGM.getContext().getSourceManager(),
+                                CGM.getLangOpts());
+  MappingGen.emitEmptyMapping(D, OS);
+  OS.flush();
+  buildDataVar();
 }
 
 void CodeGenPGO::computeRegionCounts(const Decl *D) {

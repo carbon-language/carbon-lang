@@ -21,6 +21,7 @@
 #include "CGOpenMPRuntime.h"
 #include "CodeGenFunction.h"
 #include "CodeGenPGO.h"
+#include "CoverageMappingGen.h"
 #include "CodeGenTBAA.h"
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
@@ -74,7 +75,8 @@ static CGCXXABI *createCXXABI(CodeGenModule &CGM) {
 
 CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
                              llvm::Module &M, const llvm::DataLayout &TD,
-                             DiagnosticsEngine &diags)
+                             DiagnosticsEngine &diags,
+                             CoverageSourceInfo *CoverageInfo)
     : Context(C), LangOpts(C.getLangOpts()), CodeGenOpts(CGO), TheModule(M),
       Diags(diags), TheDataLayout(TD), Target(C.getTargetInfo()),
       ABI(createCXXABI(*this)), VMContext(M.getContext()), TBAA(nullptr),
@@ -146,6 +148,11 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
       getDiags().Report(DiagID) << EC.message();
     }
   }
+
+  // If coverage mapping generation is enabled, create the
+  // CoverageMappingModuleGen object.
+  if (CodeGenOpts.CoverageMapping)
+    CoverageMapping.reset(new CoverageMappingModuleGen(*this, *CoverageInfo));
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -344,6 +351,9 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitStaticExternCAliases();
+  EmitDeferredUnusedCoverageMappings();
+  if (CoverageMapping)
+    CoverageMapping->emit();
   emitLLVMUsed();
 
   if (CodeGenOpts.Autolink &&
@@ -2989,6 +2999,9 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
       return;
 
     EmitGlobal(cast<FunctionDecl>(D));
+    // Always provide some coverage mapping
+    // even for the functions that aren't emitted.
+    AddDeferredUnusedCoverageMapping(D);
     break;
 
   case Decl::Var:
@@ -3135,6 +3148,80 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
     // non-top-level decl.  FIXME: Would be nice to have an isTopLevelDeclKind
     // function. Need to recode Decl::Kind to do that easily.
     assert(isa<TypeDecl>(D) && "Unsupported decl kind");
+  }
+}
+
+void CodeGenModule::AddDeferredUnusedCoverageMapping(Decl *D) {
+  // Do we need to generate coverage mapping?
+  if (!CodeGenOpts.CoverageMapping)
+    return;
+  switch (D->getKind()) {
+  case Decl::CXXConversion:
+  case Decl::CXXMethod:
+  case Decl::Function:
+  case Decl::ObjCMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor: {
+    if (!cast<FunctionDecl>(D)->hasBody())
+      return;
+    auto I = DeferredEmptyCoverageMappingDecls.find(D);
+    if (I == DeferredEmptyCoverageMappingDecls.end())
+      DeferredEmptyCoverageMappingDecls[D] = true;
+    break;
+  }
+  default:
+    break;
+  };
+}
+
+void CodeGenModule::ClearUnusedCoverageMapping(const Decl *D) {
+  // Do we need to generate coverage mapping?
+  if (!CodeGenOpts.CoverageMapping)
+    return;
+  if (const auto *Fn = dyn_cast<FunctionDecl>(D)) {
+    if (Fn->isTemplateInstantiation())
+      ClearUnusedCoverageMapping(Fn->getTemplateInstantiationPattern());
+  }
+  auto I = DeferredEmptyCoverageMappingDecls.find(D);
+  if (I == DeferredEmptyCoverageMappingDecls.end())
+    DeferredEmptyCoverageMappingDecls[D] = false;
+  else
+    I->second = false;
+}
+
+void CodeGenModule::EmitDeferredUnusedCoverageMappings() {
+  for (const auto I : DeferredEmptyCoverageMappingDecls) {
+    if (!I.second)
+      continue;
+    const auto *D = I.first;
+    switch (D->getKind()) {
+    case Decl::CXXConversion:
+    case Decl::CXXMethod:
+    case Decl::Function:
+    case Decl::ObjCMethod: {
+      CodeGenPGO PGO(*this);
+      GlobalDecl GD(cast<FunctionDecl>(D));
+      PGO.emitEmptyCounterMapping(D, getMangledName(GD),
+                                  getFunctionLinkage(GD));
+      break;
+    }
+    case Decl::CXXConstructor: {
+      CodeGenPGO PGO(*this);
+      GlobalDecl GD(cast<CXXConstructorDecl>(D), Ctor_Base);
+      PGO.emitEmptyCounterMapping(D, getMangledName(GD),
+                                  getFunctionLinkage(GD));
+      break;
+    }
+    case Decl::CXXDestructor: {
+      CodeGenPGO PGO(*this);
+      GlobalDecl GD(cast<CXXDestructorDecl>(D), Dtor_Base);
+      PGO.emitEmptyCounterMapping(D, getMangledName(GD),
+                                  getFunctionLinkage(GD));
+      break;
+    }
+    default:
+      break;
+    };
   }
 }
 

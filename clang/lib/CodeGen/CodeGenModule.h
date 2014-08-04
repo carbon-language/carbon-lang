@@ -73,6 +73,7 @@ class DiagnosticsEngine;
 class AnnotateAttr;
 class CXXDestructorDecl;
 class Module;
+class CoverageSourceInfo;
 
 namespace CodeGen {
 
@@ -87,6 +88,7 @@ class CGOpenMPRuntime;
 class CGCUDARuntime;
 class BlockFieldFlags;
 class FunctionArgList;
+class CoverageMappingModuleGen;
 
 struct OrderGlobalInits {
   unsigned int priority;
@@ -477,10 +479,15 @@ class CodeGenModule : public CodeGenTypeCache {
   std::unique_ptr<SanitizerMetadata> SanitizerMD;
 
   /// @}
+
+  llvm::DenseMap<const Decl *, bool> DeferredEmptyCoverageMappingDecls;
+
+  std::unique_ptr<CoverageMappingModuleGen> CoverageMapping;
 public:
   CodeGenModule(ASTContext &C, const CodeGenOptions &CodeGenOpts,
                 llvm::Module &M, const llvm::DataLayout &TD,
-                DiagnosticsEngine &Diags);
+                DiagnosticsEngine &Diags,
+                CoverageSourceInfo *CoverageInfo = nullptr);
 
   ~CodeGenModule();
 
@@ -528,6 +535,10 @@ public:
 
   InstrProfStats &getPGOStats() { return PGOStats; }
   llvm::IndexedInstrProfReader *getPGOReader() const { return PGOReader.get(); }
+
+  CoverageMappingModuleGen *getCoverageMapping() const {
+    return CoverageMapping.get();
+  }
 
   llvm::Constant *getStaticLocalDeclAddress(const VarDecl *D) {
     return StaticLocalDeclMap[D];
@@ -814,6 +825,18 @@ public:
 
   /// Emit code for a single top level declaration.
   void EmitTopLevelDecl(Decl *D);
+
+  /// \brief Stored a deferred empty coverage mapping for an unused
+  /// and thus uninstrumented top level declaration.
+  void AddDeferredUnusedCoverageMapping(Decl *D);
+
+  /// \brief Remove the deferred empty coverage mapping as this
+  /// declaration is actually instrumented.
+  void ClearUnusedCoverageMapping(const Decl *D);
+
+  /// \brief Emit all the deferred coverage mappings
+  /// for the uninstrumented functions.
+  void EmitDeferredUnusedCoverageMappings();
 
   /// Tell the consumer that this variable has been instantiated.
   void HandleCXXStaticMemberVarInstantiation(VarDecl *VD);

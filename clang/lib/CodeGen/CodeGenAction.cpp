@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CoverageMappingGen.h"
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -15,6 +16,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/CodeGen/BackendUtil.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
@@ -59,11 +61,13 @@ namespace clang {
                     const TargetOptions &targetopts,
                     const LangOptions &langopts, bool TimePasses,
                     const std::string &infile, llvm::Module *LinkModule,
-                    raw_ostream *OS, LLVMContext &C)
+                    raw_ostream *OS, LLVMContext &C,
+                    CoverageSourceInfo *CoverageInfo = nullptr)
         : Diags(_Diags), Action(action), CodeGenOpts(compopts),
           TargetOpts(targetopts), LangOpts(langopts), AsmOutStream(OS),
           Context(), LLVMIRGeneration("LLVM IR Generation Time"),
-          Gen(CreateLLVMCodeGen(Diags, infile, compopts, targetopts, C)),
+          Gen(CreateLLVMCodeGen(Diags, infile, compopts,
+                                targetopts, C, CoverageInfo)),
           LinkModule(LinkModule) {
       llvm::TimePassesIsEnabled = TimePasses;
     }
@@ -636,10 +640,17 @@ ASTConsumer *CodeGenAction::CreateASTConsumer(CompilerInstance &CI,
     LinkModuleToUse = ModuleOrErr.get();
   }
 
+  CoverageSourceInfo *CoverageInfo = nullptr;
+  // Add the preprocessor callback only when the coverage mapping is generated.
+  if (CI.getCodeGenOpts().CoverageMapping) {
+    CoverageInfo = new CoverageSourceInfo;
+    CI.getPreprocessor().addPPCallbacks(CoverageInfo);
+  }
   BEConsumer = new BackendConsumer(BA, CI.getDiagnostics(), CI.getCodeGenOpts(),
                                    CI.getTargetOpts(), CI.getLangOpts(),
                                    CI.getFrontendOpts().ShowTimers, InFile,
-                                   LinkModuleToUse, OS.release(), *VMContext);
+                                   LinkModuleToUse, OS.release(), *VMContext,
+                                   CoverageInfo);
   return BEConsumer;
 }
 

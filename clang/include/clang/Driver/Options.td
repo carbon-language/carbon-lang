@@ -408,6 +408,9 @@ def fprofile_instr_use : Flag<["-"], "fprofile-instr-use">, Group<f_Group>;
 def fprofile_instr_use_EQ : Joined<["-"], "fprofile-instr-use=">,
     Group<f_Group>, Flags<[CC1Option]>,
     HelpText<"Use instrumentation data for profile-guided optimization">;
+def fcoverage_mapping : Flag<["-"], "fcoverage-mapping">,
+    Group<f_Group>, Flags<[CC1Option]>,
+    HelpText<"Generate coverage mapping to enable code coverage analysis">;
 
 def fblocks : Flag<["-"], "fblocks">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable the 'blocks' language feature">;

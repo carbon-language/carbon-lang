@@ -46,14 +46,18 @@ namespace {
       }
     };
 
+    CoverageSourceInfo *CoverageInfo;
+
   protected:
     std::unique_ptr<llvm::Module> M;
     std::unique_ptr<CodeGen::CodeGenModule> Builder;
 
   public:
     CodeGeneratorImpl(DiagnosticsEngine &diags, const std::string& ModuleName,
-                      const CodeGenOptions &CGO, llvm::LLVMContext& C)
+                      const CodeGenOptions &CGO, llvm::LLVMContext& C,
+                      CoverageSourceInfo *CoverageInfo = nullptr)
       : Diags(diags), CodeGenOpts(CGO), HandlingTopLevelDecls(0),
+        CoverageInfo(CoverageInfo),
         M(new llvm::Module(ModuleName, C)) {}
 
     virtual ~CodeGeneratorImpl() {}
@@ -86,7 +90,7 @@ namespace {
       M->setDataLayout(Ctx->getTargetInfo().getTargetDescription());
       TD.reset(new llvm::DataLayout(Ctx->getTargetInfo().getTargetDescription()));
       Builder.reset(new CodeGen::CodeGenModule(Context, CodeGenOpts, *M, *TD,
-                                               Diags));
+                                               Diags, CoverageInfo));
 
       for (size_t i = 0, e = CodeGenOpts.DependentLibraries.size(); i < e; ++i)
         HandleDependentLibrary(CodeGenOpts.DependentLibraries[i]);
@@ -136,6 +140,10 @@ namespace {
       //     void foo() { bar(); }
       //   } A;
       DeferredInlineMethodDefinitions.push_back(D);
+
+      // Always provide some coverage mapping
+      // even for the methods that aren't emitted.
+      Builder->AddDeferredUnusedCoverageMapping(D);
     }
 
     /// HandleTagDeclDefinition - This callback is invoked each time a TagDecl
@@ -221,6 +229,7 @@ CodeGenerator *clang::CreateLLVMCodeGen(DiagnosticsEngine &Diags,
                                         const std::string& ModuleName,
                                         const CodeGenOptions &CGO,
                                         const TargetOptions &/*TO*/,
-                                        llvm::LLVMContext& C) {
-  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C);
+                                        llvm::LLVMContext& C,
+                                        CoverageSourceInfo *CoverageInfo) {
+  return new CodeGeneratorImpl(Diags, ModuleName, CGO, C, CoverageInfo);
 }
