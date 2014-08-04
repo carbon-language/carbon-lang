@@ -65,7 +65,6 @@ private:
 
   const DataLayout DL;
   AMDGPUFrameLowering FrameLowering;
-  AMDGPUIntrinsicInfo IntrinsicInfo;
   std::unique_ptr<AMDGPUTargetLowering> TLInfo;
   std::unique_ptr<AMDGPUInstrInfo> InstrInfo;
   InstrItineraryData InstrItins;
@@ -75,7 +74,6 @@ public:
   AMDGPUSubtarget &initializeSubtargetDependencies(StringRef GPU, StringRef FS);
 
   const AMDGPUFrameLowering *getFrameLowering() const { return &FrameLowering; }
-  const AMDGPUIntrinsicInfo *getIntrinsicInfo() const { return &IntrinsicInfo; }
   const AMDGPUInstrInfo *getInstrInfo() const { return InstrInfo.get(); }
   const AMDGPURegisterInfo *getRegisterInfo() const {
     return &InstrInfo->getRegisterInfo();

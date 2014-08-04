@@ -54,7 +54,7 @@ AMDGPUTargetMachine::AMDGPUTargetMachine(const Target &T, StringRef TT,
                                          CodeModel::Model CM,
                                          CodeGenOpt::Level OptLevel)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OptLevel),
-      Subtarget(TT, CPU, FS, *this) {
+      Subtarget(TT, CPU, FS, *this), IntrinsicInfo() {
   setRequiresStructuredCFG(true);
   initAsmInfo();
 }

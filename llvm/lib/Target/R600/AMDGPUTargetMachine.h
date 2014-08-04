@@ -25,8 +25,8 @@
 namespace llvm {
 
 class AMDGPUTargetMachine : public LLVMTargetMachine {
-
   AMDGPUSubtarget Subtarget;
+  AMDGPUIntrinsicInfo IntrinsicInfo;
 
 public:
   AMDGPUTargetMachine(const Target &T, StringRef TT, StringRef FS,
@@ -37,7 +37,7 @@ public:
     return getSubtargetImpl()->getFrameLowering();
   }
   const AMDGPUIntrinsicInfo *getIntrinsicInfo() const override {
-    return getSubtargetImpl()->getIntrinsicInfo();
+    return &IntrinsicInfo;
   }
   const AMDGPUInstrInfo *getInstrInfo() const override {
     return getSubtargetImpl()->getInstrInfo();

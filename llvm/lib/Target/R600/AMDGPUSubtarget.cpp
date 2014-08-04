@@ -83,7 +83,7 @@ AMDGPUSubtarget::AMDGPUSubtarget(StringRef TT, StringRef GPU, StringRef FS,
       FrameLowering(TargetFrameLowering::StackGrowsUp,
                     64 * 16, // Maximum stack alignment (long16)
                     0),
-      IntrinsicInfo(), InstrItins(getInstrItineraryForCPU(GPU)) {
+      InstrItins(getInstrItineraryForCPU(GPU)) {
 
   if (getGeneration() <= AMDGPUSubtarget::NORTHERN_ISLANDS) {
     InstrInfo.reset(new R600InstrInfo(*this));
