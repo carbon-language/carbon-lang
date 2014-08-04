@@ -86,6 +86,8 @@ protected: // Can only create subclasses.
   unsigned RequireStructuredCFG : 1;
 
 public:
+  mutable TargetOptions Options;
+
   virtual ~TargetMachine();
 
   const Target &getTarget() const { return TheTarget; }
@@ -104,7 +106,12 @@ public:
     return const_cast<TargetSubtargetInfo *>(TM->getSubtargetImpl());
   }
 
-  mutable TargetOptions Options;
+  /// getSubtarget - This method returns a pointer to the specified type of
+  /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
+  /// returned is of the correct type.
+  template<typename STC> const STC &getSubtarget() const {
+    return *static_cast<const STC*>(getSubtargetImpl());
+  }
 
   /// \brief Reset the target options based on the function's attributes.
   void resetTargetOptions(const MachineFunction *MF) const;
@@ -112,13 +119,6 @@ public:
   /// getMCAsmInfo - Return target specific asm information.
   ///
   const MCAsmInfo *getMCAsmInfo() const { return AsmInfo; }
-
-  /// getSubtarget - This method returns a pointer to the specified type of
-  /// TargetSubtargetInfo.  In debug builds, it verifies that the object being
-  /// returned is of the correct type.
-  template<typename STC> const STC &getSubtarget() const {
-    return *static_cast<const STC*>(getSubtargetImpl());
-  }
 
   /// getIntrinsicInfo - If intrinsic information is available, return it.  If
   /// not, return null.
