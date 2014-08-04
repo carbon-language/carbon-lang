@@ -6,7 +6,7 @@ what goes in or not.
 The list is sorted by surname and formatted to allow easy grepping and
 beautification by scripts.  The fields are: name (N), email (E), web-address
 (W), PGP key ID and fingerprint (P), description (D), and snail-mail address
-(S).
+(S). Each entry should contain at least the (N), (E) and (D) fields.
 
 N: Joe Abbey
 E: jabbey@arxan.com
@@ -38,9 +38,11 @@ E: echristo@gmail.com
 D: Debug Information, autotools/configure/make build, inline assembly
 
 N: Greg Clayton
+E: gclayton@apple.com
 D: LLDB
 
 N: Peter Collingbourne
+E: peter@pcc.me.uk
 D: libclc
 
 N: Anshuman Dasgupta
@@ -56,6 +58,7 @@ E: venkatra@cs.wisc.edu
 D: Sparc Backend (lib/Target/Sparc/*)
 
 N: Tobias Grosser
+E: tobias@grosser.es
 D: Polly
 
 N: James Grosbach
@@ -100,6 +103,7 @@ E: t.p.northover@gmail.com
 D: AArch64 backend
 
 N: Jakob Olesen
+E: stoklund@2pi.dk
 D: Register allocators and TableGen
 
 N: Richard Osborne
