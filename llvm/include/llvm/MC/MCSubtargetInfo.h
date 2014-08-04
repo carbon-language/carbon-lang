@@ -65,6 +65,10 @@ public:
     return FeatureBits;
   }
 
+  /// setFeatureBits - Set the feature bits.
+  ///
+  void setFeatureBits(uint64_t _FeatureBits) { FeatureBits = _FeatureBits; }
+
   /// InitMCProcessorInfo - Set or change the CPU (optionally supplemented with
   /// feature string). Recompute feature bits and scheduling model.
   void InitMCProcessorInfo(StringRef CPU, StringRef FS);

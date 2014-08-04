@@ -52,9 +52,17 @@ void MipsTargetStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
 void MipsTargetStreamer::emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) {}
 void MipsTargetStreamer::emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) {
 }
+void MipsTargetStreamer::emitDirectiveSetMips1() {}
+void MipsTargetStreamer::emitDirectiveSetMips2() {}
+void MipsTargetStreamer::emitDirectiveSetMips3() {}
+void MipsTargetStreamer::emitDirectiveSetMips4() {}
+void MipsTargetStreamer::emitDirectiveSetMips5() {}
+void MipsTargetStreamer::emitDirectiveSetMips32() {}
 void MipsTargetStreamer::emitDirectiveSetMips32R2() {}
+void MipsTargetStreamer::emitDirectiveSetMips32R6() {}
 void MipsTargetStreamer::emitDirectiveSetMips64() {}
 void MipsTargetStreamer::emitDirectiveSetMips64R2() {}
+void MipsTargetStreamer::emitDirectiveSetMips64R6() {}
 void MipsTargetStreamer::emitDirectiveSetDsp() {}
 void MipsTargetStreamer::emitDirectiveCpload(unsigned RegNo) {}
 void MipsTargetStreamer::emitDirectiveCpsetup(unsigned RegNo, int RegOrOffset,
@@ -152,8 +160,43 @@ void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
      << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower() << '\n';
 }
 
+void MipsTargetAsmStreamer::emitDirectiveSetMips1() {
+  OS << "\t.set\tmips1\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips2() {
+  OS << "\t.set\tmips2\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips3() {
+  OS << "\t.set\tmips3\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips4() {
+  OS << "\t.set\tmips4\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips5() {
+  OS << "\t.set\tmips5\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips32() {
+  OS << "\t.set\tmips32\n";
+  setCanHaveModuleDir(false);
+}
+
 void MipsTargetAsmStreamer::emitDirectiveSetMips32R2() {
   OS << "\t.set\tmips32r2\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips32R6() {
+  OS << "\t.set\tmips32r6\n";
   setCanHaveModuleDir(false);
 }
 
@@ -164,6 +207,11 @@ void MipsTargetAsmStreamer::emitDirectiveSetMips64() {
 
 void MipsTargetAsmStreamer::emitDirectiveSetMips64R2() {
   OS << "\t.set\tmips64r2\n";
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMips64R6() {
+  OS << "\t.set\tmips64r6\n";
   setCanHaveModuleDir(false);
 }
 
@@ -496,7 +544,35 @@ void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
   // FIXME: implement.
 }
 
+void MipsTargetELFStreamer::emitDirectiveSetMips1() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips2() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips3() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips4() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips5() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips32() {
+  setCanHaveModuleDir(false);
+}
+
 void MipsTargetELFStreamer::emitDirectiveSetMips32R2() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips32R6() {
   setCanHaveModuleDir(false);
 }
 
@@ -505,6 +581,10 @@ void MipsTargetELFStreamer::emitDirectiveSetMips64() {
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetMips64R2() {
+  setCanHaveModuleDir(false);
+}
+
+void MipsTargetELFStreamer::emitDirectiveSetMips64R6() {
   setCanHaveModuleDir(false);
 }
 

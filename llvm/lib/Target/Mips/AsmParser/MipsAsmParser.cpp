@@ -51,6 +51,20 @@ public:
   void setMacro() { macro = true; }
   void setNomacro() { macro = false; }
 
+  // Set of features that are either architecture features or referenced
+  // by them (e.g.: FeatureNaN2008 implied by FeatureMips32r6).
+  // The full table can be found in MipsGenSubtargetInfo.inc (MipsFeatureKV[]).
+  // The reason we need this mask is explained in the selectArch function.
+  // FIXME: Ideally we would like TableGen to generate this information.
+  static const uint64_t AllArchRelatedMask =
+      Mips::FeatureMips1 | Mips::FeatureMips2 | Mips::FeatureMips3 |
+      Mips::FeatureMips3_32 | Mips::FeatureMips3_32r2 | Mips::FeatureMips4 |
+      Mips::FeatureMips4_32 | Mips::FeatureMips4_32r2 | Mips::FeatureMips5 |
+      Mips::FeatureMips5_32r2 | Mips::FeatureMips32 | Mips::FeatureMips32r2 |
+      Mips::FeatureMips32r6 | Mips::FeatureMips64 | Mips::FeatureMips64r2 |
+      Mips::FeatureMips64r6 | Mips::FeatureCnMips | Mips::FeatureFP64Bit |
+      Mips::FeatureGP64Bit | Mips::FeatureNaN2008;
+
 private:
   unsigned aTReg;
   bool reorder;
@@ -199,6 +213,36 @@ class MipsAsmParser : public MCTargetAsmParser {
   // boundaries of accepted values for each RegisterKind
   // Example: INSERT.B $w0[n], $1 => 16 > n >= 0
   bool validateMSAIndex(int Val, int RegKind);
+
+  // Selects a new architecture by updating the FeatureBits with the necessary
+  // info including implied dependencies.
+  // Internally, it clears all the feature bits related to *any* architecture
+  // and selects the new one using the ToggleFeature functionality of the
+  // MCSubtargetInfo object that handles implied dependencies. The reason we
+  // clear all the arch related bits manually is because ToggleFeature only
+  // clears the features that imply the feature being cleared and not the
+  // features implied by the feature being cleared. This is easier to see
+  // with an example:
+  //  --------------------------------------------------
+  // | Feature         | Implies                        |
+  // | -------------------------------------------------|
+  // | FeatureMips1    | None                           |
+  // | FeatureMips2    | FeatureMips1                   |
+  // | FeatureMips3    | FeatureMips2 | FeatureMipsGP64 |
+  // | FeatureMips4    | FeatureMips3                   |
+  // | ...             |                                |
+  //  --------------------------------------------------
+  //
+  // Setting Mips3 is equivalent to set: (FeatureMips3 | FeatureMips2 |
+  // FeatureMipsGP64 | FeatureMips1)
+  // Clearing Mips3 is equivalent to clear (FeatureMips3 | FeatureMips4).
+  void selectArch(StringRef ArchFeature) {
+    uint64_t FeatureBits = STI.getFeatureBits();
+    FeatureBits &= ~MipsAssemblerOptions::AllArchRelatedMask;
+    STI.setFeatureBits(FeatureBits);
+    setAvailableFeatures(
+        ComputeAvailableFeatures(STI.ToggleFeature(ArchFeature)));
+  }
 
   void setFeatureBits(unsigned Feature, StringRef FeatureString) {
     if (!(STI.getFeatureBits() & Feature)) {
@@ -2523,17 +2567,49 @@ bool MipsAsmParser::parseSetFeature(uint64_t Feature) {
   case Mips::FeatureMips16:
     getTargetStreamer().emitDirectiveSetMips16();
     break;
+  case Mips::FeatureMips1:
+    selectArch("mips1");
+    getTargetStreamer().emitDirectiveSetMips1();
+    break;
+  case Mips::FeatureMips2:
+    selectArch("mips2");
+    getTargetStreamer().emitDirectiveSetMips2();
+    break;
+  case Mips::FeatureMips3:
+    selectArch("mips3");
+    getTargetStreamer().emitDirectiveSetMips3();
+    break;
+  case Mips::FeatureMips4:
+    selectArch("mips4");
+    getTargetStreamer().emitDirectiveSetMips4();
+    break;
+  case Mips::FeatureMips5:
+    selectArch("mips5");
+    getTargetStreamer().emitDirectiveSetMips5();
+    break;
+  case Mips::FeatureMips32:
+    selectArch("mips32");
+    getTargetStreamer().emitDirectiveSetMips32();
+    break;
   case Mips::FeatureMips32r2:
-    setFeatureBits(Mips::FeatureMips32r2, "mips32r2");
+    selectArch("mips32r2");
     getTargetStreamer().emitDirectiveSetMips32R2();
     break;
+  case Mips::FeatureMips32r6:
+    selectArch("mips32r6");
+    getTargetStreamer().emitDirectiveSetMips32R6();
+    break;
   case Mips::FeatureMips64:
-    setFeatureBits(Mips::FeatureMips64, "mips64");
+    selectArch("mips64");
     getTargetStreamer().emitDirectiveSetMips64();
     break;
   case Mips::FeatureMips64r2:
-    setFeatureBits(Mips::FeatureMips64r2, "mips64r2");
+    selectArch("mips64r2");
     getTargetStreamer().emitDirectiveSetMips64R2();
+    break;
+  case Mips::FeatureMips64r6:
+    selectArch("mips64r6");
+    getTargetStreamer().emitDirectiveSetMips64R6();
     break;
   }
   return false;
@@ -2682,12 +2758,28 @@ bool MipsAsmParser::parseDirectiveSet() {
     return false;
   } else if (Tok.getString() == "micromips") {
     return parseSetFeature(Mips::FeatureMicroMips);
+  } else if (Tok.getString() == "mips1") {
+    return parseSetFeature(Mips::FeatureMips1);
+  } else if (Tok.getString() == "mips2") {
+    return parseSetFeature(Mips::FeatureMips2);
+  } else if (Tok.getString() == "mips3") {
+    return parseSetFeature(Mips::FeatureMips3);
+  } else if (Tok.getString() == "mips4") {
+    return parseSetFeature(Mips::FeatureMips4);
+  } else if (Tok.getString() == "mips5") {
+    return parseSetFeature(Mips::FeatureMips5);
+  } else if (Tok.getString() == "mips32") {
+    return parseSetFeature(Mips::FeatureMips32);
   } else if (Tok.getString() == "mips32r2") {
     return parseSetFeature(Mips::FeatureMips32r2);
+  } else if (Tok.getString() == "mips32r6") {
+    return parseSetFeature(Mips::FeatureMips32r6);
   } else if (Tok.getString() == "mips64") {
     return parseSetFeature(Mips::FeatureMips64);
   } else if (Tok.getString() == "mips64r2") {
     return parseSetFeature(Mips::FeatureMips64r2);
+  } else if (Tok.getString() == "mips64r6") {
+    return parseSetFeature(Mips::FeatureMips64r6);
   } else if (Tok.getString() == "dsp") {
     return parseSetFeature(Mips::FeatureDSP);
   } else {
