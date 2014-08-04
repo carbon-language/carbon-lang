@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: locale.en_US.UTF-8
+// REQUIRES: locale.ru_RU.UTF-8
+
 // <locale>
 
 // locale(const locale& other, const locale& one, category cats);

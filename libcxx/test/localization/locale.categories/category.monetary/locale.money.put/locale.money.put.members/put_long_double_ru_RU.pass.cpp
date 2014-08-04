@@ -9,6 +9,8 @@
 //
 // XFAIL: apple-darwin
 
+// REQUIRES: locale.ru_RU.UTF-8
+
 // <locale>
 
 // class money_put<charT, OutputIterator>

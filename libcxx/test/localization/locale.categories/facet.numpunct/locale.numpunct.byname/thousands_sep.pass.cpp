@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: locale.en_US.UTF-8
+// REQUIRES: locale.fr_FR.UTF-8
+
 // <locale>
 
 // template <class charT> class numpunct_byname;

@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: locale.en_US.UTF-8
+// REQUIRES: locale.fr_CA.UTF-8
+
 // <locale>
 
 // template <class charT> class ctype_byname;

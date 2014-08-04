@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+// REQUIRES: locale.cs_CZ.ISO8859-2
+
 // <regex>
 
 // template <class BidirectionalIterator, class Allocator, class charT, class traits>
