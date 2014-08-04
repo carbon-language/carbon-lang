@@ -3302,7 +3302,7 @@ bool AsmParser::parseDirectiveMacro(SMLoc DirectiveLoc) {
 
       if (Qualifier == "req")
         Parameter.Required = true;
-      else if (Qualifier == "vararg" && !IsDarwin)
+      else if (Qualifier == "vararg")
         Parameter.Vararg = true;
       else
         return Error(QualLoc, Qualifier + " is not a valid parameter qualifier "
