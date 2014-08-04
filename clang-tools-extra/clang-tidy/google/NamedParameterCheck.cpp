@@ -37,6 +37,14 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
   if (Function->isImplicit())
     return;
 
+  // Ignore declarations without a definition if we're not dealing with an
+  // overriden method.
+  const FunctionDecl *Definition = nullptr;
+  if (!Function->isDefined(Definition) &&
+      (!isa<CXXMethodDecl>(Function) ||
+       cast<CXXMethodDecl>(Function)->size_overridden_methods() == 0))
+    return;
+
   // TODO: Handle overloads.
   // TODO: We could check that all redeclarations use the same name for
   //       arguments in the same position.
@@ -69,26 +77,35 @@ void NamedParameterCheck::check(const MatchFinder::MatchResult &Result) {
     auto D = diag(FirstParm->getLocation(),
                   "all parameters should be named in a function");
 
+    // Fallback to an unused marker.
+    StringRef NewName = "unused";
+
     for (auto P : UnnamedParams) {
       // If the method is overridden, try to copy the name from the base method
       // into the overrider.
-      const ParmVarDecl *Parm = P.first->getParamDecl(P.second);
       const auto *M = dyn_cast<CXXMethodDecl>(P.first);
       if (M && M->size_overridden_methods() > 0) {
         const ParmVarDecl *OtherParm =
             (*M->begin_overridden_methods())->getParamDecl(P.second);
-        std::string Name = OtherParm->getNameAsString();
-        if (!Name.empty()) {
-          D << FixItHint::CreateInsertion(Parm->getLocation(),
-                                          " /*" + Name + "*/");
-          continue;
-        }
+        StringRef Name = OtherParm->getName();
+        if (!Name.empty())
+          NewName = Name;
       }
 
-      // Otherwise just insert an unused marker. Note that getLocation() points
-      // to the place where the name would be, this allows us to also get
-      // complex cases like function pointers right.
-      D << FixItHint::CreateInsertion(Parm->getLocation(), " /*unused*/");
+      // If the definition has a named parameter use that name.
+      if (Definition) {
+        const ParmVarDecl *DefParm = Definition->getParamDecl(P.second);
+        StringRef Name = DefParm->getName();
+        if (!Name.empty())
+          NewName = Name;
+      }
+
+      // Now insert the comment. Note that getLocation() points to the place
+      // where the name would be, this allows us to also get complex cases like
+      // function pointers right.
+      const ParmVarDecl *Parm = P.first->getParamDecl(P.second);
+      D << FixItHint::CreateInsertion(Parm->getLocation(),
+                                      " /*" + NewName.str() + "*/");
     }
   }
 }
