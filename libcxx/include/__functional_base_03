@@ -1027,7 +1027,7 @@ public:
        typename __invoke_return0<type&, _A0>::type
           operator() (_A0& __a0) const
           {
-              return __invoke(get(), __a0);
+              return __invoke<type&, _A0>(get(), __a0);
           }
 
     template <class _A0, class _A1>
@@ -1035,7 +1035,7 @@ public:
        typename __invoke_return1<type&, _A0, _A1>::type
           operator() (_A0& __a0, _A1& __a1) const
           {
-              return __invoke(get(), __a0, __a1);
+              return __invoke<type&, _A0, _A1>(get(), __a0, __a1);
           }
 
     template <class _A0, class _A1, class _A2>
@@ -1043,7 +1043,7 @@ public:
        typename __invoke_return2<type&, _A0, _A1, _A2>::type
           operator() (_A0& __a0, _A1& __a1, _A2& __a2) const
           {
-              return __invoke(get(), __a0, __a1, __a2);
+              return __invoke<type&, _A0, _A1, _A2>(get(), __a0, __a1, __a2);
           }
 };
 
