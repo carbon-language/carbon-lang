@@ -167,6 +167,9 @@ def err_expected_fn_body : Error<
 def warn_attribute_on_function_definition : Warning<
   "GCC does not allow %0 attribute in this position on a function definition">, 
   InGroup<GccCompat>;
+def warn_gcc_attribute_location : Warning<
+  "GCC does not allow an attribute in this position on a function declaration">, 
+  InGroup<GccCompat>;
 def warn_attribute_no_decl : Warning<
   "attribute %0 ignored, because it is not attached to a declaration">, 
   InGroup<IgnoredAttributes>;

@@ -11,3 +11,19 @@ void f() {
 }
 
 void g(int a[static [[]] 5]); // expected-error {{static array size is a C99 feature, not permitted in C++}}
+
+namespace {
+class B {
+public:
+  virtual void test() {}
+  virtual void test2() {}
+  virtual void test3() {}
+};
+
+class D : public B {
+public:
+  void test() __attribute__((deprecated)) final {} // expected-warning {{GCC does not allow an attribute in this position on a function declaration}}
+  void test2() [[]] override {} // Ok
+  void test3() __attribute__((cf_unknown_transfer)) override {} // Ok, not known to GCC.
+};
+}
