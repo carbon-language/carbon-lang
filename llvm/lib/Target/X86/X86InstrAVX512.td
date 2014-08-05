@@ -4461,20 +4461,20 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
                             (memopv8i64 addr:$src2), (i8 imm:$imm))),
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
-multiclass avx512_alignr<string Suffix, RegisterClass RC,
-                          X86MemOperand x86memop, ValueType IntVT,
-                          ValueType FloatVT> {
+multiclass avx512_valign<string Suffix, RegisterClass RC,
+                         X86MemOperand x86memop, ValueType IntVT,
+                         ValueType FloatVT> {
   def rri : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src1, RC:$src2, i8imm:$src3),
                      !strconcat("valign"##Suffix,
                      " \t{$src3, $src2, $src1, $dst|"
                          "$dst, $src1, $src2, $src3}"),
                      [(set RC:$dst,
-                           (IntVT (X86PAlignr RC:$src2, RC:$src1,
+                           (IntVT (X86VAlign RC:$src2, RC:$src1,
                                               (i8 imm:$src3))))]>, EVEX_4V;
 
   // Also match valign of packed floats.
-  def : Pat<(FloatVT (X86PAlignr RC:$src1, RC:$src2, (i8 imm:$imm))),
+  def : Pat<(FloatVT (X86VAlign RC:$src1, RC:$src2, (i8 imm:$imm))),
             (!cast<Instruction>(NAME##rri) RC:$src2, RC:$src1, imm:$imm)>;
 
   let mayLoad = 1 in
@@ -4485,9 +4485,9 @@ multiclass avx512_alignr<string Suffix, RegisterClass RC,
                          "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
 }
-defm VALIGND : avx512_alignr<"d", VR512, i512mem, v16i32, v16f32>,
+defm VALIGND : avx512_valign<"d", VR512, i512mem, v16i32, v16f32>,
                  EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_alignr<"q", VR512, i512mem, v8i64, v8f64>,
+defm VALIGNQ : avx512_valign<"q", VR512, i512mem, v8i64, v8f64>,
                  VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 // Helper fragments to match sext vXi1 to vXiY.

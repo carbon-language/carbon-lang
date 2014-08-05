@@ -3464,6 +3464,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
   switch(Opc) {
   default: llvm_unreachable("Unknown x86 shuffle node");
   case X86ISD::PALIGNR:
+  case X86ISD::VALIGN:
   case X86ISD::SHUFP:
   case X86ISD::VPERM2X128:
     return DAG.getNode(Opc, dl, VT, V1, V2,
@@ -3802,16 +3803,9 @@ static bool isPSHUFLWMask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   return true;
 }
 
-/// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
-/// is suitable for input to PALIGNR.
-static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
-                          const X86Subtarget *Subtarget) {
-  if ((VT.is128BitVector() && !Subtarget->hasSSSE3()) ||
-      (VT.is256BitVector() && !Subtarget->hasInt256()))
-    return false;
-
+static bool isAlignrMask(ArrayRef<int> Mask, MVT VT, bool InterLane) {
   unsigned NumElts = VT.getVectorNumElements();
-  unsigned NumLanes = VT.is512BitVector() ? 1: VT.getSizeInBits()/128;
+  unsigned NumLanes = InterLane ? 1: VT.getSizeInBits()/128;
   unsigned NumLaneElts = NumElts/NumLanes;
 
   // Do not handle 64-bit element shuffles with palignr.
@@ -3873,6 +3867,28 @@ static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
   }
 
   return true;
+}
+
+/// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
+/// is suitable for input to PALIGNR.
+static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
+                          const X86Subtarget *Subtarget) {
+  if ((VT.is128BitVector() && !Subtarget->hasSSSE3()) ||
+      (VT.is256BitVector() && !Subtarget->hasInt256()))
+    // FIXME: Add AVX512BW.
+    return false;
+
+  return isAlignrMask(Mask, VT, false);
+}
+
+/// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
+/// is suitable for input to PALIGNR.
+static bool isVALIGNMask(ArrayRef<int> Mask, MVT VT,
+                          const X86Subtarget *Subtarget) {
+  // FIXME: Add AVX512VL.
+  if (!VT.is512BitVector() || !Subtarget->hasAVX512())
+    return false;
+  return isAlignrMask(Mask, VT, true);
 }
 
 /// CommuteVectorShuffleMask - Change values in a shuffle permute mask assuming
@@ -4701,9 +4717,10 @@ static unsigned getShufflePSHUFLWImmediate(ShuffleVectorSDNode *N) {
 
 /// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
 /// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
-static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
+static unsigned getShuffleAlignrImmediate(ShuffleVectorSDNode *SVOp,
+                                           bool InterLane) {
   MVT VT = SVOp->getSimpleValueType(0);
-  unsigned EltSize = VT.is512BitVector() ? 1 :
+  unsigned EltSize = InterLane ? 1 :
     VT.getVectorElementType().getSizeInBits() >> 3;
 
   unsigned NumElts = VT.getVectorNumElements();
@@ -4723,6 +4740,17 @@ static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
   assert(Val - i > 0 && "PALIGNR imm should be positive");
   return (Val - i) * EltSize;
 }
+
+/// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
+/// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
+static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
+  return getShuffleAlignrImmediate(SVOp, false);
+}
+
+static unsigned getShuffleVALIGNImmediate(ShuffleVectorSDNode *SVOp) {
+  return getShuffleAlignrImmediate(SVOp, true);
+}
+
 
 static unsigned getExtractVEXTRACTImmediate(SDNode *N, unsigned vecWidth) {
   assert((vecWidth == 128 || vecWidth == 256) && "Unsupported vector width");
@@ -9607,6 +9635,11 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isPALIGNRMask(M, VT, Subtarget))
     return getTargetShuffleNode(X86ISD::PALIGNR, dl, VT, V1, V2,
                                 getShufflePALIGNRImmediate(SVOp),
+                                DAG);
+
+  if (isVALIGNMask(M, VT, Subtarget))
+    return getTargetShuffleNode(X86ISD::VALIGN, dl, VT, V1, V2,
+                                getShuffleVALIGNImmediate(SVOp),
                                 DAG);
 
   // Check if this can be converted into a logical shift.
