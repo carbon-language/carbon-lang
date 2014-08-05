@@ -1139,6 +1139,7 @@ void Emitter<CodeEmitter>::emitInstruction(MachineInstr &MI,
     case X86::SEH_SetFrame:
     case X86::SEH_PushFrame:
     case X86::SEH_EndPrologue:
+    case X86::SEH_Epilogue:
       break;
 
     case X86::MOVPC32r: {
