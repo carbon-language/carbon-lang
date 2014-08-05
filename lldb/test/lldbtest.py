@@ -273,7 +273,12 @@ def system(commands, **kwargs):
     output, error = process.communicate()
     retcode = process.poll()
 
-    with recording(test, traceAlways) as sbuf:
+    # Enable trace on failure return while tracking down FreeBSD buildbot issues
+    trace = traceAlways
+    if not trace and retcode and sys.platform.startswith("freebsd"):
+        trace = True
+
+    with recording(test, trace) as sbuf:
         print >> sbuf
         print >> sbuf, "os command:", shellCommand
         print >> sbuf, "with pid:", pid
