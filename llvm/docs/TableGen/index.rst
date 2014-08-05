@@ -292,7 +292,7 @@ Despite being very generic, TableGen has some deficiencies that have been
 pointed out numerous times. The common theme is that, while TableGen allows
 you to build Domain-Specific-Languages, the final languages that you create
 lack the power of other DSLs, which in turn increase considerably the size
-and complecity of TableGen files.
+and complexity of TableGen files.
 
 At the same time, TableGen allows you to create virtually any meaning of
 the basic concepts via custom-made back-ends, which can pervert the original
