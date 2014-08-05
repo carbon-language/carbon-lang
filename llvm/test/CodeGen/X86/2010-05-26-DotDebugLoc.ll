@@ -26,7 +26,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786484, i32 0, metadata !1, metadata !"ret", metadata !"ret", metadata !"", metadata !1, i32 7, metadata !3, i1 false, i1 true, null, null} ; [ DW_TAG_variable ]
 !1 = metadata !{i32 786473, metadata !36} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !36, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !37, metadata !37, metadata !32, metadata !31,  metadata !37, metadata !""} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !36, i32 1, metadata !"4.2.1 (Based on Apple Inc. build 5658) (LLVM build)", i1 true, metadata !"", i32 0, metadata !37, metadata !37, metadata !32, metadata !31,  metadata !37, metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786468, metadata !36, metadata !1, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !4 = metadata !{i32 786689, metadata !5, metadata !"x", metadata !1, i32 12, metadata !3, i32 0, null} ; [ DW_TAG_arg_variable ]
 !5 = metadata !{i32 786478, metadata !36, metadata !1, metadata !"foo", metadata !"foo", metadata !"foo", i32 13, metadata !6, i1 false, i1 true, i32 0, i32 0, null, i1 false, i1 true, void (i32)* @foo, null, null, metadata !33, i32 13} ; [ DW_TAG_subprogram ]
@@ -73,15 +73,19 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 
 ; CHECK: Ldebug_loc0:
-; CHECK-NEXT: .quad   Lfunc_begin0
-; CHECK-NEXT: .quad   [[LABEL]]
+; CHECK-NEXT: [[SET1:.*]] = Lfunc_begin0-Lfunc_begin0
+; CHECK-NEXT: .quad   [[SET1]]
+; CHECK-NEXT: [[SET2:.*]] = [[LABEL]]-Lfunc_begin0
+; CHECK-NEXT: .quad   [[SET2]]
 ; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
 ; CHECK-NEXT: .short  Lset{{.*}}
 ; CHECK-NEXT: Ltmp{{.*}}:
 ; CHECK-NEXT: .byte   85
 ; CHECK-NEXT: Ltmp{{.*}}:
-; CHECK-NEXT: .quad   [[LABEL]]
-; CHECK-NEXT: .quad   [[CLOBBER]]
+; CHECK-NEXT: [[SET3:.*]] = [[LABEL]]-Lfunc_begin0
+; CHECK-NEXT: .quad   [[SET3]]
+; CHECK-NEXT: [[SET4:.*]] = [[CLOBBER]]-Lfunc_begin0
+; CHECK-NEXT: .quad   [[SET4]]
 ; CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}               ## Loc expr size
 ; CHECK-NEXT: .short  Lset{{.*}}
 ; CHECK-NEXT: Ltmp{{.*}}:

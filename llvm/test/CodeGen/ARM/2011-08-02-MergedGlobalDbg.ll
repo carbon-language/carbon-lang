@@ -1,25 +1,23 @@
-; RUN: llc < %s | FileCheck %s
+; RUN: llc -filetype=obj < %s | llvm-dwarfdump -debug-dump=info - | FileCheck %s
 
 ; Check debug info output for merged global.
 ; DW_AT_location
-; DW_OP_addr
-; DW_OP_plus
-; .long __MergedGlobals
-; DW_OP_constu
-; offset
+; 0x03 DW_OP_addr
+; 0x.. .long __MergedGlobals
+; 0x10 DW_OP_constu
+; 0x.. offset
+; 0x22 DW_OP_plus
 
-;CHECK: .long Lset9
-;CHECK-NEXT:        @ DW_AT_type
-;CHECK-NEXT:        @ DW_AT_decl_file
-;CHECK-NEXT:        @ DW_AT_decl_line
-;CHECK-NEXT:        @ DW_AT_location
-;CHECK-NEXT:        .byte   3
-;CHECK-NEXT:        .long   __MergedGlobals
-;CHECK-NEXT:        .byte   16
-; 4 is byte offset of x2 in __MergedGobals
-;CHECK-NEXT:        .byte   4
-;CHECK-NEXT:        .byte   34
-
+; CHECK: DW_TAG_variable
+; CHECK-NOT: DW_TAG
+; CHECK:    DW_AT_name {{.*}} "x1"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:    DW_AT_location [DW_FORM_exprloc]        (<0x8> 03 [[ADDR:.. .. .. ..]] 10 00 22  )
+; CHECK: DW_TAG_variable
+; CHECK-NOT: DW_TAG
+; CHECK:    DW_AT_name {{.*}} "x2"
+; CHECK-NOT: {{DW_TAG|NULL}}
+; CHECK:    DW_AT_location [DW_FORM_exprloc]        (<0x8> 03 [[ADDR]] 10 04 22  )
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32"
 target triple = "thumbv7-apple-macosx10.7.0"
@@ -75,7 +73,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!49}
 
-!0 = metadata !{i32 786449, metadata !47, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, metadata !48, metadata !48, metadata !40, metadata !41,  metadata !48, null} ; [ DW_TAG_compile_unit ]
+!0 = metadata !{i32 786449, metadata !47, i32 12, metadata !"clang", i1 true, metadata !"", i32 0, metadata !48, metadata !48, metadata !40, metadata !41,  metadata !48, null, i32 1} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{i32 786478, metadata !47, metadata !2, metadata !"get1", metadata !"get1", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (i32)* @get1, null, null, metadata !42, i32 5} ; [ DW_TAG_subprogram ] [line 5] [def] [get1]
 !2 = metadata !{i32 786473, metadata !47} ; [ DW_TAG_file_type ]
 !3 = metadata !{i32 786453, metadata !47, metadata !2, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
@@ -97,11 +95,8 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !19 = metadata !{i32 786689, metadata !8, metadata !"a", metadata !2, i32 16777230, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !20 = metadata !{i32 786688, metadata !21, metadata !"b", metadata !2, i32 14, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
 !21 = metadata !{i32 786443, metadata !47, metadata !8, i32 14, i32 19, i32 3} ; [ DW_TAG_lexical_block ]
-!22 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x5", metadata !"x5", metadata !"", metadata !2, i32 16, metadata !5, i32 0, i32 1, i32* @x5, null} ; [ DW_TAG_variable ]
-!23 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x4", metadata !"x4", metadata !"", metadata !2, i32 13, metadata !5, i32 1, i32 1, i32* @x4, null} ; [ DW_TAG_variable ]
-!24 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x3", metadata !"x3", metadata !"", metadata !2, i32 10, metadata !5, i32 1, i32 1, i32* @x3, null} ; [ DW_TAG_variable ]
-!25 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x2", metadata !"x2", metadata !"", metadata !2, i32 7, metadata !5, i32 1, i32 1, i32* @x2, null} ; [ DW_TAG_variable ]
-!26 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x1", metadata !"x1", metadata !"", metadata !2, i32 4, metadata !5, i32 1, i32 1, i32* @x1, null} ; [ DW_TAG_variable ]
+!25 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x1", metadata !"x1", metadata !"", metadata !2, i32 4, metadata !5, i32 1, i32 1, i32* @x1, null} ; [ DW_TAG_variable ]
+!26 = metadata !{i32 786484, i32 0, metadata !0, metadata !"x2", metadata !"x2", metadata !"", metadata !2, i32 7, metadata !5, i32 1, i32 1, i32* @x2, null} ; [ DW_TAG_variable ]
 !27 = metadata !{i32 786689, metadata !9, metadata !"a", metadata !2, i32 16777233, metadata !5, i32 0, null} ; [ DW_TAG_arg_variable ]
 !28 = metadata !{i32 786688, metadata !29, metadata !"b", metadata !2, i32 17, metadata !5, i32 0, null} ; [ DW_TAG_auto_variable ]
 !29 = metadata !{i32 786443, metadata !47, metadata !9, i32 17, i32 19, i32 4} ; [ DW_TAG_lexical_block ]
@@ -116,7 +111,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !38 = metadata !{i32 17, i32 16, metadata !9, null}
 !39 = metadata !{i32 17, i32 32, metadata !29, null}
 !40 = metadata !{metadata !1, metadata !6, metadata !7, metadata !8, metadata !9}
-!41 = metadata !{metadata !22, metadata !23, metadata !24, metadata !25, metadata !26}
+!41 = metadata !{metadata !25, metadata !26}
 !42 = metadata !{metadata !10, metadata !11}
 !43 = metadata !{metadata !13, metadata !14}
 !44 = metadata !{metadata !16, metadata !17}

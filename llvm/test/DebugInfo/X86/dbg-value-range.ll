@@ -22,7 +22,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, metadata !22, metadata !1, metadata !"bar", metadata !"bar", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (%struct.a*)* @bar, null, null, metadata !21, i32 0} ; [ DW_TAG_subprogram ] [line 5] [def] [scope 0] [bar]
 !1 = metadata !{i32 786473, metadata !22} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !22, i32 12, metadata !"clang version 2.9 (trunk 122997)", i1 true, metadata !"", i32 0, metadata !23, metadata !23, metadata !20, null,  null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !22, i32 12, metadata !"clang version 2.9 (trunk 122997)", i1 true, metadata !"", i32 0, metadata !23, metadata !23, metadata !20, null,  null, null, i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !22, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
@@ -51,8 +51,10 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 ;CHECK-NEXT: [[CLOBBER:Ltmp[0-9]*]]
 
 ;CHECK:Ldebug_loc0:
+;CHECK-NEXT: Lset{{.*}} =
 ;CHECK-NEXT:	.quad
-;CHECK-NEXT:	.quad	[[CLOBBER]]
+;CHECK-NEXT: [[CLOBBER_OFF:Lset.*]] = [[CLOBBER]]-{{.*}}
+;CHECK-NEXT:	.quad	[[CLOBBER_OFF]]
 ;CHECK-NEXT: Lset{{.*}} = Ltmp{{.*}}-Ltmp{{.*}}
 ;CHECK-NEXT:    .short  Lset
 ;CHECK-NEXT: Ltmp
