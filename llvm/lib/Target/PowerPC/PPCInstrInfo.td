@@ -3304,6 +3304,15 @@ foreach BATR = 0-3 in {
                     Requires<[IsPPC6xx]>;
 }
 
+foreach BR = 0-7 in {
+    def : InstAlias<"mfbr"#BR#" $Rx",
+                    (MFDCR gprc:$Rx, !add(BR, 0x80))>,
+                    Requires<[IsPPC4xx]>;
+    def : InstAlias<"mtbr"#BR#" $Rx",
+                    (MTDCR gprc:$Rx, !add(BR, 0x80))>,
+                    Requires<[IsPPC4xx]>;
+}
+
 def : InstAlias<"mtdccr $Rx", (MTSPR 1018, gprc:$Rx)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mfdccr $Rx", (MFSPR gprc:$Rx, 1018)>, Requires<[IsPPC4xx]>;
 

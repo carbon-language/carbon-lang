@@ -110,3 +110,52 @@
 # CHECK-BE: mtspr 991, 2                    # encoding: [0x7c,0x5f,0xf3,0xa6]
 # CHECK-LE: mtspr 991, 2                    # encoding: [0xa6,0xf3,0x5f,0x7c]
             mtsrr3 2
+
+# CHECK-BE: mfdcr 5, 128                    # encoding: [0x7c,0xa0,0x22,0x86]
+# CHECK-LE: mfdcr 5, 128                    # encoding: [0x86,0x22,0xa0,0x7c]
+            mfbr0 %r5
+# CHECK-BE: mtdcr 128, 5                    # encoding: [0x7c,0xa0,0x23,0x86]
+# CHECK-LE: mtdcr 128, 5                    # encoding: [0x86,0x23,0xa0,0x7c]
+            mtbr0 %r5
+# CHECK-BE: mfdcr 5, 129                    # encoding: [0x7c,0xa1,0x22,0x86]
+# CHECK-LE: mfdcr 5, 129                    # encoding: [0x86,0x22,0xa1,0x7c]
+            mfbr1 %r5
+# CHECK-BE: mtdcr 129, 5                    # encoding: [0x7c,0xa1,0x23,0x86]
+# CHECK-LE: mtdcr 129, 5                    # encoding: [0x86,0x23,0xa1,0x7c]
+            mtbr1 %r5
+# CHECK-BE: mfdcr 5, 130                    # encoding: [0x7c,0xa2,0x22,0x86]
+# CHECK-LE: mfdcr 5, 130                    # encoding: [0x86,0x22,0xa2,0x7c]
+            mfbr2 %r5
+# CHECK-BE: mtdcr 130, 5                    # encoding: [0x7c,0xa2,0x23,0x86]
+# CHECK-LE: mtdcr 130, 5                    # encoding: [0x86,0x23,0xa2,0x7c]
+            mtbr2 %r5
+# CHECK-BE: mfdcr 5, 131                    # encoding: [0x7c,0xa3,0x22,0x86]
+# CHECK-LE: mfdcr 5, 131                    # encoding: [0x86,0x22,0xa3,0x7c]
+            mfbr3 %r5
+# CHECK-BE: mtdcr 131, 5                    # encoding: [0x7c,0xa3,0x23,0x86]
+# CHECK-LE: mtdcr 131, 5                    # encoding: [0x86,0x23,0xa3,0x7c]
+            mtbr3 %r5
+# CHECK-BE: mfdcr 5, 132                    # encoding: [0x7c,0xa4,0x22,0x86]
+# CHECK-LE: mfdcr 5, 132                    # encoding: [0x86,0x22,0xa4,0x7c]
+            mfbr4 %r5
+# CHECK-BE: mtdcr 132, 5                    # encoding: [0x7c,0xa4,0x23,0x86]
+# CHECK-LE: mtdcr 132, 5                    # encoding: [0x86,0x23,0xa4,0x7c]
+            mtbr4 %r5
+# CHECK-BE: mfdcr 5, 133                    # encoding: [0x7c,0xa5,0x22,0x86]
+# CHECK-LE: mfdcr 5, 133                    # encoding: [0x86,0x22,0xa5,0x7c]
+            mfbr5 %r5
+# CHECK-BE: mtdcr 133, 5                    # encoding: [0x7c,0xa5,0x23,0x86]
+# CHECK-LE: mtdcr 133, 5                    # encoding: [0x86,0x23,0xa5,0x7c]
+            mtbr5 %r5
+# CHECK-BE: mfdcr 5, 134                    # encoding: [0x7c,0xa6,0x22,0x86]
+# CHECK-LE: mfdcr 5, 134                    # encoding: [0x86,0x22,0xa6,0x7c]
+            mfbr6 %r5
+# CHECK-BE: mtdcr 134, 5                    # encoding: [0x7c,0xa6,0x23,0x86]
+# CHECK-LE: mtdcr 134, 5                    # encoding: [0x86,0x23,0xa6,0x7c]
+            mtbr6 %r5
+# CHECK-BE: mfdcr 5, 135                    # encoding: [0x7c,0xa7,0x22,0x86]
+# CHECK-LE: mfdcr 5, 135                    # encoding: [0x86,0x22,0xa7,0x7c]
+            mfbr7 %r5
+# CHECK-BE: mtdcr 135, 5                    # encoding: [0x7c,0xa7,0x23,0x86]
+# CHECK-LE: mtdcr 135, 5                    # encoding: [0x86,0x23,0xa7,0x7c]
+            mtbr7 %r5
