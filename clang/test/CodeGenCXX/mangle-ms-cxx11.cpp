@@ -140,6 +140,18 @@ void templ_fun_with_pack() {}
 template void templ_fun_with_pack<>();
 // CHECK-DAG: @"\01??$templ_fun_with_pack@$S@@YAXXZ"
 
+template <typename...>
+void templ_fun_with_ty_pack() {}
+
+template void templ_fun_with_ty_pack<>();
+// CHECK-DAG: @"\01??$templ_fun_with_ty_pack@$$V@@YAXXZ"
+
+template <template <class> class...>
+void templ_fun_with_templ_templ_pack() {}
+
+template void templ_fun_with_templ_templ_pack<>();
+// CHECK-DAG: @"\01??$templ_fun_with_templ_templ_pack@$$V@@YAXXZ"
+
 namespace PR20047 {
 template <typename T>
 struct A {};
