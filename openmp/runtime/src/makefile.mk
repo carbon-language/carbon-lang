@@ -73,6 +73,8 @@ OPTIMIZATION := $(call check_variable,OPTIMIZATION,off on)
 TARGET_COMPILER := $(call check_variable,TARGET_COMPILER,12 11)
 # Library version: 4 -- legacy, 5 -- compat.
 VERSION      := $(call check_variable,VERSION,5 4)
+# quad precision floating point
+HAVE_QUAD     = 1
 
 VPATH += $(src_dir)
 VPATH += $(src_dir)i18n/
@@ -171,6 +173,7 @@ ifeq "$(c)" "clang"
         ld-flags += -m32 -msse
         as-flags += -m32 -msse
     endif
+    HAVE_QUAD = 0
 endif
 
 ifeq "$(LINK_TYPE)" "dyna"
@@ -596,6 +599,9 @@ kmp_version$(obj) : cpp-flags += -D _KMP_BUILD_TIME="\"$(date)\""
 
 gd-flags += -D arch_$(arch)
 gd-flags += -D $(LIB_TYPE)
+ifeq "$(HAVE_QUAD)" "1"
+    gd-flags += -D HAVE_QUAD
+endif
 ifeq "$(OMP_VERSION)" "40"
     gd-flags += -D OMP_40 -D OMP_30
 else

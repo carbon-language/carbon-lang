@@ -46,6 +46,7 @@
 #define KMP_COMPILER_ICC 0
 #define KMP_COMPILER_GCC 0
 #define KMP_COMPILER_CLANG 0
+#define KMP_COMPILER_MSVC 0
 
 #if defined( __INTEL_COMPILER )
 # undef KMP_COMPILER_ICC
@@ -56,6 +57,9 @@
 #elif defined( __GNUC__ )
 # undef KMP_COMPILER_GCC
 # define KMP_COMPILER_GCC 1
+#elif defined( _MSC_VER )
+# undef KMP_COMPILER_MSVC
+# define KMP_COMPILER_MSVC 1
 #else
 # error Unknown compiler
 #endif
@@ -175,6 +179,8 @@
    typedef __float128 _Quad;
 #  undef  KMP_HAVE_QUAD
 #  define KMP_HAVE_QUAD 1
+# elif KMP_COMPILER_MSVC
+   typedef long double _Quad;
 # endif
 #else
 # if __LDBL_MAX_EXP__ >= 16384 && KMP_COMPILER_GCC
