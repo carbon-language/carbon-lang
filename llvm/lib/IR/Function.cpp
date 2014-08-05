@@ -166,6 +166,20 @@ bool Argument::hasReturnedAttr() const {
     hasAttribute(getArgNo()+1, Attribute::Returned);
 }
 
+/// hasZExtAttr - Return true if this argument has the zext attribute on it in
+/// its containing function.
+bool Argument::hasZExtAttr() const {
+  return getParent()->getAttributes().
+    hasAttribute(getArgNo()+1, Attribute::ZExt);
+}
+
+/// hasSExtAttr Return true if this argument has the sext attribute on it in its
+/// containing function.
+bool Argument::hasSExtAttr() const {
+  return getParent()->getAttributes().
+    hasAttribute(getArgNo()+1, Attribute::SExt);
+}
+
 /// Return true if this argument has the readonly or readnone attribute on it
 /// in its containing function.
 bool Argument::onlyReadsMemory() const {

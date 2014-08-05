@@ -105,6 +105,14 @@ public:
   /// its containing function.
   bool hasInAllocaAttr() const;
 
+  /// \brief Return true if this argument has the zext attribute on it in its
+  /// containing function.
+  bool hasZExtAttr() const;
+
+  /// \brief Return true if this argument has the sext attribute on it in its
+  /// containing function.
+  bool hasSExtAttr() const;
+
   /// \brief Add a Attribute to an argument.
   void addAttr(AttributeSet AS);
 
