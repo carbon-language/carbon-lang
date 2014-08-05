@@ -3,7 +3,11 @@
 // the rest is built with Clang.  This represents the typical scenario when we
 // build a large project using "clang-cl -fallback -fsanitize=address".
 //
-// FIXME: Investigate why -GS- is required.
+// Check both -GS and -GS- builds:
+// RUN: cl -c %s -Fo%t.obj
+// RUN: %clangxx_asan -o %t.exe %s %t.obj
+// RUN: %run %t.exe
+//
 // RUN: cl -GS- -c %s -Fo%t.obj
 // RUN: %clangxx_asan -o %t.exe %s %t.obj
 // RUN: %run %t.exe

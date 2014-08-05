@@ -75,7 +75,7 @@ struct FunctionInterceptor<0> {
 // Special case of hooks -- ASan own interface functions.  Those are only called
 // after __asan_init, thus an empty implementation is sufficient.
 #define INTERFACE_FUNCTION(name)                                               \
-  extern "C" void name() {                                                     \
+  extern "C" __declspec(noinline) void name() {                                \
     volatile int prevent_icf = (__LINE__ << 8); (void)prevent_icf;             \
     __debugbreak();                                                            \
   }                                                                            \
@@ -325,6 +325,14 @@ WRAP_W_W(_expand_dbg)
 INTERCEPT_LIBRARY_FUNCTION(atoi);
 INTERCEPT_LIBRARY_FUNCTION(atol);
 INTERCEPT_LIBRARY_FUNCTION(_except_handler3);
+
+// _except_handler4 checks -GS cookie which is different for each module, so we
+// can't use INTERCEPT_LIBRARY_FUNCTION(_except_handler4).
+INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
+  __asan_handle_no_return();
+  return REAL(_except_handler4)(a, b, c, d);
+}
+
 INTERCEPT_LIBRARY_FUNCTION(frexp);
 INTERCEPT_LIBRARY_FUNCTION(longjmp);
 INTERCEPT_LIBRARY_FUNCTION(memchr);
@@ -348,6 +356,7 @@ INTERCEPT_LIBRARY_FUNCTION(wcslen);
 // is defined.
 void InterceptHooks() {
   INTERCEPT_HOOKS();
+  INTERCEPT_FUNCTION(_except_handler4);
 }
 
 // We want to call __asan_init before C/C++ initializers/constructors are

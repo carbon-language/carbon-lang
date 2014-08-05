@@ -308,6 +308,12 @@ INTERCEPTOR(int, _except_handler3, void *a, void *b, void *c, void *d) {
   __asan_handle_no_return();
   return REAL(_except_handler3)(a, b, c, d);
 }
+
+INTERCEPTOR(int, _except_handler4, void *a, void *b, void *c, void *d) {
+  CHECK(REAL(_except_handler4));
+  __asan_handle_no_return();
+  return REAL(_except_handler4)(a, b, c, d);
+}
 #endif
 
 #if ASAN_INTERCEPT_MLOCKX
@@ -745,6 +751,7 @@ void InitializeWindowsInterceptors() {
   ASAN_INTERCEPT_FUNC(CreateThread);
   ASAN_INTERCEPT_FUNC(RaiseException);
   ASAN_INTERCEPT_FUNC(_except_handler3);
+  ASAN_INTERCEPT_FUNC(_except_handler4);
 }
 
 }  // namespace __asan

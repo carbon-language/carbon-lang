@@ -4,6 +4,12 @@
 // build a large project using "clang-cl -fallback -fsanitize=address".
 //
 // RUN: %clang_cl_asan -O0 %p/dll_host.cc -Fe%t
+//
+// Check both -GS and -GS- builds:
+// RUN: cl -LD -c %s -Fo%t.obj
+// RUN: %clang_cl_asan -LD -O0 %s -Fe%t.dll %t.obj
+// RUN: %run %t %t.dll
+//
 // RUN: cl -LD -GS- -c %s -Fo%t.obj
 // RUN: %clang_cl_asan -LD -O0 %s -Fe%t.dll %t.obj
 // RUN: %run %t %t.dll
