@@ -3803,6 +3803,9 @@ static bool isPSHUFLWMask(ArrayRef<int> Mask, MVT VT, bool HasInt256) {
   return true;
 }
 
+/// \brief Return true if the mask specifies a shuffle of elements that is
+/// suitable for input to intralane (palignr) or interlane (valign) vector
+/// right-shift.
 static bool isAlignrMask(ArrayRef<int> Mask, MVT VT, bool InterLane) {
   unsigned NumElts = VT.getVectorNumElements();
   unsigned NumLanes = InterLane ? 1: VT.getSizeInBits()/128;
@@ -3869,8 +3872,8 @@ static bool isAlignrMask(ArrayRef<int> Mask, MVT VT, bool InterLane) {
   return true;
 }
 
-/// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
-/// is suitable for input to PALIGNR.
+/// \brief Return true if the node specifies a shuffle of elements that is
+/// suitable for input to PALIGNR.
 static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
                           const X86Subtarget *Subtarget) {
   if ((VT.is128BitVector() && !Subtarget->hasSSSE3()) ||
@@ -3881,8 +3884,8 @@ static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
   return isAlignrMask(Mask, VT, false);
 }
 
-/// isPALIGNRMask - Return true if the node specifies a shuffle of elements that
-/// is suitable for input to PALIGNR.
+/// \brief Return true if the node specifies a shuffle of elements that is
+/// suitable for input to VALIGN.
 static bool isVALIGNMask(ArrayRef<int> Mask, MVT VT,
                           const X86Subtarget *Subtarget) {
   // FIXME: Add AVX512VL.
@@ -4715,8 +4718,9 @@ static unsigned getShufflePSHUFLWImmediate(ShuffleVectorSDNode *N) {
   return Mask;
 }
 
-/// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
-/// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
+/// \brief Return the appropriate immediate to shuffle the specified
+/// VECTOR_SHUFFLE mask with the PALIGNR (if InterLane is false) or with
+/// VALIGN (if Interlane is true) instructions.
 static unsigned getShuffleAlignrImmediate(ShuffleVectorSDNode *SVOp,
                                            bool InterLane) {
   MVT VT = SVOp->getSimpleValueType(0);
@@ -4741,12 +4745,14 @@ static unsigned getShuffleAlignrImmediate(ShuffleVectorSDNode *SVOp,
   return (Val - i) * EltSize;
 }
 
-/// getShufflePALIGNRImmediate - Return the appropriate immediate to shuffle
-/// the specified VECTOR_SHUFFLE mask with the PALIGNR instruction.
+/// \brief Return the appropriate immediate to shuffle the specified
+/// VECTOR_SHUFFLE mask with the PALIGNR instruction.
 static unsigned getShufflePALIGNRImmediate(ShuffleVectorSDNode *SVOp) {
   return getShuffleAlignrImmediate(SVOp, false);
 }
 
+/// \brief Return the appropriate immediate to shuffle the specified
+/// VECTOR_SHUFFLE mask with the VALIGN instruction.
 static unsigned getShuffleVALIGNImmediate(ShuffleVectorSDNode *SVOp) {
   return getShuffleAlignrImmediate(SVOp, true);
 }
