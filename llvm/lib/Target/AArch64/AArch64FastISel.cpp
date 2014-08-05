@@ -94,6 +94,7 @@ class AArch64FastISel : public FastISel {
   const AArch64Subtarget *Subtarget;
   LLVMContext *Context;
 
+  bool FastLowerArguments() override;
   bool FastLowerCall(CallLoweringInfo &CLI) override;
   bool FastLowerIntrinsicCall(const IntrinsicInst *II) override;
 
@@ -1310,6 +1311,108 @@ bool AArch64FastISel::SelectIntToFP(const Instruction *I, bool Signed) {
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addReg(SrcReg);
   UpdateValueMap(I, ResultReg);
+  return true;
+}
+
+bool AArch64FastISel::FastLowerArguments() {
+  if (!FuncInfo.CanLowerReturn)
+    return false;
+
+  const Function *F = FuncInfo.Fn;
+  if (F->isVarArg())
+    return false;
+
+  CallingConv::ID CC = F->getCallingConv();
+  if (CC != CallingConv::C)
+    return false;
+
+  // Only handle simple cases like i1/i8/i16/i32/i64/f32/f64 of up to 8 GPR and
+  // FPR each.
+  unsigned GPRCnt = 0;
+  unsigned FPRCnt = 0;
+  unsigned Idx = 0;
+  for (auto const &Arg : F->args()) {
+    // The first argument is at index 1.
+    ++Idx;
+    if (F->getAttributes().hasAttribute(Idx, Attribute::ByVal) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::InReg) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::StructRet) ||
+        F->getAttributes().hasAttribute(Idx, Attribute::Nest))
+      return false;
+
+    Type *ArgTy = Arg.getType();
+    if (ArgTy->isStructTy() || ArgTy->isArrayTy() || ArgTy->isVectorTy())
+      return false;
+
+    EVT ArgVT = TLI.getValueType(ArgTy);
+    if (!ArgVT.isSimple()) return false;
+    switch (ArgVT.getSimpleVT().SimpleTy) {
+    default: return false;
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    case MVT::i64:
+      ++GPRCnt;
+      break;
+    case MVT::f16:
+    case MVT::f32:
+    case MVT::f64:
+      ++FPRCnt;
+      break;
+    }
+
+    if (GPRCnt > 8 || FPRCnt > 8)
+      return false;
+  }
+
+  static const MCPhysReg Registers[5][8] = {
+    { AArch64::W0, AArch64::W1, AArch64::W2, AArch64::W3, AArch64::W4,
+      AArch64::W5, AArch64::W6, AArch64::W7 },
+    { AArch64::X0, AArch64::X1, AArch64::X2, AArch64::X3, AArch64::X4,
+      AArch64::X5, AArch64::X6, AArch64::X7 },
+    { AArch64::H0, AArch64::H1, AArch64::H2, AArch64::H3, AArch64::H4,
+      AArch64::H5, AArch64::H6, AArch64::H7 },
+    { AArch64::S0, AArch64::S1, AArch64::S2, AArch64::S3, AArch64::S4,
+      AArch64::S5, AArch64::S6, AArch64::S7 },
+    { AArch64::D0, AArch64::D1, AArch64::D2, AArch64::D3, AArch64::D4,
+      AArch64::D5, AArch64::D6, AArch64::D7 }
+  };
+
+  unsigned GPRIdx = 0;
+  unsigned FPRIdx = 0;
+  for (auto const &Arg : F->args()) {
+    MVT VT = TLI.getSimpleValueType(Arg.getType());
+    unsigned SrcReg;
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type.");
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16: VT = MVT::i32; // fall-through
+    case MVT::i32: SrcReg = Registers[0][GPRIdx++]; break;
+    case MVT::i64: SrcReg = Registers[1][GPRIdx++]; break;
+    case MVT::f16: SrcReg = Registers[2][FPRIdx++]; break;
+    case MVT::f32: SrcReg = Registers[3][FPRIdx++]; break;
+    case MVT::f64: SrcReg = Registers[4][FPRIdx++]; break;
+    }
+
+    // Skip unused arguments.
+    if (Arg.use_empty()) {
+      UpdateValueMap(&Arg, 0);
+      continue;
+    }
+
+    const TargetRegisterClass *RC = TLI.getRegClassFor(VT);
+    unsigned DstReg = FuncInfo.MF->addLiveIn(SrcReg, RC);
+    // FIXME: Unfortunately it's necessary to emit a copy from the livein copy.
+    // Without this, EmitLiveInCopies may eliminate the livein if its only
+    // use is a bitcast (which isn't turned into an instruction).
+    unsigned ResultReg = createResultReg(RC);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::COPY), ResultReg)
+      .addReg(DstReg, getKillRegState(true));
+    UpdateValueMap(&Arg, ResultReg);
+  }
   return true;
 }
 
