@@ -7656,9 +7656,9 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
         Mask[BadInputs[1]] = MoveMaskIdx + 1 + MaskOffset;
       } else {
         assert(BadInputs.size() == 1 && "All sizes handled");
-      int MoveMaskIdx =
-          std::find(std::begin(MoveMask) + MoveOffset, std::end(MoveMask), -1) -
-          std::begin(MoveMask);
+        int MoveMaskIdx = std::find(std::begin(MoveMask) + MoveOffset,
+                                    std::end(MoveMask), -1) -
+                          std::begin(MoveMask);
         MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
         Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
       }
