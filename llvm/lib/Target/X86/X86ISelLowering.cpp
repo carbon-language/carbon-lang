@@ -17080,6 +17080,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PACKSS:             return "X86ISD::PACKSS";
   case X86ISD::PACKUS:             return "X86ISD::PACKUS";
   case X86ISD::PALIGNR:            return "X86ISD::PALIGNR";
+  case X86ISD::VALIGN:             return "X86ISD::VALIGN";
   case X86ISD::PSHUFD:             return "X86ISD::PSHUFD";
   case X86ISD::PSHUFHW:            return "X86ISD::PSHUFHW";
   case X86ISD::PSHUFLW:            return "X86ISD::PSHUFLW";

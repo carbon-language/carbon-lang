@@ -203,6 +203,7 @@ def SDTFma : SDTypeProfile<1, 3, [SDTCisSameAs<0,1>,
                            SDTCisSameAs<1,2>, SDTCisSameAs<1,3>]>;
 
 def X86PAlignr : SDNode<"X86ISD::PALIGNR", SDTShuff3OpI>;
+def X86VAlign  : SDNode<"X86ISD::VALIGN", SDTShuff3OpI>;
 
 def X86PShufd  : SDNode<"X86ISD::PSHUFD", SDTShuff2OpI>;
 def X86PShufhw : SDNode<"X86ISD::PSHUFHW", SDTShuff2OpI>;

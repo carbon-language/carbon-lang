@@ -320,7 +320,10 @@ namespace llvm {
       // Several flavors of instructions with vector shuffle behaviors.
       PACKSS,
       PACKUS,
+      // Intra-lane alignr
       PALIGNR,
+      // AVX512 inter-lane alignr
+      VALIGN,
       PSHUFD,
       PSHUFHW,
       PSHUFLW,
