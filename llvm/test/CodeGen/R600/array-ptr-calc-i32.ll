@@ -15,7 +15,7 @@ declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 ; SIRegisterInfo::eliminateFrameIndex() blindly replaces the frame index
 ; with the appropriate offset.  We should fold this into the store.
 ; SI-ALLOCA: V_ADD_I32_e32 [[PTRREG:v[0-9]+]], 0, v{{[0-9]+}}
-; SI-ALLOCA: BUFFER_STORE_DWORD {{v[0-9]+}}, s[{{[0-9]+:[0-9]+}}], [[PTRREG]]
+; SI-ALLOCA: BUFFER_STORE_DWORD {{v[0-9]+}}, [[PTRREG]], s[{{[0-9]+:[0-9]+}}]
 ;
 ; FIXME: The AMDGPUPromoteAlloca pass should be able to convert this
 ; alloca to a vector.  It currently fails because it does not know how

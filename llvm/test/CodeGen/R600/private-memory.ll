@@ -16,8 +16,8 @@ declare i32 @llvm.r600.read.tidig.x() nounwind readnone
 ; SI-PROMOTE: DS_READ_B32
 ; SI-PROMOTE: DS_READ_B32
 
-; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}
-; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}
+; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
+; SI-ALLOCA: BUFFER_STORE_DWORD v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
 define void @mova_same_clause(i32 addrspace(1)* nocapture %out, i32 addrspace(1)* nocapture %in) {
 entry:
   %stack = alloca [5 x i32], align 4
@@ -116,10 +116,10 @@ for.end:
 
 ; R600: MOVA_INT
 
-; SI-PROMOTE: BUFFER_STORE_SHORT v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}
-; SI-PROMOTE: BUFFER_STORE_SHORT v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}
+; SI-PROMOTE: BUFFER_STORE_SHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
+; SI-PROMOTE: BUFFER_STORE_SHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
 ; SI-PROMOTE-NOT: MOVREL
-; SI-PROMOTE: BUFFER_LOAD_SSHORT v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}] + v{{[0-9]+}} + s{{[0-9]+}}
+; SI-PROMOTE: BUFFER_LOAD_SSHORT v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}}
 define void @short_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i16]
@@ -138,8 +138,8 @@ entry:
 
 ; R600: MOVA_INT
 
-; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}, 0x0
-; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], v{{[0-9]+}}, s{{[0-9]+}}, 0x1
+; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} {{offen$}}
+; SI-DAG: BUFFER_STORE_BYTE v{{[0-9]+}}, v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}], s{{[0-9]+}} offen offset:0x1
 define void @char_array(i32 addrspace(1)* %out, i32 %index) {
 entry:
   %0 = alloca [2 x i8]

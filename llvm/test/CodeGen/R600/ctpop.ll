@@ -236,8 +236,8 @@ define void @v_ctpop_i32_add_var_inv(i32 addrspace(1)* noalias %out, i32 addrspa
 }
 
 ; FUNC-LABEL: @v_ctpop_i32_add_vvar_inv
-; SI-DAG: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]], {{.*}} + 0x0
-; SI-DAG: BUFFER_LOAD_DWORD [[VAR:v[0-9]+]], {{.*}} + 0x10
+; SI-DAG: BUFFER_LOAD_DWORD [[VAL:v[0-9]+]], v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 {{addr64$}}
+; SI-DAG: BUFFER_LOAD_DWORD [[VAR:v[0-9]+]], {{.*}} offset:0x10
 ; SI: V_BCNT_U32_B32_e32 [[RESULT:v[0-9]+]], [[VAL]], [[VAR]]
 ; SI: BUFFER_STORE_DWORD [[RESULT]],
 ; SI: S_ENDPGM

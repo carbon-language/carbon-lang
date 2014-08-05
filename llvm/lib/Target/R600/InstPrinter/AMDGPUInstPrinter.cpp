@@ -40,6 +40,50 @@ void AMDGPUInstPrinter::printU32ImmOperand(const MCInst *MI, unsigned OpNo,
   O << formatHex(MI->getOperand(OpNo).getImm() & 0xffffffff);
 }
 
+void AMDGPUInstPrinter::printOffen(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " offen";
+}
+
+void AMDGPUInstPrinter::printIdxen(const MCInst *MI, unsigned OpNo,
+                                   raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " idxen";
+}
+
+void AMDGPUInstPrinter::printAddr64(const MCInst *MI, unsigned OpNo,
+                                    raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " addr64";
+}
+
+void AMDGPUInstPrinter::printMBUFOffset(const MCInst *MI, unsigned OpNo,
+                                        raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm()) {
+    O << " offset:";
+    printU16ImmOperand(MI, OpNo, O);
+  }
+}
+
+void AMDGPUInstPrinter::printGLC(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " glc";
+}
+
+void AMDGPUInstPrinter::printSLC(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " slc";
+}
+
+void AMDGPUInstPrinter::printTFE(const MCInst *MI, unsigned OpNo,
+                                 raw_ostream &O) {
+  if (MI->getOperand(OpNo).getImm())
+    O << " tfe";
+}
+
 void AMDGPUInstPrinter::printRegOperand(unsigned reg, raw_ostream &O) {
   switch (reg) {
   case AMDGPU::VCC:

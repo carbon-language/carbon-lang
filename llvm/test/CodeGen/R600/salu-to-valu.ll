@@ -14,8 +14,8 @@
 
 ; Make sure we aren't using VGPR's for the srsrc operand of BUFFER_LOAD_*
 ; instructions
-; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}]
-; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, s[{{[0-9]+:[0-9]+}}]
+; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
+; CHECK: BUFFER_LOAD_UBYTE v{{[0-9]+}}, v[{{[0-9]+:[0-9]+}}], s[{{[0-9]+:[0-9]+}}], 0 addr64
 define void @mubuf(i32 addrspace(1)* %out, i8 addrspace(1)* %in) {
 entry:
   %0 = call i32 @llvm.r600.read.tidig.x() #1
