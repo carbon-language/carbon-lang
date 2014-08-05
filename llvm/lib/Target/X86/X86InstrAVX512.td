@@ -4461,12 +4461,12 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
                             (memopv8i64 addr:$src2), (i8 imm:$imm))),
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
-multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
+multiclass avx512_alignr<string Suffix, RegisterClass RC,
                           X86MemOperand x86memop, ValueType IntVT,
                           ValueType FloatVT> {
   def rri : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src1, RC:$src2, i8imm:$src3),
-                     !strconcat(OpcodeStr,
+                     !strconcat("valign"##Suffix,
                      " \t{$src3, $src2, $src1, $dst|"
                          "$dst, $src1, $src2, $src3}"),
                      [(set RC:$dst,
@@ -4480,14 +4480,14 @@ multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
   let mayLoad = 1 in
   def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
                      (ins RC:$src1, x86memop:$src2, i8imm:$src3),
-                     !strconcat(OpcodeStr,
+                     !strconcat("valign"##Suffix,
                      " \t{$src3, $src2, $src1, $dst|"
                          "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
 }
-defm VALIGND : avx512_alignr<"valignd", VR512, i512mem, v16i32, v16f32>,
+defm VALIGND : avx512_alignr<"d", VR512, i512mem, v16i32, v16f32>,
                  EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_alignr<"valignq", VR512, i512mem, v8i64, v8f64>,
+defm VALIGNQ : avx512_alignr<"q", VR512, i512mem, v8i64, v8f64>,
                  VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 // Helper fragments to match sext vXi1 to vXiY.
