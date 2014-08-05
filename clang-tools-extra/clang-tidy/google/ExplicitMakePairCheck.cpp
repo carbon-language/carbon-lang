@@ -20,15 +20,6 @@ namespace ast_matchers {
 AST_MATCHER(DeclRefExpr, hasExplicitTemplateArgs) {
   return Node.hasExplicitTemplateArgs();
 }
-
-// FIXME: This should just be callee(ignoringImpCasts()) but it's not overloaded
-// for Expr.
-AST_MATCHER_P(CallExpr, calleeIgnoringParenImpCasts, internal::Matcher<Stmt>,
-              InnerMatcher) {
-  const Expr *ExprNode = Node.getCallee();
-  return (ExprNode != nullptr &&
-          InnerMatcher.matches(*ExprNode->IgnoreParenImpCasts(), Finder, Builder));
-}
 } // namespace ast_matchers
 
 namespace tidy {
@@ -42,10 +33,10 @@ ExplicitMakePairCheck::registerMatchers(ast_matchers::MatchFinder *Finder) {
       callExpr(unless(hasAncestor(decl(anyOf(
                    recordDecl(ast_matchers::isTemplateInstantiation()),
                    functionDecl(ast_matchers::isTemplateInstantiation()))))),
-               calleeIgnoringParenImpCasts(
+               callee(expr(ignoringParenImpCasts(
                    declRefExpr(hasExplicitTemplateArgs(),
                                to(functionDecl(hasName("::std::make_pair"))))
-                       .bind("declref"))).bind("call"),
+                       .bind("declref"))))).bind("call"),
       this);
 }
 
