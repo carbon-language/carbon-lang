@@ -3647,7 +3647,7 @@ AST_MATCHER_P(CaseStmt, hasCaseConstant, internal::Matcher<Expr>,
 
 /// \brief Matches CUDA kernel call expression.
 ///
-/// Example matches kernel<<<i,j>>>()
+/// Example matches,
 /// \code
 ///   kernel<<<i,j>>>();
 /// \endcode
