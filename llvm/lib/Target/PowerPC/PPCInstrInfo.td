@@ -3037,6 +3037,16 @@ def : Pat<(i1 (not (trunc i64:$in))),
 // PowerPC Instructions used for assembler/disassembler only
 //
 
+// FIXME: For B=0 or B > 8, the registers following RT are used.
+// WARNING: Do not add patterns for this instruction without fixing this.
+def LSWI  : XForm_base_r3xo<31, 597, (outs gprc:$RT), (ins gprc:$A, u5imm:$B),
+                            "lswi $RT, $A, $B", IIC_LdStLoad, []>;
+
+// FIXME: For B=0 or B > 8, the registers following RT are used.
+// WARNING: Do not add patterns for this instruction without fixing this.
+def STSWI : XForm_base_r3xo<31, 725, (outs), (ins gprc:$RT, gprc:$A, u5imm:$B),
+                            "stswi $RT, $A, $B", IIC_LdStLoad, []>;
+
 def ISYNC : XLForm_2_ext<19, 150, 0, 0, 0, (outs), (ins),
                          "isync", IIC_SprISYNC, []>;
 

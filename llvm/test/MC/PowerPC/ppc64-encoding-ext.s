@@ -3609,3 +3609,10 @@
 # CHECK-BE: tlbia                            # encoding: [0x7c,0x00,0x02,0xe4]
 # CHECK-LE: tlbia                            # encoding: [0xe4,0x02,0x00,0x7c]
             tlbia
+
+# CHECK-BE: lswi 8, 6, 7                     # encoding: [0x7d,0x06,0x3c,0xaa]
+# CHECK-LE: lswi 8, 6, 7                     # encoding: [0xaa,0x3c,0x06,0x7d]
+            lswi %r8, %r6, 7
+# CHECK-BE: stswi 8, 6, 7                    # encoding: [0x7d,0x06,0x3d,0xaa]
+# CHECK-LE: stswi 8, 6, 7                    # encoding: [0xaa,0x3d,0x06,0x7d]
+            stswi %r8, %r6, 7
