@@ -4462,13 +4462,21 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
 multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
-                       X86MemOperand x86memop> {
+                          X86MemOperand x86memop, ValueType IntVT,
+                          ValueType FloatVT> {
   def rri : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src1, RC:$src2, i8imm:$src3),
                      !strconcat(OpcodeStr,
                      " \t{$src3, $src2, $src1, $dst|"
                          "$dst, $src1, $src2, $src3}"),
-                     []>, EVEX_4V;
+                     [(set RC:$dst,
+                           (IntVT (X86PAlignr RC:$src2, RC:$src1,
+                                              (i8 imm:$src3))))]>, EVEX_4V;
+
+  // Also match valign of packed floats.
+  def : Pat<(FloatVT (X86PAlignr RC:$src1, RC:$src2, (i8 imm:$imm))),
+            (!cast<Instruction>(NAME##rri) RC:$src2, RC:$src1, imm:$imm)>;
+
   let mayLoad = 1 in
   def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
                      (ins RC:$src1, x86memop:$src2, i8imm:$src3),
@@ -4477,19 +4485,10 @@ multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
                          "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
 }
-defm VALIGND : avx512_alignr<"valignd", VR512, i512mem>,
+defm VALIGND : avx512_alignr<"valignd", VR512, i512mem, v16i32, v16f32>,
                  EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_alignr<"valignq", VR512, i512mem>,
+defm VALIGNQ : avx512_alignr<"valignq", VR512, i512mem, v8i64, v8f64>,
                  VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
-
-def : Pat<(v16f32 (X86PAlignr VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VALIGNDrri VR512:$src2, VR512:$src1, imm:$imm)>;
-def : Pat<(v8f64 (X86PAlignr VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VALIGNQrri VR512:$src2, VR512:$src1, imm:$imm)>;
-def : Pat<(v16i32 (X86PAlignr VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VALIGNDrri VR512:$src2, VR512:$src1, imm:$imm)>;
-def : Pat<(v8i64 (X86PAlignr VR512:$src1, VR512:$src2, (i8 imm:$imm))),
-          (VALIGNQrri VR512:$src2, VR512:$src1, imm:$imm)>;
 
 // Helper fragments to match sext vXi1 to vXiY.
 def v16i1sextv16i32  : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
