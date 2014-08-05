@@ -952,6 +952,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
     break;
   }
   case ADD:
+  case AND:
   case SHL:
   case SRA:
   case SRL: {
@@ -965,6 +966,7 @@ Init *BinOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       switch (getOpcode()) {
       default: llvm_unreachable("Bad opcode!");
       case ADD: Result = LHSv +  RHSv; break;
+      case AND: Result = LHSv &  RHSv; break;
       case SHL: Result = LHSv << RHSv; break;
       case SRA: Result = LHSv >> RHSv; break;
       case SRL: Result = (uint64_t)LHSv >> (uint64_t)RHSv; break;
@@ -991,6 +993,7 @@ std::string BinOpInit::getAsString() const {
   switch (Opc) {
   case CONCAT: Result = "!con"; break;
   case ADD: Result = "!add"; break;
+  case AND: Result = "!and"; break;
   case SHL: Result = "!shl"; break;
   case SRA: Result = "!sra"; break;
   case SRL: Result = "!srl"; break;

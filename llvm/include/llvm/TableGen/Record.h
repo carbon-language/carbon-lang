@@ -928,7 +928,7 @@ public:
 ///
 class BinOpInit : public OpInit {
 public:
-  enum BinaryOp { ADD, SHL, SRA, SRL, LISTCONCAT, STRCONCAT, CONCAT, EQ };
+  enum BinaryOp { ADD, AND, SHL, SRA, SRL, LISTCONCAT, STRCONCAT, CONCAT, EQ };
 
 private:
   BinaryOp Opc;
