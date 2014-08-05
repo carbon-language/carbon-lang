@@ -38,21 +38,38 @@ define <8 x float> @fabs_v8f32(<8 x float> %p)
 declare <8 x float> @llvm.fabs.v8f32(<8 x float> %p)
 
 ; PR20354: when generating code for a vector fabs op,
-; make sure the correct mask is used for all vector elements.
-; CHECK-LABEL: .LCPI4_0:
-; CHECK-NEXT:    .long	2147483647
-; CHECK-NEXT:    .long	2147483647
-define i64 @fabs_v2f32(<2 x float> %v) {
-; CHECK-LABEL: fabs_v2f32:
-; CHECK:         movabsq $-9223372034707292160, %[[R:r[^ ]+]]
-; CHECK-NEXT:    vmovq %[[R]], %[[X:xmm[0-9]+]]
-; CHECK-NEXT:    vandps   {{.*}}.LCPI4_0{{.*}}, %[[X]], %[[X]]
-; CHECK-NEXT:    vmovq   %[[X]], %rax
-; CHECK-NEXT:    retq
-  %highbits = bitcast i64 9223372039002259456 to <2 x float> ; 0x8000_0000_8000_0000
-  %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %highbits)
-  %ret = bitcast <2 x float> %fabs to i64
-  ret i64 %ret
+; make sure that we're only turning off the sign bit of each float value.
+; No constant pool loads or vector ops are needed for the fabs of a
+; bitcasted integer constant; we should just return an integer constant
+; that has the sign bits turned off.
+;
+; So instead of something like this:
+;    movabsq (constant pool load of mask for sign bits) 
+;    vmovq   (move from integer register to vector/fp register)
+;    vandps  (mask off sign bits)
+;    vmovq   (move vector/fp register back to integer return register)
+;
+; We should generate:
+;    mov     (put constant value in return register)
+
+; CHECK-LABEL: fabs_v2f32_1
+define i64 @fabs_v2f32_1() {
+ %bitcast = bitcast i64 18446744069414584320 to <2 x float> ; 0xFFFF_FFFF_0000_0000
+ %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
+ %ret = bitcast <2 x float> %fabs to i64
+ ret i64 %ret
+; CHECK: movabsq $9223372032559808512, %rax
+;  # imm = 0x7FFF_FFFF_0000_0000
+}
+
+; CHECK-LABEL: fabs_v2f32_2
+define i64 @fabs_v2f32_2() {
+ %bitcast = bitcast i64 4294967295 to <2 x float> ; 0x0000_0000_FFFF_FFFF
+ %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
+ %ret = bitcast <2 x float> %fabs to i64
+ ret i64 %ret
+; CHECK: movl $2147483647, %eax
+;  # imm = 0x0000_0000_7FFF_FFFF
 }
 
 declare <2 x float> @llvm.fabs.v2f32(<2 x float> %p)

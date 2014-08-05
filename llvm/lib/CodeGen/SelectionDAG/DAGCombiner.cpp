@@ -7409,22 +7409,28 @@ SDValue DAGCombiner::visitFABS(SDNode *N) {
   if (N0.getOpcode() == ISD::FNEG || N0.getOpcode() == ISD::FCOPYSIGN)
     return DAG.getNode(ISD::FABS, SDLoc(N), VT, N0.getOperand(0));
 
-  // Transform fabs(bitconvert(x)) -> bitconvert(x&~sign) to avoid loading
+  // Transform fabs(bitconvert(x)) -> bitconvert(x & ~sign) to avoid loading
   // constant pool values.
-  // TODO: We can also optimize for vectors here, but we need to make sure
-  // that the sign mask is created properly for each vector element.
   if (!TLI.isFAbsFree(VT) &&
-      N0.getOpcode() == ISD::BITCAST && N0.getNode()->hasOneUse() &&
-      N0.getOperand(0).getValueType().isInteger() &&
-      !VT.isVector()) {
+      N0.getOpcode() == ISD::BITCAST &&
+      N0.getNode()->hasOneUse()) {
     SDValue Int = N0.getOperand(0);
     EVT IntVT = Int.getValueType();
     if (IntVT.isInteger() && !IntVT.isVector()) {
+      APInt SignMask;
+      if (N0.getValueType().isVector()) {
+        // For a vector, get a mask such as 0x7f... per scalar element
+        // and splat it.
+        SignMask = ~APInt::getSignBit(N0.getValueType().getScalarSizeInBits());
+        SignMask = APInt::getSplat(IntVT.getSizeInBits(), SignMask);
+      } else {
+        // For a scalar, just generate 0x7f...
+        SignMask = ~APInt::getSignBit(IntVT.getSizeInBits());
+      }
       Int = DAG.getNode(ISD::AND, SDLoc(N0), IntVT, Int,
-             DAG.getConstant(~APInt::getSignBit(IntVT.getSizeInBits()), IntVT));
+                        DAG.getConstant(SignMask, IntVT));
       AddToWorklist(Int.getNode());
-      return DAG.getNode(ISD::BITCAST, SDLoc(N),
-                         N->getValueType(0), Int);
+      return DAG.getNode(ISD::BITCAST, SDLoc(N), N->getValueType(0), Int);
     }
   }
 

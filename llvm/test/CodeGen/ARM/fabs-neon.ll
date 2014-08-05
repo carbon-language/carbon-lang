@@ -15,3 +15,40 @@ define <2 x float> @test2(<2 x float> %a) {
     ret <2 x float> %foo
 }
 declare <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
+
+; No constant pool loads or vector ops are needed for the fabs of a
+; bitcasted integer constant; we should just return integer constants
+; that have the sign bits turned off.
+;
+; So instead of something like this:
+; 	mvn	r0, #0
+; 	mov	r1, #0
+; 	vmov	d16, r1, r0
+; 	vabs.f32	d16, d16
+; 	vmov	r0, r1, d16
+; 	bx	lr
+;
+; We should generate:
+;	mov	r0, #0
+;	mvn	r1, #-2147483648
+;	mov	pc, lr
+
+; CHECK-LABEL: fabs_v2f32_1
+define i64 @fabs_v2f32_1() {
+ %bitcast = bitcast i64 18446744069414584320 to <2 x float> ; 0xFFFF_FFFF_0000_0000
+ %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
+ %ret = bitcast <2 x float> %fabs to i64
+ ret i64 %ret
+; CHECK: mvn r1, #-2147483648
+; CHECK-NOT: vabs
+}
+
+; CHECK-LABEL: fabs_v2f32_2
+define i64 @fabs_v2f32_2() {
+ %bitcast = bitcast i64 4294967295 to <2 x float> ; 0x0000_0000_FFFF_FFFF
+ %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
+ %ret = bitcast <2 x float> %fabs to i64
+ ret i64 %ret
+; CHECK: mvn r0, #-2147483648
+; CHECK-NOT: vabs
+}
