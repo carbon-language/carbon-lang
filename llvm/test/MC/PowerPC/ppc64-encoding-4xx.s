@@ -97,3 +97,16 @@
 # CHECK-BE: ici 14                          # encoding: [0x7d,0xc0,0x07,0x8c]
 # CHECK-LE: ici 14                          # encoding: [0x8c,0x07,0xc0,0x7d]
             ici 14
+
+# CHECK-BE: mfspr 2, 990                    # encoding: [0x7c,0x5e,0xf2,0xa6]
+# CHECK-LE: mfspr 2, 990                    # encoding: [0xa6,0xf2,0x5e,0x7c]
+            mfsrr2 2
+# CHECK-BE: mtspr 990, 2                    # encoding: [0x7c,0x5e,0xf3,0xa6]
+# CHECK-LE: mtspr 990, 2                    # encoding: [0xa6,0xf3,0x5e,0x7c]
+            mtsrr2 2
+# CHECK-BE: mfspr 2, 991                    # encoding: [0x7c,0x5f,0xf2,0xa6]
+# CHECK-LE: mfspr 2, 991                    # encoding: [0xa6,0xf2,0x5f,0x7c]
+            mfsrr3 2
+# CHECK-BE: mtspr 991, 2                    # encoding: [0x7c,0x5f,0xf3,0xa6]
+# CHECK-LE: mtspr 991, 2                    # encoding: [0xa6,0xf3,0x5f,0x7c]
+            mtsrr3 2
