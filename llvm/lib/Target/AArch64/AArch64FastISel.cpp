@@ -2443,17 +2443,15 @@ bool AArch64FastISel::SelectIntExt(const Instruction *I) {
   // Check if it is an argument and if it is already zero/sign-extended.
   if (const auto *Arg = dyn_cast<Argument>(Src)) {
     if ((isZExt && Arg->hasZExtAttr()) || (!isZExt && Arg->hasSExtAttr())) {
-      ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
-      if (DestVT == MVT::i64)
+      if (DestVT == MVT::i64) {
+        ResultReg = createResultReg(TLI.getRegClassFor(DestVT));
         BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                 TII.get(AArch64::SUBREG_TO_REG), ResultReg)
           .addImm(0)
           .addReg(SrcReg)
           .addImm(AArch64::sub_32);
-      else
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                TII.get(TargetOpcode::COPY), ResultReg)
-          .addReg(SrcReg);
+      } else
+        ResultReg = SrcReg;
     }
   }
 
