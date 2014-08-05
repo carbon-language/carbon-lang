@@ -33,7 +33,6 @@ public:
                        bool isLittle);
 
   const ARMSubtarget *getSubtargetImpl() const override { return &Subtarget; }
-  ARMSubtarget *getSubtargetImpl() override { return &Subtarget; }
 
   /// \brief Register ARM analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;

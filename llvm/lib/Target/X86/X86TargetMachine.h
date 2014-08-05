@@ -32,7 +32,10 @@ public:
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL);
   const X86Subtarget *getSubtargetImpl() const override { return &Subtarget; }
-  X86Subtarget *getSubtargetImpl() override { return &Subtarget; }
+
+  X86Subtarget *getSubtargetImpl() {
+    return static_cast<X86Subtarget *>(TargetMachine::getSubtargetImpl());
+  }
 
   /// \brief Register X86 analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;

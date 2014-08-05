@@ -101,7 +101,7 @@ public:
   virtual const TargetSubtargetInfo *getSubtargetImpl() const {
     return nullptr;
   }
-  virtual TargetSubtargetInfo *getSubtargetImpl() {
+  TargetSubtargetInfo *getSubtargetImpl() {
     const TargetMachine *TM = this;
     return const_cast<TargetSubtargetInfo *>(TM->getSubtargetImpl());
   }

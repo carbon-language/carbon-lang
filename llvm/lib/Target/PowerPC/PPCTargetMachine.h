@@ -33,7 +33,6 @@ public:
                    CodeGenOpt::Level OL, bool is64Bit);
 
   const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
-  PPCSubtarget *getSubtargetImpl() override { return &Subtarget; }
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;

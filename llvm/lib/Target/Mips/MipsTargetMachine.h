@@ -44,10 +44,8 @@ public:
       return Subtarget;
     return &DefaultSubtarget;
   }
-  MipsSubtarget *getSubtargetImpl() override {
-    if (Subtarget)
-      return Subtarget;
-    return &DefaultSubtarget;
+  MipsSubtarget *getSubtargetImpl() {
+    return static_cast<MipsSubtarget *>(TargetMachine::getSubtargetImpl());
   }
 
   /// \brief Reset the subtarget for the Mips target.
