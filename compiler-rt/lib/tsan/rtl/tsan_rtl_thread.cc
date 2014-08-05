@@ -36,13 +36,13 @@ ThreadContext::~ThreadContext() {
 #endif
 
 void ThreadContext::OnDead() {
-  sync.Reset();
+  CHECK_EQ(sync.size(), 0);
 }
 
 void ThreadContext::OnJoined(void *arg) {
   ThreadState *caller_thr = static_cast<ThreadState *>(arg);
   AcquireImpl(caller_thr, 0, &sync);
-  sync.Reset();
+  sync.Reset(&caller_thr->clock_cache);
 }
 
 struct OnCreatedArgs {
@@ -65,9 +65,14 @@ void ThreadContext::OnCreated(void *arg) {
 }
 
 void ThreadContext::OnReset() {
-  sync.Reset();
+  CHECK_EQ(sync.size(), 0);
   FlushUnneededShadowMemory(GetThreadTrace(tid), TraceSize() * sizeof(Event));
   //!!! FlushUnneededShadowMemory(GetThreadTraceHeader(tid), sizeof(Trace));
+}
+
+void ThreadContext::OnDetached(void *arg) {
+  ThreadState *thr1 = static_cast<ThreadState*>(arg);
+  sync.Reset(&thr1->clock_cache);
 }
 
 struct OnStartedArgs {
@@ -113,7 +118,7 @@ void ThreadContext::OnStarted(void *arg) {
   Trace *thr_trace = ThreadTrace(thr->tid);
   thr_trace->headers[trace].epoch0 = epoch0;
   StatInc(thr, StatSyncAcquire);
-  sync.Reset();
+  sync.Reset(&thr->clock_cache);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
           tid, (uptr)epoch0, args->stk_addr, args->stk_size,
@@ -134,6 +139,7 @@ void ThreadContext::OnFinished() {
     ctx->dd->DestroyPhysicalThread(thr->dd_pt);
     ctx->dd->DestroyLogicalThread(thr->dd_lt);
   }
+  ctx->clock_alloc.FlushCache(&thr->clock_cache);
   ctx->metamap.OnThreadIdle(thr);
 #ifndef TSAN_GO
   AllocatorThreadFinish(thr);
@@ -307,7 +313,7 @@ void ThreadJoin(ThreadState *thr, uptr pc, int tid) {
 void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
   CHECK_GT(tid, 0);
   CHECK_LT(tid, kMaxTid);
-  ctx->thread_registry->DetachThread(tid);
+  ctx->thread_registry->DetachThread(tid, thr);
 }
 
 void ThreadSetName(ThreadState *thr, const char *name) {

@@ -107,7 +107,7 @@ void InitializeFlags(Flags *f, const char *env) {
   ParseCommonFlagsFromString(f, env);
 
   // Copy back to common flags.
-  *common_flags() = *f;
+  internal_memcpy(common_flags(), f, sizeof(*common_flags()));
 
   // Sanity check.
   if (!f->report_bugs) {

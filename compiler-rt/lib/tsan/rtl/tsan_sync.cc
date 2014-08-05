@@ -21,7 +21,7 @@ void DDMutexInit(ThreadState *thr, uptr pc, SyncVar *s);
 
 SyncVar::SyncVar()
     : mtx(MutexTypeSyncVar, StatMtxSyncVar) {
-  Reset();
+  Reset(0);
 }
 
 void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
@@ -36,7 +36,7 @@ void SyncVar::Init(ThreadState *thr, uptr pc, uptr addr, u64 uid) {
     DDMutexInit(thr, pc, this);
 }
 
-void SyncVar::Reset() {
+void SyncVar::Reset(ThreadState *thr) {
   uid = 0;
   creation_stack_id = 0;
   owner_tid = kInvalidTid;
@@ -47,8 +47,13 @@ void SyncVar::Reset() {
   is_broken = 0;
   is_linker_init = 0;
 
-  clock.Zero();
-  read_clock.Reset();
+  if (thr == 0) {
+    CHECK_EQ(clock.size(), 0);
+    CHECK_EQ(read_clock.size(), 0);
+  } else {
+    clock.Reset(&thr->clock_cache);
+    read_clock.Reset(&thr->clock_cache);
+  }
 }
 
 MetaMap::MetaMap() {
@@ -93,7 +98,7 @@ void MetaMap::FreeRange(ThreadState *thr, uptr pc, uptr p, uptr sz) {
         DCHECK(idx & kFlagSync);
         SyncVar *s = sync_alloc_.Map(idx & ~kFlagMask);
         u32 next = s->next;
-        s->Reset();
+        s->Reset(thr);
         sync_alloc_.Free(&thr->sync_cache, idx & ~kFlagMask);
         idx = next;
       } else {
@@ -143,7 +148,7 @@ SyncVar* MetaMap::GetAndLock(ThreadState *thr, uptr pc,
       SyncVar * s = sync_alloc_.Map(idx & ~kFlagMask);
       if (s->addr == addr) {
         if (myidx != 0) {
-          mys->Reset();
+          mys->Reset(thr);
           sync_alloc_.Free(&thr->sync_cache, myidx);
         }
         if (write_lock)

@@ -17,6 +17,8 @@
 
 namespace __tsan {
 
+ClockCache cache;
+
 TEST(Clock, VectorBasic) {
   ThreadClock clk(0);
   ASSERT_EQ(clk.size(), 1U);
@@ -38,30 +40,32 @@ TEST(Clock, ChunkedBasic) {
   SyncClock chunked;
   ASSERT_EQ(vector.size(), 1U);
   ASSERT_EQ(chunked.size(), 0U);
-  vector.acquire(&chunked);
+  vector.acquire(&cache, &chunked);
   ASSERT_EQ(vector.size(), 1U);
   ASSERT_EQ(chunked.size(), 0U);
-  vector.release(&chunked);
+  vector.release(&cache, &chunked);
   ASSERT_EQ(vector.size(), 1U);
   ASSERT_EQ(chunked.size(), 1U);
-  vector.acq_rel(&chunked);
+  vector.acq_rel(&cache, &chunked);
   ASSERT_EQ(vector.size(), 1U);
   ASSERT_EQ(chunked.size(), 1U);
+  chunked.Reset(&cache);
 }
 
 TEST(Clock, AcquireRelease) {
   ThreadClock vector1(100);
   vector1.tick();
   SyncClock chunked;
-  vector1.release(&chunked);
+  vector1.release(&cache, &chunked);
   ASSERT_EQ(chunked.size(), 101U);
   ThreadClock vector2(0);
-  vector2.acquire(&chunked);
+  vector2.acquire(&cache, &chunked);
   ASSERT_EQ(vector2.size(), 101U);
   ASSERT_EQ(vector2.get(0), 0U);
   ASSERT_EQ(vector2.get(1), 0U);
   ASSERT_EQ(vector2.get(99), 0U);
   ASSERT_EQ(vector2.get(100), 1U);
+  chunked.Reset(&cache);
 }
 
 TEST(Clock, RepeatedAcquire) {
@@ -71,10 +75,12 @@ TEST(Clock, RepeatedAcquire) {
   thr2.tick();
 
   SyncClock sync;
-  thr1.ReleaseStore(&sync);
+  thr1.ReleaseStore(&cache, &sync);
 
-  thr2.acquire(&sync);
-  thr2.acquire(&sync);
+  thr2.acquire(&cache, &sync);
+  thr2.acquire(&cache, &sync);
+
+  sync.Reset(&cache);
 }
 
 TEST(Clock, ManyThreads) {
@@ -83,9 +89,9 @@ TEST(Clock, ManyThreads) {
     ThreadClock vector(0);
     vector.tick();
     vector.set(i, 1);
-    vector.release(&chunked);
+    vector.release(&cache, &chunked);
     ASSERT_EQ(i + 1, chunked.size());
-    vector.acquire(&chunked);
+    vector.acquire(&cache, &chunked);
     ASSERT_EQ(i + 1, vector.size());
   }
 
@@ -93,10 +99,12 @@ TEST(Clock, ManyThreads) {
     ASSERT_EQ(1U, chunked.get(i));
 
   ThreadClock vector(1);
-  vector.acquire(&chunked);
+  vector.acquire(&cache, &chunked);
   ASSERT_EQ(100U, vector.size());
   for (unsigned i = 0; i < 100; i++)
     ASSERT_EQ(1U, vector.get(i));
+
+  chunked.Reset(&cache);
 }
 
 TEST(Clock, DifferentSizes) {
@@ -107,30 +115,99 @@ TEST(Clock, DifferentSizes) {
     vector2.tick();
     {
       SyncClock chunked;
-      vector1.release(&chunked);
+      vector1.release(&cache, &chunked);
       ASSERT_EQ(chunked.size(), 11U);
-      vector2.release(&chunked);
+      vector2.release(&cache, &chunked);
       ASSERT_EQ(chunked.size(), 21U);
+      chunked.Reset(&cache);
     }
     {
       SyncClock chunked;
-      vector2.release(&chunked);
+      vector2.release(&cache, &chunked);
       ASSERT_EQ(chunked.size(), 21U);
-      vector1.release(&chunked);
+      vector1.release(&cache, &chunked);
       ASSERT_EQ(chunked.size(), 21U);
+      chunked.Reset(&cache);
     }
     {
       SyncClock chunked;
-      vector1.release(&chunked);
-      vector2.acquire(&chunked);
+      vector1.release(&cache, &chunked);
+      vector2.acquire(&cache, &chunked);
       ASSERT_EQ(vector2.size(), 21U);
+      chunked.Reset(&cache);
     }
     {
       SyncClock chunked;
-      vector2.release(&chunked);
-      vector1.acquire(&chunked);
+      vector2.release(&cache, &chunked);
+      vector1.acquire(&cache, &chunked);
       ASSERT_EQ(vector1.size(), 21U);
+      chunked.Reset(&cache);
     }
+  }
+}
+
+TEST(Clock, Growth) {
+  {
+    ThreadClock vector(10);
+    vector.tick();
+    vector.set(5, 42);
+    SyncClock sync;
+    vector.release(&cache, &sync);
+    ASSERT_EQ(sync.size(), 11U);
+    ASSERT_EQ(sync.get(0), 0ULL);
+    ASSERT_EQ(sync.get(1), 0ULL);
+    ASSERT_EQ(sync.get(5), 42ULL);
+    ASSERT_EQ(sync.get(9), 0ULL);
+    ASSERT_EQ(sync.get(10), 1ULL);
+    sync.Reset(&cache);
+  }
+  {
+    ThreadClock vector1(10);
+    vector1.tick();
+    ThreadClock vector2(20);
+    vector2.tick();
+    SyncClock sync;
+    vector1.release(&cache, &sync);
+    vector2.release(&cache, &sync);
+    ASSERT_EQ(sync.size(), 21U);
+    ASSERT_EQ(sync.get(0), 0ULL);
+    ASSERT_EQ(sync.get(10), 1ULL);
+    ASSERT_EQ(sync.get(19), 0ULL);
+    ASSERT_EQ(sync.get(20), 1ULL);
+    sync.Reset(&cache);
+  }
+  {
+    ThreadClock vector(100);
+    vector.tick();
+    vector.set(5, 42);
+    vector.set(90, 84);
+    SyncClock sync;
+    vector.release(&cache, &sync);
+    ASSERT_EQ(sync.size(), 101U);
+    ASSERT_EQ(sync.get(0), 0ULL);
+    ASSERT_EQ(sync.get(1), 0ULL);
+    ASSERT_EQ(sync.get(5), 42ULL);
+    ASSERT_EQ(sync.get(60), 0ULL);
+    ASSERT_EQ(sync.get(70), 0ULL);
+    ASSERT_EQ(sync.get(90), 84ULL);
+    ASSERT_EQ(sync.get(99), 0ULL);
+    ASSERT_EQ(sync.get(100), 1ULL);
+    sync.Reset(&cache);
+  }
+  {
+    ThreadClock vector1(10);
+    vector1.tick();
+    ThreadClock vector2(100);
+    vector2.tick();
+    SyncClock sync;
+    vector1.release(&cache, &sync);
+    vector2.release(&cache, &sync);
+    ASSERT_EQ(sync.size(), 101U);
+    ASSERT_EQ(sync.get(0), 0ULL);
+    ASSERT_EQ(sync.get(10), 1ULL);
+    ASSERT_EQ(sync.get(99), 0ULL);
+    ASSERT_EQ(sync.get(100), 1ULL);
+    sync.Reset(&cache);
   }
 }
 
@@ -257,31 +334,31 @@ static bool ClockFuzzer(bool printing) {
       if (printing)
         printf("acquire thr%d <- clk%d\n", tid, cid);
       thr0[tid]->acquire(sync0[cid]);
-      thr1[tid]->acquire(sync1[cid]);
+      thr1[tid]->acquire(&cache, sync1[cid]);
       break;
     case 1:
       if (printing)
         printf("release thr%d -> clk%d\n", tid, cid);
       thr0[tid]->release(sync0[cid]);
-      thr1[tid]->release(sync1[cid]);
+      thr1[tid]->release(&cache, sync1[cid]);
       break;
     case 2:
       if (printing)
         printf("acq_rel thr%d <> clk%d\n", tid, cid);
       thr0[tid]->acq_rel(sync0[cid]);
-      thr1[tid]->acq_rel(sync1[cid]);
+      thr1[tid]->acq_rel(&cache, sync1[cid]);
       break;
     case 3:
       if (printing)
         printf("rel_str thr%d >> clk%d\n", tid, cid);
       thr0[tid]->ReleaseStore(sync0[cid]);
-      thr1[tid]->ReleaseStore(sync1[cid]);
+      thr1[tid]->ReleaseStore(&cache, sync1[cid]);
       break;
     case 4:
       if (printing)
         printf("reset clk%d\n", cid);
       sync0[cid]->Reset();
-      sync1[cid]->Reset();
+      sync1[cid]->Reset(&cache);
       break;
     case 5:
       if (printing)
@@ -330,6 +407,10 @@ static bool ClockFuzzer(bool printing) {
       }
       return false;
     }
+  }
+
+  for (unsigned i = 0; i < kClocks; i++) {
+    sync1[i]->Reset(&cache);
   }
   return true;
 }

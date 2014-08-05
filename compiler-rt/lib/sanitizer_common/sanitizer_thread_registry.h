@@ -68,6 +68,7 @@ class ThreadContextBase {
   virtual void OnStarted(void *arg) {}
   virtual void OnCreated(void *arg) {}
   virtual void OnReset() {}
+  virtual void OnDetached(void *arg) {}
 };
 
 typedef ThreadContextBase* (*ThreadContextFactory)(u32 tid);
@@ -111,6 +112,7 @@ class ThreadRegistry {
   void SetThreadName(u32 tid, const char *name);
   void SetThreadNameByUserId(uptr user_id, const char *name);
   void DetachThread(u32 tid);
+  void DetachThread(u32 tid, void *arg);
   void JoinThread(u32 tid, void *arg);
   void FinishThread(u32 tid);
   void StartThread(u32 tid, uptr os_id, void *arg);
