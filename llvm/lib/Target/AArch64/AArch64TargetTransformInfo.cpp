@@ -124,6 +124,9 @@ public:
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src, unsigned Alignment,
                            unsigned AddressSpace) const override;
+
+  unsigned getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const override;
+
   /// @}
 };
 
@@ -497,4 +500,16 @@ unsigned AArch64TTI::getMemoryOpCost(unsigned Opcode, Type *Src,
   }
 
   return LT.first;
+}
+
+unsigned AArch64TTI::getCostOfKeepingLiveOverCall(ArrayRef<Type*> Tys) const {
+  unsigned Cost = 0;
+  for (auto *I : Tys) {
+    if (!I->isVectorTy())
+      continue;
+    if (I->getScalarSizeInBits() * I->getVectorNumElements() == 128)
+      Cost += getMemoryOpCost(Instruction::Store, I, 128, 0) +
+        getMemoryOpCost(Instruction::Load, I, 128, 0);
+  }
+  return Cost;
 }

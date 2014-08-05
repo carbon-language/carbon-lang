@@ -361,6 +361,10 @@ public:
   /// Returns the vectorized root.
   Value *vectorizeTree();
 
+  /// \returns the cost incurred by unwanted spills and fills, caused by
+  /// holding live values over call sites.
+  int getSpillCost();
+
   /// \returns the vectorization cost of the subtree that starts at \p VL.
   /// A negative number means that this is profitable.
   int getTreeCost();
@@ -1543,6 +1547,68 @@ bool BoUpSLP::isFullyVectorizableTinyTree() {
   return true;
 }
 
+int BoUpSLP::getSpillCost() {
+  // Walk from the bottom of the tree to the top, tracking which values are
+  // live. When we see a call instruction that is not part of our tree,
+  // query TTI to see if there is a cost to keeping values live over it
+  // (for example, if spills and fills are required).
+  unsigned BundleWidth = VectorizableTree.front().Scalars.size();
+  int Cost = 0;
+
+  SmallPtrSet<Instruction*, 4> LiveValues;
+  Instruction *PrevInst = nullptr; 
+
+  for (unsigned N = 0; N < VectorizableTree.size(); ++N) {
+    Instruction *Inst = dyn_cast<Instruction>(VectorizableTree[N].Scalars[0]);
+    if (!Inst)
+      continue;
+
+    if (!PrevInst) {
+      PrevInst = Inst;
+      continue;
+    }
+
+    DEBUG(
+      dbgs() << "SLP: #LV: " << LiveValues.size();
+      for (auto *X : LiveValues)
+        dbgs() << " " << X->getName();
+      dbgs() << ", Looking at ";
+      Inst->dump();
+      );
+
+    // Update LiveValues.
+    LiveValues.erase(PrevInst);
+    for (auto &J : PrevInst->operands()) {
+      if (isa<Instruction>(&*J) && ScalarToTreeEntry.count(&*J))
+        LiveValues.insert(cast<Instruction>(&*J));
+    }    
+
+    // Now find the sequence of instructions between PrevInst and Inst.
+    BasicBlock::reverse_iterator InstIt(Inst), PrevInstIt(PrevInst);
+    --PrevInstIt;
+    while (InstIt != PrevInstIt) {
+      if (PrevInstIt == PrevInst->getParent()->rend()) {
+        PrevInstIt = Inst->getParent()->rbegin();
+        continue;
+      }
+
+      if (isa<CallInst>(&*PrevInstIt) && &*PrevInstIt != PrevInst) {
+        SmallVector<Type*, 4> V;
+        for (auto *II : LiveValues)
+          V.push_back(VectorType::get(II->getType(), BundleWidth));
+        Cost += TTI->getCostOfKeepingLiveOverCall(V);
+      }
+
+      ++PrevInstIt;
+    }
+
+    PrevInst = Inst;
+  }
+
+  DEBUG(dbgs() << "SLP: SpillCost=" << Cost << "\n");
+  return Cost;
+}
+
 int BoUpSLP::getTreeCost() {
   int Cost = 0;
   DEBUG(dbgs() << "SLP: Calculating cost for tree of size " <<
@@ -1577,6 +1643,8 @@ int BoUpSLP::getTreeCost() {
     ExtractCost += TTI->getVectorInstrCost(Instruction::ExtractElement, VecTy,
                                            I->Lane);
   }
+
+  Cost += getSpillCost();
 
   DEBUG(dbgs() << "SLP: Total Cost " << Cost + ExtractCost<< ".\n");
   return  Cost + ExtractCost;
