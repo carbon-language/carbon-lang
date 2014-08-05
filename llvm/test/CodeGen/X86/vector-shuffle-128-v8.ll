@@ -648,3 +648,26 @@ define <8 x i16> @shuffle_v8i16_012dcde3(<8 x i16> %a, <8 x i16> %b) {
   %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 0, i32 1, i32 2, i32 13, i32 12, i32 13, i32 14, i32 3>
   ret <8 x i16> %shuffle
 }
+
+define <8 x i16> @shuffle_v8i16_XXX1X579(<8 x i16> %a, <8 x i16> %b) {
+; SSE2-LABEL: @shuffle_v8i16_XXX1X579
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshufhw {{.*}}   # xmm0 = xmm0[0,1,2,3,5,7,6,7]
+; SSE2-NEXT:    pshufd {{.*}}    # xmm0 = xmm0[0,2,2,3]
+; SSE2-NEXT:    punpcklwd {{.*}} # xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSE2-NEXT:    pshufhw {{.*}}   # xmm0 = xmm0[0,1,2,3,4,6,6,7]
+; SSE2-NEXT:    pshufd {{.*}}    # xmm0 = xmm0[0,1,2,1]
+; SSE2-NEXT:    pshuflw {{.*}}   # xmm0 = xmm0[0,1,2,2,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*}}   # xmm0 = xmm0[0,1,2,3,4,4,5,7]
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v8i16_XXX1X579
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pshufhw {{.*}}   # xmm0 = xmm0[0,1,2,3,5,7,6,7]
+; SSSE3-NEXT:    pshufd {{.*}}    # xmm0 = xmm0[0,2,2,3]
+; SSSE3-NEXT:    punpcklwd {{.*}} # xmm0 = xmm0[0],xmm1[0],xmm0[1],xmm1[1],xmm0[2],xmm1[2],xmm0[3],xmm1[3]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[{{[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+,[0-9]+}},4,5,{{[0-9]+,[0-9]+}},8,9,12,13,6,7]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 undef, i32 undef, i32 undef, i32 1, i32 undef, i32 5, i32 7, i32 9>
+  ret <8 x i16> %shuffle
+}

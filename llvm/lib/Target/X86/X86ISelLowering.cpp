@@ -7628,34 +7628,37 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
       if (GoodInputs.size() == 2) {
         // If the low inputs are spread across two dwords, pack them into
         // a single dword.
-        MoveMask[Mask[GoodInputs[0]] % 2 + MoveOffset] =
-            Mask[GoodInputs[0]] - MaskOffset;
-        MoveMask[Mask[GoodInputs[1]] % 2 + MoveOffset] =
-            Mask[GoodInputs[1]] - MaskOffset;
-        Mask[GoodInputs[0]] = Mask[GoodInputs[0]] % 2 + MoveOffset + MaskOffset;
-        Mask[GoodInputs[1]] = Mask[GoodInputs[0]] % 2 + MoveOffset + MaskOffset;
+        MoveMask[MoveOffset] = Mask[GoodInputs[0]] - MaskOffset;
+        MoveMask[MoveOffset + 1] = Mask[GoodInputs[1]] - MaskOffset;
+        Mask[GoodInputs[0]] = MoveOffset + MaskOffset;
+        Mask[GoodInputs[1]] = MoveOffset + 1 + MaskOffset;
       } else {
-        // Otherwise pin the low inputs.
+        // Otherwise pin the good inputs.
         for (int GoodInput : GoodInputs)
           MoveMask[Mask[GoodInput] - MaskOffset] = Mask[GoodInput] - MaskOffset;
       }
 
+      if (BadInputs.size() == 2) {
+        // If we have two bad inputs then there may be either one or two good
+        // inputs fixed in place. Find a fixed input, and then find the *other*
+        // two adjacent indices by using modular arithmetic.
+        int GoodMaskIdx =
+            std::find_if(std::begin(MoveMask) + MoveOffset, std::end(MoveMask),
+                         [](int M) { return M >= 0; }) -
+            std::begin(MoveMask);
+        int MoveMaskIdx =
+            (((GoodMaskIdx - MoveOffset) & ~1) + 2 % 4) + MoveOffset;
+        assert(MoveMask[MoveMaskIdx] == -1 && "Expected empty slot");
+        assert(MoveMask[MoveMaskIdx + 1] == -1 && "Expected empty slot");
+        MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
+        MoveMask[MoveMaskIdx + 1] = Mask[BadInputs[1]] - MaskOffset;
+        Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
+        Mask[BadInputs[1]] = MoveMaskIdx + 1 + MaskOffset;
+      } else {
+        assert(BadInputs.size() == 1 && "All sizes handled");
       int MoveMaskIdx =
           std::find(std::begin(MoveMask) + MoveOffset, std::end(MoveMask), -1) -
           std::begin(MoveMask);
-      assert(MoveMaskIdx >= MoveOffset && "Established above");
-
-      if (BadInputs.size() == 2) {
-        assert(MoveMask[MoveMaskIdx] == -1 && "Expected empty slot");
-        assert(MoveMask[MoveMaskIdx + 1] == -1 && "Expected empty slot");
-        MoveMask[MoveMaskIdx + Mask[BadInputs[0]] % 2] =
-            Mask[BadInputs[0]] - MaskOffset;
-        MoveMask[MoveMaskIdx + Mask[BadInputs[1]] % 2] =
-            Mask[BadInputs[1]] - MaskOffset;
-        Mask[BadInputs[0]] = MoveMaskIdx + Mask[BadInputs[0]] % 2 + MaskOffset;
-        Mask[BadInputs[1]] = MoveMaskIdx + Mask[BadInputs[1]] % 2 + MaskOffset;
-      } else {
-        assert(BadInputs.size() == 1 && "All sizes handled");
         MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
         Mask[BadInputs[0]] = MoveMaskIdx + MaskOffset;
       }
