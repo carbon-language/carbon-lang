@@ -649,6 +649,24 @@ TEST(DeclarationMatcher, HasDescendantMemoization) {
   EXPECT_TRUE(matches("void f() { int i; }", CannotMemoize));
 }
 
+TEST(DeclarationMatcher, MatchCudaDecl) {
+  EXPECT_TRUE(matchesWithCuda("__global__ void f() { }"
+                              "void g() { f<<<1, 2>>>(); }",
+                              CUDAKernelCallExpr()));
+  EXPECT_TRUE(matchesWithCuda("__attribute__((device)) void f() {}",
+                              hasCudaDeviceAttr()));
+  EXPECT_TRUE(matchesWithCuda("__attribute__((host)) void f() {}",
+                              hasCudaHostAttr()));
+  EXPECT_TRUE(matchesWithCuda("__attribute__((global)) void f() {}",
+                              hasCudaGlobalAttr()));
+  EXPECT_FALSE(matchesWithCuda("void f() {}",
+                               hasCudaGlobalAttr()));
+  EXPECT_TRUE(notMatchesWithCuda("void f() {}",
+                                 hasCudaGlobalAttr()));
+  EXPECT_FALSE(notMatchesWithCuda("__attribute__((global)) void f() {}",
+                                  hasCudaGlobalAttr()));
+}
+
 // Implements a run method that returns whether BoundNodes contains a
 // Decl bound to Id that can be dynamically cast to T.
 // Optionally checks that the check succeeded a specific number of times.

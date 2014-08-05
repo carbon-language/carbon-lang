@@ -319,6 +319,16 @@ usingDecl()
   matches using X::x </pre></td></tr>
 
 
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('usingDirectiveDecl0')"><a name="usingDirectiveDecl0Anchor">usingDirectiveDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1UsingDirectiveDecl.html">UsingDirectiveDecl</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="usingDirectiveDecl0"><pre>Matches using namespace declarations.
+
+Given
+  namespace X { int x; }
+  using namespace X;
+usingDirectiveDecl()
+  matches using namespace X </pre></td></tr>
+
+
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('varDecl0')"><a name="varDecl0Anchor">varDecl</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="varDecl0"><pre>Matches variable declarations.
 
@@ -352,6 +362,14 @@ nestedNameSpecifier()
 
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;</td><td class="name" onclick="toggle('qualType0')"><a name="qualType0Anchor">qualType</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1QualType.html">QualType</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="qualType0"><pre>Matches QualTypes in the clang AST.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('CUDAKernelCallExpr0')"><a name="CUDAKernelCallExpr0Anchor">CUDAKernelCallExpr</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CUDAKernelCallExpr.html">CUDAKernelCallExpr</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="CUDAKernelCallExpr0"><pre>Matches CUDA kernel call expression.
+
+Example matches kernel&lt;&lt;&lt;i,j&gt;&gt;&gt;()
+  kernel&lt;&lt;&lt;i,j&gt;&gt;&gt;();
 </pre></td></tr>
 
 
@@ -711,7 +729,7 @@ Given
   int a[] = { 1, 2 };
   struct B { int x, y; };
   B b = { 5, 6 };
-initList()
+initListExpr()
   matches "{ 1, 2 }" and "{ 5, 6 }"
 </pre></td></tr>
 
@@ -873,6 +891,18 @@ stmt()
 
 Example matches "abcd", L"abcd"
   char *s = "abcd"; wchar_t *ws = L"abcd"
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('substNonTypeTemplateParmExpr0')"><a name="substNonTypeTemplateParmExpr0Anchor">substNonTypeTemplateParmExpr</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1SubstNonTypeTemplateParmExpr.html">SubstNonTypeTemplateParmExpr</a>&gt;...</td></tr>
+<tr><td colspan="4" class="doc" id="substNonTypeTemplateParmExpr0"><pre>Matches substitutions of non-type template parameters.
+
+Given
+  template &lt;int N&gt;
+  struct A { static const int n = N; };
+  struct B : public A&lt;42&gt; {};
+substNonTypeTemplateParmExpr()
+  matches "N" in the right-hand side of "static const int n = N;"
 </pre></td></tr>
 
 
@@ -1269,6 +1299,7 @@ Given
     int a[] = { 2, 3 }
     int b[42];
     int c[a[0]];
+  }
 variableArrayType()
   matches "int c[a[0]]"
 </pre></td></tr>
@@ -1381,26 +1412,6 @@ constructorDecl(hasAnyConstructorInitializer(isWritten()))
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;</td><td class="name" onclick="toggle('hasOverloadedOperatorName0')"><a name="hasOverloadedOperatorName0Anchor">hasOverloadedOperatorName</a></td><td>StringRef Name</td></tr>
-<tr><td colspan="4" class="doc" id="hasOverloadedOperatorName0"><pre>Matches overloaded operator names.
-
-Matches overloaded operator names specified in strings without the
-"operator" prefix: e.g. "&lt;&lt;".
-
-Given:
-  class A { int operator*(); };
-  const A &amp;operator&lt;&lt;(const A &amp;a, const A &amp;b);
-  A a;
-  a &lt;&lt; a;   &lt;-- This matches
-
-operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;"))) matches the specified
-line and recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
-the declaration of A.
-
-Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;
-</pre></td></tr>
-
-
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;</td><td class="name" onclick="toggle('isConst0')"><a name="isConst0Anchor">isConst</a></td><td></td></tr>
 <tr><td colspan="4" class="doc" id="isConst0"><pre>Matches if the given method declaration is const.
 
@@ -1470,7 +1481,7 @@ operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;"))) matches the specified
 line and recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
 the declaration of A.
 
-Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXMethodDecl.html">CXXMethodDecl</a>&gt;
+Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;
 </pre></td></tr>
 
 
@@ -1601,10 +1612,30 @@ and reference to that variable declaration within a compound statement.
 </pre></td></tr>
 
 
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('equalsNode0')"><a name="equalsNode0Anchor">equalsNode</a></td><td>Decl *Node</td></tr>
-<tr><td colspan="4" class="doc" id="equalsNode0"><pre>Matches if a node equals another node.
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaDeviceAttr0')"><a name="hasCudaDeviceAttr0Anchor">hasCudaDeviceAttr</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="hasCudaDeviceAttr0"><pre>Matches declaration that has CUDA device attribute.
 
-Decl has pointer identity in the AST.
+Given
+  __attribute__((device)) void f() { ... }
+matches the function declaration of f.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaGlobalAttr0')"><a name="hasCudaGlobalAttr0Anchor">hasCudaGlobalAttr</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="hasCudaGlobalAttr0"><pre>Matches declaration that has CUDA global attribute.
+
+Given
+  __attribute__((global)) void f() { ... }
+matches the function declaration of f.
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Decl.html">Decl</a>&gt;</td><td class="name" onclick="toggle('hasCudaHostAttr0')"><a name="hasCudaHostAttr0Anchor">hasCudaHostAttr</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="hasCudaHostAttr0"><pre>Matches declaration that has CUDA host attribute.
+
+Given
+  __attribute__((host)) void f() { ... }
+matches the function declaration of f.
 </pre></td></tr>
 
 
@@ -1664,6 +1695,26 @@ Example matches true (matcher = boolLiteral(equals(true)))
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CharacterLiteral.html">CharacterLiteral</a>&gt;, Matcher&lt;CXXBoolLiteral&gt;,
            Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FloatingLiteral.html">FloatingLiteral</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1IntegerLiteral.html">IntegerLiteral</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;</td><td class="name" onclick="toggle('hasOverloadedOperatorName0')"><a name="hasOverloadedOperatorName0Anchor">hasOverloadedOperatorName</a></td><td>StringRef Name</td></tr>
+<tr><td colspan="4" class="doc" id="hasOverloadedOperatorName0"><pre>Matches overloaded operator names.
+
+Matches overloaded operator names specified in strings without the
+"operator" prefix: e.g. "&lt;&lt;".
+
+Given:
+  class A { int operator*(); };
+  const A &amp;operator&lt;&lt;(const A &amp;a, const A &amp;b);
+  A a;
+  a &lt;&lt; a;   &lt;-- This matches
+
+operatorCallExpr(hasOverloadedOperatorName("&lt;&lt;"))) matches the specified
+line and recordDecl(hasMethod(hasOverloadedOperatorName("*"))) matches
+the declaration of A.
+
+Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CXXOperatorCallExpr.html">CXXOperatorCallExpr</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;
 </pre></td></tr>
 
 
@@ -1897,14 +1948,6 @@ compoundStmt(
     forEachDescendant(declRefExpr(to(decl(equalsBoundNode("d"))))))
 will trigger a match for each combination of variable declaration
 and reference to that variable declaration within a compound statement.
-</pre></td></tr>
-
-
-<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('equalsNode1')"><a name="equalsNode1Anchor">equalsNode</a></td><td>Stmt *Node</td></tr>
-<tr><td colspan="4" class="doc" id="equalsNode1"><pre>Matches if a node equals another node.
-
-Stmt has pointer identity in the AST.
-
 </pre></td></tr>
 
 
@@ -2550,7 +2593,7 @@ given matcher.
 
 Example matches y.x() (matcher = callExpr(callee(methodDecl(hasName("x")))))
   class Y { public: void x(); };
-  void z() { Y y; y.x();
+  void z() { Y y; y.x(); }
 </pre></td></tr>
 
 
@@ -3448,6 +3491,7 @@ Example matches X &amp;x and const X &amp;y
     void a(X b) {
       X &amp;x = b;
       const X &amp;y = b;
+    }
   };
 </pre></td></tr>
 
