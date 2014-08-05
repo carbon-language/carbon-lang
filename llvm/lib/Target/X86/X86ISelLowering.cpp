@@ -19419,7 +19419,11 @@ static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
     // We fell out of the loop without finding a viable combining instruction.
     return false;
 
-  // Record the old value to use in RAUW-ing.
+  // Combine away the bottom node as its shuffle will be accumulated into
+  // a preceding shuffle.
+  DCI.CombineTo(N.getNode(), N.getOperand(0), /*AddTo*/ true);
+
+  // Record the old value.
   SDValue Old = V;
 
   // Merge this node's mask and our incoming mask (adjusted to account for all
@@ -19430,12 +19434,13 @@ static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
   V = DAG.getNode(V.getOpcode(), DL, MVT::v8i16, V.getOperand(0),
                   getV4X86ShuffleImm8ForMask(Mask, DAG));
 
-  // Replace N with its operand as we're going to combine that shuffle away.
-  DAG.ReplaceAllUsesWith(N, N.getOperand(0));
+  // Check that the shuffles didn't cancel each other out. If not, we need to
+  // combine to the new one.
+  if (Old != V)
+    // Replace the combinable shuffle with the combined one, updating all users
+    // so that we re-evaluate the chain here.
+    DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
 
-  // Replace the combinable shuffle with the combined one, updating all users
-  // so that we re-evaluate the chain here.
-  DCI.CombineTo(Old.getNode(), V, /*AddTo*/ true);
   return true;
 }
 
