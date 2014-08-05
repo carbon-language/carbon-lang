@@ -7540,6 +7540,7 @@ TEST_F(FormatTest, ConfigurableSpaceBeforeParens) {
                "default:\n"
                "  break;\n"
                "}", NoSpace);
+  verifyFormat("auto i = std::make_unique<int>(5);", NoSpace);
 
   FormatStyle Space = getLLVMStyle();
   Space.SpaceBeforeParens = FormatStyle::SBPO_Always;
@@ -7576,6 +7577,7 @@ TEST_F(FormatTest, ConfigurableSpaceBeforeParens) {
   verifyFormat("#if defined(x)\n"
                "#endif",
                Space);
+  verifyFormat("auto i = std::make_unique<int> (5);", Space);
 }
 
 TEST_F(FormatTest, ConfigurableSpacesInParentheses) {
