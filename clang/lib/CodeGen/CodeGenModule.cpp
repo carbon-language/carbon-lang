@@ -1951,7 +1951,8 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
       DI->EmitGlobalVariable(GV, D);
 }
 
-static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
+static bool isVarDeclStrongDefinition(const ASTContext &Context,
+                                      const VarDecl *D, bool NoCommon) {
   // Don't give variables common linkage if -fno-common was specified unless it
   // was overridden by a NoCommon attribute.
   if ((NoCommon || D->hasAttr<NoCommonAttr>()) && !D->hasAttr<CommonAttr>())
@@ -1974,6 +1975,12 @@ static bool isVarDeclStrongDefinition(const VarDecl *D, bool NoCommon) {
 
   // Tentative definitions marked with WeakImportAttr are true definitions.
   if (D->hasAttr<WeakImportAttr>())
+    return true;
+
+  // Declarations with a required alignment do not have common linakge in MSVC
+  // mode.
+  if (Context.getLangOpts().MSVCCompat &&
+      (Context.isAlignmentRequired(D->getType()) || D->hasAttr<AlignedAttr>()))
     return true;
 
   return false;
@@ -2022,7 +2029,8 @@ llvm::GlobalValue::LinkageTypes CodeGenModule::getLLVMLinkageForDeclarator(
   // C++ doesn't have tentative definitions and thus cannot have common
   // linkage.
   if (!getLangOpts().CPlusPlus && isa<VarDecl>(D) &&
-      !isVarDeclStrongDefinition(cast<VarDecl>(D), CodeGenOpts.NoCommon))
+      !isVarDeclStrongDefinition(Context, cast<VarDecl>(D),
+                                 CodeGenOpts.NoCommon))
     return llvm::GlobalVariable::CommonLinkage;
 
   // selectany symbols are externally visible, so use weak instead of
