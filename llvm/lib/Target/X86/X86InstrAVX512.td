@@ -4466,18 +4466,20 @@ multiclass avx512_alignr<string OpcodeStr, RegisterClass RC,
   def rri : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src1, RC:$src2, i8imm:$src3),
                      !strconcat(OpcodeStr,
-                     " \t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                     " \t{$src3, $src2, $src1, $dst|"
+                         "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
   let mayLoad = 1 in
   def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
                      (ins RC:$src1, x86memop:$src2, i8imm:$src3),
                      !strconcat(OpcodeStr,
-                     " \t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
+                     " \t{$src3, $src2, $src1, $dst|"
+                         "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
 }
-defm VALIGND : avx512_alignr<"valignd", VR512, i512mem>, 
+defm VALIGND : avx512_alignr<"valignd", VR512, i512mem>,
                  EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_alignr<"valignq", VR512, i512mem>, 
+defm VALIGNQ : avx512_alignr<"valignq", VR512, i512mem>,
                  VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 def : Pat<(v16f32 (X86PAlignr VR512:$src1, VR512:$src2, (i8 imm:$imm))),
