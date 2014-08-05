@@ -185,6 +185,9 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
             else
             {
                 new_plan_sp = m_thread.QueueThreadPlanForStepThrough (m_stack_id, false, stop_others);
+                // If we found a way through, then we should stop recursing.
+                if (new_plan_sp)
+                    break;
             }
         }
     }
