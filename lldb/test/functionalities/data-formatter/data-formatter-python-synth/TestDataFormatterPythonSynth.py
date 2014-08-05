@@ -19,6 +19,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
+    @skipIfFreeBSD # llvm.org/pr20545 bogus output confuses buildbot parser
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
