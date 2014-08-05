@@ -119,6 +119,21 @@ indicating the desired unroll count: `#pragma unroll _value_`.  The unroll count
 parameter can be optionally enclosed in parentheses. The directive `#pragma
 nounroll` indicates that the loop should not be unrolled.
 
+Windows Support
+---------------
+
+Clang's support for building native Windows programs, compatible with Visual
+C++, has improved significantly since the previous release. This includes
+correctly passing non-trivial objects by value, record layout, RTTI, name
+mangling, DLL attributes, and many many bug fixes. See
+`MSVC Compatibility <MSVCCompatibility.html>` for details.
+
+While still considered experimental, Clang's Windows support is good enough
+that Clang can self-host on Windows, and projects such as Chromium and Firefox
+have been built successfully using the
+`/fallback <UsersManual.html#the-fallback-option>` option.
+
+
 C Language Changes in Clang
 ---------------------------
 
