@@ -6,7 +6,7 @@
 // RUN:        -m32 -target x86_64--linux %s 2>&1 | \
 // RUN: FileCheck --check-prefix=CHECK-M32 %s
 
-// CHECK-M64: "{{.*}}{{[/\\]}}prefixed_tools_tree{{[/\\]}}x86_64--linux-as"
-// CHECK-M64: "{{.*}}{{[/\\]}}prefixed_tools_tree{{[/\\]}}x86_64--linux-ld"
-// CHECK-M32: "{{.*}}{{[/\\]}}prefixed_tools_tree{{[/\\]}}x86_64--linux-as"
-// CHECK-M32: "{{.*}}{{[/\\]}}prefixed_tools_tree{{[/\\]}}x86_64--linux-ld"
+// CHECK-M64: "{{.*}}{{/|\\\\}}prefixed_tools_tree{{/|\\\\}}x86_64--linux-as"
+// CHECK-M64: "{{.*}}{{/|\\\\}}prefixed_tools_tree{{/|\\\\}}x86_64--linux-ld"
+// CHECK-M32: "{{.*}}{{/|\\\\}}prefixed_tools_tree{{/|\\\\}}x86_64--linux-as"
+// CHECK-M32: "{{.*}}{{/|\\\\}}prefixed_tools_tree{{/|\\\\}}x86_64--linux-ld"
