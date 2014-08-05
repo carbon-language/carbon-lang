@@ -37,7 +37,6 @@
 #if defined(__APPLE__)
 #define SYMBOL_IS_FUNC(name)
 #elif defined(__ELF__)
-#define LOCAL_LABEL(name) .L_##name
 #if defined(__arm__)
 #define SYMBOL_IS_FUNC(name) .type name,%function
 #else
