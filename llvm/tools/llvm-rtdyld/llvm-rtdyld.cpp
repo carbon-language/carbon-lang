@@ -439,7 +439,14 @@ static int linkAndVerify() {
   // Resolve all the relocations we can.
   Dyld.resolveRelocations();
 
-  return checkAllExpressions(Checker);
+  int ErrorCode = checkAllExpressions(Checker);
+  if (Dyld.hasError()) {
+    errs() << "RTDyld reported an error applying relocations:\n  "
+           << Dyld.getErrorString() << "\n";
+    ErrorCode = 1;
+  }
+
+  return ErrorCode;
 }
 
 int main(int argc, char **argv) {
