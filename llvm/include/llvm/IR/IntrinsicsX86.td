@@ -3184,6 +3184,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                   [IntrNoMem]>;
 }
 
+let TargetPrefix = "x86" in {
+  def int_x86_avx512_mask_valign_q_512 : GCCBuiltin<"__builtin_ia32_alignq512_mask">,
+        Intrinsic<[llvm_v8i64_ty],
+                  [llvm_v8i64_ty, llvm_v8i64_ty, llvm_i8_ty, llvm_v8i64_ty, llvm_i8_ty],
+                  [IntrNoMem]>;
+
+  def int_x86_avx512_mask_valign_d_512 : GCCBuiltin<"__builtin_ia32_alignd512_mask">,
+        Intrinsic<[llvm_v16i32_ty],
+                  [llvm_v16i32_ty, llvm_v16i32_ty, llvm_i8_ty, llvm_v16i32_ty, llvm_i16_ty],
+                  [IntrNoMem]>;
+}
+
 // Misc.
 let TargetPrefix = "x86" in {
   def int_x86_avx512_mask_cmp_ps_512 : GCCBuiltin<"__builtin_ia32_cmpps512_mask">,

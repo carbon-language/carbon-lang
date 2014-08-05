@@ -611,3 +611,19 @@ define <8 x i64> @test_vmovntdqa(i8 *%x) {
 }
 
 declare <8 x i64> @llvm.x86.avx512.movntdqa(i8*)
+
+define <8 x i64> @test_valign_q(<8 x i64> %a, <8 x i64> %b) {
+; CHECK-LABEL: test_valign_q:
+; CHECK: valignq $2, %zmm1, %zmm0, %zmm0
+  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i8 2, <8 x i64> zeroinitializer, i8 -1)
+  ret <8 x i64> %res
+}
+
+define <8 x i64> @test_mask_valign_q(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) {
+; CHECK-LABEL: test_mask_valign_q:
+; CHECK: valignq $2, %zmm1, %zmm0, %k1, %zmm2
+  %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i8 2, <8 x i64> %src, i8 %mask)
+  ret <8 x i64> %res
+}
+
+declare <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64>, <8 x i64>, i8, <8 x i64>, i8)
