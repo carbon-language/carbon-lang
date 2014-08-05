@@ -1288,6 +1288,11 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
     Current->MustBreakBefore =
         Current->MustBreakBefore || mustBreakBefore(Line, *Current);
 
+    if (Style.AlwaysBreakAfterDefinitionReturnType &&
+        InFunctionDecl && Current->Type == TT_FunctionDeclarationName &&
+        Line.Last->is(tok::l_brace))  // Only for definitions.
+      Current->MustBreakBefore = true;
+
     Current->CanBreakBefore =
         Current->MustBreakBefore || canBreakBefore(Line, *Current);
     unsigned ChildSize = 0;

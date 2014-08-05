@@ -4147,6 +4147,17 @@ TEST_F(FormatTest, AlignsStringLiterals) {
                getLLVMStyleWithColumns(25));
 }
 
+TEST_F(FormatTest, AlwaysBreakAfterDefinitionReturnType) {
+  FormatStyle AfterType = getLLVMStyle();
+  AfterType.AlwaysBreakAfterDefinitionReturnType = true;
+  verifyFormat("const char *\n"
+               "f(void) {\n"  // Break here.
+               "  return \"\";\n"
+               "}\n"
+               "const char *bar(void);\n",  // No break here.
+               AfterType);
+}
+
 TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
   FormatStyle NoBreak = getLLVMStyle();
   NoBreak.AlwaysBreakBeforeMultilineStrings = false;
@@ -8148,6 +8159,7 @@ TEST_F(FormatTest, ParsesConfiguration) {
   CHECK_PARSE_BOOL(AllowShortBlocksOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortIfStatementsOnASingleLine);
   CHECK_PARSE_BOOL(AllowShortLoopsOnASingleLine);
+  CHECK_PARSE_BOOL(AlwaysBreakAfterDefinitionReturnType);
   CHECK_PARSE_BOOL(AlwaysBreakTemplateDeclarations);
   CHECK_PARSE_BOOL(BinPackParameters);
   CHECK_PARSE_BOOL(BreakBeforeBinaryOperators);

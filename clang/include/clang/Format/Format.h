@@ -235,6 +235,13 @@ struct FormatStyle {
   /// initializer lists.
   unsigned ConstructorInitializerIndentWidth;
 
+  /// \brief If \c true, always break after function definition return types.
+  ///
+  /// More truthfully called 'break before the identifier following the type
+  /// in a function definition'. PenaltyReturnTypeOnItsOwnLine becomes
+  /// irrelevant.
+  bool AlwaysBreakAfterDefinitionReturnType;
+
   /// \brief If \c true, always break after the <tt>template<...></tt> of a
   /// template declaration.
   bool AlwaysBreakTemplateDeclarations;
@@ -370,6 +377,8 @@ struct FormatStyle {
            AllowShortIfStatementsOnASingleLine ==
                R.AllowShortIfStatementsOnASingleLine &&
            AllowShortLoopsOnASingleLine == R.AllowShortLoopsOnASingleLine &&
+           AlwaysBreakAfterDefinitionReturnType ==
+               R.AlwaysBreakAfterDefinitionReturnType &&
            AlwaysBreakTemplateDeclarations ==
                R.AlwaysBreakTemplateDeclarations &&
            AlwaysBreakBeforeMultilineStrings ==

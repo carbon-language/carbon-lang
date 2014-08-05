@@ -173,6 +173,8 @@ template <> struct MappingTraits<FormatStyle> {
                    Style.AllowShortLoopsOnASingleLine);
     IO.mapOptional("AllowShortFunctionsOnASingleLine",
                    Style.AllowShortFunctionsOnASingleLine);
+    IO.mapOptional("AlwaysBreakAfterDefinitionReturnType",
+                   Style.AlwaysBreakAfterDefinitionReturnType);
     IO.mapOptional("AlwaysBreakTemplateDeclarations",
                    Style.AlwaysBreakTemplateDeclarations);
     IO.mapOptional("AlwaysBreakBeforeMultilineStrings",
@@ -311,6 +313,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AllowShortBlocksOnASingleLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.AllowShortLoopsOnASingleLine = false;
+  LLVMStyle.AlwaysBreakAfterDefinitionReturnType = false;
   LLVMStyle.AlwaysBreakBeforeMultilineStrings = false;
   LLVMStyle.AlwaysBreakTemplateDeclarations = false;
   LLVMStyle.BinPackParameters = true;
@@ -443,6 +446,7 @@ FormatStyle getWebKitStyle() {
 
 FormatStyle getGNUStyle() {
   FormatStyle Style = getLLVMStyle();
+  Style.AlwaysBreakAfterDefinitionReturnType = true;
   Style.BreakBeforeBinaryOperators = true;
   Style.BreakBeforeBraces = FormatStyle::BS_GNU;
   Style.BreakBeforeTernaryOperators = true;
