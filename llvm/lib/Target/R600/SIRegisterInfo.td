@@ -27,7 +27,15 @@ def VCC : RegisterWithSubRegs<"VCC", [VCC_LO, VCC_HI]> {
   let HWEncoding = 106;
 }
 
-def EXEC : SIReg<"EXEC", 126>;
+def EXEC_LO : SIReg<"EXEC", 126>;
+def EXEC_HI : SIReg<"EXEC", 127>;
+
+def EXEC : RegisterWithSubRegs<"EXEC", [EXEC_LO, EXEC_HI]> {
+  let Namespace = "AMDGPU";
+  let SubRegIndices = [sub0, sub1];
+  let HWEncoding = 126;
+}
+
 def SCC : SIReg<"SCC", 253>;
 def M0 : SIReg <"M0", 124>;
 
@@ -159,7 +167,7 @@ def M0Reg : RegisterClass<"AMDGPU", [i32], 32, (add M0)>;
 
 // Register class for all scalar registers (SGPRs + Special Registers)
 def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
-  (add SGPR_32, M0Reg, VCC_LO)
+  (add SGPR_32, M0Reg, VCC_LO, VCC_HI, EXEC_LO, EXEC_HI)
 >;
 
 def SGPR_64 : RegisterClass<"AMDGPU", [v2i32, i64], 64, (add SGPR_64Regs)>;
