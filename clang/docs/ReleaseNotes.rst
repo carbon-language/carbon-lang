@@ -124,8 +124,9 @@ Windows Support
 
 Clang's support for building native Windows programs, compatible with Visual
 C++, has improved significantly since the previous release. This includes
-correctly passing non-trivial objects by value, record layout, RTTI, name
-mangling, DLL attributes, and many many bug fixes. See
+correctly passing non-trivial objects by value, record layout, basic debug info,
+`Address Sanitizer <AddressSanitizer.html>` support, RTTI, name mangling,
+DLL attributes, and many many bug fixes. See
 `MSVC Compatibility <MSVCCompatibility.html>` for details.
 
 While still considered experimental, Clang's Windows support is good enough
