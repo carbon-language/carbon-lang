@@ -166,6 +166,47 @@
 // RUN:     -fstrength-reduce -fno-strength-reduce                            \
 // RUN:     -finline-limit=1000                                               \
 // RUN:     -finline-limit                                                    \
+// RUN:     -flto=1                                                           \
+// RUN:     -falign-labels                                                    \
+// RUN:     -falign-labels=100                                                \
+// RUN:     -falign-loops                                                     \
+// RUN:     -falign-loops=100                                                 \
+// RUN:     -falign-jumps                                                     \
+// RUN:     -falign-jumps=100                                                 \
+// RUN:     -fexcess-precision=100                                            \
+// RUN:     -fbranch-count-reg                                                \ 
+// RUN:     -fcaller-saves                                                    \
+// RUN:     -fno-default-inline -fdefault-inline                              \
+// RUN:     -fgcse-after-reload                                               \
+// RUN:     -fgcse-las                                                        \
+// RUN:     -fgcse-sm                                                         \
+// RUN:     -fipa-cp                                                          \
+// RUN:     -finline-functions-called-once                                    \
+// RUN:     -fmodulo-sched                                                    \
+// RUN:     -fmodulo-sched-allow-regmoves                                     \
+// RUN:     -fpeel-loops                                                      \
+// RUN:     -frename-registers                                                \
+// RUN:     -fschedule-insns2                                                 \
+// RUN:     -fsingle-precision-constant                                       \
+// RUN:     -ftree_loop_im                                                    \
+// RUN:     -ftree_loop_ivcanon                                               \
+// RUN:     -ftree_loop_linear                                                \
+// RUN:     -funsafe-loop-optimizations                                       \
+// RUN:     -fuse-linker-plugin                                               \
+// RUN:     -fvect-cost-model                                                 \
+// RUN:     -fvariable-expansion-in-unroller                                  \
+// RUN:     -fweb                                                             \
+// RUN:     -fwhole-program                                                   \
+// RUN:     -fno-tree-dce -ftree-dce                                          \
+// RUN:     -fno-tree-ter -ftree-ter                                          \
+// RUN:     -fno-tree-vrp -ftree-vrp                                          \
+// RUN:     -fno-delete-null-pointer-checks -fdelete-null-pointer-checks      \
+// RUN:     -fno-inline-small-functions -finline-small-functions              \
+// RUN:     -fno-fat-lto-objects -ffat-lto-objects                            \
+// RUN:     -fno-merge-constants -fmerge-constants                            \
+// RUN:     -fno-caller-saves -fcaller-saves                                  \
+// RUN:     -fno-reorder-blocks -freorder-blocks                              \
+// RUN:     -fno-schedule-insns2 -fschedule-insns2                            \
 // RUN:     %s 2>&1 | FileCheck --check-prefix=IGNORE %s
 // IGNORE-NOT: error: unknown argument
 
@@ -197,6 +238,46 @@
 // RUN: -ftracer                                                              \
 // RUN: -funroll-all-loops                                                    \
 // RUN: -funswitch-loops                                                      \
+// RUN: -flto=1                                                               \
+// RUN: -falign-labels                                                        \
+// RUN: -falign-labels=100                                                    \
+// RUN: -falign-loops                                                         \
+// RUN: -falign-loops=100                                                     \
+// RUN: -falign-jumps                                                         \
+// RUN: -falign-jumps=100                                                     \
+// RUN: -fexcess-precision=100                                                \
+// RUN: -fbranch-count-reg                                                    \ 
+// RUN: -fcaller-saves                                                        \
+// RUN: -fno-default-inline                                                   \
+// RUN: -fgcse-after-reload                                                   \
+// RUN: -fgcse-las                                                            \
+// RUN: -fgcse-sm                                                             \
+// RUN: -fipa-cp                                                              \
+// RUN: -finline-functions-called-once                                        \
+// RUN: -fmodulo-sched                                                        \
+// RUN: -fmodulo-sched-allow-regmoves                                         \
+// RUN: -fpeel-loops                                                          \
+// RUN: -frename-registers                                                    \
+// RUN: -fschedule-insns2                                                     \
+// RUN: -fsingle-precision-constant                                           \
+// RUN: -ftree_loop_im                                                        \
+// RUN: -ftree_loop_ivcanon                                                   \
+// RUN: -ftree_loop_linear                                                    \
+// RUN: -funsafe-loop-optimizations                                           \
+// RUN: -fuse-linker-plugin                                                   \
+// RUN: -fvect-cost-model                                                     \
+// RUN: -fvariable-expansion-in-unroller                                      \
+// RUN: -fweb                                                                 \
+// RUN: -fwhole-program                                                       \
+// RUN: -fcaller-saves                                                        \
+// RUN: -freorder-blocks                                                      \
+// RUN: -fdelete-null-pointer-checks                                          \
+// RUN: -ffat-lto-objects                                                     \
+// RUN: -fmerge-constants                                                     \
+// RUN: -finline-small-functions                                              \
+// RUN: -ftree-dce                                                            \
+// RUN: -ftree-ter                                                            \
+// RUN: -ftree-vrp                                                            \
 // RUN: %s 2>&1 | FileCheck --check-prefix=CHECK-WARNING %s
 // CHECK-WARNING-DAG: optimization flag '-finline-limit=1000' is not supported
 // CHECK-WARNING-DAG: optimization flag '-finline-limit' is not supported
@@ -224,6 +305,46 @@
 // CHECK-WARNING-DAG: optimization flag '-ftracer' is not supported
 // CHECK-WARNING-DAG: optimization flag '-funroll-all-loops' is not supported
 // CHECK-WARNING-DAG: optimization flag '-funswitch-loops' is not supported
+// CHECK-WARNING-DAG: optimization flag '-flto=1' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-labels' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-labels=100' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-loops' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-loops=100' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-jumps' is not supported
+// CHECK-WARNING-DAG: optimization flag '-falign-jumps=100' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fexcess-precision=100' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fbranch-count-reg' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fcaller-saves' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fno-default-inline' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fgcse-after-reload' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fgcse-las' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fgcse-sm' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fipa-cp' is not supported
+// CHECK-WARNING-DAG: optimization flag '-finline-functions-called-once' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fmodulo-sched' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fmodulo-sched-allow-regmoves' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fpeel-loops' is not supported
+// CHECK-WARNING-DAG: optimization flag '-frename-registers' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fschedule-insns2' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fsingle-precision-constant' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree_loop_im' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree_loop_ivcanon' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree_loop_linear' is not supported
+// CHECK-WARNING-DAG: optimization flag '-funsafe-loop-optimizations' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fuse-linker-plugin' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fvect-cost-model' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fvariable-expansion-in-unroller' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fweb' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fwhole-program' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fcaller-saves' is not supported
+// CHECK-WARNING-DAG: optimization flag '-freorder-blocks' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fdelete-null-pointer-checks' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ffat-lto-objects' is not supported
+// CHECK-WARNING-DAG: optimization flag '-fmerge-constants' is not supported
+// CHECK-WARNING-DAG: optimization flag '-finline-small-functions' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree-dce' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree-ter' is not supported
+// CHECK-WARNING-DAG: optimization flag '-ftree-vrp' is not supported
 
 // Test that we mute the warning on these
 // RUN: %clang -### -finline-limit=1000 -Wno-invalid-command-line-argument              \
