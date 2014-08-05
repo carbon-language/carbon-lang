@@ -3,7 +3,7 @@
 ;; Test various conversions.
 define zeroext i32 @trunc_(i8 zeroext %a, i16 zeroext %b, i32 %c, i64 %d) nounwind ssp {
 entry:
-; CHECK: trunc_
+; CHECK-LABEL: trunc_
 ; CHECK: sub sp, sp, #16
 ; CHECK: strb w0, [sp, #15]
 ; CHECK: strh w1, [sp, #12]
@@ -44,7 +44,7 @@ entry:
 
 define i64 @zext_(i8 zeroext %a, i16 zeroext %b, i32 %c, i64 %d) nounwind ssp {
 entry:
-; CHECK: zext_
+; CHECK-LABEL: zext_
 ; CHECK: sub sp, sp, #16
 ; CHECK: strb w0, [sp, #15]
 ; CHECK: strh w1, [sp, #12]
@@ -85,23 +85,25 @@ entry:
 
 define i32 @zext_i1_i32(i1 zeroext %a) nounwind ssp {
 entry:
-; CHECK: @zext_i1_i32
-; CHECK: and w0, w0, #0x1
+; CHECK-LABEL: zext_i1_i32
+; CHECK-NOT:   and w0, w0, #0x1
+; CHECK:       ret
   %conv = zext i1 %a to i32
   ret i32 %conv;
 }
 
 define i64 @zext_i1_i64(i1 zeroext %a) nounwind ssp {
 entry:
-; CHECK: @zext_i1_i64
-; CHECK: and w0, w0, #0x1
+; CHECK-LABEL: zext_i1_i64
+; CHECK-NOT:   and w0, w0, #0x1
+; CHECK:       ret
   %conv = zext i1 %a to i64
   ret i64 %conv;
 }
 
 define i64 @sext_(i8 signext %a, i16 signext %b, i32 %c, i64 %d) nounwind ssp {
 entry:
-; CHECK: sext_
+; CHECK-LABEL: sext_
 ; CHECK: sub sp, sp, #16
 ; CHECK: strb w0, [sp, #15]
 ; CHECK: strh w1, [sp, #12]
@@ -161,8 +163,9 @@ define zeroext i64 @sext_i16_i64(i16 zeroext %in) {
 ; Test sext i1 to i32
 define i32 @sext_i1_i32(i1 signext %a) nounwind ssp {
 entry:
-; CHECK: sext_i1_i32
-; CHECK: sbfx w0, w0, #0, #1
+; CHECK-LABEL: sext_i1_i32
+; CHECK-NOT:   sbfx w0, w0, #0, #1
+; CHECK:       ret
   %conv = sext i1 %a to i32
   ret i32 %conv
 }
@@ -170,7 +173,7 @@ entry:
 ; Test sext i1 to i16
 define signext i16 @sext_i1_i16(i1 %a) nounwind ssp {
 entry:
-; CHECK: sext_i1_i16
+; CHECK-LABEL: sext_i1_i16
 ; CHECK: sbfx w0, w0, #0, #1
   %conv = sext i1 %a to i16
   ret i16 %conv
@@ -179,7 +182,7 @@ entry:
 ; Test sext i1 to i8
 define signext i8 @sext_i1_i8(i1 %a) nounwind ssp {
 entry:
-; CHECK: sext_i1_i8
+; CHECK-LABEL: sext_i1_i8
 ; CHECK: sbfx w0, w0, #0, #1
   %conv = sext i1 %a to i8
   ret i8 %conv
@@ -188,7 +191,7 @@ entry:
 ; Test fpext
 define double @fpext_(float %a) nounwind ssp {
 entry:
-; CHECK: fpext_
+; CHECK-LABEL: fpext_
 ; CHECK: fcvt d0, s0
   %conv = fpext float %a to double
   ret double %conv
@@ -197,7 +200,7 @@ entry:
 ; Test fptrunc
 define float @fptrunc_(double %a) nounwind ssp {
 entry:
-; CHECK: fptrunc_
+; CHECK-LABEL: fptrunc_
 ; CHECK: fcvt s0, d0
   %conv = fptrunc double %a to float
   ret float %conv
@@ -206,7 +209,7 @@ entry:
 ; Test fptosi
 define i32 @fptosi_ws(float %a) nounwind ssp {
 entry:
-; CHECK: fptosi_ws
+; CHECK-LABEL: fptosi_ws
 ; CHECK: fcvtzs w0, s0
   %conv = fptosi float %a to i32
   ret i32 %conv
@@ -215,7 +218,7 @@ entry:
 ; Test fptosi
 define i32 @fptosi_wd(double %a) nounwind ssp {
 entry:
-; CHECK: fptosi_wd
+; CHECK-LABEL: fptosi_wd
 ; CHECK: fcvtzs w0, d0
   %conv = fptosi double %a to i32
   ret i32 %conv
@@ -224,7 +227,7 @@ entry:
 ; Test fptoui
 define i32 @fptoui_ws(float %a) nounwind ssp {
 entry:
-; CHECK: fptoui_ws
+; CHECK-LABEL: fptoui_ws
 ; CHECK: fcvtzu w0, s0
   %conv = fptoui float %a to i32
   ret i32 %conv
@@ -233,7 +236,7 @@ entry:
 ; Test fptoui
 define i32 @fptoui_wd(double %a) nounwind ssp {
 entry:
-; CHECK: fptoui_wd
+; CHECK-LABEL: fptoui_wd
 ; CHECK: fcvtzu w0, d0
   %conv = fptoui double %a to i32
   ret i32 %conv
@@ -242,7 +245,7 @@ entry:
 ; Test sitofp
 define float @sitofp_sw_i1(i1 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_sw_i1
+; CHECK-LABEL: sitofp_sw_i1
 ; CHECK: sbfx w0, w0, #0, #1
 ; CHECK: scvtf s0, w0
   %conv = sitofp i1 %a to float
@@ -252,7 +255,7 @@ entry:
 ; Test sitofp
 define float @sitofp_sw_i8(i8 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_sw_i8
+; CHECK-LABEL: sitofp_sw_i8
 ; CHECK: sxtb w0, w0
 ; CHECK: scvtf s0, w0
   %conv = sitofp i8 %a to float
@@ -262,9 +265,7 @@ entry:
 ; Test sitofp
 define float @sitofp_sw_i16(i16 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_sw_i16
-; CHECK: sxth w0, w0
-; CHECK: scvtf s0, w0
+; CHECK-LABEL: sitofp_sw_i16
   %conv = sitofp i16 %a to float
   ret float %conv
 }
@@ -272,7 +273,7 @@ entry:
 ; Test sitofp
 define float @sitofp_sw(i32 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_sw
+; CHECK-LABEL: sitofp_sw
 ; CHECK: scvtf s0, w0
   %conv = sitofp i32 %a to float
   ret float %conv
@@ -281,7 +282,7 @@ entry:
 ; Test sitofp
 define float @sitofp_sx(i64 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_sx
+; CHECK-LABEL: sitofp_sx
 ; CHECK: scvtf s0, x0
   %conv = sitofp i64 %a to float
   ret float %conv
@@ -290,7 +291,7 @@ entry:
 ; Test sitofp
 define double @sitofp_dw(i32 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_dw
+; CHECK-LABEL: sitofp_dw
 ; CHECK: scvtf d0, w0
   %conv = sitofp i32 %a to double
   ret double %conv
@@ -299,7 +300,7 @@ entry:
 ; Test sitofp
 define double @sitofp_dx(i64 %a) nounwind ssp {
 entry:
-; CHECK: sitofp_dx
+; CHECK-LABEL: sitofp_dx
 ; CHECK: scvtf d0, x0
   %conv = sitofp i64 %a to double
   ret double %conv
@@ -308,7 +309,7 @@ entry:
 ; Test uitofp
 define float @uitofp_sw_i1(i1 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_sw_i1
+; CHECK-LABEL: uitofp_sw_i1
 ; CHECK: and w0, w0, #0x1
 ; CHECK: ucvtf s0, w0
   %conv = uitofp i1 %a to float
@@ -318,9 +319,7 @@ entry:
 ; Test uitofp
 define float @uitofp_sw_i8(i8 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_sw_i8
-; CHECK: uxtb w0, w0
-; CHECK: ucvtf s0, w0
+; CHECK-LABEL: uitofp_sw_i8
   %conv = uitofp i8 %a to float
   ret float %conv
 }
@@ -328,9 +327,7 @@ entry:
 ; Test uitofp
 define float @uitofp_sw_i16(i16 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_sw_i16
-; CHECK: uxth w0, w0
-; CHECK: ucvtf s0, w0
+; CHECK-LABEL: uitofp_sw_i16
   %conv = uitofp i16 %a to float
   ret float %conv
 }
@@ -338,7 +335,7 @@ entry:
 ; Test uitofp
 define float @uitofp_sw(i32 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_sw
+; CHECK-LABEL: uitofp_sw
 ; CHECK: ucvtf s0, w0
   %conv = uitofp i32 %a to float
   ret float %conv
@@ -347,7 +344,7 @@ entry:
 ; Test uitofp
 define float @uitofp_sx(i64 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_sx
+; CHECK-LABEL: uitofp_sx
 ; CHECK: ucvtf s0, x0
   %conv = uitofp i64 %a to float
   ret float %conv
@@ -356,7 +353,7 @@ entry:
 ; Test uitofp
 define double @uitofp_dw(i32 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_dw
+; CHECK-LABEL: uitofp_dw
 ; CHECK: ucvtf d0, w0
   %conv = uitofp i32 %a to double
   ret double %conv
@@ -365,7 +362,7 @@ entry:
 ; Test uitofp
 define double @uitofp_dx(i64 %a) nounwind ssp {
 entry:
-; CHECK: uitofp_dx
+; CHECK-LABEL: uitofp_dx
 ; CHECK: ucvtf d0, x0
   %conv = uitofp i64 %a to double
   ret double %conv
@@ -373,7 +370,7 @@ entry:
 
 define i32 @i64_trunc_i32(i64 %a) nounwind ssp {
 entry:
-; CHECK: i64_trunc_i32
+; CHECK-LABEL: i64_trunc_i32
 ; CHECK: mov x1, x0
   %conv = trunc i64 %a to i32
   ret i32 %conv
@@ -381,7 +378,7 @@ entry:
 
 define zeroext i16 @i64_trunc_i16(i64 %a) nounwind ssp {
 entry:
-; CHECK: i64_trunc_i16
+; CHECK-LABEL: i64_trunc_i16
 ; CHECK: mov x[[REG:[0-9]+]], x0
 ; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0xffff
 ; CHECK: uxth w0, [[REG2]]
@@ -391,7 +388,7 @@ entry:
 
 define zeroext i8 @i64_trunc_i8(i64 %a) nounwind ssp {
 entry:
-; CHECK: i64_trunc_i8
+; CHECK-LABEL: i64_trunc_i8
 ; CHECK: mov x[[REG:[0-9]+]], x0
 ; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0xff
 ; CHECK: uxtb w0, [[REG2]]
@@ -401,7 +398,7 @@ entry:
 
 define zeroext i1 @i64_trunc_i1(i64 %a) nounwind ssp {
 entry:
-; CHECK: i64_trunc_i1
+; CHECK-LABEL: i64_trunc_i1
 ; CHECK: mov x[[REG:[0-9]+]], x0
 ; CHECK: and [[REG2:w[0-9]+]], w[[REG]], #0x1
 ; CHECK: and w0, [[REG2]], #0x1
@@ -411,7 +408,7 @@ entry:
 
 ; rdar://15101939
 define void @stack_trunc() nounwind {
-; CHECK: stack_trunc
+; CHECK-LABEL: stack_trunc
 ; CHECK: sub  sp, sp, #16
 ; CHECK: ldr  [[REG:x[0-9]+]], [sp]
 ; CHECK: mov  x[[REG2:[0-9]+]], [[REG]]
@@ -428,15 +425,15 @@ define void @stack_trunc() nounwind {
 
 define zeroext i64 @zext_i8_i64(i8 zeroext %in) {
 ; CHECK-LABEL: zext_i8_i64:
-; CHECK: mov x[[TMP:[0-9]+]], x0
-; CHECK: ubfx x0, x[[TMP]], #0, #8
+; CHECK-NOT:   ubfx x0, {{x[0-9]+}}, #0, #8
+; CHECK:       ret
   %big = zext i8 %in to i64
   ret i64 %big
 }
 define zeroext i64 @zext_i16_i64(i16 zeroext %in) {
 ; CHECK-LABEL: zext_i16_i64:
-; CHECK: mov x[[TMP:[0-9]+]], x0
-; CHECK: ubfx x0, x[[TMP]], #0, #16
+; CHECK-NOT:   ubfx x0, {{x[0-9]+}}, #0, #16
+; CHECK:       ret
   %big = zext i16 %in to i64
   ret i64 %big
 }
