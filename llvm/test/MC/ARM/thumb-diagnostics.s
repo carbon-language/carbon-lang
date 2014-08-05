@@ -218,3 +218,14 @@ error: invalid operand for instruction
         ldr r4, [pc, #-12]
 @ CHECK-ERRORS: error: instruction requires: thumb2
 
+@------------------------------------------------------------------------------
+@ STC2{L}/LDC2{L} - requires thumb2
+@------------------------------------------------------------------------------
+        stc2 p0, c8, [r1, #4]
+        stc2l p6, c2, [r7, #4]
+        ldc2 p0, c8, [r1, #4]
+        ldc2l p6, c2, [r7, #4]
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
+@ CHECK-ERRORS: error: invalid operand for instruction
