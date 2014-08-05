@@ -22,6 +22,7 @@
 #include "llvm/IR/OperandTraits.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/ValueHandle.h"
+#include <deque>
 #include <system_error>
 #include <vector>
 
@@ -183,6 +184,7 @@ class BitcodeReader : public GVMaterializer {
   /// inserted lazily into functions when they're loaded.
   typedef std::pair<unsigned, BasicBlock *> BasicBlockRefTy;
   DenseMap<Function *, std::vector<BasicBlockRefTy>> BasicBlockFwdRefs;
+  std::deque<Function *> BasicBlockFwdRefQueue;
 
   /// UseRelativeIDs - Indicates that we are using a new encoding for
   /// instruction operands where most operands in the current

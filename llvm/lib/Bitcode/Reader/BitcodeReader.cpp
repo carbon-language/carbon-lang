@@ -38,9 +38,14 @@ std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
   // Prevent recursion.
   WillMaterializeAllForwardRefs = true;
 
-  while (!BasicBlockFwdRefs.empty()) {
-    Function *F = BasicBlockFwdRefs.begin()->first;
+  while (!BasicBlockFwdRefQueue.empty()) {
+    Function *F = BasicBlockFwdRefQueue.front();
+    BasicBlockFwdRefQueue.pop_front();
     assert(F && "Expected valid function");
+    if (!BasicBlockFwdRefs.count(F))
+      // Already materialized.
+      continue;
+
     // Check for a function that isn't materializable to prevent an infinite
     // loop.  When parsing a blockaddress stored in a global variable, there
     // isn't a trivial way to check if a function will have a body without a
@@ -52,6 +57,7 @@ std::error_code BitcodeReader::materializeForwardReferencedFunctions() {
     if (std::error_code EC = Materialize(F))
       return EC;
   }
+  assert(BasicBlockFwdRefs.empty() && "Function missing from queue");
 
   // Reset state.
   WillMaterializeAllForwardRefs = false;
@@ -72,6 +78,7 @@ void BitcodeReader::FreeState() {
   MDKindMap.clear();
 
   assert(BasicBlockFwdRefs.empty() && "Unresolved blockaddress fwd references");
+  BasicBlockFwdRefQueue.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -1629,7 +1636,10 @@ std::error_code BitcodeReader::ParseConstants() {
         // Otherwise insert a placeholder and remember it so it can be inserted
         // when the function is parsed.
         BB = BasicBlock::Create(Context);
-        BasicBlockFwdRefs[Fn].emplace_back(BBID, BB);
+        auto &FwdBBs = BasicBlockFwdRefs[Fn];
+        if (FwdBBs.empty())
+          BasicBlockFwdRefQueue.push_back(Fn);
+        FwdBBs.emplace_back(BBID, BB);
       }
       V = BlockAddress::get(Fn, BB);
       break;
