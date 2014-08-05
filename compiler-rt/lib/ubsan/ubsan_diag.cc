@@ -312,3 +312,12 @@ ScopedReport::~ScopedReport() {
   if (DieAfterReport)
     Die();
 }
+
+bool __ubsan::MatchSuppression(const char *Str, SuppressionType Type) {
+  Suppression *s;
+  // If .preinit_array is not used, it is possible that the UBSan runtime is not
+  // initialized.
+  if (!SANITIZER_CAN_USE_PREINIT_ARRAY)
+    InitIfNecessary();
+  return SuppressionContext::Get()->Match(Str, Type, &s);
+}

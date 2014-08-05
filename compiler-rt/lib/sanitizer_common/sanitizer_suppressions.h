@@ -27,6 +27,7 @@ enum SuppressionType {
   SuppressionLeak,
   SuppressionLib,
   SuppressionDeadlock,
+  SuppressionVptrCheck,
   SuppressionTypeCount
 };
 

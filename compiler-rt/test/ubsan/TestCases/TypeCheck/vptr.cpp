@@ -11,6 +11,19 @@
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t oU 2>&1 | FileCheck %s --check-prefix=CHECK-OFFSET --strict-whitespace
 // RUN: UBSAN_OPTIONS=print_stacktrace=1 %run %t m0 2>&1 | FileCheck %s --check-prefix=CHECK-NULL-MEMBER --strict-whitespace
 
+// RUN: %clangxx -fsanitize=vptr -fno-sanitize-recover -g %s -O3 -o %t
+// RUN: (echo "vptr_check:S"; echo "vptr_check:T"; echo "vptr_check:U") > %t.supp
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t mS 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t fS 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t cS 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t mV 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t fV 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t cV 2>&1
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.supp" UBSAN_OPTIONS=suppressions=%t.supp %run %t oU 2>&1
+
+// RUN: echo "vptr_check:S" > %t.loc-supp
+// RUN: ASAN_OPTIONS="$ASAN_OPTIONS suppressions=%t.loc-supp" UBSAN_OPTIONS=suppressions=%t.loc-supp not %run %t x- 2>&1 | FileCheck %s --check-prefix=CHECK-LOC-SUPPRESS
+
 // FIXME: This test produces linker errors on Darwin.
 // XFAIL: darwin
 
@@ -30,6 +43,8 @@ struct T : S {
 };
 
 struct U : S, T { virtual int v() { return 2; } };
+
+struct V : S {};
 
 // Make p global so that lsan does not complain.
 T *p = 0;
@@ -83,6 +98,19 @@ int access_p(T *p, char type) {
     // Binding a reference to storage of appropriate size and alignment is OK.
     {T &r = *p;}
     break;
+
+  case 'x':
+    for (int i = 0; i < 2; i++) {
+      // Check that the first iteration ("S") succeeds, while the second ("V") fails.
+      p = reinterpret_cast<T*>((i == 0) ? new S : new V);
+      // CHECK-LOC-SUPPRESS: vptr.cpp:[[@LINE+5]]:7: runtime error: member call on address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
+      // CHECK-LOC-SUPPRESS-NEXT: [[PTR]]: note: object is of type 'V'
+      // CHECK-LOC-SUPPRESS-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
+      // CHECK-LOC-SUPPRESS-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
+      // CHECK-LOC-SUPPRESS-NEXT: {{^              vptr for 'V'}}
+      p->g();
+    }
+    return 0;
 
   case 'm':
     // CHECK-MEMBER: vptr.cpp:[[@LINE+6]]:15: runtime error: member access within address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'

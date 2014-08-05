@@ -15,6 +15,7 @@
 
 #include "ubsan_value.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
+#include "sanitizer_common/sanitizer_suppressions.h"
 
 namespace __ubsan {
 
@@ -217,6 +218,8 @@ public:
   ScopedReport(bool DieAfterReport);
   ~ScopedReport();
 };
+
+bool MatchSuppression(const char *Str, SuppressionType Type);
 
 } // namespace __ubsan
 

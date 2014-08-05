@@ -16,6 +16,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_mutex.h"
+#include "sanitizer_common/sanitizer_suppressions.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
 using namespace __ubsan;
@@ -42,6 +43,7 @@ void __ubsan::InitIfNecessary() {
   }
   // Initialize UBSan-specific flags.
   InitializeFlags();
+  SuppressionContext::InitIfNecessary();
   ubsan_inited = true;
 }
 
