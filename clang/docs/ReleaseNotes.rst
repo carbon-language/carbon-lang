@@ -125,14 +125,14 @@ Windows Support
 Clang's support for building native Windows programs, compatible with Visual
 C++, has improved significantly since the previous release. This includes
 correctly passing non-trivial objects by value, record layout, basic debug info,
-`Address Sanitizer <AddressSanitizer.html>` support, RTTI, name mangling,
+`Address Sanitizer <AddressSanitizer.html>`_ support, RTTI, name mangling,
 DLL attributes, and many many bug fixes. See
-`MSVC Compatibility <MSVCCompatibility.html>` for details.
+`MSVC Compatibility <MSVCCompatibility.html>`_ for details.
 
 While still considered experimental, Clang's Windows support is good enough
 that Clang can self-host on Windows, and projects such as Chromium and Firefox
 have been built successfully using the
-`/fallback <UsersManual.html#the-fallback-option>` option.
+`/fallback <UsersManual.html#the-fallback-option>`_ option.
 
 
 C Language Changes in Clang
