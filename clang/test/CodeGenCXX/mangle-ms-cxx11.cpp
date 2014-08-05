@@ -151,5 +151,5 @@ template <template <typename> class>
 void f() {}
 
 template void f<AliasA>();
-// CHECK-DAG: @"\01??$f@?@PR20047@@YAXXZ"
+// CHECK-DAG: @"\01??$f@$@PR20047@@YAXXZ"
 }

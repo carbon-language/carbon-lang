@@ -1187,7 +1187,7 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     } else if (isa<TypeAliasDecl>(ND)) {
       // FIXME: The mangling, while compatible with VS "14", is horribly
       // broken.  Update this when they release their next compiler.
-      Out << '?';
+      Out << '$';
     } else {
       llvm_unreachable("unexpected template template NamedDecl!");
     }
