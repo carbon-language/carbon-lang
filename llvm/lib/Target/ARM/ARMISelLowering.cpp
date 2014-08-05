@@ -2113,6 +2113,10 @@ ARMTargetLowering::LowerReturn(SDValue Chain,
   RetOps.push_back(Chain); // Operand #0 = Chain (updated below)
   bool isLittleEndian = Subtarget->isLittle();
 
+  MachineFunction &MF = DAG.getMachineFunction();
+  ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  AFI->setReturnRegsCount(RVLocs.size());
+
   // Copy the result values into the output registers.
   for (unsigned i = 0, realRVLocIdx = 0;
        i != RVLocs.size();

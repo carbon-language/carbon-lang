@@ -388,28 +388,65 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   }
 
-  if (ArgRegsSaveSize) {
-    // Unlike T2 and ARM mode, the T1 pop instruction cannot restore
-    // to LR, and we can't pop the value directly to the PC since
-    // we need to update the SP after popping the value. Therefore, we
-    // pop the old LR into R3 as a temporary.
+  bool IsV4PopReturn = false;
+  for (const CalleeSavedInfo &CSI : MFI->getCalleeSavedInfo())
+    if (CSI.getReg() == ARM::LR)
+      IsV4PopReturn = true;
+  IsV4PopReturn &= STI.hasV4TOps() && !STI.hasV5TOps();
 
+  // Unlike T2 and ARM mode, the T1 pop instruction cannot restore
+  // to LR, and we can't pop the value directly to the PC since
+  // we need to update the SP after popping the value. So instead
+  // we have to emit:
+  //   POP {r3}
+  //   ADD sp, #offset
+  //   BX r3
+  // If this would clobber a return value, then generate this sequence instead:
+  //   MOV ip, r3
+  //   POP {r3}
+  //   ADD sp, #offset
+  //   MOV lr, r3
+  //   MOV r3, ip
+  //   BX lr
+  if (ArgRegsSaveSize || IsV4PopReturn) {
     // Get the last instruction, tBX_RET
     MBBI = MBB.getLastNonDebugInstr();
     assert (MBBI->getOpcode() == ARM::tBX_RET);
-    // Epilogue for vararg functions: pop LR to R3 and branch off it.
-    AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
-      .addReg(ARM::R3, RegState::Define);
+    DebugLoc dl = MBBI->getDebugLoc();
 
-    emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
+    if (AFI->getReturnRegsCount() <= 3) {
+      // Epilogue: pop saved LR to R3 and branch off it. 
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
+        .addReg(ARM::R3, RegState::Define);
 
-    MachineInstrBuilder MIB =
-      BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg))
-      .addReg(ARM::R3, RegState::Kill);
-    AddDefaultPred(MIB);
-    MIB.copyImplicitOps(&*MBBI);
-    // erase the old tBX_RET instruction
-    MBB.erase(MBBI);
+      emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
+
+      MachineInstrBuilder MIB =
+        BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX))
+        .addReg(ARM::R3, RegState::Kill);
+      AddDefaultPred(MIB);
+      MIB.copyImplicitOps(&*MBBI);
+      // erase the old tBX_RET instruction
+      MBB.erase(MBBI);
+    } else {
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+        .addReg(ARM::R12, RegState::Define)
+        .addReg(ARM::R3, RegState::Kill));
+
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tPOP)))
+        .addReg(ARM::R3, RegState::Define);
+
+      emitSPUpdate(MBB, MBBI, TII, dl, *RegInfo, ArgRegsSaveSize);
+
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+        .addReg(ARM::LR, RegState::Define)
+        .addReg(ARM::R3, RegState::Kill));
+
+      AddDefaultPred(BuildMI(MBB, MBBI, dl, TII.get(ARM::tMOVr))
+        .addReg(ARM::R3, RegState::Define)
+        .addReg(ARM::R12, RegState::Kill));
+      // Keep the tBX_RET instruction
+    }
   }
 }
 
@@ -475,6 +512,9 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
     if (Reg == ARM::LR) {
       // Special epilogue for vararg functions. See emitEpilogue
       if (isVarArg)
+        continue;
+      // ARMv4T requires BX, see emitEpilogue
+      if (STI.hasV4TOps() && !STI.hasV5TOps())
         continue;
       Reg = ARM::PC;
       (*MIB).setDesc(TII.get(ARM::tPOP_RET));
