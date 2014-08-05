@@ -1334,8 +1334,7 @@ static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG) {
   SDLoc DL(Op);
   unsigned IsWrite = cast<ConstantSDNode>(Op.getOperand(2))->getZExtValue();
   unsigned Locality = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-  // The data thing is not used.
-  // unsigned isData = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
+  unsigned IsData = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
 
   bool IsStream = !Locality;
   // When the locality number is set
@@ -1350,6 +1349,7 @@ static SDValue LowerPREFETCH(SDValue Op, SelectionDAG &DAG) {
 
   // built the mask value encoding the expected behavior.
   unsigned PrfOp = (IsWrite << 4) |     // Load/Store bit
+                   (!IsData << 3) |     // IsDataCache bit
                    (Locality << 1) |    // Cache level bits
                    (unsigned)IsStream;  // Stream bit
   return DAG.getNode(AArch64ISD::PREFETCH, DL, MVT::Other, Op.getOperand(0),

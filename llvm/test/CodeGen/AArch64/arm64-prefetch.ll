@@ -17,6 +17,15 @@ entry:
   ; CHECK: prfum pldl1keep
   call void @llvm.prefetch(i8* %tmp, i32 0, i32 3, i32 1)
 
+  ; CHECK: prfum plil1strm
+  call void @llvm.prefetch(i8* %tmp, i32 0, i32 0, i32 0)
+  ; CHECK: prfum plil3keep
+  call void @llvm.prefetch(i8* %tmp, i32 0, i32 1, i32 0)
+  ; CHECK: prfum plil2keep
+  call void @llvm.prefetch(i8* %tmp, i32 0, i32 2, i32 0)
+  ; CHECK: prfum plil1keep
+  call void @llvm.prefetch(i8* %tmp, i32 0, i32 3, i32 0)
+
   ; CHECK: prfum pstl1strm
   call void @llvm.prefetch(i8* %tmp, i32 1, i32 0, i32 1)
   ; CHECK: prfum pstl3keep
@@ -57,26 +66,52 @@ entry:
   %arrayidx12 = getelementptr inbounds i32* %tmp10, i64 %idxprom
   %tmp11 = bitcast i32* %arrayidx12 to i8*
 
-  ; CHECK: prfm pstl1strm
-  call void @llvm.prefetch(i8* %tmp11, i32 1, i32 0, i32 1)
+
+  ; CHECK: prfm plil1strm
+  call void @llvm.prefetch(i8* %tmp11, i32 0, i32 0, i32 0)
   %tmp12 = load i32** @a, align 8, !tbaa !3
   %arrayidx15 = getelementptr inbounds i32* %tmp12, i64 %idxprom
-  %tmp13 = bitcast i32* %arrayidx15 to i8*
+  %tmp13 = bitcast i32* %arrayidx3 to i8*
 
-  ; CHECK: prfm pstl3keep
-  call void @llvm.prefetch(i8* %tmp13, i32 1, i32 1, i32 1)
+  ; CHECK: prfm plil3keep
+  call void @llvm.prefetch(i8* %tmp13, i32 0, i32 1, i32 0)
   %tmp14 = load i32** @a, align 8, !tbaa !3
   %arrayidx18 = getelementptr inbounds i32* %tmp14, i64 %idxprom
-  %tmp15 = bitcast i32* %arrayidx18 to i8*
+  %tmp15 = bitcast i32* %arrayidx6 to i8*
 
-  ; CHECK: prfm pstl2keep
-  call void @llvm.prefetch(i8* %tmp15, i32 1, i32 2, i32 1)
+  ; CHECK: prfm plil2keep
+  call void @llvm.prefetch(i8* %tmp15, i32 0, i32 2, i32 0)
   %tmp16 = load i32** @a, align 8, !tbaa !3
   %arrayidx21 = getelementptr inbounds i32* %tmp16, i64 %idxprom
-  %tmp17 = bitcast i32* %arrayidx21 to i8*
+  %tmp17 = bitcast i32* %arrayidx9 to i8*
+
+  ; CHECK: prfm plil1keep
+  call void @llvm.prefetch(i8* %tmp17, i32 0, i32 3, i32 0)
+  %tmp18 = load i32** @a, align 8, !tbaa !3
+  %arrayidx24 = getelementptr inbounds i32* %tmp18, i64 %idxprom
+  %tmp19 = bitcast i32* %arrayidx12 to i8*
+
+
+  ; CHECK: prfm pstl1strm
+  call void @llvm.prefetch(i8* %tmp19, i32 1, i32 0, i32 1)
+  %tmp20 = load i32** @a, align 8, !tbaa !3
+  %arrayidx27 = getelementptr inbounds i32* %tmp20, i64 %idxprom
+  %tmp21 = bitcast i32* %arrayidx15 to i8*
+
+  ; CHECK: prfm pstl3keep
+  call void @llvm.prefetch(i8* %tmp21, i32 1, i32 1, i32 1)
+  %tmp22 = load i32** @a, align 8, !tbaa !3
+  %arrayidx30 = getelementptr inbounds i32* %tmp22, i64 %idxprom
+  %tmp23 = bitcast i32* %arrayidx18 to i8*
+
+  ; CHECK: prfm pstl2keep
+  call void @llvm.prefetch(i8* %tmp23, i32 1, i32 2, i32 1)
+  %tmp24 = load i32** @a, align 8, !tbaa !3
+  %arrayidx33 = getelementptr inbounds i32* %tmp24, i64 %idxprom
+  %tmp25 = bitcast i32* %arrayidx21 to i8*
 
   ; CHECK: prfm pstl1keep
-  call void @llvm.prefetch(i8* %tmp17, i32 1, i32 3, i32 1)
+  call void @llvm.prefetch(i8* %tmp25, i32 1, i32 3, i32 1)
   ret void
 }
 
