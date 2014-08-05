@@ -318,7 +318,7 @@ protected:
 
         if (thread_sp)
         {
-            Log *log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
+            Log *log = lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_BREAKPOINTS | LIBLLDB_LOG_STEP);
 
             if (!thread_sp->IsValid())
             {
