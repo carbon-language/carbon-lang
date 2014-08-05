@@ -136,7 +136,10 @@ testing::AssertionResult matchesConditionallyWithCuda(
   std::unique_ptr<FrontendActionFactory> Factory(
       newFrontendActionFactory(&Finder));
   // Some tests use typeof, which is a gnu extension.
-  std::vector<std::string> Args({"-xcuda", CompileArg});
+  std::vector<std::string> Args;
+  Args.push_back("-xcuda");
+  Args.push_back("-fno-ms-extensions");
+  Args.push_back(CompileArg);
   if (!runToolOnCodeWithArgs(Factory->create(),
                              CudaHeader + Code, Args)) {
     return testing::AssertionFailure() << "Parsing error in \"" << Code << "\"";
