@@ -90,3 +90,10 @@
 # CHECK-BE: mtspr 988, 2                    # encoding: [0x7c,0x5c,0xf3,0xa6]
 # CHECK-LE: mtspr 988, 2                    # encoding: [0xa6,0xf3,0x5c,0x7c]
             mttbhi %r2
+
+# CHECK-BE: dci 14                          # encoding: [0x7d,0xc0,0x03,0x8c]
+# CHECK-LE: dci 14                          # encoding: [0x8c,0x03,0xc0,0x7d]
+            dci 14
+# CHECK-BE: ici 14                          # encoding: [0x7d,0xc0,0x07,0x8c]
+# CHECK-LE: ici 14                          # encoding: [0x8c,0x07,0xc0,0x7d]
+            ici 14

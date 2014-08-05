@@ -3090,6 +3090,22 @@ def WRTEEI: I<31, (outs), (ins i1imm:$E), "wrteei $E", IIC_SprMTMSR>,
   let Inst{21-30} = 163;
 }
 
+def DCI: I<31, (outs), (ins u4imm:$CT), "dci $CT", IIC_LdStLoad>,
+              Requires<[IsPPC4xx]> {
+  bits<4> CT;
+
+  let Inst{7-10} = CT;
+  let Inst{21-30} = 454;
+}
+
+def ICI: I<31, (outs), (ins u4imm:$CT), "ici $CT", IIC_LdStLoad>,
+              Requires<[IsPPC4xx]> {
+  bits<4> CT;
+
+  let Inst{7-10} = CT;
+  let Inst{21-30} = 966;
+}
+
 def MFMSR : XForm_rs<31, 83, (outs gprc:$RT), (ins),
                   "mfmsr $RT", IIC_SprMFMSR, []>;
 
