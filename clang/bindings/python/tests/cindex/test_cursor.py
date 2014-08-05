@@ -252,3 +252,17 @@ def test_referenced():
         if c.kind == CursorKind.CALL_EXPR:
             assert c.referenced.spelling == foo.spelling
             break
+
+def test_mangled_name():
+    kInputForMangling = """\
+    int foo(int, int);
+    """
+    tu = get_tu(kInputForMangling, lang='cpp')
+    foo = get_cursor(tu, 'foo')
+
+    # Since libclang does not link in targets, we cannot pass a triple to it
+    # and force the target. To enable this test to pass on all platforms, accept
+    # all valid manglings.
+    # [c-index-test handles this by running the source through clang, emitting
+    #  an AST file and running libclang on that AST file]
+    assert foo.mangled_name in ('_Z3fooii', '__Z3fooii', '?foo@@YAHHH')

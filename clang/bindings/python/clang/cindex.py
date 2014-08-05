@@ -1186,6 +1186,14 @@ class Cursor(Structure):
         return self._displayname
 
     @property
+    def mangled_name(self):
+        """Return the mangled name for the entity referenced by this cursor."""
+        if not hasattr(self, '_mangled_name'):
+            self._mangled_name = conf.lib.clang_Cursor_getMangling(self)
+
+        return self._mangled_name
+
+    @property
     def location(self):
         """
         Return the source location (the starting character) of the entity
@@ -2969,6 +2977,11 @@ functionList = [
    Type.from_result),
 
   ("clang_getCursorUSR",
+   [Cursor],
+   _CXString,
+   _CXString.from_result),
+
+  ("clang_Cursor_getMangling",
    [Cursor],
    _CXString,
    _CXString.from_result),
