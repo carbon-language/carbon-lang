@@ -979,21 +979,27 @@ public:
       return llvm::object::object_error::parse_failed;
     }
 
-    // In order to emit SEH table, all input files need to be compatible with
-    // SEH. Disable SEH if the file being read is not compatible.
-    if (!file->isCompatibleWithSEH())
-      _ctx.setSafeSEH(false);
+    // Add /INCLUDE'ed symbols to the file as if they existed in the
+    // file as undefined symbols.
+    for (StringRef sym : undefinedSymbols)
+      file->addUndefinedSymbol(sym);
 
     // One can define alias symbols using /alternatename:<sym>=<sym> option.
     // The mapping for /alternatename is in the context object. This helper
     // function iterate over defined atoms and create alias atoms if needed.
     createAlternateNameAtoms(*file);
 
-    for (StringRef sym : undefinedSymbols) {
-      file->addUndefinedSymbol(sym);
-      if (_ctx.deadStrip())
+    // Acquire the mutex to mutate _ctx.
+    std::lock_guard<std::recursive_mutex> lock(_ctx.getMutex());
+
+    // In order to emit SEH table, all input files need to be compatible with
+    // SEH. Disable SEH if the file being read is not compatible.
+    if (!file->isCompatibleWithSEH())
+      _ctx.setSafeSEH(false);
+
+    if (_ctx.deadStrip())
+      for (StringRef sym : undefinedSymbols)
         _ctx.addDeadStripRoot(sym);
-    }
 
     result.push_back(std::move(file));
     return std::error_code();
