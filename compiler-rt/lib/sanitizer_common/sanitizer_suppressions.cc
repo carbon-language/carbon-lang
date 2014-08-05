@@ -75,8 +75,9 @@ SuppressionContext *SuppressionContext::Get() {
   return suppression_ctx;
 }
 
-void SuppressionContext::Init() {
-  CHECK(!suppression_ctx);
+void SuppressionContext::InitIfNecessary() {
+  if (suppression_ctx)
+    return;
   suppression_ctx = new(placeholder) SuppressionContext;
   if (common_flags()->suppressions[0] == '\0')
     return;

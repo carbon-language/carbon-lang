@@ -83,10 +83,14 @@ static void InitializeFlags() {
     if (flags()->log_threads) Report(__VA_ARGS__); \
   } while (0);
 
+static bool suppressions_inited = false;
+
 void InitializeSuppressions() {
-  SuppressionContext::Init();
+  CHECK(!suppressions_inited);
+  SuppressionContext::InitIfNecessary();
   if (&__lsan_default_suppressions)
     SuppressionContext::Get()->Parse(__lsan_default_suppressions());
+  suppressions_inited = true;
 }
 
 struct RootRegion {

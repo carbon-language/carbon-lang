@@ -45,9 +45,10 @@ class SuppressionContext {
   const Suppression *SuppressionAt(uptr i) const;
   void GetMatched(InternalMmapVector<Suppression *> *matched);
 
-  // Create a SuppressionContext singleton. Not thread safe. Must be called
-  // early during initialization.
-  static void Init();
+  // Create a SuppressionContext singleton if it hasn't been created earlier.
+  // Not thread safe. Must be called early during initialization (but after
+  // runtime flags are parsed).
+  static void InitIfNecessary();
   // Returns a SuppressionContext singleton.
   static SuppressionContext *Get();
 

@@ -41,12 +41,16 @@ extern "C" const char *WEAK __tsan_default_suppressions() {
 
 namespace __tsan {
 
+static bool suppressions_inited = false;
+
 void InitializeSuppressions() {
-  SuppressionContext::Init();
+  CHECK(!suppressions_inited);
+  SuppressionContext::InitIfNecessary();
 #ifndef TSAN_GO
   SuppressionContext::Get()->Parse(__tsan_default_suppressions());
   SuppressionContext::Get()->Parse(std_suppressions);
 #endif
+  suppressions_inited = true;
 }
 
 SuppressionType conv(ReportType typ) {
