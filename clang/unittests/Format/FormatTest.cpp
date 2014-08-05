@@ -7677,6 +7677,17 @@ TEST_F(FormatTest, StroustrupBraceBreaking) {
                "}",
                BreakBeforeBrace);
 
+  verifyFormat("void foo()\n"
+               "{\n"
+               "  if (a) {\n"
+               "    a();\n"
+               "  }\n"
+               "  else {\n"
+               "    b();\n"
+               "  }\n"
+               "}\n",
+               BreakBeforeBrace);
+
   verifyFormat("#ifdef _DEBUG\n"
                "int foo(int i = 0)\n"
                "#else\n"
