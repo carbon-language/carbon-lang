@@ -48,6 +48,9 @@ class ARMFunctionInfo : public MachineFunctionInfo {
   ///
   unsigned ArgRegsSaveSize;
 
+  /// ReturnRegsCount - Number of registers used up in the return.
+  unsigned ReturnRegsCount;
+
   /// HasStackFrame - True if this function has a stack frame. Set by
   /// processFunctionBeforeCalleeSavedScan().
   bool HasStackFrame;
@@ -127,7 +130,8 @@ public:
   ARMFunctionInfo() :
     isThumb(false),
     hasThumb2(false),
-    ArgRegsSaveSize(0), HasStackFrame(false), RestoreSPFromFP(false),
+    ArgRegsSaveSize(0), ReturnRegsCount(0), HasStackFrame(false),
+    RestoreSPFromFP(false),
     LRSpilledForFarJump(false),
     FramePtrSpillOffset(0), GPRCS1Offset(0), GPRCS2Offset(0), DPRCSOffset(0),
     GPRCS1Size(0), GPRCS2Size(0), DPRCSSize(0),
@@ -150,6 +154,9 @@ public:
     return (ArgRegsSaveSize + Align - 1) & ~(Align - 1);
   }
   void setArgRegsSaveSize(unsigned s) { ArgRegsSaveSize = s; }
+
+  unsigned getReturnRegsCount() const { return ReturnRegsCount; }
+  void setReturnRegsCount(unsigned s) { ReturnRegsCount = s; }
 
   bool hasStackFrame() const { return HasStackFrame; }
   void setHasStackFrame(bool s) { HasStackFrame = s; }
