@@ -31,24 +31,26 @@ declare <2 x float> @llvm.fabs.v2f32(<2 x float> %a)
 ; We should generate:
 ;	mov	r0, #0
 ;	mvn	r1, #-2147483648
-;	mov	pc, lr
+;	bx	lr
 
-; CHECK-LABEL: fabs_v2f32_1
 define i64 @fabs_v2f32_1() {
+; CHECK-LABEL: fabs_v2f32_1:
+; CHECK: mvn r1, #-2147483648
+; CHECK: bx lr
+; CHECK-NOT: vabs
  %bitcast = bitcast i64 18446744069414584320 to <2 x float> ; 0xFFFF_FFFF_0000_0000
  %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
  %ret = bitcast <2 x float> %fabs to i64
  ret i64 %ret
-; CHECK: mvn r1, #-2147483648
-; CHECK-NOT: vabs
 }
 
-; CHECK-LABEL: fabs_v2f32_2
 define i64 @fabs_v2f32_2() {
+; CHECK-LABEL: fabs_v2f32_2:
+; CHECK: mvn r0, #-2147483648
+; CHECK: bx lr
+; CHECK-NOT: vabs
  %bitcast = bitcast i64 4294967295 to <2 x float> ; 0x0000_0000_FFFF_FFFF
  %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
  %ret = bitcast <2 x float> %fabs to i64
  ret i64 %ret
-; CHECK: mvn r0, #-2147483648
-; CHECK-NOT: vabs
 }

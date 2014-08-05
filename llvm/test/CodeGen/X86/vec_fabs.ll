@@ -52,24 +52,24 @@ declare <8 x float> @llvm.fabs.v8f32(<8 x float> %p)
 ; We should generate:
 ;    mov     (put constant value in return register)
 
-; CHECK-LABEL: fabs_v2f32_1
 define i64 @fabs_v2f32_1() {
+; CHECK-LABEL: fabs_v2f32_1:
+; CHECK: movabsq $9223372032559808512, %rax # imm = 0x7FFFFFFF00000000
+; CHECK-NEXT: retq
  %bitcast = bitcast i64 18446744069414584320 to <2 x float> ; 0xFFFF_FFFF_0000_0000
  %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
  %ret = bitcast <2 x float> %fabs to i64
  ret i64 %ret
-; CHECK: movabsq $9223372032559808512, %rax
-;  # imm = 0x7FFF_FFFF_0000_0000
 }
 
-; CHECK-LABEL: fabs_v2f32_2
 define i64 @fabs_v2f32_2() {
+; CHECK-LABEL: fabs_v2f32_2:
+; CHECK: movl $2147483647, %eax       # imm = 0x7FFFFFFF
+; CHECK-NEXT: retq
  %bitcast = bitcast i64 4294967295 to <2 x float> ; 0x0000_0000_FFFF_FFFF
  %fabs = call <2 x float> @llvm.fabs.v2f32(<2 x float> %bitcast)
  %ret = bitcast <2 x float> %fabs to i64
  ret i64 %ret
-; CHECK: movl $2147483647, %eax
-;  # imm = 0x0000_0000_7FFF_FFFF
 }
 
 declare <2 x float> @llvm.fabs.v2f32(<2 x float> %p)
