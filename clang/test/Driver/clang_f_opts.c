@@ -174,7 +174,7 @@
 // RUN:     -falign-jumps                                                     \
 // RUN:     -falign-jumps=100                                                 \
 // RUN:     -fexcess-precision=100                                            \
-// RUN:     -fbranch-count-reg                                                \ 
+// RUN:     -fbranch-count-reg                                                \
 // RUN:     -fcaller-saves                                                    \
 // RUN:     -fno-default-inline -fdefault-inline                              \
 // RUN:     -fgcse-after-reload                                               \
@@ -213,7 +213,7 @@
 // RUN:     -fno-implement-inlines -fimplement-inlines                        \
 // RUN:     -fstack-check                                                     \
 // RUN:     -fexec-charset=UTF-8                                              \
-// RUN:     -fforce-addr                                                      \ 
+// RUN:     -fforce-addr                                                      \
 // RUN:     -malign-functions=100                                             \
 // RUN:     -malign-loops=100                                                 \
 // RUN:     -malign-jumps=100                                                 \
@@ -256,7 +256,7 @@
 // RUN: -falign-jumps                                                         \
 // RUN: -falign-jumps=100                                                     \
 // RUN: -fexcess-precision=100                                                \
-// RUN: -fbranch-count-reg                                                    \ 
+// RUN: -fbranch-count-reg                                                    \
 // RUN: -fcaller-saves                                                        \
 // RUN: -fno-default-inline                                                   \
 // RUN: -fgcse-after-reload                                                   \
