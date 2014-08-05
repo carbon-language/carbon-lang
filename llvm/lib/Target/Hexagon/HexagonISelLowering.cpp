@@ -464,7 +464,7 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   SmallVector<SDValue, 8> MemOpChains;
 
   const HexagonRegisterInfo *QRI = static_cast<const HexagonRegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   SDValue StackPtr =
       DAG.getCopyFromReg(Chain, dl, QRI->getStackRegister(), getPointerTy());
 
@@ -723,7 +723,7 @@ SDValue HexagonTargetLowering::LowerINLINEASM(SDValue Op,
               // Check it to be lr
               const HexagonRegisterInfo *QRI =
                   static_cast<const HexagonRegisterInfo *>(
-                      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+                      DAG.getSubtarget().getRegisterInfo());
               if (Reg == QRI->getRARegister()) {
                 FuncInfo->setHasClobberLR(true);
                 break;
@@ -817,7 +817,7 @@ HexagonTargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
   // The Sub result contains the new stack start address, so it
   // must be placed in the stack pointer register.
   const HexagonRegisterInfo *QRI = static_cast<const HexagonRegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   SDValue CopyChain = DAG.getCopyToReg(Chain, dl, QRI->getStackRegister(), Sub);
 
   SDValue Ops[2] = { ArgAdjust, CopyChain };
@@ -964,8 +964,7 @@ HexagonTargetLowering::LowerConstantPool(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
-  const TargetRegisterInfo *TRI =
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = DAG.getSubtarget().getRegisterInfo();
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MFI->setReturnAddressIsTaken(true);
@@ -992,7 +991,7 @@ HexagonTargetLowering::LowerRETURNADDR(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 HexagonTargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   const HexagonRegisterInfo *TRI = static_cast<const HexagonRegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   MachineFrameInfo *MFI = DAG.getMachineFunction().getFrameInfo();
   MFI->setFrameAddressIsTaken(true);
 

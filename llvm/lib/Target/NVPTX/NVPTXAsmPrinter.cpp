@@ -1773,8 +1773,7 @@ void NVPTXAsmPrinter::setAndEmitFunctionVirtualRegisters(
 
   // Map the global virtual register number to a register class specific
   // virtual register number starting from 1 with that class.
-  const TargetRegisterInfo *TRI =
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   //unsigned numRegClasses = TRI->getNumRegClasses();
 
   // Emit the Fake Stack Object

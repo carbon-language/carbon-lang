@@ -2028,8 +2028,7 @@ SDValue NVPTXTargetLowering::LowerFormalArguments(
 
   const Function *F = MF.getFunction();
   const AttributeSet &PAL = F->getAttributes();
-  const TargetLowering *TLI =
-      DAG.getTarget().getSubtargetImpl()->getTargetLowering();
+  const TargetLowering *TLI = DAG.getSubtarget().getTargetLowering();
 
   SDValue Root = DAG.getRoot();
   std::vector<SDValue> OutChains;

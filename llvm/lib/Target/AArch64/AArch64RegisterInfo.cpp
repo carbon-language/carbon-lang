@@ -76,8 +76,7 @@ AArch64RegisterInfo::getThisReturnPreservedMask(CallingConv::ID) const {
 
 BitVector
 AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   // FIXME: avoid re-calculating this every time.
   BitVector Reserved(getNumRegs());
@@ -106,8 +105,7 @@ AArch64RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
 bool AArch64RegisterInfo::isReservedReg(const MachineFunction &MF,
                                       unsigned Reg) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   switch (Reg) {
   default:
@@ -171,8 +169,7 @@ bool AArch64RegisterInfo::hasBasePointer(const MachineFunction &MF) const {
 
 unsigned
 AArch64RegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   return TFI->hasFP(MF) ? AArch64::FP : AArch64::SP;
 }
@@ -239,8 +236,7 @@ bool AArch64RegisterInfo::needsFrameBaseReg(MachineInstr *MI,
   // Note that the incoming offset is based on the SP value at function entry,
   // so it'll be negative.
   MachineFunction &MF = *MI->getParent()->getParent();
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Estimate an offset from the frame pointer.
@@ -330,7 +326,7 @@ void AArch64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   const AArch64FrameLowering *TFI = static_cast<const AArch64FrameLowering *>(
-      MF.getTarget().getSubtargetImpl()->getFrameLowering());
+      MF.getSubtarget().getFrameLowering());
 
   int FrameIndex = MI.getOperand(FIOperandNum).getIndex();
   unsigned FrameReg;
@@ -368,8 +364,7 @@ namespace llvm {
 
 unsigned AArch64RegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                                   MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   switch (RC->getID()) {
   default:

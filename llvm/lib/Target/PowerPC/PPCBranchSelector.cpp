@@ -64,8 +64,8 @@ FunctionPass *llvm::createPPCBranchSelectionPass() {
 }
 
 bool PPCBSel::runOnMachineFunction(MachineFunction &Fn) {
-  const PPCInstrInfo *TII = static_cast<const PPCInstrInfo *>(
-      Fn.getTarget().getSubtargetImpl()->getInstrInfo());
+  const PPCInstrInfo *TII =
+      static_cast<const PPCInstrInfo *>(Fn.getSubtarget().getInstrInfo());
   // Give the blocks of the function a dense, in-order, numbering.
   Fn.RenumberBlocks();
   BlockSizes.resize(Fn.getNumBlockIDs());

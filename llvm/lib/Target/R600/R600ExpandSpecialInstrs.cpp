@@ -66,8 +66,7 @@ void R600ExpandSpecialInstrsPass::SetFlagInNewMI(MachineInstr *NewMI,
 }
 
 bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
-  TII = static_cast<const R600InstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  TII = static_cast<const R600InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   const R600RegisterInfo &TRI = TII->getRegisterInfo();
 

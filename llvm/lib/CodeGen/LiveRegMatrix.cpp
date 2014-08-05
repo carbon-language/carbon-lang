@@ -48,7 +48,7 @@ void LiveRegMatrix::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool LiveRegMatrix::runOnMachineFunction(MachineFunction &MF) {
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   LIS = &getAnalysis<LiveIntervals>();
   VRM = &getAnalysis<VirtRegMap>();

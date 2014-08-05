@@ -44,8 +44,7 @@ FunctionPass *llvm::createXCoreFrameToArgsOffsetEliminationPass() {
 
 bool XCoreFTAOElim::runOnMachineFunction(MachineFunction &MF) {
   const XCoreInstrInfo &TII =
-      *static_cast<const XCoreInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const XCoreInstrInfo *>(MF.getSubtarget().getInstrInfo());
   unsigned StackSize = MF.getFrameInfo()->getStackSize();
   for (MachineFunction::iterator MFI = MF.begin(), E = MF.end(); MFI != E;
        ++MFI) {

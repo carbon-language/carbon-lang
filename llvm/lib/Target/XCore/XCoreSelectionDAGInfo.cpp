@@ -33,8 +33,7 @@ EmitTargetCodeForMemcpy(SelectionDAG &DAG, SDLoc dl, SDValue Chain,
   // Call __memcpy_4 if the src, dst and size are all 4 byte aligned.
   if (!AlwaysInline && (Align & 3) == 0 &&
       DAG.MaskedValueIsZero(Size, APInt(SizeBitWidth, 3))) {
-    const TargetLowering &TLI =
-        *DAG.getTarget().getSubtargetImpl()->getTargetLowering();
+    const TargetLowering &TLI = *DAG.getSubtarget().getTargetLowering();
     TargetLowering::ArgListTy Args;
     TargetLowering::ArgListEntry Entry;
     Entry.Ty = TLI.getDataLayout()->getIntPtrType(*DAG.getContext());

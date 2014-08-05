@@ -43,7 +43,7 @@ STATISTIC(NumRepairs,  "Number of invalid live ranges repaired");
 SplitAnalysis::SplitAnalysis(const VirtRegMap &vrm, const LiveIntervals &lis,
                              const MachineLoopInfo &mli)
     : MF(vrm.getMachineFunction()), VRM(vrm), LIS(lis), Loops(mli),
-      TII(*MF.getTarget().getSubtargetImpl()->getInstrInfo()), CurLI(nullptr),
+      TII(*MF.getSubtarget().getInstrInfo()), CurLI(nullptr),
       LastSplitPoint(MF.getNumBlockIDs()) {}
 
 void SplitAnalysis::clear() {

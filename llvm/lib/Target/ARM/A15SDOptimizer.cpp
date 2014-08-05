@@ -677,9 +677,8 @@ bool A15SDOptimizer::runOnInstruction(MachineInstr *MI) {
 }
 
 bool A15SDOptimizer::runOnMachineFunction(MachineFunction &Fn) {
-  TII = static_cast<const ARMBaseInstrInfo *>(
-      Fn.getTarget().getSubtargetImpl()->getInstrInfo());
-  TRI = Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = static_cast<const ARMBaseInstrInfo *>(Fn.getSubtarget().getInstrInfo());
+  TRI = Fn.getSubtarget().getRegisterInfo();
   MRI = &Fn.getRegInfo();
   bool Modified = false;
 

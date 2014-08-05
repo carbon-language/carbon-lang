@@ -120,7 +120,7 @@ bool AArch64DeadRegisterDefinitions::processMachineBasicBlock(
 // Scan the function for instructions that have a dead definition of a
 // register. Replace that register with the zero register when possible.
 bool AArch64DeadRegisterDefinitions::runOnMachineFunction(MachineFunction &MF) {
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   bool Changed = false;
   DEBUG(dbgs() << "***** AArch64DeadRegisterDefinitions *****\n");
 

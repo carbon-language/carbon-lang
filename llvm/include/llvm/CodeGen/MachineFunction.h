@@ -39,6 +39,7 @@ class MachineModuleInfo;
 class MCContext;
 class Pass;
 class TargetMachine;
+class TargetSubtargetInfo;
 class TargetRegisterClass;
 struct MachinePointerInfo;
 
@@ -76,6 +77,7 @@ struct MachineFunctionInfo {
 class MachineFunction {
   const Function *Fn;
   const TargetMachine &Target;
+  const TargetSubtargetInfo *STI;
   MCContext &Ctx;
   MachineModuleInfo &MMI;
   GCModuleInfo *GMI;
@@ -162,6 +164,11 @@ public:
   /// getTarget - Return the target machine this machine code is compiled with
   ///
   const TargetMachine &getTarget() const { return Target; }
+
+  /// getSubtarget - Return the subtarget for which this machine code is being
+  /// compiled.
+  const TargetSubtargetInfo &getSubtarget() const { return *STI; }
+  void setSubtarget(TargetSubtargetInfo *ST) { STI = ST; }
 
   /// getRegInfo - Return information about the registers currently in use.
   ///

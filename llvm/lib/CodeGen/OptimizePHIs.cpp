@@ -67,7 +67,7 @@ bool OptimizePHIs::runOnMachineFunction(MachineFunction &Fn) {
     return false;
 
   MRI = &Fn.getRegInfo();
-  TII = Fn.getTarget().getSubtargetImpl()->getInstrInfo();
+  TII = Fn.getSubtarget().getInstrInfo();
 
   // Find dead PHI cycles and PHI cycles that can be replaced by a single
   // value.  InstCombine does these optimizations, but DAG legalization may

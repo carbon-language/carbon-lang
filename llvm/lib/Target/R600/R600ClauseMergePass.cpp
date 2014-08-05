@@ -168,8 +168,7 @@ bool R600ClauseMergePass::mergeIfPossible(MachineInstr *RootCFAlu,
 }
 
 bool R600ClauseMergePass::runOnMachineFunction(MachineFunction &MF) {
-  TII = static_cast<const R600InstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  TII = static_cast<const R600InstrInfo *>(MF.getSubtarget().getInstrInfo());
   for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                   BB != BB_E; ++BB) {
     MachineBasicBlock &MBB = *BB;

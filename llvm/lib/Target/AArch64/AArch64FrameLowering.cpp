@@ -86,8 +86,7 @@ bool AArch64FrameLowering::hasFP(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
 
 #ifndef NDEBUG
-  const TargetRegisterInfo *RegInfo =
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *RegInfo = MF.getSubtarget().getRegisterInfo();
   assert(!RegInfo->needsStackRealignment(MF) &&
          "No stack realignment on AArch64!");
 #endif
@@ -109,15 +108,14 @@ AArch64FrameLowering::hasReservedCallFrame(const MachineFunction &MF) const {
 void AArch64FrameLowering::eliminateCallFramePseudoInstr(
     MachineFunction &MF, MachineBasicBlock &MBB,
     MachineBasicBlock::iterator I) const {
-  const AArch64InstrInfo *TII = static_cast<const AArch64InstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  const AArch64InstrInfo *TII =
+      static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
   DebugLoc DL = I->getDebugLoc();
   int Opc = I->getOpcode();
   bool IsDestroy = Opc == TII->getCallFrameDestroyOpcode();
   uint64_t CalleePopAmount = IsDestroy ? I->getOperand(1).getImm() : 0;
 
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   if (!TFI->hasReservedCallFrame(MF)) {
     unsigned Align = getStackAlignment();
 
@@ -160,8 +158,7 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
-  const TargetInstrInfo *TII =
-      MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   DebugLoc DL = MBB.findDebugLoc(MBBI);
 
   // Add callee saved registers to move list.
@@ -169,7 +166,7 @@ void AArch64FrameLowering::emitCalleeSavedFrameMoves(
   if (CSI.empty())
     return;
 
-  const DataLayout *TD = MF.getTarget().getSubtargetImpl()->getDataLayout();
+  const DataLayout *TD = MF.getSubtarget().getDataLayout();
   bool HasFP = hasFP(MF);
 
   // Calculate amount of bytes used for return address storing.
@@ -208,9 +205,8 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const Function *Fn = MF.getFunction();
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
-  const TargetInstrInfo *TII =
-      MF.getTarget().getSubtargetImpl()->getInstrInfo();
+      MF.getSubtarget().getRegisterInfo());
+  const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   MachineModuleInfo &MMI = MF.getMMI();
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   bool needsFrameMoves = MMI.hasDebugInfo() || Fn->needsUnwindTableEntry();
@@ -304,7 +300,7 @@ void AArch64FrameLowering::emitPrologue(MachineFunction &MF) const {
     TII->copyPhysReg(MBB, MBBI, DL, AArch64::X19, AArch64::SP, false);
 
   if (needsFrameMoves) {
-    const DataLayout *TD = MF.getTarget().getSubtargetImpl()->getDataLayout();
+    const DataLayout *TD = MF.getSubtarget().getDataLayout();
     const int StackGrowth = -TD->getPointerSize(0);
     unsigned FramePtr = RegInfo->getFrameRegister(MF);
 
@@ -438,10 +434,10 @@ void AArch64FrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   assert(MBBI->isReturn() && "Can only insert epilog into returning blocks");
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const AArch64InstrInfo *TII = static_cast<const AArch64InstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  const AArch64InstrInfo *TII =
+      static_cast<const AArch64InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   DebugLoc DL = MBBI->getDebugLoc();
   unsigned RetOpcode = MBBI->getOpcode();
 
@@ -552,7 +548,7 @@ int AArch64FrameLowering::resolveFrameIndexReference(const MachineFunction &MF,
                                                      bool PreferFP) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   const AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   int FPOffset = MFI->getObjectOffset(FI) + 16;
   int Offset = MFI->getObjectOffset(FI) + MFI->getStackSize();
@@ -621,8 +617,7 @@ bool AArch64FrameLowering::spillCalleeSavedRegisters(
     const std::vector<CalleeSavedInfo> &CSI,
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   unsigned Count = CSI.size();
   DebugLoc DL;
   assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
@@ -698,8 +693,7 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
     const std::vector<CalleeSavedInfo> &CSI,
     const TargetRegisterInfo *TRI) const {
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   unsigned Count = CSI.size();
   DebugLoc DL;
   assert((Count & 1) == 0 && "Odd number of callee-saved regs to spill!");
@@ -767,7 +761,7 @@ bool AArch64FrameLowering::restoreCalleeSavedRegisters(
 void AArch64FrameLowering::processFunctionBeforeCalleeSavedScan(
     MachineFunction &MF, RegScavenger *RS) const {
   const AArch64RegisterInfo *RegInfo = static_cast<const AArch64RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   AArch64FunctionInfo *AFI = MF.getInfo<AArch64FunctionInfo>();
   MachineRegisterInfo *MRI = &MF.getRegInfo();
   SmallVector<unsigned, 4> UnspilledCSGPRs;

@@ -311,7 +311,7 @@ bool FPS::runOnMachineFunction(MachineFunction &MF) {
   if (!FPIsUsed) return false;
 
   Bundles = &getAnalysis<EdgeBundles>();
-  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  TII = MF.getSubtarget().getInstrInfo();
 
   // Prepare cross-MBB liveness.
   bundleCFG(MF);
@@ -1647,7 +1647,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &Inst) {
 
 void FPS::setKillFlags(MachineBasicBlock &MBB) const {
   const TargetRegisterInfo *TRI =
-      MBB.getParent()->getTarget().getSubtargetImpl()->getRegisterInfo();
+      MBB.getParent()->getSubtarget().getRegisterInfo();
   LivePhysRegs LPR(TRI);
 
   LPR.addLiveOuts(&MBB);

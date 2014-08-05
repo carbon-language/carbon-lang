@@ -227,8 +227,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo *MMI = &MF.getMMI();
   const MCRegisterInfo *MRI = MMI->getContext().getRegisterInfo();
   const XCoreInstrInfo &TII =
-      *static_cast<const XCoreInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const XCoreInstrInfo *>(MF.getSubtarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   // Debug location must be unknown since the first debug location is used
   // to determine the end of the prologue.
@@ -264,8 +263,8 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     MBB.addLiveIn(XCore::LR);
     MachineInstrBuilder MIB = BuildMI(MBB, MBBI, dl, TII.get(Opcode));
     MIB.addImm(Adjusted);
-    MIB->addRegisterKilled(
-        XCore::LR, MF.getTarget().getSubtargetImpl()->getRegisterInfo(), true);
+    MIB->addRegisterKilled(XCore::LR, MF.getSubtarget().getRegisterInfo(),
+                           true);
     if (emitFrameMoves) {
       EmitDefCfaOffset(MBB, MBBI, dl, TII, MMI, Adjusted*4);
       unsigned DRegNum = MRI->getDwarfRegNum(XCore::LR, true);
@@ -327,7 +326,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
       // We do not save/spill these registers.
       SmallVector<StackSlotInfo,2> SpillList;
       GetEHSpillList(SpillList, MFI, XFI,
-                     MF.getTarget().getSubtargetImpl()->getTargetLowering());
+                     MF.getSubtarget().getTargetLowering());
       assert(SpillList.size()==2 && "Unexpected SpillList size");
       EmitCfiOffset(MBB, MBBI, dl, TII, MMI,
                     MRI->getDwarfRegNum(SpillList[0].Reg, true),
@@ -344,8 +343,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   const XCoreInstrInfo &TII =
-      *static_cast<const XCoreInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const XCoreInstrInfo *>(MF.getSubtarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
   DebugLoc dl = MBBI->getDebugLoc();
   unsigned RetOpcode = MBBI->getOpcode();
@@ -360,8 +358,7 @@ void XCoreFrameLowering::emitEpilogue(MachineFunction &MF,
     // 'Restore' the exception info the unwinder has placed into the stack
     // slots.
     SmallVector<StackSlotInfo,2> SpillList;
-    GetEHSpillList(SpillList, MFI, XFI,
-                   MF.getTarget().getSubtargetImpl()->getTargetLowering());
+    GetEHSpillList(SpillList, MFI, XFI, MF.getSubtarget().getTargetLowering());
     RestoreSpillList(MBB, MBBI, dl, TII, RemainingAdj, SpillList);
 
     // Return to the landing pad.
@@ -419,8 +416,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
     return true;
 
   MachineFunction *MF = MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF->getSubtarget().getInstrInfo();
   XCoreFunctionInfo *XFI = MF->getInfo<XCoreFunctionInfo>();
   bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(*MF);
 
@@ -453,8 +449,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
                             const std::vector<CalleeSavedInfo> &CSI,
                             const TargetRegisterInfo *TRI) const{
   MachineFunction *MF = MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF->getSubtarget().getInstrInfo();
   bool AtStart = MI == MBB.begin();
   MachineBasicBlock::iterator BeforeI = MI;
   if (!AtStart)
@@ -487,8 +482,7 @@ void XCoreFrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   const XCoreInstrInfo &TII =
-      *static_cast<const XCoreInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const XCoreInstrInfo *>(MF.getSubtarget().getInstrInfo());
   if (!hasReservedCallFrame(MF)) {
     // Turn the adjcallstackdown instruction into 'extsp <amt>' and the
     // adjcallstackup instruction into 'ldaw sp, sp[<amt>]'

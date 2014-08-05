@@ -47,8 +47,7 @@ INITIALIZE_PASS(ExpandISelPseudos, "expand-isel-pseudos",
 
 bool ExpandISelPseudos::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
-  const TargetLowering *TLI =
-      MF.getTarget().getSubtargetImpl()->getTargetLowering();
+  const TargetLowering *TLI = MF.getSubtarget().getTargetLowering();
 
   // Iterate through each instruction in the function, looking for pseudos.
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {

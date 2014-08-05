@@ -307,8 +307,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
       return 0;
     case TargetOpcode::INLINEASM: {
       const MachineFunction *MF = MI->getParent()->getParent();
-      const TargetInstrInfo &TII =
-          *MF->getTarget().getSubtargetImpl()->getInstrInfo();
+      const TargetInstrInfo &TII = *MF->getSubtarget().getInstrInfo();
       return TII.getInlineAsmLength(MI->getOperand(0).getSymbolName(),
                                     *MF->getTarget().getMCAsmInfo());
     }

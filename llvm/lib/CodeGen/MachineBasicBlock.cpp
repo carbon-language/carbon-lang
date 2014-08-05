@@ -292,8 +292,7 @@ void MachineBasicBlock::print(raw_ostream &OS, SlotIndexes *Indexes) const {
 
   OS << '\n';
 
-  const TargetRegisterInfo *TRI =
-      MF->getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   if (!livein_empty()) {
     if (Indexes) OS << '\t';
     OS << "    Live Ins:";
@@ -362,8 +361,7 @@ MachineBasicBlock::addLiveIn(unsigned PhysReg, const TargetRegisterClass *RC) {
   bool LiveIn = isLiveIn(PhysReg);
   iterator I = SkipPHIsAndLabels(begin()), E = end();
   MachineRegisterInfo &MRI = getParent()->getRegInfo();
-  const TargetInstrInfo &TII =
-      *getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *getParent()->getSubtarget().getInstrInfo();
 
   // Look for an existing copy.
   if (LiveIn)
@@ -394,8 +392,7 @@ void MachineBasicBlock::moveAfter(MachineBasicBlock *NewBefore) {
 }
 
 void MachineBasicBlock::updateTerminator() {
-  const TargetInstrInfo *TII =
-      getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
   // A block with no successors has no concerns with fall-through edges.
   if (this->succ_empty()) return;
 
@@ -650,8 +647,7 @@ bool MachineBasicBlock::canFallThrough() {
   // Analyze the branches, if any, at the end of the block.
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
-  const TargetInstrInfo *TII =
-      getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = getParent()->getSubtarget().getInstrInfo();
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond)) {
     // If we couldn't analyze the branch, examine the last instruction.
     // If the block doesn't end in a known control barrier, assume fallthrough
@@ -696,8 +692,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
 
   // We may need to update this's terminator, but we can't do that if
   // AnalyzeBranch fails. If this uses a jump table, we won't touch it.
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   MachineBasicBlock *TBB = nullptr, *FBB = nullptr;
   SmallVector<MachineOperand, 4> Cond;
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond))
@@ -802,8 +797,8 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   NMBB->addSuccessor(Succ);
   if (!NMBB->isLayoutSuccessor(Succ)) {
     Cond.clear();
-    MF->getTarget().getSubtargetImpl()->getInstrInfo()->InsertBranch(
-        *NMBB, Succ, nullptr, Cond, dl);
+    MF->getSubtarget().getInstrInfo()->InsertBranch(*NMBB, Succ, nullptr, Cond,
+                                                    dl);
 
     if (Indexes) {
       for (instr_iterator I = NMBB->instr_begin(), E = NMBB->instr_end();
@@ -831,8 +826,7 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
     NMBB->addLiveIn(*I);
 
   // Update LiveVariables.
-  const TargetRegisterInfo *TRI =
-      MF->getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF->getSubtarget().getRegisterInfo();
   if (LV) {
     // Restore kills of virtual registers that were killed by the terminators.
     while (!KilledRegs.empty()) {

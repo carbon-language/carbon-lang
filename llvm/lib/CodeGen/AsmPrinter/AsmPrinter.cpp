@@ -1121,7 +1121,7 @@ void AsmPrinter::EmitConstantPool() {
 /// by the current function to the current output stream.
 ///
 void AsmPrinter::EmitJumpTableInfo() {
-  const DataLayout *DL = MF->getTarget().getSubtargetImpl()->getDataLayout();
+  const DataLayout *DL = MF->getSubtarget().getDataLayout();
   const MachineJumpTableInfo *MJTI = MF->getJumpTableInfo();
   if (!MJTI) return;
   if (MJTI->getEntryKind() == MachineJumpTableInfo::EK_Inline) return;

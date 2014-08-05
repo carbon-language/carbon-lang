@@ -699,7 +699,7 @@ bool LDVImpl::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   LIS = &pass.getAnalysis<LiveIntervals>();
   MDT = &pass.getAnalysis<MachineDominatorTree>();
-  TRI = mf.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TRI = mf.getSubtarget().getRegisterInfo();
   LS.initialize(mf);
   DEBUG(dbgs() << "********** COMPUTING LIVE DEBUG VARIABLES: "
                << mf.getName() << " **********\n");
@@ -994,8 +994,7 @@ void LDVImpl::emitDebugValues(VirtRegMap *VRM) {
   DEBUG(dbgs() << "********** EMITTING LIVE DEBUG VARIABLES **********\n");
   if (!MF)
     return;
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   for (unsigned i = 0, e = userValues.size(); i != e; ++i) {
     DEBUG(userValues[i]->print(dbgs(), &MF->getTarget()));
     userValues[i]->rewriteLocations(*VRM, *TRI);

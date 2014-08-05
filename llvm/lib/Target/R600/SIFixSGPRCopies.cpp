@@ -196,10 +196,10 @@ bool SIFixSGPRCopies::isVGPRToSGPRCopy(const MachineInstr &Copy,
 
 bool SIFixSGPRCopies::runOnMachineFunction(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
-  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
-  const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
+  const SIInstrInfo *TII =
+      static_cast<const SIInstrInfo *>(MF.getSubtarget().getInstrInfo());
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
                                                   BI != BE; ++BI) {
 

@@ -336,8 +336,8 @@ bool MachineCopyPropagation::runOnMachineFunction(MachineFunction &MF) {
 
   bool Changed = false;
 
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
-  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
+  TII = MF.getSubtarget().getInstrInfo();
   MRI = &MF.getRegInfo();
 
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

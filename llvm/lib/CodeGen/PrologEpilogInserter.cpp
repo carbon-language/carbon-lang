@@ -111,10 +111,8 @@ typedef SmallSetVector<int, 8> StackObjSet;
 ///
 bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const Function* F = Fn.getFunction();
-  const TargetRegisterInfo *TRI =
-      Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
-  const TargetFrameLowering *TFI =
-      Fn.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetRegisterInfo *TRI = Fn.getSubtarget().getRegisterInfo();
+  const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
 
   assert(!Fn.getRegInfo().getNumVirtRegs() && "Regalloc must assign all vregs");
 
@@ -188,10 +186,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
 /// variables for the function's frame information and eliminate call frame
 /// pseudo instructions.
 void PEI::calculateCallsInformation(MachineFunction &Fn) {
-  const TargetInstrInfo &TII =
-      *Fn.getTarget().getSubtargetImpl()->getInstrInfo();
-  const TargetFrameLowering *TFI =
-      Fn.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
+  const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
   MachineFrameInfo *MFI = Fn.getFrameInfo();
 
   unsigned MaxCallFrameSize = 0;
@@ -244,10 +240,8 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
 /// calculateCalleeSavedRegisters - Scan the function for modified callee saved
 /// registers.
 void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
-  const TargetRegisterInfo *RegInfo =
-      F.getTarget().getSubtargetImpl()->getRegisterInfo();
-  const TargetFrameLowering *TFI =
-      F.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetRegisterInfo *RegInfo = F.getSubtarget().getRegisterInfo();
+  const TargetFrameLowering *TFI = F.getSubtarget().getFrameLowering();
   MachineFrameInfo *MFI = F.getFrameInfo();
 
   // Get the callee saved register list...
@@ -344,12 +338,9 @@ void PEI::insertCSRSpillsAndRestores(MachineFunction &Fn) {
   if (CSI.empty())
     return;
 
-  const TargetInstrInfo &TII =
-      *Fn.getTarget().getSubtargetImpl()->getInstrInfo();
-  const TargetFrameLowering *TFI =
-      Fn.getTarget().getSubtargetImpl()->getFrameLowering();
-  const TargetRegisterInfo *TRI =
-      Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
+  const TargetFrameLowering *TFI = Fn.getSubtarget().getFrameLowering();
+  const TargetRegisterInfo *TRI = Fn.getSubtarget().getRegisterInfo();
   MachineBasicBlock::iterator I;
 
   // Spill using target interface.
@@ -455,8 +446,7 @@ AssignProtectedObjSet(const StackObjSet &UnassignedObjs,
 /// abstract stack objects.
 ///
 void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
-  const TargetFrameLowering &TFI =
-      *Fn.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
   StackProtector *SP = &getAnalysis<StackProtector>();
 
   bool StackGrowsDown =
@@ -526,8 +516,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   // Make sure the special register scavenging spill slot is closest to the
   // incoming stack pointer if a frame pointer is required and is closer
   // to the incoming rather than the final stack pointer.
-  const TargetRegisterInfo *RegInfo =
-      Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *RegInfo = Fn.getSubtarget().getRegisterInfo();
   bool EarlyScavengingSlots = (TFI.hasFP(Fn) &&
                                TFI.isFPCloseToIncomingSP() &&
                                RegInfo->useFPForScavengingIndex(Fn) &&
@@ -682,8 +671,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 /// prolog and epilog code to the function.
 ///
 void PEI::insertPrologEpilogCode(MachineFunction &Fn) {
-  const TargetFrameLowering &TFI =
-      *Fn.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
 
   // Add prologue to the function...
   TFI.emitPrologue(Fn);
@@ -754,8 +742,7 @@ void PEI::replaceFrameIndices(MachineBasicBlock *BB, MachineFunction &Fn,
   const TargetMachine &TM = Fn.getTarget();
   assert(TM.getSubtargetImpl()->getRegisterInfo() &&
          "TM::getRegisterInfo() must be implemented!");
-  const TargetInstrInfo &TII =
-      *Fn.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *Fn.getSubtarget().getInstrInfo();
   const TargetRegisterInfo &TRI = *TM.getSubtargetImpl()->getRegisterInfo();
   const TargetFrameLowering *TFI = TM.getSubtargetImpl()->getFrameLowering();
   bool StackGrowsDown =

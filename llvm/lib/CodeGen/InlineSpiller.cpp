@@ -146,8 +146,8 @@ public:
         MDT(pass.getAnalysis<MachineDominatorTree>()),
         Loops(pass.getAnalysis<MachineLoopInfo>()), VRM(vrm),
         MFI(*mf.getFrameInfo()), MRI(mf.getRegInfo()),
-        TII(*mf.getTarget().getSubtargetImpl()->getInstrInfo()),
-        TRI(*mf.getTarget().getSubtargetImpl()->getRegisterInfo()),
+        TII(*mf.getSubtarget().getInstrInfo()),
+        TRI(*mf.getSubtarget().getRegisterInfo()),
         MBFI(pass.getAnalysis<MachineBlockFrequencyInfo>()) {}
 
   void spill(LiveRangeEdit &) override;

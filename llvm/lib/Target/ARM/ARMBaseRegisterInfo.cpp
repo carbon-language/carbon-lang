@@ -123,8 +123,7 @@ ARMBaseRegisterInfo::getThisReturnPreservedMask(CallingConv::ID CC) const {
 
 BitVector ARMBaseRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   // FIXME: avoid re-calculating this every time.
   BitVector Reserved(getNumRegs());
@@ -190,8 +189,7 @@ ARMBaseRegisterInfo::getCrossCopyRegClass(const TargetRegisterClass *RC) const {
 unsigned
 ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                          MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   switch (RC->getID()) {
   default:
@@ -313,8 +311,7 @@ ARMBaseRegisterInfo::avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
 bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   // When outgoing call frames are so large that we adjust the stack pointer
   // around the call, we can no longer use the stack pointer to reach the
@@ -396,8 +393,7 @@ cannotEliminateFrame(const MachineFunction &MF) const {
 
 unsigned
 ARMBaseRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   if (TFI->hasFP(MF))
     return FramePtr;
@@ -414,8 +410,7 @@ emitLoadConstPool(MachineBasicBlock &MBB,
                   ARMCC::CondCodes Pred,
                   unsigned PredReg, unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C =
         ConstantInt::get(Type::getInt32Ty(MF.getFunction()->getContext()), Val);
@@ -542,8 +537,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   // Note that the incoming offset is based on the SP value at function entry,
   // so it'll be negative.
   MachineFunction &MF = *MI->getParent()->getParent();
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
@@ -605,8 +599,7 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
 
   const MachineFunction &MF = *MBB->getParent();
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0, this, MF));
 
@@ -622,8 +615,7 @@ void ARMBaseRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   const ARMBaseInstrInfo &TII =
-      *static_cast<const ARMBaseInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const ARMBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   int Off = Offset; // ARM doesn't need the general 64-bit offsets
   unsigned i = 0;
@@ -722,10 +714,9 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
   const ARMBaseInstrInfo &TII =
-      *static_cast<const ARMBaseInstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const ARMBaseInstrInfo *>(MF.getSubtarget().getInstrInfo());
   const ARMFrameLowering *TFI = static_cast<const ARMFrameLowering *>(
-      MF.getTarget().getSubtargetImpl()->getFrameLowering());
+      MF.getSubtarget().getFrameLowering());
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   assert(!AFI->isThumb1OnlyFunction() &&
          "This eliminateFrameIndex does not support Thumb1!");

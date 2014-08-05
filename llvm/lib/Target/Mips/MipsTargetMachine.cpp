@@ -97,6 +97,7 @@ void MipsTargetMachine::resetSubtarget(MachineFunction *MF) {
     Subtarget = &NoMips16Subtarget;
   else
     Subtarget = &DefaultSubtarget;
+  MF->setSubtarget(Subtarget);
   return;
 }
 

@@ -425,7 +425,7 @@ bool ARMDAGToDAGISel::hasNoVMLxHazardUse(SDNode *N) const {
     return true;
   if (Use->isMachineOpcode()) {
     const ARMBaseInstrInfo *TII = static_cast<const ARMBaseInstrInfo *>(
-        CurDAG->getTarget().getSubtargetImpl()->getInstrInfo());
+        CurDAG->getSubtarget().getInstrInfo());
 
     const MCInstrDesc &MCID = TII->get(Use->getMachineOpcode());
     if (MCID.mayStore())

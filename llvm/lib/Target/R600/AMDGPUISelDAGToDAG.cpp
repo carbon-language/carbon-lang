@@ -822,8 +822,8 @@ bool AMDGPUDAGToDAGISel::SelectMUBUFScratch(SDValue Addr, SDValue &Rsrc,
 
   SDLoc DL(Addr);
   MachineFunction &MF = CurDAG->getMachineFunction();
-  const SIRegisterInfo *TRI = static_cast<const SIRegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+  const SIRegisterInfo *TRI =
+      static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
 

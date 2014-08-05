@@ -239,8 +239,7 @@ void StackMaps::recordStackMapOpers(const MachineInstr &MI, uint64_t ID,
 
   // Record the stack size of the current function.
   const MachineFrameInfo *MFI = AP.MF->getFrameInfo();
-  const TargetRegisterInfo *RegInfo =
-      AP.MF->getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *RegInfo = AP.MF->getSubtarget().getRegisterInfo();
   const bool DynamicFrameSize = MFI->hasVarSizedObjects() ||
     RegInfo->needsStackRealignment(*(AP.MF));
   FnStackSize[AP.CurrentFnSym] =

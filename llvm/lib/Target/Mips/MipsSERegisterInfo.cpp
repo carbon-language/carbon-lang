@@ -172,7 +172,7 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
       unsigned Reg = RegInfo.createVirtualRegister(RC);
       const MipsSEInstrInfo &TII =
           *static_cast<const MipsSEInstrInfo *>(
-              MBB.getParent()->getTarget().getSubtargetImpl()->getInstrInfo());
+              MBB.getParent()->getSubtarget().getInstrInfo());
       BuildMI(MBB, II, DL, TII.get(ADDiu), Reg).addReg(FrameReg).addImm(Offset);
 
       FrameReg = Reg;
@@ -187,7 +187,7 @@ void MipsSERegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
       unsigned NewImm = 0;
       const MipsSEInstrInfo &TII =
           *static_cast<const MipsSEInstrInfo *>(
-              MBB.getParent()->getTarget().getSubtargetImpl()->getInstrInfo());
+              MBB.getParent()->getSubtarget().getInstrInfo());
       unsigned Reg = TII.loadImmediate(Offset, MBB, II, DL,
                                        OffsetBitSize == 16 ? &NewImm : nullptr);
       BuildMI(MBB, II, DL, TII.get(ADDu), Reg).addReg(FrameReg)

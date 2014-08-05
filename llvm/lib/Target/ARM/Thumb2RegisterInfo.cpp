@@ -40,8 +40,7 @@ Thumb2RegisterInfo::emitLoadConstPool(MachineBasicBlock &MBB,
                                       ARMCC::CondCodes Pred, unsigned PredReg,
                                       unsigned MIFlags) const {
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   MachineConstantPool *ConstantPool = MF.getConstantPool();
   const Constant *C = ConstantInt::get(
            Type::getInt32Ty(MBB.getParent()->getFunction()->getContext()), Val);

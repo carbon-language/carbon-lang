@@ -37,8 +37,7 @@ std::string SDNode::getOperationName(const SelectionDAG *G) const {
       return "<<Unknown DAG Node>>";
     if (isMachineOpcode()) {
       if (G)
-        if (const TargetInstrInfo *TII =
-                G->getTarget().getSubtargetImpl()->getInstrInfo())
+        if (const TargetInstrInfo *TII = G->getSubtarget().getInstrInfo())
           if (getMachineOpcode() < TII->getNumOpcodes())
             return TII->getName(getMachineOpcode());
       return "<<Unknown Machine Node #" + utostr(getOpcode()) + ">>";
@@ -435,10 +434,8 @@ void SDNode::print_details(raw_ostream &OS, const SelectionDAG *G) const {
       OS << LBB->getName() << " ";
     OS << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
-    OS << ' '
-       << PrintReg(R->getReg(),
-                   G ? G->getTarget().getSubtargetImpl()->getRegisterInfo()
-                     : nullptr);
+    OS << ' ' << PrintReg(R->getReg(),
+                          G ? G->getSubtarget().getRegisterInfo() : nullptr);
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     OS << "'" << ES->getSymbol() << "'";

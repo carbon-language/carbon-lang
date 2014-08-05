@@ -141,7 +141,7 @@ PPCRegisterInfo::getNoPreservedMask() const {
 BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const PPCFrameLowering *PPCFI = static_cast<const PPCFrameLowering *>(
-      MF.getTarget().getSubtargetImpl()->getFrameLowering());
+      MF.getSubtarget().getFrameLowering());
 
   // The ZERO register is not really a register, but the representation of r0
   // when used in instructions that treat r0 as the constant 0.
@@ -223,8 +223,7 @@ BitVector PPCRegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 unsigned
 PPCRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
                                          MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
   const unsigned DefaultSafety = 1;
 
   switch (RC->getID()) {
@@ -288,8 +287,7 @@ void PPCRegisterInfo::lowerDynamicAlloc(MachineBasicBlock::iterator II) const {
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
   // Get the instruction info.
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   // Determine whether 64-bit pointers are used.
   bool LP64 = Subtarget.isPPC64();
   DebugLoc dl = MI.getDebugLoc();
@@ -408,8 +406,7 @@ void PPCRegisterInfo::lowerCRSpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   bool LP64 = Subtarget.isPPC64();
@@ -453,8 +450,7 @@ void PPCRegisterInfo::lowerCRRestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   bool LP64 = Subtarget.isPPC64();
@@ -527,8 +523,7 @@ void PPCRegisterInfo::lowerCRBitSpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   bool LP64 = Subtarget.isPPC64();
@@ -571,8 +566,7 @@ void PPCRegisterInfo::lowerCRBitRestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   bool LP64 = Subtarget.isPPC64();
@@ -619,8 +613,7 @@ void PPCRegisterInfo::lowerVRSAVESpilling(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
@@ -645,8 +638,7 @@ void PPCRegisterInfo::lowerVRSAVERestore(MachineBasicBlock::iterator II,
   // Get the instruction's basic block.
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   DebugLoc dl = MI.getDebugLoc();
 
   const TargetRegisterClass *GPRC = &PPC::GPRCRegClass;
@@ -726,8 +718,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   // Get the basic block's function.
   MachineFunction &MF = *MBB.getParent();
   // Get the instruction info.
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   // Get the frame info.
   MachineFrameInfo *MFI = MF.getFrameInfo();
   DebugLoc dl = MI.getDebugLoc();
@@ -852,8 +843,7 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
 }
 
 unsigned PPCRegisterInfo::getFrameRegister(const MachineFunction &MF) const {
-  const TargetFrameLowering *TFI =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
 
   if (!Subtarget.isPPC64())
     return TFI->hasFP(MF) ? PPC::R31 : PPC::R1;
@@ -939,7 +929,7 @@ needsFrameBaseReg(MachineInstr *MI, int64_t Offset) const {
   MachineFunction &MF = *MBB.getParent();
 
   const PPCFrameLowering *PPCFI = static_cast<const PPCFrameLowering *>(
-      MF.getTarget().getSubtargetImpl()->getFrameLowering());
+      MF.getSubtarget().getFrameLowering());
   unsigned StackEst =
     PPCFI->determineFrameLayout(MF, false, true);
 
@@ -973,8 +963,7 @@ materializeFrameBaseRegister(MachineBasicBlock *MBB,
     DL = Ins->getDebugLoc();
 
   const MachineFunction &MF = *MBB->getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   const MCInstrDesc &MCID = TII.get(ADDriOpc);
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   MRI.constrainRegClass(BaseReg, TII.getRegClass(MCID, 0, this, MF));
@@ -999,8 +988,7 @@ void PPCRegisterInfo::resolveFrameIndex(MachineInstr &MI, unsigned BaseReg,
 
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
   const MCInstrDesc &MCID = MI.getDesc();
   MachineRegisterInfo &MRI = MF.getRegInfo();
   MRI.constrainRegClass(BaseReg,

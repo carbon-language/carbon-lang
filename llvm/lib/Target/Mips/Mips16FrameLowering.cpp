@@ -36,8 +36,7 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Mips16InstrInfo &TII =
-      *static_cast<const Mips16InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Mips16InstrInfo *>(MF.getSubtarget().getInstrInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   uint64_t StackSize = MFI->getStackSize();
@@ -85,8 +84,7 @@ void Mips16FrameLowering::emitEpilogue(MachineFunction &MF,
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const Mips16InstrInfo &TII =
-      *static_cast<const Mips16InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Mips16InstrInfo *>(MF.getSubtarget().getInstrInfo());
   DebugLoc dl = MBBI->getDebugLoc();
   uint64_t StackSize = MFI->getStackSize();
 
@@ -156,8 +154,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       Amount = -Amount;
 
     const Mips16InstrInfo &TII =
-        *static_cast<const Mips16InstrInfo *>(
-            MF.getTarget().getSubtargetImpl()->getInstrInfo());
+        *static_cast<const Mips16InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
     TII.adjustStackPtr(Mips::SP, Amount, MBB, I);
   }
@@ -177,8 +174,7 @@ void Mips16FrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   const Mips16InstrInfo &TII =
-      *static_cast<const Mips16InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Mips16InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const MipsRegisterInfo &RI = TII.getRegisterInfo();
   const BitVector Reserved = RI.getReservedRegs(MF);
   bool SaveS2 = Reserved[Mips::S2];

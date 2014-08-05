@@ -378,8 +378,7 @@ static bool isSchedBoundary(MachineBasicBlock::iterator MI,
 
 /// Main driver for both MachineScheduler and PostMachineScheduler.
 void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   bool IsPostRA = Scheduler.isPostRA();
 
   // Visit all machine basic blocks.

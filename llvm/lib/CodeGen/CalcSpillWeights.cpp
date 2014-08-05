@@ -96,8 +96,7 @@ static bool isRematerializable(const LiveInterval &LI,
 void
 VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   MachineRegisterInfo &mri = MF.getRegInfo();
-  const TargetRegisterInfo &tri =
-      *MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo &tri = *MF.getSubtarget().getRegisterInfo();
   MachineBasicBlock *mbb = nullptr;
   MachineLoop *loop = nullptr;
   bool isExiting = false;
@@ -188,8 +187,7 @@ VirtRegAuxInfo::calculateSpillWeightAndHint(LiveInterval &li) {
   // it is a preferred candidate for spilling.
   // FIXME: this gets much more complicated once we support non-trivial
   // re-materialization.
-  if (isRematerializable(li, LIS,
-                         *MF.getTarget().getSubtargetImpl()->getInstrInfo()))
+  if (isRematerializable(li, LIS, *MF.getSubtarget().getInstrInfo()))
     totalWeight *= 0.5F;
 
   li.weight = normalize(totalWeight, li.getSize());

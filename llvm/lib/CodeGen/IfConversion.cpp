@@ -269,9 +269,9 @@ INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_END(IfConverter, "if-converter", "If Converter", false, false)
 
 bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
-  TLI = MF.getTarget().getSubtargetImpl()->getTargetLowering();
-  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TLI = MF.getSubtarget().getTargetLowering();
+  TII = MF.getSubtarget().getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
   MRI = &MF.getRegInfo();
 
@@ -287,9 +287,8 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   if (!PreRegAlloc) {
     // Tail merge tend to expose more if-conversion opportunities.
     BranchFolder BF(true, false);
-    BFChange = BF.OptimizeFunction(
-        MF, TII, MF.getTarget().getSubtargetImpl()->getRegisterInfo(),
-        getAnalysisIfAvailable<MachineModuleInfo>());
+    BFChange = BF.OptimizeFunction(MF, TII, MF.getSubtarget().getRegisterInfo(),
+                                   getAnalysisIfAvailable<MachineModuleInfo>());
   }
 
   DEBUG(dbgs() << "\nIfcvt: function (" << ++FnNum <<  ") \'"
@@ -421,8 +420,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
   if (MadeChange && IfCvtBranchFold) {
     BranchFolder BF(false, false);
-    BF.OptimizeFunction(MF, TII,
-                        MF.getTarget().getSubtargetImpl()->getRegisterInfo(),
+    BF.OptimizeFunction(MF, TII, MF.getSubtarget().getRegisterInfo(),
                         getAnalysisIfAvailable<MachineModuleInfo>());
   }
 

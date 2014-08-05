@@ -189,8 +189,7 @@ PBQPRAProblem *PBQPBuilder::build(MachineFunction *mf, const LiveIntervals *lis,
 
   LiveIntervals *LIS = const_cast<LiveIntervals*>(lis);
   MachineRegisterInfo *mri = &mf->getRegInfo();
-  const TargetRegisterInfo *tri =
-      mf->getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *tri = mf->getSubtarget().getRegisterInfo();
 
   std::unique_ptr<PBQPRAProblem> p(new PBQPRAProblem());
   PBQPRAGraph &g = p->getGraph();

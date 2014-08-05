@@ -48,7 +48,7 @@ static cl::opt<int> HighLatencyCycles(
 
 ScheduleDAGSDNodes::ScheduleDAGSDNodes(MachineFunction &mf)
     : ScheduleDAG(mf), BB(nullptr), DAG(nullptr),
-      InstrItins(mf.getTarget().getSubtargetImpl()->getInstrItineraryData()) {}
+      InstrItins(mf.getSubtarget().getInstrItineraryData()) {}
 
 /// Run - perform scheduling.
 ///

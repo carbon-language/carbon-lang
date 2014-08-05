@@ -241,8 +241,7 @@ void PHIElimination::LowerPHINode(MachineBasicBlock &MBB,
   // Insert a register to register copy at the top of the current block (but
   // after any remaining phi nodes) which copies the new incoming register
   // into the phi node destination.
-  const TargetInstrInfo *TII =
-      MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF.getSubtarget().getInstrInfo();
   if (isSourceDefinedByImplicitDef(MPhi, MRI))
     // If all sources of a PHI node are implicit_def, just emit an
     // implicit_def instead of a copy.

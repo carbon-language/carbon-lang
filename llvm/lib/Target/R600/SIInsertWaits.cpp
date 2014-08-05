@@ -347,10 +347,9 @@ Counters SIInsertWaits::handleOperands(MachineInstr &MI) {
 bool SIInsertWaits::runOnMachineFunction(MachineFunction &MF) {
   bool Changes = false;
 
-  TII = static_cast<const SIInstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
-  TRI = static_cast<const SIRegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+  TII = static_cast<const SIInstrInfo *>(MF.getSubtarget().getInstrInfo());
+  TRI =
+      static_cast<const SIRegisterInfo *>(MF.getSubtarget().getRegisterInfo());
 
   MRI = &MF.getRegInfo();
 

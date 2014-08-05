@@ -298,8 +298,7 @@ public:
   }
 
   bool runOnMachineFunction(MachineFunction &MF) override {
-    TII = static_cast<const R600InstrInfo *>(
-        MF.getTarget().getSubtargetImpl()->getInstrInfo());
+    TII = static_cast<const R600InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
     for (MachineFunction::iterator BB = MF.begin(), BB_E = MF.end();
                                                     BB != BB_E; ++BB) {

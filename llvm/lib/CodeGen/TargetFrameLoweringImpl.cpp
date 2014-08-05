@@ -35,8 +35,7 @@ int TargetFrameLowering::getFrameIndexOffset(const MachineFunction &MF,
 
 int TargetFrameLowering::getFrameIndexReference(const MachineFunction &MF,
                                              int FI, unsigned &FrameReg) const {
-  const TargetRegisterInfo *RI =
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *RI = MF.getSubtarget().getRegisterInfo();
 
   // By default, assume all frame indices are referenced via whatever
   // getFrameRegister() says. The target can override this if it's doing

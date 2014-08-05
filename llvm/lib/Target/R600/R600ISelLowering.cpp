@@ -191,8 +191,8 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
   MachineFunction * MF = BB->getParent();
   MachineRegisterInfo &MRI = MF->getRegInfo();
   MachineBasicBlock::iterator I = *MI;
-  const R600InstrInfo *TII = static_cast<const R600InstrInfo *>(
-      MF->getTarget().getSubtargetImpl()->getInstrInfo());
+  const R600InstrInfo *TII =
+      static_cast<const R600InstrInfo *>(MF->getSubtarget().getInstrInfo());
 
   switch (MI->getOpcode()) {
   default:
@@ -646,7 +646,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
       if (ijb < 0) {
         const MachineFunction &MF = DAG.getMachineFunction();
         const R600InstrInfo *TII = static_cast<const R600InstrInfo *>(
-            MF.getTarget().getSubtargetImpl()->getInstrInfo());
+            MF.getSubtarget().getInstrInfo());
         interp = DAG.getMachineNode(AMDGPU::INTERP_VEC_LOAD, DL,
             MVT::v4f32, DAG.getTargetConstant(slot / 4 , MVT::i32));
         return DAG.getTargetExtractSubreg(
@@ -2081,8 +2081,8 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
 static bool
 FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
             SDValue &Abs, SDValue &Sel, SDValue &Imm, SelectionDAG &DAG) {
-  const R600InstrInfo *TII = static_cast<const R600InstrInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getInstrInfo());
+  const R600InstrInfo *TII =
+      static_cast<const R600InstrInfo *>(DAG.getSubtarget().getInstrInfo());
   if (!Src.isMachineOpcode())
     return false;
   switch (Src.getMachineOpcode()) {
@@ -2206,8 +2206,8 @@ FoldOperand(SDNode *ParentNode, unsigned SrcIdx, SDValue &Src, SDValue &Neg,
 /// \brief Fold the instructions after selecting them
 SDNode *R600TargetLowering::PostISelFolding(MachineSDNode *Node,
                                             SelectionDAG &DAG) const {
-  const R600InstrInfo *TII = static_cast<const R600InstrInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getInstrInfo());
+  const R600InstrInfo *TII =
+      static_cast<const R600InstrInfo *>(DAG.getSubtarget().getInstrInfo());
   if (!Node->isMachineOpcode())
     return Node;
   unsigned Opcode = Node->getMachineOpcode();

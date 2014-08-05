@@ -500,8 +500,7 @@ TargetInstrInfo::foldMemoryOperand(MachineBasicBlock::iterator MI,
 
   const MachineOperand &MO = MI->getOperand(1-Ops[0]);
   MachineBasicBlock::iterator Pos = MI;
-  const TargetRegisterInfo *TRI =
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
 
   if (Flags == MachineMemOperand::MOStore)
     storeRegToStackSlot(*MBB, Pos, MO.getReg(), MO.isKill(), FI, RC, TRI);
@@ -656,10 +655,8 @@ bool TargetInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
   // saves compile time, because it doesn't require every single
   // stack slot reference to depend on the instruction that does the
   // modification.
-  const TargetLowering &TLI =
-      *MF.getTarget().getSubtargetImpl()->getTargetLowering();
-  const TargetRegisterInfo *TRI =
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetLowering &TLI = *MF.getSubtarget().getTargetLowering();
+  const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
   if (MI->modifiesRegister(TLI.getStackPointerRegisterToSaveRestore(), TRI))
     return true;
 

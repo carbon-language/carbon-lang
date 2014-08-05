@@ -191,8 +191,7 @@ HexagonPacketizerList::HexagonPacketizerList(
 }
 
 bool HexagonPacketizer::runOnMachineFunction(MachineFunction &Fn) {
-  const TargetInstrInfo *TII =
-      Fn.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = Fn.getSubtarget().getInstrInfo();
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   const MachineBranchProbabilityInfo *MBPI =

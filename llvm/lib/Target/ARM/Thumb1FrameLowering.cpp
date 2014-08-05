@@ -52,10 +52,9 @@ void Thumb1FrameLowering::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   const Thumb1InstrInfo &TII =
-      *static_cast<const Thumb1InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Thumb1InstrInfo *>(MF.getSubtarget().getInstrInfo());
   const Thumb1RegisterInfo *RegInfo = static_cast<const Thumb1RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   if (!hasReservedCallFrame(MF)) {
     // If we have alloca, convert as follows:
     // ADJCALLSTACKDOWN -> sub, sp, sp, amount
@@ -91,10 +90,9 @@ void Thumb1FrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineModuleInfo &MMI = MF.getMMI();
   const MCRegisterInfo *MRI = MMI.getContext().getRegisterInfo();
   const Thumb1RegisterInfo *RegInfo = static_cast<const Thumb1RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   const Thumb1InstrInfo &TII =
-      *static_cast<const Thumb1InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Thumb1InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   unsigned Align = MF.getTarget()
                        .getSubtargetImpl()
@@ -327,10 +325,9 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
   MachineFrameInfo *MFI = MF.getFrameInfo();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   const Thumb1RegisterInfo *RegInfo = static_cast<const Thumb1RegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   const Thumb1InstrInfo &TII =
-      *static_cast<const Thumb1InstrInfo *>(
-          MF.getTarget().getSubtargetImpl()->getInstrInfo());
+      *static_cast<const Thumb1InstrInfo *>(MF.getSubtarget().getInstrInfo());
 
   unsigned Align = MF.getTarget()
                        .getSubtargetImpl()
@@ -426,8 +423,7 @@ spillCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   DebugLoc DL;
   MachineFunction &MF = *MBB.getParent();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
@@ -466,8 +462,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
 
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
-  const TargetInstrInfo &TII =
-      *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
 
   bool isVarArg = AFI->getArgRegsSaveSize() > 0;
   DebugLoc DL = MI->getDebugLoc();

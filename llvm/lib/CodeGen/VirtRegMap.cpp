@@ -55,8 +55,8 @@ INITIALIZE_PASS(VirtRegMap, "virtregmap", "Virtual Register Map", false, false)
 
 bool VirtRegMap::runOnMachineFunction(MachineFunction &mf) {
   MRI = &mf.getRegInfo();
-  TII = mf.getTarget().getSubtargetImpl()->getInstrInfo();
-  TRI = mf.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = mf.getSubtarget().getInstrInfo();
+  TRI = mf.getSubtarget().getRegisterInfo();
   MF = &mf;
 
   Virt2PhysMap.clear();

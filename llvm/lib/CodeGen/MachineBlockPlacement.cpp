@@ -1112,8 +1112,8 @@ bool MachineBlockPlacement::runOnMachineFunction(MachineFunction &F) {
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
   MBFI = &getAnalysis<MachineBlockFrequencyInfo>();
   MLI = &getAnalysis<MachineLoopInfo>();
-  TII = F.getTarget().getSubtargetImpl()->getInstrInfo();
-  TLI = F.getTarget().getSubtargetImpl()->getTargetLowering();
+  TII = F.getSubtarget().getInstrInfo();
+  TLI = F.getSubtarget().getTargetLowering();
   assert(BlockToChain.empty());
 
   buildCFGChains(F);

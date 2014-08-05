@@ -1084,7 +1084,7 @@ bool R600InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
 void  R600InstrInfo::reserveIndirectRegisters(BitVector &Reserved,
                                              const MachineFunction &MF) const {
   const AMDGPUFrameLowering *TFL = static_cast<const AMDGPUFrameLowering *>(
-      MF.getTarget().getSubtargetImpl()->getFrameLowering());
+      MF.getSubtarget().getFrameLowering());
 
   unsigned StackWidth = TFL->getStackWidth(MF);
   int End = getIndirectIndexEnd(MF);

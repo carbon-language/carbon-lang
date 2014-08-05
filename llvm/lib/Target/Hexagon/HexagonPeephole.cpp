@@ -111,8 +111,7 @@ INITIALIZE_PASS(HexagonPeephole, "hexagon-peephole", "Hexagon Peephole",
                 false, false)
 
 bool HexagonPeephole::runOnMachineFunction(MachineFunction &MF) {
-  QII = static_cast<const HexagonInstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  QII = static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
   QRI = MF.getTarget().getSubtarget<HexagonSubtarget>().getRegisterInfo();
   MRI = &MF.getRegInfo();
 

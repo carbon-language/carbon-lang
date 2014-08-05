@@ -715,8 +715,8 @@ void ExeDepsFix::visitSoftInstr(MachineInstr *mi, unsigned mask) {
 
 bool ExeDepsFix::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
-  TII = MF->getTarget().getSubtargetImpl()->getInstrInfo();
-  TRI = MF->getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = MF->getSubtarget().getInstrInfo();
+  TRI = MF->getSubtarget().getRegisterInfo();
   LiveRegs = nullptr;
   assert(NumRegs == RC->getNumRegs() && "Bad regclass");
 

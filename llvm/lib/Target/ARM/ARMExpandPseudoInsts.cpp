@@ -867,9 +867,8 @@ bool ARMExpandPseudo::ExpandMI(MachineBasicBlock &MBB,
       if (RI.hasBasePointer(MF)) {
         int32_t NumBytes = AFI->getFramePtrSpillOffset();
         unsigned FramePtr = RI.getFrameRegister(MF);
-        assert(
-            MF.getTarget().getSubtargetImpl()->getFrameLowering()->hasFP(MF) &&
-            "base pointer without frame pointer?");
+        assert(MF.getSubtarget().getFrameLowering()->hasFP(MF) &&
+               "base pointer without frame pointer?");
 
         if (AFI->isThumb2Function()) {
           emitT2RegPlusImmediate(MBB, MBBI, MI.getDebugLoc(), ARM::R6,

@@ -109,10 +109,8 @@ AdjustStackOffset(MachineFrameInfo *MFI, int FrameIdx,
 
 void
 NVPTXPrologEpilogPass::calculateFrameObjectOffsets(MachineFunction &Fn) {
-  const TargetFrameLowering &TFI =
-      *Fn.getTarget().getSubtargetImpl()->getFrameLowering();
-  const TargetRegisterInfo *RegInfo =
-      Fn.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetFrameLowering &TFI = *Fn.getSubtarget().getFrameLowering();
+  const TargetRegisterInfo *RegInfo = Fn.getSubtarget().getRegisterInfo();
 
   bool StackGrowsDown =
     TFI.getStackGrowthDirection() == TargetFrameLowering::StackGrowsDown;

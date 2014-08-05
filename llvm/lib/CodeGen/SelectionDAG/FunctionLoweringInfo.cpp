@@ -210,8 +210,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf,
       for (unsigned vti = 0, vte = ValueVTs.size(); vti != vte; ++vti) {
         EVT VT = ValueVTs[vti];
         unsigned NumRegisters = TLI->getNumRegisters(Fn->getContext(), VT);
-        const TargetInstrInfo *TII =
-            MF->getTarget().getSubtargetImpl()->getInstrInfo();
+        const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
         for (unsigned i = 0; i != NumRegisters; ++i)
           BuildMI(MBB, DL, TII->get(TargetOpcode::PHI), PHIReg + i);
         PHIReg += NumRegisters;

@@ -50,7 +50,7 @@ void LiveStacks::releaseMemory() {
 }
 
 bool LiveStacks::runOnMachineFunction(MachineFunction &MF) {
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   // FIXME: No analysis is being done right now. We are relying on the
   // register allocators to provide the information.
   return false;

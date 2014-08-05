@@ -2474,8 +2474,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  const TargetFrameLowering *TFL =
-      MF.getTarget().getSubtargetImpl()->getFrameLowering();
+  const TargetFrameLowering *TFL = MF.getSubtarget().getFrameLowering();
   MipsFunctionInfo *FuncInfo = MF.getInfo<MipsFunctionInfo>();
   bool IsPIC = getTargetMachine().getRelocationModel() == Reloc::PIC_;
 

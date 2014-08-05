@@ -861,7 +861,7 @@ void SelectionDAGBuilder::init(GCFunctionInfo *gfi, AliasAnalysis &aa,
   AA = &aa;
   GFI = gfi;
   LibInfo = li;
-  DL = DAG.getTarget().getSubtargetImpl()->getDataLayout();
+  DL = DAG.getSubtarget().getDataLayout();
   Context = DAG.getContext();
   LPadToCallSiteMap.clear();
 }
@@ -4601,8 +4601,7 @@ SelectionDAGBuilder::EmitFuncArgumentDbgValue(const Value *V, MDNode *Variable,
     return false;
 
   MachineFunction &MF = DAG.getMachineFunction();
-  const TargetInstrInfo *TII =
-      DAG.getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = DAG.getSubtarget().getInstrInfo();
 
   // Ignore inlined function arguments here.
   DIVariable DV(Variable);

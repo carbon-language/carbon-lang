@@ -3947,8 +3947,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, SDLoc dl,
 
     // Don't promote to an alignment that would require dynamic stack
     // realignment.
-    const TargetRegisterInfo *TRI =
-        MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+    const TargetRegisterInfo *TRI = MF.getSubtarget().getRegisterInfo();
     if (!TRI->needsStackRealignment(MF))
        while (NewAlign > Align &&
              TLI.getDataLayout()->exceedsNaturalStackAlignment(NewAlign))

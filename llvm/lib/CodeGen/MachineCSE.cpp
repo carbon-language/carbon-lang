@@ -664,8 +664,8 @@ bool MachineCSE::runOnMachineFunction(MachineFunction &MF) {
   if (skipOptnoneFunction(*MF.getFunction()))
     return false;
 
-  TII = MF.getTarget().getSubtargetImpl()->getInstrInfo();
-  TRI = MF.getTarget().getSubtargetImpl()->getRegisterInfo();
+  TII = MF.getSubtarget().getInstrInfo();
+  TRI = MF.getSubtarget().getRegisterInfo();
   MRI = &MF.getRegInfo();
   AA = &getAnalysis<AliasAnalysis>();
   DT = &getAnalysis<MachineDominatorTree>();

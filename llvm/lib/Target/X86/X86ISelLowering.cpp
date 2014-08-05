@@ -2457,8 +2457,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
         TotalNumXMMRegs = 0;
 
       if (IsWin64) {
-        const TargetFrameLowering &TFI =
-            *MF.getTarget().getSubtargetImpl()->getFrameLowering();
+        const TargetFrameLowering &TFI = *MF.getSubtarget().getFrameLowering();
         // Get to the caller-allocated home save location.  Add 8 to account
         // for the return address.
         int HomeOffset = TFI.getOffsetOfLocalArea() + 8;
@@ -2723,7 +2722,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // Walk the register/memloc assignments, inserting copies/loads.  In the case
   // of tail call optimization arguments are handle later.
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
     // Skip inalloca arguments, they have already been written.
     ISD::ArgFlagsTy Flags = Outs[i].Flags;
@@ -3019,8 +3018,7 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                   RegsToPass[i].second.getValueType()));
 
   // Add a register mask operand representing the call-preserved registers.
-  const TargetRegisterInfo *TRI =
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = DAG.getSubtarget().getRegisterInfo();
   const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
   assert(Mask && "Missing call preserved mask for calling convention");
   Ops.push_back(DAG.getRegisterMask(Mask));
@@ -3227,7 +3225,7 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
   // Can't do sibcall if stack needs to be dynamically re-aligned. PEI needs to
   // emit a special epilogue.
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   if (RegInfo->needsStackRealignment(MF))
     return false;
 
@@ -3339,8 +3337,8 @@ X86TargetLowering::IsEligibleForTailCallOptimization(SDValue Callee,
       // the caller's fixed stack objects.
       MachineFrameInfo *MFI = MF.getFrameInfo();
       const MachineRegisterInfo *MRI = &MF.getRegInfo();
-      const X86InstrInfo *TII = static_cast<const X86InstrInfo *>(
-          DAG.getTarget().getSubtargetImpl()->getInstrInfo());
+      const X86InstrInfo *TII =
+          static_cast<const X86InstrInfo *>(DAG.getSubtarget().getInstrInfo());
       for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
         CCValAssign &VA = ArgLocs[i];
         SDValue Arg = OutVals[i];
@@ -3493,7 +3491,7 @@ static SDValue getTargetShuffleNode(unsigned Opc, SDLoc dl, EVT VT,
 SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
   MachineFunction &MF = DAG.getMachineFunction();
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   X86MachineFunctionInfo *FuncInfo = MF.getInfo<X86MachineFunctionInfo>();
   int ReturnAddrIndex = FuncInfo->getRAIndex();
 
@@ -13608,8 +13606,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, VT);
     Chain = SP.getValue(1);
     unsigned Align = cast<ConstantSDNode>(Tmp3)->getZExtValue();
-    const TargetFrameLowering &TFI =
-        *DAG.getTarget().getSubtargetImpl()->getFrameLowering();
+    const TargetFrameLowering &TFI = *DAG.getSubtarget().getFrameLowering();
     unsigned StackAlign = TFI.getStackAlignment();
     Tmp1 = DAG.getNode(ISD::SUB, dl, VT, SP, Size); // Value
     if (Align > StackAlign)
@@ -13668,7 +13665,7 @@ X86TargetLowering::LowerDYNAMIC_STACKALLOC(SDValue Op,
     Chain = DAG.getNode(X86ISD::WIN_ALLOCA, dl, NodeTys, Chain, Flag);
 
     const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-        DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+        DAG.getSubtarget().getRegisterInfo());
     unsigned SPReg = RegInfo->getStackRegister();
     SDValue SP = DAG.getCopyFromReg(Chain, dl, SPReg, SPTy);
     Chain = SP.getValue(1);
@@ -15048,7 +15045,7 @@ SDValue X86TargetLowering::LowerRETURNADDR(SDValue Op,
   if (Depth > 0) {
     SDValue FrameAddr = LowerFRAMEADDR(Op, DAG);
     const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-        DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+        DAG.getSubtarget().getRegisterInfo());
     SDValue Offset = DAG.getConstant(RegInfo->getSlotSize(), PtrVT);
     return DAG.getLoad(PtrVT, dl, DAG.getEntryNode(),
                        DAG.getNode(ISD::ADD, dl, PtrVT,
@@ -15070,7 +15067,7 @@ SDValue X86TargetLowering::LowerFRAMEADDR(SDValue Op, SelectionDAG &DAG) const {
   SDLoc dl(Op);  // FIXME probably not meaningful
   unsigned Depth = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   unsigned FrameReg = RegInfo->getFrameRegister(DAG.getMachineFunction());
   assert(((FrameReg == X86::RBP && VT == MVT::i64) ||
           (FrameReg == X86::EBP && VT == MVT::i32)) &&
@@ -15099,7 +15096,7 @@ unsigned X86TargetLowering::getRegisterByName(const char* RegName,
 SDValue X86TargetLowering::LowerFRAME_TO_ARGS_OFFSET(SDValue Op,
                                                      SelectionDAG &DAG) const {
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   return DAG.getIntPtrConstant(2 * RegInfo->getSlotSize());
 }
 
@@ -15111,7 +15108,7 @@ SDValue X86TargetLowering::LowerEH_RETURN(SDValue Op, SelectionDAG &DAG) const {
 
   EVT PtrVT = getPointerTy();
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo());
+      DAG.getSubtarget().getRegisterInfo());
   unsigned FrameReg = RegInfo->getFrameRegister(DAG.getMachineFunction());
   assert(((FrameReg == X86::RBP && PtrVT == MVT::i64) ||
           (FrameReg == X86::EBP && PtrVT == MVT::i32)) &&
@@ -15158,8 +15155,7 @@ SDValue X86TargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   SDLoc dl (Op);
 
   const Value *TrmpAddr = cast<SrcValueSDNode>(Op.getOperand(4))->getValue();
-  const TargetRegisterInfo *TRI =
-      DAG.getTarget().getSubtargetImpl()->getRegisterInfo();
+  const TargetRegisterInfo *TRI = DAG.getSubtarget().getRegisterInfo();
 
   if (Subtarget->is64Bit()) {
     SDValue OutChains[6];
@@ -17562,8 +17558,7 @@ X86TargetLowering::EmitVAARG64WithCustomInserter(
   MachineInstr::mmo_iterator MMOEnd = MI->memoperands_end();
 
   // Machine Information
-  const TargetInstrInfo *TII =
-      MBB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MBB->getParent()->getSubtarget().getInstrInfo();
   MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
   const TargetRegisterClass *AddrRegClass = getRegClassFor(MVT::i64);
   const TargetRegisterClass *OffsetRegClass = getRegClassFor(MVT::i32);
@@ -17819,8 +17814,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   XMMSaveMBB->addSuccessor(EndMBB);
 
   // Now add the instructions.
-  const TargetInstrInfo *TII =
-      MBB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MBB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
   unsigned CountReg = MI->getOperand(0).getReg();
@@ -17903,8 +17897,7 @@ static bool checkAndUpdateEFLAGSKill(MachineBasicBlock::iterator SelectItr,
 MachineBasicBlock *
 X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
                                      MachineBasicBlock *BB) const {
-  const TargetInstrInfo *TII =
-      BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = BB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
   // To "insert" a SELECT_CC instruction, we actually have to insert the
@@ -17931,7 +17924,7 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
   // If the EFLAGS register isn't dead in the terminator, then claim that it's
   // live into the sink and copy blocks.
   const TargetRegisterInfo *TRI =
-      BB->getParent()->getTarget().getSubtargetImpl()->getRegisterInfo();
+      BB->getParent()->getSubtarget().getRegisterInfo();
   if (!MI->killsRegister(X86::EFLAGS) &&
       !checkAndUpdateEFLAGSKill(MI, BB, TRI)) {
     copy0MBB->addLiveIn(X86::EFLAGS);
@@ -17973,8 +17966,7 @@ MachineBasicBlock *
 X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
                                         bool Is64Bit) const {
   MachineFunction *MF = BB->getParent();
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
   const BasicBlock *LLVM_BB = BB->getBasicBlock();
 
@@ -18096,8 +18088,7 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
 MachineBasicBlock *
 X86TargetLowering::EmitLoweredWinAlloca(MachineInstr *MI,
                                         MachineBasicBlock *BB) const {
-  const TargetInstrInfo *TII =
-      BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = BB->getParent()->getSubtarget().getInstrInfo();
   DebugLoc DL = MI->getDebugLoc();
 
   assert(!Subtarget->isTargetMacho());
@@ -18154,8 +18145,8 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
   // or EAX and doing an indirect call.  The return value will then
   // be in the normal return register.
   MachineFunction *F = BB->getParent();
-  const X86InstrInfo *TII = static_cast<const X86InstrInfo *>(
-      F->getTarget().getSubtargetImpl()->getInstrInfo());
+  const X86InstrInfo *TII =
+      static_cast<const X86InstrInfo *>(F->getSubtarget().getInstrInfo());
   DebugLoc DL = MI->getDebugLoc();
 
   assert(Subtarget->isTargetDarwin() && "Darwin only instr emitted?");
@@ -18212,8 +18203,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
                                     MachineBasicBlock *MBB) const {
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *MF = MBB->getParent();
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
   const BasicBlock *BB = MBB->getBasicBlock();
@@ -18320,7 +18310,7 @@ X86TargetLowering::emitEHSjLjSetJmp(MachineInstr *MI,
           .addMBB(restoreMBB);
 
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      MF->getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF->getSubtarget().getRegisterInfo());
   MIB.addRegMask(RegInfo->getNoPreservedMask());
   thisMBB->addSuccessor(mainMBB);
   thisMBB->addSuccessor(restoreMBB);
@@ -18350,8 +18340,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
                                      MachineBasicBlock *MBB) const {
   DebugLoc DL = MI->getDebugLoc();
   MachineFunction *MF = MBB->getParent();
-  const TargetInstrInfo *TII =
-      MF->getTarget().getSubtargetImpl()->getInstrInfo();
+  const TargetInstrInfo *TII = MF->getSubtarget().getInstrInfo();
   MachineRegisterInfo &MRI = MF->getRegInfo();
 
   // Memory Reference
@@ -18367,7 +18356,7 @@ X86TargetLowering::emitEHSjLjLongJmp(MachineInstr *MI,
   unsigned Tmp = MRI.createVirtualRegister(RC);
   // Since FP is only updated here but NOT referenced, it's treated as GPR.
   const X86RegisterInfo *RegInfo = static_cast<const X86RegisterInfo *>(
-      MF->getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF->getSubtarget().getRegisterInfo());
   unsigned FP = (PVT == MVT::i64) ? X86::RBP : X86::EBP;
   unsigned SP = RegInfo->getStackRegister();
 
@@ -18477,8 +18466,7 @@ X86TargetLowering::emitFMA3Instr(MachineInstr *MI,
         default: llvm_unreachable("Unrecognized FMA variant.");
       }
 
-      const TargetInstrInfo &TII =
-          *MF.getTarget().getSubtargetImpl()->getInstrInfo();
+      const TargetInstrInfo &TII = *MF.getSubtarget().getInstrInfo();
       MachineInstrBuilder MIB =
         BuildMI(MF, MI->getDebugLoc(), TII.get(NewFMAOpc))
         .addOperand(MI->getOperand(0))
@@ -18544,8 +18532,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::FP80_TO_INT32_IN_MEM:
   case X86::FP80_TO_INT64_IN_MEM: {
     MachineFunction *F = BB->getParent();
-    const TargetInstrInfo *TII =
-        F->getTarget().getSubtargetImpl()->getInstrInfo();
+    const TargetInstrInfo *TII = F->getSubtarget().getInstrInfo();
     DebugLoc DL = MI->getDebugLoc();
 
     // Change the floating point control register to use "round towards zero"
@@ -18629,9 +18616,7 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VPCMPESTRM128MEM:
     assert(Subtarget->hasSSE42() &&
            "Target must have SSE4.2 or AVX features enabled");
-    return EmitPCMPSTRM(
-        MI, BB,
-        BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo());
+    return EmitPCMPSTRM(MI, BB, BB->getParent()->getSubtarget().getInstrInfo());
 
   // String/text processing lowering.
   case X86::PCMPISTRIREG:
@@ -18644,21 +18629,16 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::VPCMPESTRIMEM:
     assert(Subtarget->hasSSE42() &&
            "Target must have SSE4.2 or AVX features enabled");
-    return EmitPCMPSTRI(
-        MI, BB,
-        BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo());
+    return EmitPCMPSTRI(MI, BB, BB->getParent()->getSubtarget().getInstrInfo());
 
   // Thread synchronization.
   case X86::MONITOR:
-    return EmitMonitor(
-        MI, BB, BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo(),
-        Subtarget);
+    return EmitMonitor(MI, BB, BB->getParent()->getSubtarget().getInstrInfo(),
+                       Subtarget);
 
   // xbegin
   case X86::XBEGIN:
-    return EmitXBegin(
-        MI, BB,
-        BB->getParent()->getTarget().getSubtargetImpl()->getInstrInfo());
+    return EmitXBegin(MI, BB, BB->getParent()->getSubtarget().getInstrInfo());
 
   case X86::VASTART_SAVE_XMM_REGS:
     return EmitVAStartSaveXMMRegsWithCustomInserter(MI, BB);

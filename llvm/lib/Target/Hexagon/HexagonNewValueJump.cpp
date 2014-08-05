@@ -362,10 +362,9 @@ bool HexagonNewValueJump::runOnMachineFunction(MachineFunction &MF) {
   LiveVariables &LVs = getAnalysis<LiveVariables>();
 #endif
 
-  QII = static_cast<const HexagonInstrInfo *>(
-      MF.getTarget().getSubtargetImpl()->getInstrInfo());
+  QII = static_cast<const HexagonInstrInfo *>(MF.getSubtarget().getInstrInfo());
   QRI = static_cast<const HexagonRegisterInfo *>(
-      MF.getTarget().getSubtargetImpl()->getRegisterInfo());
+      MF.getSubtarget().getRegisterInfo());
   MBPI = &getAnalysis<MachineBranchProbabilityInfo>();
 
   if (!QRI->Subtarget.hasV4TOps() ||

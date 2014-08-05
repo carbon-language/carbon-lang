@@ -48,24 +48,20 @@ void NVPTXFrameLowering::emitPrologue(MachineFunction &MF) const {
     if (is64bit) {
       unsigned LocalReg = MRI.createVirtualRegister(&NVPTX::Int64RegsRegClass);
       MachineInstr *MI =
-          BuildMI(MBB, MBBI, dl,
-                  MF.getTarget().getSubtargetImpl()->getInstrInfo()->get(
-                      NVPTX::cvta_local_yes_64),
+          BuildMI(MBB, MBBI, dl, MF.getSubtarget().getInstrInfo()->get(
+                                     NVPTX::cvta_local_yes_64),
                   NVPTX::VRFrame).addReg(LocalReg);
       BuildMI(MBB, MI, dl,
-              MF.getTarget().getSubtargetImpl()->getInstrInfo()->get(
-                  NVPTX::MOV_DEPOT_ADDR_64),
+              MF.getSubtarget().getInstrInfo()->get(NVPTX::MOV_DEPOT_ADDR_64),
               LocalReg).addImm(MF.getFunctionNumber());
     } else {
       unsigned LocalReg = MRI.createVirtualRegister(&NVPTX::Int32RegsRegClass);
       MachineInstr *MI =
           BuildMI(MBB, MBBI, dl,
-                  MF.getTarget().getSubtargetImpl()->getInstrInfo()->get(
-                      NVPTX::cvta_local_yes),
+                  MF.getSubtarget().getInstrInfo()->get(NVPTX::cvta_local_yes),
                   NVPTX::VRFrame).addReg(LocalReg);
       BuildMI(MBB, MI, dl,
-              MF.getTarget().getSubtargetImpl()->getInstrInfo()->get(
-                  NVPTX::MOV_DEPOT_ADDR),
+              MF.getSubtarget().getInstrInfo()->get(NVPTX::MOV_DEPOT_ADDR),
               LocalReg).addImm(MF.getFunctionNumber());
     }
   }
