@@ -475,10 +475,8 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
   if (!DisableOpt)
-    PassManagerBuilder().populateLTOPassManager(passes,
-                                              /*Internalize=*/false,
-                                              !DisableInline,
-                                              DisableGVNLoadPRE);
+    PassManagerBuilder().populateLTOPassManager(passes, !DisableInline,
+                                                DisableGVNLoadPRE);
 
   // Make sure everything is still good.
   passes.add(createVerifierPass());

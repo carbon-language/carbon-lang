@@ -284,17 +284,10 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
 }
 
 void PassManagerBuilder::populateLTOPassManager(PassManagerBase &PM,
-                                                bool Internalize,
                                                 bool RunInliner,
                                                 bool DisableGVNLoadPRE) {
   // Provide AliasAnalysis services for optimizations.
   addInitialAliasAnalysisPasses(PM);
-
-  // Now that composite has been compiled, scan through the module, looking
-  // for a main function.  If main is defined, mark all other functions
-  // internal.
-  if (Internalize)
-    PM.add(createInternalizePass("main"));
 
   // Propagate constants at call sites into the functions they call.  This
   // opens opportunities for globalopt (and inlining) by substituting function
@@ -461,5 +454,5 @@ void LLVMPassManagerBuilderPopulateLTOPassManager(LLVMPassManagerBuilderRef PMB,
                                                   LLVMBool RunInliner) {
   PassManagerBuilder *Builder = unwrap(PMB);
   PassManagerBase *LPM = unwrap(PM);
-  Builder->populateLTOPassManager(*LPM, Internalize != 0, RunInliner != 0);
+  Builder->populateLTOPassManager(*LPM, RunInliner != 0, false);
 }

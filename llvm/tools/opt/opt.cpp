@@ -109,10 +109,6 @@ DisableOptimizations("disable-opt",
                      cl::desc("Do not run any optimization passes"));
 
 static cl::opt<bool>
-DisableInternalize("disable-internalize",
-                   cl::desc("Do not mark all symbols as internal"));
-
-static cl::opt<bool>
 StandardCompileOpts("std-compile-opts",
                    cl::desc("Include the standard compile time optimizations"));
 
@@ -271,8 +267,7 @@ static void AddStandardLinkPasses(PassManagerBase &PM) {
   if (DisableOptimizations) return;
 
   PassManagerBuilder Builder;
-  Builder.populateLTOPassManager(PM, /*Internalize=*/ !DisableInternalize,
-                                 /*RunInliner=*/ !DisableInline);
+  Builder.populateLTOPassManager(PM, /*RunInliner=*/!DisableInline, false);
 }
 
 //===----------------------------------------------------------------------===//
