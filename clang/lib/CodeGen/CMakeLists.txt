@@ -72,4 +72,5 @@ add_clang_library(clangCodeGen
   clangAST
   clangBasic
   clangFrontend
+  clangLex
   )
