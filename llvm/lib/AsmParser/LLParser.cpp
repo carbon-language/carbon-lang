@@ -2249,7 +2249,7 @@ Value *LLParser::PerFunctionState::GetVal(const std::string &Name,
   }
 
   // Don't make placeholders with invalid type.
-  if (!Ty->isFirstClassType() && !Ty->isLabelTy()) {
+  if (!Ty->isFirstClassType()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return nullptr;
   }
@@ -2290,7 +2290,7 @@ Value *LLParser::PerFunctionState::GetVal(unsigned ID, Type *Ty,
     return nullptr;
   }
 
-  if (!Ty->isFirstClassType() && !Ty->isLabelTy()) {
+  if (!Ty->isFirstClassType()) {
     P.Error(Loc, "invalid use of a non-first-class type");
     return nullptr;
   }
