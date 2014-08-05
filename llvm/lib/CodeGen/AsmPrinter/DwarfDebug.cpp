@@ -1229,10 +1229,9 @@ static bool piecesOverlap(DIVariable P1, DIVariable P2) {
 // [1-3]    [x, (reg0, piece  0, 32), (reg1, piece 32, 32)]
 // [3-4]    [x, (reg1, piece 32, 32)]
 // [4- ]    [x, (mem,  piece  0, 64)]
-void DwarfDebug::
-buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
-                  const DbgValueHistoryMap::InstrRanges &Ranges,
-                  DwarfCompileUnit *TheCU) {
+void
+DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
+                              const DbgValueHistoryMap::InstrRanges &Ranges) {
   typedef std::pair<DIVariable, DebugLocEntry::Value> Range;
   SmallVector<Range, 4> OpenRanges;
 
@@ -1271,7 +1270,7 @@ buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     DEBUG(dbgs() << "DotDebugLoc: " << *Begin << "\n");
 
     auto Value = getDebugLocValue(Begin);
-    DebugLocEntry Loc(StartLabel, EndLabel, Value, TheCU);
+    DebugLocEntry Loc(StartLabel, EndLabel, Value);
     if (DebugLoc.empty() || !DebugLoc.back().Merge(Loc)) {
       // Add all values from still valid non-overlapping pieces.
       for (auto Range : OpenRanges)
@@ -1340,11 +1339,12 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
 
     DotDebugLocEntries.resize(DotDebugLocEntries.size() + 1);
     DebugLocList &LocList = DotDebugLocEntries.back();
+    LocList.CU = TheCU;
     LocList.Label =
         Asm->GetTempSymbol("debug_loc", DotDebugLocEntries.size() - 1);
 
     // Build the location list for this variable.
-    buildLocationList(LocList.List, Ranges, TheCU);
+    buildLocationList(LocList.List, Ranges);
   }
 
   // Collect info for variables that were optimized out.
@@ -2198,11 +2198,11 @@ void DwarfDebug::emitDebugLoc() {
   unsigned char Size = Asm->getDataLayout().getPointerSize();
   for (const auto &DebugLoc : DotDebugLocEntries) {
     Asm->OutStreamer.EmitLabel(DebugLoc.Label);
+    const DwarfCompileUnit *CU = DebugLoc.CU;
     for (const auto &Entry : DebugLoc.List) {
       // Set up the range. This range is relative to the entry point of the
       // compile unit. This is a hard coded 0 for low_pc when we're emitting
       // ranges, or the DW_AT_low_pc on the compile unit otherwise.
-      const DwarfCompileUnit *CU = Entry.getCU();
       if (CU->getRanges().size() == 1) {
         // Grab the begin symbol from the first range as our base.
         const MCSymbol *Base = CU->getRanges()[0].getStart();

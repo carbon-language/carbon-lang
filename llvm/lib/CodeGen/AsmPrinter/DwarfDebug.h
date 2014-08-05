@@ -538,8 +538,7 @@ class DwarfDebug : public AsmPrinterHandler {
   /// \brief Build the location list for all DBG_VALUEs in the
   /// function that describe the same variable.
   void buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
-                         const DbgValueHistoryMap::InstrRanges &Ranges,
-                         DwarfCompileUnit *TheCU);
+                         const DbgValueHistoryMap::InstrRanges &Ranges);
 
   /// \brief Collect variable information from the side table maintained
   /// by MMI.

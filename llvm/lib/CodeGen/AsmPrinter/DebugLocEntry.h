@@ -15,7 +15,6 @@
 #include "llvm/MC/MCSymbol.h"
 
 namespace llvm {
-class DwarfCompileUnit;
 class MDNode;
 /// \brief This struct describes location entries emitted in the .debug_loc
 /// section.
@@ -91,14 +90,10 @@ private:
   /// A list of locations/constants belonging to this entry.
   SmallVector<Value, 1> Values;
 
-  /// The compile unit that this location entry is referenced by.
-  const DwarfCompileUnit *Unit;
-
 public:
-  DebugLocEntry() : Begin(nullptr), End(nullptr), Unit(nullptr) {}
-  DebugLocEntry(const MCSymbol *B, const MCSymbol *E,
-                Value Val, const DwarfCompileUnit *U)
-      : Begin(B), End(E), Unit(U) {
+  DebugLocEntry() : Begin(nullptr), End(nullptr) {}
+  DebugLocEntry(const MCSymbol *B, const MCSymbol *E, Value Val)
+      : Begin(B), End(E) {
     Values.push_back(std::move(Val));
   }
 
@@ -130,7 +125,6 @@ public:
 
   const MCSymbol *getBeginSym() const { return Begin; }
   const MCSymbol *getEndSym() const { return End; }
-  const DwarfCompileUnit *getCU() const { return Unit; }
   const ArrayRef<Value> getValues() const { return Values; }
   void addValue(Value Val) {
     assert(DIVariable(Val.Variable).isVariablePiece() &&
