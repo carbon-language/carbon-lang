@@ -77,3 +77,16 @@
 # CHECK-BE: mtspr 986, 2                    # encoding: [0x7c,0x5a,0xf3,0xa6]
 # CHECK-LE: mtspr 986, 2                    # encoding: [0xa6,0xf3,0x5a,0x7c]
             mttcr %r2
+
+# CHECK-BE: mfspr 2, 989                    # encoding: [0x7c,0x5d,0xf2,0xa6]
+# CHECK-LE: mfspr 2, 989                    # encoding: [0xa6,0xf2,0x5d,0x7c]
+            mftblo %r2
+# CHECK-BE: mtspr 989, 2                    # encoding: [0x7c,0x5d,0xf3,0xa6]
+# CHECK-LE: mtspr 989, 2                    # encoding: [0xa6,0xf3,0x5d,0x7c]
+            mttblo %r2
+# CHECK-BE: mfspr 2, 988                    # encoding: [0x7c,0x5c,0xf2,0xa6]
+# CHECK-LE: mfspr 2, 988                    # encoding: [0xa6,0xf2,0x5c,0x7c]
+            mftbhi %r2
+# CHECK-BE: mtspr 988, 2                    # encoding: [0x7c,0x5c,0xf3,0xa6]
+# CHECK-LE: mtspr 988, 2                    # encoding: [0xa6,0xf3,0x5c,0x7c]
+            mttbhi %r2
