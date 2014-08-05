@@ -163,8 +163,10 @@ public:
 
   /// Warn when acquiring a lock that the negative capability is not held.
   /// \param Kind -- the capability's name parameter (role, mutex, etc).
-  /// \param LockName -- A StringRef name for the lock expression, to be printed
-  /// in the error message.
+  /// \param LockName -- The name for the lock expression, to be printed in the
+  /// diagnostic.
+  /// \param Neg -- The name of the negative capability to be printed in the
+  /// diagnostic.
   /// \param Loc -- The location of the protected operation.
   virtual void handleNegativeNotHeld(StringRef Kind, Name LockName, Name Neg,
                                      SourceLocation Loc) {}
