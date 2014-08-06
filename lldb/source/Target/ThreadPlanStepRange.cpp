@@ -50,6 +50,7 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_address_ranges (),
     m_stop_others (stop_others),
     m_stack_id (),
+    m_parent_stack_id(),
     m_no_more_plans (false),
     m_first_run_event (true),
     m_use_fast_step(false)
@@ -57,6 +58,7 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_use_fast_step = GetTarget().GetUseFastStepping();
     AddRange(range);
     m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+    m_parent_stack_id = m_thread.GetStackFrameAtIndex(1)->GetStackID();
 }
 
 ThreadPlanStepRange::~ThreadPlanStepRange ()
@@ -270,7 +272,13 @@ ThreadPlanStepRange::CompareCurrentFrameToStartFrame()
     }
     else
     {
-        frame_order = eFrameCompareOlder;
+        StackID cur_parent_id = m_thread.GetStackFrameAtIndex(1)->GetStackID();
+        if (m_parent_stack_id.IsValid()
+            && cur_parent_id.IsValid()
+            && m_parent_stack_id == cur_parent_id)
+           frame_order = eFrameCompareSameParent;
+        else
+            frame_order = eFrameCompareOlder;
     }
     return frame_order;
 }

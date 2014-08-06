@@ -77,6 +77,7 @@ protected:
     std::vector<AddressRange> m_address_ranges;
     lldb::RunMode             m_stop_others;
     StackID                   m_stack_id;        // Use the stack ID so we can tell step out from step in.
+    StackID                   m_parent_stack_id; // Use the parent stack ID so we can identify tail calls and the like.
     bool                      m_no_more_plans;   // Need this one so we can tell if we stepped into a call,
                                                  // but can't continue, in which case we are done.
     bool                      m_first_run_event; // We want to broadcast only one running event, our first.

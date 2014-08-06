@@ -682,14 +682,22 @@ namespace lldb {
     } TypeOptions;
 
    //----------------------------------------------------------------------
-   // This is the return value for frame comparisons.  When frame A pushes
-   // frame B onto the stack, frame A is OLDER than frame B.
+   // This is the return value for frame comparisons.  If you are comparing frame A to frame B
+   // the following cases arise:
+   // 1) When frame A pushes frame B (or a frame that ends up pushing B) A is Older than B.
+   // 2) When frame A pushed frame B (or if frame A is on the stack but B is not) A is Younger than B
+   // 3) When frame A and frame B have the same StackID, they are Equal.
+   // 4) When frame A and frame B have the same immediate parent frame, but are not equal, the comparision yields
+   //    SameParent.
+   // 5) If the two frames are on different threads or processes the comparision is Invalid
+   // 6) If for some reason we can't figure out what went on, we return Unknown.
    //----------------------------------------------------------------------
    typedef enum FrameComparison
    {
        eFrameCompareInvalid,
        eFrameCompareUnknown,
        eFrameCompareEqual,
+       eFrameCompareSameParent,
        eFrameCompareYounger,
        eFrameCompareOlder
    } FrameComparison;

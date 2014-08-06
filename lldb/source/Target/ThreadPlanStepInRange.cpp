@@ -190,7 +190,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             
         FrameComparison frame_order = CompareCurrentFrameToStartFrame();
         
-        if (frame_order == eFrameCompareOlder)
+        if (frame_order == eFrameCompareOlder || frame_order == eFrameCompareSameParent)
         {
             // If we're in an older frame then we should stop.
             //
@@ -201,7 +201,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             if (!m_sub_plan_sp)
             {
                 // Otherwise check the ShouldStopHere for step out:
-                m_sub_plan_sp = CheckShouldStopHereAndQueueStepOut(eFrameCompareOlder);
+                m_sub_plan_sp = CheckShouldStopHereAndQueueStepOut(frame_order);
                 if (log)
                     log->Printf ("ShouldStopHere says we should step out of this frame.");
             }
@@ -402,6 +402,7 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if ((operation == eFrameCompareYounger && flags.Test(eStepInAvoidNoDebug))
+        || (operation == eFrameCompareSameParent && flags.Test(eStepOutAvoidNoDebug))
         || (operation == eFrameCompareOlder && flags.Test(eStepOutAvoidNoDebug)))
     {
         if (!frame->HasDebugInformation())

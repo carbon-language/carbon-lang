@@ -82,7 +82,8 @@ ThreadPlanShouldStopHere::DefaultShouldStopHereCallback (ThreadPlan *current_pla
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if ((operation == eFrameCompareOlder && flags.Test(eStepOutAvoidNoDebug))
-        || (operation == eFrameCompareYounger && flags.Test(eStepInAvoidNoDebug)))
+        || (operation == eFrameCompareYounger && flags.Test(eStepInAvoidNoDebug))
+        || (operation == eFrameCompareSameParent && flags.Test(eStepInAvoidNoDebug)))
     {
         if (!frame->HasDebugInformation())
         {

@@ -90,6 +90,10 @@ ThreadPlanStepOverRange::SetupAvoidNoDebug(LazyBool step_out_avoids_code_without
         GetFlags().Set (ThreadPlanShouldStopHere::eStepOutAvoidNoDebug);
     else
         GetFlags().Clear (ThreadPlanShouldStopHere::eStepOutAvoidNoDebug);
+    // Step Over plans should always avoid no-debug on step in.  Seems like you shouldn't
+    // have to say this, but a tail call looks more like a step in that a step out, so
+    // we want to catch this case.
+    GetFlags().Set (ThreadPlanShouldStopHere::eStepInAvoidNoDebug);
 }
 
 bool
