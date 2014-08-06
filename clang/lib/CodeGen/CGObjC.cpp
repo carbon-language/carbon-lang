@@ -88,7 +88,8 @@ CodeGenFunction::EmitObjCBoxedExpr(const ObjCBoxedExpr *E) {
 }
 
 llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
-                                    const ObjCMethodDecl *MethodWithObjects) {
+                                    const ObjCMethodDecl *MethodWithObjects,
+                                    const ObjCMethodDecl *AllocMethod) {
   ASTContext &Context = CGM.getContext();
   const ObjCDictionaryLiteral *DLE = nullptr;
   const ObjCArrayLiteral *ALE = dyn_cast<ObjCArrayLiteral>(E);
@@ -203,12 +204,14 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
 }
 
 llvm::Value *CodeGenFunction::EmitObjCArrayLiteral(const ObjCArrayLiteral *E) {
-  return EmitObjCCollectionLiteral(E, E->getArrayWithObjectsMethod());
+  return EmitObjCCollectionLiteral(E, E->getArrayWithObjectsMethod(),
+                                      E->getArrayAllocMethod());
 }
 
 llvm::Value *CodeGenFunction::EmitObjCDictionaryLiteral(
                                             const ObjCDictionaryLiteral *E) {
-  return EmitObjCCollectionLiteral(E, E->getDictWithObjectsMethod());
+  return EmitObjCCollectionLiteral(E, E->getDictWithObjectsMethod(),
+                                      E->getDictAllocMethod());
 }
 
 /// Emit a selector.

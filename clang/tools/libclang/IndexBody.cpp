@@ -109,11 +109,17 @@ public:
     if (ObjCMethodDecl *MD = E->getDictWithObjectsMethod())
       IndexCtx.handleReference(MD, E->getLocStart(),
                                Parent, ParentDC, E, CXIdxEntityRef_Implicit);
+    if (ObjCMethodDecl *MD = E->getDictAllocMethod())
+      IndexCtx.handleReference(MD, E->getLocStart(),
+                               Parent, ParentDC, E, CXIdxEntityRef_Implicit);
     return true;
   }
 
   bool VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
     if (ObjCMethodDecl *MD = E->getArrayWithObjectsMethod())
+      IndexCtx.handleReference(MD, E->getLocStart(),
+                               Parent, ParentDC, E, CXIdxEntityRef_Implicit);
+    if (ObjCMethodDecl *MD = E->getArrayAllocMethod())
       IndexCtx.handleReference(MD, E->getLocStart(),
                                Parent, ParentDC, E, CXIdxEntityRef_Implicit);
     return true;
