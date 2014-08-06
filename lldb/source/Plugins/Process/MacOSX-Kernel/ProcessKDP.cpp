@@ -22,6 +22,7 @@
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
+#include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/CommandObjectMultiword.h"
@@ -272,8 +273,8 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 
     if (conn_ap->IsConnected())
     {
-        const Socket& socket = static_cast<const Socket&>(conn_ap->GetReadObject());
-        const uint16_t reply_port = socket.GetPort();
+        const Socket& socket = static_cast<const Socket&>(*conn_ap->GetReadObject());
+        const uint16_t reply_port = socket.GetPortNumber();
 
         if (reply_port != 0)
         {
