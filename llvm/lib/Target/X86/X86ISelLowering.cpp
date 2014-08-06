@@ -7386,15 +7386,24 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   // First fix the masks for all the inputs that are staying in their
   // original halves. This will then dictate the targets of the cross-half
   // shuffles.
-  auto fixInPlaceInputs = [&PSHUFDMask](
-      ArrayRef<int> InPlaceInputs, MutableArrayRef<int> SourceHalfMask,
-      MutableArrayRef<int> HalfMask, int HalfOffset) {
+  auto fixInPlaceInputs =
+      [&PSHUFDMask](ArrayRef<int> InPlaceInputs, ArrayRef<int> IncomingInputs,
+                    MutableArrayRef<int> SourceHalfMask,
+                    MutableArrayRef<int> HalfMask, int HalfOffset) {
     if (InPlaceInputs.empty())
       return;
     if (InPlaceInputs.size() == 1) {
       SourceHalfMask[InPlaceInputs[0] - HalfOffset] =
           InPlaceInputs[0] - HalfOffset;
       PSHUFDMask[InPlaceInputs[0] / 2] = InPlaceInputs[0] / 2;
+      return;
+    }
+    if (IncomingInputs.empty()) {
+      // Just fix all of the in place inputs.
+      for (int Input : InPlaceInputs) {
+        SourceHalfMask[Input - HalfOffset] = Input - HalfOffset;
+        PSHUFDMask[Input / 2] = Input / 2;
+      }
       return;
     }
 
@@ -7408,10 +7417,8 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
     std::replace(HalfMask.begin(), HalfMask.end(), InPlaceInputs[1], AdjIndex);
     PSHUFDMask[AdjIndex / 2] = AdjIndex / 2;
   };
-  if (!HToLInputs.empty())
-    fixInPlaceInputs(LToLInputs, PSHUFLMask, LoMask, 0);
-  if (!LToHInputs.empty())
-    fixInPlaceInputs(HToHInputs, PSHUFHMask, HiMask, 4);
+  fixInPlaceInputs(LToLInputs, HToLInputs, PSHUFLMask, LoMask, 0);
+  fixInPlaceInputs(HToHInputs, LToHInputs, PSHUFHMask, HiMask, 4);
 
   // Now gather the cross-half inputs and place them into a free dword of
   // their target half.
@@ -7420,7 +7427,8 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   auto moveInputsToRightHalf = [&PSHUFDMask](
       MutableArrayRef<int> IncomingInputs, ArrayRef<int> ExistingInputs,
       MutableArrayRef<int> SourceHalfMask, MutableArrayRef<int> HalfMask,
-      int SourceOffset, int DestOffset) {
+      MutableArrayRef<int> FinalSourceHalfMask, int SourceOffset,
+      int DestOffset) {
     auto isWordClobbered = [](ArrayRef<int> SourceHalfMask, int Word) {
       return SourceHalfMask[Word] != -1 && SourceHalfMask[Word] != Word;
     };
@@ -7498,18 +7506,68 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
     } else if (IncomingInputs.size() == 2) {
       if (IncomingInputs[0] / 2 != IncomingInputs[1] / 2 ||
           isDWordClobbered(SourceHalfMask, IncomingInputs[0] - SourceOffset)) {
-        int SourceDWordBase = !isDWordClobbered(SourceHalfMask, 0) ? 0 : 2;
-        assert(!isDWordClobbered(SourceHalfMask, SourceDWordBase) &&
-               "Not all dwords can be clobbered!");
-        SourceHalfMask[SourceDWordBase] = IncomingInputs[0] - SourceOffset;
-        SourceHalfMask[SourceDWordBase + 1] = IncomingInputs[1] - SourceOffset;
+        // We have two non-adjacent or clobbered inputs we need to extract from
+        // the source half. To do this, we need to map them into some adjacent
+        // dword slot in the source mask.
+        int InputsFixed[2] = {IncomingInputs[0] - SourceOffset,
+                              IncomingInputs[1] - SourceOffset};
+
+        // If there is a free slot in the source half mask adjacent to one of
+        // the inputs, place the other input in it. We use (Index XOR 1) to
+        // compute an adjacent index.
+        if (!isWordClobbered(SourceHalfMask, InputsFixed[0]) &&
+            SourceHalfMask[InputsFixed[0] ^ 1] == -1) {
+          SourceHalfMask[InputsFixed[0]] = InputsFixed[0];
+          SourceHalfMask[InputsFixed[0] ^ 1] = InputsFixed[1];
+          InputsFixed[1] = InputsFixed[0] ^ 1;
+        } else if (!isWordClobbered(SourceHalfMask, InputsFixed[1]) &&
+                   SourceHalfMask[InputsFixed[1] ^ 1] == -1) {
+          SourceHalfMask[InputsFixed[1]] = InputsFixed[1];
+          SourceHalfMask[InputsFixed[1] ^ 1] = InputsFixed[0];
+          InputsFixed[0] = InputsFixed[1] ^ 1;
+        } else if (SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1)] == -1 &&
+                   SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1) + 1] == -1) {
+          // The two inputs are in the same DWord but it is clobbered and the
+          // adjacent DWord isn't used at all. Move both inputs to the free
+          // slot.
+          SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1)] = InputsFixed[0];
+          SourceHalfMask[2 * ((InputsFixed[0] / 2) ^ 1) + 1] = InputsFixed[1];
+          InputsFixed[0] = 2 * ((InputsFixed[0] / 2) ^ 1);
+          InputsFixed[1] = 2 * ((InputsFixed[0] / 2) ^ 1) + 1;
+        } else {
+          // The only way we hit this point is if there is no clobbering
+          // (because there are no off-half inputs to this half) and there is no
+          // free slot adjacent to one of the inputs. In this case, we have to
+          // swap an input with a non-input.
+          for (int i = 0; i < 4; ++i)
+            assert((SourceHalfMask[i] == -1 || SourceHalfMask[i] == i) &&
+                   "We can't handle any clobbers here!");
+          assert(InputsFixed[1] != (InputsFixed[0] ^ 1) &&
+                 "Cannot have adjacent inputs here!");
+
+          SourceHalfMask[InputsFixed[0] ^ 1] = InputsFixed[1];
+          SourceHalfMask[InputsFixed[1]] = InputsFixed[0] ^ 1;
+
+          // We also have to update the final source mask in this case because
+          // it may need to undo the above swap.
+          for (int &M : FinalSourceHalfMask)
+            if (M == (InputsFixed[0] ^ 1))
+              M = InputsFixed[1];
+            else if (M == InputsFixed[1])
+              M = InputsFixed[0] ^ 1;
+
+          InputsFixed[1] = InputsFixed[0] ^ 1;
+        }
+
+        // Point everything at the fixed inputs.
         for (int &M : HalfMask)
           if (M == IncomingInputs[0])
-            M = SourceDWordBase + SourceOffset;
+            M = InputsFixed[0] + SourceOffset;
           else if (M == IncomingInputs[1])
-            M = SourceDWordBase + 1 + SourceOffset;
-        IncomingInputs[0] = SourceDWordBase + SourceOffset;
-        IncomingInputs[1] = SourceDWordBase + 1 + SourceOffset;
+            M = InputsFixed[1] + SourceOffset;
+
+        IncomingInputs[0] = InputsFixed[0] + SourceOffset;
+        IncomingInputs[1] = InputsFixed[1] + SourceOffset;
       }
     } else {
       llvm_unreachable("Unhandled input size!");
@@ -7524,9 +7582,9 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
         if (M == Input)
           M = FreeDWord * 2 + Input % 2;
   };
-  moveInputsToRightHalf(HToLInputs, LToLInputs, PSHUFHMask, LoMask,
+  moveInputsToRightHalf(HToLInputs, LToLInputs, PSHUFHMask, LoMask, HiMask,
                         /*SourceOffset*/ 4, /*DestOffset*/ 0);
-  moveInputsToRightHalf(LToHInputs, HToHInputs, PSHUFLMask, HiMask,
+  moveInputsToRightHalf(LToHInputs, HToHInputs, PSHUFLMask, HiMask, LoMask,
                         /*SourceOffset*/ 0, /*DestOffset*/ 4);
 
   // Now enact all the shuffles we've computed to move the inputs into their
@@ -19391,26 +19449,6 @@ static bool combineRedundantHalfShuffle(SDValue N, MutableArrayRef<int> Mask,
 
       // Other-half shuffles are no-ops.
       continue;
-
-    case X86ISD::PSHUFD: {
-      // We can only handle pshufd if the half we are combining either stays in
-      // its half, or switches to the other half. Bail if one of these isn't
-      // true.
-      SmallVector<int, 4> VMask = getPSHUFShuffleMask(V);
-      int DOffset = CombineOpcode == X86ISD::PSHUFLW ? 0 : 2;
-      if (!((VMask[DOffset + 0] < 2 && VMask[DOffset + 1] < 2) ||
-            (VMask[DOffset + 0] >= 2 && VMask[DOffset + 1] >= 2)))
-        return false;
-
-      // Map the mask through the pshufd and keep walking up the chain.
-      for (int i = 0; i < 4; ++i)
-        Mask[i] = 2 * (VMask[DOffset + Mask[i] / 2] % 2) + Mask[i] % 2;
-
-      // Switch halves if the pshufd does.
-      CombineOpcode =
-          VMask[DOffset + Mask[0] / 2] < 2 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW;
-      continue;
-    }
     }
     // Break out of the loop if we break out of the switch.
     break;
