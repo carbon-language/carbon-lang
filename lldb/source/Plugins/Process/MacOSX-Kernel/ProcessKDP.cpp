@@ -272,7 +272,8 @@ ProcessKDP::DoConnectRemote (Stream *strm, const char *remote_url)
 
     if (conn_ap->IsConnected())
     {
-        const uint16_t reply_port = conn_ap->GetReadPort ();
+        const Socket& socket = static_cast<const Socket&>(conn_ap->GetReadObject());
+        const uint16_t reply_port = socket.GetPort();
 
         if (reply_port != 0)
         {

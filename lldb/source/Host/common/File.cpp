@@ -24,6 +24,7 @@
 
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Error.h"
+#include "lldb/Core/Log.h"
 #include "lldb/Host/Config.h"
 #include "lldb/Host/FileSpec.h"
 
@@ -77,11 +78,11 @@ int File::kInvalidDescriptor = -1;
 FILE * File::kInvalidStream = NULL;
 
 File::File(const char *path, uint32_t options, uint32_t permissions) :
+    IOObject(eFDTypeFile, false),
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
     m_options (),
     m_own_stream (false),
-    m_own_descriptor (false),
     m_is_interactive (eLazyBoolCalculate),
     m_is_real_terminal (eLazyBoolCalculate)
 {
@@ -91,11 +92,11 @@ File::File(const char *path, uint32_t options, uint32_t permissions) :
 File::File (const FileSpec& filespec,
             uint32_t options,
             uint32_t permissions) :
+    IOObject(eFDTypeFile, false),
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
     m_options (0),
     m_own_stream (false),
-    m_own_descriptor (false),
     m_is_interactive (eLazyBoolCalculate),
     m_is_real_terminal (eLazyBoolCalculate)
 
@@ -107,11 +108,11 @@ File::File (const FileSpec& filespec,
 }
 
 File::File (const File &rhs) :
+    IOObject(eFDTypeFile, false),
     m_descriptor (kInvalidDescriptor),
     m_stream (kInvalidStream),
     m_options (0),
     m_own_stream (false),
-    m_own_descriptor (false),
     m_is_interactive (eLazyBoolCalculate),
     m_is_real_terminal (eLazyBoolCalculate)
 {
@@ -148,13 +149,20 @@ File::GetDescriptor() const
     return kInvalidDescriptor;
 }
 
+IOObject::WaitableHandle
+File::GetWaitableHandle()
+{
+    return m_descriptor;
+}
+
+
 void
 File::SetDescriptor (int fd, bool transfer_ownership)
 {
     if (IsValid())
         Close();
     m_descriptor = fd;
-    m_own_descriptor = transfer_ownership;
+    m_should_close_fd = transfer_ownership;
 }
 
 
@@ -168,7 +176,7 @@ File::GetStream ()
             const char *mode = GetStreamOpenModeFromOptions (m_options);
             if (mode)
             {
-                if (!m_own_descriptor)
+                if (!m_should_close_fd)
                 {
                     // We must duplicate the file descriptor if we don't own it because
                     // when you call fdopen, the stream will own the fd
@@ -177,7 +185,7 @@ File::GetStream ()
 #else
                     m_descriptor = ::fcntl(GetDescriptor(), F_DUPFD);
 #endif
-                    m_own_descriptor = true;
+                    m_should_close_fd = true;
                 }
 
                 do
@@ -191,7 +199,7 @@ File::GetStream ()
                 if (m_stream)
                 {
                     m_own_stream = true;
-                    m_own_descriptor = false;
+                    m_should_close_fd = false;
                 }
             }
         }
@@ -228,7 +236,7 @@ File::Duplicate (const File &rhs)
         else
         {
             m_options = rhs.m_options;
-            m_own_descriptor = true;
+            m_should_close_fd = true;
         }
     }
     else
@@ -307,7 +315,7 @@ File::Open (const char *path, uint32_t options, uint32_t permissions)
         error.SetErrorToErrno();
     else
     {
-        m_own_descriptor = true;
+        m_should_close_fd = true;
         m_options = options;
     }
     
@@ -371,7 +379,7 @@ File::Close ()
             error.SetErrorToErrno();
     }
     
-    if (DescriptorIsValid() && m_own_descriptor)
+    if (DescriptorIsValid() && m_should_close_fd)
     {
         if (::close (m_descriptor) != 0)
             error.SetErrorToErrno();
@@ -380,7 +388,7 @@ File::Close ()
     m_stream = kInvalidStream;
     m_options = 0;
     m_own_stream = false;
-    m_own_descriptor = false;
+    m_should_close_fd = false;
     m_is_interactive = eLazyBoolCalculate;
     m_is_real_terminal = eLazyBoolCalculate;
     return error;
@@ -669,6 +677,7 @@ File::Write (const void *buf, size_t &num_bytes)
         num_bytes = 0;
         error.SetErrorString("invalid file handle");
     }
+
     return error;
 }
 

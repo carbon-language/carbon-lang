@@ -10,15 +10,10 @@
 #ifndef liblldb_ConnectionFileDescriptor_h_
 #define liblldb_ConnectionFileDescriptor_h_
 
-// C Includes
-#ifndef _WIN32
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#endif
-
 // C++ Includes
 #include <memory>
+
+#include "lldb/lldb-forward.h"
 
 // Other libraries and framework includes
 // Project includes
@@ -26,9 +21,12 @@
 #include "lldb/Host/Mutex.h"
 #include "lldb/Host/Pipe.h"
 #include "lldb/Host/Predicate.h"
+#include "lldb/Host/IOObject.h"
 
 namespace lldb_private {
 
+class Error;
+class Socket;
 class SocketAddress;
 
 class ConnectionFileDescriptor :
@@ -65,33 +63,18 @@ public:
            lldb::ConnectionStatus &status, 
            Error *error_ptr);
 
-    // If the read file descriptor is a socket, then return
-    // the port number that is being used by the socket.
-    uint16_t
-    GetReadPort () const;
-    
-    // If the write file descriptor is a socket, then return
-    // the port number that is being used by the socket.
-    uint16_t
-    GetWritePort () const;
-
-    uint16_t
-    GetBoundPort (uint32_t timeout_sec);
-
     lldb::ConnectionStatus
     BytesAvailable (uint32_t timeout_usec, Error *error_ptr);
 
     bool
     InterruptRead ();
 
-protected:
+    lldb::IOObjectSP GetReadObject() { return m_read_sp; }
+    const lldb::IOObjectSP GetReadObject() const { return m_read_sp; }
 
-    typedef enum
-    {
-        eFDTypeFile,        // Other FD requiring read/write
-        eFDTypeSocket,      // Socket requiring send/recv
-        eFDTypeSocketUDP    // Unconnected UDP socket requiring sendto/recvfrom
-    } FDType;
+    uint16_t GetListeningPort(uint32_t timeout_sec);
+
+protected:
     
     void
     OpenCommandPipe ();
@@ -101,47 +84,31 @@ protected:
     
     lldb::ConnectionStatus
     SocketListen (const char *host_and_port, Error *error_ptr);
-
+    
     lldb::ConnectionStatus
     ConnectTCP (const char *host_and_port, Error *error_ptr);
-    
+
     lldb::ConnectionStatus
     ConnectUDP (const char *args, Error *error_ptr);
     
     lldb::ConnectionStatus
-    NamedSocketAccept (const char *socket_name, Error *error_ptr);
+    NamedSocketConnect (const char *socket_name, Error *error_ptr);
 
     lldb::ConnectionStatus
-    NamedSocketConnect (const char *socket_name, Error *error_ptr);
+    NamedSocketAccept (const char *socket_name, Error *error_ptr);
     
-    lldb::ConnectionStatus
-    Close (int& fd, FDType type, Error *error);
-    
-    int m_fd_send;
-    int m_fd_recv;
-    FDType m_fd_send_type;
-    FDType m_fd_recv_type;
-    std::unique_ptr<SocketAddress> m_udp_send_sockaddr;
-    uint32_t m_socket_timeout_usec;
+    lldb::IOObjectSP m_read_sp;
+    lldb::IOObjectSP m_write_sp;
+
+    Predicate<uint16_t> m_port_predicate; // Used when binding to port zero to wait for the thread
+                                          // that creates the socket, binds and listens to resolve
+                                          // the port number.
+
     Pipe m_pipe;
     Mutex m_mutex;
-    Predicate<uint16_t> m_port_predicate; // Used when binding to port zero to wait for the thread that creates the socket, binds and listens to resolve the port number
-    bool m_should_close_fd;     // True if this class should close the file descriptor when it goes away.
-    bool m_shutting_down;       // This marks that we are shutting down so if we get woken up from BytesAvailable
-                                // to disconnect, we won't try to read again.
-    
-    static uint16_t
-    GetSocketPort (int fd);
-
-    static int
-    GetSocketOption(int fd, int level, int option_name, int &option_value);
-
-    static int
-    SetSocketOption(int fd, int level, int option_name, int option_value);
-
-    bool
-    SetSocketReceiveTimeout (uint32_t timeout_usec);
-
+    bool m_shutting_down;       // This marks that we are shutting down so if we get woken up from
+                                // BytesAvailable to disconnect, we won't try to read again.
+    bool m_waiting_for_accept;
 private:
     DISALLOW_COPY_AND_ASSIGN (ConnectionFileDescriptor);
 };

@@ -7,6 +7,7 @@ add_lldb_library(lldbHostCommon
   File.cpp
   FileSpec.cpp
   Host.cpp
+  IOObject.cpp
   Mutex.cpp
   NativeBreakpoint.cpp
   NativeBreakpointList.cpp
@@ -15,6 +16,7 @@ add_lldb_library(lldbHostCommon
   OptionParser.cpp
   Pipe.cpp
   ProcessRunLock.cpp
+  Socket.cpp
   SocketAddress.cpp
   SoftwareBreakpoint.cpp
   Symbols.cpp

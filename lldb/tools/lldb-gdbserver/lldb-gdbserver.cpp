@@ -33,6 +33,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Host/Socket.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "Plugins/Process/gdb-remote/GDBRemoteCommunicationServer.h"
@@ -401,9 +402,9 @@ ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect,
             {
                 // FIXME use new generic named pipe support.
                 int fd = ::open(named_pipe_path, O_WRONLY);
-                if (fd > -1)
+                const uint16_t bound_port = s_listen_connection_up->GetListeningPort(10);
+                if (fd > -1 && bound_port > 0)
                 {
-                    const uint16_t bound_port = s_listen_connection_up->GetBoundPort (10);
 
                     char port_str[64];
                     const ssize_t port_str_len = ::snprintf (port_str, sizeof(port_str), "%u", bound_port);
@@ -413,7 +414,10 @@ ConnectToRemote (GDBRemoteCommunicationServer &gdb_server, bool reverse_connect,
                 }
                 else
                 {
-                    fprintf (stderr, "failed to open named pipe '%s' for writing\n", named_pipe_path);
+                    if (fd < 0)
+                        fprintf (stderr, "failed to open named pipe '%s' for writing\n", named_pipe_path);
+                    else
+                        fprintf(stderr, "unable to get the bound port for the listening connection\n");
                 }
             }
 

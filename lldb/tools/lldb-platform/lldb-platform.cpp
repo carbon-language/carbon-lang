@@ -11,7 +11,9 @@
 
 // C Includes
 #include <errno.h>
-#include "lldb/Host/HostGetOpt.h"
+#if defined(__APPLE__)
+#include <netinet/in.h>
+#endif
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -27,6 +29,7 @@
 #include "lldb/Core/ConnectionMachPort.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/StreamFile.h"
+#include "lldb/Host/HostGetOpt.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Interpreter/CommandReturnObject.h"

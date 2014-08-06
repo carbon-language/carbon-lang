@@ -23,6 +23,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/Socket.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Process.h"
 
@@ -786,7 +787,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
 
             ConnectionFileDescriptor *connection = (ConnectionFileDescriptor *)GetConnection ();
             // Wait for 10 seconds to resolve the bound port
-            out_port = connection->GetBoundPort(10);
+            out_port = connection->GetListeningPort(10);
             if (out_port > 0)
             {
                 char port_cstr[32];
@@ -802,7 +803,6 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                 return error;
             }
         }
-
         
         const char *env_debugserver_log_file = getenv("LLDB_DEBUGSERVER_LOG_FILE");
         if (env_debugserver_log_file)
