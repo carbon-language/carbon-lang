@@ -4473,12 +4473,12 @@ multiclass avx512_valign<string Suffix, RegisterClass RC, RegisterClass KRC,
                            (IntVT (X86VAlign RC:$src2, RC:$src1,
                                               (i8 imm:$src3))))]>, EVEX_4V;
 
-  let Constraints = "$src0 = $dst", AddedComplexity=30 in
+  let Constraints = "$src0 = $dst" in
   def rrik : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src0, KRC:$mask, RC:$src1, RC:$src2, i8imm:$src3),
                      !strconcat("valign"##Suffix,
-                     " \t{$src3, $src2, $src1, $mask, $dst|"
-                         "$dst, $mask, $src1, $src2, $src3}"),
+                     " \t{$src3, $src2, $src1, $dst {${mask}}|"
+                         "$dst {${mask}}, $src1, $src2, $src3}"),
                      [(set RC:$dst,
                            (IntVT (vselect KRC:$mask,
                                      (X86VAlign RC:$src2, RC:$src1,

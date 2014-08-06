@@ -621,7 +621,7 @@ define <8 x i64> @test_valign_q(<8 x i64> %a, <8 x i64> %b) {
 
 define <8 x i64> @test_mask_valign_q(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) {
 ; CHECK-LABEL: test_mask_valign_q:
-; CHECK: valignq $2, %zmm1, %zmm0, %k1, %zmm2
+; CHECK: valignq $2, %zmm1, %zmm0, %zmm2 {%k1}
   %res = call <8 x i64> @llvm.x86.avx512.mask.valign.q.512(<8 x i64> %a, <8 x i64> %b, i8 2, <8 x i64> %src, i8 %mask)
   ret <8 x i64> %res
 }
