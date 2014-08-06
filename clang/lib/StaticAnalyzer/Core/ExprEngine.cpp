@@ -58,7 +58,7 @@ typedef std::pair<const CXXBindTemporaryExpr *, const StackFrameContext *>
 // The StackFrameContext assures that nested calls due to inlined recursive
 // functions do not interfere.
 REGISTER_TRAIT_WITH_PROGRAMSTATE(InitializedTemporariesSet,
-                                 llvm::ImmutableSet<CXXBindTemporaryContext>);
+                                 llvm::ImmutableSet<CXXBindTemporaryContext>)
 
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
