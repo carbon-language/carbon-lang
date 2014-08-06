@@ -218,15 +218,26 @@ bool AMDGPUInstrInfo::enableClusterLoads() const {
   return true;
 }
 
-bool AMDGPUInstrInfo::shouldScheduleLoadsNear(SDNode *Load1, SDNode *Load2,
-                                             int64_t Offset1, int64_t Offset2,
-                                             unsigned NumLoads) const {
-  assert(Offset2 > Offset1
-         && "Second offset should be larger than first offset!");
-  // If we have less than 16 loads in a row, and the offsets are within 16,
-  // then schedule together.
-  // TODO: Make the loads schedule near if it fits in a cacheline
-  return (NumLoads < 16 && (Offset2 - Offset1) < 16);
+// FIXME: This behaves strangely. If, for example, you have 32 load + stores,
+// the first 16 loads will be interleaved with the stores, and the next 16 will
+// be clustered as expected. It should really split into 2 16 store batches.
+//
+// Loads are clustered until this returns false, rather than trying to schedule
+// groups of stores. This also means we have to deal with saying different
+// address space loads should be clustered, and ones which might cause bank
+// conflicts.
+//
+// This might be deprecated so it might not be worth that much effort to fix.
+bool AMDGPUInstrInfo::shouldScheduleLoadsNear(SDNode *Load0, SDNode *Load1,
+                                              int64_t Offset0, int64_t Offset1,
+                                              unsigned NumLoads) const {
+  assert(Offset1 > Offset0 &&
+         "Second offset should be larger than first offset!");
+  // If we have less than 16 loads in a row, and the offsets are within 64
+  // bytes, then schedule together.
+
+  // A cacheline is 64 bytes (for global memory).
+  return (NumLoads <= 16 && (Offset1 - Offset0) < 64);
 }
 
 bool
