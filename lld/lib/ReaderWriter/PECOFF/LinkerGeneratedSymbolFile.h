@@ -236,7 +236,8 @@ class ExportedSymbolRenameFile : public impl::VirtualArchiveLibraryFile {
 public:
   ExportedSymbolRenameFile(const PECOFFLinkingContext &ctx,
                            std::shared_ptr<ResolvableSymbols> syms)
-      : VirtualArchiveLibraryFile("<export>"), _syms(syms) {
+      : VirtualArchiveLibraryFile("<export>"), _syms(syms),
+        _ctx(const_cast<PECOFFLinkingContext *>(&ctx)) {
     for (const PECOFFLinkingContext::ExportDesc &desc : ctx.getDllExports())
       _exportedSyms.insert(desc.name);
   }
@@ -247,10 +248,13 @@ public:
     std::string replace;
     if (!findSymbolWithAtsignSuffix(sym.str(), replace))
       return nullptr;
+    if (_ctx->deadStrip())
+      _ctx->addDeadStripRoot(_ctx->allocate(replace));
     return new (_alloc) impl::SymbolRenameFile(sym, replace);
   }
 
 private:
+
   // Find a symbol that starts with a given symbol name followed
   // by @number suffix.
   bool findSymbolWithAtsignSuffix(std::string sym, std::string &res) const {
@@ -272,8 +276,9 @@ private:
   }
 
   std::set<std::string> _exportedSyms;
-  mutable std::shared_ptr<ResolvableSymbols> _syms;
+  std::shared_ptr<ResolvableSymbols> _syms;
   mutable llvm::BumpPtrAllocator _alloc;
+  mutable PECOFFLinkingContext *_ctx;
 };
 
 // Windows has not only one but many entry point functions. The
