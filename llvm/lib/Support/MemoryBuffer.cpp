@@ -142,7 +142,7 @@ MemoryBuffer *MemoryBuffer::getNewUninitMemBuffer(size_t Size,
 }
 
 /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
-/// is completely initialized to zeros.  Note that the caller should
+/// is completely initialized to zeros.  Note that the caller need not
 /// initialize the memory allocated by this method.  The memory is owned by
 /// the MemoryBuffer object.
 MemoryBuffer *MemoryBuffer::getNewMemBuffer(size_t Size, StringRef BufferName) {
