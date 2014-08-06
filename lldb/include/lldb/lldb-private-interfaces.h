@@ -40,7 +40,6 @@ namespace lldb_private
     typedef lldb::ThreadPlanSP (*ThreadPlanStepFromHereCallback) (ThreadPlan *current_plan, Flags &flags, lldb::FrameComparison operation, void *baton);
     typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);
-    typedef bool (*CommandOverrideCallback)(void *baton, const char **argv);
     typedef void (*DebuggerInitializeCallback)(Debugger &debugger);
 
 } // namespace lldb_private

@@ -1005,14 +1005,13 @@ CommandObject::GetArgumentDescriptionAsCString (const lldb::CommandArgumentType 
 bool
 CommandObjectParsed::Execute (const char *args_string, CommandReturnObject &result)
 {
-    CommandOverrideCallback command_callback = GetOverrideCallback();
     bool handled = false;
     Args cmd_args (args_string);
-    if (command_callback)
+    if (HasOverrideCallback())
     {
         Args full_args (GetCommandName ());
         full_args.AppendArguments(cmd_args);
-        handled = command_callback (GetOverrideCallbackBaton(), full_args.GetConstArgumentVector());
+        handled = InvokeOverrideCallback (full_args.GetConstArgumentVector(), result);
     }
     if (!handled)
     {
@@ -1040,16 +1039,15 @@ CommandObjectParsed::Execute (const char *args_string, CommandReturnObject &resu
 bool
 CommandObjectRaw::Execute (const char *args_string, CommandReturnObject &result)
 {
-    CommandOverrideCallback command_callback = GetOverrideCallback();
     bool handled = false;
-    if (command_callback)
+    if (HasOverrideCallback())
     {
         std::string full_command (GetCommandName ());
         full_command += ' ';
         full_command += args_string;
         const char *argv[2] = { nullptr, nullptr };
         argv[0] = full_command.c_str();
-        handled = command_callback (GetOverrideCallbackBaton(), argv);
+        handled = InvokeOverrideCallback (argv, result);
     }
     if (!handled)
     {
