@@ -152,10 +152,11 @@ static void collectChangingRegs(const MachineFunction *MF,
                                 std::set<unsigned> &Regs) {
   for (const auto &MBB : *MF) {
     auto FirstEpilogueInst = getFirstEpilogueInst(MBB);
-    bool IsInEpilogue = false;
+
     for (const auto &MI : MBB) {
-      IsInEpilogue |= &MI == FirstEpilogueInst;
-      if (!MI.getFlag(MachineInstr::FrameSetup) && !IsInEpilogue)
+      if (&MI == FirstEpilogueInst)
+        break;
+      if (!MI.getFlag(MachineInstr::FrameSetup))
         collectClobberedRegisters(MI, TRI, Regs);
     }
   }
