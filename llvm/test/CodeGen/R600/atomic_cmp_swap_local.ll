@@ -1,8 +1,8 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i32_offset:
-; SI: S_LOAD_DWORD [[SWAP:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI: S_LOAD_DWORD [[SWAP:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xc
 ; SI-DAG: V_MOV_B32_e32 [[VCMP:v[0-9]+]], 7
 ; SI-DAG: V_MOV_B32_e32 [[VPTR:v[0-9]+]], [[PTR]]
 ; SI-DAG: V_MOV_B32_e32 [[VSWAP:v[0-9]+]], [[SWAP]]
@@ -17,8 +17,8 @@ define void @lds_atomic_cmpxchg_ret_i32_offset(i32 addrspace(1)* %out, i32 addrs
 }
 
 ; FUNC-LABEL: @lds_atomic_cmpxchg_ret_i64_offset:
-; SI: S_LOAD_DWORDX2 s{{\[}}[[LOSWAP:[0-9]+]]:[[HISWAP:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
 ; SI: S_LOAD_DWORD [[PTR:s[0-9]+]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI: S_LOAD_DWORDX2 s{{\[}}[[LOSWAP:[0-9]+]]:[[HISWAP:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
 ; SI: S_MOV_B64  s{{\[}}[[LOSCMP:[0-9]+]]:[[HISCMP:[0-9]+]]{{\]}}, 7
 ; SI-DAG: V_MOV_B32_e32 v[[LOVCMP:[0-9]+]], s[[LOSCMP]]
 ; SI-DAG: V_MOV_B32_e32 v[[HIVCMP:[0-9]+]], s[[HISCMP]]

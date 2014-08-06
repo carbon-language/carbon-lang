@@ -1,9 +1,9 @@
 ; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck -check-prefix=SI -check-prefix=FUNC %s
 
 ; FUNC-LABEL: @s_rotl_i64:
-; SI: S_LSHL_B64
 ; SI: S_SUB_I32
 ; SI: S_LSHR_B64
+; SI: S_LSHL_B64
 ; SI: S_OR_B64
 define void @s_rotl_i64(i64 addrspace(1)* %in, i64 %x, i64 %y) {
 entry:

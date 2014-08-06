@@ -1,4 +1,4 @@
-; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs< %s | FileCheck %s
+; RUN: llc -march=r600 -mcpu=SI -verify-machineinstrs < %s | FileCheck %s
 
 ; Test that codegenprepare understands address space sizes
 
@@ -10,8 +10,8 @@
 ; CHECK-LABEL: @do_as_ptr_calcs:
 ; CHECK: S_LOAD_DWORD [[SREG1:s[0-9]+]],
 ; CHECK: V_MOV_B32_e32 [[VREG1:v[0-9]+]], [[SREG1]]
-; CHECK: DS_READ_B32 v{{[0-9]+}}, [[VREG1]], 0x14
-; CHECK: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0xc
+; CHECK-DAG: DS_READ_B32 v{{[0-9]+}}, [[VREG1]], 0xc
+; CHECK-DAG: DS_READ_B32 v{{[0-9]+}}, v{{[0-9]+}}, 0x14
 define void @do_as_ptr_calcs(%struct.foo addrspace(3)* nocapture %ptr) nounwind {
 entry:
   %x = getelementptr inbounds %struct.foo addrspace(3)* %ptr, i32 0, i32 1, i32 0

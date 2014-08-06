@@ -62,6 +62,10 @@ public:
     return RI;
   }
 
+  bool areLoadsFromSameBasePtr(SDNode *Load1, SDNode *Load2,
+                               int64_t &Offset1,
+                               int64_t &Offset2) const override;
+
   bool getLdStBaseRegImmOfs(MachineInstr *LdSt,
                             unsigned &BaseReg, unsigned &Offset,
                             const TargetRegisterInfo *TRI) const final;

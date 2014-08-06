@@ -68,12 +68,12 @@ define void @load_v4i8_to_v4f32(<4 x float> addrspace(1)* noalias %out, <4 x i8>
 
 ; SI-LABEL: @load_v4i8_to_v4f32_2_uses:
 ; SI: BUFFER_LOAD_UBYTE
-; SI: V_CVT_F32_UBYTE0_e32
+; SI: BUFFER_LOAD_UBYTE
+; SI: BUFFER_LOAD_UBYTE
 ; SI: BUFFER_LOAD_UBYTE
 ; SI: V_CVT_F32_UBYTE0_e32
-; SI: BUFFER_LOAD_UBYTE
 ; SI: V_CVT_F32_UBYTE0_e32
-; SI: BUFFER_LOAD_UBYTE
+; SI: V_CVT_F32_UBYTE0_e32
 ; SI: V_CVT_F32_UBYTE0_e32
 
 ; XXX - replace with this when v4i8 loads aren't scalarized anymore.

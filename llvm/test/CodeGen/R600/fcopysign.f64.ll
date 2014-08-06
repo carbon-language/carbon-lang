@@ -5,9 +5,9 @@ declare <2 x double> @llvm.copysign.v2f64(<2 x double>, <2 x double>) nounwind r
 declare <4 x double> @llvm.copysign.v4f64(<4 x double>, <4 x double>) nounwind readnone
 
 ; FUNC-LABEL: @test_copysign_f64:
-; SI-DAG: S_LOAD_DWORDX2 s{{\[}}[[SSIGN_LO:[0-9]+]]:[[SSIGN_HI:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
-; SI: V_MOV_B32_e32 v[[VSIGN_HI:[0-9]+]], s[[SSIGN_HI]]
 ; SI-DAG: S_LOAD_DWORDX2 s{{\[}}[[SMAG_LO:[0-9]+]]:[[SMAG_HI:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xb
+; SI-DAG: S_LOAD_DWORDX2 s{{\[}}[[SSIGN_LO:[0-9]+]]:[[SSIGN_HI:[0-9]+]]{{\]}}, s{{\[[0-9]+:[0-9]+\]}}, 0xd
+; SI-DAG: V_MOV_B32_e32 v[[VSIGN_HI:[0-9]+]], s[[SSIGN_HI]]
 ; SI-DAG: V_MOV_B32_e32 v[[VMAG_HI:[0-9]+]], s[[SMAG_HI]]
 ; SI-DAG: S_MOV_B32 [[SCONST:s[0-9]+]], 0x7fffffff
 ; SI: V_BFI_B32 v[[VRESULT_HI:[0-9]+]], [[SCONST]], v[[VMAG_HI]], v[[VSIGN_HI]]

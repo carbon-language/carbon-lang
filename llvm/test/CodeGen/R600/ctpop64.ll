@@ -7,7 +7,7 @@ declare <8 x i64> @llvm.ctpop.v8i64(<8 x i64>) nounwind readnone
 declare <16 x i64> @llvm.ctpop.v16i64(<16 x i64>) nounwind readnone
 
 ; FUNC-LABEL: @s_ctpop_i64:
-; SI: S_LOAD_DWORDX2 [[SVAL:s\[[0-9]+:[0-9]+\]]],
+; SI: S_LOAD_DWORDX2 [[SVAL:s\[[0-9]+:[0-9]+\]]], s{{\[[0-9]+:[0-9]+\]}}, 0xb
 ; SI: S_BCNT1_I32_B64 [[SRESULT:s[0-9]+]], [[SVAL]]
 ; SI: V_MOV_B32_e32 [[VRESULT:v[0-9]+]], [[SRESULT]]
 ; SI: BUFFER_STORE_DWORD [[VRESULT]],

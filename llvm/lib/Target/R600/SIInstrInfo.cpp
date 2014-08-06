@@ -32,6 +32,104 @@ SIInstrInfo::SIInstrInfo(const AMDGPUSubtarget &st)
 // TargetInstrInfo callbacks
 //===----------------------------------------------------------------------===//
 
+static unsigned getNumOperandsNoGlue(SDNode *Node) {
+  unsigned N = Node->getNumOperands();
+  while (N && Node->getOperand(N - 1).getValueType() == MVT::Glue)
+    --N;
+  return N;
+}
+
+static SDValue findChainOperand(SDNode *Load) {
+  SDValue LastOp = Load->getOperand(getNumOperandsNoGlue(Load) - 1);
+  assert(LastOp.getValueType() == MVT::Other && "Chain missing from load node");
+  return LastOp;
+}
+
+bool SIInstrInfo::areLoadsFromSameBasePtr(SDNode *Load0, SDNode *Load1,
+                                          int64_t &Offset0,
+                                          int64_t &Offset1) const {
+  if (!Load0->isMachineOpcode() || !Load1->isMachineOpcode())
+    return false;
+
+  unsigned Opc0 = Load0->getMachineOpcode();
+  unsigned Opc1 = Load1->getMachineOpcode();
+
+  // Make sure both are actually loads.
+  if (!get(Opc0).mayLoad() || !get(Opc1).mayLoad())
+    return false;
+
+  if (isDS(Opc0) && isDS(Opc1)) {
+    assert(getNumOperandsNoGlue(Load0) == getNumOperandsNoGlue(Load1));
+
+    // TODO: Also shouldn't see read2st
+    assert(Opc0 != AMDGPU::DS_READ2_B32 &&
+           Opc0 != AMDGPU::DS_READ2_B64 &&
+           Opc1 != AMDGPU::DS_READ2_B32 &&
+           Opc1 != AMDGPU::DS_READ2_B64);
+
+    // Check base reg.
+    if (Load0->getOperand(1) != Load1->getOperand(1))
+      return false;
+
+    // Check chain.
+    if (findChainOperand(Load0) != findChainOperand(Load1))
+      return false;
+
+    Offset0 = cast<ConstantSDNode>(Load0->getOperand(2))->getZExtValue();
+    Offset1 = cast<ConstantSDNode>(Load1->getOperand(2))->getZExtValue();
+    return true;
+  }
+
+  if (isSMRD(Opc0) && isSMRD(Opc1)) {
+    assert(getNumOperandsNoGlue(Load0) == getNumOperandsNoGlue(Load1));
+
+    // Check base reg.
+    if (Load0->getOperand(0) != Load1->getOperand(0))
+      return false;
+
+    // Check chain.
+    if (findChainOperand(Load0) != findChainOperand(Load1))
+      return false;
+
+    Offset0 = cast<ConstantSDNode>(Load0->getOperand(1))->getZExtValue();
+    Offset1 = cast<ConstantSDNode>(Load1->getOperand(1))->getZExtValue();
+    return true;
+  }
+
+  // MUBUF and MTBUF can access the same addresses.
+  if ((isMUBUF(Opc0) || isMTBUF(Opc0)) && (isMUBUF(Opc1) || isMTBUF(Opc1))) {
+    // Skip if an SGPR offset is applied. I don't think we ever emit any of
+    // variants that use this currently.
+    int SoffsetIdx = AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::soffset);
+    if (SoffsetIdx != -1)
+      return false;
+
+    // getNamedOperandIdx returns the index for the MachineInstr's operands,
+    // which includes the result as the first operand. We are indexing into the
+    // MachineSDNode's operands, so we need to skip the result operand to get
+    // the real index.
+    --SoffsetIdx;
+
+    // Check chain.
+    if (findChainOperand(Load0) != findChainOperand(Load1))
+      return false;
+
+    // MUBUF and MTBUF have vaddr at different indices.
+    int VaddrIdx0 = AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::vaddr) - 1;
+    int VaddrIdx1 = AMDGPU::getNamedOperandIdx(Opc1, AMDGPU::OpName::vaddr) - 1;
+    if (Load0->getOperand(VaddrIdx0) != Load1->getOperand(VaddrIdx1))
+      return false;
+
+    int OffIdx0 = AMDGPU::getNamedOperandIdx(Opc0, AMDGPU::OpName::offset) - 1;
+    int OffIdx1 = AMDGPU::getNamedOperandIdx(Opc1, AMDGPU::OpName::offset) - 1;
+    Offset0 = cast<ConstantSDNode>(Load0->getOperand(OffIdx0))->getZExtValue();
+    Offset1 = cast<ConstantSDNode>(Load1->getOperand(OffIdx1))->getZExtValue();
+    return true;
+  }
+
+  return false;
+}
+
 bool SIInstrInfo::getLdStBaseRegImmOfs(MachineInstr *LdSt,
                                        unsigned &BaseReg, unsigned &Offset,
                                        const TargetRegisterInfo *TRI) const {
