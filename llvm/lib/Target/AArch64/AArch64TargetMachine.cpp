@@ -59,6 +59,12 @@ EnableAtomicTidy("aarch64-atomic-cfg-tidy", cl::Hidden,
                           " to make use of cmpxchg flow-based information"),
                  cl::init(true));
 
+static cl::opt<bool>
+EnableEarlyIfConversion("aarch64-enable-early-ifcvt", cl::Hidden,
+                        cl::desc("Run early if-conversion"),
+                        cl::init(true));
+
+
 extern "C" void LLVMInitializeAArch64Target() {
   // Register the target.
   RegisterTargetMachine<AArch64leTargetMachine> X(TheAArch64leTarget);
@@ -174,7 +180,8 @@ bool AArch64PassConfig::addInstSelector() {
 bool AArch64PassConfig::addILPOpts() {
   if (EnableCCMP)
     addPass(createAArch64ConditionalCompares());
-  addPass(&EarlyIfConverterID);
+  if (EnableEarlyIfConversion)
+    addPass(&EarlyIfConverterID);
   if (EnableStPairSuppress)
     addPass(createAArch64StorePairSuppressPass());
   return true;
