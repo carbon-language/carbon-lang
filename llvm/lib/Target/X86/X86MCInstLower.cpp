@@ -1006,7 +1006,7 @@ void X86AsmPrinter::EmitInstruction(const MachineInstr *MI) {
     SmallVector<int, 16> Mask;
 
     assert(MI->getNumOperands() >= 6 &&
-           "Wrong number of operansd for PSHUFBrm or VPSHUFBrm");
+           "Wrong number of operands for PSHUFBrm or VPSHUFBrm");
     const MachineOperand &DstOp = MI->getOperand(0);
     const MachineOperand &SrcOp = MI->getOperand(1);
     const MachineOperand &MaskOp = MI->getOperand(5);
