@@ -36,6 +36,7 @@ if [ "`uname -a | grep Linux`" != "" ]; then
 		../rtl/tsan_platform_linux.cc
 		../../sanitizer_common/sanitizer_posix.cc
 		../../sanitizer_common/sanitizer_posix_libcdep.cc
+		../../sanitizer_common/sanitizer_procmaps_common.cc
 		../../sanitizer_common/sanitizer_procmaps_linux.cc
 		../../sanitizer_common/sanitizer_linux.cc
 		../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
@@ -48,7 +49,8 @@ elif [ "`uname -a | grep FreeBSD`" != "" ]; then
                 ../rtl/tsan_platform_linux.cc
                 ../../sanitizer_common/sanitizer_posix.cc
                 ../../sanitizer_common/sanitizer_posix_libcdep.cc
-                ../../sanitizer_common/sanitizer_procmaps_linux.cc
+                ../../sanitizer_common/sanitizer_procmaps_common.cc
+                ../../sanitizer_common/sanitizer_procmaps_freebsd.cc
                 ../../sanitizer_common/sanitizer_linux.cc
                 ../../sanitizer_common/sanitizer_stoptheworld_linux_libcdep.cc
         "
