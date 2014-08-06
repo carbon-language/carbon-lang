@@ -4729,6 +4729,9 @@ TEST_F(FormatTest, UnderstandsNewAndDelete) {
                "}");
   verifyFormat("new (aaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaa))\n"
                "    typename aaaaaaaaaaaaaaaaaaaaaaaa();");
+  verifyFormat("auto aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+               "    new (aaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaa))\n"
+               "        typename aaaaaaaaaaaaaaaaaaaaaaaa();");
 }
 
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {

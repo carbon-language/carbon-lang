@@ -561,6 +561,9 @@ unsigned ContinuationIndenter::getNewLineColumn(const LineState &State) {
     return State.FirstIndent + Style.ConstructorInitializerIndentWidth;
   if (NextNonComment->Type == TT_CtorInitializerComma)
     return State.Stack.back().Indent;
+  if (Previous.is(tok::r_paren) && !Current.isBinaryOperator() &&
+      Current.isNot(tok::colon))
+    return ContinuationIndent;
   if (State.Stack.back().Indent == State.FirstIndent && PreviousNonComment &&
       PreviousNonComment->isNot(tok::r_brace))
     // Ensure that we fall back to the continuation indent width instead of
