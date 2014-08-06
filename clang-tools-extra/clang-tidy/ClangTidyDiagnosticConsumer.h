@@ -65,24 +65,25 @@ struct ClangTidyError {
   Level DiagLevel;
 };
 
-/// \brief Filters checks by name.
-class ChecksFilter {
+/// \brief Read-only set of strings represented as a list of positive and
+/// negative globs. Positive globs add all matched strings to the set, negative
+/// globs remove them in the order of appearance in the list.
+class GlobList {
 public:
   /// \brief \p GlobList is a comma-separated list of globs (only '*'
   /// metacharacter is supported) with optional '-' prefix to denote exclusion.
-  ChecksFilter(StringRef GlobList);
+  GlobList(StringRef Globs);
 
-  /// \brief Returns \c true if the check with the specified \p Name should be
-  /// enabled. The result is the last matching glob's Positive flag. If \p Name
-  /// is not matched by any globs, the check is not enabled.
-  bool isCheckEnabled(StringRef Name) { return isCheckEnabled(Name, false); }
+  /// \brief Returns \c true if the pattern matches \p S. The result is the last
+  /// matching glob's Positive flag.
+  bool contains(StringRef S) { return contains(S, false); }
 
 private:
-  bool isCheckEnabled(StringRef Name, bool Enabled);
+  bool contains(StringRef S, bool Contains);
 
   bool Positive;
   llvm::Regex Regex;
-  std::unique_ptr<ChecksFilter> NextFilter;
+  std::unique_ptr<GlobList> NextGlob;
 };
 
 /// \brief Contains displayed and ignored diagnostic counters for a ClangTidy
@@ -145,7 +146,7 @@ public:
   StringRef getCheckName(unsigned DiagnosticID) const;
 
   /// \brief Returns check filter for the \c CurrentFile.
-  ChecksFilter &getChecksFilter();
+  GlobList &getChecksFilter();
 
   /// \brief Returns global options.
   const ClangTidyGlobalOptions &getGlobalOptions() const;
@@ -179,7 +180,7 @@ private:
   std::unique_ptr<ClangTidyOptionsProvider> OptionsProvider;
 
   std::string CurrentFile;
-  std::unique_ptr<ChecksFilter> CheckFilter;
+  std::unique_ptr<GlobList> CheckFilter;
 
   ClangTidyStats Stats;
 

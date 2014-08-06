@@ -213,7 +213,7 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
   Context.setASTContext(&Compiler.getASTContext());
 
   std::vector<std::unique_ptr<ClangTidyCheck>> Checks;
-  ChecksFilter &Filter = Context.getChecksFilter();
+  GlobList &Filter = Context.getChecksFilter();
   CheckFactories->createChecks(Filter, Checks);
 
   std::unique_ptr<ast_matchers::MatchFinder> Finder(
@@ -252,10 +252,10 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
 }
 
 std::vector<std::string>
-ClangTidyASTConsumerFactory::getCheckNames(ChecksFilter &Filter) {
+ClangTidyASTConsumerFactory::getCheckNames(GlobList &Filter) {
   std::vector<std::string> CheckNames;
   for (const auto &CheckFactory : *CheckFactories) {
-    if (Filter.isCheckEnabled(CheckFactory.first))
+    if (Filter.contains(CheckFactory.first))
       CheckNames.push_back(CheckFactory.first);
   }
 
@@ -267,7 +267,7 @@ ClangTidyASTConsumerFactory::getCheckNames(ChecksFilter &Filter) {
 }
 
 ClangTidyASTConsumerFactory::CheckersList
-ClangTidyASTConsumerFactory::getCheckersControlList(ChecksFilter &Filter) {
+ClangTidyASTConsumerFactory::getCheckersControlList(GlobList &Filter) {
   CheckersList List;
 
   bool AnalyzerChecksEnabled = false;
@@ -275,7 +275,7 @@ ClangTidyASTConsumerFactory::getCheckersControlList(ChecksFilter &Filter) {
     std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
     AnalyzerChecksEnabled =
         AnalyzerChecksEnabled ||
-        (!CheckName.startswith("debug") && Filter.isCheckEnabled(Checker));
+        (!CheckName.startswith("debug") && Filter.contains(Checker));
   }
 
   if (AnalyzerChecksEnabled) {
@@ -290,7 +290,7 @@ ClangTidyASTConsumerFactory::getCheckersControlList(ChecksFilter &Filter) {
       std::string Checker((AnalyzerCheckNamePrefix + CheckName).str());
 
       if (CheckName.startswith("core") ||
-          (!CheckName.startswith("debug") && Filter.isCheckEnabled(Checker)))
+          (!CheckName.startswith("debug") && Filter.contains(Checker)))
         List.push_back(std::make_pair(CheckName, true));
     }
   }

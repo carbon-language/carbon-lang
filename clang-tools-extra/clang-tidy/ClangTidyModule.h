@@ -86,7 +86,7 @@ public:
   /// store them in \p Checks.
   ///
   /// The caller takes ownership of the return \c ClangTidyChecks.
-  void createChecks(ChecksFilter &Filter,
+  void createChecks(GlobList &Filter,
                     std::vector<std::unique_ptr<ClangTidyCheck>> &Checks);
 
   typedef std::map<std::string, CheckFactoryBase *> FactoryMap;

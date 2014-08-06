@@ -103,11 +103,11 @@ public:
                                         StringRef File);
 
   /// \brief Get the list of enabled checks.
-  std::vector<std::string> getCheckNames(ChecksFilter &Filter);
+  std::vector<std::string> getCheckNames(GlobList &Filter);
 
 private:
   typedef std::vector<std::pair<std::string, bool> > CheckersList;
-  CheckersList getCheckersControlList(ChecksFilter &Filter);
+  CheckersList getCheckersControlList(GlobList &Filter);
 
   ClangTidyContext &Context;
   std::unique_ptr<ClangTidyCheckFactories> CheckFactories;

@@ -27,10 +27,9 @@ void ClangTidyCheckFactories::addCheckFactory(StringRef Name,
 }
 
 void ClangTidyCheckFactories::createChecks(
-    ChecksFilter &Filter,
-    std::vector<std::unique_ptr<ClangTidyCheck>> &Checks) {
+    GlobList &Filter, std::vector<std::unique_ptr<ClangTidyCheck>> &Checks) {
   for (const auto &Factory : Factories) {
-    if (Filter.isCheckEnabled(Factory.first)) {
+    if (Filter.contains(Factory.first)) {
       ClangTidyCheck *Check = Factory.second->createCheck();
       Check->setName(Factory.first);
       Checks.emplace_back(Check);

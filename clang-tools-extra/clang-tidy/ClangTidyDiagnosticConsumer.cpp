@@ -146,18 +146,18 @@ static llvm::Regex ConsumeGlob(StringRef &GlobList) {
   return llvm::Regex(RegexText);
 }
 
-ChecksFilter::ChecksFilter(StringRef GlobList)
-    : Positive(!ConsumeNegativeIndicator(GlobList)),
-      Regex(ConsumeGlob(GlobList)),
-      NextFilter(GlobList.empty() ? nullptr : new ChecksFilter(GlobList)) {}
+GlobList::GlobList(StringRef Globs)
+    : Positive(!ConsumeNegativeIndicator(Globs)),
+      Regex(ConsumeGlob(Globs)),
+      NextGlob(Globs.empty() ? nullptr : new GlobList(Globs)) {}
 
-bool ChecksFilter::isCheckEnabled(StringRef Name, bool Enabled) {
-  if (Regex.match(Name))
-    Enabled = Positive;
+bool GlobList::contains(StringRef S, bool Contains) {
+  if (Regex.match(S))
+    Contains = Positive;
 
-  if (NextFilter)
-    Enabled = NextFilter->isCheckEnabled(Name, Enabled);
-  return Enabled;
+  if (NextGlob)
+    Contains = NextGlob->contains(S, Contains);
+  return Contains;
 }
 
 ClangTidyContext::ClangTidyContext(ClangTidyOptionsProvider *OptionsProvider)
@@ -202,7 +202,7 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 
 void ClangTidyContext::setCurrentFile(StringRef File) {
   CurrentFile = File;
-  CheckFilter.reset(new ChecksFilter(getOptions().Checks));
+  CheckFilter.reset(new GlobList(getOptions().Checks));
 }
 
 void ClangTidyContext::setASTContext(ASTContext *Context) {
@@ -217,7 +217,7 @@ const ClangTidyOptions &ClangTidyContext::getOptions() const {
   return OptionsProvider->getOptions(CurrentFile);
 }
 
-ChecksFilter &ClangTidyContext::getChecksFilter() {
+GlobList &ClangTidyContext::getChecksFilter() {
   assert(CheckFilter != nullptr);
   return *CheckFilter;
 }
@@ -248,7 +248,7 @@ ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx)
 void ClangTidyDiagnosticConsumer::finalizeLastError() {
   if (!Errors.empty()) {
     ClangTidyError &Error = Errors.back();
-    if (!Context.getChecksFilter().isCheckEnabled(Error.CheckName) &&
+    if (!Context.getChecksFilter().contains(Error.CheckName) &&
         Error.DiagLevel != ClangTidyError::Error) {
       ++Context.Stats.ErrorsIgnoredCheckFilter;
       Errors.pop_back();

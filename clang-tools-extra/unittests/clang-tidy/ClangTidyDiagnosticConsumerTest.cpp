@@ -28,57 +28,57 @@ TEST(ClangTidyDiagnosticConsumer, SortsErrors) {
   EXPECT_EQ("variable []", Errors[1].Message.Message);
 }
 
-TEST(ChecksFilter, Empty) {
-  ChecksFilter Filter("");
+TEST(GlobList, Empty) {
+  GlobList Filter("");
 
-  EXPECT_TRUE(Filter.isCheckEnabled(""));
-  EXPECT_FALSE(Filter.isCheckEnabled("aaa"));
+  EXPECT_TRUE(Filter.contains(""));
+  EXPECT_FALSE(Filter.contains("aaa"));
 }
 
-TEST(ChecksFilter, Nothing) {
-  ChecksFilter Filter("-*");
+TEST(GlobList, Nothing) {
+  GlobList Filter("-*");
 
-  EXPECT_FALSE(Filter.isCheckEnabled(""));
-  EXPECT_FALSE(Filter.isCheckEnabled("a"));
-  EXPECT_FALSE(Filter.isCheckEnabled("-*"));
-  EXPECT_FALSE(Filter.isCheckEnabled("-"));
-  EXPECT_FALSE(Filter.isCheckEnabled("*"));
+  EXPECT_FALSE(Filter.contains(""));
+  EXPECT_FALSE(Filter.contains("a"));
+  EXPECT_FALSE(Filter.contains("-*"));
+  EXPECT_FALSE(Filter.contains("-"));
+  EXPECT_FALSE(Filter.contains("*"));
 }
 
-TEST(ChecksFilter, Everything) {
-  ChecksFilter Filter("*");
+TEST(GlobList, Everything) {
+  GlobList Filter("*");
 
-  EXPECT_TRUE(Filter.isCheckEnabled(""));
-  EXPECT_TRUE(Filter.isCheckEnabled("aaaa"));
-  EXPECT_TRUE(Filter.isCheckEnabled("-*"));
-  EXPECT_TRUE(Filter.isCheckEnabled("-"));
-  EXPECT_TRUE(Filter.isCheckEnabled("*"));
+  EXPECT_TRUE(Filter.contains(""));
+  EXPECT_TRUE(Filter.contains("aaaa"));
+  EXPECT_TRUE(Filter.contains("-*"));
+  EXPECT_TRUE(Filter.contains("-"));
+  EXPECT_TRUE(Filter.contains("*"));
 }
 
-TEST(ChecksFilter, Simple) {
-  ChecksFilter Filter("aaa");
+TEST(GlobList, Simple) {
+  GlobList Filter("aaa");
 
-  EXPECT_TRUE(Filter.isCheckEnabled("aaa"));
-  EXPECT_FALSE(Filter.isCheckEnabled(""));
-  EXPECT_FALSE(Filter.isCheckEnabled("aa"));
-  EXPECT_FALSE(Filter.isCheckEnabled("aaaa"));
-  EXPECT_FALSE(Filter.isCheckEnabled("bbb"));
+  EXPECT_TRUE(Filter.contains("aaa"));
+  EXPECT_FALSE(Filter.contains(""));
+  EXPECT_FALSE(Filter.contains("aa"));
+  EXPECT_FALSE(Filter.contains("aaaa"));
+  EXPECT_FALSE(Filter.contains("bbb"));
 }
 
-TEST(ChecksFilter, Complex) {
-  ChecksFilter Filter("*,-a.*,-b.*,a.1.*,-a.1.A.*,-..,-...,-..+,-*$,-*qwe*");
+TEST(GlobList, Complex) {
+  GlobList Filter("*,-a.*,-b.*,a.1.*,-a.1.A.*,-..,-...,-..+,-*$,-*qwe*");
 
-  EXPECT_TRUE(Filter.isCheckEnabled("aaa"));
-  EXPECT_TRUE(Filter.isCheckEnabled("qqq"));
-  EXPECT_FALSE(Filter.isCheckEnabled("a."));
-  EXPECT_FALSE(Filter.isCheckEnabled("a.b"));
-  EXPECT_FALSE(Filter.isCheckEnabled("b."));
-  EXPECT_FALSE(Filter.isCheckEnabled("b.b"));
-  EXPECT_TRUE(Filter.isCheckEnabled("a.1.b"));
-  EXPECT_FALSE(Filter.isCheckEnabled("a.1.A.a"));
-  EXPECT_FALSE(Filter.isCheckEnabled("qwe"));
-  EXPECT_FALSE(Filter.isCheckEnabled("asdfqweasdf"));
-  EXPECT_TRUE(Filter.isCheckEnabled("asdfqwEasdf"));
+  EXPECT_TRUE(Filter.contains("aaa"));
+  EXPECT_TRUE(Filter.contains("qqq"));
+  EXPECT_FALSE(Filter.contains("a."));
+  EXPECT_FALSE(Filter.contains("a.b"));
+  EXPECT_FALSE(Filter.contains("b."));
+  EXPECT_FALSE(Filter.contains("b.b"));
+  EXPECT_TRUE(Filter.contains("a.1.b"));
+  EXPECT_FALSE(Filter.contains("a.1.A.a"));
+  EXPECT_FALSE(Filter.contains("qwe"));
+  EXPECT_FALSE(Filter.contains("asdfqweasdf"));
+  EXPECT_TRUE(Filter.contains("asdfqwEasdf"));
 }
 
 } // namespace test
