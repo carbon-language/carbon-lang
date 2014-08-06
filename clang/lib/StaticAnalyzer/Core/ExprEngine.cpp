@@ -51,15 +51,6 @@ STATISTIC(NumMaxBlockCountReachedInInlined,
 STATISTIC(NumTimesRetriedWithoutInlining,
             "The # of times we re-evaluated a call without inlining");
 
-typedef std::pair<const CXXBindTemporaryExpr *, const StackFrameContext *>
-    CXXBindTemporaryContext;
-
-// Keeps track of whether CXXBindTemporaryExpr nodes have been evaluated.
-// The StackFrameContext assures that nested calls due to inlined recursive
-// functions do not interfere.
-REGISTER_TRAIT_WITH_PROGRAMSTATE(InitializedTemporariesSet,
-                                 llvm::ImmutableSet<CXXBindTemporaryContext>)
-
 //===----------------------------------------------------------------------===//
 // Engine construction and deletion.
 //===----------------------------------------------------------------------===//
@@ -668,59 +659,13 @@ void ExprEngine::ProcessMemberDtor(const CFGMemberDtor D,
 void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
                                       ExplodedNode *Pred,
                                       ExplodedNodeSet &Dst) {
-  ExplodedNodeSet CleanDtorState;
-  StmtNodeBuilder StmtBldr(Pred, CleanDtorState, *currBldrCtx);
-  ProgramStateRef State = Pred->getState();
-  assert(State->contains<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame())));
-  State = State->remove<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()));
-  StmtBldr.generateNode(D.getBindTemporaryExpr(), Pred, State);
 
   QualType varType = D.getBindTemporaryExpr()->getSubExpr()->getType();
-  assert(CleanDtorState.size() == 1);
-  ExplodedNode *CleanPred = *CleanDtorState.begin();
-  // FIXME: Inlining of temporary destructors is not supported yet anyway, so
-  // we just put a NULL region for now. This will need to be changed later.
+
+  // FIXME: Inlining of temporary destructors is not supported yet anyway, so we
+  // just put a NULL region for now. This will need to be changed later.
   VisitCXXDestructor(varType, nullptr, D.getBindTemporaryExpr(),
-                     /*IsBase=*/false, CleanPred, Dst);
-}
-
-void ExprEngine::processCleanupTemporaryBranch(const CXXBindTemporaryExpr *BTE,
-                                               NodeBuilderContext &BldCtx,
-                                               ExplodedNode *Pred,
-                                               ExplodedNodeSet &Dst,
-                                               const CFGBlock *DstT,
-                                               const CFGBlock *DstF) {
-  BranchNodeBuilder TempDtorBuilder(Pred, Dst, BldCtx, DstT, DstF);
-  if (Pred->getState()->contains<InitializedTemporariesSet>(
-          std::make_pair(BTE, Pred->getStackFrame()))) {
-    TempDtorBuilder.markInfeasible(false);
-    TempDtorBuilder.generateNode(Pred->getState(), true, Pred);
-  } else {
-    TempDtorBuilder.markInfeasible(true);
-    TempDtorBuilder.generateNode(Pred->getState(), false, Pred);
-  }
-}
-
-void ExprEngine::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *BTE,
-                                           ExplodedNodeSet &PreVisit,
-                                           ExplodedNodeSet &Dst) {
-  if (!getAnalysisManager().options.includeTemporaryDtorsInCFG()) {
-    // In case we don't have temporary destructors in the CFG, do not mark
-    // the initialization - we would otherwise never clean it up.
-    Dst = PreVisit;
-    return;
-  }
-  StmtNodeBuilder StmtBldr(PreVisit, Dst, *currBldrCtx);
-  for (ExplodedNode *Node : PreVisit) {
-    ProgramStateRef State = Node->getState();
-    assert(!State->contains<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame())));
-    State = State->add<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame()));
-    StmtBldr.generateNode(BTE, Node, State);
-  }
+                     /*IsBase=*/ false, Pred, Dst);
 }
 
 void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
@@ -828,17 +773,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       // Handled due to fully linearised CFG.
       break;
 
-    case Stmt::CXXBindTemporaryExprClass: {
-      Bldr.takeNodes(Pred);
-      ExplodedNodeSet PreVisit;
-      getCheckerManager().runCheckersForPreStmt(PreVisit, Pred, S, *this);
-      ExplodedNodeSet Next;
-      VisitCXXBindTemporaryExpr(cast<CXXBindTemporaryExpr>(S), PreVisit, Next);
-      getCheckerManager().runCheckersForPostStmt(Dst, Next, S, *this);
-      Bldr.addNodes(Dst);
-      break;
-    }
-
     // Cases not handled yet; but will handle some day.
     case Stmt::DesignatedInitExprClass:
     case Stmt::ExtVectorElementExprClass:
@@ -876,6 +810,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SizeOfPackExprClass:
     case Stmt::StringLiteralClass:
     case Stmt::ObjCStringLiteralClass:
+    case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
     case Stmt::SubstNonTypeTemplateParmExprClass:
     case Stmt::CXXNullPtrLiteralExprClass: {
@@ -1470,8 +1405,11 @@ static const Stmt *ResolveCondition(const Stmt *Condition,
   if (!BO || !BO->isLogicalOp())
     return Condition;
 
-  assert(!B->getTerminator().isTemporaryDtorsBranch() &&
-         "Temporary destructor branches handled by processBindTemporary.");
+  // FIXME: This is a workaround until we handle temporary destructor branches
+  // correctly; currently, temporary destructor branches lead to blocks that
+  // only have a terminator (and no statements). These blocks violate the
+  // invariant this function assumes.
+  if (B->getTerminator().isTemporaryDtorsBranch()) return Condition;
 
   // For logical operations, we still have the case where some branches
   // use the traditional "merge" approach and others sink the branch
@@ -1500,8 +1438,6 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
                                ExplodedNodeSet &Dst,
                                const CFGBlock *DstT,
                                const CFGBlock *DstF) {
-  assert((!Condition || !isa<CXXBindTemporaryExpr>(Condition)) &&
-         "CXXBindTemporaryExprs are handled by processBindTemporary.");
   const LocationContext *LCtx = Pred->getLocationContext();
   PrettyStackTraceLocationContext StackCrashInfo(LCtx);
   currBldrCtx = &BldCtx;
@@ -1665,29 +1601,10 @@ void ExprEngine::processIndirectGoto(IndirectGotoNodeBuilder &builder) {
     builder.generateNode(I, state);
 }
 
-#if 0
-static bool stackFrameDoesNotContainInitializedTemporaries(ExplodedNode &Pred) {
-  const StackFrameContext* Frame = Pred.getStackFrame();
-  const llvm::ImmutableSet<CXXBindTemporaryContext> &Set =
-      Pred.getState()->get<InitializedTemporariesSet>();
-  return std::find_if(Set.begin(), Set.end(),
-                      [&](const CXXBindTemporaryContext &Ctx) {
-                        if (Ctx.second == Frame) {
-                          Ctx.first->dump();
-                          llvm::errs() << "\n";
-                        }
-           return Ctx.second == Frame;
-         }) == Set.end();
-}
-#endif
-
 /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
 ///  nodes when the control reaches the end of a function.
 void ExprEngine::processEndOfFunction(NodeBuilderContext& BC,
                                       ExplodedNode *Pred) {
-  // FIXME: Assert that stackFrameDoesNotContainInitializedTemporaries(*Pred)).
-  // We currently cannot enable this assert, as lifetime extended temporaries
-  // are not modelled correctly.
   PrettyStackTraceLocationContext CrashInfo(Pred->getLocationContext());
   StateMgr.EndPath(Pred->getState());
 
