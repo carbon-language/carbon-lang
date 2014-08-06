@@ -181,6 +181,7 @@ def SSE_MPSADBW_ITINS : OpndItins<
   IIC_SSE_MPSADBW_RR, IIC_SSE_MPSADBW_RM
 >;
 
+let Sched = WriteVecIMul in
 def SSE_PMULLD_ITINS : OpndItins<
   IIC_SSE_PMULLD_RR, IIC_SSE_PMULLD_RM
 >;
@@ -218,8 +219,18 @@ def DEFAULT_ITINS_BLENDSCHED :  OpndItins<
   IIC_ALU_NONMEM, IIC_ALU_MEM
 >;
 
+let Sched = WriteVarBlend in
+def DEFAULT_ITINS_VARBLENDSCHED :  OpndItins<
+  IIC_ALU_NONMEM, IIC_ALU_MEM
+>;
+
 let Sched = WriteFBlend in
 def SSE_INTALU_ITINS_FBLEND_P : OpndItins<
+  IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
+>;
+
+let Sched = WriteBlend in
+def SSE_INTALU_ITINS_BLEND_P : OpndItins<
   IIC_SSE_INTALU_P_RR, IIC_SSE_INTALU_P_RM
 >;
 
@@ -7308,7 +7319,7 @@ let Constraints = "$src1 = $dst" in {
 
 let Predicates = [HasAVX] in {
   defm VPMULLD  : SS48I_binop_rm<0x40, "vpmulld", mul, v4i32, VR128,
-                                 memopv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
+                                 memopv2i64, i128mem, 0, SSE_PMULLD_ITINS>,
                                  VEX_4V;
   defm VPCMPEQQ : SS48I_binop_rm<0x29, "vpcmpeqq", X86pcmpeq, v2i64, VR128,
                                  memopv2i64, i128mem, 0, SSE_INTALU_ITINS_P>,
@@ -7316,7 +7327,7 @@ let Predicates = [HasAVX] in {
 }
 let Predicates = [HasAVX2] in {
   defm VPMULLDY  : SS48I_binop_rm<0x40, "vpmulld", mul, v8i32, VR256,
-                                  memopv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
+                                  memopv4i64, i256mem, 0, SSE_PMULLD_ITINS>,
                                   VEX_4V, VEX_L;
   defm VPCMPEQQY : SS48I_binop_rm<0x29, "vpcmpeqq", X86pcmpeq, v4i64, VR256,
                                   memopv4i64, i256mem, 0, SSE_INTALU_ITINS_P>,
@@ -7422,7 +7433,7 @@ let Constraints = "$src1 = $dst" in {
                                      1, SSE_INTALU_ITINS_FBLEND_P>;
   defm PBLENDW : SS41I_binop_rmi_int<0x0E, "pblendw", int_x86_sse41_pblendw,
                                      VR128, memopv2i64, i128mem,
-                                     1, SSE_INTALU_ITINS_FBLEND_P>;
+                                     1, SSE_INTALU_ITINS_BLEND_P>;
   defm MPSADBW : SS41I_binop_rmi_int<0x42, "mpsadbw", int_x86_sse41_mpsadbw,
                                      VR128, memopv2i64, i128mem,
                                      1, SSE_MPSADBW_ITINS>;
@@ -7555,7 +7566,7 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
                     !strconcat(OpcodeStr,
                      "\t{$src2, $dst|$dst, $src2}"),
                     [(set VR128:$dst, (IntId VR128:$src1, VR128:$src2, XMM0))],
-                    itins.rr>;
+                    itins.rr>, Sched<[itins.Sched]>;
 
     def rm0 : SS48I<opc, MRMSrcMem, (outs VR128:$dst),
                     (ins VR128:$src1, x86memop:$src2),
@@ -7564,18 +7575,21 @@ let Uses = [XMM0], Constraints = "$src1 = $dst" in {
                     [(set VR128:$dst,
                       (IntId VR128:$src1,
                        (bitconvert (mem_frag addr:$src2)), XMM0))],
-                       itins.rm>;
+                       itins.rm>, Sched<[itins.Sched.Folded, ReadAfterLd]>;
   }
 }
 
 let ExeDomain = SSEPackedDouble in
 defm BLENDVPD : SS41I_ternary_int<0x15, "blendvpd", memopv2f64, f128mem,
-                                  int_x86_sse41_blendvpd>;
+                                  int_x86_sse41_blendvpd,
+                                  DEFAULT_ITINS_FBLENDSCHED>;
 let ExeDomain = SSEPackedSingle in
 defm BLENDVPS : SS41I_ternary_int<0x14, "blendvps", memopv4f32, f128mem,
-                                  int_x86_sse41_blendvps>;
+                                  int_x86_sse41_blendvps,
+                                  DEFAULT_ITINS_FBLENDSCHED>;
 defm PBLENDVB : SS41I_ternary_int<0x10, "pblendvb", memopv2i64, i128mem,
-                                  int_x86_sse41_pblendvb>;
+                                  int_x86_sse41_pblendvb,
+                                  DEFAULT_ITINS_VARBLENDSCHED>;
 
 // Aliases with the implicit xmm0 argument
 def : InstAlias<"blendvpd\t{%xmm0, $src2, $dst|$dst, $src2, xmm0}",
@@ -8763,14 +8777,14 @@ let Predicates = [HasAVX] in {
 //
 
 multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                     ValueType OpVT> {
+                     ValueType OpVT, X86FoldableSchedWrite Sched> {
   def Yrr : AVX28I<opc, MRMSrcReg, (outs VR256:$dst),
                    (ins VR256:$src1, VR256:$src2),
                    !strconcat(OpcodeStr,
                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                    [(set VR256:$dst,
                      (OpVT (X86VPermv VR256:$src1, VR256:$src2)))]>,
-                   Sched<[WriteFShuffle256]>, VEX_4V, VEX_L;
+                   Sched<[Sched]>, VEX_4V, VEX_L;
   def Yrm : AVX28I<opc, MRMSrcMem, (outs VR256:$dst),
                    (ins VR256:$src1, i256mem:$src2),
                    !strconcat(OpcodeStr,
@@ -8778,22 +8792,22 @@ multiclass avx2_perm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                    [(set VR256:$dst,
                      (OpVT (X86VPermv VR256:$src1,
                             (bitconvert (mem_frag addr:$src2)))))]>,
-                   Sched<[WriteFShuffle256Ld, ReadAfterLd]>, VEX_4V, VEX_L;
+                   Sched<[Sched.Folded, ReadAfterLd]>, VEX_4V, VEX_L;
 }
 
-defm VPERMD : avx2_perm<0x36, "vpermd", loadv4i64, v8i32>;
+defm VPERMD : avx2_perm<0x36, "vpermd", loadv4i64, v8i32, WriteShuffle256>;
 let ExeDomain = SSEPackedSingle in
-defm VPERMPS : avx2_perm<0x16, "vpermps", loadv8f32, v8f32>;
+defm VPERMPS : avx2_perm<0x16, "vpermps", loadv8f32, v8f32, WriteFShuffle256>;
 
 multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
-                         ValueType OpVT> {
+                         ValueType OpVT, X86FoldableSchedWrite Sched> {
   def Yri : AVX2AIi8<opc, MRMSrcReg, (outs VR256:$dst),
                      (ins VR256:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR256:$dst,
                        (OpVT (X86VPermi VR256:$src1, (i8 imm:$src2))))]>,
-                     Sched<[WriteShuffle256]>, VEX, VEX_L;
+                     Sched<[Sched]>, VEX, VEX_L;
   def Ymi : AVX2AIi8<opc, MRMSrcMem, (outs VR256:$dst),
                      (ins i256mem:$src1, i8imm:$src2),
                      !strconcat(OpcodeStr,
@@ -8801,12 +8815,14 @@ multiclass avx2_perm_imm<bits<8> opc, string OpcodeStr, PatFrag mem_frag,
                      [(set VR256:$dst,
                        (OpVT (X86VPermi (mem_frag addr:$src1),
                               (i8 imm:$src2))))]>,
-                     Sched<[WriteShuffle256Ld, ReadAfterLd]>, VEX, VEX_L;
+                     Sched<[Sched.Folded, ReadAfterLd]>, VEX, VEX_L;
 }
 
-defm VPERMQ : avx2_perm_imm<0x00, "vpermq", loadv4i64, v4i64>, VEX_W;
+defm VPERMQ : avx2_perm_imm<0x00, "vpermq", loadv4i64, v4i64,
+                            WriteShuffle256>, VEX_W;
 let ExeDomain = SSEPackedDouble in
-defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", loadv4f64, v4f64>, VEX_W;
+defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", loadv4f64, v4f64,
+                             WriteFShuffle256>, VEX_W;
 
 //===----------------------------------------------------------------------===//
 // VPERM2I128 - Permute Floating-Point Values in 128-bit chunks
