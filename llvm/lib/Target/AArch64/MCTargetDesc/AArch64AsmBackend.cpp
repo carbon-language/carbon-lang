@@ -14,6 +14,7 @@
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCFixupKindInfo.h"
+#include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCObjectWriter.h"
 #include "llvm/MC/MCSectionELF.h"
 #include "llvm/MC/MCSectionMachO.h"
@@ -551,7 +552,8 @@ MCAsmBackend *llvm::createAArch64leAsmBackend(const Target &T,
     return new DarwinAArch64AsmBackend(T, MRI);
 
   assert(TheTriple.isOSBinFormatELF() && "Expect either MachO or ELF target");
-  return new ELFAArch64AsmBackend(T, TheTriple.getOS(), /*IsLittleEndian=*/true);
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  return new ELFAArch64AsmBackend(T, OSABI, /*IsLittleEndian=*/true);
 }
 
 MCAsmBackend *llvm::createAArch64beAsmBackend(const Target &T,
@@ -561,6 +563,7 @@ MCAsmBackend *llvm::createAArch64beAsmBackend(const Target &T,
 
   assert(TheTriple.isOSBinFormatELF() &&
          "Big endian is only supported for ELF targets!");
-  return new ELFAArch64AsmBackend(T, TheTriple.getOS(),
+  uint8_t OSABI = MCELFObjectTargetWriter::getOSABI(TheTriple.getOS());
+  return new ELFAArch64AsmBackend(T, OSABI,
                                   /*IsLittleEndian=*/false);
 }
