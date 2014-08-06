@@ -7519,9 +7519,10 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
     int FreeDWord = (PSHUFDMask[DestOffset / 2] == -1 ? 0 : 1) + DestOffset / 2;
     assert(PSHUFDMask[FreeDWord] == -1 && "DWord not free");
     PSHUFDMask[FreeDWord] = IncomingInputs[0] / 2;
-    for (int Input : IncomingInputs)
-      std::replace(HalfMask.begin(), HalfMask.end(), Input,
-                   FreeDWord * 2 + Input % 2);
+    for (int &M : HalfMask)
+      for (int Input : IncomingInputs)
+        if (M == Input)
+          M = FreeDWord * 2 + Input % 2;
   };
   moveInputsToRightHalf(HToLInputs, LToLInputs, PSHUFHMask, LoMask,
                         /*SourceOffset*/ 4, /*DestOffset*/ 0);
