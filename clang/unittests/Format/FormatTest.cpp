@@ -9133,5 +9133,18 @@ TEST_F(FormatTest, HandleConflictMarkers) {
                    "int i;\n"));
 }
 
+TEST_F(FormatTest, DisableRegions) {
+  EXPECT_EQ("int i;\n"
+            "// clang-format off\n"
+            "  int j;\n"
+            "// clang-format on\n"
+            "int k;",
+            format(" int  i;\n"
+                   "   // clang-format off\n"
+                   "  int j;\n"
+                   " // clang-format on\n"
+                   "   int   k;"));
+}
+
 } // end namespace tooling
 } // end namespace clang

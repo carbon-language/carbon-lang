@@ -1648,6 +1648,8 @@ private:
   SmallVector<FormatToken *, 16> Tokens;
   SmallVector<IdentifierInfo *, 8> ForEachMacros;
 
+  bool FormattingDisabled = false;
+
   void readRawToken(FormatToken &Tok) {
     Lex.LexFromRawLexer(Tok.Tok);
     Tok.TokenText = StringRef(SourceMgr.getCharacterData(Tok.Tok.getLocation()),
@@ -1663,6 +1665,11 @@ private:
         Tok.Tok.setKind(tok::char_constant);
       }
     }
+    if (Tok.is(tok::comment) && Tok.TokenText == "// clang-format on")
+      FormattingDisabled = false;
+    Tok.Finalized = FormattingDisabled;
+    if (Tok.is(tok::comment) && Tok.TokenText == "// clang-format off")
+      FormattingDisabled = true;
   }
 };
 
