@@ -514,49 +514,29 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     if (!InstDep.isDef() && !InstDep.isClobber())
       continue;
 
-    // Check for cases where the store is redundant.
+    // If we're storing the same value back to a pointer that we just
+    // loaded from, then the store can be removed.
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
-      bool DeleteStore = false;
-      // If we're storing the same value back to a pointer that we just
-      // loaded from, then the store can be removed.
       if (LoadInst *DepLoad = dyn_cast<LoadInst>(InstDep.getInst())) {
         if (SI->getPointerOperand() == DepLoad->getPointerOperand() &&
             SI->getOperand(0) == DepLoad && isRemovable(SI)) {
           DEBUG(dbgs() << "DSE: Remove Store Of Load from same pointer:\n  "
                        << "LOAD: " << *DepLoad << "\n  STORE: " << *SI << '\n');
-          DeleteStore = true;
-        }
-      }
 
-      // If we find a store to memory which was defined by calloc
-      // we can remove the store if the value being stored is a
-      // constant zero (since calloc initialized the memory to
-      // that same value) or the store is undefined (if out of
-      // bounds).  
-      if (isCallocLikeFn(InstDep.getInst(), TLI) && isRemovable(SI)) {
-        Value *V = SI->getValueOperand();
-        if (isa<Constant>(V) && cast<Constant>(V)->isNullValue()) {
-          DEBUG(dbgs() << "DSE: Remove Store Of Zero to Calloc:\n  "
-                << "CALLOC: " << *InstDep.getInst() << "\n"
-                << "STORE: " << *SI << '\n');
-          DeleteStore = true;
-        }
-      }
+          // DeleteDeadInstruction can delete the current instruction.  Save BBI
+          // in case we need it.
+          WeakVH NextInst(BBI);
 
-      if (DeleteStore) {
-        // DeleteDeadInstruction can delete the current instruction.  Save BBI
-        // in case we need it.
-        WeakVH NextInst(BBI);
-        
-        DeleteDeadInstruction(SI, *MD, TLI);
-        
-        if (!NextInst)  // Next instruction deleted.
-          BBI = BB.begin();
-        else if (BBI != BB.begin())  // Revisit this instruction if possible.
-          --BBI;
-        ++NumFastStores;
-        MadeChange = true;
-        continue;
+          DeleteDeadInstruction(SI, *MD, TLI);
+
+          if (!NextInst)  // Next instruction deleted.
+            BBI = BB.begin();
+          else if (BBI != BB.begin())  // Revisit this instruction if possible.
+            --BBI;
+          ++NumFastStores;
+          MadeChange = true;
+          continue;
+        }
       }
     }
 
