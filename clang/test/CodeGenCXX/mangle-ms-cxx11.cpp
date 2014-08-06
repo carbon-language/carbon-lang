@@ -98,7 +98,7 @@ namespace PR18022 {
 
 struct { } a;
 decltype(a) fun(decltype(a) x, decltype(a)) { return x; }
-// CHECK-DAG: ?fun@PR18022@@YA?AU<unnamed-type-a>@1@U21@0@Z
+// CHECK-DAG: @"\01?fun@PR18022@@YA?AU<unnamed-type-a>@1@U21@0@Z"
 
 }
 
@@ -106,17 +106,32 @@ inline int define_lambda() {
   static auto lambda = [] { static int local; ++local; return local; };
 // First, we have the static local variable of type "<lambda_1>" inside of
 // "define_lambda".
-// CHECK-DAG: ?lambda@?1??define_lambda@@YAHXZ@4V<lambda_1>@@A
+// CHECK-DAG: @"\01?lambda@?1??define_lambda@@YAHXZ@4V<lambda_1>@?1@YAHXZ@A"
 // Next, we have the "operator()" for "<lambda_1>" which is inside of
 // "define_lambda".
-// CHECK-DAG: ??R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ
+// CHECK-DAG: @"\01??R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ"
 // Finally, we have the local which is inside of "<lambda_1>" which is inside of
 // "define_lambda". Hooray.
-// CHECK-DAG: ?local@?2???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA
+// CHECK-DAG: @"\01?local@?2???R<lambda_1>@?define_lambda@@YAHXZ@QBEHXZ@4HA"
   return lambda();
 }
 
+template <typename T>
+void use_lambda_arg(T) {}
+
+inline void call_with_lambda_arg1() {
+  use_lambda_arg([]{});
+  // CHECK-DAG: @"\01??$use_lambda_arg@V<lambda_1>@?call_with_lambda_arg1@@YAXXZ@@@YAXV<lambda_1>@?call_with_lambda_arg1@@YAXXZ@@Z"
+}
+
+inline void call_with_lambda_arg2() {
+  use_lambda_arg([]{});
+  // CHECK-DAG: @"\01??$use_lambda_arg@V<lambda_1>@?call_with_lambda_arg2@@YAXXZ@@@YAXV<lambda_1>@?call_with_lambda_arg2@@YAXXZ@@Z"
+}
+
 int call_lambda() {
+  call_with_lambda_arg1();
+  call_with_lambda_arg2();
   return define_lambda();
 }
 

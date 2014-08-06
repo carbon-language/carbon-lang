@@ -802,10 +802,7 @@ void MicrosoftCXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
 void MicrosoftCXXNameMangler::mangleNestedName(const NamedDecl *ND) {
   // <postfix> ::= <unqualified-name> [<postfix>]
   //           ::= <substitution> [<postfix>]
-  if (isLambda(ND))
-    return;
-
-  const DeclContext *DC = ND->getDeclContext();
+  const DeclContext *DC = getEffectiveDeclContext(ND);
 
   while (!DC->isTranslationUnit()) {
     if (isa<TagDecl>(ND) || isa<VarDecl>(ND)) {
