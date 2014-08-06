@@ -5,7 +5,11 @@ typedef const void * CFTypeRef;
 CFTypeRef CFBridgingRetain(id X);
 id CFBridgingRelease(CFTypeRef);
 @protocol NSCopying @end
-@interface NSDictionary
+@interface NSObject
++ (id)alloc;
+@end
+
+@interface NSDictionary : NSObject
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 - (void)setObject:(id)object forKeyedSubscript:(id)key;
 @end

@@ -746,6 +746,7 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
 ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR, 
                                             ObjCDictionaryElement *Elements,
                                             unsigned NumElements) {
+  bool Arc = getLangOpts().ObjCAutoRefCount;
   // Look up the NSDictionary class, if we haven't done so already.
   if (!NSDictionaryDecl) {
     NamedDecl *IF = LookupSingleName(TUScope,
@@ -765,9 +766,34 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
     }
   }
   
+  QualType IdT = Context.getObjCIdType();
+  if (Arc && !DictAllocObjectsMethod) {
+    // Find +[NSDictionary alloc] method.
+    IdentifierInfo *II = &Context.Idents.get("alloc");
+    Selector AllocSel = Context.Selectors.getSelector(0, &II);
+    DictAllocObjectsMethod = NSDictionaryDecl->lookupClassMethod(AllocSel);
+    if (!DictAllocObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
+        DictAllocObjectsMethod = ObjCMethodDecl::Create(Context,
+                                        SourceLocation(), SourceLocation(), AllocSel,
+                                        IdT,
+                                        nullptr /*TypeSourceInfo */,
+                                        Context.getTranslationUnitDecl(),
+                                        false /*Instance*/, false/*isVariadic*/,
+                                        /*isPropertyAccessor=*/false,
+                                        /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
+                                        ObjCMethodDecl::Required,
+                                        false);
+        SmallVector<ParmVarDecl *, 1> Params;
+        DictAllocObjectsMethod->setMethodParams(Context, Params, None);
+    }
+    if (!DictAllocObjectsMethod) {
+      Diag(SR.getBegin(), diag::err_undeclared_alloc);
+      return ExprError();
+    }
+  }
+    
   // Find the dictionaryWithObjects:forKeys:count: method, if we haven't done
   // so already.
-  QualType IdT = Context.getObjCIdType();
   if (!DictionaryWithObjectsMethod) {
     Selector Sel = NSAPIObj->getNSDictionarySelector(
                                NSAPI::NSDict_dictionaryWithObjectsForKeysCount);
@@ -925,7 +951,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
                                 Context.getObjCInterfaceType(NSDictionaryDecl));
   return MaybeBindToTemporary(ObjCDictionaryLiteral::Create(
       Context, makeArrayRef(Elements, NumElements), HasPackExpansions, Ty,
-      DictionaryWithObjectsMethod, nullptr, SR));
+      DictionaryWithObjectsMethod, DictAllocObjectsMethod, SR));
 }
 
 ExprResult Sema::BuildObjCEncodeExpression(SourceLocation AtLoc,

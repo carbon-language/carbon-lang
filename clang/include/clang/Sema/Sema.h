@@ -685,8 +685,8 @@ public:
   /// \brief The declaration of the initWithObjects:forKeys:count: method.
   ObjCMethodDecl *InitDictionaryWithObjectsMethod;
     
-  /// \brief The declaration for + (id) alloc method.
-  ObjCMethodDecl *AllocObjectsMethod;
+  /// \brief The declaration for + (id) alloc method used in [NSDictionary alloc]
+  ObjCMethodDecl *DictAllocObjectsMethod;
 
   /// \brief id<NSCopying> type.
   QualType QIDNSCopying;

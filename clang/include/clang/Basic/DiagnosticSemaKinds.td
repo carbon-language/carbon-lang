@@ -2007,6 +2007,8 @@ def err_undeclared_nsarray : Error<
 def err_undeclared_nsdictionary : Error<
   "NSDictionary must be available to use Objective-C dictionary "
   "literals">;
+def err_undeclared_alloc : Error<
+  "alloc must be available to use Objective-C literals">;
 def err_undeclared_boxing_method : Error<
   "declaration of %0 is missing in %1 class">;
 def err_objc_literal_method_sig : Error<

@@ -16,6 +16,7 @@ typedef signed char BOOL;
 
 @interface NSObject : BaseObject
 - (BOOL)isEqual:(id)other;
++ (id)alloc;
 @end
 
 @interface NSNumber : NSObject
