@@ -1355,7 +1355,7 @@ def : T1Pat<(ARMtcall texternalsym:$func), (tBL texternalsym:$func)>,
       Requires<[IsThumb]>;
 
 def : Tv5Pat<(ARMcall texternalsym:$func), (tBLXi texternalsym:$func)>,
-      Requires<[IsThumb, HasV5T]>;
+      Requires<[IsThumb, HasV5T, IsNotMClass]>;
 
 // Indirect calls to ARM routines
 def : Tv5Pat<(ARMcall GPR:$dst), (tBLXr GPR:$dst)>,

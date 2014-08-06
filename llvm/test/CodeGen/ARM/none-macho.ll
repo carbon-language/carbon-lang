@@ -84,7 +84,7 @@ define float @test_softfloat_calls(float %in) {
 
   ; Soft-float calls should be GNU-style rather than RTABI and should not be the
   ; *vfp variants used for ARMv6 iOS.
-; CHECK: blx ___addsf3{{$}}
+; CHECK: bl ___addsf3{{$}}
   ret float %sum
 }
 

@@ -6,7 +6,7 @@
 define float @foo(float %a, float %b) {
 entry:
 ; CHECK-LABEL: foo:
-; CORTEXM3: blx ___mulsf3
+; CORTEXM3: bl ___mulsf3
 ; CORTEXM4: vmul.f32  s
 ; CORTEXA8: vmul.f32  d
   %0 = fmul float %a, %b
@@ -17,8 +17,8 @@ define double @bar(double %a, double %b) {
 entry:
 ; CHECK-LABEL: bar:
   %0 = fmul double %a, %b
-; CORTEXM3: blx ___muldf3
-; CORTEXM4: blx ___muldf3
+; CORTEXM3: bl ___muldf3
+; CORTEXM4: bl ___muldf3
 ; CORTEXA8: vmul.f64  d
   ret double %0
 }

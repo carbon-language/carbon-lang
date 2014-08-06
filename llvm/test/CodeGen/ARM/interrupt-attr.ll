@@ -40,7 +40,7 @@ define arm_aapcscc void @irq_fn() alignstack(8) "interrupt"="IRQ" {
 ; CHECK-M: mov r4, sp
 ; CHECK-M: bic r4, r4, #7
 ; CHECK-M: mov sp, r4
-; CHECK-M: blx _bar
+; CHECK-M: bl _bar
 ; CHECK-M: sub.w r4, r11, #8
 ; CHECK-M: mov sp, r4
 ; CHECK-M: pop.w {r4, r10, r11, pc}
