@@ -72,6 +72,16 @@ public:
                              const CFGBlock *DstT,
                              const CFGBlock *DstF) = 0;
 
+  /// Called by CoreEngine.
+  /// Used to generate successor nodes for temporary destructors depending
+  /// on whether the corresponding constructor was visited.
+  virtual void processCleanupTemporaryBranch(const CXXBindTemporaryExpr *BTE,
+                                             NodeBuilderContext &BldCtx,
+                                             ExplodedNode *Pred,
+                                             ExplodedNodeSet &Dst,
+                                             const CFGBlock *DstT,
+                                             const CFGBlock *DstF) = 0;
+
   /// Called by CoreEngine.  Used to processing branching behavior
   /// at static initalizers.
   virtual void processStaticInitializer(const DeclStmt *DS,
