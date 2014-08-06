@@ -1274,7 +1274,7 @@ public:
       : FormatTok(nullptr), IsFirstToken(true), GreaterStashed(false),
         Column(0), TrailingWhitespace(0), Lex(Lex), SourceMgr(SourceMgr),
         Style(Style), IdentTable(getFormattingLangOpts()), Encoding(Encoding),
-        FirstInLineIndex(0) {
+        FirstInLineIndex(0), FormattingDisabled(false) {
     Lex.SetKeepWhitespaceMode(true);
 
     for (const std::string &ForEachMacro : Style.ForEachMacros)
@@ -1648,7 +1648,7 @@ private:
   SmallVector<FormatToken *, 16> Tokens;
   SmallVector<IdentifierInfo *, 8> ForEachMacros;
 
-  bool FormattingDisabled = false;
+  bool FormattingDisabled;
 
   void readRawToken(FormatToken &Tok) {
     Lex.LexFromRawLexer(Tok.Tok);
