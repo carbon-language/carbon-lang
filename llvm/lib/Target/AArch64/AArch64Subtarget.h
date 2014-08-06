@@ -99,9 +99,12 @@ public:
   bool isLittleEndian() const { return DL.isLittleEndian(); }
 
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
+  bool isTargetIOS() const { return TargetTriple.isiOS(); }
+  bool isTargetLinux() const { return TargetTriple.isOSLinux(); }
+  bool isTargetWindows() const { return TargetTriple.isOSWindows(); }
 
+  bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }
   bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
-
   bool isTargetMachO() const { return TargetTriple.isOSBinFormatMachO(); }
 
   bool isCyclone() const { return CPUString == "cyclone"; }
