@@ -50,7 +50,7 @@ attributes #1 = { nounwind readnone }
 !llvm.module.flags = !{!17, !18}
 !llvm.ident = !{!19}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""}
+!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.5 ", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
 !1 = metadata !{metadata !"pieces.c", metadata !""}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}

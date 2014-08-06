@@ -68,7 +68,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, metadata !51, metadata !1, metadata !"inlineprinter", metadata !"inlineprinter", metadata !"", i32 5, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (i8*, float, i8)* @inlineprinter, null, null, metadata !48, i32 5} ; [ DW_TAG_subprogram ] [line 5] [def] [inlineprinter]
 !1 = metadata !{i32 786473, metadata !51} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !51, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, metadata !52, metadata !52, metadata !47, null,  null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !51, i32 12, metadata !"clang version 3.0 (trunk 129915)", i1 true, metadata !"", i32 0, metadata !52, metadata !52, metadata !47, null,  null, null, i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !51, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5}
 !5 = metadata !{i32 786468, null, metadata !2, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

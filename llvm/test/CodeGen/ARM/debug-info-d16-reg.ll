@@ -61,7 +61,7 @@ declare i32 @puts(i8* nocapture) nounwind
 
 !0 = metadata !{i32 786478, metadata !46, metadata !1, metadata !"printer", metadata !"printer", metadata !"printer", i32 12, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 true, i32 (i8*, double, i8)* @printer, null, null, metadata !43, i32 12} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 786473, metadata !46} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !46, i32 1, metadata !"(LLVM build 00)", i1 true, metadata !"", i32 0, metadata !47, metadata !47, metadata !42, null,  null, metadata !""} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !46, i32 1, metadata !"(LLVM build 00)", i1 true, metadata !"", i32 0, metadata !47, metadata !47, metadata !42, null,  null, metadata !"", i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !46, metadata !1, metadata !"", i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{metadata !5, metadata !6, metadata !7, metadata !8}
 !5 = metadata !{i32 786468, metadata !46, metadata !1, metadata !"int", i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]

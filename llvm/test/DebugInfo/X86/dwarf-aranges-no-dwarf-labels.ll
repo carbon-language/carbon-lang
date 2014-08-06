@@ -60,7 +60,7 @@ attributes #2 = { nounwind readnone }
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!19, !26}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 (191881)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !17, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/debug_ranges/a.cc] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 (191881)", i1 true, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !17, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/debug_ranges/a.cc] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"tmp/debug_ranges/a.cc", metadata !"/"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !11, metadata !14}

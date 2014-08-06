@@ -83,7 +83,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 
 !0 = metadata !{i32 786478, metadata !20, metadata !1, metadata !"__OpenCL_nbt02_kernel", metadata !"__OpenCL_nbt02_kernel", metadata !"__OpenCL_nbt02_kernel", i32 2, metadata !3, i1 false, i1 true, i32 0, i32 0, null, i32 0, i1 false, void (i32 addrspace(1)*)* @__OpenCL_nbt02_kernel, null, null, null, i32 0} ; [ DW_TAG_subprogram ] [line 2] [def] [scope 0] [__OpenCL_nbt02_kernel]
 !1 = metadata !{i32 786473, metadata !20} ; [ DW_TAG_file_type ]
-!2 = metadata !{i32 786449, metadata !20, i32 1, metadata !"clc", i1 false, metadata !"", i32 0, metadata !21, metadata !21, metadata !19, null,  null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !20, i32 1, metadata !"clc", i1 false, metadata !"", i32 0, metadata !21, metadata !21, metadata !19, null,  null, null, i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786453, metadata !20, metadata !1, metadata !"", i32 0, i64 0, i64 0, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !4 = metadata !{null, metadata !5}
 !5 = metadata !{i32 786447, null, metadata !2, metadata !"", i32 0, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_pointer_type ]

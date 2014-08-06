@@ -74,7 +74,7 @@ entry:
 
 !0 = metadata !{i32 786478, metadata !51, metadata !1, metadata !"~A", metadata !"~A", metadata !"", i32 2, metadata !11, i1 false, i1 false, i32 0, i32 0, null, i32 256, i1 false, null, null, null, null, i32 0} ; [ DW_TAG_subprogram ]
 !1 = metadata !{i32 589826, metadata !51, metadata !2, metadata !"A", i32 2, i64 128, i64 32, i32 0, i32 0, null, metadata !4, i32 0, null, null, null} ; [ DW_TAG_class_type ] [A] [line 2, size 128, align 32, offset 0] [def] [from ]
-!2 = metadata !{i32 786449, metadata !51, i32 4, metadata !"clang version 3.0 (trunk 130127)", i1 false, metadata !"", i32 0, metadata !24, metadata !24, metadata !50, null, null, null} ; [ DW_TAG_compile_unit ]
+!2 = metadata !{i32 786449, metadata !51, i32 4, metadata !"clang version 3.0 (trunk 130127)", i1 false, metadata !"", i32 0, metadata !24, metadata !24, metadata !50, null, null, null, i32 1} ; [ DW_TAG_compile_unit ]
 !3 = metadata !{i32 786473, metadata !51} ; [ DW_TAG_file_type ]
 !4 = metadata !{metadata !5, metadata !7, metadata !8, metadata !9, metadata !0, metadata !10, metadata !14}
 !5 = metadata !{i32 786445, metadata !51, metadata !3, metadata !"x", i32 2, i64 32, i64 32, i64 0, i32 0, metadata !6} ; [ DW_TAG_member ]

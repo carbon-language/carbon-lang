@@ -75,7 +75,7 @@ entry:
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!29}
 
-!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/vla.c] [DW_LANG_C99]
+!0 = metadata !{i32 786449, metadata !1, i32 12, metadata !"clang version 3.3 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/vla.c] [DW_LANG_C99]
 !1 = metadata !{metadata !"vla.c", metadata !""}
 !2 = metadata !{}
 !3 = metadata !{metadata !4, metadata !9}

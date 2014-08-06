@@ -147,7 +147,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !llvm.dbg.cu = !{!0}
 !llvm.module.flags = !{!22, !27}
 
-!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !""} ; [ DW_TAG_compile_unit ] [/tmp/crash.cpp] [DW_LANG_C_plus_plus]
+!0 = metadata !{i32 786449, metadata !1, i32 4, metadata !"clang version 3.4 ", i1 false, metadata !"", i32 0, metadata !2, metadata !2, metadata !3, metadata !2, metadata !2, metadata !"", i32 1} ; [ DW_TAG_compile_unit ] [/tmp/crash.cpp] [DW_LANG_C_plus_plus]
 !1 = metadata !{metadata !"crash.cpp", metadata !"/tmp"}
 !2 = metadata !{}
 !3 = metadata !{metadata !4}
