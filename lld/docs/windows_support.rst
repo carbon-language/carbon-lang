@@ -76,7 +76,7 @@ Building LLD
 ============
 
 Using Visual Studio IDE/MSBuild
----------------------------
+-------------------------------
 
 1. Check out LLVM and LLD from the LLVM SVN repository (or Git mirror),
 #. run ``cmake -G "Visual Studio 12" <llvm-source-dir>`` from VS command prompt,
