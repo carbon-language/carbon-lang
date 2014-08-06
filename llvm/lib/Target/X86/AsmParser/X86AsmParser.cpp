@@ -2528,14 +2528,25 @@ bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
   else if (IDVal.startswith(".code"))
     return ParseDirectiveCode(IDVal, DirectiveID.getLoc());
   else if (IDVal.startswith(".att_syntax")) {
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      if (Parser.getTok().getString() == "prefix")
+        Parser.Lex();
+      else if (Parser.getTok().getString() == "noprefix")
+        return Error(DirectiveID.getLoc(), "'.att_syntax noprefix' is not "
+                                           "supported: registers must have a "
+                                           "'%' prefix in .att_syntax");
+    }
     getParser().setAssemblerDialect(0);
     return false;
   } else if (IDVal.startswith(".intel_syntax")) {
     getParser().setAssemblerDialect(1);
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
-      // FIXME: Handle noprefix
       if (Parser.getTok().getString() == "noprefix")
         Parser.Lex();
+      else if (Parser.getTok().getString() == "prefix")
+        return Error(DirectiveID.getLoc(), "'.intel_syntax prefix' is not "
+                                           "supported: registers must not have "
+                                           "a '%' prefix in .intel_syntax");
     }
     return false;
   }
