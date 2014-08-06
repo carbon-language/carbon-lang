@@ -1666,7 +1666,10 @@ ARMTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     if (isStub && Subtarget->isThumb1Only() && !Subtarget->hasV5TOps()) {
       assert(Subtarget->isTargetMachO() && "WrapperPIC use on non-MachO?");
       Callee = DAG.getNode(ARMISD::WrapperPIC, dl, getPointerTy(),
-                           DAG.getTargetGlobalAddress(GV, dl, getPointerTy()));
+                           DAG.getTargetGlobalAddress(GV, dl, getPointerTy(),
+                                                      0, ARMII::MO_NONLAZY));
+      Callee = DAG.getLoad(getPointerTy(), dl, DAG.getEntryNode(), Callee,
+                           MachinePointerInfo::getGOT(), false, false, true, 0);
     } else if (Subtarget->isTargetCOFF()) {
       assert(Subtarget->isTargetWindows() &&
              "Windows is the only supported COFF target");
