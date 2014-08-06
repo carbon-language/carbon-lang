@@ -25,6 +25,8 @@ namespace object {
 
 extern cl::opt<std::string> TripleName;
 extern cl::opt<std::string> ArchName;
+extern cl::opt<std::string> MCPU;
+extern cl::list<std::string> MAttrs;
 
 // Various helper functions.
 bool error(std::error_code ec);
