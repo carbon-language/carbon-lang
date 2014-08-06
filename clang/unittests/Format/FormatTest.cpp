@@ -7544,6 +7544,13 @@ TEST_F(FormatTest, ConfigurableSpaceBeforeParens) {
                "  break;\n"
                "}", NoSpace);
   verifyFormat("auto i = std::make_unique<int>(5);", NoSpace);
+  verifyFormat("size_t x = sizeof(x);", NoSpace);
+  verifyFormat("auto f(int x) -> decltype(x);", NoSpace);
+  verifyFormat("int f(T x) noexcept(x.create());", NoSpace);
+  verifyFormat("alignas(128) char a[128];", NoSpace);
+  verifyFormat("size_t x = alignof(MyType);", NoSpace);
+  verifyFormat("static_assert(sizeof(char) == 1, \"Impossible!\");", NoSpace);
+  verifyFormat("int f() throw(Deprecated);", NoSpace);
 
   FormatStyle Space = getLLVMStyle();
   Space.SpaceBeforeParens = FormatStyle::SBPO_Always;
@@ -7581,6 +7588,13 @@ TEST_F(FormatTest, ConfigurableSpaceBeforeParens) {
                "#endif",
                Space);
   verifyFormat("auto i = std::make_unique<int> (5);", Space);
+  verifyFormat("size_t x = sizeof (x);", Space);
+  verifyFormat("auto f (int x) -> decltype (x);", Space);
+  verifyFormat("int f (T x) noexcept (x.create ());", Space);
+  verifyFormat("alignas (128) char a[128];", Space);
+  verifyFormat("size_t x = alignof (MyType);", Space);
+  verifyFormat("static_assert (sizeof (char) == 1, \"Impossible!\");", Space);
+  verifyFormat("int f () throw (Deprecated);", Space);
 }
 
 TEST_F(FormatTest, ConfigurableSpacesInParentheses) {

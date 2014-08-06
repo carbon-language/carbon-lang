@@ -1549,7 +1549,7 @@ bool TokenAnnotator::spaceRequiredBetween(const AnnotatedLine &Line,
                           tok::kw_switch, tok::kw_catch, tok::kw_case) ||
              Left.IsForEachMacro)) ||
            (Style.SpaceBeforeParens == FormatStyle::SBPO_Always &&
-            Left.isOneOf(tok::identifier, tok::kw___attribute) &&
+            (Left.is(tok::identifier) || Left.isFunctionLikeKeyword()) &&
             Line.Type != LT_PreprocessorDirective);
   }
   if (Left.is(tok::at) && Right.Tok.getObjCKeywordID() != tok::objc_not_keyword)
