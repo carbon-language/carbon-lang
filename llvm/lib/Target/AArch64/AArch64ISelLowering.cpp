@@ -477,6 +477,10 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FROUND, Ty, Legal);
     }
   }
+
+  // Prefer likely predicted branches to selects on out-of-order cores.
+  if (Subtarget->isCortexA57())
+    PredictableSelectIsExpensive = true;
 }
 
 void AArch64TargetLowering::addTypeForNEON(EVT VT, EVT PromotedBitwiseVT) {
