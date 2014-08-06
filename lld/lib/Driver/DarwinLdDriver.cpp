@@ -32,6 +32,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
 
+#include <algorithm>
 
 namespace {
 
@@ -361,7 +362,11 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
         diagnostics << "Unable to find library -l" << arg->getValue() << "\n";
         return false;
       } else if (ctx.testingLibResolution()) {
-        diagnostics << "Found library " << resolvedPath.get() << '\n';
+       // Test may be running on Windows. Canonicalize the path
+       // separator to '/' to get consistent outputs for tests.
+       std::string path = resolvedPath.get();
+       std::replace(path.begin(), path.end(), '\\', '/');
+       diagnostics << "Found library " << path << '\n';
       }
       inputPath = resolvedPath.get();
       break;

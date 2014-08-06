@@ -25,6 +25,8 @@
 #include "llvm/Support/MachO.h"
 #include "llvm/Support/Path.h"
 
+#include <algorithm>
+
 using lld::mach_o::ArchHandler;
 using namespace llvm::MachO;
 
@@ -297,7 +299,9 @@ bool MachOLinkingContext::pathExists(StringRef path) const {
 
   // Otherwise, we're in test mode: only files explicitly provided on the
   // command-line exist.
-  return _existingPaths.find(path) != _existingPaths.end();
+  std::string key = path.str();
+  std::replace(key.begin(), key.end(), '\\', '/');
+  return _existingPaths.find(key) != _existingPaths.end();
 }
 
 void MachOLinkingContext::addModifiedSearchDir(
@@ -308,7 +312,7 @@ void MachOLinkingContext::addModifiedSearchDir(
   //   + If the last -syslibroot is "/", all of them are ignored (don't ask).
   //   + -syslibroot only applies to absolute paths.
   if (!syslibRoots.empty() && syslibRoots.back() != "/" &&
-      llvm::sys::path::is_absolute(libPath)) {
+      libPath.startswith("/")) {
     for (auto syslibRoot : syslibRoots) {
       SmallString<256> path(syslibRoot);
       llvm::sys::path::append(path, libPath);
