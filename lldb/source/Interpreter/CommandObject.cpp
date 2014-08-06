@@ -56,6 +56,7 @@ CommandObject::CommandObject
     m_is_alias (false),
     m_flags (flags),
     m_arguments(),
+    m_deprecated_command_override_callback (nullptr),
     m_command_override_callback (nullptr),
     m_command_override_baton (nullptr)
 {
