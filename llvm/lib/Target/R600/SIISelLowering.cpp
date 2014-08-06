@@ -395,8 +395,8 @@ SDValue SITargetLowering::LowerFormalArguments(
   }
 
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
 
   // At least one interpolation mode must be enabled or else the GPU will hang.
   if (Info->getShaderType() == ShaderType::PIXEL &&

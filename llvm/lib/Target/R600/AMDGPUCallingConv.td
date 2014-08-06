@@ -59,16 +59,24 @@ def CC_AMDGPU_Kernel : CallingConv<[
 ]>;
 
 def CC_AMDGPU : CallingConv<[
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>().getGeneration() >= "
-       "AMDGPUSubtarget::SOUTHERN_ISLANDS && "
-       "State.getMachineFunction().getInfo<SIMachineFunctionInfo>()->"#
-       "getShaderType() == ShaderType::COMPUTE", CCDelegateTo<CC_AMDGPU_Kernel>>,
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>().getGeneration() < "
-       "AMDGPUSubtarget::SOUTHERN_ISLANDS && "
-       "State.getMachineFunction().getInfo<R600MachineFunctionInfo>()->"
-       "getShaderType() == ShaderType::COMPUTE", CCDelegateTo<CC_AMDGPU_Kernel>>,
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>()"#
-       ".getGeneration() >= AMDGPUSubtarget::SOUTHERN_ISLANDS", CCDelegateTo<CC_SI>>,
-  CCIf<"State.getTarget().getSubtarget<AMDGPUSubtarget>()"#
-       ".getGeneration() < AMDGPUSubtarget::SOUTHERN_ISLANDS", CCDelegateTo<CC_R600>>
+  CCIf<"static_cast<const AMDGPUSubtarget&>"
+        "(State.getMachineFunction().getSubtarget()).getGeneration() >="
+          "AMDGPUSubtarget::SOUTHERN_ISLANDS && "
+        "State.getMachineFunction().getInfo<SIMachineFunctionInfo>()"
+         "->getShaderType() == ShaderType::COMPUTE",
+       CCDelegateTo<CC_AMDGPU_Kernel>>,
+  CCIf<"static_cast<const AMDGPUSubtarget&>"
+        "(State.getMachineFunction().getSubtarget()).getGeneration() < "
+          "AMDGPUSubtarget::SOUTHERN_ISLANDS && "
+         "State.getMachineFunction().getInfo<R600MachineFunctionInfo>()"
+          "->getShaderType() == ShaderType::COMPUTE",
+        CCDelegateTo<CC_AMDGPU_Kernel>>,
+   CCIf<"static_cast<const AMDGPUSubtarget&>"
+         "(State.getMachineFunction().getSubtarget()).getGeneration() >= "
+           "AMDGPUSubtarget::SOUTHERN_ISLANDS",
+        CCDelegateTo<CC_SI>>,
+   CCIf<"static_cast<const AMDGPUSubtarget&>"
+          "(State.getMachineFunction().getSubtarget()).getGeneration() < "
+            "AMDGPUSubtarget::SOUTHERN_ISLANDS",
+        CCDelegateTo<CC_R600>>
 ]>;

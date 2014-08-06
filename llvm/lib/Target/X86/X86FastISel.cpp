@@ -993,8 +993,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
-    CCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, TM, ValLocs,
-                   I->getContext());
+    CCState CCInfo(CC, F.isVarArg(), *FuncInfo.MF, ValLocs, I->getContext());
     CCInfo.AnalyzeReturn(Outs, RetCC_X86);
 
     const Value *RV = Ret->getOperand(0);
@@ -2730,8 +2729,7 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, TM, ArgLocs,
-                 CLI.RetTy->getContext());
+  CCState CCInfo(CC, IsVarArg, *FuncInfo.MF, ArgLocs, CLI.RetTy->getContext());
 
   // Allocate shadow area for Win64
   if (IsWin64)
@@ -2972,7 +2970,7 @@ bool X86FastISel::FastLowerCall(CallLoweringInfo &CLI) {
 
   // Now handle call return values.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCRetInfo(CC, IsVarArg, *FuncInfo.MF, TM, RVLocs,
+  CCState CCRetInfo(CC, IsVarArg, *FuncInfo.MF, RVLocs,
                     CLI.RetTy->getContext());
   CCRetInfo.AnalyzeCallResult(Ins, RetCC_X86);
 

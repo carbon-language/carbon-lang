@@ -1692,8 +1692,8 @@ SDValue R600TargetLowering::LowerFormalArguments(
                                       SDLoc DL, SelectionDAG &DAG,
                                       SmallVectorImpl<SDValue> &InVals) const {
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
   MachineFunction &MF = DAG.getMachineFunction();
   unsigned ShaderType = MF.getInfo<R600MachineFunctionInfo>()->getShaderType();
 

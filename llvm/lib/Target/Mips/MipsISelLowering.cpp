@@ -2480,8 +2480,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
   MipsCC::SpecialCallingConvType SpecialCallingConv =
     getSpecialCallingConv(Callee);
   MipsCC MipsCCInfo(CallConv, Subtarget.isABI_O32(), Subtarget.isFP64bit(),
@@ -2684,8 +2684,8 @@ MipsTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
                                     const Type *RetTy) const {
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
   MipsCC MipsCCInfo(CallConv, Subtarget.isABI_O32(), Subtarget.isFP64bit(),
                     CCInfo);
 
@@ -2732,8 +2732,8 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, IsVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
   MipsCC MipsCCInfo(CallConv, Subtarget.isABI_O32(), Subtarget.isFP64bit(),
                     CCInfo);
   Function::const_arg_iterator FuncArg =
@@ -2868,8 +2868,7 @@ MipsTargetLowering::CanLowerReturn(CallingConv::ID CallConv,
                                    const SmallVectorImpl<ISD::OutputArg> &Outs,
                                    LLVMContext &Context) const {
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, getTargetMachine(),
-                 RVLocs, Context);
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, Context);
   return CCInfo.CheckReturn(Outs, RetCC_Mips);
 }
 
@@ -2885,8 +2884,7 @@ MipsTargetLowering::LowerReturn(SDValue Chain,
   MachineFunction &MF = DAG.getMachineFunction();
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, IsVarArg, MF, getTargetMachine(), RVLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, IsVarArg, MF, RVLocs, *DAG.getContext());
   MipsCC MipsCCInfo(CallConv, Subtarget.isABI_O32(), Subtarget.isFP64bit(),
                     CCInfo);
 

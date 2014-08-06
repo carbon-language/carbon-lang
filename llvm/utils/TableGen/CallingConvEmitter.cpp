@@ -179,14 +179,14 @@ void CallingConvEmitter::EmitAction(Record *Action,
         O << Size << ", ";
       else
         O << "\n" << IndentStr
-          << "  State.getTarget().getSubtargetImpl()->getDataLayout()"
+          << "  State.getMachineFunction().getSubtarget().getDataLayout()"
              "->getTypeAllocSize(EVT(LocVT).getTypeForEVT(State.getContext())),"
              " ";
       if (Align)
         O << Align;
       else
         O << "\n" << IndentStr
-          << "  State.getTarget().getSubtargetImpl()->getDataLayout()"
+          << "  State.getMachineFunction().getSubtarget().getDataLayout()"
              "->getABITypeAlignment(EVT(LocVT).getTypeForEVT(State.getContext()"
              "))";
       O << ");\n" << IndentStr

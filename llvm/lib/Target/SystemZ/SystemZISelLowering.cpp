@@ -679,8 +679,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool IsVarArg,
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, IsVarArg, MF, DAG.getTarget(), ArgLocs,
-                 *DAG.getContext());
+  CCState CCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_SystemZ);
 
   unsigned NumFixedGPRs = 0;
@@ -818,8 +817,7 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Analyze the operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState ArgCCInfo(CallConv, IsVarArg, MF, DAG.getTarget(), ArgLocs,
-                    *DAG.getContext());
+  CCState ArgCCInfo(CallConv, IsVarArg, MF, ArgLocs, *DAG.getContext());
   ArgCCInfo.AnalyzeCallOperands(Outs, CC_SystemZ);
 
   // We don't support GuaranteedTailCallOpt, only automatically-detected
@@ -942,8 +940,7 @@ SystemZTargetLowering::LowerCall(CallLoweringInfo &CLI,
 
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RetLocs;
-  CCState RetCCInfo(CallConv, IsVarArg, MF, DAG.getTarget(), RetLocs,
-                    *DAG.getContext());
+  CCState RetCCInfo(CallConv, IsVarArg, MF, RetLocs, *DAG.getContext());
   RetCCInfo.AnalyzeCallResult(Ins, RetCC_SystemZ);
 
   // Copy all of the result registers out of their specified physreg.
@@ -974,8 +971,7 @@ SystemZTargetLowering::LowerReturn(SDValue Chain,
 
   // Assign locations to each returned value.
   SmallVector<CCValAssign, 16> RetLocs;
-  CCState RetCCInfo(CallConv, IsVarArg, MF, DAG.getTarget(), RetLocs,
-                    *DAG.getContext());
+  CCState RetCCInfo(CallConv, IsVarArg, MF, RetLocs, *DAG.getContext());
   RetCCInfo.AnalyzeReturn(Outs, RetCC_SystemZ);
 
   // Quick exit for void returns

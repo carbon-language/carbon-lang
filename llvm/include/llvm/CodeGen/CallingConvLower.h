@@ -174,7 +174,6 @@ private:
   CallingConv::ID CallingConv;
   bool IsVarArg;
   MachineFunction &MF;
-  const TargetMachine &TM;
   const TargetRegisterInfo &TRI;
   SmallVectorImpl<CCValAssign> &Locs;
   LLVMContext &Context;
@@ -238,15 +237,13 @@ protected:
 
 public:
   CCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
-          const TargetMachine &TM, SmallVectorImpl<CCValAssign> &locs,
-          LLVMContext &C);
+          SmallVectorImpl<CCValAssign> &locs, LLVMContext &C);
 
   void addLoc(const CCValAssign &V) {
     Locs.push_back(V);
   }
 
   LLVMContext &getContext() const { return Context; }
-  const TargetMachine &getTarget() const { return TM; }
   MachineFunction &getMachineFunction() const { return MF; }
   CallingConv::ID getCallingConv() const { return CallingConv; }
   bool isVarArg() const { return IsVarArg; }

@@ -51,9 +51,9 @@ class HexagonCCState : public CCState {
 
 public:
   HexagonCCState(CallingConv::ID CC, bool isVarArg, MachineFunction &MF,
-                 const TargetMachine &TM, SmallVectorImpl<CCValAssign> &locs,
-                 LLVMContext &C, int NumNamedVarArgParams)
-      : CCState(CC, isVarArg, MF, TM, locs, C),
+                 SmallVectorImpl<CCValAssign> &locs, LLVMContext &C,
+                 int NumNamedVarArgParams)
+      : CCState(CC, isVarArg, MF, locs, C),
         NumNamedVarArgParams(NumNamedVarArgParams) {}
 
   int getNumNamedVarArgParams() const { return NumNamedVarArgParams; }
@@ -322,8 +322,8 @@ HexagonTargetLowering::LowerReturn(SDValue Chain,
   SmallVector<CCValAssign, 16> RVLocs;
 
   // CCState - Info about the registers and stack slot.
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
 
   // Analyze return values of ISD::RET
   CCInfo.AnalyzeReturn(Outs, RetCC_Hexagon);
@@ -372,8 +372,8 @@ HexagonTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
 
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), RVLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), RVLocs,
+                 *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(Ins, RetCC_Hexagon);
 
@@ -427,9 +427,8 @@ HexagonTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  HexagonCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                        getTargetMachine(), ArgLocs, *DAG.getContext(),
-                        NumNamedVarArgParams);
+  HexagonCCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                        *DAG.getContext(), NumNamedVarArgParams);
 
   if (NumNamedVarArgParams > 0)
     CCInfo.AnalyzeCallOperands(Outs, CC_Hexagon_VarArg);
@@ -843,8 +842,8 @@ const {
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
-                 getTargetMachine(), ArgLocs, *DAG.getContext());
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), ArgLocs,
+                 *DAG.getContext());
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_Hexagon);
 
