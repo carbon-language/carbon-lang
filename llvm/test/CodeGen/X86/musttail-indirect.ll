@@ -109,7 +109,7 @@ entry:
   ret i32 %3
 }
 
-; CHECK-LABEL: @fastcall_thunk@8:
+; CHECK-LABEL: @fastcall_thunk@4:
 ; CHECK-NOT: mov %{{.*}}, {{.*(.*esp.*)}}
 ; CHECK: jmpl
 ; CHECK-NOT: ret

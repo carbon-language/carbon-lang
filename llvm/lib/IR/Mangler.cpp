@@ -72,6 +72,9 @@ static void AddFastCallStdCallSuffix(raw_ostream &OS, const Function *F,
   unsigned ArgWords = 0;
   for (Function::const_arg_iterator AI = F->arg_begin(), AE = F->arg_end();
        AI != AE; ++AI) {
+    // Skip arguments in registers to handle typical fastcall lowering.
+    if (F->getAttributes().hasAttribute(AI->getArgNo() + 1, Attribute::InReg))
+      continue;
     Type *Ty = AI->getType();
     // 'Dereference' type in case of byval or inalloca parameter attribute.
     if (AI->hasByValOrInAllocaAttr())

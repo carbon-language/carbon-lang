@@ -23,6 +23,5 @@ define x86_thiscallcc void @g(i8* %this, %struct.Six* byval %a) {
 define x86_fastcallcc void @h(i32 inreg %x, i32 inreg %y, %struct.Six* byval %a) {
   ret void
 }
-; FIXME: This should be @h@8.
-; CHECK-LABEL: @h@16:
+; CHECK-LABEL: @h@8:
 ; CHECK: retl $8
