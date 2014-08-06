@@ -19,6 +19,7 @@ class StdVBoolDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
+    @expectedFailureFreeBSD("llvm.org/pr20548") # fails to build on lab.llvm.org buildbot
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
