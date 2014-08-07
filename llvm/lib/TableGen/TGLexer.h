@@ -52,6 +52,10 @@ namespace tgtok {
 
     // Integer value.
     IntVal,
+
+    // Binary constant.  Note that these are sized according to the number of
+    // bits given.
+    BinaryIntVal,
     
     // String valued tokens.
     Id, StrVal, VarName, CodeFragment
@@ -104,6 +108,11 @@ public:
   int64_t getCurIntVal() const {
     assert(CurCode == tgtok::IntVal && "This token isn't an integer");
     return CurIntVal;
+  }
+  std::pair<int64_t, unsigned> getCurBinaryIntVal() const {
+    assert(CurCode == tgtok::BinaryIntVal &&
+           "This token isn't a binary integer");
+    return std::make_pair(CurIntVal, (CurPtr - TokStart)-2);
   }
 
   SMLoc getLoc() const;

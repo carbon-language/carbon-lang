@@ -1182,6 +1182,15 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     Lex.Lex();  // Skip '#'.
     return ParseSimpleValue(CurRec, ItemType, Mode);
   case tgtok::IntVal: R = IntInit::get(Lex.getCurIntVal()); Lex.Lex(); break;
+  case tgtok::BinaryIntVal: {
+    auto BinaryVal = Lex.getCurBinaryIntVal();
+    SmallVector<Init*, 16> Bits(BinaryVal.second);
+    for (unsigned i = 0, e = BinaryVal.second; i != e; ++i)
+      Bits[i] = BitInit::get(BinaryVal.first & (1 << i));
+    R = BitsInit::get(Bits);
+    Lex.Lex();
+    break;
+  }
   case tgtok::StrVal: {
     std::string Val = Lex.getCurStrVal();
     Lex.Lex();

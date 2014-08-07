@@ -411,7 +411,7 @@ tgtok::TokKind TGLexer::LexNumber() {
       if (CurPtr == NumStart)
         return ReturnError(CurPtr-2, "Invalid binary number");
       CurIntVal = strtoll(NumStart, nullptr, 2);
-      return tgtok::IntVal;
+      return tgtok::BinaryIntVal;
     }
   }
 
