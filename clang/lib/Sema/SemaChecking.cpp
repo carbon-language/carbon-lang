@@ -6193,7 +6193,7 @@ void CheckConditionalOperand(Sema &S, Expr *E, QualType T,
 
 void CheckConditionalOperator(Sema &S, ConditionalOperator *E,
                               SourceLocation CC, QualType T) {
-  AnalyzeImplicitConversions(S, E->getCond(), CC);
+  AnalyzeImplicitConversions(S, E->getCond(), E->getQuestionLoc());
 
   bool Suspicious = false;
   CheckConditionalOperand(S, E->getTrueExpr(), T, CC, Suspicious);
