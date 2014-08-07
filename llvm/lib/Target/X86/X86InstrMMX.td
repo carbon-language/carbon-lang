@@ -199,11 +199,11 @@ multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
   def irr : MMXPI<opc, MRMSrcReg, (outs DstRC:$dst),
                   (ins DstRC:$src1, SrcRC:$src2), asm,
                   [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))],
-                  NoItinerary, d>;
+                  NoItinerary, d>, Sched<[WriteCvtI2F]>;
   def irm : MMXPI<opc, MRMSrcMem, (outs DstRC:$dst),
                   (ins DstRC:$src1, x86memop:$src2), asm,
                   [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))],
-                  NoItinerary, d>;
+                  NoItinerary, d>, Sched<[WriteCvtI2FLd]>;
 }
 
 //===----------------------------------------------------------------------===//
