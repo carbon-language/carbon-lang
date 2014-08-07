@@ -852,8 +852,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
-  unsigned MachineFramePtr {Is64BitILP32 ?
-             getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr};
+  unsigned MachineFramePtr = Is64BitILP32 ?
+             getX86SubSuperRegister(FramePtr, MVT::i64, false) : FramePtr;
   unsigned StackPtr = RegInfo->getStackRegister();
 
   bool IsWinEH =
