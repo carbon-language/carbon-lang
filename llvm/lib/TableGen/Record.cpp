@@ -114,8 +114,11 @@ Init *BitRecTy::convertValue(IntInit *II) {
 
 Init *BitRecTy::convertValue(TypedInit *VI) {
   RecTy *Ty = VI->getType();
-  if (isa<BitRecTy>(Ty) || isa<BitsRecTy>(Ty) || isa<IntRecTy>(Ty))
+  if (isa<BitRecTy>(Ty))
     return VI;  // Accept variable if it is already of bit type!
+  if (auto *BitsTy = dyn_cast<BitsRecTy>(Ty))
+    // Accept only bits<1> expression.
+    return BitsTy->getNumBits() == 1 ? VI : nullptr;
   return nullptr;
 }
 
