@@ -479,6 +479,7 @@ private:
       AbstractConditionalOperator *E, bool BindToTemporary,
       TempDtorContext &Context);
   void InsertTempDtorDecisionBlock(const TempDtorContext &Context,
+                                   TryResult ConditionVal,
                                    CFGBlock *FalseSucc = nullptr);
 
   // NYS == Not Yet Supported
@@ -3631,24 +3632,16 @@ CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(
     BinaryOperator *E, TempDtorContext &Context) {
   if (E->isLogicalOp()) {
     VisitForTemporaryDtors(E->getLHS(), false, Context);
-    TryResult LHSVal = tryEvaluateBool(E->getLHS());
-    bool RHSNotExecuted = (E->getOpcode() == BO_LAnd && LHSVal.isFalse()) ||
-                          (E->getOpcode() == BO_LOr && LHSVal.isTrue());
-    if (RHSNotExecuted) {
-      return Block;
-    }
+    TryResult RHSExecuted = tryEvaluateBool(E->getLHS());
+    if (RHSExecuted.isKnown() && E->getOpcode() == BO_LOr)
+      RHSExecuted.negate();
 
-    // If the LHS is known, and the RHS is not executed, we returned above.
-    // Thus, once we arrive here, and the LHS is known, we also know that the
-    // RHS was executed and can execute the RHS unconditionally (that is, we
-    // don't insert a decision block).
-    if (LHSVal.isKnown()) {
-      VisitForTemporaryDtors(E->getRHS(), false, Context);
-    } else {
-      TempDtorContext RHSContext(/*IsConditional=*/true);
-      VisitForTemporaryDtors(E->getRHS(), false, RHSContext);
-      InsertTempDtorDecisionBlock(RHSContext);
-    }
+    // We do not know at CFG-construction time whether the right-hand-side was
+    // executed, thus we add a branch node that depends on the temporary
+    // constructor call.
+    TempDtorContext RHSContext(/*IsConditional=*/true);
+    VisitForTemporaryDtors(E->getRHS(), false, RHSContext);
+    InsertTempDtorDecisionBlock(RHSContext, RHSExecuted);
 
     return Block;
   }
@@ -3705,6 +3698,7 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
 }
 
 void CFGBuilder::InsertTempDtorDecisionBlock(const TempDtorContext &Context,
+                                             TryResult ConditionVal,
                                              CFGBlock *FalseSucc) {
   if (!Context.TerminatorExpr) {
     // If no temporary was found, we do not need to insert a decision point.
@@ -3713,8 +3707,9 @@ void CFGBuilder::InsertTempDtorDecisionBlock(const TempDtorContext &Context,
   assert(Context.TerminatorExpr);
   CFGBlock *Decision = createBlock(false);
   Decision->setTerminator(CFGTerminator(Context.TerminatorExpr, true));
-  addSuccessor(Decision, Block);
-  addSuccessor(Decision, FalseSucc ? FalseSucc : Context.Succ);
+  addSuccessor(Decision, Block, !ConditionVal.isFalse());
+  addSuccessor(Decision, FalseSucc ? FalseSucc : Context.Succ,
+               !ConditionVal.isTrue());
   Block = Decision;
 }
 
@@ -3725,16 +3720,8 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   CFGBlock *ConditionBlock = Block;
   CFGBlock *ConditionSucc = Succ;
   TryResult ConditionVal = tryEvaluateBool(E->getCond());
-
-  if (ConditionVal.isKnown()) {
-    if (ConditionVal.isTrue()) {
-      VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, Context);
-    } else {
-      assert(ConditionVal.isFalse());
-      VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, Context);
-    }
-    return Block;
-  }
+  TryResult NegatedVal = ConditionVal;
+  if (NegatedVal.isKnown()) NegatedVal.negate();
 
   TempDtorContext TrueContext(/*IsConditional=*/true);
   VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, TrueContext);
@@ -3746,12 +3733,12 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, FalseContext);
 
   if (TrueContext.TerminatorExpr && FalseContext.TerminatorExpr) {
-    InsertTempDtorDecisionBlock(FalseContext, TrueBlock);
+    InsertTempDtorDecisionBlock(FalseContext, NegatedVal, TrueBlock);
   } else if (TrueContext.TerminatorExpr) {
     Block = TrueBlock;
-    InsertTempDtorDecisionBlock(TrueContext);
+    InsertTempDtorDecisionBlock(TrueContext, ConditionVal);
   } else {
-    InsertTempDtorDecisionBlock(FalseContext);
+    InsertTempDtorDecisionBlock(FalseContext, NegatedVal);
   }
   return Block;
 }
