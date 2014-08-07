@@ -24,11 +24,14 @@
 
 // RUN: echo ' ' >> %t/B.h
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -fsyntax-only %s -I %t \
-// RUN:            2>&1 | count 0
+// RUN:            2>&1 | FileCheck -allow-empty -check-prefix=NO-REMARKS %s
 
 // RUN: echo ' ' >> %t/B.h
 // RUN: %clang_cc1 -fmodules -fmodules-cache-path=%t -fsyntax-only %s -I %t \
-// RUN:            -Rmodule-build -Rno-everything 2>&1 | count 0
+// RUN:            -Rmodule-build -Rno-everything 2>&1 | \
+// RUN:    FileCheck -allow-empty -check-prefix=NO-REMARKS %s
 
 // CHECK-NOT: building module 'A'
 // CHECK: building module 'B'
+// NO-REMARKS-NOT: building module 'A'
+// NO-REMARKS-NOT: building module 'B'
