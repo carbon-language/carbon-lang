@@ -3,7 +3,7 @@
 
 ; Generated from the following source compiled with clang -gmlt:
 ; void f1(void) {}
-; void f2(void) __attribute__((section("bar"))) {}
+; void f2(void) __attribute__((section("__TEXT,__bar"))) {}
 
 ; Check that
 ;  * -gmlt ('Emission Kind' of 'LineTablesOnly' in the CU debug info metadata)
@@ -36,7 +36,7 @@ entry:
 }
 
 ; Function Attrs: nounwind uwtable
-define void @f2() #0 section "bar" {
+define void @f2() #0 section "__TEXT,__bar" {
 entry:
   ret void, !dbg !12
 }
