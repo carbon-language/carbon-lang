@@ -1193,11 +1193,18 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
       cast<CXXRecordDecl>(BI.getType()->getAs<RecordType>()->getDecl());
 
     if (BI.isVirtual()) {
-      // virtual base offset offset is -ve. The code generator emits dwarf
-      // expression where it expects +ve number.
-      BaseOffset =
-        0 - CGM.getItaniumVTableContext()
-               .getVirtualBaseOffsetOffset(RD, Base).getQuantity();
+      if (CGM.getTarget().getCXXABI().isItaniumFamily()) {
+        // virtual base offset offset is -ve. The code generator emits dwarf
+        // expression where it expects +ve number.
+        BaseOffset =
+          0 - CGM.getItaniumVTableContext()
+                 .getVirtualBaseOffsetOffset(RD, Base).getQuantity();
+      } else {
+        // In the MS ABI, store the vbtable offset, which is analogous to the
+        // vbase offset offset in Itanium.
+        BaseOffset =
+            4 * CGM.getMicrosoftVTableContext().getVBTableIndex(RD, Base);
+      }
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
       BaseOffset = CGM.getContext().toBits(RL.getBaseClassOffset(Base));
