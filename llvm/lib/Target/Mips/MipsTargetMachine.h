@@ -44,12 +44,16 @@ public:
       return Subtarget;
     return &DefaultSubtarget;
   }
+  MipsSubtarget *getSubtargetImpl() {
+    return static_cast<MipsSubtarget *>(TargetMachine::getSubtargetImpl());
+  }
 
   /// \brief Reset the subtarget for the Mips target.
   void resetSubtarget(MachineFunction *MF);
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
+  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
 };
 
 /// MipsebTargetMachine - Mips32/64 big endian target machine.

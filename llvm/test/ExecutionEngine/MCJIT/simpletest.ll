@@ -1,4 +1,4 @@
-; RUN: %lli %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 define i32 @bar() {
 	ret i32 0

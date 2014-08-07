@@ -783,7 +783,7 @@ def add_magic_target_components(parser, project, opts):
     # If we have a native target with a JIT, use that for the engine. Otherwise,
     # use the interpreter.
     if native_target and native_target.enabled and native_target.has_jit:
-        engine_group.required_libraries.append('MCJIT')
+        engine_group.required_libraries.append('JIT')
         engine_group.required_libraries.append(native_group.name)
     else:
         engine_group.required_libraries.append('Interpreter')

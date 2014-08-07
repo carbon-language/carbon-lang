@@ -1,4 +1,4 @@
-; RUN: %lli %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 @count = global i32 0, align 4
 

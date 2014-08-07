@@ -16,7 +16,7 @@ BUILT_SOURCES = SparcGenRegisterInfo.inc SparcGenInstrInfo.inc \
 		SparcGenAsmWriter.inc SparcGenAsmMatcher.inc \
 		SparcGenDAGISel.inc SparcGenDisassemblerTables.inc \
 		SparcGenSubtargetInfo.inc SparcGenCallingConv.inc \
-		SparcGenMCCodeEmitter.inc
+		SparcGenCodeEmitter.inc SparcGenMCCodeEmitter.inc
 
 DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc
 

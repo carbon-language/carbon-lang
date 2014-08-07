@@ -1,4 +1,4 @@
-; RUN: %lli %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 ; This testcase failed to work because two variable sized allocas confused the
 ; local register allocator.

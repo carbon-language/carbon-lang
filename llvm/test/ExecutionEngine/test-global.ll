@@ -1,4 +1,5 @@
 ; RUN: %lli %s > /dev/null
+; XFAIL: arm
 
 @count = global i32 0, align 4
 

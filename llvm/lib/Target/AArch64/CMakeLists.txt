@@ -2,7 +2,7 @@ set(LLVM_TARGET_DEFINITIONS AArch64.td)
 
 tablegen(LLVM AArch64GenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM AArch64GenInstrInfo.inc -gen-instr-info)
-tablegen(LLVM AArch64GenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM AArch64GenMCCodeEmitter.inc -gen-emitter -mc-emitter)
 tablegen(LLVM AArch64GenMCPseudoLowering.inc -gen-pseudo-lowering)
 tablegen(LLVM AArch64GenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM AArch64GenAsmWriter1.inc -gen-asm-writer -asmwriternum=1)

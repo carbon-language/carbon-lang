@@ -1,4 +1,4 @@
-; RUN:  %lli -O0 %s
+; RUN:  %lli_mcjit -O0 %s
 
 ; Check that a variable is always aligned as specified.
 

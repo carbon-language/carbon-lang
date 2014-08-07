@@ -1,4 +1,4 @@
-; RUN: %lli %s test
+; RUN: %lli_mcjit %s test
 
 declare i32 @puts(i8*)
 

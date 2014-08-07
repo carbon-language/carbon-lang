@@ -386,7 +386,8 @@ bool PPCCTRLoops::mightUseCTR(const Triple &TT, BasicBlock *BB) {
         return true;
       const TargetLowering *TLI = TM->getSubtargetImpl()->getTargetLowering();
 
-      if (SI->getNumCases() + 1 >= (unsigned)TLI->getMinimumJumpTableEntries())
+      if (TLI->supportJumpTables() &&
+          SI->getNumCases()+1 >= (unsigned) TLI->getMinimumJumpTableEntries())
         return true;
     }
   }

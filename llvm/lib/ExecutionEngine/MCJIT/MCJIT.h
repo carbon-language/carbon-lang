@@ -211,7 +211,7 @@ class MCJIT : public ExecutionEngine {
   MCContext *Ctx;
   LinkingMemoryManager MemMgr;
   RuntimeDyld Dyld;
-  std::vector<JITEventListener*> EventListeners;
+  SmallVector<JITEventListener*, 2> EventListeners;
 
   OwningModuleContainer OwnedModules;
 
@@ -275,7 +275,13 @@ public:
   /// \param isDtors - Run the destructors instead of constructors.
   void runStaticConstructorsDestructors(bool isDtors) override;
 
+  void *getPointerToBasicBlock(BasicBlock *BB) override;
+
   void *getPointerToFunction(Function *F) override;
+
+  void *recompileAndRelinkFunction(Function *F) override;
+
+  void freeMachineCodeForFunction(Function *F) override;
 
   GenericValue runFunction(Function *F,
                            const std::vector<GenericValue> &ArgValues) override;

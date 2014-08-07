@@ -1,4 +1,4 @@
-; RUN: %lli %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 declare void @exit(i32)
 

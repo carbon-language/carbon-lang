@@ -1,4 +1,4 @@
-; RUN: %lli %s
+; RUN: %lli_mcjit %s
 ; XFAIL: arm, cygwin, win32, mingw
 declare i8* @__cxa_allocate_exception(i64)
 declare void @__cxa_throw(i8*, i8*, i8*)

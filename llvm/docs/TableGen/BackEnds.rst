@@ -78,7 +78,8 @@ returns the (currently, 32-bit unsigned) value of the instruction.
 **Output**: C++ code, implementing the target's CodeEmitter
 class by overriding the virtual functions as ``<Target>CodeEmitter::function()``.
 
-**Usage**: Used to include directly at the end of ``<Target>MCCodeEmitter.cpp``.
+**Usage**: Used to include directly at the end of ``<Target>CodeEmitter.cpp``, and
+with option `-mc-emitter` to be included in ``<Target>MCCodeEmitter.cpp``.
 
 RegisterInfo
 ------------

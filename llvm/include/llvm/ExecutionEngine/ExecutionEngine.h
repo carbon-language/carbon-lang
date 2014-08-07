@@ -141,6 +141,12 @@ protected:
   // To avoid having libexecutionengine depend on the JIT and interpreter
   // libraries, the execution engine implementations set these functions to ctor
   // pointers at startup time if they are linked in.
+  static ExecutionEngine *(*JITCtor)(
+    Module *M,
+    std::string *ErrorStr,
+    JITMemoryManager *JMM,
+    bool GVsWithCode,
+    TargetMachine *TM);
   static ExecutionEngine *(*MCJITCtor)(
     Module *M,
     std::string *ErrorStr,
@@ -329,6 +335,13 @@ public:
   /// getFunctionAddress instead.
   virtual void *getPointerToFunction(Function *F) = 0;
 
+  /// getPointerToBasicBlock - The different EE's represent basic blocks in
+  /// different ways.  Return the representation for a blockaddress of the
+  /// specified block.
+  ///
+  /// This function will not be implemented for the MCJIT execution engine.
+  virtual void *getPointerToBasicBlock(BasicBlock *BB) = 0;
+
   /// getPointerToFunctionOrStub - If the specified function has been
   /// code-gen'd, return a pointer to the function.  If not, compile it, or use
   /// a stub to implement lazy compilation if available.  See
@@ -375,6 +388,18 @@ public:
                           Type *Ty);
 
   void InitializeMemory(const Constant *Init, void *Addr);
+
+  /// recompileAndRelinkFunction - This method is used to force a function which
+  /// has already been compiled to be compiled again, possibly after it has been
+  /// modified.  Then the entry to the old copy is overwritten with a branch to
+  /// the new copy.  If there was no old copy, this acts just like
+  /// VM::getPointerToFunction().
+  virtual void *recompileAndRelinkFunction(Function *F) = 0;
+
+  /// freeMachineCodeForFunction - Release memory in the ExecutionEngine
+  /// corresponding to the machine code emitted to execute this function, useful
+  /// for garbage-collecting generated code.
+  virtual void freeMachineCodeForFunction(Function *F) = 0;
 
   /// getOrEmitGlobalVariable - Return the address of the specified global
   /// variable, possibly emitting it to memory if needed.  This is used by the
@@ -512,12 +537,14 @@ private:
   CodeGenOpt::Level OptLevel;
   RTDyldMemoryManager *MCJMM;
   JITMemoryManager *JMM;
+  bool AllocateGVsWithCode;
   TargetOptions Options;
   Reloc::Model RelocModel;
   CodeModel::Model CMModel;
   std::string MArch;
   std::string MCPU;
   SmallVector<std::string, 4> MAttrs;
+  bool UseMCJIT;
   bool VerifyModules;
 
   /// InitEngine - Does the common initialization of default options.
@@ -599,6 +626,18 @@ public:
     return *this;
   }
 
+  /// setAllocateGVsWithCode - Sets whether global values should be allocated
+  /// into the same buffer as code.  For most applications this should be set
+  /// to false.  Allocating globals with code breaks freeMachineCodeForFunction
+  /// and is probably unsafe and bad for performance.  However, we have clients
+  /// who depend on this behavior, so we must support it.  This option defaults
+  /// to false so that users of the new API can safely use the new memory
+  /// manager and free machine code.
+  EngineBuilder &setAllocateGVsWithCode(bool a) {
+    AllocateGVsWithCode = a;
+    return *this;
+  }
+
   /// setMArch - Override the architecture set by the Module's triple.
   EngineBuilder &setMArch(StringRef march) {
     MArch.assign(march.begin(), march.end());
@@ -608,6 +647,13 @@ public:
   /// setMCPU - Target a specific cpu type.
   EngineBuilder &setMCPU(StringRef mcpu) {
     MCPU.assign(mcpu.begin(), mcpu.end());
+    return *this;
+  }
+
+  /// setUseMCJIT - Set whether the MC-JIT implementation should be used
+  /// (experimental).
+  EngineBuilder &setUseMCJIT(bool Value) {
+    UseMCJIT = Value;
     return *this;
   }
 

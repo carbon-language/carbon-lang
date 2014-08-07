@@ -148,6 +148,18 @@ bool PPCPassConfig::addPreEmitPass() {
   return false;
 }
 
+bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
+                                      JITCodeEmitter &JCE) {
+  // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
+  // writing?
+  Subtarget.SetJITMode();
+
+  // Machine code emitter pass for PowerPC.
+  PM.add(createPPCJITCodeEmitterPass(*this, JCE));
+
+  return false;
+}
+
 void PPCTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
   // Add first the target-independent BasicTTI pass, then our PPC pass. This
   // allows the PPC pass to delegate to the target independent layer when

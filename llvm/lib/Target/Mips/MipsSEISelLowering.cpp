@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "MipsSEISelLowering.h"
-#include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

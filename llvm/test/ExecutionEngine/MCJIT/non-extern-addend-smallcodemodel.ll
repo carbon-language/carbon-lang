@@ -1,4 +1,4 @@
-; RUN: %lli -code-model=small %s > /dev/null
+; RUN: %lli_mcjit -code-model=small %s > /dev/null
 ; XFAIL: mips
 ;
 ; FIXME: Merge this file with non-extern-addend.ll once AArch64 supports PC-rel

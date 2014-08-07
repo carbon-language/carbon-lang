@@ -26,6 +26,7 @@ class SDep;
 class SUnit;
 class TargetFrameLowering;
 class TargetInstrInfo;
+class TargetJITInfo;
 class TargetLowering;
 class TargetRegisterClass;
 class TargetRegisterInfo;
@@ -77,6 +78,11 @@ public:
   /// details of graph coloring register allocation removed from it.
   ///
   virtual const TargetRegisterInfo *getRegisterInfo() const { return nullptr; }
+
+  /// getJITInfo - If this target supports a JIT, return information for it,
+  /// otherwise return null.
+  ///
+  virtual TargetJITInfo *getJITInfo() { return nullptr; }
 
   /// getInstrItineraryData - Returns instruction itinerary data for the target
   /// or specific subtarget.

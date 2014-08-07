@@ -1,4 +1,4 @@
-; RUN: %lli %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 ; We were accidentally inverting the signedness of right shifts.  Whoops.
 

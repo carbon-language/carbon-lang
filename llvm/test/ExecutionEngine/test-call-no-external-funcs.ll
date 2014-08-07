@@ -1,4 +1,5 @@
 ; RUN: %lli %s > /dev/null
+; XFAIL: arm
 
 define i32 @_Z14func_exit_codev() nounwind uwtable {
 entry:

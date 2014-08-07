@@ -247,6 +247,10 @@ void MCJIT::finalizeModule(Module *M) {
   finalizeLoadedModules();
 }
 
+void *MCJIT::getPointerToBasicBlock(BasicBlock *BB) {
+  report_fatal_error("not yet implemented");
+}
+
 uint64_t MCJIT::getExistingSymbolAddress(const std::string &Name) {
   Mangler Mang(TM->getSubtargetImpl()->getDataLayout());
   SmallString<128> FullName;
@@ -366,6 +370,14 @@ void *MCJIT::getPointerToFunction(Function *F) {
   SmallString<128> Name;
   TM->getNameWithPrefix(Name, F, Mang);
   return (void*)Dyld.getSymbolLoadAddress(Name);
+}
+
+void *MCJIT::recompileAndRelinkFunction(Function *F) {
+  report_fatal_error("not yet implemented");
+}
+
+void MCJIT::freeMachineCodeForFunction(Function *F) {
+  report_fatal_error("not yet implemented");
 }
 
 void MCJIT::runStaticConstructorsDestructorsInModulePtrSet(
@@ -537,7 +549,8 @@ void MCJIT::UnregisterJITEventListener(JITEventListener *L) {
   if (!L)
     return;
   MutexGuard locked(lock);
-  auto I = std::find(EventListeners.rbegin(), EventListeners.rend(), L);
+  SmallVector<JITEventListener*, 2>::reverse_iterator I=
+      std::find(EventListeners.rbegin(), EventListeners.rend(), L);
   if (I != EventListeners.rend()) {
     std::swap(*I, EventListeners.back());
     EventListeners.pop_back();
@@ -553,8 +566,7 @@ void MCJIT::NotifyObjectEmitted(const ObjectImage& Obj) {
 void MCJIT::NotifyFreeingObject(const ObjectImage& Obj) {
   MutexGuard locked(lock);
   for (unsigned I = 0, S = EventListeners.size(); I < S; ++I) {
-    JITEventListener *L = EventListeners[I];
-    L->NotifyFreeingObject(Obj);
+    EventListeners[I]->NotifyFreeingObject(Obj);
   }
 }
 

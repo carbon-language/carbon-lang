@@ -2,8 +2,9 @@ set(LLVM_TARGET_DEFINITIONS Sparc.td)
 
 tablegen(LLVM SparcGenRegisterInfo.inc -gen-register-info)
 tablegen(LLVM SparcGenInstrInfo.inc -gen-instr-info)
+tablegen(LLVM SparcGenCodeEmitter.inc -gen-emitter)
 tablegen(LLVM SparcGenDisassemblerTables.inc -gen-disassembler)
-tablegen(LLVM SparcGenMCCodeEmitter.inc -gen-emitter)
+tablegen(LLVM SparcGenMCCodeEmitter.inc -gen-emitter -mc-emitter)
 tablegen(LLVM SparcGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM SparcGenAsmMatcher.inc -gen-asm-matcher)
 tablegen(LLVM SparcGenDAGISel.inc -gen-dag-isel)
@@ -23,6 +24,8 @@ add_llvm_target(SparcCodeGen
   SparcSubtarget.cpp
   SparcTargetMachine.cpp
   SparcSelectionDAGInfo.cpp
+  SparcJITInfo.cpp
+  SparcCodeEmitter.cpp
   SparcMCInstLower.cpp
   SparcTargetObjectFile.cpp
   )

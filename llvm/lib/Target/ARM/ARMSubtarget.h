@@ -18,11 +18,13 @@
 #include "ARMFrameLowering.h"
 #include "ARMISelLowering.h"
 #include "ARMInstrInfo.h"
+#include "ARMJITInfo.h"
 #include "ARMSelectionDAGInfo.h"
 #include "ARMSubtarget.h"
 #include "Thumb1FrameLowering.h"
 #include "Thumb1InstrInfo.h"
 #include "Thumb2InstrInfo.h"
+#include "ARMJITInfo.h"
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/IR/DataLayout.h"
@@ -259,6 +261,7 @@ protected:
   const ARMSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }
+  ARMJITInfo *getJITInfo() override { return &JITInfo; }
   const ARMBaseInstrInfo *getInstrInfo() const override {
     return InstrInfo.get();
   }
@@ -275,6 +278,7 @@ protected:
 private:
   const DataLayout DL;
   ARMSelectionDAGInfo TSInfo;
+  ARMJITInfo JITInfo;
   // Either Thumb1InstrInfo or Thumb2InstrInfo.
   std::unique_ptr<ARMBaseInstrInfo> InstrInfo;
   ARMTargetLowering   TLInfo;

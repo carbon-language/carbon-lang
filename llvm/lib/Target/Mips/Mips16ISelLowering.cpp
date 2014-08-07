@@ -12,8 +12,6 @@
 //===----------------------------------------------------------------------===//
 #include "Mips16ISelLowering.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
-#include "Mips16HardFloatInfo.h"
-#include "MipsMachineFunction.h"
 #include "MipsRegisterInfo.h"
 #include "MipsTargetMachine.h"
 #include "llvm/ADT/StringRef.h"

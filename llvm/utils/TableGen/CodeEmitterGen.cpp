@@ -24,6 +24,14 @@
 #include <vector>
 using namespace llvm;
 
+// FIXME: Somewhat hackish to use a command line option for this. There should
+// be a CodeEmitter class in the Target.td that controls this sort of thing
+// instead.
+static cl::opt<bool>
+MCEmitter("mc-emitter",
+          cl::desc("Generate CodeEmitter for use with the MC library."),
+          cl::init(false));
+
 namespace {
 
 class CodeEmitterGen {
@@ -126,13 +134,15 @@ AddCodeToMergeInOperand(Record *R, BitsInit *BI, const std::string &VarName,
     if (SO.second == 0) {
       Case += "      // op: " + VarName + "\n" +
               "      op = " + EncoderMethodName + "(MI, " + utostr(OpIdx);
-      Case += ", Fixups, STI";
+      if (MCEmitter)
+        Case += ", Fixups, STI";
       Case += ");\n";
     }
   } else {
     Case += "      // op: " + VarName + "\n" +
       "      op = getMachineOpValue(MI, MI.getOperand(" + utostr(OpIdx) + ")";
-    Case += ", Fixups, STI";
+    if (MCEmitter)
+      Case += ", Fixups, STI";
     Case += ");\n";
   }
   
@@ -213,7 +223,8 @@ std::string CodeEmitterGen::getInstructionCase(Record *R,
   std::string PostEmitter = R->getValueAsString("PostEncoderMethod");
   if (!PostEmitter.empty()) {
     Case += "      Value = " + PostEmitter + "(MI, Value";
-    Case += ", STI";
+    if (MCEmitter)
+      Case += ", STI";
     Case += ");\n";
   }
   
@@ -232,9 +243,12 @@ void CodeEmitterGen::run(raw_ostream &o) {
 
   // Emit function declaration
   o << "uint64_t " << Target.getName();
-  o << "MCCodeEmitter::getBinaryCodeForInstr(const MCInst &MI,\n"
-    << "    SmallVectorImpl<MCFixup> &Fixups,\n"
-    << "    const MCSubtargetInfo &STI) const {\n";
+  if (MCEmitter)
+    o << "MCCodeEmitter::getBinaryCodeForInstr(const MCInst &MI,\n"
+      << "    SmallVectorImpl<MCFixup> &Fixups,\n"
+      << "    const MCSubtargetInfo &STI) const {\n";
+  else
+    o << "CodeEmitter::getBinaryCodeForInstr(const MachineInstr &MI) const {\n";
 
   // Emit instruction base values
   o << "  static const uint64_t InstBits[] = {\n";

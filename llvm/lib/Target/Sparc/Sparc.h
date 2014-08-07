@@ -29,6 +29,8 @@ namespace llvm {
 
   FunctionPass *createSparcISelDag(SparcTargetMachine &TM);
   FunctionPass *createSparcDelaySlotFillerPass(TargetMachine &TM);
+  FunctionPass *createSparcJITCodeEmitterPass(SparcTargetMachine &TM,
+                                              JITCodeEmitter &JCE);
 
   void LowerSparcMachineInstrToMCInst(const MachineInstr *MI,
                                       MCInst &OutMI,

@@ -121,6 +121,17 @@ public:
     return nullptr;
   }
 
+  /// recompileAndRelinkFunction - For the interpreter, functions are always
+  /// up-to-date.
+  ///
+  void *recompileAndRelinkFunction(Function *F) override {
+    return getPointerToFunction(F);
+  }
+
+  /// freeMachineCodeForFunction - The interpreter does not generate any code.
+  ///
+  void freeMachineCodeForFunction(Function *F) override { }
+
   // Methods used to execute code:
   // Place a call on the stack
   void callFunction(Function *F, const std::vector<GenericValue> &ArgVals);
@@ -202,6 +213,7 @@ private:  // Helper functions
   void SwitchToNewBasicBlock(BasicBlock *Dest, ExecutionContext &SF);
 
   void *getPointerToFunction(Function *F) override { return (void*)F; }
+  void *getPointerToBasicBlock(BasicBlock *BB) override { return (void*)BB; }
 
   void initializeExecutionEngine() { }
   void initializeExternalFunctions();
