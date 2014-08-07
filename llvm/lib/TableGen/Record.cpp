@@ -119,6 +119,16 @@ Init *BitRecTy::convertValue(TypedInit *VI) {
   if (auto *BitsTy = dyn_cast<BitsRecTy>(Ty))
     // Accept only bits<1> expression.
     return BitsTy->getNumBits() == 1 ? VI : nullptr;
+  // Ternary !if can be converted to bit, but only if both sides are
+  // convertible to a bit.
+  if (TernOpInit *TOI = dyn_cast<TernOpInit>(VI)) {
+    if (TOI->getOpcode() != TernOpInit::TernaryOp::IF)
+      return nullptr;
+    if (!TOI->getMHS()->convertInitializerTo(BitRecTy::get()) ||
+        !TOI->getRHS()->convertInitializerTo(BitRecTy::get()))
+      return nullptr;
+    return TOI;
+  }
   return nullptr;
 }
 
