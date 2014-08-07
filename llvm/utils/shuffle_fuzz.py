@@ -26,14 +26,28 @@ def main():
                       help='Show verbose output')
   parser.add_argument('--fixed-num-shuffles', type=int,
                       help='Specify a fixed number of shuffles to test')
+  parser.add_argument('--fixed-bit-width', type=int, choices=[128, 256],
+                      help='Specify a fixed bit width of vector to test')
   parser.add_argument('--triple',
                       help='Specify a triple string to include in the IR')
   args = parser.parse_args()
 
   random.seed(args.seed)
 
-  width = random.choice([2, 4, 8, 16, 32, 64])
-  element_type = random.choice(['i8', 'i16', 'i32', 'i64', 'f32', 'f64'])
+  if args.fixed_bit_width is not None:
+    if args.fixed_bit_width == 128:
+      (width, element_type) = random.choice(
+          [(2, 'i64'), (4, 'i32'), (8, 'i16'), (16, 'i8'),
+           (2, 'f64'), (4, 'f32')])
+    elif args.fixed_bit_width == 256:
+      (width, element_type) = random.choice([
+          (4, 'i64'), (8, 'i32'), (16, 'i16'), (32, 'i8'),
+          (4, 'f64'), (8, 'f32')])
+    else:
+      sys.exit(1) # Checked above by argument parsing.
+  else:
+    width = random.choice([2, 4, 8, 16, 32, 64])
+    element_type = random.choice(['i8', 'i16', 'i32', 'i64', 'f32', 'f64'])
 
   # FIXME: Support blends.
   shuffle_indices = [-1] + range(width)
