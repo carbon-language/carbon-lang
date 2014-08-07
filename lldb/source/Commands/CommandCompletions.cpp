@@ -30,6 +30,8 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/CleanUp.h"
 
+#include "llvm/ADT/SmallString.h"
+
 using namespace lldb_private;
 
 CommandCompletions::CommonCompletionElement
@@ -221,7 +223,7 @@ DiskFilesOrDirectories
     end_ptr = strrchr(partial_name_copy, '/');
     
     // This will store the resolved form of the containing directory
-    char containing_part[PATH_MAX];
+    llvm::SmallString<64> containing_part;
     
     if (end_ptr == NULL)
     {
@@ -232,14 +234,11 @@ DiskFilesOrDirectories
             // Nothing here but the user name.  We could just put a slash on the end, 
             // but for completeness sake we'll resolve the user name and only put a slash
             // on the end if it exists.
-            char resolved_username[PATH_MAX];
-            size_t resolved_username_len = FileSpec::ResolveUsername (partial_name_copy, resolved_username, 
-                                                          sizeof (resolved_username));
+            llvm::SmallString<64> resolved_username(partial_name_copy);
+            FileSpec::ResolveUsername (resolved_username);
                                                           
            // Not sure how this would happen, a username longer than PATH_MAX?  Still...
-            if (resolved_username_len >= sizeof (resolved_username))
-                return matches.GetSize();
-            else if (resolved_username_len == 0)
+            if (resolved_username.size() == 0)
             {
                 // The user name didn't resolve, let's look in the password database for matches.
                 // The user name database contains duplicates, and is not in alphabetical order, so
@@ -263,8 +262,7 @@ DiskFilesOrDirectories
         else
         {
             // The containing part is the CWD, and the whole string is the remainder.
-            containing_part[0] = '.';
-            containing_part[1] = '\0';
+            containing_part = ".";
             strcpy(remainder, partial_name_copy);
             end_ptr = partial_name_copy;
         }
@@ -274,14 +272,11 @@ DiskFilesOrDirectories
         if (end_ptr == partial_name_copy)
         {
             // We're completing a file or directory in the root volume.
-            containing_part[0] = '/';
-            containing_part[1] = '\0';
+            containing_part = "/";
         }
         else
         {
-            size_t len = end_ptr - partial_name_copy;
-            memcpy(containing_part, partial_name_copy, len);
-            containing_part[len] = '\0';
+            containing_part.append(partial_name_copy, end_ptr);
         }
         // Push end_ptr past the final "/" and set remainder.
         end_ptr++;
@@ -293,11 +288,9 @@ DiskFilesOrDirectories
 
     if (*partial_name_copy == '~')
     {
-        size_t resolved_username_len = FileSpec::ResolveUsername(containing_part, 
-                                                                 containing_part, 
-                                                                 sizeof (containing_part));
+        FileSpec::ResolveUsername(containing_part);
         // User name doesn't exist, we're not getting any further...
-        if (resolved_username_len == 0 || resolved_username_len >= sizeof (containing_part))
+        if (containing_part.empty())
             return matches.GetSize();
     }
 
@@ -314,7 +307,7 @@ DiskFilesOrDirectories
     parameters.end_ptr = end_ptr;
     parameters.baselen = baselen;
 
-    FileSpec::EnumerateDirectory(containing_part, true, true, true, DiskFilesOrDirectoriesCallback, &parameters);
+    FileSpec::EnumerateDirectory(containing_part.c_str(), true, true, true, DiskFilesOrDirectoriesCallback, &parameters);
     
     return matches.GetSize();
 }

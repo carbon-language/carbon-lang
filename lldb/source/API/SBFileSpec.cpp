@@ -16,6 +16,8 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 
+#include "llvm/ADT/SmallString.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -89,7 +91,11 @@ SBFileSpec::ResolveExecutableLocation ()
 int
 SBFileSpec::ResolvePath (const char *src_path, char *dst_path, size_t dst_len)
 {
-    return lldb_private::FileSpec::Resolve (src_path, dst_path, dst_len);
+    llvm::SmallString<64> result(src_path);
+    lldb_private::FileSpec::Resolve (result);
+    size_t result_length = std::min(dst_len-1, result.size());
+    ::strncpy(dst_path, result.c_str(), result_length + 1);
+    return result_length;
 }
 
 const char *

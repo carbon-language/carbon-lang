@@ -1119,7 +1119,6 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
                 {
                     char raw_path[PATH_MAX];
-                    char resolved_path[PATH_MAX];
                     lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
 
 #if defined (__APPLE__)
@@ -1159,8 +1158,9 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                             log->Printf ("Host::%s() failed to find /lib/liblldb within the shared lib path, bailing on bin path construction", __FUNCTION__);
                     }
 #endif  // #if defined (__APPLE__)
-                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
-                    g_lldb_support_exe_dir.SetCString(resolved_path);
+                    llvm::SmallString<64> resolved_path(raw_path);
+                    FileSpec::Resolve (resolved_path);
+                    g_lldb_support_exe_dir.SetCString(resolved_path.c_str());
                 }
                 if (log)
                     log->Printf("Host::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'", g_lldb_support_exe_dir.GetCString());
@@ -1217,7 +1217,6 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 if (GetLLDBPath (ePathTypeLLDBShlibDir, lldb_file_spec))
                 {
                     char raw_path[PATH_MAX];
-                    char resolved_path[PATH_MAX];
 #if defined(_WIN32)
                     lldb_file_spec.AppendPathComponent("../lib/site-packages");
                     lldb_file_spec.GetPath(raw_path, sizeof(raw_path));
@@ -1248,8 +1247,9 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 #if defined (__APPLE__)
                     }
 #endif
-                    FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
-                    g_lldb_python_dir.SetCString(resolved_path);
+                    llvm::SmallString<64> resolved_path(raw_path);
+                    FileSpec::Resolve (resolved_path);
+                    g_lldb_python_dir.SetCString(resolved_path.c_str());
                 }
                 
                 if (log)

@@ -28,6 +28,8 @@
 #include "lldb/Target/Process.h"
 #include "lldb/Target/TargetList.h"
 
+#include "llvm/ADT/SmallString.h"
+
 using namespace lldb;
 using namespace lldb_private;
 
@@ -241,15 +243,13 @@ TargetList::CreateTarget (Debugger &debugger,
     {
         // we want to expand the tilde but we don't want to resolve any symbolic links
         // so we can't use the FileSpec constructor's resolve flag
-        char unglobbed_path[PATH_MAX];
-        unglobbed_path[0] = '\0';
+        llvm::SmallString<64> unglobbed_path(user_exe_path);
+        FileSpec::ResolveUsername(unglobbed_path);
 
-        size_t return_count = FileSpec::ResolveUsername(user_exe_path, unglobbed_path, sizeof(unglobbed_path));
-
-        if (return_count == 0 || return_count >= sizeof(unglobbed_path))
-            ::snprintf (unglobbed_path, sizeof(unglobbed_path), "%s", user_exe_path);
-
-        file = FileSpec(unglobbed_path, false);
+        if (unglobbed_path.empty())
+            file = FileSpec(user_exe_path, false);
+        else
+            file = FileSpec(unglobbed_path.c_str(), false);
     }
 
     bool user_exe_path_is_bundle = false;

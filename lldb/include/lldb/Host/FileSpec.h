@@ -570,8 +570,8 @@ public:
     lldb::DataBufferSP
     ReadFileContentsAsCString(Error *error_ptr = NULL);
 
-    static void Normalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax);
-    static void DeNormalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax);
+    static void Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
+    static void DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax = ePathSyntaxHostNative);
 
     //------------------------------------------------------------------
     /// Change the file specified with a new path.
@@ -636,22 +636,11 @@ public:
     /// exist, the contents of \a src_path will be copied to \a dst_path 
     /// unchanged.
     ///
-    /// @param[in] src_path
-    ///     Input path to be resolved.
-    ///
-    /// @param[in] dst_path
-    ///     Buffer to store the resolved path.
-    ///
-    /// @param[in] dst_len 
-    ///     Size of the buffer pointed to by dst_path.
-    ///
-    /// @result 
-    ///     The number of characters required to write the resolved path.  If the
-    ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
-    ///     be written to \a dst_path, but the actual required length will still be returned.
+    /// @param[in] path
+    ///     Input path to be resolved, in the form of a llvm::SmallString or similar.
     //------------------------------------------------------------------
-    static size_t
-    Resolve (const char *src_path, char *dst_path, size_t dst_len);
+    static void
+    Resolve (llvm::SmallVectorImpl<char> &path);
 
     FileSpec
     CopyByAppendingPathComponent (const char *new_path) const;
@@ -679,18 +668,9 @@ public:
     ///
     /// @param[in] dst_path
     ///     Buffer to store the resolved path.
-    ///
-    /// @param[in] dst_len 
-    ///     Size of the buffer pointed to by dst_path.
-    ///
-    /// @result 
-    ///     The number of characters required to write the resolved path, or 0 if
-    ///     the user name could not be found.  If the
-    ///     resolved path doesn't fit in dst_len, dst_len-1 characters will
-    ///     be written to \a dst_path, but the actual required length will still be returned.
     //------------------------------------------------------------------
-    static size_t
-    ResolveUsername (const char *src_path, char *dst_path, size_t dst_len);
+    static void
+    ResolveUsername (llvm::SmallVectorImpl<char> &path);
     
     static size_t
     ResolvePartialUsername (const char *partial_name, StringList &matches);

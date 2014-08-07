@@ -28,6 +28,7 @@
 #endif
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 
@@ -77,81 +78,66 @@ GetCachedGlobTildeSlash()
 
 // Resolves the username part of a path of the form ~user/other/directories, and
 // writes the result into dst_path.
-// Returns 0 if there WAS a ~ in the path but the username couldn't be resolved.
-// Otherwise returns the number of characters copied into dst_path.  If the return
-// is >= dst_len, then the resolved path is too long...
-size_t
-FileSpec::ResolveUsername (const char *src_path, char *dst_path, size_t dst_len)
+void
+FileSpec::ResolveUsername (llvm::SmallVectorImpl<char> &path)
 {
-    if (src_path == NULL || src_path[0] == '\0')
-        return 0;
-
-#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
-    char user_home[PATH_MAX];
-    const char *user_name;
+#if LLDB_CONFIG_TILDE_RESOLVES_TO_USER
+    if (path.empty() || path[0] != '~')
+        return;
     
-    
-    // If there's no ~, then just copy src_path straight to dst_path (they may be the same string...)
-    if (src_path[0] != '~')
+    llvm::StringRef path_str(path.data());
+    size_t slash_pos = path_str.find_first_of("/", 1);
+    if (slash_pos == 1)
     {
-        size_t len = strlen (src_path);
-        if (len >= dst_len)
+        // A path of the form ~/ resolves to the current user's home dir
+        llvm::SmallString<64> home_dir;
+        if (!llvm::sys::path::home_directory(home_dir))
+            return;
+        
+        // Overwrite the ~ with the first character of the homedir, and insert
+        // the rest.  This way we only trigger one move, whereas an insert
+        // followed by a delete (or vice versa) would trigger two.
+        path[0] = home_dir[0];
+        path.insert(path.begin() + 1, home_dir.begin() + 1, home_dir.end());
+        return;
+    }
+    
+    auto username_begin = path.begin()+1;
+    auto username_end = (slash_pos == llvm::StringRef::npos)
+                        ? path.end()
+                        : (path.begin() + slash_pos);
+    size_t replacement_length = std::distance(path.begin(), username_end);
+
+    llvm::SmallString<20> username(username_begin, username_end);
+    struct passwd *user_entry = ::getpwnam(username.c_str());
+    if (user_entry != nullptr)
+    {
+        // Copy over the first n characters of the path, where n is the smaller of the length
+        // of the home directory and the slash pos.
+        llvm::StringRef homedir(user_entry->pw_dir);
+        size_t initial_copy_length = std::min(homedir.size(), replacement_length);
+        auto src_begin = homedir.begin();
+        auto src_end = src_begin + initial_copy_length;
+        std::copy(src_begin, src_end, path.begin());
+        if (replacement_length > homedir.size())
         {
-            ::bcopy (src_path, dst_path, dst_len - 1);
-            dst_path[dst_len] = '\0';
+            // We copied the entire home directory, but the ~username portion of the path was
+            // longer, so there's characters that need to be removed.
+            path.erase(path.begin() + initial_copy_length, username_end);
         }
-        else
-            ::bcopy (src_path, dst_path, len + 1);
-        
-        return len;
-    }
-    
-    const char *first_slash = ::strchr (src_path, '/');
-    char remainder[PATH_MAX];
-    
-    if (first_slash == NULL)
-    {
-        // The whole name is the username (minus the ~):
-        user_name = src_path + 1;
-        remainder[0] = '\0';
+        else if (replacement_length < homedir.size())
+        {
+            // We copied all the way up to the slash in the destination, but there's still more
+            // characters that need to be inserted.
+            path.insert(username_end, src_end, homedir.end());
+        }
     }
     else
     {
-        size_t user_name_len = first_slash - src_path - 1;
-        ::memcpy (user_home, src_path + 1, user_name_len);
-        user_home[user_name_len] = '\0';
-        user_name = user_home;
-        
-        ::strcpy (remainder, first_slash);
+        // Unable to resolve username (user doesn't exist?)
+        path.clear();
     }
-    
-    if (user_name == NULL)
-        return 0;
-    // User name of "" means the current user...
-    
-    struct passwd *user_entry;
-    const char *home_dir = NULL;
-    
-    if (user_name[0] == '\0')
-    {
-        home_dir = GetCachedGlobTildeSlash();
-    }
-    else
-    {
-        user_entry = ::getpwnam (user_name);
-        if (user_entry != NULL)
-            home_dir = user_entry->pw_dir;
-    }
-    
-    if (home_dir == NULL)
-        return 0;
-    else 
-        return ::snprintf (dst_path, dst_len, "%s%s", home_dir, remainder);
-#else
-    // Resolving home directories is not supported, just copy the path...
-    return ::snprintf (dst_path, dst_len, "%s", src_path);
-#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER    
+#endif
 }
 
 size_t
@@ -187,44 +173,18 @@ FileSpec::ResolvePartialUsername (const char *partial_name, StringList &matches)
 #endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER    
 }
 
-
-
-size_t
-FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
+void
+FileSpec::Resolve (llvm::SmallVectorImpl<char> &path)
 {
-    if (src_path == NULL || src_path[0] == '\0')
-        return 0;
+    if (path.empty())
+        return;
 
-    // Glob if needed for ~/, otherwise copy in case src_path is same as dst_path...
-    char unglobbed_path[PATH_MAX];
 #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-    if (src_path[0] == '~')
-    {
-        size_t return_count = ResolveUsername(src_path, unglobbed_path, sizeof(unglobbed_path));
-        
-        // If we couldn't find the user referred to, or the resultant path was too long,
-        // then just copy over the src_path.
-        if (return_count == 0 || return_count >= sizeof(unglobbed_path)) 
-            ::snprintf (unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
-    }
-    else
+    if (path[0] == '~')
+        ResolveUsername(path);
 #endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-    {
-    	::snprintf(unglobbed_path, sizeof(unglobbed_path), "%s", src_path);
-    }
 
-    // Now resolve the path if needed
-    char resolved_path[PATH_MAX];
-    if (::realpath (unglobbed_path, resolved_path))
-    {
-        // Success, copy the resolved path
-        return ::snprintf(dst_path, dst_len, "%s", resolved_path);
-    }
-    else
-    {
-        // Failed, just copy the unglobbed path
-        return ::snprintf(dst_path, dst_len, "%s", unglobbed_path);
-    }
+    llvm::sys::fs::make_absolute(path);
 }
 
 FileSpec::FileSpec() :
@@ -292,24 +252,20 @@ FileSpec::operator= (const FileSpec& rhs)
     return *this;
 }
 
-void FileSpec::Normalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax)
+void FileSpec::Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
 {
-    result.clear();
-    result.append(path.begin(), path.end());
     if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
         return;
 
-    std::replace(result.begin(), result.end(), '\\', '/');
+    std::replace(path.begin(), path.end(), '\\', '/');
 }
 
-void FileSpec::DeNormalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax)
+void FileSpec::DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
 {
-    result.clear();
-    result.append(path.begin(), path.end());
     if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
         return;
 
-    std::replace(result.begin(), result.end(), '/', '\\');
+    std::replace(path.begin(), path.end(), '/', '\\');
 }
 
 //------------------------------------------------------------------
@@ -328,41 +284,26 @@ FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
     if (pathname == NULL || pathname[0] == '\0')
         return;
 
-    llvm::SmallString<64> normalized;
-    Normalize(pathname, normalized, syntax);
+    llvm::SmallString<64> normalized(pathname);
+    Normalize(normalized, syntax);
 
-    std::vector<char> resolved_path(PATH_MAX);
-    bool path_fit = true;
-    
     if (resolve)
     {
-        path_fit = (FileSpec::Resolve (normalized.c_str(), &resolved_path[0], resolved_path.size()) < resolved_path.size() - 1);
-        m_is_resolved = path_fit;
-    }
-    else
-    {
-        // Copy the path because "basename" and "dirname" want to muck with the
-        // path buffer
-        if (normalized.size() > resolved_path.size() - 1)
-            path_fit = false;
-        else
-            ::strcpy (&resolved_path[0], normalized.c_str());
+        FileSpec::Resolve (normalized);
+        m_is_resolved = true;
     }
     
-    if (path_fit)
+    llvm::StringRef resolve_path_ref(normalized.c_str());
+    llvm::StringRef filename_ref = llvm::sys::path::filename(resolve_path_ref);
+    if (!filename_ref.empty())
     {
-        llvm::StringRef resolve_path_ref(&resolved_path[0]);
-        llvm::StringRef filename_ref = llvm::sys::path::filename(resolve_path_ref);
-        if (!filename_ref.empty())
-        {
-            m_filename.SetString (filename_ref);
-            llvm::StringRef directory_ref = llvm::sys::path::parent_path(resolve_path_ref);
-            if (!directory_ref.empty())
-                m_directory.SetString(directory_ref);
-        }
-        else
-            m_directory.SetCString(&resolved_path[0]);
+        m_filename.SetString (filename_ref);
+        llvm::StringRef directory_ref = llvm::sys::path::parent_path(resolve_path_ref);
+        if (!directory_ref.empty())
+            m_directory.SetString(directory_ref);
     }
+    else
+        m_directory.SetCString(normalized.c_str());
 }
 
 //----------------------------------------------------------------------
@@ -732,11 +673,7 @@ FileSpec::GetPath (bool denormalize) const
     if (m_filename)
         llvm::sys::path::append(result, m_filename.GetCString());
     if (denormalize && !result.empty())
-    {
-        llvm::SmallString<64> denormalized;
-        DeNormalize(result.c_str(), denormalized, m_syntax);
-        result = denormalized;
-    }
+        DeNormalize(result, m_syntax);
 
     return std::string(result.begin(), result.end());
 }
