@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.8.0"
 
 ; Simple 3-pair chain with loads and stores
-; CHECK: test1
+; CHECK-LABEL: @test1
 define void @test1(double* %a, double* %b, double* %c) {
 entry:
   %agg.tmp.i.i.sroa.0 = alloca [3 x double], align 16
@@ -23,5 +23,33 @@ entry:
   store double %mul, double* %store1
   store double %mul5, double* %store2, align 16
 ; CHECK: ret
+  ret void
+}
+
+; Float has 4 byte abi alignment on x86_64. We must use the alignmnet of the
+; value being loaded/stored not the alignment of the pointer type.
+
+; CHECK-LABEL: @test2
+; CHECK-NOT: align 8
+; CHECK: load <4 x float>{{.*}}, align 4
+; CHECK: store <4 x float>{{.*}}, align 4
+; CHECK: ret
+
+define void @test2(float * %a, float * %b) {
+entry:
+  %l0 = load float* %a
+  %a1 = getelementptr inbounds float* %a, i64 1
+  %l1 = load float* %a1
+  %a2 = getelementptr inbounds float* %a, i64 2
+  %l2 = load float* %a2
+  %a3 = getelementptr inbounds float* %a, i64 3
+  %l3 = load float* %a3
+  store float %l0, float* %b
+  %b1 = getelementptr inbounds float* %b, i64 1
+  store float %l1, float* %b1
+  %b2 = getelementptr inbounds float* %b, i64 2
+  store float %l2, float* %b2
+  %b3 = getelementptr inbounds float* %b, i64 3
+  store float %l3, float* %b3
   ret void
 }

@@ -1990,6 +1990,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       setInsertPointAfterBundle(E->Scalars);
 
       LoadInst *LI = cast<LoadInst>(VL0);
+      Type *ScalarLoadTy = LI->getType();
       unsigned AS = LI->getPointerAddressSpace();
 
       Value *VecPtr = Builder.CreateBitCast(LI->getPointerOperand(),
@@ -1997,7 +1998,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
       unsigned Alignment = LI->getAlignment();
       LI = Builder.CreateLoad(VecPtr);
       if (!Alignment)
-        Alignment = DL->getABITypeAlignment(LI->getPointerOperand()->getType());
+        Alignment = DL->getABITypeAlignment(ScalarLoadTy);
       LI->setAlignment(Alignment);
       E->VectorizedValue = LI;
       ++NumVectorInstructions;
@@ -2019,7 +2020,7 @@ Value *BoUpSLP::vectorizeTree(TreeEntry *E) {
                                             VecTy->getPointerTo(AS));
       StoreInst *S = Builder.CreateStore(VecValue, VecPtr);
       if (!Alignment)
-        Alignment = DL->getABITypeAlignment(SI->getPointerOperand()->getType());
+        Alignment = DL->getABITypeAlignment(SI->getValueOperand()->getType());
       S->setAlignment(Alignment);
       E->VectorizedValue = S;
       ++NumVectorInstructions;
