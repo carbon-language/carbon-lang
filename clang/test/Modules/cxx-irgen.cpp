@@ -18,6 +18,9 @@ int b = h();
 // CHECK-DAG: define linkonce_odr {{signext i32|i32}} @_Z3minIiET_S0_S0_(i32
 int c = min(1, 2);
 
+// CHECK-LABEL: define {{.*}} @_ZN20OperatorDeleteLookup1AD0Ev(
+// CHECK: call void @_ZN20OperatorDeleteLookup1AdlEPv(
+
 namespace ImplicitSpecialMembers {
   // CHECK-LABEL: define {{.*}} @_ZN22ImplicitSpecialMembers1DC2EOS0_(
   // CHECK: call {{.*}} @_ZN22ImplicitSpecialMembers1AC1ERKS0_(
@@ -43,6 +46,12 @@ namespace ImplicitSpecialMembers {
   extern D d1;
   D d2(d1);
   D d3(static_cast<D&&>(d1));
+}
+
+namespace OperatorDeleteLookup {
+  // Trigger emission of B's vtable and deleting dtor.
+  // This requires us to know what operator delete was selected.
+  void g() { f(); }
 }
 
 // CHECK: define available_externally {{signext i32|i32}} @_ZN1SIiE1fEv({{.*}} #[[ALWAYS_INLINE]] align

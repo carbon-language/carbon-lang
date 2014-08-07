@@ -18,3 +18,9 @@ namespace ImplicitSpecialMembers {
     C c2(c); D d2(d);
   }
 }
+
+namespace OperatorDeleteLookup {
+  // Trigger definition of A::~A() and lookup of operator delete.
+  // Likewise for B<int>::~B().
+  inline void f() { A a; B<int> b; }
+}

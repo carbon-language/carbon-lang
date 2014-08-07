@@ -4629,15 +4629,15 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
         Record.push_back(GetDeclRef(Update.getDecl()));
         break;
 
-      case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
-        AddSourceLocation(Update.getLoc(), Record);
-        break;
-
-      case UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION:
+      case UPD_CXX_ADDED_FUNCTION_DEFINITION:
         // An updated body is emitted last, so that the reader doesn't need
         // to skip over the lazy body to reach statements for other records.
         Record.pop_back();
         HasUpdatedBody = true;
+        break;
+
+      case UPD_CXX_INSTANTIATED_STATIC_DATA_MEMBER:
+        AddSourceLocation(Update.getLoc(), Record);
         break;
 
       case UPD_CXX_INSTANTIATED_CLASS_DEFINITION: {
@@ -4709,10 +4709,12 @@ void ASTWriter::WriteDeclUpdatesBlocks(RecordDataImpl &OffsetsRecord) {
 
     if (HasUpdatedBody) {
       const FunctionDecl *Def = cast<FunctionDecl>(D);
-      Record.push_back(UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION);
+      Record.push_back(UPD_CXX_ADDED_FUNCTION_DEFINITION);
       Record.push_back(Def->isInlined());
       AddSourceLocation(Def->getInnerLocStart(), Record);
       AddFunctionDefinition(Def, Record);
+      if (auto *DD = dyn_cast<CXXDestructorDecl>(Def))
+        Record.push_back(GetDeclRef(DD->getOperatorDelete()));
     }
 
     OffsetsRecord.push_back(GetDeclRef(D));
@@ -5704,9 +5706,8 @@ void ASTWriter::CompletedImplicitDefinition(const FunctionDecl *D) {
   if (!D->isFromASTFile())
     return; // Declaration not imported from PCH.
 
-  // Implicit decl from a PCH was defined.
-  // FIXME: Should implicit definition be a separate FunctionDecl?
-  RewriteDecl(D);
+  // Implicit function decl from a PCH was defined.
+  DeclUpdates[D].push_back(DeclUpdate(UPD_CXX_ADDED_FUNCTION_DEFINITION));
 }
 
 void ASTWriter::FunctionDefinitionInstantiated(const FunctionDecl *D) {
@@ -5714,10 +5715,8 @@ void ASTWriter::FunctionDefinitionInstantiated(const FunctionDecl *D) {
   if (!D->isFromASTFile())
     return;
 
-  // Since the actual instantiation is delayed, this really means that we need
-  // to update the instantiation location.
   DeclUpdates[D].push_back(
-      DeclUpdate(UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION));
+      DeclUpdate(UPD_CXX_ADDED_FUNCTION_DEFINITION));
 }
 
 void ASTWriter::StaticDataMemberInstantiated(const VarDecl *D) {

@@ -3273,7 +3273,7 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
           Reader.ReadSourceLocation(ModuleFile, Record, Idx));
       break;
 
-    case UPD_CXX_INSTANTIATED_FUNCTION_DEFINITION: {
+    case UPD_CXX_ADDED_FUNCTION_DEFINITION: {
       FunctionDecl *FD = cast<FunctionDecl>(D);
       if (Reader.PendingBodies[FD]) {
         // FIXME: Maybe check for ODR violations.
@@ -3296,6 +3296,10 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
       if (auto *CD = dyn_cast<CXXConstructorDecl>(FD))
         std::tie(CD->CtorInitializers, CD->NumCtorInitializers) =
             Reader.ReadCXXCtorInitializers(ModuleFile, Record, Idx);
+      if (auto *DD = dyn_cast<CXXDestructorDecl>(FD))
+        // FIXME: Check consistency.
+        DD->setOperatorDelete(Reader.ReadDeclAs<FunctionDecl>(ModuleFile,
+                                                              Record, Idx));
       // Store the offset of the body so we can lazily load it later.
       Reader.PendingBodies[FD] = GetCurrentCursorOffset();
       HasPendingBody = true;
