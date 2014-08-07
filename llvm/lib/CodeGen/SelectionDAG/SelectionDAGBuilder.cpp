@@ -1814,12 +1814,14 @@ void SelectionDAGBuilder::visitSPDescriptorParent(StackProtectorDescriptor &SPD,
 
   SDValue Guard;
 
-  // If useLoadStackGuardNode returns true, retrieve the guard value from
-  // the virtual register holding the value. Otherwise, emit a volatile load
-  // to retrieve the stack guard value.
-  if (TLI->useLoadStackGuardNode())
-    Guard = DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(),
-                               SPD.getGuardReg(), PtrTy);
+  // If GuardReg is set and useLoadStackGuardNode returns true, retrieve the
+  // guard value from the virtual register holding the value. Otherwise, emit a
+  // volatile load to retrieve the stack guard value.
+  unsigned GuardReg = SPD.getGuardReg();
+
+  if (GuardReg && TLI->useLoadStackGuardNode())
+    Guard = DAG.getCopyFromReg(DAG.getEntryNode(), getCurSDLoc(), GuardReg,
+                               PtrTy);
   else
     Guard = DAG.getLoad(PtrTy, getCurSDLoc(), DAG.getEntryNode(),
                         GuardPtr, MachinePointerInfo(IRGuard, 0),
@@ -5263,13 +5265,21 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     MachineFrameInfo *MFI = MF.getFrameInfo();
     EVT PtrTy = TLI->getPointerTy();
     SDValue Src, Chain = getRoot();
+    const Value *Ptr = cast<LoadInst>(I.getArgOperand(0))->getPointerOperand();
+    const GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr);
 
-    if (TLI->useLoadStackGuardNode()) {
+    // See if Ptr is a bitcast. If it is, look through it and see if we can get
+    // global variable __stack_chk_guard.
+    if (!GV)
+      if (const Operator *BC = dyn_cast<Operator>(Ptr))
+        if (BC->getOpcode() == Instruction::BitCast)
+          GV = dyn_cast<GlobalVariable>(BC->getOperand(0));
+
+    if (GV && TLI->useLoadStackGuardNode()) {
       // Emit a LOAD_STACK_GUARD node.
       MachineSDNode *Node = DAG.getMachineNode(TargetOpcode::LOAD_STACK_GUARD,
                                                sdl, PtrTy, Chain);
-      LoadInst *LI = cast<LoadInst>(I.getArgOperand(0));
-      MachinePointerInfo MPInfo(LI->getPointerOperand());
+      MachinePointerInfo MPInfo(GV);
       MachineInstr::mmo_iterator MemRefs = MF.allocateMemRefsArray(1);
       unsigned Flags = MachineMemOperand::MOLoad |
                        MachineMemOperand::MOInvariant;
