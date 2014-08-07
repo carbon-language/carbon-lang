@@ -591,11 +591,18 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 
     if (handle != IOObject::kInvalidHandleValue)
     {
+#if defined(_MSC_VER)
+        // select() won't accept pipes on Windows.  The entire Windows codepath needs to be
+        // converted over to using WaitForMultipleObjects and event HANDLEs, but for now at least
+        // this will allow ::select() to not return an error.
+        const bool have_pipe_fd = false;
+#else
         const bool have_pipe_fd = pipe_fd >= 0;
-#if !defined(__APPLE__) && !defined(_MSC_VER)
+#if !defined(__APPLE__)
         assert (handle < FD_SETSIZE);
         if (have_pipe_fd)
             assert (pipe_fd < FD_SETSIZE);
+#endif
 #endif
         while (handle == m_read_sp->GetWaitableHandle())
         {
