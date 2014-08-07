@@ -1336,10 +1336,14 @@ Triple MachOObjectFile::getArch(uint32_t CPUType, uint32_t CPUSubType) {
       return Triple("armv4t-apple-darwin");
     case MachO::CPU_SUBTYPE_ARM_V5TEJ:
       return Triple("armv5e-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_XSCALE:
+      return Triple("xscale-apple-darwin");
     case MachO::CPU_SUBTYPE_ARM_V6:
       return Triple("armv6-apple-darwin");
     case MachO::CPU_SUBTYPE_ARM_V6M:
       return Triple("armv6m-apple-darwin");
+    case MachO::CPU_SUBTYPE_ARM_V7:
+      return Triple("armv7-apple-darwin");
     case MachO::CPU_SUBTYPE_ARM_V7EM:
       return Triple("armv7em-apple-darwin");
     case MachO::CPU_SUBTYPE_ARM_V7K:
