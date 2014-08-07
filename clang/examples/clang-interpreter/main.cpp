@@ -45,7 +45,6 @@ std::string GetExecutablePath(const char *Argv0) {
 static llvm::ExecutionEngine *createExecutionEngine(llvm::Module *M,
                                                     std::string *ErrorStr) {
   llvm::EngineBuilder EB = llvm::EngineBuilder(M)
-                               .setUseMCJIT(true)
                                .setEngineKind(llvm::EngineKind::Either)
                                .setErrorStr(ErrorStr);
   return EB.create();
