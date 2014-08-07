@@ -520,6 +520,21 @@ bool CodeGenInstAlias::tryAliasOpMatch(DagInit *Result, unsigned AliasOpNo,
     return true;
   }
 
+  // Bits<n> (also used for 0bxx literals)
+  if (BitsInit *BI = dyn_cast<BitsInit>(Arg)) {
+    if (hasSubOps || !InstOpRec->isSubClassOf("Operand"))
+      return false;
+    if (!BI->isComplete())
+      return false;
+    // Convert the bits init to an integer and use that for the result.
+    IntInit *II =
+      dyn_cast_or_null<IntInit>(BI->convertInitializerTo(IntRecTy::get()));
+    if (!II)
+      return false;
+    ResOp = ResultOperand(II->getValue());
+    return true;
+  }
+
   // If both are Operands with the same MVT, allow the conversion. It's
   // up to the user to make sure the values are appropriate, just like
   // for isel Pat's.

@@ -432,8 +432,8 @@ protected:
   /// readability for really no benefit.
   enum InitKind {
     IK_BitInit,
-    IK_BitsInit,
     IK_FirstTypedInit,
+    IK_BitsInit,
     IK_DagInit,
     IK_DefInit,
     IK_FieldInit,
@@ -651,11 +651,12 @@ public:
 /// BitsInit - { a, b, c } - Represents an initializer for a BitsRecTy value.
 /// It contains a vector of bits, whose size is determined by the type.
 ///
-class BitsInit : public Init, public FoldingSetNode {
+class BitsInit : public TypedInit, public FoldingSetNode {
   std::vector<Init*> Bits;
 
   BitsInit(ArrayRef<Init *> Range)
-    : Init(IK_BitsInit), Bits(Range.begin(), Range.end()) {}
+    : TypedInit(IK_BitsInit, BitsRecTy::get(Range.size())),
+      Bits(Range.begin(), Range.end()) {}
 
   BitsInit(const BitsInit &Other) LLVM_DELETED_FUNCTION;
   BitsInit &operator=(const BitsInit &Other) LLVM_DELETED_FUNCTION;
@@ -687,6 +688,14 @@ public:
     return true;
   }
   std::string getAsString() const override;
+
+  /// resolveListElementReference - This method is used to implement
+  /// VarListElementInit::resolveReferences.  If the list element is resolvable
+  /// now, we return the resolved value, otherwise we return null.
+  Init *resolveListElementReference(Record &R, const RecordVal *RV,
+                                    unsigned Elt) const override {
+    llvm_unreachable("Illegal element reference off bits<n>");
+  }
 
   Init *resolveReferences(Record &R, const RecordVal *RV) const override;
 

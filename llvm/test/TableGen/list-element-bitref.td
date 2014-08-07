@@ -1,7 +1,7 @@
 // RUN: llvm-tblgen %s | FileCheck %s
 // XFAIL: vg_leak
 
-class C<list<bits<8>> L> {
+class C<list<bits<4>> L> {
   bits<2> V0 = L[0]{1-0};
   bits<2> V1 = L[1]{3-2};
   string V2 = !if(L[0]{0}, "Odd", "Even");
