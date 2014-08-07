@@ -7,7 +7,7 @@ target triple = "thumbv7-apple-macosx10.6.7"
 ; 0x90   DW_OP_regx of super-register
 ; 0x93   DW_OP_piece
 ; 0x9d   DW_OP_bit_piece
-; CHECK:            Location description: 90 {{.. .. ((93 ..)|(9d .. ..))}}
+; CHECK:            Location description: 90 {{.. .. ((93 ..)|(9d .. ..)) $}}
 
 define void @_Z3foov() optsize ssp {
 entry:
