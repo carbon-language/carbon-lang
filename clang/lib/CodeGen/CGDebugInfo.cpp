@@ -1195,7 +1195,9 @@ CollectCXXBases(const CXXRecordDecl *RD, llvm::DIFile Unit,
     if (BI.isVirtual()) {
       // virtual base offset offset is -ve. The code generator emits dwarf
       // expression where it expects +ve number.
-      BaseOffset = 0 - RL.getVBaseClassOffset(Base).getQuantity();
+      BaseOffset =
+        0 - CGM.getItaniumVTableContext()
+               .getVirtualBaseOffsetOffset(RD, Base).getQuantity();
       BFlags = llvm::DIDescriptor::FlagVirtual;
     } else
       BaseOffset = CGM.getContext().toBits(RL.getBaseClassOffset(Base));
