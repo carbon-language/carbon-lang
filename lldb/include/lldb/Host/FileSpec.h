@@ -631,10 +631,8 @@ public:
     ReadFileLines (STLStringArray &lines);
 
     //------------------------------------------------------------------
-    /// Resolves user name and links in \a src_path, and writes the output
-    /// to \a dst_path.  Note if the path pointed to by \a src_path does not
-    /// exist, the contents of \a src_path will be copied to \a dst_path 
-    /// unchanged.
+    /// Resolves user name and links in \a path, and overwrites the input
+    /// argument with the resolved path.
     ///
     /// @param[in] path
     ///     Input path to be resolved, in the form of a llvm::SmallString or similar.
