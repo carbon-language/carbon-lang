@@ -302,9 +302,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
     .setRelocationModel(relocModel)
     .setJITMemoryManager(new MemoryManager(*this))
     .setOptLevel(llvm::CodeGenOpt::Less)
-    .setAllocateGVsWithCode(true)
-    .setCodeModel(codeModel)
-    .setUseMCJIT(true);
+    .setCodeModel(codeModel);
 
     llvm::StringRef mArch;
     llvm::StringRef mCPU;
