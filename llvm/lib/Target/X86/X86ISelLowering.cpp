@@ -659,8 +659,7 @@ void X86TargetLowering::resetOperationActions() {
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
 
-  setOperationAction(ISD::DYNAMIC_STACKALLOC, Subtarget->is64Bit() ?
-                     MVT::i64 : MVT::i32, Custom);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, getPointerTy(), Custom);
 
   if (!TM.Options.UseSoftFloat && X86ScalarSSEf64) {
     // f32 and f64 use SSE.

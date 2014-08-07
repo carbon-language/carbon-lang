@@ -312,7 +312,8 @@ public:
 
   /// Is this x86_64 with the LP64 programming model (standard AMD64, no x32)?
   bool isTarget64BitLP64() const {
-    return In64BitMode && (TargetTriple.getEnvironment() != Triple::GNUX32);
+    return In64BitMode && (TargetTriple.getEnvironment() != Triple::GNUX32 &&
+                           TargetTriple.getOS() != Triple::NaCl);
   }
 
   PICStyles::Style getPICStyle() const { return PICStyle; }

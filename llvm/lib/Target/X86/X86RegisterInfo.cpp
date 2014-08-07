@@ -68,8 +68,10 @@ X86RegisterInfo::X86RegisterInfo(const X86Subtarget &STI)
 
   if (Is64Bit) {
     SlotSize = 8;
-    StackPtr = X86::RSP;
-    FramePtr = X86::RBP;
+    StackPtr = (Subtarget.isTarget64BitLP64() || Subtarget.isTargetNaCl64()) ?
+        X86::RSP : X86::ESP;
+    FramePtr = (Subtarget.isTarget64BitLP64() || Subtarget.isTargetNaCl64()) ?
+        X86::RBP : X86::EBP;
   } else {
     SlotSize = 4;
     StackPtr = X86::ESP;
@@ -459,13 +461,9 @@ bool X86RegisterInfo::needsStackRealignment(const MachineFunction &MF) const {
 
 bool X86RegisterInfo::hasReservedSpillSlot(const MachineFunction &MF,
                                            unsigned Reg, int &FrameIdx) const {
-  const TargetFrameLowering *TFI = MF.getSubtarget().getFrameLowering();
-
-  if (Reg == FramePtr && TFI->hasFP(MF)) {
-    FrameIdx = MF.getFrameInfo()->getObjectIndexBegin();
-    return true;
-  }
-  return false;
+  // Since X86 defines assignCalleeSavedSpillSlots which always return true
+  // this function neither used nor tested.
+  llvm_unreachable("Unused function on X86. Otherwise need a test case.");
 }
 
 void
