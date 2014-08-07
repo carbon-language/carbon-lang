@@ -227,6 +227,15 @@ public:
                      const CFGBlock *DstT,
                      const CFGBlock *DstF) override;
 
+  /// Called by CoreEngine.
+  /// Used to generate successor nodes for temporary destructors depending
+  /// on whether the corresponding constructor was visited.
+  void processCleanupTemporaryBranch(const CXXBindTemporaryExpr *BTE,
+                                     NodeBuilderContext &BldCtx,
+                                     ExplodedNode *Pred, ExplodedNodeSet &Dst,
+                                     const CFGBlock *DstT,
+                                     const CFGBlock *DstF) override;
+
   /// Called by CoreEngine.  Used to processing branching behavior
   /// at static initalizers.
   void processStaticInitializer(const DeclStmt *DS,
@@ -408,7 +417,11 @@ public:
   void VisitIncrementDecrementOperator(const UnaryOperator* U,
                                        ExplodedNode *Pred,
                                        ExplodedNodeSet &Dst);
-  
+
+  void VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *BTE,
+                                 ExplodedNodeSet &PreVisit,
+                                 ExplodedNodeSet &Dst);
+
   void VisitCXXCatchStmt(const CXXCatchStmt *CS, ExplodedNode *Pred,
                          ExplodedNodeSet &Dst);
 

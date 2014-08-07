@@ -146,6 +146,28 @@ void PR9412_f() {
     PR9412_t<PR9412_Exact>(); // expected-note {{in instantiation of function template specialization 'PR9412_t<0>' requested here}}
 }
 
+struct NoReturn {
+  ~NoReturn() __attribute__((noreturn));
+  operator bool() const;
+};
+struct Return {
+  ~Return();
+  operator bool() const;
+};
+
+int testTernaryUnconditionalNoreturn() {
+  true ? NoReturn() : NoReturn();
+}
+
+int testTernaryConditionalNoreturnTrueBranch(bool value) {
+  value ? (NoReturn() || NoReturn()) : Return();
+} // expected-warning {{control may reach end of non-void function}}
+
+int testTernaryConditionalNoreturnFalseBranch(bool value) {
+  value ? Return() : (NoReturn() || NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+
 #if __cplusplus >= 201103L
 namespace LambdaVsTemporaryDtor {
   struct Y { ~Y(); };
