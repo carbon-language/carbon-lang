@@ -1,5 +1,4 @@
 ; RUN: %lli %s > /dev/null
-; XFAIL: arm
 
 define i64 @foo() {
   ret i64 42

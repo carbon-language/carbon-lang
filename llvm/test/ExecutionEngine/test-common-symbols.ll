@@ -1,5 +1,4 @@
 ; RUN: %lli -O0 -disable-lazy-compilation=false %s
-; XFAIL: arm
 
 ; The intention of this test is to verify that symbols mapped to COMMON in ELF
 ; work as expected.
