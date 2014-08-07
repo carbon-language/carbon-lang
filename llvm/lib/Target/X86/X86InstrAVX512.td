@@ -1,7 +1,7 @@
 multiclass AVX512_masking<bits<8> O, Format F, dag Outs, dag Ins,
                               string OpcodeStr,
                               string AttSrcAsm, string IntelSrcAsm,
-                              dag RHS,
+                              dag RHS, ValueType OpVT,
                               RegisterClass RC, RegisterClass KRC> {
   def NAME: AVX512<O, F, Outs, Ins,
                        OpcodeStr#" \t{"#AttSrcAsm#", $dst|"#
@@ -17,6 +17,16 @@ multiclass AVX512_masking<bits<8> O, Format F, dag Outs, dag Ins,
                        [(set RC:$dst,
                              (vselect KRC:$mask, RHS, RC:$src0))]>,
               EVEX_K;
+  let AddedComplexity = 30 in // Prefer over VMOV*rrkz Pat<>
+    def NAME#kz: AVX512<O, F, Outs,
+                       !con((ins KRC:$mask), Ins),
+                       OpcodeStr#" \t{"#AttSrcAsm#", $dst {${mask}} {z}|"#
+                                      "$dst {${mask}} {z}, "#IntelSrcAsm#"}",
+                       [(set RC:$dst,
+                             (vselect KRC:$mask, RHS,
+                                      (OpVT (bitconvert
+                                              (v16i32 immAllZerosV)))))]>,
+              EVEX_KZ;
 }
 
 // Bitcasts between 512-bit vector types. Return the original type since
@@ -4491,7 +4501,7 @@ multiclass avx512_valign<string Suffix, RegisterClass RC, RegisterClass KRC,
                      "$src3, $src2, $src1", "$src1, $src2, $src3",
                      (IntVT (X86VAlign RC:$src2, RC:$src1,
                                        (i8 imm:$src3))),
-                     RC, KRC>,
+                     IntVT, RC, KRC>,
              AVX512AIi8Base, EVEX_4V;
 
   // Also match valign of packed floats.

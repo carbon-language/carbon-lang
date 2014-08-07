@@ -216,6 +216,15 @@ define <8 x i64> @test16k(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) 
   ret <8 x i64> %res
 }
 
+; CHECK-LABEL: test16kz
+; CHECK: valignq $2, %zmm0, %zmm1, %zmm0 {%k1} {z} ## encoding: [0x62,0xf3,0xf5,0xc9,0x03,0xc0,0x02]
+define <8 x i64> @test16kz(<8 x i64> %a, <8 x i64> %b, i8 %mask) nounwind {
+  %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
+  %m = bitcast i8 %mask to <8 x i1>
+  %res = select <8 x i1> %m, <8 x i64> %c, <8 x i64> zeroinitializer
+  ret <8 x i64> %res
+}
+
 ; CHECK-LABEL: test17
 ; CHECK: vshufpd $19, %zmm1, %zmm0
 ; CHECK: ret
