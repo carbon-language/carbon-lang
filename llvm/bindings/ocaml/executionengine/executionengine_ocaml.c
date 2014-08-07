@@ -27,7 +27,7 @@
 /* Force the LLVM interpreter and JIT to be linked in. */
 void llvm_initialize(void) {
   LLVMLinkInInterpreter();
-  LLVMLinkInJIT();
+  LLVMLinkInMCJIT();
 }
 
 /* unit -> bool */
