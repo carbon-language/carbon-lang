@@ -40,6 +40,21 @@ def {
   bits<8> E;
   let E{7-0} = {0,0,1,?,?,?,?,?};
   let E{3-0} = 0b0010;
+
+  bits<8> F1 = { 0, 1, 0b1001, 0, 0b0 }; // ok
+  bits<7> F2 = { 0, 1, 0b1001, 0, 0b0 }; // LHS doesn't have enough bits
+  bits<9> F3 = { 0, 1, 0b1001, 0, 0b0 }; // RHS doesn't have enough bits
+
+  bits<8> G1 = { 0, { 1, 0b1001, 0 }, 0b0 }; // ok
+  bits<8> G2 = { 0, { 1, 0b1001 }, 0, 0b0 }; // ok
+  bits<8> G3 = { 0, 1, { 0b1001 }, 0, 0b0 }; // ok
+
+  bits<16> H;
+  let H{15-0} = { { 0b11001100 }, 0b00110011 };
+
+  // Make sure we can initialise ints with bits<> values.
+  int J = H;
+  int K = { 0, 1 };
 }
 
 // CHECK: def {{.*}} {
@@ -56,4 +71,13 @@ def {
 // CHECK: bits<1> D7 = { ? };
 // CHECK: bits<2> D8;
 // CHECK: bits<8> E = { 0, 0, 1, ?, 0, 0, 1, 0 };
+// CHECK: bits<8> F1 = { 0, 1, 1, 0, 0, 1, 0, 0 };
+// CHECK: bits<7> F2;
+// CHECK: bits<9> F3;
+// CHECK: bits<8> G1 = { 0, 1, 1, 0, 0, 1, 0, 0 };
+// CHECK: bits<8> G2 = { 0, 1, 1, 0, 0, 1, 0, 0 };
+// CHECK: bits<8> G3 = { 0, 1, 1, 0, 0, 1, 0, 0 };
+// CHECK: bits<16> H = { 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1 };
+// CHECK: int J = 52275;
+// CHECK: int K = 1;
 // CHECK: }

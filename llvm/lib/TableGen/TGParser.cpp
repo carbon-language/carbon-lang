@@ -1302,17 +1302,28 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     }
     Lex.Lex();  // eat the '}'
 
-    SmallVector<Init *, 16> NewBits(Vals.size());
+    SmallVector<Init *, 16> NewBits;
 
+    // As we parse { a, b, ... }, 'a' is the highest bit, but we parse it
+    // first.  We'll first read everything in to a vector, then we can reverse
+    // it to get the bits in the correct order for the BitsInit value.
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
+      // bits<n> values are allowed to initialize n bits.
+      if (BitsInit *BI = dyn_cast<BitsInit>(Vals[i])) {
+        for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
+          NewBits.push_back(BI->getBit((e - i) - 1));
+        continue;
+      }
+      // All other values must be convertible to just a single bit.
       Init *Bit = Vals[i]->convertInitializerTo(BitRecTy::get());
       if (!Bit) {
         Error(BraceLoc, "Element #" + utostr(i) + " (" + Vals[i]->getAsString()+
               ") is not convertable to a bit");
         return nullptr;
       }
-      NewBits[Vals.size()-i-1] = Bit;
+      NewBits.push_back(Bit);
     }
+    std::reverse(NewBits.begin(), NewBits.end());
     return BitsInit::get(NewBits);
   }
   case tgtok::l_square: {          // Value ::= '[' ValueList ']'
