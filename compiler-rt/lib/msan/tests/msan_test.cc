@@ -2064,7 +2064,25 @@ TEST(MemorySanitizer, fcvt) {
   char *str = fcvt(12345.6789, 10, &a, &b);
   EXPECT_NOT_POISONED(a);
   EXPECT_NOT_POISONED(b);
+  ASSERT_NE(nullptr, str);
+  EXPECT_NOT_POISONED(str[0]);
+  ASSERT_NE(0U, strlen(str));
 }
+
+TEST(MemorySanitizer, fcvt_long) {
+  int a, b;
+  break_optimization(&a);
+  break_optimization(&b);
+  EXPECT_POISONED(a);
+  EXPECT_POISONED(b);
+  char *str = fcvt(111111112345.6789, 10, &a, &b);
+  EXPECT_NOT_POISONED(a);
+  EXPECT_NOT_POISONED(b);
+  ASSERT_NE(nullptr, str);
+  EXPECT_NOT_POISONED(str[0]);
+  ASSERT_NE(0U, strlen(str));
+}
+
 
 TEST(MemorySanitizer, memchr) {
   char x[10];

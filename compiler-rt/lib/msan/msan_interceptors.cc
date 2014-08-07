@@ -577,6 +577,7 @@ INTERCEPTOR(char *, fcvt, double x, int a, int *b, int *c) {
   if (!__msan_has_dynamic_component()) {
     __msan_unpoison(b, sizeof(*b));
     __msan_unpoison(c, sizeof(*c));
+    if (res) __msan_unpoison(res, REAL(strlen)(res) + 1);
   }
   return res;
 }
