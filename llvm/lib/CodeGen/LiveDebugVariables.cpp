@@ -268,7 +268,7 @@ public:
                        LiveIntervals &LIS, const TargetInstrInfo &TRI);
 
   /// findDebugLoc - Return DebugLoc used for this DBG_VALUE instruction. A
-  /// variable may have more than one corresponding DBG_VALUE instructions. 
+  /// variable may have more than one corresponding DBG_VALUE instructions.
   /// Only first one needs DebugLoc to identify variable's lexical scope
   /// in source file.
   DebugLoc findDebugLoc();
@@ -362,7 +362,7 @@ public:
 
 void UserValue::print(raw_ostream &OS, const TargetMachine *TM) {
   DIVariable DV(variable);
-  OS << "!\""; 
+  OS << "!\"";
   DV.printExtendedName(OS);
   OS << "\"\t";
   if (offset)
