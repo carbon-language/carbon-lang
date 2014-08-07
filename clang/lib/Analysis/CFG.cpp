@@ -3711,15 +3711,24 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   VisitForTemporaryDtors(E->getCond(), false, Context);
   CFGBlock *ConditionBlock = Block;
   CFGBlock *ConditionSucc = Succ;
+  TryResult ConditionVal = tryEvaluateBool(E->getCond());
 
   TempDtorContext TrueContext(/*IsConditional=*/true);
-  VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, TrueContext);
+  if (!ConditionVal.isFalse()) {
+    VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, TrueContext);
+    if (ConditionVal.isTrue())
+      return Block;
+  }
   CFGBlock *TrueBlock = Block;
 
   Block = ConditionBlock;
   Succ = ConditionSucc;
   TempDtorContext FalseContext(/*IsConditional=*/true);
-  VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, FalseContext);
+  if (!ConditionVal.isTrue()) {
+    VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, FalseContext);
+    if (ConditionVal.isFalse())
+      return Block;
+  }
 
   if (TrueContext.TerminatorExpr && FalseContext.TerminatorExpr) {
     InsertTempDtorDecisionBlock(FalseContext, TrueBlock);

@@ -159,6 +159,22 @@ int testTernaryUnconditionalNoreturn() {
   true ? NoReturn() : NoReturn();
 }
 
+int testTernaryStaticallyConditionalNoretrunOnTrue() {
+  true ? NoReturn() : Return();
+}
+
+int testTernaryStaticallyConditionalRetrunOnTrue() {
+  true ? Return() : NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testTernaryStaticallyConditionalNoretrunOnFalse() {
+  false ? Return() : NoReturn();
+}
+
+int testTernaryStaticallyConditionalRetrunOnFalse() {
+  false ? NoReturn() : Return();
+} // expected-warning {{control reaches end of non-void function}}
+
 int testTernaryConditionalNoreturnTrueBranch(bool value) {
   value ? (NoReturn() || NoReturn()) : Return();
 } // expected-warning {{control may reach end of non-void function}}
