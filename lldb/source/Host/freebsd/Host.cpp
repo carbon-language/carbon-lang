@@ -86,7 +86,7 @@ Host::ThreadCreated (const char *thread_name)
 std::string
 Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
 {
-    struct kinfo_proc *kp = nullptr;
+    struct kinfo_proc *kp = nullptr, *nkp;
     size_t len = 0;
     int error;
     int name[4] = {
@@ -98,9 +98,13 @@ Host::GetThreadName (lldb::pid_t pid, lldb::tid_t tid)
         if (kp == nullptr || (error != 0 && errno == ENOMEM)) {
             // Add extra space in case threads are added before next call.
             len += sizeof(*kp) + len / 10;
-            kp = (struct kinfo_proc *)reallocf(kp, len);
-            if (kp == nullptr)
+            nkp = (struct kinfo_proc *)realloc(kp, len);
+            if (nkp == nullptr)
+            {
+                free(kp);
                 return std::string();
+            }
+            kp = nkp;
             continue;
         }
         if (error != 0)
