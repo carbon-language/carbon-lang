@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit %s > /dev/null
+; RUN: %lli %s > /dev/null
 
 define i32 @foo() {
 	ret i32 0

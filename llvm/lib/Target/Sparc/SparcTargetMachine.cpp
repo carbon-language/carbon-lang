@@ -61,13 +61,6 @@ bool SparcPassConfig::addInstSelector() {
   return false;
 }
 
-bool SparcTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                        JITCodeEmitter &JCE) {
-  // Machine code emitter pass for Sparc.
-  PM.add(createSparcJITCodeEmitterPass(*this, JCE));
-  return false;
-}
-
 /// addPreEmitPass - This pass may be implemented by targets that want to run
 /// passes immediately before machine code is emitted.  This should return
 /// true if -print-machineinstrs should print out the code after the passes.

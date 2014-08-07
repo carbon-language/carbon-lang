@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -extra-module=%p/Inputs/cross-module-b.ll %s > /dev/null
+; RUN: %lli -extra-module=%p/Inputs/cross-module-b.ll %s > /dev/null
 
 declare i32 @FB()
 

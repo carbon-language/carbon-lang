@@ -177,10 +177,3 @@ bool X86PassConfig::addPreEmitPass() {
 
   return ShouldPrint;
 }
-
-bool X86TargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                      JITCodeEmitter &JCE) {
-  PM.add(createX86JITCodeEmitterPass(*this, JCE));
-
-  return false;
-}

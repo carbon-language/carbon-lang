@@ -21,7 +21,6 @@ namespace llvm {
 
 class FunctionPass;
 class ImmutablePass;
-class JITCodeEmitter;
 class X86TargetMachine;
 
 /// createX86AtomicExpandPass - This pass expands atomic operations that cannot
@@ -53,11 +52,6 @@ FunctionPass *createX86FloatingPointStackifierPass();
 /// before each call to avoid transition penalty between functions encoded with
 /// AVX and SSE.
 FunctionPass *createX86IssueVZeroUpperPass();
-
-/// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
-/// to the specified MCE object.
-FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
-                                          JITCodeEmitter &JCE);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

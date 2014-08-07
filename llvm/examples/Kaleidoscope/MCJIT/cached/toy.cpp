@@ -897,7 +897,6 @@ ExecutionEngine *MCJITHelper::compileModule(Module *M) {
   std::string ErrStr;
   ExecutionEngine *NewEngine = EngineBuilder(M)
                                             .setErrorStr(&ErrStr)
-                                            .setUseMCJIT(true)
                                             .setMCJITMemoryManager(new HelpingMemoryManager(this))
                                             .create();
   if (!NewEngine) {

@@ -39,8 +39,6 @@ public:
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
-
-  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &MCE) override;
 };
 
 /// ARMTargetMachine - ARM target machine.

@@ -192,7 +192,6 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
   EngineBuilder builder(unwrap(M));
   builder.setEngineKind(EngineKind::JIT)
          .setErrorStr(&Error)
-         .setUseMCJIT(true)
          .setOptLevel((CodeGenOpt::Level)options.OptLevel)
          .setCodeModel(unwrap(options.CodeModel))
          .setTargetOptions(targetOptions);
@@ -275,7 +274,6 @@ LLVMGenericValueRef LLVMRunFunction(LLVMExecutionEngineRef EE, LLVMValueRef F,
 }
 
 void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F) {
-  unwrap(EE)->freeMachineCodeForFunction(unwrap<Function>(F));
 }
 
 void LLVMAddModule(LLVMExecutionEngineRef EE, LLVMModuleRef M){
@@ -314,7 +312,7 @@ LLVMBool LLVMFindFunction(LLVMExecutionEngineRef EE, const char *Name,
 
 void *LLVMRecompileAndRelinkFunction(LLVMExecutionEngineRef EE,
                                      LLVMValueRef Fn) {
-  return unwrap(EE)->recompileAndRelinkFunction(unwrap<Function>(Fn));
+  return nullptr;
 }
 
 LLVMTargetDataRef LLVMGetExecutionEngineTargetData(LLVMExecutionEngineRef EE) {

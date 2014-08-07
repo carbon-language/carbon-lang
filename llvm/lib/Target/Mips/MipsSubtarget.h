@@ -17,7 +17,6 @@
 #include "MipsFrameLowering.h"
 #include "MipsISelLowering.h"
 #include "MipsInstrInfo.h"
-#include "MipsJITInfo.h"
 #include "MipsSelectionDAGInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -145,7 +144,6 @@ protected:
 
   const DataLayout DL; // Calculates type size & alignment
   const MipsSelectionDAGInfo TSInfo;
-  MipsJITInfo JITInfo;
   std::unique_ptr<const MipsInstrInfo> InstrInfo;
   std::unique_ptr<const MipsFrameLowering> FrameLowering;
   std::unique_ptr<const MipsTargetLowering> TLInfo;
@@ -272,7 +270,6 @@ public:
   void setHelperClassesMips16();
   void setHelperClassesMipsSE();
 
-  MipsJITInfo *getJITInfo() override { return &JITInfo; }
   const MipsSelectionDAGInfo *getSelectionDAGInfo() const override {
     return &TSInfo;
   }

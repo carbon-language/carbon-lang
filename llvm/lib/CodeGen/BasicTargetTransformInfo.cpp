@@ -188,9 +188,8 @@ unsigned BasicTTI::getJumpBufSize() const {
 
 bool BasicTTI::shouldBuildLookupTables() const {
   const TargetLoweringBase *TLI = getTLI();
-  return TLI->supportJumpTables() &&
-      (TLI->isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
-       TLI->isOperationLegalOrCustom(ISD::BRIND, MVT::Other));
+  return TLI->isOperationLegalOrCustom(ISD::BR_JT, MVT::Other) ||
+         TLI->isOperationLegalOrCustom(ISD::BRIND, MVT::Other);
 }
 
 bool BasicTTI::haveFastSqrt(Type *Ty) const {

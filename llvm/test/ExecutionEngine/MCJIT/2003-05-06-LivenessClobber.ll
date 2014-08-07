@@ -1,6 +1,6 @@
 ; This testcase should return with an exit code of 1.
 ;
-; RUN: not %lli_mcjit %s
+; RUN: not %lli %s
 
 @test = global i64 0		; <i64*> [#uses=1]
 

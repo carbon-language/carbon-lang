@@ -149,7 +149,6 @@ protected:
       .setEngineKind(EngineKind::JIT)
       .setErrorStr(&Error)
       .setJITMemoryManager(MemMgr)
-      .setUseMCJIT(true)
       .create());
     if (Error.empty() == false)
       errs() << Error;

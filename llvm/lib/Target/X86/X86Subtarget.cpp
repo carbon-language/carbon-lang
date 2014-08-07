@@ -356,8 +356,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
       DL(computeDataLayout(*this)), TSInfo(DL),
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
       FrameLowering(TargetFrameLowering::StackGrowsDown, getStackAlignment(),
-                    is64Bit() ? -8 : -4),
-      JITInfo(hasSSE1()) {}
+                    is64Bit() ? -8 : -4) {}
 
 bool X86Subtarget::enableEarlyIfConversion() const {
   return hasCMov() && X86EarlyIfConv;

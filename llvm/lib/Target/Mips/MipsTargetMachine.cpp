@@ -189,10 +189,3 @@ bool MipsPassConfig::addPreEmitPass() {
   addPass(createMipsConstantIslandPass(TM));
   return true;
 }
-
-bool MipsTargetMachine::addCodeEmitter(PassManagerBase &PM,
-                                       JITCodeEmitter &JCE) {
-  // Machine code emitter pass for Mips.
-  PM.add(createMipsJITCodeEmitterPass(*this, JCE));
-  return false;
-}

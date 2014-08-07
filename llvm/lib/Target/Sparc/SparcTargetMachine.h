@@ -30,13 +30,8 @@ public:
 
   const SparcSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 
-  SparcSubtarget *getSubtargetImpl() {
-    return static_cast<SparcSubtarget *>(TargetMachine::getSubtargetImpl());
-  }
-
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
-  bool addCodeEmitter(PassManagerBase &PM, JITCodeEmitter &JCE) override;
 };
 
 /// SparcV8TargetMachine - Sparc 32-bit target machine

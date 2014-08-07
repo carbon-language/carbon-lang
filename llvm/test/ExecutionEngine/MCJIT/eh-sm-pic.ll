@@ -1,4 +1,4 @@
-; RUN: %lli_mcjit -relocation-model=pic -code-model=small %s
+; RUN: %lli -relocation-model=pic -code-model=small %s
 ; XFAIL: cygwin, win32, mingw, mips, i686, i386, darwin, aarch64, arm
 declare i8* @__cxa_allocate_exception(i64)
 declare void @__cxa_throw(i8*, i8*, i8*)

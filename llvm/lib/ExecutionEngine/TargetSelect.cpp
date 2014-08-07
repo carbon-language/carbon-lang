@@ -30,7 +30,7 @@ TargetMachine *EngineBuilder::selectTarget() {
 
   // MCJIT can generate code for remote targets, but the old JIT and Interpreter
   // must use the host architecture.
-  if (UseMCJIT && WhichEngine != EngineKind::Interpreter && M)
+  if (WhichEngine != EngineKind::Interpreter && M)
     TT.setTriple(M->getTargetTriple());
 
   return selectTarget(TT, MArch, MCPU, MAttrs);
@@ -89,8 +89,7 @@ TargetMachine *EngineBuilder::selectTarget(const Triple &TargetTriple,
   }
 
   // FIXME: non-iOS ARM FastISel is broken with MCJIT.
-  if (UseMCJIT &&
-      TheTriple.getArch() == Triple::arm &&
+  if (TheTriple.getArch() == Triple::arm &&
       !TheTriple.isiOS() &&
       OptLevel == CodeGenOpt::None) {
     OptLevel = CodeGenOpt::Less;

@@ -36,8 +36,6 @@ public:
 
   // Pass Pipeline Configuration
   TargetPassConfig *createPassConfig(PassManagerBase &PM) override;
-  bool addCodeEmitter(PassManagerBase &PM,
-                      JITCodeEmitter &JCE) override;
 
   /// \brief Register PPC analysis passes with a pass manager.
   void addAnalysisPasses(PassManagerBase &PM) override;
