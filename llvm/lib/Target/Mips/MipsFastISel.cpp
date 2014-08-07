@@ -110,7 +110,7 @@ private:
   }
 
   MachineInstrBuilder EmitInstLoad(unsigned Opc, unsigned DstReg,
-                                      unsigned MemReg, int64_t MemOffset) {
+                                   unsigned MemReg, int64_t MemOffset) {
     return EmitInst(Opc, DstReg).addReg(MemReg).addImm(MemOffset);
   }
 
@@ -353,15 +353,23 @@ unsigned MipsFastISel::MaterializeGV(const GlobalValue *GV, MVT VT) {
     return 0;
   EmitInst(Mips::LW, DestReg).addReg(MFI->getGlobalBaseReg()).addGlobalAddress(
       GV, 0, MipsII::MO_GOT);
+  if ((GV->hasInternalLinkage() ||
+       (GV->hasLocalLinkage() && !isa<Function>(GV)))) {
+    unsigned TempReg = createResultReg(RC);
+    EmitInst(Mips::ADDiu, TempReg).addReg(DestReg).addGlobalAddress(
+        GV, 0, MipsII::MO_ABS_LO);
+    DestReg = TempReg;
+  }
   return DestReg;
 }
+
 unsigned MipsFastISel::MaterializeInt(const Constant *C, MVT VT) {
   if (VT != MVT::i32 && VT != MVT::i16 && VT != MVT::i8 && VT != MVT::i1)
     return 0;
   const TargetRegisterClass *RC = &Mips::GPR32RegClass;
   const ConstantInt *CI = cast<ConstantInt>(C);
   int64_t Imm;
-  if (CI->isNegative())
+  if ((VT != MVT::i1) && CI->isNegative())
     Imm = CI->getSExtValue();
   else
     Imm = CI->getZExtValue();
