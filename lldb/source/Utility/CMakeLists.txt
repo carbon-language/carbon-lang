@@ -9,5 +9,6 @@ add_lldb_library(lldbUtility
   SharingPtr.cpp
   StringExtractor.cpp
   StringExtractorGDBRemote.cpp
+  StringLexer.cpp
   TimeSpecTimeout.cpp
   )
