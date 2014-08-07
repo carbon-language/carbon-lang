@@ -331,7 +331,7 @@ let hasSideEffects = 1, mayStore = 1 in {
                    [(flushw)]>;
 }
 
-let isBarrier = 1, isTerminator = 1, rd = 0b1000, rs1 = 0, simm13 = 5 in
+let isBarrier = 1, isTerminator = 1, rd = 0b01000, rs1 = 0, simm13 = 5 in
   def TA5 : F3_2<0b10, 0b111010, (outs), (ins), "ta 5", [(trap)]>;
 
 let rd = 0 in

@@ -412,7 +412,7 @@ def STW_l3r : _FL3R<0b000001100, (outs),
                     (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
                     "stw $val, $addr[$offset]", []>;
 
-def STW_2rus : _F2RUS<0b0000, (outs),
+def STW_2rus : _F2RUS<0b00000, (outs),
                       (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
                       "stw $val, $addr[$offset]", []>;
 }
@@ -902,7 +902,7 @@ def BYTEREV_l2r : _FL2R<0b0000011001, (outs GRRegs:$dst), (ins GRRegs:$src),
                         "byterev $dst, $src",
                         [(set GRRegs:$dst, (bswap GRRegs:$src))]>;
 
-def CLZ_l2r : _FL2R<0b000111000, (outs GRRegs:$dst), (ins GRRegs:$src),
+def CLZ_l2r : _FL2R<0b0000111000, (outs GRRegs:$dst), (ins GRRegs:$src),
                     "clz $dst, $src",
                     [(set GRRegs:$dst, (ctlz GRRegs:$src))]>;
 

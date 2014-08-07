@@ -591,7 +591,7 @@ class FEXT_I816<bits<3> _funct, dag outs, dag ins, string asmstr,
   bits<3> funct;
 
   let funct = _funct;
-  let I8 = 0b0110;
+  let I8 = 0b00110;
 
   let Inst{26-21} = imm16{10-5};
   let Inst{20-16} = imm16{15-11};

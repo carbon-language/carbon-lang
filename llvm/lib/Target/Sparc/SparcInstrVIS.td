@@ -71,13 +71,13 @@ def FPACKFIX    : VISInst2<0b000111101, "fpackfix">;
 def FEXPAND     : VISInst2<0b001001101, "fexpand">;
 def FPMERGE     : VISInst <0b001001011, "fpmerge">;
 
-def FMUL8X16    : VISInst<0b00110001, "fmul8x16">;
-def FMUL8X16AU  : VISInst<0b00110011, "fmul8x16au">;
-def FMUL8X16AL  : VISInst<0b00110101, "fmul8x16al">;
-def FMUL8SUX16  : VISInst<0b00110110, "fmul8sux16">;
-def FMUL8ULX16  : VISInst<0b00110111, "fmul8ulx16">;
-def FMULD8SUX16 : VISInst<0b00111000, "fmuld8sux16">;
-def FMULD8ULX16 : VISInst<0b00111001, "fmuld8ulx16">;
+def FMUL8X16    : VISInst<0b000110001, "fmul8x16">;
+def FMUL8X16AU  : VISInst<0b000110011, "fmul8x16au">;
+def FMUL8X16AL  : VISInst<0b000110101, "fmul8x16al">;
+def FMUL8SUX16  : VISInst<0b000110110, "fmul8sux16">;
+def FMUL8ULX16  : VISInst<0b000110111, "fmul8ulx16">;
+def FMULD8SUX16 : VISInst<0b000111000, "fmuld8sux16">;
+def FMULD8ULX16 : VISInst<0b000111001, "fmuld8ulx16">;
 
 def ALIGNADDR   : VISInst<0b000011000, "alignaddr", I64Regs>;
 def ALIGNADDRL  : VISInst<0b000011010, "alignaddrl", I64Regs>;
@@ -134,7 +134,7 @@ def EDGE16L     : VISInst<0b000000110,  "edge16l", I64Regs>;
 def EDGE32      : VISInst<0b000001000,  "edge32",  I64Regs>;
 def EDGE32L     : VISInst<0b000001010,  "edge32l", I64Regs>;
 
-def PDIST       : VISInst<0b00111110, "pdist">;
+def PDIST       : VISInst<0b000111110, "pdist">;
 
 def ARRAY8      : VISInst<0b000010000, "array8",  I64Regs>;
 def ARRAY16     : VISInst<0b000010010, "array16", I64Regs>;
@@ -181,7 +181,7 @@ def CMASK32  : VISInstFormat<0b000011111, (outs), (ins I64Regs:$rs2),
 
 }
 
-def FCHKSM16 : VISInst<0b01000100, "fchksm16">;
+def FCHKSM16 : VISInst<0b001000100, "fchksm16">;
 
 def FHADDS   : F3_3<0b10, 0b110100, 0b001100001,
                     (outs DFPRegs:$rd), (ins DFPRegs:$rs1, DFPRegs:$rs2),
@@ -229,14 +229,14 @@ def FNSMULD  : F3_3<0b10, 0b110100, 0b001111001,
 
 def FPADD64   : VISInst<0b001000010, "fpadd64">;
 
-def FSLL16    : VISInst<0b00100001, "fsll16">;
-def FSRL16    : VISInst<0b00100011, "fsrl16">;
-def FSLL32    : VISInst<0b00100101, "fsll32">;
-def FSRL32    : VISInst<0b00100111, "fsrl32">;
-def FSLAS16   : VISInst<0b00101001, "fslas16">;
-def FSRA16    : VISInst<0b00101011, "fsra16">;
-def FSLAS32   : VISInst<0b00101101, "fslas32">;
-def FSRA32    : VISInst<0b00101111, "fsra32">;
+def FSLL16    : VISInst<0b000100001, "fsll16">;
+def FSRL16    : VISInst<0b000100011, "fsrl16">;
+def FSLL32    : VISInst<0b000100101, "fsll32">;
+def FSRL32    : VISInst<0b000100111, "fsrl32">;
+def FSLAS16   : VISInst<0b000101001, "fslas16">;
+def FSRA16    : VISInst<0b000101011, "fsra16">;
+def FSLAS32   : VISInst<0b000101101, "fslas32">;
+def FSRA32    : VISInst<0b000101111, "fsra32">;
 
 let rs1 = 0 in
 def LZCNT     : VISInstFormat<0b000010111, (outs I64Regs:$rd),

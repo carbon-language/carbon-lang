@@ -3978,7 +3978,7 @@ def t2MRS_AR : T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, apsr",
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111011111000;
   let Inst{11-8} = Rd;
-  let Inst{7-0} = 0b0000;
+  let Inst{7-0} = 0b00000000;
 }
 
 def : t2InstAlias<"mrs${p} $Rd, cpsr", (t2MRS_AR GPR:$Rd, pred:$p)>;
@@ -3988,7 +3988,7 @@ def t2MRSsys_AR: T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
   bits<4> Rd;
   let Inst{31-12} = 0b11110011111111111000;
   let Inst{11-8} = Rd;
-  let Inst{7-0} = 0b0000;
+  let Inst{7-0} = 0b00000000;
 }
 
 // M class MRS.
