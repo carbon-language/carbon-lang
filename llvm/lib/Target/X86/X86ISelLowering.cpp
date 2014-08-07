@@ -8234,10 +8234,11 @@ static SDValue lower128BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 }
 
-/// \brief Tiny helper function to test whether adjacent masks are sequential.
-static bool areAdjacentMasksSequential(ArrayRef<int> Mask) {
+/// \brief Tiny helper function to test whether a shuffle mask could be
+/// simplified by widening the elements being shuffled.
+static bool canWidenShuffleElements(ArrayRef<int> Mask) {
   for (int i = 0, Size = Mask.size(); i < Size; i += 2)
-    if (Mask[i] + 1 != Mask[i+1])
+    if (Mask[i] % 2 != 0 || Mask[i] + 1 != Mask[i+1])
       return false;
 
   return true;
@@ -8291,7 +8292,7 @@ static SDValue lowerVectorShuffle(SDValue Op, const X86Subtarget *Subtarget,
   // but it might be interesting to form i128 integers to handle flipping the
   // low and high halves of AVX 256-bit vectors.
   if (VT.isInteger() && VT.getScalarSizeInBits() < 64 &&
-      areAdjacentMasksSequential(Mask)) {
+      canWidenShuffleElements(Mask)) {
     SmallVector<int, 8> NewMask;
     for (int i = 0, Size = Mask.size(); i < Size; i += 2)
       NewMask.push_back(Mask[i] / 2);
@@ -19517,8 +19518,7 @@ static SDValue PerformTargetShuffleCombine(SDValue N, SelectionDAG &DAG,
 
     // See if this reduces to a PSHUFD which is no more expensive and can
     // combine with more operations.
-    if (Mask[0] % 2 == 0 && Mask[2] % 2 == 0 &&
-        areAdjacentMasksSequential(Mask)) {
+    if (canWidenShuffleElements(Mask)) {
       int DMask[] = {-1, -1, -1, -1};
       int DOffset = N.getOpcode() == X86ISD::PSHUFLW ? 0 : 2;
       DMask[DOffset + 0] = DOffset + Mask[0] / 2;

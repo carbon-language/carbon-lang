@@ -17,6 +17,13 @@ define <4 x i32> @shuffle_v4i32_0020(<4 x i32> %a, <4 x i32> %b) {
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 0, i32 2, i32 0>
   ret <4 x i32> %shuffle
 }
+define <4 x i32> @shuffle_v4i32_0112(<4 x i32> %a, <4 x i32> %b) {
+; CHECK-SSE2-LABEL: @shuffle_v4i32_0112
+; CHECK-SSE2:         pshufd {{.*}} # xmm0 = xmm0[0,1,1,2]
+; CHECK-SSE2-NEXT:    retq
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 1, i32 2>
+  ret <4 x i32> %shuffle
+}
 define <4 x i32> @shuffle_v4i32_0300(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v4i32_0300
 ; CHECK-SSE2:         pshufd {{.*}} # xmm0 = xmm0[0,3,0,0]
