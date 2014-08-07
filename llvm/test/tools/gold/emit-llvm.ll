@@ -6,12 +6,12 @@
 ; RUN: llvm-dis %t2.o -o - | FileCheck %s
 
 ; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
-; RUN:    --plugin-opt=also-emit-llvm \
+; RUN:     -m elf_x86_64 --plugin-opt=also-emit-llvm \
 ; RUN:    -shared %t.o -o %t3.o
 ; RUN: llvm-dis %t3.o.bc -o /dev/null
 
 ; RUN: ld -plugin %llvmshlibdir/LLVMgold.so \
-; RUN:    --plugin-opt=also-emit-llvm=%t4 \
+; RUN:     -m elf_x86_64 --plugin-opt=also-emit-llvm=%t4 \
 ; RUN:    -shared %t.o -o %t3.o
 ; RUN: llvm-dis %t4 -o /dev/null
 
