@@ -273,7 +273,9 @@ bool MachineCombiner::preservesResourceLen(
 
   // Compute current resource length
 
-  ArrayRef<const MachineBasicBlock *> MBBarr(MBB);
+  //ArrayRef<const MachineBasicBlock *> MBBarr(MBB);
+  SmallVector <const MachineBasicBlock *, 1> MBBarr;
+  MBBarr.push_back(MBB);
   unsigned ResLenBeforeCombine = BlockTrace.getResourceLength(MBBarr);
 
   // Deal with SC rather than Instructions.
