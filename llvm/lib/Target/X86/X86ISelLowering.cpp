@@ -7549,7 +7549,7 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
             if (M == (InputsFixed[0] ^ 1) + SourceOffset)
               M = InputsFixed[1] + SourceOffset;
             else if (M == InputsFixed[1] + SourceOffset)
-              M = InputsFixed[0] ^ 1 + SourceOffset;
+              M = (InputsFixed[0] ^ 1) + SourceOffset;
 
           InputsFixed[1] = InputsFixed[0] ^ 1;
         }
