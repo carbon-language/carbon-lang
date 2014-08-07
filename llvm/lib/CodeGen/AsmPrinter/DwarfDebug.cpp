@@ -1144,6 +1144,7 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
   // arguments does the function have at source level.
   if (ArgNo > Size)
     CurrentFnArguments.resize(ArgNo * 2);
+  assert(!CurrentFnArguments[ArgNo - 1]);
   CurrentFnArguments[ArgNo - 1] = Var;
   return true;
 }
@@ -1309,10 +1310,7 @@ DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
       continue;
 
     LexicalScope *Scope = nullptr;
-    if (DV.getTag() == dwarf::DW_TAG_arg_variable &&
-        DISubprogram(DV.getContext()).describes(CurFn->getFunction()))
-      Scope = LScopes.getCurrentFunctionScope();
-    else if (MDNode *IA = DV.getInlinedAt()) {
+    if (MDNode *IA = DV.getInlinedAt()) {
       DebugLoc DL = DebugLoc::getFromDILocation(IA);
       Scope = LScopes.findInlinedScope(DebugLoc::get(
           DL.getLine(), DL.getCol(), DV.getContext(), IA));
