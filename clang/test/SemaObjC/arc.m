@@ -12,6 +12,7 @@ id CFBridgingRelease(CFTypeRef);
 @interface NSDictionary : NSObject
 + (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 - (void)setObject:(id)object forKeyedSubscript:(id)key;
+- (instancetype)initWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
 @end
 @class NSFastEnumerationState;
 @protocol NSFastEnumeration
@@ -746,7 +747,7 @@ void _NSCalcBeze(NSColor* color, NSColor* bezelColors[]); // expected-error {{mu
 void rdar12569201(id key, id value) {
     // Declarations.
     __weak id x = @"foo"; // no-warning
-    __weak id y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
+    __weak id y = @{ key : value }; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
     __weak id z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
     __weak id b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
     __weak id n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
@@ -754,7 +755,7 @@ void rdar12569201(id key, id value) {
     __weak id m = @(41 + 1); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
     
     // Assignments.
-    y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
+    y = @{ key : value }; // expected-warning {{assigning retained object to weak variable; object will be released after assignment}}
     z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
     b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
     n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}

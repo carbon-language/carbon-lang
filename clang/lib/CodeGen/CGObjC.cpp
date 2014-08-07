@@ -185,6 +185,15 @@ llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
     = InterfacePointerType->getObjectType()->getInterface();
   CGObjCRuntime &Runtime = CGM.getObjCRuntime();
   llvm::Value *Receiver = Runtime.GetClass(*this, Class);
+  if (AllocMethod) {
+    // Generate the "alloc" message send.
+    CallArgList Args;
+    Selector AllocMethodSel = AllocMethod->getSelector();
+    RValue result = Runtime.GenerateMessageSend(
+      *this, ReturnValueSlot(), AllocMethod->getReturnType(), AllocMethodSel,
+      Receiver, Args, Class, AllocMethod);
+    Receiver = result.getScalarVal();
+  }
 
   // Generate the message send.
   RValue result = Runtime.GenerateMessageSend(
