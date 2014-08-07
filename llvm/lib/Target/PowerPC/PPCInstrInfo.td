@@ -3226,6 +3226,9 @@ def : InstAlias<"crnot $bx, $by", (CRNOR crbitrc:$bx, crbitrc:$by, crbitrc:$by)>
 def : InstAlias<"mtxer $Rx", (MTSPR 1, gprc:$Rx)>;
 def : InstAlias<"mfxer $Rx", (MFSPR gprc:$Rx, 1)>;
 
+def : InstAlias<"mfrtcu $Rx", (MFSPR gprc:$Rx, 4)>;
+def : InstAlias<"mfrtcl $Rx", (MFSPR gprc:$Rx, 5)>;
+
 def : InstAlias<"mtdscr $Rx", (MTSPR 17, gprc:$Rx)>;
 def : InstAlias<"mfdscr $Rx", (MFSPR gprc:$Rx, 17)>;
 

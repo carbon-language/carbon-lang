@@ -3419,6 +3419,12 @@
 # CHECK-BE: mfspr 2, 1                      # encoding: [0x7c,0x41,0x02,0xa6]
 # CHECK-LE: mfspr 2, 1                      # encoding: [0xa6,0x02,0x41,0x7c]
             mfxer 2
+# CHECK-BE: mfspr 2, 4                      # encoding: [0x7c,0x44,0x02,0xa6]
+# CHECK-LE: mfspr 2, 4                      # encoding: [0xa6,0x02,0x44,0x7c]
+            mfrtcu 2
+# CHECK-BE: mfspr 2, 5                      # encoding: [0x7c,0x45,0x02,0xa6]
+# CHECK-LE: mfspr 2, 5                      # encoding: [0xa6,0x02,0x45,0x7c]
+            mfrtcl 2
 # CHECK-BE: mtspr 17, 2                     # encoding: [0x7c,0x51,0x03,0xa6]
 # CHECK-LE: mtspr 17, 2                     # encoding: [0xa6,0x03,0x51,0x7c]
             mtdscr 2
