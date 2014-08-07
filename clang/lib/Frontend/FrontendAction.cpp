@@ -432,6 +432,10 @@ void FrontendAction::EndSourceFile() {
   // Inform the diagnostic client we are done with this source file.
   CI.getDiagnosticClient().EndSourceFile();
 
+  // Inform the preprocessor we are done.
+  if (CI.hasPreprocessor())
+    CI.getPreprocessor().EndSourceFile();
+
   // Finalize the action.
   EndSourceFileAction();
 
@@ -452,10 +456,6 @@ void FrontendAction::EndSourceFile() {
     }
     CI.setASTConsumer(nullptr);
   }
-
-  // Inform the preprocessor we are done.
-  if (CI.hasPreprocessor())
-    CI.getPreprocessor().EndSourceFile();
 
   if (CI.getFrontendOpts().ShowStats) {
     llvm::errs() << "\nSTATISTICS FOR '" << getCurrentFile() << "':\n";
