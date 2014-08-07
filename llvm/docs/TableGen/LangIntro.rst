@@ -94,7 +94,9 @@ supported include:
     uninitialized field
 
 ``0b1001011``
-    binary integer value
+    binary integer value.
+    Note that this is sized by the number of bits given and will not be
+    silently extended/truncated.
 
 ``07654321``
     octal integer value (indicated by a leading 0)
@@ -116,8 +118,9 @@ supported include:
     In rare cases, TableGen is unable to deduce the element type in which case
     the user must specify it explicitly.
 
-``{ a, b, c }``
-    initializer for a "bits<3>" value
+``{ a, b, 0b10 }``
+    initializer for a "bits<4>" value.
+    1-bit from "a", 1-bit from "b", 2-bits from 0b10.
 
 ``value``
     value reference

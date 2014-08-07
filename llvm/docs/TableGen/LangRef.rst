@@ -55,6 +55,10 @@ One aspect to note is that the :token:`DecimalInteger` token *includes* the
 ``+`` or ``-``, as opposed to having ``+`` and ``-`` be unary operators as
 most languages do.
 
+Also note that :token:`BinInteger` creates a value of type ``bits<n>``
+(where ``n`` is the number of bits).  This will implicitly convert to
+integers when needed.
+
 TableGen has identifier-like tokens:
 
 .. productionlist::
