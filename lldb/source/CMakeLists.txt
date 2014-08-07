@@ -181,6 +181,7 @@ list(APPEND LLDB_SYSTEM_LIBS ${system_libs})
 
 set( LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
+  jit
   interpreter
   asmparser
   bitreader
