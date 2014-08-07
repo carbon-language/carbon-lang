@@ -7735,7 +7735,7 @@ static SDValue lowerV8I16BasicBlendVectorShuffle(SDLoc DL, SDValue V1,
                          [](int M) { return M >= 0; }) -
             std::begin(MoveMask);
         int MoveMaskIdx =
-            (((GoodMaskIdx - MoveOffset) & ~1) + 2 % 4) + MoveOffset;
+            ((((GoodMaskIdx - MoveOffset) & ~1) + 2) % 4) + MoveOffset;
         assert(MoveMask[MoveMaskIdx] == -1 && "Expected empty slot");
         assert(MoveMask[MoveMaskIdx + 1] == -1 && "Expected empty slot");
         MoveMask[MoveMaskIdx] = Mask[BadInputs[0]] - MaskOffset;
