@@ -229,7 +229,8 @@ FileSpec::Resolve (const char *src_path, char *dst_path, size_t dst_len)
 
 FileSpec::FileSpec() :
     m_directory(),
-    m_filename()
+    m_filename(),
+    m_syntax(Host::GetHostPathSyntax())
 {
 }
 
@@ -237,13 +238,13 @@ FileSpec::FileSpec() :
 // Default constructor that can take an optional full path to a
 // file on disk.
 //------------------------------------------------------------------
-FileSpec::FileSpec(const char *pathname, bool resolve_path) :
+FileSpec::FileSpec(const char *pathname, bool resolve_path, PathSyntax syntax) :
     m_directory(),
     m_filename(),
     m_is_resolved(false)
 {
     if (pathname && pathname[0])
-        SetFile(pathname, resolve_path);
+        SetFile(pathname, resolve_path, syntax);
 }
 
 //------------------------------------------------------------------
@@ -252,7 +253,8 @@ FileSpec::FileSpec(const char *pathname, bool resolve_path) :
 FileSpec::FileSpec(const FileSpec& rhs) :
     m_directory (rhs.m_directory),
     m_filename (rhs.m_filename),
-    m_is_resolved (rhs.m_is_resolved)
+    m_is_resolved (rhs.m_is_resolved),
+    m_syntax (rhs.m_syntax)
 {
 }
 
@@ -285,8 +287,29 @@ FileSpec::operator= (const FileSpec& rhs)
         m_directory = rhs.m_directory;
         m_filename = rhs.m_filename;
         m_is_resolved = rhs.m_is_resolved;
+        m_syntax = rhs.m_syntax;
     }
     return *this;
+}
+
+void FileSpec::Normalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax)
+{
+    result.clear();
+    result.append(path.begin(), path.end());
+    if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
+        return;
+
+    std::replace(result.begin(), result.end(), '\\', '/');
+}
+
+void FileSpec::DeNormalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax)
+{
+    result.clear();
+    result.append(path.begin(), path.end());
+    if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
+        return;
+
+    std::replace(result.begin(), result.end(), '/', '\\');
 }
 
 //------------------------------------------------------------------
@@ -295,36 +318,40 @@ FileSpec::operator= (const FileSpec& rhs)
 // string values for quick comparison and efficient memory usage.
 //------------------------------------------------------------------
 void
-FileSpec::SetFile (const char *pathname, bool resolve)
+FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
 {
     m_filename.Clear();
     m_directory.Clear();
     m_is_resolved = false;
+    m_syntax = (syntax == ePathSyntaxHostNative) ? Host::GetHostPathSyntax() : syntax;
+
     if (pathname == NULL || pathname[0] == '\0')
         return;
 
-    char resolved_path[PATH_MAX];
+    llvm::SmallString<64> normalized;
+    Normalize(pathname, normalized, syntax);
+
+    std::vector<char> resolved_path(PATH_MAX);
     bool path_fit = true;
     
     if (resolve)
     {
-        path_fit = (FileSpec::Resolve (pathname, resolved_path, sizeof(resolved_path)) < sizeof(resolved_path) - 1);
+        path_fit = (FileSpec::Resolve (normalized.c_str(), &resolved_path[0], resolved_path.size()) < resolved_path.size() - 1);
         m_is_resolved = path_fit;
     }
     else
     {
         // Copy the path because "basename" and "dirname" want to muck with the
         // path buffer
-        if (::strlen (pathname) > sizeof(resolved_path) - 1)
+        if (normalized.size() > resolved_path.size() - 1)
             path_fit = false;
         else
-            ::strcpy (resolved_path, pathname);
+            ::strcpy (&resolved_path[0], normalized.c_str());
     }
-
     
     if (path_fit)
     {
-        llvm::StringRef resolve_path_ref(resolved_path);
+        llvm::StringRef resolve_path_ref(&resolved_path[0]);
         llvm::StringRef filename_ref = llvm::sys::path::filename(resolve_path_ref);
         if (!filename_ref.empty())
         {
@@ -334,7 +361,7 @@ FileSpec::SetFile (const char *pathname, bool resolve)
                 m_directory.SetString(directory_ref);
         }
         else
-            m_directory.SetCString(resolved_path);
+            m_directory.SetCString(&resolved_path[0]);
     }
 }
 
@@ -580,7 +607,7 @@ FileSpec::ResolvePath ()
         return true;    // We have already resolved this path
 
     char path_buf[PATH_MAX];    
-    if (!GetPath (path_buf, PATH_MAX))
+    if (!GetPath (path_buf, PATH_MAX, false))
         return false;
     // SetFile(...) will set m_is_resolved correctly if it can resolve the path
     SetFile (path_buf, true);
@@ -594,6 +621,12 @@ FileSpec::GetByteSize() const
     if (GetFileStats (this, &file_stats))
         return file_stats.st_size;
     return 0;
+}
+
+FileSpec::PathSyntax
+FileSpec::GetPathSyntax() const
+{
+    return m_syntax;
 }
 
 FileSpec::FileType
@@ -681,45 +714,31 @@ FileSpec::GetFilename() const
 // values.
 //------------------------------------------------------------------
 size_t
-FileSpec::GetPath(char *path, size_t path_max_len) const
+FileSpec::GetPath(char *path, size_t path_max_len, bool denormalize) const
 {
-    if (path_max_len)
-    {
-        const char *dirname = m_directory.GetCString();
-        const char *filename = m_filename.GetCString();
-        if (dirname)
-        {
-            if (filename)
-                return ::snprintf (path, path_max_len, "%s/%s", dirname, filename);
-            else
-                return ::snprintf (path, path_max_len, "%s", dirname);
-        }
-        else if (filename)
-        {
-            return ::snprintf (path, path_max_len, "%s", filename);
-        }
-    }
-    if (path)
-        path[0] = '\0';
-    return 0;
+    std::string result = GetPath(denormalize);
+
+    size_t result_length = std::min(path_max_len-1, result.length());
+    ::strncpy(path, result.c_str(), result_length + 1);
+    return result_length;
 }
 
 std::string
-FileSpec::GetPath (void) const
+FileSpec::GetPath (bool denormalize) const
 {
-    static ConstString g_slash_only ("/");
-    std::string path;
-    const char *dirname = m_directory.GetCString();
-    const char *filename = m_filename.GetCString();
-    if (dirname)
+    llvm::SmallString<64> result;
+    if (m_directory)
+        result.append(m_directory.GetCString());
+    if (m_filename)
+        llvm::sys::path::append(result, m_filename.GetCString());
+    if (denormalize && !result.empty())
     {
-        path.append (dirname);
-        if (filename && m_directory != g_slash_only)
-            path.append ("/");
+        llvm::SmallString<64> denormalized;
+        DeNormalize(result.c_str(), denormalized, m_syntax);
+        result = denormalized;
     }
-    if (filename)
-        path.append (filename);
-    return path;
+
+    return std::string(result.begin(), result.end());
 }
 
 ConstString

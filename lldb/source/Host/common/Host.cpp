@@ -839,6 +839,16 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
 
 #endif
 
+FileSpec::PathSyntax
+Host::GetHostPathSyntax()
+{
+#if defined(_WIN32)
+    return FileSpec::ePathSyntaxWindows;
+#else
+    return FileSpec::ePathSyntaxPosix;
+#endif
+}
+
 FileSpec
 Host::GetUserProfileFileSpec ()
 {

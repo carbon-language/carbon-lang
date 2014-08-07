@@ -51,6 +51,13 @@ public:
         eFileTypeOther
     } FileType;
 
+    enum PathSyntax
+    {
+        ePathSyntaxPosix,
+        ePathSyntaxWindows,
+        ePathSyntaxHostNative
+    };
+
     FileSpec();
 
     //------------------------------------------------------------------
@@ -69,7 +76,7 @@ public:
     ///
     /// @see FileSpec::SetFile (const char *path, bool resolve)
     //------------------------------------------------------------------
-    explicit FileSpec (const char *path, bool resolve_path);
+    explicit FileSpec (const char *path, bool resolve_path, PathSyntax syntax = ePathSyntaxHostNative);
 
     //------------------------------------------------------------------
     /// Copy constructor
@@ -291,6 +298,9 @@ public:
     uint64_t
     GetByteSize() const;
 
+    PathSyntax
+    GetPathSyntax() const;
+
     //------------------------------------------------------------------
     /// Directory string get accessor.
     ///
@@ -375,7 +385,7 @@ public:
     ///     still NULL terminated).
     //------------------------------------------------------------------
     size_t
-    GetPath (char *path, size_t max_path_length) const;
+    GetPath (char *path, size_t max_path_length, bool denormalize = true) const;
 
     //------------------------------------------------------------------
     /// Extract the full path to the file.
@@ -387,7 +397,7 @@ public:
     ///     concatenated.
     //------------------------------------------------------------------
     std::string
-    GetPath () const;
+    GetPath (bool denormalize = true) const;
 
     //------------------------------------------------------------------
     /// Extract the extension of the file.
@@ -559,6 +569,10 @@ public:
     //------------------------------------------------------------------
     lldb::DataBufferSP
     ReadFileContentsAsCString(Error *error_ptr = NULL);
+
+    static void Normalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax);
+    static void DeNormalize(llvm::StringRef path, llvm::SmallVectorImpl<char> &result, PathSyntax syntax);
+
     //------------------------------------------------------------------
     /// Change the file specified with a new path.
     ///
@@ -574,7 +588,7 @@ public:
     ///     the static FileSpec::Resolve.
     //------------------------------------------------------------------
     void
-    SetFile (const char *path, bool resolve_path);
+    SetFile (const char *path, bool resolve_path, PathSyntax syntax = ePathSyntaxHostNative);
 
     bool
     IsResolved () const
@@ -709,6 +723,7 @@ protected:
     ConstString m_directory;    ///< The uniqued directory path
     ConstString m_filename;     ///< The uniqued filename path
     mutable bool m_is_resolved; ///< True if this path has been resolved.
+    PathSyntax m_syntax;        ///< The syntax that this path uses (e.g. Windows / Posix)
 };
 
 //----------------------------------------------------------------------
