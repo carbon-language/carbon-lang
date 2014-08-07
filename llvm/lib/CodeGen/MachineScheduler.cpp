@@ -40,6 +40,9 @@ cl::opt<bool> ForceTopDown("misched-topdown", cl::Hidden,
                            cl::desc("Force top-down list scheduling"));
 cl::opt<bool> ForceBottomUp("misched-bottomup", cl::Hidden,
                             cl::desc("Force bottom-up list scheduling"));
+cl::opt<bool>
+DumpCriticalPathLength("misched-dcpl", cl::Hidden,
+                       cl::desc("Print critical path length to stdout"));
 }
 
 #ifndef NDEBUG
@@ -451,6 +454,11 @@ void MachineSchedulerBase::scheduleRegions(ScheduleDAGInstrs &Scheduler) {
             else dbgs() << "End";
             dbgs() << " RegionInstrs: " << NumRegionInstrs
             << " Remaining: " << RemainingInstrs << "\n");
+      if (DumpCriticalPathLength) {
+        errs() << MF->getName();
+        errs() << ":BB# " << MBB->getNumber();
+        errs() << " " << MBB->getName() << " \n";
+      }
 
       // Schedule a region: possibly reorder instructions.
       // This invalidates 'RegionEnd' and 'I'.
@@ -2462,7 +2470,10 @@ void GenericScheduler::registerRoots() {
     if ((*I)->getDepth() > Rem.CriticalPath)
       Rem.CriticalPath = (*I)->getDepth();
   }
-  DEBUG(dbgs() << "Critical Path: " << Rem.CriticalPath << '\n');
+  DEBUG(dbgs() << "Critical Path(GS-RR ): " << Rem.CriticalPath << '\n');
+  if (DumpCriticalPathLength) {
+    errs() << "Critical Path(GS-RR ): " << Rem.CriticalPath << " \n";
+  }
 
   if (EnableCyclicPath) {
     Rem.CyclicCritPath = DAG->computeCyclicCriticalPath();
@@ -2905,7 +2916,10 @@ void PostGenericScheduler::registerRoots() {
     if ((*I)->getDepth() > Rem.CriticalPath)
       Rem.CriticalPath = (*I)->getDepth();
   }
-  DEBUG(dbgs() << "Critical Path: " << Rem.CriticalPath << '\n');
+  DEBUG(dbgs() << "Critical Path: (PGS-RR) " << Rem.CriticalPath << '\n');
+  if (DumpCriticalPathLength) {
+    errs() << "Critical Path(PGS-RR ): " << Rem.CriticalPath << " \n";
+  }
 }
 
 /// Apply a set of heursitics to a new candidate for PostRA scheduling.
