@@ -207,6 +207,15 @@ define <8 x double> @test16(<8 x double> %a, <8 x double> %b) nounwind {
   ret <8 x double> %c
 }
 
+; CHECK-LABEL: test16k
+; CHECK: valignq $2, %zmm0, %zmm1, %zmm2 {%k1} #
+define <8 x i64> @test16k(<8 x i64> %a, <8 x i64> %b, <8 x i64> %src, i8 %mask) nounwind {
+  %c = shufflevector <8 x i64> %a, <8 x i64> %b, <8 x i32> <i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9>
+  %m = bitcast i8 %mask to <8 x i1>
+  %res = select <8 x i1> %m, <8 x i64> %c, <8 x i64> %src
+  ret <8 x i64> %res
+}
+
 ; CHECK-LABEL: test17
 ; CHECK: vshufpd $19, %zmm1, %zmm0
 ; CHECK: ret

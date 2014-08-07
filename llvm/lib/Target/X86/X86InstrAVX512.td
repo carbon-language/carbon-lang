@@ -8,8 +8,9 @@ multiclass AVX512_masking<bits<8> O, Format F, dag Outs, dag Ins,
                                       "$dst, "#IntelSrcAsm#"}",
                        [(set RC:$dst, RHS)]>;
 
-  let Constraints = "$src0 = $dst" in
-  def NAME#k: AVX512<O, F, Outs,
+  // Prefer over VMOV*rrk Pat<>
+  let Constraints = "$src0 = $dst", AddedComplexity = 20 in
+    def NAME#k: AVX512<O, F, Outs,
                        !con((ins RC:$src0, KRC:$mask), Ins),
                        OpcodeStr#" \t{"#AttSrcAsm#", $dst {${mask}}|"#
                                       "$dst {${mask}}, "#IntelSrcAsm#"}",
