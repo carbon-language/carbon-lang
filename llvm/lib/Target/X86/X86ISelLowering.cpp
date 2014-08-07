@@ -7546,10 +7546,10 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
           // We also have to update the final source mask in this case because
           // it may need to undo the above swap.
           for (int &M : FinalSourceHalfMask)
-            if (M == (InputsFixed[0] ^ 1))
-              M = InputsFixed[1];
-            else if (M == InputsFixed[1])
-              M = InputsFixed[0] ^ 1;
+            if (M == (InputsFixed[0] ^ 1) + SourceOffset)
+              M = InputsFixed[1] + SourceOffset;
+            else if (M == InputsFixed[1] + SourceOffset)
+              M = InputsFixed[0] ^ 1 + SourceOffset;
 
           InputsFixed[1] = InputsFixed[0] ^ 1;
         }
