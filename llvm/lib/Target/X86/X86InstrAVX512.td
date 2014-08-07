@@ -1,3 +1,23 @@
+multiclass AVX512_masking<bits<8> O, Format F, dag Outs, dag Ins,
+                              string OpcodeStr,
+                              string AttSrcAsm, string IntelSrcAsm,
+                              dag RHS,
+                              RegisterClass RC, RegisterClass KRC> {
+  def NAME: AVX512<O, F, Outs, Ins,
+                       OpcodeStr#" \t{"#AttSrcAsm#", $dst|"#
+                                      "$dst, "#IntelSrcAsm#"}",
+                       [(set RC:$dst, RHS)]>;
+
+  let Constraints = "$src0 = $dst" in
+  def NAME#k: AVX512<O, F, Outs,
+                       !con((ins RC:$src0, KRC:$mask), Ins),
+                       OpcodeStr#" \t{"#AttSrcAsm#", $dst {${mask}}|"#
+                                      "$dst {${mask}}, "#IntelSrcAsm#"}",
+                       [(set RC:$dst,
+                             (vselect KRC:$mask, RHS, RC:$src0))]>,
+              EVEX_K;
+}
+
 // Bitcasts between 512-bit vector types. Return the original type since
 // no instruction is needed for the conversion
 let Predicates = [HasAVX512] in {
@@ -4464,27 +4484,14 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
 multiclass avx512_valign<string Suffix, RegisterClass RC, RegisterClass KRC,
                          RegisterClass MRC, X86MemOperand x86memop,
                          ValueType IntVT, ValueType FloatVT> {
-  def rri : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
+  defm rri : AVX512_masking<0x03, MRMSrcReg, (outs RC:$dst),
                      (ins RC:$src1, RC:$src2, i8imm:$src3),
-                     !strconcat("valign"##Suffix,
-                     " \t{$src3, $src2, $src1, $dst|"
-                         "$dst, $src1, $src2, $src3}"),
-                     [(set RC:$dst,
-                           (IntVT (X86VAlign RC:$src2, RC:$src1,
-                                              (i8 imm:$src3))))]>, EVEX_4V;
-
-  let Constraints = "$src0 = $dst" in
-  def rrik : AVX512AIi8<0x03, MRMSrcReg, (outs RC:$dst),
-                     (ins RC:$src0, KRC:$mask, RC:$src1, RC:$src2, i8imm:$src3),
-                     !strconcat("valign"##Suffix,
-                     " \t{$src3, $src2, $src1, $dst {${mask}}|"
-                         "$dst {${mask}}, $src1, $src2, $src3}"),
-                     [(set RC:$dst,
-                           (IntVT (vselect KRC:$mask,
-                                     (X86VAlign RC:$src2, RC:$src1,
-                                                (i8 imm:$src3)),
-                                     RC:$src0)))]>,
-             EVEX_4V, EVEX_K;
+                     "valign"##Suffix,
+                     "$src3, $src2, $src1", "$src1, $src2, $src3",
+                     (IntVT (X86VAlign RC:$src2, RC:$src1,
+                                       (i8 imm:$src3))),
+                     RC, KRC>,
+             AVX512AIi8Base, EVEX_4V;
 
   // Also match valign of packed floats.
   def : Pat<(FloatVT (X86VAlign RC:$src1, RC:$src2, (i8 imm:$imm))),
