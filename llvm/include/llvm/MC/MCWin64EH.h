@@ -20,9 +20,8 @@
 #include <vector>
 
 namespace llvm {
-  class StringRef;
-  class MCStreamer;
-  class MCSymbol;
+class MCStreamer;
+class MCSymbol;
 
 namespace Win64EH {
 struct Instruction {
@@ -52,17 +51,13 @@ struct Instruction {
     return WinEH::Instruction(UOP_SetFPReg, L, Reg, Off);
   }
 };
-}
 
-  class MCWin64EHUnwindEmitter {
-  public:
-    static StringRef GetSectionSuffix(const MCSymbol *func);
-    //
-    // This emits the unwind info sections (.pdata and .xdata in PE/COFF).
-    //
-    static void Emit(MCStreamer &streamer);
-    static void EmitUnwindInfo(MCStreamer &streamer, WinEH::FrameInfo *info);
-  };
+class UnwindEmitter : public WinEH::UnwindEmitter {
+public:
+  void Emit(MCStreamer &Streamer) const override;
+  void EmitUnwindInfo(MCStreamer &Streamer, WinEH::FrameInfo *FI) const override;
+};
+}
 } // end namespace llvm
 
 #endif

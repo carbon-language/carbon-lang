@@ -8,12 +8,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86MCTargetDesc.h"
+#include "llvm/MC/MCWin64EH.h"
 #include "llvm/MC/MCWinCOFFStreamer.h"
 
 using namespace llvm;
 
 namespace {
 class X86WinCOFFStreamer : public MCWinCOFFStreamer {
+  Win64EH::UnwindEmitter EHStreamer;
 public:
   X86WinCOFFStreamer(MCContext &C, MCAsmBackend &AB, MCCodeEmitter *CE,
                      raw_ostream &OS)
@@ -29,13 +31,13 @@ void X86WinCOFFStreamer::EmitWinEHHandlerData() {
 
   // We have to emit the unwind info now, because this directive
   // actually switches to the .xdata section!
-  MCWin64EHUnwindEmitter::EmitUnwindInfo(*this, getCurrentWinFrameInfo());
+  EHStreamer.EmitUnwindInfo(*this, getCurrentWinFrameInfo());
 }
 
 void X86WinCOFFStreamer::EmitWindowsUnwindTables() {
   if (!getNumWinFrameInfos())
     return;
-  MCWin64EHUnwindEmitter::Emit(*this);
+  EHStreamer.Emit(*this);
 }
 
 void X86WinCOFFStreamer::FinishImpl() {

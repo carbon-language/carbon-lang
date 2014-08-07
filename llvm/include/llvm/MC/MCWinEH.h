@@ -13,7 +13,11 @@
 #include <vector>
 
 namespace llvm {
+class MCContext;
+class MCSection;
+class MCStreamer;
 class MCSymbol;
+class StringRef;
 
 namespace WinEH {
 struct Instruction {
@@ -57,6 +61,21 @@ struct FrameInfo {
       Function(Function), PrologEnd(nullptr), Symbol(nullptr),
       HandlesUnwind(false), HandlesExceptions(false), LastFrameInst(-1),
       ChainedParent(ChainedParent), Instructions() {}
+};
+
+class UnwindEmitter {
+public:
+  static StringRef GetSectionSuffix(const MCSymbol *Function);
+  static const MCSection *GetPDataSection(StringRef Suffix, MCContext &Context);
+  static const MCSection *GetXDataSection(StringRef Suffix, MCContext &Context);
+
+  virtual ~UnwindEmitter() { }
+
+  //
+  // This emits the unwind info sections (.pdata and .xdata in PE/COFF).
+  //
+  virtual void Emit(MCStreamer &Streamer) const = 0;
+  virtual void EmitUnwindInfo(MCStreamer &Streamer, FrameInfo *FI) const = 0;
 };
 }
 }
