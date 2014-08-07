@@ -854,7 +854,12 @@ Driver::MainLoop ()
     const size_t num_args = m_option_data.m_args.size();
     if (num_args > 0)
     {
-        commands_stream.Printf("target create \"%s\"", m_option_data.m_args[0].c_str());
+        char arch_name[64];
+        if (m_debugger.GetDefaultArchitecture (arch_name, sizeof (arch_name)))
+            commands_stream.Printf("target create --arch=%s \"%s\"", arch_name, m_option_data.m_args[0].c_str());
+        else
+            commands_stream.Printf("target create \"%s\"", m_option_data.m_args[0].c_str());
+
         if (!m_option_data.m_core_file.empty())
         {
             commands_stream.Printf(" --core \"%s\"", m_option_data.m_core_file.c_str());
