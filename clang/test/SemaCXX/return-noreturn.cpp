@@ -183,6 +183,22 @@ int testTernaryConditionalNoreturnFalseBranch(bool value) {
   value ? Return() : (NoReturn() || NoReturn());
 } // expected-warning {{control may reach end of non-void function}}
 
+int testStaticallyExecutedLogicalOrBranch() {
+  false || NoReturn();
+}
+
+int testStaticallyExecutedLogicalAndBranch() {
+  true && NoReturn();
+}
+
+int testStaticallySkippedLogicalOrBranch() {
+  true || NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
+int testStaticallySkppedLogicalAndBranch() {
+  false && NoReturn();
+} // expected-warning {{control reaches end of non-void function}}
+
 
 #if __cplusplus >= 201103L
 namespace LambdaVsTemporaryDtor {

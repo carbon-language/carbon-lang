@@ -3631,12 +3631,23 @@ CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(
     BinaryOperator *E, TempDtorContext &Context) {
   if (E->isLogicalOp()) {
     VisitForTemporaryDtors(E->getLHS(), false, Context);
-    // We do not know at CFG-construction time whether the right-hand-side was
-    // executed, thus we add a branch node that depends on the temporary
-    // constructor call.
+    TryResult LHSVal = tryEvaluateBool(E->getLHS());
+    bool RHSNotExecuted = (E->getOpcode() == BO_LAnd && LHSVal.isFalse()) ||
+                          (E->getOpcode() == BO_LOr && LHSVal.isTrue());
+    if (RHSNotExecuted) {
+      return Block;
+    }
+
     TempDtorContext RHSContext(/*IsConditional=*/true);
     VisitForTemporaryDtors(E->getRHS(), false, RHSContext);
-    InsertTempDtorDecisionBlock(RHSContext);
+
+    // If the LHS is known, and the RHS is not executed, we returned above.
+    // Thus, once we arrive here, and the LHS is known, we also know that the
+    // RHS was executed and can execute the RHS unconditionally (that is, we
+    // don't insert a decision block).
+    if (!LHSVal.isKnown())
+      InsertTempDtorDecisionBlock(RHSContext);
+
     return Block;
   }
 
