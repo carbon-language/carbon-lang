@@ -187,6 +187,11 @@ static bool isSafeToConvert(const RecordDecl *RD, CodeGenTypes &CGT) {
 /// we've temporarily deferred expanding the type because we're in a recursive
 /// context.
 bool CodeGenTypes::isFuncParamTypeConvertible(QualType Ty) {
+  // Some ABIs cannot have their member pointers represented in IR unless
+  // certain circumstances have been reached.
+  if (const auto *MPT = Ty->getAs<MemberPointerType>())
+    return getCXXABI().isMemberPointerConvertible(MPT);
+
   // If this isn't a tagged type, we can convert it!
   const TagType *TT = Ty->getAs<TagType>();
   if (!TT) return true;
@@ -194,7 +199,7 @@ bool CodeGenTypes::isFuncParamTypeConvertible(QualType Ty) {
   // Incomplete types cannot be converted.
   if (TT->isIncompleteType())
     return false;
-  
+
   // If this is an enum, then it is always safe to convert.
   const RecordType *RT = dyn_cast<RecordType>(TT);
   if (!RT) return true;

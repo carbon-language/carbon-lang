@@ -156,6 +156,11 @@ public:
   /// (in the C++ sense) with an LLVM zeroinitializer.
   virtual bool isZeroInitializable(const MemberPointerType *MPT);
 
+  /// Return whether or not a member pointers type is convertible to an IR type.
+  virtual bool isMemberPointerConvertible(const MemberPointerType *MPT) const {
+    return true;
+  }
+
   /// Create a null member pointer of the given type.
   virtual llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT);
 

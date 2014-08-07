@@ -482,6 +482,11 @@ public:
 
   bool isZeroInitializable(const MemberPointerType *MPT) override;
 
+  bool isMemberPointerConvertible(const MemberPointerType *MPT) const override {
+    const CXXRecordDecl *RD = MPT->getMostRecentCXXRecordDecl();
+    return RD->getAttr<MSInheritanceAttr>() != nullptr;
+  }
+
   llvm::Constant *EmitNullMemberPointer(const MemberPointerType *MPT) override;
 
   llvm::Constant *EmitMemberDataPointer(const MemberPointerType *MPT,
