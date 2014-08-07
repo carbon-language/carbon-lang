@@ -1659,6 +1659,10 @@ static bool isVectorPromotionViableForSlice(
       return false;
     if (!I->isSplittable())
       return false; // Skip any unsplittable intrinsics.
+  } else if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(U->getUser())) {
+    if (II->getIntrinsicID() != Intrinsic::lifetime_start &&
+        II->getIntrinsicID() != Intrinsic::lifetime_end)
+      return false;
   } else if (U->get()->getType()->getPointerElementType()->isStructTy()) {
     // Disable vector promotion when there are loads or stores of an FCA.
     return false;
