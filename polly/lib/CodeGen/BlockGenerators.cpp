@@ -67,10 +67,11 @@ bool polly::canSynthesize(const Instruction *I, const llvm::LoopInfo *LI,
 }
 
 BlockGenerator::BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
+                               LoopInfo &LI, ScalarEvolution &SE,
                                isl_ast_build *Build,
                                IslExprBuilder *ExprBuilder)
-    : Builder(B), Statement(Stmt), P(P), SE(P->getAnalysis<ScalarEvolution>()),
-      Build(Build), ExprBuilder(ExprBuilder) {}
+    : Builder(B), Statement(Stmt), P(P), LI(LI), SE(SE), Build(Build),
+      ExprBuilder(ExprBuilder) {}
 
 Value *BlockGenerator::lookupAvailableValue(const Value *Old, ValueMapT &BBMap,
                                             ValueMapT &GlobalMap) const {
@@ -209,7 +210,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
 }
 
 Loop *BlockGenerator::getLoopForInst(const llvm::Instruction *Inst) {
-  return P->getAnalysis<LoopInfo>().getLoopFor(Inst->getParent());
+  return LI.getLoopFor(Inst->getParent());
 }
 
 Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
@@ -282,14 +283,12 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap, LoopToScevMapT &LTS) {
     copyInstruction(&Inst, BBMap, GlobalMap, LTS);
 }
 
-VectorBlockGenerator::VectorBlockGenerator(PollyIRBuilder &B,
-                                           VectorValueMapT &GlobalMaps,
-                                           std::vector<LoopToScevMapT> &VLTS,
-                                           ScopStmt &Stmt,
-                                           __isl_keep isl_map *Schedule,
-                                           Pass *P)
-    : BlockGenerator(B, Stmt, P, nullptr, nullptr), GlobalMaps(GlobalMaps),
-      VLTS(VLTS), Schedule(Schedule) {
+VectorBlockGenerator::VectorBlockGenerator(
+    PollyIRBuilder &B, VectorValueMapT &GlobalMaps,
+    std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
+    __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI, ScalarEvolution &SE)
+    : BlockGenerator(B, Stmt, P, LI, SE, nullptr, nullptr),
+      GlobalMaps(GlobalMaps), VLTS(VLTS), Schedule(Schedule) {
   assert(GlobalMaps.size() > 1 && "Only one vector lane found");
   assert(Schedule && "No statement domain provided");
 }

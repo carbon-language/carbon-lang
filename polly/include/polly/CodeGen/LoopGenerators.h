@@ -36,6 +36,8 @@ using namespace llvm;
 /// @param Builder    The builder used to create the loop.
 /// @param P          A pointer to the pass that uses this function. It is used
 ///                   to update analysis information.
+/// @param LI         The loop info for the current function
+/// @param DT         The dominator tree we need to update
 /// @param ExitBlock  The block the loop will exit to.
 /// @param Predicate  The predicate used to generate the upper loop bound.
 /// @param Annotator  This function can (optionally) take a LoopAnnotator which
@@ -43,7 +45,8 @@ using namespace llvm;
 /// @param Parallel   If this loop should be marked parallel in the Annotator.
 /// @return Value*    The newly created induction variable for this loop.
 Value *createLoop(Value *LowerBound, Value *UpperBound, Value *Stride,
-                  PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBlock,
+                  PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
+                  DominatorTree &DT, BasicBlock *&ExitBlock,
                   ICmpInst::Predicate Predicate,
                   LoopAnnotator *Annotator = NULL, bool Parallel = false);
 

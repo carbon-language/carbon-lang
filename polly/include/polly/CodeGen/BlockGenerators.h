@@ -67,22 +67,23 @@ class BlockGenerator {
 public:
   /// @brief Generate a new BasicBlock for a ScopStmt.
   ///
-  /// @param Builder     The LLVM-IR Builder used to generate the statement. The
-  ///                    code is generated at the location, the Builder points
-  ///                    to.
-  /// @param Stmt        The statement to code generate.
-  /// @param GlobalMap   A map that defines for certain Values referenced from
-  ///                    the original code new Values they should be replaced
-  ///                    with.
-  /// @param P           A reference to the pass this function is called from.
-  ///                    The pass is needed to update other analysis.
+  /// @param Builder   The LLVM-IR Builder used to generate the statement. The
+  ///                  code is generated at the location, the Builder points to.
+  /// @param Stmt      The statement to code generate.
+  /// @param GlobalMap A map that defines for certain Values referenced from the
+  ///                  original code new Values they should be replaced with.
+  /// @param P         A reference to the pass this function is called from.
+  ///                  The pass is needed to update other analysis.
+  /// @param LI        The loop info for the current function
+  /// @param SE        The scalar evolution info for the current function
   /// @param Build       The AST build with the new schedule.
   /// @param ExprBuilder An expression builder to generate new access functions.
   static void generate(PollyIRBuilder &Builder, ScopStmt &Stmt,
                        ValueMapT &GlobalMap, LoopToScevMapT &LTS, Pass *P,
+                       LoopInfo &LI, ScalarEvolution &SE,
                        __isl_keep isl_ast_build *Build = nullptr,
                        IslExprBuilder *ExprBuilder = nullptr) {
-    BlockGenerator Generator(Builder, Stmt, P, Build, ExprBuilder);
+    BlockGenerator Generator(Builder, Stmt, P, LI, SE, Build, ExprBuilder);
     Generator.copyBB(GlobalMap, LTS);
   }
 
@@ -90,12 +91,14 @@ protected:
   PollyIRBuilder &Builder;
   ScopStmt &Statement;
   Pass *P;
+  LoopInfo &LI;
   ScalarEvolution &SE;
   isl_ast_build *Build;
   IslExprBuilder *ExprBuilder;
 
-  BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P,
-                 __isl_keep isl_ast_build *Build, IslExprBuilder *ExprBuilder);
+  BlockGenerator(PollyIRBuilder &B, ScopStmt &Stmt, Pass *P, LoopInfo &LI,
+                 ScalarEvolution &SE, __isl_keep isl_ast_build *Build,
+                 IslExprBuilder *ExprBuilder);
 
   /// @brief Get the new version of a Value.
   ///
@@ -204,11 +207,15 @@ public:
   ///                   loop containing the statemenet.
   /// @param P          A reference to the pass this function is called from.
   ///                   The pass is needed to update other analysis.
+  /// @param LI        The loop info for the current function
+  /// @param SE        The scalar evolution info for the current function
   static void generate(PollyIRBuilder &B, ScopStmt &Stmt,
                        VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS,
-                       __isl_keep isl_map *Schedule, Pass *P) {
-    VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P);
+                       __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI,
+                       ScalarEvolution &SE) {
+    VectorBlockGenerator Generator(B, GlobalMaps, VLTS, Stmt, Schedule, P, LI,
+                                   SE);
     Generator.copyBB();
   }
 
@@ -244,7 +251,8 @@ private:
 
   VectorBlockGenerator(PollyIRBuilder &B, VectorValueMapT &GlobalMaps,
                        std::vector<LoopToScevMapT> &VLTS, ScopStmt &Stmt,
-                       __isl_keep isl_map *Schedule, Pass *P);
+                       __isl_keep isl_map *Schedule, Pass *P, LoopInfo &LI,
+                       ScalarEvolution &SE);
 
   int getVectorWidth();
 

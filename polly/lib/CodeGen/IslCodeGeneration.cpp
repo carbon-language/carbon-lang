@@ -58,9 +58,10 @@ using namespace llvm;
 
 class IslNodeBuilder {
 public:
-  IslNodeBuilder(PollyIRBuilder &Builder, LoopAnnotator &Annotator, Pass *P)
+  IslNodeBuilder(PollyIRBuilder &Builder, LoopAnnotator &Annotator, Pass *P,
+                 LoopInfo &LI, ScalarEvolution &SE, DominatorTree &DT)
       : Builder(Builder), Annotator(Annotator), ExprBuilder(Builder, IDToValue),
-        P(P) {}
+        P(P), LI(LI), SE(SE), DT(DT) {}
 
   /// @brief Add the mappings from array id's to array llvm::Value's.
   void addMemoryAccesses(Scop &S);
@@ -73,6 +74,9 @@ private:
   LoopAnnotator &Annotator;
   IslExprBuilder ExprBuilder;
   Pass *P;
+  LoopInfo &LI;
+  ScalarEvolution &SE;
+  DominatorTree &DT;
 
   // This maps an isl_id* to the Value* it has in the generated program. For now
   // on, the only isl_ids that are stored here are the newly calculated loop
@@ -239,7 +243,7 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_map *S = isl_map_from_union_map(Schedule);
 
   createSubstitutionsVector(Expr, Stmt, VectorMap, VLTS, IVS, IteratorID);
-  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, VLTS, S, P);
+  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, VLTS, S, P, LI, SE);
 
   isl_map_free(S);
   isl_id_free(Id);
@@ -350,8 +354,8 @@ void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   if (MaxType != ValueInc->getType())
     ValueInc = Builder.CreateSExt(ValueInc, MaxType);
 
-  IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, P, ExitBlock, Predicate,
-                  &Annotator, Parallel);
+  IV = createLoop(ValueLB, ValueUB, ValueInc, Builder, P, LI, DT, ExitBlock,
+                  Predicate, &Annotator, Parallel);
   IDToValue[IteratorID] = IV;
 
   create(Body);
@@ -395,12 +399,10 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
   BasicBlock *ElseBB = BasicBlock::Create(Context, "polly.else", F);
 
-  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   DT.addNewBlock(ThenBB, CondBB);
   DT.addNewBlock(ElseBB, CondBB);
   DT.changeImmediateDominator(MergeBB, CondBB);
 
-  LoopInfo &LI = P->getAnalysis<LoopInfo>();
   Loop *L = LI.getLoopFor(CondBB);
   if (L) {
     L->addBasicBlockToLoop(ThenBB, LI.getBase());
@@ -490,7 +492,7 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
   Stmt = (ScopStmt *)isl_id_get_user(Id);
 
   createSubstitutions(Expr, Stmt, VMap, LTS);
-  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P,
+  BlockGenerator::generate(Builder, *Stmt, VMap, LTS, P, LI, SE,
                            IslAstInfo::getBuild(User), &ExprBuilder);
 
   isl_ast_node_free(User);
@@ -529,7 +531,7 @@ void IslNodeBuilder::create(__isl_take isl_ast_node *Node) {
 }
 
 void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
-  SCEVExpander Rewriter(P->getAnalysis<ScalarEvolution>(), "polly");
+  SCEVExpander Rewriter(SE, "polly");
 
   for (unsigned i = 0; i < isl_set_dim(Context, isl_dim_param); ++i) {
     isl_id *Id;
@@ -567,7 +569,10 @@ public:
   IslCodeGeneration() : ScopPass(ID) {}
 
   bool runOnScop(Scop &S) {
+    LoopInfo &LI = getAnalysis<LoopInfo>();
     IslAstInfo &AstInfo = getAnalysis<IslAstInfo>();
+    ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
+    DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
     assert(!S.getRegion().isTopLevelRegion() &&
            "Top level regions are not supported");
@@ -581,7 +586,7 @@ public:
                            polly::IRInserter(Annotator));
     Builder.SetInsertPoint(StartBlock->begin());
 
-    IslNodeBuilder NodeBuilder(Builder, Annotator, this);
+    IslNodeBuilder NodeBuilder(Builder, Annotator, this, LI, SE, DT);
 
     Builder.SetInsertPoint(StartBlock->getSinglePredecessor()->begin());
     NodeBuilder.addMemoryAccesses(S);

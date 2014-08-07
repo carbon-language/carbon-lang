@@ -47,11 +47,10 @@ using namespace polly;
 // TODO: We currently always create the GuardBB. If we can prove the loop is
 //       always executed at least once, we can get rid of this branch.
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
-                         PollyIRBuilder &Builder, Pass *P, BasicBlock *&ExitBB,
+                         PollyIRBuilder &Builder, Pass *P, LoopInfo &LI,
+                         DominatorTree &DT, BasicBlock *&ExitBB,
                          ICmpInst::Predicate Predicate,
                          LoopAnnotator *Annotator, bool Parallel) {
-  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  LoopInfo &LI = P->getAnalysis<LoopInfo>();
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
@@ -321,7 +320,8 @@ Value *OMPGenerator::createSubfunction(Value *Stride, Value *StructData,
 
   Builder.CreateBr(CheckNextBB);
   Builder.SetInsertPoint(--Builder.GetInsertPoint());
-  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB,
+  LoopInfo &LI = P->getAnalysis<LoopInfo>();
+  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, LI, DT, AfterBB,
                   ICmpInst::ICMP_SLE);
 
   BasicBlock::iterator LoopBody = Builder.GetInsertPoint();
