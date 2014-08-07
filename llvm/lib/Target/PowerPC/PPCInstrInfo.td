@@ -3168,6 +3168,8 @@ def TLBSX2D : XForm_base_r3xo<31, 914, (outs),
                               "tlbsx. $RST, $A, $B", IIC_LdStLoad, []>,
                               Requires<[IsPPC4xx]>, isDOT;
 
+def RFID : XForm_0<19, 18, (outs), (ins), "rfid", IIC_IntRFID, []>;
+
 def RFI : XForm_0<19, 50, (outs), (ins), "rfi", IIC_SprRFI, []>,
                   Requires<[IsBookE]>;
 def RFCI : XForm_0<19, 51, (outs), (ins), "rfci", IIC_BrB, []>,

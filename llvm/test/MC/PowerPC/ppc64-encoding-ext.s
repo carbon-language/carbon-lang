@@ -3616,3 +3616,7 @@
 # CHECK-BE: stswi 8, 6, 7                    # encoding: [0x7d,0x06,0x3d,0xaa]
 # CHECK-LE: stswi 8, 6, 7                    # encoding: [0xaa,0x3d,0x06,0x7d]
             stswi %r8, %r6, 7
+
+# CHECK-BE: rfid                            # encoding: [0x4c,0x00,0x00,0x24]
+# CHECK-LE: rfid                            # encoding: [0x24,0x00,0x00,0x4c]
+            rfid
