@@ -83,6 +83,7 @@ protected:
   bool UseCRBits;
   bool IsPPC64;
   bool HasAltivec;
+  bool HasSPE;
   bool HasQPX;
   bool HasVSX;
   bool HasFCPSGN;
@@ -225,6 +226,7 @@ public:
   bool hasFPRND() const { return HasFPRND; }
   bool hasFPCVT() const { return HasFPCVT; }
   bool hasAltivec() const { return HasAltivec; }
+  bool hasSPE() const { return HasSPE; }
   bool hasQPX() const { return HasQPX; }
   bool hasVSX() const { return HasVSX; }
   bool hasMFOCRF() const { return HasMFOCRF; }

@@ -632,6 +632,7 @@ def IsNotBookE  : Predicate<"!PPCSubTarget->isBookE()">;
 def IsPPC4xx  : Predicate<"PPCSubTarget->isPPC4xx()">;
 def IsPPC6xx  : Predicate<"PPCSubTarget->isPPC6xx()">;
 def IsE500  : Predicate<"PPCSubTarget->isE500()">;
+def HasSPE  : Predicate<"PPCSubTarget->HasSPE()">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Multiclass Definitions.
@@ -2521,6 +2522,7 @@ def : Pat<(fcopysign f32:$frB, f64:$frA),
           (FCPSGNS (COPY_TO_REGCLASS $frA, F4RC), $frB)>;
 
 include "PPCInstrAltivec.td"
+include "PPCInstrSPE.td"
 include "PPCInstr64Bit.td"
 include "PPCInstrVSX.td"
 
@@ -3325,6 +3327,9 @@ def : InstAlias<"mfdear $Rx", (MFSPR gprc:$Rx, 981)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mtesr $Rx", (MTSPR 980, gprc:$Rx)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mfesr $Rx", (MFSPR gprc:$Rx, 980)>, Requires<[IsPPC4xx]>;
 
+def : InstAlias<"mfspefscr $Rx", (MFSPR gprc:$Rx, 512)>;
+def : InstAlias<"mtspefscr $Rx", (MTSPR 512, gprc:$Rx)>;
+
 def : InstAlias<"mttcr $Rx", (MTSPR 986, gprc:$Rx)>, Requires<[IsPPC4xx]>;
 def : InstAlias<"mftcr $Rx", (MFSPR gprc:$Rx, 986)>, Requires<[IsPPC4xx]>;
 
@@ -3637,4 +3642,3 @@ defm : TrapExtendedMnemonic<"lgt", 1>;
 defm : TrapExtendedMnemonic<"lnl", 5>;
 defm : TrapExtendedMnemonic<"lng", 6>;
 defm : TrapExtendedMnemonic<"u", 31>;
-
