@@ -15,7 +15,6 @@ TARGET = SystemZ
 BUILT_SOURCES = SystemZGenRegisterInfo.inc \
 		SystemZGenAsmWriter.inc \
 		SystemZGenAsmMatcher.inc \
-		SystemZGenCodeEmitter.inc \
 		SystemZGenDisassemblerTables.inc \
 		SystemZGenInstrInfo.inc \
 		SystemZGenDAGISel.inc \
