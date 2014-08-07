@@ -362,9 +362,9 @@ private:
     assert(RE.Size == 2);
     SectionEntry &Section = Sections[RE.SectionID];
     StubMap::const_iterator i = Stubs.find(Value);
-    uint8_t *Addr;
+    uintptr_t Addr;
     if (i != Stubs.end())
-      Addr = Section.Address + i->second;
+      Addr = reinterpret_cast<uintptr_t>(Section.Address) + i->second;
     else {
       // FIXME: There must be a better way to do this then to check and fix the
       // alignment every time!!!
@@ -385,11 +385,11 @@ private:
       else
         addRelocationForSection(GOTRE, Value.SectionID);
       Section.StubOffset = StubOffset + getMaxStubSize();
-      Addr = (uint8_t *)StubAddress;
+      Addr = StubAddress;
     }
     RelocationEntry TargetRE(RE.SectionID, RE.Offset, RE.RelType, /*Addend=*/0,
                              RE.IsPCRel, RE.Size);
-    resolveRelocation(TargetRE, (uint64_t)Addr);
+    resolveRelocation(TargetRE, static_cast<uint64_t>(Addr));
   }
 };
 }
