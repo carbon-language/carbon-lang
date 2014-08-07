@@ -7449,7 +7449,7 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
                 Input - SourceOffset;
             // We have to swap the uses in our half mask in one sweep.
             for (int &M : HalfMask)
-              if (M == SourceHalfMask[Input - SourceOffset])
+              if (M == SourceHalfMask[Input - SourceOffset] + SourceOffset)
                 M = Input;
               else if (M == Input)
                 M = SourceHalfMask[Input - SourceOffset] + SourceOffset;

@@ -220,6 +220,24 @@ define <8 x i16> @shuffle_v8i16_26401375(<8 x i16> %a, <8 x i16> %b) {
   ret <8 x i16> %shuffle
 }
 
+define <8 x i16> @shuffle_v8i16_66751643(<8 x i16> %a, <8 x i16> %b) {
+; SSE2-LABEL: @shuffle_v8i16_66751643
+; SSE2:       # BB#0:
+; SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[3,1,2,3,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,4,6,5,7]
+; SSE2-NEXT:    pshufd {{.*}} # xmm0 = xmm0[2,3,2,0]
+; SSE2-NEXT:    pshuflw {{.*}} # xmm0 = xmm0[1,1,3,2,4,5,6,7]
+; SSE2-NEXT:    pshufhw {{.*}} # xmm0 = xmm0[0,1,2,3,7,5,4,6]
+; SSE2-NEXT:    retq
+;
+; SSSE3-LABEL: @shuffle_v8i16_66751643
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[12,13,12,13,14,15,10,11,2,3,12,13,8,9,6,7]
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i16> %a, <8 x i16> %b, <8 x i32> <i32 6, i32 6, i32 7, i32 5, i32 1, i32 6, i32 4, i32 3>
+  ret <8 x i16> %shuffle
+}
+
 define <8 x i16> @shuffle_v8i16_00444444(<8 x i16> %a, <8 x i16> %b) {
 ; SSE2-LABEL: @shuffle_v8i16_00444444
 ; SSE2:       # BB#0:
