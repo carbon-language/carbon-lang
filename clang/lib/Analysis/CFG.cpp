@@ -3638,15 +3638,17 @@ CFGBlock *CFGBuilder::VisitBinaryOperatorForTemporaryDtors(
       return Block;
     }
 
-    TempDtorContext RHSContext(/*IsConditional=*/true);
-    VisitForTemporaryDtors(E->getRHS(), false, RHSContext);
-
     // If the LHS is known, and the RHS is not executed, we returned above.
     // Thus, once we arrive here, and the LHS is known, we also know that the
     // RHS was executed and can execute the RHS unconditionally (that is, we
     // don't insert a decision block).
-    if (!LHSVal.isKnown())
+    if (LHSVal.isKnown()) {
+      VisitForTemporaryDtors(E->getRHS(), false, Context);
+    } else {
+      TempDtorContext RHSContext(/*IsConditional=*/true);
+      VisitForTemporaryDtors(E->getRHS(), false, RHSContext);
       InsertTempDtorDecisionBlock(RHSContext);
+    }
 
     return Block;
   }
@@ -3724,22 +3726,24 @@ CFGBlock *CFGBuilder::VisitConditionalOperatorForTemporaryDtors(
   CFGBlock *ConditionSucc = Succ;
   TryResult ConditionVal = tryEvaluateBool(E->getCond());
 
-  TempDtorContext TrueContext(/*IsConditional=*/true);
-  if (!ConditionVal.isFalse()) {
-    VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, TrueContext);
-    if (ConditionVal.isTrue())
-      return Block;
+  if (ConditionVal.isKnown()) {
+    if (ConditionVal.isTrue()) {
+      VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, Context);
+    } else {
+      assert(ConditionVal.isFalse());
+      VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, Context);
+    }
+    return Block;
   }
+
+  TempDtorContext TrueContext(/*IsConditional=*/true);
+  VisitForTemporaryDtors(E->getTrueExpr(), BindToTemporary, TrueContext);
   CFGBlock *TrueBlock = Block;
 
   Block = ConditionBlock;
   Succ = ConditionSucc;
   TempDtorContext FalseContext(/*IsConditional=*/true);
-  if (!ConditionVal.isTrue()) {
-    VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, FalseContext);
-    if (ConditionVal.isFalse())
-      return Block;
-  }
+  VisitForTemporaryDtors(E->getFalseExpr(), BindToTemporary, FalseContext);
 
   if (TrueContext.TerminatorExpr && FalseContext.TerminatorExpr) {
     InsertTempDtorDecisionBlock(FalseContext, TrueBlock);
