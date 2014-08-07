@@ -38,6 +38,8 @@ void MipsTargetStreamer::emitDirectiveSetReorder() {}
 void MipsTargetStreamer::emitDirectiveSetNoReorder() {}
 void MipsTargetStreamer::emitDirectiveSetMacro() {}
 void MipsTargetStreamer::emitDirectiveSetNoMacro() {}
+void MipsTargetStreamer::emitDirectiveSetMsa() { setCanHaveModuleDir(false); }
+void MipsTargetStreamer::emitDirectiveSetNoMsa() { setCanHaveModuleDir(false); }
 void MipsTargetStreamer::emitDirectiveSetAt() {}
 void MipsTargetStreamer::emitDirectiveSetNoAt() {}
 void MipsTargetStreamer::emitDirectiveEnd(StringRef Name) {}
@@ -116,6 +118,16 @@ void MipsTargetAsmStreamer::emitDirectiveSetMacro() {
 void MipsTargetAsmStreamer::emitDirectiveSetNoMacro() {
   OS << "\t.set\tnomacro\n";
   setCanHaveModuleDir(false);
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetMsa() {
+  OS << "\t.set\tmsa\n";
+  MipsTargetStreamer::emitDirectiveSetMsa();
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetNoMsa() {
+  OS << "\t.set\tnomsa\n";
+  MipsTargetStreamer::emitDirectiveSetNoMsa();
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetAt() {

@@ -30,6 +30,8 @@ public:
   virtual void emitDirectiveSetNoReorder();
   virtual void emitDirectiveSetMacro();
   virtual void emitDirectiveSetNoMacro();
+  virtual void emitDirectiveSetMsa();
+  virtual void emitDirectiveSetNoMsa();
   virtual void emitDirectiveSetAt();
   virtual void emitDirectiveSetNoAt();
   virtual void emitDirectiveEnd(StringRef Name);
@@ -114,6 +116,8 @@ public:
   void emitDirectiveSetNoReorder() override;
   void emitDirectiveSetMacro() override;
   void emitDirectiveSetNoMacro() override;
+  void emitDirectiveSetMsa() override;
+  void emitDirectiveSetNoMsa() override;
   void emitDirectiveSetAt() override;
   void emitDirectiveSetNoAt() override;
   void emitDirectiveEnd(StringRef Name) override;

@@ -167,6 +167,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetNoAtDirective();
   bool parseSetMacroDirective();
   bool parseSetNoMacroDirective();
+  bool parseSetMsaDirective();
+  bool parseSetNoMsaDirective();
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
   bool parseSetNoMips16Directive();
@@ -2487,6 +2489,30 @@ bool MipsAsmParser::parseSetNoMacroDirective() {
   return false;
 }
 
+bool MipsAsmParser::parseSetMsaDirective() {
+  Parser.Lex();
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token in statement");
+
+  setFeatureBits(Mips::FeatureMSA, "msa");
+  getTargetStreamer().emitDirectiveSetMsa();
+  return false;
+}
+
+bool MipsAsmParser::parseSetNoMsaDirective() {
+  Parser.Lex();
+
+  // If this is not the end of the statement, report an error.
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return reportParseError("unexpected token in statement");
+
+  clearFeatureBits(Mips::FeatureMSA, "msa");
+  getTargetStreamer().emitDirectiveSetNoMsa();
+  return false;
+}
+
 bool MipsAsmParser::parseSetNoMips16Directive() {
   Parser.Lex();
   // If this is not the end of the statement, report an error.
@@ -2782,6 +2808,10 @@ bool MipsAsmParser::parseDirectiveSet() {
     return parseSetFeature(Mips::FeatureMips64r6);
   } else if (Tok.getString() == "dsp") {
     return parseSetFeature(Mips::FeatureDSP);
+  } else if (Tok.getString() == "msa") {
+    return parseSetMsaDirective();
+  } else if (Tok.getString() == "nomsa") {
+    return parseSetNoMsaDirective();
   } else {
     // It is just an identifier, look for an assignment.
     parseSetAssignment();
