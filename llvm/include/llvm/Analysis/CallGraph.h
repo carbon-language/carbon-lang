@@ -58,7 +58,6 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/IncludeFile.h"
 #include <map>
 
 namespace llvm {
@@ -460,8 +459,5 @@ struct GraphTraits<const CallGraph *> : public GraphTraits<
 };
 
 } // End llvm namespace
-
-// Make sure that any clients of this file link in CallGraph.cpp
-FORCE_DEFINING_FILE_TO_BE_LINKED(CallGraph)
 
 #endif

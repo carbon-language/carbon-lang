@@ -76,7 +76,6 @@ add_llvm_library(LLVMSupport
   DynamicLibrary.cpp
   Errno.cpp
   Host.cpp
-  IncludeFile.cpp
   Memory.cpp
   Mutex.cpp
   Path.cpp

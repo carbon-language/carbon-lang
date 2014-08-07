@@ -282,6 +282,3 @@ void CallGraphWrapperPass::print(raw_ostream &OS, const Module *) const {
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 void CallGraphWrapperPass::dump() const { print(dbgs(), nullptr); }
 #endif
-
-// Enuse that users of CallGraph.h also link with this file
-DEFINING_FILE_FOR(CallGraph)
