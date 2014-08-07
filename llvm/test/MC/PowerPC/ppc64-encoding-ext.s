@@ -3626,3 +3626,10 @@
 # CHECK-BE: rfid                            # encoding: [0x4c,0x00,0x00,0x24]
 # CHECK-LE: rfid                            # encoding: [0x24,0x00,0x00,0x4c]
             rfid
+
+# CHECK-BE: mfspr 2, 280                     # encoding: [0x7c,0x58,0x42,0xa6]
+# CHECK-LE: mfspr 2, 280                     # encoding: [0xa6,0x42,0x58,0x7c]
+            mfasr 2
+# CHECK-BE: mtspr 280, 2                     # encoding: [0x7c,0x58,0x43,0xa6]
+# CHECK-LE: mtspr 280, 2                     # encoding: [0xa6,0x43,0x58,0x7c]
+            mtasr 2

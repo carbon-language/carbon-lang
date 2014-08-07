@@ -3360,6 +3360,9 @@ def : InstAlias<"subc. $rA, $rB, $rC", (SUBFC8o g8rc:$rA, g8rc:$rC, g8rc:$rB)>;
 def : InstAlias<"mtmsrd $RS", (MTMSRD gprc:$RS, 0)>;
 def : InstAlias<"mtmsr $RS", (MTMSR gprc:$RS, 0)>;
 
+def : InstAlias<"mfasr $RT", (MFSPR gprc:$RT, 280)>;
+def : InstAlias<"mtasr $RT", (MTSPR 280, gprc:$RT)>;
+
 foreach SPRG = 0-3 in {
   def : InstAlias<"mfsprg $RT, "#SPRG, (MFSPR gprc:$RT, !add(SPRG, 272))>;
   def : InstAlias<"mfsprg"#SPRG#" $RT", (MFSPR gprc:$RT, !add(SPRG, 272))>;
