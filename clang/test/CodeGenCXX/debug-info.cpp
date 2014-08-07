@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-none-linux-gnu -emit-llvm -g %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-pc-windows-msvc -emit-llvm -g %s -o - | FileCheck %s --check-prefix=MSVC
+
 template<typename T> struct Identity {
   typedef T Type;
 };
@@ -43,13 +45,17 @@ namespace VirtualDtor {
 }
 
 namespace VirtualBase {
-  struct A { };
-  struct B : virtual A { };
+  struct A { int a; };
+  struct B : virtual A { int b; };
 
   void f() {
     B b;
   }
 }
+
+// MSVC: [[VBASE_B:![0-9]+]] = metadata !{i32 {{.*}}, metadata !"B", i32 {{[0-9]*}}, i64 96, i64 32, i32 0, i32 0, null, metadata [[ZZZ:![0-9]+]], i32 0, {{.*}}} ; [ DW_TAG_structure_type ] [B] [line 49, size 96, align 32, offset 0] [def] [from ]
+// MSVC: [[ZZZ]] = metadata !{metadata [[VBASE_A_IN_B:![0-9]+]],
+// MSVC: [[VBASE_A_IN_B]] = metadata !{i32 786460, null, metadata [[VBASE_B]], null, i32 0, i64 0, i64 0, i64 -8, i32 32, metadata !{{[0-9]*}}} ; [ DW_TAG_inheritance ] [line 0, size 0, align 0, offset 18446744073709551608] [from A]
 
 namespace b5249287 {
 template <typename T> class A {
