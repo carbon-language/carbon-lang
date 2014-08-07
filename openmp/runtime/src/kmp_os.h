@@ -70,10 +70,12 @@
 #define KMP_OS_FREEBSD  0
 #define KMP_OS_DARWIN   0
 #define KMP_OS_WINDOWS    0
+#define KMP_OS_CNK      0
 #define KMP_OS_UNIX     0  /* disjunction of KMP_OS_LINUX, KMP_OS_DARWIN etc. */
 
 #define KMP_ARCH_X86        0
 #define KMP_ARCH_X86_64	    0
+#define KMP_ARCH_PPC64      0
 
 #ifdef _WIN32
 # undef KMP_OS_WINDOWS
@@ -85,14 +87,24 @@
 # define KMP_OS_DARWIN 1
 #endif
 
+// in some ppc64 linux installations, only the second condition is met
 #if ( defined __linux )
 # undef KMP_OS_LINUX
 # define KMP_OS_LINUX 1
+#elif ( defined __linux__)
+# undef KMP_OS_LINUX
+# define KMP_OS_LINUX 1
+#else
 #endif
 
 #if ( defined __FreeBSD__ )
 # undef KMP_OS_FREEBSD
 # define KMP_OS_FREEBSD 1
+#endif
+
+#if ( defined __bgq__ )
+# undef KMP_OS_CNK
+# define KMP_OS_CNK 1
 #endif
 
 #if (1 != KMP_OS_LINUX + KMP_OS_FREEBSD + KMP_OS_DARWIN + KMP_OS_WINDOWS)
@@ -121,6 +133,9 @@
 # elif defined __i386
 #  undef KMP_ARCH_X86
 #  define KMP_ARCH_X86 1
+# elif defined __powerpc64__
+#  undef KMP_ARCH_PPC64
+#  define KMP_ARCH_PPC64 1
 # endif
 #endif
 
@@ -160,7 +175,7 @@
 # define KMP_ARCH_ARM 1
 #endif
 
-#if (1 != KMP_ARCH_X86 + KMP_ARCH_X86_64 + KMP_ARCH_ARM)
+#if (1 != KMP_ARCH_X86 + KMP_ARCH_X86_64 + KMP_ARCH_ARM + KMP_ARCH_PPC64)
 # error Unknown or unsupported architecture
 #endif
 
@@ -238,7 +253,7 @@
 
 #if KMP_ARCH_X86 || KMP_ARCH_ARM
 # define KMP_SIZE_T_SPEC KMP_UINT32_SPEC
-#elif KMP_ARCH_X86_64
+#elif KMP_ARCH_X86_64 || KMP_ARCH_PPC64
 # define KMP_SIZE_T_SPEC KMP_UINT64_SPEC
 #else
 # error "Can't determine size_t printf format specifier."
@@ -663,6 +678,10 @@ extern kmp_real64 __kmp_test_then_add_real64 ( volatile kmp_real64 *p, kmp_real6
 # endif
 #endif /* KMP_OS_WINDOWS */
 
+#if KMP_ARCH_PPC64
+# define KMP_MB()       __sync_synchronize()
+#endif
+
 #ifndef KMP_MB
 # define KMP_MB()       /* nothing to do */
 #endif
@@ -769,7 +788,7 @@ typedef void    (*microtask_t)( int *gtid, int *npr, ... );
 #endif /* KMP_I8 */
 
 /* Workaround for Intel(R) 64 code gen bug when taking address of static array (Intel(R) 64 Tracker #138) */
-#if KMP_ARCH_X86_64 && KMP_OS_LINUX
+#if (KMP_ARCH_X86_64 || KMP_ARCH_PPC64) && KMP_OS_LINUX
 # define STATIC_EFI2_WORKAROUND
 #else
 # define STATIC_EFI2_WORKAROUND static

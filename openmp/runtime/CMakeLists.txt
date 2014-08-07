@@ -49,7 +49,7 @@ include(FindPerl) # Standard cmake module to check for Perl
 
 # Build Configuration
 set(os_possible_values          lin mac win mic)
-set(arch_possible_values        32e 32 arm)
+set(arch_possible_values        32e 32 arm ppc64)
 set(build_type_possible_values  release debug relwithdebinfo)
 set(omp_version_possible_values 40 30)
 set(lib_type_possible_values    normal profile stubs)
@@ -71,10 +71,13 @@ else()
     set(os             lin         CACHE STRING "The operating system to build for (lin/mac/win/mic)")
 endif()
 
-if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
-    set(arch           32          CACHE STRING "The architecture to build for (32e/32/arm).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
-else()
-    set(arch           32e         CACHE STRING "The architecture to build for (32e/32/arm).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+# set to default architecture if the user did not specify an architecture explicitly
+if(NOT arch)	
+	if("${CMAKE_SIZEOF_VOID_P}" STREQUAL "4")
+    	set(arch           32          CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+	else()
+    	set(arch           32e         CACHE STRING "The architecture to build for (32e/32/arm/ppc64).  32e is Intel(R) 64 architecture, 32 is IA-32 architecture")
+	endif()
 endif()
 
 set(lib_type       normal        CACHE STRING "Performance,Profiling,Stubs library (normal/profile/stubs)")
@@ -170,12 +173,15 @@ endif()
 set(IA32 FALSE)
 set(INTEL64 FALSE)
 set(ARM FALSE)
+set(PPC64 FALSE)
 if("${arch}" STREQUAL "32")      # IA-32 architecture
     set(IA32 TRUE)
 elseif("${arch}" STREQUAL "32e") # Intel(R) 64 architecture
     set(INTEL64 TRUE)
 elseif("${arch}" STREQUAL "arm") # ARM architecture
     set(ARM TRUE)
+elseif("${arch}" STREQUAL "ppc64") # PPC64 architecture
+    set(PPC64 TRUE)
 endif()
 
 # Set some flags based on build_type
@@ -635,6 +641,8 @@ elseif(${INTEL64})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86_64")
 elseif(${IA32})
     set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_X86")
+elseif(${PPC64})
+	set_source_files_properties(${src_dir}/z_Linux_asm.s PROPERTIES COMPILE_DEFINITIONS "KMP_ARCH_PPC64")
 endif()
 
 if(${WINDOWS})

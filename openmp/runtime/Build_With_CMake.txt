@@ -112,9 +112,10 @@ Build options
 ======================
 ==== Architecture ====
 ======================
--Darch=32|32e|arm
-* Architecture can be 32 (IA-32 architecture), 32e (Intel(R) 64 architecture)
-  or arm (ARM architecture).  This option, by default is chosen based on the
+-Darch=32|32e|arm|ppc64
+* Architecture can be 32 (IA-32 architecture), 32e (Intel(R) 64 architecture),
+  arm (ARM architecture), or ppc64 (PPC64 architecture).
+  This option, by default is chosen based on the
   CMake variable CMAKE_SIZEOF_VOID_P.  If it is 8, then Intel(R) 64 architecture
   is assumed.  If it is 4, then IA-32 architecture is assumed.  If you want to
   use a different architecture other than x86 based architecture, you must specify

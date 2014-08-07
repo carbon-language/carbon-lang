@@ -23,7 +23,14 @@ function(append_cpp_flags input_cpp_flags)
     append_definitions("-D BUILD_I8")
     append_definitions("-D KMP_LIBRARY_FILE=\\\\\"${lib_file}\\\\\"") # yes... you need 5 backslashes...
     append_definitions("-D KMP_VERSION_MAJOR=${version}")
-    append_definitions("-D CACHE_LINE=64")
+    
+    # customize to 128 bytes for ppc64
+    if(${PPC64})
+    	append_definitions("-D CACHE_LINE=128")
+    else()
+    	append_definitions("-D CACHE_LINE=64")
+    endif()
+    
     append_definitions("-D KMP_ADJUST_BLOCKTIME=1")
     append_definitions("-D BUILD_PARALLEL_ORDERED")
     append_definitions("-D KMP_ASM_INTRINS")
