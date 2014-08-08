@@ -331,6 +331,11 @@ void PPCInstrInfo::insertNoop(MachineBasicBlock &MBB,
   BuildMI(MBB, MI, DL, get(Opcode));
 }
 
+/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+void PPCInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  NopInst.setOpcode(PPC::NOP);
+}
+
 // Branch analysis.
 // Note: If the condition register is set to CTR or CTR8 then this is a
 // BDNZ (imm == 1) or BDZ (imm == 0) branch.

@@ -228,6 +228,8 @@ public:
   /// instruction may be.  This returns the maximum number of bytes.
   ///
   unsigned GetInstSizeInBytes(const MachineInstr *MI) const;
+
+  void getNoopForMachoTarget(MCInst &NopInst) const override;
 };
 
 }
