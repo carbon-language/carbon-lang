@@ -506,7 +506,9 @@ StructType *StructType::get(Type *type, ...) {
     StructFields.push_back(type);
     type = va_arg(ap, llvm::Type*);
   }
-  return llvm::StructType::get(Ctx, StructFields);
+  auto *Ret = llvm::StructType::get(Ctx, StructFields);
+  va_end(ap);
+  return Ret;
 }
 
 StructType *StructType::create(LLVMContext &Context, ArrayRef<Type*> Elements,
@@ -547,7 +549,9 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
     StructFields.push_back(type);
     type = va_arg(ap, llvm::Type*);
   }
-  return llvm::StructType::create(Ctx, StructFields, Name);
+  auto *Ret = llvm::StructType::create(Ctx, StructFields, Name);
+  va_end(ap);
+  return Ret;
 }
 
 bool StructType::isSized(SmallPtrSet<const Type*, 4> *Visited) const {
@@ -591,6 +595,7 @@ void StructType::setBody(Type *type, ...) {
     type = va_arg(ap, llvm::Type*);
   }
   setBody(StructFields);
+  va_end(ap);
 }
 
 bool StructType::isValidElementType(Type *ElemTy) {
