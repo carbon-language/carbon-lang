@@ -1700,6 +1700,18 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   if (Setter && DiagnoseUseOfDecl(Setter, MemberLoc))
     return ExprError();
 
+  // Special warning if member name used in a property-dot for a setter accessor
+  // does not use a property with same name; e.g. obj.X = ... for a property with
+  // name 'x'.
+  if (Setter && Setter->isImplicit() && Setter->isPropertyAccessor()
+      && !IFace->FindPropertyDeclaration(Member)) {
+      if (const ObjCPropertyDecl *PDecl = Setter->findPropertyDecl())
+          Diag(MemberLoc,
+               diag::warn_property_access_suggest)
+          << MemberName << QualType(OPT, 0) << PDecl->getName()
+          << FixItHint::CreateReplacement(MemberLoc, PDecl->getName());
+  }
+
   if (Getter || Setter) {
     if (Super)
       return new (Context)
