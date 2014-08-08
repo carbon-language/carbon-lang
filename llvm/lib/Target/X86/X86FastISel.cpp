@@ -2382,11 +2382,15 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
     switch (II->getIntrinsicID()) {
     default: llvm_unreachable("Unexpected intrinsic!");
     case Intrinsic::sadd_with_overflow:
-      BaseOpc = UseIncDec ? X86ISD::INC : ISD::ADD; CondOpc = X86::SETOr; break;
+      BaseOpc = UseIncDec ? unsigned(X86ISD::INC) : unsigned(ISD::ADD);
+      CondOpc = X86::SETOr;
+      break;
     case Intrinsic::uadd_with_overflow:
       BaseOpc = ISD::ADD; CondOpc = X86::SETBr; break;
     case Intrinsic::ssub_with_overflow:
-      BaseOpc = UseIncDec ? X86ISD::DEC : ISD::SUB; CondOpc = X86::SETOr; break;
+      BaseOpc = UseIncDec ? unsigned(X86ISD::DEC) : unsigned(ISD::SUB);
+      CondOpc = X86::SETOr;
+      break;
     case Intrinsic::usub_with_overflow:
       BaseOpc = ISD::SUB; CondOpc = X86::SETBr; break;
     case Intrinsic::smul_with_overflow:
