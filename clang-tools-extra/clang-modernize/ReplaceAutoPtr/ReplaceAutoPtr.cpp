@@ -34,8 +34,7 @@ ReplaceAutoPtrTransform::apply(const CompilationDatabase &Database,
   Finder.addMatcher(makeAutoPtrUsingDeclMatcher(), &Replacer);
   Finder.addMatcher(makeTransferOwnershipExprMatcher(), &Fixer);
 
-  std::unique_ptr<FrontendActionFactory> Factory(createActionFactory(Finder));
-  if (Tool.run(Factory.get())) {
+  if (Tool.run(createActionFactory(Finder).get())) {
     llvm::errs() << "Error encountered during translation.\n";
     return 1;
   }

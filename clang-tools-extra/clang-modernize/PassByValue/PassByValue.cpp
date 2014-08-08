@@ -35,8 +35,7 @@ int PassByValueTransform::apply(const tooling::CompilationDatabase &Database,
   // make the replacer available to handleBeginSource()
   this->Replacer = &Replacer;
 
-  std::unique_ptr<FrontendActionFactory> Factory(createActionFactory(Finder));
-  if (Tool.run(Factory.get())) {
+  if (Tool.run(createActionFactory(Finder).get())) {
     llvm::errs() << "Error encountered during translation.\n";
     return 1;
   }

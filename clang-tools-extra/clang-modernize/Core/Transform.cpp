@@ -128,8 +128,9 @@ Transform::addReplacementForCurrentTU(const clang::tooling::Replacement &R) {
   return true;
 }
 
-FrontendActionFactory *Transform::createActionFactory(MatchFinder &Finder) {
-  return new ActionFactory(Finder, /*Owner=*/ *this);
+std::unique_ptr<FrontendActionFactory>
+Transform::createActionFactory(MatchFinder &Finder) {
+  return llvm::make_unique<ActionFactory>(Finder, /*Owner=*/*this);
 }
 
 Version Version::getFromString(llvm::StringRef VersionStr) {

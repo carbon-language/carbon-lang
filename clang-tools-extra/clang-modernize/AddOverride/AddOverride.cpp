@@ -40,8 +40,7 @@ int AddOverrideTransform::apply(const CompilationDatabase &Database,
   // Make Fixer available to handleBeginSource().
   this->Fixer = &Fixer;
 
-  std::unique_ptr<FrontendActionFactory> Factory(createActionFactory(Finder));
-  if (int result = AddOverrideTool.run(Factory.get())) {
+  if (int result = AddOverrideTool.run(createActionFactory(Finder).get())) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }

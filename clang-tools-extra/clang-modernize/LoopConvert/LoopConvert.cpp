@@ -48,8 +48,7 @@ int LoopConvertTransform::apply(const CompilationDatabase &Database,
                                   LFK_PseudoArray, /*Owner=*/ *this);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
 
-  std::unique_ptr<FrontendActionFactory> Factory(createActionFactory(Finder));
-  if (int result = LoopTool.run(Factory.get())) {
+  if (int result = LoopTool.run(createActionFactory(Finder).get())) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }
