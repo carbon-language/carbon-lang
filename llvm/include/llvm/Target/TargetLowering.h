@@ -261,6 +261,11 @@ public:
   bool isMaskAndBranchFoldingLegal() const {
     return MaskAndBranchFoldingIsLegal;
   }
+  
+  /// Return true if target supports floating point exceptions.
+  bool hasFloatingPointExceptions() const {
+    return HasFloatingPointExceptions;
+  }
 
   /// Return the ValueType of the result of SETCC operations.  Also used to
   /// obtain the target's preferred type for the condition operand of SELECT and
@@ -1063,6 +1068,12 @@ protected:
   /// possible, should be replaced by an alternate sequence of instructions not
   /// containing an integer divide.
   void setIntDivIsCheap(bool isCheap = true) { IntDivIsCheap = isCheap; }
+  
+  /// Tells the code generator that this target supports floating point
+  /// exceptions and cares about preserving floating point exception behavior.
+  void setHasFloatingPointExceptions(bool FPExceptions = true) {
+    HasFloatingPointExceptions = FPExceptions;
+  }
 
   /// Tells the code generator which bitwidths to bypass.
   void addBypassSlowDiv(unsigned int SlowBitWidth, unsigned int FastBitWidth) {
@@ -1498,6 +1509,10 @@ private:
   /// instructions and should attempt to combine flow control instructions via
   /// predication.
   bool JumpIsExpensive;
+
+  /// Whether the target supports or cares about preserving floating point
+  /// exception behavior.
+  bool HasFloatingPointExceptions;
 
   /// This target prefers to use _setjmp to implement llvm.setjmp.
   ///

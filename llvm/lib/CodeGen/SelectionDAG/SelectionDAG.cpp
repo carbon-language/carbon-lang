@@ -3402,6 +3402,7 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
   }
 
   // Constant fold FP operations.
+  bool HasFPExceptions = TLI->hasFloatingPointExceptions();
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.getNode());
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.getNode());
   if (N1CFP) {
@@ -3415,28 +3416,32 @@ SDValue SelectionDAG::getNode(unsigned Opcode, SDLoc DL, EVT VT, SDValue N1,
       switch (Opcode) {
       case ISD::FADD:
         s = V1.add(V2, APFloat::rmNearestTiesToEven);
-        if (s != APFloat::opInvalidOp)
+        if (!HasFPExceptions || s != APFloat::opInvalidOp)
           return getConstantFP(V1, VT);
         break;
       case ISD::FSUB:
         s = V1.subtract(V2, APFloat::rmNearestTiesToEven);
-        if (s!=APFloat::opInvalidOp)
+        if (!HasFPExceptions || s!=APFloat::opInvalidOp)
           return getConstantFP(V1, VT);
         break;
       case ISD::FMUL:
         s = V1.multiply(V2, APFloat::rmNearestTiesToEven);
-        if (s!=APFloat::opInvalidOp)
+        if (!HasFPExceptions || s!=APFloat::opInvalidOp)
           return getConstantFP(V1, VT);
         break;
       case ISD::FDIV:
         s = V1.divide(V2, APFloat::rmNearestTiesToEven);
-        if (s!=APFloat::opInvalidOp && s!=APFloat::opDivByZero)
+        if (!HasFPExceptions || (s!=APFloat::opInvalidOp &&
+                                 s!=APFloat::opDivByZero)) {
           return getConstantFP(V1, VT);
+        }
         break;
       case ISD::FREM :
         s = V1.mod(V2, APFloat::rmNearestTiesToEven);
-        if (s!=APFloat::opInvalidOp && s!=APFloat::opDivByZero)
+        if (!HasFPExceptions || (s!=APFloat::opInvalidOp &&
+                                 s!=APFloat::opDivByZero)) {
           return getConstantFP(V1, VT);
+        }
         break;
       case ISD::FCOPYSIGN:
         V1.copySign(V2);
