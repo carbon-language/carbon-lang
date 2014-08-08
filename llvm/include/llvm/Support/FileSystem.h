@@ -276,14 +276,6 @@ private:
 ///          platform-specific error_code.
 std::error_code make_absolute(SmallVectorImpl<char> &path);
 
-/// @brief Normalize path separators in \a Path
-///
-/// If the path contains any '\' separators, they are transformed into '/'.
-/// This is particularly useful when cross-compiling Windows on Linux, but is
-/// safe to invoke on Windows, which accepts both characters as a path
-/// separator.
-std::error_code normalize_separators(SmallVectorImpl<char> &Path);
-
 /// @brief Create all the non-existent directories in path.
 ///
 /// @param path Directories to create.

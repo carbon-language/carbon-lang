@@ -640,22 +640,22 @@ TEST(Support, NormalizePath) {
   SmallString<64> Path5("\\a");
   SmallString<64> Path6("a\\");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path1));
+  path::native(Path1);
   EXPECT_PATH_IS(Path1, "a", "a");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path2));
+  path::native(Path2);
   EXPECT_PATH_IS(Path2, "a/b", "a/b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path3));
+  path::native(Path3);
   EXPECT_PATH_IS(Path3, "a\\b", "a/b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path4));
+  path::native(Path4);
   EXPECT_PATH_IS(Path4, "a\\\\b", "a\\\\b");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path5));
+  path::native(Path5);
   EXPECT_PATH_IS(Path5, "\\a", "/a");
 
-  ASSERT_NO_ERROR(fs::normalize_separators(Path6));
+  path::native(Path6);
   EXPECT_PATH_IS(Path6, "a\\", "a/");
 
 #undef EXPECT_PATH_IS

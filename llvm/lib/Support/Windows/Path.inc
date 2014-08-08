@@ -163,11 +163,6 @@ std::error_code create_directory(const Twine &path, bool IgnoreExisting) {
   return std::error_code();
 }
 
-std::error_code normalize_separators(SmallVectorImpl<char> &Path) {
-  (void) Path;
-  return std::error_code();
-}
-
 // We can't use symbolic links for windows.
 std::error_code create_link(const Twine &to, const Twine &from) {
   // Get arguments.
