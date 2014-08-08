@@ -1806,7 +1806,11 @@ ScriptInterpreterPython::Clear ()
     Locker locker(this,
                   ScriptInterpreterPython::Locker::AcquireLock,
                   ScriptInterpreterPython::Locker::FreeAcquiredLock);
-    PyRun_SimpleString("lldb.debugger = None; lldb.target = None; lldb.process = None; lldb.thread = None; lldb.frame = None");
+
+    // This may be called as part of Py_Finalize.  In that case the modules are destroyed in random
+    // order and we can't guarantee that we can access these.
+    if (Py_IsInitialized())
+        PyRun_SimpleString("lldb.debugger = None; lldb.target = None; lldb.process = None; lldb.thread = None; lldb.frame = None");
 }
 
 bool

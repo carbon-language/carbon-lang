@@ -62,9 +62,11 @@ namespace lldb_private {
         {
             if (py_obj != m_py_obj)
             {
-                Py_XDECREF(m_py_obj);
+                if (Py_IsInitialized())
+                    Py_XDECREF(m_py_obj);
                 m_py_obj = py_obj;
-                Py_XINCREF(m_py_obj);
+                if (Py_IsInitialized())
+                    Py_XINCREF(m_py_obj);
             }
             return true;
         }

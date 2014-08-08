@@ -20,7 +20,6 @@ Type:
 for available options.
 """
 
-import atexit
 import commands
 import os
 import errno
@@ -419,7 +418,6 @@ def setupCrashInfoHook():
         cmd = "xcrun clang %s -o %s -framework Python -Xlinker -dylib -iframework /System/Library/Frameworks/ -Xlinker -F /System/Library/Frameworks/" % (dylib_src,dylib_dst)
         if subprocess.call(cmd,shell=True) == 0 and os.path.exists(dylib_dst):
             setCrashInfoHook = setCrashInfoHook_Mac
-            atexit.register(deleteCrashInfoDylib,dylib_dst)
     else:
         pass
 
@@ -1201,6 +1199,11 @@ def checkDsymForUUIDIsNotOn():
         print "Exiting..."
         sys.exit(0)
 
+def exitTestSuite(exitCode = None):
+    lldb.SBDebugger.Terminate()
+    if exitCode:
+        sys.exit(exitCode)
+
 # On MacOS X, check to make sure that domain for com.apple.DebugSymbols defaults
 # does not exist before proceeding to running the test suite.
 if sys.platform.startswith("darwin"):
@@ -1232,11 +1235,7 @@ for testdir in testdirs:
 
 # For the time being, let's bracket the test runner within the
 # lldb.SBDebugger.Initialize()/Terminate() pair.
-import lldb, atexit
-# Update: the act of importing lldb now executes lldb.SBDebugger.Initialize(),
-# there's no need to call it a second time.
-#lldb.SBDebugger.Initialize()
-atexit.register(lambda: lldb.SBDebugger.Terminate())
+import lldb
 
 # Create a singleton SBDebugger in the lldb namespace.
 lldb.DBG = lldb.SBDebugger.Create()
@@ -1246,7 +1245,7 @@ if lldb_platform_name:
     lldb.remote_platform = lldb.SBPlatform(lldb_platform_name)
     if not lldb.remote_platform.IsValid():
         print "error: unable to create the LLDB platform named '%s'." % (lldb_platform_name)
-        sys.exit(1)
+        exitTestSuite(1)
     if lldb_platform_url:
         # We must connect to a remote platform if a LLDB platform URL was specified
         print "Connecting to remote platform '%s' at '%s'..." % (lldb_platform_name, lldb_platform_url)
@@ -1256,7 +1255,7 @@ if lldb_platform_name:
             print "Connected."
         else:
             print "error: failed to connect to remote platform using URL '%s': %s" % (lldb_platform_url, err)
-            sys.exit(1)
+            exitTestSuite(1)
     
     if lldb_platform_working_dir:
         print "Setting remote platform working directory to '%s'..." % (lldb_platform_working_dir)
@@ -1397,7 +1396,7 @@ if not parsable:
 
 if not compilers or len(compilers) == 0:
     print "No eligible compiler found, exiting."
-    sys.exit(1)
+    exitTestSuite(1)
 
 if isinstance(compilers, list) and len(compilers) >= 1:
     iterCompilers = True
@@ -1738,4 +1737,4 @@ if ("LLDB_TESTSUITE_FORCE_FINISH" in os.environ):
     subprocess.Popen(["/bin/sh", "-c", "kill %s; exit 0" % (os.getpid())])
 
 # Exiting.
-sys.exit(failed)
+exitTestSuite()

@@ -357,7 +357,8 @@ protected:
         virtual
         ~ScriptInterpreterPythonObject()
         {
-            Py_XDECREF(m_object);
+            if (Py_IsInitialized())
+                Py_XDECREF(m_object);
             m_object = NULL;
         }
         private:
