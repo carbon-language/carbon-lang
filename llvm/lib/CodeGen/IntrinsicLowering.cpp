@@ -528,6 +528,18 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     ReplaceFPIntrinsicWithCall(CI, "powf", "pow", "powl");
     break;
   }
+  case Intrinsic::sin: {
+    ReplaceFPIntrinsicWithCall(CI, "sinf", "sin", "sinl");
+    break;
+  }
+  case Intrinsic::cos: {
+    ReplaceFPIntrinsicWithCall(CI, "cosf", "cos", "cosl");
+    break;
+  }
+  case Intrinsic::ceil: {
+    ReplaceFPIntrinsicWithCall(CI, "ceilf", "ceil", "ceill");
+    break;
+  }
   case Intrinsic::flt_rounds:
      // Lower to "round to the nearest"
      if (!CI->getType()->isVoidTy())

@@ -22,6 +22,7 @@ config.host_arch = "@HOST_ARCH@"
 config.llvm_use_intel_jitevents = "@LLVM_USE_INTEL_JITEVENTS@"
 config.llvm_use_sanitizer = "@LLVM_USE_SANITIZER@"
 config.have_zlib = "@HAVE_LIBZ@"
+config.enable_ffi = "@LLVM_ENABLE_FFI@"
 
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
