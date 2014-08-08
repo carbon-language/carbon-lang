@@ -18,6 +18,7 @@
 #include "llvm/ProfileData/InstrProfReader.h"
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ProfileData/CoverageMappingWriter.h"
+#include "llvm/ProfileData/CoverageMappingReader.h"
 #include "llvm/Support/FileSystem.h"
 
 using namespace clang;
@@ -1052,8 +1053,36 @@ static StringRef getCoverageSection(const CodeGenModule &CGM) {
   return isMachO(CGM) ? "__DATA,__llvm_covmap" : "__llvm_covmap";
 }
 
+static void dump(llvm::raw_ostream &OS, const CoverageMappingRecord &Function) {
+  OS << Function.FunctionName << ":\n";
+  CounterMappingContext Ctx(Function.Expressions);
+  for (const auto &R : Function.MappingRegions) {
+    OS.indent(2);
+    switch (R.Kind) {
+    case CounterMappingRegion::CodeRegion:
+      break;
+    case CounterMappingRegion::ExpansionRegion:
+      OS << "Expansion,";
+      break;
+    case CounterMappingRegion::SkippedRegion:
+      OS << "Skipped,";
+      break;
+    }
+
+    OS << "File " << R.FileID << ", " << R.LineStart << ":"
+           << R.ColumnStart << " -> " << R.LineEnd << ":" << R.ColumnEnd
+           << " = ";
+    Ctx.dump(R.Count);
+    OS << " (HasCodeBefore = " << R.HasCodeBefore;
+    if (R.Kind == CounterMappingRegion::ExpansionRegion)
+      OS << ", Expanded file = " << R.ExpandedFileID;
+
+    OS << ")\n";
+  }
+}
+
 void CoverageMappingModuleGen::addFunctionMappingRecord(
-    llvm::GlobalVariable *FunctionName, unsigned FunctionNameSize,
+    llvm::GlobalVariable *FunctionName, StringRef FunctionNameValue,
     const std::string &CoverageMapping) {
   llvm::LLVMContext &Ctx = CGM.getLLVMContext();
   auto *Int32Ty = llvm::Type::getInt32Ty(Ctx);
@@ -1066,11 +1095,33 @@ void CoverageMappingModuleGen::addFunctionMappingRecord(
 
   llvm::Constant *FunctionRecordVals[] = {
       llvm::ConstantExpr::getBitCast(FunctionName, Int8PtrTy),
-      llvm::ConstantInt::get(Int32Ty, FunctionNameSize),
+      llvm::ConstantInt::get(Int32Ty, FunctionNameValue.size()),
       llvm::ConstantInt::get(Int32Ty, CoverageMapping.size())};
   FunctionRecords.push_back(llvm::ConstantStruct::get(
       FunctionRecordTy, makeArrayRef(FunctionRecordVals)));
   CoverageMappings += CoverageMapping;
+
+  if (CGM.getCodeGenOpts().DumpCoverageMapping) {
+    // Dump the coverage mapping data for this function by decoding the
+    // encoded data. This allows us to dump the mapping regions which were
+    // also processed by the CoverageMappingWriter which performs
+    // additional minimization operations such as reducing the number of
+    // expressions.
+    std::vector<StringRef> Filenames;
+    std::vector<CounterExpression> Expressions;
+    std::vector<CounterMappingRegion> Regions;
+    llvm::SmallVector<StringRef, 16> FilenameRefs;
+    FilenameRefs.resize(FileEntries.size());
+    for (const auto &Entry : FileEntries)
+      FilenameRefs[Entry.second] = Entry.first->getName();
+    RawCoverageMappingReader Reader(FunctionNameValue, CoverageMapping,
+                                    FilenameRefs,
+                                    Filenames, Expressions, Regions);
+    CoverageMappingRecord FunctionRecord;
+    if (Reader.read(FunctionRecord))
+      return;
+    dump(llvm::outs(), FunctionRecord);
+  }
 }
 
 void CoverageMappingModuleGen::emit() {

@@ -68,7 +68,7 @@ public:
   /// \brief Add a function's coverage mapping record to the collection of the
   /// function mapping records.
   void addFunctionMappingRecord(llvm::GlobalVariable *FunctionName,
-                                unsigned FunctionNameSize,
+                                StringRef FunctionNameValue,
                                 const std::string &CoverageMapping);
 
   /// \brief Emit the coverage mapping data for a translation unit.

@@ -400,6 +400,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ProfileInstrGenerate = Args.hasArg(OPT_fprofile_instr_generate);
   Opts.InstrProfileInput = Args.getLastArgValue(OPT_fprofile_instr_use_EQ);
   Opts.CoverageMapping = Args.hasArg(OPT_fcoverage_mapping);
+  Opts.DumpCoverageMapping = Args.hasArg(OPT_dump_coverage_mapping);
   Opts.AsmVerbose = Args.hasArg(OPT_masm_verbose);
   Opts.ObjCAutoRefCountExceptions = Args.hasArg(OPT_fobjc_arc_exceptions);
   Opts.CUDAIsDevice = Args.hasArg(OPT_fcuda_is_device);
