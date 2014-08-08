@@ -445,10 +445,13 @@ private:
   ///     if the CXXBindTemporaryExpr was marked executed, and otherwise
   ///     branches to the stored successor.
   struct TempDtorContext {
-    TempDtorContext() : KnownExecuted(true) {}
+    TempDtorContext()
+        : IsConditional(false), KnownExecuted(true), Succ(nullptr),
+          TerminatorExpr(nullptr) {}
 
     TempDtorContext(TryResult KnownExecuted)
-        : IsConditional(true), KnownExecuted(KnownExecuted) {}
+        : IsConditional(true), KnownExecuted(KnownExecuted), Succ(nullptr),
+          TerminatorExpr(nullptr) {}
 
     /// Returns whether we need to start a new branch for a temporary destructor
     /// call. This is the case when the the temporary destructor is
@@ -467,10 +470,10 @@ private:
       TerminatorExpr = E;
     }
 
-    const bool IsConditional = false;
+    const bool IsConditional;
     const TryResult KnownExecuted;
-    CFGBlock *Succ = nullptr;
-    CXXBindTemporaryExpr *TerminatorExpr = nullptr;
+    CFGBlock *Succ;
+    CXXBindTemporaryExpr *TerminatorExpr;
   };
 
   // Visitors to walk an AST and generate destructors of temporaries in
