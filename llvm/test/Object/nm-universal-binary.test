@@ -2,6 +2,10 @@ RUN: llvm-nm -arch all %p/Inputs/macho-universal.x86_64.i386 \
 RUN:         | FileCheck %s -check-prefix CHECK-OBJ
 RUN: llvm-nm -arch x86_64 %p/Inputs/macho-universal.x86_64.i386 \
 RUN:         | FileCheck %s -check-prefix CHECK-OBJ-x86_64
+RUN: not llvm-nm -arch armv7m %p/Inputs/macho-universal.x86_64.i386 2>&1 \
+RUN:         | FileCheck %s -check-prefix CHECK-OBJ-armv7m
+RUN: not llvm-nm -arch foobar %p/Inputs/macho-universal.x86_64.i386 2>&1 \
+RUN:         | FileCheck %s -check-prefix CHECK-OBJ-foobar
 RUN: llvm-nm -arch all %p/Inputs/macho-universal-archive.x86_64.i386 \
 RUN:         | FileCheck %s -check-prefix CHECK-AR
 RUN: llvm-nm -arch i386 %p/Inputs/macho-universal-archive.x86_64.i386 \
@@ -17,6 +21,12 @@ CHECK-OBJ: 00001fa0 T _main
 CHECK-OBJ-x86_64: 0000000100000000 T __mh_execute_header
 CHECK-OBJ-x86_64: 0000000100000f60 T _main
 CHECK-OBJ-x86_64:                  U dyld_stub_binder
+
+CHECK-OBJ-armv7m-NOT: Unknown architecture named
+CHECK-OBJ-armv7m: does not contain architecture
+
+CHECK-OBJ-foobar: Unknown architecture named
+CHECK-OBJ-foobar: does not contain architecture
 
 CHECK-AR: macho-universal-archive.x86_64.i386(hello.o) (for architecture x86_64):
 CHECK-AR: 0000000000000068 s EH_frame0

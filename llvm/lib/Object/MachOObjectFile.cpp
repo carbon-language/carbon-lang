@@ -1404,7 +1404,7 @@ Triple MachOObjectFile::getArch(StringRef ArchFlag) {
     return Triple("armv7em-apple-darwin");
   else if (ArchFlag == "armv7k")
     return Triple("armv7k-apple-darwin");
-  else if (ArchFlag == "armv7k")
+  else if (ArchFlag == "armv7m")
     return Triple("armv7m-apple-darwin");
   else if (ArchFlag == "armv7s")
     return Triple("armv7s-apple-darwin");
