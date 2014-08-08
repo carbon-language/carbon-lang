@@ -16,6 +16,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_UNITTESTS_AST_MATCHVERIFIER_H
+#define LLVM_CLANG_UNITTESTS_AST_MATCHVERIFIER_H
+
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/ASTMatchers/ASTMatchers.h"
@@ -288,3 +291,5 @@ private:
 
 } // end namespace ast_matchers
 } // end namespace clang
+
+#endif

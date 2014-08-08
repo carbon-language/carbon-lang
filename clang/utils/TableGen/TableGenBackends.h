@@ -13,6 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_UTILS_TABLEGEN_TABLEGENBACKENDS_H
+#define LLVM_CLANG_UTILS_TABLEGEN_TABLEGENBACKENDS_H
+
 #include <string>
 
 namespace llvm {
@@ -68,3 +71,5 @@ void EmitNeonTest2(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrDocs(RecordKeeper &Records, raw_ostream &OS);
 
 } // end namespace clang
+
+#endif
