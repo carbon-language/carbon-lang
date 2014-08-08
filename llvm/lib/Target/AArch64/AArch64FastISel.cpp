@@ -126,7 +126,8 @@ private:
   bool SimplifyAddress(Address &Addr, MVT VT, int64_t ScaleFactor,
                        bool UseUnscaled);
   void AddLoadStoreOperands(Address &Addr, const MachineInstrBuilder &MIB,
-                            unsigned Flags, bool UseUnscaled);
+                            unsigned Flags, MachineMemOperand *MMO,
+                            bool UseUnscaled);
   bool IsMemCpySmall(uint64_t Len, unsigned Alignment);
   bool TryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len,
                           unsigned Alignment);
@@ -136,9 +137,9 @@ private:
   // Emit functions.
   bool EmitCmp(Value *Src1Value, Value *Src2Value, bool isZExt);
   bool EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
-                bool UseUnscaled = false);
+                MachineMemOperand *MMO = nullptr, bool UseUnscaled = false);
   bool EmitStore(MVT VT, unsigned SrcReg, Address Addr,
-                 bool UseUnscaled = false);
+                 MachineMemOperand *MMO = nullptr, bool UseUnscaled = false);
   unsigned EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emit_MUL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
@@ -567,27 +568,32 @@ bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT,
 
 void AArch64FastISel::AddLoadStoreOperands(Address &Addr,
                                            const MachineInstrBuilder &MIB,
-                                           unsigned Flags, bool UseUnscaled) {
+                                           unsigned Flags,
+                                           MachineMemOperand *MMO,
+                                           bool UseUnscaled) {
   int64_t Offset = Addr.getOffset();
   // Frame base works a bit differently. Handle it separately.
   if (Addr.getKind() == Address::FrameIndexBase) {
     int FI = Addr.getFI();
     // FIXME: We shouldn't be using getObjectSize/getObjectAlignment.  The size
     // and alignment should be based on the VT.
-    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
-        MachinePointerInfo::getFixedStack(FI, Offset), Flags,
-        MFI.getObjectSize(FI), MFI.getObjectAlignment(FI));
+    MMO = FuncInfo.MF->getMachineMemOperand(
+      MachinePointerInfo::getFixedStack(FI, Offset), Flags,
+      MFI.getObjectSize(FI), MFI.getObjectAlignment(FI));
     // Now add the rest of the operands.
-    MIB.addFrameIndex(FI).addImm(Offset).addMemOperand(MMO);
+    MIB.addFrameIndex(FI).addImm(Offset);
   } else {
     // Now add the rest of the operands.
     MIB.addReg(Addr.getReg());
     MIB.addImm(Offset);
   }
+
+  if (MMO)
+    MIB.addMemOperand(MMO);
 }
 
 bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
-                               bool UseUnscaled) {
+                               MachineMemOperand *MMO, bool UseUnscaled) {
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
   if (!UseUnscaled && Addr.getOffset() < 0)
@@ -639,7 +645,7 @@ bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
     int64_t Offset = Addr.getOffset();
     if (Offset & (ScaleFactor - 1))
       // Retry using an unscaled, 9-bit, signed immediate offset.
-      return EmitLoad(VT, ResultReg, Addr, /*UseUnscaled*/ true);
+      return EmitLoad(VT, ResultReg, Addr, MMO, /*UseUnscaled*/ true);
 
     Addr.setOffset(Offset / ScaleFactor);
   }
@@ -652,7 +658,7 @@ bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
   ResultReg = createResultReg(RC);
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                     TII.get(Opc), ResultReg);
-  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, UseUnscaled);
+  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, MMO, UseUnscaled);
 
   // Loading an i1 requires special handling.
   if (VTIsi1) {
@@ -681,7 +687,7 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
     return false;
 
   unsigned ResultReg;
-  if (!EmitLoad(VT, ResultReg, Addr))
+  if (!EmitLoad(VT, ResultReg, Addr, createMachineMemOperandFor(I)))
     return false;
 
   UpdateValueMap(I, ResultReg);
@@ -689,7 +695,7 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
 }
 
 bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
-                                bool UseUnscaled) {
+                                MachineMemOperand *MMO, bool UseUnscaled) {
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
   if (!UseUnscaled && Addr.getOffset() < 0)
@@ -734,7 +740,7 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
     int64_t Offset = Addr.getOffset();
     if (Offset & (ScaleFactor - 1))
       // Retry using an unscaled, 9-bit, signed immediate offset.
-      return EmitStore(VT, SrcReg, Addr, /*UseUnscaled*/ true);
+      return EmitStore(VT, SrcReg, Addr, MMO, /*UseUnscaled*/ true);
 
     Addr.setOffset(Offset / ScaleFactor);
   }
@@ -756,7 +762,8 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
   // Create the base instruction, then add the operands.
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                     TII.get(StrOpc)).addReg(SrcReg);
-  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOStore, UseUnscaled);
+  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOStore, MMO, UseUnscaled);
+
   return true;
 }
 
@@ -780,7 +787,7 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
   if (!ComputeAddress(I->getOperand(1), Addr))
     return false;
 
-  if (!EmitStore(VT, SrcReg, Addr))
+  if (!EmitStore(VT, SrcReg, Addr, createMachineMemOperandFor(I)))
     return false;
   return true;
 }
@@ -1495,7 +1502,12 @@ bool AArch64FastISel::ProcessCallArgs(CallLoweringInfo &CLI,
       Addr.setReg(AArch64::SP);
       Addr.setOffset(VA.getLocMemOffset() + BEAlign);
 
-      if (!EmitStore(ArgVT, ArgReg, Addr))
+      unsigned Alignment = DL.getABITypeAlignment(ArgVal->getType());
+      MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+        MachinePointerInfo::getStack(Addr.getOffset()),
+        MachineMemOperand::MOStore, ArgVT.getStoreSize(), Alignment);
+
+      if (!EmitStore(ArgVT, ArgReg, Addr, MMO))
         return false;
     }
   }
