@@ -151,7 +151,7 @@ JSONCompilationDatabase::loadFromFile(StringRef FilePath,
     return nullptr;
   }
   std::unique_ptr<JSONCompilationDatabase> Database(
-      new JSONCompilationDatabase(DatabaseBuffer->release()));
+      new JSONCompilationDatabase(std::move(*DatabaseBuffer)));
   if (!Database->parse(ErrorMessage))
     return nullptr;
   return Database;
@@ -163,7 +163,7 @@ JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
   std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer(
       llvm::MemoryBuffer::getMemBuffer(DatabaseString));
   std::unique_ptr<JSONCompilationDatabase> Database(
-      new JSONCompilationDatabase(DatabaseBuffer.release()));
+      new JSONCompilationDatabase(std::move(DatabaseBuffer)));
   if (!Database->parse(ErrorMessage))
     return nullptr;
   return Database;

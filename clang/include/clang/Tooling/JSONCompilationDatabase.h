@@ -81,8 +81,9 @@ public:
 
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.
-  JSONCompilationDatabase(llvm::MemoryBuffer *Database)
-    : Database(Database), YAMLStream(Database->getBuffer(), SM) {}
+  JSONCompilationDatabase(std::unique_ptr<llvm::MemoryBuffer> Database)
+      : Database(std::move(Database)),
+        YAMLStream(this->Database->getBuffer(), SM) {}
 
   /// \brief Parses the database file and creates the index.
   ///
