@@ -98,6 +98,12 @@ public:
     
     void
     SetGenerateDebugInfo (bool b = true);
+    
+    bool
+    GetSuppressPersistentResult ();
+    
+    void
+    SetSuppressPersistentResult (bool b = false);
 
 protected:
 

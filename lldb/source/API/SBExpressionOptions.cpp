@@ -173,6 +173,19 @@ SBExpressionOptions::SetGenerateDebugInfo (bool b)
     return m_opaque_ap->SetGenerateDebugInfo(b);
 }
 
+bool
+SBExpressionOptions::GetSuppressPersistentResult ()
+{
+    return m_opaque_ap->GetResultIsInternal ();
+}
+
+void
+SBExpressionOptions::SetSuppressPersistentResult (bool b)
+{
+    return m_opaque_ap->SetResultIsInternal (b);
+}
+
+
 EvaluateExpressionOptions *
 SBExpressionOptions::get() const
 {
