@@ -1040,6 +1040,13 @@ static void getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
   Features.push_back("-n64");
   Features.push_back(Args.MakeArgString(ABIFeature));
 
+  // Preserve the current default.
+  // FIXME: This ought to depend on Triple.getOS()
+  Features.push_back(Args.MakeArgString("+abicalls"));
+
+  AddTargetFeature(Args, Features, options::OPT_mabicalls,
+                   options::OPT_mno_abicalls, "abicalls");
+
   StringRef FloatABI = getMipsFloatABI(D, Args);
   if (FloatABI == "soft") {
     // FIXME: Note, this is a hack. We need to pass the selected float
@@ -7097,6 +7104,11 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
 
     CmdArgs.push_back("-mabi");
     CmdArgs.push_back(ABIName.data());
+
+    // Preserve the current default
+    // FIXME: This ought to depend on Triple.getOS().
+    CmdArgs.push_back("-mabicalls");
+    Args.AddLastArg(CmdArgs, options::OPT_mabicalls, options::OPT_mno_abicalls);
 
     // -mno-shared should be emitted unless -fpic, -fpie, -fPIC, -fPIE,
     // or -mshared (not implemented) is in effect.

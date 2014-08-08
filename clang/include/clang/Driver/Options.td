@@ -1256,6 +1256,10 @@ def mfp64 : Flag<["-"], "mfp64">, Group<m_Group>,
 def mfp32 : Flag<["-"], "mfp32">, Group<m_Group>,
   HelpText<"Use 32-bit floating point registers (MIPS only)">;
 def mnan_EQ : Joined<["-"], "mnan=">, Group<m_Group>;
+def mabicalls : Flag<["-"], "mabicalls">, Group<m_Group>,
+  HelpText<"Enable SVR4-style position-independent code (Mips only)">;
+def mno_abicalls : Flag<["-"], "mno-abicalls">, Group<m_Group>,
+  HelpText<"Disable SVR4-style position-independent code (Mips only)">;
 def mips1 : Flag<["-"], "mips1">,
   Alias<march_EQ>, AliasArgs<["mips1"]>,
   HelpText<"Equivalent to -march=mips1">, Flags<[HelpHidden]>;

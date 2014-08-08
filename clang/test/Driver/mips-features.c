@@ -1,5 +1,17 @@
 // Check handling MIPS specific features options.
 //
+// -mabicalls
+// RUN: %clang -target mips-linux-gnu -### -c %s 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MABICALLS %s
+// RUN: %clang -target mips-linux-gnu -### -c %s -mno-abicalls -mabicalls 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MABICALLS %s
+// CHECK-MABICALLS: "-target-feature" "+abicalls"
+//
+// -mno-abicalls
+// RUN: %clang -target mips-linux-gnu -### -c %s -mabicalls -mno-abicalls 2>&1 \
+// RUN:   | FileCheck --check-prefix=CHECK-MNOABICALLS %s
+// CHECK-MNOABICALLS: "-target-feature" "-abicalls"
+//
 // -mips16
 // RUN: %clang -target mips-linux-gnu -### -c %s \
 // RUN:     -mno-mips16 -mips16 2>&1 \
