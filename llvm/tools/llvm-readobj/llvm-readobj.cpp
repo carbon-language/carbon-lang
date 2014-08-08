@@ -24,6 +24,7 @@
 #include "ObjDumper.h"
 #include "StreamWriter.h"
 #include "llvm/Object/Archive.h"
+#include "llvm/Object/ELFObjectFile.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -210,6 +211,17 @@ static std::error_code createDumper(const ObjectFile *Obj, StreamWriter &Writer,
   return readobj_error::unsupported_obj_file_format;
 }
 
+static StringRef getLoadName(const ObjectFile *Obj) {
+  if (auto *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
+    return ELF->getLoadName();
+  if (auto *ELF = dyn_cast<ELF64BEObjectFile>(Obj))
+    return ELF->getLoadName();
+  llvm_unreachable("Not ELF");
+}
 
 /// @brief Dumps the specified object file.
 static void dumpObject(const ObjectFile *Obj) {
@@ -228,7 +240,7 @@ static void dumpObject(const ObjectFile *Obj) {
          << "\n";
   outs() << "AddressSize: " << (8*Obj->getBytesInAddress()) << "bit\n";
   if (Obj->isELF())
-    outs() << "LoadName: " << Obj->getLoadName() << "\n";
+    outs() << "LoadName: " << getLoadName(Obj) << "\n";
 
   if (opts::FileHeaders)
     Dumper->printFileHeaders();

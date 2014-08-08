@@ -146,8 +146,6 @@ public:
   StringRef getFileFormatName() const override;
   unsigned getArch() const override;
 
-  StringRef getLoadName() const override;
-
   relocation_iterator section_rel_begin(unsigned Index) const;
   relocation_iterator section_rel_end(unsigned Index) const;
 

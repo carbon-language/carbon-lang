@@ -435,7 +435,6 @@ public:
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
   unsigned getArch() const override;
-  StringRef getLoadName() const override;
 
   import_directory_iterator import_directory_begin() const;
   import_directory_iterator import_directory_end() const;

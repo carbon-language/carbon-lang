@@ -1410,11 +1410,6 @@ unsigned MachOObjectFile::getArch() const {
   return getArch(getCPUType(this));
 }
 
-StringRef MachOObjectFile::getLoadName() const {
-  // TODO: Implement
-  report_fatal_error("get_load_name() unimplemented in MachOObjectFile");
-}
-
 relocation_iterator MachOObjectFile::section_rel_begin(unsigned Index) const {
   DataRefImpl DRI;
   DRI.d.a = Index;

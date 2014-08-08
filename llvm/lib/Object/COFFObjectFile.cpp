@@ -620,11 +620,6 @@ library_iterator COFFObjectFile::needed_library_end() const {
   report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
 }
 
-StringRef COFFObjectFile::getLoadName() const {
-  // COFF does not have this field.
-  return "";
-}
-
 import_directory_iterator COFFObjectFile::import_directory_begin() const {
   return import_directory_iterator(
       ImportDirectoryEntryRef(ImportDirectory, 0, this));

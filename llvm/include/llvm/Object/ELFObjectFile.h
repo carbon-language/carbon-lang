@@ -201,7 +201,7 @@ public:
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
   unsigned getArch() const override;
-  StringRef getLoadName() const override;
+  StringRef getLoadName() const;
 
   std::error_code getPlatformFlags(unsigned &Result) const override {
     Result = EF.getHeader()->e_flags;
