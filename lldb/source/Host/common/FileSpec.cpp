@@ -657,6 +657,9 @@ FileSpec::GetFilename() const
 size_t
 FileSpec::GetPath(char *path, size_t path_max_len, bool denormalize) const
 {
+    if (!path)
+        return 0;
+
     std::string result = GetPath(denormalize);
 
     size_t result_length = std::min(path_max_len-1, result.length());
