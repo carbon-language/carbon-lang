@@ -540,9 +540,19 @@ void native(const Twine &path, SmallVectorImpl<char> &result) {
   native(result);
 }
 
-void native(SmallVectorImpl<char> &path) {
+void native(SmallVectorImpl<char> &Path) {
 #ifdef LLVM_ON_WIN32
   std::replace(path.begin(), path.end(), '/', '\\');
+#else
+  for (auto PI = Path.begin(), PE = Path.end(); PI < PE; ++PI) {
+    if (*PI == '\\') {
+      auto PN = PI + 1;
+      if (PN < PE && *PN == '\\')
+        ++PI; // increment once, the for loop will move over the escaped slash
+      else
+        *PI = '/';
+    }
+  }
 #endif
 }
 
