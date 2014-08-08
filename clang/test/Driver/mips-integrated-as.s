@@ -206,14 +206,12 @@
 // FPXX-ODDSPREG: "-target-feature" "+fpxx"
 // FPXX-ODDSPREG: "-target-feature" "-nooddspreg"
 
-// RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s 2>&1 | \
-// RUN:   FileCheck -check-prefix=ABICALLS-ON %s
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -mabicalls 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABICALLS-ON %s
 // ABICALLS-ON: -cc1as
-// ABICALLS-ON: "-target-feature" "+abicalls"
+// ABICALLS-ON: "-target-feature" "-noabicalls"
 
 // RUN: %clang -target mips-linux-gnu -### -fintegrated-as -c %s -mno-abicalls 2>&1 | \
 // RUN:   FileCheck -check-prefix=ABICALLS-OFF %s
 // ABICALLS-OFF: -cc1as
-// ABICALLS-OFF: "-target-feature" "-abicalls"
+// ABICALLS-OFF: "-target-feature" "+noabicalls"
