@@ -630,6 +630,7 @@ ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
 }
 
 ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
+  bool Arc = getLangOpts().ObjCAutoRefCount;
   // Look up the NSArray class, if we haven't done so already.
   if (!NSArrayDecl) {
     NamedDecl *IF = LookupSingleName(TUScope,
@@ -649,18 +650,45 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
       return ExprError();
     }
   }
-  
-  // Find the arrayWithObjects:count: method, if we haven't done so already.
   QualType IdT = Context.getObjCIdType();
+  if (Arc && !ArrayAllocObjectsMethod) {
+    // Find +[NSArray alloc] method.
+    IdentifierInfo *II = &Context.Idents.get("alloc");
+    Selector AllocSel = Context.Selectors.getSelector(0, &II);
+    ArrayAllocObjectsMethod = NSArrayDecl->lookupClassMethod(AllocSel);
+    if (!ArrayAllocObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
+      ArrayAllocObjectsMethod = ObjCMethodDecl::Create(Context,
+                                  SourceLocation(), SourceLocation(), AllocSel,
+                                  IdT,
+                                  nullptr /*TypeSourceInfo */,
+                                  Context.getTranslationUnitDecl(),
+                                  false /*Instance*/, false/*isVariadic*/,
+                                  /*isPropertyAccessor=*/false,
+                                  /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
+                                  ObjCMethodDecl::Required,
+                                  false);
+      SmallVector<ParmVarDecl *, 1> Params;
+      ArrayAllocObjectsMethod->setMethodParams(Context, Params, None);
+    }
+    if (!ArrayAllocObjectsMethod) {
+      Diag(SR.getBegin(), diag::err_undeclared_alloc);
+      return ExprError();
+    }
+  }
+  // Find the arrayWithObjects:count: method, if we haven't done so already.
   if (!ArrayWithObjectsMethod) {
     Selector
-      Sel = NSAPIObj->getNSArraySelector(NSAPI::NSArr_arrayWithObjectsCount);
-    ObjCMethodDecl *Method = NSArrayDecl->lookupClassMethod(Sel);
+      Sel = NSAPIObj->getNSArraySelector(
+        Arc? NSAPI::NSArr_initWithObjectsCount : NSAPI::NSArr_arrayWithObjectsCount);
+      ObjCMethodDecl *Method =
+        Arc? NSArrayDecl->lookupInstanceMethod(Sel)
+           : NSArrayDecl->lookupClassMethod(Sel);
     if (!Method && getLangOpts().DebuggerObjCLiteral) {
       TypeSourceInfo *ReturnTInfo = nullptr;
       Method = ObjCMethodDecl::Create(
           Context, SourceLocation(), SourceLocation(), Sel, IdT, ReturnTInfo,
-          Context.getTranslationUnitDecl(), false /*Instance*/,
+          Context.getTranslationUnitDecl(),
+          Arc /*Instance for Arc, Class for MRR*/,
           false /*isVariadic*/,
           /*isPropertyAccessor=*/false,
           /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
@@ -740,7 +768,8 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
 
   return MaybeBindToTemporary(
            ObjCArrayLiteral::Create(Context, Elements, Ty,
-                                    ArrayWithObjectsMethod, nullptr, SR));
+                                    ArrayWithObjectsMethod,
+                                    ArrayAllocObjectsMethod, SR));
 }
 
 ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR, 

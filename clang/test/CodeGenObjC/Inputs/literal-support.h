@@ -30,6 +30,7 @@ typedef unsigned char BOOL;
 
 @interface NSArray (NSArrayCreation)
 + (id)arrayWithObjects:(const id [])objects count:(unsigned long)cnt;
+- (id)initWithObjects:(const id [])objects count:(unsigned long)cnt;
 @end
 
 @interface NSDictionary : NSObject

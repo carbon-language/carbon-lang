@@ -33,8 +33,15 @@ void test_array() {
   // CHECK: store i8* [[RET1]], i8** [[ELEMENT1]]
 
   // Build the array
-  // CHECK: {{invoke.*@objc_msgSend}}
-  // CHECK: call i8* @objc_retainAutoreleasedReturnValue
+  // CHECK: [[T4:%.*]] = load [[CLASS:%.*]]** @"\01L_OBJC_CLASSLIST_REFERENCES_$_"
+  // CHECK-NEXT: [[T5:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T6:%.*]] = bitcast [[CLASS]]* [[T4]] to i8*
+  // CHECK-NEXT: [[ALLOC:%.*]] = {{invoke.*@objc_msgSend}}
+
+  // CHECK: [[T7:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES_
+  // CHECK-NEXT: [[T8:%.*]] = bitcast [2 x i8*]* [[OBJECTS]] to i8**
+  // CHECK-NEXT: [[INIT:%.*]]  = {{invoke.*@objc_msgSend}}
+
   id arr = @[ X(), Y() ];
 
   // Destroy temporaries
@@ -81,7 +88,7 @@ void test_array_instantiation() {
 
   // Build the array
   // CHECK: {{invoke.*@objc_msgSend}}
-  // CHECK: call i8* @objc_retainAutoreleasedReturnValue
+
   id arr = @[ X(), Y() ];
 
   // Destroy temporaries
