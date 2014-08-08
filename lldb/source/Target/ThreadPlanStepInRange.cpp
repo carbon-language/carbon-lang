@@ -401,18 +401,10 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
     StackFrame *frame = current_plan->GetThread().GetStackFrameAtIndex(0).get();
     Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
-    if ((operation == eFrameCompareYounger && flags.Test(eStepInAvoidNoDebug))
-        || (operation == eFrameCompareSameParent && flags.Test(eStepOutAvoidNoDebug))
-        || (operation == eFrameCompareOlder && flags.Test(eStepOutAvoidNoDebug)))
-    {
-        if (!frame->HasDebugInformation())
-        {
-            if (log)
-                log->Printf ("Stepping out of frame with no debug info");
-
-            should_stop_here = false;
-        }
-    }
+    // First see if the ThreadPlanShouldStopHere default implementation thinks we should get out of here:
+    should_stop_here = ThreadPlanShouldStopHere::DefaultShouldStopHereCallback (current_plan, flags, operation, baton);
+    if (!should_stop_here)
+        return should_stop_here;
     
     if (should_stop_here && current_plan->GetKind() == eKindStepInRange && operation == eFrameCompareYounger)
     {
