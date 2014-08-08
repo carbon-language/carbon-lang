@@ -2410,7 +2410,7 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
           { X86::DEC8r, X86::DEC64_16r, X86::DEC64_32r, X86::DEC64r }  }
       };
 
-      if (UseIncDec) {
+      if (BaseOpc == X86ISD::INC || BaseOpc == X86ISD::DEC) {
         ResultReg = createResultReg(TLI.getRegClassFor(VT));
         bool Is64Bit = Subtarget->is64Bit();
         bool IsDec = BaseOpc == X86ISD::DEC;

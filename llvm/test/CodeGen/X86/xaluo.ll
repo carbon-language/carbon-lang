@@ -231,6 +231,51 @@ entry:
   ret i1 %obit
 }
 
+; UADDO reg, 1 | NOT INC
+define zeroext i1 @uaddo.inc.i8(i8 %v1, i8* %res) {
+entry:
+; CHECK-LABEL: uaddo.inc.i8
+; CHECK-NOT:   incb %dil
+  %t = call {i8, i1} @llvm.uadd.with.overflow.i8(i8 %v1, i8 1)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  store i8 %val, i8* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @uaddo.inc.i16(i16 %v1, i16* %res) {
+entry:
+; CHECK-LABEL: uaddo.inc.i16
+; CHECK-NOT:   incw %di
+  %t = call {i16, i1} @llvm.uadd.with.overflow.i16(i16 %v1, i16 1)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  store i16 %val, i16* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @uaddo.inc.i32(i32 %v1, i32* %res) {
+entry:
+; CHECK-LABEL: uaddo.inc.i32
+; CHECK-NOT:   incl %edi
+  %t = call {i32, i1} @llvm.uadd.with.overflow.i32(i32 %v1, i32 1)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @uaddo.inc.i64(i64 %v1, i64* %res) {
+entry:
+; CHECK-LABEL: uaddo.inc.i64
+; CHECK-NOT:   incq %rdi
+  %t = call {i64, i1} @llvm.uadd.with.overflow.i64(i64 %v1, i64 1)
+  %val = extractvalue {i64, i1} %t, 0
+  %obit = extractvalue {i64, i1} %t, 1
+  store i64 %val, i64* %res
+  ret i1 %obit
+}
+
 ; SSUBO
 define zeroext i1 @ssubo.i32(i32 %v1, i32 %v2, i32* %res) {
 entry:
@@ -758,6 +803,8 @@ declare {i8,  i1} @llvm.sadd.with.overflow.i8 (i8,  i8 ) nounwind readnone
 declare {i16, i1} @llvm.sadd.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.sadd.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.sadd.with.overflow.i64(i64, i64) nounwind readnone
+declare {i8,  i1} @llvm.uadd.with.overflow.i8 (i8,  i8 ) nounwind readnone
+declare {i16, i1} @llvm.uadd.with.overflow.i16(i16, i16) nounwind readnone
 declare {i32, i1} @llvm.uadd.with.overflow.i32(i32, i32) nounwind readnone
 declare {i64, i1} @llvm.uadd.with.overflow.i64(i64, i64) nounwind readnone
 declare {i32, i1} @llvm.ssub.with.overflow.i32(i32, i32) nounwind readnone
