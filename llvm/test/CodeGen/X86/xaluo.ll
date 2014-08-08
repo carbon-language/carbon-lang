@@ -67,16 +67,48 @@ entry:
   ret i1 %obit
 }
 
-; SADDO reg, imm | imm, reg
-; FIXME: INC isn't supported in FastISel yet
-define zeroext i1 @saddo.i64imm1(i64 %v1, i64* %res) {
+; SADDO reg, 1 | INC
+define zeroext i1 @saddo.inc.i8(i8 %v1, i8* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm1
-; DAG:          incq %rdi
-; DAG-NEXT:     seto %al
-; FAST-LABEL:   saddo.i64imm1
-; FAST:         addq $1, %rdi
-; FAST-NEXT:    seto %al
+; CHECK-LABEL: saddo.inc.i8
+; CHECK:       incb %dil
+; CHECK-NEXT:  seto %al
+  %t = call {i8, i1} @llvm.sadd.with.overflow.i8(i8 %v1, i8 1)
+  %val = extractvalue {i8, i1} %t, 0
+  %obit = extractvalue {i8, i1} %t, 1
+  store i8 %val, i8* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo.inc.i16(i16 %v1, i16* %res) {
+entry:
+; CHECK-LABEL: saddo.inc.i16
+; CHECK:       incw %di
+; CHECK-NEXT:  seto %al
+  %t = call {i16, i1} @llvm.sadd.with.overflow.i16(i16 %v1, i16 1)
+  %val = extractvalue {i16, i1} %t, 0
+  %obit = extractvalue {i16, i1} %t, 1
+  store i16 %val, i16* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo.inc.i32(i32 %v1, i32* %res) {
+entry:
+; CHECK-LABEL: saddo.inc.i32
+; CHECK:       incl %edi
+; CHECK-NEXT:  seto %al
+  %t = call {i32, i1} @llvm.sadd.with.overflow.i32(i32 %v1, i32 1)
+  %val = extractvalue {i32, i1} %t, 0
+  %obit = extractvalue {i32, i1} %t, 1
+  store i32 %val, i32* %res
+  ret i1 %obit
+}
+
+define zeroext i1 @saddo.inc.i64(i64 %v1, i64* %res) {
+entry:
+; CHECK-LABEL: saddo.inc.i64
+; CHECK:       incq %rdi
+; CHECK-NEXT:  seto %al
   %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 1)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
@@ -84,17 +116,18 @@ entry:
   ret i1 %obit
 }
 
+; SADDO reg, imm | imm, reg
 ; FIXME: DAG doesn't optimize immediates on the LHS.
-define zeroext i1 @saddo.i64imm2(i64 %v1, i64* %res) {
+define zeroext i1 @saddo.i64imm1(i64 %v1, i64* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm2
+; DAG-LABEL:    saddo.i64imm1
 ; DAG:          mov
 ; DAG-NEXT:     addq
 ; DAG-NEXT:     seto
-; FAST-LABEL:   saddo.i64imm2
-; FAST:         addq $1, %rdi
+; FAST-LABEL:   saddo.i64imm1
+; FAST:         addq $2, %rdi
 ; FAST-NEXT:    seto %al
-  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 1, i64 %v1)
+  %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 2, i64 %v1)
   %val = extractvalue {i64, i1} %t, 0
   %obit = extractvalue {i64, i1} %t, 1
   store i64 %val, i64* %res
@@ -102,12 +135,12 @@ entry:
 }
 
 ; Check boundary conditions for large immediates.
-define zeroext i1 @saddo.i64imm3(i64 %v1, i64* %res) {
+define zeroext i1 @saddo.i64imm2(i64 %v1, i64* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm3
+; DAG-LABEL:    saddo.i64imm2
 ; DAG:          addq $-2147483648, %rdi
 ; DAG-NEXT:     seto %al
-; FAST-LABEL:   saddo.i64imm3
+; FAST-LABEL:   saddo.i64imm2
 ; FAST:         addq $-2147483648, %rdi
 ; FAST-NEXT:    seto %al
   %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 -2147483648)
@@ -117,13 +150,13 @@ entry:
   ret i1 %obit
 }
 
-define zeroext i1 @saddo.i64imm4(i64 %v1, i64* %res) {
+define zeroext i1 @saddo.i64imm3(i64 %v1, i64* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm4
+; DAG-LABEL:    saddo.i64imm3
 ; DAG:          movabsq $-21474836489, %[[REG:[a-z]+]]
 ; DAG-NEXT:     addq %rdi, %[[REG]]
 ; DAG-NEXT:     seto
-; FAST-LABEL:   saddo.i64imm4
+; FAST-LABEL:   saddo.i64imm3
 ; FAST:         movabsq $-21474836489, %[[REG:[a-z]+]]
 ; FAST-NEXT:    addq %rdi, %[[REG]]
 ; FAST-NEXT:    seto
@@ -134,12 +167,12 @@ entry:
   ret i1 %obit
 }
 
-define zeroext i1 @saddo.i64imm5(i64 %v1, i64* %res) {
+define zeroext i1 @saddo.i64imm4(i64 %v1, i64* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm5
+; DAG-LABEL:    saddo.i64imm4
 ; DAG:          addq $2147483647, %rdi
 ; DAG-NEXT:     seto
-; FAST-LABEL:   saddo.i64imm5
+; FAST-LABEL:   saddo.i64imm4
 ; FAST:         addq $2147483647, %rdi
 ; FAST-NEXT:    seto
   %t = call {i64, i1} @llvm.sadd.with.overflow.i64(i64 %v1, i64 2147483647)
@@ -150,13 +183,13 @@ entry:
 }
 
 ; TODO: FastISel shouldn't use movabsq.
-define zeroext i1 @saddo.i64imm6(i64 %v1, i64* %res) {
+define zeroext i1 @saddo.i64imm5(i64 %v1, i64* %res) {
 entry:
-; DAG-LABEL:    saddo.i64imm6
+; DAG-LABEL:    saddo.i64imm5
 ; DAG:          movl $2147483648, %ecx
 ; DAG:          addq %rdi, %rcx
 ; DAG-NEXT:     seto
-; FAST-LABEL:   saddo.i64imm6
+; FAST-LABEL:   saddo.i64imm5
 ; FAST:         movabsq $2147483648, %[[REG:[a-z]+]]
 ; FAST:         addq %rdi, %[[REG]]
 ; FAST-NEXT:     seto

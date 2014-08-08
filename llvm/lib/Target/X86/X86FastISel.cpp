@@ -2374,15 +2374,19 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
         isCommutativeIntrinsic(II))
       std::swap(LHS, RHS);
 
+    bool UseIncDec = false;
+    if (isa<ConstantInt>(RHS) && cast<ConstantInt>(RHS)->isOne())
+      UseIncDec = true;
+
     unsigned BaseOpc, CondOpc;
     switch (II->getIntrinsicID()) {
     default: llvm_unreachable("Unexpected intrinsic!");
     case Intrinsic::sadd_with_overflow:
-      BaseOpc = ISD::ADD; CondOpc = X86::SETOr; break;
+      BaseOpc = UseIncDec ? X86ISD::INC : ISD::ADD; CondOpc = X86::SETOr; break;
     case Intrinsic::uadd_with_overflow:
       BaseOpc = ISD::ADD; CondOpc = X86::SETBr; break;
     case Intrinsic::ssub_with_overflow:
-      BaseOpc = ISD::SUB; CondOpc = X86::SETOr; break;
+      BaseOpc = UseIncDec ? X86ISD::DEC : ISD::SUB; CondOpc = X86::SETOr; break;
     case Intrinsic::usub_with_overflow:
       BaseOpc = ISD::SUB; CondOpc = X86::SETBr; break;
     case Intrinsic::smul_with_overflow:
@@ -2398,9 +2402,24 @@ bool X86FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
 
     unsigned ResultReg = 0;
     // Check if we have an immediate version.
-    if (auto const *C = dyn_cast<ConstantInt>(RHS)) {
-      ResultReg = FastEmit_ri(VT, VT, BaseOpc, LHSReg, LHSIsKill,
-                              C->getZExtValue());
+    if (const auto *CI = dyn_cast<ConstantInt>(RHS)) {
+      static const unsigned Opc[2][2][4] = {
+        { { X86::INC8r, X86::INC16r,    X86::INC32r,    X86::INC64r },
+          { X86::DEC8r, X86::DEC16r,    X86::DEC32r,    X86::DEC64r }  },
+        { { X86::INC8r, X86::INC64_16r, X86::INC64_32r, X86::INC64r },
+          { X86::DEC8r, X86::DEC64_16r, X86::DEC64_32r, X86::DEC64r }  }
+      };
+
+      if (UseIncDec) {
+        ResultReg = createResultReg(TLI.getRegClassFor(VT));
+        bool Is64Bit = Subtarget->is64Bit();
+        bool IsDec = BaseOpc == X86ISD::DEC;
+        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                TII.get(Opc[Is64Bit][IsDec][VT.SimpleTy-MVT::i8]), ResultReg)
+          .addReg(LHSReg, getKillRegState(LHSIsKill));
+      } else
+        ResultReg = FastEmit_ri(VT, VT, BaseOpc, LHSReg, LHSIsKill,
+                                CI->getZExtValue());
     }
 
     unsigned RHSReg;
