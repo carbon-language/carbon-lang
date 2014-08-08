@@ -969,44 +969,49 @@ createArgument(const Record &Arg, StringRef Attr,
   if (!Search)
     Search = &Arg;
 
-  Argument *Ptr = nullptr;
+  std::unique_ptr<Argument> Ptr;
   llvm::StringRef ArgName = Search->getName();
 
-  if (ArgName == "AlignedArgument") Ptr = new AlignedArgument(Arg, Attr);
-  else if (ArgName == "EnumArgument") Ptr = new EnumArgument(Arg, Attr);
-  else if (ArgName == "ExprArgument") Ptr = new ExprArgument(Arg, Attr);
+  if (ArgName == "AlignedArgument")
+    Ptr = llvm::make_unique<AlignedArgument>(Arg, Attr);
+  else if (ArgName == "EnumArgument")
+    Ptr = llvm::make_unique<EnumArgument>(Arg, Attr);
+  else if (ArgName == "ExprArgument")
+    Ptr = llvm::make_unique<ExprArgument>(Arg, Attr);
   else if (ArgName == "FunctionArgument")
-    Ptr = new SimpleArgument(Arg, Attr, "FunctionDecl *");
+    Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "FunctionDecl *");
   else if (ArgName == "IdentifierArgument")
-    Ptr = new SimpleArgument(Arg, Attr, "IdentifierInfo *");
+    Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "IdentifierInfo *");
   else if (ArgName == "DefaultBoolArgument")
-    Ptr = new DefaultSimpleArgument(Arg, Attr, "bool",
-                                    Arg.getValueAsBit("Default"));
-  else if (ArgName == "BoolArgument") Ptr = new SimpleArgument(Arg, Attr, 
-                                                               "bool");
+    Ptr = llvm::make_unique<DefaultSimpleArgument>(
+        Arg, Attr, "bool", Arg.getValueAsBit("Default"));
+  else if (ArgName == "BoolArgument")
+    Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "bool");
   else if (ArgName == "DefaultIntArgument")
-    Ptr = new DefaultSimpleArgument(Arg, Attr, "int",
-                                    Arg.getValueAsInt("Default"));
-  else if (ArgName == "IntArgument") Ptr = new SimpleArgument(Arg, Attr, "int");
-  else if (ArgName == "StringArgument") Ptr = new StringArgument(Arg, Attr);
-  else if (ArgName == "TypeArgument") Ptr = new TypeArgument(Arg, Attr);
+    Ptr = llvm::make_unique<DefaultSimpleArgument>(
+        Arg, Attr, "int", Arg.getValueAsInt("Default"));
+  else if (ArgName == "IntArgument")
+    Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "int");
+  else if (ArgName == "StringArgument")
+    Ptr = llvm::make_unique<StringArgument>(Arg, Attr);
+  else if (ArgName == "TypeArgument")
+    Ptr = llvm::make_unique<TypeArgument>(Arg, Attr);
   else if (ArgName == "UnsignedArgument")
-    Ptr = new SimpleArgument(Arg, Attr, "unsigned");
+    Ptr = llvm::make_unique<SimpleArgument>(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicUnsignedArgument")
-    Ptr = new VariadicArgument(Arg, Attr, "unsigned");
+    Ptr = llvm::make_unique<VariadicArgument>(Arg, Attr, "unsigned");
   else if (ArgName == "VariadicEnumArgument")
-    Ptr = new VariadicEnumArgument(Arg, Attr);
+    Ptr = llvm::make_unique<VariadicEnumArgument>(Arg, Attr);
   else if (ArgName == "VariadicExprArgument")
-    Ptr = new VariadicExprArgument(Arg, Attr);
+    Ptr = llvm::make_unique<VariadicExprArgument>(Arg, Attr);
   else if (ArgName == "VersionArgument")
-    Ptr = new VersionArgument(Arg, Attr);
+    Ptr = llvm::make_unique<VersionArgument>(Arg, Attr);
 
   if (!Ptr) {
     // Search in reverse order so that the most-derived type is handled first.
     std::vector<Record*> Bases = Search->getSuperClasses();
     for (const auto *Base : llvm::make_range(Bases.rbegin(), Bases.rend())) {
-      Ptr = createArgument(Arg, Attr, Base).release();
-      if (Ptr)
+      if ((Ptr = createArgument(Arg, Attr, Base)))
         break;
     }
   }
@@ -1014,7 +1019,7 @@ createArgument(const Record &Arg, StringRef Attr,
   if (Ptr && Arg.getValueAsBit("Optional"))
     Ptr->setOptional(true);
 
-  return std::unique_ptr<Argument>(Ptr);
+  return Ptr;
 }
 
 static void writeAvailabilityValue(raw_ostream &OS) {
