@@ -243,6 +243,9 @@ private:
   // The Scop we code generate.
   Scop *S;
   Pass *P;
+  LoopInfo &LI;
+  ScalarEvolution &SE;
+  DominatorTree &DT;
 
   // The Builder specifies the current location to code generate at.
   PollyIRBuilder &Builder;
@@ -463,7 +466,8 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   int VectorDimensions = IVS ? IVS->size() : 1;
 
   if (VectorDimensions == 1) {
-    BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P);
+    BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P, LI,
+                             SE);
     isl_set_free(Domain);
     return;
   }
@@ -491,7 +495,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
 
   isl_map *Schedule = extractPartialSchedule(Statement, Domain);
   VectorBlockGenerator::generate(Builder, *Statement, VectorMap, VLTS, Schedule,
-                                 P);
+                                 P, LI, SE);
   isl_map_free(Schedule);
 }
 
@@ -509,7 +513,7 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f) {
   UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
   Stride = Builder.getInt(APInt_from_MPZ(f->stride));
 
-  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, ExitBlock,
+  IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, LI, DT, ExitBlock,
                   CmpInst::ICMP_SLE);
 
   // Add loop iv to symbols.
@@ -772,7 +776,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
     LowerBound = ExpGen.codegen(InnerFor->LB, IntPtrTy);
     UpperBound = ExpGen.codegen(InnerFor->UB, IntPtrTy);
     Stride = Builder.getInt(APInt_from_MPZ(InnerFor->stride));
-    IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, AfterBB,
+    IV = createLoop(LowerBound, UpperBound, Stride, Builder, P, LI, DT, AfterBB,
                     CmpInst::ICMP_SLE);
     const Value *OldIV_ = Statement->getInductionVariableForDimension(2);
     Value *OldIV = const_cast<Value *>(OldIV_);
@@ -781,7 +785,8 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
 
   updateWithValueMap(VMap);
 
-  BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P);
+  BlockGenerator::generate(Builder, *Statement, ValueMap, LoopToScev, P, LI,
+                           SE);
 
   if (AfterBB)
     Builder.SetInsertPoint(AfterBB->begin());
@@ -1029,7 +1034,10 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
 }
 
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, PollyIRBuilder &B, Pass *P)
-    : S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {}
+    : S(scop), P(P), LI(P->getAnalysis<LoopInfo>()),
+      SE(P->getAnalysis<ScalarEvolution>()),
+      DT(P->getAnalysis<DominatorTreeWrapperPass>().getDomTree()), Builder(B),
+      ExpGen(Builder, ClastVars) {}
 
 namespace {
 class CodeGeneration : public ScopPass {
