@@ -326,7 +326,12 @@ Input::HNode *Input::createHNodes(Node *N) {
   } else if (MappingNode *Map = dyn_cast<MappingNode>(N)) {
     MapHNode *mapHNode = new MapHNode(N);
     for (KeyValueNode &KVN : *Map) {
-      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(KVN.getKey());
+      Node *KeyNode = KVN.getKey();
+      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(KeyNode);
+      if (!KeyScalar) {
+        setError(KeyNode, "Map key must be a scalar");
+        break;
+      }
       StringStorage.clear();
       StringRef KeyStr = KeyScalar->getValue(StringStorage);
       if (!StringStorage.empty()) {

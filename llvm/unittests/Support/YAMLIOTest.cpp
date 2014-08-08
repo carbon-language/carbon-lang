@@ -84,6 +84,13 @@ TEST(YAMLIO, TestMapRead) {
   }
 }
 
+TEST(YAMLIO, TestMalformedMapRead) {
+  FooBar doc;
+  Input yin("{foo: 3; bar: 5}", nullptr, suppressErrorMessages);
+  yin >> doc;
+  EXPECT_TRUE(!!yin.error());
+}
+
 //
 // Test the reading of a yaml sequence of mappings
 //
