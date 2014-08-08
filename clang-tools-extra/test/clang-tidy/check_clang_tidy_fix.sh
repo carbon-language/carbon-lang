@@ -20,7 +20,7 @@ set -o errexit
 # Remove the contents of the CHECK lines to avoid CHECKs matching on themselves.
 # We need to keep the comments to preserve line numbers while avoiding empty
 # lines which could potentially trigger formatting-related checks.
-sed 's#// *[A-Z-]+:.*#//#' ${INPUT_FILE} > ${TEMPORARY_FILE}
+sed 's#// *[A-Z-][A-Z-]*:.*#//#' ${INPUT_FILE} > ${TEMPORARY_FILE}
 
 clang-tidy ${TEMPORARY_FILE} -fix --checks="-*,${CHECK_TO_RUN}" \
   -- --std=c++11 $* > ${TEMPORARY_FILE}.msg 2>&1
