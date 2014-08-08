@@ -530,6 +530,8 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
     Builder.defineMacro("IBOutletCollection(ClassName)",
                         "__attribute__((iboutletcollection(ClassName)))");
     Builder.defineMacro("IBAction", "void)__attribute__((ibaction)");
+    Builder.defineMacro("IBInspectable", "");
+    Builder.defineMacro("IB_DESIGNABLE", "");
   }
 
   if (LangOpts.CPlusPlus)
