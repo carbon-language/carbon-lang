@@ -1421,6 +1421,7 @@ template <class _Tp, class _Alloc>
 void
 forward_list<_Tp, _Alloc>::remove(const value_type& __v)
 {
+    forward_list<_Tp, _Alloc> __deleted_nodes; // collect the nodes we're removing
     iterator __e = end();
     for (iterator __i = before_begin(); __i.__ptr_->__next_ != nullptr;)
     {
@@ -1429,7 +1430,7 @@ forward_list<_Tp, _Alloc>::remove(const value_type& __v)
             iterator __j = _VSTD::next(__i, 2);
             for (; __j != __e && *__j == __v; ++__j)
                 ;
-            erase_after(__i, __j);
+			__deleted_nodes.splice_after(__deleted_nodes.before_begin(), *this, __i, __j);
             if (__j == __e)
                 break;
             __i = __j;
