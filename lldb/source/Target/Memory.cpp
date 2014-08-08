@@ -241,16 +241,16 @@ lldb::addr_t
 AllocatedBlock::ReserveBlock (uint32_t size)
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
+    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_VERBOSE));
     if (size <= m_byte_size)
     {
         const uint32_t needed_chunks = CalculateChunksNeededForSize (size);
-        Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_VERBOSE));
 
         if (m_offset_to_chunk_size.empty())
         {
             m_offset_to_chunk_size[0] = needed_chunks;
             if (log)
-                log->Printf ("[1] AllocatedBlock::ReserveBlock (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks", size, size, 0, needed_chunks, m_chunk_size);
+                log->Printf ("[1] AllocatedBlock::ReserveBlock(%p) (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks", this, size, size, 0, needed_chunks, m_chunk_size);
             addr = m_addr;
         }
         else
@@ -268,7 +268,7 @@ AllocatedBlock::ReserveBlock (uint32_t size)
                     {
                         m_offset_to_chunk_size[last_offset] = needed_chunks;
                         if (log)
-                            log->Printf ("[2] AllocatedBlock::ReserveBlock (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks", size, size, last_offset, needed_chunks, m_chunk_size);
+                            log->Printf ("[2] AllocatedBlock::ReserveBlock(%p) (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks - num_chunks %lu", this, size, size, last_offset, needed_chunks, m_chunk_size, m_offset_to_chunk_size.size());
                         addr = m_addr + last_offset;
                         break;
                     }
@@ -284,7 +284,7 @@ AllocatedBlock::ReserveBlock (uint32_t size)
                     {
                         m_offset_to_chunk_size[last_offset] = needed_chunks;
                         if (log)
-                            log->Printf ("[3] AllocatedBlock::ReserveBlock (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks", size, size, last_offset, needed_chunks, m_chunk_size);
+                            log->Printf ("[3] AllocatedBlock::ReserveBlock(%p) (size = %u (0x%x)) => offset = 0x%x, %u %u bit chunks - num_chunks %lu", this, size, size, last_offset, needed_chunks, m_chunk_size, m_offset_to_chunk_size.size());
                         addr = m_addr + last_offset;
                         break;
                     }
@@ -343,9 +343,9 @@ AllocatedBlock::ReserveBlock (uint32_t size)
 //            return m_addr + m_chunk_size * first_chunk_idx;
 //        }
     }
-    Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_VERBOSE));
+
     if (log)
-        log->Printf ("AllocatedBlock::ReserveBlock (size = %u (0x%x)) => 0x%16.16" PRIx64, size, size, (uint64_t)addr);
+        log->Printf ("AllocatedBlock::ReserveBlock(%p) (size = %u (0x%x)) => 0x%16.16" PRIx64, this, size, size, (uint64_t)addr);
     return addr;
 }
 
@@ -362,7 +362,7 @@ AllocatedBlock::FreeBlock (addr_t addr)
     }
     Log *log (GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS | LIBLLDB_LOG_VERBOSE));
     if (log)
-        log->Printf ("AllocatedBlock::FreeBlock (addr = 0x%16.16" PRIx64 ") => %i", (uint64_t)addr, success);
+        log->Printf ("AllocatedBlock::FreeBlock(%p) (addr = 0x%16.16" PRIx64 ") => %i, num_chunks: %lu", this, (uint64_t)addr, success, m_offset_to_chunk_size.size());
     return success;
 }
 
@@ -436,6 +436,8 @@ AllocatedMemoryCache::AllocateMemory (size_t byte_size,
     for (PermissionsToBlockMap::iterator pos = range.first; pos != range.second; ++pos)
     {
         addr = (*pos).second->ReserveBlock (byte_size);
+        if (addr != LLDB_INVALID_ADDRESS)
+            break;
     }
     
     if (addr == LLDB_INVALID_ADDRESS)
