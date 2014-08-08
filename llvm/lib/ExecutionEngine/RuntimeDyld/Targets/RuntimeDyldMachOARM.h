@@ -28,11 +28,13 @@ public:
 
   unsigned getStubAlignment() override { return 4; }
 
-  int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                       MachO::RelocationInfoType RelType) const {
-    switch (RelType) {
+  int64_t decodeAddend(const RelocationEntry &RE) const {
+    const SectionEntry &Section = Sections[RE.SectionID];
+    uint8_t *LocalAddress = Section.Address + RE.Offset;
+
+    switch (RE.RelType) {
       default:
-        return ParentT::decodeAddend(LocalAddress, NumBytes, RelType);
+        return memcpyAddend(RE);
       case MachO::ARM_RELOC_BR24: {
         uint32_t Temp;
         memcpy(&Temp, LocalAddress, 4);
@@ -55,7 +57,8 @@ public:
     if (Obj.isRelocationScattered(RelInfo))
       return ++++RelI;
 
-    RelocationEntry RE(getBasicRelocationEntry(SectionID, ObjImg, RelI));
+    RelocationEntry RE(getRelocationEntry(SectionID, ObjImg, RelI));
+    RE.Addend = decodeAddend(RE);
     RelocationValueRef Value(
         getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 

@@ -38,7 +38,8 @@ public:
     assert(!Obj.isRelocationScattered(RelInfo) &&
            "Scattered relocations not supported on X86_64");
 
-    RelocationEntry RE(getBasicRelocationEntry(SectionID, ObjImg, RelI));
+    RelocationEntry RE(getRelocationEntry(SectionID, ObjImg, RelI));
+    RE.Addend = memcpyAddend(RE);
     RelocationValueRef Value(
         getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 

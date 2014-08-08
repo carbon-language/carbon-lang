@@ -28,11 +28,13 @@ public:
   unsigned getStubAlignment() override { return 8; }
 
   /// Extract the addend encoded in the instruction / memory location.
-  int64_t decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                       MachO::RelocationInfoType RelType) const {
+  int64_t decodeAddend(const RelocationEntry &RE) const {
+    const SectionEntry &Section = Sections[RE.SectionID];
+    uint8_t *LocalAddress = Section.Address + RE.Offset;
+    unsigned NumBytes = 1 << RE.Size;
     int64_t Addend = 0;
     // Verify that the relocation has the correct size and alignment.
-    switch (RelType) {
+    switch (RE.RelType) {
     default:
       llvm_unreachable("Unsupported relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED:
@@ -49,7 +51,7 @@ public:
       break;
     }
 
-    switch (RelType) {
+    switch (RE.RelType) {
     default:
       llvm_unreachable("Unsupported relocation type!");
     case MachO::ARM64_RELOC_UNSIGNED:
@@ -263,7 +265,8 @@ public:
       RelInfo = Obj.getRelocation(RelI->getRawDataRefImpl());
     }
 
-    RelocationEntry RE(getBasicRelocationEntry(SectionID, ObjImg, RelI));
+    RelocationEntry RE(getRelocationEntry(SectionID, ObjImg, RelI));
+    RE.Addend = decodeAddend(RE);
     RelocationValueRef Value(
         getRelocationValueRef(ObjImg, RelI, RE, ObjSectionToID, Symbols));
 

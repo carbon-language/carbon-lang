@@ -27,8 +27,10 @@ using namespace llvm::object;
 
 namespace llvm {
 
-int64_t RuntimeDyldMachO::decodeAddend(uint8_t *LocalAddress, unsigned NumBytes,
-                                       MachO::RelocationInfoType) const {
+int64_t RuntimeDyldMachO::memcpyAddend(const RelocationEntry &RE) const {
+  const SectionEntry &Section = Sections[RE.SectionID];
+  uint8_t *LocalAddress = Section.Address + RE.Offset;
+  unsigned NumBytes = 1 << RE.Size;
   int64_t Addend = 0;
   memcpy(&Addend, LocalAddress, NumBytes);
   return Addend;
