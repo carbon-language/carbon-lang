@@ -463,3 +463,160 @@
 # CHECK-BE: evxor 14, 22, 19                # encoding: [0x11,0xd6,0x9a,0x16]
 # CHECK-LE: evxor 14, 22, 19                # encoding: [0x16,0x9a,0xd6,0x11]
             evxor %r14, %r22, %r19
+
+# CHECK-BE: evldd 14, 0(27)                 # encoding: [0x11,0xdb,0x03,0x01]
+# CHECK-LE: evldd 14, 0(27)                 # encoding: [0x01,0x03,0xdb,0x11]
+            evldd %r14, 0(%r27)
+# CHECK-BE: evldd 14, 248(27)               # encoding: [0x11,0xdb,0xfb,0x01]
+# CHECK-LE: evldd 14, 248(27)               # encoding: [0x01,0xfb,0xdb,0x11]
+            evldd %r14, 248(%r27)
+# CHECK-BE: evldd 14, 248(9)                # encoding: [0x11,0xc9,0xfb,0x01]
+# CHECK-LE: evldd 14, 248(9)                # encoding: [0x01,0xfb,0xc9,0x11]
+            evldd %r14, 248(%r9)
+# CHECK-BE: evldw 14, 0(27)                 # encoding: [0x11,0xdb,0x03,0x03]
+# CHECK-LE: evldw 14, 0(27)                 # encoding: [0x03,0x03,0xdb,0x11]
+            evldw %r14, 0(%r27)
+# CHECK-BE: evldw 14, 248(27)               # encoding: [0x11,0xdb,0xfb,0x03]
+# CHECK-LE: evldw 14, 248(27)               # encoding: [0x03,0xfb,0xdb,0x11]
+            evldw %r14, 248(%r27)
+# CHECK-BE: evldw 14, 248(9)                # encoding: [0x11,0xc9,0xfb,0x03]
+# CHECK-LE: evldw 14, 248(9)                # encoding: [0x03,0xfb,0xc9,0x11]
+            evldw %r14, 248(%r9)
+# CHECK-BE: evldh 14, 0(27)                 # encoding: [0x11,0xdb,0x03,0x05]
+# CHECK-LE: evldh 14, 0(27)                 # encoding: [0x05,0x03,0xdb,0x11]
+            evldh %r14, 0(%r27)
+# CHECK-BE: evldh 14, 248(27)               # encoding: [0x11,0xdb,0xfb,0x05]
+# CHECK-LE: evldh 14, 248(27)               # encoding: [0x05,0xfb,0xdb,0x11]
+            evldh %r14, 248(%r27)
+# CHECK-BE: evldh 14, 248(9)                # encoding: [0x11,0xc9,0xfb,0x05]
+# CHECK-LE: evldh 14, 248(9)                # encoding: [0x05,0xfb,0xc9,0x11]
+            evldh %r14, 248(%r9)
+# CHECK-BE: evlhhesplat 14, 0(27)           # encoding: [0x11,0xdb,0x03,0x09]
+# CHECK-LE: evlhhesplat 14, 0(27)           # encoding: [0x09,0x03,0xdb,0x11]
+            evlhhesplat %r14, 0(%r27)
+# CHECK-BE: evlhhousplat 14, 0(27)          # encoding: [0x11,0xdb,0x03,0x0d]
+# CHECK-LE: evlhhousplat 14, 0(27)          # encoding: [0x0d,0x03,0xdb,0x11]
+            evlhhousplat %r14, 0(%r27)
+# CHECK-BE: evlhhousplat 14, 62(27)         # encoding: [0x11,0xdb,0xfb,0x0d]
+# CHECK-LE: evlhhousplat 14, 62(27)         # encoding: [0x0d,0xfb,0xdb,0x11]
+            evlhhousplat %r14, 62(%r27)
+# CHECK-BE: evlhhousplat 14, 62(9)          # encoding: [0x11,0xc9,0xfb,0x0d]
+# CHECK-LE: evlhhousplat 14, 62(9)          # encoding: [0x0d,0xfb,0xc9,0x11]
+            evlhhousplat %r14, 62(%r9)
+# CHECK-BE: evlhhossplat 14, 0(27)          # encoding: [0x11,0xdb,0x03,0x0f]
+# CHECK-LE: evlhhossplat 14, 0(27)          # encoding: [0x0f,0x03,0xdb,0x11]
+            evlhhossplat %r14, 0(%r27)
+# CHECK-BE: evlhhossplat 14, 62(27)         # encoding: [0x11,0xdb,0xfb,0x0f]
+# CHECK-LE: evlhhossplat 14, 62(27)         # encoding: [0x0f,0xfb,0xdb,0x11]
+            evlhhossplat %r14, 62(%r27)
+# CHECK-BE: evlhhossplat 14, 62(9)          # encoding: [0x11,0xc9,0xfb,0x0f]
+# CHECK-LE: evlhhossplat 14, 62(9)          # encoding: [0x0f,0xfb,0xc9,0x11]
+            evlhhossplat %r14, 62(%r9)
+# CHECK-BE: evlwhe 14, 0(27)                # encoding: [0x11,0xdb,0x03,0x11]
+# CHECK-LE: evlwhe 14, 0(27)                # encoding: [0x11,0x03,0xdb,0x11]
+            evlwhe %r14, 0(%r27)
+# CHECK-BE: evlwhe 14, 124(27)              # encoding: [0x11,0xdb,0xfb,0x11]
+# CHECK-LE: evlwhe 14, 124(27)              # encoding: [0x11,0xfb,0xdb,0x11]
+            evlwhe %r14, 124(%r27)
+# CHECK-BE: evlwhe 14, 124(9)               # encoding: [0x11,0xc9,0xfb,0x11]
+# CHECK-LE: evlwhe 14, 124(9)               # encoding: [0x11,0xfb,0xc9,0x11]
+            evlwhe %r14, 124(%r9)
+# CHECK-BE: evlwhou 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x15]
+# CHECK-LE: evlwhou 14, 0(27)               # encoding: [0x15,0x03,0xdb,0x11]
+            evlwhou %r14, 0(%r27)
+# CHECK-BE: evlwhou 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x15]
+# CHECK-LE: evlwhou 14, 124(27)             # encoding: [0x15,0xfb,0xdb,0x11]
+            evlwhou %r14, 124(%r27)
+# CHECK-BE: evlwhou 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x15]
+# CHECK-LE: evlwhou 14, 124(9)              # encoding: [0x15,0xfb,0xc9,0x11]
+            evlwhou %r14, 124(%r9)
+# CHECK-BE: evlwhos 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x17]
+# CHECK-LE: evlwhos 14, 0(27)               # encoding: [0x17,0x03,0xdb,0x11]
+            evlwhos %r14, 0(%r27)
+# CHECK-BE: evlwhos 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x17]
+# CHECK-LE: evlwhos 14, 124(27)             # encoding: [0x17,0xfb,0xdb,0x11]
+            evlwhos %r14, 124(%r27)
+# CHECK-BE: evlwhos 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x17]
+# CHECK-LE: evlwhos 14, 124(9)              # encoding: [0x17,0xfb,0xc9,0x11]
+            evlwhos %r14, 124(%r9)
+# CHECK-BE: evlwwsplat 14, 0(27)            # encoding: [0x11,0xdb,0x03,0x19]
+# CHECK-LE: evlwwsplat 14, 0(27)            # encoding: [0x19,0x03,0xdb,0x11]
+            evlwwsplat %r14, 0(%r27)
+# CHECK-BE: evlwwsplat 14, 124(27)          # encoding: [0x11,0xdb,0xfb,0x19]
+# CHECK-LE: evlwwsplat 14, 124(27)          # encoding: [0x19,0xfb,0xdb,0x11]
+            evlwwsplat %r14, 124(%r27)
+# CHECK-BE: evlwwsplat 14, 124(9)           # encoding: [0x11,0xc9,0xfb,0x19]
+# CHECK-LE: evlwwsplat 14, 124(9)           # encoding: [0x19,0xfb,0xc9,0x11]
+            evlwwsplat %r14, 124(%r9)
+# CHECK-BE: evlwhsplat 14, 0(27)            # encoding: [0x11,0xdb,0x03,0x1d]
+# CHECK-LE: evlwhsplat 14, 0(27)            # encoding: [0x1d,0x03,0xdb,0x11]
+            evlwhsplat %r14, 0(%r27)
+# CHECK-BE: evlwhsplat 14, 124(27)          # encoding: [0x11,0xdb,0xfb,0x1d]
+# CHECK-LE: evlwhsplat 14, 124(27)          # encoding: [0x1d,0xfb,0xdb,0x11]
+            evlwhsplat %r14, 124(%r27)
+# CHECK-BE: evlwhsplat 14, 124(9)           # encoding: [0x11,0xc9,0xfb,0x1d]
+# CHECK-LE: evlwhsplat 14, 124(9)           # encoding: [0x1d,0xfb,0xc9,0x11]
+            evlwhsplat %r14, 124(%r9)
+# CHECK-BE: evstdd 14, 0(27)                # encoding: [0x11,0xdb,0x03,0x21]
+# CHECK-LE: evstdd 14, 0(27)                # encoding: [0x21,0x03,0xdb,0x11]
+            evstdd %r14, 0(%r27)
+# CHECK-BE: evstdd 14, 248(27)              # encoding: [0x11,0xdb,0xfb,0x21]
+# CHECK-LE: evstdd 14, 248(27)              # encoding: [0x21,0xfb,0xdb,0x11]
+            evstdd %r14, 248(%r27)
+# CHECK-BE: evstdd 14, 248(9)               # encoding: [0x11,0xc9,0xfb,0x21]
+# CHECK-LE: evstdd 14, 248(9)               # encoding: [0x21,0xfb,0xc9,0x11]
+            evstdd %r14, 248(%r9)
+# CHECK-BE: evstdh 14, 0(27)                # encoding: [0x11,0xdb,0x03,0x25]
+# CHECK-LE: evstdh 14, 0(27)                # encoding: [0x25,0x03,0xdb,0x11]
+            evstdh %r14, 0(%r27)
+# CHECK-BE: evstdh 14, 248(27)              # encoding: [0x11,0xdb,0xfb,0x25]
+# CHECK-LE: evstdh 14, 248(27)              # encoding: [0x25,0xfb,0xdb,0x11]
+            evstdh %r14, 248(%r27)
+# CHECK-BE: evstdh 14, 248(9)               # encoding: [0x11,0xc9,0xfb,0x25]
+# CHECK-LE: evstdh 14, 248(9)               # encoding: [0x25,0xfb,0xc9,0x11]
+            evstdh %r14, 248(%r9)
+# CHECK-BE: evstdw 14, 0(27)                # encoding: [0x11,0xdb,0x03,0x23]
+# CHECK-LE: evstdw 14, 0(27)                # encoding: [0x23,0x03,0xdb,0x11]
+            evstdw %r14, 0(%r27)
+# CHECK-BE: evstdw 14, 248(27)              # encoding: [0x11,0xdb,0xfb,0x23]
+# CHECK-LE: evstdw 14, 248(27)              # encoding: [0x23,0xfb,0xdb,0x11]
+            evstdw %r14, 248(%r27)
+# CHECK-BE: evstdw 14, 248(9)               # encoding: [0x11,0xc9,0xfb,0x23]
+# CHECK-LE: evstdw 14, 248(9)               # encoding: [0x23,0xfb,0xc9,0x11]
+            evstdw %r14, 248(%r9)
+# CHECK-BE: evstwhe 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x31]
+# CHECK-LE: evstwhe 14, 0(27)               # encoding: [0x31,0x03,0xdb,0x11]
+            evstwhe %r14, 0(%r27)
+# CHECK-BE: evstwhe 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x31]
+# CHECK-LE: evstwhe 14, 124(27)             # encoding: [0x31,0xfb,0xdb,0x11]
+            evstwhe %r14, 124(%r27)
+# CHECK-BE: evstwhe 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x31]
+# CHECK-LE: evstwhe 14, 124(9)              # encoding: [0x31,0xfb,0xc9,0x11]
+            evstwhe %r14, 124(%r9)
+# CHECK-BE: evstwho 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x35]
+# CHECK-LE: evstwho 14, 0(27)               # encoding: [0x35,0x03,0xdb,0x11]
+            evstwho %r14, 0(%r27)
+# CHECK-BE: evstwho 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x35]
+# CHECK-LE: evstwho 14, 124(27)             # encoding: [0x35,0xfb,0xdb,0x11]
+            evstwho %r14, 124(%r27)
+# CHECK-BE: evstwho 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x35]
+# CHECK-LE: evstwho 14, 124(9)              # encoding: [0x35,0xfb,0xc9,0x11]
+            evstwho %r14, 124(%r9)
+# CHECK-BE: evstwwe 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x39]
+# CHECK-LE: evstwwe 14, 0(27)               # encoding: [0x39,0x03,0xdb,0x11]
+            evstwwe %r14, 0(%r27)
+# CHECK-BE: evstwwe 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x39]
+# CHECK-LE: evstwwe 14, 124(27)             # encoding: [0x39,0xfb,0xdb,0x11]
+            evstwwe %r14, 124(%r27)
+# CHECK-BE: evstwwe 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x39]
+# CHECK-LE: evstwwe 14, 124(9)              # encoding: [0x39,0xfb,0xc9,0x11]
+            evstwwe %r14, 124(%r9)
+# CHECK-BE: evstwwo 14, 0(27)               # encoding: [0x11,0xdb,0x03,0x3d]
+# CHECK-LE: evstwwo 14, 0(27)               # encoding: [0x3d,0x03,0xdb,0x11]
+            evstwwo %r14, 0(%r27)
+# CHECK-BE: evstwwo 14, 124(27)             # encoding: [0x11,0xdb,0xfb,0x3d]
+# CHECK-LE: evstwwo 14, 124(27)             # encoding: [0x3d,0xfb,0xdb,0x11]
+            evstwwo %r14, 124(%r27)
+# CHECK-BE: evstwwo 14, 124(9)              # encoding: [0x11,0xc9,0xfb,0x3d]
+# CHECK-LE: evstwwo 14, 124(9)              # encoding: [0x3d,0xfb,0xc9,0x11]
+            evstwwo %r14, 124(%r9)

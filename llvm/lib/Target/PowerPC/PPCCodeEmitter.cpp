@@ -70,6 +70,9 @@ namespace {
     unsigned getImm16Encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getSPE8DisEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getSPE4DisEncoding(const MachineInstr &MI, unsigned OpNo) const;
+    unsigned getSPE2DisEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSCallEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
@@ -261,6 +264,43 @@ unsigned PPCCodeEmitter::getMemRIXEncoding(const MachineInstr &MI,
   return RegBits;
 }
 
+unsigned PPCCodeEmitter::getSPE8DisEncoding(const MachineInstr &MI, unsigned OpNo) const {
+  // Encode (imm, reg) as a spe8dis, which has the low 5-bits of (imm / 8)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1)) << 5;
+
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO) >> 3;
+  return reverseBits(Imm | RegBits) >> 22;
+}
+
+
+unsigned PPCCodeEmitter::getSPE4DisEncoding(const MachineInstr &MI, unsigned OpNo) const {
+  // Encode (imm, reg) as a spe4dis, which has the low 5-bits of (imm / 4)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1)) << 5;
+
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO) >> 2;
+  return reverseBits(Imm | RegBits) >> 22;
+}
+
+
+unsigned PPCCodeEmitter::getSPE2DisEncoding(const MachineInstr &MI, unsigned OpNo) const {
+  // Encode (imm, reg) as a spe2dis, which has the low 5-bits of (imm / 2)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1)) << 5;
+
+  const MachineOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO) >> 1;
+  return reverseBits(Imm | RegBits) >> 22;
+}
 
 unsigned PPCCodeEmitter::getTLSRegEncoding(const MachineInstr &MI,
                                            unsigned OpNo) const {

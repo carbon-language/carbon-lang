@@ -413,6 +413,15 @@ public:
   bool isU5Imm() const { return Kind == Immediate && isUInt<5>(getImm()); }
   bool isS5Imm() const { return Kind == Immediate && isInt<5>(getImm()); }
   bool isU6Imm() const { return Kind == Immediate && isUInt<6>(getImm()); }
+  bool isU6ImmX2() const { return Kind == Immediate &&
+                                  isUInt<6>(getImm()) &&
+                                  (getImm() & 1) == 0; }
+  bool isU7ImmX4() const { return Kind == Immediate &&
+                                  isUInt<7>(getImm()) &&
+                                  (getImm() & 3) == 0; }
+  bool isU8ImmX8() const { return Kind == Immediate &&
+                                  isUInt<8>(getImm()) &&
+                                  (getImm() & 7) == 0; }
   bool isU16Imm() const { return Kind == Expression ||
                                  (Kind == Immediate && isUInt<16>(getImm())); }
   bool isS16Imm() const { return Kind == Expression ||

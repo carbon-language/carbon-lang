@@ -66,6 +66,15 @@ public:
   unsigned getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
+  unsigned getSPE8DisEncoding(const MCInst &MI, unsigned OpNo,
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
+  unsigned getSPE4DisEncoding(const MCInst &MI, unsigned OpNo,
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
+  unsigned getSPE2DisEncoding(const MCInst &MI, unsigned OpNo,
+                              SmallVectorImpl<MCFixup> &Fixups,
+                              const MCSubtargetInfo &STI) const;
   unsigned getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
                              SmallVectorImpl<MCFixup> &Fixups,
                              const MCSubtargetInfo &STI) const;
@@ -257,6 +266,54 @@ unsigned PPCMCCodeEmitter::getMemRIXEncoding(const MCInst &MI, unsigned OpNo,
   Fixups.push_back(MCFixup::Create(IsLittleEndian? 0 : 2, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_half16ds));
   return RegBits;
+}
+
+
+unsigned PPCMCCodeEmitter::getSPE8DisEncoding(const MCInst &MI, unsigned OpNo,
+                                              SmallVectorImpl<MCFixup> &Fixups,
+                                              const MCSubtargetInfo &STI)
+                                              const {
+  // Encode (imm, reg) as a spe8dis, which has the low 5-bits of (imm / 8)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI) << 5;
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO, Fixups, STI) >> 3;
+  return reverseBits(Imm | RegBits) >> 22;
+}
+
+
+unsigned PPCMCCodeEmitter::getSPE4DisEncoding(const MCInst &MI, unsigned OpNo,
+                                              SmallVectorImpl<MCFixup> &Fixups,
+                                              const MCSubtargetInfo &STI)
+                                              const {
+  // Encode (imm, reg) as a spe4dis, which has the low 5-bits of (imm / 4)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI) << 5;
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO, Fixups, STI) >> 2;
+  return reverseBits(Imm | RegBits) >> 22;
+}
+
+
+unsigned PPCMCCodeEmitter::getSPE2DisEncoding(const MCInst &MI, unsigned OpNo,
+                                              SmallVectorImpl<MCFixup> &Fixups,
+                                              const MCSubtargetInfo &STI)
+                                              const {
+  // Encode (imm, reg) as a spe2dis, which has the low 5-bits of (imm / 2)
+  // as the displacement and the next 5 bits as the register #.
+  assert(MI.getOperand(OpNo+1).isReg());
+  uint32_t RegBits = getMachineOpValue(MI, MI.getOperand(OpNo+1), Fixups, STI) << 5;
+
+  const MCOperand &MO = MI.getOperand(OpNo);
+  assert(MO.isImm());
+  uint32_t Imm = getMachineOpValue(MI, MO, Fixups, STI) >> 1;
+  return reverseBits(Imm | RegBits) >> 22;
 }
 
 

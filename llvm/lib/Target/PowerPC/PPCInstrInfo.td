@@ -566,6 +566,27 @@ def PPCDispRIXOperand : AsmOperandClass {
 def dispRIX : Operand<iPTR> {
   let ParserMatchClass = PPCDispRIXOperand;
 }
+def PPCDispSPE8Operand : AsmOperandClass {
+ let Name = "DispSPE8"; let PredicateMethod = "isU8ImmX8";
+ let RenderMethod = "addImmOperands";
+}
+def dispSPE8 : Operand<iPTR> {
+  let ParserMatchClass = PPCDispSPE8Operand;
+}
+def PPCDispSPE4Operand : AsmOperandClass {
+ let Name = "DispSPE4"; let PredicateMethod = "isU7ImmX4";
+ let RenderMethod = "addImmOperands";
+}
+def dispSPE4 : Operand<iPTR> {
+  let ParserMatchClass = PPCDispSPE4Operand;
+}
+def PPCDispSPE2Operand : AsmOperandClass {
+ let Name = "DispSPE2"; let PredicateMethod = "isU6ImmX2";
+ let RenderMethod = "addImmOperands";
+}
+def dispSPE2 : Operand<iPTR> {
+  let ParserMatchClass = PPCDispSPE2Operand;
+}
 
 def memri : Operand<iPTR> {
   let PrintMethod = "printMemRegImm";
@@ -582,6 +603,21 @@ def memrix : Operand<iPTR> {   // memri where the imm is 4-aligned.
   let MIOperandInfo = (ops dispRIX:$imm, ptr_rc_nor0:$reg);
   let EncoderMethod = "getMemRIXEncoding";
   let DecoderMethod = "decodeMemRIXOperands";
+}
+def spe8dis : Operand<iPTR> {   // SPE displacement where the imm is 8-aligned.
+  let PrintMethod = "printMemRegImm";
+  let MIOperandInfo = (ops dispSPE8:$imm, ptr_rc_nor0:$reg);
+  let EncoderMethod = "getSPE8DisEncoding";
+}
+def spe4dis : Operand<iPTR> {   // SPE displacement where the imm is 4-aligned.
+  let PrintMethod = "printMemRegImm";
+  let MIOperandInfo = (ops dispSPE4:$imm, ptr_rc_nor0:$reg);
+  let EncoderMethod = "getSPE4DisEncoding";
+}
+def spe2dis : Operand<iPTR> {   // SPE displacement where the imm is 2-aligned.
+  let PrintMethod = "printMemRegImm";
+  let MIOperandInfo = (ops dispSPE2:$imm, ptr_rc_nor0:$reg);
+  let EncoderMethod = "getSPE2DisEncoding";
 }
 
 // A single-register address. This is used with the SjLj

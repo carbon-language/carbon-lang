@@ -46,7 +46,67 @@ class EVXForm_3<bits<11> xo, dag OOL, dag IOL, string asmstr,
   let Inst{21-31} = xo;
 }
 
+class EVXForm_D<bits<11> xo, dag OOL, dag IOL, string asmstr,
+               InstrItinClass itin> : I<4, OOL, IOL, asmstr, itin> {
+  bits<5> RT;
+  bits<21> D;
+
+  let Pattern = [];
+
+  let Inst{6-10}  = RT;
+  let Inst{20} = D{0};
+  let Inst{19} = D{1};
+  let Inst{18} = D{2};
+  let Inst{17} = D{3};
+  let Inst{16} = D{4};
+  let Inst{15} = D{5};
+  let Inst{14} = D{6};
+  let Inst{13} = D{7};
+  let Inst{12} = D{8};
+  let Inst{11} = D{9};
+  let Inst{11-20} = D{0-9};
+  let Inst{21-31} = xo;
+}
+
 let Predicates = [HasSPE], isAsmParserOnly = 1 in {
+
+def EVLDD          : EVXForm_D<769, (outs gprc:$RT), (ins spe8dis:$dst),
+                               "evldd $RT, $dst", IIC_VecFP>;
+def EVLDW          : EVXForm_D<771, (outs gprc:$RT), (ins spe8dis:$dst),
+                               "evldw $RT, $dst", IIC_VecFP>;
+def EVLDH          : EVXForm_D<773, (outs gprc:$RT), (ins spe8dis:$dst),
+                               "evldh $RT, $dst", IIC_VecFP>;
+def EVLHHESPLAT    : EVXForm_D<777, (outs gprc:$RT), (ins spe2dis:$dst),
+                               "evlhhesplat $RT, $dst", IIC_VecFP>;
+def EVLHHOUSPLAT   : EVXForm_D<781, (outs gprc:$RT), (ins spe2dis:$dst),
+                               "evlhhousplat $RT, $dst", IIC_VecFP>;
+def EVLHHOSSPLAT   : EVXForm_D<783, (outs gprc:$RT), (ins spe2dis:$dst),
+                               "evlhhossplat $RT, $dst", IIC_VecFP>;
+def EVLWHE         : EVXForm_D<785, (outs gprc:$RT), (ins spe4dis:$dst),
+                               "evlwhe $RT, $dst", IIC_VecFP>;
+def EVLWHOU        : EVXForm_D<789, (outs gprc:$RT), (ins spe4dis:$dst),
+                               "evlwhou $RT, $dst", IIC_VecFP>;
+def EVLWHOS        : EVXForm_D<791, (outs gprc:$RT), (ins spe4dis:$dst),
+                               "evlwhos $RT, $dst", IIC_VecFP>;
+def EVLWWSPLAT     : EVXForm_D<793, (outs gprc:$RT), (ins spe4dis:$dst),
+                               "evlwwsplat $RT, $dst", IIC_VecFP>;
+def EVLWHSPLAT     : EVXForm_D<797, (outs gprc:$RT), (ins spe4dis:$dst),
+                               "evlwhsplat $RT, $dst", IIC_VecFP>;
+
+def EVSTDD         : EVXForm_D<801, (outs), (ins gprc:$RT, spe8dis:$dst),
+                               "evstdd $RT, $dst", IIC_VecFP>;
+def EVSTDH         : EVXForm_D<805, (outs), (ins gprc:$RT, spe8dis:$dst),
+                               "evstdh $RT, $dst", IIC_VecFP>;
+def EVSTDW         : EVXForm_D<803, (outs), (ins gprc:$RT, spe8dis:$dst),
+                               "evstdw $RT, $dst", IIC_VecFP>;
+def EVSTWHE        : EVXForm_D<817, (outs), (ins gprc:$RT, spe4dis:$dst),
+                               "evstwhe $RT, $dst", IIC_VecFP>;
+def EVSTWHO        : EVXForm_D<821, (outs), (ins gprc:$RT, spe4dis:$dst),
+                               "evstwho $RT, $dst", IIC_VecFP>;
+def EVSTWWE        : EVXForm_D<825, (outs), (ins gprc:$RT, spe4dis:$dst),
+                               "evstwwe $RT, $dst", IIC_VecFP>;
+def EVSTWWO        : EVXForm_D<829, (outs), (ins gprc:$RT, spe4dis:$dst),
+                               "evstwwo $RT, $dst", IIC_VecFP>;
 
 def EVMRA : EVXForm_1<1220, (outs gprc:$RT), (ins gprc:$RA),
                       "evmra $RT, $RA", IIC_VecFP> {
