@@ -107,7 +107,8 @@ void IncludeOrderPPCallbacks::EndOfMainFile() {
 
   // Sort the includes. We first sort by priority, then lexicographically.
   for (unsigned BI = 0, BE = Blocks.size() - 1; BI != BE; ++BI)
-    std::sort(&IncludeIndices[Blocks[BI]], &IncludeIndices[Blocks[BI + 1]],
+    std::sort(IncludeIndices.begin() + Blocks[BI],
+              IncludeIndices.begin() + Blocks[BI + 1],
               [this](unsigned LHSI, unsigned RHSI) {
       IncludeDirective &LHS = IncludeDirectives[LHSI];
       IncludeDirective &RHS = IncludeDirectives[RHSI];
