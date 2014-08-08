@@ -15,6 +15,7 @@ tablegen(LLVM AArch64GenDisassemblerTables.inc -gen-disassembler)
 add_public_tablegen_target(AArch64CommonTableGen)
 
 add_llvm_target(AArch64CodeGen
+  AArch64A57FPLoadBalancing.cpp
   AArch64AddressTypePromotion.cpp
   AArch64AdvSIMDScalarPass.cpp
   AArch64AsmPrinter.cpp

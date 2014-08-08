@@ -204,6 +204,10 @@ bool AArch64PassConfig::addPostRegAlloc() {
   // Change dead register definitions to refer to the zero register.
   if (TM->getOptLevel() != CodeGenOpt::None && EnableDeadRegisterElimination)
     addPass(createAArch64DeadRegisterDefinitions());
+  if (TM->getOptLevel() != CodeGenOpt::None &&
+      TM->getSubtarget<AArch64Subtarget>().isCortexA57())
+    // Improve performance for some FP/SIMD code for A57.
+    addPass(createAArch64A57FPLoadBalancing());
   return true;
 }
 
