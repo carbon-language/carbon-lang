@@ -6230,6 +6230,13 @@
 // X86_64:#define __x86_64 1
 // X86_64:#define __x86_64__ 1
 //
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64h-none-none < /dev/null | FileCheck -check-prefix X86_64H %s
+//
+// X86_64H:#define __x86_64 1
+// X86_64H:#define __x86_64__ 1
+// X86_64H:#define __x86_64h 1
+// X86_64H:#define __x86_64h__ 1
+
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=x86_64-none-none-gnux32 < /dev/null | FileCheck -check-prefix X32 %s
 //
 // X32:#define _ILP32 1

@@ -2668,6 +2668,10 @@ void X86TargetInfo::getTargetDefines(const LangOptions &Opts,
     Builder.defineMacro("__amd64");
     Builder.defineMacro("__x86_64");
     Builder.defineMacro("__x86_64__");
+    if (getTriple().getArchName() == "x86_64h") {
+      Builder.defineMacro("__x86_64h");
+      Builder.defineMacro("__x86_64h__");
+    }
   } else {
     DefineStd(Builder, "i386", Opts);
   }
