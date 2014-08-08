@@ -179,9 +179,6 @@ else()
   set(TARGET_32_BIT_CFLAGS "")
 endif()
 
-# List of architectures we can target.
-set(COMPILER_RT_SUPPORTED_ARCH)
-
 function(get_target_flags_for_arch arch out_var)
   list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
   if(ARCH_INDEX EQUAL -1)
@@ -190,52 +187,6 @@ function(get_target_flags_for_arch arch out_var)
     set(${out_var} ${TARGET_${arch}_CFLAGS} PARENT_SCOPE)
   endif()
 endfunction()
-
-# Try to compile a very simple source file to ensure we can target the given
-# platform. We use the results of these tests to build only the various target
-# runtime libraries supported by our current compilers cross-compiling
-# abilities.
-set(SIMPLE_SOURCE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple.cc)
-file(WRITE ${SIMPLE_SOURCE} "#include <stdlib.h>\n#include <limits>\nint main() {}\n")
-
-# test_target_arch(<arch> <target flags...>)
-# Sets the target flags for a given architecture and determines if this
-# architecture is supported by trying to build a simple file.
-macro(test_target_arch arch)
-  set(TARGET_${arch}_CFLAGS ${ARGN})
-  try_compile(CAN_TARGET_${arch} ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE}
-              COMPILE_DEFINITIONS "${TARGET_${arch}_CFLAGS}"
-              OUTPUT_VARIABLE TARGET_${arch}_OUTPUT
-              CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_${arch}_CFLAGS}")
-  if(${CAN_TARGET_${arch}})
-    list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
-  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}" OR
-         "${arch}" STREQUAL "arm_android")
-    # Bail out if we cannot target the architecture we plan to test.
-    message(FATAL_ERROR "Cannot compile for ${arch}:\n${TARGET_${arch}_OUTPUT}")
-  endif()
-endmacro()
-
-if(ANDROID)
-  test_target_arch(arm_android "")
-else()
-  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
-    if (NOT MSVC)
-      test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
-    endif()
-    test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
-    test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
-  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
-    test_target_arch(mips "")
-  endif()
-
-  # Build ARM libraries if we are configured to test on ARM
-  if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
-    test_target_arch(arm "-march=armv7-a")
-    test_target_arch(aarch64 "-march=armv8-a")
-  endif()
-endif()
 
 # We support running instrumented tests when we're not cross compiling
 # and target a UNIX-like system or Windows.
@@ -250,17 +201,6 @@ endif()
 # Check if compiler-rt is built with libc++.
 find_flag_in_string("${CMAKE_CXX_FLAGS}" "-stdlib=libc++"
                     COMPILER_RT_USES_LIBCXX)
-
-function(filter_available_targets out_var)
-  set(archs)
-  foreach(arch ${ARGN})
-    list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
-    if(NOT (ARCH_INDEX EQUAL -1) AND CAN_TARGET_${arch})
-      list(APPEND archs ${arch})
-    endif()
-  endforeach()
-  set(${out_var} ${archs} PARENT_SCOPE)
-endfunction()
 
 option(COMPILER_RT_DEBUG "Build runtimes with full debug info" OFF)
 # COMPILER_RT_DEBUG_PYBOOL is used by lit.common.configured.in.
@@ -360,18 +300,6 @@ if(APPLE)
     -mios-simulator-version-min=7.0
     -isysroot ${IOSSIM_SDK_DIR})
 endif()
-
-# Architectures supported by Sanitizer runtimes. Specific sanitizers may
-# support only subset of these (e.g. TSan works on x86_64 only).
-filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm aarch64 mips)
-filter_available_targets(ASAN_SUPPORTED_ARCH x86_64 i386 powerpc64 arm mips)
-filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm aarch64)
-filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
-filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 arm aarch64)
 
 add_subdirectory(include)
 

@@ -48,3 +48,144 @@ check_symbol_exists(__func__ "" COMPILER_RT_HAS_FUNC_SYMBOL)
 check_library_exists(m pow "" COMPILER_RT_HAS_LIBM)
 check_library_exists(dl dlopen "" COMPILER_RT_HAS_LIBDL)
 check_library_exists(pthread pthread_create "" COMPILER_RT_HAS_LIBPTHREAD)
+
+# Architectures.
+
+# List of all architectures we can target.
+set(COMPILER_RT_SUPPORTED_ARCH)
+
+# Try to compile a very simple source file to ensure we can target the given
+# platform. We use the results of these tests to build only the various target
+# runtime libraries supported by our current compilers cross-compiling
+# abilities.
+set(SIMPLE_SOURCE ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple.cc)
+file(WRITE ${SIMPLE_SOURCE} "#include <stdlib.h>\n#include <limits>\nint main() {}\n")
+
+# test_target_arch(<arch> <target flags...>)
+# Sets the target flags for a given architecture and determines if this
+# architecture is supported by trying to build a simple file.
+macro(test_target_arch arch)
+  set(TARGET_${arch}_CFLAGS ${ARGN})
+  try_compile(CAN_TARGET_${arch} ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE}
+              COMPILE_DEFINITIONS "${TARGET_${arch}_CFLAGS}"
+              OUTPUT_VARIABLE TARGET_${arch}_OUTPUT
+              CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_${arch}_CFLAGS}")
+  if(${CAN_TARGET_${arch}})
+    list(APPEND COMPILER_RT_SUPPORTED_ARCH ${arch})
+  elseif("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "${arch}" OR
+         "${arch}" STREQUAL "arm_android")
+    # Bail out if we cannot target the architecture we plan to test.
+    message(FATAL_ERROR "Cannot compile for ${arch}:\n${TARGET_${arch}_OUTPUT}")
+  endif()
+endmacro()
+
+# Generate the COMPILER_RT_SUPPORTED_ARCH list.
+if(ANDROID)
+  test_target_arch(arm_android "")
+else()
+  if("${LLVM_NATIVE_ARCH}" STREQUAL "X86")
+    if (NOT MSVC)
+      test_target_arch(x86_64 ${TARGET_64_BIT_CFLAGS})
+    endif()
+    test_target_arch(i386 ${TARGET_32_BIT_CFLAGS})
+  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "PowerPC")
+    test_target_arch(powerpc64 ${TARGET_64_BIT_CFLAGS})
+  elseif("${LLVM_NATIVE_ARCH}" STREQUAL "Mips")
+    test_target_arch(mips "")
+  endif()
+  # Build ARM libraries if we are configured to test on ARM
+  if("${COMPILER_RT_TEST_TARGET_ARCH}" MATCHES "arm|aarch64")
+    test_target_arch(arm "-march=armv7-a")
+    test_target_arch(aarch64 "-march=armv8-a")
+  endif()
+endif()
+
+# Takes ${ARGN} and puts only supported architectures in @out_var list.
+function(filter_available_targets out_var)
+  set(archs)
+  foreach(arch ${ARGN})
+    list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
+    if(NOT (ARCH_INDEX EQUAL -1) AND CAN_TARGET_${arch})
+      list(APPEND archs ${arch})
+    endif()
+  endforeach()
+  set(${out_var} ${archs} PARENT_SCOPE)
+endfunction()
+
+# Arhcitectures supported by compiler-rt libraries.
+# FIXME: add arm_android here
+filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
+  x86_64 i386 powerpc64 arm aarch64 mips arm_android)
+filter_available_targets(ASAN_SUPPORTED_ARCH
+  x86_64 i386 powerpc64 arm mips arm_android)
+filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm aarch64)
+filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
+filter_available_targets(UBSAN_SUPPORTED_ARCH x86_64 i386 arm aarch64)
+
+if(ANDROID)
+  set(OS_NAME "Android")
+else()
+  set(OS_NAME "${CMAKE_SYSTEM_NAME}")
+endif()
+
+if (SANITIZER_COMMON_SUPPORTED_ARCH AND NOT LLVM_USE_SANITIZER AND
+    (OS_NAME MATCHES "Android|Darwin|Linux|FreeBSD" OR
+    (OS_NAME MATCHES "Windows" AND MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 4)))
+  set(COMPILER_RT_HAS_SANITIZER_COMMON TRUE)
+else()
+  set(COMPILER_RT_HAS_SANITIZER_COMMON FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND ASAN_SUPPORTED_ARCH)
+  set(COMPILER_RT_HAS_ASAN TRUE)
+else()
+  set(COMPILER_RT_HAS_ASAN FALSE)
+endif()
+
+# TODO: Add builtins support.
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND DFSAN_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Linux")
+  set(COMPILER_RT_HAS_DFSAN TRUE)
+else()
+  set(COMPILER_RT_HAS_DFSAN FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND LSAN_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+  set(COMPILER_RT_HAS_LSAN TRUE)
+else()
+  set(COMPILER_RT_HAS_LSAN FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND MSAN_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Linux")
+  set(COMPILER_RT_HAS_MSAN TRUE)
+else()
+  set(COMPILER_RT_HAS_MSAN FALSE)
+endif()
+
+if (PROFILE_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+  set(COMPILER_RT_HAS_PROFILE TRUE)
+else()
+  set(COMPILER_RT_HAS_PROFILE FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND TSAN_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Linux")
+  set(COMPILER_RT_HAS_TSAN TRUE)
+else()
+  set(COMPILER_RT_HAS_TSAN FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND UBSAN_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+  set(COMPILER_RT_HAS_UBSAN TRUE)
+else()
+  set(COMPILER_RT_HAS_UBSAN FALSE)
+endif()
+
