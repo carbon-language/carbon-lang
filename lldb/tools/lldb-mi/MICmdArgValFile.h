@@ -54,4 +54,8 @@ public:
 	/* dtor */ virtual ~CMICmdArgValFile( void );
 	// From CMICmdArgSet::IArg
 	virtual bool	Validate( CMICmdArgContext & vwArgContext );
+
+// Methods:
+private:
+	bool	IsValidChars( const CMIUtilString & vrText ) const;
 };

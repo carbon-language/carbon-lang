@@ -87,12 +87,14 @@ public:
 // Overrideable:
 public:
 	/* dtor */ virtual ~CMICmdBase( void );
+	virtual bool	GetExitAppOnCommandFailure( void ) const;
 
 // Methods:
 protected:
 	void	SetError( const CMIUtilString & rErrMsg );
 	template< class T >
 		T * GetOption( const CMIUtilString & vStrOptionName );
+	bool	ParseValidateCmdOptions( void );
 	
 // Attributes:
 protected:

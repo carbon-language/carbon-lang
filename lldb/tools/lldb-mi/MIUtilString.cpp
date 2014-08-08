@@ -261,7 +261,9 @@ MIuint CMIUtilString::Split( const CMIUtilString & vDelimiter, VecString_t & vwV
 // Details:	Splits string into array of strings using delimiter. However the string is
 //			also considered for text surrounded by quotes. Text with quotes including the
 //			delimiter is treated as a whole. If multiple delimiter are found in sequence 
-//			then they are not added to the list of splits.
+//			then they are not added to the list of splits. Quotes that are embedded in the
+//			the string as string formatted quotes are ignored (proceeded by a '\\') i.e.
+//			"\"MI GDB local C++.cpp\":88".
 // Type:	Method.
 // Args:	vData		- (R) String data to be split up.
 //			vDelimiter	- (R) Delimiter char or text.
@@ -291,12 +293,20 @@ MIuint CMIUtilString::SplitConsiderQuotes( const CMIUtilString & vDelimiter, Vec
 
 	// Look for more quotes
 	bool bHaveQuotes = false;
+	const MIchar cBckSlash = '\\';
 	const MIchar cQuote = '"';
 	MIint nPosQ = find( cQuote );
 	MIint nPosQ2 = (MIint) std::string::npos;
 	if( nPosQ != (MIint) std::string::npos )
 	{
-		nPosQ2 = find( cQuote, nPosQ + 1 );
+		nPosQ2 = nPosQ + 1;
+		while( nPosQ2 < strLen )
+		{
+			nPosQ2 = find( cQuote, nPosQ2 );
+			if( (nPosQ2 == (MIint) std::string::npos) || (at( nPosQ2 - 1 ) != cBckSlash) )
+				break;
+			nPosQ2++;
+		}
 		bHaveQuotes = (nPosQ2 != (MIint) std::string::npos);
 	}
 
@@ -557,7 +567,7 @@ CMIUtilString CMIUtilString::Trim( void ) const
 CMIUtilString CMIUtilString::Trim( const MIchar vChar ) const
 {
 	CMIUtilString strNew( *this );
-	const MIuint nLen = strNew.length();
+	const MIint nLen = strNew.length();
 	if( nLen > 1 )
 	{
 		if( (strNew[ 0 ] == vChar) && (strNew[ nLen -  1 ] == vChar) )
@@ -600,5 +610,71 @@ CMIUtilString CMIUtilString::FormatBinary( const MIuint64 vnDecimal )
 	strBinaryNumber = CMIUtilString::Format( "0b%s", &pN[ 0 ] );
 
 	return strBinaryNumber;
+}
+	
+//++ ------------------------------------------------------------------------------------
+// Details:	Remove from a string doubled up characters so only one set left. Characters
+//			are only removed if the previous character is already a same character.
+// Type:	Method.
+// Args:	vChar	- (R) The character to search for and remove adjacent duplicates.
+// Return:	CMIUtilString - New version of the string.
+// Throws:	None.
+//--
+CMIUtilString CMIUtilString::RemoveRepeatedCharacters( const MIchar vChar )
+{
+	return RemoveRepeatedCharacters( 0, vChar );
+}
+	
+//++ ------------------------------------------------------------------------------------
+// Details:	Recursively remove from a string doubled up characters so only one set left. 
+//			Characters are only removed if the previous character is already a same 
+//			character.
+// Type:	Method.
+// Args:	vChar	- (R) The character to search for and remove adjacent duplicates.
+//			vnPos	- (R) Character position in the string.
+// Return:	CMIUtilString - New version of the string.
+// Throws:	None.
+//--
+CMIUtilString CMIUtilString::RemoveRepeatedCharacters( const MIint vnPos, const MIchar vChar )
+{
+	const MIchar cQuote = '"';
+
+	// Look for first quote of two
+	MIint nPos = find( cQuote, vnPos );
+	if( nPos == (MIint) std::string::npos )
+		return *this;
+
+	const MIint nPosNext = nPos + 1;
+	if( nPosNext > (MIint) length() )
+		return *this;
+
+	if( at( nPosNext ) == cQuote )
+	{
+		*this = substr( 0, nPos ) + substr( nPosNext, length() );
+		RemoveRepeatedCharacters( nPosNext, vChar );
+	}	
+
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Is the text in *this string surrounded by quotes.
+// Type:	Method.
+// Args:	None.
+// Return:	bool - True = Yes string is quoted, false = no quoted.
+// Throws:	None.
+//--
+bool CMIUtilString::IsQuoted( void ) const
+{
+	const MIchar cQuote = '"';
+	
+	if( at( 0 ) != cQuote )
+		return false;
+
+	const MIint nLen = length();
+	if( (nLen > 0) && (at( nLen - 1 ) != cQuote) )
+		return false;
+
+	return true;
 }
 	

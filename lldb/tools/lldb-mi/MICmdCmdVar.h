@@ -83,6 +83,7 @@ private:
 	CMIUtilString		m_strType;
 	bool				m_bValid;						// True = Variable is valid, false = not valid		
 	CMIUtilString		m_strExpression;
+	CMIUtilString		m_strValue;
 	const CMIUtilString	m_constStrArgThread;			// Not specified in MI spec but Eclipse gives this option
 	const CMIUtilString	m_constStrArgThreadGroup;		// Not specified in MI spec but Eclipse gives this option
 	const CMIUtilString	m_constStrArgFrame;				// Not specified in MI spec but Eclipse gives this option

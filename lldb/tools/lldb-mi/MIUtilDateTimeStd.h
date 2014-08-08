@@ -21,8 +21,8 @@
 
 #pragma once
 
-// Include compiler configuration
-#include "MICmnConfig.h"
+// Third party headers
+#include <ctime>
 
 // In-house headers:
 #include "MIUtilString.h"  
@@ -31,7 +31,7 @@
 // Details:	MI common code utility class. Used to retrieve system local date
 //			time.
 // Gotchas:	None.
-// Authors:	Aidan Dodds 10/03/2014.
+// Authors:	Illya Rudkin 16/07/2014.
 // Changes:	None.
 //--
 class CMIUtilDateTimeStd
@@ -40,15 +40,16 @@ class CMIUtilDateTimeStd
 public:
 	/* ctor */	 CMIUtilDateTimeStd( void );
 	
-	CMIUtilString 	GetDate( void ) const;
-	CMIUtilString 	GetTime( void ) const;
+	CMIUtilString 	GetDate( void );
+	CMIUtilString 	GetTime( void );
 
 // Overrideable:
 public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMIUtilDateTimeStd( void );
 
-// Methods:
+// Attributes:
 private:
-	bool GetDateTimeShort( CMIUtilString & vrwLocalDate, CMIUtilString & vrwLocalTime ) const;
+	std::time_t m_rawTime;
+	MIchar		m_pScratch[ 16 ];
 };

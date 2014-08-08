@@ -34,14 +34,12 @@
 #include <lldb/API/SBStream.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdData.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MICmnLLDBProxySBValue.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValNumber.h"
 #include "MICmdArgValString.h"
 #include "MICmdArgValThreadGrp.h"
@@ -50,6 +48,7 @@
 #include "MICmdArgValListOfN.h"
 #include "MICmdArgValConsume.h"
 #include "MICmnLLDBDebugSessionInfoVarObj.h"
+#include "MICmnLLDBUtilSBValue.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdDataEvaluateExpression constructor.
@@ -63,6 +62,8 @@ CMICmdCmdDataEvaluateExpression::CMICmdCmdDataEvaluateExpression( void )
 ,	m_bEvaluatedExpression( true )
 ,	m_strValue( "??" )
 ,	m_bCompositeVarType( false )
+,	m_bFoundInvalidChar( false )
+,	m_cExpressionInvalidChar( 0x00 )
 ,	m_constStrArgThread( "thread" )
 ,	m_constStrArgFrame( "frame" )
 ,	m_constStrArgExpr( "expr" )
@@ -99,14 +100,7 @@ bool CMICmdCmdDataEvaluateExpression::ParseArgs( void )
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, false, false, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgExpr, true, true, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -139,13 +133,29 @@ bool CMICmdCmdDataEvaluateExpression::Execute( void )
 		m_bEvaluatedExpression = false;
 		return MIstatus::success;
 	}
+	const CMICmnLLDBUtilSBValue utilValue( value );
+	if( !utilValue.HasName() )
+	{
+		if( HaveInvalidCharacterInExpression( rExpression, m_cExpressionInvalidChar ) )
+		{
+			m_bFoundInvalidChar = true;
+			return MIstatus::success;
+		}
+
+		m_strValue = rExpression;
+		return MIstatus::success;
+	}
+	if( rExpression.IsQuoted() )
+	{
+		m_strValue = rExpression.Trim( '\"' );
+		return MIstatus::success;
+	}
 
 	MIuint64 nNumber = 0;
 	if( CMICmnLLDBProxySBValue::GetValueAsUnsigned( value, nNumber ) == MIstatus::success )
 	{
 		const lldb::ValueType eValueType = value.GetValueType(); MIunused( eValueType );
-		m_strValue = (value.GetValue() != nullptr) ? value.GetValue() : "??";
-
+		m_strValue = utilValue.GetValue();
 		CMIUtilString strCString;
 		if( CMICmnLLDBProxySBValue::GetCString( value, strCString ) )
 		{
@@ -156,7 +166,7 @@ bool CMICmdCmdDataEvaluateExpression::Execute( void )
 
 	// Composite type i.e. struct
 	m_bCompositeVarType = true;
-	MIuint nChild = value.GetNumChildren();
+	const MIuint nChild = value.GetNumChildren();
 	for( MIuint i = 0; i < nChild; i++ )
 	{
 		lldb::SBValue member = value.GetChildAtIndex( i );
@@ -204,6 +214,15 @@ bool CMICmdCmdDataEvaluateExpression::Acknowledge( void )
 				m_miResultRecord = miRecordResult;
 				return MIstatus::success;
 			}
+
+			if( m_bFoundInvalidChar )
+			{
+				const CMICmnMIValueConst miValueConst( CMIUtilString::Format( "Invalid character '%c' in expression", m_cExpressionInvalidChar ) );
+				const CMICmnMIValueResult miValueResult( "msg", miValueConst );
+				const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
+				m_miResultRecord = miRecordResult;
+				return MIstatus::success;
+			}
 			
 			const CMICmnMIValueConst miValueConst( m_strValue );
 			const CMICmnMIValueResult miValueResult( "value", miValueConst );
@@ -212,14 +231,14 @@ bool CMICmdCmdDataEvaluateExpression::Acknowledge( void )
 			return MIstatus::success;
 		}
 
-		const CMICmnMIValueConst miValueConst( "could not evaluate expression" );
+		const CMICmnMIValueConst miValueConst( "Could not evaluate expression" );
 		const CMICmnMIValueResult miValueResult( "msg", miValueConst );
 		const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 		m_miResultRecord = miRecordResult;
 		return MIstatus::success;
 	}
 
-	const CMICmnMIValueConst miValueConst( "invalid expression" );
+	const CMICmnMIValueConst miValueConst( "Invalid expression" );
 	const CMICmnMIValueResult miValueResult( "msg", miValueConst );
 	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Error, miValueResult );
 	m_miResultRecord = miRecordResult;
@@ -238,6 +257,29 @@ bool CMICmdCmdDataEvaluateExpression::Acknowledge( void )
 CMICmdBase * CMICmdCmdDataEvaluateExpression::CreateSelf( void )
 {
 	return new CMICmdCmdDataEvaluateExpression();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Examine the expression string to see if it contains invalid characters.
+// Type:	Method.
+// Args:	vrExpr			- (R) Expression string given to *this command.
+//			vrwInvalidChar	- (W) True = Invalid character found, false = nothing found.
+// Return:	bool - True = Invalid character found, false = nothing found.
+// Throws:	None.
+//--
+bool CMICmdCmdDataEvaluateExpression::HaveInvalidCharacterInExpression( const CMIUtilString & vrExpr, MIchar & vrwInvalidChar )
+{
+	bool bFoundInvalidCharInExpression = false;
+	vrwInvalidChar = 0x00;
+
+	if( vrExpr.at( 0 ) == '\\' )
+	{
+		// Example: Mouse hover over "%5d" expression has \"%5d\" in it 
+		bFoundInvalidCharInExpression = true;
+		vrwInvalidChar = '\\';
+	}
+		
+	return bFoundInvalidCharInExpression;
 }
 
 //---------------------------------------------------------------------------------------
@@ -293,14 +335,7 @@ bool CMICmdCmdDataDisassemble::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgAddrEnd, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumber, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValConsume( m_constStrArgConsume, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgMode, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -505,14 +540,7 @@ bool CMICmdCmdDataReadMemoryBytes::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionShort( m_constStrArgByteOffset, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgAddrStart, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNumBytes, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -745,14 +773,7 @@ bool CMICmdCmdDataListRegisterNames::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThreadGroup, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgRegNo, false, false, CMICmdArgValListBase::eArgValType_Number ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -781,18 +802,13 @@ bool CMICmdCmdDataListRegisterNames::Execute( void )
 	for( MIuint i = 0; i < nRegisters; i++ )
 	{
 		lldb::SBValue value = registers.GetValueAtIndex( i );
-		const MIchar * pRegName = value.GetName();
-		const MIchar * pUnknown = "??";
-		pRegName = (pRegName != nullptr) ? pRegName : pUnknown;
 		const MIuint nRegChildren = value.GetNumChildren();
 		for( MIuint j = 0; j < nRegChildren; j++ )
 		{
 			lldb::SBValue value2 = value.GetChildAtIndex( j );
 			if( value2.IsValid() )
 			{
-				const MIchar * pRegName = value2.GetName();
-				pRegName = (pRegName != nullptr) ? pRegName : pUnknown;
-				const CMICmnMIValueConst miValueConst( pRegName );
+				const CMICmnMIValueConst miValueConst( CMICmnLLDBUtilSBValue( value2 ).GetName() );
 				m_miValueList.Add( miValueConst );
 			}
 		}
@@ -884,14 +900,7 @@ bool CMICmdCmdDataListRegisterValues::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgSkip, false, false ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgFormat, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgRegNo, false, true, CMICmdArgValListBase::eArgValType_Number ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1147,14 +1156,7 @@ bool CMICmdCmdDataWriteMemoryBytes::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgAddr, true, true, false, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgContents, true, true, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgCount, false, true, false, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -1274,14 +1276,7 @@ bool CMICmdCmdDataWriteMemory::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgD, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNumber, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgContents, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------

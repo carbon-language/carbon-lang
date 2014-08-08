@@ -72,7 +72,7 @@ CMICmdArgValOptionLong::CMICmdArgValOptionLong( const CMIUtilString & vrArgName,
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValOptionLong destructor.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.
@@ -107,7 +107,7 @@ void CMICmdArgValOptionLong::Destroy( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Parse the command's argument options string and try to extract the long
-//			argument *this argument type is looking for.
+//			arguemnt *this argument type is looking for.
 // Type:	Overridden.
 // Args:	vwArgContext	- (RW) The command's argument options string.
 // Return:	MIstatus::success - Functional succeeded.

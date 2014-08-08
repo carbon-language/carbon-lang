@@ -102,9 +102,9 @@ bool CMICmnStreamStderr::Shutdown( void )
 }	
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Write text data to stderr. The text data does not need to
-//			include a carrage line return as this is added to the text. The function also
-//			then passes the text data into the CMICmnLog logger.
+// Details:	Write text data to stderr. Prefix the message with "MI:". The text data does 
+//			not need to include a carrage line return as this is added to the text. The 
+//			function also then passes the text data into the CMICmnLog logger.
 // Type:	Method.
 // Args:	vText		- (R) Text data.
 //			vbSendToLog	- (R) True = Yes send to the Log file too, false = do not. (Dflt = true)
@@ -123,11 +123,33 @@ bool CMICmnStreamStderr::Write( const CMIUtilString & vText, const bool vbSendTo
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	Write an LLDB text message to stderr. 
+//			The text data does not need to include a carrage line return as this is added 
+//			to the text. The function also then passes the text data into the CMICmnLog 
+//			logger.
+// Type:	Method.
+// Args:	vText		- (R) Text data.
+//			vbSendToLog	- (R) True = Yes send to the Log file too, false = do not. (Dflt = true)
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnStreamStderr::WriteLLDBMsg( const CMIUtilString & vText, const bool vbSendToLog /* = true */ )
+{
+	if( vText.length() == 0 )
+		return MIstatus::failure;
+
+	const CMIUtilString strPrefixed( CMIUtilString::Format( "LLDB: %s", vText.c_str() ) );
+
+	return WritePriv( vText, strPrefixed, vbSendToLog );
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	Write text data to stderr. The text data does not need to
 //			include a carrage line return as this is added to the text. The function also
 //			then passes the text data into the CMICmnLog logger.
 // Type:	Method.
-// Args:	vText			- (R) Text data prefixed with MI app's short name.
+// Args:	vText			- (R) Text data. May be prefixed with MI app's short name.
 //			vTxtForLogFile	- (R) Text data.
 //			vbSendToLog		- (R) True = Yes send to the Log file too, false = do not. (Dflt = true)
 // Return:	MIstatus::success - Functional succeeded.
@@ -196,8 +218,8 @@ bool CMICmnStreamStderr::Unlock( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Take a text data and send to the stderr stream. Also output to the MI Log
-//			file.
+// Details:	Take MI Driver text message and send to the stderr stream. Also output to the
+//			 MI Log file.
 // Type:	Static method.
 // Args:	vrTxt	- (R) Text.
 // Return:	MIstatus::success - Functionality succeeded.
@@ -212,3 +234,24 @@ bool CMICmnStreamStderr::TextToStderr( const CMIUtilString & vrTxt )
 	
 	return bOk;
 }
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Take an LLDB message and send to the stderr stream. The message is not always
+//			an error message. The user has typed a command in to the Eclipse console (by-
+//			passing Eclipse) and this is the result message from LLDB back to the user.
+//			Also output to the MI Log file.
+// Type:	Static method.
+// Args:	vrTxt	- (R) Text.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMICmnStreamStderr::LLDBMsgToConsole( const CMIUtilString & vrTxt )
+{
+	const bool bLock = CMICmnStreamStderr::Instance().Lock();
+	const bool bOk = bLock && CMICmnStreamStderr::Instance().WriteLLDBMsg( vrTxt );
+	bLock && CMICmnStreamStderr::Instance().Unlock();
+	
+	return bOk;
+}
+

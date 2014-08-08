@@ -22,7 +22,6 @@
 #pragma once
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MIUtilString.h"  
 #include "MICmnBase.h"
 

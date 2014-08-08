@@ -187,7 +187,7 @@ bool CMICmnStreamStdin::SetPrompt( const CMIUtilString & vNewPrompt )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve the command line prompt text currently being used.
+// Details:	Retreive the command line prompt text currently being used.
 // Type:	Method.
 // Args:	None.
 // Return:	const CMIUtilString & - Functional failed.
@@ -201,7 +201,7 @@ const CMIUtilString & CMICmnStreamStdin::GetPrompt( void ) const
 //++ ------------------------------------------------------------------------------------
 // Details:	Wait on input from stream Stdin. On each line of input received it is 
 //			validated and providing there are no errors on the stream or the input
-//			buffer is not exceeded the data is passed to the visitor.
+//			buffer is not exceeded the data is passed to the vistor.
 // Type:	Method.
 // Args:	vrVisitor	- (W) A client deriver callback.
 // Return:	MIstatus::success - Functional succeeded.
@@ -216,7 +216,7 @@ bool CMICmnStreamStdin::SetVisitor( IStreamStdin & vrVisitor )
 
 //++ ------------------------------------------------------------------------------------
 // Details: Set whether to display optional command line prompt. The prompt is output to
-//			stdout. Disable it when this may interfere with the client reading stdout as
+//			stdout. Disable it when this may interfer with the client reading stdout as
 //			input and it tries to interpret the prompt text to.
 // Type:	Method.
 // Args:	vbYes	- (R) True = Yes prompt is shown/output to the user (stdout), false = no prompt.
@@ -231,7 +231,7 @@ void CMICmnStreamStdin::SetEnablePrompt( const bool vbYes )
 
 //++ ------------------------------------------------------------------------------------
 // Details: Get whether to display optional command line prompt. The prompt is output to
-//			stdout. Disable it when this may interfere with the client reading stdout as
+//			stdout. Disable it when this may interfer with the client reading stdout as
 //			input and it tries to interpret the prompt text to.
 // Type:	Method.
 // Args:	None. 
@@ -366,7 +366,7 @@ void CMICmnStreamStdin::SetCtrlCHit( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	The main worker method for this thread.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	vrbIsAlive	= (W) True = *this thread is working, false = thread has exited.			
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.

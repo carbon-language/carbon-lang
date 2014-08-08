@@ -13,6 +13,7 @@
 // Overview:	CMICmdCmdGdbExit				implementation.
 //				CMICmdCmdListThreadGroups		implementation.
 //				CMICmdCmdInterpreterExec		implementation.
+//				CMICmdCmdInferiorTtySet			implementation.
 //
 // Environment:	Compilers:	Visual C++ 12.
 //							gcc (Ubuntu/Linaro 4.8.1-10ubuntu9) 4.8.1
@@ -26,7 +27,6 @@
 #include <lldb/API/SBThread.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdMiscellanous.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
@@ -34,7 +34,6 @@
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MIDriverBase.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValFile.h"
 #include "MICmdArgValNumber.h"
 #include "MICmdArgValString.h"
@@ -182,14 +181,7 @@ bool CMICmdCmdListThreadGroups::ParseArgs( void )
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedRecurse, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedGroup, false, true, CMICmdArgValListBase::eArgValType_Number ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValThreadGrp( m_constStrArgNamedThreadGroup, false, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -248,7 +240,7 @@ bool CMICmdCmdListThreadGroups::Execute( void )
 		if( thread.IsValid() )
 		{
 			CMICmnMIValueTuple miTuple;
-			if( !rSessionInfo.MIResponseFormThreadInfo( m_cmdData, thread, miTuple ) )
+			if( !rSessionInfo.MIResponseFormThreadInfo2( m_cmdData, thread, miTuple ) )
 				return MIstatus::failure;
 
 			m_vecMIValueTuple.push_back( miTuple );
@@ -431,14 +423,7 @@ bool CMICmdCmdInterpreterExec::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedInterpreter, true, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedCommand, true, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -454,11 +439,14 @@ bool CMICmdCmdInterpreterExec::Execute( void )
 {
 	CMICMDBASE_GETOPTION( pArgInterpreter, String, m_constStrArgNamedInterpreter );
 	CMICMDBASE_GETOPTION( pArgCommand, String, m_constStrArgNamedCommand );
-	const CMIUtilString & rStrInterpreter( pArgInterpreter->GetValue() );
+
+	// Handle the interpreter parameter by do nothing on purpose (set to 'handled' in 
+	// the arg definition above) 
+	const CMIUtilString & rStrInterpreter( pArgInterpreter->GetValue() ); MIunused( rStrInterpreter );
+
 	const CMIUtilString & rStrCommand( pArgCommand->GetValue() );
-	const CMIUtilString strCmd( CMIUtilString::Format( "%s %s", rStrInterpreter.c_str(), rStrCommand.c_str() ) );
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( strCmd.c_str(), m_lldbResult, true ); MIunused( rtn );
+	const lldb::ReturnStatus rtn = rSessionInfo.m_rLldbDebugger.GetCommandInterpreter().HandleCommand( rStrCommand.c_str(), m_lldbResult, true ); MIunused( rtn );
 	
 	return MIstatus::success;
 }
@@ -479,12 +467,19 @@ bool CMICmdCmdInterpreterExec::Acknowledge( void )
 		CMIUtilString strMsg( m_lldbResult.GetOutput() );
 		strMsg = strMsg.StripCREndOfLine();
 		CMICmnStreamStdout::TextToStdout( strMsg );
+
+		// Send the LLDB result message to console so the user can see the result of the  
+		// command they typed. It is not necessary an error message.
+		CMICmnStreamStderr::LLDBMsgToConsole( strMsg );
 	}
 	if( m_lldbResult.GetErrorSize() > 0 )
 	{
 		CMIUtilString strMsg( m_lldbResult.GetError() );
 		strMsg = strMsg.StripCREndOfLine();
-		CMICmnStreamStderr::TextToStderr( strMsg );
+		CMICmnStreamStderr::LLDBMsgToConsole( strMsg );
+
+		// Send LLDB's error message to the MI Driver's Log file
+		CMICmnStreamStdout::TextToStdout( strMsg );
 	}
 
 	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
@@ -504,4 +499,81 @@ bool CMICmdCmdInterpreterExec::Acknowledge( void )
 CMICmdBase * CMICmdCmdInterpreterExec::CreateSelf( void )
 {
 	return new CMICmdCmdInterpreterExec();
+}
+
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdInferiorTtySet constructor.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdInferiorTtySet::CMICmdCmdInferiorTtySet( void )
+{
+	// Command factory matches this name with that received from the stdin stream
+	m_strMiCmd = "inferior-tty-set";
+	
+	// Required by the CMICmdFactory when registering *this command
+	m_pSelfCreatorFn = &CMICmdCmdInferiorTtySet::CreateSelf;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdCmdInferiorTtySet destructor.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdCmdInferiorTtySet::~CMICmdCmdInferiorTtySet( void )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command does work in this function.
+//			The command is likely to communicate with the LLDB SBDebugger in here.
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdInferiorTtySet::Execute( void )
+{
+	// Do nothing
+		
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	The invoker requires this function. The command prepares a MI Record Result
+//			for the work carried out in the Execute().
+// Type:	Overridden.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdCmdInferiorTtySet::Acknowledge( void )
+{
+	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done );
+	m_miResultRecord = miRecordResult;
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Required by the CMICmdFactory when registering *this command. The factory
+//			calls this function to create an instance of *this command.
+// Type:	Static method.
+// Args:	None.
+// Return:	CMICmdBase * - Pointer to a new command.
+// Throws:	None.
+//--
+CMICmdBase * CMICmdCmdInferiorTtySet::CreateSelf( void )
+{
+	return new CMICmdCmdInferiorTtySet();
 }

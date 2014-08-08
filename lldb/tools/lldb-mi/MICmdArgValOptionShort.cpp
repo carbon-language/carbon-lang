@@ -66,7 +66,7 @@ CMICmdArgValOptionShort::CMICmdArgValOptionShort( const CMIUtilString & vrArgNam
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValOptionShort destructor.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

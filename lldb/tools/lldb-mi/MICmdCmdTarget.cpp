@@ -25,21 +25,13 @@
 #include <lldb/API/SBCommandReturnObject.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdTarget.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnMIOutOfBandRecord.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
-#include "MICmdArgContext.h"
-#include "MICmdArgValFile.h"
-#include "MICmdArgValNumber.h"
 #include "MICmdArgValString.h"
-#include "MICmdArgValThreadGrp.h"
-#include "MICmdArgValOptionLong.h"
-#include "MICmdArgValOptionShort.h"
-#include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdTargetSelect constructor.
@@ -83,14 +75,7 @@ bool CMICmdCmdTargetSelect::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedType, true, true )) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedParameters, true, true )) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------

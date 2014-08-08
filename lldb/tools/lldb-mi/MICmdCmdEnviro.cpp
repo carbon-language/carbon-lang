@@ -20,25 +20,12 @@
 //--
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdEnviro.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
-#include "MIDriverBase.h"
-#include "MIUtilDebug.h"
-#include "MIDriver.h"
-#include "MIUtilFileStd.h"
-#include "MICmnLLDBProxySBValue.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValFile.h"
-#include "MICmdArgValNumber.h"
-#include "MICmdArgValString.h"
-#include "MICmdArgValThreadGrp.h"
-#include "MICmdArgValOptionLong.h"
-#include "MICmdArgValOptionShort.h"
-#include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdEnvironmentCd constructor.
@@ -81,13 +68,7 @@ bool CMICmdCmdEnvironmentCd::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValFile( m_constStrArgNamePathDir, true, true ) ) );
 	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------

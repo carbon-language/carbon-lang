@@ -32,7 +32,6 @@
 #include <mutex>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MIDataTypes.h"
 #include "MIUtilString.h"
 

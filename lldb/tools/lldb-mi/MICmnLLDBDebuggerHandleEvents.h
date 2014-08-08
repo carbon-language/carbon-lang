@@ -65,6 +65,7 @@ private:
 	bool	GetProcessStderr( void );
 	bool	HandleEventSBBreakPoint( const lldb::SBEvent & vEvent );
 	bool	HandleEventSBBreakpointCmn( const lldb::SBEvent & vEvent );
+	bool	HandleEventSBBreakpointAdded( const lldb::SBEvent & vEvent );
 	bool	HandleEventSBBreakpointLocationsAdded( const lldb::SBEvent & vEvent );
 	bool	HandleEventSBProcess( const lldb::SBEvent & vEvent, bool & vrbExitAppEvent );
 	bool	HandleEventSBThread( const lldb::SBEvent & vEvent );

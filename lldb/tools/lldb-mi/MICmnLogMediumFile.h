@@ -22,11 +22,11 @@
 #pragma once
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MIUtilFileStd.h"
 #include "MIUtilString.h"  
 #include "MICmnBase.h"
 #include "MICmnLog.h"
+#include "MIUtilDateTimeStd.h"
 
 //++ ============================================================================
 // Details:	MI common code implementation class. Logs application fn trace/message/
@@ -87,9 +87,10 @@ private:
 	const CMIUtilString	m_constThisMediumName;
 	const CMIUtilString	m_constMediumFileName;
 	//
-	CMIUtilString	m_fileNamePath;
-	MIuint			m_eVerbosityType;
-	CMIUtilString	m_strDate;
-	CMIUtilString	m_fileHeaderTxt;
-	CMIUtilFileStd	m_file;
+	CMIUtilString		m_fileNamePath;
+	MIuint				m_eVerbosityType;
+	CMIUtilString		m_strDate;
+	CMIUtilString		m_fileHeaderTxt;
+	CMIUtilFileStd		m_file;
+	CMIUtilDateTimeStd	m_dateTime;
 };

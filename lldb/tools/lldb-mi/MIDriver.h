@@ -90,6 +90,8 @@ public:
 	DriverState_e	GetCurrentDriverState( void ) const;
 	bool			SetDriverStateRunningNotDebugging( void );
 	bool			SetDriverStateRunningDebugging( void );
+	void			SetDriverDebuggingArgExecutable( void );
+	bool			IsDriverDebuggingArgExecutable( void ) const;
 
 	// MI information about itself
 	const CMIUtilString &	GetAppNameShort( void ) const;
@@ -97,11 +99,13 @@ public:
 	const CMIUtilString &	GetVersionDescription( void ) const;
 		
 	// MI do work
-	bool	WriteMessageToLog( const CMIUtilString & vMessage );
-	bool	SetEnableFallThru( const bool vbYes );
-	bool	GetEnableFallThru( void ) const;
-	bool	InjectMICommand( const CMIUtilString & vMICmd );
-	
+	bool					WriteMessageToLog( const CMIUtilString & vMessage );
+	bool					SetEnableFallThru( const bool vbYes );
+	bool					GetEnableFallThru( void ) const;
+	bool					InjectMICommand( const CMIUtilString & vMICmd );
+	bool					HaveExecutableFileNamePathOnCmdLine( void ) const;
+	const CMIUtilString &	GetExecutableFileNamePathOnCmdLine( void ) const;
+
 // Overridden:
 public:
 	// From CMIDriverMgr::IDriver
@@ -150,6 +154,7 @@ private:
 	bool			InitClientIDEToMIDriver( void ) const;
 	bool			InitClientIDEEclipse( void ) const;
 	bool			QueueMICommand( const CMIUtilString & vMICmd );
+	bool			LocalDebugSessionStartupInjectCommands( void );
 
 // Overridden:
 private:
@@ -162,13 +167,16 @@ private:
 	static const CMIUtilString	ms_constAppNameLong;
 	static const CMIUtilString	ms_constMIVersion;
 	//
-	bool					m_bFallThruToOtherDriverEnabled;	// True = yes fall through, false = do not pass on command
+	bool					m_bFallThruToOtherDriverEnabled;			// True = yes fall through, false = do not pass on command
 	CMIUtilThreadMutex		m_threadMutex;
-	QueueStdinLine_t		m_queueStdinLine;					// Producer = stdin monitor, consumer = *this driver 
-	bool					m_bDriverIsExiting;					// True = yes, driver told to quit, false = continue working
-	void *					m_handleMainThread;					// *this driver is run by the main thread
+	QueueStdinLine_t		m_queueStdinLine;							// Producer = stdin monitor, consumer = *this driver 
+	bool					m_bDriverIsExiting;							// True = yes, driver told to quit, false = continue working
+	void *					m_handleMainThread;							// *this driver is run by the main thread
 	CMICmnStreamStdin &		m_rStdin;	
 	CMICmnLLDBDebugger &	m_rLldbDebugger;
 	CMICmnStreamStdout &	m_rStdOut;
 	DriverState_e			m_eCurrentDriverState;
+	bool					m_bHaveExecutableFileNamePathOnCmdLine;		// True = Yes executable given as one of the parameters to the MI Driver, false = not found 
+	CMIUtilString			m_strCmdLineArgExecuteableFileNamePath;
+	bool					m_bDriverDebuggingArgExecutable;			// True = The MI Driver (MI mode) is debugging executable passed as argument, false = running via a client i.e Eclipse
 };

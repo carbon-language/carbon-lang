@@ -26,9 +26,14 @@
 // Versions:	1.0.0.1		First version from scratch 28/1/2014 to 28/3/2014. MI not complete.
 //				1.0.0.2		First deliverable to client 7/3/2014. MI not complete.
 //				1.0.0.3		Code refactor tidy. Release to community for evaluation 17/5/2014. MI not complete.
-//				1.0.0.4		Post release to community for evaluation 17/5/2014. MI not complete.
+//				1.0.0.4		Post release to the community for evaluation 17/5/2014. MI not complete.
 //				1.0.0.5		Second deliverable to client 16/6/2014.
 //				1.0.0.6		Post release of second deliverable to client 16/6/2014.
+//							Released to the community 24/6/2014.
+//				1.0.0.7 	Post release to the community.
+//							Delivered to client 30/6/2014.
+//				1.0.0.8		Delivered to client 29/7/2014.
+//				1.0.0.9		Post release to client 29/7/2014.
 //				See MIreadme.txt for list of MI commands implemented.
 //
 // Environment:	Compilers:	Visual C++ 12.

@@ -19,12 +19,6 @@
 // Copyright:	None.
 //--
 
-// Include compiler configuration
-#include "MICmnConfig.h"
-
-// Third party headers
-#include <time.h>
-
 // In-house headers:
 #include "MIUtilDateTimeStd.h"
 #include "MICmnResources.h"
@@ -52,20 +46,21 @@ CMIUtilDateTimeStd::~CMIUtilDateTimeStd( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Retrieve system local current date. Format is DD/MM/YYYY.
+// Details:	Retrieve system local current date. Format is MM/DD/YYYY.
 // Type:	Method.
 // Args:	None.
 // Return:	CMIUtilString - Text description.
 // Throws:	None.
 //--
-CMIUtilString CMIUtilDateTimeStd::GetDate( void ) const
+CMIUtilString CMIUtilDateTimeStd::GetDate( void )
 {
 	CMIUtilString strDate( MIRSRC( IDS_WORD_INVALIDBRKTS ) );
-	CMIUtilString localDate;
-	CMIUtilString localTime;
-	if( GetDateTimeShort( localDate, localTime ) )
-		strDate = localDate;
 	
+	std::time( &m_rawTime );
+	const std::tm * pTi = std::localtime( &m_rawTime );
+	if( std::strftime( &m_pScratch[ 0 ], sizeof( m_pScratch ), "%d/%m/%y", pTi ) > 0 )
+		strDate = m_pScratch;
+
 	return strDate;
 }
 
@@ -76,34 +71,14 @@ CMIUtilString CMIUtilDateTimeStd::GetDate( void ) const
 // Return:	CMIUtilString - Text description.
 // Throws:	None.
 //--
-CMIUtilString CMIUtilDateTimeStd::GetTime( void ) const 
+CMIUtilString CMIUtilDateTimeStd::GetTime( void ) 
 {
-	CMIUtilString strTime( MIRSRC( IDS_WORD_INVALIDBRKTS ) );
-	CMIUtilString localDate;
-	CMIUtilString localTime;
-	if( GetDateTimeShort( localDate, localTime ) )
-		strTime = localTime;
-	
+	std::time( &m_rawTime );
+	const std::tm * pTi = std::localtime( &m_rawTime );
+	const CMIUtilString seconds( CMIUtilString::Format( "%d", pTi->tm_sec ) );
+	const CMIUtilString zero( (seconds.length() == 1) ? "0" : "" );
+	const CMIUtilString strTime( CMIUtilString::Format( "%d:%d:%s%s", pTi->tm_hour, pTi->tm_min, zero.c_str(), seconds.c_str() ) );
+
 	return strTime;
 }
 
-//++ ------------------------------------------------------------------------------------
-// Details:	Retrieve system local time and date, short version.
-// Type:	Method.
-// Args:	vrwLocalDate	- (W) Text date. Format is DD/MM/YYYY.
-//			vrwLocalTime	- (W) Text time. Format is HH:MM:SS 24 hour clock.
-// Return:	MIstatus::success - Functional succeeded.
-//			MIstatus::failure - Functional failed.
-// Throws:	None.
-//--
-bool CMIUtilDateTimeStd::GetDateTimeShort( CMIUtilString & vrwLocalDate, CMIUtilString & vrwLocalTime ) const
-{
-	time_t rawTime;
-	::time( &rawTime );
-	struct tm * pTi = ::localtime( &rawTime );
-
-	vrwLocalDate = CMIUtilString::Format( "%d/%d/%d", pTi->tm_wday, pTi->tm_mon, pTi->tm_year );
-	vrwLocalTime = CMIUtilString::Format( "%d:%d:%d", pTi->tm_hour, pTi->tm_min, pTi->tm_sec  );
-
-	return MIstatus::success;
-}

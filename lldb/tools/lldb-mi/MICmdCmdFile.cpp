@@ -23,21 +23,13 @@
 #include <lldb/API/SBStream.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdFile.h"
 #include "MICmnMIResultRecord.h"
-#include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 #include "MIUtilFileStd.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValFile.h"
-#include "MICmdArgValNumber.h"
-#include "MICmdArgValString.h"
-#include "MICmdArgValThreadGrp.h"
 #include "MICmdArgValOptionLong.h"
-#include "MICmdArgValOptionShort.h"
-#include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdFileExecAndSymbols constructor.
@@ -81,14 +73,7 @@ bool CMICmdCmdFileExecAndSymbols::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValFile( m_constStrArgNameFile, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -180,4 +165,20 @@ bool CMICmdCmdFileExecAndSymbols::Acknowledge( void )
 CMICmdBase * CMICmdCmdFileExecAndSymbols::CreateSelf( void )
 {
 	return new CMICmdCmdFileExecAndSymbols();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	If the MI Driver is not operating via a client i.e. Eclipse but say operating
+//			on a executable passed in as a argument to the drive then what should the driver
+//			do on a command failing? Either continue operating or exit the application.
+//			Override this function where a command failure cannot allow the driver to 
+//			continue operating.
+// Type:	Overridden.
+// Args:	None.
+// Return:	bool - True = Fatal if command fails, false = can continue if command fails.
+// Throws:	None.
+//--
+bool CMICmdCmdFileExecAndSymbols::GetExitAppOnCommandFailure( void ) const
+{
+	return true;
 }

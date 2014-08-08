@@ -19,9 +19,6 @@
 // Copyright:	None.
 //--
 
-// Include compiler configuration
-#include "MICmnConfig.h"
-
 // Third party headers
 #include <stdio.h>
 #include <assert.h>

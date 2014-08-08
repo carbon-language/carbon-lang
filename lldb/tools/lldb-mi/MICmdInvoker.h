@@ -102,6 +102,7 @@ private:
 	bool		CmdDelete( const MIuint vCmdId, const bool vbYesDeleteCmd = false );
 	bool		CmdAdd( const CMICmdBase & vCmd );
 	bool		CmdStdout( const SMICmdData & vCmdData ) const;
+	void		CmdCauseAppExit( const CMICmdBase & vCmd ) const;
 	
 // Overridden:
 private:

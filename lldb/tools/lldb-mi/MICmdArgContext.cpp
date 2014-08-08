@@ -220,7 +220,7 @@ bool CMICmdArgContext::RemoveArgAtPos( const CMIUtilString & vArg, const MIuint 
 MIuint CMICmdArgContext::GetNumberArgsPresent( void ) const
 {
 	CMIUtilString::VecString_t vecOptions;
-	return m_strCmdArgsAndOptions.Split( m_constStrSpace, vecOptions );
+	return m_strCmdArgsAndOptions.SplitConsiderQuotes( m_constStrSpace, vecOptions );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -233,7 +233,7 @@ MIuint CMICmdArgContext::GetNumberArgsPresent( void ) const
 CMIUtilString::VecString_t CMICmdArgContext::GetArgs( void ) const
 {
 	CMIUtilString::VecString_t vecOptions;
-	m_strCmdArgsAndOptions.Split( m_constStrSpace, vecOptions );
+	m_strCmdArgsAndOptions.SplitConsiderQuotes( m_constStrSpace, vecOptions );
 	return vecOptions;
 }
 	

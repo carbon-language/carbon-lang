@@ -26,7 +26,6 @@
 #include "MICmdCmdGdbInfo.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValString.h"
 #include "MICmnStreamStdout.h"
 #include "MICmnLLDBDebugSessionInfo.h"
@@ -80,14 +79,7 @@ CMICmdCmdGdbInfo::~CMICmdCmdGdbInfo( void )
 bool CMICmdCmdGdbInfo::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValString( m_constStrArgNamedPrint, true, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------

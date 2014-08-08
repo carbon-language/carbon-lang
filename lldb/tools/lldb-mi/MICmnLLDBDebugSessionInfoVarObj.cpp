@@ -22,6 +22,7 @@
 // In-house headers:
 #include "MICmnLLDBDebugSessionInfoVarObj.h"
 #include "MICmnLLDBProxySBValue.h"
+#include "MICmnLLDBUtilSBValue.h"
 
 // Instantiations:
 const MIchar * CMICmnLLDBDebugSessionInfoVarObj::ms_aVarFormatStrings[] =
@@ -128,7 +129,19 @@ CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDe
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMICmnLLDBDebugSessionInfoVarObj assignment opertator.
+// Details:	CMICmnLLDBDebugSessionInfoVarObj move constructor.
+// Type:	Method.
+// Args:	vrwOther	- (R) The object to copy from.
+// Return:	None.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj::CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDebugSessionInfoVarObj && vrwOther )
+{
+	MoveOther( vrwOther );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmnLLDBDebugSessionInfoVarObj assignment operator.
 // Type:	Method.
 // Args:	vrOther	- (R) The object to copy from.
 // Return:	CMICmnLLDBDebugSessionInfoVarObj & - Updated *this object.
@@ -142,7 +155,21 @@ CMICmnLLDBDebugSessionInfoVarObj & CMICmnLLDBDebugSessionInfoVarObj::operator= (
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Copy the other instance of *this object to *this object.
+// Details:	CMICmnLLDBDebugSessionInfoVarObj assignment operator.
+// Type:	Method.
+// Args:	vrwOther	- (R) The object to copy from.
+// Return:	CMICmnLLDBDebugSessionInfoVarObj & - Updated *this object.
+// Throws:	None.
+//--
+CMICmnLLDBDebugSessionInfoVarObj & CMICmnLLDBDebugSessionInfoVarObj::operator= ( CMICmnLLDBDebugSessionInfoVarObj && vrwOther )
+{
+	MoveOther( vrwOther );
+
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Copy the other instance of that object to *this object.
 // Type:	Method.
 // Args:	vrOther	- (R) The object to copy from.
 // Return:	MIstatus::success - Functional succeeded.
@@ -167,8 +194,34 @@ bool CMICmnLLDBDebugSessionInfoVarObj::CopyOther( const CMICmnLLDBDebugSessionIn
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	Move that object to *this object.
+// Type:	Method.
+// Args:	vrwOther	- (RW) The object to copy from.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnLLDBDebugSessionInfoVarObj::MoveOther( CMICmnLLDBDebugSessionInfoVarObj & vrwOther )
+{
+	// Check for self-assignment
+	if( this == &vrwOther )
+		return MIstatus::success;
+
+	CopyOther( vrwOther );
+	vrwOther.m_eVarFormat = eVarFormat_Natural;
+	vrwOther.m_eVarType = eVarType_Internal;
+	vrwOther.m_strName.clear();
+	vrwOther.m_SBValue.Clear();
+	vrwOther.m_strNameReal.clear();
+	vrwOther.m_strFormattedValue.clear();
+	vrwOther.m_strVarObjParentName.clear();
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	CMICmnLLDBDebugSessionInfoVarObj destructor.
-// Type:	Overridable.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

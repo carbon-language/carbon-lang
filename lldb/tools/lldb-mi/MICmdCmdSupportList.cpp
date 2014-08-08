@@ -20,7 +20,6 @@
 //--
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdSupportList.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"

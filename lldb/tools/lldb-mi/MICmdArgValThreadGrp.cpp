@@ -52,7 +52,7 @@ CMICmdArgValThreadGrp::CMICmdArgValThreadGrp( const CMIUtilString & vrArgName, c
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValThreadGrp destructor.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

@@ -20,11 +20,9 @@
 //--
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdTrace.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
-
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdTraceStatus constructor.

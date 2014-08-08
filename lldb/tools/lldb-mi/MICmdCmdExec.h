@@ -17,7 +17,7 @@
 //				CMICmdCmdExecNextInstruction	interface.
 //				CMICmdCmdExecStepInstruction	interface.
 //				CMICmdCmdExecFinish				interface.
-//				CMICmdCmdExecInterupt			interface.
+//				CMICmdCmdExecInterrupt			interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class

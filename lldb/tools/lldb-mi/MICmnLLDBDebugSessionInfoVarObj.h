@@ -87,8 +87,10 @@ public:
 	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( const CMIUtilString & vrStrNameReal, const CMIUtilString & vrStrName, const lldb::SBValue & vrValue, const CMIUtilString & vrStrVarObjParentName );
 	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
 	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDebugSessionInfoVarObj & vrOther );
+	/* ctor */	CMICmnLLDBDebugSessionInfoVarObj( CMICmnLLDBDebugSessionInfoVarObj && vrOther );
 	//
 	CMICmnLLDBDebugSessionInfoVarObj & operator= ( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
+	CMICmnLLDBDebugSessionInfoVarObj & operator= ( CMICmnLLDBDebugSessionInfoVarObj && vrwOther );
 	//
 	const CMIUtilString &	GetName( void ) const;
 	const CMIUtilString &	GetNameReal( void ) const;
@@ -116,6 +118,7 @@ private:
 // Methods:
 private:
 	bool	CopyOther( const CMICmnLLDBDebugSessionInfoVarObj & vrOther );
+	bool	MoveOther( CMICmnLLDBDebugSessionInfoVarObj & vrwOther );
 
 // Attributes:
 private:
@@ -124,7 +127,7 @@ private:
 	static MapKeyToVarObj_t	ms_mapVarIdToVarObj;
 	static MIuint			ms_nVarUniqueId;
 	//
-	// *** Upate the copy constructors and assignment operator ***
+	// *** Upate the copy move constructors and assignment operator ***
 	varFormat_e		m_eVarFormat;
 	varType_e		m_eVarType;
 	CMIUtilString	m_strName;
@@ -132,5 +135,5 @@ private:
 	CMIUtilString	m_strNameReal;
 	CMIUtilString	m_strFormattedValue;
 	CMIUtilString	m_strVarObjParentName;
-	// *** Upate the copy constructors and assignment operator ***
+	// *** Upate the copy move constructors and assignment operator ***
 };

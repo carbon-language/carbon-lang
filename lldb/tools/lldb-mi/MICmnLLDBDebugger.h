@@ -29,7 +29,6 @@
 #include <lldb/API/SBEvent.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmnBase.h"
 #include "MIUtilThreadBaseStd.h"
 #include "MIUtilSingletonBase.h"

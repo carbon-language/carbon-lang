@@ -38,6 +38,9 @@
 #include "MIUtilSingletonHelper.h"
 #include "MICmnStreamStdout.h"
 #include "MICmnStreamStderr.h"
+#include "MICmdArgValFile.h"
+#include "MICmdArgValString.h"
+#include "MICmnConfig.h"
 
 // Instantiations:
 #if _DEBUG
@@ -63,6 +66,8 @@ CMIDriver::CMIDriver( void )
 ,	m_rLldbDebugger( CMICmnLLDBDebugger::Instance() )
 ,	m_rStdOut( CMICmnStreamStdout::Instance() )
 ,	m_eCurrentDriverState( eDriverState_NotRunning )
+,	m_bHaveExecutableFileNamePathOnCmdLine( false )
+,	m_bDriverDebuggingArgExecutable( false )
 {
 }
 
@@ -192,7 +197,6 @@ bool CMIDriver::Initialize( void )
 #endif // MICONFIG_COMPILE_MIDRIVER_WITH_LLDBDRIVER
 
 	m_bExitApp = false;
-	bOk = bOk && InitClientIDEToMIDriver(); // Init Eclipse IDE
 		
 	m_bInitialized = bOk;
 
@@ -390,7 +394,18 @@ lldb::SBError CMIDriver::DoParseArgs( const int argc, const char * argv[], FILE 
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Check the arguments that were passed to this program to make sure they are 
-//			valid and to get their argument values (if any).
+//			valid and to get their argument values (if any). The following are options 
+//			that are only handled by *this driver: 
+//				--executable 
+//			The application's options --interpreter and --executable in code act very similar.
+//			The --executable is necessary to differentiate whither the MI Driver is being
+//			using by a client i.e. Eclipse or from the command line. Eclipse issues the option
+//			--interpreter and also passes additional arguments which can be interpreted as an
+//			executable if called from the command line. Using --executable tells the MI 
+//			Driver is being called the command line and that the executable argument is indeed
+//			a specified executable an so actions commands to set up the executable for a 
+//			debug session. Using --interpreter on the commnd line does not action additional
+//			commands to initialise a debug session and so be able to launch the process.
 // Type:	Overridden.
 // Args:	argc		- (R)	An integer that contains the count of arguments that follow in 
 //								argv. The argc parameter is always greater than or equal to 1.
@@ -408,8 +423,47 @@ lldb::SBError CMIDriver::DoParseArgs( const int argc, const char * argv[], FILE 
 lldb::SBError CMIDriver::ParseArgs( const int argc, const char * argv[], FILE * vpStdOut, bool & vwbExiting )
 {
 	lldb::SBError errStatus;
+	const bool bHaveArgs( argc >= 2 );
+	
+	// *** Add any args handled here to GetHelpOnCmdLineArgOptions() ***
+	
+	// CODETAG_MIDRIVE_CMD_LINE_ARG_HANDLING
+	// Look for the command line options		
+	bool bHaveExecutableFileNamePath = false;
+	bool bHaveExecutableLongOption = false;
+	
+	if( bHaveArgs )
+	{
+		// Search right to left to look for the executable
+		for( MIint i = argc - 1; i > 0; i-- ) 
+		{ 
+			const CMIUtilString strArg( argv[ i ] );
+			const CMICmdArgValFile argFile;
+			if( argFile.IsFilePath( strArg  ) || 
+				CMICmdArgValString( true, false, true ).IsStringArg( strArg ))
+			{
+				bHaveExecutableFileNamePath = true;
+				m_strCmdLineArgExecuteableFileNamePath = argFile.GetFileNamePath( strArg );
+				m_bHaveExecutableFileNamePathOnCmdLine = true;
+			}
+			// This argument is also check for in CMIDriverMgr::ParseArgs()
+			if( 0 == strArg.compare( "--executable" ) )	// Used to specify that there is executable argument also on the command line 
+			{											// See fn description.
+				   bHaveExecutableLongOption = true;
+			}
+		}
+	}
 
-	// Do nothing - no options to handle for *this driver
+	if( bHaveExecutableFileNamePath && bHaveExecutableLongOption )
+	{
+		// CODETAG_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
+#if MICONFIG_ENABLE_MI_DRIVER_MI_MODE_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
+		SetDriverDebuggingArgExecutable();
+#else
+		vwbExiting = true;
+		errStatus.SetErrorString( MIRSRC( IDS_DRIVER_ERR_LOCAL_DEBUG_NOT_IMPL ) );
+#endif // MICONFIG_ENABLE_MI_DRIVER_MI_MODE_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
+	}
 
 	return errStatus;
 }
@@ -522,11 +576,29 @@ bool CMIDriver::StopWorkerThreads( void )
 //--
 bool CMIDriver::DoMainLoop( void )
 {
+	if( !InitClientIDEToMIDriver() ) // Init Eclipse IDE
+	{
+		SetErrorDescriptionn( MIRSRC( IDS_MI_INIT_ERR_CLIENT_USING_DRIVER ) );
+		return MIstatus::failure;
+	}
+
 	if( !StartWorkerThreads() )
 		return MIstatus::failure;
 	
 	// App is not quitting currently
 	m_bExitApp = false;
+
+	// CODETAG_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
+#if MICONFIG_ENABLE_MI_DRIVER_MI_MODE_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
+	if( HaveExecutableFileNamePathOnCmdLine() )
+	{
+		if( !LocalDebugSessionStartupInjectCommands() )
+		{
+			SetErrorDescription( MIRSRC( IDS_MI_INIT_ERR_LOCAL_DEBUG_SESSION ) );
+			return MIstatus::failure;
+		}
+	}
+#endif // MICONFIG_ENABLE_MI_DRIVER_MI_MODE_CMDLINE_ARG_EXECUTABLE_DEBUG_SESSION
 
 	// While the app is active
 	while( !m_bExitApp )
@@ -747,7 +819,7 @@ FILE * CMIDriver::GetStdin( void ) const
 //++ ------------------------------------------------------------------------------------
 // Details:	*this driver provides a file stream to other pass through assigned drivers 
 //			so they know what to write to.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	FILE * - Pointer to stream.
 // Throws:	None.
@@ -764,7 +836,7 @@ FILE * CMIDriver::GetStdout( void ) const
 //++ ------------------------------------------------------------------------------------
 // Details:	*this driver provides a error file stream to other pass through assigned drivers 
 //			so they know what to write to.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	FILE * - Pointer to stream.
 // Throws:	None.
@@ -775,7 +847,7 @@ FILE * CMIDriver::GetStderr( void ) const
 	// available before *this driver has been initialized! Flaw?
 
 	// This very likely to change later to a stream that the pass thru driver
-	// will write to and *this driver reads from to pass on the CMICmnLog object
+	// will write to and *this driver reads from to pass on the the CMICmnLog object
 	return stderr;
 }
 
@@ -898,6 +970,20 @@ bool CMIDriver::InterpretCommandThisDriver( const CMIUtilString & vTextLine, boo
 		return ExecuteCommand( cmdData );
 	}
 
+	// Check for escape character, may be cursor control characters
+	// This code is not necessary for application operation, just want to keep tabs on what 
+	// is been given to the driver to try and intepret.
+	if( vTextLine.at( 0 ) == 27 )
+	{
+		CMIUtilString logInput( MIRSRC( IDS_STDIN_INPUT_CTRL_CHARS ) );
+		for( MIuint i = 0; i < vTextLine.length(); i++ )
+		{
+			logInput += CMIUtilString::Format( "%d ", vTextLine.at( i ) );
+		}
+		m_pLog->WriteLog( logInput );
+		return MIstatus::success;
+	}
+
 	// Write to the Log that a 'command' was not valid. 
 	// Report back to the MI client via MI result record.
 	CMIUtilString strNotInCmdFactory;
@@ -932,7 +1018,7 @@ bool CMIDriver::ExecuteCommand( const SMICmdData & vCmdData )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Set the MI Driver's exit application flag. The application checks this flag 
-//			after every stdin line is read so the exit may not be instantaneous.
+//			after every stdin line is read so the exit may not be instantious.
 //			If vbForceExit is false the MI Driver queries its state and determines if is
 //			should exit or continue operating depending on that running state.
 //			This is related to the running state of the MI driver.
@@ -989,9 +1075,8 @@ CMIDriver::DriverState_e CMIDriver::GetCurrentDriverState( void ) const
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Set the current running state of the MI Driver to running and currently in
-//			a debug session. The driver's state must in the state running and not in a
-//			debug session to set this new state.
+// Details:	Set the current running state of the MI Driver to running and currently not in
+//			a debug session. 
 // Type:	Method.
 // Return:	MIstatus::success - Functionality succeeded.
 //			MIstatus::failure - Functionality failed.
@@ -1114,4 +1199,77 @@ bool CMIDriver::InitClientIDEEclipse( void ) const
 	std::cout << "(gdb)" << std::endl;
 
 	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Ask *this driver whether it found an executable in the MI Driver's list of 
+//			arguments which to open and debug. If so instigate commands to set up a debug
+//			session for that executable.
+// Type:	Method.
+// Args:	None.
+// Return:	bool - True = True = Yes executable given as one of the parameters to the MI 
+//				   Driver.
+//				   False = not found.
+// Throws:	None.
+//--
+bool CMIDriver::HaveExecutableFileNamePathOnCmdLine( void ) const
+{
+	return m_bHaveExecutableFileNamePathOnCmdLine;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve from *this driver executable file name path to start a debug session
+//			with (if present see HaveExecutableFileNamePathOnCmdLine()).
+// Type:	Method.
+// Args:	None.
+// Return:	CMIUtilString & - Executeable file name path or empty string.
+// Throws:	None.
+//--
+const CMIUtilString & CMIDriver::GetExecutableFileNamePathOnCmdLine( void ) const
+{
+	return m_strCmdLineArgExecuteableFileNamePath;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Execute commands (by injecting them into the stdin line queue container) and
+//			other code to set up the MI Driver such that is can take the executable 
+//			argument passed on the command and create a debug session for it.
+// Type:	Method.
+// Args:	None.
+// Return:	MIstatus::success - Functionality succeeded.
+//			MIstatus::failure - Functionality failed.
+// Throws:	None.
+//--
+bool CMIDriver::LocalDebugSessionStartupInjectCommands( void )
+{
+	const CMIUtilString strCmd( CMIUtilString::Format( "-file-exec-and-symbols %s", m_strCmdLineArgExecuteableFileNamePath.c_str() ) );
+	
+	return InjectMICommand( strCmd );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Set the MI Driver into "its debugging an executable passed as an argument"
+//			mode as against running via a client like Eclipse.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+void CMIDriver::SetDriverDebuggingArgExecutable( void )
+{
+	m_bDriverDebuggingArgExecutable = true;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details: Retrieve the MI Driver state indicating if it is operating in "its debugging 
+//			an executable passed as an argument" mode as against running via a client 
+//			like Eclipse.
+// Type:	Method.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+bool CMIDriver::IsDriverDebuggingArgExecutable( void ) const
+{
+	return m_bDriverDebuggingArgExecutable;
 }

@@ -94,7 +94,7 @@ bool CMICmnMIValueTuple::BuildTuple( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Add another MI result object to  the value's list of tuples. 
+// Details:	Add another MI result object to the value's list of tuples. 
 // Type:	Method.
 // Args:	vResult	- (R) The MI result object.
 // Return:	MIstatus::success - Functional succeeded.
@@ -122,6 +122,31 @@ bool CMICmnMIValueTuple::BuildTuple( const CMICmnMIValueResult & vResult )
 	
 	const MIchar * pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
 	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str(), vResult.GetString().c_str() );
+
+	return MIstatus::success;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add string value to the value's list of tuples. 
+// Type:	Method.
+// Args:	vValue	- (R) The string object.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueTuple::BuildTuple( const CMIUtilString & vValue )
+{
+	// Clear out the default "<Invalid>" text
+	if( m_bJustConstructed )
+	{
+		m_bJustConstructed = false;
+		m_strValue = vValue;
+		return BuildTuple();
+	}
+
+	const CMIUtilString data( ExtractContentNoBrackets() );
+	const MIchar * pFormat = m_bSpaceAfterComma ? "{%s, %s}" : "{%s,%s}";
+	m_strValue = CMIUtilString::Format( pFormat, data.c_str(), vValue.c_str() );
 
 	return MIstatus::success;
 }
@@ -156,5 +181,47 @@ bool CMICmnMIValueTuple::Add( const CMICmnMIValueResult & vResult, const bool vb
 {
 	m_bSpaceAfterComma = vbUseSpacing;
 	return BuildTuple( vResult );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Add another MI value object to  the value list's of list is values.
+//			Only values objects can be added to a list of values otherwise this function 
+//			will return MIstatus::failure.
+// Type:	Method.
+// Args:	vValue			- (R) The MI value object.
+//			vbUseSpacing	- (R) True = put space seperators into the string, false = no spaces used.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmnMIValueTuple::Add( const CMICmnMIValueConst & vValue, const bool vbUseSpacing )
+{
+	m_bSpaceAfterComma = vbUseSpacing;
+	return BuildTuple( vValue.GetString() );
+}
+
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Retrieve the contents of *this value object but without the outer most 
+//			brackets.
+// Type:	Method.
+// Args:	None.
+// Return:	CMIUtilString - Data within the object.
+// Throws:	None.
+//--
+CMIUtilString CMICmnMIValueTuple::ExtractContentNoBrackets( void ) const
+{
+	CMIUtilString data( m_strValue );
+
+	if( data[ 0 ] == '{' )
+	{
+		data = data.substr( 1, data.length() - 1 );
+	}
+	if( data[ data.size() - 1 ] == '}' )
+	{
+		data = data.substr( 0, data.length() - 1 );
+	}
+		
+	return data;
 }
 

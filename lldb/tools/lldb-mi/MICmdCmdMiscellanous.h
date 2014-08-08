@@ -13,6 +13,7 @@
 // Overview:	CMICmdCmdGdbExit				interface.
 //				CMICmdCmdListThreadGroups		interface.
 //				CMICmdCmdInterpreterExec		interface.
+//				CMICmdCmdInferiorTtySet			interface.
 //
 //				To implement new MI commands derive a new command class from the command base 
 //				class. To enable the new command for interpretation add the new command class
@@ -144,4 +145,31 @@ private:
 	const CMIUtilString			m_constStrArgNamedInterpreter;
 	const CMIUtilString			m_constStrArgNamedCommand;
 	lldb::SBCommandReturnObject m_lldbResult;
+};
+
+//++ ============================================================================
+// Details:	MI command class. MI commands derived from the command base class.
+//			*this class implements MI command "inferior-tty-set".
+// Gotchas:	None.
+// Authors:	Illya Rudkin 22/07/2014.
+// Changes:	None.
+//--
+class CMICmdCmdInferiorTtySet : public CMICmdBase
+{
+// Statics:
+public:
+	// Required by the CMICmdFactory when registering *this command
+	static CMICmdBase *	CreateSelf( void );
+
+// Methods:
+public:
+	/* ctor */	CMICmdCmdInferiorTtySet( void );
+
+// Overridden:
+public:
+	// From CMICmdInvoker::ICmd
+	virtual bool	Execute( void );
+	virtual bool	Acknowledge( void );
+	// From CMICmnBase
+	/* dtor */ virtual ~CMICmdCmdInferiorTtySet( void );
 };

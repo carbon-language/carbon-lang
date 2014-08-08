@@ -143,17 +143,9 @@ bool CMICmnMIValueList::BuildList( const CMICmnMIValueResult & vResult )
 		return BuildList();
 	}
 
-	if( m_strValue[ 0 ] == '[' )
-	{
-		m_strValue = m_strValue.substr( 1, m_strValue.size() - 1 );
-	}
-	if( m_strValue[ m_strValue.size() - 1 ] == ']' )
-	{
-		m_strValue = m_strValue.substr( 0, m_strValue.size() - 1 );
-	}
-
+	const CMIUtilString data( ExtractContentNoBrackets() );
 	const MIchar * pFormat = "[%s,%s]";
-	m_strValue = CMIUtilString::Format( pFormat, m_strValue.c_str(), vResult.GetString().c_str() );
+	m_strValue = CMIUtilString::Format( pFormat, data.c_str(), vResult.GetString().c_str() );
 
 	return MIstatus::success;
 }
@@ -186,3 +178,26 @@ bool CMICmnMIValueList::BuildList( const CMICmnMIValue & vValue )
 	return MIstatus::success;
 }
 
+//++ ------------------------------------------------------------------------------------
+// Details:	Retrieve the contents of *this value object but without the outer most 
+//			brackets.
+// Type:	Method.
+// Args:	None.
+// Return:	CMIUtilString - Data within the object.
+// Throws:	None.
+//--
+CMIUtilString CMICmnMIValueList::ExtractContentNoBrackets( void ) const
+{
+	CMIUtilString data( m_strValue );
+
+	if( data[ 0 ] == '[' )
+	{
+		data = data.substr( 1, data.length() - 1 );
+	}
+	if( data[ data.size() - 1 ] == ']' )
+	{
+		data = data.substr( 0, data.length() - 1 );
+	}
+		
+	return data;
+}

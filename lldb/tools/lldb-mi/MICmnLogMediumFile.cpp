@@ -19,22 +19,16 @@
 // Copyright:	None.
 //--
 
-// Include compiler configuration
-#include "MICmnConfig.h"
-
 // In-house headers:
 #include "MICmnLogMediumFile.h"
 #include "MICmnResources.h"
-
 #if defined( _MSC_VER )
 	#include "MIUtilSystemWindows.h"
-#elif defined( __FreeBSD__ ) || defined( __linux__ )
+#elif defined( __FreeBSD__ ) || defined( __linux )
 	#include "MIUtilSystemLinux.h"
 #elif defined( __APPLE__ )
 	#include "MIUtilSystemOsx.h"
 #endif // defined( _MSC_VER )
-
-#include "MIUtilDateTimeStd.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnLogMediumFile constructor.
@@ -285,7 +279,7 @@ CMIUtilString CMICmnLogMediumFile::MassagedData( const CMIUtilString & vData, co
 	const CMIUtilString strCr( "\n" );
 	CMIUtilString data;
 	const MIchar verbosityCode( ConvertLogVerbosityTypeToId( veType ) );
-	const CMIUtilString dt( CMIUtilString::Format( "%s %s", m_strDate.c_str(), CMIUtilDateTimeStd().GetTime().c_str() ) );
+	const CMIUtilString dt( CMIUtilString::Format( "%s %s", m_strDate.c_str(), m_dateTime.GetTime().c_str() ) );
 	
 	data = CMIUtilString::Format( "%c,%s,%s", verbosityCode, dt.c_str(), vData.c_str() );
 	data = ConvertCr( data );

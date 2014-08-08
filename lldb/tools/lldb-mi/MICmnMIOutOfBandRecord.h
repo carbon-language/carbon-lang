@@ -63,6 +63,7 @@ public:
 	{
 		eOutOfBand_Running	= 0,
 		eOutOfBand_Stopped,
+		eOutOfBand_BreakPointCreated,
 		eOutOfBand_BreakPointModified,
 		eOutOfBand_Thread,
 		eOutOfBand_ThreadGroupAdded,

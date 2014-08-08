@@ -57,7 +57,7 @@ CMICmdArgValListOfN::CMICmdArgValListOfN( const CMIUtilString & vrArgName, const
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValListOfN destructor.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

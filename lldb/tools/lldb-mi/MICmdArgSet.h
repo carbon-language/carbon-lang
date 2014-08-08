@@ -93,7 +93,8 @@ public:
 private:
 	const SetCmdArgs_t &	GetArgsNotHandledByCmd( void ) const;
 	void					Destroy( void );						// Release resources used by *this object
-	
+	bool					ValidationFormErrorMessages( const CMICmdArgContext & vwCmdArgsText );
+
 // Attributes:
 private:
 	bool					m_bIsArgsPresentButNotHandledByCmd;	// True = The driver's client presented the command with options recognised but not handled by a command, false = all args handled

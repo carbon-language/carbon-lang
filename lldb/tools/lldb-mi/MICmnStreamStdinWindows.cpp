@@ -98,10 +98,7 @@ bool CMICmnStreamStdinWindows::Initialize( void )
 
 		// Clear error indicators for std input
 		::clearerr( stdin );
-	}
 
-	if( bOk )
-	{
 #if defined( _MSC_VER )
 		m_bRunningInConsoleWin = ::_isatty( ::fileno( stdin ) );
 #endif // #if defined( _MSC_VER )
@@ -175,12 +172,7 @@ bool CMICmnStreamStdinWindows::Shutdown( void )
 //--
 bool CMICmnStreamStdinWindows::InputAvailable( bool & vwbAvail )
 {
-#ifdef _MSC_VER
 	return m_bRunningInConsoleWin ? InputAvailableConsoleWin( vwbAvail ) : InputAvailableApplication( vwbAvail );
-#else
-	// Do nothing
-	return MIstatus::success;
-#endif // ifdef _MSC_VER
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -194,7 +186,7 @@ bool CMICmnStreamStdinWindows::InputAvailable( bool & vwbAvail )
 //--
 bool CMICmnStreamStdinWindows::InputAvailableConsoleWin( bool & vwbAvail )
 {
-#ifdef _MSC_VER
+#if defined( _MSC_VER )
   if( m_nBytesToBeRead == 0 )
    {
         // Get a windows handle to std input stream
@@ -207,7 +199,7 @@ bool CMICmnStreamStdinWindows::InputAvailableConsoleWin( bool & vwbAvail )
         // Return state of whether bytes are waiting or not
         vwbAvail = (nBytesWaiting > 0);
     }
-#endif // ifdef _MSC_VER
+#endif // #if defined( _MSC_VER )
 
 	return MIstatus::success;
 }
@@ -222,8 +214,8 @@ bool CMICmnStreamStdinWindows::InputAvailableConsoleWin( bool & vwbAvail )
 //--
 bool CMICmnStreamStdinWindows::InputAvailableApplication( bool & vwbAvail )
 {
-#ifdef _MSC_VER
-   if( m_nBytesToBeRead == 0 )
+ #if defined( _MSC_VER )
+  if( m_nBytesToBeRead == 0 )
    {
         // Get a windows handle to std input stream
         HANDLE handle = ::GetStdHandle( STD_INPUT_HANDLE );
@@ -245,7 +237,7 @@ bool CMICmnStreamStdinWindows::InputAvailableApplication( bool & vwbAvail )
         // Return state of whether bytes are waiting or not
         vwbAvail = (nBytesWaiting > 0);
     }
-#endif // ifdef _MSC_VER
+#endif // #if defined( _MSC_VER )
 
 	return MIstatus::success;
 }

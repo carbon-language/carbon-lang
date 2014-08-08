@@ -28,6 +28,7 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_MapOutOfBandToOutOfBan
 {
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Running, "running" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, "stopped" },
+	{ CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointCreated, "breakpoint-created" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, "breakpoint-modified" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Thread, "" }, // "" Meant to be empty
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_ThreadGroupAdded, "thread-group-added" },
@@ -42,6 +43,7 @@ CMICmnMIOutOfBandRecord::MapOutOfBandToOutOfBandText_t ms_constMapAsyncRecordTex
 {
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Running, "*" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Stopped, "*" },
+	{ CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointCreated, "=" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_BreakPointModified, "=" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_Thread, "@" },
 	{ CMICmnMIOutOfBandRecord::eOutOfBand_ThreadGroupAdded, "=" },

@@ -20,36 +20,8 @@
 // Copyright:	None.
 //--
 
-// Third Party Headers:
-#include <lldb/API/SBBreakpointLocation.h>
-#include <lldb/API/SBCommandInterpreter.h>
-#include <lldb/API/SBStream.h>
-#include <lldb/API/SBThread.h>
-#include <lldb/API/SBTypeFormat.h>
-#include <limits.h>
-
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmd.h"
-#include "MICmnMIResultRecord.h"
-#include "MICmnMIValueConst.h"
-#include "MICmnMIOutOfBandRecord.h"
-#include "MICmnResources.h"
-#include "MICmnLLDBDebugger.h"
-#include "MICmnLLDBDebugSessionInfo.h"
-#include "MIDriverBase.h"
-#include "MIUtilDebug.h"
-#include "MIDriver.h"
-#include "MIUtilFileStd.h"
-#include "MICmnLLDBProxySBValue.h"
-#include "MICmdArgContext.h"
-#include "MICmdArgValFile.h"
-#include "MICmdArgValNumber.h"
-#include "MICmdArgValString.h"
-#include "MICmdArgValThreadGrp.h"
-#include "MICmdArgValOptionLong.h"
-#include "MICmdArgValOptionShort.h"
-#include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdEnablePrettyPrinting constructor.

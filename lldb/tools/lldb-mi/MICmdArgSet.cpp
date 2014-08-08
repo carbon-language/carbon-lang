@@ -24,7 +24,6 @@
 #include "MICmdArgValBase.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
-#include "MICmnConfig.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgSet constructor.
@@ -85,7 +84,7 @@ void CMICmdArgSet::Destroy( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Retrieve the state flag indicating that the command set up ready to parse
-//			command arguments or options found that one or more arguments was indeed
+//			command arguments or options found that one or more arguemnts was indeed
 //			present but not handled. This is given as a warning in the MI log file.
 // Type:	Method.
 // Args:	None.
@@ -98,7 +97,7 @@ bool CMICmdArgSet::IsArgsPresentButNotHandledByCmd( void ) const
 }
 	
 //++ ------------------------------------------------------------------------------------
-// Details:	Add the list of command's arguments to parse and validate another one.
+// Details:	Add the the list of command's arguments to parse and validate another one.
 // Type:	Method.
 // Args:	vArg	- (R) A command argument object.
 // Return:	MIstatus::success - Functional succeeded.
@@ -161,7 +160,7 @@ const CMICmdArgSet::SetCmdArgs_t &	CMICmdArgSet::GetArgsNotHandledByCmd( void ) 
 //++ ------------------------------------------------------------------------------------
 // Details:	Given a set of command argument objects parse the context option string to
 //			find those argument and retrieve their value. If the function fails call
-//			GetArgsThatAreMissing() to see which commands that were mandatory were 
+//			GetArgsThatAreMissing() to see which commands that were manadatory were 
 //			missing or failed to parse.
 // Type:	Method.
 // Args:	vStrMiCmd		- (R)  Command's name.
@@ -214,15 +213,23 @@ bool CMICmdArgSet::Validate( const CMIUtilString & vStrMiCmd, CMICmdArgContext &
 		return MIstatus::failure;
 	}
 	
-	if( !vwCmdArgsText.IsEmpty() )
-	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_CONTEXT_NOT_ALL_EATTEN ), vwCmdArgsText.GetArgsLeftToParse().c_str() ) );
-		return MIstatus::failure;
-	}
-
 	if( IsArgsPresentButNotHandledByCmd() )
 		WarningArgsNotHandledbyCmdLogFile( vStrMiCmd );
 
+	return ValidationFormErrorMessages( vwCmdArgsText );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Having validated the command's options text and failed for some reason form
+//			the error message made up with the faults found.
+// Type:	Method.
+//			vCmdArgsText	- (RW) A command's options or argument.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdArgSet::ValidationFormErrorMessages( const CMICmdArgContext & vwCmdArgsText )
+{
 	CMIUtilString strListMissing;
 	CMIUtilString strListInvalid;
 	CMIUtilString strListMissingInfo;
@@ -279,27 +286,49 @@ bool CMICmdArgSet::Validate( const CMIUtilString & vStrMiCmd, CMICmdArgContext &
 			++it;
 		}
 	}
+
+	bool bHaveOneError = false;
+	CMIUtilString strError = MIRSRC( IDS_CMD_ARGS_ERR_PREFIX_MSG );
 	if( bArgsMissing && bArgsInvalid )
 	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MAN_INVALID ), strListMissing.c_str(), strListInvalid.c_str() ) );
-		return MIstatus::failure;
+		bHaveOneError = true;
+		strError += CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MAN_INVALID ), strListMissing.c_str(), strListInvalid.c_str() );
 	}
 	if( bArgsMissing )
 	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY ), strListMissing.c_str() ) );
-		return MIstatus::failure;
+		if( bHaveOneError )
+			strError += ". ";
+		bHaveOneError = true;
+		strError += CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MANDATORY ), strListMissing.c_str() );
 	}
 	if( bArgsMissingInfo )
 	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MISSING_INF ), strListMissingInfo.c_str() ) );
-		return MIstatus::failure;
+		if( bHaveOneError )
+			strError += ". ";
+		bHaveOneError = true;
+		strError += CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_MISSING_INF ), strListMissingInfo.c_str() );
 	}
 	if( bArgsInvalid )
 	{
-		SetErrorDescription( CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_INVALID ), strListInvalid.c_str() ) );
+		if( bHaveOneError )
+			strError += ". ";
+		bHaveOneError = true;
+		strError += CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_VALIDATION_INVALID ), strListInvalid.c_str() );
+	}
+	if( !vwCmdArgsText.IsEmpty() )
+	{
+		if( bHaveOneError )
+			strError += ". ";
+		bHaveOneError = true;
+		strError += CMIUtilString::Format( MIRSRC( IDS_CMD_ARGS_ERR_CONTEXT_NOT_ALL_EATTEN ), vwCmdArgsText.GetArgsLeftToParse().c_str() );
+	}
+
+	if( bHaveOneError )
+	{
+		SetErrorDescription( strError );
 		return MIstatus::failure;
 	}
-	
+
 	return MIstatus::success;
 }
 

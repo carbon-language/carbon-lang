@@ -19,9 +19,6 @@
 // Copyright:	None.
 //--
 
-// Include compiler configuration
-#include "MICmnConfig.h"
-
 #if defined( _MSC_VER )
 
 // Third party headers

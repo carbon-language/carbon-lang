@@ -25,6 +25,7 @@
 #include "MICmdMgr.h"
 #include "MICmnLog.h"
 #include "MICmnStreamStdout.h"
+#include "MIDriver.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdInvoker constructor.
@@ -197,6 +198,7 @@ bool CMICmdInvoker::CmdExecute( CMICmdBase & vCmd )
 		// Report command execution failed
 		const SMICmdData cmdData( vCmd.GetCmdData() );
 		CmdStdout( cmdData );
+		CmdCauseAppExit( vCmd );
 		CmdDelete( cmdData.id );
 
 		// Proceed to wait or execute next command
@@ -208,6 +210,7 @@ bool CMICmdInvoker::CmdExecute( CMICmdBase & vCmd )
 		// Report command execution failed
 		const SMICmdData cmdData( vCmd.GetCmdData() );
 		CmdStdout( cmdData );
+		CmdCauseAppExit( vCmd );
 		CmdDelete( cmdData.id );
 
 		// Proceed to wait or execute next command
@@ -240,6 +243,7 @@ bool CMICmdInvoker::CmdExecuteFinished( CMICmdBase & vCmd )
 		// Report command acknowledge functionality failed
 		const SMICmdData cmdData( vCmd.GetCmdData() );
 		CmdStdout( cmdData );
+		CmdCauseAppExit( vCmd );
 		CmdDelete( cmdData.id );
 
 		// Proceed to wait or execute next command
@@ -265,6 +269,27 @@ bool CMICmdInvoker::CmdExecuteFinished( CMICmdBase & vCmd )
 	bOk = bOk && CmdDelete( vCmd.GetCmdData().id );
 		
 	return bOk;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	If the MI Driver is not operating via a client i.e. Eclipse check the command
+//			on failure suggests the application exits. A command can be such that a 
+//			failure cannot the allow the application to continue operating.
+// Args:	vCmd	- (R) Command object.
+// Return:	None.
+// Return:	None.
+// Throws:	None.
+//--
+void CMICmdInvoker::CmdCauseAppExit( const CMICmdBase & vCmd ) const
+{
+	if( vCmd.GetExitAppOnCommandFailure() )
+	{
+		CMIDriver & rDriver( CMIDriver::Instance() );
+		if( rDriver.IsDriverDebuggingArgExecutable() )
+		{
+			rDriver.SetExitApplicationFlag( true );
+		}
+	}
 }
 
 //++ ------------------------------------------------------------------------------------

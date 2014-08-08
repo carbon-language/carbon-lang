@@ -45,6 +45,7 @@ class CMICmnStreamStderr
 // Statics:
 public:
 	static bool	TextToStderr( const CMIUtilString & vrTxt );
+	static bool	LLDBMsgToConsole( const CMIUtilString & vrTxt );
 
 	// Methods:
 public:
@@ -54,6 +55,7 @@ public:
 	bool	Lock( void );										
 	bool	Unlock( void );										
 	bool	Write( const CMIUtilString & vText, const bool vbSendToLog = true );
+	bool	WriteLLDBMsg( const CMIUtilString & vText, const bool vbSendToLog = true );
 
 // Methods:
 private:

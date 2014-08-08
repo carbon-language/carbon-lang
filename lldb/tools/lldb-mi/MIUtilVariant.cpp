@@ -48,6 +48,30 @@ CMIUtilVariant::CDataObjectBase::CDataObjectBase( const CDataObjectBase & vrOthe
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	CDataObjectBase copy constructor.
+// Type:	Method.
+// Args:	vrOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant::CDataObjectBase::CDataObjectBase( CDataObjectBase & vrOther )
+{
+	MIunused( vrOther );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CDataObjectBase move constructor.
+// Type:	Method.
+// Args:	vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant::CDataObjectBase::CDataObjectBase( CDataObjectBase && vrwOther )
+{
+	MIunused( vrwOther );
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	CDataObjectBase destructor.
 // Type:	Overrideable.
 // Args:	None.
@@ -56,10 +80,11 @@ CMIUtilVariant::CDataObjectBase::CDataObjectBase( const CDataObjectBase & vrOthe
 //--
 CMIUtilVariant::CDataObjectBase::~CDataObjectBase( void )
 {
+	Destroy();
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CDataObjectBase copy operator.
+// Details:	CDataObjectBase copy assignment.
 // Type:	Method.
 // Args:	vrOther	- (R) The other object.
 // Return:	None.
@@ -67,7 +92,21 @@ CMIUtilVariant::CDataObjectBase::~CDataObjectBase( void )
 //--
 CMIUtilVariant::CDataObjectBase & CMIUtilVariant::CDataObjectBase::operator= ( const CDataObjectBase & vrOther )
 {
-	MIunused( vrOther );
+	Copy( vrOther );
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CDataObjectBase move assignment.
+// Type:	Method.
+// Args:	vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant::CDataObjectBase & CMIUtilVariant::CDataObjectBase::operator= ( CDataObjectBase && vrwOther )
+{
+	Copy( vrwOther );
+	vrwOther.Destroy();
 	return *this;
 }
 
@@ -110,6 +149,18 @@ void CMIUtilVariant::CDataObjectBase::Copy( const CDataObjectBase & vrOther )
 	MIunused( vrOther );
 }
 
+//++ ------------------------------------------------------------------------------------
+// Details:	Release any resources used by *this object.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+void CMIUtilVariant::CDataObjectBase::Destroy( void )
+{
+	// Do nothing - override to implement
+}
+
 //---------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
 //---------------------------------------------------------------------------------------
@@ -127,12 +178,44 @@ CMIUtilVariant::CDataObject< T >::CDataObject( const CDataObject & vrOther )
 {
 	if( this == &vrOther )
 		return;
-	CDataObjectBase::Copy( vrOther );
 	Copy( vrOther );	
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CDataObject copy operator.
+// Details:	CDataObject copy constructor.
+// Type:	Method.
+// Args:	T		- The object's type.
+//			vrOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+template< typename T >
+CMIUtilVariant::CDataObject< T >::CDataObject( CDataObject & vrOther )
+{
+	if( this == &vrOther )
+		return;
+	Copy( vrOther );	
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CDataObject move constructor.
+// Type:	Method.
+// Args:	T			- The object's type.
+//			vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+template< typename T >
+CMIUtilVariant::CDataObject< T >::CDataObject( CDataObject && vrwOther )
+{
+	if( this == &vrwOther )
+		return;
+	Copy( vrwOther );	
+	vrwOther.Destroy();
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CDataObject copy assignment.
 // Type:	Method.
 // Args:	T		- The object's type.
 //			vrOther	- (R) The other object.
@@ -144,8 +227,25 @@ CMIUtilVariant::CDataObject< T > & CMIUtilVariant::CDataObject< T >::operator= (
 {
 	if( this == &vrOther )
 		return *this;
-	CDataObjectBase::Copy( vrOther );
 	Copy( vrOther );
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CDataObject move assignment.
+// Type:	Method.
+// Args:	T			- The object's type.
+//			vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+template< typename T >
+CMIUtilVariant::CDataObject< T > & CMIUtilVariant::CDataObject< T >::operator= ( CDataObject && vrwOther )
+{
+	if( this == &vrwOther )
+		return *this;
+	Copy( vrwOther );
+	vrwOther.Destroy();
 	return *this;
 }
 
@@ -182,6 +282,39 @@ CMIUtilVariant::CMIUtilVariant( const CMIUtilVariant & vrOther )
 }
 
 //++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilVariant copy constructor.
+// Type:	Method.
+// Args:	vrOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant::CMIUtilVariant( CMIUtilVariant & vrOther )
+:	m_pDataObject( nullptr )
+{
+	if( this == &vrOther )
+		return;
+
+	Copy( vrOther );
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilVariant move constructor.
+// Type:	Method.
+// Args:	vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant::CMIUtilVariant( CMIUtilVariant && vrwOther )
+:	m_pDataObject( nullptr )
+{
+	if( this == &vrwOther )
+		return;
+
+	Copy( vrwOther );
+	vrwOther.Destroy();
+}
+
+//++ ------------------------------------------------------------------------------------
 // Details:	CMIUtilVariant destructor.
 // Type:	Method.
 // Args:	None.
@@ -194,7 +327,7 @@ CMIUtilVariant::~CMIUtilVariant( void )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	CMIUtilVariant copy operator.
+// Details:	CMIUtilVariant copy assignment.
 // Type:	Method.
 // Args:	vrOther	- (R) The other object.
 // Return:	None.
@@ -206,6 +339,23 @@ CMIUtilVariant & CMIUtilVariant::operator= ( const CMIUtilVariant & vrOther )
 		return *this;
 
 	Copy( vrOther );
+	return *this;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMIUtilVariant move assignment.
+// Type:	Method.
+// Args:	vrwOther	- (R) The other object.
+// Return:	None.
+// Throws:	None.
+//--
+CMIUtilVariant & CMIUtilVariant::operator= ( CMIUtilVariant && vrwOther )
+{
+	if( this == &vrwOther )
+		return *this;
+
+	Copy( vrwOther );
+	vrwOther.Destroy();
 	return *this;
 }
 
@@ -225,9 +375,6 @@ void CMIUtilVariant::Destroy( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Bitwise copy another data object to *this variant object.
-//			Because *this Variant class does not store the type of the object
-//			held it performs a bitwise copy of the data object whenever the variant
-//			object is copied. This could lead to issues.
 // Type:	Method.
 // Args:	vrOther	- (R) The other object.
 // Return:	None.
@@ -242,3 +389,4 @@ void CMIUtilVariant::Copy( const CMIUtilVariant & vrOther )
 		m_pDataObject = vrOther.m_pDataObject->CreateCopyOfSelf();
 	}
 }
+

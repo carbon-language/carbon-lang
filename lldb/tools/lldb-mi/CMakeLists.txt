@@ -47,6 +47,7 @@ add_lldb_executable(lldb-mi
   MICmnLLDBDebugSessionInfo.cpp
   MICmnLLDBDebugSessionInfoVarObj.cpp
   MICmnLLDBProxySBValue.cpp
+  MICmnLLDBUtilSBValue.cpp
   MICmnLog.cpp
   MICmnLogMediumFile.cpp
   MICmnMIOutOfBandRecord.cpp
@@ -127,6 +128,7 @@ add_lldb_executable(lldb-mi
   MICmnLLDBDebugSessionInfo.cpp
   MICmnLLDBDebugSessionInfoVarObj.cpp
   MICmnLLDBProxySBValue.cpp
+  MICmnLLDBUtilSBValue.cpp
   MICmnLog.cpp
   MICmnLogMediumFile.cpp
   MICmnMIOutOfBandRecord.cpp

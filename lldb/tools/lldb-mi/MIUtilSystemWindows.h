@@ -20,9 +20,6 @@
 //--
 #pragma once
 
-// Include compiler configuration
-#include "MICmnConfig.h"
-
 #if defined( _MSC_VER )
 
 // In-house headers:

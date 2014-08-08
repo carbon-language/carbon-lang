@@ -42,6 +42,8 @@ class CMIUtilVariant
 public:
 	/* ctor */ CMIUtilVariant( void );
 	/* ctor */ CMIUtilVariant( const CMIUtilVariant & vrOther );
+	/* ctor */ CMIUtilVariant( CMIUtilVariant & vrOther );
+	/* ctor */ CMIUtilVariant( CMIUtilVariant && vrwOther );
 	/* dtor */ ~CMIUtilVariant( void );
 	
 	template< typename T >
@@ -50,6 +52,7 @@ public:
 		T * Get( void ) const;
 
 	CMIUtilVariant & operator= ( const CMIUtilVariant & vrOther );
+	CMIUtilVariant & operator= ( CMIUtilVariant && vrwOther );
 
 // Classes:
 private:
@@ -65,8 +68,11 @@ private:
 	public:
 		/* ctor */ CDataObjectBase( void );
 		/* ctor */ CDataObjectBase( const CDataObjectBase & vrOther );
+		/* ctor */ CDataObjectBase( CDataObjectBase & vrOther );
+		/* ctor */ CDataObjectBase( CDataObjectBase && vrwOther );
 		//
 		CDataObjectBase & operator= ( const CDataObjectBase & vrOther ) ;
+		CDataObjectBase & operator= ( CDataObjectBase && vrwOther ) ;
 	
 	// Overrideable:
 	public:
@@ -77,6 +83,7 @@ private:
 	// Overrideable:
 	protected:
 		virtual void Copy( const CDataObjectBase & vrOther );
+		virtual void Destroy( void );
 	};
 
 	//++ ----------------------------------------------------------------------
@@ -87,18 +94,18 @@ private:
 	template< typename T >
 	class CDataObject : public CDataObjectBase
 	{
-	// Statics:
-	public:
-
 	// Methods:
 	public:
 		/* ctor */ CDataObject( void );
 		/* ctor */ CDataObject( const T & vArg );
 		/* ctor */ CDataObject( const CDataObject & vrOther );
+		/* ctor */ CDataObject( CDataObject & vrOther );
+		/* ctor */ CDataObject( CDataObject && vrwOther );
 		//
 		CDataObject & operator= ( const CDataObject & vrOther );
-		//
-		T & GetDataObject( void );
+		CDataObject & operator= ( CDataObject && vrwOther );
+		//	
+		T &	GetDataObject( void );
 
 	// Overridden:
 	public:
@@ -111,6 +118,7 @@ private:
 	private:
 		// From CDataObjectBase
 		virtual void Copy( const CDataObject & vrOther );
+		virtual void Destroy( void );
 
 	// Attributes:
 	private:
@@ -167,6 +175,7 @@ CMIUtilVariant::CDataObject< T >::CDataObject( const T & vArg )
 template< typename T >
 CMIUtilVariant::CDataObject< T >::~CDataObject( void )
 {
+	Destroy();
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -222,7 +231,21 @@ bool CMIUtilVariant::CDataObject< T >::GetIsDerivedClass( void ) const
 template< typename T >
 void CMIUtilVariant::CDataObject< T >::Copy( const CDataObject & vrOther )
 {
+	CDataObjectBase::Copy( vrOther );
 	m_dataObj = vrOther.m_dataObj;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Release any resources used by *this object.
+// Type:	Overridden.
+// Args:	None.
+// Return:	None.
+// Throws:	None.
+//--
+template< typename T >
+void CMIUtilVariant::CDataObject< T >::Destroy( void )
+{
+	CDataObjectBase::Destroy();
 }
 
 //---------------------------------------------------------------------------------------
@@ -262,3 +285,4 @@ T * CMIUtilVariant::Get( void ) const
 	// Do not use a CDataObjectBase object, use only CDataObjectBase derived objects
 	return nullptr;
 }
+

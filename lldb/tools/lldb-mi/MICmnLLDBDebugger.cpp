@@ -26,7 +26,6 @@
 #include <lldb/API/SBCommandInterpreter.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
@@ -34,7 +33,6 @@
 #include "MICmnThreadMgrStd.h"
 #include "MICmnLLDBDebuggerHandleEvents.h"
 #include "MICmnLLDBDebugSessionInfo.h"
-#include "MIUtilDebug.h"
 #include "MIUtilSingletonHelper.h"
 
 //++ ------------------------------------------------------------------------------------

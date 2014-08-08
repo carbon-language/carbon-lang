@@ -62,6 +62,7 @@ public:
 	virtual bool	ParseArgs( void );
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdFileExecAndSymbols( void );
+	virtual bool	GetExitAppOnCommandFailure( void ) const;
 
 // Attributes:
 private:

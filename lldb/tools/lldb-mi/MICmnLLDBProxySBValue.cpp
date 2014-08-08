@@ -19,11 +19,8 @@
 // Copyright:	None.
 //--
 
-#include <stdlib.h>
-
 // Third Party Headers:
 #include <lldb/API/SBError.h>
-#include <cstdlib>
 
 // In-house headers:
 #include "MICmnLLDBProxySBValue.h"
@@ -151,3 +148,4 @@ bool CMICmnLLDBProxySBValue::GetCString( const lldb::SBValue & vrValue, CMIUtilS
 
 	return MIstatus::success;
 }
+

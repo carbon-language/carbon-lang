@@ -26,14 +26,12 @@
 #include <lldb/API/SBThread.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdStack.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnMIOutOfBandRecord.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
-#include "MICmdArgContext.h"
 #include "MICmdArgValNumber.h"
 #include "MICmdArgValString.h"
 #include "MICmdArgValThreadGrp.h"
@@ -84,14 +82,7 @@ bool CMICmdCmdStackInfoDepth::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgMaxDepth, false, false ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -117,7 +108,9 @@ bool CMICmdCmdStackInfoDepth::Execute( void )
 	}
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	m_nThreadFrames = rSessionInfo.m_lldbProcess.GetThreadByIndexID( nThreadId ).GetNumFrames();
+	lldb::SBProcess & rProcess = rSessionInfo.m_lldbProcess;
+	lldb::SBThread thread = (nThreadId != UINT64_MAX) ? rProcess.GetThreadByIndexID( nThreadId ) : rProcess.GetSelectedThread();
+	m_nThreadFrames = thread.GetNumFrames();
 
 	return MIstatus::success;
 }
@@ -205,14 +198,7 @@ bool CMICmdCmdStackListFrames::ParseArgs( void )
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, true, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgFrameLow, false, true ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgFrameHigh, false, true ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -243,7 +229,8 @@ bool CMICmdCmdStackListFrames::Execute( void )
 	const MIuint nFrameLow = pArgFrameLow->GetFound() ? pArgFrameLow->GetValue() : 0;
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-	lldb::SBThread thread = rSessionInfo.m_lldbProcess.GetThreadByIndexID( nThreadId );
+	lldb::SBProcess & rProcess = rSessionInfo.m_lldbProcess;
+	lldb::SBThread thread = (nThreadId != UINT64_MAX) ? rProcess.GetThreadByIndexID( nThreadId ) : rProcess.GetSelectedThread();
 	MIuint nThreadFrames = thread.GetNumFrames();
 
 	// Adjust nThreadFrames for the nFrameHigh argument as we use nFrameHigh+1 in the min calc as the arg
@@ -385,14 +372,7 @@ bool CMICmdCmdStackListArguments::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgPrintValues, true, false ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -422,11 +402,7 @@ bool CMICmdCmdStackListArguments::Execute( void )
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
 	lldb::SBProcess & rProcess = rSessionInfo.m_lldbProcess;
-	lldb::SBThread thread;
-	if( nThreadId == UINT64_MAX )
-		thread = rProcess.GetSelectedThread();
-	else
-		thread = rProcess.GetThreadByIndexID( nThreadId );
+	lldb::SBThread thread = (nThreadId != UINT64_MAX) ? rProcess.GetThreadByIndexID( nThreadId ) : rProcess.GetSelectedThread();
 	m_bThreadInvalid = !thread.IsValid();
 	if( m_bThreadInvalid )
 		return MIstatus::success;
@@ -438,13 +414,23 @@ bool CMICmdCmdStackListArguments::Execute( void )
 		return MIstatus::success;
 	}
 	
-	lldb::SBFrame frame = thread.GetFrameAtIndex( 0 );
-	CMICmnMIValueList miValueList( true );
-	const MIuint vMaskVarTypes = 0x1000;
-	if( !rSessionInfo.MIResponseFormVariableInfo( frame, vMaskVarTypes, miValueList ) )
-		return MIstatus::failure;
 
-	m_miValueList = miValueList; 
+	const MIuint nFrames = thread.GetNumFrames();
+	for( MIuint i = 0; i < nFrames; i++ )
+	{
+		lldb::SBFrame frame = thread.GetFrameAtIndex( i );
+		CMICmnMIValueList miValueList( true );
+		const MIuint maskVarTypes = 0x1000;
+		if( !rSessionInfo.MIResponseFormVariableInfo3( frame, maskVarTypes, miValueList ) )
+			return MIstatus::failure;
+		const CMICmnMIValueConst miValueConst( CMIUtilString::Format( "%d", i ) );
+		const CMICmnMIValueResult miValueResult( "level", miValueConst );
+		CMICmnMIValueTuple miValueTuple( miValueResult );
+		const CMICmnMIValueResult miValueResult2( "args", miValueList );
+		miValueTuple.Add( miValueResult2 );
+		const CMICmnMIValueResult miValueResult3( "frame", miValueTuple );
+		m_miValueList.Add( miValueResult3 );
+	}
 
 	return MIstatus::success;
 }
@@ -470,15 +456,8 @@ bool CMICmdCmdStackListArguments::Acknowledge( void )
 		return MIstatus::success;
 	}
 
-	// MI print "%s^done,stack-args=[frame={level=\"0\",args=[%s]}]"
-	const CMICmnMIValueConst miValueConst( "0" );
-	const CMICmnMIValueResult miValueResult( "level", miValueConst );
-	CMICmnMIValueTuple miValueTuple( miValueResult );
-	const CMICmnMIValueResult miValueResult2( "args", m_miValueList );
-	miValueTuple.Add( miValueResult2 );
-	const CMICmnMIValueResult miValueResult3( "frame", miValueTuple );
-	const CMICmnMIValueList miValueList( miValueResult3 );
-	const CMICmnMIValueResult miValueResult4( "stack-args", miValueList );
+	// MI print "%s^done,stack-args=[frame={level=\"0\",args=[%s]},frame={level=\"1\",args=[%s]}]"
+	const CMICmnMIValueResult miValueResult4( "stack-args", m_miValueList );
 	const CMICmnMIResultRecord miRecordResult( m_cmdData.strMiCmdToken, CMICmnMIResultRecord::eResultClass_Done, miValueResult4 );
 	m_miResultRecord = miRecordResult;
 		
@@ -546,16 +525,9 @@ CMICmdCmdStackListLocals::~CMICmdCmdStackListLocals( void )
 bool CMICmdCmdStackListLocals::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgThread, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
-	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgFrame, false, false, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgFrame, false, true, CMICmdArgValListBase::eArgValType_Number, 1 ) ) );
 	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgPrintValues, true, false ) ) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -570,7 +542,7 @@ bool CMICmdCmdStackListLocals::ParseArgs( void )
 bool CMICmdCmdStackListLocals::Execute( void )
 {
 	CMICMDBASE_GETOPTION( pArgThread, OptionLong, m_constStrArgThread );
-	CMICMDBASE_GETOPTION( pArgPrintValues, Number, m_constStrArgPrintValues );
+	CMICMDBASE_GETOPTION( pArgFrame, OptionLong, m_constStrArgFrame );
 
 	// Retrieve the --thread option's thread ID (only 1)
 	MIuint64 nThreadId = UINT64_MAX;
@@ -582,14 +554,19 @@ bool CMICmdCmdStackListLocals::Execute( void )
 			return MIstatus::failure;
 		}
 	}
+	MIuint64 nFrame = UINT64_MAX;
+	if( pArgFrame->GetFound() )
+	{
+		if( !pArgFrame->GetExpectedOption< CMICmdArgValNumber, MIuint64 >( nFrame ) )
+		{
+			SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_OPTION_NOT_FOUND ), m_cmdData.strMiCmd.c_str(), m_constStrArgFrame.c_str() ) );
+			return MIstatus::failure;
+		}
+	}
 
 	CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
 	lldb::SBProcess & rProcess = rSessionInfo.m_lldbProcess;
-	lldb::SBThread thread;
-	if( nThreadId == UINT64_MAX )
-		thread = rProcess.GetSelectedThread();
-	else
-		thread = rProcess.GetThreadByIndexID( nThreadId );
+	lldb::SBThread thread = (nThreadId != UINT64_MAX) ? rProcess.GetThreadByIndexID( nThreadId ) : rProcess.GetSelectedThread();
 	m_bThreadInvalid = !thread.IsValid();
 	if( m_bThreadInvalid )
 		return MIstatus::success;
@@ -601,10 +578,11 @@ bool CMICmdCmdStackListLocals::Execute( void )
 		return MIstatus::success;
 	}
 	
-	lldb::SBFrame frame = thread.GetFrameAtIndex( 0 );
+	const MIuint nFrames = thread.GetNumFrames(); MIunused( nFrames );
+	lldb::SBFrame frame = (nFrame != UINT64_MAX) ? thread.GetFrameAtIndex( nFrame ) : thread.GetSelectedFrame();
 	CMICmnMIValueList miValueList( true );
-	const MIuint vMaskVarTypes = 0x0100;
-	if( !rSessionInfo.MIResponseFormVariableInfo( frame, vMaskVarTypes, miValueList ) )
+	const MIuint maskVarTypes = 0x0110;
+	if( !rSessionInfo.MIResponseFormVariableInfo( frame, maskVarTypes, miValueList ) )
 		return MIstatus::failure;
 
 	m_miValueList = miValueList;

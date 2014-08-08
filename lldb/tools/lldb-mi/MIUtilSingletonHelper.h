@@ -37,8 +37,8 @@ namespace MI
 // Type:	Template method.
 // Args:	vErrorResrcId	- (R)  The string resource ID error message identifier to place in errMsg.
 //			vwrbOk			- (RW) On input True = Try to initalise MI driver module.
-//								   On output True = MI driver module initialise successfully.
-//			vwrErrMsg		- (W)  MI driver module initialise error description on failure.
+//								   On output True = MI driver module intialise successfully.
+//			vwrErrMsg		- (W)  MI driver module intialise error description on failure.
 // Return:	MIstatus::success - Functional succeeded.
 //			MIstatus::failure - Functional failed.
 // Authors:	Aidan Dodds 17/03/2014.
@@ -65,7 +65,7 @@ bool ModuleInit( const MIint vErrorResrcId, bool & vwrbOk, CMIUtilString & vwrEr
 //			vwrbOk			- (W)  If not already false make false on module 
 //								   shutdown failure.
 //			vwrErrMsg		- (RW) Append to existing error description string MI 
-//								   driver module initialise error description on 
+//								   driver module intialise error description on 
 //								   failure.
 // Return:	True - Module shutdown succeeded.
 //			False - Module shutdown failed.

@@ -110,6 +110,7 @@ bool MICmnCommands::RegisterAll( void )
 	bOk &= Register< CMICmdCmdGdbInfo >();
 	bOk &= Register< CMICmdCmdGdbSet >();
 	bOk &= Register< CMICmdCmdGdbThread >();
+	bOk &= Register< CMICmdCmdInferiorTtySet >();
 	bOk &= Register< CMICmdCmdInterpreterExec >();
 	bOk &= Register< CMICmdCmdListThreadGroups >();
 	bOk &= Register< CMICmdCmdSource >();

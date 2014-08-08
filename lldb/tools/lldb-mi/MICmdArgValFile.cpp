@@ -50,7 +50,7 @@ CMICmdArgValFile::CMICmdArgValFile( const CMIUtilString & vrArgName, const bool 
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValFile destructor.
-// Type:	Overridden.
+// Type:	Overidden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.
@@ -74,6 +74,7 @@ bool CMICmdArgValFile::Validate( CMICmdArgContext & vwArgContext )
 		return MIstatus::success;
 
 	// The GDB/MI spec suggests there is only parameter
+
 	if( vwArgContext.GetNumberArgsPresent() == 1 )
 	{
 		const CMIUtilString & rFile( vwArgContext.GetArgsLeftToParse() ); 
@@ -81,7 +82,7 @@ bool CMICmdArgValFile::Validate( CMICmdArgContext & vwArgContext )
 		{
 			m_bFound = true;
 			m_bValid = true;
-			m_argValue = rFile;
+			m_argValue = rFile.Trim( '"' );
 			vwArgContext.RemoveArg( rFile );
 			return MIstatus::success;
 		}
@@ -103,7 +104,7 @@ bool CMICmdArgValFile::Validate( CMICmdArgContext & vwArgContext )
 			if( vwArgContext.RemoveArg( rTxt ) )
 			{
 				m_bValid = true;
-				m_argValue = rTxt;
+				m_argValue = rTxt.Trim( '"' );
 				return MIstatus::success;
 			}
 			else
@@ -118,7 +119,8 @@ bool CMICmdArgValFile::Validate( CMICmdArgContext & vwArgContext )
 }
 
 //++ ------------------------------------------------------------------------------------
-// Details:	Given some text extract the file name path from it.
+// Details:	Given some text extract the file name path from it. If a space is found in 
+//			path done return the path surrounded in quotes.
 // Type:	Method.
 // Args:	vrTxt	- (R) The text to extract the file name path from.
 // Return:	CMIUtilString -	File name and or path.
@@ -126,7 +128,15 @@ bool CMICmdArgValFile::Validate( CMICmdArgContext & vwArgContext )
 //--
 CMIUtilString CMICmdArgValFile::GetFileNamePath( const CMIUtilString & vrTxt ) const
 {
-	return vrTxt;
+	CMIUtilString fileNamePath( vrTxt );
+	
+	// Look for a space in the path
+	const MIchar cSpace = ' ';
+	const MIint nPos = fileNamePath.find( cSpace );
+	if( nPos != (MIint) std::string::npos )
+		fileNamePath = CMIUtilString::Format( "\"%s\"", fileNamePath.c_str() );
+
+	return fileNamePath;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -138,6 +148,9 @@ CMIUtilString CMICmdArgValFile::GetFileNamePath( const CMIUtilString & vrTxt ) c
 //--
 bool CMICmdArgValFile::IsFilePath( const CMIUtilString & vrFileNamePath ) const
 {
+	if( vrFileNamePath.empty() )
+		return false;
+
 	const bool bHavePosSlash = (vrFileNamePath.find_first_of( "/" ) != std::string::npos);
 	const bool bHaveBckSlash = (vrFileNamePath.find_first_of( "\\" ) != std::string::npos);
 	
@@ -159,9 +172,33 @@ bool CMICmdArgValFile::IsFilePath( const CMIUtilString & vrFileNamePath ) const
 	if( bFoundI1 )
 		return false;
 	
-	const bool bValidChars = CMIUtilString::IsAllValidAlphaAndNumeric( *vrFileNamePath.c_str() );
+	const bool bValidChars = IsValidChars( vrFileNamePath );
 	if( bValidChars || bHavePosSlash || bHaveBckSlash )
 		return true;
 
 	return false;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	Determine if the path contains valid characters for a file path. Letters can be
+//			either upper or lower case.
+// Type:	Method.
+// Args:	vrText	- (R) The text data to examine.
+// Return:	bool - True = yes valid, false = one or more chars is valid.
+// Throws:	None.
+//--
+bool CMICmdArgValFile::IsValidChars( const CMIUtilString & vrText ) const
+{
+	const MIchar * pPtr = const_cast< MIchar * >( vrText.c_str() );
+	for( MIuint i = 0; i < vrText.length(); i++, pPtr++ )
+	{
+		const MIchar c = *pPtr;
+		if( ::isalnum( (int) c ) == 0 )
+		{
+			if( (c != '.') && (c != '-') && (c != '_') )
+				return false;
+		}
+	}
+	
+	return true;
 }

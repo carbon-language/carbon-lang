@@ -23,7 +23,6 @@
 #include <lldb/API/SBError.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MIDriverMgr.h"
 #include "MICmnResources.h"
 #include "MICmnLog.h"
@@ -329,9 +328,22 @@ CMIDriverMgr::IDriver * CMIDriverMgr::GetUseThisDriverToDoWork( void ) const
 bool CMIDriverMgr::DriverMainLoop( void )
 {
 	if( m_pDriverCurrent != nullptr )
-		return m_pDriverCurrent->DoMainLoop();
+	{
+		if( !m_pDriverCurrent->DoMainLoop() )
+		{
+			const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_MAINLOOP ), m_pDriverCurrent->GetError().c_str() ) );
+			CMICmnStreamStdout::Instance().Write( errMsg, true );
+			return MIstatus::failure;
+		}
+	}
+	else
+	{
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
+		CMICmnStreamStdout::Instance().Write( errMsg, true );
+		return MIstatus::failure;
+	}
 
-	return MIstatus::failure;
+	return MIstatus::success;
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -346,6 +358,11 @@ void CMIDriverMgr::DriverResizeWindow( const uint32_t vWindowSizeWsCol )
 {
 	if( m_pDriverCurrent != nullptr )
 		return m_pDriverCurrent->DoResizeWindow( vWindowSizeWsCol );
+	else
+	{
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
+		CMICmnStreamStdout::Instance().Write( errMsg, true );
+	}
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -376,7 +393,7 @@ bool CMIDriverMgr::DriverParseArgs( const int argc, const char * argv[], FILE * 
 	if( !bOk )
 	{
 		CMIUtilString errMsg;
-		const char * pErrorCstr = error.GetCString();
+		const MIchar * pErrorCstr = error.GetCString();
 		if( pErrorCstr != nullptr )
 			errMsg = CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_PARSE_ARGS ), m_pDriverCurrent->GetName().c_str(), pErrorCstr );
 		else
@@ -399,6 +416,11 @@ CMIUtilString CMIDriverMgr::DriverGetError( void ) const
 {
 	if( m_pDriverCurrent != nullptr )
 		return m_pDriverCurrent->GetError();
+	else
+	{
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
+		CMICmnStreamStdout::Instance().Write( errMsg, true );
+	}
 
 	return CMIUtilString();
 }
@@ -415,6 +437,11 @@ CMIUtilString CMIDriverMgr::DriverGetName( void ) const
 {
 	if( m_pDriverCurrent != nullptr )
 		return m_pDriverCurrent->GetName();
+	else
+	{
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
+		CMICmnStreamStdout::Instance().Write( errMsg, true );
+	}
 
 	return CMIUtilString();
 }
@@ -432,6 +459,11 @@ lldb::SBDebugger * CMIDriverMgr::DriverGetTheDebugger( void )
 	lldb::SBDebugger * pDebugger = nullptr;
 	if( m_pDriverCurrent != nullptr )
 		pDebugger = &m_pDriverCurrent->GetTheDebugger();
+	else
+	{
+		const CMIUtilString errMsg( CMIUtilString::Format( MIRSRC( IDS_DRIVER_ERR_CURRENT_NOT_SET ) ) );
+		CMICmnStreamStdout::Instance().Write( errMsg, true );
+	}
 
 	return pDebugger;
 }
@@ -446,7 +478,18 @@ lldb::SBDebugger * CMIDriverMgr::DriverGetTheDebugger( void )
 //				--interpreter
 //				--version
 //				--versionLong
-//			The above arguments are not handled by any driver object. 
+//				--noLog
+//				--executable 
+//			The above arguments are not handled by any driver object except for --executable.
+//			The options --interpreter and --executable in code act very similar. The
+//			--executable is necessary to differentiate whither the MI Driver is being using
+//			by a client i.e. Eclipse or from the command line. Eclipse issues the option
+//			--interpreter and also passes additional arguments which can be interpreted as an
+//			executable if called from the command line. Using --executable tells the MI 
+//			Driver is being called the command line and that the executable argument is indeed
+//			a specified executable an so actions commands to set up the executable for a 
+//			debug session. Using --interpreter on the commnd line does not action additional
+//			commands to initialise a debug session and so be able to launch the process.
 // Type:	Method.
 // Args:	argc		- (R)	An integer that contains the count of arguments that follow in 
 //								argv. The argc parameter is always greater than or equal to 1.
@@ -501,12 +544,16 @@ bool CMIDriverMgr::ParseArgs( const int argc, const char * argv[], bool & vwbExi
 
 	if( bHaveArgs )
 	{
+		// CODETAG_MIDRIVE_CMD_LINE_ARG_HANDLING
 		for( MIint i = 1; i < argc; i++ ) 
 		{ 
 			// *** Add args to help in GetHelpOnCmdLineArgOptions() ***
 			const CMIUtilString strArg( argv[ i ] );
-			if( 0 == strArg.compare( "--interpreter" ) ) 
-			{
+
+			// Argument "--executable" is also check for in CMIDriver::ParseArgs()
+			if( (0 == strArg.compare( "--interpreter" )) ||	// Given by the client such as Eclipse
+				(0 == strArg.compare( "--executable" )) )	// Used to specify that there is executable argument also on the command line 
+			{												// See fn description.
 				   bHaveArgInterpret = true;
 			}
 			if( 0 == strArg.compare( "--version" ) ) 
@@ -613,12 +660,16 @@ CMIUtilString CMIDriverMgr::GetHelpOnCmdLineArgOptions( void ) const
 {
 	const CMIUtilString pHelp[] = 
 	{
+		MIRSRC( IDE_MI_APP_DESCRIPTION ),
+		MIRSRC( IDE_MI_APP_INFORMATION ),
 		MIRSRC( IDE_MI_APP_ARG_USAGE ),
 		MIRSRC( IDE_MI_APP_ARG_HELP ),
 		MIRSRC( IDE_MI_APP_ARG_VERSION ),
 		MIRSRC( IDE_MI_APP_ARG_VERSION_LONG ),
 		MIRSRC( IDE_MI_APP_ARG_INTERPRETER ),
+		MIRSRC( IDE_MI_APP_ARG_EXECUTEABLE ),
 		CMIUtilString::Format( MIRSRC( IDE_MI_APP_ARG_NO_APP_LOG ), CMICmnLogMediumFile::Instance().GetFileName().c_str() ),
+		MIRSRC( IDE_MI_APP_ARG_EXECUTABLE ),
 		MIRSRC( IDS_CMD_QUIT_HELP ),
 		MIRSRC( IDE_MI_APP_ARG_EXAMPLE )
 	};

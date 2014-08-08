@@ -55,15 +55,17 @@ public:
 	/* ctor */	CMIUtilString( const MIchar * vpData );
 	/* ctor */	CMIUtilString( const MIchar * const * vpData );
 	//
-	MIuint			Split( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
-	MIuint			SplitConsiderQuotes( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
-	CMIUtilString	Trim( void ) const;
-	CMIUtilString	Trim( const MIchar vChar ) const;
-	CMIUtilString	StripCREndOfLine( void ) const;
-	CMIUtilString	StripCRAll( void ) const;
+	bool			ExtractNumber( MIint64 & vwrNumber ) const;
 	CMIUtilString	FindAndReplace( const CMIUtilString & vFind, const CMIUtilString & vReplaceWith ) const;
 	bool			IsNumber( void ) const;
-	bool			ExtractNumber( MIint64 & vwrNumber ) const;
+	bool			IsQuoted( void ) const;
+	CMIUtilString	RemoveRepeatedCharacters( const MIchar vChar );
+	MIuint			Split( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
+	MIuint			SplitConsiderQuotes( const CMIUtilString & vDelimiter, VecString_t & vwVecSplits ) const;
+	CMIUtilString	StripCREndOfLine( void ) const;
+	CMIUtilString	StripCRAll( void ) const;
+	CMIUtilString	Trim( void ) const;
+	CMIUtilString	Trim( const MIchar vChar ) const;
 	// 
 	CMIUtilString & operator= ( const MIchar * vpRhs );
 	CMIUtilString & operator= ( const std::string & vrRhs );
@@ -78,5 +80,6 @@ private:
 
 // Methods:
 private:
-	bool	ExtractNumberFromHexadecimal( MIint64 & vwrNumber ) const;
+	bool			ExtractNumberFromHexadecimal( MIint64 & vwrNumber ) const;
+	CMIUtilString	RemoveRepeatedCharacters( const MIint vnPos, const MIchar vChar );
 };

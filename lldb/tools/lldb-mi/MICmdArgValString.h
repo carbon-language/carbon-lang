@@ -59,8 +59,12 @@ public:
 private:
 	bool	ValidateSingleText( CMICmdArgContext & vrwArgContext );
 	bool	ValidateQuotedText( CMICmdArgContext & vrwArgContext );
+	bool	ValidateQuotedTextEmbedded( CMICmdArgContext & vrwArgContext );
+	bool	ValidateQuotedQuotedTextEmbedded( CMICmdArgContext & vrwArgContext );
 	bool	IsStringArgSingleText( const CMIUtilString & vrTxt ) const;
 	bool	IsStringArgQuotedText( const CMIUtilString & vrTxt ) const;
+	bool	IsStringArgQuotedTextEmbedded( const CMIUtilString & vrTxt ) const;
+	bool	IsStringArgQuotedQuotedTextEmbedded( const CMIUtilString & vrTxt ) const;
 
 // Attribute:
 private:

@@ -24,6 +24,7 @@
 // In-house headers:
 #include "MICmnMIValue.h"
 #include "MICmnMIValueResult.h"
+#include "MICmnMIValueConst.h"
 
 //++ ============================================================================
 // Details:	MI common code MI Result class. Part of the CMICmnMIValueTupleRecord
@@ -53,8 +54,10 @@ public:
 	/* ctor */	CMICmnMIValueTuple( const CMICmnMIValueResult & vResult );
 	/* ctor */	CMICmnMIValueTuple( const CMICmnMIValueResult & vResult, const bool vbUseSpacing );
 	//
-	bool	Add( const CMICmnMIValueResult & vResult );
-	bool	Add( const CMICmnMIValueResult & vResult, const bool vbUseSpacing );
+	bool			Add( const CMICmnMIValueResult & vResult );
+	bool			Add( const CMICmnMIValueResult & vResult, const bool vbUseSpacing );
+	bool			Add( const CMICmnMIValueConst & vValue, const bool vbUseSpacing );
+	CMIUtilString	ExtractContentNoBrackets( void ) const; 
 
 // Overridden:
 public:
@@ -65,6 +68,7 @@ public:
 private:
 	bool BuildTuple( void );
 	bool BuildTuple( const CMICmnMIValueResult & vResult );
+	bool BuildTuple( const CMIUtilString & vValue );
 
 // Attributes:
 private:

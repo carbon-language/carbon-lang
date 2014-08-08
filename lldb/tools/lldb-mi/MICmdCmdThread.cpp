@@ -24,20 +24,12 @@
 #include <lldb/API/SBThread.h>
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmdCmdThread.h"
 #include "MICmnMIResultRecord.h"
 #include "MICmnMIValueConst.h"
 #include "MICmnLLDBDebugger.h"
 #include "MICmnLLDBDebugSessionInfo.h"
-#include "MICmdArgContext.h"
-#include "MICmdArgValFile.h"
 #include "MICmdArgValNumber.h"
-#include "MICmdArgValString.h"
-#include "MICmdArgValThreadGrp.h"
-#include "MICmdArgValOptionLong.h"
-#include "MICmdArgValOptionShort.h"
-#include "MICmdArgValListOfN.h"
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdCmdThreadInfo constructor.
@@ -82,14 +74,7 @@ CMICmdCmdThreadInfo::~CMICmdCmdThreadInfo( void )
 bool CMICmdCmdThreadInfo::ParseArgs( void )
 {
 	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValNumber( m_constStrArgNamedThreadId, false, true )) );
-	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
-	if( bOk && !m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
-	{
-		SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
-		return MIstatus::failure;
-	}
-	
-	return bOk;
+	return (bOk && ParseValidateCmdOptions() );
 }
 
 //++ ------------------------------------------------------------------------------------
@@ -123,7 +108,7 @@ bool CMICmdCmdThreadInfo::Execute( void )
 			return MIstatus::success;
 
 		CMICmnMIValueTuple miTuple;
-		if( !rSessionInfo.MIResponseFormThreadInfo( m_cmdData, thread, miTuple ) )
+		if( !rSessionInfo.MIResponseFormThreadInfo3( m_cmdData, thread, miTuple ) )
 			return MIstatus::failure;
 
 		m_miValueTupleThread = miTuple;
@@ -140,7 +125,7 @@ bool CMICmdCmdThreadInfo::Execute( void )
 		if( thread.IsValid() )
 		{
 			CMICmnMIValueTuple miTuple;
-			if( !rSessionInfo.MIResponseFormThreadInfo( m_cmdData, thread, miTuple ) )
+			if( !rSessionInfo.MIResponseFormThreadInfo3( m_cmdData, thread, miTuple ) )
 				return MIstatus::failure;
 
 			m_vecMIValueTuple.push_back( miTuple );

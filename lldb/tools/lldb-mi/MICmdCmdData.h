@@ -70,15 +70,21 @@ public:
 	// From CMICmnBase
 	/* dtor */ virtual ~CMICmdCmdDataEvaluateExpression( void );
 
+// Methods:
+private:
+	bool	HaveInvalidCharacterInExpression( const CMIUtilString & vrExpr, MIchar & vrwInvalidChar );
+
 // Attributes:
 private:
-	bool				m_bExpressionValid;		// True = yes is valid, false = not valid
-	bool				m_bEvaluatedExpression;	// True = yes is expression evaluated, false = failed
+	bool				m_bExpressionValid;			// True = yes is valid, false = not valid
+	bool				m_bEvaluatedExpression;		// True = yes is expression evaluated, false = failed
 	CMIUtilString		m_strValue;
 	CMICmnMIValueTuple	m_miValueTuple;
-	bool				m_bCompositeVarType;	// True = yes composite type, false = internal type
-	const CMIUtilString	m_constStrArgThread;	// Not specified in MI spec but Eclipse gives this option. Not handled by command.
-	const CMIUtilString	m_constStrArgFrame;		// Not specified in MI spec but Eclipse gives this option. Not handled by command.
+	bool				m_bCompositeVarType;		// True = yes composite type, false = internal type
+	bool				m_bFoundInvalidChar;		// True = yes found unexpected character in the expression, false = all ok
+	MIchar				m_cExpressionInvalidChar;
+	const CMIUtilString	m_constStrArgThread;		// Not specified in MI spec but Eclipse gives this option. Not handled by command.
+	const CMIUtilString	m_constStrArgFrame;			// Not specified in MI spec but Eclipse gives this option. Not handled by command.
 	const CMIUtilString	m_constStrArgExpr;		
 };
 

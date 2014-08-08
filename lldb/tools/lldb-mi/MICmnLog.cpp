@@ -20,7 +20,6 @@
 //--
 
 // In-house headers:
-#include "MICmnConfig.h"
 #include "MICmnLog.h"
 #include "MICmnLogMediumFile.h"
 #include "MIDriverMgr.h"

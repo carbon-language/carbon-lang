@@ -224,3 +224,40 @@ bool CMICmdBase::ParseArgs( void )
 	return MIstatus::success; 
 }
 	
+//++ ------------------------------------------------------------------------------------
+// Details:	Having previously given CMICmdArgSet m_setCmdArgs all the argument or option
+//			definitions for the command to handle proceed to parse and validate the
+//			command's options text for those arguments and extract the values for each if
+//			any.
+// Type:	Method.
+// Args:	None.
+// Return:	MIstatus::success - Functional succeeded.
+//			MIstatus::failure - Functional failed.
+// Throws:	None.
+//--
+bool CMICmdBase::ParseValidateCmdOptions( void )
+{
+	CMICmdArgContext argCntxt( m_cmdData.strMiCmdOption );
+	if( m_setCmdArgs.Validate( m_cmdData.strMiCmd, argCntxt ) )
+		return MIstatus::success;
+	
+	SetError( CMIUtilString::Format( MIRSRC( IDS_CMD_ERR_ARGS ), m_cmdData.strMiCmd.c_str(), m_setCmdArgs.GetErrorDescription().c_str() ) );
+
+	return MIstatus::failure;
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	If the MI Driver is not operating via a client i.e. Eclipse but say operating
+//			on a executable passed in as a argument to the drive then what should the driver
+//			do on a command failing? Either continue operating or exit the application.
+//			Override this function where a command failure cannot allow the driver to 
+//			continue operating.
+// Type:	Overrideable.
+// Args:	None.
+// Return:	bool - True = Fatal if command fails, false = can continue if command fails.
+// Throws:	None.
+//--
+bool CMICmdBase::GetExitAppOnCommandFailure( void ) const
+{
+	return false;
+}

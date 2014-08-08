@@ -124,13 +124,19 @@ public:
 	//	Common command required functionality
 	bool	AccessPath( const CMIUtilString & vPath, bool & vwbYesAccessible );
 	bool	GetFrameInfo( const lldb::SBFrame & vrFrame, lldb::addr_t & vwPc, CMIUtilString & vwFnName, CMIUtilString & vwFileName, CMIUtilString & vwPath, MIuint & vwnLine );
-	bool	GetThreadFrames( const SMICmdData & vCmdData, const MIuint vThreadIdx, CMICmnMIValueTuple & vwrThreadFrames );
+	bool	GetThreadFrames( const SMICmdData & vCmdData, const MIuint vThreadIdx, CMIUtilString & vwrThreadFrames );
+	bool	GetThreadFrames2( const SMICmdData & vCmdData, const MIuint vThreadIdx, CMIUtilString & vwrThreadFrames );
 	bool	ResolvePath( const SMICmdData & vCmdData, const CMIUtilString & vPath, CMIUtilString & vwrResolvedPath );
 	bool	ResolvePath( const CMIUtilString & vstrUnknown, CMIUtilString & vwrResolvedPath );
 	bool	MIResponseFormFrameInfo( const lldb::SBThread & vrThread, const MIuint vnLevel, CMICmnMIValueTuple & vwrMiValueTuple );
-	bool	MIResponseFormFrameInfo( const lldb::addr_t vPc, const CMIUtilString & vFnName, const CMIUtilString & vArgs, const CMIUtilString & vFileName, const CMIUtilString & vPath, const MIuint vnLine, CMICmnMIValueTuple & vwrMiValueTuple );
+	bool	MIResponseFormFrameInfo( const lldb::addr_t vPc, const CMIUtilString & vFnName, const CMIUtilString & vFileName, const CMIUtilString & vPath, const MIuint vnLine, CMICmnMIValueTuple & vwrMiValueTuple );
+	bool	MIResponseFormFrameInfo2( const lldb::addr_t vPc, const CMIUtilString & vArgInfo, const CMIUtilString & vFnName, const CMIUtilString & vFileName, const CMIUtilString & vPath, const MIuint vnLine, CMICmnMIValueTuple & vwrMiValueTuple );
 	bool	MIResponseFormThreadInfo( const SMICmdData & vCmdData, const lldb::SBThread & vrThread, CMICmnMIValueTuple & vwrMIValueTuple );
+	bool	MIResponseFormThreadInfo2( const SMICmdData & vCmdData, const lldb::SBThread & vrThread, CMICmnMIValueTuple & vwrMIValueTuple );
+	bool	MIResponseFormThreadInfo3( const SMICmdData & vCmdData, const lldb::SBThread & vrThread, CMICmnMIValueTuple & vwrMIValueTuple );
 	bool	MIResponseFormVariableInfo( const lldb::SBFrame & vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList & vwrMiValueList );
+	bool	MIResponseFormVariableInfo2( const lldb::SBFrame & vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList & vwrMiValueList );
+	bool	MIResponseFormVariableInfo3( const lldb::SBFrame & vrFrame, const MIuint vMaskVarTypes, CMICmnMIValueList & vwrMiValueList );
 	bool	MIResponseFormBrkPtFrameInfo( const SBrkPtInfo & vrBrkPtInfo, CMICmnMIValueTuple & vwrMiValueTuple );
 	bool	MIResponseFormBrkPtInfo( const SBrkPtInfo & vrBrkPtInfo, CMICmnMIValueTuple & vwrMiValueTuple );
 	bool	GetBrkPtInfo( const lldb::SBBreakpoint & vBrkPt, SBrkPtInfo & vrwBrkPtInfo ) const;
@@ -165,7 +171,10 @@ private:
 	/* ctor */	CMICmnLLDBDebugSessionInfo( void );
 	/* ctor */	CMICmnLLDBDebugSessionInfo( const CMICmnLLDBDebugSessionInfo & );
 	void		operator=( const CMICmnLLDBDebugSessionInfo & );
-
+	//
+	bool	GetVariableInfo( const MIuint vnMaxDepth, const lldb::SBValue & vrValue, const bool vbIsChildValue, CMICmnMIValueList & vwrMiValueList, MIuint & vrwnDepth );
+	bool	GetVariableInfo2( const MIuint vnMaxDepth, const lldb::SBValue & vrValue, const bool vbIsChildValue, CMICmnMIValueList & vwrMiValueList, MIuint & vrwnDepth );
+	
 // Overridden:
 private:
 	// From CMICmnBase

@@ -53,8 +53,9 @@ public:
 	/* ctor */	CMICmnMIValueList( const CMICmnMIValueResult & vResult );
 	/* ctor */	CMICmnMIValueList( const CMICmnMIValue & vValue );
 	//
-	bool	Add( const CMICmnMIValueResult & vResult );
-	bool	Add( const CMICmnMIValue & vValue );
+	bool			Add( const CMICmnMIValueResult & vResult );
+	bool			Add( const CMICmnMIValue & vValue );
+	CMIUtilString	ExtractContentNoBrackets( void ) const; 
 
 // Overridden:
 public:
