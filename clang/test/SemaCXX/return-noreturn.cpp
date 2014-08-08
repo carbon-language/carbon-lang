@@ -185,11 +185,11 @@ int testTernaryConditionalNoreturnFalseBranch(bool value) {
 
 int testConditionallyExecutedComplexTernaryTrueBranch(bool value) {
   value || (true ? NoReturn() : true);
-}
+} // expected-warning {{control may reach end of non-void function}}
 
 int testConditionallyExecutedComplexTernaryFalseBranch(bool value) {
   value || (false ? true : NoReturn());
-}
+} // expected-warning {{control may reach end of non-void function}}
 
 int testStaticallyExecutedLogicalOrBranch() {
   false || NoReturn();
@@ -209,6 +209,18 @@ int testStaticallySkppedLogicalAndBranch() {
 
 int testConditionallyExecutedComplexLogicalBranch(bool value) {
   value || (true && NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexLogicalBranch2(bool value) {
+  (true && value) || (true && NoReturn());
+} // expected-warning {{control may reach end of non-void function}}
+
+int testConditionallyExecutedComplexLogicalBranch3(bool value) {
+  (false && (Return() || true)) || (true && NoReturn());
+}
+
+int testConditionallyExecutedComplexLogicalBranch4(bool value) {
+  false || ((Return() || true) && (true && NoReturn()));
 }
 
 #if __cplusplus >= 201103L
