@@ -106,10 +106,9 @@ public:
   static MemoryBuffer *getMemBufferCopy(StringRef InputData,
                                         StringRef BufferName = "");
 
-  /// getNewMemBuffer - Allocate a new MemoryBuffer of the specified size that
-  /// is completely initialized to zeros.  Note that the caller need not
-  /// initialize the memory allocated by this method.  The memory is owned by
-  /// the MemoryBuffer object.
+  /// getNewMemBuffer - Allocate a new zero-initialized MemoryBuffer of the
+  /// specified size. Note that the caller need not initializethe memory
+  /// allocated by this method.  The memory is owned by the MemoryBuffer object.
   static MemoryBuffer *getNewMemBuffer(size_t Size, StringRef BufferName = "");
 
   /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
