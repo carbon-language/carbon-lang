@@ -107,7 +107,9 @@ namespace {
 /// A "color", which is either even or odd. Yes, these aren't really colors
 /// but the algorithm is conceptually doing two-color graph coloring.
 enum class Color { Even, Odd };
+#ifndef NDEBUG
 static const char *ColorNames[2] = { "Even", "Odd" };
+#endif
 
 class Chain;
 
