@@ -23,3 +23,25 @@ for.body:                                         ; preds = %for.body, %entry
 for.end:                                          ; preds = %for.body
   ret float %add
 }
+
+;CHECK-LABEL: @foosub(
+;CHECK: fsub fast <4 x float>
+;CHECK: ret
+define float @foosub(float* nocapture %A, i32* nocapture %n) nounwind uwtable readonly ssp {
+entry:
+  br label %for.body
+
+for.body:                                         ; preds = %for.body, %entry
+  %indvars.iv = phi i64 [ 0, %entry ], [ %indvars.iv.next, %for.body ]
+  %sum.04 = phi float [ 0.000000e+00, %entry ], [ %sub, %for.body ]
+  %arrayidx = getelementptr inbounds float* %A, i64 %indvars.iv
+  %0 = load float* %arrayidx, align 4
+  %sub = fsub fast float %sum.04, %0
+  %indvars.iv.next = add i64 %indvars.iv, 1
+  %lftr.wideiv = trunc i64 %indvars.iv.next to i32
+  %exitcond = icmp eq i32 %lftr.wideiv, 200
+  br i1 %exitcond, label %for.end, label %for.body
+
+for.end:                                          ; preds = %for.body
+  ret float %sub
+}

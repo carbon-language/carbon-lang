@@ -5136,7 +5136,7 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
                                             ReductionKind Kind,
                                             ReductionInstDesc &Prev) {
   bool FP = I->getType()->isFloatingPointTy();
-  bool FastMath = (FP && I->isCommutative() && I->isAssociative());
+  bool FastMath = FP && I->hasUnsafeAlgebra();
   switch (I->getOpcode()) {
   default:
     return ReductionInstDesc(false, I);
@@ -5158,6 +5158,7 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     return ReductionInstDesc(Kind == RK_IntegerXor, I);
   case Instruction::FMul:
     return ReductionInstDesc(Kind == RK_FloatMult && FastMath, I);
+  case Instruction::FSub:
   case Instruction::FAdd:
     return ReductionInstDesc(Kind == RK_FloatAdd && FastMath, I);
   case Instruction::FCmp:
