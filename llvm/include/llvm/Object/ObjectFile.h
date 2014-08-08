@@ -178,30 +178,6 @@ public:
   }
 };
 
-/// LibraryRef - This is a value type class that represents a single library in
-/// the list of libraries needed by a shared or dynamic object.
-class LibraryRef {
-  friend class SectionRef;
-  DataRefImpl LibraryPimpl;
-  const ObjectFile *OwningObject;
-
-public:
-  LibraryRef() : OwningObject(nullptr) { }
-
-  LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner);
-
-  bool operator==(const LibraryRef &Other) const;
-  bool operator<(const LibraryRef &Other) const;
-
-  std::error_code getNext(LibraryRef &Result) const;
-
-  // Get the path to this library, as stored in the object file.
-  std::error_code getPath(StringRef &Result) const;
-
-  DataRefImpl getRawDataRefImpl() const;
-};
-typedef content_iterator<LibraryRef> library_iterator;
-
 /// ObjectFile - This class is the base class for all object file types.
 /// Concrete instances of this object are created by createObjectFile, which
 /// figures out which type to create.
@@ -299,13 +275,6 @@ protected:
     return object_error::success;
   }
 
-  // Same for LibraryRef
-  friend class LibraryRef;
-  virtual std::error_code getLibraryNext(DataRefImpl Lib,
-                                         LibraryRef &Res) const = 0;
-  virtual std::error_code getLibraryPath(DataRefImpl Lib,
-                                         StringRef &Res) const = 0;
-
 public:
   typedef iterator_range<symbol_iterator> symbol_iterator_range;
   symbol_iterator_range symbols() const {
@@ -319,9 +288,6 @@ public:
   section_iterator_range sections() const {
     return section_iterator_range(section_begin(), section_end());
   }
-
-  virtual library_iterator needed_library_begin() const = 0;
-  virtual library_iterator needed_library_end() const = 0;
 
   /// @brief The number of bytes used to represent an address in this object
   ///        file format.
@@ -549,26 +515,6 @@ inline const ObjectFile *RelocationRef::getObjectFile() const {
   return OwningObject;
 }
 
-// Inline function definitions.
-inline LibraryRef::LibraryRef(DataRefImpl LibraryP, const ObjectFile *Owner)
-  : LibraryPimpl(LibraryP)
-  , OwningObject(Owner) {}
-
-inline bool LibraryRef::operator==(const LibraryRef &Other) const {
-  return LibraryPimpl == Other.LibraryPimpl;
-}
-
-inline bool LibraryRef::operator<(const LibraryRef &Other) const {
-  return LibraryPimpl < Other.LibraryPimpl;
-}
-
-inline std::error_code LibraryRef::getNext(LibraryRef &Result) const {
-  return OwningObject->getLibraryNext(LibraryPimpl, Result);
-}
-
-inline std::error_code LibraryRef::getPath(StringRef &Result) const {
-  return OwningObject->getLibraryPath(LibraryPimpl, Result);
-}
 
 } // end namespace object
 } // end namespace llvm

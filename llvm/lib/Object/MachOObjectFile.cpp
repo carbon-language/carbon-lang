@@ -1009,16 +1009,6 @@ std::error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
   return object_error::success;
 }
 
-std::error_code MachOObjectFile::getLibraryNext(DataRefImpl LibData,
-                                                LibraryRef &Res) const {
-  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
-}
-
-std::error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
-                                                StringRef &Res) const {
-  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
-}
-
 //
 // guessLibraryShortName() is passed a name of a dynamic library and returns a
 // guess on what the short name is.  Then name is returned as a substring of the
@@ -1244,16 +1234,6 @@ section_iterator MachOObjectFile::section_end() const {
   DataRefImpl DRI;
   DRI.d.a = Sections.size();
   return section_iterator(SectionRef(DRI, this));
-}
-
-library_iterator MachOObjectFile::needed_library_begin() const {
-  // TODO: implement
-  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
-}
-
-library_iterator MachOObjectFile::needed_library_end() const {
-  // TODO: implement
-  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
 uint8_t MachOObjectFile::getBytesInAddress() const {

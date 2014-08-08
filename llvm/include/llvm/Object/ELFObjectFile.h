@@ -71,11 +71,6 @@ protected:
   std::error_code getSymbolSection(DataRefImpl Symb,
                                    section_iterator &Res) const override;
 
-  std::error_code getLibraryNext(DataRefImpl Data,
-                                 LibraryRef &Result) const override;
-  std::error_code getLibraryPath(DataRefImpl Data,
-                                 StringRef &Res) const override;
-
   void moveSectionNext(DataRefImpl &Sec) const override;
   std::error_code getSectionName(DataRefImpl Sec,
                                  StringRef &Res) const override;
@@ -190,9 +185,6 @@ public:
 
   section_iterator section_begin() const override;
   section_iterator section_end() const override;
-
-  library_iterator needed_library_begin() const override;
-  library_iterator needed_library_end() const override;
 
   std::error_code getRelocationAddend(DataRefImpl Rel, int64_t &Res) const;
   std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
@@ -835,44 +827,6 @@ StringRef ELFObjectFile<ELFT>::getLoadName() const {
   if (DI != DE)
     return EF.getDynamicString(DI->getVal());
   return "";
-}
-
-template <class ELFT>
-library_iterator ELFObjectFile<ELFT>::needed_library_begin() const {
-  Elf_Dyn_Iter DI = EF.begin_dynamic_table();
-  Elf_Dyn_Iter DE = EF.end_dynamic_table();
-
-  while (DI != DE && DI->getTag() != ELF::DT_SONAME)
-    ++DI;
-
-  return library_iterator(LibraryRef(toDRI(DI), this));
-}
-
-template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getLibraryNext(DataRefImpl Data,
-                                                    LibraryRef &Result) const {
-  Elf_Dyn_Iter DI = toELFDynIter(Data);
-  Elf_Dyn_Iter DE = EF.end_dynamic_table();
-
-  // Skip to the next DT_NEEDED entry.
-  do
-    ++DI;
-  while (DI != DE && DI->getTag() != ELF::DT_NEEDED);
-
-  Result = LibraryRef(toDRI(DI), this);
-  return object_error::success;
-}
-
-template <class ELFT>
-std::error_code ELFObjectFile<ELFT>::getLibraryPath(DataRefImpl Data,
-                                                    StringRef &Res) const {
-  Res = EF.getDynamicString(toELFDynIter(Data)->getVal());
-  return object_error::success;
-}
-
-template <class ELFT>
-library_iterator ELFObjectFile<ELFT>::needed_library_end() const {
-  return library_iterator(LibraryRef(toDRI(EF.end_dynamic_table()), this));
 }
 
 template <class ELFT>

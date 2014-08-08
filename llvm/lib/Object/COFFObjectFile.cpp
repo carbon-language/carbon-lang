@@ -610,16 +610,6 @@ basic_symbol_iterator COFFObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(SymbolRef(Ret, this));
 }
 
-library_iterator COFFObjectFile::needed_library_begin() const {
-  // TODO: implement
-  report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
-}
-
-library_iterator COFFObjectFile::needed_library_end() const {
-  // TODO: implement
-  report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
-}
-
 import_directory_iterator COFFObjectFile::import_directory_begin() const {
   return import_directory_iterator(
       ImportDirectoryEntryRef(ImportDirectory, 0, this));
@@ -987,16 +977,6 @@ COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
     return EC;
   Result.append(SymName.begin(), SymName.end());
   return object_error::success;
-}
-
-std::error_code COFFObjectFile::getLibraryNext(DataRefImpl LibData,
-                                               LibraryRef &Result) const {
-  report_fatal_error("getLibraryNext not implemented in COFFObjectFile");
-}
-
-std::error_code COFFObjectFile::getLibraryPath(DataRefImpl LibData,
-                                               StringRef &Result) const {
-  report_fatal_error("getLibraryPath not implemented in COFFObjectFile");
 }
 
 bool ImportDirectoryEntryRef::
