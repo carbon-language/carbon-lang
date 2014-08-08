@@ -2062,8 +2062,8 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   return true;
 }
 
-MVT
-X86TargetLowering::getTypeForExtArgOrReturn(MVT VT,
+EVT
+X86TargetLowering::getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
                                             ISD::NodeType ExtendKind) const {
   MVT ReturnMVT;
   // TODO: Is this also valid on 32-bit?
@@ -2072,7 +2072,7 @@ X86TargetLowering::getTypeForExtArgOrReturn(MVT VT,
   else
     ReturnMVT = MVT::i32;
 
-  MVT MinVT = getRegisterType(ReturnMVT);
+  EVT MinVT = getRegisterType(Context, ReturnMVT);
   return VT.bitsLT(MinVT) ? MinVT : VT;
 }
 

@@ -2329,9 +2329,9 @@ public:
   /// all the time, e.g. i1 on x86-64. It is also not necessary for non-C
   /// calling conventions. The frontend should handle this and include all of
   /// the necessary information.
-  virtual MVT getTypeForExtArgOrReturn(MVT VT,
+  virtual EVT getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
                                        ISD::NodeType /*ExtendKind*/) const {
-    MVT MinVT = getRegisterType(MVT::i32);
+    EVT MinVT = getRegisterType(Context, MVT::i32);
     return VT.bitsLT(MinVT) ? MinVT : VT;
   }
 
