@@ -2394,6 +2394,17 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
                                            getVal(SI->getOperand(2)));
       DEBUG(dbgs() << "Found a Select! Simplifying: " << *InstResult
             << "\n");
+    } else if (auto *EVI = dyn_cast<ExtractValueInst>(CurInst)) {
+      InstResult = ConstantExpr::getExtractValue(
+          getVal(EVI->getAggregateOperand()), EVI->getIndices());
+      DEBUG(dbgs() << "Found an ExtractValueInst! Simplifying: " << *InstResult
+                   << "\n");
+    } else if (auto *IVI = dyn_cast<InsertValueInst>(CurInst)) {
+      InstResult = ConstantExpr::getInsertValue(
+          getVal(IVI->getAggregateOperand()),
+          getVal(IVI->getInsertedValueOperand()), IVI->getIndices());
+      DEBUG(dbgs() << "Found an InsertValueInst! Simplifying: " << *InstResult
+                   << "\n");
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurInst)) {
       Constant *P = getVal(GEP->getOperand(0));
       SmallVector<Constant*, 8> GEPOps;

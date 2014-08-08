@@ -81,10 +81,23 @@ entry:
   ret void
 }
 
+@test6_v1 = internal global { i32, i32 } { i32 42, i32 0 }, align 8
+@test6_v2 = global i32 0, align 4
+; CHECK: @test6_v2 = global i32 42, align 4
+define internal void @test6() {
+  %load = load { i32, i32 }* @test6_v1, align 8
+  %xv0 = extractvalue { i32, i32 } %load, 0
+  %iv = insertvalue { i32, i32 } %load, i32 %xv0, 1
+  %xv1 = extractvalue { i32, i32 } %iv, 1
+  store i32 %xv1, i32* @test6_v2, align 4
+  ret void
+}
+
 @llvm.global_ctors = appending constant
-  [5 x { i32, void ()* }]
+  [6 x { i32, void ()* }]
   [{ i32, void ()* } { i32 65535, void ()* @test1 },
    { i32, void ()* } { i32 65535, void ()* @test2 },
    { i32, void ()* } { i32 65535, void ()* @test3 },
    { i32, void ()* } { i32 65535, void ()* @test4 },
-   { i32, void ()* } { i32 65535, void ()* @test5 }]
+   { i32, void ()* } { i32 65535, void ()* @test5 },
+   { i32, void ()* } { i32 65535, void ()* @test6 }]
