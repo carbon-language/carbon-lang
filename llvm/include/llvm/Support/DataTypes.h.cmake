@@ -101,6 +101,13 @@ typedef signed int ssize_t;
 #define PRIu64 "I64u"
 #define PRIx64 "I64x"
 #define PRIX64 "I64X"
+
+#define PRId32 "d"
+#define PRIi32 "i"
+#define PRIo32 "o"
+#define PRIu32 "u"
+#define PRIx32 "x"
+#define PRIX32 "X"
 #endif /* HAVE_INTTYPES_H */
 
 #endif /* _MSC_VER */
