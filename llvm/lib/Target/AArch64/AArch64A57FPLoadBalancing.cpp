@@ -671,13 +671,14 @@ maybeKillChain(MachineOperand &MO, unsigned Idx,
   } else if (MO.isRegMask()) {
 
     for (auto I = ActiveChains.begin(), E = ActiveChains.end();
-         I != E; ++I) {
+         I != E;) {
       if (MO.clobbersPhysReg(I->first)) {
         DEBUG(dbgs() << "Kill (regmask) seen for chain "
               << TRI->getName(I->first) << "\n");
         I->second->setKill(MI, Idx, /*Immutable=*/true);
-        ActiveChains.erase(I);
-      }
+        ActiveChains.erase(I++);
+      } else
+        ++I;
     }
 
   }
