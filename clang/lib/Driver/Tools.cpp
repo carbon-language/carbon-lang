@@ -7101,9 +7101,6 @@ void gnutools::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-mabi");
     CmdArgs.push_back(ABIName.data());
 
-    CmdArgs.push_back("-mabicalls");
-    Args.AddLastArg(CmdArgs, options::OPT_mabicalls, options::OPT_mno_abicalls);
-
     // -mno-shared should be emitted unless -fpic, -fpie, -fPIC, -fPIE,
     // or -mshared (not implemented) is in effect.
     bool IsPicOrPie = false;
