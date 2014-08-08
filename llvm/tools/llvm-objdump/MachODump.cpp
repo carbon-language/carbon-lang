@@ -629,27 +629,27 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
   // Finally, we're ready to print the data we've gathered.
   outs() << "Contents of __compact_unwind section:\n";
   for (auto &Entry : CompactUnwinds) {
-    outs() << "  Entry at offset " << format("0x%x", Entry.OffsetInSection)
+    outs() << "  Entry at offset " << format("0x" PRIx32, Entry.OffsetInSection)
            << ":\n";
 
     // 1. Start of the region this entry applies to.
     outs() << "    start:                "
-           << format("0x%x", Entry.FunctionAddr) << ' ';
+           << format("0x%" PRIx64, Entry.FunctionAddr) << ' ';
     printUnwindRelocDest(Obj, Symbols, Entry.FunctionReloc,
                          Entry.FunctionAddr);
     outs() << '\n';
 
     // 2. Length of the region this entry applies to.
     outs() << "    length:               "
-           << format("0x%x", Entry.Length) << '\n';
+           << format("0x%" PRIx32, Entry.Length) << '\n';
     // 3. The 32-bit compact encoding.
     outs() << "    compact encoding:     "
-           << format("0x%08x", Entry.CompactEncoding) << '\n';
+           << format("0x%08" PRIx32, Entry.CompactEncoding) << '\n';
 
     // 4. The personality function, if present.
     if (Entry.PersonalityReloc.getObjectFile()) {
       outs() << "    personality function: "
-             << format("0x%x", Entry.PersonalityAddr) << ' ';
+             << format("0x%" PRIx64, Entry.PersonalityAddr) << ' ';
       printUnwindRelocDest(Obj, Symbols, Entry.PersonalityReloc,
                            Entry.PersonalityAddr);
       outs() << '\n';
@@ -658,7 +658,7 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
     // 5. This entry's language-specific data area.
     if (Entry.LSDAReloc.getObjectFile()) {
       outs() << "    LSDA:                 "
-             << format("0x%x", Entry.LSDAAddr) << ' ';
+             << format("0x%" PRIx64, Entry.LSDAAddr) << ' ';
       printUnwindRelocDest(Obj, Symbols, Entry.LSDAReloc, Entry.LSDAAddr);
       outs() << '\n';
     }
