@@ -2409,7 +2409,7 @@ bool AArch64InstrInfo::hasPattern(
 ///  ADD R,I,C
 ///  ==> MADD R,A,B,C
 /// \param Root is the ADD instruction
-/// \param [out] InsInstr is a vector of machine instructions and will
+/// \param [out] InsInstrs is a vector of machine instructions and will
 /// contain the generated madd instruction
 /// \param IdxMulOpd is index of operand in Root that is the result of
 /// the MUL. In the example above IdxMulOpd is 1.
@@ -2444,7 +2444,7 @@ static MachineInstr *genMadd(MachineFunction &MF, MachineRegisterInfo &MRI,
 ///   ==> ORR  V, ZR, Imm
 ///   ==> MADD R,A,B,V
 /// \param Root is the ADD instruction
-/// \param [out] InsInstr is a vector of machine instructions and will
+/// \param [out] InsInstrs is a vector of machine instructions and will
 /// contain the generated madd instruction
 /// \param IdxMulOpd is index of operand in Root that is the result of
 /// the MUL. In the example above IdxMulOpd is 1.
