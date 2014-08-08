@@ -23,9 +23,12 @@
 # include <osreldate.h>
 # if __FreeBSD_version <= 902001  // v9.2
 #  include <link.h>
+#  include <sys/param.h>
 #  include <ucontext.h>
 
 namespace __sanitizer {
+
+typedef unsigned long long __xuint64_t;
 
 typedef __int32_t __xregister_t;
 
@@ -74,6 +77,29 @@ typedef struct __xucontext {
   int uc_flags;
   int __spare__[4];
 } xucontext_t;
+
+struct xkinfo_vmentry {
+  int kve_structsize;
+  int kve_type;
+  __xuint64_t kve_start;
+  __xuint64_t kve_end;
+  __xuint64_t kve_offset;
+  __xuint64_t kve_vn_fileid;
+  __uint32_t kve_vn_fsid;
+  int kve_flags;
+  int kve_resident;
+  int kve_private_resident;
+  int kve_protection;
+  int kve_ref_count;
+  int kve_shadow_count;
+  int kve_vn_type;
+  __xuint64_t kve_vn_size;
+  __uint32_t kve_vn_rdev;
+  __uint16_t kve_vn_mode;
+  __uint16_t kve_status;
+  int _kve_ispare[12];
+  char kve_path[PATH_MAX];
+};
 
 typedef struct {
   __uint32_t p_type;
