@@ -20,8 +20,9 @@ Target TheARM64Target;
 extern "C" void LLVMInitializeAArch64TargetInfo() {
   // Now register the "arm64" name for use with "-march". We don't want it to
   // take possession of the Triple::aarch64 tag though.
-  RegisterTarget<Triple::UnknownArch, /*HasJIT=*/true> X(
-      TheARM64Target, "arm64", "ARM64 (little endian)");
+  TargetRegistry::RegisterTarget(TheARM64Target, "arm64",
+                                 "ARM64 (little endian)",
+                                 [](Triple::ArchType) { return false; }, true);
 
   RegisterTarget<Triple::aarch64, /*HasJIT=*/true> Z(
       TheAArch64leTarget, "aarch64", "AArch64 (little endian)");
