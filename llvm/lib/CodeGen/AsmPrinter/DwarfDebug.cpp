@@ -1144,7 +1144,6 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
   // arguments does the function have at source level.
   if (ArgNo > Size)
     CurrentFnArguments.resize(ArgNo * 2);
-  assert(!CurrentFnArguments[ArgNo - 1]);
   CurrentFnArguments[ArgNo - 1] = Var;
   return true;
 }
