@@ -11,8 +11,9 @@ int main() {
   if (!SymInitialize(GetCurrentProcess(), 0, FALSE))
     return 42;
 
-  *(int*)0 = 42;
+  *(volatile int*)0 = 42;
   // CHECK: ERROR: AddressSanitizer: access-violation on unknown address
-  // CHECK-NEXT: {{#0 0x.* in main.*report_after_syminitialize.cc:}}[[@LINE-2]]
+  // CHECK-NEXT: {{WARNING: .*DbgHelp}}
+  // CHECK: {{#0 0x.* in main.*report_after_syminitialize.cc:}}[[@LINE-3]]
   // CHECK: AddressSanitizer can not provide additional info.
 }

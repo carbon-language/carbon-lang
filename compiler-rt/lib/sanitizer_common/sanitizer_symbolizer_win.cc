@@ -40,8 +40,13 @@ class WinSymbolizer : public Symbolizer {
         // Anyways, we have to reconfigure stuff to make sure that SymInitialize
         // has all the appropriate options set.
         // Cross our fingers and reinitialize DbgHelp.
-        CHECK(SymCleanup(GetCurrentProcess()));
-        CHECK(TrySymInitialize());
+        Report("*** WARNING: Failed to initialize DbgHelp!              ***\n");
+        Report("*** Most likely this means that the app is already      ***\n");
+        Report("*** using DbgHelp, possibly with incompatible flags.    ***\n");
+        Report("*** Due to technical reasons, symbolization might crash ***\n");
+        Report("*** or produce wrong results.                           ***\n");
+        SymCleanup(GetCurrentProcess());
+        TrySymInitialize();
       }
       initialized_ = true;
     }
