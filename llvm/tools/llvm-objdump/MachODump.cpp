@@ -629,8 +629,8 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
   // Finally, we're ready to print the data we've gathered.
   outs() << "Contents of __compact_unwind section:\n";
   for (auto &Entry : CompactUnwinds) {
-    outs() << "  Entry at offset " << format("0x" PRIx32, Entry.OffsetInSection)
-           << ":\n";
+    outs() << "  Entry at offset "
+           << format("0x%" PRIx32, Entry.OffsetInSection) << ":\n";
 
     // 1. Start of the region this entry applies to.
     outs() << "    start:                "
