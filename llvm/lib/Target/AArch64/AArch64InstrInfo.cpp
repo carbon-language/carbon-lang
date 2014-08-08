@@ -641,7 +641,8 @@ bool AArch64InstrInfo::analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
     SrcReg = MI->getOperand(1).getReg();
     SrcReg2 = 0;
     CmpMask = ~0;
-    CmpValue = MI->getOperand(2).getImm();
+    // FIXME: In order to convert CmpValue to 0 or 1
+    CmpValue = (MI->getOperand(2).getImm() != 0);
     return true;
   case AArch64::ANDSWri:
   case AArch64::ANDSXri:
@@ -650,9 +651,14 @@ bool AArch64InstrInfo::analyzeCompare(const MachineInstr *MI, unsigned &SrcReg,
     SrcReg = MI->getOperand(1).getReg();
     SrcReg2 = 0;
     CmpMask = ~0;
-    CmpValue = AArch64_AM::decodeLogicalImmediate(
-        MI->getOperand(2).getImm(),
-        MI->getOpcode() == AArch64::ANDSWri ? 32 : 64);
+    // FIXME:The return val type of decodeLogicalImmediate is uint64_t,
+    // while the type of CmpValue is int. When converting uint64_t to int,
+    // the high 32 bits of uint64_t will be lost.
+    // In fact it causes a bug in spec2006-483.xalancbmk
+    // CmpValue is only used to compare with zero in OptimizeCompareInstr
+    CmpValue = (AArch64_AM::decodeLogicalImmediate(
+                    MI->getOperand(2).getImm(),
+                    MI->getOpcode() == AArch64::ANDSWri ? 32 : 64) != 0);
     return true;
   }
 
@@ -749,6 +755,9 @@ bool AArch64InstrInfo::optimizeCompareInstr(
   }
 
   // Continue only if we have a "ri" where immediate is zero.
+  // FIXME:CmpValue has already been converted to 0 or 1 in analyzeCompare
+  // function.
+  assert((CmpValue == 0 || CmpValue == 1) && "CmpValue must be 0 or 1!");
   if (CmpValue != 0 || SrcReg2 != 0)
     return false;
 
