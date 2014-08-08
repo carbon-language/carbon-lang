@@ -4052,6 +4052,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return cxstring::createRef("attribute(global)");
   case CXCursor_CUDAHostAttr:
     return cxstring::createRef("attribute(host)");
+  case CXCursor_CUDASharedAttr:
+    return cxstring::createRef("attribute(shared)");
   case CXCursor_PreprocessingDirective:
     return cxstring::createRef("preprocessing directive");
   case CXCursor_MacroDefinition:

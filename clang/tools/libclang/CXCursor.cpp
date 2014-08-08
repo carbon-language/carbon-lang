@@ -57,6 +57,7 @@ static CXCursorKind GetCursorKind(const Attr *A) {
     case attr::CUDADevice: return CXCursor_CUDADeviceAttr;
     case attr::CUDAGlobal: return CXCursor_CUDAGlobalAttr;
     case attr::CUDAHost: return CXCursor_CUDAHostAttr;
+    case attr::CUDAShared: return CXCursor_CUDASharedAttr;
   }
 
   return CXCursor_UnexposedAttr;

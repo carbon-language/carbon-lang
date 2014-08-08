@@ -1086,6 +1086,7 @@ CursorKind.CUDACONSTANT_ATTR = CursorKind(412)
 CursorKind.CUDADEVICE_ATTR = CursorKind(413)
 CursorKind.CUDAGLOBAL_ATTR = CursorKind(414)
 CursorKind.CUDAHOST_ATTR = CursorKind(415)
+CursorKind.CUDASHARED_ATTR = CursorKind(416)
 
 ###
 # Preprocessing
