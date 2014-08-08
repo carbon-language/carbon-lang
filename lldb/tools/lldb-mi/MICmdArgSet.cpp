@@ -84,7 +84,7 @@ void CMICmdArgSet::Destroy( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Retrieve the state flag indicating that the command set up ready to parse
-//			command arguments or options found that one or more arguemnts was indeed
+//			command arguments or options found that one or more arguments was indeed
 //			present but not handled. This is given as a warning in the MI log file.
 // Type:	Method.
 // Args:	None.
@@ -97,7 +97,7 @@ bool CMICmdArgSet::IsArgsPresentButNotHandledByCmd( void ) const
 }
 	
 //++ ------------------------------------------------------------------------------------
-// Details:	Add the the list of command's arguments to parse and validate another one.
+// Details:	Add the list of command's arguments to parse and validate another one.
 // Type:	Method.
 // Args:	vArg	- (R) A command argument object.
 // Return:	MIstatus::success - Functional succeeded.
@@ -160,7 +160,7 @@ const CMICmdArgSet::SetCmdArgs_t &	CMICmdArgSet::GetArgsNotHandledByCmd( void ) 
 //++ ------------------------------------------------------------------------------------
 // Details:	Given a set of command argument objects parse the context option string to
 //			find those argument and retrieve their value. If the function fails call
-//			GetArgsThatAreMissing() to see which commands that were manadatory were 
+//			GetArgsThatAreMissing() to see which commands that were mandatory were 
 //			missing or failed to parse.
 // Type:	Method.
 // Args:	vStrMiCmd		- (R)  Command's name.

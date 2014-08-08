@@ -19,7 +19,7 @@
 // Copyright:	None.
 //--
 
-#if defined( __FreeBSD__ ) || defined( __linux )
+#if defined( __FreeBSD__ ) || defined( __linux__ )
 
 // In-house headers:
 #include "MIUtilSystemLinux.h"
@@ -116,4 +116,4 @@ bool CMIUtilSystemLinux::GetLogFilesPath( CMIUtilString & vrwFileNamePath ) cons
 	return MIstatus::success;
 }
 
-#endif // #if defined( __linux )
+#endif // #if defined( __linux__ )

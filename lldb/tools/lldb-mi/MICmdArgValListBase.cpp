@@ -75,7 +75,7 @@ CMICmdArgValListBase::CMICmdArgValListBase( const CMIUtilString & vrArgName, con
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValListBase destructor.
-// Type:	Overidden.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

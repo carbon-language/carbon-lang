@@ -847,7 +847,7 @@ FILE * CMIDriver::GetStderr( void ) const
 	// available before *this driver has been initialized! Flaw?
 
 	// This very likely to change later to a stream that the pass thru driver
-	// will write to and *this driver reads from to pass on the the CMICmnLog object
+	// will write to and *this driver reads from to pass on the CMICmnLog object
 	return stderr;
 }
 
@@ -1018,7 +1018,7 @@ bool CMIDriver::ExecuteCommand( const SMICmdData & vCmdData )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	Set the MI Driver's exit application flag. The application checks this flag 
-//			after every stdin line is read so the exit may not be instantious.
+//			after every stdin line is read so the exit may not be instantaneous.
 //			If vbForceExit is false the MI Driver queries its state and determines if is
 //			should exit or continue operating depending on that running state.
 //			This is related to the running state of the MI driver.
@@ -1273,3 +1273,4 @@ bool CMIDriver::IsDriverDebuggingArgExecutable( void ) const
 {
 	return m_bDriverDebuggingArgExecutable;
 }
+

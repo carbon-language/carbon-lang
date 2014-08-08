@@ -50,7 +50,7 @@ CMICmdArgValFile::CMICmdArgValFile( const CMIUtilString & vrArgName, const bool 
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValFile destructor.
-// Type:	Overidden.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

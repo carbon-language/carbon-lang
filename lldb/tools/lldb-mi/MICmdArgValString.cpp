@@ -74,7 +74,7 @@ CMICmdArgValString::CMICmdArgValString( const CMIUtilString & vrArgName, const b
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmdArgValString destructor.
-// Type:	Overidden.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.

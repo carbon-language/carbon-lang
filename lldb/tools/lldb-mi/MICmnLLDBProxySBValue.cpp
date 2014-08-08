@@ -19,6 +19,8 @@
 // Copyright:	None.
 //--
 
+#include <stdlib.h>
+
 // Third Party Headers:
 #include <lldb/API/SBError.h>
 

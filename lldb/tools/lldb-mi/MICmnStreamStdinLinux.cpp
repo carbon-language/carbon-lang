@@ -209,3 +209,4 @@ const MIchar * CMICmnStreamStdinLinux::ReadLine( CMIUtilString & vwErrMsg )
 
 	return pText;
 }
+

@@ -258,7 +258,7 @@ CMICmnResources::CMICmnResources( void )
 
 //++ ------------------------------------------------------------------------------------
 // Details:	CMICmnResources destructor.
-// Type:	Overidden.
+// Type:	Overridden.
 // Args:	None.
 // Return:	None.
 // Throws:	None.
