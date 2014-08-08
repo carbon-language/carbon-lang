@@ -1275,8 +1275,7 @@ int main(int argc, char **argv) {
     if (ArchFlags[i] == "all") {
       ArchAll = true;
     } else {
-      Triple T = MachOObjectFile::getArch(ArchFlags[i]);
-      if (T.getArch() == Triple::UnknownArch)
+      if (!MachOObjectFile::isValidArch(ArchFlags[i]))
         error("Unknown architecture named '" + ArchFlags[i] + "'",
               "for the -arch option");
     }

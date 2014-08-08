@@ -14,6 +14,7 @@
 
 #include "llvm/Object/MachO.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/DataExtractor.h"
 #include "llvm/Support/Format.h"
@@ -1385,37 +1386,24 @@ Triple MachOObjectFile::getHostArch() {
   return Triple(sys::getDefaultTargetTriple());
 }
 
-Triple MachOObjectFile::getArch(StringRef ArchFlag) {
-  if (ArchFlag == "i386")
-    return Triple("i386-apple-darwin");
-  else if (ArchFlag == "x86_64")
-    return Triple("x86_64-apple-darwin");
-  else if (ArchFlag == "x86_64h")
-    return Triple("x86_64h-apple-darwin");
-  else if (ArchFlag == "armv4t" || ArchFlag == "arm")
-    return Triple("armv4t-apple-darwin");
-  else if (ArchFlag == "armv5e")
-    return Triple("armv5e-apple-darwin");
-  else if (ArchFlag == "armv6")
-    return Triple("armv6-apple-darwin");
-  else if (ArchFlag == "armv6m")
-    return Triple("armv6m-apple-darwin");
-  else if (ArchFlag == "armv7em")
-    return Triple("armv7em-apple-darwin");
-  else if (ArchFlag == "armv7k")
-    return Triple("armv7k-apple-darwin");
-  else if (ArchFlag == "armv7m")
-    return Triple("armv7m-apple-darwin");
-  else if (ArchFlag == "armv7s")
-    return Triple("armv7s-apple-darwin");
-  else if (ArchFlag == "arm64")
-    return Triple("arm64-apple-darwin");
-  else if (ArchFlag == "ppc")
-    return Triple("ppc-apple-darwin");
-  else if (ArchFlag == "ppc64")
-    return Triple("ppc64-apple-darwin");
-  else
-    return Triple();
+bool MachOObjectFile::isValidArch(StringRef ArchFlag) {
+  return StringSwitch<bool>(ArchFlag)
+      .Case("i386", true)
+      .Case("x86_64", true)
+      .Case("x86_64h", true)
+      .Case("armv4t", true)
+      .Case("arm", true)
+      .Case("armv5e", true)
+      .Case("armv6", true)
+      .Case("armv6m", true)
+      .Case("armv7em", true)
+      .Case("armv7k", true)
+      .Case("armv7m", true)
+      .Case("armv7s", true)
+      .Case("arm64", true)
+      .Case("ppc", true)
+      .Case("ppc64", true)
+      .Default(false);
 }
 
 unsigned MachOObjectFile::getArch() const {
