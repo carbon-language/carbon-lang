@@ -1,7 +1,4 @@
 ; Check the emission of directives at the start of an asm file.
-; This test is XFAILED until we fix the emission of '.option pic0' on
-; N32. At the moment we check if subtarget is Mips64 when we should be
-; checking the Subtarget's ABI.
 
 ; ### O32 ABI ###
 ; RUN: llc -filetype=asm -mtriple mips-unknown-linux -mcpu=mips32 \
