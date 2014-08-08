@@ -2273,13 +2273,13 @@ static void addDfsanRT(const ToolChain &TC, const ArgList &Args,
 static void addSanitizerRuntimes(const ToolChain &TC, const ArgList &Args,
                                  ArgStringList &CmdArgs) {
   const SanitizerArgs &Sanitize = TC.getSanitizerArgs();
-  const Driver &D = TC.getDriver();
   if (Sanitize.needsUbsanRt())
-    addUbsanRT(TC, Args, CmdArgs, D.CCCIsCXX(),
-                    Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
-                    Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
+    addUbsanRT(TC, Args, CmdArgs, Sanitize.linkCXXRuntimes(),
+               Sanitize.needsAsanRt() || Sanitize.needsTsanRt() ||
+                   Sanitize.needsMsanRt() || Sanitize.needsLsanRt());
   if (Sanitize.needsAsanRt())
-    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt(), D.CCCIsCXX());
+    addAsanRT(TC, Args, CmdArgs, Sanitize.needsSharedAsanRt(),
+              Sanitize.linkCXXRuntimes());
   if (Sanitize.needsTsanRt())
     addTsanRT(TC, Args, CmdArgs);
   if (Sanitize.needsMsanRt())

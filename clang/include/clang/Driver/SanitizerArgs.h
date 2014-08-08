@@ -52,9 +52,9 @@ class SanitizerArgs {
   bool AsanZeroBaseShadow;
   bool UbsanTrapOnError;
   bool AsanSharedRuntime;
+  bool LinkCXXRuntimes;
 
  public:
-  SanitizerArgs();
   /// Parses the sanitizer arguments from an argument list.
   SanitizerArgs(const ToolChain &TC, const llvm::opt::ArgList &Args);
 
@@ -77,6 +77,7 @@ class SanitizerArgs {
     return (Kind & HasZeroBaseShadow) || AsanZeroBaseShadow;
   }
   bool needsUnwindTables() const { return Kind & NeedsUnwindTables; }
+  bool linkCXXRuntimes() const { return LinkCXXRuntimes; }
   void addArgs(const llvm::opt::ArgList &Args,
                llvm::opt::ArgStringList &CmdArgs) const;
 

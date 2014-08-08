@@ -195,6 +195,14 @@
 // CHECK-UBSAN-LINUX: "-lpthread"
 // CHECK-UBSAN-LINUX-NOT: "-lstdc++"
 
+// RUN: %clang -fsanitize=undefined -fsanitize-link-c++-runtime %s -### -o %t.o 2>&1 \
+// RUN:     -target i386-unknown-linux \
+// RUN:     --sysroot=%S/Inputs/basic_linux_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-UBSAN-LINUX-LINK-CXX %s
+// CHECK-UBSAN-LINUX-LINK-CXX-NOT: "-lstdc++"
+// CHECK-UBSAN-LINUX-LINK-CXX: "-whole-archive" "{{.*}}libclang_rt.ubsan_cxx-i386.a" "-no-whole-archive"
+// CHECK-UBSAN-LINUX-LINK-CXX-NOT: "-lstdc++"
+
 // RUN: %clangxx -fsanitize=undefined %s -### -o %t.o 2>&1 \
 // RUN:     -target i386-unknown-linux \
 // RUN:     -resource-dir=%S/Inputs/resource_dir \
