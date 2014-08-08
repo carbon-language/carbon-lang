@@ -118,15 +118,15 @@ std::vector<std::string> unescapeCommandLine(
 }
 
 class JSONCompilationDatabasePlugin : public CompilationDatabasePlugin {
-  CompilationDatabase *loadFromDirectory(StringRef Directory,
-                                         std::string &ErrorMessage) override {
+  std::unique_ptr<CompilationDatabase>
+  loadFromDirectory(StringRef Directory, std::string &ErrorMessage) override {
     SmallString<1024> JSONDatabasePath(Directory);
     llvm::sys::path::append(JSONDatabasePath, "compile_commands.json");
     std::unique_ptr<CompilationDatabase> Database(
         JSONCompilationDatabase::loadFromFile(JSONDatabasePath, ErrorMessage));
     if (!Database)
       return nullptr;
-    return Database.release();
+    return Database;
   }
 };
 
@@ -141,7 +141,7 @@ X("json-compilation-database", "Reads JSON formatted compilation databases");
 // and thus register the JSONCompilationDatabasePlugin.
 volatile int JSONAnchorSource = 0;
 
-JSONCompilationDatabase *
+std::unique_ptr<JSONCompilationDatabase>
 JSONCompilationDatabase::loadFromFile(StringRef FilePath,
                                       std::string &ErrorMessage) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> DatabaseBuffer =
@@ -154,10 +154,10 @@ JSONCompilationDatabase::loadFromFile(StringRef FilePath,
       new JSONCompilationDatabase(DatabaseBuffer->release()));
   if (!Database->parse(ErrorMessage))
     return nullptr;
-  return Database.release();
+  return Database;
 }
 
-JSONCompilationDatabase *
+std::unique_ptr<JSONCompilationDatabase>
 JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
                                         std::string &ErrorMessage) {
   std::unique_ptr<llvm::MemoryBuffer> DatabaseBuffer(
@@ -166,7 +166,7 @@ JSONCompilationDatabase::loadFromBuffer(StringRef DatabaseString,
       new JSONCompilationDatabase(DatabaseBuffer.release()));
   if (!Database->parse(ErrorMessage))
     return nullptr;
-  return Database.release();
+  return Database;
 }
 
 std::vector<CompileCommand>
