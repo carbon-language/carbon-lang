@@ -306,6 +306,8 @@ def err_expected_class_name_not_template :
   Error<"'typename' is redundant; base classes are implicitly types">;
 def err_unspecified_vla_size_with_static : Error<
   "'static' may not be used with an unspecified variable length array size">;
+def err_unspecified_size_with_static : Error<
+  "'static' may not be used without an array size">;
 def warn_deprecated_register : Warning<
   "'register' storage class specifier is deprecated">,
   InGroup<DeprecatedRegister>;

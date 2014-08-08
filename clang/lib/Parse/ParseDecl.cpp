@@ -5596,6 +5596,11 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
                                                    Sema::ConstantEvaluated);
       NumElements = ParseAssignmentExpression();
     }
+  } else {
+    if (StaticLoc.isValid()) {
+      Diag(StaticLoc, diag::err_unspecified_size_with_static);
+      StaticLoc = SourceLocation();  // Drop the static.
+    }
   }
 
   // If there was an error parsing the assignment-expression, recover.

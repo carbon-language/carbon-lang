@@ -7,6 +7,7 @@ void f1(int [*]);
 void f2(int [const *]);
 void f3(int [volatile const*]);
 int f4(*XX)(void); /* expected-error {{cannot return}} expected-warning {{type specifier missing, defaults to 'int'}} */
+int f5(int [static]); /* expected-error {{'static' may not be used without an array size}} */
 
 char ((((*X))));
 
