@@ -118,3 +118,30 @@ namespace Pointer {
     // expected-warning@-1{{address of 'S::a' will always evaluate to 'true'}}
   }
 }
+
+namespace macros {
+  #define assert(x) if (x) {}
+  #define zero_on_null(x) ((x) ? *(x) : 0)
+
+  int array[5];
+  void fun();
+  int x;
+
+  void test() {
+    assert(array);
+    assert(array && "expecting null pointer");
+    // expected-warning@-1{{address of array 'array' will always evaluate to 'true'}}
+
+    assert(fun);
+    assert(fun && "expecting null pointer");
+    // expected-warning@-1{{address of function 'fun' will always evaluate to 'true'}}
+    // expected-note@-2 {{prefix with the address-of operator to silence this warning}}
+
+    // TODO: warn on assert(&x) while not warning on zero_on_null(&x)
+    zero_on_null(&x);
+    assert(zero_on_null(&x));
+    assert(&x);
+    assert(&x && "expecting null pointer");
+    // expected-warning@-1{{address of 'x' will always evaluate to 'true'}}
+  }
+}

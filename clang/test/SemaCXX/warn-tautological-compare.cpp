@@ -136,3 +136,43 @@ namespace PointerCompare {
     // expected-warning@-1{{comparison of address of 'S::a' equal to a null pointer is always false}}
   }
 }
+
+namespace macros {
+  #define assert(x) if (x) {}
+  int array[5];
+  void fun();
+  int x;
+
+  void test() {
+    assert(array == 0);
+    // expected-warning@-1{{comparison of array 'array' equal to a null pointer is always false}}
+    assert(array != 0);
+    // expected-warning@-1{{comparison of array 'array' not equal to a null pointer is always true}}
+    assert(array == 0 && "expecting null pointer");
+    // expected-warning@-1{{comparison of array 'array' equal to a null pointer is always false}}
+    assert(array != 0 && "expecting non-null pointer");
+    // expected-warning@-1{{comparison of array 'array' not equal to a null pointer is always true}}
+
+    assert(fun == 0);
+    // expected-warning@-1{{comparison of function 'fun' equal to a null pointer is always false}}
+    // expected-note@-2{{prefix with the address-of operator to silence this warning}}
+    assert(fun != 0);
+    // expected-warning@-1{{comparison of function 'fun' not equal to a null pointer is always true}}
+    // expected-note@-2{{prefix with the address-of operator to silence this warning}}
+    assert(fun == 0 && "expecting null pointer");
+    // expected-warning@-1{{comparison of function 'fun' equal to a null pointer is always false}}
+    // expected-note@-2{{prefix with the address-of operator to silence this warning}}
+    assert(fun != 0 && "expecting non-null pointer");
+    // expected-warning@-1{{comparison of function 'fun' not equal to a null pointer is always true}}
+    // expected-note@-2{{prefix with the address-of operator to silence this warning}}
+
+    assert(&x == 0);
+    // expected-warning@-1{{comparison of address of 'x' equal to a null pointer is always false}}
+    assert(&x != 0);
+    // expected-warning@-1{{comparison of address of 'x' not equal to a null pointer is always true}}
+    assert(&x == 0 && "expecting null pointer");
+    // expected-warning@-1{{comparison of address of 'x' equal to a null pointer is always false}}
+    assert(&x != 0 && "expecting non-null pointer");
+    // expected-warning@-1{{comparison of address of 'x' not equal to a null pointer is always true}}
+  }
+}

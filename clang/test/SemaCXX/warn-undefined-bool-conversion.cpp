@@ -95,3 +95,27 @@ namespace function_return_reference {
     // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; pointer may be assumed to always convert to true}}
   }
 }
+
+namespace macros {
+  #define assert(x) if (x) {}
+  #define zero_on_null(x) ((x) ? *(x) : 0)
+
+  void test(int &x) {
+    // TODO: warn on assert(&x) but not on zero_on_null(&x)
+    zero_on_null(&x);
+    assert(zero_on_null(&x));
+    assert(&x);
+
+    assert(&x && "Expecting valid reference");
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; pointer may be assumed to always convert to true}}
+  }
+
+  class S {
+    void test() {
+      assert(this);
+
+      assert(this && "Expecting invalid reference");
+      // expected-warning@-1{{'this' pointer cannot be null in well-defined C++ code; pointer may be assumed to always convert to true}}
+    }
+  };
+}

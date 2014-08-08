@@ -110,3 +110,31 @@ namespace function_return_reference {
     // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
   }
 }
+
+namespace macros {
+  #define assert(x) if (x) {}
+
+  void test(int &x) {
+    assert(&x != 0);
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    assert(&x == 0);
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    assert(&x != 0 && "Expecting valid reference");
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+    assert(&x == 0 && "Expecting invalid reference");
+    // expected-warning@-1{{reference cannot be bound to dereferenced null pointer in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+  }
+
+  class S {
+    void test() {
+      assert(this != 0);
+      // expected-warning@-1{{'this' pointer cannot be null in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+      assert(this == 0);
+      // expected-warning@-1{{'this' pointer cannot be null in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+      assert(this != 0 && "Expecting valid reference");
+      // expected-warning@-1{{'this' pointer cannot be null in well-defined C++ code; comparison may be assumed to always evaluate to true}}
+      assert(this == 0 && "Expecting invalid reference");
+      // expected-warning@-1{{'this' pointer cannot be null in well-defined C++ code; comparison may be assumed to always evaluate to false}}
+    }
+  };
+}
