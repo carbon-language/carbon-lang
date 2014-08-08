@@ -597,6 +597,31 @@ ExprResult Sema::BuildObjCBoxedExpr(SourceRange SR, Expr *ValueExpr) {
   return MaybeBindToTemporary(BoxedExpr);
 }
 
+static ObjCMethodDecl *FindAllocMethod(Sema &S, ObjCInterfaceDecl *NSClass) {
+  ObjCMethodDecl *Method = nullptr;
+  ASTContext &Context = S.Context;
+    
+  // Find +[NSClass alloc] method.
+  IdentifierInfo *II = &Context.Idents.get("alloc");
+  Selector AllocSel = Context.Selectors.getSelector(0, &II);
+  Method = NSClass->lookupClassMethod(AllocSel);
+  if (!Method && S.getLangOpts().DebuggerObjCLiteral) {
+    Method = ObjCMethodDecl::Create(Context,
+    SourceLocation(), SourceLocation(), AllocSel,
+    Context.getObjCIdType(),
+    nullptr /*TypeSourceInfo */,
+    Context.getTranslationUnitDecl(),
+    false /*Instance*/, false/*isVariadic*/,
+    /*isPropertyAccessor=*/false,
+    /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
+    ObjCMethodDecl::Required,
+    false);
+    SmallVector<ParmVarDecl *, 1> Params;
+    Method->setMethodParams(Context, Params, None);
+  }
+  return Method;
+}
+
 /// Build an ObjC subscript pseudo-object expression, given that
 /// that's supported by the runtime.
 ExprResult Sema::BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
@@ -650,32 +675,16 @@ ExprResult Sema::BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements) {
       return ExprError();
     }
   }
-  QualType IdT = Context.getObjCIdType();
   if (Arc && !ArrayAllocObjectsMethod) {
     // Find +[NSArray alloc] method.
-    IdentifierInfo *II = &Context.Idents.get("alloc");
-    Selector AllocSel = Context.Selectors.getSelector(0, &II);
-    ArrayAllocObjectsMethod = NSArrayDecl->lookupClassMethod(AllocSel);
-    if (!ArrayAllocObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
-      ArrayAllocObjectsMethod = ObjCMethodDecl::Create(Context,
-                                  SourceLocation(), SourceLocation(), AllocSel,
-                                  IdT,
-                                  nullptr /*TypeSourceInfo */,
-                                  Context.getTranslationUnitDecl(),
-                                  false /*Instance*/, false/*isVariadic*/,
-                                  /*isPropertyAccessor=*/false,
-                                  /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
-                                  ObjCMethodDecl::Required,
-                                  false);
-      SmallVector<ParmVarDecl *, 1> Params;
-      ArrayAllocObjectsMethod->setMethodParams(Context, Params, None);
-    }
+    ArrayAllocObjectsMethod = FindAllocMethod(*this, NSArrayDecl);
     if (!ArrayAllocObjectsMethod) {
       Diag(SR.getBegin(), diag::err_undeclared_alloc);
       return ExprError();
     }
   }
   // Find the arrayWithObjects:count: method, if we haven't done so already.
+  QualType IdT = Context.getObjCIdType();
   if (!ArrayWithObjectsMethod) {
     Selector
       Sel = NSAPIObj->getNSArraySelector(
@@ -795,26 +804,9 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
     }
   }
   
-  QualType IdT = Context.getObjCIdType();
   if (Arc && !DictAllocObjectsMethod) {
     // Find +[NSDictionary alloc] method.
-    IdentifierInfo *II = &Context.Idents.get("alloc");
-    Selector AllocSel = Context.Selectors.getSelector(0, &II);
-    DictAllocObjectsMethod = NSDictionaryDecl->lookupClassMethod(AllocSel);
-    if (!DictAllocObjectsMethod && getLangOpts().DebuggerObjCLiteral) {
-        DictAllocObjectsMethod = ObjCMethodDecl::Create(Context,
-                                        SourceLocation(), SourceLocation(), AllocSel,
-                                        IdT,
-                                        nullptr /*TypeSourceInfo */,
-                                        Context.getTranslationUnitDecl(),
-                                        false /*Instance*/, false/*isVariadic*/,
-                                        /*isPropertyAccessor=*/false,
-                                        /*isImplicitlyDeclared=*/true, /*isDefined=*/false,
-                                        ObjCMethodDecl::Required,
-                                        false);
-        SmallVector<ParmVarDecl *, 1> Params;
-        DictAllocObjectsMethod->setMethodParams(Context, Params, None);
-    }
+    DictAllocObjectsMethod = FindAllocMethod(*this, NSDictionaryDecl);
     if (!DictAllocObjectsMethod) {
       Diag(SR.getBegin(), diag::err_undeclared_alloc);
       return ExprError();
@@ -823,6 +815,7 @@ ExprResult Sema::BuildObjCDictionaryLiteral(SourceRange SR,
     
   // Find the dictionaryWithObjects:forKeys:count: or initWithObjects:forKeys:count:
   // (for arc) method, if we haven't done so already.
+  QualType IdT = Context.getObjCIdType();
   if (!DictionaryWithObjectsMethod) {
     Selector Sel =
       NSAPIObj->getNSDictionarySelector(Arc? NSAPI::NSDict_initWithObjectsForKeysCount
