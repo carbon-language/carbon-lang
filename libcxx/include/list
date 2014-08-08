@@ -219,7 +219,7 @@ struct __list_node_base
     _LIBCPP_INLINE_VISIBILITY
     pointer __self()
     {
-    	return static_cast<pointer>(pointer_traits<__base_pointer>::pointer_to(*this));
+        return static_cast<pointer>(pointer_traits<__base_pointer>::pointer_to(*this));
     }
 };
 
@@ -1086,10 +1086,10 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::__link_nodes_at_front(__node_pointer __f, __node_pointer __l)
 {
-	__f->__prev_ = base::__end_.__self();
-	__l->__next_ = base::__end_.__next_;
-	__l->__next_->__prev_ = __l;
-	base::__end_.__next_ = __f;
+    __f->__prev_ = base::__end_.__self();
+    __l->__next_ = base::__end_.__next_;
+    __l->__next_->__prev_ = __l;
+    base::__end_.__next_ = __f;
 }
 
 // Link in nodes [__f, __l] at the front of the list
@@ -1098,10 +1098,10 @@ inline _LIBCPP_INLINE_VISIBILITY
 void
 list<_Tp, _Alloc>::__link_nodes_at_back(__node_pointer __f, __node_pointer __l)
 {
-	__l->__next_ = base::__end_.__self();
-	__f->__prev_ = base::__end_.__prev_;
-	__f->__prev_->__next_ = __f;
-	base::__end_.__prev_ = __l;
+    __l->__next_ = base::__end_.__self();
+    __f->__prev_ = base::__end_.__prev_;
+    __f->__prev_->__next_ = __f;
+    base::__end_.__prev_ = __l;
 }
 
 
@@ -2058,14 +2058,16 @@ template <class _Tp, class _Alloc>
 void
 list<_Tp, _Alloc>::remove(const value_type& __x)
 {
-    for (iterator __i = begin(), __e = end(); __i != __e;)
+    list<_Tp, _Alloc> __deleted_nodes; // collect the nodes we're removing
+    for (const_iterator __i = begin(), __e = end(); __i != __e;)
     {
         if (*__i == __x)
         {
-            iterator __j = _VSTD::next(__i);
+            const_iterator __j = _VSTD::next(__i);
             for (; __j != __e && *__j == __x; ++__j)
                 ;
-            __i = erase(__i, __j);
+            __deleted_nodes.splice(__deleted_nodes.end(), *this, __i, __j);
+            __i = __j;
             if (__i != __e)
                 ++__i;
         }
