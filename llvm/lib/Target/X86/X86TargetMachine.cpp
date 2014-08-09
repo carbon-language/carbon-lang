@@ -37,26 +37,6 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT, StringRef CPU,
                                    CodeGenOpt::Level OL)
     : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
       Subtarget(TT, CPU, FS, *this, Options.StackAlignmentOverride) {
-  // Determine the PICStyle based on the target selected.
-  if (getRelocationModel() == Reloc::Static) {
-    // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
-    Subtarget.setPICStyle(PICStyles::None);
-  } else if (Subtarget.is64Bit()) {
-    // PIC in 64 bit mode is always rip-rel.
-    Subtarget.setPICStyle(PICStyles::RIPRel);
-  } else if (Subtarget.isTargetCOFF()) {
-    Subtarget.setPICStyle(PICStyles::None);
-  } else if (Subtarget.isTargetDarwin()) {
-    if (getRelocationModel() == Reloc::PIC_)
-      Subtarget.setPICStyle(PICStyles::StubPIC);
-    else {
-      assert(getRelocationModel() == Reloc::DynamicNoPIC);
-      Subtarget.setPICStyle(PICStyles::StubDynamicNoPIC);
-    }
-  } else if (Subtarget.isTargetELF()) {
-    Subtarget.setPICStyle(PICStyles::GOT);
-  }
-
   // default to hard float ABI
   if (Options.FloatABIType == FloatABI::Default)
     this->Options.FloatABIType = FloatABI::Hard;

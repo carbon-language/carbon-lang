@@ -13,6 +13,7 @@
 
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
+#include "X86TargetMachine.h"
 #include "llvm/IR/Attributes.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalValue.h"
@@ -357,7 +358,27 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
       InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
       FrameLowering(TargetFrameLowering::StackGrowsDown, getStackAlignment(),
                     is64Bit() ? -8 : -4),
-      JITInfo(hasSSE1()) {}
+      JITInfo(hasSSE1()) {
+  // Determine the PICStyle based on the target selected.
+  if (TM.getRelocationModel() == Reloc::Static) {
+    // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.
+    setPICStyle(PICStyles::None);
+  } else if (is64Bit()) {
+    // PIC in 64 bit mode is always rip-rel.
+    setPICStyle(PICStyles::RIPRel);
+  } else if (isTargetCOFF()) {
+    setPICStyle(PICStyles::None);
+  } else if (isTargetDarwin()) {
+    if (TM.getRelocationModel() == Reloc::PIC_)
+      setPICStyle(PICStyles::StubPIC);
+    else {
+      assert(TM.getRelocationModel() == Reloc::DynamicNoPIC);
+      setPICStyle(PICStyles::StubDynamicNoPIC);
+    }
+  } else if (isTargetELF()) {
+    setPICStyle(PICStyles::GOT);
+  }
+}
 
 bool X86Subtarget::enableEarlyIfConversion() const {
   return hasCMov() && X86EarlyIfConv;
