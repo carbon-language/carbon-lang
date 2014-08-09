@@ -96,7 +96,6 @@ PlatformWindows::CreateInstance (bool force, const lldb_private::ArchSpec *arch)
             switch (triple.getOS())
             {
             case llvm::Triple::Win32:
-            case llvm::Triple::MinGW32:
                 break;
 
             case llvm::Triple::UnknownOS:
