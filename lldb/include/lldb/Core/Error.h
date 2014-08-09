@@ -308,7 +308,7 @@ protected:
     /// Member variables
     //------------------------------------------------------------------
     ValueType m_code;               ///< Error code as an integer value.
-    lldb::ErrorType m_type;            ///< The type of the above error code.
+    lldb::ErrorType m_type;         ///< The type of the above error code.
     mutable std::string m_string;   ///< A string representation of the error code.
 };
 

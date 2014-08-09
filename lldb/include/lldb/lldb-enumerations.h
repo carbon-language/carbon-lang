@@ -237,7 +237,8 @@ namespace lldb {
         eErrorTypeGeneric,      ///< Generic errors that can be any value.
         eErrorTypeMachKernel,   ///< Mach kernel error codes.
         eErrorTypePOSIX,        ///< POSIX error codes.
-        eErrorTypeExpression    ///< These are from the ExpressionResults enum.
+        eErrorTypeExpression,   ///< These are from the ExpressionResults enum.
+        eErrorTypeWin32         ///< Standard Win32 error codes.
     } ErrorType;
 
 

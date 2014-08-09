@@ -2202,66 +2202,7 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
 #endif
 
 
-#ifdef LLDB_DISABLE_POSIX
-
-Error
-Host::MakeDirectory (const char* path, uint32_t mode)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s in not implemented on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::GetFilePermissions (const char* path, uint32_t &file_permissions)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::SetFilePermissions (const char* path, uint32_t file_permissions)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::Symlink (const char *src, const char *dst)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::Readlink (const char *path, char *buf, size_t buf_len)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::Unlink (const char *path)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-Error
-Host::RemoveDirectory (const char* path, bool recurse)
-{
-    Error error;
-    error.SetErrorStringWithFormat("%s is not supported on this host", __PRETTY_FUNCTION__);
-    return error;
-}
-
-#else
-
+#if !defined(_WIN32)
 Error
 Host::MakeDirectory (const char* path, uint32_t file_permissions)
 {
