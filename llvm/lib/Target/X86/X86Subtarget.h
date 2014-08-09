@@ -223,6 +223,9 @@ protected:
   InstrItineraryData InstrItins;
 
 private:
+  // Calculates type size & alignment
+  const DataLayout DL;
+
   /// StackAlignOverride - Override the stack alignment.
   unsigned StackAlignOverride;
 
@@ -235,8 +238,6 @@ private:
   /// In16BitMode - True if compiling for 16-bit, false for 32-bit or 64-bit.
   bool In16BitMode;
 
-  // Calculates type size & alignment
-  const DataLayout DL;
   X86SelectionDAGInfo TSInfo;
   // Ordering here is important. X86InstrInfo initializes X86RegisterInfo which
   // X86TargetLowering needs.

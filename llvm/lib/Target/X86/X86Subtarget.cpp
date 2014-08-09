@@ -298,37 +298,39 @@ void X86Subtarget::initializeEnvironment() {
   MaxInlineSizeThreshold = 128;
 }
 
-static std::string computeDataLayout(const X86Subtarget &ST) {
+static std::string computeDataLayout(const Triple &TT) {
   // X86 is little endian
   std::string Ret = "e";
 
-  Ret += DataLayout::getManglingComponent(ST.getTargetTriple());
+  Ret += DataLayout::getManglingComponent(TT);
   // X86 and x32 have 32 bit pointers.
-  if (ST.isTarget64BitILP32() || !ST.is64Bit())
+  if ((TT.isArch64Bit() &&
+       (TT.getEnvironment() == Triple::GNUX32 || TT.isOSNaCl())) ||
+      !TT.isArch64Bit())
     Ret += "-p:32:32";
 
   // Some ABIs align 64 bit integers and doubles to 64 bits, others to 32.
-  if (ST.is64Bit() || ST.isOSWindows() || ST.isTargetNaCl())
+  if (TT.isArch64Bit() || TT.isOSWindows() || TT.isOSNaCl())
     Ret += "-i64:64";
   else
     Ret += "-f64:32:64";
 
   // Some ABIs align long double to 128 bits, others to 32.
-  if (ST.isTargetNaCl())
+  if (TT.isOSNaCl())
     ; // No f80
-  else if (ST.is64Bit() || ST.isTargetDarwin())
+  else if (TT.isArch64Bit() || TT.isOSDarwin())
     Ret += "-f80:128";
   else
     Ret += "-f80:32";
 
   // The registers can hold 8, 16, 32 or, in x86-64, 64 bits.
-  if (ST.is64Bit())
+  if (TT.isArch64Bit())
     Ret += "-n8:16:32:64";
   else
     Ret += "-n8:16:32";
 
   // The stack is aligned to 32 bits on some ABIs and 128 bits on others.
-  if (!ST.is64Bit() && ST.isOSWindows())  
+  if (!TT.isArch64Bit() && TT.isOSWindows())  
     Ret += "-S32";
   else
     Ret += "-S128";
@@ -348,16 +350,16 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
                            unsigned StackAlignOverride)
     : X86GenSubtargetInfo(TT, CPU, FS), X86ProcFamily(Others),
       PICStyle(PICStyles::None), TargetTriple(TT),
+      DL(computeDataLayout(TargetTriple)),
       StackAlignOverride(StackAlignOverride),
       In64BitMode(TargetTriple.getArch() == Triple::x86_64),
       In32BitMode(TargetTriple.getArch() == Triple::x86 &&
                   TargetTriple.getEnvironment() != Triple::CODE16),
       In16BitMode(TargetTriple.getArch() == Triple::x86 &&
                   TargetTriple.getEnvironment() == Triple::CODE16),
-      DL(computeDataLayout(*this)), TSInfo(DL),
-      InstrInfo(initializeSubtargetDependencies(CPU, FS)), TLInfo(TM),
-      FrameLowering(TargetFrameLowering::StackGrowsDown, getStackAlignment(),
-                    is64Bit() ? -8 : -4),
+      TSInfo(DL), InstrInfo(initializeSubtargetDependencies(CPU, FS)),
+      TLInfo(TM), FrameLowering(TargetFrameLowering::StackGrowsDown,
+                                getStackAlignment(), is64Bit() ? -8 : -4),
       JITInfo(hasSSE1()) {
   // Determine the PICStyle based on the target selected.
   if (TM.getRelocationModel() == Reloc::Static) {
