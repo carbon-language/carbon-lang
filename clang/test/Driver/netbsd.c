@@ -19,6 +19,9 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-APCS %s
+// RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabihf \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=ARM-HF %s
 // RUN: %clang -no-canonical-prefixes -target thumb--netbsd-eabi \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=THUMB %s
@@ -28,9 +31,6 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd6.0.0-eabi \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-6 %s
-// RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabihf \
-// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
-// RUN: | FileCheck -check-prefix=ARM-HF %s
 // RUN: %clang -no-canonical-prefixes -target sparc--netbsd \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=SPARC %s
@@ -123,6 +123,15 @@
 // ARM-APCS: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // ARM-APCS: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
+// ARM-HF: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabihf"
+// ARM-HF: as{{.*}}" "-mcpu=arm926ej-s" "-o"
+// ARM-HF: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// ARM-HF: "-m" "armelf_nbsd_eabihf"
+// ARM-HF: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// ARM-HF: "{{.*}}/usr/lib{{/|\\\\}}eabihf{{/|\\\\}}crti.o"
+// ARM-HF: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// ARM-HF: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
 // THUMB: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabi"
 // THUMB: as{{.*}}" "-mcpu=arm926ej-s" "-o"
 // THUMB: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -147,9 +156,6 @@
 // ARM-6: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
 // ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // ARM-6: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
-
-// ARM-HF: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd-eabihf"
-// ARM-HF: ld{{.*}}" "-m" "armelf_nbsd_eabihf"
 
 // SPARC: clang{{.*}}" "-cc1" "-triple" "sparc--netbsd"
 // SPARC: as{{.*}}" "-32" "-o"
