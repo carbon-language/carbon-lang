@@ -1089,19 +1089,6 @@ void MCAsmStreamer::EmitWinEHHandler(const MCSymbol *Sym, bool Unwind,
   EmitEOL();
 }
 
-static const MCSection *getWin64EHTableSection(StringRef suffix,
-                                               MCContext &context) {
-  // FIXME: This doesn't belong in MCObjectFileInfo. However,
-  /// this duplicate code in MCWin64EH.cpp.
-  if (suffix == "")
-    return context.getObjectFileInfo()->getXDataSection();
-  return context.getCOFFSection((".xdata"+suffix).str(),
-                                COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                                COFF::IMAGE_SCN_MEM_READ |
-                                COFF::IMAGE_SCN_MEM_WRITE,
-                                SectionKind::getDataRel());
-}
-
 void MCAsmStreamer::EmitWinEHHandlerData() {
   MCStreamer::EmitWinEHHandlerData();
 
@@ -1111,7 +1098,8 @@ void MCAsmStreamer::EmitWinEHHandlerData() {
   // data block is visible.
   WinEH::FrameInfo *CurFrame = getCurrentWinFrameInfo();
   StringRef Suffix = WinEH::UnwindEmitter::GetSectionSuffix(CurFrame->Function);
-  if (const MCSection *XData = getWin64EHTableSection(Suffix, getContext()))
+  if (const MCSection *XData =
+          WinEH::UnwindEmitter::GetXDataSection(Suffix, getContext()))
     SwitchSectionNoChange(XData);
 
   OS << "\t.seh_handlerdata";
