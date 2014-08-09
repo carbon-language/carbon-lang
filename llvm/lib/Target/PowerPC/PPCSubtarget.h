@@ -69,6 +69,9 @@ protected:
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
 
+  // Calculates type size & alignment
+  const DataLayout DL;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned StackAlignment;
@@ -120,7 +123,6 @@ protected:
   } TargetABI;
 
   PPCFrameLowering FrameLowering;
-  const DataLayout DL;
   PPCInstrInfo InstrInfo;
   PPCJITInfo JITInfo;
   PPCTargetLowering TLInfo;

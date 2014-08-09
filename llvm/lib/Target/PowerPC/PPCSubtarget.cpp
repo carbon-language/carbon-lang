@@ -33,13 +33,12 @@ using namespace llvm;
 #include "PPCGenSubtargetInfo.inc"
 
 /// Return the datalayout string of a subtarget.
-static std::string getDataLayoutString(const PPCSubtarget &ST) {
-  const Triple &T = ST.getTargetTriple();
-
+static std::string getDataLayoutString(const Triple &T) {
+  bool is64Bit = T.getArch() == Triple::ppc64 || T.getArch() == Triple::ppc64le;
   std::string Ret;
 
   // Most PPC* platforms are big endian, PPC64LE is little endian.
-  if (ST.isLittleEndian())
+  if (T.getArch() == Triple::ppc64le)
     Ret = "e";
   else
     Ret = "E";
@@ -48,18 +47,18 @@ static std::string getDataLayoutString(const PPCSubtarget &ST) {
 
   // PPC32 has 32 bit pointers. The PS3 (OS Lv2) is a PPC64 machine with 32 bit
   // pointers.
-  if (!ST.isPPC64() || T.getOS() == Triple::Lv2)
+  if (!is64Bit || T.getOS() == Triple::Lv2)
     Ret += "-p:32:32";
 
   // Note, the alignment values for f64 and i64 on ppc64 in Darwin
   // documentation are wrong; these are correct (i.e. "what gcc does").
-  if (ST.isPPC64() || ST.isSVR4ABI())
+  if (is64Bit || !T.isOSDarwin())
     Ret += "-i64:64";
   else
     Ret += "-f64:32:64";
 
   // PPC64 has 32 and 64 bit registers, PPC32 has only 32 bit ones.
-  if (ST.isPPC64())
+  if (is64Bit)
     Ret += "-n32:64";
   else
     Ret += "-n32";
@@ -78,12 +77,12 @@ PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, PPCTargetMachine &TM,
                            CodeGenOpt::Level OptLevel)
     : PPCGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT),
+      DL(getDataLayoutString(TargetTriple)),
       IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||
               TargetTriple.getArch() == Triple::ppc64le),
       OptLevel(OptLevel), TargetABI(PPC_ABI_UNKNOWN),
-      FrameLowering(initializeSubtargetDependencies(CPU, FS)),
-      DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this),
-      TLInfo(TM), TSInfo(&DL) {}
+      FrameLowering(initializeSubtargetDependencies(CPU, FS)), InstrInfo(*this),
+      JITInfo(*this), TLInfo(TM), TSInfo(&DL) {}
 
 /// SetJITMode - This is called to inform the subtarget info that we are
 /// producing code for the JIT.
