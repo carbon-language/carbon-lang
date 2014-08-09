@@ -665,6 +665,29 @@ void PPCOperand::print(raw_ostream &OS) const {
   }
 }
 
+static void
+addNegOperand(MCInst &Inst, MCOperand &Op, MCContext &Ctx) {
+  if (Op.isImm()) {
+    Inst.addOperand(MCOperand::CreateImm(-Op.getImm()));
+    return;
+  }
+  const MCExpr *Expr = Op.getExpr();
+  if (const MCUnaryExpr *UnExpr = dyn_cast<MCUnaryExpr>(Expr)) {
+    if (UnExpr->getOpcode() == MCUnaryExpr::Minus) {
+      Inst.addOperand(MCOperand::CreateExpr(UnExpr->getSubExpr()));
+      return;
+    }
+  } else if (const MCBinaryExpr *BinExpr = dyn_cast<MCBinaryExpr>(Expr)) {
+    if (BinExpr->getOpcode() == MCBinaryExpr::Sub) {
+      const MCExpr *NE = MCBinaryExpr::CreateSub(BinExpr->getRHS(),
+                                                 BinExpr->getLHS(), Ctx);
+      Inst.addOperand(MCOperand::CreateExpr(NE));
+      return;
+    }
+  }
+  Inst.addOperand(MCOperand::CreateExpr(MCUnaryExpr::CreateMinus(Expr, Ctx)));
+}
+
 void PPCAsmParser::ProcessInstruction(MCInst &Inst,
                                       const OperandVector &Operands) {
   int Opcode = Inst.getOpcode();
@@ -680,41 +703,37 @@ void PPCAsmParser::ProcessInstruction(MCInst &Inst,
   }
   case PPC::SUBI: {
     MCInst TmpInst;
-    int64_t N = Inst.getOperand(2).getImm();
     TmpInst.setOpcode(PPC::ADDI);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    addNegOperand(TmpInst, Inst.getOperand(2), getContext());
     Inst = TmpInst;
     break;
   }
   case PPC::SUBIS: {
     MCInst TmpInst;
-    int64_t N = Inst.getOperand(2).getImm();
     TmpInst.setOpcode(PPC::ADDIS);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    addNegOperand(TmpInst, Inst.getOperand(2), getContext());
     Inst = TmpInst;
     break;
   }
   case PPC::SUBIC: {
     MCInst TmpInst;
-    int64_t N = Inst.getOperand(2).getImm();
     TmpInst.setOpcode(PPC::ADDIC);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    addNegOperand(TmpInst, Inst.getOperand(2), getContext());
     Inst = TmpInst;
     break;
   }
   case PPC::SUBICo: {
     MCInst TmpInst;
-    int64_t N = Inst.getOperand(2).getImm();
     TmpInst.setOpcode(PPC::ADDICo);
     TmpInst.addOperand(Inst.getOperand(0));
     TmpInst.addOperand(Inst.getOperand(1));
-    TmpInst.addOperand(MCOperand::CreateImm(-N));
+    addNegOperand(TmpInst, Inst.getOperand(2), getContext());
     Inst = TmpInst;
     break;
   }

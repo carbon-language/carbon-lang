@@ -14,13 +14,13 @@ addis 1, 1, target
 
 .set target, 0x1234
 
-addi 1, 1, target2@l
-addis 1, 1, target2@ha
+subi 1, 1, -target2@l
+subis 1, 1, -target2@ha
 
 .set target2, 0x12345678
 
 addi 1, 1, target3-target4@l
-addis 1, 1, target3-target4@ha
+subis 1, 1, target4-target3@ha
 
 .set target3, 0x23455678
 .set target4, 0x12341234
