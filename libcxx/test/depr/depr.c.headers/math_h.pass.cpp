@@ -9,6 +9,8 @@
 
 // <math.h>
 
+// XFAIL: linux
+
 #include <math.h>
 #include <type_traits>
 #include <cassert>
