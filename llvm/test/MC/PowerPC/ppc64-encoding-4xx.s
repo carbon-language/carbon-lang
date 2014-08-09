@@ -91,12 +91,18 @@
 # CHECK-LE: mtspr 988, 2                    # encoding: [0xa6,0xf3,0x5c,0x7c]
             mttbhi %r2
 
-# CHECK-BE: dci 14                          # encoding: [0x7d,0xc0,0x03,0x8c]
-# CHECK-LE: dci 14                          # encoding: [0x8c,0x03,0xc0,0x7d]
-            dci 14
-# CHECK-BE: ici 14                          # encoding: [0x7d,0xc0,0x07,0x8c]
-# CHECK-LE: ici 14                          # encoding: [0x8c,0x07,0xc0,0x7d]
-            ici 14
+# CHECK-BE: dccci 5, 6                      # encoding: [0x7c,0x05,0x33,0x8c]
+# CHECK-LE: dccci 5, 6                      # encoding: [0x8c,0x33,0x05,0x7c]
+            dccci %r5,%r6
+# CHECK-BE: iccci 5, 6                      # encoding: [0x7c,0x05,0x37,0x8c]
+# CHECK-LE: iccci 5, 6                      # encoding: [0x8c,0x37,0x05,0x7c]
+            iccci %r5,%r6
+# CHECK-BE: dccci 0, 0                      # encoding: [0x7c,0x00,0x03,0x8c]
+# CHECK-LE: dccci 0, 0                      # encoding: [0x8c,0x03,0x00,0x7c]
+            dci %r0
+# CHECK-BE: iccci 0, 0                      # encoding: [0x7c,0x00,0x07,0x8c]
+# CHECK-LE: iccci 0, 0                      # encoding: [0x8c,0x07,0x00,0x7c]
+            ici 0
 
 # CHECK-BE: mfspr 2, 990                    # encoding: [0x7c,0x5e,0xf2,0xa6]
 # CHECK-LE: mfspr 2, 990                    # encoding: [0xa6,0xf2,0x5e,0x7c]
