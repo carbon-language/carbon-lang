@@ -6964,6 +6964,7 @@ void netbsd::Link::ConstructJob(Compilation &C, const JobAction &JA,
   bool useLibgcc = true;
   if (Major >= 7 || (Major == 6 && Minor == 99 && Micro >= 49) || Major == 0) {
     switch(getToolChain().getArch()) {
+    case llvm::Triple::aarch64:
     case llvm::Triple::arm:
     case llvm::Triple::armeb:
     case llvm::Triple::thumb:
