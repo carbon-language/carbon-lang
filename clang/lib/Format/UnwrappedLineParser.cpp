@@ -122,14 +122,13 @@ class ScopedLineState {
 public:
   ScopedLineState(UnwrappedLineParser &Parser,
                   bool SwitchToPreprocessorLines = false)
-      : Parser(Parser) {
-    OriginalLines = Parser.CurrentLines;
+      : Parser(Parser), OriginalLines(Parser.CurrentLines) {
     if (SwitchToPreprocessorLines)
       Parser.CurrentLines = &Parser.PreprocessorDirectives;
     else if (!Parser.Line->Tokens.empty())
       Parser.CurrentLines = &Parser.Line->Tokens.back().Children;
-    PreBlockLine = Parser.Line.release();
-    Parser.Line.reset(new UnwrappedLine());
+    PreBlockLine = std::move(Parser.Line);
+    Parser.Line = llvm::make_unique<UnwrappedLine>();
     Parser.Line->Level = PreBlockLine->Level;
     Parser.Line->InPPDirective = PreBlockLine->InPPDirective;
   }
@@ -139,7 +138,7 @@ public:
       Parser.addUnwrappedLine();
     }
     assert(Parser.Line->Tokens.empty());
-    Parser.Line.reset(PreBlockLine);
+    Parser.Line = std::move(PreBlockLine);
     if (Parser.CurrentLines == &Parser.PreprocessorDirectives)
       Parser.MustBreakBeforeNextToken = true;
     Parser.CurrentLines = OriginalLines;
@@ -148,7 +147,7 @@ public:
 private:
   UnwrappedLineParser &Parser;
 
-  UnwrappedLine *PreBlockLine;
+  std::unique_ptr<UnwrappedLine> PreBlockLine;
   SmallVectorImpl<UnwrappedLine> *OriginalLines;
 };
 
