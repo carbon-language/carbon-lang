@@ -104,3 +104,27 @@ K::K() {}
 // GLOBALS-LABEL: @"\01??_7K@test2@@6B@" = linkonce_odr unnamed_addr constant [3 x i8*]
 
 }
+
+namespace pr20479 {
+struct A {
+  virtual A *f();
+};
+
+struct B : virtual A {
+  virtual B *f();
+};
+
+struct C : virtual A, B {
+// VFTABLES-LABEL: VFTable for 'pr20479::A' in 'pr20479::B' in 'pr20479::C' (2 entries).
+// VFTABLES-NEXT:   0 | pr20479::B *pr20479::B::f()
+// VFTABLES-NEXT:       [return adjustment (to type 'struct pr20479::A *'): vbase #1, 0 non-virtual]
+// VFTABLES-NEXT:   1 | pr20479::B *pr20479::B::f()
+  C();
+};
+
+C::C() {}
+
+// GLOBALS-LABEL: @"\01??_7C@pr20479@@6B@" = linkonce_odr unnamed_addr constant [2 x i8*]
+// GLOBALS: @"\01?f@B@pr20479@@QAEPAUA@2@XZ"
+// GLOBALS: @"\01?f@B@pr20479@@UAEPAU12@XZ"
+}

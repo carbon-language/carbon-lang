@@ -573,16 +573,16 @@ struct Q {
 
 // PR19172: Yet another diamond we miscompiled.
 struct R : virtual Q, X {
+  // CHECK-LABEL: VFTable for 'vdtors::X' in 'vdtors::R' (2 entries).
+  // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
+  // CHECK-NEXT: 1 | void vdtors::X::zzz()
+
   // CHECK-LABEL: VFTable for 'vdtors::Q' in 'vdtors::R' (1 entry).
   // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
   // CHECK-NEXT:     [this adjustment: -8 non-virtual]
 
   // CHECK-LABEL: Thunks for 'vdtors::R::~R()' (1 entry).
   // CHECK-NEXT: 0 | [this adjustment: -8 non-virtual]
-
-  // CHECK-LABEL: VFTable for 'vdtors::X' in 'vdtors::R' (2 entries).
-  // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
-  // CHECK-NEXT: 1 | void vdtors::X::zzz()
 
   // CHECK-LABEL: VFTable indices for 'vdtors::R' (1 entry).
   // CHECK-NEXT: 0 | vdtors::R::~R() [scalar deleting]
@@ -694,10 +694,10 @@ struct X : virtual B {};
 
 struct Y : virtual X, B {
   Y();
-  // CHECK-LABEL: VFTable for 'B' in 'pr19066::X' in 'pr19066::Y' (1 entry).
+  // CHECK-LABEL: VFTable for 'B' in 'pr19066::Y' (1 entry).
   // CHECK-NEXT:  0 | void B::g()
 
-  // CHECK-LABEL: VFTable for 'B' in 'pr19066::Y' (1 entry).
+  // CHECK-LABEL: VFTable for 'B' in 'pr19066::X' in 'pr19066::Y' (1 entry).
   // CHECK-NEXT:  0 | void B::g()
 };
 

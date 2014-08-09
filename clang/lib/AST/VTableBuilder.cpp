@@ -3174,9 +3174,16 @@ void MicrosoftVTableContext::computeVTablePaths(bool ForVBTables,
     Paths.push_back(new VPtrInfo(RD));
 
   // Recursive case: get all the vbtables from our bases and remove anything
-  // that shares a virtual base.
+  // that shares a virtual base.  Look at non-virtual bases first so we get
+  // longer inheritance paths from the derived class to the virtual bases.
+  llvm::SmallVector<CXXBaseSpecifier, 10> Bases;
+  std::copy_if(RD->bases_begin(), RD->bases_end(), std::back_inserter(Bases),
+               [](CXXBaseSpecifier bs) { return !bs.isVirtual(); });
+  std::copy_if(RD->bases_begin(), RD->bases_end(), std::back_inserter(Bases),
+               [](CXXBaseSpecifier bs) { return bs.isVirtual(); });
+
   llvm::SmallPtrSet<const CXXRecordDecl*, 4> VBasesSeen;
-  for (const auto &B : RD->bases()) {
+  for (const auto &B : Bases) {
     const CXXRecordDecl *Base = B.getType()->getAsCXXRecordDecl();
     if (B.isVirtual() && VBasesSeen.count(Base))
       continue;
