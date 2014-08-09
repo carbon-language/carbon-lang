@@ -9,7 +9,7 @@
 
 // <cmath>
 
-// isinf
+// isnan
 
 // XFAIL: linux
 
