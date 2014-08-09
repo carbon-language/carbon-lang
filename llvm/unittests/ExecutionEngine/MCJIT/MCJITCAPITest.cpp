@@ -139,8 +139,6 @@ protected:
 
     // The operating systems below are known to be sufficiently incompatible
     // that they will fail the MCJIT C API tests.
-    UnsupportedOSs.push_back(Triple::Cygwin);
-
     UnsupportedEnvironments.push_back(Triple::Cygnus);
   }
   

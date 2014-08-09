@@ -190,7 +190,7 @@ TEST(TripleTest, Normalization) {
          ++Vendor) {
       C[1] = Triple::getVendorTypeName(Triple::VendorType(Vendor));
       for (int OS = 1+Triple::UnknownOS; OS <= Triple::Minix; ++OS) {
-        if (OS == Triple::Cygwin || OS == Triple::MinGW32 || OS == Triple::Win32)
+        if (OS == Triple::Win32)
           continue;
 
         C[2] = Triple::getOSTypeName(Triple::OSType(OS));

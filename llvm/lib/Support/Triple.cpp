@@ -126,7 +126,6 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case UnknownOS: return "unknown";
 
   case AuroraUX: return "auroraux";
-  case Cygwin: return "cygwin";
   case Darwin: return "darwin";
   case DragonFly: return "dragonfly";
   case FreeBSD: return "freebsd";
@@ -135,7 +134,6 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case Linux: return "linux";
   case Lv2: return "lv2";
   case MacOSX: return "macosx";
-  case MinGW32: return "mingw32";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
   case Solaris: return "solaris";
@@ -273,7 +271,6 @@ static Triple::VendorType parseVendor(StringRef VendorName) {
 static Triple::OSType parseOS(StringRef OSName) {
   return StringSwitch<Triple::OSType>(OSName)
     .StartsWith("auroraux", Triple::AuroraUX)
-    .StartsWith("cygwin", Triple::Cygwin)
     .StartsWith("darwin", Triple::Darwin)
     .StartsWith("dragonfly", Triple::DragonFly)
     .StartsWith("freebsd", Triple::FreeBSD)
@@ -282,7 +279,6 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("linux", Triple::Linux)
     .StartsWith("lv2", Triple::Lv2)
     .StartsWith("macosx", Triple::MacOSX)
-    .StartsWith("mingw32", Triple::MinGW32)
     .StartsWith("netbsd", Triple::NetBSD)
     .StartsWith("openbsd", Triple::OpenBSD)
     .StartsWith("solaris", Triple::Solaris)
@@ -416,6 +412,9 @@ Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
 }
 
 std::string Triple::normalize(StringRef Str) {
+  bool IsMinGW32 = false;
+  bool IsCygwin = false;
+
   // Parse into components.
   SmallVector<StringRef, 4> Components;
   Str.split(Components, "-");
@@ -432,8 +431,11 @@ std::string Triple::normalize(StringRef Str) {
   if (Components.size() > 1)
     Vendor = parseVendor(Components[1]);
   OSType OS = UnknownOS;
-  if (Components.size() > 2)
+  if (Components.size() > 2) {
     OS = parseOS(Components[2]);
+    IsCygwin = Components[2].startswith("cygwin");
+    IsMinGW32 = Components[2].startswith("mingw");
+  }
   EnvironmentType Environment = UnknownEnvironment;
   if (Components.size() > 3)
     Environment = parseEnvironment(Components[3]);
@@ -476,7 +478,9 @@ std::string Triple::normalize(StringRef Str) {
         break;
       case 2:
         OS = parseOS(Comp);
-        Valid = OS != UnknownOS;
+        IsCygwin = Comp.startswith("cygwin");
+        IsMinGW32 = Comp.startswith("mingw");
+        Valid = OS != UnknownOS || IsCygwin || IsMinGW32;
         break;
       case 3:
         Environment = parseEnvironment(Comp);
@@ -556,16 +560,16 @@ std::string Triple::normalize(StringRef Str) {
       else
         Components[3] = getObjectFormatTypeName(ObjectFormat);
     }
-  } else if (OS == Triple::MinGW32) {
+  } else if (IsMinGW32) {
     Components.resize(4);
     Components[2] = "windows";
     Components[3] = "gnu";
-  } else if (OS == Triple::Cygwin) {
+  } else if (IsCygwin) {
     Components.resize(4);
     Components[2] = "windows";
     Components[3] = "cygnus";
   }
-  if (OS == Triple::MinGW32 || OS == Triple::Cygwin ||
+  if (IsMinGW32 || IsCygwin ||
       (OS == Triple::Win32 && Environment != UnknownEnvironment)) {
     if (ObjectFormat != UnknownObjectFormat && ObjectFormat != Triple::COFF) {
       Components.resize(5);

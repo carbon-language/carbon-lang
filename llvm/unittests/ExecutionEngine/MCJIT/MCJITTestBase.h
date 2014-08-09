@@ -302,7 +302,6 @@ protected:
     // The operating systems below are known to be incompatible with MCJIT as
     // they are copied from the test/ExecutionEngine/MCJIT/lit.local.cfg and
     // should be kept in sync.
-    UnsupportedOSs.push_back(Triple::Cygwin);
     UnsupportedOSs.push_back(Triple::Darwin);
 
     UnsupportedEnvironments.push_back(Triple::Cygnus);
