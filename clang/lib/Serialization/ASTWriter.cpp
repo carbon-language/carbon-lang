@@ -1139,8 +1139,9 @@ void ASTWriter::WriteControlBlock(Preprocessor &PP, ASTContext &Context,
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // Filename
     unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
 
-    assert(WritingModule->ModuleMap && "missing module map");
-    SmallString<128> ModuleMap(WritingModule->ModuleMap->getName());
+    const FileEntry *ModMapFile = PP.getHeaderSearchInfo().getModuleMap().
+        getModuleMapFileForUniquing(WritingModule);
+    SmallString<128> ModuleMap(ModMapFile->getName());
     llvm::sys::fs::make_absolute(ModuleMap);
     RecordData Record;
     Record.push_back(MODULE_MAP_FILE);

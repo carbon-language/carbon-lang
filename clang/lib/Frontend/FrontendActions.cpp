@@ -301,10 +301,12 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     return false;
   }
 
-  if (!ModuleMapForUniquing)
+  if (ModuleMapForUniquing && ModuleMapForUniquing != ModuleMap) {
+    Module->IsInferred = true;
+    HS.getModuleMap().setInferredModuleAllowedBy(Module, ModuleMapForUniquing);
+  } else {
     ModuleMapForUniquing = ModuleMap;
-  Module->ModuleMap = ModuleMapForUniquing;
-  assert(Module->ModuleMap && "missing module map file");
+  }
 
   FileManager &FileMgr = CI.getFileManager();
 

@@ -2489,15 +2489,18 @@ ASTReader::ReadControlBlock(ModuleFile &F,
           return Missing;
         }
 
+        HeaderSearch &HS = PP.getHeaderSearchInfo();
         const FileEntry *StoredModMap = FileMgr.getFile(F.ModuleMapPath);
-        if (StoredModMap == nullptr || StoredModMap != M->ModuleMap) {
-          assert(M->ModuleMap && "found module is missing module map file");
+        const FileEntry *ModMap =
+            HS.getModuleMap().getModuleMapFileForUniquing(M);
+        if (StoredModMap == nullptr || StoredModMap != ModMap) {
+          assert(ModMap && "found module is missing module map file");
           assert(M->Name == F.ModuleName && "found module with different name");
           assert(ImportedBy && "top-level import should be verified");
           if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
             Diag(diag::err_imported_module_modmap_changed)
               << F.ModuleName << ImportedBy->FileName
-              << M->ModuleMap->getName() << F.ModuleMapPath;
+              << ModMap->getName() << F.ModuleMapPath;
           return OutOfDate;
         }
       }
@@ -4281,20 +4284,17 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       bool ConfigMacrosExhaustive = Record[Idx++];
 
       Module *ParentModule = nullptr;
-      const FileEntry *ModuleMap = nullptr;
-      if (Parent) {
+      if (Parent)
         ParentModule = getSubmodule(Parent);
-        ModuleMap = ParentModule->ModuleMap;
-      }
-
-      if (!F.ModuleMapPath.empty())
-        ModuleMap = FileMgr.getFile(F.ModuleMapPath);
 
       // Retrieve this (sub)module from the module map, creating it if
       // necessary.
-      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, ModuleMap,
-                                                IsFramework, 
+      CurrentModule = ModMap.findOrCreateModule(Name, ParentModule, IsFramework,
                                                 IsExplicit).first;
+
+      // FIXME: set the definition loc for CurrentModule, or call
+      // ModMap.setInferredModuleAllowedBy()
+
       SubmoduleID GlobalIndex = GlobalID - NUM_PREDEF_SUBMODULE_IDS;
       if (GlobalIndex >= SubmodulesLoaded.size() ||
           SubmodulesLoaded[GlobalIndex]) {

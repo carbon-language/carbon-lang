@@ -146,6 +146,10 @@ private:
   /// framework modules from within those directories.
   llvm::DenseMap<const DirectoryEntry *, InferredDirectory> InferredDirectories;
 
+  /// A mapping from an inferred module to the module map that allowed the
+  /// inference.
+  llvm::DenseMap<const Module *, const FileEntry *> InferredModuleAllowedBy;
+
   /// \brief Describes whether we haved parsed a particular file as a module
   /// map.
   llvm::DenseMap<const FileEntry *, bool> ParsedModuleMap;
@@ -316,7 +320,6 @@ public:
   /// \returns The found or newly-created module, along with a boolean value
   /// that will be true if the module is newly-created.
   std::pair<Module *, bool> findOrCreateModule(StringRef Name, Module *Parent,
-                                               const FileEntry *ModuleMap,
                                                bool IsFramework,
                                                bool IsExplicit);
 
@@ -350,6 +353,19 @@ public:
   /// \returns The file entry for the module map file containing the given
   /// module, or NULL if the module definition was inferred.
   const FileEntry *getContainingModuleMapFile(Module *Module) const;
+
+  /// \brief Get the module map file that (along with the module name) uniquely
+  /// identifies this module.
+  ///
+  /// The particular module that \c Name refers to may depend on how the module
+  /// was found in header search. However, the combination of \c Name and
+  /// this module map will be globally unique for top-level modules. In the case
+  /// of inferred modules, returns the module map that allowed the inference
+  /// (e.g. contained 'module *'). Otherwise, returns
+  /// getContainingModuleMapFile().
+  const FileEntry *getModuleMapFileForUniquing(Module *M) const;
+
+  void setInferredModuleAllowedBy(Module *M, const FileEntry *ModuleMap);
 
   /// \brief Resolve all of the unresolved exports in the given module.
   ///

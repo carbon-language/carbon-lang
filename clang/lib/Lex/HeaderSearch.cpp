@@ -114,7 +114,9 @@ const HeaderMap *HeaderSearch::CreateHeaderMap(const FileEntry *FE) {
 }
 
 std::string HeaderSearch::getModuleFileName(Module *Module) {
-  return getModuleFileName(Module->Name, Module->ModuleMap->getName());
+  const FileEntry *ModuleMap =
+      getModuleMap().getModuleMapFileForUniquing(Module);
+  return getModuleFileName(Module->Name, ModuleMap->getName());
 }
 
 std::string HeaderSearch::getModuleFileName(StringRef ModuleName,

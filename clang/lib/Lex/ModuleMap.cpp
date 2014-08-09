@@ -367,6 +367,9 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       UmbrellaModule = UmbrellaModule->Parent;
 
     if (UmbrellaModule->InferSubmodules) {
+      const FileEntry *UmbrellaModuleMap =
+          getModuleMapFileForUniquing(UmbrellaModule);
+
       // Infer submodules for each of the directories we found between
       // the directory of the umbrella header and the directory where
       // the actual header is located.
@@ -377,8 +380,9 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
         SmallString<32> NameBuf;
         StringRef Name = sanitizeFilenameAsIdentifier(
             llvm::sys::path::stem(SkippedDirs[I-1]->getName()), NameBuf);
-        Result = findOrCreateModule(Name, Result, UmbrellaModule->ModuleMap,
-                                    /*IsFramework=*/false, Explicit).first;
+        Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
+                                    Explicit).first;
+        InferredModuleAllowedBy[Result] = UmbrellaModuleMap;
         Result->IsInferred = true;
 
         // Associate the module and the directory.
@@ -394,8 +398,9 @@ ModuleMap::findModuleForHeader(const FileEntry *File,
       SmallString<32> NameBuf;
       StringRef Name = sanitizeFilenameAsIdentifier(
                          llvm::sys::path::stem(File->getName()), NameBuf);
-      Result = findOrCreateModule(Name, Result, UmbrellaModule->ModuleMap,
-                                  /*IsFramework=*/false, Explicit).first;
+      Result = findOrCreateModule(Name, Result, /*IsFramework=*/false,
+                                  Explicit).first;
+      InferredModuleAllowedBy[Result] = UmbrellaModuleMap;
       Result->IsInferred = true;
       Result->addTopHeader(File);
 
@@ -535,15 +540,14 @@ Module *ModuleMap::lookupModuleQualified(StringRef Name, Module *Context) const{
 }
 
 std::pair<Module *, bool> 
-ModuleMap::findOrCreateModule(StringRef Name, Module *Parent,
-                              const FileEntry *ModuleMap, bool IsFramework,
+ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
                               bool IsExplicit) {
   // Try to find an existing module with this name.
   if (Module *Sub = lookupModuleQualified(Name, Parent))
     return std::make_pair(Sub, false);
   
   // Create a new module with this name.
-  Module *Result = new Module(Name, SourceLocation(), Parent, ModuleMap,
+  Module *Result = new Module(Name, SourceLocation(), Parent,
                               IsFramework, IsExplicit);
   if (LangOpts.CurrentModule == Name) {
     SourceModule = Result;
@@ -673,7 +677,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
     if (!canInfer)
       return nullptr;
   } else
-    ModuleMapFile = Parent->ModuleMap;
+    ModuleMapFile = getModuleMapFileForUniquing(Parent);
 
 
   // Look for an umbrella header.
@@ -687,8 +691,10 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   if (!UmbrellaHeader)
     return nullptr;
 
-  Module *Result = new Module(ModuleName, SourceLocation(), Parent, ModuleMapFile,
+  Module *Result = new Module(ModuleName, SourceLocation(), Parent,
                               /*IsFramework=*/true, /*IsExplicit=*/false);
+  InferredModuleAllowedBy[Result] = ModuleMapFile;
+  Result->IsInferred = true;
   if (LangOpts.CurrentModule == ModuleName) {
     SourceModule = Result;
     SourceModuleName = ModuleName;
@@ -797,6 +803,19 @@ ModuleMap::getContainingModuleMapFile(Module *Module) const {
 
   return SourceMgr.getFileEntryForID(
            SourceMgr.getFileID(Module->DefinitionLoc));
+}
+
+const FileEntry *ModuleMap::getModuleMapFileForUniquing(Module *M) const {
+  if (M->IsInferred) {
+    assert(InferredModuleAllowedBy.count(M) && "missing inferred module map");
+    return InferredModuleAllowedBy.find(M)->second;
+  }
+  return getContainingModuleMapFile(M);
+}
+
+void ModuleMap::setInferredModuleAllowedBy(Module *M, const FileEntry *ModMap) {
+  assert(M->IsInferred && "module not inferred");
+  InferredModuleAllowedBy[M] = ModMap;
 }
 
 void ModuleMap::dump() {
@@ -1390,14 +1409,9 @@ void ModuleMapParser::parseModuleDecl() {
     return;
   }
 
-  // If this is a submodule, use the parent's module map, since we don't want
-  // the private module map file.
-  const FileEntry *ModuleMap = ActiveModule ? ActiveModule->ModuleMap
-                                            : ModuleMapFile;
-
   // Start defining this module.
-  ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, ModuleMap,
-                                        Framework, Explicit).first;
+  ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, Framework,
+                                        Explicit).first;
   ActiveModule->DefinitionLoc = ModuleNameLoc;
   if (Attrs.IsSystem || IsSystem)
     ActiveModule->IsSystem = true;
