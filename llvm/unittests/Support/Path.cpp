@@ -644,7 +644,7 @@ TEST(Support, NormalizePath) {
   EXPECT_PATH_IS(Path1, "a", "a");
 
   path::native(Path2);
-  EXPECT_PATH_IS(Path2, "a/b", "a/b");
+  EXPECT_PATH_IS(Path2, "a\\b", "a/b");
 
   path::native(Path3);
   EXPECT_PATH_IS(Path3, "a\\b", "a/b");
