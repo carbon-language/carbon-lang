@@ -30,7 +30,7 @@ public:
   PPCTargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
-                   CodeGenOpt::Level OL, bool is64Bit);
+                   CodeGenOpt::Level OL);
 
   const PPCSubtarget *getSubtargetImpl() const override { return &Subtarget; }
 

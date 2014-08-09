@@ -66,6 +66,9 @@ class TargetMachine;
 
 class PPCSubtarget : public PPCGenSubtargetInfo {
 protected:
+  /// TargetTriple - What processor and OS we're targeting.
+  Triple TargetTriple;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned StackAlignment;
@@ -107,9 +110,6 @@ protected:
   bool IsJITCodeModel;
   bool IsLittleEndian;
 
-  /// TargetTriple - What processor and OS we're targeting.
-  Triple TargetTriple;
-
   /// OptLevel - What default optimization level we're emitting code for.
   CodeGenOpt::Level OptLevel;
 
@@ -131,7 +131,7 @@ public:
   /// of the specified triple.
   ///
   PPCSubtarget(const std::string &TT, const std::string &CPU,
-               const std::string &FS, PPCTargetMachine &TM, bool is64Bit,
+               const std::string &FS, PPCTargetMachine &TM,
                CodeGenOpt::Level OptLevel);
 
   /// ParseSubtargetFeatures - Parses features string setting specified

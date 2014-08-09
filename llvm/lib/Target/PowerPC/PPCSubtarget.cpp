@@ -76,8 +76,10 @@ PPCSubtarget &PPCSubtarget::initializeSubtargetDependencies(StringRef CPU,
 
 PPCSubtarget::PPCSubtarget(const std::string &TT, const std::string &CPU,
                            const std::string &FS, PPCTargetMachine &TM,
-                           bool is64Bit, CodeGenOpt::Level OptLevel)
-    : PPCGenSubtargetInfo(TT, CPU, FS), IsPPC64(is64Bit), TargetTriple(TT),
+                           CodeGenOpt::Level OptLevel)
+    : PPCGenSubtargetInfo(TT, CPU, FS), TargetTriple(TT),
+      IsPPC64(TargetTriple.getArch() == Triple::ppc64 ||
+              TargetTriple.getArch() == Triple::ppc64le),
       OptLevel(OptLevel), TargetABI(PPC_ABI_UNKNOWN),
       FrameLowering(initializeSubtargetDependencies(CPU, FS)),
       DL(getDataLayoutString(*this)), InstrInfo(*this), JITInfo(*this),
