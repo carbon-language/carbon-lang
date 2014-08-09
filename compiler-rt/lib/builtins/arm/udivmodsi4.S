@@ -21,6 +21,11 @@
 	.thumb
 #endif
 
+@ unsigned int __udivmodsi4(unsigned int divident, unsigned int divisor,
+@                           unsigned int *remainder)
+@   Calculate the quotient and remainder of the (unsigned) division.  The return
+@   value is the quotient, the remainder is placed in the variable.
+
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__udivmodsi4)
 #if __ARM_ARCH_EXT_IDIV__

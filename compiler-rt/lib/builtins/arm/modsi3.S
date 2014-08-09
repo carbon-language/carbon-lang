@@ -26,6 +26,9 @@
 	.thumb
 #endif
 
+@ int __modsi3(int divident, int divisor)
+@   Calculate and return the remainder of the (signed) division.
+
 	.p2align 3
 DEFINE_COMPILERRT_FUNCTION(__modsi3)
 #if __ARM_ARCH_EXT_IDIV__

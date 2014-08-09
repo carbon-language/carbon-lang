@@ -23,6 +23,10 @@
 
 	.p2align 2
 DEFINE_AEABI_FUNCTION_ALIAS(__aeabi_uidiv, __udivsi3)
+
+@ unsigned int __udivsi3(unsigned int divident, unsigned int divisor)
+@   Calculate and return the quotient of the (unsigned) division.
+
 DEFINE_COMPILERRT_FUNCTION(__udivsi3)
 #if __ARM_ARCH_EXT_IDIV__
 	tst     r1, r1

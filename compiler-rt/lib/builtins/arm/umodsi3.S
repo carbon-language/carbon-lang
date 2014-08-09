@@ -20,6 +20,9 @@
 	.thumb
 #endif
 
+@ unsigned int __umodsi3(unsigned int divident, unsigned int divisor)
+@   Calculate and return the remainder of the (unsigned) division.
+
 	.p2align 2
 DEFINE_COMPILERRT_FUNCTION(__umodsi3)
 #if __ARM_ARCH_EXT_IDIV__
