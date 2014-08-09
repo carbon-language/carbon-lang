@@ -20,7 +20,7 @@
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCLinkerOptimizationHint.h"
-#include "llvm/MC/MCWin64EH.h"
+#include "llvm/MC/MCWinEH.h"
 #include "llvm/Support/DataTypes.h"
 #include <string>
 
