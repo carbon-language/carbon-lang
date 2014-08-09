@@ -2554,7 +2554,7 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
       if (AArch64_AM::processLogicalImmediate(UImm, BitSize, Encoding)) {
         MachineInstrBuilder MIB1 =
             BuildMI(MF, Root.getDebugLoc(), TII->get(OrrOpc))
-                .addOperand(MachineOperand::CreateReg(NewVR, RegState::Define))
+                .addOperand(MachineOperand::CreateReg(NewVR, true))
                 .addReg(ZeroReg)
                 .addImm(Encoding);
         InsInstrs.push_back(MIB1);
@@ -2586,7 +2586,7 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
     // SUB NewVR, 0, C
     MachineInstrBuilder MIB1 =
         BuildMI(MF, Root.getDebugLoc(), TII->get(SubOpc))
-            .addOperand(MachineOperand::CreateReg(NewVR, RegState::Define))
+            .addOperand(MachineOperand::CreateReg(NewVR, true))
             .addReg(ZeroReg)
             .addOperand(Root.getOperand(2));
     InsInstrs.push_back(MIB1);
@@ -2635,7 +2635,7 @@ void AArch64InstrInfo::genAlternativeCodeSequence(
     if (AArch64_AM::processLogicalImmediate(UImm, BitSize, Encoding)) {
       MachineInstrBuilder MIB1 =
           BuildMI(MF, Root.getDebugLoc(), TII->get(OrrOpc))
-              .addOperand(MachineOperand::CreateReg(NewVR, RegState::Define))
+              .addOperand(MachineOperand::CreateReg(NewVR, true))
               .addReg(ZeroReg)
               .addImm(Encoding);
       InsInstrs.push_back(MIB1);
