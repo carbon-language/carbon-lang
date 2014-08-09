@@ -141,7 +141,7 @@ macro(add_sanitizer_tests_for_arch arch)
   endif()
 endmacro()
 
-if(COMPILER_RT_CAN_EXECUTE_TESTS)
+if(COMPILER_RT_CAN_EXECUTE_TESTS AND NOT ANDROID)
   # We use just-built clang to build sanitizer_common unittests, so we must
   # be sure that produced binaries would work.
   if(APPLE)
