@@ -55,27 +55,6 @@ GetFileStats (const FileSpec *file_spec, struct stat *stats_ptr)
     return false;
 }
 
-#ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
-static const char*
-GetCachedGlobTildeSlash()
-{
-    static std::string g_tilde;
-    if (g_tilde.empty())
-    {
-        struct passwd *user_entry;
-        user_entry = getpwuid(geteuid());
-        if (user_entry != NULL)
-            g_tilde = user_entry->pw_dir;
-
-        if (g_tilde.empty())
-            return NULL;
-    }
-    return g_tilde.c_str();
-}
-
-#endif // #ifdef LLDB_CONFIG_TILDE_RESOLVES_TO_USER
-
 // Resolves the username part of a path of the form ~user/other/directories, and
 // writes the result into dst_path.
 void
