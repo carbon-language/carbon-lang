@@ -130,7 +130,13 @@ void test3() {
 #  error TOP_RIGHT_UNDEF should still be defined
 #endif
 
+@import macros_bottom;
+
+TOP_DEF_RIGHT_UNDEF *TDRUf() { return TDRUp; }
+
 @import macros_right.undef;
+
+int TOP_DEF_RIGHT_UNDEF; // ok, no longer defined
 
 // FIXME: When macros_right.undef is built, macros_top is visible because
 // the state from building macros_right leaks through, so macros_right.undef

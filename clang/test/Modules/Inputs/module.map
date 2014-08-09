@@ -40,6 +40,10 @@ module macros_right {
     header "macros_right_undef.h"
   }
 }
+module macros_bottom { 
+  header "macros_bottom.h" 
+  export *
+}
 module macros { header "macros.h" }
 module macros_other { header "macros_other.h" }
 module category_top { header "category_top.h" }

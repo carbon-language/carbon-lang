@@ -524,7 +524,7 @@ public:
                                unsigned ImportedFromModuleID = 0,
                                ArrayRef<unsigned> Overrides = None)
       : MacroDirective(MD_Undefine, UndefLoc, ImportedFromModuleID, Overrides) {
-    assert(UndefLoc.isValid() && "Invalid UndefLoc!");
+    assert((UndefLoc.isValid() || ImportedFromModuleID) && "Invalid UndefLoc!");
   }
 
   static bool classof(const MacroDirective *MD) {
