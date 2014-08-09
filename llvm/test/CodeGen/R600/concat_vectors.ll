@@ -77,8 +77,7 @@ define void @test_concat_v4f32(<8 x float> addrspace(1)* %out, <4 x float> %a, <
 }
 
 ; FUNC-LABEL: @test_concat_v8f32
-; FIXME: This is currently being expanded with loads / stores to the stack.
-; FIXME-SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
+; SI-NOT: S_MOV_B32 s{{[0-9]}}, 0x80f000
 ; SI-NOT: MOVREL
 define void @test_concat_v8f32(<16 x float> addrspace(1)* %out, <8 x float> %a, <8 x float> %b) nounwind {
   %concat = shufflevector <8 x float> %a, <8 x float> %b, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>

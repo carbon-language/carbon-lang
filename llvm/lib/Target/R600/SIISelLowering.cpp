@@ -196,9 +196,11 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
       case ISD::BITCAST:
       case ISD::EXTRACT_VECTOR_ELT:
       case ISD::INSERT_VECTOR_ELT:
-      case ISD::CONCAT_VECTORS:
       case ISD::INSERT_SUBVECTOR:
       case ISD::EXTRACT_SUBVECTOR:
+        break;
+      case ISD::CONCAT_VECTORS:
+        setOperationAction(Op, VT, Custom);
         break;
       default:
         setOperationAction(Op, VT, Expand);
