@@ -22,17 +22,11 @@ class MoveOnly
 
     int data_;
 public:
-    MoveOnly(int data = 0) : data_(data) { assert(data != -1); }
-    MoveOnly(MoveOnly &&x) : data_(x.data_) {
-        assert(x.data_ != -1);
-        x.data_ = -1;
-    }
-    MoveOnly &operator=(MoveOnly &&x) {
-        assert(x.data_ != -1);
-        data_ = x.data_;
-        x.data_ = -1;
-        return *this;
-    }
+    MoveOnly(int data = 1) : data_(data) {}
+    MoveOnly(MoveOnly&& x)
+        : data_(x.data_) {x.data_ = 0;}
+    MoveOnly& operator=(MoveOnly&& x)
+        {data_ = x.data_; x.data_ = 0; return *this;}
 
     int get() const {return data_;}
 
