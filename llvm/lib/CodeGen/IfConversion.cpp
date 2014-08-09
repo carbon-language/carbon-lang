@@ -942,9 +942,8 @@ static bool canFallThroughTo(MachineBasicBlock *BB, MachineBasicBlock *ToBB) {
 /// to determine if it can be if-converted. If predecessor is already enqueued,
 /// dequeue it!
 void IfConverter::InvalidatePreds(MachineBasicBlock *BB) {
-  for (MachineBasicBlock::pred_iterator PI = BB->pred_begin(),
-         E = BB->pred_end(); PI != E; ++PI) {
-    BBInfo &PBBI = BBAnalysis[(*PI)->getNumber()];
+  for (const auto &Predecessor : BB->predecessors()) {
+    BBInfo &PBBI = BBAnalysis[Predecessor->getNumber()];
     if (PBBI.IsDone || PBBI.BB == BB)
       continue;
     PBBI.IsAnalyzed = false;
@@ -1186,6 +1185,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
   bool HasEarlyExit = CvtBBI->FalseBB != nullptr;
   uint64_t CvtNext = 0, CvtFalse = 0, BBNext = 0, BBCvt = 0, SumWeight = 0;
   uint32_t WeightScale = 0;
+
   if (HasEarlyExit) {
     // Get weights before modifying CvtBBI->BB and BBI.BB.
     CvtNext = MBPI->getEdgeWeight(CvtBBI->BB, NextBBI->BB);
@@ -1194,6 +1194,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     BBCvt = MBPI->getEdgeWeight(BBI.BB, CvtBBI->BB);
     SumWeight = MBPI->getSumForBlock(CvtBBI->BB, WeightScale);
   }
+
   if (CvtBBI->BB->pred_size() > 1) {
     BBI.NonPredSize -= TII->RemoveBranch(*BBI.BB);
     // Copy instructions in the true block, predicate them, and add them to
