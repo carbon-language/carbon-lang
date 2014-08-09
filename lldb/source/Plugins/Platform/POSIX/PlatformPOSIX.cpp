@@ -109,7 +109,7 @@ Error
 PlatformPOSIX::SetFilePermissions (const char *path, uint32_t file_permissions)
 {
     if (m_remote_platform_sp)
-        return m_remote_platform_sp->MakeDirectory(path, file_permissions);
+        return m_remote_platform_sp->SetFilePermissions(path, file_permissions);
     else
         return Platform::SetFilePermissions(path ,file_permissions);
 }
