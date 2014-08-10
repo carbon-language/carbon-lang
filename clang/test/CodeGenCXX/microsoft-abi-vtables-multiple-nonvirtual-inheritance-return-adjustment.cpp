@@ -295,3 +295,46 @@ struct X : E {
 
 void build_vftable(X *obj) { obj->foo(); }
 }
+
+namespace pr20444 {
+struct A {
+  virtual A* f();
+};
+struct B {
+  virtual B* f();
+};
+struct C : A, B {
+  virtual C* f();
+  // CHECK-LABEL: VFTable for 'pr20444::A' in 'pr20444::C' (1 entry).
+  // CHECK-NEXT:   0 | pr20444::C *pr20444::C::f()
+
+  // CHECK-LABEL: VFTable for 'pr20444::B' in 'pr20444::C' (2 entries).
+  // CHECK-NEXT:   0 | pr20444::C *pr20444::C::f()
+  // CHECK-NEXT:       [return adjustment (to type 'struct pr20444::B *'): 4 non-virtual]
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+  // CHECK-NEXT:   1 | pr20444::C *pr20444::C::f()
+  // CHECK-NEXT:       [return adjustment (to type 'struct pr20444::C *'): 0 non-virtual]
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+};
+
+void build_vftable(C *obj) { obj->f(); }
+
+struct D : C {
+  virtual D* f();
+  // CHECK-LABEL: VFTable for 'pr20444::A' in 'pr20444::C' in 'pr20444::D' (1 entry).
+  // CHECK-NEXT:   0 | pr20444::D *pr20444::D::f()
+
+  // CHECK-LABEL: VFTable for 'pr20444::B' in 'pr20444::C' in 'pr20444::D' (3 entries).
+  // CHECK-NEXT:   0 | pr20444::D *pr20444::D::f()
+  // CHECK-NEXT:       [return adjustment (to type 'struct pr20444::B *'): 4 non-virtual]
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+  // CHECK-NEXT:   1 | pr20444::D *pr20444::D::f()
+  // CHECK-NEXT:       [return adjustment (to type 'struct pr20444::C *'): 0 non-virtual]
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+  // CHECK-NEXT:   2 | pr20444::D *pr20444::D::f()
+  // CHECK-NEXT:       [return adjustment (to type 'struct pr20444::D *'): 0 non-virtual]
+  // CHECK-NEXT:       [this adjustment: -4 non-virtual]
+};
+
+void build_vftable(D *obj) { obj->f(); }
+}
