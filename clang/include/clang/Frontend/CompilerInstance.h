@@ -144,11 +144,11 @@ class CompilerInstance : public ModuleLoader {
   struct OutputFile {
     std::string Filename;
     std::string TempFilename;
-    raw_ostream *OS;
+    std::unique_ptr<raw_ostream> OS;
 
     OutputFile(const std::string &filename, const std::string &tempFilename,
-               raw_ostream *os)
-      : Filename(filename), TempFilename(tempFilename), OS(os) { }
+               std::unique_ptr<raw_ostream> OS)
+      : Filename(filename), TempFilename(tempFilename), OS(std::move(OS)) { }
   };
 
   /// The list of active output files.
@@ -508,7 +508,7 @@ public:
   /// addOutputFile - Add an output file onto the list of tracked output files.
   ///
   /// \param OutFile - The output file info.
-  void addOutputFile(const OutputFile &OutFile);
+  void addOutputFile(OutputFile OutFile);
 
   /// clearOutputFiles - Clear the output file list, destroying the contained
   /// output streams.
@@ -657,14 +657,11 @@ public:
   /// stored here on success.
   /// \param TempPathName [out] - If given, the temporary file path name
   /// will be stored here on success.
-  static llvm::raw_fd_ostream *
-  createOutputFile(StringRef OutputPath, std::string &Error,
-                   bool Binary, bool RemoveFileOnSignal,
-                   StringRef BaseInput,
-                   StringRef Extension,
-                   bool UseTemporary,
-                   bool CreateMissingDirectories,
-                   std::string *ResultPathName,
+  static std::unique_ptr<llvm::raw_fd_ostream>
+  createOutputFile(StringRef OutputPath, std::string &Error, bool Binary,
+                   bool RemoveFileOnSignal, StringRef BaseInput,
+                   StringRef Extension, bool UseTemporary,
+                   bool CreateMissingDirectories, std::string *ResultPathName,
                    std::string *TempPathName);
 
   llvm::raw_null_ostream *createNullOutputFile();
