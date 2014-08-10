@@ -485,12 +485,6 @@ public:
     return *CompletionConsumer;
   }
 
-  /// takeCodeCompletionConsumer - Remove the current code completion consumer
-  /// and give ownership to the caller.
-  CodeCompleteConsumer *takeCodeCompletionConsumer() {
-    return CompletionConsumer.release();
-  }
-
   /// setCodeCompletionConsumer - Replace the current code completion consumer;
   /// the compiler instance takes ownership of \p Value.
   void setCodeCompletionConsumer(CodeCompleteConsumer *Value);
