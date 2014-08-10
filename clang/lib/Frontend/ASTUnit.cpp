@@ -728,10 +728,9 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                              /*DisableValidation=*/disableValid,
                              AllowPCHWithCompilerErrors);
 
-  AST->Reader->setListener(new ASTInfoCollector(*AST->PP, Context,
-                                           AST->ASTFileLangOpts,
-                                           AST->TargetOpts, AST->Target, 
-                                           Counter));
+  AST->Reader->setListener(llvm::make_unique<ASTInfoCollector>(
+      *AST->PP, Context, AST->ASTFileLangOpts, AST->TargetOpts, AST->Target,
+      Counter));
 
   switch (AST->Reader->ReadAST(Filename, serialization::MK_MainFile,
                           SourceLocation(), ASTReader::ARR_None)) {

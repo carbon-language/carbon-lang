@@ -124,7 +124,7 @@ void DependencyCollector::attachToPreprocessor(Preprocessor &PP) {
   PP.addPPCallbacks(new DepCollectorPPCallbacks(*this, PP.getSourceManager()));
 }
 void DependencyCollector::attachToASTReader(ASTReader &R) {
-  R.addListener(new DepCollectorASTListener(*this));
+  R.addListener(llvm::make_unique<DepCollectorASTListener>(*this));
 }
 
 namespace {
@@ -210,7 +210,7 @@ DependencyFileGenerator *DependencyFileGenerator::CreateAndAttachToPreprocessor(
 void DependencyFileGenerator::AttachToASTReader(ASTReader &R) {
   DFGImpl *I = reinterpret_cast<DFGImpl *>(Impl);
   assert(I && "missing implementation");
-  R.addListener(new DFGASTReaderListener(*I));
+  R.addListener(llvm::make_unique<DFGASTReaderListener>(*I));
 }
 
 /// FileMatchesDepCriteria - Determine whether the given Filename should be

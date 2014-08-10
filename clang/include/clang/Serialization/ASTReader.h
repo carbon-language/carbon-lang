@@ -202,8 +202,9 @@ class ChainedASTReaderListener : public ASTReaderListener {
 
 public:
   /// Takes ownership of \p First and \p Second.
-  ChainedASTReaderListener(ASTReaderListener *First, ASTReaderListener *Second)
-      : First(First), Second(Second) { }
+  ChainedASTReaderListener(std::unique_ptr<ASTReaderListener> First,
+                           std::unique_ptr<ASTReaderListener> Second)
+      : First(std::move(First)), Second(std::move(Second)) {}
 
   bool ReadFullVersionInformation(StringRef FullVersion) override;
   void ReadModuleName(StringRef ModuleName) override;
@@ -1371,17 +1372,18 @@ public:
                         bool FromFinalization);
 
   /// \brief Set the AST callbacks listener.
-  void setListener(ASTReaderListener *listener) {
-    Listener.reset(listener);
+  void setListener(std::unique_ptr<ASTReaderListener> Listener) {
+    this->Listener = std::move(Listener);
   }
 
   /// \brief Add an AST callbak listener.
   ///
   /// Takes ownership of \p L.
-  void addListener(ASTReaderListener *L) {
+  void addListener(std::unique_ptr<ASTReaderListener> L) {
     if (Listener)
-      L = new ChainedASTReaderListener(L, Listener.release());
-    Listener.reset(L);
+      L = llvm::make_unique<ChainedASTReaderListener>(std::move(L),
+                                                      std::move(Listener));
+    Listener = std::move(L);
   }
 
   /// \brief Set the AST deserialization listener.
