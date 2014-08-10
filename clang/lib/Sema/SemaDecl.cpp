@@ -1725,6 +1725,43 @@ static void filterNonConflictingPreviousDecls(ASTContext &context,
   filter.done();
 }
 
+/// Typedef declarations don't have linkage, but they still denote the same
+/// entity if their types are the same.
+/// FIXME: This is notionally doing the same thing as ASTReaderDecl's
+/// isSameEntity.
+static void filterNonConflictingPreviousTypedefDecls(ASTContext &Context,
+                                                     TypedefNameDecl *Decl,
+                                                     LookupResult &Previous) {
+  // This is only interesting when modules are enabled.
+  if (!Context.getLangOpts().Modules)
+    return;
+
+  // Empty sets are uninteresting.
+  if (Previous.empty())
+    return;
+
+  LookupResult::Filter Filter = Previous.makeFilter();
+  while (Filter.hasNext()) {
+    NamedDecl *Old = Filter.next();
+
+    // Non-hidden declarations are never ignored.
+    if (!Old->isHidden())
+      continue;
+
+    // Declarations of the same entity are not ignored, even if they have
+    // different linkages.
+    if (auto *OldTD = dyn_cast<TypedefNameDecl>(Old))
+      if (Context.hasSameType(OldTD->getUnderlyingType(),
+                              Decl->getUnderlyingType()))
+        continue;
+
+    if (!Old->isExternallyVisible())
+      Filter.erase();
+  }
+
+  Filter.done();
+}
+
 bool Sema::isIncompatibleTypedef(TypeDecl *Old, TypedefNameDecl *New) {
   QualType OldType;
   if (TypedefNameDecl *OldTypedef = dyn_cast<TypedefNameDecl>(Old))
@@ -4835,7 +4872,7 @@ Sema::ActOnTypedefNameDecl(Scope *S, DeclContext *DC, TypedefNameDecl *NewTD,
   // in an outer scope, it isn't the same thing.
   FilterLookupForScope(Previous, DC, S, /*ConsiderLinkage*/false,
                        /*AllowInlineNamespace*/false);
-  filterNonConflictingPreviousDecls(Context, NewTD, Previous);
+  filterNonConflictingPreviousTypedefDecls(Context, NewTD, Previous);
   if (!Previous.empty()) {
     Redeclaration = true;
     MergeTypedefNameDecl(NewTD, Previous);
