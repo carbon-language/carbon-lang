@@ -414,7 +414,7 @@ void MemoryAccess::assumeNoOutOfBound(const IRAccess &Access) {
   isl_space_free(Space);
 }
 
-MemoryAccess::MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
+MemoryAccess::MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                            ScopStmt *Statement)
     : Statement(Statement), Inst(AccInst), newAccessRelation(nullptr) {
 

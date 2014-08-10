@@ -136,7 +136,8 @@ private:
   /// could allow us to handle the above example.
   ReductionType RedType = RT_NONE;
 
-  const Instruction *Inst;
+  /// @brief The access instruction of this memory access.
+  Instruction *Inst;
 
   /// Updated access relation read from JSCOP file.
   isl_map *newAccessRelation;
@@ -149,7 +150,7 @@ public:
   /// @param Access     The memory access.
   /// @param Statement  The statement that contains the access.
   /// @param SE         The ScalarEvolution analysis.
-  MemoryAccess(const IRAccess &Access, const Instruction *AccInst,
+  MemoryAccess(const IRAccess &Access, Instruction *AccInst,
                ScopStmt *Statement);
 
   ~MemoryAccess();
@@ -194,7 +195,8 @@ public:
 
   const std::string &getBaseName() const { return BaseName; }
 
-  const Instruction *getAccessInstruction() const { return Inst; }
+  /// @brief Return the access instruction of this memory access.
+  Instruction *getAccessInstruction() const { return Inst; }
 
   /// @brief Get the new access function imported from JSCOP file
   isl_map *getNewAccessRelation() const;
