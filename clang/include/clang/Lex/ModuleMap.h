@@ -310,9 +310,6 @@ public:
   /// \param Parent The module that will act as the parent of this submodule,
   /// or NULL to indicate that this is a top-level module.
   ///
-  /// \param ModuleMap The module map that defines or allows the inference of
-  /// this module.
-  ///
   /// \param IsFramework Whether this is a framework module.
   ///
   /// \param IsExplicit Whether this is an explicit submodule.
