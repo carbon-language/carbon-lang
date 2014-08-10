@@ -129,9 +129,9 @@ FrontendAction::FrontendAction() : Instance(nullptr) {}
 FrontendAction::~FrontendAction() {}
 
 void FrontendAction::setCurrentInput(const FrontendInputFile &CurrentInput,
-                                     ASTUnit *AST) {
+                                     std::unique_ptr<ASTUnit> AST) {
   this->CurrentInput = CurrentInput;
-  CurrentASTUnit.reset(AST);
+  CurrentASTUnit = std::move(AST);
 }
 
 ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
@@ -189,12 +189,11 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
 
-    ASTUnit *AST = ASTUnit::LoadFromASTFile(InputFile, Diags,
-                                            CI.getFileSystemOpts());
+    std::unique_ptr<ASTUnit> AST(
+        ASTUnit::LoadFromASTFile(InputFile, Diags, CI.getFileSystemOpts()));
+
     if (!AST)
       goto failure;
-
-    setCurrentInput(Input, AST);
 
     // Inform the diagnostic client we are processing a source file.
     CI.getDiagnosticClient().BeginSourceFile(CI.getLangOpts(), nullptr);
@@ -206,6 +205,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     CI.setSourceManager(&AST->getSourceManager());
     CI.setPreprocessor(&AST->getPreprocessor());
     CI.setASTContext(&AST->getASTContext());
+
+    setCurrentInput(Input, std::move(AST));
 
     // Initialize the action.
     if (!BeginSourceFileAction(CI, InputFile))

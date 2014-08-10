@@ -20,6 +20,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/FrontendOptions.h"
 #include "llvm/ADT/StringRef.h"
 #include <memory>
@@ -29,7 +30,6 @@
 namespace clang {
 class ASTConsumer;
 class ASTMergeAction;
-class ASTUnit;
 class CompilerInstance;
 
 /// Abstract base class for actions which can be performed by the frontend.
@@ -146,10 +146,12 @@ public:
     return *CurrentASTUnit;
   }
 
-  ASTUnit *takeCurrentASTUnit() { return CurrentASTUnit.release(); }
+  std::unique_ptr<ASTUnit> takeCurrentASTUnit() {
+    return std::move(CurrentASTUnit);
+  }
 
   void setCurrentInput(const FrontendInputFile &CurrentInput,
-                       ASTUnit *AST = nullptr);
+                       std::unique_ptr<ASTUnit> AST = nullptr);
 
   /// @}
   /// @name Supported Modes
