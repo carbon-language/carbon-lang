@@ -687,6 +687,18 @@ base:
 # CHECK-BE: ori 1, 2, 2                  # encoding: [0x60,0x41,0x00,0x02]
 # CHECK-LE: ori 1, 2, 2                  # encoding: [0x02,0x00,0x41,0x60]
             ori 1, 2, 131071@ha
+# CHECK-BE: addi 1, 2, -1                # encoding: [0x38,0x22,0xff,0xff]
+# CHECK-LE: addi 1, 2, -1                # encoding: [0xff,0xff,0x22,0x38]
+            addi 1, 2, 131071@l
+# CHECK-BE: addi 1, 2, 1                 # encoding: [0x38,0x22,0x00,0x01]
+# CHECK-LE: addi 1, 2, 1                 # encoding: [0x01,0x00,0x22,0x38]
+            addi 1, 2, 131071@h
+# CHECK-BE: addi 1, 2, 2                 # encoding: [0x38,0x22,0x00,0x02]
+# CHECK-LE: addi 1, 2, 2                 # encoding: [0x02,0x00,0x22,0x38]
+            addi 1, 2, 131071@ha
+# CHECK-BE: addis 1, 2, -4096            # encoding: [0x3c,0x22,0xf0,0x00]
+# CHECK-LE: addis 1, 2, -4096            # encoding: [0x00,0xf0,0x22,0x3c]
+            addis 1, 2, 0xf0000000@h
 
 # Data relocs
 # llvm-mc does not show any "encoding" string for data, so we just check the relocs

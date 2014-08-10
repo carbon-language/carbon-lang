@@ -297,6 +297,7 @@ struct PPCOperand : public MCParsedAsmOperand {
   enum KindTy {
     Token,
     Immediate,
+    ContextImmediate,
     Expression,
     TLSRegister
   } Kind;
@@ -341,6 +342,7 @@ public:
       Tok = o.Tok;
       break;
     case Immediate:
+    case ContextImmediate:
       Imm = o.Imm;
       break;
     case Expression:
@@ -363,6 +365,16 @@ public:
 
   int64_t getImm() const {
     assert(Kind == Immediate && "Invalid access!");
+    return Imm.Val;
+  }
+  int64_t getImmS16Context() const {
+    assert((Kind == Immediate || Kind == ContextImmediate) && "Invalid access!");
+    if (Kind == Immediate)
+      return Imm.Val;
+    return static_cast<int16_t>(Imm.Val);
+  }
+  int64_t getImmU16Context() const {
+    assert((Kind == Immediate || Kind == ContextImmediate) && "Invalid access!");
     return Imm.Val;
   }
 
@@ -422,15 +434,42 @@ public:
   bool isU8ImmX8() const { return Kind == Immediate &&
                                   isUInt<8>(getImm()) &&
                                   (getImm() & 7) == 0; }
-  bool isU16Imm() const { return Kind == Expression ||
-                                 (Kind == Immediate && isUInt<16>(getImm())); }
-  bool isS16Imm() const { return Kind == Expression ||
-                                 (Kind == Immediate && isInt<16>(getImm())); }
+  bool isU16Imm() const {
+    switch (Kind) {
+      case Expression:
+        return true;
+      case Immediate:
+      case ContextImmediate:
+        return isUInt<16>(getImmU16Context());
+      default:
+        return false;
+    }
+  }
+  bool isS16Imm() const {
+    switch (Kind) {
+      case Expression:
+        return true;
+      case Immediate:
+      case ContextImmediate:
+        return isInt<16>(getImmS16Context());
+      default:
+        return false;
+    }
+  }
   bool isS16ImmX4() const { return Kind == Expression ||
                                    (Kind == Immediate && isInt<16>(getImm()) &&
                                     (getImm() & 3) == 0); }
-  bool isS17Imm() const { return Kind == Expression ||
-                                 (Kind == Immediate && isInt<17>(getImm())); }
+  bool isS17Imm() const {
+    switch (Kind) {
+      case Expression:
+        return true;
+      case Immediate:
+      case ContextImmediate:
+        return isInt<17>(getImmS16Context());
+      default:
+        return false;
+    }
+  }
   bool isTLSReg() const { return Kind == TLSRegister; }
   bool isDirectBr() const {
     if (Kind == Expression)
@@ -553,6 +592,36 @@ public:
       Inst.addOperand(MCOperand::CreateExpr(getExpr()));
   }
 
+  void addS16ImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    switch (Kind) {
+      case Immediate:
+        Inst.addOperand(MCOperand::CreateImm(getImm()));
+        break;
+      case ContextImmediate:
+        Inst.addOperand(MCOperand::CreateImm(getImmS16Context()));
+        break;
+      default:
+        Inst.addOperand(MCOperand::CreateExpr(getExpr()));
+        break;
+    }
+  }
+
+  void addU16ImmOperands(MCInst &Inst, unsigned N) const {
+    assert(N == 1 && "Invalid number of operands!");
+    switch (Kind) {
+      case Immediate:
+        Inst.addOperand(MCOperand::CreateImm(getImm()));
+        break;
+      case ContextImmediate:
+        Inst.addOperand(MCOperand::CreateImm(getImmU16Context()));
+        break;
+      default:
+        Inst.addOperand(MCOperand::CreateExpr(getExpr()));
+        break;
+    }
+  }
+
   void addBranchTargetOperands(MCInst &Inst, unsigned N) const {
     assert(N == 1 && "Invalid number of operands!");
     if (Kind == Immediate)
@@ -634,6 +703,16 @@ public:
   }
 
   static std::unique_ptr<PPCOperand>
+  CreateContextImm(int64_t Val, SMLoc S, SMLoc E, bool IsPPC64) {
+    auto Op = make_unique<PPCOperand>(ContextImmediate);
+    Op->Imm.Val = Val;
+    Op->StartLoc = S;
+    Op->EndLoc = E;
+    Op->IsPPC64 = IsPPC64;
+    return Op;
+  }
+
+  static std::unique_ptr<PPCOperand>
   CreateFromMCExpr(const MCExpr *Val, SMLoc S, SMLoc E, bool IsPPC64) {
     if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(Val))
       return CreateImm(CE->getValue(), S, E, IsPPC64);
@@ -641,6 +720,12 @@ public:
     if (const MCSymbolRefExpr *SRE = dyn_cast<MCSymbolRefExpr>(Val))
       if (SRE->getKind() == MCSymbolRefExpr::VK_PPC_TLS)
         return CreateTLSReg(SRE, S, E, IsPPC64);
+
+    if (const PPCMCExpr *TE = dyn_cast<PPCMCExpr>(Val)) {
+      int64_t Res;
+      if (TE->EvaluateAsConstant(Res))
+        return CreateContextImm(Res, S, E, IsPPC64);
+    }
 
     return CreateExpr(Val, S, E, IsPPC64);
   }
@@ -654,6 +739,7 @@ void PPCOperand::print(raw_ostream &OS) const {
     OS << "'" << getToken() << "'";
     break;
   case Immediate:
+  case ContextImmediate:
     OS << getImm();
     break;
   case Expression:

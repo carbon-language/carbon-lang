@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "PPCFixupKinds.h"
 #include "PPCMCExpr.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAssembler.h"
@@ -52,6 +53,43 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
 }
 
 bool
+PPCMCExpr::EvaluateAsConstant(int64_t &Res) const {
+  MCValue Value;
+
+  if (!getSubExpr()->EvaluateAsRelocatable(Value, nullptr, nullptr))
+    return false;
+
+  if (!Value.isAbsolute())
+    return false;
+
+  Res = EvaluateAsInt64(Value.getConstant());
+  return true;
+}
+
+int64_t
+PPCMCExpr::EvaluateAsInt64(int64_t Value) const {
+  switch (Kind) {
+    case VK_PPC_LO:
+      return Value & 0xffff;
+    case VK_PPC_HI:
+      return (Value >> 16) & 0xffff;
+    case VK_PPC_HA:
+      return ((Value + 0x8000) >> 16) & 0xffff;
+    case VK_PPC_HIGHER:
+      return (Value >> 32) & 0xffff;
+    case VK_PPC_HIGHERA:
+      return ((Value + 0x8000) >> 32) & 0xffff;
+    case VK_PPC_HIGHEST:
+      return (Value >> 48) & 0xffff;
+    case VK_PPC_HIGHESTA:
+      return ((Value + 0x8000) >> 48) & 0xffff;
+    case VK_PPC_None:
+      break;
+  }
+  llvm_unreachable("Invalid kind!");
+}
+
+bool
 PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
                                      const MCAsmLayout *Layout,
                                      const MCFixup *Fixup) const {
@@ -61,32 +99,10 @@ PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
     return false;
 
   if (Value.isAbsolute()) {
-    int64_t Result = Value.getConstant();
-    switch (Kind) {
-      default:
-        llvm_unreachable("Invalid kind!");
-      case VK_PPC_LO:
-        Result = Result & 0xffff;
-        break;
-      case VK_PPC_HI:
-        Result = (Result >> 16) & 0xffff;
-        break;
-      case VK_PPC_HA:
-        Result = ((Result + 0x8000) >> 16) & 0xffff;
-        break;
-      case VK_PPC_HIGHER:
-        Result = (Result >> 32) & 0xffff;
-        break;
-      case VK_PPC_HIGHERA:
-        Result = ((Result + 0x8000) >> 32) & 0xffff;
-        break;
-      case VK_PPC_HIGHEST:
-        Result = (Result >> 48) & 0xffff;
-        break;
-      case VK_PPC_HIGHESTA:
-        Result = ((Result + 0x8000) >> 48) & 0xffff;
-        break;
-    }
+    int64_t Result = EvaluateAsInt64(Value.getConstant());
+    if ((Fixup == nullptr || (unsigned)Fixup->getKind() != PPC::fixup_ppc_half16) &&
+        (Result >= 0x8000))
+      return false;
     Res = MCValue::get(Result);
   } else {
     if (!Layout)

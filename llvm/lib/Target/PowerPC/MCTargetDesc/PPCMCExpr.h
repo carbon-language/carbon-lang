@@ -34,6 +34,8 @@ private:
   const MCExpr *Expr;
   bool IsDarwin;
 
+  int64_t EvaluateAsInt64(int64_t Value) const;
+
   explicit PPCMCExpr(VariantKind _Kind, const MCExpr *_Expr,
                      bool _IsDarwin)
     : Kind(_Kind), Expr(_Expr), IsDarwin(_IsDarwin) {}
@@ -87,6 +89,8 @@ public:
 
   // There are no TLS PPCMCExprs at the moment.
   void fixELFSymbolsInTLSFixups(MCAssembler &Asm) const override {}
+
+  bool EvaluateAsConstant(int64_t &Res) const;
 
   static bool classof(const MCExpr *E) {
     return E->getKind() == MCExpr::Target;

@@ -458,7 +458,7 @@ def u6imm   : Operand<i32> {
 }
 def PPCS16ImmAsmOperand : AsmOperandClass {
   let Name = "S16Imm"; let PredicateMethod = "isS16Imm";
-  let RenderMethod = "addImmOperands";
+  let RenderMethod = "addS16ImmOperands";
 }
 def s16imm  : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
@@ -468,7 +468,7 @@ def s16imm  : Operand<i32> {
 }
 def PPCU16ImmAsmOperand : AsmOperandClass {
   let Name = "U16Imm"; let PredicateMethod = "isU16Imm";
-  let RenderMethod = "addImmOperands";
+  let RenderMethod = "addU16ImmOperands";
 }
 def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
@@ -478,7 +478,7 @@ def u16imm  : Operand<i32> {
 }
 def PPCS17ImmAsmOperand : AsmOperandClass {
   let Name = "S17Imm"; let PredicateMethod = "isS17Imm";
-  let RenderMethod = "addImmOperands";
+  let RenderMethod = "addS16ImmOperands";
 }
 def s17imm  : Operand<i32> {
   // This operand type is used for addis/lis to allow the assembler parser
@@ -554,7 +554,7 @@ def ptr_rc_idx : Operand<iPTR>, PointerLikeRegClass<0> {
 
 def PPCDispRIOperand : AsmOperandClass {
  let Name = "DispRI"; let PredicateMethod = "isS16Imm";
- let RenderMethod = "addImmOperands";
+ let RenderMethod = "addS16ImmOperands";
 }
 def dispRI : Operand<iPTR> {
   let ParserMatchClass = PPCDispRIOperand;
