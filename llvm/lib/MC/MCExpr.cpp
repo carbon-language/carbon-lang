@@ -633,7 +633,7 @@ static bool EvaluateSymbolicAdd(const MCAssembler *Asm,
 
 bool MCExpr::EvaluateAsRelocatable(MCValue &Res,
                                    const MCAsmLayout *Layout,
-				   const MCFixup *Fixup) const {
+                                   const MCFixup *Fixup) const {
   MCAssembler *Assembler = Layout ? &Layout->getAssembler() : nullptr;
   return EvaluateAsRelocatableImpl(Res, Assembler, Layout, Fixup, nullptr,
                                    false, /*ForceVarExpansion*/ false);
@@ -703,7 +703,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
 
     if (!AUE->getSubExpr()->EvaluateAsRelocatableImpl(Value, Asm, Layout,
                                                       Fixup, Addrs, InSet,
-						      ForceVarExpansion))
+                                                      ForceVarExpansion))
       return false;
 
     switch (AUE->getOpcode()) {
@@ -738,10 +738,10 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res, const MCAssembler *Asm,
 
     if (!ABE->getLHS()->EvaluateAsRelocatableImpl(LHSValue, Asm, Layout,
                                                   Fixup, Addrs, InSet,
-						  ForceVarExpansion) ||
+                                                  ForceVarExpansion) ||
         !ABE->getRHS()->EvaluateAsRelocatableImpl(RHSValue, Asm, Layout,
                                                   Fixup, Addrs, InSet,
-						  ForceVarExpansion))
+                                                  ForceVarExpansion))
       return false;
 
     // We only support a few operations on non-constant expressions, handle
