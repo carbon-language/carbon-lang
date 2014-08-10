@@ -33,3 +33,10 @@ E: etherzhhb@gmail.com
 D: Co-founder
 D: scop detection, automake/cmake infrastructure, scopinfo, scoppasses, ...
 D: Google Summer of Code student 2010
+
+N: Johannes Doerfert
+E: doerfert@cs.uni-saarland.de
+E: jdoerfert@codeaurora.org
+W: http://www.cdl.uni-saarland.de/people/doerfert/
+P: http://www.cdl.uni-saarland.de/people/doerfert/JohannesDoerfert.asc
+D: reductions, general infrastructure
