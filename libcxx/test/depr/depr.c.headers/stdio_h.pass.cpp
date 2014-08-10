@@ -117,7 +117,9 @@ int main()
     static_assert((std::is_same<decltype(fputs("",fp)), int>::value), "");
     static_assert((std::is_same<decltype(getc(fp)), int>::value), "");
     static_assert((std::is_same<decltype(getchar()), int>::value), "");
+#if _LIBCPP_STD_VER < 14
     static_assert((std::is_same<decltype(gets(cp)), char*>::value), "");
+#endif
     static_assert((std::is_same<decltype(putc(0,fp)), int>::value), "");
     static_assert((std::is_same<decltype(putchar(0)), int>::value), "");
     static_assert((std::is_same<decltype(puts("")), int>::value), "");
