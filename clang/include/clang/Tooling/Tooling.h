@@ -30,6 +30,7 @@
 #ifndef LLVM_CLANG_TOOLING_TOOLING_H
 #define LLVM_CLANG_TOOLING_TOOLING_H
 
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LLVM.h"
@@ -335,8 +336,8 @@ inline std::unique_ptr<FrontendActionFactory> newFrontendActionFactory(
                              SourceFileCallbacks *Callbacks)
         : ConsumerFactory(ConsumerFactory), Callbacks(Callbacks) {}
 
-      clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
-                                            StringRef) override {
+      std::unique_ptr<clang::ASTConsumer>
+      CreateASTConsumer(clang::CompilerInstance &, StringRef) override {
         return ConsumerFactory->newASTConsumer();
       }
 

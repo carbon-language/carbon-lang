@@ -16,8 +16,8 @@
 
 using namespace clang;
 
-ASTConsumer *ASTMergeAction::CreateASTConsumer(CompilerInstance &CI,
-                                               StringRef InFile) {
+std::unique_ptr<ASTConsumer>
+ASTMergeAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
   return AdaptedAction->CreateASTConsumer(CI, InFile);
 }
 

@@ -22,8 +22,8 @@ class FixItOptions;
 
 class HTMLPrintAction : public ASTFrontendAction {
 protected:
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
 };
 
 class FixItAction : public ASTFrontendAction {
@@ -31,8 +31,8 @@ protected:
   std::unique_ptr<FixItRewriter> Rewriter;
   std::unique_ptr<FixItOptions> FixItOpts;
 
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
 
   bool BeginSourceFileAction(CompilerInstance &CI,
                              StringRef Filename) override;
@@ -59,8 +59,8 @@ protected:
 
 class RewriteObjCAction : public ASTFrontendAction {
 protected:
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
 };
 
 class RewriteMacrosAction : public PreprocessorFrontendAction {

@@ -887,12 +887,12 @@ class TopLevelDeclTrackerAction : public ASTFrontendAction {
 public:
   ASTUnit &Unit;
 
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override {
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override {
     CI.getPreprocessor().addPPCallbacks(
      new MacroDefinitionTrackerPPCallbacks(Unit.getCurrentTopLevelHashValue()));
-    return new TopLevelDeclTrackerConsumer(Unit, 
-                                           Unit.getCurrentTopLevelHashValue());
+    return llvm::make_unique<TopLevelDeclTrackerConsumer>(
+        Unit, Unit.getCurrentTopLevelHashValue());
   }
 
 public:
@@ -912,8 +912,8 @@ public:
   explicit PrecompilePreambleAction(ASTUnit &Unit)
       : Unit(Unit), HasEmittedPreamblePCH(false) {}
 
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
   bool hasEmittedPreamblePCH() const { return HasEmittedPreamblePCH; }
   void setHasEmittedPreamblePCH() { HasEmittedPreamblePCH = true; }
   bool shouldEraseOutputFiles() override { return !hasEmittedPreamblePCH(); }
@@ -975,8 +975,9 @@ public:
 
 }
 
-ASTConsumer *PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
-                                                         StringRef InFile) {
+std::unique_ptr<ASTConsumer>
+PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
+                                            StringRef InFile) {
   std::string Sysroot;
   std::string OutputFile;
   raw_ostream *OS = nullptr;
@@ -989,8 +990,8 @@ ASTConsumer *PrecompilePreambleAction::CreateASTConsumer(CompilerInstance &CI,
 
   CI.getPreprocessor().addPPCallbacks(new MacroDefinitionTrackerPPCallbacks(
       Unit.getCurrentTopLevelHashValue()));
-  return new PrecompilePreambleConsumer(Unit, this, CI.getPreprocessor(),
-                                        Sysroot, OS);
+  return llvm::make_unique<PrecompilePreambleConsumer>(
+      Unit, this, CI.getPreprocessor(), Sysroot, OS);
 }
 
 static bool isNonDriverDiag(const StoredDiagnostic &StoredDiag) {
@@ -1685,7 +1686,7 @@ void ASTUnit::transferASTDataFromCompilerInstance(CompilerInstance &CI) {
   assert(CI.hasInvocation() && "missing invocation");
   LangOpts = CI.getInvocation().LangOpts;
   TheSema = CI.takeSema();
-  Consumer.reset(CI.takeASTConsumer());
+  Consumer = CI.takeASTConsumer();
   if (CI.hasASTContext())
     Ctx = &CI.getASTContext();
   if (CI.hasPreprocessor())
@@ -1859,12 +1860,13 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(
   if (Persistent && !TrackerAct) {
     Clang->getPreprocessor().addPPCallbacks(
      new MacroDefinitionTrackerPPCallbacks(AST->getCurrentTopLevelHashValue()));
-    std::vector<ASTConsumer*> Consumers;
+    std::vector<std::unique_ptr<ASTConsumer>> Consumers;
     if (Clang->hasASTConsumer())
       Consumers.push_back(Clang->takeASTConsumer());
-    Consumers.push_back(new TopLevelDeclTrackerConsumer(*AST,
-                                           AST->getCurrentTopLevelHashValue()));
-    Clang->setASTConsumer(new MultiplexConsumer(Consumers));
+    Consumers.push_back(llvm::make_unique<TopLevelDeclTrackerConsumer>(
+        *AST, AST->getCurrentTopLevelHashValue()));
+    Clang->setASTConsumer(
+        llvm::make_unique<MultiplexConsumer>(std::move(Consumers)));
   }
   if (!Act->Execute()) {
     AST->transferASTDataFromCompilerInstance(*Clang);

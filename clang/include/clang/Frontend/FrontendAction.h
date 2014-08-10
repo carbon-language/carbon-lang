@@ -41,8 +41,8 @@ class FrontendAction {
   friend class WrapperFrontendAction;
 
 private:
-  ASTConsumer* CreateWrappedASTConsumer(CompilerInstance &CI,
-                                        StringRef InFile);
+  std::unique_ptr<ASTConsumer> CreateWrappedASTConsumer(CompilerInstance &CI,
+                                                        StringRef InFile);
 
 protected:
   /// @name Implementation Action Interface
@@ -61,8 +61,8 @@ protected:
   /// getCurrentFile().
   ///
   /// \return The new AST consumer, or null on failure.
-  virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                         StringRef InFile) = 0;
+  virtual std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                         StringRef InFile) = 0;
 
   /// \brief Callback before starting processing a single input, giving the
   /// opportunity to modify the CompilerInvocation or do some other action
@@ -229,11 +229,10 @@ public:
 
 class PluginASTAction : public ASTFrontendAction {
   virtual void anchor();
-protected:
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override = 0;
-
 public:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override = 0;
+
   /// \brief Parse the given plugin command line arguments.
   ///
   /// \param CI - The compiler instance, for use in reporting diagnostics.
@@ -249,8 +248,8 @@ class PreprocessorFrontendAction : public FrontendAction {
 protected:
   /// \brief Provide a default implementation which returns aborts;
   /// this method should never be called by FrontendAction clients.
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
 
 public:
   bool usesPreprocessorOnly() const override { return true; }
@@ -266,8 +265,8 @@ class WrapperFrontendAction : public FrontendAction {
   std::unique_ptr<FrontendAction> WrappedAction;
 
 protected:
-  ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                 StringRef InFile) override;
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef InFile) override;
   bool BeginInvocation(CompilerInstance &CI) override;
   bool BeginSourceFileAction(CompilerInstance &CI, StringRef Filename) override;
   void ExecuteAction() override;

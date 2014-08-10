@@ -183,118 +183,113 @@ void MultiplexASTMutationListener::DeclarationMarkedUsed(const Decl *D) {
 
 }  // end namespace clang
 
-MultiplexConsumer::MultiplexConsumer(ArrayRef<ASTConsumer *> C)
-    : Consumers(C.begin(), C.end()), MutationListener(),
-      DeserializationListener() {
+MultiplexConsumer::MultiplexConsumer(
+    std::vector<std::unique_ptr<ASTConsumer>> C)
+    : Consumers(std::move(C)), MutationListener(), DeserializationListener() {
   // Collect the mutation listeners and deserialization listeners of all
   // children, and create a multiplex listener each if so.
   std::vector<ASTMutationListener*> mutationListeners;
   std::vector<ASTDeserializationListener*> serializationListeners;
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i) {
-    ASTMutationListener* mutationListener =
-        Consumers[i]->GetASTMutationListener();
-    if (mutationListener)
+  for (auto &Consumer : Consumers) {
+    if (auto *mutationListener = Consumer->GetASTMutationListener())
       mutationListeners.push_back(mutationListener);
-    ASTDeserializationListener* serializationListener =
-        Consumers[i]->GetASTDeserializationListener();
-    if (serializationListener)
+    if (auto *serializationListener = Consumer->GetASTDeserializationListener())
       serializationListeners.push_back(serializationListener);
   }
-  if (mutationListeners.size()) {
-    MutationListener.reset(new MultiplexASTMutationListener(mutationListeners));
+  if (!mutationListeners.empty()) {
+    MutationListener =
+        llvm::make_unique<MultiplexASTMutationListener>(mutationListeners);
   }
-  if (serializationListeners.size()) {
-    DeserializationListener.reset(
-        new MultiplexASTDeserializationListener(serializationListeners));
+  if (!serializationListeners.empty()) {
+    DeserializationListener =
+        llvm::make_unique<MultiplexASTDeserializationListener>(
+            serializationListeners);
   }
 }
 
-MultiplexConsumer::~MultiplexConsumer() {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    delete Consumers[i];
-}
+MultiplexConsumer::~MultiplexConsumer() {}
 
 void MultiplexConsumer::Initialize(ASTContext &Context) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->Initialize(Context);
+  for (auto &Consumer : Consumers)
+    Consumer->Initialize(Context);
 }
 
 bool MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
   bool Continue = true;
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Continue = Continue && Consumers[i]->HandleTopLevelDecl(D);
+  for (auto &Consumer : Consumers)
+    Continue = Continue && Consumer->HandleTopLevelDecl(D);
   return Continue;
 }
 
 void MultiplexConsumer::HandleInlineMethodDefinition(CXXMethodDecl *D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleInlineMethodDefinition(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleInlineMethodDefinition(D);
 }
 
-void  MultiplexConsumer::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleCXXStaticMemberVarInstantiation(VD);
+void MultiplexConsumer::HandleCXXStaticMemberVarInstantiation(VarDecl *VD) {
+  for (auto &Consumer : Consumers)
+    Consumer->HandleCXXStaticMemberVarInstantiation(VD);
 }
 
 void MultiplexConsumer::HandleInterestingDecl(DeclGroupRef D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleInterestingDecl(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleInterestingDecl(D);
 }
 
 void MultiplexConsumer::HandleTranslationUnit(ASTContext &Ctx) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleTranslationUnit(Ctx);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleTranslationUnit(Ctx);
 }
 
 void MultiplexConsumer::HandleTagDeclDefinition(TagDecl *D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleTagDeclDefinition(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleTagDeclDefinition(D);
 }
 
 void MultiplexConsumer::HandleTagDeclRequiredDefinition(const TagDecl *D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleTagDeclRequiredDefinition(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleTagDeclRequiredDefinition(D);
 }
 
 void MultiplexConsumer::HandleCXXImplicitFunctionInstantiation(FunctionDecl *D){
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleCXXImplicitFunctionInstantiation(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleCXXImplicitFunctionInstantiation(D);
 }
 
 void MultiplexConsumer::HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleTopLevelDeclInObjCContainer(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleTopLevelDeclInObjCContainer(D);
 }
 
 void MultiplexConsumer::HandleImplicitImportDecl(ImportDecl *D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleImplicitImportDecl(D);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleImplicitImportDecl(D);
 }
 
 void MultiplexConsumer::HandleLinkerOptionPragma(llvm::StringRef Opts) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleLinkerOptionPragma(Opts);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleLinkerOptionPragma(Opts);
 }
 
 void MultiplexConsumer::HandleDetectMismatch(llvm::StringRef Name, llvm::StringRef Value) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleDetectMismatch(Name, Value);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleDetectMismatch(Name, Value);
 }
 
 void MultiplexConsumer::HandleDependentLibrary(llvm::StringRef Lib) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleDependentLibrary(Lib);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleDependentLibrary(Lib);
 }
 
 void MultiplexConsumer::CompleteTentativeDefinition(VarDecl *D) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->CompleteTentativeDefinition(D);
+  for (auto &Consumer : Consumers)
+    Consumer->CompleteTentativeDefinition(D);
 }
 
 void MultiplexConsumer::HandleVTable(
     CXXRecordDecl *RD, bool DefinitionRequired) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->HandleVTable(RD, DefinitionRequired);
+  for (auto &Consumer : Consumers)
+    Consumer->HandleVTable(RD, DefinitionRequired);
 }
 
 ASTMutationListener *MultiplexConsumer::GetASTMutationListener() {
@@ -306,18 +301,18 @@ ASTDeserializationListener *MultiplexConsumer::GetASTDeserializationListener() {
 }
 
 void MultiplexConsumer::PrintStats() {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    Consumers[i]->PrintStats();
+  for (auto &Consumer : Consumers)
+    Consumer->PrintStats();
 }
 
 void MultiplexConsumer::InitializeSema(Sema &S) {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    if (SemaConsumer *SC = dyn_cast<SemaConsumer>(Consumers[i]))
+  for (auto &Consumer : Consumers)
+    if (SemaConsumer *SC = dyn_cast<SemaConsumer>(Consumer.get()))
       SC->InitializeSema(S);
 }
 
 void MultiplexConsumer::ForgetSema() {
-  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
-    if (SemaConsumer *SC = dyn_cast<SemaConsumer>(Consumers[i]))
+  for (auto &Consumer : Consumers)
+    if (SemaConsumer *SC = dyn_cast<SemaConsumer>(Consumer.get()))
       SC->ForgetSema();
 }

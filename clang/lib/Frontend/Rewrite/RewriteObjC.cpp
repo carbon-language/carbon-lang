@@ -600,12 +600,12 @@ RewriteObjC::RewriteObjC(std::string inFile, raw_ostream* OS,
                "for @try/@finally (code may not execute properly)");
 }
 
-ASTConsumer *clang::CreateObjCRewriter(const std::string& InFile,
-                                       raw_ostream* OS,
-                                       DiagnosticsEngine &Diags,
-                                       const LangOptions &LOpts,
-                                       bool SilenceRewriteMacroWarning) {
-  return new RewriteObjCFragileABI(InFile, OS, Diags, LOpts, SilenceRewriteMacroWarning);
+std::unique_ptr<ASTConsumer>
+clang::CreateObjCRewriter(const std::string &InFile, raw_ostream *OS,
+                          DiagnosticsEngine &Diags, const LangOptions &LOpts,
+                          bool SilenceRewriteMacroWarning) {
+  return llvm::make_unique<RewriteObjCFragileABI>(InFile, OS, Diags, LOpts,
+                                                  SilenceRewriteMacroWarning);
 }
 
 void RewriteObjC::InitializeCommon(ASTContext &context) {

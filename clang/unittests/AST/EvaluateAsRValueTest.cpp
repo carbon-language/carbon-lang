@@ -59,9 +59,10 @@ class EvaluateConstantInitializersVisitor
 
 class EvaluateConstantInitializersAction : public clang::ASTFrontendAction {
  public:
-  clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
-                                        llvm::StringRef FilePath) override {
-    return new Consumer;
+   std::unique_ptr<clang::ASTConsumer>
+   CreateASTConsumer(clang::CompilerInstance &Compiler,
+                     llvm::StringRef FilePath) override {
+     return llvm::make_unique<Consumer>();
   }
 
  private:

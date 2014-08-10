@@ -134,9 +134,10 @@ void FrontendAction::setCurrentInput(const FrontendInputFile &CurrentInput,
   CurrentASTUnit = std::move(AST);
 }
 
-ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
-                                                      StringRef InFile) {
-  ASTConsumer* Consumer = CreateASTConsumer(CI, InFile);
+std::unique_ptr<ASTConsumer>
+FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile) {
+  std::unique_ptr<ASTConsumer> Consumer = CreateASTConsumer(CI, InFile);
   if (!Consumer)
     return nullptr;
 
@@ -145,7 +146,8 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
 
   // Make sure the non-plugin consumer is first, so that plugins can't
   // modifiy the AST.
-  std::vector<ASTConsumer*> Consumers(1, Consumer);
+  std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+  Consumers.push_back(std::move(Consumer));
 
   for (size_t i = 0, e = CI.getFrontendOpts().AddPluginActions.size();
        i != e; ++i) { 
@@ -155,16 +157,15 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
         it = FrontendPluginRegistry::begin(),
         ie = FrontendPluginRegistry::end();
         it != ie; ++it) {
-      if (it->getName() == CI.getFrontendOpts().AddPluginActions[i]) {
-        std::unique_ptr<PluginASTAction> P(it->instantiate());
-        FrontendAction* c = P.get();
-        if (P->ParseArgs(CI, CI.getFrontendOpts().AddPluginArgs[i]))
-          Consumers.push_back(c->CreateASTConsumer(CI, InFile));
-      }
+      if (it->getName() != CI.getFrontendOpts().AddPluginActions[i])
+        continue;
+      std::unique_ptr<PluginASTAction> P = it->instantiate();
+      if (P->ParseArgs(CI, CI.getFrontendOpts().AddPluginArgs[i]))
+        Consumers.push_back(P->CreateASTConsumer(CI, InFile));
     }
   }
 
-  return new MultiplexConsumer(Consumers);
+  return llvm::make_unique<MultiplexConsumer>(std::move(Consumers));
 }
 
 bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
@@ -308,8 +309,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
 
-    std::unique_ptr<ASTConsumer> Consumer(
-        CreateWrappedASTConsumer(CI, InputFile));
+    std::unique_ptr<ASTConsumer> Consumer =
+        CreateWrappedASTConsumer(CI, InputFile);
     if (!Consumer)
       goto failure;
 
@@ -350,7 +351,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
         goto failure;
     }
 
-    CI.setASTConsumer(Consumer.release());
+    CI.setASTConsumer(std::move(Consumer));
     if (!CI.hasASTConsumer())
       goto failure;
   }
@@ -449,7 +450,7 @@ void FrontendAction::EndSourceFile() {
       CI.resetAndLeakSema();
       CI.resetAndLeakASTContext();
     }
-    BuryPointer(CI.takeASTConsumer());
+    BuryPointer(CI.takeASTConsumer().get());
   } else {
     if (!isCurrentFileAST()) {
       CI.setSema(nullptr);
@@ -517,14 +518,15 @@ void ASTFrontendAction::ExecuteAction() {
 
 void PluginASTAction::anchor() { }
 
-ASTConsumer *
+std::unique_ptr<ASTConsumer>
 PreprocessorFrontendAction::CreateASTConsumer(CompilerInstance &CI,
                                               StringRef InFile) {
   llvm_unreachable("Invalid CreateASTConsumer on preprocessor action!");
 }
 
-ASTConsumer *WrapperFrontendAction::CreateASTConsumer(CompilerInstance &CI,
-                                                      StringRef InFile) {
+std::unique_ptr<ASTConsumer>
+WrapperFrontendAction::CreateASTConsumer(CompilerInstance &CI,
+                                         StringRef InFile) {
   return WrappedAction->CreateASTConsumer(CI, InFile);
 }
 bool WrapperFrontendAction::BeginInvocation(CompilerInstance &CI) {
