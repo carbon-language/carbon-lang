@@ -1684,7 +1684,7 @@ void ASTUnit::transferASTDataFromCompilerInstance(CompilerInstance &CI) {
   // created.
   assert(CI.hasInvocation() && "missing invocation");
   LangOpts = CI.getInvocation().LangOpts;
-  TheSema.reset(CI.takeSema());
+  TheSema = CI.takeSema();
   Consumer.reset(CI.takeASTConsumer());
   if (CI.hasASTContext())
     Ctx = &CI.getASTContext();

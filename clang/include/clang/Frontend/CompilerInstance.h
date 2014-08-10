@@ -459,7 +459,7 @@ public:
     return *TheSema;
   }
 
-  Sema *takeSema() { return TheSema.release(); }
+  std::unique_ptr<Sema> takeSema() { return std::move(TheSema); }
   void resetAndLeakSema() { BuryPointer(TheSema.release()); }
 
   /// }
