@@ -86,7 +86,7 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
   
   if (StatCache.get() == statCache) {
     // This is the first stat cache.
-    StatCache.reset(StatCache->takeNextStatCache());
+    StatCache = StatCache->takeNextStatCache();
     return;
   }
   

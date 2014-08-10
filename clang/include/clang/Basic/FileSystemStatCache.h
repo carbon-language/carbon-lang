@@ -84,7 +84,9 @@ public:
   /// \brief Retrieve the next stat call cache in the chain, transferring
   /// ownership of this cache (and, transitively, all of the remaining caches)
   /// to the caller.
-  FileSystemStatCache *takeNextStatCache() { return NextStatCache.release(); }
+  std::unique_ptr<FileSystemStatCache> takeNextStatCache() {
+    return std::move(NextStatCache);
+  }
 
 protected:
   // FIXME: The pointer here is a non-owning/optional reference to the
