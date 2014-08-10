@@ -182,6 +182,8 @@ namespace std {
 #include <ostream>
 #include <iomanip>
 
+#include <__debug>
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif

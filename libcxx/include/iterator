@@ -338,11 +338,7 @@ template <class C> auto crend(const C& c) -> decltype(std::rend(c));          //
 #include <Availability.h>
 #endif
 
-#ifdef _LIBCPP_DEBUG
-#   include <__debug>
-#else
-#   define _LIBCPP_ASSERT(x, m) ((void)0)
-#endif
+#include <__debug>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header

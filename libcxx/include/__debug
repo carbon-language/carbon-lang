@@ -11,19 +11,23 @@
 #ifndef _LIBCPP_DEBUG_H
 #define _LIBCPP_DEBUG_H
 
+#include <__config>
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
 
 #if _LIBCPP_DEBUG_LEVEL >= 1
-
 #   include <cstdlib>
 #   include <cstdio>
 #   include <cstddef>
 #   ifndef _LIBCPP_ASSERT
 #      define _LIBCPP_ASSERT(x, m) ((x) ? (void)0 : (_VSTD::printf("%s\n", m), _VSTD::abort()))
 #   endif
+#endif
 
+#ifndef _LIBCPP_ASSERT
+#   define _LIBCPP_ASSERT(x, m) ((void)0)
 #endif
 
 #if _LIBCPP_DEBUG_LEVEL >= 2

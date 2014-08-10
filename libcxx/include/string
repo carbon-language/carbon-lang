@@ -453,6 +453,8 @@ basic_string<char32_t> operator "" s( const char32_t *str, size_t len ); // C++1
 
 #include <__undef_min_max>
 
+#include <__debug>
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
