@@ -518,12 +518,26 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
   return Found;
 }
 
+static bool isCPSRDefined(const MachineInstr *MI) {
+  for (const auto &MO : MI->operands())
+    if (MO.isReg() && MO.getReg() == ARM::CPSR && (MO.isDef() || !MO.isDead()))
+      return true;
+  return false;
+}
+
 /// isPredicable - Return true if the specified instruction can be predicated.
 /// By default, this returns true for every instruction with a
 /// PredicateOperand.
 bool ARMBaseInstrInfo::isPredicable(MachineInstr *MI) const {
   if (!MI->isPredicable())
     return false;
+
+  // The ARM Architecture Reference Manual states that the CPSR may only be
+  // accessed by MUL in Thumb mode if it is outside an IT block.  Thus, if CPSR
+  // is defined (or clobbered) by this instruction, it is not predicable.
+  if (MI->getOpcode() == ARM::tMUL || MI->getOpcode() == ARM::t2MUL)
+    if (isCPSRDefined(MI))
+      return false;
 
   ARMFunctionInfo *AFI =
     MI->getParent()->getParent()->getInfo<ARMFunctionInfo>();
