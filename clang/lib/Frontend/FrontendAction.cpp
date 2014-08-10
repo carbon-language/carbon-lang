@@ -189,8 +189,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     IntrusiveRefCntPtr<DiagnosticsEngine> Diags(&CI.getDiagnostics());
 
-    std::unique_ptr<ASTUnit> AST(
-        ASTUnit::LoadFromASTFile(InputFile, Diags, CI.getFileSystemOpts()));
+    std::unique_ptr<ASTUnit> AST =
+        ASTUnit::LoadFromASTFile(InputFile, Diags, CI.getFileSystemOpts());
 
     if (!AST)
       goto failure;

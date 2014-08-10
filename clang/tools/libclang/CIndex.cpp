@@ -2780,12 +2780,12 @@ enum CXErrorCode clang_createTranslationUnit2(CXIndex CIdx,
   FileSystemOptions FileSystemOpts;
 
   IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
-  ASTUnit *AU = ASTUnit::LoadFromASTFile(ast_filename, Diags, FileSystemOpts,
-                                         CXXIdx->getOnlyLocalDecls(), None,
-                                         /*CaptureDiagnostics=*/true,
-                                         /*AllowPCHWithCompilerErrors=*/true,
-                                         /*UserFilesAreVolatile=*/true);
-  *out_TU = MakeCXTranslationUnit(CXXIdx, AU);
+  std::unique_ptr<ASTUnit> AU = ASTUnit::LoadFromASTFile(
+      ast_filename, Diags, FileSystemOpts, CXXIdx->getOnlyLocalDecls(), None,
+      /*CaptureDiagnostics=*/true,
+      /*AllowPCHWithCompilerErrors=*/true,
+      /*UserFilesAreVolatile=*/true);
+  *out_TU = MakeCXTranslationUnit(CXXIdx, AU.release());
   return *out_TU ? CXError_Success : CXError_Failure;
 }
 

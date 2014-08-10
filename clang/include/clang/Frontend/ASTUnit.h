@@ -708,14 +708,12 @@ public:
   /// lifetime is expected to extend past that of the returned ASTUnit.
   ///
   /// \returns - The initialized ASTUnit or null if the AST failed to load.
-  static ASTUnit *LoadFromASTFile(const std::string &Filename,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                  const FileSystemOptions &FileSystemOpts,
-                                  bool OnlyLocalDecls = false,
-                                  ArrayRef<RemappedFile> RemappedFiles = None,
-                                  bool CaptureDiagnostics = false,
-                                  bool AllowPCHWithCompilerErrors = false,
-                                  bool UserFilesAreVolatile = false);
+  static std::unique_ptr<ASTUnit> LoadFromASTFile(
+      const std::string &Filename, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+      const FileSystemOptions &FileSystemOpts, bool OnlyLocalDecls = false,
+      ArrayRef<RemappedFile> RemappedFiles = None,
+      bool CaptureDiagnostics = false, bool AllowPCHWithCompilerErrors = false,
+      bool UserFilesAreVolatile = false);
 
 private:
   /// \brief Helper function for \c LoadFromCompilerInvocation() and

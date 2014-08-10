@@ -45,8 +45,8 @@ void ASTMergeAction::ExecuteAction() {
                                     new ForwardingDiagnosticConsumer(
                                           *CI.getDiagnostics().getClient()),
                                     /*ShouldOwnClient=*/true));
-    ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,
-                                             CI.getFileSystemOpts(), false);
+    std::unique_ptr<ASTUnit> Unit = ASTUnit::LoadFromASTFile(
+        ASTFiles[I], Diags, CI.getFileSystemOpts(), false);
     if (!Unit)
       continue;
 
@@ -66,8 +66,6 @@ void ASTMergeAction::ExecuteAction() {
       
       Importer.Import(D);
     }
-
-    delete Unit;
   }
 
   AdaptedAction->ExecuteAction();

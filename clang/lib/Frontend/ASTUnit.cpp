@@ -662,14 +662,11 @@ void ASTUnit::ConfigureDiags(IntrusiveRefCntPtr<DiagnosticsEngine> &Diags,
   }
 }
 
-ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
-                              IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
-                                  const FileSystemOptions &FileSystemOpts,
-                                  bool OnlyLocalDecls,
-                                  ArrayRef<RemappedFile> RemappedFiles,
-                                  bool CaptureDiagnostics,
-                                  bool AllowPCHWithCompilerErrors,
-                                  bool UserFilesAreVolatile) {
+std::unique_ptr<ASTUnit> ASTUnit::LoadFromASTFile(
+    const std::string &Filename, IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
+    const FileSystemOptions &FileSystemOpts, bool OnlyLocalDecls,
+    ArrayRef<RemappedFile> RemappedFiles, bool CaptureDiagnostics,
+    bool AllowPCHWithCompilerErrors, bool UserFilesAreVolatile) {
   std::unique_ptr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
@@ -705,7 +702,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
 
   // Gather Info for preprocessor construction later on.
 
-  HeaderSearch &HeaderInfo = *AST->HeaderInfo.get();
+  HeaderSearch &HeaderInfo = *AST->HeaderInfo;
   unsigned Counter;
 
   AST->PP =
@@ -767,7 +764,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // Tell the diagnostic client that we have started a source file.
   AST->getDiagnostics().getClient()->BeginSourceFile(Context.getLangOpts(),&PP);
 
-  return AST.release();
+  return AST;
 }
 
 namespace {
