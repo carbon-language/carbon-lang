@@ -646,10 +646,10 @@ CodeGenAction::CreateASTConsumer(CompilerInstance &CI, StringRef InFile) {
     CoverageInfo = new CoverageSourceInfo;
     CI.getPreprocessor().addPPCallbacks(CoverageInfo);
   }
-  auto Result = llvm::make_unique<BackendConsumer>(
+  std::unique_ptr<BackendConsumer> Result(new BackendConsumer(
       BA, CI.getDiagnostics(), CI.getCodeGenOpts(), CI.getTargetOpts(),
-      CI.getLangOpts(), (bool)CI.getFrontendOpts().ShowTimers, InFile,
-      LinkModuleToUse, OS.release(), *VMContext, CoverageInfo);
+      CI.getLangOpts(), CI.getFrontendOpts().ShowTimers, InFile,
+      LinkModuleToUse, OS.release(), *VMContext, CoverageInfo));
   BEConsumer = Result.get();
   return std::move(Result);
 }
