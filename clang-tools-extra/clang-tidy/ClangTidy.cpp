@@ -179,10 +179,10 @@ private:
 
 class ClangTidyASTConsumer : public MultiplexConsumer {
 public:
-  ClangTidyASTConsumer(const SmallVectorImpl<ASTConsumer *> &Consumers,
+  ClangTidyASTConsumer(std::vector<std::unique_ptr<ASTConsumer>> Consumers,
                        std::unique_ptr<ast_matchers::MatchFinder> Finder,
                        std::vector<std::unique_ptr<ClangTidyCheck>> Checks)
-      : MultiplexConsumer(Consumers), Finder(std::move(Finder)),
+      : MultiplexConsumer(std::move(Consumers)), Finder(std::move(Finder)),
         Checks(std::move(Checks)) {}
 
 private:
@@ -203,8 +203,8 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
   }
 }
 
-
-clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
+std::unique_ptr<clang::ASTConsumer>
+ClangTidyASTConsumerFactory::CreateASTConsumer(
     clang::CompilerInstance &Compiler, StringRef File) {
   // FIXME: Move this to a separate method, so that CreateASTConsumer doesn't
   // modify Compiler.
@@ -224,7 +224,7 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
     Check->registerPPCallbacks(Compiler);
   }
 
-  SmallVector<ASTConsumer *, 2> Consumers;
+  std::vector<std::unique_ptr<ASTConsumer>> Consumers;
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
@@ -240,15 +240,16 @@ clang::ASTConsumer *ClangTidyASTConsumerFactory::CreateASTConsumer(
     AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
     AnalyzerOptions->AnalyzeNestedBlocks = true;
     AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
-    ento::AnalysisASTConsumer *AnalysisConsumer = ento::CreateAnalysisConsumer(
-        Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
-        AnalyzerOptions, Compiler.getFrontendOpts().Plugins);
+    std::unique_ptr<ento::AnalysisASTConsumer> AnalysisConsumer =
+        ento::CreateAnalysisConsumer(
+            Compiler.getPreprocessor(), Compiler.getFrontendOpts().OutputFile,
+            AnalyzerOptions, Compiler.getFrontendOpts().Plugins);
     AnalysisConsumer->AddDiagnosticConsumer(
         new AnalyzerDiagnosticConsumer(Context));
-    Consumers.push_back(AnalysisConsumer);
+    Consumers.push_back(std::move(AnalysisConsumer));
   }
-  return new ClangTidyASTConsumer(Consumers, std::move(Finder),
-                                  std::move(Checks));
+  return llvm::make_unique<ClangTidyASTConsumer>(
+      std::move(Consumers), std::move(Finder), std::move(Checks));
 }
 
 std::vector<std::string>
@@ -338,8 +339,8 @@ ClangTidyStats runClangTidy(ClangTidyOptionsProvider *OptionsProvider,
     class Action : public ASTFrontendAction {
     public:
       Action(ClangTidyASTConsumerFactory *Factory) : Factory(Factory) {}
-      ASTConsumer *CreateASTConsumer(CompilerInstance &Compiler,
-                                     StringRef File) override {
+      std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &Compiler,
+                                                     StringRef File) override {
         return Factory->CreateASTConsumer(Compiler, File);
       }
 

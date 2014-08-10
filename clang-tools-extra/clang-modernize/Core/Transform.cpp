@@ -49,7 +49,8 @@ private:
     FactoryAdaptor(MatchFinder &Finder, Transform &Owner)
         : Finder(Finder), Owner(Owner) {}
 
-    ASTConsumer *CreateASTConsumer(CompilerInstance &, StringRef) {
+    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &,
+                                                   StringRef) {
       return Finder.newASTConsumer();
     }
 

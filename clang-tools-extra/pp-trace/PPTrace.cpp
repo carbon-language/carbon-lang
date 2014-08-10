@@ -120,9 +120,10 @@ public:
       : Ignore(Ignore), CallbackCalls(CallbackCalls) {}
 
 protected:
-  virtual clang::ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
-                                                StringRef InFile) {
-    return new PPTraceConsumer(Ignore, CallbackCalls, CI.getPreprocessor());
+  std::unique_ptr<clang::ASTConsumer>
+  CreateASTConsumer(CompilerInstance &CI, StringRef InFile) override {
+    return llvm::make_unique<PPTraceConsumer>(Ignore, CallbackCalls,
+                                              CI.getPreprocessor());
   }
 
 private:

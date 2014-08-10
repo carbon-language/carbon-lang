@@ -99,8 +99,8 @@ public:
   ClangTidyASTConsumerFactory(ClangTidyContext &Context);
 
   /// \brief Returns an ASTConsumer that runs the specified clang-tidy checks.
-  clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &Compiler,
-                                        StringRef File);
+  std::unique_ptr<clang::ASTConsumer>
+  CreateASTConsumer(clang::CompilerInstance &Compiler, StringRef File);
 
   /// \brief Get the list of enabled checks.
   std::vector<std::string> getCheckNames(GlobList &Filter);
