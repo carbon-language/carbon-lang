@@ -80,8 +80,9 @@ void MipsMCExpr::PrintImpl(raw_ostream &OS) const {
 
 bool
 MipsMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                      const MCAsmLayout *Layout) const {
-  return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
+                                      const MCAsmLayout *Layout,
+                                      const MCFixup *Fixup) const {
+  return getSubExpr()->EvaluateAsRelocatable(Res, Layout, Fixup);
 }
 
 void MipsMCExpr::visitUsedExpr(MCStreamer &Streamer) const {

@@ -35,12 +35,6 @@ void ARMMCExpr::PrintImpl(raw_ostream &OS) const {
     OS << ')';
 }
 
-bool
-ARMMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                     const MCAsmLayout *Layout) const {
-  return false;
-}
-
 void ARMMCExpr::visitUsedExpr(MCStreamer &Streamer) const {
   Streamer.visitUsedExpr(*getSubExpr());
 }

@@ -63,7 +63,8 @@ public:
 
   void PrintImpl(raw_ostream &OS) const override;
   bool EvaluateAsRelocatableImpl(MCValue &Res,
-                                 const MCAsmLayout *Layout) const override {
+                                 const MCAsmLayout *Layout,
+                                 const MCFixup *Fixup) const override {
     return false;
   }
   void visitUsedExpr(MCStreamer &Streamer) const override {};

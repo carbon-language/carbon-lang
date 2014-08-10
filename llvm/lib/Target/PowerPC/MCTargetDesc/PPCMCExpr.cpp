@@ -53,10 +53,11 @@ void PPCMCExpr::PrintImpl(raw_ostream &OS) const {
 
 bool
 PPCMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                     const MCAsmLayout *Layout) const {
+                                     const MCAsmLayout *Layout,
+                                     const MCFixup *Fixup) const {
   MCValue Value;
 
-  if (!getSubExpr()->EvaluateAsRelocatable(Value, Layout))
+  if (!getSubExpr()->EvaluateAsRelocatable(Value, Layout, Fixup))
     return false;
 
   if (Value.isAbsolute()) {

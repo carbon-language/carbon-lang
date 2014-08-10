@@ -161,8 +161,9 @@ Sparc::Fixups SparcMCExpr::getFixupKind(SparcMCExpr::VariantKind Kind) {
 
 bool
 SparcMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
-                                       const MCAsmLayout *Layout) const {
-  return getSubExpr()->EvaluateAsRelocatable(Res, Layout);
+                                       const MCAsmLayout *Layout,
+                                       const MCFixup *Fixup) const {
+  return getSubExpr()->EvaluateAsRelocatable(Res, Layout, Fixup);
 }
 
 static void fixELFSymbolsInTLSFixupsImpl(const MCExpr *Expr, MCAssembler &Asm) {

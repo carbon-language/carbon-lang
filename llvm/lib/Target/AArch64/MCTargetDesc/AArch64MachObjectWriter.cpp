@@ -288,7 +288,8 @@ void AArch64MachObjectWriter::RecordRelocation(
       // FIXME: Will the Target we already have ever have any data in it
       // we need to preserve and merge with the new Target? How about
       // the FixedValue?
-      if (!Symbol->getVariableValue()->EvaluateAsRelocatable(Target, &Layout))
+      if (!Symbol->getVariableValue()->EvaluateAsRelocatable(Target, &Layout,
+                                                             &Fixup))
         Asm.getContext().FatalError(Fixup.getLoc(),
                                     "unable to resolve variable '" +
                                         Symbol->getName() + "'");

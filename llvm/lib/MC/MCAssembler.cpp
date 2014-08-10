@@ -141,7 +141,7 @@ static bool getSymbolOffsetImpl(const MCAsmLayout &Layout,
 
   // If SD is a variable, evaluate it.
   MCValue Target;
-  if (!S.getVariableValue()->EvaluateAsValue(Target, &Layout))
+  if (!S.getVariableValue()->EvaluateAsValue(Target, &Layout, nullptr))
     report_fatal_error("unable to evaluate offset for variable '" +
                        S.getName() + "'");
 
@@ -187,7 +187,7 @@ const MCSymbol *MCAsmLayout::getBaseSymbol(const MCSymbol &Symbol) const {
 
   const MCExpr *Expr = Symbol.getVariableValue();
   MCValue Value;
-  if (!Expr->EvaluateAsValue(Value, this))
+  if (!Expr->EvaluateAsValue(Value, this, nullptr))
     llvm_unreachable("Invalid Expression");
 
   const MCSymbolRefExpr *RefB = Value.getSymB();
@@ -438,11 +438,12 @@ const MCSymbolData *MCAssembler::getAtom(const MCSymbolData *SD) const {
 // a relocatable expr.
 // FIXME: Should this be the behavior of EvaluateAsRelocatable itself?
 static bool evaluate(const MCExpr &Expr, const MCAsmLayout &Layout,
-                     MCValue &Target) {
-  if (Expr.EvaluateAsValue(Target, &Layout))
+                     const MCFixup &Fixup, MCValue &Target) {
+  if (Expr.EvaluateAsValue(Target, &Layout, &Fixup)) {
     if (Target.isAbsolute())
       return true;
-  return Expr.EvaluateAsRelocatable(Target, &Layout);
+  }
+  return Expr.EvaluateAsRelocatable(Target, &Layout, &Fixup);
 }
 
 bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
@@ -454,7 +455,7 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
   // probably merge the two into a single callback that tries to evaluate a
   // fixup and records a relocation if one is needed.
   const MCExpr *Expr = Fixup.getValue();
-  if (!evaluate(*Expr, Layout, Target))
+  if (!evaluate(*Expr, Layout, Fixup, Target))
     getContext().FatalError(Fixup.getLoc(), "expected relocatable expression");
 
   bool IsPCRel = Backend.getFixupKindInfo(
