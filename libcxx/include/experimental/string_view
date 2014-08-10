@@ -187,7 +187,7 @@ namespace std {
 #endif
 
 _LIBCPP_BEGIN_NAMESPACE_LFTS
-    
+
     template<class _CharT, class _Traits = _VSTD::char_traits<_CharT> >
     class _LIBCPP_TYPE_VIS_ONLY basic_string_view {
     public:
@@ -212,7 +212,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
 
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         basic_string_view(const basic_string_view&) _NOEXCEPT = default;
-        
+
         _LIBCPP_INLINE_VISIBILITY
         basic_string_view& operator=(const basic_string_view&) _NOEXCEPT = default;
 
@@ -227,7 +227,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         {
 //             _LIBCPP_ASSERT(__len == 0 || __s != nullptr, "string_view::string_view(_CharT *, size_t): recieved nullptr");
         }
-            
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         basic_string_view(const _CharT* __s)
             : __data(__s), __size(_Traits::length(__s)) {}
@@ -235,45 +235,45 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         // [string.view.iterators], iterators
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_iterator begin()  const _NOEXCEPT { return cbegin(); }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_iterator end()    const _NOEXCEPT { return cend(); }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_iterator cbegin() const _NOEXCEPT { return __data; }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_iterator cend()   const _NOEXCEPT { return __data + __size; }
 
         _LIBCPP_INLINE_VISIBILITY
         const_reverse_iterator rbegin()   const _NOEXCEPT { return const_reverse_iterator(cend()); }
-        
+
         _LIBCPP_INLINE_VISIBILITY
         const_reverse_iterator rend()     const _NOEXCEPT { return const_reverse_iterator(cbegin()); }
-        
+
         _LIBCPP_INLINE_VISIBILITY
         const_reverse_iterator crbegin()  const _NOEXCEPT { return const_reverse_iterator(cend()); }
-        
+
         _LIBCPP_INLINE_VISIBILITY
         const_reverse_iterator crend()    const _NOEXCEPT { return const_reverse_iterator(cbegin()); }
 
         // [string.view.capacity], capacity
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         size_type size()     const _NOEXCEPT { return __size; }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         size_type length()   const _NOEXCEPT { return __size; }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         size_type max_size() const _NOEXCEPT { return _VSTD::numeric_limits<size_type>::max(); }
-        
+
         _LIBCPP_CONSTEXPR bool _LIBCPP_INLINE_VISIBILITY
         empty()         const _NOEXCEPT { return __size == 0; }
 
         // [string.view.access], element access
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference operator[](size_type __pos) const { return __data[__pos]; }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference at(size_type __pos) const
         {
@@ -290,7 +290,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         {
             return _LIBCPP_ASSERT(!empty(), "string_view::front(): string is empty"), __data[0];
         }
-        
+
         _LIBCPP_CONSTEXPR _LIBCPP_INLINE_VISIBILITY
         const_reference back() const
         {
@@ -307,7 +307,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             __data = nullptr;
             __size = 0;
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         void remove_prefix(size_type __n) _NOEXCEPT
         {
@@ -316,7 +316,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             __data += __n;
             __size -= __n;
         }
-            
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         void remove_suffix(size_type __n) _NOEXCEPT
         {
@@ -331,20 +331,20 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             const value_type *__p = __data;
             __data = __other.__data;
             __other.__data = __p;
-            
+
             size_type __sz = __size;
             __size = __other.__size;
             __other.__size = __sz;
 //             _VSTD::swap( __data, __other.__data );
 //             _VSTD::swap( __size, __other.__size );
         }
-                    
+
         // [string.view.ops], string operations:
         template<class _Allocator>
         _LIBCPP_INLINE_VISIBILITY
         _LIBCPP_EXPLICIT operator basic_string<_CharT, _Traits, _Allocator>() const
         { return basic_string<_CharT, _Traits, _Allocator>( begin(), end()); }
-        
+
         template<class _Allocator = allocator<_CharT> >
         _LIBCPP_INLINE_VISIBILITY
         basic_string<_CharT, _Traits, _Allocator> to_string( const _Allocator& __a = _Allocator())
@@ -358,7 +358,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             _VSTD::copy_n(begin() + __pos, __rlen, __s );
             return __rlen;
         }
-        
+
         _LIBCPP_CONSTEXPR
         basic_string_view substr(size_type __pos = 0, size_type __n = npos) const
         {
@@ -366,9 +366,9 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
 //                 throw out_of_range("string_view::substr");
 //             size_type __rlen = _VSTD::min( __n, size() - __pos );
 //             return basic_string_view(data() + __pos, __rlen);
-			return __pos > size()
-			       ? throw out_of_range("string_view::substr")
-			       : basic_string_view(data() + __pos, _VSTD::min(__n, size() - __pos));
+            return __pos > size()
+                ? throw out_of_range("string_view::substr")
+                : basic_string_view(data() + __pos, _VSTD::min(__n, size() - __pos));
         }
 
         _LIBCPP_CONSTEXPR_AFTER_CXX11 int compare(basic_string_view __sv) const _NOEXCEPT
@@ -379,7 +379,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
                 __retval = size() == __sv.size() ? 0 : ( size() < __sv.size() ? -1 : 1 );
             return __retval;
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, basic_string_view __sv) const
         {
@@ -392,19 +392,19 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
         {
             return substr(__pos1, __n1).compare(_sv.substr(__pos2, __n2));
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(const _CharT* __s) const
         {
             return compare(basic_string_view(__s));
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, const _CharT* __s) const
         {
             return substr(__pos1, __n1).compare(basic_string_view(__s));
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         int compare(size_type __pos1, size_type __n1, const _CharT* __s, size_type __n2) const
         {
@@ -419,14 +419,14 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find(_CharT __c, size_type __pos = 0) const _NOEXCEPT
         {
             return _VSTD::__str_find<value_type, size_type, traits_type, npos>
                 (data(), size(), __c, __pos);
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find(const _CharT* __s, size_type __pos, size_type __n) const
         {
@@ -434,7 +434,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find<value_type, size_type, traits_type, npos>
                 (data(), size(), __s, __pos, __n);
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find(const _CharT* __s, size_type __pos = 0) const
         {
@@ -451,7 +451,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_rfind<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type rfind(_CharT __c, size_type __pos = npos) const _NOEXCEPT
         {
@@ -483,11 +483,11 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find_first_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
         }
-    
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_first_of(_CharT __c, size_type __pos = 0) const _NOEXCEPT
         { return find(__c, __pos); }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_first_of(const _CharT* __s, size_type __pos, size_type __n) const
         {
@@ -495,7 +495,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find_first_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s, __pos, __n);
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_first_of(const _CharT* __s, size_type __pos=0) const
         {
@@ -512,11 +512,11 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find_last_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_last_of(_CharT __c, size_type __pos = npos) const _NOEXCEPT
         { return rfind(__c, __pos); }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_last_of(const _CharT* __s, size_type __pos, size_type __n) const
         {
@@ -541,7 +541,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find_first_not_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_first_not_of(_CharT __c, size_type __pos=0) const _NOEXCEPT
         {
@@ -564,7 +564,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return _VSTD::__str_find_first_not_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s, __pos, traits_type::length(__s));
         }
-        
+
         // find_last_not_of
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_last_not_of(basic_string_view __s, size_type __pos=npos) const _NOEXCEPT
@@ -572,15 +572,15 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             _LIBCPP_ASSERT(__s.size() == 0 || __s.data() != nullptr, "string_view::find_last_not_of(): recieved nullptr");
             return _VSTD::__str_find_last_not_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __s.data(), __pos, __s.size());
-        }       
-        
+        }
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_last_not_of(_CharT __c, size_type __pos=npos) const _NOEXCEPT
         {
             return _VSTD::__str_find_last_not_of<value_type, size_type, traits_type, npos>
                 (data(), size(), __c, __pos);
         }
-        
+
         _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
         size_type find_last_not_of(const _CharT* __s, size_type __pos, size_type __n) const
         {
@@ -597,7 +597,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
                 (data(), size(), __s, __pos, traits_type::length(__s));
         }
 
-    private:   
+    private:
         const   value_type* __data;
         size_type           __size;
     };
@@ -642,7 +642,7 @@ _LIBCPP_BEGIN_NAMESPACE_LFTS
             return true;
         return __lhs.compare(__rhs) != 0;
     }
-  
+
     template<class _CharT, class _Traits>
     _LIBCPP_CONSTEXPR_AFTER_CXX11 _LIBCPP_INLINE_VISIBILITY
     bool operator!=(basic_string_view<_CharT, _Traits> __lhs,
