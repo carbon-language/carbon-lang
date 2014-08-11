@@ -349,3 +349,15 @@ define i8* @preidx8sext64(i8* %src, i64* %out) {
   store i64 %ext, i64* %out, align 4
   ret i8* %ptr
 }
+
+; This test checks if illegal post-index is generated
+
+define i64* @postidx_clobber(i64* %addr) nounwind noinline ssp {
+; CHECK-LABEL: postidx_clobber:
+; CHECK-NOT: str     x0, [x0], #8
+; ret
+ %paddr = bitcast i64* %addr to i64**
+ store i64* %addr, i64** %paddr
+ %newaddr = getelementptr i64* %addr, i32 1
+ ret i64* %newaddr
+}
