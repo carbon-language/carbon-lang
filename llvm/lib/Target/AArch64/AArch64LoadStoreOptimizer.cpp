@@ -109,7 +109,7 @@ private:
   int getMemSize(MachineInstr *MemMI);
 };
 char AArch64LoadStoreOpt::ID = 0;
-}
+} // namespace
 
 static bool isUnscaledLdst(unsigned Opc) {
   switch (Opc) {
