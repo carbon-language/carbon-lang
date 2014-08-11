@@ -94,11 +94,11 @@ public:
     const MDNode *getVariable() const { return Variable; }
   };
 private:
-  /// A list of locations/constants belonging to this entry, sorted by offset.
+  /// A nonempty list of locations/constants belonging to this entry,
+  /// sorted by offset.
   SmallVector<Value, 1> Values;
 
 public:
-  DebugLocEntry() : Begin(nullptr), End(nullptr) {}
   DebugLocEntry(const MCSymbol *B, const MCSymbol *E, Value Val)
       : Begin(B), End(E) {
     Values.push_back(std::move(Val));
