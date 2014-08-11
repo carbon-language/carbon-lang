@@ -580,7 +580,7 @@ static void printUnwindRelocDest(const MachOObjectFile *Obj,
 
   outs() << Name;
   if (Addend)
-    outs() << " + " << format("0x%x", Addend);
+    outs() << " + " << format("0x%" PRIx64, Addend);
 }
 
 static void
