@@ -16,11 +16,6 @@ set(LSAN_SOURCES
 
 set(LSAN_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-# The common files need to build on every arch supported by ASan.
-# (Even if they build into dummy object files.)
-filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
-  x86_64 i386 powerpc64 arm aarch64 mips)
-
 add_custom_target(lsan)
 
 if(APPLE)

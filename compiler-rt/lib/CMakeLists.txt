@@ -19,7 +19,7 @@ if(COMPILER_RT_HAS_DFSAN)
   add_subdirectory(dfsan)
 endif()
 
-if(COMPILER_RT_HAS_LSAN)
+if(COMPILER_RT_HAS_LSAN OR COMPILER_RT_HAS_LSAN_COMMON)
   add_subdirectory(lsan)
 endif()
 

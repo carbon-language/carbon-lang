@@ -120,6 +120,10 @@ filter_available_targets(ASAN_SUPPORTED_ARCH
   x86_64 i386 powerpc64 arm mips arm_android)
 filter_available_targets(DFSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(LSAN_SUPPORTED_ARCH x86_64)
+# LSan common files should be available on all architectures supported
+# by other sanitizers (even if they build into dummy object files).
+filter_available_targets(LSAN_COMMON_SUPPORTED_ARCH
+  ${SANITIZER_COMMON_SUPPORTED_ARCH})
 filter_available_targets(MSAN_SUPPORTED_ARCH x86_64)
 filter_available_targets(PROFILE_SUPPORTED_ARCH x86_64 i386 arm aarch64)
 filter_available_targets(TSAN_SUPPORTED_ARCH x86_64)
@@ -159,6 +163,13 @@ if (COMPILER_RT_HAS_SANITIZER_COMMON AND LSAN_SUPPORTED_ARCH AND
   set(COMPILER_RT_HAS_LSAN TRUE)
 else()
   set(COMPILER_RT_HAS_LSAN FALSE)
+endif()
+
+if (COMPILER_RT_HAS_SANITIZER_COMMON AND LSAN_COMMON_SUPPORTED_ARCH AND
+    OS_NAME MATCHES "Darwin|Linux|FreeBSD")
+  set(COMPILER_RT_HAS_LSAN_COMMON TRUE)
+else()
+  set(COMPILER_RT_HAS_LSAN_COMMON FALSE)
 endif()
 
 if (COMPILER_RT_HAS_SANITIZER_COMMON AND MSAN_SUPPORTED_ARCH AND
