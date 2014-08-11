@@ -1,5 +1,6 @@
 ; RUN: llc < %s -march=x86 -mcpu=pentium4 -mattr=+sse2 | FileCheck %s -check-prefix=SSE2
 ; RUN: llc < %s -march=x86 -mcpu=pentium4 -mattr=+sse3 | FileCheck %s -check-prefix=SSE3
+; RUN: llc < %s -march=x86-64 -mattr=+avx | FileCheck %s -check-prefix=AVX
 
 define void @test_v4sf(<4 x float>* %P, <4 x float>* %Q, float %X) nounwind {
 	%tmp = insertelement <4 x float> zeroinitializer, float %X, i32 0		; <<4 x float>> [#uses=1]
@@ -37,6 +38,23 @@ define void @test_v2sd(<2 x double>* %P, <2 x double>* %Q, double %X) nounwind {
 define <4 x float> @load_extract_splat(<4 x float>* nocapture readonly %ptr, i64 %i, i64 %j) nounwind {
   %1 = getelementptr inbounds <4 x float>* %ptr, i64 %i
   %2 = load <4 x float>* %1, align 16
+  %3 = trunc i64 %j to i32
+  %4 = extractelement <4 x float> %2, i32 %3
+  %5 = insertelement <4 x float> undef, float %4, i32 0
+  %6 = insertelement <4 x float> %5, float %4, i32 1
+  %7 = insertelement <4 x float> %6, float %4, i32 2
+  %8 = insertelement <4 x float> %7, float %4, i32 3
+  ret <4 x float> %8
+  
+; AVX-LABEL: load_extract_splat
+; AVX-NOT: rsp
+; AVX: vbroadcastss
+}
+
+; Fold extract of a load into the load's address computation. This avoids spilling to the stack.
+define <4 x float> @load_extract_splat1(<4 x float>* nocapture readonly %ptr, i64 %i, i64 %j) nounwind {
+  %1 = getelementptr inbounds <4 x float>* %ptr, i64 %i
+  %2 = load <4 x float>* %1, align 16
   %3 = extractelement <4 x float> %2, i64 %j
   %4 = insertelement <4 x float> undef, float %3, i32 0
   %5 = insertelement <4 x float> %4, float %3, i32 1
@@ -44,7 +62,7 @@ define <4 x float> @load_extract_splat(<4 x float>* nocapture readonly %ptr, i64
   %7 = insertelement <4 x float> %6, float %3, i32 3
   ret <4 x float> %7
   
-; AVX-LABEL: load_extract_splat
+; AVX-LABEL: load_extract_splat1
 ; AVX-NOT: movs
 ; AVX: vbroadcastss
 }

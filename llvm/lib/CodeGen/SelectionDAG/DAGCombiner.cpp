@@ -188,6 +188,16 @@ namespace {
     bool CombineToPostIndexedLoadStore(SDNode *N);
     bool SliceUpLoad(SDNode *N);
 
+    /// \brief Replace an ISD::EXTRACT_VECTOR_ELT of a load with a narrowed
+    ///   load.
+    ///
+    /// \param EVE ISD::EXTRACT_VECTOR_ELT to be replaced.
+    /// \param InVecVT type of the input vector to EVE with bitcasts resolved.
+    /// \param EltNo index of the vector element to load.
+    /// \param OriginalLoad load that EVE came from to be replaced.
+    /// \returns EVE on success SDValue() on failure.
+    SDValue ReplaceExtractVectorEltOfLoadWithNarrowedLoad(
+        SDNode *EVE, EVT InVecVT, SDValue EltNo, LoadSDNode *OriginalLoad);
     void ReplaceLoadWithPromotedLoad(SDNode *Load, SDNode *ExtLoad);
     SDValue PromoteOperand(SDValue Op, EVT PVT, bool &Replace);
     SDValue SExtPromoteOperand(SDValue Op, EVT PVT);
@@ -9855,6 +9865,86 @@ SDValue DAGCombiner::visitINSERT_VECTOR_ELT(SDNode *N) {
   return DAG.getNode(ISD::BUILD_VECTOR, dl, VT, Ops);
 }
 
+SDValue DAGCombiner::ReplaceExtractVectorEltOfLoadWithNarrowedLoad(
+    SDNode *EVE, EVT InVecVT, SDValue EltNo, LoadSDNode *OriginalLoad) {
+  EVT ResultVT = EVE->getValueType(0);
+  EVT VecEltVT = InVecVT.getVectorElementType();
+  unsigned Align = OriginalLoad->getAlignment();
+  unsigned NewAlign = TLI.getDataLayout()->getABITypeAlignment(
+      VecEltVT.getTypeForEVT(*DAG.getContext()));
+
+  if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, VecEltVT))
+    return SDValue();
+
+  Align = NewAlign;
+
+  SDValue NewPtr = OriginalLoad->getBasePtr();
+  SDValue Offset;
+  EVT PtrType = NewPtr.getValueType();
+  MachinePointerInfo MPI;
+  if (auto *ConstEltNo = dyn_cast<ConstantSDNode>(EltNo)) {
+    int Elt = ConstEltNo->getZExtValue();
+    unsigned PtrOff = VecEltVT.getSizeInBits() * Elt / 8;
+    if (TLI.isBigEndian())
+      PtrOff = InVecVT.getSizeInBits() / 8 - PtrOff;
+    Offset = DAG.getConstant(PtrOff, PtrType);
+    MPI = OriginalLoad->getPointerInfo().getWithOffset(PtrOff);
+  } else {
+    Offset = DAG.getNode(
+        ISD::MUL, SDLoc(EVE), EltNo.getValueType(), EltNo,
+        DAG.getConstant(VecEltVT.getStoreSize(), EltNo.getValueType()));
+    if (TLI.isBigEndian())
+      Offset = DAG.getNode(
+          ISD::SUB, SDLoc(EVE), EltNo.getValueType(),
+          DAG.getConstant(InVecVT.getStoreSize(), EltNo.getValueType()), Offset);
+    MPI = OriginalLoad->getPointerInfo();
+  }
+  NewPtr = DAG.getNode(ISD::ADD, SDLoc(EVE), PtrType, NewPtr, Offset);
+
+  // The replacement we need to do here is a little tricky: we need to
+  // replace an extractelement of a load with a load.
+  // Use ReplaceAllUsesOfValuesWith to do the replacement.
+  // Note that this replacement assumes that the extractvalue is the only
+  // use of the load; that's okay because we don't want to perform this
+  // transformation in other cases anyway.
+  SDValue Load;
+  SDValue Chain;
+  if (ResultVT.bitsGT(VecEltVT)) {
+    // If the result type of vextract is wider than the load, then issue an
+    // extending load instead.
+    ISD::LoadExtType ExtType = TLI.isLoadExtLegal(ISD::ZEXTLOAD, VecEltVT)
+                                   ? ISD::ZEXTLOAD
+                                   : ISD::EXTLOAD;
+    Load = DAG.getExtLoad(
+        ExtType, SDLoc(EVE), ResultVT, OriginalLoad->getChain(), NewPtr, MPI,
+        VecEltVT, OriginalLoad->isVolatile(), OriginalLoad->isNonTemporal(),
+        OriginalLoad->isInvariant(), Align, OriginalLoad->getAAInfo());
+    Chain = Load.getValue(1);
+  } else {
+    Load = DAG.getLoad(
+        VecEltVT, SDLoc(EVE), OriginalLoad->getChain(), NewPtr, MPI,
+        OriginalLoad->isVolatile(), OriginalLoad->isNonTemporal(),
+        OriginalLoad->isInvariant(), Align, OriginalLoad->getAAInfo());
+    Chain = Load.getValue(1);
+    if (ResultVT.bitsLT(VecEltVT))
+      Load = DAG.getNode(ISD::TRUNCATE, SDLoc(EVE), ResultVT, Load);
+    else
+      Load = DAG.getNode(ISD::BITCAST, SDLoc(EVE), ResultVT, Load);
+  }
+  WorklistRemover DeadNodes(*this);
+  SDValue From[] = { SDValue(EVE, 0), SDValue(OriginalLoad, 1) };
+  SDValue To[] = { Load, Chain };
+  DAG.ReplaceAllUsesOfValuesWith(From, To, 2);
+  // Since we're explicitly calling ReplaceAllUses, add the new node to the
+  // worklist explicitly as well.
+  AddToWorklist(Load.getNode());
+  AddUsersToWorklist(Load.getNode()); // Add users too
+  // Make sure to revisit this node to clean it up; it will usually be dead.
+  AddToWorklist(EVE);
+  ++OpsNarrowed;
+  return SDValue(EVE, 0);
+}
+
 SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
   // (vextract (scalar_to_vector val, 0) -> val
   SDValue InVec = N->getOperand(0);
@@ -9923,6 +10013,39 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     }
   }
 
+  bool BCNumEltsChanged = false;
+  EVT ExtVT = VT.getVectorElementType();
+  EVT LVT = ExtVT;
+
+  // If the result of load has to be truncated, then it's not necessarily
+  // profitable.
+  if (NVT.bitsLT(LVT) && !TLI.isTruncateFree(LVT, NVT))
+    return SDValue();
+
+  if (InVec.getOpcode() == ISD::BITCAST) {
+    // Don't duplicate a load with other uses.
+    if (!InVec.hasOneUse())
+      return SDValue();
+
+    EVT BCVT = InVec.getOperand(0).getValueType();
+    if (!BCVT.isVector() || ExtVT.bitsGT(BCVT.getVectorElementType()))
+      return SDValue();
+    if (VT.getVectorNumElements() != BCVT.getVectorNumElements())
+      BCNumEltsChanged = true;
+    InVec = InVec.getOperand(0);
+    ExtVT = BCVT.getVectorElementType();
+  }
+
+  // (vextract (vN[if]M load $addr), i) -> ([if]M load $addr + i * size)
+  if (!LegalOperations && !ConstEltNo && InVec.hasOneUse() &&
+      ISD::isNormalLoad(InVec.getNode()) &&
+      !N->getOperand(1)->hasPredecessor(InVec.getNode())) {
+    SDValue Index = N->getOperand(1);
+    if (LoadSDNode *OrigLoad = dyn_cast<LoadSDNode>(InVec))
+      return ReplaceExtractVectorEltOfLoadWithNarrowedLoad(N, VT, Index,
+                                                           OrigLoad);
+  }
+
   // Perform only after legalization to ensure build_vector / vector_shuffle
   // optimizations have already been done.
   if (!LegalOperations) return SDValue();
@@ -9933,30 +10056,6 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
 
   if (ConstEltNo) {
     int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
-    bool NewLoad = false;
-    bool BCNumEltsChanged = false;
-    EVT ExtVT = VT.getVectorElementType();
-    EVT LVT = ExtVT;
-
-    // If the result of load has to be truncated, then it's not necessarily
-    // profitable.
-    if (NVT.bitsLT(LVT) && !TLI.isTruncateFree(LVT, NVT))
-      return SDValue();
-
-    if (InVec.getOpcode() == ISD::BITCAST) {
-      // Don't duplicate a load with other uses.
-      if (!InVec.hasOneUse())
-        return SDValue();
-
-      EVT BCVT = InVec.getOperand(0).getValueType();
-      if (!BCVT.isVector() || ExtVT.bitsGT(BCVT.getVectorElementType()))
-        return SDValue();
-      if (VT.getVectorNumElements() != BCVT.getVectorNumElements())
-        BCNumEltsChanged = true;
-      InVec = InVec.getOperand(0);
-      ExtVT = BCVT.getVectorElementType();
-      NewLoad = true;
-    }
 
     LoadSDNode *LN0 = nullptr;
     const ShuffleVectorSDNode *SVN = nullptr;
@@ -9999,6 +10098,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
       if (ISD::isNormalLoad(InVec.getNode())) {
         LN0 = cast<LoadSDNode>(InVec);
         Elt = (Idx < (int)NumElems) ? Idx : Idx - (int)NumElems;
+        EltNo = DAG.getConstant(Elt, EltNo.getValueType());
       }
     }
 
@@ -10011,72 +10111,7 @@ SDValue DAGCombiner::visitEXTRACT_VECTOR_ELT(SDNode *N) {
     if (Elt == -1)
       return DAG.getUNDEF(LVT);
 
-    unsigned Align = LN0->getAlignment();
-    if (NewLoad) {
-      // Check the resultant load doesn't need a higher alignment than the
-      // original load.
-      unsigned NewAlign =
-        TLI.getDataLayout()
-            ->getABITypeAlignment(LVT.getTypeForEVT(*DAG.getContext()));
-
-      if (NewAlign > Align || !TLI.isOperationLegalOrCustom(ISD::LOAD, LVT))
-        return SDValue();
-
-      Align = NewAlign;
-    }
-
-    SDValue NewPtr = LN0->getBasePtr();
-    unsigned PtrOff = 0;
-
-    if (Elt) {
-      PtrOff = LVT.getSizeInBits() * Elt / 8;
-      EVT PtrType = NewPtr.getValueType();
-      if (TLI.isBigEndian())
-        PtrOff = VT.getSizeInBits() / 8 - PtrOff;
-      NewPtr = DAG.getNode(ISD::ADD, SDLoc(N), PtrType, NewPtr,
-                           DAG.getConstant(PtrOff, PtrType));
-    }
-
-    // The replacement we need to do here is a little tricky: we need to
-    // replace an extractelement of a load with a load.
-    // Use ReplaceAllUsesOfValuesWith to do the replacement.
-    // Note that this replacement assumes that the extractvalue is the only
-    // use of the load; that's okay because we don't want to perform this
-    // transformation in other cases anyway.
-    SDValue Load;
-    SDValue Chain;
-    if (NVT.bitsGT(LVT)) {
-      // If the result type of vextract is wider than the load, then issue an
-      // extending load instead.
-      ISD::LoadExtType ExtType = TLI.isLoadExtLegal(ISD::ZEXTLOAD, LVT)
-        ? ISD::ZEXTLOAD : ISD::EXTLOAD;
-      Load = DAG.getExtLoad(ExtType, SDLoc(N), NVT, LN0->getChain(),
-                            NewPtr, LN0->getPointerInfo().getWithOffset(PtrOff),
-                            LVT, LN0->isVolatile(), LN0->isNonTemporal(),
-                            LN0->isInvariant(), Align, LN0->getAAInfo());
-      Chain = Load.getValue(1);
-    } else {
-      Load = DAG.getLoad(LVT, SDLoc(N), LN0->getChain(), NewPtr,
-                         LN0->getPointerInfo().getWithOffset(PtrOff),
-                         LN0->isVolatile(), LN0->isNonTemporal(),
-                         LN0->isInvariant(), Align, LN0->getAAInfo());
-      Chain = Load.getValue(1);
-      if (NVT.bitsLT(LVT))
-        Load = DAG.getNode(ISD::TRUNCATE, SDLoc(N), NVT, Load);
-      else
-        Load = DAG.getNode(ISD::BITCAST, SDLoc(N), NVT, Load);
-    }
-    WorklistRemover DeadNodes(*this);
-    SDValue From[] = { SDValue(N, 0), SDValue(LN0,1) };
-    SDValue To[] = { Load, Chain };
-    DAG.ReplaceAllUsesOfValuesWith(From, To, 2);
-    // Since we're explcitly calling ReplaceAllUses, add the new node to the
-    // worklist explicitly as well.
-    AddToWorklist(Load.getNode());
-    AddUsersToWorklist(Load.getNode()); // Add users too
-    // Make sure to revisit this node to clean it up; it will usually be dead.
-    AddToWorklist(N);
-    return SDValue(N, 0);
+    return ReplaceExtractVectorEltOfLoadWithNarrowedLoad(N, VT, EltNo, LN0);
   }
 
   return SDValue();
