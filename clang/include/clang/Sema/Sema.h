@@ -5585,6 +5585,10 @@ public:
   // C++ Variadic Templates (C++0x [temp.variadic])
   //===--------------------------------------------------------------------===//
 
+  /// Determine whether an unexpanded parameter pack might be permitted in this
+  /// location. Useful for error recovery.
+  bool isUnexpandedParameterPackPermitted();
+
   /// \brief The context in which an unexpanded parameter pack is
   /// being diagnosed.
   ///

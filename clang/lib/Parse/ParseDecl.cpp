@@ -5426,6 +5426,15 @@ void Parser::ParseParameterDeclarationClause(
       // Otherwise, we have something.  Add it and let semantic analysis try
       // to grok it and add the result to the ParamInfo we are building.
 
+      // Last chance to recover from a misplaced ellipsis in an attempted
+      // parameter pack declaration.
+      if (Tok.is(tok::ellipsis) &&
+          (NextToken().isNot(tok::r_paren) ||
+           (!ParmDeclarator.getEllipsisLoc().isValid() &&
+            !Actions.isUnexpandedParameterPackPermitted())) &&
+          Actions.containsUnexpandedParameterPacks(ParmDeclarator))
+        DiagnoseMisplacedEllipsisInDeclarator(ConsumeToken(), ParmDeclarator);
+
       // Inform the actions module about the parameter declarator, so it gets
       // added to the current scope.
       Decl *Param = Actions.ActOnParamDeclarator(getCurScope(), 
@@ -5492,12 +5501,34 @@ void Parser::ParseParameterDeclarationClause(
                                           Param, DefArgToks));
     }
 
-    if (TryConsumeToken(tok::ellipsis, EllipsisLoc) &&
-        !getLangOpts().CPlusPlus) {
-      // We have ellipsis without a preceding ',', which is ill-formed
-      // in C. Complain and provide the fix.
-      Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
+    if (TryConsumeToken(tok::ellipsis, EllipsisLoc)) {
+      if (!getLangOpts().CPlusPlus) {
+        // We have ellipsis without a preceding ',', which is ill-formed
+        // in C. Complain and provide the fix.
+        Diag(EllipsisLoc, diag::err_missing_comma_before_ellipsis)
+            << FixItHint::CreateInsertion(EllipsisLoc, ", ");
+      } else if (ParmDeclarator.getEllipsisLoc().isValid() ||
+                 Actions.containsUnexpandedParameterPacks(ParmDeclarator)) {
+        // It looks like this was supposed to be a parameter pack. Warn and
+        // point out where the ellipsis should have gone.
+        SourceLocation ParmEllipsis = ParmDeclarator.getEllipsisLoc();
+        Diag(EllipsisLoc, diag::warn_misplaced_ellipsis_vararg)
+          << ParmEllipsis.isValid() << ParmEllipsis;
+        if (ParmEllipsis.isValid()) {
+          Diag(ParmEllipsis,
+               diag::note_misplaced_ellipsis_vararg_existing_ellipsis);
+        } else {
+          Diag(ParmDeclarator.getIdentifierLoc(),
+               diag::note_misplaced_ellipsis_vararg_add_ellipsis)
+            << FixItHint::CreateInsertion(ParmDeclarator.getIdentifierLoc(),
+                                          "...")
+            << !ParmDeclarator.hasName();
+        }
+        Diag(EllipsisLoc, diag::note_misplaced_ellipsis_vararg_add_comma)
           << FixItHint::CreateInsertion(EllipsisLoc, ", ");
+      }
+
+      // We can't have any more parameters after an ellipsis.
       break;
     }
 

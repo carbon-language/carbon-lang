@@ -27,32 +27,32 @@ struct classify_function<R(Args...) const volatile> {
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......)> {
+struct classify_function<R(Args..., ...)> {
   static const unsigned value = 5;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const> {
+struct classify_function<R(Args..., ...) const> {
   static const unsigned value = 6;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) volatile> {
+struct classify_function<R(Args..., ...) volatile> {
   static const unsigned value = 7;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const volatile> {
+struct classify_function<R(Args..., ...) const volatile> {
   static const unsigned value = 8;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) &&> {
+struct classify_function<R(Args..., ...) &&> {
   static const unsigned value = 9;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const &> {
+struct classify_function<R(Args..., ...) const &> {
   static const unsigned value = 10;
 };
 

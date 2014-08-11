@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -std=c++11 -fsyntax-only -verify %s
-// expected-no-diagnostics
 
 template<typename T> struct identity;
 template<typename ...Types> struct tuple;
@@ -22,7 +21,7 @@ template<typename T> struct is_same<T, T> {
 template<typename T, typename ...Types>
 struct X0 {
   typedef identity<T(Types...)> function_pack_1;
-  typedef identity<T(Types......)> variadic_function_pack_1;
+  typedef identity<T(Types......)> variadic_function_pack_1; // expected-warning {{varargs}} expected-note {{pack}} expected-note {{insert ','}}
   typedef identity<T(T...)> variadic_1;
   typedef tuple<T(Types, ...)...> template_arg_expansion_1;
 };

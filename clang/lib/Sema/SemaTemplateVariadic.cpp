@@ -197,6 +197,20 @@ namespace {
   };
 }
 
+/// \brief Determine whether it's possible for an unexpanded parameter pack to
+/// be valid in this location. This only happens when we're in a declaration
+/// that is nested within an expression that could be expanded, such as a
+/// lambda-expression within a function call.
+///
+/// This is conservatively correct, but may claim that some unexpanded packs are
+/// permitted when they are not.
+bool Sema::isUnexpandedParameterPackPermitted() {
+  for (auto *SI : FunctionScopes)
+    if (isa<sema::LambdaScopeInfo>(SI))
+      return true;
+  return false;
+}
+
 /// \brief Diagnose all of the unexpanded parameter packs in the given
 /// vector.
 bool
