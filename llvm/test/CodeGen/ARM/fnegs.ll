@@ -1,8 +1,11 @@
 ; RUN: llc -mtriple=arm-eabi -mattr=+vfp2 %s -o - \
 ; RUN:  | FileCheck %s -check-prefix=VFP2
 
-; RUN: llc -mtriple=arm-eabi -mattr=+neon %s -o - \
+; RUN: llc -mtriple=arm-eabi -mattr=+neon,-neonfp %s -o - \
 ; RUN:  | FileCheck %s -check-prefix=NFP0
+
+; RUN: llc -mtriple=arm-eabi -mattr=+neon,+neonfp %s -o - \
+; RUN:  | FileCheck %s -check-prefix=NFP1
 
 ; RUN: llc -mtriple=arm-eabi -mcpu=cortex-a8 %s -o - \
 ; RUN:  | FileCheck %s -check-prefix=CORTEXA8
