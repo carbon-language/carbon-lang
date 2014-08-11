@@ -130,7 +130,7 @@ namespace {
   private:
     bool optimizeCmpInstr(MachineInstr *MI, MachineBasicBlock *MBB);
     bool optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
-                          SmallPtrSet<MachineInstr*, 16> &LocalMIs);
+                          SmallPtrSetImpl<MachineInstr*> &LocalMIs);
     bool optimizeSelect(MachineInstr *MI);
     bool optimizeCopyOrBitcast(MachineInstr *MI);
     bool isMoveImmediate(MachineInstr *MI,
@@ -262,7 +262,7 @@ INITIALIZE_PASS_END(PeepholeOptimizer, "peephole-opts",
 /// debug uses.
 bool PeepholeOptimizer::
 optimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
-                 SmallPtrSet<MachineInstr*, 16> &LocalMIs) {
+                 SmallPtrSetImpl<MachineInstr*> &LocalMIs) {
   unsigned SrcReg, DstReg, SubIdx;
   if (!TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx))
     return false;
