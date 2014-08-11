@@ -194,6 +194,7 @@ def tfe : Operand <i1> {
 def MUBUFAddr32 : ComplexPattern<i64, 9, "SelectMUBUFAddr32">;
 def MUBUFAddr64 : ComplexPattern<i64, 3, "SelectMUBUFAddr64">;
 def MUBUFScratch : ComplexPattern<i64, 4, "SelectMUBUFScratch">;
+def MUBUFOffset : ComplexPattern<i64, 6, "SelectMUBUFOffset">;
 
 def VOP3Mods0 : ComplexPattern<untyped, 4, "SelectVOP3Mods0">;
 def VOP3Mods  : ComplexPattern<untyped, 2, "SelectVOP3Mods">;
@@ -901,6 +902,11 @@ class DS_1A1D_NORET <bits<8> op, string asm, RegisterClass rc> : DS_1A <
   let mayLoad = 1;
 }
 
+class MUBUFAddr64Table <bit is_addr64> {
+
+  bit IsAddr64 = is_addr64;
+}
+
 class MTBUF_Store_Helper <bits<3> op, string asm, RegisterClass regClass> : MTBUF <
   op,
   (outs),
@@ -927,7 +933,11 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
                              (ins SReg_128:$srsrc,
                              mbuf_offset:$offset, SSrc_32:$soffset, glc:$glc,
                              slc:$slc, tfe:$tfe),
-                             asm#" $vdata, $srsrc, $soffset"#"$offset"#"$glc"#"$slc"#"$tfe", []>;
+                             asm#" $vdata, $srsrc, $soffset"#"$offset"#"$glc"#"$slc"#"$tfe",
+                             [(set load_vt:$vdata, (ld (MUBUFOffset v4i32:$srsrc,
+                                                       i32:$soffset, i16:$offset,
+                                                       i1:$glc, i1:$slc, i1:$tfe)))]>,
+                     MUBUFAddr64Table<0>;
       }
 
       let offen = 1, idxen = 0  in {
@@ -959,7 +969,7 @@ multiclass MUBUF_Load_Helper <bits<7> op, string asm, RegisterClass regClass,
                            (ins SReg_128:$srsrc, VReg_64:$vaddr, mbuf_offset:$offset),
                            asm#" $vdata, $vaddr, $srsrc, 0 addr64"#"$offset",
                            [(set load_vt:$vdata, (ld (MUBUFAddr64 v4i32:$srsrc,
-                                                  i64:$vaddr, i16:$offset)))]>;
+                                                  i64:$vaddr, i16:$offset)))]>, MUBUFAddr64Table<1>;
     }
   }
 }
@@ -979,6 +989,18 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
       []
     >;
 
+    let offen = 0, idxen = 0, vaddr = 0 in {
+      def _OFFSET : MUBUF <
+        op, (outs),
+        (ins vdataClass:$vdata, SReg_128:$srsrc, mbuf_offset:$offset,
+              SSrc_32:$soffset, glc:$glc, slc:$slc, tfe:$tfe),
+        name#" $vdata, $srsrc, $soffset"#"$offset"#"$glc"#"$slc"#"$tfe",
+        [(st store_vt:$vdata, (MUBUFOffset v4i32:$srsrc, i32:$soffset,
+                                           i16:$offset, i1:$glc, i1:$slc,
+                                           i1:$tfe))]
+      >, MUBUFAddr64Table<0>;
+    } // offen = 0, idxen = 0, vaddr = 0
+
     let offen = 1, idxen = 0  in {
       def _OFFEN  : MUBUF <
         op, (outs),
@@ -997,7 +1019,8 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
     (ins vdataClass:$vdata, SReg_128:$srsrc, VReg_64:$vaddr, mbuf_offset:$offset),
     name#" $vdata, $vaddr, $srsrc, 0 addr64"#"$offset",
     [(st store_vt:$vdata,
-     (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i16:$offset))]> {
+     (MUBUFAddr64 v4i32:$srsrc, i64:$vaddr, i16:$offset))]>, MUBUFAddr64Table<1>
+     {
 
       let mayLoad = 0;
       let mayStore = 1;
@@ -1214,6 +1237,14 @@ def getMCOpcode : InstrMapping {
   let ColFields = ["Subtarget"];
   let KeyCol = [!cast<string>(SISubtarget.NONE)];
   let ValueCols = [[!cast<string>(SISubtarget.SI)]];
+}
+
+def getAddr64Inst : InstrMapping {
+  let FilterClass = "MUBUFAddr64Table";
+  let RowFields = ["NAME"];
+  let ColFields = ["IsAddr64"];
+  let KeyCol = ["0"];
+  let ValueCols = [["1"]];
 }
 
 include "SIInstructions.td"

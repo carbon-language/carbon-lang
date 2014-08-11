@@ -75,9 +75,9 @@ define void @sext_in_reg_i8_to_v1i32(<1 x i32> addrspace(1)* %out, <1 x i32> %a,
 }
 
 ; FUNC-LABEL: @sext_in_reg_i1_to_i64
+; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: S_ADD_I32 [[VAL:s[0-9]+]],
 ; SI: S_BFE_I32 s{{[0-9]+}}, s{{[0-9]+}}, 0x10000
-; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: BUFFER_STORE_DWORDX2
 define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounwind {
   %c = add i64 %a, %b
@@ -88,9 +88,9 @@ define void @sext_in_reg_i1_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 }
 
 ; FUNC-LABEL: @sext_in_reg_i8_to_i64
+; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: S_ADD_I32 [[VAL:s[0-9]+]],
 ; SI: S_SEXT_I32_I8 [[EXTRACT:s[0-9]+]], [[VAL]]
-; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: BUFFER_STORE_DWORDX2
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
@@ -112,9 +112,9 @@ define void @sext_in_reg_i8_to_i64(i64 addrspace(1)* %out, i64 %a, i64 %b) nounw
 }
 
 ; FUNC-LABEL: @sext_in_reg_i16_to_i64
+; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: S_ADD_I32 [[VAL:s[0-9]+]],
 ; SI: S_SEXT_I32_I16 [[EXTRACT:s[0-9]+]], [[VAL]]
-; SI: S_MOV_B32 {{s[0-9]+}}, -1
 ; SI: BUFFER_STORE_DWORDX2
 
 ; EG: MEM_{{.*}} STORE_{{.*}} [[RES_LO:T[0-9]+\.[XYZW]]], [[ADDR_LO:T[0-9]+.[XYZW]]]
