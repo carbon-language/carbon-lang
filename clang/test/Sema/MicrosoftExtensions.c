@@ -39,6 +39,8 @@ struct nested2 {
   NESTED1;  // expected-warning {{anonymous structs are a Microsoft extension}}
 };
 
+struct nested2 PR20573 = { .a = 3 };
+
 struct nested3 {
   long d;
   struct nested4 { // expected-warning {{anonymous structs are a Microsoft extension}}

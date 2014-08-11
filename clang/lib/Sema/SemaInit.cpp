@@ -1734,24 +1734,6 @@ static void ExpandAnonymousFieldDesignator(Sema &SemaRef,
                         &Replacements[0] + Replacements.size());
 }
 
-/// \brief Given an implicit anonymous field, search the IndirectField that
-///  corresponds to FieldName.
-static IndirectFieldDecl *FindIndirectFieldDesignator(FieldDecl *AnonField,
-                                                 IdentifierInfo *FieldName) {
-  if (!FieldName)
-    return nullptr;
-
-  assert(AnonField->isAnonymousStructOrUnion());
-  Decl *NextDecl = AnonField->getNextDeclInContext();
-  while (IndirectFieldDecl *IF = 
-          dyn_cast_or_null<IndirectFieldDecl>(NextDecl)) {
-    if (FieldName == IF->getAnonField()->getIdentifier())
-      return IF;
-    NextDecl = NextDecl->getNextDeclInContext();
-  }
-  return nullptr;
-}
-
 static DesignatedInitExpr *CloneDesignatedInitExpr(Sema &SemaRef,
                                                    DesignatedInitExpr *DIE) {
   unsigned NumIndexExprs = DIE->getNumSubExprs() - 1;
@@ -1892,102 +1874,67 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
       return true;
     }
 
-    // Note: we perform a linear search of the fields here, despite
-    // the fact that we have a faster lookup method, because we always
-    // need to compute the field's index.
     FieldDecl *KnownField = D->getField();
-    IdentifierInfo *FieldName = D->getFieldName();
-    unsigned FieldIndex = 0;
-    RecordDecl::field_iterator
-      Field = RT->getDecl()->field_begin(),
-      FieldEnd = RT->getDecl()->field_end();
-    for (; Field != FieldEnd; ++Field) {
-      if (Field->isUnnamedBitfield())
-        continue;
-
-      // If we find a field representing an anonymous field, look in the
-      // IndirectFieldDecl that follow for the designated initializer.
-      if (!KnownField && Field->isAnonymousStructOrUnion()) {
-        if (IndirectFieldDecl *IF =
-            FindIndirectFieldDesignator(*Field, FieldName)) {
+    if (!KnownField) {
+      IdentifierInfo *FieldName = D->getFieldName();
+      DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
+      for (NamedDecl *ND : Lookup) {
+        if (auto *FD = dyn_cast<FieldDecl>(ND)) {
+          KnownField = FD;
+          break;
+        }
+        if (auto *IFD = dyn_cast<IndirectFieldDecl>(ND)) {
           // In verify mode, don't modify the original.
           if (VerifyOnly)
             DIE = CloneDesignatedInitExpr(SemaRef, DIE);
-          ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, IF);
+          ExpandAnonymousFieldDesignator(SemaRef, DIE, DesigIdx, IFD);
           D = DIE->getDesignator(DesigIdx);
+          KnownField = cast<FieldDecl>(*IFD->chain_begin());
           break;
         }
       }
-      if (KnownField && KnownField == *Field)
-        break;
-      if (FieldName && FieldName == Field->getIdentifier())
-        break;
+      if (!KnownField) {
+        if (VerifyOnly) {
+          ++Index;
+          return true;  // No typo correction when just trying this out.
+        }
 
-      ++FieldIndex;
-    }
+        // Name lookup found something, but it wasn't a field.
+        if (!Lookup.empty()) {
+          SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
+            << FieldName;
+          SemaRef.Diag(Lookup.front()->getLocation(),
+                       diag::note_field_designator_found);
+          ++Index;
+          return true;
+        }
 
-    if (Field == FieldEnd) {
-      if (VerifyOnly) {
-        ++Index;
-        return true; // No typo correction when just trying this out.
-      }
-
-      // There was no normal field in the struct with the designated
-      // name. Perform another lookup for this name, which may find
-      // something that we can't designate (e.g., a member function),
-      // may find nothing, or may find a member of an anonymous
-      // struct/union.
-      DeclContext::lookup_result Lookup = RT->getDecl()->lookup(FieldName);
-      FieldDecl *ReplacementField = nullptr;
-      if (Lookup.empty()) {
-        // Name lookup didn't find anything. Determine whether this
-        // was a typo for another field name.
+        // Name lookup didn't find anything.
+        // Determine whether this was a typo for another field name.
         FieldInitializerValidatorCCC Validator(RT->getDecl());
         if (TypoCorrection Corrected = SemaRef.CorrectTypo(
                 DeclarationNameInfo(FieldName, D->getFieldLoc()),
-                Sema::LookupMemberName, /*Scope=*/ nullptr, /*SS=*/ nullptr,
+                Sema::LookupMemberName, /*Scope=*/nullptr, /*SS=*/nullptr,
                 Validator, Sema::CTK_ErrorRecovery, RT->getDecl())) {
           SemaRef.diagnoseTypo(
               Corrected,
               SemaRef.PDiag(diag::err_field_designator_unknown_suggest)
-                  << FieldName << CurrentObjectType);
-          ReplacementField = Corrected.getCorrectionDeclAs<FieldDecl>();
+                << FieldName << CurrentObjectType);
+          KnownField = Corrected.getCorrectionDeclAs<FieldDecl>();
           hadError = true;
         } else {
+          // Typo correction didn't find anything.
           SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_unknown)
             << FieldName << CurrentObjectType;
           ++Index;
           return true;
         }
       }
-
-      if (!ReplacementField) {
-        // Name lookup found something, but it wasn't a field.
-        SemaRef.Diag(D->getFieldLoc(), diag::err_field_designator_nonfield)
-          << FieldName;
-        SemaRef.Diag(Lookup.front()->getLocation(),
-                      diag::note_field_designator_found);
-        ++Index;
-        return true;
-      }
-
-      if (!KnownField) {
-        // The replacement field comes from typo correction; find it
-        // in the list of fields.
-        FieldIndex = 0;
-        Field = RT->getDecl()->field_begin();
-        for (; Field != FieldEnd; ++Field) {
-          if (Field->isUnnamedBitfield())
-            continue;
-
-          if (ReplacementField == *Field ||
-              Field->getIdentifier() == ReplacementField->getIdentifier())
-            break;
-
-          ++FieldIndex;
-        }
-      }
     }
+
+    unsigned FieldIndex = KnownField->getFieldIndex();
+    RecordDecl::field_iterator Field =
+        RecordDecl::field_iterator(DeclContext::decl_iterator(KnownField));
 
     // All of the fields of a union are located at the same place in
     // the initializer list.
