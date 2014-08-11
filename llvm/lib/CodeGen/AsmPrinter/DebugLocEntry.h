@@ -59,30 +59,6 @@ public:
     // Or a location in the machine frame.
     MachineLocation Loc;
 
-    bool operator==(const Value &other) const {
-      if (EntryKind != other.EntryKind)
-        return false;
-
-      switch (EntryKind) {
-      case E_Location:
-        return Loc == other.Loc;
-      case E_Integer:
-        return Constant.Int == other.Constant.Int;
-      case E_ConstantFP:
-        return Constant.CFP == other.Constant.CFP;
-      case E_ConstantInt:
-        return Constant.CIP == other.Constant.CIP;
-      }
-      llvm_unreachable("unhandled EntryKind");
-    }
-
-    // Compare two pieces based on their offset.
-    bool operator<(const Value &other) const {
-      DIVariable Var(Variable);
-      DIVariable OtherVar(other.Variable);
-      return Var.getPieceOffset() < OtherVar.getPieceOffset();
-    }
-
     bool isLocation() const { return EntryKind == E_Location; }
     bool isInt() const { return EntryKind == E_Integer; }
     bool isConstantFP() const { return EntryKind == E_ConstantFP; }
@@ -92,7 +68,10 @@ public:
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
     const MDNode *getVariable() const { return Variable; }
+    friend bool operator==(const Value &, const Value &);
+    friend bool operator<(const Value &, const Value &);
   };
+
 private:
   /// A nonempty list of locations/constants belonging to this entry,
   /// sorted by offset.
@@ -154,5 +133,36 @@ public:
   }
 };
 
+/// Compare two Values for equality.
+inline bool operator==(const DebugLocEntry::Value &A,
+                       const DebugLocEntry::Value &B) {
+  if (A.EntryKind != B.EntryKind)
+    return false;
+
+  if (A.getVariable() != B.getVariable())
+    return false;
+
+  switch (A.EntryKind) {
+  case DebugLocEntry::Value::E_Location:
+    return A.Loc == B.Loc;
+  case DebugLocEntry::Value::E_Integer:
+    return A.Constant.Int == B.Constant.Int;
+  case DebugLocEntry::Value::E_ConstantFP:
+    return A.Constant.CFP == B.Constant.CFP;
+  case DebugLocEntry::Value::E_ConstantInt:
+    return A.Constant.CIP == B.Constant.CIP;
+  }
+  llvm_unreachable("unhandled EntryKind");
 }
+
+/// Compare two pieces based on their offset.
+inline bool operator<(const DebugLocEntry::Value &A,
+                      const DebugLocEntry::Value &B) {
+  DIVariable Var(A.getVariable());
+  DIVariable OtherVar(B.getVariable());
+  return Var.getPieceOffset() < OtherVar.getPieceOffset();
+}
+
+}
+
 #endif
