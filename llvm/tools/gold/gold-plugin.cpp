@@ -390,19 +390,8 @@ static bool mustPreserve(ld_plugin_symbol &Sym) {
 /// gold informs us that all symbols have been read. At this point, we use
 /// get_symbols to see if any of our definitions have been overridden by a
 /// native object file. Then, perform optimization and codegen.
-static ld_plugin_status all_symbols_read_hook(void) {
-  // FIXME: raw_fd_ostream should be able to represent an unopened file.
-  std::unique_ptr<raw_fd_ostream> api_file;
-
+static ld_plugin_status allSymbolsReadHook(raw_fd_ostream *apiFile) {
   assert(CodeGen);
-
-  if (options::generate_api_file) {
-    std::string Error;
-    api_file.reset(new raw_fd_ostream("apifile.txt", Error, sys::fs::F_None));
-    if (!Error.empty())
-      message(LDPL_FATAL, "Unable to open apifile.txt for writing: %s",
-              Error.c_str());
-  }
 
   for (claimed_file &F : Modules) {
     if (F.syms.empty())
@@ -413,7 +402,7 @@ static ld_plugin_status all_symbols_read_hook(void) {
         CodeGen->addMustPreserveSymbol(Sym.name);
 
         if (options::generate_api_file)
-          (*api_file) << Sym.name << "\n";
+          (*apiFile) << Sym.name << "\n";
       }
     }
   }
@@ -434,10 +423,8 @@ static ld_plugin_status all_symbols_read_hook(void) {
     std::string Error;
     if (!CodeGen->writeMergedModules(path.c_str(), Error))
       message(LDPL_FATAL, "Failed to write the output file.");
-    if (options::generate_bc_file == options::BC_ONLY) {
-      delete CodeGen;
-      exit(0);
-    }
+    if (options::generate_bc_file == options::BC_ONLY)
+      return LDPS_OK;
   }
 
   std::string ObjPath;
@@ -450,7 +437,6 @@ static ld_plugin_status all_symbols_read_hook(void) {
     ObjPath = Temp;
   }
 
-  delete CodeGen;
   for (claimed_file &F : Modules) {
     for (ld_plugin_symbol &Sym : F.syms)
       free(Sym.name);
@@ -472,6 +458,27 @@ static ld_plugin_status all_symbols_read_hook(void) {
     Cleanup.push_back(ObjPath);
 
   return LDPS_OK;
+}
+
+static ld_plugin_status all_symbols_read_hook(void) {
+  ld_plugin_status Ret;
+  if (!options::generate_api_file) {
+    Ret = allSymbolsReadHook(nullptr);
+  } else {
+    std::string Error;
+    raw_fd_ostream apiFile("apifile.txt", Error, sys::fs::F_None);
+    if (!Error.empty())
+      message(LDPL_FATAL, "Unable to open apifile.txt for writing: %s",
+              Error.c_str());
+    Ret = allSymbolsReadHook(&apiFile);
+  }
+
+  delete CodeGen;
+
+  if (options::generate_bc_file == options::BC_ONLY)
+    exit(0);
+
+  return Ret;
 }
 
 static ld_plugin_status cleanup_hook(void) {
