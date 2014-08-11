@@ -232,13 +232,13 @@ bool DiagnosticsEngine::setSeverityForGroup(diag::Flavor Flavor,
                                             StringRef Group, diag::Severity Map,
                                             SourceLocation Loc) {
   // Get the diagnostics in this group.
-  SmallVector<diag::kind, 8> GroupDiags;
+  SmallVector<diag::kind, 256> GroupDiags;
   if (Diags->getDiagnosticsInGroup(Flavor, Group, GroupDiags))
     return true;
 
   // Set the mapping.
-  for (unsigned i = 0, e = GroupDiags.size(); i != e; ++i)
-    setSeverity(GroupDiags[i], Map, Loc);
+  for (diag::kind Diag : GroupDiags)
+    setSeverity(Diag, Map, Loc);
 
   return false;
 }
