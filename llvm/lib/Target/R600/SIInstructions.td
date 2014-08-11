@@ -2717,18 +2717,16 @@ defm : MUBUF_Load_Dword <v4i32, BUFFER_LOAD_DWORDX4_OFFSET, BUFFER_LOAD_DWORDX4_
                          BUFFER_LOAD_DWORDX4_IDXEN, BUFFER_LOAD_DWORDX4_BOTHEN>;
 
 class MUBUFScratchStorePat <MUBUF Instr, ValueType vt, PatFrag st> : Pat <
-  (st vt:$value, (MUBUFAddr32 v4i32:$srsrc, i32:$vaddr, i32:$soffset,
-                              u16imm:$offset, i1imm:$offen, i1imm:$idxen,
-                              i1imm:$glc, i1imm:$slc, i1imm:$tfe)),
-  (Instr $value, $srsrc, $vaddr, $soffset, $offset, $offen, $idxen,
-         $glc, $slc, $tfe)
+  (st vt:$value, (MUBUFScratch v4i32:$srsrc, i32:$vaddr, i32:$soffset,
+                               u16imm:$offset)),
+  (Instr $value, $srsrc, $vaddr, $soffset, $offset, 0, 0, 0)
 >;
 
-def : MUBUFScratchStorePat <BUFFER_STORE_BYTE, i32, truncstorei8_private>;
-def : MUBUFScratchStorePat <BUFFER_STORE_SHORT, i32, truncstorei16_private>;
-def : MUBUFScratchStorePat <BUFFER_STORE_DWORD, i32, store_private>;
-def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2, v2i32, store_private>;
-def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4, v4i32, store_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_BYTE_OFFEN, i32, truncstorei8_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_SHORT_OFFEN, i32, truncstorei16_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORD_OFFEN, i32, store_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX2_OFFEN, v2i32, store_private>;
+def : MUBUFScratchStorePat <BUFFER_STORE_DWORDX4_OFFEN, v4i32, store_private>;
 
 /*
 class MUBUFStore_Pattern <MUBUF Instr, ValueType vt, PatFrag st> : Pat <
