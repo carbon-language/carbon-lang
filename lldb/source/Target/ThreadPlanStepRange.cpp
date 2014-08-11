@@ -58,7 +58,9 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_use_fast_step = GetTarget().GetUseFastStepping();
     AddRange(range);
     m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
-    m_parent_stack_id = m_thread.GetStackFrameAtIndex(1)->GetStackID();
+    StackFrameSP parent_stack = m_thread.GetStackFrameAtIndex(1);
+    if (parent_stack)
+      m_parent_stack_id = parent_stack->GetStackID();
 }
 
 ThreadPlanStepRange::~ThreadPlanStepRange ()
@@ -272,7 +274,10 @@ ThreadPlanStepRange::CompareCurrentFrameToStartFrame()
     }
     else
     {
-        StackID cur_parent_id = m_thread.GetStackFrameAtIndex(1)->GetStackID();
+        StackFrameSP cur_parent_frame = m_thread.GetStackFrameAtIndex(1);
+        StackID cur_parent_id;
+        if (cur_parent_frame)
+          cur_parent_id = cur_parent_frame->GetStackID();
         if (m_parent_stack_id.IsValid()
             && cur_parent_id.IsValid()
             && m_parent_stack_id == cur_parent_id)

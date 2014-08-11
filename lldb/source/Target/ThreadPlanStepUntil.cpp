@@ -77,7 +77,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
             }
         }
 
-        m_stack_id = m_thread.GetStackFrameAtIndex(frame_idx)->GetStackID();
+        m_stack_id = frame_sp->GetStackID();
 
         // Now set breakpoints on all our return addresses:
         for (size_t i = 0; i < num_addresses; i++)
