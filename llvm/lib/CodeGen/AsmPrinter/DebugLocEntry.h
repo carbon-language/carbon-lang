@@ -97,14 +97,11 @@ public:
     Values.push_back(std::move(Val));
   }
 
-  /// \brief Attempt to merge this DebugLocEntry with Next and return
-  /// true if the merge was successful. Entries can be merged if they
-  /// share the same Loc/Constant and if Next immediately follows this
-  /// Entry.
-  bool Merge(const DebugLocEntry &Next) {
-    // If this and Next are describing different pieces of the same
-    // variable, merge them by appending next's values to the current
-    // list of values.
+  /// \brief If this and Next are describing different pieces of the same
+  // variable, merge them by appending Next's values to the current
+  // list of values.
+  // Return true if the merge was successful.
+  bool MergeValues(const DebugLocEntry &Next) {
     if (Begin == Next.Begin && Values.size() > 0 && Next.Values.size() > 0) {
       DIVariable Var(Values[0].Variable);
       DIVariable NextVar(Next.Values[0].Variable);
@@ -115,6 +112,14 @@ public:
         return true;
       }
     }
+    return false;
+  }
+
+  /// \brief Attempt to merge this DebugLocEntry with Next and return
+  /// true if the merge was successful. Entries can be merged if they
+  /// share the same Loc/Constant and if Next immediately follows this
+  /// Entry.
+  bool MergeRanges(const DebugLocEntry &Next) {
     // If this and Next are describing the same variable, merge them.
     if ((End == Next.Begin && Values == Next.Values)) {
       End = Next.End;
