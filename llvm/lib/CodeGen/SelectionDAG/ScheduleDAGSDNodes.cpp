@@ -136,7 +136,7 @@ static void CheckForPhysRegDependency(SDNode *Def, SDNode *User, unsigned Op,
 static void CloneNodeWithValues(SDNode *N, SelectionDAG *DAG,
                                 SmallVectorImpl<EVT> &VTs,
                                 SDValue ExtraOper = SDValue()) {
-  SmallVector<SDValue, 4> Ops;
+  SmallVector<SDValue, 6> Ops;
   for (unsigned I = 0, E = N->getNumOperands(); I != E; ++I)
     Ops.push_back(N->getOperand(I));
 
