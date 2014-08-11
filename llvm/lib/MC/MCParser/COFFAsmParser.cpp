@@ -364,6 +364,10 @@ bool COFFAsmParser::ParseDirectiveSection(StringRef, SMLoc) {
 
     Flags |= COFF::IMAGE_SCN_LNK_COMDAT;
 
+    if (!getLexer().is(AsmToken::Identifier))
+      return TokError("expected comdat type such as 'discard' or 'largest' "
+                      "after protection bits");
+
     if (parseCOMDATType(Type))
       return true;
 

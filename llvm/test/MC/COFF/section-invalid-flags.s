@@ -6,3 +6,6 @@
 
 // CHECK: error: conflicting section flags 'b' and 'd'
 .section s_bd,"bd"; .long 1
+
+// CHECK: error: expected comdat type such as 'discard' or 'largest' after protection bits
+.section .stack, "w", @nobits
