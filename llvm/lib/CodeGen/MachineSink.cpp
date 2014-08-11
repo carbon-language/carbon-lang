@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -55,6 +56,10 @@ namespace {
     // Remember which edges have been considered for breaking.
     SmallSet<std::pair<MachineBasicBlock*,MachineBasicBlock*>, 8>
     CEBCandidates;
+    // Remember which edges we are about to split.
+    // This is different from CEBCandidates since those edges
+    // will be split.
+    SetVector<std::pair<MachineBasicBlock*,MachineBasicBlock*> > ToSplit;
 
   public:
     static char ID; // Pass identification
@@ -83,10 +88,22 @@ namespace {
     bool isWorthBreakingCriticalEdge(MachineInstr *MI,
                                      MachineBasicBlock *From,
                                      MachineBasicBlock *To);
-    MachineBasicBlock *SplitCriticalEdge(MachineInstr *MI,
-                                         MachineBasicBlock *From,
-                                         MachineBasicBlock *To,
-                                         bool BreakPHIEdge);
+    /// \brief Postpone the splitting of the given critical
+    /// edge (\p From, \p To).
+    ///
+    /// We do not split the edges on the fly. Indeed, this invalidates
+    /// the dominance information and thus triggers a lot of updates
+    /// of that information underneath.
+    /// Instead, we postpone all the splits after each iteration of
+    /// the main loop. That way, the information is at least valid
+    /// for the lifetime of an iteration.
+    ///
+    /// \return True if the edge is marked as toSplit, false otherwise.
+    /// False can be retruned if, for instance, this is not profitable.
+    bool PostponeSplitCriticalEdge(MachineInstr *MI,
+                                   MachineBasicBlock *From,
+                                   MachineBasicBlock *To,
+                                   bool BreakPHIEdge);
     bool SinkInstruction(MachineInstr *MI, bool &SawStore);
     bool AllUsesDominatedByBlock(unsigned Reg, MachineBasicBlock *MBB,
                                  MachineBasicBlock *DefMBB,
@@ -229,10 +246,24 @@ bool MachineSinking::runOnMachineFunction(MachineFunction &MF) {
 
     // Process all basic blocks.
     CEBCandidates.clear();
+    ToSplit.clear();
     for (MachineFunction::iterator I = MF.begin(), E = MF.end();
          I != E; ++I)
       MadeChange |= ProcessBlock(*I);
 
+    // If we have anything we marked as toSplit, split it now.
+    for (auto &Pair : ToSplit) {
+      auto NewSucc = Pair.first->SplitCriticalEdge(Pair.second, this);
+      if (NewSucc != nullptr) {
+        DEBUG(dbgs() << " *** Splitting critical edge:"
+              " BB#" << Pair.first->getNumber()
+              << " -- BB#" << NewSucc->getNumber()
+              << " -- BB#" << Pair.second->getNumber() << '\n');
+        MadeChange = true;
+        ++NumSplit;
+      } else
+        DEBUG(dbgs() << " *** Not legal to break critical edge\n");
+    }
     // If this iteration over the code changed anything, keep iterating.
     if (!MadeChange) break;
     EverMadeChange = true;
@@ -329,21 +360,21 @@ bool MachineSinking::isWorthBreakingCriticalEdge(MachineInstr *MI,
   return false;
 }
 
-MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
-                                                     MachineBasicBlock *FromBB,
-                                                     MachineBasicBlock *ToBB,
-                                                     bool BreakPHIEdge) {
+bool MachineSinking::PostponeSplitCriticalEdge(MachineInstr *MI,
+                                               MachineBasicBlock *FromBB,
+                                               MachineBasicBlock *ToBB,
+                                               bool BreakPHIEdge) {
   if (!isWorthBreakingCriticalEdge(MI, FromBB, ToBB))
-    return nullptr;
+    return false;
 
   // Avoid breaking back edge. From == To means backedge for single BB loop.
   if (!SplitEdges || FromBB == ToBB)
-    return nullptr;
+    return false;
 
   // Check for backedges of more "complex" loops.
   if (LI->getLoopFor(FromBB) == LI->getLoopFor(ToBB) &&
       LI->isLoopHeader(ToBB))
-    return nullptr;
+    return false;
 
   // It's not always legal to break critical edges and sink the computation
   // to the edge.
@@ -390,11 +421,13 @@ MachineBasicBlock *MachineSinking::SplitCriticalEdge(MachineInstr *MI,
       if (*PI == FromBB)
         continue;
       if (!DT->dominates(ToBB, *PI))
-        return nullptr;
+        return false;
     }
   }
 
-  return FromBB->SplitCriticalEdge(ToBB, this);
+  ToSplit.insert(std::make_pair(FromBB, ToBB));
+  
+  return true;
 }
 
 static bool AvoidsSinking(MachineInstr *MI, MachineRegisterInfo *MRI) {
@@ -656,21 +689,16 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     if (!TryBreak)
       DEBUG(dbgs() << "Sinking along critical edge.\n");
     else {
-      MachineBasicBlock *NewSucc =
-        SplitCriticalEdge(MI, ParentBlock, SuccToSinkTo, BreakPHIEdge);
-      if (!NewSucc) {
+      // Mark this edge as to be split.
+      // If the edge can actually be split, the next iteration of the main loop
+      // will sink MI in the newly created block.
+      bool Status =
+        PostponeSplitCriticalEdge(MI, ParentBlock, SuccToSinkTo, BreakPHIEdge);
+      if (!Status)
         DEBUG(dbgs() << " *** PUNTING: Not legal or profitable to "
-                        "break critical edge\n");
-        return false;
-      } else {
-        DEBUG(dbgs() << " *** Splitting critical edge:"
-              " BB#" << ParentBlock->getNumber()
-              << " -- BB#" << NewSucc->getNumber()
-              << " -- BB#" << SuccToSinkTo->getNumber() << '\n');
-        SuccToSinkTo = NewSucc;
-        ++NumSplit;
-        BreakPHIEdge = false;
-      }
+              "break critical edge\n");
+      // The instruction will not be sunk this time.
+      return false;
     }
   }
 
@@ -678,20 +706,13 @@ bool MachineSinking::SinkInstruction(MachineInstr *MI, bool &SawStore) {
     // BreakPHIEdge is true if all the uses are in the successor MBB being
     // sunken into and they are all PHI nodes. In this case, machine-sink must
     // break the critical edge first.
-    MachineBasicBlock *NewSucc = SplitCriticalEdge(MI, ParentBlock,
-                                                   SuccToSinkTo, BreakPHIEdge);
-    if (!NewSucc) {
+    bool Status = PostponeSplitCriticalEdge(MI, ParentBlock,
+                                            SuccToSinkTo, BreakPHIEdge);
+    if (!Status)
       DEBUG(dbgs() << " *** PUNTING: Not legal or profitable to "
             "break critical edge\n");
-      return false;
-    }
-
-    DEBUG(dbgs() << " *** Splitting critical edge:"
-          " BB#" << ParentBlock->getNumber()
-          << " -- BB#" << NewSucc->getNumber()
-          << " -- BB#" << SuccToSinkTo->getNumber() << '\n');
-    SuccToSinkTo = NewSucc;
-    ++NumSplit;
+    // The instruction will not be sunk this time.
+    return false;
   }
 
   // Determine where to insert into. Skip phi nodes.
