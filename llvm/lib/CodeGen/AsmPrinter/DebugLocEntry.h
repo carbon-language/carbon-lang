@@ -67,7 +67,9 @@ public:
     const ConstantFP *getConstantFP() const { return Constant.CFP; }
     const ConstantInt *getConstantInt() const { return Constant.CIP; }
     MachineLocation getLoc() const { return Loc; }
-    const MDNode *getVariable() const { return Variable; }
+    const MDNode *getVariableNode() const { return Variable; }
+    DIVariable getVariable() const { return DIVariable(Variable); }
+    bool isVariablePiece() const { return getVariable().isVariablePiece(); }
     friend bool operator==(const Value &, const Value &);
     friend bool operator<(const Value &, const Value &);
   };
@@ -121,7 +123,7 @@ public:
     Values.append(Vals.begin(), Vals.end());
     sortUniqueValues();
     assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value V){
-          return DIVariable(V.Variable).isVariablePiece();
+          return V.isVariablePiece();
         }) && "value must be a piece");
   }
 
@@ -158,9 +160,7 @@ inline bool operator==(const DebugLocEntry::Value &A,
 /// Compare two pieces based on their offset.
 inline bool operator<(const DebugLocEntry::Value &A,
                       const DebugLocEntry::Value &B) {
-  DIVariable Var(A.getVariable());
-  DIVariable OtherVar(B.getVariable());
-  return Var.getPieceOffset() < OtherVar.getPieceOffset();
+  return A.getVariable().getPieceOffset() < B.getVariable().getPieceOffset();
 }
 
 }
