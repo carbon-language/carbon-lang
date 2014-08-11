@@ -518,15 +518,15 @@ void CompilerInstance::createSema(TranslationUnitKind TUKind,
 
 // Output Files
 
-void CompilerInstance::addOutputFile(OutputFile OutFile) {
+void CompilerInstance::addOutputFile(const OutputFile &OutFile) {
   assert(OutFile.OS && "Attempt to add empty stream to output list!");
-  OutputFiles.push_back(std::move(OutFile));
+  OutputFiles.push_back(OutFile);
 }
 
 void CompilerInstance::clearOutputFiles(bool EraseFiles) {
   for (std::list<OutputFile>::iterator
          it = OutputFiles.begin(), ie = OutputFiles.end(); it != ie; ++it) {
-    it->OS.reset();
+    delete it->OS;
     if (!it->TempFilename.empty()) {
       if (EraseFiles) {
         llvm::sys::fs::remove(it->TempFilename);
@@ -561,10 +561,9 @@ CompilerInstance::createDefaultOutputFile(bool Binary,
 }
 
 llvm::raw_null_ostream *CompilerInstance::createNullOutputFile() {
-  auto OS = llvm::make_unique<llvm::raw_null_ostream>();
-  auto *Res = OS.get();
-  addOutputFile(OutputFile("", "", std::move(OS)));
-  return Res;
+  llvm::raw_null_ostream *OS = new llvm::raw_null_ostream();
+  addOutputFile(OutputFile("", "", OS));
+  return OS;
 }
 
 llvm::raw_fd_ostream *
@@ -575,7 +574,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool UseTemporary,
                                    bool CreateMissingDirectories) {
   std::string Error, OutputPathName, TempPathName;
-  auto OS = createOutputFile(OutputPath, Error, Binary,
+  llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
                                               RemoveFileOnSignal,
                                               InFile, Extension,
                                               UseTemporary,
@@ -588,16 +587,15 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     return nullptr;
   }
 
-  auto *Res = OS.get();
   // Add the output file -- but don't try to remove "-", since this means we are
   // using stdin.
   addOutputFile(OutputFile((OutputPathName != "-") ? OutputPathName : "",
-                           TempPathName, std::move(OS)));
+                TempPathName, OS));
 
-  return Res;
+  return OS;
 }
 
-std::unique_ptr<llvm::raw_fd_ostream>
+llvm::raw_fd_ostream *
 CompilerInstance::createOutputFile(StringRef OutputPath,
                                    std::string &Error,
                                    bool Binary,
@@ -665,7 +663,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     }
 
     if (!EC) {
-      OS = llvm::make_unique<llvm::raw_fd_ostream>(fd, /*shouldClose=*/true);
+      OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
       OSFile = TempFile = TempPath.str();
     }
     // If we failed to create the temporary, fallback to writing to the file
@@ -675,9 +673,9 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
 
   if (!OS) {
     OSFile = OutFile;
-    OS = llvm::make_unique<llvm::raw_fd_ostream>(
+    OS.reset(new llvm::raw_fd_ostream(
         OSFile.c_str(), Error,
-        (Binary ? llvm::sys::fs::F_None : llvm::sys::fs::F_Text));
+        (Binary ? llvm::sys::fs::F_None : llvm::sys::fs::F_Text)));
     if (!Error.empty())
       return nullptr;
   }
@@ -691,7 +689,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   if (TempPathName)
     *TempPathName = TempFile;
 
-  return OS;
+  return OS.release();
 }
 
 // Initialization Utilities
