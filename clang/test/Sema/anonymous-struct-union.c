@@ -37,7 +37,7 @@ void test_unqual_references(struct X x, const struct X xc) {
 
 struct Redecl {
   int x; // expected-note{{previous declaration is here}}
-  struct y { };
+  struct y { }; // expected-warning{{declaration does not declare anything}}
 
   union {
     int x; // expected-error{{member of anonymous union redeclares 'x'}}
