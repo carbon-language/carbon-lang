@@ -687,7 +687,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
     MachineBasicBlock *MBB = &*I;
 
     bool SeenMoveImm = false;
-    SmallPtrSet<MachineInstr*, 16> LocalMIs;
+    SmallPtrSet<MachineInstr*, 8> LocalMIs;
     SmallSet<unsigned, 4> ImmDefRegs;
     DenseMap<unsigned, MachineInstr*> ImmDefMIs;
     SmallSet<unsigned, 16> FoldAsLoadDefCandidates;
