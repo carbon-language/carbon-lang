@@ -671,10 +671,13 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
   ExplodedNodeSet CleanDtorState;
   StmtNodeBuilder StmtBldr(Pred, CleanDtorState, *currBldrCtx);
   ProgramStateRef State = Pred->getState();
-  assert(State->contains<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame())));
-  State = State->remove<InitializedTemporariesSet>(
-      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()));
+  if (State->contains<InitializedTemporariesSet>(
+      std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()))) {
+    // FIXME: Currently we insert temporary destructors for default parameters,
+    // but we don't insert the constructors.
+    State = State->remove<InitializedTemporariesSet>(
+        std::make_pair(D.getBindTemporaryExpr(), Pred->getStackFrame()));
+  }
   StmtBldr.generateNode(D.getBindTemporaryExpr(), Pred, State);
 
   QualType varType = D.getBindTemporaryExpr()->getSubExpr()->getType();

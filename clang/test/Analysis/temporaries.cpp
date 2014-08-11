@@ -393,6 +393,11 @@ namespace destructors {
     b || (check(Dtor()) + check(NoReturnDtor()));
     clang_analyzer_warnIfReached();  // expected-warning{{REACHABLE}}
   }
+
+  void f(Dtor d = Dtor());
+  void testDefaultParameters() {
+    f();
+  }
 #endif // TEMPORARY_DTORS
 }
 
