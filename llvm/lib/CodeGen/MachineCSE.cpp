@@ -79,7 +79,8 @@ namespace {
     SmallVector<MachineInstr*, 64> Exps;
     unsigned CurrVN;
 
-    bool PerformTrivialCoalescing(MachineInstr *MI, MachineBasicBlock *MBB);
+    bool PerformTrivialCopyPropagation(MachineInstr *MI,
+                                       MachineBasicBlock *MBB);
     bool isPhysDefTriviallyDead(unsigned Reg,
                                 MachineBasicBlock::const_iterator I,
                                 MachineBasicBlock::const_iterator E) const;
@@ -113,8 +114,12 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MachineCSE, "machine-cse",
                 "Machine Common Subexpression Elimination", false, false)
 
-bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
-                                          MachineBasicBlock *MBB) {
+/// The source register of a COPY machine instruction can be propagated to all
+/// its users, and this propagation could increase the probability of finding
+/// common subexpressions. If the COPY has only one user, the COPY itself can
+/// be removed.
+bool MachineCSE::PerformTrivialCopyPropagation(MachineInstr *MI,
+                                               MachineBasicBlock *MBB) {
   bool Changed = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -123,10 +128,7 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
     unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isVirtualRegister(Reg))
       continue;
-    if (!MRI->hasOneNonDBGUse(Reg))
-      // Only coalesce single use copies. This ensure the copy will be
-      // deleted.
-      continue;
+    bool OnlyOneUse = MRI->hasOneNonDBGUse(Reg);
     MachineInstr *DefMI = MRI->getVRegDef(Reg);
     if (!DefMI->isCopy())
       continue;
@@ -154,10 +156,14 @@ bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
       continue;
     DEBUG(dbgs() << "Coalescing: " << *DefMI);
     DEBUG(dbgs() << "***     to: " << *MI);
+    // Propagate SrcReg of copies to MI.
     MO.setReg(SrcReg);
     MRI->clearKillFlags(SrcReg);
-    DefMI->eraseFromParent();
-    ++NumCoalesces;
+    // Coalesce single use copies.
+    if (OnlyOneUse) {
+      DefMI->eraseFromParent();
+      ++NumCoalesces;
+    }
     Changed = true;
   }
 
@@ -454,13 +460,15 @@ bool MachineCSE::ProcessBlock(MachineBasicBlock *MBB) {
 
     bool FoundCSE = VNT.count(MI);
     if (!FoundCSE) {
-      // Look for trivial copy coalescing opportunities.
-      if (PerformTrivialCoalescing(MI, MBB)) {
+      // Using trivial copy propagation to find more CSE opportunities.
+      if (PerformTrivialCopyPropagation(MI, MBB)) {
         Changed = true;
 
         // After coalescing MI itself may become a copy.
         if (MI->isCopyLike())
           continue;
+
+        // Try again to see if CSE is possible.
         FoundCSE = VNT.count(MI);
       }
     }
