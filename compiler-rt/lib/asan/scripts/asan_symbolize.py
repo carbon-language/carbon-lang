@@ -7,6 +7,7 @@
 # License. See LICENSE.TXT for details.
 #
 #===------------------------------------------------------------------------===#
+import argparse
 import bisect
 import getopt
 import os
@@ -18,18 +19,26 @@ import termios
 
 symbolizers = {}
 DEBUG = False
-demangle = False;
-
+demangle = False
+binutils_prefix = None
+sysroot_path = None
+binary_name_filter = None
+fix_filename_patterns = None
+logfile = None
 
 # FIXME: merge the code that calls fix_filename().
 def fix_filename(file_name):
-  for path_to_cut in sys.argv[1:]:
-    file_name = re.sub('.*' + path_to_cut, '', file_name)
+  if fix_filename_patterns:
+    for path_to_cut in fix_filename_patterns:
+      file_name = re.sub('.*' + path_to_cut, '', file_name)
   file_name = re.sub('.*asan_[a-z_]*.cc:[0-9]*', '_asan_rtl_', file_name)
   file_name = re.sub('.*crtstuff.c:0', '???:0', file_name)
   return file_name
 
-def GuessArch(addr):
+def sysroot_path_filter(binary_name):
+  return sysroot_path + binary_name
+
+def guess_arch(addr):
   # Guess which arch we're running. 10 = len('0x') + 8 hex digits.
   if len(addr) > 10:
     return 'x86_64'
@@ -60,7 +69,7 @@ class LLVMSymbolizer(Symbolizer):
   def __init__(self, symbolizer_path, addr):
     super(LLVMSymbolizer, self).__init__()
     self.symbolizer_path = symbolizer_path
-    self.default_arch = GuessArch(addr)
+    self.default_arch = guess_arch(addr)
     self.pipe = self.open_llvm_symbolizer()
 
   def open_llvm_symbolizer(self):
@@ -124,7 +133,10 @@ class Addr2LineSymbolizer(Symbolizer):
     self.pipe = self.open_addr2line()
 
   def open_addr2line(self):
-    cmd = ['addr2line', '-f']
+    addr2line_tool = 'addr2line'
+    if binutils_prefix:
+      addr2line_tool = binutils_prefix + addr2line_tool
+    cmd = [addr2line_tool, '-f']
     if demangle:
       cmd += ['--demangle']
     cmd += ['-e', self.binary]
@@ -182,7 +194,7 @@ class DarwinSymbolizer(Symbolizer):
   def __init__(self, addr, binary):
     super(DarwinSymbolizer, self).__init__()
     self.binary = binary
-    self.arch = GuessArch(addr)
+    self.arch = guess_arch(addr)
     self.open_atos()
 
   def open_atos(self):
@@ -363,10 +375,10 @@ class SymbolizationLoop(object):
         self.frame_no += 1
       return result
 
-  def process_stdin(self):
+  def process_logfile(self):
     self.frame_no = 0
     while True:
-      line = sys.stdin.readline()
+      line = logfile.readline()
       if not line:
         break
       processed = self.process_line(line)
@@ -397,9 +409,33 @@ class SymbolizationLoop(object):
 
 
 if __name__ == '__main__':
-  opts, args = getopt.getopt(sys.argv[1:], "d", ["demangle"])
-  for o, a in opts:
-    if o in ("-d", "--demangle"):
-      demangle = True;
-  loop = SymbolizationLoop()
-  loop.process_stdin()
+  parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,
+  description='ASan symbolization script',
+  epilog='''Example of use:
+  asan_symbolize.py -c "$HOME/opt/cross/bin/arm-linux-gnueabi-" -s "$HOME/SymbolFiles" < asan.log''')
+  parser.add_argument('path_to_cut', nargs='*',
+    help='pattern to be cut from the result file path ')
+  parser.add_argument('-d','--demangle', action='store_true',
+    help='demangle function names')
+  parser.add_argument('-s', metavar='SYSROOT',
+    help='set path to sysroot for sanitized binaries')
+  parser.add_argument('-c', metavar='CROSS_COMPILE',
+    help='set prefix for binutils')
+  parser.add_argument('-l','--logfile', default=sys.stdin, type=argparse.FileType('r'),
+    help='set log file name to parse, default is stdin')
+  args = parser.parse_args()
+  if args.path_to_cut:
+    fix_filename_patterns = args.path_to_cut
+  if args.demangle:
+    demangle = True
+  if args.s:
+    binary_name_filter = sysroot_path_filter
+    sysroot_path = args.s
+  if args.c:
+    binutils_prefix = args.c
+  if args.logfile:
+    logfile = args.logfile
+  else:
+    logfile = sys.stdin
+  loop = SymbolizationLoop(binary_name_filter)
+  loop.process_logfile()
