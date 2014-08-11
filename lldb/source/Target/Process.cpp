@@ -47,10 +47,6 @@
 #include "lldb/Target/ThreadPlanBase.h"
 #include "Plugins/Process/Utility/InferiorCallPOSIX.h"
 
-#ifndef LLDB_DISABLE_POSIX
-#include <spawn.h>
-#endif
-
 using namespace lldb;
 using namespace lldb_private;
 

@@ -12,12 +12,6 @@
 #include "PlatformKalimba.h"
 #include "lldb/Host/Config.h"
 
-// C Includes
-#include <stdio.h>
-#ifndef LLDB_DISABLE_POSIX
-#include <sys/utsname.h>
-#endif
-
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
