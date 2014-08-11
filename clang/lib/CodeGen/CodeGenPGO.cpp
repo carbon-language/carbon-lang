@@ -847,13 +847,8 @@ void CodeGenPGO::checkGlobalDecl(GlobalDecl GD) {
   // a class. Every function is instrumented, but we only want to provide
   // coverage for one of them. Because of that we only emit the coverage mapping
   // for the base constructor/destructor.
-  // For Microsoft's C++ ABI Clang emits only the complete constructor,
-  // therefore we have to emit the coverage mapping for it instead of the base
-  // one.
-  const CXXCtorType AcceptedCtor =
-      CGM.getTarget().getCXXABI().isMicrosoft()? Ctor_Complete : Ctor_Base;
   if ((isa<CXXConstructorDecl>(GD.getDecl()) &&
-       GD.getCtorType() != AcceptedCtor) ||
+       GD.getCtorType() != Ctor_Base) ||
       (isa<CXXDestructorDecl>(GD.getDecl()) &&
        GD.getDtorType() != Dtor_Base)) {
     SkipCoverageMapping = true;
