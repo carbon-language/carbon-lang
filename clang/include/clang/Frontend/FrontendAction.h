@@ -18,6 +18,7 @@
 #ifndef LLVM_CLANG_FRONTEND_FRONTENDACTION_H
 #define LLVM_CLANG_FRONTEND_FRONTENDACTION_H
 
+#include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Frontend/ASTUnit.h"
@@ -28,7 +29,6 @@
 #include <vector>
 
 namespace clang {
-class ASTConsumer;
 class ASTMergeAction;
 class CompilerInstance;
 
