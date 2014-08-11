@@ -41,7 +41,7 @@ namespace driver {
 /// ToolChain - Access to tools for a single platform.
 class ToolChain {
 public:
-  typedef SmallVector<std::string, 4> path_list;
+  typedef SmallVector<std::string, 16> path_list;
 
   enum CXXStdlibType {
     CST_Libcxx,
