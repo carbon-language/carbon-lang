@@ -163,7 +163,7 @@ public:
     //----------------------------------------------------------------------
     // Cancels the cleanup that would have been called on "m_current_value" 
     // if it was valid. This function can be used to release the value 
-    // contained in this object so ownership can be transfered to the caller.
+    // contained in this object so ownership can be transferred to the caller.
     //----------------------------------------------------------------------
     value_type
     release ()
@@ -296,7 +296,7 @@ public:
     //----------------------------------------------------------------------
     // Cancels the cleanup that would have been called on "m_current_value" 
     // if it was valid. This function can be used to release the value 
-    // contained in this object so ownership can be transfered to the caller.
+    // contained in this object so ownership can be transferred to the caller.
     //----------------------------------------------------------------------
     value_type
     release ()

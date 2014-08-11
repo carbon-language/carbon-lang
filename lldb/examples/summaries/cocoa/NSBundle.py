@@ -54,7 +54,7 @@ class NSBundleKnown_SummaryProvider:
 							self.sys_params.types_cache.NSString)
 		my_string = text.GetSummary()
 		if (my_string == None) or (my_string == ''):
-			statistics.metric_hit('unknown_class',str(self.valobj.GetName()) + " triggered unkown pointer location")
+			statistics.metric_hit('unknown_class',str(self.valobj.GetName()) + " triggered unknown pointer location")
 			return NSBundleUnknown_SummaryProvider(self.valobj, self.sys_params).url_text()
 		else:
 			statistics.metric_hit('code_notrun',self.valobj)

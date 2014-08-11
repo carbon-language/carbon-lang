@@ -1857,7 +1857,7 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
                                                                symbol->GetAddress().GetLoadAddress(&m_target),
                                                                owner->GetBreakpoint().GetID(),
                                                                owner->GetID(),
-                                                               error.AsCString() ? error.AsCString() : "unkown error");
+                                                               error.AsCString() ? error.AsCString() : "unknown error");
                 return LLDB_INVALID_BREAK_ID;
             }
             Address resolved_address(load_addr);
@@ -1905,7 +1905,7 @@ Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardw
                                                                        load_addr,
                                                                        owner->GetBreakpoint().GetID(),
                                                                        owner->GetID(),
-                                                                       error.AsCString() ? error.AsCString() : "unkown error");
+                                                                       error.AsCString() ? error.AsCString() : "unknown error");
                     }
                 }
             }

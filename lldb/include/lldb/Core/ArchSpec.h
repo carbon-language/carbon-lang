@@ -312,7 +312,7 @@ public:
     ///
     /// @param[in] cpu The required CPU type.
     ///
-    /// @return True if the object and CPU type were sucessfully set.
+    /// @return True if the object and CPU type were successfully set.
     //------------------------------------------------------------------
     bool
     SetArchitecture (ArchitectureType arch_type, 

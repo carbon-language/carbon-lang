@@ -471,7 +471,7 @@ protected:
                             if (regex.GetErrorAsCString(regex_error, sizeof(regex_error)))
                                 result.GetErrorStream().Printf ("error: %s\n", regex_error);
                             else
-                                result.GetErrorStream().Printf ("error: unkown regex error when compiling '%s'\n", name_cstr);
+                                result.GetErrorStream().Printf ("error: unknown regex error when compiling '%s'\n", name_cstr);
                         }
                     }
                     else // No regex, either exact variable names or variable expressions.

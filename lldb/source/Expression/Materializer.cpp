@@ -95,7 +95,7 @@ public:
         }
         
         if (log)
-            log->Printf("Allocated %s (0x%" PRIx64 ") sucessfully", m_persistent_variable_sp->GetName().GetCString(), mem);
+            log->Printf("Allocated %s (0x%" PRIx64 ") successfully", m_persistent_variable_sp->GetName().GetCString(), mem);
         
         // Put the location of the spare memory into the live data of the ValueObject.
                 

@@ -192,7 +192,7 @@ const CMICmnResources::SRsrcTextData	CMICmnResources::ms_pResourceId2TextData[] 
 	{ IDS_WORD_NOT,								"not" },
 	{ IDS_WORD_INVALIDEMPTY,					"<empty>" },
 	{ IDS_WORD_INVALIDNULLPTR,					"<NULL ptr>" },
-	{ IDS_WORD_UNKNOWNBRKTS,					"<unkown>" },
+	{ IDS_WORD_UNKNOWNBRKTS,					"<unknown>" },
 	{ IDS_WORD_NOT_IMPLEMENTED,					"Not implemented" },	
 	{ IDS_WORD_NOT_IMPLEMENTED_BRKTS,			"<not implemented>" },
 	{ IDS_WORD_UNKNOWNTYPE_BRKTS,				"<unknowntype>" },
