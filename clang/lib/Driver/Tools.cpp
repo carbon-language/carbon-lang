@@ -4177,6 +4177,14 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
           D.Diag(diag::err_drv_invalid_value) << inputCharset->getAsString(Args) << value;
   }
 
+  // -fexec_charset=UTF-8 is default. Reject others
+  if (Arg *execCharset = Args.getLastArg(
+          options::OPT_fexec_charset_EQ)) {
+      StringRef value = execCharset->getValue();
+      if (value != "UTF-8")
+          D.Diag(diag::err_drv_invalid_value) << execCharset->getAsString(Args) << value;
+  }
+
   // -fcaret-diagnostics is default.
   if (!Args.hasFlag(options::OPT_fcaret_diagnostics,
                     options::OPT_fno_caret_diagnostics, true))

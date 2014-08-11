@@ -481,7 +481,6 @@ def femit_all_decls : Flag<["-"], "femit-all-decls">, Group<f_Group>, Flags<[CC1
   HelpText<"Emit all declarations, even if unused">;
 def fencoding_EQ : Joined<["-"], "fencoding=">, Group<f_Group>;
 def ferror_limit_EQ : Joined<["-"], "ferror-limit=">, Group<f_Group>, Flags<[CoreOption]>;
-def fexec_charset_EQ : Joined<["-"], "fexec-charset=">, Group<clang_ignored_f_Group>;
 def fexceptions : Flag<["-"], "fexceptions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Enable support for exception handling">;
 def fexcess_precision_EQ : Joined<["-"], "fexcess-precision=">,
@@ -584,6 +583,7 @@ def : Flag<["-"], "findirect-virtual-calls">, Alias<fapple_kext>;
 def finline_functions : Flag<["-"], "finline-functions">, Group<clang_ignored_gcc_optimization_f_Group>;
 def finline : Flag<["-"], "finline">, Group<clang_ignored_f_Group>;
 def finput_charset_EQ : Joined<["-"], "finput-charset=">, Group<f_Group>;
+def fexec_charset_EQ : Joined<["-"], "fexec-charset=">, Group<f_Group>;
 def finstrument_functions : Flag<["-"], "finstrument-functions">, Group<f_Group>, Flags<[CC1Option]>,
   HelpText<"Generate calls to instrument function entry and exit">;
 def flat__namespace : Flag<["-"], "flat_namespace">;

@@ -139,6 +139,9 @@
 // RUN: %clang -### -S -finput-charset=iso-8859-1 -o /dev/null %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-CHARSET %s
 // CHECK-INVALID-CHARSET: error: invalid value 'iso-8859-1' in '-finput-charset=iso-8859-1'
 
+// RUN: %clang -### -S -fexec-charset=iso-8859-1 -o /dev/null %s 2>&1 | FileCheck -check-prefix=CHECK-INVALID-INPUT-CHARSET %s
+// CHECK-INVALID-INPUT-CHARSET: error: invalid value 'iso-8859-1' in '-fexec-charset=iso-8859-1'
+
 // Test that we don't error on these.
 // RUN: %clang -### -S -Werror                                                \
 // RUN:     -falign-functions -falign-functions=2 -fno-align-functions        \
@@ -151,6 +154,7 @@
 // RUN:     -fident -fno-ident                                                \
 // RUN:     -fimplicit-templates -fno-implicit-templates                      \
 // RUN:     -finput-charset=UTF-8                                             \
+// RUN:     -fexec-charset=UTF-8                                             \
 // RUN:     -fivopts -fno-ivopts                                              \
 // RUN:     -fnon-call-exceptions -fno-non-call-exceptions                    \
 // RUN:     -fpermissive -fno-permissive                                      \
@@ -219,7 +223,6 @@
 // RUN:     -ffriend-injection                                                \
 // RUN:     -fno-implement-inlines -fimplement-inlines                        \
 // RUN:     -fstack-check                                                     \
-// RUN:     -fexec-charset=UTF-8                                              \
 // RUN:     -fforce-addr                                                      \
 // RUN:     -malign-functions=100                                             \
 // RUN:     -malign-loops=100                                                 \
