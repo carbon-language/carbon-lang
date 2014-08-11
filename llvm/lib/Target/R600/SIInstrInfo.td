@@ -975,6 +975,7 @@ multiclass MUBUF_Store_Helper <bits<7> op, string name, RegisterClass vdataClass
     name#" $vdata, $vaddr, $srsrc, $soffset"#"$offen"#"$idxen"#"$offset"#"$glc"#"$slc"#"$tfe",
     []
   > {
+    let lds = 0;
     let addr64 = 0;
   }
 
