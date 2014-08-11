@@ -1233,8 +1233,7 @@ static bool piecesOverlap(DIVariable P1, DIVariable P2) {
 void
 DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
                               const DbgValueHistoryMap::InstrRanges &Ranges) {
-  typedef std::pair<DIVariable, DebugLocEntry::Value> Range;
-  SmallVector<Range, 4> OpenRanges;
+  SmallVector<DebugLocEntry::Value, 4> OpenRanges;
 
   for (auto I = Ranges.begin(), E = Ranges.end(); I != E; ++I) {
     const MachineInstr *Begin = I->first;
@@ -1251,9 +1250,10 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
     // If this piece overlaps with any open ranges, truncate them.
     DIVariable DIVar = Begin->getDebugVariable();
-    auto Last = std::remove_if(OpenRanges.begin(), OpenRanges.end(), [&](Range R){
-        return piecesOverlap(DIVar, R.first);
-      });
+    auto Last = std::remove_if(OpenRanges.begin(), OpenRanges.end(),
+                  [&](DebugLocEntry::Value R) {
+                    return piecesOverlap(DIVar, DIVariable(R.getVariable()));
+                  });
     OpenRanges.erase(Last, OpenRanges.end());
 
     const MCSymbol *StartLabel = getLabelBeforeInsn(Begin);
@@ -1277,7 +1277,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     // If this is a piece, it may belong to the current DebugLocEntry.
     if (DIVar.isVariablePiece()) {
       // Add this value to the list of open ranges.
-      OpenRanges.push_back(std::make_pair(DIVar, Value));
+      OpenRanges.push_back(Value);
 
       // Attempt to add the piece to the last entry.
       if (!DebugLoc.empty())
