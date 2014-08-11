@@ -38,6 +38,23 @@ public:
   ///
   const ARMRegisterInfo &getRegisterInfo() const override { return RI; }
 
+  /// Build the equivalent inputs of a REG_SEQUENCE for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] InputRegs of the equivalent REG_SEQUENCE. Each element of
+  /// the list is modeled as <Reg:SubReg, SubIdx>.
+  /// E.g., REG_SEQUENCE vreg1:sub1, sub0, vreg2, sub1 would produce
+  /// two elements:
+  /// - vreg1:sub1, sub0
+  /// - vreg2<:0>, sub1
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isRegSequenceLike().
+  bool getRegSequenceLikeInputs(
+      const MachineInstr &MI, unsigned DefIdx,
+      SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const override;
+
 private:
   void expandLoadStackGuard(MachineBasicBlock::iterator MI,
                             Reloc::Model RM) const override;

@@ -885,6 +885,10 @@ def VMOVDRR : AVConv5I<0b11000100, 0b1011,
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
+
+  // This instruction is equivalent to
+  // $Dm = REG_SEQUENCE $Rt, ssub_0, $Rt2, ssub_1
+  let isRegSequence = 1;
 }
 
 let neverHasSideEffects = 1 in

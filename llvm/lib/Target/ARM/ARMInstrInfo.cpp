@@ -98,6 +98,31 @@ void ARMInstrInfo::expandLoadStackGuard(MachineBasicBlock::iterator MI,
     expandLoadStackGuardBase(MI, ARM::LDRLIT_ga_abs, ARM::LDRi12, RM);
 }
 
+bool ARMInstrInfo::getRegSequenceLikeInputs(
+    const MachineInstr &MI, unsigned DefIdx,
+    SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const {
+  assert(DefIdx < MI.getDesc().getNumDefs() && "Invalid definition index");
+  assert(MI.isRegSequenceLike() && "Invalid kind of instruction");
+
+  switch (MI.getOpcode()) {
+  case ARM::VMOVDRR:
+    // dX = VMOVDRR rY, rZ
+    // is the same as:
+    // dX = REG_SEQUENCE rY, ssub_0, rZ, ssub_1
+    // Populate the InputRegs accordingly.
+    // rY
+    const MachineOperand *MOReg = &MI.getOperand(1);
+    InputRegs.push_back(
+        RegSubRegPairAndIdx(MOReg->getReg(), MOReg->getSubReg(), ARM::ssub_0));
+    // rZ
+    MOReg = &MI.getOperand(2);
+    InputRegs.push_back(
+        RegSubRegPairAndIdx(MOReg->getReg(), MOReg->getSubReg(), ARM::ssub_1));
+    return true;
+  }
+  llvm_unreachable("Target dependent opcode missing");
+}
+
 namespace {
   /// ARMCGBR - Create Global Base Reg pass. This initializes the PIC
   /// global base register for ARM ELF.
