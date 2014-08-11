@@ -282,6 +282,33 @@ DWARFExpression::CopyOpcodeData (lldb::ModuleSP module_sp, const DataExtractor& 
 }
 
 void
+DWARFExpression::CopyOpcodeData (const void *data,
+                                 lldb::offset_t data_length,
+                                 ByteOrder byte_order,
+                                 uint8_t addr_byte_size)
+{
+    if (data && data_length)
+    {
+        m_data.SetData(DataBufferSP(new DataBufferHeap(data, data_length)));
+        m_data.SetByteOrder(byte_order);
+        m_data.SetAddressByteSize(addr_byte_size);
+    }
+}
+
+void
+DWARFExpression::CopyOpcodeData (uint64_t const_value,
+                                 lldb::offset_t const_value_byte_size,
+                                 uint8_t addr_byte_size)
+{
+    if (const_value_byte_size)
+    {
+        m_data.SetData(DataBufferSP(new DataBufferHeap(&const_value, const_value_byte_size)));
+        m_data.SetByteOrder(endian::InlHostByteOrder());
+        m_data.SetAddressByteSize(addr_byte_size);
+    }
+}
+
+void
 DWARFExpression::SetOpcodeData (lldb::ModuleSP module_sp, const DataExtractor& data, lldb::offset_t data_offset, lldb::offset_t data_length)
 {
     m_module_wp = module_sp;
@@ -1307,7 +1334,7 @@ DWARFExpression::Evaluate
     ClangExpressionVariableList *expr_locals,
     ClangExpressionDeclMap *decl_map,
     RegisterContext *reg_ctx,
-    lldb::ModuleSP opcode_ctx,
+    lldb::ModuleSP module_sp,
     const DataExtractor& opcodes,
     const lldb::offset_t opcodes_offset,
     const lldb::offset_t opcodes_length,
@@ -2882,7 +2909,7 @@ DWARFExpression::Evaluate
                     return false;
                 }
 
-                if (!exe_ctx || !opcode_ctx)
+                if (!exe_ctx || !module_sp)
                 {
                     if (error_ptr)
                         error_ptr->SetErrorString("No context to evaluate TLS within.");
@@ -2898,7 +2925,7 @@ DWARFExpression::Evaluate
                 }
 
                 // Lookup the TLS block address for this thread and module.
-                addr_t tls_addr = thread->GetThreadLocalData (opcode_ctx);
+                addr_t tls_addr = thread->GetThreadLocalData (module_sp);
 
                 if (tls_addr == LLDB_INVALID_ADDRESS)
                 {

@@ -222,6 +222,17 @@ public:
                     lldb::offset_t data_offset,
                     lldb::offset_t data_length);
     
+    void
+    CopyOpcodeData (const void *data,
+                    lldb::offset_t data_length,
+                    lldb::ByteOrder byte_order,
+                    uint8_t addr_byte_size);
+    
+    void
+    CopyOpcodeData (uint64_t const_value,
+                    lldb::offset_t const_value_byte_size,
+                    uint8_t addr_byte_size);
+    
 
     //------------------------------------------------------------------
     /// Tells the expression that it refers to a location list.

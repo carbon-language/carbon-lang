@@ -7333,6 +7333,7 @@ SymbolFileDWARF::ParseVariableDIE
             bool is_artificial = false;
             bool location_is_const_value_data = false;
             bool has_explicit_location = false;
+            DWARFFormValue const_value;
             //AccessType accessibility = eAccessNone;
 
             for (i=0; i<num_attributes; ++i)
@@ -7371,7 +7372,21 @@ SymbolFileDWARF::ParseVariableDIE
                                 const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
                                 uint32_t data_offset = attributes.DIEOffsetAtIndex(i);
                                 uint32_t data_length = fixed_form_sizes[form_value.Form()];
-                                location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
+                                if (data_length == 0)
+                                {
+                                    const uint8_t *data_pointer = form_value.BlockData();
+                                    if (data_pointer)
+                                    {
+                                        data_length = form_value.Unsigned();
+                                    }
+                                    else if (DWARFFormValue::IsDataForm(form_value.Form()))
+                                    {
+                                        // we need to get the byte size of the type later after we create the variable
+                                        const_value = form_value;
+                                    }
+                                }
+                                else
+                                    location.CopyOpcodeData(module, debug_info_data, data_offset, data_length);
                             }
                             else
                             {
@@ -7583,10 +7598,15 @@ SymbolFileDWARF::ParseVariableDIE
 
             if (symbol_context_scope)
             {
+                SymbolFileTypeSP type_sp(new SymbolFileType(*this, type_uid));
+                
+                if (const_value.Form() && type_sp && type_sp->GetType())
+                    location.CopyOpcodeData(const_value.Unsigned(), type_sp->GetType()->GetByteSize(), dwarf_cu->GetAddressByteSize());
+                
                 var_sp.reset (new Variable (MakeUserID(die->GetOffset()), 
                                             name, 
                                             mangled,
-                                            SymbolFileTypeSP (new SymbolFileType(*this, type_uid)),
+                                            type_sp,
                                             scope, 
                                             symbol_context_scope, 
                                             &decl, 
