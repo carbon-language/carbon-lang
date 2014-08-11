@@ -1,16 +1,16 @@
 ; RUN: llc < %s | FileCheck %s
 ; RUN: llc -mattr=+vfp3,+fp16 < %s | FileCheck --check-prefix=CHECK-FP16 %s
-; RUN: llc -mtriple=armv8-eabi < %s | FileCheck --check-prefix=CHECK-ARMV8 %s
+; RUN: llc -mtriple=armv8-eabihf < %s | FileCheck --check-prefix=CHECK-ARMV8 %s
 ; RUN: llc -mtriple=thumbv7m-eabi < %s | FileCheck --check-prefix=CHECK-SOFTFLOAT %s
 
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-n32"
-target triple = "armv7-eabi"
+target triple = "armv7---eabihf"
 
 @x = global i16 12902
 @y = global i16 0
 @z = common global i16 0
 
-define arm_aapcs_vfpcc void @foo() nounwind {
+define void @foo() nounwind {
 ; CHECK-LABEL: foo:
 ; CHECK-FP16-LABEL: foo:
 ; CHECK-ARMV8-LABEL: foo:
@@ -38,9 +38,9 @@ entry:
   ret void
 }
 
-define arm_aapcs_vfpcc double @test_from_fp16(i16 %in) {
+define double @test_from_fp16(i16 %in) {
 ; CHECK-LABEL: test_from_fp16:
-; CHECK-FP-LABEL: test_from_fp16:
+; CHECK-FP16-LABEL: test_from_fp16:
 ; CHECK-ARMV8-LABEL: test_from_fp16:
 ; CHECK-SOFTFLOAT-LABEL: test_from_fp16:
   %val = call double @llvm.convert.from.fp16.f64(i16 %in)
@@ -60,15 +60,15 @@ define arm_aapcs_vfpcc double @test_from_fp16(i16 %in) {
   ret double %val
 }
 
-define arm_aapcs_vfpcc i16 @test_to_fp16(double %in) {
+define i16 @test_to_fp16(double %in) {
 ; CHECK-LABEL: test_to_fp16:
-; CHECK-FP-LABEL: test_to_fp16:
+; CHECK-FP16-LABEL: test_to_fp16:
 ; CHECK-ARMV8-LABEL: test_to_fp16:
 ; CHECK-SOFTFLOAT-LABEL: test_to_fp16:
   %val = call i16 @llvm.convert.to.fp16.f64(double %in)
-; CHECK: bl __truncdfhf2
+; CHECK: bl __aeabi_d2h
 
-; CHECK-FP16: bl __truncdfhf2
+; CHECK-FP16: bl __aeabi_d2h
 
 ; CHECK-ARMV8: vcvtb.f16.f64 [[TMP:s[0-9]+]], d0
 ; CHECK-ARMV8: vmov r0, [[TMP]]

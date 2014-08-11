@@ -388,6 +388,19 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallName(RTLIB::UDIVREM_I32, "__udivmodsi4");
   }
 
+  // The half <-> float conversion functions are always soft-float, but are
+  // needed for some targets which use a hard-float calling convention by
+  // default.
+  if (Subtarget->isAAPCS_ABI()) {
+    setLibcallCallingConv(RTLIB::FPROUND_F32_F16, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPROUND_F64_F16, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::FPEXT_F16_F32, CallingConv::ARM_AAPCS);
+  } else {
+    setLibcallCallingConv(RTLIB::FPROUND_F32_F16, CallingConv::ARM_APCS);
+    setLibcallCallingConv(RTLIB::FPROUND_F64_F16, CallingConv::ARM_APCS);
+    setLibcallCallingConv(RTLIB::FPEXT_F16_F32, CallingConv::ARM_APCS);
+  }
+
   if (Subtarget->isThumb1Only())
     addRegisterClass(MVT::i32, &ARM::tGPRRegClass);
   else
