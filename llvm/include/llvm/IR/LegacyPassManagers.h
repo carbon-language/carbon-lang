@@ -393,7 +393,7 @@ private:
 
   // Collection of higher level analysis used by the pass managed by
   // this manager.
-  SmallVector<Pass *, 8> HigherLevelAnalysis;
+  SmallVector<Pass *, 16> HigherLevelAnalysis;
 
   unsigned Depth;
 };
