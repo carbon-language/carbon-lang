@@ -540,16 +540,16 @@ namespace {
   };
 }
 
-std::pair<unsigned, bool>
-Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
-                       const LangOptions &LangOpts, unsigned MaxLines) {
+std::pair<unsigned, bool> Lexer::ComputePreamble(llvm::MemoryBuffer &Buffer,
+                                                 const LangOptions &LangOpts,
+                                                 unsigned MaxLines) {
   // Create a lexer starting at the beginning of the file. Note that we use a
   // "fake" file source location at offset 1 so that the lexer will track our
   // position within the file.
   const unsigned StartOffset = 1;
   SourceLocation FileLoc = SourceLocation::getFromRawEncoding(StartOffset);
-  Lexer TheLexer(FileLoc, LangOpts, Buffer->getBufferStart(),
-                 Buffer->getBufferStart(), Buffer->getBufferEnd());
+  Lexer TheLexer(FileLoc, LangOpts, Buffer.getBufferStart(),
+                 Buffer.getBufferStart(), Buffer.getBufferEnd());
   TheLexer.SetCommentRetentionState(true);
 
   // StartLoc will differ from FileLoc if there is a BOM that was skipped.
@@ -563,9 +563,9 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
 
   unsigned MaxLineOffset = 0;
   if (MaxLines) {
-    const char *CurPtr = Buffer->getBufferStart();
+    const char *CurPtr = Buffer.getBufferStart();
     unsigned CurLine = 0;
-    while (CurPtr != Buffer->getBufferEnd()) {
+    while (CurPtr != Buffer.getBufferEnd()) {
       char ch = *CurPtr++;
       if (ch == '\n') {
         ++CurLine;
@@ -573,8 +573,8 @@ Lexer::ComputePreamble(const llvm::MemoryBuffer *Buffer,
           break;
       }
     }
-    if (CurPtr != Buffer->getBufferEnd())
-      MaxLineOffset = CurPtr - Buffer->getBufferStart();
+    if (CurPtr != Buffer.getBufferEnd())
+      MaxLineOffset = CurPtr - Buffer.getBufferStart();
   }
 
   do {

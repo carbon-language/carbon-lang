@@ -685,7 +685,7 @@ void PrintPreambleAction::ExecuteAction() {
   llvm::MemoryBuffer *Buffer
       = CI.getFileManager().getBufferForFile(getCurrentFile());
   if (Buffer) {
-    unsigned Preamble = Lexer::ComputePreamble(Buffer, CI.getLangOpts()).first;
+    unsigned Preamble = Lexer::ComputePreamble(*Buffer, CI.getLangOpts()).first;
     llvm::outs().write(Buffer->getBufferStart(), Preamble);
     delete Buffer;
   }
