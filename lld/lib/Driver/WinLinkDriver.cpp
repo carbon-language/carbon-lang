@@ -1166,8 +1166,8 @@ bool WinLinkDriver::parse(int argc, const char *argv[],
     case OPT_profile:
       // /profile implies /opt:ref, /opt:noicf, /incremental:no and /fixed:no.
       ctx.setDeadStripping(true);
-      ctx.setBaseRelocationEnabled(false);
-      ctx.setDynamicBaseEnabled(false);
+      ctx.setBaseRelocationEnabled(true);
+      ctx.setDynamicBaseEnabled(true);
       break;
 
     case OPT_implib:

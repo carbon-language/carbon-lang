@@ -658,8 +658,8 @@ TEST_F(WinLinkParserTest, OptUnknown) {
 TEST_F(WinLinkParserTest, Profile) {
   EXPECT_TRUE(parse("link.exe", "/profile", "a.obj", nullptr));
   EXPECT_TRUE(_context.deadStrip());
-  EXPECT_FALSE(_context.getBaseRelocationEnabled());
-  EXPECT_FALSE(_context.getDynamicBaseEnabled());
+  EXPECT_TRUE(_context.getBaseRelocationEnabled());
+  EXPECT_TRUE(_context.getDynamicBaseEnabled());
 }
 
 //
