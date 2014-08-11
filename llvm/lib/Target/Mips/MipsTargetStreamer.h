@@ -11,6 +11,7 @@
 #define MIPSTARGETSTREAMER_H
 
 #include "llvm/MC/MCELFStreamer.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "MCTargetDesc/MipsABIFlagsSection.h"
 
@@ -96,6 +97,19 @@ public:
 
 protected:
   MipsABIFlagsSection ABIFlagsSection;
+
+  bool GPRInfoSet;
+  unsigned GPRBitMask;
+  int GPROffset;
+
+  bool FPRInfoSet;
+  unsigned FPRBitMask;
+  int FPROffset;
+
+  bool FrameInfoSet;
+  int FrameOffset;
+  unsigned FrameReg;
+  unsigned ReturnReg;
 
 private:
   bool canHaveModuleDirective;

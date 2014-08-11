@@ -82,6 +82,10 @@ class MipsAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
   MipsAssemblerOptions Options;
+  MCSymbol *CurrentFn; // Pointer to the function being parsed. It may be a
+                       // nullptr, which indicates that no function is currently
+                       // selected. This usually happens after an '.end func'
+                       // directive.
 
 #define GET_ASSEMBLER_HEADER
 #include "MipsGenAsmMatcher.inc"
@@ -285,6 +289,8 @@ public:
 
     if (!isABI_O32() && !useOddSPReg() != 0)
       report_fatal_error("-mno-odd-spreg requires the O32 ABI");
+
+    CurrentFn = nullptr;
   }
 
   MCAsmParser &getParser() const { return Parser; }
@@ -3055,22 +3061,151 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     parseDataDirective(8, DirectiveID.getLoc());
     return false;
   }
-
   if (IDVal == ".ent") {
-    // Ignore this directive for now.
-    Parser.Lex();
+    StringRef SymbolName;
+
+    if (Parser.parseIdentifier(SymbolName)) {
+      reportParseError("expected identifier after .ent");
+      return false;
+    }
+
+    // There's an undocumented extension that allows an integer to
+    // follow the name of the procedure which AFAICS is ignored by GAS.
+    // Example: .ent foo,2
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      if (getLexer().isNot(AsmToken::Comma)) {
+        // Even though we accept this undocumented extension for compatibility
+        // reasons, the additional integer argument does not actually change
+        // the behaviour of the '.ent' directive, so we would like to discourage
+        // its use. We do this by not referring to the extended version in
+        // error messages which are not directly related to its use.
+        reportParseError("unexpected token, expected end of statement");
+        return false;
+      }
+      Parser.Lex(); // Eat the comma.
+      const MCExpr *DummyNumber;
+      int64_t DummyNumberVal;
+      // If the user was explicitly trying to use the extended version,
+      // we still give helpful extension-related error messages.
+      if (Parser.parseExpression(DummyNumber)) {
+        reportParseError("expected number after comma");
+        return false;
+      }
+      if (!DummyNumber->EvaluateAsAbsolute(DummyNumberVal)) {
+        reportParseError("expected an absolute expression after comma");
+        return false;
+      }
+    }
+
+    // If this is not the end of the statement, report an error.
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      reportParseError("unexpected token, expected end of statement");
+      return false;
+    }
+
+    MCSymbol *Sym = getContext().GetOrCreateSymbol(SymbolName);
+
+    getTargetStreamer().emitDirectiveEnt(*Sym);
+    CurrentFn = Sym;
     return false;
   }
 
   if (IDVal == ".end") {
-    // Ignore this directive for now.
-    Parser.Lex();
+    StringRef SymbolName;
+
+    if (Parser.parseIdentifier(SymbolName)) {
+      reportParseError("expected identifier after .end");
+      return false;
+    }
+
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      reportParseError("unexpected token, expected end of statement");
+      return false;
+    }
+
+    if (CurrentFn == nullptr) {
+      reportParseError(".end used without .ent");
+      return false;
+    }
+
+    if ((SymbolName != CurrentFn->getName())) {
+      reportParseError(".end symbol does not match .ent symbol");
+      return false;
+    }
+
+    getTargetStreamer().emitDirectiveEnd(SymbolName);
+    CurrentFn = nullptr;
     return false;
   }
 
   if (IDVal == ".frame") {
-    // Ignore this directive for now.
-    Parser.eatToEndOfStatement();
+    // .frame $stack_reg, frame_size_in_bytes, $return_reg
+    SmallVector<std::unique_ptr<MCParsedAsmOperand>, 1> TmpReg;
+    OperandMatchResultTy ResTy = ParseAnyRegister(TmpReg);
+    if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
+      reportParseError("expected stack register");
+      return false;
+    }
+
+    MipsOperand &StackRegOpnd = static_cast<MipsOperand &>(*TmpReg[0]);
+    if (!StackRegOpnd.isGPRAsmReg()) {
+      reportParseError(StackRegOpnd.getStartLoc(),
+                       "expected general purpose register");
+      return false;
+    }
+    unsigned StackReg = StackRegOpnd.getGPR32Reg();
+
+    if (Parser.getTok().is(AsmToken::Comma))
+      Parser.Lex();
+    else {
+      reportParseError("unexpected token, expected comma");
+      return false;
+    }
+
+    // Parse the frame size.
+    const MCExpr *FrameSize;
+    int64_t FrameSizeVal;
+
+    if (Parser.parseExpression(FrameSize)) {
+      reportParseError("expected frame size value");
+      return false;
+    }
+
+    if (!FrameSize->EvaluateAsAbsolute(FrameSizeVal)) {
+      reportParseError("frame size not an absolute expression");
+      return false;
+    }
+
+    if (Parser.getTok().is(AsmToken::Comma))
+      Parser.Lex();
+    else {
+      reportParseError("unexpected token, expected comma");
+      return false;
+    }
+
+    // Parse the return register.
+    TmpReg.clear();
+    ResTy = ParseAnyRegister(TmpReg);
+    if (ResTy == MatchOperand_NoMatch || ResTy == MatchOperand_ParseFail) {
+      reportParseError("expected return register");
+      return false;
+    }
+
+    MipsOperand &ReturnRegOpnd = static_cast<MipsOperand &>(*TmpReg[0]);
+    if (!ReturnRegOpnd.isGPRAsmReg()) {
+      reportParseError(ReturnRegOpnd.getStartLoc(),
+                       "expected general purpose register");
+      return false;
+    }
+
+    // If this is not the end of the statement, report an error.
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      reportParseError("unexpected token, expected end of statement");
+      return false;
+    }
+
+    getTargetStreamer().emitFrame(StackReg, FrameSizeVal,
+                                  ReturnRegOpnd.getGPR32Reg());
     return false;
   }
 
@@ -3078,15 +3213,61 @@ bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
     return parseDirectiveSet();
   }
 
-  if (IDVal == ".fmask") {
-    // Ignore this directive for now.
-    Parser.eatToEndOfStatement();
-    return false;
-  }
+  if (IDVal == ".mask" || IDVal == ".fmask") {
+    // .mask bitmask, frame_offset
+    // bitmask: One bit for each register used.
+    // frame_offset: Offset from Canonical Frame Address ($sp on entry) where
+    //               first register is expected to be saved.
+    // Examples:
+    //   .mask 0x80000000, -4
+    //   .fmask 0x80000000, -4
+    //
 
-  if (IDVal == ".mask") {
-    // Ignore this directive for now.
-    Parser.eatToEndOfStatement();
+    // Parse the bitmask
+    const MCExpr *BitMask;
+    int64_t BitMaskVal;
+
+    if (Parser.parseExpression(BitMask)) {
+      reportParseError("expected bitmask value");
+      return false;
+    }
+
+    if (!BitMask->EvaluateAsAbsolute(BitMaskVal)) {
+      reportParseError("bitmask not an absolute expression");
+      return false;
+    }
+
+    if (Parser.getTok().is(AsmToken::Comma))
+      Parser.Lex();
+    else {
+      reportParseError("unexpected token, expected comma");
+      return false;
+    }
+
+    // Parse the frame_offset
+    const MCExpr *FrameOffset;
+    int64_t FrameOffsetVal;
+
+    if (Parser.parseExpression(FrameOffset)) {
+      reportParseError("expected frame offset value");
+      return false;
+    }
+
+    if (!FrameOffset->EvaluateAsAbsolute(FrameOffsetVal)) {
+      reportParseError("frame offset not an absolute expression");
+      return false;
+    }
+
+    // If this is not the end of the statement, report an error.
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      reportParseError("unexpected token, expected end of statement");
+      return false;
+    }
+
+    if (IDVal == ".mask")
+      getTargetStreamer().emitMask(BitMaskVal, FrameOffsetVal);
+    else
+      getTargetStreamer().emitFMask(BitMaskVal, FrameOffsetVal);
     return false;
   }
 
