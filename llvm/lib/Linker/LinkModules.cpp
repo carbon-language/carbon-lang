@@ -647,14 +647,15 @@ bool ModuleLinker::getComdatResult(const Comdat *SrcC,
   StringRef ComdatName = SrcC->getName();
   Module::ComdatSymTabType &ComdatSymTab = DstM->getComdatSymbolTable();
   Module::ComdatSymTabType::iterator DstCI = ComdatSymTab.find(ComdatName);
-  if (DstCI != ComdatSymTab.end()) {
-    const Comdat *DstC = &DstCI->second;
-    Comdat::SelectionKind SSK = SrcC->getSelectionKind();
-    Comdat::SelectionKind DSK = DstC->getSelectionKind();
-    if (computeResultingSelectionKind(ComdatName, SSK, DSK, Result, LinkFromSrc))
-      return true;
-  }
-  return false;
+
+  if (DstCI == ComdatSymTab.end())
+    return false;
+
+  const Comdat *DstC = &DstCI->second;
+  Comdat::SelectionKind SSK = SrcC->getSelectionKind();
+  Comdat::SelectionKind DSK = DstC->getSelectionKind();
+  return computeResultingSelectionKind(ComdatName, SSK, DSK, Result,
+                                       LinkFromSrc);
 }
 
 /// getLinkageResult - This analyzes the two global values and determines what
