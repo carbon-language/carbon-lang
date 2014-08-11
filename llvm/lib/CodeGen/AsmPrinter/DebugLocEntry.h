@@ -114,8 +114,7 @@ public:
       DIVariable NextVar(Next.Values[0].Variable);
       if (Var.getName() == NextVar.getName() &&
           Var.isVariablePiece() && NextVar.isVariablePiece()) {
-        Values.append(Next.Values.begin(), Next.Values.end());
-        sortUniqueValues();
+        addValues(Next.Values);
         End = Next.End;
         return true;
       }
@@ -139,11 +138,12 @@ public:
   const MCSymbol *getBeginSym() const { return Begin; }
   const MCSymbol *getEndSym() const { return End; }
   const ArrayRef<Value> getValues() const { return Values; }
-  void addValue(Value Val) {
-    assert(DIVariable(Val.Variable).isVariablePiece() &&
-           "multi-value DebugLocEntries must be pieces");
-    Values.push_back(Val);
+  void addValues(ArrayRef<DebugLocEntry::Value> Vals) {
+    Values.append(Vals.begin(), Vals.end());
     sortUniqueValues();
+    assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value V){
+          return DIVariable(V.Variable).isVariablePiece();
+        }) && "value must be a piece");
   }
 
   // Sort the pieces by offset.

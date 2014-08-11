@@ -1288,8 +1288,9 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     if (!couldMerge) {
       // Need to add a new DebugLocEntry. Add all values from still
       // valid non-overlapping pieces.
-      for (auto Range : OpenRanges)
-        Loc.addValue(Range.second);
+      if (OpenRanges.size())
+        Loc.addValues(OpenRanges);
+
       DebugLoc.push_back(std::move(Loc));
     }
 
