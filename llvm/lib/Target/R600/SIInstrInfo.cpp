@@ -1394,6 +1394,7 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
       MachineOperand *SOffset = getNamedOperand(*MI, AMDGPU::OpName::soffset);
       assert(SOffset->isImm() && SOffset->getImm() == 0 && "Legalizing MUBUF "
              "with non-zero soffset is not implemented");
+      (void)SOffset;
 
       // Create the new instruction.
       unsigned Addr64Opcode = AMDGPU::getAddr64Inst(MI->getOpcode());
