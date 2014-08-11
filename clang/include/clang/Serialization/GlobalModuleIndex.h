@@ -115,7 +115,7 @@ class GlobalModuleIndex {
   unsigned NumIdentifierLookupHits;
   
   /// \brief Internal constructor. Use \c readIndex() to read an index.
-  explicit GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
+  explicit GlobalModuleIndex(std::unique_ptr<llvm::MemoryBuffer> Buffer,
                              llvm::BitstreamCursor Cursor);
 
   GlobalModuleIndex(const GlobalModuleIndex &) LLVM_DELETED_FUNCTION;

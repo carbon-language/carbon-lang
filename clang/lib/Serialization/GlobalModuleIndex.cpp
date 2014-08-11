@@ -122,11 +122,10 @@ typedef llvm::OnDiskIterableChainedHashTable<IdentifierIndexReaderTrait>
 
 }
 
-GlobalModuleIndex::GlobalModuleIndex(llvm::MemoryBuffer *Buffer,
+GlobalModuleIndex::GlobalModuleIndex(std::unique_ptr<llvm::MemoryBuffer> Buffer,
                                      llvm::BitstreamCursor Cursor)
-  : Buffer(Buffer), IdentifierIndex(),
-    NumIdentifierLookups(), NumIdentifierLookupHits()
-{
+    : Buffer(std::move(Buffer)), IdentifierIndex(), NumIdentifierLookups(),
+      NumIdentifierLookupHits() {
   // Read the global index.
   bool InGlobalIndexBlock = false;
   bool Done = false;
@@ -260,7 +259,7 @@ GlobalModuleIndex::readIndex(StringRef Path) {
     return std::make_pair(nullptr, EC_IOError);
   }
 
-  return std::make_pair(new GlobalModuleIndex(Buffer.release(), Cursor),
+  return std::make_pair(new GlobalModuleIndex(std::move(Buffer), Cursor),
                         EC_None);
 }
 
