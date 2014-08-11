@@ -327,6 +327,10 @@ def patchCoff(path, relocs):
 
   machine_type            = f.uint16()
   section_count           = f.uint16()
+
+  # Zero out timestamp to prevent churn when regenerating COFF files.
+  f.writeUInt32(0)
+
   f.seek(20)
   sections = [CoffSection(f) for idx in range(section_count)]
 
