@@ -2065,30 +2065,18 @@ void DwarfDebug::emitDebugStr() {
 void DwarfDebug::emitLocPieces(ByteStreamer &Streamer,
                                const DITypeIdentifierMap &Map,
                                ArrayRef<DebugLocEntry::Value> Values) {
-  typedef DebugLocEntry::Value Piece;
-  SmallVector<Piece, 4> Pieces(Values.begin(), Values.end());
-  assert(std::all_of(Pieces.begin(), Pieces.end(), [](Piece &P) {
+  assert(std::all_of(Values.begin(), Values.end(), [](DebugLocEntry::Value P) {
         return DIVariable(P.getVariable()).isVariablePiece();
       }) && "all values are expected to be pieces");
-
-  // Sort the pieces so they can be emitted using DW_OP_piece.
-  std::sort(Pieces.begin(), Pieces.end(), [](const Piece &A, const Piece &B) {
-      DIVariable VarA(A.getVariable());
-      DIVariable VarB(B.getVariable());
-      return VarA.getPieceOffset() < VarB.getPieceOffset();
-    });
-  // Remove any duplicate entries by dropping all but the first.
-  Pieces.erase(std::unique(Pieces.begin(), Pieces.end(),
-                           [] (const Piece &A,const Piece &B){
-                             return A.getVariable() == B.getVariable();
-                           }), Pieces.end());
+  assert(std::is_sorted(Values.begin(), Values.end()) &&
+         "pieces are expected to be sorted");
 
   unsigned Offset = 0;
-  for (auto Piece : Pieces) {
+  for (auto Piece : Values) {
     DIVariable Var(Piece.getVariable());
     unsigned PieceOffset = Var.getPieceOffset();
     unsigned PieceSize = Var.getPieceSize();
-    assert(Offset <= PieceOffset && "overlapping pieces in DebugLocEntry");
+    assert(Offset <= PieceOffset && "overlapping or duplicate pieces");
     if (Offset < PieceOffset) {
       // The DWARF spec seriously mandates pieces with no locations for gaps.
       Asm->EmitDwarfOpPiece(Streamer, (PieceOffset-Offset)*8);
