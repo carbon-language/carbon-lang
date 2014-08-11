@@ -323,8 +323,6 @@ def ast_dump_filter : Separate<["-"], "ast-dump-filter">,
   HelpText<"Use with -ast-dump or -ast-print to dump/print only AST declaration"
            " nodes having a certain substring in a qualified name. Use"
            " -ast-list to list all filterable declaration node names.">;
-def ast_dump_lookups : Flag<["-"], "ast-dump-lookups">,
-  HelpText<"Include name lookup table dumps in AST dumps">;
 def fno_modules_global_index : Flag<["-"], "fno-modules-global-index">,
   HelpText<"Do not automatically generate or update the global module index">;
 def fno_modules_error_recovery : Flag<["-"], "fno-modules-error-recovery">,
@@ -360,6 +358,8 @@ def ast_list : Flag<["-"], "ast-list">,
   HelpText<"Build ASTs and print the list of declaration node qualified names">;
 def ast_dump : Flag<["-"], "ast-dump">,
   HelpText<"Build ASTs and then debug dump them">;
+def ast_dump_lookups : Flag<["-"], "ast-dump-lookups">,
+  HelpText<"Build ASTs and then debug dump their name lookup tables">;
 def ast_view : Flag<["-"], "ast-view">,
   HelpText<"Build ASTs and view them with GraphViz">;
 def print_decl_contexts : Flag<["-"], "print-decl-contexts">,

@@ -220,7 +220,7 @@ namespace  {
     void dumpName(const NamedDecl *D);
     bool hasNodes(const DeclContext *DC);
     void dumpDeclContext(const DeclContext *DC);
-    void dumpLookups(const DeclContext *DC);
+    void dumpLookups(const DeclContext *DC, bool DumpDecls);
     void dumpAttr(const Attr *A);
 
     // C++ Utilities
@@ -569,7 +569,7 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
   }
 }
 
-void ASTDumper::dumpLookups(const DeclContext *DC) {
+void ASTDumper::dumpLookups(const DeclContext *DC, bool DumpDecls) {
   IndentScope Indent(*this);
 
   OS << "StoredDeclsMap ";
@@ -602,9 +602,26 @@ void ASTDumper::dumpLookups(const DeclContext *DC) {
          RI != RE; ++RI) {
       if (RI + 1 == RE)
         lastChild();
-      dumpDeclRef(*RI);
+
+      IndentScope LookupIndent(*this);
+      dumpBareDeclRef(*RI);
+
       if ((*RI)->isHidden())
         OS << " hidden";
+
+      // If requested, dump the redecl chain for this lookup.
+      if (DumpDecls) {
+        // Dump earliest decl first.
+        std::function<void(Decl*)> DumpPrev = [&](Decl *D) {
+          if (Decl *Prev = D->getPreviousDecl()) {
+            DumpPrev(Prev);
+            dumpDecl(Prev);
+          }
+        };
+        DumpPrev(*RI);
+        lastChild();
+        dumpDecl(*RI);
+      }
     }
   }
 
@@ -2169,13 +2186,14 @@ LLVM_DUMP_METHOD void DeclContext::dumpLookups() const {
   dumpLookups(llvm::errs());
 }
 
-LLVM_DUMP_METHOD void DeclContext::dumpLookups(raw_ostream &OS) const {
+LLVM_DUMP_METHOD void DeclContext::dumpLookups(raw_ostream &OS,
+                                               bool DumpDecls) const {
   const DeclContext *DC = this;
   while (!DC->isTranslationUnit())
     DC = DC->getParent();
   ASTContext &Ctx = cast<TranslationUnitDecl>(DC)->getASTContext();
   ASTDumper P(OS, &Ctx.getCommentCommandTraits(), &Ctx.getSourceManager());
-  P.dumpLookups(this);
+  P.dumpLookups(this, DumpDecls);
 }
 
 //===----------------------------------------------------------------------===//

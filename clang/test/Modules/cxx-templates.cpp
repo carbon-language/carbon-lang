@@ -1,6 +1,6 @@
 // RUN: rm -rf %t
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
-// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups | FileCheck %s --check-prefix=CHECK-GLOBAL
+// RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump-lookups -ast-dump-filter N | FileCheck %s --check-prefix=CHECK-NAMESPACE-N
 // RUN: not %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -std=c++11 -ast-dump | FileCheck %s --check-prefix=CHECK-DUMP
 // RUN: %clang_cc1 -x objective-c++ -fmodules -fno-modules-error-recovery -fmodules-cache-path=%t -I %S/Inputs %s -verify -std=c++11
 

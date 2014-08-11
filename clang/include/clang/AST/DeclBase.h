@@ -1642,7 +1642,7 @@ public:
 
   void dumpDeclContext() const;
   void dumpLookups() const;
-  void dumpLookups(llvm::raw_ostream &OS) const;
+  void dumpLookups(llvm::raw_ostream &OS, bool DumpDecls = false) const;
 
 private:
   void reconcileExternalVisibleStorage() const;

@@ -184,7 +184,8 @@ public:
     if (ASTList)
       return clang::CreateASTDeclNodeLister();
     if (ASTDump)
-      return clang::CreateASTDumper(ASTDumpFilter);
+      return clang::CreateASTDumper(ASTDumpFilter, /*DumpDecls*/ true,
+                                    /*DumpLookups*/ false);
     if (ASTPrint)
       return clang::CreateASTPrinter(&llvm::outs(), ASTDumpFilter);
     return llvm::make_unique<clang::ASTConsumer>();

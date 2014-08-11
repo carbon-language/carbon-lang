@@ -718,6 +718,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
     case OPT_ast_list:
       Opts.ProgramAction = frontend::ASTDeclList; break;
     case OPT_ast_dump:
+    case OPT_ast_dump_lookups:
       Opts.ProgramAction = frontend::ASTDump; break;
     case OPT_ast_print:
       Opts.ProgramAction = frontend::ASTPrint; break;
@@ -825,6 +826,7 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.FixOnlyWarnings = Args.hasArg(OPT_fix_only_warnings);
   Opts.FixAndRecompile = Args.hasArg(OPT_fixit_recompile);
   Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
+  Opts.ASTDumpDecls = Args.hasArg(OPT_ast_dump);
   Opts.ASTDumpFilter = Args.getLastArgValue(OPT_ast_dump_filter);
   Opts.ASTDumpLookups = Args.hasArg(OPT_ast_dump_lookups);
   Opts.UseGlobalModuleIndex = !Args.hasArg(OPT_fno_modules_global_index);

@@ -57,7 +57,8 @@ namespace {
         bool ShowColors = Out.has_colors();
         if (ShowColors)
           Out.changeColor(raw_ostream::BLUE);
-        Out << (Dump ? "Dumping " : "Printing ") << getName(D) << ":\n";
+        Out << ((Dump || DumpLookups) ? "Dumping " : "Printing ") << getName(D)
+            << ":\n";
         if (ShowColors)
           Out.resetColor();
         print(D);
@@ -79,9 +80,13 @@ namespace {
     }
     void print(Decl *D) {
       if (DumpLookups) {
-        if (DeclContext *DC = dyn_cast<DeclContext>(D))
-          DC->dumpLookups(Out);
-        else
+        if (DeclContext *DC = dyn_cast<DeclContext>(D)) {
+          if (DC == DC->getPrimaryContext())
+            DC->dumpLookups(Out, Dump);
+          else
+            Out << "Lookup map is in primary DeclContext "
+                << DC->getPrimaryContext() << "\n";
+        } else
           Out << "Not a DeclContext\n";
       } else if (Dump)
         D->dump(Out);
@@ -124,8 +129,10 @@ std::unique_ptr<ASTConsumer> clang::CreateASTPrinter(raw_ostream *Out,
 }
 
 std::unique_ptr<ASTConsumer> clang::CreateASTDumper(StringRef FilterString,
+                                                    bool DumpDecls,
                                                     bool DumpLookups) {
-  return llvm::make_unique<ASTPrinter>(nullptr, /*Dump=*/true, FilterString,
+  assert((DumpDecls || DumpLookups) && "nothing to dump");
+  return llvm::make_unique<ASTPrinter>(nullptr, DumpDecls, FilterString,
                                        DumpLookups);
 }
 
