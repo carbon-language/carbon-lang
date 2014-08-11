@@ -732,6 +732,6 @@ public:
 };
 } // end anonymous namespace
 
-FileSystemStatCache *PTHManager::createStatCache() {
-  return new PTHStatCache(*((PTHFileLookup*) FileLookup));
+std::unique_ptr<FileSystemStatCache> PTHManager::createStatCache() {
+  return llvm::make_unique<PTHStatCache>(*((PTHFileLookup *)FileLookup));
 }

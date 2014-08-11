@@ -64,20 +64,20 @@ FileManager::~FileManager() {
     delete VirtualDirectoryEntries[i];
 }
 
-void FileManager::addStatCache(FileSystemStatCache *statCache,
+void FileManager::addStatCache(std::unique_ptr<FileSystemStatCache> statCache,
                                bool AtBeginning) {
   assert(statCache && "No stat cache provided?");
   if (AtBeginning || !StatCache.get()) {
-    statCache->setNextStatCache(StatCache.release());
-    StatCache.reset(statCache);
+    statCache->setNextStatCache(std::move(StatCache));
+    StatCache = std::move(statCache);
     return;
   }
   
   FileSystemStatCache *LastCache = StatCache.get();
   while (LastCache->getNextStatCache())
     LastCache = LastCache->getNextStatCache();
-  
-  LastCache->setNextStatCache(statCache);
+
+  LastCache->setNextStatCache(std::move(statCache));
 }
 
 void FileManager::removeStatCache(FileSystemStatCache *statCache) {
@@ -96,7 +96,7 @@ void FileManager::removeStatCache(FileSystemStatCache *statCache) {
     PrevCache = PrevCache->getNextStatCache();
   
   assert(PrevCache && "Stat cache not found for removal");
-  PrevCache->setNextStatCache(statCache->getNextStatCache());
+  PrevCache->setNextStatCache(statCache->takeNextStatCache());
 }
 
 void FileManager::clearStatCaches() {

@@ -572,8 +572,10 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   PTHWriter PW(*OS, PP);
 
   // Install the 'stat' system call listener in the FileManager.
-  StatListener *StatCache = new StatListener(PW.getPM());
-  PP.getFileManager().addStatCache(StatCache, /*AtBeginning=*/true);
+  auto StatCacheOwner = llvm::make_unique<StatListener>(PW.getPM());
+  StatListener *StatCache = StatCacheOwner.get();
+  PP.getFileManager().addStatCache(std::move(StatCacheOwner),
+                                   /*AtBeginning=*/true);
 
   // Lex through the entire file.  This will populate SourceManager with
   // all of the header information.
