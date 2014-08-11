@@ -655,6 +655,9 @@ enum {
 
   R_AARCH64_LDST128_ABS_LO12_NC         = 0x12b,
 
+  R_AARCH64_GOTREL64                    = 0x133,
+  R_AARCH64_GOTREL32                    = 0x134,
+
   R_AARCH64_ADR_GOT_PAGE                = 0x137,
   R_AARCH64_LD64_GOT_LO12_NC            = 0x138,
 
@@ -702,7 +705,17 @@ enum {
   R_AARCH64_TLSDESC_LD64_LO12_NC        = 0x233,
   R_AARCH64_TLSDESC_ADD_LO12_NC         = 0x234,
 
-  R_AARCH64_TLSDESC_CALL                = 0x239
+  R_AARCH64_TLSDESC_CALL                = 0x239,
+
+  R_AARCH64_COPY                        = 0x400,
+  R_AARCH64_GLOB_DAT                    = 0x401,
+  R_AARCH64_JUMP_SLOT                   = 0x402,
+  R_AARCH64_RELATIVE                    = 0x403,
+  R_AARCH64_TLS_DTPREL64                = 0x404,
+  R_AARCH64_TLS_DTPMOD64                = 0x405,
+  R_AARCH64_TLS_TPREL64                 = 0x406,
+  R_AARCH64_TLSDESC                     = 0x407,
+  R_AARCH64_IRELATIVE                   = 0x408
 };
 
 // ARM Specific e_flags
