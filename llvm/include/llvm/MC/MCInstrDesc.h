@@ -125,7 +125,8 @@ namespace MCID {
     Rematerializable,
     CheapAsAMove,
     ExtraSrcRegAllocReq,
-    ExtraDefRegAllocReq
+    ExtraDefRegAllocReq,
+    RegSequence
   };
 }
 
@@ -356,6 +357,18 @@ public:
   bool canFoldAsLoad() const {
     return Flags & (1 << MCID::FoldableAsLoad);
   }
+
+  /// \brief Return true if this instruction behaves
+  /// the same way as the generic REG_SEQUENCE instructions.
+  /// E.g., on ARM,
+  /// dX VMOVDRR rY, rZ
+  /// is equivalent to
+  /// dX = REG_SEQUENCE rY, ssub_0, rZ, ssub_1.
+  ///
+  /// Note that for the optimizers to be able to take advantage of
+  /// this property, TargetInstrInfo::getRegSequenceLikeInputs has to be
+  /// override accordingly.
+  bool isRegSequenceLike() const { return Flags & (1 << MCID::RegSequence); }
 
   //===--------------------------------------------------------------------===//
   // Side Effect Analysis

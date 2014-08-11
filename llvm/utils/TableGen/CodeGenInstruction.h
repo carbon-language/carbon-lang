@@ -253,6 +253,7 @@ namespace llvm {
     bool hasExtraDefRegAllocReq : 1;
     bool isCodeGenOnly : 1;
     bool isPseudo : 1;
+    bool isRegSequence : 1;
 
     std::string DeprecatedReason;
     bool HasComplexDeprecationPredicate;

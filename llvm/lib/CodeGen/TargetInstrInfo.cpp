@@ -852,3 +852,28 @@ computeOperandLatency(const InstrItineraryData *ItinData,
                           defaultDefLatency(ItinData->SchedModel, DefMI));
   return InstrLatency;
 }
+
+bool TargetInstrInfo::getRegSequenceInputs(
+    const MachineInstr &MI, unsigned DefIdx,
+    SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const {
+  assert(MI.isRegSequence() ||
+         MI.isRegSequenceLike() && "Instruction do not have the proper type");
+
+  if (!MI.isRegSequence())
+    return getRegSequenceLikeInputs(MI, DefIdx, InputRegs);
+
+  // We are looking at:
+  // Def = REG_SEQUENCE v0, sub0, v1, sub1, ...
+  assert(DefIdx == 0 && "REG_SEQUENCE only has one def");
+  for (unsigned OpIdx = 1, EndOpIdx = MI.getNumOperands(); OpIdx != EndOpIdx;
+       OpIdx += 2) {
+    const MachineOperand &MOReg = MI.getOperand(OpIdx);
+    const MachineOperand &MOSubIdx = MI.getOperand(OpIdx + 1);
+    assert(MOSubIdx.isImm() &&
+           "One of the subindex of the reg_sequence is not an immediate");
+    // Record Reg:SubReg, SubIdx.
+    InputRegs.push_back(RegSubRegPairAndIdx(MOReg.getReg(), MOReg.getSubReg(),
+                                            (unsigned)MOSubIdx.getImm()));
+  }
+  return true;
+}

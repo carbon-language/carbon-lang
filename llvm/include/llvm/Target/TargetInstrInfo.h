@@ -264,6 +264,45 @@ public:
   virtual bool findCommutedOpIndices(MachineInstr *MI, unsigned &SrcOpIdx1,
                                      unsigned &SrcOpIdx2) const;
 
+  /// A pair composed of a register and a sub-register index.
+  /// Used to give some type checking when modeling Reg:SubReg.
+  struct RegSubRegPair {
+    unsigned Reg;
+    unsigned SubReg;
+    RegSubRegPair(unsigned Reg = 0, unsigned SubReg = 0)
+        : Reg(Reg), SubReg(SubReg) {}
+  };
+  /// A pair composed of a pair of a register and a sub-register index,
+  /// and another sub-register index.
+  /// Used to give some type checking when modeling Reg:SubReg1, SubReg2.
+  struct RegSubRegPairAndIdx : RegSubRegPair {
+    unsigned SubIdx;
+    RegSubRegPairAndIdx(unsigned Reg = 0, unsigned SubReg = 0,
+                        unsigned SubIdx = 0)
+        : RegSubRegPair(Reg, SubReg), SubIdx(SubIdx) {}
+  };
+
+  /// Build the equivalent inputs of a REG_SEQUENCE for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] InputRegs of the equivalent REG_SEQUENCE. Each element of
+  /// the list is modeled as <Reg:SubReg, SubIdx>.
+  /// E.g., REG_SEQUENCE vreg1:sub1, sub0, vreg2, sub1 would produce
+  /// two elements:
+  /// - vreg1:sub1, sub0
+  /// - vreg2<:0>, sub1
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isRegSequence() or MI.isRegSequenceLike().
+  ///
+  /// \note The generic implementation does not provide any support for
+  /// MI.isRegSequenceLike(). In other words, one has to override
+  /// getRegSequenceLikeInputs for target specific instructions.
+  bool
+  getRegSequenceInputs(const MachineInstr &MI, unsigned DefIdx,
+                       SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const;
+
   /// produceSameValue - Return true if two machine instructions would produce
   /// identical values. By default, this is only true when the two instructions
   /// are deemed identical except for defs. If this function is called when the
@@ -630,6 +669,20 @@ protected:
                                           const SmallVectorImpl<unsigned> &Ops,
                                               MachineInstr* LoadMI) const {
     return nullptr;
+  }
+
+  /// \brief Target-dependent implementation of getRegSequenceInputs.
+  ///
+  /// \returns true if it is possible to build the equivalent
+  /// REG_SEQUENCE inputs with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isRegSequenceLike().
+  ///
+  /// \see TargetInstrInfo::getRegSequenceInputs.
+  virtual bool getRegSequenceLikeInputs(
+      const MachineInstr &MI, unsigned DefIdx,
+      SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const {
+    return false;
   }
 
 public:
