@@ -48,6 +48,7 @@ let Predicates = [HasAVX512] in {
   def : Pat<(v8i64  (bitconvert (v8f64 VR512:$src))),  (v8i64 VR512:$src)>;
   def : Pat<(v8i64  (bitconvert (v16f32 VR512:$src))), (v8i64 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v8i64 VR512:$src))), (v16i32 VR512:$src)>;
+  def : Pat<(v16i32 (bitconvert (v16f32 VR512:$src))), (v16i32 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v32i16 VR512:$src))),  (v16i32 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v64i8 VR512:$src))),  (v16i32 VR512:$src)>;
   def : Pat<(v16i32 (bitconvert (v8f64 VR512:$src))),  (v16i32 VR512:$src)>;
