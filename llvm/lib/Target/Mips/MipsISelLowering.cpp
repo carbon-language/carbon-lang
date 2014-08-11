@@ -2274,7 +2274,7 @@ SDValue MipsTargetLowering::lowerFP_TO_SINT(SDValue Op,
 //       an argument. Otherwise, passed in A1, A2, A3 and stack.
 // f64 - Only passed in two aliased f32 registers if no int reg has been used
 //       yet to hold an argument. Otherwise, use A2, A3 and stack. If A1 is
-//       not used, it must be shadowed. If only A3 is avaiable, shadow it and
+//       not used, it must be shadowed. If only A3 is available, shadow it and
 //       go to stack.
 //
 //  For vararg functions, all arguments are passed in A0, A1, A2, A3 and stack.

@@ -131,7 +131,7 @@ void AArch64FrameLowering::eliminateCallFramePseudoInstr(
       // FIXME: in-function stack adjustment for calls is limited to 24-bits
       // because there's no guaranteed temporary register available.
       //
-      // ADD/SUB (immediate) has only LSL #0 and LSL #12 avaiable.
+      // ADD/SUB (immediate) has only LSL #0 and LSL #12 available.
       // 1) For offset <= 12-bit, we use LSL #0
       // 2) For 12-bit <= offset <= 24-bit, we use two instructions. One uses
       // LSL #0, and the other uses LSL #12.

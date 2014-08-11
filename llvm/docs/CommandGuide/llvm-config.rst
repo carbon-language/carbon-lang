@@ -151,7 +151,7 @@ libraries.  Useful "virtual" components include:
 
 **all**
 
- Includes all LLVM libaries.  The default if no components are specified.
+ Includes all LLVM libraries.  The default if no components are specified.
 
 
 

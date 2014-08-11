@@ -338,7 +338,7 @@ protected:
   void setLoopLandBlock(MachineLoop *LoopRep, MachineBasicBlock *MBB = nullptr);
 
   MachineBasicBlock *findNearestCommonPostDom(std::set<MachineBasicBlock *>&);
-  /// This is work around solution for findNearestCommonDominator not avaiable
+  /// This is work around solution for findNearestCommonDominator not available
   /// to post dom a proper fix should go to Dominators.h.
   MachineBasicBlock *findNearestCommonPostDom(MachineBasicBlock *MBB1,
       MachineBasicBlock *MBB2);

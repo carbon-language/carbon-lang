@@ -1684,7 +1684,7 @@ void MPPassManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
   if (!FoundPass) {
     FoundPass = RequiredPass;
     // This should be guaranteed to add RequiredPass to the passmanager given
-    // that we checked for an avaiable analysis above.
+    // that we checked for an available analysis above.
     FPP->add(RequiredPass);
   }
   // Register P as the last user of FoundPass or RequiredPass.

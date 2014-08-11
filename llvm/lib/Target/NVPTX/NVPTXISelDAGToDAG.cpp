@@ -27,7 +27,7 @@ using namespace llvm;
 static cl::opt<int> UsePrecDivF32(
     "nvptx-prec-divf32", cl::ZeroOrMore, cl::Hidden,
     cl::desc("NVPTX Specifies: 0 use div.approx, 1 use div.full, 2 use"
-             " IEEE Compliant F32 div.rnd if avaiable."),
+             " IEEE Compliant F32 div.rnd if available."),
     cl::init(2));
 
 static cl::opt<bool>

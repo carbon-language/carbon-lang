@@ -27,7 +27,7 @@ using namespace llvm;
 static cl::opt<bool> DontExpandCondPseudos16(
   "mips16-dont-expand-cond-pseudo",
   cl::init(false),
-  cl::desc("Dont expand conditional move related "
+  cl::desc("Don't expand conditional move related "
            "pseudos for Mips 16"),
   cl::Hidden);
 
