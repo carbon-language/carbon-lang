@@ -54,7 +54,7 @@ static inline bool isEnabled(const StringRef Feature) {
 /// Split - Splits a string of comma separated items in to a vector of strings.
 ///
 static void Split(std::vector<std::string> &V, const StringRef S) {
-  SmallVector<StringRef, 2> Tmp;
+  SmallVector<StringRef, 3> Tmp;
   S.split(Tmp, ",", -1, false /* KeepEmpty */);
   V.assign(Tmp.begin(), Tmp.end());
 }
