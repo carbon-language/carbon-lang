@@ -811,6 +811,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
 
   // Everything not covered here has no linkage.
   } else {
+    // FIXME: A typedef declaration has linkage if it gives a type a name for
+    // linkage purposes.
     return LinkageInfo::none();
   }
 

@@ -3829,6 +3829,8 @@ void ASTWriter::WriteRedeclarations() {
           FirstFromAST = Prev;
       }
 
+      // FIXME: Do we need to do this for the first declaration from each
+      // redeclaration chain that was merged into this one?
       Chain->MergedDecls[FirstFromAST].push_back(getDeclID(First));
     }
 
