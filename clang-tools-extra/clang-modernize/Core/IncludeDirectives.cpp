@@ -116,7 +116,7 @@ private:
     // checking for equality because it can also be part of the preamble if the
     // preamble is the whole file.
     unsigned Preamble =
-        Lexer::ComputePreamble(SM.getBuffer(Guard.FID), LangOpts).first;
+        Lexer::ComputePreamble(*SM.getBuffer(Guard.FID), LangOpts).first;
     unsigned IfndefOffset = SM.getFileOffset(Guard.IfndefLoc);
     if (IfndefOffset > (Preamble + 1))
       return;
