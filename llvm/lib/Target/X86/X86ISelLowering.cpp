@@ -14412,6 +14412,22 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   case Intrinsic::x86_avx_sqrt_pd_256:
     return DAG.getNode(ISD::FSQRT, dl, Op.getValueType(), Op.getOperand(1));
 
+  case Intrinsic::x86_avx512_mask_valign_q_512:
+  case Intrinsic::x86_avx512_mask_valign_d_512: {
+    EVT VT = Op.getValueType();
+    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
+                                  MVT::i1, VT.getVectorNumElements());
+    assert(MaskVT.isSimple() && "invalid valign mask type");
+    // Vector source operands are swapped.
+    return DAG.getNode(ISD::VSELECT, dl, VT,
+                       DAG.getNode(ISD::BITCAST, dl, MaskVT,
+                                   Op.getOperand(5)),
+                       DAG.getNode(X86ISD::VALIGN, dl, VT,
+                                   Op.getOperand(2), Op.getOperand(1),
+                                   Op.getOperand(3)),
+                       Op.getOperand(4));
+  }
+
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
   // or testp pattern and a setcc for the result.

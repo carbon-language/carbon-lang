@@ -4509,22 +4509,6 @@ multiclass avx512_valign<string Suffix, RegisterClass RC, RegisterClass KRC,
   def : Pat<(FloatVT (X86VAlign RC:$src1, RC:$src2, (i8 imm:$imm))),
             (!cast<Instruction>(NAME##rri) RC:$src2, RC:$src1, imm:$imm)>;
 
-  // Non-masking intrinsic call.
-  def : Pat<(IntVT
-               (!cast<Intrinsic>("int_x86_avx512_mask_valign_"##Suffix##"_512")
-                     RC:$src1, RC:$src2, imm:$src3,
-                     (IntVT (bitconvert (v16i32 immAllZerosV))), -1)),
-            (!cast<Instruction>(NAME#rri) RC:$src1, RC:$src2, imm:$src3)>;
-
-  // Masking intrinsic call.
-  def : Pat<(IntVT
-               (!cast<Intrinsic>("int_x86_avx512_mask_valign_"##Suffix##"_512")
-                     RC:$src1, RC:$src2, imm:$src3,
-                     RC:$src4, MRC:$mask)),
-            (!cast<Instruction>(NAME#rrik) RC:$src4,
-               (COPY_TO_REGCLASS MRC:$mask, KRC), RC:$src1,
-               RC:$src2, imm:$src3)>;
-
   let mayLoad = 1 in
   def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
                      (ins RC:$src1, x86memop:$src2, i8imm:$src3),
