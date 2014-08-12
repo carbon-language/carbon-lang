@@ -157,23 +157,12 @@ QueryRef makeInvalidQueryFromDiagnostics(const Diagnostics &Diag) {
   return new InvalidQuery(OS.str());
 }
 
-class QuerySessionSema : public Parser::RegistrySema {
-public:
-  QuerySessionSema(const QuerySession &QS) : QS(QS) {}
-
-  ast_matchers::dynamic::VariantValue getNamedValue(StringRef Name) override {
-    return QS.NamedValues.lookup(Name);
-  }
-
-private:
-  const QuerySession &QS;
-};
-
 }  // namespace
 
 QueryRef QueryParser::completeMatcherExpression() {
   std::vector<MatcherCompletion> Comps = Parser::completeExpression(
-      StringRef(Begin, End - Begin), CompletionPos - Begin);
+      StringRef(Begin, End - Begin), CompletionPos - Begin, nullptr,
+      &QS.NamedValues);
   for (std::vector<MatcherCompletion>::iterator I = Comps.begin(),
                                                 E = Comps.end();
        I != E; ++I) {
@@ -194,8 +183,6 @@ QueryRef QueryParser::doParse() {
                               .Case("unlet", PQK_Unlet)
                               .Default(PQK_Invalid);
 
-  QuerySessionSema S(QS);
-
   switch (QKind) {
   case PQK_NoOp:
     return new NoOpQuery;
@@ -214,8 +201,8 @@ QueryRef QueryParser::doParse() {
 
     Diagnostics Diag;
     ast_matchers::dynamic::VariantValue Value;
-    if (!Parser::parseExpression(StringRef(Begin, End - Begin), &S, &Value,
-                                 &Diag)) {
+    if (!Parser::parseExpression(StringRef(Begin, End - Begin), nullptr,
+                                 &QS.NamedValues, &Value, &Diag)) {
       return makeInvalidQueryFromDiagnostics(Diag);
     }
 
@@ -228,7 +215,7 @@ QueryRef QueryParser::doParse() {
 
     Diagnostics Diag;
     Optional<DynTypedMatcher> Matcher = Parser::parseMatcherExpression(
-        StringRef(Begin, End - Begin), &S, &Diag);
+        StringRef(Begin, End - Begin), nullptr, &QS.NamedValues, &Diag);
     if (!Matcher) {
       return makeInvalidQueryFromDiagnostics(Diag);
     }
