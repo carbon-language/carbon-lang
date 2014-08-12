@@ -755,33 +755,6 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
   }
 }
 
-/// Returns a musttail call instruction if one immediately precedes the given
-/// return instruction with an optional bitcast instruction between them.
-static CallInst *getPrecedingMustTailCall(ReturnInst *RI) {
-  Instruction *Prev = RI->getPrevNode();
-  if (!Prev)
-    return nullptr;
-
-  if (Value *RV = RI->getReturnValue()) {
-    if (RV != Prev)
-      return nullptr;
-
-    // Look through the optional bitcast.
-    if (auto *BI = dyn_cast<BitCastInst>(Prev)) {
-      RV = BI->getOperand(0);
-      Prev = BI->getPrevNode();
-      if (!Prev || RV != Prev)
-        return nullptr;
-    }
-  }
-
-  if (auto *CI = dyn_cast<CallInst>(Prev)) {
-    if (CI->isMustTailCall())
-      return CI;
-  }
-  return nullptr;
-}
-
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
 /// this call.  The program is still in a well defined state if this occurs
@@ -1040,7 +1013,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
       for (ReturnInst *RI : Returns) {
         // Don't insert llvm.lifetime.end calls between a musttail call and a
         // return.  The return kills all local allocas.
-        if (InlinedMustTailCalls && getPrecedingMustTailCall(RI))
+        if (InlinedMustTailCalls &&
+            RI->getParent()->getTerminatingMustTailCall())
           continue;
         IRBuilder<>(RI).CreateLifetimeEnd(AI, AllocaSize);
       }
@@ -1064,7 +1038,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     for (ReturnInst *RI : Returns) {
       // Don't insert llvm.stackrestore calls between a musttail call and a
       // return.  The return will restore the stack pointer.
-      if (InlinedMustTailCalls && getPrecedingMustTailCall(RI))
+      if (InlinedMustTailCalls && RI->getParent()->getTerminatingMustTailCall())
         continue;
       IRBuilder<>(RI).CreateCall(StackRestore, SavedPtr);
     }
@@ -1087,7 +1061,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI,
     // Handle the returns preceded by musttail calls separately.
     SmallVector<ReturnInst *, 8> NormalReturns;
     for (ReturnInst *RI : Returns) {
-      CallInst *ReturnedMustTail = getPrecedingMustTailCall(RI);
+      CallInst *ReturnedMustTail =
+          RI->getParent()->getTerminatingMustTailCall();
       if (!ReturnedMustTail) {
         NormalReturns.push_back(RI);
         continue;

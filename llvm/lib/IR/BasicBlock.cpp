@@ -138,6 +138,37 @@ const TerminatorInst *BasicBlock::getTerminator() const {
   return dyn_cast<TerminatorInst>(&InstList.back());
 }
 
+CallInst *BasicBlock::getTerminatingMustTailCall() {
+  if (InstList.empty())
+    return nullptr;
+  ReturnInst *RI = dyn_cast<ReturnInst>(&InstList.back());
+  if (!RI || RI == &InstList.front())
+    return nullptr;
+
+  Instruction *Prev = RI->getPrevNode();
+  if (!Prev)
+    return nullptr;
+
+  if (Value *RV = RI->getReturnValue()) {
+    if (RV != Prev)
+      return nullptr;
+
+    // Look through the optional bitcast.
+    if (auto *BI = dyn_cast<BitCastInst>(Prev)) {
+      RV = BI->getOperand(0);
+      Prev = BI->getPrevNode();
+      if (!Prev || RV != Prev)
+        return nullptr;
+    }
+  }
+
+  if (auto *CI = dyn_cast<CallInst>(Prev)) {
+    if (CI->isMustTailCall())
+      return CI;
+  }
+  return nullptr;
+}
+
 Instruction* BasicBlock::getFirstNonPHI() {
   BasicBlock::iterator i = begin();
   // All valid basic blocks should have a terminator,

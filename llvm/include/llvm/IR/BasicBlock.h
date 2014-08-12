@@ -23,6 +23,7 @@
 
 namespace llvm {
 
+class CallInst;
 class LandingPadInst;
 class TerminatorInst;
 class LLVMContext;
@@ -124,6 +125,14 @@ public:
   /// null if the block is not well formed.
   TerminatorInst *getTerminator();
   const TerminatorInst *getTerminator() const;
+
+  /// \brief Returns the call instruction marked 'musttail' prior to the
+  /// terminating return instruction of this basic block, if such a call is
+  /// present.  Otherwise, returns null.
+  CallInst *getTerminatingMustTailCall();
+  const CallInst *getTerminatingMustTailCall() const {
+    return const_cast<BasicBlock *>(this)->getTerminatingMustTailCall();
+  }
 
   /// \brief Returns a pointer to the first instruction in this block that is
   /// not a PHINode instruction.
