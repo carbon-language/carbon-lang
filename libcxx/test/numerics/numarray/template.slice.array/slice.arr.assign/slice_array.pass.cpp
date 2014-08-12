@@ -18,6 +18,7 @@
 
 int main()
 {
+    {
     int a1[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
     int a2[] = {-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12};
     std::valarray<int> v1(a1, sizeof(a1)/sizeof(a1[0]));
@@ -40,4 +41,16 @@ int main()
     assert(v1[13] == -11);
     assert(v1[14] == 14);
     assert(v1[15] == 15);
+    }
+    // Test return value of assignment.
+    {
+    int a1[] = {0, 1, 2};
+    int a2[] = {3, 4, 3};
+    std::valarray<int> v1(a1, 3);
+    const std::valarray<int> v2(a2, 3);
+    std::slice_array<int> s1 = v1[std::slice(1, 2, 3)];
+    std::slice_array<int> s2 = v1[std::slice(2, 2, 3)];
+    std::slice_array<int> const & s3 = (s1 = s2);
+    assert(&s1 == &s3);
+    }
 }
