@@ -241,10 +241,13 @@ append_if(COMPILER_RT_HAS_FVISIBILITY_HIDDEN_FLAG -fvisibility=hidden SANITIZER_
 append_if(COMPILER_RT_HAS_FNO_FUNCTION_SECTIONS_FLAG -fno-function-sections SANITIZER_COMMON_CFLAGS)
 
 if(MSVC)
-  # Remove /MD flag so that it doesn't conflict with /MT.
+  # Replace the /MD[d] flags with /MT.
+  # FIXME: In fact, sanitizers should support both /MT and /MD, see PR20214.
   if(COMPILER_RT_HAS_MT_FLAG)
-    string(REGEX REPLACE "(^| ) */MDd? *( |$)" "\\1 \\2" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    list(APPEND SANITIZER_COMMON_CFLAGS /MT)
+    string(REPLACE "/MDd" "/MT" CMAKE_CXX_FLAGS_DEBUG
+           "${CMAKE_CXX_FLAGS_DEBUG}")
+    string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE
+           "${CMAKE_CXX_FLAGS_RELEASE}")
   endif()
   append_if(COMPILER_RT_HAS_Oy_FLAG /Oy- SANITIZER_COMMON_CFLAGS)
   append_if(COMPILER_RT_HAS_GS_FLAG /GS- SANITIZER_COMMON_CFLAGS)
