@@ -66,7 +66,7 @@ if ( APPLE )
     list(APPEND compile_flags "-U__STRICT_ANSI__")
     list(APPEND link_flags
       "-compatibility_version 1"
-      "-current_version ${LIBCXXABI_VERSION}"
+      "-current_version 1"
       "-install_name /usr/lib/libc++abi.1.dylib"
       "/usr/lib/libSystem.B.dylib")
   else()
