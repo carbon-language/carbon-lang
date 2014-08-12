@@ -284,11 +284,12 @@ class GdbRemoteTestCaseBase(TestBase):
 
         raise Exception("failed to create a socket to the launched debug monitor after %d tries" % attempts)
 
-    def launch_process_for_attach(self,inferior_args=None, sleep_seconds=3):
+    def launch_process_for_attach(self,inferior_args=None, sleep_seconds=3, exe_path=None):
         # We're going to start a child process that the debug monitor stub can later attach to.
         # This process needs to be started so that it just hangs around for a while.  We'll
         # have it sleep.
-        exe_path = os.path.abspath("a.out")
+        if not exe_path:
+            exe_path = os.path.abspath("a.out")
 
         args = [exe_path]
         if inferior_args:
@@ -298,7 +299,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         return subprocess.Popen(args)
 
-    def prep_debug_monitor_and_inferior(self, inferior_args=None, inferior_sleep_seconds=3):
+    def prep_debug_monitor_and_inferior(self, inferior_args=None, inferior_sleep_seconds=3, inferior_exe_path=None):
         """Prep the debug monitor, the inferior, and the expected packet stream.
 
         Handle the separate cases of using the debug monitor in attach-to-inferior mode
@@ -323,7 +324,7 @@ class GdbRemoteTestCaseBase(TestBase):
 
         if self._inferior_startup == self._STARTUP_ATTACH or self._inferior_startup == self._STARTUP_ATTACH_MANUALLY:
             # Launch the process that we'll use as the inferior.
-            inferior = self.launch_process_for_attach(inferior_args=inferior_args, sleep_seconds=inferior_sleep_seconds)
+            inferior = self.launch_process_for_attach(inferior_args=inferior_args, sleep_seconds=inferior_sleep_seconds, exe_path=inferior_exe_path)
             self.assertIsNotNone(inferior)
             self.assertTrue(inferior.pid > 0)
             if self._inferior_startup == self._STARTUP_ATTACH:
@@ -336,7 +337,9 @@ class GdbRemoteTestCaseBase(TestBase):
 
         if self._inferior_startup == self._STARTUP_LAUNCH:
             # Build launch args
-            launch_args = [os.path.abspath('a.out')]
+            if not inferior_exe_path:
+                inferior_exe_path = os.path.abspath("a.out")
+            launch_args = [inferior_exe_path]
             if inferior_args:
                 launch_args.extend(inferior_args)
 

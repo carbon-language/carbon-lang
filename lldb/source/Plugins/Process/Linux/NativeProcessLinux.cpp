@@ -2154,77 +2154,78 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
                             info->si_pid,
                             (info->si_pid == getpid ()) ? "is monitor" : "is not monitor",
                             pid);
+    }
 
-        if ((info->si_pid == 0) && info->si_code == SI_USER)
+    // Check for new thread notification.
+    if ((info->si_pid == 0) && (info->si_code == SI_USER))
+    {
+        // A new thread creation is being signaled.  This is one of two parts that come in
+        // a non-deterministic order.  pid is the thread id.
+        if (log)
+            log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " tid %" PRIu64 ": new thread notification",
+                     __FUNCTION__, GetID (), pid);
+
+        // Did we already create the thread?
+        bool already_tracked = false;
+        thread_sp = GetOrCreateThread (pid, already_tracked);
+        assert (thread_sp.get() && "failed to get or create the tracking data for newly created inferior thread");
+
+        // If the thread was already tracked, it means the main thread already received its SIGTRAP for the create.
+        if (already_tracked)
         {
-            // A new thread creation is being signaled.  This is one of two parts that come in
-            // a non-deterministic order.  pid is the thread id.
-            if (log)
-                log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " tid %" PRIu64 ": new thread notification",
-                         __FUNCTION__, GetID (), pid);
-
-            // Did we already create the thread?
-            bool already_tracked = false;
-            thread_sp = GetOrCreateThread (pid, already_tracked);
-            assert (thread_sp.get() && "failed to get or create the tracking data for newly created inferior thread");
-
-            // If the thread was already tracked, it means the main thread already received its SIGTRAP for the create.
-            if (already_tracked)
-            {
-                // We can now resume this thread up since it is fully created.
-                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
-                Resume (thread_sp->GetID (), LLDB_INVALID_SIGNAL_NUMBER);
-            }
-            else
-            {
-                // Mark the thread as currently launching.  Need to wait for SIGTRAP clone on the main thread before
-                // this thread is ready to go.
-                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetLaunching ();
-            }
-        }
-        else if (info->si_pid == getpid () && (signo == SIGSTOP))
-        {
-            // This is a tgkill()-based stop.
-            if (thread_sp)
-            {
-                // An inferior thread just stopped.  Mark it as such.
-                reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (signo);
-                SetCurrentThreadID (thread_sp->GetID ());
-
-                // Remove this tid from the wait-for-stop set.
-                Mutex::Locker locker (m_wait_for_stop_tids_mutex);
-
-                auto removed_count = m_wait_for_stop_tids.erase (thread_sp->GetID ());
-                if (removed_count < 1)
-                {
-                    log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " tid %" PRIu64 ": tgkill()-stopped thread not in m_wait_for_stop_tids",
-                                 __FUNCTION__, GetID (), thread_sp->GetID ());
-
-                }
-
-                // If this is the last thread in the m_wait_for_stop_tids, we need to notify
-                // the delegate that a stop has occurred now that every thread that was supposed
-                // to stop has stopped.
-                if (m_wait_for_stop_tids.empty ())
-                {
-                    if (log)
-                    {
-                        log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " tid %" PRIu64 ", setting process state to stopped now that all tids marked for stop have completed",
-                                     __FUNCTION__,
-                                     GetID (),
-                                     pid);
-                    }
-                    SetState (StateType::eStateStopped, true);
-                }
-            }
+            // We can now resume this thread up since it is fully created.
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetRunning ();
+            Resume (thread_sp->GetID (), LLDB_INVALID_SIGNAL_NUMBER);
         }
         else
         {
-            // Hmm, not sure what to do with this.
-            if (log)
-                log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " unsure how to handle SI_KILL or SI_USER signal", __FUNCTION__, GetID ());
+            // Mark the thread as currently launching.  Need to wait for SIGTRAP clone on the main thread before
+            // this thread is ready to go.
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetLaunching ();
         }
 
+        // Done handling.
+        return;
+    }
+
+    // Check for thread stop notification.
+    if ((info->si_pid == getpid ()) && (info->si_code == SI_TKILL) && (signo == SIGSTOP))
+    {
+        // This is a tgkill()-based stop.
+        if (thread_sp)
+        {
+            // An inferior thread just stopped.  Mark it as such.
+            reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (signo);
+            SetCurrentThreadID (thread_sp->GetID ());
+
+            // Remove this tid from the wait-for-stop set.
+            Mutex::Locker locker (m_wait_for_stop_tids_mutex);
+
+            auto removed_count = m_wait_for_stop_tids.erase (thread_sp->GetID ());
+            if (removed_count < 1)
+            {
+                log->Printf ("NativeProcessLinux::%s() pid = %" PRIu64 " tid %" PRIu64 ": tgkill()-stopped thread not in m_wait_for_stop_tids",
+                             __FUNCTION__, GetID (), thread_sp->GetID ());
+
+            }
+
+            // If this is the last thread in the m_wait_for_stop_tids, we need to notify
+            // the delegate that a stop has occurred now that every thread that was supposed
+            // to stop has stopped.
+            if (m_wait_for_stop_tids.empty ())
+            {
+                if (log)
+                {
+                    log->Printf ("NativeProcessLinux::%s() pid %" PRIu64 " tid %" PRIu64 ", setting process state to stopped now that all tids marked for stop have completed",
+                                 __FUNCTION__,
+                                 GetID (),
+                                 pid);
+                }
+                SetState (StateType::eStateStopped, true);
+            }
+        }
+
+        // Done handling.
         return;
     }
 
@@ -2265,38 +2266,40 @@ NativeProcessLinux::MonitorSignal(const siginfo_t *info, lldb::pid_t pid, bool e
         }
         break;
 
+    case SIGABRT:
     case SIGILL:
-        {
-            // lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
-            // Can get the reason from here.
-            // ProcessMessage::CrashReason reason = GetCrashReasonForSIGILL(info);
-            // FIXME save the crash reason
-            SetState (StateType::eStateCrashed, true);
-        }
-        break;
-
     case SIGFPE:
-        {
-            // lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
-            // Can get the crash reason from below.
-            // ProcessMessage::CrashReason reason = GetCrashReasonForSIGFPE(info);
-            // FIXME save the crash reason
-            SetState (StateType::eStateCrashed, true);
-        }
-        break;
-
     case SIGBUS:
         {
-            // lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
-            // Can get the crash reason from below.
-            // ProcessMessage::CrashReason reason = GetCrashReasonForSIGBUS(info);
-            // FIXME save the crash reason
-            SetState (StateType::eStateCrashed);
+            // Break these out into separate cases once I have more data for each type of signal.
+            lldb::addr_t fault_addr = reinterpret_cast<lldb::addr_t>(info->si_addr);
+            if (!exited)
+            {
+                // This is just a pre-signal-delivery notification of the incoming signal.
+                // Send a stop to the debugger.
+                if (thread_sp)
+                {
+                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetStoppedBySignal (signo);
+                    SetCurrentThreadID (thread_sp->GetID ());
+                }
+                SetState (StateType::eStateStopped, true);
+            }
+            else
+            {
+                if (thread_sp)
+                {
+                    // FIXME figure out how to report exit by signal correctly.
+                    const uint64_t exception_type = static_cast<uint64_t> (SIGABRT);
+                    reinterpret_cast<NativeThreadLinux*> (thread_sp.get ())->SetCrashedWithException (exception_type, fault_addr);
+                }
+                SetState (StateType::eStateCrashed, true);
+            }
         }
         break;
 
     default:
-        // FIXME Stop all threads here.
+        if (log)
+            log->Printf ("NativeProcessLinux::%s unhandled signal %s (%d)", __FUNCTION__, GetUnixSignals ().GetSignalAsCString (signo), signo);
         break;
     }
 }
