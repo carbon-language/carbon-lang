@@ -13200,7 +13200,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
     // correctly legalized. We do this late to allow the canonical form of
     // sextload to persist throughout the rest of the DAG combiner -- it wants
     // to fold together any extensions it can, and so will fuse a sign_extend
-    // of an sextload into an sextload targeting a wider value.
+    // of an sextload into a sextload targeting a wider value.
     SDValue Load;
     if (MemSz == 128) {
       // Just switch this to a normal load.
@@ -13316,7 +13316,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
   unsigned SizeRatio = RegSz / MemSz;
 
   if (Ext == ISD::SEXTLOAD) {
-    // If we have SSE4.1 we can directly emit a VSEXT node.
+    // If we have SSE4.1, we can directly emit a VSEXT node.
     if (Subtarget->hasSSE41()) {
       SDValue Sext = DAG.getNode(X86ISD::VSEXT, dl, RegVT, SlicedVec);
       DAG.ReplaceAllUsesOfValueWith(SDValue(Ld, 1), TF);
@@ -13327,7 +13327,7 @@ static SDValue LowerExtendedLoad(SDValue Op, const X86Subtarget *Subtarget,
     // larger type and perform an arithmetic shift. If the shift is not legal
     // it's better to scalarize.
     assert(TLI.isOperationLegalOrCustom(ISD::SRA, RegVT) &&
-           "We can't implement an sext load without a arithmetic right shift!");
+           "We can't implement a sext load without an arithmetic right shift!");
 
     // Redistribute the loaded elements into the different locations.
     SmallVector<int, 16> ShuffleVec(NumElems * SizeRatio, -1);
@@ -13668,7 +13668,7 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
 }
 
 // Lower dynamic stack allocation to _alloca call for Cygwin/Mingw targets.
-// Calls to _alloca is needed to probe the stack when allocating more than 4k
+// Calls to _alloca are needed to probe the stack when allocating more than 4k
 // bytes in one go. Touching the stack at 4K increments is necessary to ensure
 // that the guard pages used by the OS virtual memory manager are allocated in
 // correct sequence.
@@ -19137,7 +19137,7 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
 /// \brief Fully generic combining of x86 shuffle instructions.
 ///
 /// This should be the last combine run over the x86 shuffle instructions. Once
-/// they have been fully optimized, this will recursively consdier all chains
+/// they have been fully optimized, this will recursively consider all chains
 /// of single-use shuffle instructions, build a generic model of the cumulative
 /// shuffle operation, and check for simpler instructions which implement this
 /// operation. We use this primarily for two purposes:
