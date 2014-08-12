@@ -127,6 +127,9 @@ void setupA(bool x) {
   A *a26 = new A(a26->get());    // expected-warning {{variable 'a26' is uninitialized when used within its own initialization}}
   A *a27 = new A(a27->get2());  // expected-warning {{variable 'a27' is uninitialized when used within its own initialization}}
   A *a28 = new A(a28->num);  // expected-warning {{variable 'a28' is uninitialized when used within its own initialization}}
+
+  const A a29(a29);  // expected-warning {{variable 'a29' is uninitialized when used within its own initialization}}
+  const A a30 = a30;  // expected-warning {{variable 'a30' is uninitialized when used within its own initialization}}
 }
 
 bool x;
@@ -162,6 +165,9 @@ A *a25 = new A(a25->zero());
 A *a26 = new A(a26->get());    // expected-warning {{variable 'a26' is uninitialized when used within its own initialization}}
 A *a27 = new A(a27->get2());  // expected-warning {{variable 'a27' is uninitialized when used within its own initialization}}
 A *a28 = new A(a28->num);  // expected-warning {{variable 'a28' is uninitialized when used within its own initialization}}
+
+const A a29(a29);  // expected-warning {{variable 'a29' is uninitialized when used within its own initialization}}
+const A a30 = a30;  // expected-warning {{variable 'a30' is uninitialized when used within its own initialization}}
 
 struct B {
   // POD struct.
@@ -209,6 +215,10 @@ void setupB() {
 
   B b17 = { b17.x = 5, b17.y = 0 };
   B b18 = { b18.x + 1, b18.y };  // expected-warning 2{{variable 'b18' is uninitialized when used within its own initialization}}
+
+  const B b19 = b19;  // expected-warning {{variable 'b19' is uninitialized when used within its own initialization}}
+  const B b20(b20);  // expected-warning {{variable 'b20' is uninitialized when used within its own initialization}}
+
 }
 
 B b1;
@@ -234,6 +244,8 @@ B* b16 = getPtrB(b16->y);  // expected-warning {{variable 'b16' is uninitialized
 B b17 = { b17.x = 5, b17.y = 0 };
 B b18 = { b18.x + 1, b18.y };  // expected-warning 2{{variable 'b18' is uninitialized when used within its own initialization}}
 
+const B b19 = b19;  // expected-warning {{variable 'b19' is uninitialized when used within its own initialization}}
+const B b20(b20);  // expected-warning {{variable 'b20' is uninitialized when used within its own initialization}}
 
 // Also test similar constructs in a field's initializer.
 struct S {
@@ -384,6 +396,11 @@ namespace {
     G(char (*)[6]) : f3(f3) {}  // expected-warning {{field 'f3' is uninitialized when used here}}
     G(char (*)[7]) : f3(f3->*f_ptr) {} // expected-warning {{field 'f3' is uninitialized when used here}}
     G(char (*)[8]) : f3(new F(f3->*ptr)) {} // expected-warning {{field 'f3' is uninitialized when used here}}
+  };
+
+  struct H {
+    H() : a(a) {}  // expected-warning {{field 'a' is uninitialized when used here}}
+    const A a;
   };
 }
 
@@ -555,7 +572,7 @@ namespace record_fields {
     B(char (*)[9]) : a(normal(a)) {}  // expected-warning {{uninitialized}}
   };
   struct C {
-    C() {} // expected-note4{{in this constructor}}
+    C() {} // expected-note5{{in this constructor}}
     A a1 = a1;  // expected-warning {{uninitialized}}
     A a2 = a2.get();  // expected-warning {{uninitialized}}
     A a3 = a3.num();
@@ -565,8 +582,9 @@ namespace record_fields {
     A a7 = const_ref(a7);
     A a8 = pointer(&a8);
     A a9 = normal(a9);  // expected-warning {{uninitialized}}
+    const A a10 = a10;  // expected-warning {{uninitialized}}
   };
-  struct D {  // expected-note4{{in the implicit default constructor}}
+  struct D {  // expected-note5{{in the implicit default constructor}}
     A a1 = a1;  // expected-warning {{uninitialized}}
     A a2 = a2.get();  // expected-warning {{uninitialized}}
     A a3 = a3.num();
@@ -576,6 +594,7 @@ namespace record_fields {
     A a7 = const_ref(a7);
     A a8 = pointer(&a8);
     A a9 = normal(a9);  // expected-warning {{uninitialized}}
+    const A a10 = a10;  // expected-warning {{uninitialized}}
   };
   D d;
   struct E {
@@ -588,6 +607,7 @@ namespace record_fields {
     A a7 = const_ref(a7);
     A a8 = pointer(&a8);
     A a9 = normal(a9);
+    const A a10 = a10;
   };
 }
 

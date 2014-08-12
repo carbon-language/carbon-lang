@@ -2314,12 +2314,18 @@ namespace {
     }
 
     void VisitCXXConstructExpr(CXXConstructExpr *E) {
-      if (E->getConstructor()->isCopyConstructor())
-        if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(E->getArg(0)))
-          if (ICE->getCastKind() == CK_NoOp)
-            if (MemberExpr *ME = dyn_cast<MemberExpr>(ICE->getSubExpr()))
-              HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
-      
+      if (E->getConstructor()->isCopyConstructor()) {
+        Expr *ArgExpr = E->getArg(0);
+        if (ImplicitCastExpr* ICE = dyn_cast<ImplicitCastExpr>(ArgExpr)) {
+          if (ICE->getCastKind() == CK_NoOp) {
+            ArgExpr = ICE->getSubExpr();
+          }
+        }
+
+        if (MemberExpr *ME = dyn_cast<MemberExpr>(ArgExpr)) {
+          HandleMemberExpr(ME, false /*CheckReferenceOnly*/);
+        }
+      }
       Inherited::VisitCXXConstructExpr(E);
     }
 
