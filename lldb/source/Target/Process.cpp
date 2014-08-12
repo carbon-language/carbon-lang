@@ -687,6 +687,7 @@ Process::Process(Target &target, Listener &listener) :
     m_stderr_data (),
     m_profile_data_comm_mutex (Mutex::eMutexTypeRecursive),
     m_profile_data (),
+    m_iohandler_sync (false),
     m_memory_cache (*this),
     m_allocated_memory_cache (*this),
     m_should_detach (false),
@@ -885,6 +886,34 @@ Process::GetNextEvent (EventSP &event_sp)
     return state;
 }
 
+bool
+Process::SyncIOHandler (uint64_t timeout_msec)
+{
+    bool timed_out = false;
+
+    // don't sync (potentially context switch) in case where there is no process IO
+    if (m_process_input_reader)
+    {
+        TimeValue timeout = TimeValue::Now();
+        timeout.OffsetWithMicroSeconds(timeout_msec*1000);
+
+        m_iohandler_sync.WaitForValueEqualTo(true, &timeout, &timed_out);
+
+        Log *log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
+        if(log)
+        {
+            if(timed_out)
+                log->Printf ("Process::%s pid %" PRIu64 " (timeout=%" PRIu64 "ms): FAIL", __FUNCTION__, GetID (), timeout_msec);
+            else
+                log->Printf ("Process::%s pid %" PRIu64 ": SUCCESS", __FUNCTION__, GetID ());
+        }
+
+        // reset sync one-shot so it will be ready for next time
+        m_iohandler_sync.SetValue(false, eBroadcastNever);
+    }
+
+    return !timed_out;
+}
 
 StateType
 Process::WaitForProcessToStop (const TimeValue *timeout, lldb::EventSP *event_sp_ptr, bool wait_always, Listener *hijack_listener)
@@ -3884,9 +3913,11 @@ Process::HandlePrivateEvent (EventSP &event_sp)
             // as this means the curses GUI is in use...
             if (!GetTarget().GetDebugger().IsForwardingEvents())
                 PushProcessIOHandler ();
+            m_iohandler_sync.SetValue(true, eBroadcastAlways);
         }
         else if (StateIsStoppedState(new_state, false))
         {
+            m_iohandler_sync.SetValue(false, eBroadcastNever);
             if (!Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
             {
                 // If the lldb_private::Debugger is handling the events, we don't

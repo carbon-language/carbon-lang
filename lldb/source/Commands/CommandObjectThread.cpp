@@ -624,7 +624,11 @@ protected:
 
             process->GetThreadList().SetSelectedThreadByID (thread->GetID());
             process->Resume ();
-        
+
+            // There is a race condition where this thread will return up the call stack to the main command handler
+            // and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+            // a chance to call PushProcessIOHandler().
+            process->SyncIOHandler(2000);
 
             if (synchronous_execution)
             {

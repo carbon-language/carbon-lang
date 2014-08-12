@@ -2660,6 +2660,25 @@ public:
                           bool wait_always = true,
                           Listener *hijack_listener = NULL);
 
+
+    //--------------------------------------------------------------------------------------
+    /// Waits for the process state to be running within a given msec timeout.
+    ///
+    /// The main purpose of this is to implement an interlock waiting for HandlePrivateEvent
+    /// to push an IOHandler.
+    ///
+    /// @param[in] timeout_msec
+    ///     The maximum time length to wait for the process to transition to the
+    ///     eStateRunning state, specified in milliseconds.
+    ///
+    /// @return
+    ///     true if successfully signalled that process started and IOHandler pushes, false
+    ///     if it timed out.
+    //--------------------------------------------------------------------------------------
+    bool
+    SyncIOHandler (uint64_t timeout_msec);
+
+
     lldb::StateType
     WaitForStateChangedEvents (const TimeValue *timeout,
                                lldb::EventSP &event_sp,
@@ -3037,6 +3056,7 @@ protected:
     std::string                 m_stderr_data;
     Mutex                       m_profile_data_comm_mutex;
     std::vector<std::string>    m_profile_data;
+    Predicate<bool>             m_iohandler_sync;
     MemoryCache                 m_memory_cache;
     AllocatedMemoryCache        m_allocated_memory_cache;
     bool                        m_should_detach;   /// Should we detach if the process object goes away with an explicit call to Kill or Detach?

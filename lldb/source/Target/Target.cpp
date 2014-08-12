@@ -2420,9 +2420,14 @@ Target::Launch (Listener &listener, ProcessLaunchInfo &launch_info)
                     m_process_sp->RestoreProcessEvents ();
 
                 error = m_process_sp->PrivateResume();
-    
+
                 if (error.Success())
                 {
+                    // there is a race condition where this thread will return up the call stack to the main command
+                    // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+                    // a chance to call PushProcessIOHandler()
+                    m_process_sp->SyncIOHandler(2000);
+
                     if (synchronous_execution)
                     {
                         state = m_process_sp->WaitForProcessToStop (NULL, NULL, true, hijack_listener_sp.get());

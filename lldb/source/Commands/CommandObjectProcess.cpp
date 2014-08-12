@@ -773,10 +773,16 @@ protected:
                     process->GetThreadList().GetThreadAtIndex(idx)->SetResumeState (eStateRunning, override_suspend);
                 }
             }
-            
+
             Error error(process->Resume());
+
             if (error.Success())
             {
+                // There is a race condition where this thread will return up the call stack to the main command
+                // handler and show an (lldb) prompt before HandlePrivateEvent (from PrivateStateThread) has
+                // a chance to call PushProcessIOHandler().
+                process->SyncIOHandler(2000);
+
                 result.AppendMessageWithFormat ("Process %" PRIu64 " resuming\n", process->GetID());
                 if (synchronous_execution)
                 {
