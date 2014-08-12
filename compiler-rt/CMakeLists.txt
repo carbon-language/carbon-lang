@@ -294,6 +294,7 @@ if(APPLE)
   else()
     set(SANITIZER_MIN_OSX_VERSION 10.6)
   endif()
+  set(CMAKE_OSX_DEPLOYMENT_TARGET "") # We're setting the flag manually below.
   set(DARWIN_osx_CFLAGS -mmacosx-version-min=${SANITIZER_MIN_OSX_VERSION})
   set(DARWIN_iossim_CFLAGS 
     -mios-simulator-version-min=7.0 -isysroot ${IOSSIM_SDK_DIR})
