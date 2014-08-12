@@ -539,6 +539,16 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
   // multiple of alignment.
   for (SmallVectorImpl<BlockLayoutChunk>::iterator
          li = layout.begin(), le = layout.end(); li != le; ++li) {
+    if (endAlign < li->Alignment) {
+      // size may not be multiple of alignment. This can only happen with
+      // an over-aligned variable. We will be adding a padding field to
+      // make the size be multiple of alignment.
+      CharUnits padding = li->Alignment - endAlign;
+      elementTypes.push_back(llvm::ArrayType::get(CGM.Int8Ty,
+                                                  padding.getQuantity()));
+      blockSize += padding;
+      endAlign = getLowBit(blockSize);
+    }
     assert(endAlign >= li->Alignment);
     li->setIndex(info, elementTypes.size());
     elementTypes.push_back(li->Type);
