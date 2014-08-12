@@ -90,7 +90,7 @@ GetPrivateRegisterInfoVector ()
 static const RegisterInfo *
 GetRegisterInfo_i386(const lldb_private::ArchSpec &arch)
 {
-    static std::vector<lldb_private::RegisterInfo> g_register_infos (GetPrivateRegisterInfoVector ());
+    std::vector<lldb_private::RegisterInfo> &g_register_infos = GetPrivateRegisterInfoVector ();
 
     // Allocate RegisterInfo only once
     if (g_register_infos.empty())
