@@ -541,7 +541,8 @@ const FileEntry *Preprocessor::LookupFile(
     bool SkipCache) {
   // If the header lookup mechanism may be relative to the current inclusion
   // stack, record the parent #includes.
-  SmallVector<const FileEntry *, 16> Includers;
+  SmallVector<std::pair<const FileEntry *, const DirectoryEntry *>, 16>
+      Includers;
   if (!FromDir) {
     FileID FID = getCurrentFileLexer()->getFileID();
     const FileEntry *FileEnt = SourceMgr.getFileEntryForID(FID);
@@ -550,13 +551,15 @@ const FileEntry *Preprocessor::LookupFile(
     // predefines buffer.  Any other file is not lexed with a normal lexer, so
     // it won't be scanned for preprocessor directives.   If we have the
     // predefines buffer, resolve #include references (which come from the
-    // -include command line argument) as if they came from the main file, this
-    // affects file lookup etc.
-    if (!FileEnt)
+    // -include command line argument) from the current working directory
+    // instead of relative to the main file.
+    if (!FileEnt) {
       FileEnt = SourceMgr.getFileEntryForID(SourceMgr.getMainFileID());
-
-    if (FileEnt)
-      Includers.push_back(FileEnt);
+      if (FileEnt)
+        Includers.push_back(std::make_pair(FileEnt, FileMgr.getDirectory(".")));
+    } else {
+      Includers.push_back(std::make_pair(FileEnt, FileEnt->getDir()));
+    }
 
     // MSVC searches the current include stack from top to bottom for
     // headers included by quoted include directives.
@@ -567,7 +570,7 @@ const FileEntry *Preprocessor::LookupFile(
         if (IsFileLexer(ISEntry))
           if ((FileEnt = SourceMgr.getFileEntryForID(
                    ISEntry.ThePPLexer->getFileID())))
-            Includers.push_back(FileEnt);
+            Includers.push_back(std::make_pair(FileEnt, FileEnt->getDir()));
       }
     }
   }

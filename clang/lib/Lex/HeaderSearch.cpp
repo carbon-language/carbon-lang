@@ -566,8 +566,8 @@ static const char *copyString(StringRef Str, llvm::BumpPtrAllocator &Alloc) {
 const FileEntry *HeaderSearch::LookupFile(
     StringRef Filename, SourceLocation IncludeLoc, bool isAngled,
     const DirectoryLookup *FromDir, const DirectoryLookup *&CurDir,
-    ArrayRef<const FileEntry *> Includers, SmallVectorImpl<char> *SearchPath,
-    SmallVectorImpl<char> *RelativePath,
+    ArrayRef<std::pair<const FileEntry *, const DirectoryEntry *>> Includers,
+    SmallVectorImpl<char> *SearchPath, SmallVectorImpl<char> *RelativePath,
     ModuleMap::KnownHeader *SuggestedModule, bool SkipCache) {
   if (!HSOpts->ModuleMapFiles.empty()) {
     // Preload all explicitly specified module map files. This enables modules
@@ -618,13 +618,13 @@ const FileEntry *HeaderSearch::LookupFile(
   // This search is not done for <> headers.
   if (!Includers.empty() && !isAngled && !NoCurDirSearch) {
     SmallString<1024> TmpDir;
-    for (ArrayRef<const FileEntry *>::iterator I = Includers.begin(),
-                                               E = Includers.end();
-         I != E; ++I) {
-      const FileEntry *Includer = *I;
+    bool First = true;
+    for (const auto &IncluderAndDir : Includers) {
+      const FileEntry *Includer = IncluderAndDir.first;
+
       // Concatenate the requested file onto the directory.
       // FIXME: Portability.  Filename concatenation should be in sys::Path.
-      TmpDir = Includer->getDir()->getName();
+      TmpDir = IncluderAndDir.second->getName();
       TmpDir.push_back('/');
       TmpDir.append(Filename.begin(), Filename.end());
 
@@ -633,10 +633,9 @@ const FileEntry *HeaderSearch::LookupFile(
       // a container that could be reallocated across this call.
       bool IncluderIsSystemHeader =
           getFileInfo(Includer).DirInfo != SrcMgr::C_User;
-      if (const FileEntry *FE =
-              getFileAndSuggestModule(*this, TmpDir.str(), Includer->getDir(),
-                                      IncluderIsSystemHeader,
-                                      SuggestedModule)) {
+      if (const FileEntry *FE = getFileAndSuggestModule(
+              *this, TmpDir.str(), IncluderAndDir.second,
+              IncluderIsSystemHeader, SuggestedModule)) {
         // Leave CurDir unset.
         // This file is a system header or C++ unfriendly if the old file is.
         //
@@ -654,7 +653,7 @@ const FileEntry *HeaderSearch::LookupFile(
         ToHFI.Framework = Framework;
 
         if (SearchPath) {
-          StringRef SearchPathRef(Includer->getDir()->getName());
+          StringRef SearchPathRef(IncluderAndDir.second->getName());
           SearchPath->clear();
           SearchPath->append(SearchPathRef.begin(), SearchPathRef.end());
         }
@@ -662,7 +661,7 @@ const FileEntry *HeaderSearch::LookupFile(
           RelativePath->clear();
           RelativePath->append(Filename.begin(), Filename.end());
         }
-        if (I == Includers.begin())
+        if (First)
           return FE;
 
         // Otherwise, we found the path via MSVC header search rules.  If
@@ -679,6 +678,7 @@ const FileEntry *HeaderSearch::LookupFile(
           break;
         }
       }
+      First = false;
     }
   }
 
@@ -780,7 +780,7 @@ const FileEntry *HeaderSearch::LookupFile(
   // "Foo" is the name of the framework in which the including header was found.
   if (!Includers.empty() && !isAngled &&
       Filename.find('/') == StringRef::npos) {
-    HeaderFileInfo &IncludingHFI = getFileInfo(Includers.front());
+    HeaderFileInfo &IncludingHFI = getFileInfo(Includers.front().first);
     if (IncludingHFI.IndexHeaderMapHeader) {
       SmallString<128> ScratchFilename;
       ScratchFilename += IncludingHFI.Framework;
@@ -937,28 +937,6 @@ LookupSubframeworkHeader(StringRef Filename,
   }
 
   return FE;
-}
-
-/// \brief Helper static function to normalize a path for injection into
-/// a synthetic header.
-/*static*/ std::string
-HeaderSearch::NormalizeDashIncludePath(StringRef File, FileManager &FileMgr) {
-  // Implicit include paths should be resolved relative to the current
-  // working directory first, and then use the regular header search
-  // mechanism. The proper way to handle this is to have the
-  // predefines buffer located at the current working directory, but
-  // it has no file entry. For now, workaround this by using an
-  // absolute path if we find the file here, and otherwise letting
-  // header search handle it.
-  SmallString<128> Path(File);
-  llvm::sys::fs::make_absolute(Path);
-  bool exists;
-  if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
-    Path = File;
-  else if (exists)
-    FileMgr.getFile(File);
-
-  return Lexer::Stringify(Path.str());
 }
 
 //===----------------------------------------------------------------------===//

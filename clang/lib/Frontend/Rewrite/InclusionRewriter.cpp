@@ -333,10 +333,13 @@ bool InclusionRewriter::HandleHasInclude(
   // FIXME: Subframeworks aren't handled here. Do we care?
   bool isAngled = PP.GetIncludeFilenameSpelling(Tok.getLocation(), Filename);
   const DirectoryLookup *CurDir;
+  const FileEntry *FileEnt = PP.getSourceManager().getFileEntryForID(FileId);
+  SmallVector<std::pair<const FileEntry *, const DirectoryEntry *>, 1>
+      Includers;
+  Includers.push_back(std::make_pair(FileEnt, FileEnt->getDir()));
   const FileEntry *File = PP.getHeaderSearchInfo().LookupFile(
-      Filename, SourceLocation(), isAngled, nullptr, CurDir,
-      PP.getSourceManager().getFileEntryForID(FileId), nullptr, nullptr,
-      nullptr, false);
+      Filename, SourceLocation(), isAngled, nullptr, CurDir, Includers, nullptr,
+      nullptr, nullptr, false);
 
   FileExists = File != nullptr;
   return true;

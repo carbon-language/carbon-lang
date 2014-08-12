@@ -543,8 +543,7 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
       continue;
 
     SuggestedPredefines += "#include \"";
-    SuggestedPredefines +=
-      HeaderSearch::NormalizeDashIncludePath(File, FileMgr);
+    SuggestedPredefines += File;
     SuggestedPredefines += "\"\n";
   }
 
@@ -556,8 +555,7 @@ static bool checkPreprocessorOptions(const PreprocessorOptions &PPOpts,
       continue;
 
     SuggestedPredefines += "#__include_macros \"";
-    SuggestedPredefines +=
-      HeaderSearch::NormalizeDashIncludePath(File, FileMgr);
+    SuggestedPredefines += File;
     SuggestedPredefines += "\"\n##\n";
   }
 

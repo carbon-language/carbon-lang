@@ -384,14 +384,12 @@ public:
   /// \param SuggestedModule If non-null, and the file found is semantically
   /// part of a known module, this will be set to the module that should
   /// be imported instead of preprocessing/parsing the file found.
-  const FileEntry *LookupFile(StringRef Filename, SourceLocation IncludeLoc,
-                              bool isAngled, const DirectoryLookup *FromDir,
-                              const DirectoryLookup *&CurDir,
-                              ArrayRef<const FileEntry *> Includers,
-                              SmallVectorImpl<char> *SearchPath,
-                              SmallVectorImpl<char> *RelativePath,
-                              ModuleMap::KnownHeader *SuggestedModule,
-                              bool SkipCache = false);
+  const FileEntry *LookupFile(
+      StringRef Filename, SourceLocation IncludeLoc, bool isAngled,
+      const DirectoryLookup *FromDir, const DirectoryLookup *&CurDir,
+      ArrayRef<std::pair<const FileEntry *, const DirectoryEntry *>> Includers,
+      SmallVectorImpl<char> *SearchPath, SmallVectorImpl<char> *RelativePath,
+      ModuleMap::KnownHeader *SuggestedModule, bool SkipCache = false);
 
   /// \brief Look up a subframework for the specified \#include file.
   ///
