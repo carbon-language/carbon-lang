@@ -12,5 +12,5 @@
 ; Test that @b and @c end up pointing to the same variable.
 
 ; CHECK: @a = weak global i32 42
-; CHECK: @b = global i32* @a
-; CHECK: @c = global i32* @a
+; CHECK: @b = global i32* @a{{$}}
+; CHECK: @c = global i32* @a{{$}}
