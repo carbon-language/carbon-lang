@@ -44,6 +44,7 @@ define i32 @foo(i64 %outer.coerce0, i64 %outer.coerce1) #0 {
   call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.8.extract.trunc}, i64 0, metadata !34), !dbg !33
   %outer.sroa.1.12.extract.shift = lshr i64 %outer.coerce1, 32, !dbg !33
   %outer.sroa.1.12.extract.trunc = trunc i64 %outer.sroa.1.12.extract.shift to i32, !dbg !33
+  call void @llvm.dbg.value(metadata !{i64 %outer.sroa.1.12.extract.shift}, i64 0, metadata !34), !dbg !33
   call void @llvm.dbg.value(metadata !{i32 %outer.sroa.1.12.extract.trunc}, i64 0, metadata !34), !dbg !33
   call void @llvm.dbg.declare(metadata !{null}, metadata !34), !dbg !33
   ret i32 %outer.sroa.1.8.extract.trunc, !dbg !36

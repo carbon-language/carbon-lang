@@ -131,7 +131,10 @@ public:
   // Remove any duplicate entries by dropping all but the first.
   void sortUniqueValues() {
     std::sort(Values.begin(), Values.end());
-    Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
+    Values.erase(std::unique(Values.begin(), Values.end(),
+                             [](const Value &A, const Value &B) {
+                               return A.getVariable() == B.getVariable();
+                               }), Values.end());
   }
 };
 
