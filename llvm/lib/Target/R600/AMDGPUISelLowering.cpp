@@ -1387,13 +1387,16 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 // This is a shortcut for integer division because we have fast i32<->f32
 // conversions, and fast f32 reciprocal instructions. The fractional part of a
 // float is enough to accurately represent up to a 24-bit integer.
-SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) const {
+SDValue AMDGPUTargetLowering::LowerDIVREM24(SDValue Op, SelectionDAG &DAG, bool sign) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
   MVT IntVT = MVT::i32;
   MVT FltVT = MVT::f32;
+
+  ISD::NodeType ToFp  = sign ? ISD::SINT_TO_FP : ISD::UINT_TO_FP;
+  ISD::NodeType ToInt = sign ? ISD::FP_TO_SINT : ISD::FP_TO_UINT;
 
   if (VT.isVector()) {
     unsigned NElts = VT.getVectorNumElements();
@@ -1403,29 +1406,35 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) cons
 
   unsigned BitSize = VT.getScalarType().getSizeInBits();
 
-  // char|short jq = ia ^ ib;
-  SDValue jq = DAG.getNode(ISD::XOR, DL, VT, LHS, RHS);
+  SDValue jq = DAG.getConstant(1, IntVT);
 
-  // jq = jq >> (bitsize - 2)
-  jq = DAG.getNode(ISD::SRA, DL, VT, jq, DAG.getConstant(BitSize - 2, VT));
+  if (sign) {
+    // char|short jq = ia ^ ib;
+    jq = DAG.getNode(ISD::XOR, DL, VT, LHS, RHS);
 
-  // jq = jq | 0x1
-  jq = DAG.getNode(ISD::OR, DL, VT, jq, DAG.getConstant(1, VT));
+    // jq = jq >> (bitsize - 2)
+    jq = DAG.getNode(ISD::SRA, DL, VT, jq, DAG.getConstant(BitSize - 2, VT));
 
-  // jq = (int)jq
-  jq = DAG.getSExtOrTrunc(jq, DL, IntVT);
+    // jq = jq | 0x1
+    jq = DAG.getNode(ISD::OR, DL, VT, jq, DAG.getConstant(1, VT));
+
+    // jq = (int)jq
+    jq = DAG.getSExtOrTrunc(jq, DL, IntVT);
+  }
 
   // int ia = (int)LHS;
-  SDValue ia = DAG.getSExtOrTrunc(LHS, DL, IntVT);
+  SDValue ia = sign ?
+    DAG.getSExtOrTrunc(LHS, DL, IntVT) : DAG.getZExtOrTrunc(LHS, DL, IntVT);
 
   // int ib, (int)RHS;
-  SDValue ib = DAG.getSExtOrTrunc(RHS, DL, IntVT);
+  SDValue ib = sign ?
+    DAG.getSExtOrTrunc(RHS, DL, IntVT) : DAG.getZExtOrTrunc(RHS, DL, IntVT);
 
   // float fa = (float)ia;
-  SDValue fa = DAG.getNode(ISD::SINT_TO_FP, DL, FltVT, ia);
+  SDValue fa = DAG.getNode(ToFp, DL, FltVT, ia);
 
   // float fb = (float)ib;
-  SDValue fb = DAG.getNode(ISD::SINT_TO_FP, DL, FltVT, ib);
+  SDValue fb = DAG.getNode(ToFp, DL, FltVT, ib);
 
   // float fq = native_divide(fa, fb);
   SDValue fq = DAG.getNode(ISD::FMUL, DL, FltVT,
@@ -1442,7 +1451,7 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) cons
                            DAG.getNode(ISD::FMUL, DL, FltVT, fqneg, fb), fa);
 
   // int iq = (int)fq;
-  SDValue iq = DAG.getNode(ISD::FP_TO_SINT, DL, IntVT, fq);
+  SDValue iq = DAG.getNode(ToInt, DL, IntVT, fq);
 
   // fr = fabs(fr);
   fr = DAG.getNode(ISD::FABS, DL, FltVT, fr);
@@ -1458,11 +1467,13 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) cons
   // jq = (cv ? jq : 0);
   jq = DAG.getNode(ISD::SELECT, DL, VT, cv, jq, DAG.getConstant(0, VT));
 
-  // dst = iq + jq;
-  iq = DAG.getSExtOrTrunc(iq, DL, VT);
+  // dst = trunc/extend to legal type
+  iq = sign ? DAG.getSExtOrTrunc(iq, DL, VT) : DAG.getZExtOrTrunc(iq, DL, VT);
 
+  // dst = iq + jq;
   SDValue Div = DAG.getNode(ISD::ADD, DL, VT, iq, jq);
 
+  // Rem needs compensation, it's easier to recompute it
   SDValue Rem = DAG.getNode(ISD::MUL, DL, VT, Div, RHS);
   Rem = DAG.getNode(ISD::SUB, DL, VT, LHS, Rem);
 
@@ -1480,6 +1491,16 @@ SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
 
   SDValue Num = Op.getOperand(0);
   SDValue Den = Op.getOperand(1);
+
+  if (VT == MVT::i32) {
+    if (DAG.MaskedValueIsZero(Op.getOperand(0), APInt(32, 0xff << 24)) &&
+        DAG.MaskedValueIsZero(Op.getOperand(1), APInt(32, 0xff << 24))) {
+      // TODO: We technically could do this for i64, but shouldn't that just be
+      // handled by something generally reducing 64-bit division on 32-bit
+      // values to 32-bit?
+      return LowerDIVREM24(Op, DAG, false);
+    }
+  }
 
   // RCP =  URECIP(Den) = 2^32 / Den + e
   // e is rounding error.
@@ -1591,7 +1612,7 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM(SDValue Op,
       // TODO: We technically could do this for i64, but shouldn't that just be
       // handled by something generally reducing 64-bit division on 32-bit
       // values to 32-bit?
-      return LowerSDIVREM24(Op, DAG);
+      return LowerDIVREM24(Op, DAG, true);
     }
   }
 

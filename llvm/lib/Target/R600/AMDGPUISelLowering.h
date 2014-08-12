@@ -82,7 +82,7 @@ protected:
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSDIVREM(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerDIVREM24(SDValue Op, SelectionDAG &DAG, bool sign) const;
   bool isHWTrueValue(SDValue Op) const;
   bool isHWFalseValue(SDValue Op) const;
 
