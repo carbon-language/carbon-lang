@@ -550,7 +550,7 @@ INTERCEPTOR(char*, strdup, const char *s) {
 }
 #endif
 
-INTERCEPTOR(uptr, strlen, const char *s) {
+INTERCEPTOR(unsigned, strlen, const char *s) {
   if (UNLIKELY(!asan_inited)) return internal_strlen(s);
   // strlen is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -558,15 +558,15 @@ INTERCEPTOR(uptr, strlen, const char *s) {
     return REAL(strlen)(s);
   }
   ENSURE_ASAN_INITED();
-  uptr length = REAL(strlen)(s);
+  unsigned length = REAL(strlen)(s);
   if (flags()->replace_str) {
     ASAN_READ_RANGE(s, length + 1);
   }
   return length;
 }
 
-INTERCEPTOR(uptr, wcslen, const wchar_t *s) {
-  uptr length = REAL(wcslen)(s);
+INTERCEPTOR(unsigned, wcslen, const wchar_t *s) {
+  unsigned length = REAL(wcslen)(s);
   if (!asan_init_is_running) {
     ENSURE_ASAN_INITED();
     ASAN_READ_RANGE(s, (length + 1) * sizeof(wchar_t));
