@@ -797,7 +797,7 @@ void ModuleMap::addHeader(Module *Mod, const FileEntry *Header,
 }
 
 const FileEntry *
-ModuleMap::getContainingModuleMapFile(Module *Module) const {
+ModuleMap::getContainingModuleMapFile(const Module *Module) const {
   if (Module->DefinitionLoc.isInvalid())
     return nullptr;
 
@@ -805,7 +805,7 @@ ModuleMap::getContainingModuleMapFile(Module *Module) const {
            SourceMgr.getFileID(Module->DefinitionLoc));
 }
 
-const FileEntry *ModuleMap::getModuleMapFileForUniquing(Module *M) const {
+const FileEntry *ModuleMap::getModuleMapFileForUniquing(const Module *M) const {
   if (M->IsInferred) {
     assert(InferredModuleAllowedBy.count(M) && "missing inferred module map");
     return InferredModuleAllowedBy.find(M)->second;
@@ -1347,8 +1347,11 @@ void ModuleMapParser::parseModuleDecl() {
     // This module map defines a submodule. Go find the module of which it
     // is a submodule.
     ActiveModule = nullptr;
+    const Module *TopLevelModule = nullptr;
     for (unsigned I = 0, N = Id.size() - 1; I != N; ++I) {
       if (Module *Next = Map.lookupModuleQualified(Id[I].first, ActiveModule)) {
+        if (I == 0)
+          TopLevelModule = Next;
         ActiveModule = Next;
         continue;
       }
@@ -1363,7 +1366,14 @@ void ModuleMapParser::parseModuleDecl() {
       HadError = true;
       return;
     }
-  } 
+
+    if (ModuleMapFile != Map.getContainingModuleMapFile(TopLevelModule)) {
+      assert(ModuleMapFile != Map.getModuleMapFileForUniquing(TopLevelModule) &&
+             "submodule defined in same file as 'module *' that allowed its "
+             "top-level module");
+      Map.addAdditionalModuleMapFile(TopLevelModule, ModuleMapFile);
+    }
+  }
   
   StringRef ModuleName = Id.back().first;
   SourceLocation ModuleNameLoc = Id.back().second;

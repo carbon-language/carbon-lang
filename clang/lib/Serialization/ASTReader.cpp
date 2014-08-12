@@ -2468,45 +2468,9 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
 
     case MODULE_MAP_FILE:
-      F.ModuleMapPath = Blob;
-
-      // Try to resolve ModuleName in the current header search context and
-      // verify that it is found in the same module map file as we saved. If the
-      // top-level AST file is a main file, skip this check because there is no
-      // usable header search context.
-      assert(!F.ModuleName.empty() &&
-             "MODULE_NAME should come before MOUDLE_MAP_FILE");
-      if (F.Kind == MK_Module &&
-          (*ModuleMgr.begin())->Kind != MK_MainFile) {
-        Module *M = PP.getHeaderSearchInfo().lookupModule(F.ModuleName);
-        if (!M) {
-          assert(ImportedBy && "top-level import should be verified");
-          if ((ClientLoadCapabilities & ARR_Missing) == 0)
-            Diag(diag::err_imported_module_not_found)
-              << F.ModuleName << ImportedBy->FileName;
-          return Missing;
-        }
-
-        HeaderSearch &HS = PP.getHeaderSearchInfo();
-        const FileEntry *StoredModMap = FileMgr.getFile(F.ModuleMapPath);
-        const FileEntry *ModMap =
-            HS.getModuleMap().getModuleMapFileForUniquing(M);
-        if (StoredModMap == nullptr || StoredModMap != ModMap) {
-          assert(ModMap && "found module is missing module map file");
-          assert(M->Name == F.ModuleName && "found module with different name");
-          assert(ImportedBy && "top-level import should be verified");
-          if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
-            Diag(diag::err_imported_module_modmap_changed)
-              << F.ModuleName << ImportedBy->FileName
-              << ModMap->getName() << F.ModuleMapPath;
-          return OutOfDate;
-        }
-      }
-
-      if (Listener)
-        Listener->ReadModuleMapFile(F.ModuleMapPath);
-      break;
-
+      if (ASTReadResult Result =
+              ReadModuleMapFileBlock(Record, F, ImportedBy, ClientLoadCapabilities))
+        return Result;
     case INPUT_FILE_OFFSETS:
       F.InputFileOffsets = (const uint32_t *)Blob.data();
       F.InputFilesLoaded.resize(Record[0]);
@@ -3314,6 +3278,89 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
     }
   }
 }
+
+ASTReader::ASTReadResult
+ASTReader::ReadModuleMapFileBlock(RecordData &Record, ModuleFile &F,
+                                  const ModuleFile *ImportedBy,
+                                  unsigned ClientLoadCapabilities) {
+  unsigned Idx = 0;
+  F.ModuleMapPath = ReadString(Record, Idx);
+
+  // Try to resolve ModuleName in the current header search context and
+  // verify that it is found in the same module map file as we saved. If the
+  // top-level AST file is a main file, skip this check because there is no
+  // usable header search context.
+  assert(!F.ModuleName.empty() &&
+         "MODULE_NAME should come before MOUDLE_MAP_FILE");
+  if (F.Kind == MK_Module && (*ModuleMgr.begin())->Kind != MK_MainFile) {
+    Module *M = PP.getHeaderSearchInfo().lookupModule(F.ModuleName);
+    if (!M) {
+      assert(ImportedBy && "top-level import should be verified");
+      if ((ClientLoadCapabilities & ARR_Missing) == 0)
+        Diag(diag::err_imported_module_not_found)
+          << F.ModuleName << ImportedBy->FileName;
+      return Missing;
+    }
+
+    // Check the primary module map file.
+    auto &Map = PP.getHeaderSearchInfo().getModuleMap();
+    const FileEntry *StoredModMap = FileMgr.getFile(F.ModuleMapPath);
+    const FileEntry *ModMap = Map.getModuleMapFileForUniquing(M);
+    if (StoredModMap == nullptr || StoredModMap != ModMap) {
+      assert(ModMap && "found module is missing module map file");
+      assert(M->Name == F.ModuleName && "found module with different name");
+      assert(ImportedBy && "top-level import should be verified");
+      if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+        Diag(diag::err_imported_module_modmap_changed)
+          << F.ModuleName << ImportedBy->FileName
+          << ModMap->getName() << F.ModuleMapPath;
+      return OutOfDate;
+    }
+
+    llvm::SmallPtrSet<const FileEntry *, 1> AdditionalStoredMaps;
+    for (unsigned I = 0, N = Record[Idx++]; I < N; ++I) {
+      // FIXME: we should use input files rather than storing names.
+      std::string Filename = ReadString(Record, Idx);
+      const FileEntry *F =
+          FileMgr.getFile(Filename, false, false);
+      if (F == nullptr) {
+        if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+          Error("could not find file '" + Filename +"' referenced by AST file");
+        return OutOfDate;
+      }
+      AdditionalStoredMaps.insert(F);
+    }
+
+    // Check any additional module map files (e.g. module.private.modulemap)
+    // that are not in the pcm.
+    if (auto *AdditionalModuleMaps = Map.getAdditionalModuleMapFiles(M)) {
+      for (const FileEntry *ModMap : *AdditionalModuleMaps) {
+        // Remove files that match
+        // Note: SmallPtrSet::erase is really remove
+        if (!AdditionalStoredMaps.erase(ModMap)) {
+          if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+            Diag(diag::err_module_different_modmap)
+              << F.ModuleName << /*new*/0 << ModMap->getName();
+          return OutOfDate;
+        }
+      }
+    }
+
+    // Check any additional module map files that are in the pcm, but not
+    // found in header search. Cases that match are already removed.
+    for (const FileEntry *ModMap : AdditionalStoredMaps) {
+      if ((ClientLoadCapabilities & ARR_OutOfDate) == 0)
+        Diag(diag::err_module_different_modmap)
+          << F.ModuleName << /*not new*/1 << ModMap->getName();
+      return OutOfDate;
+    }
+  }
+
+  if (Listener)
+    Listener->ReadModuleMapFile(F.ModuleMapPath);
+  return Success;
+}
+
 
 /// \brief Move the given method to the back of the global list of methods.
 static void moveMethodToBackOfGlobalList(Sema &S, ObjCMethodDecl *Method) {
@@ -4136,9 +4183,11 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
     case MODULE_NAME:
       Listener.ReadModuleName(Blob);
       break;
-    case MODULE_MAP_FILE:
-      Listener.ReadModuleMapFile(Blob);
+    case MODULE_MAP_FILE: {
+      unsigned Idx = 0;
+      Listener.ReadModuleMapFile(ReadString(Record, Idx));
       break;
+    }
     case LANGUAGE_OPTIONS:
       if (ParseLanguageOptions(Record, false, Listener))
         return true;

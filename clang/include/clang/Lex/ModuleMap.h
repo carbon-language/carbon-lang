@@ -107,6 +107,8 @@ public:
     }
   };
 
+  typedef llvm::SmallPtrSet<const FileEntry *, 1> AdditionalModMapsSet;
+
 private:
   typedef llvm::DenseMap<const FileEntry *, SmallVector<KnownHeader, 1> >
   HeadersMap;
@@ -149,6 +151,8 @@ private:
   /// A mapping from an inferred module to the module map that allowed the
   /// inference.
   llvm::DenseMap<const Module *, const FileEntry *> InferredModuleAllowedBy;
+
+  llvm::DenseMap<const Module *, AdditionalModMapsSet> AdditionalModMaps;
 
   /// \brief Describes whether we haved parsed a particular file as a module
   /// map.
@@ -349,7 +353,7 @@ public:
   ///
   /// \returns The file entry for the module map file containing the given
   /// module, or NULL if the module definition was inferred.
-  const FileEntry *getContainingModuleMapFile(Module *Module) const;
+  const FileEntry *getContainingModuleMapFile(const Module *Module) const;
 
   /// \brief Get the module map file that (along with the module name) uniquely
   /// identifies this module.
@@ -360,9 +364,24 @@ public:
   /// of inferred modules, returns the module map that allowed the inference
   /// (e.g. contained 'module *'). Otherwise, returns
   /// getContainingModuleMapFile().
-  const FileEntry *getModuleMapFileForUniquing(Module *M) const;
+  const FileEntry *getModuleMapFileForUniquing(const Module *M) const;
 
   void setInferredModuleAllowedBy(Module *M, const FileEntry *ModuleMap);
+
+  /// \brief Get any module map files other than getModuleMapFileForUniquing(M)
+  /// that define submodules of a top-level module \p M. This is cheaper than
+  /// getting the module map file for each submodule individually, since the
+  /// expected number of results is very small.
+  AdditionalModMapsSet *getAdditionalModuleMapFiles(const Module *M) {
+    auto I = AdditionalModMaps.find(M);
+    if (I == AdditionalModMaps.end())
+      return nullptr;
+    return &I->second;
+  }
+
+  void addAdditionalModuleMapFile(const Module *M, const FileEntry *ModuleMap) {
+    AdditionalModMaps[M].insert(ModuleMap);
+  }
 
   /// \brief Resolve all of the unresolved exports in the given module.
   ///
