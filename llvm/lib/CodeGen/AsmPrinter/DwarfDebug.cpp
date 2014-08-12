@@ -1239,9 +1239,8 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
     assert(Begin->isDebugValue() && "Invalid History entry");
 
     // Check if a variable is inaccessible in this range.
-    if (!Begin->isDebugValue() ||
-        (Begin->getNumOperands() > 1 && Begin->getOperand(0).isReg() &&
-         !Begin->getOperand(0).getReg())) {
+    if (Begin->getNumOperands() > 1 &&
+        Begin->getOperand(0).isReg() && !Begin->getOperand(0).getReg()) {
       OpenRanges.clear();
       continue;
     }
