@@ -1,5 +1,6 @@
+// RUN: rm -rf %t
 // RUN: %clang_cc1 -ffreestanding -fsyntax-only -std=c++11 %s
-// RUN: %clang_cc1 -ffreestanding -fsyntax-only -std=c++11 -fmodules %s
+// RUN: %clang_cc1 -ffreestanding -fsyntax-only -std=c++11 -fmodules -fmodules-cache-path=%t %s
 
 // This test fails on systems with older OS X 10.9 SDK headers, see PR18322.
 
