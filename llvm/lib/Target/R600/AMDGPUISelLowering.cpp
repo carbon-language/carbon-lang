@@ -250,7 +250,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   const MVT ScalarIntVTs[] = { MVT::i32, MVT::i64 };
   for (MVT VT : ScalarIntVTs) {
     setOperationAction(ISD::SREM, VT, Expand);
-    setOperationAction(ISD::SDIV, VT, Custom);
+    setOperationAction(ISD::SDIV, VT, Expand);
 
     // GPU does not have divrem function for signed or unsigned.
     setOperationAction(ISD::SDIVREM, VT, Custom);
@@ -1390,7 +1390,7 @@ SDValue AMDGPUTargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
 // This is a shortcut for integer division because we have fast i32<->f32
 // conversions, and fast f32 reciprocal instructions. The fractional part of a
 // float is enough to accurately represent up to a 24-bit integer.
-SDValue AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const {
+SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) const {
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
   SDValue LHS = Op.getOperand(0);
@@ -1463,7 +1463,17 @@ SDValue AMDGPUTargetLowering::LowerSDIV24(SDValue Op, SelectionDAG &DAG) const {
 
   // dst = iq + jq;
   iq = DAG.getSExtOrTrunc(iq, DL, VT);
-  return DAG.getNode(ISD::ADD, DL, VT, iq, jq);
+
+  SDValue Div = DAG.getNode(ISD::ADD, DL, VT, iq, jq);
+
+  SDValue Rem = DAG.getNode(ISD::MUL, DL, VT, Div, RHS);
+  Rem = DAG.getNode(ISD::SUB, DL, VT, LHS, Rem);
+
+  SDValue Res[2] = {
+    Div,
+    Rem
+  };
+  return DAG.getMergeValues(Res, DL);
 }
 
 SDValue AMDGPUTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const {
@@ -1544,7 +1554,7 @@ SDValue AMDGPUTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const {
       // TODO: We technically could do this for i64, but shouldn't that just be
       // handled by something generally reducing 64-bit division on 32-bit
       // values to 32-bit?
-      return LowerSDIV24(Op, DAG);
+//      return LowerSDIV24(Op, DAG);
     }
 
     return LowerSDIV32(Op, DAG);
@@ -1740,11 +1750,21 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM(SDValue Op,
   SDLoc DL(Op);
   EVT VT = Op.getValueType();
 
-  SDValue Zero = DAG.getConstant(0, VT);
-  SDValue NegOne = DAG.getConstant(-1, VT);
-
   SDValue LHS = Op.getOperand(0);
   SDValue RHS = Op.getOperand(1);
+
+  if (VT == MVT::i32) {
+    if (DAG.ComputeNumSignBits(Op.getOperand(0)) > 8 &&
+        DAG.ComputeNumSignBits(Op.getOperand(1)) > 8) {
+      // TODO: We technically could do this for i64, but shouldn't that just be
+      // handled by something generally reducing 64-bit division on 32-bit
+      // values to 32-bit?
+      return LowerSDIVREM24(Op, DAG);
+    }
+  }
+
+  SDValue Zero = DAG.getConstant(0, VT);
+  SDValue NegOne = DAG.getConstant(-1, VT);
 
   SDValue LHSign = DAG.getSelectCC(DL, LHS, Zero, NegOne, Zero, ISD::SETLT);
   SDValue RHSign = DAG.getSelectCC(DL, RHS, Zero, NegOne, Zero, ISD::SETLT);
