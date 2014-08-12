@@ -469,6 +469,9 @@ namespace {
 
     void computeTypeMapping();
 
+    void upgradeMismatchedGlobalArray(StringRef Name);
+    void upgradeMismatchedGlobals();
+
     bool linkAppendingVarProto(GlobalVariable *DstGV, GlobalVariable *SrcGV);
     bool linkGlobalProto(GlobalVariable *SrcGV);
     bool linkFunctionProto(Function *SrcF);
@@ -814,6 +817,83 @@ void ModuleLinker::computeTypeMapping() {
   // Now that we have discovered all of the type equivalences, get a body for
   // any 'opaque' types in the dest module that are now resolved.
   TypeMap.linkDefinedTypeBodies();
+}
+
+static void upgradeGlobalArray(GlobalVariable *GV) {
+  ArrayType *ATy = cast<ArrayType>(GV->getType()->getElementType());
+  StructType *OldTy = cast<StructType>(ATy->getElementType());
+  assert(OldTy->getNumElements() == 2 && "Expected to upgrade from 2 elements");
+
+  // Get the upgraded 3 element type.
+  PointerType *VoidPtrTy = Type::getInt8Ty(GV->getContext())->getPointerTo();
+  Type *Tys[3] = {OldTy->getElementType(0), OldTy->getElementType(1),
+                  VoidPtrTy};
+  StructType *NewTy = StructType::get(GV->getContext(), Tys, false);
+
+  // Build new constants with a null third field filled in.
+  Constant *OldInitC = GV->getInitializer();
+  ConstantArray *OldInit = dyn_cast<ConstantArray>(OldInitC);
+  if (!OldInit && !isa<ConstantAggregateZero>(OldInitC))
+    // Invalid initializer; give up.
+    return;
+  std::vector<Constant *> Initializers;
+  if (OldInit && OldInit->getNumOperands()) {
+    Value *Null = Constant::getNullValue(VoidPtrTy);
+    for (Use &U : OldInit->operands()) {
+      ConstantStruct *Init = cast<ConstantStruct>(U.get());
+      Initializers.push_back(ConstantStruct::get(
+          NewTy, Init->getOperand(0), Init->getOperand(1), Null, nullptr));
+    }
+  }
+  assert(Initializers.size() == ATy->getNumElements() &&
+         "Failed to copy all array elements");
+
+  // Replace the old GV with a new one.
+  ATy = ArrayType::get(NewTy, Initializers.size());
+  Constant *NewInit = ConstantArray::get(ATy, Initializers);
+  GlobalVariable *NewGV = new GlobalVariable(
+      *GV->getParent(), ATy, GV->isConstant(), GV->getLinkage(), NewInit, "",
+      GV, GV->getThreadLocalMode(), GV->getType()->getAddressSpace(),
+      GV->isExternallyInitialized());
+  NewGV->copyAttributesFrom(GV);
+  NewGV->takeName(GV);
+  assert(GV->use_empty() && "program cannot use initializer list");
+  GV->eraseFromParent();
+}
+
+void ModuleLinker::upgradeMismatchedGlobalArray(StringRef Name) {
+  // Look for the global arrays.
+  auto *DstGV = dyn_cast_or_null<GlobalVariable>(DstM->getNamedValue(Name));
+  if (!DstGV)
+    return;
+  auto *SrcGV = dyn_cast_or_null<GlobalVariable>(SrcM->getNamedValue(Name));
+  if (!SrcGV)
+    return;
+
+  // Check if the types already match.
+  auto *DstTy = cast<ArrayType>(DstGV->getType()->getElementType());
+  auto *SrcTy =
+      cast<ArrayType>(TypeMap.get(SrcGV->getType()->getElementType()));
+  if (DstTy == SrcTy)
+    return;
+
+  // Grab the element types.  We can only upgrade an array of a two-field
+  // struct.  Only bother if the other one has three-fields.
+  auto *DstEltTy = cast<StructType>(DstTy->getElementType());
+  auto *SrcEltTy = cast<StructType>(SrcTy->getElementType());
+  if (DstEltTy->getNumElements() == 2 && SrcEltTy->getNumElements() == 3) {
+    upgradeGlobalArray(DstGV);
+    return;
+  }
+  if (DstEltTy->getNumElements() == 3 && SrcEltTy->getNumElements() == 2)
+    upgradeGlobalArray(SrcGV);
+
+  // We can't upgrade any other differences.
+}
+
+void ModuleLinker::upgradeMismatchedGlobals() {
+  upgradeMismatchedGlobalArray("llvm.global_ctors");
+  upgradeMismatchedGlobalArray("llvm.global_dtors");
 }
 
 /// linkAppendingVarProto - If there were any appending global variables, link
@@ -1453,6 +1533,9 @@ bool ModuleLinker::run() {
       return true;
     ComdatsChosen[&C] = std::make_pair(SK, LinkFromSrc);
   }
+
+  // Upgrade mismatched global arrays.
+  upgradeMismatchedGlobals();
 
   // Insert all of the globals in src into the DstM module... without linking
   // initializers (which could refer to functions not yet mapped over).
