@@ -405,7 +405,7 @@ public:
   /// \returns The offset into the file where the preamble ends and the rest
   /// of the file begins along with a boolean value indicating whether 
   /// the preamble ends at the beginning of a new line.
-  static std::pair<unsigned, bool> ComputePreamble(llvm::MemoryBuffer &Buffer,
+  static std::pair<unsigned, bool> ComputePreamble(StringRef Buffer,
                                                    const LangOptions &LangOpts,
                                                    unsigned MaxLines = 0);
 

@@ -1254,8 +1254,8 @@ ASTUnit::ComputePreamble(CompilerInvocation &Invocation,
   }
 
   return std::make_pair(
-      Buffer,
-      Lexer::ComputePreamble(*Buffer, *Invocation.getLangOpts(), MaxLines));
+      Buffer, Lexer::ComputePreamble(Buffer->getBuffer(),
+                                     *Invocation.getLangOpts(), MaxLines));
 }
 
 ASTUnit::PreambleFileHash
