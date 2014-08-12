@@ -678,4 +678,21 @@ TEST(APIntTest, nearestLogBase2) {
   EXPECT_EQ(A9.nearestLogBase2(), UINT32_MAX);
 }
 
+TEST(APIntTest, SelfMoveAssignment) {
+  APInt X(32, 0xdeadbeef);
+  X = std::move(X);
+  EXPECT_EQ(32, X.getBitWidth());
+  EXPECT_EQ(0xdeadbeefULL, X.getLimitedValue());
+
+  uint64_t Bits[] = {0xdeadbeefdeadbeefULL, 0xdeadbeefdeadbeefULL};
+  APInt Y(128, Bits);
+  Y = std::move(Y);
+  EXPECT_EQ(128, Y.getBitWidth());
+  EXPECT_EQ(~0ULL, Y.getLimitedValue());
+  const uint64_t *Raw = Y.getRawData();
+  EXPECT_EQ(2, Y.getNumWords());
+  EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[0]);
+  EXPECT_EQ(0xdeadbeefdeadbeefULL, Raw[1]);
+}
+
 }
