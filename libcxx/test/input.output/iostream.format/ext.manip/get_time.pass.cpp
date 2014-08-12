@@ -43,7 +43,7 @@ int main()
         std::istream is(&sb);
         is.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
-        is >> std::get_time(&t, "%c");
+        is >> std::get_time(&t, "%a %b %d %H:%M:%S %Y");
         assert(t.tm_sec == 59);
         assert(t.tm_min == 55);
         assert(t.tm_hour == 23);
@@ -59,7 +59,7 @@ int main()
         std::wistream is(&sb);
         is.imbue(std::locale(LOCALE_en_US_UTF_8));
         std::tm t = {0};
-        is >> std::get_time(&t, L"%c");
+        is >> std::get_time(&t, L"%a %b %d %H:%M:%S %Y");
         assert(t.tm_sec == 59);
         assert(t.tm_min == 55);
         assert(t.tm_hour == 23);

@@ -62,7 +62,8 @@ int main()
         t.tm_mon = 11;
         t.tm_year = 161;
         t.tm_wday = 6;
-        os << std::put_time(&t, "%c");
+        t.tm_isdst = 0;
+        os << std::put_time(&t, "%a %b %d %H:%M:%S %Y");
         assert(sb.str() == "Sat Dec 31 23:55:59 2061");
     }
     {
@@ -77,7 +78,7 @@ int main()
         t.tm_mon = 11;
         t.tm_year = 161;
         t.tm_wday = 6;
-        os << std::put_time(&t, L"%c");
+        os << std::put_time(&t, L"%a %b %d %H:%M:%S %Y");
         assert(sb.str() == L"Sat Dec 31 23:55:59 2061");
     }
 }
