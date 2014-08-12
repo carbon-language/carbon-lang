@@ -43,12 +43,6 @@ private:
   /// \brief Split a vector store into multiple scalar stores.
   /// \returns The resulting chain.
 
-  SDValue LowerSDIV(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV32(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSDIV64(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM32(SDValue Op, SelectionDAG &DAG) const;
-  SDValue LowerSREM64(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerUDIVREM(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFCEIL(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFTRUNC(SDValue Op, SelectionDAG &DAG) const;

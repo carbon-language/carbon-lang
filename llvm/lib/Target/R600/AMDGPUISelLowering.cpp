@@ -310,7 +310,6 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::SUB,  VT, Expand);
     setOperationAction(ISD::SINT_TO_FP, VT, Expand);
     setOperationAction(ISD::UINT_TO_FP, VT, Expand);
-    // TODO: Implement custom UREM / SREM routines.
     setOperationAction(ISD::SDIV, VT, Expand);
     setOperationAction(ISD::UDIV, VT, Expand);
     setOperationAction(ISD::SREM, VT, Expand);
@@ -547,8 +546,6 @@ SDValue AMDGPUTargetLowering::LowerOperation(SDValue Op,
   case ISD::EXTRACT_SUBVECTOR: return LowerEXTRACT_SUBVECTOR(Op, DAG);
   case ISD::FrameIndex: return LowerFrameIndex(Op, DAG);
   case ISD::INTRINSIC_WO_CHAIN: return LowerINTRINSIC_WO_CHAIN(Op, DAG);
-  case ISD::SDIV: return LowerSDIV(Op, DAG);
-  case ISD::SREM: return LowerSREM(Op, DAG);
   case ISD::UDIVREM: return LowerUDIVREM(Op, DAG);
   case ISD::SDIVREM: return LowerSDIVREM(Op, DAG);
   case ISD::FCEIL: return LowerFCEIL(Op, DAG);
@@ -1474,171 +1471,6 @@ SDValue AMDGPUTargetLowering::LowerSDIVREM24(SDValue Op, SelectionDAG &DAG) cons
     Rem
   };
   return DAG.getMergeValues(Res, DL);
-}
-
-SDValue AMDGPUTargetLowering::LowerSDIV32(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  EVT OVT = Op.getValueType();
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  // The LowerSDIV32 function generates equivalent to the following IL.
-  // mov r0, LHS
-  // mov r1, RHS
-  // ilt r10, r0, 0
-  // ilt r11, r1, 0
-  // iadd r0, r0, r10
-  // iadd r1, r1, r11
-  // ixor r0, r0, r10
-  // ixor r1, r1, r11
-  // udiv r0, r0, r1
-  // ixor r10, r10, r11
-  // iadd r0, r0, r10
-  // ixor DST, r0, r10
-
-  // mov r0, LHS
-  SDValue r0 = LHS;
-
-  // mov r1, RHS
-  SDValue r1 = RHS;
-
-  // ilt r10, r0, 0
-  SDValue r10 = DAG.getSelectCC(DL,
-      r0, DAG.getConstant(0, OVT),
-      DAG.getConstant(-1, OVT),
-      DAG.getConstant(0, OVT),
-      ISD::SETLT);
-
-  // ilt r11, r1, 0
-  SDValue r11 = DAG.getSelectCC(DL,
-      r1, DAG.getConstant(0, OVT),
-      DAG.getConstant(-1, OVT),
-      DAG.getConstant(0, OVT),
-      ISD::SETLT);
-
-  // iadd r0, r0, r10
-  r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
-
-  // iadd r1, r1, r11
-  r1 = DAG.getNode(ISD::ADD, DL, OVT, r1, r11);
-
-  // ixor r0, r0, r10
-  r0 = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
-
-  // ixor r1, r1, r11
-  r1 = DAG.getNode(ISD::XOR, DL, OVT, r1, r11);
-
-  // udiv r0, r0, r1
-  r0 = DAG.getNode(ISD::UDIV, DL, OVT, r0, r1);
-
-  // ixor r10, r10, r11
-  r10 = DAG.getNode(ISD::XOR, DL, OVT, r10, r11);
-
-  // iadd r0, r0, r10
-  r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
-
-  // ixor DST, r0, r10
-  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
-  return DST;
-}
-
-SDValue AMDGPUTargetLowering::LowerSDIV64(SDValue Op, SelectionDAG &DAG) const {
-  return SDValue(Op.getNode(), 0);
-}
-
-SDValue AMDGPUTargetLowering::LowerSDIV(SDValue Op, SelectionDAG &DAG) const {
-  EVT OVT = Op.getValueType().getScalarType();
-
-  if (OVT == MVT::i32) {
-    if (DAG.ComputeNumSignBits(Op.getOperand(0)) > 8 &&
-        DAG.ComputeNumSignBits(Op.getOperand(1)) > 8) {
-      // TODO: We technically could do this for i64, but shouldn't that just be
-      // handled by something generally reducing 64-bit division on 32-bit
-      // values to 32-bit?
-//      return LowerSDIV24(Op, DAG);
-    }
-
-    return LowerSDIV32(Op, DAG);
-  }
-
-  assert(OVT == MVT::i64);
-  return LowerSDIV64(Op, DAG);
-}
-
-SDValue AMDGPUTargetLowering::LowerSREM32(SDValue Op, SelectionDAG &DAG) const {
-  SDLoc DL(Op);
-  EVT OVT = Op.getValueType();
-  SDValue LHS = Op.getOperand(0);
-  SDValue RHS = Op.getOperand(1);
-  // The LowerSREM32 function generates equivalent to the following IL.
-  // mov r0, LHS
-  // mov r1, RHS
-  // ilt r10, r0, 0
-  // ilt r11, r1, 0
-  // iadd r0, r0, r10
-  // iadd r1, r1, r11
-  // ixor r0, r0, r10
-  // ixor r1, r1, r11
-  // udiv r20, r0, r1
-  // umul r20, r20, r1
-  // sub r0, r0, r20
-  // iadd r0, r0, r10
-  // ixor DST, r0, r10
-
-  // mov r0, LHS
-  SDValue r0 = LHS;
-
-  // mov r1, RHS
-  SDValue r1 = RHS;
-
-  // ilt r10, r0, 0
-  SDValue r10 = DAG.getSetCC(DL, OVT, r0, DAG.getConstant(0, OVT), ISD::SETLT);
-
-  // ilt r11, r1, 0
-  SDValue r11 = DAG.getSetCC(DL, OVT, r1, DAG.getConstant(0, OVT), ISD::SETLT);
-
-  // iadd r0, r0, r10
-  r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
-
-  // iadd r1, r1, r11
-  r1 = DAG.getNode(ISD::ADD, DL, OVT, r1, r11);
-
-  // ixor r0, r0, r10
-  r0 = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
-
-  // ixor r1, r1, r11
-  r1 = DAG.getNode(ISD::XOR, DL, OVT, r1, r11);
-
-  // udiv r20, r0, r1
-  SDValue r20 = DAG.getNode(ISD::UREM, DL, OVT, r0, r1);
-
-  // umul r20, r20, r1
-  r20 = DAG.getNode(AMDGPUISD::UMUL, DL, OVT, r20, r1);
-
-  // sub r0, r0, r20
-  r0 = DAG.getNode(ISD::SUB, DL, OVT, r0, r20);
-
-  // iadd r0, r0, r10
-  r0 = DAG.getNode(ISD::ADD, DL, OVT, r0, r10);
-
-  // ixor DST, r0, r10
-  SDValue DST = DAG.getNode(ISD::XOR, DL, OVT, r0, r10);
-  return DST;
-}
-
-SDValue AMDGPUTargetLowering::LowerSREM64(SDValue Op, SelectionDAG &DAG) const {
-  return SDValue(Op.getNode(), 0);
-}
-
-SDValue AMDGPUTargetLowering::LowerSREM(SDValue Op, SelectionDAG &DAG) const {
-  EVT OVT = Op.getValueType();
-
-  if (OVT.getScalarType() == MVT::i64)
-    return LowerSREM64(Op, DAG);
-
-  if (OVT.getScalarType() == MVT::i32)
-    return LowerSREM32(Op, DAG);
-
-  return SDValue(Op.getNode(), 0);
 }
 
 SDValue AMDGPUTargetLowering::LowerUDIVREM(SDValue Op,
