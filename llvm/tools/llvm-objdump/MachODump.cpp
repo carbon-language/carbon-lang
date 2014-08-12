@@ -471,7 +471,22 @@ static void DisassembleInputMachO2(StringRef Filename,
   }
 }
 
+
+//===----------------------------------------------------------------------===//
+// __compact_unwind section dumping
+//===----------------------------------------------------------------------===//
+
 namespace {
+
+template <typename T> static uint64_t readNext(const char *&Buf) {
+    using llvm::support::little;
+    using llvm::support::unaligned;
+
+    uint64_t Val = support::endian::read<T, little, unaligned>(Buf);
+    Buf += sizeof(T);
+    return Val;
+  }
+
 struct CompactUnwindEntry {
   uint32_t OffsetInSection;
 
@@ -494,16 +509,6 @@ struct CompactUnwindEntry {
   }
 
 private:
-  template<typename T>
-  static uint64_t readNext(const char *&Buf) {
-    using llvm::support::little;
-    using llvm::support::unaligned;
-
-    uint64_t Val = support::endian::read<T, little, unaligned>(Buf);
-    Buf += sizeof(T);
-    return Val;
-  }
-
   template<typename UIntPtr>
   void read(const char *Buf) {
     FunctionAddr = readNext<UIntPtr>(Buf);
@@ -665,6 +670,239 @@ printMachOCompactUnwindSection(const MachOObjectFile *Obj,
   }
 }
 
+//===----------------------------------------------------------------------===//
+// __unwind_info section dumping
+//===----------------------------------------------------------------------===//
+
+static void printRegularSecondLevelUnwindPage(const char *PageStart) {
+  const char *Pos = PageStart;
+  uint32_t Kind = readNext<uint32_t>(Pos);
+  (void)Kind;
+  assert(Kind == 2 && "kind for a regular 2nd level index should be 2");
+
+  uint16_t EntriesStart = readNext<uint16_t>(Pos);
+  uint16_t NumEntries = readNext<uint16_t>(Pos);
+
+  Pos = PageStart + EntriesStart;
+  for (unsigned i = 0; i < NumEntries; ++i) {
+    uint32_t FunctionOffset = readNext<uint32_t>(Pos);
+    uint32_t Encoding = readNext<uint32_t>(Pos);
+
+    outs() << "      [" << i << "]: "
+           << "function offset="
+           << format("0x%08" PRIx32, FunctionOffset) << ", "
+           << "encoding="
+           << format("0x%08" PRIx32, Encoding)
+           << '\n';
+  }
+}
+
+static void printCompressedSecondLevelUnwindPage(
+    const char *PageStart, uint32_t FunctionBase,
+    const SmallVectorImpl<uint32_t> &CommonEncodings) {
+  const char *Pos = PageStart;
+  uint32_t Kind = readNext<uint32_t>(Pos);
+  (void)Kind;
+  assert(Kind == 3 && "kind for a compressed 2nd level index should be 3");
+
+  uint16_t EntriesStart = readNext<uint16_t>(Pos);
+  uint16_t NumEntries = readNext<uint16_t>(Pos);
+
+  uint16_t EncodingsStart = readNext<uint16_t>(Pos);
+  readNext<uint16_t>(Pos);
+  auto PageEncodings = (support::ulittle32_t *)(PageStart + EncodingsStart);
+
+  Pos = PageStart + EntriesStart;
+  for (unsigned i = 0; i < NumEntries; ++i) {
+    uint32_t Entry = readNext<uint32_t>(Pos);
+    uint32_t FunctionOffset = FunctionBase + (Entry & 0xffffff);
+    uint32_t EncodingIdx = Entry >> 24;
+
+    uint32_t Encoding;
+    if (EncodingIdx < CommonEncodings.size())
+      Encoding = CommonEncodings[EncodingIdx];
+    else
+      Encoding = PageEncodings[EncodingIdx - CommonEncodings.size()];
+
+    outs() << "      [" << i << "]: "
+           << "function offset="
+           << format("0x%08" PRIx32, FunctionOffset) << ", "
+           << "encoding[" << EncodingIdx << "]="
+           << format("0x%08" PRIx32, Encoding)
+           << '\n';
+  }
+}
+
+static void
+printMachOUnwindInfoSection(const MachOObjectFile *Obj,
+                            std::map<uint64_t, SymbolRef> &Symbols,
+                            const SectionRef &UnwindInfo) {
+
+  assert(Obj->isLittleEndian() &&
+         "There should not be a big-endian .o with __unwind_info");
+
+  outs() << "Contents of __unwind_info section:\n";
+
+  StringRef Contents;
+  UnwindInfo.getContents(Contents);
+  const char *Pos = Contents.data();
+
+  //===----------------------------------
+  // Section header
+  //===----------------------------------
+
+  uint32_t Version = readNext<uint32_t>(Pos);
+  outs() << "  Version:                                   "
+         << format("0x%" PRIx32, Version) << '\n';
+  assert(Version == 1 && "only understand version 1");
+
+  uint32_t CommonEncodingsStart = readNext<uint32_t>(Pos);
+  outs() << "  Common encodings array section offset:     "
+         << format("0x%" PRIx32, CommonEncodingsStart) << '\n';
+  uint32_t NumCommonEncodings = readNext<uint32_t>(Pos);
+  outs() << "  Number of common encodings in array:       "
+         << format("0x%" PRIx32, NumCommonEncodings) << '\n';
+
+  uint32_t PersonalitiesStart = readNext<uint32_t>(Pos);
+  outs() << "  Personality function array section offset: "
+         << format("0x%" PRIx32, PersonalitiesStart) << '\n';
+  uint32_t NumPersonalities = readNext<uint32_t>(Pos);
+  outs() << "  Number of personality functions in array:  "
+         << format("0x%" PRIx32, NumPersonalities) << '\n';
+
+  uint32_t IndicesStart = readNext<uint32_t>(Pos);
+  outs() << "  Index array section offset:                "
+         << format("0x%" PRIx32, IndicesStart) << '\n';
+  uint32_t NumIndices = readNext<uint32_t>(Pos);
+  outs() << "  Number of indices in array:                "
+         << format("0x%" PRIx32, NumIndices) << '\n';
+
+  //===----------------------------------
+  // A shared list of common encodings
+  //===----------------------------------
+
+  // These occupy indices in the range [0, N] whenever an encoding is referenced
+  // from a compressed 2nd level index table. In practice the linker only
+  // creates ~128 of these, so that indices are available to embed encodings in
+  // the 2nd level index.
+
+  SmallVector<uint32_t, 64> CommonEncodings;
+  outs() << "  Common encodings: (count = " << NumCommonEncodings << ")\n";
+  Pos = Contents.data() + CommonEncodingsStart;
+  for (unsigned i = 0; i < NumCommonEncodings; ++i) {
+    uint32_t Encoding = readNext<uint32_t>(Pos);
+    CommonEncodings.push_back(Encoding);
+
+    outs() << "    encoding[" << i << "]: " << format("0x%08" PRIx32, Encoding)
+           << '\n';
+  }
+
+
+  //===----------------------------------
+  // Personality functions used in this executable
+  //===----------------------------------
+
+  // There should be only a handful of these (one per source language,
+  // roughly). Particularly since they only get 2 bits in the compact encoding.
+
+  outs() << "  Personality functions: (count = " << NumPersonalities << ")\n";
+  Pos = Contents.data() + PersonalitiesStart;
+  for (unsigned i = 0; i < NumPersonalities; ++i) {
+    uint32_t PersonalityFn = readNext<uint32_t>(Pos);
+    outs() << "    personality[" << i + 1
+           << "]: " << format("0x%08" PRIx32, PersonalityFn) << '\n';
+  }
+
+  //===----------------------------------
+  // The level 1 index entries
+  //===----------------------------------
+
+  // These specify an approximate place to start searching for the more detailed
+  // information, sorted by PC.
+
+  struct IndexEntry {
+    uint32_t FunctionOffset;
+    uint32_t SecondLevelPageStart;
+    uint32_t LSDAStart;
+  };
+
+  SmallVector<IndexEntry, 4> IndexEntries;
+
+  outs() << "  Top level indices: (count = " << NumIndices << ")\n";
+  Pos = Contents.data() + IndicesStart;
+  for (unsigned i = 0; i < NumIndices; ++i) {
+    IndexEntry Entry;
+
+    Entry.FunctionOffset = readNext<uint32_t>(Pos);
+    Entry.SecondLevelPageStart = readNext<uint32_t>(Pos);
+    Entry.LSDAStart = readNext<uint32_t>(Pos);
+    IndexEntries.push_back(Entry);
+
+    outs() << "    [" << i << "]: "
+           << "function offset="
+           << format("0x%08" PRIx32, Entry.FunctionOffset) << ", "
+           << "2nd level page offset="
+           << format("0x%08" PRIx32, Entry.SecondLevelPageStart) << ", "
+           << "LSDA offset="
+           << format("0x%08" PRIx32, Entry.LSDAStart) << '\n';
+  }
+
+
+  //===----------------------------------
+  // Next come the LSDA tables
+  //===----------------------------------
+
+  // The LSDA layout is rather implicit: it's a contiguous array of entries from
+  // the first top-level index's LSDAOffset to the last (sentinel).
+
+  outs() << "  LSDA descriptors:\n";
+  Pos = Contents.data() + IndexEntries[0].LSDAStart;
+  int NumLSDAs = (IndexEntries.back().LSDAStart - IndexEntries[0].LSDAStart) /
+                 (2 * sizeof(uint32_t));
+  for (int i = 0; i < NumLSDAs; ++i) {
+    uint32_t FunctionOffset = readNext<uint32_t>(Pos);
+    uint32_t LSDAOffset = readNext<uint32_t>(Pos);
+    outs() << "    [" << i << "]: "
+           << "function offset="
+           << format("0x%08" PRIx32, FunctionOffset) << ", "
+           << "LSDA offset="
+           << format("0x%08" PRIx32, LSDAOffset) << '\n';
+  }
+
+  //===----------------------------------
+  // Finally, the 2nd level indices
+  //===----------------------------------
+
+  // Generally these are 4K in size, and have 2 possible forms:
+  //   + Regular stores up to 511 entries with disparate encodings
+  //   + Compressed stores up to 1021 entries if few enough compact encoding
+  //     values are used.
+  outs() << "  Second level indices:\n";
+  for (unsigned i = 0; i < IndexEntries.size() - 1; ++i) {
+    // The final sentinel top-level index has no associated 2nd level page
+    if (IndexEntries[i].SecondLevelPageStart == 0)
+      break;
+
+    outs() << "    Second level index[" << i << "]: "
+           << "offset in section="
+           << format("0x%08" PRIx32, IndexEntries[i].SecondLevelPageStart)
+           << ", "
+           << "base function offset="
+           << format("0x%08" PRIx32, IndexEntries[i].FunctionOffset) << '\n';
+
+    Pos = Contents.data() + IndexEntries[i].SecondLevelPageStart;
+    uint32_t Kind = *(support::ulittle32_t *)Pos;
+    if (Kind == 2)
+      printRegularSecondLevelUnwindPage(Pos);
+    else if (Kind == 3)
+      printCompressedSecondLevelUnwindPage(Pos, IndexEntries[i].FunctionOffset,
+                                           CommonEncodings);
+    else
+      llvm_unreachable("Do not know how to print this kind of 2nd level page");
+
+  }
+}
+
 void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
   std::map<uint64_t, SymbolRef> Symbols;
   for (const SymbolRef &SymRef : Obj->symbols()) {
@@ -686,7 +924,7 @@ void llvm::printMachOUnwindInfo(const MachOObjectFile *Obj) {
     if (SectName == "__compact_unwind")
       printMachOCompactUnwindSection(Obj, Symbols, Section);
     else if (SectName == "__unwind_info")
-      outs() << "llvm-objdump: warning: unhandled __unwind_info section\n";
+      printMachOUnwindInfoSection(Obj, Symbols, Section);
     else if (SectName == "__eh_frame")
       outs() << "llvm-objdump: warning: unhandled __eh_frame section\n";
 
