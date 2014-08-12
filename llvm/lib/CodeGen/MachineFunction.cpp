@@ -58,7 +58,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
     : Fn(F), Target(TM), STI(TM.getSubtargetImpl()), Ctx(mmi.getContext()),
       MMI(mmi), GMI(gmi) {
   if (TM.getSubtargetImpl()->getRegisterInfo())
-    RegInfo = new (Allocator) MachineRegisterInfo(TM);
+    RegInfo = new (Allocator) MachineRegisterInfo(this);
   else
     RegInfo = nullptr;
 

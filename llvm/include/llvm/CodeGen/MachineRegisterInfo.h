@@ -17,8 +17,8 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBundle.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <vector>
@@ -40,7 +40,7 @@ public:
   };
 
 private:
-  const TargetMachine &TM;
+  const MachineFunction *MF;
   Delegate *TheDelegate;
 
   /// IsSSA - True when the machine function is in SSA form and virtual
@@ -123,11 +123,11 @@ private:
   MachineRegisterInfo(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineRegisterInfo&) LLVM_DELETED_FUNCTION;
 public:
-  explicit MachineRegisterInfo(const TargetMachine &TM);
+  explicit MachineRegisterInfo(const MachineFunction *MF);
   ~MachineRegisterInfo();
 
   const TargetRegisterInfo *getTargetRegisterInfo() const {
-    return TM.getSubtargetImpl()->getRegisterInfo();
+    return MF->getSubtarget().getRegisterInfo();
   }
 
   void resetDelegate(Delegate *delegate) {

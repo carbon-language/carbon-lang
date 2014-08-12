@@ -23,8 +23,8 @@ using namespace llvm;
 // Pin the vtable to this file.
 void MachineRegisterInfo::Delegate::anchor() {}
 
-MachineRegisterInfo::MachineRegisterInfo(const TargetMachine &TM)
-  : TM(TM), TheDelegate(nullptr), IsSSA(true), TracksLiveness(true) {
+MachineRegisterInfo::MachineRegisterInfo(const MachineFunction *MF)
+  : MF(MF), TheDelegate(nullptr), IsSSA(true), TracksLiveness(true) {
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedRegUnits.resize(getTargetRegisterInfo()->getNumRegUnits());
