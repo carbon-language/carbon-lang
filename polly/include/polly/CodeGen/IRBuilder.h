@@ -101,5 +101,14 @@ private:
 // PollyIRBuilder;
 typedef PollyBuilderInserter<true> IRInserter;
 typedef llvm::IRBuilder<true, llvm::ConstantFolder, IRInserter> PollyIRBuilder;
+
+/// @brief Return an IR builder pointed before the @p BB terminator.
+static inline PollyIRBuilder createPollyIRBuilder(llvm::BasicBlock *BB,
+                                                  LoopAnnotator &LA) {
+  PollyIRBuilder Builder(BB->getContext(), llvm::ConstantFolder(),
+                         polly::IRInserter(LA));
+  Builder.SetInsertPoint(BB->getTerminator());
+  return Builder;
+}
 }
 #endif

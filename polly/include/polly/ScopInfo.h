@@ -615,6 +615,9 @@ public:
   inline const Region &getRegion() const { return R; }
   inline Region &getRegion() { return R; }
 
+  /// @brief Return the entry block for the underlying region.
+  inline llvm::BasicBlock *getRegionEntry() { return R.getEntry(); }
+
   /// @brief Get the maximum depth of the loop.
   ///
   /// @return The maximum depth of the loop.

@@ -10,11 +10,10 @@ target triple = "x86_64-unknown-linux-gnu"
 ;       A[i][j] = 1.0;
 ; }
 
-; CHECK: polly.split_new_and_old:
-; CHECK: %0 = icmp sge i64 %m, 150
-; CHECK: %1 = select i1 %0, i64 1, i64 0
-; CHECK: %2 = icmp ne i64 0, %1
-; CHECK: br i1 %2, label %polly.start, label %for.i
+; CHECK: %[[T0:[._a-zA-Z0-9]]] = icmp sge i64 %m, 150
+; CHECK: %[[T1:[._a-zA-Z0-9]]] = select i1 %[[T0]], i64 1, i64 0
+; CHECK: %[[T2:[._a-zA-Z0-9]]] = icmp ne i64 %[[T1]], 0
+; CHECK: br i1 %[[T2]], label %polly.start, label %for.i
 
 define void @foo(i64 %n, i64 %m, double* %A) {
 entry:
