@@ -33,10 +33,6 @@ void foo() {
 #define TESTMACRO if (b || F())
 
   TESTMACRO {
-// CHECK-MESSAGES: :[[@LINE-1]]:3: warning: dubious check of 'bool *' against 'nullptr'
-// Can't fix this.
-// CHECK-FIXES: #define TESTMACRO if (b || F())
-// CHECK-FIXES: TESTMACRO {
   }
 
   t(b);
@@ -81,4 +77,7 @@ void foo() {
 
   if (d.b)
     (void)*d.b; // no-warning
+
+#define CHECK(b) if (b) {}
+  CHECK(c)
 }

@@ -24,6 +24,9 @@ AST_MATCHER(QualType, isBoolean) { return Node->isBooleanType(); }
 namespace tidy {
 
 void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
+  auto InTemplateInstantiation = hasAncestor(
+      decl(anyOf(recordDecl(ast_matchers::isTemplateInstantiation()),
+                 functionDecl(ast_matchers::isTemplateInstantiation()))));
   // Look for ifs that have an implicit bool* to bool conversion in the
   // condition. Filter negations.
   Finder->addMatcher(
@@ -32,7 +35,8 @@ void BoolPointerImplicitConversion::registerMatchers(MatchFinder *Finder) {
                        hasSourceExpression(expr(
                            hasType(pointerType(pointee(isBoolean()))),
                            ignoringParenImpCasts(declRefExpr().bind("expr")))),
-                       isPointerToBoolean()))))).bind("if"),
+                       isPointerToBoolean())))),
+             unless(InTemplateInstantiation)).bind("if"),
       this);
 }
 
@@ -40,6 +44,10 @@ void
 BoolPointerImplicitConversion::check(const MatchFinder::MatchResult &Result) {
   auto *If = Result.Nodes.getStmtAs<IfStmt>("if");
   auto *Var = Result.Nodes.getStmtAs<DeclRefExpr>("expr");
+
+  // Ignore macros.
+  if (Var->getLocStart().isMacroID())
+    return;
 
   // Only allow variable accesses for now, no function calls or member exprs.
   // Check that we don't dereference the variable anywhere within the if. This
