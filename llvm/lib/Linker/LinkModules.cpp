@@ -78,9 +78,9 @@ public:
     for (DenseMap<Type*, Type*>::const_iterator
            I = MappedTypes.begin(), E = MappedTypes.end(); I != E; ++I) {
       dbgs() << "TypeMap: ";
-      I->first->dump();
+      I->first->print(dbgs());
       dbgs() << " => ";
-      I->second->dump();
+      I->second->print(dbgs());
       dbgs() << '\n';
     }
   }

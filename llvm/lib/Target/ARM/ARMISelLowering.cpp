@@ -10981,6 +10981,6 @@ bool ARMTargetLowering::functionArgumentNeedsConsecutiveRegisters(
   HABaseType Base = HA_UNKNOWN;
   uint64_t Members = 0;
   bool result = isHomogeneousAggregate(Ty, Base, Members);
-  DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump(); dbgs() << "\n");
+  DEBUG(dbgs() << "isHA: " << result << " "; Ty->dump());
   return result;
 }

@@ -2290,7 +2290,7 @@ void Value::printAsOperand(raw_ostream &O, bool PrintType, const Module *M) cons
 void Value::dump() const { print(dbgs()); dbgs() << '\n'; }
 
 // Type::dump - allow easy printing of Types from the debugger.
-void Type::dump() const { print(dbgs()); }
+void Type::dump() const { print(dbgs()); dbgs() << '\n'; }
 
 // Module::dump() - Allow printing of Modules from the debugger.
 void Module::dump() const { print(dbgs(), nullptr); }
