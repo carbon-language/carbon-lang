@@ -3102,9 +3102,24 @@ Sema::ActOnObjCAtSynchronizedOperand(SourceLocation atLoc, Expr *operand) {
   if (!type->isDependentType() &&
       !type->isObjCObjectPointerType()) {
     const PointerType *pointerType = type->getAs<PointerType>();
-    if (!pointerType || !pointerType->getPointeeType()->isVoidType())
-      return Diag(atLoc, diag::error_objc_synchronized_expects_object)
-               << type << operand->getSourceRange();
+    if (!pointerType || !pointerType->getPointeeType()->isVoidType()) {
+      if (getLangOpts().CPlusPlus) {
+        if (RequireCompleteType(atLoc, type,
+                                diag::err_incomplete_receiver_type))
+          return Diag(atLoc, diag::error_objc_synchronized_expects_object)
+                   << type << operand->getSourceRange();
+
+        ExprResult result = PerformContextuallyConvertToObjCPointer(operand);
+        if (!result.isUsable())
+          return Diag(atLoc, diag::error_objc_synchronized_expects_object)
+                   << type << operand->getSourceRange();
+
+        operand = result.get();
+      } else {
+          return Diag(atLoc, diag::error_objc_synchronized_expects_object)
+                   << type << operand->getSourceRange();
+      }
+    }
   }
 
   // The operand to @synchronized is a full-expression.
