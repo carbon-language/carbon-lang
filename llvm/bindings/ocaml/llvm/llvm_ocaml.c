@@ -577,6 +577,11 @@ CAMLprim LLVMValueRef llvm_operand(LLVMValueRef V, value I) {
   return LLVMGetOperand(V, Int_val(I));
 }
 
+/* llvalue -> int -> lluse */
+CAMLprim LLVMUseRef llvm_operand_use(LLVMValueRef V, value I) {
+  return LLVMGetOperandUse(V, Int_val(I));
+}
+
 /* llvalue -> int -> llvalue -> unit */
 CAMLprim value llvm_set_operand(LLVMValueRef U, value I, LLVMValueRef V) {
   LLVMSetOperand(U, Int_val(I), V);

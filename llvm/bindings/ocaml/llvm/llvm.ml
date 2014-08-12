@@ -428,6 +428,7 @@ let fold_right_uses f v init =
 
 (*--... Operations on users ................................................--*)
 external operand : llvalue -> int -> llvalue = "llvm_operand"
+external operand_use : llvalue -> int -> lluse = "llvm_operand_use"
 external set_operand : llvalue -> int -> llvalue -> unit = "llvm_set_operand"
 external num_operands : llvalue -> int = "llvm_num_operands"
 

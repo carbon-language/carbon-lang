@@ -720,6 +720,11 @@ val fold_right_uses : (lluse -> 'a -> 'a) -> llvalue -> 'a -> 'a
     method [llvm::User::getOperand]. *)
 val operand : llvalue -> int -> llvalue
 
+(** [operand_use v i] returns the use of the operand at index [i] for the value [v]. See the
+    method [llvm::User::getOperandUse]. *)
+val operand_use : llvalue -> int -> lluse
+
+
 (** [set_operand v i o] sets the operand of the value [v] at the index [i] to
     the value [o].
     See the method [llvm::User::setOperand]. *)
