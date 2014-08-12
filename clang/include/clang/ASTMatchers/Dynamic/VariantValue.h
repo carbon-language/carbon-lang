@@ -29,6 +29,50 @@ namespace clang {
 namespace ast_matchers {
 namespace dynamic {
 
+/// \brief Kind identifier.
+///
+/// It supports all types that VariantValue can contain.
+class ArgKind {
+ public:
+  enum Kind {
+    AK_Matcher,
+    AK_Unsigned,
+    AK_String
+  };
+  /// \brief Constructor for non-matcher types.
+  ArgKind(Kind K) : K(K) { assert(K != AK_Matcher); }
+
+  /// \brief Constructor for matcher types.
+  ArgKind(ast_type_traits::ASTNodeKind MatcherKind)
+      : K(AK_Matcher), MatcherKind(MatcherKind) {}
+
+  Kind getArgKind() const { return K; }
+  ast_type_traits::ASTNodeKind getMatcherKind() const {
+    assert(K == AK_Matcher);
+    return MatcherKind;
+  }
+
+  /// \brief Determines if this type can be converted to \p To.
+  ///
+  /// \param To the requested destination type.
+  ///
+  /// \param Value corresponding to the "specificity" of the convertion.
+  bool isConvertibleTo(ArgKind To, unsigned *Specificity) const;
+
+  bool operator<(const ArgKind &Other) const {
+    if (K == AK_Matcher && Other.K == AK_Matcher)
+      return MatcherKind < Other.MatcherKind;
+    return K < Other.K;
+  }
+
+  /// \brief String representation of the type.
+  std::string asString() const;
+
+private:
+  Kind K;
+  ast_type_traits::ASTNodeKind MatcherKind;
+};
+
 using ast_matchers::internal::DynTypedMatcher;
 
 /// \brief A variant matcher object.
@@ -66,6 +110,8 @@ class VariantMatcher {
     virtual llvm::Optional<DynTypedMatcher> getSingleMatcher() const = 0;
     virtual std::string getTypeAsString() const = 0;
     virtual void makeTypedMatcher(MatcherOps &Ops) const = 0;
+    virtual bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind,
+                                 unsigned *Specificity) const = 0;
   };
 
 public:
@@ -114,6 +160,18 @@ public:
     TypedMatcherOps<T> Ops;
     if (Value) Value->makeTypedMatcher(Ops);
     return Ops.hasMatcher();
+  }
+
+  /// \brief Determines if the contained matcher can be converted to \p Kind.
+  ///
+  /// \param Kind the requested destination type.
+  ///
+  /// \param Value corresponding to the "specificity" of the convertion.
+  bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind,
+                       unsigned *Specificity) const {
+    if (Value)
+      return Value->isConvertibleTo(Kind, Specificity);
+    return false;
   }
 
   /// \brief Return this matcher as a \c Matcher<T>.
@@ -227,6 +285,22 @@ public:
   bool isMatcher() const;
   const VariantMatcher &getMatcher() const;
   void setMatcher(const VariantMatcher &Matcher);
+
+  /// \brief Determines if the contained value can be converted to \p Kind.
+  ///
+  /// \param Kind the requested destination type.
+  ///
+  /// \param Value corresponding to the "specificity" of the convertion.
+  bool isConvertibleTo(ArgKind Kind, unsigned* Specificity) const;
+
+  /// \brief Determines if the contained value can be converted to any kind
+  /// in \p Kinds.
+  ///
+  /// \param Kinds the requested destination types.
+  ///
+  /// \param Value corresponding to the "specificity" of the convertion. It is
+  /// the maximum specificity of all the possible conversions.
+  bool isConvertibleTo(ArrayRef<ArgKind> Kinds, unsigned *Specificity) const;
 
   /// \brief String representation of the type of the value.
   std::string getTypeAsString() const;

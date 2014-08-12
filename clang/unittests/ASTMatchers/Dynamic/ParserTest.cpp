@@ -152,6 +152,14 @@ TEST(ParserTest, ParseMatcher) {
 
 using ast_matchers::internal::Matcher;
 
+Parser::NamedValueMap getTestNamedValues() {
+  Parser::NamedValueMap Values;
+  Values["nameX"] = std::string("x");
+  Values["hasParamA"] =
+      VariantMatcher::SingleMatcher(hasParameter(0, hasName("a")));
+  return Values;
+}
+
 TEST(ParserTest, FullParserTest) {
   Diagnostics Error;
   llvm::Optional<DynTypedMatcher> VarDecl(Parser::parseMatcherExpression(
@@ -174,21 +182,11 @@ TEST(ParserTest, FullParserTest) {
   EXPECT_FALSE(matches("void f(int x, int a);", M));
 
   // Test named values.
-  struct NamedSema : public Parser::RegistrySema {
-   public:
-    virtual VariantValue getNamedValue(StringRef Name) {
-      if (Name == "nameX")
-        return std::string("x");
-      if (Name == "param0")
-        return VariantMatcher::SingleMatcher(hasParameter(0, hasName("a")));
-      return VariantValue();
-    }
-  };
-  NamedSema Sema;
+  auto NamedValues = getTestNamedValues();
   llvm::Optional<DynTypedMatcher> HasParameterWithNamedValues(
       Parser::parseMatcherExpression(
-          "functionDecl(param0, hasParameter(1, hasName(nameX)))", &Sema,
-          &Error));
+          "functionDecl(hasParamA, hasParameter(1, hasName(nameX)))",
+          nullptr, &NamedValues, &Error));
   EXPECT_EQ("", Error.toStringFull());
   M = HasParameterWithNamedValues->unconditionalConvertTo<Decl>();
 
@@ -270,7 +268,7 @@ TEST(ParserTest, OverloadErrors) {
             ParseWithError("callee(\"A\")"));
 }
 
-TEST(ParserTest, Completion) {
+TEST(ParserTest, CompletionRegistry) {
   std::vector<MatcherCompletion> Comps =
       Parser::completeExpression("while", 5);
   ASSERT_EQ(1u, Comps.size());
@@ -282,6 +280,38 @@ TEST(ParserTest, Completion) {
   ASSERT_EQ(1u, Comps.size());
   EXPECT_EQ("bind(\"", Comps[0].TypedText);
   EXPECT_EQ("bind", Comps[0].MatcherDecl);
+}
+
+TEST(ParserTest, CompletionNamedValues) {
+  // Can complete non-matcher types.
+  auto NamedValues = getTestNamedValues();
+  StringRef Code = "functionDecl(hasName(";
+  std::vector<MatcherCompletion> Comps =
+      Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
+  ASSERT_EQ(1u, Comps.size());
+  EXPECT_EQ("nameX", Comps[0].TypedText);
+  EXPECT_EQ("String nameX", Comps[0].MatcherDecl);
+
+  // Can complete if there are names in the expression.
+  Code = "methodDecl(hasName(nameX), ";
+  Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
+  EXPECT_LT(0u, Comps.size());
+
+  // Can complete names and registry together.
+  Code = "methodDecl(hasP";
+  Comps = Parser::completeExpression(Code, Code.size(), nullptr, &NamedValues);
+  ASSERT_EQ(3u, Comps.size());
+  EXPECT_EQ("aramA", Comps[0].TypedText);
+  EXPECT_EQ("Matcher<FunctionDecl> hasParamA", Comps[0].MatcherDecl);
+
+  EXPECT_EQ("arameter(", Comps[1].TypedText);
+  EXPECT_EQ(
+      "Matcher<FunctionDecl> hasParameter(unsigned, Matcher<ParmVarDecl>)",
+      Comps[1].MatcherDecl);
+
+  EXPECT_EQ("arent(", Comps[2].TypedText);
+  EXPECT_EQ("Matcher<Decl> hasParent(Matcher<Decl|Stmt>)",
+            Comps[2].MatcherDecl);
 }
 
 }  // end anonymous namespace

@@ -353,77 +353,63 @@ llvm::raw_ostream &operator<<(llvm::raw_ostream &OS,
   return OS;
 }
 
-struct ReverseSpecificityThenName {
-  bool operator()(const std::pair<unsigned, std::string> &A,
-                  const std::pair<unsigned, std::string> &B) const {
-    return A.first > B.first || (A.first == B.first && A.second < B.second);
-  }
-};
+}  // namespace
 
-}
-
-std::vector<MatcherCompletion> Registry::getCompletions(
-    ArrayRef<std::pair<MatcherCtor, unsigned> > Context) {
+std::vector<ArgKind> Registry::getAcceptedCompletionTypes(
+    ArrayRef<std::pair<MatcherCtor, unsigned>> Context) {
   ASTNodeKind InitialTypes[] = {
-    ASTNodeKind::getFromNodeKind<Decl>(),
-    ASTNodeKind::getFromNodeKind<QualType>(),
-    ASTNodeKind::getFromNodeKind<Type>(),
-    ASTNodeKind::getFromNodeKind<Stmt>(),
-    ASTNodeKind::getFromNodeKind<NestedNameSpecifier>(),
-    ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>(),
-    ASTNodeKind::getFromNodeKind<TypeLoc>()
-  };
-  ArrayRef<ASTNodeKind> InitialTypesRef(InitialTypes);
+      ASTNodeKind::getFromNodeKind<Decl>(),
+      ASTNodeKind::getFromNodeKind<QualType>(),
+      ASTNodeKind::getFromNodeKind<Type>(),
+      ASTNodeKind::getFromNodeKind<Stmt>(),
+      ASTNodeKind::getFromNodeKind<NestedNameSpecifier>(),
+      ASTNodeKind::getFromNodeKind<NestedNameSpecifierLoc>(),
+      ASTNodeKind::getFromNodeKind<TypeLoc>()};
 
   // Starting with the above seed of acceptable top-level matcher types, compute
   // the acceptable type set for the argument indicated by each context element.
-  std::set<ASTNodeKind> TypeSet(InitialTypesRef.begin(), InitialTypesRef.end());
-  for (ArrayRef<std::pair<MatcherCtor, unsigned> >::iterator
-           CtxI = Context.begin(),
-           CtxE = Context.end();
-       CtxI != CtxE; ++CtxI) {
-    std::vector<internal::ArgKind> NextTypeSet;
-    for (std::set<ASTNodeKind>::iterator I = TypeSet.begin(), E = TypeSet.end();
-         I != E; ++I) {
-      if (CtxI->first->isConvertibleTo(*I) &&
-          (CtxI->first->isVariadic() ||
-           CtxI->second < CtxI->first->getNumArgs()))
-        CtxI->first->getArgKinds(*I, CtxI->second, NextTypeSet);
+  std::set<ArgKind> TypeSet(std::begin(InitialTypes), std::end(InitialTypes));
+  for (const auto &CtxEntry : Context) {
+    MatcherCtor Ctor = CtxEntry.first;
+    unsigned ArgNumber = CtxEntry.second;
+    std::vector<ArgKind> NextTypeSet;
+    for (const ArgKind &Kind : TypeSet) {
+      if (Kind.getArgKind() == Kind.AK_Matcher &&
+          Ctor->isConvertibleTo(Kind.getMatcherKind()) &&
+          (Ctor->isVariadic() || ArgNumber < Ctor->getNumArgs()))
+        Ctor->getArgKinds(Kind.getMatcherKind(), ArgNumber, NextTypeSet);
     }
     TypeSet.clear();
-    for (std::vector<internal::ArgKind>::iterator I = NextTypeSet.begin(),
-                                                  E = NextTypeSet.end();
-         I != E; ++I) {
-      if (I->getArgKind() == internal::ArgKind::AK_Matcher)
-        TypeSet.insert(I->getMatcherKind());
-    }
+    TypeSet.insert(NextTypeSet.begin(), NextTypeSet.end());
   }
+  return std::vector<ArgKind>(TypeSet.begin(), TypeSet.end());
+}
 
-  typedef std::map<std::pair<unsigned, std::string>, MatcherCompletion,
-                   ReverseSpecificityThenName> CompletionsTy;
-  CompletionsTy Completions;
+std::vector<MatcherCompletion>
+Registry::getMatcherCompletions(ArrayRef<ArgKind> AcceptedTypes) {
+  std::vector<MatcherCompletion> Completions;
 
-  // TypeSet now contains the list of acceptable types for the argument we are
-  // completing.  Search the registry for acceptable matchers.
+  // Search the registry for acceptable matchers.
   for (ConstructorMap::const_iterator I = RegistryData->constructors().begin(),
                                       E = RegistryData->constructors().end();
        I != E; ++I) {
     std::set<ASTNodeKind> RetKinds;
     unsigned NumArgs = I->second->isVariadic() ? 1 : I->second->getNumArgs();
     bool IsPolymorphic = I->second->isPolymorphic();
-    std::vector<std::vector<internal::ArgKind> > ArgsKinds(NumArgs);
+    std::vector<std::vector<ArgKind>> ArgsKinds(NumArgs);
     unsigned MaxSpecificity = 0;
-    for (std::set<ASTNodeKind>::iterator TI = TypeSet.begin(),
-                                         TE = TypeSet.end();
-         TI != TE; ++TI) {
+    for (const ArgKind& Kind : AcceptedTypes) {
+      if (Kind.getArgKind() != Kind.AK_Matcher)
+        continue;
       unsigned Specificity;
       ASTNodeKind LeastDerivedKind;
-      if (I->second->isConvertibleTo(*TI, &Specificity, &LeastDerivedKind)) {
+      if (I->second->isConvertibleTo(Kind.getMatcherKind(), &Specificity,
+                                     &LeastDerivedKind)) {
         if (MaxSpecificity < Specificity)
           MaxSpecificity = Specificity;
         RetKinds.insert(LeastDerivedKind);
         for (unsigned Arg = 0; Arg != NumArgs; ++Arg)
-          I->second->getArgKinds(*TI, Arg, ArgsKinds[Arg]);
+          I->second->getArgKinds(Kind.getMatcherKind(), Arg, ArgsKinds[Arg]);
         if (IsPolymorphic)
           break;
       }
@@ -437,24 +423,20 @@ std::vector<MatcherCompletion> Registry::getCompletions(
         OS << "Matcher<T> " << I->first() << "(Matcher<T>";
       } else {
         OS << "Matcher<" << RetKinds << "> " << I->first() << "(";
-        for (std::vector<std::vector<internal::ArgKind> >::iterator
-                 KI = ArgsKinds.begin(),
-                 KE = ArgsKinds.end();
-             KI != KE; ++KI) {
-          if (KI != ArgsKinds.begin())
+        for (const std::vector<ArgKind> &Arg : ArgsKinds) {
+          if (&Arg != &ArgsKinds[0])
             OS << ", ";
           // This currently assumes that a matcher may not overload a
           // non-matcher, and all non-matcher overloads have identical
           // arguments.
-          if ((*KI)[0].getArgKind() == internal::ArgKind::AK_Matcher) {
+          if (Arg[0].getArgKind() == ArgKind::AK_Matcher) {
             std::set<ASTNodeKind> MatcherKinds;
-            std::transform(
-                KI->begin(), KI->end(),
-                std::inserter(MatcherKinds, MatcherKinds.end()),
-                std::mem_fun_ref(&internal::ArgKind::getMatcherKind));
+            std::transform(Arg.begin(), Arg.end(),
+                           std::inserter(MatcherKinds, MatcherKinds.end()),
+                           std::mem_fun_ref(&ArgKind::getMatcherKind));
             OS << "Matcher<" << MatcherKinds << ">";
           } else {
-            OS << (*KI)[0].asString();
+            OS << Arg[0].asString();
           }
         }
       }
@@ -466,19 +448,14 @@ std::vector<MatcherCompletion> Registry::getCompletions(
       TypedText += "(";
       if (ArgsKinds.empty())
         TypedText += ")";
-      else if (ArgsKinds[0][0].getArgKind() == internal::ArgKind::AK_String)
+      else if (ArgsKinds[0][0].getArgKind() == ArgKind::AK_String)
         TypedText += "\"";
 
-      Completions[std::make_pair(MaxSpecificity, I->first())] =
-          MatcherCompletion(TypedText, OS.str());
+      Completions.emplace_back(TypedText, OS.str(), MaxSpecificity);
     }
   }
 
-  std::vector<MatcherCompletion> RetVal;
-  for (CompletionsTy::iterator I = Completions.begin(), E = Completions.end();
-       I != E; ++I)
-    RetVal.push_back(I->second);
-  return RetVal;
+  return Completions;
 }
 
 // static

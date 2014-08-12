@@ -30,48 +30,8 @@
 namespace clang {
 namespace ast_matchers {
 namespace dynamic {
-
 namespace internal {
 
-struct ArgKind {
-  enum Kind {
-    AK_Matcher,
-    AK_Unsigned,
-    AK_String
-  };
-  ArgKind(Kind K)
-      : K(K) {}
-  ArgKind(ast_type_traits::ASTNodeKind MatcherKind)
-      : K(AK_Matcher), MatcherKind(MatcherKind) {}
-
-  std::string asString() const {
-    switch (getArgKind()) {
-    case AK_Matcher:
-      return (Twine("Matcher<") + MatcherKind.asStringRef() + ">").str();
-    case AK_Unsigned:
-      return "unsigned";
-    case AK_String:
-      return "string";
-    }
-    llvm_unreachable("unhandled ArgKind");
-  }
-
-  Kind getArgKind() const { return K; }
-  ast_type_traits::ASTNodeKind getMatcherKind() const {
-    assert(K == AK_Matcher);
-    return MatcherKind;
-  }
-
-  bool operator<(const ArgKind &Other) const {
-    if (K == AK_Matcher && Other.K == AK_Matcher)
-      return MatcherKind < Other.MatcherKind;
-    return K < Other.K;
-  }
-
-private:
-  Kind K;
-  ast_type_traits::ASTNodeKind MatcherKind;
-};
 
 /// \brief Helper template class to just from argument type to the right is/get
 ///   functions in VariantValue.
@@ -161,16 +121,10 @@ inline bool isRetKindConvertibleTo(
     ArrayRef<ast_type_traits::ASTNodeKind> RetKinds,
     ast_type_traits::ASTNodeKind Kind, unsigned *Specificity,
     ast_type_traits::ASTNodeKind *LeastDerivedKind) {
-  for (ArrayRef<ast_type_traits::ASTNodeKind>::const_iterator
-           i = RetKinds.begin(),
-           e = RetKinds.end();
-       i != e; ++i) {
-    unsigned Distance;
-    if (i->isBaseOf(Kind, &Distance)) {
-      if (Specificity)
-        *Specificity = 100 - Distance;
+  for (const ast_type_traits::ASTNodeKind &NodeKind : RetKinds) {
+    if (ArgKind(NodeKind).isConvertibleTo(Kind, Specificity)) {
       if (LeastDerivedKind)
-        *LeastDerivedKind = *i;
+        *LeastDerivedKind = NodeKind;
       return true;
     }
   }

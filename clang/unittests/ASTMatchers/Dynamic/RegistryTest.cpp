@@ -82,8 +82,9 @@ public:
   typedef std::vector<MatcherCompletion> CompVector;
 
   CompVector getCompletions() {
-    return Registry::getCompletions(
-        ArrayRef<std::pair<MatcherCtor, unsigned> >());
+    std::vector<std::pair<MatcherCtor, unsigned> > Context;
+    return Registry::getMatcherCompletions(
+        Registry::getAcceptedCompletionTypes(Context));
   }
 
   CompVector getCompletions(StringRef MatcherName1, unsigned ArgNo1) {
@@ -92,7 +93,8 @@ public:
     if (!Ctor)
       return CompVector();
     Context.push_back(std::make_pair(*Ctor, ArgNo1));
-    return Registry::getCompletions(Context);
+    return Registry::getMatcherCompletions(
+        Registry::getAcceptedCompletionTypes(Context));
   }
 
   CompVector getCompletions(StringRef MatcherName1, unsigned ArgNo1,
@@ -106,18 +108,16 @@ public:
     if (!Ctor)
       return CompVector();
     Context.push_back(std::make_pair(*Ctor, ArgNo2));
-    return Registry::getCompletions(Context);
+    return Registry::getMatcherCompletions(
+        Registry::getAcceptedCompletionTypes(Context));
   }
 
   bool hasCompletion(const CompVector &Comps, StringRef TypedText,
-                     StringRef MatcherDecl = StringRef(),
-                     unsigned *Index = nullptr) {
+                     StringRef MatcherDecl = StringRef()) {
     for (CompVector::const_iterator I = Comps.begin(), E = Comps.end(); I != E;
          ++I) {
       if (I->TypedText == TypedText &&
           (MatcherDecl.empty() || I->MatcherDecl == MatcherDecl)) {
-        if (Index)
-          *Index = I - Comps.begin();
         return true;
       }
     }
@@ -445,17 +445,12 @@ TEST_F(RegistryTest, Completion) {
 
   CompVector WhileComps = getCompletions("whileStmt", 0);
 
-  unsigned HasBodyIndex, HasParentIndex, AllOfIndex;
   EXPECT_TRUE(hasCompletion(WhileComps, "hasBody(",
-                            "Matcher<WhileStmt> hasBody(Matcher<Stmt>)",
-                            &HasBodyIndex));
+                            "Matcher<WhileStmt> hasBody(Matcher<Stmt>)"));
   EXPECT_TRUE(hasCompletion(WhileComps, "hasParent(",
-                            "Matcher<Stmt> hasParent(Matcher<Decl|Stmt>)",
-                            &HasParentIndex));
-  EXPECT_TRUE(hasCompletion(WhileComps, "allOf(",
-                            "Matcher<T> allOf(Matcher<T>...)", &AllOfIndex));
-  EXPECT_GT(HasParentIndex, HasBodyIndex);
-  EXPECT_GT(AllOfIndex, HasParentIndex);
+                            "Matcher<Stmt> hasParent(Matcher<Decl|Stmt>)"));
+  EXPECT_TRUE(
+      hasCompletion(WhileComps, "allOf(", "Matcher<T> allOf(Matcher<T>...)"));
 
   EXPECT_FALSE(hasCompletion(WhileComps, "whileStmt("));
   EXPECT_FALSE(hasCompletion(WhileComps, "ifStmt("));

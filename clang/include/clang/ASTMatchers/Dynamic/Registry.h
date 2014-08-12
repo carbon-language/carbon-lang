@@ -36,14 +36,23 @@ typedef const internal::MatcherDescriptor *MatcherCtor;
 
 struct MatcherCompletion {
   MatcherCompletion() {}
-  MatcherCompletion(StringRef TypedText, StringRef MatcherDecl)
-      : TypedText(TypedText), MatcherDecl(MatcherDecl) {}
+  MatcherCompletion(StringRef TypedText, StringRef MatcherDecl,
+                    unsigned Specificity)
+      : TypedText(TypedText), MatcherDecl(MatcherDecl),
+        Specificity(Specificity) {}
 
   /// \brief The text to type to select this matcher.
   std::string TypedText;
 
   /// \brief The "declaration" of the matcher, with type information.
   std::string MatcherDecl;
+
+  /// \brief Value corresponding to the "specificity" of the converted matcher.
+  ///
+  /// Zero specificity indicates that this conversion would produce a trivial
+  /// matcher that will either always or never match.
+  /// Such matchers are excluded from code completion results.
+  unsigned Specificity;
 
   bool operator==(const MatcherCompletion &Other) const {
     return TypedText == Other.TypedText && MatcherDecl == Other.MatcherDecl;
@@ -58,28 +67,28 @@ public:
   /// constructor, or Optional<MatcherCtor>() if not found.
   static llvm::Optional<MatcherCtor> lookupMatcherCtor(StringRef MatcherName);
 
-  /// \brief Compute the list of completions for \p Context.
+  /// \brief Compute the list of completion types for \p Context.
   ///
   /// Each element of \p Context represents a matcher invocation, going from
-  /// outermost to innermost. Elements are pairs consisting of a reference to the
-  /// matcher constructor and the index of the next element in the argument list
-  /// of that matcher (or for the last element, the index of the completion
-  /// point in the argument list). An empty list requests completion for the
-  /// root matcher.
+  /// outermost to innermost. Elements are pairs consisting of a reference to
+  /// the matcher constructor and the index of the next element in the
+  /// argument list of that matcher (or for the last element, the index of
+  /// the completion point in the argument list). An empty list requests
+  /// completion for the root matcher.
+  static std::vector<ArgKind> getAcceptedCompletionTypes(
+      llvm::ArrayRef<std::pair<MatcherCtor, unsigned>> Context);
+
+  /// \brief Compute the list of completions that match any of
+  /// \p AcceptedTypes.
   ///
-  /// The completions are ordered first by decreasing relevance, then
-  /// alphabetically.  Relevance is determined by how closely the matcher's
-  /// type matches that of the context. For example, if the innermost matcher
-  /// takes a FunctionDecl matcher, the FunctionDecl matchers are returned
-  /// first, followed by the ValueDecl matchers, then NamedDecl, then Decl, then
-  /// polymorphic matchers.
+  /// \param All types accepted for this completion.
   ///
-  /// Matchers which are technically convertible to the innermost context but
-  /// which would match either all or no nodes are excluded. For example,
-  /// namedDecl and varDecl are excluded in a FunctionDecl context, because
-  /// those matchers would match respectively all or no nodes in such a context.
+  /// \return All completions for the specified types.
+  /// Completions should be valid when used in \c lookupMatcherCtor().
+  /// The matcher constructed from the return of \c lookupMatcherCtor()
+  /// should be convertible to some type in \p AcceptedTypes.
   static std::vector<MatcherCompletion>
-  getCompletions(ArrayRef<std::pair<MatcherCtor, unsigned> > Context);
+  getMatcherCompletions(ArrayRef<ArgKind> AcceptedTypes);
 
   /// \brief Construct a matcher from the registry.
   ///
