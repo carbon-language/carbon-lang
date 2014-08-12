@@ -56,7 +56,8 @@ class ArgKind {
   ///
   /// \param To the requested destination type.
   ///
-  /// \param Value corresponding to the "specificity" of the convertion.
+  /// \param Specificity value corresponding to the "specificity" of the
+  ///   convertion.
   bool isConvertibleTo(ArgKind To, unsigned *Specificity) const;
 
   bool operator<(const ArgKind &Other) const {
@@ -166,7 +167,8 @@ public:
   ///
   /// \param Kind the requested destination type.
   ///
-  /// \param Value corresponding to the "specificity" of the convertion.
+  /// \param Specificity value corresponding to the "specificity" of the
+  ///   convertion.
   bool isConvertibleTo(ast_type_traits::ASTNodeKind Kind,
                        unsigned *Specificity) const {
     if (Value)
@@ -290,7 +292,8 @@ public:
   ///
   /// \param Kind the requested destination type.
   ///
-  /// \param Value corresponding to the "specificity" of the convertion.
+  /// \param Specificity value corresponding to the "specificity" of the
+  ///   convertion.
   bool isConvertibleTo(ArgKind Kind, unsigned* Specificity) const;
 
   /// \brief Determines if the contained value can be converted to any kind
@@ -298,8 +301,9 @@ public:
   ///
   /// \param Kinds the requested destination types.
   ///
-  /// \param Value corresponding to the "specificity" of the convertion. It is
-  /// the maximum specificity of all the possible conversions.
+  /// \param Specificity value corresponding to the "specificity" of the
+  ///   convertion. It is the maximum specificity of all the possible
+  ///   conversions.
   bool isConvertibleTo(ArrayRef<ArgKind> Kinds, unsigned *Specificity) const;
 
   /// \brief String representation of the type of the value.

@@ -109,7 +109,7 @@ public:
     /// \brief Compute the list of completions that match any of
     /// \p AcceptedTypes.
     ///
-    /// \param All types accepted for this completion.
+    /// \param AcceptedTypes All types accepted for this completion.
     ///
     /// \return All completions for the specified types.
     /// Completions should be valid when used in \c lookupMatcherCtor().
