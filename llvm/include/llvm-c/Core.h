@@ -1378,6 +1378,13 @@ LLVMValueRef LLVMGetUsedValue(LLVMUseRef U);
 LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index);
 
 /**
+ * Obtain the use of an operand at a specific index in a llvm::User value.
+ *
+ * @see llvm::User::getOperandUse()
+ */
+LLVMUseRef LLVMGetOperandUse(LLVMValueRef Val, unsigned Index);
+
+/**
  * Set an operand at a specific index in a llvm::User value.
  *
  * @see llvm::User::setOperand()

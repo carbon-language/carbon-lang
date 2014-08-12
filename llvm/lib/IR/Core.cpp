@@ -603,6 +603,11 @@ LLVMValueRef LLVMGetOperand(LLVMValueRef Val, unsigned Index) {
   return wrap(cast<User>(V)->getOperand(Index));
 }
 
+LLVMUseRef LLVMGetOperandUse(LLVMValueRef Val, unsigned Index) {
+  Value *V = unwrap(Val);
+  return wrap(&cast<User>(V)->getOperandUse(Index));
+}
+
 void LLVMSetOperand(LLVMValueRef Val, unsigned Index, LLVMValueRef Op) {
   unwrap<User>(Val)->setOperand(Index, unwrap(Op));
 }
