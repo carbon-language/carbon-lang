@@ -4,7 +4,7 @@ LLFILE=`echo $1 | sed -e 's/\.c/.ll/g'`
 LLFILE_TMP=${LLFILE}.tmp
 
 # The number of lines to cut of the LLVM-IR file clang produces.
-CUT_N_LINES=9
+CUT_N_LINES=6
 
 clang -c -S -emit-llvm -O0 $1 -o ${LLFILE}
 
