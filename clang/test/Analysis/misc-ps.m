@@ -118,19 +118,6 @@ __m128i vec128i(long long __q1, long long __q0) {
   return __extension__ (__m128i)(__v2di){ __q0, __q1 };
 }
 
-// Zero-sized VLAs.
-void check_zero_sized_VLA(int x) {
-  if (x)
-    return;
-
-  int vla[x]; // expected-warning{{Declared variable-length array (VLA) has zero size}}
-}
-
-void check_uninit_sized_VLA() {
-  int x;
-  int vla[x]; // expected-warning{{Declared variable-length array (VLA) uses a garbage value as its size}}
-}
-
 // sizeof(void)
 // - Tests a regression reported in PR 3211: http://llvm.org/bugs/show_bug.cgi?id=3211
 void handle_sizeof_void(unsigned flag) {
