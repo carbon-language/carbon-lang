@@ -234,7 +234,7 @@ public:
                   QualifierMangleMode QMM = QMM_Mangle);
   void mangleFunctionType(const FunctionType *T,
                           const FunctionDecl *D = nullptr,
-                          bool ForceInstMethod = false);
+                          bool ForceThisQuals = false);
   void mangleNestedName(const NamedDecl *ND);
 
 private:
@@ -1538,8 +1538,13 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionProtoType *T,
   // Structors only appear in decls, so at this point we know it's not a
   // structor type.
   // FIXME: This may not be lambda-friendly.
-  Out << "$$A6";
-  mangleFunctionType(T);
+  if (T->getTypeQuals() || T->getRefQualifier() != RQ_None) {
+    Out << "$$A8@@";
+    mangleFunctionType(T, /*D=*/nullptr, /*ForceThisQuals=*/true);
+  } else {
+    Out << "$$A6";
+    mangleFunctionType(T);
+  }
 }
 void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,
                                          SourceRange) {
@@ -1548,7 +1553,7 @@ void MicrosoftCXXNameMangler::mangleType(const FunctionNoProtoType *T,
 
 void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
                                                  const FunctionDecl *D,
-                                                 bool ForceInstMethod) {
+                                                 bool ForceThisQuals) {
   // <function-type> ::= <this-cvr-qualifiers> <calling-convention>
   //                     <return-type> <argument-list> <throw-spec>
   const FunctionProtoType *Proto = cast<FunctionProtoType>(T);
@@ -1556,21 +1561,21 @@ void MicrosoftCXXNameMangler::mangleFunctionType(const FunctionType *T,
   SourceRange Range;
   if (D) Range = D->getSourceRange();
 
-  bool IsStructor = false, IsInstMethod = ForceInstMethod;
+  bool IsStructor = false, HasThisQuals = ForceThisQuals;
   if (const CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(D)) {
     if (MD->isInstance())
-      IsInstMethod = true;
+      HasThisQuals = true;
     if (isa<CXXConstructorDecl>(MD) || isa<CXXDestructorDecl>(MD))
       IsStructor = true;
   }
 
   // If this is a C++ instance method, mangle the CVR qualifiers for the
   // this pointer.
-  if (IsInstMethod) {
+  if (HasThisQuals) {
     Qualifiers Quals = Qualifiers::fromCVRMask(Proto->getTypeQuals());
-    manglePointerExtQualifiers(Quals, nullptr);
+    manglePointerExtQualifiers(Quals, /*PointeeType=*/nullptr);
     mangleRefQualifier(Proto->getRefQualifier());
-    mangleQualifiers(Quals, false);
+    mangleQualifiers(Quals, /*IsMember=*/false);
   }
 
   mangleCallingConvention(T);

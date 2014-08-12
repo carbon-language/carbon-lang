@@ -1,5 +1,58 @@
 // RUN: %clang_cc1 -std=c++11 -fms-extensions -emit-llvm %s -o - -triple=i386-pc-win32 | FileCheck %s
 
+namespace FTypeWithQuals {
+template <typename T>
+struct S {};
+
+using A = int () const;
+S<A> a;
+// CHECK-DAG: @"\01?a@FTypeWithQuals@@3U?$S@$$A8@@BAHXZ@1@A"
+
+using B = int () volatile;
+S<B> b;
+// CHECK-DAG: @"\01?b@FTypeWithQuals@@3U?$S@$$A8@@CAHXZ@1@A"
+
+using C = int () __restrict;
+S<C> c;
+// CHECK-DAG: @"\01?c@FTypeWithQuals@@3U?$S@$$A8@@IAAHXZ@1@A"
+
+using D = int () const &;
+S<D> d;
+// CHECK-DAG: @"\01?d@FTypeWithQuals@@3U?$S@$$A8@@GBAHXZ@1@A"
+
+using E = int () volatile &;
+S<E> e;
+// CHECK-DAG: @"\01?e@FTypeWithQuals@@3U?$S@$$A8@@GCAHXZ@1@A"
+
+using F = int () __restrict &;
+S<F> f;
+// CHECK-DAG: @"\01?f@FTypeWithQuals@@3U?$S@$$A8@@IGAAHXZ@1@A"
+
+using G = int () const &&;
+S<G> g;
+// CHECK-DAG: @"\01?g@FTypeWithQuals@@3U?$S@$$A8@@HBAHXZ@1@A"
+
+using H = int () volatile &&;
+S<H> h;
+// CHECK-DAG: @"\01?h@FTypeWithQuals@@3U?$S@$$A8@@HCAHXZ@1@A"
+
+using I = int () __restrict &&;
+S<I> i;
+// CHECK-DAG: @"\01?i@FTypeWithQuals@@3U?$S@$$A8@@IHAAHXZ@1@A"
+
+using J = int ();
+S<J> j;
+// CHECK-DAG: @"\01?j@FTypeWithQuals@@3U?$S@$$A6AHXZ@1@A"
+
+using K = int () &;
+S<K> k;
+// CHECK-DAG: @"\01?k@FTypeWithQuals@@3U?$S@$$A8@@GAAHXZ@1@A"
+
+using L = int () &&;
+S<L> l;
+// CHECK-DAG: @"\01?l@FTypeWithQuals@@3U?$S@$$A8@@HAAHXZ@1@A"
+}
+
 // CHECK: "\01?DeducedType@@3HA"
 auto DeducedType = 30;
 
