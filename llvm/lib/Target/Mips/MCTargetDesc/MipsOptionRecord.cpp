@@ -61,7 +61,6 @@ void MipsRegInfoRecord::EmitMipsOptionRecord() {
     assert((ri_gp_value & 0xffffffff) == ri_gp_value);
     Streamer->EmitIntValue(ri_gp_value, 4);
   }
-
   Streamer->PopSection();
 }
 
