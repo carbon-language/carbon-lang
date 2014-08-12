@@ -1879,11 +1879,21 @@ VirtSpecifiers::Specifier Parser::isCXX11VirtSpecifier(const Token &Tok) const {
 ///         virt-specifier
 ///         virt-specifier-seq virt-specifier
 void Parser::ParseOptionalCXX11VirtSpecifierSeq(VirtSpecifiers &VS,
-                                                bool IsInterface) {
+                                                bool IsInterface,
+                                                SourceLocation FriendLoc) {
   while (true) {
     VirtSpecifiers::Specifier Specifier = isCXX11VirtSpecifier();
     if (Specifier == VirtSpecifiers::VS_None)
       return;
+
+    if (FriendLoc.isValid()) {
+      Diag(Tok.getLocation(), diag::err_friend_decl_spec)
+        << VirtSpecifiers::getSpecifierName(Specifier)
+        << FixItHint::CreateRemoval(Tok.getLocation())
+        << SourceRange(FriendLoc, FriendLoc);
+      ConsumeToken();
+      continue;
+    }
 
     // C++ [class.mem]p8:
     //   A virt-specifier-seq shall contain at most one of each virt-specifier.
@@ -1929,13 +1939,19 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
   //   identifier[opt] ':' constant-expression
   if (Tok.isNot(tok::colon))
     ParseDeclarator(DeclaratorInfo);
+  else
+    DeclaratorInfo.SetIdentifier(nullptr, Tok.getLocation());
 
   if (!DeclaratorInfo.isFunctionDeclarator() && TryConsumeToken(tok::colon)) {
+    assert(DeclaratorInfo.isPastIdentifier() &&
+           "don't know where identifier would go yet?");
     BitfieldSize = ParseConstantExpression();
     if (BitfieldSize.isInvalid())
       SkipUntil(tok::comma, StopAtSemi | StopBeforeMatch);
   } else
-    ParseOptionalCXX11VirtSpecifierSeq(VS, getCurrentClass().IsInterface);
+    ParseOptionalCXX11VirtSpecifierSeq(
+        VS, getCurrentClass().IsInterface,
+        DeclaratorInfo.getDeclSpec().getFriendSpecLoc());
 
   // If a simple-asm-expr is present, parse it.
   if (Tok.is(tok::kw_asm)) {
@@ -1954,7 +1970,9 @@ void Parser::ParseCXXMemberDeclaratorBeforeInitializer(
   // For compatibility with code written to older Clang, also accept a
   // virt-specifier *after* the GNU attributes.
   if (BitfieldSize.isUnset() && VS.isUnset()) {
-    ParseOptionalCXX11VirtSpecifierSeq(VS, getCurrentClass().IsInterface);
+    ParseOptionalCXX11VirtSpecifierSeq(
+        VS, getCurrentClass().IsInterface,
+        DeclaratorInfo.getDeclSpec().getFriendSpecLoc());
     if (!VS.isUnset()) {
       // If we saw any GNU-style attributes that are known to GCC followed by a
       // virt-specifier, issue a GCC-compat warning.
@@ -2319,7 +2337,6 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
            E = Ranges.end(); I != E; ++I)
         Diag((*I).getBegin(), diag::err_attributes_not_allowed) << *I;
 
-      // TODO: handle initializers, VS, bitfields, 'delete'
       ThisDecl = Actions.ActOnFriendFunctionDecl(getCurScope(), DeclaratorInfo,
                                                  TemplateParams);
     } else {
