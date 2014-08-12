@@ -438,7 +438,9 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
                 shell_command.PutCString ("exec");
 
                 // Only Apple supports /usr/bin/arch being able to specify the architecture
-                if (GetArchitecture().IsValid())
+                if (GetArchitecture().IsValid() &&                                          // Valid architecture
+                    GetArchitecture().GetTriple().getVendor() == llvm::Triple::Apple &&     // Apple only
+                    GetArchitecture().GetCore() != ArchSpec::eCore_x86_64_x86_64h)          // Don't do this for x86_64h
                 {
                     shell_command.Printf(" /usr/bin/arch -arch %s", GetArchitecture().GetArchitectureName());
                     // Set the resume count to 2:
