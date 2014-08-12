@@ -611,9 +611,7 @@ static void AsanInitInternal() {
   if (common_flags()->verbosity)
     PrintAddressSpaceLayout();
 
-  if (common_flags()->disable_coredump) {
-    DisableCoreDumper();
-  }
+  DisableCoreDumperIfNecessary();
 
   if (full_shadow_is_available) {
     // mmap the low shadow plus at least one page at the left.

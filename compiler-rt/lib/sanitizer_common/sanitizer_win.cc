@@ -189,7 +189,7 @@ void DumpProcessMap() {
   UNIMPLEMENTED();
 }
 
-void DisableCoreDumper() {
+void DisableCoreDumperIfNecessary() {
   // Do nothing.
 }
 
@@ -207,6 +207,14 @@ bool StackSizeIsUnlimited() {
 }
 
 void SetStackSizeLimitInBytes(uptr limit) {
+  UNIMPLEMENTED();
+}
+
+bool AddressSpaceIsUnlimited() {
+  UNIMPLEMENTED();
+}
+
+void SetAddressSpaceUnlimited() {
   UNIMPLEMENTED();
 }
 

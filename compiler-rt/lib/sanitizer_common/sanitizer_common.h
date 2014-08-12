@@ -176,7 +176,7 @@ void PrintModuleAndOffset(InternalScopedString *buffer,
                           const char *module, uptr offset);
 
 // OS
-void DisableCoreDumper();
+void DisableCoreDumperIfNecessary();
 void DumpProcessMap();
 bool FileExists(const char *filename);
 const char *GetEnv(const char *name);
@@ -187,6 +187,8 @@ u32 GetUid();
 void ReExec();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
+bool AddressSpaceIsUnlimited();
+void SetAddressSpaceUnlimited();
 void AdjustStackSize(void *attr);
 void PrepareForSandboxing(__sanitizer_sandbox_arguments *args);
 void CovPrepareForSandboxing(__sanitizer_sandbox_arguments *args);

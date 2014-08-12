@@ -44,28 +44,47 @@ void FlushUnneededShadowMemory(uptr addr, uptr size) {
   madvise((void*)addr, size, MADV_DONTNEED);
 }
 
-void DisableCoreDumper() {
-  struct rlimit nocore;
-  nocore.rlim_cur = 0;
-  nocore.rlim_max = 0;
-  setrlimit(RLIMIT_CORE, &nocore);
+static rlim_t getlim(int res) {
+  rlimit rlim;
+  CHECK_EQ(0, getrlimit(res, &rlim));
+  return rlim.rlim_cur;
 }
 
-bool StackSizeIsUnlimited() {
-  struct rlimit rlim;
-  CHECK_EQ(0, getrlimit(RLIMIT_STACK, &rlim));
-  return ((uptr)rlim.rlim_cur == (uptr)-1);
-}
-
-void SetStackSizeLimitInBytes(uptr limit) {
-  struct rlimit rlim;
-  rlim.rlim_cur = limit;
-  rlim.rlim_max = limit;
-  if (setrlimit(RLIMIT_STACK, &rlim)) {
+static void setlim(int res, rlim_t lim) {
+  // The following magic is to prevent clang from replacing it with memset.
+  volatile struct rlimit rlim;
+  rlim.rlim_cur = lim;
+  rlim.rlim_max = lim;
+  if (setrlimit(res, (struct rlimit*)&rlim)) {
     Report("ERROR: %s setrlimit() failed %d\n", SanitizerToolName, errno);
     Die();
   }
+}
+
+void DisableCoreDumperIfNecessary() {
+  if (common_flags()->disable_coredump) {
+    setlim(RLIMIT_CORE, 0);
+  }
+}
+
+bool StackSizeIsUnlimited() {
+  rlim_t stack_size = getlim(RLIMIT_STACK);
+  return (stack_size == (rlim_t)-1);
+}
+
+void SetStackSizeLimitInBytes(uptr limit) {
+  setlim(RLIMIT_STACK, (rlim_t)limit);
   CHECK(!StackSizeIsUnlimited());
+}
+
+bool AddressSpaceIsUnlimited() {
+  rlim_t as_size = getlim(RLIMIT_AS);
+  return (as_size == (rlim_t)-1);
+}
+
+void SetAddressSpaceUnlimited() {
+  setlim(RLIMIT_AS, -1);
+  CHECK(AddressSpaceIsUnlimited());
 }
 
 void SleepForSeconds(int seconds) {
