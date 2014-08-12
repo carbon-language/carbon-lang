@@ -580,6 +580,16 @@ define i32 addrspace(1)* @test33_array_struct_as1([10 x %struct.Key] addrspace(1
   ret i32 addrspace(1)* %C
 }
 
+define i32 addrspace(1)* @test33_addrspacecast(%struct.Key* %A) {
+; CHECK-LABEL: @test33_addrspacecast(
+; CHECK: %C = getelementptr %struct.Key* %A, i64 0, i32 0, i32 1
+; CHECK-NEXT: addrspacecast i32* %C to i32 addrspace(1)*
+; CHECK-NEXT: ret
+  %B = addrspacecast %struct.Key* %A to %struct.anon addrspace(1)*
+  %C = getelementptr %struct.anon addrspace(1)* %B, i32 0, i32 2
+  ret i32 addrspace(1)* %C
+}
+
 	%T2 = type { i8*, i8 }
 define i8* @test34(i8* %Val, i64 %V) nounwind {
 entry:
