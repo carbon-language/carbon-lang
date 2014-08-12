@@ -33,6 +33,43 @@ The ``.clang-format`` file uses YAML format:
   # A comment.
   ...
 
+The configuration file can consist of several sections each having different
+``Language:`` parameter denoting the programming language this section of the
+configuration is targeted at. See the description of the **Language** option
+below for the list of supported languages. The first section may have no
+language set, it will set the default style options for all lanugages.
+Configuration sections for specific language will override options set in the
+default section.
+
+When :program:`clang-format` formats a file, it auto-detects the language using
+the file name. When formatting standard input or a file that doesn't have the
+extension corresponding to its language, ``-assume-filename=`` option can be
+used to override the file name :program:`clang-format` uses to detect the
+language.
+
+An example of a configuration file for multiple languages:
+
+.. code-block:: yaml
+
+  ---
+  # We'll use defaults from the LLVM style, but with 4 columns indentation.
+  BasedOnStyle: LLVM
+  IndentWidth: 4
+  ---
+  Language: Cpp
+  # Force pointers to the type for C++.
+  DerivePointerAlignment: false
+  PointerAlignment: Left
+  ---
+  Language: JavaScript
+  # Use 100 columns for JS.
+  ColumnLimit: 100
+  ---
+  Language: Proto
+  # Don't format .proto files.
+  DisableFormat: true
+  ...
+
 An easy way to get a valid ``.clang-format`` file containing all configuration
 options of a certain predefined style is:
 
