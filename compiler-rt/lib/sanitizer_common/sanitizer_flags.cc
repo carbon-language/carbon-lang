@@ -65,6 +65,7 @@ void SetCommonFlagsDefaults(CommonFlags *f) {
   f->full_address_space = false;
   f->suppressions = "";
   f->print_suppressions = true;
+  f->disable_coredump = (SANITIZER_WORDSIZE == 64);
 }
 
 void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
@@ -149,6 +150,10 @@ void ParseCommonFlagsFromString(CommonFlags *f, const char *str) {
   ParseFlag(str, &f->suppressions, "suppressions", "Suppressions file name.");
   ParseFlag(str, &f->print_suppressions, "print_suppressions",
             "Print matched suppressions at exit.");
+  ParseFlag(str, &f->disable_coredump, "disable_coredump",
+      "Disable core dumping. By default, disable_core=1 on 64-bit to avoid "
+      "dumping a 16T+ core file. Ignored on OSes that don't dump core by"
+      "default and for sanitizers that don't reserve lots of virtual memory.");
 
   // Do a sanity check for certain flags.
   if (f->malloc_context_size < 1)

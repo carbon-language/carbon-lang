@@ -52,7 +52,6 @@ struct Flags {
   bool print_stats;
   bool print_legend;
   bool atexit;
-  bool disable_core;
   bool allow_reexec;
   bool print_full_thread_history;
   bool poison_heap;

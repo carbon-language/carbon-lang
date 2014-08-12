@@ -347,8 +347,7 @@ static void setlim(int res, rlim_t lim) {
 }
 
 const char *InitializePlatform() {
-  void *p = 0;
-  if (sizeof(p) == 8) {
+  if (common_flags()->disable_coredump) {
     // Disable core dumps, dumping of 16TB usually takes a bit long.
     setlim(RLIMIT_CORE, 0);
   }
