@@ -1366,9 +1366,12 @@ bool Sema::CheckMessageArgumentTypes(QualType ReceiverType,
                                   : diag::warn_instance_method_not_found_with_typo;
         Selector MatchedSel = OMD->getSelector();
         SourceRange SelectorRange(SelectorLocs.front(), SelectorLocs.back());
-        Diag(SelLoc, DiagID)
-          << Sel<< isClassMessage << MatchedSel
-          << FixItHint::CreateReplacement(SelectorRange, MatchedSel.getAsString());
+        if (MatchedSel.isUnarySelector())
+          Diag(SelLoc, DiagID)
+            << Sel<< isClassMessage << MatchedSel
+            << FixItHint::CreateReplacement(SelectorRange, MatchedSel.getAsString());
+        else
+          Diag(SelLoc, DiagID) << Sel<< isClassMessage << MatchedSel;
       }
       else
         Diag(SelLoc, DiagID)
