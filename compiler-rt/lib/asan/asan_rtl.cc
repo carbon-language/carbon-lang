@@ -468,13 +468,6 @@ static NOINLINE void force_interface_symbols() {
     case 15: __asan_set_error_report_callback(0); break;
     case 16: __asan_handle_no_return(); break;
     case 17: __asan_address_is_poisoned(0); break;
-    case 18: __asan_get_allocated_size(0); break;
-    case 19: __asan_get_current_allocated_bytes(); break;
-    case 20: __asan_get_estimated_allocated_size(0); break;
-    case 21: __asan_get_free_bytes(); break;
-    case 22: __asan_get_heap_size(); break;
-    case 23: __asan_get_ownership(0); break;
-    case 24: __asan_get_unmapped_bytes(); break;
     case 25: __asan_poison_memory_region(0, 0); break;
     case 26: __asan_unpoison_memory_region(0, 0); break;
     case 27: __asan_set_error_exit_code(0); break;

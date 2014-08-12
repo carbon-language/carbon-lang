@@ -108,10 +108,8 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 // Add convenient macro for interface functions that may be represented as
 // weak hooks.
 #define ASAN_MALLOC_HOOK(ptr, size) \
-  if (&__asan_malloc_hook) __asan_malloc_hook(ptr, size); \
   if (&__sanitizer_malloc_hook) __sanitizer_malloc_hook(ptr, size)
 #define ASAN_FREE_HOOK(ptr) \
-  if (&__asan_free_hook) __asan_free_hook(ptr); \
   if (&__sanitizer_free_hook) __sanitizer_free_hook(ptr)
 #define ASAN_ON_ERROR() \
   if (&__asan_on_error) __asan_on_error()

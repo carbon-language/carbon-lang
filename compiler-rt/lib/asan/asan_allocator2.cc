@@ -757,16 +757,10 @@ using namespace __asan;  // NOLINT
 uptr __sanitizer_get_estimated_allocated_size(uptr size) {
   return size;
 }
-uptr __asan_get_estimated_allocated_size(uptr size) {
-  return __sanitizer_get_estimated_allocated_size(size);
-}
 
 int __sanitizer_get_ownership(const void *p) {
   uptr ptr = reinterpret_cast<uptr>(p);
   return (AllocationSize(ptr) > 0);
-}
-int __asan_get_ownership(const void *p) {
-  return __sanitizer_get_ownership(p);
 }
 
 uptr __sanitizer_get_allocated_size(const void *p) {
@@ -780,22 +774,10 @@ uptr __sanitizer_get_allocated_size(const void *p) {
   }
   return allocated_size;
 }
-uptr __asan_get_allocated_size(const void *p) {
-  return __sanitizer_get_allocated_size(p);
-}
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default (no-op) implementation of malloc hooks.
 extern "C" {
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-void __asan_malloc_hook(void *ptr, uptr size) {
-  (void)ptr;
-  (void)size;
-}
-SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-void __asan_free_hook(void *ptr) {
-  (void)ptr;
-}
 SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
 void __sanitizer_malloc_hook(void *ptr, uptr size) {
   (void)ptr;

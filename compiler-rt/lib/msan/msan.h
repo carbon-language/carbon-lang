@@ -141,10 +141,8 @@ void MsanTSDDtor(void *tsd);
 }  // namespace __msan
 
 #define MSAN_MALLOC_HOOK(ptr, size) \
-  if (&__msan_malloc_hook) __msan_malloc_hook(ptr, size); \
   if (&__sanitizer_malloc_hook) __sanitizer_malloc_hook(ptr, size)
 #define MSAN_FREE_HOOK(ptr) \
-  if (&__msan_free_hook) __msan_free_hook(ptr); \
   if (&__sanitizer_free_hook) __sanitizer_free_hook(ptr)
 
 #endif  // MSAN_H

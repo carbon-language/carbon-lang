@@ -11,8 +11,6 @@
 // RUN:   | grep " T " | sed "s/.* T //" \
 // RUN:   | grep "__asan_" | sed "s/___asan_/__asan_/" \
 // RUN:   | sed -E "s/__asan_init_v[0-9]+/__asan_init/" \
-// RUN:   | grep -v "__asan_malloc_hook" \
-// RUN:   | grep -v "__asan_free_hook" \
 // RUN:   | grep -v "__asan_default_options" \
 // RUN:   | grep -v "__asan_on_error" > %t.symbols
 

@@ -19,18 +19,11 @@
 #include "tsan_flags.h"
 
 // May be overriden by front-end.
-extern "C" void WEAK __tsan_malloc_hook(void *ptr, uptr size) {
-  (void)ptr;
-  (void)size;
-}
 extern "C" void WEAK __sanitizer_malloc_hook(void *ptr, uptr size) {
   (void)ptr;
   (void)size;
 }
 
-extern "C" void WEAK __tsan_free_hook(void *ptr) {
-  (void)ptr;
-}
 extern "C" void WEAK __sanitizer_free_hook(void *ptr) {
   (void)ptr;
 }
@@ -147,7 +140,6 @@ void invoke_malloc_hook(void *ptr, uptr size) {
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
-  __tsan_malloc_hook(ptr, size);
   __sanitizer_malloc_hook(ptr, size);
 }
 
@@ -155,7 +147,6 @@ void invoke_free_hook(void *ptr) {
   ThreadState *thr = cur_thread();
   if (ctx == 0 || !ctx->initialized || thr->ignore_interceptors)
     return;
-  __tsan_free_hook(ptr);
   __sanitizer_free_hook(ptr);
 }
 
@@ -188,52 +179,31 @@ uptr __sanitizer_get_current_allocated_bytes() {
   allocator()->GetStats(stats);
   return stats[AllocatorStatAllocated];
 }
-uptr __tsan_get_current_allocated_bytes() {
-  return __sanitizer_get_current_allocated_bytes();
-}
 
 uptr __sanitizer_get_heap_size() {
   uptr stats[AllocatorStatCount];
   allocator()->GetStats(stats);
   return stats[AllocatorStatMapped];
 }
-uptr __tsan_get_heap_size() {
-  return __sanitizer_get_heap_size();
-}
 
 uptr __sanitizer_get_free_bytes() {
   return 1;
-}
-uptr __tsan_get_free_bytes() {
-  return __sanitizer_get_free_bytes();
 }
 
 uptr __sanitizer_get_unmapped_bytes() {
   return 1;
 }
-uptr __tsan_get_unmapped_bytes() {
-  return __sanitizer_get_unmapped_bytes();
-}
 
 uptr __sanitizer_get_estimated_allocated_size(uptr size) {
   return size;
-}
-uptr __tsan_get_estimated_allocated_size(uptr size) {
-  return __sanitizer_get_estimated_allocated_size(size);
 }
 
 int __sanitizer_get_ownership(const void *p) {
   return allocator()->GetBlockBegin(p) != 0;
 }
-int __tsan_get_ownership(const void *p) {
-  return __sanitizer_get_ownership(p);
-}
 
 uptr __sanitizer_get_allocated_size(const void *p) {
   return user_alloc_usable_size(p);
-}
-uptr __tsan_get_allocated_size(const void *p) {
-  return __sanitizer_get_allocated_size(p);
 }
 
 void __tsan_on_thread_idle() {

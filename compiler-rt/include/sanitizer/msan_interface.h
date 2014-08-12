@@ -93,60 +93,6 @@ extern "C" {
      Passing 0 will unset the callback. */
   void __msan_set_death_callback(void (*callback)(void));
 
-  /***********************************/
-  /* Allocator statistics interface. */
-
-  /* Returns the estimated number of bytes that will be reserved by allocator
-     for request of "size" bytes. If Msan allocator can't allocate that much
-     memory, returns the maximal possible allocation size, otherwise returns
-     "size". */
-  /* DEPRECATED: Use __sanitizer_get_estimated_allocated_size instead. */
-  size_t __msan_get_estimated_allocated_size(size_t size);
-
-  /* Returns true if p was returned by the Msan allocator and
-     is not yet freed. */
-  /* DEPRECATED: Use __sanitizer_get_ownership instead. */
-  int __msan_get_ownership(const volatile void *p);
-
-  /* Returns the number of bytes reserved for the pointer p.
-     Requires (get_ownership(p) == true) or (p == 0). */
-  /* DEPRECATED: Use __sanitizer_get_allocated_size instead. */
-  size_t __msan_get_allocated_size(const volatile void *p);
-
-  /* Number of bytes, allocated and not yet freed by the application. */
-  /* DEPRECATED: Use __sanitizer_get_current_allocated_bytes instead. */
-  size_t __msan_get_current_allocated_bytes();
-
-  /* Number of bytes, mmaped by msan allocator to fulfill allocation requests.
-     Generally, for request of X bytes, allocator can reserve and add to free
-     lists a large number of chunks of size X to use them for future requests.
-     All these chunks count toward the heap size. Currently, allocator never
-     releases memory to OS (instead, it just puts freed chunks to free
-     lists). */
-  /* DEPRECATED: Use __sanitizer_get_heap_size instead. */
-  size_t __msan_get_heap_size();
-
-  /* Number of bytes, mmaped by msan allocator, which can be used to fulfill
-     allocation requests. When a user program frees memory chunk, it can first
-     fall into quarantine and will count toward __msan_get_free_bytes()
-     later. */
-  /* DEPRECATED: Use __sanitizer_get_free_bytes instead. */
-  size_t __msan_get_free_bytes();
-
-  /* Number of bytes in unmapped pages, that are released to OS. Currently,
-     always returns 0. */
-  /* DEPRECATED: Use __sanitizer_get_unmapped_bytes instead. */
-  size_t __msan_get_unmapped_bytes();
-
-  /* Malloc hooks that may be optionally provided by user.
-     __msan_malloc_hook(ptr, size) is called immediately after
-       allocation of "size" bytes, which returned "ptr".
-     __msan_free_hook(ptr) is called immediately before
-       deallocation of "ptr". */
-  /* DEPRECATED: Use __sanitizer_malloc_hook / __sanitizer_free_hook instead. */
-  void __msan_malloc_hook(const volatile void *ptr, size_t size);
-  void __msan_free_hook(const volatile void *ptr);
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif

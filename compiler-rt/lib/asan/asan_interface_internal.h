@@ -115,22 +115,6 @@ extern "C" {
   SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
   /* OPTIONAL */ void __asan_on_error();
 
-  // ---------------------------
-  // FIXME: Replace these functions with __sanitizer equivalent.
-  SANITIZER_INTERFACE_ATTRIBUTE
-  uptr __asan_get_estimated_allocated_size(uptr size);
-  SANITIZER_INTERFACE_ATTRIBUTE int __asan_get_ownership(const void *p);
-  SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_allocated_size(const void *p);
-  SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_current_allocated_bytes();
-  SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_heap_size();
-  SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_free_bytes();
-  SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_get_unmapped_bytes();
-  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-  /* OPTIONAL */ void __asan_malloc_hook(void *ptr, uptr size);
-  SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
-  /* OPTIONAL */ void __asan_free_hook(void *ptr);
-  // ---------------------------
-
   SANITIZER_INTERFACE_ATTRIBUTE void __asan_print_accumulated_stats();
 
   SANITIZER_INTERFACE_ATTRIBUTE SANITIZER_WEAK_ATTRIBUTE
