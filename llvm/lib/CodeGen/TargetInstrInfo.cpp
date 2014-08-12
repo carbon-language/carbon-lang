@@ -856,8 +856,8 @@ computeOperandLatency(const InstrItineraryData *ItinData,
 bool TargetInstrInfo::getRegSequenceInputs(
     const MachineInstr &MI, unsigned DefIdx,
     SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const {
-  assert(MI.isRegSequence() ||
-         MI.isRegSequenceLike() && "Instruction do not have the proper type");
+  assert((MI.isRegSequence() ||
+          MI.isRegSequenceLike()) && "Instruction do not have the proper type");
 
   if (!MI.isRegSequence())
     return getRegSequenceLikeInputs(MI, DefIdx, InputRegs);
