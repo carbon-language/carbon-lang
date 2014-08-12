@@ -4493,6 +4493,8 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
                    "    B>*>(\n"
                    "\n"
                    "    );"));
+  verifyFormat("int aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+               "    const typename aaaaaaaaaaaaaaaa aaaaaaaaaaaaaaaaaaa);");
 
   FormatStyle AlwaysBreak = getLLVMStyle();
   AlwaysBreak.AlwaysBreakTemplateDeclarations = true;
