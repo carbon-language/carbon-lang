@@ -5678,7 +5678,11 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
 }
 
 ObjCMethodDecl *Sema::SelectBestMethod(Selector Sel, MultiExprArg Args,
-                                       SmallVectorImpl<ObjCMethodDecl*>& Methods) {
+                                       bool IsInstance) {
+  SmallVector<ObjCMethodDecl*, 4> Methods;
+  if (!CollectMultipleMethodsInGlobalPool(Sel, Methods, IsInstance))
+    return nullptr;
+    
   for (unsigned b = 0, e = Methods.size(); b < e; b++) {
     bool Match = true;
     ObjCMethodDecl *Method = Methods[b];

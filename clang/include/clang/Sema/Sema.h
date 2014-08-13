@@ -2894,7 +2894,7 @@ private:
   /// \brief - Returns a selector which best matches given argument list or
   /// nullptr if none could be found
   ObjCMethodDecl *SelectBestMethod(Selector Sel, MultiExprArg Args,
-                                   SmallVectorImpl<ObjCMethodDecl*>& Methods);
+                                   bool IsInstance);
     
 
   /// \brief Record the typo correction failure and return an empty correction.
