@@ -220,7 +220,7 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     OwnsRemappedFileBuffers(true),
     NumStoredDiagnosticsFromDriver(0),
     PreambleRebuildCounter(0), SavedMainFileBuffer(nullptr),
-    PreambleBuffer(nullptr), NumWarningsInPreamble(0),
+    NumWarningsInPreamble(0),
     ShouldCacheCodeCompletionResults(false),
     IncludeBriefCommentsInCodeCompletion(false), UserFilesAreVolatile(false),
     CompletionCacheTopLevelHashValue(0),
@@ -251,9 +251,6 @@ ASTUnit::~ASTUnit() {
     for (const auto &RB : PPOpts.RemappedFileBuffers)
       delete RB.second;
   }
-  
-  delete SavedMainFileBuffer;
-  delete PreambleBuffer;
 
   ClearCachedCompletionResults();  
   
@@ -1029,8 +1026,7 @@ static void checkAndSanitizeDiags(SmallVectorImpl<StoredDiagnostic> &
 /// \returns True if a failure occurred that causes the ASTUnit not to
 /// contain any translation-unit information, false otherwise.
 bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
-  delete SavedMainFileBuffer;
-  SavedMainFileBuffer = nullptr;
+  SavedMainFileBuffer.reset(nullptr);
 
   if (!Invocation) {
     delete OverrideMainBuffer;
@@ -1127,7 +1123,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     checkAndSanitizeDiags(StoredDiagnostics, getSourceManager());
 
     // Keep track of the override buffer;
-    SavedMainFileBuffer = OverrideMainBuffer;
+    SavedMainFileBuffer.reset(OverrideMainBuffer);
   }
 
   std::unique_ptr<TopLevelDeclTrackerAction> Act(
@@ -1514,14 +1510,12 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
                                                   + NewPreamble.second.first);
   PreambleEndsAtStartOfLine = NewPreamble.second.second;
 
-  delete PreambleBuffer;
-  PreambleBuffer
-    = llvm::MemoryBuffer::getMemBufferCopy(
-        NewPreamble.first->getBuffer().slice(0, Preamble.size()), MainFilename);
+  PreambleBuffer.reset(llvm::MemoryBuffer::getMemBufferCopy(
+      NewPreamble.first->getBuffer().slice(0, Preamble.size()), MainFilename));
 
   // Remap the main source file to the preamble buffer.
   StringRef MainFilePath = FrontendOpts.Inputs[0].getFile();
-  PreprocessorOpts.addRemappedFile(MainFilePath, PreambleBuffer);
+  PreprocessorOpts.addRemappedFile(MainFilePath, PreambleBuffer.get());
 
   // Tell the compiler invocation to generate a temporary precompiled header.
   FrontendOpts.ProgramAction = frontend::GeneratePCH;

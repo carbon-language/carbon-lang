@@ -272,12 +272,12 @@ private:
   /// \brief When non-NULL, this is the buffer used to store the contents of
   /// the main file when it has been padded for use with the precompiled
   /// preamble.
-  llvm::MemoryBuffer *SavedMainFileBuffer;
+  std::unique_ptr<llvm::MemoryBuffer> SavedMainFileBuffer;
 
   /// \brief When non-NULL, this is the buffer used to store the
   /// contents of the preamble when it has been padded to build the
   /// precompiled preamble.
-  llvm::MemoryBuffer *PreambleBuffer;
+  std::unique_ptr<llvm::MemoryBuffer >PreambleBuffer;
 
   /// \brief The number of warnings that occurred while parsing the preamble.
   ///
