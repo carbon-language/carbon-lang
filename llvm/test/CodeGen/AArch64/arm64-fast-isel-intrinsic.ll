@@ -7,7 +7,7 @@ define void @t1() {
 ; ARM64-LABEL: t1
 ; ARM64: adrp x8, _message@PAGE
 ; ARM64: add x0, x8, _message@PAGEOFF
-; ARM64: movz w9, #0
+; ARM64: mov w9, wzr
 ; ARM64: movz x2, #0x50
 ; ARM64: uxtb w1, w9
 ; ARM64: bl _memset

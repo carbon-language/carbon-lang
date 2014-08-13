@@ -42,7 +42,7 @@ entry:
 
 define i32 @sext_(i8 %a, i16 %b) nounwind {
 entry:
-; CHECK-LABEL: @sext_
+; CHECK-LABEL: sext_
 ; CHECK:       sxtb w0, w0
 ; CHECK:       sxth w1, w1
 ; CHECK:       bl _foo_sext_
@@ -54,7 +54,7 @@ declare void @foo_sext_(i8 %a, i16 %b)
 
 define i32 @zext_(i8 %a, i16 %b) nounwind {
 entry:
-; CHECK-LABEL: @zext_
+; CHECK-LABEL: zext_
 ; CHECK:       uxtb w0, w0
 ; CHECK:       uxth w1, w1
   call void @foo_zext_(i8 zeroext %a, i16 zeroext %b)
@@ -78,17 +78,18 @@ declare i32 @bar(i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 zeroext, i8 
 ; Test materialization of integers.  Target-independent selector handles this.
 define i32 @t2() {
 entry:
-; CHECK-LABEL: @t2
-; CHECK:       movz x0, #0
+; CHECK-LABEL: t2
+; CHECK:       mov [[REG1:x[0-9]+]], xzr
 ; CHECK:       orr w1, wzr, #0xfffffff8
-; CHECK:       orr w[[REG:[0-9]+]], wzr, #0x3ff
-; CHECK:       orr w[[REG2:[0-9]+]], wzr, #0x2
-; CHECK:       movz w[[REG3:[0-9]+]], #0
-; CHECK:       orr w[[REG4:[0-9]+]], wzr, #0x1
-; CHECK:       uxth w2, w[[REG]]
-; CHECK:       sxtb w3, w[[REG2]]
-; CHECK:       and w4, w[[REG3]], #0x1
-; CHECK:       and w5, w[[REG4]], #0x1
+; CHECK:       orr [[REG2:w[0-9]+]], wzr, #0x3ff
+; CHECK:       orr [[REG3:w[0-9]+]], wzr, #0x2
+; CHECK:       mov [[REG4:w[0-9]+]], wzr
+; CHECK:       orr [[REG5:w[0-9]+]], wzr, #0x1
+; CHECK:       mov x0, [[REG1]]
+; CHECK:       uxth w2, [[REG2]]
+; CHECK:       sxtb w3, [[REG3]]
+; CHECK:       and w4, [[REG4]], #0x1
+; CHECK:       and w5, [[REG5]], #0x1
 ; CHECK:       bl _func2
   %call = call i32 @func2(i64 zeroext 0, i32 signext -8, i16 zeroext 1023, i8 signext -254, i1 zeroext 0, i1 zeroext 1)
   ret i32 0

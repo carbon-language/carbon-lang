@@ -217,7 +217,19 @@ unsigned AArch64FastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
 unsigned AArch64FastISel::AArch64MaterializeInt(const ConstantInt *CI, MVT VT) {
   if (VT > MVT::i64)
     return 0;
-  return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+
+  if (!CI->isZero())
+    return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+
+  // Create a copy from the zero register to materialize a "0" value.
+  const TargetRegisterClass *RC = (VT == MVT::i64) ? &AArch64::GPR64RegClass
+                                                   : &AArch64::GPR32RegClass;
+  unsigned ZeroReg = (VT == MVT::i64) ? AArch64::XZR : AArch64::WZR;
+  unsigned ResultReg = createResultReg(RC);
+  BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+          TII.get(TargetOpcode::COPY), ResultReg)
+    .addReg(ZeroReg, getKillRegState(true));
+  return ResultReg;
 }
 
 unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
