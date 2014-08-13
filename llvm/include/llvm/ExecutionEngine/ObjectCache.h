@@ -29,11 +29,10 @@ public:
   /// notifyObjectCompiled - Provides a pointer to compiled code for Module M.
   virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) = 0;
 
-  /// getObjectCopy - Returns a pointer to a newly allocated MemoryBuffer that
-  /// contains the object which corresponds with Module M, or 0 if an object is
-  /// not available. The caller owns both the MemoryBuffer returned by this
-  /// and the memory it references.
-  virtual MemoryBuffer* getObject(const Module* M) = 0;
+  /// Returns a pointer to a newly allocated MemoryBuffer that contains the
+  /// object which corresponds with Module M, or 0 if an object is not
+  /// available.
+  virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) = 0;
 };
 
 }

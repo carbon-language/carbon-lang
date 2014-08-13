@@ -279,7 +279,7 @@ public:
     outfile.close();
   }
 
-  MemoryBuffer* getObject(const Module* M) override {
+  std::unique_ptr<MemoryBuffer> getObject(const Module* M) override {
     const std::string ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
@@ -294,7 +294,8 @@ public:
     // because the file has probably just been mmapped.  Instead we make
     // a copy.  The filed-based buffer will be released when it goes
     // out of scope.
-    return MemoryBuffer::getMemBufferCopy(IRObjectBuffer.get()->getBuffer());
+    return std::unique_ptr<MemoryBuffer>(
+        MemoryBuffer::getMemBufferCopy(IRObjectBuffer.get()->getBuffer()));
   }
 
 private:

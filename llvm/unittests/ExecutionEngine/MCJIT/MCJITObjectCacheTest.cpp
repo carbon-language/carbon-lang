@@ -44,14 +44,15 @@ public:
     ObjMap[ModuleID] = copyBuffer(Obj);
   }
 
-  virtual MemoryBuffer* getObject(const Module* M) {
+  virtual std::unique_ptr<MemoryBuffer> getObject(const Module* M) {
     const MemoryBuffer* BufferFound = getObjectInternal(M);
     ModulesLookedUp.insert(M->getModuleIdentifier());
     if (!BufferFound)
       return nullptr;
     // Our test cache wants to maintain ownership of its object buffers
     // so we make a copy here for the execution engine.
-    return MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer());
+    return std::unique_ptr<MemoryBuffer>(
+        MemoryBuffer::getMemBufferCopy(BufferFound->getBuffer()));
   }
 
   // Test-harness-specific functions
