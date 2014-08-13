@@ -194,12 +194,10 @@ define void @test16() nounwind {
   br label %block2
 
 block2:
-; CHECK: movabsq $1
-; CHECK: cvtsi2sdq {{.*}} %xmm0
+; CHECK: movsd LCP{{.*}}_{{.*}}(%rip), %xmm0
 ; CHECK: movb $1, %al
 ; CHECK: callq _test16callee
 
-; AVX: movabsq $1
 ; AVX: vmovsd LCP{{.*}}_{{.*}}(%rip), %xmm0
 ; AVX: movb $1, %al
 ; AVX: callq _test16callee

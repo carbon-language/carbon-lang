@@ -29,7 +29,6 @@ entry:
 ; ARM: bl {{_?CallVariadic}}
 ; THUMB: sub sp, #32
 ; THUMB: movs r0, #5
-; THUMB: movt r0, #0
 ; THUMB: ldr r1, [sp, #28]
 ; THUMB: ldr r2, [sp, #24]
 ; THUMB: ldr r3, [sp, #20]
