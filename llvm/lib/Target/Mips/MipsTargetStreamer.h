@@ -191,14 +191,8 @@ public:
   void emitDirectiveSetMicroMips() override;
   void emitDirectiveSetNoMicroMips() override;
   void emitDirectiveSetMips16() override;
-  void emitDirectiveSetNoMips16() override;
 
-  void emitDirectiveSetReorder() override;
   void emitDirectiveSetNoReorder() override;
-  void emitDirectiveSetMacro() override;
-  void emitDirectiveSetNoMacro() override;
-  void emitDirectiveSetAt() override;
-  void emitDirectiveSetNoAt() override;
   void emitDirectiveEnd(StringRef Name) override;
 
   void emitDirectiveEnt(const MCSymbol &Symbol) override;
@@ -211,19 +205,6 @@ public:
                  unsigned ReturnReg) override;
   void emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) override;
   void emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) override;
-
-  void emitDirectiveSetMips1() override;
-  void emitDirectiveSetMips2() override;
-  void emitDirectiveSetMips3() override;
-  void emitDirectiveSetMips4() override;
-  void emitDirectiveSetMips5() override;
-  void emitDirectiveSetMips32() override;
-  void emitDirectiveSetMips32R2() override;
-  void emitDirectiveSetMips32R6() override;
-  void emitDirectiveSetMips64() override;
-  void emitDirectiveSetMips64R2() override;
-  void emitDirectiveSetMips64R6() override;
-  void emitDirectiveSetDsp() override;
 
   // PIC support
   virtual void emitDirectiveCpload(unsigned RegNo);
