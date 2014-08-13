@@ -140,3 +140,21 @@ entry:
   %vecinit15.i = insertelement <16 x i32> %vecinit14.i, i32 %f, i32 15
   ret <16 x i32> %vecinit15.i
 }
+
+; We implement the scalar broadcast intrinsics with vector initializers.
+; Verify that the IR generated will produce the broadcast at the end.
+define <8 x double> @test_mm512_broadcastsd_pd(<2 x double> %a) {
+; CHECK-LABEL: _test_mm512_broadcastsd_pd:
+; CHECK: vbroadcastsd %xmm0, %zmm0
+entry:
+  %0 = extractelement <2 x double> %a, i32 0
+  %vecinit.i = insertelement <8 x double> undef, double %0, i32 0
+  %vecinit1.i = insertelement <8 x double> %vecinit.i, double %0, i32 1
+  %vecinit2.i = insertelement <8 x double> %vecinit1.i, double %0, i32 2
+  %vecinit3.i = insertelement <8 x double> %vecinit2.i, double %0, i32 3
+  %vecinit4.i = insertelement <8 x double> %vecinit3.i, double %0, i32 4
+  %vecinit5.i = insertelement <8 x double> %vecinit4.i, double %0, i32 5
+  %vecinit6.i = insertelement <8 x double> %vecinit5.i, double %0, i32 6
+  %vecinit7.i = insertelement <8 x double> %vecinit6.i, double %0, i32 7
+  ret <8 x double> %vecinit7.i
+}
