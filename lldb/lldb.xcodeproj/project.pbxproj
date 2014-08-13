@@ -735,6 +735,8 @@
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 		B2B7CCEB15D1BD6700EEFB57 /* CommandObjectWatchpointCommand.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEA15D1BD6600EEFB57 /* CommandObjectWatchpointCommand.cpp */; };
 		B2B7CCF015D1C20F00EEFB57 /* WatchpointOptions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2B7CCEF15D1C20F00EEFB57 /* WatchpointOptions.cpp */; };
+		ED4AFF45199C2218004FFDC6 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		ED4AFF46199C2224004FFDC6 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */ = {isa = PBXBuildFile; fileRef = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ED88244E15114A9200BC98B9 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
 		ED88245015114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
 		ED88245115114CA200BC98B9 /* main.mm in Sources */ = {isa = PBXBuildFile; fileRef = ED88244F15114CA200BC98B9 /* main.mm */; };
@@ -891,6 +893,17 @@
 				AFF87C8F150FF688000E1742 /* com.apple.debugserver.applist.plist in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
+		};
+		ED4AFF44199C2207004FFDC6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
+			dstSubfolderSpec = 16;
+			files = (
+				ED4AFF46199C2224004FFDC6 /* com.apple.lldb.launcherXPCService.xpc in CopyFiles */,
+				ED4AFF45199C2218004FFDC6 /* com.apple.lldb.launcherRootXPCService.xpc in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -4298,6 +4311,7 @@
 				26680205115FD0ED008E1FE4 /* Frameworks */,
 				261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */,
 				9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */,
+				ED4AFF44199C2207004FFDC6 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -6804,8 +6818,6 @@
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -6823,7 +6835,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -6840,8 +6851,6 @@
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -6859,7 +6868,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -6900,8 +6908,6 @@
 				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -6919,7 +6925,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -6936,8 +6941,6 @@
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -6949,7 +6952,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -6977,7 +6979,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -6994,8 +6995,6 @@
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -7013,7 +7012,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -7031,8 +7029,6 @@
 				CODE_SIGN_IDENTITY = "-";
 				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = YES;
-				DEPLOYMENT_LOCATION = YES;
-				DSTROOT = "$(SYMROOT)";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -7044,7 +7040,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -7073,7 +7068,6 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]) or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9.1]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
