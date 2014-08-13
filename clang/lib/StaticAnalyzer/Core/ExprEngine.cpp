@@ -681,8 +681,11 @@ void ExprEngine::ProcessTemporaryDtor(const CFGTemporaryDtor D,
   StmtBldr.generateNode(D.getBindTemporaryExpr(), Pred, State);
 
   QualType varType = D.getBindTemporaryExpr()->getSubExpr()->getType();
-  assert(CleanDtorState.size() == 1);
-  ExplodedNode *CleanPred = *CleanDtorState.begin();
+  // FIXME: Currently CleanDtorState can be empty here due to temporaries being
+  // bound to default parameters.
+  assert(CleanDtorState.size() <= 1);
+  ExplodedNode *CleanPred =
+      CleanDtorState.empty() ? Pred : *CleanDtorState.begin();
   // FIXME: Inlining of temporary destructors is not supported yet anyway, so
   // we just put a NULL region for now. This will need to be changed later.
   VisitCXXDestructor(varType, nullptr, D.getBindTemporaryExpr(),
@@ -718,10 +721,16 @@ void ExprEngine::VisitCXXBindTemporaryExpr(const CXXBindTemporaryExpr *BTE,
   StmtNodeBuilder StmtBldr(PreVisit, Dst, *currBldrCtx);
   for (ExplodedNode *Node : PreVisit) {
     ProgramStateRef State = Node->getState();
-    assert(!State->contains<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame())));
-    State = State->add<InitializedTemporariesSet>(
-        std::make_pair(BTE, Node->getStackFrame()));
+
+    if (!State->contains<InitializedTemporariesSet>(
+            std::make_pair(BTE, Node->getStackFrame()))) {
+      // FIXME: Currently the state might already contain the marker due to
+      // incorrect handling of temporaries bound to default parameters; for
+      // those, we currently skip the CXXBindTemporaryExpr but rely on adding
+      // temporary destructor nodes.
+      State = State->add<InitializedTemporariesSet>(
+          std::make_pair(BTE, Node->getStackFrame()));
+    }
     StmtBldr.generateNode(BTE, Node, State);
   }
 }

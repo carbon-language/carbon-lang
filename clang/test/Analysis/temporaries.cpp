@@ -398,6 +398,27 @@ namespace destructors {
   void testDefaultParameters() {
     f();
   }
+
+  struct DefaultParam {
+    DefaultParam(int, const Dtor& d = Dtor());
+    ~DefaultParam();
+  };
+  void testDefaultParamConstructorsInLoops() {
+    while (true) {
+      // FIXME: This exact pattern triggers the temporary cleanup logic
+      // to fail when adding a 'clean' state.
+      DefaultParam(42);
+      DefaultParam(42);
+    }
+  }
+  void testDefaultParamConstructorsInTernariesInLoops(bool value) {
+    while (true) {
+      // FIXME: This exact pattern triggers the temporary cleanup logic
+      // to visit the bind-temporary logic with a state that already has that
+      // temporary marked as executed.
+      value ? DefaultParam(42) : DefaultParam(42);
+    }
+  }
 #endif // TEMPORARY_DTORS
 }
 
