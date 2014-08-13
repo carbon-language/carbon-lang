@@ -5377,6 +5377,11 @@ bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
   return A && (A->getValue() == StringRef(Value));
 }
 
+bool mips::isUCLibc(const ArgList &Args) {
+  Arg *A = Args.getLastArg(options::OPT_m_libc_Group);
+  return A && A->getOption().matches(options::OPT_muclibc);
+}
+
 bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
   if (Arg *NaNArg = Args.getLastArg(options::OPT_mnan_EQ))
     return llvm::StringSwitch<bool>(NaNArg->getValue())
@@ -7302,7 +7307,11 @@ static std::string getLinuxDynamicLinker(const ArgList &Args,
                            .Case("n32", "/lib32")
                            .Case("n64", "/lib64")
                            .Default("/lib");
-    StringRef LibName = IsNaN2008 ? "ld-linux-mipsn8.so.1" : "ld.so.1";
+    StringRef LibName;
+    if (mips::isUCLibc(Args))
+      LibName = IsNaN2008 ? "ld-uClibc-mipsn8.so.0" : "ld-uClibc.so.0";
+    else
+      LibName = IsNaN2008 ? "ld-linux-mipsn8.so.1" : "ld.so.1";
 
     return (LibDir + "/" + LibName).str();
   } else if (ToolChain.getArch() == llvm::Triple::ppc)

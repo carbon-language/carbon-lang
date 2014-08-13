@@ -1696,6 +1696,9 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
     auto Mips16 = makeMultilib("/mips16")
       .flag("+mips16");
 
+    auto UCLibc = makeMultilib("/uclibc")
+      .flag("+muclibc");
+
     auto MAbi64 = makeMultilib("/64")
       .flag("+mabi=n64").flag("-mabi=n32").flag("-m32");
 
@@ -1714,6 +1717,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
     FSFMipsMultilibs = MultilibSet()
       .Either(MArchMips32, MArchMicroMips, 
               MArchMips64r2, MArchMips64, MArchDefault)
+      .Maybe(UCLibc)
       .Maybe(Mips16)
       .FilterOut("/mips64/mips16")
       .FilterOut("/mips64r2/mips16")
@@ -1732,7 +1736,11 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
           StringRef InstallDir, StringRef TripleStr, const Multilib &M) {
         std::vector<std::string> Dirs;
         Dirs.push_back((InstallDir + "/include").str());
-        Dirs.push_back((InstallDir + "/../../../../sysroot/usr/include").str());
+        std::string SysRootInc = InstallDir.str() + "/../../../../sysroot";
+        if (StringRef(M.includeSuffix()).startswith("/uclibc"))
+          Dirs.push_back(SysRootInc + "/uclibc/usr/include");
+        else
+          Dirs.push_back(SysRootInc + "/usr/include");
         return Dirs;
       });
   }
@@ -1748,6 +1756,9 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
 
     auto MArchDefault = makeMultilib("")
       .flag("-mips16").flag("-mmicromips");
+
+    auto UCLibc = makeMultilib("/uclibc")
+      .flag("+muclibc");
 
     auto SoftFloat = makeMultilib("/soft-float")
       .flag("+msoft-float");
@@ -1772,6 +1783,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
 
     CSMipsMultilibs = MultilibSet()
       .Either(MArchMips16, MArchMicroMips, MArchDefault)
+      .Maybe(UCLibc)
       .Either(SoftFloat, Nan2008, DefaultFloat)
       .FilterOut("/micromips/nan2008")
       .FilterOut("/mips16/nan2008")
@@ -1784,8 +1796,12 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
           StringRef InstallDir, StringRef TripleStr, const Multilib &M) {
         std::vector<std::string> Dirs;
         Dirs.push_back((InstallDir + "/include").str());
-        Dirs.push_back((InstallDir + "/../../../../" + TripleStr +
-                        "/libc/usr/include").str());
+        std::string SysRootInc =
+            InstallDir.str() + "/../../../../" + TripleStr.str();
+        if (StringRef(M.includeSuffix()).startswith("/uclibc"))
+          Dirs.push_back(SysRootInc + "/libc/uclibc/usr/include");
+        else
+          Dirs.push_back(SysRootInc + "/libc/usr/include");
         return Dirs;
       });
   }
@@ -1855,6 +1871,7 @@ static bool findMIPSMultilibs(const llvm::Triple &TargetTriple, StringRef Path,
   addMultilibFlag(CPUName == "mips64r2" || CPUName == "octeon",
                   "march=mips64r2", Flags);
   addMultilibFlag(isMicroMips(Args), "mmicromips", Flags);
+  addMultilibFlag(tools::mips::isUCLibc(Args), "muclibc", Flags);
   addMultilibFlag(tools::mips::isNaN2008(Args, TargetTriple), "mnan=2008",
                   Flags);
   addMultilibFlag(ABIName == "n32", "mabi=n32", Flags);

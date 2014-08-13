@@ -297,6 +297,33 @@
 // CHECK-BE-HF-32R2: "[[TC]]{{/|\\\\}}crtend.o"
 // CHECK-BE-HF-32R2: "[[TC]]/../../../../sysroot/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
+// = Big-endian, mips32r2, hard float, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips-linux-gnu -mips32r2 -mhard-float -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-UC-HF-32R2 %s
+// CHECK-BE-UC-HF-32R2: "-internal-isystem"
+// CHECK-BE-UC-HF-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-BE-UC-HF-32R2: "-internal-isystem"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc"
+// CHECK-BE-UC-HF-32R2: "-internal-isystem"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-BE-UC-HF-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/include"
+// CHECK-BE-UC-HF-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-BE-UC-HF-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-UC-HF-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc"
+// CHECK-BE-UC-HF-32R2: "-dynamic-linker" "/lib/ld-uClibc.so.0"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/uclibc{{/|\\\\}}crtbegin.o"
+// CHECK-BE-UC-HF-32R2: "-L[[TC]]/uclibc"
+// CHECK-BE-UC-HF-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc"
+// CHECK-BE-UC-HF-32R2: "-L[[TC]]/../../../../sysroot/uclibc/usr/lib/../lib"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/uclibc{{/|\\\\}}crtend.o"
+// CHECK-BE-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
 // = Big-endian, mips32r2, fp64, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mips-linux-gnu -mips32r2 -mfp64 -mhard-float \
@@ -350,6 +377,33 @@
 // CHECK-BE-SF-32R2: "-L[[TC]]/../../../../sysroot/sof/usr/lib/../lib"
 // CHECK-BE-SF-32R2: "[[TC]]/sof{{/|\\\\}}crtend.o"
 // CHECK-BE-SF-32R2: "[[TC]]/../../../../sysroot/sof/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Big-endian, mips32r2, soft float, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips-linux-gnu -mips32r2 -msoft-float -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-UC-SF-32R2 %s
+// CHECK-BE-UC-SF-32R2: "-internal-isystem"
+// CHECK-BE-UC-SF-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-BE-UC-SF-32R2: "-internal-isystem"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc/sof"
+// CHECK-BE-UC-SF-32R2: "-internal-isystem"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-BE-UC-SF-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/include"
+// CHECK-BE-UC-SF-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-BE-UC-SF-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-UC-SF-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc/sof"
+// CHECK-BE-UC-SF-32R2: "-dynamic-linker" "/lib/ld-uClibc.so.0"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/sof/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/sof/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/uclibc/sof{{/|\\\\}}crtbegin.o"
+// CHECK-BE-UC-SF-32R2: "-L[[TC]]/uclibc/sof"
+// CHECK-BE-UC-SF-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc/sof"
+// CHECK-BE-UC-SF-32R2: "-L[[TC]]/../../../../sysroot/uclibc/sof/usr/lib/../lib"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/uclibc/sof{{/|\\\\}}crtend.o"
+// CHECK-BE-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/sof/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Big-endian, mips32r2 / mips16, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -512,6 +566,33 @@
 // CHECK-BE-NAN-32R2: "-L[[TC]]/../../../../sysroot/nan2008/usr/lib/../lib"
 // CHECK-BE-NAN-32R2: "[[TC]]/nan2008{{/|\\\\}}crtend.o"
 // CHECK-BE-NAN-32R2: "[[TC]]/../../../../sysroot/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Big-endian, mips32r2, nan2008, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mips-linux-gnu -mips32r2 -mnan=2008 -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-BE-UC-NAN-32R2 %s
+// CHECK-BE-UC-NAN-32R2: "-internal-isystem"
+// CHECK-BE-UC-NAN-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-BE-UC-NAN-32R2: "-internal-isystem"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc/nan2008"
+// CHECK-BE-UC-NAN-32R2: "-internal-isystem"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-BE-UC-NAN-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/include"
+// CHECK-BE-UC-NAN-32R2: "-internal-externc-isystem"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-BE-UC-NAN-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-BE-UC-NAN-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc/nan2008"
+// CHECK-BE-UC-NAN-32R2: "-dynamic-linker" "/lib/ld-uClibc-mipsn8.so.0"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/nan2008/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/nan2008/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/uclibc/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-BE-UC-NAN-32R2: "-L[[TC]]/uclibc/nan2008"
+// CHECK-BE-UC-NAN-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc/nan2008"
+// CHECK-BE-UC-NAN-32R2: "-L[[TC]]/../../../../sysroot/uclibc/nan2008/usr/lib/../lib"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/uclibc/nan2008{{/|\\\\}}crtend.o"
+// CHECK-BE-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Big-endian, mips32r2, fp64, nan2008
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -1566,6 +1647,33 @@
 // CHECK-EL-HF-32R2: "[[TC]]/el{{/|\\\\}}crtend.o"
 // CHECK-EL-HF-32R2: "[[TC]]/../../../../sysroot/el/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
+// = Little-endian, mips32r2, hard float, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mipsel-linux-gnu -mips32r2 -mhard-float -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-UC-HF-32R2 %s
+// CHECK-EL-UC-HF-32R2: "-internal-isystem"
+// CHECK-EL-UC-HF-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-EL-UC-HF-32R2: "-internal-isystem"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc/el"
+// CHECK-EL-UC-HF-32R2: "-internal-isystem"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-EL-UC-HF-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/include"
+// CHECK-EL-UC-HF-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-EL-UC-HF-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-UC-HF-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc/el"
+// CHECK-EL-UC-HF-32R2: "-dynamic-linker" "/lib/ld-uClibc.so.0"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/uclibc/el{{/|\\\\}}crtbegin.o"
+// CHECK-EL-UC-HF-32R2: "-L[[TC]]/uclibc/el"
+// CHECK-EL-UC-HF-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc/el"
+// CHECK-EL-UC-HF-32R2: "-L[[TC]]/../../../../sysroot/uclibc/el/usr/lib/../lib"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/uclibc/el{{/|\\\\}}crtend.o"
+// CHECK-EL-UC-HF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
 // = Little-endian, mips32r2, fp64, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
 // RUN:     --target=mipsel-linux-gnu -mips32r2 -mfp64 -mhard-float \
@@ -1619,6 +1727,33 @@
 // CHECK-EL-SF-32R2: "-L[[TC]]/../../../../sysroot/el/sof/usr/lib/../lib"
 // CHECK-EL-SF-32R2: "[[TC]]/el/sof{{/|\\\\}}crtend.o"
 // CHECK-EL-SF-32R2: "[[TC]]/../../../../sysroot/el/sof/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Little-endian, mips32r2, soft float, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mipsel-linux-gnu -mips32r2 -msoft-float -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-UC-SF-32R2 %s
+// CHECK-EL-UC-SF-32R2: "-internal-isystem"
+// CHECK-EL-UC-SF-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-EL-UC-SF-32R2: "-internal-isystem"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc/el/sof"
+// CHECK-EL-UC-SF-32R2: "-internal-isystem"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-EL-UC-SF-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/include"
+// CHECK-EL-UC-SF-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-EL-UC-SF-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-UC-SF-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc/el/sof"
+// CHECK-EL-UC-SF-32R2: "-dynamic-linker" "/lib/ld-uClibc.so.0"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/sof/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/sof/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/uclibc/el/sof{{/|\\\\}}crtbegin.o"
+// CHECK-EL-UC-SF-32R2: "-L[[TC]]/uclibc/el/sof"
+// CHECK-EL-UC-SF-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc/el/sof"
+// CHECK-EL-UC-SF-32R2: "-L[[TC]]/../../../../sysroot/uclibc/el/sof/usr/lib/../lib"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/uclibc/el/sof{{/|\\\\}}crtend.o"
+// CHECK-EL-UC-SF-32R2: "[[TC]]/../../../../sysroot/uclibc/el/sof/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Little-endian, mips32r2 / mips16, hard float
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
@@ -1781,6 +1916,33 @@
 // CHECK-EL-NAN-32R2: "-L[[TC]]/../../../../sysroot/el/nan2008/usr/lib/../lib"
 // CHECK-EL-NAN-32R2: "[[TC]]/el/nan2008{{/|\\\\}}crtend.o"
 // CHECK-EL-NAN-32R2: "[[TC]]/../../../../sysroot/el/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
+//
+// = Little-endian, mips32r2, nan2008, uclibc
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     --target=mipsel-linux-gnu -mips32r2 -mnan=2008 -muclibc \
+// RUN:     --gcc-toolchain=%S/Inputs/mips_fsf_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-EL-UC-NAN-32R2 %s
+// CHECK-EL-UC-NAN-32R2: "-internal-isystem"
+// CHECK-EL-UC-NAN-32R2: "[[TC:[^"]+/lib/gcc/mips-mti-linux-gnu/4.9.0]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0"
+// CHECK-EL-UC-NAN-32R2: "-internal-isystem"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/mips-mti-linux-gnu/uclibc/el/nan2008"
+// CHECK-EL-UC-NAN-32R2: "-internal-isystem"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../mips-mti-linux-gnu/include/c++/4.9.0/backward"
+// CHECK-EL-UC-NAN-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/include"
+// CHECK-EL-UC-NAN-32R2: "-internal-externc-isystem"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/usr/include"
+// CHECK-EL-UC-NAN-32R2: "{{.*}}ld{{(.exe)?}}"
+// CHECK-EL-UC-NAN-32R2: "--sysroot=[[TC]]/../../../../sysroot/uclibc/el/nan2008"
+// CHECK-EL-UC-NAN-32R2: "-dynamic-linker" "/lib/ld-uClibc-mipsn8.so.0"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/el/nan2008/usr/lib/../lib{{/|\\\\}}crt1.o"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/el/nan2008/usr/lib/../lib{{/|\\\\}}crti.o"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/uclibc/el/nan2008{{/|\\\\}}crtbegin.o"
+// CHECK-EL-UC-NAN-32R2: "-L[[TC]]/uclibc/el/nan2008"
+// CHECK-EL-UC-NAN-32R2: "-L[[TC]]/../../../../mips-mti-linux-gnu/lib/../lib/uclibc/el/nan2008"
+// CHECK-EL-UC-NAN-32R2: "-L[[TC]]/../../../../sysroot/uclibc/el/nan2008/usr/lib/../lib"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/uclibc/el/nan2008{{/|\\\\}}crtend.o"
+// CHECK-EL-UC-NAN-32R2: "[[TC]]/../../../../sysroot/uclibc/el/nan2008/usr/lib/../lib{{/|\\\\}}crtn.o"
 //
 // = Little-endian, mips32r2, fp64, nan2008
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \

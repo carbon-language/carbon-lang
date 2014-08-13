@@ -80,6 +80,7 @@ def m_hexagon_Features_Group  : OptionGroup<"<m hexagon features group>">, Group
 def m_arm_Features_Group  : OptionGroup<"<m arm features group>">, Group<m_Group>;
 def m_aarch64_Features_Group  : OptionGroup<"<m aarch64 features group>">, Group<m_Group>;
 def m_ppc_Features_Group  : OptionGroup<"<m ppc features group>">, Group<m_Group>;
+def m_libc_Group          : OptionGroup<"<m libc group>">, Group<m_Group>;
 def u_Group               : OptionGroup<"<u group>">;
 
 def pedantic_Group        : OptionGroup<"<pedantic group>">,
@@ -1304,6 +1305,8 @@ def modd_spreg : Flag<["-"], "modd-spreg">, Group<m_Group>,
 def mno_odd_spreg : Flag<["-"], "mno-odd-spreg">, Group<m_Group>,
   HelpText<"Disable odd single-precision floating point registers">,
   Flags<[HelpHidden]>;
+def mglibc : Flag<["-"], "mglibc">, Group<m_libc_Group>, Flags<[HelpHidden]>;
+def muclibc : Flag<["-"], "muclibc">, Group<m_libc_Group>, Flags<[HelpHidden]>;
 def module_file_info : Flag<["-"], "module-file-info">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>;
 def mthumb : Flag<["-"], "mthumb">, Group<m_Group>;
 def mtune_EQ : Joined<["-"], "mtune=">, Group<m_Group>;
