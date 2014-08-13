@@ -167,7 +167,12 @@ enum
     gcc_ecx,
     gcc_edx,
     gcc_ebx,
-    gcc_ebp,
+
+    // On i386 Darwin the eh_frame register numbers for ebp and esp are reversed from DWARF.
+    // It's due to an ancient compiler bug in the output of the eh_frame.
+    // Specifically, on i386 darwin eh_frame, 4 is ebp, 5 is esp.
+    // On i386 darwin debug_frame (and debug_info), 4 is esp, 5 is ebp.
+    gcc_ebp,   
     gcc_esp,
     gcc_esi,
     gcc_edi,
