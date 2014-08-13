@@ -511,7 +511,9 @@ entry:
 ; CHECK: str {{w[0-9]+}}, [sp]
 ; FAST-LABEL: i64_split
 ; FAST: ldr x7, [{{x[0-9]+}}]
-; FAST: str {{w[0-9]+}}, [sp]
+; FAST: mov x[[R0:[0-9]+]], sp
+; FAST: orr w[[R1:[0-9]+]], wzr, #0x8
+; FAST: str w[[R1]], {{\[}}x[[R0]]{{\]}}
   %0 = load i64* bitcast (%struct.s41* @g41 to i64*), align 16
   %call = tail call i32 @callee_i64(i32 1, i32 2, i32 3, i32 4, i32 5,
                                     i32 6, i32 7, i64 %0, i32 8) #5

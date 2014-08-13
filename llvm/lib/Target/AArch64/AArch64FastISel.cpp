@@ -1687,9 +1687,14 @@ bool AArch64FastISel::FinishCall(CallLoweringInfo &CLI, MVT RetVT,
 
 bool AArch64FastISel::FastLowerCall(CallLoweringInfo &CLI) {
   CallingConv::ID CC  = CLI.CallConv;
+  bool IsTailCall     = CLI.IsTailCall;
   bool IsVarArg       = CLI.IsVarArg;
   const Value *Callee = CLI.Callee;
   const char *SymName = CLI.SymName;
+
+  // Allow SelectionDAG isel to handle tail calls.
+  if (IsTailCall)
+    return false;
 
   CodeModel::Model CM = TM.getCodeModel();
   // Only support the small and large code model.
