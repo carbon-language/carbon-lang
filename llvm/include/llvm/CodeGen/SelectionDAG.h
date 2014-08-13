@@ -802,7 +802,8 @@ public:
                               ArrayRef<SDValue> Ops,
                               EVT MemVT, MachinePointerInfo PtrInfo,
                               unsigned Align = 0, bool Vol = false,
-                              bool ReadMem = true, bool WriteMem = true);
+                              bool ReadMem = true, bool WriteMem = true,
+                              unsigned Size = 0);
 
   SDValue getMemIntrinsicNode(unsigned Opcode, SDLoc dl, SDVTList VTList,
                               ArrayRef<SDValue> Ops,

@@ -431,10 +431,15 @@ public:
     EVT          memVT;       // memory VT
     const Value* ptrVal;      // value representing memory location
     int          offset;      // offset off of ptrVal
+    unsigned     size;        // the size of the memory location
+                              // (taken from memVT if zero)
     unsigned     align;       // alignment
     bool         vol;         // is volatile?
     bool         readMem;     // reads memory?
     bool         writeMem;    // writes memory?
+
+    IntrinsicInfo() : opc(0), ptrVal(nullptr), offset(0), size(0), align(1),
+                      vol(false), readMem(false), writeMem(false) {}
   };
 
   /// Given an intrinsic, checks if on the target the intrinsic will need to map

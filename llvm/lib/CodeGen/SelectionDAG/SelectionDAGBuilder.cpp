@@ -3868,7 +3868,7 @@ void SelectionDAGBuilder::visitTargetIntrinsic(const CallInst &I,
                                      VTs, Ops, Info.memVT,
                                    MachinePointerInfo(Info.ptrVal, Info.offset),
                                      Info.align, Info.vol,
-                                     Info.readMem, Info.writeMem);
+                                     Info.readMem, Info.writeMem, Info.size);
   } else if (!HasChain) {
     Result = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, getCurSDLoc(), VTs, Ops);
   } else if (!I.getType()->isVoidTy()) {
