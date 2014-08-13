@@ -29,8 +29,8 @@ void g() {
   N::f<double>(1.0);
   N::f<int>();
   N::f(); // expected-error {{no matching function}}
-  // expected-note@Inputs/cxx-templates-a.h:6 {{couldn't infer template argument}}
-  // expected-note@Inputs/cxx-templates-a.h:7 {{requires 1 argument}}
+  // expected-note@Inputs/cxx-templates-b.h:6 {{couldn't infer template argument}}
+  // expected-note@Inputs/cxx-templates-b.h:7 {{requires single argument}}
 
   template_param_kinds_1<0>(); // ok, from cxx-templates-a.h
   template_param_kinds_1<int>(); // ok, from cxx-templates-b.h

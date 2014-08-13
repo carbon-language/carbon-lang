@@ -1296,6 +1296,11 @@ DeclContext::lookup(DeclarationName Name) {
   if (PrimaryContext != this)
     return PrimaryContext->lookup(Name);
 
+  // If this is a namespace, ensure that any later redeclarations of it have
+  // been loaded, since they may add names to the result of this lookup.
+  if (auto *ND = dyn_cast<NamespaceDecl>(this))
+    (void)ND->getMostRecentDecl();
+
   if (hasExternalVisibleStorage()) {
     if (NeedToReconcileExternalVisibleStorage)
       reconcileExternalVisibleStorage();

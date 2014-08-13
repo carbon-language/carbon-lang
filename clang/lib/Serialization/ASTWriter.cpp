@@ -3479,6 +3479,18 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
 // DeclContext's Name Lookup Table Serialization
 //===----------------------------------------------------------------------===//
 
+/// Determine the declaration that should be put into the name lookup table to
+/// represent the given declaration in this module. This is usually D itself,
+/// but if D was imported and merged into a local declaration, we want the most
+/// recent local declaration instead. The chosen declaration will be the most
+/// recent declaration in any module that imports this one.
+static NamedDecl *getDeclForLocalLookup(NamedDecl *D) {
+  for (Decl *Redecl = D; Redecl; Redecl = Redecl->getPreviousDecl())
+    if (!Redecl->isFromASTFile())
+      return cast<NamedDecl>(Redecl);
+  return D;
+}
+
 namespace {
 // Trait used for the on-disk hash table used in the method pool.
 class ASTDeclContextNameLookupTrait {
@@ -3596,7 +3608,7 @@ public:
     LE.write<uint16_t>(Lookup.size());
     for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
          I != E; ++I)
-      LE.write<uint32_t>(Writer.GetDeclRef(*I));
+      LE.write<uint32_t>(Writer.GetDeclRef(getDeclForLocalLookup(*I)));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -3642,7 +3654,7 @@ void ASTWriter::AddUpdatedDeclContext(const DeclContext *DC) {
                             [&](DeclarationName Name,
                                 DeclContext::lookup_const_result Result) {
       for (auto *Decl : Result)
-        GetDeclRef(Decl);
+        GetDeclRef(getDeclForLocalLookup(Decl));
     });
   }
 }

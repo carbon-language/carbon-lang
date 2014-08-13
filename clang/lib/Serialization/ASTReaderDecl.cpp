@@ -2619,11 +2619,11 @@ ASTReader::combineStoredMergedDecls(Decl *Canon, GlobalDeclID CanonID) {
   // Append the stored merged declarations to the merged declarations set.
   MergedDeclsMap::iterator Pos = MergedDecls.find(Canon);
   if (Pos == MergedDecls.end())
-    Pos = MergedDecls.insert(std::make_pair(Canon, 
+    Pos = MergedDecls.insert(std::make_pair(Canon,
                                             SmallVector<DeclID, 2>())).first;
   Pos->second.append(StoredPos->second.begin(), StoredPos->second.end());
   StoredMergedDecls.erase(StoredPos);
-  
+
   // Sort and uniquify the set of merged declarations.
   llvm::array_pod_sort(Pos->second.begin(), Pos->second.end());
   Pos->second.erase(std::unique(Pos->second.begin(), Pos->second.end()),

@@ -1898,16 +1898,20 @@ void ASTReader::removeOverriddenMacros(IdentifierInfo *II,
     SubmoduleID OwnerID = Overrides[OI];
 
     // If this macro is not yet visible, remove it from the hidden names list.
+    // It won't be there if we're in the middle of making the owner visible.
     Module *Owner = getSubmodule(OwnerID);
-    HiddenNames &Hidden = HiddenNamesMap[Owner];
-    HiddenMacrosMap::iterator HI = Hidden.HiddenMacros.find(II);
-    if (HI != Hidden.HiddenMacros.end()) {
-      // Register the macro now so we don't lose it when we re-export.
-      PP.appendMacroDirective(II, HI->second->import(PP, ImportLoc));
+    auto HiddenIt = HiddenNamesMap.find(Owner);
+    if (HiddenIt != HiddenNamesMap.end()) {
+      HiddenNames &Hidden = HiddenIt->second;
+      HiddenMacrosMap::iterator HI = Hidden.HiddenMacros.find(II);
+      if (HI != Hidden.HiddenMacros.end()) {
+        // Register the macro now so we don't lose it when we re-export.
+        PP.appendMacroDirective(II, HI->second->import(PP, ImportLoc));
 
-      auto SubOverrides = HI->second->getOverriddenSubmodules();
-      Hidden.HiddenMacros.erase(HI);
-      removeOverriddenMacros(II, ImportLoc, Ambig, SubOverrides);
+        auto SubOverrides = HI->second->getOverriddenSubmodules();
+        Hidden.HiddenMacros.erase(HI);
+        removeOverriddenMacros(II, ImportLoc, Ambig, SubOverrides);
+      }
     }
 
     // If this macro is already in our list of conflicts, remove it from there.
@@ -2675,7 +2679,6 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         auto *DC = cast<DeclContext>(D);
         DC->getPrimaryContext()->setHasExternalVisibleStorage(true);
         auto *&LookupTable = F.DeclContextInfos[DC].NameLookupTableData;
-        // FIXME: There should never be an existing lookup table.
         delete LookupTable;
         LookupTable = Table;
       } else
@@ -6051,12 +6054,6 @@ void ASTReader::CompleteRedeclChain(const Decl *D) {
 
   const DeclContext *DC = D->getDeclContext()->getRedeclContext();
 
-  // Recursively ensure that the decl context itself is complete
-  // (in particular, this matters if the decl context is a namespace).
-  //
-  // FIXME: This should be performed by lookup instead of here.
-  cast<Decl>(DC)->getMostRecentDecl();
-
   // If this is a named declaration, complete it by looking it up
   // within its context.
   //
@@ -8246,9 +8243,16 @@ void ASTReader::finishPendingActions() {
 }
 
 void ASTReader::diagnoseOdrViolations() {
+  if (PendingOdrMergeFailures.empty() && PendingOdrMergeChecks.empty())
+    return;
+
   // Trigger the import of the full definition of each class that had any
   // odr-merging problems, so we can produce better diagnostics for them.
-  for (auto &Merge : PendingOdrMergeFailures) {
+  // These updates may in turn find and diagnose some ODR failures, so take
+  // ownership of the set first.
+  auto OdrMergeFailures = std::move(PendingOdrMergeFailures);
+  PendingOdrMergeFailures.clear();
+  for (auto &Merge : OdrMergeFailures) {
     Merge.first->buildLookup();
     Merge.first->decls_begin();
     Merge.first->bases_begin();
@@ -8322,7 +8326,7 @@ void ASTReader::diagnoseOdrViolations() {
   }
 
   // Issue any pending ODR-failure diagnostics.
-  for (auto &Merge : PendingOdrMergeFailures) {
+  for (auto &Merge : OdrMergeFailures) {
     // If we've already pointed out a specific problem with this class, don't
     // bother issuing a general "something's different" diagnostic.
     if (!DiagnosedOdrMergeFailures.insert(Merge.first))
@@ -8361,7 +8365,6 @@ void ASTReader::diagnoseOdrViolations() {
         << Merge.first;
     }
   }
-  PendingOdrMergeFailures.clear();
 }
 
 void ASTReader::FinishedDeserializing() {
