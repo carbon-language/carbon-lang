@@ -986,6 +986,8 @@ are listed below.
       more problems at higher optimization levels.
    -  ``-fsanitize=return``: In C++, reaching the end of a
       value-returning function without returning a value.
+   -  ``-fsanitize=returns-nonnull-attribute``: Returning null pointer
+      from a function which is declared to never return null.
    -  ``-fsanitize=shift``: Shift operators where the amount shifted is
       greater or equal to the promoted bit-width of the left hand side
       or less than zero, or where the left hand side is negative. For a

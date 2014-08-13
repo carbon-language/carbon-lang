@@ -1998,7 +1998,24 @@ void CodeGenFunction::EmitFunctionEpilog(const CGFunctionInfo &FI,
     llvm_unreachable("Invalid ABI kind for return argument");
   }
 
-  llvm::Instruction *Ret = RV ? Builder.CreateRet(RV) : Builder.CreateRetVoid();
+  llvm::Instruction *Ret;
+  if (RV) {
+    if (SanOpts->ReturnsNonnullAttribute &&
+        CurGD.getDecl()->hasAttr<ReturnsNonNullAttr>()) {
+      SanitizerScope SanScope(this);
+      llvm::Value *Cond =
+          Builder.CreateICmpNE(RV, llvm::Constant::getNullValue(RV->getType()));
+      llvm::Constant *StaticData[] = {
+        EmitCheckSourceLocation(EndLoc)
+      };
+      EmitCheck(Cond, "nonnull_return", StaticData, ArrayRef<llvm::Value *>(),
+                CRK_Recoverable);
+    }
+    Ret = Builder.CreateRet(RV);
+  } else {
+    Ret = Builder.CreateRetVoid();
+  }
+
   if (!RetDbgLoc.isUnknown())
     Ret->setDebugLoc(RetDbgLoc);
 }

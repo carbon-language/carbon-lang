@@ -308,3 +308,22 @@ void __ubsan::__ubsan_handle_function_type_mismatch_abort(
     FunctionTypeMismatchData *Data, ValueHandle Function) {
   handleFunctionTypeMismatch(Data, Function, true);
 }
+
+static void handleNonnullReturn(NonNullReturnData *Data, bool Abort) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  ScopedReport R(Abort);
+
+  Diag(Loc, DL_Error, "null pointer returned from function declared to never "
+                      "return null");
+}
+
+void __ubsan::__ubsan_handle_nonnull_return(NonNullReturnData *Data) {
+  handleNonnullReturn(Data, false);
+}
+
+void __ubsan::__ubsan_handle_nonnull_return_abort(NonNullReturnData *Data) {
+  handleNonnullReturn(Data, true);
+}
