@@ -136,3 +136,14 @@ define i32 @test13(i32 %x, i32 %y) {
 ; CHECK-NEXT: %and = and i32 %x, %y
 ; CHECK-NEXT: ret i32 %and
 }
+
+; ((x | y) ^ (x ^ y)) -> (x & y)
+define i32 @test15(i32 %x, i32 %y) {
+  %1 = xor i32 %y, %x
+  %2 = or i32 %y, %x
+  %3 = xor i32 %2, %1
+  ret i32 %3
+; CHECK-LABEL: @test15(
+; CHECK-NEXT: %1 = and i32 %y, %x
+; CHECK-NEXT: ret i32 %1
+}
