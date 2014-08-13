@@ -28,7 +28,6 @@
 # CHECK: {{[0-9a-f]+}}  g    *ABS*  00000000 _gp_disp
 
     .global glob1
-    .ent    glob1
 glob1:
     lui     $t0,%hi(_gp_disp+0x1)
     lh      $t0,%lo(_gp_disp+0x1)($t0)
@@ -44,4 +43,3 @@ glob1:
 
     lui     $t0,%hi(_gp_disp+0x1ffff)
     lh      $t0,%lo(_gp_disp+0x1ffff)($t0)
-    .end    glob1
