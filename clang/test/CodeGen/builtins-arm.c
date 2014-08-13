@@ -69,11 +69,12 @@ unsigned rbit(unsigned a) {
 
 void prefetch(int i) {
   __builtin_arm_prefetch(&i, 0, 1);
-// CHECK: call {{.*}} @llvm.prefetch(i8* %0, i32 0, i32 3, i32 1)
+// CHECK: call {{.*}} @llvm.prefetch(i8* %{{.*}}, i32 0, i32 3, i32 1)
 
   __builtin_arm_prefetch(&i, 1, 1);
-// CHECK: call {{.*}} @llvm.prefetch(i8* %0, i32 1, i32 3, i32 1)
+// CHECK: call {{.*}} @llvm.prefetch(i8* %{{.*}}, i32 1, i32 3, i32 1)
+
 
   __builtin_arm_prefetch(&i, 1, 0);
-// CHECK: call {{.*}} @llvm.prefetch(i8* %0, i32 1, i32 3, i32 0)
+// CHECK: call {{.*}} @llvm.prefetch(i8* %{{.*}}, i32 1, i32 3, i32 0)
 }
