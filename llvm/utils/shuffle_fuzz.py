@@ -57,9 +57,46 @@ def main():
       'f32': 1 << 32, 'f64': 1 << 64}[element_type]
 
   shuffle_range = (2 * width) if args.blends else width
-  shuffle_indices = [-1] + range(shuffle_range)
 
-  shuffle_tree = [[[random.choice(shuffle_indices)
+  # Because undef (-1) saturates and is indistinguishable when testing the
+  # correctness of a shuffle, we want to bias our fuzz toward having a decent
+  # mixture of non-undef lanes in the end. With a deep shuffle tree, the
+  # probabilies aren't good so we need to bias things. The math here is that if
+  # we uniformly select between -1 and the other inputs, each element of the
+  # result will have the following probability of being undef:
+  #
+  #   1 - (shuffle_range/(shuffle_range+1))^max_shuffle_height
+  #
+  # More generally, for any probability P of selecting a defined element in
+  # a single shuffle, the end result is:
+  #
+  #   1 - P^max_shuffle_height
+  #
+  # The power of the shuffle height is the real problem, as we want:
+  #
+  #   1 - shuffle_range/(shuffle_range+1)
+  #
+  # So we bias the selection of undef at any given node based on the tree
+  # height. Below, let 'A' be 'len(shuffle_range)', 'C' be 'max_shuffle_height',
+  # and 'B' be the bias we use to compensate for
+  # C '((A+1)*A^(1/C))/(A*(A+1)^(1/C))':
+  #
+  #   1 - (B * A)/(A + 1)^C = 1 - A/(A + 1)
+  #
+  # So at each node we use:
+  #
+  #   1 - (B * A)/(A + 1)
+  # = 1 - ((A + 1) * A * A^(1/C))/(A * (A + 1) * (A + 1)^(1/C))
+  # = 1 - ((A + 1) * A^((C + 1)/C))/(A * (A + 1)^((C + 1)/C))
+  #
+  # This is the formula we use to select undef lanes in the shuffle.
+  A = float(shuffle_range)
+  C = float(args.max_shuffle_height)
+  undef_prob = 1.0 - (((A + 1.0) * pow(A, (C + 1.0)/C)) /
+                      (A * pow(A + 1.0, (C + 1.0)/C)))
+
+  shuffle_tree = [[[-1 if random.random() <= undef_prob
+                       else random.choice(range(shuffle_range))
                     for _ in itertools.repeat(None, width)]
                    for _ in itertools.repeat(None, args.max_shuffle_height - i)]
                   for i in xrange(args.max_shuffle_height)]
