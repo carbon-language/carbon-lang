@@ -5234,6 +5234,8 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include <strstream>\n"
                "#endif");
 
+  verifyFormat("#define MY_IMPORT <a/b>");
+
   // Protocol buffer definition or missing "#".
   verifyFormat("import \"aaaaaaaaaaaaaaaaa/aaaaaaaaaaaaaaa\";",
                getLLVMStyleWithColumns(30));

@@ -497,7 +497,6 @@ private:
   }
 
   void parseIncludeDirective() {
-    next();
     if (CurrentToken && CurrentToken->is(tok::less)) {
       next();
       while (CurrentToken) {
@@ -554,6 +553,7 @@ private:
     switch (CurrentToken->Tok.getIdentifierInfo()->getPPKeywordID()) {
     case tok::pp_include:
     case tok::pp_import:
+      next();
       parseIncludeDirective();
       break;
     case tok::pp_error:
@@ -587,8 +587,18 @@ public:
     // should not break the line).
     IdentifierInfo *Info = CurrentToken->Tok.getIdentifierInfo();
     if (Info && Info->getPPKeywordID() == tok::pp_import &&
-        CurrentToken->Next && CurrentToken->Next->is(tok::string_literal))
+        CurrentToken->Next && CurrentToken->Next->is(tok::string_literal)) {
+      next();
       parseIncludeDirective();
+      return LT_Other;
+    }
+
+    // If this line starts and ends in '<' and '>', respectively, it is likely
+    // part of "#define <a/b.h>".
+    if (CurrentToken->is(tok::less) && Line.Last->is(tok::greater)) {
+      parseIncludeDirective();
+      return LT_Other;
+    }
 
     while (CurrentToken) {
       if (CurrentToken->is(tok::kw_virtual))
