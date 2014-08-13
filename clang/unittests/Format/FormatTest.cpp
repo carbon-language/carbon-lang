@@ -9200,5 +9200,9 @@ TEST_F(FormatTest, DisableRegions) {
                    "   int   k;"));
 }
 
+TEST_F(FormatTest, DoNotCrashOnInvalidInput) {
+  format("? ) =");
+}
+
 } // end namespace tooling
 } // end namespace clang

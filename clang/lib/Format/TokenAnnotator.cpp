@@ -701,8 +701,11 @@ private:
       for (FormatToken *Previous = Current.Previous;
            Previous && !Previous->isOneOf(tok::comma, tok::semi);
            Previous = Previous->Previous) {
-        if (Previous->isOneOf(tok::r_square, tok::r_paren))
+        if (Previous->isOneOf(tok::r_square, tok::r_paren)) {
           Previous = Previous->MatchingParen;
+          if (!Previous)
+            break;
+        }
         if ((Previous->Type == TT_BinaryOperator ||
              Previous->Type == TT_UnaryOperator) &&
             Previous->isOneOf(tok::star, tok::amp)) {
