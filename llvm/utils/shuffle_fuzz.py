@@ -63,7 +63,7 @@ def main():
 
   if args.verbose:
     # Print out the shuffle sequence in a compact form.
-    print >>sys.stderr, 'Testing shuffle sequence:'
+    print >>sys.stderr, 'Testing shuffle sequence "%s":' % (args.seed,)
     for s in shuffles:
       print >>sys.stderr, '  v%d%s: %s' % (width, element_type, s)
     print >>sys.stderr, ''
@@ -114,9 +114,9 @@ entry:""" % subst
     if r != -1:
       s = ('FAIL(%(seed)s): lane %(lane)d, expected %(result)d, found %%d\\0A' %
            {'seed': args.seed, 'lane': i, 'result': r})
-      s += ''.join(['\\00' for _ in itertools.repeat(None, 64 - len(s) + 2)])
+      s += ''.join(['\\00' for _ in itertools.repeat(None, 128 - len(s) + 2)])
       print """
-@error.%(i)d = private unnamed_addr global [64 x i8] c"%(s)s"
+@error.%(i)d = private unnamed_addr global [128 x i8] c"%(s)s"
 """.strip() % {'i': i, 's': s}
 
   # Finally, generate a main function which will trap if any lanes are mapped
@@ -125,8 +125,8 @@ entry:""" % subst
 define i32 @main() optnone noinline {
 entry:
   ; Create a scratch space to print error messages.
-  %%str = alloca [64 x i8]
-  %%str.ptr = getelementptr inbounds [64 x i8]* %%str, i32 0, i32 0
+  %%str = alloca [128 x i8]
+  %%str.ptr = getelementptr inbounds [128 x i8]* %%str, i32 0, i32 0
 
   ; Build the input vector and call the test function.
   %%input = bitcast <%(N)d x %(IT)s> <%(input)s> to <%(N)d x %(T)s>
@@ -161,7 +161,7 @@ die.%(i)d:
   ; Capture the actual value and print an error message.
   %%tmp.%(i)d = zext %(IT)s %%v.%(i)d to i2048
   %%bad.%(i)d = trunc i2048 %%tmp.%(i)d to i32
-  call i32 (i8*, i8*, ...)* @sprintf(i8* %%str.ptr, i8* getelementptr inbounds ([64 x i8]* @error.%(i)d, i32 0, i32 0), i32 %%bad.%(i)d)
+  call i32 (i8*, i8*, ...)* @sprintf(i8* %%str.ptr, i8* getelementptr inbounds ([128 x i8]* @error.%(i)d, i32 0, i32 0), i32 %%bad.%(i)d)
   %%length.%(i)d = call i32 @strlen(i8* %%str.ptr)
   %%size.%(i)d = add i32 %%length.%(i)d, 1
   call i32 @write(i32 2, i8* %%str.ptr, i32 %%size.%(i)d)
