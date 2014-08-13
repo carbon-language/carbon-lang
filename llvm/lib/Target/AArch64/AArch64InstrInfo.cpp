@@ -2293,8 +2293,7 @@ static bool canCombineWithMUL(MachineBasicBlock &MBB, MachineOperand &MO,
     return false;
 
   // Must only used by the user we combine with.
-  // FIXME: handle the case of DBG uses gracefully
-  if (!MRI.hasOneUse(MI->getOperand(0).getReg()))
+  if (!MRI.hasOneNonDBGUse(MI->getOperand(0).getReg()))
     return false;
 
   return true;

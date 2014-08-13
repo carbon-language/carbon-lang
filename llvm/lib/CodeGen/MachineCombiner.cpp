@@ -380,7 +380,7 @@ bool MachineCombiner::combineInstructions(MachineBasicBlock *MBB) {
             MBB->insert((MachineBasicBlock::iterator) & MI,
                         (MachineInstr *)InstrPtr);
           for (auto *InstrPtr : DelInstrs)
-            InstrPtr->eraseFromParent();
+            InstrPtr->eraseFromParentAndMarkDBGValuesForRemoval();
 
           Changed = true;
           ++NumInstCombined;
