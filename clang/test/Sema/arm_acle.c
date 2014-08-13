@@ -30,3 +30,10 @@ int32_t test_ssat_const_diag(int32_t t, const int32_t v) {
 int32_t test_usat_const_diag(int32_t t, const int32_t v) {
   return __usat(t, v);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
 }
+
+/*
+ * Prefetch intrinsics
+ */
+void test_pldx_const_diag(int32_t i) {
+  __pldx(i, 0, 0, 0);  // expected-error-re {{argument to {{.*}} must be a constant integer}}
+}

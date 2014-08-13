@@ -66,6 +66,29 @@ static __inline__ void __attribute__((always_inline, nodebug)) __yield(void) {
 }
 #endif
 
+/* 8.6 Memory prefetch intrinsics */
+/* 8.6.1 Data prefetch */
+#define __pld(addr) __pldx(0, 0, 0, addr)
+
+#if __ARM_32BIT_STATE
+#define __pldx(access_kind, cache_level, retention_policy, addr) \
+  __builtin_arm_prefetch(addr, access_kind, 1)
+#else
+#define __pldx(access_kind, cache_level, retention_policy, addr) \
+  __builtin_arm_prefetch(addr, access_kind, cache_level, retention_policy, 1)
+#endif
+
+/* 8.6.2 Instruction prefetch */
+#define __pli(addr) __plix(0, 0, addr)
+
+#if __ARM_32BIT_STATE
+#define __plix(cache_level, retention_policy, addr) \
+  __builtin_arm_prefetch(addr, 0, 0)
+#else
+#define __plix(cache_level, retention_policy, addr) \
+  __builtin_arm_prefetch(addr, 0, cache_level, retention_policy, 0)
+#endif
+
 /* 8.7 NOP */
 static __inline__ void __attribute__((always_inline, nodebug)) __nop(void) {
   __builtin_arm_nop();
