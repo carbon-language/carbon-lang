@@ -1,5 +1,6 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -x objective-c++ -std=c++11 -fmodules-cache-path=%t -I %S/Inputs -triple %itanium_abi_triple -disable-llvm-optzns -emit-llvm -o - %s | FileCheck %s
+// RUN: %clang_cc1 -fmodules -x objective-c++ -std=c++11 -fmodules-cache-path=%t -I %S/Inputs -triple %itanium_abi_triple -disable-llvm-optzns -emit-llvm -g -o - %s | FileCheck %s
 // FIXME: When we have a syntax for modules in C++, use that.
 
 @import cxx_irgen_top;
@@ -9,6 +10,22 @@ CtorInit<int> x;
 
 @import cxx_irgen_left;
 @import cxx_irgen_right;
+
+// Keep these two namespace definitions separate; merging them hides the bug.
+namespace EmitInlineMethods {
+  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1C1fEPNS_1AE(
+  // CHECK-DAG: declare void @_ZN17EmitInlineMethods1A1gEv(
+  struct C {
+    __attribute__((used)) void f(A *p) { p->g(); }
+  };
+}
+namespace EmitInlineMethods {
+  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1D1fEPNS_1BE(
+  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1B1gEv(
+  struct D {
+    __attribute__((used)) void f(B *p) { p->g(); }
+  };
+}
 
 // CHECK-DAG: define available_externally hidden {{signext i32|i32}} @_ZN1SIiE1gEv({{.*}} #[[ALWAYS_INLINE:.*]] align
 int a = S<int>::g();

@@ -38,3 +38,14 @@ namespace OperatorDeleteLookup {
   template<typename T> struct B { void operator delete(void*); virtual ~B() {} typedef int t; };
   typedef B<int>::t b_int_instantated;
 }
+
+namespace EmitInlineMethods {
+  struct A {
+    void f() {}
+    void g();
+  };
+  struct B {
+    void f();
+    void g() {}
+  };
+}

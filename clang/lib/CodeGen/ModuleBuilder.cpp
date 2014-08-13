@@ -117,10 +117,14 @@ namespace {
     }
 
     void EmitDeferredDecls() {
+      if (DeferredInlineMethodDefinitions.empty())
+        return;
+
       // Emit any deferred inline method definitions. Note that more deferred
       // methods may be added during this loop, since ASTConsumer callbacks
       // can be invoked if AST inspection results in declarations being added.
-      for (unsigned I = 0; I < DeferredInlineMethodDefinitions.size(); ++I)
+      HandlingTopLevelDeclRAII HandlingDecl(*this);
+      for (unsigned I = 0; I != DeferredInlineMethodDefinitions.size(); ++I)
         Builder->EmitTopLevelDecl(DeferredInlineMethodDefinitions[I]);
       DeferredInlineMethodDefinitions.clear();
     }
