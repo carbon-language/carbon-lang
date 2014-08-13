@@ -624,6 +624,11 @@ bool Sema::CheckARMBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall) {
     return CheckARMBuiltinExclusiveCall(BuiltinID, TheCall, 64);
   }
 
+  if (BuiltinID == ARM::BI__builtin_arm_prefetch) {
+    return SemaBuiltinConstantArgRange(TheCall, 1, 0, 1) ||
+      SemaBuiltinConstantArgRange(TheCall, 2, 0, 1);
+  }
+
   if (CheckNeonBuiltinFunctionCall(BuiltinID, TheCall))
     return true;
 

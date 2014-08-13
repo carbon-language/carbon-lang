@@ -3088,6 +3088,18 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateCall(F, llvm::ConstantInt::get(Int32Ty, HintID));
   }
 
+  if (BuiltinID == ARM::BI__builtin_arm_prefetch) {
+    Value *Address = EmitScalarExpr(E->getArg(0));
+    Value *RW      = EmitScalarExpr(E->getArg(1));
+    Value *IsData  = EmitScalarExpr(E->getArg(2));
+
+    // Locality is not supported on ARM target
+    Value *Locality = llvm::ConstantInt::get(Int32Ty, 3);
+
+    Value *F = CGM.getIntrinsic(Intrinsic::prefetch);
+    return Builder.CreateCall4(F, Address, RW, Locality, IsData);
+  }
+
   if (BuiltinID == ARM::BI__builtin_arm_rbit) {
     return Builder.CreateCall(CGM.getIntrinsic(Intrinsic::arm_rbit),
                                                EmitScalarExpr(E->getArg(0)),

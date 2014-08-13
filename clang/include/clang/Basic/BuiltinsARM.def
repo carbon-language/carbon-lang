@@ -80,6 +80,9 @@ BUILTIN(__builtin_arm_dmb, "vUi", "nc")
 BUILTIN(__builtin_arm_dsb, "vUi", "nc")
 BUILTIN(__builtin_arm_isb, "vUi", "nc")
 
+// Prefetch
+BUILTIN(__builtin_arm_prefetch, "vvC*UiUi", "nc")
+
 // MSVC
 LANGBUILTIN(__yield, "v", "", ALL_MS_LANGUAGES)
 LANGBUILTIN(__wfe, "v", "", ALL_MS_LANGUAGES)
