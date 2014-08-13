@@ -135,6 +135,9 @@ private:
 
   bool handleConstantAddresses(const Value *V, X86AddressMode &AM);
 
+  unsigned X86MaterializeInt(const ConstantInt *CI, MVT VT);
+  unsigned X86MaterializeFP(const ConstantFP *CFP, MVT VT);
+  unsigned X86MaterializeGV(const GlobalValue *GV,MVT VT);
   unsigned TargetMaterializeConstant(const Constant *C) override;
 
   unsigned TargetMaterializeAlloca(const AllocaInst *C) override;
@@ -3099,10 +3102,15 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
   return false;
 }
 
-unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
-  MVT VT;
-  if (!isTypeLegal(C->getType(), VT))
+unsigned X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
+  if (VT > MVT::i64)
     return 0;
+  return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+}
+
+unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
+  if (CFP->isNullValue())
+    return TargetMaterializeFloatZero(CFP);
 
   // Can't handle alternate code models yet.
   if (TM.getCodeModel() != CodeModel::Small)
@@ -3113,23 +3121,6 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   const TargetRegisterClass *RC = nullptr;
   switch (VT.SimpleTy) {
   default: return 0;
-  case MVT::i8:
-    Opc = X86::MOV8rm;
-    RC  = &X86::GR8RegClass;
-    break;
-  case MVT::i16:
-    Opc = X86::MOV16rm;
-    RC  = &X86::GR16RegClass;
-    break;
-  case MVT::i32:
-    Opc = X86::MOV32rm;
-    RC  = &X86::GR32RegClass;
-    break;
-  case MVT::i64:
-    // Must be in x86-64 mode.
-    Opc = X86::MOV64rm;
-    RC  = &X86::GR64RegClass;
-    break;
   case MVT::f32:
     if (X86ScalarSSEf32) {
       Opc = Subtarget->hasAVX() ? X86::VMOVSSrm : X86::MOVSSrm;
@@ -3153,39 +3144,11 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
     return 0;
   }
 
-  // Materialize addresses with LEA/MOV instructions.
-  if (isa<GlobalValue>(C)) {
-    X86AddressMode AM;
-    if (X86SelectAddress(C, AM)) {
-      // If the expression is just a basereg, then we're done, otherwise we need
-      // to emit an LEA.
-      if (AM.BaseType == X86AddressMode::RegBase &&
-          AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == nullptr)
-        return AM.Base.Reg;
-
-      unsigned ResultReg = createResultReg(RC);
-      if (TM.getRelocationModel() == Reloc::Static &&
-          TLI.getPointerTy() == MVT::i64) {
-        // The displacement code be more than 32 bits away so we need to use
-        // an instruction with a 64 bit immediate
-        Opc = X86::MOV64ri;
-        BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(Opc), ResultReg).addGlobalAddress(cast<GlobalValue>(C));
-      } else {
-        Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
-        addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                             TII.get(Opc), ResultReg), AM);
-      }
-      return ResultReg;
-    }
-    return 0;
-  }
-
   // MachineConstantPool wants an explicit alignment.
-  unsigned Align = DL.getPrefTypeAlignment(C->getType());
+  unsigned Align = DL.getPrefTypeAlignment(CFP->getType());
   if (Align == 0) {
-    // Alignment of vector types.  FIXME!
-    Align = DL.getTypeAllocSize(C->getType());
+    // Alignment of vector types. FIXME!
+    Align = DL.getTypeAllocSize(CFP->getType());
   }
 
   // x86-32 PIC requires a PIC base register for constant pools.
@@ -3203,13 +3166,63 @@ unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
   }
 
   // Create the load from the constant pool.
-  unsigned MCPOffset = MCP.getConstantPoolIndex(C, Align);
+  unsigned CPI = MCP.getConstantPoolIndex(CFP, Align);
   unsigned ResultReg = createResultReg(RC);
+
   addConstantPoolReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                    TII.get(Opc), ResultReg),
-                           MCPOffset, PICBase, OpFlag);
-
+                           CPI, PICBase, OpFlag);
   return ResultReg;
+}
+
+unsigned X86FastISel::X86MaterializeGV(const GlobalValue *GV, MVT VT) {
+  // Can't handle alternate code models yet.
+  if (TM.getCodeModel() != CodeModel::Small)
+    return 0;
+
+  // Materialize addresses with LEA/MOV instructions.
+  X86AddressMode AM;
+  if (X86SelectAddress(GV, AM)) {
+    // If the expression is just a basereg, then we're done, otherwise we need
+    // to emit an LEA.
+    if (AM.BaseType == X86AddressMode::RegBase &&
+        AM.IndexReg == 0 && AM.Disp == 0 && AM.GV == nullptr)
+      return AM.Base.Reg;
+
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    if (TM.getRelocationModel() == Reloc::Static &&
+        TLI.getPointerTy() == MVT::i64) {
+      // The displacement code could be more than 32 bits away so we need to use
+      // an instruction with a 64 bit immediate
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV64ri),
+              ResultReg)
+        .addGlobalAddress(GV);
+    } else {
+      unsigned Opc = TLI.getPointerTy() == MVT::i32 ? X86::LEA32r : X86::LEA64r;
+      addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                             TII.get(Opc), ResultReg), AM);
+    }
+    return ResultReg;
+  }
+  return 0;
+}
+
+unsigned X86FastISel::TargetMaterializeConstant(const Constant *C) {
+  EVT CEVT = TLI.getValueType(C->getType(), true);
+
+  // Only handle simple types.
+  if (!CEVT.isSimple())
+    return 0;
+  MVT VT = CEVT.getSimpleVT();
+
+  if (const auto *CI = dyn_cast<ConstantInt>(C))
+    return X86MaterializeInt(CI, VT);
+  else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
+    return X86MaterializeFP(CFP, VT);
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
+    return X86MaterializeGV(GV, VT);
+
+  return 0;
 }
 
 unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
