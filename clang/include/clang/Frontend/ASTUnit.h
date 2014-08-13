@@ -277,7 +277,7 @@ private:
   /// \brief When non-NULL, this is the buffer used to store the
   /// contents of the preamble when it has been padded to build the
   /// precompiled preamble.
-  std::unique_ptr<llvm::MemoryBuffer >PreambleBuffer;
+  std::unique_ptr<llvm::MemoryBuffer> PreambleBuffer;
 
   /// \brief The number of warnings that occurred while parsing the preamble.
   ///
