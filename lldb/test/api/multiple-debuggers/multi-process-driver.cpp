@@ -29,6 +29,9 @@
 #include <lldb/API/SBDebugger.h>
 #endif
 
+#include <chrono>
+#include <thread>
+
 #define NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS 50
 
 #define DEBUG 0
@@ -233,10 +236,10 @@ int main (int argc, char **argv)
         inferior_process_name = argv[1];
     }
 
+    std::thread threads[NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS];
     for (uint64_t i = 0; i< NUMBER_OF_SIMULTANEOUS_DEBUG_SESSIONS; i++)
     {
-        pthread_t thread;
-        pthread_create (&thread, NULL, do_one_debugger, (void*) i);
+        threads[i] = std::move(std::thread(do_one_debugger, (void*)i));
     }
 
 
@@ -244,7 +247,7 @@ int main (int argc, char **argv)
     int iter = 0;
     while (1)
     {
-        sleep (3);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         bool all_done = true;
         int successful_threads = 0;
         int total_completed_threads = 0;

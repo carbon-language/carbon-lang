@@ -1,8 +1,7 @@
 LEVEL = ../../make
 
-C_SOURCES := main.c
-LD_EXTRAS := -lpthread
-
+CXX_SOURCES := main.cpp
+ENABLE_THREADS := Yes
 EXE := AttachResume
 
 include $(LEVEL)/Makefile.rules

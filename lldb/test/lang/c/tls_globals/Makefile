@@ -6,6 +6,6 @@ CFLAGS_EXTRAS += -fPIC
 DYLIB_NAME := a
 DYLIB_C_SOURCES := a.c
 
-LD_EXTRAS += -lpthread
+ENABLE_THREADS := YES
 
 include $(LEVEL)/Makefile.rules

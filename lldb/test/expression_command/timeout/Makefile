@@ -1,5 +1,5 @@
 LEVEL = ../../make
 
-C_SOURCES := wait-a-while.c
+CXX_SOURCES := wait-a-while.cpp
 
 include $(LEVEL)/Makefile.rules

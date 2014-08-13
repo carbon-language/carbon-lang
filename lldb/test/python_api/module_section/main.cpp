@@ -8,15 +8,20 @@
 //===----------------------------------------------------------------------===//
 
 // C includes
-#include <pthread.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
 
-pthread_t g_thread_1 = NULL;
-pthread_t g_thread_2 = NULL;
-pthread_t g_thread_3 = NULL;
+// C++ includes
+#include <chrono>
+#include <mutex>
+#include <random>
+#include <thread>
+
+std::thread g_thread_1;
+std::thread g_thread_2;
+std::thread g_thread_3;
+std::mutex g_mask_mutex;
 
 typedef enum {
     eGet,
@@ -29,9 +34,9 @@ uint32_t mask_access (MaskAction action, uint32_t mask = 0);
 uint32_t
 mask_access (MaskAction action, uint32_t mask)
 {
-    static pthread_mutex_t g_mask_mutex = PTHREAD_MUTEX_INITIALIZER;
     static uint32_t g_mask = 0;
-    ::pthread_mutex_lock (&g_mask_mutex);
+
+    std::lock_guard<std::mutex> lock(g_mask_mutex);
     switch (action)
     {
     case eGet:
@@ -45,9 +50,7 @@ mask_access (MaskAction action, uint32_t mask)
         g_mask &= ~mask;
         break;
     }
-    uint32_t new_mask = g_mask;
-    ::pthread_mutex_unlock (&g_mask_mutex);
-    return new_mask;
+    return g_mask;
 }
 
 void *
@@ -57,12 +60,17 @@ thread_func (void *arg)
     uint32_t thread_mask = (1u << (thread_index));
     printf ("%s (thread index = %u) startng...\n", __FUNCTION__, thread_index);
 
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0, 3000000);
+
     while (mask_access(eGet) & thread_mask)
     {
         // random micro second sleep from zero to 3 seconds
-        int usec = ::rand() % 3000000;
+        int usec = distribution(generator);
+
         printf ("%s (thread = %u) doing a usleep (%d)...\n", __FUNCTION__, thread_index, usec);
-        ::usleep (usec);
+        std::chrono::microseconds duration(usec);
+        std::this_thread::sleep_for(duration);
         printf ("%s (thread = %u) after usleep ...\n", __FUNCTION__, thread_index); // Set break point at this line.
     }
     printf ("%s (thread index = %u) exiting...\n", __FUNCTION__, thread_index);
@@ -85,9 +93,9 @@ int main (int argc, char const *argv[])
     mask_access (eAssign, thread_mask_1 | thread_mask_2 | thread_mask_3); // And that line.
 
     // Create 3 threads
-    err = ::pthread_create (&g_thread_1, NULL, thread_func, &thread_index_1);
-    err = ::pthread_create (&g_thread_2, NULL, thread_func, &thread_index_2);
-    err = ::pthread_create (&g_thread_3, NULL, thread_func, &thread_index_3);
+    g_thread_1 = std::thread(thread_func, (void*)&thread_index_1);
+    g_thread_2 = std::thread(thread_func, (void*)&thread_index_2);
+    g_thread_3 = std::thread(thread_func, (void*)&thread_index_3);
 
     char line[64];
     while (mask_access(eGet) != 0)
@@ -120,9 +128,9 @@ int main (int argc, char const *argv[])
     mask_access (eClearBits, UINT32_MAX);
 
     // Join all of our threads
-    err = ::pthread_join (g_thread_1, &thread_result);
-    err = ::pthread_join (g_thread_2, &thread_result);
-    err = ::pthread_join (g_thread_3, &thread_result);
+    g_thread_1.join();
+    g_thread_2.join();
+    g_thread_3.join();
 
     return 0;
 }

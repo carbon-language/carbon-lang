@@ -1,8 +1,8 @@
 LEVEL = ../../../make
 
 CFLAGS_EXTRAS := -D__STDC_LIMIT_MACROS
-LD_EXTRAS := -lpthread
+ENABLE_THREADS := YES
 CXX_SOURCES := main.cpp
-MAKE_DSYM :=NO
+MAKE_DSYM := NO
 
 include $(LEVEL)/Makefile.rules

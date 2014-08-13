@@ -1,7 +1,8 @@
-#include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
-#include <pthread.h>
+
+#include <chrono>
+#include <thread>
 
 void *start(void *data)
 {
@@ -10,8 +11,8 @@ void *start(void *data)
     for (i=0; i<30; i++)
     {
         if ( idx == 0 )
-            usleep(1);
-        sleep(1);
+            std::this_thread::sleep_for(std::chrono::microseconds(1));
+        std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     return 0;
 }
@@ -19,14 +20,12 @@ void *start(void *data)
 int main(int argc, char const *argv[])
 {
     static const size_t nthreads = 16;
-    pthread_attr_t attr;
-    pthread_t threads[nthreads];
+    std::thread threads[nthreads];
     size_t i;
 
-    pthread_attr_init(&attr);
     for (i=0; i<nthreads; i++)
-        pthread_create(&threads[i], &attr, &start, (void *)i);
+        threads[i] = std::move(std::thread(start, (void*)i));
 
     for (i=0; i<nthreads; i++)
-        pthread_join(threads[i], 0);
+        threads[i].join();
 }

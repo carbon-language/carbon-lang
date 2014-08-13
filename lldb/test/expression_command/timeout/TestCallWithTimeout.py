@@ -15,7 +15,7 @@ class ExprCommandWithTimeoutsTestCase(TestBase):
         # Call super's setUp().
         TestBase.setUp(self)
 
-        self.main_source = "wait-a-while.c"
+        self.main_source = "wait-a-while.cpp"
         self.main_source_spec = lldb.SBFileSpec (self.main_source)
 
 

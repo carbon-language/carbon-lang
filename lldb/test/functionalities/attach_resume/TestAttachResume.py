@@ -70,7 +70,7 @@ class AttachResumeTestCase(TestBase):
             'Process not stopped after interrupt')
 
         # check that this breakpoint is auto-cleared on detach (r204752)
-        self.runCmd("br set -f main.c -l 12")
+        self.runCmd("br set -f main.cpp -l 12")
 
         self.runCmd("c")
         self.assertTrue(wait_for_state(lldb.eStateRunning),
