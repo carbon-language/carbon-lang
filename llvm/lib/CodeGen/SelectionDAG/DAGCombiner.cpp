@@ -10838,16 +10838,30 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
     // It may still be beneficial to combine the two shuffles if the
     // resulting shuffle is legal.
-    if (TLI.isTypeLegal(VT) && TLI.isShuffleMaskLegal(Mask, VT)) {
-      if (!CommuteOperands)
-        // shuffle(shuffle(x, undef, M1), undef, M2) -> shuffle(x, undef, M3).
-        // shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(x, undef, M3)
-        return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(0), N1,
-                                    &Mask[0]);
-      
-      //   shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(undef, y, M3)
-      return DAG.getVectorShuffle(VT, SDLoc(N), N1, N0->getOperand(1),
-                                  &Mask[0]);
+    if (TLI.isTypeLegal(VT)) {
+      if (!CommuteOperands) {
+        if (TLI.isShuffleMaskLegal(Mask, VT))
+          // shuffle(shuffle(x, undef, M1), undef, M2) -> shuffle(x, undef, M3).
+          // shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(x, undef, M3)
+          return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(0), N1,
+                                      &Mask[0]);
+      } else {
+        // Compute the commuted shuffle mask.
+        for (unsigned i = 0; i != NumElts; ++i) {
+          int idx = Mask[i];
+          if (idx < 0)
+            continue;
+          else if (idx < (int)NumElts)
+            Mask[i] = idx + NumElts;
+          else
+            Mask[i] = idx - NumElts;
+        }
+
+        if (TLI.isShuffleMaskLegal(Mask, VT))
+          //   shuffle(shuffle(x, y, M1), undef, M2) -> shuffle(y, undef, M3)
+          return DAG.getVectorShuffle(VT, SDLoc(N), N0->getOperand(1), N1,
+                                      &Mask[0]);
+      }
     }
   }
 

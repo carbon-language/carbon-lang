@@ -204,8 +204,8 @@ define <4 x i32> @test18(<4 x i32> %A, <4 x i32> %B) {
   ret <4 x i32> %2
 }
 ; CHECK-LABEL: test18
-; CHECK: blendps $11
-; CHECK-NEXT: pshufd $-59
+; CHECK-NOT: blendps
+; CHECK: pshufd {{.*}} # xmm0 = xmm1[1,1,0,3]
 ; CHECK-NEXT: ret
 
 define <4 x i32> @test19(<4 x i32> %A, <4 x i32> %B) {
@@ -240,6 +240,8 @@ define <4 x i32> @test21(<4 x i32> %A, <4 x i32> %B) {
 ; CHECK-NEXT: pshufd $-60
 ; CHECK-NEXT: ret
 
+; Test that we correctly combine shuffles according to rule
+;  shuffle(shuffle(x, y), undef) -> shuffle(y, undef)
 
 define <4 x i32> @test22(<4 x i32> %A, <4 x i32> %B) {
   %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
@@ -247,7 +249,69 @@ define <4 x i32> @test22(<4 x i32> %A, <4 x i32> %B) {
   ret <4 x i32> %2
 }
 ; CHECK-LABEL: test22
-; CHECK: blendps $11
-; CHECK-NEXT: pshufd $-43
+; CHECK-NOT: blendps
+; CHECK: pshufd {{.*}} # xmm0 = xmm1[1,1,1,3]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test23(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 0, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test23
+; CHECK-NOT: blendps
+; CHECK: pshufd {{.*}} # xmm0 = xmm1[0,1,0,3]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test24(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 1, i32 6, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 0, i32 3, i32 2, i32 4>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test24
+; CHECK-NOT: blendps
+; CHECK: pshufd {{.*}} # xmm0 = xmm1[0,3,2,0]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test25(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %B, <4 x i32> %A, <4 x i32> <i32 1, i32 5, i32 2, i32 4>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 3, i32 1, i32 3, i32 1>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test25
+; CHECK-NOT:  shufps
+; CHECK: pshufd {{.*}} # xmm0 = xmm0[0,1,0,1]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test26(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %B, <4 x i32> %A, <4 x i32> <i32 1, i32 2, i32 6, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 2, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test26
+; CHECK-NOT: shufps
+; CHECK: movhlps {{.*}} # xmm0 = xmm0[1,1]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test27(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %B, <4 x i32> %A, <4 x i32> <i32 2, i32 1, i32 5, i32 4>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 3, i32 2>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test27
+; CHECK-NOT: shufps
+; CHECK-NOT: movhlps
+; CHECK: pshufd {{.*}} # xmm0 = xmm0[0,1,0,1]
+; CHECK-NEXT: ret
+
+define <4 x i32> @test28(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %B, <4 x i32> %A, <4 x i32> <i32 1, i32 2, i32 4, i32 5>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 3, i32 2>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test28
+; CHECK-NOT: shufps
+; CHECK-NOT: movhlps
+; CHECK: pshufd {{.*}} # xmm0 = xmm0[0,1,1,0]
 ; CHECK-NEXT: ret
 
