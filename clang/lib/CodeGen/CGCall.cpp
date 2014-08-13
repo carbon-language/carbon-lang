@@ -85,37 +85,18 @@ CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionNoProtoType> FTNP) {
 }
 
 /// Arrange the LLVM function layout for a value of the given function
-/// type, on top of any implicit parameters already stored.  Use the
-/// given ExtInfo instead of the ExtInfo from the function type.
-static const CGFunctionInfo &arrangeLLVMFunctionInfo(CodeGenTypes &CGT,
-                                                     bool IsInstanceMethod,
-                                       SmallVectorImpl<CanQualType> &prefix,
-                                             CanQual<FunctionProtoType> FTP,
-                                              FunctionType::ExtInfo extInfo) {
+/// type, on top of any implicit parameters already stored.
+static const CGFunctionInfo &
+arrangeLLVMFunctionInfo(CodeGenTypes &CGT, bool IsInstanceMethod,
+                        SmallVectorImpl<CanQualType> &prefix,
+                        CanQual<FunctionProtoType> FTP) {
   RequiredArgs required = RequiredArgs::forPrototypePlus(FTP, prefix.size());
   // FIXME: Kill copy.
   for (unsigned i = 0, e = FTP->getNumParams(); i != e; ++i)
     prefix.push_back(FTP->getParamType(i));
   CanQualType resultType = FTP->getReturnType().getUnqualifiedType();
   return CGT.arrangeLLVMFunctionInfo(resultType, IsInstanceMethod, prefix,
-                                     extInfo, required);
-}
-
-/// Arrange the argument and result information for a free function (i.e.
-/// not a C++ or ObjC instance method) of the given type.
-static const CGFunctionInfo &arrangeFreeFunctionType(CodeGenTypes &CGT,
-                                      SmallVectorImpl<CanQualType> &prefix,
-                                            CanQual<FunctionProtoType> FTP) {
-  return arrangeLLVMFunctionInfo(CGT, false, prefix, FTP, FTP->getExtInfo());
-}
-
-/// Arrange the argument and result information for a free function (i.e.
-/// not a C++ or ObjC instance method) of the given type.
-static const CGFunctionInfo &arrangeCXXMethodType(CodeGenTypes &CGT,
-                                      SmallVectorImpl<CanQualType> &prefix,
-                                            CanQual<FunctionProtoType> FTP) {
-  FunctionType::ExtInfo extInfo = FTP->getExtInfo();
-  return arrangeLLVMFunctionInfo(CGT, true, prefix, FTP, extInfo);
+                                     FTP->getExtInfo(), required);
 }
 
 /// Arrange the argument and result information for a value of the
@@ -123,7 +104,7 @@ static const CGFunctionInfo &arrangeCXXMethodType(CodeGenTypes &CGT,
 const CGFunctionInfo &
 CodeGenTypes::arrangeFreeFunctionType(CanQual<FunctionProtoType> FTP) {
   SmallVector<CanQualType, 16> argTypes;
-  return ::arrangeFreeFunctionType(*this, argTypes, FTP);
+  return ::arrangeLLVMFunctionInfo(*this, false, argTypes, FTP);
 }
 
 static CallingConv getCallingConventionForDecl(const Decl *D, bool IsWindows) {
@@ -192,8 +173,9 @@ CodeGenTypes::arrangeCXXMethodType(const CXXRecordDecl *RD,
   else
     argTypes.push_back(Context.VoidPtrTy);
 
-  return ::arrangeCXXMethodType(*this, argTypes,
-              FTP->getCanonicalTypeUnqualified().getAs<FunctionProtoType>());
+  return ::arrangeLLVMFunctionInfo(
+      *this, true, argTypes,
+      FTP->getCanonicalTypeUnqualified().getAs<FunctionProtoType>());
 }
 
 /// Arrange the argument and result information for a declaration or
