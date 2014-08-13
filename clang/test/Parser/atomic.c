@@ -33,3 +33,6 @@ typedef _Atomic(int) __attribute__((address_space(1))) atomic_addr_space_int;
 
 typedef _Atomic int __attribute__((vector_size(16))) atomic_vector_int;
 typedef _Atomic(int __attribute__((vector_size(16)))) atomic_vector_int;
+
+struct S
+_Atomic atomic_s_no_missing_semicolon;

@@ -1066,6 +1066,8 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   case tok::comma:              // __builtin_offsetof(struct foo{...} ,
   case tok::kw_operator:        // struct foo       operator  ++() {...}
   case tok::kw___declspec:      // struct foo {...} __declspec(...)
+  case tok::l_square:           // void f(struct f  [         3])
+  case tok::ellipsis:           // void f(struct f  ...       [Ns])
     return true;
   case tok::colon:
     return CouldBeBitfield;     // enum E { ... }   :         2;
@@ -1073,6 +1075,7 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   case tok::kw_const:           // struct foo {...} const     x;
   case tok::kw_volatile:        // struct foo {...} volatile  x;
   case tok::kw_restrict:        // struct foo {...} restrict  x;
+  case tok::kw__Atomic:         // struct foo {...} _Atomic   x;
   // Function specifiers
   // Note, no 'explicit'. An explicit function must be either a conversion
   // operator or a constructor. Either way, it can't have a return type.
@@ -1111,10 +1114,6 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
     if (!getLangOpts().CPlusPlus)
       return true;
     break;
-    // C++11 attributes
-  case tok::l_square: // enum E [[]] x
-    // Note, no tok::kw_alignas here; alignas cannot appertain to a type.
-    return getLangOpts().CPlusPlus11 && NextToken().is(tok::l_square);
   case tok::greater:
     // template<class T = class X>
     return getLangOpts().CPlusPlus;
@@ -1669,7 +1668,11 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // Also enforce C++ [temp]p3:
   //   In a template-declaration which defines a class, no declarator
   //   is permitted.
+  //
+  // After a type-specifier, we don't expect a semicolon. This only happens in
+  // C, since definitions are not permitted in this context in C++.
   if (TUK == Sema::TUK_Definition &&
+      (getLangOpts().CPlusPlus || !isTypeSpecifier(DSC)) &&
       (TemplateInfo.Kind || !isValidAfterTypeSpecifier(false))) {
     if (Tok.isNot(tok::semi)) {
       const PrintingPolicy &PPol = Actions.getASTContext().getPrintingPolicy();

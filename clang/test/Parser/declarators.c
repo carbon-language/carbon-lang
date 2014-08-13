@@ -150,3 +150,5 @@ enum E16 {
   A6;  // expected-error{{expected '= constant-expression' or end of enumerator definition}}
   A6a
 };
+
+int PR20634 = sizeof(struct { int n; } [5]);

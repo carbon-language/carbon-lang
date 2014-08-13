@@ -122,3 +122,8 @@ struct MemberComponentOrder : Base {
   void g() __attribute__(( )) override;
   void h() __attribute__(( )) override {}
 };
+
+void NoMissingSemicolonHere(struct S
+                            [3]);
+template<int ...N> void NoMissingSemicolonHereEither(struct S
+                                                     ... [N]);
