@@ -3697,6 +3697,7 @@ let Predicates = [UseSSE1] in {
 
 let AddedComplexity = 400 in { // Prefer non-temporal versions
 let SchedRW = [WriteStore] in {
+let Predicates = [HasAVX, NoVLX] in {
 def VMOVNTPSmr : VPSI<0x2B, MRMDestMem, (outs),
                      (ins f128mem:$dst, VR128:$src),
                      "movntps\t{$src, $dst|$dst, $src}",
@@ -3737,6 +3738,7 @@ def VMOVNTDQYmr : VPDI<0xE7, MRMDestMem, (outs),
                     [(alignednontemporalstore (v4i64 VR256:$src),
                                               addr:$dst)],
                                               IIC_SSE_MOVNT>, VEX, VEX_L;
+}
 
 def MOVNTPSmr : PSI<0x2B, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                     "movntps\t{$src, $dst|$dst, $src}",

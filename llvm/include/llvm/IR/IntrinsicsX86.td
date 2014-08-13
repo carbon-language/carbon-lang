@@ -1954,8 +1954,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_i32_ty], [IntrNoMem, Commutative]>;
   def int_x86_avx2_movntdqa : GCCBuiltin<"__builtin_ia32_movntdqa256">,
               Intrinsic<[llvm_v4i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
-  def int_x86_avx512_movntdqa : GCCBuiltin<"__builtin_ia32_movntdqa512">,
-              Intrinsic<[llvm_v8i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -3219,6 +3217,8 @@ let TargetPrefix = "x86" in {
             Intrinsic<[llvm_v8i64_ty], [llvm_v8i64_ty, llvm_v8i64_ty,
                                         llvm_v8i64_ty, llvm_i8_ty],
                       [IntrNoMem]>;
+  def int_x86_avx512_movntdqa : GCCBuiltin<"__builtin_ia32_movntdqa512">,
+            Intrinsic<[llvm_v8i64_ty], [llvm_ptr_ty], [IntrReadMem]>;
 }
 
 //===----------------------------------------------------------------------===//

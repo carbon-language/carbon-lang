@@ -2090,42 +2090,72 @@ def : Pat<(v8i64 (X86Vinsert undef, GR64:$src2, (iPTR 0))),
 //===----------------------------------------------------------------------===//
 // AVX-512 - Non-temporals
 //===----------------------------------------------------------------------===//
+let SchedRW = [WriteLoad] in {
+  def VMOVNTDQAZrm : AVX512PI<0x2A, MRMSrcMem, (outs VR512:$dst),
+                        (ins i512mem:$src), "vmovntdqa\t{$src, $dst|$dst, $src}",
+                        [(set VR512:$dst, (int_x86_avx512_movntdqa addr:$src))],
+                        SSEPackedInt>, EVEX, T8PD, EVEX_V512,
+                        EVEX_CD8<64, CD8VF>;
 
-def VMOVNTDQAZrm : AVX5128I<0x2A, MRMSrcMem, (outs VR512:$dst),
-                            (ins i512mem:$src),
-                            "vmovntdqa\t{$src, $dst|$dst, $src}",
-                            [(set VR512:$dst,
-                              (int_x86_avx512_movntdqa addr:$src))]>,
-                   EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
+  let Predicates = [HasAVX512, HasVLX] in {
+    def VMOVNTDQAZ256rm : AVX512PI<0x2A, MRMSrcMem, (outs VR256X:$dst),
+                             (ins i256mem:$src),
+                             "vmovntdqa\t{$src, $dst|$dst, $src}", [],
+                             SSEPackedInt>, EVEX, T8PD, EVEX_V256,
+                             EVEX_CD8<64, CD8VF>;
 
-// Prefer non-temporal over temporal versions
-let AddedComplexity = 400, SchedRW = [WriteStore] in {
-
-def VMOVNTPSZmr : AVX512PSI<0x2B, MRMDestMem, (outs),
-                            (ins f512mem:$dst, VR512:$src),
-                            "vmovntps\t{$src, $dst|$dst, $src}",
-                            [(alignednontemporalstore (v16f32 VR512:$src),
-                                                      addr:$dst)],
-                            IIC_SSE_MOVNT>,
-                  EVEX, EVEX_V512, EVEX_CD8<32, CD8VF>;
-
-def VMOVNTPDZmr : AVX512PDI<0x2B, MRMDestMem, (outs),
-                            (ins f512mem:$dst, VR512:$src),
-                            "vmovntpd\t{$src, $dst|$dst, $src}",
-                            [(alignednontemporalstore (v8f64 VR512:$src),
-                                                      addr:$dst)],
-			    IIC_SSE_MOVNT>,
-                  EVEX, EVEX_V512, VEX_W, EVEX_CD8<64, CD8VF>;
-
-
-def VMOVNTDQZmr : AVX512BI<0xE7, MRMDestMem, (outs),
-                           (ins i512mem:$dst, VR512:$src),
-                           "vmovntdq\t{$src, $dst|$dst, $src}",
-                           [(alignednontemporalstore (v8i64 VR512:$src),
-                                                     addr:$dst)],
-                           IIC_SSE_MOVNT>,
-                  EVEX, EVEX_V512, EVEX_CD8<64, CD8VF>;
+    def VMOVNTDQAZ128rm : AVX512PI<0x2A, MRMSrcMem, (outs VR128X:$dst),
+                             (ins i128mem:$src),
+                             "vmovntdqa\t{$src, $dst|$dst, $src}", [],
+                             SSEPackedInt>, EVEX, T8PD, EVEX_V128,
+                             EVEX_CD8<64, CD8VF>;
+  }
 }
+
+multiclass avx512_movnt<bits<8> opc, string OpcodeStr, PatFrag st_frag,
+                        ValueType OpVT, RegisterClass RC, X86MemOperand memop,
+                        Domain d, InstrItinClass itin = IIC_SSE_MOVNT> {
+  let SchedRW = [WriteStore], mayStore = 1,
+      AddedComplexity = 400 in
+  def mr : AVX512PI<opc, MRMDestMem, (outs), (ins memop:$dst, RC:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                    [(st_frag (OpVT RC:$src), addr:$dst)], d, itin>, EVEX;
+}
+
+multiclass avx512_movnt_vl<bits<8> opc, string OpcodeStr, PatFrag st_frag,
+                           string elty, string elsz, string vsz512,
+                           string vsz256, string vsz128, Domain d,
+                           Predicate prd, InstrItinClass itin = IIC_SSE_MOVNT> {
+  let Predicates = [prd] in
+  defm Z : avx512_movnt<opc, OpcodeStr, st_frag,
+                        !cast<ValueType>("v"##vsz512##elty##elsz), VR512,
+                        !cast<X86MemOperand>(elty##"512mem"), d, itin>,
+                        EVEX_V512;
+
+  let Predicates = [prd, HasVLX] in {
+    defm Z256 : avx512_movnt<opc, OpcodeStr, st_frag,
+                             !cast<ValueType>("v"##vsz256##elty##elsz), VR256X,
+                             !cast<X86MemOperand>(elty##"256mem"), d, itin>,
+                             EVEX_V256;
+
+    defm Z128 : avx512_movnt<opc, OpcodeStr, st_frag,
+                             !cast<ValueType>("v"##vsz128##elty##elsz), VR128X,
+                             !cast<X86MemOperand>(elty##"128mem"), d, itin>,
+                             EVEX_V128;
+  }
+}
+
+defm VMOVNTDQ : avx512_movnt_vl<0xE7, "vmovntdq", alignednontemporalstore,
+                                "i", "64", "8", "4", "2", SSEPackedInt,
+                                HasAVX512>, PD, EVEX_CD8<64, CD8VF>;
+
+defm VMOVNTPD : avx512_movnt_vl<0x2B, "vmovntpd", alignednontemporalstore,
+                                "f", "64", "8", "4", "2", SSEPackedDouble,
+                                HasAVX512>, PD, VEX_W, EVEX_CD8<64, CD8VF>;
+
+defm VMOVNTPS : avx512_movnt_vl<0x2B, "vmovntps", alignednontemporalstore,
+                                "f", "32", "16", "8", "4", SSEPackedSingle,
+                                HasAVX512>, PS, EVEX_CD8<32, CD8VF>;
 
 //===----------------------------------------------------------------------===//
 // AVX-512 - Integer arithmetic
