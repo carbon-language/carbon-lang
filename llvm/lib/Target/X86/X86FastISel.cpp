@@ -3107,6 +3107,29 @@ unsigned X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
     return 0;
 
   uint64_t Imm = CI->getZExtValue();
+  if (Imm == 0) {
+    unsigned SrcReg = FastEmitInst_(X86::MOV32r0, &X86::GR32RegClass);
+    switch (VT.SimpleTy) {
+    default: llvm_unreachable("Unexpected value type");
+    case MVT::i1:
+    case MVT::i8:
+      return FastEmitInst_extractsubreg(MVT::i8, SrcReg, /*Kill=*/true,
+                                        X86::sub_8bit);
+    case MVT::i16:
+      return FastEmitInst_extractsubreg(MVT::i16, SrcReg, /*Kill=*/true,
+                                        X86::sub_16bit);
+    case MVT::i32:
+      return SrcReg;
+    case MVT::i64: {
+      unsigned ResultReg = createResultReg(&X86::GR64RegClass);
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+              TII.get(TargetOpcode::SUBREG_TO_REG), ResultReg)
+        .addImm(0).addReg(SrcReg).addImm(X86::sub_32bit);
+      return ResultReg;
+    }
+    }
+  }
+
   unsigned Opc = 0;
   switch (VT.SimpleTy) {
   default: llvm_unreachable("Unexpected value type");
