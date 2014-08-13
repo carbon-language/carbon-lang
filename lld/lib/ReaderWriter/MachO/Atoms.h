@@ -123,7 +123,7 @@ private:
 class MachOSharedLibraryAtom : public SharedLibraryAtom {
 public:
   MachOSharedLibraryAtom(const File &file, StringRef name,
-                         StringRef dylibInstallName)
+                         StringRef dylibInstallName, bool weakDef)
       : SharedLibraryAtom(), _file(file), _name(name),
         _dylibInstallName(dylibInstallName) {}
   virtual ~MachOSharedLibraryAtom() {}

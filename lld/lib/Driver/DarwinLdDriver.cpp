@@ -321,26 +321,25 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   //      skipped.
   //   3. If the last -syslibroot is "/", all of them are ignored entirely.
   //   4. If { syslibroots } x path ==  {}, the original path is kept.
-  std::vector<StringRef> syslibRoots;
   for (auto syslibRoot : parsedArgs->filtered(OPT_syslibroot)) {
-    syslibRoots.push_back(syslibRoot->getValue());
+    ctx.addSysLibRoot(syslibRoot->getValue());
   }
 
   // Paths specified with -L come first, and are not considered system paths for
   // the case where there is precisely 1 -syslibroot.
   for (auto libPath : parsedArgs->filtered(OPT_L)) {
-    ctx.addModifiedSearchDir(libPath->getValue(), syslibRoots, false);
+    ctx.addModifiedSearchDir(libPath->getValue());
   }
 
   // -Z suppresses the standard search paths.
   if (!parsedArgs->hasArg(OPT_Z)) {
-    ctx.addModifiedSearchDir("/usr/lib", syslibRoots, true);
-    ctx.addModifiedSearchDir("/usr/local/lib", syslibRoots, true);
+    ctx.addModifiedSearchDir("/usr/lib", true);
+    ctx.addModifiedSearchDir("/usr/local/lib", true);
   }
 
   // Now that we've constructed the final set of search paths, print out what
   // we'll be using for testing purposes.
-  if (ctx.testingLibResolution()) {
+  if (ctx.testingLibResolution() || parsedArgs->getLastArg(OPT_v)) {
     diagnostics << "Library search paths:\n";
     for (auto path : ctx.searchDirs()) {
       diagnostics << "    " << path << '\n';
@@ -373,7 +372,7 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     }
     }
     inputGraph->addInputElement(std::unique_ptr<InputElement>(
-        new MachOFileNode(ctx, inputPath, globalWholeArchive)));
+        new MachOFileNode(inputPath, globalWholeArchive)));
   }
 
   if (!inputGraph->size()) {

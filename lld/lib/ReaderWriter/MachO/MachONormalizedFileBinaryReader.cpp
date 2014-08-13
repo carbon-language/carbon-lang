@@ -28,6 +28,7 @@
 
 #include "lld/Core/Error.h"
 #include "lld/Core/LLVM.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -233,8 +234,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
   uint32_t dataInCodeSize = 0;
   ec = forEachLoadCommand(lcRange, lcCount, swap, is64,
                     [&] (uint32_t cmd, uint32_t size, const char* lc) -> bool {
-    if (is64) {
-      if (cmd == LC_SEGMENT_64) {
+    switch(cmd) {
+    case LC_SEGMENT_64:
+      if (is64) {
         const segment_command_64 *seg =
                               reinterpret_cast<const segment_command_64*>(lc);
         const unsigned sectionCount = (swap
@@ -276,8 +278,9 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           f->sections.push_back(section);
         }
       }
-    } else {
-      if (cmd == LC_SEGMENT) {
+      break;
+    case LC_SEGMENT:
+      if (!is64) {
         const segment_command *seg =
                               reinterpret_cast<const segment_command*>(lc);
         const unsigned sectionCount = (swap
@@ -319,8 +322,8 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
           f->sections.push_back(section);
         }
       }
-    }
-    if (cmd == LC_SYMTAB) {
+      break;
+    case LC_SYMTAB: {
       const symtab_command *st = reinterpret_cast<const symtab_command*>(lc);
       const char *strings = start + read32(swap, st->stroff);
       const uint32_t strSize = read32(swap, st->strsize);
@@ -389,15 +392,31 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
             f->localSymbols.push_back(sout);
         }
       }
-    } else if (cmd == LC_ID_DYLIB) {
+      }
+      break;
+    case LC_ID_DYLIB: {
       const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
       f->installName = lc + read32(swap, dl->dylib.name);
-    } else if (cmd == LC_DATA_IN_CODE) {
+      }
+      break;
+    case LC_DATA_IN_CODE: {
       const linkedit_data_command *ldc =
                             reinterpret_cast<const linkedit_data_command*>(lc);
       dataInCode = reinterpret_cast<const data_in_code_entry*>(
                                             start + read32(swap, ldc->dataoff));
       dataInCodeSize = read32(swap, ldc->datasize);
+      }
+    case LC_LOAD_DYLIB:
+    case LC_LOAD_WEAK_DYLIB:
+    case LC_REEXPORT_DYLIB:
+    case LC_LOAD_UPWARD_DYLIB: {
+      const dylib_command *dl = reinterpret_cast<const dylib_command*>(lc);
+      DependentDylib entry;
+      entry.path = lc + read32(swap, dl->dylib.name);
+      entry.kind = LoadCommandType(cmd);
+      f->dependentDylibs.push_back(entry);
+      }
+      break;
     }
     return false;
   });
@@ -422,7 +441,7 @@ readBinary(std::unique_ptr<MemoryBuffer> &mb,
 
 class MachOReader : public Reader {
 public:
-  MachOReader(MachOLinkingContext::Arch arch) : _arch(arch) {}
+  MachOReader(MachOLinkingContext &ctx) : _ctx(ctx) {}
 
   bool canParse(file_magic magic, StringRef ext,
                 const MemoryBuffer &mb) const override {
@@ -437,7 +456,7 @@ public:
   parseFile(std::unique_ptr<MemoryBuffer> &mb, const Registry &registry,
             std::vector<std::unique_ptr<File>> &result) const override {
     // Convert binary file to normalized mach-o.
-    auto normFile = readBinary(mb, _arch);
+    auto normFile = readBinary(mb, _ctx.arch());
     if (std::error_code ec = normFile.getError())
       return ec;
     // Convert normalized mach-o to atoms.
@@ -450,16 +469,16 @@ public:
     return std::error_code();
   }
 private:
-  MachOLinkingContext::Arch _arch;
+  MachOLinkingContext &_ctx;
 };
 
 
 } // namespace normalized
 } // namespace mach_o
 
-void Registry::addSupportMachOObjects(const MachOLinkingContext &ctx) {
+void Registry::addSupportMachOObjects(MachOLinkingContext &ctx) {
   MachOLinkingContext::Arch arch = ctx.arch();
-  add(std::unique_ptr<Reader>(new mach_o::normalized::MachOReader(arch)));
+  add(std::unique_ptr<Reader>(new mach_o::normalized::MachOReader(ctx)));
   addKindTable(Reference::KindNamespace::mach_o, ctx.archHandler().kindArch(), 
                ctx.archHandler().kindStrings());
   add(std::unique_ptr<YamlIOTaggedDocumentHandler>(

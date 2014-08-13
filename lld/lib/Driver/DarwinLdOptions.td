@@ -96,6 +96,8 @@ def sectalign : MultiArg<["-"], "sectalign", 3>,
                 HelpText<"alignment for segment/section">;
 def t : Flag<["-"], "t">,
      HelpText<"Print the names of the input files as ld processes them">;
+def v : Flag<["-"], "v">,
+     HelpText<"Print linker information">;
 
 
 // extras

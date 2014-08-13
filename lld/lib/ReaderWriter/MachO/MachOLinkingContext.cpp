@@ -10,9 +10,11 @@
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 
 #include "ArchHandler.h"
+#include "File.h"
 #include "MachOPasses.h"
 
 #include "lld/Core/PassManager.h"
+#include "lld/Driver/DarwinInputGraph.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "lld/Passes/LayoutPass.h"
@@ -28,6 +30,7 @@
 #include <algorithm>
 
 using lld::mach_o::ArchHandler;
+using lld::mach_o::MachODylibFile;
 using namespace llvm::MachO;
 
 namespace lld {
@@ -304,16 +307,16 @@ bool MachOLinkingContext::pathExists(StringRef path) const {
   return _existingPaths.find(key) != _existingPaths.end();
 }
 
-void MachOLinkingContext::addModifiedSearchDir(
-    StringRef libPath, const StringRefVector &syslibRoots, bool isSystemPath) {
+void MachOLinkingContext::addModifiedSearchDir(StringRef libPath,
+                                               bool isSystemPath) {
   bool addedModifiedPath = false;
 
   // Two cases to consider here:
   //   + If the last -syslibroot is "/", all of them are ignored (don't ask).
   //   + -syslibroot only applies to absolute paths.
-  if (!syslibRoots.empty() && syslibRoots.back() != "/" &&
+  if (!_syslibRoots.empty() && _syslibRoots.back() != "/" &&
       libPath.startswith("/")) {
-    for (auto syslibRoot : syslibRoots) {
+    for (auto syslibRoot : _syslibRoots) {
       SmallString<256> path(syslibRoot);
       llvm::sys::path::append(path, libPath);
       if (pathExists(path)) {
@@ -328,7 +331,7 @@ void MachOLinkingContext::addModifiedSearchDir(
 
   // Finally, if only one -syslibroot is given, system paths which aren't in it
   // get suppressed.
-  if (syslibRoots.size() != 1 || !isSystemPath) {
+  if (_syslibRoots.size() != 1 || !isSystemPath) {
     if (pathExists(libPath)) {
       _searchDirs.push_back(libPath);
     }
@@ -418,6 +421,86 @@ Writer &MachOLinkingContext::writer() const {
     _writer = createWriterMachO(*this);
   return *_writer;
 }
+
+MachODylibFile* MachOLinkingContext::loadIndirectDylib(StringRef path) const {
+  std::unique_ptr<MachOFileNode> node(new MachOFileNode(path, false));
+  std::error_code ec = node->parse(*this, llvm::errs());
+  if (ec)
+    return nullptr;
+
+  assert(node->files().size() == 1 && "expected one file in dylib");
+  // lld::File object is owned by MachOFileNode object. This method returns
+  // an unowned pointer to the lld::File object.
+  MachODylibFile* result = reinterpret_cast<MachODylibFile*>(
+                                                   node->files().front().get());
+
+  // Node object now owned by _indirectDylibs vector.
+  _indirectDylibs.push_back(std::move(node));
+
+  return result;
+}
+
+
+MachODylibFile* MachOLinkingContext::findIndirectDylib(StringRef path) const {
+  // See if already loaded.
+  auto pos = _pathToDylibMap.find(path);
+  if (pos != _pathToDylibMap.end())
+    return pos->second;
+
+  // Search -L paths if of the form "libXXX.dylib"
+  std::pair<StringRef, StringRef> split = path.rsplit('/');
+  StringRef leafName = split.second;
+  if (leafName.startswith("lib") && leafName.endswith(".dylib")) {
+    // FIXME: Need to enhance searchLibrary() to only look for .dylib
+    auto libPath = searchLibrary(leafName);
+    if (!libPath.getError()) {
+      return loadIndirectDylib(libPath.get());
+    }
+  }
+
+  // Try full path with sysroot.
+  for (StringRef sysPath : _syslibRoots) {
+    SmallString<256> fullPath;
+    fullPath.assign(sysPath);
+    llvm::sys::path::append(fullPath, path);
+    if (pathExists(fullPath))
+      return loadIndirectDylib(fullPath);
+  }
+
+  // Try full path.
+  if (pathExists(path)) {
+    return loadIndirectDylib(path);
+  }
+
+  return nullptr;
+}
+
+bool MachOLinkingContext::createImplicitFiles(
+                            std::vector<std::unique_ptr<File> > &result) const {
+  // Add indirect dylibs by asking each linked dylib to add its indirects.
+  // Iterate until no more dylibs get loaded.
+  size_t dylibCount = 0;
+  while (dylibCount != _allDylibs.size()) {
+    dylibCount = _allDylibs.size();
+    for (MachODylibFile *dylib : _allDylibs) {
+      dylib->loadReExportedDylibs([this] (StringRef path) -> MachODylibFile* {
+                                  return findIndirectDylib(path); });
+    }
+  }
+
+  // Let writer add output type specific extras.
+  return writer().createImplicitFiles(result);
+}
+
+
+void MachOLinkingContext::registerDylib(MachODylibFile *dylib) {
+  _allDylibs.insert(dylib);
+  _pathToDylibMap[dylib->installName()] = dylib;
+  // If path is different than install name, register path too.
+  if (!dylib->path().equals(dylib->installName()))
+    _pathToDylibMap[dylib->path()] = dylib;
+}
+
 
 ArchHandler &MachOLinkingContext::archHandler() const {
   if (!_archHandler)

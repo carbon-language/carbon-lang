@@ -175,22 +175,16 @@ private:
 
 class MachODylibFile : public SharedLibraryFile {
 public:
-  MachODylibFile(StringRef path) : SharedLibraryFile(path), _dylib_name(path) {}
+  MachODylibFile(StringRef path, StringRef installName)
+      : SharedLibraryFile(path), _installName(installName) {
+  }
 
-  virtual const SharedLibraryAtom *exports(StringRef name,
-                                           bool dataSymbolOnly) const {
-    // FIXME: we obviously need to record code/data if we're going to make
-    // proper use of dataSymbolOnly.
-    auto sym = _nameToAtom.find(name);
-
-    if (sym == _nameToAtom.end())
-      return nullptr;
-
-    if (!sym->second)
-      sym->second =
-          new (_allocator) MachOSharedLibraryAtom(*this, name, _dylib_name);
-
-    return sym->second;
+  virtual const SharedLibraryAtom *exports(StringRef name, bool isData) const {
+    // Pass down _installName and _allocator so that if this requested symbol
+    // is re-exported through this dylib, the SharedLibraryAtom's loadName()
+    // is this dylib installName and not the implementation dylib's.
+    // NOTE: isData is not needed for dylibs (it matters for static libs).
+    return exports(name, _installName, _allocator);
   }
 
   const atom_collection<DefinedAtom> &defined() const override {
@@ -209,22 +203,78 @@ public:
     return _absoluteAtoms;
   }
 
-  void addSharedLibraryAtom(StringRef name, bool copyRefs) {
+  /// Adds symbol name that this dylib exports. The corresponding
+  /// SharedLibraryAtom is created lazily (since most symbols are not used).
+  void addExportedSymbol(StringRef name, bool weakDef, bool copyRefs) {
     if (copyRefs) {
       name = name.copy(_allocator);
     }
+    AtomAndFlags info(weakDef);
+    _nameToAtom[name] = info;
+  }
 
-    _nameToAtom[name] = nullptr;
+  void addReExportedDylib(StringRef dylibPath) {
+    _reExportedDylibs.emplace_back(dylibPath);
+  }
+
+  StringRef installName() { return _installName; }
+
+  typedef std::function<MachODylibFile *(StringRef)> FindDylib;
+
+  void loadReExportedDylibs(FindDylib find) {
+    for (ReExportedDylib &entry : _reExportedDylibs) {
+      entry.file = find(entry.path);
+    }
   }
 
 private:
-  StringRef _dylib_name;
+  const SharedLibraryAtom *exports(StringRef name, StringRef installName,
+                                   llvm::BumpPtrAllocator &allocator) const {
+    // First, check if requested symbol is directly implemented by this dylib.
+    auto entry = _nameToAtom.find(name);
+    if (entry != _nameToAtom.end()) {
+      if (!entry->second.atom) {
+        // Lazily create SharedLibraryAtom.
+        entry->second.atom =
+          new (allocator) MachOSharedLibraryAtom(*this, name, installName,
+                                                 entry->second.weakDef);
+      }
+      return entry->second.atom;
+    }
+
+    // Next, check if symbol is implemented in some re-exported dylib.
+    for (const ReExportedDylib &dylib : _reExportedDylibs) {
+      assert(dylib.file);
+      auto atom = dylib.file->exports(name, installName, allocator);
+      if (atom)
+        return atom;
+    }
+
+    // Symbol not exported or re-exported by this dylib.
+    return nullptr;
+  }
+
+
+  struct ReExportedDylib {
+    ReExportedDylib(StringRef p) : path(p), file(nullptr) { }
+    StringRef       path;
+    MachODylibFile *file;
+  };
+
+  struct AtomAndFlags {
+    AtomAndFlags() : atom(nullptr), weakDef(false) { }
+    AtomAndFlags(bool weak) : atom(nullptr), weakDef(weak) { }
+    const SharedLibraryAtom  *atom;
+    bool                      weakDef;
+  };
+
+  StringRef _installName;
   atom_collection_vector<DefinedAtom>        _definedAtoms;
   atom_collection_vector<UndefinedAtom>      _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom>  _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>       _absoluteAtoms;
-
-  mutable std::unordered_map<StringRef, SharedLibraryAtom *> _nameToAtom;
+  std::vector<ReExportedDylib>               _reExportedDylibs;
+  mutable std::unordered_map<StringRef, AtomAndFlags> _nameToAtom;
   mutable llvm::BumpPtrAllocator _allocator;
 };
 

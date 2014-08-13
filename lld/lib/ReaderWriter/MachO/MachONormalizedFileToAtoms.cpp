@@ -671,12 +671,19 @@ normalizedObjectToAtoms(const NormalizedFile &normalizedFile, StringRef path,
 ErrorOr<std::unique_ptr<lld::File>>
 normalizedDylibToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                        bool copyRefs) {
+  // Instantiate SharedLibraryFile object.
   std::unique_ptr<MachODylibFile> file(
-      new MachODylibFile(normalizedFile.installName));
-
+                          new MachODylibFile(path, normalizedFile.installName));
+  // Tell MachODylibFile object about all symbols it exports.
   for (auto &sym : normalizedFile.globalSymbols) {
     assert((sym.scope & N_EXT) && "only expect external symbols here");
-    file->addSharedLibraryAtom(sym.name, copyRefs);
+    bool weakDef = (sym.desc & N_WEAK_DEF);
+    file->addExportedSymbol(sym.name, weakDef, copyRefs);
+  }
+  // Tell MachODylibFile object about all dylibs it re-exports.
+  for (const DependentDylib &dep : normalizedFile.dependentDylibs) {
+    if (dep.kind == llvm::MachO::LC_REEXPORT_DYLIB)
+      file->addReExportedDylib(dep.path);
   }
 
   return std::unique_ptr<File>(std::move(file));
@@ -715,6 +722,7 @@ normalizedToAtoms(const NormalizedFile &normalizedFile, StringRef path,
                   bool copyRefs) {
   switch (normalizedFile.fileType) {
   case MH_DYLIB:
+  case MH_DYLIB_STUB:
     return normalizedDylibToAtoms(normalizedFile, path, copyRefs);
   case MH_OBJECT:
     return normalizedObjectToAtoms(normalizedFile, path, copyRefs);

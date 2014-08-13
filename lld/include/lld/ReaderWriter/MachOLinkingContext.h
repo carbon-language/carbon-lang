@@ -14,6 +14,7 @@
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
 
@@ -25,6 +26,7 @@ namespace lld {
 
 namespace mach_o {
 class ArchHandler; 
+class MachODylibFile;
 }
 
 class MachOLinkingContext : public LinkingContext {
@@ -56,6 +58,7 @@ public:
 
   void addPasses(PassManager &pm) override;
   bool validateImpl(raw_ostream &diagnostics) override;
+  bool createImplicitFiles(std::vector<std::unique_ptr<File>> &) const override;
 
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
@@ -82,6 +85,8 @@ public:
   bool printAtoms() const { return _printAtoms; }
   bool testingLibResolution() const { return _testingLibResolution; }
   const StringRefVector &searchDirs() const { return _searchDirs; }
+  void addSysLibRoot(StringRef sysPath) { _syslibRoots.push_back(sysPath); }
+  const StringRefVector &sysLibRoots() const { return _syslibRoots; }
 
   /// \brief Checks whether a given path on the filesystem exists.
   ///
@@ -96,9 +101,7 @@ public:
   /// The set of paths added consists of approximately all syslibroot-prepended
   /// versions of libPath that exist, or the original libPath if there are none
   /// for whatever reason. With various edge-cases for compatibility.
-  void addModifiedSearchDir(StringRef libPath,
-                            const StringRefVector &syslibRoots,
-                            bool isSystemPath = false);
+  void addModifiedSearchDir(StringRef libPath, bool isSystemPath = false);
 
   /// \brief Determine whether -lFoo can be resolve within the given path, and
   /// return the filename if so.
@@ -177,11 +180,19 @@ public:
   /// Stub creation Pass should be run.
   bool needsStubsPass() const;
 
-  // GOT createion Pass should be run.
+  // GOT creation Pass should be run.
   bool needsGOTPass() const;
 
   /// Magic symbol name stubs will need to help lazy bind.
   StringRef binderSymbolName() const;
+
+  /// Used to keep track of direct and indirect dylibs.
+  void registerDylib(mach_o::MachODylibFile *dylib);
+
+  /// Used to find indirect dylibs. Instantiates a MachODylibFile if one
+  /// has not already been made for the requested dylib.  Uses -L and -F
+  /// search paths to allow indirect dylibs to be overridden.
+  mach_o::MachODylibFile* findIndirectDylib(StringRef path) const;
 
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
@@ -198,6 +209,8 @@ public:
 
 private:
   Writer &writer() const override;
+  mach_o::MachODylibFile* loadIndirectDylib(StringRef path) const;
+
 
   struct ArchInfo {
     StringRef                 archName;
@@ -217,6 +230,7 @@ private:
 
   std::set<StringRef> _existingPaths; // For testing only.
   StringRefVector _searchDirs;
+  StringRefVector _syslibRoots;
   HeaderFileType _outputMachOType;   // e.g MH_EXECUTE
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info
@@ -235,6 +249,9 @@ private:
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
   std::vector<SectionAlign> _sectAligns;
+  llvm::StringMap<mach_o::MachODylibFile*> _pathToDylibMap;
+  std::set<mach_o::MachODylibFile*> _allDylibs;
+  mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
 };
 
 } // end namespace lld

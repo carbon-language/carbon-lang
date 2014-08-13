@@ -19,6 +19,7 @@
 
 #include "lld/Core/InputGraph.h"
 #include "lld/Core/ArchiveLibraryFile.h"
+#include "lld/Core/SharedLibraryFile.h"
 #include "lld/ReaderWriter/MachOLinkingContext.h"
 
 #include <map>
@@ -28,7 +29,7 @@ namespace lld {
 /// \brief Represents a MachO File
 class MachOFileNode : public FileNode {
 public:
-  MachOFileNode(MachOLinkingContext &, StringRef path, bool isWholeArchive)
+  MachOFileNode(StringRef path, bool isWholeArchive)
       : FileNode(path), _isWholeArchive(isWholeArchive) {}
 
   /// \brief Parse the input file to lld::File.
@@ -44,8 +45,8 @@ public:
     if (ctx.logInputFiles())
       diagnostics << *filePath << "\n";
 
+    std::vector<std::unique_ptr<File>> parsedFiles;
     if (_isWholeArchive) {
-      std::vector<std::unique_ptr<File>> parsedFiles;
       std::error_code ec = ctx.registry().parseFile(_buffer, parsedFiles);
       if (ec)
         return ec;
@@ -62,7 +63,17 @@ public:
         return std::error_code();
       }
     }
-    return ctx.registry().parseFile(_buffer, _files);
+    if (std::error_code ec = ctx.registry().parseFile(_buffer, parsedFiles))
+      return ec;
+    for (std::unique_ptr<File> &pf : parsedFiles) {
+      // If a dylib was parsed, inform LinkingContext about it.
+      if (SharedLibraryFile *shl = dyn_cast<SharedLibraryFile>(pf.get())) {
+        MachOLinkingContext *mctx = (MachOLinkingContext*)(&ctx);
+        mctx->registerDylib(reinterpret_cast<mach_o::MachODylibFile*>(shl));
+      }
+      _files.push_back(std::move(pf));
+    }
+    return std::error_code();
   }
 
   /// \brief Return the file that has to be processed by the resolver
