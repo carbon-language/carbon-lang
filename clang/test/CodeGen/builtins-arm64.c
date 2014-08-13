@@ -29,3 +29,17 @@ void barriers() {
   __builtin_arm_dsb(2);  //CHECK: call {{.*}} @llvm.aarch64.dsb(i32 2)
   __builtin_arm_isb(3);  //CHECK: call {{.*}} @llvm.aarch64.isb(i32 3)
 }
+
+void prefetch() {
+  __builtin_arm_prefetch(0, 1, 2, 0, 1); // pstl3keep
+// CHECK: call {{.*}} @llvm.prefetch(i8* null, i32 1, i32 1, i32 1)
+
+  __builtin_arm_prefetch(0, 0, 0, 1, 1); // pldl1keep
+// CHECK: call {{.*}} @llvm.prefetch(i8* null, i32 0, i32 0, i32 1)
+
+  __builtin_arm_prefetch(0, 0, 0, 1, 1); // pldl1strm
+// CHECK: call {{.*}} @llvm.prefetch(i8* null, i32 0, i32 0, i32 1)
+
+  __builtin_arm_prefetch(0, 0, 0, 0, 0); // plil1keep
+// CHECK: call {{.*}} @llvm.prefetch(i8* null, i32 0, i32 3, i32 0)
+}
