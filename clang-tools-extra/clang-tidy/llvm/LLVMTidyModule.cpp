@@ -10,6 +10,7 @@
 #include "../ClangTidy.h"
 #include "../ClangTidyModule.h"
 #include "../ClangTidyModuleRegistry.h"
+#include "HeaderGuardCheck.h"
 #include "IncludeOrderCheck.h"
 #include "NamespaceCommentCheck.h"
 #include "TwineLocalCheck.h"
@@ -20,6 +21,8 @@ namespace tidy {
 class LLVMModule : public ClangTidyModule {
 public:
   void addCheckFactories(ClangTidyCheckFactories &CheckFactories) override {
+    CheckFactories.addCheckFactory(
+        "llvm-header-guard", new ClangTidyCheckFactory<LLVMHeaderGuardCheck>());
     CheckFactories.addCheckFactory(
         "llvm-include-order", new ClangTidyCheckFactory<IncludeOrderCheck>());
     CheckFactories.addCheckFactory(

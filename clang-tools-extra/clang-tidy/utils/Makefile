@@ -1,4 +1,4 @@
-##===- tools/extra/clang-tidy/Makefile ---------------------*- Makefile -*-===##
+##===- clang-tidy/google/Makefile --------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -6,11 +6,7 @@
 # License. See LICENSE.TXT for details.
 #
 ##===----------------------------------------------------------------------===##
-
-CLANG_LEVEL := ../../..
-LIBRARYNAME := clangTidy
-include $(CLANG_LEVEL)/../../Makefile.config
-
-DIRS = llvm google misc tool utils
+CLANG_LEVEL := ../../../..
+LIBRARYNAME := clangTidyUtils
 
 include $(CLANG_LEVEL)/Makefile
