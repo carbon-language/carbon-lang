@@ -251,9 +251,8 @@ CodeGenTypes::arrangeCXXConstructorCall(const CallArgList &args,
                                         unsigned ExtraArgs) {
   // FIXME: Kill copy.
   SmallVector<CanQualType, 16> ArgTypes;
-  for (CallArgList::const_iterator i = args.begin(), e = args.end(); i != e;
-       ++i)
-    ArgTypes.push_back(Context.getCanonicalParamType(i->Ty));
+  for (const auto &Arg : args)
+    ArgTypes.push_back(Context.getCanonicalParamType(Arg.Ty));
 
   CanQual<FunctionProtoType> FPT = GetFormalType(D);
   RequiredArgs Required = RequiredArgs::forPrototypePlus(FPT, 1 + ExtraArgs);
@@ -426,9 +425,8 @@ CodeGenTypes::arrangeFreeFunctionCall(QualType resultType,
                                       RequiredArgs required) {
   // FIXME: Kill copy.
   SmallVector<CanQualType, 16> argTypes;
-  for (CallArgList::const_iterator i = args.begin(), e = args.end();
-       i != e; ++i)
-    argTypes.push_back(Context.getCanonicalParamType(i->Ty));
+  for (const auto &Arg : args)
+    argTypes.push_back(Context.getCanonicalParamType(Arg.Ty));
   return arrangeLLVMFunctionInfo(GetReturnType(resultType), false, argTypes,
                                  info, required);
 }
@@ -440,9 +438,8 @@ CodeGenTypes::arrangeCXXMethodCall(const CallArgList &args,
                                    RequiredArgs required) {
   // FIXME: Kill copy.
   SmallVector<CanQualType, 16> argTypes;
-  for (CallArgList::const_iterator i = args.begin(), e = args.end();
-       i != e; ++i)
-    argTypes.push_back(Context.getCanonicalParamType(i->Ty));
+  for (const auto &Arg : args)
+    argTypes.push_back(Context.getCanonicalParamType(Arg.Ty));
 
   FunctionType::ExtInfo info = FPT->getExtInfo();
   return arrangeLLVMFunctionInfo(GetReturnType(FPT->getReturnType()), true,
@@ -454,9 +451,8 @@ const CGFunctionInfo &CodeGenTypes::arrangeFreeFunctionDeclaration(
     const FunctionType::ExtInfo &info, bool isVariadic) {
   // FIXME: Kill copy.
   SmallVector<CanQualType, 16> argTypes;
-  for (FunctionArgList::const_iterator i = args.begin(), e = args.end();
-       i != e; ++i)
-    argTypes.push_back(Context.getCanonicalParamType((*i)->getType()));
+  for (auto Arg : args)
+    argTypes.push_back(Context.getCanonicalParamType(Arg->getType()));
 
   RequiredArgs required =
     (isVariadic ? RequiredArgs(args.size()) : RequiredArgs::All);
@@ -2898,7 +2894,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
           // We don't know what we're loading from.
           LI->setAlignment(1);
           Args.push_back(LI);
-          
+
           // Validate argument match.
           checkArgMatches(LI, IRArgNo, IRFuncTy);
         }
@@ -2906,7 +2902,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
         // In the simple case, just pass the coerced loaded value.
         Args.push_back(CreateCoercedLoad(SrcPtr, ArgInfo.getCoerceToType(),
                                          *this));
-        
+
         // Validate argument match.
         checkArgMatches(Args.back(), IRArgNo, IRFuncTy);
       }

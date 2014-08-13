@@ -208,10 +208,7 @@ void CodeGenFunction::StartThunk(llvm::Function *Fn, GlobalDecl GD,
   CGM.getCXXABI().buildThisParam(*this, FunctionArgs);
 
   // Add the rest of the parameters.
-  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
-                                          E = MD->param_end();
-       I != E; ++I)
-    FunctionArgs.push_back(*I);
+  FunctionArgs.append(MD->param_begin(), MD->param_end());
 
   if (isa<CXXDestructorDecl>(MD))
     CGM.getCXXABI().addImplicitStructorParams(*this, ResultType, FunctionArgs);
