@@ -20,12 +20,12 @@ using namespace elf;
 static void relocR_AARCH64_ABS64(uint8_t *location, uint64_t P, uint64_t S,
                                  int64_t A) {
   int64_t result = (int64_t)S + A;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: 0x" << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::ulittle64_t *>(location) =
       result |
       (int64_t) * reinterpret_cast<llvm::support::little64_t *>(location);
@@ -44,12 +44,12 @@ static void relocR_AARCH64_PREL32(uint8_t *location, uint64_t P, uint64_t S,
 static void relocR_AARCH64_ABS32(uint8_t *location, uint64_t P, uint64_t S,
                                  int64_t A) {
   int32_t result = (int32_t)(S + A);
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: 0x" << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: 0x" << Twine::utohexstr(S);
+      llvm::dbgs() << " A: 0x" << Twine::utohexstr(A);
+      llvm::dbgs() << " P: 0x" << Twine::utohexstr(P);
+      llvm::dbgs() << " result: 0x" << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -64,14 +64,14 @@ static void relocR_AARCH64_ADR_PREL_PG_HI21(uint8_t *location, uint64_t P,
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
   immhi = immhi << 3;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
-                  llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
+      llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       immlo | immhi |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -86,14 +86,14 @@ static void relocR_AARCH64_ADR_PREL_LO21(uint8_t *location, uint64_t P,
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
   immhi = immhi << 3;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
-                  llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
+      llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       immlo | immhi |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -105,12 +105,12 @@ static void relocR_AARCH64_ADD_ABS_LO12_NC(uint8_t *location, uint64_t P,
                                            uint64_t S, int64_t A) {
   int32_t result = (int32_t)((S + A) & 0xFFF);
   result <<= 10;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -120,12 +120,12 @@ static void relocJump26(uint8_t *location, uint64_t P, uint64_t S, int64_t A) {
   int32_t result = (int32_t)((S + A) - P);
   result &= 0x0FFFFFFC;
   result >>= 2;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -137,12 +137,12 @@ static void relocR_AARCH64_CONDBR19(uint8_t *location, uint64_t P, uint64_t S,
   int32_t result = (int32_t)((S + A) - P);
   result &= 0x01FFFFC;
   result <<= 3;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -153,12 +153,12 @@ static void relocR_AARCH64_LDST8_ABS_LO12_NC(uint8_t *location, uint64_t P,
                                              uint64_t S, int64_t A) {
   int32_t result = (int32_t)((S + A) & 0xFFF);
   result <<= 10;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -170,12 +170,12 @@ static void relocR_AARCH64_LDST16_ABS_LO12_NC(uint8_t *location, uint64_t P,
   int32_t result = (int32_t)(S + A);
   result &= 0x0FFC;
   result <<= 9;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -187,12 +187,12 @@ static void relocR_AARCH64_LDST32_ABS_LO12_NC(uint8_t *location, uint64_t P,
   int32_t result = (int32_t)(S + A);
   result &= 0x0FFC;
   result <<= 8;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -204,12 +204,12 @@ static void relocR_AARCH64_LDST64_ABS_LO12_NC(uint8_t *location, uint64_t P,
   int32_t result = (int32_t)(S + A);
   result &= 0x0FF8;
   result <<= 7;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -221,12 +221,12 @@ static void relocR_AARCH64_LDST128_ABS_LO12_NC(uint8_t *location, uint64_t P,
   int32_t result = (int32_t)(S + A);
   result &= 0x0FF8;
   result <<= 6;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -240,14 +240,14 @@ static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
   immhi = immhi << 3;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
-                  llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
+      llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       immlo | immhi |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -257,12 +257,12 @@ static void relocR_AARCH64_ADR_GOT_PAGE(uint8_t *location, uint64_t P,
 static void relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
                                             uint64_t S, int64_t A) {
   int32_t result = S + A;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   result &= 0xFF8;
   result <<= 7;
   *reinterpret_cast<llvm::support::little32_t *>(location) =
@@ -274,12 +274,12 @@ static void relocR_AARCH64_LD64_GOT_LO12_NC(uint8_t *location, uint64_t P,
 static void relocADD_AARCH64_GOTRELINDEX(uint8_t *location, uint64_t P,
                                          uint64_t S, int64_t A) {
   int32_t result = S + A;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   result &= 0xFFF;
   result <<= 10;
   *reinterpret_cast<llvm::support::little32_t *>(location) =
@@ -297,14 +297,14 @@ static void relocR_AARCH64_TLSIE_ADR_GOTTPREL_PAGE21(uint8_t *location,
   uint32_t immhi = result & 0x1FFFFC;
   immlo = immlo << 29;
   immhi = immhi << 3;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
-                  llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " immhi: " << Twine::utohexstr(immhi);
+      llvm::dbgs() << " immlo: " << Twine::utohexstr(immlo);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       immlo | immhi |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -317,12 +317,12 @@ static void relocR_AARCH64_TLSIE_LD64_GOTTPREL_LO12_NC(uint8_t *location,
   int32_t result = S + A;
   result &= 0xFF8;
   result <<= 7;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -334,12 +334,12 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_HI12(uint8_t *location, uint64_t P,
   int32_t result = S + A;
   result &= 0x0FFF000;
   result >>= 2;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);
@@ -352,12 +352,12 @@ static void relocR_AARCH64_TLSLE_ADD_TPREL_LO12_NC(uint8_t *location,
   int32_t result = S + A;
   result &= 0x0FFF;
   result <<= 10;
-  DEBUG_WITH_TYPE("AArch64", llvm::dbgs() << "\t\tHandle " << __func__ << " -";
-                  llvm::dbgs() << " S: " << Twine::utohexstr(S);
-                  llvm::dbgs() << " A: " << Twine::utohexstr(A);
-                  llvm::dbgs() << " P: " << Twine::utohexstr(P);
-                  llvm::dbgs() << " result: " << Twine::utohexstr(result)
-                               << "\n");
+  DEBUG_WITH_TYPE(
+      "AArch64", llvm::dbgs() << "\t\tHandle " << LLVM_FUNCTION_NAME << " -";
+      llvm::dbgs() << " S: " << Twine::utohexstr(S);
+      llvm::dbgs() << " A: " << Twine::utohexstr(A);
+      llvm::dbgs() << " P: " << Twine::utohexstr(P);
+      llvm::dbgs() << " result: " << Twine::utohexstr(result) << "\n");
   *reinterpret_cast<llvm::support::little32_t *>(location) =
       result |
       (int32_t) * reinterpret_cast<llvm::support::little32_t *>(location);

@@ -112,7 +112,7 @@ template <class Derived> class AArch64RelocationPass : public Pass {
   void handleReference(const DefinedAtom &atom, const Reference &ref) {
     DEBUG_WITH_TYPE(
         "AArch64", llvm::dbgs()
-                       << "\t" << __func__ << "()"
+                       << "\t" << LLVM_FUNCTION_NAME << "()"
                        << ":   Name of Defined Atom: " << atom.name().str();
         llvm::dbgs() << "   kindValue: " << ref.kindValue() << "\n");
     if (ref.kindNamespace() != Reference::KindNamespace::ELF)
