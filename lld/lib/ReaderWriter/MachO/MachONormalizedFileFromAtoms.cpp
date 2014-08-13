@@ -761,11 +761,16 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
   const uint32_t start = file.globalSymbols.size() + file.localSymbols.size();
   for (AtomAndIndex &ai : undefs) {
     Symbol sym;
+    uint16_t desc = 0;
+    if (!rMode) {
+      uint8_t ordinal = dylibOrdinal(dyn_cast<SharedLibraryAtom>(ai.atom));
+      llvm::MachO::SET_LIBRARY_ORDINAL(desc, ordinal);
+    }
     sym.name  = ai.atom->name();
     sym.type  = N_UNDF;
     sym.scope = N_EXT;
     sym.sect  = 0;
-    sym.desc  = 0;
+    sym.desc  = desc;
     sym.value = 0;
     _atomToSymbolIndex[ai.atom] = file.undefinedSymbols.size() + start;
     file.undefinedSymbols.push_back(sym);

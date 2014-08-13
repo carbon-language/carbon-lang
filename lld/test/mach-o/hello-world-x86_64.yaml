@@ -1,5 +1,5 @@
 # RUN: lld -flavor darwin -arch x86_64 -macosx_version_min 10.8 %s -o %t  && \
-# RUN: llvm-nm %t | FileCheck %s
+# RUN: llvm-nm -m -n %t | FileCheck %s
 #
 # Test that x86_64 hello-world can be linked into a mach-o executable
 #
@@ -138,7 +138,7 @@ global-symbols:
 
 ...
 
-# CHECK:	U ___stdoutp
-# CHECK:	U _fprintf
-# CHECK:	{{[0-9a-f]+}} T _main
-# CHECK:	U dyld_stub_binder
+# CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external _main
+# CHECK:	(undefined) external ___stdoutp (from libSystem)
+# CHECK:	(undefined) external _fprintf (from libSystem)
+# CHECK:	(undefined) external dyld_stub_binder (from libSystem)

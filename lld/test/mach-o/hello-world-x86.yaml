@@ -1,5 +1,5 @@
 # RUN: lld -flavor darwin -arch i386 -macosx_version_min 10.8 %s -o %t  && \
-# RUN: llvm-nm %t | FileCheck %s
+# RUN: llvm-nm -m %t | FileCheck %s
 #
 # Test that i386 hello-world can be linked into a mach-o executable
 #
@@ -83,6 +83,6 @@ global-symbols:
 
 ...
 
-# CHECK:	{{[0-9a-f]+}} T _main
-# CHECK:	U _printf
-# CHECK:	U dyld_stub_binder
+# CHECK:	{{[0-9a-f]+}} (__TEXT,__text) external _main
+# CHECK:	(undefined) external _printf (from libSystem)
+# CHECK:	(undefined) external dyld_stub_binder (from libSystem)
