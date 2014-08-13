@@ -40,7 +40,7 @@ int glob;
 // CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMOD_MODULE_H:.*/Modules/Inputs/Module\.framework[/\\]Headers[/\\]Module\.h]] | {{.*}} | hash loc: <invalid>
 // CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMODHDR:.*/Modules/Inputs/Module.framework[/\\]Headers.]]Sub.h | name: "Module/Sub.h" | hash loc: [[TMOD_MODULE_H]]:23:1 | isImport: 0 | isAngled: 1
 // CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMODHDR]]Sub2.h | name: "Module/Sub2.h" | hash loc: [[TMODHDR]]Sub.h:1:1 | isImport: 0 | isAngled: 1
-// CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMODHDR]]Buried/Treasure.h | name: "Module/Buried/Treasure.h" | hash loc: [[TMOD_MODULE_H]]:24:1 | isImport: 0 | isAngled: 1
+// CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMODHDR]]Buried{{[/\\]}}Treasure.h | name: "Module/Buried/Treasure.h" | hash loc: [[TMOD_MODULE_H]]:24:1 | isImport: 0 | isAngled: 1
 // CHECK-TMOD-NEXT: [ppIncludedFile]: [[TMOD_SUB_H:.*[/\\]Modules[/\\]Inputs[/\\]Module\.framework[/\\]Frameworks[/\\]SubFramework\.framework[/\\]Headers[/\\]SubFramework\.h]] | {{.*}} | hash loc: <invalid>
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: function | name: getModuleVersion | {{.*}} | loc: [[TMOD_MODULE_H]]:9:13
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: objc-class | name: Module | {{.*}} | loc: [[TMOD_MODULE_H]]:15:12
@@ -52,6 +52,6 @@ int glob;
 // CHECK-TMOD-NEXT: [importedASTFile]: [[PCM]] | loc: [[TMODHDR]]Sub.h:1:2 | name: "Module.Sub2" | isImplicit: 1
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Module_Sub | {{.*}} | loc: [[TMODHDR]]Sub.h:2:6
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Module_Sub2 | USR: c:@Module_Sub2 | {{.*}} | loc: [[TMODHDR]]Sub2.h:1:6
-// CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Buried_Treasure | {{.*}} | loc: [[TMODHDR]]Buried/Treasure.h:1:11
+// CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: Buried_Treasure | {{.*}} | loc: [[TMODHDR]]Buried{{[/\\]}}Treasure.h:1:11
 // CHECK-TMOD-NEXT: [indexDeclaration]: kind: variable | name: module_subframework | {{.*}} | loc: [[TMOD_SUB_H]]:4:7
 // CHECK-TMOD-NOT: [indexDeclaration]
