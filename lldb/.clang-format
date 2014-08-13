@@ -2,3 +2,6 @@ BasedOnStyle: LLVM
 IndentWidth:     4
 ColumnLimit:     120
 BreakBeforeBraces: Allman
+AlwaysBreakAfterDefinitionReturnType: true
+AllowShortFunctionsOnASingleLine: Inline
+BreakConstructorInitializersBeforeComma: true
