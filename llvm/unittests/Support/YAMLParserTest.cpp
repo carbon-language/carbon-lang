@@ -18,7 +18,7 @@
 namespace llvm {
 
 static void SuppressDiagnosticsOutput(const SMDiagnostic &, void *) {
-  // Prevent SourceMgr from writing errors to stderr 
+  // Prevent SourceMgr from writing errors to stderr
   // to reduce noise in unit test runs.
 }
 
