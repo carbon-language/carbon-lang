@@ -238,9 +238,13 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
     // Do branch inversion.
     BasicBlock *CurrBlock = LastCondBlock;
     bool EverChanged = false;
-    while (1) {
+    for (;CurrBlock != FirstCondBlock;
+          CurrBlock = CurrBlock->getSinglePredecessor()) {
       BranchInst *BI = dyn_cast<BranchInst>(CurrBlock->getTerminator());
       CmpInst *CI = dyn_cast<CmpInst>(BI->getCondition());
+      if (!CI)
+        continue;
+
       CmpInst::Predicate Predicate = CI->getPredicate();
       // Canonicalize icmp_ne -> icmp_eq, fcmp_one -> fcmp_oeq
       if ((Predicate == CmpInst::ICMP_NE) || (Predicate == CmpInst::FCMP_ONE)) {
@@ -248,9 +252,6 @@ bool FlattenCFGOpt::FlattenParallelAndOr(BasicBlock *BB, IRBuilder<> &Builder,
         BI->swapSuccessors();
         EverChanged = true;
       }
-      if (CurrBlock == FirstCondBlock)
-        break;
-      CurrBlock = CurrBlock->getSinglePredecessor();
     }
     return EverChanged;
   }
