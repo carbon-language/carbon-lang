@@ -11,6 +11,6 @@ CLANG_LEVEL := ../../..
 LIBRARYNAME := clangTidy
 include $(CLANG_LEVEL)/../../Makefile.config
 
-DIRS = llvm google misc tool utils
+DIRS = utils llvm google misc tool
 
 include $(CLANG_LEVEL)/Makefile
