@@ -152,6 +152,7 @@ private:
   unsigned Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
   unsigned Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
 
+  unsigned AArch64MaterializeInt(const ConstantInt *CI, MVT VT);
   unsigned AArch64MaterializeFP(const ConstantFP *CFP, MVT VT);
   unsigned AArch64MaterializeGV(const GlobalValue *GV);
 
@@ -213,28 +214,28 @@ unsigned AArch64FastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   return 0;
 }
 
+unsigned AArch64FastISel::AArch64MaterializeInt(const ConstantInt *CI, MVT VT) {
+  if (VT > MVT::i64)
+    return 0;
+  return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+}
+
 unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
   if (VT != MVT::f32 && VT != MVT::f64)
     return 0;
 
   const APFloat Val = CFP->getValueAPF();
-  bool is64bit = (VT == MVT::f64);
+  bool Is64Bit = (VT == MVT::f64);
 
   // This checks to see if we can use FMOV instructions to materialize
   // a constant, otherwise we have to materialize via the constant pool.
   if (TLI.isFPImmLegal(Val, VT)) {
-    int Imm;
-    unsigned Opc;
-    if (is64bit) {
-      Imm = AArch64_AM::getFP64Imm(Val);
-      Opc = AArch64::FMOVDi;
-    } else {
-      Imm = AArch64_AM::getFP32Imm(Val);
-      Opc = AArch64::FMOVSi;
-    }
+    int Imm = Is64Bit ? AArch64_AM::getFP64Imm(Val)
+                      : AArch64_AM::getFP32Imm(Val);
+    unsigned Opc = Is64Bit ? AArch64::FMOVDi : AArch64::FMOVSi;
     unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-        .addImm(Imm);
+      .addImm(Imm);
     return ResultReg;
   }
 
@@ -244,16 +245,17 @@ unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
   if (Align == 0)
     Align = DL.getTypeAllocSize(CFP->getType());
 
-  unsigned Idx = MCP.getConstantPoolIndex(cast<Constant>(CFP), Align);
+  unsigned CPI = MCP.getConstantPoolIndex(cast<Constant>(CFP), Align);
   unsigned ADRPReg = createResultReg(&AArch64::GPR64commonRegClass);
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
-          ADRPReg).addConstantPoolIndex(Idx, 0, AArch64II::MO_PAGE);
+          ADRPReg)
+    .addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGE);
 
-  unsigned Opc = is64bit ? AArch64::LDRDui : AArch64::LDRSui;
+  unsigned Opc = Is64Bit ? AArch64::LDRDui : AArch64::LDRSui;
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
   BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
-      .addReg(ADRPReg)
-      .addConstantPoolIndex(Idx, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
+    .addReg(ADRPReg)
+    .addConstantPoolIndex(CPI, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC);
   return ResultReg;
 }
 
@@ -280,25 +282,26 @@ unsigned AArch64FastISel::AArch64MaterializeGV(const GlobalValue *GV) {
     // ADRP + LDRX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
             ADRPReg)
-        .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGE);
+      .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGE);
 
     ResultReg = createResultReg(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::LDRXui),
             ResultReg)
-        .addReg(ADRPReg)
-        .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGEOFF |
-                          AArch64II::MO_NC);
+      .addReg(ADRPReg)
+      .addGlobalAddress(GV, 0, AArch64II::MO_GOT | AArch64II::MO_PAGEOFF |
+                        AArch64II::MO_NC);
   } else {
     // ADRP + ADDX
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADRP),
-            ADRPReg).addGlobalAddress(GV, 0, AArch64II::MO_PAGE);
+            ADRPReg)
+      .addGlobalAddress(GV, 0, AArch64II::MO_PAGE);
 
     ResultReg = createResultReg(&AArch64::GPR64spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADDXri),
             ResultReg)
-        .addReg(ADRPReg)
-        .addGlobalAddress(GV, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC)
-        .addImm(0);
+      .addReg(ADRPReg)
+      .addGlobalAddress(GV, 0, AArch64II::MO_PAGEOFF | AArch64II::MO_NC)
+      .addImm(0);
   }
   return ResultReg;
 }
@@ -311,8 +314,9 @@ unsigned AArch64FastISel::TargetMaterializeConstant(const Constant *C) {
     return 0;
   MVT VT = CEVT.getSimpleVT();
 
-  // FIXME: Handle ConstantInt.
-  if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
+  if (const auto *CI = dyn_cast<ConstantInt>(C))
+    return AArch64MaterializeInt(CI, VT);
+  else if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
     return AArch64MaterializeFP(CFP, VT);
   else if (const GlobalValue *GV = dyn_cast<GlobalValue>(C))
     return AArch64MaterializeGV(GV);
