@@ -25,16 +25,6 @@ class TestObjectCache : public ObjectCache {
 public:
   TestObjectCache() : DuplicateInserted(false) { }
 
-  virtual ~TestObjectCache() {
-    // Free any buffers we've allocated.
-    SmallVectorImpl<MemoryBuffer *>::iterator it, end;
-    end = AllocatedBuffers.end();
-    for (it = AllocatedBuffers.begin(); it != end; ++it) {
-      delete *it;
-    }
-    AllocatedBuffers.clear();
-  }
-
   virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) {
     // If we've seen this module before, note that.
     const std::string ModuleID = M->getModuleIdentifier();
@@ -75,14 +65,16 @@ public:
 private:
   MemoryBuffer *copyBuffer(const MemoryBuffer *Buf) {
     // Create a local copy of the buffer.
-    MemoryBuffer *NewBuffer = MemoryBuffer::getMemBufferCopy(Buf->getBuffer());
-    AllocatedBuffers.push_back(NewBuffer);
-    return NewBuffer;
+    std::unique_ptr<MemoryBuffer> NewBuffer(
+        MemoryBuffer::getMemBufferCopy(Buf->getBuffer()));
+    MemoryBuffer *Ret = NewBuffer.get();
+    AllocatedBuffers.push_back(std::move(NewBuffer));
+    return Ret;
   }
 
   StringMap<const MemoryBuffer *> ObjMap;
   StringSet<>                     ModulesLookedUp;
-  SmallVector<MemoryBuffer *, 2>  AllocatedBuffers;
+  SmallVector<std::unique_ptr<MemoryBuffer>, 2> AllocatedBuffers;
   bool                            DuplicateInserted;
 };
 
