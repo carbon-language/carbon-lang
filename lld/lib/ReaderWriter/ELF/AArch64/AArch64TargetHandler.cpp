@@ -20,7 +20,7 @@ AArch64TargetHandler::AArch64TargetHandler(AArch64LinkingContext &context)
     : DefaultTargetHandler(context), _context(context),
       _AArch64TargetLayout(new AArch64TargetLayout<AArch64ELFType>(context)),
       _AArch64RelocationHandler(
-          new AArch64TargetRelocationHandler(*_AArch64TargetLayout.get())) {}
+          new AArch64TargetRelocationHandler()) {}
 
 void AArch64TargetHandler::registerRelocationNames(Registry &registry) {
   registry.addKindTable(Reference::KindNamespace::ELF,

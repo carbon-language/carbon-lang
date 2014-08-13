@@ -21,8 +21,7 @@ template <class ELFT> class AArch64TargetLayout;
 class AArch64TargetRelocationHandler final
     : public TargetRelocationHandler<AArch64ELFType> {
 public:
-  AArch64TargetRelocationHandler(AArch64TargetLayout<AArch64ELFType> &layout)
-      : _tlsSize(0), _AArch64Layout(layout) {}
+  AArch64TargetRelocationHandler() {}
 
   std::error_code applyRelocation(ELFWriter &, llvm::FileOutputBuffer &,
                                   const lld::AtomLayout &,
@@ -31,11 +30,6 @@ public:
   virtual int64_t relocAddend(const Reference &) const;
 
   static const Registry::KindStrings kindStrings[];
-
-private:
-  // Cached size of the TLS segment.
-  mutable uint64_t _tlsSize;
-  AArch64TargetLayout<AArch64ELFType> &_AArch64Layout;
 };
 
 } // end namespace elf
