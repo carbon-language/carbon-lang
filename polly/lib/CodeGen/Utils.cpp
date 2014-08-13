@@ -24,8 +24,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
   BasicBlock *StartBlock, *SplitBlock, *NewBlock;
   Region &R = S.getRegion();
   PollyIRBuilder Builder(R.getEntry());
-  DominatorTree &DT =
-      P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
   RegionInfo &RI = P->getAnalysis<RegionInfoPass>().getRegionInfo();
   LoopInfo &LI = P->getAnalysis<LoopInfo>();
 
