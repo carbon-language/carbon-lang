@@ -169,8 +169,8 @@ symbol table entries. Here is an example of the "hello world" module:
     }
 
     ; Named metadata
-    !1 = metadata !{i32 42}
-    !foo = !{!1, null}
+    !0 = metadata !{i32 42, null, metadata !"string"}
+    !foo = !{!0}
 
 This example is made up of a :ref:`global variable <globalvars>` named
 "``.str``", an external declaration of the "``puts``" function, a
