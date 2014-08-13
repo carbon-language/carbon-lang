@@ -536,7 +536,9 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, MVT VT) {
       (ARM_AM::getSOImmVal(Imm) != -1);
     if (UseImm) {
       unsigned Opc = isThumb2 ? ARM::t2MVNi : ARM::MVNi;
-      unsigned ImmReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+      const TargetRegisterClass *RC = isThumb2 ? &ARM::rGPRRegClass :
+                                                 &ARM::GPRRegClass;
+      unsigned ImmReg = createResultReg(RC);
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                               TII.get(Opc), ImmReg)
                       .addImm(Imm));
