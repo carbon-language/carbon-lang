@@ -7327,22 +7327,126 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   // Input: [a, b, c, d, e, f, g, h] -PSHUFD[0,2,1,3]-> [a, b, e, f, c, d, g, h]
   // Mask:  [0, 1, 2, 7, 4, 5, 6, 3] -----------------> [0, 1, 4, 7, 2, 3, 6, 5]
   //
-  // Before we had 3-1 in the low half and 3-1 in the high half. Afterward, 2-2
-  // and 2-2.
-  auto balanceSides = [&](ArrayRef<int> ThreeInputs, int OneInput,
-                          int ThreeInputHalfSum, int OneInputHalfOffset) {
+  // However in some very rare cases we have a 1-into-3 or 3-into-1 on one half
+  // and an existing 2-into-2 on the other half. In this case we may have to
+  // pre-shuffle the 2-into-2 half to avoid turning it into a 3-into-1 or
+  // 1-into-3 which could cause us to cycle endlessly fixing each side in turn.
+  // Fortunately, we don't have to handle anything but a 2-into-2 pattern
+  // because any other situation (including a 3-into-1 or 1-into-3 in the other
+  // half than the one we target for fixing) will be fixed when we re-enter this
+  // path. We will also combine away any sequence of PSHUFD instructions that
+  // result into a single instruction. Here is an example of the tricky case:
+  //
+  // Input: [a, b, c, d, e, f, g, h] -PSHUFD[0,2,1,3]-> [a, b, e, f, c, d, g, h]
+  // Mask:  [3, 7, 1, 0, 2, 7, 3, 5] -THIS-IS-BAD!!!!-> [5, 7, 1, 0, 4, 7, 5, 3]
+  //
+  // This now has a 1-into-3 in the high half! Instead, we do two shuffles:
+  //
+  // Input: [a, b, c, d, e, f, g, h] PSHUFHW[0,2,1,3]-> [a, b, c, d, e, g, f, h]
+  // Mask:  [3, 7, 1, 0, 2, 7, 3, 5] -----------------> [3, 7, 1, 0, 2, 7, 3, 6]
+  //
+  // Input: [a, b, c, d, e, g, f, h] -PSHUFD[0,2,1,3]-> [a, b, e, g, c, d, f, h]
+  // Mask:  [3, 7, 1, 0, 2, 7, 3, 6] -----------------> [5, 7, 1, 0, 4, 7, 5, 6]
+  //
+  // The result is fine to be handled by the generic logic.
+  auto balanceSides = [&](ArrayRef<int> AToAInputs, ArrayRef<int> BToAInputs,
+                          ArrayRef<int> BToBInputs, ArrayRef<int> AToBInputs,
+                          int AOffset, int BOffset) {
+    assert(AToAInputs.size() == 3 || AToAInputs.size() == 1 &&
+           "Must call this with A having 3 or 1 inputs from the A half.");
+    assert(BToAInputs.size() == 1 || BToAInputs.size() == 3 &&
+           "Must call this with B having 1 or 3 inputs from the B half.");
+    assert(AToAInputs.size() + BToAInputs.size() == 4 &&
+           "Must call this with either 3:1 or 1:3 inputs (summing to 4).");
+
     // Compute the index of dword with only one word among the three inputs in
     // a half by taking the sum of the half with three inputs and subtracting
     // the sum of the actual three inputs. The difference is the remaining
     // slot.
-    int DWordA = (ThreeInputHalfSum -
-                  std::accumulate(ThreeInputs.begin(), ThreeInputs.end(), 0)) /
-                 2;
-    int DWordB = OneInputHalfOffset / 2 + (OneInput / 2 + 1) % 2;
+    int ADWord, BDWord;
+    int &TripleDWord = AToAInputs.size() == 3 ? ADWord : BDWord;
+    int &OneInputDWord = AToAInputs.size() == 3 ? BDWord : ADWord;
+    int TripleInputOffset = AToAInputs.size() == 3 ? AOffset : BOffset;
+    ArrayRef<int> TripleInputs = AToAInputs.size() == 3 ? AToAInputs : BToAInputs;
+    int OneInput = AToAInputs.size() == 3 ? BToAInputs[0] : AToAInputs[0];
+    int TripleInputSum = 0 + 1 + 2 + 3 + (4 * TripleInputOffset);
+    int TripleNonInputIdx =
+        TripleInputSum - std::accumulate(TripleInputs.begin(), TripleInputs.end(), 0);
+    TripleDWord = TripleNonInputIdx / 2;
+
+    // We use xor with one to compute the adjacent DWord to whichever one the
+    // OneInput is in.
+    OneInputDWord = (OneInput / 2) ^ 1;
+
+    // Check for one tricky case: We're fixing a 3<-1 or a 1<-3 shuffle for AToA
+    // and BToA inputs. If there is also such a problem with the BToB and AToB
+    // inputs, we don't try to fix it necessarily -- we'll recurse and see it in
+    // the next pass. However, if we have a 2<-2 in the BToB and AToB inputs, it
+    // is essential that we don't *create* a 3<-1 as then we might oscillate.
+    if (BToBInputs.size() == 2 && AToBInputs.size() == 2) {
+      // Compute how many inputs will be flipped by swapping these DWords. We
+      // need
+      // to balance this to ensure we don't form a 3-1 shuffle in the other
+      // half.
+      int NumFlippedAToBInputs =
+          std::count(AToBInputs.begin(), AToBInputs.end(), 2 * ADWord) +
+          std::count(AToBInputs.begin(), AToBInputs.end(), 2 * ADWord + 1);
+      int NumFlippedBToBInputs =
+          std::count(BToBInputs.begin(), BToBInputs.end(), 2 * BDWord) +
+          std::count(BToBInputs.begin(), BToBInputs.end(), 2 * BDWord + 1);
+      if ((NumFlippedAToBInputs == 1 &&
+           (NumFlippedBToBInputs == 0 || NumFlippedBToBInputs == 2)) ||
+          (NumFlippedBToBInputs == 1 &&
+           (NumFlippedAToBInputs == 0 || NumFlippedAToBInputs == 2))) {
+        // We choose whether to fix the A half or B half based on whether that
+        // half has zero flipped inputs. At zero, we may not be able to fix it
+        // with that half. We also bias towards fixing the B half because that
+        // will more commonly be the high half, and we have to bias one way.
+        auto FixFlippedInputs = [&V, &DL, &Mask, &DAG](int PinnedIdx, int DWord,
+                                                       ArrayRef<int> Inputs) {
+          int FixIdx = PinnedIdx ^ 1; // The adjacent slot to the pinned slot.
+          bool IsFixIdxInput = std::find(Inputs.begin(), Inputs.end(),
+                                         PinnedIdx ^ 1) != Inputs.end();
+          // Determine whether the free index is in the flipped dword or the
+          // unflipped dword based on where the pinned index is. We use this bit
+          // in an xor to conditionally select the adjacent dword.
+          int FixFreeIdx = 2 * (DWord ^ (PinnedIdx / 2 == DWord));
+          bool IsFixFreeIdxInput = std::find(Inputs.begin(), Inputs.end(),
+                                             FixFreeIdx) != Inputs.end();
+          if (IsFixIdxInput == IsFixFreeIdxInput)
+            FixFreeIdx += 1;
+          IsFixFreeIdxInput = std::find(Inputs.begin(), Inputs.end(),
+                                        FixFreeIdx) != Inputs.end();
+          assert(IsFixIdxInput != IsFixFreeIdxInput &&
+                 "We need to be changing the number of flipped inputs!");
+          int PSHUFHalfMask[] = {0, 1, 2, 3};
+          std::swap(PSHUFHalfMask[FixFreeIdx % 4], PSHUFHalfMask[FixIdx % 4]);
+          V = DAG.getNode(FixIdx < 4 ? X86ISD::PSHUFLW : X86ISD::PSHUFHW, DL,
+                          MVT::v8i16, V,
+                          getV4X86ShuffleImm8ForMask(PSHUFHalfMask, DAG));
+
+          for (int &M : Mask)
+            if (M != -1 && M == FixIdx)
+              M = FixFreeIdx;
+            else if (M != -1 && M == FixFreeIdx)
+              M = FixIdx;
+        };
+        if (NumFlippedBToBInputs != 0) {
+          int BPinnedIdx =
+              BToAInputs.size() == 3 ? TripleNonInputIdx : OneInput;
+          FixFlippedInputs(BPinnedIdx, BDWord, BToBInputs);
+        } else {
+          assert(NumFlippedAToBInputs != 0 && "Impossible given predicates!");
+          int APinnedIdx =
+              AToAInputs.size() == 3 ? TripleNonInputIdx : OneInput;
+          FixFlippedInputs(APinnedIdx, ADWord, AToBInputs);
+        }
+      }
+    }
 
     int PSHUFDMask[] = {0, 1, 2, 3};
-    PSHUFDMask[DWordA] = DWordB;
-    PSHUFDMask[DWordB] = DWordA;
+    PSHUFDMask[ADWord] = BDWord;
+    PSHUFDMask[BDWord] = ADWord;
     V = DAG.getNode(ISD::BITCAST, DL, MVT::v8i16,
                     DAG.getNode(X86ISD::PSHUFD, DL, MVT::v4i32,
                                 DAG.getNode(ISD::BITCAST, DL, MVT::v4i32, V),
@@ -7350,24 +7454,20 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
 
     // Adjust the mask to match the new locations of A and B.
     for (int &M : Mask)
-      if (M != -1 && M/2 == DWordA)
-        M = 2 * DWordB + M % 2;
-      else if (M != -1 && M/2 == DWordB)
-        M = 2 * DWordA + M % 2;
+      if (M != -1 && M/2 == ADWord)
+        M = 2 * BDWord + M % 2;
+      else if (M != -1 && M/2 == BDWord)
+        M = 2 * ADWord + M % 2;
 
     // Recurse back into this routine to re-compute state now that this isn't
     // a 3 and 1 problem.
     return DAG.getVectorShuffle(MVT::v8i16, DL, V, DAG.getUNDEF(MVT::v8i16),
                                 Mask);
   };
-  if (NumLToL == 3 && NumHToL == 1)
-    return balanceSides(LToLInputs, HToLInputs[0], 0 + 1 + 2 + 3, 4);
-  else if (NumLToL == 1 && NumHToL == 3)
-    return balanceSides(HToLInputs, LToLInputs[0], 4 + 5 + 6 + 7, 0);
-  else if (NumLToH == 1 && NumHToH == 3)
-    return balanceSides(HToHInputs, LToHInputs[0], 4 + 5 + 6 + 7, 0);
-  else if (NumLToH == 3 && NumHToH == 1)
-    return balanceSides(LToHInputs, HToHInputs[0], 0 + 1 + 2 + 3, 4);
+  if ((NumLToL == 3 && NumHToL == 1) || (NumLToL == 1 && NumHToL == 3))
+    return balanceSides(LToLInputs, HToLInputs, HToHInputs, LToHInputs, 0, 4);
+  else if ((NumHToH == 3 && NumLToH == 1) || (NumHToH == 1 && NumLToH == 3))
+    return balanceSides(HToHInputs, LToHInputs, LToLInputs, HToLInputs, 4, 0);
 
   // At this point there are at most two inputs to the low and high halves from
   // each half. That means the inputs can always be grouped into dwords and
