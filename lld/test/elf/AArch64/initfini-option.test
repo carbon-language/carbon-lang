@@ -1,0 +1,21 @@
+# This tests the functionality that lld is able to create
+# init_array/fini_array sections in the output ELF. This
+# corresponds to the the .init_array/.fini_array sections
+# in the output ELF.
+
+RUN: lld -flavor gnu -target aarch64--linux-gnu %p/Inputs/initfini-option.o  \
+RUN: -init init -fini fini --noinhibit-exec --output-filetype=yaml -static -o %t
+RUN: FileCheck %s < %t
+
+CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECK:    section-name:    .init_array
+CHECK:    references:
+CHECK:      - kind:            R_AARCH64_ABS64
+CHECK:        offset:          0
+CHECK:        target:          init
+CHECK:    content:         [ 00, 00, 00, 00, 00, 00, 00, 00 ]
+CHECK:    section-name:    .fini_array
+CHECK:    references:
+CHECK:      - kind:            R_AARCH64_ABS64
+CHECK:        offset:          0
+CHECK:        target:          fini

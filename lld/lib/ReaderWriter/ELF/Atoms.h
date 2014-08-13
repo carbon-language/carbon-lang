@@ -679,6 +679,11 @@ public:
                             Reference::Addend a) {
     this->addReferenceELF(Reference::KindArch::Mips, relocType, off, t, a);
   }
+
+  void addReferenceELF_AArch64(uint16_t relocType, uint64_t off, const Atom *t,
+                               Reference::Addend a) {
+    this->addReferenceELF(Reference::KindArch::AArch64, relocType, off, t, a);
+  }
 };
 
 /// \brief Atom which represents an object for which a COPY relocation will be

@@ -204,6 +204,10 @@ getArchType(const llvm::Triple &triple, StringRef value) {
     if (value == "elf32ltsmip")
       return llvm::Triple::mipsel;
     return llvm::None;
+  case llvm::Triple::aarch64:
+    if (value == "aarch64linux")
+      return llvm::Triple::aarch64;
+    return llvm::None;
   default:
     return llvm::None;
   }

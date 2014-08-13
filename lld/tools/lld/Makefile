@@ -23,6 +23,7 @@ USEDLIBS = lldDriver.a \
            lldELF.a lldMachO.a lldPasses.a lldPECOFF.a lldYAML.a \
            lldReaderWriter.a lldCore.a lldNative.a \
            lldHexagonELFTarget.a lldPPCELFTarget.a lldMipsELFTarget.a \
-           lldX86ELFTarget.a lldX86_64ELFTarget.a LLVMOption.a
+           lldX86ELFTarget.a lldX86_64ELFTarget.a lldAArch64ELFTarget.a \
+           LLVMOption.a
 
 include $(LLD_LEVEL)/Makefile

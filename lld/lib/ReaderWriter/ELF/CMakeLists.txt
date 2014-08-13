@@ -13,6 +13,7 @@ target_link_libraries(lldELF
   lldReaderWriter
   lldX86ELFTarget
   lldX86_64ELFTarget
+  lldAArch64ELFTarget
   )
 
 include_directories(.)

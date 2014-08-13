@@ -87,6 +87,8 @@ uint16_t ELFLinkingContext::getOutputMachine() const {
     return llvm::ELF::EM_MIPS;
   case llvm::Triple::ppc:
     return llvm::ELF::EM_PPC;
+  case llvm::Triple::aarch64:
+    return llvm::ELF::EM_AARCH64;
   default:
     llvm_unreachable("Unhandled arch");
   }
@@ -147,6 +149,9 @@ ELFLinkingContext::create(llvm::Triple triple) {
   case llvm::Triple::ppc:
     return std::unique_ptr<ELFLinkingContext>(
         new lld::elf::PPCLinkingContext(triple));
+  case llvm::Triple::aarch64:
+    return std::unique_ptr<ELFLinkingContext>(
+        new lld::elf::AArch64LinkingContext(triple));
   default:
     return nullptr;
   }

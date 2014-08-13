@@ -64,7 +64,8 @@ public:
     ARM     = 3,
     PowerPC = 4,
     Hexagon = 5,
-    Mips    = 6
+    Mips    = 6,
+    AArch64 = 7
   };
 
   KindArch kindArch() const { return (KindArch)_kindArch; }

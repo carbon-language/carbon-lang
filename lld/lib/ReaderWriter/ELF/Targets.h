@@ -15,5 +15,6 @@
 #include "PPC/PPCTarget.h"
 #include "X86/X86Target.h"
 #include "X86_64/X86_64Target.h"
+#include "AArch64/AArch64Target.h"
 
 #endif
