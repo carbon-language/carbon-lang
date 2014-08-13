@@ -131,9 +131,11 @@ void CommaSeparatedList::precomputeFormattingInfos(const FormatToken *Token) {
   if (!Token->MatchingParen || Token->isNot(tok::l_brace))
     return;
 
-  // In C++11 braced list style, we should not format in columns unless we allow
-  // bin-packing of function parameters.
-  if (Style.Cpp11BracedListStyle && !Style.BinPackParameters)
+  // In C++11 braced list style, we should not format in columns unless they
+  // have many items (20 or more) or we allow bin-packing of function
+  // parameters.
+  if (Style.Cpp11BracedListStyle && !Style.BinPackParameters &&
+      Commas.size() < 19)
     return;
 
   FormatToken *ItemBegin = Token->Next;

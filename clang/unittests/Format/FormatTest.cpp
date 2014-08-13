@@ -5441,6 +5441,13 @@ TEST_F(FormatTest, LayoutCxx11BraceInitializers) {
                "    kkkkkk,\n"
                "};",
                NoBinPacking);
+  verifyFormat(
+      "const Aaaaaa aaaaa = {\n"
+      "    aaaaa,  bbbbb,  ccccc,  ddddd,  eeeee,  ffffff, ggggg, hhhhhh,\n"
+      "    iiiiii, jjjjjj, kkkkkk, aaaaa,  bbbbb,  ccccc,  ddddd, eeeee,\n"
+      "    ffffff, ggggg,  hhhhhh, iiiiii, jjjjjj, kkkkkk,\n"
+      "};",
+      NoBinPacking);
 
   // FIXME: The alignment of these trailing comments might be bad. Then again,
   // this might be utterly useless in real code.
