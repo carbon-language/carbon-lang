@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_STOREREF_H
-#define LLVM_CLANG_GR_STOREREF_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_STOREREF_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_STOREREF_H
 
 #include <cassert>
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_COVERAGEMAPPINGGEN_H
-#define CLANG_CODEGEN_COVERAGEMAPPINGGEN_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_COVERAGEMAPPINGGEN_H
+#define LLVM_CLANG_LIB_CODEGEN_COVERAGEMAPPINGGEN_H
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"

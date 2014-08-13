@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIBCLANG_CLOG_H
-#define LLVM_LIBCLANG_CLOG_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CLOG_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CLOG_H
 
 #include "clang-c/Index.h"
 #include "clang/Basic/LLVM.h"

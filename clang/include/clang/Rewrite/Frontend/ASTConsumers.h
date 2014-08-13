@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef REWRITE_ASTCONSUMERS_H
-#define REWRITE_ASTCONSUMERS_H
+#ifndef LLVM_CLANG_REWRITE_FRONTEND_ASTCONSUMERS_H
+#define LLVM_CLANG_REWRITE_FRONTEND_ASTCONSUMERS_H
 
 #include "clang/Basic/LLVM.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PTHLEXER_H
-#define LLVM_CLANG_PTHLEXER_H
+#ifndef LLVM_CLANG_LEX_PTHLEXER_H
+#define LLVM_CLANG_LEX_PTHLEXER_H
 
 #include "clang/Lex/PreprocessorLexer.h"
 

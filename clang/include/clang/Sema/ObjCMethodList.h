@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_OBJC_METHOD_LIST_H
-#define LLVM_CLANG_SEMA_OBJC_METHOD_LIST_H
+#ifndef LLVM_CLANG_SEMA_OBJCMETHODLIST_H
+#define LLVM_CLANG_SEMA_OBJCMETHODLIST_H
 
 #include "llvm/ADT/PointerIntPair.h"
 

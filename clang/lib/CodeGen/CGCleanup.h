@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGCLEANUP_H
-#define CLANG_CODEGEN_CGCLEANUP_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGCLEANUP_H
+#define LLVM_CLANG_LIB_CODEGEN_CGCLEANUP_H
 
 #include "EHScopeStack.h"
 #include "llvm/ADT/SmallPtrSet.h"

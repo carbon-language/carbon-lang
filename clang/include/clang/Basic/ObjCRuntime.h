@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_OBJCRUNTIME_H
-#define LLVM_CLANG_OBJCRUNTIME_H
+#ifndef LLVM_CLANG_BASIC_OBJCRUNTIME_H
+#define LLVM_CLANG_BASIC_OBJCRUNTIME_H
 
 #include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/Triple.h"

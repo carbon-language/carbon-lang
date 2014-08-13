@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REWRITE_FRONTENDACTIONS_H
-#define LLVM_CLANG_REWRITE_FRONTENDACTIONS_H
+#ifndef LLVM_CLANG_REWRITE_FRONTEND_FRONTENDACTIONS_H
+#define LLVM_CLANG_REWRITE_FRONTEND_FRONTENDACTIONS_H
 
 #include "clang/Frontend/FrontendAction.h"
 

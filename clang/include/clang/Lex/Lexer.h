@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LEXER_H
-#define LLVM_CLANG_LEXER_H
+#ifndef LLVM_CLANG_LEX_LEXER_H
+#define LLVM_CLANG_LEX_LEXER_H
 
 #include "clang/Basic/LangOptions.h"
 #include "clang/Lex/PreprocessorLexer.h"

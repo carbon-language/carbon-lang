@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LIBCLANG_INDEXINGCONTEXT_H
-#define LLVM_CLANG_LIBCLANG_INDEXINGCONTEXT_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_INDEXINGCONTEXT_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_INDEXINGCONTEXT_H
 
 #include "CXCursor.h"
 #include "Index_Internal.h"

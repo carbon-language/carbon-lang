@@ -14,8 +14,8 @@
 // respective lists.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_FRONTEND_PCHBITCODES_H
-#define LLVM_CLANG_FRONTEND_PCHBITCODES_H
+#ifndef LLVM_CLANG_SERIALIZATION_ASTBITCODES_H
+#define LLVM_CLANG_SERIALIZATION_ASTBITCODES_H
 
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"

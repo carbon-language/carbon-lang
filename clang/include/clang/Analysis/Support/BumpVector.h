@@ -16,8 +16,8 @@
 // refactor this core logic into something common that is shared between
 // the two.  The main thing that is different is the allocation strategy.
 
-#ifndef LLVM_CLANG_BUMP_VECTOR
-#define LLVM_CLANG_BUMP_VECTOR
+#ifndef LLVM_CLANG_ANALYSIS_SUPPORT_BUMPVECTOR_H
+#define LLVM_CLANG_ANALYSIS_SUPPORT_BUMPVECTOR_H
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/Allocator.h"
@@ -241,4 +241,4 @@ void BumpVector<T>::grow(BumpVectorContext &C, size_t MinSize) {
 }
 
 } // end: clang namespace
-#endif // end: LLVM_CLANG_BUMP_VECTOR
+#endif

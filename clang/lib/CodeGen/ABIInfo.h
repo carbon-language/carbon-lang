@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_ABIINFO_H
-#define CLANG_CODEGEN_ABIINFO_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_ABIINFO_H
+#define LLVM_CLANG_LIB_CODEGEN_ABIINFO_H
 
 #include "clang/AST/Type.h"
 #include "llvm/IR/CallingConv.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGDEBUGINFO_H
-#define CLANG_CODEGEN_CGDEBUGINFO_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGDEBUGINFO_H
+#define LLVM_CLANG_LIB_CODEGEN_CGDEBUGINFO_H
 
 #include "CGBuilder.h"
 #include "clang/AST/Expr.h"

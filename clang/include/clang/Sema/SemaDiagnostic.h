@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICSEMA_H
-#define LLVM_CLANG_DIAGNOSTICSEMA_H
+#ifndef LLVM_CLANG_SEMA_SEMADIAGNOSTIC_H
+#define LLVM_CLANG_SEMA_SEMADIAGNOSTIC_H
 
 #include "clang/Basic/Diagnostic.h"
 

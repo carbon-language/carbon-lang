@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_TYPELOCBUILDER_H
-#define LLVM_CLANG_SEMA_TYPELOCBUILDER_H
+#ifndef LLVM_CLANG_LIB_SEMA_TYPELOCBUILDER_H
+#define LLVM_CLANG_LIB_SEMA_TYPELOCBUILDER_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/TypeLoc.h"

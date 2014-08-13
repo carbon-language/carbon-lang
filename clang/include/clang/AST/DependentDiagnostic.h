@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_DEPENDENT_DIAGNOSTIC_H
-#define LLVM_CLANG_AST_DEPENDENT_DIAGNOSTIC_H
+#ifndef LLVM_CLANG_AST_DEPENDENTDIAGNOSTIC_H
+#define LLVM_CLANG_AST_DEPENDENTDIAGNOSTIC_H
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclContextInternals.h"

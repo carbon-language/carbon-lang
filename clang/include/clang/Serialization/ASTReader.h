@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_AST_READER_H
-#define LLVM_CLANG_FRONTEND_AST_READER_H
+#ifndef LLVM_CLANG_SERIALIZATION_ASTREADER_H
+#define LLVM_CLANG_SERIALIZATION_ASTREADER_H
 
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclarationName.h"

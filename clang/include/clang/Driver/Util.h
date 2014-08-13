@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_UTIL_H_
-#define CLANG_DRIVER_UTIL_H_
+#ifndef LLVM_CLANG_DRIVER_UTIL_H
+#define LLVM_CLANG_DRIVER_UTIL_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"

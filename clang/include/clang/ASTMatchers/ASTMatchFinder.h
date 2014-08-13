@@ -38,8 +38,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCH_FINDER_H
-#define LLVM_CLANG_AST_MATCHERS_AST_MATCH_FINDER_H
+#ifndef LLVM_CLANG_ASTMATCHERS_ASTMATCHFINDER_H
+#define LLVM_CLANG_ASTMATCHERS_ASTMATCHFINDER_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 
@@ -253,4 +253,4 @@ match(MatcherT Matcher, const NodeT &Node, ASTContext &Context) {
 } // end namespace ast_matchers
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_MATCHERS_AST_MATCH_FINDER_H
+#endif

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_OPERATION_KINDS_H
-#define LLVM_CLANG_AST_OPERATION_KINDS_H
+#ifndef LLVM_CLANG_AST_OPERATIONKINDS_H
+#define LLVM_CLANG_AST_OPERATIONKINDS_H
 
 namespace clang {
   

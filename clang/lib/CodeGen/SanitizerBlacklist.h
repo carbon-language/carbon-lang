@@ -11,8 +11,8 @@
 // sanitizers.
 //
 //===----------------------------------------------------------------------===//
-#ifndef CLANG_CODEGEN_SANITIZERBLACKLIST_H
-#define CLANG_CODEGEN_SANITIZERBLACKLIST_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_SANITIZERBLACKLIST_H
+#define LLVM_CLANG_LIB_CODEGEN_SANITIZERBLACKLIST_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"

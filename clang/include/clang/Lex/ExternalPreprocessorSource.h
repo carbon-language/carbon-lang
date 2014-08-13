@@ -11,8 +11,8 @@
 //  construction of macro definitions from some external source.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_LEX_EXTERNAL_PREPROCESSOR_SOURCE_H
-#define LLVM_CLANG_LEX_EXTERNAL_PREPROCESSOR_SOURCE_H
+#ifndef LLVM_CLANG_LEX_EXTERNALPREPROCESSORSOURCE_H
+#define LLVM_CLANG_LEX_EXTERNALPREPROCESSORSOURCE_H
 
 namespace clang {
 
@@ -36,4 +36,4 @@ public:
   
 }
 
-#endif // LLVM_CLANG_LEX_EXTERNAL_PREPROCESSOR_SOURCE_H
+#endif

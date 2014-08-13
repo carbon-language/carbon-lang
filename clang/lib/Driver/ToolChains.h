@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_LIB_DRIVER_TOOLCHAINS_H_
-#define CLANG_LIB_DRIVER_TOOLCHAINS_H_
+#ifndef LLVM_CLANG_LIB_DRIVER_TOOLCHAINS_H
+#define LLVM_CLANG_LIB_DRIVER_TOOLCHAINS_H
 
 #include "Tools.h"
 #include "clang/Basic/VersionTuple.h"

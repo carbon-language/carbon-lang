@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_LITERALSUPPORT_H
-#define CLANG_LITERALSUPPORT_H
+#ifndef LLVM_CLANG_LEX_LITERALSUPPORT_H
+#define LLVM_CLANG_LEX_LITERALSUPPORT_H
 
 #include "clang/Basic/CharInfo.h"
 #include "clang/Basic/LLVM.h"

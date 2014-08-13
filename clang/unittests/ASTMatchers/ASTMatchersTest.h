@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_UNITTESTS_AST_MATCHERS_AST_MATCHERS_TEST_H
-#define LLVM_CLANG_UNITTESTS_AST_MATCHERS_AST_MATCHERS_TEST_H
+#ifndef LLVM_CLANG_UNITTESTS_ASTMATCHERS_ASTMATCHERSTEST_H
+#define LLVM_CLANG_UNITTESTS_ASTMATCHERS_ASTMATCHERSTEST_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Frontend/ASTUnit.h"

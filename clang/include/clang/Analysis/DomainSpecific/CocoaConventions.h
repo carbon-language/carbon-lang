@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_DS_COCOA
-#define LLVM_CLANG_ANALYSIS_DS_COCOA
+#ifndef LLVM_CLANG_ANALYSIS_DOMAINSPECIFIC_COCOACONVENTIONS_H
+#define LLVM_CLANG_ANALYSIS_DOMAINSPECIFIC_COCOACONVENTIONS_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"

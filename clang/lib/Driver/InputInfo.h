@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_LIB_DRIVER_INPUTINFO_H_
-#define CLANG_LIB_DRIVER_INPUTINFO_H_
+#ifndef LLVM_CLANG_LIB_DRIVER_INPUTINFO_H
+#define LLVM_CLANG_LIB_DRIVER_INPUTINFO_H
 
 #include "clang/Driver/Types.h"
 #include "llvm/Option/Arg.h"

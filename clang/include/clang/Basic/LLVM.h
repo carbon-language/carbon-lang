@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_BASIC_LLVM_H
-#define CLANG_BASIC_LLVM_H
+#ifndef LLVM_CLANG_BASIC_LLVM_H
+#define LLVM_CLANG_BASIC_LLVM_H
 
 // Do not proliferate #includes here, require clients to #include their
 // dependencies.

@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_BASIC_ABI_H
-#define CLANG_BASIC_ABI_H
+#ifndef LLVM_CLANG_BASIC_ABI_H
+#define LLVM_CLANG_BASIC_ABI_H
 
 #include "llvm/Support/DataTypes.h"
 
@@ -204,4 +204,4 @@ struct ThunkInfo {
 
 } // end namespace clang
 
-#endif // CLANG_BASIC_ABI_H
+#endif

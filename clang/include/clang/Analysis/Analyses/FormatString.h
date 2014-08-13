@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_H
-#define LLVM_CLANG_FORMAT_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_FORMATSTRING_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_FORMATSTRING_H
 
 #include "clang/AST/CanonicalType.h"
 

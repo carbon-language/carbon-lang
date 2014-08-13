@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_MACROINFO_H
-#define LLVM_CLANG_MACROINFO_H
+#ifndef LLVM_CLANG_LEX_MACROINFO_H
+#define LLVM_CLANG_LEX_MACROINFO_H
 
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/ArrayRef.h"

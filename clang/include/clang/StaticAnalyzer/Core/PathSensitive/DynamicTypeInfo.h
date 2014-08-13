@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SA_CORE_DYNAMICTYPEINFO_H
-#define LLVM_CLANG_SA_CORE_DYNAMICTYPEINFO_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_DYNAMICTYPEINFO_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_DYNAMICTYPEINFO_H
 
 #include "clang/AST/Type.h"
 

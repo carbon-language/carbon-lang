@@ -11,8 +11,8 @@
 //  loading named modules.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_LEX_MODULE_LOADER_H
-#define LLVM_CLANG_LEX_MODULE_LOADER_H
+#ifndef LLVM_CLANG_LEX_MODULELOADER_H
+#define LLVM_CLANG_LEX_MODULELOADER_H
 
 #include "clang/Basic/Module.h"
 #include "clang/Basic/SourceLocation.h"

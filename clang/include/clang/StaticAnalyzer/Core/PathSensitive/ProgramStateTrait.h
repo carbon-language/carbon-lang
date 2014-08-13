@@ -15,8 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_CLANG_GR_PROGRAMSTATETRAIT_H
-#define LLVM_CLANG_GR_PROGRAMSTATETRAIT_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_PROGRAMSTATETRAIT_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_PROGRAMSTATETRAIT_H
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/DataTypes.h"

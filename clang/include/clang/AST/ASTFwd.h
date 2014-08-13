@@ -12,6 +12,9 @@
 ///
 //===-------------------------------------------------------------===//
 
+#ifndef LLVM_CLANG_AST_ASTFWD_H
+#define LLVM_CLANG_AST_ASTFWD_H
+
 namespace clang {
 
 class Decl;
@@ -26,3 +29,5 @@ class Type;
 class CXXCtorInitializer;
 
 } // end namespace clang
+
+#endif

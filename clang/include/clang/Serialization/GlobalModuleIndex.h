@@ -13,8 +13,8 @@
 // queries such as "do any modules know about this identifier?"
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
-#define LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
+#ifndef LLVM_CLANG_SERIALIZATION_GLOBALMODULEINDEX_H
+#define LLVM_CLANG_SERIALIZATION_GLOBALMODULEINDEX_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_OPTIONS_H
-#define CLANG_DRIVER_OPTIONS_H
+#ifndef LLVM_CLANG_DRIVER_OPTIONS_H
+#define LLVM_CLANG_DRIVER_OPTIONS_H
 
 namespace llvm {
 namespace opt {

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_COMPILATION_DATABASE_PLUGIN_REGISTRY_H
-#define LLVM_CLANG_TOOLING_COMPILATION_DATABASE_PLUGIN_REGISTRY_H
+#ifndef LLVM_CLANG_TOOLING_COMPILATIONDATABASEPLUGINREGISTRY_H
+#define LLVM_CLANG_TOOLING_COMPILATIONDATABASEPLUGINREGISTRY_H
 
 #include "clang/Tooling/CompilationDatabase.h"
 #include "llvm/Support/Registry.h"
@@ -24,4 +24,4 @@ typedef llvm::Registry<CompilationDatabasePlugin>
 } // end namespace tooling
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLING_COMPILATION_DATABASE_PLUGIN_REGISTRY_H
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_COMMENT_PARSER_H
-#define LLVM_CLANG_AST_COMMENT_PARSER_H
+#ifndef LLVM_CLANG_AST_COMMENTPARSER_H
+#define LLVM_CLANG_AST_COMMENTPARSER_H
 
 #include "clang/AST/Comment.h"
 #include "clang/AST/CommentLexer.h"

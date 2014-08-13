@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REWRITE_REWRITERS_H
-#define LLVM_CLANG_REWRITE_REWRITERS_H
+#ifndef LLVM_CLANG_REWRITE_FRONTEND_REWRITERS_H
+#define LLVM_CLANG_REWRITE_FRONTEND_REWRITERS_H
 
 #include "clang/Basic/LLVM.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REWRITER_TEST_CONTEXT_H
-#define LLVM_CLANG_REWRITER_TEST_CONTEXT_H
+#ifndef LLVM_CLANG_UNITTESTS_TOOLING_REWRITERTESTCONTEXT_H
+#define LLVM_CLANG_UNITTESTS_TOOLING_REWRITERTESTCONTEXT_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"

@@ -11,8 +11,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_CXSTRING_H
-#define CLANG_CXSTRING_H
+#ifndef LLVM_CLANG_C_CXSTRING_H
+#define LLVM_CLANG_C_CXSTRING_H
 
 #include "clang-c/Platform.h"
 

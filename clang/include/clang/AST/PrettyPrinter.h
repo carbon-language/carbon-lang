@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_PRETTY_PRINTER_H
-#define LLVM_CLANG_AST_PRETTY_PRINTER_H
+#ifndef LLVM_CLANG_AST_PRETTYPRINTER_H
+#define LLVM_CLANG_AST_PRETTYPRINTER_H
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/LangOptions.h"

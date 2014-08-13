@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGBUILDER_H
-#define CLANG_CODEGEN_CGBUILDER_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGBUILDER_H
+#define LLVM_CLANG_LIB_CODEGEN_CGBUILDER_H
 
 #include "llvm/IR/IRBuilder.h"
 

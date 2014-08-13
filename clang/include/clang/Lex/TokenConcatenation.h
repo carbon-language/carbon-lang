@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_LEX_TOKEN_CONCATENATION_H
-#define CLANG_LEX_TOKEN_CONCATENATION_H
+#ifndef LLVM_CLANG_LEX_TOKENCONCATENATION_H
+#define LLVM_CLANG_LEX_TOKENCONCATENATION_H
 
 #include "clang/Basic/TokenKinds.h"
 

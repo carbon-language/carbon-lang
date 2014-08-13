@@ -17,8 +17,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_MARSHALLERS_H
-#define LLVM_CLANG_AST_MATCHERS_DYNAMIC_MARSHALLERS_H
+#ifndef LLVM_CLANG_LIB_ASTMATCHERS_DYNAMIC_MARSHALLERS_H
+#define LLVM_CLANG_LIB_ASTMATCHERS_DYNAMIC_MARSHALLERS_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"

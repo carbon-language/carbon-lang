@@ -31,8 +31,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_PARSER_H
-#define LLVM_CLANG_AST_MATCHERS_DYNAMIC_PARSER_H
+#ifndef LLVM_CLANG_ASTMATCHERS_DYNAMIC_PARSER_H
+#define LLVM_CLANG_ASTMATCHERS_DYNAMIC_PARSER_H
 
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"
 #include "clang/ASTMatchers/Dynamic/Registry.h"

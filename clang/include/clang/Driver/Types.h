@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_TYPES_H_
-#define CLANG_DRIVER_TYPES_H_
+#ifndef LLVM_CLANG_DRIVER_TYPES_H
+#define LLVM_CLANG_DRIVER_TYPES_H
 
 #include "clang/Driver/Phases.h"
 #include "llvm/ADT/SmallVector.h"

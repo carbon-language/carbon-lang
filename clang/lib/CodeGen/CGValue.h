@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGVALUE_H
-#define CLANG_CODEGEN_CGVALUE_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGVALUE_H
+#define LLVM_CLANG_LIB_CODEGEN_CGVALUE_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"

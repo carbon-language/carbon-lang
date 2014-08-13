@@ -10,8 +10,8 @@
 //  This file defines the ExternalSemaSource interface.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
-#define LLVM_CLANG_SEMA_EXTERNAL_SEMA_SOURCE_H
+#ifndef LLVM_CLANG_SEMA_EXTERNALSEMASOURCE_H
+#define LLVM_CLANG_SEMA_EXTERNALSEMASOURCE_H
 
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/Type.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOKEN_H
-#define LLVM_CLANG_TOKEN_H
+#ifndef LLVM_CLANG_LEX_TOKEN_H
+#define LLVM_CLANG_LEX_TOKEN_H
 
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/SourceLocation.h"

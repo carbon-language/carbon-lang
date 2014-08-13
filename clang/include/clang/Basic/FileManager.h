@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FILEMANAGER_H
-#define LLVM_CLANG_FILEMANAGER_H
+#ifndef LLVM_CLANG_BASIC_FILEMANAGER_H
+#define LLVM_CLANG_BASIC_FILEMANAGER_H
 
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Basic/LLVM.h"

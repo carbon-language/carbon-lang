@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ALL_DIAGNOSTICS_H
-#define LLVM_CLANG_ALL_DIAGNOSTICS_H
+#ifndef LLVM_CLANG_BASIC_ALLDIAGNOSTICS_H
+#define LLVM_CLANG_BASIC_ALLDIAGNOSTICS_H
 
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/CommentDiagnostic.h"

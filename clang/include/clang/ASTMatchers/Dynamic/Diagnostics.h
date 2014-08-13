@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_DIAGNOSTICS_H
-#define LLVM_CLANG_AST_MATCHERS_DYNAMIC_DIAGNOSTICS_H
+#ifndef LLVM_CLANG_ASTMATCHERS_DYNAMIC_DIAGNOSTICS_H
+#define LLVM_CLANG_ASTMATCHERS_DYNAMIC_DIAGNOSTICS_H
 
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"
 #include "clang/Basic/LLVM.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIBCLANG_INDEX_INTERNAL_H
-#define LLVM_LIBCLANG_INDEX_INTERNAL_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_INDEX_INTERNAL_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_INDEX_INTERNAL_H
 
 #include "clang-c/Index.h"
 

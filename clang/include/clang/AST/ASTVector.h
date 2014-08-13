@@ -15,8 +15,8 @@
 // FIXME: Most of this is copy-and-paste from BumpVector.h and SmallVector.h.
 // We can refactor this core logic into something common.
 
-#ifndef LLVM_CLANG_AST_VECTOR
-#define LLVM_CLANG_AST_VECTOR
+#ifndef LLVM_CLANG_AST_ASTVECTOR_H
+#define LLVM_CLANG_AST_ASTVECTOR_H
 
 #include "clang/AST/AttrIterator.h"
 #include "llvm/ADT/PointerIntPair.h"

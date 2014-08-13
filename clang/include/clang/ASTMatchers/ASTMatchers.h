@@ -42,8 +42,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_H
-#define LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_H
+#ifndef LLVM_CLANG_ASTMATCHERS_ASTMATCHERS_H
+#define LLVM_CLANG_ASTMATCHERS_ASTMATCHERS_H
 
 #include "clang/AST/DeclFriend.h"
 #include "clang/AST/DeclTemplate.h"
@@ -3690,4 +3690,4 @@ AST_MATCHER(Decl, hasCudaGlobalAttr) {
 } // end namespace ast_matchers
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_H
+#endif

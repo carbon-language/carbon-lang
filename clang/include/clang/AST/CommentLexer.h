@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_COMMENT_LEXER_H
-#define LLVM_CLANG_AST_COMMENT_LEXER_H
+#ifndef LLVM_CLANG_AST_COMMENTLEXER_H
+#define LLVM_CLANG_AST_COMMENTLEXER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"

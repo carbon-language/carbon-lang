@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_TOOL_H_
-#define CLANG_DRIVER_TOOL_H_
+#ifndef LLVM_CLANG_DRIVER_TOOL_H
+#define LLVM_CLANG_DRIVER_TOOL_H
 
 #include "clang/Basic/LLVM.h"
 

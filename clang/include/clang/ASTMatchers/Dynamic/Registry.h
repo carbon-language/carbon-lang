@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_REGISTRY_H
-#define LLVM_CLANG_AST_MATCHERS_DYNAMIC_REGISTRY_H
+#ifndef LLVM_CLANG_ASTMATCHERS_DYNAMIC_REGISTRY_H
+#define LLVM_CLANG_ASTMATCHERS_DYNAMIC_REGISTRY_H
 
 #include "clang/ASTMatchers/Dynamic/Diagnostics.h"
 #include "clang/ASTMatchers/Dynamic/VariantValue.h"

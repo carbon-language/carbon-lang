@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_JOB_H_
-#define CLANG_DRIVER_JOB_H_
+#ifndef LLVM_CLANG_DRIVER_JOB_H
+#define LLVM_CLANG_DRIVER_JOB_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallVector.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOKENLEXER_H
-#define LLVM_CLANG_TOKENLEXER_H
+#ifndef LLVM_CLANG_LEX_TOKENLEXER_H
+#define LLVM_CLANG_LEX_TOKENLEXER_H
 
 #include "clang/Basic/SourceLocation.h"
 

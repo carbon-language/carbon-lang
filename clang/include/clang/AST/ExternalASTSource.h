@@ -11,8 +11,8 @@
 //  construction of AST nodes from some external source.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
-#define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
+#ifndef LLVM_CLANG_AST_EXTERNALASTSOURCE_H
+#define LLVM_CLANG_AST_EXTERNALASTSOURCE_H
 
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclBase.h"
@@ -650,4 +650,4 @@ typedef LazyOffsetPtr<CXXBaseSpecifier, uint64_t,
 
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
+#endif

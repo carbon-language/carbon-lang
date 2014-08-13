@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_WHITESPACEMANAGER_H
-#define LLVM_CLANG_FORMAT_WHITESPACEMANAGER_H
+#ifndef LLVM_CLANG_LIB_FORMAT_WHITESPACEMANAGER_H
+#define LLVM_CLANG_LIB_FORMAT_WHITESPACEMANAGER_H
 
 #include "TokenAnnotator.h"
 #include "clang/Basic/SourceManager.h"
@@ -200,4 +200,4 @@ private:
 } // namespace format
 } // namespace clang
 
-#endif // LLVM_CLANG_FORMAT_WHITESPACEMANAGER_H
+#endif

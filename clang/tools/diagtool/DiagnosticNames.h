@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DIAGTOOL_DIAGNOSTICNAMES_H
-#define DIAGTOOL_DIAGNOSTICNAMES_H
+#ifndef LLVM_CLANG_TOOLS_DIAGTOOL_DIAGNOSTICNAMES_H
+#define LLVM_CLANG_TOOLS_DIAGTOOL_DIAGNOSTICNAMES_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"

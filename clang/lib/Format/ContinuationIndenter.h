@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_CONTINUATION_INDENTER_H
-#define LLVM_CLANG_FORMAT_CONTINUATION_INDENTER_H
+#ifndef LLVM_CLANG_LIB_FORMAT_CONTINUATIONINDENTER_H
+#define LLVM_CLANG_LIB_FORMAT_CONTINUATIONINDENTER_H
 
 #include "Encoding.h"
 #include "clang/Format/Format.h"
@@ -370,4 +370,4 @@ struct LineState {
 } // end namespace format
 } // end namespace clang
 
-#endif // LLVM_CLANG_FORMAT_CONTINUATION_INDENTER_H
+#endif

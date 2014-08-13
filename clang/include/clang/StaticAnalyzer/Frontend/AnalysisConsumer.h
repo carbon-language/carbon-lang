@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_ANALYSISCONSUMER_H
-#define LLVM_CLANG_GR_ANALYSISCONSUMER_H
+#ifndef LLVM_CLANG_STATICANALYZER_FRONTEND_ANALYSISCONSUMER_H
+#define LLVM_CLANG_STATICANALYZER_FRONTEND_ANALYSISCONSUMER_H
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/LLVM.h"

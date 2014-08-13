@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_LIB_CHECKERS_ALLOC_DIAGS_H
-#define LLVM_CLANG_SA_LIB_CHECKERS_ALLOC_DIAGS_H
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKERS_ALLOCATIONDIAGNOSTICS_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKERS_ALLOCATIONDIAGNOSTICS_H
 
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 

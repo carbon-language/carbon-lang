@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DATAFLOW_WORKLIST
-#define LLVM_CLANG_DATAFLOW_WORKLIST
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_DATAFLOWWORKLIST_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_DATAFLOWWORKLIST_H
 
 #include "clang/Analysis/Analyses/PostOrderCFGView.h"
 

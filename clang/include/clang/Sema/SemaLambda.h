@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_LAMBDA_H
-#define LLVM_CLANG_SEMA_LAMBDA_H
+#ifndef LLVM_CLANG_SEMA_SEMALAMBDA_H
+#define LLVM_CLANG_SEMA_SEMALAMBDA_H
 #include "clang/AST/ASTLambda.h"
 #include "clang/Sema/ScopeInfo.h"
 namespace clang {
@@ -33,4 +33,4 @@ Optional<unsigned> getStackIndexOfNearestEnclosingCaptureCapableLambda(
 
 } // clang
 
-#endif // LLVM_CLANG_SEMA_LAMBDA_H
+#endif

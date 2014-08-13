@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CINDEXER_H
-#define LLVM_CLANG_CINDEXER_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CINDEXER_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CINDEXER_H
 
 #include "clang-c/Index.h"
 #include "llvm/ADT/StringRef.h"

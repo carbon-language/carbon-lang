@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGCALL_H
-#define CLANG_CODEGEN_CGCALL_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGCALL_H
+#define LLVM_CLANG_LIB_CODEGEN_CGCALL_H
 
 #include "CGValue.h"
 #include "EHScopeStack.h"

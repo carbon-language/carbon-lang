@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_BASIC_CHARINFO_H
-#define CLANG_BASIC_CHARINFO_H
+#ifndef LLVM_CLANG_BASIC_CHARINFO_H
+#define LLVM_CLANG_BASIC_CHARINFO_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"

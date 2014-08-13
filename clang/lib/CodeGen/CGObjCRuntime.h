@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_OBCJRUNTIME_H
-#define CLANG_CODEGEN_OBCJRUNTIME_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGOBJCRUNTIME_H
+#define LLVM_CLANG_LIB_CODEGEN_CGOBJCRUNTIME_H
 #include "CGBuilder.h"
 #include "CGCall.h"
 #include "CGValue.h"

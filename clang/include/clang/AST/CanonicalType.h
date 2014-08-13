@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_CANONICAL_TYPE_H
-#define LLVM_CLANG_AST_CANONICAL_TYPE_H
+#ifndef LLVM_CLANG_AST_CANONICALTYPE_H
+#define LLVM_CLANG_AST_CANONICALTYPE_H
 
 #include "clang/AST/Type.h"
 #include "llvm/Support/Casting.h"
@@ -736,4 +736,4 @@ CanTypeIterator<InputIterator>::operator->() const {
 }
 
 
-#endif // LLVM_CLANG_AST_CANONICAL_TYPE_H
+#endif

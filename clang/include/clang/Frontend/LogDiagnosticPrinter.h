@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_LOG_DIAGNOSTIC_PRINTER_H_
-#define LLVM_CLANG_FRONTEND_LOG_DIAGNOSTIC_PRINTER_H_
+#ifndef LLVM_CLANG_FRONTEND_LOGDIAGNOSTICPRINTER_H
+#define LLVM_CLANG_FRONTEND_LOGDIAGNOSTICPRINTER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"

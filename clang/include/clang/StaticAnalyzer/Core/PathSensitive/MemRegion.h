@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_MEMREGION_H
-#define LLVM_CLANG_GR_MEMREGION_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_MEMREGION_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_MEMREGION_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"

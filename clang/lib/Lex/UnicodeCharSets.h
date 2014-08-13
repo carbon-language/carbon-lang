@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef CLANG_LEX_UNICODECHARSETS_H
-#define CLANG_LEX_UNICODECHARSETS_H
+#ifndef LLVM_CLANG_LIB_LEX_UNICODECHARSETS_H
+#define LLVM_CLANG_LIB_LEX_UNICODECHARSETS_H
 
 #include "llvm/Support/UnicodeCharRanges.h"
 

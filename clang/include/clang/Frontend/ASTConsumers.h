@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DRIVER_ASTCONSUMERS_H
-#define DRIVER_ASTCONSUMERS_H
+#ifndef LLVM_CLANG_FRONTEND_ASTCONSUMERS_H
+#define LLVM_CLANG_FRONTEND_ASTCONSUMERS_H
 
 #include "clang/Basic/LLVM.h"
 

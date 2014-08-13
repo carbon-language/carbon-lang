@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_ATTRLIST_H
-#define LLVM_CLANG_SEMA_ATTRLIST_H
+#ifndef LLVM_CLANG_SEMA_ATTRIBUTELIST_H
+#define LLVM_CLANG_SEMA_ATTRIBUTELIST_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/VersionTuple.h"

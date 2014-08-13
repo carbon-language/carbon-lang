@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_FRONTEND_CHECKERREGISTRATION_H
-#define LLVM_CLANG_SA_FRONTEND_CHECKERREGISTRATION_H
+#ifndef LLVM_CLANG_STATICANALYZER_FRONTEND_CHECKERREGISTRATION_H
+#define LLVM_CLANG_STATICANALYZER_FRONTEND_CHECKERREGISTRATION_H
 
 #include "clang/Basic/LLVM.h"
 #include <string>

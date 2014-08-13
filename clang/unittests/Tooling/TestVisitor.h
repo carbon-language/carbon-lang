@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TEST_VISITOR_H
-#define LLVM_CLANG_TEST_VISITOR_H
+#ifndef LLVM_CLANG_UNITTESTS_TOOLING_TESTVISITOR_H
+#define LLVM_CLANG_UNITTESTS_TOOLING_TESTVISITOR_H
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"

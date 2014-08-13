@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
-#define LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
+#ifndef LLVM_CLANG_LIB_FORMAT_UNWRAPPEDLINEPARSER_H
+#define LLVM_CLANG_LIB_FORMAT_UNWRAPPEDLINEPARSER_H
 
 #include "FormatToken.h"
 #include "clang/Basic/IdentifierTable.h"
@@ -214,4 +214,4 @@ inline UnwrappedLine::UnwrappedLine()
 } // end namespace format
 } // end namespace clang
 
-#endif // LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
+#endif

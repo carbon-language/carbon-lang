@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGBLOCKS_H
-#define CLANG_CODEGEN_CGBLOCKS_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGBLOCKS_H
+#define LLVM_CLANG_LIB_CODEGEN_CGBLOCKS_H
 
 #include "CGBuilder.h"
 #include "CGCall.h"

@@ -32,8 +32,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_INTERNAL_H
-#define LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_INTERNAL_H
+#ifndef LLVM_CLANG_ASTMATCHERS_ASTMATCHERSINTERNAL_H
+#define LLVM_CLANG_ASTMATCHERS_ASTMATCHERSINTERNAL_H
 
 #include "clang/AST/ASTTypeTraits.h"
 #include "clang/AST/Decl.h"
@@ -1662,4 +1662,4 @@ struct NotEqualsBoundNodePredicate {
 } // end namespace ast_matchers
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_MATCHERS_AST_MATCHERS_INTERNAL_H
+#endif

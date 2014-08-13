@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PRAGMA_H
-#define LLVM_CLANG_PRAGMA_H
+#ifndef LLVM_CLANG_LEX_PRAGMA_H
+#define LLVM_CLANG_LEX_PRAGMA_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"

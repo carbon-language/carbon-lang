@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_OPENMPRUNTIME_H
-#define CLANG_CODEGEN_OPENMPRUNTIME_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
+#define LLVM_CLANG_LIB_CODEGEN_CGOPENMPRUNTIME_H
 
 #include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"

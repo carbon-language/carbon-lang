@@ -11,8 +11,8 @@
 //  containing a serialized representation of a translation unit.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_FRONTEND_AST_WRITER_H
-#define LLVM_CLANG_FRONTEND_AST_WRITER_H
+#ifndef LLVM_CLANG_SERIALIZATION_ASTWRITER_H
+#define LLVM_CLANG_SERIALIZATION_ASTWRITER_H
 
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/Decl.h"

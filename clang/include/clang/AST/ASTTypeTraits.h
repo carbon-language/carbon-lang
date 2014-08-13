@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_AST_TYPE_TRAITS_H
-#define LLVM_CLANG_AST_AST_TYPE_TRAITS_H
+#ifndef LLVM_CLANG_AST_ASTTYPETRAITS_H
+#define LLVM_CLANG_AST_ASTTYPETRAITS_H
 
 #include "clang/AST/ASTFwd.h"
 #include "clang/AST/Decl.h"
@@ -361,4 +361,4 @@ inline const void *DynTypedNode::getMemoizationData() const {
 } // end namespace ast_type_traits
 } // end namespace clang
 
-#endif // LLVM_CLANG_AST_AST_TYPE_TRAITS_H
+#endif

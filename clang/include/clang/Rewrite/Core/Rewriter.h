@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REWRITER_H
-#define LLVM_CLANG_REWRITER_H
+#ifndef LLVM_CLANG_REWRITE_CORE_REWRITER_H
+#define LLVM_CLANG_REWRITE_CORE_REWRITER_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Rewrite/Core/DeltaTree.h"

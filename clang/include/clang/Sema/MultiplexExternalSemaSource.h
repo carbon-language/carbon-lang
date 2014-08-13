@@ -10,8 +10,8 @@
 //  This file defines ExternalSemaSource interface, dispatching to all clients
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SEMA_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H
-#define LLVM_CLANG_SEMA_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H
+#ifndef LLVM_CLANG_SEMA_MULTIPLEXEXTERNALSEMASOURCE_H
+#define LLVM_CLANG_SEMA_MULTIPLEXEXTERNALSEMASOURCE_H
 
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/Weak.h"
@@ -368,4 +368,4 @@ public:
 
 } // end namespace clang
 
-#endif // LLVM_CLANG_SEMA_MULTIPLEX_EXTERNAL_SEMA_SOURCE_H
+#endif

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CFGSTMTMAP_H
-#define LLVM_CLANG_CFGSTMTMAP_H
+#ifndef LLVM_CLANG_ANALYSIS_CFGSTMTMAP_H
+#define LLVM_CLANG_ANALYSIS_CFGSTMTMAP_H
 
 #include "clang/Analysis/CFG.h"
 

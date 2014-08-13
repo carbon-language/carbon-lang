@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_SERIALIZE_DIAGNOSTIC_PRINTER_H_
-#define LLVM_CLANG_FRONTEND_SERIALIZE_DIAGNOSTIC_PRINTER_H_
+#ifndef LLVM_CLANG_FRONTEND_SERIALIZEDDIAGNOSTICPRINTER_H
+#define LLVM_CLANG_FRONTEND_SERIALIZEDDIAGNOSTICPRINTER_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/Bitcode/BitstreamWriter.h"

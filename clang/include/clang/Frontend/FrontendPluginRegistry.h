@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_PLUGINFRONTENDACTION_H
-#define LLVM_CLANG_FRONTEND_PLUGINFRONTENDACTION_H
+#ifndef LLVM_CLANG_FRONTEND_FRONTENDPLUGINREGISTRY_H
+#define LLVM_CLANG_FRONTEND_FRONTENDPLUGINREGISTRY_H
 
 #include "clang/Frontend/FrontendAction.h"
 #include "llvm/Support/Registry.h"

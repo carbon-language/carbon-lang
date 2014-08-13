@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREADSAFETY_H
-#define LLVM_CLANG_THREADSAFETY_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETY_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETY_H
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Basic/SourceLocation.h"

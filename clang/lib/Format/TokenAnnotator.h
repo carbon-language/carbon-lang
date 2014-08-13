@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_TOKEN_ANNOTATOR_H
-#define LLVM_CLANG_FORMAT_TOKEN_ANNOTATOR_H
+#ifndef LLVM_CLANG_LIB_FORMAT_TOKENANNOTATOR_H
+#define LLVM_CLANG_LIB_FORMAT_TOKENANNOTATOR_H
 
 #include "UnwrappedLineParser.h"
 #include "clang/Format/Format.h"
@@ -146,4 +146,4 @@ private:
 } // end namespace format
 } // end namespace clang
 
-#endif // LLVM_CLANG_FORMAT_TOKEN_ANNOTATOR_H
+#endif

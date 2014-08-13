@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_DRIVER_H_
-#define CLANG_DRIVER_DRIVER_H_
+#ifndef LLVM_CLANG_DRIVER_DRIVER_H
+#define LLVM_CLANG_DRIVER_DRIVER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LLVM.h"

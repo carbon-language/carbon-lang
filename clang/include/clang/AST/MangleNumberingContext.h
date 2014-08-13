@@ -12,8 +12,8 @@
 //  literals.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_MANGLENUMBERINGCONTEXT_H
-#define LLVM_CLANG_MANGLENUMBERINGCONTEXT_H
+#ifndef LLVM_CLANG_AST_MANGLENUMBERINGCONTEXT_H
+#define LLVM_CLANG_AST_MANGLENUMBERINGCONTEXT_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"

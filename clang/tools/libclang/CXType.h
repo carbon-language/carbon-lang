@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CXTYPES_H
-#define LLVM_CLANG_CXTYPES_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CXTYPE_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CXTYPE_H
 
 #include "clang-c/Index.h"
 #include "clang/AST/Type.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_BODYFARM_H
-#define LLVM_CLANG_ANALYSIS_BODYFARM_H
+#ifndef LLVM_CLANG_LIB_ANALYSIS_BODYFARM_H
+#define LLVM_CLANG_LIB_ANALYSIS_BODYFARM_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"

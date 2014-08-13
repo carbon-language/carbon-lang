@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CODEGENFUNCTION_H
-#define CLANG_CODEGEN_CODEGENFUNCTION_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CODEGENFUNCTION_H
+#define LLVM_CLANG_LIB_CODEGEN_CODEGENFUNCTION_H
 
 #include "CGBuilder.h"
 #include "CGDebugInfo.h"

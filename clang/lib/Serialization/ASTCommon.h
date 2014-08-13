@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SERIALIZATION_LIB_AST_COMMON_H
-#define LLVM_CLANG_SERIALIZATION_LIB_AST_COMMON_H
+#ifndef LLVM_CLANG_LIB_SERIALIZATION_ASTCOMMON_H
+#define LLVM_CLANG_LIB_SERIALIZATION_ASTCOMMON_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Serialization/ASTBitCodes.h"

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SIMPLE_FORM_CONTEXT_H
-#define LLVM_CLANG_SIMPLE_FORM_CONTEXT_H
+#ifndef LLVM_CLANG_LIB_INDEX_SIMPLEFORMATCONTEXT_H
+#define LLVM_CLANG_LIB_INDEX_SIMPLEFORMATCONTEXT_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"

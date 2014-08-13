@@ -44,8 +44,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREAD_SAFETY_TIL_H
-#define LLVM_CLANG_THREAD_SAFETY_TIL_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYTIL_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYTIL_H
 
 // All clang include dependencies for this file must be put in
 // ThreadSafetyUtil.h.
@@ -1848,4 +1848,4 @@ void simplifyIncompleteArg(Variable *V, til::Phi *Ph);
 } // end namespace threadSafety
 } // end namespace clang
 
-#endif // LLVM_CLANG_THREAD_SAFETY_TIL_H
+#endif

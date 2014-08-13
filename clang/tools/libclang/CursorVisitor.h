@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LIBCLANG_CURSORVISITOR_H
-#define LLVM_CLANG_LIBCLANG_CURSORVISITOR_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CURSORVISITOR_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CURSORVISITOR_H
 
 #include "CXCursor.h"
 #include "CXTranslationUnit.h"

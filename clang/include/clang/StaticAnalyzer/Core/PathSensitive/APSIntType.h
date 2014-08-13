@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_CORE_APSINTTYPE_H
-#define LLVM_CLANG_SA_CORE_APSINTTYPE_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_APSINTTYPE_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_APSINTTYPE_H
 
 #include "llvm/ADT/APSInt.h"
 #include <tuple>

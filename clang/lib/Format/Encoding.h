@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_ENCODING_H
-#define LLVM_CLANG_FORMAT_ENCODING_H
+#ifndef LLVM_CLANG_LIB_FORMAT_ENCODING_H
+#define LLVM_CLANG_LIB_FORMAT_ENCODING_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/ConvertUTF.h"
@@ -143,4 +143,4 @@ inline unsigned getEscapeSequenceLength(StringRef Text) {
 } // namespace format
 } // namespace clang
 
-#endif // LLVM_CLANG_FORMAT_ENCODING_H
+#endif

@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_COMMENTOPTIONS_H
-#define LLVM_CLANG_COMMENTOPTIONS_H
+#ifndef LLVM_CLANG_BASIC_COMMENTOPTIONS_H
+#define LLVM_CLANG_BASIC_COMMENTOPTIONS_H
 
 #include <string>
 #include <vector>

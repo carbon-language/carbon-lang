@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REWRITEROPE_H
-#define LLVM_CLANG_REWRITEROPE_H
+#ifndef LLVM_CLANG_REWRITE_CORE_REWRITEROPE_H
+#define LLVM_CLANG_REWRITE_CORE_REWRITEROPE_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"

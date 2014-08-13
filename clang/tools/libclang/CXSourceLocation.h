@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CXSOURCELOCATION_H
-#define LLVM_CLANG_CXSOURCELOCATION_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CXSOURCELOCATION_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CXSOURCELOCATION_H
 
 #include "clang-c/Index.h"
 #include "clang/AST/ASTContext.h"

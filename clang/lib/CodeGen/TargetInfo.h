@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_TARGETINFO_H
-#define CLANG_CODEGEN_TARGETINFO_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_TARGETINFO_H
+#define LLVM_CLANG_LIB_CODEGEN_TARGETINFO_H
 
 #include "clang/AST/Type.h"
 #include "clang/Basic/LLVM.h"
@@ -212,4 +212,4 @@ public:
 };
 }
 
-#endif // CLANG_CODEGEN_TARGETINFO_H
+#endif

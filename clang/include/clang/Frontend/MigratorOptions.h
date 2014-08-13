@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_MIGRATOROPTIONS
-#define LLVM_CLANG_FRONTEND_MIGRATOROPTIONS
+#ifndef LLVM_CLANG_FRONTEND_MIGRATOROPTIONS_H
+#define LLVM_CLANG_FRONTEND_MIGRATOROPTIONS_H
 
 namespace clang {
 

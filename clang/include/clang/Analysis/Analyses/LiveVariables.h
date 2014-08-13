@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LIVEVARIABLES_H
-#define LLVM_CLANG_LIVEVARIABLES_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_LIVEVARIABLES_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_LIVEVARIABLES_H
 
 #include "clang/AST/Decl.h"
 #include "clang/Analysis/AnalysisContext.h"

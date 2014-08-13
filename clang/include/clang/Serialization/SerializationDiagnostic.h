@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SERIALIZATIONDIAGNOSTIC_H
-#define LLVM_CLANG_SERIALIZATIONDIAGNOSTIC_H
+#ifndef LLVM_CLANG_SERIALIZATION_SERIALIZATIONDIAGNOSTIC_H
+#define LLVM_CLANG_SERIALIZATION_SERIALIZATIONDIAGNOSTIC_H
 
 #include "clang/Basic/Diagnostic.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CXSTRING_H
-#define LLVM_CLANG_CXSTRING_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CXSTRING_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CXSTRING_H
 
 #include "clang-c/Index.h"
 #include "clang/Basic/LLVM.h"

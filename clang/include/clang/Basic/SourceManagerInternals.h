@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
-#define LLVM_CLANG_SOURCEMANAGER_INTERNALS_H
+#ifndef LLVM_CLANG_BASIC_SOURCEMANAGERINTERNALS_H
+#define LLVM_CLANG_BASIC_SOURCEMANAGERINTERNALS_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/SourceManager.h"

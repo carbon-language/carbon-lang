@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_MATCHERS_DYNAMIC_VARIANT_VALUE_H
-#define LLVM_CLANG_AST_MATCHERS_DYNAMIC_VARIANT_VALUE_H
+#ifndef LLVM_CLANG_ASTMATCHERS_DYNAMIC_VARIANTVALUE_H
+#define LLVM_CLANG_ASTMATCHERS_DYNAMIC_VARIANTVALUE_H
 
 #include "clang/ASTMatchers/ASTMatchers.h"
 #include "clang/ASTMatchers/ASTMatchersInternal.h"

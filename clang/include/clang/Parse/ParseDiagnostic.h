@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICPARSE_H
-#define LLVM_CLANG_DIAGNOSTICPARSE_H
+#ifndef LLVM_CLANG_PARSE_PARSEDIAGNOSTIC_H
+#define LLVM_CLANG_PARSE_PARSEDIAGNOSTIC_H
 
 #include "clang/Basic/Diagnostic.h"
 

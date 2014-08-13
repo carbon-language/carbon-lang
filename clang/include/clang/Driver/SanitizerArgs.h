@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef CLANG_LIB_DRIVER_SANITIZERARGS_H_
-#define CLANG_LIB_DRIVER_SANITIZERARGS_H_
+#ifndef LLVM_CLANG_DRIVER_SANITIZERARGS_H
+#define LLVM_CLANG_DRIVER_SANITIZERARGS_H
 
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
@@ -148,4 +148,4 @@ class SanitizerArgs {
 }  // namespace driver
 }  // namespace clang
 
-#endif // CLANG_LIB_DRIVER_SANITIZERARGS_H_
+#endif

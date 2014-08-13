@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_COREENGINE
-#define LLVM_CLANG_GR_COREENGINE
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_COREENGINE_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_COREENGINE_H
 
 #include "clang/AST/Expr.h"
 #include "clang/Analysis/AnalysisContext.h"

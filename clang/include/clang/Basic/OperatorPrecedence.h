@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_OPERATOR_PRECEDENCE_H
-#define LLVM_CLANG_OPERATOR_PRECEDENCE_H
+#ifndef LLVM_CLANG_BASIC_OPERATORPRECEDENCE_H
+#define LLVM_CLANG_BASIC_OPERATORPRECEDENCE_H
 
 #include "clang/Basic/TokenKinds.h"
 

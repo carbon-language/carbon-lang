@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CXXABI_H
-#define CLANG_CODEGEN_CXXABI_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGCXXABI_H
+#define LLVM_CLANG_LIB_CODEGEN_CGCXXABI_H
 
 #include "CodeGenFunction.h"
 #include "clang/Basic/LLVM.h"

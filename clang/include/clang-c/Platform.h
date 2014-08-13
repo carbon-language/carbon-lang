@@ -11,8 +11,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_C_PLATFORM_H
-#define CLANG_C_PLATFORM_H
+#ifndef LLVM_CLANG_C_PLATFORM_H
+#define LLVM_CLANG_C_PLATFORM_H
 
 #ifdef __cplusplus
 extern "C" {

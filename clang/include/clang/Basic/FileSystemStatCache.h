@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FILESYSTEMSTATCACHE_H
-#define LLVM_CLANG_FILESYSTEMSTATCACHE_H
+#ifndef LLVM_CLANG_BASIC_FILESYSTEMSTATCACHE_H
+#define LLVM_CLANG_BASIC_FILESYSTEMSTATCACHE_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"

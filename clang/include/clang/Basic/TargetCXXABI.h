@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TARGETCXXABI_H
-#define LLVM_CLANG_TARGETCXXABI_H
+#ifndef LLVM_CLANG_BASIC_TARGETCXXABI_H
+#define LLVM_CLANG_BASIC_TARGETCXXABI_H
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ErrorHandling.h"

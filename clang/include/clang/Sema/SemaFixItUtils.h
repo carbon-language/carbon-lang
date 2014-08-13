@@ -10,8 +10,8 @@
 //  This file defines helper classes for generation of Sema FixItHints.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_CLANG_SEMA_FIXITUTILS_H
-#define LLVM_CLANG_SEMA_FIXITUTILS_H
+#ifndef LLVM_CLANG_SEMA_SEMAFIXITUTILS_H
+#define LLVM_CLANG_SEMA_SEMAFIXITUTILS_H
 
 #include "clang/AST/Expr.h"
 
@@ -88,4 +88,4 @@ struct ConversionFixItGenerator {
 };
 
 } // endof namespace clang
-#endif // LLVM_CLANG_SEMA_FIXITUTILS_H
+#endif

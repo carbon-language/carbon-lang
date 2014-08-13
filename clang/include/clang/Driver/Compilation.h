@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_COMPILATION_H_
-#define CLANG_DRIVER_COMPILATION_H_
+#ifndef LLVM_CLANG_DRIVER_COMPILATION_H
+#define LLVM_CLANG_DRIVER_COMPILATION_H
 
 #include "clang/Driver/Job.h"
 #include "clang/Driver/Util.h"

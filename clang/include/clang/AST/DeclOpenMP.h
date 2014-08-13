@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_OPENMP_H
-#define LLVM_CLANG_AST_OPENMP_H
+#ifndef LLVM_CLANG_AST_DECLOPENMP_H
+#define LLVM_CLANG_AST_DECLOPENMP_H
 
 #include "clang/AST/DeclBase.h"
 #include "llvm/ADT/ArrayRef.h"

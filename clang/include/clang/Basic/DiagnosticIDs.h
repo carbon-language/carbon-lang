@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICIDS_H
-#define LLVM_CLANG_DIAGNOSTICIDS_H
+#ifndef LLVM_CLANG_BASIC_DIAGNOSTICIDS_H
+#define LLVM_CLANG_BASIC_DIAGNOSTICIDS_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"

@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOKENKINDS_H
-#define LLVM_CLANG_TOKENKINDS_H
+#ifndef LLVM_CLANG_BASIC_TOKENKINDS_H
+#define LLVM_CLANG_BASIC_TOKENKINDS_H
 
 #include "llvm/Support/Compiler.h"
 

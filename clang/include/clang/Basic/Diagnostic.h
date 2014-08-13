@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTIC_H
-#define LLVM_CLANG_DIAGNOSTIC_H
+#ifndef LLVM_CLANG_BASIC_DIAGNOSTIC_H
+#define LLVM_CLANG_BASIC_DIAGNOSTIC_H
 
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"

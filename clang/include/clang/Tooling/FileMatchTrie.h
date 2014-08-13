@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_FILE_MATCH_TRIE_H
-#define LLVM_CLANG_TOOLING_FILE_MATCH_TRIE_H
+#ifndef LLVM_CLANG_TOOLING_FILEMATCHTRIE_H
+#define LLVM_CLANG_TOOLING_FILEMATCHTRIE_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringRef.h"
@@ -86,4 +86,4 @@ private:
 } // end namespace tooling
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLING_FILE_MATCH_TRIE_H
+#endif

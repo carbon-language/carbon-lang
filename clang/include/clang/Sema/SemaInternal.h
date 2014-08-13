@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_SEMA_INTERNAL_H
-#define LLVM_CLANG_SEMA_SEMA_INTERNAL_H
+#ifndef LLVM_CLANG_SEMA_SEMAINTERNAL_H
+#define LLVM_CLANG_SEMA_SEMAINTERNAL_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/Sema/Sema.h"

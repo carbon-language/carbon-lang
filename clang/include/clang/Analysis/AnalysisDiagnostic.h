@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_DIAGNOSTICANALYSIS_H
-#define LLVM_CLANG_DIAGNOSTICANALYSIS_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSISDIAGNOSTIC_H
+#define LLVM_CLANG_ANALYSIS_ANALYSISDIAGNOSTIC_H
 
 #include "clang/Basic/Diagnostic.h"
 

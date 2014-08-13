@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CODEGENMODULE_H
-#define CLANG_CODEGEN_CODEGENMODULE_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CODEGENMODULE_H
+#define LLVM_CLANG_LIB_CODEGEN_CODEGENMODULE_H
 
 #include "CGVTables.h"
 #include "CodeGenTypes.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_MULTIPLEINCLUDEOPT_H
-#define LLVM_CLANG_MULTIPLEINCLUDEOPT_H
+#ifndef LLVM_CLANG_LEX_MULTIPLEINCLUDEOPT_H
+#define LLVM_CLANG_LEX_MULTIPLEINCLUDEOPT_H
 
 #include "clang/Basic/SourceLocation.h"
 

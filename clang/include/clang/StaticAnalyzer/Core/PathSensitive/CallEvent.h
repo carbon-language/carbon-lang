@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_STATICANALYZER_PATHSENSITIVE_CALL
-#define LLVM_CLANG_STATICANALYZER_PATHSENSITIVE_CALL
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_CALLEVENT_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_CALLEVENT_H
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"

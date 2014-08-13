@@ -12,8 +12,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_CXCOMPILATIONDATABASE_H
-#define CLANG_CXCOMPILATIONDATABASE_H
+#ifndef LLVM_CLANG_C_CXCOMPILATIONDATABASE_H
+#define LLVM_CLANG_C_CXCOMPILATIONDATABASE_H
 
 #include "clang-c/Platform.h"
 #include "clang-c/CXString.h"

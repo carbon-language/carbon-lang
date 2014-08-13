@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_DRIVER_ACTION_H_
-#define CLANG_DRIVER_ACTION_H_
+#ifndef LLVM_CLANG_DRIVER_ACTION_H
+#define LLVM_CLANG_DRIVER_ACTION_H
 
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"

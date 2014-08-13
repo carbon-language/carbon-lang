@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_VERIFYDIAGNOSTICSCLIENT_H
-#define LLVM_CLANG_FRONTEND_VERIFYDIAGNOSTICSCLIENT_H
+#ifndef LLVM_CLANG_FRONTEND_VERIFYDIAGNOSTICCONSUMER_H
+#define LLVM_CLANG_FRONTEND_VERIFYDIAGNOSTICCONSUMER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Lex/Preprocessor.h"

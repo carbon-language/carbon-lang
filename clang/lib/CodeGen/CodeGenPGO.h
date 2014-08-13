@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CODEGENPGO_H
-#define CLANG_CODEGEN_CODEGENPGO_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CODEGENPGO_H
+#define LLVM_CLANG_LIB_CODEGEN_CODEGENPGO_H
 
 #include "CGBuilder.h"
 #include "CodeGenModule.h"

@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SOURCELOCATION_H
-#define LLVM_CLANG_SOURCELOCATION_H
+#ifndef LLVM_CLANG_BASIC_SOURCELOCATION_H
+#define LLVM_CLANG_BASIC_SOURCELOCATION_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/Compiler.h"

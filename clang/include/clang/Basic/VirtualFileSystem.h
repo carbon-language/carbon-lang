@@ -10,8 +10,8 @@
 /// \brief Defines the virtual file system interface vfs::FileSystem.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_BASIC_VIRTUAL_FILE_SYSTEM_H
-#define LLVM_CLANG_BASIC_VIRTUAL_FILE_SYSTEM_H
+#ifndef LLVM_CLANG_BASIC_VIRTUALFILESYSTEM_H
+#define LLVM_CLANG_BASIC_VIRTUALFILESYSTEM_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
@@ -280,4 +280,4 @@ public:
 
 } // end namespace vfs
 } // end namespace clang
-#endif // LLVM_CLANG_BASIC_VIRTUAL_FILE_SYSTEM_H
+#endif

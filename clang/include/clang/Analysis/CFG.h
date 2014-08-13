@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CFG_H
-#define LLVM_CLANG_CFG_H
+#ifndef LLVM_CLANG_ANALYSIS_CFG_H
+#define LLVM_CLANG_ANALYSIS_CFG_H
 
 #include "clang/AST/Stmt.h"
 #include "clang/Analysis/Support/BumpVector.h"

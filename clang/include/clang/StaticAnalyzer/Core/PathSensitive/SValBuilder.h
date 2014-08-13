@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_SVALBUILDER
-#define LLVM_CLANG_GR_SVALBUILDER
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SVALBUILDER_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_SVALBUILDER_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Expr.h"

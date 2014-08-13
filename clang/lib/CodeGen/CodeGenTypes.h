@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CODEGENTYPES_H
-#define CLANG_CODEGEN_CODEGENTYPES_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CODEGENTYPES_H
+#define LLVM_CLANG_LIB_CODEGEN_CODEGENTYPES_H
 
 #include "CGCall.h"
 #include "clang/AST/GlobalDecl.h"

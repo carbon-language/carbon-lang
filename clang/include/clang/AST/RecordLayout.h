@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_LAYOUTINFO_H
-#define LLVM_CLANG_AST_LAYOUTINFO_H
+#ifndef LLVM_CLANG_AST_RECORDLAYOUT_H
+#define LLVM_CLANG_AST_RECORDLAYOUT_H
 
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclCXX.h"

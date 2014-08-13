@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CUDARUNTIME_H
-#define CLANG_CODEGEN_CUDARUNTIME_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGCUDARUNTIME_H
+#define LLVM_CLANG_LIB_CODEGEN_CGCUDARUNTIME_H
 
 namespace clang {
 

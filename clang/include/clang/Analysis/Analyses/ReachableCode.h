@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_REACHABLECODE_H
-#define LLVM_CLANG_REACHABLECODE_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_REACHABLECODE_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_REACHABLECODE_H
 
 #include "clang/Basic/SourceLocation.h"
 

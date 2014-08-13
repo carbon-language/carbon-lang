@@ -11,8 +11,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_C_CXERRORCODE_H
-#define CLANG_C_CXERRORCODE_H
+#ifndef LLVM_CLANG_C_CXERRORCODE_H
+#define LLVM_CLANG_C_CXERRORCODE_H
 
 #include "clang-c/Platform.h"
 

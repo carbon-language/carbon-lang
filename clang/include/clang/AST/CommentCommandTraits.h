@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_CLANG_AST_COMMENT_COMMAND_TRAITS_H
-#define LLVM_CLANG_AST_COMMENT_COMMAND_TRAITS_H
+#ifndef LLVM_CLANG_AST_COMMENTCOMMANDTRAITS_H
+#define LLVM_CLANG_AST_COMMENTCOMMANDTRAITS_H
 
 #include "clang/Basic/CommentOptions.h"
 #include "clang/Basic/LLVM.h"

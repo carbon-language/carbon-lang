@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CXCURSOR_H
-#define LLVM_CLANG_CXCURSOR_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CXCURSOR_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CXCURSOR_H
 
 #include "clang-c/Index.h"
 #include "clang/Basic/SourceLocation.h"

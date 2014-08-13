@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_OBJCRETAINCOUNT_H
-#define LLVM_CLANG_OBJCRETAINCOUNT_H
+#ifndef LLVM_CLANG_STATICANALYZER_CHECKERS_OBJCRETAINCOUNT_H
+#define LLVM_CLANG_STATICANALYZER_CHECKERS_OBJCRETAINCOUNT_H
 
 namespace clang { namespace ento { namespace objc_retain {
 

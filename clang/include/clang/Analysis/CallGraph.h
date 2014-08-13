@@ -14,8 +14,8 @@
 //  edges to all externally available functions.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_CALLGRAPH
-#define LLVM_CLANG_ANALYSIS_CALLGRAPH
+#ifndef LLVM_CLANG_ANALYSIS_CALLGRAPH_H
+#define LLVM_CLANG_ANALYSIS_CALLGRAPH_H
 
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/RecursiveASTVisitor.h"

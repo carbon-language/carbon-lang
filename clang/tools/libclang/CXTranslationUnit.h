@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CXTRANSLATIONUNIT_H
-#define LLVM_CLANG_CXTRANSLATIONUNIT_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CXTRANSLATIONUNIT_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CXTRANSLATIONUNIT_H
 
 #include "CLog.h"
 #include "CXString.h"

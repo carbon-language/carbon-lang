@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CODEGEN_CODE_GEN_ACTION_H
-#define LLVM_CLANG_CODEGEN_CODE_GEN_ACTION_H
+#ifndef LLVM_CLANG_CODEGEN_CODEGENACTION_H
+#define LLVM_CLANG_CODEGEN_CODEGENACTION_H
 
 #include "clang/Frontend/FrontendAction.h"
 #include <memory>

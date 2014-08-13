@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ATTRKINDS_H
-#define LLVM_CLANG_ATTRKINDS_H
+#ifndef LLVM_CLANG_BASIC_ATTRKINDS_H
+#define LLVM_CLANG_BASIC_ATTRKINDS_H
 
 namespace clang {
 

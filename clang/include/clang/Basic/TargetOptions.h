@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
-#define LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
+#ifndef LLVM_CLANG_BASIC_TARGETOPTIONS_H
+#define LLVM_CLANG_BASIC_TARGETOPTIONS_H
 
 #include <string>
 #include <vector>

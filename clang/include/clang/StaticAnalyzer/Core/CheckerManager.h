@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
-#define LLVM_CLANG_SA_CORE_CHECKERMANAGER_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_CHECKERMANAGER_H
+#define LLVM_CLANG_STATICANALYZER_CORE_CHECKERMANAGER_H
 
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/Basic/LangOptions.h"

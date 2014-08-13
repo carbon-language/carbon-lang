@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_STMT_ITR_H
-#define LLVM_CLANG_AST_STMT_ITR_H
+#ifndef LLVM_CLANG_AST_STMTITERATOR_H
+#define LLVM_CLANG_AST_STMTITERATOR_H
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"

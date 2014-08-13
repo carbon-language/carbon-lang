@@ -12,8 +12,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_C_DOCUMENTATION_H
-#define CLANG_C_DOCUMENTATION_H
+#ifndef LLVM_CLANG_C_DOCUMENTATION_H
+#define LLVM_CLANG_C_DOCUMENTATION_H
 
 #include "clang-c/Index.h"
 

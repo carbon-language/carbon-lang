@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_FORMAT_TOKEN_H
-#define LLVM_CLANG_FORMAT_FORMAT_TOKEN_H
+#ifndef LLVM_CLANG_LIB_FORMAT_FORMATTOKEN_H
+#define LLVM_CLANG_LIB_FORMAT_FORMATTOKEN_H
 
 #include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Format/Format.h"
@@ -522,4 +522,4 @@ private:
 } // namespace format
 } // namespace clang
 
-#endif // LLVM_CLANG_FORMAT_FORMAT_TOKEN_H
+#endif

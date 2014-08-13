@@ -10,8 +10,8 @@
 |* Implements the diagnostic functions of the Clang C interface.              *|
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
-#ifndef LLVM_CLANG_CINDEX_DIAGNOSTIC_H
-#define LLVM_CLANG_CINDEX_DIAGNOSTIC_H
+#ifndef LLVM_CLANG_TOOLS_LIBCLANG_CINDEXDIAGNOSTIC_H
+#define LLVM_CLANG_TOOLS_LIBCLANG_CINDEXDIAGNOSTIC_H
 
 #include "clang-c/Index.h"
 #include <vector>
@@ -163,4 +163,4 @@ CXDiagnosticSetImpl *lazyCreateDiags(CXTranslationUnit TU,
 
 } // end namespace clang
 
-#endif // LLVM_CLANG_CINDEX_DIAGNOSTIC_H
+#endif

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_STATIC_ANALYZER_BUG_CATEGORIES_H
-#define LLVM_CLANG_STATIC_ANALYZER_BUG_CATEGORIES_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_COMMONBUGCATEGORIES_H
+#define LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_COMMONBUGCATEGORIES_H
 
 // Common strings used for the "category" of many static analyzer issues.
 namespace clang {

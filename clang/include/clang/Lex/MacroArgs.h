@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_MACROARGS_H
-#define LLVM_CLANG_MACROARGS_H
+#ifndef LLVM_CLANG_LEX_MACROARGS_H
+#define LLVM_CLANG_LEX_MACROARGS_H
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/ArrayRef.h"

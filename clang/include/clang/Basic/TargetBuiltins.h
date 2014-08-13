@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_BASIC_TARGET_BUILTINS_H
-#define LLVM_CLANG_BASIC_TARGET_BUILTINS_H
+#ifndef LLVM_CLANG_BASIC_TARGETBUILTINS_H
+#define LLVM_CLANG_BASIC_TARGETBUILTINS_H
 
 #include "clang/Basic/Builtins.h"
 #undef PPC

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREAD_SAFETY_UTIL_H
-#define LLVM_CLANG_THREAD_SAFETY_UTIL_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYUTIL_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYUTIL_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/AlignOf.h"

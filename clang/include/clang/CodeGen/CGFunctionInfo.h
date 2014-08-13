@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CODEGEN_FUNCTION_INFO_H
-#define LLVM_CLANG_CODEGEN_FUNCTION_INFO_H
+#ifndef LLVM_CLANG_CODEGEN_CGFUNCTIONINFO_H
+#define LLVM_CLANG_CODEGEN_CGFUNCTIONINFO_H
 
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/Type.h"

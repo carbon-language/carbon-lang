@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_TEST_UTILS_H
-#define LLVM_CLANG_FORMAT_TEST_UTILS_H
+#ifndef LLVM_CLANG_UNITTESTS_FORMAT_FORMATTESTUTILS_H
+#define LLVM_CLANG_UNITTESTS_FORMAT_FORMATTESTUTILS_H
 
 #include "llvm/ADT/StringRef.h"
 
@@ -64,4 +64,4 @@ inline std::string messUp(llvm::StringRef Code) {
 } // end namespace format
 } // end namespace clang
 
-#endif // LLVM_CLANG_FORMAT_TEST_UTILS_H
+#endif

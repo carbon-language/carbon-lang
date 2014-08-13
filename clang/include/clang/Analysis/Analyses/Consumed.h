@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CONSUMED_H
-#define LLVM_CLANG_CONSUMED_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_CONSUMED_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_CONSUMED_H
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/ExprCXX.h"

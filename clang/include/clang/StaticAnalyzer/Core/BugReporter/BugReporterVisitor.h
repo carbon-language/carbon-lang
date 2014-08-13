@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_BUGREPORTERVISITOR
-#define LLVM_CLANG_GR_BUGREPORTERVISITOR
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_BUGREPORTERVISITOR_H
+#define LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_BUGREPORTERVISITOR_H
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/ADT/FoldingSet.h"
@@ -364,4 +364,4 @@ bool isDeclRefExprToReference(const Expr *E);
 } // end namespace bugreporter
 
 
-#endif //LLVM_CLANG_GR__BUGREPORTERVISITOR
+#endif

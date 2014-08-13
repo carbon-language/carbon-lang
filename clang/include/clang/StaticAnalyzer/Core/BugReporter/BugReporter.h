@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_BUGREPORTER
-#define LLVM_CLANG_GR_BUGREPORTER
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_BUGREPORTER_H
+#define LLVM_CLANG_STATICANALYZER_CORE_BUGREPORTER_BUGREPORTER_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"

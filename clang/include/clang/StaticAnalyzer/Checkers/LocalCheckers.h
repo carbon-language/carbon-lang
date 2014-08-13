@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_LOCALCHECKERS_H
-#define LLVM_CLANG_GR_LOCALCHECKERS_H
+#ifndef LLVM_CLANG_STATICANALYZER_CHECKERS_LOCALCHECKERS_H
+#define LLVM_CLANG_STATICANALYZER_CHECKERS_LOCALCHECKERS_H
 
 namespace clang {
 namespace ento {

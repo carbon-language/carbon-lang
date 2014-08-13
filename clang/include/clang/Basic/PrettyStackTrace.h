@@ -14,8 +14,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_BASIC_PRETTYSTACKTRACE_H
-#define CLANG_BASIC_PRETTYSTACKTRACE_H
+#ifndef LLVM_CLANG_BASIC_PRETTYSTACKTRACE_H
+#define LLVM_CLANG_BASIC_PRETTYSTACKTRACE_H
 
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/Support/PrettyStackTrace.h"

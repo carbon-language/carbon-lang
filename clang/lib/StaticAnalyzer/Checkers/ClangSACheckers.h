@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
-#define LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
+#ifndef LLVM_CLANG_LIB_STATICANALYZER_CHECKERS_CLANGSACHECKERS_H
+#define LLVM_CLANG_LIB_STATICANALYZER_CHECKERS_CLANGSACHECKERS_H
 
 #include "clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h"
 

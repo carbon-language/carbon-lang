@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_ANALYSIS_CFG_REACHABILITY
-#define CLANG_ANALYSIS_CFG_REACHABILITY
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_CFGREACHABILITYANALYSIS_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_CFGREACHABILITYANALYSIS_H
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"

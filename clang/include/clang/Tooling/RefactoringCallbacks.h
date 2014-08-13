@@ -26,8 +26,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_REFACTORING_CALLBACKS_H
-#define LLVM_CLANG_TOOLING_REFACTORING_CALLBACKS_H
+#ifndef LLVM_CLANG_TOOLING_REFACTORINGCALLBACKS_H
+#define LLVM_CLANG_TOOLING_REFACTORINGCALLBACKS_H
 
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 #include "clang/Tooling/Refactoring.h"
@@ -87,4 +87,4 @@ private:
 } // end namespace tooling
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLING_REFACTORING_CALLBACKS_H
+#endif

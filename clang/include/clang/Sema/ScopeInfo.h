@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_SEMA_SCOPE_INFO_H
-#define LLVM_CLANG_SEMA_SCOPE_INFO_H
+#ifndef LLVM_CLANG_SEMA_SCOPEINFO_H
+#define LLVM_CLANG_SEMA_SCOPEINFO_H
 
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"

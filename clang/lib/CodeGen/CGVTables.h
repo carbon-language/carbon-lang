@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGVTABLE_H
-#define CLANG_CODEGEN_CGVTABLE_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGVTABLES_H
+#define LLVM_CLANG_LIB_CODEGEN_CGVTABLES_H
 
 #include "clang/AST/BaseSubobject.h"
 #include "clang/AST/CharUnits.h"

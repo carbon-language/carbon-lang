@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_THREAD_SAFETY_TRAVERSE_H
-#define LLVM_CLANG_THREAD_SAFETY_TRAVERSE_H
+#ifndef LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYTRAVERSE_H
+#define LLVM_CLANG_ANALYSIS_ANALYSES_THREADSAFETYTRAVERSE_H
 
 #include "ThreadSafetyTIL.h"
 

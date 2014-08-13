@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_ANALYSISMANAGER_H
-#define LLVM_CLANG_GR_ANALYSISMANAGER_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_ANALYSISMANAGER_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_ANALYSISMANAGER_H
 
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"

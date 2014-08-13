@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_CODEGEN_ABITYPES_H
-#define LLVM_CLANG_CODEGEN_ABITYPES_H
+#ifndef LLVM_CLANG_CODEGEN_CODEGENABITYPES_H
+#define LLVM_CLANG_CODEGEN_CODEGENABITYPES_H
 
 #include "clang/AST/CanonicalType.h"
 #include "clang/AST/Type.h"

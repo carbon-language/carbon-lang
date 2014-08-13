@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_FRONTEND_MULTIPLEXCONSUMER_H
-#define CLANG_FRONTEND_MULTIPLEXCONSUMER_H
+#ifndef LLVM_CLANG_FRONTEND_MULTIPLEXCONSUMER_H
+#define LLVM_CLANG_FRONTEND_MULTIPLEXCONSUMER_H
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Sema/SemaConsumer.h"

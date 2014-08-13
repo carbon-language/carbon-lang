@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CLANG_CODEGEN_CGLOOPINFO_H
-#define CLANG_CODEGEN_CGLOOPINFO_H
+#ifndef LLVM_CLANG_LIB_CODEGEN_CGLOOPINFO_H
+#define LLVM_CLANG_LIB_CODEGEN_CGLOOPINFO_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -133,4 +133,4 @@ private:
 } // end namespace CodeGen
 } // end namespace clang
 
-#endif // CLANG_CODEGEN_CGLOOPINFO_H
+#endif

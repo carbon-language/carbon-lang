@@ -10,8 +10,8 @@
 // routines.
 //
 //===----------------------------------------------------------------------===/
-#ifndef LLVM_CLANG_SEMA_TEMPLATE_DEDUCTION_H
-#define LLVM_CLANG_SEMA_TEMPLATE_DEDUCTION_H
+#ifndef LLVM_CLANG_SEMA_TEMPLATEDEDUCTION_H
+#define LLVM_CLANG_SEMA_TEMPLATEDEDUCTION_H
 
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/PartialDiagnostic.h"

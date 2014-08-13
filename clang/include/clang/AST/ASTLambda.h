@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_LAMBDA_H
-#define LLVM_CLANG_AST_LAMBDA_H
+#ifndef LLVM_CLANG_AST_ASTLAMBDA_H
+#define LLVM_CLANG_AST_ASTLAMBDA_H
 
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
@@ -77,4 +77,4 @@ inline DeclContext *getLambdaAwareParentOfDeclContext(DeclContext *DC) {
 
 } // clang
 
-#endif // LLVM_CLANG_AST_LAMBDA_H
+#endif

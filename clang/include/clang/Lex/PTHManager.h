@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_PTHMANAGER_H
-#define LLVM_CLANG_PTHMANAGER_H
+#ifndef LLVM_CLANG_LEX_PTHMANAGER_H
+#define LLVM_CLANG_LEX_PTHMANAGER_H
 
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"

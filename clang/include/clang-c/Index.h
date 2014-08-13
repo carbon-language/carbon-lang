@@ -13,8 +13,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef CLANG_C_INDEX_H
-#define CLANG_C_INDEX_H
+#ifndef LLVM_CLANG_C_INDEX_H
+#define LLVM_CLANG_C_INDEX_H
 
 #include <time.h>
 

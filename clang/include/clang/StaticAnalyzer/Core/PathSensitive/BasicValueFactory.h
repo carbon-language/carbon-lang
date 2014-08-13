@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_GR_BASICVALUEFACTORY_H
-#define LLVM_CLANG_GR_BASICVALUEFACTORY_H
+#ifndef LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_BASICVALUEFACTORY_H
+#define LLVM_CLANG_STATICANALYZER_CORE_PATHSENSITIVE_BASICVALUEFACTORY_H
 
 #include "clang/AST/ASTContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h"
