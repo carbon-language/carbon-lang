@@ -14,4 +14,5 @@ add_clang_library(clangTidyLLVMModule
   clangLex
   clangTidy
   clangTidyUtils
+  clangTooling
   )
