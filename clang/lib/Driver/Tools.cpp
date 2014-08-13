@@ -5379,7 +5379,7 @@ bool mips::hasMipsAbiArg(const ArgList &Args, const char *Value) {
 
 bool mips::isUCLibc(const ArgList &Args) {
   Arg *A = Args.getLastArg(options::OPT_m_libc_Group);
-  return A && A->getOption().matches(options::OPT_nolibc);
+  return A && A->getOption().matches(options::OPT_muclibc);
 }
 
 bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
