@@ -15876,7 +15876,7 @@ static SDValue LowerMUL_LOHI(SDValue Op, const X86Subtarget *Subtarget,
   } else {
     const int HighMask[] = {1, 5, 3, 7};
     Highs = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, HighMask);
-    const int LowMask[] = {1, 4, 2, 6};
+    const int LowMask[] = {0, 4, 2, 6};
     Lows = DAG.getVectorShuffle(VT, dl, Mul1, Mul2, LowMask);
   }
 
