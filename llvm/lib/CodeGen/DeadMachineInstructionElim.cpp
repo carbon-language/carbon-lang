@@ -124,19 +124,10 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
       if (isDead(MI)) {
         DEBUG(dbgs() << "DeadMachineInstructionElim: DELETING: " << *MI);
         // It is possible that some DBG_VALUE instructions refer to this
-        // instruction.  Examine each def operand for such references;
-        // if found, mark the DBG_VALUE as undef (but don't delete it).
-        for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-          const MachineOperand &MO = MI->getOperand(i);
-          if (!MO.isReg() || !MO.isDef())
-            continue;
-          unsigned Reg = MO.getReg();
-          if (!TargetRegisterInfo::isVirtualRegister(Reg))
-            continue;
-          MRI->markUsesInDebugValueAsUndef(Reg);
-        }
+        // instruction.  They get marked as undef and will be deleted
+        // in the live debug variable analysis.
+        MI->eraseFromParentAndMarkDBGValuesForRemoval();
         AnyChanges = true;
-        MI->eraseFromParent();
         ++NumDeletes;
         MIE = MBB->rend();
         // MII is now pointing to the next instruction to process,

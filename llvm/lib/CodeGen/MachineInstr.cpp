@@ -895,6 +895,27 @@ void MachineInstr::eraseFromParent() {
   getParent()->erase(this);
 }
 
+void MachineInstr::eraseFromParentAndMarkDBGValuesForRemoval() {
+  assert(getParent() && "Not embedded in a basic block!");
+  MachineBasicBlock *MBB = getParent();
+  MachineFunction *MF = MBB->getParent();
+  assert(MF && "Not embedded in a function!");
+
+  MachineInstr *MI = (MachineInstr *)this;
+  MachineRegisterInfo &MRI = MF->getRegInfo();
+
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg() || !MO.isDef())
+      continue;
+    unsigned Reg = MO.getReg();
+    if (!TargetRegisterInfo::isVirtualRegister(Reg))
+      continue;
+    MRI.markUsesInDebugValueAsUndef(Reg);
+  }
+  MI->eraseFromParent();
+}
+
 void MachineInstr::eraseFromBundle() {
   assert(getParent() && "Not embedded in a basic block!");
   getParent()->erase_instr(this);
