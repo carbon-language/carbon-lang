@@ -123,6 +123,8 @@ def err_target_unknown_abi : Error<"unknown target ABI '%0'">;
 def err_target_unknown_fpmath : Error<"unknown FP unit '%0'">;
 def err_target_unsupported_fpmath : Error<
     "the '%0' unit is not supported with this instruction set">;
+def err_target_unsupported_unaligned : Error<
+  "the %0 sub-architecture does not support unaligned accesses">;
 
 // Source manager
 def err_cannot_open_file : Error<"cannot open file '%0': %1">, DefaultFatal;
