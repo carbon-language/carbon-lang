@@ -7353,9 +7353,9 @@ static SDValue lowerV8I16SingleInputVectorShuffle(
   auto balanceSides = [&](ArrayRef<int> AToAInputs, ArrayRef<int> BToAInputs,
                           ArrayRef<int> BToBInputs, ArrayRef<int> AToBInputs,
                           int AOffset, int BOffset) {
-    assert(AToAInputs.size() == 3 || AToAInputs.size() == 1 &&
+    assert((AToAInputs.size() == 3 || AToAInputs.size() == 1) &&
            "Must call this with A having 3 or 1 inputs from the A half.");
-    assert(BToAInputs.size() == 1 || BToAInputs.size() == 3 &&
+    assert((BToAInputs.size() == 1 || BToAInputs.size() == 3) &&
            "Must call this with B having 1 or 3 inputs from the B half.");
     assert(AToAInputs.size() + BToAInputs.size() == 4 &&
            "Must call this with either 3:1 or 1:3 inputs (summing to 4).");
