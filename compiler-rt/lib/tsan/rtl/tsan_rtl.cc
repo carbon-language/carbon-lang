@@ -605,13 +605,13 @@ void UnalignedMemoryAccess(ThreadState *thr, uptr pc, uptr addr,
   while (size) {
     int size1 = 1;
     int kAccessSizeLog = kSizeLog1;
-    if (size >= 8 && (addr & ~7) == ((addr + 8) & ~7)) {
+    if (size >= 8 && (addr & ~7) == ((addr + 7) & ~7)) {
       size1 = 8;
       kAccessSizeLog = kSizeLog8;
-    } else if (size >= 4 && (addr & ~7) == ((addr + 4) & ~7)) {
+    } else if (size >= 4 && (addr & ~7) == ((addr + 3) & ~7)) {
       size1 = 4;
       kAccessSizeLog = kSizeLog4;
-    } else if (size >= 2 && (addr & ~7) == ((addr + 2) & ~7)) {
+    } else if (size >= 2 && (addr & ~7) == ((addr + 1) & ~7)) {
       size1 = 2;
       kAccessSizeLog = kSizeLog2;
     }
