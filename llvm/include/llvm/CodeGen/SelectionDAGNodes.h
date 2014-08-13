@@ -417,6 +417,16 @@ public:
     return NodeType >= ISD::FIRST_TARGET_MEMORY_OPCODE;
   }
 
+  /// Test if this node is a memory intrinsic (with valid pointer information).
+  /// INTRINSIC_W_CHAIN and INTRINSIC_VOID nodes are sometimes created for
+  /// non-memory intrinsics (with chains) that are not really instances of
+  /// MemSDNode. For such nodes, we need some extra state to determine the
+  /// proper classof relationship.
+  bool isMemIntrinsic() const {
+    return (NodeType == ISD::INTRINSIC_W_CHAIN ||
+            NodeType == ISD::INTRINSIC_VOID) && ((SubclassData >> 13) & 1);
+  }
+
   /// isMachineOpcode - Test if this node has a post-isel opcode, directly
   /// corresponding to a MachineInstr opcode.
   bool isMachineOpcode() const { return NodeType < 0; }
@@ -1158,8 +1168,7 @@ public:
            N->getOpcode() == ISD::ATOMIC_LOAD_UMAX    ||
            N->getOpcode() == ISD::ATOMIC_LOAD         ||
            N->getOpcode() == ISD::ATOMIC_STORE        ||
-           N->getOpcode() == ISD::INTRINSIC_W_CHAIN   ||
-           N->getOpcode() == ISD::INTRINSIC_VOID      ||
+           N->isMemIntrinsic()                        ||
            N->isTargetMemoryOpcode();
   }
 };
@@ -1288,14 +1297,14 @@ public:
                      ArrayRef<SDValue> Ops, EVT MemoryVT,
                      MachineMemOperand *MMO)
     : MemSDNode(Opc, Order, dl, VTs, Ops, MemoryVT, MMO) {
+    SubclassData |= 1u << 13;
   }
 
   // Methods to support isa and dyn_cast
   static bool classof(const SDNode *N) {
     // We lower some target intrinsics to their target opcode
     // early a node with a target opcode can be of this class
-    return N->getOpcode() == ISD::INTRINSIC_W_CHAIN ||
-           N->getOpcode() == ISD::INTRINSIC_VOID ||
+    return N->isMemIntrinsic()             ||
            N->getOpcode() == ISD::PREFETCH ||
            N->isTargetMemoryOpcode();
   }
