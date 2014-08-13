@@ -114,7 +114,7 @@ LD = $(CC)
 LDFLAGS ?= $(CFLAGS)
 LDFLAGS += $(LD_EXTRAS)
 ifneq "$(OS)" "Windows_NT"
-	ifeq "$(ENABLE_THREADS)" "Yes"
+	ifeq "$(ENABLE_THREADS)" "YES"
 		LDFLAGS += -lpthread
 	endif
 endif
