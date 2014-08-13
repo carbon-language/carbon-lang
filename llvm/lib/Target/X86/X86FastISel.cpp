@@ -3105,7 +3105,34 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
 unsigned X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
   if (VT > MVT::i64)
     return 0;
-  return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+
+  uint64_t Imm = CI->getZExtValue();
+  unsigned Opc = 0;
+  switch (VT.SimpleTy) {
+  default: llvm_unreachable("Unexpected value type");
+  case MVT::i1:  VT = MVT::i8; // fall-through
+  case MVT::i8:  Opc = X86::MOV8ri;  break;
+  case MVT::i16: Opc = X86::MOV16ri; break;
+  case MVT::i32: Opc = X86::MOV32ri; break;
+  case MVT::i64: {
+    if (isUInt<32>(Imm))
+      Opc = X86::MOV32ri;
+    else if (isInt<32>(Imm))
+      Opc = X86::MOV64ri32;
+    else
+      Opc = X86::MOV64ri;
+    break;
+  }
+  }
+  if (VT == MVT::i64 && Opc == X86::MOV32ri) {
+    unsigned SrcReg = FastEmitInst_i(Opc, &X86::GR32RegClass, Imm);
+    unsigned ResultReg = createResultReg(&X86::GR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+            TII.get(TargetOpcode::SUBREG_TO_REG), ResultReg)
+      .addImm(0).addReg(SrcReg).addImm(X86::sub_32bit);
+    return ResultReg;
+  }
+  return FastEmitInst_i(Opc, TLI.getRegClassFor(VT), Imm);
 }
 
 unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
