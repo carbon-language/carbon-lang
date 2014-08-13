@@ -453,3 +453,21 @@ entry:
   store <16 x float> %in, <16 x float> addrspace(1)* %out, align 4
   ret void
 }
+
+; FUNC-LABEL: @kernel_arg_i64
+; SI: S_LOAD_DWORDX2
+; SI: S_LOAD_DWORDX2
+; SI: BUFFER_STORE_DWORDX2
+define void @kernel_arg_i64(i64 addrspace(1)* %out, i64 %a) nounwind {
+  store i64 %a, i64 addrspace(1)* %out, align 8
+  ret void
+}
+
+; XFUNC-LABEL: @kernel_arg_v1i64
+; XSI: S_LOAD_DWORDX2
+; XSI: S_LOAD_DWORDX2
+; XSI: BUFFER_STORE_DWORDX2
+; define void @kernel_arg_v1i64(<1 x i64> addrspace(1)* %out, <1 x i64> %a) nounwind {
+;   store <1 x i64> %a, <1 x i64> addrspace(1)* %out, align 8
+;   ret void
+; }

@@ -1705,8 +1705,13 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
   for (unsigned i = 0, e = Ins.size(); i < e; ++i) {
     CCValAssign &VA = ArgLocs[i];
-    EVT VT = Ins[i].VT;
-    EVT MemVT = LocalIns[i].VT;
+    const ISD::InputArg &In = Ins[i];
+    EVT VT = In.VT;
+    EVT MemVT = VA.getLocVT();
+    if (!VT.isVector() && MemVT.isVector()) {
+      // Get load source type if scalarized.
+      MemVT = MemVT.getVectorElementType();
+    }
 
     if (ShaderType != ShaderType::COMPUTE) {
       unsigned Reg = MF.addLiveIn(VA.getLocReg(), &AMDGPU::R600_Reg128RegClass);
@@ -1716,7 +1721,7 @@ SDValue R600TargetLowering::LowerFormalArguments(
     }
 
     PointerType *PtrTy = PointerType::get(VT.getTypeForEVT(*DAG.getContext()),
-                                                   AMDGPUAS::CONSTANT_BUFFER_0);
+                                          AMDGPUAS::CONSTANT_BUFFER_0);
 
     // i64 isn't a legal type, so the register type used ends up as i32, which
     // isn't expected here. It attempts to create this sextload, but it ends up
@@ -1725,15 +1730,28 @@ SDValue R600TargetLowering::LowerFormalArguments(
 
     // The first 36 bytes of the input buffer contains information about
     // thread group and global sizes.
+    ISD::LoadExtType Ext = ISD::NON_EXTLOAD;
+    if (MemVT.getScalarSizeInBits() != VT.getScalarSizeInBits()) {
+      // FIXME: This should really check the extload type, but the handling of
+      // extload vector parameters seems to be broken.
 
-    // FIXME: This should really check the extload type, but the handling of
-    // extload vecto parameters seems to be broken.
-    //ISD::LoadExtType Ext = Ins[i].Flags.isSExt() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
-    ISD::LoadExtType Ext = ISD::SEXTLOAD;
-    SDValue Arg = DAG.getExtLoad(Ext, DL, VT, Chain,
-                                 DAG.getConstant(36 + VA.getLocMemOffset(), MVT::i32),
-                                 MachinePointerInfo(UndefValue::get(PtrTy)),
-                                 MemVT, false, false, false, 4);
+      // Ext = In.Flags.isSExt() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+      Ext = ISD::SEXTLOAD;
+    }
+
+    // Compute the offset from the value.
+    // XXX - I think PartOffset should give you this, but it seems to give the
+    // size of the register which isn't useful.
+
+    unsigned ValBase = ArgLocs[In.OrigArgIndex].getLocMemOffset();
+    unsigned PartOffset = VA.getLocMemOffset();
+
+    MachinePointerInfo PtrInfo(UndefValue::get(PtrTy), PartOffset - ValBase);
+    SDValue Arg = DAG.getLoad(ISD::UNINDEXED, Ext, VT, DL, Chain,
+                              DAG.getConstant(36 + PartOffset, MVT::i32),
+                              DAG.getUNDEF(MVT::i32),
+                              PtrInfo,
+                              MemVT, false, true, true, 4);
 
     // 4 is the preferred alignment for the CONSTANT memory space.
     InVals.push_back(Arg);
