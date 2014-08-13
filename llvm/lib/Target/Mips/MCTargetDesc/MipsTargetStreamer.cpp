@@ -29,7 +29,9 @@
 using namespace llvm;
 
 MipsTargetStreamer::MipsTargetStreamer(MCStreamer &S)
-    : MCTargetStreamer(S), canHaveModuleDirective(true) {}
+    : MCTargetStreamer(S), canHaveModuleDirective(true) {
+  GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
+}
 void MipsTargetStreamer::emitDirectiveSetMicroMips() {}
 void MipsTargetStreamer::emitDirectiveSetNoMicroMips() {}
 void MipsTargetStreamer::emitDirectiveSetMips16() {}
@@ -492,11 +494,45 @@ void MipsTargetELFStreamer::emitDirectiveSetNoAt() {
 }
 
 void MipsTargetELFStreamer::emitDirectiveEnd(StringRef Name) {
-  // FIXME: implement.
+  MCAssembler &MCA = getStreamer().getAssembler();
+  MCContext &Context = MCA.getContext();
+  MCStreamer &OS = getStreamer();
+
+  const MCSectionELF *Sec = Context.getELFSection(".pdr", ELF::SHT_PROGBITS,
+                                                  ELF::SHF_ALLOC | ELF::SHT_REL,
+                                                  SectionKind::getMetadata());
+
+  const MCSymbolRefExpr *ExprRef =
+      MCSymbolRefExpr::Create(Name, MCSymbolRefExpr::VK_None, Context);
+
+  MCSectionData &SecData = MCA.getOrCreateSectionData(*Sec);
+  SecData.setAlignment(4);
+
+  OS.PushSection();
+
+  OS.SwitchSection(Sec);
+
+  OS.EmitValueImpl(ExprRef, 4);
+
+  OS.EmitIntValue(GPRInfoSet ? GPRBitMask : 0, 4); // reg_mask
+  OS.EmitIntValue(GPRInfoSet ? GPROffset : 0, 4);  // reg_offset
+
+  OS.EmitIntValue(FPRInfoSet ? FPRBitMask : 0, 4); // fpreg_mask
+  OS.EmitIntValue(FPRInfoSet ? FPROffset : 0, 4);  // fpreg_offset
+
+  OS.EmitIntValue(FrameInfoSet ? FrameOffset : 0, 4); // frame_offset
+  OS.EmitIntValue(FrameInfoSet ? FrameReg : 0, 4);    // frame_reg
+  OS.EmitIntValue(FrameInfoSet ? ReturnReg : 0, 4);   // return_reg
+
+  // The .end directive marks the end of a procedure. Invalidate
+  // the information gathered up until this point.
+  GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
+
+  OS.PopSection();
 }
 
 void MipsTargetELFStreamer::emitDirectiveEnt(const MCSymbol &Symbol) {
-  // FIXME: implement.
+  GPRInfoSet = FPRInfoSet = FrameInfoSet = false;
 }
 
 void MipsTargetELFStreamer::emitDirectiveAbiCalls() {
@@ -542,18 +578,28 @@ void MipsTargetELFStreamer::emitDirectiveOptionPic2() {
 }
 
 void MipsTargetELFStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
-                                      unsigned ReturnReg) {
-  // FIXME: implement.
+                                      unsigned ReturnReg_) {
+  MCContext &Context = getStreamer().getAssembler().getContext();
+  const MCRegisterInfo *RegInfo = Context.getRegisterInfo();
+
+  FrameInfoSet = true;
+  FrameReg = RegInfo->getEncodingValue(StackReg);
+  FrameOffset = StackSize;
+  ReturnReg = RegInfo->getEncodingValue(ReturnReg_);
 }
 
 void MipsTargetELFStreamer::emitMask(unsigned CPUBitmask,
                                      int CPUTopSavedRegOff) {
-  // FIXME: implement.
+  GPRInfoSet = true;
+  GPRBitMask = CPUBitmask;
+  GPROffset = CPUTopSavedRegOff;
 }
 
 void MipsTargetELFStreamer::emitFMask(unsigned FPUBitmask,
                                       int FPUTopSavedRegOff) {
-  // FIXME: implement.
+  FPRInfoSet = true;
+  FPRBitMask = FPUBitmask;
+  FPROffset = FPUTopSavedRegOff;
 }
 
 void MipsTargetELFStreamer::emitDirectiveSetMips1() {
