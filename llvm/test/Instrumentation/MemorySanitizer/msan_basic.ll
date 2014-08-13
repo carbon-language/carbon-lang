@@ -878,16 +878,3 @@ define void @MismatchedReturnTypeTailCall(i32 %a) sanitize_memory {
 ; CHECK-LABEL: define void @MismatchedReturnTypeTailCall
 ; CHECK: tail call i32 @InnerTailCall
 ; CHECK: ret void
-
-declare i32 @InnerMustTailCall(i32 %a)
-
-define i32 @MustTailCall(i32 %a) {
-  %b = musttail call i32 @InnerMustTailCall(i32 %a)
-  ret i32 %b
-}
-
-; Test that 'musttail' is preserved.  The ABI should make this work.
-
-; CHECK-LABEL: define i32 @MustTailCall
-; CHECK: musttail call i32 @InnerMustTailCall
-; CHECK-NEXT: ret i32

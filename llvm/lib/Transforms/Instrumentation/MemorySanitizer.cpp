@@ -2356,12 +2356,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       VAHelper->visitCallSite(CS, IRB);
     }
 
-    // If this is a musttail call site, we can't insert propagation code here.
-    // The return type of the caller must match the callee, so the shadow should
-    // already be set up for an immediate return.
-    if (CS.isMustTailCall())
-      return;
-
     // Now, get the shadow for the RetVal.
     if (!I.getType()->isSized()) return;
     IRBuilder<> IRBBefore(&I);
@@ -2395,10 +2389,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   void visitReturnInst(ReturnInst &I) {
-    // Don't propagate shadow between musttail calls and the return.
-    if (I.getParent()->getTerminatingMustTailCall())
-      return;
-
     IRBuilder<> IRB(&I);
     Value *RetVal = I.getReturnValue();
     if (!RetVal) return;
