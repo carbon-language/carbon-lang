@@ -4,7 +4,9 @@
 
 // rdar://16808765
 
-@interface NSObject @end
+@interface NSObject 
++ (void)clsMethod:(int*)arg;
+@end
 
 @class NSDictionary;
 @class NSError;
@@ -18,6 +20,7 @@
 @required
 - (void)getDonuts:(void (^)(NSDictionary *))replyBlock;
 - (void)getCake:(float*)arg, ...;
++ (void)clsMethod:(float*)arg;
 @end
 
 @implementation Foo
@@ -33,3 +36,7 @@
     [(id)0 getCake: &g, 1,3.14];
 }
 @end
+
+void func( Class c, float g ) {
+    [c clsMethod: &g];
+}

@@ -2420,7 +2420,7 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                                                  receiverIsId);
       if (Method)
         if (ObjCMethodDecl *BestMethod =
-                SelectBestMethod(Sel, ArgsIn, Method->isInstanceMethod()))
+              SelectBestMethod(Sel, ArgsIn, Method->isInstanceMethod()))
           Method = BestMethod;
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
@@ -2473,6 +2473,10 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                       << Sel << SourceRange(LBracLoc, RBracLoc);
                   }
             }
+            if (Method)
+              if (ObjCMethodDecl *BestMethod =
+                  SelectBestMethod(Sel, ArgsIn, Method->isInstanceMethod()))
+                Method = BestMethod;
           }
         }
       }
