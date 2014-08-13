@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UTILS_CODE_EXTRACTOR_H
-#define LLVM_TRANSFORMS_UTILS_CODE_EXTRACTOR_H
+#ifndef LLVM_TRANSFORMS_UTILS_CODEEXTRACTOR_H
+#define LLVM_TRANSFORMS_UTILS_CODEEXTRACTOR_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SetVector.h"

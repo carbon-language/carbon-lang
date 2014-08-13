@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_FRAMEINFO_H
-#define SPARC_FRAMEINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCFRAMELOWERING_H
+#define LLVM_LIB_TARGET_SPARC_SPARCFRAMELOWERING_H
 
 #include "Sparc.h"
 #include "llvm/Target/TargetFrameLowering.h"

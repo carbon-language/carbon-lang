@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MipsISELLOWERING_H
-#define MipsISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSISELLOWERING_H
+#define LLVM_LIB_TARGET_MIPS_MIPSISELLOWERING_H
 
 #include "MCTargetDesc/MipsBaseInfo.h"
 #include "Mips.h"
@@ -625,4 +625,4 @@ namespace llvm {
   }
 }
 
-#endif // MipsISELLOWERING_H
+#endif

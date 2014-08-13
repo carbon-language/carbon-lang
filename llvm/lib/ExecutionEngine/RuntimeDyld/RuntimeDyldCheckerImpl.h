@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIMEDYLDCHECKERIMPL_H
-#define LLVM_RUNTIMEDYLDCHECKERIMPL_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDCHECKERIMPL_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDCHECKERIMPL_H
 
 #include "RuntimeDyldImpl.h"
 #include <set>
@@ -57,4 +57,4 @@ private:
 };
 }
 
-#endif // LLVM_RUNTIMEDYLDCHECKERIMPL_H
+#endif

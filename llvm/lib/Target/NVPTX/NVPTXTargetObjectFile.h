@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_NVPTX_TARGETOBJECTFILE_H
-#define LLVM_TARGET_NVPTX_TARGETOBJECTFILE_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXTARGETOBJECTFILE_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXTARGETOBJECTFILE_H
 
 #include "NVPTXSection.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"

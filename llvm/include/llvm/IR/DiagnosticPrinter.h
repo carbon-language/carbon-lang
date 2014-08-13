@@ -13,8 +13,8 @@
 // on their needs.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_DIAGNOSTICPRINTER_H
-#define LLVM_SUPPORT_DIAGNOSTICPRINTER_H
+#ifndef LLVM_IR_DIAGNOSTICPRINTER_H
+#define LLVM_IR_DIAGNOSTICPRINTER_H
 
 #include <string>
 

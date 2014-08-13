@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_STRINGTABLE_BUILDER_H
-#define LLVM_MC_STRINGTABLE_BUILDER_H
+#ifndef LLVM_MC_STRINGTABLEBUILDER_H
+#define LLVM_MC_STRINGTABLEBUILDER_H
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"

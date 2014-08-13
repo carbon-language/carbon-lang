@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_TARGET_MSP430_TARGETMACHINE_H
-#define LLVM_TARGET_MSP430_TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430TARGETMACHINE_H
+#define LLVM_LIB_TARGET_MSP430_MSP430TARGETMACHINE_H
 
 #include "MSP430Subtarget.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -40,4 +40,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_MSP430_TARGETMACHINE_H
+#endif

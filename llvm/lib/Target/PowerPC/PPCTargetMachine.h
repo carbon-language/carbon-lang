@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPC_TARGETMACHINE_H
-#define PPC_TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCTARGETMACHINE_H
+#define LLVM_LIB_TARGET_POWERPC_PPCTARGETMACHINE_H
 
 #include "PPCInstrInfo.h"
 #include "PPCSubtarget.h"

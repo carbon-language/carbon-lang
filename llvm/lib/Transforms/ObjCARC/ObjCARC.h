@@ -20,8 +20,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_SCALAR_OBJCARC_H
-#define LLVM_TRANSFORMS_SCALAR_OBJCARC_H
+#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARC_H
+#define LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARC_H
 
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -395,4 +395,4 @@ static inline bool IsObjCIdentifiedObject(const Value *V) {
 } // end namespace objcarc
 } // end namespace llvm
 
-#endif // LLVM_TRANSFORMS_SCALAR_OBJCARC_H
+#endif

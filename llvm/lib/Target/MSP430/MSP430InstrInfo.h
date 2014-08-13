@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MSP430INSTRINFO_H
-#define LLVM_TARGET_MSP430INSTRINFO_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430INSTRINFO_H
+#define LLVM_LIB_TARGET_MSP430_MSP430INSTRINFO_H
 
 #include "MSP430RegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"

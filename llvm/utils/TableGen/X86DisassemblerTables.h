@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86DISASSEMBLERTABLES_H
-#define X86DISASSEMBLERTABLES_H
+#ifndef LLVM_UTILS_TABLEGEN_X86DISASSEMBLERTABLES_H
+#define LLVM_UTILS_TABLEGEN_X86DISASSEMBLERTABLES_H
 
 #include "X86DisassemblerShared.h"
 #include "X86ModRMFilters.h"

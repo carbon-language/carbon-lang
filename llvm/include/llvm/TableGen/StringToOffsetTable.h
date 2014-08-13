@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TBLGEN_STRING_TO_OFFSET_TABLE_H
-#define TBLGEN_STRING_TO_OFFSET_TABLE_H
+#ifndef LLVM_TABLEGEN_STRINGTOOFFSETTABLE_H
+#define LLVM_TABLEGEN_STRINGTOOFFSETTABLE_H
 
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"

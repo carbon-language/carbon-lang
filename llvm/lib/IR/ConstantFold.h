@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CONSTANTFOLDING_H
-#define CONSTANTFOLDING_H
+#ifndef LLVM_LIB_IR_CONSTANTFOLD_H
+#define LLVM_LIB_IR_CONSTANTFOLD_H
 
 #include "llvm/ADT/ArrayRef.h"
 

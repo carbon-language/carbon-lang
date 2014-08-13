@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMBASEINFO_H
-#define ARMBASEINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMBASEINFO_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMBASEINFO_H
 
 #include "ARMMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"

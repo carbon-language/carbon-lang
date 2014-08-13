@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMJITINFO_H
-#define ARMJITINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMJITINFO_H
+#define LLVM_LIB_TARGET_ARM_ARMJITINFO_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

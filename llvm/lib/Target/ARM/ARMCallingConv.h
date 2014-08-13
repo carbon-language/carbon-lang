@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMCALLINGCONV_H
-#define ARMCALLINGCONV_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMCALLINGCONV_H
+#define LLVM_LIB_TARGET_ARM_ARMCALLINGCONV_H
 
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"

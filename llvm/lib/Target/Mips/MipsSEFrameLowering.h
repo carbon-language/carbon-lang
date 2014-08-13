@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSSE_FRAMEINFO_H
-#define MIPSSE_FRAMEINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSSEFRAMELOWERING_H
+#define LLVM_LIB_TARGET_MIPS_MIPSSEFRAMELOWERING_H
 
 #include "MipsFrameLowering.h"
 

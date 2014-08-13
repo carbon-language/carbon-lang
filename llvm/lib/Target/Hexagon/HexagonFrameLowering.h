@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXAGON_FRAMEINFO_H
-#define HEXAGON_FRAMEINFO_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONFRAMELOWERING_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONFRAMELOWERING_H
 
 #include "Hexagon.h"
 #include "llvm/Target/TargetFrameLowering.h"

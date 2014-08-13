@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSTARGETSTREAMER_H
-#define MIPSTARGETSTREAMER_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSTARGETSTREAMER_H
+#define LLVM_LIB_TARGET_MIPS_MIPSTARGETSTREAMER_H
 
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCRegisterInfo.h"

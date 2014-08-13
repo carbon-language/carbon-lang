@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREREGISTERINFO_H
-#define XCOREREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCOREREGISTERINFO_H
+#define LLVM_LIB_TARGET_XCORE_XCOREREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
 

@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86RECOGNIZABLEINSTR_H
-#define X86RECOGNIZABLEINSTR_H
+#ifndef LLVM_UTILS_TABLEGEN_X86RECOGNIZABLEINSTR_H
+#define LLVM_UTILS_TABLEGEN_X86RECOGNIZABLEINSTR_H
 
 #include "CodeGenTarget.h"
 #include "X86DisassemblerTables.h"

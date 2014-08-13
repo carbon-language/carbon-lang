@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef Hexagon_SUBTARGET_H
-#define Hexagon_SUBTARGET_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONSUBTARGET_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONSUBTARGET_H
 
 #include "HexagonFrameLowering.h"
 #include "HexagonInstrInfo.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef REMOTEMEMORYMANAGER_H
-#define REMOTEMEMORYMANAGER_H
+#ifndef LLVM_TOOLS_LLI_REMOTEMEMORYMANAGER_H
+#define LLVM_TOOLS_LLI_REMOTEMEMORYMANAGER_H
 
 #include "RemoteTarget.h"
 #include "llvm/ADT/DenseMap.h"

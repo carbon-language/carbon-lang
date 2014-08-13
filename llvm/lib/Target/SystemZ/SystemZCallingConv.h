@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZCALLINGCONV_H
-#define SYSTEMZCALLINGCONV_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZCALLINGCONV_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZCALLINGCONV_H
 
 namespace llvm {
 namespace SystemZ {

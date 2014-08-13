@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_ASM_INSTRUMENTATION_H
-#define X86_ASM_INSTRUMENTATION_H
+#ifndef LLVM_LIB_TARGET_X86_ASMPARSER_X86ASMINSTRUMENTATION_H
+#define LLVM_LIB_TARGET_X86_ASMPARSER_X86ASMINSTRUMENTATION_H
 
 #include "llvm/ADT/SmallVector.h"
 
@@ -54,4 +54,4 @@ protected:
 
 } // End llvm namespace
 
-#endif // X86_ASM_INSTRUMENTATION_H
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DWARFDEBUG_H__
-#define CODEGEN_ASMPRINTER_DWARFDEBUG_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFDEBUG_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFDEBUG_H
 
 #include "DwarfFile.h"
 #include "AsmPrinterHandler.h"

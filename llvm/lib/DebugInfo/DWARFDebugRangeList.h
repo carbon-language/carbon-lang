@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFDEBUGRANGELIST_H
-#define LLVM_DEBUGINFO_DWARFDEBUGRANGELIST_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGRANGELIST_H
+#define LLVM_LIB_DEBUGINFO_DWARFDEBUGRANGELIST_H
 
 #include "llvm/Support/DataExtractor.h"
 #include <vector>

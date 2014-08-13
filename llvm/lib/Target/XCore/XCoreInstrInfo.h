@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREINSTRUCTIONINFO_H
-#define XCOREINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCOREINSTRINFO_H
+#define LLVM_LIB_TARGET_XCORE_XCOREINSTRINFO_H
 
 #include "XCoreRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"

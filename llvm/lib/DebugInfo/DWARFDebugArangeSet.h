@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFDEBUGARANGESET_H
-#define LLVM_DEBUGINFO_DWARFDEBUGARANGESET_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGARANGESET_H
+#define LLVM_LIB_DEBUGINFO_DWARFDEBUGARANGESET_H
 
 #include "llvm/ADT/iterator_range.h"
 #include "llvm/Support/DataExtractor.h"

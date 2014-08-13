@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMTARGETMACHINE_H
-#define ARMTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMTARGETMACHINE_H
+#define LLVM_LIB_TARGET_ARM_ARMTARGETMACHINE_H
 
 #include "ARMInstrInfo.h"
 #include "ARMSubtarget.h"

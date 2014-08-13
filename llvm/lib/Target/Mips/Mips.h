@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_MIPS_H
-#define TARGET_MIPS_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPS_H
+#define LLVM_LIB_TARGET_MIPS_MIPS_H
 
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"

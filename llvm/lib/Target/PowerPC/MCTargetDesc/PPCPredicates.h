@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_POWERPC_PPCPREDICATES_H
-#define LLVM_TARGET_POWERPC_PPCPREDICATES_H
+#ifndef LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCPREDICATES_H
+#define LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCPREDICATES_H
 
 // GCC #defines PPC on Linux but we use it as our namespace name
 #undef PPC

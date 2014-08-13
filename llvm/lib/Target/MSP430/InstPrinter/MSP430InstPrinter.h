@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MSP430INSTPRINTER_H
-#define MSP430INSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_MSP430_INSTPRINTER_MSP430INSTPRINTER_H
+#define LLVM_LIB_TARGET_MSP430_INSTPRINTER_MSP430INSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
 

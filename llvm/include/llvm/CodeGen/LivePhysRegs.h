@@ -26,8 +26,8 @@
 // %XMM0<def> = ..., %YMM0<imp-use> (%YMM0 and all its sub-registers are alive)
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVE_PHYS_REGS_H
-#define LLVM_CODEGEN_LIVE_PHYS_REGS_H
+#ifndef LLVM_CODEGEN_LIVEPHYSREGS_H
+#define LLVM_CODEGEN_LIVEPHYSREGS_H
 
 #include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -143,4 +143,4 @@ inline raw_ostream &operator<<(raw_ostream &OS, const LivePhysRegs& LR) {
 
 } // namespace llvm
 
-#endif // LLVM_CODEGEN_LIVE_PHYS_REGS_H
+#endif

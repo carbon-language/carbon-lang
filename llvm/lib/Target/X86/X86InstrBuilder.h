@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86INSTRBUILDER_H
-#define X86INSTRBUILDER_H
+#ifndef LLVM_LIB_TARGET_X86_X86INSTRBUILDER_H
+#define LLVM_LIB_TARGET_X86_X86INSTRBUILDER_H
 
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

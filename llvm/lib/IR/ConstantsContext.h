@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTANTSCONTEXT_H
-#define LLVM_CONSTANTSCONTEXT_H
+#ifndef LLVM_LIB_IR_CONSTANTSCONTEXT_H
+#define LLVM_LIB_IR_CONSTANTSCONTEXT_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"

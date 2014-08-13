@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_OPERAND_H
-#define X86_OPERAND_H
+#ifndef LLVM_LIB_TARGET_X86_ASMPARSER_X86OPERAND_H
+#define LLVM_LIB_TARGET_X86_ASMPARSER_X86OPERAND_H
 
 #include "X86AsmParserCommon.h"
 #include "llvm/MC/MCExpr.h"
@@ -485,4 +485,4 @@ struct X86Operand : public MCParsedAsmOperand {
 
 } // End of namespace llvm
 
-#endif // X86_OPERAND
+#endif

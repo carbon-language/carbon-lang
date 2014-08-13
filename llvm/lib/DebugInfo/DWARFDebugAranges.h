@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFDEBUGARANGES_H
-#define LLVM_DEBUGINFO_DWARFDEBUGARANGES_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGARANGES_H
+#define LLVM_LIB_DEBUGINFO_DWARFDEBUGARANGES_H
 
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/DataExtractor.h"

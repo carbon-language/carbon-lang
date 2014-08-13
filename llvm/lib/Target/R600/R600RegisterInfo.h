@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef R600REGISTERINFO_H_
-#define R600REGISTERINFO_H_
+#ifndef LLVM_LIB_TARGET_R600_R600REGISTERINFO_H
+#define LLVM_LIB_TARGET_R600_R600REGISTERINFO_H
 
 #include "AMDGPURegisterInfo.h"
 
@@ -46,4 +46,4 @@ struct R600RegisterInfo : public AMDGPURegisterInfo {
 
 } // End namespace llvm
 
-#endif // AMDIDSAREGISTERINFO_H_
+#endif

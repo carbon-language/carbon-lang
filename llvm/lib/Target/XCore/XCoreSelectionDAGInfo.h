@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORESELECTIONDAGINFO_H
-#define XCORESELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORESELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_XCORE_XCORESELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

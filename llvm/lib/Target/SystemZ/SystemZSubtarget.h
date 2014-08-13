@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZSUBTARGET_H
-#define SYSTEMZSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZSUBTARGET_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZSUBTARGET_H
 
 #include "SystemZFrameLowering.h"
 #include "SystemZISelLowering.h"

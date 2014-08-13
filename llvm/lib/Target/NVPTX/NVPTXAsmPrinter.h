@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXASMPRINTER_H
-#define NVPTXASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXASMPRINTER_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXASMPRINTER_H
 
 #include "NVPTX.h"
 #include "NVPTXSubtarget.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_C_BINDING_WRAPPING_H
-#define LLVM_C_BINDING_WRAPPING_H
+#ifndef LLVM_SUPPORT_CBINDINGWRAPPING_H
+#define LLVM_SUPPORT_CBINDINGWRAPPING_H
 
 #include "llvm/Support/Casting.h"
 

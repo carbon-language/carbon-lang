@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_ARMWINEHPRINTER_H
-#define LLVM_READOBJ_ARMWINEHPRINTER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_ARMWINEHPRINTER_H
+#define LLVM_TOOLS_LLVM_READOBJ_ARMWINEHPRINTER_H
 
 #include "StreamWriter.h"
 #include "llvm/Object/COFF.h"

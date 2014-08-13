@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef VALUE_ENUMERATOR_H
-#define VALUE_ENUMERATOR_H
+#ifndef LLVM_LIB_BITCODE_WRITER_VALUEENUMERATOR_H
+#define LLVM_LIB_BITCODE_WRITER_VALUEENUMERATOR_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

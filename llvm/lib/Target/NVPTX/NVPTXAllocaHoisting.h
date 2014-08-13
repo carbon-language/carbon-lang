@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTX_ALLOCA_HOISTING_H_
-#define NVPTX_ALLOCA_HOISTING_H_
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXALLOCAHOISTING_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXALLOCAHOISTING_H
 
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/IR/DataLayout.h"
@@ -47,4 +47,4 @@ extern FunctionPass *createAllocaHoisting();
 
 } // end namespace llvm
 
-#endif // NVPTX_ALLOCA_HOISTING_H_
+#endif

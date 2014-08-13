@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMHAZARDRECOGNIZER_H
-#define ARMHAZARDRECOGNIZER_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMHAZARDRECOGNIZER_H
+#define LLVM_LIB_TARGET_ARM_ARMHAZARDRECOGNIZER_H
 
 #include "llvm/CodeGen/ScoreboardHazardRecognizer.h"
 
@@ -46,4 +46,4 @@ public:
 
 } // end namespace llvm
 
-#endif // ARMHAZARDRECOGNIZER_H
+#endif

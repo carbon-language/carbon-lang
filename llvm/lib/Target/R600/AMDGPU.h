@@ -8,8 +8,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPU_H
-#define AMDGPU_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPU_H
+#define LLVM_LIB_TARGET_R600_AMDGPU_H
 
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"
@@ -127,4 +127,4 @@ enum AddressSpaces {
 
 } // namespace AMDGPUAS
 
-#endif // AMDGPU_H
+#endif

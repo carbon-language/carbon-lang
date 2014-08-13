@@ -20,8 +20,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
-#define LLVM_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
+#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
+#define LLVM_LIB_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"
@@ -71,4 +71,4 @@ namespace objcarc {
 } // namespace objcarc
 } // namespace llvm
 
-#endif // LLVM_TRANSFORMS_OBJCARC_OBJCARCALIASANALYSIS_H
+#endif

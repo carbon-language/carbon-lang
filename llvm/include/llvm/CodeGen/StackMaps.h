@@ -8,8 +8,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_STACKMAPS
-#define LLVM_STACKMAPS
+#ifndef LLVM_CODEGEN_STACKMAPS_H
+#define LLVM_CODEGEN_STACKMAPS_H
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"
@@ -196,4 +196,4 @@ private:
 
 }
 
-#endif // LLVM_STACKMAPS
+#endif

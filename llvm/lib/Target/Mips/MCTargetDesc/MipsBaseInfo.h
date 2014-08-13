@@ -11,8 +11,8 @@
 // the Mips target useful for the compiler back-end and the MC libraries.
 //
 //===----------------------------------------------------------------------===//
-#ifndef MIPSBASEINFO_H
-#define MIPSBASEINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSBASEINFO_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSBASEINFO_H
 
 #include "MipsFixupKinds.h"
 #include "MipsMCTargetDesc.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64REGISTERINFO_H
-#define LLVM_TARGET_AArch64REGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64REGISTERINFO_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64REGISTERINFO_H
 
 #define GET_REGINFO_HEADER
 #include "AArch64GenRegisterInfo.inc"
@@ -98,4 +98,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_AArch64REGISTERINFO_H
+#endif

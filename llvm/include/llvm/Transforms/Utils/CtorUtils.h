@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UTILS_CTOR_UTILS_H
-#define LLVM_TRANSFORMS_UTILS_CTOR_UTILS_H
+#ifndef LLVM_TRANSFORMS_UTILS_CTORUTILS_H
+#define LLVM_TRANSFORMS_UTILS_CTORUTILS_H
 
 #include "llvm/ADT/STLExtras.h"
 

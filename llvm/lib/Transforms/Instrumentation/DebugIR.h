@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
-#define LLVM_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
+#ifndef LLVM_LIB_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
+#define LLVM_LIB_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
 
 #include "llvm/Pass.h"
 
@@ -95,4 +95,4 @@ private:
 
 } // llvm namespace
 
-#endif // LLVM_TRANSFORMS_INSTRUMENTATION_DEBUGIR_H
+#endif

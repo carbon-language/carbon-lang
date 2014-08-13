@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_REDUCTIONRULES_H
-#define LLVM_REDUCTIONRULES_H
+#ifndef LLVM_CODEGEN_PBQP_REDUCTIONRULES_H
+#define LLVM_CODEGEN_PBQP_REDUCTIONRULES_H
 
 #include "Graph.h"
 #include "Math.h"
@@ -188,4 +188,4 @@ namespace PBQP {
 
 }
 
-#endif // LLVM_REDUCTIONRULES_H
+#endif

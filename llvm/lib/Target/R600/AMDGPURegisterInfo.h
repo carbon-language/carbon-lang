@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUREGISTERINFO_H
-#define AMDGPUREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUREGISTERINFO_H
+#define LLVM_LIB_TARGET_R600_AMDGPUREGISTERINFO_H
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -62,4 +62,4 @@ struct AMDGPURegisterInfo : public AMDGPUGenRegisterInfo {
 
 } // End namespace llvm
 
-#endif // AMDIDSAREGISTERINFO_H
+#endif

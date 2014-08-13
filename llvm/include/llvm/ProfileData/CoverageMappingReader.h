@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_COVERAGEMAPPING_READER_H_
-#define LLVM_PROFILEDATA_COVERAGEMAPPING_READER_H_
+#ifndef LLVM_PROFILEDATA_COVERAGEMAPPINGREADER_H
+#define LLVM_PROFILEDATA_COVERAGEMAPPINGREADER_H
 
 #include "llvm/ProfileData/InstrProf.h"
 #include "llvm/ProfileData/CoverageMapping.h"
@@ -204,4 +204,4 @@ public:
 } // end namespace coverage
 } // end namespace llvm
 
-#endif // LLVM_PROFILEDATA_COVERAGEMAPPING_READER_H_
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MSP430SELECTIONDAGINFO_H
-#define MSP430SELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430SELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_MSP430_MSP430SELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

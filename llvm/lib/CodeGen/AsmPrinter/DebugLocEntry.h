@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H__
-#define CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DEBUGLOCENTRY_H
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/MC/MachineLocation.h"

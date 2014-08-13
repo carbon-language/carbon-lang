@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64TARGETMACHINE_H
-#define AArch64TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64TARGETMACHINE_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64TARGETMACHINE_H
 
 #include "AArch64InstrInfo.h"
 #include "AArch64Subtarget.h"

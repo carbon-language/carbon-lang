@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ERROR_OR_H
-#define LLVM_SUPPORT_ERROR_OR_H
+#ifndef LLVM_SUPPORT_ERROROR_H
+#define LLVM_SUPPORT_ERROROR_H
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/AlignOf.h"

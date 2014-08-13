@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPCINSTPRINTER_H
-#define PPCINSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_POWERPC_INSTPRINTER_PPCINSTPRINTER_H
+#define LLVM_LIB_TARGET_POWERPC_INSTPRINTER_PPCINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
 

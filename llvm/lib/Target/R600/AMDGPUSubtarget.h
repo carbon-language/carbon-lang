@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUSUBTARGET_H
-#define AMDGPUSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUSUBTARGET_H
+#define LLVM_LIB_TARGET_R600_AMDGPUSUBTARGET_H
 #include "AMDGPU.h"
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUInstrInfo.h"
@@ -213,4 +213,4 @@ public:
 
 } // End namespace llvm
 
-#endif // AMDGPUSUBTARGET_H
+#endif

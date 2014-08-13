@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MSP430REGISTERINFO_H
-#define LLVM_TARGET_MSP430REGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430REGISTERINFO_H
+#define LLVM_LIB_TARGET_MSP430_MSP430REGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
 
@@ -44,4 +44,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_MSP430REGISTERINFO_H
+#endif

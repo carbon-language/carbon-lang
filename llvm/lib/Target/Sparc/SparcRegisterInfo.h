@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCREGISTERINFO_H
-#define SPARCREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCREGISTERINFO_H
+#define LLVM_LIB_TARGET_SPARC_SPARCREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
 

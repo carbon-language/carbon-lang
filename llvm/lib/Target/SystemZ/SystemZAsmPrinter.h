@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZASMPRINTER_H
-#define SYSTEMZASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZASMPRINTER_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZASMPRINTER_H
 
 #include "SystemZTargetMachine.h"
 #include "llvm/CodeGen/AsmPrinter.h"

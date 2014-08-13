@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PPC_PPCFIXUPKINDS_H
-#define LLVM_PPC_PPCFIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCFIXUPKINDS_H
+#define LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_SCHEDULE_H
-#define CODEGEN_SCHEDULE_H
+#ifndef LLVM_UTILS_TABLEGEN_CODEGENSCHEDULE_H
+#define LLVM_UTILS_TABLEGEN_CODEGENSCHEDULE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"

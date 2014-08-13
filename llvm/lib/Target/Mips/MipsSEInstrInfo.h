@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSSEINSTRUCTIONINFO_H
-#define MIPSSEINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSSEINSTRINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPSSEINSTRINFO_H
 
 #include "MipsInstrInfo.h"
 #include "MipsSERegisterInfo.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXAGONASMPRINTER_H
-#define HEXAGONASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONMACHINESCHEDULER_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONMACHINESCHEDULER_H
 
 #include "llvm/ADT/PriorityQueue.h"
 #include "llvm/Analysis/AliasAnalysis.h"

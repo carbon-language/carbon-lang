@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_FRAMELOWERING_H
-#define X86_FRAMELOWERING_H
+#ifndef LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
+#define LLVM_LIB_TARGET_X86_X86FRAMELOWERING_H
 
 #include "llvm/Target/TargetFrameLowering.h"
 

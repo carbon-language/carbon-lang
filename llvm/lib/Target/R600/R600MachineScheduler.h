@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef R600MACHINESCHEDULER_H_
-#define R600MACHINESCHEDULER_H_
+#ifndef LLVM_LIB_TARGET_R600_R600MACHINESCHEDULER_H
+#define LLVM_LIB_TARGET_R600_R600MACHINESCHEDULER_H
 
 #include "R600InstrInfo.h"
 #include "llvm/ADT/PriorityQueue.h"

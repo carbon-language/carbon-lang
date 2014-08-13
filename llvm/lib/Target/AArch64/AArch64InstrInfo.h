@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64INSTRINFO_H
-#define LLVM_TARGET_AArch64INSTRINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64INSTRINFO_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64INSTRINFO_H
 
 #include "AArch64.h"
 #include "AArch64RegisterInfo.h"

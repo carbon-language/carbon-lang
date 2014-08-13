@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_INTRINSIC_H
-#define CODEGEN_INTRINSIC_H
+#ifndef LLVM_UTILS_TABLEGEN_CODEGENINTRINSICS_H
+#define LLVM_UTILS_TABLEGEN_CODEGENINTRINSICS_H
 
 #include "llvm/CodeGen/MachineValueType.h"
 #include <string>

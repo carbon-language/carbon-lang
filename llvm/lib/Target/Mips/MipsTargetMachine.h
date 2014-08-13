@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSTARGETMACHINE_H
-#define MIPSTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSTARGETMACHINE_H
+#define LLVM_LIB_TARGET_MIPS_MIPSTARGETMACHINE_H
 
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/Passes.h"

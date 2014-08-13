@@ -19,8 +19,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_SCALAR_ARCRUNTIMEENTRYPOINTS_H
-#define LLVM_TRANSFORMS_SCALAR_ARCRUNTIMEENTRYPOINTS_H
+#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_ARCRUNTIMEENTRYPOINTS_H
+#define LLVM_LIB_TRANSFORMS_OBJCARC_ARCRUNTIMEENTRYPOINTS_H
 
 #include "ObjCARC.h"
 
@@ -183,4 +183,4 @@ private:
 } // namespace objcarc
 } // namespace llvm
 
-#endif // LLVM_TRANSFORMS_SCALAR_ARCRUNTIMEENTRYPOINTS_H
+#endif

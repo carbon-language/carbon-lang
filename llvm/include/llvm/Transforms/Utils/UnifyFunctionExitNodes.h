@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UNIFYFUNCTIONEXITNODES_H
-#define LLVM_TRANSFORMS_UNIFYFUNCTIONEXITNODES_H
+#ifndef LLVM_TRANSFORMS_UTILS_UNIFYFUNCTIONEXITNODES_H
+#define LLVM_TRANSFORMS_UTILS_UNIFYFUNCTIONEXITNODES_H
 
 #include "llvm/Pass.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SDNODEDBGVALUE_H
-#define LLVM_CODEGEN_SDNODEDBGVALUE_H
+#ifndef LLVM_LIB_CODEGEN_SELECTIONDAG_SDNODEDBGVALUE_H
+#define LLVM_LIB_CODEGEN_SELECTIONDAG_SDNODEDBGVALUE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DebugLoc.h"

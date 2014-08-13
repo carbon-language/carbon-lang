@@ -29,8 +29,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_CONSTANTRANGE_H
-#define LLVM_SUPPORT_CONSTANTRANGE_H
+#ifndef LLVM_IR_CONSTANTRANGE_H
+#define LLVM_IR_CONSTANTRANGE_H
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/Support/DataTypes.h"

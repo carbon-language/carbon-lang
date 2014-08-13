@@ -10,8 +10,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUINSTPRINTER_H
-#define AMDGPUINSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_R600_INSTPRINTER_AMDGPUINSTPRINTER_H
+#define LLVM_LIB_TARGET_R600_INSTPRINTER_AMDGPUINSTPRINTER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCInstPrinter.h"
@@ -72,4 +72,4 @@ private:
 
 } // End namespace llvm
 
-#endif // AMDGPUINSTRPRINTER_H
+#endif

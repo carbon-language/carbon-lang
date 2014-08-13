@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef SIINSTRINFO_H
-#define SIINSTRINFO_H
+#ifndef LLVM_LIB_TARGET_R600_SIINSTRINFO_H
+#define LLVM_LIB_TARGET_R600_SIINSTRINFO_H
 
 #include "AMDGPUInstrInfo.h"
 #include "SIRegisterInfo.h"
@@ -234,4 +234,4 @@ namespace SISrcMods {
   };
 }
 
-#endif //SIINSTRINFO_H
+#endif

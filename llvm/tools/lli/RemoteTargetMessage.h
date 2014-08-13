@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLI_REMOTETARGETMESSAGE_H
-#define LLI_REMOTETARGETMESSAGE_H
+#ifndef LLVM_TOOLS_LLI_REMOTETARGETMESSAGE_H
+#define LLVM_TOOLS_LLI_REMOTETARGETMESSAGE_H
 
 namespace llvm {
 

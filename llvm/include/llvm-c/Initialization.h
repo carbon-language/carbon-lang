@@ -13,8 +13,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef LLVM_C_INITIALIZEPASSES_H
-#define LLVM_C_INITIALIZEPASSES_H
+#ifndef LLVM_C_INITIALIZATION_H
+#define LLVM_C_INITIALIZATION_H
 
 #include "llvm-c/Core.h"
 

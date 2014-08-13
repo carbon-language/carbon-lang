@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64MACHINECOMBINERPATTERN_H
-#define LLVM_TARGET_AArch64MACHINECOMBINERPATTERN_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64MACHINECOMBINERPATTERN_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64MACHINECOMBINERPATTERN_H
 
 namespace llvm {
 

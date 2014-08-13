@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ALLOCATIONORDER_H
-#define LLVM_CODEGEN_ALLOCATIONORDER_H
+#ifndef LLVM_LIB_CODEGEN_ALLOCATIONORDER_H
+#define LLVM_LIB_CODEGEN_ALLOCATIONORDER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/MC/MCRegisterInfo.h"

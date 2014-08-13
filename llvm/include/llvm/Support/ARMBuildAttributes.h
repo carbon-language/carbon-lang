@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ARM_BUILD_ATTRIBUTES_H
-#define LLVM_SUPPORT_ARM_BUILD_ATTRIBUTES_H
+#ifndef LLVM_SUPPORT_ARMBUILDATTRIBUTES_H
+#define LLVM_SUPPORT_ARMBUILDATTRIBUTES_H
 
 namespace llvm {
 class StringRef;
@@ -220,4 +220,4 @@ enum {
 } // namespace ARMBuildAttrs
 } // namespace llvm
 
-#endif // LLVM_SUPPORT_ARM_BUILD_ATTRIBUTES_H
+#endif

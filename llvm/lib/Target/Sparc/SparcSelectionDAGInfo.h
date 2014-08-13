@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCSELECTIONDAGINFO_H
-#define SPARCSELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCSELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_SPARC_SPARCSELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

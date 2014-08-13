@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXAGONASMPRINTER_H
-#define HEXAGONASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONASMPRINTER_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONASMPRINTER_H
 
 #include "Hexagon.h"
 #include "HexagonTargetMachine.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
-#define LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCISELLOWERING_H
+#define LLVM_LIB_TARGET_POWERPC_PPCISELLOWERING_H
 
 #include "PPC.h"
 #include "PPCInstrInfo.h"

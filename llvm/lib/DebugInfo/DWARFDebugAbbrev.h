@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFDEBUGABBREV_H
-#define LLVM_DEBUGINFO_DWARFDEBUGABBREV_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGABBREV_H
+#define LLVM_LIB_DEBUGINFO_DWARFDEBUGABBREV_H
 
 #include "DWARFAbbreviationDeclaration.h"
 #include <list>

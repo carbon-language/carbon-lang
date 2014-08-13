@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXUTILITIES_H
-#define NVPTXUTILITIES_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXUTILITIES_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXUTILITIES_H
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/GlobalVariable.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_NVPTXSECTION_H
-#define LLVM_NVPTXSECTION_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXSECTION_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXSECTION_H
 
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCSection.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86REGISTERINFO_H
-#define X86REGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_X86_X86REGISTERINFO_H
+#define LLVM_LIB_TARGET_X86_X86REGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
 

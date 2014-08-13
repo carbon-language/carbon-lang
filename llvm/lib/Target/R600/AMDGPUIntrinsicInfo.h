@@ -11,8 +11,8 @@
 /// \brief Interface for the AMDGPU Implementation of the Intrinsic Info class.
 //
 //===-----------------------------------------------------------------------===//
-#ifndef AMDGPU_INTRINSICINFO_H
-#define AMDGPU_INTRINSICINFO_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUINTRINSICINFO_H
+#define LLVM_LIB_TARGET_R600_AMDGPUINTRINSICINFO_H
 
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
@@ -45,4 +45,4 @@ public:
 
 } // end namespace llvm
 
-#endif // AMDGPU_INTRINSICINFO_H
+#endif

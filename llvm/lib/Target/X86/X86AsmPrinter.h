@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86ASMPRINTER_H
-#define X86ASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_X86_X86ASMPRINTER_H
+#define LLVM_LIB_TARGET_X86_X86ASMPRINTER_H
 
 #include "X86Subtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"

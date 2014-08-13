@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORETARGETASMINFO_H
-#define XCORETARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_XCORE_MCTARGETDESC_XCOREMCASMINFO_H
+#define LLVM_LIB_TARGET_XCORE_MCTARGETDESC_XCOREMCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoELF.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCBJECTFILEINFO_H
-#define LLVM_MC_MCBJECTFILEINFO_H
+#ifndef LLVM_MC_MCOBJECTFILEINFO_H
+#define LLVM_MC_MCOBJECTFILEINFO_H
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CodeGen.h"

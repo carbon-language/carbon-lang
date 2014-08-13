@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPCHAZRECS_H
-#define PPCHAZRECS_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCHAZARDRECOGNIZERS_H
+#define LLVM_LIB_TARGET_POWERPC_PPCHAZARDRECOGNIZERS_H
 
 #include "PPCInstrInfo.h"
 #include "llvm/CodeGen/ScheduleHazardRecognizer.h"

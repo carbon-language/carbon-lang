@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CPPTARGETMACHINE_H
-#define CPPTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_CPPBACKEND_CPPTARGETMACHINE_H
+#define LLVM_LIB_TARGET_CPPBACKEND_CPPTARGETMACHINE_H
 
 #include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"

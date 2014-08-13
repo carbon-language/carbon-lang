@@ -20,8 +20,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_OBJCARC_DEPEDENCYANALYSIS_H
-#define LLVM_TRANSFORMS_OBJCARC_DEPEDENCYANALYSIS_H
+#ifndef LLVM_LIB_TRANSFORMS_OBJCARC_DEPENDENCYANALYSIS_H
+#define LLVM_LIB_TRANSFORMS_OBJCARC_DEPENDENCYANALYSIS_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -76,4 +76,4 @@ CanAlterRefCount(const Instruction *Inst, const Value *Ptr,
 } // namespace objcarc
 } // namespace llvm
 
-#endif // LLVM_TRANSFORMS_OBJCARC_DEPEDENCYANALYSIS_H
+#endif

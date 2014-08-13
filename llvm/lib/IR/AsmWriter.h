@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IR_ASSEMBLYWRITER_H
-#define LLVM_IR_ASSEMBLYWRITER_H
+#ifndef LLVM_LIB_IR_ASMWRITER_H
+#define LLVM_LIB_IR_ASMWRITER_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
@@ -121,4 +121,4 @@ private:
 
 } // namespace llvm
 
-#endif //LLVM_IR_ASMWRITER_H
+#endif

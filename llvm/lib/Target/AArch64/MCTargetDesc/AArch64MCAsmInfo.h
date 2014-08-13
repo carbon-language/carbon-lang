@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64TARGETASMINFO_H
-#define AArch64TARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_MCTARGETDESC_AARCH64MCASMINFO_H
+#define LLVM_LIB_TARGET_AARCH64_MCTARGETDESC_AARCH64MCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoDarwin.h"
 

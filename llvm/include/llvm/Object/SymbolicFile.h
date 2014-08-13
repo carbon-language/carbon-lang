@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_SYMBOLIC_FILE_H
-#define LLVM_OBJECT_SYMBOLIC_FILE_H
+#ifndef LLVM_OBJECT_SYMBOLICFILE_H
+#define LLVM_OBJECT_SYMBOLICFILE_H
 
 #include "llvm/Object/Binary.h"
 

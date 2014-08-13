@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_SUBTARGET_H
-#define SPARC_SUBTARGET_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCSUBTARGET_H
+#define LLVM_LIB_TARGET_SPARC_SPARCSUBTARGET_H
 
 #include "SparcFrameLowering.h"
 #include "SparcInstrInfo.h"

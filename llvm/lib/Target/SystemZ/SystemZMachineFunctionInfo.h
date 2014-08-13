@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZMACHINEFUNCTIONINFO_H
-#define SYSTEMZMACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZMACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 

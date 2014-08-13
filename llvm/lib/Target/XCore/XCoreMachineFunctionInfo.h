@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREMACHINEFUNCTIONINFO_H
-#define XCOREMACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCOREMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_XCORE_XCOREMACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -103,4 +103,4 @@ public:
 };
 } // End llvm namespace
 
-#endif // XCOREMACHINEFUNCTIONINFO_H
+#endif

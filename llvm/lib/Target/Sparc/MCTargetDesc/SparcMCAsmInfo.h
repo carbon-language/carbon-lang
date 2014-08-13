@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCTARGETASMINFO_H
-#define SPARCTARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCMCASMINFO_H
+#define LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCMCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoELF.h"
 

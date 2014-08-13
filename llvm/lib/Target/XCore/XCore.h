@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_XCORE_H
-#define TARGET_XCORE_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORE_H
+#define LLVM_LIB_TARGET_XCORE_XCORE_H
 
 #include "MCTargetDesc/XCoreMCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"

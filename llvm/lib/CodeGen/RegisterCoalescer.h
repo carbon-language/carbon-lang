@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_REGISTER_COALESCER_H
-#define LLVM_CODEGEN_REGISTER_COALESCER_H
+#ifndef LLVM_LIB_CODEGEN_REGISTERCOALESCER_H
+#define LLVM_LIB_CODEGEN_REGISTERCOALESCER_H
 
 namespace llvm {
 

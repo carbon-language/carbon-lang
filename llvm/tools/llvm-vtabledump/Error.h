@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_VTABLEDUMP_ERROR_H
-#define LLVM_TOOLS_VTABLEDUMP_ERROR_H
+#ifndef LLVM_TOOLS_LLVM_VTABLEDUMP_ERROR_H
+#define LLVM_TOOLS_LLVM_VTABLEDUMP_ERROR_H
 
 #include <system_error>
 

@@ -71,8 +71,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86DISASSEMBLER_H
-#define X86DISASSEMBLER_H
+#ifndef LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLER_H
+#define LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLER_H
 
 #include "X86DisassemblerDecoderCommon.h"
 #include "llvm/MC/MCDisassembler.h"

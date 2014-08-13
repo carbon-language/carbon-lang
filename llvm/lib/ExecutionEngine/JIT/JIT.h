@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef JIT_H
-#define JIT_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_JIT_JIT_H
+#define LLVM_LIB_EXECUTIONENGINE_JIT_JIT_H
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/IR/ValueHandle.h"

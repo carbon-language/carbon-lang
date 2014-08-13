@@ -11,6 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXISELDAGTODAG_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXISELDAGTODAG_H
+
 #include "NVPTX.h"
 #include "NVPTXISelLowering.h"
 #include "NVPTXRegisterInfo.h"
@@ -92,3 +95,5 @@ private:
 
 };
 }
+
+#endif

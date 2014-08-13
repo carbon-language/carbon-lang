@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCSUBTARGET_H
-#define LLVM_MC_MCSUBTARGET_H
+#ifndef LLVM_MC_MCSUBTARGETINFO_H
+#define LLVM_MC_MCSUBTARGETINFO_H
 
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/MC/SubtargetFeature.h"

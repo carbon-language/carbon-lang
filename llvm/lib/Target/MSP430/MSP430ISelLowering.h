@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MSP430_ISELLOWERING_H
-#define LLVM_TARGET_MSP430_ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430ISELLOWERING_H
+#define LLVM_LIB_TARGET_MSP430_MSP430ISELLOWERING_H
 
 #include "MSP430.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -170,4 +170,4 @@ namespace llvm {
   };
 } // namespace llvm
 
-#endif // LLVM_TARGET_MSP430_ISELLOWERING_H
+#endif

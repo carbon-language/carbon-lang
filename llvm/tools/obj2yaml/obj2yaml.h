@@ -10,8 +10,8 @@
 // source file, implement it.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_OBJ2YAML_H
-#define LLVM_TOOLS_OBJ2YAML_H
+#ifndef LLVM_TOOLS_OBJ2YAML_OBJ2YAML_H
+#define LLVM_TOOLS_OBJ2YAML_OBJ2YAML_H
 
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/raw_ostream.h"

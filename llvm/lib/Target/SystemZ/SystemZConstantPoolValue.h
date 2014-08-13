@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZCONSTANTPOOLVALUE_H
-#define SYSTEMZCONSTANTPOOLVALUE_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZCONSTANTPOOLVALUE_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZCONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/ErrorHandling.h"

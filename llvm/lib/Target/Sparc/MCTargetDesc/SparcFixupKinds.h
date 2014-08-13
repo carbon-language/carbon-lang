@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SPARC_FIXUPKINDS_H
-#define LLVM_SPARC_FIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCFIXUPKINDS_H
+#define LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 

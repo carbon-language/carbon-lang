@@ -18,8 +18,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_CGSCC_PASS_MANAGER_H
-#define LLVM_ANALYSIS_CGSCC_PASS_MANAGER_H
+#ifndef LLVM_ANALYSIS_CGSCCPASSMANAGER_H
+#define LLVM_ANALYSIS_CGSCCPASSMANAGER_H
 
 #include "llvm/IR/PassManager.h"
 #include "llvm/Analysis/LazyCallGraph.h"

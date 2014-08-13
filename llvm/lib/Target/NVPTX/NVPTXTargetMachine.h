@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTX_TARGETMACHINE_H
-#define NVPTX_TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXTARGETMACHINE_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXTARGETMACHINE_H
 
 #include "NVPTXSubtarget.h"
 #include "ManagedStringPool.h"

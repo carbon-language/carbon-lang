@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_ARM_FEATURES_H
-#define TARGET_ARM_FEATURES_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMFEATURES_H
+#define LLVM_LIB_TARGET_ARM_ARMFEATURES_H
 
 #include "MCTargetDesc/ARMMCTargetDesc.h"
 

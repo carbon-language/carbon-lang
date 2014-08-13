@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SCHEDULEDAGSDNODES_H
-#define SCHEDULEDAGSDNODES_H
+#ifndef LLVM_LIB_CODEGEN_SELECTIONDAG_SCHEDULEDAGSDNODES_H
+#define LLVM_LIB_CODEGEN_SELECTIONDAG_SCHEDULEDAGSDNODES_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ScheduleDAG.h"

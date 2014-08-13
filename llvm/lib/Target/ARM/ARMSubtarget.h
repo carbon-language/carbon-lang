@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMSUBTARGET_H
-#define ARMSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMSUBTARGET_H
+#define LLVM_LIB_TARGET_ARM_ARMSUBTARGET_H
 
 
 #include "ARMFrameLowering.h"

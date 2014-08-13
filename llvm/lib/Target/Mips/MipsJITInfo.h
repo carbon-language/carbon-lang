@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSJITINFO_H
-#define MIPSJITINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSJITINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPSJITINFO_H
 
 #include "MipsMachineFunction.h"
 #include "llvm/CodeGen/MachineConstantPool.h"

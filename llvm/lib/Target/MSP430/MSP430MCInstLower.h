@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MSP430_MCINSTLOWER_H
-#define MSP430_MCINSTLOWER_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430MCINSTLOWER_H
+#define LLVM_LIB_TARGET_MSP430_MSP430MCINSTLOWER_H
 
 #include "llvm/Support/Compiler.h"
 

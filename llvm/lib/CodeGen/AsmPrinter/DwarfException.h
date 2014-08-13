@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
-#define LLVM_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFEXCEPTION_H
 
 #include "EHStreamer.h"
 #include "llvm/CodeGen/AsmPrinter.h"

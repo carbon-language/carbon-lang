@@ -12,14 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_TARGET_MIPS_MIPS16HARDFLOAT_H
+#define LLVM_LIB_TARGET_MIPS_MIPS16HARDFLOAT_H
+
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsTargetMachine.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
-
-
-#ifndef MIPS16HARDFLOAT_H
-#define MIPS16HARDFLOAT_H
 
 using namespace llvm;
 

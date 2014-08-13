@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86TARGETMACHINE_H
-#define X86TARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_X86_X86TARGETMACHINE_H
+#define LLVM_LIB_TARGET_X86_X86TARGETMACHINE_H
 #include "X86InstrInfo.h"
 #include "X86Subtarget.h"
 #include "llvm/IR/DataLayout.h"

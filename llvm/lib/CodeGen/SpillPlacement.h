@@ -24,8 +24,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SPILLPLACEMENT_H
-#define LLVM_CODEGEN_SPILLPLACEMENT_H
+#ifndef LLVM_LIB_CODEGEN_SPILLPLACEMENT_H
+#define LLVM_LIB_CODEGEN_SPILLPLACEMENT_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"

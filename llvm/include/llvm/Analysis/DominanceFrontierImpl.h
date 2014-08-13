@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DOMINANCEFRONTIER_IMPL_H
-#define LLVM_ANALYSIS_DOMINANCEFRONTIER_IMPL_H
+#ifndef LLVM_ANALYSIS_DOMINANCEFRONTIERIMPL_H
+#define LLVM_ANALYSIS_DOMINANCEFRONTIERIMPL_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/Debug.h"

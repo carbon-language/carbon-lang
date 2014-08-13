@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPU_TARGET_MACHINE_H
-#define AMDGPU_TARGET_MACHINE_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUTARGETMACHINE_H
+#define LLVM_LIB_TARGET_R600_AMDGPUTARGETMACHINE_H
 
 #include "AMDGPUFrameLowering.h"
 #include "AMDGPUInstrInfo.h"
@@ -45,4 +45,4 @@ public:
 
 } // End namespace llvm
 
-#endif // AMDGPU_TARGET_MACHINE_H
+#endif

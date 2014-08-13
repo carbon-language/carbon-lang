@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_IR_OBJECT_FILE_H
-#define LLVM_OBJECT_IR_OBJECT_FILE_H
+#ifndef LLVM_OBJECT_IROBJECTFILE_H
+#define LLVM_OBJECT_IROBJECTFILE_H
 
 #include "llvm/Object/SymbolicFile.h"
 

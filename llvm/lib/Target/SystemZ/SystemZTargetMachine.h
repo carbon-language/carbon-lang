@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef SYSTEMZTARGETMACHINE_H
-#define SYSTEMZTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETMACHINE_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZTARGETMACHINE_H
 
 #include "SystemZSubtarget.h"
 #include "llvm/Target/TargetMachine.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64_TARGETOBJECTFILE_H
-#define LLVM_TARGET_AArch64_TARGETOBJECTFILE_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64TARGETOBJECTFILE_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64TARGETOBJECTFILE_H
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"

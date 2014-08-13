@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_ELF_OBJECT_FILE_H
-#define LLVM_OBJECT_ELF_OBJECT_FILE_H
+#ifndef LLVM_OBJECT_ELFOBJECTFILE_H
+#define LLVM_OBJECT_ELFOBJECTFILE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"

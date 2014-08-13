@@ -19,8 +19,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ARM_EHABI_H
-#define LLVM_SUPPORT_ARM_EHABI_H
+#ifndef LLVM_SUPPORT_ARMEHABI_H
+#define LLVM_SUPPORT_ARMEHABI_H
 
 namespace llvm {
 namespace ARM {
@@ -131,4 +131,4 @@ namespace EHABI {
 }
 }
 
-#endif // ARM_UNWIND_OP_H
+#endif

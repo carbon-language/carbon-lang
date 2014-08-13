@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_ARM_H
-#define TARGET_ARM_H
+#ifndef LLVM_LIB_TARGET_ARM_ARM_H
+#define LLVM_LIB_TARGET_ARM_ARM_H
 
 #include "llvm/Support/CodeGen.h"
 

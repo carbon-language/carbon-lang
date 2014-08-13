@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64MACHINEFUNCTIONINFO_H
-#define AArch64MACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64MACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64MACHINEFUNCTIONINFO_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -160,4 +160,4 @@ private:
 };
 } // End llvm namespace
 
-#endif // AArch64MACHINEFUNCTIONINFO_H
+#endif

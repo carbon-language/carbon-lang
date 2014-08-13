@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_ELF_TYPES_H
-#define LLVM_OBJECT_ELF_TYPES_H
+#ifndef LLVM_OBJECT_ELFTYPES_H
+#define LLVM_OBJECT_ELFTYPES_H
 
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/DataTypes.h"

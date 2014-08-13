@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPCTARGETSTREAMER_H
-#define PPCTARGETSTREAMER_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCTARGETSTREAMER_H
+#define LLVM_LIB_TARGET_POWERPC_PPCTARGETSTREAMER_H
 
 #include "llvm/MC/MCStreamer.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSINSTPRINTER_H
-#define MIPSINSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_MIPS_INSTPRINTER_MIPSINSTPRINTER_H
+#define LLVM_LIB_TARGET_MIPS_INSTPRINTER_MIPSINSTPRINTER_H
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {

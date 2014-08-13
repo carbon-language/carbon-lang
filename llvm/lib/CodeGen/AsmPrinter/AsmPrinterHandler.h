@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_ASMPRINTERHANDLER_H__
-#define CODEGEN_ASMPRINTER_ASMPRINTERHANDLER_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_ASMPRINTERHANDLER_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_ASMPRINTERHANDLER_H
 
 #include "llvm/Support/DataTypes.h"
 

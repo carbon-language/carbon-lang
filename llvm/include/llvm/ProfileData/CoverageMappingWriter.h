@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_COVERAGEMAPPING_WRITER_H_
-#define LLVM_PROFILEDATA_COVERAGEMAPPING_WRITER_H_
+#ifndef LLVM_PROFILEDATA_COVERAGEMAPPINGWRITER_H
+#define LLVM_PROFILEDATA_COVERAGEMAPPINGWRITER_H
 
 #include "llvm/ProfileData/CoverageMapping.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -60,4 +60,4 @@ public:
 } // end namespace coverage
 } // end namespace llvm
 
-#endif // LLVM_PROFILE_COVERAGEMAPPING_WRITER_H_
+#endif

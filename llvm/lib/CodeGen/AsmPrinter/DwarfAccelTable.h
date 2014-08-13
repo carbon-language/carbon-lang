@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DWARFACCELTABLE_H__
-#define CODEGEN_ASMPRINTER_DWARFACCELTABLE_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFACCELTABLE_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFACCELTABLE_H
 
 #include "DIE.h"
 #include "llvm/ADT/ArrayRef.h"

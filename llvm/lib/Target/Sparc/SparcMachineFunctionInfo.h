@@ -10,8 +10,8 @@
 // This file declares  Sparc specific per-machine-function information.
 //
 //===----------------------------------------------------------------------===//
-#ifndef SPARCMACHINEFUNCTIONINFO_H
-#define SPARCMACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_SPARC_SPARCMACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 

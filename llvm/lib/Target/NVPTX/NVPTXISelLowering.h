@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXISELLOWERING_H
-#define NVPTXISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXISELLOWERING_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXISELLOWERING_H
 
 #include "NVPTX.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -538,4 +538,4 @@ private:
 };
 } // namespace llvm
 
-#endif // NVPTXISELLOWERING_H
+#endif

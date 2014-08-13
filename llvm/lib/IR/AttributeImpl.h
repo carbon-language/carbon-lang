@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ATTRIBUTESIMPL_H
-#define LLVM_ATTRIBUTESIMPL_H
+#ifndef LLVM_LIB_IR_ATTRIBUTEIMPL_H
+#define LLVM_LIB_IR_ATTRIBUTEIMPL_H
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/IR/Attributes.h"

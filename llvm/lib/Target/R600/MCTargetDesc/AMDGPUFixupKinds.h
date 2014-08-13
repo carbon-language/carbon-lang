@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_AMDGPUFIXUPKINDS_H
-#define LLVM_AMDGPUFIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUFIXUPKINDS_H
+#define LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 
@@ -31,4 +31,4 @@ enum Fixups {
 }
 }
 
-#endif // LLVM_AMDGPUFIXUPKINDS_H
+#endif

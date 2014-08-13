@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCJITINFO_H
-#define SPARCJITINFO_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCJITINFO_H
+#define LLVM_LIB_TARGET_SPARC_SPARCJITINFO_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"

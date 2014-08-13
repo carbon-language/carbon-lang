@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HexagonTARGETMACHINE_H
-#define HexagonTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONTARGETMACHINE_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONTARGETMACHINE_H
 
 #include "HexagonInstrInfo.h"
 #include "HexagonSubtarget.h"

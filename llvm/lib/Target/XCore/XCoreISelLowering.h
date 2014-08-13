@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREISELLOWERING_H
-#define XCOREISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCOREISELLOWERING_H
+#define LLVM_LIB_TARGET_XCORE_XCOREISELLOWERING_H
 
 #include "XCore.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -215,4 +215,4 @@ namespace llvm {
   };
 }
 
-#endif // XCOREISELLOWERING_H
+#endif

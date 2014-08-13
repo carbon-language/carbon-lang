@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFTYPEUNIT_H
-#define LLVM_DEBUGINFO_DWARFTYPEUNIT_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFTYPEUNIT_H
+#define LLVM_LIB_DEBUGINFO_DWARFTYPEUNIT_H
 
 #include "DWARFUnit.h"
 

@@ -12,8 +12,8 @@
 // Diagnostics reporting is still done as part of the LLVMContext.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_DIAGNOSTICINFO_H
-#define LLVM_SUPPORT_DIAGNOSTICINFO_H
+#ifndef LLVM_IR_DIAGNOSTICINFO_H
+#define LLVM_IR_DIAGNOSTICINFO_H
 
 #include "llvm-c/Core.h"
 #include "llvm/ADT/ArrayRef.h"

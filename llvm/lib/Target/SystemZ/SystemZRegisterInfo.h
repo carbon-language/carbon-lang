@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SystemZREGISTERINFO_H
-#define SystemZREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZREGISTERINFO_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZREGISTERINFO_H
 
 #include "SystemZ.h"
 #include "llvm/Target/TargetRegisterInfo.h"

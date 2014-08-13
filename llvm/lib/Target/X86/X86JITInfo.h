@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86JITINFO_H
-#define X86JITINFO_H
+#ifndef LLVM_LIB_TARGET_X86_X86JITINFO_H
+#define LLVM_LIB_TARGET_X86_X86JITINFO_H
 
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/IR/Function.h"

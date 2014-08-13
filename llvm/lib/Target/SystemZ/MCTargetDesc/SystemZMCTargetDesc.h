@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZMCTARGETDESC_H
-#define SYSTEMZMCTARGETDESC_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_MCTARGETDESC_SYSTEMZMCTARGETDESC_H
+#define LLVM_LIB_TARGET_SYSTEMZ_MCTARGETDESC_SYSTEMZMCTARGETDESC_H
 
 #include "llvm/Support/DataTypes.h"
 

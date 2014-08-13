@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef THUMB1REGISTERINFO_H
-#define THUMB1REGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_THUMB1REGISTERINFO_H
+#define LLVM_LIB_TARGET_ARM_THUMB1REGISTERINFO_H
 
 #include "ARMBaseRegisterInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
@@ -60,4 +60,4 @@ public:
 };
 }
 
-#endif // THUMB1REGISTERINFO_H
+#endif

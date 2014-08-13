@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCTARGETMACHINE_H
-#define SPARCTARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCTARGETMACHINE_H
+#define LLVM_LIB_TARGET_SPARC_SPARCTARGETMACHINE_H
 
 #include "SparcInstrInfo.h"
 #include "SparcSubtarget.h"

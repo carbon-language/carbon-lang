@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_Hexagon_H
-#define TARGET_Hexagon_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGON_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGON_H
 
 #include "MCTargetDesc/HexagonMCTargetDesc.h"
 #include "llvm/Target/TargetLowering.h"

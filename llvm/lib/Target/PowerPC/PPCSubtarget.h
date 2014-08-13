@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCSUBTARGET_H
-#define POWERPCSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCSUBTARGET_H
+#define LLVM_LIB_TARGET_POWERPC_PPCSUBTARGET_H
 
 #include "PPCFrameLowering.h"
 #include "PPCInstrInfo.h"

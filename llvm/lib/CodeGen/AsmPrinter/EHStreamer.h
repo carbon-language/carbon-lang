@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ASMPRINTER_EHSTREAMER_H
-#define LLVM_CODEGEN_ASMPRINTER_EHSTREAMER_H
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_EHSTREAMER_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_EHSTREAMER_H
 
 #include "AsmPrinterHandler.h"
 #include "llvm/ADT/DenseMap.h"

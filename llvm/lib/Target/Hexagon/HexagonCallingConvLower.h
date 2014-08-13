@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_Hexagon_CODEGEN_CALLINGCONVLOWER_H
-#define LLVM_Hexagon_CODEGEN_CALLINGCONVLOWER_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONCALLINGCONVLOWER_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONCALLINGCONVLOWER_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/CallingConvLower.h"

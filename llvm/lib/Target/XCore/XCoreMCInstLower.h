@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREMCINSTLOWER_H
-#define XCOREMCINSTLOWER_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCOREMCINSTLOWER_H
+#define LLVM_LIB_TARGET_XCORE_XCOREMCINSTLOWER_H
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Support/Compiler.h"
 

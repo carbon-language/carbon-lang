@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSISELDAGTODAG_H
-#define MIPSISELDAGTODAG_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSISELDAGTODAG_H
+#define LLVM_LIB_TARGET_MIPS_MIPSISELDAGTODAG_H
 
 #include "Mips.h"
 #include "MipsSubtarget.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DWARFCOMPILEUNIT_H
-#define CODEGEN_ASMPRINTER_DWARFCOMPILEUNIT_H
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFUNIT_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFUNIT_H
 
 #include "DIE.h"
 #include "DwarfDebug.h"

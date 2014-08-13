@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSRELOCATIONS_H_
-#define MIPSRELOCATIONS_H_
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSRELOCATIONS_H
+#define LLVM_LIB_TARGET_MIPS_MIPSRELOCATIONS_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
 

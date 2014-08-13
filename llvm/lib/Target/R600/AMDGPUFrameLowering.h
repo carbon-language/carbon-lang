@@ -12,8 +12,8 @@
 /// machine.
 //
 //===----------------------------------------------------------------------===//
-#ifndef AMDILFRAME_LOWERING_H
-#define AMDILFRAME_LOWERING_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUFRAMELOWERING_H
+#define LLVM_LIB_TARGET_R600_AMDGPUFRAMELOWERING_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetFrameLowering.h"
@@ -42,4 +42,4 @@ public:
   bool hasFP(const MachineFunction &MF) const override;
 };
 } // namespace llvm
-#endif // AMDILFRAME_LOWERING_H
+#endif

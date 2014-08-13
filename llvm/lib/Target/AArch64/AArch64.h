@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_AArch64_H
-#define TARGET_AArch64_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64_H
 
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include "Utils/AArch64BaseInfo.h"

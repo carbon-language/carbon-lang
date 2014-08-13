@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IR_LEAKSCONTEXT_H
-#define LLVM_IR_LEAKSCONTEXT_H
+#ifndef LLVM_LIB_IR_LEAKSCONTEXT_H
+#define LLVM_LIB_IR_LEAKSCONTEXT_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/IR/Value.h"
@@ -95,4 +95,4 @@ private:
 
 }
 
-#endif // LLVM_IR_LEAKSCONTEXT_H
+#endif

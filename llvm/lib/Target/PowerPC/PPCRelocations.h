@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPCRELOCATIONS_H
-#define PPCRELOCATIONS_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCRELOCATIONS_H
+#define LLVM_LIB_TARGET_POWERPC_PPCRELOCATIONS_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
 

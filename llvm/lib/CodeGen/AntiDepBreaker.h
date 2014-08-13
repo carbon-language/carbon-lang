@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_ANTIDEPBREAKER_H
-#define LLVM_CODEGEN_ANTIDEPBREAKER_H
+#ifndef LLVM_LIB_CODEGEN_ANTIDEPBREAKER_H
+#define LLVM_LIB_CODEGEN_ANTIDEPBREAKER_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"

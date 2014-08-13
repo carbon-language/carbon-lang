@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_DYNAMICLIBRARY_H
-#define LLVM_SYSTEM_DYNAMICLIBRARY_H
+#ifndef LLVM_SUPPORT_DYNAMICLIBRARY_H
+#define LLVM_SUPPORT_DYNAMICLIBRARY_H
 
 #include <string>
 
@@ -101,4 +101,4 @@ namespace sys {
 } // End sys namespace
 } // End llvm namespace
 
-#endif // LLVM_SYSTEM_DYNAMIC_LIBRARY_H
+#endif

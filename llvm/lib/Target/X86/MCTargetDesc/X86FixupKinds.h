@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_X86_X86FIXUPKINDS_H
-#define LLVM_X86_X86FIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_X86_MCTARGETDESC_X86FIXUPKINDS_H
+#define LLVM_LIB_TARGET_X86_MCTARGETDESC_X86FIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 

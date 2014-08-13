@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64_FRAMELOWERING_H
-#define AArch64_FRAMELOWERING_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64FRAMELOWERING_H
 
 #include "llvm/Target/TargetFrameLowering.h"
 

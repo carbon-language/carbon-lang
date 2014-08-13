@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIMEDYLDMACHOAARCH64_H
-#define LLVM_RUNTIMEDYLDMACHOAARCH64_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_TARGETS_RUNTIMEDYLDMACHOAARCH64_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_TARGETS_RUNTIMEDYLDMACHOAARCH64_H
 
 #include "../RuntimeDyldMachO.h"
 #include "llvm/Support/Endian.h"
@@ -399,4 +399,4 @@ private:
 
 #undef DEBUG_TYPE
 
-#endif // LLVM_RUNTIMEDYLDMACHOAARCH64_H
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HexagonSELECTIONDAGINFO_H
-#define HexagonSELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONSELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONSELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXAGONMCINST_H
-#define HEXAGONMCINST_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINST_H
+#define LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONMCINST_H
 
 #include "HexagonTargetMachine.h"
 #include "llvm/MC/MCInst.h"

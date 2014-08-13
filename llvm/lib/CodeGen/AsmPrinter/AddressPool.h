@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_ADDRESSPOOL_H__
-#define CODEGEN_ASMPRINTER_ADDRESSPOOL_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_ADDRESSPOOL_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_ADDRESSPOOL_H
 
 #include "llvm/ADT/DenseMap.h"
 

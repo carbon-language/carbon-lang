@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_READ_OBJ_H
-#define LLVM_TOOLS_READ_OBJ_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_LLVM_READOBJ_H
+#define LLVM_TOOLS_LLVM_READOBJ_LLVM_READOBJ_H
 
 #include "llvm/Support/CommandLine.h"
 #include <string>

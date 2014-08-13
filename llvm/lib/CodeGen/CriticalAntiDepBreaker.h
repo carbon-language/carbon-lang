@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
-#define LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
+#ifndef LLVM_LIB_CODEGEN_CRITICALANTIDEPBREAKER_H
+#define LLVM_LIB_CODEGEN_CRITICALANTIDEPBREAKER_H
 
 #include "AntiDepBreaker.h"
 #include "llvm/ADT/BitVector.h"

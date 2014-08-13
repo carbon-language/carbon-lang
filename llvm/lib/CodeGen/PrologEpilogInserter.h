@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_PEI_H
-#define LLVM_CODEGEN_PEI_H
+#ifndef LLVM_LIB_CODEGEN_PROLOGEPILOGINSERTER_H
+#define LLVM_LIB_CODEGEN_PROLOGEPILOGINSERTER_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SparseBitVector.h"

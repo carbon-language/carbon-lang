@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SELECTIONDAG_LEGALIZETYPES_H
-#define SELECTIONDAG_LEGALIZETYPES_H
+#ifndef LLVM_LIB_CODEGEN_SELECTIONDAG_LEGALIZETYPES_H
+#define LLVM_LIB_CODEGEN_SELECTIONDAG_LEGALIZETYPES_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"

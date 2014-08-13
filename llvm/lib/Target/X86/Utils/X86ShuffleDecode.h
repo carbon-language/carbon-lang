@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_SHUFFLE_DECODE_H
-#define X86_SHUFFLE_DECODE_H
+#ifndef LLVM_LIB_TARGET_X86_UTILS_X86SHUFFLEDECODE_H
+#define LLVM_LIB_TARGET_X86_UTILS_X86SHUFFLEDECODE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/ArrayRef.h"

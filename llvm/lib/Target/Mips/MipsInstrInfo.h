@@ -15,8 +15,8 @@
 // size in bytes; MipsLongBranch only expects it to be the correct upper bound.
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSINSTRUCTIONINFO_H
-#define MIPSINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSINSTRINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPSINSTRINFO_H
 
 #include "Mips.h"
 #include "MipsAnalyzeImmediate.h"

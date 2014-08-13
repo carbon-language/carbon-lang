@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef R600INSTRUCTIONINFO_H_
-#define R600INSTRUCTIONINFO_H_
+#ifndef LLVM_LIB_TARGET_R600_R600INSTRINFO_H
+#define LLVM_LIB_TARGET_R600_R600INSTRINFO_H
 
 #include "AMDGPUInstrInfo.h"
 #include "R600Defines.h"
@@ -298,4 +298,4 @@ int getLDSNoRetOp(uint16_t Opcode);
 
 } // End llvm namespace
 
-#endif // R600INSTRINFO_H_
+#endif

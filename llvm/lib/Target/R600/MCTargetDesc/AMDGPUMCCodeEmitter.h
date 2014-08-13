@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUCODEEMITTER_H
-#define AMDGPUCODEEMITTER_H
+#ifndef LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUMCCODEEMITTER_H
+#define LLVM_LIB_TARGET_R600_MCTARGETDESC_AMDGPUMCCODEEMITTER_H
 
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/Support/raw_ostream.h"
@@ -47,4 +47,4 @@ public:
 
 } // End namespace llvm
 
-#endif // AMDGPUCODEEMITTER_H
+#endif

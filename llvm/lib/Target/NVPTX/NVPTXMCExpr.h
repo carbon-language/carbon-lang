@@ -9,8 +9,8 @@
 
 // Modeled after ARMMCExpr
 
-#ifndef NVPTXMCEXPR_H
-#define NVPTXMCEXPR_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXMCEXPR_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXMCEXPR_H
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/MC/MCExpr.h"

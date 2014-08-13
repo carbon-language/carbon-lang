@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_RELOCATIONS_H
-#define SPARC_RELOCATIONS_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCRELOCATIONS_H
+#define LLVM_LIB_TARGET_SPARC_SPARCRELOCATIONS_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
 

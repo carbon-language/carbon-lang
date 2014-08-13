@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXSUBTARGET_H
-#define NVPTXSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXSUBTARGET_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXSUBTARGET_H
 
 #include "NVPTX.h"
 #include "NVPTXFrameLowering.h"
@@ -119,4 +119,4 @@ public:
 
 } // End llvm namespace
 
-#endif // NVPTXSUBTARGET_H
+#endif

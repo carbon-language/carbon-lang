@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_ASM_PARSER_COMMON_H
-#define X86_ASM_PARSER_COMMON_H
+#ifndef LLVM_LIB_TARGET_X86_ASMPARSER_X86ASMPARSERCOMMON_H
+#define LLVM_LIB_TARGET_X86_ASMPARSER_X86ASMPARSERCOMMON_H
 
 namespace llvm {
 
@@ -40,4 +40,4 @@ inline bool isImmSExti64i32Value(uint64_t Value) {
 
 } // End of namespace llvm
 
-#endif // X86_ASM_PARSER_COMMON_H
+#endif

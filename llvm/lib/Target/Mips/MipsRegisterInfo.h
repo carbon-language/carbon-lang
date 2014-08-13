@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSREGISTERINFO_H
-#define MIPSREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSREGISTERINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPSREGISTERINFO_H
 
 #include "Mips.h"
 #include "llvm/Target/TargetRegisterInfo.h"

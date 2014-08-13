@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SELECTIONDAGBUILDER_H
-#define SELECTIONDAGBUILDER_H
+#ifndef LLVM_LIB_CODEGEN_SELECTIONDAG_SELECTIONDAGBUILDER_H
+#define LLVM_LIB_CODEGEN_SELECTIONDAG_SELECTIONDAGBUILDER_H
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"

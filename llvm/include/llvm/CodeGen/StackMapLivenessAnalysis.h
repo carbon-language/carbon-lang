@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_STACKMAP_LIVENESS_ANALYSIS_H
-#define LLVM_CODEGEN_STACKMAP_LIVENESS_ANALYSIS_H
+#ifndef LLVM_CODEGEN_STACKMAPLIVENESSANALYSIS_H
+#define LLVM_CODEGEN_STACKMAPLIVENESSANALYSIS_H
 
 #include "llvm/CodeGen/LivePhysRegs.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -61,4 +61,4 @@ private:
 
 } // llvm namespace
 
-#endif // LLVM_CODEGEN_STACKMAP_LIVENESS_ANALYSIS_H
+#endif

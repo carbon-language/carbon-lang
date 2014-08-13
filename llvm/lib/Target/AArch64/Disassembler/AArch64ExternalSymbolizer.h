@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64EXTERNALSYMBOLIZER_H
-#define AArch64EXTERNALSYMBOLIZER_H
+#ifndef LLVM_LIB_TARGET_AARCH64_DISASSEMBLER_AARCH64EXTERNALSYMBOLIZER_H
+#define LLVM_LIB_TARGET_AARCH64_DISASSEMBLER_AARCH64EXTERNALSYMBOLIZER_H
 
 #include "llvm/MC/MCExternalSymbolizer.h"
 

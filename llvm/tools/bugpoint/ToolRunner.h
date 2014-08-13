@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BUGPOINT_TOOLRUNNER_H
-#define BUGPOINT_TOOLRUNNER_H
+#ifndef LLVM_TOOLS_BUGPOINT_TOOLRUNNER_H
+#define LLVM_TOOLS_BUGPOINT_TOOLRUNNER_H
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/CommandLine.h"

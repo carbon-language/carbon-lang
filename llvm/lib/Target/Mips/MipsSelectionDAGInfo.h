@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSSELECTIONDAGINFO_H
-#define MIPSSELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSSELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPSSELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

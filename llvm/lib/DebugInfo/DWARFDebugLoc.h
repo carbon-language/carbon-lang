@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFDEBUGLOC_H
-#define LLVM_DEBUGINFO_DWARFDEBUGLOC_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFDEBUGLOC_H
+#define LLVM_LIB_DEBUGINFO_DWARFDEBUGLOC_H
 
 #include "DWARFRelocMap.h"
 #include "llvm/ADT/SmallVector.h"

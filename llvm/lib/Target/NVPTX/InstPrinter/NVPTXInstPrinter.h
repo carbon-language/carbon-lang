@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTX_INST_PRINTER_H
-#define NVPTX_INST_PRINTER_H
+#ifndef LLVM_LIB_TARGET_NVPTX_INSTPRINTER_NVPTXINSTPRINTER_H
+#define LLVM_LIB_TARGET_NVPTX_INSTPRINTER_NVPTXINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Support/raw_ostream.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_INSTRPROF_WRITER_H_
-#define LLVM_PROFILEDATA_INSTRPROF_WRITER_H_
+#ifndef LLVM_PROFILEDATA_INSTRPROFWRITER_H
+#define LLVM_PROFILEDATA_INSTRPROFWRITER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -48,4 +48,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_PROFILE_INSTRPROF_WRITER_H_
+#endif

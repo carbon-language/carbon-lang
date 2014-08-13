@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARCTARGETSTREAMER_H
-#define SPARCTARGETSTREAMER_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCTARGETSTREAMER_H
+#define LLVM_LIB_TARGET_SPARC_SPARCTARGETSTREAMER_H
 
 #include "llvm/MC/MCELFStreamer.h"
 #include "llvm/MC/MCStreamer.h"

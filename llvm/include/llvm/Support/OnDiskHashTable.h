@@ -11,8 +11,8 @@
 /// \brief Defines facilities for reading and writing on-disk hash tables.
 ///
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_SUPPORT_ON_DISK_HASH_TABLE_H
-#define LLVM_SUPPORT_ON_DISK_HASH_TABLE_H
+#ifndef LLVM_SUPPORT_ONDISKHASHTABLE_H
+#define LLVM_SUPPORT_ONDISKHASHTABLE_H
 
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/AlignOf.h"
@@ -568,4 +568,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_SUPPORT_ON_DISK_HASH_TABLE_H
+#endif

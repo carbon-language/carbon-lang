@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86CALLINGCONV_H
-#define X86CALLINGCONV_H
+#ifndef LLVM_LIB_TARGET_X86_X86CALLINGCONV_H
+#define LLVM_LIB_TARGET_X86_X86CALLINGCONV_H
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/IR/CallingConv.h"

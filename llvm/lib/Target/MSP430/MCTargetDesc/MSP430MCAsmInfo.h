@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MSP430TARGETASMINFO_H
-#define MSP430TARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_MSP430_MCTARGETDESC_MSP430MCASMINFO_H
+#define LLVM_LIB_TARGET_MSP430_MCTARGETDESC_MSP430MCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoELF.h"
 

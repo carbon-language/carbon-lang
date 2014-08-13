@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORETARGETMACHINE_H
-#define XCORETARGETMACHINE_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORETARGETMACHINE_H
+#define LLVM_LIB_TARGET_XCORE_XCORETARGETMACHINE_H
 
 #include "XCoreSubtarget.h"
 #include "llvm/Target/TargetMachine.h"

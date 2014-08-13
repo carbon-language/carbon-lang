@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLI_RPCCHANNEL_H
-#define LLI_RPCCHANNEL_H
+#ifndef LLVM_TOOLS_LLI_RPCCHANNEL_H
+#define LLVM_TOOLS_LLI_RPCCHANNEL_H
 
 #include <stdlib.h>
 #include <string>
@@ -46,4 +46,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLI_RPCCHANNEL_H
+#endif

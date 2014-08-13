@@ -14,8 +14,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef MCJIT_TEST_BASE_H
-#define MCJIT_TEST_BASE_H
+#ifndef LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H
+#define LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTBASE_H
 
 #include "MCJITTestAPICommon.h"
 #include "llvm/Config/config.h"
@@ -344,4 +344,4 @@ protected:
 
 } // namespace llvm
 
-#endif // MCJIT_TEST_H
+#endif

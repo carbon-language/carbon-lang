@@ -12,6 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXMACHINEFUNCTIONINFO_H
+
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -44,3 +47,5 @@ public:
   }
 };
 }
+
+#endif

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMASMPRINTER_H
-#define ARMASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMASMPRINTER_H
+#define LLVM_LIB_TARGET_ARM_ARMASMPRINTER_H
 
 #include "ARMSubtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"

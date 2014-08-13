@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMINSTRUCTIONINFO_H
-#define ARMINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMINSTRINFO_H
+#define LLVM_LIB_TARGET_ARM_ARMINSTRINFO_H
 
 #include "ARMBaseInstrInfo.h"
 #include "ARMRegisterInfo.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_ARMATTRIBUTE_PARSER_H
-#define LLVM_READOBJ_ARMATTRIBUTE_PARSER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_ARMATTRIBUTEPARSER_H
+#define LLVM_TOOLS_LLVM_READOBJ_ARMATTRIBUTEPARSER_H
 
 #include "StreamWriter.h"
 #include "llvm/Support/ARMBuildAttributes.h"

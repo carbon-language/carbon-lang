@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_H
-#define LLVM_LIB_EXECUTIONENGINE_MCJIT_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
+#define LLVM_LIB_EXECUTIONENGINE_MCJIT_MCJIT_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"

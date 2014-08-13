@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYMBOLTABLELISTTRAITS_IMPL_H
-#define LLVM_SYMBOLTABLELISTTRAITS_IMPL_H
+#ifndef LLVM_LIB_IR_SYMBOLTABLELISTTRAITSIMPL_H
+#define LLVM_LIB_IR_SYMBOLTABLELISTTRAITSIMPL_H
 
 #include "llvm/IR/SymbolTableListTraits.h"
 #include "llvm/IR/ValueSymbolTable.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIME_DYLD_MACHO_H
-#define LLVM_RUNTIME_DYLD_MACHO_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDMACHO_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDMACHO_H
 
 #include "ObjectImageCommon.h"
 #include "RuntimeDyldImpl.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEMZINSTPRINTER_H
-#define LLVM_SYSTEMZINSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_INSTPRINTER_SYSTEMZINSTPRINTER_H
+#define LLVM_LIB_TARGET_SYSTEMZ_INSTPRINTER_SYSTEMZINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Support/Compiler.h"

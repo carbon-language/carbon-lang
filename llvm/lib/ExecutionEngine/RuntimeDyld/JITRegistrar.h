@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTION_ENGINE_JIT_REGISTRAR_H
-#define LLVM_EXECUTION_ENGINE_JIT_REGISTRAR_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_JITREGISTRAR_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_JITREGISTRAR_H
 
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 
@@ -41,4 +41,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_EXECUTION_ENGINE_JIT_REGISTRAR_H
+#endif

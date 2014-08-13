@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86_INTEL_INST_PRINTER_H
-#define X86_INTEL_INST_PRINTER_H
+#ifndef LLVM_LIB_TARGET_X86_INSTPRINTER_X86INTELINSTPRINTER_H
+#define LLVM_LIB_TARGET_X86_INSTPRINTER_X86INTELINSTPRINTER_H
 
 #include "llvm/MC/MCInstPrinter.h"
 #include "llvm/Support/raw_ostream.h"

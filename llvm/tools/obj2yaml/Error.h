@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_ERROR_H
-#define LLVM_TOOLS_ERROR_H
+#ifndef LLVM_TOOLS_OBJ2YAML_ERROR_H
+#define LLVM_TOOLS_OBJ2YAML_ERROR_H
 
 #include <system_error>
 

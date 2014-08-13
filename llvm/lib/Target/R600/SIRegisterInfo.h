@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef SIREGISTERINFO_H_
-#define SIREGISTERINFO_H_
+#ifndef LLVM_LIB_TARGET_R600_SIREGISTERINFO_H
+#define LLVM_LIB_TARGET_R600_SIREGISTERINFO_H
 
 #include "AMDGPURegisterInfo.h"
 
@@ -91,4 +91,4 @@ struct SIRegisterInfo : public AMDGPURegisterInfo {
 
 } // End namespace llvm
 
-#endif // SIREGISTERINFO_H_
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIME_DYLD_ELF_H
-#define LLVM_RUNTIME_DYLD_ELF_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDELF_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_RUNTIMEDYLDELF_H
 
 #include "RuntimeDyldImpl.h"
 #include "llvm/ADT/DenseMap.h"

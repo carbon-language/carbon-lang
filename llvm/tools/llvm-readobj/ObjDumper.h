@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_OBJDUMPER_H
-#define LLVM_READOBJ_OBJDUMPER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_OBJDUMPER_H
+#define LLVM_TOOLS_LLVM_READOBJ_OBJDUMPER_H
 
 #include <memory>
 #include <system_error>

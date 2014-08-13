@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZFRAMELOWERING_H
-#define SYSTEMZFRAMELOWERING_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZFRAMELOWERING_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZFRAMELOWERING_H
 
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Target/TargetFrameLowering.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SPARCMCEXPR_H
-#define LLVM_SPARCMCEXPR_H
+#ifndef LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCMCEXPR_H
+#define LLVM_LIB_TARGET_SPARC_MCTARGETDESC_SPARCMCEXPR_H
 
 #include "SparcFixupKinds.h"
 #include "llvm/MC/MCExpr.h"

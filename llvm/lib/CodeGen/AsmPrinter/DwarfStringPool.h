@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_STRINGPOOL_H__
-#define CODEGEN_ASMPRINTER_STRINGPOOL_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFSTRINGPOOL_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFSTRINGPOOL_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/CodeGen/AsmPrinter.h"

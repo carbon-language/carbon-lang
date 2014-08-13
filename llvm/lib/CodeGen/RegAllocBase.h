@@ -34,8 +34,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_REGALLOCBASE
-#define LLVM_CODEGEN_REGALLOCBASE
+#ifndef LLVM_LIB_CODEGEN_REGALLOCBASE_H
+#define LLVM_LIB_CODEGEN_REGALLOCBASE_H
 
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
@@ -106,4 +106,4 @@ private:
 
 } // end namespace llvm
 
-#endif // !defined(LLVM_CODEGEN_REGALLOCBASE)
+#endif

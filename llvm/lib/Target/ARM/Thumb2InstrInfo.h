@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef THUMB2INSTRUCTIONINFO_H
-#define THUMB2INSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_THUMB2INSTRINFO_H
+#define LLVM_LIB_TARGET_ARM_THUMB2INSTRINFO_H
 
 #include "ARMBaseInstrInfo.h"
 #include "Thumb2RegisterInfo.h"
@@ -75,4 +75,4 @@ ARMCC::CondCodes getITInstrPredicate(const MachineInstr *MI, unsigned &PredReg);
 
 }
 
-#endif // THUMB2INSTRUCTIONINFO_H
+#endif

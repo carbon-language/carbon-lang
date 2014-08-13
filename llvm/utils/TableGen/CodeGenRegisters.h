@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_REGISTERS_H
-#define CODEGEN_REGISTERS_H
+#ifndef LLVM_UTILS_TABLEGEN_CODEGENREGISTERS_H
+#define LLVM_UTILS_TABLEGEN_CODEGENREGISTERS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"

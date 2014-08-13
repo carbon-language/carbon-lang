@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC_JITINFO_H
-#define POWERPC_JITINFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCJITINFO_H
+#define LLVM_LIB_TARGET_POWERPC_PPCJITINFO_H
 
 #include "llvm/CodeGen/JITCodeEmitter.h"
 #include "llvm/Target/TargetJITInfo.h"

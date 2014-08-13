@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUISELLOWERING_H
-#define AMDGPUISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUISELLOWERING_H
+#define LLVM_LIB_TARGET_R600_AMDGPUISELLOWERING_H
 
 #include "llvm/Target/TargetLowering.h"
 
@@ -252,4 +252,4 @@ enum {
 
 } // End namespace llvm
 
-#endif // AMDGPUISELLOWERING_H
+#endif

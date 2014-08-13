@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORESUBTARGET_H
-#define XCORESUBTARGET_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORESUBTARGET_H
+#define LLVM_LIB_TARGET_XCORE_XCORESUBTARGET_H
 
 #include "XCoreFrameLowering.h"
 #include "XCoreISelLowering.h"

@@ -9,8 +9,8 @@
 /// \file
 /// \brief Common declarations for yaml2obj
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_TOOLS_YAML2OBJ_H
-#define LLVM_TOOLS_YAML2OBJ_H
+#ifndef LLVM_TOOLS_YAML2OBJ_YAML2OBJ_H
+#define LLVM_TOOLS_YAML2OBJ_YAML2OBJ_H
 
 namespace llvm {
 class raw_ostream;

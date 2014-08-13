@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPS_MACHINE_FUNCTION_INFO_H
-#define MIPS_MACHINE_FUNCTION_INFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSMACHINEFUNCTION_H
+#define LLVM_LIB_TARGET_MIPS_MIPSMACHINEFUNCTION_H
 
 #include "Mips16HardFloatInfo.h"
 #include "llvm/ADT/StringMap.h"
@@ -150,4 +150,4 @@ private:
 
 } // end of namespace llvm
 
-#endif // MIPS_MACHINE_FUNCTION_INFO_H
+#endif

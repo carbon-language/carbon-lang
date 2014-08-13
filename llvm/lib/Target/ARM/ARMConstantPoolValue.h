@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
-#define LLVM_TARGET_ARM_CONSTANTPOOLVALUE_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMCONSTANTPOOLVALUE_H
+#define LLVM_LIB_TARGET_ARM_ARMCONSTANTPOOLVALUE_H
 
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/Casting.h"

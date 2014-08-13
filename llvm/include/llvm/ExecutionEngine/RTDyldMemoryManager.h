@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
-#define LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
+#ifndef LLVM_EXECUTIONENGINE_RTDYLDMEMORYMANAGER_H
+#define LLVM_EXECUTIONENGINE_RTDYLDMEMORYMANAGER_H
 
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ADT/StringRef.h"
@@ -123,4 +123,4 @@ DEFINE_SIMPLE_CONVERSION_FUNCTIONS(
 
 } // namespace llvm
 
-#endif // LLVM_EXECUTIONENGINE_RT_DYLD_MEMORY_MANAGER_H
+#endif

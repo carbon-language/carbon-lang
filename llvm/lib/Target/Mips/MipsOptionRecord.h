@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSOPTIONRECORD_H
-#define MIPSOPTIONRECORD_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSOPTIONRECORD_H
+#define LLVM_LIB_TARGET_MIPS_MIPSOPTIONRECORD_H
 
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "llvm/MC/MCContext.h"

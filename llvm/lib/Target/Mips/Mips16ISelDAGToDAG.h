@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPS16ISELDAGTODAG_H
-#define MIPS16ISELDAGTODAG_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPS16ISELDAGTODAG_H
+#define LLVM_LIB_TARGET_MIPS_MIPS16ISELDAGTODAG_H
 
 #include "MipsISelDAGToDAG.h"
 

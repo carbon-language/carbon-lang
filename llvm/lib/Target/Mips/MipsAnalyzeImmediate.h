@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef MIPS_ANALYZE_IMMEDIATE_H
-#define MIPS_ANALYZE_IMMEDIATE_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSANALYZEIMMEDIATE_H
+#define LLVM_LIB_TARGET_MIPS_MIPSANALYZEIMMEDIATE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataTypes.h"

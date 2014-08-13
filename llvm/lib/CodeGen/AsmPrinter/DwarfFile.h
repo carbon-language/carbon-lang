@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DWARFFILE_H__
-#define CODEGEN_ASMPRINTER_DWARFFILE_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DWARFFILE_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DWARFFILE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"

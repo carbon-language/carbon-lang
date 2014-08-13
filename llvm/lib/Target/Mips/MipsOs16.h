@@ -11,15 +11,13 @@
 //
 //===----------------------------------------------------------------------===//
 
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSOS16_H
+#define LLVM_LIB_TARGET_MIPS_MIPSOS16_H
+
 #include "MCTargetDesc/MipsMCTargetDesc.h"
 #include "MipsTargetMachine.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
-
-
-
-#ifndef MIPSOS16_H
-#define MIPSOS16_H
 
 using namespace llvm;
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_NVPTX_UTIL_H
-#define LLVM_TARGET_NVPTX_UTIL_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXUTIL_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXUTIL_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstr.h"

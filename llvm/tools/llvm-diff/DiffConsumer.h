@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LLVM_DIFFCONSUMER_H_
-#define _LLVM_DIFFCONSUMER_H_
+#ifndef LLVM_TOOLS_LLVM_DIFF_DIFFCONSUMER_H
+#define LLVM_TOOLS_LLVM_DIFF_DIFFCONSUMER_H
 
 #include "DiffLog.h"
 #include "llvm/ADT/DenseMap.h"

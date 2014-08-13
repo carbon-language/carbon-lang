@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H_
-#define CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H_
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DBGVALUEHISTORYCALCULATOR_H
 
 #include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallVector.h"

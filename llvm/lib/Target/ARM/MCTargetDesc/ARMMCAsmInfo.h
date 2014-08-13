@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ARMTARGETASMINFO_H
-#define LLVM_ARMTARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCASMINFO_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoCOFF.h"
 #include "llvm/MC/MCAsmInfoDarwin.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86ISELLOWERING_H
-#define X86ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_X86_X86ISELLOWERING_H
+#define LLVM_LIB_TARGET_X86_X86ISELLOWERING_H
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"

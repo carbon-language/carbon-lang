@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZINSTRBUILDER_H
-#define SYSTEMZINSTRBUILDER_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZINSTRBUILDER_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZINSTRBUILDER_H
 
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

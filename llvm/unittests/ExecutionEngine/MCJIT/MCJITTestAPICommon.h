@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MCJIT_TEST_API_COMMON_H
-#define MCJIT_TEST_API_COMMON_H
+#ifndef LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTAPICOMMON_H
+#define LLVM_UNITTESTS_EXECUTIONENGINE_MCJIT_MCJITTESTAPICOMMON_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Triple.h"
@@ -93,5 +93,5 @@ protected:
 
 } // namespace llvm
 
-#endif // MCJIT_TEST_API_COMMON_H
+#endif
 

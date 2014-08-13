@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_RECORD_STREAMER
-#define LLVM_OBJECT_RECORD_STREAMER
+#ifndef LLVM_LIB_OBJECT_RECORDSTREAMER_H
+#define LLVM_LIB_OBJECT_RECORDSTREAMER_H
 
 #include "llvm/MC/MCStreamer.h"
 

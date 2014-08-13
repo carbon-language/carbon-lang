@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSMCNACL_H
-#define MIPSMCNACL_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCNACL_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCNACL_H
 
 #include "llvm/MC/MCELFStreamer.h"
 

@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BITCODE_BITCODE_WRITER_PASS_H
-#define LLVM_BITCODE_BITCODE_WRITER_PASS_H
+#ifndef LLVM_BITCODE_BITCODEWRITERPASS_H
+#define LLVM_BITCODE_BITCODEWRITERPASS_H
 
 #include "llvm/ADT/StringRef.h"
 

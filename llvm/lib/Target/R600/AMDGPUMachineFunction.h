@@ -10,8 +10,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUMACHINEFUNCTION_H
-#define AMDGPUMACHINEFUNCTION_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUMACHINEFUNCTION_H
+#define LLVM_LIB_TARGET_R600_AMDGPUMACHINEFUNCTION_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 #include <map>
@@ -36,4 +36,4 @@ public:
 };
 
 }
-#endif // AMDGPUMACHINEFUNCTION_H
+#endif

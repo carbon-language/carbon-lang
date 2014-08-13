@@ -8,8 +8,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef R600DEFINES_H_
-#define R600DEFINES_H_
+#ifndef LLVM_LIB_TARGET_R600_R600DEFINES_H
+#define LLVM_LIB_TARGET_R600_R600DEFINES_H
 
 #include "llvm/MC/MCRegisterInfo.h"
 
@@ -168,4 +168,4 @@ namespace OpName {
 
 #define R_0288E8_SQ_LDS_ALLOC                        0x0288E8
 
-#endif // R600DEFINES_H_
+#endif

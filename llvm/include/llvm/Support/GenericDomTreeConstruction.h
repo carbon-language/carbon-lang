@@ -22,8 +22,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_SUPPORT_GENERIC_DOM_TREE_CONSTRUCTION_H
-#define LLVM_SUPPORT_GENERIC_DOM_TREE_CONSTRUCTION_H
+#ifndef LLVM_SUPPORT_GENERICDOMTREECONSTRUCTION_H
+#define LLVM_SUPPORT_GENERICDOMTREECONSTRUCTION_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/GenericDomTree.h"

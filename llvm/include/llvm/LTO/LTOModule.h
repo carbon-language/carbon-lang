@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LTO_MODULE_H
-#define LTO_MODULE_H
+#ifndef LLVM_LTO_LTOMODULE_H
+#define LLVM_LTO_LTOMODULE_H
 
 #include "llvm-c/lto.h"
 #include "llvm/ADT/StringMap.h"
@@ -208,4 +208,4 @@ private:
                                   TargetOptions options, std::string &errMsg);
 };
 }
-#endif // LTO_MODULE_H
+#endif

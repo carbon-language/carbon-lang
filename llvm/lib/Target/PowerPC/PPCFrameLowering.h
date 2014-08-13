@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC_FRAMEINFO_H
-#define POWERPC_FRAMEINFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCFRAMELOWERING_H
+#define LLVM_LIB_TARGET_POWERPC_PPCFRAMELOWERING_H
 
 #include "PPC.h"
 #include "llvm/ADT/STLExtras.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_READOBJ_WIN64EHPRINTER_H
-#define LLVM_TOOLS_READOBJ_WIN64EHPRINTER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_WIN64EHDUMPER_H
+#define LLVM_TOOLS_LLVM_READOBJ_WIN64EHDUMPER_H
 
 #include "StreamWriter.h"
 #include "llvm/Support/Win64EH.h"

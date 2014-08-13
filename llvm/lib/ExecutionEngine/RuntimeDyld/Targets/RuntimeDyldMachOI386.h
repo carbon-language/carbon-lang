@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIMEDYLDMACHOI386_H
-#define LLVM_RUNTIMEDYLDMACHOI386_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_TARGETS_RUNTIMEDYLDMACHOI386_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_TARGETS_RUNTIMEDYLDMACHOI386_H
 
 #include "../RuntimeDyldMachO.h"
 
@@ -313,4 +313,4 @@ private:
 
 #undef DEBUG_TYPE
 
-#endif // LLVM_RUNTIMEDYLDMACHOI386_H
+#endif

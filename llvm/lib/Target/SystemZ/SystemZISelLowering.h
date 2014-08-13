@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_SystemZ_ISELLOWERING_H
-#define LLVM_TARGET_SystemZ_ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZISELLOWERING_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZISELLOWERING_H
 
 #include "SystemZ.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
@@ -322,4 +322,4 @@ private:
 };
 } // end namespace llvm
 
-#endif // LLVM_TARGET_SystemZ_ISELLOWERING_H
+#endif

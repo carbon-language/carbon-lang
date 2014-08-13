@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef XCORETARGETSTREAMER_H
-#define XCORETARGETSTREAMER_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORETARGETSTREAMER_H
+#define LLVM_LIB_TARGET_XCORE_XCORETARGETSTREAMER_H
 
 #include "llvm/MC/MCStreamer.h"
 

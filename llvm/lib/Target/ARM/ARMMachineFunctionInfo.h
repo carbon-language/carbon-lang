@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMMACHINEFUNCTIONINFO_H
-#define ARMMACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_ARM_ARMMACHINEFUNCTIONINFO_H
 
 #include "ARMSubtarget.h"
 #include "llvm/ADT/BitVector.h"
@@ -245,4 +245,4 @@ public:
 };
 } // End llvm namespace
 
-#endif // ARMMACHINEFUNCTIONINFO_H
+#endif

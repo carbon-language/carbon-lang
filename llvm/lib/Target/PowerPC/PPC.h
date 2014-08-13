@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_POWERPC_H
-#define LLVM_TARGET_POWERPC_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPC_H
+#define LLVM_LIB_TARGET_POWERPC_PPC_H
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include <string>

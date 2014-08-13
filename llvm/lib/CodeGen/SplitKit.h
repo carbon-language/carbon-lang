@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SPLITKIT_H
-#define LLVM_CODEGEN_SPLITKIT_H
+#ifndef LLVM_LIB_CODEGEN_SPLITKIT_H
+#define LLVM_LIB_CODEGEN_SPLITKIT_H
 
 #include "LiveRangeCalc.h"
 #include "llvm/ADT/ArrayRef.h"

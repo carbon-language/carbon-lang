@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPU_ASMPRINTER_H
-#define AMDGPU_ASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUASMPRINTER_H
+#define LLVM_LIB_TARGET_R600_AMDGPUASMPRINTER_H
 
 #include "llvm/CodeGen/AsmPrinter.h"
 #include <vector>
@@ -82,4 +82,4 @@ protected:
 
 } // End anonymous llvm
 
-#endif //AMDGPU_ASMPRINTER_H
+#endif

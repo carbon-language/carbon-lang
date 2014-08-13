@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLI_REMOTETARGETEXTERNAL_H
-#define LLI_REMOTETARGETEXTERNAL_H
+#ifndef LLVM_TOOLS_LLI_REMOTETARGETEXTERNAL_H
+#define LLVM_TOOLS_LLI_REMOTETARGETEXTERNAL_H
 
 #include "RPCChannel.h"
 #include "RemoteTarget.h"
@@ -140,4 +140,4 @@ private:
 
 } // end namespace llvm
 
-#endif // LLI_REMOTETARGETEXTERNAL_H
+#endif

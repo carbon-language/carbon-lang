@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMISELLOWERING_H
-#define ARMISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMISELLOWERING_H
+#define LLVM_LIB_TARGET_ARM_ARMISELLOWERING_H
 
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/CodeGen/CallingConvLower.h"

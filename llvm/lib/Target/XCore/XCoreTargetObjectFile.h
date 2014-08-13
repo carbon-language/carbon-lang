@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_XCORE_TARGETOBJECTFILE_H
-#define LLVM_TARGET_XCORE_TARGETOBJECTFILE_H
+#ifndef LLVM_LIB_TARGET_XCORE_XCORETARGETOBJECTFILE_H
+#define LLVM_LIB_TARGET_XCORE_XCORETARGETOBJECTFILE_H
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 

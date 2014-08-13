@@ -8,8 +8,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef SIDEFINES_H_
-#define SIDEFINES_H_
+#ifndef LLVM_LIB_TARGET_R600_SIDEFINES_H
+#define LLVM_LIB_TARGET_R600_SIDEFINES_H
 
 namespace SIInstrFlags {
 // This needs to be kept in sync with the field bits in InstSI.
@@ -92,4 +92,4 @@ enum {
 #define R_00B860_COMPUTE_TMPRING_SIZE                                   0x00B860
 #define   S_00B860_WAVESIZE(x)                                        (((x) & 0x1FFF) << 12)
 
-#endif // SIDEFINES_H_
+#endif

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BITCODE_READER_H
-#define BITCODE_READER_H
+#ifndef LLVM_LIB_BITCODE_READER_BITCODEREADER_H
+#define LLVM_LIB_BITCODE_READER_BITCODEREADER_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Bitcode/BitstreamReader.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MIPS_TARGETOBJECTFILE_H
-#define LLVM_TARGET_MIPS_TARGETOBJECTFILE_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSTARGETOBJECTFILE_H
+#define LLVM_LIB_TARGET_MIPS_MIPSTARGETOBJECTFILE_H
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 

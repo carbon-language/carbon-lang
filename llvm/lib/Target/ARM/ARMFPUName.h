@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMFPUNAME_H
-#define ARMFPUNAME_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMFPUNAME_H
+#define LLVM_LIB_TARGET_ARM_ARMFPUNAME_H
 
 namespace llvm {
 namespace ARM {
@@ -23,4 +23,4 @@ enum FPUKind {
 } // namespace ARM
 } // namespace llvm
 
-#endif // ARMFPUNAME_H
+#endif

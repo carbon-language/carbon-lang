@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSSEISELLOWERING_H
-#define MIPSSEISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSSEISELLOWERING_H
+#define LLVM_LIB_TARGET_MIPS_MIPSSEISELLOWERING_H
 
 #include "MipsISelLowering.h"
 #include "MipsRegisterInfo.h"
@@ -114,4 +114,4 @@ namespace llvm {
   };
 }
 
-#endif // MipsSEISELLOWERING_H
+#endif

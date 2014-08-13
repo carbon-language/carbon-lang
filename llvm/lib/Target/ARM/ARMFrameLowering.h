@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARM_FRAMEINFO_H
-#define ARM_FRAMEINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMFRAMELOWERING_H
+#define LLVM_LIB_TARGET_ARM_ARMFRAMELOWERING_H
 
 #include "llvm/Target/TargetFrameLowering.h"
 

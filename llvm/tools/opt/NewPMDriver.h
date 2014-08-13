@@ -18,8 +18,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_OPT_NEW_PM_DRIVER_H
-#define LLVM_TOOLS_OPT_NEW_PM_DRIVER_H
+#ifndef LLVM_TOOLS_OPT_NEWPMDRIVER_H
+#define LLVM_TOOLS_OPT_NEWPMDRIVER_H
 
 #include "llvm/ADT/StringRef.h"
 

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef Hexagon_ISELLOWERING_H
-#define Hexagon_ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONISELLOWERING_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONISELLOWERING_H
 
 #include "Hexagon.h"
 #include "llvm/CodeGen/CallingConvLower.h"

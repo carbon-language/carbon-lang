@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_STREAMWRITER_H
-#define LLVM_READOBJ_STREAMWRITER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_STREAMWRITER_H
+#define LLVM_TOOLS_LLVM_READOBJ_STREAMWRITER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"

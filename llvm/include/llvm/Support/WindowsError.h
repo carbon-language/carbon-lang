@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_WINDOWS_ERROR_H
-#define LLVM_SUPPORT_WINDOWS_ERROR_H
+#ifndef LLVM_SUPPORT_WINDOWSERROR_H
+#define LLVM_SUPPORT_WINDOWSERROR_H
 
 #include <system_error>
 

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_NVPTX_H
-#define LLVM_TARGET_NVPTX_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTX_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTX_H
 
 #include "MCTargetDesc/NVPTXBaseInfo.h"
 #include "llvm/ADT/StringMap.h"

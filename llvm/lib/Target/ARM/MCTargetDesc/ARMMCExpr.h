@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMMCEXPR_H
-#define ARMMCEXPR_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCEXPR_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCEXPR_H
 
 #include "llvm/MC/MCExpr.h"
 

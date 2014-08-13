@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef THUMB1INSTRUCTIONINFO_H
-#define THUMB1INSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_THUMB1INSTRINFO_H
+#define LLVM_LIB_TARGET_ARM_THUMB1INSTRINFO_H
 
 #include "ARMBaseInstrInfo.h"
 #include "Thumb1RegisterInfo.h"
@@ -60,4 +60,4 @@ private:
 };
 }
 
-#endif // THUMB1INSTRUCTIONINFO_H
+#endif

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSABIFLAGSSECTION_H
-#define MIPSABIFLAGSSECTION_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIFLAGSSECTION_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSABIFLAGSSECTION_H
 
 #include "llvm/MC/MCStreamer.h"
 

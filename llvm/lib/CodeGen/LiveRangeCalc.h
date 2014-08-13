@@ -19,8 +19,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVERANGECALC_H
-#define LLVM_CODEGEN_LIVERANGECALC_H
+#ifndef LLVM_LIB_CODEGEN_LIVERANGECALC_H
+#define LLVM_LIB_CODEGEN_LIVERANGECALC_H
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
-#define LLVM_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
+#ifndef LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
+#define LLVM_LIB_EXECUTIONENGINE_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
 
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
 #include "llvm/ExecutionEngine/ObjectImage.h"
@@ -86,4 +86,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_RUNTIMEDYLD_OBJECT_IMAGE_H
+#endif

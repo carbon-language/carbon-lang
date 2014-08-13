@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_COSTALLOCATOR_H
-#define LLVM_COSTALLOCATOR_H
+#ifndef LLVM_CODEGEN_PBQP_COSTALLOCATOR_H
+#define LLVM_CODEGEN_PBQP_COSTALLOCATOR_H
 
 #include <set>
 #include <type_traits>
@@ -144,4 +144,4 @@ private:
 
 }
 
-#endif // LLVM_COSTALLOCATOR_H
+#endif

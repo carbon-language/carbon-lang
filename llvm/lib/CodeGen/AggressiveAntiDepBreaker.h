@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_AGGRESSIVEANTIDEPBREAKER_H
-#define LLVM_CODEGEN_AGGRESSIVEANTIDEPBREAKER_H
+#ifndef LLVM_LIB_CODEGEN_AGGRESSIVEANTIDEPBREAKER_H
+#define LLVM_LIB_CODEGEN_AGGRESSIVEANTIDEPBREAKER_H
 
 #include "AntiDepBreaker.h"
 #include "llvm/ADT/BitVector.h"

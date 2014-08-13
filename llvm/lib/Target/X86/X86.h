@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TARGET_X86_H
-#define TARGET_X86_H
+#ifndef LLVM_LIB_TARGET_X86_X86_H
+#define LLVM_LIB_TARGET_X86_X86_H
 
 #include "llvm/Support/CodeGen.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64INSTPRINTER_H
-#define AArch64INSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_AARCH64_INSTPRINTER_AARCH64INSTPRINTER_H
+#define LLVM_LIB_TARGET_AARCH64_INSTPRINTER_AARCH64INSTPRINTER_H
 
 #include "MCTargetDesc/AArch64MCTargetDesc.h"
 #include "llvm/ADT/StringRef.h"

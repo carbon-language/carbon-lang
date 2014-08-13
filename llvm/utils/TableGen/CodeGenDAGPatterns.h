@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_DAGPATTERNS_H
-#define CODEGEN_DAGPATTERNS_H
+#ifndef LLVM_UTILS_TABLEGEN_CODEGENDAGPATTERNS_H
+#define LLVM_UTILS_TABLEGEN_CODEGENDAGPATTERNS_H
 
 #include "CodeGenIntrinsics.h"
 #include "CodeGenTarget.h"

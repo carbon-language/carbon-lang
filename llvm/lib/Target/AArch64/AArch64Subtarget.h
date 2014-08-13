@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64SUBTARGET_H
-#define AArch64SUBTARGET_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64SUBTARGET_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64SUBTARGET_H
 
 #include "AArch64FrameLowering.h"
 #include "AArch64ISelLowering.h"
@@ -139,4 +139,4 @@ public:
 };
 } // End llvm namespace
 
-#endif // AArch64SUBTARGET_H
+#endif

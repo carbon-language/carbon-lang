@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HexagonINSTRUCTIONINFO_H
-#define HexagonINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONINSTRINFO_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONINSTRINFO_H
 
 #include "HexagonRegisterInfo.h"
 #include "MCTargetDesc/HexagonBaseInfo.h"

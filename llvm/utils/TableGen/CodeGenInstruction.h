@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_INSTRUCTION_H
-#define CODEGEN_INSTRUCTION_H
+#ifndef LLVM_UTILS_TABLEGEN_CODEGENINSTRUCTION_H
+#define LLVM_UTILS_TABLEGEN_CODEGENINSTRUCTION_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MachineValueType.h"

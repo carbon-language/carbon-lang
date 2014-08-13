@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SIISELLOWERING_H
-#define SIISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_R600_SIISELLOWERING_H
+#define LLVM_LIB_TARGET_R600_SIISELLOWERING_H
 
 #include "AMDGPUISelLowering.h"
 #include "SIInstrInfo.h"
@@ -99,4 +99,4 @@ public:
 
 } // End namespace llvm
 
-#endif //SIISELLOWERING_H
+#endif

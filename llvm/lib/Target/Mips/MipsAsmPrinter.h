@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSASMPRINTER_H
-#define MIPSASMPRINTER_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSASMPRINTER_H
+#define LLVM_LIB_TARGET_MIPS_MIPSASMPRINTER_H
 
 #include "Mips16HardFloatInfo.h"
 #include "MipsMCInstLower.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SPILLER_H
-#define LLVM_CODEGEN_SPILLER_H
+#ifndef LLVM_LIB_CODEGEN_SPILLER_H
+#define LLVM_LIB_CODEGEN_SPILLER_H
 
 namespace llvm {
 

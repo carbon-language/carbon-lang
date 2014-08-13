@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86DISASSEMBLERDECODERCOMMON_H
-#define X86DISASSEMBLERDECODERCOMMON_H
+#ifndef LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLERDECODERCOMMON_H
+#define LLVM_LIB_TARGET_X86_DISASSEMBLER_X86DISASSEMBLERDECODERCOMMON_H
 
 #include "llvm/Support/DataTypes.h"
 

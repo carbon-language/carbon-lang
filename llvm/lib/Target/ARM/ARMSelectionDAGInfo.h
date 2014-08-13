@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMSELECTIONDAGINFO_H
-#define ARMSELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMSELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_ARM_ARMSELECTIONDAGINFO_H
 
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"

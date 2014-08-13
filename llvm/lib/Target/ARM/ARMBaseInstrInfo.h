@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMBASEINSTRUCTIONINFO_H
-#define ARMBASEINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMBASEINSTRINFO_H
+#define LLVM_LIB_TARGET_ARM_ARMBASEINSTRINFO_H
 
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "llvm/ADT/DenseMap.h"

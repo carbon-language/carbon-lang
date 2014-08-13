@@ -10,8 +10,8 @@
 /// \file
 //===----------------------------------------------------------------------===//
 
-#ifndef R600MACHINEFUNCTIONINFO_H
-#define R600MACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_R600_R600MACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_R600_R600MACHINEFUNCTIONINFO_H
 
 #include "AMDGPUMachineFunction.h"
 #include "llvm/ADT/BitVector.h"
@@ -31,4 +31,4 @@ public:
 
 } // End llvm namespace
 
-#endif //R600MACHINEFUNCTIONINFO_H
+#endif

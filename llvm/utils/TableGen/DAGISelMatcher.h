@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TBLGEN_DAGISELMATCHER_H
-#define TBLGEN_DAGISELMATCHER_H
+#ifndef LLVM_UTILS_TABLEGEN_DAGISELMATCHER_H
+#define LLVM_UTILS_TABLEGEN_DAGISELMATCHER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"

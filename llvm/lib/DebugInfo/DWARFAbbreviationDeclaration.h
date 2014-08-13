@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
-#define LLVM_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
+#ifndef LLVM_LIB_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
+#define LLVM_LIB_DEBUGINFO_DWARFABBREVIATIONDECLARATION_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/DataExtractor.h"

@@ -32,8 +32,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LAZY_CALL_GRAPH
-#define LLVM_ANALYSIS_LAZY_CALL_GRAPH
+#ifndef LLVM_ANALYSIS_LAZYCALLGRAPH_H
+#define LLVM_ANALYSIS_LAZYCALLGRAPH_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerUnion.h"

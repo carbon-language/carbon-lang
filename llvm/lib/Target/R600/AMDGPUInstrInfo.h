@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AMDGPUINSTRINFO_H
-#define AMDGPUINSTRINFO_H
+#ifndef LLVM_LIB_TARGET_R600_AMDGPUINSTRINFO_H
+#define LLVM_LIB_TARGET_R600_AMDGPUINSTRINFO_H
 
 #include "AMDGPURegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -198,4 +198,4 @@ namespace AMDGPU {
 #define AMDGPU_FLAG_REGISTER_LOAD  (UINT64_C(1) << 63)
 #define AMDGPU_FLAG_REGISTER_STORE (UINT64_C(1) << 62)
 
-#endif // AMDGPUINSTRINFO_H
+#endif

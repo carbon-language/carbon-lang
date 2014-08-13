@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPC_MACHINE_FUNCTION_INFO_H
-#define PPC_MACHINE_FUNCTION_INFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCMACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_POWERPC_PPCMACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 

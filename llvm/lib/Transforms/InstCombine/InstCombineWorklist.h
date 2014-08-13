@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef INSTCOMBINE_WORKLIST_H
-#define INSTCOMBINE_WORKLIST_H
+#ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
+#define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINEWORKLIST_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

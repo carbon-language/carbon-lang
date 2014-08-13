@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HEXAGONBASEINFO_H
-#define HEXAGONBASEINFO_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONBASEINFO_H
+#define LLVM_LIB_TARGET_HEXAGON_MCTARGETDESC_HEXAGONBASEINFO_H
 
 #include "HexagonMCTargetDesc.h"
 #include "llvm/Support/ErrorHandling.h"

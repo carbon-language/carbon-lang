@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef XCOREINSTPRINTER_H
-#define XCOREINSTPRINTER_H
+#ifndef LLVM_LIB_TARGET_XCORE_INSTPRINTER_XCOREINSTPRINTER_H
+#define LLVM_LIB_TARGET_XCORE_INSTPRINTER_XCOREINSTPRINTER_H
 #include "llvm/MC/MCInstPrinter.h"
 
 namespace llvm {

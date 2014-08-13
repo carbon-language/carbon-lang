@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86RELOCATIONS_H
-#define X86RELOCATIONS_H
+#ifndef LLVM_LIB_TARGET_X86_X86RELOCATIONS_H
+#define LLVM_LIB_TARGET_X86_X86RELOCATIONS_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
 

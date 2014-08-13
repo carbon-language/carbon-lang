@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
-#define LLVM_CODEGEN_LIVEINTERVAL_ANALYSIS_H
+#ifndef LLVM_CODEGEN_LIVEINTERVALANALYSIS_H
+#define LLVM_CODEGEN_LIVEINTERVALANALYSIS_H
 
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallVector.h"

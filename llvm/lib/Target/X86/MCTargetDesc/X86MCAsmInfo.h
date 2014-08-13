@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86TARGETASMINFO_H
-#define X86TARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_X86_MCTARGETDESC_X86MCASMINFO_H
+#define LLVM_LIB_TARGET_X86_MCTARGETDESC_X86MCASMINFO_H
 
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCAsmInfoCOFF.h"

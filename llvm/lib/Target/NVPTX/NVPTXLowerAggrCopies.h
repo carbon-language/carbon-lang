@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTX_LOWER_AGGR_COPIES_H
-#define NVPTX_LOWER_AGGR_COPIES_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXLOWERAGGRCOPIES_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXLOWERAGGRCOPIES_H
 
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/IR/DataLayout.h"

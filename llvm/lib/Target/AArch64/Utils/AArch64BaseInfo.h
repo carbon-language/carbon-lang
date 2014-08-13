@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64BASEINFO_H
-#define AArch64BASEINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_UTILS_AARCH64BASEINFO_H
+#define LLVM_LIB_TARGET_AARCH64_UTILS_AARCH64BASEINFO_H
 
 // FIXME: Is it easiest to fix this layering violation by moving the .inc
 // #includes from AArch64MCTargetDesc.h to here?

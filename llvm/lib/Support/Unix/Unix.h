@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_UNIX_UNIX_H
-#define LLVM_SYSTEM_UNIX_UNIX_H
+#ifndef LLVM_LIB_SUPPORT_UNIX_UNIX_H
+#define LLVM_LIB_SUPPORT_UNIX_UNIX_H
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only generic UNIX code that

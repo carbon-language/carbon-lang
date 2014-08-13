@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MSP430_SUBTARGET_H
-#define LLVM_TARGET_MSP430_SUBTARGET_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430SUBTARGET_H
+#define LLVM_LIB_TARGET_MSP430_MSP430SUBTARGET_H
 
 #include "MSP430FrameLowering.h"
 #include "MSP430InstrInfo.h"

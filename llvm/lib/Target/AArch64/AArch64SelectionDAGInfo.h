@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64SELECTIONDAGINFO_H
-#define AArch64SELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64SELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64SELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

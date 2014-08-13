@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BUGDRIVER_H
-#define BUGDRIVER_H
+#ifndef LLVM_TOOLS_BUGPOINT_BUGDRIVER_H
+#define LLVM_TOOLS_BUGPOINT_BUGDRIVER_H
 
 #include "llvm/IR/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"

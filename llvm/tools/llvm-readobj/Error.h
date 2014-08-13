@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_ERROR_H
-#define LLVM_READOBJ_ERROR_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_ERROR_H
+#define LLVM_TOOLS_LLVM_READOBJ_ERROR_H
 
 #include <system_error>
 

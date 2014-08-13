@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
-#define LLVM_TARGET_ARM_ARMADDRESSINGMODES_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMADDRESSINGMODES_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMADDRESSINGMODES_H
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARM_UNWIND_OP_ASM_H
-#define ARM_UNWIND_OP_ASM_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMUNWINDOPASM_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMUNWINDOPASM_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ARMEHABI.h"
@@ -90,4 +90,4 @@ private:
 
 } // namespace llvm
 
-#endif // ARM_UNWIND_OP_ASM_H
+#endif

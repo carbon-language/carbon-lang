@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_PHIELIMINATIONUTILS_H
-#define LLVM_CODEGEN_PHIELIMINATIONUTILS_H
+#ifndef LLVM_LIB_CODEGEN_PHIELIMINATIONUTILS_H
+#define LLVM_LIB_CODEGEN_PHIELIMINATIONUTILS_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
 

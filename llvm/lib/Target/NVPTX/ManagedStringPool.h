@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_MANAGED_STRING_H
-#define LLVM_SUPPORT_MANAGED_STRING_H
+#ifndef LLVM_LIB_TARGET_NVPTX_MANAGEDSTRINGPOOL_H
+#define LLVM_LIB_TARGET_NVPTX_MANAGEDSTRINGPOOL_H
 
 #include "llvm/ADT/SmallVector.h"
 #include <string>

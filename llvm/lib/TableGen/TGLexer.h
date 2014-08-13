@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TGLEXER_H
-#define TGLEXER_H
+#ifndef LLVM_LIB_TABLEGEN_TGLEXER_H
+#define LLVM_LIB_TABLEGEN_TGLEXER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"

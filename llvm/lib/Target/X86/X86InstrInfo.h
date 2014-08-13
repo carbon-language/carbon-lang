@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86INSTRUCTIONINFO_H
-#define X86INSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_X86_X86INSTRINFO_H
+#define LLVM_LIB_TARGET_X86_X86INSTRINFO_H
 
 #include "MCTargetDesc/X86BaseInfo.h"
 #include "X86RegisterInfo.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ARM_ARMFIXUPKINDS_H
-#define LLVM_ARM_ARMFIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMFIXUPKINDS_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 

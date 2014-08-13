@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC32_REGISTERINFO_H
-#define POWERPC32_REGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCREGISTERINFO_H
+#define LLVM_LIB_TARGET_POWERPC_PPCREGISTERINFO_H
 
 #include "PPC.h"
 #include "llvm/ADT/DenseMap.h"

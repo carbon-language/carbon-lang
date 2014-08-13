@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TOOLS_VTABLEDUMP_H
-#define LLVM_TOOLS_VTABLEDUMP_H
+#ifndef LLVM_TOOLS_LLVM_VTABLEDUMP_LLVM_VTABLEDUMP_H
+#define LLVM_TOOLS_LLVM_VTABLEDUMP_LLVM_VTABLEDUMP_H
 
 #include "llvm/Support/CommandLine.h"
 #include <string>

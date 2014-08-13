@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef AArch64_MCINSTLOWER_H
-#define AArch64_MCINSTLOWER_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64MCINSTLOWER_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64MCINSTLOWER_H
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Compiler.h"

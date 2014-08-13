@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64_AArch64ADDRESSINGMODES_H
-#define LLVM_TARGET_AArch64_AArch64ADDRESSINGMODES_H
+#ifndef LLVM_LIB_TARGET_AARCH64_MCTARGETDESC_AARCH64ADDRESSINGMODES_H
+#define LLVM_LIB_TARGET_AARCH64_MCTARGETDESC_AARCH64ADDRESSINGMODES_H
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"

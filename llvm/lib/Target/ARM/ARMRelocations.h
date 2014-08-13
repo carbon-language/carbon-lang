@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMRELOCATIONS_H
-#define ARMRELOCATIONS_H
+#ifndef LLVM_LIB_TARGET_ARM_ARMRELOCATIONS_H
+#define LLVM_LIB_TARGET_ARM_ARMRELOCATIONS_H
 
 #include "llvm/CodeGen/MachineRelocation.h"
 

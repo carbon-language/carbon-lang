@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_INTERFERENCECACHE
-#define LLVM_CODEGEN_INTERFERENCECACHE
+#ifndef LLVM_LIB_CODEGEN_INTERFERENCECACHE_H
+#define LLVM_LIB_CODEGEN_INTERFERENCECACHE_H
 
 #include "llvm/CodeGen/LiveIntervalUnion.h"
 

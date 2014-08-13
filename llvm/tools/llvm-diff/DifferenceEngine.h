@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LLVM_DIFFERENCE_ENGINE_H_
-#define _LLVM_DIFFERENCE_ENGINE_H_
+#ifndef LLVM_TOOLS_LLVM_DIFF_DIFFERENCEENGINE_H
+#define LLVM_TOOLS_LLVM_DIFF_DIFFERENCEENGINE_H
 
 #include "DiffConsumer.h"
 #include "DiffLog.h"

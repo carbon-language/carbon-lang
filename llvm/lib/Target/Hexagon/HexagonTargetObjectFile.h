@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef HexagonTARGETOBJECTFILE_H
-#define HexagonTARGETOBJECTFILE_H
+#ifndef LLVM_LIB_TARGET_HEXAGON_HEXAGONTARGETOBJECTFILE_H
+#define LLVM_LIB_TARGET_HEXAGON_HEXAGONTARGETOBJECTFILE_H
 
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/MC/MCSectionELF.h"

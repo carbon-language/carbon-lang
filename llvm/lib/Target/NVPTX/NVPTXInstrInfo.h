@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXINSTRUCTIONINFO_H
-#define NVPTXINSTRUCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXINSTRINFO_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXINSTRINFO_H
 
 #include "NVPTX.h"
 #include "NVPTXRegisterInfo.h"

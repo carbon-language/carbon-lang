@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_MSP430_H
-#define LLVM_TARGET_MSP430_H
+#ifndef LLVM_LIB_TARGET_MSP430_MSP430_H
+#define LLVM_LIB_TARGET_MSP430_MSP430_H
 
 #include "MCTargetDesc/MSP430MCTargetDesc.h"
 #include "llvm/Target/TargetMachine.h"

@@ -35,8 +35,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IR_PASS_MANAGER_H
-#define LLVM_IR_PASS_MANAGER_H
+#ifndef LLVM_IR_PASSMANAGER_H
+#define LLVM_IR_PASSMANAGER_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"

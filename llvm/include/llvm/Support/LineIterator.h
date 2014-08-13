@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_LINEITERATOR_H__
-#define LLVM_SUPPORT_LINEITERATOR_H__
+#ifndef LLVM_SUPPORT_LINEITERATOR_H
+#define LLVM_SUPPORT_LINEITERATOR_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
@@ -82,4 +82,4 @@ private:
 };
 }
 
-#endif // LLVM_SUPPORT_LINEITERATOR_H__
+#endif

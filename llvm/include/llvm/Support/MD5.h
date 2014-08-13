@@ -25,8 +25,8 @@
  * See md5.c for more information.
  */
 
-#ifndef LLVM_SYSTEM_MD5_H
-#define LLVM_SYSTEM_MD5_H
+#ifndef LLVM_SUPPORT_MD5_H
+#define LLVM_SUPPORT_MD5_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"

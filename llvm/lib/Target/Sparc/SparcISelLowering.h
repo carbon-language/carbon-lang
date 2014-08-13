@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SPARC_ISELLOWERING_H
-#define SPARC_ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_SPARC_SPARCISELLOWERING_H
+#define LLVM_LIB_TARGET_SPARC_SPARCISELLOWERING_H
 
 #include "Sparc.h"
 #include "llvm/Target/TargetLowering.h"

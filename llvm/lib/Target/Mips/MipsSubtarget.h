@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSSUBTARGET_H
-#define MIPSSUBTARGET_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPSSUBTARGET_H
+#define LLVM_LIB_TARGET_MIPS_MIPSSUBTARGET_H
 
 #include "MipsFrameLowering.h"
 #include "MipsISelLowering.h"

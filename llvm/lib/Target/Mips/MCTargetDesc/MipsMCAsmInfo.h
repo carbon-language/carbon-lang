@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPSTARGETASMINFO_H
-#define MIPSTARGETASMINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCASMINFO_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCASMINFO_H
 
 #include "llvm/MC/MCAsmInfoELF.h"
 

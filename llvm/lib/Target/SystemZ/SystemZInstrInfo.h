@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_SYSTEMZINSTRINFO_H
-#define LLVM_TARGET_SYSTEMZINSTRINFO_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZINSTRINFO_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZINSTRINFO_H
 
 #include "SystemZ.h"
 #include "SystemZRegisterInfo.h"

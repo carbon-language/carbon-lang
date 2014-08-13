@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_INSTRPROF_INDEXED_H_
-#define LLVM_PROFILEDATA_INSTRPROF_INDEXED_H_
+#ifndef LLVM_LIB_PROFILEDATA_INSTRPROFINDEXED_H
+#define LLVM_LIB_PROFILEDATA_INSTRPROFINDEXED_H
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MD5.h"
@@ -52,4 +52,4 @@ const HashT HashType = HashT::MD5;
 
 } // end namespace llvm
 
-#endif // LLVM_PROFILEDATA_INSTRPROF_INDEXED_H_
+#endif

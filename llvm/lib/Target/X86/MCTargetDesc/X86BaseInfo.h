@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86BASEINFO_H
-#define X86BASEINFO_H
+#ifndef LLVM_LIB_TARGET_X86_MCTARGETDESC_X86BASEINFO_H
+#define LLVM_LIB_TARGET_X86_MCTARGETDESC_X86BASEINFO_H
 
 #include "X86MCTargetDesc.h"
 #include "llvm/MC/MCInstrDesc.h"

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MIPS_MIPSFIXUPKINDS_H
-#define LLVM_MIPS_MIPSFIXUPKINDS_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSFIXUPKINDS_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 
@@ -199,4 +199,4 @@ namespace Mips {
 } // namespace llvm
 
 
-#endif // LLVM_MIPS_MIPSFIXUPKINDS_H
+#endif

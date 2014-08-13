@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef DISASSEMBLER_H
-#define DISASSEMBLER_H
+#ifndef LLVM_TOOLS_LLVM_MC_DISASSEMBLER_H
+#define LLVM_TOOLS_LLVM_MC_DISASSEMBLER_H
 
 #include <string>
 

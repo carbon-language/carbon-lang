@@ -16,8 +16,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef LLVM_C_BITCODEWRITER_H
-#define LLVM_C_BITCODEWRITER_H
+#ifndef LLVM_C_BITWRITER_H
+#define LLVM_C_BITWRITER_H
 
 #include "llvm-c/Core.h"
 

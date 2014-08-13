@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef INSTCOMBINE_INSTCOMBINE_H
-#define INSTCOMBINE_INSTCOMBINE_H
+#ifndef LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINE_H
+#define LLVM_LIB_TRANSFORMS_INSTCOMBINE_INSTCOMBINE_H
 
 #include "InstCombineWorklist.h"
 #include "llvm/Analysis/TargetFolder.h"

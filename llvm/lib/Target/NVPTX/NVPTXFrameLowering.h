@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTX_FRAMELOWERING_H
-#define NVPTX_FRAMELOWERING_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXFRAMELOWERING_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXFRAMELOWERING_H
 
 #include "llvm/Target/TargetFrameLowering.h"
 

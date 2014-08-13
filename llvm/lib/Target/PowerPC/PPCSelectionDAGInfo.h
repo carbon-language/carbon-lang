@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPCCSELECTIONDAGINFO_H
-#define POWERPCCSELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_POWERPC_PPCSELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_POWERPC_PPCSELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

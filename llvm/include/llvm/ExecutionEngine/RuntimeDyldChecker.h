@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIMEDYLDCHECKER_H
-#define LLVM_RUNTIMEDYLDCHECKER_H
+#ifndef LLVM_EXECUTIONENGINE_RUNTIMEDYLDCHECKER_H
+#define LLVM_EXECUTIONENGINE_RUNTIMEDYLDCHECKER_H
 
 #include "llvm/ADT/StringRef.h"
 
@@ -82,4 +82,4 @@ private:
 
 } // end namespace llvm
 
-#endif // LLVM_RUNTIMEDYLDCHECKER_H
+#endif

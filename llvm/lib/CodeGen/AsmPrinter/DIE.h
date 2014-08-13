@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CODEGEN_ASMPRINTER_DIE_H__
-#define CODEGEN_ASMPRINTER_DIE_H__
+#ifndef LLVM_LIB_CODEGEN_ASMPRINTER_DIE_H
+#define LLVM_LIB_CODEGEN_ASMPRINTER_DIE_H
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallVector.h"

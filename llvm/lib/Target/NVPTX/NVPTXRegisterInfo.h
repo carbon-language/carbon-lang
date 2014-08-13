@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NVPTXREGISTERINFO_H
-#define NVPTXREGISTERINFO_H
+#ifndef LLVM_LIB_TARGET_NVPTX_NVPTXREGISTERINFO_H
+#define LLVM_LIB_TARGET_NVPTX_NVPTXREGISTERINFO_H
 
 #include "ManagedStringPool.h"
 #include "llvm/Target/TargetRegisterInfo.h"

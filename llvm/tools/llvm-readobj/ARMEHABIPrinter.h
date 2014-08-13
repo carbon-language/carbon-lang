@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_READOBJ_ARMEHABI_PRINTER_H
-#define LLVM_READOBJ_ARMEHABI_PRINTER_H
+#ifndef LLVM_TOOLS_LLVM_READOBJ_ARMEHABIPRINTER_H
+#define LLVM_TOOLS_LLVM_READOBJ_ARMEHABIPRINTER_H
 
 #include "Error.h"
 #include "StreamWriter.h"

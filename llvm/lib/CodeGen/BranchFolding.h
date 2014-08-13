@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_BRANCHFOLDING_HPP
-#define LLVM_CODEGEN_BRANCHFOLDING_HPP
+#ifndef LLVM_LIB_CODEGEN_BRANCHFOLDING_H
+#define LLVM_LIB_CODEGEN_BRANCHFOLDING_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"

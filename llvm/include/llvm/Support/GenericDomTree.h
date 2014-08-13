@@ -15,8 +15,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_GENERIC_DOM_TREE_H
-#define LLVM_SUPPORT_GENERIC_DOM_TREE_H
+#ifndef LLVM_SUPPORT_GENERICDOMTREE_H
+#define LLVM_SUPPORT_GENERICDOMTREE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"

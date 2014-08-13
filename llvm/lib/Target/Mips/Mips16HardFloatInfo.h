@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MIPS16HARDFLOATINFO_H
-#define MIPS16HARDFLOATINFO_H
+#ifndef LLVM_LIB_TARGET_MIPS_MIPS16HARDFLOATINFO_H
+#define LLVM_LIB_TARGET_MIPS_MIPS16HARDFLOATINFO_H
 
 namespace llvm {
 

@@ -32,8 +32,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LTO_CODE_GENERATOR_H
-#define LTO_CODE_GENERATOR_H
+#ifndef LLVM_LTO_LTOCODEGENERATOR_H
+#define LLVM_LTO_LTOCODEGENERATOR_H
 
 #include "llvm-c/lto.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -152,4 +152,4 @@ private:
   void *DiagContext;
 };
 }
-#endif // LTO_CODE_GENERATOR_H
+#endif

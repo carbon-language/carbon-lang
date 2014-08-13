@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LLVMCONTEXT_IMPL_H
-#define LLVM_LLVMCONTEXT_IMPL_H
+#ifndef LLVM_LIB_IR_LLVMCONTEXTIMPL_H
+#define LLVM_LIB_IR_LLVMCONTEXTIMPL_H
 
 #include "AttributeImpl.h"
 #include "ConstantsContext.h"

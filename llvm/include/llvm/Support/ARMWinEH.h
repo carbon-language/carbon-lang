@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_WINARMEH_H
-#define LLVM_SUPPORT_WINARMEH_H
+#ifndef LLVM_SUPPORT_ARMWINEH_H
+#define LLVM_SUPPORT_ARMWINEH_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Endian.h"

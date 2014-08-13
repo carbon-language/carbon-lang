@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef R600ISELLOWERING_H
-#define R600ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_R600_R600ISELLOWERING_H
+#define LLVM_LIB_TARGET_R600_R600ISELLOWERING_H
 
 #include "AMDGPUISelLowering.h"
 
@@ -74,4 +74,4 @@ private:
 
 } // End namespace llvm;
 
-#endif // R600ISELLOWERING_H
+#endif

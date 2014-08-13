@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMARCHNAME_H
-#define ARMARCHNAME_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMARCHNAME_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMARCHNAME_H
 
 namespace llvm {
 namespace ARM {
@@ -24,4 +24,4 @@ enum ArchKind {
 } // namespace ARM
 } // namespace llvm
 
-#endif // ARMARCHNAME_H
+#endif

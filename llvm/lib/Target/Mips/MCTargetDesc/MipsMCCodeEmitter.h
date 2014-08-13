@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 //
 
-#ifndef MIPS_MC_CODE_EMITTER_H
-#define MIPS_MC_CODE_EMITTER_H
+#ifndef LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCCODEEMITTER_H
+#define LLVM_LIB_TARGET_MIPS_MCTARGETDESC_MIPSMCCODEEMITTER_H
 
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/Support/DataTypes.h"

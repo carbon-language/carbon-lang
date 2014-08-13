@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86MACHINEFUNCTIONINFO_H
-#define X86MACHINEFUNCTIONINFO_H
+#ifndef LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
+#define LLVM_LIB_TARGET_X86_X86MACHINEFUNCTIONINFO_H
 
 #include "llvm/CodeGen/MachineFunction.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86SUBTARGET_H
-#define X86SUBTARGET_H
+#ifndef LLVM_LIB_TARGET_X86_X86SUBTARGET_H
+#define LLVM_LIB_TARGET_X86_X86SUBTARGET_H
 
 #include "X86FrameLowering.h"
 #include "X86ISelLowering.h"

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PASSMANAGERS_H
-#define LLVM_PASSMANAGERS_H
+#ifndef LLVM_IR_LEGACYPASSMANAGERS_H
+#define LLVM_IR_LEGACYPASSMANAGERS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"

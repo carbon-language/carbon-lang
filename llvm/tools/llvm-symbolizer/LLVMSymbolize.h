@@ -10,8 +10,8 @@
 // Header for LLVM symbolization library.
 //
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_SYMBOLIZE_H
-#define LLVM_SYMBOLIZE_H
+#ifndef LLVM_TOOLS_LLVM_SYMBOLIZER_LLVMSYMBOLIZE_H
+#define LLVM_TOOLS_LLVM_SYMBOLIZER_LLVMSYMBOLIZE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/DebugInfo/DIContext.h"
@@ -124,4 +124,4 @@ private:
 } // namespace symbolize
 } // namespace llvm
 
-#endif // LLVM_SYMBOLIZE_H
+#endif

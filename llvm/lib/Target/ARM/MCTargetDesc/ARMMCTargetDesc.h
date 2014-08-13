@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ARMMCTARGETDESC_H
-#define ARMMCTARGETDESC_H
+#ifndef LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCTARGETDESC_H
+#define LLVM_LIB_TARGET_ARM_MCTARGETDESC_ARMMCTARGETDESC_H
 
 #include "llvm/Support/DataTypes.h"
 #include <string>

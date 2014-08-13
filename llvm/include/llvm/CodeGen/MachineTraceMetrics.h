@@ -44,8 +44,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
-#define LLVM_CODEGEN_MACHINE_TRACE_METRICS_H
+#ifndef LLVM_CODEGEN_MACHINETRACEMETRICS_H
+#define LLVM_CODEGEN_MACHINETRACEMETRICS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"

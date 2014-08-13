@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PROFILEDATA_INSTRPROF_READER_H_
-#define LLVM_PROFILEDATA_INSTRPROF_READER_H_
+#ifndef LLVM_PROFILEDATA_INSTRPROFREADER_H
+#define LLVM_PROFILEDATA_INSTRPROFREADER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringExtras.h"
@@ -302,4 +302,4 @@ public:
 
 } // end namespace llvm
 
-#endif // LLVM_PROFILEDATA_INSTRPROF_READER_H_
+#endif

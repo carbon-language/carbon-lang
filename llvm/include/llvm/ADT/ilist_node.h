@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_ILISTNODE_H
-#define LLVM_ADT_ILISTNODE_H
+#ifndef LLVM_ADT_ILIST_NODE_H
+#define LLVM_ADT_ILIST_NODE_H
 
 namespace llvm {
 

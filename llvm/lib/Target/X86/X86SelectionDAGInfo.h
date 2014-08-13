@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef X86SELECTIONDAGINFO_H
-#define X86SELECTIONDAGINFO_H
+#ifndef LLVM_LIB_TARGET_X86_X86SELECTIONDAGINFO_H
+#define LLVM_LIB_TARGET_X86_X86SELECTIONDAGINFO_H
 
 #include "llvm/Target/TargetSelectionDAGInfo.h"
 

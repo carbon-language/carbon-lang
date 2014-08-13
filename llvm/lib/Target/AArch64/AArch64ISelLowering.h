@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_AArch64_ISELLOWERING_H
-#define LLVM_TARGET_AArch64_ISELLOWERING_H
+#ifndef LLVM_LIB_TARGET_AARCH64_AARCH64ISELLOWERING_H
+#define LLVM_LIB_TARGET_AARCH64_AARCH64ISELLOWERING_H
 
 #include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -469,4 +469,4 @@ FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
 
 } // end namespace llvm
 
-#endif // LLVM_TARGET_AArch64_ISELLOWERING_H
+#endif

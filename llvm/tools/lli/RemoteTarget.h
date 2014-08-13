@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef REMOTEPROCESS_H
-#define REMOTEPROCESS_H
+#ifndef LLVM_TOOLS_LLI_REMOTETARGET_H
+#define LLVM_TOOLS_LLI_REMOTETARGET_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

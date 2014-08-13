@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SYSTEMZ_H
-#define SYSTEMZ_H
+#ifndef LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZ_H
+#define LLVM_LIB_TARGET_SYSTEMZ_SYSTEMZ_H
 
 #include "MCTargetDesc/SystemZMCTargetDesc.h"
 #include "llvm/Support/CodeGen.h"

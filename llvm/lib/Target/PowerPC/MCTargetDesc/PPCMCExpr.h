@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef PPCMCEXPR_H
-#define PPCMCEXPR_H
+#ifndef LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCMCEXPR_H
+#define LLVM_LIB_TARGET_POWERPC_MCTARGETDESC_PPCMCEXPR_H
 
 #include "llvm/MC/MCAsmLayout.h"
 #include "llvm/MC/MCExpr.h"
