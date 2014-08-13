@@ -281,6 +281,13 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
     if (DirInfo != UFE.Dir && Data.IsVFSMapped)
       UFE.Dir = DirInfo;
 
+    // Always update the name to use the last name by which a file was accessed.
+    // FIXME: Neither this nor always using the first name is correct; we want
+    // to switch towards a design where we return a FileName object that
+    // encapsulates both the name by which the file was accessed and the
+    // corresponding FileEntry.
+    UFE.Name = Data.Name;
+
     return &UFE;
   }
 
