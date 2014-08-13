@@ -35,6 +35,8 @@ void MachineDominatorTree::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool MachineDominatorTree::runOnMachineFunction(MachineFunction &F) {
+  CriticalEdgesToSplit.clear();
+  NewBBs.clear();
   DT->recalculate(F);
 
   return false;

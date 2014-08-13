@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_MACHINEDOMINATORS_H
 #define LLVM_CODEGEN_MACHINEDOMINATORS_H
 
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
@@ -38,6 +39,103 @@ typedef DomTreeNodeBase<MachineBasicBlock> MachineDomTreeNode;
 /// compute a normal dominator tree.
 ///
 class MachineDominatorTree : public MachineFunctionPass {
+  /// \brief Helper structure used to hold all the basic blocks
+  /// involved in the split of a critical edge.
+  struct CriticalEdge {
+    MachineBasicBlock *FromBB;
+    MachineBasicBlock *ToBB;
+    MachineBasicBlock *NewBB;
+    CriticalEdge(MachineBasicBlock *FromBB, MachineBasicBlock *ToBB,
+                 MachineBasicBlock *NewBB)
+        : FromBB(FromBB), ToBB(ToBB), NewBB(NewBB) {}
+  };
+
+  /// \brief Pile up all the critical edges to be split.
+  /// The splitting of a critical edge is local and thus, it is possible
+  /// to apply several of those changes at the same time.
+  mutable SmallVector<CriticalEdge, 32> CriticalEdgesToSplit;
+  /// \brief Remember all the basic blocks that are inserted during
+  /// edge splitting.
+  /// Invariant: NewBBs == all the basic blocks contained in the NewBB
+  /// field of all the elements of CriticalEdgesToSplit.
+  /// I.e., forall elt in CriticalEdgesToSplit, it exists BB in NewBBs
+  /// such as BB == elt.NewBB.
+  mutable SmallSet<MachineBasicBlock *, 32> NewBBs;
+
+  /// \brief Apply all the recorded critical edges to the DT.
+  /// This updates the underlying DT information in a way that uses
+  /// the fast query path of DT as much as possible.
+  ///
+  /// \post CriticalEdgesToSplit.empty().
+  void applySplitCriticalEdges() const {
+    // Bail out early if there is nothing to do.
+    if (CriticalEdgesToSplit.empty())
+      return;
+
+    // For each element in CriticalEdgesToSplit, remember whether or
+    // not element is the new immediate domminator of its successor.
+    // The mapping is done by index, i.e., the information for the ith
+    // element of CriticalEdgesToSplit is the ith element of IsNewIDom.
+    SmallVector<bool, 32> IsNewIDom;
+    IsNewIDom.resize(CriticalEdgesToSplit.size());
+    size_t Idx = 0;
+
+    // Collect all the dominance properties info, before invalidating
+    // the underlying DT.
+    for (CriticalEdge &Edge : CriticalEdgesToSplit) {
+      // Update dominator information.
+      MachineBasicBlock *Succ = Edge.ToBB;
+      MachineDomTreeNode *SucccDTNode = DT->getNode(Succ);
+
+      IsNewIDom[Idx] = true;
+      for (MachineBasicBlock *PredBB : Succ->predecessors()) {
+        if (PredBB == Edge.NewBB)
+          continue;
+        // If we are in this situation:
+        // FromBB1        FromBB2
+        //    +              +
+        //   + +            + +
+        //  +   +          +   +
+        // ...  Split1  Split2 ...
+        //           +   +
+        //            + +
+        //             +
+        //            Succ
+        // Instead of checking the domiance property with Split2, we
+        // check it with FromBB2 since Split2 is still unknown of the
+        // underlying DT structure.
+        if (NewBBs.count(PredBB)) {
+          assert(PredBB->pred_size() == 1 && "A basic block resulting from a "
+                                             "critical edge split has more "
+                                             "than one predecessor!");
+          PredBB = *PredBB->pred_begin();
+        }
+        if (!DT->dominates(SucccDTNode, DT->getNode(PredBB))) {
+          IsNewIDom[Idx] = false;
+          break;
+        }
+      }
+      ++Idx;
+    }
+
+    // Now, update DT with the collected dominance properties info.
+    Idx = 0;
+    for (CriticalEdge &Edge : CriticalEdgesToSplit) {
+      // We know FromBB dominates NewBB.
+      MachineDomTreeNode *NewDTNode = DT->addNewBlock(Edge.NewBB, Edge.FromBB);
+      MachineDomTreeNode *SucccDTNode = DT->getNode(Edge.ToBB);
+
+      // If all the other predecessors of "Succ" are dominated by "Succ" itself
+      // then the new block is the new immediate dominator of "Succ". Otherwise,
+      // the new block doesn't dominate anything.
+      if (IsNewIDom[Idx])
+        DT->changeImmediateDominator(SucccDTNode, NewDTNode);
+      ++Idx;
+    }
+    NewBBs.clear();
+    CriticalEdgesToSplit.clear();
+  }
+
 public:
   static char ID; // Pass ID, replacement for typeid
   DominatorTreeBase<MachineBasicBlock>* DT;
@@ -46,7 +144,10 @@ public:
 
   ~MachineDominatorTree();
 
-  DominatorTreeBase<MachineBasicBlock>& getBase() { return *DT; }
+  DominatorTreeBase<MachineBasicBlock> &getBase() {
+    applySplitCriticalEdges();
+    return *DT;
+  }
 
   void getAnalysisUsage(AnalysisUsage &AU) const override;
 
@@ -55,14 +156,17 @@ public:
   /// dominators, this will always be a single block (the entry node).
   ///
   inline const std::vector<MachineBasicBlock*> &getRoots() const {
+    applySplitCriticalEdges();
     return DT->getRoots();
   }
 
   inline MachineBasicBlock *getRoot() const {
+    applySplitCriticalEdges();
     return DT->getRoot();
   }
 
   inline MachineDomTreeNode *getRootNode() const {
+    applySplitCriticalEdges();
     return DT->getRootNode();
   }
 
@@ -70,17 +174,20 @@ public:
 
   inline bool dominates(const MachineDomTreeNode* A,
                         const MachineDomTreeNode* B) const {
+    applySplitCriticalEdges();
     return DT->dominates(A, B);
   }
 
   inline bool dominates(const MachineBasicBlock* A,
                         const MachineBasicBlock* B) const {
+    applySplitCriticalEdges();
     return DT->dominates(A, B);
   }
 
   // dominates - Return true if A dominates B. This performs the
   // special checks necessary if A and B are in the same basic block.
   bool dominates(const MachineInstr *A, const MachineInstr *B) const {
+    applySplitCriticalEdges();
     const MachineBasicBlock *BBA = A->getParent(), *BBB = B->getParent();
     if (BBA != BBB) return DT->dominates(BBA, BBB);
 
@@ -100,11 +207,13 @@ public:
 
   inline bool properlyDominates(const MachineDomTreeNode* A,
                                 const MachineDomTreeNode* B) const {
+    applySplitCriticalEdges();
     return DT->properlyDominates(A, B);
   }
 
   inline bool properlyDominates(const MachineBasicBlock* A,
                                 const MachineBasicBlock* B) const {
+    applySplitCriticalEdges();
     return DT->properlyDominates(A, B);
   }
 
@@ -112,10 +221,12 @@ public:
   /// for basic block A and B. If there is no such block then return NULL.
   inline MachineBasicBlock *findNearestCommonDominator(MachineBasicBlock *A,
                                                        MachineBasicBlock *B) {
+    applySplitCriticalEdges();
     return DT->findNearestCommonDominator(A, B);
   }
 
   inline MachineDomTreeNode *operator[](MachineBasicBlock *BB) const {
+    applySplitCriticalEdges();
     return DT->getNode(BB);
   }
 
@@ -123,6 +234,7 @@ public:
   /// block.  This is the same as using operator[] on this class.
   ///
   inline MachineDomTreeNode *getNode(MachineBasicBlock *BB) const {
+    applySplitCriticalEdges();
     return DT->getNode(BB);
   }
 
@@ -131,6 +243,7 @@ public:
   /// the children list of the immediate dominator.
   inline MachineDomTreeNode *addNewBlock(MachineBasicBlock *BB,
                                          MachineBasicBlock *DomBB) {
+    applySplitCriticalEdges();
     return DT->addNewBlock(BB, DomBB);
   }
 
@@ -139,11 +252,13 @@ public:
   ///
   inline void changeImmediateDominator(MachineBasicBlock *N,
                                        MachineBasicBlock* NewIDom) {
+    applySplitCriticalEdges();
     DT->changeImmediateDominator(N, NewIDom);
   }
 
   inline void changeImmediateDominator(MachineDomTreeNode *N,
                                        MachineDomTreeNode* NewIDom) {
+    applySplitCriticalEdges();
     DT->changeImmediateDominator(N, NewIDom);
   }
 
@@ -151,24 +266,49 @@ public:
   /// dominate any other blocks. Removes node from its immediate dominator's
   /// children list. Deletes dominator node associated with basic block BB.
   inline void eraseNode(MachineBasicBlock *BB) {
+    applySplitCriticalEdges();
     DT->eraseNode(BB);
   }
 
   /// splitBlock - BB is split and now it has one successor. Update dominator
   /// tree to reflect this change.
   inline void splitBlock(MachineBasicBlock* NewBB) {
+    applySplitCriticalEdges();
     DT->splitBlock(NewBB);
   }
 
   /// isReachableFromEntry - Return true if A is dominated by the entry
   /// block of the function containing it.
   bool isReachableFromEntry(const MachineBasicBlock *A) {
+    applySplitCriticalEdges();
     return DT->isReachableFromEntry(A);
   }
 
   void releaseMemory() override;
 
   void print(raw_ostream &OS, const Module*) const override;
+
+  /// \brief Record that the critical edge (FromBB, ToBB) has been
+  /// split with NewBB.
+  /// This is best to use this method instead of directly update the
+  /// underlying information, because this helps mitigating the
+  /// number of time the DT information is invalidated.
+  ///
+  /// \note Do not use this method with regular edges.
+  ///
+  /// \note To benefit from the compile time improvement incurred by this
+  /// method, the users of this method have to limit the queries to the DT
+  /// interface between two edges splitting. In other words, they have to
+  /// pack the splitting of critical edges as much as possible.
+  void recordSplitCriticalEdge(MachineBasicBlock *FromBB,
+                              MachineBasicBlock *ToBB,
+                              MachineBasicBlock *NewBB) {
+    bool Inserted = NewBBs.insert(NewBB);
+    (void)Inserted;
+    assert(Inserted &&
+           "A basic block inserted via edge splitting cannot appear twice");
+    CriticalEdgesToSplit.push_back(CriticalEdge(FromBB, ToBB, NewBB));
+  }
 };
 
 //===-------------------------------------
