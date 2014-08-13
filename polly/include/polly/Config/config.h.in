@@ -32,6 +32,3 @@
 
 /* Define if pluto found */
 #undef PLUTO_FOUND
-
-/* Define if scoplib found */
-#undef SCOPLIB_FOUND

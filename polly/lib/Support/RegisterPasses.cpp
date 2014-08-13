@@ -51,9 +51,6 @@ enum OptimizerChoice {
 #ifdef PLUTO_FOUND
   OPTIMIZER_PLUTO,
 #endif
-#ifdef SCOPLIB_FOUND
-  OPTIMIZER_POCC,
-#endif
   OPTIMIZER_ISL
 };
 
@@ -63,9 +60,6 @@ static cl::opt<OptimizerChoice> Optimizer(
         clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
 #ifdef PLUTO_FOUND
         clEnumValN(OPTIMIZER_PLUTO, "pluto", "The Pluto scheduling optimizer"),
-#endif
-#ifdef SCOPLIB_FOUND
-        clEnumValN(OPTIMIZER_POCC, "pocc", "The PoCC scheduling optimizer"),
 #endif
         clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
         clEnumValEnd),
@@ -169,9 +163,6 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeJSONImporterPass(Registry);
   initializeIslAstInfoPass(Registry);
   initializeIslScheduleOptimizerPass(Registry);
-#ifdef SCOPLIB_FOUND
-  initializePoccPass(Registry);
-#endif
   initializePollyIndVarSimplifyPass(Registry);
   initializePollyCanonicalizePass(Registry);
   initializeScopDetectionPass(Registry);
@@ -198,7 +189,7 @@ void initializePollyPasses(PassRegistry &Registry) {
 ///
 /// For certain parts of the Polly optimizer, several alternatives are provided:
 ///
-/// As scheduling optimizer we support PoCC (http://pocc.sourceforge.net), PLUTO
+/// As scheduling optimizer we support PLUTO
 /// (http://pluto-compiler.sourceforge.net) as well as the isl scheduling
 /// optimizer (http://freecode.com/projects/isl). The isl optimizer is the
 /// default optimizer.
@@ -232,12 +223,6 @@ static void registerPollyPasses(llvm::PassManagerBase &PM) {
   switch (Optimizer) {
   case OPTIMIZER_NONE:
     break; /* Do nothing */
-
-#ifdef SCOPLIB_FOUND
-  case OPTIMIZER_POCC:
-    PM.add(polly::createPoccPass());
-    break;
-#endif
 
 #ifdef PLUTO_FOUND
   case OPTIMIZER_PLUTO:

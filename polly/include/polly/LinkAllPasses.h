@@ -53,12 +53,6 @@ llvm::Pass *createIslCodeGenerationPass();
 llvm::Pass *createIslScheduleOptimizerPass();
 llvm::Pass *createTempScopInfoPass();
 
-#ifdef SCOPLIB_FOUND
-llvm::Pass *createPoccPass();
-llvm::Pass *createScopLibExporterPass();
-llvm::Pass *createScopLibImporterPass();
-#endif
-
 extern char &IndependentBlocksID;
 extern char &CodePreparationID;
 }
@@ -100,11 +94,6 @@ struct PollyForcePassLinking {
     polly::createIslScheduleOptimizerPass();
     polly::createTempScopInfoPass();
 
-#ifdef SCOPLIB_FOUND
-    polly::createPoccPass();
-    polly::createScopLibExporterPass();
-    polly::createScopLibImporterPass();
-#endif
   }
 } PollyForcePassLinking; // Force link by creating a global definition.
 }
@@ -126,9 +115,6 @@ void initializeIslScheduleOptimizerPass(llvm::PassRegistry &);
 void initializePlutoOptimizerPass(llvm::PassRegistry &);
 #endif
 void initializePollyCanonicalizePass(llvm::PassRegistry &);
-#ifdef SCOPLIB_FOUND
-void initializePoccPass(llvm::PassRegistry &);
-#endif
 void initializePollyIndVarSimplifyPass(llvm::PassRegistry &);
 }
 

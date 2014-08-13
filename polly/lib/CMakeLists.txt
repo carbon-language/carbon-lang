@@ -26,14 +26,6 @@ if (GPU_CODEGEN)
        CodeGen/PTXGenerator.cpp)
 endif (GPU_CODEGEN)
 
-if (SCOPLIB_FOUND)
-  set(POLLY_SCOPLIB_FILES
-      Transform/Pocc.cpp
-      Exchange/ScopLib.cpp
-      Exchange/ScopLibExporter.cpp
-      Exchange/ScopLibImporter.cpp)
-endif (SCOPLIB_FOUND)
-
 add_polly_library(Polly
   Analysis/Dependences.cpp
   Analysis/ScopDetection.cpp
@@ -51,7 +43,6 @@ add_polly_library(Polly
   CodeGen/RuntimeDebugBuilder.cpp
   ${GPGPU_CODEGEN_FILES}
   Exchange/JSONExporter.cpp
-  ${POLLY_SCOPLIB_FILES}
   Support/GICHelper.cpp
   Support/SCEVValidator.cpp
   Support/RegisterPasses.cpp

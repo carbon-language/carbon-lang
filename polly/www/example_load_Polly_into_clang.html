@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
           "http://www.w3.org/TR/html4/strict.dtd">
 <!-- Material used from: HTML 4.01 specs: http://www.w3.org/TR/html401/ -->
 <html>
@@ -115,8 +115,8 @@ possible to run <a
 href="http://www-rocq.inria.fr/~pouchet/software/pocc/">PoCC</a> as external
 optimizer. PoCC provides access to the original Pluto implementation. To use
 PoCC add <b>-polly-optimizer=pocc</b> to the command line (only available if
-Polly was compiled with scoplib support). To disable the
-optimizer entirely use the option <b>-polly-optimizer=none</b>.
+Polly was compiled with scoplib support) [removed after <a href="http://llvm.org/releases/download.html#3.4.2">LLVM 3.4.2</a>].
+To disable the optimizer entirely use the option <b>-polly-optimizer=none</b>.
 
 <h3>Disable tiling in the optimizer</h3>
 By default both optimizers perform tiling, if possible. In case this is not

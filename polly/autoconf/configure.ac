@@ -99,19 +99,6 @@ CXXFLAGS=$saved_CXXFLAGS
 AS_IF([test "x$pluto_found" = "xyes"],
   [AC_DEFINE([PLUTO_FOUND],[1],[Define if pluto found])])
 
-dnl Check that we have scoplib.
-find_lib_and_headers([scoplib], [scoplib/scop.h], [scoplib])
-AS_IF([test "x$scoplib_found" = "xyes"],
-  [AC_DEFINE([SCOPLIB_FOUND],[1],[Define if scoplib found])])
-
-if test "x$scoplib_found" = "xyes"; then :
-  scoplib_rpath="-Wl,-rpath=$given_lib_path"
-else
-  scoplib_rpath=""
-fi
-
-AC_SUBST(scoplib_rpath)
-
 dnl Check if CUDA lib there
 dnl Disable the build of polly, even if it is checked out into tools/polly.
 AC_ARG_ENABLE(polly_gpu_codegen,
