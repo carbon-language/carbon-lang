@@ -1,12 +1,15 @@
 # Check we accept -install_name correctly:
-# RUN: lld -flavor darwin -arch x86_64 -install_name libwibble.dylib -dylib %s -o %t.dylib
+# RUN: lld -flavor darwin -arch x86_64 -install_name libwibble.dylib -dylib \
+# RUN:     %p/Inputs/libSystem.yaml %s -o %t.dylib
 # RUN: macho-dump %t.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 
 # Check we read LC_ID_DYLIB correctly:
-# RUN: lld -flavor darwin -arch x86_64 %p/Inputs/use-dylib-install-names.yaml %t.dylib -r -print_atoms | FileCheck %s --check-prefix=CHECK-BINARY-READ
+# RUN: lld -flavor darwin -arch x86_64 %p/Inputs/use-dylib-install-names.yaml \
+# RUN:      %t.dylib -r -print_atoms | FileCheck %s --check-prefix=CHECK-BINARY-READ
 
 # Check we default the install-name to the output file:
-# RUN: lld -flavor darwin -arch x86_64 -dylib %s -o libwibble.dylib
+# RUN: lld -flavor darwin -arch x86_64 -dylib %s -o libwibble.dylib \
+# RUN:     %p/Inputs/libSystem.yaml
 # RUN: macho-dump libwibble.dylib | FileCheck %s --check-prefix=CHECK-BINARY-WRITE
 # RUN: rm -f libwibble.dylib
 

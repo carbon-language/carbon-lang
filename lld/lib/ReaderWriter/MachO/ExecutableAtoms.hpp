@@ -25,29 +25,41 @@ namespace mach_o {
 
 
 //
-// CRuntimeFile adds an UndefinedAtom for "_main" so that the Resolving
+// CEntryFile adds an UndefinedAtom for "_main" so that the Resolving
 // phase will fail if "_main" is undefined.
 //
-class CRuntimeFile : public SimpleFile {
+class CEntryFile : public SimpleFile {
 public:
-  CRuntimeFile(const MachOLinkingContext &context)
-      : SimpleFile("C runtime"), 
-       _undefMain(*this, context.entrySymbolName()),
-       _undefBinder(*this, context.binderSymbolName()) {
-      // only main executables need _main
-      if (context.outputMachOType() == llvm::MachO::MH_EXECUTE) {
-        this->addAtom(_undefMain);
-      }
-      // only dynamic binaries use stubs
-      if (context.needsStubsPass()) {
-        this->addAtom(_undefBinder);
-      }
-   }
+  CEntryFile(const MachOLinkingContext &context)
+      : SimpleFile("C entry"),
+       _undefMain(*this, context.entrySymbolName()) {
+    this->addAtom(_undefMain);
+  }
 
 private:
   SimpleUndefinedAtom   _undefMain;
+};
+
+
+//
+// StubHelperFile adds an UndefinedAtom for "dyld_stub_binder" so that
+// the Resolveing phase will fail if "dyld_stub_binder" is undefined.
+//
+class StubHelperFile : public SimpleFile {
+public:
+  StubHelperFile(const MachOLinkingContext &context)
+      : SimpleFile("stub runtime"),
+        _undefBinder(*this, context.binderSymbolName()) {
+    this->addAtom(_undefBinder);
+  }
+
+private:
   SimpleUndefinedAtom   _undefBinder;
 };
+
+
+
+
 
 } // namespace mach_o
 } // namespace lld

@@ -1,7 +1,7 @@
 # REQUIRES: arm
 # RUN: lld -flavor darwin -arch armv7 -r -print_atoms %s -o %t  | FileCheck %s \
-# RUN: && lld -flavor darwin -arch armv7 -dylib -print_atoms \
-# RUN:     -sectalign __TEXT __text 0x1000 %t -o %t2  | FileCheck %s \
+# RUN: && lld -flavor darwin -arch armv7 -dylib -print_atoms %t -o %t2 \
+# RUN:     %p/Inputs/libSystem.yaml -sectalign __TEXT __text 0x1000  | FileCheck %s \
 # RUN: && llvm-objdump -d -macho -triple=armv7-apple-ios %t2 | FileCheck -check-prefix=ACODE %s \
 # RUN: && llvm-objdump -d -macho -triple=thumbv7-apple-ios %t2 | FileCheck -check-prefix=TCODE %s 
 #

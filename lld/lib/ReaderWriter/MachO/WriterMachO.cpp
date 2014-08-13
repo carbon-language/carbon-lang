@@ -46,10 +46,13 @@ public:
   }
 
   bool createImplicitFiles(std::vector<std::unique_ptr<File> > &r) override {
-    if (_context.outputMachOType() == llvm::MachO::MH_EXECUTE) {
-      // When building main executables, add _main as required entry point.
-      r.emplace_back(new CRuntimeFile(_context));
-    }
+    // When building main executables, add _main as required entry point.
+    if (_context.outputTypeHasEntry())
+      r.emplace_back(new CEntryFile(_context));
+    // If this can link with dylibs, need helper function (dyld_stub_binder).
+    if (_context.needsStubsPass())
+      r.emplace_back(new StubHelperFile(_context));
+
     return true;
   }
 private:
