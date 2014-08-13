@@ -17,13 +17,14 @@ import argparse
 import itertools
 import random
 import sys
+import uuid
 
 def main():
   parser = argparse.ArgumentParser(description=__doc__)
-  parser.add_argument('seed',
-                      help='A string used to seed the RNG')
   parser.add_argument('-v', '--verbose', action='store_true',
                       help='Show verbose output')
+  parser.add_argument('--seed', default=str(uuid.uuid4()),
+                      help='A string used to seed the RNG')
   parser.add_argument('--max-shuffle-height', type=int, default=16,
                       help='Specify a fixed height of shuffle tree to test')
   parser.add_argument('--no-blends', dest='blends', action='store_false',
