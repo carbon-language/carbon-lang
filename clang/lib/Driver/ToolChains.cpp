@@ -2609,6 +2609,9 @@ NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
       else if (tools::mips::hasMipsAbiArg(Args, "64"))
         getFilePaths().push_back("=/usr/lib/64");
       break;
+    case llvm::Triple::ppc:
+      getFilePaths().push_back("=/usr/lib/powerpc");
+      break;
     case llvm::Triple::sparc:
       getFilePaths().push_back("=/usr/lib/sparc");
       break;
@@ -2651,6 +2654,8 @@ NetBSD::GetCXXStdlibType(const ArgList &Args) const {
     case llvm::Triple::thumb:
     case llvm::Triple::thumbeb:
     case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64le:
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
       return ToolChain::CST_Libcxx;

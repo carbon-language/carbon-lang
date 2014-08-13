@@ -622,9 +622,14 @@ public:
     return true;
   }
   bool IsIntegratedAssemblerDefault() const override {
-    if (getTriple().getArch() == llvm::Triple::ppc)
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
+    case llvm::Triple::ppc64le:
       return true;
-    return Generic_ELF::IsIntegratedAssemblerDefault();
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
   }
 
 protected:
