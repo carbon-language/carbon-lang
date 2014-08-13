@@ -1,5 +1,5 @@
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-apple-ios | FileCheck %s --check-prefix=ARM
-; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=armv7-linux-gnueabi | FileCheck %s --check-prefix=ARM
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-apple-ios     < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
+; RUN: llc -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -arm-use-movt=false -mtriple=armv7-linux-gnueabi < %s | FileCheck %s --check-prefix=CHECK --check-prefix=ARM
 ; RUN: llc < %s -O0 -verify-machineinstrs -fast-isel-abort -relocation-model=dynamic-no-pic -mtriple=thumbv7-apple-ios | FileCheck %s --check-prefix=THUMB
 ; rdar://10412592
 
