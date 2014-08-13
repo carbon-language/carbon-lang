@@ -24,8 +24,10 @@ def main():
                       help='A string used to seed the RNG')
   parser.add_argument('-v', '--verbose', action='store_true',
                       help='Show verbose output')
-  parser.add_argument('--fixed-num-shuffles', type=int,
-                      help='Specify a fixed number of shuffles to test')
+  parser.add_argument('--max-shuffle-height', type=int, default=16,
+                      help='Specify a fixed height of shuffle tree to test')
+  parser.add_argument('--no-blends', dest='blends', action='store_false',
+                      help='Include blends of two input vectors')
   parser.add_argument('--fixed-bit-width', type=int, choices=[128, 256],
                       help='Specify a fixed bit width of vector to test')
   parser.add_argument('--triple',
@@ -49,33 +51,46 @@ def main():
     width = random.choice([2, 4, 8, 16, 32, 64])
     element_type = random.choice(['i8', 'i16', 'i32', 'i64', 'f32', 'f64'])
 
-  # FIXME: Support blends.
-  shuffle_indices = [-1] + range(width)
+  element_modulus = {
+      'i8': 1 << 8, 'i16': 1 << 16, 'i32': 1 << 32, 'i64': 1 << 64,
+      'f32': 1 << 32, 'f64': 1 << 64}[element_type]
 
-  if args.fixed_num_shuffles is not None:
-    num_shuffles = args.fixed_num_shuffles
-  else:
-    num_shuffles = random.randint(0, 16)
+  shuffle_range = (2 * width) if args.blends else width
+  shuffle_indices = [-1] + range(shuffle_range)
 
-  shuffles = [[random.choice(shuffle_indices)
-               for _ in itertools.repeat(None, width)]
-              for _ in itertools.repeat(None, num_shuffles)]
+  shuffle_tree = [[[random.choice(shuffle_indices)
+                    for _ in itertools.repeat(None, width)]
+                   for _ in itertools.repeat(None, args.max_shuffle_height - i)]
+                  for i in xrange(args.max_shuffle_height)]
 
   if args.verbose:
     # Print out the shuffle sequence in a compact form.
-    print >>sys.stderr, 'Testing shuffle sequence "%s":' % (args.seed,)
-    for s in shuffles:
-      print >>sys.stderr, '  v%d%s: %s' % (width, element_type, s)
+    print >>sys.stderr, ('Testing shuffle sequence "%s" (v%d%s):' %
+                         (args.seed, width, element_type))
+    for i, shuffles in enumerate(shuffle_tree):
+      print >>sys.stderr, '  tree level %d:' % (i,)
+      for j, s in enumerate(shuffles):
+        print >>sys.stderr, '    shuffle %d: %s' % (j, s)
     print >>sys.stderr, ''
 
-  # Compute a round-trip of the shuffle.
-  result = range(1, width + 1)
-  for s in shuffles:
-    result = [result[i] if i != -1 else -1 for i in s]
+  # Symbolically evaluate the shuffle tree.
+  inputs = [[int(j % element_modulus)
+             for j in xrange(i * width + 1, (i + 1) * width + 1)]
+            for i in xrange(args.max_shuffle_height + 1)]
+  results = inputs
+  for shuffles in shuffle_tree:
+    results = [[((results[i] if j < width else results[i + 1])[j % width]
+                 if j != -1 else -1)
+                for j in s]
+               for i, s in enumerate(shuffles)]
+  if len(results) != 1:
+    print >>sys.stderr, 'ERROR: Bad results: %s' % (results,)
+    sys.exit(1)
+  result = results[0]
 
   if args.verbose:
     print >>sys.stderr, 'Which transforms:'
-    print >>sys.stderr, '  from: %s' % (range(1, width + 1),)
+    print >>sys.stderr, '  from: %s' % (inputs,)
     print >>sys.stderr, '  into: %s' % (result,)
     print >>sys.stderr, ''
 
@@ -92,22 +107,24 @@ def main():
   # Now we need to generate IR for the shuffle function.
   subst = {'N': width, 'T': element_type, 'IT': integral_element_type}
   print """
-define internal <%(N)d x %(T)s> @test(<%(N)d x %(T)s> %%v) noinline nounwind {
-entry:""" % subst
+define internal fastcc <%(N)d x %(T)s> @test(%(arguments)s) noinline nounwind {
+entry:""" % dict(subst,
+                 arguments=', '.join(
+                     ['<%(N)d x %(T)s> %%s.0.%(i)d' % dict(subst, i=i)
+                      for i in xrange(args.max_shuffle_height + 1)]))
 
-  for i, s in enumerate(shuffles):
+  for i, shuffles in enumerate(shuffle_tree):
+   for j, s in enumerate(shuffles):
     print """
-  %%s%(i)d = shufflevector <%(N)d x %(T)s> %(I)s, <%(N)d x %(T)s> undef, <%(N)d x i32> <%(S)s>
-""".strip() % dict(subst,
-                i=i,
-                I=('%%s%d' % (i - 1)) if i != 0 else '%v',
-                S=', '.join(['i32 %s' % (str(si) if si != -1 else 'undef',)
-                             for si in s]))
+  %%s.%(next_i)d.%(j)d = shufflevector <%(N)d x %(T)s> %%s.%(i)d.%(j)d, <%(N)d x %(T)s> %%s.%(i)d.%(next_j)d, <%(N)d x i32> <%(S)s>
+""".strip('\n') % dict(subst, i=i, next_i=i + 1, j=j, next_j=j + 1,
+                       S=', '.join(['i32 ' + (str(si) if si != -1 else 'undef')
+                                    for si in s]))
 
   print """
-  ret <%(N)d x %(T)s> %%s%(i)d
+  ret <%(N)d x %(T)s> %%s.%(i)d.0
 }
-""" % dict(subst, i=len(shuffles) - 1)
+""" % dict(subst, i=len(shuffle_tree))
 
   # Generate some string constants that we can use to report errors.
   for i, r in enumerate(result):
@@ -119,28 +136,39 @@ entry:""" % subst
 @error.%(i)d = private unnamed_addr global [128 x i8] c"%(s)s"
 """.strip() % {'i': i, 's': s}
 
+  # Define a wrapper function which is marked 'optnone' to prevent
+  # interprocedural optimizations from deleting the test.
+  print """
+define internal fastcc <%(N)d x %(T)s> @test_wrapper(%(arguments)s) optnone noinline {
+  %%result = call fastcc <%(N)d x %(T)s> @test(%(arguments)s)
+  ret <%(N)d x %(T)s> %%result
+}
+""" % dict(subst,
+           arguments=', '.join(['<%(N)d x %(T)s> %%s.%(i)d' % dict(subst, i=i)
+                                for i in xrange(args.max_shuffle_height + 1)]))
+
   # Finally, generate a main function which will trap if any lanes are mapped
   # incorrectly (in an observable way).
   print """
-define i32 @main() optnone noinline {
+define i32 @main() {
 entry:
   ; Create a scratch space to print error messages.
   %%str = alloca [128 x i8]
   %%str.ptr = getelementptr inbounds [128 x i8]* %%str, i32 0, i32 0
 
   ; Build the input vector and call the test function.
-  %%input = bitcast <%(N)d x %(IT)s> <%(input)s> to <%(N)d x %(T)s>
-  %%v = call <%(N)d x %(T)s> @test(<%(N)d x %(T)s> %%input)
+  %%v = call fastcc <%(N)d x %(T)s> @test_wrapper(%(inputs)s)
   ; We need to cast this back to an integer type vector to easily check the
   ; result.
   %%v.cast = bitcast <%(N)d x %(T)s> %%v to <%(N)d x %(IT)s>
   br label %%test.0
 """ % dict(subst,
-           input=', '.join(['%(IT)s %(i)s' % dict(subst, i=i)
-                            for i in xrange(1, width + 1)]),
-           result=', '.join(['%(IT)s %(i)s' % dict(subst,
-                                                   i=i if i != -1 else 'undef')
-                             for i in result]))
+           inputs=', '.join(
+               [('<%(N)d x %(T)s> bitcast '
+                 '(<%(N)d x %(IT)s> <%(input)s> to <%(N)d x %(T)s>)' %
+                 dict(subst, input=', '.join(['%(IT)s %(i)d' % dict(subst, i=i)
+                                              for i in input])))
+                for input in inputs]))
 
   # Test that each non-undef result lane contains the expected value.
   for i, r in enumerate(result):
