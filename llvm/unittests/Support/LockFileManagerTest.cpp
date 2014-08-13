@@ -95,7 +95,7 @@ TEST(LockFileManagerTest, RelativePath) {
 
   char PathBuf[1024];
   const char *OrigPath = getcwd(PathBuf, 1024);
-  chdir(TmpDir.c_str());
+  ASSERT_FALSE(chdir(TmpDir.c_str()));
 
   sys::fs::create_directory("inner");
   SmallString<64> LockedFile("inner");
@@ -118,7 +118,7 @@ TEST(LockFileManagerTest, RelativePath) {
   EC = sys::fs::remove("inner");
   ASSERT_FALSE(EC);
 
-  chdir(OrigPath);
+  ASSERT_FALSE(chdir(OrigPath));
 
   EC = sys::fs::remove(StringRef(TmpDir));
   ASSERT_FALSE(EC);
