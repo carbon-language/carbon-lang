@@ -56,13 +56,13 @@ enum OptimizerChoice {
 
 static cl::opt<OptimizerChoice> Optimizer(
     "polly-optimizer", cl::desc("Select the scheduling optimizer"),
-    cl::values(
-        clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
+    cl::values(clEnumValN(OPTIMIZER_NONE, "none", "No optimizer"),
 #ifdef PLUTO_FOUND
-        clEnumValN(OPTIMIZER_PLUTO, "pluto", "The Pluto scheduling optimizer"),
+               clEnumValN(OPTIMIZER_PLUTO, "pluto",
+                          "The Pluto scheduling optimizer"),
 #endif
-        clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
-        clEnumValEnd),
+               clEnumValN(OPTIMIZER_ISL, "isl", "The isl scheduling optimizer"),
+               clEnumValEnd),
     cl::Hidden, cl::init(OPTIMIZER_ISL), cl::ZeroOrMore,
     cl::cat(PollyCategory));
 

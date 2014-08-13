@@ -93,7 +93,6 @@ struct PollyForcePassLinking {
     polly::createIslCodeGenerationPass();
     polly::createIslScheduleOptimizerPass();
     polly::createTempScopInfoPass();
-
   }
 } PollyForcePassLinking; // Force link by creating a global definition.
 }
