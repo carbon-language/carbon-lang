@@ -29,8 +29,7 @@ id foo(void) {
 }
 
 @protocol MyObject
-- (id)initWithData:(Object *)data;	// expected-note {{using}} \
-					// expected-note {{passing argument to parameter 'data' here}}
+- (id)initWithData:(Object *)data;	// expected-note {{using}} 
 @end
 
 @protocol SomeOther
@@ -54,8 +53,7 @@ id foo(void) {
 }
 + (NTGridDataObject*)dataObject:(id<MyObject, MyCoding>)data
 {
-    NTGridDataObject *result = [(id)0 initWithData:data]; // expected-warning {{multiple methods named 'initWithData:' found}} \
-    expected-warning {{sending 'id<MyObject,MyCoding>' to parameter of incompatible type 'Object *'}}
+    NTGridDataObject *result = [(id)0 initWithData:data]; // expected-warning {{multiple methods named 'initWithData:' found}} 
     return result;
 }
 @end

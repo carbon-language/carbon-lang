@@ -2315,6 +2315,23 @@ static bool isAcceptableMethodMismatch(ObjCMethodDecl *chosen,
   return (chosen->getReturnType()->isIntegerType());
 }
 
+bool Sema::CollectMultipleMethodsInGlobalPool(Selector Sel,
+                                              SmallVectorImpl<ObjCMethodDecl*>& Methods,
+                                              bool instance) {
+  if (ExternalSource)
+    ReadMethodPool(Sel);
+
+  GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
+  if (Pos == MethodPool.end())
+    return false;
+  // Gather the non-hidden methods.
+  ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
+  for (ObjCMethodList *M = &MethList; M; M = M->getNext())
+    if (M->Method && !M->Method->isHidden())
+      Methods.push_back(M->Method);
+  return (Methods.size() > 1);
+}
+
 ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
                                                bool receiverIdOrClass,
                                                bool warn, bool instance) {

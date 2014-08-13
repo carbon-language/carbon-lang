@@ -2418,6 +2418,13 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
         Method = LookupFactoryMethodInGlobalPool(Sel, 
                                                  SourceRange(LBracLoc,RBracLoc),
                                                  receiverIsId);
+      if (Method) {
+        SmallVector<ObjCMethodDecl*, 4> Methods;
+        if (CollectMultipleMethodsInGlobalPool(Sel, Methods,
+                                               Method->isInstanceMethod()))
+          if (ObjCMethodDecl *BestMethod = SelectBestMethod(Sel, ArgsIn, Methods))
+            Method = BestMethod;
+      }
     } else if (ReceiverType->isObjCClassType() ||
                ReceiverType->isObjCQualifiedClassType()) {
       // Handle messages to Class.
