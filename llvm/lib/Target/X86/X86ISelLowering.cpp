@@ -3872,7 +3872,8 @@ static bool isAlignrMask(ArrayRef<int> Mask, MVT VT, bool InterLane) {
 static bool isPALIGNRMask(ArrayRef<int> Mask, MVT VT,
                           const X86Subtarget *Subtarget) {
   if ((VT.is128BitVector() && !Subtarget->hasSSSE3()) ||
-      (VT.is256BitVector() && !Subtarget->hasInt256()))
+      (VT.is256BitVector() && !Subtarget->hasInt256()) ||
+      VT.is512BitVector())
     // FIXME: Add AVX512BW.
     return false;
 
