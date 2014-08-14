@@ -174,6 +174,10 @@ public:
   iterator begin() const { return ErrorReports.begin(); }
   iterator end() const { return ErrorReports.end(); }
   size_t size() const { return ErrorReports.size(); }
+
+  /// @brief Returns true, if we store at least one error.
+  ///
+  /// @return true, if we store at least one error.
   bool hasErrors() const { return size() > 0; }
 
   const Region *region() const { return R; }
@@ -214,7 +218,11 @@ public:
   }
 
   bool hasErrors(const Region *R) const {
-    return (Logs.count(R) && Logs.at(R).size() > 0);
+    if (!Logs.count(R))
+      return false;
+
+    RejectLog Log = Logs.at(R);
+    return Log.hasErrors();
   }
 
   bool hasErrors(Region *R) const { return hasErrors((const Region *)R); }
