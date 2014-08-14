@@ -469,3 +469,14 @@ define i32 @test44(i32 %a, i32 %b) {
  %or = or i32 %xor, %and
  ret i32 %or
 }
+
+define i32 @test45(i32 %x, i32 %y, i32 %z) {
+; CHECK-LABEL: test45(
+; CHECK-NEXT: %1 = and i32 %x, %z
+; CHECK-NEXT: %or1 = or i32 %1, %y
+; CHECK-NEXT: ret i32 %or1
+  %or = or i32 %y, %z
+  %and = and i32 %x, %or
+  %or1 = or i32 %and, %y
+  ret i32 %or1
+}

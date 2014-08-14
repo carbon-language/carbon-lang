@@ -2124,6 +2124,10 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (Op0->hasOneUse() || cast<BinaryOperator>(Op0)->hasOneUse())
         return BinaryOperator::CreateOr(Op1, C);
 
+  // ((B | C) & A) | B -> B | (A & C)
+  if (match(Op0, m_And(m_Or(m_Specific(Op1), m_Value(C)), m_Value(A))))
+    return BinaryOperator::CreateOr(Op1, Builder->CreateAnd(A, C));
+
   // (X >> Z) | (Y >> Z)  -> (X|Y) >> Z  for all shifts.
   if (BinaryOperator *SI1 = dyn_cast<BinaryOperator>(Op1)) {
     if (BinaryOperator *SI0 = dyn_cast<BinaryOperator>(Op0))
