@@ -657,19 +657,24 @@ public:
 /// @brief Captures errors with aliasing.
 class ReportAlias : public RejectReason {
   //===--------------------------------------------------------------------===//
+public:
+  typedef std::vector<const llvm::Value *> PointerSnapshotTy;
 
+private:
   /// @brief Format an invalid alias set.
   ///
   /// @param AS The invalid alias set to format.
-  std::string formatInvalidAlias(AliasSet &AS) const;
+  std::string formatInvalidAlias() const;
 
   Instruction *Inst;
-  AliasSet &AS;
+
+  // A snapshot of the llvm values that took part in the aliasing error.
+  mutable PointerSnapshotTy Pointers;
 
 public:
   ReportAlias(Instruction *Inst, AliasSet &AS);
 
-  AliasSet &getAliasSet() { return AS; }
+  const PointerSnapshotTy &getPointers() const { return Pointers; }
 
   /// @name LLVM-RTTI interface
   //@{

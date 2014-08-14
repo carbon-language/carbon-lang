@@ -427,27 +427,27 @@ bool ReportFuncCall::classof(const RejectReason *RR) {
 // ReportAlias.
 
 ReportAlias::ReportAlias(Instruction *Inst, AliasSet &AS)
-    : RejectReason(rrkAlias), Inst(Inst), AS(AS) {
+    : RejectReason(rrkAlias), Inst(Inst) {
+
+  for (const auto &I : AS)
+    Pointers.push_back(I.getValue());
+
   ++BadAliasForScop;
 }
 
-std::string ReportAlias::formatInvalidAlias(AliasSet &AS) const {
+std::string ReportAlias::formatInvalidAlias() const {
   std::string Message;
   raw_string_ostream OS(Message);
 
   OS << "Possible aliasing: ";
 
-  std::vector<Value *> Pointers;
-
-  for (const auto &I : AS)
-    Pointers.push_back(I.getValue());
-
   std::sort(Pointers.begin(), Pointers.end());
 
-  for (std::vector<Value *>::iterator PI = Pointers.begin(),
-                                      PE = Pointers.end();
+  for (PointerSnapshotTy::const_iterator PI = Pointers.begin(),
+                                         PE = Pointers.end();
        ;) {
-    Value *V = *PI;
+    const Value *V = *PI;
+    assert(V && "Diagnostic info does not match found LLVM-IR anymore.");
 
     if (V->getName().size() == 0)
       OS << "\"" << *V << "\"";
@@ -465,7 +465,7 @@ std::string ReportAlias::formatInvalidAlias(AliasSet &AS) const {
   return OS.str();
 }
 
-std::string ReportAlias::getMessage() const { return formatInvalidAlias(AS); }
+std::string ReportAlias::getMessage() const { return formatInvalidAlias(); }
 
 const DebugLoc &ReportAlias::getDebugLoc() const { return Inst->getDebugLoc(); }
 
