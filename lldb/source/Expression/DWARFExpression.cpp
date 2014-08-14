@@ -2692,7 +2692,7 @@ DWARFExpression::Evaluate
 
                         default:
                             if (error_ptr)
-                                error_ptr->SetErrorStringWithFormat ("unhandled value typpe for DW_OP_piece(%" PRIu64 ")", piece_byte_size);
+                                error_ptr->SetErrorStringWithFormat ("unhandled value type for DW_OP_piece(%" PRIu64 ")", piece_byte_size);
                             return false;
 
                         }
