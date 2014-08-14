@@ -377,10 +377,6 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
     }
     return;
   }
-
-  llvm::Type *WordType =
-      DataLayout.getLargestLegalIntType(Types.getLLVMContext());
-  uint64_t WordSize = WordType ? DataLayout.getTypeSizeInBits(WordType) : 0;
   for (;;) {
     // Check to see if we need to start a new run.
     if (Run == FieldEnd) {
@@ -396,12 +392,9 @@ CGRecordLowering::accumulateBitFields(RecordDecl::field_iterator Field,
       ++Field;
       continue;
     }
-    // Add bitfields to the run as long as they qualify. If we end up on a word
-    // boundary we insert a break since it's equivalent and very wide types are
-    // harder to optimize with.
+    // Add bitfields to the run as long as they qualify.
     if (Field != FieldEnd && Field->getBitWidthValue(Context) != 0 &&
-        Tail == getFieldBitOffset(*Field) &&
-        WordSize != Tail - StartBitOffset) {
+        Tail == getFieldBitOffset(*Field)) {
       Tail += Field->getBitWidthValue(Context);
       ++Field;
       continue;
