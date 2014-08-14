@@ -98,10 +98,34 @@ public:
 };
 
 
+// For testing operator overloading
 template <class K, class T>
 class MyMap {
 public:
   T& operator[](const K& k);
+};
+
+
+// For testing handling of containers.
+template <class T>
+class MyContainer {
+public:
+  MyContainer();
+
+  typedef T* iterator;
+  typedef const T* const_iterator;
+
+  T* begin();
+  T* end();
+
+  const T* cbegin();
+  const T* cend();
+
+  T&       operator[](int i);
+  const T& operator[](int i) const;
+
+private:
+  T* ptr_;
 };
 
 
@@ -4643,5 +4667,64 @@ class Foo {
 };
 
 } // end namespace AssertSharedExclusive
+
+
+namespace RangeBasedForAndReferences {
+
+class Foo {
+  struct MyStruct {
+    int a;
+  };
+
+  Mutex mu;
+  int a GUARDED_BY(mu);
+  MyContainer<int>  cntr  GUARDED_BY(mu);
+  MyStruct s GUARDED_BY(mu);
+  int arr[10] GUARDED_BY(mu);
+
+  void nonref_test() {
+    int b = a;             // expected-warning {{reading variable 'a' requires holding mutex 'mu'}}
+    b = 0;                 // no warning
+  }
+
+  void auto_test() {
+    auto b = a;            // expected-warning {{reading variable 'a' requires holding mutex 'mu'}}
+    b = 0;                 // no warning
+    auto &c = a;           // no warning
+    c = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+  }
+
+  void ref_test() {
+    int &b = a;
+    int &c = b;
+    int &d = c;
+    b = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+    c = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+    d = 0;                 // expected-warning {{writing variable 'a' requires holding mutex 'mu' exclusively}}
+
+    MyStruct &rs = s;
+    rs.a = 0;              // expected-warning {{writing variable 's' requires holding mutex 'mu' exclusively}}
+
+    int (&rarr)[10] = arr;
+    rarr[2] = 0;           // expected-warning {{writing variable 'arr' requires holding mutex 'mu' exclusively}}
+  }
+
+  void ptr_test() {
+    int *b = &a;
+    *b = 0;                // no expected warning yet
+  }
+
+  void for_test() {
+    int total = 0;
+    for (int i : cntr) {   // expected-warning2 {{reading variable 'cntr' requires holding mutex 'mu'}}
+      total += i;
+    }
+  }
+};
+
+
+} // end namespace RangeBasedForAndReferences
+
+
 
 
