@@ -2318,9 +2318,10 @@ bool MipsAsmParser::ParseBracketSuffix(StringRef Name,
 bool MipsAsmParser::ParseInstruction(ParseInstructionInfo &Info, StringRef Name,
                                      SMLoc NameLoc, OperandVector &Operands) {
   DEBUG(dbgs() << "ParseInstruction\n");
-  // We have reached first instruction, module directive after
-  // this is forbidden.
-  getTargetStreamer().setCanHaveModuleDir(false);
+
+  // We have reached first instruction, module directive are now forbidden.
+  getTargetStreamer().forbidModuleDirective();
+
   // Check if we have valid mnemonic
   if (!mnemonicIsValid(Name, 0)) {
     Parser.eatToEndOfStatement();
@@ -2932,7 +2933,7 @@ bool MipsAsmParser::parseDirectiveModule() {
   MCAsmLexer &Lexer = getLexer();
   SMLoc L = Lexer.getLoc();
 
-  if (!getTargetStreamer().getCanHaveModuleDir()) {
+  if (!getTargetStreamer().isModuleDirectiveAllowed()) {
     // TODO : get a better message.
     reportParseError(".module directive must appear before any code");
     return false;

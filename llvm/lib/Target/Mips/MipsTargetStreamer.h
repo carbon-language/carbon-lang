@@ -83,8 +83,8 @@ public:
   virtual void emitDirectiveModuleOddSPReg(bool Enabled, bool IsO32ABI);
   virtual void emitDirectiveSetFp(MipsABIFlagsSection::FpABIKind Value){};
   virtual void emitMipsAbiFlags(){};
-  void setCanHaveModuleDir(bool Can) { canHaveModuleDirective = Can; }
-  bool getCanHaveModuleDir() { return canHaveModuleDirective; }
+  void forbidModuleDirective() { ModuleDirectiveAllowed = false; }
+  bool isModuleDirectiveAllowed() { return ModuleDirectiveAllowed; }
 
   // This method enables template classes to set internal abi flags
   // structure values.
@@ -112,7 +112,7 @@ protected:
   unsigned ReturnReg;
 
 private:
-  bool canHaveModuleDirective;
+  bool ModuleDirectiveAllowed;
 };
 
 // This part is for ascii assembly output

@@ -131,7 +131,7 @@ void MipsAsmPrinter::emitPseudoIndirectBranch(MCStreamer &OutStreamer,
 
 void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   MipsTargetStreamer &TS = getTargetStreamer();
-  TS.setCanHaveModuleDir(false);
+  TS.forbidModuleDirective();
 
   if (MI->isDebugValue()) {
     SmallString<128> Str;
