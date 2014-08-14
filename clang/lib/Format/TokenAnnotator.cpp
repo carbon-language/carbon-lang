@@ -1305,7 +1305,9 @@ void TokenAnnotator::calculateFormattingInformation(AnnotatedLine &Line) {
 
     if (Style.AlwaysBreakAfterDefinitionReturnType &&
         InFunctionDecl && Current->Type == TT_FunctionDeclarationName &&
-        Line.Last->is(tok::l_brace))  // Only for definitions.
+        !Line.Last->isOneOf(tok::semi, tok::comment))  // Only for definitions.
+      // FIXME: Line.Last points to other characters than tok::semi
+      // and tok::lbrace.
       Current->MustBreakBefore = true;
 
     Current->CanBreakBefore =

@@ -4156,6 +4156,29 @@ TEST_F(FormatTest, AlwaysBreakAfterDefinitionReturnType) {
                "}\n"
                "const char *bar(void);\n",  // No break here.
                AfterType);
+  verifyFormat("template <class T>\n"
+               "T *\n"
+               "f(T &c) {\n"  // Break here.
+               "  return NULL;\n"
+               "}\n"
+               "template <class T> T *f(T &c);\n",  // No break here.
+               AfterType);
+  AfterType.BreakBeforeBraces = FormatStyle::BS_Stroustrup;
+  verifyFormat("const char *\n"
+               "f(void)\n"  // Break here.
+               "{\n"
+               "  return \"\";\n"
+               "}\n"
+               "const char *bar(void);\n",  // No break here.
+               AfterType);
+  verifyFormat("template <class T>\n"
+               "T *\n"  // Problem here: no line break
+               "f(T &c)\n"  // Break here.
+               "{\n"
+               "  return NULL;\n"
+               "}\n"
+               "template <class T> T *f(T &c);\n",  // No break here.
+               AfterType);
 }
 
 TEST_F(FormatTest, AlwaysBreakBeforeMultilineStrings) {
