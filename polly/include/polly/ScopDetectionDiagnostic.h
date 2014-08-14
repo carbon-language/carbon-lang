@@ -194,9 +194,9 @@ public:
   const_iterator begin() const { return Logs.begin(); }
   const_iterator end() const { return Logs.end(); }
 
-  void insert(std::pair<const Region *, RejectLog> New) {
-    auto Result = Logs.insert(New);
-    assert(Result.second && "Tried to replace an element in the log!");
+  std::pair<iterator, bool>
+  insert(const std::pair<const Region *, RejectLog> &New) {
+    return Logs.insert(New);
   }
 
   std::map<const Region *, RejectLog>::mapped_type at(const Region *R) {
