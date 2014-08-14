@@ -316,13 +316,19 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
 
   // If it hasn't already been generated, see if it's in one of our modules.
   Module *M = findModuleForSymbol(Name, CheckFunctionsOnly);
-  if (!M)
-    return 0;
+  if (M) {
+    generateCodeForModule(M);
 
-  generateCodeForModule(M);
+    // Check the RuntimeDyld table again, it should be there now.
+    return getExistingSymbolAddress(Name);
+  }
 
-  // Check the RuntimeDyld table again, it should be there now.
-  return getExistingSymbolAddress(Name);
+  // If a LazyFunctionCreator is installed, use it to get/create the function.
+  // FIXME: Should we instead have a LazySymbolCreator callback?
+  if (LazyFunctionCreator)
+    Addr = (uint64_t)LazyFunctionCreator(Name);
+
+  return Addr;
 }
 
 uint64_t MCJIT::getGlobalValueAddress(const std::string &Name) {
@@ -578,5 +584,7 @@ uint64_t LinkingMemoryManager::getSymbolAddress(const std::string &Name) {
     Result = ParentEngine->getSymbolAddress(Name.substr(1), false);
   if (Result)
     return Result;
+  if (ParentEngine->isSymbolSearchingDisabled())
+    return 0;
   return ClientMM->getSymbolAddress(Name);
 }
