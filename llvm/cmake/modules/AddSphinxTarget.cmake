@@ -24,7 +24,7 @@ function (add_sphinx_target builder project)
                             "${CMAKE_CURRENT_SOURCE_DIR}" # Source
                             "${SPHINX_BUILD_DIR}" # Output
                     COMMENT
-                    "Generating ${builder} Sphinx documentation for ${project}")
+                    "Generating ${builder} Sphinx documentation for ${project} into \"${SPHINX_BUILD_DIR}\"")
 
   # When "clean" target is run, remove the Sphinx build directory
   set_property(DIRECTORY APPEND PROPERTY
