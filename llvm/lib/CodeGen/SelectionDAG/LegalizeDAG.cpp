@@ -156,6 +156,8 @@ public:
   // Node replacement helpers
   void ReplacedNode(SDNode *N) {
     LegalizedNodes.erase(N);
+    if (UpdatedNodes)
+      UpdatedNodes->insert(N);
   }
   void ReplaceNode(SDNode *Old, SDNode *New) {
     DEBUG(dbgs() << " ... replacing: "; Old->dump(&DAG);
