@@ -507,6 +507,72 @@ _mm512_roundscale_pd(__m512d __A, const int __imm)
                _MM_FROUND_CUR_DIRECTION);
 }
 
+static __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_fmadd_pd(__m512d __A, __m512d __B, __m512d __C)
+{
+  return (__m512d)
+    __builtin_ia32_vfmaddpd512_mask(__A,
+                                    __B,
+                                    __C,
+                                    (__mmask8) -1,
+                                    _MM_FROUND_CUR_DIRECTION);
+}
+
+static __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_fmsub_pd(__m512d __A, __m512d __B, __m512d __C)
+{
+  return (__m512d)
+    __builtin_ia32_vfmsubpd512_mask(__A,
+                                    __B,
+                                    __C,
+                                    (__mmask8) -1,
+                                    _MM_FROUND_CUR_DIRECTION);
+}
+
+static __inline__ __m512d __attribute__((__always_inline__, __nodebug__))
+_mm512_fnmadd_pd(__m512d __A, __m512d __B, __m512d __C)
+{
+  return (__m512d)
+    __builtin_ia32_vfnmaddpd512_mask(__A,
+                                     __B,
+                                     __C,
+                                     (__mmask8) -1,
+                                     _MM_FROUND_CUR_DIRECTION);
+}
+
+static __inline__ __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_fmadd_ps(__m512 __A, __m512 __B, __m512 __C)
+{
+  return (__m512)
+    __builtin_ia32_vfmaddps512_mask(__A,
+                                    __B,
+                                    __C,
+                                    (__mmask16) -1,
+                                    _MM_FROUND_CUR_DIRECTION);
+}
+
+static __inline__ __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_fmsub_ps(__m512 __A, __m512 __B, __m512 __C)
+{
+  return (__m512)
+    __builtin_ia32_vfmsubps512_mask(__A,
+                                    __B,
+                                    __C,
+                                    (__mmask16) -1,
+                                    _MM_FROUND_CUR_DIRECTION);
+}
+
+static __inline__ __m512 __attribute__((__always_inline__, __nodebug__))
+_mm512_fnmadd_ps(__m512 __A, __m512 __B, __m512 __C)
+{
+  return (__m512)
+    __builtin_ia32_vfnmaddps512_mask(__A,
+                                     __B,
+                                     __C,
+                                     (__mmask16) -1,
+                                     _MM_FROUND_CUR_DIRECTION);
+}
+
 /* Vector permutations */
 
 static __inline __m512i __attribute__ ((__always_inline__, __nodebug__))

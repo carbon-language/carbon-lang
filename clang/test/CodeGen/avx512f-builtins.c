@@ -151,3 +151,10 @@ __m512d test_mm512_broadcastsd_pd(__m128d a)
   // CHECK: insertelement <8 x double> {{.*}}, i32 7
   return _mm512_broadcastsd_pd(a);
 }
+
+__m512i test_mm512_fmadd_pd(__m512d a, __m512d b, __m512d c)
+{
+  // CHECK-LABEL: @test_mm512_fmadd_pd
+  // CHECK: @llvm.x86.fma.mask.vfmadd.pd.512
+  return _mm512_fmadd_pd(a, b, c);
+}

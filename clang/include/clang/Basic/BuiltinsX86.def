@@ -655,7 +655,7 @@ BUILTIN(__builtin_ia32_sha256rnds2, "V4iV4iV4iV4i", "")
 BUILTIN(__builtin_ia32_sha256msg1, "V4iV4iV4i", "")
 BUILTIN(__builtin_ia32_sha256msg2, "V4iV4iV4i", "")
 
-// FMA4
+// FMA
 BUILTIN(__builtin_ia32_vfmaddps, "V4fV4fV4fV4f", "")
 BUILTIN(__builtin_ia32_vfmaddpd, "V2dV2dV2dV2d", "")
 BUILTIN(__builtin_ia32_vfmaddss, "V4fV4fV4fV4f", "")
@@ -688,6 +688,12 @@ BUILTIN(__builtin_ia32_vfmaddsubps256, "V8fV8fV8fV8f", "")
 BUILTIN(__builtin_ia32_vfmaddsubpd256, "V4dV4dV4dV4d", "")
 BUILTIN(__builtin_ia32_vfmsubaddps256, "V8fV8fV8fV8f", "")
 BUILTIN(__builtin_ia32_vfmsubaddpd256, "V4dV4dV4dV4d", "")
+BUILTIN(__builtin_ia32_vfmaddpd512_mask,  "V8dV8dV8dV8dUci", "")
+BUILTIN(__builtin_ia32_vfmsubpd512_mask,  "V8dV8dV8dV8dUci", "")
+BUILTIN(__builtin_ia32_vfnmaddpd512_mask, "V8dV8dV8dV8dUci", "")
+BUILTIN(__builtin_ia32_vfmaddps512_mask,  "V16fV16fV16fV16fUsi", "")
+BUILTIN(__builtin_ia32_vfmsubps512_mask,  "V16fV16fV16fV16fUsi", "")
+BUILTIN(__builtin_ia32_vfnmaddps512_mask, "V16fV16fV16fV16fUsi", "")
 
 // XOP
 BUILTIN(__builtin_ia32_vpmacssww, "V8sV8sV8sV8s", "")
