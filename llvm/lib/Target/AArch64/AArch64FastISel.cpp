@@ -487,7 +487,7 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
           NumBytes = 0;
       }
 
-      if (NumBytes != (1 << Val))
+      if (NumBytes != (1U << Val))
         break;
 
       Addr.setShift(Val);
