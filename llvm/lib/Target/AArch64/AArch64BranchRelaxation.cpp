@@ -137,7 +137,7 @@ static bool BBHasFallthrough(MachineBasicBlock *MBB) {
   if (NextBB == MBB->getParent()->end())
     return false;
 
-  for (MachineBasicBlock *S : MBB->successors()) 
+  for (MachineBasicBlock *S : MBB->successors())
     if (S == NextBB)
       return true;
 
