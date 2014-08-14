@@ -8,12 +8,19 @@ function (add_sphinx_target builder project)
   set(SPHINX_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/${builder}")
   set(SPHINX_DOC_TREE_DIR "${CMAKE_CURRENT_BINARY_DIR}/_doctrees")
   set(SPHINX_TARGET_NAME docs-${project}-${builder})
+
+  if (SPHINX_WARNINGS_AS_ERRORS)
+    set(SPHINX_WARNINGS_AS_ERRORS_FLAG "-W")
+  else()
+    set(SPHINX_WARNINGS_AS_ERRORS_FLAG "")
+  endif()
+
   add_custom_target(${SPHINX_TARGET_NAME}
                     COMMAND ${SPHINX_EXECUTABLE}
                             -b ${builder}
                             -d "${SPHINX_DOC_TREE_DIR}"
                             -q # Quiet: no output other than errors and warnings.
-                            -W # Warnings are errors.
+                            ${SPHINX_WARNINGS_AS_ERRORS_FLAG} # Treat warnings as errors if requested
                             "${CMAKE_CURRENT_SOURCE_DIR}" # Source
                             "${SPHINX_BUILD_DIR}" # Output
                     COMMENT

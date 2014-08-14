@@ -363,6 +363,10 @@ LLVM-specific variables
   is enabled). Currently the only target added is ``docs-llvm-man``. Defaults
   to ON.
 
+**SPHINX_WARNINGS_AS_ERRORS**:BOOL
+  If enabled then sphinx documentation warnings will be treated as
+  errors. Defaults to ON.
+
 Executing the test suite
 ========================
 
