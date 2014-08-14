@@ -506,16 +506,6 @@ public:
                              llvm::opt::ArgStringList &CC1Args) const override;
 };
 
-class LLVM_LIBRARY_VISIBILITY AuroraUX : public Generic_GCC {
-public:
-  AuroraUX(const Driver &D, const llvm::Triple &Triple,
-           const llvm::opt::ArgList &Args);
-
-protected:
-  Tool *buildAssembler() const override;
-  Tool *buildLinker() const override;
-};
-
 class LLVM_LIBRARY_VISIBILITY Solaris : public Generic_GCC {
 public:
   Solaris(const Driver &D, const llvm::Triple &Triple,

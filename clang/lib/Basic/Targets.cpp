@@ -516,27 +516,6 @@ public:
   }
 };
 
-// AuroraUX target
-template<typename Target>
-class AuroraUXTargetInfo : public OSTargetInfo<Target> {
-protected:
-  void getOSDefines(const LangOptions &Opts, const llvm::Triple &Triple,
-                    MacroBuilder &Builder) const override {
-    DefineStd(Builder, "sun", Opts);
-    DefineStd(Builder, "unix", Opts);
-    Builder.defineMacro("__ELF__");
-    Builder.defineMacro("__svr4__");
-    Builder.defineMacro("__SVR4");
-  }
-public:
-  AuroraUXTargetInfo(const llvm::Triple &Triple)
-      : OSTargetInfo<Target>(Triple) {
-    this->UserLabelPrefix = "";
-    this->WCharType = this->SignedLong;
-    // FIXME: WIntType should be SignedLong
-  }
-};
-
 // Solaris target
 template<typename Target>
 class SolarisTargetInfo : public OSTargetInfo<Target> {
@@ -5069,10 +5048,8 @@ public:
     SparcTargetInfo::getTargetDefines(Opts, Builder);
     Builder.defineMacro("__sparcv9");
     Builder.defineMacro("__arch64__");
-    // Solaris and its derivative AuroraUX don't need these variants, but the
-    // BSDs do.
-    if (getTriple().getOS() != llvm::Triple::Solaris &&
-        getTriple().getOS() != llvm::Triple::AuroraUX) {
+    // Solaris doesn't need these variants, but the BSDs do.
+    if (getTriple().getOS() != llvm::Triple::Solaris) {
       Builder.defineMacro("__sparc64__");
       Builder.defineMacro("__sparc_v9__");
       Builder.defineMacro("__sparcv9__");
@@ -5099,14 +5076,6 @@ public:
 } // end anonymous namespace.
 
 namespace {
-class AuroraUXSparcV8TargetInfo : public AuroraUXTargetInfo<SparcV8TargetInfo> {
-public:
-  AuroraUXSparcV8TargetInfo(const llvm::Triple &Triple)
-      : AuroraUXTargetInfo<SparcV8TargetInfo>(Triple) {
-    SizeType = UnsignedInt;
-    PtrDiffType = SignedInt;
-  }
-};
 class SolarisSparcV8TargetInfo : public SolarisTargetInfo<SparcV8TargetInfo> {
 public:
   SolarisSparcV8TargetInfo(const llvm::Triple &Triple)
@@ -6344,8 +6313,6 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     switch (os) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<SparcV8TargetInfo>(Triple);
-    case llvm::Triple::AuroraUX:
-      return new AuroraUXSparcV8TargetInfo(Triple);
     case llvm::Triple::Solaris:
       return new SolarisSparcV8TargetInfo(Triple);
     case llvm::Triple::NetBSD:
@@ -6362,8 +6329,6 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
     switch (os) {
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<SparcV9TargetInfo>(Triple);
-    case llvm::Triple::AuroraUX:
-      return new AuroraUXTargetInfo<SparcV9TargetInfo>(Triple);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<SparcV9TargetInfo>(Triple);
     case llvm::Triple::NetBSD:
@@ -6392,8 +6357,6 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new DarwinI386TargetInfo(Triple);
 
     switch (os) {
-    case llvm::Triple::AuroraUX:
-      return new AuroraUXTargetInfo<X86_32TargetInfo>(Triple);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_32TargetInfo>(Triple);
     case llvm::Triple::DragonFly:
@@ -6440,8 +6403,6 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new DarwinX86_64TargetInfo(Triple);
 
     switch (os) {
-    case llvm::Triple::AuroraUX:
-      return new AuroraUXTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Linux:
       return new LinuxTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::DragonFly:
