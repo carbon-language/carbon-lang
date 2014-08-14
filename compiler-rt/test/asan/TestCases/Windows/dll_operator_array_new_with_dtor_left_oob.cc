@@ -20,11 +20,11 @@ int test_function() {
 //        should be "8 bytes ... left of 168-byte region", see
 //        https://code.google.com/p/address-sanitizer/issues/detail?id=314
 // CHECK: [[ADDR]] is located {{.*}} bytes to the left of 172-byte region
-// FIXME: should get rid of the malloc/free frames called from the inside of
-// operator new/delete in DLLs.  Also, the operator new frame should have [].
+// FIXME: Should get rid of the malloc/free frames called from the inside of
+// operator new/delete in DLLs when using -MT CRT.
+// FIXME: The operator new frame should have [].
 // CHECK-LABEL: allocated by thread T0 here:
-// CHECK-NEXT:   malloc
-// CHECK-NEXT:   operator new
+// CHECK:        operator new
 // CHECK-NEXT:   test_function {{.*}}dll_operator_array_new_with_dtor_left_oob.cc:[[@LINE-16]]
 // CHECK-NEXT:   main {{.*}}dll_host.cc
 // CHECK-LABEL: SUMMARY

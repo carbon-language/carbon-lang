@@ -12,11 +12,13 @@ int main() {
 // CHECK:   {{#0 .* main .*operator_array_new_uaf.cc}}:[[@LINE-3]]
 // CHECK: [[ADDR]] is located 0 bytes inside of 42-byte region
 // CHECK-LABEL: freed by thread T0 here:
-// CHECK:   {{#0 .* operator delete}}[]
-// CHECK:   {{#1 .* main .*operator_array_new_uaf.cc}}:[[@LINE-8]]
+// FIXME: The 'operator delete' frame should have [].
+// CHECK:   {{#0 .* operator delete}}
+// CHECK:   {{#1 .* main .*operator_array_new_uaf.cc}}:[[@LINE-9]]
 // CHECK-LABEL: previously allocated by thread T0 here:
-// CHECK:   {{#0 .* operator new}}[]
-// CHECK:   {{#1 .* main .*operator_array_new_uaf.cc}}:[[@LINE-12]]
+// FIXME: The 'operator new' frame should have [].
+// CHECK:   {{#0 .* operator new}}
+// CHECK:   {{#1 .* main .*operator_array_new_uaf.cc}}:[[@LINE-14]]
   return 0;
 }
 
