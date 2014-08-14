@@ -533,11 +533,14 @@ public:
   }
 
   virtual bool IsIntegratedAssemblerDefault() const override {
-    if (getTriple().getArch() == llvm::Triple::ppc ||
-        getTriple().getArch() == llvm::Triple::sparc ||
-        getTriple().getArch() == llvm::Triple::sparcv9)
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+    case llvm::Triple::sparc:
+    case llvm::Triple::sparcv9:
       return true;
-    return Generic_ELF::IsIntegratedAssemblerDefault();
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
   }
 
 protected:
@@ -582,10 +585,13 @@ public:
   AddClangCXXStdlibIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                                llvm::opt::ArgStringList &CC1Args) const override;
   bool IsIntegratedAssemblerDefault() const override {
-    if (getTriple().getArch() == llvm::Triple::ppc ||
-        getTriple().getArch() == llvm::Triple::ppc64)
+    switch (getTriple().getArch()) {
+    case llvm::Triple::ppc:
+    case llvm::Triple::ppc64:
       return true;
-    return Generic_ELF::IsIntegratedAssemblerDefault();
+    default:
+      return Generic_ELF::IsIntegratedAssemblerDefault();
+    }
   }
 
   bool UseSjLjExceptions() const override;
