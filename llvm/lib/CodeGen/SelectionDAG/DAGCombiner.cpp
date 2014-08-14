@@ -6303,11 +6303,7 @@ SDValue DAGCombiner::visitBITCAST(SDNode *N) {
                                  LN0->isVolatile(), LN0->isNonTemporal(),
                                  LN0->isInvariant(), OrigAlign,
                                  LN0->getAAInfo());
-      AddToWorklist(N);
-      CombineTo(N0.getNode(),
-                DAG.getNode(ISD::BITCAST, SDLoc(N0),
-                            N0.getValueType(), Load),
-                Load.getValue(1));
+      DAG.ReplaceAllUsesOfValueWith(N0.getValue(1), Load.getValue(1));
       return Load;
     }
   }

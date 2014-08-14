@@ -289,3 +289,27 @@ entry:
   %s.16.0 = shufflevector <16 x i8> %s.7.1, <16 x i8> %s.7.2, <16 x i32> <i32 13, i32 1, i32 16, i32 16, i32 6, i32 7, i32 29, i32 18, i32 19, i32 28, i32 undef, i32 undef, i32 31, i32 1, i32 undef, i32 10>
   ret <16 x i8> %s.16.0
 }
+
+define <16 x i8> @stress_test1(<16 x i8> %s.0.5, <16 x i8> %s.0.8, <16 x i8> %s.0.9) noinline nounwind {
+; We don't have anything useful to check here. This generates tons of
+; instructions. Instead, just make sure we survived codegen.
+;
+; ALL-LABEL: @stress_test1
+; ALL: retq
+entry:
+  %s.1.8 = shufflevector <16 x i8> %s.0.8, <16 x i8> undef, <16 x i32> <i32 9, i32 9, i32 undef, i32 undef, i32 undef, i32 2, i32 undef, i32 6, i32 undef, i32 6, i32 undef, i32 14, i32 14, i32 undef, i32 undef, i32 0>
+  %s.2.4 = shufflevector <16 x i8> undef, <16 x i8> %s.0.5, <16 x i32> <i32 21, i32 undef, i32 undef, i32 19, i32 undef, i32 undef, i32 29, i32 24, i32 21, i32 23, i32 21, i32 17, i32 19, i32 undef, i32 20, i32 22>
+  %s.2.5 = shufflevector <16 x i8> %s.0.5, <16 x i8> undef, <16 x i32> <i32 3, i32 8, i32 undef, i32 7, i32 undef, i32 10, i32 8, i32 0, i32 15, i32 undef, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 9>
+  %s.2.9 = shufflevector <16 x i8> %s.0.9, <16 x i8> undef, <16 x i32> <i32 7, i32 undef, i32 14, i32 7, i32 8, i32 undef, i32 7, i32 8, i32 5, i32 15, i32 undef, i32 1, i32 11, i32 undef, i32 undef, i32 11>
+  %s.3.4 = shufflevector <16 x i8> %s.2.4, <16 x i8> %s.0.5, <16 x i32> <i32 5, i32 0, i32 21, i32 6, i32 15, i32 27, i32 22, i32 21, i32 4, i32 22, i32 19, i32 26, i32 9, i32 26, i32 8, i32 29>
+  %s.3.9 = shufflevector <16 x i8> %s.2.9, <16 x i8> undef, <16 x i32> <i32 8, i32 6, i32 8, i32 1, i32 undef, i32 4, i32 undef, i32 2, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 6, i32 undef>
+  %s.4.7 = shufflevector <16 x i8> %s.1.8, <16 x i8> %s.2.9, <16 x i32> <i32 9, i32 0, i32 22, i32 20, i32 24, i32 7, i32 21, i32 17, i32 20, i32 12, i32 19, i32 23, i32 2, i32 9, i32 17, i32 10>
+  %s.4.8 = shufflevector <16 x i8> %s.2.9, <16 x i8> %s.3.9, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 6, i32 10, i32 undef, i32 0, i32 5, i32 undef, i32 9, i32 undef>
+  %s.5.7 = shufflevector <16 x i8> %s.4.7, <16 x i8> %s.4.8, <16 x i32> <i32 16, i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %s.8.4 = shufflevector <16 x i8> %s.3.4, <16 x i8> %s.5.7, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 28, i32 undef, i32 0, i32 undef, i32 undef, i32 undef, i32 undef, i32 1, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %s.9.4 = shufflevector <16 x i8> %s.8.4, <16 x i8> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 10, i32 5>
+  %s.10.4 = shufflevector <16 x i8> %s.9.4, <16 x i8> undef, <16 x i32> <i32 undef, i32 7, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef>
+  %s.12.4 = shufflevector <16 x i8> %s.10.4, <16 x i8> undef, <16 x i32> <i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 undef, i32 13, i32 undef, i32 undef, i32 undef>
+
+  ret <16 x i8> %s.12.4
+}
