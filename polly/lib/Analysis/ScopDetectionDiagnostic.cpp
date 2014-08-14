@@ -83,33 +83,57 @@ void getDebugLocation(const Region *R, unsigned &LineBegin, unsigned &LineEnd,
       LineEnd = std::max(LineEnd, NewLine);
     }
 }
+}
+
+namespace llvm {
+// @brief Lexicographic order on (line, col) of our debug locations.
+static bool operator<(const llvm::DebugLoc &LHS, const llvm::DebugLoc &RHS) {
+  return LHS.getLine() < RHS.getLine() ||
+         (LHS.getLine() == RHS.getLine() && LHS.getCol() < RHS.getCol());
+}
+}
+
+namespace polly {
+static void getDebugLocations(const Region *R, DebugLoc &Begin, DebugLoc &End) {
+  for (const BasicBlock *BB : R->blocks())
+    for (const Instruction &Inst : *BB) {
+      DebugLoc DL = Inst.getDebugLoc();
+      if (DL.isUnknown())
+        continue;
+
+      Begin = Begin.isUnknown() ? DL : std::min(Begin, DL);
+      End = End.isUnknown() ? DL : std::max(End, DL);
+    }
+}
 
 void emitRejectionRemarks(const llvm::Function &F, const RejectLog &Log) {
   LLVMContext &Ctx = F.getContext();
 
   const Region *R = Log.region();
-  const BasicBlock *Entry = R->getEntry();
-  DebugLoc DL = Entry->getTerminator()->getDebugLoc();
+  DebugLoc Begin, End;
+
+  getDebugLocations(R, Begin, End);
 
   emitOptimizationRemarkMissed(
-      Ctx, DEBUG_TYPE, F, DL,
+      Ctx, DEBUG_TYPE, F, Begin,
       "The following errors keep this region from being a Scop.");
+
   for (RejectReasonPtr RR : Log) {
     const DebugLoc &Loc = RR->getDebugLoc();
     if (!Loc.isUnknown())
       emitOptimizationRemarkMissed(Ctx, DEBUG_TYPE, F, Loc,
                                    RR->getEndUserMessage());
   }
+
+  emitOptimizationRemarkMissed(Ctx, DEBUG_TYPE, F, End,
+                               "Invalid Scop candidate ends here.");
 }
 
 void emitValidRemarks(const llvm::Function &F, const Region *R) {
   LLVMContext &Ctx = F.getContext();
 
-  const BasicBlock *Entry = R->getEntry();
-  const BasicBlock *Exit = R->getExit();
-
-  const DebugLoc &Begin = Entry->getFirstNonPHIOrDbg()->getDebugLoc();
-  const DebugLoc &End = Exit->getFirstNonPHIOrDbg()->getDebugLoc();
+  DebugLoc Begin, End;
+  getDebugLocations(R, Begin, End);
 
   emitOptimizationRemark(Ctx, DEBUG_TYPE, F, Begin,
                          "A valid Scop begins here.");
