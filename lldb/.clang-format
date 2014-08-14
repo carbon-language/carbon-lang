@@ -5,3 +5,4 @@ BreakBeforeBraces: Allman
 AlwaysBreakAfterDefinitionReturnType: true
 AllowShortFunctionsOnASingleLine: Inline
 BreakConstructorInitializersBeforeComma: true
+IndentCaseLabels: true
