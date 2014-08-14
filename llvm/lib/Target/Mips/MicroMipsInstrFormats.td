@@ -621,3 +621,15 @@ class MADDS_FM_MM<bits<6> funct>: MMArch {
   let Inst{10-6}  = fr;
   let Inst{5-0}   = funct;
 }
+
+class COMPACT_BRANCH_FM_MM<bits<5> funct> {
+  bits<5>  rs;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x10;
+  let Inst{25-21} = funct;
+  let Inst{20-16} = rs;
+  let Inst{15-0}  = offset;
+}

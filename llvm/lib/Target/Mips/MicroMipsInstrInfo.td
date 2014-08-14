@@ -26,6 +26,16 @@ def brtarget_mm : Operand<OtherVT> {
   let DecoderMethod = "DecodeBranchTargetMM";
 }
 
+class CompactBranchMM<string opstr, DAGOperand opnd, PatFrag cond_op,
+                      RegisterOperand RO> :
+  InstSE<(outs), (ins RO:$rs, opnd:$offset),
+         !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let hasDelaySlot = 0;
+  let Defs = [AT];
+}
+
 let canFoldAsLoad = 1 in
 class LoadLeftRightMM<string opstr, SDNode OpNode, RegisterOperand RO,
                       Operand MemOpnd> :
@@ -104,6 +114,12 @@ class WaitMM<string opstr> :
          NoItinerary, FrmOther, opstr>;
 
 let DecoderNamespace = "MicroMips", Predicates = [InMicroMips] in {
+  /// Compact Branch Instructions
+  def BEQZC_MM : CompactBranchMM<"beqzc", brtarget_mm, seteq, GPR32Opnd>,
+                 COMPACT_BRANCH_FM_MM<0x7>;
+  def BNEZC_MM : CompactBranchMM<"bnezc", brtarget_mm, setne, GPR32Opnd>,
+                 COMPACT_BRANCH_FM_MM<0x5>;
+
   /// Arithmetic Instructions (ALU Immediate)
   def ADDiu_MM : MMRel, ArithLogicI<"addiu", simm16, GPR32Opnd>,
                  ADDI_FM_MM<0xc>;
