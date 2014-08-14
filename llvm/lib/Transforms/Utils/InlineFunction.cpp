@@ -356,11 +356,35 @@ static void CloneAliasScopeMetadata(CallSite CS, ValueToValueMapTy &VMap) {
     if (!NI)
       continue;
 
-    if (MDNode *M = NI->getMetadata(LLVMContext::MD_alias_scope))
-      NI->setMetadata(LLVMContext::MD_alias_scope, MDMap[M]);
+    if (MDNode *M = NI->getMetadata(LLVMContext::MD_alias_scope)) {
+      MDNode *NewMD = MDMap[M];
+      // If the call site also had alias scope metadata (a list of scopes to
+      // which instructions inside it might belong), propagate those scopes to
+      // the inlined instructions.
+      if (MDNode *CSM =
+          CS.getInstruction()->getMetadata(LLVMContext::MD_alias_scope))
+        NewMD = MDNode::concatenate(NewMD, CSM);
+      NI->setMetadata(LLVMContext::MD_alias_scope, NewMD);
+    } else if (NI->mayReadOrWriteMemory()) {
+      if (MDNode *M =
+          CS.getInstruction()->getMetadata(LLVMContext::MD_alias_scope))
+        NI->setMetadata(LLVMContext::MD_alias_scope, M);
+    }
 
-    if (MDNode *M = NI->getMetadata(LLVMContext::MD_noalias))
-      NI->setMetadata(LLVMContext::MD_noalias, MDMap[M]);
+    if (MDNode *M = NI->getMetadata(LLVMContext::MD_noalias)) {
+      MDNode *NewMD = MDMap[M];
+      // If the call site also had noalias metadata (a list of scopes with
+      // which instructions inside it don't alias), propagate those scopes to
+      // the inlined instructions.
+      if (MDNode *CSM =
+          CS.getInstruction()->getMetadata(LLVMContext::MD_noalias))
+        NewMD = MDNode::concatenate(NewMD, CSM);
+      NI->setMetadata(LLVMContext::MD_noalias, NewMD);
+    } else if (NI->mayReadOrWriteMemory()) {
+      if (MDNode *M =
+          CS.getInstruction()->getMetadata(LLVMContext::MD_noalias))
+        NI->setMetadata(LLVMContext::MD_noalias, M);
+    }
   }
 
   // Now that everything has been replaced, delete the dummy nodes.
