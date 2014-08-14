@@ -13,15 +13,15 @@ CtorInit<int> x;
 
 // Keep these two namespace definitions separate; merging them hides the bug.
 namespace EmitInlineMethods {
-  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1C1fEPNS_1AE(
-  // CHECK-DAG: declare void @_ZN17EmitInlineMethods1A1gEv(
+  // CHECK-DAG: define linkonce_odr [[CC:(x86_thiscallcc[ ]+)?]]void @_ZN17EmitInlineMethods1C1fEPNS_1AE(
+  // CHECK-DAG: declare [[CC]]void @_ZN17EmitInlineMethods1A1gEv(
   struct C {
     __attribute__((used)) void f(A *p) { p->g(); }
   };
 }
 namespace EmitInlineMethods {
-  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1D1fEPNS_1BE(
-  // CHECK-DAG: define linkonce_odr void @_ZN17EmitInlineMethods1B1gEv(
+  // CHECK-DAG: define linkonce_odr [[CC]]void @_ZN17EmitInlineMethods1D1fEPNS_1BE(
+  // CHECK-DAG: define linkonce_odr [[CC]]void @_ZN17EmitInlineMethods1B1gEv(
   struct D {
     __attribute__((used)) void f(B *p) { p->g(); }
   };
