@@ -639,9 +639,9 @@ private:
 
   void next() {
     if (CurrentToken) {
-      determineTokenType(*CurrentToken);
-      CurrentToken->BindingStrength = Contexts.back().BindingStrength;
       CurrentToken->NestingLevel = Contexts.size() - 1;
+      CurrentToken->BindingStrength = Contexts.back().BindingStrength;
+      determineTokenType(*CurrentToken);
       CurrentToken = CurrentToken->Next;
     }
 
@@ -745,7 +745,8 @@ private:
       // Line.MightBeFunctionDecl can only be true after the parentheses of a
       // function declaration have been found. In this case, 'Current' is a
       // trailing token of this declaration and thus cannot be a name.
-      if (isStartOfName(Current) && !Line.MightBeFunctionDecl) {
+      if (isStartOfName(Current) &&
+          (!Line.MightBeFunctionDecl || Current.NestingLevel != 0)) {
         Contexts.back().FirstStartOfName = &Current;
         Current.Type = TT_StartOfName;
       } else if (Current.is(tok::kw_auto)) {
