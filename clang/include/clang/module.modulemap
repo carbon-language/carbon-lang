@@ -47,9 +47,6 @@ module Clang_Basic {
   exclude header "Basic/Sanitizers.def"
   exclude header "Basic/TokenKinds.def"
 
-  // This file is one big layering violation.
-  exclude header "Basic/AllDiagnostics.h"
-
   // This file includes a header from Lex.
   exclude header "Basic/PlistSupport.h"
 
@@ -61,6 +58,24 @@ module Clang_Basic {
 
 module Clang_CodeGen { requires cplusplus umbrella "CodeGen" module * { export * } }
 module Clang_Config { requires cplusplus umbrella "Config" module * { export * } }
+
+// Files for diagnostic groups are spread all over the include/clang/ tree, but
+// logically form a single module.
+module Clang_Diagnostics {
+  requires cplusplus
+
+  module All { header "Basic/AllDiagnostics.h" export * }
+  module Analysis { header "Analysis/AnalysisDiagnostic.h" export * }
+  module AST { header "AST/ASTDiagnostic.h" export * }
+  module Comment { header "AST/CommentDiagnostic.h" export * }
+  module Driver { header "Driver/DriverDiagnostic.h" export * }
+  module Frontend { header "Frontend/FrontendDiagnostic.h" export * }
+  module Lex { header "Lex/LexDiagnostic.h" export * }
+  module Parse { header "Parse/ParseDiagnostic.h" export * }
+  // FIXME: This breaks the build of Clang_Sema, for unknown reasons.
+  //module Sema { header "Sema/SemaDiagnostic.h" export * }
+  module Serialization { header "Serialization/SerializationDiagnostic.h" export * }
+}
 
 module Clang_Driver {
   requires cplusplus
@@ -100,9 +115,6 @@ module Clang_StaticAnalyzer {
 
   // This file is intended for repeated textual inclusion.
   exclude header "StaticAnalyzer/Core/Analyses.def"
-
-  // FIXME: This is logically a part of Basic, but has been put in the wrong place.
-  exclude header "StaticAnalyzer/Core/AnalyzerOptions.h"
 
   module * { export * }
 }
