@@ -14224,6 +14224,21 @@ static SDValue getTargetVShiftNode(unsigned Opc, SDLoc dl, MVT VT,
   return DAG.getNode(Opc, dl, VT, SrcOp, ShAmt);
 }
 
+/// \brief Return (vselect \p Mask, \p Op, \p PreservedSrc) along with the
+/// necessary casting for \p Mask when lowering masking intrinsics.
+static SDValue getVectorMaskingNode(SDValue Op, SDValue Mask,
+                                    SDValue PreservedSrc, SelectionDAG &DAG) {
+    EVT VT = Op.getValueType();
+    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
+                                  MVT::i1, VT.getVectorNumElements());
+    SDLoc dl(Op);
+
+    assert(MaskVT.isSimple() && "invalid mask type");
+    return DAG.getNode(ISD::VSELECT, dl, VT,
+                       DAG.getNode(ISD::BITCAST, dl, MaskVT, Mask),
+                       Op, PreservedSrc);
+}
+
 static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
   SDLoc dl(Op);
   unsigned IntNo = cast<ConstantSDNode>(Op.getOperand(0))->getZExtValue();
@@ -14602,20 +14617,13 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::FSQRT, dl, Op.getValueType(), Op.getOperand(1));
 
   case Intrinsic::x86_avx512_mask_valign_q_512:
-  case Intrinsic::x86_avx512_mask_valign_d_512: {
-    EVT VT = Op.getValueType();
-    EVT MaskVT = EVT::getVectorVT(*DAG.getContext(),
-                                  MVT::i1, VT.getVectorNumElements());
-    assert(MaskVT.isSimple() && "invalid valign mask type");
+  case Intrinsic::x86_avx512_mask_valign_d_512:
     // Vector source operands are swapped.
-    return DAG.getNode(ISD::VSELECT, dl, VT,
-                       DAG.getNode(ISD::BITCAST, dl, MaskVT,
-                                   Op.getOperand(5)),
-                       DAG.getNode(X86ISD::VALIGN, dl, VT,
-                                   Op.getOperand(2), Op.getOperand(1),
-                                   Op.getOperand(3)),
-                       Op.getOperand(4));
-  }
+    return getVectorMaskingNode(DAG.getNode(X86ISD::VALIGN, dl,
+                                            Op.getValueType(), Op.getOperand(2),
+                                            Op.getOperand(1),
+                                            Op.getOperand(3)),
+                                Op.getOperand(5), Op.getOperand(4), DAG);
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
