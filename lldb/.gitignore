@@ -28,3 +28,5 @@ test/20*
 
 # We should ignore Xcode-style embedding of llvm/ at lldb root dir.
 /llvm/
+/DerivedData/
+/lldb.xcworkspace/xcshareddata/
