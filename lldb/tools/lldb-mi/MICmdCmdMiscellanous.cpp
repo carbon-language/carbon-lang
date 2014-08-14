@@ -282,11 +282,14 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 		miTuple.Add( miValueResult2 );
 
 		CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-		const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
-		const CMIUtilString strPid( CMIUtilString::Format( "%lld", pid ) );
-		const CMICmnMIValueConst miValueConst3( strPid );
-		const CMICmnMIValueResult miValueResult3( "pid", miValueConst3 );
-		miTuple.Add( miValueResult3 );
+		if (rSessionInfo.m_lldbProcess.IsValid ())
+		{
+			const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
+			const CMIUtilString strPid( CMIUtilString::Format( "%lld", pid ) );
+			const CMICmnMIValueConst miValueConst3( strPid );
+			const CMICmnMIValueResult miValueResult3( "pid", miValueConst3 );
+			miTuple.Add( miValueResult3 );
+		}
 
 		const CMICmnMIValueConst miValueConst4( MIRSRC( IDS_WORD_NOT_IMPLEMENTED_BRKTS ) );
 		const CMICmnMIValueResult miValueResult4( "num_children", miValueConst4 );
@@ -315,19 +318,25 @@ bool CMICmdCmdListThreadGroups::Acknowledge( void )
 		miTuple.Add( miValueResult2 );
 
 		CMICmnLLDBDebugSessionInfo & rSessionInfo( CMICmnLLDBDebugSessionInfo::Instance() );
-		const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
-		const CMIUtilString strPid( CMIUtilString::Format( "%lld", pid ) );
-		const CMICmnMIValueConst miValueConst3( strPid );
-		const CMICmnMIValueResult miValueResult3( "pid", miValueConst3 );
-		miTuple.Add( miValueResult3 );
+		if (rSessionInfo.m_lldbProcess.IsValid ())
+		{
+			const lldb::pid_t pid = rSessionInfo.m_lldbProcess.GetProcessID();
+			const CMIUtilString strPid( CMIUtilString::Format( "%lld", pid ) );
+			const CMICmnMIValueConst miValueConst3( strPid );
+			const CMICmnMIValueResult miValueResult3( "pid", miValueConst3 );
+			miTuple.Add( miValueResult3 );
+		}
 
-		lldb::SBTarget & rTrgt = rSessionInfo.m_lldbTarget;
-		const MIchar * pDir = rTrgt.GetExecutable().GetDirectory();
-		const MIchar * pFileName = rTrgt.GetExecutable().GetFilename();
-		const CMIUtilString strFile( CMIUtilString::Format( "%s/%s", pDir, pFileName ) );
-		const CMICmnMIValueConst miValueConst4( strFile );
-		const CMICmnMIValueResult miValueResult4( "executable", miValueConst4 );
-		miTuple.Add( miValueResult4 );
+		if (rSessionInfo.m_lldbTarget.IsValid ())
+		{
+			lldb::SBTarget & rTrgt = rSessionInfo.m_lldbTarget;
+			const MIchar * pDir = rTrgt.GetExecutable().GetDirectory();
+			const MIchar * pFileName = rTrgt.GetExecutable().GetFilename();
+			const CMIUtilString strFile( CMIUtilString::Format( "%s/%s", pDir, pFileName ) );
+			const CMICmnMIValueConst miValueConst4( strFile );
+			const CMICmnMIValueResult miValueResult4( "executable", miValueConst4 );
+			miTuple.Add( miValueResult4 );
+		}
 		
 		const CMICmnMIValueList miValueList( miTuple );
 		const CMICmnMIValueResult miValueResult5( "groups", miValueList );
