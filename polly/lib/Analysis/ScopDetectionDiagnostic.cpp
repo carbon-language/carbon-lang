@@ -149,6 +149,13 @@ const llvm::DebugLoc &RejectReason::getDebugLoc() const {
   return Unknown;
 }
 
+// RejectLog.
+void RejectLog::print(raw_ostream &OS, int level) const {
+  int j = 0;
+  for (auto Reason : ErrorReports)
+    OS.indent(level) << "[" << j++ << "] " << Reason->getMessage() << "\n";
+}
+
 //===----------------------------------------------------------------------===//
 // ReportCFG.
 

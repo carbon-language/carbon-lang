@@ -180,6 +180,8 @@ public:
   /// @return true, if we store at least one error.
   bool hasErrors() const { return size() > 0; }
 
+  void print(raw_ostream &OS, int level = 0) const;
+
   const Region *region() const { return R; }
   void report(RejectReasonPtr Reject) { ErrorReports.push_back(Reject); }
 };
