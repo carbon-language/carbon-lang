@@ -33,6 +33,7 @@
 #include "lldb/Host/File.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
+#include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/NativeRegisterContext.h"
@@ -2150,7 +2151,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_QSetSTDIN (StringExtractorGDBRemote &packet)
 {
     packet.SetFilePos(::strlen ("QSetSTDIN:"));
-    ProcessLaunchInfo::FileAction file_action;
+    FileAction file_action;
     std::string path;
     packet.GetHexByteString(path);
     const bool read = false;
@@ -2167,7 +2168,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_QSetSTDOUT (StringExtractorGDBRemote &packet)
 {
     packet.SetFilePos(::strlen ("QSetSTDOUT:"));
-    ProcessLaunchInfo::FileAction file_action;
+    FileAction file_action;
     std::string path;
     packet.GetHexByteString(path);
     const bool read = true;
@@ -2184,7 +2185,7 @@ GDBRemoteCommunication::PacketResult
 GDBRemoteCommunicationServer::Handle_QSetSTDERR (StringExtractorGDBRemote &packet)
 {
     packet.SetFilePos(::strlen ("QSetSTDERR:"));
-    ProcessLaunchInfo::FileAction file_action;
+    FileAction file_action;
     std::string path;
     packet.GetHexByteString(path);
     const bool read = true;

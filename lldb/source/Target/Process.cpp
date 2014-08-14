@@ -404,7 +404,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             
         case 'i':   // STDIN for read only
             {   
-                ProcessLaunchInfo::FileAction action;
+                FileAction action;
                 if (action.Open (STDIN_FILENO, option_arg, true, false))
                     launch_info.AppendFileAction (action);
             }
@@ -412,7 +412,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             
         case 'o':   // Open STDOUT for write only
             {   
-                ProcessLaunchInfo::FileAction action;
+                FileAction action;
                 if (action.Open (STDOUT_FILENO, option_arg, false, true))
                     launch_info.AppendFileAction (action);
             }
@@ -420,7 +420,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
 
         case 'e':   // STDERR for write only
             {   
-                ProcessLaunchInfo::FileAction action;
+                FileAction action;
                 if (action.Open (STDERR_FILENO, option_arg, false, true))
                     launch_info.AppendFileAction (action);
             }
@@ -433,7 +433,7 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             
         case 'n':   // Disable STDIO
             {
-                ProcessLaunchInfo::FileAction action;
+                FileAction action;
                 if (action.Open (STDIN_FILENO, "/dev/null", true, false))
                     launch_info.AppendFileAction (action);
                 if (action.Open (STDOUT_FILENO, "/dev/null", false, true))

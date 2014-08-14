@@ -68,7 +68,9 @@
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
+#include "lldb/Target/FileAction.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Target/ProcessLaunchInfo.h"
 #include "lldb/Target/TargetList.h"
 #include "lldb/Utility/CleanUp.h"
 
@@ -1955,10 +1957,10 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
 
         for (size_t i=0; i<num_file_actions; ++i)
         {
-            const ProcessLaunchInfo::FileAction *launch_file_action = launch_info.GetFileActionAtIndex(i);
+            const FileAction *launch_file_action = launch_info.GetFileActionAtIndex(i);
             if (launch_file_action)
             {
-                if (!ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (&file_actions,
+                if (!AddPosixSpawnFileAction (&file_actions,
                                                                              launch_file_action,
                                                                              log,
                                                                              error))
@@ -2029,6 +2031,70 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
     }
 
     return error;
+}
+
+bool Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, Log *log, Error &error)
+{
+    if (info == NULL)
+        return false;
+
+    posix_spawn_file_actions_t *file_actions = reinterpret_cast<posix_spawn_file_actions_t *>(_file_actions);
+
+    switch (info->GetAction())
+    {
+    case FileAction::eFileActionNone:
+        error.Clear();
+        break;
+
+    case FileAction::eFileActionClose:
+        if (info->GetFD() == -1)
+            error.SetErrorString("invalid fd for posix_spawn_file_actions_addclose(...)");
+        else
+        {
+            error.SetError(::posix_spawn_file_actions_addclose(file_actions, info->GetFD()), eErrorTypePOSIX);
+            if (log && (error.Fail() || log))
+                error.PutToLog(log, "posix_spawn_file_actions_addclose (action=%p, fd=%i)",
+                               static_cast<void *>(file_actions), info->GetFD());
+        }
+        break;
+
+    case FileAction::eFileActionDuplicate:
+        if (info->GetFD() == -1)
+            error.SetErrorString("invalid fd for posix_spawn_file_actions_adddup2(...)");
+        else if (info->GetActionArgument() == -1)
+            error.SetErrorString("invalid duplicate fd for posix_spawn_file_actions_adddup2(...)");
+        else
+        {
+            error.SetError(::posix_spawn_file_actions_adddup2(file_actions, info->GetFD(), info->GetActionArgument()),
+                           eErrorTypePOSIX);
+            if (log && (error.Fail() || log))
+                error.PutToLog(log, "posix_spawn_file_actions_adddup2 (action=%p, fd=%i, dup_fd=%i)",
+                               static_cast<void *>(file_actions), info->GetFD(), info->GetActionArgument());
+        }
+        break;
+
+    case FileAction::eFileActionOpen:
+        if (info->GetFD() == -1)
+            error.SetErrorString("invalid fd in posix_spawn_file_actions_addopen(...)");
+        else
+        {
+            int oflag = info->GetActionArgument();
+
+            mode_t mode = 0;
+
+            if (oflag & O_CREAT)
+                mode = 0640;
+
+            error.SetError(
+                ::posix_spawn_file_actions_addopen(file_actions, info->GetFD(), info->GetPath(), oflag, mode),
+                eErrorTypePOSIX);
+            if (error.Fail() || log)
+                error.PutToLog(log, "posix_spawn_file_actions_addopen (action=%p, fd=%i, path='%s', oflag=%i, mode=%i)",
+                               static_cast<void *>(file_actions), info->GetFD(), info->GetPath(), oflag, mode);
+        }
+        break;
+    }
+    return error.Success();
 }
 
 #endif // LaunchProcedssPosixSpawn: Apple, Linux, FreeBSD and other GLIBC systems

@@ -23,6 +23,9 @@
 
 namespace lldb_private {
 
+class FileAction;
+class ProcessLaunchInfo;
+
 //----------------------------------------------------------------------
 /// @class Host Host.h "lldb/Host/Host.h"
 /// @brief A class that provides host computer information.
@@ -508,6 +511,8 @@ public:
 
     static Error
     LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid);
+
+    static bool AddPosixSpawnFileAction(void *file_actions, const FileAction *info, Log *log, Error &error);
 #endif
 
     static lldb::pid_t

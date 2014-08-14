@@ -158,7 +158,7 @@ public:
     GetUnixSignals();
 
     const char *
-    GetFilePath(const lldb_private::ProcessLaunchInfo::FileAction *file_action,
+    GetFilePath(const lldb_private::FileAction *file_action,
                 const char *default_path);
 
     /// Stops all threads in the process.

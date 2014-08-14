@@ -18,6 +18,7 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
+#include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
 
 #include "ProcessWindows.h"
@@ -30,7 +31,7 @@ namespace
 HANDLE
 GetStdioHandle(ProcessLaunchInfo &launch_info, int fd)
 {
-    const ProcessLaunchInfo::FileAction *action = launch_info.GetFileActionForFD(fd);
+    const FileAction *action = launch_info.GetFileActionForFD(fd);
     if (action == nullptr)
         return NULL;
     SECURITY_ATTRIBUTES secattr = {0};

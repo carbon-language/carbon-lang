@@ -1393,7 +1393,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
     // Posix spawn stuff.
     xpc_dictionary_set_int64(message, LauncherXPCServiceCPUTypeKey, launch_info.GetArchitecture().GetMachOCPUType());
     xpc_dictionary_set_int64(message, LauncherXPCServicePosixspawnFlagsKey, Host::GetPosixspawnFlags(launch_info));
-    const ProcessLaunchInfo::FileAction *file_action = launch_info.GetFileActionForFD(STDIN_FILENO);
+    const FileAction *file_action = launch_info.GetFileActionForFD(STDIN_FILENO);
     if (file_action && file_action->GetPath())
     {
         xpc_dictionary_set_string(message, LauncherXPCServiceStdInPathKeyKey, file_action->GetPath());

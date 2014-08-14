@@ -9,45 +9,16 @@
 
 #include "lldb/Host/Config.h"
 
-#include "lldb/Target/ProcessLaunchInfo.h"
-
 #ifndef LLDB_DISABLE_POSIX
 #include <spawn.h>
 #endif
 
+#include "lldb/Target/ProcessLaunchInfo.h"
+#include "lldb/Target/FileAction.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
-
-//----------------------------------------------------------------------------
-// ProcessLaunchInfo::FileAction member functions
-//----------------------------------------------------------------------------
-
-ProcessLaunchInfo::FileAction::FileAction () :
-    m_action (eFileActionNone),
-    m_fd (-1),
-    m_arg (-1),
-    m_path ()
-{
-}
-
-void
-ProcessLaunchInfo::FileAction::Clear()
-{
-    m_action = eFileActionNone;
-    m_fd = -1;
-    m_arg = -1;
-    m_path.clear();
-}
-
-const char *
-ProcessLaunchInfo::FileAction::GetPath () const
-{
-    if (m_path.empty())
-        return NULL;
-    return m_path.c_str();
-}
 
 //----------------------------------------------------------------------------
 // ProcessLaunchInfo member functions
@@ -69,8 +40,7 @@ ProcessLaunchInfo::ProcessLaunchInfo () :
 {
 }
 
-ProcessLaunchInfo::ProcessLaunchInfo (
-                                      const char *stdin_path,
+ProcessLaunchInfo::ProcessLaunchInfo (const char *stdin_path,
                                       const char *stdout_path,
                                       const char *stderr_path,
                                       const char *working_directory,
@@ -90,7 +60,7 @@ ProcessLaunchInfo::ProcessLaunchInfo (
 {
     if (stdin_path)
     {
-        ProcessLaunchInfo::FileAction file_action;
+        FileAction file_action;
         const bool read = true;
         const bool write = false;
         if (file_action.Open(STDIN_FILENO, stdin_path, read, write))
@@ -98,7 +68,7 @@ ProcessLaunchInfo::ProcessLaunchInfo (
     }
     if (stdout_path)
     {
-        ProcessLaunchInfo::FileAction file_action;
+        FileAction file_action;
         const bool read = false;
         const bool write = true;
         if (file_action.Open(STDOUT_FILENO, stdout_path, read, write))
@@ -106,7 +76,7 @@ ProcessLaunchInfo::ProcessLaunchInfo (
     }
     if (stderr_path)
     {
-        ProcessLaunchInfo::FileAction file_action;
+        FileAction file_action;
         const bool read = false;
         const bool write = true;
         if (file_action.Open(STDERR_FILENO, stderr_path, read, write))
@@ -164,7 +134,7 @@ ProcessLaunchInfo::AppendSuppressFileAction (int fd, bool read, bool write)
     return false;
 }
 
-const ProcessLaunchInfo::FileAction *
+const FileAction *
 ProcessLaunchInfo::GetFileActionAtIndex (size_t idx) const
 {
     if (idx < m_file_actions.size())
@@ -172,7 +142,7 @@ ProcessLaunchInfo::GetFileActionAtIndex (size_t idx) const
     return NULL;
 }
 
-const ProcessLaunchInfo::FileAction *
+const FileAction *
 ProcessLaunchInfo::GetFileActionForFD (int fd) const
 {
     for (size_t idx=0, count=m_file_actions.size(); idx < count; ++idx)
@@ -490,132 +460,3 @@ ProcessLaunchInfo::ConvertArgumentsForLaunchingInShell (Error &error,
     }
     return false;
 }
-
-
-bool
-ProcessLaunchInfo::FileAction::Open (int fd, const char *path, bool read, bool write)
-{
-    if ((read || write) && fd >= 0 && path && path[0])
-    {
-        m_action = eFileActionOpen;
-        m_fd = fd;
-        if (read && write)
-            m_arg = O_NOCTTY | O_CREAT | O_RDWR;
-        else if (read)
-            m_arg = O_NOCTTY | O_RDONLY;
-        else
-            m_arg = O_NOCTTY | O_CREAT | O_WRONLY;
-        m_path.assign (path);
-        return true;
-    }
-    else
-    {
-        Clear();
-    }
-    return false;
-}
-
-bool
-ProcessLaunchInfo::FileAction::Close (int fd)
-{
-    Clear();
-    if (fd >= 0)
-    {
-        m_action = eFileActionClose;
-        m_fd = fd;
-    }
-    return m_fd >= 0;
-}
-
-
-bool
-ProcessLaunchInfo::FileAction::Duplicate (int fd, int dup_fd)
-{
-    Clear();
-    if (fd >= 0 && dup_fd >= 0)
-    {
-        m_action = eFileActionDuplicate;
-        m_fd = fd;
-        m_arg = dup_fd;
-    }
-    return m_fd >= 0;
-}
-
-
-
-#ifndef LLDB_DISABLE_POSIX
-bool
-ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (void *_file_actions,
-                                                        const FileAction *info,
-                                                        Log *log,
-                                                        Error& error)
-{
-    if (info == NULL)
-        return false;
-
-    posix_spawn_file_actions_t *file_actions = reinterpret_cast<posix_spawn_file_actions_t *>(_file_actions);
-
-    switch (info->m_action)
-    {
-        case eFileActionNone:
-            error.Clear();
-            break;
-
-        case eFileActionClose:
-            if (info->m_fd == -1)
-                error.SetErrorString ("invalid fd for posix_spawn_file_actions_addclose(...)");
-            else
-            {
-                error.SetError (::posix_spawn_file_actions_addclose (file_actions, info->m_fd),
-                                eErrorTypePOSIX);
-                if (log && (error.Fail() || log))
-                    error.PutToLog(log, "posix_spawn_file_actions_addclose (action=%p, fd=%i)",
-                                   static_cast<void*>(file_actions), info->m_fd);
-            }
-            break;
-
-        case eFileActionDuplicate:
-            if (info->m_fd == -1)
-                error.SetErrorString ("invalid fd for posix_spawn_file_actions_adddup2(...)");
-            else if (info->m_arg == -1)
-                error.SetErrorString ("invalid duplicate fd for posix_spawn_file_actions_adddup2(...)");
-            else
-            {
-                error.SetError (::posix_spawn_file_actions_adddup2 (file_actions, info->m_fd, info->m_arg),
-                                eErrorTypePOSIX);
-                if (log && (error.Fail() || log))
-                    error.PutToLog(log, "posix_spawn_file_actions_adddup2 (action=%p, fd=%i, dup_fd=%i)",
-                                   static_cast<void*>(file_actions), info->m_fd,
-                                   info->m_arg);
-            }
-            break;
-
-        case eFileActionOpen:
-            if (info->m_fd == -1)
-                error.SetErrorString ("invalid fd in posix_spawn_file_actions_addopen(...)");
-            else
-            {
-                int oflag = info->m_arg;
-
-                mode_t mode = 0;
-
-                if (oflag & O_CREAT)
-                    mode = 0640;
-
-                error.SetError (::posix_spawn_file_actions_addopen (file_actions,
-                                                                    info->m_fd,
-                                                                    info->m_path.c_str(),
-                                                                    oflag,
-                                                                    mode),
-                                eErrorTypePOSIX);
-                if (error.Fail() || log)
-                    error.PutToLog(log,
-                                   "posix_spawn_file_actions_addopen (action=%p, fd=%i, path='%s', oflag=%i, mode=%i)",
-                                   static_cast<void*>(file_actions), info->m_fd,
-                                   info->m_path.c_str(), oflag, mode);
-            }
-            break;
-    }
-    return error.Success();
-}
-#endif

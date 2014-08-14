@@ -6,6 +6,7 @@ add_lldb_library(lldbTarget
   ABI.cpp
   CPPLanguageRuntime.cpp
   ExecutionContext.cpp
+  FileAction.cpp
   JITLoader.cpp
   JITLoaderList.cpp
   LanguageRuntime.cpp
