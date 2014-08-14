@@ -57,6 +57,8 @@ template<int> struct UseInt;
 template<typename T> void UseRedeclaredEnum(UseInt<T() + CommonTemplate<char>::a>);
 constexpr void (*UseRedeclaredEnumB)(UseInt<1>) = UseRedeclaredEnum<int>;
 
+typedef WithPartialSpecialization<void(int)>::type WithPartialSpecializationInstantiate3;
+
 template<typename> struct MergeSpecializations;
 template<typename T> struct MergeSpecializations<T&> {
   typedef int partially_specialized_in_b;
@@ -76,4 +78,5 @@ void TriggerInstantiation() {
   UseDefinedInBImpl<void>();
   Std::f<int>();
   PartiallyInstantiatePartialSpec<int*>::foo();
+  WithPartialSpecialization<void(int)>::type x;
 }

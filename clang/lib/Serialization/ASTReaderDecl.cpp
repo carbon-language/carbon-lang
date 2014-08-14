@@ -2391,8 +2391,14 @@ static DeclContext *getPrimaryContextForMerging(DeclContext *DC) {
   if (NamespaceDecl *ND = dyn_cast<NamespaceDecl>(DC))
     return ND->getOriginalNamespace();
 
+  // There is one tricky case here: if DC is a class with no definition, then
+  // we're merging a declaration whose definition is added by an update record,
+  // but we've not yet loaded that update record. In this case, we use the
+  // canonical declaration for merging until we get a real definition.
+  // FIXME: When we add a definition, we may need to move the partial lookup
+  // information from the canonical declaration onto the chosen definition.
   if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(DC))
-    return RD->getDefinition();
+    return RD->getPrimaryContext();
 
   if (EnumDecl *ED = dyn_cast<EnumDecl>(DC))
     return ED->getASTContext().getLangOpts().CPlusPlus? ED->getDefinition()
@@ -3361,7 +3367,12 @@ void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,
           Reader.ReadTemplateArgumentList(TemplArgs, F, Record, Idx);
           auto *TemplArgList = TemplateArgumentList::CreateCopy(
               Reader.getContext(), TemplArgs.data(), TemplArgs.size());
-          Spec->setInstantiationOf(PartialSpec, TemplArgList);
+
+          // FIXME: If we already have a partial specialization set,
+          // check that it matches.
+          if (!Spec->getSpecializedTemplateOrPartial()
+                   .is<ClassTemplatePartialSpecializationDecl *>())
+            Spec->setInstantiationOf(PartialSpec, TemplArgList);
         }
       }
 
