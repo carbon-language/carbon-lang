@@ -41,6 +41,7 @@ using namespace llvm;
 namespace {
 
 class AArch64FastISel : public FastISel {
+
   class Address {
   public:
     typedef enum {
@@ -50,23 +51,17 @@ class AArch64FastISel : public FastISel {
 
   private:
     BaseKind Kind;
-    AArch64_AM::ShiftExtendType ExtType;
     union {
       unsigned Reg;
       int FI;
     } Base;
-    unsigned OffsetReg;
-    unsigned Shift;
     int64_t Offset;
     const GlobalValue *GV;
 
   public:
-    Address() : Kind(RegBase), ExtType(AArch64_AM::InvalidShiftExtend),
-      OffsetReg(0), Shift(0), Offset(0), GV(nullptr) { Base.Reg = 0; }
+    Address() : Kind(RegBase), Offset(0), GV(nullptr) { Base.Reg = 0; }
     void setKind(BaseKind K) { Kind = K; }
     BaseKind getKind() const { return Kind; }
-    void setExtendType(AArch64_AM::ShiftExtendType E) { ExtType = E; }
-    AArch64_AM::ShiftExtendType getExtendType() const { return ExtType; }
     bool isRegBase() const { return Kind == RegBase; }
     bool isFIBase() const { return Kind == FrameIndexBase; }
     void setReg(unsigned Reg) {
@@ -76,14 +71,6 @@ class AArch64FastISel : public FastISel {
     unsigned getReg() const {
       assert(isRegBase() && "Invalid base register access!");
       return Base.Reg;
-    }
-    void setOffsetReg(unsigned Reg) {
-      assert(isRegBase() && "Invalid offset register access!");
-      OffsetReg = Reg;
-    }
-    unsigned getOffsetReg() const {
-      assert(isRegBase() && "Invalid offset register access!");
-      return OffsetReg;
     }
     void setFI(unsigned FI) {
       assert(isFIBase() && "Invalid base frame index  access!");
@@ -95,11 +82,11 @@ class AArch64FastISel : public FastISel {
     }
     void setOffset(int64_t O) { Offset = O; }
     int64_t getOffset() { return Offset; }
-    void setShift(unsigned S) { Shift = S; }
-    unsigned getShift() { return Shift; }
 
     void setGlobalValue(const GlobalValue *G) { GV = G; }
     const GlobalValue *getGlobalValue() { return GV; }
+
+    bool isValid() { return isFIBase() || (isRegBase() && getReg() != 0); }
   };
 
   /// Subtarget - Keep a pointer to the AArch64Subtarget around so that we can
@@ -134,12 +121,13 @@ private:
   // Utility helper routines.
   bool isTypeLegal(Type *Ty, MVT &VT);
   bool isLoadStoreTypeLegal(Type *Ty, MVT &VT);
-  bool ComputeAddress(const Value *Obj, Address &Addr, Type *Ty = nullptr);
+  bool ComputeAddress(const Value *Obj, Address &Addr);
   bool ComputeCallAddress(const Value *V, Address &Addr);
-  bool SimplifyAddress(Address &Addr, MVT VT);
+  bool SimplifyAddress(Address &Addr, MVT VT, int64_t ScaleFactor,
+                       bool UseUnscaled);
   void AddLoadStoreOperands(Address &Addr, const MachineInstrBuilder &MIB,
-                            unsigned Flags, unsigned ScaleFactor,
-                            MachineMemOperand *MMO);
+                            unsigned Flags, MachineMemOperand *MMO,
+                            bool UseUnscaled);
   bool IsMemCpySmall(uint64_t Len, unsigned Alignment);
   bool TryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len,
                           unsigned Alignment);
@@ -149,9 +137,9 @@ private:
   // Emit functions.
   bool EmitCmp(Value *Src1Value, Value *Src2Value, bool isZExt);
   bool EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
-                MachineMemOperand *MMO = nullptr);
+                MachineMemOperand *MMO = nullptr, bool UseUnscaled = false);
   bool EmitStore(MVT VT, unsigned SrcReg, Address Addr,
-                 MachineMemOperand *MMO = nullptr);
+                 MachineMemOperand *MMO = nullptr, bool UseUnscaled = false);
   unsigned EmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emiti1Ext(unsigned SrcReg, MVT DestVT, bool isZExt);
   unsigned Emit_MUL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
@@ -349,8 +337,7 @@ unsigned AArch64FastISel::TargetMaterializeConstant(const Constant *C) {
 }
 
 // Computes the address to get to an object.
-bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
-{
+bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr) {
   const User *U = nullptr;
   unsigned Opcode = Instruction::UserOp1;
   if (const Instruction *I = dyn_cast<Instruction>(Obj)) {
@@ -377,18 +364,18 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
     break;
   case Instruction::BitCast: {
     // Look through bitcasts.
-    return ComputeAddress(U->getOperand(0), Addr, Ty);
+    return ComputeAddress(U->getOperand(0), Addr);
   }
   case Instruction::IntToPtr: {
     // Look past no-op inttoptrs.
     if (TLI.getValueType(U->getOperand(0)->getType()) == TLI.getPointerTy())
-      return ComputeAddress(U->getOperand(0), Addr, Ty);
+      return ComputeAddress(U->getOperand(0), Addr);
     break;
   }
   case Instruction::PtrToInt: {
     // Look past no-op ptrtoints.
     if (TLI.getValueType(U->getType()) == TLI.getPointerTy())
-      return ComputeAddress(U->getOperand(0), Addr, Ty);
+      return ComputeAddress(U->getOperand(0), Addr);
     break;
   }
   case Instruction::GetElementPtr: {
@@ -430,7 +417,7 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
 
     // Try to grab the base operand now.
     Addr.setOffset(TmpOffset);
-    if (ComputeAddress(U->getOperand(0), Addr, Ty))
+    if (ComputeAddress(U->getOperand(0), Addr))
       return true;
 
     // We failed, restore everything and try the other options.
@@ -450,86 +437,19 @@ bool AArch64FastISel::ComputeAddress(const Value *Obj, Address &Addr, Type *Ty)
     }
     break;
   }
-  case Instruction::Add: {
+  case Instruction::Add:
     // Adds of constants are common and easy enough.
-    const Value *LHS = U->getOperand(0);
-    const Value *RHS = U->getOperand(1);
-
-    if (isa<ConstantInt>(LHS))
-      std::swap(LHS, RHS);
-
-    if (const ConstantInt *CI = dyn_cast<ConstantInt>(RHS)) {
+    if (const ConstantInt *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
       Addr.setOffset(Addr.getOffset() + (uint64_t)CI->getSExtValue());
-      return ComputeAddress(LHS, Addr, Ty);
-    }
-
-    Address Backup = Addr;
-    if (ComputeAddress(LHS, Addr, Ty) && ComputeAddress(RHS, Addr, Ty))
-      return true;
-    Addr = Backup;
-
-    break;
-  }
-  case Instruction::Shl:
-    if (Addr.getOffsetReg())
-      break;
-
-    if (const auto *CI = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      unsigned Val = CI->getZExtValue();
-      if (Val < 1 || Val > 3)
-        break;
-
-      uint64_t NumBytes = 0;
-      if (Ty && Ty->isSized()) {
-        uint64_t NumBits = DL.getTypeSizeInBits(Ty);
-        NumBytes = NumBits / 8;
-        if (!isPowerOf2_64(NumBits))
-          NumBytes = 0;
-      }
-
-      if (NumBytes != (1ULL << Val))
-        break;
-
-      Addr.setShift(Val);
-      Addr.setExtendType(AArch64_AM::LSL);
-
-      if (const auto *I = dyn_cast<Instruction>(U->getOperand(0)))
-        if (FuncInfo.MBBMap[I->getParent()] == FuncInfo.MBB)
-          U = I;
-
-      if (const auto *ZE = dyn_cast<ZExtInst>(U))
-        if (ZE->getOperand(0)->getType()->isIntegerTy(32))
-          Addr.setExtendType(AArch64_AM::UXTW);
-
-      if (const auto *SE = dyn_cast<SExtInst>(U))
-        if (SE->getOperand(0)->getType()->isIntegerTy(32))
-          Addr.setExtendType(AArch64_AM::SXTW);
-
-      unsigned Reg = getRegForValue(U->getOperand(0));
-      if (!Reg)
-        return false;
-      Addr.setOffsetReg(Reg);
-      return true;
+      return ComputeAddress(U->getOperand(0), Addr);
     }
     break;
   }
 
-  if (Addr.getReg()) {
-    if (!Addr.getOffsetReg()) {
-      unsigned Reg = getRegForValue(Obj);
-      if (!Reg)
-        return false;
-      Addr.setOffsetReg(Reg);
-      return true;
-    }
-    return false;
-  }
-
-  unsigned Reg = getRegForValue(Obj);
-  if (!Reg)
-    return false;
-  Addr.setReg(Reg);
-  return true;
+  // Try to get this in a register if nothing else has worked.
+  if (!Addr.isValid())
+    Addr.setReg(getRegForValue(Obj));
+  return Addr.isValid();
 }
 
 bool AArch64FastISel::ComputeCallAddress(const Value *V, Address &Addr) {
@@ -611,80 +531,50 @@ bool AArch64FastISel::isLoadStoreTypeLegal(Type *Ty, MVT &VT) {
   return false;
 }
 
-bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
-  unsigned ScaleFactor;
+bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT,
+                                      int64_t ScaleFactor, bool UseUnscaled) {
+  bool needsLowering = false;
+  int64_t Offset = Addr.getOffset();
   switch (VT.SimpleTy) {
-  default: return false;
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
+  default:
+    return false;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+  case MVT::i64:
+  case MVT::f32:
+  case MVT::f64:
+    if (!UseUnscaled)
+      // Using scaled, 12-bit, unsigned immediate offsets.
+      needsLowering = ((Offset & 0xfff) != Offset);
+    else
+      // Using unscaled, 9-bit, signed immediate offsets.
+      needsLowering = (Offset > 256 || Offset < -256);
+    break;
   }
 
-  bool ImmediateOffsetNeedsLowering = false;
-  bool RegisterOffsetNeedsLowering = false;
-  int64_t Offset = Addr.getOffset();
-  if (((Offset < 0) || (Offset & (ScaleFactor - 1))) && !isInt<9>(Offset))
-    ImmediateOffsetNeedsLowering = true;
-  else if (Offset > 0 && !(Offset & (ScaleFactor - 1)) &&
-           !isUInt<12>(Offset / ScaleFactor))
-    ImmediateOffsetNeedsLowering = true;
-
-  // Cannot encode an offset register and an immediate offset in the same
-  // instruction. Fold the immediate offset into the load/store instruction and
-  // emit an additonal add to take care of the offset register.
-  if (!ImmediateOffsetNeedsLowering && Addr.getOffset() && Addr.isRegBase() &&
-      Addr.getOffsetReg())
-    RegisterOffsetNeedsLowering = true;
-
-  // If this is a stack pointer and the offset needs to be simplified then put
+  //If this is a stack pointer and the offset needs to be simplified then put
   // the alloca address into a register, set the base type back to register and
   // continue. This should almost never happen.
-  if (ImmediateOffsetNeedsLowering && Addr.isFIBase()) {
+  if (needsLowering && Addr.getKind() == Address::FrameIndexBase) {
     unsigned ResultReg = createResultReg(&AArch64::GPR64RegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ADDXri),
             ResultReg)
-      .addFrameIndex(Addr.getFI())
-      .addImm(0)
-      .addImm(0);
+        .addFrameIndex(Addr.getFI())
+        .addImm(0)
+        .addImm(0);
     Addr.setKind(Address::RegBase);
     Addr.setReg(ResultReg);
   }
 
-  if (RegisterOffsetNeedsLowering) {
-    unsigned ResultReg = 0;
-    if (Addr.getReg()) {
-      ResultReg = createResultReg(&AArch64::GPR64RegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(AArch64::ADDXrs), ResultReg)
-        .addReg(Addr.getReg())
-        .addReg(Addr.getOffsetReg())
-        .addImm(Addr.getShift());
-    } else
-      ResultReg = Emit_LSL_ri(MVT::i64, Addr.getOffsetReg(),
-                              /*Op0IsKill=*/false, Addr.getShift());
-    if (!ResultReg)
-      return false;
-
-    Addr.setReg(ResultReg);
-    Addr.setOffsetReg(0);
-    Addr.setShift(0);
-  }
-
   // Since the offset is too large for the load/store instruction get the
   // reg+offset into a register.
-  if (ImmediateOffsetNeedsLowering) {
-    unsigned ResultReg = 0;
-    if (Addr.getReg())
-      ResultReg = FastEmit_ri_(MVT::i64, ISD::ADD, Addr.getReg(),
-                               /*IsKill=*/false, Offset, MVT::i64);
-    else
-      ResultReg = FastEmit_i(MVT::i64, MVT::i64, ISD::Constant, Offset);
-
-    if (!ResultReg)
+  if (needsLowering) {
+    uint64_t UnscaledOffset = Addr.getOffset() * ScaleFactor;
+    unsigned ResultReg = FastEmit_ri_(MVT::i64, ISD::ADD, Addr.getReg(), false,
+                                      UnscaledOffset, MVT::i64);
+    if (ResultReg == 0)
       return false;
     Addr.setReg(ResultReg);
     Addr.setOffset(0);
@@ -695,11 +585,11 @@ bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
 void AArch64FastISel::AddLoadStoreOperands(Address &Addr,
                                            const MachineInstrBuilder &MIB,
                                            unsigned Flags,
-                                           unsigned ScaleFactor,
-                                           MachineMemOperand *MMO) {
-  int64_t Offset = Addr.getOffset() / ScaleFactor;
+                                           MachineMemOperand *MMO,
+                                           bool UseUnscaled) {
+  int64_t Offset = Addr.getOffset();
   // Frame base works a bit differently. Handle it separately.
-  if (Addr.isFIBase()) {
+  if (Addr.getKind() == Address::FrameIndexBase) {
     int FI = Addr.getFI();
     // FIXME: We shouldn't be using getObjectSize/getObjectAlignment.  The size
     // and alignment should be based on the VT.
@@ -709,19 +599,9 @@ void AArch64FastISel::AddLoadStoreOperands(Address &Addr,
     // Now add the rest of the operands.
     MIB.addFrameIndex(FI).addImm(Offset);
   } else {
-    assert(Addr.isRegBase() && "Unexpected address kind.");
-    if (Addr.getOffsetReg()) {
-      assert(Addr.getOffset() == 0 && "Unexpected offset");
-      bool IsSigned = Addr.getExtendType() == AArch64_AM::SXTW ||
-                      Addr.getExtendType() == AArch64_AM::SXTX;
-      MIB.addReg(Addr.getReg());
-      MIB.addReg(Addr.getOffsetReg());
-      MIB.addImm(IsSigned);
-      MIB.addImm(Addr.getShift() != 0);
-    } else {
-      MIB.addReg(Addr.getReg());
-      MIB.addImm(Offset);
-    }
+    // Now add the rest of the operands.
+    MIB.addReg(Addr.getReg());
+    MIB.addImm(Offset);
   }
 
   if (MMO)
@@ -729,68 +609,72 @@ void AArch64FastISel::AddLoadStoreOperands(Address &Addr,
 }
 
 bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
-                               MachineMemOperand *MMO) {
-  // Simplify this down to something we can handle.
-  if (!SimplifyAddress(Addr, VT))
-    return false;
-
-  unsigned ScaleFactor;
-  switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
-  }
-
+                               MachineMemOperand *MMO, bool UseUnscaled) {
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
-  bool UseScaled = true;
-  if ((Addr.getOffset() < 0) || (Addr.getOffset() & (ScaleFactor - 1))) {
-    UseScaled = false;
-    ScaleFactor = 1;
-  }
-
-  static const unsigned OpcTable[4][6] = {
-    { AArch64::LDURBBi,  AArch64::LDURHHi,  AArch64::LDURWi,  AArch64::LDURXi,
-      AArch64::LDURSi,   AArch64::LDURDi },
-    { AArch64::LDRBBui,  AArch64::LDRHHui,  AArch64::LDRWui,  AArch64::LDRXui,
-      AArch64::LDRSui,   AArch64::LDRDui },
-    { AArch64::LDRBBroX, AArch64::LDRHHroX, AArch64::LDRWroX, AArch64::LDRXroX,
-      AArch64::LDRSroX,  AArch64::LDRDroX },
-    { AArch64::LDRBBroW, AArch64::LDRHHroW, AArch64::LDRWroW, AArch64::LDRXroW,
-      AArch64::LDRSroW,  AArch64::LDRDroW }
-  };
+  if (!UseUnscaled && Addr.getOffset() < 0)
+    UseUnscaled = true;
 
   unsigned Opc;
   const TargetRegisterClass *RC;
   bool VTIsi1 = false;
-  bool UseRegOffset = Addr.isRegBase() && !Addr.getOffset() && Addr.getReg() &&
-                      Addr.getOffsetReg();
-  unsigned Idx = UseRegOffset ? 2 : UseScaled ? 1 : 0;
-  if (Addr.getExtendType() == AArch64_AM::UXTW ||
-      Addr.getExtendType() == AArch64_AM::SXTW)
-    Idx++;
-
+  int64_t ScaleFactor = 0;
   switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  VTIsi1 = true; // Intentional fall-through.
-  case MVT::i8:  Opc = OpcTable[Idx][0]; RC = &AArch64::GPR32RegClass; break;
-  case MVT::i16: Opc = OpcTable[Idx][1]; RC = &AArch64::GPR32RegClass; break;
-  case MVT::i32: Opc = OpcTable[Idx][2]; RC = &AArch64::GPR32RegClass; break;
-  case MVT::i64: Opc = OpcTable[Idx][3]; RC = &AArch64::GPR64RegClass; break;
-  case MVT::f32: Opc = OpcTable[Idx][4]; RC = &AArch64::FPR32RegClass; break;
-  case MVT::f64: Opc = OpcTable[Idx][5]; RC = &AArch64::FPR64RegClass; break;
+  default:
+    return false;
+  case MVT::i1:
+    VTIsi1 = true;
+  // Intentional fall-through.
+  case MVT::i8:
+    Opc = UseUnscaled ? AArch64::LDURBBi : AArch64::LDRBBui;
+    RC = &AArch64::GPR32RegClass;
+    ScaleFactor = 1;
+    break;
+  case MVT::i16:
+    Opc = UseUnscaled ? AArch64::LDURHHi : AArch64::LDRHHui;
+    RC = &AArch64::GPR32RegClass;
+    ScaleFactor = 2;
+    break;
+  case MVT::i32:
+    Opc = UseUnscaled ? AArch64::LDURWi : AArch64::LDRWui;
+    RC = &AArch64::GPR32RegClass;
+    ScaleFactor = 4;
+    break;
+  case MVT::i64:
+    Opc = UseUnscaled ? AArch64::LDURXi : AArch64::LDRXui;
+    RC = &AArch64::GPR64RegClass;
+    ScaleFactor = 8;
+    break;
+  case MVT::f32:
+    Opc = UseUnscaled ? AArch64::LDURSi : AArch64::LDRSui;
+    RC = TLI.getRegClassFor(VT);
+    ScaleFactor = 4;
+    break;
+  case MVT::f64:
+    Opc = UseUnscaled ? AArch64::LDURDi : AArch64::LDRDui;
+    RC = TLI.getRegClassFor(VT);
+    ScaleFactor = 8;
+    break;
   }
+  // Scale the offset.
+  if (!UseUnscaled) {
+    int64_t Offset = Addr.getOffset();
+    if (Offset & (ScaleFactor - 1))
+      // Retry using an unscaled, 9-bit, signed immediate offset.
+      return EmitLoad(VT, ResultReg, Addr, MMO, /*UseUnscaled*/ true);
+
+    Addr.setOffset(Offset / ScaleFactor);
+  }
+
+  // Simplify this down to something we can handle.
+  if (!SimplifyAddress(Addr, VT, UseUnscaled ? 1 : ScaleFactor, UseUnscaled))
+    return false;
 
   // Create the base instruction, then add the operands.
   ResultReg = createResultReg(RC);
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                     TII.get(Opc), ResultReg);
-  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, ScaleFactor, MMO);
+  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOLoad, MMO, UseUnscaled);
 
   // Loading an i1 requires special handling.
   if (VTIsi1) {
@@ -798,8 +682,8 @@ bool AArch64FastISel::EmitLoad(MVT VT, unsigned &ResultReg, Address Addr,
     unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
             ANDReg)
-      .addReg(ResultReg)
-      .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+        .addReg(ResultReg)
+        .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
     ResultReg = ANDReg;
   }
   return true;
@@ -815,7 +699,7 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
 
   // See if we can handle this address.
   Address Addr;
-  if (!ComputeAddress(I->getOperand(0), Addr, I->getType()))
+  if (!ComputeAddress(I->getOperand(0), Addr))
     return false;
 
   unsigned ResultReg;
@@ -827,63 +711,59 @@ bool AArch64FastISel::SelectLoad(const Instruction *I) {
 }
 
 bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
-                                MachineMemOperand *MMO) {
-  // Simplify this down to something we can handle.
-  if (!SimplifyAddress(Addr, VT))
-    return false;
-
-  unsigned ScaleFactor;
-  switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  // fall-through
-  case MVT::i8:  ScaleFactor = 1; break;
-  case MVT::i16: ScaleFactor = 2; break;
-  case MVT::i32: // fall-through
-  case MVT::f32: ScaleFactor = 4; break;
-  case MVT::i64: // fall-through
-  case MVT::f64: ScaleFactor = 8; break;
-  }
-
+                                MachineMemOperand *MMO, bool UseUnscaled) {
   // Negative offsets require unscaled, 9-bit, signed immediate offsets.
   // Otherwise, we try using scaled, 12-bit, unsigned immediate offsets.
-  bool UseScaled = true;
-  if ((Addr.getOffset() < 0) || (Addr.getOffset() & (ScaleFactor - 1))) {
-    UseScaled = false;
-    ScaleFactor = 1;
-  }
+  if (!UseUnscaled && Addr.getOffset() < 0)
+    UseUnscaled = true;
 
-
-  static const unsigned OpcTable[4][6] = {
-    { AArch64::STURBBi,  AArch64::STURHHi,  AArch64::STURWi,  AArch64::STURXi,
-      AArch64::STURSi,   AArch64::STURDi },
-    { AArch64::STRBBui,  AArch64::STRHHui,  AArch64::STRWui,  AArch64::STRXui,
-      AArch64::STRSui,   AArch64::STRDui },
-    { AArch64::STRBBroX, AArch64::STRHHroX, AArch64::STRWroX, AArch64::STRXroX,
-      AArch64::STRSroX,  AArch64::STRDroX },
-    { AArch64::STRBBroW, AArch64::STRHHroW, AArch64::STRWroW, AArch64::STRXroW,
-      AArch64::STRSroW,  AArch64::STRDroW }
-
-  };
-
-  unsigned Opc;
+  unsigned StrOpc;
   bool VTIsi1 = false;
-  bool UseRegOffset = Addr.isRegBase() && !Addr.getOffset() && Addr.getReg() &&
-                      Addr.getOffsetReg();
-  unsigned Idx = UseRegOffset ? 2 : UseScaled ? 1 : 0;
-  if (Addr.getExtendType() == AArch64_AM::UXTW ||
-      Addr.getExtendType() == AArch64_AM::SXTW)
-    Idx++;
-
+  int64_t ScaleFactor = 0;
+  // Using scaled, 12-bit, unsigned immediate offsets.
   switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type.");
-  case MVT::i1:  VTIsi1 = true;
-  case MVT::i8:  Opc = OpcTable[Idx][0]; break;
-  case MVT::i16: Opc = OpcTable[Idx][1]; break;
-  case MVT::i32: Opc = OpcTable[Idx][2]; break;
-  case MVT::i64: Opc = OpcTable[Idx][3]; break;
-  case MVT::f32: Opc = OpcTable[Idx][4]; break;
-  case MVT::f64: Opc = OpcTable[Idx][5]; break;
+  default:
+    return false;
+  case MVT::i1:
+    VTIsi1 = true;
+  case MVT::i8:
+    StrOpc = UseUnscaled ? AArch64::STURBBi : AArch64::STRBBui;
+    ScaleFactor = 1;
+    break;
+  case MVT::i16:
+    StrOpc = UseUnscaled ? AArch64::STURHHi : AArch64::STRHHui;
+    ScaleFactor = 2;
+    break;
+  case MVT::i32:
+    StrOpc = UseUnscaled ? AArch64::STURWi : AArch64::STRWui;
+    ScaleFactor = 4;
+    break;
+  case MVT::i64:
+    StrOpc = UseUnscaled ? AArch64::STURXi : AArch64::STRXui;
+    ScaleFactor = 8;
+    break;
+  case MVT::f32:
+    StrOpc = UseUnscaled ? AArch64::STURSi : AArch64::STRSui;
+    ScaleFactor = 4;
+    break;
+  case MVT::f64:
+    StrOpc = UseUnscaled ? AArch64::STURDi : AArch64::STRDui;
+    ScaleFactor = 8;
+    break;
   }
+  // Scale the offset.
+  if (!UseUnscaled) {
+    int64_t Offset = Addr.getOffset();
+    if (Offset & (ScaleFactor - 1))
+      // Retry using an unscaled, 9-bit, signed immediate offset.
+      return EmitStore(VT, SrcReg, Addr, MMO, /*UseUnscaled*/ true);
+
+    Addr.setOffset(Offset / ScaleFactor);
+  }
+
+  // Simplify this down to something we can handle.
+  if (!SimplifyAddress(Addr, VT, UseUnscaled ? 1 : ScaleFactor, UseUnscaled))
+    return false;
 
   // Storing an i1 requires special handling.
   if (VTIsi1) {
@@ -891,15 +771,14 @@ bool AArch64FastISel::EmitStore(MVT VT, unsigned SrcReg, Address Addr,
     unsigned ANDReg = createResultReg(&AArch64::GPR32spRegClass);
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::ANDWri),
             ANDReg)
-      .addReg(SrcReg)
-      .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
+        .addReg(SrcReg)
+        .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
     SrcReg = ANDReg;
   }
   // Create the base instruction, then add the operands.
   MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                    TII.get(Opc))
-                              .addReg(SrcReg);
-  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOStore, ScaleFactor, MMO);
+                                    TII.get(StrOpc)).addReg(SrcReg);
+  AddLoadStoreOperands(Addr, MIB, MachineMemOperand::MOStore, MMO, UseUnscaled);
 
   return true;
 }
@@ -921,7 +800,7 @@ bool AArch64FastISel::SelectStore(const Instruction *I) {
 
   // See if we can handle this address.
   Address Addr;
-  if (!ComputeAddress(I->getOperand(1), Addr, I->getOperand(0)->getType()))
+  if (!ComputeAddress(I->getOperand(1), Addr))
     return false;
 
   if (!EmitStore(VT, SrcReg, Addr, createMachineMemOperandFor(I)))
