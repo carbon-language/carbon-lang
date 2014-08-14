@@ -148,6 +148,9 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                             SmallVectorImpl<MCInst> &Instructions);
 
+  void expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
+                            SmallVectorImpl<MCInst> &Instructions);
+
   void expandMemInst(MCInst &Inst, SMLoc IDLoc,
                      SmallVectorImpl<MCInst> &Instructions, bool isLoad,
                      bool isImmOpnd);
@@ -1103,8 +1106,8 @@ bool MipsAsmParser::expandInstruction(MCInst &Inst, SMLoc IDLoc,
 }
 
 namespace {
-template <int Shift, bool PerformShift>
-void createShiftOr(int64_t Value, unsigned RegNo, SMLoc IDLoc,
+template <bool PerformShift>
+void createShiftOr(MCOperand Operand, unsigned RegNo, SMLoc IDLoc,
                    SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
   if (PerformShift) {
@@ -1119,10 +1122,17 @@ void createShiftOr(int64_t Value, unsigned RegNo, SMLoc IDLoc,
   tmpInst.setOpcode(Mips::ORi);
   tmpInst.addOperand(MCOperand::CreateReg(RegNo));
   tmpInst.addOperand(MCOperand::CreateReg(RegNo));
-  tmpInst.addOperand(
-      MCOperand::CreateImm(((Value & (0xffffLL << Shift)) >> Shift)));
+  tmpInst.addOperand(Operand);
   tmpInst.setLoc(IDLoc);
   Instructions.push_back(tmpInst);
+}
+
+template <int Shift, bool PerformShift>
+void createShiftOr(int64_t Value, unsigned RegNo, SMLoc IDLoc,
+                   SmallVectorImpl<MCInst> &Instructions) {
+  createShiftOr<PerformShift>(
+      MCOperand::CreateImm(((Value & (0xffffLL << Shift)) >> Shift)), RegNo,
+      IDLoc, Instructions);
 }
 }
 
@@ -1228,7 +1238,12 @@ MipsAsmParser::expandLoadAddressReg(MCInst &Inst, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(2);
-  assert(ImmOp.isImm() && "expected immediate operand kind");
+  assert((ImmOp.isImm() || ImmOp.isExpr()) &&
+         "expected immediate operand kind");
+  if (!ImmOp.isImm()) {
+    expandLoadAddressSym(Inst, IDLoc, Instructions);
+    return false;
+  }
   const MCOperand &SrcRegOp = Inst.getOperand(1);
   assert(SrcRegOp.isReg() && "expected register operand kind");
   const MCOperand &DstRegOp = Inst.getOperand(0);
@@ -1272,7 +1287,12 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
                                     SmallVectorImpl<MCInst> &Instructions) {
   MCInst tmpInst;
   const MCOperand &ImmOp = Inst.getOperand(1);
-  assert(ImmOp.isImm() && "expected immediate operand kind");
+  assert((ImmOp.isImm() || ImmOp.isExpr()) &&
+         "expected immediate operand kind");
+  if (!ImmOp.isImm()) {
+    expandLoadAddressSym(Inst, IDLoc, Instructions);
+    return false;
+  }
   const MCOperand &RegOp = Inst.getOperand(0);
   assert(RegOp.isReg() && "expected register operand kind");
   int ImmValue = ImmOp.getImm();
@@ -1300,6 +1320,71 @@ MipsAsmParser::expandLoadAddressImm(MCInst &Inst, SMLoc IDLoc,
     Instructions.push_back(tmpInst);
   }
   return false;
+}
+
+void
+MipsAsmParser::expandLoadAddressSym(MCInst &Inst, SMLoc IDLoc,
+                                    SmallVectorImpl<MCInst> &Instructions) {
+  // FIXME: If we do have a valid at register to use, we should generate a
+  // slightly shorter sequence here.
+  MCInst tmpInst;
+  int ExprOperandNo = 1;
+  // Sometimes the assembly parser will get the immediate expression as
+  // a $zero + an immediate.
+  if (Inst.getNumOperands() == 3) {
+    assert(Inst.getOperand(1).getReg() ==
+           (isGP64bit() ? Mips::ZERO_64 : Mips::ZERO));
+    ExprOperandNo = 2;
+  }
+  const MCOperand &SymOp = Inst.getOperand(ExprOperandNo);
+  assert(SymOp.isExpr() && "expected symbol operand kind");
+  const MCOperand &RegOp = Inst.getOperand(0);
+  unsigned RegNo = RegOp.getReg();
+  const MCSymbolRefExpr *Symbol = cast<MCSymbolRefExpr>(SymOp.getExpr());
+  const MCSymbolRefExpr *HiExpr =
+      MCSymbolRefExpr::Create(Symbol->getSymbol().getName(),
+                              MCSymbolRefExpr::VK_Mips_ABS_HI, getContext());
+  const MCSymbolRefExpr *LoExpr =
+      MCSymbolRefExpr::Create(Symbol->getSymbol().getName(),
+                              MCSymbolRefExpr::VK_Mips_ABS_LO, getContext());
+  if (isGP64bit()) {
+    // If it's a 64-bit architecture, expand to:
+    // la d,sym => lui  d,highest(sym)
+    //             ori  d,d,higher(sym)
+    //             dsll d,d,16
+    //             ori  d,d,hi16(sym)
+    //             dsll d,d,16
+    //             ori  d,d,lo16(sym)
+    const MCSymbolRefExpr *HighestExpr =
+        MCSymbolRefExpr::Create(Symbol->getSymbol().getName(),
+                                MCSymbolRefExpr::VK_Mips_HIGHEST, getContext());
+    const MCSymbolRefExpr *HigherExpr =
+        MCSymbolRefExpr::Create(Symbol->getSymbol().getName(),
+                                MCSymbolRefExpr::VK_Mips_HIGHER, getContext());
+
+    tmpInst.setOpcode(Mips::LUi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegNo));
+    tmpInst.addOperand(MCOperand::CreateExpr(HighestExpr));
+    Instructions.push_back(tmpInst);
+
+    createShiftOr<false>(MCOperand::CreateExpr(HigherExpr), RegNo, SMLoc(),
+                         Instructions);
+    createShiftOr<true>(MCOperand::CreateExpr(HiExpr), RegNo, SMLoc(),
+                        Instructions);
+    createShiftOr<true>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
+                        Instructions);
+  } else {
+    // Otherwise, expand to:
+    // la d,sym => lui  d,hi16(sym)
+    //             ori  d,d,lo16(sym)
+    tmpInst.setOpcode(Mips::LUi);
+    tmpInst.addOperand(MCOperand::CreateReg(RegNo));
+    tmpInst.addOperand(MCOperand::CreateExpr(HiExpr));
+    Instructions.push_back(tmpInst);
+
+    createShiftOr<false>(MCOperand::CreateExpr(LoExpr), RegNo, SMLoc(),
+                         Instructions);
+  }
 }
 
 void MipsAsmParser::expandMemInst(MCInst &Inst, SMLoc IDLoc,
