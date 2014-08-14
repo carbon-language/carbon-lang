@@ -4,6 +4,7 @@
 // RUN: link /nologo /DLL /OUT:%t.1.dll %t.1.obj %asan_dll_thunk
 // RUN: %clang_cl_asan -DCONFIG=2 %s -c -Fo%t.2.obj
 // RUN: link /nologo /DLL /OUT:%t.2.dll %t.2.obj %t.1.lib %asan_dll_thunk
+// REQUIRES: asan-static-runtime
 
 #if CONFIG==1
 extern "C" __declspec(dllexport) int f1() {
