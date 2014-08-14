@@ -106,3 +106,15 @@ entry:
   call void @foo(i32 -2130706433)
   ret void
 }
+
+; Load from constant pool.
+define i32 @t10(i32 %a) {
+; ARM-LABEL:   t10
+; ARM:         ldr
+; THUMB-LABEL: t10
+; THUMB:       movw r1, #52257
+; THUMB-NEXT:  movt r1, #35037
+  %1 = xor i32 -1998730207, %a
+  ret i32 %1
+}
+

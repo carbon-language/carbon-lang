@@ -547,7 +547,8 @@ unsigned ARMFastISel::ARMMaterializeInt(const Constant *C, MVT VT) {
   }
 
   if (Subtarget->useMovt(*FuncInfo.MF))
-    return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
+    if (FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue()))
+      return true;
 
   // Load from constant pool.  For now 32-bit only.
   if (VT != MVT::i32)
