@@ -49,7 +49,7 @@ public:
 
   const AsmToken peekTok(bool ShouldSkipSpace = true) override;
 
-  bool isAtStartOfComment(char Char);
+  bool isAtStartOfComment(const char *Ptr);
   bool isAtStatementSeparator(const char *Ptr);
 
   const MCAsmInfo &getMAI() const { return MAI; }

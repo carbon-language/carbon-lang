@@ -417,7 +417,7 @@ AsmToken AsmLexer::LexQuote() {
 StringRef AsmLexer::LexUntilEndOfStatement() {
   TokStart = CurPtr;
 
-  while (!isAtStartOfComment(*CurPtr) &&    // Start of line comment.
+  while (!isAtStartOfComment(CurPtr) &&     // Start of line comment.
          !isAtStatementSeparator(CurPtr) && // End of statement marker.
          *CurPtr != '\n' && *CurPtr != '\r' &&
          (*CurPtr != 0 || CurPtr != CurBuf.end())) {
@@ -458,9 +458,17 @@ const AsmToken AsmLexer::peekTok(bool ShouldSkipSpace) {
   return Token;
 }
 
-bool AsmLexer::isAtStartOfComment(char Char) {
-  // FIXME: This won't work for multi-character comment indicators like "//".
-  return Char == *MAI.getCommentString();
+bool AsmLexer::isAtStartOfComment(const char *Ptr) {
+  const char *CommentString = MAI.getCommentString();
+
+  if (CommentString[1] == '\0')
+    return CommentString[0] == Ptr[0];
+
+  // FIXME: special case for the bogus "##" comment string in X86MCAsmInfoDarwin
+  if (CommentString[1] == '#')
+    return CommentString[0] == Ptr[0];
+
+  return strncmp(Ptr, CommentString, strlen(CommentString)) == 0;
 }
 
 bool AsmLexer::isAtStatementSeparator(const char *Ptr) {
@@ -473,7 +481,7 @@ AsmToken AsmLexer::LexToken() {
   // This always consumes at least one character.
   int CurChar = getNextChar();
 
-  if (isAtStartOfComment(CurChar)) {
+  if (isAtStartOfComment(TokStart)) {
     // If this comment starts with a '#', then return the Hash token and let
     // the assembler parser see if it can be parsed as a cpp line filename
     // comment. We do this only if we are at the start of a line.
