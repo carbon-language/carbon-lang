@@ -575,10 +575,6 @@ private:
   /// correspond to a different MBB than the end.
   bool HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB);
 
-  /// \brief Helper for materializeRegForValue to materialize a constant in a
-  /// target-independent way.
-  unsigned MaterializeConstant(const Value *V, MVT VT);
-
   /// Helper for getRegForVale. This function is called when the value isn't
   /// already available in a register and must be materialized with new
   /// instructions.

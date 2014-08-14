@@ -3105,57 +3105,7 @@ X86FastISel::TargetSelectInstruction(const Instruction *I)  {
 unsigned X86FastISel::X86MaterializeInt(const ConstantInt *CI, MVT VT) {
   if (VT > MVT::i64)
     return 0;
-
-  uint64_t Imm = CI->getZExtValue();
-  if (Imm == 0) {
-    unsigned SrcReg = FastEmitInst_(X86::MOV32r0, &X86::GR32RegClass);
-    switch (VT.SimpleTy) {
-    default: llvm_unreachable("Unexpected value type");
-    case MVT::i1:
-    case MVT::i8:
-      return FastEmitInst_extractsubreg(MVT::i8, SrcReg, /*Kill=*/true,
-                                        X86::sub_8bit);
-    case MVT::i16:
-      return FastEmitInst_extractsubreg(MVT::i16, SrcReg, /*Kill=*/true,
-                                        X86::sub_16bit);
-    case MVT::i32:
-      return SrcReg;
-    case MVT::i64: {
-      unsigned ResultReg = createResultReg(&X86::GR64RegClass);
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(TargetOpcode::SUBREG_TO_REG), ResultReg)
-        .addImm(0).addReg(SrcReg).addImm(X86::sub_32bit);
-      return ResultReg;
-    }
-    }
-  }
-
-  unsigned Opc = 0;
-  switch (VT.SimpleTy) {
-  default: llvm_unreachable("Unexpected value type");
-  case MVT::i1:  VT = MVT::i8; // fall-through
-  case MVT::i8:  Opc = X86::MOV8ri;  break;
-  case MVT::i16: Opc = X86::MOV16ri; break;
-  case MVT::i32: Opc = X86::MOV32ri; break;
-  case MVT::i64: {
-    if (isUInt<32>(Imm))
-      Opc = X86::MOV32ri;
-    else if (isInt<32>(Imm))
-      Opc = X86::MOV64ri32;
-    else
-      Opc = X86::MOV64ri;
-    break;
-  }
-  }
-  if (VT == MVT::i64 && Opc == X86::MOV32ri) {
-    unsigned SrcReg = FastEmitInst_i(Opc, &X86::GR32RegClass, Imm);
-    unsigned ResultReg = createResultReg(&X86::GR64RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-            TII.get(TargetOpcode::SUBREG_TO_REG), ResultReg)
-      .addImm(0).addReg(SrcReg).addImm(X86::sub_32bit);
-    return ResultReg;
-  }
-  return FastEmitInst_i(Opc, TLI.getRegClassFor(VT), Imm);
+  return FastEmit_i(VT, VT, ISD::Constant, CI->getZExtValue());
 }
 
 unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
@@ -3163,8 +3113,7 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
     return TargetMaterializeFloatZero(CFP);
 
   // Can't handle alternate code models yet.
-  CodeModel::Model CM = TM.getCodeModel();
-  if (CM != CodeModel::Small && CM != CodeModel::Large)
+  if (TM.getCodeModel() != CodeModel::Small)
     return 0;
 
   // Get opcode and regclass of the output for the given load instruction.
@@ -3219,21 +3168,6 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
   // Create the load from the constant pool.
   unsigned CPI = MCP.getConstantPoolIndex(CFP, Align);
   unsigned ResultReg = createResultReg(RC);
-
-  if (CM == CodeModel::Large) {
-    unsigned AddrReg = createResultReg(&X86::GR64RegClass);
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV64ri),
-            AddrReg)
-      .addConstantPoolIndex(CPI, 0, OpFlag);
-    MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-                                      TII.get(Opc), ResultReg);
-    addDirectMem(MIB, AddrReg);
-    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
-      MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
-      TM.getSubtargetImpl()->getDataLayout()->getPointerSize(), Align);
-    MIB->addMemOperand(*FuncInfo.MF, MMO);
-    return ResultReg;
-  }
 
   addConstantPoolReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                    TII.get(Opc), ResultReg),

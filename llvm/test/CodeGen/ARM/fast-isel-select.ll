@@ -12,6 +12,7 @@ entry:
 ; ARM: mov r0, r{{[1-9]}}
 ; THUMB: t1
 ; THUMB: movs r{{[1-9]}}, #10
+; THUMB: movt r{{[1-9]}}, #0
 ; THUMB: cmp r0, #0
 ; THUMB: it eq
 ; THUMB: moveq r{{[1-9]}}, #20
@@ -58,12 +59,13 @@ entry:
 ; ARM: cmp r0, #0
 ; ARM: mvneq r{{[1-9]}}, #0
 ; ARM: mov r0, r{{[1-9]}}
-; THUMB-LABEL: t4
-; THUMB: mvn [[REG:r[1-9]+]], #9
+; THUMB: t4
+; THUMB: movw r{{[1-9]}}, #65526
+; THUMB: movt r{{[1-9]}}, #65535
 ; THUMB: cmp r0, #0
 ; THUMB: it eq
-; THUMB: mvneq [[REG]], #0
-; THUMB: mov r0, [[REG]]
+; THUMB: mvneq r{{[1-9]}}, #0
+; THUMB: mov r0, r{{[1-9]}}
   %0 = select i1 %c, i32 -10, i32 -1
   ret i32 %0
 }

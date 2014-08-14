@@ -117,11 +117,17 @@ entry:
 ; ARM-LONG: blx [[R]]
 ; THUMB: @t10
 ; THUMB: movs [[R0:l?r[0-9]*]], #0
+; THUMB: movt [[R0]], #0
 ; THUMB: movs [[R1:l?r[0-9]*]], #248
+; THUMB: movt [[R1]], #0
 ; THUMB: movs [[R2:l?r[0-9]*]], #187
+; THUMB: movt [[R2]], #0
 ; THUMB: movs [[R3:l?r[0-9]*]], #28
+; THUMB: movt [[R3]], #0
 ; THUMB: movw [[R4:l?r[0-9]*]], #40
+; THUMB: movt [[R4]], #0
 ; THUMB: movw [[R5:l?r[0-9]*]], #186
+; THUMB: movt [[R5]], #0
 ; THUMB: and [[R0]], [[R0]], #255
 ; THUMB: and [[R1]], [[R1]], #255
 ; THUMB: and [[R2]], [[R2]], #255

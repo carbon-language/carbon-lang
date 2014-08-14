@@ -14,6 +14,7 @@ entry:
 ; THUMB-NOT: ldr
 ; THUMB-NOT: sxtb
 ; THUMB: movs r0, #0
+; THUMB: movt r0, #0
 ; THUMB: pop
   ret i32 0
 }
