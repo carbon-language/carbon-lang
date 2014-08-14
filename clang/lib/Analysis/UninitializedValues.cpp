@@ -771,7 +771,7 @@ void clang::runUninitializedVariablesAnalysis(
   }
 
   // Proceed with the workist.
-  DataflowWorklist worklist(cfg, ac);
+  ForwardDataflowWorklist worklist(cfg, ac);
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);

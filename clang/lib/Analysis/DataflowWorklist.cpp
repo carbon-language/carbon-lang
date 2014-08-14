@@ -19,7 +19,7 @@ using namespace clang;
 // but it doesn't control when the algorithm terminates.
 // Initially, enqueuedBlocks is set to true for all blocks;
 // that's not because everything is added initially to the worklist,
-// but instead, to cause the forward analysis to follow the reverse post order
+// but instead, to cause the analysis to follow the initial graph traversal
 // until we enqueue something on the worklist. 
 void DataflowWorklist::enqueueBlock(const clang::CFGBlock *block) {
   if (block && !enqueuedBlocks[block->getBlockID()]) {
@@ -28,10 +28,11 @@ void DataflowWorklist::enqueueBlock(const clang::CFGBlock *block) {
   }
 }
 
-// The forward analysis alternates between essentially two worklists.
+// The analysis alternates between essentially two worklists.
 // A prioritization worklist (SmallVector<const CFGBlock *> worklist)
-// is consulted first, and if it's empty, we consult the reverse
-// post-order traversal (PostOrderCFGView::iterator PO_I).
+// is consulted first, and if it's empty, we consult
+// PostOrderCFGView::iterator PO_I, which implements either post-order traversal
+// for backward analysis, or reverse post-order traversal for forward analysis.
 // The prioritization worklist is used to prioritize analyzing from
 // the beginning, or to prioritize updates fed by back edges.
 // Typically, what gets enqueued on the worklist are back edges, which
@@ -45,22 +46,11 @@ void DataflowWorklist::enqueueSuccessors(const clang::CFGBlock *block) {
   }
 }
 
-// The reverse analysis uses a simple re-sorting of the worklist to
-// reprioritize it.  It's not as efficient as the two-worklists approach,
-// but it isn't performance sensitive since it's used by the static analyzer,
-// and the static analyzer does far more work that dwarfs the work done here.
-// TODO: It would still be nice to use the same approach for both analyses.
 void DataflowWorklist::enqueuePredecessors(const clang::CFGBlock *block) {
-  const unsigned OldWorklistSize = worklist.size();
   for (CFGBlock::const_pred_iterator I = block->pred_begin(),
        E = block->pred_end(); I != E; ++I) {
     enqueueBlock(*I);
   }
-
-  if (OldWorklistSize == 0 || OldWorklistSize == worklist.size())
-    return;
-
-  sortWorklist();
 }
 
 const CFGBlock *DataflowWorklist::dequeue() {
@@ -71,8 +61,9 @@ const CFGBlock *DataflowWorklist::dequeue() {
   if (!worklist.empty())
     B = worklist.pop_back_val();
 
-  // Next dequeue from the initial reverse post order.  This is the
-  // theoretical ideal in the presence of no back edges.
+  // Next dequeue from the initial graph traversal (either post order or
+  // reverse post order).  This is the theoretical ideal in the presence
+  // of no back edges.
   else if (PO_I != PO_E) {
     B = *PO_I;
     ++PO_I;
@@ -84,9 +75,5 @@ const CFGBlock *DataflowWorklist::dequeue() {
   assert(enqueuedBlocks[B->getBlockID()] == true);
   enqueuedBlocks[B->getBlockID()] = false;
   return B;
-}
-
-void DataflowWorklist::sortWorklist() {
-  std::sort(worklist.begin(), worklist.end(), comparator);
 }
 

@@ -10,7 +10,7 @@
 // DataflowWorklist keeps track of blocks for dataflow analysis. It maintains a
 // vector of blocks for priority processing, and falls back upon a reverse
 // post-order iterator. It supports both forward (used in UninitializedValues)
-// and reverse (used in LiveVariables) analyses.
+// and backward (used in LiveVariables) analyses.
 //
 //===----------------------------------------------------------------------===//
 
@@ -21,38 +21,39 @@
 
 namespace clang {
 
-class DataflowWorklistBase {
-protected:
+class DataflowWorklist {
   PostOrderCFGView::iterator PO_I, PO_E;
-  PostOrderCFGView::BlockOrderCompare comparator;
   SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
 
-  DataflowWorklistBase(const CFG &cfg, PostOrderCFGView &view)
+protected:
+  DataflowWorklist(const CFG &cfg, PostOrderCFGView &view)
     : PO_I(view.begin()), PO_E(view.end()),
-      comparator(view.getComparator()),
       enqueuedBlocks(cfg.getNumBlockIDs(), true) {
-        // Treat the first block as already analyzed.
-        if (PO_I != PO_E) {
-          assert(*PO_I == &cfg.getEntry());
+        // For forward analysis, treat the first block as already analyzed.
+        if ((PO_I != PO_E) && (*PO_I == &cfg.getEntry())) {
           enqueuedBlocks[(*PO_I)->getBlockID()] = false;
           ++PO_I;
         }
       }
-};
-
-class DataflowWorklist : DataflowWorklistBase {
 
 public:
-  DataflowWorklist(const CFG &cfg, AnalysisDeclContext &Ctx)
-    : DataflowWorklistBase(cfg, *Ctx.getAnalysis<PostOrderCFGView>()) {}
-
   void enqueueBlock(const CFGBlock *block);
   void enqueuePredecessors(const CFGBlock *block);
   void enqueueSuccessors(const CFGBlock *block);
   const CFGBlock *dequeue();
+};
 
-  void sortWorklist();
+class BackwardDataflowWorklist : public DataflowWorklist {
+public:
+  BackwardDataflowWorklist(const CFG &cfg, AnalysisDeclContext &Ctx)
+    : DataflowWorklist(cfg, *Ctx.getAnalysis<PostOrderCFGView>()) {}
+};
+
+class ForwardDataflowWorklist : public DataflowWorklist {
+public:
+  ForwardDataflowWorklist(const CFG &cfg, AnalysisDeclContext &Ctx)
+    : DataflowWorklist(cfg, *Ctx.getAnalysis<ReversePostOrderCFGView>()) {}
 };
 
 } // end clang namespace

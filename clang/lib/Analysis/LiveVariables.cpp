@@ -448,21 +448,18 @@ LiveVariables::computeLiveness(AnalysisDeclContext &AC,
 
   LiveVariablesImpl *LV = new LiveVariablesImpl(AC, killAtAssign);
 
-  // Construct the dataflow worklist.  Enqueue the exit block as the
-  // start of the analysis.
-  DataflowWorklist worklist(*cfg, AC);
+  // Construct the backward dataflow worklist.
+  BackwardDataflowWorklist worklist(*cfg, AC);
   llvm::BitVector everAnalyzedBlock(cfg->getNumBlockIDs());
+  llvm::BitVector scannedForAssignments(cfg->getNumBlockIDs());
 
-  // FIXME: we should enqueue using post order.
-  for (CFG::const_iterator it = cfg->begin(), ei = cfg->end(); it != ei; ++it) {
-    const CFGBlock *block = *it;
-    worklist.enqueueBlock(block);
+  while (const CFGBlock *block = worklist.dequeue()) {
     
     // FIXME: Scan for DeclRefExprs using in the LHS of an assignment.
     // We need to do this because we lack context in the reverse analysis
     // to determine if a DeclRefExpr appears in such a context, and thus
     // doesn't constitute a "use".
-    if (killAtAssign)
+    if (killAtAssign && !scannedForAssignments[block->getBlockID()]) {
       for (CFGBlock::const_iterator bi = block->begin(), be = block->end();
            bi != be; ++bi) {
         if (Optional<CFGStmt> cs = bi->getAs<CFGStmt>()) {
@@ -477,11 +474,9 @@ LiveVariables::computeLiveness(AnalysisDeclContext &AC,
           }
         }
       }
-  }
+      scannedForAssignments[block->getBlockID()] = true;
+    }
   
-  worklist.sortWorklist();
-  
-  while (const CFGBlock *block = worklist.dequeue()) {
     // Determine if the block's end value has changed.  If not, we
     // have nothing left to do for this block.
     LivenessValues &prevVal = LV->blocksEndToLiveness[block];
