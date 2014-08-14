@@ -710,7 +710,8 @@ static void printCompressedSecondLevelUnwindPage(
 
   uint16_t EncodingsStart = readNext<uint16_t>(Pos);
   readNext<uint16_t>(Pos);
-  auto PageEncodings = (support::ulittle32_t *)(PageStart + EncodingsStart);
+  const auto *PageEncodings = reinterpret_cast<const support::ulittle32_t *>(
+      PageStart + EncodingsStart);
 
   Pos = PageStart + EntriesStart;
   for (unsigned i = 0; i < NumEntries; ++i) {
@@ -891,7 +892,7 @@ printMachOUnwindInfoSection(const MachOObjectFile *Obj,
            << format("0x%08" PRIx32, IndexEntries[i].FunctionOffset) << '\n';
 
     Pos = Contents.data() + IndexEntries[i].SecondLevelPageStart;
-    uint32_t Kind = *(support::ulittle32_t *)Pos;
+    uint32_t Kind = *reinterpret_cast<const support::ulittle32_t *>(Pos);
     if (Kind == 2)
       printRegularSecondLevelUnwindPage(Pos);
     else if (Kind == 3)
