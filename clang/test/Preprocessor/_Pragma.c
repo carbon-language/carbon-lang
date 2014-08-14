@@ -11,3 +11,5 @@ _Pragma("message(\"foo \\\\\\\\ bar\")") // expected-warning {{foo \\ bar}}
 #ifdef macro
 #error #define invalid
 #endif
+
+_Pragma( // expected-error{{_Pragma takes a parenthesized string literal}}

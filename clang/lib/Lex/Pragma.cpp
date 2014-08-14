@@ -193,7 +193,7 @@ void Preprocessor::Handle_Pragma(Token &Tok) {
   if (!tok::isStringLiteral(Tok.getKind())) {
     Diag(PragmaLoc, diag::err__Pragma_malformed);
     // Skip this token, and the ')', if present.
-    if (Tok.isNot(tok::r_paren))
+    if (Tok.isNot(tok::r_paren) && Tok.isNot(tok::eof))
       Lex(Tok);
     if (Tok.is(tok::r_paren))
       Lex(Tok);
