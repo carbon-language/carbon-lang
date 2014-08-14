@@ -3485,9 +3485,22 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
 /// recent local declaration instead. The chosen declaration will be the most
 /// recent declaration in any module that imports this one.
 static NamedDecl *getDeclForLocalLookup(NamedDecl *D) {
-  for (Decl *Redecl = D; Redecl; Redecl = Redecl->getPreviousDecl())
-    if (!Redecl->isFromASTFile())
-      return cast<NamedDecl>(Redecl);
+  if (!D->isFromASTFile())
+    return D;
+
+  if (Decl *Redecl = D->getPreviousDecl()) {
+    // For Redeclarable decls, a prior declaration might be local.
+    for (; Redecl; Redecl = Redecl->getPreviousDecl())
+      if (!Redecl->isFromASTFile())
+        return cast<NamedDecl>(Redecl);
+  } else if (Decl *First = D->getCanonicalDecl()) {
+    // For Mergeable decls, the first decl might be local.
+    if (!First->isFromASTFile())
+      return cast<NamedDecl>(First);
+  }
+
+  // All declarations are imported. Our most recent declaration will also be
+  // the most recent one in anyone who imports us.
   return D;
 }
 

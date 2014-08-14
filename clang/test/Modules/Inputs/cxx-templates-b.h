@@ -46,6 +46,8 @@ void use_some_template_b() {
   SomeTemplate<char[1]> a;
   SomeTemplate<char[2]> b, c;
   b = c;
+
+  WithImplicitSpecialMembers<int> wism1, wism2(wism1);
 }
 
 auto enum_b_from_b = CommonTemplate<int>::b;

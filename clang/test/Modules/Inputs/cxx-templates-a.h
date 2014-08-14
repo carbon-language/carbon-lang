@@ -29,6 +29,8 @@ void use_some_template_a() {
   SomeTemplate<char[2]> a;
   SomeTemplate<char[1]> b, c;
   b = c;
+
+  (void)&WithImplicitSpecialMembers<int>::n;
 }
 
 template<int> struct MergeTemplates;

@@ -6417,13 +6417,13 @@ namespace {
   /// declaration context.
   class DeclContextNameLookupVisitor {
     ASTReader &Reader;
-    SmallVectorImpl<const DeclContext *> &Contexts;
+    ArrayRef<const DeclContext *> Contexts;
     DeclarationName Name;
     SmallVectorImpl<NamedDecl *> &Decls;
 
   public:
-    DeclContextNameLookupVisitor(ASTReader &Reader, 
-                                 SmallVectorImpl<const DeclContext *> &Contexts, 
+    DeclContextNameLookupVisitor(ASTReader &Reader,
+                                 ArrayRef<const DeclContext *> Contexts,
                                  DeclarationName Name,
                                  SmallVectorImpl<NamedDecl *> &Decls)
       : Reader(Reader), Contexts(Contexts), Name(Name), Decls(Decls) { }
@@ -6436,9 +6436,9 @@ namespace {
       // this context in this module.
       ModuleFile::DeclContextInfosMap::iterator Info;
       bool FoundInfo = false;
-      for (unsigned I = 0, N = This->Contexts.size(); I != N; ++I) {
-        Info = M.DeclContextInfos.find(This->Contexts[I]);
-        if (Info != M.DeclContextInfos.end() && 
+      for (auto *DC : This->Contexts) {
+        Info = M.DeclContextInfos.find(DC);
+        if (Info != M.DeclContextInfos.end() &&
             Info->second.NameLookupTableData) {
           FoundInfo = true;
           break;
@@ -6447,7 +6447,7 @@ namespace {
 
       if (!FoundInfo)
         return false;
-      
+
       // Look for this name within this module.
       ASTDeclContextNameLookupTable *LookupTable =
         Info->second.NameLookupTableData;
@@ -6468,9 +6468,11 @@ namespace {
           // currently read before reading its name. The lookup is triggered by
           // building that decl (likely indirectly), and so it is later in the
           // sense of "already existing" and can be ignored here.
+          // FIXME: This should not happen; deserializing declarations should
+          // not perform lookups since that can lead to deserialization cycles.
           continue;
         }
-      
+
         // Record this declaration.
         FoundAnything = true;
         This->Decls.push_back(ND);
@@ -6510,15 +6512,17 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   if (!Name)
     return false;
 
+  Deserializing LookupResults(this);
+
   SmallVector<NamedDecl *, 64> Decls;
-  
+
   // Compute the declaration contexts we need to look into. Multiple such
   // declaration contexts occur when two declaration contexts from disjoint
   // modules get merged, e.g., when two namespaces with the same name are 
   // independently defined in separate modules.
   SmallVector<const DeclContext *, 2> Contexts;
   Contexts.push_back(DC);
-  
+
   if (DC->isNamespace()) {
     auto Merged = MergedDecls.find(const_cast<Decl *>(cast<Decl>(DC)));
     if (Merged != MergedDecls.end()) {
@@ -6526,24 +6530,40 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
         Contexts.push_back(cast<DeclContext>(GetDecl(Merged->second[I])));
     }
   }
+
+  auto LookUpInContexts = [&](ArrayRef<const DeclContext*> Contexts) {
+    DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
+
+    // If we can definitively determine which module file to look into,
+    // only look there. Otherwise, look in all module files.
+    ModuleFile *Definitive;
+    if (Contexts.size() == 1 &&
+        (Definitive = getDefinitiveModuleFileFor(Contexts[0], *this))) {
+      DeclContextNameLookupVisitor::visit(*Definitive, &Visitor);
+    } else {
+      ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
+    }
+  };
+
+  LookUpInContexts(Contexts);
+
+  // If this might be an implicit special member function, then also search
+  // all merged definitions of the surrounding class. We need to search them
+  // individually, because finding an entity in one of them doesn't imply that
+  // we can't find a different entity in another one.
   if (isa<CXXRecordDecl>(DC)) {
-    auto Merged = MergedLookups.find(DC);
-    if (Merged != MergedLookups.end())
-      Contexts.insert(Contexts.end(), Merged->second.begin(),
-                      Merged->second.end());
+    auto Kind = Name.getNameKind();
+    if (Kind == DeclarationName::CXXConstructorName ||
+        Kind == DeclarationName::CXXDestructorName ||
+        (Kind == DeclarationName::CXXOperatorName &&
+         Name.getCXXOverloadedOperator() == OO_Equal)) {
+      auto Merged = MergedLookups.find(DC);
+      if (Merged != MergedLookups.end())
+        for (auto *MergedDC : Merged->second)
+          LookUpInContexts(MergedDC);
+    }
   }
 
-  DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
-
-  // If we can definitively determine which module file to look into,
-  // only look there. Otherwise, look in all module files.
-  ModuleFile *Definitive;
-  if (Contexts.size() == 1 &&
-      (Definitive = getDefinitiveModuleFileFor(DC, *this))) {
-    DeclContextNameLookupVisitor::visit(*Definitive, &Visitor);
-  } else {
-    ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
-  }
   ++NumVisibleDeclContextsRead;
   SetExternalVisibleDeclsForName(DC, Name, Decls);
   return !Decls.empty();

@@ -36,3 +36,5 @@ typedef WithPartialSpecialization<int*> WithPartialSpecializationUse;
 
 template<typename T> struct WithExplicitSpecialization;
 typedef WithExplicitSpecialization<int> WithExplicitSpecializationUse;
+
+template<typename T> struct WithImplicitSpecialMembers { int n; };
