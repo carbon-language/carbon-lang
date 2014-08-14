@@ -71,6 +71,7 @@ public:
 		eArgValType_StringQuoted,
 		eArgValType_StringQuotedNumber,
 		eArgValType_StringQuotedNumberPath,
+		eArgValType_StringAnything,			// Accept any words for a string 'type' even if they look like --longOptions for example
 		eArgValType_ThreadGrp,
 		eArgValType_count,		// Always the last one
 		eArgValType_invalid

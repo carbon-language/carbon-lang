@@ -25,6 +25,7 @@
 #include "MICmnMIValueConst.h"
 #include "MICmdArgValString.h"
 #include "MICmdArgValListOfN.h"
+#include "MICmdArgValOptionLong.h"
 #include "MICmnLLDBDebugSessionInfo.h"
 
 // Instantiations:
@@ -44,7 +45,8 @@ const CMICmdCmdGdbSet::MapGdbOptionNameToFnGdbOptionPtr_t CMICmdCmdGdbSet::ms_ma
 // Throws:	None.
 //--
 CMICmdCmdGdbSet::CMICmdCmdGdbSet( void )
-:	m_constStrArgNamedGdbOption( "option" )
+:	m_constStrArgNamedThreadGrp( "thread-group" )
+,	m_constStrArgNamedGdbOption( "option" )
 ,	m_bGdbOptionRecognised( true ) 
 ,	m_bGdbOptionFnSuccessful( false )
 ,	m_bGbbOptionFnHasError( false )
@@ -79,7 +81,8 @@ CMICmdCmdGdbSet::~CMICmdCmdGdbSet( void )
 //--
 bool CMICmdCmdGdbSet::ParseArgs( void )
 {
-	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedGdbOption, true, true, CMICmdArgValListBase::eArgValType_StringQuotedNumberPath ) ) );
+	bool bOk = m_setCmdArgs.Add( *(new CMICmdArgValOptionLong( m_constStrArgNamedThreadGrp, false, false, CMICmdArgValListBase::eArgValType_ThreadGrp, 1 ) ) );
+	bOk = bOk && m_setCmdArgs.Add( *(new CMICmdArgValListOfN( m_constStrArgNamedGdbOption, true, true, CMICmdArgValListBase::eArgValType_StringAnything ) ) );
 	return (bOk && ParseValidateCmdOptions() );
 }
 

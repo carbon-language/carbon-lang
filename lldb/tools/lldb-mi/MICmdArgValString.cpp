@@ -34,6 +34,22 @@ CMICmdArgValString::CMICmdArgValString( void )
 :	m_bHandleQuotedString( false )
 ,	m_bAcceptNumbers( false )
 ,	m_bHandleDirPaths( false )
+,	m_bHandleAnything( false )
+{
+}
+
+//++ ------------------------------------------------------------------------------------
+// Details:	CMICmdArgValString constructor.
+// Type:	Method.
+// Args:	vbAnything	- (R) True = Parse a string and accept anything, false = do not accept anything. 
+// Return:	None.
+// Throws:	None.
+//--
+CMICmdArgValString::CMICmdArgValString( const bool vbAnything )
+:	m_bHandleQuotedString( false )
+,	m_bAcceptNumbers( false )
+,	m_bHandleDirPaths( false )
+,	m_bHandleAnything( vbAnything )
 {
 }
 
@@ -50,6 +66,7 @@ CMICmdArgValString::CMICmdArgValString( const bool vbHandleQuotes, const bool vb
 :	m_bHandleQuotedString( vbHandleQuotes )
 ,	m_bAcceptNumbers( vbAcceptNumbers )
 ,	m_bHandleDirPaths( vbHandleDirPaths )
+,	m_bHandleAnything( false )
 {
 }
 
@@ -69,6 +86,7 @@ CMICmdArgValString::CMICmdArgValString( const CMIUtilString & vrArgName, const b
 ,	m_bHandleQuotedString( vbHandleQuotes )
 ,	m_bAcceptNumbers( vbAcceptNumbers )
 ,	m_bHandleDirPaths( false )
+,	m_bHandleAnything( false )
 {
 }
 
@@ -345,6 +363,10 @@ bool CMICmdArgValString::IsStringArg( const CMIUtilString & vrTxt ) const
 //--
 bool CMICmdArgValString::IsStringArgSingleText( const CMIUtilString & vrTxt ) const
 {
+	// Accept anything as string word
+	if( m_bHandleAnything )
+		return true;
+
 	if( !m_bHandleDirPaths )
 	{
 		// Look for directory file paths, if found reject

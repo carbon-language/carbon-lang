@@ -43,6 +43,7 @@ class CMICmdArgValString : public CMICmdArgValBaseTemplate< CMIUtilString >
 // Methods:
 public:
 	/* ctor */	CMICmdArgValString( void );
+	/* ctor */	CMICmdArgValString( const bool vbAnything );
 	/* ctor */	CMICmdArgValString( const bool vbHandleQuotes, const bool vbAcceptNumbers, const bool vbHandleDirPaths );
 	/* ctor */	CMICmdArgValString( const CMIUtilString & vrArgName, const bool vbMandatory, const bool vbHandleByCmd, const bool vbHandleQuotes = false, const bool vbAcceptNumbers = false );
 	//
@@ -71,4 +72,5 @@ private:
 	bool	m_bHandleQuotedString;	// True = Parse a string surrounded by quotes spaces are not delimitors, false = only text up to next delimiting space character
 	bool	m_bAcceptNumbers;		// True = Parse a string and accept as a number if number, false = numbers not recognised as string types
 	bool	m_bHandleDirPaths;		// True = Parse a string and accept directory file style string if present, false = directory file path not accepted
+	bool	m_bHandleAnything;		// True = Parse a string and accept anything if present, false = validate for criteria matches
 };

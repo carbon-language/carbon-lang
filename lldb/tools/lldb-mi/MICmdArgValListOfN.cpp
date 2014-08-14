@@ -111,7 +111,8 @@ bool CMICmdArgValListOfN::CreateList( const CMIUtilString & vrTxt )
 	CMIUtilString::VecString_t vecOptions;
 	if( (m_eArgType == eArgValType_StringQuoted) ||
 	    (m_eArgType == eArgValType_StringQuotedNumber) ||
-	    (m_eArgType == eArgValType_StringQuotedNumberPath) )
+	    (m_eArgType == eArgValType_StringQuotedNumberPath) ||
+		(m_eArgType == eArgValType_StringAnything) )
 	{
 		if( vrTxt.SplitConsiderQuotes( " ", vecOptions ) == 0 )
 			return MIstatus::failure;
@@ -147,9 +148,10 @@ bool CMICmdArgValListOfN::CreateList( const CMIUtilString & vrTxt )
 bool CMICmdArgValListOfN::IsListOfN( const CMIUtilString & vrTxt ) const
 {
 	CMIUtilString::VecString_t vecOptions;
-	if ( m_eArgType == eArgValType_StringQuoted ||
-	     m_eArgType == eArgValType_StringQuotedNumber ||
-	     m_eArgType == eArgValType_StringQuotedNumberPath )
+	if( (m_eArgType == eArgValType_StringQuoted) ||
+	    (m_eArgType == eArgValType_StringQuotedNumber) ||
+	    (m_eArgType == eArgValType_StringQuotedNumberPath) ||
+		(m_eArgType == eArgValType_StringAnything)  )
 	{
 		if( vrTxt.SplitConsiderQuotes( " ", vecOptions ) == 0 )
 			return false;

@@ -150,6 +150,9 @@ CMICmdArgValBase * CMICmdArgValListBase::CreationObj( const CMIUtilString & vrTx
 		case eArgValType_StringQuotedNumberPath:
 			pOptionObj = new CMICmdArgValString( true, true, true );
 			break;
+		case eArgValType_StringAnything:
+			pOptionObj = new CMICmdArgValString( true );
+			break;
 		case eArgValType_ThreadGrp:
 			pOptionObj = new CMICmdArgValThreadGrp();
 			break;
@@ -203,6 +206,9 @@ bool CMICmdArgValListBase::IsExpectedCorrectType( const CMIUtilString & vrTxt, c
 			break;
 		case eArgValType_StringQuotedNumberPath:
 			bValid = CMICmdArgValString( true, true, true ).IsStringArg( vrTxt );
+			break;
+		case eArgValType_StringAnything:
+			bValid = CMICmdArgValString( true ).IsStringArg( vrTxt );
 			break;
 		case eArgValType_ThreadGrp:
 			bValid = CMICmdArgValThreadGrp().IsArgThreadGrp( vrTxt );
