@@ -2512,6 +2512,16 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       if ((A == C && B == D) || (A == D && B == C))
         return BinaryOperator::CreateXor(A, B);
     }
+    // (A | ~B) ^ (~A | B) -> A ^ B
+    if (match(Op0I, m_Or(m_Value(A), m_Not(m_Value(B)))) &&
+        match(Op1I, m_Or(m_Not(m_Specific(A)), m_Specific(B)))) {
+      return BinaryOperator::CreateXor(A, B);
+    }
+    // (~A | B) ^ (A | ~B) -> A ^ B
+    if (match(Op0I, m_Or(m_Not(m_Value(A)), m_Value(B))) &&
+        match(Op1I, m_Or(m_Specific(A), m_Not(m_Specific(B))))) {
+      return BinaryOperator::CreateXor(A, B);
+    }
     // (A ^ B)^(A | B) -> A & B
     if (match(Op0I, m_Xor(m_Value(A), m_Value(B))) &&
         match(Op1I, m_Or(m_Value(C), m_Value(D)))) {
