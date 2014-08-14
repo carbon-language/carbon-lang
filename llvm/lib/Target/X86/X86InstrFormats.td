@@ -722,7 +722,7 @@ class AVX512AIi8<bits<8> o, Format F, dag outs, dag ins, string asm,
               list<dag> pattern, InstrItinClass itin = NoItinerary>
       : Ii8<o, F, outs, ins, asm, pattern, itin, SSEPackedInt>, TAPD,
         Requires<[HasAVX512]>;
-class AVX512AIi8Base: TAPD {
+class AVX512AIi8Base : TAPD {
   Domain ExeDomain = SSEPackedInt;
   ImmType ImmT = Imm8;
 }
@@ -748,6 +748,7 @@ class AVX512FMA3<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = NoItinerary>
       : I<o, F, outs, ins, asm, pattern, itin>, T8PD,
         EVEX_4V, Requires<[HasAVX512]>;
+class AVX512FMA3Base : T8PD, EVEX_4V;
 
 class AVX512<bits<8> o, Format F, dag outs, dag ins, string asm,
            list<dag>pattern, InstrItinClass itin = NoItinerary>
