@@ -85,7 +85,8 @@ public:
   bool printAtoms() const { return _printAtoms; }
   bool testingLibResolution() const { return _testingLibResolution; }
   const StringRefVector &searchDirs() const { return _searchDirs; }
-  void addSysLibRoot(StringRef sysPath) { _syslibRoots.push_back(sysPath); }
+  const StringRefVector &frameworkDirs() const { return _frameworkDirs; }
+  void setSysLibRoots(const StringRefVector &paths);
   const StringRefVector &sysLibRoots() const { return _syslibRoots; }
 
   /// \brief Checks whether a given path on the filesystem exists.
@@ -112,9 +113,17 @@ public:
   ErrorOr<StringRef> searchDirForLibrary(StringRef path,
                                          StringRef libName) const;
 
-  /// \brief Iterates through all search path entries lookinf for libName (as
+  /// \brief Iterates through all search path entries looking for libName (as
   /// specified by -lFoo).
   ErrorOr<StringRef> searchLibrary(StringRef libName) const;
+
+  /// Add a framework search path.  Internally, this method may be prepended
+  /// the path with syslibroot.
+  void addFrameworkSearchDir(StringRef fwPath, bool isSystemPath = false);
+
+  /// \brief Iterates through all framework directories looking for
+  /// Foo.framework/Foo (when fwName = "Foo").
+  ErrorOr<StringRef> findPathForFramework(StringRef fwName) const;
 
   /// \brief The dylib's binary compatibility version, in the raw uint32 format.
   ///
@@ -231,6 +240,7 @@ private:
   std::set<StringRef> _existingPaths; // For testing only.
   StringRefVector _searchDirs;
   StringRefVector _syslibRoots;
+  StringRefVector _frameworkDirs;
   HeaderFileType _outputMachOType;   // e.g MH_EXECUTE
   bool _outputMachOTypeStatic; // Disambiguate static vs dynamic prog
   bool _doNothing;            // for -help and -v which just print info

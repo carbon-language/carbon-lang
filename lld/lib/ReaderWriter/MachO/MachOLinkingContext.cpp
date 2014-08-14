@@ -307,15 +307,16 @@ bool MachOLinkingContext::pathExists(StringRef path) const {
   return _existingPaths.find(key) != _existingPaths.end();
 }
 
+void MachOLinkingContext::setSysLibRoots(const StringRefVector &paths) {
+  _syslibRoots = paths;
+}
+
 void MachOLinkingContext::addModifiedSearchDir(StringRef libPath,
                                                bool isSystemPath) {
   bool addedModifiedPath = false;
 
-  // Two cases to consider here:
-  //   + If the last -syslibroot is "/", all of them are ignored (don't ask).
-  //   + -syslibroot only applies to absolute paths.
-  if (!_syslibRoots.empty() && _syslibRoots.back() != "/" &&
-      libPath.startswith("/")) {
+  // -syslibroot only applies to absolute paths.
+  if (libPath.startswith("/")) {
     for (auto syslibRoot : _syslibRoots) {
       SmallString<256> path(syslibRoot);
       llvm::sys::path::append(path, libPath);
@@ -337,6 +338,35 @@ void MachOLinkingContext::addModifiedSearchDir(StringRef libPath,
     }
   }
 }
+
+void MachOLinkingContext::addFrameworkSearchDir(StringRef fwPath,
+                                                bool isSystemPath) {
+  bool pathAdded = false;
+
+  // -syslibroot only used with to absolute framework search paths.
+  if (fwPath.startswith("/")) {
+    for (auto syslibRoot : _syslibRoots) {
+      SmallString<256> path(syslibRoot);
+      llvm::sys::path::append(path, fwPath);
+      if (pathExists(path)) {
+        _frameworkDirs.push_back(path.str().copy(_allocator));
+        pathAdded = true;
+      }
+    }
+  }
+  // If fwPath found in any -syslibroot, then done.
+  if (pathAdded)
+    return;
+
+  // If only one -syslibroot, system paths not in that SDK are suppressed.
+  if (isSystemPath && (_syslibRoots.size() == 1))
+    return;
+
+  // Only use raw fwPath if that directory exists.
+  if (pathExists(fwPath))
+    _frameworkDirs.push_back(fwPath);
+}
+
 
 ErrorOr<StringRef>
 MachOLinkingContext::searchDirForLibrary(StringRef path,
@@ -374,6 +404,19 @@ ErrorOr<StringRef> MachOLinkingContext::searchLibrary(StringRef libName) const {
     ErrorOr<StringRef> ec = searchDirForLibrary(dir, libName);
     if (ec)
       return ec;
+  }
+
+  return make_error_code(llvm::errc::no_such_file_or_directory);
+}
+
+
+ErrorOr<StringRef> MachOLinkingContext::findPathForFramework(StringRef fwName) const{
+  SmallString<256> fullPath;
+  for (StringRef dir : frameworkDirs()) {
+    fullPath.assign(dir);
+    llvm::sys::path::append(fullPath, Twine(fwName) + ".framework", fwName);
+    if (pathExists(fullPath))
+      return fullPath.str().copy(_allocator);
   }
 
   return make_error_code(llvm::errc::no_such_file_or_directory);

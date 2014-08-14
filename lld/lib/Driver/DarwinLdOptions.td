@@ -66,6 +66,8 @@ def bundle_loader : Separate<["-"], "bundle_loader">,
 def grp_libs : OptionGroup<"libs">, HelpText<"LIBRARY OPTIONS">;
 def L : JoinedOrSeparate<["-"], "L">,
         HelpText<"Add directory to library search path">, Group<grp_libs>;
+def F : JoinedOrSeparate<["-"], "F">,
+        HelpText<"Add directory to framework search path">, Group<grp_libs>;
 def Z : Flag<["-"], "Z">,
      HelpText<"Do not search standard directories for libraries or frameworks">;
 def all_load : Flag<["-"], "all_load">,
@@ -78,6 +80,8 @@ def syslibroot : Separate<["-"], "syslibroot">,
 // Input options
 def l : Joined<["-"], "l">,
         HelpText<"Base name of library searched for in -L directories">;
+def framework : Separate<["-"], "framework">,
+    HelpText<"Base name of framework searched for in -F directories">;
 
 // test case options
 def print_atoms : Flag<["-"], "print_atoms">,

@@ -321,8 +321,14 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   //      skipped.
   //   3. If the last -syslibroot is "/", all of them are ignored entirely.
   //   4. If { syslibroots } x path ==  {}, the original path is kept.
+  std::vector<StringRef> sysLibRoots;
   for (auto syslibRoot : parsedArgs->filtered(OPT_syslibroot)) {
-    ctx.addSysLibRoot(syslibRoot->getValue());
+    sysLibRoots.push_back(syslibRoot->getValue());
+  }
+  if (!sysLibRoots.empty()) {
+    // Ignore all if last -syslibroot is "/".
+    if (sysLibRoots.back() != "/")
+      ctx.setSysLibRoots(sysLibRoots);
   }
 
   // Paths specified with -L come first, and are not considered system paths for
@@ -331,10 +337,17 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.addModifiedSearchDir(libPath->getValue());
   }
 
+  // Process -F directories (where to look for frameworks).
+  for (auto fwPath : parsedArgs->filtered(OPT_F)) {
+    ctx.addFrameworkSearchDir(fwPath->getValue());
+  }
+
   // -Z suppresses the standard search paths.
   if (!parsedArgs->hasArg(OPT_Z)) {
     ctx.addModifiedSearchDir("/usr/lib", true);
     ctx.addModifiedSearchDir("/usr/local/lib", true);
+    ctx.addFrameworkSearchDir("/Library/Frameworks", true);
+    ctx.addFrameworkSearchDir("/System/Library/Frameworks", true);
   }
 
   // Now that we've constructed the final set of search paths, print out what
@@ -342,6 +355,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (ctx.testingLibResolution() || parsedArgs->getLastArg(OPT_v)) {
     diagnostics << "Library search paths:\n";
     for (auto path : ctx.searchDirs()) {
+      diagnostics << "    " << path << '\n';
+    }
+    diagnostics << "Framework search paths:\n";
+    for (auto path : ctx.frameworkDirs()) {
       diagnostics << "    " << path << '\n';
     }
   }
@@ -368,6 +385,21 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
        diagnostics << "Found library " << path << '\n';
       }
       inputPath = resolvedPath.get();
+      break;
+    }
+    case OPT_framework: {
+      ErrorOr<StringRef> fullPath = ctx.findPathForFramework(arg->getValue());
+      if (!fullPath) {
+        diagnostics << "Unable to find -framework " << arg->getValue() << "\n";
+        return false;
+      } else if (ctx.testingLibResolution()) {
+       // Test may be running on Windows. Canonicalize the path
+       // separator to '/' to get consistent outputs for tests.
+       std::string path = fullPath.get();
+       std::replace(path.begin(), path.end(), '\\', '/');
+       diagnostics << "Found framework " << path << '\n';
+      }
+      inputPath = fullPath.get();
       break;
     }
     }
