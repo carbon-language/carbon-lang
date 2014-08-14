@@ -4823,6 +4823,10 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
       "const char* const p = reinterpret_cast<const char* const>(q);");
   verifyGoogleFormat("void f(int i = 0, SomeType** temps = NULL);");
 
+  FormatStyle Left = getLLVMStyle();
+  Left.PointerAlignment = FormatStyle::PAS_Left;
+  verifyFormat("x = *a(x) = *a(y);", Left);
+
   verifyIndependentOfContext("a = *(x + y);");
   verifyIndependentOfContext("a = &(x + y);");
   verifyIndependentOfContext("*(x + y).call();");

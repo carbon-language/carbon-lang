@@ -708,7 +708,8 @@ private:
         }
         if ((Previous->Type == TT_BinaryOperator ||
              Previous->Type == TT_UnaryOperator) &&
-            Previous->isOneOf(tok::star, tok::amp)) {
+            Previous->isOneOf(tok::star, tok::amp) && Previous->Previous &&
+            Previous->Previous->isNot(tok::equal)) {
           Previous->Type = TT_PointerOrReference;
         }
       }
