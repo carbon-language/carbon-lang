@@ -1301,8 +1301,11 @@ void ASTDeclReader::MergeDefinitionData(
 
   // If the new definition has new special members, let the name lookup
   // code know that it needs to look in the new definition too.
-  if ((MergeDD.DeclaredSpecialMembers & ~DD.DeclaredSpecialMembers) &&
-      DD.Definition != MergeDD.Definition) {
+  //
+  // FIXME: We only need to do this if the merged definition declares members
+  // that this definition did not declare, or if it defines members that this
+  // definition did not define.
+  if (MergeDD.DeclaredSpecialMembers && DD.Definition != MergeDD.Definition) {
     Reader.MergedLookups[DD.Definition].push_back(MergeDD.Definition);
     DD.Definition->setHasExternalVisibleStorage();
   }

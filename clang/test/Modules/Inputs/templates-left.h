@@ -60,3 +60,9 @@ template<typename T> void testDelayUpdates(DelayUpdates<T> *p = 0) {}
 void outOfLineInlineUseLeftF(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::f);
 void outOfLineInlineUseLeftG(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::g);
 void outOfLineInlineUseLeftH(void (OutOfLineInline<int>::*)() = &OutOfLineInline<int>::h);
+
+namespace EmitDefaultedSpecialMembers {
+  inline void f() {
+    SmallString<256> SS;
+  };
+}
