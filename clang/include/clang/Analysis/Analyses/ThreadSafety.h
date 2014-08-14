@@ -181,6 +181,16 @@ public:
   virtual void handleFunExcludesLock(StringRef Kind, Name FunName,
                                      Name LockName, SourceLocation Loc) {}
 
+  /// Called by the analysis when starting analysis of a function.
+  /// Used to issue suggestions for changes to annotations.
+  virtual void enterFunction(const FunctionDecl *FD) {}
+
+  /// Called by the analysis when finishing analysis of a function.
+  virtual void leaveFunction(const FunctionDecl *FD) {}
+
+  /// Return the number of errors found within this function so far.
+  virtual int numErrors() { return 0; }
+
   bool issueBetaWarnings() { return IssueBetaWarnings; }
   void setIssueBetaWarnings(bool b) { IssueBetaWarnings = b; }
 

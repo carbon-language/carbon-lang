@@ -596,6 +596,7 @@ def ThreadSafety : DiagGroup<"thread-safety",
                               ThreadSafetyAnalysis,
                               ThreadSafetyPrecise,
                               ThreadSafetyNegative]>;
+def ThreadSafetyVerbose : DiagGroup<"thread-safety-verbose">;
 def ThreadSafetyBeta : DiagGroup<"thread-safety-beta">;
 
 // Uniqueness Analysis warnings
