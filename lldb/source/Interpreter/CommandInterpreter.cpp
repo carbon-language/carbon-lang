@@ -417,7 +417,7 @@ CommandInterpreter::LoadCommandDictionary ()
                                       {"^(-.*)$", "breakpoint set %1"},
                                       {"^(.*[^[:space:]])`(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%2' --shlib '%1'"},
                                       {"^\\&(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1' --skip-prologue=0"},
-                                      {"^(.*[^[:space:]])[[:space:]]*$", "breakpoint set --name '%1'"}};
+                                      {"^[\"']?(.*[^[:space:]\"'])[\"']?[[:space:]]*$", "breakpoint set --name '%1'"}};
     
     size_t num_regexes = llvm::array_lengthof(break_regexes);
         
