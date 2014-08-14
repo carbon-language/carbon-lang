@@ -512,7 +512,9 @@ def I8Imm : SDNodeXForm<imm, [{
 }]>;
 
 def FROUND_NO_EXC : ImmLeaf<i32, [{ return Imm == 8; }]>;
-def FROUND_CURRENT : ImmLeaf<i32, [{ return Imm == 4; }]>;
+def FROUND_CURRENT : ImmLeaf<i32, [{
+  return Imm == X86::STATIC_ROUNDING::CUR_DIRECTION;
+}]>;
 
 // BYTE_imm - Transform bit immediates into byte immediates.
 def BYTE_imm  : SDNodeXForm<imm, [{
