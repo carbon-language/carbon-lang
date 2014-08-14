@@ -21,3 +21,25 @@ define <4 x float> @t2(<4 x float> %Q) {
         %tmp = fsub <4 x float> zeroinitializer, %Q
 	ret <4 x float> %tmp
 }
+
+; If we're bitcasting an integer to an FP vector, we should avoid the FPU/vector unit entirely.
+; Make sure that we're flipping the sign bit and only the sign bit of each float.
+; So instead of something like this:
+;    movd	%rdi, %xmm0
+;    xorps	.LCPI2_0(%rip), %xmm0
+;
+; We should generate:
+;    movabsq     (put sign bit mask in integer register))
+;    xorq        (flip sign bits)
+;    movd        (move to xmm return register) 
+
+define <2 x float> @fneg_bitcast(i64 %i) {
+; CHECK-LABEL: fneg_bitcast:
+; CHECK:	movabsq	$-9223372034707292160, %rax # imm = 0x8000000080000000
+; CHECK-NEXT:	xorq	%rdi, %rax
+; CHECK-NEXT:	movd	%rax, %xmm0
+; CHECK-NEXT:	retq
+  %bitcast = bitcast i64 %i to <2 x float>
+  %fneg = fsub <2 x float> <float -0.0, float -0.0>, %bitcast
+  ret <2 x float> %fneg
+}
