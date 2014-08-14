@@ -727,10 +727,6 @@ ifeq ($(HOST_OS),SunOS)
 CPP.BaseFlags += -include llvm/Support/Solaris.h
 endif
 
-ifeq ($(HOST_OS),AuroraUX)
-CPP.BaseFlags += -include llvm/Support/Solaris.h
-endif # !HOST_OS - AuroraUX.
-
 # On Windows, SharedLibDir != LibDir. The order is important.
 ifeq ($(HOST_OS), $(filter $(HOST_OS), Cygwin MingW))
   LD.Flags    += -L$(SharedLibDir) -L$(LibDir) -L$(LLVMToolDir) -L$(LLVMLibDir)

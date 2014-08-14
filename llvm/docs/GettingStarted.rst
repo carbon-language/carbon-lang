@@ -115,7 +115,6 @@ LLVM is known to work on the following host platforms:
 ================== ===================== =============
 OS                 Arch                  Compilers               
 ================== ===================== =============
-AuroraUX           x86\ :sup:`1`         GCC                     
 Linux              x86\ :sup:`1`         GCC, Clang              
 Linux              amd64                 GCC, Clang              
 Linux              ARM\ :sup:`4`         GCC, Clang              
