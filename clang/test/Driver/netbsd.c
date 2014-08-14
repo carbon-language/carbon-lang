@@ -16,6 +16,9 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM %s
+// RUN: %clang -no-canonical-prefixes -target armeb--netbsd-eabi \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=ARMEB %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-APCS %s
@@ -25,6 +28,9 @@
 // RUN: %clang -no-canonical-prefixes -target thumb--netbsd-eabi \
 // RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=THUMB %s
+// RUN: %clang -no-canonical-prefixes -target thumbeb--netbsd-eabi \
+// RUN: -no-integrated-as --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=THUMBEB %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd7.0.0-eabi \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=ARM-7 %s
@@ -62,6 +68,9 @@
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd-eabi -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-ARM %s
+// RUN: %clang -no-canonical-prefixes -target armeb--netbsd-eabi -static \
+// RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
+// RUN: | FileCheck -check-prefix=S-ARMEB %s
 // RUN: %clang -no-canonical-prefixes -target arm--netbsd7.0.0-eabi -static \
 // RUN: --sysroot=%S/Inputs/basic_netbsd_tree %s -### 2>&1 \
 // RUN: | FileCheck -check-prefix=S-ARM-7 %s
@@ -120,6 +129,15 @@
 // ARM: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // ARM: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
+// ARMEB: clang{{.*}}" "-cc1" "-triple" "armebv5e--netbsd-eabi"
+// ARMEB: as{{.*}}" "-mcpu=arm926ej-s" "-o"
+// ARMEB: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// ARMEB: "-m" "armelfb_nbsd_eabi"
+// ARMEB: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// ARMEB: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
+// ARMEB: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// ARMEB: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
 // ARM-APCS: clang{{.*}}" "-cc1" "-triple" "armv4--netbsd"
 // ARM-APCS: as{{.*}}" "-mcpu=strongarm" "-o"
 // ARM-APCS: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -146,6 +164,15 @@
 // THUMB: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
 // THUMB: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // THUMB: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// THUMBEB: clang{{.*}}" "-cc1" "-triple" "armebv5e--netbsd-eabi"
+// THUMBEB: as{{.*}}" "-mcpu=arm926ej-s" "-o"
+// THUMBEB: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
+// THUMBEB: "-m" "armelfb_nbsd_eabi"
+// THUMBEB: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// THUMBEB: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
+// THUMBEB: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// THUMBEB: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // ARM-7: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd7.0.0-eabi"
 // ARM-7: ld{{.*}}" "--eh-frame-hdr" "-dynamic-linker" "/libexec/ld.elf_so"
@@ -234,6 +261,14 @@
 // S-ARM: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
 // S-ARM: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
 // S-ARM: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
+
+// S-ARMEB: clang{{.*}}" "-cc1" "-triple" "armebv5e--netbsd-eabi"
+// S-ARMEB: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
+// S-ARMEB: "-m" "armelfb_nbsd_eabi"
+// S-ARMEB: "-o" "a.out" "{{.*}}/usr/lib{{/|\\\\}}crt0.o"
+// S-ARMEB: "{{.*}}/usr/lib{{/|\\\\}}eabi{{/|\\\\}}crti.o"
+// S-ARMEB: "{{.*}}/usr/lib{{/|\\\\}}crtbegin.o" "{{.*}}.o" "-lc"
+// S-ARMEB: "{{.*}}/usr/lib{{/|\\\\}}crtend.o" "{{.*}}/usr/lib{{/|\\\\}}crtn.o"
 
 // S-ARM-7: clang{{.*}}" "-cc1" "-triple" "armv5e--netbsd7.0.0-eabi"
 // S-ARM-7: ld{{.*}}" "--eh-frame-hdr" "-Bstatic"
