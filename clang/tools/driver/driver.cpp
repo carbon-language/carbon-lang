@@ -293,7 +293,7 @@ namespace {
   };
 }
 
-static void HandleDriverEnvVars(Driver &TheDriver) {
+static void SetBackdoorDriverOutputsFromEnvVars(Driver &TheDriver) {
   // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
   TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
   if (TheDriver.CCPrintOptions)
@@ -426,7 +426,7 @@ int main(int argc_, const char **argv_) {
   llvm::InitializeAllTargets();
   ParseProgName(argv, SavedStrings, TheDriver);
 
-  HandleDriverEnvVars(TheDriver);
+  SetBackdoorDriverOutputsFromEnvVars(TheDriver);
 
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
