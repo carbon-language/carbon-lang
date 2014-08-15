@@ -67,6 +67,7 @@
 #include "lldb/Host/Config.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Process.h"
@@ -841,16 +842,6 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
 
 #endif
 
-FileSpec::PathSyntax
-Host::GetHostPathSyntax()
-{
-#if defined(_WIN32)
-    return FileSpec::ePathSyntaxWindows;
-#else
-    return FileSpec::ePathSyntaxPosix;
-#endif
-}
-
 FileSpec
 Host::GetUserProfileFileSpec ()
 {
@@ -1080,7 +1071,7 @@ static void CleanupProcessSpecificLLDBTempDir ()
         // Remove the LLDB temporary directory if we have one. Set "recurse" to
         // true to all files that were created for the LLDB process can be cleaned up.
         const bool recurse = true;
-        Host::RemoveDirectory(tmpdir_file_spec.GetDirectory().GetCString(), recurse);
+        FileSystem::DeleteDirectory(tmpdir_file_spec.GetDirectory().GetCString(), recurse);
     }
 }
 
@@ -1384,10 +1375,12 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                 {
                     StreamString pid_tmpdir;
                     pid_tmpdir.Printf("%s/lldb", tmpdir_cstr);
-                    if (Host::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
+                    if (FileSystem::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault)
+                            .Success())
                     {
                         pid_tmpdir.Printf("/%" PRIu64, Host::GetCurrentProcessID());
-                        if (Host::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault).Success())
+                        if (FileSystem::MakeDirectory(pid_tmpdir.GetString().c_str(), eFilePermissionsDirectoryDefault)
+                                .Success())
                         {
                             // Make an atexit handler to clean up the process specify LLDB temp dir
                             // and all of its contents.
@@ -1960,10 +1953,7 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
             const FileAction *launch_file_action = launch_info.GetFileActionAtIndex(i);
             if (launch_file_action)
             {
-                if (!AddPosixSpawnFileAction (&file_actions,
-                                                                             launch_file_action,
-                                                                             log,
-                                                                             error))
+                if (!AddPosixSpawnFileAction(&file_actions, launch_file_action, log, error))
                     return error;
             }
         }
@@ -2033,7 +2023,8 @@ Host::LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_i
     return error;
 }
 
-bool Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, Log *log, Error &error)
+bool
+Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, Log *log, Error &error)
 {
     if (info == NULL)
         return false;
@@ -2042,57 +2033,59 @@ bool Host::AddPosixSpawnFileAction(void *_file_actions, const FileAction *info, 
 
     switch (info->GetAction())
     {
-    case FileAction::eFileActionNone:
-        error.Clear();
-        break;
+        case FileAction::eFileActionNone:
+            error.Clear();
+            break;
 
-    case FileAction::eFileActionClose:
-        if (info->GetFD() == -1)
-            error.SetErrorString("invalid fd for posix_spawn_file_actions_addclose(...)");
-        else
-        {
-            error.SetError(::posix_spawn_file_actions_addclose(file_actions, info->GetFD()), eErrorTypePOSIX);
-            if (log && (error.Fail() || log))
-                error.PutToLog(log, "posix_spawn_file_actions_addclose (action=%p, fd=%i)",
-                               static_cast<void *>(file_actions), info->GetFD());
-        }
-        break;
+        case FileAction::eFileActionClose:
+            if (info->GetFD() == -1)
+                error.SetErrorString("invalid fd for posix_spawn_file_actions_addclose(...)");
+            else
+            {
+                error.SetError(::posix_spawn_file_actions_addclose(file_actions, info->GetFD()), eErrorTypePOSIX);
+                if (log && (error.Fail() || log))
+                    error.PutToLog(log, "posix_spawn_file_actions_addclose (action=%p, fd=%i)",
+                                   static_cast<void *>(file_actions), info->GetFD());
+            }
+            break;
 
-    case FileAction::eFileActionDuplicate:
-        if (info->GetFD() == -1)
-            error.SetErrorString("invalid fd for posix_spawn_file_actions_adddup2(...)");
-        else if (info->GetActionArgument() == -1)
-            error.SetErrorString("invalid duplicate fd for posix_spawn_file_actions_adddup2(...)");
-        else
-        {
-            error.SetError(::posix_spawn_file_actions_adddup2(file_actions, info->GetFD(), info->GetActionArgument()),
-                           eErrorTypePOSIX);
-            if (log && (error.Fail() || log))
-                error.PutToLog(log, "posix_spawn_file_actions_adddup2 (action=%p, fd=%i, dup_fd=%i)",
-                               static_cast<void *>(file_actions), info->GetFD(), info->GetActionArgument());
-        }
-        break;
+        case FileAction::eFileActionDuplicate:
+            if (info->GetFD() == -1)
+                error.SetErrorString("invalid fd for posix_spawn_file_actions_adddup2(...)");
+            else if (info->GetActionArgument() == -1)
+                error.SetErrorString("invalid duplicate fd for posix_spawn_file_actions_adddup2(...)");
+            else
+            {
+                error.SetError(
+                    ::posix_spawn_file_actions_adddup2(file_actions, info->GetFD(), info->GetActionArgument()),
+                    eErrorTypePOSIX);
+                if (log && (error.Fail() || log))
+                    error.PutToLog(log, "posix_spawn_file_actions_adddup2 (action=%p, fd=%i, dup_fd=%i)",
+                                   static_cast<void *>(file_actions), info->GetFD(), info->GetActionArgument());
+            }
+            break;
 
-    case FileAction::eFileActionOpen:
-        if (info->GetFD() == -1)
-            error.SetErrorString("invalid fd in posix_spawn_file_actions_addopen(...)");
-        else
-        {
-            int oflag = info->GetActionArgument();
+        case FileAction::eFileActionOpen:
+            if (info->GetFD() == -1)
+                error.SetErrorString("invalid fd in posix_spawn_file_actions_addopen(...)");
+            else
+            {
+                int oflag = info->GetActionArgument();
 
-            mode_t mode = 0;
+                mode_t mode = 0;
 
-            if (oflag & O_CREAT)
-                mode = 0640;
+                if (oflag & O_CREAT)
+                    mode = 0640;
 
-            error.SetError(
-                ::posix_spawn_file_actions_addopen(file_actions, info->GetFD(), info->GetPath(), oflag, mode),
-                eErrorTypePOSIX);
-            if (error.Fail() || log)
-                error.PutToLog(log, "posix_spawn_file_actions_addopen (action=%p, fd=%i, path='%s', oflag=%i, mode=%i)",
-                               static_cast<void *>(file_actions), info->GetFD(), info->GetPath(), oflag, mode);
-        }
-        break;
+                error.SetError(
+                    ::posix_spawn_file_actions_addopen(file_actions, info->GetFD(), info->GetPath(), oflag, mode),
+                    eErrorTypePOSIX);
+                if (error.Fail() || log)
+                    error.PutToLog(log,
+                                   "posix_spawn_file_actions_addopen (action=%p, fd=%i, path='%s', oflag=%i, mode=%i)",
+                                   static_cast<void *>(file_actions), info->GetFD(), info->GetPath(), oflag, mode);
+            }
+            break;
     }
     return error.Success();
 }
@@ -2266,298 +2259,3 @@ Host::LaunchApplication (const FileSpec &app_file_spec)
 }
 
 #endif
-
-
-#if !defined(_WIN32)
-Error
-Host::MakeDirectory (const char* path, uint32_t file_permissions)
-{
-    Error error;
-    if (path && path[0])
-    {
-        if (::mkdir(path, file_permissions) != 0)
-        {
-            error.SetErrorToErrno();
-            switch (error.GetError())
-            {
-            case ENOENT:
-                {
-                    // Parent directory doesn't exist, so lets make it if we can
-                    FileSpec spec(path, false);
-                    if (spec.GetDirectory() && spec.GetFilename())
-                    {
-                        // Make the parent directory and try again
-                        Error error2 = Host::MakeDirectory(spec.GetDirectory().GetCString(), file_permissions);
-                        if (error2.Success())
-                        {
-                            // Try and make the directory again now that the parent directory was made successfully
-                            if (::mkdir(path, file_permissions) == 0)
-                                error.Clear();
-                            else
-                                error.SetErrorToErrno();
-                        }
-                    }
-                }
-                break;
-            case EEXIST:
-                {
-                    FileSpec path_spec(path, false);
-                    if (path_spec.IsDirectory())
-                        error.Clear(); // It is a directory and it already exists
-                }
-                break;
-            }
-        }
-    }
-    else
-    {
-        error.SetErrorString("empty path");
-    }
-    return error;
-}
-                                                                    
-Error
-Host::RemoveDirectory (const char* path, bool recurse)
-{
-    Error error;
-    if (path && path[0])
-    {
-        if (recurse)
-        {
-            StreamString command;
-            command.Printf("rm -rf \"%s\"", path);
-            int status = ::system(command.GetString().c_str());
-            if (status != 0)
-                error.SetError(status, eErrorTypeGeneric);
-        }
-        else
-        {
-            if (::rmdir(path) != 0)
-                error.SetErrorToErrno();
-        }
-    }
-    else
-    {
-        error.SetErrorString("empty path");
-    }
-    return error;
-}
-
-Error
-Host::GetFilePermissions (const char* path, uint32_t &file_permissions)
-{
-    Error error;
-    struct stat file_stats;
-    if (::stat (path, &file_stats) == 0)
-    {
-        // The bits in "st_mode" currently match the definitions
-        // for the file mode bits in unix.
-        file_permissions = file_stats.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
-    }
-    else
-    {
-        error.SetErrorToErrno();
-    }
-    return error;
-}
-
-Error
-Host::SetFilePermissions (const char* path, uint32_t file_permissions)
-{
-    Error error;
-    if (::chmod(path, file_permissions) != 0)
-        error.SetErrorToErrno();
-    return error;
-}
-
-Error
-Host::Symlink (const char *src, const char *dst)
-{
-    Error error;
-    if (::symlink(dst, src) == -1)
-        error.SetErrorToErrno();
-    return error;
-}
-
-Error
-Host::Unlink (const char *path)
-{
-    Error error;
-    if (::unlink(path) == -1)
-        error.SetErrorToErrno();
-    return error;
-}
-
-Error
-Host::Readlink (const char *path, char *buf, size_t buf_len)
-{
-    Error error;
-    ssize_t count = ::readlink(path, buf, buf_len);
-    if (count < 0)
-        error.SetErrorToErrno();
-    else if (static_cast<size_t>(count) < (buf_len-1))
-        buf[count] = '\0'; // Success
-    else
-        error.SetErrorString("'buf' buffer is too small to contain link contents");
-    return error;
-}
-
-
-#endif
-
-typedef std::map<lldb::user_id_t, lldb::FileSP> FDToFileMap;
-FDToFileMap& GetFDToFileMap()
-{
-    static FDToFileMap g_fd2filemap;
-    return g_fd2filemap;
-}
-
-lldb::user_id_t
-Host::OpenFile (const FileSpec& file_spec,
-                uint32_t flags,
-                uint32_t mode,
-                Error &error)
-{
-    std::string path (file_spec.GetPath());
-    if (path.empty())
-    {
-        error.SetErrorString("empty path");
-        return UINT64_MAX;
-    }
-    FileSP file_sp(new File());
-    error = file_sp->Open(path.c_str(),flags,mode);
-    if (file_sp->IsValid() == false)
-        return UINT64_MAX;
-    lldb::user_id_t fd = file_sp->GetDescriptor();
-    GetFDToFileMap()[fd] = file_sp;
-    return fd;
-}
-
-bool
-Host::CloseFile (lldb::user_id_t fd, Error &error)
-{
-    if (fd == UINT64_MAX)
-    {
-        error.SetErrorString ("invalid file descriptor");
-        return false;
-    }
-    FDToFileMap& file_map = GetFDToFileMap();
-    FDToFileMap::iterator pos = file_map.find(fd);
-    if (pos == file_map.end())
-    {
-        error.SetErrorStringWithFormat ("invalid host file descriptor %" PRIu64, fd);
-        return false;
-    }
-    FileSP file_sp = pos->second;
-    if (!file_sp)
-    {
-        error.SetErrorString ("invalid host backing file");
-        return false;
-    }
-    error = file_sp->Close();
-    file_map.erase(pos);
-    return error.Success();
-}
-
-uint64_t
-Host::WriteFile (lldb::user_id_t fd, uint64_t offset, const void* src, uint64_t src_len, Error &error)
-{
-    if (fd == UINT64_MAX)
-    {
-        error.SetErrorString ("invalid file descriptor");
-        return UINT64_MAX;
-    }
-    FDToFileMap& file_map = GetFDToFileMap();
-    FDToFileMap::iterator pos = file_map.find(fd);
-    if (pos == file_map.end())
-    {
-        error.SetErrorStringWithFormat("invalid host file descriptor %" PRIu64 , fd);
-        return false;
-    }
-    FileSP file_sp = pos->second;
-    if (!file_sp)
-    {
-        error.SetErrorString ("invalid host backing file");
-        return UINT64_MAX;
-    }
-    if (static_cast<uint64_t>(file_sp->SeekFromStart(offset, &error)) != offset ||
-        error.Fail())
-        return UINT64_MAX;
-    size_t bytes_written = src_len;
-    error = file_sp->Write(src, bytes_written);
-    if (error.Fail())
-        return UINT64_MAX;
-    return bytes_written;
-}
-
-uint64_t
-Host::ReadFile (lldb::user_id_t fd, uint64_t offset, void* dst, uint64_t dst_len, Error &error)
-{
-    if (fd == UINT64_MAX)
-    {
-        error.SetErrorString ("invalid file descriptor");
-        return UINT64_MAX;
-    }
-    FDToFileMap& file_map = GetFDToFileMap();
-    FDToFileMap::iterator pos = file_map.find(fd);
-    if (pos == file_map.end())
-    {
-        error.SetErrorStringWithFormat ("invalid host file descriptor %" PRIu64, fd);
-        return false;
-    }
-    FileSP file_sp = pos->second;
-    if (!file_sp)
-    {
-        error.SetErrorString ("invalid host backing file");
-        return UINT64_MAX;
-    }
-    if (static_cast<uint64_t>(file_sp->SeekFromStart(offset, &error)) != offset ||
-        error.Fail())
-        return UINT64_MAX;
-    size_t bytes_read = dst_len;
-    error = file_sp->Read(dst ,bytes_read);
-    if (error.Fail())
-        return UINT64_MAX;
-    return bytes_read;
-}
-
-lldb::user_id_t
-Host::GetFileSize (const FileSpec& file_spec)
-{
-    return file_spec.GetByteSize();
-}
-
-bool
-Host::GetFileExists (const FileSpec& file_spec)
-{
-    return file_spec.Exists();
-}
-
-bool
-Host::CalculateMD5 (const FileSpec& file_spec,
-                    uint64_t &low,
-                    uint64_t &high)
-{
-#if defined (__APPLE__)
-    StreamString md5_cmd_line;
-    md5_cmd_line.Printf("md5 -q '%s'", file_spec.GetPath().c_str());
-    std::string hash_string;
-    Error err = Host::RunShellCommand(md5_cmd_line.GetData(), NULL, NULL, NULL, &hash_string, 60);
-    if (err.Fail())
-        return false;
-    // a correctly formed MD5 is 16-bytes, that is 32 hex digits
-    // if the output is any other length it is probably wrong
-    if (hash_string.size() != 32)
-        return false;
-    std::string part1(hash_string,0,16);
-    std::string part2(hash_string,16);
-    const char* part1_cstr = part1.c_str();
-    const char* part2_cstr = part2.c_str();
-    high = ::strtoull(part1_cstr, NULL, 16);
-    low = ::strtoull(part2_cstr, NULL, 16);
-    return true;
-#else
-    // your own MD5 implementation here
-    return false;
-#endif
-}

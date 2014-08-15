@@ -36,11 +36,23 @@ class FileAction
 
     bool Open(int fd, const char *path, bool read, bool write);
 
-    int GetFD() const { return m_fd; }
+    int
+    GetFD() const
+    {
+        return m_fd;
+    }
 
-    Action GetAction() const { return m_action; }
+    Action
+    GetAction() const
+    {
+        return m_action;
+    }
 
-    int GetActionArgument() const { return m_arg; }
+    int
+    GetActionArgument() const
+    {
+        return m_arg;
+    }
 
     const char *GetPath() const;
 

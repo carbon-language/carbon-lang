@@ -176,16 +176,14 @@ ProcessPOSIX::WillLaunch(Module* module)
 }
 
 const char *
-ProcessPOSIX::GetFilePath(
-    const lldb_private::FileAction *file_action,
-    const char *default_path)
+ProcessPOSIX::GetFilePath(const lldb_private::FileAction *file_action, const char *default_path)
 {
     const char *pts_name = "/dev/pts/";
     const char *path = NULL;
 
     if (file_action)
     {
-        if (file_action->GetAction () == FileAction::eFileActionOpen)
+        if (file_action->GetAction() == FileAction::eFileActionOpen)
         {
             path = file_action->GetPath();
             // By default the stdio paths passed in will be pseudo-terminal

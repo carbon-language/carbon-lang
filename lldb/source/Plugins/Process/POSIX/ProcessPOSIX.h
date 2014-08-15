@@ -157,9 +157,7 @@ public:
     lldb_private::UnixSignals &
     GetUnixSignals();
 
-    const char *
-    GetFilePath(const lldb_private::FileAction *file_action,
-                const char *default_path);
+    const char *GetFilePath(const lldb_private::FileAction *file_action, const char *default_path);
 
     /// Stops all threads in the process.
     /// The \p stop_tid parameter indicates the thread which initiated the stop.

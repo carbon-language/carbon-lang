@@ -402,45 +402,44 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
             break;
             
         case 'i':   // STDIN for read only
-            {   
-                FileAction action;
-                if (action.Open (STDIN_FILENO, option_arg, true, false))
-                    launch_info.AppendFileAction (action);
-            }
+        {
+            FileAction action;
+            if (action.Open (STDIN_FILENO, option_arg, true, false))
+                launch_info.AppendFileAction (action);
             break;
+        }
             
         case 'o':   // Open STDOUT for write only
-            {   
-                FileAction action;
-                if (action.Open (STDOUT_FILENO, option_arg, false, true))
-                    launch_info.AppendFileAction (action);
-            }
+        {
+            FileAction action;
+            if (action.Open (STDOUT_FILENO, option_arg, false, true))
+                launch_info.AppendFileAction (action);
             break;
+        }
 
         case 'e':   // STDERR for write only
-            {   
-                FileAction action;
-                if (action.Open (STDERR_FILENO, option_arg, false, true))
-                    launch_info.AppendFileAction (action);
-            }
+        {
+            FileAction action;
+            if (action.Open (STDERR_FILENO, option_arg, false, true))
+                launch_info.AppendFileAction (action);
             break;
-            
+        }
 
         case 'p':   // Process plug-in name
             launch_info.SetProcessPluginName (option_arg);    
             break;
             
         case 'n':   // Disable STDIO
-            {
-                FileAction action;
-                if (action.Open (STDIN_FILENO, "/dev/null", true, false))
-                    launch_info.AppendFileAction (action);
-                if (action.Open (STDOUT_FILENO, "/dev/null", false, true))
-                    launch_info.AppendFileAction (action);
-                if (action.Open (STDERR_FILENO, "/dev/null", false, true))
-                    launch_info.AppendFileAction (action);
-            }
+        {
+            FileAction action;
+            if (action.Open (STDIN_FILENO, "/dev/null", true, false))
+                launch_info.AppendFileAction (action);
+            if (action.Open (STDOUT_FILENO, "/dev/null", false, true))
+                launch_info.AppendFileAction (action);
+            if (action.Open (STDERR_FILENO, "/dev/null", false, true))
+                launch_info.AppendFileAction (action);
             break;
+        }
             
         case 'w': 
             launch_info.SetWorkingDirectory (option_arg);    
@@ -473,7 +472,6 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
         default:
             error.SetErrorStringWithFormat("unrecognized short option character '%c'", short_option);
             break;
-            
     }
     return error;
 }

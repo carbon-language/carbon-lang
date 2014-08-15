@@ -22,6 +22,7 @@
 #include "lldb/Core/StreamFile.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Socket.h"
 #include "lldb/Host/TimeValue.h"
@@ -843,7 +844,7 @@ GDBRemoteCommunication::StartDebugserverProcess (const char *hostname,
                     out_port = Args::StringToUInt32(port_cstr, 0);
                     name_pipe_file.Close();
                 }
-                Host::Unlink(named_pipe_path);
+                FileSystem::Unlink(named_pipe_path);
             }
             else if (listen)
             {

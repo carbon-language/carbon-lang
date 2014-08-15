@@ -12,6 +12,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Host/Config.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/SocketAddress.h"
 #include "lldb/Host/TimeValue.h"
@@ -442,7 +443,7 @@ Error Socket::UnixDomainAccept(llvm::StringRef name, Socket *&socket)
     saddr_un.sun_len = SUN_LEN (&saddr_un);
 #endif
 
-    Host::Unlink (name.data());
+    FileSystem::Unlink(name.data());
     bool success = false;
     if (::bind (listen_fd, (struct sockaddr *)&saddr_un, SUN_LEN (&saddr_un)) == 0) 
     {

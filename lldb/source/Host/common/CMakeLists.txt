@@ -5,6 +5,7 @@ add_lldb_library(lldbHostCommon
   DynamicLibrary.cpp
   Editline.cpp
   File.cpp
+	FileCache.cpp
   FileSpec.cpp
   Host.cpp
   IOObject.cpp

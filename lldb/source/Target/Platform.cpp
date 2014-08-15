@@ -19,6 +19,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
@@ -494,8 +495,8 @@ RecurseCopy_Callback (void *baton,
                     dst_file.GetFilename() = src.GetFilename();
                 
                 char buf[PATH_MAX];
-                
-                rc_baton->error = Host::Readlink (src.GetPath().c_str(), buf, sizeof(buf));
+
+                rc_baton->error = FileSystem::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
 
                 if (rc_baton->error.Fail())
                     return FileSpec::eEnumerateDirectoryResultQuit; // got an error, bail out
@@ -649,7 +650,7 @@ Platform::Install (const FileSpec& src, const FileSpec& dst)
                     if (GetFileExists (fixed_dst))
                         Unlink (fixed_dst.GetPath().c_str());
                     char buf[PATH_MAX];
-                    error = Host::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
+                    error = FileSystem::Readlink(src.GetPath().c_str(), buf, sizeof(buf));
                     if (error.Success())
                         error = CreateSymlink(dst.GetPath().c_str(), buf);
                 }
@@ -701,7 +702,7 @@ Error
 Platform::MakeDirectory (const char *path, uint32_t permissions)
 {
     if (IsHost())
-        return Host::MakeDirectory (path, permissions);
+        return FileSystem::MakeDirectory(path, permissions);
     else
     {
         Error error;
@@ -714,7 +715,7 @@ Error
 Platform::GetFilePermissions (const char *path, uint32_t &file_permissions)
 {
     if (IsHost())
-        return Host::GetFilePermissions(path, file_permissions);
+        return FileSystem::GetFilePermissions(path, file_permissions);
     else
     {
         Error error;
@@ -727,7 +728,7 @@ Error
 Platform::SetFilePermissions (const char *path, uint32_t file_permissions)
 {
     if (IsHost())
-        return Host::SetFilePermissions(path, file_permissions);
+        return FileSystem::SetFilePermissions(path, file_permissions);
     else
     {
         Error error;
@@ -1182,7 +1183,7 @@ Platform::CalculateMD5 (const FileSpec& file_spec,
                         uint64_t &high)
 {
     if (IsHost())
-        return Host::CalculateMD5(file_spec, low, high);
+        return FileSystem::CalculateMD5(file_spec, low, high);
     else
         return false;
 }

@@ -23,6 +23,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
@@ -287,7 +288,7 @@ static lldb_private::Error
 MakeCacheFolderForFile (const FileSpec& module_cache_spec)
 {
     FileSpec module_cache_folder = module_cache_spec.CopyByRemovingLastPathComponent();
-    return Host::MakeDirectory(module_cache_folder.GetPath().c_str(), eFilePermissionsDirectoryDefault);
+    return FileSystem::MakeDirectory(module_cache_folder.GetPath().c_str(), eFilePermissionsDirectoryDefault);
 }
 
 static lldb_private::Error
@@ -366,7 +367,7 @@ PlatformDarwin::GetSharedModuleWithLocalCache (const lldb_private::ModuleSpec &m
                     // when going over the *slow* GDB remote transfer mechanism we first check
                     // the hashes of the files - and only do the actual transfer if they differ
                     uint64_t high_local,high_remote,low_local,low_remote;
-                    Host::CalculateMD5 (module_cache_spec, low_local, high_local);
+                    FileSystem::CalculateMD5(module_cache_spec, low_local, high_local);
                     m_remote_platform_sp->CalculateMD5(module_spec.GetFileSpec(), low_remote, high_remote);
                     if (low_local != low_remote || high_local != high_remote)
                     {

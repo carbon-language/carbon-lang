@@ -103,6 +103,10 @@ if ( CMAKE_SYSTEM_NAME MATCHES "Windows" )
     lldbPluginJITLoaderGDB
     Ws2_32
     )
+else ()
+  list(APPEND LLDB_USED_LIBS
+		lldbHostPosix
+		)
 endif ()
 
 # Linux-only libraries

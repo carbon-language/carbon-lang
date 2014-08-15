@@ -18,7 +18,9 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/File.h"
+#include "lldb/Host/FileCache.h"
 #include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
 
@@ -121,7 +123,7 @@ PlatformPOSIX::OpenFile (const FileSpec& file_spec,
                          Error &error)
 {
     if (IsHost())
-        return Host::OpenFile(file_spec, flags, mode, error);
+        return FileCache::GetInstance().OpenFile(file_spec, flags, mode, error);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->OpenFile(file_spec, flags, mode, error);
     else
@@ -132,7 +134,7 @@ bool
 PlatformPOSIX::CloseFile (lldb::user_id_t fd, Error &error)
 {
     if (IsHost())
-        return Host::CloseFile(fd, error);
+        return FileCache::GetInstance().CloseFile(fd, error);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->CloseFile(fd, error);
     else
@@ -147,7 +149,7 @@ PlatformPOSIX::ReadFile (lldb::user_id_t fd,
                          Error &error)
 {
     if (IsHost())
-        return Host::ReadFile(fd, offset, dst, dst_len, error);
+        return FileCache::GetInstance().ReadFile(fd, offset, dst, dst_len, error);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->ReadFile(fd, offset, dst, dst_len, error);
     else
@@ -162,7 +164,7 @@ PlatformPOSIX::WriteFile (lldb::user_id_t fd,
                           Error &error)
 {
     if (IsHost())
-        return Host::WriteFile(fd, offset, src, src_len, error);
+        return FileCache::GetInstance().WriteFile(fd, offset, src, src_len, error);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->WriteFile(fd, offset, src, src_len, error);
     else
@@ -350,7 +352,7 @@ lldb::user_id_t
 PlatformPOSIX::GetFileSize (const FileSpec& file_spec)
 {
     if (IsHost())
-        return Host::GetFileSize(file_spec);
+        return FileSystem::GetFileSize(file_spec);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->GetFileSize(file_spec);
     else
@@ -361,7 +363,7 @@ Error
 PlatformPOSIX::CreateSymlink(const char *src, const char *dst)
 {
     if (IsHost())
-        return Host::Symlink(src, dst);
+        return FileSystem::Symlink(src, dst);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->CreateSymlink(src, dst);
     else
@@ -383,7 +385,7 @@ Error
 PlatformPOSIX::Unlink (const char *path)
 {
     if (IsHost())
-        return Host::Unlink (path);
+        return FileSystem::Unlink(path);
     else if (m_remote_platform_sp)
         return m_remote_platform_sp->Unlink(path);
     else
@@ -480,10 +482,9 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
         if (permissions == 0)
             permissions = lldb::eFilePermissionsFileDefault;
 
-        user_id_t fd_dst = Host::OpenFile(destination,
-                                          File::eOpenOptionCanCreate | File::eOpenOptionWrite | File::eOpenOptionTruncate,
-                                          permissions,
-                                          error);
+        user_id_t fd_dst = FileCache::GetInstance().OpenFile(
+            destination, File::eOpenOptionCanCreate | File::eOpenOptionWrite | File::eOpenOptionTruncate, permissions,
+            error);
 
         if (fd_dst == UINT64_MAX)
         {
@@ -507,15 +508,11 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
                     break;
                 if (n_read == 0)
                     break;
-                if (Host::WriteFile(fd_dst,
-                                    offset,
-                                    buffer_sp->GetBytes(),
-                                    n_read,
-                                    error) != n_read)
+                if (FileCache::GetInstance().WriteFile(fd_dst, offset, buffer_sp->GetBytes(), n_read, error) != n_read)
                 {
                     if (!error.Fail())
                         error.SetErrorString("unable to write to destination file");
-                        break;
+                    break;
                 }
                 offset += n_read;
             }
@@ -524,7 +521,7 @@ PlatformPOSIX::GetFile (const lldb_private::FileSpec& source /* remote file path
         if (fd_src != UINT64_MAX)
             CloseFile(fd_src, error);
         // And close the dst file descriptot.
-        if (fd_dst != UINT64_MAX && !Host::CloseFile(fd_dst, error))
+        if (fd_dst != UINT64_MAX && !FileCache::GetInstance().CloseFile(fd_dst, error))
         {
             if (!error.Fail())
                 error.SetErrorString("unable to close destination file");

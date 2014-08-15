@@ -21,9 +21,16 @@ using namespace lldb_private;
 // FileAction member functions
 //----------------------------------------------------------------------------
 
-FileAction::FileAction() : m_action(eFileActionNone), m_fd(-1), m_arg(-1), m_path() {}
+FileAction::FileAction()
+    : m_action(eFileActionNone)
+    , m_fd(-1)
+    , m_arg(-1)
+    , m_path()
+{
+}
 
-void FileAction::Clear()
+void
+FileAction::Clear()
 {
     m_action = eFileActionNone;
     m_fd = -1;
@@ -31,14 +38,16 @@ void FileAction::Clear()
     m_path.clear();
 }
 
-const char *FileAction::GetPath() const
+const char *
+FileAction::GetPath() const
 {
     if (m_path.empty())
         return NULL;
     return m_path.c_str();
 }
 
-bool FileAction::Open(int fd, const char *path, bool read, bool write)
+bool
+FileAction::Open(int fd, const char *path, bool read, bool write)
 {
     if ((read || write) && fd >= 0 && path && path[0])
     {
@@ -60,7 +69,8 @@ bool FileAction::Open(int fd, const char *path, bool read, bool write)
     return false;
 }
 
-bool FileAction::Close(int fd)
+bool
+FileAction::Close(int fd)
 {
     Clear();
     if (fd >= 0)
@@ -71,7 +81,8 @@ bool FileAction::Close(int fd)
     return m_fd >= 0;
 }
 
-bool FileAction::Duplicate(int fd, int dup_fd)
+bool
+FileAction::Duplicate(int fd, int dup_fd)
 {
     Clear();
     if (fd >= 0 && dup_fd >= 0)

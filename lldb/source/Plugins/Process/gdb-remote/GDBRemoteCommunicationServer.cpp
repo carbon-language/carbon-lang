@@ -31,6 +31,7 @@
 #include "lldb/Host/Debug.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/File.h"
+#include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/FileAction.h"
@@ -2498,7 +2499,7 @@ GDBRemoteCommunicationServer::Handle_qPlatform_mkdir (StringExtractorGDBRemote &
     {
         std::string path;
         packet.GetHexByteString(path);
-        Error error = Host::MakeDirectory(path.c_str(),mode);
+        Error error = FileSystem::MakeDirectory(path.c_str(), mode);
         if (error.Success())
             return SendPacketNoLock ("OK", 2);
         else
@@ -2517,7 +2518,7 @@ GDBRemoteCommunicationServer::Handle_qPlatform_chmod (StringExtractorGDBRemote &
     {
         std::string path;
         packet.GetHexByteString(path);
-        Error error = Host::SetFilePermissions (path.c_str(), mode);
+        Error error = FileSystem::SetFilePermissions(path.c_str(), mode);
         if (error.Success())
             return SendPacketNoLock ("OK", 2);
         else
@@ -2667,7 +2668,7 @@ GDBRemoteCommunicationServer::Handle_vFile_Size (StringExtractorGDBRemote &packe
     packet.GetHexByteString(path);
     if (!path.empty())
     {
-        lldb::user_id_t retcode = Host::GetFileSize(FileSpec(path.c_str(), false));
+        lldb::user_id_t retcode = FileSystem::GetFileSize(FileSpec(path.c_str(), false));
         StreamString response;
         response.PutChar('F');
         response.PutHex64(retcode);
@@ -2708,7 +2709,7 @@ GDBRemoteCommunicationServer::Handle_vFile_Exists (StringExtractorGDBRemote &pac
     packet.GetHexByteString(path);
     if (!path.empty())
     {
-        bool retcode = Host::GetFileExists(FileSpec(path.c_str(), false));
+        bool retcode = FileSystem::GetFileExists(FileSpec(path.c_str(), false));
         StreamString response;
         response.PutChar('F');
         response.PutChar(',');
@@ -2729,7 +2730,7 @@ GDBRemoteCommunicationServer::Handle_vFile_symlink (StringExtractorGDBRemote &pa
     packet.GetHexByteStringTerminatedBy(dst, ',');
     packet.GetChar(); // Skip ',' char
     packet.GetHexByteString(src);
-    Error error = Host::Symlink(src.c_str(), dst.c_str());
+    Error error = FileSystem::Symlink(src.c_str(), dst.c_str());
     StreamString response;
     response.Printf("F%u,%u", error.GetError(), error.GetError());
     return SendPacketNoLock(response.GetData(), response.GetSize());
@@ -2741,7 +2742,7 @@ GDBRemoteCommunicationServer::Handle_vFile_unlink (StringExtractorGDBRemote &pac
     packet.SetFilePos(::strlen("vFile:unlink:"));
     std::string path;
     packet.GetHexByteString(path);
-    Error error = Host::Unlink(path.c_str());
+    Error error = FileSystem::Unlink(path.c_str());
     StreamString response;
     response.Printf("F%u,%u", error.GetError(), error.GetError());
     return SendPacketNoLock(response.GetData(), response.GetSize());
@@ -2893,7 +2894,7 @@ GDBRemoteCommunicationServer::Handle_vFile_MD5 (StringExtractorGDBRemote &packet
     {
         uint64_t a,b;
         StreamGDBRemote response;
-        if (Host::CalculateMD5(FileSpec(path.c_str(),false),a,b) == false)
+        if (FileSystem::CalculateMD5(FileSpec(path.c_str(), false), a, b) == false)
         {
             response.PutCString("F,");
             response.PutCString("x");

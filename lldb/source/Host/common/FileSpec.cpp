@@ -27,21 +27,21 @@
 #include <pwd.h>
 #endif
 
+#include "lldb/Core/DataBufferHeap.h"
+#include "lldb/Core/DataBufferMemoryMap.h"
+#include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/StreamString.h"
+#include "lldb/Core/Stream.h"
+#include "lldb/Host/File.h"
+#include "lldb/Host/FileSpec.h"
+#include "lldb/Host/FileSystem.h"
+#include "lldb/Host/Host.h"
+#include "lldb/Utility/CleanUp.h"
+
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-
-#include "lldb/Core/StreamString.h"
-#include "lldb/Host/File.h"
-#include "lldb/Host/FileSpec.h"
-#include "lldb/Host/Host.h"
-#include "lldb/Core/DataBufferHeap.h"
-#include "lldb/Core/DataBufferMemoryMap.h"
-#include "lldb/Core/RegularExpression.h"
-#include "lldb/Core/Stream.h"
-#include "lldb/Host/Host.h"
-#include "lldb/Utility/CleanUp.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -166,10 +166,10 @@ FileSpec::Resolve (llvm::SmallVectorImpl<char> &path)
     llvm::sys::fs::make_absolute(path);
 }
 
-FileSpec::FileSpec() :
-    m_directory(),
-    m_filename(),
-    m_syntax(Host::GetHostPathSyntax())
+FileSpec::FileSpec()
+    : m_directory()
+    , m_filename()
+    , m_syntax(FileSystem::GetNativePathSyntax())
 {
 }
 
@@ -233,7 +233,8 @@ FileSpec::operator= (const FileSpec& rhs)
 
 void FileSpec::Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
 {
-    if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
+    if (syntax == ePathSyntaxPosix ||
+        (syntax == ePathSyntaxHostNative && FileSystem::GetNativePathSyntax() == ePathSyntaxPosix))
         return;
 
     std::replace(path.begin(), path.end(), '\\', '/');
@@ -241,7 +242,8 @@ void FileSpec::Normalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
 
 void FileSpec::DeNormalize(llvm::SmallVectorImpl<char> &path, PathSyntax syntax)
 {
-    if (syntax == ePathSyntaxPosix || (syntax == ePathSyntaxHostNative && Host::GetHostPathSyntax() == ePathSyntaxPosix))
+    if (syntax == ePathSyntaxPosix ||
+        (syntax == ePathSyntaxHostNative && FileSystem::GetNativePathSyntax() == ePathSyntaxPosix))
         return;
 
     std::replace(path.begin(), path.end(), '/', '\\');
@@ -258,7 +260,7 @@ FileSpec::SetFile (const char *pathname, bool resolve, PathSyntax syntax)
     m_filename.Clear();
     m_directory.Clear();
     m_is_resolved = false;
-    m_syntax = (syntax == ePathSyntaxHostNative) ? Host::GetHostPathSyntax() : syntax;
+    m_syntax = (syntax == ePathSyntaxHostNative) ? FileSystem::GetNativePathSyntax() : syntax;
 
     if (pathname == NULL || pathname[0] == '\0')
         return;
@@ -587,7 +589,7 @@ FileSpec::GetPermissions () const
 {
     uint32_t file_permissions = 0;
     if (*this)
-        Host::GetFilePermissions(GetPath().c_str(), file_permissions);
+        FileSystem::GetFilePermissions(GetPath().c_str(), file_permissions);
     return file_permissions;
 }
 
