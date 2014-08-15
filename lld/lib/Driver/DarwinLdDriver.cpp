@@ -320,16 +320,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (llvm::opt::Arg *loader = parsedArgs->getLastArg(OPT_bundle_loader))
     ctx.setBundleLoader(loader->getValue());
 
-  // Handle -help
-  if (parsedArgs->getLastArg(OPT_help)) {
-    table.PrintHelp(llvm::outs(), argv[0], "LLVM Darwin Linker", false);
-    // If only -help on command line, don't try to do any linking
-    if (argc == 2) {
-      ctx.setDoNothing(true);
-      return true;
-    }
-  }
-
   // Handle -sectalign segname sectname align
   for (auto &alignArg : parsedArgs->filtered(OPT_sectalign)) {
     const char* segName   = alignArg->getValue(0);
@@ -480,6 +470,10 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   }
 
   if (!inputGraph->size()) {
+    if (parsedArgs->size() == 0) {
+      table.PrintHelp(llvm::outs(), "lld", "LLVM Linker", false);
+      return false;
+    }
     diagnostics << "No input files\n";
     return false;
   }
