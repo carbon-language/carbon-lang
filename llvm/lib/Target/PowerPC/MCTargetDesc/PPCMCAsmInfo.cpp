@@ -64,7 +64,6 @@ PPCELFMCAsmInfo::PPCELFMCAsmInfo(bool is64Bit, const Triple& T) {
   DollarIsPC = true;
 
   // Set up DWARF directives
-  HasLEB128 = true;  // Target asm supports leb128 directives (little-endian)
   MinInstAlignment = 4;
 
   // Exceptions handling

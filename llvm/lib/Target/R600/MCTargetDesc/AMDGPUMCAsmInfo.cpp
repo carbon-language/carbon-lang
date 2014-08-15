@@ -52,7 +52,6 @@ AMDGPUMCAsmInfo::AMDGPUMCAsmInfo(StringRef &TT) : MCAsmInfo() {
   HasNoDeadStrip = true;
   WeakRefDirective = ".weakref\t";
   //===--- Dwarf Emission Directives -----------------------------------===//
-  HasLEB128 = true;
   SupportsDebugInformation = true;
 }
 

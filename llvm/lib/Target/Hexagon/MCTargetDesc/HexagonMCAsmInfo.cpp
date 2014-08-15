@@ -24,7 +24,6 @@ HexagonMCAsmInfo::HexagonMCAsmInfo(StringRef TT) {
   Data64bitsDirective = nullptr;  // .xword is only supported by V9.
   ZeroDirective = "\t.skip\t";
   CommentString = "//";
-  HasLEB128 = true;
 
   LCOMMDirectiveAlignmentType = LCOMM::ByteAlignment;
   InlineAsmStart = "# InlineAsm Start";

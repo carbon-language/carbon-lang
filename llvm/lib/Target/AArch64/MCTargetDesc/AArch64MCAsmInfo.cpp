@@ -89,7 +89,6 @@ AArch64MCAsmInfoELF::AArch64MCAsmInfoELF(StringRef TT) {
 
   WeakRefDirective = "\t.weak\t";
 
-  HasLEB128 = true;
   SupportsDebugInformation = true;
 
   // Exceptions handling

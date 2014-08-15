@@ -79,7 +79,6 @@ MCAsmInfo::MCAsmInfo() {
   HiddenVisibilityAttr = MCSA_Hidden;
   HiddenDeclarationVisibilityAttr = MCSA_Hidden;
   ProtectedVisibilityAttr = MCSA_Protected;
-  HasLEB128 = false;
   SupportsDebugInformation = false;
   ExceptionsType = ExceptionHandling::None;
   WinEHEncodingType = WinEH::EncodingType::ET_Invalid;

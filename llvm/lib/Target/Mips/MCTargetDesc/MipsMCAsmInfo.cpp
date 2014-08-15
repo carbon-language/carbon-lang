@@ -41,6 +41,5 @@ MipsMCAsmInfo::MipsMCAsmInfo(StringRef TT) {
   UseAssignmentForEHBegin = true;
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
-  HasLEB128 = true;
   DwarfRegNumForCFI = true;
 }

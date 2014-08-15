@@ -28,7 +28,6 @@ XCoreMCAsmInfo::XCoreMCAsmInfo(StringRef TT) {
   ProtectedVisibilityAttr = MCSA_Invalid;
 
   // Debug
-  HasLEB128 = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
   DwarfRegNumForCFI = true;
 }

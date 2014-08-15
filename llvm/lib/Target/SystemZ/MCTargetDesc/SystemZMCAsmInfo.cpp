@@ -23,7 +23,6 @@ SystemZMCAsmInfo::SystemZMCAsmInfo(StringRef TT) {
   Data64bitsDirective = "\t.quad\t";
   UsesELFSectionDirectiveForBSS = true;
   SupportsDebugInformation = true;
-  HasLEB128 = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
 }
 

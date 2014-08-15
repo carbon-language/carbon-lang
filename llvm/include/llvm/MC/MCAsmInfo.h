@@ -295,9 +295,6 @@ protected:
 
   //===--- Dwarf Emission Directives -----------------------------------===//
 
-  /// True if target asm supports leb128 directives.  Defaults to false.
-  bool HasLEB128;
-
   /// True if target supports emission of debugging information.  Defaults to
   /// false.
   bool SupportsDebugInformation;
@@ -471,7 +468,6 @@ public:
   MCSymbolAttr getProtectedVisibilityAttr() const {
     return ProtectedVisibilityAttr;
   }
-  bool hasLEB128() const { return HasLEB128; }
   bool doesSupportDebugInformation() const { return SupportsDebugInformation; }
   bool doesSupportExceptionHandling() const {
     return ExceptionsType != ExceptionHandling::None;
