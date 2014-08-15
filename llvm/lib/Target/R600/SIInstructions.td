@@ -2322,48 +2322,51 @@ def : Pat <
 /********** Floating point absolute/negative **********/
 /********** ================================ **********/
 
-// Manipulate the sign bit directly, as e.g. using the source negation modifier
-// in V_ADD_F32_e64 $src, 0, [...] does not result in -0.0 for $src == +0.0,
-// breaking the piglit *s-floatBitsToInt-neg* tests
+// Prevent expanding both fneg and fabs.
 
-// TODO: Look into not implementing isFNegFree/isFAbsFree for SI, and possibly
-// removing these patterns
+// FIXME: Should use S_OR_B32
 def : Pat <
   (fneg (fabs f32:$src)),
   (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
 >;
 
+// FIXME: Should use S_OR_B32
 def : Pat <
   (fneg (fabs f64:$src)),
     (f64 (INSERT_SUBREG
       (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
        (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
-    (V_OR_B32_e32 (S_MOV_B32 0x80000000),
-                       (EXTRACT_SUBREG f64:$src, sub1)), sub1)) // Set sign bit.
+    (V_OR_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
+                  (V_MOV_B32_e32 0x80000000)), sub1)) // Set sign bit.
 >;
 
-class SIUnaryCustomInsertInst<string name, SDPatternOperator node,
-                              ValueType vt,
-                              RegisterClass dstrc,
-                              RegisterClass srcrc> :
-  AMDGPUShaderInst<
-    (outs dstrc:$dst),
-    (ins srcrc:$src0),
-    name#" $dst, $src0",
-    [(set vt:$dst, (node vt:$src0))]> {
-  let usesCustomInserter = 1;
-}
+def : Pat <
+  (fabs f32:$src),
+  (V_AND_B32_e32 $src, (V_MOV_B32_e32 0x7fffffff))
+>;
 
-def FABS_SI : SIUnaryCustomInsertInst<"FABS_SI", fabs,
-                                      f32, VReg_32, VSrc_32>;
-def FNEG_SI : SIUnaryCustomInsertInst<"FNEG_SI", fneg,
-                                       f32, VReg_32, VSrc_32>;
+def : Pat <
+  (fneg f32:$src),
+  (V_XOR_B32_e32 $src, (V_MOV_B32_e32 0x80000000))
+>;
 
-def FABS64_SI : SIUnaryCustomInsertInst<"FABS64_SI", fabs,
-                                        f64, VReg_64, VSrc_64>;
-def FNEG64_SI : SIUnaryCustomInsertInst<"FNEG64_SI", fneg,
-                                        f64, VReg_64, VSrc_64>;
+def : Pat <
+  (fabs f64:$src),
+    (f64 (INSERT_SUBREG
+      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
+       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+    (V_AND_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
+                    (V_MOV_B32_e32 0x7fffffff)), sub1)) // Set sign bit.
+>;
 
+def : Pat <
+  (fneg f64:$src),
+    (f64 (INSERT_SUBREG
+      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
+       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+    (V_XOR_B32_e32 (EXTRACT_SUBREG f64:$src, sub1),
+                    (V_MOV_B32_e32 0x80000000)), sub1))
+>;
 
 /********** ================== **********/
 /********** Immediate Patterns **********/

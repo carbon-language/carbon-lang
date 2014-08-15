@@ -56,6 +56,32 @@ define void @vector_or_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 %b)
   ret void
 }
 
+; SI-LABEL: @scalar_or_literal_i32
+; SI: S_OR_B32 s0, s0, 0x1869f
+define void @scalar_or_literal_i32(i32 addrspace(1)* %out, i32 %a) {
+  %or = or i32 %a, 99999
+  store i32 %or, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: @vector_or_literal_i32
+; SI: V_OR_B32_e32 v{{[0-9]+}}, 0xffff, v{{[0-9]+}}
+define void @vector_or_literal_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {
+  %loada = load i32 addrspace(1)* %a, align 4
+  %or = or i32 %loada, 65535
+  store i32 %or, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
+; SI-LABEL: @vector_or_inline_immediate_i32
+; SI: V_OR_B32_e32 v{{[0-9]+}}, 4, v{{[0-9]+}}
+define void @vector_or_inline_immediate_i32(i32 addrspace(1)* %out, i32 addrspace(1)* %a, i32 addrspace(1)* %b) {
+  %loada = load i32 addrspace(1)* %a, align 4
+  %or = or i32 %loada, 4
+  store i32 %or, i32 addrspace(1)* %out, align 4
+  ret void
+}
+
 ; EG-LABEL: @scalar_or_i64
 ; EG-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[2].W, KC0[3].Y
 ; EG-DAG: OR_INT * T{{[0-9]\.[XYZW]}}, KC0[3].X, KC0[3].Z
