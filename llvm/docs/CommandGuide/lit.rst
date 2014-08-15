@@ -270,7 +270,7 @@ Once a test suite is discovered, its config file is loaded.  Config files
 themselves are Python modules which will be executed.  When the config file is
 executed, two important global variables are predefined:
 
-**lit**
+**lit_config**
 
  The global **lit** configuration object (a *LitConfig* instance), which defines
  the builtin test formats, global configuration parameters, and other helper
