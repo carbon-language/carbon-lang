@@ -803,6 +803,28 @@ bool SIInstrInfo::isImmOperandLegal(const MachineInstr *MI, unsigned OpNo,
   return RI.regClassCanUseImmediate(OpInfo.RegClass);
 }
 
+bool SIInstrInfo::canFoldOffset(unsigned OffsetSize, unsigned AS) {
+  switch (AS) {
+  case AMDGPUAS::GLOBAL_ADDRESS: {
+    // MUBUF instructions a 12-bit offset in bytes.
+    return isUInt<12>(OffsetSize);
+  }
+  case AMDGPUAS::CONSTANT_ADDRESS: {
+    // SMRD instructions have an 8-bit offset in dwords.
+    return (OffsetSize % 4 == 0) && isUInt<8>(OffsetSize / 4);
+  }
+  case AMDGPUAS::LOCAL_ADDRESS:
+  case AMDGPUAS::REGION_ADDRESS: {
+    // The single offset versions have a 16-bit offset in bytes.
+    return isUInt<16>(OffsetSize);
+  }
+  case AMDGPUAS::PRIVATE_ADDRESS:
+    // Indirect register addressing does not use any offsets.
+  default:
+    return 0;
+  }
+}
+
 bool SIInstrInfo::hasVALU32BitEncoding(unsigned Opcode) const {
   return AMDGPU::getVOPe32(Opcode) != -1;
 }

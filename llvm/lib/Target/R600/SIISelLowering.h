@@ -56,6 +56,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
   static SDValue performUCharToFloatCombine(SDNode *N,
                                             DAGCombinerInfo &DCI);
+  SDValue performSHLPtrCombine(SDNode *N,
+                               unsigned AS,
+                               DAGCombinerInfo &DCI) const;
 
 public:
   SITargetLowering(TargetMachine &tm);
