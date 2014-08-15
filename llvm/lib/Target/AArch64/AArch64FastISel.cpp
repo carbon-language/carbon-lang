@@ -230,10 +230,19 @@ unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
   // This checks to see if we can use FMOV instructions to materialize
   // a constant, otherwise we have to materialize via the constant pool.
   if (TLI.isFPImmLegal(Val, VT)) {
+    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+    // Positive zero (+0.0) has to be materialized with a fmov from the zero
+    // register, because the immediate version of fmov cannot encode zero.
+    if (Val.isPosZero()) {
+      unsigned ZReg = Is64Bit ? AArch64::XZR : AArch64::WZR;
+      unsigned Opc = Is64Bit ? AArch64::FMOVDr : AArch64::FMOVSr;
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
+        .addReg(ZReg, getKillRegState(true));
+      return ResultReg;
+    }
     int Imm = Is64Bit ? AArch64_AM::getFP64Imm(Val)
                       : AArch64_AM::getFP32Imm(Val);
     unsigned Opc = Is64Bit ? AArch64::FMOVDi : AArch64::FMOVSi;
-    unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
     BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
       .addImm(Imm);
     return ResultReg;
