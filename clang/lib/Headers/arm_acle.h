@@ -108,11 +108,7 @@ static __inline__ unsigned long __attribute__((always_inline, nodebug))
 
 static __inline__ uint64_t __attribute__((always_inline, nodebug))
   __clzll(uint64_t t) {
-#if __SIZEOF_LONG_LONG__ == 8
   return __builtin_clzll(t);
-#else
-  return __builtin_clzl(t);
-#endif
 }
 
 static __inline__ uint32_t __attribute__((always_inline, nodebug))
