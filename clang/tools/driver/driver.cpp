@@ -357,6 +357,19 @@ static void SetInstallDir(SmallVectorImpl<const char *> &argv,
     TheDriver.setInstalledDir(InstalledPath);
 }
 
+static int HandleCC1Tool(SmallVectorImpl<const char *> &argv, StringRef Tool) {
+  if (Tool == "")
+    return cc1_main(argv.data()+2, argv.data()+argv.size(), argv[0],
+                    (void*) (intptr_t) GetExecutablePath);
+  if (Tool == "as")
+    return cc1as_main(argv.data()+2, argv.data()+argv.size(), argv[0],
+                    (void*) (intptr_t) GetExecutablePath);
+
+  // Reject unknown tools.
+  llvm::errs() << "error: unknown integrated tool '" << Tool << "'\n";
+  return 1;
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
@@ -375,20 +388,8 @@ int main(int argc_, const char **argv_) {
   llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv);
 
   // Handle -cc1 integrated tools.
-  if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1")) {
-    StringRef Tool = argv[1] + 4;
-
-    if (Tool == "")
-      return cc1_main(argv.data()+2, argv.data()+argv.size(), argv[0],
-                      (void*) (intptr_t) GetExecutablePath);
-    if (Tool == "as")
-      return cc1as_main(argv.data()+2, argv.data()+argv.size(), argv[0],
-                      (void*) (intptr_t) GetExecutablePath);
-
-    // Reject unknown tools.
-    llvm::errs() << "error: unknown integrated tool '" << Tool << "'\n";
-    return 1;
-  }
+  if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1"))
+    return HandleCC1Tool(argv, argv[1] + 4);
 
   bool CanonicalPrefixes = true;
   for (int i = 1, size = argv.size(); i < size; ++i) {
