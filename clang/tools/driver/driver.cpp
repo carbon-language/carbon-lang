@@ -41,6 +41,7 @@
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Regex.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/StringSaver.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/Timer.h"
@@ -281,18 +282,6 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
   }
 }
 
-namespace {
-  class StringSetSaver : public llvm::cl::StringSaver {
-  public:
-    StringSetSaver(std::set<std::string> &Storage) : Storage(Storage) {}
-    const char *SaveString(const char *Str) override {
-      return GetStableCStr(Storage, Str);
-    }
-  private:
-    std::set<std::string> &Storage;
-  };
-}
-
 static void SetBackdoorDriverOutputsFromEnvVars(Driver &TheDriver) {
   // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
   TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
@@ -383,7 +372,7 @@ int main(int argc_, const char **argv_) {
   }
 
   std::set<std::string> SavedStrings;
-  StringSetSaver Saver(SavedStrings);
+  llvm::StringSaver Saver;
   llvm::cl::ExpandResponseFiles(Saver, llvm::cl::TokenizeGNUCommandLine, argv);
 
   // Handle -cc1 integrated tools.
