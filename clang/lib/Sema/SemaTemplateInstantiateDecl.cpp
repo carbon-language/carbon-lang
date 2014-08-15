@@ -3319,6 +3319,20 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     return;
   }
 
+  // If we're performing recursive template instantiation, create our own
+  // queue of pending implicit instantiations that we will instantiate later,
+  // while we're still within our own instantiation context.
+  // This has to happen before LateTemplateParser below is called, so that
+  // it marks vtables used in late parsed templates as used.
+  SavePendingLocalImplicitInstantiationsRAII
+      SavedPendingLocalImplicitInstantiations(*this);
+  std::unique_ptr<SavePendingInstantiationsAndVTableUsesRAII>
+      SavePendingInstantiationsAndVTableUses;
+  if (Recursive) {
+    SavePendingInstantiationsAndVTableUses.reset(
+        new SavePendingInstantiationsAndVTableUsesRAII(*this));
+  }
+
   // Call the LateTemplateParser callback if there is a need to late parse
   // a templated function definition.
   if (!Pattern && PatternDecl->isLateTemplateParsed() &&
@@ -3350,6 +3364,7 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
       Function->setInvalidDecl();
     } else if (Function->getTemplateSpecializationKind()
                  == TSK_ExplicitInstantiationDefinition) {
+      assert(!Recursive);
       PendingInstantiations.push_back(
         std::make_pair(Function, PointOfInstantiation));
     }
@@ -3385,18 +3400,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   // Copy the inner loc start from the pattern.
   Function->setInnerLocStart(PatternDecl->getInnerLocStart());
-
-  // If we're performing recursive template instantiation, create our own
-  // queue of pending implicit instantiations that we will instantiate later,
-  // while we're still within our own instantiation context.
-  SavePendingLocalImplicitInstantiationsRAII
-      SavedPendingLocalImplicitInstantiations(*this);
-  std::unique_ptr<SavePendingInstantiationsAndVTableUsesRAII>
-      SavePendingInstantiationsAndVTableUses;
-  if (Recursive) {
-    SavePendingInstantiationsAndVTableUses.reset(
-        new SavePendingInstantiationsAndVTableUsesRAII(*this));
-  }
 
   EnterExpressionEvaluationContext EvalContext(*this,
                                                Sema::PotentiallyEvaluated);
