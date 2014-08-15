@@ -441,7 +441,7 @@ bool AMDGPUTargetLowering::isLoadBitCastBeneficial(EVT LoadTy,
 
 bool AMDGPUTargetLowering::isFAbsFree(EVT VT) const {
   assert(VT.isFloatingPoint());
-  return VT == MVT::f32;
+  return VT == MVT::f32 || VT == MVT::f64;
 }
 
 bool AMDGPUTargetLowering::isFNegFree(EVT VT) const {

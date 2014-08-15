@@ -226,7 +226,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   // FIXME: These should be removed and handled the same was as f32 fneg. Source
   // modifiers also work for the double instructions.
   setOperationAction(ISD::FNEG, MVT::f64, Expand);
-  setOperationAction(ISD::FABS, MVT::f64, Expand);
 
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
 
@@ -662,6 +661,35 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     BuildMI(*BB, I, DL, TII->get(AMDGPU::V_AND_B32_e32), DestReg)
       .addReg(MI->getOperand(1).getReg())
       .addReg(Reg);
+    MI->eraseFromParent();
+    break;
+  }
+  case AMDGPU::FABS64_SI: {
+    MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+    const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
+      getTargetMachine().getSubtargetImpl()->getInstrInfo());
+
+    DebugLoc DL = MI->getDebugLoc();
+    unsigned SuperReg = MI->getOperand(0).getReg();
+    unsigned SrcReg = MI->getOperand(1).getReg();
+
+    unsigned TmpReg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+
+    // Copy the subregister to make sure it is the right register class.
+    unsigned VReg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::COPY), VReg)
+      .addReg(SrcReg, 0, AMDGPU::sub1);
+
+    // We only need to mask the upper half of the register pair.
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_AND_B32_e32), TmpReg)
+      .addImm(0x7fffffff)
+      .addReg(VReg);
+
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::REG_SEQUENCE), SuperReg)
+      .addReg(SrcReg, 0, AMDGPU::sub0)
+      .addImm(AMDGPU::sub0)
+      .addReg(TmpReg)
+      .addImm(AMDGPU::sub1);
     MI->eraseFromParent();
     break;
   }
