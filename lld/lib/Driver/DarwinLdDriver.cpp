@@ -34,6 +34,8 @@
 
 #include <algorithm>
 
+using namespace lld;
+
 namespace {
 
 // Create enum with OPT_xxx values for each option in DarwinLdOptions.td
@@ -67,6 +69,78 @@ public:
   DarwinLdOptTable() : OptTable(infoTable, llvm::array_lengthof(infoTable)){}
 };
 
+// Test may be running on Windows. Canonicalize the path
+// separator to '/' to get consistent outputs for tests.
+std::string canonicalizePath(StringRef path) {
+  char sep = llvm::sys::path::get_separator().front();
+  if (sep != '/') {
+    std::string fixedPath = path;
+    std::replace(fixedPath.begin(), fixedPath.end(), sep, '/');
+    return fixedPath;
+  } else {
+    return path;
+  }
+}
+
+void addFile(StringRef path, std::unique_ptr<InputGraph> &inputGraph,
+             bool forceLoad) {
+   inputGraph->addInputElement(std::unique_ptr<InputElement>(
+                                          new MachOFileNode(path, forceLoad)));
+}
+
+//
+// There are two variants of the  -filelist option:
+//
+//   -filelist <path>
+// In this variant, the path is to a text file which contains one file path
+// per line.  There are no comments or trimming of whitespace.
+//
+//   -fileList <path>,<dir>
+// In this variant, the path is to a text file which contains a partial path
+// per line. The <dir> prefix is prepended to each partial path.
+//
+std::error_code parseFileList(StringRef fileListPath,
+                              std::unique_ptr<InputGraph> &inputGraph,
+                              MachOLinkingContext &ctx, bool forceLoad,
+                              raw_ostream &diagnostics) {
+  // If there is a comma, split off <dir>.
+  std::pair<StringRef, StringRef> opt = fileListPath.split(',');
+  StringRef filePath = opt.first;
+  StringRef dirName = opt.second;
+  // Map in file list file.
+  ErrorOr<std::unique_ptr<MemoryBuffer>> mb =
+                                        MemoryBuffer::getFileOrSTDIN(filePath);
+  if (std::error_code ec = mb.getError())
+    return ec;
+  StringRef buffer = mb->get()->getBuffer();
+  while (!buffer.empty()) {
+    // Split off each line in the file.
+    std::pair<StringRef, StringRef> lineAndRest = buffer.split('\n');
+    StringRef line = lineAndRest.first;
+    StringRef path;
+    if (!dirName.empty()) {
+      // If there is a <dir> then prepend dir to each line.
+      SmallString<256> fullPath;
+      fullPath.assign(dirName);
+      llvm::sys::path::append(fullPath, Twine(line));
+      path = ctx.copy(fullPath.str());
+    } else {
+      // No <dir> use whole line as input file path.
+      path = ctx.copy(line);
+    }
+    if (!ctx.pathExists(path)) {
+      return make_dynamic_error_code(Twine("File not found '")
+                                     + path
+                                     + "'");
+    }
+    if (ctx.testingFileUsage()) {
+      diagnostics << "Found filelist entry " << canonicalizePath(path) << '\n';
+    }
+    addFile(path, inputGraph, forceLoad);
+    buffer = lineAndRest.second;
+  }
+  return std::error_code();
+}
 
 } // namespace anonymous
 
@@ -293,12 +367,12 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   if (parsedArgs->getLastArg(OPT_t))
     ctx.setLogInputFiles(true);
 
-  // In -test_libresolution mode, we'll be given an explicit list of paths that
+  // In -test_file_usage mode, we'll be given an explicit list of paths that
   // exist. We'll also be expected to print out information about how we located
   // libraries and so on that the user specified, but not to actually do any
   // linking.
-  if (parsedArgs->getLastArg(OPT_test_libresolution)) {
-    ctx.setTestingLibResolution();
+  if (parsedArgs->getLastArg(OPT_test_file_usage)) {
+    ctx.setTestingFileUsage();
 
     // With paths existing by fiat, linking is not going to end well.
     ctx.setDoNothing(true);
@@ -350,9 +424,9 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
     ctx.addFrameworkSearchDir("/System/Library/Frameworks", true);
   }
 
-  // Now that we've constructed the final set of search paths, print out what
-  // we'll be using for testing purposes.
-  if (ctx.testingLibResolution() || parsedArgs->getLastArg(OPT_v)) {
+  // Now that we've constructed the final set of search paths, print out those
+  // search paths in verbose mode.
+  if (parsedArgs->getLastArg(OPT_v)) {
     diagnostics << "Library search paths:\n";
     for (auto path : ctx.searchDirs()) {
       diagnostics << "    " << path << '\n';
@@ -365,46 +439,44 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
 
   // Handle input files
   for (auto &arg : *parsedArgs) {
-    StringRef inputPath;
+    ErrorOr<StringRef> resolvedPath = StringRef();
     switch (arg->getOption().getID()) {
     default:
       continue;
     case OPT_INPUT:
-      inputPath = arg->getValue();
+      addFile(arg->getValue(), inputGraph, globalWholeArchive);
       break;
-    case OPT_l: {
-      ErrorOr<StringRef> resolvedPath = ctx.searchLibrary(arg->getValue());
+    case OPT_l:
+      resolvedPath = ctx.searchLibrary(arg->getValue());
       if (!resolvedPath) {
         diagnostics << "Unable to find library -l" << arg->getValue() << "\n";
         return false;
-      } else if (ctx.testingLibResolution()) {
-       // Test may be running on Windows. Canonicalize the path
-       // separator to '/' to get consistent outputs for tests.
-       std::string path = resolvedPath.get();
-       std::replace(path.begin(), path.end(), '\\', '/');
-       diagnostics << "Found library " << path << '\n';
+      } else if (ctx.testingFileUsage()) {
+       diagnostics << "Found library " << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      inputPath = resolvedPath.get();
+      addFile(resolvedPath.get(), inputGraph, globalWholeArchive);
       break;
-    }
-    case OPT_framework: {
-      ErrorOr<StringRef> fullPath = ctx.findPathForFramework(arg->getValue());
-      if (!fullPath) {
+    case OPT_framework:
+      resolvedPath = ctx.findPathForFramework(arg->getValue());
+      if (!resolvedPath) {
         diagnostics << "Unable to find -framework " << arg->getValue() << "\n";
         return false;
-      } else if (ctx.testingLibResolution()) {
-       // Test may be running on Windows. Canonicalize the path
-       // separator to '/' to get consistent outputs for tests.
-       std::string path = fullPath.get();
-       std::replace(path.begin(), path.end(), '\\', '/');
-       diagnostics << "Found framework " << path << '\n';
+      } else if (ctx.testingFileUsage()) {
+        diagnostics << "Found framework " << canonicalizePath(resolvedPath.get()) << '\n';
       }
-      inputPath = fullPath.get();
+      addFile(resolvedPath.get(), inputGraph, globalWholeArchive);
+      break;
+    case OPT_filelist:
+      if (std::error_code ec = parseFileList(arg->getValue(), inputGraph,
+                                             ctx, globalWholeArchive,
+                                             diagnostics)) {
+        diagnostics << "error: " << ec.message()
+                    << ", processing '-filelist " << arg->getValue()
+                    << "'\n";
+        return false;
+      }
       break;
     }
-    }
-    inputGraph->addInputElement(std::unique_ptr<InputElement>(
-        new MachOFileNode(inputPath, globalWholeArchive)));
   }
 
   if (!inputGraph->size()) {
@@ -417,5 +489,6 @@ bool DarwinLdDriver::parse(int argc, const char *argv[],
   // Validate the combination of options used.
   return ctx.validate(diagnostics);
 }
+
 
 } // namespace lld

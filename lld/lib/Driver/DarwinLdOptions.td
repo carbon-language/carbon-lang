@@ -82,15 +82,18 @@ def l : Joined<["-"], "l">,
         HelpText<"Base name of library searched for in -L directories">;
 def framework : Separate<["-"], "framework">,
     HelpText<"Base name of framework searched for in -F directories">;
+def filelist : Separate<["-"], "filelist">,
+    HelpText<"file containing paths to input files">;
+
 
 // test case options
 def print_atoms : Flag<["-"], "print_atoms">,
         HelpText<"Emit output as yaml atoms">;
-def test_libresolution : Flag<["-"], "test_libresolution">,
+def test_file_usage : Flag<["-"], "test_file_usage">,
         HelpText<"Only files specified by -file_exists are considered to exist."
-                 " Print debugging information during resolution">;
+                 " Print which files would be used.">;
 def path_exists : Separate<["-"], "path_exists">,
-        HelpText<"When used with -test_libresolution, only these paths exist">;
+        HelpText<"When used with -test_file_usage, only these paths exist">;
 
 
 // general options

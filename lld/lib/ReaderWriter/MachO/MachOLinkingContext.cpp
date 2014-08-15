@@ -130,7 +130,7 @@ MachOLinkingContext::MachOLinkingContext()
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
-      _testingLibResolution(false), _archHandler(nullptr) {}
+      _testingFileUsage(false), _archHandler(nullptr) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -297,7 +297,7 @@ bool MachOLinkingContext::addUnixThreadLoadCommand() const {
 }
 
 bool MachOLinkingContext::pathExists(StringRef path) const {
-  if (!testingLibResolution())
+  if (!_testingFileUsage)
     return llvm::sys::fs::exists(path.str());
 
   // Otherwise, we're in test mode: only files explicitly provided on the

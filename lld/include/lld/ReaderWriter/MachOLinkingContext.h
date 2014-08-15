@@ -83,7 +83,7 @@ public:
   void setDoNothing(bool value) { _doNothing = value; }
   bool doNothing() const { return _doNothing; }
   bool printAtoms() const { return _printAtoms; }
-  bool testingLibResolution() const { return _testingLibResolution; }
+  bool testingFileUsage() const { return _testingFileUsage; }
   const StringRefVector &searchDirs() const { return _searchDirs; }
   const StringRefVector &frameworkDirs() const { return _frameworkDirs; }
   void setSysLibRoots(const StringRefVector &paths);
@@ -91,7 +91,7 @@ public:
 
   /// \brief Checks whether a given path on the filesystem exists.
   ///
-  /// When running in -test_libresolution mode, this method consults an
+  /// When running in -test_file_usage mode, this method consults an
   /// internally maintained list of files that exist (provided by -path_exists)
   /// instead of the actual filesystem.
   bool pathExists(StringRef path) const;
@@ -171,8 +171,8 @@ public:
   }
   void setBundleLoader(StringRef loader) { _bundleLoader = loader; }
   void setPrintAtoms(bool value=true) { _printAtoms = value; }
-  void setTestingLibResolution(bool value = true) {
-    _testingLibResolution = value;
+  void setTestingFileUsage(bool value = true) {
+    _testingFileUsage = value;
   }
   void addExistingPathForDebug(StringRef path) {
     _existingPaths.insert(path);
@@ -202,6 +202,9 @@ public:
   /// has not already been made for the requested dylib.  Uses -L and -F
   /// search paths to allow indirect dylibs to be overridden.
   mach_o::MachODylibFile* findIndirectDylib(StringRef path) const;
+
+  /// Creates a copy (owned by this MachOLinkingContext) of a string.
+  StringRef copy(StringRef str) { return str.copy(_allocator); }
 
   static Arch archFromCpuType(uint32_t cputype, uint32_t cpusubtype);
   static Arch archFromName(StringRef archName);
@@ -254,7 +257,7 @@ private:
   StringRef _installName;
   bool _deadStrippableDylib;
   bool _printAtoms;
-  bool _testingLibResolution;
+  bool _testingFileUsage;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
