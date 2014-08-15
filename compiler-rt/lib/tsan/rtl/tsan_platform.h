@@ -128,7 +128,7 @@ void FlushShadowMemory();
 void WriteMemoryProfile(char *buf, uptr buf_size, uptr nthread, uptr nlive);
 uptr GetRSS();
 
-const char *InitializePlatform();
+void InitializePlatform();
 void FinalizePlatform();
 
 // The additional page is to catch shadow stack overflow as paging fault.

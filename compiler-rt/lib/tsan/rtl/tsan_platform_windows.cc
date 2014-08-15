@@ -35,8 +35,7 @@ uptr GetRSS() {
   return 0;
 }
 
-const char *InitializePlatform() {
-  return GetEnv(kTsanOptionsEnv);
+void InitializePlatform() {
 }
 
 void FinalizePlatform() {

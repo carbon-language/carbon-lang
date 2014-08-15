@@ -289,18 +289,19 @@ void Initialize(ThreadState *thr) {
   // Install tool-specific callbacks in sanitizer_common.
   SetCheckFailedCallback(TsanCheckFailed);
 
+  ctx = new(ctx_placeholder) Context;
+  const char *options = GetEnv(kTsanOptionsEnv);
+  InitializeFlags(&ctx->flags, options);
 #ifndef TSAN_GO
   InitializeAllocator();
 #endif
   InitializeInterceptors();
-  const char *env = InitializePlatform();
+  InitializePlatform();
   InitializeMutex();
   InitializeDynamicAnnotations();
-  ctx = new(ctx_placeholder) Context;
 #ifndef TSAN_GO
   InitializeShadowMemory();
 #endif
-  InitializeFlags(&ctx->flags, env);
   // Setup correct file descriptor for error reports.
   __sanitizer_set_report_path(flags()->log_path);
   InitializeSuppressions();
@@ -336,7 +337,6 @@ void Initialize(ThreadState *thr) {
 }
 
 int Finalize(ThreadState *thr) {
-  Context *ctx = __tsan::ctx;
   bool failed = false;
 
   if (flags()->atexit_sleep_ms > 0 && ThreadCount(thr) > 1)

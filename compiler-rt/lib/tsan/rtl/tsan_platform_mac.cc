@@ -73,9 +73,8 @@ void InitializeShadowMemory() {
 }
 #endif
 
-const char *InitializePlatform() {
+void InitializePlatform() {
   DisableCoreDumperIfNecessary();
-  return GetEnv(kTsanOptionsEnv);
 }
 
 void FinalizePlatform() {
