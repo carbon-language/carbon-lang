@@ -50,6 +50,22 @@ enum SynchronizationScope {
   CrossThread = 1
 };
 
+/// Returns true if the ordering is at least as strong as acquire
+/// (i.e. acquire, acq_rel or seq_cst)
+inline bool isAtLeastAcquire(AtomicOrdering Ord) {
+   return (Ord == Acquire ||
+    Ord == AcquireRelease ||
+    Ord == SequentiallyConsistent);
+}
+
+/// Returns true if the ordering is at least as strong as release
+/// (i.e. release, acq_rel or seq_cst)
+inline bool isAtLeastRelease(AtomicOrdering Ord) {
+return (Ord == Release ||
+    Ord == AcquireRelease ||
+    Ord == SequentiallyConsistent);
+}
+
 //===----------------------------------------------------------------------===//
 //                                AllocaInst Class
 //===----------------------------------------------------------------------===//
