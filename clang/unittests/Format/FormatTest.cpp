@@ -3428,6 +3428,10 @@ TEST_F(FormatTest, BreaksFunctionDeclarations) {
                "    int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 1);");
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaa\n"
                "aaaaaaaaaaaaaaaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaa = 1);");
+  verifyGoogleFormat(
+      "typename aaaaaaaaaa<aaaaaa>::aaaaaaaaaaa\n"
+      "aaaaaaaaaa<aaaaaa>::aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    bool *aaaaaaaaaaaaaaaaaa, bool *aa) {}");
 }
 
 TEST_F(FormatTest, TrailingReturnType) {

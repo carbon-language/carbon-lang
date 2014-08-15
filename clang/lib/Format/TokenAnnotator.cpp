@@ -1441,6 +1441,8 @@ unsigned TokenAnnotator::splitPenalty(const AnnotatedLine &Line,
     return 110;
   if (Right.is(tok::r_brace))
     return 1;
+  if (Left.Type == TT_TemplateOpener)
+    return 100;
   if (Left.opensScope())
     return Left.ParameterCount > 1 ? Style.PenaltyBreakBeforeFirstCallParameter
                                    : 19;
