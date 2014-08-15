@@ -1459,6 +1459,9 @@ llvm::Function *MicrosoftCXXABI::EmitVirtualMemPtrThunk(
   CGM.SetLLVMFunctionAttributes(MD, FnInfo, ThunkFn);
   CGM.SetLLVMFunctionAttributesForDefinition(MD, ThunkFn);
 
+  // These thunks can be compared, so they are not unnamed.
+  ThunkFn->setUnnamedAddr(false);
+
   // Start codegen.
   CodeGenFunction CGF(CGM);
   CGF.StartThunk(ThunkFn, MD, FnInfo);
