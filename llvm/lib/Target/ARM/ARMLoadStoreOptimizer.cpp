@@ -721,7 +721,7 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   unsigned PRegNum = PMO.isUndef() ? UINT_MAX : TRI->getEncodingValue(PReg);
   unsigned Count = 1;
   unsigned Limit = ~0U;
-
+  bool BaseKill = false;
   // vldm / vstm limit are 32 for S variants, 16 for D variants.
 
   switch (Opcode) {
@@ -760,18 +760,24 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
       ++Count;
     } else {
       // Can't merge this in. Try merge the earlier ones first.
-      MergeOpsUpdate(MBB, MemOps, SIndex, i, insertAfter, SOffset,
-                     Base, false, Opcode, Pred, PredReg, Scratch, dl, Merges);
+      // We need to compute BaseKill here because the MemOps may have been
+      // reordered.
+      BaseKill = Loc->killsRegister(Base);
+
+      MergeOpsUpdate(MBB, MemOps, SIndex, i, insertAfter, SOffset, Base,
+                     BaseKill, Opcode, Pred, PredReg, Scratch, dl, Merges);
       MergeLDR_STR(MBB, i, Base, Opcode, Size, Pred, PredReg, Scratch,
                    MemOps, Merges);
       return;
     }
 
-    if (MemOps[i].Position > MemOps[insertAfter].Position)
+    if (MemOps[i].Position > MemOps[insertAfter].Position) {
       insertAfter = i;
+      Loc = MemOps[i].MBBI;
+    }
   }
 
-  bool BaseKill = Loc->findRegisterUseOperandIdx(Base, true) != -1;
+  BaseKill =  Loc->killsRegister(Base);
   MergeOpsUpdate(MBB, MemOps, SIndex, MemOps.size(), insertAfter, SOffset,
                  Base, BaseKill, Opcode, Pred, PredReg, Scratch, dl, Merges);
 }
