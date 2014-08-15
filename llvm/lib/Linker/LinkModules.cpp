@@ -546,6 +546,11 @@ Value *ValueMaterializerTy::materializeValueFor(Value *V) {
                                   SF->getLinkage(), SF->getName(), DstM);
   copyGVAttributes(DF, SF);
 
+  if (Comdat *SC = SF->getComdat()) {
+    Comdat *DC = DstM->getOrInsertComdat(SC->getName());
+    DF->setComdat(DC);
+  }
+
   LazilyLinkFunctions.push_back(SF);
   return DF;
 }
