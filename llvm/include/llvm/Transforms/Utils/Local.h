@@ -275,6 +275,11 @@ bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
 /// Returns true if any basic block was removed.
 bool removeUnreachableBlocks(Function &F);
 
+/// \brief Combine the metadata of two instructions so that K can replace J
+///
+/// Metadata not listed as known via KnownIDs is removed
+void combineMetadata(Instruction *K, const Instruction *J, ArrayRef<unsigned> KnownIDs);
+
 } // End llvm namespace
 
 #endif

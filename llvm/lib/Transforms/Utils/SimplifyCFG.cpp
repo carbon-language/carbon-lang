@@ -43,6 +43,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include <algorithm>
 #include <map>
 #include <set>
@@ -1040,6 +1041,13 @@ static bool HoistThenElseCodeToIf(BranchInst *BI, const DataLayout *DL) {
     if (!I2->use_empty())
       I2->replaceAllUsesWith(I1);
     I1->intersectOptionalDataWith(I2);
+    unsigned KnownIDs[] = {
+      LLVMContext::MD_tbaa,
+      LLVMContext::MD_range,
+      LLVMContext::MD_fpmath,
+      LLVMContext::MD_invariant_load
+    };
+    combineMetadata(I1, I2, KnownIDs);
     I2->eraseFromParent();
     Changed = true;
 
