@@ -146,19 +146,26 @@ TEST(CommandLineTest, UseOptionCategory) {
                                                   "Category.";
 }
 
-typedef void ParserFunction(StringRef Source, StringSaver &Saver,
+class StrDupSaver : public cl::StringSaver {
+  const char *SaveString(const char *Str) override {
+    return strdup(Str);
+  }
+};
+
+typedef void ParserFunction(StringRef Source, llvm::cl::StringSaver &Saver,
                             SmallVectorImpl<const char *> &NewArgv);
 
 
 void testCommandLineTokenizer(ParserFunction *parse, const char *Input,
                               const char *const Output[], size_t OutputSize) {
   SmallVector<const char *, 0> Actual;
-  StringSaver Saver;
+  StrDupSaver Saver;
   parse(Input, Saver, Actual);
   EXPECT_EQ(OutputSize, Actual.size());
   for (unsigned I = 0, E = Actual.size(); I != E; ++I) {
     if (I < OutputSize)
       EXPECT_STREQ(Output[I], Actual[I]);
+    free(const_cast<char *>(Actual[I]));
   }
 }
 
