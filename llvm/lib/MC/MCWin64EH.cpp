@@ -53,7 +53,7 @@ static void EmitAbsDifference(MCStreamer &Streamer, const MCSymbol *LHS,
   const MCExpr *Diff =
       MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(LHS, Context),
                               MCSymbolRefExpr::Create(RHS, Context), Context);
-  Streamer.EmitAbsValue(Diff, 1);
+  Streamer.EmitValue(Diff, 1);
 }
 
 static void EmitUnwindCode(MCStreamer &streamer, const MCSymbol *begin,
