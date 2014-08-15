@@ -28,9 +28,7 @@ bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);
 }  // namespace __interception
 
 #if defined(_DLL)
-# define INTERCEPT_FUNCTION_WIN(func) \
-    ::__interception::GetRealFunctionAddress( \
-        #func, (::__interception::uptr*)&REAL(func))
+# error Not implemented yet
 #else
 # define INTERCEPT_FUNCTION_WIN(func) \
     ::__interception::OverrideFunction( \
