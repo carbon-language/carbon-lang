@@ -24,6 +24,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/StringSaver.h"
 #include <cassert>
 #include <climits>
 #include <cstdarg>
@@ -1771,15 +1772,6 @@ void getRegisteredOptions(StringMap<Option*> &Map);
 //===----------------------------------------------------------------------===//
 // Standalone command line processing utilities.
 //
-
-/// \brief Saves strings in the inheritor's stable storage and returns a stable
-/// raw character pointer.
-class StringSaver {
-  virtual void anchor();
-public:
-  virtual const char *SaveString(const char *Str) = 0;
-  virtual ~StringSaver() {};  // Pacify -Wnon-virtual-dtor.
-};
 
 /// \brief Tokenizes a command line that can contain escapes and quotes.
 //
