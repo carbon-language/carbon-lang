@@ -1,9 +1,9 @@
 ; RUN: opt %loadPolly -polly-scops -analyze < %s | FileCheck %s
 ;
-; FIXME: We cannot detect this SCoP yet but as soon as we can we should check
-;        that the reduction is detected!
-;
-; CHECK-NOT: Scattering
+; CHECK: ReadAccess := [Reduction Type: +]
+; CHECK:   { Stmt_for_body[i0] -> MemRef_A[o0] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 <= 1 and o0 >= 0) };
+; CHECK: MustWriteAccess :=  [Reduction Type: +]
+; CHECK:   { Stmt_for_body[i0] -> MemRef_A[o0] : exists (e0 = floor((-i0 + o0)/2): 2e0 = -i0 + o0 and o0 <= 1 and o0 >= 0) };
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)

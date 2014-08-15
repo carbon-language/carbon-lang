@@ -63,6 +63,13 @@ static cl::opt<bool> DisableMultiplicativeReductions(
     cl::desc("Disable multiplicative reductions"), cl::Hidden, cl::ZeroOrMore,
     cl::init(false), cl::cat(PollyCategory));
 
+static int extractAffine(__isl_take isl_set *Set, __isl_take isl_aff *Aff,
+                         void *User) {
+  *((isl_aff **)(User)) = Aff;
+  isl_set_free(Set);
+  return 0;
+}
+
 /// Translate a 'const SCEV *' expression in an isl_pw_aff.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff *> {
 public:
@@ -164,6 +171,42 @@ SCEVAffinator::visitTruncateExpr(const SCEVTruncateExpr *Expr) {
 
 __isl_give isl_pw_aff *
 SCEVAffinator::visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+  ScalarEvolution &SE = *S->getSE();
+
+  const SCEV *OpS = Expr->getOperand();
+  unsigned ModCst = 1 << OpS->getType()->getScalarSizeInBits();
+
+  // Pattern matching rules to capture some bit and modulo computations:
+  //
+  //       EXP   %  2^C      <==>
+  // [A] (i + c) & (2^C - 1)  ==> zext iC {c,+,1}<%for_i> to IXX
+  // [B] (p + q) & (2^C - 1)  ==> zext iC (trunc iXX %p_add_q to iC) to iXX
+  // [C] (i + p) & (2^C - 1)  ==> zext iC {p & (2^C - 1),+,1}<%for_i> to iXX
+  //                          ==> zext iC {trunc iXX %p to iC,+,1}<%for_i> to
+
+  // Check for [A] and [C].
+  if (auto *OpAR = dyn_cast<SCEVAddRecExpr>(OpS)) {
+    assert(OpAR->getStepRecurrence(SE)->isOne());
+
+    const SCEV *OpARStart = OpAR->getStart();
+    const SCEV *OpARStep = OpAR->getStepRecurrence(SE);
+
+    // Special case for [C].
+    if (auto *OpARStartTR = dyn_cast<SCEVTruncateExpr>(OpARStart)) {
+      OpARStart = OpARStartTR->getOperand();
+      OpARStep = SE.getConstant(OpARStart->getType(), 1);
+    }
+
+    const SCEV *NewAR = SE.getAddRecExpr(OpARStart, OpARStep, OpAR->getLoop(),
+                                         OpAR->getNoWrapFlags());
+    return isl_pw_aff_mod_val(visit(NewAR), isl_val_int_from_si(Ctx, ModCst));
+  }
+
+  // Check for [B].
+  if (auto *OpTR = dyn_cast<SCEVTruncateExpr>(OpS))
+    return isl_pw_aff_mod_val(visit(OpTR->getOperand()),
+                              isl_val_int_from_si(Ctx, ModCst));
+
   llvm_unreachable("SCEVZeroExtendExpr not yet supported");
 }
 
@@ -263,7 +306,32 @@ __isl_give isl_pw_aff *SCEVAffinator::visitUMaxExpr(const SCEVUMaxExpr *Expr) {
 }
 
 __isl_give isl_pw_aff *SCEVAffinator::visitUnknown(const SCEVUnknown *Expr) {
-  llvm_unreachable("Unknowns are always parameters");
+  Value *Unknown = Expr->getValue();
+  if (auto *BO = dyn_cast<BinaryOperator>(Unknown)) {
+    isl_pw_aff *RHS, *LHS;
+    isl_aff *RHSAff;
+    isl_val *RHSVal;
+
+    assert(BO->getOpcode() == Instruction::SRem &&
+           "Binary operator unknowns are always signed modulo expressions");
+    LHS = visit(S->getSE()->getSCEV(BO->getOperand(0)));
+    RHS = visit(S->getSE()->getSCEV(BO->getOperand(1)));
+    assert(isl_pw_aff_is_cst(RHS) &&
+           "Modulo expressions are only valid for a constant right hand side");
+    assert(isl_pw_aff_n_piece(RHS) == 1 &&
+           "Modulo expressions are only valid for a non split right hand side");
+    isl_pw_aff_foreach_piece(RHS, extractAffine, &RHSAff);
+    assert(isl_aff_is_cst(RHSAff) &&
+           "Modulo expressions are only valid for a constant right hand side");
+    RHSVal = isl_aff_get_constant_val(RHSAff);
+
+    isl_pw_aff_free(RHS);
+    isl_aff_free(RHSAff);
+
+    return isl_pw_aff_mod_val(LHS, RHSVal);
+  }
+
+  llvm_unreachable("Unknowns are always parameters or modulo expressions");
 }
 
 int SCEVAffinator::getLoopDepth(const Loop *L) {

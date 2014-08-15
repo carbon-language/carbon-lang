@@ -2,9 +2,9 @@
 ;
 ;    void f(int *A) {
 ;      for (int i = 0; i < 1024; i++)
-; S1:    A[i % 2] = i;
+; S1:    A[i ^ 2] = i;
 ;      for (int i = 0; i < 1024; i++)
-; S2:    A[i2] = i;
+; S2:    A[i] = i;
 ;    }
 
 ; We unfortunately do need to execute all iterations of S1, as we do not know
@@ -16,45 +16,52 @@
 ; CHECK: for (int c1 = 0; c1 <= 1023; c1 += 1)
 ; CHECK:   Stmt_S2(c1);
 
-target datalayout = "e-m:e-p:32:32-i64:64-v128:64:128-n32-S64"
+target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 
 define void @f(i32* %A) {
 entry:
   br label %for.cond
 
-for.cond:
+for.cond:                                         ; preds = %for.inc, %entry
   %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.inc ]
-  %exitcond = icmp ne i32 %i.0, 1024
-  br i1 %exitcond, label %S1, label %next
+  %exitcond1 = icmp ne i32 %i.0, 1024
+  br i1 %exitcond1, label %for.body, label %for.end
 
-S1:
-  %rem = srem i32 %i.0, 2
-  %arrayidx = getelementptr inbounds i32* %A, i32 %rem
+for.body:                                         ; preds = %for.cond
+  br label %S1
+
+S1:                                               ; preds = %for.body
+  %xor = xor i32 %i.0, 2
+  %idxprom = sext i32 %xor to i64
+  %arrayidx = getelementptr inbounds i32* %A, i64 %idxprom
   store i32 %i.0, i32* %arrayidx, align 4
   br label %for.inc
 
-for.inc:
+for.inc:                                          ; preds = %S1
   %inc = add nsw i32 %i.0, 1
   br label %for.cond
 
-next:
- br label %for.cond.2
+for.end:                                          ; preds = %for.cond
+  br label %for.cond2
 
-for.cond.2:
-  %i.2 = phi i32 [ 0, %next ], [ %inc.2, %for.inc.2 ]
-  %exitcond.2 = icmp ne i32 %i.2, 1024
-  br i1 %exitcond.2, label %S2, label %for.end
+for.cond2:                                        ; preds = %for.inc7, %for.end
+  %indvars.iv = phi i64 [ %indvars.iv.next, %for.inc7 ], [ 0, %for.end ]
+  %exitcond = icmp ne i64 %indvars.iv, 1024
+  br i1 %exitcond, label %for.body4, label %for.end9
 
-S2:
-  %arrayidx.2 = getelementptr inbounds i32* %A, i32 %i.2
-  store i32 %i.2, i32* %arrayidx.2, align 4
-  br label %for.inc.2
+for.body4:                                        ; preds = %for.cond2
+  br label %S2
 
-for.inc.2:
-  %inc.2 = add nsw i32 %i.2, 1
-  br label %for.cond.2
+S2:                                               ; preds = %for.body4
+  %arrayidx6 = getelementptr inbounds i32* %A, i64 %indvars.iv
+  %tmp = trunc i64 %indvars.iv to i32
+  store i32 %tmp, i32* %arrayidx6, align 4
+  br label %for.inc7
 
-for.end:
+for.inc7:                                         ; preds = %S2
+  %indvars.iv.next = add nuw nsw i64 %indvars.iv, 1
+  br label %for.cond2
+
+for.end9:                                         ; preds = %for.cond2
   ret void
 }
-
