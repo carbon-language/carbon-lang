@@ -336,6 +336,27 @@ CreateAndPopulateDiagOpts(SmallVectorImpl<const char *> &argv) {
   return DiagOpts;
 }
 
+static void SetInstallDir(SmallVectorImpl<const char *> &argv,
+                          Driver &TheDriver) {
+  // Attempt to find the original path used to invoke the driver, to determine
+  // the installed path. We do this manually, because we want to support that
+  // path being a symlink.
+  SmallString<128> InstalledPath(argv[0]);
+
+  // Do a PATH lookup, if there are no directory components.
+  if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {
+    std::string Tmp = llvm::sys::FindProgramByName(
+      llvm::sys::path::filename(InstalledPath.str()));
+    if (!Tmp.empty())
+      InstalledPath = Tmp;
+  }
+  llvm::sys::fs::make_absolute(InstalledPath);
+  InstalledPath = llvm::sys::path::parent_path(InstalledPath);
+  bool exists;
+  if (!llvm::sys::fs::exists(InstalledPath.str(), exists) && exists)
+    TheDriver.setInstalledDir(InstalledPath);
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
@@ -399,26 +420,7 @@ int main(int argc_, const char **argv_) {
   ProcessWarningOptions(Diags, *DiagOpts, /*ReportDiags=*/false);
 
   Driver TheDriver(Path, llvm::sys::getDefaultTargetTriple(), Diags);
-
-  // Attempt to find the original path used to invoke the driver, to determine
-  // the installed path. We do this manually, because we want to support that
-  // path being a symlink.
-  {
-    SmallString<128> InstalledPath(argv[0]);
-
-    // Do a PATH lookup, if there are no directory components.
-    if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {
-      std::string Tmp = llvm::sys::FindProgramByName(
-        llvm::sys::path::filename(InstalledPath.str()));
-      if (!Tmp.empty())
-        InstalledPath = Tmp;
-    }
-    llvm::sys::fs::make_absolute(InstalledPath);
-    InstalledPath = llvm::sys::path::parent_path(InstalledPath);
-    bool exists;
-    if (!llvm::sys::fs::exists(InstalledPath.str(), exists) && exists)
-      TheDriver.setInstalledDir(InstalledPath);
-  }
+  SetInstallDir(argv, TheDriver);
 
   llvm::InitializeAllTargets();
   ParseProgName(argv, SavedStrings, TheDriver);
