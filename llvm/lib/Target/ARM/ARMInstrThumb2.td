@@ -3991,6 +3991,23 @@ def t2MRSsys_AR: T2I<(outs GPR:$Rd), (ins), NoItinerary, "mrs", "\t$Rd, spsr",
   let Inst{7-0} = 0b00000000;
 }
 
+def t2MRSbanked : T2I<(outs rGPR:$Rd), (ins banked_reg:$banked),
+                      NoItinerary, "mrs", "\t$Rd, $banked", []>,
+                  Requires<[IsThumb, HasVirtualization]> {
+  bits<6> banked;
+  bits<4> Rd;
+
+  let Inst{31-21} = 0b11110011111;
+  let Inst{20} = banked{5}; // R bit
+  let Inst{19-16} = banked{3-0};
+  let Inst{15-12} = 0b1000;
+  let Inst{11-8} = Rd;
+  let Inst{7-5} = 0b001;
+  let Inst{4} = banked{4};
+  let Inst{3-0} = 0b0000;
+}
+
+
 // M class MRS.
 //
 // This MRS has a mask field in bits 7-0 and can take more values than
@@ -4027,6 +4044,25 @@ def t2MSR_AR : T2I<(outs), (ins msr_mask:$mask, rGPR:$Rn),
   let Inst{11-8}  = mask{3-0};
   let Inst{7-0}   = 0;
 }
+
+// However, the MSR (banked register) system instruction (ARMv7VE) *does* have a
+// separate encoding (distinguished by bit 5.
+def t2MSRbanked : T2I<(outs), (ins banked_reg:$banked, rGPR:$Rn),
+                      NoItinerary, "msr", "\t$banked, $Rn", []>,
+                  Requires<[IsThumb, HasVirtualization]> {
+  bits<6> banked;
+  bits<4> Rn;
+
+  let Inst{31-21} = 0b11110011100;
+  let Inst{20} = banked{5}; // R bit
+  let Inst{19-16} = Rn;
+  let Inst{15-12} = 0b1000;
+  let Inst{11-8} = banked{3-0};
+  let Inst{7-5} = 0b001;
+  let Inst{4} = banked{4};
+  let Inst{3-0} = 0b0000;
+}
+
 
 // M class MSR.
 //

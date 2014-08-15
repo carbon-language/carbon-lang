@@ -241,6 +241,9 @@ def HasDB            : Predicate<"Subtarget->hasDataBarrier()">,
 def HasMP            : Predicate<"Subtarget->hasMPExtension()">,
                                  AssemblerPredicate<"FeatureMP",
                                                     "mp-extensions">;
+def HasVirtualization: Predicate<"false">,
+                                 AssemblerPredicate<"FeatureVirtualization",
+                                                   "virtualization-extensions">;
 def HasTrustZone     : Predicate<"Subtarget->hasTrustZone()">,
                                  AssemblerPredicate<"FeatureTrustZone",
                                                     "TrustZone">;
@@ -5066,12 +5069,31 @@ def MRSsys : ABI<0b0001, (outs GPRnopc:$Rd), (ins), NoItinerary,
   let Unpredictable{11-0} = 0b110100001111;
 }
 
+// However, the MRS (banked register) system instruction (ARMv7VE) *does* have a
+// separate encoding (distinguished by bit 5.
+def MRSbanked : ABI<0b0001, (outs GPRnopc:$Rd), (ins banked_reg:$banked),
+                    NoItinerary, "mrs", "\t$Rd, $banked", []>,
+                Requires<[IsARM, HasVirtualization]> {
+  bits<6> banked;
+  bits<4> Rd;
+
+  let Inst{23} = 0;
+  let Inst{22} = banked{5}; // R bit
+  let Inst{21-20} = 0b10;
+  let Inst{19-16} = banked{3-0};
+  let Inst{15-12} = Rd;
+  let Inst{11-9} = 0b001;
+  let Inst{8} = banked{4};
+  let Inst{7-0} = 0b00000000;
+}
+
 // Move from ARM core register to Special Register
 //
-// No need to have both system and application versions, the encodings are the
-// same and the assembly parser has no way to distinguish between them. The mask
-// operand contains the special register (R Bit) in bit 4 and bits 3-0 contains
-// the mask with the fields to be accessed in the special register.
+// No need to have both system and application versions of MSR (immediate) or
+// MSR (register), the encodings are the same and the assembly parser has no way
+// to distinguish between them. The mask operand contains the special register
+// (R Bit) in bit 4 and bits 3-0 contains the mask with the fields to be
+// accessed in the special register.
 def MSR : ABI<0b0001, (outs), (ins msr_mask:$mask, GPR:$Rn), NoItinerary,
               "msr", "\t$mask, $Rn", []> {
   bits<5> mask;
@@ -5097,6 +5119,25 @@ def MSRi : ABI<0b0011, (outs), (ins msr_mask:$mask,  so_imm:$a), NoItinerary,
   let Inst{19-16} = mask{3-0};
   let Inst{15-12} = 0b1111;
   let Inst{11-0} = a;
+}
+
+// However, the MSR (banked register) system instruction (ARMv7VE) *does* have a
+// separate encoding (distinguished by bit 5.
+def MSRbanked : ABI<0b0001, (outs), (ins banked_reg:$banked, GPRnopc:$Rn),
+                    NoItinerary, "msr", "\t$banked, $Rn", []>,
+                Requires<[IsARM, HasVirtualization]> {
+  bits<6> banked;
+  bits<4> Rn;
+
+  let Inst{23} = 0;
+  let Inst{22} = banked{5}; // R bit
+  let Inst{21-20} = 0b10;
+  let Inst{19-16} = banked{3-0};
+  let Inst{15-12} = 0b1111;
+  let Inst{11-9} = 0b001;
+  let Inst{8} = banked{4};
+  let Inst{7-4} = 0b0000;
+  let Inst{3-0} = Rn;
 }
 
 // Dynamic stack allocation yields a _chkstk for Windows targets.  These calls

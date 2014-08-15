@@ -117,6 +117,7 @@ public:
   void printCPSIMod(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printCPSIFlag(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMSRMaskOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printBankedRegOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printPredicateOperand(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printMandatoryPredicateOperand(const MCInst *MI, unsigned OpNum,
                                       raw_ostream &O);

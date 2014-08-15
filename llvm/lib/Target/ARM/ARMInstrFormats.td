@@ -203,6 +203,16 @@ def msr_mask : Operand<i32> {
   let ParserMatchClass = MSRMaskOperand;
 }
 
+def BankedRegOperand : AsmOperandClass {
+  let Name = "BankedReg";
+  let ParserMethod = "parseBankedRegOperand";
+}
+def banked_reg : Operand<i32> {
+  let PrintMethod = "printBankedRegOperand";
+  let DecoderMethod = "DecodeBankedReg";
+  let ParserMatchClass = BankedRegOperand;
+}
+
 // Shift Right Immediate - A shift right immediate is encoded differently from
 // other shift immediates. The imm6 field is encoded like so:
 //
