@@ -247,6 +247,22 @@ std::pair<MCSymbol *, MCSymbol *> MCDwarfLineTableHeader::Emit(MCStreamer *MCOS)
   return Emit(MCOS, StandardOpcodeLengths);
 }
 
+static const MCExpr *forceExpAbs(MCStreamer &OS, const MCExpr* Expr) {
+  MCContext &Context = OS.getContext();
+  assert(!isa<MCSymbolRefExpr>(Expr));
+  if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
+    return Expr;
+
+  MCSymbol *ABS = Context.CreateTempSymbol();
+  OS.EmitAssignment(ABS, Expr);
+  return MCSymbolRefExpr::Create(ABS, Context);
+}
+
+static void emitAbsValue(MCStreamer &OS, const MCExpr *Value, unsigned Size) {
+  const MCExpr *ABS = forceExpAbs(OS, Value);
+  OS.EmitValue(ABS, Size);
+}
+
 std::pair<MCSymbol *, MCSymbol *>
 MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
                              ArrayRef<char> StandardOpcodeLengths) const {
@@ -265,8 +281,8 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
 
   // The first 4 bytes is the total length of the information for this
   // compilation unit (not including these 4 bytes for the length).
-  MCOS->EmitAbsValue(MakeStartMinusEndExpr(*MCOS, *LineStartSym, *LineEndSym,4),
-                     4);
+  emitAbsValue(*MCOS,
+               MakeStartMinusEndExpr(*MCOS, *LineStartSym, *LineEndSym, 4), 4);
 
   // Next 2 bytes is the Version, which is Dwarf 2.
   MCOS->EmitIntValue(2, 2);
@@ -278,8 +294,9 @@ MCDwarfLineTableHeader::Emit(MCStreamer *MCOS,
   // section to the end of the prologue.  Not including the 4 bytes for the
   // total length, the 2 bytes for the version, and these 4 bytes for the
   // length of the prologue.
-  MCOS->EmitAbsValue(MakeStartMinusEndExpr(*MCOS, *LineStartSym, *ProEndSym,
-                                           (4 + 2 + 4)), 4);
+  emitAbsValue(
+      *MCOS,
+      MakeStartMinusEndExpr(*MCOS, *LineStartSym, *ProEndSym, (4 + 2 + 4)), 4);
 
   // Parameters of the state machine, are next.
   MCOS->EmitIntValue(context.getAsmInfo()->getMinInstAlignment(), 1);
@@ -620,7 +637,7 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS,
     const MCExpr *Size = MakeStartMinusEndExpr(*MCOS,
       *StartSymbol, *EndSymbol, 0);
     MCOS->EmitValue(Addr, AddrSize);
-    MCOS->EmitAbsValue(Size, AddrSize);
+    emitAbsValue(*MCOS, Size, AddrSize);
   }
 
   // And finally the pair of terminating zeros.
@@ -650,7 +667,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   // The 4 byte total length of the information for this compilation unit, not
   // including these 4 bytes.
   const MCExpr *Length = MakeStartMinusEndExpr(*MCOS, *InfoStart, *InfoEnd, 4);
-  MCOS->EmitAbsValue(Length, 4);
+  emitAbsValue(*MCOS, Length, 4);
 
   // The 2 byte DWARF version.
   MCOS->EmitIntValue(context.getDwarfVersion(), 2);
@@ -821,7 +838,7 @@ static void EmitGenDwarfRanges(MCStreamer *MCOS) {
     const MCExpr *SectionSize = MakeStartMinusEndExpr(*MCOS,
       *StartSymbol, *EndSymbol, 0);
     MCOS->EmitIntValue(0, AddrSize);
-    MCOS->EmitAbsValue(SectionSize, AddrSize);
+    emitAbsValue(*MCOS, SectionSize, AddrSize);
   }
 
   // Emit end of list entry
@@ -980,7 +997,7 @@ static void emitFDESymbol(MCObjectStreamer &streamer, const MCSymbol &symbol,
                                                  streamer);
   unsigned size = getSizeForEncoding(streamer, symbolEncoding);
   if (asmInfo->doDwarfFDESymbolsUseAbsDiff() && isEH)
-    streamer.EmitAbsValue(v, size);
+    emitAbsValue(streamer, v, size);
   else
     streamer.EmitValue(v, size);
 }
@@ -1206,7 +1223,7 @@ void FrameEmitterImpl::EmitCompactUnwind(MCObjectStreamer &Streamer,
   // Range Length
   const MCExpr *Range = MakeStartMinusEndExpr(Streamer, *Frame.Begin,
                                               *Frame.End, 0);
-  Streamer.EmitAbsValue(Range, 4);
+  emitAbsValue(Streamer, Range, 4);
 
   // Compact Encoding
   Size = getSizeForEncoding(Streamer, dwarf::DW_EH_PE_udata4);
@@ -1247,7 +1264,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *sectionStart,
                                                *sectionEnd, 4);
-  streamer.EmitAbsValue(Length, 4);
+  emitAbsValue(streamer, Length, 4);
 
   // CIE ID
   unsigned CIE_ID = IsEH ? 0 : -1;
@@ -1348,7 +1365,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
 
   // Length
   const MCExpr *Length = MakeStartMinusEndExpr(streamer, *fdeStart, *fdeEnd, 0);
-  streamer.EmitAbsValue(Length, 4);
+  emitAbsValue(streamer, Length, 4);
 
   streamer.EmitLabel(fdeStart);
 
@@ -1357,11 +1374,11 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
   if (IsEH) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, cieStart, *fdeStart,
                                                  0);
-    streamer.EmitAbsValue(offset, 4);
+    emitAbsValue(streamer, offset, 4);
   } else if (!asmInfo->doesDwarfUseRelocationsAcrossSections()) {
     const MCExpr *offset = MakeStartMinusEndExpr(streamer, *SectionStart,
                                                  cieStart, 0);
-    streamer.EmitAbsValue(offset, 4);
+    emitAbsValue(streamer, offset, 4);
   } else {
     streamer.EmitSymbolValue(&cieStart, 4);
   }
@@ -1375,7 +1392,7 @@ MCSymbol *FrameEmitterImpl::EmitFDE(MCObjectStreamer &streamer,
   // PC Range
   const MCExpr *Range = MakeStartMinusEndExpr(streamer, *frame.Begin,
                                               *frame.End, 0);
-  streamer.EmitAbsValue(Range, PCSize);
+  emitAbsValue(streamer, Range, PCSize);
 
   if (IsEH) {
     // Augmentation Data Length

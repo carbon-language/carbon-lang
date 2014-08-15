@@ -56,17 +56,6 @@ void MCStreamer::reset() {
   SectionStack.push_back(std::pair<MCSectionSubPair, MCSectionSubPair>());
 }
 
-static const MCExpr *forceExpAbs(MCStreamer &OS, const MCExpr* Expr) {
-  MCContext &Context = OS.getContext();
-  assert(!isa<MCSymbolRefExpr>(Expr));
-  if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
-    return Expr;
-
-  MCSymbol *ABS = Context.CreateTempSymbol();
-  OS.EmitAssignment(ABS, Expr);
-  return MCSymbolRefExpr::Create(ABS, Context);
-}
-
 raw_ostream &MCStreamer::GetCommentOS() {
   // By default, discard comments.
   return nulls();
@@ -112,12 +101,6 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value) {
   encodeSLEB128(Value, OSE);
   EmitBytes(OSE.str());
 }
-
-void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size) {
-  const MCExpr *ABS = forceExpAbs(*this, Value);
-  EmitValue(ABS, Size);
-}
-
 
 void MCStreamer::EmitValue(const MCExpr *Value, unsigned Size,
                            const SMLoc &Loc) {

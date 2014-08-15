@@ -547,12 +547,6 @@ public:
   /// to pass in a MCExpr for constant integers.
   virtual void EmitIntValue(uint64_t Value, unsigned Size);
 
-  /// EmitAbsValue - Emit the Value, but try to avoid relocations. On MachO
-  /// this is done by producing
-  /// foo = value
-  /// .long foo
-  void EmitAbsValue(const MCExpr *Value, unsigned Size);
-
   virtual void EmitULEB128Value(const MCExpr *Value);
 
   virtual void EmitSLEB128Value(const MCExpr *Value);
