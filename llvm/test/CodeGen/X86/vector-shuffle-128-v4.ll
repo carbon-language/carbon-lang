@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=CHECK-SSE2
+; RUN: llc < %s -mtriple=x86_64-unknown-unknown -mcpu=x86-64 -mattr=+avx -x86-experimental-vector-shuffle-lowering | FileCheck %s --check-prefix=CHECK-AVX1
 
 target datalayout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128"
 target triple = "x86_64-unknown-unknown"
@@ -57,6 +58,14 @@ define <4 x i32> @shuffle_v4i32_3210(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2:         pshufd {{.*}} # xmm0 = xmm0[3,2,1,0]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  ret <4 x i32> %shuffle
+}
+
+define <4 x i32> @shuffle_v4i32_2121(<4 x i32> %a, <4 x i32> %b) {
+; CHECK-AVX1-LABEL: @shuffle_v4i32_2121
+; CHECK-AVX1:         vpshufd {{.*}} # xmm0 = xmm0[2,1,2,1]
+; CHECK-AVX1-NEXT:    retq
+  %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 2, i32 1, i32 2, i32 1>
   ret <4 x i32> %shuffle
 }
 

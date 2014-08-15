@@ -19496,7 +19496,7 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   while (Mask.size() > 1) {
     SmallVector<int, 16> NewMask;
     for (int i = 0, e = Mask.size()/2; i < e; ++i) {
-      if (Mask[2*i] % 2 != 0 || Mask[2*i] != Mask[2*i + 1] + 1) {
+      if (Mask[2*i] % 2 != 0 || Mask[2*i] + 1 != Mask[2*i + 1]) {
         NewMask.clear();
         break;
       }
