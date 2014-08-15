@@ -151,7 +151,7 @@ int main (void) {
 
 - (void) dealloc
 {
- self.formatter = 0; // expected-warning {{property 'formatter' not found on object of type 'FMXBridgeFormatter *'; did you mean to access property cppFormatter?}}
+ self.formatter = 0;
 }
 @end
 

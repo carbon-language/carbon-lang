@@ -1708,11 +1708,15 @@ HandleExprPropertyRefExpr(const ObjCObjectPointerType *OPT,
   // name 'x'.
   if (Setter && Setter->isImplicit() && Setter->isPropertyAccessor()
       && !IFace->FindPropertyDeclaration(Member)) {
-      if (const ObjCPropertyDecl *PDecl = Setter->findPropertyDecl())
+      if (const ObjCPropertyDecl *PDecl = Setter->findPropertyDecl()) {
+        // Do not warn if user is using property-dot syntax to make call to
+        // user named setter.
+        if (!(PDecl->getPropertyAttributes() & ObjCPropertyDecl::OBJC_PR_setter))
           Diag(MemberLoc,
                diag::warn_property_access_suggest)
           << MemberName << QualType(OPT, 0) << PDecl->getName()
           << FixItHint::CreateReplacement(MemberLoc, PDecl->getName());
+      }
   }
 
   if (Getter || Setter) {
