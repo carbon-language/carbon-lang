@@ -2328,10 +2328,18 @@ def : Pat <
 
 // TODO: Look into not implementing isFNegFree/isFAbsFree for SI, and possibly
 // removing these patterns
-
 def : Pat <
   (fneg (fabs f32:$src)),
   (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
+>;
+
+def : Pat <
+  (fneg (fabs f64:$src)),
+    (f64 (INSERT_SUBREG
+      (INSERT_SUBREG (f64 (IMPLICIT_DEF)),
+       (i32 (EXTRACT_SUBREG f64:$src, sub0)), sub0),
+    (V_OR_B32_e32 (S_MOV_B32 0x80000000),
+                       (EXTRACT_SUBREG f64:$src, sub1)), sub1)) // Set sign bit.
 >;
 
 class SIUnaryCustomInsertInst<string name, SDPatternOperator node,

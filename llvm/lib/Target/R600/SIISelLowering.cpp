@@ -223,10 +223,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
     setOperationAction(ISD::FRINT, MVT::f64, Legal);
   }
 
-  // FIXME: These should be removed and handled the same was as f32 fneg. Source
-  // modifiers also work for the double instructions.
-  setOperationAction(ISD::FNEG, MVT::f64, Expand);
-
   setOperationAction(ISD::FDIV, MVT::f32, Custom);
 
   setTargetDAGCombine(ISD::SELECT_CC);
@@ -701,11 +697,39 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
     unsigned DestReg = MI->getOperand(0).getReg();
     unsigned Reg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
 
+    // FIXME: Should use SALU instructions
     BuildMI(*BB, I, DL, TII->get(AMDGPU::V_MOV_B32_e32), Reg)
       .addImm(0x80000000);
     BuildMI(*BB, I, DL, TII->get(AMDGPU::V_XOR_B32_e32), DestReg)
       .addReg(MI->getOperand(1).getReg())
       .addReg(Reg);
+    MI->eraseFromParent();
+    break;
+  }
+  case AMDGPU::FNEG64_SI: {
+    MachineRegisterInfo &MRI = BB->getParent()->getRegInfo();
+    const SIInstrInfo *TII = static_cast<const SIInstrInfo *>(
+        getTargetMachine().getSubtargetImpl()->getInstrInfo());
+
+    DebugLoc DL = MI->getDebugLoc();
+    unsigned SrcReg = MI->getOperand(1).getReg();
+    unsigned DestReg = MI->getOperand(0).getReg();
+
+    unsigned TmpReg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+    unsigned ImmReg = MRI.createVirtualRegister(&AMDGPU::VReg_32RegClass);
+
+    // FIXME: Should use SALU instructions
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_MOV_B32_e32), ImmReg)
+      .addImm(0x80000000);
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::V_XOR_B32_e32), TmpReg)
+      .addReg(SrcReg, 0, AMDGPU::sub1)
+      .addReg(ImmReg);
+
+    BuildMI(*BB, I, DL, TII->get(AMDGPU::REG_SEQUENCE), DestReg)
+      .addReg(SrcReg, 0, AMDGPU::sub0)
+      .addImm(AMDGPU::sub0)
+      .addReg(TmpReg)
+      .addImm(AMDGPU::sub1);
     MI->eraseFromParent();
     break;
   }
