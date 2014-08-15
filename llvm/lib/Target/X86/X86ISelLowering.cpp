@@ -8334,6 +8334,17 @@ static SDValue lower128BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   }
 }
 
+static bool isHalfCrossingShuffleMask(ArrayRef<int> Mask) {
+  int Size = Mask.size();
+  for (int M : Mask.slice(0, Size / 2))
+    if (M >= 0 && (M % Size) >= Size / 2)
+      return true;
+  for (int M : Mask.slice(Size / 2, Size / 2))
+    if (M >= 0 && (M % Size) < Size / 2)
+      return true;
+  return false;
+}
+
 /// \brief Generic routine to split a 256-bit vector shuffle into 128-bit
 /// shuffles.
 ///
@@ -8399,6 +8410,103 @@ static SDValue splitAndLower256BitVectorShuffle(SDValue Op, SDValue V1,
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, VT, Lo, Hi);
 }
 
+/// \brief Handle lowering of 4-lane 64-bit floating point shuffles.
+///
+/// Also ends up handling lowering of 4-lane 64-bit integer shuffles when AVX2
+/// isn't available.
+static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(V1.getSimpleValueType() == MVT::v4f64 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4f64 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
+
+  // FIXME: If we have AVX2, we should delegate to generic code as crossing
+  // shuffles aren't a problem and FP and int have the same patterns.
+
+  // FIXME: We can handle these more cleverly than splitting for v4f64.
+  if (isHalfCrossingShuffleMask(Mask))
+    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  if (isSingleInputShuffleMask(Mask)) {
+    // Non-half-crossing single input shuffles can be lowerid with an
+    // interleaved permutation.
+    unsigned VPERMILPMask = (Mask[0] == 1) | ((Mask[1] == 1) << 1) |
+                            ((Mask[2] == 3) << 2) | ((Mask[3] == 3) << 3);
+    return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v4f64, V1,
+                       DAG.getConstant(VPERMILPMask, MVT::i8));
+  }
+
+  // Check if the blend happens to exactly fit that of SHUFPD.
+  if (Mask[0] < 4 && (Mask[1] == -1 || Mask[1] >= 4) &&
+      Mask[2] < 4 && (Mask[3] == -1 || Mask[3] >= 4)) {
+    unsigned SHUFPDMask = (Mask[0] == 1) | ((Mask[1] == 5) << 1) |
+                          ((Mask[2] == 3) << 2) | ((Mask[3] == 7) << 3);
+    return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V1, V2,
+                       DAG.getConstant(SHUFPDMask, MVT::i8));
+  }
+  if ((Mask[0] == -1 || Mask[0] >= 4) && Mask[1] < 4 &&
+      (Mask[2] == -1 || Mask[2] >= 4) && Mask[3] < 4) {
+    unsigned SHUFPDMask = (Mask[0] == 5) | ((Mask[1] == 1) << 1) |
+                          ((Mask[2] == 7) << 2) | ((Mask[3] == 3) << 3);
+    return DAG.getNode(X86ISD::SHUFP, DL, MVT::v4f64, V2, V1,
+                       DAG.getConstant(SHUFPDMask, MVT::i8));
+  }
+
+  // Shuffle the input elements into the desired positions in V1 and V2 and
+  // blend them together.
+  int V1Mask[] = {-1, -1, -1, -1};
+  int V2Mask[] = {-1, -1, -1, -1};
+  for (int i = 0; i < 4; ++i)
+    if (Mask[i] >= 0 && Mask[i] < 4)
+      V1Mask[i] = Mask[i];
+  else if (Mask[i] >= 4)
+    V2Mask[i] = Mask[i] - 4;
+
+  V1 = DAG.getVectorShuffle(MVT::v4f64, DL, V1, DAG.getUNDEF(MVT::v4f64), V1Mask);
+  V2 = DAG.getVectorShuffle(MVT::v4f64, DL, V2, DAG.getUNDEF(MVT::v4f64), V2Mask);
+
+  unsigned BlendMask = 0;
+  for (int i = 0; i < 4; ++i)
+    if (Mask[i] >= 4)
+      BlendMask |= 1 << i;
+
+  return DAG.getNode(X86ISD::BLENDI, DL, MVT::v4f64, V1, V2,
+                     DAG.getConstant(BlendMask, MVT::i8));
+}
+
+/// \brief Handle lowering of 4-lane 64-bit integer shuffles.
+///
+/// Largely delegates to common code when we have AVX2 and to the floating-point
+/// code when we only have AVX.
+static SDValue lowerV4I64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
+                                       const X86Subtarget *Subtarget,
+                                       SelectionDAG &DAG) {
+  SDLoc DL(Op);
+  assert(Op.getSimpleValueType() == MVT::v4i64 && "Bad shuffle type!");
+  assert(V1.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
+  assert(V2.getSimpleValueType() == MVT::v4i64 && "Bad operand type!");
+  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
+  ArrayRef<int> Mask = SVOp->getMask();
+  assert(Mask.size() == 4 && "Unexpected mask size for v4 shuffle!");
+
+  // FIXME: If we have AVX2, we should delegate to generic code as crossing
+  // shuffles aren't a problem and FP and int have the same patterns.
+
+  if (isHalfCrossingShuffleMask(Mask))
+    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+
+  // AVX1 doesn't provide any facilities for v4i64 shuffles, bitcast and
+  // delegate to floating point code.
+  V1 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V1);
+  V2 = DAG.getNode(ISD::BITCAST, DL, MVT::v4f64, V2);
+  return DAG.getNode(ISD::BITCAST, DL, MVT::v4i64,
+                     lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG));
+}
+
 /// \brief High-level routine to lower various 256-bit x86 vector shuffles.
 ///
 /// This routine either breaks down the specific type of a 256-bit x86 vector
@@ -8407,16 +8515,24 @@ static SDValue splitAndLower256BitVectorShuffle(SDValue Op, SDValue V1,
 static SDValue lower256BitVectorShuffle(SDValue Op, SDValue V1, SDValue V2,
                                         MVT VT, const X86Subtarget *Subtarget,
                                         SelectionDAG &DAG) {
-  // FIXME: We should detect symmetric patterns and re-use the 128-bit shuffle
-  // lowering logic with wider types in that case.
+  switch (VT.SimpleTy) {
+  case MVT::v4f64:
+    return lowerV4F64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v4i64:
+    return lowerV4I64VectorShuffle(Op, V1, V2, Subtarget, DAG);
+  case MVT::v8i32:
+  case MVT::v8f32:
+  case MVT::v16i16:
+  case MVT::v32i8:
+    // Fall back to the basic pattern of extracting the high half and forming
+    // a 4-way blend.
+    // FIXME: Add targeted lowering for each type that can document rationale
+    // for delegating to this when necessary.
+    return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
 
-  // FIXME: We should detect when we can use AVX2 cross-half shuffles to either
-  // implement the shuffle completely, more effectively build symmetry, or
-  // minimize half-blends.
-
-  // Fall back to the basic pattern of extracting the high half and forming
-  // a 4-way blend.
-  return splitAndLower256BitVectorShuffle(Op, V1, V2, Subtarget, DAG);
+  default:
+    llvm_unreachable("Not a valid 256-bit x86 vector type!");
+  }
 }
 
 /// \brief Tiny helper function to test whether a shuffle mask could be
