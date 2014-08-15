@@ -320,6 +320,22 @@ static void FixupDiagPrefixExeName(TextDiagnosticPrinter *DiagClient,
   DiagClient->setPrefix(ExeBasename);
 }
 
+// This lets us create the DiagnosticsEngine with a properly-filled-out
+// DiagnosticOptions instance.
+static DiagnosticOptions *
+CreateAndPopulateDiagOpts(SmallVectorImpl<const char *> &argv) {
+  auto *DiagOpts = new DiagnosticOptions;
+  std::unique_ptr<OptTable> Opts(createDriverOptTable());
+  unsigned MissingArgIndex, MissingArgCount;
+  std::unique_ptr<InputArgList> Args(Opts->ParseArgs(
+      argv.begin() + 1, argv.end(), MissingArgIndex, MissingArgCount));
+  // We ignore MissingArgCount and the return value of ParseDiagnosticArgs.
+  // Any errors that would be diagnosed here will also be diagnosed later,
+  // when the DiagnosticsEngine actually exists.
+  (void) ParseDiagnosticArgs(*DiagOpts, *Args);
+  return DiagOpts;
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
@@ -370,19 +386,9 @@ int main(int argc_, const char **argv_) {
 
   std::string Path = GetExecutablePath(argv[0], CanonicalPrefixes);
 
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
-  {
-    std::unique_ptr<OptTable> Opts(createDriverOptTable());
-    unsigned MissingArgIndex, MissingArgCount;
-    std::unique_ptr<InputArgList> Args(Opts->ParseArgs(
-        argv.begin() + 1, argv.end(), MissingArgIndex, MissingArgCount));
-    // We ignore MissingArgCount and the return value of ParseDiagnosticArgs.
-    // Any errors that would be diagnosed here will also be diagnosed later,
-    // when the DiagnosticsEngine actually exists.
-    (void) ParseDiagnosticArgs(*DiagOpts, *Args);
-  }
-  // Now we can create the DiagnosticsEngine with a properly-filled-out
-  // DiagnosticOptions instance.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts =
+      CreateAndPopulateDiagOpts(argv);
+
   TextDiagnosticPrinter *DiagClient
     = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
   FixupDiagPrefixExeName(DiagClient, Path);
