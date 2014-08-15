@@ -19,7 +19,7 @@
 // a = add nsw i64 f, 3
 // e = getelementptr ..., i64 a
 //
-// This is legal to do so if the computations are markers with either nsw or nuw
+// This is legal to do if the computations are marked with either nsw or nuw
 // markers.
 // Moreover, the current heuristic is simple: it does not create new sext
 // operations, i.e., it gives up when a sext would have forked (e.g., if
@@ -223,7 +223,7 @@ AArch64AddressTypePromotion::shouldConsiderSExt(const Instruction *SExt) const {
 }
 
 // Input:
-// - SExtInsts contains all the sext instructions that are use direclty in
+// - SExtInsts contains all the sext instructions that are used directly in
 //   GetElementPtrInst, i.e., access to memory.
 // Algorithm:
 // - For each sext operation in SExtInsts:
@@ -353,7 +353,7 @@ AArch64AddressTypePromotion::propagateSignExtension(Instructions &SExtInsts) {
 
     // If the use is already of the right type, connect its uses to its argument
     // and delete it.
-    // This can happen for an Instruction which all uses are sign extended.
+    // This can happen for an Instruction all uses of which are sign extended.
     if (!ToRemove.count(SExt) &&
         SExt->getType() == SExt->getOperand(0)->getType()) {
       DEBUG(dbgs() << "Sign extension is useless, attach its use to "

@@ -21,7 +21,7 @@ def int_arm_thread_pointer : GCCBuiltin<"__builtin_thread_pointer">,
             Intrinsic<[llvm_ptr_ty], [], [IntrNoMem]>;
 
 //===----------------------------------------------------------------------===//
-// Saturating Arithmentic
+// Saturating Arithmetic
 
 def int_arm_qadd : GCCBuiltin<"__builtin_arm_qadd">,
     Intrinsic<[llvm_i32_ty], [llvm_i32_ty, llvm_i32_ty],

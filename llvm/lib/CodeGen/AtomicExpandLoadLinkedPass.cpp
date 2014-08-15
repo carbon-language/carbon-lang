@@ -105,7 +105,7 @@ bool AtomicExpandLoadLinked::expandAtomicLoad(LoadInst *LI) {
           ? Monotonic
           : LI->getOrdering();
 
-  // The only 64-bit load guaranteed to be single-copy atomic by the ARM ARM is
+  // The only 64-bit load guaranteed to be single-copy atomic by the ARM is
   // an ldrexd (A3.5.3).
   IRBuilder<> Builder(LI);
   Value *Val = TM->getSubtargetImpl()->getTargetLowering()->emitLoadLinked(
