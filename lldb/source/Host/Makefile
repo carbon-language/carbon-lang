@@ -14,14 +14,17 @@ include $(LLDB_LEVEL)/../../Makefile.config
 DIRS := common
 
 ifeq ($(HOST_OS),Darwin)
+DIRS += posix
 DIRS += macosx
 endif
 
 ifeq ($(HOST_OS),Linux)
+DIRS += posix
 DIRS += linux
 endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
+DIRS += posix
 DIRS += freebsd
 endif
 
