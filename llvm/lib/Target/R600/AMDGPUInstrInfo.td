@@ -23,6 +23,10 @@ def AMDGPUTrigPreOp : SDTypeProfile<1, 2,
   [SDTCisSameAs<0, 1>, SDTCisFP<0>, SDTCisInt<2>]
 >;
 
+def AMDGPULdExpOp : SDTypeProfile<1, 2,
+  [SDTCisSameAs<0, 1>, SDTCisFP<0>, SDTCisInt<2>]
+>;
+
 def AMDGPUDivScaleOp : SDTypeProfile<2, 3,
   [SDTCisFP<0>, SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, SDTCisSameAs<0, 4>]
 >;
@@ -51,6 +55,8 @@ def AMDGPUrsq_legacy : SDNode<"AMDGPUISD::RSQ_LEGACY", SDTFPUnaryOp>;
 
 // out = 1.0 / sqrt(a) result clamped to +/- max_float.
 def AMDGPUrsq_clamped : SDNode<"AMDGPUISD::RSQ_CLAMPED", SDTFPUnaryOp>;
+
+def AMDGPUldexp : SDNode<"AMDGPUISD::LDEXP", AMDGPULdExpOp>;
 
 // out = max(a, b) a and b are floats
 def AMDGPUfmax : SDNode<"AMDGPUISD::FMAX", SDTFPBinOp,

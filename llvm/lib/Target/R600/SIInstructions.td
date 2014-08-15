@@ -1390,7 +1390,7 @@ defm V_SUBBREV_U32 : VOP2bInst <0x0000002a, "V_SUBBREV_U32",
 } // End isCommutable = 1, Defs = [VCC]
 
 defm V_LDEXP_F32 : VOP2Inst <0x0000002b, "V_LDEXP_F32",
-  VOP_F32_F32_F32
+  VOP_F32_F32_I32, AMDGPUldexp
 >;
 ////def V_CVT_PKACCUM_U8_F32 : VOP2_U8 <0x0000002c, "V_CVT_PKACCUM_U8_F32", []>;
 ////def V_CVT_PKNORM_I16_F32 : VOP2_I16 <0x0000002d, "V_CVT_PKNORM_I16_F32", []>;
@@ -1509,7 +1509,7 @@ defm V_MAX_F64 : VOP3Inst <0x00000167, "V_MAX_F64",
 } // isCommutable = 1
 
 defm V_LDEXP_F64 : VOP3Inst <0x00000168, "V_LDEXP_F64",
-  VOP_F32_F32_I32
+  VOP_F64_F64_I32, AMDGPUldexp
 >;
 
 let isCommutable = 1 in {

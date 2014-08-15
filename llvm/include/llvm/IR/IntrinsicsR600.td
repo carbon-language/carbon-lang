@@ -69,4 +69,7 @@ def int_AMDGPU_rsq : GCCBuiltin<"__builtin_amdgpu_rsq">,
 def int_AMDGPU_rsq_clamped : GCCBuiltin<"__builtin_amdgpu_rsq_clamped">,
   Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>], [IntrNoMem]>;
 
+def int_AMDGPU_ldexp : GCCBuiltin<"__builtin_amdgpu_ldexp">,
+  Intrinsic<[llvm_anyfloat_ty], [LLVMMatchType<0>, llvm_i32_ty], [IntrNoMem]>;
+
 } // End TargetPrefix = "AMDGPU"

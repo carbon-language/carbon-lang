@@ -203,6 +203,7 @@ enum {
   RSQ,
   RSQ_LEGACY,
   RSQ_CLAMPED,
+  LDEXP,
   DOT4,
   BFE_U32, // Extract range of bits with zero extension to 32-bits.
   BFE_I32, // Extract range of bits with sign extension to 32-bits.
