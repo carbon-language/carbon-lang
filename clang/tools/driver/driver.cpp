@@ -293,6 +293,23 @@ namespace {
   };
 }
 
+static void HandleDriverEnvVars(Driver &TheDriver) {
+  // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
+  TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
+  if (TheDriver.CCPrintOptions)
+    TheDriver.CCPrintOptionsFilename = ::getenv("CC_PRINT_OPTIONS_FILE");
+
+  // Handle CC_PRINT_HEADERS and CC_PRINT_HEADERS_FILE.
+  TheDriver.CCPrintHeaders = !!::getenv("CC_PRINT_HEADERS");
+  if (TheDriver.CCPrintHeaders)
+    TheDriver.CCPrintHeadersFilename = ::getenv("CC_PRINT_HEADERS_FILE");
+
+  // Handle CC_LOG_DIAGNOSTICS and CC_LOG_DIAGNOSTICS_FILE.
+  TheDriver.CCLogDiagnostics = !!::getenv("CC_LOG_DIAGNOSTICS");
+  if (TheDriver.CCLogDiagnostics)
+    TheDriver.CCLogDiagnosticsFilename = ::getenv("CC_LOG_DIAGNOSTICS_FILE");
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
@@ -396,20 +413,7 @@ int main(int argc_, const char **argv_) {
   llvm::InitializeAllTargets();
   ParseProgName(argv, SavedStrings, TheDriver);
 
-  // Handle CC_PRINT_OPTIONS and CC_PRINT_OPTIONS_FILE.
-  TheDriver.CCPrintOptions = !!::getenv("CC_PRINT_OPTIONS");
-  if (TheDriver.CCPrintOptions)
-    TheDriver.CCPrintOptionsFilename = ::getenv("CC_PRINT_OPTIONS_FILE");
-
-  // Handle CC_PRINT_HEADERS and CC_PRINT_HEADERS_FILE.
-  TheDriver.CCPrintHeaders = !!::getenv("CC_PRINT_HEADERS");
-  if (TheDriver.CCPrintHeaders)
-    TheDriver.CCPrintHeadersFilename = ::getenv("CC_PRINT_HEADERS_FILE");
-
-  // Handle CC_LOG_DIAGNOSTICS and CC_LOG_DIAGNOSTICS_FILE.
-  TheDriver.CCLogDiagnostics = !!::getenv("CC_LOG_DIAGNOSTICS");
-  if (TheDriver.CCLogDiagnostics)
-    TheDriver.CCLogDiagnosticsFilename = ::getenv("CC_LOG_DIAGNOSTICS_FILE");
+  HandleDriverEnvVars(TheDriver);
 
   std::unique_ptr<Compilation> C(TheDriver.BuildCompilation(argv));
   int Res = 0;
