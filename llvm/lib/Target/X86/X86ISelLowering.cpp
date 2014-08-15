@@ -7055,11 +7055,14 @@ static bool isSingleInputShuffleMask(ArrayRef<int> Mask) {
   return true;
 }
 
+// Hide this symbol with an anonymous namespace instead of 'static' so that MSVC
+// 2013 will allow us to use it as a non-type template parameter.
+namespace {
+
 /// \brief Implementation of the \c isShuffleEquivalent variadic functor.
 ///
 /// See its documentation for details.
-static bool isShuffleEquivalentImpl(ArrayRef<int> Mask,
-                                    ArrayRef<const int *> Args) {
+bool isShuffleEquivalentImpl(ArrayRef<int> Mask, ArrayRef<const int *> Args) {
   if (Mask.size() != Args.size())
     return false;
   for (int i = 0, e = Mask.size(); i < e; ++i) {
@@ -7071,6 +7074,9 @@ static bool isShuffleEquivalentImpl(ArrayRef<int> Mask,
   }
   return true;
 }
+
+} // namespace
+
 /// \brief Checks whether a shuffle mask is equivalent to an explicit list of
 /// arguments.
 ///
