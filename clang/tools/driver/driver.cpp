@@ -357,7 +357,7 @@ static void SetInstallDir(SmallVectorImpl<const char *> &argv,
     TheDriver.setInstalledDir(InstalledPath);
 }
 
-static int HandleCC1Tool(ArrayRef<const char *> argv, StringRef Tool) {
+static int ExecuteCC1Tool(ArrayRef<const char *> argv, StringRef Tool) {
   void *GetExecutablePathVP = (void *)(intptr_t) GetExecutablePath;
   if (Tool == "")
     return cc1_main(argv.slice(2), argv[0], GetExecutablePathVP);
@@ -388,7 +388,7 @@ int main(int argc_, const char **argv_) {
 
   // Handle -cc1 integrated tools.
   if (argv.size() > 1 && StringRef(argv[1]).startswith("-cc1"))
-    return HandleCC1Tool(argv, argv[1] + 4);
+    return ExecuteCC1Tool(argv, argv[1] + 4);
 
   bool CanonicalPrefixes = true;
   for (int i = 1, size = argv.size(); i < size; ++i) {
