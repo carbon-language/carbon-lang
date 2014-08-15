@@ -2334,33 +2334,28 @@ def : Pat <
   (V_OR_B32_e32 $src, (V_MOV_B32_e32 0x80000000)) /* Set sign bit */
 >;
 
-def FABS_SI : AMDGPUShaderInst <
-  (outs VReg_32:$dst),
-  (ins VSrc_32:$src0),
-  "FABS_SI $dst, $src0",
-  []
-> {
+class SIUnaryCustomInsertInst<string name, SDPatternOperator node,
+                              ValueType vt,
+                              RegisterClass dstrc,
+                              RegisterClass srcrc> :
+  AMDGPUShaderInst<
+    (outs dstrc:$dst),
+    (ins srcrc:$src0),
+    name#" $dst, $src0",
+    [(set vt:$dst, (node vt:$src0))]> {
   let usesCustomInserter = 1;
 }
 
-def : Pat <
-  (fabs f32:$src),
-  (FABS_SI f32:$src)
->;
+def FABS_SI : SIUnaryCustomInsertInst<"FABS_SI", fabs,
+                                      f32, VReg_32, VSrc_32>;
+def FNEG_SI : SIUnaryCustomInsertInst<"FNEG_SI", fneg,
+                                       f32, VReg_32, VSrc_32>;
 
-def FNEG_SI : AMDGPUShaderInst <
-  (outs VReg_32:$dst),
-  (ins VSrc_32:$src0),
-  "FNEG_SI $dst, $src0",
-  []
-> {
-  let usesCustomInserter = 1;
-}
+def FABS64_SI : SIUnaryCustomInsertInst<"FABS64_SI", fabs,
+                                        f64, VReg_64, VSrc_64>;
+def FNEG64_SI : SIUnaryCustomInsertInst<"FNEG64_SI", fneg,
+                                        f64, VReg_64, VSrc_64>;
 
-def : Pat <
-  (fneg f32:$src),
-  (FNEG_SI f32:$src)
->;
 
 /********** ================== **********/
 /********** Immediate Patterns **********/
