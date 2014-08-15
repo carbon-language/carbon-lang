@@ -6568,6 +6568,31 @@ public:
   /// but have not yet been performed.
   std::deque<PendingImplicitInstantiation> PendingInstantiations;
 
+  class SavePendingInstantiationsAndVTableUsesRAII {
+  public:
+    SavePendingInstantiationsAndVTableUsesRAII(Sema &S): S(S) {
+      SavedPendingInstantiations.swap(S.PendingInstantiations);
+      SavedVTableUses.swap(S.VTableUses);
+    }
+
+    ~SavePendingInstantiationsAndVTableUsesRAII() {
+      // Restore the set of pending vtables.
+      assert(S.VTableUses.empty() &&
+             "VTableUses should be empty before it is discarded.");
+      S.VTableUses.swap(SavedVTableUses);
+
+      // Restore the set of pending implicit instantiations.
+      assert(S.PendingInstantiations.empty() &&
+             "PendingInstantiations should be empty before it is discarded.");
+      S.PendingInstantiations.swap(SavedPendingInstantiations);
+    }
+
+  private:
+    Sema &S;
+    SmallVector<VTableUse, 16> SavedVTableUses;
+    std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
+  };
+
   /// \brief The queue of implicit template instantiations that are required
   /// and must be performed within the current local scope.
   ///

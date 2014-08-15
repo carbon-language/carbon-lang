@@ -3389,13 +3389,13 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
-  SmallVector<VTableUse, 16> SavedVTableUses;
-  std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
   SavePendingLocalImplicitInstantiationsRAII
       SavedPendingLocalImplicitInstantiations(*this);
+  std::unique_ptr<SavePendingInstantiationsAndVTableUsesRAII>
+      SavePendingInstantiationsAndVTableUses;
   if (Recursive) {
-    VTableUses.swap(SavedVTableUses);
-    PendingInstantiations.swap(SavedPendingInstantiations);
+    SavePendingInstantiationsAndVTableUses.reset(
+        new SavePendingInstantiationsAndVTableUsesRAII(*this));
   }
 
   EnterExpressionEvaluationContext EvalContext(*this,
@@ -3466,15 +3466,8 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
     // instantiation of this template.
     PerformPendingInstantiations();
 
-    // Restore the set of pending vtables.
-    assert(VTableUses.empty() &&
-           "VTableUses should be empty before it is discarded.");
-    VTableUses.swap(SavedVTableUses);
-
-    // Restore the set of pending implicit instantiations.
-    assert(PendingInstantiations.empty() &&
-           "PendingInstantiations should be empty before it is discarded.");
-    PendingInstantiations.swap(SavedPendingInstantiations);
+    // Restore PendingInstantiations and VTableUses.
+    SavePendingInstantiationsAndVTableUses.reset();
   }
 }
 
@@ -3790,11 +3783,11 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
       // If we're performing recursive template instantiation, create our own
       // queue of pending implicit instantiations that we will instantiate
       // later, while we're still within our own instantiation context.
-      SmallVector<VTableUse, 16> SavedVTableUses;
-      std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
+      std::unique_ptr<SavePendingInstantiationsAndVTableUsesRAII>
+          SavePendingInstantiationsAndVTableUses;
       if (Recursive) {
-        VTableUses.swap(SavedVTableUses);
-        PendingInstantiations.swap(SavedPendingInstantiations);
+        SavePendingInstantiationsAndVTableUses.reset(
+            new SavePendingInstantiationsAndVTableUsesRAII(*this));
       }
 
       LocalInstantiationScope Local(*this);
@@ -3822,15 +3815,8 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
         // instantiation of this template.
         PerformPendingInstantiations();
 
-        // Restore the set of pending vtables.
-        assert(VTableUses.empty() &&
-               "VTableUses should be empty before it is discarded.");
-        VTableUses.swap(SavedVTableUses);
-
-        // Restore the set of pending implicit instantiations.
-        assert(PendingInstantiations.empty() &&
-               "PendingInstantiations should be empty before it is discarded.");
-        PendingInstantiations.swap(SavedPendingInstantiations);
+        // Restore PendingInstantiations and VTableUses.
+        SavePendingInstantiationsAndVTableUses.reset();
       }
     }
 
@@ -3914,13 +3900,13 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
   // If we're performing recursive template instantiation, create our own
   // queue of pending implicit instantiations that we will instantiate later,
   // while we're still within our own instantiation context.
-  SmallVector<VTableUse, 16> SavedVTableUses;
-  std::deque<PendingImplicitInstantiation> SavedPendingInstantiations;
   SavePendingLocalImplicitInstantiationsRAII
       SavedPendingLocalImplicitInstantiations(*this);
+  std::unique_ptr<SavePendingInstantiationsAndVTableUsesRAII>
+      SavePendingInstantiationsAndVTableUses;
   if (Recursive) {
-    VTableUses.swap(SavedVTableUses);
-    PendingInstantiations.swap(SavedPendingInstantiations);
+    SavePendingInstantiationsAndVTableUses.reset(
+        new SavePendingInstantiationsAndVTableUsesRAII(*this));
   }
 
   // Enter the scope of this instantiation. We don't use
@@ -3987,15 +3973,8 @@ void Sema::InstantiateVariableDefinition(SourceLocation PointOfInstantiation,
     // instantiation of this template.
     PerformPendingInstantiations();
 
-    // Restore the set of pending vtables.
-    assert(VTableUses.empty() &&
-           "VTableUses should be empty before it is discarded.");
-    VTableUses.swap(SavedVTableUses);
-
-    // Restore the set of pending implicit instantiations.
-    assert(PendingInstantiations.empty() &&
-           "PendingInstantiations should be empty before it is discarded.");
-    PendingInstantiations.swap(SavedPendingInstantiations);
+    // Restore PendingInstantiations and VTableUses.
+    SavePendingInstantiationsAndVTableUses.reset();
   }
 }
 
