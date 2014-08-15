@@ -275,12 +275,24 @@ static const MCExpr *buildSymbolDiff(MCObjectStreamer &OS, const MCSymbol *A,
   return AddrDelta;
 }
 
+static void emitDwarfSetLineAddr(MCObjectStreamer &OS, int64_t LineDelta,
+                                 const MCSymbol *Label, int PointerSize) {
+  // emit the sequence to set the address
+  OS.EmitIntValue(dwarf::DW_LNS_extended_op, 1);
+  OS.EmitULEB128IntValue(PointerSize + 1);
+  OS.EmitIntValue(dwarf::DW_LNE_set_address, 1);
+  OS.EmitSymbolValue(Label, PointerSize);
+
+  // emit the sequence for the LineDelta (from 1) and a zero address delta.
+  MCDwarfLineAddr::Emit(&OS, LineDelta, 0);
+}
+
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                                 const MCSymbol *LastLabel,
                                                 const MCSymbol *Label,
                                                 unsigned PointerSize) {
   if (!LastLabel) {
-    EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
+    emitDwarfSetLineAddr(*this, LineDelta, Label, PointerSize);
     return;
   }
   const MCExpr *AddrDelta = buildSymbolDiff(*this, Label, LastLabel);

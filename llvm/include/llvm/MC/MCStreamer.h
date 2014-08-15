@@ -664,10 +664,6 @@ public:
                                      StringRef FileName);
 
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
-
-  void EmitDwarfSetLineAddr(int64_t LineDelta, const MCSymbol *Label,
-                            int PointerSize);
-
   virtual void EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding);
   virtual void EmitCFISections(bool EH, bool Debug);
   void EmitCFIStartProc(bool IsSimple);
