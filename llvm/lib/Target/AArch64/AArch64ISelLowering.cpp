@@ -1779,7 +1779,7 @@ SDValue AArch64TargetLowering::LowerFormalArguments(
     } else { // VA.isRegLoc()
       assert(VA.isMemLoc() && "CCValAssign is neither reg nor mem");
       unsigned ArgOffset = VA.getLocMemOffset();
-      unsigned ArgSize = VA.getLocVT().getSizeInBits() / 8;
+      unsigned ArgSize = VA.getValVT().getSizeInBits() / 8;
 
       uint32_t BEAlign = 0;
       if (ArgSize < 8 && !Subtarget->isLittleEndian())
@@ -2321,7 +2321,7 @@ AArch64TargetLowering::LowerCall(CallLoweringInfo &CLI,
       // common case. It should also work for fundamental types too.
       uint32_t BEAlign = 0;
       unsigned OpSize = Flags.isByVal() ? Flags.getByValSize() * 8
-                                        : VA.getLocVT().getSizeInBits();
+                                        : VA.getValVT().getSizeInBits();
       OpSize = (OpSize + 7) / 8;
       if (!Subtarget->isLittleEndian() && !Flags.isByVal()) {
         if (OpSize < 8)
