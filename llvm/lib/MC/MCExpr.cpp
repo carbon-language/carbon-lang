@@ -467,9 +467,27 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler &Asm) const {
   return EvaluateAsAbsolute(Res, &Asm, nullptr, nullptr);
 }
 
+int64_t MCExpr::evaluateKnownAbsolute(const MCAsmLayout &Layout) const {
+  int64_t Res;
+  bool Abs =
+      evaluateAsAbsolute(Res, &Layout.getAssembler(), &Layout, nullptr, true);
+  (void)Abs;
+  assert(Abs && "Not actually absolute");
+  return Res;
+}
+
 bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
                                 const MCAsmLayout *Layout,
                                 const SectionAddrMap *Addrs) const {
+  // FIXME: The use if InSet = Addrs is a hack. Setting InSet causes us
+  // absolutize differences across sections and that is what the MachO writer
+  // uses Addrs for.
+  return evaluateAsAbsolute(Res, Asm, Layout, Addrs, Addrs);
+}
+
+bool MCExpr::evaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
+                                const MCAsmLayout *Layout,
+                                const SectionAddrMap *Addrs, bool InSet) const {
   MCValue Value;
 
   // Fast path constants.
@@ -478,12 +496,8 @@ bool MCExpr::EvaluateAsAbsolute(int64_t &Res, const MCAssembler *Asm,
     return true;
   }
 
-  // FIXME: The use if InSet = Addrs is a hack. Setting InSet causes us
-  // absolutize differences across sections and that is what the MachO writer
-  // uses Addrs for.
-  bool IsRelocatable =
-      EvaluateAsRelocatableImpl(Value, Asm, Layout, nullptr, Addrs,
-                                /*InSet*/ Addrs, /*ForceVarExpansion*/ false);
+  bool IsRelocatable = EvaluateAsRelocatableImpl(
+      Value, Asm, Layout, nullptr, Addrs, InSet, /*ForceVarExpansion*/ false);
 
   // Record the current value.
   Res = Value.getConstant();

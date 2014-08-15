@@ -994,11 +994,8 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
 }
 
 bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
-  int64_t Value = 0;
   uint64_t OldSize = LF.getContents().size();
-  bool IsAbs = LF.getValue().EvaluateAsAbsolute(Value, Layout);
-  (void)IsAbs;
-  assert(IsAbs);
+  int64_t Value = LF.getValue().evaluateKnownAbsolute(Layout);
   SmallString<8> &Data = LF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
@@ -1013,11 +1010,8 @@ bool MCAssembler::relaxLEB(MCAsmLayout &Layout, MCLEBFragment &LF) {
 bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
                                      MCDwarfLineAddrFragment &DF) {
   MCContext &Context = Layout.getAssembler().getContext();
-  int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
-  bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
-  (void)IsAbs;
-  assert(IsAbs);
+  int64_t AddrDelta = DF.getAddrDelta().evaluateKnownAbsolute(Layout);
   int64_t LineDelta;
   LineDelta = DF.getLineDelta();
   SmallString<8> &Data = DF.getContents();
@@ -1031,11 +1025,8 @@ bool MCAssembler::relaxDwarfLineAddr(MCAsmLayout &Layout,
 bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
                                               MCDwarfCallFrameFragment &DF) {
   MCContext &Context = Layout.getAssembler().getContext();
-  int64_t AddrDelta = 0;
   uint64_t OldSize = DF.getContents().size();
-  bool IsAbs = DF.getAddrDelta().EvaluateAsAbsolute(AddrDelta, Layout);
-  (void)IsAbs;
-  assert(IsAbs);
+  int64_t AddrDelta = DF.getAddrDelta().evaluateKnownAbsolute(Layout);
   SmallString<8> &Data = DF.getContents();
   Data.clear();
   raw_svector_ostream OSE(Data);
