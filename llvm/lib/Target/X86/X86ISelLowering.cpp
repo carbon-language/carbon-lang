@@ -7055,6 +7055,35 @@ static bool isSingleInputShuffleMask(ArrayRef<int> Mask) {
   return true;
 }
 
+/// \brief Implementation of the \c isShuffleEquivalent variadic functor.
+///
+/// See its documentation for details.
+static bool isShuffleEquivalentImpl(ArrayRef<int> Mask,
+                                    ArrayRef<const int *> Args) {
+  if (Mask.size() != Args.size())
+    return false;
+  for (int i = 0, e = Mask.size(); i < e; ++i) {
+    assert(*Args[i] >= 0 && "Arguments must be positive integers!");
+    assert(*Args[i] < (int)Args.size() * 2 &&
+           "Argument outside the range of possible shuffle inputs!");
+    if (Mask[i] != -1 && Mask[i] != *Args[i])
+      return false;
+  }
+  return true;
+}
+/// \brief Checks whether a shuffle mask is equivalent to an explicit list of
+/// arguments.
+///
+/// This is a fast way to test a shuffle mask against a fixed pattern:
+///
+///   if (isShuffleEquivalent(Mask, 3, 2, 1, 0)) { ... }
+///
+/// It returns true if the mask is exactly as wide as the argument list, and
+/// each element of the mask is either -1 (signifying undef) or the value given
+/// in the argument.
+static const VariadicFunction1<
+    bool, ArrayRef<int>, int, isShuffleEquivalentImpl> isShuffleEquivalent = {};
+
 /// \brief Get a 4-lane 8-bit shuffle immediate for a mask.
 ///
 /// This helper function produces an 8-bit shuffle immediate corresponding to
@@ -8439,6 +8468,19 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
     return DAG.getNode(X86ISD::VPERMILP, DL, MVT::v4f64, V1,
                        DAG.getConstant(VPERMILPMask, MVT::i8));
   }
+
+  // X86 has dedicated unpack instructions that can handle specific blend
+  // operations: UNPCKH and UNPCKL.
+  if (isShuffleEquivalent(Mask, 0, 4, 2, 6))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f64, V1, V2);
+  if (isShuffleEquivalent(Mask, 1, 5, 3, 7))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f64, V1, V2);
+  // FIXME: It would be nice to find a way to get canonicalization to commute
+  // these patterns.
+  if (isShuffleEquivalent(Mask, 4, 0, 6, 2))
+    return DAG.getNode(X86ISD::UNPCKL, DL, MVT::v4f64, V2, V1);
+  if (isShuffleEquivalent(Mask, 5, 1, 7, 3))
+    return DAG.getNode(X86ISD::UNPCKH, DL, MVT::v4f64, V2, V1);
 
   // Check if the blend happens to exactly fit that of SHUFPD.
   if (Mask[0] < 4 && (Mask[1] == -1 || Mask[1] >= 4) &&
