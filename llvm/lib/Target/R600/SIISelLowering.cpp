@@ -242,6 +242,49 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
 // TargetLowering queries
 //===----------------------------------------------------------------------===//
 
+// FIXME: This really needs an address space argument. The immediate offset
+// size is different for different sets of memory instruction sets.
+
+// The single offset DS instructions have a 16-bit unsigned byte offset.
+//
+// MUBUF / MTBUF have a 12-bit unsigned byte offset, and additionally can do r +
+// r + i with addr64. 32-bit has more addressing mode options. Depending on the
+// resource constant, it can also do (i64 r0) + (i32 r1) * (i14 i).
+//
+// SMRD instructions have an 8-bit, dword offset.
+//
+bool SITargetLowering::isLegalAddressingMode(const AddrMode &AM,
+                                             Type *Ty) const {
+  // No global is ever allowed as a base.
+  if (AM.BaseGV)
+    return false;
+
+  // Allow a 16-bit unsigned immediate field, since this is what DS instructions
+  // use.
+  if (!isUInt<16>(AM.BaseOffs))
+    return false;
+
+  // Only support r+r,
+  switch (AM.Scale) {
+  case 0:  // "r+i" or just "i", depending on HasBaseReg.
+    break;
+  case 1:
+    if (AM.HasBaseReg && AM.BaseOffs)  // "r+r+i" is not allowed.
+      return false;
+    // Otherwise we have r+r or r+i.
+    break;
+  case 2:
+    if (AM.HasBaseReg || AM.BaseOffs)  // 2*r+r  or  2*r+i is not allowed.
+      return false;
+    // Allow 2*r as r+r.
+    break;
+  default: // Don't allow n * r
+    return false;
+  }
+
+  return true;
+}
+
 bool SITargetLowering::allowsMisalignedMemoryAccesses(EVT  VT,
                                                       unsigned AddrSpace,
                                                       unsigned Align,

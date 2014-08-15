@@ -59,6 +59,10 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
 public:
   SITargetLowering(TargetMachine &tm);
+
+  bool isLegalAddressingMode(const AddrMode &AM,
+                             Type *Ty) const override;
+
   bool allowsMisalignedMemoryAccesses(EVT VT, unsigned AS,
                                       unsigned Align,
                                       bool *IsFast) const override;
