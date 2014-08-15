@@ -52,7 +52,7 @@ int main()
     test_make_signed< unsigned long long, signed long long >();
     test_make_signed< wchar_t, std::conditional<sizeof(wchar_t) == 4, int, short>::type >();
     test_make_signed< const wchar_t, std::conditional<sizeof(wchar_t) == 4, const int, const short>::type >();
-    test_make_signed< const Enum, const int >();
+    test_make_signed< const Enum, std::conditional<sizeof(Enum) == sizeof(int), const int, const signed char>::type >();
     test_make_signed< BigEnum, std::conditional<sizeof(long) == 4, long long, long>::type >();
 #ifndef _LIBCPP_HAS_NO_INT128
     test_make_signed< __int128_t, __int128_t >();
