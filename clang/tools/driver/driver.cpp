@@ -441,10 +441,9 @@ int main(int argc_, const char **argv_) {
     FailingCommands.push_back(std::make_pair(-1, FailingCommand));
   }
 
-  for (SmallVectorImpl< std::pair<int, const Command *> >::iterator it =
-         FailingCommands.begin(), ie = FailingCommands.end(); it != ie; ++it) {
-    int CommandRes = it->first;
-    const Command *FailingCommand = it->second;
+  for (const auto &P : FailingCommands) {
+    int CommandRes = P.first;
+    const Command *FailingCommand = P.second;
     if (!Res)
       Res = CommandRes;
 
