@@ -63,8 +63,7 @@ void initializePollyPasses(llvm::PassRegistry &Registry);
 }
 #endif
 
-int cc1_main(const char **ArgBegin, const char **ArgEnd,
-             const char *Argv0, void *MainAddr) {
+int cc1_main(ArrayRef<const char *> Argv, const char *Argv0, void *MainAddr) {
   std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
@@ -84,9 +83,8 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagsBuffer);
-  bool Success;
-  Success = CompilerInvocation::CreateFromArgs(Clang->getInvocation(),
-                                               ArgBegin, ArgEnd, Diags);
+  bool Success = CompilerInvocation::CreateFromArgs(
+      Clang->getInvocation(), Argv.begin(), Argv.end(), Diags);
 
   // Infer the builtin include path if unspecified.
   if (Clang->getHeaderSearchOpts().UseBuiltinIncludes &&

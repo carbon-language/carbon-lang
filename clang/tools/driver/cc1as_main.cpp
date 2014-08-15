@@ -141,15 +141,15 @@ public:
     DwarfVersion = 3;
   }
 
-  static bool CreateFromArgs(AssemblerInvocation &Res, const char **ArgBegin,
-                             const char **ArgEnd, DiagnosticsEngine &Diags);
+  static bool CreateFromArgs(AssemblerInvocation &Res,
+                             ArrayRef<const char *> Argv,
+                             DiagnosticsEngine &Diags);
 };
 
 }
 
 bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
-                                         const char **ArgBegin,
-                                         const char **ArgEnd,
+                                         ArrayRef<const char *> Argv,
                                          DiagnosticsEngine &Diags) {
   bool Success = true;
 
@@ -159,7 +159,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   const unsigned IncludedFlagsBitmask = options::CC1AsOption;
   unsigned MissingArgIndex, MissingArgCount;
   std::unique_ptr<InputArgList> Args(
-      OptTbl->ParseArgs(ArgBegin, ArgEnd, MissingArgIndex, MissingArgCount,
+      OptTbl->ParseArgs(Argv.begin(), Argv.end(), MissingArgIndex, MissingArgCount,
                         IncludedFlagsBitmask));
 
   // Check for missing argument error.
@@ -420,11 +420,10 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message,
   exit(1);
 }
 
-int cc1as_main(const char **ArgBegin, const char **ArgEnd,
-               const char *Argv0, void *MainAddr) {
+int cc1as_main(ArrayRef<const char *> Argv, const char *Argv0, void *MainAddr) {
   // Print a stack trace if we signal out.
   sys::PrintStackTraceOnErrorSignal();
-  PrettyStackTraceProgram X(ArgEnd - ArgBegin, ArgBegin);
+  PrettyStackTraceProgram X(Argv.size(), Argv.data());
   llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
 
   // Initialize targets and assembly printers/parsers.
@@ -447,7 +446,7 @@ int cc1as_main(const char **ArgBegin, const char **ArgEnd,
 
   // Parse the arguments.
   AssemblerInvocation Asm;
-  if (!AssemblerInvocation::CreateFromArgs(Asm, ArgBegin, ArgEnd, Diags))
+  if (!AssemblerInvocation::CreateFromArgs(Asm, Argv, Diags))
     return 1;
 
   if (Asm.ShowHelp) {

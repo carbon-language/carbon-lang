@@ -187,10 +187,10 @@ static void ApplyQAOverride(SmallVectorImpl<const char*> &Args,
   }
 }
 
-extern int cc1_main(const char **ArgBegin, const char **ArgEnd,
-                    const char *Argv0, void *MainAddr);
-extern int cc1as_main(const char **ArgBegin, const char **ArgEnd,
-                      const char *Argv0, void *MainAddr);
+extern int cc1_main(ArrayRef<const char *> Argv, const char *Argv0,
+                    void *MainAddr);
+extern int cc1as_main(ArrayRef<const char *> Argv, const char *Argv0,
+                      void *MainAddr);
 
 static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
                           std::set<std::string> &SavedStrings,
@@ -357,13 +357,12 @@ static void SetInstallDir(SmallVectorImpl<const char *> &argv,
     TheDriver.setInstalledDir(InstalledPath);
 }
 
-static int HandleCC1Tool(SmallVectorImpl<const char *> &argv, StringRef Tool) {
+static int HandleCC1Tool(ArrayRef<const char *> argv, StringRef Tool) {
+  void *GetExecutablePathVP = (void *)(intptr_t) GetExecutablePath;
   if (Tool == "")
-    return cc1_main(argv.data()+2, argv.data()+argv.size(), argv[0],
-                    (void*) (intptr_t) GetExecutablePath);
+    return cc1_main(argv.slice(2), argv[0], GetExecutablePathVP);
   if (Tool == "as")
-    return cc1as_main(argv.data()+2, argv.data()+argv.size(), argv[0],
-                    (void*) (intptr_t) GetExecutablePath);
+    return cc1as_main(argv.slice(2), argv[0], GetExecutablePathVP);
 
   // Reject unknown tools.
   llvm::errs() << "error: unknown integrated tool '" << Tool << "'\n";
