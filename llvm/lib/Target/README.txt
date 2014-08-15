@@ -1163,7 +1163,7 @@ There are many load PRE testcases in testsuite/gcc.dg/tree-ssa/loadpre* in the
 GCC testsuite, ones we don't get yet are (checked through loadpre25):
 
 [CRIT EDGE BREAKING]
-loadpre3.c predcom-4.c
+predcom-4.c
 
 [PRE OF READONLY CALL]
 loadpre5.c
