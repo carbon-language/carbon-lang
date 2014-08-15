@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
-
 #include "valarray"
 
 _LIBCPP_BEGIN_NAMESPACE_STD

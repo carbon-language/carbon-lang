@@ -7,8 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define _LIBCPP_EXTERN_TEMPLATE(...) extern template __VA_ARGS__;
-
 #include "string"
 #include "cstdlib"
 #include "cwchar"
