@@ -1335,7 +1335,8 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplate &LPT) {
   ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
 
   // Recreate the containing function DeclContext.
-  Sema::ContextRAII FunctionSavedContext(Actions, Actions.getContainingDC(FunD));
+  Sema::ContextRAII FunctionSavedContext(Actions,
+                                         Actions.getContainingDC(FunD));
 
   Actions.ActOnStartOfFunctionDef(getCurScope(), FunD);
 
