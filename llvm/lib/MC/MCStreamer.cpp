@@ -69,13 +69,14 @@ const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
   return AddrDelta;
 }
 
-const MCExpr *MCStreamer::ForceExpAbs(const MCExpr* Expr) {
+static const MCExpr *forceExpAbs(MCStreamer &OS, const MCExpr* Expr) {
+  MCContext &Context = OS.getContext();
   assert(!isa<MCSymbolRefExpr>(Expr));
   if (Context.getAsmInfo()->hasAggressiveSymbolFolding())
     return Expr;
 
   MCSymbol *ABS = Context.CreateTempSymbol();
-  EmitAssignment(ABS, Expr);
+  OS.EmitAssignment(ABS, Expr);
   return MCSymbolRefExpr::Create(ABS, Context);
 }
 
@@ -138,7 +139,7 @@ void MCStreamer::EmitSLEB128IntValue(int64_t Value) {
 }
 
 void MCStreamer::EmitAbsValue(const MCExpr *Value, unsigned Size) {
-  const MCExpr *ABS = ForceExpAbs(Value);
+  const MCExpr *ABS = forceExpAbs(*this, Value);
   EmitValue(ABS, Size);
 }
 
