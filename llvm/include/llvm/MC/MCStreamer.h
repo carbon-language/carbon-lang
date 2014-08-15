@@ -196,9 +196,6 @@ class MCStreamer {
 protected:
   MCStreamer(MCContext &Ctx);
 
-  const MCExpr *BuildSymbolDiff(MCContext &Context, const MCSymbol *A,
-                                const MCSymbol *B);
-
   virtual void EmitCFIStartProcImpl(MCDwarfFrameInfo &Frame);
   virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &CurFrame);
 

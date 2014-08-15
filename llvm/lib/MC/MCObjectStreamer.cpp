@@ -264,6 +264,17 @@ void MCObjectStreamer::EmitDwarfLocDirective(unsigned FileNo, unsigned Line,
                                           Isa, Discriminator, FileName);
 }
 
+static const MCExpr *buildSymbolDiff(MCObjectStreamer &OS, const MCSymbol *A,
+                                     const MCSymbol *B) {
+  MCContext &Context = OS.getContext();
+  MCSymbolRefExpr::VariantKind Variant = MCSymbolRefExpr::VK_None;
+  const MCExpr *ARef = MCSymbolRefExpr::Create(A, Variant, Context);
+  const MCExpr *BRef = MCSymbolRefExpr::Create(B, Variant, Context);
+  const MCExpr *AddrDelta =
+      MCBinaryExpr::Create(MCBinaryExpr::Sub, ARef, BRef, Context);
+  return AddrDelta;
+}
+
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                                 const MCSymbol *LastLabel,
                                                 const MCSymbol *Label,
@@ -272,7 +283,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
     EmitDwarfSetLineAddr(LineDelta, Label, PointerSize);
     return;
   }
-  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
+  const MCExpr *AddrDelta = buildSymbolDiff(*this, Label, LastLabel);
   int64_t Res;
   if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfLineAddr::Emit(this, LineDelta, Res);
@@ -283,7 +294,7 @@ void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
 
 void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
                                                  const MCSymbol *Label) {
-  const MCExpr *AddrDelta = BuildSymbolDiff(getContext(), Label, LastLabel);
+  const MCExpr *AddrDelta = buildSymbolDiff(*this, Label, LastLabel);
   int64_t Res;
   if (AddrDelta->EvaluateAsAbsolute(Res, getAssembler())) {
     MCDwarfFrameEmitter::EmitAdvanceLoc(*this, Res);
