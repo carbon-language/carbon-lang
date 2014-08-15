@@ -222,12 +222,6 @@ void MCStreamer::EmitLabel(MCSymbol *Symbol) {
     TS->emitLabel(Symbol);
 }
 
-void MCStreamer::EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding) {
-  EnsureValidDwarfFrame();
-  MCDwarfFrameInfo *CurFrame = getCurrentDwarfFrameInfo();
-  CurFrame->CompactUnwindEncoding = CompactUnwindEncoding;
-}
-
 void MCStreamer::EmitCFISections(bool EH, bool Debug) {
   assert(EH || Debug);
 }

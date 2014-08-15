@@ -708,9 +708,6 @@ void AsmPrinter::emitCFIInstruction(const MachineInstr &MI) {
   if (needsCFIMoves() == CFI_M_None)
     return;
 
-  if (MMI->getCompactUnwindEncoding() != 0)
-    OutStreamer.EmitCompactUnwindEncoding(MMI->getCompactUnwindEncoding());
-
   const MachineModuleInfo &MMI = MF->getMMI();
   const std::vector<MCCFIInstruction> &Instrs = MMI.getFrameInstructions();
   unsigned CFIIndex = MI.getOperand(0).getCFIIndex();

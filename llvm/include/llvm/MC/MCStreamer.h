@@ -664,7 +664,6 @@ public:
                                      StringRef FileName);
 
   virtual MCSymbol *getDwarfLineTableSymbol(unsigned CUID);
-  virtual void EmitCompactUnwindEncoding(uint32_t CompactUnwindEncoding);
   virtual void EmitCFISections(bool EH, bool Debug);
   void EmitCFIStartProc(bool IsSimple);
   void EmitCFIEndProc();
