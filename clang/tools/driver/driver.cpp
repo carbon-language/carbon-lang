@@ -310,6 +310,16 @@ static void HandleDriverEnvVars(Driver &TheDriver) {
     TheDriver.CCLogDiagnosticsFilename = ::getenv("CC_LOG_DIAGNOSTICS_FILE");
 }
 
+static void FixupDiagPrefixExeName(TextDiagnosticPrinter *DiagClient,
+                                   const std::string &Path) {
+  // If the clang binary happens to be named cl.exe for compatibility reasons,
+  // use clang-cl.exe as the prefix to avoid confusion between clang and MSVC.
+  StringRef ExeBasename(llvm::sys::path::filename(Path));
+  if (ExeBasename.equals_lower("cl.exe"))
+    ExeBasename = "clang-cl.exe";
+  DiagClient->setPrefix(ExeBasename);
+}
+
 int main(int argc_, const char **argv_) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::PrettyStackTraceProgram X(argc_, argv_);
@@ -375,13 +385,7 @@ int main(int argc_, const char **argv_) {
   // DiagnosticOptions instance.
   TextDiagnosticPrinter *DiagClient
     = new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
-
-  // If the clang binary happens to be named cl.exe for compatibility reasons,
-  // use clang-cl.exe as the prefix to avoid confusion between clang and MSVC.
-  StringRef ExeBasename(llvm::sys::path::filename(Path));
-  if (ExeBasename.equals_lower("cl.exe"))
-    ExeBasename = "clang-cl.exe";
-  DiagClient->setPrefix(ExeBasename);
+  FixupDiagPrefixExeName(DiagClient, Path);
 
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
 
