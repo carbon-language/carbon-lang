@@ -133,37 +133,10 @@ int _CrtSetReportMode(int, int) {
 }
 }  // extern "C"
 
-using __interception::GetRealFunctionAddress;
-
-// We don't want to include "windows.h" in this file to avoid extra attributes
-// set on malloc/free etc (e.g. dllimport), so declare a few things manually:
-extern "C" int __stdcall VirtualProtect(void* addr, size_t size,
-                                        DWORD prot, DWORD *old_prot);
-const int PAGE_EXECUTE_READWRITE = 0x40;
-
 namespace __asan {
 void ReplaceSystemMalloc() {
 #if defined(_DLL)
-# ifdef _WIN64
-#  error ReplaceSystemMalloc was not tested on x64
-# endif
-  char *crt_malloc;
-  if (GetRealFunctionAddress("malloc", (void**)&crt_malloc)) {
-    // Replace malloc in the CRT dll with a jump to our malloc.
-    DWORD old_prot, unused;
-    CHECK(VirtualProtect(crt_malloc, 16, PAGE_EXECUTE_READWRITE, &old_prot));
-    REAL(memset)(crt_malloc, 0xCC /* int 3 */, 16);  // just in case.
-
-    ptrdiff_t jmp_offset = (char*)malloc - (char*)crt_malloc - 5;
-    crt_malloc[0] = 0xE9;  // jmp, should be followed by an offset.
-    REAL(memcpy)(crt_malloc + 1, &jmp_offset, sizeof(jmp_offset));
-
-    CHECK(VirtualProtect(crt_malloc, 16, old_prot, &unused));
-
-    // FYI: FlushInstructionCache is needed on Itanium etc but not on x86/x64.
-  }
-
-  // FIXME: investigate whether anything else is needed.
+# error MD CRT is not yet supported, see PR20214.
 #endif
 }
 }  // namespace __asan

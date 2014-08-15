@@ -22,8 +22,6 @@
 #define INTERCEPTION_WIN_H
 
 namespace __interception {
-// returns true if a function with the given name was found.
-bool GetRealFunctionAddress(const char *func_name, uptr *func_addr);
 
 // returns true if the old function existed, false on failure.
 bool OverrideFunction(uptr old_func, uptr new_func, uptr *orig_old_func);

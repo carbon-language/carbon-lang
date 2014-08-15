@@ -19,20 +19,6 @@
 
 namespace __interception {
 
-bool GetRealFunctionAddress(const char *func_name, uptr *func_addr) {
-  const char *DLLS[] = {
-    "msvcr80.dll",
-    "msvcr90.dll",
-    "kernel32.dll",
-    NULL
-  };
-  *func_addr = 0;
-  for (size_t i = 0; *func_addr == 0 && DLLS[i]; ++i) {
-    *func_addr = (uptr)GetProcAddress(GetModuleHandleA(DLLS[i]), func_name);
-  }
-  return (*func_addr != 0);
-}
-
 // FIXME: internal_str* and internal_mem* functions should be moved from the
 // ASan sources into interception/.
 
