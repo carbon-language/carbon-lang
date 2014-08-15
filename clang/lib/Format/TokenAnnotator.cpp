@@ -311,10 +311,12 @@ private:
         if (CurrentToken->isOneOf(tok::r_paren, tok::r_square))
           return false;
         updateParameterCount(Left, CurrentToken);
-        if (CurrentToken->is(tok::colon)) {
-          if (CurrentToken->getPreviousNonComment()->is(tok::identifier))
-            CurrentToken->getPreviousNonComment()->Type = TT_SelectorName;
-          Left->Type = TT_DictLiteral;
+        if (CurrentToken->isOneOf(tok::colon, tok::l_brace)) {
+          FormatToken *Previous = CurrentToken->getPreviousNonComment();
+          if (Previous->is(tok::identifier))
+            Previous->Type = TT_SelectorName;
+          if (CurrentToken->is(tok::colon))
+            Left->Type = TT_DictLiteral;
         }
         if (!consumeToken())
           return false;
