@@ -313,3 +313,15 @@ entry:
 
   ret <16 x i8> %s.12.4
 }
+
+define <16 x i8> @PR20540(<8 x i8> %a) {
+; SSSE3-LABEL: @PR20540
+; SSSE3:       # BB#0:
+; SSSE3-NEXT:    pxor %xmm1, %xmm1
+; SSSE3-NEXT:    pshufb {{.*}} # xmm1 = zero,zero,zero,zero,zero,zero,zero,zero,xmm1[0,0,0,0,0,0,0,0]
+; SSSE3-NEXT:    pshufb {{.*}} # xmm0 = xmm0[0,2,4,6,8,10,12,14],zero,zero,zero,zero,zero,zero,zero,zero
+; SSSE3-NEXT:    por %xmm1, %xmm0
+; SSSE3-NEXT:    retq
+  %shuffle = shufflevector <8 x i8> %a, <8 x i8> zeroinitializer, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8, i32 8>
+  ret <16 x i8> %shuffle
+}

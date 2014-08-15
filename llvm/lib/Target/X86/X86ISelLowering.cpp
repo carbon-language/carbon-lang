@@ -19335,7 +19335,9 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
     assert(Mask.size() <= 16 && "Can't shuffle elements smaller than bytes!");
     int Ratio = 16 / Mask.size();
     for (unsigned i = 0; i < 16; ++i) {
-      int M = Ratio * Mask[i / Ratio] + i % Ratio;
+      int M = Mask[i / Ratio] != SM_SentinelZero
+                  ? Ratio * Mask[i / Ratio] + i % Ratio
+                  : 255;
       PSHUFBMask.push_back(DAG.getConstant(M, MVT::i8));
     }
     Op = DAG.getNode(ISD::BITCAST, DL, MVT::v16i8, Input);
@@ -19384,8 +19386,9 @@ static bool combineX86ShuffleChain(SDValue Op, SDValue Root, ArrayRef<int> Mask,
 /// combine-ordering. To fix this, we should do the redundant instruction
 /// combining in this recursive walk.
 static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
-                                          ArrayRef<int> IncomingMask, int Depth,
-                                          bool HasPSHUFB, SelectionDAG &DAG,
+                                          ArrayRef<int> RootMask,
+                                          int Depth, bool HasPSHUFB,
+                                          SelectionDAG &DAG,
                                           TargetLowering::DAGCombinerInfo &DCI,
                                           const X86Subtarget *Subtarget) {
   // Bound the depth of our recursive combine because this is ultimately
@@ -19421,28 +19424,44 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
 
   assert(VT.getVectorNumElements() == OpMask.size() &&
          "Different mask size from vector size!");
+  assert(((RootMask.size() > OpMask.size() &&
+           RootMask.size() % OpMask.size() == 0) ||
+          (OpMask.size() > RootMask.size() &&
+           OpMask.size() % RootMask.size() == 0) ||
+          OpMask.size() == RootMask.size()) &&
+         "The smaller number of elements must divide the larger.");
+  int RootRatio = std::max<int>(1, OpMask.size() / RootMask.size());
+  int OpRatio = std::max<int>(1, RootMask.size() / OpMask.size());
+  assert(((RootRatio == 1 && OpRatio == 1) ||
+          (RootRatio == 1) != (OpRatio == 1)) &&
+         "Must not have a ratio for both incoming and op masks!");
 
   SmallVector<int, 16> Mask;
-  Mask.reserve(std::max(OpMask.size(), IncomingMask.size()));
+  Mask.reserve(std::max(OpMask.size(), RootMask.size()));
 
-  // Merge this shuffle operation's mask into our accumulated mask. This is
-  // a bit tricky as the shuffle may have a different size from the root.
-  if (OpMask.size() == IncomingMask.size()) {
-    for (int M : IncomingMask)
-      Mask.push_back(OpMask[M]);
-  } else if (OpMask.size() < IncomingMask.size()) {
-    assert(IncomingMask.size() % OpMask.size() == 0 &&
-           "The smaller number of elements must divide the larger.");
-    int Ratio = IncomingMask.size() / OpMask.size();
-    for (int M : IncomingMask)
-      Mask.push_back(Ratio * OpMask[M / Ratio] + M % Ratio);
-  } else {
-    assert(OpMask.size() > IncomingMask.size() && "All other cases handled!");
-    assert(OpMask.size() % IncomingMask.size() == 0 &&
-           "The smaller number of elements must divide the larger.");
-    int Ratio = OpMask.size() / IncomingMask.size();
-    for (int i = 0, e = OpMask.size(); i < e; ++i)
-      Mask.push_back(OpMask[Ratio * IncomingMask[i / Ratio] + i % Ratio]);
+  // Merge this shuffle operation's mask into our accumulated mask. Note that
+  // this shuffle's mask will be the first applied to the input, followed by the
+  // root mask to get us all the way to the root value arrangement. The reason
+  // for this order is that we are recursing up the operation chain.
+  for (int i = 0, e = std::max(OpMask.size(), RootMask.size()); i < e; ++i) {
+    int RootIdx = i / RootRatio;
+    if (RootMask[RootIdx] == SM_SentinelZero) {
+      // This is a zero-ed lane, we're done.
+      Mask.push_back(SM_SentinelZero);
+      continue;
+    }
+
+    int RootMaskedIdx = RootMask[RootIdx] * RootRatio + i % RootRatio;
+    int OpIdx = RootMaskedIdx / OpRatio;
+    if (OpMask[OpIdx] == SM_SentinelZero) {
+      // The incoming lanes are zero, it doesn't matter which ones we are using.
+      Mask.push_back(SM_SentinelZero);
+      continue;
+    }
+
+    // Ok, we have non-zero lanes, map them through.
+    Mask.push_back(OpMask[OpIdx] * OpRatio +
+                   RootMaskedIdx % OpRatio);
   }
 
   // See if we can recurse into the operand to combine more things.
