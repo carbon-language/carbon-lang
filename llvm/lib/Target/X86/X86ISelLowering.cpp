@@ -19493,18 +19493,10 @@ static bool combineX86ShufflesRecursively(SDValue Op, SDValue Root,
   // elements, and shrink them to the half-width mask. It does this in a loop
   // so it will reduce the size of the mask to the minimal width mask which
   // performs an equivalent shuffle.
-  while (Mask.size() > 1) {
-    SmallVector<int, 16> NewMask;
-    for (int i = 0, e = Mask.size()/2; i < e; ++i) {
-      if (Mask[2*i] % 2 != 0 || Mask[2*i] + 1 != Mask[2*i + 1]) {
-        NewMask.clear();
-        break;
-      }
-      NewMask.push_back(Mask[2*i] / 2);
-    }
-    if (NewMask.empty())
-      break;
-    Mask.swap(NewMask);
+  while (Mask.size() > 1 && canWidenShuffleElements(Mask)) {
+    for (int i = 0, e = Mask.size() / 2; i < e; ++i)
+      Mask[i] = Mask[2 * i] / 2;
+    Mask.resize(Mask.size() / 2);
   }
 
   return combineX86ShuffleChain(Op, Root, Mask, Depth, HasPSHUFB, DAG, DCI,
