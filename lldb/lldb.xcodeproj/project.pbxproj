@@ -27,9 +27,9 @@
 				AF90106415AB7D2900FF120D /* CopyFiles */,
 			);
 			dependencies = (
-				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
 				26CEF3B914FD5952007286B2 /* PBXTargetDependency */,
 				26CEF3B714FD594E007286B2 /* PBXTargetDependency */,
+				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
 				2687EACB1508115000DD8C2E /* PBXTargetDependency */,
 			);
 			name = desktop;
