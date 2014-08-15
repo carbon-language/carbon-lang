@@ -61,8 +61,8 @@ std::string GetExecutablePath(const char *Argv0, bool CanonicalPrefixes) {
   return llvm::sys::fs::getMainExecutable(Argv0, P);
 }
 
-static const char *SaveStringInSet(std::set<std::string> &SavedStrings,
-                                   StringRef S) {
+static const char *GetStableCStr(std::set<std::string> &SavedStrings,
+                                 StringRef S) {
   return SavedStrings.insert(S).first->c_str();
 }
 
@@ -101,12 +101,12 @@ static void ApplyOneQAOverride(raw_ostream &OS,
 
   if (Edit[0] == '^') {
     const char *Str =
-      SaveStringInSet(SavedStrings, Edit.substr(1));
+      GetStableCStr(SavedStrings, Edit.substr(1));
     OS << "### Adding argument " << Str << " at beginning\n";
     Args.insert(Args.begin() + 1, Str);
   } else if (Edit[0] == '+') {
     const char *Str =
-      SaveStringInSet(SavedStrings, Edit.substr(1));
+      GetStableCStr(SavedStrings, Edit.substr(1));
     OS << "### Adding argument " << Str << " at end\n";
     Args.push_back(Str);
   } else if (Edit[0] == 's' && Edit[1] == '/' && Edit.endswith("/") &&
@@ -120,7 +120,7 @@ static void ApplyOneQAOverride(raw_ostream &OS,
 
       if (Repl != Args[i]) {
         OS << "### Replacing '" << Args[i] << "' with '" << Repl << "'\n";
-        Args[i] = SaveStringInSet(SavedStrings, Repl);
+        Args[i] = GetStableCStr(SavedStrings, Repl);
       }
     }
   } else if (Edit[0] == 'x' || Edit[0] == 'X') {
@@ -152,7 +152,7 @@ static void ApplyOneQAOverride(raw_ostream &OS,
         ++i;
     }
     OS << "### Adding argument " << Edit << " at end\n";
-    Args.push_back(SaveStringInSet(SavedStrings, '-' + Edit.str()));
+    Args.push_back(GetStableCStr(SavedStrings, '-' + Edit.str()));
   } else {
     OS << "### Unrecognized edit: " << Edit << "\n";
   }
@@ -275,8 +275,8 @@ static void ParseProgName(SmallVectorImpl<const char *> &ArgVector,
     if (it != ArgVector.end())
       ++it;
     const char* Strings[] =
-      { SaveStringInSet(SavedStrings, std::string("-target")),
-        SaveStringInSet(SavedStrings, Prefix) };
+      { GetStableCStr(SavedStrings, std::string("-target")),
+        GetStableCStr(SavedStrings, Prefix) };
     ArgVector.insert(it, Strings, Strings + llvm::array_lengthof(Strings));
   }
 }
@@ -286,7 +286,7 @@ namespace {
   public:
     StringSetSaver(std::set<std::string> &Storage) : Storage(Storage) {}
     const char *SaveString(const char *Str) override {
-      return SaveStringInSet(Storage, Str);
+      return GetStableCStr(Storage, Str);
     }
   private:
     std::set<std::string> &Storage;
