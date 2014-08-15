@@ -35,6 +35,70 @@ void llvm::EmitAnyX86InstComments(const MCInst *MI, raw_ostream &OS,
   const char *DestName = nullptr, *Src1Name = nullptr, *Src2Name = nullptr;
 
   switch (MI->getOpcode()) {
+  case X86::BLENDPDrri:
+  case X86::VBLENDPDrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::BLENDPDrmi:
+  case X86::VBLENDPDrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v2f64,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+  case X86::VBLENDPDYrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VBLENDPDYrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v4f64,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+
+  case X86::BLENDPSrri:
+  case X86::VBLENDPSrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::BLENDPSrmi:
+  case X86::VBLENDPSrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v4f32,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+  case X86::VBLENDPSYrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::VBLENDPSYrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v8f32,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+
+  case X86::PBLENDWrri:
+  case X86::VPBLENDWrri:
+    Src2Name = getRegName(MI->getOperand(2).getReg());
+    // FALL THROUGH.
+  case X86::PBLENDWrmi:
+  case X86::VPBLENDWrmi:
+    if(MI->getOperand(MI->getNumOperands()-1).isImm())
+      DecodeBLENDMask(MVT::v8i16,
+                      MI->getOperand(MI->getNumOperands()-1).getImm(),
+                      ShuffleMask);
+    Src1Name = getRegName(MI->getOperand(1).getReg());
+    DestName = getRegName(MI->getOperand(0).getReg());
+    break;
+
   case X86::INSERTPSrr:
   case X86::VINSERTPSrr:
     DestName = getRegName(MI->getOperand(0).getReg());

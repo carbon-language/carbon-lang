@@ -70,6 +70,9 @@ void DecodePSHUFBMask(const ConstantDataSequential *C,
 void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
                       SmallVectorImpl<int> &ShuffleMask);
 
+/// \brief Decode a BLEND immediate mask into a shuffle mask.
+void DecodeBLENDMask(MVT VT, unsigned Imm, SmallVectorImpl<int> &ShuffleMask);
+
 void DecodeVPERM2X128Mask(MVT VT, unsigned Imm,
                           SmallVectorImpl<int> &ShuffleMask);
 

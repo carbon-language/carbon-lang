@@ -258,6 +258,13 @@ void DecodePSHUFBMask(ArrayRef<uint64_t> RawMask,
   }
 }
 
+void DecodeBLENDMask(MVT VT, unsigned Imm,
+                       SmallVectorImpl<int> &ShuffleMask) {
+  int NumElements = VT.getVectorNumElements();
+  for (int i = 0; i < NumElements; ++i)
+    ShuffleMask.push_back(((Imm >> i) & 1) ? NumElements + i : i);
+}
+
 /// DecodeVPERMMask - this decodes the shuffle masks for VPERMQ/VPERMPD.
 /// No VT provided since it only works on 256-bit, 4 element vectors.
 void DecodeVPERMMask(unsigned Imm, SmallVectorImpl<int> &ShuffleMask) {
