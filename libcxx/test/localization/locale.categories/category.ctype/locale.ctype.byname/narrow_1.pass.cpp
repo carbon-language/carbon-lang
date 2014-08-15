@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 // REQUIRES: locale.en_US.UTF-8
-// REQUIRES: locale.fr_CA.UTF-8
+// REQUIRES: locale.fr_CA.ISO8859-1
 
 // <locale>
 
