@@ -294,10 +294,17 @@ PlatformWindows::ResolveExecutable (const FileSpec &exe_file,
 
             if (error.Fail() || !exe_module_sp)
             {
-                error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
-                                                exe_file.GetPath().c_str(),
-                                                GetPluginName().GetCString(),
-                                                arch_names.GetString().c_str());
+                if (exe_file.Readable())
+                {
+                    error.SetErrorStringWithFormat ("'%s' doesn't contain any '%s' platform architectures: %s",
+                                                    exe_file.GetPath().c_str(),
+                                                    GetPluginName().GetCString(),
+                                                    arch_names.GetString().c_str());
+                }
+                else
+                {
+                    error.SetErrorStringWithFormat("'%s' is not readable", exe_file.GetPath().c_str());
+                }
             }
         }
     }
