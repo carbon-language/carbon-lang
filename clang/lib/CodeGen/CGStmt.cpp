@@ -730,6 +730,7 @@ void CodeGenFunction::EmitWhileStmt(const WhileStmt &S,
   // Immediately force cleanup.
   ConditionScope.ForceCleanup();
 
+  EmitStopPoint(&S);
   // Branch to the loop header again.
   EmitBranch(LoopHeader.getBlock());
 
