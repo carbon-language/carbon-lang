@@ -936,7 +936,7 @@ public:
                                  llvm::Function *F);
 
   /// Set the LLVM function attributes which only apply to a function
-  /// definintion.
+  /// definition.
   void SetLLVMFunctionAttributesForDefinition(const Decl *D, llvm::Function *F);
 
   /// Return true iff the given type uses 'sret' when used as a return type.

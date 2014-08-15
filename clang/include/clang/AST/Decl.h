@@ -2647,7 +2647,7 @@ public:
   }
 
   /// isThisDeclarationADefinition() - Return true if this declaration
-  /// is a completion definintion of the type.  Provided for consistency.
+  /// is a completion definition of the type.  Provided for consistency.
   bool isThisDeclarationADefinition() const {
     return isCompleteDefinition();
   }
