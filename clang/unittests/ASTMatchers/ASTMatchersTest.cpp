@@ -1528,6 +1528,13 @@ TEST(IsExternC, MatchesExternCFunctionDeclarations) {
   EXPECT_TRUE(notMatches("void f() {}", functionDecl(isExternC())));
 }
 
+TEST(IsDeleted, MatchesDeletedFunctionDeclarations) {
+  EXPECT_TRUE(
+      notMatches("void Func();", functionDecl(hasName("Func"), isDeleted())));
+  EXPECT_TRUE(matches("void Func() = delete;",
+                      functionDecl(hasName("Func"), isDeleted())));
+}
+
 TEST(HasAnyParameter, DoesntMatchIfInnerMatcherDoesntMatch) {
   EXPECT_TRUE(notMatches("class Y {}; class X { void x(int) {} };",
       methodDecl(hasAnyParameter(hasType(recordDecl(hasName("X")))))));

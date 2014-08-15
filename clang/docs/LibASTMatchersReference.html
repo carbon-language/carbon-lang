@@ -368,7 +368,7 @@ nestedNameSpecifier()
 <tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1Stmt.html">Stmt</a>&gt;</td><td class="name" onclick="toggle('CUDAKernelCallExpr0')"><a name="CUDAKernelCallExpr0Anchor">CUDAKernelCallExpr</a></td><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1CUDAKernelCallExpr.html">CUDAKernelCallExpr</a>&gt;...</td></tr>
 <tr><td colspan="4" class="doc" id="CUDAKernelCallExpr0"><pre>Matches CUDA kernel call expression.
 
-Example matches kernel&lt;&lt;&lt;i,j&gt;&gt;&gt;()
+Example matches,
   kernel&lt;&lt;&lt;i,j&gt;&gt;&gt;();
 </pre></td></tr>
 
@@ -1730,6 +1730,17 @@ Example matches A, va, fa
   void fb();  Doesn't match, as it has no body.
 
 Usable as: Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1TagDecl.html">TagDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1VarDecl.html">VarDecl</a>&gt;, Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;
+</pre></td></tr>
+
+
+<tr><td>Matcher&lt<a href="http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html">FunctionDecl</a>&gt;</td><td class="name" onclick="toggle('isDeleted0')"><a name="isDeleted0Anchor">isDeleted</a></td><td></td></tr>
+<tr><td colspan="4" class="doc" id="isDeleted0"><pre>Matches deleted function declarations.
+
+Given:
+  void Func();
+  void DeletedFunc() = delete;
+functionDecl(isDeleted())
+  matches the declaration of DeletedFunc, but not Func.
 </pre></td></tr>
 
 
