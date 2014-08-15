@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra | FileCheck %s
-; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra -regalloc=basic | FileCheck %s
+; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra -verify-machineinstrs | FileCheck %s -check-prefix=CHECK
+; RUN: llc < %s -mtriple=thumb-apple-darwin -disable-cgp-branch-opts -disable-post-ra -regalloc=basic -verify-machineinstrs | FileCheck %s -check-prefix=CHECK
 
 	%struct.state = type { i32, %struct.info*, float**, i32, i32, i32, i32, i32, i32, i32, i32, i32, i64, i64, i64, i64, i64, i64, i8* }
 	%struct.info = type { i32, i32, i32, i32, i32, i32, i32, i8* }
