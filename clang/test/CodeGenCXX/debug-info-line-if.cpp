@@ -9,12 +9,12 @@ int main() {
       else if (x >= 0)
         ++a;    // CHECK: add nsw{{.*}}, 1
     // The continuation block if the if statement should not share the
-    // location of the ++a statement. Having it point to the end of
-    // the condition is not ideal either, but it's less missleading.
+    // location of the ++a statement. The branch back to the start of the loop
+    // should be attributed to the loop header line.
 
     // CHECK: br label
     // CHECK: br label
     // CHECK: br label {{.*}}, !dbg ![[DBG:.*]]
-    // CHECK: ![[DBG]] = metadata !{i32 [[@LINE-11]], i32 0, metadata !{{.*}}, null}
+    // CHECK: ![[DBG]] = metadata !{i32 [[@LINE-12]], i32 0, metadata !{{.*}}, null}
 
 }
