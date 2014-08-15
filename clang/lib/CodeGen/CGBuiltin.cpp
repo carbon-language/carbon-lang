@@ -6055,6 +6055,17 @@ static Value *emitTernaryFPBuiltin(CodeGenFunction &CGF,
   return CGF.Builder.CreateCall3(F, Src0, Src1, Src2);
 }
 
+// Emit an intrinsic that has 1 float or double operand, and 1 integer.
+static Value *emitFPIntBuiltin(CodeGenFunction &CGF,
+                               const CallExpr *E,
+                               unsigned IntrinsicID) {
+  llvm::Value *Src0 = CGF.EmitScalarExpr(E->getArg(0));
+  llvm::Value *Src1 = CGF.EmitScalarExpr(E->getArg(1));
+
+  Value *F = CGF.CGM.getIntrinsic(IntrinsicID, Src0->getType());
+  return CGF.Builder.CreateCall2(F, Src0, Src1);
+}
+
 Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
                                             const CallExpr *E) {
   switch (BuiltinID) {
@@ -6093,12 +6104,8 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
   case R600::BI__builtin_amdgpu_div_fixupf:
     return emitTernaryFPBuiltin(*this, E, Intrinsic::AMDGPU_div_fixup);
   case R600::BI__builtin_amdgpu_trig_preop:
-  case R600::BI__builtin_amdgpu_trig_preopf: {
-    Value *Src0 = EmitScalarExpr(E->getArg(0));
-    Value *Src1 = EmitScalarExpr(E->getArg(1));
-    Value *F = CGM.getIntrinsic(Intrinsic::AMDGPU_trig_preop, Src0->getType());
-    return Builder.CreateCall2(F, Src0, Src1);
-  }
+  case R600::BI__builtin_amdgpu_trig_preopf:
+    return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_trig_preop);
   case R600::BI__builtin_amdgpu_rcp:
   case R600::BI__builtin_amdgpu_rcpf:
     return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rcp);
@@ -6108,6 +6115,9 @@ Value *CodeGenFunction::EmitR600BuiltinExpr(unsigned BuiltinID,
   case R600::BI__builtin_amdgpu_rsq_clamped:
   case R600::BI__builtin_amdgpu_rsq_clampedf:
     return emitUnaryFPBuiltin(*this, E, Intrinsic::AMDGPU_rsq_clamped);
+  case R600::BI__builtin_amdgpu_ldexp:
+  case R600::BI__builtin_amdgpu_ldexpf:
+    return emitFPIntBuiltin(*this, E, Intrinsic::AMDGPU_ldexp);
    default:
     return nullptr;
   }

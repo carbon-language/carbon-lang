@@ -112,3 +112,17 @@ void test_rsq_clamped_f64(global double* out, double a)
 {
   *out = __builtin_amdgpu_rsq_clamped(a);
 }
+
+// CHECK-LABEL: @test_ldexp_f32
+// CHECK: call float @llvm.AMDGPU.ldexp.f32
+void test_ldexp_f32(global float* out, float a, int b)
+{
+  *out = __builtin_amdgpu_ldexpf(a, b);
+}
+
+// CHECK-LABEL: @test_ldexp_f64
+// CHECK: call double @llvm.AMDGPU.ldexp.f64
+void test_ldexp_f64(global double* out, double a, int b)
+{
+  *out = __builtin_amdgpu_ldexp(a, b);
+}
