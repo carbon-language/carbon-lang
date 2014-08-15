@@ -1454,22 +1454,22 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
   const FunctionDecl *CurrentFunction;
   bool Verbose;
 
-  OptionalNotes getNotes() {
+  OptionalNotes getNotes() const {
     if (Verbose && CurrentFunction) {
       PartialDiagnosticAt FNote(CurrentFunction->getBody()->getLocStart(),
-        S.PDiag(diag::note_thread_warning_in_fun)
-        << CurrentFunction->getNameAsString());
+                                S.PDiag(diag::note_thread_warning_in_fun)
+                                    << CurrentFunction->getNameAsString());
       return OptionalNotes(1, FNote);
     }
-    else return OptionalNotes();
+    return OptionalNotes();
   }
 
-  OptionalNotes getNotes(const PartialDiagnosticAt &Note) {
+  OptionalNotes getNotes(const PartialDiagnosticAt &Note) const {
     OptionalNotes ONS(1, Note);
     if (Verbose && CurrentFunction) {
       PartialDiagnosticAt FNote(CurrentFunction->getBody()->getLocStart(),
-        S.PDiag(diag::note_thread_warning_in_fun)
-        << CurrentFunction->getNameAsString());
+                                S.PDiag(diag::note_thread_warning_in_fun)
+                                    << CurrentFunction->getNameAsString());
       ONS.push_back(FNote);
     }
     return ONS;
@@ -1629,13 +1629,11 @@ class ThreadSafetyReporter : public clang::threadSafety::ThreadSafetyHandler {
                                                        << LockName << LK);
       if (Verbose && POK == POK_VarAccess) {
         PartialDiagnosticAt Note(D->getLocation(),
-          S.PDiag(diag::note_guarded_by_declared_here) <<
-          D->getNameAsString());
+                                 S.PDiag(diag::note_guarded_by_declared_here)
+                                     << D->getNameAsString());
         Warnings.push_back(DelayedDiag(Warning, getNotes(Note)));
-      }
-      else {
+      } else
         Warnings.push_back(DelayedDiag(Warning, getNotes()));
-      }
     }
   }
 
