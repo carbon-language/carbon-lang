@@ -49,7 +49,7 @@ void _free_dbg(void *ptr, int) {
 }
 
 ALLOCATION_FUNCTION_ATTRIBUTE
-void cfree(void *) {
+void cfree(void *ptr) {
   CHECK(!"cfree() should not be used on Windows");
 }
 
