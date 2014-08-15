@@ -97,6 +97,7 @@ LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
 
 ifeq ($(HOST_OS),Darwin)
   USEDLIBS += lldbHostMacOSX.a \
+              lldbHostPosix.a \
               lldbPluginDynamicLoaderMacOSX.a \
               lldbPluginDynamicLoaderDarwinKernel.a \
               lldbPluginObjectContainerUniversalMachO.a \
@@ -111,6 +112,7 @@ endif
 
 ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbHostLinux.a \
+              lldbHostPosix.a \
               lldbPluginProcessLinux.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginDynamicLoaderMacOSX.a \
@@ -126,6 +128,7 @@ endif
 
 ifneq (,$(filter $(HOST_OS), FreeBSD GNU/kFreeBSD))
   USEDLIBS += lldbHostFreeBSD.a \
+              lldbHostPosix.a \
               lldbPluginProcessPOSIX.a \
               lldbPluginProcessFreeBSD.a \
               lldbPluginProcessElfCore.a \
