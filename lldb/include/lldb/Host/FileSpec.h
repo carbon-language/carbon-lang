@@ -270,6 +270,15 @@ public:
     bool
     Exists () const;
 
+    //------------------------------------------------------------------
+    /// Check if a file is readable by the current user
+    ///
+    /// @return
+    ///     \b true if the file exists on disk and is readable, \b false
+    ///     otherwise.
+    //------------------------------------------------------------------
+    bool
+    Readable () const;
      
     //------------------------------------------------------------------
     /// Expanded existence test.

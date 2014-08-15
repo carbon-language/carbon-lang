@@ -69,7 +69,7 @@ ProcessMachCore::CreateInstance (Target &target, Listener &listener, const FileS
     {
         const size_t header_size = sizeof(llvm::MachO::mach_header);
         lldb::DataBufferSP data_sp (crash_file->ReadFileContents(0, header_size));
-        if (data_sp->GetByteSize() == header_size)
+        if (data_sp && data_sp->GetByteSize() == header_size)
         {
             DataExtractor data(data_sp, lldb::eByteOrderLittle, 4);
             

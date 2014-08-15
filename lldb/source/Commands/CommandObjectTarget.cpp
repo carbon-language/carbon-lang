@@ -230,12 +230,38 @@ protected:
         FileSpec core_file (m_core_file.GetOptionValue().GetCurrentValue());
         FileSpec remote_file (m_remote_file.GetOptionValue().GetCurrentValue());
 
+        if (core_file)
+        {
+            if (!core_file.Exists())
+            {
+                result.AppendErrorWithFormat("core file '%s' doesn't exist", core_file.GetPath().c_str());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+                
+            }
+            if (!core_file.Readable())
+            {
+                result.AppendErrorWithFormat("core file '%s' is not readable", core_file.GetPath().c_str());
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+        }
+
         if (argc == 1 || core_file || remote_file)
         {
             FileSpec symfile (m_symbol_file.GetOptionValue().GetCurrentValue());
             if (symfile)
             {
-                if (!symfile.Exists())
+                if (symfile.Exists())
+                {
+                    if (!symfile.Readable())
+                    {
+                        result.AppendErrorWithFormat("symbol file '%s' is not readable", core_file.GetPath().c_str());
+                        result.SetStatus (eReturnStatusFailed);
+                        return false;
+                    }
+                }
+                else
                 {
                     char symfile_path[PATH_MAX];
                     symfile.GetPath(symfile_path, sizeof(symfile_path));

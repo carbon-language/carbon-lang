@@ -483,6 +483,15 @@ FileSpec::Exists () const
 }
 
 bool
+FileSpec::Readable () const
+{
+    const uint32_t permissions = GetPermissions();
+    if (permissions & eFilePermissionsEveryoneR)
+        return true;
+    return false;
+}
+
+bool
 FileSpec::ResolveExecutableLocation ()
 {
     if (!m_directory)
