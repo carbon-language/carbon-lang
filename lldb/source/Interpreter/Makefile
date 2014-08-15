@@ -22,9 +22,10 @@ include $(LLDB_LEVEL)/Makefile
 # Drop -Wfour-char-constants,  which we are not currently clean with.
 EXTRA_OPTIONS += -Wno-four-char-constants
 
-# Drop -Wself-assign, -Wmissing-field-initializers and -Wsometimes-uninitialized,
-# which we are not currently clean with (due to SWIG generated cpp source).
-EXTRA_OPTIONS += -Wno-missing-field-initializers -Wno-self-assign -Wno-sometimes-uninitialized -Wno-cast-qual
+# Drop -Wself-assign, -Wmissing-field-initializers, -Wsometimes-uninitialized,
+# -Wcast-qual, and -Wdeprecated-register which we are not clean with due to SWIG
+# generated cpp source.
+EXTRA_OPTIONS += -Wno-missing-field-initializers -Wno-self-assign -Wno-sometimes-uninitialized -Wno-cast-qual -Wno-deprecated-register
 
 PYTHON_DIR := $(PROJ_OBJ_ROOT)/$(BuildMode)
 
