@@ -188,9 +188,6 @@ public:
   /// Called by the analysis when finishing analysis of a function.
   virtual void leaveFunction(const FunctionDecl *FD) {}
 
-  /// Return the number of errors found within this function so far.
-  virtual int numErrors() { return 0; }
-
   bool issueBetaWarnings() { return IssueBetaWarnings; }
   void setIssueBetaWarnings(bool b) { IssueBetaWarnings = b; }
 
