@@ -2358,7 +2358,29 @@ FormatPromptRecurse
                                                 if (args.GetSize() > 0)
                                                 {
                                                     const char *open_paren = strchr (cstr, '(');
-                                                    const char *close_paren = NULL;
+                                                    const char *close_paren = nullptr;
+                                                    const char *generic = strchr(cstr, '<');
+                                                    // if before the arguments list begins there is a template sign
+                                                    // then scan to the end of the generic args before you try to find
+                                                    // the arguments list
+                                                    if (generic && open_paren && generic < open_paren)
+                                                    {
+                                                        int generic_depth = 1;
+                                                        ++generic;
+                                                        for (;
+                                                             *generic && generic_depth > 0;
+                                                             generic++)
+                                                        {
+                                                            if (*generic == '<')
+                                                                generic_depth++;
+                                                            if (*generic == '>')
+                                                                generic_depth--;
+                                                        }
+                                                        if (*generic)
+                                                            open_paren = strchr(generic, '(');
+                                                        else
+                                                            open_paren = nullptr;
+                                                    }
                                                     if (open_paren)
                                                     {
                                                         if (IsToken (open_paren, "(anonymous namespace)"))
