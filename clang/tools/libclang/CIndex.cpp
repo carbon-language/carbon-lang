@@ -3283,6 +3283,18 @@ int clang_getFileUniqueID(CXFile file, CXFileUniqueID *outID) {
   return 0;
 }
 
+int clang_File_isEqual(CXFile file1, CXFile file2) {
+  if (file1 == file2)
+    return true;
+
+  if (!file1 || !file2)
+    return false;
+
+  FileEntry *FEnt1 = static_cast<FileEntry *>(file1);
+  FileEntry *FEnt2 = static_cast<FileEntry *>(file2);
+  return FEnt1->getUniqueID() == FEnt2->getUniqueID();
+}
+
 } // end: extern "C"
 
 //===----------------------------------------------------------------------===//
