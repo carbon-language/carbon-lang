@@ -87,7 +87,7 @@ define float @fmul_fneg_fneg_f32(float %x, float %y) {
   ret float %mul
 }
 ; CHECK-LABEL: fmul_fneg_fneg_v4f32:
-; CHECK: mulps %xmm1, %xmm0
+; CHECK: mulps {{%xmm1|\(%rdx\)}}, %xmm0
 ; CHECK-NEXT: retq
 define <4 x float> @fmul_fneg_fneg_v4f32(<4 x float> %x, <4 x float> %y) {
   %x.neg = fsub <4 x float> <float -0.0, float -0.0, float -0.0, float -0.0>, %x
