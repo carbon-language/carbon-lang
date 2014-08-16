@@ -1068,6 +1068,9 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   case tok::kw___declspec:      // struct foo {...} __declspec(...)
   case tok::l_square:           // void f(struct f  [         3])
   case tok::ellipsis:           // void f(struct f  ...       [Ns])
+  // FIXME: we should emit semantic diagnostic when declaration
+  // attribute is in type attribute position.
+  case tok::kw___attribute:     // struct foo __attribute__((used)) x;
     return true;
   case tok::colon:
     return CouldBeBitfield;     // enum E { ... }   :         2;

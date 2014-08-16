@@ -95,3 +95,13 @@ void testFundef5() __attribute__(()) { }
 __attribute__((pure)) int testFundef6(int a) { return a; }
 
 void deprecatedTestFun(void) __attribute__((deprecated()));
+
+struct s {
+  int a;
+};
+
+// This test ensure compatibility with parsing GNU-style attributes
+// where the attribute is on a separate line from the elaborated type
+// specifier.
+struct s
+__attribute__((used)) bar;
