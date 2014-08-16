@@ -255,3 +255,194 @@ define <4 x i8> @test4c(<4 x i8>* %a, <4 x i8>* %b) {
 ; CHECK: blendps $13
 ; CHECK: ret
 
+
+; Verify that the dag combiner correctly folds the following shuffle pairs to Undef.
+
+define <4 x i32> @test1b(<4 x i32> %A) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 5, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test1b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test2b(<4 x i32> %A) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 4, i32 5, i32 1, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 6, i32 7>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test2b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test3b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %B, <4 x i32> <i32 1, i32 3, i32 1, i32 3>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test3b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test4b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 4, i32 1, i32 1, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %B, <4 x i32> <i32 0, i32 3, i32 3, i32 0>
+  ret <4 x i32> %2
+}
+; CHECK-LABEL: test4b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test5b(<4 x i32> %A) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 0, i32 1, i32 5, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 4, i32 5, i32 2, i32 7>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 4, i32 1, i32 6, i32 3>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test5b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test6b(<4 x i32> %A) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 4, i32 5, i32 1, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 1, i32 0, i32 6, i32 7>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 5, i32 2, i32 7>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test6b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test7b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %B, <4 x i32> <i32 1, i32 3, i32 1, i32 3>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 6>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test7b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test8b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 4, i32 1, i32 1, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 0, i32 4, i32 1, i32 6>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 1, i32 5, i32 3, i32 3>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test8b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test9b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 0, i32 1, i32 undef, i32 7>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> undef, <4 x i32> <i32 3, i32 4, i32 2, i32 1>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> %A, <4 x i32> <i32 2, i32 1, i32 1, i32 2>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test9b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test10b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 undef, i32 undef, i32 1, i32 6>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %A, <4 x i32> <i32 0, i32 6, i32 1, i32 0>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 0, i32 2>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test10b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test11b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 0, i32 undef, i32 1, i32 undef>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %B, <4 x i32> <i32 1, i32 3, i32 1, i32 3>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 0, i32 5, i32 1, i32 6>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test11b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <4 x i32> @test12b(<4 x i32> %A, <4 x i32> %B) {
+  %1 = shufflevector <4 x i32> %A, <4 x i32> %B, <4 x i32> <i32 undef, i32 1, i32 1, i32 undef>
+  %2 = shufflevector <4 x i32> %1, <4 x i32> %B, <4 x i32> <i32 0, i32 3, i32 3, i32 0>
+  %3 = shufflevector <4 x i32> %2, <4 x i32> undef, <4 x i32> <i32 1, i32 5, i32 1, i32 4>
+  ret <4 x i32> %3
+}
+; CHECK-LABEL: test12b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <8 x i32> @test13b(<8 x i32> %A, <8 x i32> %B) {
+  %1 = shufflevector <8 x i32> %A, <8 x i32> %B, <8 x i32> <i32 0, i32 undef, i32 1, i32 undef, i32 0, i32 undef, i32 1, i32 undef>
+  %2 = shufflevector <8 x i32> %1, <8 x i32> %B, <8 x i32> <i32 1, i32 3, i32 1, i32 3, i32 1, i32 3, i32 1, i32 3>
+  %3 = shufflevector <8 x i32> %2, <8 x i32> undef, <8 x i32> <i32 0, i32 9, i32 1, i32 10, i32 0, i32 9, i32 1, i32 10>
+  ret <8 x i32> %3
+}
+; CHECK-LABEL: test13b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <8 x i32> @test14b(<8 x i32> %A, <8 x i32> %B) {
+  %1 = shufflevector <8 x i32> %A, <8 x i32> %B, <8 x i32> <i32 undef, i32 1, i32 1, i32 undef, i32 undef, i32 1, i32 1, i32 undef>
+  %2 = shufflevector <8 x i32> %1, <8 x i32> %B, <8 x i32> <i32 0, i32 3, i32 3, i32 0, i32 0, i32 3, i32 3, i32 0>
+  %3 = shufflevector <8 x i32> %2, <8 x i32> undef, <8 x i32> <i32 1, i32 9, i32 1, i32 8, i32 1, i32 9, i32 1, i32 8>
+  ret <8 x i32> %3
+}
+; CHECK-LABEL: test14b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <8 x i32> @test15b(<8 x i32> %A, <8 x i32> %B) {
+  %1 = shufflevector <8 x i32> %A, <8 x i32> %B, <8 x i32> <i32 0, i32 1, i32 undef, i32 11, i32 0, i32 1, i32 undef, i32 11>
+  %2 = shufflevector <8 x i32> %1, <8 x i32> undef, <8 x i32> <i32 8, i32 9, i32 2, i32 11, i32 8, i32 9, i32 2, i32 11>
+  %3 = shufflevector <8 x i32> %2, <8 x i32> %A, <8 x i32> <i32 2, i32 2, i32 undef, i32 2, i32 2, i32 2, i32 undef, i32 2>
+  ret <8 x i32> %3
+}
+; CHECK-LABEL: test15b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+
+define <8 x i32> @test16b(<8 x i32> %A, <8 x i32> %B) {
+  %1 = shufflevector <8 x i32> %A, <8 x i32> %B, <8 x i32> <i32 undef, i32 undef, i32 1, i32 10, i32 undef, i32 undef, i32 1, i32 10>
+  %2 = shufflevector <8 x i32> %1, <8 x i32> %A, <8 x i32> <i32 0, i32 10, i32 2, i32 11, i32 0, i32 10, i32 2, i32 11>
+  %3 = shufflevector <8 x i32> %2, <8 x i32> undef, <8 x i32> <i32 4, i32 9, i32 undef, i32 0, i32 4, i32 9, i32 undef, i32 0>
+  ret <8 x i32> %3
+}
+; CHECK-LABEL: test16b
+; CHECK-NOT: blendps
+; CHECK-NOT: pshufd
+; CHECK-NOT: movhlps
+; CHECK: ret
+

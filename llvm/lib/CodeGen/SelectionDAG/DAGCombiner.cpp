@@ -10787,6 +10787,14 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
         Idx = OtherSV->getMaskElt(Idx);
       Mask.push_back(Idx);
     }
+
+    // Check if all indices in Mask are Undef. In case, propagate Undef.
+    bool isUndefMask = true;
+    for (unsigned i = 0; i != NumElts && isUndefMask; ++i)
+      isUndefMask &= Mask[i] < 0;
+
+    if (isUndefMask)
+      return DAG.getUNDEF(VT);
     
     bool CommuteOperands = false;
     if (N0.getOperand(1).getOpcode() != ISD::UNDEF) {
@@ -10931,6 +10939,14 @@ SDValue DAGCombiner::visitVECTOR_SHUFFLE(SDNode *N) {
 
       Mask.push_back(Idx);
     }
+
+    // Check if all indices in Mask are Undef. In case, propagate Undef.
+    bool isUndefMask = true;
+    for (unsigned i = 0; i != NumElts && isUndefMask; ++i)
+      isUndefMask &= Mask[i] < 0;
+
+    if (isUndefMask)
+      return DAG.getUNDEF(VT);
 
     // Avoid introducing shuffles with illegal mask.
     if (TLI.isShuffleMaskLegal(Mask, VT)) {
