@@ -107,13 +107,9 @@ bool FixedStackPseudoSourceValue::isConstant(const MachineFrameInfo *MFI) const{
 }
 
 bool FixedStackPseudoSourceValue::isAliased(const MachineFrameInfo *MFI) const {
-  // Negative frame indices are used for special things that don't
-  // appear in LLVM IR. Non-negative indices may be used for things
-  // like static allocas.
   if (!MFI)
-    return FI >= 0;
-  // Spill slots should not alias others.
-  return !MFI->isFixedObjectIndex(FI) && !MFI->isSpillSlotObjectIndex(FI);
+    return true;
+  return MFI->isAliasedObjectIndex(FI);
 }
 
 bool FixedStackPseudoSourceValue::mayAlias(const MachineFrameInfo *MFI) const {

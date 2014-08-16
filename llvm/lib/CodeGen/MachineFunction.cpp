@@ -521,7 +521,8 @@ int MachineFrameInfo::CreateStackObject(uint64_t Size, unsigned Alignment,
     clampStackAlignment(!getFrameLowering()->isStackRealignable() ||
                           !RealignOption,
                         Alignment, getFrameLowering()->getStackAlignment());
-  Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, Alloca));
+  Objects.push_back(StackObject(Size, Alignment, 0, false, isSS, Alloca,
+                                !isSS));
   int Index = (int)Objects.size() - NumFixedObjects - 1;
   assert(Index >= 0 && "Bad frame index!");
   ensureMaxAlignment(Alignment);
@@ -554,7 +555,7 @@ int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
   Alignment = clampStackAlignment(
       !getFrameLowering()->isStackRealignable() || !RealignOption, Alignment,
       getFrameLowering()->getStackAlignment());
-  Objects.push_back(StackObject(0, Alignment, 0, false, false, Alloca));
+  Objects.push_back(StackObject(0, Alignment, 0, false, false, Alloca, true));
   ensureMaxAlignment(Alignment);
   return (int)Objects.size()-NumFixedObjects-1;
 }
@@ -565,7 +566,7 @@ int MachineFrameInfo::CreateVariableSizedObject(unsigned Alignment,
 /// index with a negative value.
 ///
 int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
-                                        bool Immutable) {
+                                        bool Immutable, bool isAliased) {
   assert(Size != 0 && "Cannot allocate zero size fixed stack objects!");
   // The alignment of the frame index can be determined from its offset from
   // the incoming frame position.  If the frame object is at offset 32 and
@@ -578,7 +579,7 @@ int MachineFrameInfo::CreateFixedObject(uint64_t Size, int64_t SPOffset,
                               Align, getFrameLowering()->getStackAlignment());
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset, Immutable,
                                               /*isSS*/   false,
-                                              /*Alloca*/ nullptr));
+                                              /*Alloca*/ nullptr, isAliased));
   return -++NumFixedObjects;
 }
 
@@ -594,7 +595,8 @@ int MachineFrameInfo::CreateFixedSpillStackObject(uint64_t Size,
   Objects.insert(Objects.begin(), StackObject(Size, Align, SPOffset,
                                               /*Immutable*/ true,
                                               /*isSS*/ true,
-                                              /*Alloca*/ nullptr));
+                                              /*Alloca*/ nullptr,
+                                              /*isAliased*/ false));
   return -++NumFixedObjects;
 }
 
