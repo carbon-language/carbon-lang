@@ -1697,9 +1697,9 @@ std::error_code BitcodeReader::ParseUseLists() {
       unsigned NumUses = 0;
       SmallDenseMap<const Use *, unsigned, 16> Order;
       for (const Use &U : V->uses()) {
-        if (NumUses > Record.size())
+        if (++NumUses > Record.size())
           break;
-        Order[&U] = Record[NumUses++];
+        Order[&U] = Record[NumUses - 1];
       }
       if (Order.size() != Record.size() || NumUses > Record.size())
         // Mismatches can happen if the functions are being materialized lazily
