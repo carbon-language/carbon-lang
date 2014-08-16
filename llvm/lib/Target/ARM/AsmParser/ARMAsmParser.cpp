@@ -8751,6 +8751,30 @@ bool ARMAsmParser::parseDirectiveCPU(SMLoc L) {
   return false;
 }
 
+// FIXME: This is duplicated in getARMFPUFeatures() in
+// tools/clang/lib/Driver/Tools.cpp
+static const struct {
+  const unsigned Fpu;
+  const uint64_t Enabled;
+  const uint64_t Disabled;
+} Fpus[] = {
+      {ARM::VFP, ARM::FeatureVFP2, ARM::FeatureNEON},
+      {ARM::VFPV2, ARM::FeatureVFP2, ARM::FeatureNEON},
+      {ARM::VFPV3, ARM::FeatureVFP3, ARM::FeatureNEON},
+      {ARM::VFPV3_D16, ARM::FeatureVFP3 | ARM::FeatureD16, ARM::FeatureNEON},
+      {ARM::VFPV4, ARM::FeatureVFP4, ARM::FeatureNEON},
+      {ARM::VFPV4_D16, ARM::FeatureVFP4 | ARM::FeatureD16, ARM::FeatureNEON},
+      {ARM::FP_ARMV8, ARM::FeatureFPARMv8,
+       ARM::FeatureNEON | ARM::FeatureCrypto},
+      {ARM::NEON, ARM::FeatureNEON, 0},
+      {ARM::NEON_VFPV4, ARM::FeatureVFP4 | ARM::FeatureNEON, 0},
+      {ARM::NEON_FP_ARMV8, ARM::FeatureFPARMv8 | ARM::FeatureNEON,
+       ARM::FeatureCrypto},
+      {ARM::CRYPTO_NEON_FP_ARMV8,
+       ARM::FeatureFPARMv8 | ARM::FeatureNEON | ARM::FeatureCrypto, 0},
+      {ARM::SOFTVFP, 0, 0},
+};
+
 /// parseDirectiveFPU
 ///  ::= .fpu str
 bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
@@ -8764,6 +8788,18 @@ bool ARMAsmParser::parseDirectiveFPU(SMLoc L) {
   if (ID == ARM::INVALID_FPU) {
     Error(L, "Unknown FPU name");
     return false;
+  }
+
+  for (const auto &Fpu : Fpus) {
+    if (Fpu.Fpu != ID)
+      continue;
+
+    // Need to toggle features that should be on but are off and that
+    // should off but are on.
+    unsigned Toggle = (Fpu.Enabled & ~STI.getFeatureBits()) |
+                      (Fpu.Disabled & STI.getFeatureBits());
+    setAvailableFeatures(ComputeAvailableFeatures(STI.ToggleFeature(Toggle)));
+    break;
   }
 
   getTargetStreamer().emitFPU(ID);
