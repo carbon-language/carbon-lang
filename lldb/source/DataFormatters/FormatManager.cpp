@@ -970,6 +970,7 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdListSyntheticFrontEndCreator, "libc++ std::list synthetic children", ConstString("^std::__1::list<.+>(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::map synthetic children", ConstString("^std::__1::map<.+> >(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator, "libc++ std::vector<bool> synthetic children", ConstString("std::__1::vector<std::__1::allocator<bool> >"), stl_synth_flags);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator, "libc++ std::vector<bool> synthetic children", ConstString("std::__1::vector<bool, std::__1::allocator<bool> >"), stl_synth_flags);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::set synthetic children", ConstString("^std::__1::set<.+> >(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::multiset synthetic children", ConstString("^std::__1::multiset<.+> >(( )?&)?$"), stl_synth_flags, true);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxStdMapSyntheticFrontEndCreator, "libc++ std::multimap synthetic children", ConstString("^std::__1::multimap<.+> >(( )?&)?$"), stl_synth_flags, true);
@@ -989,6 +990,7 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::map summary provider", ConstString("^std::__1::map<.+>(( )?&)?$"), stl_summary_flags, true);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::deque summary provider", ConstString("^std::__1::deque<.+>(( )?&)?$"), stl_summary_flags, true);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector<bool> summary provider", ConstString("std::__1::vector<std::__1::allocator<bool> >"), stl_summary_flags);
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector<bool> summary provider", ConstString("std::__1::vector<bool, std::__1::allocator<bool> >"), stl_summary_flags);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::set summary provider", ConstString("^std::__1::set<.+>(( )?&)?$"), stl_summary_flags, true);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::multiset summary provider", ConstString("^std::__1::multiset<.+>(( )?&)?$"), stl_summary_flags, true);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::multimap summary provider", ConstString("^std::__1::multimap<.+>(( )?&)?$"), stl_summary_flags, true);
