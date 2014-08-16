@@ -2620,9 +2620,9 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         F.TypeRemap.insertOrReplace(
           std::make_pair(LocalBaseTypeIndex, 
                          F.BaseTypeIndex - LocalBaseTypeIndex));
-        
-        TypesLoaded.resize(TypesLoaded.size() + F.LocalNumTypes);
       }
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      TypesLoaded.resize(TypesLoaded.size() + std::max(F.LocalNumTypes, 1U));
       break;
     }
         
@@ -2650,9 +2650,10 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         // Introduce the global -> local mapping for declarations within this
         // module.
         F.GlobalToLocalDeclIDs[&F] = LocalBaseDeclID;
-        
-        DeclsLoaded.resize(DeclsLoaded.size() + F.LocalNumDecls);
       }
+
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      DeclsLoaded.resize(DeclsLoaded.size() + std::max(F.LocalNumDecls, 1U));
       break;
     }
         
@@ -2720,10 +2721,11 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         F.IdentifierRemap.insertOrReplace(
           std::make_pair(LocalBaseIdentifierID,
                          F.BaseIdentifierID - LocalBaseIdentifierID));
-        
-        IdentifiersLoaded.resize(IdentifiersLoaded.size() 
-                                 + F.LocalNumIdentifiers);
       }
+
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      IdentifiersLoaded.resize(IdentifiersLoaded.size() +
+                               std::max(F.LocalNumIdentifiers, 1U));
       break;
     }
 
@@ -2813,9 +2815,10 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         F.SelectorRemap.insertOrReplace(
           std::make_pair(LocalBaseSelectorID,
                          F.BaseSelectorID - LocalBaseSelectorID));
-
-        SelectorsLoaded.resize(SelectorsLoaded.size() + F.LocalNumSelectors);        
       }
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      SelectorsLoaded.resize(SelectorsLoaded.size() +
+                             std::max(F.LocalNumSelectors, 1U));
       break;
     }
         
@@ -2855,8 +2858,10 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
       F.SLocEntryOffsets = (const uint32_t *)Blob.data();
       F.LocalNumSLocEntries = Record[0];
       unsigned SLocSpaceSize = Record[1];
+
+      // Increase size by >= 1 so we get a unique base index in the next module.
       std::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
-          SourceMgr.AllocateLoadedSLocEntries(F.LocalNumSLocEntries,
+          SourceMgr.AllocateLoadedSLocEntries(std::max(F.LocalNumSLocEntries, 1U),
                                               SLocSpaceSize);
       // Make our entry in the range map. BaseID is negative and growing, so
       // we invert it. Because we invert it, though, we need the other end of
@@ -3049,9 +3054,11 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         PP.createPreprocessingRecord();
       if (!PP.getPreprocessingRecord()->getExternalSource())
         PP.getPreprocessingRecord()->SetExternalSource(*this);
+
+      // Increase size by >= 1 so we get a unique base index in the next module.
       StartingID 
         = PP.getPreprocessingRecord()
-            ->allocateLoadedEntities(F.NumPreprocessedEntities);
+            ->allocateLoadedEntities(std::max(F.NumPreprocessedEntities, 1U));
       F.BasePreprocessedEntityID = StartingID;
 
       if (F.NumPreprocessedEntities > 0) {
@@ -3255,9 +3262,9 @@ ASTReader::ReadASTBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         F.MacroRemap.insertOrReplace(
           std::make_pair(LocalBaseMacroID,
                          F.BaseMacroID - LocalBaseMacroID));
-
-        MacrosLoaded.resize(MacrosLoaded.size() + F.LocalNumMacros);
       }
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      MacrosLoaded.resize(MacrosLoaded.size() + std::max(F.LocalNumMacros, 1U));
       break;
     }
 
@@ -4509,9 +4516,11 @@ ASTReader::ReadSubmoduleBlock(ModuleFile &F, unsigned ClientLoadCapabilities) {
         F.SubmoduleRemap.insertOrReplace(
           std::make_pair(LocalBaseSubmoduleID,
                          F.BaseSubmoduleID - LocalBaseSubmoduleID));
-        
-        SubmodulesLoaded.resize(SubmodulesLoaded.size() + F.LocalNumSubmodules);
-      }      
+      }
+
+      // Increase size by >= 1 so we get a unique base index in the next module.
+      SubmodulesLoaded.resize(SubmodulesLoaded.size() +
+                              std::max(F.LocalNumSubmodules, 1U));
       break;
     }
         

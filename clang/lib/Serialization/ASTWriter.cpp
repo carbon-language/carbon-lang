@@ -4458,6 +4458,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
         StringRef FileName = (*M)->FileName;
         LE.write<uint16_t>(FileName.size());
         Out.write(FileName.data(), FileName.size());
+
+        // These values should be unique within a chain, since they will be read
+        // as keys into ContinuousRangeMaps.
         LE.write<uint32_t>((*M)->SLocEntryBaseOffset);
         LE.write<uint32_t>((*M)->BaseIdentifierID);
         LE.write<uint32_t>((*M)->BaseMacroID);
