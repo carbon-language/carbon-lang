@@ -105,9 +105,6 @@ void test_templates() {
 #define CAST(type, value) (type)(value)
 void macros(double d) {
   int i = CAST(int, d);
-  // CHECK-MESSAGES: :[[@LINE-1]]:11: warning: C-style casts are discouraged. Use static_cast.
-  // CHECK-FIXES: #define CAST(type, value) (type)(value)
-  // CHECK-FIXES: int i = CAST(int, d);
 }
 
 enum E { E1 = 1 };

@@ -60,6 +60,12 @@ bool pointedTypesAreEqual(QualType SourceType, QualType DestType) {
 void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
   const auto *CastExpr = Result.Nodes.getNodeAs<CStyleCastExpr>("cast");
 
+  auto ParenRange = CharSourceRange::getTokenRange(CastExpr->getLParenLoc(),
+                                                   CastExpr->getRParenLoc());
+  // Ignore casts in macros.
+  if (ParenRange.getBegin().isMacroID() || ParenRange.getEnd().isMacroID())
+    return;
+
   // Casting to void is an idiomatic way to mute "unused variable" and similar
   // warnings.
   if (CastExpr->getTypeAsWritten()->isVoidType())
@@ -69,8 +75,6 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
       CastExpr->getSubExprAsWritten()->getType().getCanonicalType();
   QualType DestType = CastExpr->getTypeAsWritten().getCanonicalType();
 
-  auto ParenRange = CharSourceRange::getTokenRange(CastExpr->getLParenLoc(),
-                                                   CastExpr->getRParenLoc());
   if (SourceType == DestType) {
     diag(CastExpr->getLocStart(), "Redundant cast to the same type.")
         << FixItHint::CreateRemoval(ParenRange);
@@ -84,8 +88,6 @@ void AvoidCStyleCastsCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto ReplaceWithCast = [&](StringRef CastType) {
     diag_builder << ("Use " + CastType + ".").str();
-    if (ParenRange.getBegin().isMacroID() || ParenRange.getEnd().isMacroID())
-      return;
 
     const Expr *SubExpr = CastExpr->getSubExprAsWritten()->IgnoreImpCasts();
     std::string CastText = (CastType + "<" + DestTypeString + ">").str();
