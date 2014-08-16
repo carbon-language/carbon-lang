@@ -155,7 +155,7 @@ define <4 x i32> @shuffle_v4i32_4012(<4 x i32> %a, <4 x i32> %b) {
 }
 define <4 x i32> @shuffle_v4i32_0145(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v4i32_0145
-; CHECK-SSE2:         shufpd {{.*}} # xmm0 = xmm0[0],xmm1[0]
+; CHECK-SSE2:         punpcklqdq {{.*}} # xmm0 = xmm0[0],xmm1[0]
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 0, i32 1, i32 4, i32 5>
   ret <4 x i32> %shuffle
@@ -170,8 +170,8 @@ define <4 x i32> @shuffle_v4i32_0451(<4 x i32> %a, <4 x i32> %b) {
 }
 define <4 x i32> @shuffle_v4i32_4501(<4 x i32> %a, <4 x i32> %b) {
 ; CHECK-SSE2-LABEL: @shuffle_v4i32_4501
-; CHECK-SSE2:         shufpd {{.*}} # xmm1 = xmm1[0],xmm0[0]
-; CHECK-SSE2-NEXT:    movapd %xmm1, %xmm0
+; CHECK-SSE2:         punpcklqdq {{.*}} # xmm1 = xmm1[0],xmm0[0]
+; CHECK-SSE2-NEXT:    movdqa %xmm1, %xmm0
 ; CHECK-SSE2-NEXT:    retq
   %shuffle = shufflevector <4 x i32> %a, <4 x i32> %b, <4 x i32> <i32 4, i32 5, i32 0, i32 1>
   ret <4 x i32> %shuffle
