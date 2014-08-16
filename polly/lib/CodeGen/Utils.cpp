@@ -20,17 +20,18 @@
 
 using namespace llvm;
 
-BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
+BasicBlock *polly::executeScopConditionally(Scop &S, Pass *PassInfo) {
   BasicBlock *StartBlock, *SplitBlock, *NewBlock;
   Region &R = S.getRegion();
   PollyIRBuilder Builder(R.getEntry());
-  DominatorTree &DT = P->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-  RegionInfo &RI = P->getAnalysis<RegionInfoPass>().getRegionInfo();
-  LoopInfo &LI = P->getAnalysis<LoopInfo>();
+  DominatorTree &DT =
+      PassInfo->getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  RegionInfo &RI = PassInfo->getAnalysis<RegionInfoPass>().getRegionInfo();
+  LoopInfo &LI = PassInfo->getAnalysis<LoopInfo>();
 
   // Split the entry edge of the region and generate a new basic block on this
   // edge. This function also updates ScopInfo and RegionInfo.
-  NewBlock = SplitEdge(R.getEnteringBlock(), R.getEntry(), P);
+  NewBlock = SplitEdge(R.getEnteringBlock(), R.getEntry(), PassInfo);
   if (DT.dominates(R.getEntry(), NewBlock)) {
     BasicBlock *OldBlock = R.getEntry();
     std::string OldName = OldBlock->getName();
@@ -58,7 +59,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
   StartBlock = BasicBlock::Create(F->getContext(), "polly.start", F);
   SplitBlock->getTerminator()->eraseFromParent();
   Builder.SetInsertPoint(SplitBlock);
-  Builder.CreateCondBr(RTC, StartBlock, R.getEntry());
+  Builder.CreateCondBr(Builder.getTrue(), StartBlock, R.getEntry());
   if (Loop *L = LI.getLoopFor(SplitBlock))
     L->addBasicBlockToLoop(StartBlock, LI.getBase());
   DT.addNewBlock(StartBlock, SplitBlock);
@@ -71,7 +72,7 @@ BasicBlock *polly::executeScopConditionally(Scop &S, Pass *P, Value *RTC) {
     // PHI nodes that would complicate life.
     MergeBlock = R.getExit();
   else {
-    MergeBlock = SplitEdge(R.getExitingBlock(), R.getExit(), P);
+    MergeBlock = SplitEdge(R.getExitingBlock(), R.getExit(), PassInfo);
     // SplitEdge will never split R.getExit(), as R.getExit() has more than
     // one predecessor. Hence, mergeBlock is always a newly generated block.
     R.replaceExitRecursive(MergeBlock);

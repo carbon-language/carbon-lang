@@ -568,58 +568,41 @@ public:
 
   IslCodeGeneration() : ScopPass(ID) {}
 
-  /// @name The analysis passes we need to generate code.
-  ///
-  ///{
-  LoopInfo *LI;
-  IslAstInfo *AI;
-  DominatorTree *DT;
-  ScalarEvolution *SE;
-  ///}
-
-  /// @brief The loop anotator to generate llvm.loop metadata.
-  LoopAnnotator Annotator;
-
-  /// @brief Build the delinearization runtime condition.
-  ///
-  /// Build the condition that evaluates at run-time to true iff all
-  /// delinearization assumptions taken for the SCoP hold, and to zero
-  /// otherwise.
-  ///
-  /// @return A value evaluating to true/false if delinarization is save/unsave.
-  Value *buildRTC(PollyIRBuilder &Builder, IslExprBuilder &ExprBuilder) {
-    Builder.SetInsertPoint(Builder.GetInsertBlock()->getTerminator());
-    Value *RTC = ExprBuilder.create(AI->getRunCondition());
-    return Builder.CreateIsNotNull(RTC);
-  }
-
   bool runOnScop(Scop &S) {
-    LI = &getAnalysis<LoopInfo>();
-    AI = &getAnalysis<IslAstInfo>();
-    DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    SE = &getAnalysis<ScalarEvolution>();
+    LoopInfo &LI = getAnalysis<LoopInfo>();
+    IslAstInfo &AstInfo = getAnalysis<IslAstInfo>();
+    ScalarEvolution &SE = getAnalysis<ScalarEvolution>();
+    DominatorTree &DT = getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
     assert(!S.getRegion().isTopLevelRegion() &&
            "Top level regions are not supported");
 
-    PollyIRBuilder Builder =
-        createPollyIRBuilder(S.getRegionEntry(), Annotator);
-
-    IslNodeBuilder NodeBuilder(Builder, Annotator, this, *LI, *SE, *DT);
-    NodeBuilder.addMemoryAccesses(S);
-    NodeBuilder.addParameters(S.getContext());
-
     simplifyRegion(&S, this);
-    Builder.SetInsertPoint(
-        S.getRegion().getEnteringBlock()->getFirstInsertionPt());
 
-    Value *RTC = buildRTC(Builder, NodeBuilder.getExprBuilder());
-    BasicBlock *StartBlock = executeScopConditionally(S, this, RTC);
+    BasicBlock *StartBlock = executeScopConditionally(S, this);
+    isl_ast_node *Ast = AstInfo.getAst();
+    LoopAnnotator Annotator;
+    PollyIRBuilder Builder(StartBlock->getContext(), llvm::ConstantFolder(),
+                           polly::IRInserter(Annotator));
     Builder.SetInsertPoint(StartBlock->begin());
 
-    NodeBuilder.create(AI->getAst());
+    IslNodeBuilder NodeBuilder(Builder, Annotator, this, LI, SE, DT);
 
-    DEBUG(StartBlock->getParent()->dump());
+    Builder.SetInsertPoint(StartBlock->getSinglePredecessor()->begin());
+    NodeBuilder.addMemoryAccesses(S);
+    NodeBuilder.addParameters(S.getContext());
+    // Build condition that evaluates at run-time if all assumptions taken
+    // for the scop hold. If we detect some assumptions do not hold, the
+    // original code is executed.
+    Value *V = NodeBuilder.getExprBuilder().create(AstInfo.getRunCondition());
+    Value *Zero = ConstantInt::get(V->getType(), 0);
+    V = Builder.CreateICmp(CmpInst::ICMP_NE, Zero, V);
+    BasicBlock *PrevBB = StartBlock->getUniquePredecessor();
+    BranchInst *Branch = dyn_cast<BranchInst>(PrevBB->getTerminator());
+    Branch->setCondition(V);
+    Builder.SetInsertPoint(StartBlock->begin());
+
+    NodeBuilder.create(Ast);
     return true;
   }
 
