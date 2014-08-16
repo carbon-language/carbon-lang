@@ -82,7 +82,7 @@ public:
   std::vector<const SCEV *> getParameters() { return Parameters; }
 
   /// @brief Add the parameters of Source to this result.
-  void addParamsFrom(const ValidatorResult &Source) {
+  void addParamsFrom(class ValidatorResult &Source) {
     Parameters.insert(Parameters.end(), Source.Parameters.begin(),
                       Source.Parameters.end());
   }
@@ -91,10 +91,9 @@ public:
   ///
   /// This means to merge the parameters and to set the Type to the most
   /// specific Type that matches both.
-  ValidatorResult &merge(const ValidatorResult &ToMerge) {
+  void merge(class ValidatorResult &ToMerge) {
     Type = std::max(Type, ToMerge.Type);
     addParamsFrom(ToMerge);
-    return *this;
   }
 
   void print(raw_ostream &OS) {
@@ -157,37 +156,8 @@ public:
   }
 
   class ValidatorResult visitZeroExtendExpr(const SCEVZeroExtendExpr *Expr) {
+    ValidatorResult Op = visit(Expr->getOperand());
 
-    // Pattern matching rules to capture some bit and modulo computations:
-    //
-    //       EXP   %  2^C      <==>
-    // [A] (i + c) & (2^C - 1)  ==> zext iC {c,+,1}<%for_i> to IXX
-    // [B] (p + q) & (2^C - 1)  ==> zext iC (trunc iXX %p_add_q to iC) to iXX
-    // [C] (i + p) & (2^C - 1)  ==> zext iC {p & (2^C - 1),+,1}<%for_i> to iXX
-    //                          ==> zext iC {trunc iXX %p to iC,+,1}<%for_i> to
-
-    // Check for [A] and [C].
-    const SCEV *OpS = Expr->getOperand();
-    if (auto *OpAR = dyn_cast<SCEVAddRecExpr>(OpS)) {
-      const SCEV *OpARStart = OpAR->getStart();
-
-      // Special case for [C].
-      if (auto *OpARStartTR = dyn_cast<SCEVTruncateExpr>(OpARStart))
-        OpARStart = OpARStartTR->getOperand();
-
-      ValidatorResult OpARStartVR = visit(OpARStart);
-      if (OpARStartVR.isConstant() && OpAR->getStepRecurrence(SE)->isOne())
-        return OpARStartVR;
-    }
-
-    // Check for [B].
-    if (auto *OpTR = dyn_cast<SCEVTruncateExpr>(OpS)) {
-      ValidatorResult OpTRVR = visit(OpTR->getOperand());
-      if (OpTRVR.isConstant())
-        return OpTRVR;
-    }
-
-    ValidatorResult Op = visit(OpS);
     switch (Op.getType()) {
     case SCEVType::INT:
     case SCEVType::PARAM:
@@ -376,27 +346,12 @@ public:
       return ValidatorResult(SCEVType::INVALID);
     }
 
-    if (auto *I = dyn_cast<Instruction>(Expr->getValue())) {
-      if (I->getOpcode() == Instruction::SRem) {
-
-        ValidatorResult Op0 = visit(SE.getSCEV(I->getOperand(0)));
-        if (!Op0.isValid())
-          return ValidatorResult(SCEVType::INVALID);
-
-        ValidatorResult Op1 = visit(SE.getSCEV(I->getOperand(1)));
-        if (!Op1.isValid() || !Op1.isINT())
-          return ValidatorResult(SCEVType::INVALID);
-
-        Op0.merge(Op1);
-        return Op0;
-      }
-
+    if (Instruction *I = dyn_cast<Instruction>(Expr->getValue()))
       if (R->contains(I)) {
         DEBUG(dbgs() << "INVALID: UnknownExpr references an instruction "
                         "within the region\n");
         return ValidatorResult(SCEVType::INVALID);
       }
-    }
 
     if (BaseAddress == V) {
       DEBUG(dbgs() << "INVALID: UnknownExpr references BaseAddress\n");
