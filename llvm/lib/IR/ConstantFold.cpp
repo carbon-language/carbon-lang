@@ -2144,9 +2144,10 @@ static Constant *ConstantFoldGetElementPtrImpl(Constant *C,
 
   // If all indices are known integers and normalized, we can do a simple
   // check for the "inbounds" property.
-  if (!Unknown && !inBounds &&
-      isa<GlobalVariable>(C) && isInBoundsIndices(Idxs))
-    return ConstantExpr::getInBoundsGetElementPtr(C, Idxs);
+  if (!Unknown && !inBounds)
+    if (auto *GV = dyn_cast<GlobalVariable>(C))
+      if (!GV->hasExternalWeakLinkage() && isInBoundsIndices(Idxs))
+        return ConstantExpr::getInBoundsGetElementPtr(C, Idxs);
 
   return nullptr;
 }
