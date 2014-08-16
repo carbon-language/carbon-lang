@@ -1635,11 +1635,14 @@ std::error_code BitcodeReader::ParseConstants() {
       } else {
         // Otherwise insert a placeholder and remember it so it can be inserted
         // when the function is parsed.
-        BB = BasicBlock::Create(Context);
         auto &FwdBBs = BasicBlockFwdRefs[Fn];
         if (FwdBBs.empty())
           BasicBlockFwdRefQueue.push_back(Fn);
-        FwdBBs.emplace_back(BBID, BB);
+        if (FwdBBs.size() < BBID + 1)
+          FwdBBs.resize(BBID + 1);
+        if (!FwdBBs[BBID])
+          FwdBBs[BBID] = BasicBlock::Create(Context);
+        BB = FwdBBs[BBID];
       }
       V = BlockAddress::get(Fn, BB);
       break;
@@ -2392,24 +2395,19 @@ std::error_code BitcodeReader::ParseFunctionBody(Function *F) {
           FunctionBBs[i] = BasicBlock::Create(Context, "", F);
       } else {
         auto &BBRefs = BBFRI->second;
-        std::sort(BBRefs.begin(), BBRefs.end(),
-                  [](const std::pair<unsigned, BasicBlock *> &LHS,
-                     const std::pair<unsigned, BasicBlock *> &RHS) {
-          return LHS.first < RHS.first;
-        });
-        unsigned R = 0, RE = BBRefs.size();
-        for (unsigned I = 0, E = FunctionBBs.size(); I != E; ++I)
-          if (R != RE && BBRefs[R].first == I) {
-            assert(I != 0 && "Invalid reference to entry block");
-            BasicBlock *BB = BBRefs[R++].second;
-            BB->insertInto(F);
-            FunctionBBs[I] = BB;
+        // Check for invalid basic block references.
+        if (BBRefs.size() > FunctionBBs.size())
+          return Error(BitcodeError::InvalidID);
+        assert(!BBRefs.empty() && "Unexpected empty array");
+        assert(!BBRefs.front() && "Invalid reference to entry block");
+        for (unsigned I = 0, E = FunctionBBs.size(), RE = BBRefs.size(); I != E;
+             ++I)
+          if (I < RE && BBRefs[I]) {
+            BBRefs[I]->insertInto(F);
+            FunctionBBs[I] = BBRefs[I];
           } else {
             FunctionBBs[I] = BasicBlock::Create(Context, "", F);
           }
-        // Check for invalid basic block references.
-        if (R != RE)
-          return Error(BitcodeError::InvalidID);
 
         // Erase from the table.
         BasicBlockFwdRefs.erase(BBFRI);

@@ -44,3 +44,17 @@ here:
 end:
   ret void
 }
+
+; Check a blockaddress taken in two separate functions before the referenced
+; function.
+define i8* @take1() {
+  ret i8* blockaddress(@taken, %bb)
+}
+define i8* @take2() {
+  ret i8* blockaddress(@taken, %bb)
+}
+define void @taken() {
+  unreachable
+bb:
+  unreachable
+}

@@ -181,9 +181,9 @@ class BitcodeReader : public GVMaterializer {
   DenseMap<Function*, uint64_t> DeferredFunctionInfo;
 
   /// These are basic blocks forward-referenced by block addresses.  They are
-  /// inserted lazily into functions when they're loaded.
-  typedef std::pair<unsigned, BasicBlock *> BasicBlockRefTy;
-  DenseMap<Function *, std::vector<BasicBlockRefTy>> BasicBlockFwdRefs;
+  /// inserted lazily into functions when they're loaded.  The basic block ID is
+  /// its index into the vector.
+  DenseMap<Function *, std::vector<BasicBlock *>> BasicBlockFwdRefs;
   std::deque<Function *> BasicBlockFwdRefQueue;
 
   /// UseRelativeIDs - Indicates that we are using a new encoding for
