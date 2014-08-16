@@ -1532,7 +1532,8 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error, Stream* fee
         }
 
         FileSpecList file_specs = platform_sp->LocateExecutableScriptingResources (target,
-                                                                                   *this);
+                                                                                   *this,
+                                                                                   feedback_stream);
         
         
         const uint32_t num_specs = file_specs.GetSize();

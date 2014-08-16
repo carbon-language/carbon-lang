@@ -92,7 +92,7 @@ Platform::GetFileWithUUID (const FileSpec &platform_file,
 }
 
 FileSpecList
-Platform::LocateExecutableScriptingResources (Target *target, Module &module)
+Platform::LocateExecutableScriptingResources (Target *target, Module &module, Stream* feedback_stream)
 {
     return FileSpecList();
 }

@@ -56,7 +56,8 @@ PlatformDarwin::~PlatformDarwin()
 
 FileSpecList
 PlatformDarwin::LocateExecutableScriptingResources (Target *target,
-                                                    Module &module)
+                                                    Module &module,
+                                                    Stream* feedback_stream)
 {
     FileSpecList file_list;
     if (target && target->GetDebugger().GetScriptLanguage() == eScriptLanguagePython)
@@ -84,6 +85,7 @@ PlatformDarwin::LocateExecutableScriptingResources (Target *target,
                             while (module_spec.GetFilename())
                             {
                                 std::string module_basename (module_spec.GetFilename().GetCString());
+                                std::string original_module_basename (module_basename);
 
                                 // FIXME: for Python, we cannot allow certain characters in module
                                 // filenames we import. Theoretically, different scripting languages may
@@ -97,10 +99,39 @@ PlatformDarwin::LocateExecutableScriptingResources (Target *target,
                                 
 
                                 StreamString path_string;
+                                StreamString original_path_string;
                                 // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
                                 // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
                                 path_string.Printf("%s/../Python/%s.py",symfile_spec.GetDirectory().GetCString(), module_basename.c_str());
+                                original_path_string.Printf("%s/../Python/%s.py",symfile_spec.GetDirectory().GetCString(), original_module_basename.c_str());
                                 FileSpec script_fspec(path_string.GetData(), true);
+                                FileSpec orig_script_fspec(original_path_string.GetData(), true);
+                                
+                                // if we did some replacements of reserved characters, and a file with the untampered name
+                                // exists, then warn the user that the file as-is shall not be loaded
+                                if (feedback_stream)
+                                {
+                                    if (module_basename != original_module_basename
+                                        && orig_script_fspec.Exists())
+                                    {
+                                        if (script_fspec.Exists())
+                                            feedback_stream->Printf("warning: the symbol file '%s' contains a debug script. However, its name"
+                                                                    " '%s' contains reserved characters and as such cannot be loaded. LLDB will"
+                                                                    " load '%s' instead. Consider removing the file with the malformed name to"
+                                                                    " eliminate this warning.\n",
+                                                                    symfile_spec.GetPath().c_str(),
+                                                                    original_path_string.GetData(),
+                                                                    path_string.GetData());
+                                        else
+                                            feedback_stream->Printf("warning: the symbol file '%s' contains a debug script. However, its name"
+                                                                    " contains reserved characters and as such cannot be loaded. If you intend"
+                                                                    " to have this script loaded, please rename '%s' to '%s' and retry.\n",
+                                                                    symfile_spec.GetPath().c_str(),
+                                                                    original_path_string.GetData(),
+                                                                    path_string.GetData());
+                                    }
+                                }
+                                
                                 if (script_fspec.Exists())
                                 {
                                     file_list.Append (script_fspec);

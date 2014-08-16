@@ -40,7 +40,8 @@ public:
 
     lldb_private::FileSpecList
     LocateExecutableScriptingResources (lldb_private::Target *target,
-                                        lldb_private::Module &module);
+                                        lldb_private::Module &module,
+                                        lldb_private::Stream* feedback_stream);
     
     virtual lldb_private::Error
     GetSharedModule (const lldb_private::ModuleSpec &module_spec,

@@ -1013,10 +1013,10 @@ LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
             target->GetDebugger().GetErrorFile()->Printf("unable to load scripting data for module %s - error reported was %s\n",
                                                            module_sp->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
                                                            error.AsCString());
-        if (feedback_stream.GetSize())
-            target->GetDebugger().GetErrorFile()->Printf("%s\n",
-                                                           feedback_stream.GetData());
     }
+    if (feedback_stream.GetSize())
+        target->GetDebugger().GetErrorFile()->Printf("%s\n",
+                                                     feedback_stream.GetData());
 }
 
 void

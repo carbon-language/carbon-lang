@@ -331,7 +331,8 @@ namespace lldb_private {
         //----------------------------------------------------------------------
         virtual FileSpecList
         LocateExecutableScriptingResources (Target *target,
-                                            Module &module);
+                                            Module &module,
+                                            Stream* feedback_stream);
         
         virtual Error
         GetSharedModule (const ModuleSpec &module_spec, 
