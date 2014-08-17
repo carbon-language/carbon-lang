@@ -29,28 +29,27 @@ namespace llvm {
 static const char *const TimeIRParsingGroupName = "LLVM IR Parsing";
 static const char *const TimeIRParsingName = "Parse IR";
 
-static Module *getLazyIRModule(MemoryBuffer *Buffer, SMDiagnostic &Err,
-                               LLVMContext &Context) {
+static Module *getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer,
+                               SMDiagnostic &Err, LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     std::string ErrMsg;
-    ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer, Context);
+    ErrorOr<Module *> ModuleOrErr = getLazyBitcodeModule(Buffer.get(), Context);
     if (std::error_code EC = ModuleOrErr.getError()) {
       Err = SMDiagnostic(Buffer->getBufferIdentifier(), SourceMgr::DK_Error,
                          EC.message());
-      // getLazyBitcodeModule does not take ownership of the Buffer in the
-      // case of an error.
-      delete Buffer;
       return nullptr;
     }
+    // getLazyBitcodeModule takes ownership of the Buffer when successful.
+    Buffer.release();
     return ModuleOrErr.get();
   }
 
-  return ParseAssembly(Buffer, nullptr, Err, Context);
+  return ParseAssembly(Buffer.release(), nullptr, Err, Context);
 }
 
-Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err,
-                                  LLVMContext &Context) {
+Module *llvm::getLazyIRFileModule(const std::string &Filename,
+                                  SMDiagnostic &Err, LLVMContext &Context) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFileOrSTDIN(Filename);
   if (std::error_code EC = FileOrErr.getError()) {
@@ -59,7 +58,7 @@ Module *llvm::getLazyIRFileModule(const std::string &Filename, SMDiagnostic &Err
     return nullptr;
   }
 
-  return getLazyIRModule(FileOrErr.get().release(), Err, Context);
+  return getLazyIRModule(std::move(FileOrErr.get()), Err, Context);
 }
 
 Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
