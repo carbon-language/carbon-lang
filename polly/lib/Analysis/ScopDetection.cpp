@@ -116,7 +116,7 @@ static cl::opt<bool, true>
     TrackFailures("polly-detect-track-failures",
                   cl::desc("Track failure strings in detecting scop regions"),
                   cl::location(PollyTrackFailures), cl::Hidden, cl::ZeroOrMore,
-                  cl::init(false), cl::cat(PollyCategory));
+                  cl::init(true), cl::cat(PollyCategory));
 
 static cl::opt<bool> KeepGoing("polly-detect-keep-going",
                                cl::desc("Do not fail on the first error."),
