@@ -63,11 +63,18 @@ void fun1() {\n\
   }\n\
  foo = b.foo;\n\
 }\n";
-  std::vector<std::vector<unsigned>> VarTestOffsets = {
-    { 19, 63, 205, 223 },
-    { 30, 45, 172, 187 },
-    { 129, 148, 242 },
-  };
+  std::vector<std::vector<unsigned>> VarTestOffsets(3);
+  VarTestOffsets[0].push_back(19);
+  VarTestOffsets[0].push_back(63);
+  VarTestOffsets[0].push_back(205);
+  VarTestOffsets[0].push_back(223);
+  VarTestOffsets[1].push_back(30);
+  VarTestOffsets[1].push_back(45);
+  VarTestOffsets[1].push_back(172);
+  VarTestOffsets[1].push_back(187);
+  VarTestOffsets[2].push_back(129);
+  VarTestOffsets[2].push_back(148);
+  VarTestOffsets[2].push_back(242);
 
   testOffsetGroups(VarTest, VarTestOffsets);
 }
