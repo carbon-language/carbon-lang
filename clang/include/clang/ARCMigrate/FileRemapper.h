@@ -52,14 +52,14 @@ public:
   bool overwriteOriginal(DiagnosticsEngine &Diag,
                          StringRef outputDir = StringRef());
 
-  void remap(StringRef filePath, llvm::MemoryBuffer *memBuf);
+  void remap(StringRef filePath, std::unique_ptr<llvm::MemoryBuffer> memBuf);
 
   void applyMappings(PreprocessorOptions &PPOpts) const;
 
   void clear(StringRef outputDir = StringRef());
 
 private:
-  void remap(const FileEntry *file, llvm::MemoryBuffer *memBuf);
+  void remap(const FileEntry *file, std::unique_ptr<llvm::MemoryBuffer> memBuf);
   void remap(const FileEntry *file, const FileEntry *newfile);
 
   const FileEntry *getOriginalFile(StringRef filePath);

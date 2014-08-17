@@ -207,15 +207,17 @@ void FileRemapper::applyMappings(PreprocessorOptions &PPOpts) const {
   PPOpts.RetainRemappedFileBuffers = true;
 }
 
-void FileRemapper::remap(StringRef filePath, llvm::MemoryBuffer *memBuf) {
-  remap(getOriginalFile(filePath), memBuf);
+void FileRemapper::remap(StringRef filePath,
+                         std::unique_ptr<llvm::MemoryBuffer> memBuf) {
+  remap(getOriginalFile(filePath), std::move(memBuf));
 }
 
-void FileRemapper::remap(const FileEntry *file, llvm::MemoryBuffer *memBuf) {
+void FileRemapper::remap(const FileEntry *file,
+                         std::unique_ptr<llvm::MemoryBuffer> memBuf) {
   assert(file);
   Target &targ = FromToMappings[file];
   resetTarget(targ);
-  targ = memBuf;
+  targ = memBuf.release();
 }
 
 void FileRemapper::remap(const FileEntry *file, const FileEntry *newfile) {
