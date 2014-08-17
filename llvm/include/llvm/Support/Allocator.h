@@ -201,9 +201,6 @@ public:
 
   /// \brief Allocate space at the specified alignment.
   void *Allocate(size_t Size, size_t Alignment) {
-    if (!CurPtr) // Start a new slab if we haven't allocated one already.
-      StartNewSlab();
-
     // Keep track of how many bytes we've allocated.
     BytesAllocated += Size;
 
