@@ -494,17 +494,12 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     std::vector<RelocationRef>::const_iterator rel_end = Rels.end();
     // Disassemble symbol by symbol.
     for (unsigned si = 0, se = Symbols.size(); si != se; ++si) {
+
       uint64_t Start = Symbols[si].first;
-      uint64_t End;
-      // The end is either the size of the section or the beginning of the next
-      // symbol.
-      if (si == se - 1)
-        End = SectSize;
-      // Make sure this symbol takes up space.
-      else if (Symbols[si + 1].first != Start)
-        End = Symbols[si + 1].first - 1;
-      else
-        // This symbol has the same address as the next symbol. Skip it.
+      // The end is either the section end or the beginning of the next symbol.
+      uint64_t End = (si == se - 1) ? SectSize : Symbols[si + 1].first;
+      // If this symbol has the same address as the next symbol, then skip it.
+      if (Start == End)
         continue;
 
       outs() << '\n' << Symbols[si].second << ":\n";
