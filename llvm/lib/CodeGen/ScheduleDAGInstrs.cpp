@@ -575,7 +575,7 @@ static bool MIsNeedChainEdge(AliasAnalysis *AA, const MachineFrameInfo *MFI,
 static unsigned
 iterateChainSucc(AliasAnalysis *AA, const MachineFrameInfo *MFI,
                  SUnit *SUa, SUnit *SUb, SUnit *ExitSU, unsigned *Depth,
-                 SmallPtrSet<const SUnit*, 16> &Visited) {
+                 SmallPtrSetImpl<const SUnit*> &Visited) {
   if (!SUa || !SUb || SUb == ExitSU)
     return *Depth;
 

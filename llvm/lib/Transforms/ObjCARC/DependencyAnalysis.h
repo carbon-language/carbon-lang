@@ -53,8 +53,8 @@ enum DependenceKind {
 void FindDependencies(DependenceKind Flavor,
                       const Value *Arg,
                       BasicBlock *StartBB, Instruction *StartInst,
-                      SmallPtrSet<Instruction *, 4> &DependingInstructions,
-                      SmallPtrSet<const BasicBlock *, 4> &Visited,
+                      SmallPtrSetImpl<Instruction *> &DependingInstructions,
+                      SmallPtrSetImpl<const BasicBlock *> &Visited,
                       ProvenanceAnalysis &PA);
 
 bool

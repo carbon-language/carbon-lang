@@ -96,7 +96,7 @@ namespace {
 
     Value *findValue(Value *V, bool OffsetOk) const;
     Value *findValueImpl(Value *V, bool OffsetOk,
-                         SmallPtrSet<Value *, 4> &Visited) const;
+                         SmallPtrSetImpl<Value *> &Visited) const;
 
   public:
     Module *Mod;
@@ -622,7 +622,7 @@ Value *Lint::findValue(Value *V, bool OffsetOk) const {
 
 /// findValueImpl - Implementation helper for findValue.
 Value *Lint::findValueImpl(Value *V, bool OffsetOk,
-                           SmallPtrSet<Value *, 4> &Visited) const {
+                           SmallPtrSetImpl<Value *> &Visited) const {
   // Detect self-referential values.
   if (!Visited.insert(V))
     return UndefValue::get(V->getType());

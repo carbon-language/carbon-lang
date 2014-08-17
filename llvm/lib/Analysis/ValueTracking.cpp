@@ -1833,7 +1833,7 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
 
 /// GetStringLengthH - If we can compute the length of the string pointed to by
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
-static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
+static uint64_t GetStringLengthH(Value *V, SmallPtrSetImpl<PHINode*> &PHIs) {
   // Look through noop bitcast instructions.
   V = V->stripPointerCasts();
 

@@ -302,8 +302,8 @@ private:
   void DetermineInsertionPoint(AllocaInst *AI, unsigned AllocaNum,
                                AllocaInfo &Info);
   void ComputeLiveInBlocks(AllocaInst *AI, AllocaInfo &Info,
-                           const SmallPtrSet<BasicBlock *, 32> &DefBlocks,
-                           SmallPtrSet<BasicBlock *, 32> &LiveInBlocks);
+                           const SmallPtrSetImpl<BasicBlock *> &DefBlocks,
+                           SmallPtrSetImpl<BasicBlock *> &LiveInBlocks);
   void RenamePass(BasicBlock *BB, BasicBlock *Pred,
                   RenamePassData::ValVector &IncVals,
                   std::vector<RenamePassData> &Worklist);
@@ -766,8 +766,8 @@ void PromoteMem2Reg::run() {
 /// inserted phi nodes would be dead).
 void PromoteMem2Reg::ComputeLiveInBlocks(
     AllocaInst *AI, AllocaInfo &Info,
-    const SmallPtrSet<BasicBlock *, 32> &DefBlocks,
-    SmallPtrSet<BasicBlock *, 32> &LiveInBlocks) {
+    const SmallPtrSetImpl<BasicBlock *> &DefBlocks,
+    SmallPtrSetImpl<BasicBlock *> &LiveInBlocks) {
 
   // To determine liveness, we must iterate through the predecessors of blocks
   // where the def is live.  Blocks are added to the worklist if we need to

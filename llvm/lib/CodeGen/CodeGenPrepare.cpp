@@ -2297,7 +2297,7 @@ static bool IsOperandAMemoryOperand(CallInst *CI, InlineAsm *IA, Value *OpVal,
 /// Add the ultimately found memory instructions to MemoryUses.
 static bool FindAllMemoryUses(Instruction *I,
                 SmallVectorImpl<std::pair<Instruction*,unsigned> > &MemoryUses,
-                              SmallPtrSet<Instruction*, 16> &ConsideredInsts,
+                              SmallPtrSetImpl<Instruction*> &ConsideredInsts,
                               const TargetLowering &TLI) {
   // If we already considered this instruction, we're done.
   if (!ConsideredInsts.insert(I))

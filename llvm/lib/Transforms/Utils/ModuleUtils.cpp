@@ -78,7 +78,7 @@ void llvm::appendToGlobalDtors(Module &M, Function *F, int Priority) {
 }
 
 GlobalVariable *
-llvm::collectUsedGlobalVariables(Module &M, SmallPtrSet<GlobalValue *, 8> &Set,
+llvm::collectUsedGlobalVariables(Module &M, SmallPtrSetImpl<GlobalValue *> &Set,
                                  bool CompilerUsed) {
   const char *Name = CompilerUsed ? "llvm.compiler.used" : "llvm.used";
   GlobalVariable *GV = M.getGlobalVariable(Name);

@@ -1149,7 +1149,7 @@ bool DwarfDebug::addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope) {
 
 // Collect variable information from side table maintained by MMI.
 void DwarfDebug::collectVariableInfoFromMMITable(
-    SmallPtrSet<const MDNode *, 16> &Processed) {
+    SmallPtrSetImpl<const MDNode *> &Processed) {
   for (const auto &VI : MMI->getVariableDbgInfo()) {
     if (!VI.Var)
       continue;
@@ -1308,7 +1308,7 @@ DwarfDebug::buildLocationList(SmallVectorImpl<DebugLocEntry> &DebugLoc,
 
 // Find variables for each lexical scope.
 void
-DwarfDebug::collectVariableInfo(SmallPtrSet<const MDNode *, 16> &Processed) {
+DwarfDebug::collectVariableInfo(SmallPtrSetImpl<const MDNode *> &Processed) {
   LexicalScope *FnScope = LScopes.getCurrentFunctionScope();
   DwarfCompileUnit *TheCU = SPMap.lookup(FnScope->getScopeNode());
 
