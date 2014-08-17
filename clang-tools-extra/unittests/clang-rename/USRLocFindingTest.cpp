@@ -40,7 +40,7 @@ static void testOffsetGroups(const char *Code,
   EXPECT_EQ(Groups.size(), AllUSRs.size());
 }
 
-#if !(defined(_MSC_VER) && _MSC_VER < 1800)
+
 TEST(USRLocFinding, FindsVarUSR) {
   const char VarTest[] = "\n\
 namespace A {\n\
@@ -78,7 +78,6 @@ void fun1() {\n\
 
   testOffsetGroups(VarTest, VarTestOffsets);
 }
-#endif
 
 }
 }
