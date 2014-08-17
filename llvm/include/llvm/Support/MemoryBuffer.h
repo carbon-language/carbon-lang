@@ -24,11 +24,11 @@
 #include <system_error>
 
 namespace llvm {
-/// MemoryBuffer - This interface provides simple read-only access to a block
-/// of memory, and provides simple methods for reading files and standard input
-/// into a memory buffer.  In addition to basic access to the characters in the
-/// file, this interface guarantees you can read one character past the end of
-/// the file, and that this character will read as '\0'.
+/// This interface provides simple read-only access to a block/ of memory, and
+/// provides simple methods for reading files and standard input into a memory
+/// buffer. In addition to basic access to the characters in the file, this
+/// interface guarantees you can read one character past the end of the file,
+/// and that this character will read as '\0'.
 ///
 /// The '\0' guarantee is needed to support an optimization -- it's intended to
 /// be more efficient for clients which are reading all the data to stop
@@ -55,8 +55,8 @@ public:
     return StringRef(BufferStart, getBufferSize());
   }
 
-  /// getBufferIdentifier - Return an identifier for this buffer, typically the
-  /// filename it was read from.
+  /// Return an identifier for this buffer, typically the filename it was read
+  /// from.
   virtual const char *getBufferIdentifier() const {
     return "Unknown buffer";
   }
@@ -94,27 +94,25 @@ public:
   getOpenFile(int FD, const char *Filename, uint64_t FileSize,
               bool RequiresNullTerminator = true, bool IsVolatileSize = false);
 
-  /// getMemBuffer - Open the specified memory range as a MemoryBuffer.  Note
-  /// that InputData must be null terminated if RequiresNullTerminator is true.
+  /// Open the specified memory range as a MemoryBuffer. Note that InputData
+  /// must be null terminated if RequiresNullTerminator is true.
   static MemoryBuffer *getMemBuffer(StringRef InputData,
                                     StringRef BufferName = "",
                                     bool RequiresNullTerminator = true);
 
-  /// getMemBufferCopy - Open the specified memory range as a MemoryBuffer,
-  /// copying the contents and taking ownership of it.  InputData does not
-  /// have to be null terminated.
+  /// Open the specified memory range as a MemoryBuffer, copying the contents
+  /// and taking ownership of it. InputData does not have to be null terminated.
   static MemoryBuffer *getMemBufferCopy(StringRef InputData,
                                         StringRef BufferName = "");
 
-  /// getNewMemBuffer - Allocate a new zero-initialized MemoryBuffer of the
-  /// specified size. Note that the caller need not initialize the memory
-  /// allocated by this method.  The memory is owned by the MemoryBuffer object.
+  /// Allocate a new zero-initialized MemoryBuffer of the specified size. Note
+  /// that the caller need not initialize the memory allocated by this method.
+  /// The memory is owned by the MemoryBuffer object.
   static MemoryBuffer *getNewMemBuffer(size_t Size, StringRef BufferName = "");
 
-  /// getNewUninitMemBuffer - Allocate a new MemoryBuffer of the specified size
-  /// that is not initialized.  Note that the caller should initialize the
-  /// memory allocated by this method.  The memory is owned by the MemoryBuffer
-  /// object.
+  /// Allocate a new MemoryBuffer of the specified size that is not initialized.
+  /// Note that the caller should initialize the memory allocated by this
+  /// method. The memory is owned by the MemoryBuffer object.
   static MemoryBuffer *getNewUninitMemBuffer(size_t Size,
                                              StringRef BufferName = "");
 
