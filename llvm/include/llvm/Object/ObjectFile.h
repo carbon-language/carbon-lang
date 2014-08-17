@@ -322,7 +322,6 @@ public:
     return v->isObject();
   }
 
-public:
   static ErrorOr<std::unique_ptr<COFFObjectFile>>
   createCOFFObjectFile(std::unique_ptr<MemoryBuffer> Object);
 
