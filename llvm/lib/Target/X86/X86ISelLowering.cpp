@@ -8535,8 +8535,8 @@ static SDValue lowerV4F64VectorShuffle(SDValue Op, SDValue V1, SDValue V2,
   for (int i = 0; i < 4; ++i)
     if (Mask[i] >= 0 && Mask[i] < 4)
       V1Mask[i] = Mask[i];
-  else if (Mask[i] >= 4)
-    V2Mask[i] = Mask[i] - 4;
+    else if (Mask[i] >= 4)
+      V2Mask[i] = Mask[i] - 4;
 
   V1 = DAG.getVectorShuffle(MVT::v4f64, DL, V1, DAG.getUNDEF(MVT::v4f64), V1Mask);
   V2 = DAG.getVectorShuffle(MVT::v4f64, DL, V2, DAG.getUNDEF(MVT::v4f64), V2Mask);
