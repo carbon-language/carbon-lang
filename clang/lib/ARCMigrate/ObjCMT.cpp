@@ -1939,7 +1939,7 @@ public:
       return true;
 
     llvm::SourceMgr SM;
-    Stream YAMLStream(FileBufOrErr.get().release(), SM);
+    Stream YAMLStream(std::move(FileBufOrErr.get()), SM);
     document_iterator I = YAMLStream.begin();
     if (I == YAMLStream.end())
       return true;
