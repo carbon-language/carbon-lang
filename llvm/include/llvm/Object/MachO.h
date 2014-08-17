@@ -219,6 +219,8 @@ public:
   static bool isValidArch(StringRef ArchFlag);
   static Triple getHostArch();
 
+  bool isRelocatableObject() const override;
+
   static bool classof(const Binary *v) {
     return v->isMachO();
   }

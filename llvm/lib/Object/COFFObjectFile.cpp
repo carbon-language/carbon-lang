@@ -979,6 +979,10 @@ COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
   return object_error::success;
 }
 
+bool COFFObjectFile::isRelocatableObject() const {
+  return !DataDirectory;
+}
+
 bool ImportDirectoryEntryRef::
 operator==(const ImportDirectoryEntryRef &Other) const {
   return ImportTable == Other.ImportTable && Index == Other.Index;

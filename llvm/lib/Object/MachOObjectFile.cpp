@@ -1688,6 +1688,10 @@ void MachOObjectFile::ReadULEB128s(uint64_t Index,
   }
 }
 
+bool MachOObjectFile::isRelocatableObject() const {
+  return getHeader().filetype == MachO::MH_OBJECT;
+}
+
 ErrorOr<std::unique_ptr<MachOObjectFile>>
 ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
   StringRef Magic = Buffer->getBuffer().slice(0, 4);

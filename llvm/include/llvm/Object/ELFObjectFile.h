@@ -224,6 +224,8 @@ public:
 
   std::pair<symbol_iterator, symbol_iterator>
   getELFDynamicSymbolIterators() const override;
+
+  bool isRelocatableObject() const override;
 };
 
 // Use an alignment of 2 for the typedefs since that is the worst case for
@@ -943,6 +945,10 @@ template <class ELFT>
 std::pair<symbol_iterator, symbol_iterator>
 ELFObjectFile<ELFT>::getELFDynamicSymbolIterators() const {
   return std::make_pair(dynamic_symbol_begin(), dynamic_symbol_end());
+}
+
+template <class ELFT> bool ELFObjectFile<ELFT>::isRelocatableObject() const {
+  return EF.getHeader()->e_type == ELF::ET_REL;
 }
 
 inline std::error_code getELFRelocationAddend(const RelocationRef R,

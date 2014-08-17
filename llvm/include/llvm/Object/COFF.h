@@ -462,6 +462,8 @@ public:
   std::error_code getHintName(uint32_t Rva, uint16_t &Hint,
                               StringRef &Name) const;
 
+  bool isRelocatableObject() const override;
+
   static inline bool classof(const Binary *v) { return v->isCOFF(); }
 };
 
