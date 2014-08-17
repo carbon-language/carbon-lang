@@ -6,5 +6,5 @@
 // RUN: ./test-clang -v -S %s -no-canonical-prefixes 2>&1 | FileCheck --check-prefix=NCP %s
 
 
-// CHECK: /bin/clang{{.*}}" -cc1
+// CHECK: /clang{{.*}}" -cc1
 // NCP: test-clang" -cc1
