@@ -80,9 +80,6 @@ public:
 /// \brief Helper class for storing information about an active macro
 /// instantiation.
 struct MacroInstantiation {
-  /// The macro instantiation with substitutions.
-  MemoryBuffer *Instantiation;
-
   /// The location of the instantiation.
   SMLoc InstantiationLoc;
 
@@ -96,7 +93,7 @@ struct MacroInstantiation {
   size_t CondStackDepth;
 
 public:
-  MacroInstantiation(SMLoc IL, int EB, SMLoc EL, MemoryBuffer *I,
+  MacroInstantiation(SMLoc IL, int EB, SMLoc EL, StringRef I,
                      size_t CondStackDepth);
 };
 
@@ -1866,8 +1863,8 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
 }
 
 MacroInstantiation::MacroInstantiation(SMLoc IL, int EB, SMLoc EL,
-                                       MemoryBuffer *I, size_t CondStackDepth)
-    : Instantiation(I), InstantiationLoc(IL), ExitBuffer(EB), ExitLoc(EL),
+                                       StringRef I, size_t CondStackDepth)
+    : InstantiationLoc(IL), ExitBuffer(EB), ExitLoc(EL),
       CondStackDepth(CondStackDepth) {}
 
 static bool isOperator(AsmToken::TokenKind kind) {
@@ -2133,11 +2130,11 @@ bool AsmParser::handleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) {
   // instantiation stack.
   MacroInstantiation *MI =
       new MacroInstantiation(NameLoc, CurBuffer, getTok().getLoc(),
-                             Instantiation, TheCondStack.size());
+                             Instantiation->getBuffer(), TheCondStack.size());
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(MI->Instantiation, SMLoc());
+  CurBuffer = SrcMgr.AddNewSourceBuffer(Instantiation, SMLoc());
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
   Lex();
 
@@ -4319,11 +4316,11 @@ void AsmParser::instantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
   // instantiation stack.
   MacroInstantiation *MI =
       new MacroInstantiation(DirectiveLoc, CurBuffer, getTok().getLoc(),
-                             Instantiation, TheCondStack.size());
+                             Instantiation->getBuffer(), TheCondStack.size());
   ActiveMacros.push_back(MI);
 
   // Jump to the macro instantiation and prime the lexer.
-  CurBuffer = SrcMgr.AddNewSourceBuffer(MI->Instantiation, SMLoc());
+  CurBuffer = SrcMgr.AddNewSourceBuffer(Instantiation, SMLoc());
   Lexer.setBuffer(SrcMgr.getMemoryBuffer(CurBuffer)->getBuffer());
   Lex();
 }
