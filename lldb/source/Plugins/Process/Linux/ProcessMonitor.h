@@ -55,6 +55,7 @@ public:
                    const char *stdout_path,
                    const char *stderr_path,
                    const char *working_dir,
+                   const lldb_private::ProcessLaunchInfo &launch_info,
                    lldb_private::Error &error);
 
     ProcessMonitor(ProcessPOSIX *process,
@@ -233,7 +234,8 @@ private:
                    const char *stdin_path,
                    const char *stdout_path,
                    const char *stderr_path,
-                   const char *working_dir);
+                   const char *working_dir,
+                   const lldb_private::ProcessLaunchInfo &launch_info);
 
         ~LaunchArgs();
 
@@ -244,6 +246,7 @@ private:
         const char *m_stdout_path;      // Redirect stdout or NULL.
         const char *m_stderr_path;      // Redirect stderr or NULL.
         const char *m_working_dir;      // Working directory or NULL.
+        const lldb_private::ProcessLaunchInfo &m_launch_info;
     };
 
     void

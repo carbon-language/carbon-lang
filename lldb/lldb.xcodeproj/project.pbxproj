@@ -952,6 +952,12 @@
 		236124A31986B4E2004EFC37 /* Socket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Socket.cpp; sourceTree = "<group>"; };
 		236124A61986B50E004EFC37 /* IoObject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = IoObject.h; path = include/lldb/Host/IoObject.h; sourceTree = "<group>"; };
 		236124A71986B50E004EFC37 /* Socket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Socket.h; path = include/lldb/Host/Socket.h; sourceTree = "<group>"; };
+		23AB052D199FF639003B8084 /* FreeBSDThread.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = FreeBSDThread.cpp; sourceTree = "<group>"; };
+		23AB052E199FF639003B8084 /* FreeBSDThread.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FreeBSDThread.h; sourceTree = "<group>"; };
+		23AB052F199FF639003B8084 /* ProcessFreeBSD.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessFreeBSD.cpp; sourceTree = "<group>"; };
+		23AB0530199FF639003B8084 /* ProcessFreeBSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessFreeBSD.h; sourceTree = "<group>"; };
+		23AB0531199FF639003B8084 /* ProcessMonitor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMonitor.cpp; sourceTree = "<group>"; };
+		23AB0532199FF639003B8084 /* ProcessMonitor.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcessMonitor.h; sourceTree = "<group>"; };
 		23DDF224196C3EE600BB8417 /* CommandOptionValidators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandOptionValidators.cpp; path = source/Interpreter/CommandOptionValidators.cpp; sourceTree = "<group>"; };
 		23EDE3301926839700F6A132 /* NativeRegisterContext.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = NativeRegisterContext.cpp; path = source/Target/NativeRegisterContext.cpp; sourceTree = "<group>"; };
 		23EDE3311926843600F6A132 /* NativeRegisterContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NativeRegisterContext.h; path = include/lldb/Target/NativeRegisterContext.h; sourceTree = "<group>"; };
@@ -2282,6 +2288,19 @@
 			path = source/Host/linux;
 			sourceTree = "<group>";
 		};
+		23AB0526199FF5D3003B8084 /* FreeBSD */ = {
+			isa = PBXGroup;
+			children = (
+				23AB052E199FF639003B8084 /* FreeBSDThread.h */,
+				23AB052D199FF639003B8084 /* FreeBSDThread.cpp */,
+				23AB0530199FF639003B8084 /* ProcessFreeBSD.h */,
+				23AB052F199FF639003B8084 /* ProcessFreeBSD.cpp */,
+				23AB0532199FF639003B8084 /* ProcessMonitor.h */,
+				23AB0531199FF639003B8084 /* ProcessMonitor.cpp */,
+			);
+			path = FreeBSD;
+			sourceTree = "<group>";
+		};
 		260C897110F57C5600BB2B04 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
@@ -2395,6 +2414,7 @@
 			isa = PBXGroup;
 			children = (
 				26BC179F18C7F4CB00D2196D /* elf-core */,
+				23AB0526199FF5D3003B8084 /* FreeBSD */,
 				4CEE62F71145F1C70064CF93 /* GDB Remote */,
 				233B008B196106E90090E598 /* Linux */,
 				2642FBA713D003B400ED6808 /* MacOSX-Kernel */,

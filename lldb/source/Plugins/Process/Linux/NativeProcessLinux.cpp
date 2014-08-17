@@ -18,6 +18,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <linux/unistd.h>
+#include <sys/personality.h>
 #include <sys/ptrace.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
@@ -92,6 +93,7 @@
   #define ARCH_GET_GS 0x1004
 #endif
 
+#define LLDB_PERSONALITY_GET_CURRENT_SETTINGS  0xffffffff
 
 // Support hardware breakpoints in case it has not been defined
 #ifndef TRAP_HWBKPT
@@ -993,7 +995,8 @@ NativeProcessLinux::LaunchArgs::LaunchArgs(NativeProcessLinux *monitor,
                                        const char *stdin_path,
                                        const char *stdout_path,
                                        const char *stderr_path,
-                                       const char *working_dir)
+                                       const char *working_dir,
+                                       const lldb_private::ProcessLaunchInfo &launch_info)
     : OperationArgs(monitor),
       m_module(module),
       m_argv(argv),
@@ -1001,7 +1004,10 @@ NativeProcessLinux::LaunchArgs::LaunchArgs(NativeProcessLinux *monitor,
       m_stdin_path(stdin_path),
       m_stdout_path(stdout_path),
       m_stderr_path(stderr_path),
-      m_working_dir(working_dir) { }
+      m_working_dir(working_dir),
+      m_launch_info(launch_info)
+{
+}
 
 NativeProcessLinux::LaunchArgs::~LaunchArgs()
 { }
@@ -1084,6 +1090,7 @@ NativeProcessLinux::LaunchProcess (
             stdout_path,
             stderr_path,
             working_dir,
+            launch_info,
             error);
 
     if (error.Fail ())
@@ -1182,6 +1189,7 @@ NativeProcessLinux::LaunchInferior (
     const char *stdout_path,
     const char *stderr_path,
     const char *working_dir,
+    const lldb_private::ProcessLaunchInfo &launch_info,
     lldb_private::Error &error)
 {
     if (module)
@@ -1193,7 +1201,7 @@ NativeProcessLinux::LaunchInferior (
         new LaunchArgs(
             this, module, argv, envp,
             stdin_path, stdout_path, stderr_path,
-            working_dir));
+            working_dir, launch_info));
 
     sem_init(&m_operation_pending, 0, 0);
     sem_init(&m_operation_done, 0, 0);
@@ -1351,6 +1359,10 @@ NativeProcessLinux::LaunchOpThread(void *arg)
 bool
 NativeProcessLinux::Launch(LaunchArgs *args)
 {
+    assert (args && "null args");
+    if (!args)
+        return false;
+
     NativeProcessLinux *monitor = args->m_monitor;
     assert (monitor && "monitor is NULL");
     if (!monitor)
@@ -1461,6 +1473,33 @@ NativeProcessLinux::Launch(LaunchArgs *args)
         if (working_dir != NULL && working_dir[0])
           if (0 != ::chdir(working_dir))
               exit(eChdirFailed);
+
+        // Disable ASLR if requested.
+        if (args->m_launch_info.GetFlags ().Test (lldb::eLaunchFlagDisableASLR))
+        {
+            const int old_personality = personality (LLDB_PERSONALITY_GET_CURRENT_SETTINGS);
+            if (old_personality == -1)
+            {
+                if (log)
+                    log->Printf ("NativeProcessLinux::%s retrieval of Linux personality () failed: %s. Cannot disable ASLR.", __FUNCTION__, strerror (errno));
+            }
+            else
+            {
+                const int new_personality = personality (ADDR_NO_RANDOMIZE | old_personality);
+                if (new_personality == -1)
+                {
+                    if (log)
+                        log->Printf ("NativeProcessLinux::%s setting of Linux personality () to disable ASLR failed, ignoring: %s", __FUNCTION__, strerror (errno));
+
+                }
+                else
+                {
+                    if (log)
+                        log->Printf ("NativeProcessLinux::%s disbling ASLR: SUCCESS", __FUNCTION__);
+
+                }
+            }
+        }
 
         // Execute.  We should never return.
         execve(argv[0],

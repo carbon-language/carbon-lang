@@ -807,6 +807,7 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
                                const char *stdout_path,
                                const char *stderr_path,
                                const char *working_dir,
+                               const lldb_private::ProcessLaunchInfo & /* launch_info */,
                                lldb_private::Error &error)
     : m_process(static_cast<ProcessFreeBSD *>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),

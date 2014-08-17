@@ -217,7 +217,8 @@ namespace lldb_private
                     const char *stdin_path,
                     const char *stdout_path,
                     const char *stderr_path,
-                    const char *working_dir);
+                    const char *working_dir,
+                    const lldb_private::ProcessLaunchInfo &launch_info);
 
             ~LaunchArgs();
 
@@ -228,6 +229,7 @@ namespace lldb_private
             const char *m_stdout_path;      // Redirect stdout or NULL.
             const char *m_stderr_path;      // Redirect stderr or NULL.
             const char *m_working_dir;      // Working directory or NULL.
+            const lldb_private::ProcessLaunchInfo &m_launch_info;
         };
 
         struct AttachArgs : OperationArgs
@@ -256,6 +258,7 @@ namespace lldb_private
             const char *stdout_path,
             const char *stderr_path,
             const char *working_dir,
+            const lldb_private::ProcessLaunchInfo &launch_info,
             Error &error);
 
         /// Attaches to an existing process.  Forms the

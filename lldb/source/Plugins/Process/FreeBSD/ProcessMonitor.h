@@ -55,6 +55,7 @@ public:
                    const char *stdout_path,
                    const char *stderr_path,
                    const char *working_dir,
+                   const lldb_private::ProcessLaunchInfo &launch_info,
                    lldb_private::Error &error);
 
     ProcessMonitor(ProcessPOSIX *process,

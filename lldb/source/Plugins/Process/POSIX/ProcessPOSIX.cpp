@@ -241,6 +241,7 @@ ProcessPOSIX::DoLaunch (Module *module,
                                     stdout_path, 
                                     stderr_path,
                                     working_dir,
+                                    launch_info,
                                     error);
 
     m_module = module;
