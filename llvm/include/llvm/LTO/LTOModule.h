@@ -71,8 +71,8 @@ public:
                                  StringRef triplePrefix);
 
   /// Create a MemoryBuffer from a memory range with an optional name.
-  static MemoryBuffer *makeBuffer(const void *mem, size_t length,
-                                  StringRef name = "");
+  static std::unique_ptr<MemoryBuffer>
+  makeBuffer(const void *mem, size_t length, StringRef name = "");
 
   /// Create an LTOModule. N.B. These methods take ownership of the buffer. The
   /// caller must have initialized the Targets, the TargetMCs, the AsmPrinters,

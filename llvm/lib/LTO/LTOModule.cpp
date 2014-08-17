@@ -165,10 +165,11 @@ LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
 }
 
 /// Create a MemoryBuffer from a memory range with an optional name.
-MemoryBuffer *LTOModule::makeBuffer(const void *mem, size_t length,
-                                    StringRef name) {
+std::unique_ptr<MemoryBuffer>
+LTOModule::makeBuffer(const void *mem, size_t length, StringRef name) {
   const char *startPtr = (const char*)mem;
-  return MemoryBuffer::getMemBuffer(StringRef(startPtr, length), name, false);
+  return std::unique_ptr<MemoryBuffer>(
+      MemoryBuffer::getMemBuffer(StringRef(startPtr, length), name, false));
 }
 
 /// objcClassNameFromExpression - Get string that the data pointer points to.
