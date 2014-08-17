@@ -45,7 +45,7 @@ static Module *getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer,
     return ModuleOrErr.get();
   }
 
-  return ParseAssembly(Buffer.release(), nullptr, Err, Context);
+  return ParseAssembly(std::move(Buffer), nullptr, Err, Context);
 }
 
 Module *llvm::getLazyIRFileModule(const std::string &Filename,
@@ -78,8 +78,8 @@ Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
     return M;
   }
 
-  return ParseAssembly(MemoryBuffer::getMemBuffer(
-                           Buffer->getBuffer(), Buffer->getBufferIdentifier()),
+  return ParseAssembly(std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(
+                           Buffer->getBuffer(), Buffer->getBufferIdentifier())),
                        nullptr, Err, Context);
 }
 

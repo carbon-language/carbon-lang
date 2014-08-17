@@ -21,20 +21,19 @@
 #include <system_error>
 using namespace llvm;
 
-Module *llvm::ParseAssembly(MemoryBuffer *F,
-                            Module *M,
-                            SMDiagnostic &Err,
-                            LLVMContext &Context) {
+Module *llvm::ParseAssembly(std::unique_ptr<MemoryBuffer> F, Module *M,
+                            SMDiagnostic &Err, LLVMContext &Context) {
   SourceMgr SM;
-  SM.AddNewSourceBuffer(F, SMLoc());
+  MemoryBuffer *Buf = F.get();
+  SM.AddNewSourceBuffer(F.release(), SMLoc());
 
   // If we are parsing into an existing module, do it.
   if (M)
-    return LLParser(F, SM, Err, M).Run() ? nullptr : M;
+    return LLParser(Buf, SM, Err, M).Run() ? nullptr : M;
 
   // Otherwise create a new module.
-  std::unique_ptr<Module> M2(new Module(F->getBufferIdentifier(), Context));
-  if (LLParser(F, SM, Err, M2.get()).Run())
+  std::unique_ptr<Module> M2(new Module(Buf->getBufferIdentifier(), Context));
+  if (LLParser(Buf, SM, Err, M2.get()).Run())
     return nullptr;
   return M2.release();
 }
@@ -49,7 +48,7 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename, SMDiagnostic &Err,
     return nullptr;
   }
 
-  return ParseAssembly(FileOrErr.get().release(), nullptr, Err, Context);
+  return ParseAssembly(std::move(FileOrErr.get()), nullptr, Err, Context);
 }
 
 Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
@@ -57,5 +56,5 @@ Module *llvm::ParseAssemblyString(const char *AsmString, Module *M,
   MemoryBuffer *F =
       MemoryBuffer::getMemBuffer(StringRef(AsmString), "<string>");
 
-  return ParseAssembly(F, M, Err, Context);
+  return ParseAssembly(std::unique_ptr<MemoryBuffer>(F), M, Err, Context);
 }

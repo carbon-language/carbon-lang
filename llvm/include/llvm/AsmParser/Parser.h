@@ -14,6 +14,7 @@
 #ifndef LLVM_ASMPARSER_PARSER_H
 #define LLVM_ASMPARSER_PARSER_H
 
+#include <memory>
 #include <string>
 
 namespace llvm {
@@ -50,14 +51,12 @@ Module *ParseAssemblyString(
 
 /// This function is the low-level interface to the LLVM Assembly Parser.
 /// ParseAssemblyFile and ParseAssemblyString are wrappers around this function.
-/// @brief Parse LLVM Assembly from a MemoryBuffer. This function *always*
-/// takes ownership of the MemoryBuffer.
+/// @brief Parse LLVM Assembly from a MemoryBuffer.
 Module *ParseAssembly(
-    MemoryBuffer *F,     ///< The MemoryBuffer containing assembly
-    Module *M,           ///< A module to add the assembly too.
-    SMDiagnostic &Err,   ///< Error result info.
-    LLVMContext &Context
-);
+    std::unique_ptr<MemoryBuffer> F, ///< The MemoryBuffer containing assembly
+    Module *M,                       ///< A module to add the assembly too.
+    SMDiagnostic &Err,               ///< Error result info.
+    LLVMContext &Context);
 
 } // End llvm namespace
 
