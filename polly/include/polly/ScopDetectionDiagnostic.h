@@ -627,6 +627,9 @@ class ReportLoopBound : public RejectReason {
   // The non-affine loop bound.
   const SCEV *LoopCount;
 
+  // A copy of the offending loop's debug location.
+  const DebugLoc Loc;
+
 public:
   ReportLoopBound(Loop *L, const SCEV *LoopCount);
 
@@ -641,6 +644,7 @@ public:
   //@{
   virtual std::string getMessage() const override;
   virtual const DebugLoc &getDebugLoc() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 

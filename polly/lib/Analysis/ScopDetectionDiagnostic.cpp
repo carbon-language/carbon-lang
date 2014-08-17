@@ -393,7 +393,8 @@ bool ReportIndEdge::classof(const RejectReason *RR) {
 // ReportLoopBound.
 
 ReportLoopBound::ReportLoopBound(Loop *L, const SCEV *LoopCount)
-    : RejectReason(rrkLoopBound), L(L), LoopCount(LoopCount) {
+    : RejectReason(rrkLoopBound), L(L), LoopCount(LoopCount),
+      Loc(L->getStartLoc()) {
   ++BadLoopBoundForScop;
 }
 
@@ -402,13 +403,14 @@ std::string ReportLoopBound::getMessage() const {
          L->getHeader()->getName();
 }
 
-const DebugLoc &ReportLoopBound::getDebugLoc() const {
-  const BasicBlock *BB = L->getHeader();
-  return BB->getTerminator()->getDebugLoc();
-}
+const DebugLoc &ReportLoopBound::getDebugLoc() const { return Loc; }
 
 bool ReportLoopBound::classof(const RejectReason *RR) {
   return RR->getKind() == rrkLoopBound;
+}
+
+std::string ReportLoopBound::getEndUserMessage() const {
+  return "Failed to derive an affine function from the loop bounds.";
 }
 
 //===----------------------------------------------------------------------===//
