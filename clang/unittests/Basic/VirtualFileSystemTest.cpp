@@ -539,9 +539,9 @@ public:
   IntrusiveRefCntPtr<vfs::FileSystem>
   getFromYAMLRawString(StringRef Content,
                        IntrusiveRefCntPtr<vfs::FileSystem> ExternalFS) {
-    MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Content);
-    return getVFSFromYAML(std::unique_ptr<MemoryBuffer>(Buffer),
-                          CountingDiagHandler, this, ExternalFS);
+    std::unique_ptr<MemoryBuffer> Buffer(MemoryBuffer::getMemBuffer(Content));
+    return getVFSFromYAML(std::move(Buffer), CountingDiagHandler, this,
+                          ExternalFS);
   }
 
   IntrusiveRefCntPtr<vfs::FileSystem> getFromYAMLString(
