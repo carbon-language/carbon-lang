@@ -107,6 +107,7 @@ void test10(void){
 
   register int r asm ("cx");
   register int rr asm ("rr_asm"); // expected-error{{unknown register name 'rr_asm' in asm}}
+  register int rrr asm ("%"); // expected-error{{unknown register name '%' in asm}}
 }
 
 // This is just an assert because of the boolean conversion.

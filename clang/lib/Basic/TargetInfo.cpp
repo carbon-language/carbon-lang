@@ -338,6 +338,8 @@ bool TargetInfo::isValidGCCRegisterName(StringRef Name) const {
 
   // Get rid of any register prefix.
   Name = removeGCCRegisterPrefix(Name);
+  if (Name.empty())
+      return false;
 
   getGCCRegNames(Names, NumNames);
 
