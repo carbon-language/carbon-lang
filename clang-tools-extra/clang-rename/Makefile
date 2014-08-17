@@ -10,7 +10,4 @@
 CLANG_LEVEL := ../../..
 TOOLNAME = clang-rename
 include $(CLANG_LEVEL)/../../Makefile.config
-
-DIRS = test
-
 include $(CLANG_LEVEL)/Makefile
