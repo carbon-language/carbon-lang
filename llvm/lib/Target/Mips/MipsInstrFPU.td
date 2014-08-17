@@ -232,14 +232,14 @@ class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
   let isCodeGenOnly = 1;
 }
 
-class C_COND_FT<string CondStr, string Typestr,
-                RegisterOperand RC, InstrItinClass itin>  :
-   InstSE<(outs), (ins FCCRegsOpnd:$cc, RC:$fs, RC:$ft),
-          !strconcat("c.", CondStr, ".", Typestr, "\t $cc, $fs, $ft"),
-          [], itin, FrmFR>;
+class C_COND_FT<string CondStr, string Typestr, RegisterOperand RC,
+                InstrItinClass itin>  :
+   InstSE<(outs), (ins RC:$fs, RC:$ft),
+          !strconcat("c.", CondStr, ".", Typestr, "\t$fs, $ft"), [], itin,
+          FrmFR>;
 
-multiclass C_COND_M<string TypeStr, RegisterOperand RC,
-                    bits<5> fmt, InstrItinClass itin> {
+multiclass C_COND_M<string TypeStr, RegisterOperand RC, bits<5> fmt,
+                    InstrItinClass itin> {
   def C_F_#NAME : C_COND_FT<"f", TypeStr, RC, itin>, C_COND_FM<fmt, 0>;
   def C_UN_#NAME : C_COND_FT<"un", TypeStr, RC, itin>, C_COND_FM<fmt, 1>;
   def C_EQ_#NAME : C_COND_FT<"eq", TypeStr, RC, itin>, C_COND_FM<fmt, 2>;
@@ -258,48 +258,12 @@ multiclass C_COND_M<string TypeStr, RegisterOperand RC,
   def C_NGT_#NAME : C_COND_FT<"ngt", TypeStr, RC, itin>, C_COND_FM<fmt, 15>;
 }
 
-
-defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>,
-         INSN_MIPS4_32_NOT_32R6_64R6;
-defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>,
-           INSN_MIPS4_32_NOT_32R6_64R6, AdditionalRequires<[NotFP64bit]>;
+defm S : C_COND_M<"s", FGR32Opnd, 16, II_C_CC_S>, ISA_MIPS1_NOT_32R6_64R6;
+defm D32 : C_COND_M<"d", AFGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
+           AdditionalRequires<[NotFP64bit]>;
 let DecoderNamespace = "Mips64" in
-defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>,
-           INSN_MIPS4_32_NOT_32R6_64R6, AdditionalRequires<[IsFP64bit]>;
-
-class CCInstAlias<string CondStr, string TypeStr, dag Result>:
-       MipsInstAlias<!strconcat("c.", CondStr, ".", TypeStr, "\t $fs, $ft"),
-                     Result>, ISA_MIPS1_NOT_32R6_64R6;
-
-multiclass CCondInstAlias<string CondStr,
-                           Instruction CondS, Instruction CondD32,
-                           Instruction CondD64> {
-  def : CCInstAlias<CondStr, "s",
-                   (CondS FCC0, FGR32Opnd:$fs, FGR32Opnd:$ft )>;
-  def : CCInstAlias<CondStr, "d" ,
-                   (CondD32 FCC0, AFGR64Opnd:$fs, AFGR64Opnd:$ft )>,
-                    AdditionalRequires<[NotFP64bit]>;
-  def : CCInstAlias<CondStr, "d",
-                   (CondD64 FCC0, FGR64Opnd:$fs, FGR64Opnd:$ft )>,
-                    AdditionalRequires<[IsFP64bit]>;
-}
-
-defm : CCondInstAlias<"f", C_F_S, C_F_D32, C_F_D64>;
-defm : CCondInstAlias<"un", C_UN_S, C_UN_D32, C_UN_D64>;
-defm : CCondInstAlias<"eq", C_EQ_S, C_EQ_D32, C_EQ_D64>;
-defm : CCondInstAlias<"ueq", C_UEQ_S, C_UEQ_D32, C_UEQ_D64>;
-defm : CCondInstAlias<"olt", C_OLT_S, C_OLT_D32, C_OLT_D64>;
-defm : CCondInstAlias<"ult", C_ULT_S, C_ULT_D32, C_ULT_D64>;
-defm : CCondInstAlias<"ole", C_OLE_S, C_OLE_D32, C_OLE_D64>;
-defm : CCondInstAlias<"ule", C_ULE_S, C_ULE_D32, C_ULE_D64>;
-defm : CCondInstAlias<"sf", C_SF_S, C_SF_D32, C_SF_D64>;
-defm : CCondInstAlias<"ngle", C_NGLE_S, C_NGLE_D32, C_NGLE_D64>;
-defm : CCondInstAlias<"seq", C_SEQ_S, C_SEQ_D32, C_SEQ_D64>;
-defm : CCondInstAlias<"ngl", C_NGL_S, C_NGL_D32, C_NGL_D64>;
-defm : CCondInstAlias<"lt", C_LT_S, C_LT_D32, C_LT_D64>;
-defm : CCondInstAlias<"nge", C_NGE_S, C_NGE_D32, C_NGE_D64>;
-defm : CCondInstAlias<"le", C_LE_S, C_LE_D32, C_LE_D64>;
-defm : CCondInstAlias<"ngt", C_NGT_S, C_NGT_D32, C_NGT_D64>;
+defm D64 : C_COND_M<"d", FGR64Opnd, 17, II_C_CC_D>, ISA_MIPS1_NOT_32R6_64R6,
+           AdditionalRequires<[IsFP64bit]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
