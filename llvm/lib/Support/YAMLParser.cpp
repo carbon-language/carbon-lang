@@ -260,7 +260,7 @@ namespace yaml {
 class Scanner {
 public:
   Scanner(const StringRef Input, SourceMgr &SM);
-  Scanner(MemoryBuffer *Buffer, SourceMgr &SM_);
+  Scanner(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM_);
 
   /// @brief Parse the next token and return it without popping it.
   Token &peekNext();
@@ -714,19 +714,12 @@ Scanner::Scanner(StringRef Input, SourceMgr &sm)
   End = InputBuffer->getBufferEnd();
 }
 
-Scanner::Scanner(MemoryBuffer *Buffer, SourceMgr &SM_)
-  : SM(SM_)
-  , InputBuffer(Buffer)
-  , Current(InputBuffer->getBufferStart())
-  , End(InputBuffer->getBufferEnd())
-  , Indent(-1)
-  , Column(0)
-  , Line(0)
-  , FlowLevel(0)
-  , IsStartOfStream(true)
-  , IsSimpleKeyAllowed(true)
-  , Failed(false) {
-    SM.AddNewSourceBuffer(InputBuffer, SMLoc());
+Scanner::Scanner(std::unique_ptr<MemoryBuffer> Buffer, SourceMgr &SM_)
+    : SM(SM_), InputBuffer(Buffer.get()),
+      Current(InputBuffer->getBufferStart()), End(InputBuffer->getBufferEnd()),
+      Indent(-1), Column(0), Line(0), FlowLevel(0), IsStartOfStream(true),
+      IsSimpleKeyAllowed(true), Failed(false) {
+  SM.AddNewSourceBuffer(Buffer.release(), SMLoc());
 }
 
 Token &Scanner::peekNext() {
@@ -1524,8 +1517,8 @@ bool Scanner::fetchMoreTokens() {
 Stream::Stream(StringRef Input, SourceMgr &SM)
     : scanner(new Scanner(Input, SM)), CurrentDoc() {}
 
-Stream::Stream(MemoryBuffer *InputBuffer, SourceMgr &SM)
-    : scanner(new Scanner(InputBuffer, SM)), CurrentDoc() {}
+Stream::Stream(std::unique_ptr<MemoryBuffer> InputBuffer, SourceMgr &SM)
+    : scanner(new Scanner(std::move(InputBuffer), SM)), CurrentDoc() {}
 
 Stream::~Stream() {}
 

@@ -79,8 +79,7 @@ public:
   /// \brief This keeps a reference to the string referenced by \p Input.
   Stream(StringRef Input, SourceMgr &);
 
-  /// \brief This takes ownership of \p InputBuffer.
-  Stream(MemoryBuffer *InputBuffer, SourceMgr &);
+  Stream(std::unique_ptr<MemoryBuffer> InputBuffer, SourceMgr &);
   ~Stream();
 
   document_iterator begin();
