@@ -157,7 +157,7 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
   if (ObjCache) {
     // MemoryBuffer is a thin wrapper around the actual memory, so it's OK
     // to create a temporary object here and delete it after the call.
-    std::unique_ptr<MemoryBuffer> MB(CompiledObject->getMemBuffer());
+    std::unique_ptr<MemoryBuffer> MB = CompiledObject->getMemBuffer();
     ObjCache->notifyObjectCompiled(M, MB.get());
   }
 

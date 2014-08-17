@@ -222,7 +222,7 @@ ObjectImage *RuntimeDyldELF::createObjectImage(ObjectBuffer *Buffer) {
                      (uint8_t)Buffer->getBufferStart()[ELF::EI_DATA]);
   std::error_code ec;
 
-  std::unique_ptr<MemoryBuffer> Buf(Buffer->getMemBuffer());
+  std::unique_ptr<MemoryBuffer> Buf = Buffer->getMemBuffer();
 
   if (Ident.first == ELF::ELFCLASS32 && Ident.second == ELF::ELFDATA2LSB) {
     auto Obj =
