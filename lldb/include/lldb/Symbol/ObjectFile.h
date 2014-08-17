@@ -62,23 +62,11 @@ public:
 /// for an object file.
 ///
 /// Object files can be represented by the entire file, or by part of a
-/// file. Examples of object files that are part of a file include
-/// object files that contain information for multiple architectures in
-/// the same file, or archive files that contain multiple objects
-/// (ranlib archives) (possibly for multiple architectures as well).
+/// file. An example of a partial file ObjectFile is one that contains
+/// information for one of multiple architectures in the same file.
 ///
-/// Object archive files (e.g. ranlib archives) can contain 
-/// multiple .o (object) files that must be selected by index or by name. 
-/// The number of objects that an ObjectFile contains can be determined 
-/// using the ObjectFile::GetNumObjects() const
-/// function, and followed by a call to
-/// ObjectFile::SelectObjectAtIndex (uint32_t) to change the currently
-/// selected object. Objects can also be selected by name using the
-/// ObjectFile::SelectObject(const char *) function.
-///
-/// Once an architecture is selected (and an object is selected for
-/// for archives), the object file information can be extracted from
-/// this abstract class.
+/// Once an architecture is selected the object file information can be
+/// extracted from this abstract class.
 //----------------------------------------------------------------------
 class ObjectFile:
     public std::enable_shared_from_this<ObjectFile>,
