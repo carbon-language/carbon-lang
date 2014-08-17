@@ -9580,14 +9580,12 @@ bool ARMAsmParser::parseDirectiveArchExtension(SMLoc L) {
       return false;
     }
 
-    bool ToggleFeatures = EnableFeature
-                              ? (~STI.getFeatureBits() & Extension.Features)
-                              : ( STI.getFeatureBits() & Extension.Features);
-    if (ToggleFeatures) {
-      unsigned Features =
-          ComputeAvailableFeatures(STI.ToggleFeature(Extension.Features));
-      setAvailableFeatures(Features);
-    }
+    unsigned ToggleFeatures = EnableFeature
+                                  ? (~STI.getFeatureBits() & Extension.Features)
+                                  : ( STI.getFeatureBits() & Extension.Features);
+    unsigned Features =
+        ComputeAvailableFeatures(STI.ToggleFeature(ToggleFeatures));
+    setAvailableFeatures(Features);
     return false;
   }
 
