@@ -301,6 +301,12 @@ bool ReportNonAffineAccess::classof(const RejectReason *RR) {
   return RR->getKind() == rrkNonAffineAccess;
 }
 
+std::string ReportNonAffineAccess::getEndUserMessage() const {
+  llvm::StringRef BaseName = BaseValue->getName();
+  std::string Name = (BaseName.size() > 0) ? BaseName : "UNKNOWN";
+  return "The array subscript of \"" + Name + "\" is not affine";
+}
+
 //===----------------------------------------------------------------------===//
 // ReportIndVar.
 

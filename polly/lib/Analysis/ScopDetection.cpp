@@ -383,7 +383,7 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       const Instruction *Insn = PIAF.first;
       if (Shape->DelinearizedSizes.empty())
         return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
-                                              Insn);
+                                              Insn, BaseValue);
 
       MemAcc *Acc = new MemAcc(Insn, Shape);
       InsnToMemAcc.insert({Insn, Acc});
@@ -392,13 +392,13 @@ bool ScopDetection::hasAffineMemoryAccesses(DetectionContext &Context) const {
       if (Shape->DelinearizedSizes.empty() ||
           Acc->DelinearizedSubscripts.empty())
         return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
-                                              Insn);
+                                              Insn, BaseValue);
 
       // Check that the delinearized subscripts are affine.
       for (const SCEV *S : Acc->DelinearizedSubscripts)
         if (!isAffineExpr(&Context.CurRegion, S, *SE, BaseValue))
           return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true, AF,
-                                                Insn);
+                                                Insn, BaseValue);
     }
   }
   return true;
@@ -441,7 +441,7 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
     if (!PollyDelinearize || !AF)
       return invalid<ReportNonAffineAccess>(Context, /*Assert=*/true,
-                                            AccessFunction, &Inst);
+                                            AccessFunction, &Inst, BaseValue);
 
     const SCEV *ElementSize = SE->getElementSize(&Inst);
     Context.ElementSize[BasePointer] = ElementSize;

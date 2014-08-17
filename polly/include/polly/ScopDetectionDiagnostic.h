@@ -491,10 +491,14 @@ class ReportNonAffineAccess : public ReportAffFunc {
   // The non-affine access function.
   const SCEV *AccessFunction;
 
+  // The base pointer of the memory access.
+  const Value *BaseValue;
+
 public:
-  ReportNonAffineAccess(const SCEV *AccessFunction, const Instruction *Inst)
-      : ReportAffFunc(rrkNonAffineAccess, Inst),
-        AccessFunction(AccessFunction) {}
+  ReportNonAffineAccess(const SCEV *AccessFunction, const Instruction *Inst,
+                        const Value *V)
+      : ReportAffFunc(rrkNonAffineAccess, Inst), AccessFunction(AccessFunction),
+        BaseValue(V) {}
 
   const SCEV *get() { return AccessFunction; }
 
@@ -506,6 +510,7 @@ public:
   /// @name RejectReason interface
   //@{
   virtual std::string getMessage() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 
