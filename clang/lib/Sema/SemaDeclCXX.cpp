@@ -2205,13 +2205,13 @@ namespace {
     Sema &S;
     // List of Decls to generate a warning on.  Also remove Decls that become
     // initialized.
-    llvm::SmallPtrSet<ValueDecl*, 4> &Decls;
+    llvm::SmallPtrSetImpl<ValueDecl*> &Decls;
     // If non-null, add a note to the warning pointing back to the constructor.
     const CXXConstructorDecl *Constructor;
   public:
     typedef EvaluatedExprVisitor<UninitializedFieldVisitor> Inherited;
     UninitializedFieldVisitor(Sema &S,
-                              llvm::SmallPtrSet<ValueDecl*, 4> &Decls,
+                              llvm::SmallPtrSetImpl<ValueDecl*> &Decls,
                               const CXXConstructorDecl *Constructor)
       : Inherited(S.Context), S(S), Decls(Decls),
         Constructor(Constructor) { }
@@ -2350,7 +2350,7 @@ namespace {
     }
   };
   static void CheckInitExprContainsUninitializedFields(
-      Sema &S, Expr *E, llvm::SmallPtrSet<ValueDecl*, 4> &Decls,
+      Sema &S, Expr *E, llvm::SmallPtrSetImpl<ValueDecl*> &Decls,
       const CXXConstructorDecl *Constructor) {
     if (Decls.size() == 0)
       return;
@@ -5910,7 +5910,7 @@ namespace {
 
 /// \brief Check whether any most overriden method from MD in Methods
 static bool CheckMostOverridenMethods(const CXXMethodDecl *MD,
-                   const llvm::SmallPtrSet<const CXXMethodDecl *, 8>& Methods) {
+                  const llvm::SmallPtrSetImpl<const CXXMethodDecl *>& Methods) {
   if (MD->size_overridden_methods() == 0)
     return Methods.count(MD->getCanonicalDecl());
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),
@@ -5972,7 +5972,7 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
 
 /// \brief Add the most overriden methods from MD to Methods
 static void AddMostOverridenMethods(const CXXMethodDecl *MD,
-                         llvm::SmallPtrSet<const CXXMethodDecl *, 8>& Methods) {
+                        llvm::SmallPtrSetImpl<const CXXMethodDecl *>& Methods) {
   if (MD->size_overridden_methods() == 0)
     Methods.insert(MD->getCanonicalDecl());
   for (CXXMethodDecl::method_iterator I = MD->begin_overridden_methods(),

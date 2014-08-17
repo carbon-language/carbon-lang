@@ -116,7 +116,7 @@ static unsigned deduceWeakPropertyFromType(Sema &S, QualType T) {
 static void
 CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
                              ObjCProtocolDecl *Proto,
-                             llvm::SmallPtrSet<ObjCProtocolDecl *, 16> &Known) {
+                             llvm::SmallPtrSetImpl<ObjCProtocolDecl *> &Known) {
   // Have we seen this protocol before?
   if (!Known.insert(Proto))
     return;
