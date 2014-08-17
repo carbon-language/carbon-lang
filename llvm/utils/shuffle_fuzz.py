@@ -20,6 +20,7 @@ import sys
 import uuid
 
 def main():
+  element_types=['i8', 'i16', 'i32', 'i64', 'f32', 'f64']
   parser = argparse.ArgumentParser(description=__doc__)
   parser.add_argument('-v', '--verbose', action='store_true',
                       help='Show verbose output')
@@ -31,26 +32,31 @@ def main():
                       help='Include blends of two input vectors')
   parser.add_argument('--fixed-bit-width', type=int, choices=[128, 256],
                       help='Specify a fixed bit width of vector to test')
+  parser.add_argument('--fixed-element-type', choices=element_types,
+                      help='Specify a fixed element type to test')
   parser.add_argument('--triple',
                       help='Specify a triple string to include in the IR')
   args = parser.parse_args()
 
   random.seed(args.seed)
 
+  if args.fixed_element_type is not None:
+    element_types=[args.fixed_element_type]
+
   if args.fixed_bit_width is not None:
     if args.fixed_bit_width == 128:
+      width_map={'i64': 2, 'i32': 4, 'i16': 8, 'i8': 16, 'f64': 2, 'f32': 4}
       (width, element_type) = random.choice(
-          [(2, 'i64'), (4, 'i32'), (8, 'i16'), (16, 'i8'),
-           (2, 'f64'), (4, 'f32')])
+          [(width_map[t], t) for t in element_types])
     elif args.fixed_bit_width == 256:
-      (width, element_type) = random.choice([
-          (4, 'i64'), (8, 'i32'), (16, 'i16'), (32, 'i8'),
-          (4, 'f64'), (8, 'f32')])
+      width_map={'i64': 4, 'i32': 8, 'i16': 16, 'i8': 32, 'f64': 4, 'f32': 8}
+      (width, element_type) = random.choice(
+          [(width_map[t], t) for t in element_types])
     else:
       sys.exit(1) # Checked above by argument parsing.
   else:
     width = random.choice([2, 4, 8, 16, 32, 64])
-    element_type = random.choice(['i8', 'i16', 'i32', 'i64', 'f32', 'f64'])
+    element_type = random.choice(element_types)
 
   element_modulus = {
       'i8': 1 << 8, 'i16': 1 << 16, 'i32': 1 << 32, 'i64': 1 << 64,
