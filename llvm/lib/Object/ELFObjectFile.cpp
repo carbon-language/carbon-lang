@@ -17,6 +17,10 @@
 namespace llvm {
 using namespace object;
 
+ELFObjectFileBase::ELFObjectFileBase(unsigned int Type,
+                                     std::unique_ptr<MemoryBuffer> Source)
+    : ObjectFile(Type, std::move(Source)) {}
+
 ErrorOr<std::unique_ptr<ObjectFile>>
 ObjectFile::createELFObjectFile(std::unique_ptr<MemoryBuffer> &Obj) {
   std::pair<unsigned char, unsigned char> Ident =

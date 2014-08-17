@@ -35,8 +35,21 @@
 namespace llvm {
 namespace object {
 
-template <class ELFT>
-class ELFObjectFile : public ObjectFile {
+class ELFObjectFileBase : public ObjectFile {
+protected:
+  ELFObjectFileBase(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
+
+public:
+  virtual std::error_code getRelocationAddend(DataRefImpl Rel,
+                                              int64_t &Res) const = 0;
+  virtual std::pair<symbol_iterator, symbol_iterator>
+  getELFDynamicSymbolIterators() const = 0;
+
+  virtual std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
+                                           bool &IsDefault) const = 0;
+};
+
+template <class ELFT> class ELFObjectFile : public ELFObjectFileBase {
 public:
   LLVM_ELF_IMPORT_TYPES_ELFT(ELFT)
 
@@ -186,9 +199,10 @@ public:
   section_iterator section_begin() const override;
   section_iterator section_end() const override;
 
-  std::error_code getRelocationAddend(DataRefImpl Rel, int64_t &Res) const;
+  std::error_code getRelocationAddend(DataRefImpl Rel,
+                                      int64_t &Res) const override;
   std::error_code getSymbolVersion(SymbolRef Symb, StringRef &Version,
-                                   bool &IsDefault) const;
+                                   bool &IsDefault) const override;
 
   uint8_t getBytesInAddress() const override;
   StringRef getFileFormatName() const override;
@@ -207,6 +221,9 @@ public:
     return v->getType() == getELFType(ELFT::TargetEndianness == support::little,
                                       ELFT::Is64Bits);
   }
+
+  std::pair<symbol_iterator, symbol_iterator>
+  getELFDynamicSymbolIterators() const override;
 };
 
 // Use an alignment of 2 for the typedefs since that is the worst case for
@@ -780,10 +797,11 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 template <class ELFT>
 ELFObjectFile<ELFT>::ELFObjectFile(std::unique_ptr<MemoryBuffer> Object,
                                    std::error_code &EC)
-    : ObjectFile(getELFType(static_cast<endianness>(ELFT::TargetEndianness) ==
-                                support::little,
-                            ELFT::Is64Bits),
-                 std::move(Object)),
+    : ELFObjectFileBase(
+          getELFType(static_cast<endianness>(ELFT::TargetEndianness) ==
+                         support::little,
+                     ELFT::Is64Bits),
+          std::move(Object)),
       EF(Data->getBuffer(), EC) {}
 
 template <class ELFT>
@@ -921,73 +939,30 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
   }
 }
 
-/// FIXME: Maybe we should have a base ElfObjectFile that is not a template
-/// and make these member functions?
+template <class ELFT>
+std::pair<symbol_iterator, symbol_iterator>
+ELFObjectFile<ELFT>::getELFDynamicSymbolIterators() const {
+  return std::make_pair(dynamic_symbol_begin(), dynamic_symbol_end());
+}
+
 inline std::error_code getELFRelocationAddend(const RelocationRef R,
                                               int64_t &Addend) {
   const ObjectFile *Obj = R.getObjectFile();
   DataRefImpl DRI = R.getRawDataRefImpl();
-  // Little-endian 32-bit
-  if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
-    return ELFObj->getRelocationAddend(DRI, Addend);
-
-  // Big-endian 32-bit
-  if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
-    return ELFObj->getRelocationAddend(DRI, Addend);
-
-  // Little-endian 64-bit
-  if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
-    return ELFObj->getRelocationAddend(DRI, Addend);
-
-  // Big-endian 64-bit
-  if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
-    return ELFObj->getRelocationAddend(DRI, Addend);
-
-  llvm_unreachable("Object passed to getELFRelocationAddend() is not ELF");
+  return cast<ELFObjectFileBase>(Obj)->getRelocationAddend(DRI, Addend);
 }
 
 inline std::pair<symbol_iterator, symbol_iterator>
 getELFDynamicSymbolIterators(SymbolicFile *Obj) {
-  if (const ELF32LEObjectFile *ELF = dyn_cast<ELF32LEObjectFile>(Obj))
-    return std::make_pair(ELF->dynamic_symbol_begin(),
-                          ELF->dynamic_symbol_end());
-  if (const ELF64LEObjectFile *ELF = dyn_cast<ELF64LEObjectFile>(Obj))
-    return std::make_pair(ELF->dynamic_symbol_begin(),
-                          ELF->dynamic_symbol_end());
-  if (const ELF32BEObjectFile *ELF = dyn_cast<ELF32BEObjectFile>(Obj))
-    return std::make_pair(ELF->dynamic_symbol_begin(),
-                          ELF->dynamic_symbol_end());
-  if (const ELF64BEObjectFile *ELF = cast<ELF64BEObjectFile>(Obj))
-    return std::make_pair(ELF->dynamic_symbol_begin(),
-                          ELF->dynamic_symbol_end());
-
-  llvm_unreachable(
-      "Object passed to getELFDynamicSymbolIterators() is not ELF");
+  return cast<ELFObjectFileBase>(Obj)->getELFDynamicSymbolIterators();
 }
 
-/// This is a generic interface for retrieving GNU symbol version
-/// information from an ELFObjectFile.
 inline std::error_code GetELFSymbolVersion(const ObjectFile *Obj,
                                            const SymbolRef &Sym,
                                            StringRef &Version,
                                            bool &IsDefault) {
-  // Little-endian 32-bit
-  if (const ELF32LEObjectFile *ELFObj = dyn_cast<ELF32LEObjectFile>(Obj))
-    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
-
-  // Big-endian 32-bit
-  if (const ELF32BEObjectFile *ELFObj = dyn_cast<ELF32BEObjectFile>(Obj))
-    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
-
-  // Little-endian 64-bit
-  if (const ELF64LEObjectFile *ELFObj = dyn_cast<ELF64LEObjectFile>(Obj))
-    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
-
-  // Big-endian 64-bit
-  if (const ELF64BEObjectFile *ELFObj = dyn_cast<ELF64BEObjectFile>(Obj))
-    return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
-
-  llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
+  return cast<ELFObjectFileBase>(Obj)
+      ->getSymbolVersion(Sym, Version, IsDefault);
 }
 }
 }
