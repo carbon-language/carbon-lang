@@ -514,9 +514,7 @@ public:
 
   /// \brief Parses \p Buffer, which is expected to be in YAML format and
   /// returns a virtual file system representing its contents.
-  ///
-  /// Takes ownership of \p Buffer.
-  static VFSFromYAML *create(MemoryBuffer *Buffer,
+  static VFSFromYAML *create(std::unique_ptr<MemoryBuffer> Buffer,
                              SourceMgr::DiagHandlerTy DiagHandler,
                              void *DiagContext,
                              IntrusiveRefCntPtr<FileSystem> ExternalFS);
@@ -865,13 +863,13 @@ DirectoryEntry::~DirectoryEntry() { llvm::DeleteContainerPointers(Contents); }
 
 VFSFromYAML::~VFSFromYAML() { llvm::DeleteContainerPointers(Roots); }
 
-VFSFromYAML *VFSFromYAML::create(MemoryBuffer *Buffer,
+VFSFromYAML *VFSFromYAML::create(std::unique_ptr<MemoryBuffer> Buffer,
                                  SourceMgr::DiagHandlerTy DiagHandler,
                                  void *DiagContext,
                                  IntrusiveRefCntPtr<FileSystem> ExternalFS) {
 
   SourceMgr SM;
-  yaml::Stream Stream(Buffer, SM);
+  yaml::Stream Stream(Buffer.release(), SM);
 
   SM.setDiagHandler(DiagHandler, DiagContext);
   yaml::document_iterator DI = Stream.begin();
@@ -993,10 +991,11 @@ VFSFromYAML::openFileForRead(const Twine &Path,
 }
 
 IntrusiveRefCntPtr<FileSystem>
-vfs::getVFSFromYAML(MemoryBuffer *Buffer, SourceMgr::DiagHandlerTy DiagHandler,
-                    void *DiagContext,
+vfs::getVFSFromYAML(std::unique_ptr<MemoryBuffer> Buffer,
+                    SourceMgr::DiagHandlerTy DiagHandler, void *DiagContext,
                     IntrusiveRefCntPtr<FileSystem> ExternalFS) {
-  return VFSFromYAML::create(Buffer, DiagHandler, DiagContext, ExternalFS);
+  return VFSFromYAML::create(std::move(Buffer), DiagHandler, DiagContext,
+                             ExternalFS);
 }
 
 UniqueID vfs::getNextVirtualUniqueID() {

@@ -250,10 +250,8 @@ llvm::sys::fs::UniqueID getNextVirtualUniqueID();
 
 /// \brief Gets a \p FileSystem for a virtual file system described in YAML
 /// format.
-///
-/// Takes ownership of \p Buffer.
 IntrusiveRefCntPtr<FileSystem>
-getVFSFromYAML(llvm::MemoryBuffer *Buffer,
+getVFSFromYAML(std::unique_ptr<llvm::MemoryBuffer> Buffer,
                llvm::SourceMgr::DiagHandlerTy DiagHandler,
                void *DiagContext = nullptr,
                IntrusiveRefCntPtr<FileSystem> ExternalFS = getRealFileSystem());
