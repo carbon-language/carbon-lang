@@ -442,11 +442,12 @@ ReportAlias::ReportAlias(Instruction *Inst, AliasSet &AS)
   ++BadAliasForScop;
 }
 
-std::string ReportAlias::formatInvalidAlias() const {
+std::string ReportAlias::formatInvalidAlias(std::string Prefix,
+                                            std::string Suffix) const {
   std::string Message;
   raw_string_ostream OS(Message);
 
-  OS << "Possible aliasing: ";
+  OS << Prefix;
 
   std::sort(Pointers.begin(), Pointers.end());
 
@@ -469,10 +470,19 @@ std::string ReportAlias::formatInvalidAlias() const {
       break;
   }
 
+  OS << Suffix;
+
   return OS.str();
 }
 
-std::string ReportAlias::getMessage() const { return formatInvalidAlias(); }
+std::string ReportAlias::getMessage() const {
+  return formatInvalidAlias("Possible aliasing: ");
+}
+
+std::string ReportAlias::getEndUserMessage() const {
+  return formatInvalidAlias("Accesses to the arrays ",
+                            " may access the same memory.");
+}
 
 const DebugLoc &ReportAlias::getDebugLoc() const { return Inst->getDebugLoc(); }
 

@@ -673,8 +673,10 @@ public:
 private:
   /// @brief Format an invalid alias set.
   ///
-  /// @param AS The invalid alias set to format.
-  std::string formatInvalidAlias() const;
+  //  @param Prefix A prefix string to put before the list of aliasing pointers.
+  //  @param Suffix A suffix string to put after the list of aliasing pointers.
+  std::string formatInvalidAlias(std::string Prefix = "",
+                                 std::string Suffix = "") const;
 
   Instruction *Inst;
 
@@ -695,6 +697,7 @@ public:
   //@{
   virtual std::string getMessage() const override;
   virtual const DebugLoc &getDebugLoc() const override;
+  virtual std::string getEndUserMessage() const override;
   //@}
 };
 
