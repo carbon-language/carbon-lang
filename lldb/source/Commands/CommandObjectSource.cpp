@@ -804,7 +804,7 @@ protected:
                 result.SetStatus (eReturnStatusFailed);
                 return false;
             }
-            
+
             if (num_matches > 1)
             {
                 bool got_multiple = false;
@@ -820,7 +820,7 @@ protected:
                         {
                             if (test_cu_spec != static_cast<FileSpec *> (sc.comp_unit))
                                 got_multiple = true;
-                                break;
+                            break;
                         }
                         else
                             test_cu_spec = sc.comp_unit;
@@ -828,7 +828,7 @@ protected:
                 }
                 if (got_multiple)
                 {
-                    result.AppendErrorWithFormat("Multiple source files found matching: \"%s.\"\n", 
+                    result.AppendErrorWithFormat("Multiple source files found matching: \"%s.\"\n",
                                                  m_options.file_name.c_str());
                     result.SetStatus (eReturnStatusFailed);
                     return false;
