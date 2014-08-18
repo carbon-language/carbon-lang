@@ -373,7 +373,7 @@ SourceManager::File::File(const FileSpec &file_spec, Target *target) :
                                 {
                                     if (test_cu_spec != static_cast<FileSpec *> (sc.comp_unit))
                                         got_multiple = true;
-                                        break;
+                                    break;
                                 }
                                 else
                                     test_cu_spec = sc.comp_unit;
