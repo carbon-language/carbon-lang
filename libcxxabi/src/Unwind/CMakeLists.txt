@@ -59,6 +59,7 @@ include_directories("${LIBCXXABI_LIBCXX_INCLUDES}")
 # Generate library list.
 set(libraries ${LIBCXXABI_CXX_ABI_LIBRARIES})
 append_if(libraries LIBCXXABI_HAS_C_LIB c)
+append_if(libraries LIBCXXABI_HAS_DL_LIB dl)
 append_if(libraries LIBCXXABI_HAS_PTHREAD_LIB pthread)
 
 target_link_libraries(unwind ${libraries})
