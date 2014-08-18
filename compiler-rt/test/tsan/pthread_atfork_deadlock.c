@@ -1,4 +1,4 @@
-// RUN: %clang_tsan -O1 %s -o %t && %deflake %run %t | FileCheck %s
+// RUN: %clang_tsan -O1 %s -lpthread -o %t && %deflake %run %t | FileCheck %s
 // Regression test for
 // https://code.google.com/p/thread-sanitizer/issues/detail?id=61
 // When the data race was reported, pthread_atfork() handler used to be
