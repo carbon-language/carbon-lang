@@ -2097,4 +2097,13 @@ def WriteRSQRTPSYm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
 }
 def : InstRW<[WriteRSQRTPSYm], (instregex "VRSQRTPSYm(_Int)?")>;
 
+//-- Logic instructions --//
+
+// AND, ANDN, OR, XOR PS/PD.
+// x,x / v,v,v.
+def : InstRW<[WriteP5], (instregex "(V?)(AND|ANDN|OR|XOR)P(S|D)(Y?)rr")>;
+// x,m / v,v,m.
+def : InstRW<[WriteP5Ld, ReadAfterLd],
+                         (instregex "(V?)(AND|ANDN|OR|XOR)P(S|D)(Y?)rm")>;
+
 } // SchedModel
