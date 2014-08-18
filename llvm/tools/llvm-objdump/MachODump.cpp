@@ -50,22 +50,36 @@ static cl::opt<bool>
 static cl::opt<std::string>
   DSYMFile("dsym", cl::desc("Use .dSYM file for debug info"));
 
-static const Target *GetTarget(const MachOObjectFile *MachOObj) {
+static std::string ThumbTripleName;
+
+static const Target *GetTarget(const MachOObjectFile *MachOObj,
+                               const char **McpuDefault,
+                               const Target **ThumbTarget) {
   // Figure out the target triple.
   if (TripleName.empty()) {
     llvm::Triple TT("unknown-unknown-unknown");
-    TT.setArch(Triple::ArchType(MachOObj->getArch()));
+    llvm::Triple ThumbTriple = Triple();
+    TT = MachOObj->getArch(McpuDefault, &ThumbTriple);
     TripleName = TT.str();
+    ThumbTripleName = ThumbTriple.str();
   }
 
   // Get the target specific parser.
   std::string Error;
   const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
-  if (TheTarget)
+  if (TheTarget && ThumbTripleName.empty())
     return TheTarget;
 
-  errs() << "llvm-objdump: error: unable to get target for '" << TripleName
-         << "', see --version and --triple.\n";
+  *ThumbTarget = TargetRegistry::lookupTarget(ThumbTripleName, Error);
+  if (*ThumbTarget)
+    return TheTarget;
+
+  errs() << "llvm-objdump: error: unable to get target for '";
+  if (!TheTarget)
+    errs() << TripleName;
+  else
+    errs() << ThumbTripleName;
+  errs() << "', see --version and --triple.\n";
   return nullptr;
 }
 
@@ -211,14 +225,26 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
 
 static void DisassembleInputMachO2(StringRef Filename,
                                    MachOObjectFile *MachOOF) {
-  const Target *TheTarget = GetTarget(MachOOF);
+  const char *McpuDefault = nullptr;
+  const Target *ThumbTarget = nullptr;
+  const Target *TheTarget = GetTarget(MachOOF, &McpuDefault, &ThumbTarget);
   if (!TheTarget) {
     // GetTarget prints out stuff.
     return;
   }
+  if (MCPU.empty() && McpuDefault)
+    MCPU = McpuDefault;
+
   std::unique_ptr<const MCInstrInfo> InstrInfo(TheTarget->createMCInstrInfo());
   std::unique_ptr<MCInstrAnalysis> InstrAnalysis(
       TheTarget->createMCInstrAnalysis(InstrInfo.get()));
+  std::unique_ptr<const MCInstrInfo> ThumbInstrInfo;
+  std::unique_ptr<MCInstrAnalysis> ThumbInstrAnalysis;
+  if (ThumbTarget) {
+    ThumbInstrInfo.reset(ThumbTarget->createMCInstrInfo());
+    ThumbInstrAnalysis.reset(
+        ThumbTarget->createMCInstrAnalysis(ThumbInstrInfo.get()));
+  }
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
@@ -238,7 +264,7 @@ static void DisassembleInputMachO2(StringRef Filename,
       TheTarget->createMCSubtargetInfo(TripleName, MCPU, FeaturesStr));
   MCContext Ctx(AsmInfo.get(), MRI.get(), nullptr);
   std::unique_ptr<const MCDisassembler> DisAsm(
-    TheTarget->createMCDisassembler(*STI, Ctx));
+      TheTarget->createMCDisassembler(*STI, Ctx));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   std::unique_ptr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
       AsmPrinterVariant, *AsmInfo, *InstrInfo, *MRI, *STI));
@@ -246,6 +272,34 @@ static void DisassembleInputMachO2(StringRef Filename,
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "
            << TripleName << '\n';
+    return;
+  }
+
+  // Set up thumb disassembler.
+  std::unique_ptr<const MCRegisterInfo> ThumbMRI;
+  std::unique_ptr<const MCAsmInfo> ThumbAsmInfo;
+  std::unique_ptr<const MCSubtargetInfo> ThumbSTI;
+  std::unique_ptr<const MCDisassembler> ThumbDisAsm;
+  std::unique_ptr<MCInstPrinter> ThumbIP;
+  std::unique_ptr<MCContext> ThumbCtx;
+  if (ThumbTarget) {
+    ThumbMRI.reset(ThumbTarget->createMCRegInfo(ThumbTripleName));
+    ThumbAsmInfo.reset(
+        ThumbTarget->createMCAsmInfo(*ThumbMRI, ThumbTripleName));
+    ThumbSTI.reset(
+        ThumbTarget->createMCSubtargetInfo(ThumbTripleName, MCPU, FeaturesStr));
+    ThumbCtx.reset(new MCContext(ThumbAsmInfo.get(), ThumbMRI.get(), nullptr));
+    ThumbDisAsm.reset(ThumbTarget->createMCDisassembler(*ThumbSTI, *ThumbCtx));
+    int ThumbAsmPrinterVariant = ThumbAsmInfo->getAssemblerDialect();
+    ThumbIP.reset(ThumbTarget->createMCInstPrinter(
+        ThumbAsmPrinterVariant, *ThumbAsmInfo, *ThumbInstrInfo, *ThumbMRI,
+        *ThumbSTI));
+  }
+
+  if (ThumbTarget && (!ThumbInstrAnalysis || !ThumbAsmInfo || !ThumbSTI ||
+                      !ThumbDisAsm || !ThumbIP)) {
+    errs() << "error: couldn't initialize disassembler for target "
+           << ThumbTripleName << '\n';
     return;
   }
 
@@ -396,6 +450,10 @@ static void DisassembleInputMachO2(StringRef Filename,
 
       symbolTableWorked = true;
 
+      DataRefImpl Symb = Symbols[SymIdx].getRawDataRefImpl();
+      bool isThumb =
+          (MachOOF->getSymbolFlags(Symb) & SymbolRef::SF_Thumb) && ThumbTarget;
+
       outs() << SymName << ":\n";
       DILineInfo lastLine;
       for (uint64_t Index = Start; Index < End; Index += Size) {
@@ -422,10 +480,19 @@ static void DisassembleInputMachO2(StringRef Filename,
           continue;
         }
 
-        if (DisAsm->getInstruction(Inst, Size, memoryObject, Index,
-                                   DebugOut, nulls())) {
+        bool gotInst;
+        if (isThumb)
+          gotInst = ThumbDisAsm->getInstruction(Inst, Size, memoryObject, Index,
+                                     DebugOut, nulls());
+        else
+          gotInst = DisAsm->getInstruction(Inst, Size, memoryObject, Index,
+                                     DebugOut, nulls());
+        if (gotInst) {
           DumpBytes(StringRef(Bytes.data() + Index, Size));
-          IP->printInst(&Inst, outs(), "");
+          if (isThumb)
+            ThumbIP->printInst(&Inst, outs(), "");
+          else
+            IP->printInst(&Inst, outs(), "");
 
           // Print debug info.
           if (diContext) {

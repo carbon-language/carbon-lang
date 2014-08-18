@@ -1,0 +1,15 @@
+@ RUN: llvm-mc < %s -triple armv7-apple-darwin -filetype=obj | llvm-objdump -m -d - | FileCheck %s
+
+.thumb
+.thumb_func _t
+_t:
+nop
+nop
+.align 2
+.arm
+_a:
+nop
+
+@ CHECK: 00 bf nop
+@ CHECK-NEXT: 00 bf nop
+@ CHECK: 00 f0 20 e3 nop
