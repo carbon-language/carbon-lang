@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (101):
+CHECK: Warnings without flags (100):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_excess_initializers
 CHECK-NEXT:   ext_excess_initializers_in_char_array_initializer
@@ -106,7 +106,6 @@ CHECK-NEXT:   warn_pragma_pack_show
 CHECK-NEXT:   warn_property_getter_owning_mismatch
 CHECK-NEXT:   warn_property_types_are_incompatible
 CHECK-NEXT:   warn_readonly_property
-CHECK-NEXT:   warn_redeclaration_without_attribute_prev_attribute_ignored
 CHECK-NEXT:   warn_register_objc_catch_parm
 CHECK-NEXT:   warn_related_result_type_compatibility_class
 CHECK-NEXT:   warn_related_result_type_compatibility_protocol
