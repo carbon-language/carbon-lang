@@ -814,4 +814,64 @@ def : InstRW<[WriteP1_Lat3], (instregex "PDEP(32|64)rr", "PEXT(32|64)rr")>;
 // r,m,r.
 def : InstRW<[WriteP1_Lat3Ld], (instregex "PDEP(32|64)rm", "PEXT(32|64)rm")>;
 
+//-- Control transfer instructions --//
+
+// J(E|R)CXZ.
+def WriteJCXZ : SchedWriteRes<[HWPort0156, HWPort6]> {
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteJCXZ], (instregex "JCXZ", "JECXZ_(32|64)", "JRCXZ")>;
+
+// LOOP.
+def WriteLOOP : SchedWriteRes<[]> {
+  let NumMicroOps = 7;
+}
+def : InstRW<[WriteLOOP], (instregex "LOOP")>;
+
+// LOOP(N)E
+def WriteLOOPE : SchedWriteRes<[]> {
+  let NumMicroOps = 11;
+}
+def : InstRW<[WriteLOOPE], (instregex "LOOPE", "LOOPNE")>;
+
+// CALL.
+// r.
+def WriteCALLr : SchedWriteRes<[HWPort237, HWPort4, HWPort6]> {
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteCALLr], (instregex "CALL(16|32)r")>;
+
+// m.
+def WriteCALLm : SchedWriteRes<[HWPort237, HWPort4, HWPort6]> {
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteCALLm], (instregex "CALL(16|32)m")>;
+
+// RET.
+def WriteRET : SchedWriteRes<[HWPort237, HWPort6]> {
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteRET], (instregex "RET(L|Q|W)", "LRET(L|Q|W)")>;
+
+// i.
+def WriteRETI : SchedWriteRes<[HWPort23, HWPort6, HWPort015]> {
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 2, 1];
+}
+def : InstRW<[WriteRETI], (instregex "RETI(L|Q|W)", "LRETI(L|Q|W)")>;
+
+// BOUND.
+// r,m.
+def WriteBOUND : SchedWriteRes<[]> {
+  let NumMicroOps = 15;
+}
+def : InstRW<[WriteBOUND], (instregex "BOUNDS(16|32)rm")>;
+
+// INTO.
+def WriteINTO : SchedWriteRes<[]> {
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteINTO], (instregex "INTO")>;
+
 } // SchedModel
