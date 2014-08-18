@@ -43,6 +43,10 @@ option(LIBCXX_ENABLE_WERROR "Fail and stop if a warning is triggered." OFF)
 option(LIBCXX_ENABLE_CXX1Y "Enable -std=c++1y and use of c++1y language features if the compiler supports it." OFF)
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 option(LIBCXX_INSTALL_SUPPORT_HEADERS "Install libc++ support headers." ON)
+if (LIBCXX_BUILT_STANDALONE)
+  set(LLVM_USE_SANITIZER "" CACHE STRING
+      "Define the sanitizer used to build the library and tests")
+endif()
 
 set(CXXABIS none libcxxabi libcxxrt libstdc++ libsupc++)
 if (NOT LIBCXX_CXX_ABI)
@@ -283,6 +287,29 @@ endif()
 # This is the _ONLY_ place where add_definitions is called.
 if (MSVC)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+endif()
+
+# Configure for sanitizers. If LIBCXX_BUILT_STANDALONE then we have to do
+# the flag translation ourselves. Othewise LLVM's CMakeList.txt will handle it.
+if (LIBCXX_BUILT_STANDALONE)
+  # NOTE: LLVM_USE_SANITIZER checks for a UNIX like system instead of MSVC.
+  # But we don't have LLVM_ON_UNIX so checking for MSVC is the best we can do.
+  if (LLVM_USE_SANITIZER AND NOT MSVC)
+    append_if(LIBCXX_CXX_FEATURE_FLAGS LIBCXX_HAS_NO_OMIT_FRAME_POINTER_FLAG
+            "-fno-omit-frame-pointer")
+    if (LLVM_USE_SANITIZER STREQUAL "Address")
+      list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize=address")
+    elseif (LLVM_USE_SANITIZER MATCHES "Memory(WithOrigins)?")
+      list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize=memory")
+      if (LLVM_USE_SANITIZER STREQUAL "MemoryWithOrigins")
+        list(APPEND LIBCXX_CXX_FEATURE_FLAGS "-fsanitize-memory-track-origins")
+      endif()
+    else()
+      message(WARNING "Unsupported value of LLVM_USE_SANITIZER: ${LLVM_USE_SANITIZER}")
+    endif()
+  elseif(MSVC)
+    message(WARNING "LLVM_USE_SANITIZER is not supported with MSVC")
+  endif()
 endif()
 
 string(REPLACE ";" " " LIBCXX_CXX_REQUIRED_FLAGS "${LIBCXX_CXX_REQUIRED_FLAGS}")
