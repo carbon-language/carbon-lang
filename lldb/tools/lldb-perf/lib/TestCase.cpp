@@ -26,6 +26,7 @@ TestCase::TestCase () :
 	SBHostOS::ThreadCreated ("<lldb-tester.app.main>");
 	m_debugger = SBDebugger::Create(false);
 	m_listener = m_debugger.GetListener();
+    m_listener.StartListeningForEventClass (m_debugger, SBProcess::GetBroadcasterClass(), SBProcess::eBroadcastBitStateChanged | SBProcess::eBroadcastBitInterrupt);
 }
 
 static std::string
@@ -110,10 +111,7 @@ TestCase::Launch (lldb::SBLaunchInfo &launch_info)
     if (!error.Success())
         fprintf (stderr, "error: %s\n", error.GetCString());
     if (m_process.IsValid())
-    {
-        m_process.GetBroadcaster().AddListener(m_listener, SBProcess::eBroadcastBitStateChanged | SBProcess::eBroadcastBitInterrupt);
         return true;
-    }
     return false;
 }
 
