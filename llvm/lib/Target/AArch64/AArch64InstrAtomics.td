@@ -29,8 +29,7 @@ def : Pat<(atomic_fence (imm), (imm)), (DMB (i32 0xb))>;
 class acquiring_load<PatFrag base>
   : PatFrag<(ops node:$ptr), (base node:$ptr), [{
   AtomicOrdering Ordering = cast<AtomicSDNode>(N)->getOrdering();
-  assert(Ordering != AcquireRelease && "unexpected load ordering");
-  return Ordering == Acquire || Ordering == SequentiallyConsistent;
+  return isAtLeastAcquire(Ordering);
 }]>;
 
 // An atomic load operation that does not need either acquire or release
@@ -38,7 +37,7 @@ class acquiring_load<PatFrag base>
 class relaxed_load<PatFrag base>
   : PatFrag<(ops node:$ptr), (base node:$ptr), [{
   AtomicOrdering Ordering = cast<AtomicSDNode>(N)->getOrdering();
-  return Ordering == Monotonic || Ordering == Unordered;
+  return !isAtLeastAcquire(Ordering);
 }]>;
 
 // 8-bit loads
@@ -114,14 +113,14 @@ class releasing_store<PatFrag base>
   : PatFrag<(ops node:$ptr, node:$val), (base node:$ptr, node:$val), [{
   AtomicOrdering Ordering = cast<AtomicSDNode>(N)->getOrdering();
   assert(Ordering != AcquireRelease && "unexpected store ordering");
-  return Ordering == Release || Ordering == SequentiallyConsistent;
+  return isAtLeastRelease(Ordering);
 }]>;
 
 // An atomic store operation that doesn't actually need to be atomic on AArch64.
 class relaxed_store<PatFrag base>
   : PatFrag<(ops node:$ptr, node:$val), (base node:$ptr, node:$val), [{
   AtomicOrdering Ordering = cast<AtomicSDNode>(N)->getOrdering();
-  return Ordering == Monotonic || Ordering == Unordered;
+  return !isAtLeastRelease(Ordering);
 }]>;
 
 // 8-bit stores
