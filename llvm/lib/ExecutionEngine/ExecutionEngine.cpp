@@ -348,8 +348,8 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 
 void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   // Execute global ctors/dtors for each module in the program.
-  for (unsigned i = 0, e = Modules.size(); i != e; ++i)
-    runStaticConstructorsDestructors(Modules[i], isDtors);
+  for (Module *M : Modules)
+    runStaticConstructorsDestructors(M, isDtors);
 }
 
 #ifndef NDEBUG
