@@ -1,6 +1,6 @@
 macro(add_host_subdirectory group)
   list(APPEND HOST_SOURCES ${ARGN})
-  source_group(group FILES ${ARGN})
+  source_group(${group} FILES ${ARGN})
 endmacro()
 
 add_host_subdirectory(common
