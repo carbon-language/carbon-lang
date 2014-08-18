@@ -1442,4 +1442,67 @@ def WriteVPGATHERQQ256 : SchedWriteRes<[]> {
 }
 def : InstRW<[WriteVPGATHERQQ256, ReadAfterLd], (instregex "VPGATHERQQYrm")>;
 
+//-- Arithmetic instructions --//
+
+// PHADD|PHSUB (S) W/D.
+// v <- v,v.
+def WritePHADDSUBr : SchedWriteRes<[HWPort1, HWPort5]> {
+  let Latency = 3;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 2];
+}
+def : InstRW<[WritePHADDSUBr], (instregex "MMX_PHADD(W?)rr64",
+                               "MMX_PHADDSWrr64",
+                               "MMX_PHSUB(W|D)rr64",
+                               "MMX_PHSUBSWrr64",
+                               "(V?)PH(ADD|SUB)(W|D)(Y?)rr",
+                               "(V?)PH(ADD|SUB)SWrr(256)?")>;
+
+// v <- v,m.
+def WritePHADDSUBm : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
+  let Latency = 6;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 2, 1];
+}
+def : InstRW<[WritePHADDSUBm, ReadAfterLd],
+                              (instregex "MMX_PHADD(W?)rm64",
+                               "MMX_PHADDSWrm64",
+                               "MMX_PHSUB(W|D)rm64",
+                               "MMX_PHSUBSWrm64",
+                               "(V?)PH(ADD|SUB)(W|D)(Y?)rm",
+                               "(V?)PH(ADD|SUB)SWrm(128|256)?")>;
+
+// PCMPGTQ.
+// v <- v,v.
+def WritePCMPGTQr : SchedWriteRes<[HWPort0]> {
+  let Latency = 5;
+  let NumMicroOps = 1;
+}
+def : InstRW<[WritePCMPGTQr], (instregex "(V?)PCMPGTQ(Y?)rr")>;
+
+// v <- v,m.
+def WritePCMPGTQm : SchedWriteRes<[HWPort0, HWPort23]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WritePCMPGTQm, ReadAfterLd], (instregex "(V?)PCMPGTQ(Y?)rm")>;
+
+// PMULLD.
+// x,x / y,y,y.
+def WritePMULLDr : SchedWriteRes<[HWPort0]> {
+  let Latency = 10;
+  let NumMicroOps = 2;
+  let ResourceCycles = [2];
+}
+def : InstRW<[WritePMULLDr], (instregex "(V?)PMULLD(Y?)rr")>;
+
+// x,m / y,y,m.
+def WritePMULLDm : SchedWriteRes<[HWPort0, HWPort23]> {
+  let Latency = 10;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WritePMULLDm, ReadAfterLd], (instregex "(V?)PMULLD(Y?)rm")>;
+
 } // SchedModel
