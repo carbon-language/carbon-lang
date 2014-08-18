@@ -292,7 +292,6 @@ public:
 
   const char *getCharacterData(bool *Invalid = nullptr) const;
 
-  const llvm::MemoryBuffer* getBuffer(bool *Invalid = nullptr) const;
 
   /// \brief Return a StringRef to the source buffer data for the
   /// specified FileID.
