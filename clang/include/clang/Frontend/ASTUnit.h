@@ -423,7 +423,7 @@ private:
   explicit ASTUnit(bool MainFileIsAST);
 
   void CleanTemporaryFiles();
-  bool Parse(llvm::MemoryBuffer *OverrideMainBuffer);
+  bool Parse(std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer);
   
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
   ComputePreamble(CompilerInvocation &Invocation, 

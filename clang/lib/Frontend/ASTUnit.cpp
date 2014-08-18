@@ -1025,14 +1025,12 @@ static void checkAndSanitizeDiags(SmallVectorImpl<StoredDiagnostic> &
 ///
 /// \returns True if a failure occurred that causes the ASTUnit not to
 /// contain any translation-unit information, false otherwise.
-bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
+bool ASTUnit::Parse(std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer) {
   SavedMainFileBuffer.reset();
 
-  if (!Invocation) {
-    delete OverrideMainBuffer;
+  if (!Invocation)
     return true;
-  }
-  
+
   // Create the compiler instance to use for building the AST.
   std::unique_ptr<CompilerInstance> Clang(new CompilerInstance());
 
@@ -1053,10 +1051,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // Create the target instance.
   Clang->setTarget(TargetInfo::CreateTargetInfo(
       Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
-  if (!Clang->hasTarget()) {
-    delete OverrideMainBuffer;
+  if (!Clang->hasTarget())
     return true;
-  }
 
   // Inform the target of the language options.
   //
@@ -1076,10 +1072,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   FileSystemOpts = Clang->getFileSystemOpts();
   IntrusiveRefCntPtr<vfs::FileSystem> VFS =
       createVFSFromCompilerInvocation(Clang->getInvocation(), getDiagnostics());
-  if (!VFS) {
-    delete OverrideMainBuffer;
+  if (!VFS)
     return true;
-  }
   FileMgr = new FileManager(FileSystemOpts, VFS);
   SourceMgr = new SourceManager(getDiagnostics(), *FileMgr,
                                 UserFilesAreVolatile);
@@ -1108,7 +1102,8 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // make that override happen and introduce the preamble.
   PreprocessorOptions &PreprocessorOpts = Clang->getPreprocessorOpts();
   if (OverrideMainBuffer) {
-    PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
+    PreprocessorOpts.addRemappedFile(OriginalSourceFile,
+                                     OverrideMainBuffer.get());
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
@@ -1123,7 +1118,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     checkAndSanitizeDiags(StoredDiagnostics, getSourceManager());
 
     // Keep track of the override buffer;
-    SavedMainFileBuffer.reset(OverrideMainBuffer);
+    SavedMainFileBuffer = std::move(OverrideMainBuffer);
   }
 
   std::unique_ptr<TopLevelDeclTrackerAction> Act(
@@ -1136,7 +1131,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0]))
     goto error;
 
-  if (OverrideMainBuffer) {
+  if (SavedMainFileBuffer) {
     std::string ModName = getPreambleFile(this);
     TranslateStoredDiagnostics(getFileManager(), getSourceManager(),
                                PreambleDiagnostics, StoredDiagnostics);
@@ -1155,10 +1150,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
 
 error:
   // Remove the overridden buffer we used for the preamble.
-  if (OverrideMainBuffer) {
-    delete OverrideMainBuffer;
-    SavedMainFileBuffer = nullptr;
-  }
+  SavedMainFileBuffer = nullptr;
 
   // Keep the ownership of the data in the ASTUnit because the client may
   // want to see the diagnostics.
@@ -1890,11 +1882,10 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   Invocation->getFrontendOpts().DisableFree = false;
   ProcessWarningOptions(getDiagnostics(), Invocation->getDiagnosticOpts());
 
-  llvm::MemoryBuffer *OverrideMainBuffer = nullptr;
+  std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer;
   if (PrecompilePreamble) {
     PreambleRebuildCounter = 2;
-    OverrideMainBuffer
-      = getMainBufferWithPrecompiledPreamble(*Invocation);
+    OverrideMainBuffer.reset(getMainBufferWithPrecompiledPreamble(*Invocation));
   }
   
   SimpleTimer ParsingTimer(WantTiming);
@@ -1902,9 +1893,9 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<llvm::MemoryBuffer>
-    MemBufferCleanup(OverrideMainBuffer);
-  
-  return Parse(OverrideMainBuffer);
+    MemBufferCleanup(OverrideMainBuffer.get());
+
+  return Parse(std::move(OverrideMainBuffer));
 }
 
 std::unique_ptr<ASTUnit> ASTUnit::LoadFromCompilerInvocation(
@@ -2054,9 +2045,9 @@ bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
 
   // If we have a preamble file lying around, or if we might try to
   // build a precompiled preamble, do so now.
-  llvm::MemoryBuffer *OverrideMainBuffer = nullptr;
+  std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer;
   if (!getPreambleFile(this).empty() || PreambleRebuildCounter > 0)
-    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(*Invocation);
+    OverrideMainBuffer.reset(getMainBufferWithPrecompiledPreamble(*Invocation));
     
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
@@ -2065,8 +2056,8 @@ bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
     getDiagnostics().setNumWarnings(NumWarningsInPreamble);
 
   // Parse the sources
-  bool Result = Parse(OverrideMainBuffer);
-  
+  bool Result = Parse(std::move(OverrideMainBuffer));
+
   // If we're caching global code-completion results, and the top-level 
   // declarations have changed, clear out the code-completion cache.
   if (!Result && ShouldCacheCodeCompletionResults &&
