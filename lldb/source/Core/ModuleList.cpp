@@ -1133,9 +1133,10 @@ ModuleList::LoadScriptingResourcesInTarget (Target *target,
                                                    module->GetFileSpec().GetFileNameStrippingExtension().GetCString(),
                                                    error.AsCString());
                     errors.push_back(error);
+
+                    if (!continue_on_error)
+                        return false;
                 }
-                if (!continue_on_error)
-                    return false;
             }
         }
     }
