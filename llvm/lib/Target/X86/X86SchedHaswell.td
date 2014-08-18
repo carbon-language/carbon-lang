@@ -306,6 +306,10 @@ def Write3P06_Lat2 : SchedWriteRes<[HWPort06]> {
   let ResourceCycles = [3];
 }
 
+def WriteP0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
+  let NumMicroOps = 2;
+}
+
 def WriteP0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [1, 2, 1];
@@ -314,6 +318,11 @@ def WriteP0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
 def Write2P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [2, 2, 1];
+}
+
+def Write2P0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
 }
 
 def Write3P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
@@ -873,5 +882,38 @@ def WriteINTO : SchedWriteRes<[]> {
   let NumMicroOps = 4;
 }
 def : InstRW<[WriteINTO], (instregex "INTO")>;
+
+//-- String instructions --//
+
+// LODSB/W.
+def : InstRW<[Write2P0156_P23], (instregex "LODS(B|W)")>;
+
+// LODSD/Q.
+def : InstRW<[WriteP0156_P23], (instregex "LODS(L|Q)")>;
+
+// STOS.
+def WriteSTOS : SchedWriteRes<[HWPort23, HWPort0156, HWPort4]> {
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteSTOS], (instregex "STOS(B|L|Q|W)")>;
+
+// MOVS.
+def WriteMOVS : SchedWriteRes<[HWPort23, HWPort4, HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 5;
+  let ResourceCycles = [2, 1, 2];
+}
+def : InstRW<[WriteMOVS], (instregex "MOVS(B|L|Q|W)")>;
+
+// SCAS.
+def : InstRW<[Write2P0156_P23], (instregex "SCAS(B|W|L|Q)")>;
+
+// CMPS.
+def WriteCMPS : SchedWriteRes<[HWPort23, HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 5;
+  let ResourceCycles = [2, 3];
+}
+def : InstRW<[WriteCMPS], (instregex "CMPS(B|L|Q|W)")>;
 
 } // SchedModel
