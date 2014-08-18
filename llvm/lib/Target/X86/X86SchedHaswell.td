@@ -267,6 +267,11 @@ def : WriteRes<WriteNop, []>;
 //================ Exceptions ================//
 
 //-- Specific Scheduling Models --//
+def WriteP0 : SchedWriteRes<[HWPort0]>;
+def WriteP1 : SchedWriteRes<[HWPort1]>;
+def WriteP1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
+  let NumMicroOps = 2;
+}
 def WriteP1_Lat3 : SchedWriteRes<[HWPort1]> {
   let Latency = 3;
 }
@@ -293,6 +298,9 @@ def WriteP01 : SchedWriteRes<[HWPort01]>;
 def Write2P01 : SchedWriteRes<[HWPort01]> {
   let NumMicroOps = 2;
 }
+def Write3P01 : SchedWriteRes<[HWPort01]> {
+  let NumMicroOps = 3;
+}
 
 def WriteP06 : SchedWriteRes<[HWPort06]>;
 
@@ -302,6 +310,14 @@ def Write2P06 : SchedWriteRes<[HWPort06]> {
   let ResourceCycles = [2];
 }
 
+def Write2P1 : SchedWriteRes<[HWPort1]> {
+  let NumMicroOps = 2;
+  let ResourceCycles = [2];
+}
+def Write2P1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
 def WriteP15 : SchedWriteRes<[HWPort15]>;
 def WriteP15Ld : SchedWriteRes<[HWPort15, HWPort23]> {
   let Latency = 4;
@@ -1104,5 +1120,59 @@ def WriteFRSTOR : SchedWriteRes<[]> {
   let NumMicroOps = 90;
 }
 def : InstRW<[WriteFRSTOR], (instregex "FRSTORm")>;
+
+//-- Arithmetic instructions --//
+
+// FABS.
+def : InstRW<[WriteP0], (instregex "ABS_F")>;
+
+// FCHS.
+def : InstRW<[WriteP0], (instregex "CHS_F")>;
+
+// FCOM(P) FUCOM(P).
+// r.
+def : InstRW<[WriteP1], (instregex "COM_FST0r", "COMP_FST0r", "UCOM_Fr",
+                         "UCOM_FPr")>;
+// m.
+def : InstRW<[WriteP1_P23], (instregex "FCOM(32|64)m", "FCOMP(32|64)m")>;
+
+// FCOMPP FUCOMPP.
+// r.
+def : InstRW<[Write2P01], (instregex "FCOMPP", "UCOM_FPPr")>;
+
+// FCOMI(P) FUCOMI(P).
+// m.
+def : InstRW<[Write3P01], (instregex "COM_FIr", "COM_FIPr", "UCOM_FIr",
+                           "UCOM_FIPr")>;
+
+// FICOM(P).
+def : InstRW<[Write2P1_P23], (instregex "FICOM(16|32)m", "FICOMP(16|32)m")>;
+
+// FTST.
+def : InstRW<[WriteP1], (instregex "TST_F")>;
+
+// FXAM.
+def : InstRW<[Write2P1], (instregex "FXAM")>;
+
+// FPREM.
+def WriteFPREM : SchedWriteRes<[]> {
+  let Latency = 19;
+  let NumMicroOps = 28;
+}
+def : InstRW<[WriteFPREM], (instregex "FPREM")>;
+
+// FPREM1.
+def WriteFPREM1 : SchedWriteRes<[]> {
+  let Latency = 27;
+  let NumMicroOps = 41;
+}
+def : InstRW<[WriteFPREM1], (instregex "FPREM1")>;
+
+// FRNDINT.
+def WriteFRNDINT : SchedWriteRes<[]> {
+  let Latency = 11;
+  let NumMicroOps = 17;
+}
+def : InstRW<[WriteFRNDINT], (instregex "FRNDINT")>;
 
 } // SchedModel
