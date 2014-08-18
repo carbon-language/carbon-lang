@@ -3,6 +3,7 @@
 declare fastcc void @callee_stack0()
 declare fastcc void @callee_stack8([8 x i32], i64)
 declare fastcc void @callee_stack16([8 x i32], i64, i64)
+declare extern_weak fastcc void @callee_weak()
 
 define fastcc void @caller_to0_from0() nounwind {
 ; CHECK-LABEL: caller_to0_from0:
@@ -91,4 +92,14 @@ define fastcc void @caller_to16_from16([8 x i32], i64 %a, i64 %b) {
 ; CHECK: stp {{x[0-9]+}}, {{x[0-9]+}}, [sp, #16]
 ; CHECK-NEXT: add sp, sp, #16
 ; CHECK-NEXT: b callee_stack16
+}
+
+
+; Weakly-referenced extern functions cannot be tail-called, as AAELF does
+; not define the behaviour of branch instructions to undefined weak symbols.
+define fastcc void @caller_weak() {
+; CHECK-LABEL: caller_weak:
+; CHECK: bl callee_weak
+  tail call void @callee_weak()
+  ret void
 }

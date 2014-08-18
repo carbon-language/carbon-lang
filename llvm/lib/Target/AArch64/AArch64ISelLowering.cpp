@@ -2016,6 +2016,19 @@ bool AArch64TargetLowering::isEligibleForTailCallOptimization(
     return false;
   }
 
+  // Externally-defined functions with weak linkage should not be
+  // tail-called on AArch64 when the OS does not support dynamic
+  // pre-emption of symbols, as the AAELF spec requires normal calls
+  // to undefined weak functions to be replaced with a NOP or jump to the
+  // next instruction. The behaviour of branch instructions in this
+  // situation (as used for tail calls) is implementation-defined, so we
+  // cannot rely on the linker replacing the tail call with a return.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    const GlobalValue *GV = G->getGlobal();
+    if (GV->hasExternalWeakLinkage())
+      return false;
+  }
+
   // Now we search for cases where we can use a tail call without changing the
   // ABI. Sibcall is used in some places (particularly gcc) to refer to this
   // concept.

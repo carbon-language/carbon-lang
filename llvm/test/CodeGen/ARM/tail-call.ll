@@ -3,6 +3,7 @@
 ; RUN:   | FileCheck %s -check-prefix CHECK-NO-TAIL
 
 declare i32 @callee(i32 %i)
+declare extern_weak fastcc void @callee_weak()
 
 define i32 @caller(i32 %i) {
 entry:
@@ -19,3 +20,12 @@ entry:
 ; CHECK-NO-TAIL: pop {lr}
 ; CHECK-NO-TAIL: bx lr
 
+
+; Weakly-referenced extern functions cannot be tail-called, as AAELF does
+; not define the behaviour of branch instructions to undefined weak symbols.
+define fastcc void @caller_weak() {
+; CHECK-LABEL: caller_weak:
+; CHECK: bl callee_weak
+  tail call void @callee_weak()
+  ret void
+}
