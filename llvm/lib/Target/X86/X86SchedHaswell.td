@@ -942,4 +942,41 @@ def WriteCMPXCHG16B : SchedWriteRes<[]> {
 }
 def : InstRW<[WriteCMPXCHG16B], (instregex "CMPXCHG16B")>;
 
+//-- Other --//
+
+// PAUSE.
+def WritePAUSE : SchedWriteRes<[HWPort05, HWPort6]> {
+  let NumMicroOps = 5;
+  let ResourceCycles = [1, 3];
+}
+def : InstRW<[WritePAUSE], (instregex "PAUSE")>;
+
+// LEAVE.
+def : InstRW<[Write2P0156_P23], (instregex "LEAVE")>;
+
+// XGETBV.
+def WriteXGETBV : SchedWriteRes<[]> {
+  let NumMicroOps = 8;
+}
+def : InstRW<[WriteXGETBV], (instregex "XGETBV")>;
+
+// RDTSC.
+def WriteRDTSC : SchedWriteRes<[]> {
+  let NumMicroOps = 15;
+}
+def : InstRW<[WriteRDTSC], (instregex "RDTSC")>;
+
+// RDPMC.
+def WriteRDPMC : SchedWriteRes<[]> {
+  let NumMicroOps = 34;
+}
+def : InstRW<[WriteRDPMC], (instregex "RDPMC")>;
+
+// RDRAND.
+def WriteRDRAND : SchedWriteRes<[HWPort23, HWPort015]> {
+  let NumMicroOps = 17;
+  let ResourceCycles = [1, 16];
+}
+def : InstRW<[WriteRDRAND], (instregex "RDRAND(16|32|64)r")>;
+
 } // SchedModel
