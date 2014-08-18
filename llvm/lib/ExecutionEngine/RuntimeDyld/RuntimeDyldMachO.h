@@ -119,7 +119,7 @@ public:
 
   /// Write the least significant 'Size' bytes in 'Value' out at the address
   /// pointed to by Addr. Check for overflow.
-  bool writeBytesUnaligned(uint8_t *Addr, uint64_t Value, unsigned Size);
+  bool writeBytesUnaligned(uint8_t *Dst, uint64_t Value, unsigned Size);
 
   SectionEntry &getSection(unsigned SectionID) { return Sections[SectionID]; }
 
