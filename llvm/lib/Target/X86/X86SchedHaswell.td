@@ -372,6 +372,42 @@ def WriteP5Ld : SchedWriteRes<[HWPort5, HWPort23]> {
   let ResourceCycles = [1, 1];
 }
 
+def WriteP0_P1_Lat4 : SchedWriteRes<[HWPort0, HWPort1]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+
+def WriteP0_P1_Lat4Ld : SchedWriteRes<[HWPort0, HWPort1, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+
+def WriteP1_P5_Lat4 : SchedWriteRes<[HWPort1, HWPort5]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+
+def WriteP1_P5_Lat4Ld : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+
+def WriteP1_P5_Lat6 : SchedWriteRes<[HWPort1, HWPort5]> {
+  let Latency = 6;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+
+def WriteP1_P5_Lat6Ld : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
+  let Latency = 10;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+
 // Notation:
 // - r: register.
 // - mm: 64 bit mmx register.
@@ -1688,5 +1724,139 @@ def WriteVGATHERQPD256 : SchedWriteRes<[]> {
   let NumMicroOps = 22;
 }
 def : InstRW<[WriteVGATHERQPD256, ReadAfterLd], (instregex "VGATHERQPDYrm")>;
+
+//-- Conversion instructions --//
+
+// CVTPD2PS.
+// x,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "(V?)CVTPD2PSrr")>;
+
+// x,m128.
+def : InstRW<[WriteP1_P5_Lat4Ld], (instregex "(V?)CVTPD2PS(X?)rm")>;
+
+// x,y.
+def WriteCVTPD2PSYrr : SchedWriteRes<[HWPort1, HWPort5]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteCVTPD2PSYrr], (instregex "(V?)CVTPD2PSYrr")>;
+
+// x,m256.
+def WriteCVTPD2PSYrm : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
+  let Latency = 9;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteCVTPD2PSYrm], (instregex "(V?)CVTPD2PSYrm")>;
+
+// CVTSD2SS.
+// x,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "(Int_)?(V)?CVTSD2SSrr")>;
+
+// x,m64.
+def : InstRW<[WriteP1_P5_Lat4Ld], (instregex "(Int_)?(V)?CVTSD2SSrm")>;
+
+// CVTPS2PD.
+// x,x.
+def WriteCVTPS2PDrr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteCVTPS2PDrr], (instregex "(V?)CVTPS2PDrr")>;
+
+// x,m64.
+// y,m128.
+def WriteCVTPS2PDrm : SchedWriteRes<[HWPort0, HWPort23]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteCVTPS2PDrm], (instregex "(V?)CVTPS2PD(Y?)rm")>;
+
+// y,x.
+def WriteVCVTPS2PDYrr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteVCVTPS2PDYrr], (instregex "VCVTPS2PDYrr")>;
+
+// CVTSS2SD.
+// x,x.
+def WriteCVTSS2SDrr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteCVTSS2SDrr], (instregex "(Int_)?(V?)CVTSS2SDrr")>;
+
+// x,m32.
+def WriteCVTSS2SDrm : SchedWriteRes<[HWPort0, HWPort23]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteCVTSS2SDrm], (instregex "(Int_)?(V?)CVTSS2SDrm")>;
+
+// CVTDQ2PD.
+// x,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "(V)?CVTDQ2PDrr")>;
+
+// y,x.
+def : InstRW<[WriteP1_P5_Lat6], (instregex "VCVTDQ2PDYrr")>;
+
+// CVT(T)PD2DQ.
+// x,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "(V?)CVT(T?)PD2DQrr")>;
+// x,m128.
+def : InstRW<[WriteP1_P5_Lat4Ld], (instregex "(V?)CVT(T?)PD2DQrm")>;
+// x,y.
+def : InstRW<[WriteP1_P5_Lat6], (instregex "VCVT(T?)PD2DQYrr")>;
+// x,m256.
+def : InstRW<[WriteP1_P5_Lat6Ld], (instregex "VCVT(T?)PD2DQYrm")>;
+
+// CVT(T)PS2PI.
+// mm,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "MMX_CVT(T?)PS2PIirr")>;
+
+// CVTPI2PD.
+// x,mm.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "MMX_CVT(T?)PI2PDirr")>;
+
+// CVT(T)PD2PI.
+// mm,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "MMX_CVT(T?)PD2PIirr")>;
+
+// CVSTSI2SS.
+// x,r32.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "(Int_)?(V?)CVT(T?)SI2SS(64)?rr")>;
+
+// CVT(T)SS2SI.
+// r32,x.
+def : InstRW<[WriteP0_P1_Lat4], (instregex "(Int_)?(V?)CVT(T?)SS2SI(64)?rr")>;
+// r32,m32.
+def : InstRW<[WriteP0_P1_Lat4Ld], (instregex "(Int_)?(V?)CVT(T?)SS2SI(64)?rm")>;
+
+// CVTSI2SD.
+// x,r32/64.
+def : InstRW<[WriteP0_P1_Lat4], (instregex "(Int_)?(V?)CVTSI2SS(64)?rr")>;
+
+// CVTSD2SI.
+// r32/64
+def : InstRW<[WriteP0_P1_Lat4], (instregex "(Int_)?(V?)CVT(T?)SD2SI(64)?rr")>;
+// r32,m32.
+def : InstRW<[WriteP0_P1_Lat4Ld], (instregex "(Int_)?(V?)CVT(T?)SD2SI(64)?rm")>;
+
+// VCVTPS2PH.
+// x,v,i.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "VCVTPS2PH(Y?)rr")>;
+// m,v,i.
+def : InstRW<[WriteP1_P5_Lat4Ld, WriteRMW], (instregex "VCVTPS2PH(Y?)mr")>;
+
+// VCVTPH2PS.
+// v,x.
+def : InstRW<[WriteP1_P5_Lat4], (instregex "VCVTPH2PS(Y?)rr")>;
 
 } // SchedModel
