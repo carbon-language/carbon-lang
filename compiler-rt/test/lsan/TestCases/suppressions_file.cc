@@ -2,10 +2,10 @@
 // RUN: %clangxx_lsan %s -o %t
 
 // RUN: echo "leak:*LSanTestLeakingFunc*" > %t.supp1
-// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions=%t.supp1 ASAN_OPTIONS=$ASAN_OPTIONS:suppressions=%t.supp1 not %run %t 2>&1 | FileCheck %s
+// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions=%t.supp1 not %run %t 2>&1 | FileCheck %s
 
 // RUN: echo "leak:%t" > %t.supp2
-// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions="%t.supp2":symbolize=false ASAN_OPTIONS=$ASAN_OPTIONS:suppressions="%t.supp2" %run %t
+// RUN: LSAN_OPTIONS=$LSAN_BASE:suppressions="%t.supp2":symbolize=false %run %t
 
 #include <stdio.h>
 #include <stdlib.h>

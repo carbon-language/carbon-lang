@@ -36,7 +36,7 @@ bool DisabledInThisThread() { return disable_counter > 0; }
 
 Flags lsan_flags;
 
-static void InitializeFlags() {
+static void InitializeFlags(bool standalone) {
   Flags *f = flags();
   // Default values.
   f->report_objects = false;
@@ -71,6 +71,17 @@ static void InitializeFlags() {
     ParseFlag(options, &f->log_threads, "log_threads", "");
     ParseFlag(options, &f->exitcode, "exitcode", "");
   }
+
+  // Set defaults for common flags (only in standalone mode) and parse
+  // them from LSAN_OPTIONS.
+  CommonFlags *cf = common_flags();
+  if (standalone) {
+    SetCommonFlagsDefaults(cf);
+    cf->external_symbolizer_path = GetEnv("LSAN_SYMBOLIZER_PATH");
+    cf->malloc_context_size = 30;
+    cf->detect_leaks = true;
+  }
+  ParseCommonFlagsFromString(cf, options);
 }
 
 #define LOG_POINTERS(...)                           \
@@ -106,8 +117,8 @@ void InitializeRootRegions() {
   root_regions = new(placeholder) InternalMmapVector<RootRegion>(1);
 }
 
-void InitCommonLsan() {
-  InitializeFlags();
+void InitCommonLsan(bool standalone) {
+  InitializeFlags(standalone);
   InitializeRootRegions();
   if (common_flags()->detect_leaks) {
     // Initialization which can fail or print warnings should only be done if

@@ -680,7 +680,7 @@ static void AsanInitInternal() {
   SanitizerInitializeUnwinder();
 
 #if CAN_SANITIZE_LEAKS
-  __lsan::InitCommonLsan();
+  __lsan::InitCommonLsan(false);
   if (common_flags()->detect_leaks && common_flags()->leak_check_at_exit) {
     Atexit(__lsan::DoLeakCheck);
   }
