@@ -1343,11 +1343,11 @@ static void makeStandaloneDiagnostic(const LangOptions &LangOpts,
 /// \returns If the precompiled preamble can be used, returns a newly-allocated
 /// buffer that should be used in place of the main file when doing so.
 /// Otherwise, returns a NULL pointer.
-llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
-                              const CompilerInvocation &PreambleInvocationIn,
-                                                           bool AllowRebuild,
-                                                           unsigned MaxLines) {
-  
+std::unique_ptr<llvm::MemoryBuffer>
+ASTUnit::getMainBufferWithPrecompiledPreamble(
+    const CompilerInvocation &PreambleInvocationIn, bool AllowRebuild,
+    unsigned MaxLines) {
+
   IntrusiveRefCntPtr<CompilerInvocation>
     PreambleInvocation(new CompilerInvocation(PreambleInvocationIn));
   FrontendOptions &FrontendOpts = PreambleInvocation->getFrontendOpts();
@@ -1451,8 +1451,10 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
                               PreambleInvocation->getDiagnosticOpts());
         getDiagnostics().setNumWarnings(NumWarningsInPreamble);
 
-        return llvm::MemoryBuffer::getMemBufferCopy(
-            NewPreamble.first->getBuffer(), FrontendOpts.Inputs[0].getFile());
+        return std::unique_ptr<llvm::MemoryBuffer>(
+            llvm::MemoryBuffer::getMemBufferCopy(
+                NewPreamble.first->getBuffer(),
+                FrontendOpts.Inputs[0].getFile()));
       }
     }
 
@@ -1646,9 +1648,10 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     CompletionCacheTopLevelHashValue = 0;
     PreambleTopLevelHashValue = CurrentTopLevelHashValue;
   }
-  
-  return llvm::MemoryBuffer::getMemBufferCopy(NewPreamble.first->getBuffer(),
-                                              MainFilename);
+
+  return std::unique_ptr<llvm::MemoryBuffer>(
+      llvm::MemoryBuffer::getMemBufferCopy(NewPreamble.first->getBuffer(),
+                                           MainFilename));
 }
 
 void ASTUnit::RealizeTopLevelDeclsFromPreamble() {
@@ -1885,7 +1888,7 @@ bool ASTUnit::LoadFromCompilerInvocation(bool PrecompilePreamble) {
   std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer;
   if (PrecompilePreamble) {
     PreambleRebuildCounter = 2;
-    OverrideMainBuffer.reset(getMainBufferWithPrecompiledPreamble(*Invocation));
+    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(*Invocation);
   }
   
   SimpleTimer ParsingTimer(WantTiming);
@@ -2047,7 +2050,7 @@ bool ASTUnit::Reparse(ArrayRef<RemappedFile> RemappedFiles) {
   // build a precompiled preamble, do so now.
   std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer;
   if (!getPreambleFile(this).empty() || PreambleRebuildCounter > 0)
-    OverrideMainBuffer.reset(getMainBufferWithPrecompiledPreamble(*Invocation));
+    OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(*Invocation);
     
   // Clear out the diagnostics state.
   getDiagnostics().Reset();
@@ -2410,7 +2413,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // the use of the precompiled preamble if we're if the completion
   // point is within the main file, after the end of the precompiled
   // preamble.
-  llvm::MemoryBuffer *OverrideMainBuffer = nullptr;
+  std::unique_ptr<llvm::MemoryBuffer> OverrideMainBuffer;
   if (!getPreambleFile(this).empty()) {
     std::string CompleteFilePath(File);
     llvm::sys::fs::UniqueID CompleteFileID;
@@ -2420,9 +2423,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
       llvm::sys::fs::UniqueID MainID;
       if (!llvm::sys::fs::getUniqueID(MainPath, MainID)) {
         if (CompleteFileID == MainID && Line > 1)
-          OverrideMainBuffer
-            = getMainBufferWithPrecompiledPreamble(*CCInvocation, false, 
-                                                   Line - 1);
+          OverrideMainBuffer = getMainBufferWithPrecompiledPreamble(
+              *CCInvocation, false, Line - 1);
       }
     }
   }
@@ -2430,14 +2432,15 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
   if (OverrideMainBuffer) {
-    PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
+    PreprocessorOpts.addRemappedFile(OriginalSourceFile,
+                                     OverrideMainBuffer.get());
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
     PreprocessorOpts.PrecompiledPreambleBytes.second
                                                     = PreambleEndsAtStartOfLine;
     PreprocessorOpts.ImplicitPCHInclude = getPreambleFile(this);
     PreprocessorOpts.DisablePCHValidation = true;
-    
-    OwnedBuffers.push_back(OverrideMainBuffer);
+
+    OwnedBuffers.push_back(OverrideMainBuffer.release());
   } else {
     PreprocessorOpts.PrecompiledPreambleBytes.first = 0;
     PreprocessorOpts.PrecompiledPreambleBytes.second = false;

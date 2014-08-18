@@ -428,11 +428,10 @@ private:
   std::pair<llvm::MemoryBuffer *, std::pair<unsigned, bool> >
   ComputePreamble(CompilerInvocation &Invocation, 
                   unsigned MaxLines, bool &CreatedBuffer);
-  
-  llvm::MemoryBuffer *getMainBufferWithPrecompiledPreamble(
-                               const CompilerInvocation &PreambleInvocationIn,
-                                                     bool AllowRebuild = true,
-                                                        unsigned MaxLines = 0);
+
+  std::unique_ptr<llvm::MemoryBuffer> getMainBufferWithPrecompiledPreamble(
+      const CompilerInvocation &PreambleInvocationIn, bool AllowRebuild = true,
+      unsigned MaxLines = 0);
   void RealizeTopLevelDeclsFromPreamble();
 
   /// \brief Transfers ownership of the objects (like SourceManager) from
