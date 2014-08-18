@@ -1410,7 +1410,7 @@ SDValue SITargetLowering::PerformDAGCombine(SDNode *N,
       SDValue NewPtr = performSHLPtrCombine(Ptr.getNode(), AS, DCI);
       if (NewPtr) {
         SmallVector<SDValue, 8> NewOps;
-        for (unsigned I = 0, N = MemNode->getNumOperands(); I != N; ++I)
+        for (unsigned I = 0, E = MemNode->getNumOperands(); I != E; ++I)
           NewOps.push_back(MemNode->getOperand(I));
 
         NewOps[N->getOpcode() == ISD::STORE ? 2 : 1] = NewPtr;
