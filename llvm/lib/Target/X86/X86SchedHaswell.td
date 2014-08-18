@@ -1175,4 +1175,20 @@ def WriteFRNDINT : SchedWriteRes<[]> {
 }
 def : InstRW<[WriteFRNDINT], (instregex "FRNDINT")>;
 
+//-- Math instructions --//
+
+// FSCALE.
+def WriteFSCALE : SchedWriteRes<[]> {
+  let Latency = 75; // 49-125
+  let NumMicroOps = 50; // 25-75
+}
+def : InstRW<[WriteFSCALE], (instregex "FSCALE")>;
+
+// FXTRACT.
+def WriteFXTRACT : SchedWriteRes<[]> {
+  let Latency = 15;
+  let NumMicroOps = 17;
+}
+def : InstRW<[WriteFXTRACT], (instregex "FXTRACT")>;
+
 } // SchedModel
