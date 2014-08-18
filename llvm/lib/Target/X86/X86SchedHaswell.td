@@ -2106,4 +2106,34 @@ def : InstRW<[WriteP5], (instregex "(V?)(AND|ANDN|OR|XOR)P(S|D)(Y?)rr")>;
 def : InstRW<[WriteP5Ld, ReadAfterLd],
                          (instregex "(V?)(AND|ANDN|OR|XOR)P(S|D)(Y?)rm")>;
 
+//-- Other instructions --//
+
+// VZEROUPPER.
+def WriteVZEROUPPER : SchedWriteRes<[]> {
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteVZEROUPPER], (instregex "VZEROUPPER")>;
+
+// VZEROALL.
+def WriteVZEROALL : SchedWriteRes<[]> {
+  let NumMicroOps = 12;
+}
+def : InstRW<[WriteVZEROALL], (instregex "VZEROALL")>;
+
+// LDMXCSR.
+def WriteLDMXCSR : SchedWriteRes<[HWPort0, HWPort6, HWPort23]> {
+  let Latency = 6;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteLDMXCSR], (instregex "(V)?LDMXCSR")>;
+
+// STMXCSR.
+def WriteSTMXCSR : SchedWriteRes<[HWPort0, HWPort4, HWPort6, HWPort237]> {
+  let Latency = 7;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+def : InstRW<[WriteSTMXCSR], (instregex "(V)?STMXCSR")>;
+
 } // SchedModel
