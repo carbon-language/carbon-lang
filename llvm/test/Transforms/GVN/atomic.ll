@@ -78,3 +78,29 @@ entry:
   %x3 = add i32 %x, %x2
   ret i32 %x3
 }
+
+; GVN across monotonic store (allowed)
+define i32 @test7() nounwind uwtable ssp {
+; CHECK: test7
+; CHECK: add i32 %x, %x
+entry:
+  %x = load i32* @y
+  store atomic i32 %x, i32* @x monotonic, align 4
+  %y = load i32* @y
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+; GVN of an unordered across monotonic load (not allowed)
+define i32 @test8() nounwind uwtable ssp {
+; CHECK: test8
+; CHECK: add i32 %x, %y
+entry:
+  %x = load atomic i32* @y unordered, align 4
+  %clobber = load atomic i32* @x monotonic, align 4
+  %y = load atomic i32* @y monotonic, align 4
+  %z = add i32 %x, %y
+  ret i32 %z
+}
+
+

@@ -407,20 +407,32 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
     // Values depend on loads if the pointers are must aliased.  This means that
     // a load depends on another must aliased load from the same value.
+    // One exception is atomic loads: a value can depend on an atomic load that it
+    // does not alias with when this atomic load indicates that another thread may
+    // be accessing the location.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Atomic loads have complications involved.
       // A monotonic load is OK if the query inst is itself not atomic.
       // FIXME: This is overly conservative.
       if (!LI->isUnordered()) {
-        if (!QueryInst || LI->getOrdering() != Monotonic)
+        if (!QueryInst)
+          return MemDepResult::getClobber(LI);
+        if (LI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(LI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
-          if (!QueryLI->isUnordered())
+          if (!QueryLI->isSimple())
             return MemDepResult::getClobber(LI);
         if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
-          if (!QuerySI->isUnordered())
+          if (!QuerySI->isSimple())
             return MemDepResult::getClobber(LI);
       }
+
+      // FIXME: this is overly conservative.
+      // While volatile access cannot be eliminated, they do not have to clobber
+      // non-aliasing locations, as normal accesses can for example be reordered
+      // with volatile accesses.
+      if (LI->isVolatile())
+        return MemDepResult::getClobber(LI);
 
       AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
 
@@ -481,15 +493,24 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
       // A monotonic store is OK if the query inst is itself not atomic.
       // FIXME: This is overly conservative.
       if (!SI->isUnordered()) {
-        if (!QueryInst || SI->getOrdering() != Monotonic)
+        if (!QueryInst)
+          return MemDepResult::getClobber(SI);
+        if (SI->getOrdering() != Monotonic)
           return MemDepResult::getClobber(SI);
         if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
-          if (!QueryLI->isUnordered())
+          if (!QueryLI->isSimple())
             return MemDepResult::getClobber(SI);
         if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
-          if (!QuerySI->isUnordered())
+          if (!QuerySI->isSimple())
             return MemDepResult::getClobber(SI);
       }
+
+      // FIXME: this is overly conservative.
+      // While volatile access cannot be eliminated, they do not have to clobber
+      // non-aliasing locations, as normal accesses can for example be reordered
+      // with volatile accesses.
+      if (SI->isVolatile())
+        return MemDepResult::getClobber(SI);
 
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
