@@ -167,10 +167,6 @@ LLLexer::LLLexer(MemoryBuffer *StartBuf, SourceMgr &sm, SMDiagnostic &Err,
   CurPtr = CurBuf->getBufferStart();
 }
 
-std::string LLLexer::getFilename() const {
-  return CurBuf->getBufferIdentifier();
-}
-
 int LLLexer::getNextChar() {
   char CurChar = *CurPtr++;
   switch (CurChar) {

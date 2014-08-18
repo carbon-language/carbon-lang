@@ -67,8 +67,6 @@ namespace llvm {
     void Warning(LocTy WarningLoc, const Twine &Msg) const;
     void Warning(const Twine &Msg) const { return Warning(getLoc(), Msg); }
 
-    std::string getFilename() const;
-
   private:
     lltok::Kind LexToken();
 
