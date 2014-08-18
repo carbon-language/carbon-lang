@@ -1545,4 +1545,148 @@ def WriteEMMS : SchedWriteRes<[]> {
 }
 def : InstRW<[WriteEMMS], (instregex "MMX_EMMS")>;
 
+//=== Floating Point XMM and YMM Instructions ===//
+//-- Move instructions --//
+
+// MOVMSKP S/D.
+// r32 <- x.
+def WriteMOVMSKPr : SchedWriteRes<[HWPort0]> {
+  let Latency = 3;
+}
+def : InstRW<[WriteMOVMSKPr], (instregex "(V?)MOVMSKP(S|D)rr")>;
+
+// r32 <- y.
+def WriteVMOVMSKPYr : SchedWriteRes<[HWPort0]> {
+  let Latency = 2;
+}
+def : InstRW<[WriteVMOVMSKPYr], (instregex "VMOVMSKP(S|D)Yrr")>;
+
+// VPERM2F128.
+def : InstRW<[WriteFShuffle256], (instregex "VPERM2F128rr")>;
+def : InstRW<[WriteFShuffle256Ld, ReadAfterLd], (instregex "VPERM2F128rm")>;
+
+// BLENDVP S/D.
+def : InstRW<[WriteFVarBlend], (instregex "BLENDVP(S|D)rr0")>;
+def : InstRW<[WriteFVarBlendLd, ReadAfterLd], (instregex "BLENDVP(S|D)rm0")>;
+
+// VBROADCASTF128.
+def : InstRW<[WriteLoad], (instregex "VBROADCASTF128")>;
+
+// EXTRACTPS.
+// r32,x,i.
+def WriteEXTRACTPSr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteEXTRACTPSr], (instregex "(V?)EXTRACTPSrr")>;
+
+// m32,x,i.
+def WriteEXTRACTPSm : SchedWriteRes<[HWPort0, HWPort5, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteEXTRACTPSm], (instregex "(V?)EXTRACTPSmr")>;
+
+// VEXTRACTF128.
+// x,y,i.
+def : InstRW<[WriteFShuffle256], (instregex "VEXTRACTF128rr")>;
+
+// m128,y,i.
+def WriteVEXTRACTF128m : SchedWriteRes<[HWPort23, HWPort4]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteVEXTRACTF128m], (instregex "VEXTRACTF128mr")>;
+
+// VINSERTF128.
+// y,y,x,i.
+def : InstRW<[WriteFShuffle256], (instregex "VINSERTF128rr")>;
+
+// y,y,m128,i.
+def WriteVINSERTF128m : SchedWriteRes<[HWPort015, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteFShuffle256, ReadAfterLd], (instregex "VINSERTF128rm")>;
+
+// VMASKMOVP S/D.
+// v,v,m.
+def WriteVMASKMOVPrm : SchedWriteRes<[HWPort5, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVMASKMOVPrm], (instregex "VMASKMOVP(S|D)(Y?)rm")>;
+
+// m128,x,x.
+def WriteVMASKMOVPmr : SchedWriteRes<[HWPort0, HWPort1, HWPort4, HWPort23]> {
+  let Latency = 13;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+def : InstRW<[WriteVMASKMOVPmr], (instregex "VMASKMOVP(S|D)mr")>;
+
+// m256,y,y.
+def WriteVMASKMOVPYmr : SchedWriteRes<[HWPort0, HWPort1, HWPort4, HWPort23]> {
+  let Latency = 14;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+def : InstRW<[WriteVMASKMOVPYmr], (instregex "VMASKMOVP(S|D)Ymr")>;
+
+// VGATHERDPS.
+// x.
+def WriteVGATHERDPS128 : SchedWriteRes<[]> {
+  let NumMicroOps = 20;
+}
+def : InstRW<[WriteVGATHERDPS128, ReadAfterLd], (instregex "VGATHERDPSrm")>;
+
+// y.
+def WriteVGATHERDPS256 : SchedWriteRes<[]> {
+  let NumMicroOps = 34;
+}
+def : InstRW<[WriteVGATHERDPS256, ReadAfterLd], (instregex "VGATHERDPSYrm")>;
+
+// VGATHERQPS.
+// x.
+def WriteVGATHERQPS128 : SchedWriteRes<[]> {
+  let NumMicroOps = 15;
+}
+def : InstRW<[WriteVGATHERQPS128, ReadAfterLd], (instregex "VGATHERQPSrm")>;
+
+// y.
+def WriteVGATHERQPS256 : SchedWriteRes<[]> {
+  let NumMicroOps = 22;
+}
+def : InstRW<[WriteVGATHERQPS256, ReadAfterLd], (instregex "VGATHERQPSYrm")>;
+
+// VGATHERDPD.
+// x.
+def WriteVGATHERDPD128 : SchedWriteRes<[]> {
+  let NumMicroOps = 12;
+}
+def : InstRW<[WriteVGATHERDPD128, ReadAfterLd], (instregex "VGATHERDPDrm")>;
+
+// y.
+def WriteVGATHERDPD256 : SchedWriteRes<[]> {
+  let NumMicroOps = 20;
+}
+def : InstRW<[WriteVGATHERDPD256, ReadAfterLd], (instregex "VGATHERDPDYrm")>;
+
+// VGATHERQPD.
+// x.
+def WriteVGATHERQPD128 : SchedWriteRes<[]> {
+  let NumMicroOps = 14;
+}
+def : InstRW<[WriteVGATHERQPD128, ReadAfterLd], (instregex "VGATHERQPDrm")>;
+
+// y.
+def WriteVGATHERQPD256 : SchedWriteRes<[]> {
+  let NumMicroOps = 22;
+}
+def : InstRW<[WriteVGATHERQPD256, ReadAfterLd], (instregex "VGATHERQPDYrm")>;
+
 } // SchedModel
