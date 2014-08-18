@@ -1643,6 +1643,7 @@ static int perform_file_scan(const char *ast_file, const char *source_file,
 
   if ((fp = fopen(source_file, "r")) == NULL) {
     fprintf(stderr, "Could not open '%s'\n", source_file);
+    clang_disposeTranslationUnit(TU);
     return 1;
   }
 
