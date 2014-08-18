@@ -12,7 +12,7 @@ if (NOT DEFINED LLVM_MAIN_SRC_DIR)
   #FileCheck is not install by default, warn the user to Copy FileCheck
   if( NOT EXISTS ${LLVM_INSTALL_ROOT}/bin/FileCheck
       OR NOT EXISTS ${LLVM_INSTALL_ROOT}/bin/not)
-    message(WARNING "FileCheck or not are requred by running regress tests, "
+    message(WARNING "FileCheck or not are required by running regress tests, "
                     "but they are not installed! Please copy it to "
                     "${LLVM_INSTALL_ROOT}/bin.")
   endif(NOT EXISTS ${LLVM_INSTALL_ROOT}/bin/FileCheck

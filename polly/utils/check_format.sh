@@ -14,7 +14,7 @@ OK=0
 
 for ARG in "$@"
   do
-    ${CLANG_FORMAT} $ARG | diff -u $ARG -
+    ${CLANG_FORMAT} -style=llvm $ARG | diff -u $ARG - >&2
 
     if [[ $? -eq 1 ]]; then
       OK=1

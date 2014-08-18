@@ -1,0 +1,23 @@
+{
+  "linters": {
+    "format": {
+      "include": "(include/polly/.+\\.h$|lib/.+\\.cpp$)",
+      "exclude": "(lib/JSON/.*)",
+      "type": "script-and-regex"
+    },
+    "chmod": {
+      "type": "chmod"
+    },
+    "filename": {
+      "exclude": "(www/experiments/.+|.*\\.jscop.*)",
+      "type": "filename"
+    },
+    "merge-conflict": {
+      "type": "merge-conflict"
+    },
+    "spelling": {
+      "exclude": "(configure|autoconf/.*)",
+      "type": "spelling"
+    }
+  }
+}

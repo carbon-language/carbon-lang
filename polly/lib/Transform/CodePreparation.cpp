@@ -18,7 +18,7 @@
 // variables. Such variables are generated before scop detection and
 // also before the code preparation pass. All PHI nodes that are not canonical
 // induction variables are not supported by the indvars based code generation
-// and are consequently translated into explict memory accesses.
+// and are consequently translated into explicit memory accesses.
 //
 // - scev based code generation:
 //

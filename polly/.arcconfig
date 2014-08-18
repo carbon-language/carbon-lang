@@ -1,4 +1,6 @@
 {
   "project_id" : "polly",
-  "conduit_uri" : "http://reviews.llvm.org/"
+  "conduit_uri" : "http://reviews.llvm.org/",
+  "linter.scriptandregex.script": "sh -c './utils/check_format.sh \"$0\" 2> /dev/null || true'",
+  "linter.scriptandregex.regex": "/^(OK:(?P<ignore>.+)|Error:) (?P<message>.+)$/m"
 }

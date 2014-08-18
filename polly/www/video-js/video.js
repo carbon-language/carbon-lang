@@ -39,7 +39,7 @@ var VideoJS = JRClass.extend({
       this.video = element;
     }
     // Store reference to player on the video element.
-    // So you can acess the player later: document.getElementById("video_id").player.play();
+    // So you can access the player later: document.getElementById("video_id").player.play();
     this.video.player = this;
     this.values = {}; // Cache video values.
     this.elements = {}; // Store refs to controls elements.
@@ -456,7 +456,7 @@ VideoJS.player.extend({
     this.canPlaySourceResult = false;
     return false;
   },
-  // Check if the extention is compatible, for when type won't work
+  // Check if the extension is compatible, for when type won't work
   canPlayExt: function(src){
     if (!src) { return ""; }
     var match = src.match(/\.([^\.]+)$/);
@@ -1290,10 +1290,10 @@ VideoJS.player.newBehavior("currentTimeScrubber", function(element){
       _V_.addListener(document, "mousemove", this.onCurrentTimeScrubberMouseMove.rEvtContext(this));
       _V_.addListener(document, "mouseup", this.onCurrentTimeScrubberMouseUp.rEvtContext(this));
     },
-    onCurrentTimeScrubberMouseMove: function(event){ // Removeable
+    onCurrentTimeScrubberMouseMove: function(event){ // Removable
       this.setCurrentTimeWithScrubber(event);
     },
-    onCurrentTimeScrubberMouseUp: function(event){ // Removeable
+    onCurrentTimeScrubberMouseUp: function(event){ // Removable
       _V_.unblockTextSelection();
       document.removeEventListener("mousemove", this.onCurrentTimeScrubberMouseMove, false);
       document.removeEventListener("mouseup", this.onCurrentTimeScrubberMouseUp, false);
@@ -1385,11 +1385,11 @@ VideoJS.player.newBehavior("fullscreenToggle", function(element){
       }
     },
 
-    fullscreenOnWindowResize: function(event){ // Removeable
+    fullscreenOnWindowResize: function(event){ // Removable
       this.positionControlBars();
     },
     // Create listener for esc key while in full screen mode
-    fullscreenOnEscKey: function(event){ // Removeable
+    fullscreenOnEscKey: function(event){ // Removable
       if (event.keyCode == 27) {
         this.exitFullScreen();
       }
@@ -1718,7 +1718,7 @@ Function.prototype.evtContext = function(obj){
   return temp;
 };
 
-// Removeable Event listener with Context
+// Removable Event listener with Context
 // Replaces the original function with a version that has context
 // So it can be removed using the original function name.
 // In order to work, a version of the function must already exist in the player/prototype
