@@ -48,6 +48,7 @@ def HWPort6 : ProcResource<1>;
 def HWPort7 : ProcResource<1>;
 
 // Many micro-ops are capable of issuing on multiple ports.
+def HWPort01  : ProcResGroup<[HWPort0, HWPort1]>;
 def HWPort23  : ProcResGroup<[HWPort2, HWPort3]>;
 def HWPort237 : ProcResGroup<[HWPort2, HWPort3, HWPort7]>;
 def HWPort05  : ProcResGroup<[HWPort0, HWPort5]>;
@@ -285,6 +286,12 @@ def Write2P0156_Lat2Ld : SchedWriteRes<[HWPort0156, HWPort23]> {
 def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [2, 1];
+}
+
+def WriteP01 : SchedWriteRes<[HWPort01]>;
+
+def Write2P01 : SchedWriteRes<[HWPort01]> {
+  let NumMicroOps = 2;
 }
 
 def WriteP06 : SchedWriteRes<[HWPort06]>;
@@ -978,5 +985,124 @@ def WriteRDRAND : SchedWriteRes<[HWPort23, HWPort015]> {
   let ResourceCycles = [1, 16];
 }
 def : InstRW<[WriteRDRAND], (instregex "RDRAND(16|32|64)r")>;
+
+//=== Floating Point x87 Instructions ===//
+//-- Move instructions --//
+
+// FLD.
+// m80.
+def : InstRW<[WriteP01], (instregex "LD_Frr")>;
+
+def WriteLD_F80m : SchedWriteRes<[HWPort01, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 2];
+}
+def : InstRW<[WriteLD_F80m], (instregex "LD_F80m")>;
+
+// FBLD.
+// m80.
+def WriteFBLD : SchedWriteRes<[]> {
+  let Latency = 47;
+  let NumMicroOps = 43;
+}
+def : InstRW<[WriteFBLD], (instregex "FBLDm")>;
+
+// FST(P).
+// r.
+def : InstRW<[WriteP01], (instregex "ST_(F|FP)rr")>;
+
+// m80.
+def WriteST_FP80m : SchedWriteRes<[HWPort0156, HWPort23, HWPort4]> {
+  let NumMicroOps = 7;
+  let ResourceCycles = [3, 2, 2];
+}
+def : InstRW<[WriteST_FP80m], (instregex "ST_FP80m")>;
+
+// FBSTP.
+// m80.
+def WriteFBSTP : SchedWriteRes<[]> {
+  let NumMicroOps = 226;
+}
+def : InstRW<[WriteFBSTP], (instregex "FBSTPm")>;
+
+// FXCHG.
+def : InstRW<[WriteNop], (instregex "XCH_F")>;
+
+// FILD.
+def WriteFILD : SchedWriteRes<[HWPort01, HWPort23]> {
+  let Latency = 6;
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteFILD], (instregex "ILD_F(16|32|64)m")>;
+
+// FIST(P) FISTTP.
+def WriteFIST : SchedWriteRes<[HWPort1, HWPort23, HWPort4]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteFIST], (instregex "IST_(F|FP)(16|32)m")>;
+
+// FLDZ.
+def : InstRW<[WriteP01], (instregex "LD_F0")>;
+
+// FLD1.
+def : InstRW<[Write2P01], (instregex "LD_F1")>;
+
+// FLDPI FLDL2E etc.
+def : InstRW<[Write2P01], (instregex "FLDPI", "FLDL2(T|E)" "FLDL(G|N)2")>;
+
+// FCMOVcc.
+def WriteFCMOVcc : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteFCMOVcc], (instregex "CMOV(B|BE|P|NB|NBE|NE|NP)_F")>;
+
+// FNSTSW.
+// AX.
+def WriteFNSTSW : SchedWriteRes<[HWPort0, HWPort0156]> {
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteFNSTSW], (instregex "FNSTSW16r")>;
+
+// m16.
+def WriteFNSTSWm : SchedWriteRes<[HWPort0, HWPort4, HWPort237]> {
+  let Latency = 6;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteFNSTSWm], (instregex "FNSTSWm")>;
+
+// FLDCW.
+def WriteFLDCW : SchedWriteRes<[HWPort01, HWPort23, HWPort6]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteFLDCW], (instregex "FLDCW16m")>;
+
+// FNSTCW.
+def WriteFNSTCW : SchedWriteRes<[HWPort237, HWPort4, HWPort6]> {
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteFNSTCW], (instregex "FNSTCW16m")>;
+
+// FINCSTP FDECSTP.
+def : InstRW<[WriteP01], (instregex "FINCSTP", "FDECSTP")>;
+
+// FFREE.
+def : InstRW<[WriteP01], (instregex "FFREE")>;
+
+// FNSAVE.
+def WriteFNSAVE : SchedWriteRes<[]> {
+  let NumMicroOps = 147;
+}
+def : InstRW<[WriteFNSAVE], (instregex "FSAVEm")>;
+
+// FRSTOR.
+def WriteFRSTOR : SchedWriteRes<[]> {
+  let NumMicroOps = 90;
+}
+def : InstRW<[WriteFRSTOR], (instregex "FRSTORm")>;
 
 } // SchedModel
