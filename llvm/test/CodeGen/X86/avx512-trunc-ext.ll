@@ -135,9 +135,8 @@ define <16 x i16> @trunc_v16i32_to_v16i16(<16 x i32> %x) {
 }
 
 ; CHECK-LABEL: trunc_i32_to_i1
-; CHECK: andl
-; CHECK: kmov
-; CHECK: kortest
+; CHECK: testb
+; CHECK: setne
 ; CKECK: orl
 ; CHECK: ret
 define i16 @trunc_i32_to_i1(i32 %a) {

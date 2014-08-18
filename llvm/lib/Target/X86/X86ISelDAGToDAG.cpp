@@ -2544,12 +2544,30 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
     SDValue N0 = Node->getOperand(0);
     SDValue N1 = Node->getOperand(1);
 
+    if (N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse() &&
+        HasNoSignedComparisonUses(Node)) {
+      // Look for (X86cmp (truncate $op, i1), 0) and try to convert to a
+      // smaller encoding
+      if (Opcode == X86ISD::CMP && N0.getValueType() == MVT::i1 &&
+          X86::isZeroNode(N1)) {
+        SDValue Reg = N0.getOperand(0);
+        SDValue Imm = CurDAG->getTargetConstant(1, MVT::i8);
+
+        // Emit testb
+        if (Reg.getScalarValueSizeInBits() > 8)
+          Reg = CurDAG->getTargetExtractSubreg(X86::sub_8bit, dl, MVT::i8, Reg);
+        // Emit a testb.
+        SDNode *NewNode = CurDAG->getMachineNode(X86::TEST8ri, dl, MVT::i32,
+                                                Reg, Imm);
+        ReplaceUses(SDValue(Node, 0), SDValue(NewNode, 0));
+        return nullptr;
+      }
+
+      N0 = N0.getOperand(0);
+    }
     // Look for (X86cmp (and $op, $imm), 0) and see if we can convert it to
     // use a smaller encoding.
-    if (N0.getOpcode() == ISD::TRUNCATE && N0.hasOneUse() &&
-        HasNoSignedComparisonUses(Node))
-      // Look past the truncate if CMP is the only use of it.
-      N0 = N0.getOperand(0);
+    // Look past the truncate if CMP is the only use of it.
     if ((N0.getNode()->getOpcode() == ISD::AND ||
          (N0.getResNo() == 0 && N0.getNode()->getOpcode() == X86ISD::AND)) &&
         N0.getNode()->hasOneUse() &&

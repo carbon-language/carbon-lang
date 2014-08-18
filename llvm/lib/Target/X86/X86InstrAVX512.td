@@ -1198,6 +1198,10 @@ let Predicates = [HasBWI] in {
 }
 
 let Predicates = [HasAVX512] in {
+  def : Pat<(i1 (trunc (i64 GR64:$src))),
+            (COPY_TO_REGCLASS (KMOVWkr (AND32ri (EXTRACT_SUBREG $src, sub_32bit),
+                                        (i32 1))), VK1)>;
+
   def : Pat<(i1 (trunc (i32 GR32:$src))),
             (COPY_TO_REGCLASS (KMOVWkr (AND32ri $src, (i32 1))), VK1)>;
 
