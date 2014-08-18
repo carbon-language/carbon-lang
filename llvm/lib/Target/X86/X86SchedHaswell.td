@@ -53,12 +53,12 @@ def HWPort23  : ProcResGroup<[HWPort2, HWPort3]>;
 def HWPort237 : ProcResGroup<[HWPort2, HWPort3, HWPort7]>;
 def HWPort04  : ProcResGroup<[HWPort0, HWPort4]>;
 def HWPort05  : ProcResGroup<[HWPort0, HWPort5]>;
-def HWPort06 : ProcResGroup<[HWPort0, HWPort6]>;
+def HWPort06  : ProcResGroup<[HWPort0, HWPort6]>;
 def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort16  : ProcResGroup<[HWPort1, HWPort6]>;
-def HWPort56: ProcResGroup<[HWPort5, HWPort6]>;
+def HWPort56  : ProcResGroup<[HWPort5, HWPort6]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
-def HWPort056: ProcResGroup<[HWPort0, HWPort5, HWPort6]>;
+def HWPort056 : ProcResGroup<[HWPort0, HWPort5, HWPort6]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
 
 // 60 Entry Unified Scheduler
@@ -269,35 +269,20 @@ def : WriteRes<WriteNop, []>;
 //================ Exceptions ================//
 
 //-- Specific Scheduling Models --//
+
+// Starting with P0.
 def WriteP0 : SchedWriteRes<[HWPort0]>;
-def WriteP1 : SchedWriteRes<[HWPort1]>;
-def WriteP1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
+
+def WriteP0_P1_Lat4 : SchedWriteRes<[HWPort0, HWPort1]> {
+  let Latency = 4;
   let NumMicroOps = 2;
-}
-def WriteP1_Lat3 : SchedWriteRes<[HWPort1]> {
-  let Latency = 3;
-}
-def WriteP1_Lat3Ld : SchedWriteRes<[HWPort1, HWPort23]> {
-  let Latency = 7;
+  let ResourceCycles = [1, 1];
 }
 
-def Write2P0156_Lat2 : SchedWriteRes<[HWPort0156]> {
-  let Latency = 2;
-  let ResourceCycles = [2];
-}
-def Write2P0156_Lat2Ld : SchedWriteRes<[HWPort0156, HWPort23]> {
-  let Latency = 6;
-  let ResourceCycles = [2, 1];
-}
-
-def Write5P0156 : SchedWriteRes<[HWPort0156]> {
-  let NumMicroOps = 5;
-  let ResourceCycles = [5];
-}
-
-def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
-  let Latency = 1;
-  let ResourceCycles = [2, 1];
+def WriteP0_P1_Lat4Ld : SchedWriteRes<[HWPort0, HWPort1, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
 }
 
 def WriteP01 : SchedWriteRes<[HWPort01]>;
@@ -322,19 +307,6 @@ def Write2P06 : SchedWriteRes<[HWPort06]> {
   let ResourceCycles = [2];
 }
 
-def Write2P1 : SchedWriteRes<[HWPort1]> {
-  let NumMicroOps = 2;
-  let ResourceCycles = [2];
-}
-def Write2P1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
-  let NumMicroOps = 3;
-  let ResourceCycles = [2, 1];
-}
-def WriteP15 : SchedWriteRes<[HWPort15]>;
-def WriteP15Ld : SchedWriteRes<[HWPort15, HWPort23]> {
-  let Latency = 4;
-}
-
 def Write3P06_Lat2 : SchedWriteRes<[HWPort06]> {
   let Latency = 2;
   let NumMicroOps = 3;
@@ -343,6 +315,25 @@ def Write3P06_Lat2 : SchedWriteRes<[HWPort06]> {
 
 def WriteP0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
   let NumMicroOps = 2;
+}
+
+def Write2P0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+
+def Write2P0156_Lat2 : SchedWriteRes<[HWPort0156]> {
+  let Latency = 2;
+  let ResourceCycles = [2];
+}
+def Write2P0156_Lat2Ld : SchedWriteRes<[HWPort0156, HWPort23]> {
+  let Latency = 6;
+  let ResourceCycles = [2, 1];
+}
+
+def Write5P0156 : SchedWriteRes<[HWPort0156]> {
+  let NumMicroOps = 5;
+  let ResourceCycles = [5];
 }
 
 def WriteP0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
@@ -355,33 +346,35 @@ def Write2P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let ResourceCycles = [2, 2, 1];
 }
 
-def Write2P0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
-  let NumMicroOps = 3;
-  let ResourceCycles = [2, 1];
-}
-
 def Write3P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [3, 2, 1];
 }
 
-def WriteP5 : SchedWriteRes<[HWPort5]>;
-def WriteP5Ld : SchedWriteRes<[HWPort5, HWPort23]> {
-  let Latency = 5;
+// Starting with P1.
+def WriteP1 : SchedWriteRes<[HWPort1]>;
+
+def WriteP1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
   let NumMicroOps = 2;
-  let ResourceCycles = [1, 1];
+}
+def WriteP1_Lat3 : SchedWriteRes<[HWPort1]> {
+  let Latency = 3;
+}
+def WriteP1_Lat3Ld : SchedWriteRes<[HWPort1, HWPort23]> {
+  let Latency = 7;
 }
 
-def WriteP0_P1_Lat4 : SchedWriteRes<[HWPort0, HWPort1]> {
-  let Latency = 4;
+def Write2P1 : SchedWriteRes<[HWPort1]> {
   let NumMicroOps = 2;
-  let ResourceCycles = [1, 1];
+  let ResourceCycles = [2];
 }
-
-def WriteP0_P1_Lat4Ld : SchedWriteRes<[HWPort0, HWPort1, HWPort23]> {
-  let Latency = 8;
+def Write2P1_P23 : SchedWriteRes<[HWPort1, HWPort23]> {
   let NumMicroOps = 3;
-  let ResourceCycles = [1, 1, 1];
+  let ResourceCycles = [2, 1];
+}
+def WriteP15 : SchedWriteRes<[HWPort15]>;
+def WriteP15Ld : SchedWriteRes<[HWPort15, HWPort23]> {
+  let Latency = 4;
 }
 
 def WriteP1_P5_Lat4 : SchedWriteRes<[HWPort1, HWPort5]> {
@@ -406,6 +399,20 @@ def WriteP1_P5_Lat6Ld : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
   let Latency = 10;
   let NumMicroOps = 3;
   let ResourceCycles = [1, 1, 1];
+}
+
+// Starting with P2.
+def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
+  let Latency = 1;
+  let ResourceCycles = [2, 1];
+}
+
+// Starting with P5.
+def WriteP5 : SchedWriteRes<[HWPort5]>;
+def WriteP5Ld : SchedWriteRes<[HWPort5, HWPort23]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
 }
 
 // Notation:
