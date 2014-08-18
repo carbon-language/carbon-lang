@@ -389,13 +389,17 @@ void llvm_gcda_emit_arcs(uint32_t num_counters, uint64_t *counters) {
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
     if (val != 0x01a10000) {
-      fprintf(stderr, "profiling:invalid arc tag (0x%08x)\n", val);
+      fprintf(stderr, "profiling: %s: cannot merge previous GCDA file: "
+                      "corrupt arc tag (0x%08x)\n",
+              filename, val);
       return;
     }
 
     val = read_32bit_value();
     if (val == (uint32_t)-1 || val / 2 != num_counters) {
-      fprintf(stderr, "profiling:invalid number of counters (%d)\n", val);
+      fprintf(stderr, "profiling: %s: cannot merge previous GCDA file: "
+                      "mismatched number of counters (%d)\n",
+              filename, val);
       return;
     }
 
@@ -437,13 +441,17 @@ void llvm_gcda_summary_info() {
   if (val != (uint32_t)-1) {
     /* There are counters present in the file. Merge them. */
     if (val != 0xa1000000) {
-      fprintf(stderr, "profiling:invalid object tag (0x%08x)\n", val);
+      fprintf(stderr, "profiling: %s: cannot merge previous run count: "
+                      "corrupt object tag (0x%08x)\n",
+              filename, val);
       return;
     }
 
     val = read_32bit_value(); /* length */
     if (val != obj_summary_len) {
-      fprintf(stderr, "profiling:invalid object length (%d)\n", val);
+      fprintf(stderr, "profiling: %s: cannot merge previous run count: "
+                      "mismatched object length (%d)\n",
+              filename, val);
       return;
     }
 
