@@ -283,7 +283,7 @@ void Constant::destroyConstantImpl() {
 }
 
 static bool canTrapImpl(const Constant *C,
-                        SmallPtrSetImpl<const ConstantExpr *> &NonTrappingOps) {
+                        SmallPtrSet<const ConstantExpr *, 4> &NonTrappingOps) {
   assert(C->getType()->isFirstClassType() && "Cannot evaluate aggregate vals!");
   // The only thing that could possibly trap are constant exprs.
   const ConstantExpr *CE = dyn_cast<ConstantExpr>(C);

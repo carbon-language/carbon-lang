@@ -506,7 +506,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
 /// DeadPHICycle - Return true if this PHI node is only used by a PHI node cycle
 /// that is dead.
 static bool DeadPHICycle(PHINode *PN,
-                         SmallPtrSetImpl<PHINode*> &PotentiallyDeadPHIs) {
+                         SmallPtrSet<PHINode*, 16> &PotentiallyDeadPHIs) {
   if (PN->use_empty()) return true;
   if (!PN->hasOneUse()) return false;
 
@@ -528,7 +528,7 @@ static bool DeadPHICycle(PHINode *PN,
 /// NonPhiInVal.  This happens with mutually cyclic phi nodes like:
 ///   z = some value; x = phi (y, z); y = phi (x, z)
 static bool PHIsEqualValue(PHINode *PN, Value *NonPhiInVal,
-                           SmallPtrSetImpl<PHINode*> &ValueEqualPHIs) {
+                           SmallPtrSet<PHINode*, 16> &ValueEqualPHIs) {
   // See if we already saw this PHI node.
   if (!ValueEqualPHIs.insert(PN))
     return true;

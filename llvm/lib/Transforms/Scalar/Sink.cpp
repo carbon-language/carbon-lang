@@ -56,7 +56,7 @@ namespace {
     }
   private:
     bool ProcessBlock(BasicBlock &BB);
-    bool SinkInstruction(Instruction *I, SmallPtrSetImpl<Instruction*> &Stores);
+    bool SinkInstruction(Instruction *I, SmallPtrSet<Instruction *, 8> &Stores);
     bool AllUsesDominatedByBlock(Instruction *Inst, BasicBlock *BB) const;
     bool IsAcceptableTarget(Instruction *Inst, BasicBlock *SuccToSinkTo) const;
   };
@@ -157,7 +157,7 @@ bool Sinking::ProcessBlock(BasicBlock &BB) {
 }
 
 static bool isSafeToMove(Instruction *Inst, AliasAnalysis *AA,
-                         SmallPtrSetImpl<Instruction *> &Stores) {
+                         SmallPtrSet<Instruction *, 8> &Stores) {
 
   if (Inst->mayWriteToMemory()) {
     Stores.insert(Inst);
@@ -220,7 +220,7 @@ bool Sinking::IsAcceptableTarget(Instruction *Inst,
 /// SinkInstruction - Determine whether it is safe to sink the specified machine
 /// instruction out of its current block into a successor.
 bool Sinking::SinkInstruction(Instruction *Inst,
-                              SmallPtrSetImpl<Instruction *> &Stores) {
+                              SmallPtrSet<Instruction *, 8> &Stores) {
 
   // Don't sink static alloca instructions.  CodeGen assumes allocas outside the
   // entry block are dynamically sized stack objects.

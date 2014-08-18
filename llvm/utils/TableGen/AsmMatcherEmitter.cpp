@@ -448,7 +448,7 @@ struct MatchableInfo {
   void formTwoOperandAlias(StringRef Constraint);
 
   void initialize(const AsmMatcherInfo &Info,
-                  SmallPtrSetImpl<Record*> &SingletonRegisters,
+                  SmallPtrSet<Record*, 16> &SingletonRegisters,
                   int AsmVariantNo, std::string &RegisterPrefix);
 
   /// validate - Return true if this matchable is a valid thing to match against
@@ -644,7 +644,7 @@ private:
 
   /// buildRegisterClasses - Build the ClassInfo* instances for register
   /// classes.
-  void buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters);
+  void buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters);
 
   /// buildOperandClasses - Build the ClassInfo* instances for user defined
   /// operand classes.
@@ -766,7 +766,7 @@ void MatchableInfo::formTwoOperandAlias(StringRef Constraint) {
 }
 
 void MatchableInfo::initialize(const AsmMatcherInfo &Info,
-                               SmallPtrSetImpl<Record*> &SingletonRegisters,
+                               SmallPtrSet<Record*, 16> &SingletonRegisters,
                                int AsmVariantNo, std::string &RegisterPrefix) {
   AsmVariantID = AsmVariantNo;
   AsmString =
@@ -1075,7 +1075,7 @@ struct LessRegisterSet {
 };
 
 void AsmMatcherInfo::
-buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
+buildRegisterClasses(SmallPtrSet<Record*, 16> &SingletonRegisters) {
   const std::vector<CodeGenRegister*> &Registers =
     Target.getRegBank().getRegisters();
   ArrayRef<CodeGenRegisterClass*> RegClassList =
@@ -1093,7 +1093,7 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
         (*it)->getOrder().begin(), (*it)->getOrder().end()));
 
   // Add any required singleton sets.
-  for (SmallPtrSetImpl<Record*>::iterator it = SingletonRegisters.begin(),
+  for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
        ie = SingletonRegisters.end(); it != ie; ++it) {
     Record *Rec = *it;
     RegisterSets.insert(RegisterSet(&Rec, &Rec + 1));
@@ -1191,7 +1191,7 @@ buildRegisterClasses(SmallPtrSetImpl<Record*> &SingletonRegisters) {
     RegisterClasses[it->first] = RegisterSetClasses[it->second];
 
   // Name the register classes which correspond to singleton registers.
-  for (SmallPtrSetImpl<Record*>::iterator it = SingletonRegisters.begin(),
+  for (SmallPtrSet<Record*, 16>::iterator it = SingletonRegisters.begin(),
          ie = SingletonRegisters.end(); it != ie; ++it) {
     Record *Rec = *it;
     ClassInfo *CI = RegisterClasses[Rec];

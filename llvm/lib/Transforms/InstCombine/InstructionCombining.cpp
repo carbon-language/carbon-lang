@@ -2548,7 +2548,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 /// whose condition is a known constant, we only visit the reachable successors.
 ///
 static bool AddReachableCodeToWorklist(BasicBlock *BB,
-                                       SmallPtrSetImpl<BasicBlock*> &Visited,
+                                       SmallPtrSet<BasicBlock*, 64> &Visited,
                                        InstCombiner &IC,
                                        const DataLayout *DL,
                                        const TargetLibraryInfo *TLI) {

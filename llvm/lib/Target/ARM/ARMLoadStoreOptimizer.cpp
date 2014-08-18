@@ -1714,7 +1714,7 @@ bool ARMPreAllocLoadStoreOpt::runOnMachineFunction(MachineFunction &Fn) {
 static bool IsSafeAndProfitableToMove(bool isLd, unsigned Base,
                                       MachineBasicBlock::iterator I,
                                       MachineBasicBlock::iterator E,
-                                      SmallPtrSetImpl<MachineInstr*> &MemOps,
+                                      SmallPtrSet<MachineInstr*, 4> &MemOps,
                                       SmallSet<unsigned, 4> &MemRegs,
                                       const TargetRegisterInfo *TRI) {
   // Are there stores / loads / calls between them?

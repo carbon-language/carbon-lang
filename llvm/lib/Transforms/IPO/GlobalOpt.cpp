@@ -612,7 +612,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const DataLayout &DL) {
 /// value will trap if the value is dynamically null.  PHIs keeps track of any
 /// phi nodes we've seen to avoid reprocessing them.
 static bool AllUsesOfValueWillTrapIfNull(const Value *V,
-                                        SmallPtrSetImpl<const PHINode*> &PHIs) {
+                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
   for (const User *U : V->users())
     if (isa<LoadInst>(U)) {
       // Will trap.
@@ -957,7 +957,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 /// it is to the specified global.
 static bool ValueIsOnlyUsedLocallyOrStoredToOneGlobal(const Instruction *V,
                                                       const GlobalVariable *GV,
-                                        SmallPtrSetImpl<const PHINode*> &PHIs) {
+                                         SmallPtrSet<const PHINode*, 8> &PHIs) {
   for (const User *U : V->users()) {
     const Instruction *Inst = cast<Instruction>(U);
 
@@ -1047,8 +1047,8 @@ static void ReplaceUsesOfMallocWithGlobal(Instruction *Alloc,
 /// of a load) are simple enough to perform heap SRA on.  This permits GEP's
 /// that index through the array and struct field, icmps of null, and PHIs.
 static bool LoadUsesSimpleEnoughForHeapSRA(const Value *V,
-                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIs,
-                        SmallPtrSetImpl<const PHINode*> &LoadUsingPHIsPerLoad) {
+                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIs,
+                        SmallPtrSet<const PHINode*, 32> &LoadUsingPHIsPerLoad) {
   // We permit two users of the load: setcc comparing against the null
   // pointer, and a getelementptr of a specific form.
   for (const User *U : V->users()) {
@@ -1975,7 +1975,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 
 static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSetImpl<Constant*> &SimpleConstants,
+                            SmallPtrSet<Constant*, 8> &SimpleConstants,
                             const DataLayout *DL);
 
 
@@ -1988,7 +1988,7 @@ isSimpleEnoughValueToCommit(Constant *C,
 /// in SimpleConstants to avoid having to rescan the same constants all the
 /// time.
 static bool isSimpleEnoughValueToCommitHelper(Constant *C,
-                                   SmallPtrSetImpl<Constant*> &SimpleConstants,
+                                   SmallPtrSet<Constant*, 8> &SimpleConstants,
                                    const DataLayout *DL) {
   // Simple global addresses are supported, do not allow dllimport or
   // thread-local globals.
@@ -2046,7 +2046,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
 
 static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
-                            SmallPtrSetImpl<Constant*> &SimpleConstants,
+                            SmallPtrSet<Constant*, 8> &SimpleConstants,
                             const DataLayout *DL) {
   // If we already checked this constant, we win.
   if (!SimpleConstants.insert(C)) return true;
@@ -2217,7 +2217,7 @@ public:
     return MutatedMemory;
   }
 
-  const SmallPtrSetImpl<GlobalVariable*> &getInvariants() const {
+  const SmallPtrSet<GlobalVariable*, 8> &getInvariants() const {
     return Invariants;
   }
 
@@ -2725,7 +2725,7 @@ static int compareNames(Constant *const *A, Constant *const *B) {
 }
 
 static void setUsedInitializer(GlobalVariable &V,
-                               SmallPtrSetImpl<GlobalValue *> Init) {
+                               SmallPtrSet<GlobalValue *, 8> Init) {
   if (Init.empty()) {
     V.eraseFromParent();
     return;

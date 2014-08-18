@@ -81,8 +81,8 @@ namespace {
     CallGraphNode *PromoteArguments(CallGraphNode *CGN);
     bool isSafeToPromoteArgument(Argument *Arg, bool isByVal) const;
     CallGraphNode *DoPromotion(Function *F,
-                              SmallPtrSetImpl<Argument*> &ArgsToPromote,
-                              SmallPtrSetImpl<Argument*> &ByValArgsToTransform);
+                               SmallPtrSet<Argument*, 8> &ArgsToPromote,
+                               SmallPtrSet<Argument*, 8> &ByValArgsToTransform);
     
     using llvm::Pass::doInitialization;
     bool doInitialization(CallGraph &CG) override;
@@ -495,8 +495,8 @@ bool ArgPromotion::isSafeToPromoteArgument(Argument *Arg,
 /// arguments, and returns the new function.  At this point, we know that it's
 /// safe to do so.
 CallGraphNode *ArgPromotion::DoPromotion(Function *F,
-                             SmallPtrSetImpl<Argument*> &ArgsToPromote,
-                             SmallPtrSetImpl<Argument*> &ByValArgsToTransform) {
+                               SmallPtrSet<Argument*, 8> &ArgsToPromote,
+                              SmallPtrSet<Argument*, 8> &ByValArgsToTransform) {
 
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.

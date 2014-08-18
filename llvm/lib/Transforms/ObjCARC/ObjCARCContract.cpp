@@ -72,9 +72,9 @@ namespace {
 
     bool ContractAutorelease(Function &F, Instruction *Autorelease,
                              InstructionClass Class,
-                             SmallPtrSetImpl<Instruction *>
+                             SmallPtrSet<Instruction *, 4>
                                &DependingInstructions,
-                             SmallPtrSetImpl<const BasicBlock *>
+                             SmallPtrSet<const BasicBlock *, 4>
                                &Visited);
 
     void ContractRelease(Instruction *Release,
@@ -150,9 +150,9 @@ ObjCARCContract::OptimizeRetainCall(Function &F, Instruction *Retain) {
 bool
 ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
                                      InstructionClass Class,
-                                     SmallPtrSetImpl<Instruction *>
+                                     SmallPtrSet<Instruction *, 4>
                                        &DependingInstructions,
-                                     SmallPtrSetImpl<const BasicBlock *>
+                                     SmallPtrSet<const BasicBlock *, 4>
                                        &Visited) {
   const Value *Arg = GetObjCArg(Autorelease);
 

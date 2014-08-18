@@ -285,7 +285,7 @@ void LexicalScopes::assignInstructionRanges(
 /// have machine instructions that belong to lexical scope identified by
 /// DebugLoc.
 void LexicalScopes::getMachineBasicBlocks(
-    DebugLoc DL, SmallPtrSetImpl<const MachineBasicBlock *> &MBBs) {
+    DebugLoc DL, SmallPtrSet<const MachineBasicBlock *, 4> &MBBs) {
   MBBs.clear();
   LexicalScope *Scope = getOrCreateLexicalScope(DL);
   if (!Scope)

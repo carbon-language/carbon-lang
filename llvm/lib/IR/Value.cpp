@@ -303,7 +303,7 @@ void Value::takeName(Value *V) {
 }
 
 #ifndef NDEBUG
-static bool contains(SmallPtrSetImpl<ConstantExpr *> &Cache, ConstantExpr *Expr,
+static bool contains(SmallPtrSet<ConstantExpr *, 4> &Cache, ConstantExpr *Expr,
                      Constant *C) {
   if (!Cache.insert(Expr))
     return false;
@@ -476,7 +476,7 @@ Value *Value::stripInBoundsOffsets() {
 /// isDereferenceablePointer - Test if this value is always a pointer to
 /// allocated and suitably aligned memory for a simple load or store.
 static bool isDereferenceablePointer(const Value *V, const DataLayout *DL,
-                                     SmallPtrSetImpl<const Value *> &Visited) {
+                                     SmallPtrSet<const Value *, 32> &Visited) {
   // Note that it is not safe to speculate into a malloc'd region because
   // malloc may return null.
 

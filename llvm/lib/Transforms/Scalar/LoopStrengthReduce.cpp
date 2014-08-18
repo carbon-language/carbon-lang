@@ -744,7 +744,7 @@ static bool isExistingPhi(const SCEVAddRecExpr *AR, ScalarEvolution &SE) {
 /// TODO: Allow UDivExpr if we can find an existing IV increment that is an
 /// obvious multiple of the UDivExpr.
 static bool isHighCostExpansion(const SCEV *S,
-                                SmallPtrSetImpl<const SCEV*> &Processed,
+                                SmallPtrSet<const SCEV*, 8> &Processed,
                                 ScalarEvolution &SE) {
   // Zero/One operand expressions
   switch (S->getSCEVType()) {
@@ -892,34 +892,34 @@ public:
 
   void RateFormula(const TargetTransformInfo &TTI,
                    const Formula &F,
-                   SmallPtrSetImpl<const SCEV *> &Regs,
+                   SmallPtrSet<const SCEV *, 16> &Regs,
                    const DenseSet<const SCEV *> &VisitedRegs,
                    const Loop *L,
                    const SmallVectorImpl<int64_t> &Offsets,
                    ScalarEvolution &SE, DominatorTree &DT,
                    const LSRUse &LU,
-                   SmallPtrSetImpl<const SCEV *> *LoserRegs = nullptr);
+                   SmallPtrSet<const SCEV *, 16> *LoserRegs = nullptr);
 
   void print(raw_ostream &OS) const;
   void dump() const;
 
 private:
   void RateRegister(const SCEV *Reg,
-                    SmallPtrSetImpl<const SCEV *> &Regs,
+                    SmallPtrSet<const SCEV *, 16> &Regs,
                     const Loop *L,
                     ScalarEvolution &SE, DominatorTree &DT);
   void RatePrimaryRegister(const SCEV *Reg,
-                           SmallPtrSetImpl<const SCEV *> &Regs,
+                           SmallPtrSet<const SCEV *, 16> &Regs,
                            const Loop *L,
                            ScalarEvolution &SE, DominatorTree &DT,
-                           SmallPtrSetImpl<const SCEV *> *LoserRegs);
+                           SmallPtrSet<const SCEV *, 16> *LoserRegs);
 };
 
 }
 
 /// RateRegister - Tally up interesting quantities from the given register.
 void Cost::RateRegister(const SCEV *Reg,
-                        SmallPtrSetImpl<const SCEV *> &Regs,
+                        SmallPtrSet<const SCEV *, 16> &Regs,
                         const Loop *L,
                         ScalarEvolution &SE, DominatorTree &DT) {
   if (const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(Reg)) {
@@ -967,10 +967,10 @@ void Cost::RateRegister(const SCEV *Reg,
 /// before, rate it. Optional LoserRegs provides a way to declare any formula
 /// that refers to one of those regs an instant loser.
 void Cost::RatePrimaryRegister(const SCEV *Reg,
-                               SmallPtrSetImpl<const SCEV *> &Regs,
+                               SmallPtrSet<const SCEV *, 16> &Regs,
                                const Loop *L,
                                ScalarEvolution &SE, DominatorTree &DT,
-                               SmallPtrSetImpl<const SCEV *> *LoserRegs) {
+                               SmallPtrSet<const SCEV *, 16> *LoserRegs) {
   if (LoserRegs && LoserRegs->count(Reg)) {
     Lose();
     return;
@@ -984,13 +984,13 @@ void Cost::RatePrimaryRegister(const SCEV *Reg,
 
 void Cost::RateFormula(const TargetTransformInfo &TTI,
                        const Formula &F,
-                       SmallPtrSetImpl<const SCEV *> &Regs,
+                       SmallPtrSet<const SCEV *, 16> &Regs,
                        const DenseSet<const SCEV *> &VisitedRegs,
                        const Loop *L,
                        const SmallVectorImpl<int64_t> &Offsets,
                        ScalarEvolution &SE, DominatorTree &DT,
                        const LSRUse &LU,
-                       SmallPtrSetImpl<const SCEV *> *LoserRegs) {
+                       SmallPtrSet<const SCEV *, 16> *LoserRegs) {
   assert(F.isCanonical() && "Cost is accurate only for canonical formula");
   // Tally up the registers.
   if (const SCEV *ScaledReg = F.ScaledReg) {
@@ -2557,7 +2557,7 @@ bool IVChain::isProfitableIncrement(const SCEV *OperExpr,
 ///
 /// TODO: Consider IVInc free if it's already used in another chains.
 static bool
-isProfitableChain(IVChain &Chain, SmallPtrSetImpl<Instruction*> &Users,
+isProfitableChain(IVChain &Chain, SmallPtrSet<Instruction*, 4> &Users,
                   ScalarEvolution &SE, const TargetTransformInfo &TTI) {
   if (StressIVChain)
     return true;

@@ -139,7 +139,7 @@ void SjLjEHPrepare::insertCallSiteStore(Instruction *I, int Number) {
 /// MarkBlocksLiveIn - Insert BB and all of its predescessors into LiveBBs until
 /// we reach blocks we've already seen.
 static void MarkBlocksLiveIn(BasicBlock *BB,
-                             SmallPtrSetImpl<BasicBlock *> &LiveBBs) {
+                             SmallPtrSet<BasicBlock *, 64> &LiveBBs) {
   if (!LiveBBs.insert(BB))
     return; // already been here.
 

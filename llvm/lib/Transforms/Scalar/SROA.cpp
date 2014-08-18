@@ -990,7 +990,7 @@ private:
   bool splitAlloca(AllocaInst &AI, AllocaSlices &S);
   bool runOnAlloca(AllocaInst &AI);
   void clobberUse(Use &U);
-  void deleteDeadInstructions(SmallPtrSetImpl<AllocaInst *> &DeletedAllocas);
+  void deleteDeadInstructions(SmallPtrSet<AllocaInst *, 4> &DeletedAllocas);
   bool promoteAllocas(Function &F);
 };
 }
@@ -3499,7 +3499,7 @@ bool SROA::runOnAlloca(AllocaInst &AI) {
 ///
 /// We also record the alloca instructions deleted here so that they aren't
 /// subsequently handed to mem2reg to promote.
-void SROA::deleteDeadInstructions(SmallPtrSetImpl<AllocaInst*> &DeletedAllocas) {
+void SROA::deleteDeadInstructions(SmallPtrSet<AllocaInst*, 4> &DeletedAllocas) {
   while (!DeadInsts.empty()) {
     Instruction *I = DeadInsts.pop_back_val();
     DEBUG(dbgs() << "Deleting dead instruction: " << *I << "\n");
@@ -3524,7 +3524,7 @@ void SROA::deleteDeadInstructions(SmallPtrSetImpl<AllocaInst*> &DeletedAllocas) 
 
 static void enqueueUsersInWorklist(Instruction &I,
                                    SmallVectorImpl<Instruction *> &Worklist,
-                                   SmallPtrSetImpl<Instruction *> &Visited) {
+                                   SmallPtrSet<Instruction *, 8> &Visited) {
   for (User *U : I.users())
     if (Visited.insert(cast<Instruction>(U)))
       Worklist.push_back(cast<Instruction>(U));

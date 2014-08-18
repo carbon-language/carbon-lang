@@ -163,7 +163,7 @@ public:
   /// which have machine instructions that belong to lexical scope identified by
   /// DebugLoc.
   void getMachineBasicBlocks(DebugLoc DL,
-                             SmallPtrSetImpl<const MachineBasicBlock *> &MBBs);
+                             SmallPtrSet<const MachineBasicBlock *, 4> &MBBs);
 
   /// dominates - Return true if DebugLoc's lexical scope dominates at least one
   /// machine instruction's lexical scope in a given machine basic block.

@@ -155,7 +155,7 @@ int Type::getFPMantissaWidth() const {
 /// isSizedDerivedType - Derived types like structures and arrays are sized
 /// iff all of the members of the type are sized as well.  Since asking for
 /// their size is relatively uncommon, move this operation out of line.
-bool Type::isSizedDerivedType(SmallPtrSetImpl<const Type*> *Visited) const {
+bool Type::isSizedDerivedType(SmallPtrSet<const Type*, 4> *Visited) const {
   if (const ArrayType *ATy = dyn_cast<ArrayType>(this))
     return ATy->getElementType()->isSized(Visited);
 
@@ -554,7 +554,7 @@ StructType *StructType::create(StringRef Name, Type *type, ...) {
   return Ret;
 }
 
-bool StructType::isSized(SmallPtrSetImpl<const Type*> *Visited) const {
+bool StructType::isSized(SmallPtrSet<const Type*, 4> *Visited) const {
   if ((getSubclassData() & SCDB_IsSized) != 0)
     return true;
   if (isOpaque())

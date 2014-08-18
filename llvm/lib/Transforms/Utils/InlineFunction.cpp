@@ -98,7 +98,7 @@ namespace {
     /// split the landing pad block after the landingpad instruction and jump
     /// to there.
     void forwardResume(ResumeInst *RI,
-                       SmallPtrSetImpl<LandingPadInst*> &InlinedLPads);
+                       SmallPtrSet<LandingPadInst*, 16> &InlinedLPads);
 
     /// addIncomingPHIValuesFor - Add incoming-PHI values to the unwind
     /// destination block for the given basic block, using the values for the
@@ -157,7 +157,7 @@ BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
 void InvokeInliningInfo::forwardResume(ResumeInst *RI,
-                               SmallPtrSetImpl<LandingPadInst*> &InlinedLPads) {
+                               SmallPtrSet<LandingPadInst*, 16> &InlinedLPads) {
   BasicBlock *Dest = getInnerResumeDest();
   BasicBlock *Src = RI->getParent();
 

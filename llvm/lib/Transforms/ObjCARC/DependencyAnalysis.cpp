@@ -206,8 +206,8 @@ void
 llvm::objcarc::FindDependencies(DependenceKind Flavor,
                                 const Value *Arg,
                                 BasicBlock *StartBB, Instruction *StartInst,
-                                SmallPtrSetImpl<Instruction *> &DependingInsts,
-                                SmallPtrSetImpl<const BasicBlock *> &Visited,
+                                SmallPtrSet<Instruction *, 4> &DependingInsts,
+                                SmallPtrSet<const BasicBlock *, 4> &Visited,
                                 ProvenanceAnalysis &PA) {
   BasicBlock::iterator StartPos = StartInst;
 

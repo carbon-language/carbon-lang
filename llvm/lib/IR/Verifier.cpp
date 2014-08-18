@@ -257,7 +257,7 @@ private:
   void visitGlobalVariable(const GlobalVariable &GV);
   void visitGlobalAlias(const GlobalAlias &GA);
   void visitAliaseeSubExpr(const GlobalAlias &A, const Constant &C);
-  void visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias *> &Visited,
+  void visitAliaseeSubExpr(SmallPtrSet<const GlobalAlias *, 4> &Visited,
                            const GlobalAlias &A, const Constant &C);
   void visitNamedMDNode(const NamedMDNode &NMD);
   void visitMDNode(MDNode &MD, Function *F);
@@ -502,7 +502,7 @@ void Verifier::visitAliaseeSubExpr(const GlobalAlias &GA, const Constant &C) {
   visitAliaseeSubExpr(Visited, GA, C);
 }
 
-void Verifier::visitAliaseeSubExpr(SmallPtrSetImpl<const GlobalAlias*> &Visited,
+void Verifier::visitAliaseeSubExpr(SmallPtrSet<const GlobalAlias *, 4> &Visited,
                                    const GlobalAlias &GA, const Constant &C) {
   if (const auto *GV = dyn_cast<GlobalValue>(&C)) {
     Assert1(!GV->isDeclaration(), "Alias must point to a definition", &GA);

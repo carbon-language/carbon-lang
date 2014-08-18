@@ -1178,7 +1178,7 @@ static void changeToCall(InvokeInst *II) {
 }
 
 static bool markAliveBlocks(BasicBlock *BB,
-                            SmallPtrSetImpl<BasicBlock*> &Reachable) {
+                            SmallPtrSet<BasicBlock*, 128> &Reachable) {
 
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);

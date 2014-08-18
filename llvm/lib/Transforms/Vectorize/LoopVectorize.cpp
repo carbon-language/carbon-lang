@@ -783,7 +783,7 @@ private:
   /// Return true if all of the instructions in the block can be speculatively
   /// executed. \p SafePtrs is a list of addresses that are known to be legal
   /// and we know that we can read from them without segfault.
-  bool blockCanBePredicated(BasicBlock *BB, SmallPtrSetImpl<Value *> &SafePtrs);
+  bool blockCanBePredicated(BasicBlock *BB, SmallPtrSet<Value *, 8>& SafePtrs);
 
   /// Returns True, if 'Phi' is the kind of reduction variable for type
   /// 'Kind'. If this is a reduction variable, it adds it to ReductionList.
@@ -3541,7 +3541,7 @@ static Type* getWiderType(const DataLayout &DL, Type *Ty0, Type *Ty1) {
 /// \brief Check that the instruction has outside loop users and is not an
 /// identified reduction variable.
 static bool hasOutsideLoopUser(const Loop *TheLoop, Instruction *Inst,
-                               SmallPtrSetImpl<Value *> &Reductions) {
+                               SmallPtrSet<Value *, 4> &Reductions) {
   // Reduction instructions are allowed to have exit users. All other
   // instructions must not have external users.
   if (!Reductions.count(Inst))
@@ -4884,7 +4884,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 }
 
 static bool hasMultipleUsesOf(Instruction *I,
-                              SmallPtrSetImpl<Instruction *> &Insts) {
+                              SmallPtrSet<Instruction *, 8> &Insts) {
   unsigned NumUses = 0;
   for(User::op_iterator Use = I->op_begin(), E = I->op_end(); Use != E; ++Use) {
     if (Insts.count(dyn_cast<Instruction>(*Use)))
@@ -4896,7 +4896,7 @@ static bool hasMultipleUsesOf(Instruction *I,
   return false;
 }
 
-static bool areAllUsesIn(Instruction *I, SmallPtrSetImpl<Instruction *> &Set) {
+static bool areAllUsesIn(Instruction *I, SmallPtrSet<Instruction *, 8> &Set) {
   for(User::op_iterator Use = I->op_begin(), E = I->op_end(); Use != E; ++Use)
     if (!Set.count(dyn_cast<Instruction>(*Use)))
       return false;
@@ -5229,7 +5229,7 @@ bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
 }
 
 bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB,
-                                           SmallPtrSetImpl<Value *> &SafePtrs) {
+                                            SmallPtrSet<Value *, 8>& SafePtrs) {
   for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
     // We might be able to hoist the load.
     if (it->mayReadFromMemory()) {

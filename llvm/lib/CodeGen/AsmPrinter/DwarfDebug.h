@@ -533,7 +533,7 @@ class DwarfDebug : public AsmPrinterHandler {
   bool addCurrentFnArgument(DbgVariable *Var, LexicalScope *Scope);
 
   /// \brief Populate LexicalScope entries with variables' info.
-  void collectVariableInfo(SmallPtrSetImpl<const MDNode *> &ProcessedVars);
+  void collectVariableInfo(SmallPtrSet<const MDNode *, 16> &ProcessedVars);
 
   /// \brief Build the location list for all DBG_VALUEs in the
   /// function that describe the same variable.
@@ -542,7 +542,7 @@ class DwarfDebug : public AsmPrinterHandler {
 
   /// \brief Collect variable information from the side table maintained
   /// by MMI.
-  void collectVariableInfoFromMMITable(SmallPtrSetImpl<const MDNode *> &P);
+  void collectVariableInfoFromMMITable(SmallPtrSet<const MDNode *, 16> &P);
 
   /// \brief Ensure that a label will be emitted before MI.
   void requestLabelBeforeInsn(const MachineInstr *MI) {
