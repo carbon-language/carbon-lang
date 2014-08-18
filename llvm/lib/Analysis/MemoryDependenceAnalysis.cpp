@@ -409,9 +409,18 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
     // a load depends on another must aliased load from the same value.
     if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
       // Atomic loads have complications involved.
+      // A monotonic load is OK if the query inst is itself not atomic.
       // FIXME: This is overly conservative.
-      if (!LI->isUnordered())
-        return MemDepResult::getClobber(LI);
+      if (!LI->isUnordered()) {
+        if (!QueryInst || LI->getOrdering() != Monotonic)
+          return MemDepResult::getClobber(LI);
+        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
+          if (!QueryLI->isUnordered())
+            return MemDepResult::getClobber(LI);
+        if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
+          if (!QuerySI->isUnordered())
+            return MemDepResult::getClobber(LI);
+      }
 
       AliasAnalysis::Location LoadLoc = AA->getLocation(LI);
 
@@ -469,9 +478,18 @@ getPointerDependencyFrom(const AliasAnalysis::Location &MemLoc, bool isLoad,
 
     if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
       // Atomic stores have complications involved.
+      // A monotonic store is OK if the query inst is itself not atomic.
       // FIXME: This is overly conservative.
-      if (!SI->isUnordered())
-        return MemDepResult::getClobber(SI);
+      if (!SI->isUnordered()) {
+        if (!QueryInst || SI->getOrdering() != Monotonic)
+          return MemDepResult::getClobber(SI);
+        if (auto *QueryLI = dyn_cast<LoadInst>(QueryInst))
+          if (!QueryLI->isUnordered())
+            return MemDepResult::getClobber(SI);
+        if (auto *QuerySI = dyn_cast<StoreInst>(QueryInst))
+          if (!QuerySI->isUnordered())
+            return MemDepResult::getClobber(SI);
+      }
 
       // If alias analysis can tell that this store is guaranteed to not modify
       // the query pointer, ignore it.  Use getModRefInfo to handle cases where
