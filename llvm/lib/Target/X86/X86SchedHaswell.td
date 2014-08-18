@@ -2029,4 +2029,72 @@ def : InstRW<[WriteFMADDm],
     // 4p forms.
     "VF(N?)M(ADD|SUB)P(S|D)4(rm|mr)(Y)?")>;
 
+//-- Math instructions --//
+
+// VSQRTPS.
+// y,y.
+def WriteVSQRTPSYr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 19;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVSQRTPSYr], (instregex "VSQRTPSYr")>;
+
+// y,m256.
+def WriteVSQRTPSYm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 23;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteVSQRTPSYm], (instregex "VSQRTPSYm")>;
+
+// VSQRTPD.
+// y,y.
+def WriteVSQRTPDYr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 28;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVSQRTPDYr], (instregex "VSQRTPDYr")>;
+
+// y,m256.
+def WriteVSQRTPDYm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 32;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteVSQRTPDYm], (instregex "VSQRTPDYm")>;
+
+// RSQRT SS/PS.
+// x,x.
+def WriteRSQRTr : SchedWriteRes<[HWPort0]> {
+  let Latency = 5;
+}
+def : InstRW<[WriteRSQRTr], (instregex "(V?)RSQRT(SS|PS)r(_Int)?")>;
+
+// x,m128.
+def WriteRSQRTm : SchedWriteRes<[HWPort0, HWPort23]> {
+  let Latency = 9;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteRSQRTm], (instregex "(V?)RSQRT(SS|PS)m(_Int)?")>;
+
+// RSQRTPS 256.
+// y,y.
+def WriteRSQRTPSYr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteRSQRTPSYr], (instregex "VRSQRTPSYr(_Int)?")>;
+
+// y,m256.
+def WriteRSQRTPSYm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 11;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteRSQRTPSYm], (instregex "VRSQRTPSYm(_Int)?")>;
+
 } // SchedModel
