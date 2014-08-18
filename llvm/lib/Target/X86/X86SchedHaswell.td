@@ -55,6 +55,7 @@ def HWPort06 : ProcResGroup<[HWPort0, HWPort6]>;
 def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort16  : ProcResGroup<[HWPort1, HWPort6]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
+def HWPort056: ProcResGroup<[HWPort0, HWPort5, HWPort6]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
 
 // 60 Entry Unified Scheduler
@@ -281,6 +282,21 @@ def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
 
 def WriteP06 : SchedWriteRes<[HWPort06]>;
 
+def WriteP0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
+  let Latency = 1;
+  let ResourceCycles = [1, 2, 1];
+}
+
+def Write2P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
+  let Latency = 1;
+  let ResourceCycles = [2, 2, 1];
+}
+
+def Write3P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
+  let Latency = 1;
+  let ResourceCycles = [3, 2, 1];
+}
+
 // Notation:
 // - r: register.
 // - mm: 64 bit mmx register.
@@ -405,5 +421,181 @@ def WriteMoveBE64mr : SchedWriteRes<[HWPort06, HWPort15, HWPort237, HWPort4]> {
   let NumMicroOps = 4;
 }
 def : InstRW<[WriteMoveBE64mr], (instregex "MOVBE64mr")>;
+
+//-- Arithmetic instructions --//
+
+// ADD SUB.
+// m,r/i.
+def : InstRW<[Write2P0156_2P237_P4],
+              (instregex "(ADD|SUB)(8|16|32|64)m(r|i)",
+              "(ADD|SUB)(8|16|32|64)mi8", "(ADD|SUB)64mi32")>;
+
+// ADC SBB.
+// r,r/i.
+def : InstRW<[Write2P0156_Lat2], (instregex "(ADC|SBB)(8|16|32|64)r(r|i)",
+                           "(ADC|SBB)(16|32|64)ri8",
+                           "(ADC|SBB)64ri32",
+                           "(ADC|SBB)(8|16|32|64)rr_REV")>;
+
+// r,m.
+def : InstRW<[Write2P0156_Lat2Ld, ReadAfterLd], (instregex "(ADC|SBB)(8|16|32|64)rm")>;
+
+// m,r/i.
+def : InstRW<[Write3P0156_2P237_P4],
+             (instregex "(ADC|SBB)(8|16|32|64)m(r|i)",
+              "(ADC|SBB)(16|32|64)mi8",
+              "(ADC|SBB)64mi32")>;
+
+// INC DEC NOT NEG.
+// m.
+def : InstRW<[WriteP0156_2P237_P4],
+             (instregex "(INC|DEC|NOT|NEG)(8|16|32|64)m",
+              "(INC|DEC)64(16|32)m")>;
+
+// MUL IMUL.
+// r16.
+def WriteMul16 : SchedWriteRes<[HWPort1, HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteMul16], (instregex "IMUL16r", "MUL16r")>;
+
+// m16.
+def WriteMul16Ld : SchedWriteRes<[HWPort1, HWPort0156, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 5;
+}
+def : InstRW<[WriteMul16Ld], (instregex "IMUL16m", "MUL16m")>;
+
+// r32.
+def WriteMul32 : SchedWriteRes<[HWPort1, HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteMul32], (instregex "IMUL32r", "MUL32r")>;
+
+// m32.
+def WriteMul32Ld : SchedWriteRes<[HWPort1, HWPort0156, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteMul32Ld], (instregex "IMUL32m", "MUL32m")>;
+
+// r64.
+def WriteMul64 : SchedWriteRes<[HWPort1, HWPort6]> {
+  let Latency = 3;
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteMul64], (instregex "IMUL64r", "MUL64r")>;
+
+// m64.
+def WriteMul64Ld : SchedWriteRes<[HWPort1, HWPort6, HWPort23]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteMul64Ld], (instregex "IMUL64m", "MUL64m")>;
+
+// r16,r16.
+def WriteMul16rri : SchedWriteRes<[HWPort1, HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteMul16rri], (instregex "IMUL16rri", "IMUL16rri8")>;
+
+// r16,m16.
+def WriteMul16rmi : SchedWriteRes<[HWPort1, HWPort0156, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteMul16rmi], (instregex "IMUL16rmi", "IMUL16rmi8")>;
+
+// MULX.
+// r32,r32,r32.
+def WriteMulX32 : SchedWriteRes<[HWPort1, HWPort056]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 2];
+}
+def : InstRW<[WriteMulX32], (instregex "MULX32rr")>;
+
+// r32,r32,m32.
+def WriteMulX32Ld : SchedWriteRes<[HWPort1, HWPort056, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 2, 1];
+}
+def : InstRW<[WriteMulX32Ld], (instregex "MULX32rm")>;
+
+// r64,r64,r64.
+def WriteMulX64 : SchedWriteRes<[HWPort1, HWPort6]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+}
+def : InstRW<[WriteMulX64], (instregex "MULX64rr")>;
+
+// r64,r64,m64.
+def WriteMulX64Ld : SchedWriteRes<[HWPort1, HWPort6, HWPort23]> {
+  let Latency = 8;
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteMulX64Ld], (instregex "MULX64rm")>;
+
+// DIV.
+// r8.
+def WriteDiv8 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 22;
+  let NumMicroOps = 9;
+}
+def : InstRW<[WriteDiv8], (instregex "DIV8r")>;
+
+// r16.
+def WriteDiv16 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 23;
+  let NumMicroOps = 10;
+}
+def : InstRW<[WriteDiv16], (instregex "DIV16r")>;
+
+// r32.
+def WriteDiv32 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 22;
+  let NumMicroOps = 10;
+}
+def : InstRW<[WriteDiv32], (instregex "DIV32r")>;
+
+// r64.
+def WriteDiv64 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 32;
+  let NumMicroOps = 36;
+}
+def : InstRW<[WriteDiv64], (instregex "DIV64r")>;
+
+// IDIV.
+// r8.
+def WriteIDiv8 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 23;
+  let NumMicroOps = 9;
+}
+def : InstRW<[WriteIDiv8], (instregex "IDIV8r")>;
+
+// r16.
+def WriteIDiv16 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 23;
+  let NumMicroOps = 10;
+}
+def : InstRW<[WriteIDiv16], (instregex "IDIV16r")>;
+
+// r32.
+def WriteIDiv32 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 22;
+  let NumMicroOps = 9;
+}
+def : InstRW<[WriteIDiv32], (instregex "IDIV32r")>;
+
+// r64.
+def WriteIDiv64 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
+  let Latency = 39;
+  let NumMicroOps = 59;
+}
+def : InstRW<[WriteIDiv64], (instregex "IDIV64r")>;
 
 } // SchedModel
