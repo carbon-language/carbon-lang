@@ -2019,6 +2019,8 @@ void ASTDeclReader::mergeRedeclarable(Redeclarable<T> *DBase,
   T *D = static_cast<T*>(DBase);
   T *DCanon = D->getCanonicalDecl();
   if (D != DCanon &&
+      // IDs < NUM_PREDEF_DECL_IDS are not loaded from an AST file.
+      Redecl.getFirstID() >= NUM_PREDEF_DECL_IDS &&
       (!Reader.getContext().getLangOpts().Modules ||
        Reader.getOwningModuleFile(DCanon) == Reader.getOwningModuleFile(D))) {
     // All redeclarations between this declaration and its originally-canonical
