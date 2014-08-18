@@ -51,10 +51,12 @@ def HWPort7 : ProcResource<1>;
 def HWPort01  : ProcResGroup<[HWPort0, HWPort1]>;
 def HWPort23  : ProcResGroup<[HWPort2, HWPort3]>;
 def HWPort237 : ProcResGroup<[HWPort2, HWPort3, HWPort7]>;
+def HWPort04  : ProcResGroup<[HWPort0, HWPort4]>;
 def HWPort05  : ProcResGroup<[HWPort0, HWPort5]>;
 def HWPort06 : ProcResGroup<[HWPort0, HWPort6]>;
 def HWPort15  : ProcResGroup<[HWPort1, HWPort5]>;
 def HWPort16  : ProcResGroup<[HWPort1, HWPort6]>;
+def HWPort56: ProcResGroup<[HWPort5, HWPort6]>;
 def HWPort015 : ProcResGroup<[HWPort0, HWPort1, HWPort5]>;
 def HWPort056: ProcResGroup<[HWPort0, HWPort5, HWPort6]>;
 def HWPort0156: ProcResGroup<[HWPort0, HWPort1, HWPort5, HWPort6]>;
@@ -288,6 +290,11 @@ def Write2P0156_Lat2Ld : SchedWriteRes<[HWPort0156, HWPort23]> {
   let ResourceCycles = [2, 1];
 }
 
+def Write5P0156 : SchedWriteRes<[HWPort0156]> {
+  let NumMicroOps = 5;
+  let ResourceCycles = [5];
+}
+
 def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [2, 1];
@@ -302,6 +309,11 @@ def Write3P01 : SchedWriteRes<[HWPort01]> {
   let NumMicroOps = 3;
 }
 
+def WriteP015 : SchedWriteRes<[HWPort015]>;
+
+def WriteP01_P5 : SchedWriteRes<[HWPort01, HWPort5]> {
+  let NumMicroOps = 2;
+}
 def WriteP06 : SchedWriteRes<[HWPort06]>;
 
 def Write2P06 : SchedWriteRes<[HWPort06]> {
@@ -351,6 +363,13 @@ def Write2P0156_P23 : SchedWriteRes<[HWPort0156, HWPort23]> {
 def Write3P0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let Latency = 1;
   let ResourceCycles = [3, 2, 1];
+}
+
+def WriteP5 : SchedWriteRes<[HWPort5]>;
+def WriteP5Ld : SchedWriteRes<[HWPort5, HWPort23]> {
+  let Latency = 5;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
 }
 
 // Notation:
@@ -1190,5 +1209,237 @@ def WriteFXTRACT : SchedWriteRes<[]> {
   let NumMicroOps = 17;
 }
 def : InstRW<[WriteFXTRACT], (instregex "FXTRACT")>;
+
+//-- Other instructions --//
+
+// FNOP.
+def : InstRW<[WriteP01], (instregex "FNOP")>;
+
+// WAIT.
+def : InstRW<[Write2P01], (instregex "WAIT")>;
+
+// FNCLEX.
+def : InstRW<[Write5P0156], (instregex "FNCLEX")>;
+
+// FNINIT.
+def WriteFNINIT : SchedWriteRes<[]> {
+  let NumMicroOps = 26;
+}
+def : InstRW<[WriteFNINIT], (instregex "FNINIT")>;
+
+//=== Integer MMX and XMM Instructions ===//
+//-- Move instructions --//
+
+// MOVD.
+// r32/64 <- (x)mm.
+def : InstRW<[WriteP0], (instregex "MMX_MOVD64grr", "MMX_MOVD64from64rr",
+                         "VMOVPDI2DIrr", "MOVPDI2DIrr")>;
+
+// (x)mm <- r32/64.
+def : InstRW<[WriteP5], (instregex "MMX_MOVD64rr", "MMX_MOVD64to64rr",
+                         "VMOVDI2PDIrr", "MOVDI2PDIrr")>;
+
+// MOVQ.
+// r64 <- (x)mm.
+def : InstRW<[WriteP0], (instregex "VMOVPQIto64rr")>;
+
+// (x)mm <- r64.
+def : InstRW<[WriteP5], (instregex "VMOV64toPQIrr", "VMOVZQI2PQIrr")>;
+
+// (x)mm <- (x)mm.
+def : InstRW<[WriteP015], (instregex "MMX_MOVQ64rr")>;
+
+// (V)MOVDQA/U.
+// x <- x.
+def : InstRW<[WriteP015], (instregex "MOVDQ(A|U)rr", "VMOVDQ(A|U)rr",
+                           "MOVDQ(A|U)rr_REV", "VMOVDQ(A|U)rr_REV",
+                           "VMOVDQ(A|U)Yrr", "VMOVDQ(A|U)Yrr_REV")>;
+
+// MOVDQ2Q.
+def : InstRW<[WriteP01_P5], (instregex "MMX_MOVDQ2Qrr")>;
+
+// MOVQ2DQ.
+def : InstRW<[WriteP015], (instregex "MMX_MOVQ2DQrr")>;
+
+
+// PACKSSWB/DW.
+// mm <- mm.
+def WriteMMXPACKSSrr : SchedWriteRes<[HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 3;
+  let ResourceCycles = [3];
+}
+def : InstRW<[WriteMMXPACKSSrr], (instregex "MMX_PACKSSDWirr",
+                                  "MMX_PACKSSWBirr", "MMX_PACKUSWBirr")>;
+
+// mm <- m64.
+def WriteMMXPACKSSrm : SchedWriteRes<[HWPort23, HWPort5]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 3];
+}
+def : InstRW<[WriteMMXPACKSSrm], (instregex "MMX_PACKSSDWirm",
+                                  "MMX_PACKSSWBirm", "MMX_PACKUSWBirm")>;
+
+// VPMOVSX/ZX BW BD BQ DW DQ.
+// y <- x.
+def WriteVPMOVSX : SchedWriteRes<[HWPort5]> {
+  let Latency = 3;
+  let NumMicroOps = 1;
+}
+def : InstRW<[WriteVPMOVSX], (instregex "VPMOV(SX|ZX)(BW|BQ|DW|DQ)Yrr")>;
+
+// PBLENDW.
+// x,x,i / v,v,v,i
+def WritePBLENDWr : SchedWriteRes<[HWPort5]>;
+def : InstRW<[WritePBLENDWr], (instregex "(V?)PBLENDW(Y?)rri")>;
+
+// x,m,i / v,v,m,i
+def WritePBLENDWm : SchedWriteRes<[HWPort5, HWPort23]> {
+  let NumMicroOps = 2;
+  let Latency = 4;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WritePBLENDWm, ReadAfterLd], (instregex "(V?)PBLENDW(Y?)rmi")>;
+
+// VPBLENDD.
+// v,v,v,i.
+def WriteVPBLENDDr : SchedWriteRes<[HWPort015]>;
+def : InstRW<[WriteVPBLENDDr], (instregex "VPBLENDD(Y?)rri")>;
+
+// v,v,m,i
+def WriteVPBLENDDm : SchedWriteRes<[HWPort015, HWPort23]> {
+  let NumMicroOps = 2;
+  let Latency = 4;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteVPBLENDDm, ReadAfterLd], (instregex "VPBLENDD(Y?)rmi")>;
+
+// MASKMOVQ.
+def WriteMASKMOVQ : SchedWriteRes<[HWPort0, HWPort4, HWPort23]> {
+  let Latency = 13;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 2];
+}
+def : InstRW<[WriteMASKMOVQ], (instregex "MMX_MASKMOVQ(64)?")>;
+
+// MASKMOVDQU.
+def WriteMASKMOVDQU : SchedWriteRes<[HWPort04, HWPort56, HWPort23]> {
+  let Latency = 14;
+  let NumMicroOps = 10;
+  let ResourceCycles = [4, 2, 4];
+}
+def : InstRW<[WriteMASKMOVDQU], (instregex "(V?)MASKMOVDQU(64)?")>;
+
+// VPMASKMOV D/Q.
+// v,v,m.
+def WriteVPMASKMOVr : SchedWriteRes<[HWPort5, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVPMASKMOVr, ReadAfterLd],
+                               (instregex "VPMASKMOV(D|Q)(Y?)rm")>;
+
+// m, v,v.
+def WriteVPMASKMOVm : SchedWriteRes<[HWPort0, HWPort1, HWPort4, HWPort23]> {
+  let Latency = 13;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+def : InstRW<[WriteVPMASKMOVm], (instregex "VPMASKMOV(D|Q)(Y?)mr")>;
+
+// PMOVMSKB.
+def WritePMOVMSKB : SchedWriteRes<[HWPort0]> {
+  let Latency = 3;
+}
+def : InstRW<[WritePMOVMSKB], (instregex "(V|MMX_)?PMOVMSKB(Y?)rr")>;
+
+// PEXTR B/W/D/Q.
+// r32,x,i.
+def WritePEXTRr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WritePEXTRr], (instregex "PEXTR(B|W|D|Q)rr", "MMX_PEXTRWirri")>;
+
+// m8,x,i.
+def WritePEXTRm : SchedWriteRes<[HWPort23, HWPort4, HWPort5]> {
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WritePEXTRm], (instregex "PEXTR(B|W|D|Q)mr")>;
+
+// VPBROADCAST B/W.
+// x, m8/16.
+def WriteVPBROADCAST128Ld : SchedWriteRes<[HWPort01, HWPort23, HWPort5]> {
+  let Latency = 5;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteVPBROADCAST128Ld, ReadAfterLd],
+                                     (instregex "VPBROADCAST(B|W)rm")>;
+
+// y, m8/16
+def WriteVPBROADCAST256Ld : SchedWriteRes<[HWPort01, HWPort23, HWPort5]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteVPBROADCAST256Ld, ReadAfterLd],
+                                     (instregex "VPBROADCAST(B|W)Yrm")>;
+
+// VPGATHERDD.
+// x.
+def WriteVPGATHERDD128 : SchedWriteRes<[]> {
+  let NumMicroOps = 20;
+}
+def : InstRW<[WriteVPGATHERDD128, ReadAfterLd], (instregex "VPGATHERDDrm")>;
+
+// y.
+def WriteVPGATHERDD256 : SchedWriteRes<[]> {
+  let NumMicroOps = 34;
+}
+def : InstRW<[WriteVPGATHERDD256, ReadAfterLd], (instregex "VPGATHERDDYrm")>;
+
+// VPGATHERQD.
+// x.
+def WriteVPGATHERQD128 : SchedWriteRes<[]> {
+  let NumMicroOps = 15;
+}
+def : InstRW<[WriteVPGATHERQD128, ReadAfterLd], (instregex "VPGATHERQDrm")>;
+
+// y.
+def WriteVPGATHERQD256 : SchedWriteRes<[]> {
+  let NumMicroOps = 22;
+}
+def : InstRW<[WriteVPGATHERQD256, ReadAfterLd], (instregex "VPGATHERQDYrm")>;
+
+// VPGATHERDQ.
+// x.
+def WriteVPGATHERDQ128 : SchedWriteRes<[]> {
+  let NumMicroOps = 12;
+}
+def : InstRW<[WriteVPGATHERDQ128, ReadAfterLd], (instregex "VPGATHERDQrm")>;
+
+// y.
+def WriteVPGATHERDQ256 : SchedWriteRes<[]> {
+  let NumMicroOps = 20;
+}
+def : InstRW<[WriteVPGATHERDQ256, ReadAfterLd], (instregex "VPGATHERDQYrm")>;
+
+// VPGATHERQQ.
+// x.
+def WriteVPGATHERQQ128 : SchedWriteRes<[]> {
+  let NumMicroOps = 14;
+}
+def : InstRW<[WriteVPGATHERQQ128, ReadAfterLd], (instregex "VPGATHERQQrm")>;
+
+// y.
+def WriteVPGATHERQQ256 : SchedWriteRes<[]> {
+  let NumMicroOps = 22;
+}
+def : InstRW<[WriteVPGATHERQQ256, ReadAfterLd], (instregex "VPGATHERQQYrm")>;
 
 } // SchedModel
