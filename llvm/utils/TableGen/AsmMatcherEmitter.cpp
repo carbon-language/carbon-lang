@@ -565,9 +565,9 @@ struct SubtargetFeatureInfo {
   Record *TheDef;
 
   /// \brief An unique index assigned to represent this feature.
-  unsigned Index;
+  uint64_t Index;
 
-  SubtargetFeatureInfo(Record *D, unsigned Idx) : TheDef(D), Index(Idx) {}
+  SubtargetFeatureInfo(Record *D, uint64_t Idx) : TheDef(D), Index(Idx) {}
 
   /// \brief The name of the enumerated constant identifying this feature.
   std::string getEnumName() const {
@@ -1327,10 +1327,10 @@ void AsmMatcherInfo::buildInfo() {
     if (Pred->getName().empty())
       PrintFatalError(Pred->getLoc(), "Predicate has no name!");
 
-    unsigned FeatureNo = SubtargetFeatures.size();
+    uint64_t FeatureNo = SubtargetFeatures.size();
     SubtargetFeatures[Pred] = new SubtargetFeatureInfo(Pred, FeatureNo);
     DEBUG(SubtargetFeatures[Pred]->dump());
-    assert(FeatureNo < 32 && "Too many subtarget features!");
+    assert(FeatureNo < 64 && "Too many subtarget features!");
   }
 
   // Parse the instructions; we need to do this first so that we can gather the
@@ -2205,7 +2205,9 @@ static void emitMatchRegisterName(CodeGenTarget &Target, Record *AsmParser,
 }
 
 static const char *getMinimalTypeForRange(uint64_t Range) {
-  assert(Range <= 0xFFFFFFFFULL && "Enum too large");
+  assert(Range <= 0xFFFFFFFFFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFFFFFFULL)
+    return "uint64_t";
   if (Range > 0xFFFF)
     return "uint32_t";
   if (Range > 0xFF)
@@ -2232,7 +2234,7 @@ static void emitSubtargetFeatureFlagEnumeration(AsmMatcherInfo &Info,
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
     SubtargetFeatureInfo &SFI = *it->second;
-    OS << "  " << SFI.getEnumName() << " = (1U << " << SFI.Index << "),\n";
+    OS << "  " << SFI.getEnumName() << " = (1ULL << " << SFI.Index << "),\n";
   }
   OS << "  Feature_None = 0\n";
   OS << "};\n\n";
@@ -2263,7 +2265,7 @@ static void emitOperandDiagnosticTypes(AsmMatcherInfo &Info, raw_ostream &OS) {
 static void emitGetSubtargetFeatureName(AsmMatcherInfo &Info, raw_ostream &OS) {
   OS << "// User-level names for subtarget features that participate in\n"
      << "// instruction matching.\n"
-     << "static const char *getSubtargetFeatureName(unsigned Val) {\n";
+     << "static const char *getSubtargetFeatureName(uint64_t Val) {\n";
   if (!Info.SubtargetFeatures.empty()) {
     OS << "  switch(Val) {\n";
     typedef std::map<Record*, SubtargetFeatureInfo*, LessRecordByID> RecFeatMap;
@@ -2290,9 +2292,9 @@ static void emitComputeAvailableFeatures(AsmMatcherInfo &Info,
   std::string ClassName =
     Info.AsmParser->getValueAsString("AsmParserClassName");
 
-  OS << "unsigned " << Info.Target.getName() << ClassName << "::\n"
+  OS << "uint64_t " << Info.Target.getName() << ClassName << "::\n"
      << "ComputeAvailableFeatures(uint64_t FB) const {\n";
-  OS << "  unsigned Features = 0;\n";
+  OS << "  uint64_t Features = 0;\n";
   for (std::map<Record*, SubtargetFeatureInfo*, LessRecordByID>::const_iterator
          it = Info.SubtargetFeatures.begin(),
          ie = Info.SubtargetFeatures.end(); it != ie; ++it) {
@@ -2446,7 +2448,7 @@ static bool emitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info,
   if (Aliases.empty()) return false;
 
   OS << "static void applyMnemonicAliases(StringRef &Mnemonic, "
-    "unsigned Features, unsigned VariantID) {\n";
+    "uint64_t Features, unsigned VariantID) {\n";
   OS << "  switch (VariantID) {\n";
   unsigned VariantCount = Target.getAsmParserVariantCount();
   for (unsigned VC = 0; VC != VariantCount; ++VC) {
@@ -2589,7 +2591,7 @@ static void emitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
-  OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+  OS << "  uint64_t AvailableFeatures = getAvailableFeatures();\n\n";
 
   OS << "  // Get the next operand index.\n";
   OS << "  unsigned NextOpNum = Operands.size()-1;\n";
@@ -2691,7 +2693,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "#undef GET_ASSEMBLER_HEADER\n";
   OS << "  // This should be included into the middle of the declaration of\n";
   OS << "  // your subclasses implementation of MCTargetAsmParser.\n";
-  OS << "  unsigned ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
+  OS << "  uint64_t ComputeAvailableFeatures(uint64_t FeatureBits) const;\n";
   OS << "  void convertToMCInst(unsigned Kind, MCInst &Inst, "
      << "unsigned Opcode,\n"
      << "                       const OperandVector "
@@ -2703,7 +2705,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS.indent(27);
   OS << "const OperandVector &Operands,\n"
      << "                                MCInst &Inst,\n"
-     << "                                unsigned &ErrorInfo,"
+     << "                                uint64_t &ErrorInfo,"
      << " bool matchingInlineAsm,\n"
      << "                                unsigned VariantID = 0);\n";
 
@@ -2912,7 +2914,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
      << "MatchInstructionImpl(const OperandVector"
      << " &Operands,\n";
   OS << "                     MCInst &Inst,\n"
-     << "unsigned &ErrorInfo, bool matchingInlineAsm, unsigned VariantID) {\n";
+     << "uint64_t &ErrorInfo, bool matchingInlineAsm, unsigned VariantID) {\n";
 
   OS << "  // Eliminate obvious mismatches.\n";
   OS << "  if (Operands.size() > " << (MaxNumOperands+1) << ") {\n";
@@ -2922,7 +2924,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
 
   // Emit code to get the available features.
   OS << "  // Get the current feature set.\n";
-  OS << "  unsigned AvailableFeatures = getAvailableFeatures();\n\n";
+  OS << "  uint64_t AvailableFeatures = getAvailableFeatures();\n\n";
 
   OS << "  // Get the instruction mnemonic, which is the first token.\n";
   OS << "  StringRef Mnemonic = ((" << Target.getName()
@@ -2938,7 +2940,7 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "  bool HadMatchOtherThanFeatures = false;\n";
   OS << "  bool HadMatchOtherThanPredicate = false;\n";
   OS << "  unsigned RetCode = Match_InvalidOperand;\n";
-  OS << "  unsigned MissingFeatures = ~0U;\n";
+  OS << "  uint64_t MissingFeatures = ~0ULL;\n";
   OS << "  // Set ErrorInfo to the operand that mismatches if it is\n";
   OS << "  // wrong for all instances of the instruction.\n";
   OS << "  ErrorInfo = ~0U;\n";
@@ -3014,10 +3016,10 @@ void AsmMatcherEmitter::run(raw_ostream &OS) {
   OS << "    if ((AvailableFeatures & it->RequiredFeatures) "
      << "!= it->RequiredFeatures) {\n";
   OS << "      HadMatchOtherThanFeatures = true;\n";
-  OS << "      unsigned NewMissingFeatures = it->RequiredFeatures & "
+  OS << "      uint64_t NewMissingFeatures = it->RequiredFeatures & "
         "~AvailableFeatures;\n";
-  OS << "      if (CountPopulation_32(NewMissingFeatures) <=\n"
-        "          CountPopulation_32(MissingFeatures))\n";
+  OS << "      if (CountPopulation_64(NewMissingFeatures) <=\n"
+        "          CountPopulation_64(MissingFeatures))\n";
   OS << "        MissingFeatures = NewMissingFeatures;\n";
   OS << "      continue;\n";
   OS << "    }\n";

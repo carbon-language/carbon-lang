@@ -345,7 +345,7 @@ public:
                         SMLoc NameLoc, OperandVector &Operands) override;
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
-                               unsigned &ErrorInfo,
+                               uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
   // Used by the TableGen code to parse particular operand types.
@@ -677,7 +677,7 @@ bool SystemZAsmParser::parseOperand(OperandVector &Operands,
 bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                                OperandVector &Operands,
                                                MCStreamer &Out,
-                                               unsigned &ErrorInfo,
+                                               uint64_t &ErrorInfo,
                                                bool MatchingInlineAsm) {
   MCInst Inst;
   unsigned MatchResult;
@@ -696,7 +696,7 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Special case the error message for the very common case where only
     // a single subtarget feature is missing
     std::string Msg = "instruction requires:";
-    unsigned Mask = 1;
+    uint64_t Mask = 1;
     for (unsigned I = 0; I < sizeof(ErrorInfo) * 8 - 1; ++I) {
       if (ErrorInfo & Mask) {
         Msg += " ";
@@ -709,7 +709,7 @@ bool SystemZAsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
 
   case Match_InvalidOperand: {
     SMLoc ErrorLoc = IDLoc;
-    if (ErrorInfo != ~0U) {
+    if (ErrorInfo != ~0ULL) {
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction");
 

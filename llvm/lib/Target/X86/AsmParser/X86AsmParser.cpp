@@ -694,7 +694,7 @@ private:
 
   bool MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                OperandVector &Operands, MCStreamer &Out,
-                               unsigned &ErrorInfo,
+                               uint64_t &ErrorInfo,
                                bool MatchingInlineAsm) override;
 
   virtual bool OmitRegisterFromClobberLists(unsigned RegNo) override;
@@ -2297,7 +2297,7 @@ bool X86AsmParser::processInstruction(MCInst &Inst, const OperandVector &Ops) {
   }
 }
 
-static const char *getSubtargetFeatureName(unsigned Val);
+static const char *getSubtargetFeatureName(uint64_t Val);
 
 void X86AsmParser::EmitInstruction(MCInst &Inst, OperandVector &Operands,
                                    MCStreamer &Out) {
@@ -2307,7 +2307,7 @@ void X86AsmParser::EmitInstruction(MCInst &Inst, OperandVector &Operands,
 
 bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
                                            OperandVector &Operands,
-                                           MCStreamer &Out, unsigned &ErrorInfo,
+                                           MCStreamer &Out, uint64_t &ErrorInfo,
                                            bool MatchingInlineAsm) {
   assert(!Operands.empty() && "Unexpect empty operand list!");
   X86Operand &Op = static_cast<X86Operand &>(*Operands[0]);
@@ -2363,7 +2363,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     // Special case the error message for the very common case where only
     // a single subtarget feature is missing.
     std::string Msg = "instruction requires:";
-    unsigned Mask = 1;
+    uint64_t Mask = 1;
     for (unsigned i = 0; i < (sizeof(ErrorInfo)*8-1); ++i) {
       if (ErrorInfo & Mask) {
         Msg += " ";
@@ -2401,8 +2401,8 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   const char *Suffixes = Base[0] != 'f' ? "bwlq" : "slt\0";
 
   // Check for the various suffix matches.
-  unsigned ErrorInfoIgnore;
-  unsigned ErrorInfoMissingFeature = 0; // Init suppresses compiler warnings.
+  uint64_t ErrorInfoIgnore;
+  uint64_t ErrorInfoMissingFeature = 0; // Init suppresses compiler warnings.
   unsigned Match[4];
 
   for (unsigned I = 0, E = array_lengthof(Match); I != E; ++I) {
@@ -2469,7 +2469,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
     }
 
     // Recover location info for the operand if we know which was the problem.
-    if (ErrorInfo != ~0U) {
+    if (ErrorInfo != ~0ULL) {
       if (ErrorInfo >= Operands.size())
         return Error(IDLoc, "too few operands for instruction",
                      EmptyRanges, MatchingInlineAsm);
@@ -2491,7 +2491,7 @@ bool X86AsmParser::MatchAndEmitInstruction(SMLoc IDLoc, unsigned &Opcode,
   if (std::count(std::begin(Match), std::end(Match),
                  Match_MissingFeature) == 1) {
     std::string Msg = "instruction requires:";
-    unsigned Mask = 1;
+    uint64_t Mask = 1;
     for (unsigned i = 0; i < (sizeof(ErrorInfoMissingFeature)*8-1); ++i) {
       if (ErrorInfoMissingFeature & Mask) {
         Msg += " ";
