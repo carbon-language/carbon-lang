@@ -1505,4 +1505,35 @@ def WritePMULLDm : SchedWriteRes<[HWPort0, HWPort23]> {
 }
 def : InstRW<[WritePMULLDm, ReadAfterLd], (instregex "(V?)PMULLD(Y?)rm")>;
 
+//-- Logic instructions --//
+
+// PTEST.
+// v,v.
+def WritePTESTr : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WritePTESTr], (instregex "(V?)PTEST(Y?)rr")>;
+
+// v,m.
+def WritePTESTm : SchedWriteRes<[HWPort0, HWPort5, HWPort23]> {
+  let Latency = 6;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WritePTESTr], (instregex "(V?)PTEST(Y?)rm")>;
+
+// PSLL,PSRL,PSRA W/D/Q.
+// x,x / v,v,x.
+def WritePShift : SchedWriteRes<[HWPort0, HWPort5]> {
+  let Latency = 2;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WritePShift], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)(Y?)rr")>;
+
+// PSLL,PSRL DQ.
+def : InstRW<[WriteP5], (instregex "(V?)PS(R|L)LDQ(Y?)ri")>;
+
 } // SchedModel
