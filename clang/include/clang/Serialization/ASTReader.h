@@ -1418,8 +1418,9 @@ public:
   void UpdateSema();
 
   /// \brief Add in-memory (virtual file) buffer.
-  void addInMemoryBuffer(StringRef &FileName, llvm::MemoryBuffer *Buffer) {
-    ModuleMgr.addInMemoryBuffer(FileName, Buffer);
+  void addInMemoryBuffer(StringRef &FileName,
+                         std::unique_ptr<llvm::MemoryBuffer> Buffer) {
+    ModuleMgr.addInMemoryBuffer(FileName, std::move(Buffer));
   }
 
   /// \brief Finalizes the AST reader's state before writing an AST file to

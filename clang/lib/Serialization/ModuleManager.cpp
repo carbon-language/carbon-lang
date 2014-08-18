@@ -45,10 +45,11 @@ ModuleFile *ModuleManager::lookup(const FileEntry *File) {
   return Known->second;
 }
 
-llvm::MemoryBuffer *ModuleManager::lookupBuffer(StringRef Name) {
+std::unique_ptr<llvm::MemoryBuffer>
+ModuleManager::lookupBuffer(StringRef Name) {
   const FileEntry *Entry = FileMgr.getFile(Name, /*openFile=*/false,
                                            /*cacheFailure=*/false);
-  return InMemoryBuffers[Entry];
+  return std::move(InMemoryBuffers[Entry]);
 }
 
 ModuleManager::AddModuleResult
@@ -98,10 +99,9 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
     }
 
     // Load the contents of the module
-    if (llvm::MemoryBuffer *Buffer = lookupBuffer(FileName)) {
+    if (std::unique_ptr<llvm::MemoryBuffer> Buffer = lookupBuffer(FileName)) {
       // The buffer was already provided for us.
-      assert(Buffer && "Passed null buffer");
-      New->Buffer.reset(Buffer);
+      New->Buffer = std::move(Buffer);
     } else {
       // Open the AST file.
       std::error_code ec;
@@ -187,12 +187,13 @@ void ModuleManager::removeModules(
   Chain.erase(first, last);
 }
 
-void ModuleManager::addInMemoryBuffer(StringRef FileName, 
-                                      llvm::MemoryBuffer *Buffer) {
-  
-  const FileEntry *Entry = FileMgr.getVirtualFile(FileName, 
-                                                  Buffer->getBufferSize(), 0);
-  InMemoryBuffers[Entry] = Buffer;
+void
+ModuleManager::addInMemoryBuffer(StringRef FileName,
+                                 std::unique_ptr<llvm::MemoryBuffer> Buffer) {
+
+  const FileEntry *Entry =
+      FileMgr.getVirtualFile(FileName, Buffer->getBufferSize(), 0);
+  InMemoryBuffers[Entry] = std::move(Buffer);
 }
 
 ModuleManager::VisitState *ModuleManager::allocateVisitState() {
