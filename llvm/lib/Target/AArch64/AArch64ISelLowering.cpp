@@ -278,6 +278,15 @@ AArch64TargetLowering::AArch64TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FCOPYSIGN, MVT::f64, Custom);
   setOperationAction(ISD::FCOPYSIGN, MVT::f32, Custom);
 
+  // f16 is storage-only, so we promote operations to f32 if we know this is
+  // valid, and ignore them otherwise. The operations not mentioned here will
+  // fail to select, but this is not a major problem as no source language
+  // should be emitting native f16 operations yet.
+  setOperationAction(ISD::FADD, MVT::f16, Promote);
+  setOperationAction(ISD::FDIV, MVT::f16, Promote);
+  setOperationAction(ISD::FMUL, MVT::f16, Promote);
+  setOperationAction(ISD::FSUB, MVT::f16, Promote);
+
   // AArch64 has implementations of a lot of rounding-like FP operations.
   static MVT RoundingTypes[] = { MVT::f32, MVT::f64};
   for (unsigned I = 0; I < array_lengthof(RoundingTypes); ++I) {
