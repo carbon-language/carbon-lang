@@ -685,9 +685,9 @@ class SourceManager : public RefCountedBase<SourceManager> {
   InBeforeInTUCacheEntry &getInBeforeInTUCache(FileID LFID, FileID RFID) const;
 
   // Cache for the "fake" buffer used for error-recovery purposes.
-  mutable llvm::MemoryBuffer *FakeBufferForRecovery;
+  mutable std::unique_ptr<llvm::MemoryBuffer> FakeBufferForRecovery;
 
-  mutable SrcMgr::ContentCache *FakeContentCacheForRecovery;
+  mutable std::unique_ptr<SrcMgr::ContentCache> FakeContentCacheForRecovery;
 
   /// \brief Lazily computed map of macro argument chunks to their expanded
   /// source location.

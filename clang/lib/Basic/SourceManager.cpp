@@ -373,8 +373,7 @@ SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr,
   : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
     UserFilesAreVolatile(UserFilesAreVolatile),
     ExternalSLocEntries(nullptr), LineTable(nullptr), NumLinearScans(0),
-    NumBinaryProbes(0), FakeBufferForRecovery(nullptr),
-    FakeContentCacheForRecovery(nullptr) {
+    NumBinaryProbes(0) {
   clearIDTables();
   Diag.setSourceManager(this);
 }
@@ -398,9 +397,6 @@ SourceManager::~SourceManager() {
       ContentCacheAlloc.Deallocate(I->second);
     }
   }
-  
-  delete FakeBufferForRecovery;
-  delete FakeContentCacheForRecovery;
 
   llvm::DeleteContainerSeconds(MacroArgsCacheMap);
 }
@@ -505,10 +501,10 @@ SourceManager::AllocateLoadedSLocEntries(unsigned NumSLocEntries,
 /// fake, non-empty buffer.
 llvm::MemoryBuffer *SourceManager::getFakeBufferForRecovery() const {
   if (!FakeBufferForRecovery)
-    FakeBufferForRecovery
-      = llvm::MemoryBuffer::getMemBuffer("<<<INVALID BUFFER>>");
-  
-  return FakeBufferForRecovery;
+    FakeBufferForRecovery.reset(
+        llvm::MemoryBuffer::getMemBuffer("<<<INVALID BUFFER>>"));
+
+  return FakeBufferForRecovery.get();
 }
 
 /// \brief As part of recovering from missing or changed content, produce a
@@ -516,11 +512,11 @@ llvm::MemoryBuffer *SourceManager::getFakeBufferForRecovery() const {
 const SrcMgr::ContentCache *
 SourceManager::getFakeContentCacheForRecovery() const {
   if (!FakeContentCacheForRecovery) {
-    FakeContentCacheForRecovery = new ContentCache();
+    FakeContentCacheForRecovery = llvm::make_unique<SrcMgr::ContentCache>();
     FakeContentCacheForRecovery->replaceBuffer(getFakeBufferForRecovery(),
                                                /*DoNotFree=*/true);
   }
-  return FakeContentCacheForRecovery;
+  return FakeContentCacheForRecovery.get();
 }
 
 /// \brief Returns the previous in-order FileID or an invalid FileID if there
