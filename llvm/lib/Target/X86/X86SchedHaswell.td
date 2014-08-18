@@ -1859,4 +1859,174 @@ def : InstRW<[WriteP1_P5_Lat4Ld, WriteRMW], (instregex "VCVTPS2PH(Y?)mr")>;
 // v,x.
 def : InstRW<[WriteP1_P5_Lat4], (instregex "VCVTPH2PS(Y?)rr")>;
 
+//-- Arithmetic instructions --//
+
+// HADD, HSUB PS/PD
+// x,x / v,v,v.
+def WriteHADDSUBPr : SchedWriteRes<[HWPort1, HWPort5]> {
+  let Latency = 5;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 2];
+}
+def : InstRW<[WriteHADDSUBPr], (instregex "(V?)H(ADD|SUB)P(S|D)(Y?)rr")>;
+
+// x,m / v,v,m.
+def WriteHADDSUBPm : SchedWriteRes<[HWPort1, HWPort5, HWPort23]> {
+  let Latency = 9;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 2, 1];
+}
+def : InstRW<[WriteHADDSUBPm], (instregex "(V?)H(ADD|SUB)P(S|D)(Y?)rm")>;
+
+// MULL SS/SD PS/PD.
+// x,x / v,v,v.
+def WriteMULr : SchedWriteRes<[HWPort01]> {
+  let Latency = 5;
+}
+def : InstRW<[WriteMULr], (instregex "(V?)MUL(P|S)(S|D)rr")>;
+
+// x,m / v,v,m.
+def WriteMULm : SchedWriteRes<[HWPort01, HWPort23]> {
+  let Latency = 4;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteMULm], (instregex "(V?)MUL(P|S)(S|D)rm")>;
+
+// VDIVPS.
+// y,y,y.
+def WriteVDIVPSYrr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 19; // 18-21 cycles.
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVDIVPSYrr], (instregex "VDIVPSYrr")>;
+
+// y,y,m256.
+def WriteVDIVPSYrm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 23; // 18-21 + 4 cycles.
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteVDIVPSYrm, ReadAfterLd], (instregex "VDIVPSYrm")>;
+
+// VDIVPD.
+// y,y,y.
+def WriteVDIVPDYrr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 27; // 19-35 cycles.
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVDIVPDYrr], (instregex "VDIVPDYrr")>;
+
+// y,y,m256.
+def WriteVDIVPDYrm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 31; // 19-35 + 4 cycles.
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteVDIVPDYrm, ReadAfterLd], (instregex "VDIVPDYrm")>;
+
+// VRCPPS.
+// y,y.
+def WriteVRCPPSr : SchedWriteRes<[HWPort0, HWPort15]> {
+  let Latency = 7;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteVRCPPSr], (instregex "VRCPPSYr(_Int)?")>;
+
+// y,m256.
+def WriteVRCPPSm : SchedWriteRes<[HWPort0, HWPort15, HWPort23]> {
+  let Latency = 11;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteVRCPPSm], (instregex "VRCPPSYm(_Int)?")>;
+
+// ROUND SS/SD PS/PD.
+// v,v,i.
+def WriteROUNDr : SchedWriteRes<[HWPort1]> {
+  let Latency = 6;
+  let NumMicroOps = 2;
+  let ResourceCycles = [2];
+}
+def : InstRW<[WriteROUNDr], (instregex "(V?)ROUND(Y?)(S|P)(S|D)r(_Int)?")>;
+
+// v,m,i.
+def WriteROUNDm : SchedWriteRes<[HWPort1, HWPort23]> {
+  let Latency = 10;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteROUNDm], (instregex "(V?)ROUND(Y?)(S|P)(S|D)m(_Int)?")>;
+
+// DPPS.
+// x,x,i / v,v,v,i.
+def WriteDPPSr : SchedWriteRes<[HWPort0, HWPort1, HWPort5]> {
+  let Latency = 14;
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteDPPSr], (instregex "(V?)DPPS(Y?)rri")>;
+
+// x,m,i / v,v,m,i.
+def WriteDPPSm : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort23, HWPort6]> {
+  let Latency = 18;
+  let NumMicroOps = 6;
+  let ResourceCycles = [2, 1, 1, 1, 1];
+}
+def : InstRW<[WriteDPPSm, ReadAfterLd], (instregex "(V?)DPPS(Y?)rmi")>;
+
+// DPPD.
+// x,x,i.
+def WriteDPPDr : SchedWriteRes<[HWPort0, HWPort1, HWPort5]> {
+  let Latency = 9;
+  let NumMicroOps = 3;
+  let ResourceCycles = [1, 1, 1];
+}
+def : InstRW<[WriteDPPDr], (instregex "(V?)DPPDrri")>;
+
+// x,m,i.
+def WriteDPPDm : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort23]> {
+  let Latency = 13;
+  let NumMicroOps = 4;
+  let ResourceCycles = [1, 1, 1, 1];
+}
+def : InstRW<[WriteDPPDm], (instregex "(V?)DPPDrmi")>;
+
+// VFMADD.
+// v,v,v.
+def WriteFMADDr : SchedWriteRes<[HWPort01]> {
+  let Latency = 5;
+  let NumMicroOps = 1;
+}
+def : InstRW<[WriteFMADDr],
+    (instregex
+    // 3p forms.
+    "VF(N?)M(ADD|SUB|ADDSUB|SUBADD)P(S|D)(r213|r132|r231)r(Y)?",
+    // 3s forms.
+    "VF(N?)M(ADD|SUB)S(S|D)(r132|231|213)r",
+    // 4s/4s_int forms.
+    "VF(N?)M(ADD|SUB)S(S|D)4rr(_REV|_Int)?",
+    // 4p forms.
+    "VF(N?)M(ADD|SUB)P(S|D)4rr(Y)?(_REV)?")>;
+
+// v,v,m.
+def WriteFMADDm : SchedWriteRes<[HWPort01, HWPort23]> {
+  let Latency = 9;
+  let NumMicroOps = 2;
+  let ResourceCycles = [1, 1];
+}
+def : InstRW<[WriteFMADDm],
+    (instregex
+    // 3p forms.
+    "VF(N?)M(ADD|SUB|ADDSUB|SUBADD)P(S|D)(r213|r132|r231)m(Y)?",
+    // 3s forms.
+    "VF(N?)M(ADD|SUB)S(S|D)(r132|231|213)m",
+    // 4s/4s_int forms.
+    "VF(N?)M(ADD|SUB)S(S|D)4(rm|mr)(_Int)?",
+    // 4p forms.
+    "VF(N?)M(ADD|SUB)P(S|D)4(rm|mr)(Y)?")>;
+
 } // SchedModel
