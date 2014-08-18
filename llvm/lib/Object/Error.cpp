@@ -25,7 +25,7 @@ public:
 };
 }
 
-const char *_object_error_category::name() const {
+const char *_object_error_category::name() const LLVM_NOEXCEPT {
   return "llvm.object";
 }
 
