@@ -2152,9 +2152,7 @@ static SmallString<128> getSanitizerRTLibName(const ToolChain &TC,
 static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
                                     ArgStringList &CmdArgs,
                                     const StringRef Sanitizer,
-                                    bool BeforeLibStdCXX,
-                                    bool ExportSymbols = true,
-                                    bool LinkDeps = true) {
+                                    bool ExportSymbols, bool LinkDeps) {
   SmallString<128> LibSanitizer =
       getSanitizerRTLibName(TC, Sanitizer, /*Shared*/ false);
 
@@ -2164,34 +2162,34 @@ static void addSanitizerRTLinkFlags(const ToolChain &TC, const ArgList &Args,
   // strategy of inserting it at the front of the link command. It also
   // needs to be forced to end up in the executable, so wrap it in
   // whole-archive.
-  SmallVector<const char *, 3> LibSanitizerArgs;
+  SmallVector<const char *, 8> LibSanitizerArgs;
   LibSanitizerArgs.push_back("-whole-archive");
   LibSanitizerArgs.push_back(Args.MakeArgString(LibSanitizer));
   LibSanitizerArgs.push_back("-no-whole-archive");
-
-  CmdArgs.insert(BeforeLibStdCXX ? CmdArgs.begin() : CmdArgs.end(),
-                 LibSanitizerArgs.begin(), LibSanitizerArgs.end());
-
   if (LinkDeps) {
-    // Link sanitizer dependencies explicitly
-    CmdArgs.push_back("-lpthread");
-    CmdArgs.push_back("-lrt");
-    CmdArgs.push_back("-lm");
+    // Link sanitizer dependencies explicitly. These libraries should be added
+    // at the front of the link command, so that they will definitely
+    // participate in link even if user specified -Wl,-as-needed (see PR15823).
+    LibSanitizerArgs.push_back("-lpthread");
+    LibSanitizerArgs.push_back("-lrt");
+    LibSanitizerArgs.push_back("-lm");
     // There's no libdl on FreeBSD.
     if (TC.getTriple().getOS() != llvm::Triple::FreeBSD)
-      CmdArgs.push_back("-ldl");
+      LibSanitizerArgs.push_back("-ldl");
   }
-
   // If possible, use a dynamic symbols file to export the symbols from the
   // runtime library. If we can't do so, use -export-dynamic instead to export
   // all symbols from the binary.
   if (ExportSymbols) {
     if (llvm::sys::fs::exists(LibSanitizer + ".syms"))
-      CmdArgs.push_back(
+      LibSanitizerArgs.push_back(
           Args.MakeArgString("--dynamic-list=" + LibSanitizer + ".syms"));
     else
-      CmdArgs.push_back("-export-dynamic");
+      LibSanitizerArgs.push_back("-export-dynamic");
   }
+
+  CmdArgs.insert(CmdArgs.begin(), LibSanitizerArgs.begin(),
+                 LibSanitizerArgs.end());
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).
@@ -2212,12 +2210,14 @@ static void addAsanRT(const ToolChain &TC, const ArgList &Args,
 
   if (Shared) {
     addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan-preinit",
-                            /*BeforeLibStdCXX*/ true, /*ExportSymbols*/ false,
+                            /*ExportSymbols*/ false,
                             /*LinkDeps*/ false);
   } else {
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan", true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan", /*ExportSymbols*/ true,
+                            /*LinkDeps*/ true);
     if (IsCXX)
-      addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan_cxx", true);
+      addSanitizerRTLinkFlags(TC, Args, CmdArgs, "asan_cxx",
+                              /*ExportSymbols*/ true, /*LinkDeps*/ false);
   }
 }
 
@@ -2226,7 +2226,8 @@ static void addAsanRT(const ToolChain &TC, const ArgList &Args,
 static void addTsanRT(const ToolChain &TC, const ArgList &Args,
                       ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "tsan", true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "tsan", /*ExportSymbols*/ true,
+                            /*LinkDeps*/ true);
 }
 
 /// If MemorySanitizer is enabled, add appropriate linker flags (Linux).
@@ -2234,7 +2235,8 @@ static void addTsanRT(const ToolChain &TC, const ArgList &Args,
 static void addMsanRT(const ToolChain &TC, const ArgList &Args,
                       ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "msan", true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "msan", /*ExportSymbols*/ true,
+                            /*LinkDeps*/ true);
 }
 
 /// If LeakSanitizer is enabled, add appropriate linker flags (Linux).
@@ -2242,7 +2244,8 @@ static void addMsanRT(const ToolChain &TC, const ArgList &Args,
 static void addLsanRT(const ToolChain &TC, const ArgList &Args,
                       ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "lsan", true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "lsan", /*ExportSymbols */ true,
+                            /*LinkDeps*/ true);
 }
 
 /// If UndefinedBehaviorSanitizer is enabled, add appropriate linker flags
@@ -2257,20 +2260,24 @@ static void addUbsanRT(const ToolChain &TC, const ArgList &Args,
   // Need a copy of sanitizer_common. This could come from another sanitizer
   // runtime; if we're not including one, include our own copy.
   if (!HasOtherSanitizerRt)
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "san", true, false);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "san", /*ExportSymbols*/ false,
+                            /*LinkDeps*/ false);
 
-  addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan", false, true);
+  addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan", /*ExportSymbols*/ true,
+                          /*LinkDeps*/ true);
 
   // Only include the bits of the runtime which need a C++ ABI library if
   // we're linking in C++ mode.
   if (IsCXX)
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan_cxx", false, true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "ubsan_cxx",
+                            /*ExportSymbols*/ true, /*LinkDeps*/ false);
 }
 
 static void addDfsanRT(const ToolChain &TC, const ArgList &Args,
                        ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared))
-    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "dfsan", true);
+    addSanitizerRTLinkFlags(TC, Args, CmdArgs, "dfsan", /*ExportSymbols*/ true,
+                            /*LinkDeps*/ true);
 }
 
 // Should be called before we add C++ ABI library.
