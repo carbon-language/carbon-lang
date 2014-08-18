@@ -1536,4 +1536,13 @@ def : InstRW<[WritePShift], (instregex "(V?)PS(LL|RL|RA)(W|D|Q)(Y?)rr")>;
 // PSLL,PSRL DQ.
 def : InstRW<[WriteP5], (instregex "(V?)PS(R|L)LDQ(Y?)ri")>;
 
+//-- Other --//
+
+// EMMS.
+def WriteEMMS : SchedWriteRes<[]> {
+  let Latency = 13;
+  let NumMicroOps = 31;
+}
+def : InstRW<[WriteEMMS], (instregex "MMX_EMMS")>;
+
 } // SchedModel
