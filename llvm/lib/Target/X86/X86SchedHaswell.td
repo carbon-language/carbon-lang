@@ -916,4 +916,30 @@ def WriteCMPS : SchedWriteRes<[HWPort23, HWPort0156]> {
 }
 def : InstRW<[WriteCMPS], (instregex "CMPS(B|L|Q|W)")>;
 
+//-- Synchronization instructions --//
+
+// XADD.
+def WriteXADD : SchedWriteRes<[]> {
+  let NumMicroOps = 5;
+}
+def : InstRW<[WriteXADD], (instregex "XADD(8|16|32|64)rm")>;
+
+// CMPXCHG.
+def WriteCMPXCHG : SchedWriteRes<[]> {
+  let NumMicroOps = 6;
+}
+def : InstRW<[WriteCMPXCHG], (instregex "CMPXCHG(8|16|32|64)rm")>;
+
+// CMPXCHG8B.
+def WriteCMPXCHG8B : SchedWriteRes<[]> {
+  let NumMicroOps = 15;
+}
+def : InstRW<[WriteCMPXCHG8B], (instregex "CMPXCHG8B")>;
+
+// CMPXCHG16B.
+def WriteCMPXCHG16B : SchedWriteRes<[]> {
+  let NumMicroOps = 22;
+}
+def : InstRW<[WriteCMPXCHG16B], (instregex "CMPXCHG16B")>;
+
 } // SchedModel
