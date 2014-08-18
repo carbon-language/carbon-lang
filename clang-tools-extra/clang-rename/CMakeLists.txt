@@ -9,20 +9,11 @@ add_clang_executable(clang-rename
   )
 
 target_link_libraries(clang-rename
-  clangAnalysis
   clangAST
   clangBasic
-  clangDriver
-  clangEdit
   clangFrontend
-  clangFrontendTool
   clangIndex
-  clangLex
-  clangParse
   clangRewrite
-  clangRewriteFrontend
-  clangSerialization
-  clangSema
   clangTooling
   )
 
