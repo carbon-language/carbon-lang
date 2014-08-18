@@ -1,6 +1,5 @@
 add_subdirectory(clang-apply-replacements)
 add_subdirectory(clang-modernize)
-add_subdirectory(clang-rename)
 add_subdirectory(modularize)
 add_subdirectory(module-map-checker)
 add_subdirectory(remove-cstr-calls)
