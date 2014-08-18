@@ -136,7 +136,7 @@ namespace llvm {
     std::map<unsigned, AttrBuilder> NumberedAttrBuilders;
 
   public:
-    LLParser(MemoryBuffer *F, SourceMgr &SM, SMDiagnostic &Err, Module *m) :
+    LLParser(StringRef F, SourceMgr &SM, SMDiagnostic &Err, Module *m) :
       Context(m->getContext()), Lex(F, SM, Err, m->getContext()),
       M(m) {}
     bool Run();

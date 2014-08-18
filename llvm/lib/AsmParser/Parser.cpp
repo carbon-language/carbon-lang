@@ -29,11 +29,11 @@ Module *llvm::ParseAssembly(std::unique_ptr<MemoryBuffer> F, Module *M,
 
   // If we are parsing into an existing module, do it.
   if (M)
-    return LLParser(Buf, SM, Err, M).Run() ? nullptr : M;
+    return LLParser(Buf->getBuffer(), SM, Err, M).Run() ? nullptr : M;
 
   // Otherwise create a new module.
   std::unique_ptr<Module> M2(new Module(Buf->getBufferIdentifier(), Context));
-  if (LLParser(Buf, SM, Err, M2.get()).Run())
+  if (LLParser(Buf->getBuffer(), SM, Err, M2.get()).Run())
     return nullptr;
   return M2.release();
 }

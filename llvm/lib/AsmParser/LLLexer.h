@@ -28,7 +28,7 @@ namespace llvm {
 
   class LLLexer {
     const char *CurPtr;
-    MemoryBuffer *CurBuf;
+    StringRef CurBuf;
     SMDiagnostic &ErrorInfo;
     SourceMgr &SM;
     LLVMContext &Context;
@@ -43,7 +43,7 @@ namespace llvm {
     APSInt  APSIntVal;
 
   public:
-    explicit LLLexer(MemoryBuffer *StartBuf, SourceMgr &SM, SMDiagnostic &,
+    explicit LLLexer(StringRef StartBuf, SourceMgr &SM, SMDiagnostic &,
                      LLVMContext &C);
     ~LLLexer() {}
 
