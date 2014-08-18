@@ -684,7 +684,7 @@ public:
 
       uint64_t File = endian::readNext<uint64_t, little, unaligned>(d);
       uint64_t Device = endian::readNext<uint64_t, little, unaligned>(d);
-      llvm::sys::fs::UniqueID UniqueID(File, Device);
+      llvm::sys::fs::UniqueID UniqueID(Device, File);
       time_t ModTime = endian::readNext<uint64_t, little, unaligned>(d);
       uint64_t Size = endian::readNext<uint64_t, little, unaligned>(d);
       return data_type(Size, ModTime, UniqueID, IsDirectory);
