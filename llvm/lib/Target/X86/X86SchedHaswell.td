@@ -266,6 +266,13 @@ def : WriteRes<WriteNop, []>;
 //================ Exceptions ================//
 
 //-- Specific Scheduling Models --//
+def WriteP1_Lat3 : SchedWriteRes<[HWPort1]> {
+  let Latency = 3;
+}
+def WriteP1_Lat3Ld : SchedWriteRes<[HWPort1, HWPort23]> {
+  let Latency = 7;
+}
+
 def Write2P0156_Lat2 : SchedWriteRes<[HWPort0156]> {
   let Latency = 2;
   let ResourceCycles = [2];
@@ -281,6 +288,23 @@ def Write2P237_P4 : SchedWriteRes<[HWPort237, HWPort4]> {
 }
 
 def WriteP06 : SchedWriteRes<[HWPort06]>;
+
+def Write2P06 : SchedWriteRes<[HWPort06]> {
+  let Latency = 1;
+  let NumMicroOps = 2;
+  let ResourceCycles = [2];
+}
+
+def WriteP15 : SchedWriteRes<[HWPort15]>;
+def WriteP15Ld : SchedWriteRes<[HWPort15, HWPort23]> {
+  let Latency = 4;
+}
+
+def Write3P06_Lat2 : SchedWriteRes<[HWPort06]> {
+  let Latency = 2;
+  let NumMicroOps = 3;
+  let ResourceCycles = [3];
+}
 
 def WriteP0156_2P237_P4 : SchedWriteRes<[HWPort0156, HWPort237, HWPort4]> {
   let Latency = 1;
@@ -597,5 +621,197 @@ def WriteIDiv64 : SchedWriteRes<[HWPort0, HWPort1, HWPort5, HWPort6]> {
   let NumMicroOps = 59;
 }
 def : InstRW<[WriteIDiv64], (instregex "IDIV64r")>;
+
+//-- Logic instructions --//
+
+// AND OR XOR.
+// m,r/i.
+def : InstRW<[Write2P0156_2P237_P4],
+             (instregex "(AND|OR|XOR)(8|16|32|64)m(r|i)",
+              "(AND|OR|XOR)(8|16|32|64)mi8", "(AND|OR|XOR)64mi32")>;
+
+// SHR SHL SAR.
+// m,i.
+def WriteShiftRMW : SchedWriteRes<[HWPort06, HWPort237, HWPort4]> {
+  let NumMicroOps = 4;
+  let ResourceCycles = [2, 1, 1];
+}
+def : InstRW<[WriteShiftRMW], (instregex "S(A|H)(R|L)(8|16|32|64)m(i|1)")>;
+
+// r,cl.
+def : InstRW<[Write3P06_Lat2], (instregex "S(A|H)(R|L)(8|16|32|64)rCL")>;
+
+// m,cl.
+def WriteShiftClLdRMW : SchedWriteRes<[HWPort06, HWPort23, HWPort4]> {
+  let NumMicroOps = 6;
+  let ResourceCycles = [3, 2, 1];
+}
+def : InstRW<[WriteShiftClLdRMW], (instregex "S(A|H)(R|L)(8|16|32|64)mCL")>;
+
+// ROR ROL.
+// r,1.
+def : InstRW<[Write2P06], (instregex "RO(R|L)(8|16|32|64)r1")>;
+
+// m,i.
+def WriteRotateRMW : SchedWriteRes<[HWPort06, HWPort237, HWPort4]> {
+  let NumMicroOps = 5;
+  let ResourceCycles = [2, 2, 1];
+}
+def : InstRW<[WriteRotateRMW], (instregex "RO(R|L)(8|16|32|64)mi")>;
+
+// r,cl.
+def : InstRW<[Write3P06_Lat2], (instregex "RO(R|L)(8|16|32|64)rCL")>;
+
+// m,cl.
+def WriteRotateRMWCL : SchedWriteRes<[]> {
+  let NumMicroOps = 6;
+}
+def : InstRW<[WriteRotateRMWCL], (instregex "RO(R|L)(8|16|32|64)mCL")>;
+
+// RCR RCL.
+// r,1.
+def WriteRCr1 : SchedWriteRes<[HWPort06, HWPort0156]> {
+  let Latency = 2;
+  let NumMicroOps = 3;
+  let ResourceCycles = [2, 1];
+}
+def : InstRW<[WriteRCr1], (instregex "RC(R|L)(8|16|32|64)r1")>;
+
+// m,1.
+def WriteRCm1 : SchedWriteRes<[]> {
+  let NumMicroOps = 6;
+}
+def : InstRW<[WriteRCm1], (instregex "RC(R|L)(8|16|32|64)m1")>;
+
+// r,i.
+def WriteRCri : SchedWriteRes<[HWPort0156]> {
+  let Latency = 6;
+  let NumMicroOps = 8;
+}
+def : InstRW<[WriteRCri], (instregex "RC(R|L)(8|16|32|64)r(i|CL)")>;
+
+// m,i.
+def WriteRCmi : SchedWriteRes<[]> {
+  let NumMicroOps = 11;
+}
+def : InstRW<[WriteRCmi], (instregex "RC(R|L)(8|16|32|64)m(i|CL)")>;
+
+// SHRD SHLD.
+// r,r,i.
+def WriteShDrr : SchedWriteRes<[HWPort1]> {
+  let Latency = 3;
+}
+def : InstRW<[WriteShDrr], (instregex "SH(R|L)D(16|32|64)rri8")>;
+
+// m,r,i.
+def WriteShDmr : SchedWriteRes<[]> {
+  let NumMicroOps = 5;
+}
+def : InstRW<[WriteShDmr], (instregex "SH(R|L)D(16|32|64)mri8")>;
+
+// r,r,cl.
+def WriteShlDCL : SchedWriteRes<[HWPort0156]> {
+  let Latency = 3;
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteShlDCL], (instregex "SHLD(16|32|64)rrCL")>;
+
+// r,r,cl.
+def WriteShrDCL : SchedWriteRes<[HWPort0156]> {
+  let Latency = 4;
+  let NumMicroOps = 4;
+}
+def : InstRW<[WriteShrDCL], (instregex "SHRD(16|32|64)rrCL")>;
+
+// m,r,cl.
+def WriteShDmrCL : SchedWriteRes<[]> {
+  let NumMicroOps = 7;
+}
+def : InstRW<[WriteShDmrCL], (instregex "SH(R|L)D(16|32|64)mrCL")>;
+
+// BT.
+// r,r/i.
+def : InstRW<[WriteShift], (instregex "BT(16|32|64)r(r|i8)")>;
+
+// m,r.
+def WriteBTmr : SchedWriteRes<[]> {
+  let NumMicroOps = 10;
+}
+def : InstRW<[WriteBTmr], (instregex "BT(16|32|64)mr")>;
+
+// m,i.
+def : InstRW<[WriteShiftLd], (instregex "BT(16|32|64)mi8")>;
+
+// BTR BTS BTC.
+// r,r,i.
+def : InstRW<[WriteShift], (instregex "BT(R|S|C)(16|32|64)r(r|i8)")>;
+
+// m,r.
+def WriteBTRSCmr : SchedWriteRes<[]> {
+  let NumMicroOps = 11;
+}
+def : InstRW<[WriteBTRSCmr], (instregex "BT(R|S|C)(16|32|64)mr")>;
+
+// m,i.
+def : InstRW<[WriteShiftLd], (instregex "BT(R|S|C)(16|32|64)mi8")>;
+
+// BSF BSR.
+// r,r.
+def : InstRW<[WriteP1_Lat3], (instregex "BS(R|F)(16|32|64)rr")>;
+// r,m.
+def : InstRW<[WriteP1_Lat3Ld], (instregex "BS(R|F)(16|32|64)rm")>;
+
+// SETcc.
+// r.
+def : InstRW<[WriteShift],
+             (instregex "SET(O|NO|B|AE|E|NE|BE|A|S|NS|P|NP|L|GE|LE|G)r")>;
+// m.
+def WriteSetCCm : SchedWriteRes<[HWPort06, HWPort237, HWPort4]> {
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteSetCCm],
+             (instregex "SET(O|NO|B|AE|E|NE|BE|A|S|NS|P|NP|L|GE|LE|G)m")>;
+
+// CLD STD.
+def WriteCldStd : SchedWriteRes<[HWPort15, HWPort6]> {
+  let NumMicroOps = 3;
+}
+def : InstRW<[WriteCldStd], (instregex "STD", "CLD")>;
+
+// LZCNT TZCNT.
+// r,r.
+def : InstRW<[WriteP1_Lat3], (instregex "(L|TZCNT)(16|32|64)rr")>;
+// r,m.
+def : InstRW<[WriteP1_Lat3Ld], (instregex "(L|TZCNT)(16|32|64)rm")>;
+
+// ANDN.
+// r,r.
+def : InstRW<[WriteP15], (instregex "ANDN(32|64)rr")>;
+// r,m.
+def : InstRW<[WriteP15Ld], (instregex "ANDN(32|64)rm")>;
+
+// BLSI BLSMSK BLSR.
+// r,r.
+def : InstRW<[WriteP15], (instregex "BLS(I|MSK|R)(32|64)rr")>;
+// r,m.
+def : InstRW<[WriteP15Ld], (instregex "BLS(I|MSK|R)(32|64)rm")>;
+
+// BEXTR.
+// r,r,r.
+def : InstRW<[Write2P0156_Lat2], (instregex "BEXTR(32|64)rr")>;
+// r,m,r.
+def : InstRW<[Write2P0156_Lat2Ld], (instregex "BEXTR(32|64)rm")>;
+
+// BZHI.
+// r,r,r.
+def : InstRW<[WriteP15], (instregex "BZHI(32|64)rr")>;
+// r,m,r.
+def : InstRW<[WriteP15Ld], (instregex "BZHI(32|64)rm")>;
+
+// PDEP PEXT.
+// r,r,r.
+def : InstRW<[WriteP1_Lat3], (instregex "PDEP(32|64)rr", "PEXT(32|64)rr")>;
+// r,m,r.
+def : InstRW<[WriteP1_Lat3Ld], (instregex "PDEP(32|64)rm", "PEXT(32|64)rm")>;
 
 } // SchedModel
