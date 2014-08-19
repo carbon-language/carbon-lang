@@ -1778,9 +1778,16 @@ function's scope.
 
 ::
 
-    ; At function scope.
-    uselistorder i32 %arg1, { 1, 0, 2 }
-    uselistorder label %bb, { 1, 0 }
+    define void @foo(i32 %arg1, i32 %arg2) {
+    entry:
+      ; ... instructions ...
+    bb:
+      ; ... instructions ...
+
+      ; At function scope.
+      uselistorder i32 %arg1, { 1, 0, 2 }
+      uselistorder label %bb, { 1, 0 }
+    }
 
     ; At global scope.
     uselistorder i32* @global, { 1, 2, 0 }
