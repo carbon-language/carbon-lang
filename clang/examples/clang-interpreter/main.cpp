@@ -165,7 +165,7 @@ int main(int argc, const char **argv, char * const *envp) {
     return 1;
 
   int Res = 255;
-  if (std::unique_ptr<llvm::Module> &Module = Act->getModule())
+  if (std::unique_ptr<llvm::Module> Module = Act->takeModule())
     Res = Execute(std::move(Module), envp);
 
   // Shutdown.
