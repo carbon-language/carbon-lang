@@ -128,17 +128,21 @@ namespace llvm {
 
     // References to blockaddress.  The key is the function ValID, the value is
     // a list of references to blocks in that function.
-    std::map<ValID, std::vector<std::pair<ValID, GlobalValue*> > >
-      ForwardRefBlockAddresses;
+    std::map<ValID, std::map<ValID, GlobalValue *>> ForwardRefBlockAddresses;
+    class PerFunctionState;
+    /// Reference to per-function state to allow basic blocks to be
+    /// forward-referenced by blockaddress instructions within the same
+    /// function.
+    PerFunctionState *BlockAddressPFS;
 
     // Attribute builder reference information.
     std::map<Value*, std::vector<unsigned> > ForwardRefAttrGroups;
     std::map<unsigned, AttrBuilder> NumberedAttrBuilders;
 
   public:
-    LLParser(StringRef F, SourceMgr &SM, SMDiagnostic &Err, Module *m) :
-      Context(m->getContext()), Lex(F, SM, Err, m->getContext()),
-      M(m) {}
+    LLParser(StringRef F, SourceMgr &SM, SMDiagnostic &Err, Module *m)
+        : Context(m->getContext()), Lex(F, SM, Err, m->getContext()), M(m),
+          BlockAddressPFS(nullptr) {}
     bool Run();
 
     LLVMContext &getContext() { return Context; }
@@ -327,6 +331,8 @@ namespace llvm {
       /// unnamed.  If there is an error, this returns null otherwise it returns
       /// the block being defined.
       BasicBlock *DefineBB(const std::string &Name, LocTy Loc);
+
+      bool resolveForwardRefBlockAddresses();
     };
 
     bool ConvertValIDToValue(Type *Ty, ValID &ID, Value *&V,
@@ -372,7 +378,7 @@ namespace llvm {
     bool ParseValID(ValID &ID, PerFunctionState *PFS = nullptr);
     bool ParseGlobalValue(Type *Ty, Constant *&V);
     bool ParseGlobalTypeAndValue(Constant *&V);
-    bool ParseGlobalValueVector(SmallVectorImpl<Constant*> &Elts);
+    bool ParseGlobalValueVector(SmallVectorImpl<Constant *> &Elts);
     bool parseOptionalComdat(Comdat *&C);
     bool ParseMetadataListValue(ValID &ID, PerFunctionState *PFS);
     bool ParseMetadataValue(ValID &ID, PerFunctionState *PFS);
@@ -432,10 +438,6 @@ namespace llvm {
     int ParseGetElementPtr(Instruction *&I, PerFunctionState &PFS);
     int ParseExtractValue(Instruction *&I, PerFunctionState &PFS);
     int ParseInsertValue(Instruction *&I, PerFunctionState &PFS);
-
-    bool ResolveForwardRefBlockAddresses(Function *TheFn,
-                             std::vector<std::pair<ValID, GlobalValue*> > &Refs,
-                                         PerFunctionState *PFS);
   };
 } // End llvm namespace
 
