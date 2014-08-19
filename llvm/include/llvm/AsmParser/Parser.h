@@ -50,14 +50,25 @@ std::unique_ptr<Module> parseAssemblyString(StringRef AsmString,
                                             SMDiagnostic &Error,
                                             LLVMContext &Context);
 
-/// This function is the low-level interface to the LLVM Assembly Parser.
-/// ParseAssemblyFile and ParseAssemblyString are wrappers around this function.
+/// parseAssemblyFile and parseAssemblyString are wrappers around this function.
 /// @brief Parse LLVM Assembly from a MemoryBuffer.
 /// @param F The MemoryBuffer containing assembly
 /// @param Err Error result info.
 /// @param Context Context in which to allocate globals info.
 std::unique_ptr<Module> parseAssembly(std::unique_ptr<MemoryBuffer> F,
                                       SMDiagnostic &Err, LLVMContext &Context);
+
+/// This function is the low-level interface to the LLVM Assembly Parser.
+/// This is kept as an independent function instead of being inlined into
+/// parseAssembly for the convenience of interactive users that want to add
+/// recently parsed bits to an existing module.
+///
+/// @param F The MemoryBuffer containing assembly
+/// @param M The module to add data to.
+/// @param Err Error result info.
+/// @return true on error.
+bool parseAssemblyInto(std::unique_ptr<MemoryBuffer> F, Module &M,
+                       SMDiagnostic &Err);
 
 } // End llvm namespace
 

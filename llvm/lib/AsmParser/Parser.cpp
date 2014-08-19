@@ -21,17 +21,24 @@
 #include <system_error>
 using namespace llvm;
 
+bool llvm::parseAssemblyInto(std::unique_ptr<MemoryBuffer> F, Module &M,
+                             SMDiagnostic &Err) {
+  SourceMgr SM;
+  StringRef Buf = F->getBuffer();
+  SM.AddNewSourceBuffer(F.release(), SMLoc());
+
+  return LLParser(Buf, SM, Err, &M).Run();
+}
+
 std::unique_ptr<Module> llvm::parseAssembly(std::unique_ptr<MemoryBuffer> F,
                                             SMDiagnostic &Err,
                                             LLVMContext &Context) {
-  SourceMgr SM;
-  MemoryBuffer *Buf = F.get();
-  SM.AddNewSourceBuffer(F.release(), SMLoc());
-
   std::unique_ptr<Module> M =
-      make_unique<Module>(Buf->getBufferIdentifier(), Context);
-  if (LLParser(Buf->getBuffer(), SM, Err, M.get()).Run())
+      make_unique<Module>(F->getBufferIdentifier(), Context);
+
+  if (parseAssemblyInto(std::move(F), *M, Err))
     return nullptr;
+
   return std::move(M);
 }
 
