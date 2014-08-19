@@ -3163,7 +3163,8 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
     return TargetMaterializeFloatZero(CFP);
 
   // Can't handle alternate code models yet.
-  if (TM.getCodeModel() != CodeModel::Small)
+  CodeModel::Model CM = TM.getCodeModel();
+  if (CM != CodeModel::Small && CM != CodeModel::Large)
     return 0;
 
   // Get opcode and regclass of the output for the given load instruction.
@@ -3218,6 +3219,21 @@ unsigned X86FastISel::X86MaterializeFP(const ConstantFP *CFP, MVT VT) {
   // Create the load from the constant pool.
   unsigned CPI = MCP.getConstantPoolIndex(CFP, Align);
   unsigned ResultReg = createResultReg(RC);
+
+  if (CM == CodeModel::Large) {
+    unsigned AddrReg = createResultReg(&X86::GR64RegClass);
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(X86::MOV64ri),
+            AddrReg)
+      .addConstantPoolIndex(CPI, 0, OpFlag);
+    MachineInstrBuilder MIB = BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
+                                      TII.get(Opc), ResultReg);
+    addDirectMem(MIB, AddrReg);
+    MachineMemOperand *MMO = FuncInfo.MF->getMachineMemOperand(
+      MachinePointerInfo::getConstantPool(), MachineMemOperand::MOLoad,
+      TM.getSubtargetImpl()->getDataLayout()->getPointerSize(), Align);
+    MIB->addMemOperand(*FuncInfo.MF, MMO);
+    return ResultReg;
+  }
 
   addConstantPoolReference(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
                                    TII.get(Opc), ResultReg),
