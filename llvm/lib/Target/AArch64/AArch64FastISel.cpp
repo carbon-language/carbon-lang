@@ -903,8 +903,7 @@ bool AArch64FastISel::SelectBranch(const Instruction *I) {
           .addReg(CondReg)
           .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc,
-              TII.get(AArch64::SUBSWri))
-          .addReg(ANDReg)
+              TII.get(AArch64::SUBSWri), AArch64::WZR)
           .addReg(ANDReg)
           .addImm(0)
           .addImm(0);
@@ -1110,14 +1109,12 @@ bool AArch64FastISel::EmitCmp(Value *Src1Value, Value *Src2Value, bool isZExt) {
 
   if (isICmp) {
     if (UseImm)
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CmpOpc))
-          .addReg(ZReg)
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CmpOpc), ZReg)
           .addReg(SrcReg1)
           .addImm(Imm)
           .addImm(0);
     else
-      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CmpOpc))
-          .addReg(ZReg)
+      BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(CmpOpc), ZReg)
           .addReg(SrcReg1)
           .addReg(SrcReg2);
   } else {
@@ -1197,8 +1194,8 @@ bool AArch64FastISel::SelectSelect(const Instruction *I) {
       .addReg(CondReg, getKillRegState(CondIsKill))
       .addImm(AArch64_AM::encodeLogicalImmediate(1, 32));
 
-    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::SUBSWri))
-      .addReg(ANDReg)
+    BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(AArch64::SUBSWri),
+            AArch64::WZR)
       .addReg(ANDReg)
       .addImm(0)
       .addImm(0);
