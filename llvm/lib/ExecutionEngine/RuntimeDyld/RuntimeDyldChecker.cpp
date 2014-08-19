@@ -207,7 +207,7 @@ private:
     size_t FirstNonSymbol = Expr.find_first_not_of("0123456789"
                                                    "abcdefghijklmnopqrstuvwxyz"
                                                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                                   ":_.");
+                                                   ":_.$");
     return std::make_pair(Expr.substr(0, FirstNonSymbol),
                           Expr.substr(FirstNonSymbol).ltrim());
   }
