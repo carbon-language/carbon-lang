@@ -614,7 +614,7 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
   } else if (R1->getType()->isIntegerTy()) {
     if (!match(R1, m_And(m_Value(R11), m_Value(R12)))) {
       // As before, model no mask as a trivial mask if it'll let us do an
-      // optimisation.
+      // optimization.
       R11 = R1;
       R12 = Constant::getAllOnesValue(R1->getType());
     }
