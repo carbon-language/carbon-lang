@@ -12,9 +12,14 @@
 #include <stdarg.h>
 #include "abort_message.h"
 
+#ifdef __BIONIC__
+#include <android/set_abort_message.h>
+#include <syslog.h>
+#endif
+
 #pragma GCC visibility push(hidden)
 
-#if __APPLE__ 
+#if __APPLE__
 #   if defined(__has_include) && __has_include(<CrashReporterClient.h>)
 #       define HAVE_CRASHREPORTERCLIENT_H 1
 #       include <CrashReporterClient.h>
@@ -33,7 +38,7 @@ void abort_message(const char* format, ...)
     vfprintf(stderr, format, list);
     va_end(list);
     fprintf(stderr, "\n");
-    
+
 #if __APPLE__ && HAVE_CRASHREPORTERCLIENT_H
     // record message in crash report
     char* buffer;
@@ -42,6 +47,20 @@ void abort_message(const char* format, ...)
     vasprintf(&buffer, format, list2);
     va_end(list2);
     CRSetCrashLogMessage(buffer);
+#elif __BIONIC__
+    char* buffer;
+    va_list list2;
+    va_start(list2, format);
+    vasprintf(&buffer, format, list2);
+    va_end(list2);
+
+    // Show error in tombstone.
+    android_set_abort_message(buffer);
+
+    // Show error in logcat.
+    openlog("libc++abi", 0, 0);
+    syslog(LOG_CRIT, "%s", buffer);
+    closelog();
 #endif
 
     abort();
