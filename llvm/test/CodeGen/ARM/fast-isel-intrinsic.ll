@@ -31,9 +31,7 @@ define void @t1() nounwind ssp {
 ; THUMB: {{(movt r0, :upper16:_?message1)|(ldr r0, \[r0\])}}
 ; THUMB: adds r0, #5
 ; THUMB: movs r1, #64
-; THUMB: movt r1, #0
 ; THUMB: movs r2, #10
-; THUMB: movt r2, #0
 ; THUMB: and r1, r1, #255
 ; THUMB: bl {{_?}}memset
 ; THUMB-LONG-LABEL: t1:
@@ -71,7 +69,6 @@ define void @t2() nounwind ssp {
 ; THUMB: adds r1, r0, #4
 ; THUMB: adds r0, #16
 ; THUMB: movs r2, #17
-; THUMB: movt r2, #0
 ; THUMB: str r0, [sp[[SLOT:[, #0-9]*]]] @ 4-byte Spill
 ; THUMB: mov r0, r1
 ; THUMB: ldr r1,  [sp[[SLOT]]] @ 4-byte Reload
@@ -109,7 +106,6 @@ define void @t3() nounwind ssp {
 ; THUMB: adds r1, r0, #4
 ; THUMB: adds r0, #16
 ; THUMB: movs r2, #10
-; THUMB: movt r2, #0
 ; THUMB: str r0, [sp[[SLOT:[, #0-9]*]]] @ 4-byte Spill
 ; THUMB: mov r0, r1
 ; THUMB: ldr r1,  [sp[[SLOT]]] @ 4-byte Reload
