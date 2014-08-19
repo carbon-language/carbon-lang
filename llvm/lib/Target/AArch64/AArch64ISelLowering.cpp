@@ -38,10 +38,12 @@ using namespace llvm;
 STATISTIC(NumTailCalls, "Number of tail calls");
 STATISTIC(NumShiftInserts, "Number of vector shift inserts");
 
+namespace {
 enum AlignMode {
   StrictAlign,
   NoStrictAlign
 };
+}
 
 static cl::opt<AlignMode>
 Align(cl::desc("Load/store alignment support"),
