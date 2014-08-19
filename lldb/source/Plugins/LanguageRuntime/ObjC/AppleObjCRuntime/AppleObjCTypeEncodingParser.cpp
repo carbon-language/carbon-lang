@@ -45,10 +45,10 @@ AppleObjCTypeEncodingParser::ReadStructElementName(lldb_utility::StringLexer& ty
     return buffer.GetString();
 }
 
-uint
+uint32_t
 AppleObjCTypeEncodingParser::ReadNumber (lldb_utility::StringLexer& type)
 {
-    uint total = 0;
+    uint32_t total = 0;
     while (type.HasAtLeast(1) && isdigit(type.Peek()))
            total = 10*total + (type.Next() - '0');
     return total;
@@ -90,7 +90,7 @@ AppleObjCTypeEncodingParser::BuildUnion (clang::ASTContext &ast_ctx, lldb_utilit
 }
 
 clang::QualType
-AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint kind)
+AppleObjCTypeEncodingParser::BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint32_t kind)
 {
     if (!type.NextIf(opener))
         return clang::QualType();
@@ -148,7 +148,7 @@ AppleObjCTypeEncodingParser::BuildArray (clang::ASTContext &ast_ctx, lldb_utilit
 {
     if (!type.NextIf('['))
         return clang::QualType();
-    uint size = ReadNumber(type);
+    uint32_t size = ReadNumber(type);
     clang::QualType element_type(BuildType(ast_ctx, type, allow_unknownanytype));
     if (!type.NextIf(']'))
         return clang::QualType();
@@ -214,7 +214,7 @@ AppleObjCTypeEncodingParser::BuildType (clang::ASTContext &ast_ctx, StringLexer&
     
     if (type.NextIf('b'))
     {
-        uint size = ReadNumber(type);
+        uint32_t size = ReadNumber(type);
         if (bitfield_bit_size)
         {
             *bitfield_bit_size = size;

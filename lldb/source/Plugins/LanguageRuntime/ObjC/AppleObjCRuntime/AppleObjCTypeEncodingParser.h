@@ -51,7 +51,7 @@ namespace lldb_private {
         BuildStruct (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
         
         clang::QualType
-        BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint kind);
+        BuildAggregate (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype, char opener, char closer, uint32_t kind);
         
         clang::QualType
         BuildUnion (clang::ASTContext &ast_ctx, lldb_utility::StringLexer& type, bool allow_unknownanytype);
@@ -68,7 +68,7 @@ namespace lldb_private {
         std::string
         ReadStructElementName(lldb_utility::StringLexer& type);
         
-        uint
+        uint32_t
         ReadNumber (lldb_utility::StringLexer& type);
 
     };
