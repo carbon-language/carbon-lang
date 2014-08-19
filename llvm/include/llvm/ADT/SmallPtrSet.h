@@ -240,6 +240,8 @@ struct RoundUpToPowerOfTwo {
 template <typename PtrType>
 class SmallPtrSetImpl : public SmallPtrSetImplBase {
   typedef PointerLikeTypeTraits<PtrType> PtrTraits;
+
+  SmallPtrSetImpl(const SmallPtrSetImpl&) LLVM_DELETED_FUNCTION;
 protected:
   // Constructors that forward to the base.
   SmallPtrSetImpl(const void **SmallStorage, const SmallPtrSetImpl &that)
