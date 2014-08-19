@@ -57,11 +57,15 @@ public:
       return nullptr;
 
     if (dataSymbolOnly) {
-      ErrorOr<std::unique_ptr<MemoryBuffer>> buffOrErr =
-          ci->getMemoryBuffer(true);
+      ErrorOr<llvm::MemoryBufferRef> buffOrErr = ci->getMemoryBufferRef();
       if (buffOrErr.getError())
         return nullptr;
-      if (isDataSymbol(std::move(buffOrErr.get()), name))
+
+      llvm::MemoryBufferRef mb = buffOrErr.get();
+      std::unique_ptr<MemoryBuffer> buff(MemoryBuffer::getMemBuffer(
+          mb.getBuffer(), mb.getBufferIdentifier(), false));
+
+      if (isDataSymbol(std::move(buff), name))
         return nullptr;
     }
 
@@ -136,14 +140,17 @@ protected:
   std::error_code
   instantiateMember(Archive::child_iterator member,
                     std::vector<std::unique_ptr<File>> &result) const {
-    ErrorOr<std::unique_ptr<MemoryBuffer>> mbOrErr =
-        member->getMemoryBuffer(true);
+    ErrorOr<llvm::MemoryBufferRef> mbOrErr = member->getMemoryBufferRef();
     if (std::error_code ec = mbOrErr.getError())
       return ec;
-    std::unique_ptr<MemoryBuffer> mb = std::move(mbOrErr.get());
+    llvm::MemoryBufferRef mb = mbOrErr.get();
     if (_logLoading)
-      llvm::outs() << mb->getBufferIdentifier() << "\n";
-    _registry.parseFile(mb, result);
+      llvm::outs() << mb.getBufferIdentifier() << "\n";
+
+    std::unique_ptr<MemoryBuffer> buf(MemoryBuffer::getMemBuffer(
+        mb.getBuffer(), mb.getBufferIdentifier(), false));
+
+    _registry.parseFile(buf, result);
     const char *memberStart = member->getBuffer().data();
     _membersInstantiated.insert(memberStart);
     return std::error_code();
@@ -154,7 +161,7 @@ protected:
   // symbol or does not exist, returns a failure.
   std::error_code isDataSymbol(std::unique_ptr<MemoryBuffer> mb,
                                StringRef symbol) const {
-    auto objOrErr(ObjectFile::createObjectFile(mb));
+    auto objOrErr(ObjectFile::createObjectFile(mb->getMemBufferRef()));
     if (auto ec = objOrErr.getError())
       return ec;
     std::unique_ptr<ObjectFile> obj = std::move(objOrErr.get());
@@ -218,7 +225,7 @@ public:
     MemoryBuffer &buff = *mb;
     // Make Archive object which will be owned by FileArchive object.
     std::error_code ec;
-    Archive *archive = new Archive(std::move(mb), ec);
+    Archive *archive = new Archive(mb->getMemBufferRef(), ec);
     if (ec)
       return ec;
     StringRef path = buff.getBufferIdentifier();

@@ -144,6 +144,7 @@ private:
   StringRef ArrayRefToString(ArrayRef<uint8_t> array);
 
   std::unique_ptr<const llvm::object::COFFObjectFile> _obj;
+  std::unique_ptr<MemoryBuffer> _mb;
   atom_collection_vector<DefinedAtom> _definedAtoms;
   atom_collection_vector<UndefinedAtom> _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
@@ -287,9 +288,9 @@ DefinedAtom::Merge getMerge(const coff_aux_section_definition *auxsym) {
 }
 
 FileCOFF::FileCOFF(std::unique_ptr<MemoryBuffer> mb, std::error_code &ec)
-    : File(mb->getBufferIdentifier(), kindObject), _compatibleWithSEH(false),
-      _ordinal(0) {
-  auto binaryOrErr = llvm::object::createBinary(std::move(mb));
+    : File(mb->getBufferIdentifier(), kindObject), _mb(std::move(mb)),
+      _compatibleWithSEH(false), _ordinal(0) {
+  auto binaryOrErr = llvm::object::createBinary(_mb->getMemBufferRef());
   if ((ec = binaryOrErr.getError()))
     return;
   std::unique_ptr<llvm::object::Binary> bin = std::move(binaryOrErr.get());
