@@ -37,7 +37,7 @@ namespace object {
 
 class ELFObjectFileBase : public ObjectFile {
 protected:
-  ELFObjectFileBase(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
+  ELFObjectFileBase(unsigned int Type, MemoryBufferRef Source);
 
 public:
   virtual std::error_code getRelocationAddend(DataRefImpl Rel,
@@ -186,7 +186,7 @@ protected:
   bool isDyldELFObject;
 
 public:
-  ELFObjectFile(std::unique_ptr<MemoryBuffer> Object, std::error_code &EC);
+  ELFObjectFile(MemoryBufferRef Object, std::error_code &EC);
 
   const Elf_Sym *getSymbol(DataRefImpl Symb) const;
 
@@ -797,14 +797,13 @@ ELFObjectFile<ELFT>::getRela(DataRefImpl Rela) const {
 }
 
 template <class ELFT>
-ELFObjectFile<ELFT>::ELFObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                                   std::error_code &EC)
+ELFObjectFile<ELFT>::ELFObjectFile(MemoryBufferRef Object, std::error_code &EC)
     : ELFObjectFileBase(
           getELFType(static_cast<endianness>(ELFT::TargetEndianness) ==
                          support::little,
                      ELFT::Is64Bits),
-          std::move(Object)),
-      EF(Data->getBuffer(), EC) {}
+          Object),
+      EF(Data.getBuffer(), EC) {}
 
 template <class ELFT>
 basic_symbol_iterator ELFObjectFile<ELFT>::symbol_begin_impl() const {

@@ -187,10 +187,10 @@ class ObjectFile : public SymbolicFile {
   ObjectFile(const ObjectFile &other) LLVM_DELETED_FUNCTION;
 
 protected:
-  ObjectFile(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
+  ObjectFile(unsigned int Type, MemoryBufferRef Source);
 
   const uint8_t *base() const {
-    return reinterpret_cast<const uint8_t *>(Data->getBufferStart());
+    return reinterpret_cast<const uint8_t *>(Data.getBufferStart());
   }
 
   // These functions are for SymbolRef to call internally. The main goal of
@@ -309,14 +309,13 @@ public:
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.
   /// @brief Create ObjectFile from path.
-  static ErrorOr<std::unique_ptr<ObjectFile>>
+  static ErrorOr<OwningBinary<ObjectFile>>
   createObjectFile(StringRef ObjectPath);
 
   static ErrorOr<std::unique_ptr<ObjectFile>>
-  createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
-                   sys::fs::file_magic Type);
+  createObjectFile(MemoryBufferRef Object, sys::fs::file_magic Type);
   static ErrorOr<std::unique_ptr<ObjectFile>>
-  createObjectFile(std::unique_ptr<MemoryBuffer> &Object) {
+  createObjectFile(MemoryBufferRef Object) {
     return createObjectFile(Object, sys::fs::file_magic::unknown);
   }
 
@@ -326,13 +325,13 @@ public:
   }
 
   static ErrorOr<std::unique_ptr<COFFObjectFile>>
-  createCOFFObjectFile(std::unique_ptr<MemoryBuffer> Object);
+  createCOFFObjectFile(MemoryBufferRef Object);
 
   static ErrorOr<std::unique_ptr<ObjectFile>>
-  createELFObjectFile(std::unique_ptr<MemoryBuffer> &Object);
+  createELFObjectFile(MemoryBufferRef Object);
 
   static ErrorOr<std::unique_ptr<MachOObjectFile>>
-  createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Object);
+  createMachOObjectFile(MemoryBufferRef Object);
 };
 
 // Inline function definitions.

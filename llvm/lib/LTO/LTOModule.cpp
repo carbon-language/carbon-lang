@@ -77,7 +77,8 @@ LTOModule *LTOModule::createFromFile(const char *path, TargetOptions options,
     errMsg = EC.message();
     return nullptr;
   }
-  return makeLTOModule(std::move(BufferOrErr.get()), options, errMsg);
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
+  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg);
 }
 
 LTOModule *LTOModule::createFromOpenFile(int fd, const char *path, size_t size,
@@ -96,23 +97,30 @@ LTOModule *LTOModule::createFromOpenFileSlice(int fd, const char *path,
     errMsg = EC.message();
     return nullptr;
   }
-  return makeLTOModule(std::move(BufferOrErr.get()), options, errMsg);
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(BufferOrErr.get());
+  return makeLTOModule(Buffer->getMemBufferRef(), options, errMsg);
 }
 
 LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
                                        TargetOptions options,
                                        std::string &errMsg, StringRef path) {
-  std::unique_ptr<MemoryBuffer> buffer(makeBuffer(mem, length, path));
-  if (!buffer)
-    return nullptr;
-  return makeLTOModule(std::move(buffer), options, errMsg);
+  StringRef Data((char *)mem, length);
+  MemoryBufferRef Buffer(Data, path);
+  return makeLTOModule(Buffer, options, errMsg);
 }
 
-LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
+LTOModule *LTOModule::makeLTOModule(MemoryBufferRef Buffer,
                                     TargetOptions options,
                                     std::string &errMsg) {
+  StringRef Data = Buffer.getBuffer();
+  StringRef FileName = Buffer.getBufferIdentifier();
+  std::unique_ptr<MemoryBuffer> MemBuf(
+      makeBuffer(Data.begin(), Data.size(), FileName));
+  if (!MemBuf)
+    return nullptr;
+
   ErrorOr<Module *> MOrErr =
-      getLazyBitcodeModule(Buffer.get(), getGlobalContext());
+      getLazyBitcodeModule(MemBuf.get(), getGlobalContext());
   if (std::error_code EC = MOrErr.getError()) {
     errMsg = EC.message();
     return nullptr;
@@ -150,7 +158,7 @@ LTOModule *LTOModule::makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
   M->setDataLayout(target->getSubtargetImpl()->getDataLayout());
 
   std::unique_ptr<object::IRObjectFile> IRObj(
-      new object::IRObjectFile(std::move(Buffer), std::move(M)));
+      new object::IRObjectFile(Buffer, std::move(M)));
 
   LTOModule *Ret = new LTOModule(std::move(IRObj), target);
 

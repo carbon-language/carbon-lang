@@ -415,7 +415,7 @@ protected:
                            SmallVectorImpl<char> &Result) const override;
 
 public:
-  COFFObjectFile(std::unique_ptr<MemoryBuffer> Object, std::error_code &EC);
+  COFFObjectFile(MemoryBufferRef Object, std::error_code &EC);
   basic_symbol_iterator symbol_begin_impl() const override;
   basic_symbol_iterator symbol_end_impl() const override;
   section_iterator section_begin() const override;

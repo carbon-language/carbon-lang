@@ -17,11 +17,11 @@
 #include "llvm/Object/Error.h"
 #include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/MemoryBuffer.h"
 
 namespace llvm {
 
 class LLVMContext;
-class MemoryBuffer;
 class StringRef;
 
 namespace object {
@@ -34,9 +34,9 @@ private:
   unsigned int TypeID;
 
 protected:
-  std::unique_ptr<MemoryBuffer> Data;
+  MemoryBufferRef Data;
 
-  Binary(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
+  Binary(unsigned int Type, MemoryBufferRef Source);
 
   enum {
     ID_Archive,
@@ -78,8 +78,8 @@ public:
   virtual ~Binary();
 
   StringRef getData() const;
-  MemoryBuffer *releaseBuffer() { return Data.release(); }
   StringRef getFileName() const;
+  MemoryBufferRef getMemoryBufferRef() const;
 
   // Cast methods.
   unsigned int getType() const { return TypeID; }
@@ -126,11 +126,37 @@ public:
 /// @brief Create a Binary from Source, autodetecting the file type.
 ///
 /// @param Source The data to create the Binary from.
-ErrorOr<std::unique_ptr<Binary>>
-createBinary(std::unique_ptr<MemoryBuffer> Source,
-             LLVMContext *Context = nullptr);
+ErrorOr<std::unique_ptr<Binary>> createBinary(MemoryBufferRef Source,
+                                              LLVMContext *Context = nullptr);
 
-ErrorOr<std::unique_ptr<Binary>> createBinary(StringRef Path);
+template <typename T> class OwningBinary {
+  std::unique_ptr<T> Bin;
+  std::unique_ptr<MemoryBuffer> Buf;
+
+public:
+  OwningBinary();
+  OwningBinary(std::unique_ptr<T> Bin, std::unique_ptr<MemoryBuffer> Buf);
+  std::unique_ptr<T> &getBinary();
+  std::unique_ptr<MemoryBuffer> &getBuffer();
+};
+
+template <typename T>
+OwningBinary<T>::OwningBinary(std::unique_ptr<T> Bin,
+                              std::unique_ptr<MemoryBuffer> Buf)
+    : Bin(std::move(Bin)), Buf(std::move(Buf)) {}
+
+template <typename T> OwningBinary<T>::OwningBinary() {}
+
+template <typename T> std::unique_ptr<T> &OwningBinary<T>::getBinary() {
+  return Bin;
+}
+
+template <typename T>
+std::unique_ptr<MemoryBuffer> &OwningBinary<T>::getBuffer() {
+  return Buf;
+}
+
+ErrorOr<OwningBinary<Binary>> createBinary(StringRef Path);
 }
 }
 

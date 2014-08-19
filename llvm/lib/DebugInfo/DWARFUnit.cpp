@@ -261,12 +261,12 @@ bool DWARFUnit::parseDWO() {
     sys::path::append(AbsolutePath, CompilationDir);
   }
   sys::path::append(AbsolutePath, DWOFileName);
-  ErrorOr<std::unique_ptr<object::ObjectFile>> DWOFile =
+  ErrorOr<object::OwningBinary<object::ObjectFile>> DWOFile =
       object::ObjectFile::createObjectFile(AbsolutePath);
   if (!DWOFile)
     return false;
   // Reset DWOHolder.
-  DWO = llvm::make_unique<DWOHolder>(std::move(*DWOFile));
+  DWO = llvm::make_unique<DWOHolder>(std::move(DWOFile->getBinary()));
   DWARFUnit *DWOCU = DWO->getUnit();
   // Verify that compile unit in .dwo file is valid.
   if (!DWOCU || DWOCU->getDWOId() != getDWOId()) {

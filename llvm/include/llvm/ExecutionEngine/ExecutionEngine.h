@@ -22,6 +22,7 @@
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/MC/MCCodeGenInfo.h"
+#include "llvm/Object/Binary.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Target/TargetMachine.h"
@@ -195,7 +196,7 @@ public:
   /// resolve external symbols in objects it is loading.  If a symbol is found
   /// in the Archive the contained object file will be extracted (in memory)
   /// and loaded for possible execution.
-  virtual void addArchive(std::unique_ptr<object::Archive> A);
+  virtual void addArchive(object::OwningBinary<object::Archive> A);
 
   //===--------------------------------------------------------------------===//
 

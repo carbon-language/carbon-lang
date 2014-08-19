@@ -19,23 +19,21 @@
 using namespace llvm;
 using namespace object;
 
-SymbolicFile::SymbolicFile(unsigned int Type,
-                           std::unique_ptr<MemoryBuffer> Source)
-    : Binary(Type, std::move(Source)) {}
+SymbolicFile::SymbolicFile(unsigned int Type, MemoryBufferRef Source)
+    : Binary(Type, Source) {}
 
 SymbolicFile::~SymbolicFile() {}
 
-ErrorOr<std::unique_ptr<SymbolicFile>>
-SymbolicFile::createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
-                                 sys::fs::file_magic Type,
-                                 LLVMContext *Context) {
+ErrorOr<std::unique_ptr<SymbolicFile>> SymbolicFile::createSymbolicFile(
+    MemoryBufferRef Object, sys::fs::file_magic Type, LLVMContext *Context) {
+  StringRef Data = Object.getBuffer();
   if (Type == sys::fs::file_magic::unknown)
-    Type = sys::fs::identify_magic(Object->getBuffer());
+    Type = sys::fs::identify_magic(Data);
 
   switch (Type) {
   case sys::fs::file_magic::bitcode:
     if (Context)
-      return IRObjectFile::createIRObjectFile(std::move(Object), *Context);
+      return IRObjectFile::createIRObjectFile(Object, *Context);
   // Fallthrough
   case sys::fs::file_magic::unknown:
   case sys::fs::file_magic::archive:

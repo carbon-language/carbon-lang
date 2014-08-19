@@ -28,7 +28,7 @@ class IRObjectFile : public SymbolicFile {
   std::vector<std::pair<std::string, uint32_t>> AsmSymbols;
 
 public:
-  IRObjectFile(std::unique_ptr<MemoryBuffer> Object, std::unique_ptr<Module> M);
+  IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> M);
   ~IRObjectFile();
   void moveSymbolNext(DataRefImpl &Symb) const override;
   std::error_code printSymbolName(raw_ostream &OS,
@@ -49,9 +49,8 @@ public:
     return v->isIR();
   }
 
-  static ErrorOr<IRObjectFile *>
-  createIRObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                     LLVMContext &Context);
+  static ErrorOr<IRObjectFile *> createIRObjectFile(MemoryBufferRef Object,
+                                                    LLVMContext &Context);
 };
 }
 }

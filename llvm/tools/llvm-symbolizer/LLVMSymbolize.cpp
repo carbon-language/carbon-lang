@@ -300,12 +300,12 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
     return I->second;
   Binary *Bin = nullptr;
   Binary *DbgBin = nullptr;
-  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(Path);
+  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(Path);
   if (!error(BinaryOrErr.getError())) {
-    std::unique_ptr<Binary> &ParsedBinary = BinaryOrErr.get();
+    OwningBinary<Binary> &ParsedBinary = BinaryOrErr.get();
     // Check if it's a universal binary.
-    Bin = ParsedBinary.get();
-    ParsedBinariesAndObjects.push_back(std::move(ParsedBinary));
+    Bin = ParsedBinary.getBinary().get();
+    addOwningBinary(std::move(ParsedBinary));
     if (Bin->isMachO() || Bin->isMachOUniversalBinary()) {
       // On Darwin we may find DWARF in separate object file in
       // resource directory.
@@ -314,8 +314,9 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
       BinaryOrErr = createBinary(ResourcePath);
       std::error_code EC = BinaryOrErr.getError();
       if (EC != errc::no_such_file_or_directory && !error(EC)) {
-        DbgBin = BinaryOrErr.get().get();
-        ParsedBinariesAndObjects.push_back(std::move(BinaryOrErr.get()));
+        OwningBinary<Binary> B = std::move(BinaryOrErr.get());
+        DbgBin = B.getBinary().get();
+        addOwningBinary(std::move(B));
       }
     }
     // Try to locate the debug binary using .gnu_debuglink section.
@@ -327,8 +328,9 @@ LLVMSymbolizer::getOrCreateBinary(const std::string &Path) {
           findDebugBinary(Path, DebuglinkName, CRCHash, DebugBinaryPath)) {
         BinaryOrErr = createBinary(DebugBinaryPath);
         if (!error(BinaryOrErr.getError())) {
-          DbgBin = BinaryOrErr.get().get();
-          ParsedBinariesAndObjects.push_back(std::move(BinaryOrErr.get()));
+          OwningBinary<Binary> B = std::move(BinaryOrErr.get());
+          DbgBin = B.getBinary().get();
+          addOwningBinary(std::move(B));
         }
       }
     }

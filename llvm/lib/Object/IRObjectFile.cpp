@@ -32,9 +32,8 @@
 using namespace llvm;
 using namespace object;
 
-IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                           std::unique_ptr<Module> Mod)
-    : SymbolicFile(Binary::ID_IR, std::move(Object)), M(std::move(Mod)) {
+IRObjectFile::IRObjectFile(MemoryBufferRef Object, std::unique_ptr<Module> Mod)
+    : SymbolicFile(Binary::ID_IR, Object), M(std::move(Mod)) {
   // If we have a DataLayout, setup a mangler.
   const DataLayout *DL = M->getDataLayout();
   if (!DL)
@@ -114,9 +113,6 @@ IRObjectFile::IRObjectFile(std::unique_ptr<MemoryBuffer> Object,
 }
 
 IRObjectFile::~IRObjectFile() {
-  GVMaterializer *GVM =  M->getMaterializer();
-  if (GVM)
-    GVM->releaseBuffer();
  }
 
 static const GlobalValue *getGV(DataRefImpl &Symb) {
@@ -268,12 +264,20 @@ basic_symbol_iterator IRObjectFile::symbol_end_impl() const {
   return basic_symbol_iterator(BasicSymbolRef(Ret, this));
 }
 
-ErrorOr<IRObjectFile *> llvm::object::IRObjectFile::createIRObjectFile(
-    std::unique_ptr<MemoryBuffer> Object, LLVMContext &Context) {
-  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Object.get(), Context);
+ErrorOr<IRObjectFile *>
+llvm::object::IRObjectFile::createIRObjectFile(MemoryBufferRef Object,
+                                               LLVMContext &Context) {
+
+  StringRef Data = Object.getBuffer();
+  StringRef FileName = Object.getBufferIdentifier();
+  std::unique_ptr<MemoryBuffer> Buff(
+      MemoryBuffer::getMemBuffer(Data, FileName, false));
+
+  ErrorOr<Module *> MOrErr = getLazyBitcodeModule(Buff.get(), Context);
   if (std::error_code EC = MOrErr.getError())
     return EC;
+  Buff.release();
 
   std::unique_ptr<Module> M(MOrErr.get());
-  return new IRObjectFile(std::move(Object), std::move(M));
+  return new IRObjectFile(Object, std::move(M));
 }

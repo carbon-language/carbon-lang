@@ -31,8 +31,7 @@ using support::ulittle32_t;
 using support::little16_t;
 
 // Returns false if size is greater than the buffer size. And sets ec.
-static bool checkSize(const MemoryBuffer &M, std::error_code &EC,
-                      uint64_t Size) {
+static bool checkSize(MemoryBufferRef M, std::error_code &EC, uint64_t Size) {
   if (M.getBufferSize() < Size) {
     EC = object_error::unexpected_eof;
     return false;
@@ -43,7 +42,7 @@ static bool checkSize(const MemoryBuffer &M, std::error_code &EC,
 // Sets Obj unless any bytes in [addr, addr + size) fall outsize of m.
 // Returns unexpected_eof if error.
 template <typename T>
-static std::error_code getObject(const T *&Obj, const MemoryBuffer &M,
+static std::error_code getObject(const T *&Obj, MemoryBufferRef M,
                                  const uint8_t *Ptr,
                                  const size_t Size = sizeof(T)) {
   uintptr_t Addr = uintptr_t(Ptr);
@@ -397,7 +396,7 @@ relocation_iterator COFFObjectFile::section_rel_end(DataRefImpl Ref) const {
 // Initialize the pointer to the symbol table.
 std::error_code COFFObjectFile::initSymbolTablePtr() {
   if (std::error_code EC = getObject(
-          SymbolTable, *Data, base() + COFFHeader->PointerToSymbolTable,
+          SymbolTable, Data, base() + COFFHeader->PointerToSymbolTable,
           COFFHeader->NumberOfSymbols * sizeof(coff_symbol)))
     return EC;
 
@@ -408,12 +407,11 @@ std::error_code COFFObjectFile::initSymbolTablePtr() {
       base() + COFFHeader->PointerToSymbolTable +
       COFFHeader->NumberOfSymbols * sizeof(coff_symbol);
   const ulittle32_t *StringTableSizePtr;
-  if (std::error_code EC =
-          getObject(StringTableSizePtr, *Data, StringTableAddr))
+  if (std::error_code EC = getObject(StringTableSizePtr, Data, StringTableAddr))
     return EC;
   StringTableSize = *StringTableSizePtr;
   if (std::error_code EC =
-          getObject(StringTable, *Data, StringTableAddr, StringTableSize))
+          getObject(StringTable, Data, StringTableAddr, StringTableSize))
     return EC;
 
   // Treat table sizes < 4 as empty because contrary to the PECOFF spec, some
@@ -511,15 +509,14 @@ std::error_code COFFObjectFile::initExportTablePtr() {
   return object_error::success;
 }
 
-COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                               std::error_code &EC)
-    : ObjectFile(Binary::ID_COFF, std::move(Object)), COFFHeader(nullptr),
+COFFObjectFile::COFFObjectFile(MemoryBufferRef Object, std::error_code &EC)
+    : ObjectFile(Binary::ID_COFF, Object), COFFHeader(nullptr),
       PE32Header(nullptr), PE32PlusHeader(nullptr), DataDirectory(nullptr),
       SectionTable(nullptr), SymbolTable(nullptr), StringTable(nullptr),
       StringTableSize(0), ImportDirectory(nullptr), NumberOfImportDirectory(0),
       ExportDirectory(nullptr) {
   // Check that we at least have enough room for a header.
-  if (!checkSize(*Data, EC, sizeof(coff_file_header)))
+  if (!checkSize(Data, EC, sizeof(coff_file_header)))
     return;
 
   // The current location in the file where we are looking at.
@@ -533,7 +530,7 @@ COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
   if (base()[0] == 0x4d && base()[1] == 0x5a) {
     // PE/COFF, seek through MS-DOS compatibility stub and 4-byte
     // PE signature to find 'normal' COFF header.
-    if (!checkSize(*Data, EC, 0x3c + 8))
+    if (!checkSize(Data, EC, 0x3c + 8))
       return;
     CurPtr = *reinterpret_cast<const ulittle16_t *>(base() + 0x3c);
     // Check the PE magic bytes. ("PE\0\0")
@@ -545,13 +542,13 @@ COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
     HasPEHeader = true;
   }
 
-  if ((EC = getObject(COFFHeader, *Data, base() + CurPtr)))
+  if ((EC = getObject(COFFHeader, Data, base() + CurPtr)))
     return;
   CurPtr += sizeof(coff_file_header);
 
   if (HasPEHeader) {
     const pe32_header *Header;
-    if ((EC = getObject(Header, *Data, base() + CurPtr)))
+    if ((EC = getObject(Header, Data, base() + CurPtr)))
       return;
 
     const uint8_t *DataDirAddr;
@@ -569,7 +566,7 @@ COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
       EC = object_error::parse_failed;
       return;
     }
-    if ((EC = getObject(DataDirectory, *Data, DataDirAddr, DataDirSize)))
+    if ((EC = getObject(DataDirectory, Data, DataDirAddr, DataDirSize)))
       return;
     CurPtr += COFFHeader->SizeOfOptionalHeader;
   }
@@ -577,7 +574,7 @@ COFFObjectFile::COFFObjectFile(std::unique_ptr<MemoryBuffer> Object,
   if (COFFHeader->isImportLibrary())
     return;
 
-  if ((EC = getObject(SectionTable, *Data, base() + CurPtr,
+  if ((EC = getObject(SectionTable, Data, base() + CurPtr,
                       COFFHeader->NumberOfSections * sizeof(coff_section))))
     return;
 
@@ -826,7 +823,7 @@ COFFObjectFile::getSectionContents(const coff_section *Sec,
   // data, as there's nothing that says that is not allowed.
   uintptr_t ConStart = uintptr_t(base()) + Sec->PointerToRawData;
   uintptr_t ConEnd = ConStart + Sec->SizeOfRawData;
-  if (ConEnd > uintptr_t(Data->getBufferEnd()))
+  if (ConEnd > uintptr_t(Data.getBufferEnd()))
     return object_error::parse_failed;
   Res = ArrayRef<uint8_t>(reinterpret_cast<const unsigned char*>(ConStart),
                           Sec->SizeOfRawData);
@@ -1092,10 +1089,9 @@ ExportDirectoryEntryRef::getSymbolName(StringRef &Result) const {
 }
 
 ErrorOr<std::unique_ptr<COFFObjectFile>>
-ObjectFile::createCOFFObjectFile(std::unique_ptr<MemoryBuffer> Object) {
+ObjectFile::createCOFFObjectFile(MemoryBufferRef Object) {
   std::error_code EC;
-  std::unique_ptr<COFFObjectFile> Ret(
-      new COFFObjectFile(std::move(Object), EC));
+  std::unique_ptr<COFFObjectFile> Ret(new COFFObjectFile(Object, EC));
   if (EC)
     return EC;
   return std::move(Ret);

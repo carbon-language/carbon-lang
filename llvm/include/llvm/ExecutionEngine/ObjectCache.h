@@ -27,7 +27,7 @@ public:
   virtual ~ObjectCache() { }
 
   /// notifyObjectCompiled - Provides a pointer to compiled code for Module M.
-  virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) = 0;
+  virtual void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) = 0;
 
   /// Returns a pointer to a newly allocated MemoryBuffer that contains the
   /// object which corresponds with Module M, or 0 if an object is not

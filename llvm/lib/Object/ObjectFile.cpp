@@ -25,8 +25,8 @@ using namespace object;
 
 void ObjectFile::anchor() { }
 
-ObjectFile::ObjectFile(unsigned int Type, std::unique_ptr<MemoryBuffer> Source)
-    : SymbolicFile(Type, std::move(Source)) {}
+ObjectFile::ObjectFile(unsigned int Type, MemoryBufferRef Source)
+    : SymbolicFile(Type, Source) {}
 
 std::error_code ObjectFile::printSymbolName(raw_ostream &OS,
                                             DataRefImpl Symb) const {
@@ -48,10 +48,10 @@ section_iterator ObjectFile::getRelocatedSection(DataRefImpl Sec) const {
 }
 
 ErrorOr<std::unique_ptr<ObjectFile>>
-ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
-                             sys::fs::file_magic Type) {
+ObjectFile::createObjectFile(MemoryBufferRef Object, sys::fs::file_magic Type) {
+  StringRef Data = Object.getBuffer();
   if (Type == sys::fs::file_magic::unknown)
-    Type = sys::fs::identify_magic(Object->getBuffer());
+    Type = sys::fs::identify_magic(Data);
 
   switch (Type) {
   case sys::fs::file_magic::unknown:
@@ -79,16 +79,24 @@ ObjectFile::createObjectFile(std::unique_ptr<MemoryBuffer> &Object,
   case sys::fs::file_magic::coff_object:
   case sys::fs::file_magic::coff_import_library:
   case sys::fs::file_magic::pecoff_executable:
-    return createCOFFObjectFile(std::move(Object));
+    return createCOFFObjectFile(Object);
   }
   llvm_unreachable("Unexpected Object File Type");
 }
 
-ErrorOr<std::unique_ptr<ObjectFile>>
+ErrorOr<OwningBinary<ObjectFile>>
 ObjectFile::createObjectFile(StringRef ObjectPath) {
   ErrorOr<std::unique_ptr<MemoryBuffer>> FileOrErr =
       MemoryBuffer::getFile(ObjectPath);
   if (std::error_code EC = FileOrErr.getError())
     return EC;
-  return createObjectFile(FileOrErr.get());
+  std::unique_ptr<MemoryBuffer> Buffer = std::move(FileOrErr.get());
+
+  ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr =
+      createObjectFile(Buffer->getMemBufferRef());
+  if (std::error_code EC = ObjOrErr.getError())
+    return EC;
+  std::unique_ptr<ObjectFile> Obj = std::move(ObjOrErr.get());
+
+  return OwningBinary<ObjectFile>(std::move(Obj), std::move(Buffer));
 }

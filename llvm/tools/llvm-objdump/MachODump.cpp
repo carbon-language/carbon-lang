@@ -210,15 +210,16 @@ static void DisassembleInputMachO2(StringRef Filename,
                                    MachOObjectFile *MachOOF);
 
 void llvm::DisassembleInputMachO(StringRef Filename) {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> Buff =
+  ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr =
       MemoryBuffer::getFileOrSTDIN(Filename);
-  if (std::error_code EC = Buff.getError()) {
+  if (std::error_code EC = BuffOrErr.getError()) {
     errs() << "llvm-objdump: " << Filename << ": " << EC.message() << "\n";
     return;
   }
+  std::unique_ptr<MemoryBuffer> Buff = std::move(BuffOrErr.get());
 
-  std::unique_ptr<MachOObjectFile> MachOOF =
-    std::move(ObjectFile::createMachOObjectFile(Buff.get()).get());
+  std::unique_ptr<MachOObjectFile> MachOOF = std::move(
+      ObjectFile::createMachOObjectFile(Buff.get()->getMemBufferRef()).get());
 
   DisassembleInputMachO2(Filename, MachOOF.get());
 }
@@ -352,13 +353,16 @@ static void DisassembleInputMachO2(StringRef Filename,
     // A separate DSym file path was specified, parse it as a macho file,
     // get the sections and supply it to the section name parsing machinery.
     if (!DSYMFile.empty()) {
-      ErrorOr<std::unique_ptr<MemoryBuffer>> Buf =
+      ErrorOr<std::unique_ptr<MemoryBuffer>> BufOrErr =
           MemoryBuffer::getFileOrSTDIN(DSYMFile);
-      if (std::error_code EC = Buf.getError()) {
+      if (std::error_code EC = BufOrErr.getError()) {
         errs() << "llvm-objdump: " << Filename << ": " << EC.message() << '\n';
         return;
       }
-      DbgObj = ObjectFile::createMachOObjectFile(Buf.get()).get().release();
+      DbgObj =
+          ObjectFile::createMachOObjectFile(BufOrErr.get()->getMemBufferRef())
+              .get()
+              .release();
     }
 
     // Setup the DIContext

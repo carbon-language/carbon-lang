@@ -24,9 +24,11 @@
 #include <system_error>
 
 namespace llvm {
-/// This interface provides simple read-only access to a block/ of memory, and
+class MemoryBufferRef;
+
+/// This interface provides simple read-only access to a block of memory, and
 /// provides simple methods for reading files and standard input into a memory
-/// buffer. In addition to basic access to the characters in the file, this
+/// buffer.  In addition to basic access to the characters in the file, this
 /// interface guarantees you can read one character past the end of the file,
 /// and that this character will read as '\0'.
 ///
@@ -136,7 +138,27 @@ public:
 
   /// Return information on the memory mechanism used to support the
   /// MemoryBuffer.
-  virtual BufferKind getBufferKind() const = 0;  
+  virtual BufferKind getBufferKind() const = 0;
+
+  MemoryBufferRef getMemBufferRef() const;
+};
+
+class MemoryBufferRef {
+  StringRef Buffer;
+  StringRef Identifier;
+
+public:
+  MemoryBufferRef() {}
+  MemoryBufferRef(StringRef Buffer, StringRef Identifier)
+      : Buffer(Buffer), Identifier(Identifier) {}
+
+  StringRef getBuffer() const { return Buffer; }
+
+  StringRef getBufferIdentifier() const { return Identifier; }
+
+  const char *getBufferStart() const { return Buffer.begin(); }
+  const char *getBufferEnd() const { return Buffer.end(); }
+  size_t getBufferSize() const { return Buffer.size(); }
 };
 
 // Create wrappers for C Binding types (see CBindingWrapping.h).

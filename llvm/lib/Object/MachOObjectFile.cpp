@@ -222,10 +222,9 @@ static uint32_t getSectionFlags(const MachOObjectFile *O,
   return Sect.flags;
 }
 
-MachOObjectFile::MachOObjectFile(std::unique_ptr<MemoryBuffer> Object,
-                                 bool IsLittleEndian, bool Is64bits,
-                                 std::error_code &EC)
-    : ObjectFile(getMachOType(IsLittleEndian, Is64bits), std::move(Object)),
+MachOObjectFile::MachOObjectFile(MemoryBufferRef Object, bool IsLittleEndian,
+                                 bool Is64bits, std::error_code &EC)
+    : ObjectFile(getMachOType(IsLittleEndian, Is64bits), Object),
       SymtabLoadCmd(nullptr), DysymtabLoadCmd(nullptr),
       DataInCodeLoadCmd(nullptr) {
   uint32_t LoadCommandCount = this->getHeader().ncmds;
@@ -1776,18 +1775,18 @@ bool MachOObjectFile::isRelocatableObject() const {
 }
 
 ErrorOr<std::unique_ptr<MachOObjectFile>>
-ObjectFile::createMachOObjectFile(std::unique_ptr<MemoryBuffer> &Buffer) {
-  StringRef Magic = Buffer->getBuffer().slice(0, 4);
+ObjectFile::createMachOObjectFile(MemoryBufferRef Buffer) {
+  StringRef Magic = Buffer.getBuffer().slice(0, 4);
   std::error_code EC;
   std::unique_ptr<MachOObjectFile> Ret;
   if (Magic == "\xFE\xED\xFA\xCE")
-    Ret.reset(new MachOObjectFile(std::move(Buffer), false, false, EC));
+    Ret.reset(new MachOObjectFile(Buffer, false, false, EC));
   else if (Magic == "\xCE\xFA\xED\xFE")
-    Ret.reset(new MachOObjectFile(std::move(Buffer), true, false, EC));
+    Ret.reset(new MachOObjectFile(Buffer, true, false, EC));
   else if (Magic == "\xFE\xED\xFA\xCF")
-    Ret.reset(new MachOObjectFile(std::move(Buffer), false, true, EC));
+    Ret.reset(new MachOObjectFile(Buffer, false, true, EC));
   else if (Magic == "\xCF\xFA\xED\xFE")
-    Ret.reset(new MachOObjectFile(std::move(Buffer), true, true, EC));
+    Ret.reset(new MachOObjectFile(Buffer, true, true, EC));
   else
     return object_error::parse_failed;
 

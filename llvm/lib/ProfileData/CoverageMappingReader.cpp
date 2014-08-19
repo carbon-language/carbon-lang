@@ -292,11 +292,13 @@ ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
 ObjectFileCoverageMappingReader::ObjectFileCoverageMappingReader(
     std::unique_ptr<MemoryBuffer> &ObjectBuffer, sys::fs::file_magic Type)
     : CurrentRecord(0) {
-  auto File = llvm::object::ObjectFile::createObjectFile(ObjectBuffer, Type);
+  auto File = object::ObjectFile::createObjectFile(
+      ObjectBuffer->getMemBufferRef(), Type);
   if (!File)
     error(File.getError());
   else
-    Object = std::move(File.get());
+    Object = OwningBinary<ObjectFile>(std::move(File.get()),
+                                      std::move(ObjectBuffer));
 }
 
 namespace {
@@ -429,16 +431,17 @@ std::error_code readCoverageMappingData(
 }
 
 std::error_code ObjectFileCoverageMappingReader::readHeader() {
-  if (!Object)
+  ObjectFile *OF = Object.getBinary().get();
+  if (!OF)
     return getError();
-  auto BytesInAddress = Object->getBytesInAddress();
+  auto BytesInAddress = OF->getBytesInAddress();
   if (BytesInAddress != 4 && BytesInAddress != 8)
     return error(instrprof_error::malformed);
 
   // Look for the sections that we are interested in.
   int FoundSectionCount = 0;
   SectionRef ProfileNames, CoverageMapping;
-  for (const auto &Section : Object->sections()) {
+  for (const auto &Section : OF->sections()) {
     StringRef Name;
     if (auto Err = Section.getName(Name))
       return Err;

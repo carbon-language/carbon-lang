@@ -119,7 +119,7 @@ void MCJIT::addObjectFile(std::unique_ptr<object::ObjectFile> Obj) {
   NotifyObjectEmitted(*LoadedObject);
 }
 
-void MCJIT::addArchive(std::unique_ptr<object::Archive> A) {
+void MCJIT::addArchive(object::OwningBinary<object::Archive> A) {
   Archives.push_back(std::move(A));
 }
 
@@ -161,8 +161,8 @@ ObjectBufferStream* MCJIT::emitObject(Module *M) {
   if (ObjCache) {
     // MemoryBuffer is a thin wrapper around the actual memory, so it's OK
     // to create a temporary object here and delete it after the call.
-    std::unique_ptr<MemoryBuffer> MB = CompiledObject->getMemBuffer();
-    ObjCache->notifyObjectCompiled(M, MB.get());
+    MemoryBufferRef MB = CompiledObject->getMemBuffer();
+    ObjCache->notifyObjectCompiled(M, MB);
   }
 
   return CompiledObject.release();
@@ -295,7 +295,8 @@ uint64_t MCJIT::getSymbolAddress(const std::string &Name,
   if (Addr)
     return Addr;
 
-  for (std::unique_ptr<object::Archive> &A : Archives) {
+  for (object::OwningBinary<object::Archive> &OB : Archives) {
+    object::Archive *A = OB.getBinary().get();
     // Look for our symbols in each Archive
     object::Archive::child_iterator ChildIt = A->findSym(Name);
     if (ChildIt != A->child_end()) {

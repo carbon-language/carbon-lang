@@ -453,12 +453,12 @@ static void PrintFileSectionSizes(StringRef file) {
   }
 
   // Attempt to open the binary.
-  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(file);
+  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(file);
   if (std::error_code EC = BinaryOrErr.getError()) {
     errs() << ToolName << ": " << file << ": " << EC.message() << ".\n";
     return;
   }
-  Binary &Bin = *BinaryOrErr.get();
+  Binary &Bin = *BinaryOrErr.get().getBinary();
 
   if (Archive *a = dyn_cast<Archive>(&Bin)) {
     // This is an archive. Iterate over each member and display its sizes.

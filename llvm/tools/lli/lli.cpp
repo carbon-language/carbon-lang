@@ -263,7 +263,7 @@ public:
   }
   virtual ~LLIObjectCache() {}
 
-  void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) override {
+  void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) override {
     const std::string ModuleID = M->getModuleIdentifier();
     std::string CacheName;
     if (!getCacheFilename(ModuleID, CacheName))
@@ -275,7 +275,7 @@ public:
       sys::fs::create_directories(Twine(dir));
     }
     raw_fd_ostream outfile(CacheName.c_str(), errStr, sys::fs::F_None);
-    outfile.write(Obj->getBufferStart(), Obj->getBufferSize());
+    outfile.write(Obj.getBufferStart(), Obj.getBufferSize());
     outfile.close();
   }
 
@@ -530,30 +530,35 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   for (unsigned i = 0, e = ExtraObjects.size(); i != e; ++i) {
-    ErrorOr<std::unique_ptr<object::ObjectFile>> Obj =
+    ErrorOr<object::OwningBinary<object::ObjectFile>> Obj =
         object::ObjectFile::createObjectFile(ExtraObjects[i]);
     if (!Obj) {
       Err.print(argv[0], errs());
       return 1;
     }
-    EE->addObjectFile(std::move(Obj.get()));
+    EE->addObjectFile(std::move(Obj.get().getBinary()));
   }
 
   for (unsigned i = 0, e = ExtraArchives.size(); i != e; ++i) {
-    ErrorOr<std::unique_ptr<MemoryBuffer>> ArBuf =
+    ErrorOr<std::unique_ptr<MemoryBuffer>> ArBufOrErr =
         MemoryBuffer::getFileOrSTDIN(ExtraArchives[i]);
-    if (!ArBuf) {
+    if (!ArBufOrErr) {
       Err.print(argv[0], errs());
       return 1;
     }
+    std::unique_ptr<MemoryBuffer> &ArBuf = ArBufOrErr.get();
 
     ErrorOr<std::unique_ptr<object::Archive>> ArOrErr =
-        object::Archive::create(std::move(ArBuf.get()));
+        object::Archive::create(ArBuf->getMemBufferRef());
     if (std::error_code EC = ArOrErr.getError()) {
       errs() << EC.message();
       return 1;
     }
-    EE->addArchive(std::move(ArOrErr.get()));
+    std::unique_ptr<object::Archive> &Ar = ArOrErr.get();
+
+    object::OwningBinary<object::Archive> OB(std::move(Ar), std::move(ArBuf));
+
+    EE->addArchive(std::move(OB));
   }
 
   // If the target is Cygwin/MingW and we are generating remote code, we

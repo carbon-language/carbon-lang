@@ -109,7 +109,7 @@ Archive::Child Archive::Child::getNext() const {
   const char *NextLoc = Data.data() + SpaceToSkip;
 
   // Check to see if this is past the end of the archive.
-  if (NextLoc >= Parent->Data->getBufferEnd())
+  if (NextLoc >= Parent->Data.getBufferEnd())
     return Child(Parent, nullptr);
 
   return Child(Parent, NextLoc);
@@ -159,45 +159,36 @@ ErrorOr<StringRef> Archive::Child::getName() const {
   return name;
 }
 
-ErrorOr<std::unique_ptr<MemoryBuffer>>
-Archive::Child::getMemoryBuffer(bool FullPath) const {
+ErrorOr<MemoryBufferRef> Archive::Child::getMemoryBufferRef() const {
   ErrorOr<StringRef> NameOrErr = getName();
   if (std::error_code EC = NameOrErr.getError())
     return EC;
   StringRef Name = NameOrErr.get();
-  SmallString<128> Path;
-  std::unique_ptr<MemoryBuffer> Ret(MemoryBuffer::getMemBuffer(
-      getBuffer(),
-      FullPath
-          ? (Twine(Parent->getFileName()) + "(" + Name + ")").toStringRef(Path)
-          : Name,
-      false));
-  return std::move(Ret);
+  return MemoryBufferRef(getBuffer(), Name);
 }
 
 ErrorOr<std::unique_ptr<Binary>>
 Archive::Child::getAsBinary(LLVMContext *Context) const {
-  ErrorOr<std::unique_ptr<MemoryBuffer>> BuffOrErr = getMemoryBuffer();
+  ErrorOr<MemoryBufferRef> BuffOrErr = getMemoryBufferRef();
   if (std::error_code EC = BuffOrErr.getError())
     return EC;
 
-  return createBinary(std::move(*BuffOrErr), Context);
+  return createBinary(BuffOrErr.get(), Context);
 }
 
-ErrorOr<std::unique_ptr<Archive>>
-Archive::create(std::unique_ptr<MemoryBuffer> Source) {
+ErrorOr<std::unique_ptr<Archive>> Archive::create(MemoryBufferRef Source) {
   std::error_code EC;
-  std::unique_ptr<Archive> Ret(new Archive(std::move(Source), EC));
+  std::unique_ptr<Archive> Ret(new Archive(Source, EC));
   if (EC)
     return EC;
   return std::move(Ret);
 }
 
-Archive::Archive(std::unique_ptr<MemoryBuffer> Source, std::error_code &ec)
-    : Binary(Binary::ID_Archive, std::move(Source)), SymbolTable(child_end()) {
+Archive::Archive(MemoryBufferRef Source, std::error_code &ec)
+    : Binary(Binary::ID_Archive, Source), SymbolTable(child_end()) {
   // Check for sufficient magic.
-  if (Data->getBufferSize() < 8 ||
-      StringRef(Data->getBufferStart(), 8) != Magic) {
+  if (Data.getBufferSize() < 8 ||
+      StringRef(Data.getBufferStart(), 8) != Magic) {
     ec = object_error::invalid_file_type;
     return;
   }
@@ -311,13 +302,13 @@ Archive::Archive(std::unique_ptr<MemoryBuffer> Source, std::error_code &ec)
 }
 
 Archive::child_iterator Archive::child_begin(bool SkipInternal) const {
-  if (Data->getBufferSize() == 8) // empty archive.
+  if (Data.getBufferSize() == 8) // empty archive.
     return child_end();
 
   if (SkipInternal)
     return FirstRegular;
 
-  const char *Loc = Data->getBufferStart() + strlen(Magic);
+  const char *Loc = Data.getBufferStart() + strlen(Magic);
   Child c(this, Loc);
   return c;
 }

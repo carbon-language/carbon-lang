@@ -32,11 +32,11 @@ static std::error_code dumpInput(StringRef File) {
   if (File != "-" && !sys::fs::exists(File))
     return obj2yaml_error::file_not_found;
 
-  ErrorOr<std::unique_ptr<Binary>> BinaryOrErr = createBinary(File);
+  ErrorOr<OwningBinary<Binary>> BinaryOrErr = createBinary(File);
   if (std::error_code EC = BinaryOrErr.getError())
     return EC;
 
-  Binary &Binary = *BinaryOrErr.get();
+  Binary &Binary = *BinaryOrErr.get().getBinary();
   // TODO: If this is an archive, then burst it and dump each entry
   if (ObjectFile *Obj = dyn_cast<ObjectFile>(&Binary))
     return dumpObject(*Obj);

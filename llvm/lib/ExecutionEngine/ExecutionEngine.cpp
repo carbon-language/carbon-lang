@@ -124,7 +124,7 @@ void ExecutionEngine::addObjectFile(std::unique_ptr<object::ObjectFile> O) {
   llvm_unreachable("ExecutionEngine subclass doesn't implement addObjectFile.");
 }
 
-void ExecutionEngine::addArchive(std::unique_ptr<object::Archive> A) {
+void ExecutionEngine::addArchive(object::OwningBinary<object::Archive> A) {
   llvm_unreachable("ExecutionEngine subclass doesn't implement addArchive.");
 }
 

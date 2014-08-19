@@ -416,3 +416,9 @@ ErrorOr<std::unique_ptr<MemoryBuffer>> MemoryBuffer::getSTDIN() {
 
   return getMemoryBufferForStream(0, "<stdin>");
 }
+
+MemoryBufferRef MemoryBuffer::getMemBufferRef() const {
+  StringRef Data = getBuffer();
+  StringRef Identifier = getBufferIdentifier();
+  return MemoryBufferRef(Data, Identifier);
+}

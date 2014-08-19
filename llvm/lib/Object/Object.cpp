@@ -19,12 +19,13 @@
 using namespace llvm;
 using namespace object;
 
-inline ObjectFile *unwrap(LLVMObjectFileRef OF) {
-  return reinterpret_cast<ObjectFile*>(OF);
+inline OwningBinary<ObjectFile> *unwrap(LLVMObjectFileRef OF) {
+  return reinterpret_cast<OwningBinary<ObjectFile> *>(OF);
 }
 
-inline LLVMObjectFileRef wrap(const ObjectFile *OF) {
-  return reinterpret_cast<LLVMObjectFileRef>(const_cast<ObjectFile*>(OF));
+inline LLVMObjectFileRef wrap(const OwningBinary<ObjectFile> *OF) {
+  return reinterpret_cast<LLVMObjectFileRef>(
+      const_cast<OwningBinary<ObjectFile> *>(OF));
 }
 
 inline section_iterator *unwrap(LLVMSectionIteratorRef SI) {
@@ -61,10 +62,12 @@ wrap(const relocation_iterator *SI) {
 LLVMObjectFileRef LLVMCreateObjectFile(LLVMMemoryBufferRef MemBuf) {
   std::unique_ptr<MemoryBuffer> Buf(unwrap(MemBuf));
   ErrorOr<std::unique_ptr<ObjectFile>> ObjOrErr(
-      ObjectFile::createObjectFile(Buf));
-  Buf.release();
-  ObjectFile *Obj = ObjOrErr ? ObjOrErr.get().release() : nullptr;
-  return wrap(Obj);
+      ObjectFile::createObjectFile(Buf->getMemBufferRef()));
+  std::unique_ptr<ObjectFile> Obj;
+  if (ObjOrErr)
+    Obj = std::move(ObjOrErr.get());
+  auto *Ret = new OwningBinary<ObjectFile>(std::move(Obj), std::move(Buf));
+  return wrap(Ret);
 }
 
 void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile) {
@@ -72,8 +75,9 @@ void LLVMDisposeObjectFile(LLVMObjectFileRef ObjectFile) {
 }
 
 // ObjectFile Section iterators
-LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef ObjectFile) {
-  section_iterator SI = unwrap(ObjectFile)->section_begin();
+LLVMSectionIteratorRef LLVMGetSections(LLVMObjectFileRef OF) {
+  OwningBinary<ObjectFile> *OB = unwrap(OF);
+  section_iterator SI = OB->getBinary()->section_begin();
   return wrap(new section_iterator(SI));
 }
 
@@ -81,9 +85,10 @@ void LLVMDisposeSectionIterator(LLVMSectionIteratorRef SI) {
   delete unwrap(SI);
 }
 
-LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef ObjectFile,
-                                LLVMSectionIteratorRef SI) {
-  return (*unwrap(SI) == unwrap(ObjectFile)->section_end()) ? 1 : 0;
+LLVMBool LLVMIsSectionIteratorAtEnd(LLVMObjectFileRef OF,
+                                    LLVMSectionIteratorRef SI) {
+  OwningBinary<ObjectFile> *OB = unwrap(OF);
+  return (*unwrap(SI) == OB->getBinary()->section_end()) ? 1 : 0;
 }
 
 void LLVMMoveToNextSection(LLVMSectionIteratorRef SI) {
@@ -97,8 +102,9 @@ void LLVMMoveToContainingSection(LLVMSectionIteratorRef Sect,
 }
 
 // ObjectFile Symbol iterators
-LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef ObjectFile) {
-  symbol_iterator SI = unwrap(ObjectFile)->symbol_begin();
+LLVMSymbolIteratorRef LLVMGetSymbols(LLVMObjectFileRef OF) {
+  OwningBinary<ObjectFile> *OB = unwrap(OF);
+  symbol_iterator SI = OB->getBinary()->symbol_begin();
   return wrap(new symbol_iterator(SI));
 }
 
@@ -106,9 +112,10 @@ void LLVMDisposeSymbolIterator(LLVMSymbolIteratorRef SI) {
   delete unwrap(SI);
 }
 
-LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef ObjectFile,
-                                LLVMSymbolIteratorRef SI) {
-  return (*unwrap(SI) == unwrap(ObjectFile)->symbol_end()) ? 1 : 0;
+LLVMBool LLVMIsSymbolIteratorAtEnd(LLVMObjectFileRef OF,
+                                   LLVMSymbolIteratorRef SI) {
+  OwningBinary<ObjectFile> *OB = unwrap(OF);
+  return (*unwrap(SI) == OB->getBinary()->symbol_end()) ? 1 : 0;
 }
 
 void LLVMMoveToNextSymbol(LLVMSymbolIteratorRef SI) {

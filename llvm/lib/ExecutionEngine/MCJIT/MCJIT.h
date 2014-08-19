@@ -216,7 +216,7 @@ class MCJIT : public ExecutionEngine {
 
   OwningModuleContainer OwnedModules;
 
-  SmallVector<std::unique_ptr<object::Archive>, 2> Archives;
+  SmallVector<object::OwningBinary<object::Archive>, 2> Archives;
 
   typedef SmallVector<ObjectImage *, 2> LoadedObjectList;
   LoadedObjectList  LoadedObjects;
@@ -240,7 +240,7 @@ public:
   /// @{
   void addModule(std::unique_ptr<Module> M) override;
   void addObjectFile(std::unique_ptr<object::ObjectFile> O) override;
-  void addArchive(std::unique_ptr<object::Archive> O) override;
+  void addArchive(object::OwningBinary<object::Archive> O) override;
   bool removeModule(Module *M) override;
 
   /// FindFunctionNamed - Search all of the active modules to find the one that

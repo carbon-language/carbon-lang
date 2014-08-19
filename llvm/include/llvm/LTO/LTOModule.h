@@ -202,10 +202,9 @@ private:
   /// Get string that the data pointer points to.
   bool objcClassNameFromExpression(const Constant *c, std::string &name);
 
-  /// Create an LTOModule (private version). N.B. This method takes ownership of
-  /// the buffer.
-  static LTOModule *makeLTOModule(std::unique_ptr<MemoryBuffer> Buffer,
-                                  TargetOptions options, std::string &errMsg);
+  /// Create an LTOModule (private version).
+  static LTOModule *makeLTOModule(MemoryBufferRef Buffer, TargetOptions options,
+                                  std::string &errMsg);
 };
 }
 #endif

@@ -116,7 +116,7 @@ const uint64_t UnknownAddressOrSize = ~0ULL;
 class SymbolicFile : public Binary {
 public:
   virtual ~SymbolicFile();
-  SymbolicFile(unsigned int Type, std::unique_ptr<MemoryBuffer> Source);
+  SymbolicFile(unsigned int Type, MemoryBufferRef Source);
 
   // virtual interface.
   virtual void moveSymbolNext(DataRefImpl &Symb) const = 0;
@@ -144,14 +144,14 @@ public:
 
   // construction aux.
   static ErrorOr<std::unique_ptr<SymbolicFile>>
-  createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object,
-                     sys::fs::file_magic Type, LLVMContext *Context);
+  createSymbolicFile(MemoryBufferRef Object, sys::fs::file_magic Type,
+                     LLVMContext *Context);
 
   static ErrorOr<std::unique_ptr<SymbolicFile>>
-  createSymbolicFile(std::unique_ptr<MemoryBuffer> &Object) {
+  createSymbolicFile(MemoryBufferRef Object) {
     return createSymbolicFile(Object, sys::fs::file_magic::unknown, nullptr);
   }
-  static ErrorOr<std::unique_ptr<SymbolicFile>>
+  static ErrorOr<OwningBinary<SymbolicFile>>
   createSymbolicFile(StringRef ObjectPath);
 
   static inline bool classof(const Binary *v) {

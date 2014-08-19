@@ -157,7 +157,7 @@ public:
 
 private:
   std::error_code LastError;
-  std::unique_ptr<llvm::object::ObjectFile> Object;
+  object::OwningBinary<object::ObjectFile> Object;
   std::vector<StringRef> Filenames;
   std::vector<ProfileMappingRecord> MappingRecords;
   size_t CurrentRecord;

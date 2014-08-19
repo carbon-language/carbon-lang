@@ -25,7 +25,7 @@ class TestObjectCache : public ObjectCache {
 public:
   TestObjectCache() : DuplicateInserted(false) { }
 
-  virtual void notifyObjectCompiled(const Module *M, const MemoryBuffer *Obj) {
+  void notifyObjectCompiled(const Module *M, MemoryBufferRef Obj) override {
     // If we've seen this module before, note that.
     const std::string ModuleID = M->getModuleIdentifier();
     if (ObjMap.find(ModuleID) != ObjMap.end())
@@ -63,10 +63,10 @@ public:
   }
 
 private:
-  MemoryBuffer *copyBuffer(const MemoryBuffer *Buf) {
+  MemoryBuffer *copyBuffer(MemoryBufferRef Buf) {
     // Create a local copy of the buffer.
     std::unique_ptr<MemoryBuffer> NewBuffer(
-        MemoryBuffer::getMemBufferCopy(Buf->getBuffer()));
+        MemoryBuffer::getMemBufferCopy(Buf.getBuffer()));
     MemoryBuffer *Ret = NewBuffer.get();
     AllocatedBuffers.push_back(std::move(NewBuffer));
     return Ret;
