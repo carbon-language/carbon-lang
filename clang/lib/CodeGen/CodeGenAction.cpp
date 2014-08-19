@@ -579,8 +579,6 @@ void CodeGenAction::EndSourceFileAction() {
   TheModule.reset(BEConsumer->takeModule());
 }
 
-llvm::Module *CodeGenAction::takeModule() { return TheModule.release(); }
-
 llvm::LLVMContext *CodeGenAction::takeLLVMContext() {
   OwnsVMContext = false;
   return VMContext;

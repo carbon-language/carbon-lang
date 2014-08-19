@@ -52,9 +52,9 @@ public:
   /// the action will load it from the specified file.
   void setLinkModule(llvm::Module *Mod) { LinkModule = Mod; }
 
-  /// takeModule - Take the generated LLVM module, for use after the action has
-  /// been run. The result may be null on failure.
-  llvm::Module *takeModule();
+  /// Take the generated LLVM module, for use after the action has been run.
+  /// The result may be null on failure.
+  std::unique_ptr<llvm::Module> &getModule() { return TheModule; }
 
   /// Take the LLVM context used by this action.
   llvm::LLVMContext *takeLLVMContext();
