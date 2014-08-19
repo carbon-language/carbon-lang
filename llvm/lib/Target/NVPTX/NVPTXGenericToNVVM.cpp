@@ -140,20 +140,23 @@ bool GenericToNVVM::runOnModule(Module &M) {
   for (GVMapTy::iterator I = GVMap.begin(), E = GVMap.end(); I != E;) {
     GlobalVariable *GV = I->first;
     GlobalVariable *NewGV = I->second;
-    ++I;
+
+    // Remove GV from the map so that it can be RAUWed.  Note that
+    // DenseMap::erase() won't invalidate any iterators but this one.
+    auto Next = std::next(I);
+    GVMap.erase(I);
+    I = Next;
+
     Constant *BitCastNewGV = ConstantExpr::getPointerCast(NewGV, GV->getType());
     // At this point, the remaining uses of GV should be found only in global
     // variable initializers, as other uses have been already been removed
     // while walking through the instructions in function definitions.
-    for (Value::use_iterator UI = GV->use_begin(), UE = GV->use_end();
-         UI != UE;)
-      (UI++)->set(BitCastNewGV);
+    GV->replaceAllUsesWith(BitCastNewGV);
     std::string Name = GV->getName();
-    GV->removeDeadConstantUsers();
     GV->eraseFromParent();
     NewGV->setName(Name);
   }
-  GVMap.clear();
+  assert(GVMap.empty() && "Expected it to be empty by now");
 
   return true;
 }
