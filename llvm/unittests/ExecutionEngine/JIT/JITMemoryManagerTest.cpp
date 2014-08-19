@@ -158,7 +158,7 @@ TEST(JITMemoryManagerTest, TestCodeAllocation) {
 TEST(JITMemoryManagerTest, TestSmallGlobalInts) {
   std::unique_ptr<JITMemoryManager> MemMgr(
       JITMemoryManager::CreateDefaultMemManager());
-  uint8_t  *a = (uint8_t *)MemMgr->allocateGlobal(8,  0);
+  uint8_t  *a = (uint8_t *)MemMgr->allocateGlobal(8,  1);
   uint16_t *b = (uint16_t*)MemMgr->allocateGlobal(16, 2);
   uint32_t *c = (uint32_t*)MemMgr->allocateGlobal(32, 4);
   uint64_t *d = (uint64_t*)MemMgr->allocateGlobal(64, 8);

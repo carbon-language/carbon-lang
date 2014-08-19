@@ -201,12 +201,10 @@ public:
 
   /// \brief Allocate space at the specified alignment.
   void *Allocate(size_t Size, size_t Alignment) {
+    assert(Alignment > 0 && "0-byte alignnment is not allowed. Use 1 instead.");
+
     // Keep track of how many bytes we've allocated.
     BytesAllocated += Size;
-
-    // 0-byte alignment means 1-byte alignment.
-    if (Alignment == 0)
-      Alignment = 1;
 
     // Allocate the aligned space, going forwards from CurPtr.
     char *Ptr = alignPtr(CurPtr, Alignment);
