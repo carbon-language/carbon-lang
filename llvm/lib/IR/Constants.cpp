@@ -803,11 +803,6 @@ ConstantArray::ConstantArray(ArrayType *T, ArrayRef<Constant *> V)
 }
 
 Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
-  if (Constant *C = getImpl(Ty, V))
-    return C;
-  return Ty->getContext().pImpl->ArrayConstants.getOrCreate(Ty, V);
-}
-Constant *ConstantArray::getImpl(ArrayType *Ty, ArrayRef<Constant*> V) {
   // Empty arrays are canonicalized to ConstantAggregateZero.
   if (V.empty())
     return ConstantAggregateZero::get(Ty);
@@ -816,6 +811,7 @@ Constant *ConstantArray::getImpl(ArrayType *Ty, ArrayRef<Constant*> V) {
     assert(V[i]->getType() == Ty->getElementType() &&
            "Wrong type in array element initializer");
   }
+  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
 
   // If this is an all-zero array, return a ConstantAggregateZero object.  If
   // all undef, return an UndefValue, if "all simple", then return a
@@ -897,7 +893,7 @@ Constant *ConstantArray::getImpl(ArrayType *Ty, ArrayRef<Constant*> V) {
   }
 
   // Otherwise, we really do want to create a ConstantArray.
-  return nullptr;
+  return pImpl->ArrayConstants.getOrCreate(Ty, V);
 }
 
 /// getTypeForElements - Return an anonymous struct type to use for a constant
@@ -985,14 +981,9 @@ ConstantVector::ConstantVector(VectorType *T, ArrayRef<Constant *> V)
 
 // ConstantVector accessors.
 Constant *ConstantVector::get(ArrayRef<Constant*> V) {
-  if (Constant *C = getImpl(V))
-    return C;
-  VectorType *Ty = VectorType::get(V.front()->getType(), V.size());
-  return Ty->getContext().pImpl->VectorConstants.getOrCreate(Ty, V);
-}
-Constant *ConstantVector::getImpl(ArrayRef<Constant*> V) {
   assert(!V.empty() && "Vectors can't be empty");
   VectorType *T = VectorType::get(V.front()->getType(), V.size());
+  LLVMContextImpl *pImpl = T->getContext().pImpl;
 
   // If this is an all-undef or all-zero vector, return a
   // ConstantAggregateZero or UndefValue.
@@ -1084,7 +1075,7 @@ Constant *ConstantVector::getImpl(ArrayRef<Constant*> V) {
 
   // Otherwise, the element type isn't compatible with ConstantDataVector, or
   // the operand list constants a ConstantExpr or something else strange.
-  return nullptr;
+  return pImpl->VectorConstants.getOrCreate(T, V);
 }
 
 Constant *ConstantVector::getSplat(unsigned NumElts, Constant *V) {
@@ -1478,21 +1469,27 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   // and return early.
   BlockAddress *&NewBA =
     getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
-  if (NewBA) {
-    replaceUsesOfWithOnConstantImpl(NewBA);
+  if (!NewBA) {
+    getBasicBlock()->AdjustBlockAddressRefCount(-1);
+
+    // Remove the old entry, this can't cause the map to rehash (just a
+    // tombstone will get added).
+    getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
+                                                            getBasicBlock()));
+    NewBA = this;
+    setOperand(0, NewF);
+    setOperand(1, NewBB);
+    getBasicBlock()->AdjustBlockAddressRefCount(1);
     return;
   }
 
-  getBasicBlock()->AdjustBlockAddressRefCount(-1);
+  // Otherwise, I do need to replace this with an existing value.
+  assert(NewBA != this && "I didn't contain From!");
 
-  // Remove the old entry, this can't cause the map to rehash (just a
-  // tombstone will get added).
-  getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
-                                                          getBasicBlock()));
-  NewBA = this;
-  setOperand(0, NewF);
-  setOperand(1, NewBB);
-  getBasicBlock()->AdjustBlockAddressRefCount(1);
+  // Everyone using this now uses the replacement.
+  replaceAllUsesWith(NewBA);
+
+  destroyConstant();
 }
 
 //---- ConstantExpr::get() implementations.
@@ -1510,7 +1507,7 @@ static inline Constant *getFoldedCast(
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
 
   // Look up the constant in the table first to ensure uniqueness.
-  ConstantExprKeyType Key(opc, C);
+  ExprMapKeyType Key(opc, C);
 
   return pImpl->ExprConstants.getOrCreate(Ty, Key);
 }
@@ -1845,7 +1842,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
     return FC;          // Fold a few common cases.
 
   Constant *ArgVec[] = { C1, C2 };
-  ConstantExprKeyType Key(Opcode, ArgVec, 0, Flags);
+  ExprMapKeyType Key(Opcode, ArgVec, 0, Flags);
 
   LLVMContextImpl *pImpl = C1->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(C1->getType(), Key);
@@ -1922,7 +1919,7 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
     return SC;        // Fold common cases
 
   Constant *ArgVec[] = { C, V1, V2 };
-  ConstantExprKeyType Key(Instruction::Select, ArgVec);
+  ExprMapKeyType Key(Instruction::Select, ArgVec);
 
   LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(V1->getType(), Key);
@@ -1957,8 +1954,8 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
            "getelementptr index type missmatch");
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   }
-  const ConstantExprKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
-                                InBounds ? GEPOperator::IsInBounds : 0);
+  const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
+                           InBounds ? GEPOperator::IsInBounds : 0);
 
   LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -1976,7 +1973,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
-  const ConstantExprKeyType Key(Instruction::ICmp, ArgVec, pred);
+  const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
 
   Type *ResultTy = Type::getInt1Ty(LHS->getContext());
   if (VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
@@ -1997,7 +1994,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
-  const ConstantExprKeyType Key(Instruction::FCmp, ArgVec, pred);
+  const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
 
   Type *ResultTy = Type::getInt1Ty(LHS->getContext());
   if (VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
@@ -2018,7 +2015,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
 
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { Val, Idx };
-  const ConstantExprKeyType Key(Instruction::ExtractElement, ArgVec);
+  const ExprMapKeyType Key(Instruction::ExtractElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   Type *ReqTy = Val->getType()->getVectorElementType();
@@ -2038,7 +2035,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
     return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { Val, Elt, Idx };
-  const ConstantExprKeyType Key(Instruction::InsertElement, ArgVec);
+  const ExprMapKeyType Key(Instruction::InsertElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(Val->getType(), Key);
@@ -2058,7 +2055,7 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { V1, V2, Mask };
-  const ConstantExprKeyType Key(Instruction::ShuffleVector, ArgVec);
+  const ExprMapKeyType Key(Instruction::ShuffleVector, ArgVec);
 
   LLVMContextImpl *pImpl = ShufTy->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ShufTy, Key);
@@ -2078,7 +2075,7 @@ Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
     return FC;
 
   Constant *ArgVec[] = { Agg, Val };
-  const ConstantExprKeyType Key(Instruction::InsertValue, ArgVec, 0, 0, Idxs);
+  const ExprMapKeyType Key(Instruction::InsertValue, ArgVec, 0, 0, Idxs);
 
   LLVMContextImpl *pImpl = Agg->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -2099,7 +2096,7 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
     return FC;
 
   Constant *ArgVec[] = { Agg };
-  const ConstantExprKeyType Key(Instruction::ExtractValue, ArgVec, 0, 0, Idxs);
+  const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec, 0, 0, Idxs);
 
   LLVMContextImpl *pImpl = Agg->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -2655,17 +2652,6 @@ Constant *ConstantDataVector::getSplatValue() const {
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
 ///
-void Constant::replaceUsesOfWithOnConstantImpl(Constant *Replacement) {
-  // I do need to replace this with an existing value.
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
@@ -2692,51 +2678,52 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     AllSame &= Val == ToC;
   }
 
+  Constant *Replacement = nullptr;
   if (AllSame && ToC->isNullValue()) {
-    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
-    return;
-  }
-  if (AllSame && isa<UndefValue>(ToC)) {
-    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
-    return;
-  }
-
-  // Check for any other type of constant-folding.
-  if (Constant *C = getImpl(getType(), Values)) {
-    replaceUsesOfWithOnConstantImpl(C);
-    return;
-  }
-
-  // Check to see if we have this array type already.
-  LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
-    cast<ArrayType>(getType()), makeArrayRef(Values));
-  LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
-    pImpl->ArrayConstants.find(Lookup);
-
-  if (I != pImpl->ArrayConstants.map_end()) {
-    replaceUsesOfWithOnConstantImpl(I->first);
-    return;
-  }
-
-  // Okay, the new shape doesn't exist in the system yet.  Instead of
-  // creating a new constant array, inserting it, replaceallusesof'ing the
-  // old with the new, then deleting the old... just update the current one
-  // in place!
-  pImpl->ArrayConstants.remove(this);
-
-  // Update to the new value.  Optimize for the case when we have a single
-  // operand that we're changing, but handle bulk updates efficiently.
-  if (NumUpdated == 1) {
-    unsigned OperandToUpdate = U - OperandList;
-    assert(getOperand(OperandToUpdate) == From &&
-           "ReplaceAllUsesWith broken!");
-    setOperand(OperandToUpdate, ToC);
+    Replacement = ConstantAggregateZero::get(getType());
+  } else if (AllSame && isa<UndefValue>(ToC)) {
+    Replacement = UndefValue::get(getType());
   } else {
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      if (getOperand(I) == From)
-        setOperand(I, ToC);
+    // Check to see if we have this array type already.
+    LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
+        cast<ArrayType>(getType()), makeArrayRef(Values));
+    LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
+      pImpl->ArrayConstants.find(Lookup);
+
+    if (I != pImpl->ArrayConstants.map_end()) {
+      Replacement = I->first;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant array, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      pImpl->ArrayConstants.remove(this);
+
+      // Update to the new value.  Optimize for the case when we have a single
+      // operand that we're changing, but handle bulk updates efficiently.
+      if (NumUpdated == 1) {
+        unsigned OperandToUpdate = U - OperandList;
+        assert(getOperand(OperandToUpdate) == From &&
+               "ReplaceAllUsesWith broken!");
+        setOperand(OperandToUpdate, ToC);
+      } else {
+        for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+          if (getOperand(i) == From)
+            setOperand(i, ToC);
+      }
+      pImpl->ArrayConstants.insert(this);
+      return;
+    }
   }
-  pImpl->ArrayConstants.insert(this);
+
+  // Otherwise, I do need to replace this with an existing value.
+  assert(Replacement != this && "I didn't contain From!");
+
+  // Everyone using this now uses the replacement.
+  replaceAllUsesWith(Replacement);
+
+  // Delete the old constant!
+  destroyConstant();
 }
 
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -2776,75 +2763,63 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
   LLVMContextImpl *pImpl = getContext().pImpl;
 
+  Constant *Replacement = nullptr;
   if (isAllZeros) {
-    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
-    return;
-  }
-  if (isAllUndef) {
-    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
-    return;
-  }
-
-  // Check to see if we have this struct type already.
-  LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
-      cast<StructType>(getType()), makeArrayRef(Values));
-  LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
+    Replacement = ConstantAggregateZero::get(getType());
+  } else if (isAllUndef) {
+    Replacement = UndefValue::get(getType());
+  } else {
+    // Check to see if we have this struct type already.
+    LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
+        cast<StructType>(getType()), makeArrayRef(Values));
+    LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
       pImpl->StructConstants.find(Lookup);
 
-  if (I != pImpl->StructConstants.map_end()) {
-    replaceUsesOfWithOnConstantImpl(I->first);
-    return;
+    if (I != pImpl->StructConstants.map_end()) {
+      Replacement = I->first;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant struct, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      pImpl->StructConstants.remove(this);
+
+      // Update to the new value.
+      setOperand(OperandToUpdate, ToC);
+      pImpl->StructConstants.insert(this);
+      return;
+    }
   }
 
-  // Okay, the new shape doesn't exist in the system yet.  Instead of
-  // creating a new constant struct, inserting it, replaceallusesof'ing the
-  // old with the new, then deleting the old... just update the current one
-  // in place!
-  pImpl->StructConstants.remove(this);
+  assert(Replacement != this && "I didn't contain From!");
 
-  // Update to the new value.
-  setOperand(OperandToUpdate, ToC);
-  pImpl->StructConstants.insert(this);
+  // Everyone using this now uses the replacement.
+  replaceAllUsesWith(Replacement);
+
+  // Delete the old constant!
+  destroyConstant();
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-  Constant *ToC = cast<Constant>(To);
 
   SmallVector<Constant*, 8> Values;
   Values.reserve(getNumOperands());  // Build replacement array...
-  unsigned NumUpdated = 0;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);
-    if (Val == From) {
-      ++NumUpdated;
-      Val = ToC;
-    }
+    if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
 
-  if (Constant *C = getImpl(Values)) {
-    replaceUsesOfWithOnConstantImpl(C);
-    return;
-  }
+  Constant *Replacement = get(Values);
+  assert(Replacement != this && "I didn't contain From!");
 
-  // Update to the new value.  Optimize for the case when we have a single
-  // operand that we're changing, but handle bulk updates efficiently.
-  auto &pImpl = getType()->getContext().pImpl;
-  pImpl->VectorConstants.remove(this);
+  // Everyone using this now uses the replacement.
+  replaceAllUsesWith(Replacement);
 
-  if (NumUpdated == 1) {
-    unsigned OperandToUpdate = U - OperandList;
-    assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
-    setOperand(OperandToUpdate, ToC);
-  } else {
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      if (getOperand(I) == From)
-        setOperand(I, ToC);
-  }
-
-  pImpl->VectorConstants.insert(this);
+  // Delete the old constant!
+  destroyConstant();
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
@@ -2861,55 +2836,11 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   Constant *Replacement = getWithOperands(NewOps);
   assert(Replacement != this && "I didn't contain From!");
 
-  // Check if Replacement has no users (and is the same type).  Ideally, this
-  // check would be done *before* creating Replacement, but threading this
-  // through constant-folding isn't trivial.
-  if (canBecomeReplacement(Replacement)) {
-    // Avoid unnecessary RAUW traffic.
-    auto &ExprConstants = getType()->getContext().pImpl->ExprConstants;
-    ExprConstants.remove(this);
-
-    auto *CE = cast<ConstantExpr>(Replacement);
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      // Only set the operands that have actually changed.
-      if (getOperand(I) != CE->getOperand(I))
-        setOperand(I, CE->getOperand(I));
-
-    CE->destroyConstant();
-    ExprConstants.insert(this);
-    return;
-  }
-
   // Everyone using this now uses the replacement.
   replaceAllUsesWith(Replacement);
 
   // Delete the old constant!
   destroyConstant();
-}
-
-bool ConstantExpr::canBecomeReplacement(const Constant *Replacement) const {
-  // If Replacement already has users, use it regardless.
-  if (!Replacement->use_empty())
-    return false;
-
-  // Check for anything that could have changed during constant-folding.
-  if (getValueID() != Replacement->getValueID())
-    return false;
-  const auto *CE = cast<ConstantExpr>(Replacement);
-  if (getOpcode() != CE->getOpcode())
-    return false;
-  if (getNumOperands() != CE->getNumOperands())
-    return false;
-  if (getRawSubclassOptionalData() != CE->getRawSubclassOptionalData())
-    return false;
-  if (isCompare())
-    if (getPredicate() != CE->getPredicate())
-      return false;
-  if (hasIndices())
-    if (getIndices() != CE->getIndices())
-      return false;
-
-  return true;
 }
 
 Instruction *ConstantExpr::getAsInstruction() {

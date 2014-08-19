@@ -274,30 +274,5 @@ TEST(ConstantsTest, ReplaceWithConstantTest) {
 
 #undef CHECK
 
-TEST(ConstantsTest, ConstantArrayReplaceWithConstant) {
-  LLVMContext Context;
-  std::unique_ptr<Module> M(new Module("MyModule", Context));
-
-  Type *IntTy = Type::getInt8Ty(Context);
-  ArrayType *ArrayTy = ArrayType::get(IntTy, 2);
-  Constant *A01Vals[2] = {ConstantInt::get(IntTy, 0),
-                          ConstantInt::get(IntTy, 1)};
-  Constant *A01 = ConstantArray::get(ArrayTy, A01Vals);
-
-  Constant *Global = new GlobalVariable(*M, IntTy, false,
-                                        GlobalValue::ExternalLinkage, nullptr);
-  Constant *GlobalInt = ConstantExpr::getPtrToInt(Global, IntTy);
-  Constant *A0GVals[2] = {ConstantInt::get(IntTy, 0), GlobalInt};
-  Constant *A0G = ConstantArray::get(ArrayTy, A0GVals);
-  ASSERT_NE(A01, A0G);
-
-  GlobalVariable *RefArray =
-      new GlobalVariable(*M, ArrayTy, false, GlobalValue::ExternalLinkage, A0G);
-  ASSERT_EQ(A0G, RefArray->getInitializer());
-
-  GlobalInt->replaceAllUsesWith(ConstantInt::get(IntTy, 1));
-  ASSERT_EQ(A01, RefArray->getInitializer());
-}
-
 }  // end anonymous namespace
 }  // end namespace llvm

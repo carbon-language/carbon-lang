@@ -272,13 +272,13 @@ public:
   
   DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 
-  typedef ConstantUniqueMap<ConstantArray> ArrayConstantsTy;
+  typedef ConstantAggrUniqueMap<ArrayType, ConstantArray> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
   
-  typedef ConstantUniqueMap<ConstantStruct> StructConstantsTy;
+  typedef ConstantAggrUniqueMap<StructType, ConstantStruct> StructConstantsTy;
   StructConstantsTy StructConstants;
   
-  typedef ConstantUniqueMap<ConstantVector> VectorConstantsTy;
+  typedef ConstantAggrUniqueMap<VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
   DenseMap<PointerType*, ConstantPointerNull*> CPNConstants;
@@ -289,10 +289,12 @@ public:
 
   DenseMap<std::pair<const Function *, const BasicBlock *>, BlockAddress *>
     BlockAddresses;
-  ConstantUniqueMap<ConstantExpr> ExprConstants;
+  ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>
+    ExprConstants;
 
-  ConstantUniqueMap<InlineAsm> InlineAsms;
-
+  ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&, PointerType,
+                    InlineAsm> InlineAsms;
+  
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
   

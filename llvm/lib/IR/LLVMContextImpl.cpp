@@ -75,7 +75,7 @@ LLVMContextImpl::~LLVMContextImpl() {
   // Free the constants.  This is important to do here to ensure that they are
   // freed before the LeakDetector is torn down.
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
-                DropFirst());
+                DropReferences());
   std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),
                 DropFirst());
   std::for_each(StructConstants.map_begin(), StructConstants.map_end(),
