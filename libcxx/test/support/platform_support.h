@@ -44,6 +44,8 @@
 #include <string>
 #if defined(_LIBCPP_MSVCRT) || defined(__MINGW32__)
 #include <io.h> // _mktemp
+#else
+#include <unistd.h> // close
 #endif
 
 inline
