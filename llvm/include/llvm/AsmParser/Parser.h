@@ -14,8 +14,8 @@
 #ifndef LLVM_ASMPARSER_PARSER_H
 #define LLVM_ASMPARSER_PARSER_H
 
+#include "llvm/ADT/StringRef.h"
 #include <memory>
-#include <string>
 
 namespace llvm {
 
@@ -30,11 +30,12 @@ class LLVMContext;
 /// that this does not verify that the generated Module is valid, so you should
 /// run the verifier after parsing the file to check that it is okay.
 /// @brief Parse LLVM Assembly from a file
-Module *ParseAssemblyFile(
-  const std::string &Filename, ///< The name of the file to parse
-  SMDiagnostic &Error,         ///< Error result info.
-  LLVMContext &Context         ///< Context in which to allocate globals info.
-);
+/// @param Filename The name of the file to parse
+/// @param Error Error result info.
+/// @param Context Context in which to allocate globals info.
+std::unique_ptr<Module> parseAssemblyFile(StringRef Filename,
+                                          SMDiagnostic &Error,
+                                          LLVMContext &Context);
 
 /// The function is a secondary interface to the LLVM Assembly Parser. It parses
 /// an ASCII string that (presumably) contains LLVM Assembly code. It returns a
@@ -42,21 +43,21 @@ Module *ParseAssemblyFile(
 /// that this does not verify that the generated Module is valid, so you should
 /// run the verifier after parsing the file to check that it is okay.
 /// @brief Parse LLVM Assembly from a string
-Module *ParseAssemblyString(
-  const char *AsmString, ///< The string containing assembly
-  Module *M,             ///< A module to add the assembly too.
-  SMDiagnostic &Error,   ///< Error result info.
-  LLVMContext &Context
-);
+/// @param AsmString The string containing assembly
+/// @param Error Error result info.
+/// @param Context Context in which to allocate globals info.
+std::unique_ptr<Module> parseAssemblyString(StringRef AsmString,
+                                            SMDiagnostic &Error,
+                                            LLVMContext &Context);
 
 /// This function is the low-level interface to the LLVM Assembly Parser.
 /// ParseAssemblyFile and ParseAssemblyString are wrappers around this function.
 /// @brief Parse LLVM Assembly from a MemoryBuffer.
-Module *ParseAssembly(
-    std::unique_ptr<MemoryBuffer> F, ///< The MemoryBuffer containing assembly
-    Module *M,                       ///< A module to add the assembly too.
-    SMDiagnostic &Err,               ///< Error result info.
-    LLVMContext &Context);
+/// @param F The MemoryBuffer containing assembly
+/// @param Err Error result info.
+/// @param Context Context in which to allocate globals info.
+std::unique_ptr<Module> parseAssembly(std::unique_ptr<MemoryBuffer> F,
+                                      SMDiagnostic &Err, LLVMContext &Context);
 
 } // End llvm namespace
 

@@ -38,7 +38,7 @@ TEST(UseTest, sort) {
                              "}\n";
   SMDiagnostic Err;
   char vnbuf[8];
-  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
   ASSERT_TRUE(F->arg_begin() != F->arg_end());
@@ -83,7 +83,7 @@ TEST(UseTest, reverse) {
                              "}\n";
   SMDiagnostic Err;
   char vnbuf[8];
-  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
   Function *F = M->getFunction("f");
   ASSERT_TRUE(F);
   ASSERT_TRUE(F->arg_begin() != F->arg_end());

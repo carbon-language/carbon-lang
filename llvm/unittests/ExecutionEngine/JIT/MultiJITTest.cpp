@@ -27,8 +27,7 @@ namespace {
 std::unique_ptr<Module> loadAssembly(LLVMContext &Context,
                                      const char *Assembly) {
   SMDiagnostic Error;
-  std::unique_ptr<Module> Ret(
-      ParseAssemblyString(Assembly, nullptr, Error, Context));
+  std::unique_ptr<Module> Ret = parseAssemblyString(Assembly, Error, Context);
   std::string errMsg;
   raw_string_ostream os(errMsg);
   Error.print("", os);

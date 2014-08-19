@@ -34,7 +34,7 @@ TEST(ValueTest, UsedInBasicBlock) {
                              "  ret void\n"
                              "}\n";
   SMDiagnostic Err;
-  Module *M = ParseAssemblyString(ModuleString, nullptr, Err, C);
+  std::unique_ptr<Module> M = parseAssemblyString(ModuleString, Err, C);
 
   Function *F = M->getFunction("f");
 

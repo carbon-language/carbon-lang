@@ -26,18 +26,16 @@ using namespace llvm;
 namespace {
 
 std::unique_ptr<Module> parseAssembly(const char *Assembly) {
-  auto M = make_unique<Module>("Module", getGlobalContext());
-
   SMDiagnostic Error;
-  bool Parsed =
-      ParseAssemblyString(Assembly, M.get(), Error, M->getContext()) == M.get();
+  std::unique_ptr<Module> M =
+      parseAssemblyString(Assembly, Error, getGlobalContext());
 
   std::string ErrMsg;
   raw_string_ostream OS(ErrMsg);
   Error.print("", OS);
 
   // A failure here means that the test itself is buggy.
-  if (!Parsed)
+  if (!M)
     report_fatal_error(OS.str().c_str());
 
   return M;

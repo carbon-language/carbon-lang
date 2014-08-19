@@ -30,20 +30,16 @@ namespace {
 class IsPotentiallyReachableTest : public testing::Test {
 protected:
   void ParseAssembly(const char *Assembly) {
-    M.reset(new Module("Module", getGlobalContext()));
-
     SMDiagnostic Error;
-    bool Parsed = ParseAssemblyString(Assembly, M.get(),
-                                      Error, M->getContext()) == M.get();
+    M = parseAssemblyString(Assembly, Error, getGlobalContext());
 
     std::string errMsg;
     raw_string_ostream os(errMsg);
     Error.print("", os);
 
-    if (!Parsed) {
-      // A failure here means that the test itself is buggy.
+    // A failure here means that the test itself is buggy.
+    if (!M)
       report_fatal_error(os.str().c_str());
-    }
 
     Function *F = M->getFunction("test");
     if (F == nullptr)

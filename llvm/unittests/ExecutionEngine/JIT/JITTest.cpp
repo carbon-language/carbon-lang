@@ -166,15 +166,14 @@ public:
   }
 };
 
-bool LoadAssemblyInto(Module *M, const char *assembly) {
+std::unique_ptr<Module> loadAssembly(LLVMContext &C, const char *Assembly) {
   SMDiagnostic Error;
-  bool success =
-    nullptr != ParseAssemblyString(assembly, M, Error, M->getContext());
+  std::unique_ptr<Module> M = parseAssemblyString(Assembly, Error, C);
   std::string errMsg;
   raw_string_ostream os(errMsg);
   Error.print("", os);
-  EXPECT_TRUE(success) << os.str();
-  return success;
+  EXPECT_TRUE((bool)M) << os.str();
+  return M;
 }
 
 class JITTest : public testing::Test {
@@ -200,7 +199,7 @@ class JITTest : public testing::Test {
   }
 
   void LoadAssembly(const char *assembly) {
-    LoadAssemblyInto(M, assembly);
+    M = loadAssembly(Context, assembly).release();
   }
 
   LLVMContext Context;
@@ -615,14 +614,13 @@ TEST_F(JITTest, EscapedLazyStubStillCallable) {
 // Converts the LLVM assembly to bitcode and returns it in a std::string.  An
 // empty string indicates an error.
 std::string AssembleToBitcode(LLVMContext &Context, const char *Assembly) {
-  Module TempModule("TempModule", Context);
-  if (!LoadAssemblyInto(&TempModule, Assembly)) {
+  std::unique_ptr<Module> TempModule = loadAssembly(Context, Assembly);
+  if (!TempModule)
     return "";
-  }
 
   std::string Result;
   raw_string_ostream OS(Result);
-  WriteBitcodeToFile(&TempModule, OS);
+  WriteBitcodeToFile(TempModule.get(), OS);
   OS.flush();
   return Result;
 }

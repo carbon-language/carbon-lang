@@ -29,8 +29,9 @@ namespace llvm {
 static const char *const TimeIRParsingGroupName = "LLVM IR Parsing";
 static const char *const TimeIRParsingName = "Parse IR";
 
-static Module *getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer,
-                               SMDiagnostic &Err, LLVMContext &Context) {
+static std::unique_ptr<Module>
+getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer, SMDiagnostic &Err,
+                LLVMContext &Context) {
   if (isBitcode((const unsigned char *)Buffer->getBufferStart(),
                 (const unsigned char *)Buffer->getBufferEnd())) {
     std::string ErrMsg;
@@ -42,10 +43,10 @@ static Module *getLazyIRModule(std::unique_ptr<MemoryBuffer> Buffer,
     }
     // getLazyBitcodeModule takes ownership of the Buffer when successful.
     Buffer.release();
-    return ModuleOrErr.get();
+    return std::unique_ptr<Module>(ModuleOrErr.get());
   }
 
-  return ParseAssembly(std::move(Buffer), nullptr, Err, Context);
+  return parseAssembly(std::move(Buffer), Err, Context);
 }
 
 Module *llvm::getLazyIRFileModule(const std::string &Filename,
@@ -58,7 +59,7 @@ Module *llvm::getLazyIRFileModule(const std::string &Filename,
     return nullptr;
   }
 
-  return getLazyIRModule(std::move(FileOrErr.get()), Err, Context);
+  return getLazyIRModule(std::move(FileOrErr.get()), Err, Context).release();
 }
 
 Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
@@ -78,9 +79,9 @@ Module *llvm::ParseIR(MemoryBuffer *Buffer, SMDiagnostic &Err,
     return M;
   }
 
-  return ParseAssembly(std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(
+  return parseAssembly(std::unique_ptr<MemoryBuffer>(MemoryBuffer::getMemBuffer(
                            Buffer->getBuffer(), Buffer->getBufferIdentifier())),
-                       nullptr, Err, Context);
+                       Err, Context).release();
 }
 
 Module *llvm::ParseIRFile(const std::string &Filename, SMDiagnostic &Err,
