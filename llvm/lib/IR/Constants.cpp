@@ -1478,27 +1478,21 @@ void BlockAddress::replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
   // and return early.
   BlockAddress *&NewBA =
     getContext().pImpl->BlockAddresses[std::make_pair(NewF, NewBB)];
-  if (!NewBA) {
-    getBasicBlock()->AdjustBlockAddressRefCount(-1);
-
-    // Remove the old entry, this can't cause the map to rehash (just a
-    // tombstone will get added).
-    getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
-                                                            getBasicBlock()));
-    NewBA = this;
-    setOperand(0, NewF);
-    setOperand(1, NewBB);
-    getBasicBlock()->AdjustBlockAddressRefCount(1);
+  if (NewBA) {
+    replaceUsesOfWithOnConstantImpl(NewBA);
     return;
   }
 
-  // Otherwise, I do need to replace this with an existing value.
-  assert(NewBA != this && "I didn't contain From!");
+  getBasicBlock()->AdjustBlockAddressRefCount(-1);
 
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(NewBA);
-
-  destroyConstant();
+  // Remove the old entry, this can't cause the map to rehash (just a
+  // tombstone will get added).
+  getContext().pImpl->BlockAddresses.erase(std::make_pair(getFunction(),
+                                                          getBasicBlock()));
+  NewBA = this;
+  setOperand(0, NewF);
+  setOperand(1, NewBB);
+  getBasicBlock()->AdjustBlockAddressRefCount(1);
 }
 
 //---- ConstantExpr::get() implementations.
@@ -2661,6 +2655,17 @@ Constant *ConstantDataVector::getSplatValue() const {
 /// work, but would be really slow because it would have to unique each updated
 /// array instance.
 ///
+void Constant::replaceUsesOfWithOnConstantImpl(Constant *Replacement) {
+  // I do need to replace this with an existing value.
+  assert(Replacement != this && "I didn't contain From!");
+
+  // Everyone using this now uses the replacement.
+  replaceAllUsesWith(Replacement);
+
+  // Delete the old constant!
+  destroyConstant();
+}
+
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
@@ -2687,52 +2692,45 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     AllSame &= Val == ToC;
   }
 
-  Constant *Replacement = nullptr;
   if (AllSame && ToC->isNullValue()) {
-    Replacement = ConstantAggregateZero::get(getType());
-  } else if (AllSame && isa<UndefValue>(ToC)) {
-    Replacement = UndefValue::get(getType());
-  } else {
-    // Check to see if we have this array type already.
-    LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
-        cast<ArrayType>(getType()), makeArrayRef(Values));
-    LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
-      pImpl->ArrayConstants.find(Lookup);
-
-    if (I != pImpl->ArrayConstants.map_end()) {
-      Replacement = I->first;
-    } else {
-      // Okay, the new shape doesn't exist in the system yet.  Instead of
-      // creating a new constant array, inserting it, replaceallusesof'ing the
-      // old with the new, then deleting the old... just update the current one
-      // in place!
-      pImpl->ArrayConstants.remove(this);
-
-      // Update to the new value.  Optimize for the case when we have a single
-      // operand that we're changing, but handle bulk updates efficiently.
-      if (NumUpdated == 1) {
-        unsigned OperandToUpdate = U - OperandList;
-        assert(getOperand(OperandToUpdate) == From &&
-               "ReplaceAllUsesWith broken!");
-        setOperand(OperandToUpdate, ToC);
-      } else {
-        for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-          if (getOperand(i) == From)
-            setOperand(i, ToC);
-      }
-      pImpl->ArrayConstants.insert(this);
-      return;
-    }
+    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
+    return;
+  }
+  if (AllSame && isa<UndefValue>(ToC)) {
+    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
+    return;
   }
 
-  // Otherwise, I do need to replace this with an existing value.
-  assert(Replacement != this && "I didn't contain From!");
+  // Check to see if we have this array type already.
+  LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
+    cast<ArrayType>(getType()), makeArrayRef(Values));
+  LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
+    pImpl->ArrayConstants.find(Lookup);
 
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(Replacement);
+  if (I != pImpl->ArrayConstants.map_end()) {
+    replaceUsesOfWithOnConstantImpl(I->first);
+    return;
+  }
 
-  // Delete the old constant!
-  destroyConstant();
+  // Okay, the new shape doesn't exist in the system yet.  Instead of
+  // creating a new constant array, inserting it, replaceallusesof'ing the
+  // old with the new, then deleting the old... just update the current one
+  // in place!
+  pImpl->ArrayConstants.remove(this);
+
+  // Update to the new value.  Optimize for the case when we have a single
+  // operand that we're changing, but handle bulk updates efficiently.
+  if (NumUpdated == 1) {
+    unsigned OperandToUpdate = U - OperandList;
+    assert(getOperand(OperandToUpdate) == From &&
+           "ReplaceAllUsesWith broken!");
+    setOperand(OperandToUpdate, ToC);
+  } else {
+    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
+      if (getOperand(I) == From)
+        setOperand(I, ToC);
+  }
+  pImpl->ArrayConstants.insert(this);
 }
 
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -2772,41 +2770,35 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
   LLVMContextImpl *pImpl = getContext().pImpl;
 
-  Constant *Replacement = nullptr;
   if (isAllZeros) {
-    Replacement = ConstantAggregateZero::get(getType());
-  } else if (isAllUndef) {
-    Replacement = UndefValue::get(getType());
-  } else {
-    // Check to see if we have this struct type already.
-    LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
-        cast<StructType>(getType()), makeArrayRef(Values));
-    LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
-      pImpl->StructConstants.find(Lookup);
-
-    if (I != pImpl->StructConstants.map_end()) {
-      Replacement = I->first;
-    } else {
-      // Okay, the new shape doesn't exist in the system yet.  Instead of
-      // creating a new constant struct, inserting it, replaceallusesof'ing the
-      // old with the new, then deleting the old... just update the current one
-      // in place!
-      pImpl->StructConstants.remove(this);
-
-      // Update to the new value.
-      setOperand(OperandToUpdate, ToC);
-      pImpl->StructConstants.insert(this);
-      return;
-    }
+    replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
+    return;
+  }
+  if (isAllUndef) {
+    replaceUsesOfWithOnConstantImpl(UndefValue::get(getType()));
+    return;
   }
 
-  assert(Replacement != this && "I didn't contain From!");
+  // Check to see if we have this struct type already.
+  LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
+      cast<StructType>(getType()), makeArrayRef(Values));
+  LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
+      pImpl->StructConstants.find(Lookup);
 
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(Replacement);
+  if (I != pImpl->StructConstants.map_end()) {
+    replaceUsesOfWithOnConstantImpl(I->first);
+    return;
+  }
 
-  // Delete the old constant!
-  destroyConstant();
+  // Okay, the new shape doesn't exist in the system yet.  Instead of
+  // creating a new constant struct, inserting it, replaceallusesof'ing the
+  // old with the new, then deleting the old... just update the current one
+  // in place!
+  pImpl->StructConstants.remove(this);
+
+  // Update to the new value.
+  setOperand(OperandToUpdate, ToC);
+  pImpl->StructConstants.insert(this);
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -2822,13 +2814,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
   }
 
   Constant *Replacement = get(Values);
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
+  replaceUsesOfWithOnConstantImpl(Replacement);
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,

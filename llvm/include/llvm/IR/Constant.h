@@ -48,6 +48,8 @@ protected:
     : User(ty, vty, Ops, NumOps) {}
 
   void destroyConstantImpl();
+  void replaceUsesOfWithOnConstantImpl(Constant *Replacement);
+
 public:
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
