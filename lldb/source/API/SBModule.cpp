@@ -221,6 +221,7 @@ SBModule::GetUUIDString () const
     if (!uuid_string.empty())
     {
         strncpy (uuid_string_buffer, uuid_string.c_str(), sizeof (uuid_string_buffer));
+        uuid_string_buffer[sizeof (uuid_string_buffer) - 1] = '\0';
         uuid_c_string = uuid_string_buffer;
     }
 
