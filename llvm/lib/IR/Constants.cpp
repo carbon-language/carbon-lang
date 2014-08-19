@@ -2857,63 +2857,26 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   Constant *To = cast<Constant>(ToV);
 
   SmallVector<Constant*, 8> NewOps;
+  unsigned NumUpdated = 0;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Op = getOperand(i);
-    NewOps.push_back(Op == From ? To : Op);
+    if (Op == From) {
+      ++NumUpdated;
+      Op = To;
+    }
+    NewOps.push_back(Op);
   }
+  assert(NumUpdated && "I didn't contain From!");
 
-  Constant *Replacement = getWithOperands(NewOps);
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Check if Replacement has no users (and is the same type).  Ideally, this
-  // check would be done *before* creating Replacement, but threading this
-  // through constant-folding isn't trivial.
-  if (canBecomeReplacement(Replacement)) {
-    // Avoid unnecessary RAUW traffic.
-    auto &ExprConstants = getType()->getContext().pImpl->ExprConstants;
-    ExprConstants.remove(this);
-
-    auto *CE = cast<ConstantExpr>(Replacement);
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      // Only set the operands that have actually changed.
-      if (getOperand(I) != CE->getOperand(I))
-        setOperand(I, CE->getOperand(I));
-
-    CE->destroyConstant();
-    ExprConstants.insert(this);
+  if (Constant *C = getWithOperands(NewOps, getType(), true)) {
+    replaceUsesOfWithOnConstantImpl(C);
     return;
   }
 
-  // Everyone using this now uses the replacement.
-  replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
-bool ConstantExpr::canBecomeReplacement(const Constant *Replacement) const {
-  // If Replacement already has users, use it regardless.
-  if (!Replacement->use_empty())
-    return false;
-
-  // Check for anything that could have changed during constant-folding.
-  if (getValueID() != Replacement->getValueID())
-    return false;
-  const auto *CE = cast<ConstantExpr>(Replacement);
-  if (getOpcode() != CE->getOpcode())
-    return false;
-  if (getNumOperands() != CE->getNumOperands())
-    return false;
-  if (getRawSubclassOptionalData() != CE->getRawSubclassOptionalData())
-    return false;
-  if (isCompare())
-    if (getPredicate() != CE->getPredicate())
-      return false;
-  if (hasIndices())
-    if (getIndices() != CE->getIndices())
-      return false;
-
-  return true;
+  // Update to the new value.
+  if (Constant *C = getContext().pImpl->ExprConstants.replaceOperandsInPlace(
+          NewOps, this, From, To, NumUpdated, U - OperandList))
+    replaceUsesOfWithOnConstantImpl(C);
 }
 
 Instruction *ConstantExpr::getAsInstruction() {

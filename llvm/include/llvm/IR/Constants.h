@@ -1142,12 +1142,6 @@ private:
   void setValueSubclassData(unsigned short D) {
     Value::setValueSubclassData(D);
   }
-
-  /// \brief Check whether this can become its replacement.
-  ///
-  /// For use during \a replaceUsesOfWithOnConstant(), check whether we know
-  /// how to turn this into \a Replacement, thereby reducing RAUW traffic.
-  bool canBecomeReplacement(const Constant *Replacement) const;
 };
 
 template <>

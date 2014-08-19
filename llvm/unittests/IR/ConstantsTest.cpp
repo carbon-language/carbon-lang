@@ -299,5 +299,28 @@ TEST(ConstantsTest, ConstantArrayReplaceWithConstant) {
   ASSERT_EQ(A01, RefArray->getInitializer());
 }
 
+TEST(ConstantsTest, ConstantExprReplaceWithConstant) {
+  LLVMContext Context;
+  std::unique_ptr<Module> M(new Module("MyModule", Context));
+
+  Type *IntTy = Type::getInt8Ty(Context);
+  Constant *G1 = new GlobalVariable(*M, IntTy, false,
+                                    GlobalValue::ExternalLinkage, nullptr);
+  Constant *G2 = new GlobalVariable(*M, IntTy, false,
+                                    GlobalValue::ExternalLinkage, nullptr);
+  ASSERT_NE(G1, G2);
+
+  Constant *Int1 = ConstantExpr::getPtrToInt(G1, IntTy);
+  Constant *Int2 = ConstantExpr::getPtrToInt(G2, IntTy);
+  ASSERT_NE(Int1, Int2);
+
+  GlobalVariable *Ref =
+      new GlobalVariable(*M, IntTy, false, GlobalValue::ExternalLinkage, Int1);
+  ASSERT_EQ(Int1, Ref->getInitializer());
+
+  G1->replaceAllUsesWith(G2);
+  ASSERT_EQ(Int2, Ref->getInitializer());
+}
+
 }  // end anonymous namespace
 }  // end namespace llvm
