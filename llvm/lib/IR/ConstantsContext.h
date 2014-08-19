@@ -169,11 +169,10 @@ public:
   void *operator new(size_t s) {
     return User::operator new(s, 1);
   }
-  ExtractValueConstantExpr(Constant *Agg,
-                           const SmallVector<unsigned, 4> &IdxList,
+  ExtractValueConstantExpr(Constant *Agg, ArrayRef<unsigned> IdxList,
                            Type *DestTy)
-    : ConstantExpr(DestTy, Instruction::ExtractValue, &Op<0>(), 1),
-      Indices(IdxList) {
+      : ConstantExpr(DestTy, Instruction::ExtractValue, &Op<0>(), 1),
+        Indices(IdxList.begin(), IdxList.end()) {
     Op<0>() = Agg;
   }
 
@@ -196,10 +195,9 @@ public:
     return User::operator new(s, 2);
   }
   InsertValueConstantExpr(Constant *Agg, Constant *Val,
-                          const SmallVector<unsigned, 4> &IdxList,
-                          Type *DestTy)
-    : ConstantExpr(DestTy, Instruction::InsertValue, &Op<0>(), 2),
-      Indices(IdxList) {
+                          ArrayRef<unsigned> IdxList, Type *DestTy)
+      : ConstantExpr(DestTy, Instruction::InsertValue, &Op<0>(), 2),
+        Indices(IdxList.begin(), IdxList.end()) {
     Op<0>() = Agg;
     Op<1>() = Val;
   }
