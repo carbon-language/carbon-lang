@@ -429,6 +429,7 @@ private:
   bool TraverseFunctionHelper(FunctionDecl *D);
   bool TraverseVarHelper(VarDecl *D);
   bool TraverseOMPExecutableDirective(OMPExecutableDirective *S);
+  bool TraverseOMPLoopDirective(OMPLoopDirective *S);
   bool TraverseOMPClause(OMPClause *C);
 #define OPENMP_CLAUSE(Name, Class) bool Visit##Class(Class *C);
 #include "clang/Basic/OpenMPKinds.def"
@@ -2299,6 +2300,12 @@ bool RecursiveASTVisitor<Derived>::TraverseOMPExecutableDirective(
     TRY_TO(TraverseOMPClause(C));
   }
   return true;
+}
+
+template <typename Derived>
+bool
+RecursiveASTVisitor<Derived>::TraverseOMPLoopDirective(OMPLoopDirective *S) {
+  return TraverseOMPExecutableDirective(S);
 }
 
 DEF_TRAVERSE_STMT(OMPParallelDirective,

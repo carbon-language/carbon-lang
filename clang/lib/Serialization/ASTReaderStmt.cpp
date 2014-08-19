@@ -1963,6 +1963,13 @@ void ASTStmtReader::VisitOMPExecutableDirective(OMPExecutableDirective *E) {
     E->setAssociatedStmt(Reader.ReadSubStmt());
 }
 
+void ASTStmtReader::VisitOMPLoopDirective(OMPLoopDirective *D) {
+  VisitStmt(D);
+  // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
+  Idx += 2;
+  VisitOMPExecutableDirective(D);
+}
+
 void ASTStmtReader::VisitOMPParallelDirective(OMPParallelDirective *D) {
   VisitStmt(D);
   // The NumClauses field was read in ReadStmtFromStream.
@@ -1971,17 +1978,11 @@ void ASTStmtReader::VisitOMPParallelDirective(OMPParallelDirective *D) {
 }
 
 void ASTStmtReader::VisitOMPSimdDirective(OMPSimdDirective *D) {
-  VisitStmt(D);
-  // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
-  Idx += 2;
-  VisitOMPExecutableDirective(D);
+  VisitOMPLoopDirective(D);
 }
 
 void ASTStmtReader::VisitOMPForDirective(OMPForDirective *D) {
-  VisitStmt(D);
-  // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
-  Idx += 2;
-  VisitOMPExecutableDirective(D);
+  VisitOMPLoopDirective(D);
 }
 
 void ASTStmtReader::VisitOMPSectionsDirective(OMPSectionsDirective *D) {
@@ -2015,10 +2016,7 @@ void ASTStmtReader::VisitOMPCriticalDirective(OMPCriticalDirective *D) {
 }
 
 void ASTStmtReader::VisitOMPParallelForDirective(OMPParallelForDirective *D) {
-  VisitStmt(D);
-  // Two fields (NumClauses and CollapsedNum) were read in ReadStmtFromStream.
-  Idx += 2;
-  VisitOMPExecutableDirective(D);
+  VisitOMPLoopDirective(D);
 }
 
 void ASTStmtReader::VisitOMPParallelSectionsDirective(
