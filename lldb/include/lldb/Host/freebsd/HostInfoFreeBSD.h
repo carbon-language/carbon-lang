@@ -18,9 +18,9 @@ namespace lldb_private
 class HostInfoFreeBSD : public HostInfoPosix
 {
   public:
-    bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
-    bool GetOSBuildString(std::string &s);
-    bool GetOSKernelDescription(std::string &s);
+    static bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
+    static bool GetOSBuildString(std::string &s);
+    static bool GetOSKernelDescription(std::string &s);
 };
 }
 
