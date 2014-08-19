@@ -11,8 +11,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+
+using namespace lldb_private;
 
 bool
 HostInfoFreeBSD::GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update)
