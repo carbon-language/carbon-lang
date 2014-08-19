@@ -2810,17 +2810,41 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
 
   SmallVector<Constant*, 8> Values;
   Values.reserve(getNumOperands());  // Build replacement array...
+  unsigned NumUpdated = 0;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
+    if (Val == From) {
+      ++NumUpdated;
+      Val = ToC;
+    }
     Values.push_back(Val);
   }
 
-  Constant *Replacement = get(Values);
-  replaceUsesOfWithOnConstantImpl(Replacement);
+  if (Constant *C = getImpl(Values)) {
+    replaceUsesOfWithOnConstantImpl(C);
+    return;
+  }
+
+  // Update to the new value.  Optimize for the case when we have a single
+  // operand that we're changing, but handle bulk updates efficiently.
+  auto &pImpl = getType()->getContext().pImpl;
+  pImpl->VectorConstants.remove(this);
+
+  if (NumUpdated == 1) {
+    unsigned OperandToUpdate = U - OperandList;
+    assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
+    setOperand(OperandToUpdate, ToC);
+  } else {
+    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
+      if (getOperand(I) == From)
+        setOperand(I, ToC);
+  }
+
+  pImpl->VectorConstants.insert(this);
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
