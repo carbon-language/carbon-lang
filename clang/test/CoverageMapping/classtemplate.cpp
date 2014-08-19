@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple %itanium_abi_triple -fprofile-instr-generate -fcoverage-mapping -dump-coverage-mapping -emit-llvm-only -main-file-name classtemplate.cpp %s > %tmapping
-// cat %tmapping | FileCheck %s --check-prefix=CHECK-CONSTRUCTOR
-// cat %tmapping | FileCheck %s --check-prefix=CHECK-GETTER
-// cat %tmapping | FileCheck %s --check-prefix=CHECK-SETTER
+// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-CONSTRUCTOR
+// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-GETTER
+// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-SETTER
 
 template<class TT>
 class Test {
