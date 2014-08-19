@@ -25,12 +25,9 @@ namespace llvm {
 class PointerType;
 class FunctionType;
 class Module;
+
 struct InlineAsmKeyType;
-template<class ValType, class ValRefType, class TypeClass, class ConstantClass,
-         bool HasLargeKey>
-class ConstantUniqueMap;
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator;
+template <class ConstantClass> class ConstantUniqueMap;
 
 class InlineAsm : public Value {
 public:
@@ -40,9 +37,8 @@ public:
   };
 
 private:
-  friend struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType>;
-  friend class ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&,
-                                 PointerType, InlineAsm, false>;
+  friend struct InlineAsmKeyType;
+  friend class ConstantUniqueMap<InlineAsm>;
 
   InlineAsm(const InlineAsm &) LLVM_DELETED_FUNCTION;
   void operator=(const InlineAsm&) LLVM_DELETED_FUNCTION;

@@ -37,12 +37,8 @@ class PointerType;
 class VectorType;
 class SequentialType;
 
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator;
-template<class ConstantClass, class TypeClass>
-struct ConstantArrayCreator;
-template<class ConstantClass, class TypeClass>
-struct ConvertConstantType;
+struct ConstantExprKeyType;
+template <class ConstantClass> struct ConstantAggrKeyType;
 
 //===----------------------------------------------------------------------===//
 /// This is the shared class of boolean and integer constants. This class
@@ -338,7 +334,7 @@ public:
 /// ConstantArray - Constant Array Declarations
 ///
 class ConstantArray : public Constant {
-  friend struct ConstantArrayCreator<ConstantArray, ArrayType>;
+  friend struct ConstantAggrKeyType<ConstantArray>;
   ConstantArray(const ConstantArray &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
@@ -346,6 +342,10 @@ public:
   // ConstantArray accessors
   static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
 
+private:
+  static Constant *getImpl(ArrayType *T, ArrayRef<Constant *> V);
+
+public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
@@ -376,7 +376,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 // ConstantStruct - Constant Struct Declarations
 //
 class ConstantStruct : public Constant {
-  friend struct ConstantArrayCreator<ConstantStruct, StructType>;
+  friend struct ConstantAggrKeyType<ConstantStruct>;
   ConstantStruct(const ConstantStruct &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
@@ -435,7 +435,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 /// ConstantVector - Constant Vector Declarations
 ///
 class ConstantVector : public Constant {
-  friend struct ConstantArrayCreator<ConstantVector, VectorType>;
+  friend struct ConstantAggrKeyType<ConstantVector>;
   ConstantVector(const ConstantVector &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
@@ -443,6 +443,10 @@ public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
 
+private:
+  static Constant *getImpl(ArrayRef<Constant *> V);
+
+public:
   /// getSplat - Return a ConstantVector with the specified constant in each
   /// element.
   static Constant *getSplat(unsigned NumElts, Constant *Elt);
@@ -794,9 +798,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BlockAddress, Value)
 /// constant expressions.  The Opcode field for the ConstantExpr class is
 /// maintained in the Value::SubclassData field.
 class ConstantExpr : public Constant {
-  friend struct ConstantCreator<ConstantExpr,Type,
-                            std::pair<unsigned, std::vector<Constant*> > >;
-  friend struct ConvertConstantType<ConstantExpr, Type>;
+  friend struct ConstantExprKeyType;
 
 protected:
   ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)
@@ -1113,6 +1115,12 @@ private:
   void setValueSubclassData(unsigned short D) {
     Value::setValueSubclassData(D);
   }
+
+  /// \brief Check whether this can become its replacement.
+  ///
+  /// For use during \a replaceUsesOfWithOnConstant(), check whether we know
+  /// how to turn this into \a Replacement, thereby reducing RAUW traffic.
+  bool canBecomeReplacement(const Constant *Replacement) const;
 };
 
 template <>
