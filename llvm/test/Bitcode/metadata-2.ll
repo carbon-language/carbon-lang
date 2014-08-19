@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis -disable-output
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s
 	%0 = type { %object.ModuleInfo.__vtbl*, i8*, %"byte[]", %1, %"ClassInfo[]", i32, void ()*, void ()*, void ()*, i8*, void ()* }		; type %0
 	%1 = type { i64, %object.ModuleInfo* }		; type %1
 	%2 = type { i32, void ()* }		; type %2

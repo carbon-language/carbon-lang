@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 
 define i32 @test(i1 %C, i32 %V1, i32 %V2) {

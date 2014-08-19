@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 ; Method arguments were being checked for collisions at the global scope before
 ; the method object was created by the parser.  Because of this, false

@@ -3,7 +3,7 @@
 ; RUN: llvm-as < %s | llvm-dis | grep "addrspace(66)" | count 2
 ; RUN: llvm-as < %s | llvm-dis | grep "addrspace(11)" | count 6
 ; RUN: llvm-as < %s | llvm-dis | grep "addrspace(22)" | count 5
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 	%struct.mystruct = type { i32, i32 addrspace(33)*, i32, i32 addrspace(33)* }
 @input = weak addrspace(42) global %struct.mystruct zeroinitializer  		; <%struct.mystruct addrspace(42)*> [#uses=1]

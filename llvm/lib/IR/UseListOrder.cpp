@@ -33,3 +33,11 @@ bool llvm::shouldPreserveBitcodeUseListOrder() {
 bool llvm::shouldPreserveAssemblyUseListOrder() {
   return PreserveAssemblyUseListOrder;
 }
+
+void llvm::setPreserveBitcodeUseListOrder(bool ShouldPreserve) {
+  PreserveBitcodeUseListOrder = ShouldPreserve;
+}
+
+void llvm::setPreserveAssemblyUseListOrder(bool ShouldPreserve) {
+  PreserveAssemblyUseListOrder = ShouldPreserve;
+}

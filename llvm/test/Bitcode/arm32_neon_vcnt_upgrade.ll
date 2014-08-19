@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s
 ; Tests vclz and vcnt
 
 define <4 x i16> @vclz16(<4 x i16>* %A) nounwind {

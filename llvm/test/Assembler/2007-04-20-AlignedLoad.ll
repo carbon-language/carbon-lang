@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | grep "align 1024"
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 define i32 @test(i32* %arg) {
 entry:

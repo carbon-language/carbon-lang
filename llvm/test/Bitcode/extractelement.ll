@@ -1,5 +1,5 @@
 ; RUN: opt < %s -constprop | llvm-dis -disable-output
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s
 ; PR3465
 
 define double @test() {

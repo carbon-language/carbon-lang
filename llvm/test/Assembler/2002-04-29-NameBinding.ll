@@ -7,7 +7,7 @@
 ; RUN: opt < %s -globaldce -S | \
 ; RUN:   not grep constant
 ;
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 @v1 = internal constant i32 5           
 

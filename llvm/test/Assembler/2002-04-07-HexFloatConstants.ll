@@ -9,7 +9,7 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | opt -constprop | \
 ; RUN: llvm-dis > %t.2
 ; RUN: diff %t.1 %t.2
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 define double @test() {
         %tmp = fmul double 7.200000e+101, 0x427F4000             ; <double> [#uses=1]

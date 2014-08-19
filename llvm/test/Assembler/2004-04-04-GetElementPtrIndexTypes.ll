@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 define i32* @t1({ float, i32 }* %X) {
         %W = getelementptr { float, i32 }* %X, i32 20, i32 1            ; <i32*> [#uses=0]

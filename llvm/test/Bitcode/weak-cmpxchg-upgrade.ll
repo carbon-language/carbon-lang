@@ -1,5 +1,5 @@
 ; RUN: llvm-dis < %s.bc | FileCheck %s
-; RUN: verify-uselistorder < %s.bc -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s.bc
 
 ; cmpxchg-upgrade.ll.bc was produced by running a version of llvm-as from just
 ; before the IR change on this file.

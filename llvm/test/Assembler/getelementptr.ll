@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 ; Verify that over-indexed getelementptrs are folded.
 @A = external global [2 x [3 x [5 x [7 x i32]]]]

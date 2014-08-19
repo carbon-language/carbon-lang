@@ -1,7 +1,7 @@
 ; Test to make sure loop vectorizer metadata is automatically upgraded.
 ;
 ; RUN: llvm-dis < %s.bc | FileCheck %s
-; RUN: verify-uselistorder < %s.bc -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s.bc
 
 define void @_Z28loop_with_vectorize_metadatav() {
 entry:

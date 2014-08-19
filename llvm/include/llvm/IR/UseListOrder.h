@@ -54,6 +54,8 @@ typedef std::vector<UseListOrder> UseListOrderStack;
 /// \brief Whether to preserve use-list ordering.
 bool shouldPreserveBitcodeUseListOrder();
 bool shouldPreserveAssemblyUseListOrder();
+void setPreserveBitcodeUseListOrder(bool ShouldPreserve);
+void setPreserveAssemblyUseListOrder(bool ShouldPreserve);
 
 } // end namespace llvm
 

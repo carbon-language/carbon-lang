@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis -disable-output
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s
 ; PR4373
 
 @foo = weak global { i32 } zeroinitializer              

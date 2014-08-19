@@ -534,9 +534,8 @@ int main(int argc, char **argv) {
   errs() << "*** verify-use-list-order ***\n";
   if (!shouldPreserveBitcodeUseListOrder()) {
     // Can't verify if order isn't preserved.
-    errs() << "warning: cannot verify bitcode; "
-              "try -preserve-bc-use-list-order\n";
-    return 0;
+    errs() << "warning: forcing -preserve-bc-use-list-order\n";
+    setPreserveBitcodeUseListOrder(true);
   }
 
   // Verify the use lists now and after reversing them.

@@ -1,5 +1,5 @@
 ; RUN: llvm-as %s -o /dev/null
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 @.LC0 = internal global [12 x i8] c"hello world\00"             ; <[12 x i8]*> [#uses=1]
 

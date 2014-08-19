@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | llvm-as | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 
 ; CHECK: @foo
 ; CHECK: store { i32, i32 } { i32 7, i32 9 }, { i32, i32 }* %x

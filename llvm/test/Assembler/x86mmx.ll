@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder %s
 ; Basic smoke test for x86_mmx type.
 
 ; CHECK: define x86_mmx @sh16

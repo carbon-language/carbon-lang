@@ -1,6 +1,6 @@
 ; RUN: llvm-as < %s -o %t.bc 2>&1 >/dev/null | FileCheck -check-prefix=WARN %s
 ; RUN: llvm-dis < %t.bc | FileCheck %s
-; RUN: verify-uselistorder < %t.bc -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %t.bc
 
 define i32 @main() {
 entry:

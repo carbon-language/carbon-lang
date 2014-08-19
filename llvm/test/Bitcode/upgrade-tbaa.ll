@@ -1,5 +1,5 @@
 ; RUN: llvm-as < %s | llvm-dis | FileCheck %s
-; RUN: verify-uselistorder < %s -preserve-bc-use-list-order
+; RUN: verify-uselistorder < %s
 
 ; Function Attrs: nounwind
 define void @_Z4testPiPf(i32* nocapture %pI, float* nocapture %pF) #0 {
