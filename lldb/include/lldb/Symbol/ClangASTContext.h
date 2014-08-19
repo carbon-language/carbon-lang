@@ -43,6 +43,9 @@ public:
     ClangASTContext (const char *triple = NULL);
 
     ~ClangASTContext();
+    
+    static ClangASTContext*
+    GetASTContext (clang::ASTContext* ast_ctx);
 
     clang::ASTContext *
     getASTContext();

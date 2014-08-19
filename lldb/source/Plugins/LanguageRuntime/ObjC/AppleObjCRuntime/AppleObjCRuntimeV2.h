@@ -105,6 +105,9 @@ public:
     virtual lldb::addr_t
     LookupRuntimeSymbol (const ConstString &name);
     
+    virtual EncodingToTypeSP
+    GetEncodingToType ();
+    
 protected:
     virtual lldb::BreakpointResolverSP
     CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
@@ -277,6 +280,7 @@ private:
     bool                                    m_loaded_objc_opt;
     std::unique_ptr<NonPointerISACache>       m_non_pointer_isa_cache_ap;
     std::unique_ptr<TaggedPointerVendor>    m_tagged_pointer_vendor_ap;
+    EncodingToTypeSP                        m_encoding_to_type_sp;
 };
     
 } // namespace lldb_private

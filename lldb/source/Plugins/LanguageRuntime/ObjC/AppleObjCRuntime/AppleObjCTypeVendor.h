@@ -51,6 +51,7 @@ private:
     
     ObjCLanguageRuntime        &m_runtime;
     ClangASTContext             m_ast_ctx;
+    ObjCLanguageRuntime::EncodingToTypeSP m_type_realizer_sp;
     AppleObjCExternalASTSource *m_external_source;
     
     typedef llvm::DenseMap<ObjCLanguageRuntime::ObjCISA, clang::ObjCInterfaceDecl *> ISAToInterfaceMap;

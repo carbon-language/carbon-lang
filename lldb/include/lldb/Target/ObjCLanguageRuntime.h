@@ -20,6 +20,7 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/TypeVendor.h"
 #include "lldb/Target/LanguageRuntime.h"
@@ -238,6 +239,25 @@ public:
             m_type_wp = type_sp;
         }
         
+        struct iVarDescriptor {
+            ConstString m_name;
+            ClangASTType m_type;
+            uint64_t m_size;
+            int32_t m_offset;
+        };
+        
+        virtual size_t
+        GetNumIVars ()
+        {
+            return 0;
+        }
+        
+        virtual iVarDescriptor
+        GetIVarAtIndex (size_t idx)
+        {
+            return iVarDescriptor();
+        }
+        
     protected:
         bool
         IsPointerValid (lldb::addr_t value,
@@ -251,6 +271,25 @@ public:
         LazyBool m_is_cf;
         lldb::TypeWP m_type_wp;
     };
+    
+    class EncodingToType
+    {
+    public:
+        virtual ClangASTType RealizeType (ClangASTContext& ast_ctx, const char* name, bool allow_unknownanytype);
+        virtual ClangASTType RealizeType (const char* name, bool allow_unknownanytype);
+        
+        virtual ClangASTType RealizeType (clang::ASTContext& ast_ctx, const char* name, bool allow_unknownanytype) = 0;
+        
+        virtual ~EncodingToType();
+        
+    protected:
+        std::unique_ptr<ClangASTContext> m_scratch_ast_ctx_ap;
+    };
+    
+    typedef std::shared_ptr<EncodingToType> EncodingToTypeSP;
+    
+    virtual EncodingToTypeSP
+    GetEncodingToType ();
     
     virtual ClassDescriptorSP
     GetClassDescriptor (ValueObject& in_value);

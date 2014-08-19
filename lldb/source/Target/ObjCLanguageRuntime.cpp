@@ -602,4 +602,27 @@ ObjCLanguageRuntime::GetNonKVOClassDescriptor (ObjCISA isa)
 }
 
 
+ClangASTType
+ObjCLanguageRuntime::EncodingToType::RealizeType (const char* name, bool allow_unknownanytype)
+{
+    if (m_scratch_ast_ctx_ap)
+        return RealizeType(*m_scratch_ast_ctx_ap, name, allow_unknownanytype);
+    return ClangASTType();
+}
 
+ClangASTType
+ObjCLanguageRuntime::EncodingToType::RealizeType (ClangASTContext& ast_ctx, const char* name, bool allow_unknownanytype)
+{
+    clang::ASTContext *clang_ast = ast_ctx.getASTContext();
+    if (!clang_ast)
+        return ClangASTType();
+    return RealizeType(*clang_ast, name, allow_unknownanytype);
+}
+
+ObjCLanguageRuntime::EncodingToType::~EncodingToType() {}
+
+ObjCLanguageRuntime::EncodingToTypeSP
+ObjCLanguageRuntime::GetEncodingToType ()
+{
+    return nullptr;
+}

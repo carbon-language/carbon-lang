@@ -164,7 +164,8 @@ private:
 AppleObjCTypeVendor::AppleObjCTypeVendor(ObjCLanguageRuntime &runtime) :
     TypeVendor(),
     m_runtime(runtime),
-    m_ast_ctx(runtime.GetProcess()->GetTarget().GetArchitecture().GetTriple().getTriple().c_str())
+    m_ast_ctx(runtime.GetProcess()->GetTarget().GetArchitecture().GetTriple().getTriple().c_str()),
+    m_type_realizer_sp(m_runtime.GetEncodingToType())
 {
     m_external_source = new AppleObjCExternalASTSource (*this);
     llvm::IntrusiveRefCntPtr<clang::ExternalASTSource> external_source_owning_ptr (m_external_source);
@@ -323,7 +324,7 @@ public:
         }
     }
     
-    clang::ObjCMethodDecl *BuildMethod (clang::ObjCInterfaceDecl *interface_decl, const char *name, bool instance)
+    clang::ObjCMethodDecl *BuildMethod (clang::ObjCInterfaceDecl *interface_decl, const char *name, bool instance, ObjCLanguageRuntime::EncodingToTypeSP type_realizer_sp)
     {
         if (!m_is_valid || m_type_vector.size() < 3)
             return NULL;
@@ -339,11 +340,13 @@ public:
         const bool isDefined = false;
         const clang::ObjCMethodDecl::ImplementationControl impControl = clang::ObjCMethodDecl::None;
         const bool HasRelatedResultType = false;
+        const bool allow_unknownanytype = true;
         
         std::vector <clang::IdentifierInfo *> selector_components;
         
         const char *name_cursor = name;
         bool is_zero_argument = true;
+        
         
         while (*name_cursor != '\0')
         {
@@ -363,7 +366,7 @@ public:
         
         clang::Selector sel = ast_ctx.Selectors.getSelector(is_zero_argument ? 0 : selector_components.size(), selector_components.data());
         
-        clang::QualType ret_type = BuildType(ast_ctx, m_type_vector[0].c_str());
+        clang::QualType ret_type = type_realizer_sp->RealizeType(interface_decl->getASTContext(), m_type_vector[0].c_str(), allow_unknownanytype).GetQualType();
         
         if (ret_type.isNull())
             return NULL;
@@ -389,7 +392,8 @@ public:
              ai != ae;
              ++ai)
         {
-            clang::QualType arg_type = BuildType(ast_ctx, m_type_vector[ai].c_str());
+            const bool allow_unknownanytype = true;
+            clang::QualType arg_type = type_realizer_sp->RealizeType(ast_ctx, m_type_vector[ai].c_str(), allow_unknownanytype).GetQualType();
             
             if (arg_type.isNull())
                 return NULL; // well, we just wasted a bunch of time.  Wish we could delete the stuff we'd just made!
@@ -410,81 +414,6 @@ public:
         return ret;
     }
 private:
-    clang::QualType BuildType (clang::ASTContext &ast_ctx, const char *type)
-    {
-        if (!type)
-            return clang::QualType();
-        
-        switch (*type)
-        {
-        default:
-            return ast_ctx.UnknownAnyTy;
-        case 'r':
-            {
-                clang::QualType target_type = BuildType(ast_ctx, type+1);
-                if (target_type.isNull())
-                    return clang::QualType();
-                else if (target_type == ast_ctx.UnknownAnyTy)
-                    return ast_ctx.UnknownAnyTy;
-                else
-                    return ast_ctx.getConstType(target_type);
-            }
-        case '^':
-        {
-            clang::QualType target_type = BuildType(ast_ctx, type+1);
-            if (target_type.isNull())
-                return clang::QualType();
-            else if (target_type == ast_ctx.UnknownAnyTy)
-                return ast_ctx.UnknownAnyTy;
-            else
-                return ast_ctx.getPointerType(target_type);
-        }
-        case 'c':
-            return ast_ctx.CharTy;
-        case 'i':
-            return ast_ctx.IntTy;
-        case 's':
-            return ast_ctx.ShortTy;
-        case 'l':
-            if (ast_ctx.getTypeSize(ast_ctx.VoidTy) == 64)
-                return ast_ctx.IntTy;
-            else
-                return ast_ctx.LongTy;
-        case 'q':
-            return ast_ctx.LongLongTy;
-        case 'C':
-            return ast_ctx.UnsignedCharTy;
-        case 'I':
-            return ast_ctx.UnsignedIntTy;
-        case 'S':
-            return ast_ctx.UnsignedShortTy;
-        case 'L':
-            if (ast_ctx.getTypeSize(ast_ctx.VoidTy) == 64)
-                return ast_ctx.UnsignedIntTy;
-            else
-                return ast_ctx.UnsignedLongTy;
-        case 'Q':
-            return ast_ctx.UnsignedLongLongTy;
-        case 'f':
-            return ast_ctx.FloatTy;
-        case 'd':
-            return ast_ctx.DoubleTy;
-        case 'B':
-            return ast_ctx.BoolTy;
-        case 'v':
-            return ast_ctx.VoidTy;
-        case '*':
-            return ast_ctx.getPointerType(ast_ctx.CharTy);
-        case '@':
-            return ast_ctx.getObjCIdType();
-        case '#':
-            return ast_ctx.getObjCClassType();
-        case ':':
-            return ast_ctx.getObjCSelType();
-        }
-        return clang::QualType();
-    }
-    
     typedef std::vector <std::string> TypeVector;
     
     TypeVector  m_type_vector;
@@ -532,7 +461,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
 
         ObjCRuntimeMethodType method_type(types);
         
-        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, true);
+        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, true, m_type_realizer_sp);
         
         if (log)
             log->Printf("[  AOTV::FD] Instance method [%s] [%s]", name, types);
@@ -550,7 +479,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         
         ObjCRuntimeMethodType method_type(types);
         
-        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, false);
+        clang::ObjCMethodDecl *method_decl = method_type.BuildMethod (interface_decl, name, false, m_type_realizer_sp);
         
         if (log)
             log->Printf("[  AOTV::FD] Class method [%s] [%s]", name, types);

@@ -79,6 +79,16 @@ using namespace lldb_private;
 using namespace llvm;
 using namespace clang;
 
+typedef llvm::DenseMap<clang::ASTContext *, ClangASTContext*> ClangASTMap;
+
+static ClangASTMap &
+GetASTMap()
+{
+    static ClangASTMap g_map;
+    return g_map;
+}
+
+
 clang::AccessSpecifier
 ClangASTContext::ConvertAccessTypeToAccessSpecifier (AccessType access)
 {
@@ -291,6 +301,11 @@ ClangASTContext::ClangASTContext (const char *target_triple) :
 //----------------------------------------------------------------------
 ClangASTContext::~ClangASTContext()
 {
+    if (m_ast_ap.get())
+    {
+        GetASTMap().erase(m_ast_ap.get());
+    }
+
     m_builtins_ap.reset();
     m_selector_table_ap.reset();
     m_identifier_table_ap.reset();
@@ -393,8 +408,17 @@ ClangASTContext::getASTContext()
         }
         
         m_ast_ap->getDiagnostics().setClient(getDiagnosticConsumer(), false);
+        
+        GetASTMap().insert(std::make_pair(m_ast_ap.get(), this));
     }
     return m_ast_ap.get();
+}
+
+ClangASTContext*
+ClangASTContext::GetASTContext (clang::ASTContext* ast)
+{
+    ClangASTContext *clang_ast = GetASTMap().lookup(ast);
+    return clang_ast;
 }
 
 Builtin::Context *
