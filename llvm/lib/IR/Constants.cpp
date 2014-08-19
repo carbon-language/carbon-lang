@@ -2701,6 +2701,12 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     return;
   }
 
+  // Check for any other type of constant-folding.
+  if (Constant *C = getImpl(getType(), Values)) {
+    replaceUsesOfWithOnConstantImpl(C);
+    return;
+  }
+
   // Check to see if we have this array type already.
   LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
     cast<ArrayType>(getType()), makeArrayRef(Values));
