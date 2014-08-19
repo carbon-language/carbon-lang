@@ -145,7 +145,13 @@ namespace llvm {
     bool equals(ArrayRef RHS) const {
       if (Length != RHS.Length)
         return false;
-      return std::equal(begin(), end(), RHS.begin());
+      // Don't use std::equal(), since it asserts in MSVC on nullptr iterators.
+      for (auto L = begin(), LE = end(), R = RHS.begin(); L != LE; ++L, ++R)
+        // Match std::equal() in using == (instead of !=) to minimize API
+        // requirements of ArrayRef'ed types.
+        if (!(*L == *R))
+          return false;
+      return true;
     }
 
     /// slice(n) - Chop off the first N elements of the array.
