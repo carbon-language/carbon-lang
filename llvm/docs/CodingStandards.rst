@@ -162,6 +162,8 @@ being aware of:
 * ``std::initializer_list`` (and the constructors and functions that take it as
   an argument) are not always available, so you cannot (for example) initialize
   a ``std::vector`` with a braced initializer list.
+* ``std::equal()`` (and other algorithms) incorrectly assert in MSVC when given
+  ``nullptr`` as an iterator.
 
 Other than these areas you should assume the standard library is available and
 working as expected until some build bot tells you otherwise. If you're in an
