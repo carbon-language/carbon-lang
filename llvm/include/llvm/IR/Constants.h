@@ -858,19 +858,25 @@ public:
                           bool HasNUW = false, bool HasNSW = false);
   static Constant *getLShr(Constant *C1, Constant *C2, bool isExact = false);
   static Constant *getAShr(Constant *C1, Constant *C2, bool isExact = false);
-  static Constant *getTrunc   (Constant *C, Type *Ty);
-  static Constant *getSExt    (Constant *C, Type *Ty);
-  static Constant *getZExt    (Constant *C, Type *Ty);
-  static Constant *getFPTrunc (Constant *C, Type *Ty);
-  static Constant *getFPExtend(Constant *C, Type *Ty);
-  static Constant *getUIToFP  (Constant *C, Type *Ty);
-  static Constant *getSIToFP  (Constant *C, Type *Ty);
-  static Constant *getFPToUI  (Constant *C, Type *Ty);
-  static Constant *getFPToSI  (Constant *C, Type *Ty);
-  static Constant *getPtrToInt(Constant *C, Type *Ty);
-  static Constant *getIntToPtr(Constant *C, Type *Ty);
-  static Constant *getBitCast (Constant *C, Type *Ty);
-  static Constant *getAddrSpaceCast(Constant *C, Type *Ty);
+  static Constant *getTrunc(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getSExt(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getZExt(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getFPTrunc(Constant *C, Type *Ty,
+                              bool OnlyIfReduced = false);
+  static Constant *getFPExtend(Constant *C, Type *Ty,
+                               bool OnlyIfReduced = false);
+  static Constant *getUIToFP(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getSIToFP(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getFPToUI(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getFPToSI(Constant *C, Type *Ty, bool OnlyIfReduced = false);
+  static Constant *getPtrToInt(Constant *C, Type *Ty,
+                               bool OnlyIfReduced = false);
+  static Constant *getIntToPtr(Constant *C, Type *Ty,
+                               bool OnlyIfReduced = false);
+  static Constant *getBitCast(Constant *C, Type *Ty,
+                              bool OnlyIfReduced = false);
+  static Constant *getAddrSpaceCast(Constant *C, Type *Ty,
+                                    bool OnlyIfReduced = false);
 
   static Constant *getNSWNeg(Constant *C) { return getNeg(C, false, true); }
   static Constant *getNUWNeg(Constant *C) { return getNeg(C, true, false); }
@@ -925,13 +931,14 @@ public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
-  // @brief Convenience function for getting one of the casting operations
-  // using a CastOps opcode.
-  static Constant *getCast(
-    unsigned ops,  ///< The opcode for the conversion
-    Constant *C,   ///< The constant to be converted
-    Type *Ty ///< The type to which the constant is converted
-  );
+  /// \brief Convenience function for getting a Cast operation.
+  ///
+  /// \param ops The opcode for the conversion
+  /// \param C  The constant to be converted
+  /// \param Ty The type to which the constant is converted
+  /// \param OnlyIfReduced see \a getWithOperands() docs.
+  static Constant *getCast(unsigned ops, Constant *C, Type *Ty,
+                           bool OnlyIfReduced = false);
 
   // @brief Create a ZExt or BitCast cast constant expression
   static Constant *getZExtOrBitCast(
@@ -997,44 +1004,53 @@ public:
 
   /// Select constant expr
   ///
-  static Constant *getSelect(Constant *C, Constant *V1, Constant *V2);
+  /// \param OnlyIfReducedTy see \a getWithOperands() docs.
+  static Constant *getSelect(Constant *C, Constant *V1, Constant *V2,
+                             Type *OnlyIfReducedTy = nullptr);
 
   /// get - Return a binary or shift operator constant expression,
   /// folding if possible.
   ///
+  /// \param OnlyIfReducedTy see \a getWithOperands() docs.
   static Constant *get(unsigned Opcode, Constant *C1, Constant *C2,
-                       unsigned Flags = 0);
+                       unsigned Flags = 0, Type *OnlyIfReducedTy = nullptr);
 
-  /// @brief Return an ICmp or FCmp comparison operator constant expression.
-  static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2);
+  /// \brief Return an ICmp or FCmp comparison operator constant expression.
+  ///
+  /// \param OnlyIfReduced see \a getWithOperands() docs.
+  static Constant *getCompare(unsigned short pred, Constant *C1, Constant *C2,
+                              bool OnlyIfReduced = false);
 
   /// get* - Return some common constants without having to
   /// specify the full Instruction::OPCODE identifier.
   ///
-  static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS);
-  static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS);
+  static Constant *getICmp(unsigned short pred, Constant *LHS, Constant *RHS,
+                           bool OnlyIfReduced = false);
+  static Constant *getFCmp(unsigned short pred, Constant *LHS, Constant *RHS,
+                           bool OnlyIfReduced = false);
 
   /// Getelementptr form.  Value* is only accepted for convenience;
   /// all elements must be Constant's.
   ///
-  static Constant *getGetElementPtr(Constant *C,
-                                    ArrayRef<Constant *> IdxList,
-                                    bool InBounds = false) {
+  /// \param OnlyIfReduced see \a getWithOperands() docs.
+  static Constant *getGetElementPtr(Constant *C, ArrayRef<Constant *> IdxList,
+                                    bool InBounds = false,
+                                    Type *OnlyIfReducedTy = nullptr) {
     return getGetElementPtr(C, makeArrayRef((Value * const *)IdxList.data(),
                                             IdxList.size()),
                             InBounds);
   }
-  static Constant *getGetElementPtr(Constant *C,
-                                    Constant *Idx,
-                                    bool InBounds = false) {
+  static Constant *getGetElementPtr(Constant *C, Constant *Idx,
+                                    bool InBounds = false,
+                                    Type *OnlyIfReducedTy = nullptr) {
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
     return getGetElementPtr(C, cast<Value>(Idx), InBounds);
   }
-  static Constant *getGetElementPtr(Constant *C,
-                                    ArrayRef<Value *> IdxList,
-                                    bool InBounds = false);
+  static Constant *getGetElementPtr(Constant *C, ArrayRef<Value *> IdxList,
+                                    bool InBounds = false,
+                                    Type *OnlyIfReducedTy = nullptr);
 
   /// Create an "inbounds" getelementptr. See the documentation for the
   /// "inbounds" flag in LangRef.html for details.
@@ -1054,12 +1070,17 @@ public:
     return getGetElementPtr(C, IdxList, true);
   }
 
-  static Constant *getExtractElement(Constant *Vec, Constant *Idx);
-  static Constant *getInsertElement(Constant *Vec, Constant *Elt,Constant *Idx);
-  static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask);
-  static Constant *getExtractValue(Constant *Agg, ArrayRef<unsigned> Idxs);
+  static Constant *getExtractElement(Constant *Vec, Constant *Idx,
+                                     Type *OnlyIfReducedTy = nullptr);
+  static Constant *getInsertElement(Constant *Vec, Constant *Elt, Constant *Idx,
+                                    Type *OnlyIfReducedTy = nullptr);
+  static Constant *getShuffleVector(Constant *V1, Constant *V2, Constant *Mask,
+                                    Type *OnlyIfReducedTy = nullptr);
+  static Constant *getExtractValue(Constant *Agg, ArrayRef<unsigned> Idxs,
+                                   Type *OnlyIfReducedTy = nullptr);
   static Constant *getInsertValue(Constant *Agg, Constant *Val,
-                                  ArrayRef<unsigned> Idxs);
+                                  ArrayRef<unsigned> Idxs,
+                                  Type *OnlyIfReducedTy = nullptr);
 
   /// getOpcode - Return the opcode at the root of this constant expression
   unsigned getOpcode() const { return getSubclassDataFromValue(); }
@@ -1086,11 +1107,17 @@ public:
     return getWithOperands(Ops, getType());
   }
 
-  /// getWithOperands - This returns the current constant expression with the
-  /// operands replaced with the specified values and with the specified result
-  /// type.  The specified array must have the same number of operands as our
-  /// current one.
-  Constant *getWithOperands(ArrayRef<Constant*> Ops, Type *Ty) const;
+  /// \brief Get the current expression with the operands replaced.
+  ///
+  /// Return the current constant expression with the operands replaced with \c
+  /// Ops and the type with \c Ty.  The new operands must have the same number
+  /// as the current ones.
+  ///
+  /// If \c OnlyIfReduced is \c true, nullptr will be returned unless something
+  /// gets constant-folded, the type changes, or the expression is otherwise
+  /// canonicalized.  This parameter should almost always be \c false.
+  Constant *getWithOperands(ArrayRef<Constant *> Ops, Type *Ty,
+                            bool OnlyIfReduced = false) const;
 
   /// getAsInstruction - Returns an Instruction which implements the same operation
   /// as this ConstantExpr. The instruction is not linked to any basic block.
