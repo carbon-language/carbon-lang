@@ -803,6 +803,11 @@ ConstantArray::ConstantArray(ArrayType *T, ArrayRef<Constant *> V)
 }
 
 Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
+  if (Constant *C = getImpl(Ty, V))
+    return C;
+  return Ty->getContext().pImpl->ArrayConstants.getOrCreate(Ty, V);
+}
+Constant *ConstantArray::getImpl(ArrayType *Ty, ArrayRef<Constant*> V) {
   // Empty arrays are canonicalized to ConstantAggregateZero.
   if (V.empty())
     return ConstantAggregateZero::get(Ty);
@@ -811,7 +816,6 @@ Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
     assert(V[i]->getType() == Ty->getElementType() &&
            "Wrong type in array element initializer");
   }
-  LLVMContextImpl *pImpl = Ty->getContext().pImpl;
 
   // If this is an all-zero array, return a ConstantAggregateZero object.  If
   // all undef, return an UndefValue, if "all simple", then return a
@@ -893,7 +897,7 @@ Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
   }
 
   // Otherwise, we really do want to create a ConstantArray.
-  return pImpl->ArrayConstants.getOrCreate(Ty, V);
+  return nullptr;
 }
 
 /// getTypeForElements - Return an anonymous struct type to use for a constant
@@ -981,9 +985,14 @@ ConstantVector::ConstantVector(VectorType *T, ArrayRef<Constant *> V)
 
 // ConstantVector accessors.
 Constant *ConstantVector::get(ArrayRef<Constant*> V) {
+  if (Constant *C = getImpl(V))
+    return C;
+  VectorType *Ty = VectorType::get(V.front()->getType(), V.size());
+  return Ty->getContext().pImpl->VectorConstants.getOrCreate(Ty, V);
+}
+Constant *ConstantVector::getImpl(ArrayRef<Constant*> V) {
   assert(!V.empty() && "Vectors can't be empty");
   VectorType *T = VectorType::get(V.front()->getType(), V.size());
-  LLVMContextImpl *pImpl = T->getContext().pImpl;
 
   // If this is an all-undef or all-zero vector, return a
   // ConstantAggregateZero or UndefValue.
@@ -1075,7 +1084,7 @@ Constant *ConstantVector::get(ArrayRef<Constant*> V) {
 
   // Otherwise, the element type isn't compatible with ConstantDataVector, or
   // the operand list constants a ConstantExpr or something else strange.
-  return pImpl->VectorConstants.getOrCreate(T, V);
+  return nullptr;
 }
 
 Constant *ConstantVector::getSplat(unsigned NumElts, Constant *V) {

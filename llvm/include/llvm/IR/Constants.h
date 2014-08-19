@@ -342,6 +342,10 @@ public:
   // ConstantArray accessors
   static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
 
+private:
+  static Constant *getImpl(ArrayType *T, ArrayRef<Constant *> V);
+
+public:
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 
@@ -439,6 +443,10 @@ public:
   // ConstantVector accessors
   static Constant *get(ArrayRef<Constant*> V);
 
+private:
+  static Constant *getImpl(ArrayRef<Constant *> V);
+
+public:
   /// getSplat - Return a ConstantVector with the specified constant in each
   /// element.
   static Constant *getSplat(unsigned NumElts, Constant *Elt);
