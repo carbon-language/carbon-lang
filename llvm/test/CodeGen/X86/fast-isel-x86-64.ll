@@ -144,7 +144,7 @@ if.end:                                           ; preds = %if.then, %entry
 ; CHECK-LABEL: test12:
 ; CHECK: testb	$1,
 ; CHECK-NEXT: je L
-; CHECK-NEXT: movl $0, %edi
+; CHECK-NEXT: xorl %edi, %edi
 ; CHECK-NEXT: callq
 }
 
@@ -154,7 +154,7 @@ define void @test13() nounwind {
   call void @test13f(i1 0)
   ret void
 ; CHECK-LABEL: test13:
-; CHECK: movl $0, %edi
+; CHECK: xorl %edi, %edi
 ; CHECK-NEXT: callq
 }
 
@@ -278,7 +278,7 @@ entry:
   call void @foo22(i32 3)
   ret void
 ; CHECK-LABEL: test22:
-; CHECK: movl	$0, %edi
+; CHECK: xorl	%edi, %edi
 ; CHECK: callq	_foo22
 ; CHECK: movl	$1, %edi
 ; CHECK: callq	_foo22
