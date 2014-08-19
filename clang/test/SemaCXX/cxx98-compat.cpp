@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
-// RUN: %clang_cc1 -fsyntax-only -std=c++1y -Wc++98-compat -verify %s -DCXX1YCOMPAT
+// RUN: %clang_cc1 -fsyntax-only -std=c++1y -Wc++98-compat -verify %s -DCXX14COMPAT
 
 namespace std {
   struct type_info;
@@ -373,10 +373,10 @@ namespace rdar11736429 {
 }
 
 template<typename T> T var = T(10);
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
+#ifdef CXX14COMPAT
+// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++14}}
 #else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
+// expected-warning@-4 {{variable templates are a C++14 extension}}
 #endif
 
 // No diagnostic for specializations of variable templates; we will have
@@ -388,27 +388,27 @@ float fvar = var<float>;
 
 class A {
   template<typename T> static T var = T(10);
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
+#ifdef CXX14COMPAT
+// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++14}}
 #else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
+// expected-warning@-4 {{variable templates are a C++14 extension}}
 #endif
 
-  template<typename T> static T* var<T*> = new T(); 
+  template<typename T> static T* var<T*> = new T();
 };
 
 struct B {  template<typename T> static T v; };
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
+#ifdef CXX14COMPAT
+// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++14}}
 #else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
+// expected-warning@-4 {{variable templates are a C++14 extension}}
 #endif
 
 template<typename T> T B::v = T();
-#ifdef CXX1YCOMPAT
-// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++1y}}
+#ifdef CXX14COMPAT
+// expected-warning@-2 {{variable templates are incompatible with C++ standards before C++14}}
 #else
-// expected-warning@-4 {{variable templates are a C++1y extension}}
+// expected-warning@-4 {{variable templates are a C++14 extension}}
 #endif
 
 template<typename T> T* B::v<T*> = new T();
@@ -416,6 +416,6 @@ template<> int B::v<int> = 10;
 template int B::v<int>;
 float fsvar = B::v<float>;
 
-#ifdef CXX1YCOMPAT
-int digit_seps = 123'456; // expected-warning {{digit separators are incompatible with C++ standards before C++1y}}
+#ifdef CXX14COMPAT
+int digit_seps = 123'456; // expected-warning {{digit separators are incompatible with C++ standards before C++14}}
 #endif

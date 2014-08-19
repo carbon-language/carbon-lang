@@ -17,8 +17,8 @@ auto f() -> int
     return 0;
 }
 
-auto g(); // expected-error{{return without trailing return type; deduced return types are a C++1y extension}}
-decltype(auto) g2(); // expected-warning{{extension}} expected-error-re{{{{^}}deduced return types are a C++1y extension}}
+auto g(); // expected-error{{return without trailing return type; deduced return types are a C++14 extension}}
+decltype(auto) g2(); // expected-warning{{extension}} expected-error-re{{{{^}}deduced return types are a C++14 extension}}
 auto badness = g2();
 
 int h() -> int; // expected-error{{trailing return type must specify return type 'auto', not 'int'}}
@@ -75,14 +75,14 @@ only<double> p4 = xx.get_nested<double>().h(0L, 1.0, 3.14f);
 namespace PR12053 {
   template <typename T>
   auto f1(T t) -> decltype(f1(t)) {} // expected-note{{candidate template ignored}}
-  
+
   void test_f1() {
     f1(0); // expected-error{{no matching function for call to 'f1'}}
   }
-  
+
   template <typename T>
   auto f2(T t) -> decltype(f2(&t)) {} // expected-note{{candidate template ignored}}
-  
+
   void test_f2() {
     f2(0); // expected-error{{no matching function for call to 'f2'}}
   }

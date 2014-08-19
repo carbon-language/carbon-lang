@@ -43,7 +43,7 @@ char c = 'x'_x; // expected-warning {{will be treated as a user-defined literal 
 
 #else
 
-auto init_capture = [a(0)] {}; // expected-warning {{initialized lambda captures are incompatible with C++ standards before C++1y}}
+auto init_capture = [a(0)] {}; // expected-warning {{initialized lambda captures are incompatible with C++ standards before C++14}}
 static_assert(true); // expected-warning {{incompatible with C++ standards before C++1z}}
 
 #endif

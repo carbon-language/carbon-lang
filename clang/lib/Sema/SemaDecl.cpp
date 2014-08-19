@@ -5471,7 +5471,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
           // Only C++1y supports variable templates (N3651).
           Diag(D.getIdentifierLoc(),
-               getLangOpts().CPlusPlus1y
+               getLangOpts().CPlusPlus14
                    ? diag::warn_cxx11_compat_variable_template
                    : diag::ext_variable_template);
         }
@@ -7027,12 +7027,12 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         NewFD->setVirtualAsWritten(true);
       }
 
-      if (getLangOpts().CPlusPlus1y &&
+      if (getLangOpts().CPlusPlus14 &&
           NewFD->getReturnType()->isUndeducedType())
         Diag(D.getDeclSpec().getVirtualSpecLoc(), diag::err_auto_fn_virtual);
     }
 
-    if (getLangOpts().CPlusPlus1y &&
+    if (getLangOpts().CPlusPlus14 &&
         (NewFD->isDependentContext() ||
          (isFriend && CurContext->isDependentContext())) &&
         NewFD->getReturnType()->isUndeducedType()) {
@@ -7784,7 +7784,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   // This rule is not present in C++1y, so we produce a backwards
   // compatibility warning whenever it happens in C++11.
   CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
-  if (!getLangOpts().CPlusPlus1y && MD && MD->isConstexpr() &&
+  if (!getLangOpts().CPlusPlus14 && MD && MD->isConstexpr() &&
       !MD->isStatic() && !isa<CXXConstructorDecl>(MD) &&
       (MD->getTypeQualifiers() & Qualifiers::Const) == 0) {
     CXXMethodDecl *OldMD = nullptr;
@@ -7806,7 +7806,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                 .IgnoreParens().getAs<FunctionTypeLoc>())
           AddConstLoc = getLocForEndOfToken(FTL.getRParenLoc());
 
-        Diag(MD->getLocation(), diag::warn_cxx1y_compat_constexpr_not_const)
+        Diag(MD->getLocation(), diag::warn_cxx14_compat_constexpr_not_const)
           << FixItHint::CreateInsertion(AddConstLoc, " const");
       }
     }
@@ -10163,7 +10163,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
   if (FD) {
     FD->setBody(Body);
 
-    if (getLangOpts().CPlusPlus1y && !FD->isInvalidDecl() && Body &&
+    if (getLangOpts().CPlusPlus14 && !FD->isInvalidDecl() && Body &&
         !FD->isDependentContext() && FD->getReturnType()->isUndeducedType()) {
       // If the function has a deduced result type but contains no 'return'
       // statements, the result type as written must be exactly 'auto', and

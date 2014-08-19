@@ -656,7 +656,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
         }
       }
       // "i", "if", and "il" are user-defined suffixes in C++1y.
-      if (PP.getLangOpts().CPlusPlus1y && *s == 'i')
+      if (PP.getLangOpts().CPlusPlus14 && *s == 'i')
         break;
       // fall through.
     case 'j':
@@ -716,7 +716,7 @@ bool NumericLiteralParser::isValidUDSuffix(const LangOptions &LangOpts,
     return true;
 
   // In C++11, there are no library suffixes.
-  if (!LangOpts.CPlusPlus1y)
+  if (!LangOpts.CPlusPlus14)
     return false;
 
   // In C++1y, "s", "h", "min", "ms", "us", and "ns" are used in the library.
@@ -813,10 +813,10 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   if ((c1 == 'b' || c1 == 'B') && (c2 == '0' || c2 == '1')) {
     // 0b101010 is a C++1y / GCC extension.
     PP.Diag(TokLoc,
-            PP.getLangOpts().CPlusPlus1y
+            PP.getLangOpts().CPlusPlus14
               ? diag::warn_cxx11_compat_binary_literal
               : PP.getLangOpts().CPlusPlus
-                ? diag::ext_binary_literal_cxx1y
+                ? diag::ext_binary_literal_cxx14
                 : diag::ext_binary_literal);
     ++s;
     radix = 2;

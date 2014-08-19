@@ -14,5 +14,5 @@ struct X {
 // expected-error@6 {{non-constexpr declaration of 'f' follows constexpr declaration}}
 // expected-note@5 {{previous}}
 #else
-// expected-warning@5 {{'constexpr' non-static member function will not be implicitly 'const' in C++1y; add 'const' to avoid a change in behavior}}
+// expected-warning@5 {{'constexpr' non-static member function will not be implicitly 'const' in C++14; add 'const' to avoid a change in behavior}}
 #endif

@@ -5201,7 +5201,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                dyn_cast<CXXRecordDecl>(Actions.CurContext),
                                DS.getTypeQualifiers() |
                                (D.getDeclSpec().isConstexprSpecified() &&
-                                !getLangOpts().CPlusPlus1y
+                                !getLangOpts().CPlusPlus14
                                   ? Qualifiers::Const : 0),
                                IsCXX11MemberFunction);
 

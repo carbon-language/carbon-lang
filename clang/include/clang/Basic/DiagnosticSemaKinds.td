@@ -936,7 +936,7 @@ def err_static_assert_expression_is_not_constant : Error<
 def err_static_assert_failed : Error<"static_assert failed%select{ %1|}0">;
 def ext_static_assert_no_message : ExtWarn<
   "static_assert with no message is a C++1z extension">, InGroup<CXX1z>;
-def warn_cxx1y_compat_static_assert_no_message : Warning<
+def warn_cxx14_compat_static_assert_no_message : Warning<
   "static_assert with no message is incompatible with C++ standards before C++1z">,
   DefaultIgnore, InGroup<CXXPre1zCompat>;
 
@@ -1603,9 +1603,9 @@ def err_auto_new_ctor_multiple_expressions : Error<
   "new expression for type %0 contains multiple constructor arguments">;
 def err_auto_missing_trailing_return : Error<
   "'auto' return without trailing return type; deduced return types are a "
-  "C++1y extension">;
+  "C++14 extension">;
 def err_deduced_return_type : Error<
-  "deduced return types are a C++1y extension">;
+  "deduced return types are a C++14 extension">;
 def err_trailing_return_without_auto : Error<
   "function with trailing return type must specify return type 'auto', not %0">;
 def err_trailing_return_in_parens : Error<
@@ -1754,10 +1754,10 @@ def note_for_range_begin_end : Note<
 def warn_cxx98_compat_constexpr : Warning<
   "'constexpr' specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
-// FIXME: Maybe this should also go in -Wc++1y-compat?
-def warn_cxx1y_compat_constexpr_not_const : Warning<
+// FIXME: Maybe this should also go in -Wc++14-compat?
+def warn_cxx14_compat_constexpr_not_const : Warning<
   "'constexpr' non-static member function will not be implicitly 'const' "
-  "in C++1y; add 'const' to avoid a change in behavior">,
+  "in C++14; add 'const' to avoid a change in behavior">,
   InGroup<DiagGroup<"constexpr-not-const">>;
 def err_invalid_constexpr : Error<
   "%select{function parameter|typedef|non-static data member}0 "
@@ -1799,28 +1799,28 @@ def err_constexpr_body_invalid_stmt : Error<
   "statement not allowed in constexpr %select{function|constructor}0">;
 def ext_constexpr_body_invalid_stmt : ExtWarn<
   "use of this statement in a constexpr %select{function|constructor}0 "
-  "is a C++1y extension">, InGroup<CXX1y>;
+  "is a C++14 extension">, InGroup<CXX14>;
 def warn_cxx11_compat_constexpr_body_invalid_stmt : Warning<
   "use of this statement in a constexpr %select{function|constructor}0 "
-  "is incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "is incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def ext_constexpr_type_definition : ExtWarn<
   "type definition in a constexpr %select{function|constructor}0 "
-  "is a C++1y extension">, InGroup<CXX1y>;
+  "is a C++14 extension">, InGroup<CXX14>;
 def warn_cxx11_compat_constexpr_type_definition : Warning<
   "type definition in a constexpr %select{function|constructor}0 "
-  "is incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "is incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def err_constexpr_vla : Error<
   "variably-modified type %0 cannot be used in a constexpr "
   "%select{function|constructor}1">;
 def ext_constexpr_local_var : ExtWarn<
   "variable declaration in a constexpr %select{function|constructor}0 "
-  "is a C++1y extension">, InGroup<CXX1y>;
+  "is a C++14 extension">, InGroup<CXX14>;
 def warn_cxx11_compat_constexpr_local_var : Warning<
   "variable declaration in a constexpr %select{function|constructor}0 "
-  "is incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "is incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def err_constexpr_local_var_static : Error<
   "%select{static|thread_local}1 variable not permitted in a constexpr "
   "%select{function|constructor}0">;
@@ -1839,14 +1839,14 @@ def err_constexpr_body_no_return : Error<
   "no return statement in constexpr function">;
 def warn_cxx11_compat_constexpr_body_no_return : Warning<
   "constexpr function with no return statements is incompatible with C++ "
-  "standards before C++1y">, InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "standards before C++14">, InGroup<CXXPre14Compat>, DefaultIgnore;
 def ext_constexpr_body_multiple_return : ExtWarn<
-  "multiple return statements in constexpr function is a C++1y extension">,
-  InGroup<CXX1y>;
+  "multiple return statements in constexpr function is a C++14 extension">,
+  InGroup<CXX14>;
 def warn_cxx11_compat_constexpr_body_multiple_return : Warning<
   "multiple return statements in constexpr function "
-  "is incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "is incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def note_constexpr_body_previous_return : Note<
   "previous return statement is here">;
 def err_constexpr_function_try_block : Error<
@@ -3127,11 +3127,11 @@ def err_template_parameter_default_friend_template : Error<
 def err_template_template_parm_no_parms : Error<
   "template template parameter must have its own template parameters">;
 
-def ext_variable_template : ExtWarn<"variable templates are a C++1y extension">,
-  InGroup<CXX1y>;
+def ext_variable_template : ExtWarn<"variable templates are a C++14 extension">,
+  InGroup<CXX14>;
 def warn_cxx11_compat_variable_template : Warning<
-  "variable templates are incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "variable templates are incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def err_template_variable_noparams : Error<
   "extraneous 'template<>' in declaration of variable %0">;
 def err_template_member : Error<"member %0 declared as a template">;
@@ -5387,12 +5387,12 @@ let CategoryName = "Lambda Issue" in {
     "implicit capture of lambda object due to conversion to block pointer "
     "here">;
 
-  // C++1y lambda init-captures.
+  // C++14 lambda init-captures.
   def warn_cxx11_compat_init_capture : Warning<
     "initialized lambda captures are incompatible with C++ standards "
-    "before C++1y">, InGroup<CXXPre1yCompat>, DefaultIgnore;
+    "before C++14">, InGroup<CXXPre14Compat>, DefaultIgnore;
   def ext_init_capture : ExtWarn<
-    "initialized lambda captures are a C++1y extension">, InGroup<CXX1y>;
+    "initialized lambda captures are a C++14 extension">, InGroup<CXX14>;
   def err_init_capture_no_expression : Error<
     "initializer missing for lambda capture %0">;
   def err_init_capture_multiple_expressions : Error<

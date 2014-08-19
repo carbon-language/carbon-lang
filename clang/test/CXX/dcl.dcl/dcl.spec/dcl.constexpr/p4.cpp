@@ -92,37 +92,37 @@ struct V {
   constexpr V(int(&)[2]) {
     constexpr int a = 0;
 #ifndef CXX1Y
-    // expected-error@-2 {{variable declaration in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{variable declaration in a constexpr constructor is a C++14 extension}}
 #endif
   }
   constexpr V(int(&)[3]) {
     constexpr int ForwardDecl(int);
 #ifndef CXX1Y
-    // expected-error@-2 {{use of this statement in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{use of this statement in a constexpr constructor is a C++14 extension}}
 #endif
   }
   constexpr V(int(&)[4]) {
     typedef struct { } S1;
 #ifndef CXX1Y
-    // expected-error@-2 {{type definition in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{type definition in a constexpr constructor is a C++14 extension}}
 #endif
   }
   constexpr V(int(&)[5]) {
     using S2 = struct { };
 #ifndef CXX1Y
-    // expected-error@-2 {{type definition in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{type definition in a constexpr constructor is a C++14 extension}}
 #endif
   }
   constexpr V(int(&)[6]) {
     struct S3 { };
 #ifndef CXX1Y
-    // expected-error@-2 {{type definition in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{type definition in a constexpr constructor is a C++14 extension}}
 #endif
   }
   constexpr V(int(&)[7]) {
     return;
 #ifndef CXX1Y
-    // expected-error@-2 {{use of this statement in a constexpr constructor is a C++1y extension}}
+    // expected-error@-2 {{use of this statement in a constexpr constructor is a C++14 extension}}
 #endif
   }
 };

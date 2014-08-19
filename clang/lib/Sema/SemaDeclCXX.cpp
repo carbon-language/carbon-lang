@@ -855,7 +855,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
       // C++1y allows types to be defined, not just declared.
       if (cast<TagDecl>(DclIt)->isThisDeclarationADefinition())
         SemaRef.Diag(DS->getLocStart(),
-                     SemaRef.getLangOpts().CPlusPlus1y
+                     SemaRef.getLangOpts().CPlusPlus14
                        ? diag::warn_cxx11_compat_constexpr_type_definition
                        : diag::ext_constexpr_type_definition)
           << isa<CXXConstructorDecl>(Dcl);
@@ -896,7 +896,7 @@ static bool CheckConstexprDeclStmt(Sema &SemaRef, const FunctionDecl *Dcl,
         }
       }
       SemaRef.Diag(VD->getLocation(),
-                   SemaRef.getLangOpts().CPlusPlus1y
+                   SemaRef.getLangOpts().CPlusPlus14
                     ? diag::warn_cxx11_compat_constexpr_local_var
                     : diag::ext_constexpr_local_var)
         << isa<CXXConstructorDecl>(Dcl);
@@ -1041,7 +1041,7 @@ CheckConstexprFunctionStmt(Sema &SemaRef, const FunctionDecl *Dcl, Stmt *S,
   case Stmt::ContinueStmtClass:
     // C++1y allows all of these. We don't allow them as extensions in C++11,
     // because they don't make sense without variable mutation.
-    if (!SemaRef.getLangOpts().CPlusPlus1y)
+    if (!SemaRef.getLangOpts().CPlusPlus14)
       break;
     if (!Cxx1yLoc.isValid())
       Cxx1yLoc = S->getLocStart();
@@ -1115,7 +1115,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
 
   if (Cxx1yLoc.isValid())
     Diag(Cxx1yLoc,
-         getLangOpts().CPlusPlus1y
+         getLangOpts().CPlusPlus14
            ? diag::warn_cxx11_compat_constexpr_body_invalid_stmt
            : diag::ext_constexpr_body_invalid_stmt)
       << isa<CXXConstructorDecl>(Dcl);
@@ -1180,7 +1180,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
       // statement. We still do, unless the return type might be void, because
       // otherwise if there's no return statement, the function cannot
       // be used in a core constant expression.
-      bool OK = getLangOpts().CPlusPlus1y &&
+      bool OK = getLangOpts().CPlusPlus14 &&
                 (Dcl->getReturnType()->isVoidType() ||
                  Dcl->getReturnType()->isDependentType());
       Diag(Dcl->getLocation(),
@@ -1190,7 +1190,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     }
     if (ReturnStmts.size() > 1) {
       Diag(ReturnStmts.back(),
-           getLangOpts().CPlusPlus1y
+           getLangOpts().CPlusPlus14
              ? diag::warn_cxx11_compat_constexpr_body_multiple_return
              : diag::ext_constexpr_body_multiple_return);
       for (unsigned I = 0; I < ReturnStmts.size() - 1; ++I)
@@ -4729,7 +4729,7 @@ static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
 
   case Sema::CXXCopyAssignment:
   case Sema::CXXMoveAssignment:
-    if (!S.getLangOpts().CPlusPlus1y)
+    if (!S.getLangOpts().CPlusPlus14)
       return false;
     // In C++1y, we need to perform overload resolution.
     Ctor = false;
@@ -4913,7 +4913,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     // A defaulted special member cannot have cv-qualifiers.
     if (Type->getTypeQuals()) {
       Diag(MD->getLocation(), diag::err_defaulted_special_member_quals)
-        << (CSM == CXXMoveAssignment) << getLangOpts().CPlusPlus1y;
+        << (CSM == CXXMoveAssignment) << getLangOpts().CPlusPlus14;
       HadError = true;
     }
   }
@@ -4962,7 +4962,7 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
   // destructors in C++1y), this is checked elsewhere.
   bool Constexpr = defaultedSpecialMemberIsConstexpr(*this, RD, CSM,
                                                      HasConstParam);
-  if ((getLangOpts().CPlusPlus1y ? !isa<CXXDestructorDecl>(MD)
+  if ((getLangOpts().CPlusPlus14 ? !isa<CXXDestructorDecl>(MD)
                                  : isa<CXXConstructorDecl>(MD)) &&
       MD->isConstexpr() && !Constexpr &&
       MD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {

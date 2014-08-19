@@ -3003,7 +3003,7 @@ Sema::FinishTemplateArgumentDeduction(FunctionTemplateDecl *FunctionTemplate,
 static QualType GetTypeOfFunction(Sema &S, const OverloadExpr::FindResult &R,
                                   FunctionDecl *Fn) {
   // We may need to deduce the return type of the function now.
-  if (S.getLangOpts().CPlusPlus1y && Fn->getReturnType()->isUndeducedType() &&
+  if (S.getLangOpts().CPlusPlus14 && Fn->getReturnType()->isUndeducedType() &&
       S.DeduceReturnType(Fn, R.Expression->getExprLoc(), /*Diagnose*/ false))
     return QualType();
 
@@ -3582,7 +3582,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   // If the function has a deduced return type, substitute it for a dependent
   // type so that we treat it as a non-deduced context in what follows.
   bool HasDeducedReturnType = false;
-  if (getLangOpts().CPlusPlus1y && InOverloadResolution &&
+  if (getLangOpts().CPlusPlus14 && InOverloadResolution &&
       Function->getReturnType()->getContainedAutoType()) {
     FunctionType = SubstAutoType(FunctionType, Context.DependentTy);
     HasDeducedReturnType = true;

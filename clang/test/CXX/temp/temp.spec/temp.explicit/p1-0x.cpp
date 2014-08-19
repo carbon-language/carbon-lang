@@ -9,7 +9,7 @@ template inline void X<int>::f(); // expected-error{{explicit instantiation cann
 
 template<typename T>
 struct Y {
-  constexpr int f() { return 0; } // expected-warning{{C++1y}}
+  constexpr int f() { return 0; } // expected-warning{{C++14}}
 };
 
 template constexpr int Y<int>::f() const; // expected-error{{explicit instantiation cannot be 'constexpr'}}

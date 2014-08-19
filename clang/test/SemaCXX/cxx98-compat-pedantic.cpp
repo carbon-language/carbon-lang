@@ -49,5 +49,5 @@ unsigned long long ull1 = // expected-warning {{'long long' is incompatible with
 
 int k = 0b1001;
 #ifdef CXX1Y
-// expected-warning@-2 {{binary integer literals are incompatible with C++ standards before C++1y}}
+// expected-warning@-2 {{binary integer literals are incompatible with C++ standards before C++14}}
 #endif

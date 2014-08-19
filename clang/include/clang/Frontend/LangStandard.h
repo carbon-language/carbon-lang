@@ -24,7 +24,7 @@ enum LangFeatures {
   C11 = (1 << 3),
   CPlusPlus = (1 << 4),
   CPlusPlus11 = (1 << 5),
-  CPlusPlus1y = (1 << 6),
+  CPlusPlus14 = (1 << 6),
   CPlusPlus1z = (1 << 7),
   Digraphs = (1 << 8),
   GNUMode = (1 << 9),
@@ -73,8 +73,8 @@ public:
   /// isCPlusPlus11 - Language is a C++11 variant (or later).
   bool isCPlusPlus11() const { return Flags & frontend::CPlusPlus11; }
 
-  /// isCPlusPlus1y - Language is a C++14 variant (or later).
-  bool isCPlusPlus1y() const { return Flags & frontend::CPlusPlus1y; }
+  /// isCPlusPlus14 - Language is a C++14 variant (or later).
+  bool isCPlusPlus14() const { return Flags & frontend::CPlusPlus14; }
 
   /// isCPlusPlus1z - Language is a C++17 variant (or later).
   bool isCPlusPlus1z() const { return Flags & frontend::CPlusPlus1z; }

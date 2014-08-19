@@ -1067,7 +1067,7 @@ bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
     // is a redeclaration of OldMethod.
     unsigned OldQuals = OldMethod->getTypeQualifiers();
     unsigned NewQuals = NewMethod->getTypeQualifiers();
-    if (!getLangOpts().CPlusPlus1y && NewMethod->isConstexpr() &&
+    if (!getLangOpts().CPlusPlus14 && NewMethod->isConstexpr() &&
         !isa<CXXConstructorDecl>(NewMethod))
       NewQuals |= Qualifiers::Const;
 
@@ -5365,14 +5365,14 @@ ExprResult Sema::PerformContextualImplicitConversion(
     CXXConversionDecl *Conversion;
     FunctionTemplateDecl *ConvTemplate = dyn_cast<FunctionTemplateDecl>(D);
     if (ConvTemplate) {
-      if (getLangOpts().CPlusPlus1y)
+      if (getLangOpts().CPlusPlus14)
         Conversion = cast<CXXConversionDecl>(ConvTemplate->getTemplatedDecl());
       else
         continue; // C++11 does not consider conversion operator templates(?).
     } else
       Conversion = cast<CXXConversionDecl>(D);
 
-    assert((!ConvTemplate || getLangOpts().CPlusPlus1y) &&
+    assert((!ConvTemplate || getLangOpts().CPlusPlus14) &&
            "Conversion operator templates are considered potentially "
            "viable in C++1y");
 
@@ -5385,7 +5385,7 @@ ExprResult Sema::PerformContextualImplicitConversion(
         if (!ConvTemplate)
           ExplicitConversions.addDecl(I.getDecl(), I.getAccess());
       } else {
-        if (!ConvTemplate && getLangOpts().CPlusPlus1y) {
+        if (!ConvTemplate && getLangOpts().CPlusPlus14) {
           if (ToType.isNull())
             ToType = CurToType.getUnqualifiedType();
           else if (HasUniqueTargetType &&
@@ -5397,7 +5397,7 @@ ExprResult Sema::PerformContextualImplicitConversion(
     }
   }
 
-  if (getLangOpts().CPlusPlus1y) {
+  if (getLangOpts().CPlusPlus14) {
     // C++1y [conv]p6:
     // ... An expression e of class type E appearing in such a context
     // is said to be contextually implicitly converted to a specified
@@ -6165,7 +6165,7 @@ Sema::AddConversionCandidate(CXXConversionDecl *Conversion,
 
   // If the conversion function has an undeduced return type, trigger its
   // deduction now.
-  if (getLangOpts().CPlusPlus1y && ConvType->isUndeducedType()) {
+  if (getLangOpts().CPlusPlus14 && ConvType->isUndeducedType()) {
     if (DeduceReturnType(Conversion, From->getExprLoc()))
       return;
     ConvType = Conversion->getConversionType().getNonReferenceType();
@@ -9865,7 +9865,7 @@ private:
 
       // If any candidate has a placeholder return type, trigger its deduction
       // now.
-      if (S.getLangOpts().CPlusPlus1y &&
+      if (S.getLangOpts().CPlusPlus14 &&
           FunDecl->getReturnType()->isUndeducedType() &&
           S.DeduceReturnType(FunDecl, SourceExpr->getLocStart(), Complain))
         return false;
@@ -10170,7 +10170,7 @@ Sema::ResolveSingleFunctionTemplateSpecialization(OverloadExpr *ovl,
     if (FoundResult) *FoundResult = I.getPair();    
   }
 
-  if (Matched && getLangOpts().CPlusPlus1y &&
+  if (Matched && getLangOpts().CPlusPlus14 &&
       Matched->getReturnType()->isUndeducedType() &&
       DeduceReturnType(Matched, ovl->getExprLoc(), Complain))
     return nullptr;

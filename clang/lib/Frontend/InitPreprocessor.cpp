@@ -375,7 +375,7 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
     // C++1y [cpp.predefined]p1:
     //   The name __cplusplus is defined to the value 201402L when compiling a
     //   C++ translation unit.
-    else if (LangOpts.CPlusPlus1y)
+    else if (LangOpts.CPlusPlus14)
       Builder.defineMacro("__cplusplus", "201402L");
     // C++11 [cpp.predefined]p1:
     //   The name __cplusplus is defined to the value 201103L when compiling a
@@ -417,7 +417,7 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
     Builder.defineMacro("__cpp_user_defined_literals", "200809");
     Builder.defineMacro("__cpp_lambdas", "200907");
     Builder.defineMacro("__cpp_constexpr",
-                        LangOpts.CPlusPlus1y ? "201304" : "200704");
+                        LangOpts.CPlusPlus14 ? "201304" : "200704");
     Builder.defineMacro("__cpp_static_assert", "200410");
     Builder.defineMacro("__cpp_decltype", "200707");
     Builder.defineMacro("__cpp_attributes", "200809");
@@ -426,7 +426,7 @@ static void InitializeCPlusPlusFeatureTestMacros(const LangOptions &LangOpts,
   }
 
   // C++14 features.
-  if (LangOpts.CPlusPlus1y) {
+  if (LangOpts.CPlusPlus14) {
     Builder.defineMacro("__cpp_binary_literals", "201304");
     Builder.defineMacro("__cpp_init_captures", "201304");
     Builder.defineMacro("__cpp_generic_lambdas", "201304");

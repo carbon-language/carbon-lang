@@ -102,7 +102,7 @@ X x = cmin(X(), X()); // ok, not constexpr
 template<typename T>
 struct Y {
   constexpr Y() {}
-  constexpr int get() { return T(); } // expected-warning {{C++1y}}
+  constexpr int get() { return T(); } // expected-warning {{C++14}}
 };
 struct Z { operator int(); };
 

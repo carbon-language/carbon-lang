@@ -71,7 +71,7 @@ struct ConstexprDtor {
 template <typename T> constexpr T ft(T t) { return t; }
 template <typename T> T gt(T t) { return t; }
 struct S {
-  template<typename T> constexpr T f(); // expected-warning {{C++1y}}
+  template<typename T> constexpr T f(); // expected-warning {{C++14}}
   template <typename T>
   T g() const; // expected-note-re {{candidate template ignored: could not match 'T (){{( __attribute__\(\(thiscall\)\))?}} const' against 'char (){{( __attribute__\(\(thiscall\)\))?}}'}}
 };
@@ -82,7 +82,7 @@ template <> char ft(char c) { return c; } // expected-note {{previous}}
 template <> constexpr char ft(char nl); // expected-error {{constexpr declaration of 'ft<char>' follows non-constexpr declaration}}
 template <> constexpr int gt(int nl) { return nl; }
 template <> notlit S::f() const { return notlit(); }
-template <> constexpr int S::g() { return 0; } // expected-note {{previous}} expected-warning {{C++1y}}
+template <> constexpr int S::g() { return 0; } // expected-note {{previous}} expected-warning {{C++14}}
 template <> int S::g() const; // expected-error {{non-constexpr declaration of 'g<int>' follows constexpr declaration}}
 // specializations can drop the 'constexpr' but not the implied 'const'.
 template <> char S::g() { return 0; } // expected-error {{no function template matches}}

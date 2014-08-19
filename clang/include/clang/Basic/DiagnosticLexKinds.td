@@ -161,8 +161,8 @@ def err_invalid_suffix_integer_constant : Error<
 def err_invalid_suffix_float_constant : Error<
   "invalid suffix '%0' on floating constant">;
 def warn_cxx11_compat_digit_separator : Warning<
-  "digit separators are incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompat>, DefaultIgnore;
+  "digit separators are incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14Compat>, DefaultIgnore;
 def err_digit_separator_not_between_digits : Error<
   "digit separator cannot appear at %select{start|end}0 of digit sequence">;
 def warn_extraneous_char_constant : Warning<
@@ -182,11 +182,11 @@ def ext_hexconstant_invalid : Extension<
   "hexadecimal floating constants are a C99 feature">, InGroup<C99>;
 def ext_binary_literal : Extension<
   "binary integer literals are a GNU extension">, InGroup<GNUBinaryLiteral>;
-def ext_binary_literal_cxx1y : Extension<
-  "binary integer literals are a C++1y extension">, InGroup<CXX1y>;
+def ext_binary_literal_cxx14 : Extension<
+  "binary integer literals are a C++14 extension">, InGroup<CXX14>;
 def warn_cxx11_compat_binary_literal : Warning<
-  "binary integer literals are incompatible with C++ standards before C++1y">,
-  InGroup<CXXPre1yCompatPedantic>, DefaultIgnore;
+  "binary integer literals are incompatible with C++ standards before C++14">,
+  InGroup<CXXPre14CompatPedantic>, DefaultIgnore;
 def err_pascal_string_too_long : Error<"Pascal string is too long">;
 def err_octal_escape_too_large : Error<"octal escape sequence out of range">;
 def err_hex_escape_too_large : Error<"hex escape sequence out of range">;

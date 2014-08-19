@@ -561,7 +561,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     if (Tok.is(tok::kw_typename)) {
       Diag(Tok.getLocation(),
            getLangOpts().CPlusPlus1z
-               ? diag::warn_cxx1y_compat_template_template_param_typename
+               ? diag::warn_cxx14_compat_template_template_param_typename
                : diag::ext_template_template_param_typename)
         << (!getLangOpts().CPlusPlus1z
                 ? FixItHint::CreateReplacement(Tok.getLocation(), "class")

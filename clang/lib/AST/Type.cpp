@@ -1147,7 +1147,7 @@ bool Type::isLiteralType(const ASTContext &Ctx) const {
   // C++1y [basic.types]p10:
   //   A type is a literal type if it is:
   //   -- cv void; or
-  if (Ctx.getLangOpts().CPlusPlus1y && isVoidType())
+  if (Ctx.getLangOpts().CPlusPlus14 && isVoidType())
     return true;
 
   // C++11 [basic.types]p10:

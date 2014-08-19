@@ -873,7 +873,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // We don't do this before C++1y, because we don't support deduced return
     // types there.
     QualType DefaultTypeForNoTrailingReturn =
-        getLangOpts().CPlusPlus1y ? Context.getAutoDeductType()
+        getLangOpts().CPlusPlus14 ? Context.getAutoDeductType()
                                   : Context.DependentTy;
     QualType MethodTy =
         Context.getFunctionType(DefaultTypeForNoTrailingReturn, None, EPI);
@@ -999,7 +999,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
     VarDecl *Var = nullptr;
     if (C->Init.isUsable()) {
-      Diag(C->Loc, getLangOpts().CPlusPlus1y
+      Diag(C->Loc, getLangOpts().CPlusPlus14
                        ? diag::warn_cxx11_compat_init_capture
                        : diag::ext_init_capture);
 
@@ -1451,7 +1451,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     // different machinery.
     // FIXME: Refactor and Merge the return type deduction machinery.
     // FIXME: Assumes current resolution to core issue 975.
-    if (LSI->HasImplicitReturnType && !getLangOpts().CPlusPlus1y) {
+    if (LSI->HasImplicitReturnType && !getLangOpts().CPlusPlus14) {
       deduceClosureReturnType(*LSI);
 
       //   - if there are no return statements in the

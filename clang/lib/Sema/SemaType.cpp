@@ -763,7 +763,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
     // is inferred from the return statements inside the block.
     // The declspec is always missing in a lambda expr context; it is either
     // specified with a trailing return type or inferred.
-    if (S.getLangOpts().CPlusPlus1y &&
+    if (S.getLangOpts().CPlusPlus14 &&
         declarator.getContext() == Declarator::LambdaExprContext) {
       // In C++1y, a lambda's implicit return type is 'auto'.
       Result = Context.getAutoDeductType();
@@ -2175,7 +2175,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       Error = 0;  
       break;
     case Declarator::LambdaExprParameterContext:
-      if (!(SemaRef.getLangOpts().CPlusPlus1y 
+      if (!(SemaRef.getLangOpts().CPlusPlus14 
               && D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto))
         Error = 14;
       break;
@@ -2208,11 +2208,11 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       Error = 10; // Type alias
       break;
     case Declarator::TrailingReturnContext:
-      if (!SemaRef.getLangOpts().CPlusPlus1y)
+      if (!SemaRef.getLangOpts().CPlusPlus14)
         Error = 11; // Function return type
       break;
     case Declarator::ConversionIdContext:
-      if (!SemaRef.getLangOpts().CPlusPlus1y)
+      if (!SemaRef.getLangOpts().CPlusPlus14)
         Error = 12; // conversion-type-id
       break;
     case Declarator::TypeNameContext:
@@ -2697,7 +2697,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
         // and not, for instance, a pointer to a function.
         if (D.getDeclSpec().containsPlaceholderType() &&
             !FTI.hasTrailingReturnType() && chunkIndex == 0 &&
-            !S.getLangOpts().CPlusPlus1y) {
+            !S.getLangOpts().CPlusPlus14) {
           S.Diag(D.getDeclSpec().getTypeSpecTypeLoc(),
                  D.getDeclSpec().getTypeSpecType() == DeclSpec::TST_auto
                      ? diag::err_auto_missing_trailing_return

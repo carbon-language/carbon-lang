@@ -7,6 +7,6 @@
 // This is a test of the code modification hints for C++1y-compatibility problems.
 
 struct S {
-  constexpr int &f(); // expected-warning {{'constexpr' non-static member function will not be implicitly 'const' in C++1y; add 'const' to avoid a change in behavior}}
+  constexpr int &f(); // expected-warning {{'constexpr' non-static member function will not be implicitly 'const' in C++14; add 'const' to avoid a change in behavior}}
   int &f();
 };

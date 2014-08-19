@@ -1597,7 +1597,7 @@ bool Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   }
 
   // If we have a digit separator, continue.
-  if (C == '\'' && getLangOpts().CPlusPlus1y) {
+  if (C == '\'' && getLangOpts().CPlusPlus14) {
     unsigned NextSize;
     char Next = getCharAndSizeNoWarn(CurPtr + Size, NextSize, getLangOpts());
     if (isIdentifierBody(Next)) {
@@ -1660,7 +1660,7 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr,
     bool IsUDSuffix = false;
     if (C == '_')
       IsUDSuffix = true;
-    else if (IsStringLiteral && getLangOpts().CPlusPlus1y) {
+    else if (IsStringLiteral && getLangOpts().CPlusPlus14) {
       // In C++1y, we need to look ahead a few characters to see if this is a
       // valid suffix for a string literal or a numeric literal (this could be
       // the 'operator""if' defining a numeric literal operator).

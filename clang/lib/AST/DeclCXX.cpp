@@ -720,7 +720,7 @@ void CXXRecordDecl::addedMember(Decl *D) {
       //   brace-or-equal-initializers for non-static data members.
       //
       // This rule was removed in C++1y.
-      if (!getASTContext().getLangOpts().CPlusPlus1y)
+      if (!getASTContext().getLangOpts().CPlusPlus14)
         data().Aggregate = false;
 
       // C++11 [class]p10:

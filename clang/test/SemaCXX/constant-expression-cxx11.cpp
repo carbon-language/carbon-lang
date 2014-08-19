@@ -1443,7 +1443,7 @@ namespace InvalidClasses {
 
 namespace NamespaceAlias {
   constexpr int f() {
-    namespace NS = NamespaceAlias; // expected-warning {{use of this statement in a constexpr function is a C++1y extension}}
+    namespace NS = NamespaceAlias; // expected-warning {{use of this statement in a constexpr function is a C++14 extension}}
     return &NS::f != nullptr;
   }
 }
@@ -1700,7 +1700,7 @@ namespace VirtualFromBase {
   template <typename T> struct X : T {
     constexpr X() {}
     double d = 0.0;
-    constexpr int f() { return sizeof(T); } // expected-warning {{will not be implicitly 'const' in C++1y}}
+    constexpr int f() { return sizeof(T); } // expected-warning {{will not be implicitly 'const' in C++14}}
   };
 
   // Virtual f(), not OK.
@@ -1715,17 +1715,17 @@ namespace VirtualFromBase {
 }
 
 namespace ConstexprConstructorRecovery {
-  class X { 
-  public: 
-      enum E : short { 
-          headers = 0x1, 
-          middlefile = 0x2, 
-          choices = 0x4 
-      }; 
-      constexpr X() noexcept {}; 
-  protected: 
+  class X {
+  public:
+      enum E : short {
+          headers = 0x1,
+          middlefile = 0x2,
+          choices = 0x4
+      };
+      constexpr X() noexcept {};
+  protected:
       E val{0}; // expected-error {{cannot initialize a member subobject of type 'ConstexprConstructorRecovery::X::E' with an rvalue of type 'int'}}
-  }; 
+  };
   constexpr X x{};
 }
 

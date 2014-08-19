@@ -21,7 +21,7 @@ struct Literal {
 struct S {
   virtual int ImplicitlyVirtual() const = 0; // expected-note {{overridden virtual function}}
 };
-struct SS : S { 
+struct SS : S {
   int ImplicitlyVirtual() const;
 };
 
@@ -62,7 +62,7 @@ struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-li
   constexpr T &operator=(const T&) = default;
 #ifndef CXX1Y
   // expected-error@-2 {{an explicitly-defaulted copy assignment operator may not have 'const', 'constexpr' or 'volatile' qualifiers}}
-  // expected-warning@-3 {{C++1y}}
+  // expected-warning@-3 {{C++14}}
 #else
   // expected-error@-5 {{defaulted definition of copy assignment operator is not constexpr}}
 #endif
@@ -161,21 +161,21 @@ constexpr int ForStmt() {
 constexpr int VarDecl() {
   int a = 0;
 #ifndef CXX1Y
-  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
 constexpr int ConstexprVarDecl() {
   constexpr int a = 0;
 #ifndef CXX1Y
-  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
 constexpr int VarWithCtorDecl() {
   Literal a;
 #ifndef CXX1Y
-  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
@@ -183,7 +183,7 @@ NonLiteral nl;
 constexpr NonLiteral &ExternNonLiteralVarDecl() {
   extern NonLiteral nl;
 #ifndef CXX1Y
-  // expected-error@-2 {{variable declaration in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{variable declaration in a constexpr function is a C++14 extension}}
 #endif
   return nl;
 }
@@ -191,28 +191,28 @@ static_assert(&ExternNonLiteralVarDecl() == &nl, "");
 constexpr int FuncDecl() {
   constexpr int ForwardDecl(int);
 #ifndef CXX1Y
-  // expected-error@-2 {{use of this statement in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{use of this statement in a constexpr function is a C++14 extension}}
 #endif
   return ForwardDecl(42);
 }
 constexpr int ClassDecl1() {
   typedef struct { } S1;
 #ifndef CXX1Y
-  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{type definition in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
 constexpr int ClassDecl2() {
   using S2 = struct { };
 #ifndef CXX1Y
-  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{type definition in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
 constexpr int ClassDecl3() {
   struct S3 { };
 #ifndef CXX1Y
-  // expected-error@-2 {{type definition in a constexpr function is a C++1y extension}}
+  // expected-error@-2 {{type definition in a constexpr function is a C++14 extension}}
 #endif
   return 0;
 }
@@ -245,11 +245,11 @@ namespace DR1364 {
 
 namespace rdar13584715 {
   typedef __PTRDIFF_TYPE__ ptrdiff_t;
-  
+
   template<typename T> struct X {
     static T value() {};
   };
-  
+
   void foo(ptrdiff_t id) {
     switch (id) {
     case reinterpret_cast<ptrdiff_t>(&X<long>::value):  // expected-error{{case value is not a constant expression}} \
@@ -269,7 +269,7 @@ namespace std_example {
   constexpr int abs(int x) {
     if (x < 0)
 #ifndef CXX1Y
-      // expected-error@-2 {{C++1y}}
+      // expected-error@-2 {{C++14}}
 #endif
       x = -x;
     return x;
@@ -295,7 +295,7 @@ namespace std_example {
     return r;
   }
 #ifndef CXX1Y
-    // expected-error@-5 {{C++1y}}
+    // expected-error@-5 {{C++14}}
     // expected-error@-5 {{statement not allowed}}
 #endif
 }
