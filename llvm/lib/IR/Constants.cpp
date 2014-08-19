@@ -1507,7 +1507,7 @@ static inline Constant *getFoldedCast(
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
 
   // Look up the constant in the table first to ensure uniqueness.
-  ExprMapKeyType Key(opc, C);
+  ConstantExprKeyType Key(opc, C);
 
   return pImpl->ExprConstants.getOrCreate(Ty, Key);
 }
@@ -1842,7 +1842,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2,
     return FC;          // Fold a few common cases.
 
   Constant *ArgVec[] = { C1, C2 };
-  ExprMapKeyType Key(Opcode, ArgVec, 0, Flags);
+  ConstantExprKeyType Key(Opcode, ArgVec, 0, Flags);
 
   LLVMContextImpl *pImpl = C1->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(C1->getType(), Key);
@@ -1919,7 +1919,7 @@ Constant *ConstantExpr::getSelect(Constant *C, Constant *V1, Constant *V2) {
     return SC;        // Fold common cases
 
   Constant *ArgVec[] = { C, V1, V2 };
-  ExprMapKeyType Key(Instruction::Select, ArgVec);
+  ConstantExprKeyType Key(Instruction::Select, ArgVec);
 
   LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(V1->getType(), Key);
@@ -1954,8 +1954,8 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
            "getelementptr index type missmatch");
     ArgVec.push_back(cast<Constant>(Idxs[i]));
   }
-  const ExprMapKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
-                           InBounds ? GEPOperator::IsInBounds : 0);
+  const ConstantExprKeyType Key(Instruction::GetElementPtr, ArgVec, 0,
+                                InBounds ? GEPOperator::IsInBounds : 0);
 
   LLVMContextImpl *pImpl = C->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -1973,7 +1973,7 @@ ConstantExpr::getICmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
-  const ExprMapKeyType Key(Instruction::ICmp, ArgVec, pred);
+  const ConstantExprKeyType Key(Instruction::ICmp, ArgVec, pred);
 
   Type *ResultTy = Type::getInt1Ty(LHS->getContext());
   if (VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
@@ -1994,7 +1994,7 @@ ConstantExpr::getFCmp(unsigned short pred, Constant *LHS, Constant *RHS) {
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { LHS, RHS };
   // Get the key type with both the opcode and predicate
-  const ExprMapKeyType Key(Instruction::FCmp, ArgVec, pred);
+  const ConstantExprKeyType Key(Instruction::FCmp, ArgVec, pred);
 
   Type *ResultTy = Type::getInt1Ty(LHS->getContext());
   if (VectorType *VT = dyn_cast<VectorType>(LHS->getType()))
@@ -2015,7 +2015,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
 
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { Val, Idx };
-  const ExprMapKeyType Key(Instruction::ExtractElement, ArgVec);
+  const ConstantExprKeyType Key(Instruction::ExtractElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   Type *ReqTy = Val->getType()->getVectorElementType();
@@ -2035,7 +2035,7 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
     return FC;          // Fold a few common cases.
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { Val, Elt, Idx };
-  const ExprMapKeyType Key(Instruction::InsertElement, ArgVec);
+  const ConstantExprKeyType Key(Instruction::InsertElement, ArgVec);
 
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(Val->getType(), Key);
@@ -2055,7 +2055,7 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
 
   // Look up the constant in the table first to ensure uniqueness
   Constant *ArgVec[] = { V1, V2, Mask };
-  const ExprMapKeyType Key(Instruction::ShuffleVector, ArgVec);
+  const ConstantExprKeyType Key(Instruction::ShuffleVector, ArgVec);
 
   LLVMContextImpl *pImpl = ShufTy->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ShufTy, Key);
@@ -2075,7 +2075,7 @@ Constant *ConstantExpr::getInsertValue(Constant *Agg, Constant *Val,
     return FC;
 
   Constant *ArgVec[] = { Agg, Val };
-  const ExprMapKeyType Key(Instruction::InsertValue, ArgVec, 0, 0, Idxs);
+  const ConstantExprKeyType Key(Instruction::InsertValue, ArgVec, 0, 0, Idxs);
 
   LLVMContextImpl *pImpl = Agg->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
@@ -2096,7 +2096,7 @@ Constant *ConstantExpr::getExtractValue(Constant *Agg,
     return FC;
 
   Constant *ArgVec[] = { Agg };
-  const ExprMapKeyType Key(Instruction::ExtractValue, ArgVec, 0, 0, Idxs);
+  const ConstantExprKeyType Key(Instruction::ExtractValue, ArgVec, 0, 0, Idxs);
 
   LLVMContextImpl *pImpl = Agg->getContext().pImpl;
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);

@@ -289,11 +289,9 @@ public:
 
   DenseMap<std::pair<const Function *, const BasicBlock *>, BlockAddress *>
     BlockAddresses;
-  ConstantUniqueMap<ExprMapKeyType, const ExprMapKeyType&, Type, ConstantExpr>
-    ExprConstants;
+  ConstantUniqueMap<ConstantExpr> ExprConstants;
 
-  ConstantUniqueMap<InlineAsmKeyType, const InlineAsmKeyType&, PointerType,
-                    InlineAsm> InlineAsms;
+  ConstantUniqueMap<InlineAsm> InlineAsms;
   
   ConstantInt *TheTrueVal;
   ConstantInt *TheFalseVal;
