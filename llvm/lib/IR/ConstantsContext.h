@@ -362,7 +362,7 @@ struct InlineAsmKeyType {
                         AsmDialect);
   }
 
-  typedef typename ConstantInfo<InlineAsm>::TypeClass TypeClass;
+  typedef ConstantInfo<InlineAsm>::TypeClass TypeClass;
   InlineAsm *create(TypeClass *Ty) const {
     return new InlineAsm(Ty, AsmString, Constraints, HasSideEffects,
                          IsAlignStack, AsmDialect);
@@ -423,7 +423,7 @@ struct ConstantExprKeyType {
                         hash_combine_range(Indexes.begin(), Indexes.end()));
   }
 
-  typedef typename ConstantInfo<ConstantExpr>::TypeClass TypeClass;
+  typedef ConstantInfo<ConstantExpr>::TypeClass TypeClass;
   ConstantExpr *create(TypeClass *Ty) const {
     switch (Opcode) {
     default:
