@@ -1195,9 +1195,8 @@ void MicrosoftCXXNameMangler::mangleTemplateArg(const TemplateDecl *TD,
     if (const auto *TD = dyn_cast<TagDecl>(ND)) {
       mangleType(TD);
     } else if (isa<TypeAliasDecl>(ND)) {
-      // FIXME: The mangling, while compatible with VS "14", is horribly
-      // broken.  Update this when they release their next compiler.
-      Out << '$';
+      Out << "$$Y";
+      mangleName(ND);
     } else {
       llvm_unreachable("unexpected template template NamedDecl!");
     }
