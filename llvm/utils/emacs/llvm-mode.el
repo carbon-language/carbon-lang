@@ -48,6 +48,8 @@
    `(,(regexp-opt '("extractelement" "insertelement" "shufflevector") 'words) . font-lock-keyword-face)
    ;; Aggregate ops
    `(,(regexp-opt '("extractvalue" "insertvalue") 'words) . font-lock-keyword-face)
+   ;; Use-list order directives
+   `(,(regexp-opt '("uselistorder" "uselistorder_bb") 'words) . font-lock-keyword-face)
 
    )
   "Syntax highlighting for LLVM"

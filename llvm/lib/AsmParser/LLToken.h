@@ -180,6 +180,9 @@ namespace lltok {
     kw_extractelement, kw_insertelement, kw_shufflevector,
     kw_extractvalue, kw_insertvalue, kw_blockaddress,
 
+    // Use-list order directives.
+    kw_uselistorder, kw_uselistorder_bb,
+
     // Unsigned Valued tokens (UIntVal).
     GlobalID,          // @42
     LocalVarID,        // %42

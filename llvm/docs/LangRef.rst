@@ -1749,6 +1749,45 @@ otherwise unsafe floating point operations
    dramatically change results in floating point (e.g. reassociate). This
    flag implies all the others.
 
+.. _uselistorder:
+
+Use-list Order Directives
+-------------------------
+
+Use-list directives encode the in-memory order of each use-list, allowing the
+order to be recreated.  ``<order-indexes>`` is a comma-separated list of
+indexes that are assigned to the referenced value's uses.  The referenced
+value's use-list is immediately sorted by these indexes.
+
+Use-list directives may appear at function scope or global scope.  They are not
+instructions, and have no effect on the semantics of the IR.  When they're at
+function scope, they must appear after the terminator of the final basic block.
+
+If basic blocks have their address taken via ``blockaddress()`` expressions,
+``uselistorder_bb`` can be used to reorder their use-lists from outside their
+function's scope.
+
+:Syntax:
+
+::
+
+    uselistorder <ty> <value>, { <order-indexes> }
+    uselistorder_bb @function, %block { <order-indexes> }
+
+:Examples:
+
+::
+
+    ; At function scope.
+    uselistorder i32 %arg1, { 1, 0, 2 }
+    uselistorder label %bb, { 1, 0 }
+
+    ; At global scope.
+    uselistorder i32* @global, { 1, 2, 0 }
+    uselistorder i32 7, { 1, 0 }
+    uselistorder i32 (i32) @bar, { 1, 0 }
+    uselistorder_bb @foo, %bb, { 5, 1, 3, 2, 0, 4 }
+
 .. _typesystem:
 
 Type System

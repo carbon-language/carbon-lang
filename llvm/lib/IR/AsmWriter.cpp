@@ -49,6 +49,213 @@ AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
 // Helper Functions
 //===----------------------------------------------------------------------===//
 
+namespace {
+struct OrderMap {
+  DenseMap<const Value *, std::pair<unsigned, bool>> IDs;
+
+  unsigned size() const { return IDs.size(); }
+  std::pair<unsigned, bool> &operator[](const Value *V) { return IDs[V]; }
+  std::pair<unsigned, bool> lookup(const Value *V) const {
+    return IDs.lookup(V);
+  }
+  void index(const Value *V) {
+    // Explicitly sequence get-size and insert-value operations to avoid UB.
+    unsigned ID = IDs.size() + 1;
+    IDs[V].first = ID;
+  }
+};
+}
+
+static void orderValue(const Value *V, OrderMap &OM) {
+  if (OM.lookup(V).first)
+    return;
+
+  if (const Constant *C = dyn_cast<Constant>(V))
+    if (C->getNumOperands() && !isa<GlobalValue>(C))
+      for (const Value *Op : C->operands())
+        if (!isa<BasicBlock>(Op) && !isa<GlobalValue>(Op))
+          orderValue(Op, OM);
+
+  // Note: we cannot cache this lookup above, since inserting into the map
+  // changes the map's size, and thus affects the other IDs.
+  OM.index(V);
+}
+
+static OrderMap orderModule(const Module *M) {
+  // This needs to match the order used by ValueEnumerator::ValueEnumerator()
+  // and ValueEnumerator::incorporateFunction().
+  OrderMap OM;
+
+  for (const GlobalVariable &G : M->globals()) {
+    if (G.hasInitializer())
+      if (!isa<GlobalValue>(G.getInitializer()))
+        orderValue(G.getInitializer(), OM);
+    orderValue(&G, OM);
+  }
+  for (const GlobalAlias &A : M->aliases()) {
+    if (!isa<GlobalValue>(A.getAliasee()))
+      orderValue(A.getAliasee(), OM);
+    orderValue(&A, OM);
+  }
+  for (const Function &F : *M) {
+    if (F.hasPrefixData())
+      if (!isa<GlobalValue>(F.getPrefixData()))
+        orderValue(F.getPrefixData(), OM);
+    orderValue(&F, OM);
+
+    if (F.isDeclaration())
+      continue;
+
+    for (const Argument &A : F.args())
+      orderValue(&A, OM);
+    for (const BasicBlock &BB : F) {
+      orderValue(&BB, OM);
+      for (const Instruction &I : BB) {
+        for (const Value *Op : I.operands())
+          if ((isa<Constant>(*Op) && !isa<GlobalValue>(*Op)) ||
+              isa<InlineAsm>(*Op))
+            orderValue(Op, OM);
+        orderValue(&I, OM);
+      }
+    }
+  }
+  return OM;
+}
+
+static void predictValueUseListOrderImpl(const Value *V, const Function *F,
+                                         unsigned ID, const OrderMap &OM,
+                                         UseListOrderStack &Stack) {
+  // Predict use-list order for this one.
+  typedef std::pair<const Use *, unsigned> Entry;
+  SmallVector<Entry, 64> List;
+  for (const Use &U : V->uses())
+    // Check if this user will be serialized.
+    if (OM.lookup(U.getUser()).first)
+      List.push_back(std::make_pair(&U, List.size()));
+
+  if (List.size() < 2)
+    // We may have lost some users.
+    return;
+
+  bool GetsReversed =
+      !isa<GlobalVariable>(V) && !isa<Function>(V) && !isa<BasicBlock>(V);
+  if (auto *BA = dyn_cast<BlockAddress>(V))
+    ID = OM.lookup(BA->getBasicBlock()).first;
+  std::sort(List.begin(), List.end(), [&](const Entry &L, const Entry &R) {
+    const Use *LU = L.first;
+    const Use *RU = R.first;
+    if (LU == RU)
+      return false;
+
+    auto LID = OM.lookup(LU->getUser()).first;
+    auto RID = OM.lookup(RU->getUser()).first;
+
+    // If ID is 4, then expect: 7 6 5 1 2 3.
+    if (LID < RID) {
+      if (GetsReversed)
+        if (RID <= ID)
+          return true;
+      return false;
+    }
+    if (RID < LID) {
+      if (GetsReversed)
+        if (LID <= ID)
+          return false;
+      return true;
+    }
+
+    // LID and RID are equal, so we have different operands of the same user.
+    // Assume operands are added in order for all instructions.
+    if (GetsReversed)
+      if (LID <= ID)
+        return LU->getOperandNo() < RU->getOperandNo();
+    return LU->getOperandNo() > RU->getOperandNo();
+  });
+
+  if (std::is_sorted(
+          List.begin(), List.end(),
+          [](const Entry &L, const Entry &R) { return L.second < R.second; }))
+    // Order is already correct.
+    return;
+
+  // Store the shuffle.
+  Stack.emplace_back(V, F, List.size());
+  assert(List.size() == Stack.back().Shuffle.size() && "Wrong size");
+  for (size_t I = 0, E = List.size(); I != E; ++I)
+    Stack.back().Shuffle[I] = List[I].second;
+}
+
+static void predictValueUseListOrder(const Value *V, const Function *F,
+                                     OrderMap &OM, UseListOrderStack &Stack) {
+  auto &IDPair = OM[V];
+  assert(IDPair.first && "Unmapped value");
+  if (IDPair.second)
+    // Already predicted.
+    return;
+
+  // Do the actual prediction.
+  IDPair.second = true;
+  if (!V->use_empty() && std::next(V->use_begin()) != V->use_end())
+    predictValueUseListOrderImpl(V, F, IDPair.first, OM, Stack);
+
+  // Recursive descent into constants.
+  if (const Constant *C = dyn_cast<Constant>(V))
+    if (C->getNumOperands()) // Visit GlobalValues.
+      for (const Value *Op : C->operands())
+        if (isa<Constant>(Op)) // Visit GlobalValues.
+          predictValueUseListOrder(Op, F, OM, Stack);
+}
+
+static UseListOrderStack predictUseListOrder(const Module *M) {
+  OrderMap OM = orderModule(M);
+
+  // Use-list orders need to be serialized after all the users have been added
+  // to a value, or else the shuffles will be incomplete.  Store them per
+  // function in a stack.
+  //
+  // Aside from function order, the order of values doesn't matter much here.
+  UseListOrderStack Stack;
+
+  // We want to visit the functions backward now so we can list function-local
+  // constants in the last Function they're used in.  Module-level constants
+  // have already been visited above.
+  for (auto I = M->rbegin(), E = M->rend(); I != E; ++I) {
+    const Function &F = *I;
+    if (F.isDeclaration())
+      continue;
+    for (const BasicBlock &BB : F)
+      predictValueUseListOrder(&BB, &F, OM, Stack);
+    for (const Argument &A : F.args())
+      predictValueUseListOrder(&A, &F, OM, Stack);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        for (const Value *Op : I.operands())
+          if (isa<Constant>(*Op) || isa<InlineAsm>(*Op)) // Visit GlobalValues.
+            predictValueUseListOrder(Op, &F, OM, Stack);
+    for (const BasicBlock &BB : F)
+      for (const Instruction &I : BB)
+        predictValueUseListOrder(&I, &F, OM, Stack);
+  }
+
+  // Visit globals last.
+  for (const GlobalVariable &G : M->globals())
+    predictValueUseListOrder(&G, nullptr, OM, Stack);
+  for (const Function &F : *M)
+    predictValueUseListOrder(&F, nullptr, OM, Stack);
+  for (const GlobalAlias &A : M->aliases())
+    predictValueUseListOrder(&A, nullptr, OM, Stack);
+  for (const GlobalVariable &G : M->globals())
+    if (G.hasInitializer())
+      predictValueUseListOrder(G.getInitializer(), nullptr, OM, Stack);
+  for (const GlobalAlias &A : M->aliases())
+    predictValueUseListOrder(A.getAliasee(), nullptr, OM, Stack);
+  for (const Function &F : *M)
+    if (F.hasPrefixData())
+      predictValueUseListOrder(F.getPrefixData(), nullptr, OM, Stack);
+
+  return Stack;
+}
+
 static const Module *getModuleFromVal(const Value *V) {
   if (const Argument *MA = dyn_cast<Argument>(V))
     return MA->getParent() ? MA->getParent()->getParent() : nullptr;
@@ -346,6 +553,8 @@ public:
     TheFunction = F;
     FunctionProcessed = false;
   }
+
+  const Function *getFunction() const { return TheFunction; }
 
   /// After calling incorporateFunction, use this method to remove the
   /// most recently incorporated function from the SlotTracker. This
@@ -1279,6 +1488,9 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
 void AssemblyWriter::printModule(const Module *M) {
   Machine.initialize();
 
+  if (shouldPreserveAssemblyUseListOrder())
+    UseListOrders = predictUseListOrder(M);
+
   if (!M->getModuleIdentifier().empty() &&
       // Don't print the ID if it will start a new line (which would
       // require a comment char before it).
@@ -1339,9 +1551,13 @@ void AssemblyWriter::printModule(const Module *M) {
        I != E; ++I)
     printAlias(I);
 
+  // Output global use-lists.
+  printUseLists(nullptr);
+
   // Output all of the functions.
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
     printFunction(I);
+  assert(UseListOrders.empty() && "All use-lists should have been consumed");
 
   // Output all attribute groups.
   if (!Machine.as_empty()) {
@@ -1691,6 +1907,9 @@ void AssemblyWriter::printFunction(const Function *F) {
     // Output all of the function's basic blocks.
     for (Function::const_iterator I = F->begin(), E = F->end(); I != E; ++I)
       printBasicBlock(I);
+
+    // Output the function's use-lists.
+    printUseLists(F);
 
     Out << "}\n";
   }
@@ -2168,6 +2387,45 @@ void AssemblyWriter::writeAllAttributeGroups() {
 }
 
 } // namespace llvm
+
+void AssemblyWriter::printUseListOrder(const UseListOrder &Order) {
+  bool IsInFunction = Machine.getFunction();
+  if (IsInFunction)
+    Out << "  ";
+
+  Out << "uselistorder";
+  if (const BasicBlock *BB =
+          IsInFunction ? nullptr : dyn_cast<BasicBlock>(Order.V)) {
+    Out << "_bb ";
+    writeOperand(BB->getParent(), false);
+    Out << ", ";
+    writeOperand(BB, false);
+  } else {
+    Out << " ";
+    writeOperand(Order.V, true);
+  }
+  Out << ", { ";
+
+  assert(Order.Shuffle.size() >= 2 && "Shuffle too small");
+  Out << Order.Shuffle[0];
+  for (unsigned I = 1, E = Order.Shuffle.size(); I != E; ++I)
+    Out << ", " << Order.Shuffle[I];
+  Out << " }\n";
+}
+
+void AssemblyWriter::printUseLists(const Function *F) {
+  auto hasMore =
+      [&]() { return !UseListOrders.empty() && UseListOrders.back().F == F; };
+  if (!hasMore())
+    // Nothing to do.
+    return;
+
+  Out << "\n; uselistorder directives\n";
+  while (hasMore()) {
+    printUseListOrder(UseListOrders.back());
+    UseListOrders.pop_back();
+  }
+}
 
 //===----------------------------------------------------------------------===//
 //                       External Interface declarations

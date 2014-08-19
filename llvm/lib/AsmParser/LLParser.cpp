@@ -239,6 +239,9 @@ bool LLParser::ParseTopLevelEntities() {
     }
 
     case lltok::kw_attributes: if (ParseUnnamedAttrGrp()) return true; break;
+    case lltok::kw_uselistorder: if (ParseUseListOrder()) return true; break;
+    case lltok::kw_uselistorder_bb:
+                                 if (ParseUseListOrderBB()) return true; break;
     }
   }
 }
@@ -3371,8 +3374,7 @@ bool LLParser::PerFunctionState::resolveForwardRefBlockAddresses() {
 }
 
 /// ParseFunctionBody
-///   ::= '{' BasicBlock+ '}'
-///
+///   ::= '{' BasicBlock+ UseListOrderDirective* '}'
 bool LLParser::ParseFunctionBody(Function &Fn) {
   if (Lex.getKind() != lltok::lbrace)
     return TokError("expected '{' in function body");
@@ -3390,11 +3392,16 @@ bool LLParser::ParseFunctionBody(Function &Fn) {
   SaveAndRestore<PerFunctionState *> ScopeExit(BlockAddressPFS, &PFS);
 
   // We need at least one basic block.
-  if (Lex.getKind() == lltok::rbrace)
+  if (Lex.getKind() == lltok::rbrace || Lex.getKind() == lltok::kw_uselistorder)
     return TokError("function body requires at least one basic block");
 
-  while (Lex.getKind() != lltok::rbrace)
+  while (Lex.getKind() != lltok::rbrace &&
+         Lex.getKind() != lltok::kw_uselistorder)
     if (ParseBasicBlock(PFS)) return true;
+
+  while (Lex.getKind() != lltok::rbrace)
+    if (ParseUseListOrder(&PFS))
+      return true;
 
   // Eat the }.
   Lex.Lex();
@@ -4653,4 +4660,136 @@ bool LLParser::ParseMDNodeVector(SmallVectorImpl<Value*> &Elts,
   } while (EatIfPresent(lltok::comma));
 
   return false;
+}
+
+//===----------------------------------------------------------------------===//
+// Use-list order directives.
+//===----------------------------------------------------------------------===//
+bool LLParser::sortUseListOrder(Value *V, ArrayRef<unsigned> Indexes,
+                                SMLoc Loc) {
+  if (V->use_empty())
+    return Error(Loc, "value has no uses");
+
+  unsigned NumUses = 0;
+  SmallDenseMap<const Use *, unsigned, 16> Order;
+  for (const Use &U : V->uses()) {
+    if (++NumUses > Indexes.size())
+      break;
+    Order[&U] = Indexes[NumUses - 1];
+  }
+  if (NumUses < 2)
+    return Error(Loc, "value only has one use");
+  if (Order.size() != Indexes.size() || NumUses > Indexes.size())
+    return Error(Loc, "wrong number of indexes, expected " +
+                          Twine(std::distance(V->use_begin(), V->use_end())));
+
+  V->sortUseList([&](const Use &L, const Use &R) {
+    return Order.lookup(&L) < Order.lookup(&R);
+  });
+  return false;
+}
+
+/// ParseUseListOrderIndexes
+///   ::= '{' uint32 (',' uint32)+ '}'
+bool LLParser::ParseUseListOrderIndexes(SmallVectorImpl<unsigned> &Indexes) {
+  SMLoc Loc = Lex.getLoc();
+  if (ParseToken(lltok::lbrace, "expected '{' here"))
+    return true;
+  if (Lex.getKind() == lltok::rbrace)
+    return Lex.Error("expected non-empty list of uselistorder indexes");
+
+  // Use Offset, Max, and IsOrdered to check consistency of indexes.  The
+  // indexes should be distinct numbers in the range [0, size-1], and should
+  // not be in order.
+  unsigned Offset = 0;
+  unsigned Max = 0;
+  bool IsOrdered = true;
+  assert(Indexes.empty() && "Expected empty order vector");
+  do {
+    unsigned Index;
+    if (ParseUInt32(Index))
+      return true;
+
+    // Update consistency checks.
+    Offset += Index - Indexes.size();
+    Max = std::max(Max, Index);
+    IsOrdered &= Index == Indexes.size();
+
+    Indexes.push_back(Index);
+  } while (EatIfPresent(lltok::comma));
+
+  if (ParseToken(lltok::rbrace, "expected '}' here"))
+    return true;
+
+  if (Indexes.size() < 2)
+    return Error(Loc, "expected >= 2 uselistorder indexes");
+  if (Offset != 0 || Max >= Indexes.size())
+    return Error(Loc, "expected distinct uselistorder indexes in range [0, size)");
+  if (IsOrdered)
+    return Error(Loc, "expected uselistorder indexes to change the order");
+
+  return false;
+}
+
+/// ParseUseListOrder
+///   ::= 'uselistorder' Type Value ',' UseListOrderIndexes
+bool LLParser::ParseUseListOrder(PerFunctionState *PFS) {
+  SMLoc Loc = Lex.getLoc();
+  if (ParseToken(lltok::kw_uselistorder, "expected uselistorder directive"))
+    return true;
+
+  Value *V;
+  SmallVector<unsigned, 16> Indexes;
+  if (ParseTypeAndValue(V, PFS) ||
+      ParseToken(lltok::comma, "expected comma in uselistorder directive") ||
+      ParseUseListOrderIndexes(Indexes))
+    return true;
+
+  return sortUseListOrder(V, Indexes, Loc);
+}
+
+/// ParseUseListOrderBB
+///   ::= 'uselistorder_bb' @foo ',' %bar ',' UseListOrderIndexes
+bool LLParser::ParseUseListOrderBB() {
+  assert(Lex.getKind() == lltok::kw_uselistorder_bb);
+  SMLoc Loc = Lex.getLoc();
+  Lex.Lex();
+
+  ValID Fn, Label;
+  SmallVector<unsigned, 16> Indexes;
+  if (ParseValID(Fn) ||
+      ParseToken(lltok::comma, "expected comma in uselistorder_bb directive") ||
+      ParseValID(Label) ||
+      ParseToken(lltok::comma, "expected comma in uselistorder_bb directive") ||
+      ParseUseListOrderIndexes(Indexes))
+    return true;
+
+  // Check the function.
+  GlobalValue *GV;
+  if (Fn.Kind == ValID::t_GlobalName)
+    GV = M->getNamedValue(Fn.StrVal);
+  else if (Fn.Kind == ValID::t_GlobalID)
+    GV = Fn.UIntVal < NumberedVals.size() ? NumberedVals[Fn.UIntVal] : nullptr;
+  else
+    return Error(Fn.Loc, "expected function name in uselistorder_bb");
+  if (!GV)
+    return Error(Fn.Loc, "invalid function forward reference in uselistorder_bb");
+  auto *F = dyn_cast<Function>(GV);
+  if (!F)
+    return Error(Fn.Loc, "expected function name in uselistorder_bb");
+  if (F->isDeclaration())
+    return Error(Fn.Loc, "invalid declaration in uselistorder_bb");
+
+  // Check the basic block.
+  if (Label.Kind == ValID::t_LocalID)
+    return Error(Label.Loc, "invalid numeric label in uselistorder_bb");
+  if (Label.Kind != ValID::t_LocalName)
+    return Error(Label.Loc, "expected basic block name in uselistorder_bb");
+  Value *V = F->getValueSymbolTable().lookup(Label.StrVal);
+  if (!V)
+    return Error(Label.Loc, "invalid basic block in uselistorder_bb");
+  if (!isa<BasicBlock>(V))
+    return Error(Label.Loc, "expected basic block in uselistorder_bb");
+
+  return sortUseListOrder(V, Indexes, Loc);
 }

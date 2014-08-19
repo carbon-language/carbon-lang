@@ -365,8 +365,7 @@ static void verifyAssemblyUseListOrder(const Module &M) {
 
 static void verifyUseListOrder(const Module &M) {
   verifyBitcodeUseListOrder(M);
-  if (shouldPreserveAssemblyUseListOrder())
-    verifyAssemblyUseListOrder(M);
+  verifyAssemblyUseListOrder(M);
 }
 
 static void shuffleValueUseLists(Value *V, std::minstd_rand0 &Gen,
@@ -532,10 +531,14 @@ int main(int argc, char **argv) {
     report_fatal_error("verification failed");
 
   errs() << "*** verify-use-list-order ***\n";
+  // Can't verify if order isn't preserved.
   if (!shouldPreserveBitcodeUseListOrder()) {
-    // Can't verify if order isn't preserved.
     errs() << "warning: forcing -preserve-bc-use-list-order\n";
     setPreserveBitcodeUseListOrder(true);
+  }
+  if (!shouldPreserveAssemblyUseListOrder()) {
+    errs() << "warning: forcing -preserve-ll-use-list-order\n";
+    setPreserveAssemblyUseListOrder(true);
   }
 
   // Verify the use lists now and after reversing them.

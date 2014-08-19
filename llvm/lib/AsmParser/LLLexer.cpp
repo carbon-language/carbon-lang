@@ -664,6 +664,10 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(x);
   KEYWORD(blockaddress);
 
+  // Use-list order directives.
+  KEYWORD(uselistorder);
+  KEYWORD(uselistorder_bb);
+
   KEYWORD(personality);
   KEYWORD(cleanup);
   KEYWORD(catch);
