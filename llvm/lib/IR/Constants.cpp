@@ -2660,8 +2660,6 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
 
   SmallVector<Constant*, 8> Values;
-  LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup;
-  Lookup.first = cast<ArrayType>(getType());
   Values.reserve(getNumOperands());  // Build replacement array.
 
   // Fill values with the modified operands of the constant array.  Also,
@@ -2687,7 +2685,8 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = UndefValue::get(getType());
   } else {
     // Check to see if we have this array type already.
-    Lookup.second = makeArrayRef(Values);
+    LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
+        cast<ArrayType>(getType()), makeArrayRef(Values));
     LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
       pImpl->ArrayConstants.find(Lookup);
 
@@ -2736,8 +2735,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
   SmallVector<Constant*, 8> Values;
-  LLVMContextImpl::StructConstantsTy::LookupKey Lookup;
-  Lookup.first = cast<StructType>(getType());
   Values.reserve(getNumOperands());  // Build replacement struct.
 
   // Fill values with the modified operands of the constant struct.  Also,
@@ -2773,7 +2770,8 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = UndefValue::get(getType());
   } else {
     // Check to see if we have this struct type already.
-    Lookup.second = makeArrayRef(Values);
+    LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
+        cast<StructType>(getType()), makeArrayRef(Values));
     LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
       pImpl->StructConstants.find(Lookup);
 
