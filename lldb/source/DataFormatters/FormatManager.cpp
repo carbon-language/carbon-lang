@@ -583,11 +583,17 @@ GetTypeForCache (ValueObject& valobj,
     return ConstString();
 }
 
-static lldb::TypeFormatImplSP
-GetHardcodedFormat (ValueObject& valobj,
-                    lldb::DynamicValueType use_dynamic)
+lldb::TypeFormatImplSP
+FormatManager::GetHardcodedFormat (ValueObject& valobj,
+                                   lldb::DynamicValueType use_dynamic)
 {
-    return lldb::TypeFormatImplSP();
+    for (const auto& candidate: m_hardcoded_formats)
+    {
+        auto result = candidate(valobj,use_dynamic,*this);
+        if (result)
+            return result;
+    }
+    return nullptr;
 }
 
 lldb::TypeFormatImplSP
@@ -621,7 +627,7 @@ FormatManager::GetFormat (ValueObject& valobj,
             log->Printf("[FormatManager::GetFormat] Search failed. Giving hardcoded a chance.");
         retval = GetHardcodedFormat(valobj, use_dynamic);
     }
-    if (valobj_type)
+    else if (valobj_type)
     {
         if (log)
             log->Printf("[FormatManager::GetFormat] Caching %p for type %s",
@@ -634,11 +640,17 @@ FormatManager::GetFormat (ValueObject& valobj,
     return retval;
 }
 
-static lldb::TypeSummaryImplSP
-GetHardcodedSummaryFormat (ValueObject& valobj,
-                               lldb::DynamicValueType use_dynamic)
+lldb::TypeSummaryImplSP
+FormatManager::GetHardcodedSummaryFormat (ValueObject& valobj,
+                                          lldb::DynamicValueType use_dynamic)
 {
-    return lldb::TypeSummaryImplSP();
+    for (const auto& candidate: m_hardcoded_summaries)
+    {
+        auto result = candidate(valobj,use_dynamic,*this);
+        if (result)
+            return result;
+    }
+    return nullptr;
 }
 
 lldb::TypeSummaryImplSP
@@ -672,7 +684,7 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
             log->Printf("[FormatManager::GetSummaryFormat] Search failed. Giving hardcoded a chance.");
         retval = GetHardcodedSummaryFormat(valobj, use_dynamic);
     }
-    if (valobj_type)
+    else if (valobj_type)
     {
         if (log)
             log->Printf("[FormatManager::GetSummaryFormat] Caching %p for type %s",
@@ -686,11 +698,17 @@ FormatManager::GetSummaryFormat (ValueObject& valobj,
 }
 
 #ifndef LLDB_DISABLE_PYTHON
-static lldb::SyntheticChildrenSP
-GetHardcodedSyntheticChildren (ValueObject& valobj,
-                               lldb::DynamicValueType use_dynamic)
+lldb::SyntheticChildrenSP
+FormatManager::GetHardcodedSyntheticChildren (ValueObject& valobj,
+                                              lldb::DynamicValueType use_dynamic)
 {
-    return lldb::SyntheticChildrenSP();
+    for (const auto& candidate: m_hardcoded_synthetics)
+    {
+        auto result = candidate(valobj,use_dynamic,*this);
+        if (result)
+            return result;
+    }
+    return nullptr;
 }
 
 lldb::SyntheticChildrenSP
@@ -724,7 +742,7 @@ FormatManager::GetSyntheticChildren (ValueObject& valobj,
             log->Printf("[FormatManager::GetSyntheticChildren] Search failed. Giving hardcoded a chance.");
         retval = GetHardcodedSyntheticChildren(valobj, use_dynamic);
     }
-    if (valobj_type)
+    else if (valobj_type)
     {
         if (log)
             log->Printf("[FormatManager::GetSyntheticChildren] Caching %p for type %s",
@@ -752,12 +770,17 @@ FormatManager::FormatManager() :
     m_coregraphics_category_name(ConstString("CoreGraphics")),
     m_coreservices_category_name(ConstString("CoreServices")),
     m_vectortypes_category_name(ConstString("VectorTypes")),
-    m_appkit_category_name(ConstString("AppKit"))
+    m_appkit_category_name(ConstString("AppKit")),
+    m_hardcoded_formats(),
+    m_hardcoded_summaries(),
+    m_hardcoded_synthetics()
+    
 {
     LoadSystemFormatters();
     LoadLibStdcppFormatters();
     LoadLibcxxFormatters();
     LoadObjCFormatters();
+    LoadHardcodedFormatters();
     
     EnableCategory(m_objc_category_name,TypeCategoryMap::Last);
     EnableCategory(m_corefoundation_category_name,TypeCategoryMap::Last);
@@ -984,6 +1007,7 @@ FormatManager::LoadLibcxxFormatters()
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxSharedPtrSyntheticFrontEndCreator, "weak_ptr synthetic children", ConstString("^(std::__1::)weak_ptr<.+>(( )?&)?$"), stl_synth_flags, true);
     
     stl_summary_flags.SetDontShowChildren(false);stl_summary_flags.SetSkipPointers(false);
+    AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibcxxVectorBoolSyntheticFrontEndCreator, "libc++ std::vector<bool> synthetic children", ConstString("std::__1::vector<bool, std::__1::allocator<bool> >"), stl_synth_flags);
     
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector summary provider", ConstString("^std::__1::vector<.+>(( )?&)?$"), stl_summary_flags, true);
     AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::list summary provider", ConstString("^std::__1::list<.+>(( )?&)?$"), stl_summary_flags, true);
@@ -1003,6 +1027,7 @@ FormatManager::LoadLibcxxFormatters()
     
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxVectorIteratorSyntheticFrontEndCreator, "std::vector iterator synthetic children", ConstString("^std::__1::__wrap_iter<.+>$"), stl_synth_flags, true);
     
+    AddCXXSummary(libcxx_category_sp, lldb_private::formatters::LibcxxContainerSummaryProvider, "libc++ std::vector<bool> summary provider", ConstString("std::__1::vector<bool, std::__1::allocator<bool> >"), stl_summary_flags);
     AddCXXSynthetic(libcxx_category_sp, lldb_private::formatters::LibCxxMapIteratorSyntheticFrontEndCreator, "std::map iterator synthetic children", ConstString("^std::__1::__map_iterator<.+>$"), stl_synth_flags, true);
     
     AddFilter(libcxx_category_sp, {"__a_"}, "libc++ std::atomic filter", ConstString("^std::__1::atomic<.*>$"), stl_synth_flags, true);
@@ -1435,4 +1460,18 @@ FormatManager::LoadObjCFormatters()
                      "",
                      ConstString("vBool32"),
                      vector_flags);
+}
+
+void
+FormatManager::LoadHardcodedFormatters()
+{
+    {
+        // insert code to load formats here
+    }
+    {
+        // insert code to load summaries here
+    }
+    {
+        // insert code to load synthetics here
+    }
 }

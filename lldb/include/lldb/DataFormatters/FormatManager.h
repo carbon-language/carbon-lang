@@ -25,6 +25,7 @@
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
 #include <atomic>
+#include <functional>
 
 namespace lldb_private {
     
@@ -38,6 +39,14 @@ class FormatManager : public IFormatChangeListener
     typedef FormatMap<ConstString, TypeSummaryImpl> NamedSummariesMap;
     typedef TypeCategoryMap::MapType::iterator CategoryMapIterator;
 public:
+    
+    template <typename FormatterType>
+    using HardcodedFormatterFinder = std::function<typename FormatterType::SharedPointer (lldb_private::ValueObject&,
+                                                                                          lldb::DynamicValueType,
+                                                                                          FormatManager&)>;
+    
+    template <typename FormatterType>
+    using HardcodedFormatterFinders = std::vector<HardcodedFormatterFinder<FormatterType>>;
     
     typedef TypeCategoryMap::CallbackType CategoryCallback;
     
@@ -260,6 +269,19 @@ private:
     ConstString m_vectortypes_category_name;
     ConstString m_appkit_category_name;
     
+    HardcodedFormatterFinders<TypeFormatImpl> m_hardcoded_formats;
+    HardcodedFormatterFinders<TypeSummaryImpl> m_hardcoded_summaries;
+    HardcodedFormatterFinders<SyntheticChildren> m_hardcoded_synthetics;
+    
+    lldb::TypeFormatImplSP
+    GetHardcodedFormat (ValueObject&,lldb::DynamicValueType);
+    
+    lldb::TypeSummaryImplSP
+    GetHardcodedSummaryFormat (ValueObject&,lldb::DynamicValueType);
+
+    lldb::SyntheticChildrenSP
+    GetHardcodedSyntheticChildren (ValueObject&,lldb::DynamicValueType);
+    
     TypeCategoryMap&
     GetCategories ()
     {
@@ -281,8 +303,11 @@ private:
     
     void
     LoadObjCFormatters ();
+    
+    void
+    LoadHardcodedFormatters ();
 };
     
 } // namespace lldb_private
-
+    
 #endif	// lldb_FormatManager_h_
