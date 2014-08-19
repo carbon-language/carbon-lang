@@ -2396,6 +2396,26 @@ ValueObject::GetNonBaseClassParent()
     return NULL;
 }
 
+
+bool
+ValueObject::IsBaseClass (uint32_t& depth)
+{
+    if (!IsBaseClass())
+    {
+        depth = 0;
+        return false;
+    }
+    if (GetParent())
+    {
+        GetParent()->IsBaseClass(depth);
+        depth = depth + 1;
+        return true;
+    }
+    // TODO: a base of no parent? weird..
+    depth = 1;
+    return true;
+}
+
 void
 ValueObject::GetExpressionPath (Stream &s, bool qualify_cxx_base_classes, GetExpressionPathFormat epformat)
 {

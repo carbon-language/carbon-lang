@@ -430,6 +430,9 @@ public:
         return false;
     }
     
+    bool
+    IsBaseClass (uint32_t& depth);
+    
     virtual bool
     IsDereferenceOfParent ()
     {
