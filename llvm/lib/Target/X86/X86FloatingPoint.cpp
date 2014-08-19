@@ -1654,6 +1654,9 @@ void FPS::setKillFlags(MachineBasicBlock &MBB) const {
 
   for (MachineBasicBlock::reverse_iterator I = MBB.rbegin(), E = MBB.rend();
        I != E; ++I) {
+    if (I->isDebugValue())
+      continue;
+
     BitVector Defs(8);
     SmallVector<MachineOperand *, 2> Uses;
     MachineInstr &MI = *I;
