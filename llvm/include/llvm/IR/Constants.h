@@ -37,12 +37,8 @@ class PointerType;
 class VectorType;
 class SequentialType;
 
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator;
-template<class ConstantClass, class TypeClass>
-struct ConstantArrayCreator;
-template<class ConstantClass, class TypeClass>
-struct ConvertConstantType;
+struct ConstantExprKeyType;
+template <class ConstantClass> struct ConstantAggrKeyType;
 
 //===----------------------------------------------------------------------===//
 /// This is the shared class of boolean and integer constants. This class
@@ -338,7 +334,7 @@ public:
 /// ConstantArray - Constant Array Declarations
 ///
 class ConstantArray : public Constant {
-  friend struct ConstantArrayCreator<ConstantArray, ArrayType>;
+  friend struct ConstantAggrKeyType<ConstantArray>;
   ConstantArray(const ConstantArray &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
@@ -376,7 +372,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 // ConstantStruct - Constant Struct Declarations
 //
 class ConstantStruct : public Constant {
-  friend struct ConstantArrayCreator<ConstantStruct, StructType>;
+  friend struct ConstantAggrKeyType<ConstantStruct>;
   ConstantStruct(const ConstantStruct &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
@@ -435,7 +431,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 /// ConstantVector - Constant Vector Declarations
 ///
 class ConstantVector : public Constant {
-  friend struct ConstantArrayCreator<ConstantVector, VectorType>;
+  friend struct ConstantAggrKeyType<ConstantVector>;
   ConstantVector(const ConstantVector &) LLVM_DELETED_FUNCTION;
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);
@@ -794,9 +790,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(BlockAddress, Value)
 /// constant expressions.  The Opcode field for the ConstantExpr class is
 /// maintained in the Value::SubclassData field.
 class ConstantExpr : public Constant {
-  friend struct ConstantCreator<ConstantExpr,Type,
-                            std::pair<unsigned, std::vector<Constant*> > >;
-  friend struct ConvertConstantType<ConstantExpr, Type>;
+  friend struct ConstantExprKeyType;
 
 protected:
   ConstantExpr(Type *ty, unsigned Opcode, Use *Ops, unsigned NumOps)

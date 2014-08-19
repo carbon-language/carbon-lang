@@ -29,8 +29,6 @@
 #define DEBUG_TYPE "ir"
 
 namespace llvm {
-template<class ValType>
-struct ConstantTraits;
 
 /// UnaryConstantExpr - This class is private to Constants.cpp, and is used
 /// behind the scenes to implement unary constant exprs.
@@ -314,6 +312,7 @@ struct OperandTraits<CompareConstantExpr> :
 };
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(CompareConstantExpr, Value)
 
+template <class ConstantClass> struct ConstantAggrKeyType;
 struct InlineAsmKeyType;
 struct ConstantExprKeyType;
 
@@ -325,6 +324,50 @@ template <> struct ConstantInfo<ConstantExpr> {
 template <> struct ConstantInfo<InlineAsm> {
   typedef InlineAsmKeyType ValType;
   typedef PointerType TypeClass;
+};
+template <> struct ConstantInfo<ConstantArray> {
+  typedef ConstantAggrKeyType<ConstantArray> ValType;
+  typedef ArrayType TypeClass;
+};
+template <> struct ConstantInfo<ConstantStruct> {
+  typedef ConstantAggrKeyType<ConstantStruct> ValType;
+  typedef StructType TypeClass;
+};
+template <> struct ConstantInfo<ConstantVector> {
+  typedef ConstantAggrKeyType<ConstantVector> ValType;
+  typedef VectorType TypeClass;
+};
+
+template <class ConstantClass> struct ConstantAggrKeyType {
+  ArrayRef<Constant *> Operands;
+  ConstantAggrKeyType(ArrayRef<Constant *> Operands) : Operands(Operands) {}
+  ConstantAggrKeyType(const ConstantClass *C,
+                      SmallVectorImpl<Constant *> &Storage) {
+    assert(Storage.empty() && "Expected empty storage");
+    for (unsigned I = 0, E = C->getNumOperands(); I != E; ++I)
+      Storage.push_back(C->getOperand(I));
+    Operands = Storage;
+  }
+
+  bool operator==(const ConstantAggrKeyType &X) const {
+    return Operands == X.Operands;
+  }
+  bool operator==(const ConstantClass *C) const {
+    if (Operands.size() != C->getNumOperands())
+      return false;
+    for (unsigned I = 0, E = Operands.size(); I != E; ++I)
+      if (Operands[I] != C->getOperand(I))
+        return false;
+    return true;
+  }
+  unsigned getHash() const {
+    return hash_combine_range(Operands.begin(), Operands.end());
+  }
+
+  typedef typename ConstantInfo<ConstantClass>::TypeClass TypeClass;
+  ConstantClass *create(TypeClass *Ty) const {
+    return new (Operands.size()) ConstantClass(Ty, Operands);
+  }
 };
 
 struct InlineAsmKeyType {
@@ -459,41 +502,6 @@ struct ConstantExprKeyType {
   }
 };
 
-// The number of operands for each ConstantCreator::create method is
-// determined by the ConstantTraits template.
-// ConstantCreator - A class that is used to create constants by
-// ConstantUniqueMap*.  This class should be partially specialized if there is
-// something strange that needs to be done to interface to the ctor for the
-// constant.
-//
-template<typename T, typename Alloc>
-struct ConstantTraits< std::vector<T, Alloc> > {
-  static unsigned uses(const std::vector<T, Alloc>& v) {
-    return v.size();
-  }
-};
-
-template<>
-struct ConstantTraits<Constant *> {
-  static unsigned uses(Constant * const & v) {
-    return 1;
-  }
-};
-
-template<class ConstantClass, class TypeClass, class ValType>
-struct ConstantCreator {
-  static ConstantClass *create(TypeClass *Ty, const ValType &V) {
-    return new(ConstantTraits<ValType>::uses(V)) ConstantClass(Ty, V);
-  }
-};
-
-template<class ConstantClass, class TypeClass>
-struct ConstantArrayCreator {
-  static ConstantClass *create(TypeClass *Ty, ArrayRef<Constant*> V) {
-    return new(V.size()) ConstantClass(Ty, V);
-  }
-};
-
 template <class ConstantClass> class ConstantUniqueMap {
 public:
   typedef typename ConstantInfo<ConstantClass>::ValType ValType;
@@ -587,129 +595,6 @@ public:
   }
 
   void dump() const { DEBUG(dbgs() << "Constant.cpp: ConstantUniqueMap\n"); }
-};
-
-// Unique map for aggregate constants
-template<class TypeClass, class ConstantClass>
-class ConstantAggrUniqueMap {
-public:
-  typedef ArrayRef<Constant*> Operands;
-  typedef std::pair<TypeClass*, Operands> LookupKey;
-private:
-  struct MapInfo {
-    typedef DenseMapInfo<ConstantClass*> ConstantClassInfo;
-    typedef DenseMapInfo<Constant*> ConstantInfo;
-    typedef DenseMapInfo<TypeClass*> TypeClassInfo;
-    static inline ConstantClass* getEmptyKey() {
-      return ConstantClassInfo::getEmptyKey();
-    }
-    static inline ConstantClass* getTombstoneKey() {
-      return ConstantClassInfo::getTombstoneKey();
-    }
-    static unsigned getHashValue(const ConstantClass *CP) {
-      SmallVector<Constant*, 8> CPOperands;
-      CPOperands.reserve(CP->getNumOperands());
-      for (unsigned I = 0, E = CP->getNumOperands(); I < E; ++I)
-        CPOperands.push_back(CP->getOperand(I));
-      return getHashValue(LookupKey(CP->getType(), CPOperands));
-    }
-    static bool isEqual(const ConstantClass *LHS, const ConstantClass *RHS) {
-      return LHS == RHS;
-    }
-    static unsigned getHashValue(const LookupKey &Val) {
-      return hash_combine(Val.first, hash_combine_range(Val.second.begin(),
-                                                        Val.second.end()));
-    }
-    static bool isEqual(const LookupKey &LHS, const ConstantClass *RHS) {
-      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
-        return false;
-      if (LHS.first != RHS->getType()
-          || LHS.second.size() != RHS->getNumOperands())
-        return false;
-      for (unsigned I = 0, E = RHS->getNumOperands(); I < E; ++I) {
-        if (LHS.second[I] != RHS->getOperand(I))
-          return false;
-      }
-      return true;
-    }
-  };
-public:
-  typedef DenseMap<ConstantClass *, char, MapInfo> MapTy;
-
-private:
-  /// Map - This is the main map from the element descriptor to the Constants.
-  /// This is the primary way we avoid creating two of the same shape
-  /// constant.
-  MapTy Map;
-
-public:
-  typename MapTy::iterator map_begin() { return Map.begin(); }
-  typename MapTy::iterator map_end() { return Map.end(); }
-
-  void freeConstants() {
-    for (typename MapTy::iterator I=Map.begin(), E=Map.end();
-         I != E; ++I) {
-      // Asserts that use_empty().
-      delete I->first;
-    }
-  }
-
-private:
-  typename MapTy::iterator findExistingElement(ConstantClass *CP) {
-    return Map.find(CP);
-  }
-
-  ConstantClass *Create(TypeClass *Ty, Operands V, typename MapTy::iterator I) {
-    ConstantClass* Result =
-      ConstantArrayCreator<ConstantClass,TypeClass>::create(Ty, V);
-
-    assert(Result->getType() == Ty && "Type specified is not correct!");
-    Map[Result] = '\0';
-
-    return Result;
-  }
-public:
-
-  /// getOrCreate - Return the specified constant from the map, creating it if
-  /// necessary.
-  ConstantClass *getOrCreate(TypeClass *Ty, Operands V) {
-    LookupKey Lookup(Ty, V);
-    ConstantClass* Result = nullptr;
-
-    typename MapTy::iterator I = Map.find_as(Lookup);
-    // Is it in the map?
-    if (I != Map.end())
-      Result = I->first;
-
-    if (!Result) {
-      // If no preexisting value, create one now...
-      Result = Create(Ty, V, I);
-    }
-
-    return Result;
-  }
-
-  /// Find the constant by lookup key.
-  typename MapTy::iterator find(LookupKey Lookup) {
-    return Map.find_as(Lookup);
-  }
-
-  /// Insert the constant into its proper slot.
-  void insert(ConstantClass *CP) {
-    Map[CP] = '\0';
-  }
-
-  /// Remove this constant from the map
-  void remove(ConstantClass *CP) {
-    typename MapTy::iterator I = findExistingElement(CP);
-    assert(I != Map.end() && "Constant not found in constant table!");
-    assert(I->first == CP && "Didn't find correct element?");
-    Map.erase(I);
-  }
-
-  void dump() const {
-    DEBUG(dbgs() << "Constant.cpp: ConstantUniqueMap\n");
-  }
 };
 
 } // end namespace llvm
