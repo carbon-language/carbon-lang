@@ -1036,9 +1036,9 @@ public:
   static Constant *getGetElementPtr(Constant *C, ArrayRef<Constant *> IdxList,
                                     bool InBounds = false,
                                     Type *OnlyIfReducedTy = nullptr) {
-    return getGetElementPtr(C, makeArrayRef((Value * const *)IdxList.data(),
-                                            IdxList.size()),
-                            InBounds);
+    return getGetElementPtr(
+        C, makeArrayRef((Value * const *)IdxList.data(), IdxList.size()),
+        InBounds, OnlyIfReducedTy);
   }
   static Constant *getGetElementPtr(Constant *C, Constant *Idx,
                                     bool InBounds = false,
@@ -1046,7 +1046,7 @@ public:
     // This form of the function only exists to avoid ambiguous overload
     // warnings about whether to convert Idx to ArrayRef<Constant *> or
     // ArrayRef<Value *>.
-    return getGetElementPtr(C, cast<Value>(Idx), InBounds);
+    return getGetElementPtr(C, cast<Value>(Idx), InBounds, OnlyIfReducedTy);
   }
   static Constant *getGetElementPtr(Constant *C, ArrayRef<Value *> IdxList,
                                     bool InBounds = false,
