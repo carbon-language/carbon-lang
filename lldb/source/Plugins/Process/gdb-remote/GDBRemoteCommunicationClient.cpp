@@ -27,6 +27,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/Target.h"
 
@@ -2779,7 +2780,7 @@ GDBRemoteCommunicationClient::LaunchGDBserverAndGetPort (lldb::pid_t &pid, const
         hostname = remote_accept_hostname;
     else
     {
-        if (Host::GetHostname (hostname))
+        if (HostInfo::GetHostname(hostname))
         {
             // Make the GDB server we launch only accept connections from this host
             stream.Printf("host:%s;", hostname.c_str());

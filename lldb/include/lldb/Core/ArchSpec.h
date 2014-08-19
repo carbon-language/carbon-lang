@@ -238,7 +238,7 @@ public:
     ///
     /// This will be something like "ubuntu", "fedora", etc. on Linux.
     /// This should be the same value returned by
-    /// Host::GetDistributionId ().
+    /// HostInfo::GetDistributionId ().
     ///------------------------------------------------------------------
     void
     SetDistributionId (const char* distribution_id);

@@ -31,7 +31,7 @@
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Expression/IRInterpreter.h"
 #include "lldb/Expression/Materializer.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Function.h"
@@ -898,7 +898,7 @@ ClangUserExpression::Execute (Stream &error_stream,
 
             lldb::addr_t function_stack_pointer = user_expression_plan->GetFunctionStackPointer();
 
-            function_stack_bottom = function_stack_pointer - Host::GetPageSize();
+            function_stack_bottom = function_stack_pointer - HostInfo::GetPageSize();
             function_stack_top = function_stack_pointer;
 
             if (log)

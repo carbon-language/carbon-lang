@@ -24,7 +24,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Core/Log.h"
 #include "lldb/lldb-private-log.h"
 
@@ -268,7 +268,7 @@ DataBufferMemoryMap::MemoryMapFromFileDescriptor (int fd,
                         if (error.GetError() == EINVAL)
                         {
                             // We may still have a shot at memory mapping if we align things correctly
-                            size_t page_offset = offset % Host::GetPageSize();
+                            size_t page_offset = offset % HostInfo::GetPageSize();
                             if (page_offset != 0)
                             {
                                 m_mmap_addr = (uint8_t *)::mmap(NULL, length + page_offset, prot, flags, fd, offset - page_offset);

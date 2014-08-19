@@ -21,6 +21,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Expression/ClangUserExpression.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -87,7 +88,7 @@ ThreadPlanCallUserExpression::MischiefManaged ()
             lldb::addr_t function_stack_bottom;
             lldb::addr_t function_stack_pointer = GetFunctionStackPointer();
 
-            function_stack_bottom = function_stack_pointer - Host::GetPageSize();
+            function_stack_bottom = function_stack_pointer - HostInfo::GetPageSize();
             function_stack_top = function_stack_pointer;
             
             StreamString  error_stream;

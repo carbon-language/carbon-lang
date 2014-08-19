@@ -33,6 +33,7 @@
 #include "lldb/Host/File.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/TimeValue.h"
 #include "lldb/Target/FileAction.h"
 #include "lldb/Target/Platform.h"
@@ -1229,7 +1230,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     uint32_t major = UINT32_MAX;
     uint32_t minor = UINT32_MAX;
     uint32_t update = UINT32_MAX;
-    if (Host::GetOSVersion (major, minor, update))
+    if (HostInfo::GetOSVersion(major, minor, update))
     {
         if (major != UINT32_MAX)
         {
@@ -1245,18 +1246,21 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     }
 
     std::string s;
-    if (Host::GetOSBuildString (s))
+#if !defined(__linux__)
+    if (HostInfo::GetOSBuildString(s))
     {
         response.PutCString ("os_build:");
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
-    if (Host::GetOSKernelDescription (s))
+    if (HostInfo::GetOSKernelDescription(s))
     {
         response.PutCString ("os_kernel:");
         response.PutCStringAsRawHex8(s.c_str());
         response.PutChar(';');
     }
+#endif
+
 #if defined(__APPLE__)
 
 #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
@@ -1267,7 +1271,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
     response.PutCStringAsRawHex8("127.0.0.1");
     response.PutChar(';');
 #else   // #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
-    if (Host::GetHostname (s))
+    if (HostInfo::GetHostname(s))
     {
         response.PutCString ("hostname:");
         response.PutCStringAsRawHex8(s.c_str());
@@ -1276,7 +1280,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
 #endif  // #if defined(__arm__) || defined(__arm64__) || defined(__aarch64__)
 
 #else   // #if defined(__APPLE__)
-    if (Host::GetHostname (s))
+    if (HostInfo::GetHostname(s))
     {
         response.PutCString ("hostname:");
         response.PutCStringAsRawHex8(s.c_str());

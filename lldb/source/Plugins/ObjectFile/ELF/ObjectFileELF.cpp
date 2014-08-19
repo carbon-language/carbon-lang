@@ -28,8 +28,10 @@
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/MathExtras.h"
 
 #define CASE_AND_STREAM(s, def, width)                  \
@@ -1277,8 +1279,8 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 const ArchSpec host_arch32 = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
                 if (host_arch32.GetCore() == arch_spec.GetCore())
                 {
-                    arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
-                    arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+                    arch_spec.GetTriple().setOSName(HostInfo::GetOSString().data());
+                    arch_spec.GetTriple().setVendorName(HostInfo::GetVendorString().data());
                 }
             }
             break;
@@ -1287,8 +1289,8 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
                 const ArchSpec host_arch64 = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
                 if (host_arch64.GetCore() == arch_spec.GetCore())
                 {
-                    arch_spec.GetTriple().setOSName (Host::GetOSString().GetCString());
-                    arch_spec.GetTriple().setVendorName(Host::GetVendorString().GetCString());
+                    arch_spec.GetTriple().setOSName(HostInfo::GetOSString().data());
+                    arch_spec.GetTriple().setVendorName(HostInfo::GetVendorString().data());
                 }
             }
             break;

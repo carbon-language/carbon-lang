@@ -96,32 +96,6 @@ namespace
     }
 }
 
-bool
-Host::GetOSVersion(uint32_t &major,
-                   uint32_t &minor,
-                   uint32_t &update)
-{
-    OSVERSIONINFOEX info;
-
-    ZeroMemory(&info, sizeof(OSVERSIONINFOEX));
-    info.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-#pragma warning(push)
-#pragma warning(disable: 4996)
-    // Starting with Microsoft SDK for Windows 8.1, this function is deprecated in favor of the
-    // new Windows Version Helper APIs.  Since we don't specify a minimum SDK version, it's easier
-    // to simply disable the warning rather than try to support both APIs.
-    if (GetVersionEx((LPOSVERSIONINFO) &info) == 0) {
-        return false;
-    }
-#pragma warning(pop)
-
-    major = (uint32_t) info.dwMajorVersion;
-    minor = (uint32_t) info.dwMinorVersion;
-    update = (uint32_t) info.wServicePackMajor;
-
-    return true;
-}
-
 Error
 Host::LaunchProcess (ProcessLaunchInfo &launch_info)
 {
@@ -211,31 +185,6 @@ Host::Kill(lldb::pid_t pid, int signo)
     TerminateProcess((HANDLE) pid, 1);
 }
 
-uint32_t
-Host::GetNumberCPUS()
-{
-    static uint32_t g_num_cores = UINT32_MAX;
-    if (g_num_cores == UINT32_MAX)
-    {
-        SYSTEM_INFO system_info;
-        ::GetSystemInfo(&system_info);
-        g_num_cores = system_info.dwNumberOfProcessors;
-    }
-    return g_num_cores;
-}
-
-size_t
-Host::GetPageSize()
-{
-    static long g_pagesize = 0;
-    if (!g_pagesize)
-    {
-        SYSTEM_INFO systemInfo;
-        GetNativeSystemInfo(&systemInfo);
-        g_pagesize = systemInfo.dwPageSize;
-    }
-    return g_pagesize;
-}
 
 const char *
 Host::GetSignalAsCString(int signo)

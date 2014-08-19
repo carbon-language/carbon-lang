@@ -585,6 +585,10 @@
 		3FDFDDBD199C3A06009756A7 /* FileAction.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBC199C3A06009756A7 /* FileAction.cpp */; };
 		3FDFDDBF199D345E009756A7 /* FileCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDBE199D345E009756A7 /* FileCache.cpp */; };
 		3FDFDDC6199D37ED009756A7 /* FileSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */; };
+		3FDFE52C19A2917A009756A7 /* HostInfoMacOSX.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */; };
+		3FDFE53119A292F0009756A7 /* HostInfoPosix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */; };
+		3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */ = {isa = PBXBuildFile; fileRef = 3FDFE53219A29304009756A7 /* HostInfoPosix.h */; };
+		3FDFE53519A29327009756A7 /* HostInfoBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3FDFE53419A29327009756A7 /* HostInfoBase.cpp */; };
 		449ACC98197DEA0B008D175E /* FastDemangle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 449ACC96197DE9EC008D175E /* FastDemangle.cpp */; };
 		490A36C0180F0E6F00BA31F8 /* PlatformWindows.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 490A36BD180F0E6F00BA31F8 /* PlatformWindows.cpp */; };
 		490A36C2180F0E9300BA31F8 /* PlatformWindows.h in Headers */ = {isa = PBXBuildFile; fileRef = 490A36BE180F0E6F00BA31F8 /* PlatformWindows.h */; };
@@ -1746,6 +1750,30 @@
 		3FDFDDC0199D34E2009756A7 /* FileCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileCache.h; path = include/lldb/Host/FileCache.h; sourceTree = "<group>"; };
 		3FDFDDC1199D34E2009756A7 /* FileSystem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = FileSystem.h; path = include/lldb/Host/FileSystem.h; sourceTree = "<group>"; };
 		3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSystem.cpp; path = source/Host/posix/FileSystem.cpp; sourceTree = "<group>"; };
+		3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = HostInfoMacOSX.mm; path = source/Host/macosx/HostInfoMacOSX.mm; sourceTree = "<group>"; };
+		3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoMacOSX.h; path = include/lldb/Host/macosx/HostInfoMacOSX.h; sourceTree = "<group>"; };
+		3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfoPosix.cpp; path = source/Host/posix/HostInfoPosix.cpp; sourceTree = "<group>"; };
+		3FDFE53219A29304009756A7 /* HostInfoPosix.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HostInfoPosix.h; path = include/lldb/Host/posix/HostInfoPosix.h; sourceTree = "<group>"; };
+		3FDFE53419A29327009756A7 /* HostInfoBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HostInfoBase.cpp; sourceTree = "<group>"; };
+		3FDFE53619A2933E009756A7 /* HostInfoLinux.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HostInfoLinux.cpp; sourceTree = "<group>"; };
+		3FDFE53719A2936B009756A7 /* HostInfo.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfo.h; path = include/lldb/Host/HostInfo.h; sourceTree = "<group>"; };
+		3FDFE53819A2936B009756A7 /* HostInfoBase.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoBase.h; path = include/lldb/Host/HostInfoBase.h; sourceTree = "<group>"; };
+		3FDFE53B19A293B3009756A7 /* HostInfoFreeBSD.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfoFreeBSD.cpp; path = source/Host/freebsd/HostInfoFreeBSD.cpp; sourceTree = "<group>"; };
+		3FDFE53C19A293CA009756A7 /* Config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Config.h; path = include/lldb/Host/freebsd/Config.h; sourceTree = "<group>"; };
+		3FDFE53D19A293CA009756A7 /* HostInfoFreeBSD.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoFreeBSD.h; path = include/lldb/Host/freebsd/HostInfoFreeBSD.h; sourceTree = "<group>"; };
+		3FDFE53F19A29448009756A7 /* Condition.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Condition.cpp; path = source/Host/windows/Condition.cpp; sourceTree = "<group>"; };
+		3FDFE54019A29448009756A7 /* EditLineWin.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = EditLineWin.cpp; path = source/Host/windows/EditLineWin.cpp; sourceTree = "<group>"; };
+		3FDFE54119A29448009756A7 /* FileSystem.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = FileSystem.cpp; path = source/Host/windows/FileSystem.cpp; sourceTree = "<group>"; };
+		3FDFE54219A29448009756A7 /* Host.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Host.cpp; path = source/Host/windows/Host.cpp; sourceTree = "<group>"; };
+		3FDFE54319A29448009756A7 /* HostInfoWindows.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = HostInfoWindows.cpp; path = source/Host/windows/HostInfoWindows.cpp; sourceTree = "<group>"; };
+		3FDFE54419A29448009756A7 /* Mutex.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Mutex.cpp; path = source/Host/windows/Mutex.cpp; sourceTree = "<group>"; };
+		3FDFE54519A29448009756A7 /* ProcessRunLock.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ProcessRunLock.cpp; path = source/Host/windows/ProcessRunLock.cpp; sourceTree = "<group>"; };
+		3FDFE54619A29448009756A7 /* Windows.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Windows.cpp; path = source/Host/windows/Windows.cpp; sourceTree = "<group>"; };
+		3FDFE54719A2946B009756A7 /* AutoHandle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AutoHandle.h; path = include/lldb/Host/windows/AutoHandle.h; sourceTree = "<group>"; };
+		3FDFE54819A2946B009756A7 /* editlinewin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = editlinewin.h; path = include/lldb/Host/windows/editlinewin.h; sourceTree = "<group>"; };
+		3FDFE54919A2946B009756A7 /* HostInfoWindows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = HostInfoWindows.h; path = include/lldb/Host/windows/HostInfoWindows.h; sourceTree = "<group>"; };
+		3FDFE54A19A2946B009756A7 /* win32.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = win32.h; path = include/lldb/Host/windows/win32.h; sourceTree = "<group>"; };
+		3FDFE54B19A2946B009756A7 /* windows.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = windows.h; path = include/lldb/Host/windows/windows.h; sourceTree = "<group>"; };
 		449ACC96197DE9EC008D175E /* FastDemangle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FastDemangle.cpp; path = source/Core/FastDemangle.cpp; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
@@ -2283,6 +2311,7 @@
 			isa = PBXGroup;
 			children = (
 				233B009D19610D6B0090E598 /* Host.cpp */,
+				3FDFE53619A2933E009756A7 /* HostInfoLinux.cpp */,
 			);
 			name = linux;
 			path = source/Host/linux;
@@ -3464,9 +3493,11 @@
 			isa = PBXGroup;
 			children = (
 				69A01E1A1236C5D400C660B5 /* common */,
+				3FDFE53919A29399009756A7 /* freebsd */,
 				233B009C19610D130090E598 /* linux */,
 				26BC7EE510F1B88100F91463 /* MacOSX */,
 				3FDFDDC4199D37BE009756A7 /* posix */,
+				3FDFE53E19A2940E009756A7 /* windows */,
 				26BC7DD210F1B7D500F91463 /* Condition.h */,
 				266F5CBB12FC846200DFCE33 /* Config.h */,
 				9456F2231616645A00656F91 /* DynamicLibrary.h */,
@@ -3478,6 +3509,8 @@
 				26FA4315130103F400E71120 /* FileSpec.h */,
 				3FDFDDC1199D34E2009756A7 /* FileSystem.h */,
 				26BC7DD410F1B7D500F91463 /* Host.h */,
+				3FDFE53719A2936B009756A7 /* HostInfo.h */,
+				3FDFE53819A2936B009756A7 /* HostInfoBase.h */,
 				236124A61986B50E004EFC37 /* IoObject.h */,
 				26BC7DD510F1B7D500F91463 /* Mutex.h */,
 				232CB60B191E00CC00EF39FC /* NativeBreakpoint.cpp */,
@@ -3713,6 +3746,8 @@
 		26BC7EE510F1B88100F91463 /* MacOSX */ = {
 			isa = PBXGroup;
 			children = (
+				3FDFE52D19A291AF009756A7 /* HostInfoMacOSX.h */,
+				3FDFE52B19A2917A009756A7 /* HostInfoMacOSX.mm */,
 				26BC7EED10F1B8AD00F91463 /* CFCBundle.cpp */,
 				26BC7EEE10F1B8AD00F91463 /* CFCBundle.h */,
 				26BC7EEF10F1B8AD00F91463 /* CFCData.cpp */,
@@ -3927,9 +3962,41 @@
 		3FDFDDC4199D37BE009756A7 /* posix */ = {
 			isa = PBXGroup;
 			children = (
+				3FDFE53219A29304009756A7 /* HostInfoPosix.h */,
+				3FDFE53019A292F0009756A7 /* HostInfoPosix.cpp */,
 				3FDFDDC5199D37ED009756A7 /* FileSystem.cpp */,
 			);
 			name = posix;
+			sourceTree = "<group>";
+		};
+		3FDFE53919A29399009756A7 /* freebsd */ = {
+			isa = PBXGroup;
+			children = (
+				3FDFE53C19A293CA009756A7 /* Config.h */,
+				3FDFE53D19A293CA009756A7 /* HostInfoFreeBSD.h */,
+				3FDFE53B19A293B3009756A7 /* HostInfoFreeBSD.cpp */,
+			);
+			name = freebsd;
+			sourceTree = "<group>";
+		};
+		3FDFE53E19A2940E009756A7 /* windows */ = {
+			isa = PBXGroup;
+			children = (
+				3FDFE54719A2946B009756A7 /* AutoHandle.h */,
+				3FDFE53F19A29448009756A7 /* Condition.cpp */,
+				3FDFE54819A2946B009756A7 /* editlinewin.h */,
+				3FDFE54019A29448009756A7 /* EditLineWin.cpp */,
+				3FDFE54119A29448009756A7 /* FileSystem.cpp */,
+				3FDFE54219A29448009756A7 /* Host.cpp */,
+				3FDFE54919A2946B009756A7 /* HostInfoWindows.h */,
+				3FDFE54319A29448009756A7 /* HostInfoWindows.cpp */,
+				3FDFE54419A29448009756A7 /* Mutex.cpp */,
+				3FDFE54519A29448009756A7 /* ProcessRunLock.cpp */,
+				3FDFE54A19A2946B009756A7 /* win32.h */,
+				3FDFE54B19A2946B009756A7 /* windows.h */,
+				3FDFE54619A29448009756A7 /* Windows.cpp */,
+			);
+			name = windows;
 			sourceTree = "<group>";
 		};
 		490A36BA180F0E6F00BA31F8 /* Windows */ = {
@@ -4019,17 +4086,18 @@
 		69A01E1A1236C5D400C660B5 /* common */ = {
 			isa = PBXGroup;
 			children = (
-				AF37E10917C861F20061E18E /* ProcessRunLock.cpp */,
 				9456F2211616644B00656F91 /* DynamicLibrary.cpp */,
 				26CFDCA2186163A4000E63E5 /* Editline.cpp */,
 				260C6EA213011581005E16B0 /* File.cpp */,
 				26FA43171301048600E71120 /* FileSpec.cpp */,
 				69A01E1B1236C5D400C660B5 /* Condition.cpp */,
 				69A01E1C1236C5D400C660B5 /* Host.cpp */,
+				3FDFE53419A29327009756A7 /* HostInfoBase.cpp */,
 				236124A21986B4E2004EFC37 /* IoObject.cpp */,
 				69A01E1E1236C5D400C660B5 /* Mutex.cpp */,
 				A36FF33B17D8E94600244D40 /* OptionParser.cpp */,
 				260A39A719647A4E004B4130 /* Pipe.cpp */,
+				AF37E10917C861F20061E18E /* ProcessRunLock.cpp */,
 				236124A31986B4E2004EFC37 /* Socket.cpp */,
 				69A01E1F1236C5D400C660B5 /* Symbols.cpp */,
 				268DA873130095ED00C9483A /* Terminal.cpp */,
@@ -4283,6 +4351,7 @@
 				AF0F6E511739A76D009180FE /* RegisterContextKDP_arm64.h in Headers */,
 				260CC63A15D04377002BF2E0 /* OptionValueUUID.h in Headers */,
 				260A248E15D06C50009981B0 /* OptionValues.h in Headers */,
+				3FDFE53319A29304009756A7 /* HostInfoPosix.h in Headers */,
 				AF061F88182C97ED00B6A19C /* RegisterContextHistory.h in Headers */,
 				26DAED6015D327A200E15819 /* OptionValuePathMappings.h in Headers */,
 				26ACEC2815E077AE00E94760 /* Property.h in Headers */,
@@ -4874,6 +4943,7 @@
 				2689008313353E2200698AC0 /* CommandObjectMultiword.cpp in Sources */,
 				2689008413353E2200698AC0 /* CommandObjectRegexCommand.cpp in Sources */,
 				2689008513353E2200698AC0 /* CommandReturnObject.cpp in Sources */,
+				3FDFE53519A29327009756A7 /* HostInfoBase.cpp in Sources */,
 				26474CBE18D0CB2D0073DEBA /* RegisterContextMach_i386.cpp in Sources */,
 				2689008613353E2200698AC0 /* Options.cpp in Sources */,
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
@@ -4919,7 +4989,9 @@
 				94D0B10C16D5535900EA9C70 /* LibCxx.cpp in Sources */,
 				268900C513353E5F00698AC0 /* DWARFDIECollection.cpp in Sources */,
 				268900C613353E5F00698AC0 /* DWARFFormValue.cpp in Sources */,
+				3FDFE53119A292F0009756A7 /* HostInfoPosix.cpp in Sources */,
 				233B007D1960C9F90090E598 /* ProcessInfo.cpp in Sources */,
+				3FDFE52C19A2917A009756A7 /* HostInfoMacOSX.mm in Sources */,
 				268900C713353E5F00698AC0 /* DWARFLocationDescription.cpp in Sources */,
 				26BC17B118C7F4CB00D2196D /* ThreadElfCore.cpp in Sources */,
 				268900C813353E5F00698AC0 /* DWARFLocationList.cpp in Sources */,

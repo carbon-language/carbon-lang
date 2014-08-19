@@ -56,6 +56,7 @@
 #include <limits>
 
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/Debugger.h"
@@ -416,9 +417,11 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         // for the default triple.  It's probably an artifact of config.guess.
         if (triple.getOS() == llvm::Triple::Linux && triple.getVendor() == llvm::Triple::UnknownVendor)
             triple.setVendorName ("");
-
-        const char* distribution_id = GetDistributionId ().AsCString();
-
+#if defined(__linux__)
+        const char *distribution_id = HostInfo::GetDistributionId().data();
+#else
+        const char *distribution_id = "";
+#endif
         switch (triple.getArch())
         {
         default:
@@ -448,7 +451,7 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         g_supports_32 = g_host_arch_32.IsValid();
         g_supports_64 = g_host_arch_64.IsValid();
     }
-    
+
 #endif // #else for #if defined (__APPLE__)
     
     if (arch_kind == eSystemDefaultArchitecture32)
@@ -461,57 +464,6 @@ Host::GetArchitecture (SystemDefaultArchitecture arch_kind)
         
     return g_host_arch_32;
 }
-
-const ConstString &
-Host::GetVendorString()
-{
-    static ConstString g_vendor;
-    if (!g_vendor)
-    {
-        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
-        const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
-        g_vendor.SetCStringWithLength(str_ref.data(), str_ref.size());
-    }
-    return g_vendor;
-}
-
-const ConstString &
-Host::GetOSString()
-{
-    static ConstString g_os_string;
-    if (!g_os_string)
-    {
-        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
-        const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
-        g_os_string.SetCStringWithLength(str_ref.data(), str_ref.size());
-    }
-    return g_os_string;
-}
-
-const ConstString &
-Host::GetTargetTriple()
-{
-    static ConstString g_host_triple;
-    if (!(g_host_triple))
-    {
-        const ArchSpec &host_arch = GetArchitecture (eSystemDefaultArchitecture);
-        g_host_triple.SetCString(host_arch.GetTriple().getTriple().c_str());
-    }
-    return g_host_triple;
-}
-
-// See linux/Host.cpp for Linux-based implementations of this.
-// Add your platform-specific implementation to the appropriate host file.
-#if !defined(__linux__)
-
-const ConstString &
-    Host::GetDistributionId ()
-{
-    static ConstString s_distribution_id;
-    return s_distribution_id;
-}
-
-#endif // #if !defined(__linux__)
 
 lldb::pid_t
 Host::GetCurrentProcessID()
@@ -1401,24 +1353,6 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
     return false;
 }
 
-
-bool
-Host::GetHostname (std::string &s)
-{
-    char hostname[PATH_MAX];
-    hostname[sizeof(hostname) - 1] = '\0';
-    if (::gethostname (hostname, sizeof(hostname) - 1) == 0)
-    {
-        struct hostent* h = ::gethostbyname (hostname);
-        if (h)
-            s.assign (h->h_name);
-        else
-            s.assign (hostname);
-        return true;
-    }
-    return false;
-}
-
 #ifndef _WIN32
 
 const char *
@@ -1504,22 +1438,6 @@ Host::GetEffectiveGroupID ()
     return getegid();
 }
 
-#endif
-
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) // see macosx/Host.mm
-bool
-Host::GetOSBuildString (std::string &s)
-{
-    s.clear();
-    return false;
-}
-
-bool
-Host::GetOSKernelDescription (std::string &s)
-{
-    s.clear();
-    return false;
-}
 #endif
 
 #if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) \
@@ -1792,7 +1710,7 @@ Host::GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
         g_use_close_on_exec_flag = eLazyBoolNo;
         
         uint32_t major, minor, update;
-        if (Host::GetOSVersion(major, minor, update))
+        if (HostInfo::GetOSVersion(major, minor, update))
         {
             // Kernel panic if we use the POSIX_SPAWN_CLOEXEC_DEFAULT on 10.7 or earlier
             if (major > 10 || (major == 10 && minor > 7))
@@ -2178,54 +2096,6 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
 #endif // defined(__linux__) || defined(__FreeBSD__) || defined(__NetBSD__)
 
 #ifndef _WIN32
-
-size_t
-Host::GetPageSize()
-{
-    return ::getpagesize();
-}
-
-uint32_t
-Host::GetNumberCPUS ()
-{
-    static uint32_t g_num_cores = UINT32_MAX;
-    if (g_num_cores == UINT32_MAX)
-    {
-#if defined(__APPLE__) or defined (__linux__) or defined (__FreeBSD__) or defined (__FreeBSD_kernel__)
-
-        g_num_cores = ::sysconf(_SC_NPROCESSORS_ONLN);
-
-#else
-        
-        // Assume POSIX support if a host specific case has not been supplied above
-        g_num_cores = 0;
-        int num_cores = 0;
-        size_t num_cores_len = sizeof(num_cores);
-#ifdef HW_AVAILCPU
-        int mib[] = { CTL_HW, HW_AVAILCPU };
-#else
-        int mib[] = { CTL_HW, HW_NCPU };
-#endif
-        
-        /* get the number of CPUs from the system */
-        if (sysctl(mib, llvm::array_lengthof(mib), &num_cores, &num_cores_len, NULL, 0) == 0 && (num_cores > 0))
-        {
-            g_num_cores = num_cores;
-        }
-        else
-        {
-            mib[1] = HW_NCPU;
-            num_cores_len = sizeof(num_cores);
-            if (sysctl(mib, llvm::array_lengthof(mib), &num_cores, &num_cores_len, NULL, 0) == 0 && (num_cores > 0))
-            {
-                if (num_cores > 0)
-                    g_num_cores = num_cores;
-            }
-        }
-#endif
-    }
-    return g_num_cores;
-}
 
 void
 Host::Kill(lldb::pid_t pid, int signo)

@@ -23,6 +23,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Breakpoint/BreakpointLocation.h"
@@ -662,7 +663,7 @@ PlatformWindows::GetStatus (Stream &strm)
     uint32_t major;
     uint32_t minor;
     uint32_t update;
-    if (!Host::GetOSVersion(major, minor, update))
+    if (!HostInfo::GetOSVersion(major, minor, update))
     {
         strm << "Windows";
         return;

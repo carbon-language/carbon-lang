@@ -11,6 +11,7 @@ add_host_subdirectory(common
   common/FileCache.cpp
   common/FileSpec.cpp
   common/Host.cpp
+  common/HostInfoBase.cpp
   common/IOObject.cpp
   common/Mutex.cpp
   common/NativeBreakpoint.cpp
@@ -32,6 +33,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
   add_host_subdirectory(windows
     windows/FileSystem.cpp
     windows/Host.cpp
+    windows/HostInfoWindows.cpp
     windows/ProcessRunLock.cpp
     windows/Mutex.cpp
     windows/Condition.cpp
@@ -41,6 +43,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 else()
   add_host_subdirectory(posix
     posix/FileSystem.cpp
+    posix/HostInfoPosix.cpp
     )
 
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
@@ -59,10 +62,12 @@ else()
   elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     add_host_subdirectory(linux
       linux/Host.cpp
+      linux/HostInfoLinux.cpp
       )
   elseif (CMAKE_SYSTEM_NAME MATCHES "FreeBSD")
     add_host_subdirectory(freebsd
       freebsd/Host.cpp
+      freebsd/HostInfoFreeBSD.cpp
       )
   endif()
 endif()

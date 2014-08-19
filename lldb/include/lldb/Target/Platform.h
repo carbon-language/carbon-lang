@@ -246,7 +246,7 @@ namespace lldb_private {
         //
         // Remote classes must be connected for this to succeed. Local 
         // subclasses don't need to override this function as it will just
-        // call the Host::GetOSVersion().
+        // call the HostInfo::GetOSVersion().
         //------------------------------------------------------------------
         virtual bool
         GetRemoteOSVersion ()
@@ -929,7 +929,7 @@ namespace lldb_private {
         // being connected. For remote platforms, we might set the version ahead
         // of time before we actually connect and this version might change when
         // we actually connect to a remote platform. For the host platform this
-        // will be set to the once we call Host::GetOSVersion().
+        // will be set to the once we call HostInfo::GetOSVersion().
         bool m_os_version_set_while_connected;
         bool m_system_arch_set_while_connected;
         ConstString m_sdk_sysroot; // the root location of where the SDK files are all located

@@ -21,6 +21,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/Utils.h"
@@ -349,9 +350,7 @@ Platform::GetOSVersion (uint32_t &major,
         if (!success)
         {
             // We have a local host platform
-            success = Host::GetOSVersion (m_major_os_version, 
-                                          m_minor_os_version, 
-                                          m_update_os_version);
+            success = HostInfo::GetOSVersion(m_major_os_version, m_minor_os_version, m_update_os_version);
             m_os_version_set_while_connected = success;
         }
     }
@@ -398,8 +397,14 @@ Platform::GetOSVersion (uint32_t &major,
 bool
 Platform::GetOSBuildString (std::string &s)
 {
+    s.clear();
+
     if (IsHost())
-        return Host::GetOSBuildString (s);
+#if !defined(__linux__)
+        return HostInfo::GetOSBuildString(s);
+#else
+        return false;
+#endif
     else
         return GetRemoteOSBuildString (s);
 }
@@ -408,7 +413,11 @@ bool
 Platform::GetOSKernelDescription (std::string &s)
 {
     if (IsHost())
-        return Host::GetOSKernelDescription (s);
+#if !defined(__linux__)
+        return HostInfo::GetOSKernelDescription(s);
+#else
+        return false;
+#endif
     else
         return GetRemoteOSKernelDescription (s);
 }
@@ -801,8 +810,8 @@ Platform::SetOSVersion (uint32_t major,
 {
     if (IsHost())
     {
-        // We don't need anyone setting the OS version for the host platform, 
-        // we should be able to figure it out by calling Host::GetOSVersion(...).
+        // We don't need anyone setting the OS version for the host platform,
+        // we should be able to figure it out by calling HostInfo::GetOSVersion(...).
         return false; 
     }
     else
