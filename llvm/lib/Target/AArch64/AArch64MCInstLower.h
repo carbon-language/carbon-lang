@@ -33,7 +33,7 @@ class LLVM_LIBRARY_VISIBILITY AArch64MCInstLower {
   Triple TargetTriple;
 
 public:
-  AArch64MCInstLower(MCContext &ctx, Mangler &mang, AsmPrinter &printer);
+  AArch64MCInstLower(MCContext &ctx, AsmPrinter &printer);
 
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp) const;
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;

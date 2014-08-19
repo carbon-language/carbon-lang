@@ -25,8 +25,7 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
-AArch64MCInstLower::AArch64MCInstLower(MCContext &ctx, Mangler &mang,
-                                       AsmPrinter &printer)
+AArch64MCInstLower::AArch64MCInstLower(MCContext &ctx, AsmPrinter &printer)
     : Ctx(ctx), Printer(printer), TargetTriple(printer.getTargetTriple()) {}
 
 MCSymbol *

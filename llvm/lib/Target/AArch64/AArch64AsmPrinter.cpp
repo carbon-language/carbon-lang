@@ -54,7 +54,7 @@ public:
   AArch64AsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
       : AsmPrinter(TM, Streamer),
         Subtarget(&TM.getSubtarget<AArch64Subtarget>()),
-        MCInstLowering(OutContext, *Mang, *this), SM(*this), AArch64FI(nullptr),
+        MCInstLowering(OutContext, *this), SM(*this), AArch64FI(nullptr),
         LOHLabelCounter(0) {}
 
   const char *getPassName() const override {
