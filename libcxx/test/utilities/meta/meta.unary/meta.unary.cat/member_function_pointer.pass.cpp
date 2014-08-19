@@ -61,6 +61,18 @@ int main()
     test_member_function_pointer<void (Class::*)(int) volatile>();
     test_member_function_pointer<void (Class::*)(int, char) volatile>();
 
+    test_member_function_pointer<void (Class::*)(...)>();
+    test_member_function_pointer<void (Class::*)(int, ...)>();
+    test_member_function_pointer<void (Class::*)(int, char, ...)>();
+
+    test_member_function_pointer<void (Class::*)(...) const>();
+    test_member_function_pointer<void (Class::*)(int, ...) const>();
+    test_member_function_pointer<void (Class::*)(int, char, ...) const>();
+
+    test_member_function_pointer<void (Class::*)(...) volatile>();
+    test_member_function_pointer<void (Class::*)(int, ...) volatile>();
+    test_member_function_pointer<void (Class::*)(int, char, ...) volatile>();
+
 #if __cplusplus >= 201103L
 // reference qualifiers on functions are a C++11 extension
     test_member_function_pointer<void (Class::*)() &&>();
@@ -74,5 +86,17 @@ int main()
     test_member_function_pointer<void (Class::*)() volatile &&>();
     test_member_function_pointer<void (Class::*)(int) volatile &&>();
     test_member_function_pointer<void (Class::*)(int, char) volatile &&>();
+
+    test_member_function_pointer<void (Class::*)(...) &&>();
+    test_member_function_pointer<void (Class::*)(int,...) &&>();
+    test_member_function_pointer<void (Class::*)(int, char,...) &&>();
+
+    test_member_function_pointer<void (Class::*)(...) &>();
+    test_member_function_pointer<void (Class::*)(int,...) &>();
+    test_member_function_pointer<void (Class::*)(int, char,...) &>();
+
+    test_member_function_pointer<void (Class::*)(...) volatile &&>();
+    test_member_function_pointer<void (Class::*)(int,...) volatile &&>();
+    test_member_function_pointer<void (Class::*)(int, char,...) volatile &&>();
 #endif
 }
