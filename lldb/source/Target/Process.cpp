@@ -454,11 +454,18 @@ ProcessLaunchCommandOptions::SetOptionValue (uint32_t option_idx, const char *op
                 launch_info.GetArchitecture().SetTriple (option_arg);
             break;
             
-        case 'A':   
-            launch_info.GetFlags().Set (eLaunchFlagDisableASLR); 
+        case 'A':   // Disable ASLR.
+        {
+            bool success;
+            const bool disable_aslr_arg = Args::StringToBoolean (option_arg, true, &success);
+            if (success)
+                disable_aslr = disable_aslr_arg ? eLazyBoolYes : eLazyBoolNo;
+            else
+                error.SetErrorStringWithFormat ("Invalid boolean value for disable-aslr option: '%s'", option_arg ? option_arg : "<null>");
             break;
-            
-        case 'c':   
+        }
+
+        case 'c':
             if (option_arg && option_arg[0])
                 launch_info.SetShell (option_arg);
             else
@@ -480,7 +487,7 @@ OptionDefinition
 ProcessLaunchCommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_ALL, false, "stop-at-entry", 's', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,          "Stop at the entry point of the program when launching a process."},
-{ LLDB_OPT_SET_ALL, false, "disable-aslr",  'A', OptionParser::eNoArgument,       NULL, NULL, 0, eArgTypeNone,          "Disable address space layout randomization when launching a process."},
+{ LLDB_OPT_SET_ALL, false, "disable-aslr",  'A', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeBoolean,          "Set whether to disable address space layout randomization when launching a process."},
 { LLDB_OPT_SET_ALL, false, "plugin",        'p', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypePlugin,        "Name of the process plugin you want to use."},
 { LLDB_OPT_SET_ALL, false, "working-dir",   'w', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeDirectoryName,          "Set the current working directory to <path> when running the inferior."},
 { LLDB_OPT_SET_ALL, false, "arch",          'a', OptionParser::eRequiredArgument, NULL, NULL, 0, eArgTypeArchitecture,  "Set the architecture for the process to launch when ambiguous."},

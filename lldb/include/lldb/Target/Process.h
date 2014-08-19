@@ -392,6 +392,7 @@ public:
     OptionParsingStarting ()
     {
         launch_info.Clear();
+        disable_aslr = eLazyBoolCalculate;
     }
     
     const OptionDefinition*
@@ -407,6 +408,7 @@ public:
     // Instance variables to hold the values for command options.
     
     ProcessLaunchInfo launch_info;
+    lldb_private::LazyBool disable_aslr;
 };
 
 //----------------------------------------------------------------------

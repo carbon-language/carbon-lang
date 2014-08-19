@@ -205,8 +205,25 @@ protected:
         
         const char *target_settings_argv0 = target->GetArg0();
         
-        if (target->GetDisableASLR())
+        // Determine whether we will disable ASLR or leave it in the default state (i.e. enabled if the platform supports it).
+        // First check if the process launch options explicitly turn on/off disabling ASLR.  If so, use that setting;
+        // otherwise, use the 'settings target.disable-aslr' setting.
+        bool disable_aslr = false;
+        if (m_options.disable_aslr != eLazyBoolCalculate)
+        {
+            // The user specified an explicit setting on the process launch line.  Use it.
+            disable_aslr = (m_options.disable_aslr == eLazyBoolYes);
+        }
+        else
+        {
+            // The user did not explicitly specify whether to disable ASLR.  Fall back to the target.disable-aslr setting.
+            disable_aslr = target->GetDisableASLR ();
+        }
+        
+        if (disable_aslr)
             m_options.launch_info.GetFlags().Set (eLaunchFlagDisableASLR);
+        else
+            m_options.launch_info.GetFlags().Clear (eLaunchFlagDisableASLR);
         
         if (target->GetDetachOnError())
             m_options.launch_info.GetFlags().Set (eLaunchFlagDetachOnError);
