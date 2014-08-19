@@ -2671,8 +2671,6 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
-  LLVMContextImpl *pImpl = getType()->getContext().pImpl;
-
   SmallVector<Constant*, 8> Values;
   Values.reserve(getNumOperands());  // Build replacement array.
 
@@ -2707,36 +2705,10 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     return;
   }
 
-  // Check to see if we have this array type already.
-  LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup(
-    cast<ArrayType>(getType()), makeArrayRef(Values));
-  LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
-    pImpl->ArrayConstants.find(Lookup);
-
-  if (I != pImpl->ArrayConstants.map_end()) {
-    replaceUsesOfWithOnConstantImpl(I->first);
-    return;
-  }
-
-  // Okay, the new shape doesn't exist in the system yet.  Instead of
-  // creating a new constant array, inserting it, replaceallusesof'ing the
-  // old with the new, then deleting the old... just update the current one
-  // in place!
-  pImpl->ArrayConstants.remove(this);
-
-  // Update to the new value.  Optimize for the case when we have a single
-  // operand that we're changing, but handle bulk updates efficiently.
-  if (NumUpdated == 1) {
-    unsigned OperandToUpdate = U - OperandList;
-    assert(getOperand(OperandToUpdate) == From &&
-           "ReplaceAllUsesWith broken!");
-    setOperand(OperandToUpdate, ToC);
-  } else {
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      if (getOperand(I) == From)
-        setOperand(I, ToC);
-  }
-  pImpl->ArrayConstants.insert(this);
+  // Update to the new value.
+  if (Constant *C = getContext().pImpl->ArrayConstants.replaceOperandsInPlace(
+          Values, this, From, ToC, NumUpdated, U - OperandList))
+    replaceUsesOfWithOnConstantImpl(C);
 }
 
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -2774,8 +2746,6 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   }
   Values[OperandToUpdate] = ToC;
 
-  LLVMContextImpl *pImpl = getContext().pImpl;
-
   if (isAllZeros) {
     replaceUsesOfWithOnConstantImpl(ConstantAggregateZero::get(getType()));
     return;
@@ -2785,26 +2755,10 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     return;
   }
 
-  // Check to see if we have this struct type already.
-  LLVMContextImpl::StructConstantsTy::LookupKey Lookup(
-      cast<StructType>(getType()), makeArrayRef(Values));
-  LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
-      pImpl->StructConstants.find(Lookup);
-
-  if (I != pImpl->StructConstants.map_end()) {
-    replaceUsesOfWithOnConstantImpl(I->first);
-    return;
-  }
-
-  // Okay, the new shape doesn't exist in the system yet.  Instead of
-  // creating a new constant struct, inserting it, replaceallusesof'ing the
-  // old with the new, then deleting the old... just update the current one
-  // in place!
-  pImpl->StructConstants.remove(this);
-
   // Update to the new value.
-  setOperand(OperandToUpdate, ToC);
-  pImpl->StructConstants.insert(this);
+  if (Constant *C = getContext().pImpl->StructConstants.replaceOperandsInPlace(
+          Values, this, From, ToC))
+    replaceUsesOfWithOnConstantImpl(C);
 }
 
 void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -2829,22 +2783,10 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
     return;
   }
 
-  // Update to the new value.  Optimize for the case when we have a single
-  // operand that we're changing, but handle bulk updates efficiently.
-  auto &pImpl = getType()->getContext().pImpl;
-  pImpl->VectorConstants.remove(this);
-
-  if (NumUpdated == 1) {
-    unsigned OperandToUpdate = U - OperandList;
-    assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
-    setOperand(OperandToUpdate, ToC);
-  } else {
-    for (unsigned I = 0, E = getNumOperands(); I != E; ++I)
-      if (getOperand(I) == From)
-        setOperand(I, ToC);
-  }
-
-  pImpl->VectorConstants.insert(this);
+  // Update to the new value.
+  if (Constant *C = getContext().pImpl->VectorConstants.replaceOperandsInPlace(
+          Values, this, From, ToC, NumUpdated, U - OperandList))
+    replaceUsesOfWithOnConstantImpl(C);
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,

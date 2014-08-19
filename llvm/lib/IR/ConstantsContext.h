@@ -341,6 +341,8 @@ template <> struct ConstantInfo<ConstantVector> {
 template <class ConstantClass> struct ConstantAggrKeyType {
   ArrayRef<Constant *> Operands;
   ConstantAggrKeyType(ArrayRef<Constant *> Operands) : Operands(Operands) {}
+  ConstantAggrKeyType(ArrayRef<Constant *> Operands, const ConstantClass *)
+      : Operands(Operands) {}
   ConstantAggrKeyType(const ConstantClass *C,
                       SmallVectorImpl<Constant *> &Storage) {
     assert(Storage.empty() && "Expected empty storage");
@@ -425,6 +427,11 @@ struct ConstantExprKeyType {
                       ArrayRef<unsigned> Indexes = None)
       : Opcode(Opcode), SubclassOptionalData(SubclassOptionalData),
         SubclassData(SubclassData), Ops(Ops), Indexes(Indexes) {}
+  ConstantExprKeyType(ArrayRef<Constant *> Operands, const ConstantExpr *CE)
+      : Opcode(CE->getOpcode()),
+        SubclassOptionalData(CE->getRawSubclassOptionalData()),
+        SubclassData(CE->isCompare() ? CE->getPredicate() : 0), Ops(Operands),
+        Indexes(CE->hasIndices() ? CE->getIndices() : ArrayRef<unsigned>()) {}
   ConstantExprKeyType(const ConstantExpr *CE,
                       SmallVectorImpl<Constant *> &Storage)
       : Opcode(CE->getOpcode()),
@@ -592,6 +599,31 @@ public:
     assert(I != Map.end() && "Constant not found in constant table!");
     assert(I->first == CP && "Didn't find correct element?");
     Map.erase(I);
+  }
+
+  ConstantClass *replaceOperandsInPlace(ArrayRef<Constant *> Operands,
+                                        ConstantClass *CP, Value *From,
+                                        Constant *To, unsigned NumUpdated = 0,
+                                        unsigned OperandNo = ~0u) {
+    LookupKey Lookup(CP->getType(), ValType(Operands, CP));
+    auto I = find(Lookup);
+    if (I != Map.end())
+      return I->first;
+
+    // Update to the new value.  Optimize for the case when we have a single
+    // operand that we're changing, but handle bulk updates efficiently.
+    remove(CP);
+    if (NumUpdated == 1) {
+      assert(OperandNo < CP->getNumOperands() && "Invalid index");
+      assert(CP->getOperand(OperandNo) != To && "I didn't contain From!");
+      CP->setOperand(OperandNo, To);
+    } else {
+      for (unsigned I = 0, E = CP->getNumOperands(); I != E; ++I)
+        if (CP->getOperand(I) == From)
+          CP->setOperand(I, To);
+    }
+    insert(CP);
+    return nullptr;
   }
 
   void dump() const { DEBUG(dbgs() << "Constant.cpp: ConstantUniqueMap\n"); }
