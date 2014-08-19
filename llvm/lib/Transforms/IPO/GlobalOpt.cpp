@@ -2725,7 +2725,7 @@ static int compareNames(Constant *const *A, Constant *const *B) {
 }
 
 static void setUsedInitializer(GlobalVariable &V,
-                               SmallPtrSet<GlobalValue *, 8> Init) {
+                               const SmallPtrSet<GlobalValue *, 8> &Init) {
   if (Init.empty()) {
     V.eraseFromParent();
     return;
@@ -2825,7 +2825,7 @@ static bool mayHaveOtherReferences(GlobalAlias &GA, const LLVMUsed &U) {
   return U.usedCount(&GA) || U.compilerUsedCount(&GA);
 }
 
-static bool hasUsesToReplace(GlobalAlias &GA, LLVMUsed &U, bool &RenameTarget) {
+static bool hasUsesToReplace(GlobalAlias &GA, const LLVMUsed &U,bool &RenameTarget) {
   RenameTarget = false;
   bool Ret = false;
   if (hasUseOtherThanLLVMUsed(GA, U))
