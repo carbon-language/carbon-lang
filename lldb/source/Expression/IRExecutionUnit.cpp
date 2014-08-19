@@ -295,7 +295,7 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
 
     m_module_ap->getContext().setInlineAsmDiagnosticHandler(ReportInlineAsmError, &error);
 
-    llvm::EngineBuilder builder(m_module_ap.get());
+    llvm::EngineBuilder builder(std::move(m_module_ap));
 
     builder.setEngineKind(llvm::EngineKind::JIT)
     .setErrorStr(&error_string)
@@ -325,10 +325,6 @@ IRExecutionUnit::GetRunnableInfo(Error &error,
         error.SetErrorToGenericError();
         error.SetErrorStringWithFormat("Couldn't JIT the function: %s", error_string.c_str());
         return;
-    }
-    else
-    {
-        m_module_ap.release(); // ownership was transferred
     }
 
     // Make sure we see all sections, including ones that don't have relocations...
