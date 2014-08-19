@@ -970,54 +970,7 @@ private:
 
 /// Utility class for getting and setting loop vectorizer hints in the form
 /// of loop metadata.
-/// This class keeps a number of loop annotations locally (as member variables)
-/// and can, upon request, write them back as metadata on the loop. It will
-/// initially scan the loop for existing metadata, and will update the local
-/// values based on information in the loop.
-/// We cannot write all values to metadata, as the mere presence of some info,
-/// for example 'force', means a decision has been made. So, we need to be
-/// careful NOT to add them if the user hasn't specifically asked so.
 class LoopVectorizeHints {
-  enum HintKind {
-    HK_WIDTH,
-    HK_UNROLL,
-    HK_FORCE
-  };
-
-  /// Hint - associates name and validation with the hint value.
-  struct Hint {
-    const char * Name;
-    unsigned Value; // This may have to change for non-numeric values.
-    HintKind Kind;
-
-    Hint(const char * Name, unsigned Value, HintKind Kind)
-      : Name(Name), Value(Value), Kind(Kind) { }
-
-    bool validate(unsigned Val) {
-      switch (Kind) {
-      case HK_WIDTH:
-        return isPowerOf2_32(Val) && Val <= MaxVectorWidth;
-      case HK_UNROLL:
-        return isPowerOf2_32(Val) && Val <= MaxUnrollFactor;
-      case HK_FORCE:
-        return (Val <= 1);
-      }
-      return false;
-    }
-  };
-
-  /// Vectorization width.
-  Hint Width;
-  /// Vectorization unroll factor.
-  Hint Unroll;
-  /// Vectorization forced
-  Hint Force;
-  /// Array to help iterating through all hints.
-  Hint *Hints[3] = { &Width, &Unroll, &Force };
-
-  /// Return the loop metadata prefix.
-  static StringRef Prefix() { return "llvm.loop."; }
-
 public:
   enum ForceKind {
     FK_Undefined = -1, ///< Not selected.
@@ -1026,40 +979,70 @@ public:
   };
 
   LoopVectorizeHints(const Loop *L, bool DisableUnrolling)
-      : Width("vectorize.width", VectorizationFactor, HK_WIDTH),
-        Unroll("interleave.count", DisableUnrolling, HK_UNROLL),
-        Force("vectorize.enable", FK_Undefined, HK_FORCE),
-        TheLoop(L) {
-    // Populate values with existing loop metadata.
-    getHintsFromMetadata();
-
+      : Width(VectorizationFactor),
+        Unroll(DisableUnrolling),
+        Force(FK_Undefined),
+        LoopID(L->getLoopID()) {
+    getHints(L);
     // force-vector-unroll overrides DisableUnrolling.
     if (VectorizationUnroll.getNumOccurrences() > 0)
-      Unroll.Value = VectorizationUnroll;
+      Unroll = VectorizationUnroll;
 
-    DEBUG(if (DisableUnrolling && Unroll.Value == 1) dbgs()
+    DEBUG(if (DisableUnrolling && Unroll == 1) dbgs()
           << "LV: Unrolling disabled by the pass manager\n");
   }
 
-  /// Mark the loop L as already vectorized by setting the width to 1.
-  void setAlreadyVectorized() {
-    Width.Value = Unroll.Value = 1;
-    writeHintsToMetadata({ Width, Unroll });
+  /// Return the loop metadata prefix.
+  static StringRef Prefix() { return "llvm.loop."; }
+
+  MDNode *createHint(LLVMContext &Context, StringRef Name, unsigned V) const {
+    SmallVector<Value*, 2> Vals;
+    Vals.push_back(MDString::get(Context, Name));
+    Vals.push_back(ConstantInt::get(Type::getInt32Ty(Context), V));
+    return MDNode::get(Context, Vals);
   }
 
-  /// Dumps all the hint information.
+  /// Mark the loop L as already vectorized by setting the width to 1.
+  void setAlreadyVectorized(Loop *L) {
+    LLVMContext &Context = L->getHeader()->getContext();
+
+    Width = 1;
+
+    // Create a new loop id with one more operand for the already_vectorized
+    // hint. If the loop already has a loop id then copy the existing operands.
+    SmallVector<Value*, 4> Vals(1);
+    if (LoopID)
+      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i)
+        Vals.push_back(LoopID->getOperand(i));
+
+    Vals.push_back(
+        createHint(Context, Twine(Prefix(), "vectorize.width").str(), Width));
+    Vals.push_back(
+        createHint(Context, Twine(Prefix(), "interleave.count").str(), 1));
+
+    MDNode *NewLoopID = MDNode::get(Context, Vals);
+    // Set operand 0 to refer to the loop id itself.
+    NewLoopID->replaceOperandWith(0, NewLoopID);
+
+    L->setLoopID(NewLoopID);
+    if (LoopID)
+      LoopID->replaceAllUsesWith(NewLoopID);
+
+    LoopID = NewLoopID;
+  }
+
   std::string emitRemark() const {
     Report R;
-    if (Force.Value == LoopVectorizeHints::FK_Disabled)
+    if (Force == LoopVectorizeHints::FK_Disabled)
       R << "vectorization is explicitly disabled";
     else {
       R << "use -Rpass-analysis=loop-vectorize for more info";
-      if (Force.Value == LoopVectorizeHints::FK_Enabled) {
+      if (Force == LoopVectorizeHints::FK_Enabled) {
         R << " (Force=true";
-        if (Width.Value != 0)
-          R << ", Vector Width=" << Width.Value;
-        if (Unroll.Value != 0)
-          R << ", Interleave Count=" << Unroll.Value;
+        if (Width != 0)
+          R << ", Vector Width=" << Width;
+        if (Unroll != 0)
+          R << ", Interleave Count=" << Unroll;
         R << ")";
       }
     }
@@ -1067,14 +1050,14 @@ public:
     return R.str();
   }
 
-  unsigned getWidth() const { return Width.Value; }
-  unsigned getUnroll() const { return Unroll.Value; }
-  enum ForceKind getForce() const { return (ForceKind)Force.Value; }
+  unsigned getWidth() const { return Width; }
+  unsigned getUnroll() const { return Unroll; }
+  enum ForceKind getForce() const { return Force; }
+  MDNode *getLoopID() const { return LoopID; }
 
 private:
-  /// Find hints specified in the loop metadata and update local values.
-  void getHintsFromMetadata() {
-    MDNode *LoopID = TheLoop->getLoopID();
+  /// Find hints specified in the loop metadata.
+  void getHints(const Loop *L) {
     if (!LoopID)
       return;
 
@@ -1103,91 +1086,52 @@ private:
         continue;
 
       // Check if the hint starts with the loop metadata prefix.
-      StringRef Name = S->getString();
+      StringRef Hint = S->getString();
+      if (!Hint.startswith(Prefix()))
+        continue;
+      // Remove the prefix.
+      Hint = Hint.substr(Prefix().size(), StringRef::npos);
+
       if (Args.size() == 1)
-        setHint(Name, Args[0]);
+        getHint(Hint, Args[0]);
     }
   }
 
-  /// Checks string hint with one operand and set value if valid.
-  void setHint(StringRef Name, Value *Arg) {
-    if (!Name.startswith(Prefix()))
-      return;
-    Name = Name.substr(Prefix().size(), StringRef::npos);
-
+  // Check string hint with one operand.
+  void getHint(StringRef Hint, Value *Arg) {
     const ConstantInt *C = dyn_cast<ConstantInt>(Arg);
     if (!C) return;
     unsigned Val = C->getZExtValue();
 
-    for (auto H : Hints) {
-      if (Name == H->Name) {
-        if (H->validate(Val))
-          H->Value = Val;
-        else
-          DEBUG(dbgs() << "LV: ignoring invalid hint '" << Name << "'\n");
-        break;
-      }
+    if (Hint == "vectorize.width") {
+      if (isPowerOf2_32(Val) && Val <= MaxVectorWidth)
+        Width = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid width hint metadata\n");
+    } else if (Hint == "vectorize.enable") {
+      if (C->getBitWidth() == 1)
+        Force = Val == 1 ? LoopVectorizeHints::FK_Enabled
+                         : LoopVectorizeHints::FK_Disabled;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid enable hint metadata\n");
+    } else if (Hint == "interleave.count") {
+      if (isPowerOf2_32(Val) && Val <= MaxUnrollFactor)
+        Unroll = Val;
+      else
+        DEBUG(dbgs() << "LV: ignoring invalid unroll hint metadata\n");
+    } else {
+      DEBUG(dbgs() << "LV: ignoring unknown hint " << Hint << '\n');
     }
   }
 
-  /// Create a new hint from name / value pair.
-  MDNode *createHintMetadata(StringRef Name, unsigned V) const {
-    LLVMContext &Context = TheLoop->getHeader()->getContext();
-    SmallVector<Value*, 2> Vals;
-    Vals.push_back(MDString::get(Context, Name));
-    Vals.push_back(ConstantInt::get(Type::getInt32Ty(Context), V));
-    return MDNode::get(Context, Vals);
-  }
+  /// Vectorization width.
+  unsigned Width;
+  /// Vectorization unroll factor.
+  unsigned Unroll;
+  /// Vectorization forced
+  enum ForceKind Force;
 
-  /// Matches metadata with hint name.
-  bool matchesHintMetadataName(MDNode *Node, std::vector<Hint> &HintTypes) {
-    MDString* Name = dyn_cast<MDString>(Node->getOperand(0));
-    if (!Name)
-      return false;
-
-    for (auto H : HintTypes)
-      if (Name->getName().endswith(H.Name))
-        return true;
-    return false;
-  }
-
-  /// Sets current hints into loop metadata, keeping other values intact.
-  void writeHintsToMetadata(std::vector<Hint> HintTypes) {
-    if (HintTypes.size() == 0)
-      return;
-
-    // Reserve the first element to LoopID (see below).
-    SmallVector<Value*, 4> Vals(1);
-    // If the loop already has metadata, then ignore the existing operands.
-    MDNode *LoopID = TheLoop->getLoopID();
-    if (LoopID) {
-      for (unsigned i = 1, ie = LoopID->getNumOperands(); i < ie; ++i) {
-        MDNode *Node = cast<MDNode>(LoopID->getOperand(i));
-        // If node in update list, ignore old value.
-        if (!matchesHintMetadataName(Node, HintTypes))
-          Vals.push_back(Node);
-      }
-    }
-
-    // Now, add the missing hints.
-    for (auto H : HintTypes)
-      Vals.push_back(
-          createHintMetadata(Twine(Prefix(), H.Name).str(), H.Value));
-
-    // Replace current metadata node with new one.
-    LLVMContext &Context = TheLoop->getHeader()->getContext();
-    MDNode *NewLoopID = MDNode::get(Context, Vals);
-    // Set operand 0 to refer to the loop id itself.
-    NewLoopID->replaceOperandWith(0, NewLoopID);
-
-    TheLoop->setLoopID(NewLoopID);
-    if (LoopID)
-      LoopID->replaceAllUsesWith(NewLoopID);
-    LoopID = NewLoopID;
-  }
-
-  /// The loop these hints belong to.
-  const Loop *TheLoop;
+  MDNode *LoopID;
 };
 
 static void emitMissedWarning(Function *F, Loop *L,
@@ -1449,7 +1393,7 @@ struct LoopVectorize : public FunctionPass {
     }
 
     // Mark the loop as already vectorized to avoid vectorizing again.
-    Hints.setAlreadyVectorized();
+    Hints.setAlreadyVectorized(L);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
     return true;
@@ -2551,7 +2495,7 @@ void InnerLoopVectorizer::createEmptyLoop() {
   LoopScalarBody = OldBasicBlock;
 
   LoopVectorizeHints Hints(Lp, true);
-  Hints.setAlreadyVectorized();
+  Hints.setAlreadyVectorized(Lp);
 }
 
 /// This function returns the identity element (or neutral element) for
