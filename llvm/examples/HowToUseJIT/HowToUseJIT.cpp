@@ -56,7 +56,8 @@ int main() {
   LLVMContext Context;
   
   // Create some module to put our function into it.
-  Module *M = new Module("test", Context);
+  std::unique_ptr<Module> Owner = make_unique<Module>("test", Context);
+  Module *M = Owner.get();
 
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
@@ -114,7 +115,7 @@ int main() {
   builder.CreateRet(Add1CallRes);
 
   // Now we create the JIT.
-  ExecutionEngine* EE = EngineBuilder(M).create();
+  ExecutionEngine* EE = EngineBuilder(std::move(Owner)).create();
 
   outs() << "We just constructed this LLVM module:\n\n" << *M;
   outs() << "\n\nRunning foo: ";

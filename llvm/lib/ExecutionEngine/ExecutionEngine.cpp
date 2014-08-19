@@ -49,20 +49,20 @@ void ObjectBuffer::anchor() {}
 void ObjectBufferStream::anchor() {}
 
 ExecutionEngine *(*ExecutionEngine::JITCtor)(
-  Module *M,
+  std::unique_ptr<Module> M,
   std::string *ErrorStr,
   JITMemoryManager *JMM,
   bool GVsWithCode,
   TargetMachine *TM) = nullptr;
 ExecutionEngine *(*ExecutionEngine::MCJITCtor)(
-  Module *M,
+  std::unique_ptr<Module >M,
   std::string *ErrorStr,
   RTDyldMemoryManager *MCJMM,
   TargetMachine *TM) = nullptr;
-ExecutionEngine *(*ExecutionEngine::InterpCtor)(Module *M,
+ExecutionEngine *(*ExecutionEngine::InterpCtor)(std::unique_ptr<Module> M,
                                                 std::string *ErrorStr) =nullptr;
 
-ExecutionEngine::ExecutionEngine(Module *M)
+ExecutionEngine::ExecutionEngine(std::unique_ptr<Module> M)
   : EEState(*this),
     LazyFunctionCreator(nullptr) {
   CompilingLazily         = false;
@@ -77,14 +77,12 @@ ExecutionEngine::ExecutionEngine(Module *M)
   VerifyModules = false;
 #endif
 
-  Modules.push_back(M);
   assert(M && "Module is null?");
+  Modules.push_back(std::move(M));
 }
 
 ExecutionEngine::~ExecutionEngine() {
   clearAllGlobalMappings();
-  for (unsigned i = 0, e = Modules.size(); i != e; ++i)
-    delete Modules[i];
 }
 
 namespace {
@@ -131,10 +129,10 @@ void ExecutionEngine::addArchive(std::unique_ptr<object::Archive> A) {
 }
 
 bool ExecutionEngine::removeModule(Module *M) {
-  for(SmallVectorImpl<Module *>::iterator I = Modules.begin(),
-        E = Modules.end(); I != E; ++I) {
-    Module *Found = *I;
+  for (auto I = Modules.begin(), E = Modules.end(); I != E; ++I) {
+    Module *Found = I->get();
     if (Found == M) {
+      I->release();
       Modules.erase(I);
       clearGlobalMappingsFromModule(M);
       return true;
@@ -307,10 +305,10 @@ void *ArgvArray::reset(LLVMContext &C, ExecutionEngine *EE,
   return Array;
 }
 
-void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
+void ExecutionEngine::runStaticConstructorsDestructors(Module &module,
                                                        bool isDtors) {
   const char *Name = isDtors ? "llvm.global_dtors" : "llvm.global_ctors";
-  GlobalVariable *GV = module->getNamedGlobal(Name);
+  GlobalVariable *GV = module.getNamedGlobal(Name);
 
   // If this global has internal linkage, or if it has a use, then it must be
   // an old-style (llvmgcc3) static ctor with __main linked in and in use.  If
@@ -348,8 +346,8 @@ void ExecutionEngine::runStaticConstructorsDestructors(Module *module,
 
 void ExecutionEngine::runStaticConstructorsDestructors(bool isDtors) {
   // Execute global ctors/dtors for each module in the program.
-  for (Module *M : Modules)
-    runStaticConstructorsDestructors(M, isDtors);
+  for (std::unique_ptr<Module> &M : Modules)
+    runStaticConstructorsDestructors(*M, isDtors);
 }
 
 #ifndef NDEBUG
@@ -474,10 +472,10 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
 
     ExecutionEngine *EE = nullptr;
     if (UseMCJIT && ExecutionEngine::MCJITCtor)
-      EE = ExecutionEngine::MCJITCtor(M, ErrorStr, MCJMM ? MCJMM : JMM,
-                                      TheTM.release());
+      EE = ExecutionEngine::MCJITCtor(std::move(M), ErrorStr,
+                                      MCJMM ? MCJMM : JMM, TheTM.release());
     else if (ExecutionEngine::JITCtor)
-      EE = ExecutionEngine::JITCtor(M, ErrorStr, JMM,
+      EE = ExecutionEngine::JITCtor(std::move(M), ErrorStr, JMM,
                                     AllocateGVsWithCode, TheTM.release());
 
     if (EE) {
@@ -490,7 +488,7 @@ ExecutionEngine *EngineBuilder::create(TargetMachine *TM) {
   // an interpreter instead.
   if (WhichEngine & EngineKind::Interpreter) {
     if (ExecutionEngine::InterpCtor)
-      return ExecutionEngine::InterpCtor(M, ErrorStr);
+      return ExecutionEngine::InterpCtor(std::move(M), ErrorStr);
     if (ErrorStr)
       *ErrorStr = "Interpreter has not been linked in.";
     return nullptr;

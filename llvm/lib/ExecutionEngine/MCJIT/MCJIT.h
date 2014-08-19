@@ -101,7 +101,8 @@ private:
 // called.
 
 class MCJIT : public ExecutionEngine {
-  MCJIT(Module *M, TargetMachine *tm, RTDyldMemoryManager *MemMgr);
+  MCJIT(std::unique_ptr<Module> M, TargetMachine *tm,
+        RTDyldMemoryManager *MemMgr);
 
   typedef llvm::SmallPtrSet<Module *, 4> ModulePtrSet;
 
@@ -124,8 +125,8 @@ class MCJIT : public ExecutionEngine {
     ModulePtrSet::iterator begin_finalized() { return FinalizedModules.begin(); }
     ModulePtrSet::iterator end_finalized() { return FinalizedModules.end(); }
 
-    void addModule(Module *M) {
-      AddedModules.insert(M);
+    void addModule(std::unique_ptr<Module> M) {
+      AddedModules.insert(M.release());
     }
 
     bool removeModule(Module *M) {
@@ -237,7 +238,7 @@ public:
 
   /// @name ExecutionEngine interface implementation
   /// @{
-  void addModule(Module *M) override;
+  void addModule(std::unique_ptr<Module> M) override;
   void addObjectFile(std::unique_ptr<object::ObjectFile> O) override;
   void addArchive(std::unique_ptr<object::Archive> O) override;
   bool removeModule(Module *M) override;
@@ -324,7 +325,7 @@ public:
     MCJITCtor = createJIT;
   }
 
-  static ExecutionEngine *createJIT(Module *M,
+  static ExecutionEngine *createJIT(std::unique_ptr<Module> M,
                                     std::string *ErrorStr,
                                     RTDyldMemoryManager *MemMgr,
                                     TargetMachine *TM);

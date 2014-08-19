@@ -20,9 +20,10 @@ namespace {
 
 class ExecutionEngineTest : public testing::Test {
 protected:
-  ExecutionEngineTest()
-    : M(new Module("<main>", getGlobalContext())), Error(""),
-      Engine(EngineBuilder(M).setErrorStr(&Error).create()) {
+  ExecutionEngineTest() {
+    auto Owner = make_unique<Module>("<main>", getGlobalContext());
+    M = Owner.get();
+    Engine.reset(EngineBuilder(std::move(Owner)).setErrorStr(&Error).create());
   }
 
   virtual void SetUp() {
@@ -35,9 +36,9 @@ protected:
                               GlobalValue::ExternalLinkage, nullptr, Name);
   }
 
-  Module *const M;
   std::string Error;
-  const std::unique_ptr<ExecutionEngine> Engine;
+  Module *M;  // Owned by ExecutionEngine.
+  std::unique_ptr<ExecutionEngine> Engine;
 };
 
 TEST_F(ExecutionEngineTest, ForwardGlobalMapping) {

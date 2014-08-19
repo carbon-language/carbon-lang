@@ -78,7 +78,7 @@ class JIT : public ExecutionEngine {
   BasicBlockAddressMapTy BasicBlockAddressMap;
 
 
-  JIT(Module *M, TargetMachine &tm, TargetJITInfo &tji,
+  JIT(std::unique_ptr<Module> M, TargetMachine &tm, TargetJITInfo &tji,
       JITMemoryManager *JMM, bool AllocateGVsWithCode);
 public:
   ~JIT();
@@ -91,7 +91,7 @@ public:
   ///
   TargetJITInfo &getJITInfo() const { return TJI; }
 
-  void addModule(Module *M) override;
+  void addModule(std::unique_ptr<Module> M) override;
 
   /// removeModule - Remove a Module from the list of modules.  Returns true if
   /// M is found.
@@ -167,7 +167,7 @@ public:
   ///
   JITCodeEmitter *getCodeEmitter() const { return JCE; }
 
-  static ExecutionEngine *createJIT(Module *M,
+  static ExecutionEngine *createJIT(std::unique_ptr<Module> M,
                                     std::string *ErrorStr,
                                     JITMemoryManager *JMM,
                                     bool GVsWithCode,

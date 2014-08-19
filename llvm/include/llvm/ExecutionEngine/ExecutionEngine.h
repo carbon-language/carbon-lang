@@ -18,6 +18,7 @@
 #include "llvm-c/ExecutionEngine.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/IR/ValueMap.h"
 #include "llvm/MC/MCCodeGenInfo.h"
@@ -41,7 +42,6 @@ class GlobalValue;
 class JITEventListener;
 class JITMemoryManager;
 class MachineCodeInfo;
-class Module;
 class MutexGuard;
 class ObjectCache;
 class RTDyldMemoryManager;
@@ -131,7 +131,7 @@ class ExecutionEngine {
 protected:
   /// The list of Modules that we are JIT'ing from.  We use a SmallVector to
   /// optimize for the case where there is only one module.
-  SmallVector<Module*, 1> Modules;
+  SmallVector<std::unique_ptr<Module>, 1> Modules;
 
   void setDataLayout(const DataLayout *Val) { DL = Val; }
 
@@ -142,17 +142,18 @@ protected:
   // libraries, the execution engine implementations set these functions to ctor
   // pointers at startup time if they are linked in.
   static ExecutionEngine *(*JITCtor)(
-    Module *M,
+    std::unique_ptr<Module> M,
     std::string *ErrorStr,
     JITMemoryManager *JMM,
     bool GVsWithCode,
     TargetMachine *TM);
   static ExecutionEngine *(*MCJITCtor)(
-    Module *M,
+    std::unique_ptr<Module> M,
     std::string *ErrorStr,
     RTDyldMemoryManager *MCJMM,
     TargetMachine *TM);
-  static ExecutionEngine *(*InterpCtor)(Module *M, std::string *ErrorStr);
+  static ExecutionEngine *(*InterpCtor)(std::unique_ptr<Module> M,
+                                        std::string *ErrorStr);
 
   /// LazyFunctionCreator - If an unknown function is needed, this function
   /// pointer is invoked to create it.  If this returns null, the JIT will
@@ -171,11 +172,9 @@ public:
 
   virtual ~ExecutionEngine();
 
-  /// addModule - Add a Module to the list of modules that we can JIT from.
-  /// Note that this takes ownership of the Module: when the ExecutionEngine is
-  /// destroyed, it destroys the Module as well.
-  virtual void addModule(Module *M) {
-    Modules.push_back(M);
+  /// Add a Module to the list of modules that we can JIT from.
+  virtual void addModule(std::unique_ptr<Module> M) {
+    Modules.push_back(std::move(M));
   }
 
   /// addObjectFile - Add an ObjectFile to the execution engine.
@@ -274,11 +273,11 @@ public:
   /// \param isDtors - Run the destructors instead of constructors.
   virtual void runStaticConstructorsDestructors(bool isDtors);
 
-  /// runStaticConstructorsDestructors - This method is used to execute all of
-  /// the static constructors or destructors for a particular module.
+  /// This method is used to execute all of the static constructors or
+  /// destructors for a particular module.
   ///
   /// \param isDtors - Run the destructors instead of constructors.
-  void runStaticConstructorsDestructors(Module *module, bool isDtors);
+  void runStaticConstructorsDestructors(Module &module, bool isDtors);
 
 
   /// runFunctionAsMain - This is a helper function which wraps runFunction to
@@ -506,7 +505,7 @@ public:
   }
 
 protected:
-  explicit ExecutionEngine(Module *M);
+  explicit ExecutionEngine(std::unique_ptr<Module> M);
 
   void emitGlobals();
 
@@ -526,12 +525,12 @@ namespace EngineKind {
   const static Kind Either = (Kind)(JIT | Interpreter);
 }
 
-/// EngineBuilder - Builder class for ExecutionEngines.  Use this by
-/// stack-allocating a builder, chaining the various set* methods, and
-/// terminating it with a .create() call.
+/// Builder class for ExecutionEngines. Use this by stack-allocating a builder,
+/// chaining the various set* methods, and terminating it with a .create()
+/// call.
 class EngineBuilder {
 private:
-  Module *M;
+  std::unique_ptr<Module> M;
   EngineKind::Kind WhichEngine;
   std::string *ErrorStr;
   CodeGenOpt::Level OptLevel;
@@ -551,9 +550,8 @@ private:
   void InitEngine();
 
 public:
-  /// EngineBuilder - Constructor for EngineBuilder.  If create() is called and
-  /// is successful, the created engine takes ownership of the module.
-  EngineBuilder(Module *m) : M(m) {
+  /// Constructor for EngineBuilder.
+  EngineBuilder(std::unique_ptr<Module> M) : M(std::move(M)) {
     InitEngine();
   }
 

@@ -110,7 +110,7 @@ LLVMBool LLVMCreateExecutionEngineForModule(LLVMExecutionEngineRef *OutEE,
                                             LLVMModuleRef M,
                                             char **OutError) {
   std::string Error;
-  EngineBuilder builder(unwrap(M));
+  EngineBuilder builder(std::unique_ptr<Module>(unwrap(M)));
   builder.setEngineKind(EngineKind::Either)
          .setErrorStr(&Error);
   if (ExecutionEngine *EE = builder.create()){
@@ -125,7 +125,7 @@ LLVMBool LLVMCreateInterpreterForModule(LLVMExecutionEngineRef *OutInterp,
                                         LLVMModuleRef M,
                                         char **OutError) {
   std::string Error;
-  EngineBuilder builder(unwrap(M));
+  EngineBuilder builder(std::unique_ptr<Module>(unwrap(M)));
   builder.setEngineKind(EngineKind::Interpreter)
          .setErrorStr(&Error);
   if (ExecutionEngine *Interp = builder.create()) {
@@ -141,7 +141,7 @@ LLVMBool LLVMCreateJITCompilerForModule(LLVMExecutionEngineRef *OutJIT,
                                         unsigned OptLevel,
                                         char **OutError) {
   std::string Error;
-  EngineBuilder builder(unwrap(M));
+  EngineBuilder builder(std::unique_ptr<Module>(unwrap(M)));
   builder.setEngineKind(EngineKind::JIT)
          .setErrorStr(&Error)
          .setOptLevel((CodeGenOpt::Level)OptLevel);
@@ -189,7 +189,7 @@ LLVMBool LLVMCreateMCJITCompilerForModule(
   targetOptions.EnableFastISel = options.EnableFastISel;
 
   std::string Error;
-  EngineBuilder builder(unwrap(M));
+  EngineBuilder builder(std::unique_ptr<Module>(unwrap(M)));
   builder.setEngineKind(EngineKind::JIT)
          .setErrorStr(&Error)
          .setUseMCJIT(true)
@@ -279,7 +279,7 @@ void LLVMFreeMachineCodeForFunction(LLVMExecutionEngineRef EE, LLVMValueRef F) {
 }
 
 void LLVMAddModule(LLVMExecutionEngineRef EE, LLVMModuleRef M){
-  unwrap(EE)->addModule(unwrap(M));
+  unwrap(EE)->addModule(std::unique_ptr<Module>(unwrap(M)));
 }
 
 void LLVMAddModuleProvider(LLVMExecutionEngineRef EE, LLVMModuleProviderRef MP){

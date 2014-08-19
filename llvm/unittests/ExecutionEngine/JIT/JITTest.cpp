@@ -184,15 +184,18 @@ class JITTest : public testing::Test {
   }
 
   virtual void SetUp() {
-    M = new Module("<main>", Context);
+    std::unique_ptr<Module> Owner = make_unique<Module>("<main>", Context);
+    M = Owner.get();
     RJMM = createMemoryManager();
     RJMM->setPoisonMemory(true);
     std::string Error;
     TargetOptions Options;
-    TheJIT.reset(EngineBuilder(M).setEngineKind(EngineKind::JIT)
-                 .setJITMemoryManager(RJMM)
-                 .setErrorStr(&Error)
-                 .setTargetOptions(Options).create());
+    TheJIT.reset(EngineBuilder(std::move(Owner))
+                     .setEngineKind(EngineKind::JIT)
+                     .setJITMemoryManager(RJMM)
+                     .setErrorStr(&Error)
+                     .setTargetOptions(Options)
+                     .create());
     ASSERT_TRUE(TheJIT.get() != nullptr) << Error;
   }
 
@@ -213,14 +216,15 @@ class JITTest : public testing::Test {
 // stays alive after that.
 TEST(JIT, GlobalInFunction) {
   LLVMContext context;
-  Module *M = new Module("<main>", context);
+  std::unique_ptr<Module> Owner = make_unique<Module>("<main>", context);
+  Module *M = Owner.get();
 
   JITMemoryManager *MemMgr = JITMemoryManager::CreateDefaultMemManager();
   // Tell the memory manager to poison freed memory so that accessing freed
   // memory is more easily tested.
   MemMgr->setPoisonMemory(true);
   std::string Error;
-  std::unique_ptr<ExecutionEngine> JIT(EngineBuilder(M)
+  std::unique_ptr<ExecutionEngine> JIT(EngineBuilder(std::move(Owner))
                                            .setEngineKind(EngineKind::JIT)
                                            .setErrorStr(&Error)
                                            .setJITMemoryManager(MemMgr)
@@ -638,9 +642,10 @@ ExecutionEngine *getJITFromBitcode(
     delete BitcodeBuffer;
     return nullptr;
   }
-  M = ModuleOrErr.get();
+  std::unique_ptr<Module> Owner(ModuleOrErr.get());
+  M = Owner.get();
   std::string errMsg;
-  ExecutionEngine *TheJIT = EngineBuilder(M)
+  ExecutionEngine *TheJIT = EngineBuilder(std::move(Owner))
     .setEngineKind(EngineKind::JIT)
     .setErrorStr(&errMsg)
     .create();

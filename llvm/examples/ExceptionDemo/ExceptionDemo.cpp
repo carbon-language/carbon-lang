@@ -1957,12 +1957,14 @@ int main(int argc, char *argv[]) {
   llvm::IRBuilder<> theBuilder(context);
 
   // Make the module, which holds all the code.
-  llvm::Module *module = new llvm::Module("my cool jit", context);
+  std::unique_ptr<llvm::Module> Owner =
+      llvm::make_unique<llvm::Module>("my cool jit", context);
+  llvm::Module *module = Owner.get();
 
   llvm::RTDyldMemoryManager *MemMgr = new llvm::SectionMemoryManager();
 
   // Build engine with JIT
-  llvm::EngineBuilder factory(module);
+  llvm::EngineBuilder factory(std::move(Owner));
   factory.setEngineKind(llvm::EngineKind::JIT);
   factory.setAllocateGVsWithCode(false);
   factory.setTargetOptions(Opts);

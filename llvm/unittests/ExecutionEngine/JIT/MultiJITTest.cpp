@@ -24,20 +24,20 @@ namespace {
 #if !defined(__arm__) && !defined(__powerpc__) && !defined(__s390__) \
                       && !defined(__aarch64__)
 
-bool LoadAssemblyInto(Module *M, const char *assembly) {
+std::unique_ptr<Module> loadAssembly(LLVMContext &Context,
+                                     const char *Assembly) {
   SMDiagnostic Error;
-  bool success =
-    nullptr != ParseAssemblyString(assembly, M, Error, M->getContext());
+  std::unique_ptr<Module> Ret(
+      ParseAssemblyString(Assembly, nullptr, Error, Context));
   std::string errMsg;
   raw_string_ostream os(errMsg);
   Error.print("", os);
-  EXPECT_TRUE(success) << os.str();
-  return success;
+  EXPECT_TRUE((bool)Ret) << os.str();
+  return std::move(Ret);
 }
 
-void createModule1(LLVMContext &Context1, Module *&M1, Function *&FooF1) {
-  M1 = new Module("test1", Context1);
-  LoadAssemblyInto(M1,
+std::unique_ptr<Module> createModule1(LLVMContext &Context1, Function *&FooF1) {
+  std::unique_ptr<Module> Ret =  loadAssembly(Context1,
                    "define i32 @add1(i32 %ArgX1) { "
                    "entry: "
                    "  %addresult = add i32 1, %ArgX1 "
@@ -49,12 +49,12 @@ void createModule1(LLVMContext &Context1, Module *&M1, Function *&FooF1) {
                    "  %add1 = call i32 @add1(i32 10) "
                    "  ret i32 %add1 "
                    "} ");
-  FooF1 = M1->getFunction("foo1");
+  FooF1 = Ret->getFunction("foo1");
+  return std::move(Ret);
 }
 
-void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
-  M2 = new Module("test2", Context2);
-  LoadAssemblyInto(M2,
+std::unique_ptr<Module> createModule2(LLVMContext &Context2, Function *&FooF2) {
+  std::unique_ptr<Module> Ret = loadAssembly(Context2,
                    "define i32 @add2(i32 %ArgX2) { "
                    "entry: "
                    "  %addresult = add i32 2, %ArgX2 "
@@ -66,24 +66,23 @@ void createModule2(LLVMContext &Context2, Module *&M2, Function *&FooF2) {
                    "  %add2 = call i32 @add2(i32 10) "
                    "  ret i32 %add2 "
                    "} ");
-  FooF2 = M2->getFunction("foo2");
+  FooF2 = Ret->getFunction("foo2");
+  return std::move(Ret);
 }
 
 TEST(MultiJitTest, EagerMode) {
   LLVMContext Context1;
-  Module *M1 = nullptr;
   Function *FooF1 = nullptr;
-  createModule1(Context1, M1, FooF1);
+  std::unique_ptr<Module> M1 = createModule1(Context1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = nullptr;
   Function *FooF2 = nullptr;
-  createModule2(Context2, M2, FooF2);
+  std::unique_ptr<Module> M2 = createModule2(Context2, FooF2);
 
   // Now we create the JIT in eager mode
-  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(std::move(M1)).create());
   EE1->DisableLazyCompilation(true);
-  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(std::move(M2)).create());
   EE2->DisableLazyCompilation(true);
 
   // Call the `foo' function with no arguments:
@@ -101,19 +100,17 @@ TEST(MultiJitTest, EagerMode) {
 
 TEST(MultiJitTest, LazyMode) {
   LLVMContext Context1;
-  Module *M1 = nullptr;
   Function *FooF1 = nullptr;
-  createModule1(Context1, M1, FooF1);
+  std::unique_ptr<Module> M1 = createModule1(Context1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = nullptr;
   Function *FooF2 = nullptr;
-  createModule2(Context2, M2, FooF2);
+  std::unique_ptr<Module> M2 = createModule2(Context2, FooF2);
 
   // Now we create the JIT in lazy mode
-  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(std::move(M1)).create());
   EE1->DisableLazyCompilation(false);
-  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(std::move(M2)).create());
   EE2->DisableLazyCompilation(false);
 
   // Call the `foo' function with no arguments:
@@ -135,18 +132,16 @@ extern "C" {
 
 TEST(MultiJitTest, JitPool) {
   LLVMContext Context1;
-  Module *M1 = nullptr;
   Function *FooF1 = nullptr;
-  createModule1(Context1, M1, FooF1);
+  std::unique_ptr<Module> M1 = createModule1(Context1, FooF1);
 
   LLVMContext Context2;
-  Module *M2 = nullptr;
   Function *FooF2 = nullptr;
-  createModule2(Context2, M2, FooF2);
+  std::unique_ptr<Module> M2 = createModule2(Context2, FooF2);
 
   // Now we create two JITs
-  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(M1).create());
-  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(M2).create());
+  std::unique_ptr<ExecutionEngine> EE1(EngineBuilder(std::move(M1)).create());
+  std::unique_ptr<ExecutionEngine> EE2(EngineBuilder(std::move(M2)).create());
 
   Function *F1 = EE1->FindFunctionNamed("foo1");
   void *foo1 = EE1->getPointerToFunction(F1);

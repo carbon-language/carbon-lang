@@ -114,7 +114,7 @@ protected:
 TEST_F(MCJITObjectCacheTest, SetNullObjectCache) {
   SKIP_UNSUPPORTED_PLATFORM;
 
-  createJIT(M.release());
+  createJIT(std::move(M));
 
   TheJIT->setObjectCache(nullptr);
 
@@ -130,7 +130,7 @@ TEST_F(MCJITObjectCacheTest, VerifyBasicObjectCaching) {
   // Save a copy of the module pointer before handing it off to MCJIT.
   const Module * SavedModulePointer = M.get();
 
-  createJIT(M.release());
+  createJIT(std::move(M));
 
   TheJIT->setObjectCache(Cache.get());
 
@@ -157,7 +157,7 @@ TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
   std::unique_ptr<TestObjectCache> Cache(new TestObjectCache);
 
   // Compile this module with an MCJIT engine
-  createJIT(M.release());
+  createJIT(std::move(M));
   TheJIT->setObjectCache(Cache.get());
   TheJIT->finalizeObject();
 
@@ -174,7 +174,7 @@ TEST_F(MCJITObjectCacheTest, VerifyLoadFromCache) {
   const Module * SecondModulePointer = M.get();
 
   // Create a new MCJIT instance to load this module then execute it.
-  createJIT(M.release());
+  createJIT(std::move(M));
   TheJIT->setObjectCache(Cache.get());
   compileAndRun();
 
@@ -191,7 +191,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   std::unique_ptr<TestObjectCache> Cache(new TestObjectCache);
 
   // Compile this module with an MCJIT engine
-  createJIT(M.release());
+  createJIT(std::move(M));
   TheJIT->setObjectCache(Cache.get());
   TheJIT->finalizeObject();
 
@@ -209,7 +209,7 @@ TEST_F(MCJITObjectCacheTest, VerifyNonLoadFromCache) {
   const Module * SecondModulePointer = M.get();
 
   // Create a new MCJIT instance to load this module then execute it.
-  createJIT(M.release());
+  createJIT(std::move(M));
   TheJIT->setObjectCache(Cache.get());
 
   // Verify that our object cache does not contain the module yet.

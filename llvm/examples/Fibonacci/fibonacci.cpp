@@ -96,15 +96,16 @@ int main(int argc, char **argv) {
   LLVMContext Context;
 
   // Create some module to put our function into it.
-  std::unique_ptr<Module> M(new Module("test", Context));
+  std::unique_ptr<Module> Owner(new Module("test", Context));
+  Module *M = Owner.get();
 
   // We are about to create the "fib" function:
-  Function *FibF = CreateFibFunction(M.get(), Context);
+  Function *FibF = CreateFibFunction(M, Context);
 
   // Now we going to create JIT
   std::string errStr;
   ExecutionEngine *EE =
-    EngineBuilder(M.get())
+    EngineBuilder(std::move(Owner))
     .setErrorStr(&errStr)
     .setEngineKind(EngineKind::JIT)
     .create();

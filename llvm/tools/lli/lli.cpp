@@ -346,7 +346,7 @@ static void addCygMingExtraModule(ExecutionEngine *EE,
   Triple TargetTriple(TargetTripleStr);
 
   // Create a new module.
-  Module *M = new Module("CygMingHelper", Context);
+  std::unique_ptr<Module> M = make_unique<Module>("CygMingHelper", Context);
   M->setTargetTriple(TargetTripleStr);
 
   // Create an empty function named "__main".
@@ -354,11 +354,11 @@ static void addCygMingExtraModule(ExecutionEngine *EE,
   if (TargetTriple.isArch64Bit()) {
     Result = Function::Create(
       TypeBuilder<int64_t(void), false>::get(Context),
-      GlobalValue::ExternalLinkage, "__main", M);
+      GlobalValue::ExternalLinkage, "__main", M.get());
   } else {
     Result = Function::Create(
       TypeBuilder<int32_t(void), false>::get(Context),
-      GlobalValue::ExternalLinkage, "__main", M);
+      GlobalValue::ExternalLinkage, "__main", M.get());
   }
   BasicBlock *BB = BasicBlock::Create(Context, "__main", Result);
   Builder.SetInsertPoint(BB);
@@ -370,7 +370,7 @@ static void addCygMingExtraModule(ExecutionEngine *EE,
   Builder.CreateRet(ReturnVal);
 
   // Add this new module to the ExecutionEngine.
-  EE->addModule(M);
+  EE->addModule(std::move(M));
 }
 
 
@@ -399,7 +399,8 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Load the bitcode...
   SMDiagnostic Err;
-  Module *Mod = ParseIRFile(InputFile, Err, Context);
+  std::unique_ptr<Module> Owner(ParseIRFile(InputFile, Err, Context));
+  Module *Mod = Owner.get();
   if (!Mod) {
     Err.print(argv[0], errs());
     return 1;
@@ -435,7 +436,7 @@ int main(int argc, char **argv, char * const *envp) {
   }
 
   std::string ErrorMsg;
-  EngineBuilder builder(Mod);
+  EngineBuilder builder(std::move(Owner));
   builder.setMArch(MArch);
   builder.setMCPU(MCPU);
   builder.setMAttrs(MAttrs);
@@ -512,7 +513,7 @@ int main(int argc, char **argv, char * const *envp) {
 
   // Load any additional modules specified on the command line.
   for (unsigned i = 0, e = ExtraModules.size(); i != e; ++i) {
-    Module *XMod = ParseIRFile(ExtraModules[i], Err, Context);
+    std::unique_ptr<Module> XMod(ParseIRFile(ExtraModules[i], Err, Context));
     if (!XMod) {
       Err.print(argv[0], errs());
       return 1;
@@ -525,7 +526,7 @@ int main(int argc, char **argv, char * const *envp) {
       }
       // else, we already printed a warning above.
     }
-    EE->addModule(XMod);
+    EE->addModule(std::move(XMod));
   }
 
   for (unsigned i = 0, e = ExtraObjects.size(); i != e; ++i) {

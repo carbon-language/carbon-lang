@@ -43,7 +43,7 @@ static struct RegisterJIT {
 extern "C" void LLVMLinkInMCJIT() {
 }
 
-ExecutionEngine *MCJIT::createJIT(Module *M,
+ExecutionEngine *MCJIT::createJIT(std::unique_ptr<Module> M,
                                   std::string *ErrorStr,
                                   RTDyldMemoryManager *MemMgr,
                                   TargetMachine *TM) {
@@ -52,19 +52,14 @@ ExecutionEngine *MCJIT::createJIT(Module *M,
   // FIXME: Don't do this here.
   sys::DynamicLibrary::LoadLibraryPermanently(nullptr, nullptr);
 
-  return new MCJIT(M, TM, MemMgr ? MemMgr : new SectionMemoryManager());
+  return new MCJIT(std::move(M), TM,
+                   MemMgr ? MemMgr : new SectionMemoryManager());
 }
 
-MCJIT::MCJIT(Module *m, TargetMachine *tm, RTDyldMemoryManager *MM)
-  : ExecutionEngine(m), TM(tm), Ctx(nullptr), MemMgr(this, MM), Dyld(&MemMgr),
-    ObjCache(nullptr) {
-
-  OwnedModules.addModule(m);
-  setDataLayout(TM->getSubtargetImpl()->getDataLayout());
-}
-
-MCJIT::~MCJIT() {
-  MutexGuard locked(lock);
+MCJIT::MCJIT(std::unique_ptr<Module> M, TargetMachine *tm,
+             RTDyldMemoryManager *MM)
+    : ExecutionEngine(std::move(M)), TM(tm), Ctx(nullptr), MemMgr(this, MM),
+      Dyld(&MemMgr), ObjCache(nullptr) {
   // FIXME: We are managing our modules, so we do not want the base class
   // ExecutionEngine to manage them as well. To avoid double destruction
   // of the first (and only) module added in ExecutionEngine constructor
@@ -75,7 +70,16 @@ MCJIT::~MCJIT() {
   // If so, additional functions: addModule, removeModule, FindFunctionNamed,
   // runStaticConstructorsDestructors could be moved back to EE as well.
   //
+  std::unique_ptr<Module> First = std::move(Modules[0]);
   Modules.clear();
+
+  OwnedModules.addModule(std::move(First));
+  setDataLayout(TM->getSubtargetImpl()->getDataLayout());
+}
+
+MCJIT::~MCJIT() {
+  MutexGuard locked(lock);
+
   Dyld.deregisterEHFrames();
 
   LoadedObjectList::iterator it, end;
@@ -93,9 +97,9 @@ MCJIT::~MCJIT() {
   delete TM;
 }
 
-void MCJIT::addModule(Module *M) {
+void MCJIT::addModule(std::unique_ptr<Module> M) {
   MutexGuard locked(lock);
-  OwnedModules.addModule(M);
+  OwnedModules.addModule(std::move(M));
 }
 
 bool MCJIT::removeModule(Module *M) {
@@ -389,7 +393,7 @@ void MCJIT::freeMachineCodeForFunction(Function *F) {
 void MCJIT::runStaticConstructorsDestructorsInModulePtrSet(
     bool isDtors, ModulePtrSet::iterator I, ModulePtrSet::iterator E) {
   for (; I != E; ++I) {
-    ExecutionEngine::runStaticConstructorsDestructors(*I, isDtors);
+    ExecutionEngine::runStaticConstructorsDestructors(**I, isDtors);
   }
 }
 
