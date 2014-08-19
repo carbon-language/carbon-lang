@@ -238,6 +238,7 @@ For API clients and LLVM developers.
    StackMaps
    InAlloca
    BigEndianNEON
+   CoverageMappingFormat
 
 :doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
@@ -324,6 +325,8 @@ For API clients and LLVM developers.
   LLVM's support for generating NEON instructions on big endian ARM targets is
   somewhat nonintuitive. This document explains the implementation and rationale.
 
+:doc:`CoverageMappingFormat`
+  This describes the format and encoding used for LLVM’s code coverage mapping.
 
 Development Process Documentation
 =================================
