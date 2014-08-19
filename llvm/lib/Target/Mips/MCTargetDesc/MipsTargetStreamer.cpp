@@ -56,6 +56,9 @@ void MipsTargetStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
 void MipsTargetStreamer::emitMask(unsigned CPUBitmask, int CPUTopSavedRegOff) {}
 void MipsTargetStreamer::emitFMask(unsigned FPUBitmask, int FPUTopSavedRegOff) {
 }
+void MipsTargetStreamer::emitDirectiveSetArch(StringRef Arch) {
+  forbidModuleDirective();
+}
 void MipsTargetStreamer::emitDirectiveSetMips1() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips2() { forbidModuleDirective(); }
 void MipsTargetStreamer::emitDirectiveSetMips3() { forbidModuleDirective(); }
@@ -172,6 +175,11 @@ void MipsTargetAsmStreamer::emitFrame(unsigned StackReg, unsigned StackSize,
      << StringRef(MipsInstPrinter::getRegisterName(StackReg)).lower() << ","
      << StackSize << ",$"
      << StringRef(MipsInstPrinter::getRegisterName(ReturnReg)).lower() << '\n';
+}
+
+void MipsTargetAsmStreamer::emitDirectiveSetArch(StringRef Arch) {
+  OS << "\t.set arch=" << Arch << "\n";
+  MipsTargetStreamer::emitDirectiveSetArch(Arch);
 }
 
 void MipsTargetAsmStreamer::emitDirectiveSetMips1() {
