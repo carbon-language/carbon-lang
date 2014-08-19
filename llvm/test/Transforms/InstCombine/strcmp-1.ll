@@ -15,7 +15,7 @@ define i32 @test1(i8* %str2) {
 ; CHECK-LABEL: @test1(
 ; CHECK: %strcmpload = load i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
-; CHECK: %2 = sub i32 0, %1
+; CHECK: %2 = sub nsw i32 0, %1
 ; CHECK: ret i32 %2
 
   %str1 = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0

@@ -32,7 +32,7 @@ define i32 @test3(i32 %x) nounwind {
 
 ; CHECK-LABEL: @test3(
 ; CHECK-NEXT: and i32 %x, 31
-; CHECK-NEXT: sub i32 73, %and
+; CHECK-NEXT: sub nsw i32 73, %and
 ; CHECK-NEXT: ret
 }
 

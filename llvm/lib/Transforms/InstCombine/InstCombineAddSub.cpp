@@ -956,6 +956,38 @@ bool InstCombiner::WillNotOverflowUnsignedAdd(Value *LHS, Value *RHS) {
   return false;
 }
 
+/// \brief Return true if we can prove that:
+///    (sub LHS, RHS)  === (sub nsw LHS, RHS)
+/// This basically requires proving that the add in the original type would not
+/// overflow to change the sign bit or have a carry out.
+/// TODO: Handle this for Vectors.
+bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS) {
+  // If LHS and RHS each have at least two sign bits, the subtraction
+  // cannot overflow.
+  if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
+    return true;
+
+  if (IntegerType *IT = dyn_cast<IntegerType>(LHS->getType())) {
+    unsigned BitWidth = IT->getBitWidth();
+    APInt LHSKnownZero(BitWidth, 0);
+    APInt LHSKnownOne(BitWidth, 0);
+    computeKnownBits(LHS, LHSKnownZero, LHSKnownOne);
+
+    APInt RHSKnownZero(BitWidth, 0);
+    APInt RHSKnownOne(BitWidth, 0);
+    computeKnownBits(RHS, RHSKnownZero, RHSKnownOne);
+
+    // Subtraction of two 2's compliment numbers having identical signs will
+    // never overflow.
+    if ((LHSKnownOne[BitWidth - 1] && RHSKnownOne[BitWidth - 1]) ||
+        (LHSKnownZero[BitWidth - 1] && RHSKnownZero[BitWidth - 1]))
+      return true;
+
+    // TODO: implement logic similar to checkRippleForAdd
+  }
+  return false;
+}
+
 // Checks if any operand is negative and we can convert add to sub.
 // This function checks for following negative patterns
 //   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
@@ -1623,7 +1655,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         return ReplaceInstUsesWith(I, Res);
       }
 
-  return nullptr;
+  bool Changed = false;
+  if (!I.hasNoSignedWrap() && WillNotOverflowSignedSub(Op0, Op1)) {
+    Changed = true;
+    I.setHasNoSignedWrap(true);
+  }
+
+  return Changed ? &I : nullptr;
 }
 
 Instruction *InstCombiner::visitFSub(BinaryOperator &I) {

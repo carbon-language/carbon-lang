@@ -37,7 +37,7 @@ define i32 @test_simplify3(i8* %mem1, i8* %mem2) {
 ; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
 ; CHECK: [[LOAD2:%[a-z]+]] = load i8* %mem2, align 1
 ; CHECK: [[ZEXT2:%[a-z]+]] = zext i8 [[LOAD2]] to i32
-; CHECK: [[RET:%[a-z]+]] = sub i32 [[ZEXT1]], [[ZEXT2]]
+; CHECK: [[RET:%[a-z]+]] = sub nsw i32 [[ZEXT1]], [[ZEXT2]]
   ret i32 %ret
 ; CHECK: ret i32 [[RET]]
 }

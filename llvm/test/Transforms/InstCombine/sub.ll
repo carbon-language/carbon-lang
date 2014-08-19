@@ -473,3 +473,39 @@ define i32 @test39(i32 %A, i32 %x) {
 ; CHECK: %C = add i32 %x, %A
 ; CHECK: ret i32 %C
 }
+
+define i16 @test40(i16 %a, i16 %b) {
+  %ashr = ashr i16 %a, 1
+  %ashr1 = ashr i16 %b, 1
+  %sub = sub i16 %ashr, %ashr1
+  ret i16 %sub
+; CHECK-LABEL: @test40(
+; CHECK-NEXT: [[ASHR:%.*]] = ashr i16 %a, 1
+; CHECK-NEXT: [[ASHR1:%.*]] = ashr i16 %b, 1
+; CHECK-NEXT: [[RET:%.*]] = sub nsw i16 [[ASHR]], [[ASHR1]]
+; CHECK: ret i16 [[RET]]
+}
+
+define i32 @test41(i16 %a, i16 %b) {
+  %conv = sext i16 %a to i32
+  %conv1 = sext i16 %b to i32
+  %sub = sub i32 %conv, %conv1
+  ret i32 %sub
+; CHECK-LABEL: @test41(
+; CHECK-NEXT: [[SEXT:%.*]] = sext i16 %a to i32
+; CHECK-NEXT: [[SEXT1:%.*]] = sext i16 %b to i32
+; CHECK-NEXT: [[RET:%.*]] = sub nsw i32 [[SEXT]], [[SEXT1]]
+; CHECK: ret i32 [[RET]]
+}
+
+define i4 @test42(i4 %x, i4 %y) {
+  %a = and i4 %y, 7
+  %b = and i4 %x, 7
+  %c = sub i4 %a, %b
+  ret i4 %c
+; CHECK-LABEL: @test42(
+; CHECK-NEXT: [[AND:%.*]] = and i4 %y, 7
+; CHECK-NEXT: [[AND1:%.*]] = and i4 %x, 7
+; CHECK-NEXT: [[RET:%.*]] = sub nsw i4 %a, %b
+; CHECK: ret i4 [[RET]]
+}

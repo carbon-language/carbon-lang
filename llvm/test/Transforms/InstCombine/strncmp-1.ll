@@ -15,7 +15,7 @@ define i32 @test1(i8* %str2) {
 ; CHECK-LABEL: @test1(
 ; CHECK: %strcmpload = load i8* %str
 ; CHECK: %1 = zext i8 %strcmpload to i32
-; CHECK: %2 = sub i32 0, %1
+; CHECK: %2 = sub nsw i32 0, %1
 ; CHECK: ret i32 %2
 
   %str1 = getelementptr inbounds [1 x i8]* @null, i32 0, i32 0
@@ -73,7 +73,7 @@ define i32 @test6(i8* %str1, i8* %str2) {
 ; CHECK: [[ZEXT1:%[a-z]+]] = zext i8 [[LOAD1]] to i32
 ; CHECK: [[LOAD2:%[a-z]+]] = load i8* %str2, align 1
 ; CHECK: [[ZEXT2:%[a-z]+]] = zext i8 [[LOAD2]] to i32
-; CHECK: [[RET:%[a-z]+]] = sub i32 [[ZEXT1]], [[ZEXT2]]
+; CHECK: [[RET:%[a-z]+]] = sub nsw i32 [[ZEXT1]], [[ZEXT2]]
 ; CHECK: ret i32 [[RET]]
 
   %temp1 = call i32 @strncmp(i8* %str1, i8* %str2, i32 1)
