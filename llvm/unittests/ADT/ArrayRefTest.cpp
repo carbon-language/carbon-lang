@@ -59,4 +59,8 @@ TEST(ArrayRefTest, Equals) {
   EXPECT_FALSE(AR1b.equals(3, 4, 5, 6, 7));
 }
 
+TEST(ArrayRefTest, EmptyEquals) {
+  EXPECT_TRUE(ArrayRef<unsigned>() == ArrayRef<unsigned>());
+}
+
 } // end anonymous namespace
