@@ -5,6 +5,7 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target sparc-linux-gnu \
 // RUN:   | FileCheck --check-prefix=CHECK-DEF %s
+// CHECK-DEF: "-target-feature" "+soft-float"
 // CHECK-DEF: "-msoft-float"
 //
 // -mhard-float
@@ -17,12 +18,14 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target sparc-linux-gnu -msoft-float \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT %s
+// CHECK-SOFT: "-target-feature" "+soft-float"
 // CHECK-SOFT: "-msoft-float"
 //
 // Default sparc64
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target sparc64-linux-gnu \
 // RUN:   | FileCheck --check-prefix=CHECK-DEF-SPARC64 %s
+// CHECK-DEF-SPARC64: "-target-feature" "+soft-float"
 // CHECK-DEF-SPARC64: "-msoft-float"
 //
 // -mhard-float
@@ -35,4 +38,5 @@
 // RUN: %clang -c %s -### -o %t.o 2>&1 \
 // RUN:     -target sparc64-linux-gnu -msoft-float \
 // RUN:   | FileCheck --check-prefix=CHECK-SOFT-SPARC64 %s
+// CHECK-SOFT-SPARC64: "-target-feature" "+soft-float"
 // CHECK-SOFT-SPARC64: "-msoft-float"

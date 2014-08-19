@@ -1298,7 +1298,7 @@ static std::string getR600TargetGPU(const ArgList &Args) {
 }
 
 static void getSparcTargetFeatures(const ArgList &Args,
-                                   std::vector<const char *> Features) {
+                                   std::vector<const char *> &Features) {
   bool SoftFloatABI = true;
   if (Arg *A =
           Args.getLastArg(options::OPT_msoft_float, options::OPT_mhard_float)) {
@@ -1801,6 +1801,7 @@ static void getTargetFeatures(const Driver &D, const llvm::Triple &Triple,
     getPPCTargetFeatures(Args, Features);
     break;
   case llvm::Triple::sparc:
+  case llvm::Triple::sparcv9:
     getSparcTargetFeatures(Args, Features);
     break;
   case llvm::Triple::aarch64:
