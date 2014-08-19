@@ -1,6 +1,6 @@
 BasedOnStyle: LLVM
 IndentWidth:     4
-ColumnLimit:     120
+ColumnLimit:     140
 BreakBeforeBraces: Allman
 AlwaysBreakAfterDefinitionReturnType: true
 AllowShortFunctionsOnASingleLine: Inline
