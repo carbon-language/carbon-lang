@@ -204,6 +204,11 @@ static cl::opt<bool> EnableCondStoresVectorization(
     "enable-cond-stores-vec", cl::init(false), cl::Hidden,
     cl::desc("Enable if predication of stores during vectorization."));
 
+static cl::opt<unsigned> MaxNestedScalarReductionUF(
+    "max-nested-scalar-reduction-unroll", cl::init(2), cl::Hidden,
+    cl::desc("The maximum unroll factor to use when unrolling a scalar "
+             "reduction in a nested loop."));
+
 namespace {
 
 // Forward declarations.
@@ -5545,6 +5550,18 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
     // saturated.
     unsigned StoresUF = UF / (Legal->NumStores ? Legal->NumStores : 1);
     unsigned LoadsUF = UF /  (Legal->NumLoads ? Legal->NumLoads : 1);
+
+    // If we have a scalar reduction (vector reductions are already dealt with
+    // by this point), we can increase the critical path length if the loop
+    // we're unrolling is inside another loop. Limit, by default to 2, so the
+    // critical path only gets increased by one reduction operation.
+    if (Legal->getReductionVars()->size() &&
+        TheLoop->getLoopDepth() > 1) {
+      unsigned F = static_cast<unsigned>(MaxNestedScalarReductionUF);
+      SmallUF = std::min(SmallUF, F);
+      StoresUF = std::min(StoresUF, F);
+      LoadsUF = std::min(LoadsUF, F);
+    }
 
     if (EnableLoadStoreRuntimeUnroll && std::max(StoresUF, LoadsUF) > SmallUF) {
       DEBUG(dbgs() << "LV: Unrolling to saturate store or load ports.\n");
