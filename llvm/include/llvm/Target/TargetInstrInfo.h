@@ -321,6 +321,28 @@ public:
   getExtractSubregInputs(const MachineInstr &MI, unsigned DefIdx,
                          RegSubRegPairAndIdx &InputReg) const;
 
+  /// Build the equivalent inputs of a INSERT_SUBREG for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] BaseReg and \p [out] InsertedReg contain
+  /// the equivalent inputs of INSERT_SUBREG.
+  /// E.g., INSERT_SUBREG vreg0:sub0, vreg1:sub1, sub3 would produce:
+  /// - BaseReg: vreg0:sub0
+  /// - InsertedReg: vreg1:sub1, sub3
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isInsertSubreg() or MI.isInsertSubregLike().
+  ///
+  /// \note The generic implementation does not provide any support for
+  /// MI.isInsertSubregLike(). In other words, one has to override
+  /// getInsertSubregLikeInputs for target specific instructions.
+  bool
+  getInsertSubregInputs(const MachineInstr &MI, unsigned DefIdx,
+                        RegSubRegPair &BaseReg,
+                        RegSubRegPairAndIdx &InsertedReg) const;
+
+
   /// produceSameValue - Return true if two machine instructions would produce
   /// identical values. By default, this is only true when the two instructions
   /// are deemed identical except for defs. If this function is called when the
@@ -714,6 +736,21 @@ protected:
   virtual bool getExtractSubregLikeInputs(
       const MachineInstr &MI, unsigned DefIdx,
       RegSubRegPairAndIdx &InputReg) const {
+    return false;
+  }
+
+  /// \brief Target-dependent implementation of getInsertSubregInputs.
+  ///
+  /// \returns true if it is possible to build the equivalent
+  /// INSERT_SUBREG inputs with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isInsertSubregLike().
+  ///
+  /// \see TargetInstrInfo::getInsertSubregInputs.
+  virtual bool
+  getInsertSubregLikeInputs(const MachineInstr &MI, unsigned DefIdx,
+                            RegSubRegPair &BaseReg,
+                            RegSubRegPairAndIdx &InsertedReg) const {
     return false;
   }
 

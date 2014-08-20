@@ -127,7 +127,8 @@ namespace MCID {
     ExtraSrcRegAllocReq,
     ExtraDefRegAllocReq,
     RegSequence,
-    ExtractSubreg
+    ExtractSubreg,
+    InsertSubreg
   };
 }
 
@@ -384,6 +385,20 @@ public:
   /// override accordingly.
   bool isExtractSubregLike() const {
     return Flags & (1 << MCID::ExtractSubreg);
+  }
+
+  /// \brief Return true if this instruction behaves
+  /// the same way as the generic INSERT_SUBREG instructions.
+  /// E.g., on ARM,
+  /// dX = VSETLNi32 dY, rZ, Imm
+  /// is equivalent to a INSERT_SUBREG:
+  /// dX = INSERT_SUBREG dY, rZ, translateImmToSubIdx(Imm)
+  ///
+  /// Note that for the optimizers to be able to take advantage of
+  /// this property, TargetInstrInfo::getInsertSubregLikeInputs has to be
+  /// override accordingly.
+  bool isInsertSubregLike() const {
+    return Flags & (1 << MCID::InsertSubreg);
   }
 
   //===--------------------------------------------------------------------===//

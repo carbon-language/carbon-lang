@@ -387,6 +387,9 @@ class Instruction {
   bit isExtractSubreg = 0;  // Is this instruction a kind of extract subreg?
                              // If so, make sure to override
                              // TargetInstrInfo::getExtractSubregLikeInputs.
+  bit isInsertSubreg = 0;   // Is this instruction a kind of insert subreg?
+                            // If so, make sure to override
+                            // TargetInstrInfo::getInsertSubregLikeInputs.
 
   // Side effect flags - When set, the flags have these meanings:
   //
