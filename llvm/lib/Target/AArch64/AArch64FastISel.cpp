@@ -291,7 +291,7 @@ unsigned AArch64FastISel::AArch64MaterializeFP(const ConstantFP *CFP, MVT VT) {
     // register, because the immediate version of fmov cannot encode zero.
     if (Val.isPosZero()) {
       unsigned ZReg = Is64Bit ? AArch64::XZR : AArch64::WZR;
-      unsigned Opc = Is64Bit ? AArch64::FMOVDr : AArch64::FMOVSr;
+      unsigned Opc = Is64Bit ? AArch64::FMOVXDr : AArch64::FMOVWSr;
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DbgLoc, TII.get(Opc), ResultReg)
         .addReg(ZReg, getKillRegState(true));
       return ResultReg;
