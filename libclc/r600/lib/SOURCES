@@ -7,4 +7,3 @@ workitem/get_local_id.ll
 workitem/get_global_size.ll
 synchronization/barrier.cl
 synchronization/barrier_impl.ll
-shared/vload.cl

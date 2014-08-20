@@ -3,30 +3,29 @@
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable
 
 #define VSTORE_VECTORIZE(PRIM_TYPE, ADDR_SPACE) \
+  typedef PRIM_TYPE##2 less_aligned_##ADDR_SPACE##PRIM_TYPE##2 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF void vstore2(PRIM_TYPE##2 vec, size_t offset, ADDR_SPACE PRIM_TYPE *mem) { \
-    mem[2*offset] = vec.s0; \
-    mem[2*offset+1] = vec.s1; \
+    *((ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##2*) (&mem[2*offset])) = vec; \
   } \
 \
   _CLC_OVERLOAD _CLC_DEF void vstore3(PRIM_TYPE##3 vec, size_t offset, ADDR_SPACE PRIM_TYPE *mem) { \
-    mem[3*offset] = vec.s0; \
-    mem[3*offset+1] = vec.s1; \
-    mem[3*offset+2] = vec.s2; \
+    *((ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##2*) (&mem[3*offset])) = (PRIM_TYPE##2)(vec.s0, vec.s1); \
+    mem[3 * offset + 2] = vec.s2;\
   } \
 \
+  typedef PRIM_TYPE##4 less_aligned_##ADDR_SPACE##PRIM_TYPE##4 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF void vstore4(PRIM_TYPE##4 vec, size_t offset, ADDR_SPACE PRIM_TYPE *mem) { \
-    vstore2(vec.lo, 0, &mem[offset*4]); \
-    vstore2(vec.hi, 1, &mem[offset*4]); \
+    *((ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##4*) (&mem[4*offset])) = vec; \
   } \
 \
+  typedef PRIM_TYPE##8 less_aligned_##ADDR_SPACE##PRIM_TYPE##8 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF void vstore8(PRIM_TYPE##8 vec, size_t offset, ADDR_SPACE PRIM_TYPE *mem) { \
-    vstore4(vec.lo, 0, &mem[offset*8]); \
-    vstore4(vec.hi, 1, &mem[offset*8]); \
+    *((ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##8*) (&mem[8*offset])) = vec; \
   } \
 \
+  typedef PRIM_TYPE##16 less_aligned_##ADDR_SPACE##PRIM_TYPE##16 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF void vstore16(PRIM_TYPE##16 vec, size_t offset, ADDR_SPACE PRIM_TYPE *mem) { \
-    vstore8(vec.lo, 0, &mem[offset*16]); \
-    vstore8(vec.hi, 1, &mem[offset*16]); \
+    *((ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##16*) (&mem[16*offset])) = vec; \
   } \
 
 #define VSTORE_ADDR_SPACES(__CLC_SCALAR___CLC_GENTYPE) \

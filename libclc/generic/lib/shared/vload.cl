@@ -1,24 +1,30 @@
 #include <clc/clc.h>
 
 #define VLOAD_VECTORIZE(PRIM_TYPE, ADDR_SPACE) \
+  typedef PRIM_TYPE##2 less_aligned_##ADDR_SPACE##PRIM_TYPE##2 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF PRIM_TYPE##2 vload2(size_t offset, const ADDR_SPACE PRIM_TYPE *x) { \
-    return (PRIM_TYPE##2)(x[2*offset] , x[2*offset+1]); \
+    return *((const ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##2*) (&x[2*offset])); \
   } \
 \
+  typedef PRIM_TYPE##3 less_aligned_##ADDR_SPACE##PRIM_TYPE##3 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF PRIM_TYPE##3 vload3(size_t offset, const ADDR_SPACE PRIM_TYPE *x) { \
-    return (PRIM_TYPE##3)(x[3*offset] , x[3*offset+1], x[3*offset+2]); \
+    PRIM_TYPE##2 vec = *((const ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##2*) (&x[3*offset])); \
+    return (PRIM_TYPE##3)(vec.s0, vec.s1, x[offset*3+2]); \
   } \
 \
+  typedef PRIM_TYPE##4 less_aligned_##ADDR_SPACE##PRIM_TYPE##4 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF PRIM_TYPE##4 vload4(size_t offset, const ADDR_SPACE PRIM_TYPE *x) { \
-    return (PRIM_TYPE##4)(x[4*offset], x[4*offset+1], x[4*offset+2], x[4*offset+3]); \
+    return *((const ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##4*) (&x[4*offset])); \
   } \
 \
+  typedef PRIM_TYPE##8 less_aligned_##ADDR_SPACE##PRIM_TYPE##8 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF PRIM_TYPE##8 vload8(size_t offset, const ADDR_SPACE PRIM_TYPE *x) { \
-    return (PRIM_TYPE##8)(vload4(0, &x[8*offset]), vload4(1, &x[8*offset])); \
+    return *((const ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##8*) (&x[8*offset])); \
   } \
 \
+  typedef PRIM_TYPE##16 less_aligned_##ADDR_SPACE##PRIM_TYPE##16 __attribute__ ((aligned (sizeof(PRIM_TYPE))));\
   _CLC_OVERLOAD _CLC_DEF PRIM_TYPE##16 vload16(size_t offset, const ADDR_SPACE PRIM_TYPE *x) { \
-    return (PRIM_TYPE##16)(vload8(0, &x[16*offset]), vload8(1, &x[16*offset])); \
+    return *((const ADDR_SPACE less_aligned_##ADDR_SPACE##PRIM_TYPE##16*) (&x[16*offset])); \
   } \
 
 #define VLOAD_ADDR_SPACES(__CLC_SCALAR_GENTYPE) \

@@ -57,8 +57,6 @@ shared/clamp.cl
 shared/max.cl
 shared/min.cl
 shared/vload.cl
-shared/vload_impl.ll
 shared/vstore.cl
-shared/vstore_impl.ll
 workitem/get_global_id.cl
 workitem/get_global_size.cl
