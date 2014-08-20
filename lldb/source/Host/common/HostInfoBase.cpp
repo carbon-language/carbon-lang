@@ -22,85 +22,86 @@
 using namespace lldb;
 using namespace lldb_private;
 
-uint32_t HostInfoBase::m_number_cpus = 0;
-std::string HostInfoBase::m_vendor_string;
-std::string HostInfoBase::m_os_string;
-std::string HostInfoBase::m_host_triple;
-ArchSpec HostInfoBase::m_host_arch_32;
-ArchSpec HostInfoBase::m_host_arch_64;
 
 uint32_t
 HostInfoBase::GetNumberCPUS()
 {
     static bool is_initialized = false;
+    uint32_t g_number_cpus = 0;
     if (!is_initialized)
     {
-        m_number_cpus = std::thread::hardware_concurrency();
+        g_number_cpus = std::thread::hardware_concurrency();
         is_initialized = true;
     }
 
-    return m_number_cpus;
+    return g_number_cpus;
 }
 
 llvm::StringRef
 HostInfoBase::GetVendorString()
 {
     static bool is_initialized = false;
+    std::string g_vendor_string;
     if (!is_initialized)
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
         const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
-        m_vendor_string.assign(str_ref.begin(), str_ref.end());
+        g_vendor_string.assign(str_ref.begin(), str_ref.end());
         is_initialized = true;
     }
-    return m_vendor_string;
+    return llvm::StringRef(g_vendor_string);
 }
 
 llvm::StringRef
 HostInfoBase::GetOSString()
 {
     static bool is_initialized = false;
+    std::string g_os_string;
     if (!is_initialized)
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
         const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
-        m_os_string.assign(str_ref.begin(), str_ref.end());
+        g_os_string.assign(str_ref.begin(), str_ref.end());
         is_initialized = true;
     }
-    return m_os_string;
+    return llvm::StringRef(g_os_string);
 }
 
 llvm::StringRef
 HostInfoBase::GetTargetTriple()
 {
     static bool is_initialized = false;
+    std::string g_host_triple;
     if (!is_initialized)
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
-        m_host_triple = host_arch.GetTriple().getTriple();
+        g_host_triple = host_arch.GetTriple().getTriple();
         is_initialized = true;
     }
-    return m_host_triple;
+    return g_host_triple;
 }
 
 const ArchSpec &
 HostInfoBase::GetArchitecture(ArchitectureKind arch_kind)
 {
     static bool is_initialized = false;
+    static ArchSpec g_host_arch_32;
+    static ArchSpec g_host_arch_64;
+
     if (!is_initialized)
     {
-        HostInfo::ComputeHostArchitectureSupport(m_host_arch_32, m_host_arch_64);
+        HostInfo::ComputeHostArchitectureSupport(g_host_arch_32, g_host_arch_64);
         is_initialized = true;
     }
 
     // If an explicit 32 or 64-bit architecture was requested, return that.
     if (arch_kind == eArchKind32)
-        return m_host_arch_32;
+        return g_host_arch_32;
     if (arch_kind == eArchKind64)
-        return m_host_arch_64;
+        return g_host_arch_64;
 
     // Otherwise prefer the 64-bit architecture if it is valid.
-    return (m_host_arch_64.IsValid()) ? m_host_arch_64 : m_host_arch_32;
+    return (g_host_arch_64.IsValid()) ? g_host_arch_64 : g_host_arch_32;
 }
 
 void

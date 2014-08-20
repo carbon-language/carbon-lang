@@ -80,14 +80,6 @@ class HostInfoBase
 
   protected:
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
-
-    static uint32_t m_number_cpus;
-    static std::string m_vendor_string;
-    static std::string m_os_string;
-    static std::string m_host_triple;
-
-    static ArchSpec m_host_arch_32;
-    static ArchSpec m_host_arch_64;
 };
 }
 
