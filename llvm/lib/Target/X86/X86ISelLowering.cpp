@@ -2052,6 +2052,13 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
        UI != UE; ++UI) {
     if (UI->getOpcode() != X86ISD::RET_FLAG)
       return false;
+    // If we are returning more than one value, we can definitely
+    // not make a tail call see PR19530
+    if (UI->getNumOperands() > 4)
+      return false;
+    if (UI->getNumOperands() == 4 &&
+        UI->getOperand(UI->getNumOperands()-1).getValueType() != MVT::Glue)
+      return false;
     HasRet = true;
   }
 
