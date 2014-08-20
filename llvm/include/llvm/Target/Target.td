@@ -386,7 +386,7 @@ class Instruction {
                             // the [MC]CodeEmitter stuff.
   bit isExtractSubreg = 0;  // Is this instruction a kind of extract subreg?
                              // If so, make sure to override
-                             // TargetInstrInfo::getExtractSubregInputs.
+                             // TargetInstrInfo::getExtractSubregLikeInputs.
 
   // Side effect flags - When set, the flags have these meanings:
   //
