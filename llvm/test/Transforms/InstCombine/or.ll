@@ -480,3 +480,29 @@ define i32 @test45(i32 %x, i32 %y, i32 %z) {
   %or1 = or i32 %and, %y
   ret i32 %or1
 }
+
+define i1 @test46(i8 signext %c)  {
+  %c.off = add i8 %c, -97
+  %cmp1 = icmp ult i8 %c.off, 26
+  %c.off17 = add i8 %c, -65
+  %cmp2 = icmp ult i8 %c.off17, 26
+  %or = or i1 %cmp1, %cmp2
+  ret i1 %or
+; CHECK-LABEL: @test46(
+; CHECK-NEXT:  and i8 %c, -33
+; CHECK-NEXT:  add i8 %1, -65
+; CHECK-NEXT:  icmp ult i8 %2, 26
+}
+
+define i1 @test47(i8 signext %c)  {
+  %c.off = add i8 %c, -65
+  %cmp1 = icmp ule i8 %c.off, 26
+  %c.off17 = add i8 %c, -97
+  %cmp2 = icmp ule i8 %c.off17, 26
+  %or = or i1 %cmp1, %cmp2
+  ret i1 %or
+; CHECK-LABEL: @test47(
+; CHECK-NEXT:  and i8 %c, -33
+; CHECK-NEXT:  add i8 %1, -65
+; CHECK-NEXT:  icmp ult i8 %2, 27
+}
