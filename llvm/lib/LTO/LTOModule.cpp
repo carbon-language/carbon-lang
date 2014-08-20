@@ -104,7 +104,7 @@ LTOModule *LTOModule::createFromOpenFileSlice(int fd, const char *path,
 LTOModule *LTOModule::createFromBuffer(const void *mem, size_t length,
                                        TargetOptions options,
                                        std::string &errMsg, StringRef path) {
-  StringRef Data((char *)mem, length);
+  StringRef Data((const char *)mem, length);
   MemoryBufferRef Buffer(Data, path);
   return makeLTOModule(Buffer, options, errMsg);
 }
