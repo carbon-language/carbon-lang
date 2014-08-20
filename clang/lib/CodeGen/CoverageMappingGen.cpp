@@ -836,6 +836,7 @@ struct CounterCoverageMappingBuilder
     // Counter tracks the body of the loop.
     RegionMapper Cnt(this, S);
     BreakContinueStack.push_back(BreakContinue());
+    Cnt.beginRegion();
     VisitSubStmtRBraceState(S->getBody());
     BreakContinue BC = BreakContinueStack.pop_back_val();
     Cnt.adjustForControlFlow();
