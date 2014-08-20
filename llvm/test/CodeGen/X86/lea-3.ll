@@ -1,4 +1,6 @@
 ; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-nacl | FileCheck %s
 ; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
 
 ; CHECK: leaq (,[[A0:%rdi|%rcx]],4), %rax

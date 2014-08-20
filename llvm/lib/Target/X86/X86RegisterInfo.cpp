@@ -489,6 +489,12 @@ X86RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   else
     BasePtr = (TFI->hasFP(MF) ? FramePtr : StackPtr);
 
+  // For LEA64_32r when BasePtr is 32-bits (X32) we can use full-size 64-bit
+  // register as source operand, semantic is the same and destination is
+  // 32-bits. It saves one byte per lea in code since 0x67 prefix is avoided.
+  if (Opc == X86::LEA64_32r && X86::GR32RegClass.contains(BasePtr))
+    BasePtr = getX86SubSuperRegister(BasePtr, MVT::i64, false);
+
   // This must be part of a four operand memory reference.  Replace the
   // FrameIndex with base register with EBP.  Add an offset to the offset.
   MI.getOperand(FIOperandNum).ChangeToRegister(BasePtr, false);

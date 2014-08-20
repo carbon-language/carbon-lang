@@ -1,5 +1,7 @@
 ; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
 ; RUN: llc < %s -mtriple=x86_64-win32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-nacl | FileCheck %s
 
 define i32 @test1(i32 %x) nounwind {
         %tmp1 = shl i32 %x, 3

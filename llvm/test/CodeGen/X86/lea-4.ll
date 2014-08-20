@@ -1,4 +1,7 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux-gnux32 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-nacl | FileCheck %s
+
 
 define zeroext i16 @t1(i32 %on_off) nounwind {
 entry:
