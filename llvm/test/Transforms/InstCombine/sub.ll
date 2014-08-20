@@ -506,6 +506,18 @@ define i4 @test42(i4 %x, i4 %y) {
 ; CHECK-LABEL: @test42(
 ; CHECK-NEXT: [[AND:%.*]] = and i4 %y, 7
 ; CHECK-NEXT: [[AND1:%.*]] = and i4 %x, 7
-; CHECK-NEXT: [[RET:%.*]] = sub nsw i4 %a, %b
+; CHECK-NEXT: [[RET:%.*]] = sub nsw i4 [[AND]], [[AND1]]
+; CHECK: ret i4 [[RET]]
+}
+
+define i4 @test43(i4 %x, i4 %y) {
+  %a = or i4 %x, -8
+  %b = and i4 %y, 7
+  %c = sub i4 %a, %b
+  ret i4 %c
+; CHECK-LABEL: @test43(
+; CHECK-NEXT: [[OR:%.*]] = or i4 %x, -8
+; CHECK-NEXT: [[AND:%.*]] = and i4 %y, 7
+; CHECK-NEXT: [[RET:%.*]] = sub nuw i4 [[OR]], [[AND]]
 ; CHECK: ret i4 [[RET]]
 }

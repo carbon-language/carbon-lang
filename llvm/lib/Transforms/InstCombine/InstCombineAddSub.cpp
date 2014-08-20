@@ -988,6 +988,20 @@ bool InstCombiner::WillNotOverflowSignedSub(Value *LHS, Value *RHS) {
   return false;
 }
 
+/// \brief Return true if we can prove that:
+///    (sub LHS, RHS)  === (sub nuw LHS, RHS)
+bool InstCombiner::WillNotOverflowUnsignedSub(Value *LHS, Value *RHS) {
+  // If the LHS is negative and the RHS is non-negative, no unsigned wrap.
+  bool LHSKnownNonNegative, LHSKnownNegative;
+  bool RHSKnownNonNegative, RHSKnownNegative;
+  ComputeSignBit(LHS, LHSKnownNonNegative, LHSKnownNegative, DL, 0);
+  ComputeSignBit(RHS, RHSKnownNonNegative, RHSKnownNegative, DL, 0);
+  if (LHSKnownNegative && RHSKnownNonNegative)
+    return true;
+
+  return false;
+}
+
 // Checks if any operand is negative and we can convert add to sub.
 // This function checks for following negative patterns
 //   ADD(XOR(OR(Z, NOT(C)), C)), 1) == NEG(AND(Z, C))
@@ -1659,6 +1673,10 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   if (!I.hasNoSignedWrap() && WillNotOverflowSignedSub(Op0, Op1)) {
     Changed = true;
     I.setHasNoSignedWrap(true);
+  }
+  if (!I.hasNoUnsignedWrap() && WillNotOverflowUnsignedSub(Op0, Op1)) {
+    Changed = true;
+    I.setHasNoUnsignedWrap(true);
   }
 
   return Changed ? &I : nullptr;
