@@ -13,8 +13,8 @@ include $(CLANG_LEVEL)/../../Makefile.config
 
 PARALLEL_DIRS := remove-cstr-calls tool-template modularize \
  module-map-checker pp-trace
-DIRS := clang-apply-replacements clang-modernize clang-tidy clang-query \
-	unittests
+DIRS := clang-apply-replacements clang-modernize clang-rename clang-tidy \
+	clang-query unittests
 
 include $(CLANG_LEVEL)/Makefile
 

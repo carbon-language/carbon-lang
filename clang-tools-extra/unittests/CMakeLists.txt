@@ -7,5 +7,6 @@ endfunction()
 
 add_subdirectory(clang-apply-replacements)
 add_subdirectory(clang-modernize)
+add_subdirectory(clang-rename)
 add_subdirectory(clang-query)
 add_subdirectory(clang-tidy)
