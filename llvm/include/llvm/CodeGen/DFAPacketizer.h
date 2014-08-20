@@ -107,9 +107,7 @@ protected:
   std::map<MachineInstr*, SUnit*> MIToSUnit;
 
 public:
-  VLIWPacketizerList(
-    MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
-    bool IsPostRA);
+  VLIWPacketizerList(MachineFunction &MF, MachineLoopInfo &MLI, bool IsPostRA);
 
   virtual ~VLIWPacketizerList();
 

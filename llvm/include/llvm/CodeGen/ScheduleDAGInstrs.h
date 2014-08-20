@@ -76,7 +76,6 @@ namespace llvm {
   class ScheduleDAGInstrs : public ScheduleDAG {
   protected:
     const MachineLoopInfo *MLI;
-    const MachineDominatorTree *MDT;
     const MachineFrameInfo *MFI;
 
     /// Live Intervals provides reaching defs in preRA scheduling.
@@ -155,7 +154,6 @@ namespace llvm {
   public:
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo *mli,
-                               const MachineDominatorTree *mdt,
                                bool IsPostRAFlag,
                                bool RemoveKillFlags = false,
                                LiveIntervals *LIS = nullptr);
