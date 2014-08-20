@@ -16,6 +16,8 @@ declare void @custom1(i32 %a, i32 %b)
 
 declare i32 @custom2(i32 %a, i32 %b)
 
+declare void @custom3(...)
+
 declare void @customcb(i32 (i32)* %cb)
 
 declare i32 @cb(i32)
@@ -32,6 +34,10 @@ define void @f() {
 
   ; CHECK: call void @__dfsw_customcb({{.*}} @"dfst0$customcb", i8* bitcast ({{.*}} @"dfs$cb" to i8*), i16 0)
   call void @customcb(i32 (i32)* @cb)
+
+  ; CHECK: call void @__dfsan_unimplemented
+  ; CHECK: call void (...)* @custom3()
+  call void (...)* @custom3()
 
   ret void
 }

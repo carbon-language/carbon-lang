@@ -476,7 +476,7 @@ DataFlowSanitizer::WrapperKind DataFlowSanitizer::getWrapperKind(Function *F) {
     return WK_Functional;
   if (ABIList.isIn(*F, "discard"))
     return WK_Discard;
-  if (ABIList.isIn(*F, "custom"))
+  if (ABIList.isIn(*F, "custom") && !F->isVarArg())
     return WK_Custom;
 
   return WK_Warning;
