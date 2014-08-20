@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.IdenticalExpr -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core.IdenticalExpr -w -verify %s
 
 /* Only one expected warning per function allowed at the very end. */
 
@@ -1520,13 +1520,13 @@ void test_nowarn_wchar() {
 }
 
 void test_nowarn_long() {
-  int a =0, b = 0;
+  int a = 0, b = 0;
   long c;
   if (0) {
     b -= a;
     c = 0;
   } else { // no-warning
     b -= a;
-    c = 0xFFFFFFFFFFFFFFFF;
+    c = 0LL;
   }
 }
