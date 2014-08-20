@@ -72,13 +72,13 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
         OutStr.erase(OutStr.begin()+i, OutStr.begin()+Idx);
         --i;
       } else if (ColNum == MaxColumns) {                  // Wrap lines.
-        if (LastSpace) {
-          OutStr.insert(LastSpace, "\\l...");
-          ColNum = i - LastSpace;
-          LastSpace = 0;
-          i += 3; // The loop will advance 'i' again.
-        }
-        // Else keep trying to find a space.
+        // Wrap very long names even though we can't find a space.
+        if (!LastSpace)
+          LastSpace = i;
+        OutStr.insert(LastSpace, "\\l...");
+        ColNum = i - LastSpace;
+        LastSpace = 0;
+        i += 3; // The loop will advance 'i' again.
       }
       else
         ++ColNum;
