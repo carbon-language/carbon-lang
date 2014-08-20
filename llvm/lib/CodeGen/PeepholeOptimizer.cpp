@@ -46,7 +46,7 @@
 //     if it loads to virtual registers and the virtual register defined has 
 //     a single use.
 //
-// - Optimize Copies and Bitcast:
+// - Optimize Copies and Bitcast (more generally, target specific copies):
 //
 //     Rewrite copies and bitcasts to avoid cross register bank copies
 //     when possible.
@@ -79,6 +79,7 @@
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
+#include <utility>
 using namespace llvm;
 
 #define DEBUG_TYPE "peephole-opt"
@@ -101,7 +102,8 @@ STATISTIC(NumCmps,       "Number of compares eliminated");
 STATISTIC(NumImmFold,    "Number of move immediate folded");
 STATISTIC(NumLoadFold,   "Number of loads folded");
 STATISTIC(NumSelects,    "Number of selects optimized");
-STATISTIC(NumCopiesBitcasts, "Number of copies/bitcasts optimized");
+STATISTIC(NumUncoalescableCopies, "Number of uncoalescable copies optimized");
+STATISTIC(NumRewrittenCopies, "Number of copies rewritten");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
@@ -133,6 +135,10 @@ namespace {
                           SmallPtrSetImpl<MachineInstr*> &LocalMIs);
     bool optimizeSelect(MachineInstr *MI);
     bool optimizeCopyOrBitcast(MachineInstr *MI);
+    bool optimizeCoalescableCopy(MachineInstr *MI);
+    bool optimizeUncoalescableCopy(MachineInstr *MI,
+                                   SmallPtrSetImpl<MachineInstr *> &LocalMIs);
+    bool findNextSource(unsigned &Reg, unsigned &SubReg);
     bool isMoveImmediate(MachineInstr *MI,
                          SmallSet<unsigned, 4> &ImmDefRegs,
                          DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
@@ -141,6 +147,23 @@ namespace {
                        DenseMap<unsigned, MachineInstr*> &ImmDefMIs);
     bool isLoadFoldable(MachineInstr *MI,
                         SmallSet<unsigned, 16> &FoldAsLoadDefCandidates);
+
+    /// \brief Check whether \p MI is understood by the register coalescer
+    /// but may require some rewriting.
+    bool isCoalescableCopy(const MachineInstr &MI) {
+      // SubregToRegs are not interesting, because they are already register
+      // coalescer friendly.
+      return MI.isCopy() || (!DisableAdvCopyOpt &&
+                             (MI.isRegSequence() || MI.isInsertSubreg() ||
+                              MI.isExtractSubreg()));
+    }
+
+    /// \brief Check whether \p MI is a copy like instruction that is
+    /// not recognized by the register coalescer.
+    bool isUncoalescableCopy(const MachineInstr &MI) {
+      return MI.isBitcast() || (!DisableAdvCopyOpt &&
+                                MI.isRegSequenceLike());
+    }
   };
 
   /// \brief Helper class to track the possible sources of a value defined by
@@ -177,63 +200,87 @@ namespace {
     /// the ValueTracker class but that would have complicated the code of
     /// the users of this class.
     bool UseAdvancedTracking;
-    /// Optional MachineRegisterInfo used to perform some complex
+    /// MachineRegisterInfo used to perform tracking.
+    const MachineRegisterInfo &MRI;
+    /// Optional TargetInstrInfo used to perform some complex
     /// tracking.
-    const MachineRegisterInfo *MRI;
+    const TargetInstrInfo *TII;
 
     /// \brief Dispatcher to the right underlying implementation of
     /// getNextSource.
-    bool getNextSourceImpl(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceImpl(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for Copy instructions.
-    bool getNextSourceFromCopy(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromCopy(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for Bitcast instructions.
-    bool getNextSourceFromBitcast(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromBitcast(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for RegSequence
     /// instructions.
-    bool getNextSourceFromRegSequence(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromRegSequence(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for InsertSubreg
     /// instructions.
-    bool getNextSourceFromInsertSubreg(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromInsertSubreg(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for ExtractSubreg
     /// instructions.
-    bool getNextSourceFromExtractSubreg(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromExtractSubreg(unsigned &SrcReg, unsigned &SrcSubReg);
     /// \brief Specialized version of getNextSource for SubregToReg
     /// instructions.
-    bool getNextSourceFromSubregToReg(unsigned &SrcIdx, unsigned &SrcSubReg);
+    bool getNextSourceFromSubregToReg(unsigned &SrcReg, unsigned &SrcSubReg);
 
   public:
-    /// \brief Create a ValueTracker instance for the value defines by \p MI
-    /// at the operand index \p DefIdx.
+    /// \brief Create a ValueTracker instance for the value defined by \p Reg.
     /// \p DefSubReg represents the sub register index the value tracker will
-    /// track. It does not need to match the sub register index used in \p MI.
+    /// track. It does not need to match the sub register index used in the
+    /// definition of \p Reg.
     /// \p UseAdvancedTracking specifies whether or not the value tracker looks
     /// through complex instructions. By default (false), it handles only copy
     /// and bitcast instructions.
-    /// \p MRI useful to perform some complex checks.
-    ValueTracker(const MachineInstr &MI, unsigned DefIdx, unsigned DefSubReg,
+    /// If \p Reg is a physical register, a value tracker constructed with
+    /// this constructor will not find any alternative source.
+    /// Indeed, when \p Reg is a physical register that constructor does not
+    /// know which definition of \p Reg it should track.
+    /// Use the next constructor to track a physical register.
+    ValueTracker(unsigned Reg, unsigned DefSubReg,
+                 const MachineRegisterInfo &MRI,
                  bool UseAdvancedTracking = false,
-                 const MachineRegisterInfo *MRI = nullptr)
+                 const TargetInstrInfo *TII = nullptr)
+        : Def(nullptr), DefIdx(0), DefSubReg(DefSubReg), Reg(Reg),
+          UseAdvancedTracking(UseAdvancedTracking), MRI(MRI), TII(TII) {
+      if (!TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        Def = MRI.getVRegDef(Reg);
+        DefIdx = MRI.def_begin(Reg).getOperandNo();
+      }
+    }
+
+    /// \brief Create a ValueTracker instance for the value defined by
+    /// the pair \p MI, \p DefIdx.
+    /// Unlike the other constructor, the value tracker produced by this one
+    /// may be able to find a new source when the definition is a physical
+    /// register.
+    /// This could be useful to rewrite target specific instructions into
+    /// generic copy instructions.
+    ValueTracker(const MachineInstr &MI, unsigned DefIdx, unsigned DefSubReg,
+                 const MachineRegisterInfo &MRI,
+                 bool UseAdvancedTracking = false,
+                 const TargetInstrInfo *TII = nullptr)
         : Def(&MI), DefIdx(DefIdx), DefSubReg(DefSubReg),
-          UseAdvancedTracking(UseAdvancedTracking), MRI(MRI) {
-      assert(Def->getOperand(DefIdx).isDef() &&
-             Def->getOperand(DefIdx).isReg() &&
-             "Definition does not match machine instruction");
-      // Initially the value is in the defined register.
+          UseAdvancedTracking(UseAdvancedTracking), MRI(MRI), TII(TII) {
+      assert(DefIdx < Def->getDesc().getNumDefs() &&
+             Def->getOperand(DefIdx).isReg() && "Invalid definition");
       Reg = Def->getOperand(DefIdx).getReg();
     }
 
     /// \brief Following the use-def chain, get the next available source
     /// for the tracked value.
-    /// When the returned value is not nullptr, getReg() gives the register
+    /// When the returned value is not nullptr, \p SrcReg gives the register
     /// that contain the tracked value.
     /// \note The sub register index returned in \p SrcSubReg must be used
-    /// on that getReg() to access the actual value.
+    /// on \p SrcReg to access the actual value.
     /// \return Unless the returned value is nullptr (i.e., no source found),
-    /// \p SrcIdx gives the index of the next source in the returned
-    /// instruction and \p SrcSubReg the index to be used on that source to
-    /// get the tracked value. When nullptr is returned, no alternative source
-    /// has been found.
-    const MachineInstr *getNextSource(unsigned &SrcIdx, unsigned &SrcSubReg);
+    /// \p SrcReg gives the register of the next source used in the returned
+    /// instruction and \p SrcSubReg the sub-register index to be used on that
+    /// source to get the tracked value. When nullptr is returned, no
+    /// alternative source has been found.
+    const MachineInstr *getNextSource(unsigned &SrcReg, unsigned &SrcSubReg);
 
     /// \brief Get the last register where the initial value can be found.
     /// Initially this is the register of the definition.
@@ -480,71 +527,21 @@ static bool shareSameRegisterFile(const TargetRegisterInfo &TRI,
   return TRI.getCommonSubClass(DefRC, SrcRC) != nullptr;
 }
 
-/// \brief Get the index of the definition and source for \p Copy
-/// instruction.
-/// \pre Copy.isCopy() or Copy.isBitcast().
-/// \return True if the Copy instruction has only one register source
-/// and one register definition. Otherwise, \p DefIdx and \p SrcIdx
-/// are invalid.
-static bool getCopyOrBitcastDefUseIdx(const MachineInstr &Copy,
-                                      unsigned &DefIdx, unsigned &SrcIdx) {
-  assert((Copy.isCopy() || Copy.isBitcast()) && "Wrong operation type.");
-  if (Copy.isCopy()) {
-    // Copy instruction are supposed to be: Def = Src.
-     if (Copy.getDesc().getNumOperands() != 2)
-       return false;
-     DefIdx = 0;
-     SrcIdx = 1;
-     assert(Copy.getOperand(DefIdx).isDef() && "Use comes before def!");
-     return true;
-  }
-  // Bitcast case.
-  // Bitcasts with more than one def are not supported.
-  if (Copy.getDesc().getNumDefs() != 1)
-    return false;
-  // Initialize SrcIdx to an undefined operand.
-  SrcIdx = Copy.getDesc().getNumOperands();
-  for (unsigned OpIdx = 0, EndOpIdx = SrcIdx; OpIdx != EndOpIdx; ++OpIdx) {
-    const MachineOperand &MO = Copy.getOperand(OpIdx);
-    if (!MO.isReg() || !MO.getReg())
-      continue;
-    if (MO.isDef())
-      DefIdx = OpIdx;
-    else if (SrcIdx != EndOpIdx)
-      // Multiple sources?
-      return false;
-    SrcIdx = OpIdx;
-  }
-  return true;
-}
-
-/// \brief Optimize a copy or bitcast instruction to avoid cross
-/// register bank copy. The optimization looks through a chain of
-/// copies and try to find a source that has a compatible register
-/// class.
-/// Two register classes are considered to be compatible if they share
-/// the same register bank.
-/// New copies issued by this optimization are register allocator
-/// friendly. This optimization does not remove any copy as it may
-/// overconstraint the register allocator, but replaces some when
-/// possible.
-/// \pre \p MI is a Copy (MI->isCopy() is true)
-/// \return True, when \p MI has been optimized. In that case, \p MI has
-/// been removed from its parent.
-bool PeepholeOptimizer::optimizeCopyOrBitcast(MachineInstr *MI) {
-  unsigned DefIdx, SrcIdx;
-  if (!MI || !getCopyOrBitcastDefUseIdx(*MI, DefIdx, SrcIdx))
+/// \brief Try to find the next source that share the same register file
+/// for the value defined by \p Reg and \p SubReg.
+/// When true is returned, \p Reg and \p SubReg are updated with the
+/// register number and sub-register index of the new source.
+/// \return False if no alternative sources are available. True otherwise.
+bool PeepholeOptimizer::findNextSource(unsigned &Reg, unsigned &SubReg) {
+  // Do not try to find a new source for a physical register.
+  // So far we do not have any motivating example for doing that.
+  // Thus, instead of maintaining untested code, we will revisit that if
+  // that changes at some point.
+  if (TargetRegisterInfo::isPhysicalRegister(Reg))
     return false;
 
-  const MachineOperand &MODef = MI->getOperand(DefIdx);
-  assert(MODef.isReg() && "Copies must be between registers.");
-  unsigned Def = MODef.getReg();
-
-  if (TargetRegisterInfo::isPhysicalRegister(Def))
-    return false;
-
-  const TargetRegisterClass *DefRC = MRI->getRegClass(Def);
-  unsigned DefSubReg = MODef.getSubReg();
+  const TargetRegisterClass *DefRC = MRI->getRegClass(Reg);
+  unsigned DefSubReg = SubReg;
 
   unsigned Src;
   unsigned SrcSubReg;
@@ -553,12 +550,12 @@ bool PeepholeOptimizer::optimizeCopyOrBitcast(MachineInstr *MI) {
 
   // Follow the chain of copies until we reach the top of the use-def chain
   // or find a more suitable source.
-  ValueTracker ValTracker(*MI, DefIdx, DefSubReg, !DisableAdvCopyOpt, MRI);
+  ValueTracker ValTracker(Reg, DefSubReg, *MRI, !DisableAdvCopyOpt, TII);
   do {
-    unsigned CopySrcIdx, CopySrcSubReg;
-    if (!ValTracker.getNextSource(CopySrcIdx, CopySrcSubReg))
+    unsigned CopySrcReg, CopySrcSubReg;
+    if (!ValTracker.getNextSource(CopySrcReg, CopySrcSubReg))
       break;
-    Src = ValTracker.getReg();
+    Src = CopySrcReg;
     SrcSubReg = CopySrcSubReg;
 
     // Do not extend the live-ranges of physical registers as they add
@@ -577,24 +574,402 @@ bool PeepholeOptimizer::optimizeCopyOrBitcast(MachineInstr *MI) {
   } while (!ShouldRewrite);
 
   // If we did not find a more suitable source, there is nothing to optimize.
-  if (!ShouldRewrite || Src == MI->getOperand(SrcIdx).getReg())
+  if (!ShouldRewrite || Src == Reg)
     return false;
 
-  // Rewrite the copy to avoid a cross register bank penalty. 
-  unsigned NewVR = TargetRegisterInfo::isPhysicalRegister(Def) ? Def :
-    MRI->createVirtualRegister(DefRC);
-  MachineInstr *NewCopy = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
-                                  TII->get(TargetOpcode::COPY), NewVR)
-    .addReg(Src, 0, SrcSubReg);
-  NewCopy->getOperand(0).setSubReg(DefSubReg);
+  Reg = Src;
+  SubReg = SrcSubReg;
+  return true;
+}
 
-  MRI->replaceRegWith(Def, NewVR);
-  MRI->clearKillFlags(NewVR);
-  // We extended the lifetime of Src.
-  // Clear the kill flags to account for that.
-  MRI->clearKillFlags(Src);
+namespace {
+/// \brief Helper class to rewrite the arguments of a copy-like instruction.
+class CopyRewriter {
+protected:
+  /// The copy-like instruction.
+  MachineInstr &CopyLike;
+  /// The index of the source being rewritten.
+  unsigned CurrentSrcIdx;
+
+public:
+  CopyRewriter(MachineInstr &MI) : CopyLike(MI), CurrentSrcIdx(0) {}
+
+  virtual ~CopyRewriter() {}
+
+  /// \brief Get the next rewritable source (SrcReg, SrcSubReg) and
+  /// the related value that it affects (TrackReg, TrackSubReg).
+  /// A source is considered rewritable if its register class and the
+  /// register class of the related TrackReg may not be register
+  /// coalescer friendly. In other words, given a copy-like instruction
+  /// not all the arguments may be returned at rewritable source, since
+  /// some arguments are none to be register coalescer friendly.
+  ///
+  /// Each call of this method moves the current source to the next
+  /// rewritable source.
+  /// For instance, let CopyLike be the instruction to rewrite.
+  /// CopyLike has one definition and one source:
+  /// dst.dstSubIdx = CopyLike src.srcSubIdx.
+  ///
+  /// The first call will give the first rewritable source, i.e.,
+  /// the only source this instruction has:
+  /// (SrcReg, SrcSubReg) = (src, srcSubIdx).
+  /// This source defines the whole definition, i.e.,
+  /// (TrackReg, TrackSubReg) = (dst, dstSubIdx).
+  ///
+  /// The second and subsequent calls will return false, has there is only one
+  /// rewritable source.
+  ///
+  /// \return True if a rewritable source has been found, false otherwise.
+  /// The output arguments are valid if and only if true is returned.
+  virtual bool getNextRewritableSource(unsigned &SrcReg, unsigned &SrcSubReg,
+                                       unsigned &TrackReg,
+                                       unsigned &TrackSubReg) {
+    // If CurrentSrcIdx == 1, this means this function has already been
+    // called once. CopyLike has one defintiion and one argument, thus,
+    // there is nothing else to rewrite.
+    if (!CopyLike.isCopy() || CurrentSrcIdx == 1)
+      return false;
+    // This is the first call to getNextRewritableSource.
+    // Move the CurrentSrcIdx to remember that we made that call.
+    CurrentSrcIdx = 1;
+    // The rewritable source is the argument.
+    const MachineOperand &MOSrc = CopyLike.getOperand(1);
+    SrcReg = MOSrc.getReg();
+    SrcSubReg = MOSrc.getSubReg();
+    // What we track are the alternative sources of the definition.
+    const MachineOperand &MODef = CopyLike.getOperand(0);
+    TrackReg = MODef.getReg();
+    TrackSubReg = MODef.getSubReg();
+    return true;
+  }
+
+  /// \brief Rewrite the current source with \p NewReg and \p NewSubReg
+  /// if possible.
+  /// \return True if the rewritting was possible, false otherwise.
+  virtual bool RewriteCurrentSource(unsigned NewReg, unsigned NewSubReg) {
+    if (!CopyLike.isCopy() || CurrentSrcIdx != 1)
+      return false;
+    MachineOperand &MOSrc = CopyLike.getOperand(CurrentSrcIdx);
+    MOSrc.setReg(NewReg);
+    MOSrc.setSubReg(NewSubReg);
+    return true;
+  }
+};
+
+/// \brief Specialized rewriter for INSERT_SUBREG instruction.
+class InsertSubregRewriter : public CopyRewriter {
+public:
+  InsertSubregRewriter(MachineInstr &MI) : CopyRewriter(MI) {
+    assert(MI.isInsertSubreg() && "Invalid instruction");
+  }
+
+  /// \brief See CopyRewriter::getNextRewritableSource.
+  /// Here CopyLike has the following form:
+  /// dst = INSERT_SUBREG Src1, Src2.src2SubIdx, subIdx.
+  /// Src1 has the same register class has dst, hence, there is
+  /// nothing to rewrite.
+  /// Src2.src2SubIdx, may not be register coalescer friendly.
+  /// Therefore, the first call to this method returns:
+  /// (SrcReg, SrcSubReg) = (Src2, src2SubIdx).
+  /// (TrackReg, TrackSubReg) = (dst, subIdx).
+  ///
+  /// Subsequence calls will return false.
+  bool getNextRewritableSource(unsigned &SrcReg, unsigned &SrcSubReg,
+                               unsigned &TrackReg,
+                               unsigned &TrackSubReg) override {
+    // If we already get the only source we can rewrite, return false.
+    if (CurrentSrcIdx == 2)
+      return false;
+    // We are looking at v2 = INSERT_SUBREG v0, v1, sub0.
+    CurrentSrcIdx = 2;
+    const MachineOperand &MOInsertedReg = CopyLike.getOperand(2);
+    SrcReg = MOInsertedReg.getReg();
+    SrcSubReg = MOInsertedReg.getSubReg();
+    const MachineOperand &MODef = CopyLike.getOperand(0);
+
+    // We want to track something that is compatible with the
+    // partial definition.
+    TrackReg = MODef.getReg();
+    if (MODef.getSubReg())
+      // Bails if we have to compose sub-register indices.
+      return false;
+    TrackSubReg = (unsigned)CopyLike.getOperand(3).getImm();
+    return true;
+  }
+  bool RewriteCurrentSource(unsigned NewReg, unsigned NewSubReg) override {
+    if (CurrentSrcIdx != 2)
+      return false;
+    // We are rewriting the inserted reg.
+    MachineOperand &MO = CopyLike.getOperand(CurrentSrcIdx);
+    MO.setReg(NewReg);
+    MO.setSubReg(NewSubReg);
+    return true;
+  }
+};
+
+/// \brief Specialized rewriter for EXTRACT_SUBREG instruction.
+class ExtractSubregRewriter : public CopyRewriter {
+  const TargetInstrInfo &TII;
+
+public:
+  ExtractSubregRewriter(MachineInstr &MI, const TargetInstrInfo &TII)
+      : CopyRewriter(MI), TII(TII) {
+    assert(MI.isExtractSubreg() && "Invalid instruction");
+  }
+
+  /// \brief See CopyRewriter::getNextRewritableSource.
+  /// Here CopyLike has the following form:
+  /// dst.dstSubIdx = EXTRACT_SUBREG Src, subIdx.
+  /// There is only one rewritable source: Src.subIdx,
+  /// which defines dst.dstSubIdx.
+  bool getNextRewritableSource(unsigned &SrcReg, unsigned &SrcSubReg,
+                               unsigned &TrackReg,
+                               unsigned &TrackSubReg) override {
+    // If we already get the only source we can rewrite, return false.
+    if (CurrentSrcIdx == 1)
+      return false;
+    // We are looking at v1 = EXTRACT_SUBREG v0, sub0.
+    CurrentSrcIdx = 1;
+    const MachineOperand &MOExtractedReg = CopyLike.getOperand(1);
+    SrcReg = MOExtractedReg.getReg();
+    // If we have to compose sub-register indices, bails out.
+    if (MOExtractedReg.getSubReg())
+      return false;
+
+    SrcSubReg = CopyLike.getOperand(2).getImm();
+
+    // We want to track something that is compatible with the definition.
+    const MachineOperand &MODef = CopyLike.getOperand(0);
+    TrackReg = MODef.getReg();
+    TrackSubReg = MODef.getSubReg();
+    return true;
+  }
+
+  bool RewriteCurrentSource(unsigned NewReg, unsigned NewSubReg) override {
+    // The only source we can rewrite is the input register.
+    if (CurrentSrcIdx != 1)
+      return false;
+
+    CopyLike.getOperand(CurrentSrcIdx).setReg(NewReg);
+
+    // If we find a source that does not require to extract something,
+    // rewrite the operation with a copy.
+    if (!NewSubReg) {
+      // Move the current index to an invalid position.
+      // We do not want another call to this method to be able
+      // to do any change.
+      CurrentSrcIdx = -1;
+      // Rewrite the operation as a COPY.
+      // Get rid of the sub-register index.
+      CopyLike.RemoveOperand(2);
+      // Morph the operation into a COPY.
+      CopyLike.setDesc(TII.get(TargetOpcode::COPY));
+      return true;
+    }
+    CopyLike.getOperand(CurrentSrcIdx + 1).setImm(NewSubReg);
+    return true;
+  }
+};
+
+/// \brief Specialized rewriter for REG_SEQUENCE instruction.
+class RegSequenceRewriter : public CopyRewriter {
+public:
+  RegSequenceRewriter(MachineInstr &MI) : CopyRewriter(MI) {
+    assert(MI.isRegSequence() && "Invalid instruction");
+  }
+
+  /// \brief See CopyRewriter::getNextRewritableSource.
+  /// Here CopyLike has the following form:
+  /// dst = REG_SEQUENCE Src1.src1SubIdx, subIdx1, Src2.src2SubIdx, subIdx2.
+  /// Each call will return a different source, walking all the available
+  /// source.
+  ///
+  /// The first call returns:
+  /// (SrcReg, SrcSubReg) = (Src1, src1SubIdx).
+  /// (TrackReg, TrackSubReg) = (dst, subIdx1).
+  ///
+  /// The second call returns:
+  /// (SrcReg, SrcSubReg) = (Src2, src2SubIdx).
+  /// (TrackReg, TrackSubReg) = (dst, subIdx2).
+  ///
+  /// And so on, until all the sources have been traversed, then
+  /// it returns false.
+  bool getNextRewritableSource(unsigned &SrcReg, unsigned &SrcSubReg,
+                               unsigned &TrackReg,
+                               unsigned &TrackSubReg) override {
+    // We are looking at v0 = REG_SEQUENCE v1, sub1, v2, sub2, etc.
+
+    // If this is the first call, move to the first argument.
+    if (CurrentSrcIdx == 0) {
+      CurrentSrcIdx = 1;
+    } else {
+      // Otherwise, move to the next argument and check that it is valid.
+      CurrentSrcIdx += 2;
+      if (CurrentSrcIdx >= CopyLike.getNumOperands())
+        return false;
+    }
+    const MachineOperand &MOInsertedReg = CopyLike.getOperand(CurrentSrcIdx);
+    SrcReg = MOInsertedReg.getReg();
+    // If we have to compose sub-register indices, bails out.
+    if ((SrcSubReg = MOInsertedReg.getSubReg()))
+      return false;
+
+    // We want to track something that is compatible with the related
+    // partial definition.
+    TrackSubReg = CopyLike.getOperand(CurrentSrcIdx + 1).getImm();
+
+    const MachineOperand &MODef = CopyLike.getOperand(0);
+    TrackReg = MODef.getReg();
+    // If we have to compose sub-registers, bails.
+    return MODef.getSubReg() == 0;
+  }
+
+  bool RewriteCurrentSource(unsigned NewReg, unsigned NewSubReg) override {
+    // We cannot rewrite out of bound operands.
+    // Moreover, rewritable sources are at odd positions.
+    if ((CurrentSrcIdx & 1) != 1 || CurrentSrcIdx > CopyLike.getNumOperands())
+      return false;
+
+    MachineOperand &MO = CopyLike.getOperand(CurrentSrcIdx);
+    MO.setReg(NewReg);
+    MO.setSubReg(NewSubReg);
+    return true;
+  }
+};
+} // End namespace.
+
+/// \brief Get the appropriated CopyRewriter for \p MI.
+/// \return A pointer to a dynamically allocated CopyRewriter or nullptr
+/// if no rewriter works for \p MI.
+static CopyRewriter *getCopyRewriter(MachineInstr &MI,
+                                     const TargetInstrInfo &TII) {
+  switch (MI.getOpcode()) {
+  default:
+    return nullptr;
+  case TargetOpcode::COPY:
+    return new CopyRewriter(MI);
+  case TargetOpcode::INSERT_SUBREG:
+    return new InsertSubregRewriter(MI);
+  case TargetOpcode::EXTRACT_SUBREG:
+    return new ExtractSubregRewriter(MI, TII);
+  case TargetOpcode::REG_SEQUENCE:
+    return new RegSequenceRewriter(MI);
+  }
+  llvm_unreachable(nullptr);
+}
+
+/// \brief Optimize generic copy instructions to avoid cross
+/// register bank copy. The optimization looks through a chain of
+/// copies and tries to find a source that has a compatible register
+/// class.
+/// Two register classes are considered to be compatible if they share
+/// the same register bank.
+/// New copies issued by this optimization are register allocator
+/// friendly. This optimization does not remove any copy as it may
+/// overconstraint the register allocator, but replaces some operands
+/// when possible.
+/// \pre isCoalescableCopy(*MI) is true.
+/// \return True, when \p MI has been rewritten. False otherwise.
+bool PeepholeOptimizer::optimizeCoalescableCopy(MachineInstr *MI) {
+  assert(MI && isCoalescableCopy(*MI) && "Invalid argument");
+  assert(MI->getDesc().getNumDefs() == 1 &&
+         "Coalescer can understand multiple defs?!");
+  const MachineOperand &MODef = MI->getOperand(0);
+  // Do not rewrite physical definitions.
+  if (TargetRegisterInfo::isPhysicalRegister(MODef.getReg()))
+    return false;
+
+  bool Changed = false;
+  // Get the right rewriter for the current copy.
+  std::unique_ptr<CopyRewriter> CpyRewriter(getCopyRewriter(*MI, *TII));
+  // If none exists, bails out.
+  if (!CpyRewriter)
+    return false;
+  // Rewrite each rewritable source.
+  unsigned SrcReg, SrcSubReg, TrackReg, TrackSubReg;
+  while (CpyRewriter->getNextRewritableSource(SrcReg, SrcSubReg, TrackReg,
+                                              TrackSubReg)) {
+    unsigned NewSrc = TrackReg;
+    unsigned NewSubReg = TrackSubReg;
+    // Try to find a more suitable source.
+    // If we failed to do so, or get the actual source,
+    // move to the next source.
+    if (!findNextSource(NewSrc, NewSubReg) || SrcReg == NewSrc)
+      continue;
+    // Rewrite source.
+    Changed |= CpyRewriter->RewriteCurrentSource(NewSrc, NewSubReg);
+  }
+  // TODO: We could have a clean-up method to tidy the instruction.
+  // E.g., v0 = INSERT_SUBREG v1, v1.sub0, sub0
+  // => v0 = COPY v1
+  // Currently we haven't seen motivating example for that and we
+  // want to avoid untested code.
+  NumRewrittenCopies += Changed == true;
+  return Changed;
+}
+
+/// \brief Optimize copy-like instructions to create
+/// register coalescer friendly instruction.
+/// The optimization tries to kill-off the \p MI by looking
+/// through a chain of copies to find a source that has a compatible
+/// register class.
+/// If such a source is found, it replace \p MI by a generic COPY
+/// operation.
+/// \pre isUncoalescableCopy(*MI) is true.
+/// \return True, when \p MI has been optimized. In that case, \p MI has
+/// been removed from its parent.
+/// All COPY instructions created, are inserted in \p LocalMIs.
+bool PeepholeOptimizer::optimizeUncoalescableCopy(
+    MachineInstr *MI, SmallPtrSetImpl<MachineInstr *> &LocalMIs) {
+  assert(MI && isUncoalescableCopy(*MI) && "Invalid argument");
+
+  // Check if we can rewrite all the values defined by this instruction.
+  SmallVector<
+      std::pair<TargetInstrInfo::RegSubRegPair, TargetInstrInfo::RegSubRegPair>,
+      4> RewritePairs;
+  for (const MachineOperand &MODef : MI->defs()) {
+    if (MODef.isDead())
+      // We can ignore those.
+      continue;
+
+    // If a physical register is here, this is probably for a good reason.
+    // Do not rewrite that.
+    if (TargetRegisterInfo::isPhysicalRegister(MODef.getReg()))
+      return false;
+
+    // If we do not know how to rewrite this definition, there is no point
+    // in trying to kill this instruction.
+    TargetInstrInfo::RegSubRegPair Def(MODef.getReg(), MODef.getSubReg());
+    TargetInstrInfo::RegSubRegPair Src = Def;
+    if (!findNextSource(Src.Reg, Src.SubReg))
+      return false;
+    RewritePairs.push_back(std::make_pair(Def, Src));
+  }
+  // The change is possible for all defs, do it.
+  for (const auto &PairDefSrc : RewritePairs) {
+    const auto &Def = PairDefSrc.first;
+    const auto &Src = PairDefSrc.second;
+    // Rewrite the "copy" in a way the register coalescer understands.
+    assert(!TargetRegisterInfo::isPhysicalRegister(Def.Reg) &&
+           "We do not rewrite physical registers");
+    const TargetRegisterClass *DefRC = MRI->getRegClass(Def.Reg);
+    unsigned NewVR = MRI->createVirtualRegister(DefRC);
+    MachineInstr *NewCopy = BuildMI(*MI->getParent(), MI, MI->getDebugLoc(),
+                                    TII->get(TargetOpcode::COPY),
+                                    NewVR).addReg(Src.Reg, 0, Src.SubReg);
+    NewCopy->getOperand(0).setSubReg(Def.SubReg);
+    if (Def.SubReg)
+      NewCopy->getOperand(0).setIsUndef();
+    LocalMIs.insert(NewCopy);
+    MRI->replaceRegWith(Def.Reg, NewVR);
+    MRI->clearKillFlags(NewVR);
+    // We extended the lifetime of Src.
+    // Clear the kill flags to account for that.
+    MRI->clearKillFlags(Src.Reg);
+  }
+  // MI is now dead.
   MI->eraseFromParent();
-  ++NumCopiesBitcasts;
+  ++NumUncoalescableCopies;
   return true;
 }
 
@@ -714,11 +1089,18 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
       if (MI->mayStore() || MI->isCall())
         FoldAsLoadDefCandidates.clear();
 
-      if (((MI->isBitcast() || MI->isCopy()) && optimizeCopyOrBitcast(MI)) ||
+      if ((isUncoalescableCopy(*MI) &&
+           optimizeUncoalescableCopy(MI, LocalMIs)) ||
           (MI->isCompare() && optimizeCmpInstr(MI, MBB)) ||
           (MI->isSelect() && optimizeSelect(MI))) {
         // MI is deleted.
         LocalMIs.erase(MI);
+        Changed = true;
+        continue;
+      }
+
+      if (isCoalescableCopy(*MI) && optimizeCoalescableCopy(MI)) {
+        // MI is just rewritten.
         Changed = true;
         continue;
       }
@@ -784,24 +1166,25 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   return Changed;
 }
 
-bool ValueTracker::getNextSourceFromCopy(unsigned &SrcIdx,
+bool ValueTracker::getNextSourceFromCopy(unsigned &SrcReg,
                                          unsigned &SrcSubReg) {
   assert(Def->isCopy() && "Invalid definition");
   // Copy instruction are supposed to be: Def = Src.
   // If someone breaks this assumption, bad things will happen everywhere.
-  assert(Def->getDesc().getNumOperands() == 2 && "Invalid number of operands");
+  assert(Def->getNumOperands() == 2 && "Invalid number of operands");
 
   if (Def->getOperand(DefIdx).getSubReg() != DefSubReg)
     // If we look for a different subreg, it means we want a subreg of src.
     // Bails as we do not support composing subreg yet.
     return false;
   // Otherwise, we want the whole source.
-  SrcIdx = 1;
-  SrcSubReg = Def->getOperand(SrcIdx).getSubReg();
+  const MachineOperand &Src = Def->getOperand(1);
+  SrcReg = Src.getReg();
+  SrcSubReg = Src.getSubReg();
   return true;
 }
 
-bool ValueTracker::getNextSourceFromBitcast(unsigned &SrcIdx,
+bool ValueTracker::getNextSourceFromBitcast(unsigned &SrcReg,
                                             unsigned &SrcSubReg) {
   assert(Def->isBitcast() && "Invalid definition");
 
@@ -817,7 +1200,7 @@ bool ValueTracker::getNextSourceFromBitcast(unsigned &SrcIdx,
     // Bails as we do not support composing subreg yet.
     return false;
 
-  SrcIdx = Def->getDesc().getNumOperands();
+  unsigned SrcIdx = Def->getNumOperands();
   for (unsigned OpIdx = DefIdx + 1, EndOpIdx = SrcIdx; OpIdx != EndOpIdx;
        ++OpIdx) {
     const MachineOperand &MO = Def->getOperand(OpIdx);
@@ -829,13 +1212,16 @@ bool ValueTracker::getNextSourceFromBitcast(unsigned &SrcIdx,
       return false;
     SrcIdx = OpIdx;
   }
-  SrcSubReg = Def->getOperand(SrcIdx).getSubReg();
+  const MachineOperand &Src = Def->getOperand(SrcIdx);
+  SrcReg = Src.getReg();
+  SrcSubReg = Src.getSubReg();
   return true;
 }
 
-bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcIdx,
+bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcReg,
                                                 unsigned &SrcSubReg) {
-  assert(Def->isRegSequence() && "Invalid definition");
+  assert((Def->isRegSequence() || Def->isRegSequenceLike()) &&
+         "Invalid definition");
 
   if (Def->getOperand(DefIdx).getSubReg())
     // If we are composing subreg, bails out.
@@ -854,19 +1240,26 @@ bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcIdx,
     // turn that into an assertion.
     return false;
 
+  if (!TII)
+    // We could handle the REG_SEQUENCE here, but we do not want to
+    // duplicate the code from the generic TII.
+    return false;
+
+  SmallVector<TargetInstrInfo::RegSubRegPairAndIdx, 8> RegSeqInputRegs;
+  if (!TII->getRegSequenceInputs(*Def, DefIdx, RegSeqInputRegs))
+    return false;
+
   // We are looking at:
   // Def = REG_SEQUENCE v0, sub0, v1, sub1, ...
   // Check if one of the operand defines the subreg we are interested in.
-  for (unsigned OpIdx = DefIdx + 1, EndOpIdx = Def->getNumOperands();
-       OpIdx != EndOpIdx; OpIdx += 2) {
-    const MachineOperand &MOSubIdx = Def->getOperand(OpIdx + 1);
-    assert(MOSubIdx.isImm() &&
-           "One of the subindex of the reg_sequence is not an immediate");
-    if (MOSubIdx.getImm() == DefSubReg) {
-      assert(Def->getOperand(OpIdx).isReg() &&
-             "One of the source of the reg_sequence is not a register");
-      SrcIdx = OpIdx;
-      SrcSubReg = Def->getOperand(SrcIdx).getSubReg();
+  for (auto &RegSeqInput : RegSeqInputRegs) {
+    if (RegSeqInput.SubIdx == DefSubReg) {
+      if (RegSeqInput.SubReg)
+        // Bails if we have to compose sub registers.
+        return false;
+
+      SrcReg = RegSeqInput.Reg;
+      SrcSubReg = RegSeqInput.SubReg;
       return true;
     }
   }
@@ -877,7 +1270,32 @@ bool ValueTracker::getNextSourceFromRegSequence(unsigned &SrcIdx,
   return false;
 }
 
-bool ValueTracker::getNextSourceFromInsertSubreg(unsigned &SrcIdx,
+/// Extract the inputs from INSERT_SUBREG.
+/// INSERT_SUBREG vreg0:sub0, vreg1:sub1, sub3 would produce:
+/// - BaseReg: vreg0:sub0
+/// - InsertedReg: vreg1:sub1, sub3
+static void
+getInsertSubregInputs(const MachineInstr &MI,
+                      TargetInstrInfo::RegSubRegPair &BaseReg,
+                      TargetInstrInfo::RegSubRegPairAndIdx &InsertedReg) {
+  assert(MI.isInsertSubreg() && "Instruction do not have the proper type");
+
+  // We are looking at:
+  // Def = INSERT_SUBREG v0, v1, sub0.
+  const MachineOperand &MOBaseReg = MI.getOperand(1);
+  const MachineOperand &MOInsertedReg = MI.getOperand(2);
+  const MachineOperand &MOSubIdx = MI.getOperand(3);
+  assert(MOSubIdx.isImm() &&
+         "One of the subindex of the reg_sequence is not an immediate");
+  BaseReg.Reg = MOBaseReg.getReg();
+  BaseReg.SubReg = MOBaseReg.getSubReg();
+
+  InsertedReg.Reg = MOInsertedReg.getReg();
+  InsertedReg.SubReg = MOInsertedReg.getSubReg();
+  InsertedReg.SubIdx = (unsigned)MOSubIdx.getImm();
+}
+
+bool ValueTracker::getNextSourceFromInsertSubreg(unsigned &SrcReg,
                                                  unsigned &SrcSubReg) {
   assert(Def->isInsertSubreg() && "Invalid definition");
   if (Def->getOperand(DefIdx).getSubReg())
@@ -886,50 +1304,68 @@ bool ValueTracker::getNextSourceFromInsertSubreg(unsigned &SrcIdx,
     // I.e., this may be turned into an assert.
     return false;
 
+  TargetInstrInfo::RegSubRegPair BaseReg;
+  TargetInstrInfo::RegSubRegPairAndIdx InsertedReg;
+  assert(DefIdx == 0 && "Invalid definition");
+  getInsertSubregInputs(*Def, BaseReg, InsertedReg);
+
   // We are looking at:
   // Def = INSERT_SUBREG v0, v1, sub1
   // There are two cases:
   // 1. DefSubReg == sub1, get v1.
   // 2. DefSubReg != sub1, the value may be available through v0.
 
-  // #1 Check if the inserted register matches the require sub index.
-  unsigned InsertedSubReg = Def->getOperand(3).getImm();
-  if (InsertedSubReg == DefSubReg) {
-    SrcIdx = 2;
-    SrcSubReg = Def->getOperand(SrcIdx).getSubReg();
+  // #1 Check if the inserted register matches the required sub index.
+  if (InsertedReg.SubIdx == DefSubReg) {
+    SrcReg = InsertedReg.Reg;
+    SrcSubReg = InsertedReg.SubReg;
     return true;
   }
   // #2 Otherwise, if the sub register we are looking for is not partial
   // defined by the inserted element, we can look through the main
   // register (v0).
-  // To check the overlapping we need a MRI and a TRI.
-  if (!MRI)
-    return false;
-
   const MachineOperand &MODef = Def->getOperand(DefIdx);
-  const MachineOperand &MOBase = Def->getOperand(1);
   // If the result register (Def) and the base register (v0) do not
   // have the same register class or if we have to compose
   // subregisters, bails out.
-  if (MRI->getRegClass(MODef.getReg()) != MRI->getRegClass(MOBase.getReg()) ||
-      MOBase.getSubReg())
+  if (MRI.getRegClass(MODef.getReg()) != MRI.getRegClass(BaseReg.Reg) ||
+      BaseReg.SubReg)
     return false;
 
-  // Get the TRI and check if inserted sub register overlaps with the
-  // sub register we are tracking.
-  const TargetRegisterInfo *TRI = MRI->getTargetRegisterInfo();
+  // Get the TRI and check if the inserted sub-register overlaps with the
+  // sub-register we are tracking.
+  const TargetRegisterInfo *TRI = MRI.getTargetRegisterInfo();
   if (!TRI ||
       (TRI->getSubRegIndexLaneMask(DefSubReg) &
-       TRI->getSubRegIndexLaneMask(InsertedSubReg)) != 0)
+       TRI->getSubRegIndexLaneMask(InsertedReg.SubIdx)) != 0)
     return false;
   // At this point, the value is available in v0 via the same subreg
   // we used for Def.
-  SrcIdx = 1;
+  SrcReg = BaseReg.Reg;
   SrcSubReg = DefSubReg;
   return true;
 }
 
-bool ValueTracker::getNextSourceFromExtractSubreg(unsigned &SrcIdx,
+/// Extract the inputs from EXTRACT_SUBREG.
+/// EXTRACT_SUBREG vreg1:sub1, sub0, would produce:
+/// - vreg1:sub1, sub0
+static void
+getExtractSubregInputs(const MachineInstr &MI,
+                       TargetInstrInfo::RegSubRegPairAndIdx &InputReg) {
+  assert(MI.isExtractSubreg() && "Instruction do not have the proper type");
+  // We are looking at:
+  // Def = EXTRACT_SUBREG v0.sub1, sub0.
+  const MachineOperand &MOReg = MI.getOperand(1);
+  const MachineOperand &MOSubIdx = MI.getOperand(2);
+  assert(MOSubIdx.isImm() &&
+         "The subindex of the extract_subreg is not an immediate");
+
+  InputReg.Reg = MOReg.getReg();
+  InputReg.SubReg = MOReg.getSubReg();
+  InputReg.SubIdx = (unsigned)MOSubIdx.getImm();
+}
+
+bool ValueTracker::getNextSourceFromExtractSubreg(unsigned &SrcReg,
                                                   unsigned &SrcSubReg) {
   assert(Def->isExtractSubreg() && "Invalid definition");
   // We are looking at:
@@ -940,17 +1376,21 @@ bool ValueTracker::getNextSourceFromExtractSubreg(unsigned &SrcIdx,
   if (DefSubReg)
     return false;
 
+  TargetInstrInfo::RegSubRegPairAndIdx ExtractSubregInputReg;
+  assert(DefIdx == 0 && "Invalid definition");
+  getExtractSubregInputs(*Def, ExtractSubregInputReg);
+
   // Bails if we have to compose sub registers.
   // Likewise, if v0.subreg != 0, we would have to compose v0.subreg with sub0.
-  if (Def->getOperand(1).getSubReg())
+  if (ExtractSubregInputReg.SubReg)
     return false;
   // Otherwise, the value is available in the v0.sub0.
-  SrcIdx = 1;
-  SrcSubReg = Def->getOperand(2).getImm();
+  SrcReg = ExtractSubregInputReg.Reg;
+  SrcSubReg = ExtractSubregInputReg.SubIdx;
   return true;
 }
 
-bool ValueTracker::getNextSourceFromSubregToReg(unsigned &SrcIdx,
+bool ValueTracker::getNextSourceFromSubregToReg(unsigned &SrcReg,
                                                 unsigned &SrcSubReg) {
   assert(Def->isSubregToReg() && "Invalid definition");
   // We are looking at:
@@ -967,37 +1407,37 @@ bool ValueTracker::getNextSourceFromSubregToReg(unsigned &SrcIdx,
   if (Def->getOperand(2).getSubReg())
     return false;
 
-  SrcIdx = 2;
+  SrcReg = Def->getOperand(2).getReg();
   SrcSubReg = Def->getOperand(3).getImm();
   return true;
 }
 
-bool ValueTracker::getNextSourceImpl(unsigned &SrcIdx, unsigned &SrcSubReg) {
+bool ValueTracker::getNextSourceImpl(unsigned &SrcReg, unsigned &SrcSubReg) {
   assert(Def && "This method needs a valid definition");
 
   assert(
       (DefIdx < Def->getDesc().getNumDefs() || Def->getDesc().isVariadic()) &&
       Def->getOperand(DefIdx).isDef() && "Invalid DefIdx");
   if (Def->isCopy())
-    return getNextSourceFromCopy(SrcIdx, SrcSubReg);
+    return getNextSourceFromCopy(SrcReg, SrcSubReg);
   if (Def->isBitcast())
-    return getNextSourceFromBitcast(SrcIdx, SrcSubReg);
+    return getNextSourceFromBitcast(SrcReg, SrcSubReg);
   // All the remaining cases involve "complex" instructions.
   // Bails if we did not ask for the advanced tracking.
   if (!UseAdvancedTracking)
     return false;
-  if (Def->isRegSequence())
-    return getNextSourceFromRegSequence(SrcIdx, SrcSubReg);
+  if (Def->isRegSequence() || Def->isRegSequenceLike())
+    return getNextSourceFromRegSequence(SrcReg, SrcSubReg);
   if (Def->isInsertSubreg())
-    return getNextSourceFromInsertSubreg(SrcIdx, SrcSubReg);
+    return getNextSourceFromInsertSubreg(SrcReg, SrcSubReg);
   if (Def->isExtractSubreg())
-    return getNextSourceFromExtractSubreg(SrcIdx, SrcSubReg);
+    return getNextSourceFromExtractSubreg(SrcReg, SrcSubReg);
   if (Def->isSubregToReg())
-    return getNextSourceFromSubregToReg(SrcIdx, SrcSubReg);
+    return getNextSourceFromSubregToReg(SrcReg, SrcSubReg);
   return false;
 }
 
-const MachineInstr *ValueTracker::getNextSource(unsigned &SrcIdx,
+const MachineInstr *ValueTracker::getNextSource(unsigned &SrcReg,
                                                 unsigned &SrcSubReg) {
   // If we reach a point where we cannot move up in the use-def chain,
   // there is nothing we can get.
@@ -1006,20 +1446,18 @@ const MachineInstr *ValueTracker::getNextSource(unsigned &SrcIdx,
 
   const MachineInstr *PrevDef = nullptr;
   // Try to find the next source.
-  if (getNextSourceImpl(SrcIdx, SrcSubReg)) {
+  if (getNextSourceImpl(SrcReg, SrcSubReg)) {
     // Update definition, definition index, and subregister for the
     // next call of getNextSource.
-    const MachineOperand &MO = Def->getOperand(SrcIdx);
-    assert(MO.isReg() && !MO.isDef() && "Source is invalid");
     // Update the current register.
-    Reg = MO.getReg();
+    Reg = SrcReg;
     // Update the return value before moving up in the use-def chain.
     PrevDef = Def;
     // If we can still move up in the use-def chain, move to the next
     // defintion.
     if (!TargetRegisterInfo::isPhysicalRegister(Reg)) {
-      Def = MRI->getVRegDef(Reg);
-      DefIdx = MRI->def_begin(Reg).getOperandNo();
+      Def = MRI.getVRegDef(Reg);
+      DefIdx = MRI.def_begin(Reg).getOperandNo();
       DefSubReg = SrcSubReg;
       return PrevDef;
     }
