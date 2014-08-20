@@ -907,7 +907,7 @@ unsigned SelectionDAG::getEVTAlignment(EVT VT) const {
 
 // EntryNode could meaningfully have debug info if we can find it...
 SelectionDAG::SelectionDAG(const TargetMachine &tm, CodeGenOpt::Level OL)
-    : TM(tm), TSI(*tm.getSubtargetImpl()->getSelectionDAGInfo()), TLI(nullptr),
+    : TM(tm), TSI(tm.getSubtargetImpl()->getSelectionDAGInfo()), TLI(nullptr),
       OptLevel(OL),
       EntryNode(ISD::EntryToken, 0, DebugLoc(), getVTList(MVT::Other)),
       Root(getEntryNode()), NewNodesMustHaveLegalTypes(false),
@@ -4228,9 +4228,8 @@ SDValue SelectionDAG::getMemcpy(SDValue Chain, SDLoc dl, SDValue Dst,
   // Then check to see if we should lower the memcpy with target-specific
   // code. If the target chooses to do this, this is the next best.
   SDValue Result =
-    TSI.EmitTargetCodeForMemcpy(*this, dl, Chain, Dst, Src, Size, Align,
-                                isVol, AlwaysInline,
-                                DstPtrInfo, SrcPtrInfo);
+      TSI->EmitTargetCodeForMemcpy(*this, dl, Chain, Dst, Src, Size, Align,
+                                   isVol, AlwaysInline, DstPtrInfo, SrcPtrInfo);
   if (Result.getNode())
     return Result;
 
@@ -4296,9 +4295,8 @@ SDValue SelectionDAG::getMemmove(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // Then check to see if we should lower the memmove with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDValue Result =
-    TSI.EmitTargetCodeForMemmove(*this, dl, Chain, Dst, Src, Size, Align, isVol,
-                                 DstPtrInfo, SrcPtrInfo);
+  SDValue Result = TSI->EmitTargetCodeForMemmove(
+      *this, dl, Chain, Dst, Src, Size, Align, isVol, DstPtrInfo, SrcPtrInfo);
   if (Result.getNode())
     return Result;
 
@@ -4351,9 +4349,8 @@ SDValue SelectionDAG::getMemset(SDValue Chain, SDLoc dl, SDValue Dst,
 
   // Then check to see if we should lower the memset with target-specific
   // code. If the target chooses to do this, this is the next best.
-  SDValue Result =
-    TSI.EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src, Size, Align, isVol,
-                                DstPtrInfo);
+  SDValue Result = TSI->EmitTargetCodeForMemset(*this, dl, Chain, Dst, Src,
+                                                Size, Align, isVol, DstPtrInfo);
   if (Result.getNode())
     return Result;
 
