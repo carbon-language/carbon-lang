@@ -164,7 +164,8 @@ public:
     size_t EndIfLen = std::strcspn(EndIfData, "\r\n");
 
     StringRef EndIfStr(EndIfData, EndIfLen);
-    if (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str())) {
+    if (EndIf.isValid() && !EndIfStr.endswith("// " + HeaderGuard.str()) &&
+        !EndIfStr.endswith("/* " + HeaderGuard.str() + " */")) {
       std::string Correct = "endif  // " + HeaderGuard.str();
       Check->diag(EndIf, "#endif for a header guard should reference the "
                          "guard macro in a comment")

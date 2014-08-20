@@ -93,6 +93,18 @@ static std::string runHeaderGuardCheck(StringRef Code, const Twine &Filename) {
       Code, /*Errors=*/nullptr, Filename, std::string("-xc++-header"));
 }
 
+namespace {
+struct WithEndifComment : public LLVMHeaderGuardCheck {
+  bool shouldSuggestEndifComment(StringRef Filename) override { return true; }
+};
+} // namespace
+
+static std::string runHeaderGuardCheckWithEndif(StringRef Code,
+                                                const Twine &Filename) {
+  return test::runCheckOnCode<WithEndifComment>(
+      Code, /*Errors=*/nullptr, Filename, std::string("-xc++-header"));
+}
+
 TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
   EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif\n",
             runHeaderGuardCheck("#ifndef FOO\n#define FOO\n#endif\n",
@@ -126,6 +138,24 @@ TEST(LLVMHeaderGuardCheckTest, FixHeaderGuards) {
             runHeaderGuardCheck(
                 "int foo;\n#ifndef FOOLOLO\n#define FOOLOLO\n#endif\n",
                 "include/clang/bar.h"));
+
+  EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif "
+            " // LLVM_ADT_FOO_H\n",
+            runHeaderGuardCheckWithEndif("#ifndef FOO\n#define FOO\n#endif\n",
+                                         "include/llvm/ADT/foo.h"));
+
+  EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif "
+            " // LLVM_ADT_FOO_H\n",
+            runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H\n#define "
+                                         "LLVM_ADT_FOO_H\n#endif // LLVM_H\n",
+                                         "include/llvm/ADT/foo.h"));
+
+  EXPECT_EQ("#ifndef LLVM_ADT_FOO_H\n#define LLVM_ADT_FOO_H\n#endif"
+            " /* LLVM_ADT_FOO_H */\n",
+            runHeaderGuardCheckWithEndif("#ifndef LLVM_ADT_FOO_H\n#define "
+                                         "LLVM_ADT_FOO_H\n"
+                                         "#endif /* LLVM_ADT_FOO_H */\n",
+                                         "include/llvm/ADT/foo.h"));
 }
 #endif
 
