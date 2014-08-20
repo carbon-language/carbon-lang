@@ -371,11 +371,16 @@ public:
     return Reg;
   }
 
+  /// AlignStack - Align the top of the stakc to the specified alignment.
+  void AlignStack(unsigned Align) {
+    assert(Align && ((Align - 1) & Align) == 0); // Align is power of 2.
+    StackOffset = ((StackOffset + Align - 1) & ~(Align - 1));
+  }
+
   /// AllocateStack - Allocate a chunk of stack space with the specified size
   /// and alignment.
   unsigned AllocateStack(unsigned Size, unsigned Align) {
-    assert(Align && ((Align-1) & Align) == 0); // Align is power of 2.
-    StackOffset = ((StackOffset + Align-1) & ~(Align-1));
+    AlignStack(Align);
     unsigned Result = StackOffset;
     StackOffset += Size;
     MF.getFrameInfo()->ensureMaxAlignment(Align);
