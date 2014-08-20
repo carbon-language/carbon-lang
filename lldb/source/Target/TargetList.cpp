@@ -89,6 +89,19 @@ TargetList::CreateTarget (Debugger &debugger,
 
     bool prefer_platform_arch = false;
     
+    CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
+    if (platform_options && platform_options->PlatformWasSpecified ())
+    {
+        const bool select_platform = true;
+        platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
+                                                                   arch,
+                                                                   select_platform,
+                                                                   error,
+                                                                   platform_arch);
+        if (!platform_sp)
+            return error;
+    }
+    
     if (user_exe_path && user_exe_path[0])
     {
         ModuleSpecList module_specs;
@@ -150,26 +163,92 @@ TargetList::CreateTarget (Debugger &debugger,
                         platform_arch = matching_module_spec.GetArchitecture();
                     }
                 }
+                else
+                {
+                    // No architecture specified, check if there is only one platform for
+                    // all of the architectures.
+                    
+                    typedef std::vector<PlatformSP> PlatformList;
+                    PlatformList platforms;
+                    PlatformSP host_platform_sp = Platform::GetDefaultPlatform();
+                    for (size_t i=0; i<num_specs; ++i)
+                    {
+                        ModuleSpec module_spec;
+                        if (module_specs.GetModuleSpecAtIndex(i, module_spec))
+                        {
+                            // See if there was a selected platform and check that first
+                            // since the user may have specified it.
+                            if (platform_sp)
+                            {
+                                if (platform_sp->IsCompatibleArchitecture(module_spec.GetArchitecture(), false, NULL))
+                                {
+                                    platforms.push_back(platform_sp);
+                                    continue;
+                                }
+                            }
+                            
+                            // Next check the host platform it if wasn't already checked above
+                            if (host_platform_sp && (!platform_sp || host_platform_sp->GetName() != platform_sp->GetName()))
+                            {
+                                if (host_platform_sp->IsCompatibleArchitecture(module_spec.GetArchitecture(), false, NULL))
+                                {
+                                    platforms.push_back(host_platform_sp);
+                                    continue;
+                                }
+                            }
+                            
+                            // Just find a platform that matches the architecture in the executable file
+                            platforms.push_back(Platform::GetPlatformForArchitecture(module_spec.GetArchitecture(), nullptr));
+                        }
+                    }
+                    
+                    Platform *platform_ptr = NULL;
+                    for (const auto &the_platform_sp : platforms)
+                    {
+                        if (platform_ptr)
+                        {
+                            if (platform_ptr->GetName() != the_platform_sp->GetName())
+                            {
+                                platform_ptr = NULL;
+                                break;
+                            }
+                        }
+                        else
+                        {
+                            platform_ptr = the_platform_sp.get();
+                        }
+                    }
+                    
+                    if (platform_ptr)
+                    {
+                        // All platforms for all modules in the exectuable match, so we can select this platform
+                        platform_sp = platforms.front();
+                    }
+                    else
+                    {
+                        // More than one platform claims to support this file, so the --platform option must be specified
+                        StreamString error_strm;
+                        std::set<Platform *> platform_set;
+                        error_strm.Printf ("more than one platform supports this executable (");
+                        for (const auto &the_platform_sp : platforms)
+                        {
+                            if (platform_set.find(the_platform_sp.get()) == platform_set.end())
+                            {
+                                if (!platform_set.empty())
+                                    error_strm.PutCString(", ");
+                                error_strm.PutCString(the_platform_sp->GetName().GetCString());
+                                platform_set.insert(the_platform_sp.get());
+                            }
+                        }
+                        error_strm.Printf("), use the --platform option to specify a platform");
+                        error.SetErrorString(error_strm.GetString().c_str());
+                        return error;
+                    }
+                }
             }
         }
     }
 
-    CommandInterpreter &interpreter = debugger.GetCommandInterpreter();
-    if (platform_options)
-    {
-        if (platform_options->PlatformWasSpecified ())
-        {
-            const bool select_platform = true;
-            platform_sp = platform_options->CreatePlatformWithOptions (interpreter,
-                                                                       arch,
-                                                                       select_platform, 
-                                                                       error,
-                                                                       platform_arch);
-            if (!platform_sp)
-                return error;
-        }
-    }
-    
     if (!platform_sp)
     {
         // Get the current platform and make sure it is compatible with the
@@ -219,17 +298,10 @@ TargetList::CreateTarget (Debugger &debugger,
 
     ArchSpec arch(specified_arch);
 
-    if (platform_sp)
+    if (arch.IsValid())
     {
-        if (arch.IsValid())
-        {
-            if (!platform_sp->IsCompatibleArchitecture(arch, false, NULL))
-                platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
-        }
-    }
-    else if (arch.IsValid())
-    {
-        platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
+        if (!platform_sp || !platform_sp->IsCompatibleArchitecture(arch, false, NULL))
+            platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
     }
     
     if (!platform_sp)
