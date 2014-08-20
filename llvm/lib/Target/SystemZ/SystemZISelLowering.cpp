@@ -2800,14 +2800,10 @@ SystemZTargetLowering::emitAtomicLoadBinary(MachineInstr *MI,
     unsigned Tmp = MRI.createVirtualRegister(RC);
     BuildMI(MBB, DL, TII->get(BinOpcode), Tmp)
       .addReg(RotatedOldVal).addOperand(Src2);
-    if (BitSize < 32)
+    if (BitSize <= 32)
       // XILF with the upper BitSize bits set.
       BuildMI(MBB, DL, TII->get(SystemZ::XILF), RotatedNewVal)
-        .addReg(Tmp).addImm(uint32_t(~0 << (32 - BitSize)));
-    else if (BitSize == 32)
-      // XILF with every bit set.
-      BuildMI(MBB, DL, TII->get(SystemZ::XILF), RotatedNewVal)
-        .addReg(Tmp).addImm(~uint32_t(0));
+        .addReg(Tmp).addImm(-1U << (32 - BitSize));
     else {
       // Use LCGR and add -1 to the result, which is more compact than
       // an XILF, XILH pair.

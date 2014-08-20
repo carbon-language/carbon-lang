@@ -294,7 +294,7 @@ static void emitIncrement(MachineBasicBlock &MBB,
     else {
       Opcode = SystemZ::AGFI;
       // Make sure we maintain 8-byte stack alignment.
-      int64_t MinVal = -int64_t(1) << 31;
+      int64_t MinVal = -uint64_t(1) << 31;
       int64_t MaxVal = (int64_t(1) << 31) - 8;
       if (ThisVal < MinVal)
         ThisVal = MinVal;
