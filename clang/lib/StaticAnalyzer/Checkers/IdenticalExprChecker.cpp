@@ -455,7 +455,7 @@ static bool isIdenticalStmt(const ASTContext &Ctx, const Stmt *Stmt1,
   case Stmt::StringLiteralClass: {
     const StringLiteral *StringLit1 = cast<StringLiteral>(Stmt1);
     const StringLiteral *StringLit2 = cast<StringLiteral>(Stmt2);
-    return StringLit1->getString() == StringLit2->getString();
+    return StringLit1->getBytes() == StringLit2->getBytes();
   }
   case Stmt::MemberExprClass: {
     const MemberExpr *MemberStmt1 = cast<MemberExpr>(Stmt1);

@@ -1511,3 +1511,10 @@ void test_nowarn_chained_if_stmts_3(int x) {
   else if (x++) // no-warning
     ;
 }
+
+void test_warn_wchar() {
+  const wchar_t * a = 0 ? L"Warning" : L"Warning"; // expected-warning {{identical expressions on both sides of ':' in conditional expression}}
+}
+void test_nowarn_wchar() {
+  const wchar_t * a = 0 ? L"No" : L"Warning";
+}
