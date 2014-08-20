@@ -773,19 +773,27 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
                                        const Value *LHS, const Value *RHS,
                                        bool IsZExt, bool WantResult) {
   AArch64_AM::ShiftExtendType ExtendType = AArch64_AM::InvalidShiftExtend;
-  MVT SrcVT = RetVT;
+  bool NeedExtend = false;
   switch (RetVT.SimpleTy) {
-  default: return 0;
+  default:
+    return 0;
   case MVT::i1:
+    NeedExtend = true;
+    break;
   case MVT::i8:
-    ExtendType = IsZExt ? AArch64_AM::UXTB : AArch64_AM::SXTB; RetVT = MVT::i32;
+    NeedExtend = true;
+    ExtendType = IsZExt ? AArch64_AM::UXTB : AArch64_AM::SXTB;
     break;
   case MVT::i16:
-    ExtendType = IsZExt ? AArch64_AM::UXTH : AArch64_AM::SXTH; RetVT = MVT::i32;
+    NeedExtend = true;
+    ExtendType = IsZExt ? AArch64_AM::UXTH : AArch64_AM::SXTH;
     break;
-  case MVT::i32: break;
-  case MVT::i64: break;
+  case MVT::i32:  // fall-through
+  case MVT::i64:
+    break;
   }
+  MVT SrcVT = RetVT;
+  RetVT.SimpleTy = std::max(RetVT.SimpleTy, MVT::i32);
 
   // Canonicalize immediates to the RHS first.
   if (UseAdds && isa<ConstantInt>(LHS) && !isa<ConstantInt>(RHS))
@@ -805,7 +813,7 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
     return 0;
   bool LHSIsKill = hasTrivialKill(LHS);
 
-  if (ExtendType != AArch64_AM::InvalidShiftExtend)
+  if (NeedExtend)
     LHSReg = EmitIntExt(SrcVT, LHSReg, RetVT, IsZExt);
 
   unsigned ResultReg = 0;
@@ -821,6 +829,7 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
   if (ResultReg)
     return ResultReg;
 
+  // Only extend the RHS within the instruction if there is a valid extend type.
   if (ExtendType != AArch64_AM::InvalidShiftExtend) {
     if (const auto *SI = dyn_cast<BinaryOperator>(RHS))
       if (const auto *C = dyn_cast<ConstantInt>(SI->getOperand(1)))
@@ -867,6 +876,10 @@ unsigned AArch64FastISel::emitAddsSubs(bool UseAdds, MVT RetVT,
   if (!RHSReg)
     return 0;
   bool RHSIsKill = hasTrivialKill(RHS);
+
+  if (NeedExtend)
+    RHSReg = EmitIntExt(SrcVT, RHSReg, RetVT, IsZExt);
+
   return emitAddsSubs_rr(UseAdds, RetVT, LHSReg, LHSIsKill, RHSReg, RHSIsKill,
                          WantResult);
 }
