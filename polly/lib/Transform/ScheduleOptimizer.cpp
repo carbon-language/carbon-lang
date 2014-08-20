@@ -344,12 +344,12 @@ isl_map *IslScheduleOptimizer::getPrevectorMap(isl_ctx *ctx, int DimToVectorize,
   // DimToVectorize to the point loop at the innermost dimension.
   for (int i = 0; i < ScheduleDimensions; i++) {
     c = isl_equality_alloc(isl_local_space_copy(LocalSpace));
-    isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
+    c = isl_constraint_set_coefficient_si(c, isl_dim_in, i, -1);
 
     if (i == DimToVectorize)
-      isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
+      c = isl_constraint_set_coefficient_si(c, isl_dim_out, PointDimension, 1);
     else
-      isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
+      c = isl_constraint_set_coefficient_si(c, isl_dim_out, i, 1);
 
     TilingMap = isl_map_add_constraint(TilingMap, c);
   }
