@@ -275,7 +275,7 @@ bool
 AppleObjCRuntimeV1::ClassDescriptorV1::Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
                                                  std::function <bool (const char *, const char *)> const &instance_method_func,
                                                  std::function <bool (const char *, const char *)> const &class_method_func,
-                                                 std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func)
+                                                 std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func) const
 {
     return false;
 }
