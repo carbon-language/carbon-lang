@@ -43,7 +43,7 @@ bool SmallPtrSetImplBase::insert_imp(const void * Ptr) {
         return false;
     
     // Nope, there isn't.  If we stay small, just 'pushback' now.
-    if (NumElements < CurArraySize-1) {
+    if (NumElements < CurArraySize) {
       SmallArray[NumElements++] = Ptr;
       return true;
     }
@@ -200,12 +200,11 @@ SmallPtrSetImplBase::SmallPtrSetImplBase(const void **SmallStorage,
   if (that.isSmall()) {
     CurArray = SmallArray;
     memcpy(CurArray, that.CurArray, sizeof(void *) * CurArraySize);
-    return;
+  } else {
+    // Otherwise, we steal the large memory allocation and no copy is needed.
+    CurArray = that.CurArray;
+    that.CurArray = that.SmallArray;
   }
-
-  // Otherwise, we steal the large memory allocation and no copy is needed.
-  CurArray = that.CurArray;
-  that.CurArray = that.SmallArray;
 
   // Make the "that" object small and empty.
   that.CurArraySize = SmallSize;
