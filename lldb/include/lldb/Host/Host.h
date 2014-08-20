@@ -123,23 +123,6 @@ public:
     SystemLog (SystemLogType type, const char *format, va_list args);
 
     //------------------------------------------------------------------
-    /// Gets the host architecture.
-    ///
-    /// @return
-    ///     A const architecture object that represents the host
-    ///     architecture.
-    //------------------------------------------------------------------
-    enum SystemDefaultArchitecture
-    {
-        eSystemDefaultArchitecture,     // The overall default architecture that applications will run on this host
-        eSystemDefaultArchitecture32,   // If this host supports 32 bit programs, return the default 32 bit arch
-        eSystemDefaultArchitecture64    // If this host supports 64 bit programs, return the default 64 bit arch
-    };
-
-    static const ArchSpec &
-    GetArchitecture (SystemDefaultArchitecture arch_kind = eSystemDefaultArchitecture);
-
-    //------------------------------------------------------------------
     /// Get the process ID for the calling process.
     ///
     /// @return

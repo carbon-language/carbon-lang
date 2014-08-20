@@ -23,7 +23,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 
@@ -131,7 +131,7 @@ PlatformKalimba::ResolveExecutable (const FileSpec &exe_file,
                 bool is_os_specified = (module_triple.getOS() != llvm::Triple::UnknownOS);
                 if (!is_vendor_specified || !is_os_specified)
                 {
-                    const llvm::Triple &host_triple = Host::GetArchitecture (Host::eSystemDefaultArchitecture).GetTriple();
+                    const llvm::Triple &host_triple = HostInfo::GetArchitecture(HostInfo::eArchKindDefault).GetTriple();
 
                     if (!is_vendor_specified)
                         module_triple.setVendorName (host_triple.getVendorName());

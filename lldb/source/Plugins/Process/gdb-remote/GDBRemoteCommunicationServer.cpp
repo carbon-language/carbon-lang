@@ -1188,7 +1188,7 @@ GDBRemoteCommunicationServer::Handle_qHostInfo (StringExtractorGDBRemote &packet
 
     // $cputype:16777223;cpusubtype:3;ostype:Darwin;vendor:apple;endian:little;ptrsize:8;#00
 
-    ArchSpec host_arch (Host::GetArchitecture ());
+    ArchSpec host_arch(HostInfo::GetArchitecture());
     const llvm::Triple &host_triple = host_arch.GetTriple();
     response.PutCString("triple:");
     response.PutCString(host_triple.getTriple().c_str());

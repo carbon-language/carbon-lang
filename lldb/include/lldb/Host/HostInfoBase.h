@@ -10,6 +10,8 @@
 #ifndef lldb_Host_HostInfoBase_h_
 #define lldb_Host_HostInfoBase_h_
 
+#include "lldb/Core/ArchSpec.h"
+
 #include "llvm/ADT/StringRef.h"
 
 #include <stdint.h>
@@ -60,11 +62,32 @@ class HostInfoBase
     //------------------------------------------------------------------
     static llvm::StringRef GetTargetTriple();
 
+    //------------------------------------------------------------------
+    /// Gets the host architecture.
+    ///
+    /// @return
+    ///     A const architecture object that represents the host
+    ///     architecture.
+    //------------------------------------------------------------------
+    enum ArchitectureKind
+    {
+        eArchKindDefault, // The overall default architecture that applications will run on this host
+        eArchKind32,      // If this host supports 32 bit programs, return the default 32 bit arch
+        eArchKind64       // If this host supports 64 bit programs, return the default 64 bit arch
+    };
+
+    static const ArchSpec &GetArchitecture(ArchitectureKind arch_kind = eArchKindDefault);
+
   protected:
+    static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
+
     static uint32_t m_number_cpus;
     static std::string m_vendor_string;
     static std::string m_os_string;
     static std::string m_host_triple;
+
+    static ArchSpec m_host_arch_32;
+    static ArchSpec m_host_arch_64;
 };
 }
 

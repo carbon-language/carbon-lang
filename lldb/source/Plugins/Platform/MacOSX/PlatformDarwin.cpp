@@ -23,6 +23,7 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -761,7 +762,7 @@ PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Targ
 bool
 PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    ArchSpec host_arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+    ArchSpec host_arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
     if (host_arch.GetCore() == ArchSpec::eCore_x86_64_x86_64h)
     {
         switch (idx)
@@ -775,7 +776,7 @@ PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
                 return true;
 
             case 2:
-                arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
                 return true;
 
             default: return false;
@@ -785,19 +786,19 @@ PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     {
         if (idx == 0)
         {
-            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+            arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
             return arch.IsValid();
         }
         else if (idx == 1)
         {
-            ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
-            ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
+            ArchSpec platform_arch(HostInfo::GetArchitecture(HostInfo::eArchKindDefault));
+            ArchSpec platform_arch64(HostInfo::GetArchitecture(HostInfo::eArchKind64));
             if (platform_arch.IsExactMatch(platform_arch64))
             {
                 // This macosx platform supports both 32 and 64 bit. Since we already
                 // returned the 64 bit arch for idx == 0, return the 32 bit arch 
                 // for idx == 1
-                arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
                 return arch.IsValid();
             }
         }

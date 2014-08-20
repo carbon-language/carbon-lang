@@ -20,6 +20,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/StopInfo.h"
 #include "lldb/Target/Target.h"
@@ -180,14 +181,15 @@ POSIXThread::GetRegisterContext()
                 {
                     case llvm::Triple::x86:
                     case llvm::Triple::x86_64:
-                        if (Host::GetArchitecture().GetAddressByteSize() == 4)
+                        if (HostInfo::GetArchitecture().GetAddressByteSize() == 4)
                         {
                             // 32-bit hosts run with a RegisterContextLinux_i386 context.
                             reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_i386(target_arch));
                         }
                         else
                         {
-                            assert((Host::GetArchitecture().GetAddressByteSize() == 8) && "Register setting path assumes this is a 64-bit host");
+                            assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
+                                   "Register setting path assumes this is a 64-bit host");
                             // X86_64 hosts know how to work with 64-bit and 32-bit EXEs using the x86_64 register context.
                             reg_interface = static_cast<RegisterInfoInterface*>(new RegisterContextLinux_x86_64(target_arch));
                         }
@@ -596,7 +598,7 @@ unsigned
 POSIXThread::GetRegisterIndexFromOffset(unsigned offset)
 {
     unsigned reg = LLDB_INVALID_REGNUM;
-    ArchSpec arch = Host::GetArchitecture();
+    ArchSpec arch = HostInfo::GetArchitecture();
 
     switch (arch.GetMachine())
     {
@@ -626,7 +628,7 @@ const char *
 POSIXThread::GetRegisterName(unsigned reg)
 {
     const char * name = nullptr;
-    ArchSpec arch = Host::GetArchitecture();
+    ArchSpec arch = HostInfo::GetArchitecture();
 
     switch (arch.GetMachine())
     {

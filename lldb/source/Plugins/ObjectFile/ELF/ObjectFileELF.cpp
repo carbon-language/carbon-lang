@@ -27,7 +27,6 @@
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Target/SectionLoadList.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 
 #include "llvm/ADT/PointerUnion.h"
@@ -588,7 +587,7 @@ ObjectFileELF::GetModuleSpecifications (const lldb_private::FileSpec& file,
                     llvm::Triple &spec_triple = spec.GetArchitecture ().GetTriple ();
                     if (spec_triple.getVendor () == llvm::Triple::VendorType::UnknownVendor)
                     {
-                        const llvm::Triple &host_triple = Host::GetArchitecture ().GetTriple ();
+                        const llvm::Triple &host_triple = HostInfo::GetArchitecture().GetTriple();
                         if (spec_triple.getOS () == host_triple.getOS ())
                             spec_triple.setVendor (host_triple.getVendor ());
                     }
@@ -1276,7 +1275,7 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
         {
         case 4:
             {
-                const ArchSpec host_arch32 = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                const ArchSpec host_arch32 = HostInfo::GetArchitecture(HostInfo::eArchKind32);
                 if (host_arch32.GetCore() == arch_spec.GetCore())
                 {
                     arch_spec.GetTriple().setOSName(HostInfo::GetOSString().data());
@@ -1286,7 +1285,7 @@ ObjectFileELF::GetSectionHeaderInfo(SectionHeaderColl &section_headers,
             break;
         case 8:
             {
-                const ArchSpec host_arch64 = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+                const ArchSpec host_arch64 = HostInfo::GetArchitecture(HostInfo::eArchKind64);
                 if (host_arch64.GetCore() == arch_spec.GetCore())
                 {
                     arch_spec.GetTriple().setOSName(HostInfo::GetOSString().data());

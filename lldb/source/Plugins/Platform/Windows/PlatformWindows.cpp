@@ -22,7 +22,6 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/PluginManager.h"
-#include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/Module.h"
@@ -41,9 +40,9 @@ namespace
         SupportedArchList()
         {
             AddArch(ArchSpec("i686-pc-windows"));
-            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture));
-            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture32));
-            AddArch(Host::GetArchitecture(Host::eSystemDefaultArchitecture64));
+            AddArch(HostInfo::GetArchitecture(HostInfo::eArchKindDefault));
+            AddArch(HostInfo::GetArchitecture(HostInfo::eArchKind32));
+            AddArch(HostInfo::GetArchitecture(HostInfo::eArchKind64));
             AddArch(ArchSpec("i386-pc-windows"));
         }
 
@@ -154,7 +153,7 @@ PlatformWindows::Initialize(void)
         WSAStartup(MAKEWORD(2,2), &dummy);
         // Force a host flag to true for the default platform object.
         PlatformSP default_platform_sp (new PlatformWindows(true));
-        default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
+        default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformWindows::GetPluginNameStatic(false),

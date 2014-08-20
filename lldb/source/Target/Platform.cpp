@@ -914,7 +914,7 @@ Platform::GetSystemArchitecture()
         if (!m_system_arch.IsValid())
         {
             // We have a local host platform
-            m_system_arch = Host::GetArchitecture();
+            m_system_arch = HostInfo::GetArchitecture();
             m_system_arch_set_while_connected = m_system_arch.IsValid();
         }
     }

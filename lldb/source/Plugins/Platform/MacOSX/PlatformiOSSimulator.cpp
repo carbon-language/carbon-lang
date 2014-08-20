@@ -23,6 +23,7 @@
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 
@@ -425,8 +426,8 @@ PlatformiOSSimulator::FindProcesses (const ProcessInstanceInfoMatch &match_info,
 bool
 PlatformiOSSimulator::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
-    static const ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
-    static const ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
+    static const ArchSpec platform_arch(HostInfo::GetArchitecture(HostInfo::eArchKindDefault));
+    static const ArchSpec platform_arch64(HostInfo::GetArchitecture(HostInfo::eArchKind64));
 
     if (idx == 0)
     {
@@ -450,7 +451,7 @@ PlatformiOSSimulator::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &a
             }
             else if (idx == 2 || idx == 3)
             {
-                arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
                 if (arch.IsValid())
                 {
                     if (idx == 2)

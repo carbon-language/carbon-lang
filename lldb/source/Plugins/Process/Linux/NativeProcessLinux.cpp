@@ -38,6 +38,7 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/State.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/NativeRegisterContext.h"
 #include "lldb/Target/ProcessLaunchInfo.h"
@@ -1266,10 +1267,8 @@ NativeProcessLinux::AttachToInferior (lldb::pid_t pid, lldb_private::Error &erro
     ModuleSP exe_module_sp;
     FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
 
-    error = platform_sp->ResolveExecutable(process_info.GetExecutableFile(),
-                                    Host::GetArchitecture(),
-                                    exe_module_sp,
-                                    executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+    error = platform_sp->ResolveExecutable(process_info.GetExecutableFile(), HostInfo::GetArchitecture(), exe_module_sp,
+                                           executable_search_paths.GetSize() ? &executable_search_paths : NULL);
     if (!error.Success())
         return;
 

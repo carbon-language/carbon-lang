@@ -20,8 +20,9 @@
 #include "llvm/Support/Host.h"
 #include "lldb/Utility/SafeMachO.h"
 #include "lldb/Core/RegularExpression.h"
+#include "lldb/Core/StringList.h"
 #include "lldb/Host/Endian.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Platform.h"
 
 using namespace lldb;
@@ -620,11 +621,11 @@ ArchSpec::SetTriple (const char *triple_cstr)
         {
             // Special case for the current host default architectures...
             if (triple_stref.equals (LLDB_ARCH_DEFAULT_32BIT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKind32);
             else if (triple_stref.equals (LLDB_ARCH_DEFAULT_64BIT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKind64);
             else if (triple_stref.equals (LLDB_ARCH_DEFAULT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
         }
         else
         {
@@ -651,11 +652,11 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
         {
             // Special case for the current host default architectures...
             if (triple_stref.equals (LLDB_ARCH_DEFAULT_32BIT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKind32);
             else if (triple_stref.equals (LLDB_ARCH_DEFAULT_64BIT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture64);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKind64);
             else if (triple_stref.equals (LLDB_ARCH_DEFAULT))
-                *this = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+                *this = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
         }
         else
         {

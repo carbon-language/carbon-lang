@@ -44,7 +44,7 @@ PlatformMacOSX::Initialize ()
     {
 #if defined (__APPLE__)
         PlatformSP default_platform_sp (new PlatformMacOSX(true));
-        default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
+        default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif        
         PluginManager::RegisterPlugin (PlatformMacOSX::GetPluginNameStatic(false),

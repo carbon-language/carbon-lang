@@ -30,7 +30,7 @@
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Host/FileSpec.h"
-#include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Process.h"
 
@@ -155,7 +155,7 @@ PlatformLinux::Initialize ()
     {
 #if defined(__linux__)
         PlatformSP default_platform_sp (new PlatformLinux(true));
-        default_platform_sp->SetSystemArchitecture (Host::GetArchitecture());
+        default_platform_sp->SetSystemArchitecture(HostInfo::GetArchitecture());
         Platform::SetDefaultPlatform (default_platform_sp);
 #endif
         PluginManager::RegisterPlugin(PlatformLinux::GetPluginNameStatic(false),
@@ -248,7 +248,7 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                 bool is_os_specified = (module_triple.getOS() != llvm::Triple::UnknownOS);
                 if (!is_vendor_specified || !is_os_specified)
                 {
-                    const llvm::Triple &host_triple = Host::GetArchitecture (Host::eSystemDefaultArchitecture).GetTriple();
+                    const llvm::Triple &host_triple = HostInfo::GetArchitecture(HostInfo::eArchKindDefault).GetTriple();
 
                     if (!is_vendor_specified)
                         module_triple.setVendorName (host_triple.getVendorName());
@@ -374,17 +374,16 @@ PlatformLinux::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
     if (idx == 0)
     {
-        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+        arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
         return arch.IsValid();
     }
     else if (idx == 1)
     {
         // If the default host architecture is 64-bit, look for a 32-bit variant
-        ArchSpec hostArch
-                      = Host::GetArchitecture(Host::eSystemDefaultArchitecture);
+        ArchSpec hostArch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
         if (hostArch.IsValid() && hostArch.GetTriple().isArch64Bit())
         {
-            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
             return arch.IsValid();
         }
     }

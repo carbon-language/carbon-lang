@@ -26,6 +26,7 @@
 #include "lldb/Core/Error.h"
 #include "lldb/Host/Endian.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/StreamFile.h"
@@ -222,7 +223,7 @@ GetFreeBSDProcessCPUType (ProcessInstanceInfo &process_info)
 {
     if (process_info.ProcessIDIsValid())
     {
-        process_info.GetArchitecture() = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+        process_info.GetArchitecture() = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
         return true;
     }
     process_info.GetArchitecture().Clear();

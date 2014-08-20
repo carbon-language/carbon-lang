@@ -15,8 +15,12 @@
 namespace lldb_private
 {
 
+class ArchSpec;
+
 class HostInfoMacOSX : public HostInfoPosix
 {
+    friend class HostInfoBase;
+
   private:
     // Static class, unconstructable.
     HostInfoMacOSX();
@@ -26,6 +30,9 @@ class HostInfoMacOSX : public HostInfoPosix
     static bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
     static bool GetOSBuildString(std::string &s);
     static bool GetOSKernelDescription(std::string &s);
+
+  protected:
+    static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
 };
 }
 
