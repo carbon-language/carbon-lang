@@ -1518,3 +1518,15 @@ void test_warn_wchar() {
 void test_nowarn_wchar() {
   const wchar_t * a = 0 ? L"No" : L"Warning";
 }
+
+void test_nowarn_long() {
+  int a =0, b = 0;
+  long c;
+  if (0) {
+    b -= a;
+    c = 0;
+  } else { // no-warning
+    b -= a;
+    c = 0xFFFFFFFFFFFFFFFF;
+  }
+}
