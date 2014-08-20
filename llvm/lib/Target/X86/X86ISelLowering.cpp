@@ -10416,6 +10416,13 @@ static SDValue LowerVSELECTtoBlend(SDValue Op, const X86Subtarget *Subtarget,
 }
 
 SDValue X86TargetLowering::LowerVSELECT(SDValue Op, SelectionDAG &DAG) const {
+  // A vselect where all conditions and data are constants can be optimized into
+  // a single vector load by SelectionDAGLegalize::ExpandBUILD_VECTOR().
+  if (ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(0).getNode()) &&
+      ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(1).getNode()) &&
+      ISD::isBuildVectorOfConstantSDNodes(Op.getOperand(2).getNode()))
+    return SDValue();
+  
   SDValue BlendOp = LowerVSELECTtoBlend(Op, Subtarget, DAG);
   if (BlendOp.getNode())
     return BlendOp;
@@ -20417,6 +20424,12 @@ TransformVSELECTtoBlendVECTOR_SHUFFLE(SDNode *N, SelectionDAG &DAG,
     return SDValue();
 
   if (!ISD::isBuildVectorOfConstantSDNodes(Cond.getNode()))
+    return SDValue();
+
+  // A vselect where all conditions and data are constants can be optimized into
+  // a single vector load by SelectionDAGLegalize::ExpandBUILD_VECTOR().
+  if (ISD::isBuildVectorOfConstantSDNodes(LHS.getNode()) &&
+      ISD::isBuildVectorOfConstantSDNodes(RHS.getNode()))
     return SDValue();
 
   unsigned MaskValue = 0;
