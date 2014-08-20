@@ -842,6 +842,11 @@ def VMOVRRD  : AVConv3I<0b11000101, 0b1011,
   // Some single precision VFP instructions may be executed on both NEON and VFP
   // pipelines.
   let D = VFPNeonDomain;
+
+  // This instruction is equivalent to
+  // $Rt = EXTRACT_SUBREG $Dm, ssub_0
+  // $Rt2 = EXTRACT_SUBREG $Dm, ssub_1
+  let isExtractSubreg = 1;
 }
 
 def VMOVRRS  : AVConv3I<0b11000101, 0b1010,

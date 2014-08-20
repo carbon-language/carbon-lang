@@ -55,6 +55,19 @@ public:
       const MachineInstr &MI, unsigned DefIdx,
       SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const override;
 
+  /// Build the equivalent inputs of a EXTRACT_SUBREG for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] InputReg of the equivalent EXTRACT_SUBREG.
+  /// E.g., EXTRACT_SUBREG vreg1:sub1, sub0, sub1 would produce:
+  /// - vreg1:sub1, sub0
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isExtractSubregLike().
+  bool getExtractSubregLikeInputs(const MachineInstr &MI, unsigned DefIdx,
+                                  RegSubRegPairAndIdx &InputReg) const override;
+
 private:
   void expandLoadStackGuard(MachineBasicBlock::iterator MI,
                             Reloc::Model RM) const override;
