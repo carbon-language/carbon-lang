@@ -50,8 +50,8 @@ static cl::opt<bool> UseTBAA("use-tbaa-in-sched-mi", cl::Hidden,
     cl::init(true), cl::desc("Enable use of TBAA during MI GAD construction"));
 
 ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
-                                     const MachineLoopInfo &mli,
-                                     const MachineDominatorTree &mdt,
+                                     const MachineLoopInfo *mli,
+                                     const MachineDominatorTree *mdt,
                                      bool IsPostRAFlag,
                                      bool RemoveKillFlags,
                                      LiveIntervals *lis)

@@ -115,7 +115,7 @@ public:
 DefaultVLIWScheduler::DefaultVLIWScheduler(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
   bool IsPostRA) :
-  ScheduleDAGInstrs(MF, MLI, MDT, IsPostRA) {
+  ScheduleDAGInstrs(MF, &MLI, &MDT, IsPostRA) {
   CanHandleTerminators = true;
 }
 

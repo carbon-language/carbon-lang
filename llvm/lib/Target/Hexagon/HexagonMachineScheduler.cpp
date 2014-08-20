@@ -145,7 +145,7 @@ void VLIWMachineScheduler::schedule() {
         << "********** MI Converging Scheduling VLIW BB#" << BB->getNumber()
         << " " << BB->getName()
         << " in_func " << BB->getParent()->getFunction()->getName()
-        << " at loop depth "  << MLI.getLoopDepth(BB)
+        << " at loop depth "  << MLI->getLoopDepth(BB)
         << " \n");
 
   buildDAGWithRegPressure();

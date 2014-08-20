@@ -197,7 +197,7 @@ SchedulePostRATDList::SchedulePostRATDList(
   AliasAnalysis *AA, const RegisterClassInfo &RCI,
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
-  : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
+  : ScheduleDAGInstrs(MF, &MLI, &MDT, /*IsPostRA=*/true), AA(AA), EndIndex(0) {
 
   const TargetMachine &TM = MF.getTarget();
   const InstrItineraryData *InstrItins =
