@@ -1042,6 +1042,16 @@ struct CounterCoverageMappingBuilder
   void VisitImaginaryLiteral(const ImaginaryLiteral *E) {
     mapToken(E->getLocStart());
   }
+
+  void VisitObjCMessageExpr(const ObjCMessageExpr *E) {
+    mapToken(E->getLeftLoc());
+    for (Stmt::const_child_range I = static_cast<const Stmt*>(E)->children(); I;
+         ++I) {
+      if (*I)
+        this->Visit(*I);
+    }
+    mapToken(E->getRightLoc());
+  }
 };
 }
 
