@@ -126,6 +126,9 @@
 #include <clc/synchronization/cl_mem_fence_flags.h>
 #include <clc/synchronization/barrier.h>
 
+/* 6.11.10 Async Copy and Prefetch Functions */
+#include <clc/async/prefetch.h>
+
 /* 6.11.11 Atomic Functions */
 #include <clc/atomic/atomic_add.h>
 #include <clc/atomic/atomic_dec.h>
