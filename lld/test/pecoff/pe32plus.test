@@ -1,7 +1,7 @@
 # RUN: yaml2obj %p/Inputs/nop64.obj.yaml > %t.obj
 
 # RUN: lld -flavor link /out:%t.exe /subsystem:console /entry:start \
-# RUN:   /machine:x64 -- %t.obj
+# RUN:   /machine:x64 -- %t.obj %p/Inputs/vars.lib
 # RUN: llvm-readobj -file-headers %t.exe | FileCheck %s
 
 CHECK:      Format: COFF-x86-64
@@ -9,7 +9,7 @@ CHECK-NEXT: Arch: x86_64
 CHECK-NEXT: AddressSize: 64bit
 CHECK-NEXT: ImageFileHeader {
 CHECK-NEXT:   Machine: IMAGE_FILE_MACHINE_AMD64 (0x8664)
-CHECK-NEXT:   SectionCount: 1
+CHECK-NEXT:   SectionCount: 5
 CHECK-NEXT:   TimeDateStamp:
 CHECK-NEXT:   PointerToSymbolTable: 0x0
 CHECK-NEXT:   SymbolCount: 0
@@ -23,10 +23,10 @@ CHECK-NEXT: ImageOptionalHeader {
 CHECK-NEXT:   MajorLinkerVersion: 0
 CHECK-NEXT:   MinorLinkerVersion: 0
 CHECK-NEXT:   SizeOfCode: 512
-CHECK-NEXT:   SizeOfInitializedData: 0
+CHECK-NEXT:   SizeOfInitializedData: 2048
 CHECK-NEXT:   SizeOfUninitializedData: 0
-CHECK-NEXT:   AddressOfEntryPoint: 0x1000
-CHECK-NEXT:   BaseOfCode: 0x1000
+CHECK-NEXT:   AddressOfEntryPoint: 0x5000
+CHECK-NEXT:   BaseOfCode: 0x5000
 CHECK-NEXT:   ImageBase: 0x140000000
 CHECK-NEXT:   SectionAlignment: 4096
 CHECK-NEXT:   FileAlignment: 512
@@ -36,8 +36,8 @@ CHECK-NEXT:   MajorImageVersion: 0
 CHECK-NEXT:   MinorImageVersion: 0
 CHECK-NEXT:   MajorSubsystemVersion: 6
 CHECK-NEXT:   MinorSubsystemVersion: 0
-CHECK-NEXT:   SizeOfImage: 8192
-CHECK-NEXT:   SizeOfHeaders: 512
+CHECK-NEXT:   SizeOfImage: 24576
+CHECK-NEXT:   SizeOfHeaders: 1024
 CHECK-NEXT:   Subsystem: IMAGE_SUBSYSTEM_WINDOWS_CUI (0x3)
 CHECK-NEXT:   Subsystem [ (0x8140)
 CHECK-NEXT:     IMAGE_DLL_CHARACTERISTICS_DYNAMIC_BASE (0x40)
@@ -52,8 +52,8 @@ CHECK-NEXT:   NumberOfRvaAndSize: 16
 CHECK-NEXT:   DataDirectory {
 CHECK-NEXT:     ExportTableRVA: 0x0
 CHECK-NEXT:     ExportTableSize: 0x0
-CHECK-NEXT:     ImportTableRVA: 0x0
-CHECK-NEXT:     ImportTableSize: 0x0
+CHECK-NEXT:     ImportTableRVA: 0x3000
+CHECK-NEXT:     ImportTableSize: 0x28
 CHECK-NEXT:     ResourceTableRVA: 0x0
 CHECK-NEXT:     ResourceTableSize: 0x0
 CHECK-NEXT:     ExceptionTableRVA: 0x0
@@ -74,8 +74,8 @@ CHECK-NEXT:     LoadConfigTableRVA: 0x0
 CHECK-NEXT:     LoadConfigTableSize: 0x0
 CHECK-NEXT:     BoundImportRVA: 0x0
 CHECK-NEXT:     BoundImportSize: 0x0
-CHECK-NEXT:     IATRVA: 0x0
-CHECK-NEXT:     IATSize: 0x0
+CHECK-NEXT:     IATRVA: 0x2000
+CHECK-NEXT:     IATSize: 0x10
 CHECK-NEXT:     DelayImportDescriptorRVA: 0x0
 CHECK-NEXT:     DelayImportDescriptorSize: 0x0
 CHECK-NEXT:     CLRRuntimeHeaderRVA: 0x0
