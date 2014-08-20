@@ -1032,7 +1032,7 @@ public:
   /// Getelementptr form.  Value* is only accepted for convenience;
   /// all elements must be Constant's.
   ///
-  /// \param OnlyIfReduced see \a getWithOperands() docs.
+  /// \param OnlyIfReducedTy see \a getWithOperands() docs.
   static Constant *getGetElementPtr(Constant *C, ArrayRef<Constant *> IdxList,
                                     bool InBounds = false,
                                     Type *OnlyIfReducedTy = nullptr) {
