@@ -25,3 +25,51 @@ void open_2(const char *path) {
   if (fd > -1)
     close(fd);
 }
+
+void open_3(const char *path) {
+  int fd;
+  fd = open(path, O_RDONLY, NULL); // expected-warning{{Third argument to 'open' is not an integer}}
+  if (fd > -1)
+    close(fd);
+}
+
+void open_4(const char *path) {
+  int fd;
+  fd = open(path, O_RDONLY, ""); // expected-warning{{Third argument to 'open' is not an integer}}
+  if (fd > -1)
+    close(fd);
+}
+
+void open_5(const char *path) {
+  int fd;
+  struct {
+    int val;
+  } st = {0};
+  fd = open(path, O_RDONLY, st); // expected-warning{{Third argument to 'open' is not an integer}}
+  if (fd > -1)
+    close(fd);
+}
+
+void open_6(const char *path) {
+  int fd;
+  struct {
+    int val;
+  } st = {0};
+  fd = open(path, O_RDONLY, st.val); // no-warning
+  if (fd > -1)
+    close(fd);
+}
+
+void open_7(const char *path) {
+  int fd;
+  fd = open(path, O_RDONLY, &open); // expected-warning{{Third argument to 'open' is not an integer}}
+  if (fd > -1)
+    close(fd);
+}
+
+void open_8(const char *path) {
+  int fd;
+  fd = open(path, O_RDONLY, 0.0f); // expected-warning{{Third argument to 'open' is not an integer}}
+  if (fd > -1)
+    close(fd);
+}

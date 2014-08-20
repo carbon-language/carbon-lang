@@ -95,6 +95,15 @@ void UnixAPIChecker::CheckOpen(CheckerContext &C, const CallExpr *CE) const {
     // The frontend should issue a warning for this case, so this is a sanity
     // check.
     return;
+  } else if (CE->getNumArgs() == 3) {
+    const Expr *Arg = CE->getArg(2);
+    QualType QT = Arg->getType();
+    if (!QT->isIntegerType()) {
+      ReportOpenBug(C, state,
+                    "Third argument to 'open' is not an integer",
+                    Arg->getSourceRange());
+      return;
+    }
   } else if (CE->getNumArgs() > 3) {
     ReportOpenBug(C, state,
                   "Call to 'open' with more than three arguments",
