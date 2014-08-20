@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "ARMSubtarget.h"
 #include "Thumb1InstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -41,10 +42,30 @@ void Thumb1InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
                                   MachineBasicBlock::iterator I, DebugLoc DL,
                                   unsigned DestReg, unsigned SrcReg,
                                   bool KillSrc) const {
-  AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg)
-    .addReg(SrcReg, getKillRegState(KillSrc)));
+  // Need to check the arch.
+  MachineFunction &MF = *MBB.getParent();
+  const ARMSubtarget &st = MF.getTarget().getSubtarget<ARMSubtarget>();
+
   assert(ARM::GPRRegClass.contains(DestReg, SrcReg) &&
          "Thumb1 can only copy GPR registers");
+
+  if (st.hasV6Ops() || ARM::hGPRRegClass.contains(SrcReg)
+      || !ARM::tGPRRegClass.contains(DestReg))
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tMOVr), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc)));
+  else {
+    // FIXME: The performance consequences of this are going to be atrocious.
+    // Some things to try that should be better:
+    //   * 'mov hi, $src; mov $dst, hi', with hi as either r10 or r11
+    //   * 'movs $dst, $src' if cpsr isn't live
+    // See: http://lists.cs.uiuc.edu/pipermail/llvmdev/2014-August/075998.html
+
+    // 'MOV lo, lo' is unpredictable on < v6, so use the stack to do it
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tPUSH)))
+      .addReg(SrcReg, getKillRegState(KillSrc));
+    AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::tPOP)))
+      .addReg(DestReg, getDefRegState(true));
+  }
 }
 
 void Thumb1InstrInfo::

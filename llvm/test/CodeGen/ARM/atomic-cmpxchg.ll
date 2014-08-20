@@ -20,12 +20,15 @@ entry:
 
 ; CHECK-THUMB-LABEL: test_cmpxchg_res_i8
 ; CHECK-THUMB: bl __sync_val_compare_and_swap_1
-; CHECK-THUMB: mov [[R1:r[0-9]+]], r0
+; CHECK-THUMB-NOT: mov [[R1:r[0-7]]], r0
+; CHECK-THUMB: push  {r0}
+; CHECK-THUMB: pop {[[R1:r[0-7]]]}
 ; CHECK-THUMB: movs r0, #1
 ; CHECK-THUMB: movs [[R2:r[0-9]+]], #0
 ; CHECK-THUMB: cmp [[R1]], {{r[0-9]+}}
 ; CHECK-THU<B: beq
-; CHECK-THUMB: mov r0, [[R2]]
+; CHECK-THUMB: push  {[[R2]]}
+; CHECK-THUMB: pop {r0}
 
 ; CHECK-ARMV7-LABEL: test_cmpxchg_res_i8
 ; CHECK-ARMV7: ldrexb [[R3:r[0-9]+]], [r0]
