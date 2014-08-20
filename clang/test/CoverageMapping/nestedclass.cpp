@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fprofile-instr-generate -fcoverage-mapping -dump-coverage-mapping -emit-llvm-only -main-file-name nestedclass.cpp %s > %tmapping
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-OUTER
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-INNER
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-INNERMOST
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-OUTER
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-INNER
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-INNERMOST
 
 struct Test {                   // CHECK-OUTER: emitTest
   void emitTest() {             // CHECK-OUTER: File 0, [[@LINE]]:19 -> [[@LINE+2]]:4 = #0 (HasCodeBefore = 0)

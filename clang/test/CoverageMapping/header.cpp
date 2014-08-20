@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -fprofile-instr-generate -fcoverage-mapping -dump-coverage-mapping -emit-llvm-only -main-file-name tu1.cpp %s > %tmapping
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-FUNC
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-STATIC-FUNC
-// RUN: cat %tmapping | FileCheck %s --check-prefix=CHECK-STATIC-FUNC2
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-FUNC
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-STATIC-FUNC
+// RUN: FileCheck -input-file %tmapping %s --check-prefix=CHECK-STATIC-FUNC2
 
 #include "Inputs/header1.h"
 
