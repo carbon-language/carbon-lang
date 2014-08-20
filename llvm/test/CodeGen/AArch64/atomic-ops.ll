@@ -493,6 +493,7 @@ define i8 @test_atomic_load_min_i8(i8 %offset) nounwind {
 ; CHECK-LABEL: test_atomic_load_min_i8:
    %old = atomicrmw min i8* @var8, i8 %offset acquire
 ; CHECK-NOT: dmb
+; CHECK: sxtb w[[TMP:[0-9]+]], w0
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var8
 
@@ -502,14 +503,13 @@ define i8 @test_atomic_load_min_i8(i8 %offset) nounwind {
   ;  function there.
 
 ; CHECK-NEXT: sxtb w[[OLD_EXT:[0-9]+]], w[[OLD]]
-; CHECK-NEXT: cmp w[[OLD_EXT]], w0, sxtb
-; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, le
+; CHECK-NEXT: cmp w[[OLD_EXT]], w[[TMP]]
+; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w[[TMP]], le
 
 ; CHECK-NEXT: stxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i8 %old
 }
 
@@ -517,6 +517,7 @@ define i16 @test_atomic_load_min_i16(i16 %offset) nounwind {
 ; CHECK-LABEL: test_atomic_load_min_i16:
    %old = atomicrmw min i16* @var16, i16 %offset release
 ; CHECK-NOT: dmb
+; CHECK: sxth w[[TMP:[0-9]+]], w0
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var16
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var16
 
@@ -526,15 +527,14 @@ define i16 @test_atomic_load_min_i16(i16 %offset) nounwind {
   ;  function there.
 
 ; CHECK-NEXT: sxth w[[OLD_EXT:[0-9]+]], w[[OLD]]
-; CHECK-NEXT: cmp w[[OLD_EXT]], w0, sxth
-; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, le
+; CHECK-NEXT: cmp w[[OLD_EXT]], w[[TMP]]
+; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w[[TMP]], le
 
 
 ; CHECK-NEXT: stlxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i16 %old
 }
 
@@ -590,6 +590,7 @@ define i8 @test_atomic_load_max_i8(i8 %offset) nounwind {
 ; CHECK-LABEL: test_atomic_load_max_i8:
    %old = atomicrmw max i8* @var8, i8 %offset seq_cst
 ; CHECK-NOT: dmb
+; CHECK: sxtb w[[TMP:[0-9]+]], w0
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var8
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var8
 
@@ -599,15 +600,14 @@ define i8 @test_atomic_load_max_i8(i8 %offset) nounwind {
   ;  function there.
 
 ; CHECK-NEXT: sxtb w[[OLD_EXT:[0-9]+]], w[[OLD]]
-; CHECK-NEXT: cmp w[[OLD_EXT]], w0, sxtb
-; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, gt
+; CHECK-NEXT: cmp w[[OLD_EXT]], w[[TMP]]
+; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w[[TMP]], gt
 
 
 ; CHECK-NEXT: stlxrb [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i8 %old
 }
 
@@ -615,6 +615,7 @@ define i16 @test_atomic_load_max_i16(i16 %offset) nounwind {
 ; CHECK-LABEL: test_atomic_load_max_i16:
    %old = atomicrmw max i16* @var16, i16 %offset acquire
 ; CHECK-NOT: dmb
+; CHECK: sxth w[[TMP:[0-9]+]], w0
 ; CHECK: adrp [[TMPADDR:x[0-9]+]], var16
 ; CHECK: add x[[ADDR:[0-9]+]], [[TMPADDR]], {{#?}}:lo12:var16
 
@@ -624,15 +625,14 @@ define i16 @test_atomic_load_max_i16(i16 %offset) nounwind {
   ;  function there.
 
 ; CHECK-NEXT: sxth w[[OLD_EXT:[0-9]+]], w[[OLD]]
-; CHECK-NEXT: cmp w[[OLD_EXT]], w0, sxth
-; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w0, gt
+; CHECK-NEXT: cmp w[[OLD_EXT]], w[[TMP]]
+; CHECK-NEXT: csel [[NEW:w[0-9]+]], w[[OLD]], w[[TMP]], gt
 
 
 ; CHECK-NEXT: stxrh [[STATUS:w[0-9]+]], [[NEW]], [x[[ADDR]]]
 ; CHECK-NEXT: cbnz [[STATUS]], .LBB{{[0-9]+}}_1
 ; CHECK-NOT: dmb
 
-; CHECK: mov {{[xw]}}0, {{[xw]}}[[OLD]]
    ret i16 %old
 }
 
