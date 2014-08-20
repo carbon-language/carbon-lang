@@ -171,6 +171,7 @@ bool SymbolTable::addByName(const Atom &newAtom) {
   const Atom *existing = findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
+    _context.notifySymbolTableAdd(&newAtom);
     _nameTable[name] = &newAtom;
     return true;
   }
@@ -298,6 +299,9 @@ bool SymbolTable::addByName(const Atom &newAtom) {
     llvm::report_fatal_error("duplicate symbol error");
     break;
   }
+
+  // Give context a chance to change which is kept.
+  _context.notifySymbolTableCoalesce(existing, &newAtom, useNew);
 
   if (useNew) {
     // Update name table to use new atom.

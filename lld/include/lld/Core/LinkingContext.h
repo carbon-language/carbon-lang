@@ -224,6 +224,20 @@ public:
   }
   InputGraph &getInputGraph() const { return *_inputGraph; }
 
+  /// Notify the LinkingContext when an atom is added to the symbol table.
+  /// This is an opportunity for flavor specific work to be done.
+  virtual void notifySymbolTableAdd(const Atom *atom) const {
+  }
+
+  /// Notify the LinkingContext when the symbol table found a name collision.
+  /// The useNew parameter specifies which the symbol table plans to keep,
+  /// but that can be changed by the LinkingContext.  This is also an
+  /// opportunity for flavor specific processing.
+  virtual void notifySymbolTableCoalesce(const Atom *existingAtom,
+                                         const Atom *newAtom,
+                                         bool &useNew) const {
+  }
+
   /// This method adds undefined symbols specified by the -u option to the to
   /// the list of undefined symbols known to the linker. This option essentially
   /// forces an undefined symbol to be created. You may also need to call
