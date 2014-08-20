@@ -2612,7 +2612,8 @@ bool AsmParser::parseDirectiveFill() {
 
   for (uint64_t i = 0, e = NumValues; i != e; ++i) {
     getStreamer().EmitIntValue(FillExpr, NonZeroFillSize);
-    getStreamer().EmitIntValue(0, FillSize - NonZeroFillSize);
+    if (NonZeroFillSize < FillSize)
+      getStreamer().EmitIntValue(0, FillSize - NonZeroFillSize);
   }
 
   return false;
