@@ -1016,12 +1016,11 @@ static void EmitPersonality(MCStreamer &streamer, const MCSymbol &symbol,
 namespace {
   class FrameEmitterImpl {
     int CFAOffset;
-    int CIENum;
     bool IsEH;
     const MCSymbol *SectionStart;
   public:
     FrameEmitterImpl(bool isEH)
-        : CFAOffset(0), CIENum(0), IsEH(isEH), SectionStart(nullptr) {}
+        : CFAOffset(0), IsEH(isEH), SectionStart(nullptr) {}
 
     void setSectionStart(const MCSymbol *Label) { SectionStart = Label; }
 
@@ -1257,7 +1256,6 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCObjectStreamer &streamer,
 
   MCSymbol *sectionStart = context.CreateTempSymbol();
   streamer.EmitLabel(sectionStart);
-  CIENum++;
 
   MCSymbol *sectionEnd = context.CreateTempSymbol();
 
