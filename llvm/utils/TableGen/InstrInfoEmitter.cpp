@@ -506,6 +506,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.hasExtraSrcRegAllocReq) OS << "|(1<<MCID::ExtraSrcRegAllocReq)";
   if (Inst.hasExtraDefRegAllocReq) OS << "|(1<<MCID::ExtraDefRegAllocReq)";
   if (Inst.isRegSequence) OS << "|(1<<MCID::RegSequence)";
+  if (Inst.isExtractSubreg) OS << "|(1<<MCID::ExtractSubreg)";
 
   // Emit all of the target-specific flags...
   BitsInit *TSF = Inst.TheDef->getValueAsBitsInit("TSFlags");

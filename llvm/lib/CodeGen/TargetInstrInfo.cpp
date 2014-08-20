@@ -877,3 +877,26 @@ bool TargetInstrInfo::getRegSequenceInputs(
   }
   return true;
 }
+
+bool TargetInstrInfo::getExtractSubregInputs(
+    const MachineInstr &MI, unsigned DefIdx,
+    RegSubRegPairAndIdx &InputReg) const {
+  assert((MI.isExtractSubreg() ||
+      MI.isExtractSubregLike()) && "Instruction do not have the proper type");
+
+  if (!MI.isExtractSubreg())
+    return getExtractSubregLikeInputs(MI, DefIdx, InputReg);
+
+  // We are looking at:
+  // Def = EXTRACT_SUBREG v0.sub1, sub0.
+  assert(DefIdx == 0 && "EXTRACT_SUBREG only has one def");
+  const MachineOperand &MOReg = MI.getOperand(1);
+  const MachineOperand &MOSubIdx = MI.getOperand(2);
+  assert(MOSubIdx.isImm() &&
+         "The subindex of the extract_subreg is not an immediate");
+
+  InputReg.Reg = MOReg.getReg();
+  InputReg.SubReg = MOReg.getSubReg();
+  InputReg.SubIdx = (unsigned)MOSubIdx.getImm();
+  return true;
+}

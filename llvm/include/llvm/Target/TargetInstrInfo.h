@@ -303,6 +303,24 @@ public:
   getRegSequenceInputs(const MachineInstr &MI, unsigned DefIdx,
                        SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const;
 
+  /// Build the equivalent inputs of a EXTRACT_SUBREG for the given \p MI
+  /// and \p DefIdx.
+  /// \p [out] InputReg of the equivalent EXTRACT_SUBREG.
+  /// E.g., EXTRACT_SUBREG vreg1:sub1, sub0, sub1 would produce:
+  /// - vreg1:sub1, sub0
+  ///
+  /// \returns true if it is possible to build such an input sequence
+  /// with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isExtractSubreg() or MI.isExtractSubregLike().
+  ///
+  /// \note The generic implementation does not provide any support for
+  /// MI.isExtractSubregLike(). In other words, one has to override
+  /// getExtractSubregLikeInputs for target specific instructions.
+  bool
+  getExtractSubregInputs(const MachineInstr &MI, unsigned DefIdx,
+                         RegSubRegPairAndIdx &InputReg) const;
+
   /// produceSameValue - Return true if two machine instructions would produce
   /// identical values. By default, this is only true when the two instructions
   /// are deemed identical except for defs. If this function is called when the
@@ -682,6 +700,20 @@ protected:
   virtual bool getRegSequenceLikeInputs(
       const MachineInstr &MI, unsigned DefIdx,
       SmallVectorImpl<RegSubRegPairAndIdx> &InputRegs) const {
+    return false;
+  }
+
+  /// \brief Target-dependent implementation of getExtractSubregInputs.
+  ///
+  /// \returns true if it is possible to build the equivalent
+  /// EXTRACT_SUBREG inputs with the pair \p MI, \p DefIdx. False otherwise.
+  ///
+  /// \pre MI.isExtractSubregLike().
+  ///
+  /// \see TargetInstrInfo::getExtractSubregInputs.
+  virtual bool getExtractSubregLikeInputs(
+      const MachineInstr &MI, unsigned DefIdx,
+      RegSubRegPairAndIdx &InputReg) const {
     return false;
   }
 

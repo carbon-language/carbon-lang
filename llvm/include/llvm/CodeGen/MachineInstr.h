@@ -524,6 +524,21 @@ public:
     return hasProperty(MCID::RegSequence, Type);
   }
 
+  /// \brief Return true if this instruction behaves
+  /// the same way as the generic EXTRACT_SUBREG instructions.
+  /// E.g., on ARM,
+  /// rX, rY VMOVRRD dZ
+  /// is equivalent to two EXTRACT_SUBREG:
+  /// rX = EXTRACT_SUBREG dZ, ssub_0
+  /// rY = EXTRACT_SUBREG dZ, ssub_1
+  ///
+  /// Note that for the optimizers to be able to take advantage of
+  /// this property, TargetInstrInfo::getExtractSubregLikeInputs has to be
+  /// override accordingly.
+  bool isExtractSubregLike(QueryType Type = IgnoreBundle) const {
+    return hasProperty(MCID::ExtractSubreg, Type);
+  }
+
   //===--------------------------------------------------------------------===//
   // Side Effect Analysis
   //===--------------------------------------------------------------------===//

@@ -315,6 +315,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R)
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   isNotDuplicable = R->getValueAsBit("isNotDuplicable");
   isRegSequence = R->getValueAsBit("isRegSequence");
+  isExtractSubreg = R->getValueAsBit("isExtractSubreg");
 
   bool Unset;
   mayLoad      = R->getValueAsBitOrUnset("mayLoad", Unset);

@@ -384,6 +384,9 @@ class Instruction {
   bit isPseudo     = 0;     // Is this instruction a pseudo-instruction?
                             // If so, won't have encoding information for
                             // the [MC]CodeEmitter stuff.
+  bit isExtractSubreg = 0;  // Is this instruction a kind of extract subreg?
+                             // If so, make sure to override
+                             // TargetInstrInfo::getExtractSubregInputs.
 
   // Side effect flags - When set, the flags have these meanings:
   //
