@@ -162,7 +162,8 @@ namespace {
     /// not recognized by the register coalescer.
     bool isUncoalescableCopy(const MachineInstr &MI) {
       return MI.isBitcast() || (!DisableAdvCopyOpt &&
-                                MI.isRegSequenceLike());
+                                (MI.isRegSequenceLike() ||
+                                 MI.isExtractSubregLike()));
     }
   };
 
@@ -1346,28 +1347,10 @@ bool ValueTracker::getNextSourceFromInsertSubreg(unsigned &SrcReg,
   return true;
 }
 
-/// Extract the inputs from EXTRACT_SUBREG.
-/// EXTRACT_SUBREG vreg1:sub1, sub0, would produce:
-/// - vreg1:sub1, sub0
-static void
-getExtractSubregInputs(const MachineInstr &MI,
-                       TargetInstrInfo::RegSubRegPairAndIdx &InputReg) {
-  assert(MI.isExtractSubreg() && "Instruction do not have the proper type");
-  // We are looking at:
-  // Def = EXTRACT_SUBREG v0.sub1, sub0.
-  const MachineOperand &MOReg = MI.getOperand(1);
-  const MachineOperand &MOSubIdx = MI.getOperand(2);
-  assert(MOSubIdx.isImm() &&
-         "The subindex of the extract_subreg is not an immediate");
-
-  InputReg.Reg = MOReg.getReg();
-  InputReg.SubReg = MOReg.getSubReg();
-  InputReg.SubIdx = (unsigned)MOSubIdx.getImm();
-}
-
 bool ValueTracker::getNextSourceFromExtractSubreg(unsigned &SrcReg,
                                                   unsigned &SrcSubReg) {
-  assert(Def->isExtractSubreg() && "Invalid definition");
+  assert((Def->isExtractSubreg() ||
+          Def->isExtractSubregLike()) && "Invalid definition");
   // We are looking at:
   // Def = EXTRACT_SUBREG v0, sub0
 
@@ -1376,9 +1359,14 @@ bool ValueTracker::getNextSourceFromExtractSubreg(unsigned &SrcReg,
   if (DefSubReg)
     return false;
 
+  if (!TII)
+    // We could handle the EXTRACT_SUBREG here, but we do not want to
+    // duplicate the code from the generic TII.
+    return false;
+
   TargetInstrInfo::RegSubRegPairAndIdx ExtractSubregInputReg;
-  assert(DefIdx == 0 && "Invalid definition");
-  getExtractSubregInputs(*Def, ExtractSubregInputReg);
+  if (!TII->getExtractSubregInputs(*Def, DefIdx, ExtractSubregInputReg))
+    return false;
 
   // Bails if we have to compose sub registers.
   // Likewise, if v0.subreg != 0, we would have to compose v0.subreg with sub0.
@@ -1430,7 +1418,7 @@ bool ValueTracker::getNextSourceImpl(unsigned &SrcReg, unsigned &SrcSubReg) {
     return getNextSourceFromRegSequence(SrcReg, SrcSubReg);
   if (Def->isInsertSubreg())
     return getNextSourceFromInsertSubreg(SrcReg, SrcSubReg);
-  if (Def->isExtractSubreg())
+  if (Def->isExtractSubreg() || Def->isExtractSubregLike())
     return getNextSourceFromExtractSubreg(SrcReg, SrcSubReg);
   if (Def->isSubregToReg())
     return getNextSourceFromSubregToReg(SrcReg, SrcSubReg);
