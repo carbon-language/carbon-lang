@@ -20,11 +20,17 @@
 #include <linux/unistd.h>
 #include <sys/personality.h>
 #include <sys/ptrace.h>
+#include <sys/uio.h>
 #include <sys/socket.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/user.h>
 #include <sys/wait.h>
+
+#if defined (__arm64__) || defined (__aarch64__)
+// NT_PRSTATUS and NT_FPREGSET definition
+#include <elf.h>
+#endif
 
 // C++ Includes
 #include <fstream>
@@ -662,10 +668,22 @@ namespace
     void
     ReadGPROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
+        int regset = NT_PRSTATUS;
+        struct iovec ioVec;
+
+        ioVec.iov_base = m_buf;
+        ioVec.iov_len = m_buf_size;
+        if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, m_buf_size) < 0)
+            m_result = false;
+        else
+            m_result = true;
+#else
         if (PTRACE(PTRACE_GETREGS, m_tid, NULL, m_buf, m_buf_size) < 0)
             m_result = false;
         else
             m_result = true;
+#endif
     }
 
     //------------------------------------------------------------------------------
@@ -690,10 +708,22 @@ namespace
     void
     ReadFPROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
+        int regset = NT_FPREGSET;
+        struct iovec ioVec;
+
+        ioVec.iov_base = m_buf;
+        ioVec.iov_len = m_buf_size;
+        if (PTRACE(PTRACE_GETREGSET, m_tid, &regset, &ioVec, m_buf_size) < 0)
+            m_result = false;
+        else
+            m_result = true;
+#else
         if (PTRACE(PTRACE_GETFPREGS, m_tid, NULL, m_buf, m_buf_size) < 0)
             m_result = false;
         else
             m_result = true;
+#endif
     }
 
     //------------------------------------------------------------------------------
@@ -747,10 +777,22 @@ namespace
     void
     WriteGPROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
+        int regset = NT_PRSTATUS;
+        struct iovec ioVec;
+
+        ioVec.iov_base = m_buf;
+        ioVec.iov_len = m_buf_size;
+        if (PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, m_buf_size) < 0)
+            m_result = false;
+        else
+            m_result = true;
+#else
         if (PTRACE(PTRACE_SETREGS, m_tid, NULL, m_buf, m_buf_size) < 0)
             m_result = false;
         else
             m_result = true;
+#endif
     }
 
     //------------------------------------------------------------------------------
@@ -775,10 +817,22 @@ namespace
     void
     WriteFPROperation::Execute(NativeProcessLinux *monitor)
     {
+#if defined (__arm64__) || defined (__aarch64__)
+        int regset = NT_FPREGSET;
+        struct iovec ioVec;
+
+        ioVec.iov_base = m_buf;
+        ioVec.iov_len = m_buf_size;
+        if (PTRACE(PTRACE_SETREGSET, m_tid, &regset, &ioVec, m_buf_size) < 0)
+            m_result = false;
+        else
+            m_result = true;
+#else
         if (PTRACE(PTRACE_SETFPREGS, m_tid, NULL, m_buf, m_buf_size) < 0)
             m_result = false;
         else
             m_result = true;
+#endif
     }
 
     //------------------------------------------------------------------------------
