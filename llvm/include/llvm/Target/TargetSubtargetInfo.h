@@ -118,7 +118,7 @@ public:
   virtual bool enablePostMachineScheduler() const;
 
   /// \brief True if the subtarget should run the atomic expansion pass.
-  virtual bool enableAtomicExpandLoadLinked() const;
+  virtual bool enableAtomicExpand() const;
 
   /// \brief Override generic scheduling policy within a region.
   ///

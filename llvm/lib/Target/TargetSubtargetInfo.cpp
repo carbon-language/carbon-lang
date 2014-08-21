@@ -39,7 +39,7 @@ bool TargetSubtargetInfo::useMachineScheduler() const {
   return enableMachineScheduler();
 }
 
-bool TargetSubtargetInfo::enableAtomicExpandLoadLinked() const {
+bool TargetSubtargetInfo::enableAtomicExpand() const {
   return true;
 }
 

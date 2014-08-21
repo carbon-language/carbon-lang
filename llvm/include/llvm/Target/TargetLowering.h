@@ -937,7 +937,7 @@ public:
   /// @}
 
   //===--------------------------------------------------------------------===//
-  /// \name Helpers for load-linked/store-conditional atomic expansion.
+  /// \name Helpers for atomic expansion.
   /// @{
 
   /// Perform a load-linked operation on Addr, returning a "Value *" with the
@@ -957,7 +957,7 @@ public:
   }
 
   /// Return true if the given (atomic) instruction should be expanded by the
-  /// IR-level AtomicExpandLoadLinked pass into a loop involving
+  /// IR-level AtomicExpand pass into a loop involving
   /// load-linked/store-conditional pairs. Atomic stores will be expanded in the
   /// same way as "atomic xchg" operations which ignore their output if needed.
   virtual bool shouldExpandAtomicInIR(Instruction *Inst) const {

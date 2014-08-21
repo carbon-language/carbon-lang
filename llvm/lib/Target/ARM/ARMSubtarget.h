@@ -436,8 +436,8 @@ public:
   /// True for some subtargets at > -O0.
   bool enablePostMachineScheduler() const override;
 
-  // enableAtomicExpandLoadLinked - True if we need to expand our atomics.
-  bool enableAtomicExpandLoadLinked() const override;
+  // enableAtomicExpand- True if we need to expand our atomics.
+  bool enableAtomicExpand() const override;
 
   /// getInstrItins - Return the instruction itineraries based on subtarget
   /// selection.

@@ -428,7 +428,7 @@ bool ARMSubtarget::enablePostMachineScheduler() const {
   return (!isThumb() || hasThumb2());
 }
 
-bool ARMSubtarget::enableAtomicExpandLoadLinked() const {
+bool ARMSubtarget::enableAtomicExpand() const {
   return hasAnyDataBarrier() && !isThumb1Only();
 }
 

@@ -1,4 +1,4 @@
-//===-- AtomicExpandLoadLinkedPass.cpp - Expand atomic instructions -------===//
+//===-- AtomicExpandPass.cpp - Expand atomic instructions -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -25,16 +25,16 @@
 
 using namespace llvm;
 
-#define DEBUG_TYPE "arm-atomic-expand"
+#define DEBUG_TYPE "atomic-expand"
 
 namespace {
-  class AtomicExpandLoadLinked : public FunctionPass {
+  class AtomicExpand: public FunctionPass {
     const TargetMachine *TM;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit AtomicExpandLoadLinked(const TargetMachine *TM = nullptr)
+    explicit AtomicExpand(const TargetMachine *TM = nullptr)
       : FunctionPass(ID), TM(TM) {
-      initializeAtomicExpandLoadLinkedPass(*PassRegistry::getPassRegistry());
+      initializeAtomicExpandPass(*PassRegistry::getPassRegistry());
     }
 
     bool runOnFunction(Function &F) override;
@@ -50,18 +50,18 @@ namespace {
   };
 }
 
-char AtomicExpandLoadLinked::ID = 0;
-char &llvm::AtomicExpandLoadLinkedID = AtomicExpandLoadLinked::ID;
-INITIALIZE_TM_PASS(AtomicExpandLoadLinked, "atomic-ll-sc",
-    "Expand Atomic calls in terms of load-linked & store-conditional",
+char AtomicExpand::ID = 0;
+char &llvm::AtomicExpandID = AtomicExpand::ID;
+INITIALIZE_TM_PASS(AtomicExpand, "atomic-expand",
+    "Expand Atomic calls in terms of either load-linked & store-conditional or cmpxchg",
     false, false)
 
-FunctionPass *llvm::createAtomicExpandLoadLinkedPass(const TargetMachine *TM) {
-  return new AtomicExpandLoadLinked(TM);
+FunctionPass *llvm::createAtomicExpandPass(const TargetMachine *TM) {
+  return new AtomicExpand(TM);
 }
 
-bool AtomicExpandLoadLinked::runOnFunction(Function &F) {
-  if (!TM || !TM->getSubtargetImpl()->enableAtomicExpandLoadLinked())
+bool AtomicExpand::runOnFunction(Function &F) {
+  if (!TM || !TM->getSubtargetImpl()->enableAtomicExpand())
     return false;
 
   SmallVector<Instruction *, 1> AtomicInsts;
@@ -97,7 +97,7 @@ bool AtomicExpandLoadLinked::runOnFunction(Function &F) {
   return MadeChange;
 }
 
-bool AtomicExpandLoadLinked::expandAtomicLoad(LoadInst *LI) {
+bool AtomicExpand::expandAtomicLoad(LoadInst *LI) {
   // Load instructions don't actually need a leading fence, even in the
   // SequentiallyConsistent case.
   AtomicOrdering MemOpOrder =
@@ -119,7 +119,7 @@ bool AtomicExpandLoadLinked::expandAtomicLoad(LoadInst *LI) {
   return true;
 }
 
-bool AtomicExpandLoadLinked::expandAtomicStore(StoreInst *SI) {
+bool AtomicExpand::expandAtomicStore(StoreInst *SI) {
   // The only atomic 64-bit store on ARM is an strexd that succeeds, which means
   // we need a loop and the entire instruction is essentially an "atomicrmw
   // xchg" that ignores the value loaded.
@@ -133,7 +133,7 @@ bool AtomicExpandLoadLinked::expandAtomicStore(StoreInst *SI) {
   return expandAtomicRMW(AI);
 }
 
-bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
+bool AtomicExpand::expandAtomicRMW(AtomicRMWInst *AI) {
   AtomicOrdering Order = AI->getOrdering();
   Value *Addr = AI->getPointerOperand();
   BasicBlock *BB = AI->getParent();
@@ -233,7 +233,7 @@ bool AtomicExpandLoadLinked::expandAtomicRMW(AtomicRMWInst *AI) {
   return true;
 }
 
-bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
+bool AtomicExpand::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   AtomicOrdering SuccessOrder = CI->getSuccessOrdering();
   AtomicOrdering FailureOrder = CI->getFailureOrdering();
   Value *Addr = CI->getPointerOperand();
@@ -359,7 +359,7 @@ bool AtomicExpandLoadLinked::expandAtomicCmpXchg(AtomicCmpXchgInst *CI) {
   return true;
 }
 
-AtomicOrdering AtomicExpandLoadLinked::insertLeadingFence(IRBuilder<> &Builder,
+AtomicOrdering AtomicExpand::insertLeadingFence(IRBuilder<> &Builder,
                                                        AtomicOrdering Ord) {
   if (!TM->getSubtargetImpl()->getTargetLowering()->getInsertFencesForAtomic())
     return Ord;
@@ -372,7 +372,7 @@ AtomicOrdering AtomicExpandLoadLinked::insertLeadingFence(IRBuilder<> &Builder,
   return Monotonic;
 }
 
-void AtomicExpandLoadLinked::insertTrailingFence(IRBuilder<> &Builder,
+void AtomicExpand::insertTrailingFence(IRBuilder<> &Builder,
                                               AtomicOrdering Ord) {
   if (!TM->getSubtargetImpl()->getTargetLowering()->getInsertFencesForAtomic())
     return;
