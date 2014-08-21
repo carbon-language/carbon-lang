@@ -1367,6 +1367,88 @@ void SIInstrInfo::legalizeOperands(MachineInstr *MI) const {
   }
 }
 
+void SIInstrInfo::splitSMRD(MachineInstr *MI,
+                            const TargetRegisterClass *HalfRC,
+                            unsigned HalfImmOp, unsigned HalfSGPROp,
+                            MachineInstr *&Lo, MachineInstr *&Hi) const {
+
+  DebugLoc DL = MI->getDebugLoc();
+  MachineBasicBlock *MBB = MI->getParent();
+  MachineRegisterInfo &MRI = MBB->getParent()->getRegInfo();
+  unsigned RegLo = MRI.createVirtualRegister(HalfRC);
+  unsigned RegHi = MRI.createVirtualRegister(HalfRC);
+  unsigned HalfSize = HalfRC->getSize();
+  const MachineOperand *OffOp =
+      getNamedOperand(*MI, AMDGPU::OpName::offset);
+  const MachineOperand *SBase = getNamedOperand(*MI, AMDGPU::OpName::sbase);
+
+  if (OffOp) {
+    // Handle the _IMM variant
+    unsigned LoOffset = OffOp->getImm();
+    unsigned HiOffset = LoOffset + (HalfSize / 4);
+    Lo = BuildMI(*MBB, MI, DL, get(HalfImmOp), RegLo)
+                  .addOperand(*SBase)
+                  .addImm(LoOffset);
+
+    if (!isUInt<8>(HiOffset)) {
+      unsigned OffsetSGPR =
+          MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+      BuildMI(*MBB, MI, DL, get(AMDGPU::S_MOV_B32), OffsetSGPR)
+              .addImm(HiOffset << 2);  // The immediate offset is in dwords,
+                                       // but offset in register is in bytes.
+      Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegHi)
+                    .addOperand(*SBase)
+                    .addReg(OffsetSGPR);
+    } else {
+      Hi = BuildMI(*MBB, MI, DL, get(HalfImmOp), RegHi)
+                     .addOperand(*SBase)
+                     .addImm(HiOffset);
+    }
+  } else {
+    // Handle the _SGPR variant
+    MachineOperand *SOff = getNamedOperand(*MI, AMDGPU::OpName::soff);
+    Lo = BuildMI(*MBB, MI, DL, get(HalfSGPROp), RegLo)
+                  .addOperand(*SBase)
+                  .addOperand(*SOff);
+    unsigned OffsetSGPR = MRI.createVirtualRegister(&AMDGPU::SReg_32RegClass);
+    BuildMI(*MBB, MI, DL, get(AMDGPU::S_ADD_I32), OffsetSGPR)
+            .addOperand(*SOff)
+            .addImm(HalfSize);
+    Hi = BuildMI(*MBB, MI, DL, get(HalfSGPROp))
+                  .addOperand(*SBase)
+                  .addReg(OffsetSGPR);
+  }
+
+  unsigned SubLo, SubHi;
+  switch (HalfSize) {
+    case 4:
+      SubLo = AMDGPU::sub0;
+      SubHi = AMDGPU::sub1;
+      break;
+    case 8:
+      SubLo = AMDGPU::sub0_sub1;
+      SubHi = AMDGPU::sub2_sub3;
+      break;
+    case 16:
+      SubLo = AMDGPU::sub0_sub1_sub2_sub3;
+      SubHi = AMDGPU::sub4_sub5_sub6_sub7;
+      break;
+    case 32:
+      SubLo = AMDGPU::sub0_sub1_sub2_sub3_sub4_sub5_sub6_sub7;
+      SubHi = AMDGPU::sub8_sub9_sub10_sub11_sub12_sub13_sub14_sub15;
+      break;
+    default:
+      llvm_unreachable("Unhandled HalfSize");
+  }
+
+  BuildMI(*MBB, MI, DL, get(AMDGPU::REG_SEQUENCE))
+          .addOperand(MI->getOperand(0))
+          .addReg(RegLo)
+          .addImm(SubLo)
+          .addReg(RegHi)
+          .addImm(SubHi);
+}
+
 void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) const {
   MachineBasicBlock *MBB = MI->getParent();
   switch (MI->getOpcode()) {
@@ -1375,7 +1457,7 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
     case AMDGPU::S_LOAD_DWORDX2_IMM:
     case AMDGPU::S_LOAD_DWORDX2_SGPR:
     case AMDGPU::S_LOAD_DWORDX4_IMM:
-    case AMDGPU::S_LOAD_DWORDX4_SGPR:
+    case AMDGPU::S_LOAD_DWORDX4_SGPR: {
       unsigned NewOpcode = getVALUOp(*MI);
       unsigned RegOffset;
       unsigned ImmOffset;
@@ -1422,14 +1504,44 @@ void SIInstrInfo::moveSMRDToVALU(MachineInstr *MI, MachineRegisterInfo &MRI) con
               .addImm(AMDGPU::sub2)
               .addReg(DWord3)
               .addImm(AMDGPU::sub3);
-     MI->setDesc(get(NewOpcode));
-     if (MI->getOperand(2).isReg()) {
-       MI->getOperand(2).setReg(MI->getOperand(1).getReg());
-     } else {
-       MI->getOperand(2).ChangeToRegister(MI->getOperand(1).getReg(), false);
-     }
-     MI->getOperand(1).setReg(SRsrc);
-     MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
+      MI->setDesc(get(NewOpcode));
+      if (MI->getOperand(2).isReg()) {
+        MI->getOperand(2).setReg(MI->getOperand(1).getReg());
+      } else {
+        MI->getOperand(2).ChangeToRegister(MI->getOperand(1).getReg(), false);
+      }
+      MI->getOperand(1).setReg(SRsrc);
+      MI->addOperand(*MBB->getParent(), MachineOperand::CreateImm(ImmOffset));
+
+      const TargetRegisterClass *NewDstRC =
+          RI.getRegClass(get(NewOpcode).OpInfo[0].RegClass);
+
+      unsigned DstReg = MI->getOperand(0).getReg();
+      unsigned NewDstReg = MRI.createVirtualRegister(NewDstRC);
+      MRI.replaceRegWith(DstReg, NewDstReg);
+      break;
+    }
+    case AMDGPU::S_LOAD_DWORDX8_IMM:
+    case AMDGPU::S_LOAD_DWORDX8_SGPR: {
+      MachineInstr *Lo, *Hi;
+      splitSMRD(MI, &AMDGPU::SReg_128RegClass, AMDGPU::S_LOAD_DWORDX4_IMM,
+                AMDGPU::S_LOAD_DWORDX4_SGPR, Lo, Hi);
+      MI->eraseFromParent();
+      moveSMRDToVALU(Lo, MRI);
+      moveSMRDToVALU(Hi, MRI);
+      break;
+    }
+
+    case AMDGPU::S_LOAD_DWORDX16_IMM:
+    case AMDGPU::S_LOAD_DWORDX16_SGPR: {
+      MachineInstr *Lo, *Hi;
+      splitSMRD(MI, &AMDGPU::SReg_256RegClass, AMDGPU::S_LOAD_DWORDX8_IMM,
+                AMDGPU::S_LOAD_DWORDX8_SGPR, Lo, Hi);
+      MI->eraseFromParent();
+      moveSMRDToVALU(Lo, MRI);
+      moveSMRDToVALU(Hi, MRI);
+      break;
+    }
   }
 }
 

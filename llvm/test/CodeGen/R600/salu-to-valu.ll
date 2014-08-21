@@ -88,3 +88,31 @@ entry:
   store i32 %3, i32 addrspace(1)* %out
   ret void
 }
+
+; CHECK-LABEL: @s_load_imm_v8i32
+; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: BUFFER_LOAD_DWORDX4
+define void @s_load_imm_v8i32(<8 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
+entry:
+  %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
+  %tmp1 = getelementptr inbounds i32 addrspace(2)* %in, i32 %tmp0
+  %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <8 x i32> addrspace(2)*
+  %tmp3 = load <8 x i32> addrspace(2)* %tmp2, align 4
+  store <8 x i32> %tmp3, <8 x i32> addrspace(1)* %out, align 32
+  ret void
+}
+
+; CHECK-LABEL: @s_load_imm_v16i32
+; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: BUFFER_LOAD_DWORDX4
+; CHECK: BUFFER_LOAD_DWORDX4
+define void @s_load_imm_v16i32(<16 x i32> addrspace(1)* %out, i32 addrspace(2)* nocapture readonly %in) {
+entry:
+  %tmp0 = tail call i32 @llvm.r600.read.tidig.x() #1
+  %tmp1 = getelementptr inbounds i32 addrspace(2)* %in, i32 %tmp0
+  %tmp2 = bitcast i32 addrspace(2)* %tmp1 to <16 x i32> addrspace(2)*
+  %tmp3 = load <16 x i32> addrspace(2)* %tmp2, align 4
+  store <16 x i32> %tmp3, <16 x i32> addrspace(1)* %out, align 32
+  ret void
+}
