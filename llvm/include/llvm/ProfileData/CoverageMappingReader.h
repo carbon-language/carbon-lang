@@ -33,6 +33,7 @@ class ObjectFileCoverageMappingReader;
 /// \brief Coverage mapping information for a single function.
 struct CoverageMappingRecord {
   StringRef FunctionName;
+  uint64_t FunctionHash;
   ArrayRef<StringRef> Filenames;
   ArrayRef<CounterExpression> Expressions;
   ArrayRef<CounterMappingRegion> MappingRegions;
@@ -143,16 +144,17 @@ public:
   struct ProfileMappingRecord {
     CoverageMappingVersion Version;
     StringRef FunctionName;
+    uint64_t FunctionHash;
     StringRef CoverageMapping;
     size_t FilenamesBegin;
     size_t FilenamesSize;
 
     ProfileMappingRecord(CoverageMappingVersion Version, StringRef FunctionName,
-                         StringRef CoverageMapping, size_t FilenamesBegin,
-                         size_t FilenamesSize)
+                         uint64_t FunctionHash, StringRef CoverageMapping,
+                         size_t FilenamesBegin, size_t FilenamesSize)
         : Version(Version), FunctionName(FunctionName),
-          CoverageMapping(CoverageMapping), FilenamesBegin(FilenamesBegin),
-          FilenamesSize(FilenamesSize) {}
+          FunctionHash(FunctionHash), CoverageMapping(CoverageMapping),
+          FilenamesBegin(FilenamesBegin), FilenamesSize(FilenamesSize) {}
   };
 
 private:

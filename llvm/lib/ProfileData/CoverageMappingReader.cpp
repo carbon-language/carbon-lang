@@ -308,6 +308,7 @@ template <typename IntPtrT> struct CoverageMappingFunctionRecord {
   IntPtrT FunctionNamePtr;
   uint32_t FunctionNameSize;
   uint32_t CoverageMappingSize;
+  uint64_t FunctionHash;
 };
 
 /// \brief The coverage mapping data for a single translation unit.
@@ -422,8 +423,8 @@ std::error_code readCoverageMappingData(
                                           FunctionName))
         return Err;
       Records.push_back(ObjectFileCoverageMappingReader::ProfileMappingRecord(
-          Version, FunctionName, Mapping, FilenamesBegin,
-          Filenames.size() - FilenamesBegin));
+          Version, FunctionName, MappingRecord.FunctionHash, Mapping,
+          FilenamesBegin, Filenames.size() - FilenamesBegin));
     }
   }
 
@@ -485,6 +486,7 @@ ObjectFileCoverageMappingReader::readNextRecord(CoverageMappingRecord &Record) {
       FunctionsFilenames, Expressions, MappingRegions);
   if (auto Err = Reader.read(Record))
     return Err;
+  Record.FunctionHash = R.FunctionHash;
   ++CurrentRecord;
   return success();
 }
