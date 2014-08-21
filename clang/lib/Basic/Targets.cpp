@@ -1469,6 +1469,9 @@ static const unsigned R600AddrSpaceMap[] = {
   3     // cuda_shared
 };
 
+// If you edit the description strings, make sure you update
+// getPointerWidthV().
+
 static const char *DescriptionStringR600 =
   "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128"
   "-v192:256-v256:256-v512:512-v1024:1024-v2048:2048-n32:64";
@@ -1506,6 +1509,20 @@ public:
     DescriptionString = DescriptionStringR600;
     AddrSpaceMap = &R600AddrSpaceMap;
     UseAddrSpaceMapMangling = true;
+  }
+
+  uint64_t getPointerWidthV(unsigned AddrSpace) const override {
+    if (GPU <= GK_CAYMAN)
+      return 32;
+
+    switch(AddrSpace) {
+      default:
+        return 64;
+      case 0:
+      case 3:
+      case 5:
+        return 32;
+    }
   }
 
   const char * getClobbers() const override {
