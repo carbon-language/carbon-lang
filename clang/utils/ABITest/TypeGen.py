@@ -56,16 +56,20 @@ class BuiltinType(Type):
         return self.name
 
 class EnumType(Type):
+    unique_id = 0
+
     def __init__(self, index, enumerators):
         self.index = index
         self.enumerators = enumerators
+        self.unique_id = self.__class__.unique_id
+        self.__class__.unique_id += 1
 
     def getEnumerators(self):
         result = ''
         for i, init in enumerate(self.enumerators):
             if i > 0:
                 result = result + ', '
-            result = result + 'enum%dval%d' % (self.index, i)
+            result = result + 'enum%dval%d_%d' % (self.index, i, self.unique_id)
             if init:
                 result = result + ' = %s' % (init)
 
