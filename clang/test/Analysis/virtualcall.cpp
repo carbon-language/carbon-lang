@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.cplusplus.VirtualCall -analyzer-store region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=alpha.cplusplus.VirtualCall -analyzer-store region -verify -std=c++11 %s
 
 class A {
 public:
@@ -46,10 +46,31 @@ C::C() {
   f(foo()); // expected-warning{{Call virtual functions during construction or destruction will never go to a more derived class}}
 }
 
+class D : public B {
+public:
+  D() {
+    foo(); // no-warning
+  }
+  ~D() { bar(); }
+  int foo() final;
+  void bar() final { foo(); } // no-warning
+};
+
+class E final : public B {
+public:
+  E() {
+    foo(); // no-warning
+  }
+  ~E() { bar(); }
+  int foo() override;
+};
+
 int main() {
   A *a;
   B *b;
   C *c;
+  D *d;
+  E *e;
 }
 
 #include "virtualcall.h"

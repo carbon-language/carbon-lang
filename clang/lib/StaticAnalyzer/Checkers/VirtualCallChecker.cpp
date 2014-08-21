@@ -146,15 +146,22 @@ void WalkAST::VisitCXXMemberCallExpr(CallExpr *CE) {
     if (CME->getQualifier())
       callIsNonVirtual = true;
 
-    // Elide analyzing the call entirely if the base pointer is not 'this'.
-    if (Expr *base = CME->getBase()->IgnoreImpCasts())
+    if (Expr *base = CME->getBase()->IgnoreImpCasts()) {
+      // Elide analyzing the call entirely if the base pointer is not 'this'.
       if (!isa<CXXThisExpr>(base))
         return;
+
+      // If the most derived class is marked final, we know that now subclass
+      // can override this member.
+      if (base->getBestDynamicClassType()->hasAttr<FinalAttr>())
+        callIsNonVirtual = true;
+    }
   }
 
   // Get the callee.
   const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(CE->getDirectCallee());
-  if (MD && MD->isVirtual() && !callIsNonVirtual)
+  if (MD && MD->isVirtual() && !callIsNonVirtual && !MD->hasAttr<FinalAttr>() &&
+      !MD->getParent()->hasAttr<FinalAttr>())
     ReportVirtualCall(CE, MD->isPure());
 
   Enqueue(CE);
