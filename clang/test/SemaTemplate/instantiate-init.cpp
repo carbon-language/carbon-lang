@@ -133,3 +133,12 @@ namespace PR16903 {
   	fun(in);
   }
 }
+
+namespace ReturnStmtIsInitialization {
+  struct X {
+    X() {}
+    X(const X &) = delete;
+  };
+  template<typename T> X f() { return {}; }
+  auto &&x = f<void>();
+}
