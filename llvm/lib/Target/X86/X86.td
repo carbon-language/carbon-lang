@@ -163,6 +163,8 @@ def FeaturePRFCHW  : SubtargetFeature<"prfchw", "HasPRFCHW", "true",
                                       "Support PRFCHW instructions">;
 def FeatureRDSEED  : SubtargetFeature<"rdseed", "HasRDSEED", "true",
                                       "Support RDSEED instruction">;
+def FeatureSMAP    : SubtargetFeature<"smap", "HasSMAP", "true",
+                                      "Support SMAP instructions">;
 def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
                                      "Use LEA for adjusting the stack pointer">;
 def FeatureSlowDivide : SubtargetFeature<"idiv-to-divb",
@@ -276,6 +278,13 @@ def : ProcessorModel<"core-avx2", HaswellModel,
                       FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
                       FeatureHLE]>;
 
+// Broadwell
+def : ProcessorModel<"broadwell", HaswellModel,
+                     [FeatureAVX2, FeatureCMPXCHG16B, FeatureFastUAMem,
+                      FeaturePOPCNT, FeatureAES, FeaturePCLMUL, FeatureRDRAND,
+                      FeatureF16C, FeatureFSGSBase, FeatureMOVBE, FeatureLZCNT,
+                      FeatureBMI, FeatureBMI2, FeatureFMA, FeatureRTM,
+                      FeatureHLE, FeatureADX, FeatureRDSEED, FeatureSMAP]>;
 // KNL
 // FIXME: define KNL model
 def : ProcessorModel<"knl", HaswellModel,

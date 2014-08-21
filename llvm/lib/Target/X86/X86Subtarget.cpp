@@ -281,6 +281,7 @@ void X86Subtarget::initializeEnvironment() {
   HasSGX = false;
   HasPRFCHW = false;
   HasRDSEED = false;
+  HasSMAP = false;
   IsBTMemSlow = false;
   IsSHLDSlow = false;
   IsUAMemFast = false;

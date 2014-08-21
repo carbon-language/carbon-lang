@@ -148,6 +148,9 @@ protected:
   /// HasRDSEED - Processor has RDSEED instructions.
   bool HasRDSEED;
 
+  /// HasSMAP - Processor has SMAP instructions.
+  bool HasSMAP;
+
   /// IsBTMemSlow - True if BT (bit test) of memory instructions are slow.
   bool IsBTMemSlow;
 
@@ -358,6 +361,7 @@ public:
   bool hasSGX() const { return HasSGX; }
   bool hasPRFCHW() const { return HasPRFCHW; }
   bool hasRDSEED() const { return HasRDSEED; }
+  bool hasSMAP() const { return HasSMAP; }
   bool isBTMemSlow() const { return IsBTMemSlow; }
   bool isSHLDSlow() const { return IsSHLDSlow; }
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
