@@ -295,7 +295,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   SourceMgr SrcMgr;
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  SrcMgr.AddNewSourceBuffer(Buffer->release(), SMLoc());
+  SrcMgr.AddNewSourceBuffer(std::move(*Buffer), SMLoc());
 
   // Record the location of the include directories so that the lexer can find
   // it later.

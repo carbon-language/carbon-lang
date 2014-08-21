@@ -498,11 +498,11 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
 
   llvm::SourceMgr TempSrcMgr;
   llvm::MCContext Ctx(MAI.get(), MRI.get(), MOFI.get(), &TempSrcMgr);
-  llvm::MemoryBuffer *Buffer =
-      llvm::MemoryBuffer::getMemBuffer(AsmString, "<MS inline asm>");
+  std::unique_ptr<llvm::MemoryBuffer> Buffer(
+      llvm::MemoryBuffer::getMemBuffer(AsmString, "<MS inline asm>"));
 
   // Tell SrcMgr about this buffer, which is what the parser will pick up.
-  TempSrcMgr.AddNewSourceBuffer(Buffer, llvm::SMLoc());
+  TempSrcMgr.AddNewSourceBuffer(std::move(Buffer), llvm::SMLoc());
 
   std::unique_ptr<llvm::MCStreamer> Str(createNullStreamer(Ctx));
   std::unique_ptr<llvm::MCAsmParser> Parser(
