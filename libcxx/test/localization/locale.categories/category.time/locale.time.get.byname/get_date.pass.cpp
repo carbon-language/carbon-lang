@@ -12,6 +12,10 @@
 // REQUIRES: locale.ru_RU.UTF-8
 // REQUIRES: locale.zh_CN.UTF-8
 
+// GLIBC Expects "10/06/2009" for fr_FR as opposed to "10.06.2009"
+// GLIBC also failes on the zh_CN test.
+// XFAIL: linux
+
 // <locale>
 
 // class time_get_byname<charT, InputIterator>
@@ -79,6 +83,7 @@ int main()
         assert(t.tm_year == 109);
         assert(err == std::ios_base::eofbit);
     }
+
     {
         const my_facet f(LOCALE_zh_CN_UTF_8, 1);
         const char in[] = "2009/06/10";
