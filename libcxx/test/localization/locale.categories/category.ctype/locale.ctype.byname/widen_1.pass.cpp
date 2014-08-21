@@ -15,6 +15,8 @@
 
 // I doubt this test is portable
 
+// XFAIL: linux
+
 #include <locale>
 #include <cassert>
 #include <limits.h>
