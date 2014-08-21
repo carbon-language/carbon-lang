@@ -2921,10 +2921,15 @@ NativeProcessLinux::GetSoftwareBreakpointSize (NativeRegisterContextSP context_s
 {
     // FIXME put this behind a breakpoint protocol class that can be
     // set per architecture.  Need ARM, MIPS support here.
+    static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
 
     switch (m_arch.GetMachine ())
     {
+        case llvm::Triple::aarch64:
+            actual_opcode_size = static_cast<uint32_t> (sizeof(g_aarch64_opcode));
+            return Error ();
+
         case llvm::Triple::x86:
         case llvm::Triple::x86_64:
             actual_opcode_size = static_cast<uint32_t> (sizeof(g_i386_opcode));
@@ -2950,10 +2955,16 @@ NativeProcessLinux::GetSoftwareBreakpointTrapOpcode (size_t trap_opcode_size_hin
 {
     // FIXME put this behind a breakpoint protocol class that can be
     // set per architecture.  Need ARM, MIPS support here.
+    static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
     static const uint8_t g_i386_opcode [] = { 0xCC };
 
     switch (m_arch.GetMachine ())
     {
+    case llvm::Triple::aarch64:
+        trap_opcode_bytes = g_aarch64_opcode;
+        actual_opcode_size = sizeof(g_aarch64_opcode);
+        return Error ();
+
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
         trap_opcode_bytes = g_i386_opcode;

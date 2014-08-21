@@ -421,6 +421,13 @@ PlatformLinux::GetSoftwareBreakpointTrapOpcode (Target &target,
         assert(false && "CPU type not supported!");
         break;
             
+    case llvm::Triple::aarch64:
+        {
+            static const uint8_t g_aarch64_opcode[] = { 0x00, 0x00, 0x20, 0xd4 };
+            trap_opcode = g_aarch64_opcode;
+            trap_opcode_size = sizeof(g_aarch64_opcode);
+        }
+        break;
     case llvm::Triple::x86:
     case llvm::Triple::x86_64:
         {
