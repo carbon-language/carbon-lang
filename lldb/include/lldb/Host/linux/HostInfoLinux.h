@@ -28,6 +28,8 @@ class HostInfoLinux : public HostInfoPosix
     ~HostInfoLinux();
 
   public:
+    static void Initialize();
+
     static bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
     static llvm::StringRef GetDistributionId();
 
@@ -35,11 +37,6 @@ class HostInfoLinux : public HostInfoPosix
     static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);
     static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
-
-    static std::string m_distribution_id;
-    static uint32_t m_os_major;
-    static uint32_t m_os_minor;
-    static uint32_t m_os_update;
 };
 }
 

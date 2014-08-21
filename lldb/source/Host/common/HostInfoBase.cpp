@@ -39,6 +39,27 @@ CleanupProcessSpecificLLDBTempDir()
     // true to all files that were created for the LLDB process can be cleaned up.
     FileSystem::DeleteDirectory(tmpdir_file_spec.GetDirectory().GetCString(), true);
 }
+
+struct HostInfoBaseFields
+{
+    uint32_t m_number_cpus;
+    std::string m_vendor_string;
+    std::string m_os_string;
+    std::string m_host_triple;
+
+    ArchSpec m_host_arch_32;
+    ArchSpec m_host_arch_64;
+
+    FileSpec m_lldb_so_dir;
+    FileSpec m_lldb_support_exe_dir;
+    FileSpec m_lldb_headers_dir;
+    FileSpec m_lldb_python_dir;
+    FileSpec m_lldb_system_plugin_dir;
+    FileSpec m_lldb_user_plugin_dir;
+    FileSpec m_lldb_tmp_dir;
+};
+
+HostInfoBaseFields *g_fields = nullptr;
 }
 
 #define COMPUTE_LLDB_PATH(compute_function, member_var)                                                                                    \
@@ -54,20 +75,11 @@ CleanupProcessSpecificLLDBTempDir()
             result = &member_var;                                                                                                          \
     }
 
-uint32_t HostInfoBase::m_number_cpus = 0;
-std::string HostInfoBase::m_vendor_string;
-std::string HostInfoBase::m_os_string;
-std::string HostInfoBase::m_host_triple;
-ArchSpec HostInfoBase::m_host_arch_32;
-ArchSpec HostInfoBase::m_host_arch_64;
-
-FileSpec HostInfoBase::m_lldb_so_dir;
-FileSpec HostInfoBase::m_lldb_support_exe_dir;
-FileSpec HostInfoBase::m_lldb_headers_dir;
-FileSpec HostInfoBase::m_lldb_python_dir;
-FileSpec HostInfoBase::m_lldb_system_plugin_dir;
-FileSpec HostInfoBase::m_lldb_user_plugin_dir;
-FileSpec HostInfoBase::m_lldb_tmp_dir;
+void
+HostInfoBase::Initialize()
+{
+    g_fields = new HostInfoBaseFields();
+}
 
 uint32_t
 HostInfoBase::GetNumberCPUS()
@@ -75,11 +87,11 @@ HostInfoBase::GetNumberCPUS()
     static bool is_initialized = false;
     if (!is_initialized)
     {
-        m_number_cpus = std::thread::hardware_concurrency();
+        g_fields->m_number_cpus = std::thread::hardware_concurrency();
         is_initialized = true;
     }
 
-    return m_number_cpus;
+    return g_fields->m_number_cpus;
 }
 
 llvm::StringRef
@@ -90,10 +102,10 @@ HostInfoBase::GetVendorString()
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
         const llvm::StringRef &str_ref = host_arch.GetTriple().getVendorName();
-        m_vendor_string.assign(str_ref.begin(), str_ref.end());
+        g_fields->m_vendor_string.assign(str_ref.begin(), str_ref.end());
         is_initialized = true;
     }
-    return m_vendor_string;
+    return g_fields->m_vendor_string;
 }
 
 llvm::StringRef
@@ -104,10 +116,10 @@ HostInfoBase::GetOSString()
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
         const llvm::StringRef &str_ref = host_arch.GetTriple().getOSName();
-        m_os_string.assign(str_ref.begin(), str_ref.end());
+        g_fields->m_os_string.assign(str_ref.begin(), str_ref.end());
         is_initialized = true;
     }
-    return m_os_string;
+    return g_fields->m_os_string;
 }
 
 llvm::StringRef
@@ -117,10 +129,10 @@ HostInfoBase::GetTargetTriple()
     if (!is_initialized)
     {
         const ArchSpec &host_arch = HostInfo::GetArchitecture();
-        m_host_triple = host_arch.GetTriple().getTriple();
+        g_fields->m_host_triple = host_arch.GetTriple().getTriple();
         is_initialized = true;
     }
-    return m_host_triple;
+    return g_fields->m_host_triple;
 }
 
 const ArchSpec &
@@ -129,18 +141,18 @@ HostInfoBase::GetArchitecture(ArchitectureKind arch_kind)
     static bool is_initialized = false;
     if (!is_initialized)
     {
-        HostInfo::ComputeHostArchitectureSupport(m_host_arch_32, m_host_arch_64);
+        HostInfo::ComputeHostArchitectureSupport(g_fields->m_host_arch_32, g_fields->m_host_arch_64);
         is_initialized = true;
     }
 
     // If an explicit 32 or 64-bit architecture was requested, return that.
     if (arch_kind == eArchKind32)
-        return m_host_arch_32;
+        return g_fields->m_host_arch_32;
     if (arch_kind == eArchKind64)
-        return m_host_arch_64;
+        return g_fields->m_host_arch_64;
 
     // Otherwise prefer the 64-bit architecture if it is valid.
-    return (m_host_arch_64.IsValid()) ? m_host_arch_64 : m_host_arch_32;
+    return (g_fields->m_host_arch_64.IsValid()) ? g_fields->m_host_arch_64 : g_fields->m_host_arch_32;
 }
 
 bool
@@ -158,39 +170,42 @@ HostInfoBase::GetLLDBPath(lldb::PathType type, FileSpec &file_spec)
     switch (type)
     {
         case lldb::ePathTypeLLDBShlibDir:
-            COMPUTE_LLDB_PATH(ComputeSharedLibraryDirectory, m_lldb_so_dir)
+            COMPUTE_LLDB_PATH(ComputeSharedLibraryDirectory, g_fields->m_lldb_so_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", m_lldb_so_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBShlibDir) => '%s'", g_fields->m_lldb_so_dir.GetPath().c_str());
             break;
         case lldb::ePathTypeSupportExecutableDir:
-            COMPUTE_LLDB_PATH(ComputeSupportExeDirectory, m_lldb_support_exe_dir)
+            COMPUTE_LLDB_PATH(ComputeSupportExeDirectory, g_fields->m_lldb_support_exe_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'", m_lldb_support_exe_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeSupportExecutableDir) => '%s'",
+                            g_fields->m_lldb_support_exe_dir.GetPath().c_str());
             break;
         case lldb::ePathTypeHeaderDir:
-            COMPUTE_LLDB_PATH(ComputeHeaderDirectory, m_lldb_headers_dir)
+            COMPUTE_LLDB_PATH(ComputeHeaderDirectory, g_fields->m_lldb_headers_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeHeaderDir) => '%s'", m_lldb_headers_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeHeaderDir) => '%s'", g_fields->m_lldb_headers_dir.GetPath().c_str());
             break;
         case lldb::ePathTypePythonDir:
-            COMPUTE_LLDB_PATH(ComputePythonDirectory, m_lldb_python_dir)
+            COMPUTE_LLDB_PATH(ComputePythonDirectory, g_fields->m_lldb_python_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypePythonDir) => '%s'", m_lldb_python_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypePythonDir) => '%s'", g_fields->m_lldb_python_dir.GetPath().c_str());
             break;
         case lldb::ePathTypeLLDBSystemPlugins:
-            COMPUTE_LLDB_PATH(ComputeSystemPluginsDirectory, m_lldb_system_plugin_dir)
+            COMPUTE_LLDB_PATH(ComputeSystemPluginsDirectory, g_fields->m_lldb_system_plugin_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBSystemPlugins) => '%s'", m_lldb_system_plugin_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBSystemPlugins) => '%s'",
+                            g_fields->m_lldb_system_plugin_dir.GetPath().c_str());
             break;
         case lldb::ePathTypeLLDBUserPlugins:
-            COMPUTE_LLDB_PATH(ComputeUserPluginsDirectory, m_lldb_user_plugin_dir)
+            COMPUTE_LLDB_PATH(ComputeUserPluginsDirectory, g_fields->m_lldb_user_plugin_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBUserPlugins) => '%s'", m_lldb_user_plugin_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBUserPlugins) => '%s'",
+                            g_fields->m_lldb_user_plugin_dir.GetPath().c_str());
             break;
         case lldb::ePathTypeLLDBTempSystemDir:
-            COMPUTE_LLDB_PATH(ComputeTempFileDirectory, m_lldb_tmp_dir)
+            COMPUTE_LLDB_PATH(ComputeTempFileDirectory, g_fields->m_lldb_tmp_dir)
             if (log)
-                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", m_lldb_tmp_dir.GetPath().c_str());
+                log->Printf("HostInfoBase::GetLLDBPath(ePathTypeLLDBTempSystemDir) => '%s'", g_fields->m_lldb_tmp_dir.GetPath().c_str());
             break;
     }
 

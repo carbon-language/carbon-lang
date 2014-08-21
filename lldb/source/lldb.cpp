@@ -18,6 +18,7 @@
 #include "lldb/Core/RegularExpression.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Interpreter/ScriptInterpreterPython.h"
 #include "lldb/Target/Target.h"
@@ -106,6 +107,7 @@ lldb_private::Initialize ()
     {
         g_inited = true;
         Log::Initialize();
+        HostInfo::Initialize();
         Timer::Initialize ();
         Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
         

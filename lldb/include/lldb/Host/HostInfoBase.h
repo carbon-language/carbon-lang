@@ -33,6 +33,8 @@ class HostInfoBase
     ~HostInfoBase() {}
 
   public:
+    static void Initialize();
+
     //------------------------------------------------------------------
     /// Returns the number of CPUs on this current host.
     ///
@@ -111,22 +113,6 @@ class HostInfoBase
     static bool ComputeUserPluginsDirectory(FileSpec &file_spec);
 
     static void ComputeHostArchitectureSupport(ArchSpec &arch_32, ArchSpec &arch_64);
-
-    static uint32_t m_number_cpus;
-    static std::string m_vendor_string;
-    static std::string m_os_string;
-    static std::string m_host_triple;
-
-    static ArchSpec m_host_arch_32;
-    static ArchSpec m_host_arch_64;
-
-    static FileSpec m_lldb_so_dir;
-    static FileSpec m_lldb_support_exe_dir;
-    static FileSpec m_lldb_headers_dir;
-    static FileSpec m_lldb_python_dir;
-    static FileSpec m_lldb_system_plugin_dir;
-    static FileSpec m_lldb_user_plugin_dir;
-    static FileSpec m_lldb_tmp_dir;
 };
 }
 
