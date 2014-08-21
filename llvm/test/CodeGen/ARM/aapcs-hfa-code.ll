@@ -54,12 +54,11 @@ define arm_aapcs_vfpcc void @test_1double({ double } %a) {
 ; CHECK: bl test_1double
 
 ; CHECK-M4F-LABEL: test_1double:
-; CHECK-M4F: movs [[ONEHI:r[0-9]+]], #0
-; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0
-; CHECK-M4F: movt [[ONEHI]], #16368
-; CHECK-M4F-DAG: vmov s0, [[ONELO]]
-; CHECK-M4F-DAG: vmov s1, [[ONEHI]]
+; CHECK-M4F: vldr d0, [[CP_LABEL:.*]]
 ; CHECK-M4F: bl test_1double
+; CHECK-M4F: [[CP_LABEL]]
+; CHECK-M4F-NEXT: .long 0
+; CHECK-M4F-NEXT: .long 1072693248
 
   call arm_aapcs_vfpcc void @test_1double({ double } { double 1.0 })
   ret void
@@ -76,11 +75,10 @@ define arm_aapcs_vfpcc void @test_1double_nosplit([4 x float], [4 x double], [3 
 ; CHECK: bl test_1double_nosplit
 
 ; CHECK-M4F-LABEL: test_1double_nosplit:
-; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0
 ; CHECK-M4F: movs [[ONEHI:r[0-9]+]], #0
+; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0
 ; CHECK-M4F: movt [[ONEHI]], #16368
-; CHECK-M4F-DAG: str [[ONELO]], [sp]
-; CHECK-M4F-DAG: str [[ONEHI]], [sp, #4]
+; CHECK-M4F: strd [[ONELO]], [[ONEHI]], [sp]
 ; CHECK-M4F: bl test_1double_nosplit
   call arm_aapcs_vfpcc void @test_1double_nosplit([4 x float] undef, [4 x double] undef, [3 x float] undef, double 1.0)
   ret void
@@ -98,11 +96,10 @@ define arm_aapcs_vfpcc void @test_1double_misaligned([4 x double], [4 x double],
 ; CHECK-DAG: strd [[ONELO]], [[ONEHI]], [sp, #8]
 
 ; CHECK-M4F-LABEL: test_1double_misaligned:
-; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0
 ; CHECK-M4F: movs [[ONEHI:r[0-9]+]], #0
+; CHECK-M4F: movs [[ONELO:r[0-9]+]], #0
 ; CHECK-M4F: movt [[ONEHI]], #16368
-; CHECK-M4F-DAG: str [[ONELO]], [sp, #8]
-; CHECK-M4F-DAG: str [[ONEHI]], [sp, #12]
+; CHECK-M4F: strd [[ONELO]], [[ONEHI]], [sp, #8]
 ; CHECK-M4F: bl test_1double_misaligned
 
   ret void

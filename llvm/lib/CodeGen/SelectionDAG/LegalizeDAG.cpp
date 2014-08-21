@@ -3517,6 +3517,16 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
                                       RTLIB::FMA_F80, RTLIB::FMA_F128,
                                       RTLIB::FMA_PPCF128));
     break;
+  case ISD::FADD:
+    Results.push_back(ExpandFPLibCall(Node, RTLIB::ADD_F32, RTLIB::ADD_F64,
+                                      RTLIB::ADD_F80, RTLIB::ADD_F128,
+                                      RTLIB::ADD_PPCF128));
+    break;
+  case ISD::FMUL:
+    Results.push_back(ExpandFPLibCall(Node, RTLIB::MUL_F32, RTLIB::MUL_F64,
+                                      RTLIB::MUL_F80, RTLIB::MUL_F128,
+                                      RTLIB::MUL_PPCF128));
+    break;
   case ISD::FP16_TO_FP: {
     if (Node->getValueType(0) == MVT::f32) {
       Results.push_back(ExpandLibCall(RTLIB::FPEXT_F16_F32, Node, false));
@@ -3549,12 +3559,16 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
   }
   case ISD::FSUB: {
     EVT VT = Node->getValueType(0);
-    assert(TLI.isOperationLegalOrCustom(ISD::FADD, VT) &&
-           TLI.isOperationLegalOrCustom(ISD::FNEG, VT) &&
-           "Don't know how to expand this FP subtraction!");
-    Tmp1 = DAG.getNode(ISD::FNEG, dl, VT, Node->getOperand(1));
-    Tmp1 = DAG.getNode(ISD::FADD, dl, VT, Node->getOperand(0), Tmp1);
-    Results.push_back(Tmp1);
+    if (TLI.isOperationLegalOrCustom(ISD::FADD, VT) &&
+        TLI.isOperationLegalOrCustom(ISD::FNEG, VT)) {
+      Tmp1 = DAG.getNode(ISD::FNEG, dl, VT, Node->getOperand(1));
+      Tmp1 = DAG.getNode(ISD::FADD, dl, VT, Node->getOperand(0), Tmp1);
+      Results.push_back(Tmp1);
+    } else {
+      Results.push_back(ExpandFPLibCall(Node, RTLIB::SUB_F32, RTLIB::SUB_F64,
+                                        RTLIB::SUB_F80, RTLIB::SUB_F128,
+                                        RTLIB::SUB_PPCF128));
+    }
     break;
   }
   case ISD::SUB: {

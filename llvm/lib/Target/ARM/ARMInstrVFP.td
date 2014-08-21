@@ -515,6 +515,8 @@ def VCVTDS  : ASuI<0b11101, 0b11, 0b0111, 0b11, 0,
   let Inst{5}     = Sm{0};
   let Inst{15-12} = Dd{3-0};
   let Inst{22}    = Dd{4};
+
+  let Predicates = [HasVFP2, HasDPVFP];
 }
 
 // Special case encoding: bits 11-8 is 0b1011.

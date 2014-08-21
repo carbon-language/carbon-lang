@@ -18,7 +18,7 @@ entry:
 ; CHECK-LABEL: bar:
   %0 = fmul double %a, %b
 ; CORTEXM3: bl ___muldf3
-; CORTEXM4: bl ___muldf3
+; CORTEXM4: {{bl|b.w}} ___muldf3
 ; CORTEXA8: vmul.f64  d
   ret double %0
 }
