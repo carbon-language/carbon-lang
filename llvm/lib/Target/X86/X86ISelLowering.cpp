@@ -2298,7 +2298,6 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
     CCInfo.AllocateStack(32, 8);
 
   CCInfo.AnalyzeFormalArguments(Ins, CC_X86);
-  CCInfo.AlignStack(Is64Bit ? 8 : 4);
 
   unsigned LastVal = ~0U;
   SDValue ArgValue;
