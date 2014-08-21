@@ -22,6 +22,8 @@ class HostInfoPosix : public HostInfoBase
   public:
     static size_t GetPageSize();
     static bool GetHostname(std::string &s);
+    static bool LookupUserName(uint32_t uid, std::string &user_name);
+    static bool LookupGroupName(uint32_t gid, std::string &group_name);
 
   protected:
     static bool ComputeSupportExeDirectory(FileSpec &file_spec);

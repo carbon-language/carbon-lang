@@ -776,30 +776,34 @@ Platform::SetRemoteWorkingDirectory(const ConstString &path)
 const char *
 Platform::GetUserName (uint32_t uid)
 {
+#if !defined(LLDB_DISABLE_POSIX)
     const char *user_name = GetCachedUserName(uid);
     if (user_name)
         return user_name;
     if (IsHost())
     {
         std::string name;
-        if (Host::GetUserName(uid, name))
+        if (HostInfo::LookupUserName(uid, name))
             return SetCachedUserName (uid, name.c_str(), name.size());
     }
+#endif
     return NULL;
 }
 
 const char *
 Platform::GetGroupName (uint32_t gid)
 {
+#if !defined(LLDB_DISABLE_POSIX)
     const char *group_name = GetCachedGroupName(gid);
     if (group_name)
         return group_name;
     if (IsHost())
     {
         std::string name;
-        if (Host::GetGroupName(gid, name))
+        if (HostInfo::LookupGroupName(gid, name))
             return SetCachedGroupName (gid, name.c_str(), name.size());
     }
+#endif
     return NULL;
 }
 

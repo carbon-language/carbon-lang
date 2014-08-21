@@ -867,65 +867,6 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 
 #ifndef _WIN32
 
-const char *
-Host::GetUserName (uint32_t uid, std::string &user_name)
-{
-    struct passwd user_info;
-    struct passwd *user_info_ptr = &user_info;
-    char user_buffer[PATH_MAX];
-    size_t user_buffer_size = sizeof(user_buffer);
-    if (::getpwuid_r (uid,
-                      &user_info,
-                      user_buffer,
-                      user_buffer_size,
-                      &user_info_ptr) == 0)
-    {
-        if (user_info_ptr)
-        {
-            user_name.assign (user_info_ptr->pw_name);
-            return user_name.c_str();
-        }
-    }
-    user_name.clear();
-    return NULL;
-}
-
-const char *
-Host::GetGroupName (uint32_t gid, std::string &group_name)
-{
-    char group_buffer[PATH_MAX];
-    size_t group_buffer_size = sizeof(group_buffer);
-    struct group group_info;
-    struct group *group_info_ptr = &group_info;
-    // Try the threadsafe version first
-    if (::getgrgid_r (gid,
-                      &group_info,
-                      group_buffer,
-                      group_buffer_size,
-                      &group_info_ptr) == 0)
-    {
-        if (group_info_ptr)
-        {
-            group_name.assign (group_info_ptr->gr_name);
-            return group_name.c_str();
-        }
-    }
-    else
-    {
-        // The threadsafe version isn't currently working
-        // for me on darwin, but the non-threadsafe version 
-        // is, so I am calling it below.
-        group_info_ptr = ::getgrgid (gid);
-        if (group_info_ptr)
-        {
-            group_name.assign (group_info_ptr->gr_name);
-            return group_name.c_str();
-        }
-    }
-    group_name.clear();
-    return NULL;
-}
-
 uint32_t
 Host::GetUserID ()
 {
@@ -950,23 +891,6 @@ Host::GetEffectiveGroupID ()
     return getegid();
 }
 
-#endif
-
-#if !defined (__APPLE__) && !defined (__FreeBSD__) && !defined (__FreeBSD_kernel__) \
-    && !defined(__linux__) && !defined(_WIN32)
-uint32_t
-Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
-{
-    process_infos.Clear();
-    return process_infos.GetSize();
-}
-
-bool
-Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
-{
-    process_info.Clear();
-    return false;
-}
 #endif
 
 #if !defined(__linux__)

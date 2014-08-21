@@ -235,19 +235,6 @@ Host::DynamicLibraryGetSymbol(void *opaque, const char *symbol_name, Error &erro
     return NULL;
 }
 
-const char *
-Host::GetUserName (uint32_t uid, std::string &user_name)
-{
-    return NULL;
-}
-
-const char *
-Host::GetGroupName (uint32_t gid, std::string &group_name)
-{
-    llvm_unreachable("Windows does not support group name");
-    return NULL;
-}
-
 uint32_t
 Host::GetUserID ()
 {
