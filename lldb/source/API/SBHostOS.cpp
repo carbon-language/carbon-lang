@@ -23,7 +23,7 @@ SBFileSpec
 SBHostOS::GetProgramFileSpec ()
 {
     SBFileSpec sb_filespec;
-    sb_filespec.SetFileSpec (Host::GetProgramFileSpec ());
+    sb_filespec.SetFileSpec(HostInfo::GetProgramFileSpec());
     return sb_filespec;
 }
 

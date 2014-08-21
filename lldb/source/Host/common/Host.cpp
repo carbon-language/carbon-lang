@@ -646,68 +646,6 @@ Host::SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid,
 
 #endif
 
-FileSpec
-Host::GetUserProfileFileSpec ()
-{
-    static FileSpec g_profile_filespec;
-    if (!g_profile_filespec)
-    {
-        llvm::SmallString<64> path;
-        llvm::sys::path::home_directory(path);
-        return FileSpec(path.c_str(), false);
-    }
-    return g_profile_filespec;
-}
-
-FileSpec
-Host::GetProgramFileSpec ()
-{
-    static FileSpec g_program_filespec;
-    if (!g_program_filespec)
-    {
-#if defined (__APPLE__)
-        char program_fullpath[PATH_MAX];
-        // If DST is NULL, then return the number of bytes needed.
-        uint32_t len = sizeof(program_fullpath);
-        int err = _NSGetExecutablePath (program_fullpath, &len);
-        if (err == 0)
-            g_program_filespec.SetFile (program_fullpath, false);
-        else if (err == -1)
-        {
-            char *large_program_fullpath = (char *)::malloc (len + 1);
-
-            err = _NSGetExecutablePath (large_program_fullpath, &len);
-            if (err == 0)
-                g_program_filespec.SetFile (large_program_fullpath, false);
-
-            ::free (large_program_fullpath);
-        }
-#elif defined (__linux__)
-        char exe_path[PATH_MAX];
-        ssize_t len = readlink("/proc/self/exe", exe_path, sizeof(exe_path) - 1);
-        if (len > 0) {
-            exe_path[len] = 0;
-            g_program_filespec.SetFile(exe_path, false);
-        }
-#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
-        int exe_path_mib[4] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, getpid() };
-        size_t exe_path_size;
-        if (sysctl(exe_path_mib, 4, NULL, &exe_path_size, NULL, 0) == 0)
-        {
-            char *exe_path = new char[exe_path_size];
-            if (sysctl(exe_path_mib, 4, exe_path, &exe_path_size, NULL, 0) == 0)
-                g_program_filespec.SetFile(exe_path, false);
-            delete[] exe_path;
-        }
-#elif defined(_WIN32)
-        std::vector<char> buffer(PATH_MAX);
-        ::GetModuleFileName(NULL, &buffer[0], buffer.size());
-        g_program_filespec.SetFile(&buffer[0], false);
-#endif
-    }
-    return g_program_filespec;
-}
-
 #if !defined (__APPLE__) // see Host.mm
 
 bool
@@ -861,34 +799,6 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
             module_filespec.SetFile(info.dli_fname, true);
     }
     return module_filespec;
-}
-
-#endif
-
-#ifndef _WIN32
-
-uint32_t
-Host::GetUserID ()
-{
-    return getuid();
-}
-
-uint32_t
-Host::GetGroupID ()
-{
-    return getgid();
-}
-
-uint32_t
-Host::GetEffectiveUserID ()
-{
-    return geteuid();
-}
-
-uint32_t
-Host::GetEffectiveGroupID ()
-{
-    return getegid();
 }
 
 #endif

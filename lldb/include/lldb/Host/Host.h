@@ -91,25 +91,6 @@ public:
                                  lldb::pid_t pid,
                                  bool monitor_signals);
 
-    static const char *
-    GetUserName (uint32_t uid, std::string &user_name);
-    
-    static const char *
-    GetGroupName (uint32_t gid, std::string &group_name);
-    
-    static uint32_t
-    GetUserID ();
-    
-    static uint32_t
-    GetGroupID ();
-
-    static uint32_t
-    GetEffectiveUserID ();
-
-    static uint32_t
-    GetEffectiveGroupID ();
-
-
     enum SystemLogType
     {
         eSystemLogWarning,
@@ -261,27 +242,6 @@ public:
     SetShortThreadName (lldb::pid_t pid, lldb::tid_t tid, const char *name, size_t len);
 
     //------------------------------------------------------------------
-    /// Gets the FileSpec of the user profile directory.  On Posix-platforms
-    /// this is ~, and on windows this is generally something like
-    /// C:\Users\Alice.
-    ///
-    /// @return
-    ///     \b A file spec with the path to the user's home directory.
-    //------------------------------------------------------------------
-    static FileSpec
-    GetUserProfileFileSpec ();
-
-    //------------------------------------------------------------------
-    /// Gets the FileSpec of the current process (the process that
-    /// that is running the LLDB code).
-    ///
-    /// @return
-    ///     \b A file spec with the program name.
-    //------------------------------------------------------------------
-    static FileSpec
-    GetProgramFileSpec ();
-
-    //------------------------------------------------------------------
     /// Given an address in the current process (the process that
     /// is running the LLDB code), return the name of the module that
     /// it comes from. This can be useful when you need to know the
@@ -298,8 +258,6 @@ public:
     //------------------------------------------------------------------
     static FileSpec
     GetModuleFileSpecForHostAddress (const void *host_addr);
-
-
     
     //------------------------------------------------------------------
     /// If you have an executable that is in a bundle and want to get

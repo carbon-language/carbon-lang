@@ -236,33 +236,6 @@ Host::DynamicLibraryGetSymbol(void *opaque, const char *symbol_name, Error &erro
 }
 
 uint32_t
-Host::GetUserID ()
-{
-    llvm_unreachable("Windows does not support uid");
-}
-
-uint32_t
-Host::GetGroupID ()
-{
-    llvm_unreachable("Windows does not support gid");
-    return 0;
-}
-
-uint32_t
-Host::GetEffectiveUserID ()
-{
-    llvm_unreachable("Windows does not support euid");
-    return 0;
-}
-
-uint32_t
-Host::GetEffectiveGroupID ()
-{
-    llvm_unreachable("Windows does not support egid");
-    return 0;
-}
-
-uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {
     process_infos.Clear();

@@ -51,6 +51,7 @@
 
 #include "lldb/Host/Editline.h"
 #include "lldb/Host/Host.h"
+#include "lldb/Host/HostInfo.h"
 
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Interpreter/CommandCompletions.h"
@@ -67,7 +68,9 @@
 
 #include "lldb/Utility/CleanUp.h"
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Path.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -2381,13 +2384,15 @@ CommandInterpreter::SourceInitFile (bool in_cwd, CommandReturnObject &result)
         // "-" and the name of the program. If this file doesn't exist, we fall
         // back to just the "~/.lldbinit" file. We also obey any requests to not
         // load the init files.
-        FileSpec profilePath = Host::GetUserProfileFileSpec();
+        llvm::SmallString<64> home_dir_path;
+        llvm::sys::path::home_directory(home_dir_path);
+        FileSpec profilePath(home_dir_path.c_str(), false);
         profilePath.AppendPathComponent(".lldbinit");
         std::string init_file_path = profilePath.GetPath();
 
         if (m_skip_app_init_files == false)
         {
-            FileSpec program_file_spec (Host::GetProgramFileSpec());
+            FileSpec program_file_spec(HostInfo::GetProgramFileSpec());
             const char *program_name = program_file_spec.GetFilename().AsCString();
     
             if (program_name)

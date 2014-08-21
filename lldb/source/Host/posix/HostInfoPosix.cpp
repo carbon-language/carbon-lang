@@ -97,6 +97,30 @@ HostInfoPosix::LookupGroupName(uint32_t gid, std::string &group_name)
     return NULL;
 }
 
+uint32_t
+HostInfoPosix::GetUserID()
+{
+    return getuid();
+}
+
+uint32_t
+HostInfoPosix::GetGroupID()
+{
+    return getgid();
+}
+
+uint32_t
+HostInfoPosix::GetEffectiveUserID()
+{
+    return geteuid();
+}
+
+uint32_t
+HostInfoPosix::GetEffectiveGroupID()
+{
+    return getegid();
+}
+
 bool
 HostInfoPosix::ComputeSupportExeDirectory(FileSpec &file_spec)
 {

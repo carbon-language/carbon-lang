@@ -25,6 +25,11 @@ class HostInfoPosix : public HostInfoBase
     static const char *LookupUserName(uint32_t uid, std::string &user_name);
     static const char *LookupGroupName(uint32_t gid, std::string &group_name);
 
+    static uint32_t GetUserID();
+    static uint32_t GetGroupID();
+    static uint32_t GetEffectiveUserID();
+    static uint32_t GetEffectiveGroupID();
+
   protected:
     static bool ComputeSupportExeDirectory(FileSpec &file_spec);
     static bool ComputeHeaderDirectory(FileSpec &file_spec);

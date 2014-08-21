@@ -10,7 +10,9 @@
 #ifndef lldb_Host_linux_HostInfoLinux_h_
 #define lldb_Host_linux_HostInfoLinux_h_
 
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/posix/HostInfoPosix.h"
+
 #include "llvm/ADT/StringRef.h"
 
 #include <string>
@@ -32,6 +34,7 @@ class HostInfoLinux : public HostInfoPosix
 
     static bool GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update);
     static llvm::StringRef GetDistributionId();
+    static FileSpec GetProgramFileSpec();
 
   protected:
     static bool ComputeSystemPluginsDirectory(FileSpec &file_spec);

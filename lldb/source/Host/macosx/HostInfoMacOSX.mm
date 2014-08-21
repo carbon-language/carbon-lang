@@ -27,6 +27,7 @@
 // Objective C/C++ includes
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/Foundation.h>
+#include <mach-o/dyld.h>
 #include <objc/objc-auto.h>
 
 using namespace lldb_private;
@@ -89,6 +90,32 @@ HostInfoMacOSX::GetOSVersion(uint32_t &major, uint32_t &minor, uint32_t &update)
         return true;
     }
     return false;
+}
+
+FileSpec
+HostInfoMacOSX::GetProgramFileSpec()
+{
+    static FileSpec g_program_filespec;
+    if (!g_program_filespec)
+    {
+        char program_fullpath[PATH_MAX];
+        // If DST is NULL, then return the number of bytes needed.
+        uint32_t len = sizeof(program_fullpath);
+        int err = _NSGetExecutablePath(program_fullpath, &len);
+        if (err == 0)
+            g_program_filespec.SetFile(program_fullpath, false);
+        else if (err == -1)
+        {
+            char *large_program_fullpath = (char *)::malloc(len + 1);
+
+            err = _NSGetExecutablePath(large_program_fullpath, &len);
+            if (err == 0)
+                g_program_filespec.SetFile(large_program_fullpath, false);
+
+            ::free(large_program_fullpath);
+        }
+    }
+    return g_program_filespec;
 }
 
 bool
