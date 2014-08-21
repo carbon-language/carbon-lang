@@ -2759,6 +2759,18 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 }
 
 //===----------------------------------------------------------------------===//
+// ADX
+
+let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
+  def int_x86_addcarryx_u32: GCCBuiltin<"__builtin_ia32_addcarryx_u32">,
+        Intrinsic<[llvm_i8_ty], [llvm_i8_ty, llvm_i32_ty, llvm_i32_ty,
+                                 llvm_ptr_ty], [IntrReadWriteArgMem]>;
+  def int_x86_addcarryx_u64: GCCBuiltin<"__builtin_ia32_addcarryx_u64">,
+        Intrinsic<[llvm_i8_ty], [llvm_i8_ty, llvm_i64_ty, llvm_i64_ty,
+                                 llvm_ptr_ty], [IntrReadWriteArgMem]>;
+}
+
+//===----------------------------------------------------------------------===//
 // RTM intrinsics. Transactional Memory support.
 
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".

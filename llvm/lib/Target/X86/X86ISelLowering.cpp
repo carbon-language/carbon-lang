@@ -15355,7 +15355,7 @@ static SDValue LowerREADCYCLECOUNTER(SDValue Op, const X86Subtarget *Subtarget,
 }
 
 enum IntrinsicType {
-  GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST
+  GATHER, SCATTER, PREFETCH, RDSEED, RDRAND, RDPMC, RDTSC, XTEST, ADX
 };
 
 struct IntrinsicData {
@@ -15451,6 +15451,10 @@ static void InitIntinsicsMap() {
                                 IntrinsicData(RDTSC,  X86ISD::RDTSCP_DAG, 0)));
   IntrMap.insert(std::make_pair(Intrinsic::x86_rdpmc,
                                 IntrinsicData(RDPMC,  X86ISD::RDPMC_DAG, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarryx_u32,
+                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
+  IntrMap.insert(std::make_pair(Intrinsic::x86_addcarryx_u64,
+                                IntrinsicData(ADX,    X86ISD::ADC, 0)));
   Initialized = true;
 }
 
@@ -15542,6 +15546,25 @@ static SDValue LowerINTRINSIC_W_CHAIN(SDValue Op, const X86Subtarget *Subtarget,
     SDValue Ret = DAG.getNode(ISD::ZERO_EXTEND, dl, Op->getValueType(0), SetCC);
     return DAG.getNode(ISD::MERGE_VALUES, dl, Op->getVTList(),
                        Ret, SDValue(InTrans.getNode(), 1));
+  }
+  // ADC/ADCX
+  case ADX: {
+    SmallVector<SDValue, 2> Results;
+    SDVTList CFVTs = DAG.getVTList(Op->getValueType(0), MVT::Other);
+    SDVTList VTs = DAG.getVTList(Op.getOperand(3)->getValueType(0), MVT::Other);
+    SDValue GenCF = DAG.getNode(X86ISD::ADD, dl, CFVTs, Op.getOperand(2),
+                                DAG.getConstant(-1, MVT::i8));
+    SDValue Res = DAG.getNode(Intr.Opc0, dl, VTs, Op.getOperand(3),
+                              Op.getOperand(4), GenCF.getValue(1));
+    SDValue Store = DAG.getStore(Op.getOperand(0), dl, Res.getValue(0),
+                                 Op.getOperand(5), MachinePointerInfo(),
+                                 false, false, 0);
+    SDValue SetCC = DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                                DAG.getConstant(X86::COND_B, MVT::i8),
+                                Res.getValue(1));
+    Results.push_back(SetCC);
+    Results.push_back(Store);
+    return DAG.getMergeValues(Results, dl);
   }
   }
   llvm_unreachable("Unknown Intrinsic Type");
