@@ -52,7 +52,7 @@ unsigned Use::getOperandNo() const {
 // Sets up the waymarking algorithm's tags for a series of Uses. See the
 // algorithm details here:
 //
-//   http://www.llvm.org/docs/ProgrammersManual.html#UserLayout
+//   http://www.llvm.org/docs/ProgrammersManual.html#the-waymarking-algorithm
 //
 Use *Use::initTags(Use *const Start, Use *Stop) {
   ptrdiff_t Done = 0;
