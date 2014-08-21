@@ -173,3 +173,11 @@ define i32 @test17(i32 %x, i32 %y) {
 ; CHECK-NEXT: %xor = xor i32 %x, %y
 ; CHECK-NEXT: ret i32 %xor
 }
+
+define i32 @test18(i32 %a, i32 %b) {
+  %or = xor i32 %a, %b
+  %and1 = and i32 %or, 1
+  %and2 = and i32 %b, -2
+  %xor = or i32 %and1, %and2
+  ret i32 %xor
+}

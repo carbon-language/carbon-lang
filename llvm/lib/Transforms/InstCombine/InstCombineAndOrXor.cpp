@@ -1983,6 +1983,38 @@ Instruction *InstCombiner::FoldOrWithConstants(BinaryOperator &I, Value *Op,
   return nullptr;
 }
 
+/// \brief This helper function folds:
+///
+///     ((A | B) & C1) ^ (B & C2)
+///
+/// into:
+///
+///     (A & C1) ^ B
+///
+/// when the XOR of the two constants is "all ones" (-1).
+Instruction *InstCombiner::FoldXorWithConstants(BinaryOperator &I, Value *Op,
+                                                Value *A, Value *B, Value *C) {
+  ConstantInt *CI1 = dyn_cast<ConstantInt>(C);
+  if (!CI1)
+    return nullptr;
+
+  Value *V1 = nullptr;
+  ConstantInt *CI2 = nullptr;
+  if (!match(Op, m_And(m_Value(V1), m_ConstantInt(CI2))))
+    return nullptr;
+
+  APInt Xor = CI1->getValue() ^ CI2->getValue();
+  if (!Xor.isAllOnesValue())
+    return nullptr;
+
+  if (V1 == A || V1 == B) {
+    Value *NewOp = Builder->CreateAnd(V1 == A ? B : A, CI1);
+    return BinaryOperator::CreateXor(NewOp, V1);
+  }
+
+  return nullptr;
+}
+
 Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -2163,6 +2195,18 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     if (match(B, m_Or(m_Specific(A), m_Value(V1))) ||
         match(B, m_Or(m_Value(V1), m_Specific(A)))) {
       Instruction *Ret = FoldOrWithConstants(I, Op0, A, V1, D);
+      if (Ret) return Ret;
+    }
+    // ((A^B)&1)|(B&-2) -> (A&1) ^ B
+    if (match(A, m_Xor(m_Value(V1), m_Specific(B))) ||
+        match(A, m_Xor(m_Specific(B), m_Value(V1)))) {
+      Instruction *Ret = FoldXorWithConstants(I, Op1, V1, B, C);
+      if (Ret) return Ret;
+    }
+    // (B&-2)|((A^B)&1) -> (A&1) ^ B
+    if (match(B, m_Xor(m_Specific(A), m_Value(V1))) ||
+        match(B, m_Xor(m_Value(V1), m_Specific(A)))) {
+      Instruction *Ret = FoldXorWithConstants(I, Op0, A, V1, D);
       if (Ret) return Ret;
     }
   }

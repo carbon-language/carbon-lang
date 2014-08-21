@@ -152,6 +152,8 @@ public:
   Value *FoldOrOfFCmps(FCmpInst *LHS, FCmpInst *RHS);
   Instruction *FoldOrWithConstants(BinaryOperator &I, Value *Op, Value *A,
                                    Value *B, Value *C);
+  Instruction *FoldXorWithConstants(BinaryOperator &I, Value *Op, Value *A,
+                                    Value *B, Value *C);
   Instruction *visitOr(BinaryOperator &I);
   Instruction *visitXor(BinaryOperator &I);
   Instruction *visitShl(BinaryOperator &I);
