@@ -674,6 +674,9 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
     }
     return nullptr;
   case Instruction::Trunc: {
+    if (V->getType()->isVectorTy())
+      return nullptr;
+
     uint32_t DestBitWidth = cast<IntegerType>(DestTy)->getBitWidth();
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       return ConstantInt::get(V->getContext(),
