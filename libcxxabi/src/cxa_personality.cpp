@@ -314,8 +314,18 @@ static const void* read_target2_value(const void* ptr)
     uintptr_t offset = *reinterpret_cast<const uintptr_t*>(ptr);
     if (!offset)
         return 0;
+    // "ARM EABI provides a TARGET2 relocation to describe these typeinfo
+    // pointers. The reason being it allows their precise semantics to be
+    // deferred to the linker. For bare-metal they turn into absolute
+    // relocations. For linux they turn into GOT-REL relocations."
+    // https://gcc.gnu.org/ml/gcc-patches/2009-08/msg00264.html
+#if LIBCXXABI_BAREMETAL
+    return reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(ptr) +
+                                         offset);
+#else
     return *reinterpret_cast<const void **>(reinterpret_cast<uintptr_t>(ptr) +
                                             offset);
+#endif
 }
 
 static const __shim_type_info*
