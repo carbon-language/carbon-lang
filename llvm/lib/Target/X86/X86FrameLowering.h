@@ -20,11 +20,16 @@ namespace llvm {
 
 class MCSymbol;
 class X86TargetMachine;
+class X86Subtarget;
 
 class X86FrameLowering : public TargetFrameLowering {
 public:
   explicit X86FrameLowering(StackDirection D, unsigned StackAl, int LAO)
     : TargetFrameLowering(StackGrowsDown, StackAl, LAO) {}
+
+  static void getStackProbeFunction(const X86Subtarget &STI,
+                                    unsigned &CallOp,
+                                    const char *&Symbol);
 
   void emitCalleeSavedFrameMoves(MachineBasicBlock &MBB,
                                  MachineBasicBlock::iterator MBBI,

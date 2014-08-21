@@ -352,6 +352,23 @@ static bool usesTheStack(const MachineFunction &MF) {
   return false;
 }
 
+void X86FrameLowering::getStackProbeFunction(const X86Subtarget &STI,
+                                             unsigned &CallOp,
+                                             const char *&Symbol) {
+  CallOp = STI.is64Bit() ? X86::W64ALLOCA : X86::CALLpcrel32;
+
+  if (STI.is64Bit()) {
+    if (STI.isTargetCygMing()) {
+      Symbol = "___chkstk_ms";
+    } else {
+      Symbol = "__chkstk";
+    }
+  } else if (STI.isTargetCygMing())
+    Symbol = "_alloca";
+  else
+    Symbol = "_chkstk";
+}
+
 /// emitPrologue - Push callee-saved registers onto the stack, which
 /// automatically adjust the stack pointer. Adjust the stack pointer to allocate
 /// space for local variables. Also emit labels used by the exception handler to
@@ -668,17 +685,9 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // virtual memory manager are allocated in correct sequence.
   if (NumBytes >= 4096 && STI.isOSWindows() && !STI.isTargetMacho()) {
     const char *StackProbeSymbol;
+    unsigned CallOp;
 
-    if (Is64Bit) {
-      if (STI.isTargetCygMing()) {
-        StackProbeSymbol = "___chkstk_ms";
-      } else {
-        StackProbeSymbol = "__chkstk";
-      }
-    } else if (STI.isTargetCygMing())
-      StackProbeSymbol = "_alloca";
-    else
-      StackProbeSymbol = "_chkstk";
+    getStackProbeFunction(STI, CallOp, StackProbeSymbol);
 
     // Check whether EAX is livein for this function.
     bool isEAXAlive = isEAXLiveIn(MF);
@@ -709,7 +718,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     }
 
     BuildMI(MBB, MBBI, DL,
-            TII.get(Is64Bit ? X86::W64ALLOCA : X86::CALLpcrel32))
+            TII.get(CallOp))
       .addExternalSymbol(StackProbeSymbol)
       .addReg(StackPtr,    RegState::Define | RegState::Implicit)
       .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit)
