@@ -386,7 +386,7 @@ AMDGPUTargetLowering::AMDGPUTargetLowering(TargetMachine &TM) :
   // There are no integer divide instructions, and these expand to a pretty
   // large sequence of instructions.
   setIntDivIsCheap(false);
-  setPow2DivIsCheap(false);
+  setPow2SDivIsCheap(false);
 
   // TODO: Investigate this when 64-bit divides are implemented.
   addBypassSlowDiv(64, 32);

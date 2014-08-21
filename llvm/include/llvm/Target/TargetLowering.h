@@ -223,8 +223,8 @@ public:
     return BypassSlowDivWidths;
   }
 
-  /// Return true if pow2 div is cheaper than a chain of srl/add/sra.
-  bool isPow2DivCheap() const { return Pow2DivIsCheap; }
+  /// Return true if pow2 sdiv is cheaper than a chain of sra/srl/add/sra.
+  bool isPow2SDivCheap() const { return Pow2SDivIsCheap; }
 
   /// Return true if Flow Control is an expensive operation that should be
   /// avoided.
@@ -1105,9 +1105,9 @@ protected:
     BypassSlowDivWidths[SlowBitWidth] = FastBitWidth;
   }
 
-  /// Tells the code generator that it shouldn't generate srl/add/sra for a
-  /// signed divide by power of two, and let the target handle it.
-  void setPow2DivIsCheap(bool isCheap = true) { Pow2DivIsCheap = isCheap; }
+  /// Tells the code generator that it shouldn't generate sra/srl/add/sra for a
+  /// signed divide by power of two; let the target handle it.
+  void setPow2SDivIsCheap(bool isCheap = true) { Pow2SDivIsCheap = isCheap; }
 
   /// Add the specified register class as an available regclass for the
   /// specified value type. This indicates the selector can handle values of
@@ -1526,9 +1526,9 @@ private:
   /// div/rem when the operands are positive and less than 256.
   DenseMap <unsigned int, unsigned int> BypassSlowDivWidths;
 
-  /// Tells the code generator that it shouldn't generate srl/add/sra for a
-  /// signed divide by power of two, and let the target handle it.
-  bool Pow2DivIsCheap;
+  /// Tells the code generator that it shouldn't generate sra/srl/add/sra for a
+  /// signed divide by power of two; let the target handle it.
+  bool Pow2SDivIsCheap;
 
   /// Tells the code generator that it shouldn't generate extra flow control
   /// instructions and should attempt to combine flow control instructions via

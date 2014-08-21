@@ -2082,7 +2082,7 @@ SDValue DAGCombiner::visitSDIV(SDNode *N) {
                                      (-N1C->getAPIntValue()).isPowerOf2())) {
     // If dividing by powers of two is cheap, then don't perform the following
     // fold.
-    if (TLI.isPow2DivCheap())
+    if (TLI.isPow2SDivCheap())
       return SDValue();
 
     // Target-specific implementation of sdiv x, pow2.

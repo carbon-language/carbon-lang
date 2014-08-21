@@ -67,7 +67,7 @@ static TargetLoweringObjectFile *createTLOF(const Triple &TT) {
 PPCTargetLowering::PPCTargetLowering(PPCTargetMachine &TM)
     : TargetLowering(TM, createTLOF(Triple(TM.getTargetTriple()))),
       Subtarget(*TM.getSubtargetImpl()) {
-  setPow2DivIsCheap();
+  setPow2SDivIsCheap();
 
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
   setUseUnderscoreSetJmp(true);
