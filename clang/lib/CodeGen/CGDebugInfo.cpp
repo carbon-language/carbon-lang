@@ -2596,8 +2596,7 @@ void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
   llvm::DIDescriptor D = DBuilder.createLexicalBlock(
       llvm::DIDescriptor(LexicalBlockStack.empty() ? nullptr
                                                    : LexicalBlockStack.back()),
-      getOrCreateFile(CurLoc), getLineNumber(CurLoc), getColumnNumber(CurLoc),
-      0);
+      getOrCreateFile(CurLoc), getLineNumber(CurLoc), getColumnNumber(CurLoc));
   llvm::MDNode *DN = D;
   LexicalBlockStack.push_back(DN);
 }
