@@ -218,6 +218,14 @@ static void addDataFlowSanitizerPass(const PassManagerBuilder &Builder,
   PM.add(createDataFlowSanitizerPass(CGOpts.SanitizerBlacklistFile));
 }
 
+static TargetLibraryInfo *createTLI(llvm::Triple &TargetTriple,
+                                    const CodeGenOptions &CodeGenOpts) {
+  TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
+  if (!CodeGenOpts.SimplifyLibCalls)
+    TLI->disableAllFunctions();
+  return TLI;
+}
+
 void EmitAssemblyHelper::CreatePasses() {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.getInlining();
@@ -295,9 +303,7 @@ void EmitAssemblyHelper::CreatePasses() {
 
   // Figure out TargetLibraryInfo.
   Triple TargetTriple(TheModule->getTargetTriple());
-  PMBuilder.LibraryInfo = new TargetLibraryInfo(TargetTriple);
-  if (!CodeGenOpts.SimplifyLibCalls)
-    PMBuilder.LibraryInfo->disableAllFunctions();
+  PMBuilder.LibraryInfo = createTLI(TargetTriple, CodeGenOpts);
 
   switch (Inlining) {
   case CodeGenOptions::NoInlining: break;
@@ -494,10 +500,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
 
   // Add LibraryInfo.
   llvm::Triple TargetTriple(TheModule->getTargetTriple());
-  TargetLibraryInfo *TLI = new TargetLibraryInfo(TargetTriple);
-  if (!CodeGenOpts.SimplifyLibCalls)
-    TLI->disableAllFunctions();
-  PM->add(TLI);
+  PM->add(createTLI(TargetTriple, CodeGenOpts));
 
   // Add Target specific analysis passes.
   TM->addAnalysisPasses(*PM);
