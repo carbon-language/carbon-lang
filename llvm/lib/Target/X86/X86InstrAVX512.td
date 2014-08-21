@@ -1,3 +1,55 @@
+// Group template arguments that can be derived from the vector type (EltNum x
+// EltVT).  These are things like the register class for the writemask, etc.
+// The idea is to pass one of these as the template argument rather than the
+// individual arguments.
+class X86VectorVTInfo<int NumElts, ValueType EltVT, RegisterClass rc,
+                      string suffix = ""> {
+  RegisterClass RC = rc;
+
+  // Corresponding mask register class.
+  RegisterClass KRC = !cast<RegisterClass>("VK" # NumElts);
+
+  // Corresponding write-mask register class.
+  RegisterClass KRCWM = !cast<RegisterClass>("VK" # NumElts # "WM");
+
+  // The GPR register class that can hold the write mask.  Use GR8 for fewer
+  // than 8 elements.  Use shift-right and equal to work around the lack of
+  // !lt in tablegen.
+  RegisterClass MRC =
+    !cast<RegisterClass>("GR" #
+                         !if (!eq (!srl(NumElts, 3), 0), 8, NumElts));
+
+  // Suffix used in the instruction mnemonic.
+  string Suffix = suffix;
+
+  // The vector VT.
+  ValueType VT = !cast<ValueType>("v" # NumElts # EltVT);
+
+  string EltTypeName = !cast<string>(EltVT);
+  // Size of the element type in bits, e.g. 32 for v16i32.
+  string EltSize = !subst("i", "", !subst("f", "", EltTypeName));
+
+  // "i" for integer types and "f" for floating-point types
+  string TypeVariantName = !subst(EltSize, "", EltTypeName);
+
+  // Size of RC in bits, e.g. 512 for VR512.
+  int Size = VT.Size;
+
+  // The corresponding memory operand, e.g. i512mem for VR512.
+  X86MemOperand MemOp = !cast<X86MemOperand>(TypeVariantName # Size # "mem");
+
+  // The corresponding float type, e.g. v16f32 for v16i32
+  ValueType FloatVT = !if (!eq(TypeVariantName, "i"),
+                           !cast<ValueType>("v" # NumElts # "f" # EltSize),
+                           VT);
+
+  // The string to specify embedded broadcast in assembly.
+  string BroadcastStr = "{1to" # NumElts # "}";
+}
+
+def v16i32_info : X86VectorVTInfo<16, i32, VR512, "d">;
+def v8i64_info  : X86VectorVTInfo<8,  i64, VR512, "q">;
+
 // Common base class of AVX512_masking and AVX512_masking_3src.
 multiclass AVX512_masking_common<bits<8> O, Format F, dag Outs, dag Ins,
                                  dag MaskingIns, dag ZeroMaskingIns,
@@ -4566,34 +4618,30 @@ def : Pat<(v8i64 (X86Shufp VR512:$src1,
                             (memopv8i64 addr:$src2), (i8 imm:$imm))),
           (VSHUFPDZrmi VR512:$src1, addr:$src2, imm:$imm)>;
 
-multiclass avx512_valign<string Suffix, RegisterClass RC, RegisterClass KRC,
-                         RegisterClass MRC, X86MemOperand x86memop,
-                         ValueType IntVT, ValueType FloatVT> {
-  defm rri : AVX512_masking<0x03, MRMSrcReg, (outs RC:$dst),
-                     (ins RC:$src1, RC:$src2, i8imm:$src3),
-                     "valign"##Suffix,
+multiclass avx512_valign<X86VectorVTInfo _> {
+  defm rri : AVX512_masking<0x03, MRMSrcReg, (outs _.RC:$dst),
+                     (ins _.RC:$src1, _.RC:$src2, i8imm:$src3),
+                     "valign"##_.Suffix,
                      "$src3, $src2, $src1", "$src1, $src2, $src3",
-                     (IntVT (X86VAlign RC:$src2, RC:$src1,
-                                       (i8 imm:$src3))),
-                     IntVT, RC, KRC>,
+                     (_.VT (X86VAlign _.RC:$src2, _.RC:$src1,
+                                      (i8 imm:$src3))),
+                     _.VT, _.RC, _.KRCWM>,
              AVX512AIi8Base, EVEX_4V;
 
   // Also match valign of packed floats.
-  def : Pat<(FloatVT (X86VAlign RC:$src1, RC:$src2, (i8 imm:$imm))),
-            (!cast<Instruction>(NAME##rri) RC:$src2, RC:$src1, imm:$imm)>;
+  def : Pat<(_.FloatVT (X86VAlign _.RC:$src1, _.RC:$src2, (i8 imm:$imm))),
+            (!cast<Instruction>(NAME##rri) _.RC:$src2, _.RC:$src1, imm:$imm)>;
 
   let mayLoad = 1 in
-  def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs RC:$dst),
-                     (ins RC:$src1, x86memop:$src2, i8imm:$src3),
-                     !strconcat("valign"##Suffix,
+  def rmi : AVX512AIi8<0x03, MRMSrcMem, (outs _.RC:$dst),
+                     (ins _.RC:$src1, _.MemOp:$src2, i8imm:$src3),
+                     !strconcat("valign"##_.Suffix,
                      " \t{$src3, $src2, $src1, $dst|"
                          "$dst, $src1, $src2, $src3}"),
                      []>, EVEX_4V;
 }
-defm VALIGND : avx512_valign<"d", VR512, VK16WM, GR16, i512mem, v16i32, v16f32>,
-                 EVEX_V512, EVEX_CD8<32, CD8VF>;
-defm VALIGNQ : avx512_valign<"q", VR512, VK8WM, GR8, i512mem, v8i64, v8f64>,
-                 VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
+defm VALIGND : avx512_valign<v16i32_info>, EVEX_V512, EVEX_CD8<32, CD8VF>;
+defm VALIGNQ : avx512_valign<v8i64_info>, VEX_W, EVEX_V512, EVEX_CD8<64, CD8VF>;
 
 // Helper fragments to match sext vXi1 to vXiY.
 def v16i1sextv16i32  : PatLeaf<(v16i32 (X86vsrai VR512:$src, (i8 31)))>;
