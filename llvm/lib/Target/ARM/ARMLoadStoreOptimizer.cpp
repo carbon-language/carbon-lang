@@ -360,13 +360,15 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
 
     int BaseOpc =
       isThumb2 ? ARM::t2ADDri :
+      (isThumb1 && Offset < 8) ? ARM::tADDi3 :
       isThumb1 ? ARM::tADDi8  : ARM::ADDri;
 
     if (Offset < 0) {
+      Offset = - Offset;
       BaseOpc =
         isThumb2 ? ARM::t2SUBri :
+        (isThumb1 && Offset < 8) ? ARM::tSUBi3 :
         isThumb1 ? ARM::tSUBi8  : ARM::SUBri;
-      Offset = - Offset;
     }
 
     if (!TL->isLegalAddImmediate(Offset))
@@ -374,22 +376,28 @@ ARMLoadStoreOpt::MergeOps(MachineBasicBlock &MBB,
       return false; // Probably not worth it then.
 
     if (isThumb1) {
-      if (Base != NewBase) {
+      // Thumb1: depending on immediate size, use either
+      //   ADD NewBase, Base, #imm3
+      // or
+      //   MOV NewBase, Base
+      //   ADD NewBase, #imm8.
+      if (Base != NewBase && Offset >= 8) {
         // Need to insert a MOV to the new base first.
-        // FIXME: If the immediate fits in 3 bits, use ADD instead.
         BuildMI(MBB, MBBI, dl, TII->get(ARM::tMOVr), NewBase)
           .addReg(Base, getKillRegState(BaseKill))
           .addImm(Pred).addReg(PredReg);
+        // Set up BaseKill and Base correctly to insert the ADDS/SUBS below.
+        Base = NewBase;
+        BaseKill = false;
       }
       AddDefaultT1CC(BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase))
-        .addReg(NewBase, getKillRegState(true)).addImm(Offset)
+        .addReg(Base, getKillRegState(BaseKill)).addImm(Offset)
         .addImm(Pred).addReg(PredReg);
     } else {
       BuildMI(MBB, MBBI, dl, TII->get(BaseOpc), NewBase)
         .addReg(Base, getKillRegState(BaseKill)).addImm(Offset)
         .addImm(Pred).addReg(PredReg).addReg(0);
     }
-
     Base = NewBase;
     BaseKill = true; // New base is always killed straight away.
   }
