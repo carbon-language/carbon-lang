@@ -560,7 +560,6 @@ public:
   DIScope getContext() const { return getFieldAs<DIScope>(2); }
   unsigned getLineNumber() const { return getUnsignedField(3); }
   unsigned getColumnNumber() const { return getUnsignedField(4); }
-  unsigned getDiscriminator() const { return getUnsignedField(5); }
   bool Verify() const;
 };
 
@@ -577,6 +576,7 @@ public:
   unsigned getLineNumber() const { return getScope().getLineNumber(); }
   unsigned getColumnNumber() const { return getScope().getColumnNumber(); }
   DILexicalBlock getScope() const { return getFieldAs<DILexicalBlock>(2); }
+  unsigned getDiscriminator() const { return getUnsignedField(3); }
   bool Verify() const;
 };
 
@@ -767,12 +767,12 @@ public:
     // Since discriminators are associated with lexical blocks, make
     // sure this location is a lexical block before retrieving its
     // value.
-    return getScope().isLexicalBlock()
-               ? getFieldAs<DILexicalBlock>(2).getDiscriminator()
+    return getScope().isLexicalBlockFile()
+               ? getFieldAs<DILexicalBlockFile>(2).getDiscriminator()
                : 0;
   }
   unsigned computeNewDiscriminator(LLVMContext &Ctx);
-  DILocation copyWithNewScope(LLVMContext &Ctx, DILexicalBlock NewScope);
+  DILocation copyWithNewScope(LLVMContext &Ctx, DILexicalBlockFile NewScope);
 };
 
 class DIObjCProperty : public DIDescriptor {

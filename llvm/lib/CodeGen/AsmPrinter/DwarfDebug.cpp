@@ -1722,8 +1722,8 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
     assert(Scope.isScope());
     Fn = Scope.getFilename();
     Dir = Scope.getDirectory();
-    if (Scope.isLexicalBlock())
-      Discriminator = DILexicalBlock(S).getDiscriminator();
+    if (Scope.isLexicalBlockFile())
+      Discriminator = DILexicalBlockFile(S).getDiscriminator();
 
     unsigned CUID = Asm->OutStreamer.getContext().getDwarfCompileUnitID();
     Src = static_cast<DwarfCompileUnit &>(*InfoHolder.getUnits()[CUID])

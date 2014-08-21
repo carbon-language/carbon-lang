@@ -1249,11 +1249,13 @@ DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
 /// createLexicalBlockFile - This creates a new MDNode that encapsulates
 /// an existing scope with a new filename.
 DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
-                                                     DIFile File) {
+                                                     DIFile File,
+                                                     unsigned Discriminator) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_lexical_block),
     File.getFileNode(),
-    Scope
+    Scope,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Discriminator),
   };
   DILexicalBlockFile R(MDNode::get(VMContext, Elts));
   assert(
@@ -1263,8 +1265,7 @@ DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
 }
 
 DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
-                                             unsigned Line, unsigned Col,
-                                             unsigned Discriminator) {
+                                             unsigned Line, unsigned Col) {
   // FIXME: This isn't thread safe nor the right way to defeat MDNode uniquing.
   // I believe the right way is to have a self-referential element in the node.
   // Also: why do we bother with line/column - they're not used and the
@@ -1280,7 +1281,6 @@ DILexicalBlock DIBuilder::createLexicalBlock(DIDescriptor Scope, DIFile File,
     getNonCompileUnitScope(Scope),
     ConstantInt::get(Type::getInt32Ty(VMContext), Line),
     ConstantInt::get(Type::getInt32Ty(VMContext), Col),
-    ConstantInt::get(Type::getInt32Ty(VMContext), Discriminator),
     ConstantInt::get(Type::getInt32Ty(VMContext), unique_id++)
   };
   DILexicalBlock R(MDNode::get(VMContext, Elts));

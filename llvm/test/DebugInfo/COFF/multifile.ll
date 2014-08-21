@@ -248,10 +248,10 @@ attributes #1 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="false" "
 !10 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !11 = metadata !{metadata !"clang version 3.5 "}
 !12 = metadata !{i32 1, i32 0, metadata !13, null}
-!13 = metadata !{i32 786443, metadata !14, metadata !4} ; [ DW_TAG_lexical_block ] [D:\/one.c]
+!13 = metadata !{i32 786443, metadata !14, metadata !4, i32 0} ; [ DW_TAG_lexical_block ] [D:\/one.c]
 !14 = metadata !{metadata !"one.c", metadata !"D:\5C"}
 !15 = metadata !{i32 2, i32 0, metadata !16, null}
-!16 = metadata !{i32 786443, metadata !17, metadata !4} ; [ DW_TAG_lexical_block ] [D:\/two.c]
+!16 = metadata !{i32 786443, metadata !17, metadata !4, i32 0} ; [ DW_TAG_lexical_block ] [D:\/two.c]
 !17 = metadata !{metadata !"two.c", metadata !"D:\5C"}
 !18 = metadata !{i32 7, i32 0, metadata !13, null}
 !19 = metadata !{i32 8, i32 0, metadata !13, null} ; [ DW_TAG_imported_declaration ]

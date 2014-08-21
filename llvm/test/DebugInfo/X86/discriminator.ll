@@ -52,11 +52,11 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !8 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !9 = metadata !{metadata !"clang version 3.5 "}
 !10 = metadata !{i32 2, i32 0, metadata !11, null}
-!11 = metadata !{i32 786443, metadata !1, metadata !4, i32 2, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [./discriminator.c]
+!11 = metadata !{i32 786443, metadata !1, metadata !4, i32 2, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [./discriminator.c]
 !12 = metadata !{i32 3, i32 0, metadata !4, null}
 !13 = metadata !{i32 4, i32 0, metadata !4, null}
 !14 = metadata !{i32 2, i32 0, metadata !15, null}
-!15 = metadata !{i32 786443, metadata !1, metadata !4, i32 2, i32 0, i32 42, i32 1} ; [ DW_TAG_lexical_block ] [./discriminator.c]
+!15 = metadata !{i32 786443, metadata !1, metadata !4, i32 42} ; [ DW_TAG_lexical_block ] [./discriminator.c]
 
 ; CHECK: Address            Line   Column File   ISA Discriminator Flags
 ; CHECK: ------------------ ------ ------ ------ --- ------------- -------------

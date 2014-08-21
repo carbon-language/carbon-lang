@@ -659,8 +659,9 @@ namespace llvm {
     /// lexical block as it crosses a file.
     /// @param Scope       Lexical block.
     /// @param File        Source file.
-    DILexicalBlockFile createLexicalBlockFile(DIDescriptor Scope,
-                                              DIFile File);
+    /// @param Discriminator DWARF path discriminator value.
+    DILexicalBlockFile createLexicalBlockFile(DIDescriptor Scope, DIFile File,
+                                              unsigned Discriminator = 0);
 
     /// createLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
@@ -668,10 +669,8 @@ namespace llvm {
     /// @param File          Source file.
     /// @param Line          Line number.
     /// @param Col           Column number.
-    /// @param Discriminator DWARF path discriminator value.
     DILexicalBlock createLexicalBlock(DIDescriptor Scope, DIFile File,
-                                      unsigned Line, unsigned Col,
-                                      unsigned Discriminator);
+                                      unsigned Line, unsigned Col);
 
     /// \brief Create a descriptor for an imported module.
     /// @param Context The scope this module is imported into

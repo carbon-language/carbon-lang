@@ -112,7 +112,7 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !14 = metadata !{i32 1, metadata !"Debug Info Version", i32 1}
 !15 = metadata !{metadata !"clang version 3.5.0 "}
 !16 = metadata !{i32 786688, metadata !17, metadata !"b", metadata !11, i32 3, metadata !18, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [b] [line 3]
-!17 = metadata !{i32 786443, metadata !1, metadata !12, i32 3, i32 0, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/inline-scopes.cpp]
+!17 = metadata !{i32 786443, metadata !1, metadata !12, i32 3, i32 0, i32 1} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/inline-scopes.cpp]
 !18 = metadata !{i32 786468, null, null, metadata !"bool", i32 0, i64 8, i64 8, i64 0, i32 0, i32 2} ; [ DW_TAG_base_type ] [bool] [line 0, size 8, align 8, offset 0, enc DW_ATE_boolean]
 !19 = metadata !{i32 3, i32 0, metadata !17, metadata !20}
 !20 = metadata !{i32 8, i32 0, metadata !4, null} ; [ DW_TAG_imported_declaration ]
@@ -120,8 +120,8 @@ attributes #2 = { "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "n
 !22 = metadata !{i32 5, i32 0, metadata !12, metadata !20}
 !23 = metadata !{i32 6, i32 0, metadata !12, metadata !20}
 !24 = metadata !{i32 786688, metadata !25, metadata !"b", metadata !6, i32 2, metadata !18, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [b] [line 2]
-!25 = metadata !{i32 786443, metadata !5, metadata !26, i32 2, i32 0, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
-!26 = metadata !{i32 786443, metadata !5, metadata !10} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
+!25 = metadata !{i32 786443, metadata !5, metadata !26, i32 2, i32 0, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
+!26 = metadata !{i32 786443, metadata !5, metadata !10, i32 0} ; [ DW_TAG_lexical_block ] [/tmp/dbginfo/y.cc]
 !27 = metadata !{i32 2, i32 0, metadata !25, metadata !28}
 !28 = metadata !{i32 9, i32 0, metadata !4, null}
 !29 = metadata !{i32 3, i32 0, metadata !25, metadata !28}

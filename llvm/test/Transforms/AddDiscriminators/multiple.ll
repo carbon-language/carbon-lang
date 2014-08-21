@@ -66,6 +66,6 @@ attributes #0 = { nounwind uwtable "less-precise-fpmad"="false" "no-frame-pointe
 !12 = metadata !{i32 4, i32 0, metadata !4, null}
 
 ; CHECK: !12 = metadata !{i32 3, i32 0, metadata !13, null}
-; CHECK: !13 = metadata !{i32 786443, metadata !1, metadata !11, i32 3, i32 0, i32 1, i32 0} ; [ DW_TAG_lexical_block ] [./multiple.c]
+; CHECK: !13 = metadata !{i32 786443, metadata !1, metadata !11, i32 1} ; [ DW_TAG_lexical_block ] [./multiple.c]
 ; CHECK: !14 = metadata !{i32 3, i32 0, metadata !15, null}
-; CHECK: !15 = metadata !{i32 786443, metadata !1, metadata !11, i32 3, i32 0, i32 2, i32 1} ; [ DW_TAG_lexical_block ] [./multiple.c]
+; CHECK: !15 = metadata !{i32 786443, metadata !1, metadata !11, i32 2} ; [ DW_TAG_lexical_block ] [./multiple.c]
