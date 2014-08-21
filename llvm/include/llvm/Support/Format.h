@@ -41,6 +41,7 @@ namespace llvm {
 class format_object_base {
 protected:
   const char *Fmt;
+  ~format_object_base() {} // Disallow polymorphic deletion.
   virtual void home(); // Out of line virtual method.
 
   /// Call snprintf() for this object, on the given buffer and size.
@@ -48,7 +49,6 @@ protected:
 
 public:
   format_object_base(const char *fmt) : Fmt(fmt) {}
-  virtual ~format_object_base() {}
 
   /// Format the object into the specified buffer.  On success, this returns
   /// the length of the formatted string.  If the buffer is too small, this
@@ -79,7 +79,7 @@ public:
 /// returns whether or not it is big enough.
 
 template <typename T>
-class format_object1 : public format_object_base {
+class format_object1 final : public format_object_base {
   T Val;
 public:
   format_object1(const char *fmt, const T &val)
@@ -92,7 +92,7 @@ public:
 };
 
 template <typename T1, typename T2>
-class format_object2 : public format_object_base {
+class format_object2 final : public format_object_base {
   T1 Val1;
   T2 Val2;
 public:
@@ -106,7 +106,7 @@ public:
 };
 
 template <typename T1, typename T2, typename T3>
-class format_object3 : public format_object_base {
+class format_object3 final : public format_object_base {
   T1 Val1;
   T2 Val2;
   T3 Val3;
@@ -121,7 +121,7 @@ public:
 };
 
 template <typename T1, typename T2, typename T3, typename T4>
-class format_object4 : public format_object_base {
+class format_object4 final : public format_object_base {
   T1 Val1;
   T2 Val2;
   T3 Val3;
@@ -138,7 +138,7 @@ public:
 };
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5>
-class format_object5 : public format_object_base {
+class format_object5 final : public format_object_base {
   T1 Val1;
   T2 Val2;
   T3 Val3;
@@ -158,7 +158,7 @@ public:
 
 template <typename T1, typename T2, typename T3, typename T4, typename T5,
           typename T6>
-class format_object6 : public format_object_base {
+class format_object6 final : public format_object_base {
   T1 Val1;
   T2 Val2;
   T3 Val3;
