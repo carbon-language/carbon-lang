@@ -128,7 +128,7 @@ private:
   bool SelectTrunc(const Instruction *I);
   bool SelectIntExt(const Instruction *I);
   bool SelectMul(const Instruction *I);
-  bool SelectShift(const Instruction *I, bool IsLeftShift, bool IsArithmetic);
+  bool SelectShift(const Instruction *I);
   bool SelectBitCast(const Instruction *I);
 
   // Utility helper routines.
@@ -193,9 +193,15 @@ private:
                          unsigned Op1, bool Op1IsKill);
   unsigned Emit_UMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
                          unsigned Op1, bool Op1IsKill);
-  unsigned Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
-  unsigned Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
-  unsigned Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill, uint64_t Imm);
+  unsigned emitLSL_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                      unsigned Op1Reg, bool Op1IsKill);
+  unsigned emitLSL_ri(MVT RetVT, unsigned Op0Reg, bool Op0IsKill, uint64_t Imm);
+  unsigned emitLSR_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                      unsigned Op1Reg, bool Op1IsKill);
+  unsigned emitLSR_ri(MVT RetVT, unsigned Op0Reg, bool Op0IsKill, uint64_t Imm);
+  unsigned emitASR_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                      unsigned Op1Reg, bool Op1IsKill);
+  unsigned emitASR_ri(MVT RetVT, unsigned Op0Reg, bool Op0IsKill, uint64_t Imm);
 
   unsigned AArch64MaterializeInt(const ConstantInt *CI, MVT VT);
   unsigned AArch64MaterializeFP(const ConstantFP *CFP, MVT VT);
@@ -703,8 +709,8 @@ bool AArch64FastISel::SimplifyAddress(Address &Addr, MVT VT) {
                                    Addr.getOffsetReg(), /*TODO:IsKill=*/false,
                                    Addr.getShift());
     else
-      ResultReg = Emit_LSL_ri(MVT::i64, Addr.getOffsetReg(),
-                              /*Op0IsKill=*/false, Addr.getShift());
+      ResultReg = emitLSL_ri(MVT::i64, Addr.getOffsetReg(), /*Op0IsKill=*/false,
+                             Addr.getShift());
     if (!ResultReg)
       return false;
 
@@ -2366,7 +2372,7 @@ bool AArch64FastISel::FastLowerIntrinsicCall(const IntrinsicInst *II) {
 
       if (VT == MVT::i32) {
         MulReg = Emit_SMULL_rr(MVT::i64, LHSReg, LHSIsKill, RHSReg, RHSIsKill);
-        unsigned ShiftReg = Emit_LSR_ri(MVT::i64, MulReg, false, 32);
+        unsigned ShiftReg = emitLSR_ri(MVT::i64, MulReg, /*IsKill=*/false, 32);
         MulReg = FastEmitInst_extractsubreg(VT, MulReg, /*IsKill=*/true,
                                             AArch64::sub_32);
         ShiftReg = FastEmitInst_extractsubreg(VT, ShiftReg, /*IsKill=*/true,
@@ -2653,8 +2659,34 @@ unsigned AArch64FastISel::Emit_UMULL_rr(MVT RetVT, unsigned Op0, bool Op0IsKill,
                           AArch64::XZR, /*IsKill=*/true);
 }
 
-unsigned AArch64FastISel::Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
-                                      uint64_t Shift) {
+unsigned AArch64FastISel::emitLSL_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                                     unsigned Op1Reg, bool Op1IsKill) {
+  unsigned Opc = 0;
+  bool NeedTrunc = false;
+  uint64_t Mask = 0;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:  Opc = AArch64::LSLVWr; NeedTrunc = true; Mask = 0xff;   break;
+  case MVT::i16: Opc = AArch64::LSLVWr; NeedTrunc = true; Mask = 0xffff; break;
+  case MVT::i32: Opc = AArch64::LSLVWr;                                  break;
+  case MVT::i64: Opc = AArch64::LSLVXr;                                  break;
+  }
+
+  const TargetRegisterClass *RC =
+      (RetVT == MVT::i64) ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+  if (NeedTrunc) {
+    Op1Reg = emitAND_ri(MVT::i32, Op1Reg, Op1IsKill, Mask);
+    Op1IsKill = true;
+  }
+  unsigned ResultReg = FastEmitInst_rr(Opc, RC, Op0Reg, Op0IsKill, Op1Reg,
+                                       Op1IsKill);
+  if (NeedTrunc)
+    ResultReg = emitAND_ri(MVT::i32, ResultReg, /*IsKill=*/true, Mask);
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::emitLSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                     uint64_t Shift) {
   unsigned Opc, ImmR, ImmS;
   switch (RetVT.SimpleTy) {
   default: return 0;
@@ -2673,8 +2705,35 @@ unsigned AArch64FastISel::Emit_LSL_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
   return FastEmitInst_rii(Opc, RC, Op0, Op0IsKill, ImmR, ImmS);
 }
 
-unsigned AArch64FastISel::Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
-                                      uint64_t Shift) {
+unsigned AArch64FastISel::emitLSR_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                                     unsigned Op1Reg, bool Op1IsKill) {
+  unsigned Opc = 0;
+  bool NeedTrunc = false;
+  uint64_t Mask = 0;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:  Opc = AArch64::LSRVWr; NeedTrunc = true; Mask = 0xff;   break;
+  case MVT::i16: Opc = AArch64::LSRVWr; NeedTrunc = true; Mask = 0xffff; break;
+  case MVT::i32: Opc = AArch64::LSRVWr; break;
+  case MVT::i64: Opc = AArch64::LSRVXr; break;
+  }
+
+  const TargetRegisterClass *RC =
+      (RetVT == MVT::i64) ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+  if (NeedTrunc) {
+    Op0Reg = emitAND_ri(MVT::i32, Op0Reg, Op0IsKill, Mask);
+    Op1Reg = emitAND_ri(MVT::i32, Op1Reg, Op1IsKill, Mask);
+    Op0IsKill = Op1IsKill = true;
+  }
+  unsigned ResultReg = FastEmitInst_rr(Opc, RC, Op0Reg, Op0IsKill, Op1Reg,
+                                       Op1IsKill);
+  if (NeedTrunc)
+    ResultReg = emitAND_ri(MVT::i32, ResultReg, /*IsKill=*/true, Mask);
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::emitLSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                     uint64_t Shift) {
   unsigned Opc, ImmS;
   switch (RetVT.SimpleTy) {
   default: return 0;
@@ -2689,8 +2748,35 @@ unsigned AArch64FastISel::Emit_LSR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
   return FastEmitInst_rii(Opc, RC, Op0, Op0IsKill, Shift, ImmS);
 }
 
-unsigned AArch64FastISel::Emit_ASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
-                                      uint64_t Shift) {
+unsigned AArch64FastISel::emitASR_rr(MVT RetVT, unsigned Op0Reg, bool Op0IsKill,
+                                     unsigned Op1Reg, bool Op1IsKill) {
+  unsigned Opc = 0;
+  bool NeedTrunc = false;
+  uint64_t Mask = 0;
+  switch (RetVT.SimpleTy) {
+  default: return 0;
+  case MVT::i8:  Opc = AArch64::ASRVWr; NeedTrunc = true; Mask = 0xff;   break;
+  case MVT::i16: Opc = AArch64::ASRVWr; NeedTrunc = true; Mask = 0xffff; break;
+  case MVT::i32: Opc = AArch64::ASRVWr;                                  break;
+  case MVT::i64: Opc = AArch64::ASRVXr;                                  break;
+  }
+
+  const TargetRegisterClass *RC =
+      (RetVT == MVT::i64) ? &AArch64::GPR64RegClass : &AArch64::GPR32RegClass;
+  if (NeedTrunc) {
+    Op0Reg = EmitIntExt(RetVT, Op0Reg, MVT::i32, /*IsZExt=*/false);
+    Op1Reg = emitAND_ri(MVT::i32, Op1Reg, Op1IsKill, Mask);
+    Op0IsKill = Op1IsKill = true;
+  }
+  unsigned ResultReg = FastEmitInst_rr(Opc, RC, Op0Reg, Op0IsKill, Op1Reg,
+                                       Op1IsKill);
+  if (NeedTrunc)
+    ResultReg = emitAND_ri(MVT::i32, ResultReg, /*IsKill=*/true, Mask);
+  return ResultReg;
+}
+
+unsigned AArch64FastISel::emitASR_ri(MVT RetVT, unsigned Op0, bool Op0IsKill,
+                                     uint64_t Shift) {
   unsigned Opc, ImmS;
   switch (RetVT.SimpleTy) {
   default: return 0;
@@ -2892,31 +2978,56 @@ bool AArch64FastISel::SelectMul(const Instruction *I) {
   return true;
 }
 
-bool AArch64FastISel::SelectShift(const Instruction *I, bool IsLeftShift,
-                                  bool IsArithmetic) {
+bool AArch64FastISel::SelectShift(const Instruction *I) {
   EVT RetEVT = TLI.getValueType(I->getType(), true);
   if (!RetEVT.isSimple())
     return false;
   MVT RetVT = RetEVT.getSimpleVT();
-
-  if (!isa<ConstantInt>(I->getOperand(1)))
-    return false;
 
   unsigned Op0Reg = getRegForValue(I->getOperand(0));
   if (!Op0Reg)
     return false;
   bool Op0IsKill = hasTrivialKill(I->getOperand(0));
 
-  uint64_t ShiftVal = cast<ConstantInt>(I->getOperand(1))->getZExtValue();
+  if (const auto *C = dyn_cast<ConstantInt>(I->getOperand(1))) {
+    unsigned ResultReg = 0;
+    uint64_t ShiftVal = C->getZExtValue();
+    switch (I->getOpcode()) {
+    default: llvm_unreachable("Unexpected instruction.");
+    case Instruction::Shl:
+      ResultReg = emitLSL_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+      break;
+    case Instruction::AShr:
+      ResultReg = emitASR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+      break;
+    case Instruction::LShr:
+      ResultReg = emitLSR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+      break;
+    }
+    if (!ResultReg)
+      return false;
 
-  unsigned ResultReg;
-  if (IsLeftShift)
-    ResultReg = Emit_LSL_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
-  else {
-    if (IsArithmetic)
-      ResultReg = Emit_ASR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
-    else
-      ResultReg = Emit_LSR_ri(RetVT, Op0Reg, Op0IsKill, ShiftVal);
+    UpdateValueMap(I, ResultReg);
+    return true;
+  }
+
+  unsigned Op1Reg = getRegForValue(I->getOperand(1));
+  if (!Op1Reg)
+    return false;
+  bool Op1IsKill = hasTrivialKill(I->getOperand(1));
+
+  unsigned ResultReg = 0;
+  switch (I->getOpcode()) {
+  default: llvm_unreachable("Unexpected instruction.");
+  case Instruction::Shl:
+    ResultReg = emitLSL_rr(RetVT, Op0Reg, Op0IsKill, Op1Reg, Op1IsKill);
+    break;
+  case Instruction::AShr:
+    ResultReg = emitASR_rr(RetVT, Op0Reg, Op0IsKill, Op1Reg, Op1IsKill);
+    break;
+  case Instruction::LShr:
+    ResultReg = emitLSR_rr(RetVT, Op0Reg, Op0IsKill, Op1Reg, Op1IsKill);
+    break;
   }
 
   if (!ResultReg)
@@ -3012,12 +3123,10 @@ bool AArch64FastISel::TargetSelectInstruction(const Instruction *I) {
   // selector -> improve FastISel tblgen.
   case Instruction::Mul:
     return SelectMul(I);
-  case Instruction::Shl:
-      return SelectShift(I, /*IsLeftShift=*/true, /*IsArithmetic=*/false);
-  case Instruction::LShr:
-    return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/false);
+  case Instruction::Shl:  // fall-through
+  case Instruction::LShr: // fall-through
   case Instruction::AShr:
-    return SelectShift(I, /*IsLeftShift=*/false, /*IsArithmetic=*/true);
+    return SelectShift(I);
   case Instruction::BitCast:
     return SelectBitCast(I);
   }
