@@ -15,6 +15,7 @@
 #include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringSet.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MachO.h"
 
@@ -25,7 +26,7 @@ using llvm::MachO::HeaderFileType;
 namespace lld {
 
 namespace mach_o {
-class ArchHandler; 
+class ArchHandler;
 class MachODylibFile;
 }
 
@@ -49,6 +50,12 @@ public:
     macOSX,
     iOS,
     iOS_simulator
+  };
+
+  enum class ExportMode {
+    globals,    // Default, all global symbols exported.
+    whiteList,  // -exported_symbol[s_list], only listed symbols exported.
+    blackList   // -unexported_symbol[s_list], no listed symbol exported.
   };
 
   /// Initializes the context to sane default values given the specified output
@@ -78,6 +85,15 @@ public:
   Arch arch() const { return _arch; }
   StringRef archName() const { return nameFromArch(_arch); }
   OS os() const { return _os; }
+
+  ExportMode exportMode() const { return _exportMode; }
+  void setExportMode(ExportMode mode) { _exportMode = mode; }
+  void addExportSymbol(StringRef sym);
+  bool exportRestrictMode() const { return _exportMode != ExportMode::globals; }
+  bool exportSymbolNamed(StringRef sym) const;
+
+  bool keepPrivateExterns() const { return _keepPrivateExterns; }
+  void setKeepPrivateExterns(bool v) { _keepPrivateExterns = v; }
 
   bool minOS(StringRef mac, StringRef iOS) const;
   void setDoNothing(bool value) { _doNothing = value; }
@@ -222,6 +238,8 @@ public:
 private:
   Writer &writer() const override;
   mach_o::MachODylibFile* loadIndirectDylib(StringRef path) const;
+  void checkExportWhiteList(const DefinedAtom *atom) const;
+  void checkExportBlackList(const DefinedAtom *atom) const;
 
 
   struct ArchInfo {
@@ -258,6 +276,7 @@ private:
   bool _deadStrippableDylib;
   bool _printAtoms;
   bool _testingFileUsage;
+  bool _keepPrivateExterns;
   StringRef _bundleLoader;
   mutable std::unique_ptr<mach_o::ArchHandler> _archHandler;
   mutable std::unique_ptr<Writer> _writer;
@@ -265,6 +284,8 @@ private:
   llvm::StringMap<mach_o::MachODylibFile*> _pathToDylibMap;
   std::set<mach_o::MachODylibFile*> _allDylibs;
   mutable std::vector<std::unique_ptr<class MachOFileNode>> _indirectDylibs;
+  ExportMode _exportMode;
+  llvm::StringSet<> _exportedSymbols;
 };
 
 } // end namespace lld

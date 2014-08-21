@@ -34,6 +34,21 @@ def ios_simulator_version_min : Separate<["-"], "ios_simulator_version_min">,
 def mllvm : Separate<["-"], "mllvm">,
      MetaVarName<"<option>">,
      HelpText<"Options to pass to LLVM during LTO">, Group<grp_opts>;
+def exported_symbols_list : Separate<["-"], "exported_symbols_list">,
+     MetaVarName<"<file-path>">,
+     HelpText<"Restricts which symbols will be exported">, Group<grp_opts>;
+def exported_symbol : Separate<["-"], "exported_symbol">,
+     MetaVarName<"<symbol>">,
+     HelpText<"Restricts which symbols will be exported">, Group<grp_opts>;
+def unexported_symbols_list : Separate<["-"], "unexported_symbols_list">,
+     MetaVarName<"<file-path>">,
+     HelpText<"Lists symbols that should not be exported">, Group<grp_opts>;
+def unexported_symbol : Separate<["-"], "unexported_symbol">,
+     MetaVarName<"<symbol>">,
+     HelpText<"A symbol which should not be exported">, Group<grp_opts>;
+def keep_private_externs : Flag<["-"], "keep_private_externs">,
+     HelpText<"Private extern (hidden) symbols should not be transformed "
+              "into local symbols">, Group<grp_opts>;
 
 // main executable options
 def grp_main : OptionGroup<"opts">, HelpText<"MAIN EXECUTABLE OPTIONS">;

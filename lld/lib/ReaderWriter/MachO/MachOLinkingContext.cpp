@@ -130,7 +130,8 @@ MachOLinkingContext::MachOLinkingContext()
       _doNothing(false), _arch(arch_unknown), _os(OS::macOSX), _osMinVersion(0),
       _pageZeroSize(0), _pageSize(4096), _compatibilityVersion(0),
       _currentVersion(0), _deadStrippableDylib(false), _printAtoms(false),
-      _testingFileUsage(false), _archHandler(nullptr) {}
+      _testingFileUsage(false), _keepPrivateExterns(false),
+      _archHandler(nullptr), _exportMode(ExportMode::globals) {}
 
 MachOLinkingContext::~MachOLinkingContext() {}
 
@@ -448,6 +449,12 @@ bool MachOLinkingContext::validateImpl(raw_ostream &diagnostics) {
     return false;
   }
 
+  // If -exported_symbols_list used, all exported symbols must be defined.
+  if (_exportMode == ExportMode::whiteList) {
+    for (const auto &symbol : _exportedSymbols)
+      addInitialUndefinedSymbol(symbol.getKey());
+  }
+
   return true;
 }
 
@@ -571,5 +578,24 @@ bool MachOLinkingContext::sectionAligned(StringRef seg, StringRef sect,
   }
   return false;
 }
+
+
+void MachOLinkingContext::addExportSymbol(StringRef sym) {
+  // FIXME: Support wildcards.
+  _exportedSymbols.insert(sym);
+}
+
+bool MachOLinkingContext::exportSymbolNamed(StringRef sym) const {
+  switch (_exportMode) {
+  case ExportMode::globals:
+    llvm_unreachable("exportSymbolNamed() should not be called in this mode");
+    break;
+  case ExportMode::whiteList:
+    return _exportedSymbols.count(sym);
+  case ExportMode::blackList:
+    return !_exportedSymbols.count(sym);
+  }
+}
+
 
 } // end namespace lld

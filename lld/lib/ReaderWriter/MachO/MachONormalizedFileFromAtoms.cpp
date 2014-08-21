@@ -106,7 +106,7 @@ public:
   void      copySectionInfo(NormalizedFile &file);
   void      updateSectionInfo(NormalizedFile &file);
   void      buildAtomToAddressMap();
-  void      addSymbols(const lld::File &atomFile, NormalizedFile &file);
+  std::error_code addSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addIndirectSymbols(const lld::File &atomFile, NormalizedFile &file);
   void      addRebaseAndBindingInfo(const lld::File &, NormalizedFile &file);
   void      addSectionRelocs(const lld::File &, NormalizedFile &file);
@@ -130,20 +130,21 @@ private:
   void         layoutSectionsInSegment(SegmentInfo *seg, uint64_t &addr);
   void         layoutSectionsInTextSegment(size_t, SegmentInfo *, uint64_t &);
   void         copySectionContent(SectionInfo *si, ContentBytes &content);
-  uint8_t      scopeBits(const DefinedAtom* atom);
   uint16_t     descBits(const DefinedAtom* atom);
   int          dylibOrdinal(const SharedLibraryAtom *sa);
   void         segIndexForSection(const SectionInfo *sect,
                              uint8_t &segmentIndex, uint64_t &segmentStartAddr);
   const Atom  *targetOfLazyPointer(const DefinedAtom *lpAtom);
   const Atom  *targetOfStub(const DefinedAtom *stubAtom);
-  bool         belongsInGlobalSymbolsSection(const DefinedAtom* atom);
+  std::error_code getSymbolTableRegion(const DefinedAtom* atom,
+                                       bool &inGlobalsRegion,
+                                       SymbolScope &symbolScope);
   void         appendSection(SectionInfo *si, NormalizedFile &file);
   uint32_t     sectionIndexForAtom(const Atom *atom);
 
   static uint64_t alignTo(uint64_t value, uint8_t align2);
   typedef llvm::DenseMap<const Atom*, uint32_t> AtomToIndex;
-  struct AtomAndIndex { const Atom *atom; uint32_t index; };
+  struct AtomAndIndex { const Atom *atom; uint32_t index; SymbolScope scope; };
   struct AtomSorter {
     bool operator()(const AtomAndIndex &left, const AtomAndIndex &right);
   };
@@ -635,18 +636,6 @@ void Util::buildAtomToAddressMap() {
   }
 }
 
-uint8_t Util::scopeBits(const DefinedAtom* atom) {
-  switch (atom->scope()) {
-  case Atom::scopeTranslationUnit:
-    return 0;
-  case Atom::scopeLinkageUnit:
-    return N_PEXT | N_EXT;
-  case Atom::scopeGlobal:
-    return N_EXT;
-  }
-  llvm_unreachable("Unknown scope");
-}
-
 uint16_t Util::descBits(const DefinedAtom* atom) {
   uint16_t desc = 0;
   switch (atom->merge()) {
@@ -677,16 +666,55 @@ bool Util::AtomSorter::operator()(const AtomAndIndex &left,
 }
 
 
-bool Util::belongsInGlobalSymbolsSection(const DefinedAtom* atom) {
-  // ScopeLinkageUnit symbols are in globals area of symbol table
-  // in object files, but in locals area for final linked images. 
-  if (_context.outputMachOType() == llvm::MachO::MH_OBJECT)
-    return (atom->scope() != Atom::scopeTranslationUnit);
-  else
-    return (atom->scope() == Atom::scopeGlobal);
+std::error_code Util::getSymbolTableRegion(const DefinedAtom* atom,
+                                           bool &inGlobalsRegion,
+                                           SymbolScope &scope) {
+  bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
+  switch (atom->scope()) {
+  case Atom::scopeTranslationUnit:
+    scope = 0;
+    inGlobalsRegion = false;
+    return std::error_code();
+  case Atom::scopeLinkageUnit:
+    if ((_context.exportMode() == MachOLinkingContext::ExportMode::whiteList)
+        && _context.exportSymbolNamed(atom->name())) {
+      return make_dynamic_error_code(Twine("cannot export hidden symbol ")
+                                    + atom->name());
+    }
+    if (rMode) {
+      if (_context.keepPrivateExterns()) {
+        // -keep_private_externs means keep in globals region as N_PEXT.
+        scope = N_PEXT | N_EXT;
+        inGlobalsRegion = true;
+        return std::error_code();
+      }
+    }
+    // scopeLinkageUnit symbols are no longer global once linked.
+    scope = N_PEXT;
+    inGlobalsRegion = false;
+    return std::error_code();
+  case Atom::scopeGlobal:
+    if (_context.exportRestrictMode()) {
+      if (_context.exportSymbolNamed(atom->name())) {
+        scope = N_EXT;
+        inGlobalsRegion = true;
+        return std::error_code();
+      } else {
+        scope = N_PEXT;
+        inGlobalsRegion = false;
+        return std::error_code();
+      }
+    } else {
+      scope = N_EXT;
+      inGlobalsRegion = true;
+      return std::error_code();
+    }
+    break;
+  }
 }
 
-void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
+std::error_code Util::addSymbols(const lld::File &atomFile,
+                                 NormalizedFile &file) {
   bool rMode = (_context.outputMachOType() == llvm::MachO::MH_OBJECT);
   // Mach-O symbol table has three regions: locals, globals, undefs.
 
@@ -697,14 +725,19 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
     for (const AtomInfo &info : sect->atomsAndOffsets) {
       const DefinedAtom *atom = info.atom;
       if (!atom->name().empty()) {
-        if (belongsInGlobalSymbolsSection(atom)) {
-          AtomAndIndex ai = { atom, sect->finalSectionIndex };
+        SymbolScope symbolScope;
+        bool inGlobalsRegion;
+        if (auto ec = getSymbolTableRegion(atom, inGlobalsRegion, symbolScope)){
+          return ec;
+        }
+        if (inGlobalsRegion) {
+          AtomAndIndex ai = { atom, sect->finalSectionIndex, symbolScope };
           globals.push_back(ai);
         } else {
           Symbol sym;
           sym.name  = atom->name();
           sym.type  = N_SECT;
-          sym.scope = scopeBits(atom);
+          sym.scope = symbolScope;
           sym.sect  = sect->finalSectionIndex;
           sym.desc  = descBits(atom);
           sym.value = _atomToAddress[atom];
@@ -737,7 +770,7 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
     Symbol sym;
     sym.name  = ai.atom->name();
     sym.type  = N_SECT;
-    sym.scope = scopeBits(static_cast<const DefinedAtom*>(ai.atom));
+    sym.scope = ai.scope;
     sym.sect  = ai.index;
     sym.desc  = descBits(static_cast<const DefinedAtom*>(ai.atom));
     sym.value = _atomToAddress[ai.atom];
@@ -750,11 +783,11 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
   std::vector<AtomAndIndex> undefs;
   undefs.reserve(128);
   for (const UndefinedAtom *atom : atomFile.undefined()) {
-    AtomAndIndex ai = { atom, 0 };
+    AtomAndIndex ai = { atom, 0, N_EXT };
     undefs.push_back(ai);
   }
   for (const SharedLibraryAtom *atom : atomFile.sharedLibrary()) {
-    AtomAndIndex ai = { atom, 0 };
+    AtomAndIndex ai = { atom, 0, N_EXT };
     undefs.push_back(ai);
   }
   std::sort(undefs.begin(), undefs.end(), AtomSorter());
@@ -768,13 +801,15 @@ void Util::addSymbols(const lld::File &atomFile, NormalizedFile &file) {
     }
     sym.name  = ai.atom->name();
     sym.type  = N_UNDF;
-    sym.scope = N_EXT;
+    sym.scope = ai.scope;
     sym.sect  = 0;
     sym.desc  = desc;
     sym.value = 0;
     _atomToSymbolIndex[ai.atom] = file.undefinedSymbols.size() + start;
     file.undefinedSymbols.push_back(sym);
   }
+
+  return std::error_code();
 }
 
 const Atom *Util::targetOfLazyPointer(const DefinedAtom *lpAtom) {
@@ -1083,7 +1118,9 @@ normalizedFromAtoms(const lld::File &atomFile,
   util.buildAtomToAddressMap();
   util.updateSectionInfo(normFile);
   util.copySectionContent(normFile);
-  util.addSymbols(atomFile, normFile);
+  if (auto ec = util.addSymbols(atomFile, normFile)) {
+    return ec;
+  }
   util.addIndirectSymbols(atomFile, normFile);
   util.addRebaseAndBindingInfo(atomFile, normFile);
   util.addSectionRelocs(atomFile, normFile);
