@@ -72,7 +72,8 @@ namespace llvm {
           CompressDebugSections(false), FunctionSections(false),
           DataSections(false), TrapUnreachable(false), TrapFuncName(""),
           FloatABIType(FloatABI::Default),
-          AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single) {}
+          AllowFPOpFusion(FPOpFusion::Standard), JTType(JumpTable::Single),
+          ThreadModel(ThreadModel::POSIX) {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
     /// option is specified on the command line, and should enable debugging
