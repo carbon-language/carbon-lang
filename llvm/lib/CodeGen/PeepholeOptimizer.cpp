@@ -94,7 +94,7 @@ DisablePeephole("disable-peephole", cl::Hidden, cl::init(false),
                 cl::desc("Disable the peephole optimizer"));
 
 static cl::opt<bool>
-DisableAdvCopyOpt("disable-adv-copy-opt", cl::Hidden, cl::init(true),
+DisableAdvCopyOpt("disable-adv-copy-opt", cl::Hidden, cl::init(false),
                   cl::desc("Disable advanced copy optimization"));
 
 STATISTIC(NumReuse,      "Number of extension results reused");
